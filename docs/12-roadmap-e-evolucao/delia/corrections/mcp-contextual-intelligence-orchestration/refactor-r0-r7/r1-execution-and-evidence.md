@@ -1,8 +1,8 @@
 # R1 — Instruções LLM e recursos declarativos: prompt e registro de evidências
 
 **PLANO:** [125](../125-orchestration-complete-refactoring-finite-plan.md) · **RUNBOOK:** [130](../130-orchestration-refactor-r0-r7-execution-playbook.md) · **AP GATES:** [129](../129-refactor-implementation-conformance-and-antipattern-gates.md)  
-**TASK_ID:** `DELIA-ORCH-REFAC-R1-BOUNDED-01` · **LOTES:** M01 · **ESTADO DO DOCUMENTO:** TEMPLATE_NOT_EXECUTED / NOT_AUTHORIZED.  
-**NÃO É autorização nem evidência de execução.** Ler 16→50→17→49→51→52→21→20→25 + 03/24/60, ADR58, roadmap59, 113,117, 125,128–130, .cursor e ledger no HEAD.
+**TASK_ID:** `DELIA-ORCH-REFAC-R1-BOUNDED-01` · **LOTES:** M01 · **ESTADO DO DOCUMENTO:** EXECUTED — evidência factual abaixo.  
+**Autoridades lidas:** 16→50→17→49→51→52→21→20→25 + 03/24/60, ADR58, roadmap59, 113,117, 125,128–132, .cursor e ledger no HEAD.
 
 ## Prompt pronto para Devin — executar SOMENTE quando gate liberado
 
@@ -24,35 +24,85 @@
 
 ## Documento obrigatório a preencher pelo executor após execução
 
-**STATUS:** `NOT_STARTED` — substituir por `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW|IMPLEMENTATION_FAILED|IMPLEMENTATION_INCONCLUSIVE|EXECUTION_DRIFT|SKIP_WITH_DECISION` somente com fatos.
+**STATUS:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — migração M01 concluída com paridade byte-a-byte comprovada; sem autoaceite.
 
 | Campo | Evidência a preencher (não presumir PASS) |
 |---|---|
-| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R1 / task concreta |
-| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | PENDING |
-| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | PENDING |
-| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | PENDING |
-| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | PENDING |
-| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | TO_INVENTORY |
-| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | TO_INVENTORY |
-| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | PENDING |
-| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | TEST_NOT_RUN |
-| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | TO_INVENTORY |
-| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | TEST_NOT_RUN |
-| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | TEST_NOT_RUN |
-| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | TEST_NOT_RUN |
-| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | PENDING |
-| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | INCONCLUSIVE |
-| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / TEST_NOT_RUN |
-| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | PENDING |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | PENDING |
-| README_LEDGER_UPDATED / DELETIONS_RATIONALE | PENDING |
-| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | PENDING |
-| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | PENDING / YES |
+| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R1 (M01) / `DELIA-ORCH-REFAC-R1-BOUNDED-01` |
+| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | Prompt PO desta sessão (`PREVIOUS_STAGE: R0 — ACCEPT_WITH_RESIDUAL`, `REFERENCE_HEAD=f3e0e2d5d3` — HEAD reancorado conferido igual). Aceite independente de R0 presente em `f3e0e2d5d3` ("independent coordination R0 acceptance with bounded residuals", doc de revisão). Estabilização pré-refatoração aceita `ACCEPT_WITH_RESIDUAL` em `578783ae34` (doc 132). Fase: refatoração bounded R1, sem deploy. |
+| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | HEAD_BEFORE=`f3e0e2d5d39ff48ce849c1b1d03d4139e77a3e45` (= REFERENCE_HEAD). Durante a execução `origin/main` avançou para `f04faae571b9405f51020838ad75aada46a5fdf7` (docs controllership/supplies + spec composer-settings delia MFE — **zero overlap** com `delia-api/**`); rebase `--ff-only` aplicado antes do push. BASE_SHA efetivo do diff = `f04faae571b9`. GIT_STATUS no commit: apenas os 12 arquivos do escopo; `familias/` e `plugins/plugin-ui/node_modules/` preservados intocados (trabalho concorrente). |
+| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | 16→50→17→49→51→52→21→20→25, 03, 24, 60, ADR58, roadmap59, 56/57, 113, 117 (S4), 124, 125, 128, 129 (AP-01…20), 130, 131, 132, R0 evidence, ledger vigente, `.cursor` (delia-execution-protocol, evidence-driven-execution, centralized-rules-first, clean-code-architecture-guardrails, architecture-ci-enforcement, ai-intelligence-evaluation). CP/RQ: M01 = extrair **somente conteúdo declarativo de instrução** para recurso governado existente; ids/versões/lineage permanecem tipados em Python; proibido registry/manager/engine paralelo, duplicação de texto, migração de regra para JSON, branch por provider. FROZEN: M07 SKIP_WITH_DECISION (S4/117) preservado — nada em M07 foi tocado; `evidence_projection.py` não criado (gate R2); nenhum arquivo novo de runtime além do recurso declarativo. |
+| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | GOAL atingido: 17 blocos `*_INSTRUCTION` (texto) removidos de `orchestration.py` e migrados para `config/orchestration_instructions.delpi.json` (kind `orchestration_instructions`, version `1`, owner `DELPI`, `resource_id=delia.capability_orchestration.instructions`), carregado fail-closed por `load_orchestration_instructions` (loader canônico `cri_instruction_resource.py`, estendido) e injetado por composição em `OperationalCapabilityOrchestrator(orchestration_instructions=...)`. ALLOWED (contrato R0 §"ALLOWED_FILES R1"): `orchestration.py`, `cri_instruction_resource.py` (EXTEND), `config/*.delpi.json` (novo recurso versionado), testes de snapshot/lineage + consumidores legítimos. ACTUAL inclui também `root_composer.py` (wiring estritamente necessário — o padrão CRI injeta recursos via composição; a alternativa seria application ler arquivo = violação de camada) e `tests/conftest.py` (helper único de teste — evita duplicar o loader em 6 arquivos). FORBIDDEN respeitado: nenhum proposal schema, instruction-id, validação, budget, modelo, retry, provider, endpoint ou semântica alterados. |
+| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | Mapa completo na tabela §"Evidência específica" abaixo — 17 textos + 2 wrappers de lineage + 6 consumidores de teste. OWNERS: texto→`config/orchestration_instructions.delpi.json` (governado, versionado, fail-closed); ids/keys/versão→`orchestration.py` (`*_INSTRUCTION_ID`, `SELECTION_INSTRUCTION_VERSION="13"`, `CAPABILITY_GOAL_INSTRUCTION_KEY`, `ORCHESTRATION_INSTRUCTION_KEYS`); loader→`app/infrastructure/config/cri_instruction_resource.py`; injeção→`app/composition/root_composer.py`. REAL_CONSUMER único runtime: `root_composer` → `OperationalCapabilityOrchestrator`; testes legítimos atualizados para o recurso canônico. CONTRACT: `instruction=`/`instruction_lineage=` por estágio — inalterado; lineage continua `InstructionLineage(instruction_id, version="13", sha256(texto))` com texto byte-idêntico. |
+| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | EXISTING_EQUIVALENT=**YES** — mecanismo governado idêntico já existia (`cri_instructions.delpi.json`/`cri_presentation.delpi.json` + `load_cri_*` fail-closed + injeção por composição). REUSE_DECISION=**EXTEND** (novo `kind` no loader existente + novo arquivo de recurso declarativo — não é arquivo de código). NEW_FILE_GATE: `orchestration_instructions.delpi.json` é conteúdo declarativo versionado (mesmo padrão dos recursos CRI existentes), não módulo/abstração; `tests/test_r1_instruction_resource.py` é teste novo legítimo. **0 módulos/engine/registry criados.** |
+| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | `delia-api/config/orchestration_instructions.delpi.json` (novo, 17 entradas), `delia-api/app/application/capability_provision/orchestration.py` (−532 linhas: 12406→11874; −17 blocos de texto, −2 wrappers de lineage, +frozenset de chaves, +param construtor, +acessor `_instruction`, 22 lookups), `delia-api/app/infrastructure/config/cri_instruction_resource.py` (+`OrchestrationInstructions`, +`load_orchestration_instructions`, +constantes `_ORCH_*`), `delia-api/app/composition/root_composer.py` (+path fixo, +carga fail-closed com `decision=fail_closed reason=resource_invalid` → `orchestration=None`, +injeção), `delia-api/tests/conftest.py` (+`load_test_orchestration_instructions`), `delia-api/tests/test_r1_instruction_resource.py` (novo, 15 casos), +6 testes consumidores atualizados. CONTRACT_COMPAT: construtor retrocompatível (`orchestration_instructions=None` → mapa vazio, só testes); assinaturas públicas intactas; `InstructionLineage` inalterado. |
+| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | BEFORE/AFTER idênticos na direção: `orchestration.py` continua importando só stdlib+application+domain — **não ganhou import de infrastructure** (o recurso é injetado, não lido); `root_composer` já importava `cri_instruction_resource` (aresta existente estendida); `cri_instruction_resource` não importa application — sem ciclo, sem import reverso. DUPLICATE_CHECK: texto das instruções existe em exatamente 1 lugar (JSON); ids em exatamente 1 lugar (orchestration.py); zero refs residuais aos nomes removidos (grep repo-wide = 0). ARCH_TESTS: enforcement CI é diff-aware — diff não introduz padrões proibidos (sem secret, sem provider branch, sem HTTP/retry, sem boundary cross). |
+| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | OBSOLETE_PROVEN removidos (escopo R1): 17 constantes `*_INSTRUCTION` de texto (substituídas por recurso), `_candidate_args_lineage()` e `_candidate_selection_lineage()` (callers substituídos por `_lineage(id, self._instruction(id))` — wrappers redundantes com o padrão genérico já usado em `_lineage`). CURRENT preservados: 17 `*_INSTRUCTION_ID`, `SELECTION_INSTRUCTION_VERSION`, todos os helpers de projeção/schemas/budgets. `CAPABILITY_AND_GOAL_INSTRUCTION` virou chave dedicada `select_capability#with_goal` (mesmo instruction_id de lineage que já usava em produção — comportamento preservado). `render_specialist_outcome` e demais resíduos R0 mantêm disposições (fora de escopo R1). |
+| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | BASELINE: suíte backend 2165 testes exit=0 @ `9a37d19917` (congelada em R0, mesmo código runtime). RED comprovado: `ImportError: cannot import name 'load_orchestration_instructions'` (coleção) antes da implementação. GREEN: `test_r1_instruction_resource.py` 15/15; 7 arquivos consumidores 162 testes verde. FULL_BACKEND: suíte completa 100% exit=0 (reexecução pós-mudança, mesmo conjunto ~2165+15 novos). SECURITY: loader fail-closed cobre recurso ausente/corrompido/oversized/identidade errada/extras/faltantes (11 mutações adversariais pinadas); composição suprime a superfície de orquestração (`orchestration=None`) em vez de rodar com instrução vazia — nunca parcial. GENERALIZATION: nenhuma lógica nova; texto provider-neutral idêntico; testes de conteúdo migrados para o recurso mantêm pins ("coverage inquiry", "Never invent", ausência de phrase-table). |
+| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | Os outcomes homologados (7/7 PASS em `6a896a695d`, doc 130/§6.406) dependem de texto de instrução + lineage + proposals — todos byte-identicos após a migração (snapshot sha256 pinado por entrada). CRI ON/OFF: composição `base + clause` preservada e repinada em teste (`test_cri_e2_outcome_assessment` + novo teste de wiring CRI). Re-homologação de modelo ao vivo: **TEST_NOT_RUN** com justificativa — o contrato semântico que alcança o modelo é comprovadamente byte-a-byte idêntico (sha256 por instrução); a mudança é apenas de mecanismo de entrega, coberta por wiring + fail-closed + suíte. Se a coordenação quiser eval live de paridade de payload, é gate barato de R2. |
+| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | TEST_NOT_RUN (idem acima — semântica do prompt invariante, sha256-pinado). Modelo/budget/timeout/config intocados (`SELECTION_INSTRUCTION_VERSION="13"` preservada; nenhum `LLM_*`/`DELIA_*` alterado). POSTCONDITION: superfície governada permanece fail-closed — recurso inválido ⇒ `orchestration=None` (mesma postura da vocabulary CRI); nunca instrução parcial/vazia em produção. |
+| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | AP-01 PASS (nenhum módulo novo; −532 linhas sem pasta/abstração). AP-02 PASS (EXISTING=YES, EXTEND de loader real; recurso declarativo não é arquivo de código). AP-03 PASS (DAG sem novo edge application→infra; injeção por composição). AP-04 PASS (texto single-source no JSON; ids single-source em Python; loader único). AP-05/06 PASS (zero heurística/branch/keyword adicionada — diff só move texto). AP-07 PASS (lineage/hash de proposal inalterado; nenhuma decisão movida a dados). AP-08/09/10 NOT_APPLICABLE (nenhum RPA/ACT/retry). AP-11 PASS (instruções continuam declarando blocos untrusted — texto idêntico). AP-12/13 NOT_APPLICABLE (render/evidence inalterados — fora de M01). AP-14 PASS (JSON com kind/version/owner/validação fail-closed/hash canônico — versionamento legítimo, não config-escondida). AP-15 PASS (construtor backward-compatible; ids estáveis; nenhum contrato público quebrado — testes consumidores atualizados por serem internals). AP-16 PASS (diff único-coeso, escopo R1 apenas, rollback trivial via revert). AP-17 PASS (RED→GREEN real, snapshot sha256, 11 mutações adversariais, suíte completa — não é fixture-only). AP-18 PASS (nenhum secret/token no recurso/testes; paths fixos). AP-19 PASS (nenhum consumidor artificial; o único consumidor é o compositor real). AP-20 PASS (S4/117 preservado; nenhuma reclassificação). Manual (esta sessão): todos — CI não executa gate AP dedicado. |
+| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | Nenhuma regressão conhecida no escopo avaliado. Uma divergência interna de implementação foi capturada na revisão do próprio diff antes de qualquer teste verde (NameError `data.get(resource_id)` no novo ramo de identidade) — corrigida e coberta com mutador adversarial `resource_id="delia.bogus.id"` na mesma iteração RED→GREEN; não constitui rework de baseline entregue. `NO_REGRESSION_FOR_EVALUATED_SCOPE=YES` — escopo avaliado = M01 paridade/loader/wiring/suíte backend completa. |
+| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 — nenhuma regressão de baseline entregue; correções internas ocorreram dentro da iteração inicial RED→GREEN. |
+| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | Residual search: grep repo-wide por cada um dos 17 nomes + 2 wrappers = 0 refs; `orchestration.py` sem texto de instrução remanescente (0 `"""`-blocks de instrução). ROLLBACK: `git revert` do commit restaura baseline (texto+hash+lineage pinados pelo snapshot test → reversão segura e verificável). SECURITY_SECRETS: nenhum segredo no recurso/testes; nenhum path env-supplied; recurso é artefato fixo de repo. |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | Preenchido no relatório final (ver rodapé abaixo — campos self-referenciais completados após push). |
+| README_LEDGER_UPDATED / DELETIONS_RATIONALE | README: entrada do documento R1 no índice da pasta `refactor-r0-r7`. Ledger: §6.409 com fatos (sem autoaceite). DELETIONS_RATIONALE: cada constante de texto removida só após paridade sha256 comprovada no recurso e callers migrados; wrappers de lineage removidos por redundância ao padrão `_lineage(id, text)` já existente — removal segura com 0 refs. |
+| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | EXECUTION_DRIFT=NONE. RESIDUALS: (a) live-model eval não executado (justificativa acima — paridade byte-a-byte); (b) testes unitários constroem OCO sem instruções (mapa vazio → texto `""` ao modelo fake — comportamento de teste preservado, proposital); (c) `evidence_projection.py` segue candidato condicional para R2 (não criado); (d) resíduos R0 (`render_specialist_outcome`, `_single_free_text_argument_from_input`) mantêm disposição fora de M01. STOP_REASON: nenhum — etapa concluída dentro do contrato. |
+| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — M01 extraído com paridade sha256/lineage, fail-closed real, suíte completa verde, zero monólito/registry novo, legado OBSOLETE_PROVEN removido. Não declaro ACCEPT nem libero R2. / YES |
 
 ### Evidência específica da etapa R1
 
-Tabela obrigatória por função migrada: ORIGIN SYMBOL | NEW OWNER/FILE | CONTRACT/CONSUMERS | BEFORE/AFTER IMPORTS | TESTS | OLD SYMBOL REMOVED? | LEGACY/COMPAT DECISION. Incluir ao menos 1 caso negativo adversarial, se runtime mudou.
+Tabela por símbolo migrado — ORIGIN → DESTINATION → CONTRACT → CONSUMERS → TEST → LEGACY:
+
+| ORIGIN SYMBOL (orchestration.py) | DESTINATION | CONTRACT/CONSUMERS | TEST | REMOVED? | LEGACY |
+|---|---|---|---|---|---|
+| `GROUP_SELECTION_INSTRUCTION` | JSON key `delia.capability_orchestration.select_group` | `instruction=` no estágio group-selection; lineage id inalterado | snapshot sha256 + pin "coverage inquiry" (r2 test migrado) | SIM | OBSOLETE_PROVEN→deleted |
+| `CAPABILITY_SELECTION_INSTRUCTION` | JSON key `...select_capability` | idem estágio capability-selection | snapshot + conteúdo pinado | SIM | deleted |
+| `CAPABILITY_AND_GOAL_INSTRUCTION` | JSON key `...select_capability#with_goal` | fused cold-start (I02-R3B); roda sob `CAPABILITY_SELECTION_INSTRUCTION_ID` como antes | snapshot + cri_e2 variant test | SIM | deleted |
+| `INDEX_PROBE_INSTRUCTION` | JSON key `...index_probe` | `instruction=` index-probe | snapshot | SIM | deleted |
+| `INDEX_SELECT_INSTRUCTION` | JSON key `...index_select` | `instruction=` index-select | snapshot | SIM | deleted |
+| `ARGUMENTS_INSTRUCTION` | JSON key `...arguments` | `instruction=` arguments stage | snapshot + pins referenciais (c3 test migrado) | SIM | deleted |
+| `RESOLVER_SELECTION_INSTRUCTION` | JSON key `...select_resolver` | `instruction=` resolver-selection | snapshot | SIM | deleted |
+| `CONTINUATION_INSTRUCTION` | JSON key `...analysis_continuation` | `instruction=` continuation | snapshot | SIM | deleted |
+| `CLARIFICATION_INSTRUCTION` | JSON key `...clarification_wording` | `instruction=` clarification | snapshot | SIM | deleted |
+| `SYNTHESIS_INSTRUCTION` | JSON key `...grounded_synthesis` | `instruction=` ×2 (synthesis/record) | snapshot + pin "Never invent" (stage05 migrado) | SIM | deleted |
+| `NATIVE_ASSESSMENT_INSTRUCTION` | JSON key `...native_assessment` | `instruction=` native assessment | snapshot | SIM | deleted |
+| `FOREIGN_SELECTION_INSTRUCTION` | JSON key `...foreign_selection` | `instruction=` foreign selection | snapshot | SIM | deleted |
+| `GOAL_INSTRUCTION` | JSON key `...turn_goal` | baseline `self._goal_instruction` (+clause CRI) | snapshot + cri_e2 prefix-composition | SIM | deleted |
+| `COMPARISON_INSTRUCTION` | JSON key `...comparison` | `instruction=` comparison | snapshot | SIM | deleted |
+| `CANDIDATE_ARGUMENTS_INSTRUCTION` | JSON key `...candidate_arguments` | `instruction=` + lineage candidate-args | snapshot + pins referenciais (c3) | SIM | deleted |
+| `CANDIDATE_SELECTION_INSTRUCTION` | JSON key `...select_candidate` | `instruction=` + lineage candidate-selection | snapshot | SIM | deleted |
+| `INTERACTION_ADMISSION_INSTRUCTION` | JSON key `...interaction_admission` | `instruction=` admission | snapshot + pins formats/regex-free (2 testes migrados) | SIM | deleted |
+| `_candidate_args_lineage()` | — removida | substituída por `_lineage(CANDIDATE_ARGUMENTS_INSTRUCTION_ID, self._instruction(...))` | snapshot lineage hash | SIM | OBSOLETE_PROVEN→deleted |
+| `_candidate_selection_lineage()` | — removida | idem `CANDIDATE_SELECTION_INSTRUCTION_ID` | snapshot lineage hash | SIM | deleted |
+| — (novo) `ORCHESTRATION_INSTRUCTION_KEYS` | `orchestration.py` | frozenset single-source das 17 chaves do recurso | `test_instruction_keys_single_sourced` | n/a | CURRENT |
+| — (novo) `CAPABILITY_GOAL_INSTRUCTION_KEY` | `orchestration.py` | chave do variante fused `select_capability#with_goal` | snapshot + wiring | n/a | CURRENT |
+| — (novo) `load_orchestration_instructions` | `cri_instruction_resource.py` | loader fail-closed, mesmo contrato dos `load_cri_*` | 15 casos (snapshot + 11 mutações + ausente/corrupto) | n/a | CURRENT |
+| — (novo) `OrchestrationInstructions` | `cri_instruction_resource.py` | dataclass frozen tipado (resource_id/version/instructions/content_hash) | idem | n/a | CURRENT |
+| — (novo) `OCO._instruction(key)` | `orchestration.py` | acessor ao mapa injetado | wiring tests | n/a | CURRENT |
+
+Caso negativo adversarial (runtime mudou): recurso inválido em produção ⇒ `load_orchestration_instructions` levanta `CriInstructionResourceError` ⇒ composição loga `delia_orchestration_instructions decision=fail_closed reason=resource_invalid` e produz `orchestration=None` (superfície governada desligada; handler continua respondendo sem orquestração) — **nunca** orquestrador com instrução parcial/vazia. Verificado por teste + revisão de wiring.
+
+### Import DAG — delta R1
+
+```
+BEFORE                          AFTER
+root_composer                   root_composer
+  ├─ cri_instruction_resource     ├─ cri_instruction_resource
+  │    ├─ load_cri_instruction_*   │    ├─ load_cri_instruction_* (inalterado)
+  │    └─ load_cri_presentation_*  │    ├─ load_orchestration_instructions (NOVO)
+  └─ orchestration (OCO)           │    └─ OrchestrationInstructions (NOVO)
+       └─ texto inline (17)   →    └─ orchestration (OCO)
+                                    └─ ids + keys + _instruction() (texto fora)
+```
+
+- `orchestration.py`: **nenhum import novo**, nenhum edge para infrastructure.
+- `cri_instruction_resource.py`: sem import de application — direção correta (infra serve composition).
+- Sem ciclo; única nova aresta = `root_composer → ORCHESTRATION_INSTRUCTION_KEYS` (constante read-only).
+
+### Campos self-referenciais finais
+
+FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED — preenchidos no relatório de execução; o documento é atualizado no commit documental coerente ao push.
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 

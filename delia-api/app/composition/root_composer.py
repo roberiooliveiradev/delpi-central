@@ -10,6 +10,7 @@ from app.application.capability_provision.mcp_provider import (
 )
 from app.application.capability_provision.orchestration import (
     OperationalCapabilityOrchestrator,
+    ORCHESTRATION_INSTRUCTION_KEYS,
 )
 from app.application.capability_provision.openapi_provider import (
     OpenApiCapabilityProvider,
@@ -33,6 +34,7 @@ from app.infrastructure.config.settings import Settings
 from app.infrastructure.config.cri_instruction_resource import (
     load_cri_instruction_clause,
     load_cri_presentation_vocabulary,
+    load_orchestration_instructions,
 )
 from app.infrastructure.auth.subject_bearer import current_subject_bearer
 from app.infrastructure.interoperability.config import (
@@ -72,6 +74,15 @@ _CRI_PRESENTATION_PATH = (
     Path(__file__).resolve().parents[2]
     / "config"
     / "cri_presentation.delpi.json"
+)
+# R1/M01: governed instruction resource — fixed repo artifact, never
+# request/env-supplied. The orchestration surface is suppressed
+# (fail-closed) when the resource is absent or invalid: a governed
+# stage without its instruction text cannot run safely.
+_ORCHESTRATION_INSTRUCTIONS_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "orchestration_instructions.delpi.json"
 )
 
 
@@ -375,6 +386,17 @@ def _compose_turn_handler(
                     clause.version,
                     clause.content_hash,
                 )
+    try:
+        orchestration_instructions = load_orchestration_instructions(
+            _ORCHESTRATION_INSTRUCTIONS_PATH,
+            required_names=ORCHESTRATION_INSTRUCTION_KEYS,
+        ).instructions
+    except Exception:
+        _logger.warning(
+            "delia_orchestration_instructions decision=fail_closed "
+            "reason=resource_invalid"
+        )
+        orchestration_instructions = None
     cri_effective = cri_requested and cri_vocabulary is not None
     orchestration = (
         OperationalCapabilityOrchestrator(
@@ -393,8 +415,9 @@ def _compose_turn_handler(
             cri_instruction_version=cri_version,
             cri_presentation_vocabulary=cri_vocabulary,
             field_labels=field_labels,
+            orchestration_instructions=orchestration_instructions,
         )
-        if providers
+        if providers and orchestration_instructions is not None
         else None
     )
     # CRI E1 (doc 73 §7 / spec 75 §4.1): the single response-intelligence

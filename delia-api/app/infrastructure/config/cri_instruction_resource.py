@@ -125,6 +125,20 @@ _MAX_FIELD_LABEL_ENTRIES = 256
 _MAX_FIELD_LABEL_KEY_CHARS = 64
 _MAX_FIELD_LABEL_TEXT_CHARS = 96
 
+# Refactor R1 (plan 125 / M01): orchestration model-stage instruction
+# text is declarative content — the same governed versioned-resource
+# contract, a different consumer, never a second registry. The
+# resource carries text only: instruction ids and lineage versions
+# remain typed constants in the application layer, single-sourced.
+_ORCH_RESOURCE_ID = "delia.capability_orchestration.instructions"
+_ORCH_KIND = "orchestration_instructions"
+_ORCH_VERSIONS = frozenset({"1"})
+_ORCH_KEYS = frozenset(
+    {"resource_id", "version", "kind", "owner", "instructions"}
+)
+_MAX_ORCH_INSTRUCTION_ENTRIES = 32
+_MAX_ORCH_INSTRUCTION_BYTES = 8192
+
 
 class CriInstructionResourceError(Exception):
     """The governed CRI instruction resource is absent or invalid."""
@@ -141,6 +155,19 @@ class CriInstructionClause:
     resource_id: str
     version: str
     text: str
+    content_hash: str
+
+
+@dataclass(frozen=True)
+class OrchestrationInstructions:
+    """Validated orchestration instruction set — declarative text
+    keyed by the typed instruction ids (plus the fused
+    capability+goal variant key) that remain single-sourced in the
+    application layer."""
+
+    resource_id: str
+    version: str
+    instructions: Mapping[str, str]
     content_hash: str
 
 
@@ -396,4 +423,80 @@ def load_cri_presentation_vocabulary(
             canonical.encode("utf-8")
         ).hexdigest(),
         field_labels=field_labels,
+    )
+
+
+def load_orchestration_instructions(
+    path: str | Path, *, required_names: frozenset[str] | set[str]
+) -> OrchestrationInstructions:
+    """Load and validate the governed orchestration instruction set.
+
+    Fail-closed like the sibling loaders: wrong identity/kind/version,
+    extra or missing top-level keys, a non-mapping ``instructions``
+    section, absent/unknown entry names or empty/oversized text all
+    raise ``CriInstructionResourceError`` — the set is returned whole
+    or not at all. ``required_names`` is supplied by the consumer so
+    the application layer stays the single source of the key list.
+    """
+
+    data = _load_resource_object(path)
+    extra = set(data) - _ORCH_KEYS
+    if extra:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"unsupported fields: {sorted(extra)}",
+        )
+    missing = {k for k in _ORCH_KEYS if not data.get(k)}
+    if missing:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"missing fields: {sorted(missing)}",
+        )
+    if str(data.get("resource_id")) != _ORCH_RESOURCE_ID:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"unexpected resource_id: {data.get('resource_id')!r}",
+        )
+    version = _validate_identity(
+        data, kind=_ORCH_KIND, versions=_ORCH_VERSIONS
+    )
+    instructions = data["instructions"]
+    if not isinstance(instructions, Mapping):
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            "instructions not an object",
+        )
+    if len(instructions) > _MAX_ORCH_INSTRUCTION_ENTRIES:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            "instructions oversized",
+        )
+    names = set(instructions)
+    diff = names ^ set(required_names)
+    if diff:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"instruction set mismatch: {sorted(diff)}",
+        )
+    out: dict[str, str] = {}
+    for name, text in instructions.items():
+        if (
+            not isinstance(name, str)
+            or not isinstance(text, str)
+            or not text.strip()
+            or len(text.encode("utf-8")) > _MAX_ORCH_INSTRUCTION_BYTES
+        ):
+            raise CriInstructionResourceError(
+                "cri_instruction_resource_invalid",
+                f"instruction {name!r} empty or oversized",
+            )
+        out[name] = text
+    canonical = json.dumps(out, sort_keys=True, ensure_ascii=False)
+    return OrchestrationInstructions(
+        resource_id=_ORCH_RESOURCE_ID,
+        version=version,
+        instructions=out,
+        content_hash=hashlib.sha256(
+            canonical.encode("utf-8")
+        ).hexdigest(),
     )

@@ -14,6 +14,7 @@ from app.application.capability_provision.orchestration import (
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )
+from tests.conftest import load_test_orchestration_instructions
 from tests.test_specialist_capability_orchestration import (
     FakePort,
     TEO_TOOLS,
@@ -125,7 +126,9 @@ def test_semarg_t24_cold_greeting_regression():
 
 def test_semarg_t21_admission_instruction_forbids_regex_intent():
     # Instruction guides the LLM; it must not encode phrase tables.
-    instr = orch.INTERACTION_ADMISSION_INSTRUCTION.lower()
+    instr = load_test_orchestration_instructions()[
+        orch.INTERACTION_ADMISSION_INSTRUCTION_ID
+    ].lower()
     assert "hypothetical" in instr
     assert "cadastrados" in instr or "registered" in instr
     # No terminal-pino hardcoding.

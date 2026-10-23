@@ -30,8 +30,6 @@ from app.application.capability_provision.mcp_provider import (
     McpCapabilityProvider,
 )
 from app.application.capability_provision.orchestration import (
-    ARGUMENTS_INSTRUCTION,
-    CANDIDATE_ARGUMENTS_INSTRUCTION,
     OperationalCapabilityOrchestrator,
     _context_folded_discovery_query,
     _deterministic_guidance_content,
@@ -71,6 +69,11 @@ from tests.test_specialist_capability_orchestration import (
     TEST_MODEL_REF,
     VISTA_TOOLS,
 )
+
+from tests.conftest import load_test_orchestration_instructions
+
+_INSTRUCTIONS = load_test_orchestration_instructions()
+
 
 _CRI_RESOURCE_PATH = (
     Path(__file__).resolve().parents[1]
@@ -358,8 +361,8 @@ def test_instructions_resolve_referential_expressions():
     """The existing instruction contracts must direct the model to
     restate concrete referents from prior turns — provider-neutral."""
     for instruction in (
-        ARGUMENTS_INSTRUCTION,
-        CANDIDATE_ARGUMENTS_INSTRUCTION,
+        _INSTRUCTIONS[ARGUMENTS_INSTRUCTION_ID],
+        _INSTRUCTIONS[CANDIDATE_ARGUMENTS_INSTRUCTION_ID],
     ):
         assert "prior" in instruction.lower()
         assert "refer" in instruction.lower()

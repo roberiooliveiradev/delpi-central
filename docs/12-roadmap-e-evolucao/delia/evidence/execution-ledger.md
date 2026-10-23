@@ -17855,3 +17855,13 @@ TASK_ID=DELIA-UX-DICTATION-MODE-COMPOSER-SETTINGS-REFINEMENT-01
 COMMIT=77f1aa67c5(code)+docs DEPLOYED=YES PROD_QA=36/36
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## §6.409 — R1 refactor M01: instruções LLM em recurso governado (2026-10-23)
+
+**2026-10-23 — DELIA-ORCH-REFAC-R1-BOUNDED-01 (r1-execution-and-evidence.md):** etapa R1 do plano 125 executada sob autorização explícita do PO (PREVIOUS_STAGE R0 ACCEPT_WITH_RESIDUAL `f3e0e2d5d3`; rebase ff sobre `f04faae571` — zero overlap delia-api). M01: 17 blocos `*_INSTRUCTION` de texto extraídos de `orchestration.py` (12.406→11.874 linhas) para `delia-api/config/orchestration_instructions.delpi.json` — recurso versionado (kind `orchestration_instructions`, version `1`, owner `DELPI`, `delia.capability_orchestration.instructions`) carregado fail-closed pelo loader canônico estendido (`cri_instruction_resource.load_orchestration_instructions` + `OrchestrationInstructions`, mesma identidade/kind/version/bounds dos `load_cri_*`) e injetado por composição (`root_composer`; recurso inválido ⇒ `orchestration=None` — superfície governada off, nunca instrução vazia). Ids, `SELECTION_INSTRUCTION_VERSION="13"` e `InstructionLineage(id, version, sha256(texto))` permanecem single-source em Python; chave fused `select_capability#with_goal` preserva o instruction_id que o fused já usava em produção. Paridade byte-a-byte pinada por sha256 em `test_r1_instruction_resource.py` (15 casos: snapshot + 11 mutações adversariais + ausente/corrupto + wiring/CRI). Legado removido: 17 constantes de texto + `_candidate_args_lineage`/`_candidate_selection_lineage` (redundantes a `_lineage(id, text)`); zero refs residuais (grep). 6 testes consumidores migrados ao recurso via `load_test_orchestration_instructions` (conftest). DAG: orchestration sem novo edge p/ infra (injeção, não leitura); nenhum registry/engine/módulo novo. Suíte backend completa 100% exit=0; D4–N1 e CRI ON/OFF semanticamente invariantes (texto sha256-idêntico); eval de modelo TEST_NOT_RUN (semântica inalterada). ZERO deploy (proibido na etapa). AP-01..20 reconciliados no documento; `AUTO_REWORK_USED=0`; `NO_REGRESSION_FOR_EVALUATED_SCOPE=YES`.
+
+TASK_ID=DELIA-ORCH-REFAC-R1-BOUNDED-01
+COMMIT=<pending-push> DEPLOYED=NO (proibido nesta etapa)
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION (R2 NAO autorizado)

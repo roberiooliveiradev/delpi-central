@@ -1,4 +1,5 @@
 import socket
+from pathlib import Path
 
 import pytest
 
@@ -66,3 +67,23 @@ def app():
 def client(app):
     with app.test_client() as test_client:
         yield test_client
+
+
+def load_test_orchestration_instructions() -> dict:
+    """R1/M01 (plan 125): instruction text is a governed versioned
+    resource — tests load it through the canonical fail-closed
+    loader; never a second copy and never a test-local snapshot of
+    the text itself."""
+    from app.application.capability_provision.orchestration import (
+        ORCHESTRATION_INSTRUCTION_KEYS,
+    )
+    from app.infrastructure.config.cri_instruction_resource import (
+        load_orchestration_instructions,
+    )
+
+    return load_orchestration_instructions(
+        Path(__file__).resolve().parents[1]
+        / "config"
+        / "orchestration_instructions.delpi.json",
+        required_names=ORCHESTRATION_INSTRUCTION_KEYS,
+    ).instructions

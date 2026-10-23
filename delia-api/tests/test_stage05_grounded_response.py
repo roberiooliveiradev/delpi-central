@@ -30,12 +30,12 @@ from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
-    SYNTHESIS_INSTRUCTION,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _proven_field_differences,
     _render_synthesis,
 )
+from tests.conftest import load_test_orchestration_instructions
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )
@@ -511,7 +511,12 @@ def test_unknown_provider_behavior_preserved():
 
 
 def test_mcp_instruction_injection_in_record_is_not_prose_fact():
-    assert "Never invent" in SYNTHESIS_INSTRUCTION
+    assert (
+        "Never invent"
+        in load_test_orchestration_instructions()[
+            SYNTHESIS_INSTRUCTION_ID
+        ]
+    )
     records = (
         {
             "nome": "X",

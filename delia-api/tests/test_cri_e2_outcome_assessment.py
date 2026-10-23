@@ -22,11 +22,13 @@ from app.application.capability_provision.contracts import (
 )
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
+    CAPABILITY_GOAL_INSTRUCTION_KEY,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
 )
+from tests.conftest import load_test_orchestration_instructions
 from app.application.capability_provision.outcome_assessment import (
     OUTCOME_ANSWERED,
     OUTCOME_EMPTY_RESULT,
@@ -251,6 +253,9 @@ def _orchestrator(outcome, proposal, *, enabled: bool):
         ),
         cri_instruction_version=(
             clause.version if clause is not None else None
+        ),
+        orchestration_instructions=(
+            load_test_orchestration_instructions()
         ),
     )
 
@@ -725,10 +730,15 @@ def test_cri_instruction_variant_carries_requirements_clause():
     """The CRI goal instructions extend the same contract — baseline
     text is a strict prefix, never a rewritten prompt. The clause
     itself is injected from the governed declarative resource."""
-    from app.application.capability_provision.orchestration import (
-        CAPABILITY_AND_GOAL_INSTRUCTION,
-        GOAL_INSTRUCTION,
+    from tests.conftest import (
+        load_test_orchestration_instructions,
     )
+
+    instructions = load_test_orchestration_instructions()
+    goal_text = instructions[GOAL_INSTRUCTION_ID]
+    capability_goal_text = instructions[
+        CAPABILITY_GOAL_INSTRUCTION_KEY
+    ]
 
     clause = _cri_clause()
     orch = _orchestrator(
@@ -737,16 +747,16 @@ def test_cri_instruction_variant_carries_requirements_clause():
         enabled=True,
     )
     assert orch._goal_instruction == (
-        GOAL_INSTRUCTION + clause.text.strip()
+        goal_text + clause.text.strip()
     )
     assert orch._capability_goal_instruction == (
-        CAPABILITY_AND_GOAL_INSTRUCTION + clause.text.strip()
+        capability_goal_text + clause.text.strip()
     )
     assert "answer_requirements" in orch._goal_instruction
     assert "answer_requirements" in orch._capability_goal_instruction
-    assert "answer_requirements" not in GOAL_INSTRUCTION
+    assert "answer_requirements" not in goal_text
     assert (
-        "answer_requirements" not in CAPABILITY_AND_GOAL_INSTRUCTION
+        "answer_requirements" not in capability_goal_text
     )
 
 

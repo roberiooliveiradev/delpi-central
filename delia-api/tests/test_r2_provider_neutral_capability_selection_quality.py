@@ -16,7 +16,6 @@ from app.application.capability_provision.contracts import (
 )
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
-    CAPABILITY_SELECTION_INSTRUCTION,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
@@ -25,6 +24,7 @@ from app.application.capability_provision.orchestration import (
     _list_header,
     _records_are_prior_excerpts,
 )
+from tests.conftest import load_test_orchestration_instructions
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )
@@ -683,9 +683,12 @@ def test_r2_t15_model_timeout_technical():
 
 
 def test_r2_t16_global_30s_budget_constant():
-    assert "DISCOVERY" in CAPABILITY_SELECTION_INSTRUCTION
-    assert "coverage inquiry" in CAPABILITY_SELECTION_INSTRUCTION.lower() or (
-        "quais informações" in CAPABILITY_SELECTION_INSTRUCTION.lower()
+    sel_instr = load_test_orchestration_instructions()[
+        CAPABILITY_SELECTION_INSTRUCTION_ID
+    ]
+    assert "DISCOVERY" in sel_instr
+    assert "coverage inquiry" in sel_instr.lower() or (
+        "quais informações" in sel_instr.lower()
     )
     deadline = TurnDeadline.start(30.0)
     assert deadline.remaining_seconds() <= 30.0

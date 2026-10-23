@@ -17,6 +17,7 @@ from typing import Any
 from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
+    INTERACTION_ADMISSION_INSTRUCTION_ID,
     _SELECTION_INCONCLUSIVE_CONTENT,
     _activity_outcome_summary,
 )
@@ -225,11 +226,13 @@ def test_g0_02_conversational_fallback_timeout_soft_lands():
 
 
 def test_g0_02_admission_instruction_requires_owner_for_formats_catalog():
-    from app.application.capability_provision.orchestration import (
-        INTERACTION_ADMISSION_INSTRUCTION,
+    from tests.conftest import (
+        load_test_orchestration_instructions,
     )
 
-    text = INTERACTION_ADMISSION_INSTRUCTION.lower()
+    text = load_test_orchestration_instructions()[
+        INTERACTION_ADMISSION_INSTRUCTION_ID
+    ].lower()
     assert "formats" in text or "formatos" in text
     assert "operational" in text
     assert "requires_owner_surface" in text
