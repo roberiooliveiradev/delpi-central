@@ -317,8 +317,7 @@ existe implementada e canônica — `GET /supplies/cpv` (api-delpi,
 `SUM(SD2.D2_CUSTO1)` nos CFOPs de venda 5101/5124/6101/6124 por
 `D2_EMISSAO` — doc 80 §39, rodada 21); reutilização para a evidência de
 fechamento classificada `REUSE_PARTIAL` — lacuna `as_of`/snapshot é
-`DECISION_REQUIRED` do owner (custo corrente sofre revalorização
-posterior).
+**superado para a consulta corrente**: decisão PO CPV mensal **vivo**, com correções retroativas refletidas no mês original após recálculo Protheus (doc 80 §40); evidência anteriormente homologada tem rastreabilidade distinta, sem pressupor snapshot implementado.
 
 ## §6 — Gates e métricas resultantes
 
