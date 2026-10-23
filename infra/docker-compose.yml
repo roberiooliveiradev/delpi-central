@@ -1987,9 +1987,11 @@ services:
       DELIA_LLM_BASE_URL: ${DELIA_LLM_BASE_URL:-}
       DELIA_LLM_MODEL: ${DELIA_LLM_MODEL:-}
       DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-}
-      DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-30}
+      # Doc 103 (PO decision, activation task DELIA-C3-PRODUCTION-60-3-300-
+      # ACTIVATION-01): 60s per real LLM call.
+      DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-60}
       DELIA_LLM_MAX_OUTPUT_TOKENS: ${DELIA_LLM_MAX_OUTPUT_TOKENS:-2048}
-      DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-30}
+      DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-60}
 
       # VD-F03 dictation.transcription.v1 — dedicated audio-capable model
       # behind the same approved provider family; unset fails closed
@@ -2039,21 +2041,23 @@ services:
       DELIA_OPENAPI_DELPI_BASE_URL: ${DELIA_OPENAPI_DELPI_BASE_URL:-http://delpi-api-delpi:8000}
       DELIA_OPENAPI_DELPI_DECLARATIONS_PATH: ${DELIA_OPENAPI_DELPI_DECLARATIONS_PATH:-/app/config/openapi_declarations.delpi.json}
       DELIA_OPENAPI_TIMEOUT_SECONDS: ${DELIA_OPENAPI_TIMEOUT_SECONDS:-15}
-      # LOOP-03R2A: total wall-clock budget for one interaction turn —
-      # stays >=20s under the ~100s Cloudflare edge timeout so the
-      # application always answers before the edge terminates the
-      # request (524).
-      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-30}
+      # Doc 103 (PO decision): absolute monotonic cap of 300s per
+      # interaction. Long silent windows are protected by the
+      # transport keepalive (≤15s gap) on the NDJSON path — the ~100s
+      # edge idle timeout is never reached on a live stream.
+      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-300}
       # CP4 governed stage resume (docs 88 §10.2 / 90): default OFF —
       # legacy single-attempt. Dev may set 2 for one bounded re-attempt
       # under the approved 60s monotonic interaction budget; the 30s
       # per-attempt ceiling is a code constant.
       DELIA_MAX_GOVERNED_ATTEMPTS: ${DELIA_MAX_GOVERNED_ATTEMPTS:-1}
-      # Doc 103 GATE 1: per-LOGICAL-CALL LLM retry — explicitly OFF in
-      # production (1) until a future activation gate authorizes it.
-      # Distinct from turn resume above; invalid values fail closed.
-      DELIA_LLM_CALL_MAX_ATTEMPTS: ${DELIA_LLM_CALL_MAX_ATTEMPTS:-1}
-      DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-60}
+      # Doc 103 GATE 1: per-LOGICAL-CALL LLM retry — activated to the
+      # PO-approved 3 attempts by explicit PO decision (task
+      # DELIA-C3-PRODUCTION-60-3-300-ACTIVATION-01) with residual risk
+      # R4 accepted OPEN/DEFERRED_BY_PO. Distinct from turn resume
+      # above, which stays 1; invalid values fail closed to 1.
+      DELIA_LLM_CALL_MAX_ATTEMPTS: ${DELIA_LLM_CALL_MAX_ATTEMPTS:-3}
+      DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-300}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.
       # Stays unset in prod .env unless rollout is separately authorized.
