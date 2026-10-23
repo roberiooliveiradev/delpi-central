@@ -150,6 +150,17 @@ Mudança contratual: cards passam a ser **compactos** — nome da pendência, qu
 - MFE: 382 passed (attention: 5 — contrato compacto, sem `preview`, estados loading/error/partial/unavailable); tsc ok; build ok; eslint sem achados nos arquivos alterados.
 - Chamadas downstream por request: **10 → 6** (PR summary + PO + 2×OTD + 2×SS-summary); payload por chamada reduzido (`page_size` 3→1 nos endpoints com summary).
 
+### Performance (medida em produção, unidades 01+02)
+- **Antes**: composição fazia até 10 chamadas downstream; fonte PR ≈ summary serial (~29s) + 2 listas de prévia seriais → pior caso ~90s de loading.
+- **Depois**: 6 chamadas (PR summary + PO + 2×OTD + 2×SS summary); `list_lines` do summary passou a buscar páginas 2..N em paralelo (pool de 8, ordem preservada — owner `purchase-requests-api`, gargalo comprovado por medição por fonte).
+- **Endpoint real medido**: ~13,6s total (PR summary ~14s; PO 0,5s; OTD 2,4–4,6s; SS 1,4s — em paralelo).
+- **Residual**: o `summary` de SCs ainda agrega linhas no `purchase-requests-api`; redução adicional exige agregação/count server-side no `api-delpi` (backlog, não bloqueio — o loading é limitado e com refresh).
+
+### Deploy P2
+- Commits `0baa937c15` (compactação) + `35cfe26e9a`/`303104af38` (fan-out paralelo).
+- Serviços publicados: `supplies-api` (`sha256:3ab12e661d09`), `supplies` (`sha256:2464c0b5b522`), `purchase-requests-api` (`sha256:c70585fe251b`) — todos healthy.
+- Smoke: 5 cards com contagens reais `[81,156,90,7,201]`, sem `preview`, `partialFailures: []`; 401 sem token (verificado na entrega anterior, contrato inalterado).
+
 ### Residual
 - `VISUAL_AUTHENTICATED=INCONCLUSIVE` mantém-se (sem navegador autenticado).
 - A prévia detalhada de estoque deixou de existir — a observação (2) da revisão GPT sobre exposição de prévia sem `estoque-seguranca.access` fica **resolvida por remoção** (não há mais dados de itens na Home).
