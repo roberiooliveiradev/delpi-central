@@ -145,3 +145,12 @@ mecanismo comprovado: `preparePluginUiRemote()` faz `import
 - `End`/`PageDown` fora de foco nativo depende do componente focável — o DOM e o
   ARIA não mudaram; o defeito reportado (ausência de região de scroll) está
   resolvido.
+
+
+## Revisão GPT — PR.UI.S4 (2026-10-23)
+
+**Decisão:** `ACCEPT_WITH_RESIDUAL` para correção em código e publicação técnica; `VISUAL_AUTHENTICATED=INCONCLUSIVE`. Foram inspecionados no source `1e51c1ae6b` os estilos `plugins/plugin-ui/src/styles/select-control.css` e `multi-select.css`, o teste `multi-select.scroll.test.ts` e o presente documento. A colisão por substring de `-select__*` com `-multi-select__*` é compatível com os seletores encontrados. O diff exclui o multi-select dos wildcards conflitantes do Select e configura no MultiSelect portaled painel flex limitado a `min(70vh,480px)`, busca/ações fora do scroll e lista `min-height:0; flex:1 1 auto; overflow:auto`. A correção está no **owner `@delpi/plugin-ui`**, sem override CSS em Supplies e sem alteração de contrato público.
+
+**Evidência executor-reported (não reexecutada pelo GPT):** Chromium headless reproduziu `scrollTop=0` antes e `1394` depois, `clientHeight=1780→386`, primeiro/último item acessíveis; suíte kit `2324/2324`, typecheck/build PASS; deploy somente `plugin-ui` imagem `sha256:37868d89c63f` e stylesheet `style-CLZDCNXE.css`. Esses testes provam o CSS e o DOM de reprodução, mas **não** substituem smoke da página autenticada no navegador do PO. `LINT=INCONCLUSIVE` no executor (eslint v9 versus configuração legada), não declarar lint PASS.
+
+**Residuais:** verificar em produção autenticada wheel/touchpad/teclado e seleção da última opção do Centro de custo, tema e viewport; fazer teste sibling funcional de ao menos um outro consumidor do mesmo remote quando possível; monitorar seletor wildcard residual em `popover-surface.css` para regressão cosmética (não classificado como causa de scroll). `CONTRACT_IMPACT=NONE`. `CODE=ACCEPT`; `DEPLOY=PASS (executor-reported)`; `VISUAL=INCONCLUSIVE`. Nenhuma mudança autorizada em fluxo ERP ou cutover de fornecedores.
