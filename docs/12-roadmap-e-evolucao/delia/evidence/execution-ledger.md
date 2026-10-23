@@ -17916,6 +17916,7 @@ DEPLOYED=YES PROD_HOMOLOGATION=EXECUTED BUSINESS_OUTCOME=PASS_WITH_RESIDUALS
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
 
+
 ## §6.414 — Composer Settings: motion UX suave (2026-10-23)
 
 **2026-10-23 — DELIA-UX-COMPOSER-SETTINGS-GENTLE-MOTION-REFINEMENT-01 (spec 125 §11):** microinteracoes suaves implementadas no wrapper de produto, zero mudanca no AnchoredPanelPortal. Entrada fade+translateY(5px) 160ms suprimida em mount-ja-aberto (remount batch<->live, sem flicker); saida --exiting 130ms com estado funcional imediato (aria-expanded/--open fecham na hora, so a apresentacao anima), pointer-events:none, timer com cleanup, Escape/fora idempotentes no exit; selecao 170ms, check opacidade+escala 160ms, trigger 150ms; tudo sob prefers-reduced-motion no-preference — em reduce fecha instantaneo. Zero mudanca de ditado/contrato/backend.
@@ -17928,3 +17929,20 @@ TASK_ID=DELIA-UX-COMPOSER-SETTINGS-GENTLE-MOTION-REFINEMENT-01
 COMMIT=924bbeba9c(code)+docs DEPLOYED=YES PROD_QA=20/20
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.415 — Diagnóstico causal pós-deploy R1/R2: D5-R, D8-R, D5-schema (2026-10-23)
+
+**2026-10-23 — DELIA-ORCH-REFAC-R1R2-POSTDEPLOY-FUNCTIONAL-CAUSAL-DIAGNOSTIC-01:** diagnóstico causal read-only dos residuais sinalizados pela revisão independente `9d7d61205f` (D5-R funcional FAIL, D8-R PARTIAL, D5-schema INCONCLUSIVE). Reancorado: doc HEAD/origin `924bbeba9c`; imagem prod reverificada `sha256:ee155bf5a325` inalterada; checkout prod `924bbeba9c`; delia-api em origin/main identico ao avaliado `0660f49af0` (exceto script de evidencia fora do runtime). Sem deploy, sem correcao implementada.
+
+TRACES PROD (redigidos, imagem ee155bf5a325): D5-R `f74d8044` — `contract_subject=yes` -> `vista.get_catalog` -> `CAPABILITY_NOT_ENUMERABLE` -> `outcome=contract_facts` -> CRI `leads.contract_facts` + rows bounded; irmaos D5 (`5a677e82`,`c0ecca32`,`305de7e5`) mesma payload com `contract_subject=no` -> resposta guidance correta. D8-R — `davi.discover_delpi_information` x2 (retry folded executou) -> `CAPABILITY_NOT_MATCHED eligible=95` -> `envelope_only no_business_data` -> `presented=0`. D5-schema (`2c787e76`,`58adece2`) — `contract_subject=yes` -> davi.discover -> `candidate_arguments` propose ok -> turno termina sem invoke encadeado.
+
+REPRODUCAO DETERMINISTICA (dev api-delpi, retrieval owner): `descricao do material 10080043` -> [] ; `descricao do produto 10080043` -> `search_products 0.91`; `search_products.searchable_text` sem token `material`. Candidato do D5-schema = `search_protheus_columns_in_table` (0.897) exigindo `tableName`+`q` nao derivaveis -> `candidate_arguments` invalido -> `merged=None` -> `candidates_present -> return None` honesto sem projecao de contract_facts.
+
+ROOT CAUSES PROVEN: D5-R = MODEL_VARIANCE na fronteira de intencao (`contract_subject`) expondo precedencia deterministica `entities.*`-first em `_contract_fact_rows` + deslocamento de guidance na composicao CRI; D8-R = OWNER_VARIANCE/CONTRACT_LIMITATION — gap de vocabulario lexical DAVI (material<->produto); D5-schema = ORCHESTRATOR_DEFECT — assimetria do terminal candidatos-presentes vs zero-candidatos sob `contract_subject`. A/B baseline `6a896a695d` byte-identico nos tres caminhos -> **zero regressao R1/R2**. Recomendacoes bounded documentadas (2x DELIA, 1x owner DAVI), nenhuma implementada.
+
+TASK_ID=DELIA-ORCH-REFAC-R1R2-POSTDEPLOY-FUNCTIONAL-CAUSAL-DIAGNOSTIC-01
+DEPLOYED=NO (proibido) CORRECTIONS_IMPLEMENTED=NO
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+Evidencia: [doc 134](../corrections/mcp-contextual-intelligence-orchestration/134-r1-r2-postdeploy-functional-causal-diagnostic.md).
+
