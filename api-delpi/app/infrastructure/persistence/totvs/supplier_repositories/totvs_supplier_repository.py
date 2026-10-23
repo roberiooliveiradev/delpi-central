@@ -103,6 +103,7 @@ class TotvsSupplierRepository(BaseRepository):
         query: str | None = None,
         state: str | None = None,
         blocked: bool | None = None,
+        tax_id: str | None = None,
         sort_by: str = _PAGED_SORT_DEFAULT,
         sort_dir: str = "asc",
         page: int = 1,
@@ -112,7 +113,9 @@ class TotvsSupplierRepository(BaseRepository):
 
         Same match semantics as ``search_suppliers`` (code prefix, CI_AI name
         contains, digit-only tax id contains, code+store pair) with server-side
-        pagination, allowlisted sort and deterministic tiebreak.
+        pagination, allowlisted sort and deterministic tiebreak. ``tax_id`` is a
+        separate exact filter on digit-normalized A2_CGC (canonical duplicate
+        check) — ANDed with the remaining clauses, never ORed into ``query``.
         """
         clauses = ["SA2.D_E_L_E_T_ = ''", "SA2.A2_FILIAL = ''"]
         params: list[Any] = []
@@ -142,6 +145,14 @@ class TotvsSupplierRepository(BaseRepository):
         if uf:
             clauses.append("SA2.A2_EST = ?")
             params.append(uf)
+
+        tax_digits = re.sub(r"\D", "", tax_id or "")
+        if tax_digits:
+            clauses.append(
+                "REPLACE(REPLACE(REPLACE("
+                "SA2.A2_CGC, '.', ''), '/', ''), '-', '') = ?"
+            )
+            params.append(tax_digits)
 
         if blocked is True:
             clauses.append("SA2.A2_MSBLQL = '1'")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 
@@ -10,6 +11,7 @@ class SuppliersListRequest:
     query: str | None = None
     state: str | None = None
     blocked: bool | None = None
+    tax_id: str | None = None
     page: int = 1
     page_size: int = 20
     sort_by: str = "supplier_name"
@@ -28,6 +30,11 @@ class SuppliersListRequest:
             self.state = state or None
         if self.blocked is not None and not isinstance(self.blocked, bool):
             raise ValueError("blocked must be a boolean")
+        if self.tax_id is not None:
+            digits = re.sub(r"\D", "", str(self.tax_id))
+            if len(digits) not in (11, 14):
+                raise ValueError("tax_id must be an 11- or 14-digit document")
+            self.tax_id = digits
         self.page = max(1, int(self.page or 1))
         self.page_size = min(100, max(1, int(self.page_size or 20)))
         self.sort_by = (self.sort_by or "supplier_name").strip().lower()

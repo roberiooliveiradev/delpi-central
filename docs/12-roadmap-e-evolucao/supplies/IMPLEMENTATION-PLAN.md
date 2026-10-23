@@ -538,6 +538,8 @@ X0–X3.E2E da integração CNPJ/fornecedores estão aceitos **apenas no boundar
 
 **X4.UX-R1.P0 CONCLUÍDO (2026-10-23):** inventário + contract freeze do cadastro assistido (3 entradas na `SupplierCreatePage`) e conferência E13. Contratos candidatos congelados: `POST /suppliers/creation-preview`, `GET /suppliers/external-search`, `POST /suppliers/enrichment-summaries` (batch, read-model PG — sem N+1). Lacuna registrada: duplicate-check exato por CNPJ não existe na api-delpi (só `LIKE` textual) — menor contrato proposto `GET /supplies/suppliers?tax_id=`. R1.S1 `READY_TO_AUTHORIZE`; R1.S3 `BLOCKED` até homologação de provider nominal (CNPGolden/ZenPJ/Nume/CNPJota catalogados, nenhum escolhido). Doc: `X4-UX-R1-P0-INVENTORY-CONTRACT-FREEZE-20261023.md`.
 
+**X4.UX-R1.S1 CONCLUÍDO (2026-10-23):** `POST /suppliers/creation-preview` implementado em supplies-api — sugestões com proveniência via `CompanyRegistryProvider` existente + duplicate-check exato (nova cláusula `tax_id` digito-normalizada em api-delpi `GET /supplies/suppliers`; `CLEAR` só com match exato e total=0, falha → `INCONCLUSIVE`). Draft-only, zero escrita, 425 testes supplies-api verdes. Doc: `X4-UX-R1-S1-CREATION-PREVIEW-BACKEND-20261023.md`.
+
 
 ## Plano derivado X4.UX-R1 — cadastro assistido / conferência (2026-10-23)
 
