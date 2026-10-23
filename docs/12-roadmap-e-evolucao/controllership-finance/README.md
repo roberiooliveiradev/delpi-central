@@ -326,3 +326,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - relação tabular de baixas (23/10/2026)
 
 [Doc 73 - Pagamentos setembro/2026: inventário de baixas](./73-ciclo1-pagos-0926-relacao-baixas.md): estrutura de uma aba XLSB com eventos de baixas, motivos DEB/CMP/FAT/NOR/DAC, datas, natureza, componentes financeiros e diferenças entre valor original e total baixado. Confronto com os PDFs por data (`DLP06R01`) e natureza (`nat.prt`), rotina FINR190 e contratos R01/R02 ainda `TO_INVENTORY/TEST_NOT_RUN`. Dados operacionais originais não versionados.
+
+
+### Ciclo 1 - recebimentos por data (23/10/2026)
+
+[Doc 74 - Relatorio de recebimentos por data](./74-ciclo1-recebidos-por-data.md): PDF privado do layout `DLP06R01`, com baixas agrupadas por data, compensacoes, subtotal e total geral. Nao equiparar baixa a entrada bancaria, nem posicao em aberto a fluxo liquidado. Correspondencia FINR190, verificacao do log de inconsistencias e paridade R01/R02 seguem pendentes; dados de origem nao versionados.
