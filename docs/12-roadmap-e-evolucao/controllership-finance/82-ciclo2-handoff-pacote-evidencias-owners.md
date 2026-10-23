@@ -103,6 +103,16 @@ população; G6 exige homologação funcional da Controladoria.
 | Impacto PROC-0072 | transforma "snapshot observado" em "produtor identificado" — destrava R12/R15 |
 | Critério de aceite | `EXECUTION_OBSERVED` (log/schedule datado da escrita SB9) + `CODE_DEPLOYED` |
 
+#### E7 — Versão implantada do MATR910 + parâmetros efetivos do kardex
+
+| Campo | Conteúdo |
+|---|---|
+| Evidência atual | **Rodada 19:** fonte `matr910_dlp.prx` no acervo (`SOURCE_AVAILABLE`) e modelo físico `PROVEN` — UNION SD1/SD2/SD3, `F4_ESTOQUE='S'`, `D3_ESTORNO<>'S'`, `D*_ORIGLAN<>'LF'`, datas por tabela, ordem NUMSEQ, custos `as_of`. Paridade linha-a-linha: 9.357/9.357 (R06) e 45/45 (R07) — doc 80 §37, doc 85 §6/§7 |
+| Lacuna objetiva | (a) confirmação de que a versão compilada no RPO de produção corresponde ao fonte `matr910_dlp.prx` disponível (`CODE_DEPLOYED`); (b) parâmetros efetivos das emissões de 01/10 — especialmente mv_par10 `Saldo a considerar` (Atual/Fechamento), mv_par09, mv_par22 poder3 e o armazém usado na emissão de `Invent.xlsb` (loc 01+99 observados) |
+| Fonte esperada | identificação da build/RPO da rotina MATR910 + print/registro de parametrização vinculado às emissões (aceita evidência equivalente com vínculo demonstrável) |
+| Impacto PROC-0072 | converte `SOURCE_AVAILABLE` em `CODE_DEPLOYED`; encerra o residual de parâmetros de R06/R07 (G4/G5 já PASS com base na reconstrução; E7 fecha a cadeia produtor→versão) |
+| Critério de aceite | `CODE_DEPLOYED` (versão RPO comprovada) + `EXECUTION_OBSERVED` (parâmetros vinculados) |
+
 ---
 
 ### 2.2 — Owner DBA (objetos de banco)

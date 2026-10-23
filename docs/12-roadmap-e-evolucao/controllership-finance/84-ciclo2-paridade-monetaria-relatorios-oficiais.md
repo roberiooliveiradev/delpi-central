@@ -280,8 +280,35 @@ MP — validação por tipo em doc 80 §33.C/§34.B.
 - **R08** (Material em Processo): xlsb já é o próprio artefato oficial —
   paridade documental com o P7 demonstrada (§3); população SIZ/SC2 não
   testada. G5 não promovido.
-- **R04, R06, R07, R09, R11–R15**: sem população oficial comparável
+- **R04, R09, R11–R15**: sem população oficial comparável
   disponível → G5 `TEST_NOT_RUN`/PENDING preservado.
+
+## §5.1 — R06 · Kardex CPV e R07 · Inventários (rodada 19)
+
+Paridade **linha-a-linha** entre os XLSB e o Protheus físico
+(filial 02, 09/2026, `as_of` da emissão 01/10 16:58) — doc 80 §37,
+doc 85 §6/§7:
+
+| Dimensão | Oficial | Físico | Regra | Resultado | Δ | Status |
+|---|---|---|---|---|---|---|
+| População R06 | 1.544 produtos / 9.357 mov. | UNION SD1+SD2+SD3 elegíveis | produtos com ≥1 mov. elegível (MOD*/MO fora) | reproduzida | 0 | `PASS` |
+| População R07 | 45 mov. `INVENT` | SD3 `D3_DOC='INVENT'` loc 01+99 | TES 999/499, CF RE0/DE0 | 45/45 | 0 | `PASS` |
+| Data competência | data impressa | `D1_DTDIGIT`/`D2_EMISSAO`/`D3_EMISSAO` | por tabela (fonte + casos dig≠emi) | provada | 0 | `PASS` |
+| Ordem mesma-data | sequência impressa | `D3_NUMSEQ` | mv_par16=Digitação | 1.971/1.971 | 0 | `PASS` |
+| REF | F-/P-/OP/CC | `D1_FORNECE`/`D2_PEDIDO`/`D3_OP`/`D3_CC` | por tabela de origem | ~9.357 verificados | 0 | `PASS` |
+| Quantidade | qtd impressa | `D1_QUANT`/`D2_QUANT`/`D3_QUANT` | sinal na própria coluna | reproduzida | 0 | `PASS` |
+| Custo movimento | custo impresso | `D1_CUSTO`/`D2_CUSTO1`/`D3_CUSTO1` as_of | moeda 1 + `TTAT_OLD` pós-recálculo | 9.346/9.357 (99,88%) + R07 45/45 | 11 linhas residual | `PASS` (binding por blocos sem miss residual) |
+| Saldo inicial | cabeçalho produto | `CalcEst` ≡ `B9_QINI`/`B9_VINI1`@0831 | por produto | 1.544/1.544 | 0 | `PASS` |
+| Cadeia de saldo | saldo linha a linha | inicial + movimentos | acumulado contínuo | 1.544/1.544 blocos | 0 | `PASS` |
+| Saldo final (vs SB9 corrente) | saldo impresso | SB9@0930 regravação 21/10 | — | 354 produtos divergem **só em valor** | 227 <R$1 / 127 ≥R$1 | `STALE_EVIDENCE` (drift pós-emissão, não erro) |
+| Totais R07 | E 2.348,108/R$185.103 · S 30.808,206 | SD3 INVENT | agregado | reconciliado | 0 | `PASS` |
+
+**Hipóteses descartadas:** filial 01 (população diverge), data única de
+emissão para SD1 (digitação provada), saldo por recálculo inverso
+(batimento exato com `B9`@0831), inclusão de estornos (pares ausentes).
+**Residual aberto:** versão RPO + parâmetros efetivos das emissões
+(E7 — TI/ERP); classificação poder3 `F4_PODER3` no escopo kardex;
+medida "CPV" agregada (`DECISION_REQUIRED`).
 
 ## §6 — Gates e métricas resultantes
 
@@ -289,11 +316,13 @@ MP — validação por tipo em doc 80 §33.C/§34.B.
 |---|---|---|
 | R01 G5 | TEST_NOT_RUN | **PASS** (paridade row-level integral) |
 | R02 G5 | TEST_NOT_RUN | **PASS** (paridade row-level integral do artefato; G4 permanece PENDING — fonte ausente) |
-| R03 G5 | TEST_NOT_RUN | PENDING (paridade parcial: EM PROCESSO + PA/PI exatos) |
-| R05 G5 | TEST_NOT_RUN | PENDING (9/10 tipos + residual MP) |
+| R03 G5 | TEST_NOT_RUN | PENDING (paridade parcial: EM PROCESSO + PA/PI exatos; resumo → E2) |
+| R05 G4/G5 | TEST_NOT_RUN | **PASS** (rodadas 15–16: 130/130 células Δ=0,000 no `as_of`) |
+| R06 G4/G5 | PENDING/TEST_NOT_RUN | **PASS** (rodada 19: 9.357/9.357 linhas, custos 99,88% direto+TTAT, cadeia 1.544/1.544 — §5.1) |
+| R07 G4/G5 | PENDING/TEST_NOT_RUN | **PASS** (rodada 19: INVENT 45/45 vinculados — §5.1) |
 
-`COLETA = 39/60 = 65,0%` (inalterado — G5 não entra no denominador) ·
-`AUDITORIA = 41/90 = 45,6%` · `CONCLUÍDOS = 0/15` (G6 exige aceite humano).
+`COLETA = 42/60 = 70,0%` · `AUDITORIA = 47/90 = 52,2%` ·
+`CONCLUÍDOS = 0/15` (G6 exige aceite humano).
 
 ## §7 — Segurança e método
 

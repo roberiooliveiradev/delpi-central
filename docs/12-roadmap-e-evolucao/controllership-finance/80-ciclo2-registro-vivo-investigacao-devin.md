@@ -2149,3 +2149,99 @@ apenas a fronteira entre fato e hipótese:
 - Consequência: R03 G4/G5 permanecem `PENDING`; encerramento
   condicionado ao pacote E2.1/E2.2/E2.3 do doc 82 §2.1 (parâmetros
   efetivos, linhas de produto da folha 74 e produtor implantado).
+
+## §37 — RODADA 19 (CF-C2-KARDEX-CPV-INVENT-PARITY-001) — RECONSTRUÇÃO FÍSICA DO KARDEX MATR910 — 2026-10-23
+
+### §37.A — Preparação e GO
+
+- HEAD `303104af38` (sincronizado com `origin/main`, fast-forward a partir
+  de `146170360d`). `IMPLEMENTATION_AUTHORIZED=NO`; somente SELECT via
+  `delpi-api-delpi`; artefatos originais lidos via Excel COM (XLSB → CSV
+  temporário, fora do Git).
+- Artefatos: `cpv 09 26 matriz.xlsb` (R06, emissão 01/10/2026 16:58) e
+  `Invent.xlsb` (R07), ambos já custodiados — não requisitados ao PO.
+
+### §37.B — Inventário estrutural dos XLSB (Frente A)
+
+- `cpv 09 26 matriz.xlsb`: 1 aba "01-02 - Kardex Fisico-Financei",
+  **14.382 linhas × 16 col** = **1.544 blocos de produto** + **9.357
+  linhas de movimento** + ~379 cabeçalhos repetidos + 1.544 linhas de
+  "segunda UM" + linhas de posição IPI/endereço. **0 blocos sem
+  movimento** — as 14.382 linhas NÃO são movimentos.
+- `Invent.xlsb`: 1 aba `Planilha2`, **50 linhas × 12 col** = **45
+  movimentos efetivos** `INVENT` + linhas em branco/agregação. Totais:
+  entradas 2.348,108 / R$185.103 · saídas 30.808,206 · líquido
+  **−28.460,098**.
+- Competência: todos os movimentos em 09/2026; escopo efetivo **filial
+  02 / loc 01** (R06) e loc 01+99 (R07).
+
+### §37.C — R06: produtor e modelo físico (Frentes B/C/D)
+
+- **Produtor `PROVEN`:** rotina "Kardex" ≡ **MATR910**; fonte
+  `matr910_dlp.prx` no acervo (`SOURCE_AVAILABLE`; `CODE_DEPLOYED`
+  pendente — E7). Comportamento observado 100% compatível com o fonte.
+- **Modelo:** UNION SD1+SD2+SD3 por produto (join SB1; SD1/SD2 join SF4
+  `F4_ESTOQUE='S'`), filtros `D3_ESTORNO<>'S'`, `D*_ORIGLAN<>'LF'`,
+  `D*_LOCAL=mv_par08`, `D1_REMITO=''`, ranges SB1 (produto/tipo/grupo).
+- **Competência por tabela:** SD1=`D1_DTDIGIT`, SD2=`D2_EMISSAO`,
+  SD3=`D3_EMISSAO` — provado por contagens e por casos digitação≠emissão.
+- **Ordenação:** data + `*_NUMSEQ` — 1.971/1.971 grupos mesma-data
+  consistentes com `D3_NUMSEQ` (mv_par16=Digitação).
+- **REF:** `F-`+`D1_FORNECE` (260/260), `P-`+`D2_PEDIDO` (594/594),
+  `OP`+`D3_OP` (6.060/6.060), `CC`+`D3_CC` (~2.443).
+- **Custos:** `D1_CUSTO`/`D2_CUSTO1`/`D3_CUSTO1` moeda 1 **as_of da
+  emissão** — 9.346/9.357 (99,88%) com vínculo (corrente ou `TTAT_OLD`
+  de revalorização pós-emissão). Identidade linha-a-linha verificada por
+  blocos.
+- **Saldos:** inicial = `CalcEst` ≡ `B9_QINI`/`B9_VINI1` @2026-08-31
+  (1.544/1.544 exato); cadeia contínua até o saldo impresso
+  (1.544/1.544). Sinais negativos ficam na coluna do movimento
+  (devolução SD2 → entrada negativa; estorno-compra SD1 → saída
+  negativa).
+- **População:** só produtos com ≥1 movimento elegível; 26 `MOD*` tipo
+  `MO` fora (sem SB9); 1.426 produtos SB9 sem movimento elegível fora
+  (1.023 com saldo≠0) — relatório de movimento, não de posição.
+- **CPV (`AS-IS`):** saídas agregadas ≠ CPV — misturam requisições de
+  produção (RE1/RE3 dominantes), vendas NF (5101/6101/7101), devoluções,
+  transferências e INVENT. Sem escopo de medida, nenhum total do relatório
+  é igualável ao CPV — `DECISION_REQUIRED` para a medida.
+
+### §37.D — R07: inventários (Frente E)
+
+- `Invent.xlsb` = mesmo MATR910 filtrado a `D3_DOC='INVENT'`, TES
+  999/RE0 (saída) e 499/DE0 (entrada), filial 02 loc 01+99.
+- **45/45 linhas vinculadas ao SD3** — 35 match direto + 10 via
+  `TTAT_OLD` de `D3_CUSTO1` (revalorização pós-emissão; ex.: 1.330,650
+  impresso vs 1.331,299 corrente). Sem misses residuais de população no
+  escopo observado.
+
+### §37.E — Temporalidade (Frente F)
+
+- Linha do tempo: emissão kardex 01/10 **16:58** → recálculo MATA330
+  ~17:5x (TTAT `D3_CUSTO1` em massa) → regravação SB9@0930 em 21/10.
+- Custos impressos = `as_of` de emissão; ~1.981 linhas divergentes do
+  custo corrente resolvem via `TTAT_OLD`.
+- Saldo final kardex vs SB9 corrente: **354 produtos divergem só em
+  valor** (Δqtd=0 em todos) — 227 < R$1, 127 ≥ R$1 — drift de
+  revalorização posterior, `STALE_EVIDENCE` na comparação corrente, não
+  defeito do relatório (cadeia interna 100% consistente).
+
+### §37.F — Paridade (Frente G)
+
+- Identidade de linha: 9.357/9.357 (R06) e 45/45 (R07) verificado por
+  blocos; custos 99,88% direto+TTAT; saldos iniciais 100%; ordenação
+  100%; REF 100%. Matriz detalhada no doc 84 §5.1.
+- Hipóteses descartadas com evidência: filial 01 (população não bate),
+  data única de emissão para SD1 (digitação provada), saldo por recálculo
+  inverso (batimento exato com `B9`@0831), inclusão de estornos (pares
+  ausentes com linha limpa presente).
+
+### §37.G — Gates
+
+- **R06: G4 PASS, G5 PASS** — origem física, filtros, joins, ordenação,
+  custos `as_of` e cadeia de saldo demonstrados + paridade linha-a-linha
+  reproduzível (residual temporal classificado, não erro).
+- **R07: G4 PASS, G5 PASS** — 45/45 ajustes INVENT vinculados, semântica
+  TES/CF/saldo provada, totais reconciliados.
+- **G6: PENDING** (aceite funcional Controladoria). R01–R05 inalterados.
+- Métricas: `COLETA 42/60 = 70,0%` · `AUDITORIA 47/90 = 52,2%`.

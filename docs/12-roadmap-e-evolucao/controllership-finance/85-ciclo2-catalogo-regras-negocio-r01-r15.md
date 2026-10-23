@@ -513,22 +513,89 @@ doc 84 §4; evidência doc 80 §31.
 
 ---
 
-## §6 — R06 · CPV / Kardex (MATR910) — `AS-IS`/`TO_INVENTORY`
+## §6 — R06 · CPV / Kardex (MATR910) — `PROVEN` (escopo filial 02 / loc 01, 09/2026)
 
-- `cpv 09 26 matriz.xlsb` = "Kardex Fisico-Financeiro" por produto
-  (14.382 linhas): sequência de movimentos (DATA, TES, C.F, DOC,
-  entradas/saídas qtd+custo, saldo, CM do movimento) + cabeçalho do produto.
-- Roster: MATR910 "Kardex diario — CPV e Inventarios". Bindings SD3/D1/D2
-  `TO_INVENTORY`.
+**Fonte no acervo:** `docs/13-fontes-totvs-protheus/04. Estoque/matr910_dlp.prx`
+— `SOURCE_AVAILABLE` (variante Delpi). `CODE_DEPLOYED` **pendente** (versão
+compilada no RPO não inspecionada — E7, doc 82 §2.1). Todos os pontos
+testados do comportamento observado são compatíveis com o fonte.
+
+- `BR-R06-001` (produtor/modelo — `PROVEN`): cada bloco de produto =
+  UNION de três fontes — SD1 (entradas NF), SD2 (saídas NF), SD3
+  (internas/produção/inventário) — com cabeçalho SB1
+  (cod/desc/UM/tipo/grupo/POSIPI/armazém). Joins:
+  `SB1.B1_COD=D*_COD`; SD1/SD2 fazem join SF4 por `D*_TES=F4_CODIGO`.
+  Grupo SX1 `MTR910` — 22 perguntas (mv_par01..22), catálogo extraído.
+- `BR-R06-002` (filtros — `PROVEN` fonte + empírico): `SF4.F4_ESTOQUE='S'`
+  (SD1/SD2); `SD3.D3_ESTORNO<>'S'` — pares de estorno excluídos
+  (verificado: doc com trio DE6-limpo + DE6/RE6 `ESTORNO=S`/deletado
+  imprime só a linha limpa); `D1_ORIGLAN<>'LF'` e `D2_ORIGLAN<>'LF'`;
+  `D*_LOCAL=mv_par08` (loc 01 observado); `D1_REMITO=''`; cláusula
+  `D3_SERVIC` (CQ/`MV_CQ`); SB1 limitado por produto mv_par01/02, tipo
+  mv_par03/04, grupo mv_par18/19 e `B1_COD<>MV_PRODIMP`.
+- `BR-R06-003` (data de competência por tabela — `PROVEN`): SD1 usa
+  **`D1_DTDIGIT`** (digitação — 281 linhas impressas na data de digitação
+  com digitação≠emissão; docs emitidos em out/digitados em set entram na
+  competência); SD2 usa **`D2_EMISSAO`** (590/590); SD3 usa
+  **`D3_EMISSAO`**. Reflete o fonte (queries literais).
+- `BR-R06-004` (ordenação — `PROVEN`): por data do movimento; dentro da
+  mesma data por `*_NUMSEQ` — mv_par16=Digitação ordena pela coluna
+  SEQUENCIA (D1/D2/D3_NUMSEQ). Verificado: 1.971/1.971 grupos de mesma
+  data consistentes com `D3_NUMSEQ`.
+- `BR-R06-005` (coluna REF "P.V.,FOR, CC, PJ, OP ou OS" — `PROVEN`):
+  SD1 → `F-`+`D1_FORNECE` (260/260); SD2 → `P-`+`D2_PEDIDO` (594/594);
+  SD3 → `OP`+`D3_OP` (6.060/6.060) ou `CC`+`D3_CC` (~2.443, zero
+  divergência).
+- `BR-R06-006` (custos — `PROVEN`): SD1 → `D1_CUSTO`, SD2 → `D2_CUSTO1`,
+  SD3 → `D3_CUSTO1`, moeda mv_par11=1. Valores impressos são **as_of da
+  emissão** (01/10 16:58, pré-recálculo MATA330 ~17:5x): 9.346/9.357
+  (99,88%) com vínculo de custo — custo corrente ou `TTAT_OLD` de
+  revalorização posterior; binding de identidade linha-a-linha verificado
+  por blocos (9.357 movimentos / 1.544 blocos).
+- `BR-R06-007` (cadeia de saldo — `PROVEN`): saldo inicial do cabeçalho =
+  `CalcEst(produto, local, mv_par05)` ≡ `B9_QINI`/`B9_VINI1` @2026-08-31
+  (1.544/1.544 exato); saldo acumulado linha a linha = saldo impresso —
+  1.544/1.544 blocos contínuos (qtd e valor).
+- `BR-R06-008` (sinais — `PROVEN`): quantidade/custo negativos permanecem
+  na coluna do próprio movimento com sinal − (devolução de venda SD2 →
+  entrada negativa; estorno de compra SD1 → saída negativa).
+- `BR-R06-009` (população — `PROVEN` no escopo observado): produtos com
+  ≥1 movimento elegível (mv_par07 "Lista Prods S/Movim" = Não — 0 blocos
+  sem movimento); 26 produtos `MOD*` (tipo `MO`) fora — nenhum tem SB9;
+  1.426 produtos com SB9 fora do kardex (1.023 com saldo ≠0 @30/09) —
+  o relatório cobre **movimento**, não posição.
+- `BR-R06-010` (semântica CPV — `AS-IS`): saídas do kardex **não são**
+  CPV direto — misturam requisições p/ produção (RE1/RE3, classes
+  dominantes), vendas NF (CF 5101/6101/7101), devoluções, transferências
+  e ajustes INVENT. "CPV" no PROC-0072 é evidência composta; nenhum total
+  agregado do relatório equivale ao CPV sem escopo de medida definido.
+- `PENDING`: versão compilada no RPO (E7); parâmetros efetivos da emissão
+  além dos inferidos (mv_par09=`D`, mv_par16=Digitação pela ordenação,
+  mv_par10 `Saldo a considerar` — provável Fechamento dado o as_of);
+  classificação poder3 (`F4_PODER3`) no escopo kardex.
+- `STALE_EVIDENCE` (saldo final vs SB9 corrente): 354 produtos divergem
+  **só em valor** (Δqtd=0 em todos) — SB9@0930 reconstruído em 21/10 após
+  recálculo; o saldo impresso é o as_of da emissão. 227 < R$1; 127 ≥ R$1.
 
 ---
 
-## §7 — R07 · Inventários (MATR910 filtrado) — `AS-IS`
+## §7 — R07 · Inventários (MATR910 filtrado) — `PROVEN` (filial 02 / loc 01+99)
 
-- `Invent.xlsb` = mesmo kardex filtrado a docs `INVENT` — TES **999 (RE0)** /
-  **499 (DE0)**: ajustes de inventário com saldo resultante.
-- Regra derivável: ajuste de inventário = movimento SD3 com TES de ajuste
-  (`TO_INVENTORY` para binding físico).
+- `BR-R07-001` (artefato — `PROVEN`): `Invent.xlsb` (1 aba, 50 linhas, 45
+  movimentos efetivos) = mesmo layout kardex filtrado a
+  `D3_DOC='INVENT'` — TES **999/RE0** (saída) e **499/DE0** (entrada);
+  cobre loc 01 e loc 99 da filial 02.
+- `BR-R07-002` (semântica — `PROVEN`): ajuste de inventário = SD3 com doc
+  `INVENT`; entrada DE0 soma qtd/valor ao saldo; saída RE0 subtrai; custo
+  = `D3_CUSTO1` as_of emissão; saldo resultante impresso na linha —
+  mesma cadeia de BR-R06-007.
+- `BR-R07-003` (reconciliação — `PROVEN`): 45/45 linhas vinculadas ao SD3
+  — 35 match direto + 10 via `TTAT_OLD` de `D3_CUSTO1` (revalorização
+  pós-emissão; ex.: 1.330,650 impresso vs 1.331,299 corrente). Totais
+  oficiais: entradas 2.348,108 / R$185.103 · saídas 30.808,206 · líquido
+  −28.460,098. População física INVENT do escopo coberta pelo artefato.
+- `PENDING`: versão RPO do produtor (E7, compartilhada com R06);
+  confirmação do parâmetro de armazém da emissão (loc 01+99 observados).
 
 ---
 
@@ -646,6 +713,11 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R05-011/012 as_of custo + ponte | `SD*_TTAT_LOG` | `TTAT_DTIME`,`TTAT_COLD`,`TTAT_FIELD` | custo no `as_of` da emissão + residual por produto | `as_of` + decomposição de drift em contrato histórico | api-delpi | T-R05-08/09 | doc 80 §33.A-B |
 | BR-R09 MOD rate | `SBZ010.BZ_CUSTD` + Fat×MOD | `BZ_CUSTD`, horas | rate×horas por PA/filial | `mod-cost-rate` (E6=C) | api-delpi | T-R09-01 | doc 80 §22–§25 |
 | BR-R10/11 EDAPP | SD1/SD2 | `D1_*`,`D2_*` | consulta parametrizada | `fiscal-docs-query` | api-delpi | T-R10-01 | doc 47 §11.1 |
+| BR-R06-001/002/003 kardex UNION | `matr910_dlp.prx` + SD1/SD2/SD3/SF4 | `D1_DTDIGIT`,`D2_EMISSAO`,`D3_EMISSAO`,`F4_ESTOQUE`,`D3_ESTORNO`,`D*_ORIGLAN`,`D*_LOCAL` | UNION SD1+SD2+SD3 por produto/armazém com datas por tabela | `stock-kardex` (contrato futuro — `DECISION_REQUIRED`) | api-delpi | T-R06-01..04 | doc 80 §37.C |
+| BR-R06-004/005 ordem+REF | `matr910_dlp.prx` | `D*_NUMSEQ`,`D1_FORNECE`,`D2_PEDIDO`,`D3_OP`,`D3_CC` | data + NUMSEQ; REF por origem (F-/P-/OP/CC) | idem | api-delpi | T-R06-05/06 | doc 80 §37.C |
+| BR-R06-006/007 custo+saldo | `matr910_dlp.prx` + TTAT/SB9 | `D*_CUSTO*`,`TTAT_COLD`,`B9_QINI`,`B9_VINI1` | custo as_of emissão; cadeia saldo desde `CalcEst` | `as_of` obrigatório (mesma regra de BR-R05-008) | api-delpi | T-R06-07/08 | doc 80 §37.C/E |
+| BR-R06-009/010 população+CPV | artefato + SB1/SB9 | `B1_TIPO`,`B1_COD`,mv_par07 | só produtos com movimento; saídas ≠ CPV | escopo de medida CPV = `DECISION_REQUIRED` | cf-api | T-R06-09 | doc 80 §37.C |
+| BR-R07-001..003 INVENT | artefato + SD3/TTAT | `D3_DOC='INVENT'`,`D3_TM`,`D3_CF`,`D3_CUSTO1` | ajustes 999/RE0 saída + 499/DE0 entrada, loc 01+99 | `stock-kardex` filtro doc — mesmo contrato de R06 | api-delpi | T-R07-01/02 | doc 80 §37.D |
 | BR-R12-003 Refaz | `DEL100.PRW` | SD3/SB9 | reconstrução→comparação | `rebuild-balances-audit` | api-delpi | T-R12-01 | doc 80 §24.E |
 | BR-R15 SB9 snapshot | SB9/SB2 | `B9_*` | snapshot mensal | `month-end-stock` (**após E5**) | api-delpi | T-R15-01 | doc 80 §21 |
 
@@ -696,6 +768,20 @@ copia para BFF/frontend.
 | T-R05-09 | BR-R05-012 | positive · reproduzido | ponte por produto: Σ residual = +8.631,731 = oficial **exato** (agregação `CAST DECIMAL(30,9)`); TransfProc-RE3 fora do fluxo de valor |
 | T-R09-01 | BR-R09 | positive · reproduzido | Custo Unitário MOD = `BZ_CUSTD` por produto/filial |
 | T-R10-01 | BR-R10/11 | positive · reproduzido | export = tabela literal; consulta parametrizada equivalente |
+| T-R06-01 | BR-R06-001/002 | positive · reproduzido | UNION SD1/SD2/SD3: 9.357 linhas vinculadas linha-a-linha por blocos (1.544 produtos) |
+| T-R06-02 | BR-R06-002 | negative · reproduzido | `D3_ESTORNO='S'`/deletado fora; doc com trio limpo+par estornado imprime só a linha limpa |
+| T-R06-03 | BR-R06-003 | positive · reproduzido | SD1 por `D1_DTDIGIT`: doc emitido em out/digitado em set entra na competência (281 casos dig≠emi); SD2/SD3 por `EMISSAO` |
+| T-R06-04 | BR-R06-002 | negative · reproduzido | `D*_ORIGLAN='LF'` excluído; `D*_LOCAL≠mv_par08` excluído |
+| T-R06-05 | BR-R06-004 | positive · reproduzido | mesma data ordena por `D3_NUMSEQ` — 1.971/1.971 grupos consistentes |
+| T-R06-06 | BR-R06-005 | positive · reproduzido | REF: `F-`+fornecedor (260/260), `P-`+pedido (594/594), `OP`+`D3_OP` (6.060/6.060), `CC`+`D3_CC` |
+| T-R06-07 | BR-R06-006 | positive · reproduzido | custo impresso = `D*_CUSTO*` as_of emissão; divergente do corrente resolve via `TTAT_OLD` (1.981 linhas) |
+| T-R06-08 | BR-R06-007 | positive · reproduzido | saldo inicial `B9_*`@0831 + movimentos = saldo impresso — 1.544/1.544 blocos contínuos |
+| T-R06-09 | BR-R06-009 | negative · reproduzido | produto sem movimento elegível não vira bloco (0/1.544); tipo `MO`/MOD* fora |
+| T-R06-10 | BR-R06-008 | positive · reproduzido | devolução SD2 → entrada negativa na mesma coluna; estorno-compra SD1 → saída negativa |
+| T-R07-01 | BR-R07-001/002 | positive · reproduzido | 45/45 linhas INVENT vinculadas ao SD3 (999/RE0 saída, 499/DE0 entrada), loc 01+99 |
+| T-R07-02 | BR-R07-003 | positive · reproduzido | 10 divergências de custo = revalorização pós-emissão provada via `TTAT_OLD`; totais oficiais fecham |
+| T-R07-03 | BR-R07-002 | negative · candidato | estorno de INVENT (par `D3_ESTORNO`) deve ficar fora — mesma regra de T-R06-02 |
+| T-R07-04 | BR-R07-002 | positive · candidato | movimento retroativo INVENT digitado após emissão não entra na reprodução `as_of` |
 | T-R12-01 | BR-R12-003 | positive · reproduzido | query DEL100 vigente = 3.058/421/242 |
 | T-R15-01 | BR-R15 | negative · reproduzido | snapshot com timestamp ≠ execução → não declarar produtor |
 
@@ -705,9 +791,9 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
-| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R06, R07, R08, R09 (layout), BR-R12-001/002, R15 (execução) |
-| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07/R08 bindings físicos, R09 vínculo DLP204, R10/11 filtros, R13 contrato externo, R14 todo |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..009** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população), **BR-R07-001..003** (INVENT 45/45), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
+| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), BR-R06-010 (semântica CPV composta), R08, R09 (layout), BR-R12-001/002, R15 (execução) |
+| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 vínculo DLP204, R10/11 filtros, R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
 | `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |
 | `STALE_EVIDENCE` | contagens DEL100 antigas 724/672 (`EXECUTION_DRIFT`, doc 80 §23.A) |
@@ -717,6 +803,6 @@ investigação** e necessárias para reproduzir os resultados oficiais
 observados estão consolidadas neste documento ou em doc 84 (paridade
 detalhada) — nenhuma ficou apenas em scripts temporários, mensagens ou
 memória. O catálogo **não afirma completude**: itens com binding/pendência
-declarada (R04, R06–R08, R13, R14 e pendências internas de R01–R03/R05/R15)
+declarada (R04, R08, R13, R14 e pendências internas de R01–R03/R05–R07/R15)
 não têm ainda todas as regras necessárias para conclusão — permanecem
 `PENDING`/`TO_INVENTORY`.

@@ -118,13 +118,13 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 `Entradas e saidas.pdf` = **`MATR320.prt`** — "Resumo das Entradas e Saidas EM R$", período 01/09–30/09/2026, MATRIZ; colunas por tipo (Tip): Saldo Inicial, Compras, Movimentações Internas, Requisições p/ Produção, Transferências, Produção, Vendas, Transf. p/ Processo, Devoluções, Poder de Terceiros, Saldo Atual + Total Geral. **Fonte localizado:** `matr320.prx` (padrão TOTVS, execução via SP `MAT056`; variante Delpi `Dmatr320.prx`/`DLPR320` zera poder3 e não foi a usada). **Reconciliação de colunas (doc 84 §4.2-4.4, doc 80 §31+§33):** **escopo completo reproduzido — 10 tipos × 13 colunas, 120/120 colunas de fluxo exatas ao centavo** no estado de emissão (inclui retificação retroativa `<NF-RETIF-A>` e reversão `TTAT_COLD` com corte por timestamp de emissão); MovInt residual 0,48 eliminado (artefato de sobre-reversão); divergência MP SA +8.631,731 **decomposta ao centavo por produto** (6 produtos revalorização CM pós-emissão — Δ 0,000, doc 80 §34.C); **130/130 células oficiais Δ = 0,000** no `as_of` da emissão. Gates: **G1–G3 PASS · G4 PASS · G5 PASS · G6 PENDING** (aceite funcional).
 
-### R06 — CPV / Kardex 01 — **PARCIAL**
+### R06 — CPV / Kardex 01 — **RECONCILIADO**
 
-`cpv 09 26 matriz.xlsb` = "Kardex Fisico-Financeiro" por produto (14.382 linhas): por produto, sequência de movimentos (DATA, TES, C.F, DOC, entradas/saídas qtd+custo, saldo, CM do movimento) + cabeçalho produto (código, descrição, UM, tipo, grupo, CM, posição IPI, endereço/armazém). Roster: **MATR910** "Kardex diario — CPV e Inventarios". Gates: **G1–G3 PASS · G4 PENDING** (SD3/D1/D2 bindings prováveis, não confirmados) · G5/G6 PENDING.
+`cpv 09 26 matriz.xlsb` = "Kardex Fisico-Financeiro" por produto (14.382 linhas = 1.544 blocos + **9.357 movimentos** + layout). **Reconstrução física completa (rodada 19, doc 80 §37, doc 85 §6):** produtor MATR910 com fonte `matr910_dlp.prx` (`SOURCE_AVAILABLE`); UNION **SD1 (`D1_DTDIGIT`) + SD2 (`D2_EMISSAO`) + SD3 (`D3_EMISSAO`)**, `F4_ESTOQUE='S'`, `D3_ESTORNO<>'S'`, `D*_ORIGLAN<>'LF'`, loc 01; ordem data+`D3_NUMSEQ` (1.971/1.971); REF decodificado (F-/P-/OP/CC); custos `as_of` emissão (99,88% direto+`TTAT_OLD`); cadeia de saldo `B9`@0831 → saldo impresso (1.544/1.544). População = produtos com movimento (MOD*/MO fora; SB9 sem movimento fora). Saídas agregadas **≠ CPV** (semântica composta — `AS-IS`). Residual: versão RPO + parâmetros efetivos (E7). Gates: **G1–G5 PASS · G6 PENDING** (aceite funcional).
 
-### R07 — Inventários / Kardex 99 — **PARCIAL**
+### R07 — Inventários / Kardex 99 — **RECONCILIADO**
 
-`Invent.xlsb` = mesmo layout kardex filtrado a docs **"INVENT"** (TES 999 RE0 / 499 DE0) — movimentos de ajuste de inventário com saldo resultante. Gates: **G1–G3 PASS (MATR910) · G4 PENDING · G5/G6 PENDING**.
+`Invent.xlsb` = mesmo kardex filtrado a `D3_DOC='INVENT'` (TES **999/RE0** saída, **499/DE0** entrada), filial 02 loc 01+99. **45/45 linhas vinculadas ao SD3** (35 diretas + 10 via `TTAT_OLD` de custo); totais oficiais reconciliados (E 2.348,108/R$185.103 · S 30.808,206 · líquido −28.460,098). Gates: **G1–G5 PASS · G6 PENDING**.
 
 ### R08 — Material em Processo / H02 — **PARCIAL**
 
@@ -187,8 +187,8 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R03 P7 / Bloco H | PARCIAL | "Registro de Inventário Modelo P7" (MATR460?) | G1,G2,G3 (binding de totalização provado rodada 15 — doc 80 §33.D; G4/G5 pendentes por parametrização) |
 | R04 Consumo por OP | BLOQUEADO | — | — |
 | R05 Entradas e Saídas | PARCIAL | MATR320 | G1,G2,G3,**G4**,**G5** (escopo completo reproduzido ao centavo + drift decomposto — doc 80 §33, doc 84 §4.4) |
-| R06 CPV / Kardex 01 | PARCIAL | MATR910 | G1,G2,G3 |
-| R07 Inventários | PARCIAL | MATR910 | G1,G2,G3 |
+| R06 CPV / Kardex 01 | RECONCILIADO | MATR910 (`matr910_dlp.prx`) | G1,G2,G3,**G4**,**G5** (UNION SD1/SD2/SD3 linha-a-linha — doc 80 §37, doc 85 §6; RPO/params → E7) |
+| R07 Inventários | RECONCILIADO | MATR910 | G1,G2,G3,**G4**,**G5** (INVENT 45/45 — doc 80 §37.D, doc 85 §7) |
 | R08 Material em Processo | PARCIAL | MATR989 | G1,G2,G3 |
 | R09 Fat × MOD | PARCIAL | DLP204 | G1,G2,G3 |
 | R10 Notas por CC | PARCIAL | EDAPP (SD1) | G1,G2,G3,G4 |
