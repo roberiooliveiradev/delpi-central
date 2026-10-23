@@ -893,3 +893,55 @@ Interpretação hipotética (`INCONCLUSIVE`): o produtor real pode aplicar regra
 | C2-R40 | armazéns | NNR decodificado; SB9 cobre CQ/REJEIT | — |
 | C2-R41 | MOD | custo SD3 zero histórico; MOD↔CC espelhado; CT2 ausente nos CCs/filtros examinados | G4 fonte |
 | C2-R42 | produtor | inserção em janela comum por filial — assinatura observada, job único não provado | — |
+
+---
+
+## §21 — RODADA 9 (CF-C2-EXEC-008 continuação) — REGRA SB9 = SNAPSHOT DE SB2 + MOD — 2026-10-23
+
+### 21.A — Identidade SB9↔SB2 — `PROVEN` (recorte)
+
+Teste em chaves `SB9@20260930` sem **nenhum** movimento posterior (SD3/SD1/SD2 após 09-30) — nessas, o SB2 atual equivale ao SB2 no fechamento:
+
+| Comparação com SB2 atual | n | % de 1.643 |
+|---|---|---|
+| `B9_QINI == B2_QATU` | 1.593 | 96,9% |
+| `B9_VINI1 == B2_VATU1` | 1.576 | 95,9% |
+| `B9_CM1 == B2_CM1` | 1.164 | 70,8% |
+| quantidade **e** valor iguais | **1.575** | **95,9%** |
+
+**Conclusão:** `SB9` é **snapshot mensal do saldo físico SB2** (qtd × custo médio armazenado em `B9_CM1`, consistente em 2.925/3.117 linhas: `B9_VINI1 ≈ B9_QINI × B9_CM1`). As divergências reconstrução×SB9 refletem diferença entre a **fórmula de acúmulo (DEL100/SQL)** e o **roll-forward real do SB2** — não defeito do snapshot. Isto reenquadra §18–§20: o SB9 provê o fechamento oficial do saldo físico; a reconstrução por movimentos é aproximação (faltam pernas de SB2: ajustes, transferências poder-de-terceiros e outras origens fora de SD3/SD1/SD2).
+
+### 21.B — Hipóteses testadas e rejeitadas
+
+- **Retroatividade — REJEITADA:** 0 dos 26.726 movimentos SD3 da janela foi inserido após o batch (`I_N_S_D_T_` ≤ 02/10 17h); remover retroativos não fecha nenhuma das 724 (`dv_fecha_sem_retroativos=0`).
+- **TM999 excluída — REJEITADA** (rodada 8).
+
+### 21.C — Anatomia das 724 por regra de fechamento do valor
+
+| Regra que fecha `sb9_v` | n | tb. c/ Δqtd |
+|---|---|---|
+| `sb9_v == prior_v` (congelado) | 224 | 224 |
+| `sb9_v == sb9_qq × uc_prior` | 113 | 112 |
+| `sb9_v == 0` | 44 | 43 |
+| outra | 343 | 285 |
+
+- Custo unitário armazenado (`B9_CM1`) das divergentes: **164 == CM anterior**; **332 == CM da reconstrução**; 4 zero. Quando CM coincide, o delta de valor = Δquantidade × CM — **a divergência primária é de quantidade** (620/672 com qtd divergente vs 55 com só valor divergente).
+- Consistente com SB9=SB2: SB2 pode divergir da soma de movimentos por ajustes/pernas não medidas; CM recalculado em ~46% das divergentes.
+
+### 21.D — MOD monetária: caminhos esgotados nesta base
+
+- `D3_CC` existe mas só **10/6.821** linhas MOD o têm preenchido — CC não viaja no SD3.
+- `CT5010` (pares CCD/CCC de rateio): 194 linhas, todas vazias. `CTH010` (classe valor): 0 linhas.
+- `CT3010.CT3_CUSTO`: só 9 linhas, todas de **2008** — lançamento por CC desuso.
+- `CT2010` nos CCs de MOD set/2026: zero (delimitado, rodada 8).
+- **Síntese:** apropriação monetária MOD **não ocorre** nas tabelas contábeis/CC desta base — consistente com absorção no custo do produto (CM via MATA330) ou apuração externa/planilha. `TO_INVENTORY` com vias documentadas esgotadas → owner ERP/Controladoria.
+
+### 21.E — Registro
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R43 | SB9×SB2 | PROVEN (recorte): 96% identidade sem mov. posterior → SB9=snapshot SB2 | G4 fonte |
+| C2-R44 | retroatividade | REJEITADA: 0 mov. pós-batch | — |
+| C2-R45 | 724 decompostas | 224 cong/113 qtd×uc_prior/44 zero/343 outra; CM: 332=calc, 164=prior | — |
+| C2-R46 | MOD vias | esgotadas nesta base (D3_CC, CT5, CTH, CT3, CT2) → TO_INVENTORY | — |
+| C2-R47 | — | `NO_GATE_CHANGE` | — |
