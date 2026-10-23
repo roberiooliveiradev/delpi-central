@@ -70,6 +70,7 @@ from app.application.interaction.argument_validation import (
     validate_untyped_arguments,
 )
 from app.application.interaction.capability_attempt import (
+    OWNER_PATH_UNBOUND,
     EARLY_CONVERSATIONAL_ADMISSION,
     SURFACE_INQUIRY_ADMISSION,
     GovernedCapabilityAttempt,
@@ -5694,12 +5695,23 @@ class OperationalCapabilityOrchestrator:
         # surface_inquiry still consults the LIVE surface listing — the
         # answer is a deterministic projection of it, never a model
         # list and never an owner invocation.
-        admission_class = self._admit_conversational_turn(
-            input_text,
-            workspace_context=workspace_context,
-            prior_turns=prior_turns,
-            correlation=correlation,
-            deadline=deadline,
+        admission_class, admission_owner_required = (
+            self._admit_conversational_turn(
+                input_text,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+            )
+        )
+        # DELIA-C3-S5-REWORK (D8): when admission declared an owner
+        # need, any post-admission NOT_APPLICABLE fizzle is marked so
+        # the interaction layer answers with deterministic
+        # insufficiency, never free-form model prose. When admission
+        # could not run (no model / exhausted budget) the marker
+        # stays None and the existing conversational fallback applies.
+        unbound_outcome = (
+            OWNER_PATH_UNBOUND if admission_owner_required else None
         )
         if admission_class == "surface_inquiry":
             _logger.info(
@@ -5868,6 +5880,20 @@ class OperationalCapabilityOrchestrator:
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
             )
+        if selection[0] == "not_applicable_capability":
+            # A group path was attempted but the capability stage bound
+            # none — marked so the interaction layer answers with
+            # deterministic insufficiency, never free-form prose.
+            _logger.info(
+                "orchestration stage=target_selection "
+                "decision=capability_unbound correlation_id=%s",
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+                admission_outcome=unbound_outcome,
+            )
         if selection[0] == "inconclusive":
             # Group was chosen (or invented) but capability could not be
             # bound — bounded ask-back, never a second free-form burn.
@@ -5885,6 +5911,7 @@ class OperationalCapabilityOrchestrator:
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
+                admission_outcome=unbound_outcome,
             )
         _, group_key, descriptor, selected_goal = selection
         group = groups[group_key]
@@ -5985,6 +6012,7 @@ class OperationalCapabilityOrchestrator:
                         status=GovernedCapabilityStatus.NOT_APPLICABLE,
                         correlation_id=correlation,
                         error_code="intent_target_incompatible",
+                        admission_outcome=unbound_outcome,
                     )
                 descriptor = demoted
                 remote_name = demoted.remote_name
@@ -6075,6 +6103,7 @@ class OperationalCapabilityOrchestrator:
                             status=GovernedCapabilityStatus.NOT_APPLICABLE,
                             correlation_id=correlation,
                             error_code="invalid_foreign_selection",
+                            admission_outcome=unbound_outcome,
                         )
                     # corroborate: the second source could not be
                     # selected — the primary result still runs and the
@@ -6716,6 +6745,7 @@ class OperationalCapabilityOrchestrator:
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
+                admission_outcome=unbound_outcome,
             )
 
         if descriptor.operation_class is SpecialistOperationClass.PREPARE:
@@ -6823,6 +6853,8 @@ class OperationalCapabilityOrchestrator:
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
+                error_code="owner_query_miss",
+                admission_outcome=unbound_outcome,
             )
         outcome, action_id, remote_used = invoked
         if path_mode == "corroborate":
@@ -9615,12 +9647,16 @@ class OperationalCapabilityOrchestrator:
             # Q02-A: no lexical coverage-inquiry override. Capability
             # applicability remains a validated model proposal only.
             if cap_status == "not_applicable":
+                # The group path WAS attempted and bound nothing — a
+                # distinct signal from group-level not_applicable so
+                # the caller can mark the deterministic insufficiency
+                # terminal instead of free-form conversational prose.
                 _logger.info(
                     "orchestration stage=select_capability "
                     "decision=not_applicable group=%s",
                     group_key,
                 )
-                return ("not_applicable",)
+                return ("not_applicable_capability",)
             else:
                 _logger.info(
                     "orchestration stage=select_capability decision=none "
@@ -10700,17 +10736,22 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...],
         correlation: str,
         deadline: TurnDeadline,
-    ) -> str | None:
+    ) -> tuple[str | None, bool]:
         """Cheap typed admission: non-operational turns skip selection.
 
-        Returns the admitted ``interaction_class`` ("conversation",
-        "explanation", "hypothetical" or "surface_inquiry") only when
-        the model declares requires_owner_surface=false. Ambiguous /
-        failed / timed-out admission returns None and falls through to
-        selection (never invents business facts by skipping owners).
-        "surface_inquiry" answers from the deterministic live-surface
-        projection — still no owner invocation, but the live listing
-        IS consulted.
+        Returns ``(interaction_class, owner_required)``: the admitted
+        class ("conversation", "explanation", "hypothetical" or
+        "surface_inquiry") only when the model declares
+        requires_owner_surface=false. ``owner_required`` is True when
+        the proposal proceeded to the governed owner path (requires
+        true, or operational/ambiguous class); False when admission
+        never ran (budget skip, timeout, invalid proposal) or admitted
+        a conversational class. Ambiguous/failed admission returns
+        ``(None, False)`` and falls through to selection with the
+        conversational fallback preserved (never invents business
+        facts by skipping owners). "surface_inquiry" answers from the
+        deterministic live-surface projection — still no owner
+        invocation, but the live listing IS consulted.
         """
         # Q02-A: prior turns no longer skip admission — the model must
         # classify topic change vs operational continuity explicitly.
@@ -10726,7 +10767,7 @@ class OperationalCapabilityOrchestrator:
                 int(remaining * 1000),
                 correlation,
             )
-            return None
+            return None, False
         try:
             proposal = self._propose(
                 input_text,
@@ -10759,9 +10800,9 @@ class OperationalCapabilityOrchestrator:
                 "decision=budget_exhausted correlation_id=%s",
                 correlation,
             )
-            return None
+            return None, False
         if proposal is None:
-            return None
+            return None, False
         raw_req = proposal.get("requires_owner_surface")
         if isinstance(raw_req, str):
             requires = raw_req.strip().lower() == "true"
@@ -10770,10 +10811,10 @@ class OperationalCapabilityOrchestrator:
         elif raw_req is False:
             requires = False
         else:
-            return None
+            return None, False
         raw_class = proposal.get("interaction_class")
         if not isinstance(raw_class, str):
-            return None
+            return None, False
         interaction_class = raw_class.strip().lower()
         if interaction_class not in {
             "conversation",
@@ -10783,7 +10824,16 @@ class OperationalCapabilityOrchestrator:
             "surface_inquiry",
             "ambiguous",
         }:
-            return None
+            return None, False
+        if interaction_class == "surface_inquiry":
+            # The typed class is the semantic statement: a surface
+            # inquiry is answered by the deterministic live-surface
+            # projection — bounded, read-only, never an invocation. A
+            # contradictory requires_owner_surface flag in the same
+            # proposal is output noise and never vetoes the listing;
+            # it only vetoes free-form classes (below), where skipping
+            # the owner path could suppress real data.
+            return interaction_class, True
         if requires or interaction_class in {"operational", "ambiguous"}:
             _logger.info(
                 "orchestration stage=interaction_admission "
@@ -10791,8 +10841,8 @@ class OperationalCapabilityOrchestrator:
                 interaction_class,
                 correlation,
             )
-            return None
-        return interaction_class
+            return None, True
+        return interaction_class, False
 
     def _surface_inquiry_attempt(
         self,

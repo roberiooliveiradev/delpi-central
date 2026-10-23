@@ -52,6 +52,16 @@ EARLY_CONVERSATIONAL_ADMISSION = "early_conversational_admission"
 # invocation. Listing a surface never grants authorization.
 SURFACE_INQUIRY_ADMISSION = "surface_inquiry_admission"
 
+# DELIA-C3-S5-REWORK (D8): admission declared an owner-surface need
+# but the governed path ended NOT_APPLICABLE (no capability bound,
+# intent/foreign inputs unresolvable, or a bound query that returned
+# nothing). The attempt stays NOT_APPLICABLE; this marker lets the
+# interaction layer answer with deterministic insufficiency instead
+# of free-form model prose that could narrate internals it cannot
+# verify. Group-level applicable=false stays unmarked — that remains
+# the conversational-recovery path.
+OWNER_PATH_UNBOUND = "owner_path_unbound"
+
 
 class GovernedCapabilityStatus(str, Enum):
     """Truthful outcome classification for one governed capability

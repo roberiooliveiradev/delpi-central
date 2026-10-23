@@ -45,6 +45,7 @@ from app.application.capability_provision.contracts import (
     OWNER_RECORD_NOT_FOUND,
 )
 from app.application.interaction.capability_attempt import (
+    OWNER_PATH_UNBOUND,
     EARLY_CONVERSATIONAL_ADMISSION,
     SURFACE_INQUIRY_ADMISSION,
     GovernedCapabilityStatus,
@@ -170,6 +171,26 @@ DELPI_OWNER_RECORD_NOT_FOUND_MESSAGE = (
     "A fonte consultada informou que não há registro para esta "
     "solicitação. Nenhum dado operacional foi inventado."
 )
+
+# DELIA-C3-S5-REWORK (D8): admission declared an owner-surface need
+# but the governed path ended NOT_APPLICABLE. The honest answer is
+# deterministic insufficiency — the general model never narrates an
+# operational miss as if it knew DELPI internals. A bound query that
+# returned nothing (owner_query_miss) reports the consulted miss;
+# capability-binding failures report the capability insufficiency.
+LIMITATION_OWNER_PATH_UNBOUND = "owner_path_unbound"
+OWNER_PATH_UNBOUND_MESSAGE = (
+    "Não identifiquei nas superfícies autoritativas uma capacidade que "
+    "responda a esta solicitação agora. Nenhum dado operacional foi "
+    "inventado — reformule ou especifique o pedido."
+)
+LIMITATION_OWNER_QUERY_MISS = "owner_query_miss"
+
+# S5-REWORK note: INVALID_MODEL_OUTPUT intentionally still propagates —
+# fail-closed error is the honest terminal for invalid model output
+# (frozen contract, test_interaction_runtime::test_invalid_structured_
+# output_mapped). The governed call retry (DELIA_LLM_CALL_MAX_ATTEMPTS)
+# is the sanctioned recovery path.
 # Doc 88 CP2: a model-stage deadline or the turn budget interrupted
 # processing — the authoritative source is NOT blamed when it was
 # never consulted. Truthful interruption, no continuity promise: no
@@ -516,6 +537,39 @@ class HandleInteractiveConversationTurn:
                 session, user_turn, attempt
             )
             _emit_terminal(sink, ActivityPhase.COMPLETED)
+            return self._with_observability(
+                result,
+                turn_deadline,
+                composition_mode=COMPOSITION_DETERMINISTIC,
+                governed_attempts=attempt.governed_attempts,
+            )
+
+        # DELIA-C3-S5-REWORK (D8): an attempted owner path that ended
+        # NOT_APPLICABLE gets a deterministic insufficiency answer —
+        # the free-form model call could only narrate internals it
+        # cannot verify. A bound query that returned nothing reports
+        # the consulted miss, not a capability absence.
+        if attempt is not None and (
+            attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+            and attempt.admission_outcome == OWNER_PATH_UNBOUND
+        ):
+            if attempt.error_code == LIMITATION_OWNER_QUERY_MISS:
+                content = DELPI_OWNER_RECORD_NOT_FOUND_MESSAGE
+                limitation = LIMITATION_OWNER_QUERY_MISS
+            else:
+                content = OWNER_PATH_UNBOUND_MESSAGE
+                limitation = LIMITATION_OWNER_PATH_UNBOUND
+            result = self._honest_terminal_result(
+                session,
+                user_turn,
+                content,
+                limitation,
+            )
+            _emit_terminal(
+                sink,
+                ActivityPhase.BLOCKED,
+                state=ActivityState.BLOCKED,
+            )
             return self._with_observability(
                 result,
                 turn_deadline,
@@ -1196,6 +1250,45 @@ class HandleInteractiveConversationTurn:
             presentation_markdown=getattr(
                 attempt, "markdown_content", None
             ),
+        )
+
+    def _honest_terminal_result(
+        self,
+        session: InteractionSession,
+        user_turn: InteractionTurn,
+        content: str,
+        limitation: str,
+    ) -> InteractiveTurnResult:
+        """Deterministic honest terminal — declared limitation, no
+        model invocation, never fabricated prose."""
+        occurred = _now_utc()
+        result_turn = InteractionTurn(
+            turn_id=str(uuid.uuid4()),
+            session_id=session.session_id,
+            kind=TurnKind.DELIA_RESULT,
+            content=content,
+            occurred_at=occurred,
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+            limitations=(limitation,),
+        )
+        session, result_validation = record_interaction_turn(
+            session, result_turn
+        )
+        if not result_validation.valid:
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "validated DELIA_RESULT turn rejected by session rules",
+            )
+        return InteractiveTurnResult(
+            session_id=session.session_id,
+            user_turn_id=user_turn.turn_id,
+            result_turn_id=result_turn.turn_id,
+            content=content,
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+            limitations=(limitation,),
+            generated_at=occurred,
+            model_invocation_id=None,
+            grounding_status=GroundingStatus.NON_GROUNDED,
         )
 
     def _conversational_budget_result(
