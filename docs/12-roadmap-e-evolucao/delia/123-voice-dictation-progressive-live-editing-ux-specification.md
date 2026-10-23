@@ -178,3 +178,8 @@ A alteração de runtime é uma task bounded separada: reanchor authorities/ledg
 ## 13. Ampliação visual do composer — settings extensível (2026-10-23)
 
 A seleção batch/live deixa de ocupar uma faixa permanente acima do campo de pergunta e passa a ser a primeira seção **Ditado** no menu **Configurações do campo de pergunta**, conforme [125 — Composer Settings e Dictation Mode Settings](./125-conversation-composer-settings-and-dictation-mode-ux-specification.md). Futuramente o mesmo invólucro poderá apresentar outras configurações legitimamente especificadas, por composição, sem criar desde já engine/registry/persistência. Default batch, live opt-in, bloqueio de troca durante captura e contratos v1 permanecem intactos. `UX_SPEC=PLANNED`, `RUNTIME_CHANGED=NO` nesta documentação.
+
+
+## 14. Identidade visual unificada de gravação (2026-10-23)
+
+A decisão visual para batch e live está documentada em [126 — Unified Voice Capture Visual System](./126-unified-voice-capture-visual-design-specification.md). Ambos usam identidade azul institucional e controles circulares, preservando seus layouts funcionais distintos. **STATUS=VISUAL_SPEC_ONLY; RUNTIME_NOT_CHANGED; DEFAULT_BATCH/LIVE_OPT_IN_INTACT.**
