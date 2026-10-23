@@ -17875,3 +17875,15 @@ TASK_ID=DELIA-ORCH-REFAC-R2-BOUNDED-01
 COMMIT=3e7b063de6 DEPLOYED=NO (proibido nesta etapa)
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION (R3 NAO autorizado)
+## §6.411 — Composer Settings: refinamento visual Clean Select (2026-10-23)
+
+**2026-10-23 — DELIA-UX-COMPOSER-SETTINGS-CLEAN-VISUAL-REFINEMENT-01 (spec 125 §9):** menu virou painel flutuante clean de selecao por linhas. DictationModeSettings: radio nativo oculto (nao display:none — teclado/SR preservados) + check lucide a direita so no selecionado + descricoes curtas; ComposerSettingsMenu: cabecalho "Configurações"/"Campo de pergunta", trigger com estado --open, fechamento opt-in por secao via [data-close-on-change] (contrato minimo para futuras secoes). CSS so tokens, sem cards internos, sem hardcode de paleta. Zero comportamento/contrato/backend alterado.
+
+TESTES: settings 16/16 (+CL-04/CL-05), delia 415/415, typecheck+build verdes. DEPLOY: push ff `678f373ae0` -> up-prod-sequential --build delia.
+
+QA VISUAL PROD 21/21 + transcricao real: light+dark (tokens, check so no selecionado, radios ocultos reais, live opt-in por linha), dock real dentro do viewport, mobile 320/360/375/390/420 sem clipping/scroll-h, zoom 200 operavel; batch pt-BR real 55 chars ("Alô, alô, você pode mostrar os indicadores de produção?"). Screenshots shots-clean/. DEFECTS_PROD=0 (3 chars numa leitura = janela curta de captura do probe, provado com 5s).
+
+TASK_ID=DELIA-UX-COMPOSER-SETTINGS-CLEAN-VISUAL-REFINEMENT-01
+COMMIT=678f373ae0(code)+docs DEPLOYED=YES PROD_QA=21/21+transcription
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION

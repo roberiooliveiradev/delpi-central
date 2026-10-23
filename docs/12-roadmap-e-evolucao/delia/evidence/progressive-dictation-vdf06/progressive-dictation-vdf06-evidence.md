@@ -306,3 +306,60 @@ screenshots `C:\temp\delia-qa\shots-cs\`. Residual conhecido:
 screen-reader real `TEST_NOT_RUN` (ambiente); larguras 360/375/420 e
 zoom 200% não cobertos pelo probe (320/390 PASS; layout é
 width-content adaptativo).
+
+
+---
+
+## Clean Select Menu — refinamento visual do Composer Settings (spec 125 §9, 2026-10-23)
+
+Refinamento puramente visual (commit `678f373ae0`) conforme a referência
+aprovada pelo PO: o menu virou um painel flutuante clean de seleção por
+linhas, abandonando a aparência de formulário com radios expostos.
+
+### Implementação
+
+- `DictationModeSettings`: opções como **linhas selecionáveis** — radio
+  nativo mantido mas visualmente oculto (`1px`/`opacity:0`, **não**
+  `display:none`, preservando teclado/leitores de tela); check `Check`
+  (lucide) discreto à direita apenas na linha selecionada; seção "Ditado"
+  com micro-ícone `Mic`; descrições curtas por opção; texto disabled
+  atenuado sem depender só de cor.
+- `ComposerSettingsMenu`: cabeçalho compacto "Configurações" +
+  subtítulo "Campo de pergunta"; trigger com estado `--open` sutil;
+  **contrato mínimo de fechamento por seção** — o contêiner só fecha o
+  menu quando o `change` nasce dentro de `[data-close-on-change]`
+  (opt-in), preservando composição para futuras seções (CL-14).
+- CSS: um único painel, sem cards internos; selected = fundo accent 9% +
+  check; hover via `--surface-hover`; focus-visible via
+  `:has(input:focus-visible)`; zero hardcode de paleta — só tokens
+  (`--delpi-ui-*`/`--primary`/`--text*`); reduced-motion respeitado.
+- Nenhum comportamento alterado: captura, reconciler, bloqueio de troca,
+  batch default, live opt-in, no-auto-submit intactos.
+
+### Testes
+
+- `DeliaComposerSettings.test.tsx`: +2 testes CL (check apenas no
+  selecionado, linha inteira clicável) — 16/16; cabeçalho CS-03
+  atualizado para "Configurações"/"Campo de pergunta".
+- Suite DÉLIA completa: **415/415**; typecheck e build verdes.
+
+### QA visual real de produção (21/21 PASS + prova de transcrição)
+
+Chrome headless, deploy `678f373ae0`. Screenshots em
+`C:\temp\delia-qa\shots-clean\` (a1–a4 light/dark, b dock, c 320–420,
+d zoom200):
+
+- Light: menu aberto/fechado, batch default, check só no selecionado,
+  radios reais porém ocultos, live opt-in via linha — 6/6.
+- Dark: tokens aplicados (labels `rgba(255,255,255,0.9)`), sem hardcode.
+- Dock real: menu dentro do viewport, batch default — 2/2.
+- Mobile 320/360/375/390/420px: menu dentro do viewport + zero scroll
+  horizontal — 10/10.
+- Zoom 200%: menu abre e opções operáveis — 2/2.
+- Batch real pt-BR: `Alô, alô, você pode mostrar os indicadores de
+  produção?` (55 chars, janela de captura 5s) — probe dedicado
+  `vd-cs-batch-check.mjs`. Uma leitura anterior de 3 chars era janela
+  de captura curta do probe, não defeito.
+
+Residual: `SCREEN_READER_QA=TEST_NOT_RUN` (sem leitor no ambiente);
+contraste AA por tokens compartilhados, não medido com ferramenta.

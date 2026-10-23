@@ -97,7 +97,7 @@ Menu é apenas configuração de apresentação/input; não permite a criação 
 
 ## 9. Decisão visual posterior — Clean Select Menu (2026-10-23)
 
-**Status:** PRODUCT_UX_DECISION / VISUAL_REFINEMENT_PLANNED; substitui apenas o tratamento visual da seção Ditado na especificação anterior. **Não** reabre seleção batch default, opt-in live, portais, contratos STT ou runtime. **Referência aprovada pelo Product Owner:** imagem de interface clara com menus compactos, linhas leves, tipografia hierárquica, seleção de linha inteira e check discreto à direita. A referência é de linguagem visual, **não** de tema claro obrigatório e **não** autoriza implementar as opções ilustrativas “Tone of voice”/“Answer length”. A DÉLIA permanece compatível com dark/light e tokens compartilhados.
+**Status:** IMPLEMENTED_AND_HOMOLOGATED (2026-10-23, commit `678f373ae0`, deploy prod + QA visual 21/21 + transcrição real); substitui apenas o tratamento visual da seção Ditado na especificação anterior. **Não** reabre seleção batch default, opt-in live, portais, contratos STT ou runtime. **Referência aprovada pelo Product Owner:** imagem de interface clara com menus compactos, linhas leves, tipografia hierárquica, seleção de linha inteira e check discreto à direita. A referência é de linguagem visual, **não** de tema claro obrigatório e **não** autoriza implementar as opções ilustrativas “Tone of voice”/“Answer length”. A DÉLIA permanece compatível com dark/light e tokens compartilhados.
 
 ### 9.1 Princípios visuais
 
@@ -132,4 +132,4 @@ Menu é apenas configuração de apresentação/input; não permite a criação 
 | CL-13 | Sem nova primitiva ou settings engine se reuse existente suficiente |
 | CL-14 | Sem implementar opções fictícias da imagem de referência; extensibilidade via composição intacta |
 
-**Implementação:** task bounded `DELIA-UX-COMPOSER-SETTINGS-CLEAN-VISUAL-REFINEMENT-01`: reanchor HEAD/authorities/ledger → reuse/abstraction gate → alterar menor diff dos dois componentes e CSS → RED/GREEN + regressões → browser screenshot/QA light+dark/full-page/Dock/mobile/zoom → rework → docs/evidence/ledger → commit/push main → deploy frontend scoped → smoke/relatório. **VISUAL_RUNTIME_STATUS=NOT_IMPLEMENTED_BY_THIS_DOC_UPDATE**. Não considerar a task concluída por mockup ou apenas CSS sem QA.
+**Implementação:** task bounded `DELIA-UX-COMPOSER-SETTINGS-CLEAN-VISUAL-REFINEMENT-01`: reanchor HEAD/authorities/ledger → reuse/abstraction gate → alterar menor diff dos dois componentes e CSS → RED/GREEN + regressões → browser screenshot/QA light+dark/full-page/Dock/mobile/zoom → rework → docs/evidence/ledger → commit/push main → deploy frontend scoped → smoke/relatório. **VISUAL_RUNTIME_STATUS=IMPLEMENTED** — ver evidência VD-F06, seção Clean Select Menu. Não considerar a task concluída por mockup ou apenas CSS sem QA.
