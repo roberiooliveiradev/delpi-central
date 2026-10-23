@@ -17445,3 +17445,8 @@ REUSE_DECISION=EXTEND (turn_observability + orchestration + handler; zero ledger
 API_EXECUTION_STARVATION=CONFIRMED (model 7124ms vs operational 198ms, wire real)
 BUDGET_DECISION=ARCHITECTURE_DECISION_REQUIRED (reserva operacional + degradacao honesta)
 LIMITS_2_60_30=UNCHANGED RECOVERY_PRODUCTION=OFF EXTERNAL_LLM_CALLS=0
+
+
+## §6.382 — Budget-continuity contract decision (Task 1, 2026-10-23)
+
+**2026-10-23 — DELIA-C3-BUDGET-CONTINUITY-CONTRACT-DECISION-01:** contrato/ADR produzido no doc 102 para a decisao PO dos docs 100/101 (ate 60s semanticos por tentativa, ate 3 tentativas, direcao B+D, comunicacao real de continuidade). Inventario: EXISTING_EQUIVALENT=YES em todas as responsabilidades; REUSE=EXTEND apenas nos owners canonicos — nenhum engine/scheduler/registry novo. Proposta concreta (TO_DECIDE): llm_quota_seconds=60 por tentativa (soma medida de chamadas; replay/checkpoint nao debita; falha nao fabrica tokens), attempt_wall=90s, max_governed_attempts<=3 dev/prod-OFF, operational_reserve=25s fundamentada em timeout de fonte 15s + AuthZ + pos-condicao + CRI, envelope global 150s streamed / 60s buffered legado (edge ~100s mitigado por keep-alive <=15s). Vocabulario aditivo de encerramento sem mascarar fonte como modelo. Invariantes: envelope monotonico unico; mutating_invoke_started bloqueia nova tentativa; PREPARE/ACT nunca reexecutados; zero regex/keyword/alias; terminal unico. CODE_CHANGE=NONE RUNTIME_CHANGE=NONE PRODUCTION_RETRY=BLOCKED REVOCATION_RISK=OPEN (DEFERRED_BY_PO).
