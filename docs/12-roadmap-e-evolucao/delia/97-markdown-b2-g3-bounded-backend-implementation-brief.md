@@ -168,3 +168,22 @@ RECOMMENDATION_FOR_COORDINATION=
 `NEXT=coordination G3 review → implementation prompt to Cursor`.
 
 This document is a bounded execution brief, **not** a replacement for code review or the future execution prompt.
+
+
+## 10. Architecture / Coordination decision — G3 bounded approval (2026-10-23)
+
+**Review input:** Cursor gate report `DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01`, inspected at `a530bc12dcfe5456425d4d6b2ffb475b373d9fec`, with ledger §6.383 recording STOP due to previously pending approval. Direct GitHub review reconfirmed v1 emitter, v2 proposal schema, existing frontend reader and the canonical CP-333 scope.
+
+**COORDINATION_VERDICT_ON_GATE_REPORT=ACCEPT**: STOP was correct and runtime diff was zero.
+
+**G3_BOUNDED_IMPLEMENTATION_APPROVAL=APPROVED_FOR_CURSOR** for I0–I3 + local tests and evidence, subject to current HEAD and canonical reanchor. This is a prospective explicit coordination approval for the bounded Markdown-safe backend producer contract, NOT a retroactive assertion of G3 implementation or CP-333 pass.
+
+**Required first implementation gate (MUST-FIX):** reconcile `PROCESSING_TIMEOUT` from `presentation.v1` with the proposed v2 JSON Schema and `plugins/delia/src/api/presentation.ts` known message-kind allowlist; use existing canonical message vocabulary, no novel status. Write failing contract tests before changes. If schema/consumer contract cannot be reconciled additively, STOP and request coordination decision. No invalid v2 emitting unknown kinds.
+
+**Allowed boundary:** `render_specialist_outcome` existing governed deterministic projection; minimal typed additive transport through actual application result contract; `compose_presentation` versioned serializer; required tests/schemas. No new registry, engine, model stage, provider branch or second RBAC. v1/legacy plain parity and metadata preserved. Class A admitted structured → Markdown deterministic; B/C plain inert. Public HTTPS links: emit only with legitimate admitted source, otherwise zero clickable links (not a blocker to text Markdown); internal Minha DELPI links deferred, never synthesize routes or authorize in DÉLIA. Existing v2 closed envelope DOES NOT include `authorized_links`; no unilateral schema expansion.
+
+**Mandatory gate evidence:** RED→GREEN for status vocabulary, unknown-version/schema, malformed v2 neutral-error, valid renderer failure inert fallback, JSON+NDJSON, bounds/sanitization, XSS, grounding/provenance, confirmation/READ-PREPARE-ACT invariants, version migration/rollback, and existing full backend/frontend regressions. G4 browser QA/independent review remains separate, as does production deployment. No paid external LLM calls during local development; if a real model is required use Ollama only.
+
+**Execution status after this decision:** `G3_TASK_BRIEF_APPROVED=YES`; `G3_IMPLEMENTATION=AUTHORIZED_NOT_EXECUTED`; `G4=TEST_NOT_RUN`; `CP-333=PLANNED_NOT_PASS`; `PRODUCTION_ACTIVATION=NO`; `I04_PHASE_UNCHANGED`. Executor must not self-accept; return SHA/config/tests/RQ-AC evidence for independent review.
+
+**NEXT_BOUNDED_STEP:** Cursor resumes `DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01` from current main, starts with I0 RED tests including PROCESSING_TIMEOUT, then I1/I2 minimal backend implementation, I3 frontend only if genuine contract mismatch, docs/ledger factual updates, commit/push and execution report. No deploy.
