@@ -75,9 +75,24 @@ deduplicado de ids. Sem N+1; Core indisponível → fallback honesto.
   `{header:{requester}}` (regressão do bug) + novos
   `test_detail_header_requester_gets_photo_url` e
   `test_legacy_top_level_requester_still_enriched` (sibling).
+- Novo `test_detail_enriches_header_requester_via_identity_service` (rota
+  BFF: payload do detalhe passa pelo enrich e devolve `display_name`).
 - Structural guard MFE: hero deve receber `person={header?.requester}` e
   nunca `header?.requester?.name|display_name` literal.
-- supplies-api identity + BFF: 35/35 · MFE purchase-requests: 20/20.
+- supplies-api identity + BFF: **36/36** · MFE purchase-requests: 20/20.
+
+## Evidência live (container deployado)
+
+`enrich_payload` executado no `delpi-supplies-api` prod
+(`sha256:6a7d25694898`) com shape real `{header:{requester},lines}` e
+Core S2S real: `header.requester` recebeu
+`photo_url=/purchase-requests/requesters/000007/photo` (Fabiano, mapeado
++ foto) — prova de que o header entra no conjunto do enrich; o
+`display_name` segue o mesmo batch já comprovado na listagem.
+
+`VISUAL_AUTHENTICATED = INCONCLUSIVE` — token de usuário portal expirado
+e o mint exige credencial interativa; o `user` de teste do realm não é
+usuário Core (`/me` → invalid_token).
 
 ## Residuais
 
