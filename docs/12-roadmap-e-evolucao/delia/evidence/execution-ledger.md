@@ -17771,3 +17771,18 @@ COMMITS=9a46c81e65+3acf70b5e2 DEPLOYED=YES FLAG_ACTIVATED=post_smoke_gate
 PROD_LIVE_SMOKE=PASS PROD_BROWSER_QA=13/13 EXECUTION_DRIFT=NONE
 EXECUTION_STATUS=COMPLETE_LIVE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.403 — Correcao generalizante D5/D5-R: implementacao, deploy e homologacao produtiva (2026-10-23)
+
+**2026-10-23 — DELIA-C3-D5-GENERALIZING-EVIDENCE-RELEVANCE-REMEDIATION-01 (doc 124 -> doc 126):** causa causal comprovada por RED prod-shaped: `assess_outcome` classificava todo DISCOVERY sem business records como OUTCOME_CONTRACT_FACTS (intent-blind) e a composicao CRI sobrescrevia o content terminal (`entities.playlist` como resposta; insuficiencia clobberando guidance). Fix bounded em 2 modulos: `contract_subject` tipado (hipotese semantica, nao autoridade) no goal proposal; CONTRACT_FACTS gateado por sujeito declarado; borda CRI defere a projecao governada. Sem blacklist entities.playlist, sem ramo provider, sem lexical de intencao. RED 6 falhas -> GREEN; suite backend completa 2128 testes exit 0; sibling provider-neutral e controle positivo pinados; RC1/RC2 intactos.
+
+DEPLOY: push ff -> release `ea2f59e930`; up-prod-sequential.sh --build delia-api em srv-api; imagem `dc8b59fb4fa7` (rollback `536b621a6d81` + `1b21ce948e`); container healthy; health 200; POST sem bearer 401; contract_subject verificado no codigo deployado; kimi-k3 60/3/300 + CRI on.
+
+HOMOLOGACAO PROD (identidade `user` autorizada pelo PO; password-grant + openid; zero users criados; tokens nao persistidos): D4 PASS (listagem viva DAVI/TEO/VISTA); D5 FAIL->PARTIAL (entities.playlist eliminado; indice productGuide projetado com topico display_formats; residual: indice amplo, displayFormatCatalog nao aprofundado); D5-R PARTIAL->PASS (doc block_types via index_select, verbatim owner); D8 PASS (10080043 grounded verbatim; residual Group code sem rotulo); D8-R PARTIAL (discover sem encadear execute — variancia Kimi, honesto); N1 PASS; controle D5-schema PASS (contract facts preservados sob sujeito declarado). Security: 401 fail-closed, zero writes, zero 502/504, attempt=1 todos estagios.
+
+TASK_ID=DELIA-C3-D5-GENERALIZING-EVIDENCE-RELEVANCE-REMEDIATION-01
+COMMIT=ea2f59e930(code)+docs DEPLOYED=YES IMAGE=dc8b59fb4fa7 ROLLBACK=536b621a6d81
+D5=PARTIAL D5-R=PASS D4=PASS D8=PASS D8-R=PARTIAL N1=PASS D5-schema=PASS
+MATERIAL_GAPS=d5_projection_breadth,d8r_discover_execute_chain,ptbr_labels_residual
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
