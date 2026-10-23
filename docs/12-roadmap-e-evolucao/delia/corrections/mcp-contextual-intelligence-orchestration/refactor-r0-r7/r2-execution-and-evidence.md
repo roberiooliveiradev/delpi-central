@@ -45,7 +45,7 @@
 | REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | Nenhuma regressão conhecida. Um incidente de ferramenta (não de runtime): a suíte completa coletou arquivos enquanto os imports de teste estavam sendo migrados → ImportError transitório em 1 módulo de teste; rerun após estabilização = 100% verde. Não é regressão de baseline. `NO_REGRESSION_FOR_EVALUATED_SCOPE=YES` — escopo avaliado = M02/M03 extração + gate de composição R1. |
 | AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 — nenhuma regressão de baseline entregue; correções de wiring de imports de teste ocorreram dentro da iteração de implementação. |
 | RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | Residual search: defs removidas de orchestration (AST verifica ausência); referências restantes resolvem via re-export; testes migrados para owner canônico; zero definições duplicadas. ROLLBACK: `git revert` restaura o estado (move é idêntico — reversão trivial). SECURITY_SECRETS: nenhum. |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | Preenchidos abaixo (campos self-referenciais completados após push). |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | FINAL_HEAD=`3e7b063de68139a4960b4aff5417dad4d3ade70b` (= ORIGIN_MAIN_FINAL após push); PUSH_VERIFIED=YES — ff-only após rebase sobre `28707e4860` (upstream: docs supplies + MFE composer, zero overlap delia-api). |
 | README_LEDGER_UPDATED / DELETIONS_RATIONALE | README: entrada R1+R2 no índice. Ledger: §6.410 com fatos. DELETIONS_RATIONALE: cada símbolo saiu de `orchestration.py` somente após prova AST de identidade no destino e migração/compatibilidade de todos os consumers. |
 | EXECUTION_DRIFT / RESIDUALS / STOP_REASON | EXECUTION_DRIFT=NONE. RESIDUALS: (a) `_synthesis_records`, `_proven_field_differences`, `_selected_proven_differences`, `_compare_records`, parsers prior-excerpt e constantes M06/M07 permanecem no coordinator por dependência legítima ou decisão congelada — listados para R4/R6; (b) `evidence_projection.py` não criado — owner existente bastou; (c) live-model eval não executado (identidade AST); (d) re-export via `orchestration` preservado como camada de compatibilidade — imports novos devem mirar o owner canônico. STOP_REASON: nenhum. |
 | EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — M02/M03 extraídos para owner existente com prova de identidade, sanitizador único, DAG acíclico, suíte verde, gate R1 integrado verificado. Não declaro ACCEPT nem libero R3. / YES |
@@ -84,7 +84,7 @@ conversational_response ──┐          conversational_response ──┐
 
 ### Campos self-referenciais finais
 
-FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED — completados abaixo após push.
+FINAL_HEAD=`3e7b063de68139a4960b4aff5417dad4d3ade70b` · ORIGIN_MAIN_FINAL=`3e7b063de6` · PUSH_VERIFIED=YES (ff-only após rebase sobre trabalho concorrente não-sobreposto).
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
