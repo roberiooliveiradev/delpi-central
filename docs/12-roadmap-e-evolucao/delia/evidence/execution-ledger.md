@@ -17493,3 +17493,17 @@ NEXT=COORDINATION_G3_APPROVAL → então RED tests → I1 projection → I2 emit
 **Verificação factual:** nova suite 23/23; scoped regression 288/288; backend completo 2004/2004 (inclui `test_activity_streaming` atualizado — fixture estruturada emite v2 legitimamente pelo NDJSON); delia 336/336 + tsc; schema v2 conformance manual PASS (closed props, enums, bounds); 15 negative checks PASS (HTML/script como dado inerte, redação de secrets, bounds, fail-closed, NDJSON single-line); residual search: `markdown_safe` emitido somente em `presentation.py`; zero `authorized_links` no backend; zero eval/innerHTML no diff.
 
 **Estado:** `G3_IMPLEMENTATION=EXECUTED_PENDING_INDEPENDENT_REVIEW`; `G4_BROWSER_QA=TEST_NOT_RUN`; `CP-333=PLANNED_NOT_PASS` (executor não auto-aceita); `PRODUCTION_B2=OFF` (nenhum deploy); `INTERNAL_L1=DEFERRED`; `PUBLIC_LINKS=ZERO_EMITTED` (nenhuma fonte admitida no boundary — deferimento registrado, não bloqueia Markdown textual). Executor retorna à coordenação para revisão independente.
+
+
+
+## §6.385 — G3-RW-01 leaf literal safety: rework executado — pending coordination review (2026-10-23)
+
+**2026-10-23 — DELIA-C3-MARKDOWN-B2-G3-RW01-LEAF-LITERAL-SAFETY:** revisão independente df4008b44f (REWORK bounded, finding G3-RW-01) executada sobre base 0602b5c6d0, reanciada em origin/main (df4008b44f HEAD, zero overlap semântico — arquivos dirty fora de escopo provados EOL-only).
+
+**Correção (bounded):** _md_leaf em orchestration.py — _MD_ESCAPE passou a escapar TODA pontuação ASCII escapável do CommonMark (_MD_ESCAPABLE), e novo _MD_LINE_BREAKS normaliza CR/LF/CRLF/U+2028/U+2029 para espaço único. Excerpt de guidance agora passa por _md_leaf (antes translate cru). Dados de owner ficam literal single-line; o projetor segue dono de toda estrutura. Plain content byte-preservado.
+
+**Evidência token-level (marked.lexer real, ctx plugins/plugin-ui):** markdown hostil gerado pelo backend → top-level só tokens list do projetor; STRUCTURAL_FOUND=[] (zero heading/blockquote/code/table/hr/html); LINKS=[] — escape do : do scheme quebra autolink GFM (probe direto: https\: sem token; www\. e a@b\.co idem). Probe do escape anterior provou marked formando link mesmo com brackets escapados — o escape total foi o mecanismo necessário.
+
+**RED→GREEN:** 11 novos testes adversariais FAIL antes; suite focada 36/36 GREEN após. Scoped regression 288/288; backend completo 2017/2017; delia 336/336 + tsc; 15/15 negatives PASS; round-trip v2 real → parsePresentationV2 ok. v1 byte parity; v2 schema inalterado; JSON/NDJSON safe; zero links/zero authorized_links/zero eval-innerHTML.
+
+**Estado:** G3_RW01=EXECUTED_PENDING_COORDINATION_REVIEW; CP-333=PLANNED_NOT_PASS; G4_BROWSER_QA=TEST_NOT_RUN; PRODUCTION_DEPLOYMENT=NO. Retorna à coordenação para revisão do rework antes de G4.

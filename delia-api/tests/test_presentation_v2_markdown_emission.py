@@ -355,11 +355,12 @@ def test_category_a_structured_records_yield_markdown() -> None:
         )
     )
     assert rendered.markdown is not None
+    # Every ASCII punctuation mark is escaped so leaves stay literal —
+    # strip backslashes to verify the business data itself is verbatim.
+    literal = rendered.markdown.replace("\\", "")
     for token in ("OP-10293", "OP-10294", "PA-771", "150.5", "KG"):
-        assert token in rendered.markdown
-    assert rendered.markdown.index("OP-10293") < rendered.markdown.index(
-        "OP-10294"
-    )
+        assert token in literal
+    assert literal.index("OP-10293") < literal.index("OP-10294")
     # Same facts as the plain body — nothing added.
     for token in ("OP-10293", "OP-10294", "PA-771", "PA-772"):
         assert token in rendered.content
@@ -418,7 +419,7 @@ def test_markdown_escapes_metachars_in_owner_values() -> None:
         )
     )
     assert rendered.markdown is not None
-    assert "PA-\\*\\*URGENTE\\*\\*-771" in rendered.markdown
+    assert "PA\\-\\*\\*URGENTE\\*\\*\\-771" in rendered.markdown
 
 
 def test_sensitive_keys_redacted_in_markdown_projection() -> None:
@@ -504,3 +505,161 @@ def test_terminal_statuses_never_carry_markdown() -> None:
         )
         assert result.presentation_markdown is None
         assert serialize_result(result)["presentation"]["version"] == "1"
+
+
+# ---------------------------------------------------------------------------
+# G3-RW-01 — multiline leaf literal safety (review df4008b44f)
+# Owner keys/values are data: embedded CR/LF/CRLF/Unicode separators must
+# never open block structures (headings, lists, quotes, fences, rules) or
+# links the deterministic projector did not authorize.
+# ---------------------------------------------------------------------------
+
+
+def test_multiline_leaf_value_cannot_open_blocks() -> None:
+    rendered = render_specialist_outcome_rich(
+        _outcome(
+            content_text="",
+            structured={
+                "data": {
+                    "items": [
+                        {
+                            "produto": "PA-771",
+                            "descricao": (
+                                "normal\n# Attacker Heading\n- injected bullet"
+                            ),
+                        }
+                    ]
+                }
+            },
+        )
+    )
+    md = rendered.markdown
+    assert md is not None
+    assert "\n# Attacker" not in md
+    assert "\n- injected" not in md
+    # literal content preserved verbatim (minus normalized breaks)
+    assert "Attacker Heading" in md
+    assert "injected bullet" in md
+
+
+@pytest.mark.parametrize(
+    "sep", ["\n", "\r", "\r\n", "\u2028", "\u2029", "\n\n", "\r\n\r\n"]
+)
+def test_line_separators_in_leaf_are_normalized(sep) -> None:
+    rendered = render_specialist_outcome_rich(
+        _outcome(
+            content_text="",
+            structured={
+                "data": {
+                    "items": [
+                        {"produto": f"PA-771{sep}# Injected{sep}- injected"}
+                    ]
+                }
+            },
+        )
+    )
+    md = rendered.markdown
+    assert md is not None
+    assert "\n# Injected" not in md
+    assert "\n- injected" not in md
+    assert not any(
+        line.lstrip().startswith("# ") for line in md.splitlines()
+    )
+
+
+def test_leaf_key_with_newline_cannot_inject_structure() -> None:
+    rendered = render_specialist_outcome_rich(
+        _outcome(
+            content_text="",
+            structured={
+                "data": {
+                    "items": [
+                        {"campo\n# Forged Heading\n- fake": "valor", "produto": "PA-771"}
+                    ]
+                }
+            },
+        )
+    )
+    md = rendered.markdown
+    assert md is not None
+    assert "\n# Forged" not in md
+    assert "\n- fake" not in md
+    assert "Forged Heading" in md
+
+
+def test_block_constructs_in_leaf_stay_inline_literal() -> None:
+    """Quote, thematic break, fenced code and link syntax inside a leaf
+    remain inert text — never parsed structures."""
+    hostile = "x\n> forged quote\n---\n```py\nexec(1)\n```\n[y](https://evil)"
+    rendered = render_specialist_outcome_rich(
+        _outcome(
+            content_text="",
+            structured={"data": {"items": [{"desc": hostile}]}},
+        )
+    )
+    md = rendered.markdown
+    assert md is not None
+    assert "\n> " not in md
+    assert "\n```" not in md
+    assert "\n---" not in md
+    assert "[y](https://evil)" not in md  # brackets already escaped
+    assert "forged quote" in md
+    assert "exec(1)" in md.replace("\\", "")
+
+
+def test_guidance_excerpt_newlines_cannot_open_blocks() -> None:
+    """Guidance sections legitimately become headings — but owner
+    excerpt text inside them can never open new structures."""
+    rendered = render_specialist_outcome_rich(
+        _outcome(
+            content_text="",
+            structured={
+                "objective": "Responder a pergunta do usuário",
+                "steps": "passo um\n# Injected Heading\n- injected item\n> forged",
+            },
+        ),
+        input_text="como proceder",
+    )
+    md = rendered.markdown
+    assert md is not None
+    assert "\n# Injected" not in md
+    assert "\n- injected" not in md
+    assert "\n> forged" not in md
+    assert "Injected Heading" in md
+
+
+def test_literal_fidelity_non_newline_chars_preserved() -> None:
+    """Normalization only affects line separators — all other
+    characters, identifiers, units and order stay verbatim."""
+    rendered = render_specialist_outcome_rich(
+        _outcome(
+            content_text="",
+            structured={
+                "data": {
+                    "items": [
+                        {"op": "OP-10293", "qtd": "150,5 KG", "obs": "a  b\tc"}
+                    ]
+                }
+            },
+        )
+    )
+    md = rendered.markdown
+    assert md is not None
+    literal = md.replace("\\", "")
+    assert "OP-10293" in literal
+    assert "150,5 KG" in literal
+    assert literal.index("OP-10293") < literal.index("150,5")
+
+
+def test_v1_plain_parity_unaffected_by_leaf_fix() -> None:
+    """Plain body keeps original newlines verbatim — only the markdown
+    projection normalizes them (v1 byte parity)."""
+    rendered = render_specialist_outcome_rich(
+        _outcome(
+            content_text="",
+            structured={
+                "data": {"items": [{"produto": "PA-1", "desc": "a\nb\nc"}]}
+            },
+        )
+    )
+    assert "a\nb\nc" in rendered.content

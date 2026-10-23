@@ -4331,21 +4331,38 @@ def _business_lines(node: Mapping, depth: int = 0) -> list[str] | None:
 # source exists at this boundary.
 # ---------------------------------------------------------------------------
 
+# G3-RW-01: a leaf must remain literal data — the projector owns every
+# structural decision. ALL CommonMark-escapable ASCII punctuation is
+# backslash-escaped so owner text can never form emphasis, code spans,
+# links, autolinks (bare URL/email/www — verified against marked: only
+# escaping the scheme colon breaks GFM autolink detection), inline HTML
+# or entity references. Escaped punctuation renders identically, so
+# business values display verbatim.
+_MD_ESCAPABLE = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 _MD_ESCAPE = str.maketrans(
+    {char: "\\" + char for char in _MD_ESCAPABLE}
+)
+
+# CR/LF/CRLF and the Unicode line/paragraph separators inside owner
+# data normalize to a plain space — the leaf stays on the line the
+# projector emitted and `# `/`- `/`> `/``` /`---` sequences can never
+# become headings, list items, quotes, fences or rules.
+_MD_LINE_BREAKS = str.maketrans(
     {
-        "\\": "\\\\",
-        "*": "\\*",
-        "_": "\\_",
-        "`": "\\`",
-        "[": "\\[",
-        "]": "\\]",
+        "\r": " ",
+        "\n": " ",
+        "\u2028": " ",
+        "\u2029": " ",
     }
 )
 
 
 def _md_leaf(value: object) -> str:
-    """Owner leaf as literal Markdown text — metachars stay inert."""
-    return str(value).translate(_MD_ESCAPE)
+    """Owner leaf as literal inline Markdown text — every ASCII
+    punctuation mark is escaped and embedded line separators collapse
+    to spaces, so owner data can never introduce structural elements,
+    links, autolinks or formatting instructions of its own."""
+    return str(value).translate(_MD_ESCAPE).translate(_MD_LINE_BREAKS)
 
 
 def _md_format_structured(node: object, depth: int = 0) -> list[str]:
@@ -4497,8 +4514,7 @@ def _md_guidance_content(
         blocks.append(
             (
                 section,
-                f"### {_md_leaf(section)}\n\n"
-                + excerpt.translate(_MD_ESCAPE),
+                f"### {_md_leaf(section)}\n\n" + _md_leaf(excerpt),
             )
         )
     if not blocks:
