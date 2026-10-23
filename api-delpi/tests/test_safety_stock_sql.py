@@ -5,6 +5,10 @@ from app.domain.totvs.protheus_product_types import (
     SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
     SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN,
 )
+from app.domain.services.supplies.safety_stock_consumption_analysis_service import (
+    CONSUMPTION_MOVEMENT_TYPE,
+    REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
     INTERNAL_TRANSFER_SUPPLIER_CODES,
     PRIMARY_WAREHOUSE,
@@ -26,6 +30,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     product_detail_sql,
     resolve_order_by,
     safety_stock_product_universe_clause,
+    sd3_eligible_consumption_predicate,
     stock_agg_cte,
 )
 
@@ -87,14 +92,29 @@ def test_consumption_analysis_and_detail_share_product_universe() -> None:
     assert detail_params == ["02", "02", *universe_params]
 
 
+def test_sd3_eligible_consumption_predicate_splits_mp_and_3019() -> None:
+    clause, params = sd3_eligible_consumption_predicate()
+    assert "LEFT(RTRIM(LTRIM(SD3.D3_COD))" in clause
+    assert "D3_OP" in clause
+    assert params == [
+        SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+        REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
+        SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+        CONSUMPTION_MOVEMENT_TYPE,
+    ]
+
+
 def test_consumption_agg_cte_uses_sd3_filters() -> None:
-    sql, _ = consumption_agg_cte(branch='01')
+    sql, params = consumption_agg_cte(branch="01")
     assert "SD3010" in sql
     assert "D3_LOCAL) = '99'" in sql
-    assert "D3_TM) = '999'" in sql
-    assert "D3_OP" in sql
     assert "D3_EMISSAO >=" in sql
     assert "HAVING COUNT(*) > 0" in sql
+    eligible_sql, eligible_params = sd3_eligible_consumption_predicate()
+    assert eligible_sql in sql
+    assert params == ["01", *eligible_params]
+    assert REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE in params
+    assert CONSUMPTION_MOVEMENT_TYPE in params
 
 
 def test_consumption_analysis_rows_require_estseg_and_movements() -> None:
@@ -114,10 +134,14 @@ def test_consumption_analysis_rows_require_estseg_and_movements() -> None:
 
 
 def test_consumption_last_date_sql() -> None:
-    sql, _ = consumption_last_date_sql(branch="01")
+    sql, params = consumption_last_date_sql(branch="01")
+    eligible_sql, eligible_params = sd3_eligible_consumption_predicate()
     assert "last_consumption_date" in sql
     assert "D3_LOCAL) = '99'" in sql
-    assert "D3_TM) = '999'" in sql
+    assert eligible_sql in sql
+    assert params == ["01", *eligible_params]
+    assert "D3_COD) = ?" in sql
+    assert sql.index(eligible_sql) < sql.index("D3_COD) = ?")
 
 
 def test_last_inventory_date_sql() -> None:
@@ -143,9 +167,12 @@ def test_last_inventory_dates_batch_sql() -> None:
 
 
 def test_consumption_monthly_series_sql() -> None:
-    sql, _ = consumption_monthly_series_sql(branch='01')
+    sql, params = consumption_monthly_series_sql(branch="01")
+    eligible_sql, eligible_params = sd3_eligible_consumption_predicate()
     assert "LEFT(RTRIM(SD3.D3_EMISSAO), 6)" in sql
-    assert "D3_TM) = '999'" in sql
+    assert eligible_sql in sql
+    assert params == ["01", *eligible_params]
+    assert sql.index(eligible_sql) < sql.index("D3_COD) = ?")
 
 
 def test_build_where_clauses_excludes_blocked_by_default() -> None:

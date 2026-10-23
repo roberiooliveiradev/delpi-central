@@ -50,6 +50,16 @@ export type ConsumptionAnalysisSummaryData = {
   period_business_days: number;
   consumption_warehouse: string;
   consumption_movement_type: string;
+  replacement_part_consumption_movement_type?: string;
+  consumption_profiles?: Record<
+    string,
+    {
+      warehouse: string;
+      movement_type: string;
+      requires_production_order: boolean;
+      code_prefix?: string;
+    }
+  >;
   status_distribution: StatusDistributionItem[];
 };
 
@@ -134,6 +144,7 @@ export type CalculationMemory = {
   available_stock: number;
   coverage_business_days: number | null;
   consumption_filters: {
+    profile?: string;
     warehouse: string;
     movement_type: string;
     requires_production_order: boolean;

@@ -72,6 +72,10 @@ def test_summary_and_items_use_cases(_set_cache, _get_cache) -> None:
     assert summary["analyzed_items"] == 2
     assert summary["period_calendar_days"] == 365
     assert "status_distribution" in summary
+    assert summary["consumption_movement_type"] == "999"
+    assert summary["replacement_part_consumption_movement_type"] == "503"
+    assert "replacement_part" in summary["consumption_profiles"]
+    assert summary["consumption_profiles"]["replacement_part"]["movement_type"] == "503"
 
     items_uc = GetSafetyStockConsumptionAnalysisItemsUseCase(repo)
     page = items_uc.execute(

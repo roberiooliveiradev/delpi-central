@@ -10,11 +10,20 @@ from app.domain.services.supplies.safety_stock_business_days_service import (
     SafetyStockBusinessDaysService,
 )
 from app.domain.services.supplies.safety_stock_classification_service import TOLERANCE
+from app.domain.totvs.protheus_product_types import (
+    SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+    SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN,
+)
 
 ANALYSIS_CALENDAR_DAYS = 365
 ANNUAL_COMPARISON_YEARS = 3
 CONSUMPTION_WAREHOUSE = "99"
+# Matéria-prima: baixa de produção (SD3 TM 999 com OP).
 CONSUMPTION_MOVEMENT_TYPE = "999"
+# Peça de reposição (código 3019*): baixa indireta (SD3 TM 503, sem OP).
+REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE = "503"
+CONSUMPTION_PROFILE_RAW_MATERIAL = "raw_material_production"
+CONSUMPTION_PROFILE_REPLACEMENT_PART = "replacement_part"
 
 STATUS_BELOW = "below_suggested"
 STATUS_ABOVE = "above_suggested"
@@ -36,6 +45,36 @@ ADEQUATE_RATIO = 0.05
 
 class SafetyStockConsumptionAnalysisService:
     """Transforma agregados SD3 + SBZ em indicadores gerenciais."""
+
+    @staticmethod
+    def is_replacement_part_code(product_code: str | None) -> bool:
+        code = str(product_code or "").strip()
+        return code.startswith(SUPPLIES_OTD_PRODUCT_CODE_PREFIX)
+
+    @classmethod
+    def consumption_profile_for_product(cls, product_code: str | None) -> dict[str, Any]:
+        """Perfil de baixa SD3 elegível por família de código.
+
+        - Código ``3019*`` (peça de reposição): TM 503, sem exigir OP.
+        - Demais do universo (MP): TM 999 com OP preenchida.
+        """
+        if cls.is_replacement_part_code(product_code):
+            return {
+                "profile": CONSUMPTION_PROFILE_REPLACEMENT_PART,
+                "warehouse": CONSUMPTION_WAREHOUSE,
+                "movement_type": REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
+                "requires_production_order": False,
+                "code_prefix": SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+                "code_prefix_len": SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN,
+            }
+        return {
+            "profile": CONSUMPTION_PROFILE_RAW_MATERIAL,
+            "warehouse": CONSUMPTION_WAREHOUSE,
+            "movement_type": CONSUMPTION_MOVEMENT_TYPE,
+            "requires_production_order": True,
+            "code_prefix": None,
+            "code_prefix_len": SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN,
+        }
 
     @staticmethod
     def resolve_period(*, as_of: date | None = None) -> tuple[date, date, int]:
@@ -275,6 +314,7 @@ class SafetyStockConsumptionAnalysisService:
         if avg <= 0:
             quality_warnings.append("average_consumption_not_positive")
 
+        profile = cls.consumption_profile_for_product(row.get("product_code"))
         return {
             **row,
             "available_stock": available_stock,
@@ -293,8 +333,12 @@ class SafetyStockConsumptionAnalysisService:
             "analysis_status": status,
             "quality_warnings": quality_warnings,
             "has_inconsistent_data": status == STATUS_INCONSISTENT,
-            "consumption_warehouse": CONSUMPTION_WAREHOUSE,
-            "consumption_movement_type": CONSUMPTION_MOVEMENT_TYPE,
+            "consumption_profile": profile["profile"],
+            "consumption_warehouse": profile["warehouse"],
+            "consumption_movement_type": profile["movement_type"],
+            "consumption_requires_production_order": profile[
+                "requires_production_order"
+            ],
         }
 
     @classmethod
@@ -319,6 +363,7 @@ class SafetyStockConsumptionAnalysisService:
 
     @classmethod
     def build_calculation_memory(cls, item: dict[str, Any]) -> dict[str, Any]:
+        profile = cls.consumption_profile_for_product(item.get("product_code"))
         return {
             "formula": (
                 "suggested_safety_stock = ceil("
@@ -337,9 +382,16 @@ class SafetyStockConsumptionAnalysisService:
             "available_stock": item.get("available_stock"),
             "coverage_business_days": item.get("coverage_business_days"),
             "consumption_filters": {
-                "warehouse": CONSUMPTION_WAREHOUSE,
-                "movement_type": CONSUMPTION_MOVEMENT_TYPE,
-                "requires_production_order": True,
+                "profile": item.get("consumption_profile") or profile["profile"],
+                "warehouse": item.get("consumption_warehouse") or profile["warehouse"],
+                "movement_type": item.get("consumption_movement_type")
+                or profile["movement_type"],
+                "requires_production_order": bool(
+                    item.get(
+                        "consumption_requires_production_order",
+                        profile["requires_production_order"],
+                    )
+                ),
                 "signed_quantity": True,
             },
             "quality_warnings": list(item.get("quality_warnings") or []),

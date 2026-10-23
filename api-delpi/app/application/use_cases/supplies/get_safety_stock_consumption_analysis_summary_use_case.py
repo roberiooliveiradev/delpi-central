@@ -12,9 +12,13 @@ from app.domain.ports.supplies.safety_stock_query_repository_port import (
 from app.domain.services.supplies.safety_stock_consumption_analysis_service import (
     ANALYSIS_CALENDAR_DAYS,
     CONSUMPTION_MOVEMENT_TYPE,
+    CONSUMPTION_PROFILE_RAW_MATERIAL,
+    CONSUMPTION_PROFILE_REPLACEMENT_PART,
     CONSUMPTION_WAREHOUSE,
+    REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
     SafetyStockConsumptionAnalysisService,
 )
+from app.domain.totvs.protheus_product_types import SUPPLIES_OTD_PRODUCT_CODE_PREFIX
 
 
 class GetSafetyStockConsumptionAnalysisSummaryUseCase:
@@ -34,7 +38,24 @@ class GetSafetyStockConsumptionAnalysisSummaryUseCase:
             "period_calendar_days": ANALYSIS_CALENDAR_DAYS,
             "period_business_days": period_business_days,
             "consumption_warehouse": CONSUMPTION_WAREHOUSE,
+            # Legado: TM da MP (produção). Peças 3019 usam o perfil replacement_part.
             "consumption_movement_type": CONSUMPTION_MOVEMENT_TYPE,
+            "replacement_part_consumption_movement_type": (
+                REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE
+            ),
+            "consumption_profiles": {
+                CONSUMPTION_PROFILE_RAW_MATERIAL: {
+                    "warehouse": CONSUMPTION_WAREHOUSE,
+                    "movement_type": CONSUMPTION_MOVEMENT_TYPE,
+                    "requires_production_order": True,
+                },
+                CONSUMPTION_PROFILE_REPLACEMENT_PART: {
+                    "warehouse": CONSUMPTION_WAREHOUSE,
+                    "movement_type": REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
+                    "requires_production_order": False,
+                    "code_prefix": SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+                },
+            },
             "status_distribution": [
                 {"status": "below_suggested", "count": summary["below_suggested"]},
                 {"status": "above_suggested", "count": summary["above_suggested"]},

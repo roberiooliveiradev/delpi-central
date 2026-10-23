@@ -39,7 +39,7 @@ Gateway → /apps/api-delpi/supplies/safety-stock/*
 - Universo: matéria-prima (`B1_TIPO = MP`) ou código iniciado em `3019`
 - Consulta rápida no topo: código/descrição abre o detalhe da simulação
 - Produtos com `BZ_ESTSEG <> 0` e baixas elegíveis nos últimos 12 meses
-- Consumo médio diário útil (SD3 local 99, TM 999, OP preenchida)
+- Consumo médio diário útil no local 99: MP = TM 999 com OP; peças `3019*` = TM 503 (sem OP)
 - ESTSEG sugerido = consumo médio × dias úteis do lead time (`BZ_PE`)
 - KPIs, distribuição, tabela comparativa e detalhe com série mensal / comparativo anual
 - Simulação **somente leitura** (não grava no Protheus)
@@ -85,6 +85,7 @@ Base: **`/apps/api-delpi/supplies/safety-stock`**
 - Dias úteis: segunda–sexta, sem feriados
 - Lead time: `BZ_PE` em dias corridos, convertido para dias úteis na janela futura
 - Cobertura: saldo disponível ÷ consumo médio diário útil
+- Baixas elegíveis: MP → SD3 TM `999` + OP; código `3019*` → SD3 TM `503` (peça de reposição, sem OP)
 
 ---
 

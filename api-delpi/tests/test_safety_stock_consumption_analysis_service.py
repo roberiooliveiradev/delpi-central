@@ -4,12 +4,77 @@ from datetime import date
 
 from app.domain.services.supplies.safety_stock_consumption_analysis_service import (
     ANALYSIS_CALENDAR_DAYS,
+    CONSUMPTION_MOVEMENT_TYPE,
+    CONSUMPTION_PROFILE_RAW_MATERIAL,
+    CONSUMPTION_PROFILE_REPLACEMENT_PART,
+    REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
     STATUS_ABOVE,
     STATUS_ADEQUATE,
     STATUS_BELOW,
     STATUS_INCONSISTENT,
     SafetyStockConsumptionAnalysisService,
 )
+
+
+def test_consumption_profile_replacement_part_uses_tm_503_without_op() -> None:
+    profile = SafetyStockConsumptionAnalysisService.consumption_profile_for_product(
+        "30191665"
+    )
+    assert profile["profile"] == CONSUMPTION_PROFILE_REPLACEMENT_PART
+    assert profile["movement_type"] == REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE
+    assert profile["requires_production_order"] is False
+
+
+def test_consumption_profile_raw_material_keeps_tm_999_with_op() -> None:
+    profile = SafetyStockConsumptionAnalysisService.consumption_profile_for_product(
+        "10020113"
+    )
+    assert profile["profile"] == CONSUMPTION_PROFILE_RAW_MATERIAL
+    assert profile["movement_type"] == CONSUMPTION_MOVEMENT_TYPE
+    assert profile["requires_production_order"] is True
+
+
+def test_enrich_row_exposes_consumption_profile_on_item() -> None:
+    period_end = date(2026, 7, 17)
+    period_start = date(2025, 7, 18)
+    mp = SafetyStockConsumptionAnalysisService.enrich_row(
+        {
+            "product_code": "10020113",
+            "safety_stock": 80,
+            "lead_time_days": 10,
+            "available_stock": 200,
+            "period_consumption": 1300,
+        },
+        period_start=period_start,
+        period_end=period_end,
+        period_business_days=130,
+        as_of=period_end,
+    )
+    part = SafetyStockConsumptionAnalysisService.enrich_row(
+        {
+            "product_code": "30190001",
+            "safety_stock": 5,
+            "lead_time_days": 10,
+            "available_stock": 20,
+            "period_consumption": 130,
+        },
+        period_start=period_start,
+        period_end=period_end,
+        period_business_days=130,
+        as_of=period_end,
+    )
+    assert mp["consumption_movement_type"] == CONSUMPTION_MOVEMENT_TYPE
+    assert mp["consumption_requires_production_order"] is True
+    assert part["consumption_movement_type"] == REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE
+    assert part["consumption_requires_production_order"] is False
+    memory = SafetyStockConsumptionAnalysisService.build_calculation_memory(part)
+    assert memory["consumption_filters"]["movement_type"] == (
+        REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE
+    )
+    assert memory["consumption_filters"]["requires_production_order"] is False
+    assert memory["consumption_filters"]["profile"] == (
+        CONSUMPTION_PROFILE_REPLACEMENT_PART
+    )
 
 
 def test_resolve_period_is_inclusive_365_days() -> None:
@@ -165,3 +230,5 @@ def test_enrich_row_builds_managerial_fields() -> None:
     memory = SafetyStockConsumptionAnalysisService.build_calculation_memory(enriched)
     assert "ceil" in memory["formula"]
     assert memory["current_safety_stock"] == 80
+    assert memory["consumption_filters"]["movement_type"] == CONSUMPTION_MOVEMENT_TYPE
+    assert memory["consumption_filters"]["requires_production_order"] is True

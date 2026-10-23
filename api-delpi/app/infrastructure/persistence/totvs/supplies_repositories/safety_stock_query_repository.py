@@ -463,8 +463,8 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       )
       sql_template, cte_params = consumption_analysis_rows_sql(branch=branch)
       sql = sql_template.format(where_sql=where_sql)
-      # cte_params = stock + materials + consumption branch params;
-      # start_date is a ? inside consumption_agg after branch params.
+      # cte_params = stock + materials + consumption (filial + elegibilidade SD3);
+      # start_date is a ? inside consumption_agg after those params.
       params = cte_params + [period_start] + filter_params
       with self as repo:
           rows = repo.execute_query(sql, params)

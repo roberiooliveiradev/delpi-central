@@ -199,8 +199,9 @@ Comparação     = ESTSEG atual ${formatNumberPtBr(memory.current_safety_stock)}
                  vs sugerido ${formatNumberPtBr(memory.suggested_safety_stock)}`}
                   </pre>
                   <p className="ess-detail__hint">
-                    Consideramos apenas baixas de produção no armazém 99, com ordem de
-                    produção e tipo de movimento 999.
+                    {memory.consumption_filters.requires_production_order
+                      ? `Consideramos baixas de produção no armazém ${memory.consumption_filters.warehouse}, com ordem de produção e tipo de movimento ${memory.consumption_filters.movement_type}.`
+                      : `Para peças de reposição (código 3019), consideramos baixas no armazém ${memory.consumption_filters.warehouse} com tipo de movimento ${memory.consumption_filters.movement_type} (sem exigir ordem de produção).`}
                   </p>
                   {memory.quality_warnings.length > 0 ? (
                     <ul className="ess-calc-warnings" aria-label="Alertas da análise">

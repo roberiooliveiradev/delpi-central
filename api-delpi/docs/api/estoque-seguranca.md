@@ -67,13 +67,24 @@ Responde à pergunta gerencial: **qual estoque de segurança cobre o lead time c
 
 ### Consumo (SD3)
 
-Soma assinada de `D3_QUANT` com:
+Soma assinada de `D3_QUANT` com filtros comuns:
 
 - `D_E_L_E_T_ = ''`
 - mesma filial/produto
 - `D3_LOCAL = '99'`
-- OP preenchida (`D3_OP`)
-- `D3_TM = '999'`
+
+A elegibilidade do tipo de movimento depende da família do código (fonte canônica:
+`SafetyStockConsumptionAnalysisService.consumption_profile_for_product` +
+`sd3_eligible_consumption_predicate` no SQL):
+
+| Família | Critério de código | `D3_TM` | Ordem de produção (`D3_OP`) |
+|---------|--------------------|---------|-----------------------------|
+| Matéria-prima (produção) | Universo MP **sem** prefixo `3019` | `999` | Obrigatória (não vazia) |
+| Peça de reposição | Código inicia com `3019` | `503` | Não exigida |
+
+Peças `3019*` não são consumidas por OP como MP; o consumo operacional na fábrica
+usa o movimento `503`. A ficha de análise (série mensal, comparativo anual,
+projeção e memória de cálculo) aplica esse perfil **somente** a esses códigos.
 
 ### Fórmulas
 

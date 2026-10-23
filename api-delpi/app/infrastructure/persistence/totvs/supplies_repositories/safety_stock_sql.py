@@ -11,6 +11,7 @@ from app.domain.services.supplies.safety_stock_classification_service import (
 from app.domain.services.supplies.safety_stock_consumption_analysis_service import (
     CONSUMPTION_MOVEMENT_TYPE,
     CONSUMPTION_WAREHOUSE,
+    REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
 )
 from app.domain.services.supplies.safety_stock_supplier_scope_service import (
     INTERNAL_TRANSFER_SUPPLIER_CODES,
@@ -23,6 +24,40 @@ from app.domain.totvs.protheus_product_types import (
     SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
     SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN,
 )
+
+
+def sd3_eligible_consumption_predicate(
+    *,
+    code_column: str = "SD3.D3_COD",
+    tm_column: str = "SD3.D3_TM",
+    op_column: str = "SD3.D3_OP",
+) -> tuple[str, list]:
+    """Baixas SD3 elegíveis para consumo do estoque de segurança.
+
+    - Peça ``3019*``: ``D3_TM = 503`` (sem exigir OP).
+    - Demais (MP): ``D3_TM = 999`` com OP preenchida.
+    """
+    clause = (
+        "("
+        f"("
+        f"LEFT(RTRIM(LTRIM({code_column})), {SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN}) = ?"
+        f" AND RTRIM({tm_column}) = ?"
+        f")"
+        f" OR "
+        f"("
+        f"LEFT(RTRIM(LTRIM({code_column})), {SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN}) <> ?"
+        f" AND RTRIM({tm_column}) = ?"
+        f" AND LTRIM(RTRIM(ISNULL({op_column}, ''))) <> ''"
+        f")"
+        ")"
+    )
+    params = [
+        SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+        REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
+        SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+        CONSUMPTION_MOVEMENT_TYPE,
+    ]
+    return clause, params
 
 
 def branch_filter_and(column: str, scope: str) -> tuple[str, list]:
@@ -45,6 +80,7 @@ __all__ = [
     "consumption_analysis_rows_sql",
     "consumption_last_date_sql",
     "consumption_monthly_series_sql",
+    "sd3_eligible_consumption_predicate",
     "last_inventory_date_sql",
     "last_inventory_dates_batch_sql",
     "linked_suppliers_sql",
@@ -982,8 +1018,9 @@ def consumption_agg_cte(
     branch: str,
     start_date_param: str = "?",
 ) -> tuple[str, list]:
-    """Agrega baixas SD3 elegíveis (local 99, TM 999, OP preenchida)."""
+    """Agrega baixas SD3 elegíveis (local 99; MP=TM 999+OP; 3019*=TM 503)."""
     and_sql, params = branch_filter_and("RTRIM(SD3.D3_FILIAL)", branch)
+    eligible_sql, eligible_params = sd3_eligible_consumption_predicate()
     sql = f"""
     consumption_agg AS (
         SELECT
@@ -996,14 +1033,13 @@ def consumption_agg_cte(
         WHERE SD3.D_E_L_E_T_ = ''
           {and_sql}
           AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
-          AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
-          AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
+          AND {eligible_sql}
           AND SD3.D3_EMISSAO >= {start_date_param}
         GROUP BY SD3.D3_COD
         HAVING COUNT(*) > 0
     )
     """
-    return sql, params
+    return sql, params + eligible_params
 
 
 def build_consumption_analysis_where_clauses(
@@ -1105,21 +1141,25 @@ def consumption_last_date_sql(
     branch: str,
     product_param: str = "?",
 ) -> tuple[str, list]:
-    """Última baixa elegível (consumo SD3) de um produto na filial — sem janela de datas."""
+    """Última baixa elegível (consumo SD3) de um produto na filial — sem janela de datas.
+
+    Ordem dos ``?``: filial (se houver) → predicado elegível → produto
+    (o repositório acrescenta o código ao final).
+    """
     and_sql, params = branch_filter_and("RTRIM(SD3.D3_FILIAL)", branch)
+    eligible_sql, eligible_params = sd3_eligible_consumption_predicate()
     sql = f"""
     SELECT TOP 1
         RTRIM(SD3.D3_EMISSAO) AS last_consumption_date
     FROM SD3010 SD3 WITH (NOLOCK)
     WHERE SD3.D_E_L_E_T_ = ''
       {and_sql}
-      AND RTRIM(SD3.D3_COD) = {product_param}
       AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
-      AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
-      AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
+      AND {eligible_sql}
+      AND RTRIM(SD3.D3_COD) = {product_param}
     ORDER BY SD3.D3_EMISSAO DESC, SD3.R_E_C_N_O_ DESC
     """
-    return sql, params
+    return sql, params + eligible_params
 
 
 def last_inventory_date_sql(
@@ -1181,8 +1221,13 @@ def consumption_monthly_series_sql(
     product_param: str = "?",
     start_date_param: str = "?",
 ) -> tuple[str, list]:
-    """Série mensal de consumo (baixas elegíveis) para um produto."""
+    """Série mensal de consumo (baixas elegíveis) para um produto.
+
+    Ordem dos ``?``: filial (se houver) → predicado elegível → produto → início
+    (o repositório acrescenta código e data ao final).
+    """
     and_sql, params = branch_filter_and("RTRIM(SD3.D3_FILIAL)", branch)
+    eligible_sql, eligible_params = sd3_eligible_consumption_predicate()
     sql = f"""
     SELECT
         LEFT(RTRIM(SD3.D3_EMISSAO), 6) AS year_month,
@@ -1191,12 +1236,11 @@ def consumption_monthly_series_sql(
     FROM SD3010 SD3 WITH (NOLOCK)
     WHERE SD3.D_E_L_E_T_ = ''
       {and_sql}
-      AND RTRIM(SD3.D3_COD) = {product_param}
       AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
-      AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
-      AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
+      AND {eligible_sql}
+      AND RTRIM(SD3.D3_COD) = {product_param}
       AND SD3.D3_EMISSAO >= {start_date_param}
     GROUP BY LEFT(RTRIM(SD3.D3_EMISSAO), 6)
     ORDER BY year_month ASC
     """
-    return sql, params
+    return sql, params + eligible_params
