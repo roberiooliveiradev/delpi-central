@@ -51,7 +51,7 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/me/capabilities` | `supplies.access` | Core + catálogo de units | **IMPLEMENTADO** |
 | GET | `/me/preferences` | `supplies.access` | PG supplies | **IMPLEMENTADO** |
 | PATCH | `/me/preferences` | `supplies.access`; `default_branch ∈ allowedUnits` | PG supplies | **IMPLEMENTADO** |
-| GET | `/home/attention` | `supplies.access` | composição real: SCs (purchase-requests-api), pedidos em atraso, recebimentos atrasados e estoque de segurança (api-delpi) — contagem + prévia + alvo contextual | **IMPLEMENTADO** |
+| ~~GET~~ | ~~`/home/attention`~~ | — | removido no HOME-ATTENTION.P3 — não existe fonte canônica de tarefas do usuário e a Home não deve compor pendências operacionais (custo/latência); páginas de destino mantêm seus próprios resumos | **REMOVIDO** |
 | GET | `/analytics/overview` | `supplies.access` | `branch` repetido (0, 1 ou N). 0 ou 01+02 = consolidado; uma filial = escopo único. SI: uma chamada `department-indicators`. Série OTD usa a mesma regra (uma filial ou consolidado 01+02). Filial inválida = 422. | **IMPLEMENTADO** |
 | GET | `/analytics/otd/series` | `supplies.access` + unit | api-delpi | **IMPLEMENTADO** |
 | GET | `/analytics/otd` | `supplies.access` + unit | api-delpi + SI | **IMPLEMENTADO** |

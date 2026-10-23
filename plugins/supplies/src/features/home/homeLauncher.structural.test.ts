@@ -10,11 +10,9 @@ describe("Home launcher visual pattern", () => {
     const page = readFileSync(join(dir, "../../pages/HomePage.tsx"), "utf8");
     expect(page).toMatch(/SuppliesSectionRouteCard/);
     expect(page).toMatch(/SuppliesCatalogSearchBar/);
-    expect(page).toMatch(/SuppliesEventsSection/);
     expect(page).toMatch(/SuppliesRecentAccessStrip/);
     expect(page).not.toMatch(/HOME\.favoritesTitle/);
     expect(page).toMatch(/SuppliesSectionCard/);
-    expect(page).toMatch(/SuppliesLoadingCard/);
     expect(page).toMatch(/sp-home-sections-grid/);
     expect(page).not.toMatch(/sp-home__fav/);
   });
@@ -22,7 +20,6 @@ describe("Home launcher visual pattern", () => {
   it("usa SectionHintLabel nos blocos do Início (sem LabelWithHelp/? solto)", () => {
     const page = readFileSync(join(dir, "../../pages/HomePage.tsx"), "utf8");
     const shell = readFileSync(join(dir, "../../app/PluginShell.tsx"), "utf8");
-    expect(page).toMatch(/SP_HELP\.home\.attention/);
     expect(page).toMatch(/SP_HELP\.home\.paths/);
     expect(page).toMatch(/SP_HELP\.home\.search/);
     expect(page).toMatch(/SP_HELP\.home\.recents/);
@@ -32,7 +29,6 @@ describe("Home launcher visual pattern", () => {
     expect(page).not.toMatch(/HelpTooltip/);
     expect(page).toMatch(/toggleHomeFavorite/);
     expect(page).toMatch(/onPinClick/);
-    expect(shell).toMatch(/SP_HELP\.home\.heroAttention/);
     expect(shell).toMatch(/SP_HELP\.home\.scopeBadge/);
     expect(shell).toMatch(/SuppliesTitleWithHelp|SuppliesSectionHintLabel/);
     expect(shell).not.toMatch(/HelpTooltip/);

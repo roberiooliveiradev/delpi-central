@@ -212,26 +212,6 @@
   align-items: start;
 }
 
-.dashboard-supplies-portal .sp-home-attention-error {
-  display: grid;
-  gap: 0.65rem;
-  justify-items: start;
-}
-
-.dashboard-supplies-portal .sp-home-queue-ok {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  padding: 10px 14px;
-  border: 1px solid var(--sp-border);
-  border-radius: 10px;
-  background: var(--sp-surface);
-  color: var(--sp-text);
-  font-size: 0.875rem;
-}
-
 .dashboard-supplies-portal .sp-overview__grid,
 .dashboard-supplies-portal .sp-overview-kpi-grid {
   display: grid;

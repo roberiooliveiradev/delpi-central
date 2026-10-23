@@ -33,7 +33,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E1 — descoberta + freeze** | **concluída 2026-09-08** |
 | **E2 — supplies-api foundation** | **concluída 2026-09-08** — Flask, authz Core-first, schema `supplies`, gateway api-delpi, `/me/capabilities` |
 | **E3 — MFE + RBAC coexistência** | **concluída 2026-09-08** — `plugins/supplies`, BFF-only, shell capability-driven, manifest Core, papéis canônicos |
-| **E4 — Home + Ajuda + perfil** | **concluída** — `/home/attention`, Manual/Quero→onde/FAQ/glossário, perfil `/users/:userId`, preferências e avatar Core |
+| **E4 — Home + Ajuda + perfil** | **concluída** — hub do Início (Atenção removida no P3), Manual/Quero→onde/FAQ/glossário, perfil `/users/:userId`, preferências e avatar Core |
 | **E5 — Overview + OTD analytics** | **concluída** — WF-02/WF-02R + WF-OTD-A; tríade de meta SI, filtros/URL, charts e gauges |
 | **E6 — SC C1 + GATE-FEATURE WF-04** | **concluída 2026-09-11** — BFF C1, lista/detalhe/export, kit-first, Help, testes; smoke federado `INCONCLUSIVE` |
 | **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first |
@@ -131,7 +131,7 @@ selecionar página em foco
 
 ## 4. Páginas já fechadas
 
-**Início (WF-01):** BFF `/home/attention`, hub capability-driven, PageHero/kit, Favoritos TopBar, loading/error/partial/empty, AuthZ e Ajuda.
+**Início (WF-01):** hub capability-driven, PageHero/kit, Favoritos TopBar, busca/recentes, AuthZ e Ajuda. Seção Atenção removida no HOME-ATTENTION.P3 (sem fonte canônica de tarefas; Home não dispara composição operacional).
 
 **Visão geral (WF-02/WF-02R):** `/analytics/overview` + `/analytics/otd/series`; filtros por período/unidade com URL shareable; 7 KPIs; tríade SI (`goalValue`, `comparableGoal`, `referenceGoal`, `iddScore`); charts OTD/comparativo; Help sincronizado. Filtros de domínio como `location`/`stock_method` não são globais da Overview.
 

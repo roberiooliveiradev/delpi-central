@@ -47,13 +47,11 @@ export const SHELL_NAV_CONTENT = {
     eyebrow: "Portal Suprimentos",
     ariaLabel: "Saudação",
     description:
-      "Acompanhe a atenção do dia e abra as funcionalidades — indicadores do período ficam na Visão geral.",
+      "Abra as funcionalidades do seu escopo — indicadores do período ficam na Visão geral.",
     scopeUnits: "Filiais no escopo",
     scopeEmpty: "Sem filial liberada",
     helpAriaLabel: "Ajuda: Início",
     highlights: {
-      attention: "Atenção",
-      attentionClear: "Em dia",
       units: "Filiais",
       overview: "Visão geral",
       overviewCta: "Abrir",

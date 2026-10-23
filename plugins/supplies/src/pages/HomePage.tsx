@@ -9,23 +9,15 @@ import {
   Users,
 } from "lucide-react";
 
-import {
-  type HomeAttentionCard,
-} from "../api/homeAttention";
-import { navigatePluginPath, navigatePluginView } from "../app/pluginNavigation";
-import type { PluginRoutableView } from "../app/pluginRoutes";
+import { navigatePluginView } from "../app/pluginNavigation";
 import { useSuppliesSession } from "../app/SuppliesSessionContext";
 import {
-  SuppliesActionButton,
   SuppliesCatalogSearchBar,
   SuppliesEmptyState,
-  SuppliesEventsSection,
-  SuppliesLoadingCard,
   SuppliesRecentAccessStrip,
   SuppliesSectionHintLabel,
   SuppliesSectionCard,
   SuppliesSectionRouteCard,
-  SuppliesStateBanner,
 } from "../app/suppliesUi";
 import { SP_HELP } from "../content/helpTooltips";
 import {
@@ -46,11 +38,6 @@ import {
   subscribeHomeFavorites,
   toggleHomeFavorite,
 } from "../app/homeFavoritesStore";
-import {
-  loadHomeAttention,
-  subscribeHomeAttention,
-  type HomeAttentionState,
-} from "../app/homeAttentionStore";
 import {
   filterRecentsByCaps,
   pushRecentView,
@@ -73,24 +60,6 @@ const SECTION_ICONS: Record<string, ReactNode> = {
   help: <BookOpen size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
-const ATTENTION_ICONS: Record<string, ReactNode> = {
-  purchase_requests_ordering: (
-    <ClipboardList size={18} strokeWidth={1.75} aria-hidden="true" />
-  ),
-  purchase_requests_receiving: (
-    <ShoppingCart size={18} strokeWidth={1.75} aria-hidden="true" />
-  ),
-  purchase_orders_late: (
-    <Package size={18} strokeWidth={1.75} aria-hidden="true" />
-  ),
-  late_deliveries: (
-    <Package size={18} strokeWidth={1.75} aria-hidden="true" />
-  ),
-  safety_stock_below: (
-    <BarChart3 size={18} strokeWidth={1.75} aria-hidden="true" />
-  ),
-};
-
 const SECTION_HINTS: Record<string, string> = {
   attention: SP_HELP.home.sections.attention,
   analytics: SP_HELP.home.sections.analytics,
@@ -100,25 +69,6 @@ const SECTION_HINTS: Record<string, string> = {
   help: SP_HELP.home.sections.help,
 };
 
-function isNavigationTarget(viewId: string): viewId is PluginRoutableView {
-  return [
-    "home",
-    "overview",
-    "my_tasks",
-    "purchase_requests",
-    "purchase_orders",
-    "deliveries",
-    "suppliers",
-    "products",
-    "inventory",
-    "safety_stock",
-    "negotiations",
-    "indicators",
-    "administration",
-    "help",
-  ].includes(viewId);
-}
-
 export function HomePage({ basePath }: HomePageProps) {
   const session = useSuppliesSession();
   const hubCaps = useMemo(
@@ -127,32 +77,15 @@ export function HomePage({ basePath }: HomePageProps) {
   );
   const sections = useMemo(() => resolveHomePathSections(hubCaps), [hubCaps]);
   const [query, setQuery] = useState("");
-  const [attention, setAttention] = useState<HomeAttentionState>(() => ({
-    loading: true,
-    error: null,
-    cards: [],
-    partialFailures: [],
-  }));
   const [recents, setRecents] = useState<RecentHubView[]>(() =>
     typeof window !== "undefined" ? readRecentViews() : [],
   );
   const [favorites, setFavorites] = useState<HomeFavoriteItem[]>([]);
 
   useEffect(() => subscribeHomeFavorites(setFavorites), []);
-  useEffect(() => subscribeHomeAttention(setAttention), []);
 
   useEffect(() => {
     loadHomeFavoritesFromStorage();
-  }, []);
-
-  const reloadAttention = useCallback(() => {
-    void loadHomeAttention();
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void loadHomeAttention(controller.signal);
-    return () => controller.abort();
   }, []);
 
   const visibleRecents = useMemo(
@@ -210,90 +143,9 @@ export function HomePage({ basePath }: HomePageProps) {
     [favoriteKeys, navigateRoute, onToggleFavorite],
   );
 
-  const goToCard = (card: HomeAttentionCard) => {
-    const target = card.target;
-    if (!target || card.status === "unavailable") return;
-    if (target.kind === "view" && isNavigationTarget(target.viewId)) {
-      navigateRoute({ viewId: target.viewId, label: card.title }, target.query ?? undefined);
-      return;
-    }
-    if (target.kind === "href") {
-      navigatePluginPath(target.href);
-    }
-  };
-
-  const attentionCards = attention.cards;
-  const attentionLoading = attention.loading;
-  const attentionError = attention.error;
-  const attentionReady = !attentionLoading;
-  const hasAttention = attentionCards.length > 0;
-  const showAttentionPanel = attentionReady && !attentionError && hasAttention;
-  const showQueueOk = attentionReady && !attentionError && !hasAttention;
-  const partialMessages = attention.partialFailures
-    .map((item) => item.message?.trim())
-    .filter((value): value is string => Boolean(value));
-
   return (
     <section className="sp-page-stack sp-home-layout" aria-label="Início">
       <div className="sp-home-stack">
-        {showAttentionPanel ? (
-          <SuppliesEventsSection
-            title={HOME.attentionTitle}
-            subtitle={HOME.attentionSubtitle}
-            hint={SP_HELP.home.attention}
-            listAriaLabel={HOME.attentionTitle}
-            actions={
-              <SuppliesActionButton variant="ghost" onClick={reloadAttention}>
-                {HOME.attentionRefresh}
-              </SuppliesActionButton>
-            }
-            items={attentionCards.map((card) => ({
-              id: card.id,
-              title:
-                card.count == null
-                  ? card.title
-                  : `${card.title} · ${card.count} ${card.countUnit ?? ""}`.trim(),
-              description: card.description,
-              tone: card.status === "unavailable" ? "neutral" : "warning",
-              leadingIcon: ATTENTION_ICONS[card.id] ?? SECTION_ICONS.attention,
-              actionLabel:
-                card.status === "unavailable" || !card.target
-                  ? undefined
-                  : HOME.attentionOpen,
-              onAction:
-                card.status === "unavailable" || !card.target
-                  ? undefined
-                  : () => goToCard(card),
-            }))}
-          >
-            {partialMessages.length > 0 ? (
-              <SuppliesStateBanner>{HOME.attentionPartial}</SuppliesStateBanner>
-            ) : null}
-          </SuppliesEventsSection>
-        ) : null}
-
-        {showQueueOk ? (
-          <div className="sp-home-queue-ok" role="status">
-            <SuppliesSectionHintLabel
-                  label={HOME.attentionQueueOk}
-                  hint={SP_HELP.home.queueOk}
-                />
-          </div>
-        ) : null}
-
-        {attentionLoading ? (
-          <SuppliesLoadingCard title={HOME.attentionLoading} variant="panel" />
-        ) : null}
-
-        {attentionError ? (
-          <div className="sp-home-attention-error">
-            <SuppliesStateBanner variant="error">{HOME.attentionError}</SuppliesStateBanner>
-            <SuppliesActionButton variant="ghost" onClick={reloadAttention}>
-              {HOME.attentionRefresh}
-            </SuppliesActionButton>
-          </div>
-        ) : null}
-
         <SuppliesSectionCard
           title={HOME.pathsTitle}
           subtitle={HOME.pathsSubtitle}

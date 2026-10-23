@@ -3,8 +3,6 @@
 const HOME_HELP = {
   vsOverview:
     "Início é ação e descoberta. Visão geral é o painel de KPIs do período — só aparece se você tiver acesso analítico.",
-  attention:
-    "Pendências reais do seu escopo — solicitações sem pedido, aguardando recebimento, pedidos e recebimentos em atraso e itens abaixo do estoque de segurança — com contagem ao vivo. Cada cartão abre a lista já filtrada. Se uma origem falhar, o cartão avisa a indisponibilidade sem virar zero.",
   paths:
     "Caminhos por seção liberados para o seu acesso. Busque, fixe favoritos e reabra os últimos acessos. Objetivo: chegar à ação em poucos cliques.",
   search:
@@ -13,10 +11,6 @@ const HOME_HELP = {
     "Atalhos que você fixou com a estrela nos caminhos. Ficam neste navegador e só mostram áreas ainda liberadas para você.",
   recents:
     "Últimas áreas abertas neste navegador. A lista respeita as permissões atuais.",
-  queueOk:
-    "Todas as fontes de atenção responderam e nenhuma pendência foi confirmada no seu escopo. Os caminhos e a busca abaixo continuam disponíveis.",
-  heroAttention:
-    "Quantidade de situações de atenção com pendência confirmada no seu escopo. Cada cartão abaixo detalha a origem e a contagem — «Em dia» significa que todas as fontes responderam sem pendências.",
   heroUnits:
     "Quantas filiais estão liberadas no seu escopo do Portal. Os dados operacionais respeitam esse limite.",
   heroOverview:
@@ -25,7 +19,7 @@ const HOME_HELP = {
     "Filiais do recorte. Quem tem uso normal consulta Santa Catarina e Espírito Santo; a escolha é filtro, não permissão.",
   sections: {
     attention:
-      "Entrada do Portal — ação do dia, sem misturar com o painel de KPIs.",
+      "Entrada do Portal — busca, favoritos e caminhos, sem misturar com o painel de KPIs.",
     analytics:
       "Visão geral, negociações e indicadores do período. Não substitui o bloco Atenção do Início.",
     purchase_requests:
@@ -40,7 +34,7 @@ const HOME_HELP = {
 
 export const SP_HELP = {
   shell: {
-    navHome: "Atenção do dia, busca e atalhos para as áreas que você pode acessar.",
+    navHome: "Busca, favoritos e atalhos para as áreas que você pode acessar.",
     navOverview:
       "Indicadores consolidados do período e das unidades selecionadas. Itens operacionais ficam em Solicitações e Operações.",
     navMyTasks: "Fila de acompanhamento atribuída a você.",
@@ -55,7 +49,6 @@ export const SP_HELP = {
   home: HOME_HELP,
   /** Alias estável para consumidores existentes. */
   homeVsOverview: HOME_HELP.vsOverview,
-  homeAttention: HOME_HELP.attention,
   suppliers:
     "Cadastro central de fornecedores (SA2, empresa 01): busca por código, loja, razão social, fantasia ou documento. A ficha abre no modo consulta com os campos agrupados por seção; na edição, código, loja e CNPJ/CPF aparecem protegidos e a revisão mostra somente o que mudou. A URL guarda busca e filtros para compartilhar.",
   suppliersSearch:

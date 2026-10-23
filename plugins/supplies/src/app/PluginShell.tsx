@@ -26,11 +26,6 @@ import {
   TOP_BAR_COLLAPSE_TRIGGER,
 } from "../content/topBarCollapseConfig";
 import { navigatePluginView } from "./pluginNavigation";
-import {
-  loadHomeAttention,
-  subscribeHomeAttention,
-  type HomeAttentionState,
-} from "./homeAttentionStore";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { ShellTopBarActions, ShellTopBarSecondary } from "./ShellTopBarSlots";
 import { useSuppliesSession } from "./SuppliesSessionContext";
@@ -94,14 +89,6 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const [paletteQuery, setPaletteQuery] = useState("");
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
-  const [attention, setAttention] = useState<HomeAttentionState>(() => ({
-    loading: false,
-    error: null,
-    cards: [],
-    partialFailures: [],
-  }));
-
-  useEffect(() => subscribeHomeAttention(setAttention), []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -125,13 +112,6 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
       });
     return () => controller.abort();
   }, []);
-
-  useEffect(() => {
-    if (view !== "home") return;
-    const controller = new AbortController();
-    void loadHomeAttention(controller.signal);
-    return () => controller.abort();
-  }, [view]);
 
   const caps = session.capabilities;
   const items = resolveShellNavItems({
@@ -173,34 +153,11 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const showGreeting = view === "home";
   const heroCopy = SHELL_NAV_CONTENT.homeHero;
   const heroTitle = formatPortalGreeting({ firstName: userFirstName });
-  const actionableAttention = attention.cards.filter((card) => card.status !== "unavailable");
-  const attentionReady = !attention.loading && !attention.error;
-  const attentionValue = attention.loading
-    ? "—"
-    : attention.error
-      ? "—"
-      : actionableAttention.length > 0
-        ? `${actionableAttention.length}`
-        : heroCopy.highlights.attentionClear;
   const unitsLabel =
     session.allowedUnits.length > 0
       ? session.allowedUnits.join(", ")
       : heroCopy.scopeEmpty;
   const heroHighlights = [
-    {
-      id: "attention",
-      label: (
-        <SuppliesSectionHintLabel
-          label={heroCopy.highlights.attention}
-          hint={SP_HELP.home.heroAttention}
-        />
-      ),
-      value: attentionValue,
-      tone:
-        attentionReady && actionableAttention.length > 0
-          ? ("warning" as const)
-          : ("neutral" as const),
-    },
     {
       id: "units",
       label: (

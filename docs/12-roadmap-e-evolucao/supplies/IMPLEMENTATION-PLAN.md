@@ -148,7 +148,7 @@ E3.S1–S5 concluídas: Module Federation, BFF-only, shell, manifest e RBAC coex
 
 # E4 — Home + Ajuda + Perfil — COMPLETED
 
-E4.S1–S4 concluídas: catálogo, `/home/attention`, Ajuda inicial, `/users/:userId`, preferências e avatar Core.
+E4.S1–S4 concluídas: catálogo, Ajuda inicial, `/users/:userId`, preferências e avatar Core. (`/home/attention` removido no HOME-ATTENTION.P3 — ver decisão abaixo.)
 
 # E5 — Overview + OTD analytics — COMPLETED
 
@@ -587,3 +587,6 @@ X0–X3.E2E da integração CNPJ/fornecedores estão aceitos **apenas no boundar
 
 
 **HOME-ATTENTION — GO de execução (2026-10-23):** PO autorizou Devin a percorrer **A0 inventário → A1 contract freeze → A2 BFF/owners autorizados → A3 MFE Atenção → A4 testes + commit/push + deploy + smoke**, sem pausas artificiais para aprovação, conforme [plano atualizado](./HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md). Deploy só se gates técnicos e de segurança passarem. Fontes sem evidência ficam excluídas, sem bloquear fontes independentes. Não alterar demais seções/páginas da Home, RBAC, fornecedores PROD-C1 nem flags ERP. Status `AUTHORIZED_FOR_EXECUTION`, runtime `PENDING`.
+
+
+**HOME-ATTENTION.P3 — REMOVE_ATTENTION (2026-10-23):** inventário da fonte de tarefas concluiu que **não existe serviço canônico de tarefas atribuídas ao usuário**: `my_tasks` é placeholder navegacional ("será composta nas jornadas seguintes"); Core `/me/notifications` é caixa de entrada informativa ao destinatário (read≠pendência a executar; dispatchers de `purchase-requests-api` notificam o solicitante sobre mudanças de estado, não atribuem ação); `assigned_to` só existe em contextos alheios (helpdesk, LNF). Decisão: **remoção integral da seção Atenção** — `GET /home/attention` (BFF), `HomeAttentionService`, client/store MFE e o destaque "Atenção" do hero (que derivava dos cards) foram removidos. A Home passa a abrir sem nenhuma chamada operacional (SC summary, PCs atrasados, OTD, ESTSEG); essas fontes seguem servindo as páginas de destino. `my_tasks` permanece na navegação. Resultado completo no §12 de [HOME-ATTENTION-REAL-DATA-RESULT-20261023.md](./HOME-ATTENTION-REAL-DATA-RESULT-20261023.md).

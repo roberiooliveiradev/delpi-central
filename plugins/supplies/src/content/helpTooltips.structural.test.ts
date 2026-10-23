@@ -19,8 +19,6 @@ describe("helpTooltips", () => {
   it("keeps required shell help keys", () => {
     expect(SP_HELP.coexistence.length).toBeGreaterThan(20);
     expect(SP_HELP.homeVsOverview.length).toBeGreaterThan(20);
-    expect(SP_HELP.homeAttention.length).toBeGreaterThan(20);
-    expect(SP_HELP.home.attention).toBe(SP_HELP.homeAttention);
     expect(SP_HELP.home.paths.length).toBeGreaterThan(20);
     expect(SP_HELP.home.search.length).toBeGreaterThan(20);
     expect(SP_HELP.home.favorites.length).toBeGreaterThan(20);

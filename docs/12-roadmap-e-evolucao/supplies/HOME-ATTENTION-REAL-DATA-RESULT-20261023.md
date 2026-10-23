@@ -175,3 +175,41 @@ Mudança contratual: cards passam a ser **compactos** — nome da pendência, qu
 **Segurança/navegação:** remoção de previews elimina a exposição de linhas de estoque anteriormente apontada; contador agregado e link continuam condicionados aos contratos/permissões existentes. Filtros para SC, PO, OTD e estoque possuem validação estrutural reportada, mas `FILTERED_NAVIGATION_AUTHENTICATED=INCONCLUSIVE` até navegação real + URL/F5 em sessão. 401 anônimo não substitui testes efetivos de usuário/unidade. Recomendar reteste visual de cards compactos em claro/escuro, mobile, teclado e origem sem permissão ao destino estoque.
 
 **Release:** `P2_CODE=ACCEPT_WITH_RESIDUAL`, `P2_DEPLOY=PASS (executor-reported)`, `P2_SMOKE=PASS (executor-reported)`, `P2_PERFORMANCE=ACCEPT_WITH_RESIDUAL` (melhoria substantiva mas meta 5s não alcançada), `P2_VISUAL=INCONCLUSIVE`. Não modificar cutover C1 de fornecedores, ainda aguardando Gabriel/TOTVS. Próxima frente, se PO priorizar: agregação eficiente das solicitações e benchmark p50/p95.
+
+
+## 12. HOME-ATTENTION.P3 — Remoção da seção (2026-10-23)
+
+**Decisão: `REMOVE_ATTENTION`.** O PO autorizou ponta a ponta: remover os cinco cards operacionais e investigar uma fonte canônica de "Minhas tarefas"; se inexistente, remover Atenção por completo.
+
+### Inventário da fonte de tarefas (evidência)
+| Candidato | Veredito |
+|---|---|
+| `my_tasks` (rota supplies) | placeholder navegacional — App.tsx: "A fila de acompanhamento será composta nas jornadas seguintes" |
+| Core `GET /me/notifications` | caixa de entrada informativa ao destinatário: `list_unread(user_id)` marca lida/não lida; não modela atribuição nem pendência a executar (ler ≠ concluir tarefa) |
+| Dispatchers `purchase-requests-api` | notificam o **solicitante** sobre mudanças de estado (aprovada/rejeitada/PC vinculado/recebimento) — informação, não tarefa atribuída |
+| `assigned_to` em api-delpi | somente contextos alheios (helpdesk, LNF) — fora do escopo Suprimentos e de `supplies.access` |
+| Endpoint de contagem de tarefas | inexistente em todos os serviços inspecionados |
+
+Sem owner, sem ciclo de vida "pendente→feita", sem endpoint de contagem: renderizar "Minhas tarefas · N" seria contador fictício ou semântica errada (notificação ≠ tarefa). `TASKS_ONLY` inviável → remoção conforme autorização.
+
+### Removido
+- `supplies-api`: rota `GET /home/attention` (`home_routes.py`), `HomeAttentionService`, blueprint no composer, suite `test_home_attention.py` (14 testes).
+- `plugins/supplies`: `api/homeAttention.ts`, `app/homeAttentionStore.ts`, bloco Atenção da `HomePage` (panel/queue-ok/loading/error), destaque "Atenção" do hero do `PluginShell` (derivado dos cards), CSS `sp-home-attention-error`/`sp-home-queue-ok`, chaves `attention*` de conteúdo/Help/manual, teste `Home.attention.test.ts` (substituído por `Home.noAttention.test.ts` — 6 guards anti-regressão).
+- **Não removido** (outros consumidores): gateways `PurchaseRequestsGateway`/`SuppliesDelpiReads`, endpoints produtores (summary SC, POs abertos, OTD, ESTSEG), fan-out paralelo do P2, faixas Atenção das páginas de lista, rota `my_tasks` na navegação.
+
+### Efeito
+- Abrir a Home não dispara nenhuma chamada operacional: 6 downstream calls/request → **0** no fluxo da Home (~13,6s → latência só de hero/favoritos/recentes locais).
+- Sem loading permanente, sem contador inventado, sem mensagem de "sem tarefas".
+- AuthZ: nada novo; dados pessoais de outros contextos não são acessados.
+
+### Testes
+- Backend: suite completa sem falhas após remoção (436+ passam; 14 testes de atenção removidos junto com o código).
+- MFE: **383 passed** (6 guards novos: módulos ausentes, HomePage/PluginShell sem atenção, sem `/home/attention`, demais blocos intactos); tsc ok; eslint limpo; vite build ok.
+
+### Deploy
+- Serviços publicados: `supplies-api` + `supplies` (somente os afetados; `purchase-requests-api`/`api-delpi` intactos — otimizações do P2 continuam servindo as páginas de destino).
+- Smoke: `GET /home/attention` → **404** (contrato removido); bundle sem marcadores `homeAttention`; Home renderiza sem a seção.
+
+### Residual
+- `my_tasks` segue placeholder na navegação (`TO_INVENTORY` mantido) — quando existir owner canônico de tarefas, o card "Minhas tarefas" pode voltar via Cenário A do P3.
+- `VISUAL_AUTHENTICATED=INCONCLUSIVE` (sem navegador autenticado neste ambiente).
