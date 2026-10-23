@@ -24,3 +24,6 @@
 ## Aceite de ciclo
 
 Task 1 CONTRACT_APPROVED; Task 2 BACKEND_DEV_VERIFIED; Task 3 UI_INTEGRATION_VERIFIED; Task 4 INTEGRATED_EVAL_ACCEPTED_WITH_RESIDUAL_OR_BETTER. Nunca fechar fase sem authorities + ledger + SHA + outcome.
+
+
+> **SUPERSESSION / decisão PO de 2026-10-23:** [doc 103](./103-po-approved-llm-call-timeout-retry-and-global-five-minute-cap.md) prevalece sobre propostas anteriores conflitantes: **60s por chamada LLM real, até 3 tentativas por chamada lógica e teto global absoluto de 300s por solicitação**. Corte local genérico de 10s deve ser substituído na implementação; valores 60s de quota cumulativa por attempt, 90s attempt wall, 25s reserve e 150s streamed / 60s buffered do ADR 102 **não estão aprovados para implementação**. Reuso de owners existentes e B+D permanecem. Código ainda inalterado; next Task 2 implementação dev com testes e gates. R4 remediação postergada, risco aberto; nenhuma liberação de retry produtivo decorre deste adendo.
