@@ -1277,3 +1277,66 @@ Marcação formal: **todas as conclusões derivadas de 724/672 estão `STALE_EVI
 | C2-R64 | query vigente | sanitizada no §24.E; 724/672 → STALE_EVIDENCE formal | — |
 | C2-R65 | residuais | SQL-investigável esgotado; msdb/DDL/proc = owner DBA/TI | — |
 | C2-R66 | — | `NO_GATE_CHANGE` | — |
+
+---
+
+## §25 — RODADA 13 (CF-C2-EXEC-013) — CONSOLIDAÇÃO E FECHAMENTO DE RESIDUAIS — 2026-10-23
+
+### 25.A — Validação pontual da query §24.E (TES/SF4 e reprodução)
+
+**Lookup TES/SF4 — `PROVEN` fiel à semântica `xFilial`:** `SF4010` é compartilhada — todas as 458 linhas têm `F4_FILIAL=' '` e **nenhum** `F4_CODIGO` duplicado por filial ou com `F4_ESTOQUE` divergente. Logo `DbSeek(xFilial("SF4")+TES)` resolve no registro global único — o `EXISTS` sem filtro de filial da query publicada **equivale exatamente** ao comportamento AdvPL. Todos os 39 TES usados na janela resolvem a registro único.
+
+**Reprodução independente:** a query §24.E foi executada em duas sessões distintas com resultado idêntico — **3.058 chaves / 242 quantidade / 421 valor** — reproduzível e versionada.
+
+### 25.B — Consolidação MOD
+
+| Evidência | Estado |
+|---|---|
+| `VALOR_MOD_HORA == SBZ010.BZ_CUSTD` (filial×produto, 1:1) | `PROVEN` (f01 33/33; f02 34/38 + 4 sem-SBZ consistentes) |
+| `RESULTADO = (PREVISTO−REAL)×rate`; `LUCRO/PREJUÍZO` = split sinal | `PROVEN` 85.904/85.904 |
+| View aplica rate **corrente** retroativamente | `PROVEN` (MOD20101: 88,34 em 2006 vs log 77,61→88,34 em 08/10/2026) |
+| Cobertura do histórico | `LIMITADO`: TTAT_LOG inicia 27/04/2026 — **reconstrói só pós-abril**; rates anteriores irreconstruíveis |
+| Cadastro inicial de rates MOD | ~80 produtos sem log e `BZ_CUSTD=0` — nunca precificados |
+
+### 25.C — Quadro de decisão para a Controladoria (não implementado)
+
+| Opção | Proveniência exigida | Imutabilidade | Limitações |
+|---|---|---|---|
+| **A. Histórico homologado** (rate da competência) | rate vigente por data — TTAT_LOG (≥abr/26) ou nova tabela histórica | snapshot de resultado por competência gravado no fechamento | pré-abr/26 irreconstruível; diverge da view oficial enquanto ela usar rate corrente; exige manutenção de tabela/política nova |
+| **B. Recalculado corrente** (status quo) | `BZ_CUSTD` atual (já provado) | nenhuma — revaloriza a cada MATA019/MATA010 | distorce série histórica ±8–9%/revalorização; paridade plena com a view existente |
+| **C. Ambos** | as duas fontes acima | snapshot da opção A + leitura viva da B | maior superfície de explicação/UX; depende de A |
+
+Requisitos para qualquer decisão: fonte de rate-por-data com owner (Controladoria/Custos), política de congelamento no fechamento mensal, e homologação do valor-base set/2026 (f01 +5.918,90 / f02 −32.694,32 pela ótica corrente).
+
+### 25.D — Evidências objetivas a solicitar aos owners
+
+| # | Owner | Evidência solicitada | Desbloqueia |
+|---|---|---|---|
+| E1 | TI/ERP | fonte `DLP06R01` (ou confirmação de rotina produtora das 657 baixas receber) | produtor receber |
+| E2 | TI/ERP | produtor e parâmetros do P7/MATR460 oficial (rotina, SX1/SX6, exports) | R03 G1–G4 |
+| E3 | DBA | definição (DDL) de `vw_Apontamentos_Eficiencia`, `VW_PROTHEUS_CUSTO_*`, `vw_fin_despesas_centro_custo` | implementação MOD, bindings G4 |
+| E4 | DBA | lista de jobs SQL Agent (`msdb.dbo.sysjobs`) e código das SPs `STP_DELPI_OP_TERCEIRO_*`/`STP_PROTHEUS_DELPI_AJUSTA_OP` | execução do fechamento SB9 |
+| E5 | TI/ERP | confirmação da rotina/schedule que grava SB9 (MATA330+custom?) e log de execução out/2026 | produtor SB9 |
+| E6 | Controladoria | decisão 25.C (A/B/C) + homologação do valor-base MOD set/2026 | política de congelamento |
+
+### 25.E — Cruzamento residuais × gates Doc 47
+
+| Gate item | Nossa evidência relacionada | O que falta para o gate |
+|---|---|---|
+| **R03** P7/Bloco H | SB9=snapshot SB2 (96%), elegibilidade, 68 exceções | produtor oficial + parâmetros (E2); G1–G4 `PENDING` |
+| **R04** Consumo/OP | `matr860` decodificado (MOD via SD3, `B1_COD LIKE 'MOD%'`/`B1_CCCUSTO`) | bindings homologados + amostra oficial (G4/G5) |
+| **R09** Faturamento×MOD | fórmula+rate `PROVEN` (view), TTAT | rotina oficial do relatório (a confirmar) + DDL da view (E3) + aceite (G6) |
+| **R12** Refaz Saldos | `DEL100` decodificado + query vigente 421/242 | vínculo rotina-oficial↔relatório; execução observada |
+| **R15** Cutoff/SB9 | snapshot recorrente, janela comum, MA330OK hook | execução do job (E4/E5) + aceite |
+
+**`NO_GATE_CHANGE`**: toda evidência acima é candidata a G4/G5, mas gates exigem referência de artefato/SHA, homologação e aceite — nenhum critério completo nesta rodada.
+
+### 25.F — Registro
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R67 | SF4 lookup | PROVEN: compartilhada (458 linhas filial=' '), EXISTS ≡ xFilial | G4 fonte |
+| C2-R68 | reprodução | 3.058/421/242 confirmado em 2 execuções independentes | G4 fonte |
+| C2-R69 | quadro decisão | A/B/C com requisitos e limitações; valor-base set/26 | — |
+| C2-R70 | owner asks | E1–E6 objetivas para TI/DBA/Controladoria | — |
+| C2-R71 | cross-map | R03/R04/R09/R12/R15 mapeados; `NO_GATE_CHANGE` | — |
