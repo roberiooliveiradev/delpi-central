@@ -336,3 +336,10 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - relacao tabular de recebimentos (23/10/2026)
 
 [Doc 75 - Recebidos XLSB: inventario de eventos de baixa](./75-ciclo1-recebidos-relacao-baixas.md): inventario sanitizado de uma aba com 22 campos, codigos de motivo, diferencas entre valor original e total baixado, comparacao conceitual com PDF (doc 74), contas a receber (doc 70) e TARGET R01/R02 (doc 48). Produtor FINR190, regra de compensacao, identificador de evento, log de inconsistencias e paridade SQL/relatorio permanecem `TO_INVENTORY/TEST_NOT_RUN`. Fonte e valores privados nao versionados. Documento 71 permanece pendente de verificacao.
+
+
+### Ciclo 1 — Revisao consolidada (23/10/2026)
+
+[Doc 71 — Pagamentos por data](./71-ciclo1-pagos-por-data.md): inventario conceitual do PDF DLP06R01, distinguindo fluxo de baixas, compensacoes, posicao aberta e movimentacao bancaria. Fonte privada nao versionada; FINR190 candidato e paridade TEST_NOT_RUN.
+
+[Doc 76 — Revisao documental do Ciclo 1](./76-ciclo1-fechamento-documental.md): cobertura de 19 planilhas/PDFs e video, lacunas dos inventarios historicos CC matriz/Analise, parametros divergentes do inventario e paridade financeira pendente. ACCEPT_WITH_RESIDUAL para base documental, encerramento formal PENDING, Ciclo 2 NO_GO. Corrige a nota anterior de que doc 71 ainda nao havia sido publicado; paths de 53/58 historicos ainda TO_INVENTORY.
