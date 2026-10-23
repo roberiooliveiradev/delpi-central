@@ -17607,7 +17607,7 @@ UNTRUSTED_METADATA_LEAK=NONE (deterministic + live scan 20 turns)
 HONEST_INSUFFICIENCY=YES BUSINESS_RECORD_INTEGRITY=YES
 ROLLBACK=git revert (single module + tests, zero migrations/deploy)
 
-## §6.392 — G4 residual closure + production deploy — TEST_FIXTURE evidence + SSH operator deploy (2026-10-23)
+## §6.392b — G4 residual closure + production deploy — TEST_FIXTURE evidence + SSH operator deploy (2026-10-23)
 
 **2026-10-23 — DELIA-C3-MARKDOWN-B2-G4-RESIDUAL-CLOSURE-TEST-FIX-DEPLOY-01:** reancorado em 04fcc80df6 (G4 review 754bef3305 ACCEPT_WITH_RESIDUAL + doc-109/P1 absorvidos); upstream 86294797d1 (P1 projection fix) integrado por rebase durante a task. RELEASE_SHA=caac5f5452 push verificado.
 
@@ -17626,3 +17626,15 @@ ROLLBACK=git revert (single module + tests, zero migrations/deploy)
 **ROLLBACK=READY:** imagem anterior + checkout a6aef6a321 rebuild (não executado — deploy íntegro).
 
 **Estado:** G4_RESIDUAL_CLOSURE=EXECUTED; DEPLOYMENT_TECHNICAL_STATUS=SUCCESS; BUSINESS_OUTCOME_VERIFICATION=PARTIAL (turno autenticado prod não exercido — sem credencial e2e em prod; endpoint+authz+health verificados); CP-333=PLANNED_NOT_PASS (20/25 RQ IMPLEMENTED, 80%; RQ08/11/20/21/25 PARTIAL; AC15/16/22/26/30 PARTIAL). Retorna à coordenação.
+
+## §6.393 — RC1/RC2 prod: fix ja deployado (caac5f5452) verificado em runtime; homologacao autenticada bloqueada por credencial (2026-10-23)
+
+**2026-10-23 — DELIA-C3-EVIDENCE-PROJECTION-PROD-DEPLOY-AND-HOMOLOGATION-01:** deploy do fix 86294797d1 verificado JA ATIVO em srv-api — task G4 concorrente deployou caac5f5452 (contem o fix por rebase) minutos antes; imagem cf66b56c6022 built apos o merge; marcadores _without_control_plane/_is_capability_descriptor/_CAPABILITY_VOCABULARY_KEYS presentes no orchestration.py em execucao. Checkout prod sincronizado ff-only para 287f94a2a (delta docs-only). Regime 60/3/300 preservado; CRI on; LLM=moonshotai/kimi-k3; healthy; interaction 401 sem credencial; zero 502/504; zero migrations. Homologacao autenticada D4/D5/D8 = TEST_NOT_RUN: realm prod nao possui identidade de teste (apenas usuarios reais); usar/resetar credenciais reais proibido; KC admin existe mas criar usuario modifica estado de identidade (fora da autorizacao); residual identico docs 95/106. Evidencia substituta: 30 testes com envelopes reais + 20 turnos live dev = zero leak; logica deterministica independente do modelo. Doc 111.
+
+TASK_ID=DELIA-C3-EVIDENCE-PROJECTION-PROD-DEPLOY-AND-HOMOLOGATION-01
+DEPLOY_STATUS=ALREADY_DEPLOYED_VERIFIED DEPLOYED_RUNTIME_SHA=caac5f5452 (superset de 86294797d1) PROD_CHECKOUT=287f94a2a
+IMAGE=cf66b56c6022 (built pos-merge) SERVICE_HEALTH=PASS AUTHN=401_failclosed GATEWAY=zero_50x
+D4=D5=D8_AUTHENTICATED=TEST_NOT_RUN (sem credencial de teste governada em prod; realm so usuarios reais; criar credencial fora da autorizacao)
+CONTROL_PLANE_LEAK=NONE_proven_in_code+dev_live; PROD_WIRE=TEST_NOT_RUN
+EXTERNAL_LLM_CALLS=0 ROLLBACK=READY (imagens anteriores no host) EXECUTION_DRIFT=NONE
+NEXT=PO manual QA D4/D5/D8 no Portal OU identidade de homologacao governada (decisao owner de identidade)
