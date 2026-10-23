@@ -112,8 +112,9 @@
 }
 
 /* Portal no body: posição vem do AnchoredPanelPortal (fixed); evita stretch por `right: 0`. */
+/* Wildcard exclui multi-select: "-select__*" é substring de "-multi-select__*". */
 .delpi-ui-select__panel--portal,
-[class*="-select__panel--portal"] {
+[class*="-select__panel--portal"]:not([class*="-multi-select__panel--portal"]) {
   right: auto;
   top: auto;
   left: auto;
@@ -135,8 +136,8 @@
 }
 
 .delpi-ui-select__panel--portal .delpi-ui-select__search,
-[class*="-select__panel--portal"] .delpi-ui-select__search,
-[class*="-select__panel--portal"] [class*="-select__search"] {
+[class*="-select__panel--portal"]:not([class*="-multi-select__panel--portal"]) .delpi-ui-select__search,
+[class*="-select__panel--portal"]:not([class*="-multi-select__panel--portal"]) [class*="-select__search"]:not([class*="-multi-select__search"]) {
   flex: 0 0 auto;
 }
 
@@ -171,8 +172,8 @@
 
 /* No portal, a lista preenche o teto do painel — sem segundo max-height concorrente. */
 .delpi-ui-select__panel--portal .delpi-ui-select__list,
-[class*="-select__panel--portal"] .delpi-ui-select__list,
-[class*="-select__panel--portal"] [class*="-select__list"] {
+[class*="-select__panel--portal"]:not([class*="-multi-select__panel--portal"]) .delpi-ui-select__list,
+[class*="-select__panel--portal"]:not([class*="-multi-select__panel--portal"]) [class*="-select__list"]:not([class*="-multi-select__list"]) {
   max-height: none;
   flex: 1 1 auto;
   overflow: auto;

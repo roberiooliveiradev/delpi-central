@@ -95,6 +95,34 @@
   min-width: 0;
   max-width: none; /* sobrescreve max(100%, 240px) do painel não-portal */
   box-sizing: border-box;
+  /*
+   * Um único scroll: painel limita altura (overflow hidden); a única
+   * superfície de overflow é `.delpi-ui-multi-select__list`. Busca e ações
+   * ficam fixas — mesmo contrato do select portaled.
+   */
+  max-height: min(70vh, 480px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.delpi-ui-multi-select__panel--portal .delpi-ui-multi-select__search,
+.delpi-ui-multi-select__panel--portal .delpi-ui-multi-select__actions,
+.delpi-ui-multi-select__panel--portal .delpi-ui-multi-select__create,
+[class*="-multi-select__panel--portal"] [class*="-multi-select__search"],
+[class*="-multi-select__panel--portal"] [class*="-multi-select__actions"],
+[class*="-multi-select__panel--portal"] [class*="-multi-select__create"] {
+  flex: 0 0 auto;
+}
+
+/* No portal, a lista preenche o teto do painel e é a única região rolável. */
+.delpi-ui-multi-select__panel--portal .delpi-ui-multi-select__list,
+[class*="-multi-select__panel--portal"] [class*="-multi-select__list"] {
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 
 .delpi-ui-multi-select__search {
