@@ -17709,3 +17709,12 @@ EXTERNAL_LLM_CALLS=0 PRODUCTION_HOMOLOGATION=PENDING_gates
 INDEPENDENT_REVIEW_PENDING COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
 
+
+
+## §6.399 — Markdown B2 UX QA: Dock real + acessibilidade + responsividade em produção (2026-10-23)
+
+**2026-10-23 — DELIA-UX-MARKDOWN-B2-DOCK-AND-ACCESSIBILITY-QA-01 (QA-first, zero defects):** homologação autenticada em https://minhadelpi.com.br sobre código deployado (superset de 8162baf1a7). Companion Dock REAL: turno SIPOC emitiu presentation.version=2 + format=markdown_safe (sessao f8459c59, turno 18521b23); DOM .delpi-ui-conversation-markdown com 12 listas/23 li, 0 anchors, 0 scripts, 0 overflow horizontal, composer visivel. Full-page: render rico em light+dark+reduced-motion; code block real com badge Python + Copiar codigo (clipboard=73 chars literais + feedback). Viewports 420/375/360/320 e zoom 200% sem quebra. Teclado: Tab sem trap; Shift+Tab percorre cadeia completa (Mais opcoes → Copiar resposta → Detalhes da evidencia → PRE → Copiar codigo → Ver detalhes). SCREEN_READER_QA=TEST_NOT_RUN (sem leitor de tela no ambiente; auditoria DOM parcial: lang=pt-br, listas semanticas, aria-labels, 0 HTML injetado). Regressões focadas: plugin-ui markdown+codeblock 89/89, delia api 60/60; suites completas herdadas verdes (codigo inalterado). DEFECTS_FOUND=0 → nenhum fix, nenhum deploy. Evidencia: docs/.../evidence/markdown-b2-dock-accessibility-qa-01/. CP-333 permanece PLANNED_NOT_PASS; MB2-UX10 unico criterio nao-PASS (TEST_NOT_RUN).
+
+TASK_ID=DELIA-UX-MARKDOWN-B2-DOCK-AND-ACCESSIBILITY-QA-01
+MB2_UX=19_PASS/1_TEST_NOT_RUN DEFECTS=0 CODE_DIFF=NONE DEPLOY=NONE
+NEXT=coordenacao avalia outcome CP-333; screen reader real pendente de ambiente
