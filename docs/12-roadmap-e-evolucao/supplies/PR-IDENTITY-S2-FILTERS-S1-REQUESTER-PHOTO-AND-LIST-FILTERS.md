@@ -6,17 +6,15 @@ Continuação de [PR-IDENTITY-S1-REQUESTER-CORE-RESOLUTION.md](./PR-IDENTITY-S1-
 
 ## PR.IDENTITY.S2 — Identidade visual do solicitante
 
-### Layout da identidade
+### Layout da identidade (PR.IDENTITY.S3 — nome único)
 
 ```text
-[Foto|Iniciais]  Nome oficial Minha DELPI     ← display_name (principal)
-                 ELAINE                        ← requester.name TOTVS (secundário)
+[Foto|Iniciais]  Elaine Gracielle Gracielle Romig     ← display_name || name || code
 ```
 
-- **Principal:** `display_name` (Core) → `name` (origem) → `code`.
-- **Secundário:** quando `display_name` resolveu, o **nome TOTVS de origem** (`requester.name`) quando diferente do oficial; caso contrário `code` — nunca duplica.
+- **Regra vigente (S3):** um único nome — `display_name` (Core) → `name` (origem TOTVS) → `code`. Não há linha secundária; `requester.name` permanece no contrato apenas como fallback de dados.
 - **Foto:** `requester.photo_url` (caminho BFF) → blob autenticado → object URL → `src` do `EntityAvatarLabel`. Sem foto/erro → iniciais do nome exibido.
-- Componente `SuppliesPersonIdentity` compartilhado cobre tabela, cards e ficha.
+- Componente `SuppliesPersonIdentity` compartilhado cobre tabela, cards, ficha de SC e identidade do comprador na ficha de pedido (mesma regra de nome único).
 
 ### Cadeia da fotografia (tudo contrato existente)
 
@@ -43,9 +41,9 @@ GET /purchase-requests/requesters/{pid}/photo?branch=..&date_from=..&date_to=..
 
 | Cenário | Resultado |
 |---|---|
-| Mapeado + foto | foto real + nome oficial + TOTVS abaixo |
-| Mapeado + sem foto | iniciais do nome oficial + TOTVS abaixo |
-| Não mapeado | iniciais do nome origem + código abaixo |
+| Mapeado + foto | foto real + nome oficial |
+| Mapeado + sem foto | iniciais do nome oficial |
+| Não mapeado | iniciais do nome de origem (ou código, se ausente) |
 | Foto 403/404/timeout | fallback iniciais, lista intacta |
 | Core indisponível | nomes/fotos ausentes, listagem intacta (soft-fail) |
 

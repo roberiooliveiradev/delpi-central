@@ -30,28 +30,16 @@ export function SuppliesPersonIdentity({
   photoPeriod?: PersonPhotoPeriod;
 }) {
   const { allowedUnits } = useSuppliesSession();
+  // Single name: Minha DELPI official → TOTVS source name → source code.
   const name = person?.display_name || person?.name || person?.code || "";
-  const code = person?.code || person?.protheus_user_id || "";
   const photoSrc = usePersonPhoto(person?.photo_url, {
     branches: allowedUnits,
     dateFrom: photoPeriod?.dateFrom,
     dateTo: photoPeriod?.dateTo,
   });
-  // When the Core link resolved, the TOTVS source name becomes the
-  // secondary line; otherwise keep the source code as before.
-  const secondary = person?.display_name
-    ? person.name && person.name !== person.display_name
-      ? person.name
-      : code && code !== name
-        ? code
-        : undefined
-    : code && code !== name
-      ? code
-      : undefined;
   return (
     <SuppliesEntityAvatarLabel
       name={name}
-      secondary={secondary}
       src={photoSrc}
       colorKey={personColorKey(person?.code, person?.protheus_user_id)}
     />

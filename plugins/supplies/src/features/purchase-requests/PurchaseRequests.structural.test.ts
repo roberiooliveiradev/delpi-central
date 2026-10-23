@@ -270,13 +270,15 @@ describe("PurchaseRequests feature", () => {
     expect(types).toContain("display_name");
   });
 
-  it("identidade do solicitante: nome TOTVS secundário e foto via BFF", () => {
+  it("identidade do solicitante: nome único com fallback e foto via BFF", () => {
     const identity = readFileSync(
       join(dir, "../../app/SuppliesDirectoryIdentity.tsx"),
       "utf8",
     );
-    // Secondary line = TOTVS source name when the Core link resolved.
-    expect(identity).toContain("person.name && person.name !== person.display_name");
+    // Single name — no TOTVS/code secondary line (PR.IDENTITY.S3);
+    // the supplier identity above keeps its own secondary={code}.
+    expect(identity).toContain("person?.display_name || person?.name || person?.code");
+    expect(identity).not.toContain("const secondary");
     expect(identity).toContain("src={photoSrc}");
     expect(identity).toContain("usePersonPhoto(person?.photo_url, {");
     expect(identity).toContain("branches: allowedUnits");
