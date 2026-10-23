@@ -1,5 +1,5 @@
 # Portal Suprimentos — Plano de refatoração do componente Atenção (Home)
-**Data:** 2026-10-23 · **Estado:** `AUTHORIZED_FOR_END_TO_END_EXECUTION` · **Implementação/deploy:** `AUTHORIZED_BY_PO`, condicionada aos gates técnicos e de segurança  
+**Data:** 2026-10-23 · **Estado:** `EXECUTED` — ver [HOME-ATTENTION-REAL-DATA-RESULT-20261023.md](./HOME-ATTENTION-REAL-DATA-RESULT-20261023.md) · **Implementação/deploy:** `AUTHORIZED_BY_PO`, condicionada aos gates técnicos e de segurança  
 **Escopo estrito:** componente **Atenção** da página `/apps/supplies` (Home). **Não alterar** hero, caminhos/funcionalidades, favoritos, últimos acessos, barra de navegação, indicadores da Visão geral ou outras páginas.
 
 ## 1. Problema observado e decisão de produto

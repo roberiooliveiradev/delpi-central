@@ -284,6 +284,30 @@
   color: var(--sp-text-muted);
 }
 
+.dashboard-supplies-portal .sp-home-attention__preview {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.45rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.dashboard-supplies-portal .sp-home-attention__preview-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 1px dashed var(--sp-border);
+  padding-top: 0.3rem;
+}
+
+.dashboard-supplies-portal .sp-home-attention__preview-detail {
+  color: var(--sp-text-muted);
+  font-size: 0.8rem;
+}
+
 .dashboard-supplies-portal .sp-overview__grid,
 .dashboard-supplies-portal .sp-overview-kpi-grid {
   display: grid;

@@ -134,6 +134,35 @@ class SuppliesDelpiReads:
             )
         )
 
+    def get_purchase_orders(
+        self,
+        *,
+        access_token: str,
+        branches: list[str],
+        late_only: bool = False,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        """Open PO lines list (summary ignores late_only/pagination — owner rule)."""
+        codes = [str(code).strip() for code in branches if str(code).strip()]
+        if not codes:
+            raise ValueError("at least one concrete branch is required")
+        params: dict[str, Any] = {
+            "branch": codes,
+            "page": page,
+            "page_size": page_size,
+        }
+        if late_only:
+            params["late_only"] = "true"
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                "/supplies/purchase-orders",
+                access_token=access_token,
+                params=params,
+            )
+        )
+        return data if isinstance(data, dict) else {}
+
     def get_safety_stock_summary(
         self,
         *,
@@ -286,6 +315,41 @@ class SuppliesDelpiReads:
                         "sort": sort,
                     },
                 ),
+            )
+        )
+        return data if isinstance(data, dict) else {}
+
+    def get_safety_stock_items(
+        self,
+        *,
+        access_token: str,
+        branch: str,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+        sort_by: str | None = None,
+        sort_direction: str | None = None,
+    ) -> dict[str, Any]:
+        """Safety-stock items for one concrete branch."""
+        concrete = str(branch or "").strip()
+        if not concrete:
+            raise ValueError("branch is required for safety-stock items reads")
+        params: dict[str, Any] = {
+            "branch": concrete,
+            "page": page,
+            "page_size": page_size,
+        }
+        if status:
+            params["status"] = status
+        if sort_by:
+            params["sort_by"] = sort_by
+        if sort_direction:
+            params["sort_direction"] = sort_direction
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                "/supplies/safety-stock/items",
+                access_token=access_token,
+                params=params,
             )
         )
         return data if isinstance(data, dict) else {}
