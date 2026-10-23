@@ -159,3 +159,14 @@ Nenhum contrato HTTP alterado. Mudança limitada a textos de help (MFE) e remoç
 1. Aceite visual autenticado dos helps e seletores (E14 + inclusão).
 2. Resposta do owner TOTVS sobre mutação de vínculo e de-para fiscal.
 3. Cleanup do fornecedor de ensaio `003882/01`.
+
+
+## 10. Revisão GPT — E7 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` em código, `E7_VISUAL=INCONCLUSIVE`.** Revisado no GitHub o documento de execução e `plugins/supplies/src/features/suppliers/types.ts` no source `e8a86cb338`. A matriz registra 54/54 chaves com ajuda funcional e referência TOTVS; as alterações são de apresentação no MFE e remoção de overrides concorrentes de E14. Testes (375 PASS), build/typecheck/lint e deploy `App-BIORgSGT.js` são resultados **reportados pelo executor**, não reexecutados pelo GPT; navegador autenticado ainda `TEST_NOT_RUN`.
+
+**Limites de autoridade:** `TOTVS REFERENCES VERIFIED=54/54` significa conferência documental com dicionário canônico/SX3 reportada pelo executor; não significa auditoria independente do GPT em runtime de cada coluna. A descrição funcional de alguns códigos de enum e frases que ainda empregam 'ERP' merecem revisão por negócio/owner durante o aceite visual, sem trocar silently descrições validadas. Nenhum catálogo foi criado porque SX3 não trouxe domínio/lookup confiável para `A2_GRPTRIB` e `A2_RISCO`; evitar inferir domínio fechado dos valores observados na SA2.
+
+**Cliente vinculado:** PUT isolado rejeitado, PUT de par divergente e variante com `A2_VINCULA` não persistiram troca de `A2_CLIENTE` em TST01, conforme relatório. Isso prova **ausência de persistência nos contratos/ensaios testados**, não impossibilidade definitiva de alteração por toda operação do Protheus. `LINKED_CUSTOMER_PUT=BLOCKED` até resposta do owner Gabriel/TOTVS; continuar rejeitando tentativa de troca na API, sem falso sucesso.
+
+**Gate:** `E7_CODE=ACCEPT_WITH_RESIDUAL`, `E7_RUNTIME=PASS (executor-reported technical)`, `E7_VISUAL=INCONCLUSIVE`, `ERP_WRITE_GATES=OFF`. Próximo passo: PO testar tooltips por seção em cadastro e E14 (mouse, teclado, mobile, contraste, sem clipping), e owners retornarem sobre vínculo cliente, grupo tributário e risco.
