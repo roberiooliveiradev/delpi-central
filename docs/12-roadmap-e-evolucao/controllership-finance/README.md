@@ -108,6 +108,12 @@ Status: `REPORT_CATALOG=DOCUMENTED_PARTIAL`; `TABLE_COLUMN_BINDINGS=TO_INVENTORY
 
 [Doc 48 §§9–11 — rotas financeiras, decisão D3.1 e gate](./48-r01-r02-financial-settlements-api-contract-target.md): PO aprovou campo `branchCode` nullable no DTO e evolução backend-first, sem preencher filial artificialmente ou exigir paridade com `_F190C`. **Separação de acesso não foi dispensada**: fontes têm filial vazia nas probes, portanto `BRANCH_ENFORCEMENT=PENDING`, `API_DELPI_PERMISSION=DECISION_REQUIRED`, `IMPLEMENTATION_AUTHORIZED=NO` para endpoints com dados reais. Próximo passo: fechamento de contrato e testes de isolamento antes do GO explícito. BFF, MFE e exportação permanecem fora do slice.
 
+## Diretriz operacional vinculante — pesquisa de reuso entre contextos (Ciclo 2, 23/10/2026)
+
+**Antes de avançar qualquer R01–R15 ou registrar nova regra no doc 85, o Devin deve executar a verificação transversal documentada no [doc 80 §0](./80-ciclo2-registro-vivo-investigacao-devin.md):** procurar no **código e contratos do HEAD** regras, endpoints, services, SQL, testes e consumidores já presentes em **Suprimentos, api-delpi e demais contextos Minha DELPI**, e confrontá-los com instruções oficiais, `.cursor`, ADRs e padrões de desenvolvimento. Isso é uma **etapa da investigação vigente**, não uma nova frente de catálogo. Registar o resultado e referências de evidência no doc 80/85 da rodada; não duplicar regras canônicas nem inferir ausência por search miss.
+
+**Pendência já identificada para a próxima interação:** o PO informou que **o CPV já é calculado em Suprimentos e possui regra na API**. A implementação e o contrato específicos ainda **não foram verificados** neste recorte; revisar esse reuso antes de propor medida ou fórmula nova para R06. Separadamente, examinar as **11 linhas de custo de R06** não vinculadas individualmente; a existência do CPV não resolve sua paridade automaticamente. **Sem mudança de gates ou autorização de runtime decorrente desta atualização.**
+
 ## 4. Sequência de coordenação para o próximo chat
 
 1. **IMP-00 — READ/INVENTORY/VERIFY (sem runtime):** HEAD + `git status` no checkout, Project Instructions, `.cursor`, contratos/Core e owners, diff e CI; confirmar gates A12/A14/A15/A16 aplicáveis **sem reabrir escolhas já aprovadas**. Produzir brief preciso do primeiro slice e decisão `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
