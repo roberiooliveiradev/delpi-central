@@ -104,3 +104,14 @@ usuário Core (`/me` → invalid_token).
 - `order_user` (`C7_USER`) presente no contrato do detalhe mas ainda não
   exibido no MFE — quando a ficha renderizar criador do pedido, o mesmo
   `PersonRef`/`enrich` já se aplica.
+
+
+## Revisão GPT — PR.IDENTITY.S4 (2026-10-23)
+
+**Veredito:** `ACCEPT_WITH_RESIDUAL` para código e deploy técnico reportado; `VISUAL_AUTHENTICATED=INCONCLUSIVE`. Conferidos no source `97587080b9` o `RequesterIdentityService` e a documentação de execução. A causa-raiz é consistente com o código: `_requester_refs` percorria `requester` top-level, `items[]`, `lines[]`, mas não `header.requester`. O diff inclui agora `payload.get("header")` e `detail_header["requester"]` no **mesmo** batch, sem nova consulta por linha, sem mudança de DTO e sem matching textual. O fluxo `display_name → name → code` no MFE foi mantido.
+
+**Evidências do executor, não reexecutadas pelo GPT:** supplies-api 36/36 testes, MFE 20/20, deploy `delpi-supplies-api` imagem `sha256:6a7d25694898` healthy; `enrich_payload` em container produtivo retornou `photo_url` em um header de caso mapeado. **Isso não equivale a um GET autenticado da ficha SC 01/178764 nem prova independente de `display_name` nela**. O smoke pela rota humana permaneceu `INCONCLUSIVE` por ausência de credencial autenticada válida. Não chamar o gate visual da ficha de PASS.
+
+**Inventário e limites corretos:** SC lista/cards/detalhe/facet resolvíveis por `C1_USER`; `C7_COMPRA` é código de cadastro de compradores, não um `SYS_USR` comprovado, e `approver_name` carece de identificador — ficam `UNMAPPED` sem fuzzy matching. Export CSV preserva nome fonte (residual explícito). `RequesterPhotoScopeGuard` continua fail-closed por identidade mapeada e universo autorizado; ainda é necessário smoke autenticado de foto na ficha real. 
+
+**Estado:** `S4_CODE=ACCEPT_WITH_RESIDUAL`; `S4_DEPLOY=PASS (executor-reported)`; `SC_178764_AUTHENTICATED_RUNTIME=INCONCLUSIVE`; `S4_VISUAL=INCONCLUSIVE`. Próxima verificação PO: abrir `/apps/supplies/purchase-requests/01/178764`, confirmar nome oficial Minha DELPI no hero e foto/iniciais corretas. Nenhuma mudança na frente de fornecedores `X4.PROD-C1`.
