@@ -105,8 +105,8 @@ Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) 
 | Finalidade | registro fiscal-contábil do estoque no fechamento; alimenta SPED Bloco H |
 | Entrada | data estoque (30/09/2026), empresa/filial, escopo de tipos (observados: completo × MP/PA/PI), armazém |
 | Saída | CLASSIFICAÇÃO FISCAL, DISCRIMINAÇÃO, UNID, QUANTIDADE, UNITÁRIO, PARCIAL, TOTAL + RESUMO por tipo EM ESTOQUE/EM PROCESSO + TOTAL GERAL |
-| Origem física | **SB9 candidato** (snapshot de SB2 — §21 doc 80, PROVEN 96% no recorte) — vínculo P7↔SB9 **não provado** |
-| Comparação | totais divergentes entre emissões (3.776.994,69 → ~2.756.1xx → 3.946.431,87 / 2.976.967,56): fechamento iterativo. **Paridade parcial (doc 84 §3):** EM PROCESSO = `Material em processo.xlsb` exato (355.240,51); PA/PI EM ESTOQUE = MATR320 exato; total EM ESTOQUE e escopo MP/PA/PI não reproduzidos (Δ ≥ −8.182,43) |
+| Origem física | **SB9 candidato** (snapshot de SB2 — §21 doc 80, PROVEN 96% no recorte) — vínculo P7↔SB9 **não provado**. Estrutural (doc 80 §31.G): hook `A460UNIT` ajusta `MP7GDA`; workfiles `MP7_*` com `TIPOMOV`∈{`aSalAtu`,`QtCus`,`aDadosCF9`} por produto+armazém+data-fechamento — `EM ESTOQUE+EM PROCESSO = TOTAL P7` exato |
+| Comparação | totais divergentes entre emissões (3.776.994,69 → ~2.756.1xx → 3.946.431,87 / 2.976.967,56): fechamento iterativo. **Paridade parcial (doc 84 §3):** EM PROCESSO = `Material em processo.xlsb` exato (355.240,51); PA/PI EM ESTOQUE = MATR320 exato; total EM ESTOQUE e escopo MP/PA/PI não reproduzidos (Δ ≥ −8.182,43); hipótese EM ESTOQUE≈exclui armazém 99 (Δ ≈ 293.273 vs MP loc-99 293.674,80) — PENDING |
 | Gates | **G1 PASS · G2 PASS · G3 PASS · G4 PENDING · G5 PENDING · G6 PENDING** |
 | Residual | parâmetros efetivos (filtro de tipos/armazém por versão); binding físico SB9×SB2×outras; amostra oficial p/ paridade |
 
@@ -114,9 +114,9 @@ Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) 
 
 Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz ORDEM PRODUCAO mas é R08; `matr860` permanece **candidato** (fonte presente, papel decodificado na rodada 7 — MOD via SD3 RE1/TM999 — mas não é o relatório de consumo por OP observado em uso). Gates: todos **PENDING**. Próxima ação: confirmar com Controladoria qual artefato/rosto o relatório tem (roster não lista).
 
-### R05 — Entradas e Saídas / valor estoque — **PARCIAL (rotina+artefato identificados)**
+### R05 — Entradas e Saídas / valor estoque — **PARCIAL (rotina+artefato+fonte identificados)**
 
-`Entradas e saidas.pdf` = **`MATR320.prt`** — "Resumo das Entradas e Saidas EM R$", período 01/09–30/09/2026, MATRIZ; colunas por tipo (Tip): Saldo Inicial, Compras, Movimentações Internas, Requisições p/ Produção, Transferências, Produção, Vendas, Transf. p/ Processo, Devoluções, Poder de Terceiros, Saldo Atual + Total Geral. **Paridade parcial (doc 84 §4):** SB9@30/09 f01 × Saldo Atual — 9/10 tipos exatos ao centavo; residual MP +8.631,73 não explicado; eixos Entradas/Saídas não reconciliados. Gates: **G1–G3 PASS · G4 PENDING** (binding SD1/SD2/SD3/TRB a confirmar) · G5 PENDING · G6 PENDING.
+`Entradas e saidas.pdf` = **`MATR320.prt`** — "Resumo das Entradas e Saidas EM R$", período 01/09–30/09/2026, MATRIZ; colunas por tipo (Tip): Saldo Inicial, Compras, Movimentações Internas, Requisições p/ Produção, Transferências, Produção, Vendas, Transf. p/ Processo, Devoluções, Poder de Terceiros, Saldo Atual + Total Geral. **Fonte localizado:** `matr320.prx` (padrão TOTVS, execução via SP `MAT056`; variante Delpi `Dmatr320.prx`/`DLPR320` zera poder3 e não foi a usada). **Reconciliação de colunas (doc 84 §4.2, doc 80 §31):** 12/13 colunas MP exatas ao centavo no estado de emissão — incluindo a retificação retroativa do doc `004504505` (TES 001→085, inserido ~20-21/10) que explica Compras (+94.018,81) e EntPT (−103.602,00) simultaneamente; MovInt residual ~R$0,48; SA = estado de custo da emissão (diverge +8.631,73 do SB9 reconstruído 21/10 — **explicada**: repricing +9.583,19, recálculo CM pós-emissão, INVENT −24,95, residual ~−950). Gates: **G1–G3 PASS · G4 PENDING** (bindings provados por fonte+dados na linha MP; formalização dos demais tipos pendente) · G5 PENDING (paridade `as_of` centesimal pendente na medida de saldo) · G6 PENDING.
 
 ### R06 — CPV / Kardex 01 — **PARCIAL**
 

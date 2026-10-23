@@ -127,7 +127,8 @@ Mais:
 | Pagar FINR190 | **paridade row-level PROVEN** (948/948 chaves, TB=`E5_VALOR`, VO=`E2_VALOR`+regras aglutinado, resumos/componentes exatos — doc 84); residual: subconjunto do log + versão RPO |
 | Receber DLP06R01 | **paridade row-level do artefato PROVEN, Δ R$0,00** (649 SE5×SE1 + 8 `PA`/`FINA750` sem título; TB=`E5_VALOR`, VO=`E1_VALOR` 649 + VO=provisão `'P'` espelhada MATA121/FINA050 8/8 — doc 84, errata doc 80 §30); residual: fonte do produtor (G4) + regra geral do sem-título (3 excluídos identificados) — **pende de TI/ERP** |
 | MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
-| SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) |
+| SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) — **reforço 23/10:** onda retificadora de ~20-21/10 confirmada por RECNO (SD1 doc `004504505` reclassificado 001→085 + SB9 f01 inserido 21/10 19:13) — corrobora "reexecução/etapa distinta" sem identificar o writer |
+| MATR320 (R05) | **fonte localizado 23/10:** `matr320.prx` padrão TOTVS (execução via SP `MAT056`; variante `DLPR320` descartada por poder3 zerado no fonte × não-zerado no PDF). Colunas MP reconciliadas 12/13 ao centavo em estado de emissão (doc 84 §4.2, doc 80 §31, regras doc 85 §5); residual: MovInt ~R$0,48 e `as_of` do saldo |
 | DLP06R01, P7 | **parcialmente resolvidos 23/10** — DLP06R01.prt=layout compartilhado (pagar: produtor FINR190 provado; receber: custom `DLP06R01` sem fonte — E1 pendente); P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |
 | Doc 47 | crosswalk doc 83 + §11/§11.1/§11.2: **39/60 = 65,0% coleta · 41/90 = 45,6% auditoria** — 37 gates 23/10 (rework) + G5 de R01/R02 (paridade row-level, doc 84) |
 

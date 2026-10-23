@@ -179,6 +179,8 @@ parâmetros por emissão pendentes (E2, TI/ERP). **→ G5 PENDING.**
 
 ## §4 — R05 · Entradas e Saídas (`MATR320.prt`)
 
+### §4.1 — Saldo Atual × SB9
+
 SB9@30/09/2026 filial 01 (`B9_VINI1` por `B1_TIPO`) × coluna **Saldo Atual**
 do MATR320:
 
@@ -188,9 +190,48 @@ do MATR320:
 | MP | 3.373.542,05 | 3.364.910,31 | **+8.631,73** |
 
 Total: 3.893.096,17 vs 3.884.464,44 (Δ = o mesmo 8.631,73, isolado em MP).
-Eixos Entradas/Saídas não reconciliados (exigiria agregação SD3 por tipo —
-não executado; eixo pendente). **→ G5 PENDING** (paridade de fechamento
-9/10 + residual MP não explicado).
+
+### §4.2 — Reconciliação completa das colunas (linha MP) — rodada 23/10
+
+Fonte oficial localizada: `docs/13-fontes-totvs-protheus/04. Estoque/
+MATR320/matr320.prx` (padrão TOTVS, execução via SP `MAT056` — a variante
+Delpi `Dmatr320.prx`/`DLPR320` tem poder de terceiros comentado e **não**
+foi a usada, pois o PDF traz EntPT/SaiPT não zeradas). Regras por coluna
+em doc 80 §31.B e catálogo doc 85 §5 (BR-R05-003…010).
+
+| Coluna MP | Impresso | Reconstruído (origem física) | Δ |
+|---|---|---|---|
+| Saldo Inicial | 3.315.659,021 | derivado; = ΣSB9@0831 | **0** |
+| Compras | 642.670,88 | SD1 poder3=N/est=S/tipo≠'D' `D1_CUSTO` DTDIGIT-Set + itens 001 do doc 004504505 ainda vivos na emissão | **0** |
+| Movimentações Internas | −40.957,818 | SD3 OP-vazio CF[3]≠'3' (INV + DE6/RE6 + RE0-503) | ~0,48 (precisão TTAT_COLD) |
+| Requisições p/ Produção | −666.114,374 | SD3 OP-preenchido não-PR a custos de emissão | **0** |
+| Transferências | 0,000 | RE4/DE4 espelhadas | **0** |
+| Produção | 0,000 | — | **0** |
+| Vendas | 164.330,717 | SD2 poder3=N/est=S/tipo≠'D' `D2_CUSTO1` | **0** |
+| Transf. p/ Processo | 940.599,335 | SD3 CF[3]='3' OP-vazio (RE3) — **memo, fora da equação** | **0** |
+| Devolução de Vendas | 264,681 | SD1 poder3=N/est=S/tipo='D' (TES 168/1949) | **0** |
+| Devolução de Compras | 4.732,694 | SD2 poder3=N/est=S/tipo='D' (CFOP 6201) | **0** |
+| Entrada Poder Terceiros | 319.258,140 | SD1 poder3≠'N'/est=S `D1_CUSTO` DTDIGIT-Set − itens 085 do doc 004504505 (inseridos ~20-21/10 retroativos) | **0** |
+| Saída Poder Terceiros | 36.806,805 | SD2 poder3≠'N'/est=S `D2_CUSTO1` (TES 524/x903) | **0** |
+| Saldo Atual | 3.364.910,314 | saldo no estado de custo da emissão (01/10 16:16) | +8.631,73 vs SB9@21/10 |
+
+Equação validada ao centavo: `SA = SI + Compras + MovInt + Requis +
+Transf + Produção − Vendas + DevV − DevC + EntPT − SaiPT` (TransfProc
+memo).
+
+### §4.3 — Divergência MP +8.631,73 — decomposição (doc 80 §31.E)
+
+| Componente | Valor |
+|---|---|
+| Repricing da retificação doc 004504505 (001→085, ~20-21/10) | +9.583,19 |
+| Movimentos INVENT retroativos (insert 01/10 ~19h) | −24,95 |
+| Recálculo de custo médio pós-emissão (MATA330 c/ 25.995 updates `D3_CUSTO1`; `Analise.xlsx` ΣQ×ΔCM ≈ +10,7k agregado) | incluído |
+| Residual não decomposto | ≈ −950 |
+
+**DIFERENÇA EXPLICADA**: SA impresso = estado de custo da emissão; SB9 =
+snapshot reconstruído 21/10 pós-retificação. Não é erro de fórmula nem
+de filtro — é diferença temporal de estado. **→ G5 PENDING** até
+paridade `as_of` demonstrada nas três medidas canônicas (E/S × P7 × H02).
 
 ## §5 — Demais itens (candidatos avaliados)
 

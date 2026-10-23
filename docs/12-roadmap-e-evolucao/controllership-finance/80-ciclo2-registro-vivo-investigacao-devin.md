@@ -1513,3 +1513,187 @@ demonstrada** — dependente do fonte `DLP06R01` (E1, TI/ERP).
 - **R02 G5: PASS mantido** — Δ monetário = R$0,00; pendências remanescentes
   são de identidade de regra (G4), não de paridade. G4 PENDING, G6 PENDING.
 - Métricas inalteradas: `COLETA 39/60` · `AUDITORIA 41/90` · concluídos 0/15.
+
+---
+
+## §31 — CF-C2-STOCK-PARITY-001: fonte MATR320 localizado + reconciliação completa de colunas + mecanismo da divergência MP (2026-10-23)
+
+Rodada de investigação READ-only. Dois achados estruturais: (1) o fonte
+oficial do relatório está no acervo documental; (2) a divergência de
+R$8.631,73 e os gaps das colunas Compras/EntPT decorrem de **eventos
+retificadores posteriores à emissão**, reconstruíveis por RECNO e por
+log de auditoria.
+
+### 31.A — Fonte e arquitetura da emissão
+
+- `docs/13-fontes-totvs-protheus/04. Estoque/MATR320/matr320.prx` =
+  relatório padrão TOTVS `MATR320` (TReport "Resumo das Entradas e
+  Saidas"). Caminho primário: **stored procedure `MAT056`** via
+  `TCSPExec` (GetSPName("MAT056","22"), VerIDProc `'002'`); o SQL do
+  fonte só roda como fallback quando a SP não existe.
+- `Dmatr320.prx` = customização Delpi `DLPR320` (User Function renomeada,
+  lógica idêntica **exceto** `nEntrTerc`/`nSaiTerc` comentados — colunas
+  de poder de terceiros zeradas).
+- Evidência da variante efetivamente emitida: o PDF oficial traz
+  `Entrada/Saída Poder Terceiros` **não zeradas** (MP: 319.258,140 /
+  36.806,805) → a emissão seguiu o caminho **padrão (SP MAT056)**,
+  não `DLPR320`. Regras do fonte padrão valem como AS-IS.
+- Parâmetros do pergunte `MTR320`: armazém de/até (mv_par01/02), tipo
+  de/até (03/04), produto de/até (05/06), **emissão de/até (07/08)**,
+  moeda (09), **saldo a considerar: Atual/Fechamento/CalcEst (10)**,
+  MOD sim/não (11), OPs SIGAMNT (12). Constantes internas:
+  `MV_LOCPROC` (armazém processo, padrão `'99'`) e `MV_CQ` (qualidade,
+  padrão `'98'`).
+
+### 31.B — Regras canônicas de coluna (fonte, linhas 402–761)
+
+Filtros físicos por tabela:
+
+- `SD1`: join SF4 `F4_ESTOQUE='S'` · `D1_DTDIGIT` ∈ [par07,par08] ·
+  `D1_ORIGLAN<>'LF'` · `D1_LOCAL` ∈ [par01,par02] · valor = `D1_CUSTO`
+  (moeda 1; `D1_CUSTO<n>` p/ moeda n).
+- `SD2`: idem com `D2_EMISSAO` ∈ período · `D2_ORIGLAN<>'LF'` ·
+  valor = `D2_CUSTO1`.
+- `SD3`: `D3_EMISSAO` ∈ período · `D3_LOCAL` range ·
+  `D3_ESTORNO<>'S'` (MV_D3ESTOR='N') · valor = `D3_CUSTO1` com sinal
+  **negativo quando `D3_TM > '500'`** (TM é saída).
+- Classificação SD1/SD2 por `SF4.F4_PODER3` + `D1_TIPO`/`D2_TIPO`:
+  poder3='N' → Compras/Vendas (ou DevVendas/DevComprs se TIPO='D');
+  poder3≠'N' → EntPT/SaiPT.
+- Classificação SD3 por `D3_CF`/`D3_OP`: `CF` iniciando 'PR' →
+  Produção; `CF ∈ {RE4,DE4}` → Transferências; `OP` vazio ∧
+  `CF[3]≠'3'` → Movimentações Internas; `OP` preenchido → Requisições
+  p/ Produção; demais → Transf. p/ Processo (`nReqOutr`, acumulado
+  também em `nReqProc` sob regra `lLocProc`).
+- `nSaldoAtu` = Σ `B2_VATU<moeda>` (par10=1) ou `B2_VFIM<moeda>` (2)
+  ou `CalcEst` (3) sobre SB2 nos armazéns do range.
+- **`nSalant` é derivado**: `SaldoAtu − Σ colunas de movimento`
+  (não é saldo inicial cadastrado — texto do próprio fonte).
+
+### 31.C — Reconciliação coluna a coluna — linha MP (filial 01, 09/2026)
+
+Valores impressos × origem física (SELECT-only; custos em moeda 1):
+
+| Coluna | Impresso | Origem física | Δ |
+|---|---|---|---|
+| Saldo Inicial | 3.315.659,021 | derivado (SA − movimentos); = ΣSB9@0831 exato | 0 |
+| Compras | 642.670,88 | SD1 poder3=N/est=S/tipo≠'D' DTDIGIT-Set **+ itens 001 do doc 004504505 ainda vivos** (548.652,07 + 94.018,81) | **0** |
+| Movimentações Internas | −40.957,818 | SD3 OP-vazio, CF[3]≠'3' (INV DE0/RE0 net + DE6/RE6 net + RE0-503) a custos de emissão; por custo atual −40.958,297 | ~0,48 residual de precisão (TTAT_COLD) |
+| Requisições p/ Produção | −666.114,374 | SD3 OP-preenchido não-PR (RE2+RE9+RE0-999-220) a custos de emissão (TTAT_COLD) | **0** |
+| Transferências | 0,000 | SD3 CF∈{RE4,DE4} espelhadas (±259.794,011) | 0 |
+| Produção | 0,000 | sem CF 'PR*' em MP | 0 |
+| Vendas | 164.330,717 | SD2 poder3=N/est=S/tipo≠'D' `D2_CUSTO1` (TES 614/5101 + 590/6151) | **0** |
+| Transf. p/ Processo | 940.599,335 | SD3 CF[3]='3' OP-vazio (RE3) a custos de emissão — **coluna memo fora da equação do saldo** | **0** |
+| Devolução de Vendas | 264,681 | SD1 poder3=N/est=S/tipo='D' (TES 168/CFOP 1949) | **0** |
+| Devolução de Compras | 4.732,694 | SD2 poder3=N/est=S/tipo='D' (CFOP 6201, TES 530/561) | **0** |
+| Entrada Poder Terceiros | 319.258,140 | SD1 poder3≠'N'/est=S `D1_CUSTO` DTDIGIT-Set **sem os itens 085 do doc 004504505** (422.860,14 − 103.602,00) | **0** |
+| Saída Poder Terceiros | 36.806,805 | SD2 poder3≠'N'/est=S `D2_CUSTO1` (TES 524 × CFOP x903) | **0** |
+| Saldo Atual | 3.364.910,314 | medida de saldo no estado de custo da emissão (01/10 16:16) | vs SB9@21/10: +8.631,73 (ver 31.D) |
+
+Equação da linha MP (verificada ao centavo):
+`SA = SI + Compras + MovInt + Requisições + Transf + Produção − Vendas
++ DevV − DevC + EntPT − SaiPT` — TransfProc fora da soma (memo).
+
+### 31.D — Mecanismo unificado: retificação retroativa pós-emissão
+
+Doc `004504505` (NF série 1, fornecedor 000001/11, emissão 18/09,
+digitação 22/09): cada item existe em **par espelhado** —
+
+- `TES 001` **deletado** (`D_E_L_E_T_='*'`, RECNO 286517–286520,
+  custo 94.018,81 — itens MP);
+- `TES 085` **vivo** (RECNO 288137–288140, custo 103.602,00).
+
+Os RECNOs 288137–288140 estão num bloco cujos vizinhos têm
+`D1_DTDIGIT` = 20–21/10/2026 → **os itens 085 foram inseridos em
+~20–21/10 com datas retroativas** (mesma onda do rebuild SB9 de
+21/10 19:13 e do insert do doc 004510648-085 em 288145). Na emissão
+(01/10 16:16) os itens eram 001/compra → explica **simultaneamente**:
+
+- Compras impresso 642.670,88 = 548.652,07 + 94.018,81 (Δ 0,00);
+- EntPT impresso 319.258,14 = 422.860,14 − 103.602,00 (Δ 0,00).
+
+Demais linhas SD1 deletadas na janela (duplicatas 000016560,
+000140318, 000499157 etc.) são housekeeping anterior à emissão —
+caso contrário os matches centesimais não fechariam.
+
+### 31.E — Decomposição da divergência MP (SA impresso × SB9 atual)
+
+`SB9@21/10 (B9_VINI1) = 3.373.542,05` vs `SA impresso = 3.364.910,31`
+→ **+8.631,73**. Componentes demonstrados:
+
+1. **Repricing da retificação** — os 4 itens do doc 004504505
+   trocaram custo 94.018,81 → 103.602,00 (**Δ +9.583,19**); dois dos
+   produtos (`10211413`, `10211414`) constam no topo do relatório de
+   variação de CM (`Analise.xlsx`) — o repricing integrou a
+   revalorização do estoque.
+2. **Recálculo de custo médio pós-emissão** — `MATA330` e rotinas
+   correlatas regravaram `D3_CUSTO1`/`D2_CUSTO1` (25.995 updates no
+   TTAT); reversão com `TTAT_COLD` reproduz os valores de emissão
+   (matches exatos em RE3 e Requisições). A variação agregada por
+   produto (`Analise.xlsx`, ΣQfinal×ΔCM ≈ +10,7k) é consistente em
+   ordem de grandeza.
+3. **Movimentos retroativos INVENT** (digitação ≤30/09, insert
+   01/10 ~19h): líquido apenas **−24,95**.
+4. **Residual** ≈ −950 (interações de repricing por produto/armazém e
+   precisão do COLD) — INCONCLUSIVE no centavo.
+
+Classificação: **DIFERENÇA EXPLICADA** (não paridade): os dois números
+medem estados de custo distintos — SA@emissão (16:16, pré-retificação)
+vs snapshot SB9 reconstruído em 21/10. A coluna `Saldo Atual` do
+MATR320 é reproduzível **no estado de custo da emissão**, não no
+estado atual.
+
+### 31.F — Estado e preservações
+
+- Nenhuma mutação de dados; todas as consultas SELECT.
+- `EXECUTION_DRIFT`, `STALE_EVIDENCE`, `NO_GATE_CHANGE` preservados.
+- Regras codificadas em doc 85 §5 (BR-R05-003…010); matriz de paridade
+  em doc 84 §4; crosswalk doc 83.
+- G5 para R05 permanece **PENDING** até paridade `as_of` centesimal
+  demonstrada nas três medidas (E/S × P7 × H02) — SA depende de
+  snapshot/versionamento explícito.
+
+### 31.G — Frente B parcial: evidências estruturais do MATR460/P7
+
+O fonte `matr460.prx` **não** consta no acervo (código padrão TOTVS, como a
+SP MAT056). Evidências indiretas encontradas:
+
+- `A460UNIT.prw` (hook Delpi no acervo): recebe `dDataFech`, `cLocOrig`
+  (parâmetro `MV_ALMTERC`), `cArqTemp` e ajusta `TOTAL/VALOR_UNIT/QUANTIDADE`
+  por produto — executa `UPDATE MP7GDA SET VALOR += workfile.TOTAL`. Confirma
+  MATR460 = rotina do "Modelo P7" (tabelas `MP7*`).
+- Banco contém arquivos de trabalho P7 persistidos:
+  `MP7GDA` (PRODUTO/VALOR — ajuste do hook), `MP7_01_01`, `MP7_01_02`,
+  `MP7_05_01`, `MP7_052019`, `MP7F01_202402`, `MP7F02_202402` — esquema
+  `PRODUTO, ARMAZEM, DATAFECHAMENTO, NOMEARQ, TIPOMOV, QUANTIDADE, TOTAL`.
+- `TIPOMOV` observado: **`aSalAtu`** (linhas de saldo por produto+armazém+
+  data-fechamento), **`QtCus`** (linhas quantidade×custo), **`aDadosCF9`**
+  (dados do registro fiscal de inventário — livro CF9). Dados persistem só
+  até ~04/2024 — nada da competência 09/2026 (arquivo é recriado por
+  emissão).
+- Aritmética dos artefatos (doc 84 §3 + esta rodada):
+  `EM ESTOQUE 3.591.191,36 + EM PROCESSO 355.240,51 = 3.946.431,87`
+  = **TOTAL geral do `Estoque.pdf` ao centavo** → o P7 completo =
+  EM ESTOQUE + EM PROCESSO, e EM PROCESSO = MATR989 (355.240,51 exato).
+- `EM ESTOQUE total 3.591.191,36` vs `SA total MATR320 3.884.464,44`:
+  Δ −293.273,08 ≈ estoque no armazém 99/LOCPROC (MP loc-99 = 293.674,80) —
+  **hipótese forte não provada**: P7 EM ESTOQUE exclui armazém de
+  processo (MV_LOCPROC=99), consistente com a existência de `MV_ALMTERC`
+  no hook e com a seção EM PROCESSO separada. Confirmação depende dos
+  parâmetros de emissão (E2) ou do fonte da SP.
+
+### 31.H — Conciliação tripla E/S × P7 × H02 — comparabilidade
+
+- `MATR320` mede **movimentação do período por tipo** (fluxo) com Saldo
+  Atual como medida de estado à data de referência.
+- `P7/MATR460` mede **posição de inventário** (EM ESTOQUE + EM PROCESSO)
+  à data-fechamento, provavelmente por produto/armazém (`aSalAtu`).
+- `H02/Bloco H` é o **registro fiscal do inventário** (SPED) — escopo
+  fiscal/legal, distinto do operacional.
+- As três medidas **não são diretamente confrontáveis** sem: (i)
+  parâmetros de emissão do P7 (tipos/armazém/terceiros — E2);
+  (ii) alinhamento de data-base e escopo; (iii) identidade da medida
+  H02 no recorte. A equação canônica `DIVERGÊNCIA = E/S − P7 − H02`
+  continua **não aplicável ao recorte atual** — pendência legítima, não
+  falha de reconciliação. Requisito TARGET derivado: o portal deve
+  expor cada medida com seu `as_of` e escopo, sem forçar igualdade.
