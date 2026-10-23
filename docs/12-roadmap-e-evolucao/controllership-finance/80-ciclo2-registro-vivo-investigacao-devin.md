@@ -297,3 +297,30 @@ Fonte: `data_routes.py:23-93`, `sql_validator.py`, `run_sql_use_case.py`, `base_
 5. **Rastreabilidade:** Doc 47 preservado com `NO_GATE_CHANGE`. Os dados de autenticação vêm do código no HEAD observado; nenhum HTTP/ERP ou permission grant foi testado. D1 permanece `PENDING_GO`, com principal/owner e escopo por aprovar.
 
 **Revisão:** correções documentais efetuadas; nenhum sinal de implementação autorizada. `D0_EXECUTION=DOCUMENTARY_ONLY`; `G4_PARITY=TEST_NOT_RUN`; `D1=NO_GO`.
+
+
+## 12. Decisão do PO — GO de execução READ-only do Ciclo 2 (23/10/2026)
+
+**Decisão expressa do PO nesta conversa:** "vamos fazer apenas consultas select o usuário do banco é somene leitura. vamos partir para execução, ficar limitando o devin só vai nos atrapalhar". Esta seção é a autoridade mais recente sobre o **GO operacional READ-only** e prevalece sobre marcas anteriores de `D1=NO_GO` ou `CYCLE_2_GO=NO` **somente para investigação SELECT/read-only nos nove workstreams**, sem reclassificar provas antigas.
+
+**Estado atualizado:** `CYCLE_2_READ_INVESTIGATION=PO_APPROVED`; `D1-D4_READ_DISCOVERY=AUTHORIZED_WITH_VERIFIED_READ_ONLY_PRINCIPAL`; `WRITE_OR_RUNTIME_IMPLEMENTATION=NOT_AUTHORIZED`. D0 está fechado documentalmente com residuais. O PO afirma que o usuário do banco é somente leitura; **os grants efetivos do principal ainda precisam ser constatados pelo executor**, sem expor credenciais. Se a autenticação/autorização requerida pela API não estiver disponível, registrar bloqueio; não contornar proteções nem solicitar novas permissões por conta própria.
+
+### 12.A — Diretriz de execução
+
+- Devin pode investigar em sequência **D1, D2, D3 e D4** sem pedir um novo aceite para cada tabela ou chamada de leitura, dentro deste escopo; revisar e publicar evidências progressivamente. Não exigir número fixo de chamadas nem obrigar que todo dicionário SX2/SX3 esteja completo antes dos SELECTs necessários.
+- Permitidos: leitura de metadados via `/system`, consultas tipadas GET de dados operacionais, e `SELECT`/CTEs read-only via `/data/sql` ou ação canônica autorizada, respeitando autenticação/escopo disponíveis e conta de BD sem privilégios de escrita. Escolher a superfície com menor complexidade que entregue prova.
+- Antes da primeira consulta: capturar HEAD/status; verificar pelo canal legítimo os privilégios e a identidade de consulta efetivamente utilizados, documentação da rota, e que consulta read-only não chama rotina/procedure mutante. Não executar DDL, DML, EXEC/procedures, transações com escrita, nem contornar autenticação. Preferir tabelas/colunas explícitas e filtros de competência/filial; segmentar grandes conjuntos e usar limites ou agregados quando fizer sentido para proteger performance **sem impor um teto arbitrário que invalide a conciliação**.
+- A afirmação do PO sobre conta read-only é uma premissa operacional, não comprovação independente. Se o principal efetivo tiver escrita, query endpoint permitir efeitos colaterais não conhecidos, ou observabilidade indicar carga excessiva, **STOP** e registrar owner/alternativa segura; não tentar explorar.
+- Não publicar no GitHub dados brutos, valores financeiros confidenciais, identificadores pessoais, segredos ou tokens. Guardar outputs sensíveis em meio autorizado, documentando somente a existência, parâmetros sanitizados, regra, divergência, status e identificador de evidência permitido.
+- Nenhuma nova API, BFF, tela, permission, migration, alteração de código produtivo, agendamento de job, alteração do Protheus ou deploy. O contrato R01/R02/R03 não muda por este GO.
+- A execução do ciclo deve atualizar este registro vivo, doc 47 quando G1-G6 forem efetivamente demonstrados, e produzir Execution Report por workstream/rodada; sem esperar retorno a este chat para cada SELECT.
+
+### 12.B — Gate mínimo não burocrático
+
+1. Confirmar identidade técnica e autorização funcional existente para READ e conta de banco sem grants mutantes. **Sem novos grants pelo Devin.**
+2. Executar apenas operações de leitura sem efeitos colaterais e com escopo corporativo permitido; manter filtros/volume proporcionais.
+3. Para cada workstream, identificar fontes/chaves/fórmulas, montar SELECT reproduzível, comparar com artefato oficial e registrar diferença ou `INCONCLUSIVE`.
+4. Atualizar docs 80 e 47 preservando o histórico; entregar SHAs e pendências.
+5. Quando faltar autorização/capacidade, separar o bloqueio específico e continuar outros workstreams permitidos. Não bloquear todo o ciclo por uma lacuna isolada.
+
+**Paridade e homologação:** este GO autoriza *investigar*, não presumir equivalência, passar G5/G6 sem prova ou declarar fechamento final. Revisão GPT e aceite funcional humano continuam necessários para conclusão.
