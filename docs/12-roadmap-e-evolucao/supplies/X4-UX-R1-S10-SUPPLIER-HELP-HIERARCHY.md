@@ -74,3 +74,12 @@ Zero diff fora de `plugins/supplies` + docs. Sem contrato, RBAC, permissão, int
 ## 9. Próxima etapa
 
 Aceite visual autenticado do novo hierarquia (hero + subtítulos visíveis nas 5 seções de ambas as telas).
+
+
+## 10. Revisão GPT — S10 (2026-10-23)
+
+**Decisão: `ACCEPT_WITH_RESIDUAL` para implementação S10 em código.** Inspeção em GitHub no source `bf3db64c8e` confirmou `supplierSectionDescriptions` como fonte compartilhada, `subtitle` aplicado em `SupplierCreatePage` e `SupplierDetailPage`, descrições de hero distintas e complemento de limite simplificado. As 54 ajudas E7 continuam no registry segundo a evidência do executor e testes estruturais. Nenhuma mudança de backend/RBAC/integração consta do relatório.
+
+**Classificação da evidência:** MFE 381 PASS, typecheck, lint, build, deploy MFE-only e bundle `App-BWLqb0qi.js` = **reportados pelo Cursor**, não reexecutados pelo GPT. `S10_VISUAL = INCONCLUSIVE`; os componentes reutilizados não substituem prova de desktop/mobile, claro/escuro, teclado e leitura efetiva. O rótulo `E10_VISUAL` usado no relatório S10 é ambíguo em relação à feature E10/WF-15 histórica: usar **`S10_VISUAL`** em relatórios futuros para não confundir gates.
+
+**Aceite pendente:** validar com navegador autenticado se os subtítulos das cinco seções são visíveis sem hover na criação e edição, se o texto genérico antigo desapareceu, se tooltips dos campos continuam acessíveis e sem clipping, e se não existe promessa de gravação enquanto gates ERP estiverem OFF. Nenhuma escrita real no Protheus autorizada por esta revisão.
