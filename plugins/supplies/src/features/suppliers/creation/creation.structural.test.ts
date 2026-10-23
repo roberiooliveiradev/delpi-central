@@ -176,20 +176,27 @@ describe("UX polish (X4.UX-R1.S9)", () => {
   });
 
   it("retrieved_at é exibido em America/Sao_Paulo sem mutar o contrato", () => {
-    const content = read("content.ts");
-    expect(content).toContain('"America/Sao_Paulo"');
-    expect(content).toContain("Intl.DateTimeFormat");
-    expect(content).toContain("timeZone: PORTAL_TIME_ZONE");
+    // formatadores canônicos compartilhados no contexto suppliers (S9.R1)
+    const shared = readFileSync(
+      join(dir, "../externalSourceFormat.ts"),
+      "utf8",
+    );
+    expect(shared).toContain('"America/Sao_Paulo"');
+    expect(shared).toContain("Intl.DateTimeFormat");
+    expect(shared).toContain("timeZone: PORTAL_TIME_ZONE");
     // fallback seguro para timestamp inválido
-    expect(content).toContain("return iso");
+    expect(shared).toContain("return iso");
     const panel = read("CreationSuggestionsPanel.tsx");
     expect(panel).toContain("formatRetrievedAt(entry.source.retrieved_at)");
   });
 
   it("fonte humanizada com provider_id preservado como proveniência", () => {
-    const content = read("content.ts");
-    expect(content).toContain("providerDisplayName");
-    expect(content).toContain("brasilapi-cnpj-v1");
+    const shared = readFileSync(
+      join(dir, "../externalSourceFormat.ts"),
+      "utf8",
+    );
+    expect(shared).toContain("providerDisplayName");
+    expect(shared).toContain("brasilapi-cnpj-v1");
     const panel = read("CreationSuggestionsPanel.tsx");
     expect(panel).toContain("providerDisplayName(entry.source.provider_id)");
     // identificador técnico continua acessível (title) — contrato intacto

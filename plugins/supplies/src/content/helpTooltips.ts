@@ -85,7 +85,7 @@ export const SP_HELP = {
   suppliersIdentification:
     "Identificação cadastral: documento (CNPJ/CPF), tipo de pessoa, código, loja, razão social e fantasia — o documento é o primeiro campo em todos os modos. Código + loja compõem o identificador único do fornecedor.",
   suppliersEnrichment:
-    "Enriquecimento cadastral: compara a ficha do Protheus com dados públicos do CNPJ na BrasilAPI — fonte externa de terceiros, somente sugestão, nunca autoridade. «Consultar dados externos» cria uma revisão sua com as diferenças por campo; aceite apenas campos elegíveis (rejeitar é sempre permitido para pendências) e as decisões em lote exigem confirmação. «Preparar atualização» gera apenas um rascunho para conferência — nenhum dado é gravado no Protheus por esta tela. O histórico mostra suas revisões anteriores; cada uma expira em 24h.",
+    "Enriquecimento cadastral: compara a ficha do Protheus com dados públicos do CNPJ na BrasilAPI — fonte externa de terceiros, somente sugestão, nunca autoridade; a fonte e a data/hora da consulta aparecem em formato amigável (horário de Brasília). «Consultar dados externos» cria uma revisão sua com as diferenças por campo; aceite apenas campos elegíveis (rejeitar é sempre permitido para pendências) e as decisões em lote exigem confirmação. «Preparar atualização» gera apenas um rascunho para conferência — nenhum dado é gravado no Protheus por esta tela. O histórico mostra suas revisões anteriores; cada uma expira em 24h.",
   overviewTemporal:
     "Cada card tem natureza temporal própria: intervalo (OTD, CPV, economia), snapshot (estoque, críticos) ou estado atual (SC pendentes). Início não substitui este painel.",
   overviewFiltersPeriod:

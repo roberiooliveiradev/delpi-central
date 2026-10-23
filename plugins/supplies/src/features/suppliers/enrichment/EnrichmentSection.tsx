@@ -27,6 +27,10 @@ import {
 import { EnrichmentComparisonTable } from "./EnrichmentComparisonTable";
 import { EnrichmentHistoryTable } from "./EnrichmentHistoryTable";
 import {
+  formatRetrievedAt,
+  providerDisplayName,
+} from "../externalSourceFormat";
+import {
   ENRICHMENT_CONTENT as C,
   mapEnrichmentError,
 } from "./content";
@@ -329,7 +333,14 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
                 summary.pending,
               )}
               {" · "}
-              {`${active.review.source_id} · ${active.review.source_retrieved_at ?? ""}`}
+              <span
+                title={`${active.review.source_id} · ${active.review.source_retrieved_at ?? ""}`}
+              >
+                {providerDisplayName(active.review.source_id)}
+                {active.review.source_retrieved_at
+                  ? ` · ${formatRetrievedAt(active.review.source_retrieved_at)}`
+                  : ""}
+              </span>
             </p>
 
             <EnrichmentComparisonTable

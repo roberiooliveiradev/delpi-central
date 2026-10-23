@@ -9,6 +9,10 @@ import {
   ENRICHMENT_CONTENT as C,
   REVIEW_STATUS_LABELS,
 } from "./content";
+import {
+  formatRetrievedAt,
+  providerDisplayName,
+} from "../externalSourceFormat";
 import type { EnrichmentReview } from "./types";
 
 type EnrichmentHistoryTableProps = {
@@ -24,9 +28,7 @@ type EnrichmentHistoryTableProps = {
 
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString("pt-BR");
+  return formatRetrievedAt(value);
 }
 
 export function EnrichmentHistoryTable({
@@ -48,7 +50,9 @@ export function EnrichmentHistoryTable({
     {
       key: "source",
       header: C.columnSource,
-      render: (r) => r.source_id,
+      render: (r) => (
+        <span title={r.source_id}>{providerDisplayName(r.source_id)}</span>
+      ),
     },
     {
       key: "status",

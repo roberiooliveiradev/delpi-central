@@ -115,6 +115,41 @@ describe("Enrichment feature (X4.S1) — boundaries", () => {
     expect(ops).toMatch(/status >= 500 \|\| err\.status === 429/);
   });
 
+  it("S9.R1 — fonte/data usam os formatadores compartilhados", () => {
+    const section = read("EnrichmentSection.tsx");
+    const history = read("EnrichmentHistoryTable.tsx");
+    for (const text of [section, history]) {
+      expect(text).toContain("../externalSourceFormat");
+      expect(text).toContain("providerDisplayName");
+      expect(text).toContain("formatRetrievedAt");
+    }
+    // sem timestamp bruto como texto principal nem fuso do relógio local
+    // padrão bruto pode aparecer apenas dentro de title= (proveniência),
+    // nunca como texto principal — exatamente 1 ocorrência
+    const rawMeta = section.match(/active\.review\.source_id\} · /g) ?? [];
+    expect(rawMeta).toHaveLength(1);
+    expect(history).not.toContain("toLocaleString");
+    // proveniência técnica preservada via title
+    expect(section).toMatch(/title=\{`?\$?\{?active\.review\.source_id/);
+    expect(history).toContain("title={r.source_id}");
+  });
+
+  it("S9.R1 — formatadores canônicos moram no bounded context suppliers", () => {
+    const shared = readFileSync(
+      join(dir, "../externalSourceFormat.ts"),
+      "utf8",
+    );
+    expect(shared).toContain('PORTAL_TIME_ZONE = "America/Sao_Paulo"');
+    expect(shared).toContain("brasilapi-cnpj-v1");
+    const creationContent = readFileSync(
+      join(dir, "../creation/content.ts"),
+      "utf8",
+    );
+    // re-export — única fonte, sem duplicar o formatador
+    expect(creationContent).toContain('from "../externalSourceFormat"');
+    expect(creationContent).not.toContain("formatToParts");
+  });
+
   it("prepare-update não carrega idempotência fictícia", () => {
     const ops = read("decisionOperations.ts");
     // variante "prepare" da operação carrega apenas expectedRevision
