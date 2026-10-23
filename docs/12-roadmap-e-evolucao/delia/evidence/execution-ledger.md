@@ -17606,3 +17606,23 @@ RC1_REMEDIATED=YES RC2_REMEDIATED=YES
 UNTRUSTED_METADATA_LEAK=NONE (deterministic + live scan 20 turns)
 HONEST_INSUFFICIENCY=YES BUSINESS_RECORD_INTEGRITY=YES
 ROLLBACK=git revert (single module + tests, zero migrations/deploy)
+
+## §6.392 — G4 residual closure + production deploy — TEST_FIXTURE evidence + SSH operator deploy (2026-10-23)
+
+**2026-10-23 — DELIA-C3-MARKDOWN-B2-G4-RESIDUAL-CLOSURE-TEST-FIX-DEPLOY-01:** reancorado em 04fcc80df6 (G4 review 754bef3305 ACCEPT_WITH_RESIDUAL + doc-109/P1 absorvidos); upstream 86294797d1 (P1 projection fix) integrado por rebase durante a task. RELEASE_SHA=caac5f5452 push verificado.
+
+**Residuais fechados/classificados:**
+- R1 MARKDOWN_VISUAL=PASS_TEST_FIXTURE — harness QA sancionado (`VITE_DELIA_DEMO=1` dev-only build-arg; produção nunca admite) + novo fixture `markdown_full` (headings/listas/bold/code — mesmo caminho admitido ConversationMarkdown/ConversationCodeBlock). Verificado autenticado em /apps/delia: h4/h5 semânticos (downshift hierárquico), ul/ol, strong, 6 code blocks inertes com "Copiar código", zero `<a>` (authorizedLinks=[]), zero script/iframe/object/embed injetado (`<script>alert` dentro da fence permanece texto literal), 320px sem overflow, 420px identidade, dark scheme, reduced-motion, zoom 200%, clipboard real. `LIVE_BUSINESS_OUTCOME=TEST_NOT_RUN` — modelos Ollama locais não alcançam outcome Category-A admitido; fixture não é apresentado como outcome real.
+- R2 A11Y=PARTIAL — teclado/foco/aria-hidden/dark/reduced-motion/zoom exercidos no navegador real; screen-reader real TEST_NOT_RUN (sem runtime SR no ambiente).
+- R3 AC22=PARTIAL (validado) — turno real "uma única frase" produziu resposta curta (204 chars — adaptação via canal de prosa do modelo); strict não honrado. "tópicos" 7/7 invalid_model_output (flake modelo local — TEST_NOT_RUN). Nenhum segundo LLM/classificador criado.
+- R4 AC26=PARTIAL / PUBLIC_LINK_EMISSION=DEFERRED — produtor emite zero URLs; http(s) está na lista de redaction técnico; nenhuma fonte pública admitida existe. Nenhum registry/provider inventado.
+
+**Código alterado (QA harness apenas):** demoMode.ts +48 (fixture markdown_full) + demoMode.test.tsx +2 — gate `VITE_DELIA_DEMO` inalterado (off por default; build produtiva nunca admite). Zero diff em produto.
+
+**Regressões em 04fcc80df6/pós-rebase caac5f5452:** focado+G4+discovery 87/87; consumer G4 14/14; demoMode 18/18; delia 351/351; tsc limpo; negatives 15/15 (G4, seams inalterados).
+
+**DEPLOY (SSH operador@srv-api 192.168.1.237):** checkout prod estava em 43d5c61965 (limpo) → `git pull --ff-only` → caac5f5452 → `docker compose build delia-api` → `up -d --force-recreate delia-api`. Escopo mínimo: só delia-api (delta runtime = P1 upstream 86294797d1 + markdown já deployado em RW01; delia MFE sem rebuild — fixture é inerte em prod).
+**Post-deploy:** HEAD=caac5f5452 verificado; container healthy; boot log limpo (CRI resources + env=production, zero handler_not_configured); /health 200 via gateway; /interaction/turns 401 sem token em JSON e NDJSON (AuthN fail-closed preservado); /apps/delia 200; SSO well-known 200. Config produtiva intocada (openrouter/kimi-k3, 60s/3 attempts/60 stage — frozen).
+**ROLLBACK=READY:** imagem anterior + checkout a6aef6a321 rebuild (não executado — deploy íntegro).
+
+**Estado:** G4_RESIDUAL_CLOSURE=EXECUTED; DEPLOYMENT_TECHNICAL_STATUS=SUCCESS; BUSINESS_OUTCOME_VERIFICATION=PARTIAL (turno autenticado prod não exercido — sem credencial e2e em prod; endpoint+authz+health verificados); CP-333=PLANNED_NOT_PASS (20/25 RQ IMPLEMENTED, 80%; RQ08/11/20/21/25 PARTIAL; AC15/16/22/26/30 PARTIAL). Retorna à coordenação.
