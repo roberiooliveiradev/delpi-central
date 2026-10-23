@@ -2007,6 +2007,7 @@ services:
       DELIA_STT_MAX_AUDIO_BYTES: ${DELIA_STT_MAX_AUDIO_BYTES:-8388608}
       DELIA_STT_MAX_DURATION_MS: ${DELIA_STT_MAX_DURATION_MS:-300000}
       DELIA_STT_RATE_LIMIT_PER_MINUTE: ${DELIA_STT_RATE_LIMIT_PER_MINUTE:-10}
+      DELIA_STT_INCREMENTAL_ENABLED: ${DELIA_STT_INCREMENTAL_ENABLED:-}
 
       # C3-MCP-INTEROP-01R1A: user-delegated credential exchange — single
       # confidential DÉLIA requester client (same contract as DEV; the
