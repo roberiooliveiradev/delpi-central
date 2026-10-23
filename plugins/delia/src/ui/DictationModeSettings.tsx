@@ -75,7 +75,6 @@ export function DictationModeSettings({
     <fieldset
       className="delia-dictation-settings"
       disabled={disabled}
-      data-close-on-change
     >
       <legend className="delia-dictation-settings__legend">
         <Mic size={12} strokeWidth={1.8} aria-hidden="true" />

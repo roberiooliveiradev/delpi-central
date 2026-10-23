@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AnchoredPanelPortal,
   HelpTooltip,
@@ -10,10 +10,18 @@ export type ComposerSettingsMenuProps = {
   /**
    * Seções do menu, por composição — hoje `DictationModeSettings`;
    * futuras seções entram como novos filhos sem alterar o menu (CS-18).
-   * Uma seção que pede fechamento após escolha marca o contêiner com
-   * `data-close-on-change` (contrato mínimo, opt-in por seção).
+   * Seleções dentro do menu aplicam imediatamente e não o fecham;
+   * o painel só fecha por saída explícita (trigger, Escape, clique
+   * externo) — spec 125 §10.
    */
   children: ReactNode;
+  /**
+   * `open` é controlado pelo host porque trocar o modo de ditado troca
+   * a sub-árvore do composer (batch ⇄ live), remontando este menu —
+   * estado local não sobreviveria à seleção.
+   */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 const TRIGGER_LABEL = "Configurações do campo de pergunta";
@@ -24,20 +32,35 @@ const TRIGGER_LABEL = "Configurações do campo de pergunta";
  * (popover ancorado, Escape/fora fecha, foco devolvido ao trigger).
  * Não conhece STT, draft nem backend.
  */
-export function ComposerSettingsMenu({ children }: ComposerSettingsMenuProps) {
-  const [open, setOpen] = useState(false);
-  const anchorRef = useRef<HTMLSpanElement | null>(null);
+export function ComposerSettingsMenu({
+  children,
+  open,
+  onOpenChange,
+}: ComposerSettingsMenuProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
+  /*
+   * Callback ref + estado (não useRef): quando o menu nasce já aberto —
+   * remount ao trocar o modo de ditado — o ref da âncora ainda não está
+   * anexado quando o layout effect de posição do portal roda. O estado
+   * re-renderiza assim que o elemento materializa e o efeito reposiciona.
+   */
+  const [anchorEl, setAnchorEl] = useState<HTMLSpanElement | null>(null);
+  const portalAnchorRef = useMemo(
+    () => ({ current: anchorEl }),
+    [anchorEl],
+  );
 
   const dismiss = () => {
-    setOpen(false);
-    anchorRef.current
-      ?.querySelector<HTMLButtonElement>("button")
-      ?.focus();
+    onOpenChange(false);
+    if (panelRef.current?.contains(document.activeElement)) {
+      anchorEl
+        ?.querySelector<HTMLButtonElement>("button")
+        ?.focus();
+    }
   };
 
   return (
-    <span className="delia-composer-settings" ref={anchorRef}>
+    <span className="delia-composer-settings" ref={setAnchorEl}>
       <HelpTooltip wrap content={TRIGGER_LABEL}>
         <IconButton
           type="button"
@@ -49,14 +72,14 @@ export function ComposerSettingsMenu({ children }: ComposerSettingsMenuProps) {
           aria-label={TRIGGER_LABEL}
           aria-haspopup="dialog"
           aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
+          onClick={() => onOpenChange(!open)}
         >
           <Settings2 size={16} strokeWidth={1.8} />
         </IconButton>
       </HelpTooltip>
       <AnchoredPanelPortal
         open={open}
-        anchorRef={anchorRef}
+        anchorRef={portalAnchorRef}
         panelRef={panelRef}
         className="delia-composer-settings__panel"
         role="dialog"
@@ -73,18 +96,7 @@ export function ComposerSettingsMenu({ children }: ComposerSettingsMenuProps) {
             Campo de pergunta
           </span>
         </div>
-        <div
-          onChange={(event) => {
-            if (
-              event.target instanceof HTMLElement &&
-              event.target.closest("[data-close-on-change]")
-            ) {
-              dismiss();
-            }
-          }}
-        >
-          {children}
-        </div>
+        {children}
       </AnchoredPanelPortal>
     </span>
   );

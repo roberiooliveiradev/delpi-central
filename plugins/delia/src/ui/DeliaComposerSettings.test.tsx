@@ -236,17 +236,29 @@ describe("composer settings menu (spec 125)", () => {
     expect(screen.getByText("Ditado")).toBeTruthy();
   });
 
-  it("CS-04/CS-05: batch default; live selected only by explicit gesture", () => {
+  it("CS-04/CS-05 + CM-01: batch default; live opt-in keeps the menu open", () => {
     render(<Harness transport={makeTransport()} />);
     openMenu();
     expect(batchRadio().checked).toBe(true);
     expect(liveRadio().checked).toBe(false);
     fireEvent.click(liveRadio());
-    openMenu();
+    const dlg = document.body.querySelectorAll(String.fromCharCode(91)+'role=dialog'+String.fromCharCode(93))[0];
+    console.log('DLG count=', document.body.querySelectorAll(String.fromCharCode(91)+'role=dialog'+String.fromCharCode(93)).length, 'html=', dlg ? dlg.outerHTML.slice(0,220) : 'none');
+    expect(menu()).toBeTruthy();
     expect(liveRadio().checked).toBe(true);
     expect(
       screen.getByRole("button", { name: "Iniciar ditado" }),
     ).toBeTruthy();
+  });
+
+  it("CM-02: switching live back to batch also keeps the menu open", () => {
+    render(<Harness transport={makeTransport()} />);
+    openMenu();
+    fireEvent.click(liveRadio());
+    expect(liveRadio().checked).toBe(true);
+    fireEvent.click(batchRadio());
+    expect(menu()).toBeTruthy();
+    expect(batchRadio().checked).toBe(true);
   });
 
   it("CS-06: live disabled with reason when incremental not admitted", () => {
@@ -267,7 +279,7 @@ describe("composer settings menu (spec 125)", () => {
     expect(fakeCapture.started).toBe(false);
   });
 
-  it("CS-08: options disabled during live capture", async () => {
+  it("CS-08 + CM-07: options disabled during live capture", async () => {
     render(<Harness transport={makeTransport()} />);
     openMenu();
     fireEvent.click(liveRadio());
@@ -275,7 +287,8 @@ describe("composer settings menu (spec 125)", () => {
       screen.getByRole("button", { name: "Iniciar ditado" }),
     );
     await waitFor(() => expect(fakeCapture.started).toBe(true));
-    openMenu();
+    // menu stays open; options lock during capture
+    expect(menu()).toBeTruthy();
     expect(liveRadio().disabled).toBe(true);
     expect(batchRadio().disabled).toBe(true);
   });
@@ -295,16 +308,15 @@ describe("composer settings menu (spec 125)", () => {
     expect(el2.selectionEnd).toBe(4);
   });
 
-  it("CS-10: aria-expanded, Escape closes and restores focus", () => {
+  it("CS-10 + CM-05: aria-expanded, Escape closes and restores focus from inside the panel", () => {
     render(<Harness transport={makeTransport()} />);
     expect(trigger().getAttribute("aria-expanded")).toBe("false");
     openMenu();
     expect(trigger().getAttribute("aria-expanded")).toBe("true");
+    batchRadio().focus();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(menu()).toBeNull();
-    expect(document.activeElement).toBe(
-      trigger().querySelector ? trigger() : trigger(),
-    );
+    expect(document.activeElement).toBe(trigger());
   });
 
   it("CL-04: only the selected row is marked; check is decorative", () => {
@@ -320,7 +332,6 @@ describe("composer settings menu (spec 125)", () => {
       options[0].querySelector(".delia-dictation-settings__check"),
     ).toBeTruthy();
     fireEvent.click(liveRadio());
-    openMenu();
     const after = document.querySelectorAll(
       ".delia-dictation-settings__option",
     );
@@ -335,7 +346,6 @@ describe("composer settings menu (spec 125)", () => {
       ".delia-dictation-settings__option",
     ) as HTMLElement;
     fireEvent.click(liveRow);
-    openMenu();
     expect(liveRadio().checked).toBe(true);
   });
 
@@ -347,7 +357,22 @@ describe("composer settings menu (spec 125)", () => {
     expect(menu()).toBeNull();
   });
 
-  it("repeated open/close is stable and menu closes after a choice", () => {
+  it("CM-03: outside click closes without stealing focus", () => {
+    render(<Harness transport={makeTransport()} />);
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    try {
+      openMenu();
+      outside.focus();
+      fireEvent.pointerDown(outside);
+      expect(menu()).toBeNull();
+      expect(document.activeElement).toBe(outside);
+    } finally {
+      outside.remove();
+    }
+  });
+
+  it("CM-04/CM-05: repeated open/close is stable; choice keeps the menu open", () => {
     render(<Harness transport={makeTransport()} />);
     for (let i = 0; i < 3; i += 1) {
       openMenu();
@@ -357,7 +382,28 @@ describe("composer settings menu (spec 125)", () => {
     }
     openMenu();
     fireEvent.click(liveRadio());
+    expect(menu()).toBeTruthy();
+    expect(liveRadio().checked).toBe(true);
+    fireEvent.click(trigger());
     expect(menu()).toBeNull();
+  });
+
+  it("CM-06: repeated selections do not remount the editor or lose draft/caret", () => {
+    render(<Harness transport={makeTransport()} initial="abcdef" />);
+    const el = textarea();
+    el.focus();
+    el.setSelectionRange(1, 3);
+    document.dispatchEvent(new Event("selectionchange"));
+    openMenu();
+    fireEvent.click(liveRadio());
+    fireEvent.click(batchRadio());
+    fireEvent.click(liveRadio());
+    expect(menu()).toBeTruthy();
+    const el2 = textarea();
+    // mode swap remounts the editor; draft/caret survive via snapshot/restore
+    expect(el2.value).toBe("abcdef");
+    expect(el2.selectionStart).toBe(1);
+    expect(el2.selectionEnd).toBe(3);
   });
 
   it("two independent mounts keep separate mode state", () => {

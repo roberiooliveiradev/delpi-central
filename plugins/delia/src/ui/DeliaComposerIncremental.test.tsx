@@ -175,15 +175,19 @@ const PARTIALS: Record<string, DeliaIncrementalEvent[]> = {
   ],
 };
 
+const SETTINGS_NAME = "Configurações do campo de pergunta";
+// selection keeps the menu open (spec 125 §10) — dismiss explicitly so
+// later steps see a deterministic surface
 const selectLive = () => {
-  fireEvent.click(
-    screen.getByRole("button", {
-      name: "Configurações do campo de pergunta",
-    }),
-  );
+  const settingsTrigger = () =>
+    screen.getByRole("button", { name: SETTINGS_NAME });
+  if (screen.queryByRole("dialog", { name: SETTINGS_NAME }) == null) {
+    fireEvent.click(settingsTrigger());
+  }
   fireEvent.click(
     screen.getByRole("radio", { name: /Transcrição em tempo real/ }),
   );
+  fireEvent.click(settingsTrigger());
 };
 
 describe("incremental dictation surface", () => {

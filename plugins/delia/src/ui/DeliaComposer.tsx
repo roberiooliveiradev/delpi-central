@@ -221,6 +221,9 @@ export function DeliaComposer({
 }: DeliaComposerProps) {
   const [mode, setMode] = useState<DictationMode>(DEFAULT_DICTATION_MODE);
   const [captureBusy, setCaptureBusy] = useState(false);
+  // Settings-menu open state lives here because switching batch ⇄ live
+  // swaps the whole composer subtree and remounts the menu (spec 125 §10).
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const liveAvailable = incrementalTransport != null;
   const batchAvailable = audioCaptureEnabled && dictationTranscriber != null;
   const useLive = mode === "live" && liveAvailable;
@@ -264,7 +267,7 @@ export function DeliaComposer({
   // lives inside the composer settings menu, a discreet toolbar control
   // whose options stay visible (but disabled) during capture.
   const settingsAction = showSettings ? (
-    <ComposerSettingsMenu>
+    <ComposerSettingsMenu open={settingsOpen} onOpenChange={setSettingsOpen}>
       <DictationModeSettings
         value={mode}
         onChange={setMode}

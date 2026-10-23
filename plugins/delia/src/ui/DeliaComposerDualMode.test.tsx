@@ -181,21 +181,26 @@ const SETTINGS_TRIGGER = "Configurações do campo de pergunta";
 const LIVE_OPTION = /Transcrição em tempo real/;
 const BATCH_OPTION = /Gravar e transcrever/;
 
-const openSettings = () =>
-  fireEvent.click(
-    screen.getByRole("button", { name: SETTINGS_TRIGGER }),
-  );
+const settingsTrigger = () =>
+  screen.getByRole("button", { name: SETTINGS_TRIGGER });
+const openSettings = () => fireEvent.click(settingsTrigger());
+const settingsOpen = () =>
+  screen.queryByRole("dialog", { name: SETTINGS_TRIGGER }) != null;
 const liveOption = () =>
   screen.getByRole("radio", { name: LIVE_OPTION }) as HTMLInputElement;
 const batchOption = () =>
   screen.getByRole("radio", { name: BATCH_OPTION }) as HTMLInputElement;
+// selection keeps the menu open (spec 125 §10) — helpers dismiss it
+// explicitly so later steps see a deterministic surface
 const selectLive = () => {
-  openSettings();
+  if (!settingsOpen()) fireEvent.click(settingsTrigger());
   fireEvent.click(liveOption());
+  fireEvent.click(settingsTrigger());
 };
 const selectBatch = () => {
-  openSettings();
+  if (!settingsOpen()) fireEvent.click(settingsTrigger());
   fireEvent.click(batchOption());
+  fireEvent.click(settingsTrigger());
 };
 const textarea = () =>
   document.getElementById("delia-dual-input") as HTMLTextAreaElement;
