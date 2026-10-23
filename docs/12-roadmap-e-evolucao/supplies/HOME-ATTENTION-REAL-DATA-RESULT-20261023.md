@@ -164,3 +164,14 @@ Mudança contratual: cards passam a ser **compactos** — nome da pendência, qu
 ### Residual
 - `VISUAL_AUTHENTICATED=INCONCLUSIVE` mantém-se (sem navegador autenticado).
 - A prévia detalhada de estoque deixou de existir — a observação (2) da revisão GPT sobre exposição de prévia sem `estoque-seguranca.access` fica **resolvida por remoção** (não há mais dados de itens na Home).
+
+
+## 11. Revisão GPT — HOME-ATTENTION.P2 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para P2 compactação e deploy técnico; `PERFORMANCE_TARGET_5S=FAIL`; `VISUAL_AUTHENTICATED=INCONCLUSIVE`.** Revisados em GitHub o source `c92f480eb1`, `supplies-api/app/application/services/home_attention_service.py` e este documento. O BFF deixou de buscar previews, reduziu payloads com `page_size=1`, preservou cinco contagens e estados de falha. O MFE adotou cards compactos com ações de navegação. Resultados de 450 testes BFF, 69 testes do `purchase-requests-api`, 382 MFE, deploy das três imagens, health e smoke com contagens `[81,156,90,7,201]` são **executor-reported**, não reexecutados pelo GPT.
+
+**Benefício medido pelo executor:** chamadas downstream `10→6` e duração ponta a ponta no smoke de `~90s` pior cenário anterior para `13,6s` após fan-out no owner de SC. **Comparação limitada:** são tempos pontuais, não p50/p95 rigorosos em amostras equivalentes; não declarar SLA cumprido. A meta anterior de orçamento total ≤5s não foi atingida. `PR_SUMMARY_AGGREGATION=TO_INVENTORY`: investigar agregação server-side no `api-delpi` ou interface contratada equivalente com owner `purchase-requests-api`, mantendo semântica de buckets, janela temporal, unidade e AuthZ. Não aumentar concorrência indefinidamente.
+
+**Segurança/navegação:** remoção de previews elimina a exposição de linhas de estoque anteriormente apontada; contador agregado e link continuam condicionados aos contratos/permissões existentes. Filtros para SC, PO, OTD e estoque possuem validação estrutural reportada, mas `FILTERED_NAVIGATION_AUTHENTICATED=INCONCLUSIVE` até navegação real + URL/F5 em sessão. 401 anônimo não substitui testes efetivos de usuário/unidade. Recomendar reteste visual de cards compactos em claro/escuro, mobile, teclado e origem sem permissão ao destino estoque.
+
+**Release:** `P2_CODE=ACCEPT_WITH_RESIDUAL`, `P2_DEPLOY=PASS (executor-reported)`, `P2_SMOKE=PASS (executor-reported)`, `P2_PERFORMANCE=ACCEPT_WITH_RESIDUAL` (melhoria substantiva mas meta 5s não alcançada), `P2_VISUAL=INCONCLUSIVE`. Não modificar cutover C1 de fornecedores, ainda aguardando Gabriel/TOTVS. Próxima frente, se PO priorizar: agregação eficiente das solicitações e benchmark p50/p95.
