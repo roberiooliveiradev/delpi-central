@@ -12,6 +12,7 @@ from app.domain.services.supplies.safety_stock_consumption_analysis_service impo
     CONSUMPTION_MOVEMENT_TYPE,
     CONSUMPTION_WAREHOUSE,
     REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
+    REPLACEMENT_PART_CONSUMPTION_WAREHOUSE,
 )
 from app.domain.services.supplies.safety_stock_supplier_scope_service import (
     INTERNAL_TRANSFER_SUPPLIER_CODES,
@@ -29,23 +30,26 @@ from app.domain.totvs.protheus_product_types import (
 def sd3_eligible_consumption_predicate(
     *,
     code_column: str = "SD3.D3_COD",
+    local_column: str = "SD3.D3_LOCAL",
     tm_column: str = "SD3.D3_TM",
     op_column: str = "SD3.D3_OP",
 ) -> tuple[str, list]:
     """Baixas SD3 elegíveis para consumo do estoque de segurança.
 
-    - Peça ``3019*``: ``D3_TM = 503`` (sem exigir OP).
-    - Demais (MP): ``D3_TM = 999`` com OP preenchida.
+    - Peça ``3019*``: local ``01``, ``D3_TM = 503`` (sem exigir OP).
+    - Demais (MP): local ``99``, ``D3_TM = 999`` com OP preenchida.
     """
     clause = (
         "("
         f"("
         f"LEFT(RTRIM(LTRIM({code_column})), {SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN}) = ?"
+        f" AND RTRIM({local_column}) = ?"
         f" AND RTRIM({tm_column}) = ?"
         f")"
         f" OR "
         f"("
         f"LEFT(RTRIM(LTRIM({code_column})), {SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN}) <> ?"
+        f" AND RTRIM({local_column}) = ?"
         f" AND RTRIM({tm_column}) = ?"
         f" AND LTRIM(RTRIM(ISNULL({op_column}, ''))) <> ''"
         f")"
@@ -53,8 +57,10 @@ def sd3_eligible_consumption_predicate(
     )
     params = [
         SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+        REPLACEMENT_PART_CONSUMPTION_WAREHOUSE,
         REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
         SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+        CONSUMPTION_WAREHOUSE,
         CONSUMPTION_MOVEMENT_TYPE,
     ]
     return clause, params
@@ -1018,7 +1024,7 @@ def consumption_agg_cte(
     branch: str,
     start_date_param: str = "?",
 ) -> tuple[str, list]:
-    """Agrega baixas SD3 elegíveis (local 99; MP=TM 999+OP; 3019*=TM 503)."""
+    """Agrega baixas SD3 elegíveis (MP: 99/999+OP; 3019*: 01/503)."""
     and_sql, params = branch_filter_and("RTRIM(SD3.D3_FILIAL)", branch)
     eligible_sql, eligible_params = sd3_eligible_consumption_predicate()
     sql = f"""
@@ -1032,7 +1038,6 @@ def consumption_agg_cte(
         FROM SD3010 SD3 WITH (NOLOCK)
         WHERE SD3.D_E_L_E_T_ = ''
           {and_sql}
-          AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
           AND {eligible_sql}
           AND SD3.D3_EMISSAO >= {start_date_param}
         GROUP BY SD3.D3_COD
@@ -1154,7 +1159,6 @@ def consumption_last_date_sql(
     FROM SD3010 SD3 WITH (NOLOCK)
     WHERE SD3.D_E_L_E_T_ = ''
       {and_sql}
-      AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
       AND {eligible_sql}
       AND RTRIM(SD3.D3_COD) = {product_param}
     ORDER BY SD3.D3_EMISSAO DESC, SD3.R_E_C_N_O_ DESC
@@ -1236,7 +1240,6 @@ def consumption_monthly_series_sql(
     FROM SD3010 SD3 WITH (NOLOCK)
     WHERE SD3.D_E_L_E_T_ = ''
       {and_sql}
-      AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
       AND {eligible_sql}
       AND RTRIM(SD3.D3_COD) = {product_param}
       AND SD3.D3_EMISSAO >= {start_date_param}

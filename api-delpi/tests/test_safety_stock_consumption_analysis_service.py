@@ -7,7 +7,9 @@ from app.domain.services.supplies.safety_stock_consumption_analysis_service impo
     CONSUMPTION_MOVEMENT_TYPE,
     CONSUMPTION_PROFILE_RAW_MATERIAL,
     CONSUMPTION_PROFILE_REPLACEMENT_PART,
+    CONSUMPTION_WAREHOUSE,
     REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
+    REPLACEMENT_PART_CONSUMPTION_WAREHOUSE,
     STATUS_ABOVE,
     STATUS_ADEQUATE,
     STATUS_BELOW,
@@ -16,20 +18,22 @@ from app.domain.services.supplies.safety_stock_consumption_analysis_service impo
 )
 
 
-def test_consumption_profile_replacement_part_uses_tm_503_without_op() -> None:
+def test_consumption_profile_replacement_part_uses_local_01_tm_503_without_op() -> None:
     profile = SafetyStockConsumptionAnalysisService.consumption_profile_for_product(
-        "30191665"
+        "30190042"
     )
     assert profile["profile"] == CONSUMPTION_PROFILE_REPLACEMENT_PART
+    assert profile["warehouse"] == REPLACEMENT_PART_CONSUMPTION_WAREHOUSE
     assert profile["movement_type"] == REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE
     assert profile["requires_production_order"] is False
 
 
-def test_consumption_profile_raw_material_keeps_tm_999_with_op() -> None:
+def test_consumption_profile_raw_material_keeps_local_99_tm_999_with_op() -> None:
     profile = SafetyStockConsumptionAnalysisService.consumption_profile_for_product(
         "10020113"
     )
     assert profile["profile"] == CONSUMPTION_PROFILE_RAW_MATERIAL
+    assert profile["warehouse"] == CONSUMPTION_WAREHOUSE
     assert profile["movement_type"] == CONSUMPTION_MOVEMENT_TYPE
     assert profile["requires_production_order"] is True
 
@@ -66,8 +70,12 @@ def test_enrich_row_exposes_consumption_profile_on_item() -> None:
     assert mp["consumption_movement_type"] == CONSUMPTION_MOVEMENT_TYPE
     assert mp["consumption_requires_production_order"] is True
     assert part["consumption_movement_type"] == REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE
+    assert part["consumption_warehouse"] == REPLACEMENT_PART_CONSUMPTION_WAREHOUSE
     assert part["consumption_requires_production_order"] is False
     memory = SafetyStockConsumptionAnalysisService.build_calculation_memory(part)
+    assert memory["consumption_filters"]["warehouse"] == (
+        REPLACEMENT_PART_CONSUMPTION_WAREHOUSE
+    )
     assert memory["consumption_filters"]["movement_type"] == (
         REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE
     )
@@ -75,6 +83,8 @@ def test_enrich_row_exposes_consumption_profile_on_item() -> None:
     assert memory["consumption_filters"]["profile"] == (
         CONSUMPTION_PROFILE_REPLACEMENT_PART
     )
+    # Negativo: MP não herda armazém/TM de peça de reposição.
+    assert mp["consumption_warehouse"] == CONSUMPTION_WAREHOUSE
 
 
 def test_resolve_period_is_inclusive_365_days() -> None:

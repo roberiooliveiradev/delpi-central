@@ -16,6 +16,7 @@ from app.domain.services.supplies.safety_stock_consumption_analysis_service impo
     CONSUMPTION_PROFILE_REPLACEMENT_PART,
     CONSUMPTION_WAREHOUSE,
     REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
+    REPLACEMENT_PART_CONSUMPTION_WAREHOUSE,
     SafetyStockConsumptionAnalysisService,
 )
 from app.domain.totvs.protheus_product_types import SUPPLIES_OTD_PRODUCT_CODE_PREFIX
@@ -50,7 +51,7 @@ class GetSafetyStockConsumptionAnalysisSummaryUseCase:
                     "requires_production_order": True,
                 },
                 CONSUMPTION_PROFILE_REPLACEMENT_PART: {
-                    "warehouse": CONSUMPTION_WAREHOUSE,
+                    "warehouse": REPLACEMENT_PART_CONSUMPTION_WAREHOUSE,
                     "movement_type": REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
                     "requires_production_order": False,
                     "code_prefix": SUPPLIES_OTD_PRODUCT_CODE_PREFIX,

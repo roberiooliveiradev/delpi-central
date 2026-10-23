@@ -17,10 +17,12 @@ from app.domain.totvs.protheus_product_types import (
 
 ANALYSIS_CALENDAR_DAYS = 365
 ANNUAL_COMPARISON_YEARS = 3
+# Matéria-prima: baixa de produção no armazém de processo.
 CONSUMPTION_WAREHOUSE = "99"
-# Matéria-prima: baixa de produção (SD3 TM 999 com OP).
 CONSUMPTION_MOVEMENT_TYPE = "999"
-# Peça de reposição (código 3019*): baixa indireta (SD3 TM 503, sem OP).
+# Peça de reposição (código 3019*): baixa indireta TM 503 no armazém primário.
+# Evidência TOTVS (ex. 30190042): movimentos 503 em D3_LOCAL=01, sem OP — não no 99.
+REPLACEMENT_PART_CONSUMPTION_WAREHOUSE = "01"
 REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE = "503"
 CONSUMPTION_PROFILE_RAW_MATERIAL = "raw_material_production"
 CONSUMPTION_PROFILE_REPLACEMENT_PART = "replacement_part"
@@ -55,13 +57,13 @@ class SafetyStockConsumptionAnalysisService:
     def consumption_profile_for_product(cls, product_code: str | None) -> dict[str, Any]:
         """Perfil de baixa SD3 elegível por família de código.
 
-        - Código ``3019*`` (peça de reposição): TM 503, sem exigir OP.
-        - Demais do universo (MP): TM 999 com OP preenchida.
+        - Código ``3019*`` (peça de reposição): local 01, TM 503, sem OP.
+        - Demais do universo (MP): local 99, TM 999 com OP preenchida.
         """
         if cls.is_replacement_part_code(product_code):
             return {
                 "profile": CONSUMPTION_PROFILE_REPLACEMENT_PART,
-                "warehouse": CONSUMPTION_WAREHOUSE,
+                "warehouse": REPLACEMENT_PART_CONSUMPTION_WAREHOUSE,
                 "movement_type": REPLACEMENT_PART_CONSUMPTION_MOVEMENT_TYPE,
                 "requires_production_order": False,
                 "code_prefix": SUPPLIES_OTD_PRODUCT_CODE_PREFIX,

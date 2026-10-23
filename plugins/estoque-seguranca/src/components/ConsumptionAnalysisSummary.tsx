@@ -20,7 +20,7 @@ export function ConsumptionAnalysisSummary({
   const periodLabel =
     summary != null
       ? `${formatIsoDatePtBr(summary.period_start)} a ${formatIsoDatePtBr(summary.period_end)} · ${formatIntegerPtBr(summary.period_business_days)} dias úteis`
-      : "Últimos 12 meses (baixas SD3 local 99 · MP TM 999 / peças 3019 TM 503)";
+      : "Últimos 12 meses (MP: local 99/TM 999 · peças 3019: local 01/TM 503)";
 
   return (
     <section className="ess-analysis-summary" aria-label="Indicadores da análise de consumo">
