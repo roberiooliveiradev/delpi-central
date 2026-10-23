@@ -76,6 +76,10 @@ function ProductionAppointmentsContent({
   const [byOpPageSize, setByOpPageSize] = useState(20);
   const [listSearch, setListSearch] = useState("");
   const [byOpSearch, setByOpSearch] = useState("");
+  const [listSortKey, setListSortKey] = useState<string | null>("appointment_datetime");
+  const [listSortDirection, setListSortDirection] = useState<"asc" | "desc">("desc");
+  const [byOpSortKey, setByOpSortKey] = useState<string | null>("qty_produced");
+  const [byOpSortDirection, setByOpSortDirection] = useState<"asc" | "desc">("desc");
 
   const debouncedOp = useDebouncedValue(draftFilters.op, 350);
   const debouncedProduct = useDebouncedValue(draftFilters.product, 350);
@@ -122,6 +126,14 @@ function ProductionAppointmentsContent({
     setByOpPage(1);
   }, [debouncedByOpSearch]);
 
+  useEffect(() => {
+    setListPage(1);
+  }, [listSortKey, listSortDirection]);
+
+  useEffect(() => {
+    setByOpPage(1);
+  }, [byOpSortKey, byOpSortDirection]);
+
   const { granularity, setGranularity } = useChartGranularitySelection(
     draftFilters.dateStart,
     draftFilters.dateEnd,
@@ -141,7 +153,29 @@ function ProductionAppointmentsContent({
     byOpPageSize,
     debouncedListSearch,
     debouncedByOpSearch,
+    listSortKey,
+    listSortDirection,
+    byOpSortKey,
+    byOpSortDirection,
   );
+
+  const handleListSortChange = (columnKey: string) => {
+    if (listSortKey === columnKey) {
+      setListSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setListSortKey(columnKey);
+    setListSortDirection("asc");
+  };
+
+  const handleByOpSortChange = (columnKey: string) => {
+    if (byOpSortKey === columnKey) {
+      setByOpSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setByOpSortKey(columnKey);
+    setByOpSortDirection("asc");
+  };
 
   const handleFiltersChange = (patch: Partial<FilterFormState>) => {
     setDraftFilters((current) => ({ ...current, ...patch }));
@@ -282,6 +316,10 @@ function ProductionAppointmentsContent({
             byOpPageSize={byOpPageSize}
             listSearch={listSearch}
             byOpSearch={byOpSearch}
+            listSortKey={listSortKey}
+            listSortDirection={listSortDirection}
+            byOpSortKey={byOpSortKey}
+            byOpSortDirection={byOpSortDirection}
             loading={tables.loading}
             workCentersLoading={dashboard.loading}
             onListPageChange={setListPage}
@@ -290,6 +328,8 @@ function ProductionAppointmentsContent({
             onByOpPageSizeChange={setByOpPageSize}
             onListSearchChange={setListSearch}
             onByOpSearchChange={setByOpSearch}
+            onListSortChange={handleListSortChange}
+            onByOpSortChange={handleByOpSortChange}
             onOpenOp={handleOpenOp}
             onOpenCt={handleOpenCt}
           />

@@ -69,6 +69,9 @@ def _guard_and_build(
     granularity: Optional[str] = None,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
+    sort_by: Optional[str] = None,
+    sort_direction: Optional[str] = None,
+    sort_catalog: str = "list",
     error_context: str,
 ):
     branch_error = branch_access_error(branch)
@@ -88,6 +91,9 @@ def _guard_and_build(
             granularity=granularity,
             page=page,
             page_size=page_size,
+            sort_by=sort_by,
+            sort_direction=sort_direction,
+            sort_catalog=sort_catalog,
             require_branch=False,
         )
     except ValueError as exc:
@@ -138,6 +144,12 @@ def list_appointments_route(
     mother_op: bool = MOTHER_OP_QUERY(),
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY("page_50_200"),
+    sort_by: Optional[str] = Query(
+        None, description="Column key for global sort across pages."
+    ),
+    sort_direction: Optional[str] = Query(
+        None, description='Sort direction: "asc" or "desc".'
+    ),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
@@ -156,6 +168,9 @@ def list_appointments_route(
         mother_op=mother_op,
         page=page,
         page_size=page_size,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        sort_catalog="list",
         error_context="listar apontamentos",
     )
     if err:
@@ -353,6 +368,12 @@ def by_op_route(
     mother_op: bool = MOTHER_OP_QUERY(),
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY("page_50_200"),
+    sort_by: Optional[str] = Query(
+        None, description="Column key for global sort across pages."
+    ),
+    sort_direction: Optional[str] = Query(
+        None, description='Sort direction: "asc" or "desc".'
+    ),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
@@ -371,6 +392,9 @@ def by_op_route(
         mother_op=mother_op,
         page=page,
         page_size=page_size,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        sort_catalog="by_op",
         error_context="carregar drill-down por OP",
     )
     if err:
@@ -404,6 +428,12 @@ def child_ops_route(
     search: Optional[str] = SEARCH_QUERY(),
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY("page_50_200"),
+    sort_by: Optional[str] = Query(
+        None, description="Column key for global sort across pages."
+    ),
+    sort_direction: Optional[str] = Query(
+        None, description='Sort direction: "asc" or "desc".'
+    ),
 ):
     """Child OPs of the same family (sequence ≠ 001) with appointments in the period."""
     start_date, end_date = resolve_period_dates(
@@ -422,6 +452,9 @@ def child_ops_route(
         search=search,
         page=page,
         page_size=page_size,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        sort_catalog="by_op",
         error_context="carregar OPs filhas",
     )
     if err:

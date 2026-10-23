@@ -62,6 +62,38 @@ MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 MAX_BY_OP_LIMIT = 200
 DEFAULT_BY_OP_LIMIT = 50
 
+DEFAULT_LIST_SORT_BY = "appointment_datetime"
+DEFAULT_LIST_SORT_DIRECTION = "desc"
+DEFAULT_BY_OP_SORT_BY = "qty_produced"
+DEFAULT_BY_OP_SORT_DIRECTION = "desc"
+SORT_DIRECTIONS: frozenset[str] = frozenset({"asc", "desc"})
+
+# Whitelist de chaves de ordenação (API ↔ colunas do MFE). Expressões no SQL.
+LIST_SORTABLE_COLUMNS: frozenset[str] = frozenset(
+    {
+        "appointment_datetime",
+        "operator",
+        "operation",
+        "resource",
+        "production_order",
+        "product",
+        "work_center",
+        "qty_produced",
+        "qty_lost",
+    }
+)
+BY_OP_SORTABLE_COLUMNS: frozenset[str] = frozenset(
+    {
+        "production_order",
+        "product",
+        "appointment_count",
+        "work_center_count",
+        "qty_produced",
+        "qty_lost",
+        "period",
+    }
+)
+
 SERIES_GROUP_BY_OPTIONS: frozenset[str] = frozenset({"day", "day_work_center"})
 
 # Granularidade temporal (série de apontamentos e série de OPs finalizadas).

@@ -7,6 +7,8 @@ import type {
   AppointmentsQueryFilters,
 } from "../types/appointments";
 
+export type TableSortDirection = "asc" | "desc";
+
 export function useAppointmentsTables(
   appliedFilters: AppointmentsQueryFilters | null,
   listPage: number,
@@ -15,6 +17,10 @@ export function useAppointmentsTables(
   byOpPageSize: number,
   listSearch = "",
   byOpSearch = "",
+  listSortBy: string | null = "appointment_datetime",
+  listSortDirection: TableSortDirection = "desc",
+  byOpSortBy: string | null = "qty_produced",
+  byOpSortDirection: TableSortDirection = "desc",
 ) {
   const [list, setList] = useState<AppointmentsListData | null>(null);
   const [byOp, setByOp] = useState<AppointmentsByOpData | null>(null);
@@ -42,10 +48,14 @@ export function useAppointmentsTables(
           fetchAppointmentsList(filters, listPage, listPageSize, {
             signal: controller.signal,
             search: listSearch,
+            sortBy: listSortBy,
+            sortDirection: listSortDirection,
           }),
           fetchAppointmentsByOp(filters, byOpPage, byOpPageSize, {
             signal: controller.signal,
             search: byOpSearch,
+            sortBy: byOpSortBy,
+            sortDirection: byOpSortDirection,
           }),
         ]);
         setList(listData);
@@ -68,6 +78,10 @@ export function useAppointmentsTables(
     byOpPageSize,
     listSearch,
     byOpSearch,
+    listSortBy,
+    listSortDirection,
+    byOpSortBy,
+    byOpSortDirection,
     reloadKey,
   ]);
 

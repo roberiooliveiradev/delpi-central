@@ -34,6 +34,9 @@ def build_query_request(
     granularity: Optional[str] = None,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
+    sort_by: Optional[str] = None,
+    sort_direction: Optional[str] = None,
+    sort_catalog: str = "list",
     require_branch: bool = True,
 ) -> ProductionAppointmentsQueryRequest:
     return ProductionAppointmentsQueryRequest.from_query(
@@ -49,6 +52,9 @@ def build_query_request(
         granularity=granularity,
         page=page,
         page_size=page_size,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        sort_catalog=sort_catalog,
         require_branch=require_branch,
     )
 

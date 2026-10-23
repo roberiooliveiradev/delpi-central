@@ -82,6 +82,8 @@ class ListProductionAppointmentsUseCase:
             self._repository.list_appointments(
                 offset=request.offset,
                 page_size=request.page_size,
+                sort_by=request.sort_by,
+                sort_direction=request.sort_direction,
                 **filters,
             )
         )
@@ -96,6 +98,8 @@ class ListProductionAppointmentsUseCase:
                 "product": request.product,
                 "search": request.search,
                 "mother_op": request.mother_op,
+                "sort_by": request.sort_by,
+                "sort_direction": request.sort_direction,
             },
             "items": items,
             "summary": build_period_summary(
@@ -237,6 +241,8 @@ class ListProductionAppointmentsByOpUseCase:
             self._repository.list_by_op(
                 offset=request.offset,
                 page_size=request.page_size,
+                sort_by=request.sort_by,
+                sort_direction=request.sort_direction,
                 **filters,
             )
         )
@@ -251,6 +257,8 @@ class ListProductionAppointmentsByOpUseCase:
                 "product": request.product,
                 "search": request.search,
                 "mother_op": request.mother_op,
+                "sort_by": request.sort_by,
+                "sort_direction": request.sort_direction,
             },
             "items": items,
             "summary": build_period_summary(
@@ -299,6 +307,8 @@ class ListProductionAppointmentsChildOpsUseCase:
             self._repository.list_by_op(
                 offset=request.offset,
                 page_size=request.page_size,
+                sort_by=request.sort_by,
+                sort_direction=request.sort_direction,
                 **filters,
             )
         )
@@ -314,6 +324,8 @@ class ListProductionAppointmentsChildOpsUseCase:
                 "op": reference_op,
                 "product": request.product,
                 "search": request.search,
+                "sort_by": request.sort_by,
+                "sort_direction": request.sort_direction,
             },
             "items": items,
             "summary": build_period_summary(

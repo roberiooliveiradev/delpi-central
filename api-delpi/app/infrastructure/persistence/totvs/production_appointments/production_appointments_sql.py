@@ -13,11 +13,89 @@ Milheiro agregado: ``toMilheiroFactor`` (ex.: MT × 0.001) via ``_qty_milheiro_e
 from __future__ import annotations
 
 from app.domain.production.production_appointments.production_appointments_scope import (
+    BY_OP_SORTABLE_COLUMNS,
     CT_INSPECAO_NOME_SQL_LIKE,
+    DEFAULT_BY_OP_SORT_BY,
+    DEFAULT_BY_OP_SORT_DIRECTION,
+    DEFAULT_LIST_SORT_BY,
+    DEFAULT_LIST_SORT_DIRECTION,
+    LIST_SORTABLE_COLUMNS,
     MOTHER_OP_SUFFIX,
     PA_STOCK_ENTRY_PRODUCT_TYPE,
+    SORT_DIRECTIONS,
     restrict_produced_qty_to_pa_last_routing_operation,
 )
+
+_LIST_SORT_EXPRESSIONS: dict[str, str] = {
+    "appointment_datetime": (
+        "SH6.H6_DTAPONT {dir}, SH6.H6_HORAINI {dir}, SH6.R_E_C_N_O_ {dir}"
+    ),
+    "operator": (
+        "LTRIM(RTRIM(ISNULL(U.USR_NOME, ''))) {dir}, "
+        "LTRIM(RTRIM(SH6.H6_OPERADO)) {dir}, SH6.R_E_C_N_O_ DESC"
+    ),
+    "operation": "LTRIM(RTRIM(SH6.H6_OPERAC)) {dir}, SH6.R_E_C_N_O_ DESC",
+    "resource": (
+        "LTRIM(RTRIM(ISNULL(SH1.H1_DESCRI, ''))) {dir}, "
+        "LTRIM(RTRIM(SH6.H6_RECURSO)) {dir}, SH6.R_E_C_N_O_ DESC"
+    ),
+    "production_order": "LTRIM(RTRIM(SH6.H6_OP)) {dir}, SH6.R_E_C_N_O_ DESC",
+    "product": "LTRIM(RTRIM(SH6.H6_PRODUTO)) {dir}, SH6.R_E_C_N_O_ DESC",
+    "work_center": "LTRIM(RTRIM(SH1.H1_CTRAB)) {dir}, SH6.R_E_C_N_O_ DESC",
+    "qty_produced": "CAST(SH6.H6_QTDPROD AS FLOAT) {dir}, SH6.R_E_C_N_O_ DESC",
+    "qty_lost": "CAST(SH6.H6_QTDPERD AS FLOAT) {dir}, SH6.R_E_C_N_O_ DESC",
+}
+
+# Aliases do SELECT de ``build_by_op_query`` (SQL Server aceita no ORDER BY).
+_BY_OP_SORT_EXPRESSIONS: dict[str, str] = {
+    "production_order": "production_order {dir}",
+    "product": "product {dir}",
+    "appointment_count": "appointment_count {dir}",
+    "work_center_count": "work_center_count {dir}",
+    "qty_produced": "qty_produced {dir}",
+    "qty_lost": "qty_lost {dir}",
+    "period": "first_date {dir}",
+}
+
+
+def _normalize_sort_direction(sort_direction: str | None, *, default: str) -> str:
+    value = str(sort_direction or default).strip().lower()
+    if value not in SORT_DIRECTIONS:
+        return default
+    return value
+
+
+def resolve_appointments_list_order_by(
+    sort_by: str | None = None,
+    sort_direction: str | None = None,
+) -> str:
+    key = str(sort_by or DEFAULT_LIST_SORT_BY).strip()
+    if key not in LIST_SORTABLE_COLUMNS:
+        key = DEFAULT_LIST_SORT_BY
+    direction = _normalize_sort_direction(
+        sort_direction, default=DEFAULT_LIST_SORT_DIRECTION
+    )
+    sql_dir = "DESC" if direction == "desc" else "ASC"
+    template = _LIST_SORT_EXPRESSIONS[key]
+    return template.format(dir=sql_dir)
+
+
+def resolve_by_op_order_by(
+    sort_by: str | None = None,
+    sort_direction: str | None = None,
+) -> str:
+    key = str(sort_by or DEFAULT_BY_OP_SORT_BY).strip()
+    if key not in BY_OP_SORTABLE_COLUMNS:
+        key = DEFAULT_BY_OP_SORT_BY
+    direction = _normalize_sort_direction(
+        sort_direction, default=DEFAULT_BY_OP_SORT_DIRECTION
+    )
+    sql_dir = "DESC" if direction == "desc" else "ASC"
+    template = _BY_OP_SORT_EXPRESSIONS[key]
+    primary = template.format(dir=sql_dir)
+    if key == "production_order":
+        return primary
+    return f"{primary}, production_order ASC"
 from app.domain.services.production.production_appointments_list_search_service import (
     ProductionAppointmentsListSearchService,
 )
@@ -285,6 +363,8 @@ def build_appointments_list_query(
     product: str | None = None,
     search: str | None = None,
     mother_op: bool = False,
+    sort_by: str | None = None,
+    sort_direction: str | None = None,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -297,6 +377,7 @@ def build_appointments_list_query(
         search_scope="appointment",
         mother_op=mother_op,
     )
+    order_by = resolve_appointments_list_order_by(sort_by, sort_direction)
     sql = f"""
     SELECT
         LTRIM(RTRIM(SH6.H6_FILIAL)) AS branch,
@@ -324,7 +405,7 @@ def build_appointments_list_query(
     {_BASE_FROM}
     {_OPERATOR_JOIN}
     WHERE {where}
-    ORDER BY SH6.H6_DTAPONT DESC, SH6.H6_HORAINI DESC, SH6.R_E_C_N_O_ DESC
+    ORDER BY {order_by}
     OFFSET {int(offset)} ROWS FETCH NEXT {int(page_size)} ROWS ONLY
     """
     return sql, tuple(params)
@@ -522,6 +603,8 @@ def build_by_op_query(
     op_family_prefix: str | None = None,
     child_ops_only: bool = False,
     exclude_op: str | None = None,
+    sort_by: str | None = None,
+    sort_direction: str | None = None,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -537,6 +620,7 @@ def build_by_op_query(
         child_ops_only=child_ops_only,
         exclude_op=exclude_op,
     )
+    order_by = resolve_by_op_order_by(sort_by, sort_direction)
     sql = f"""
     SELECT
         LTRIM(RTRIM(SH6.H6_OP)) AS production_order,
@@ -553,7 +637,7 @@ def build_by_op_query(
     {_BASE_FROM}
     WHERE {where}
     GROUP BY SH6.H6_OP, SH6.H6_PRODUTO, SB1.B1_TIPO, SB1.B1_DESC
-    ORDER BY qty_produced DESC, SH6.H6_OP
+    ORDER BY {order_by}
     OFFSET {int(offset)} ROWS FETCH NEXT {int(page_size)} ROWS ONLY
     """
     return sql, tuple(params)

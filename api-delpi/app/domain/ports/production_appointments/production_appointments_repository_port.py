@@ -19,6 +19,8 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         product: str | None = None,
         search: str | None = None,
         mother_op: bool = False,
+        sort_by: str | None = None,
+        sort_direction: str | None = None,
     ) -> list[dict]: ...
 
     def count_appointments(
@@ -88,6 +90,8 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         op_family_prefix: str | None = None,
         child_ops_only: bool = False,
         exclude_op: str | None = None,
+        sort_by: str | None = None,
+        sort_direction: str | None = None,
     ) -> list[dict]: ...
 
     def count_by_op(

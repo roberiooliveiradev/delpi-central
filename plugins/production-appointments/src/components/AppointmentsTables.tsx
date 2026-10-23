@@ -50,6 +50,8 @@ const VIEW_MODES: ReadonlyArray<{
   },
 ];
 
+type SortDir = "asc" | "desc";
+
 type AppointmentsTablesProps = {
   workCenters: WorkCenterSummaryRow[];
   appointments: AppointmentRow[];
@@ -63,6 +65,10 @@ type AppointmentsTablesProps = {
   byOpPageSize: number;
   listSearch: string;
   byOpSearch: string;
+  listSortKey: string | null;
+  listSortDirection: SortDir;
+  byOpSortKey: string | null;
+  byOpSortDirection: SortDir;
   loading?: boolean;
   workCentersLoading?: boolean;
   onListPageChange: (page: number) => void;
@@ -71,11 +77,11 @@ type AppointmentsTablesProps = {
   onByOpPageSizeChange: (pageSize: number) => void;
   onListSearchChange: (value: string) => void;
   onByOpSearchChange: (value: string) => void;
+  onListSortChange: (columnKey: string) => void;
+  onByOpSortChange: (columnKey: string) => void;
   onOpenOp: (productionOrder: string) => void;
   onOpenCt: (workCenter: string) => void;
 };
-
-type SortDir = "asc" | "desc";
 
 function isInspection(value: number | boolean | undefined): boolean {
   return value === true || value === 1;
@@ -128,6 +134,10 @@ export function AppointmentsTables({
   byOpPageSize,
   listSearch,
   byOpSearch,
+  listSortKey,
+  listSortDirection,
+  byOpSortKey,
+  byOpSortDirection,
   loading = false,
   workCentersLoading = false,
   onListPageChange,
@@ -136,16 +146,15 @@ export function AppointmentsTables({
   onByOpPageSizeChange,
   onListSearchChange,
   onByOpSearchChange,
+  onListSortChange,
+  onByOpSortChange,
   onOpenOp,
   onOpenCt,
 }: AppointmentsTablesProps) {
   const [viewMode, setViewMode] = useState<AppointmentsTableViewMode>("appointments");
   const [exporting, setExporting] = useState(false);
 
-  const [listSortKey, setListSortKey] = useState<string | null>("appointment_datetime");
-  const [listSortDir, setListSortDir] = useState<SortDir>("desc");
-  const [byOpSortKey, setByOpSortKey] = useState<string | null>("qty_produced");
-  const [byOpSortDir, setByOpSortDir] = useState<SortDir>("desc");
+  // Resumo por CT vem completo do summary (sem paginação server) — sort client-side ok.
   const [ctSortKey, setCtSortKey] = useState<string | null>("qty_produced");
   const [ctSortDir, setCtSortDir] = useState<SortDir>("desc");
 
@@ -288,14 +297,6 @@ export function AppointmentsTables({
     () => sortRows(workCenters, workCenterColumns, ctSortKey, ctSortDir),
     [workCenters, workCenterColumns, ctSortKey, ctSortDir],
   );
-  const sortedAppointments = useMemo(
-    () => sortRows(appointments, appointmentColumns, listSortKey, listSortDir),
-    [appointments, appointmentColumns, listSortKey, listSortDir],
-  );
-  const sortedByOp = useMemo(
-    () => sortRows(byOp, byOpColumns, byOpSortKey, byOpSortDir),
-    [byOp, byOpColumns, byOpSortKey, byOpSortDir],
-  );
 
   const activeMode = VIEW_MODES.find((mode) => mode.id === viewMode) ?? VIEW_MODES[1];
 
@@ -390,7 +391,7 @@ export function AppointmentsTables({
           title="Apontamentos"
           titleHint={activeMode.hint}
           columns={appointmentColumns}
-          rows={sortedAppointments}
+          rows={appointments}
           rowKey={(row) => String(row.appointment_id)}
           loading={loading}
           onRowClick={(row) => onOpenOp(row.production_order)}
@@ -403,12 +404,8 @@ export function AppointmentsTables({
           }}
           serverSort={{
             sortKey: listSortKey,
-            sortDirection: listSortDir,
-            onSortChange: (columnKey) => {
-              const next = toggleSort(listSortKey, listSortDir, columnKey);
-              setListSortKey(next.key);
-              setListSortDir(next.direction);
-            },
+            sortDirection: listSortDirection,
+            onSortChange: onListSortChange,
           }}
           serverPagination={{
             page: listPage,
@@ -429,7 +426,7 @@ export function AppointmentsTables({
           title="Por ordem de produção"
           titleHint={activeMode.hint}
           columns={byOpColumns}
-          rows={sortedByOp}
+          rows={byOp}
           rowKey={(row) => `${row.production_order}-${row.product}`}
           loading={loading}
           onRowClick={(row) => onOpenOp(row.production_order)}
@@ -442,12 +439,8 @@ export function AppointmentsTables({
           }}
           serverSort={{
             sortKey: byOpSortKey,
-            sortDirection: byOpSortDir,
-            onSortChange: (columnKey) => {
-              const next = toggleSort(byOpSortKey, byOpSortDir, columnKey);
-              setByOpSortKey(next.key);
-              setByOpSortDir(next.direction);
-            },
+            sortDirection: byOpSortDirection,
+            onSortChange: onByOpSortChange,
           }}
           serverPagination={{
             page: byOpPage,

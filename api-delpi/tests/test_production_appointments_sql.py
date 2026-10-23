@@ -321,7 +321,47 @@ def test_appointments_list_exposes_datetime_operator_and_resource() -> None:
     assert "AS resource_name" in query
     assert "AS start_time" in query
     assert "AS end_time" in query
-    assert "ORDER BY SH6.H6_DTAPONT DESC, SH6.H6_HORAINI DESC" in query
+    assert "ORDER BY SH6.H6_DTAPONT DESC, SH6.H6_HORAINI DESC, SH6.R_E_C_N_O_ DESC" in query
+
+
+def test_appointments_list_order_by_respects_sort_by() -> None:
+    from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
+        build_appointments_list_query,
+        resolve_appointments_list_order_by,
+    )
+
+    assert "H6_QTDPROD" in resolve_appointments_list_order_by("qty_produced", "asc")
+    query, _ = build_appointments_list_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        offset=0,
+        page_size=20,
+        sort_by="qty_produced",
+        sort_direction="asc",
+    )
+    assert "ORDER BY CAST(SH6.H6_QTDPROD AS FLOAT) ASC" in query
+    # Negativo: chave inválida cai no default datetime desc.
+    assert "H6_DTAPONT DESC" in resolve_appointments_list_order_by("hack;drop", "desc")
+
+
+def test_by_op_order_by_uses_select_aliases() -> None:
+    from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
+        build_by_op_query,
+        resolve_by_op_order_by,
+    )
+
+    assert resolve_by_op_order_by("period", "asc").startswith("first_date ASC")
+    query, _ = build_by_op_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        offset=0,
+        page_size=20,
+        sort_by="appointment_count",
+        sort_direction="desc",
+    )
+    assert "ORDER BY appointment_count DESC, production_order ASC" in query
 
 
 def test_appointments_list_and_count_include_search_join() -> None:

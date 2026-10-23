@@ -33,19 +33,25 @@ function baseQuery(filters: AppointmentsQueryFilters) {
   };
 }
 
-type ListRequestOptions = RequestOptions & { search?: string };
+type ListRequestOptions = RequestOptions & {
+  search?: string;
+  sortBy?: string | null;
+  sortDirection?: "asc" | "desc";
+};
 
 function listQuery(
   filters: AppointmentsQueryFilters,
   page: number,
   pageSize: number,
-  search?: string,
+  options: Pick<ListRequestOptions, "search" | "sortBy" | "sortDirection"> = {},
 ) {
   return {
     ...baseQuery(filters),
     page,
     page_size: pageSize,
-    search: search?.trim() || undefined,
+    search: options.search?.trim() || undefined,
+    sort_by: options.sortBy?.trim() || undefined,
+    sort_direction: options.sortDirection || undefined,
   };
 }
 
@@ -86,7 +92,7 @@ export async function fetchAppointmentsList(
   options: ListRequestOptions = {},
 ): Promise<AppointmentsListData> {
   return getEnvelope(
-    `${queryString(listQuery(filters, page, pageSize, options.search))}`,
+    `${queryString(listQuery(filters, page, pageSize, options))}`,
     options,
   );
 }
@@ -98,7 +104,7 @@ export async function fetchAppointmentsByOp(
   options: ListRequestOptions = {},
 ): Promise<AppointmentsByOpData> {
   return getEnvelope(
-    `/by-op${queryString(listQuery(filters, page, pageSize, options.search))}`,
+    `/by-op${queryString(listQuery(filters, page, pageSize, options))}`,
     options,
   );
 }
@@ -116,7 +122,7 @@ export async function fetchAppointmentsChildOps(
         { ...filters, op: productionOrder, motherOp: undefined },
         page,
         pageSize,
-        options.search,
+        options,
       ),
       op: productionOrder,
     })}`,

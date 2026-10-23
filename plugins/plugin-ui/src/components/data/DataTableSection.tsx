@@ -61,6 +61,13 @@ export type ServerPaginationConfig = {
   pageSizeOptions?: readonly number[];
 };
 
+/**
+ * Ordenação controlada pelo consumidor.
+ *
+ * Com ``serverPagination``, a ordenação **deve** ser aplicada na fonte de dados
+ * (API/SQL) sobre o conjunto completo; o kit só espelha o estado no header.
+ * Reordenar apenas o array da página atual deixa a ordem incorreta nas demais páginas.
+ */
 export type ServerSortConfig = {
   sortKey: string | null;
   sortDirection: "asc" | "desc";

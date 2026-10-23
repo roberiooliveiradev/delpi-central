@@ -3,11 +3,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.domain.production.production_appointments.production_appointments_scope import (
+    BY_OP_SORTABLE_COLUMNS,
+    DEFAULT_BY_OP_SORT_BY,
+    DEFAULT_BY_OP_SORT_DIRECTION,
+    DEFAULT_LIST_SORT_BY,
+    DEFAULT_LIST_SORT_DIRECTION,
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
+    LIST_SORTABLE_COLUMNS,
     MAX_PAGE_SIZE,
     SERIES_GRANULARITY_OPTIONS,
     SERIES_GROUP_BY_OPTIONS,
+    SORT_DIRECTIONS,
     VALID_BRANCHES,
 )
 from app.domain.services.production.production_appointments_list_search_service import (
@@ -33,6 +40,8 @@ class ProductionAppointmentsQueryRequest:
     granularity: str = "day"
     page: int = DEFAULT_PAGE
     page_size: int = DEFAULT_PAGE_SIZE
+    sort_by: str = DEFAULT_LIST_SORT_BY
+    sort_direction: str = DEFAULT_LIST_SORT_DIRECTION
 
     @classmethod
     def from_query(
@@ -50,6 +59,9 @@ class ProductionAppointmentsQueryRequest:
         granularity: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
+        sort_by: str | None = None,
+        sort_direction: str | None = None,
+        sort_catalog: str = "list",
         require_branch: bool = True,
     ) -> ProductionAppointmentsQueryRequest:
         normalized_branch = optional_concrete_branch(branch)
@@ -74,6 +86,25 @@ class ProductionAppointmentsQueryRequest:
         if resolved_size < 1 or resolved_size > MAX_PAGE_SIZE:
             raise ValueError(f"page_size deve estar entre 1 e {MAX_PAGE_SIZE}.")
 
+        catalog = (sort_catalog or "list").strip().lower()
+        if catalog == "by_op":
+            allowed = BY_OP_SORTABLE_COLUMNS
+            default_sort = DEFAULT_BY_OP_SORT_BY
+            default_direction = DEFAULT_BY_OP_SORT_DIRECTION
+        else:
+            allowed = LIST_SORTABLE_COLUMNS
+            default_sort = DEFAULT_LIST_SORT_BY
+            default_direction = DEFAULT_LIST_SORT_DIRECTION
+
+        resolved_sort = (sort_by or default_sort).strip()
+        if resolved_sort not in allowed:
+            raise ValueError(
+                f"sort_by inválido. Use um de: {', '.join(sorted(allowed))}."
+            )
+        resolved_direction = (sort_direction or default_direction).strip().lower()
+        if resolved_direction not in SORT_DIRECTIONS:
+            raise ValueError('sort_direction inválida. Use "asc" ou "desc".')
+
         return cls(
             branch=normalized_branch,
             date_start=date_start.strip() if date_start else None,
@@ -87,6 +118,8 @@ class ProductionAppointmentsQueryRequest:
             granularity=resolved_granularity,
             page=resolved_page,
             page_size=resolved_size,
+            sort_by=resolved_sort,
+            sort_direction=resolved_direction,
         )
 
     def protheus_closed_open(self) -> tuple[str, str]:
