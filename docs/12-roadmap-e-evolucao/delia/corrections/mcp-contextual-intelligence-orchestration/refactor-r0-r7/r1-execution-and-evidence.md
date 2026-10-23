@@ -45,7 +45,7 @@
 | REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | Nenhuma regressão conhecida no escopo avaliado. Uma divergência interna de implementação foi capturada na revisão do próprio diff antes de qualquer teste verde (NameError `data.get(resource_id)` no novo ramo de identidade) — corrigida e coberta com mutador adversarial `resource_id="delia.bogus.id"` na mesma iteração RED→GREEN; não constitui rework de baseline entregue. `NO_REGRESSION_FOR_EVALUATED_SCOPE=YES` — escopo avaliado = M01 paridade/loader/wiring/suíte backend completa. |
 | AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 — nenhuma regressão de baseline entregue; correções internas ocorreram dentro da iteração inicial RED→GREEN. |
 | RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | Residual search: grep repo-wide por cada um dos 17 nomes + 2 wrappers = 0 refs; `orchestration.py` sem texto de instrução remanescente (0 `"""`-blocks de instrução). ROLLBACK: `git revert` do commit restaura baseline (texto+hash+lineage pinados pelo snapshot test → reversão segura e verificável). SECURITY_SECRETS: nenhum segredo no recurso/testes; nenhum path env-supplied; recurso é artefato fixo de repo. |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | Preenchido no relatório final (ver rodapé abaixo — campos self-referenciais completados após push). |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | FINAL_HEAD=`aac06af292162f31723c98c65cc104339fb022bd` (= ORIGIN_MAIN_FINAL após push); PUSH_VERIFIED=YES — `git push origin main` ff-only, rebase sobre `3808fa4c00` (docs-only concorrente), zero conflito. |
 | README_LEDGER_UPDATED / DELETIONS_RATIONALE | README: entrada do documento R1 no índice da pasta `refactor-r0-r7`. Ledger: §6.409 com fatos (sem autoaceite). DELETIONS_RATIONALE: cada constante de texto removida só após paridade sha256 comprovada no recurso e callers migrados; wrappers de lineage removidos por redundância ao padrão `_lineage(id, text)` já existente — removal segura com 0 refs. |
 | EXECUTION_DRIFT / RESIDUALS / STOP_REASON | EXECUTION_DRIFT=NONE. RESIDUALS: (a) live-model eval não executado (justificativa acima — paridade byte-a-byte); (b) testes unitários constroem OCO sem instruções (mapa vazio → texto `""` ao modelo fake — comportamento de teste preservado, proposital); (c) `evidence_projection.py` segue candidato condicional para R2 (não criado); (d) resíduos R0 (`render_specialist_outcome`, `_single_free_text_argument_from_input`) mantêm disposição fora de M01. STOP_REASON: nenhum — etapa concluída dentro do contrato. |
 | EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — M01 extraído com paridade sha256/lineage, fail-closed real, suíte completa verde, zero monólito/registry novo, legado OBSOLETE_PROVEN removido. Não declaro ACCEPT nem libero R2. / YES |
@@ -102,7 +102,7 @@ root_composer                   root_composer
 
 ### Campos self-referenciais finais
 
-FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED — preenchidos no relatório de execução; o documento é atualizado no commit documental coerente ao push.
+FINAL_HEAD=`aac06af292162f31723c98c65cc104339fb022bd` · ORIGIN_MAIN_FINAL=`aac06af292` · PUSH_VERIFIED=YES (ff-only após rebase sobre docs concorrentes).
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
