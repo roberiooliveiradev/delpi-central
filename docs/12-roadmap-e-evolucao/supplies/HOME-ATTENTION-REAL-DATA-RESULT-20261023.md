@@ -207,8 +207,10 @@ Sem owner, sem ciclo de vida "pendente→feita", sem endpoint de contagem: rende
 - MFE: **383 passed** (6 guards novos: módulos ausentes, HomePage/PluginShell sem atenção, sem `/home/attention`, demais blocos intactos); tsc ok; eslint limpo; vite build ok.
 
 ### Deploy
-- Serviços publicados: `supplies-api` + `supplies` (somente os afetados; `purchase-requests-api`/`api-delpi` intactos — otimizações do P2 continuam servindo as páginas de destino).
-- Smoke: `GET /home/attention` → **404** (contrato removido); bundle sem marcadores `homeAttention`; Home renderiza sem a seção.
+- Commit `66bf028bcc` → `main` (ff-only). Serviços publicados: `supplies-api` (`sha256:d4a88f111cab`) + `supplies` (`sha256:b6170a770508`) — somente os afetados; `purchase-requests-api`/`api-delpi` intactos (otimizações do P2 continuam servindo as páginas de destino). `delpi-supplies-api` Up healthy.
+- Smoke autenticado: `GET /home/attention` → **404** em 12ms (contrato removido — verificado `url_map` sem rotas home, 38 rotas restantes); `GET /me/capabilities` → 200 em 10ms; anônimo → 401 (fail-closed).
+- Bundle federado: `App-C1cf8iYo.js` sem marcadores `homeAttention`/`sp-home-attention`; `my_tasks` presente na navegação.
+- Antes/depois: Home → 1 chamada BFF + 6 downstream (~13,6s composição) → **0 chamadas** de atenção; hero/favoritos/recentes/caminhos renderizam sem espera operacional.
 
 ### Residual
 - `my_tasks` segue placeholder na navegação (`TO_INVENTORY` mantido) — quando existir owner canônico de tarefas, o card "Minhas tarefas" pode voltar via Cenário A do P3.
