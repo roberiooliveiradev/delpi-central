@@ -91,3 +91,12 @@ Alterados: `SupplierCreatePage.tsx` (integração), `index.css` (estilos escopad
 ## 12. Próximo gate
 
 R1.S3 (provider nominal) permanece bloqueado; S4/S5/S6 não autorizados automaticamente. Aceite federado do S2 depende de R1.S7.
+
+
+## 13. Revisão GPT do R1 (2026-10-23) — REWORK residual
+
+**Evidência no código commit `cda28e6b9f`:** `identityChangeCheck()` exige confirmação quando `person_type` preenchido difere de `J`, mesmo com `tax_id` igual. Entretanto `isIdentityCoherent()` em `creation/stateMachine.ts` verifica **somente** a igualdade de `draft.tax_id` e `activeTaxId`. `CreationAssistedFlow` usa este boolean para liberar `applyOne`/`applyAll` e `CreationSuggestionsPanel` (`identityBlocked`).
+
+**Cenário negativo faltante:** draft `tax_id` igual ao CNPJ consultado, `person_type='F'` (ou `'X'`), consulta retorna `person_type='J'`, usuário **cancela** a confirmação. `isIdentityCoherent(draft, activeTaxId)` permanece `true`, permitindo aplicar sugestões apesar de identidade não confirmada. Os testes estruturais e unitários reportados não provam o bloqueio desse cenário completo.
+
+**Decisão:** **REWORK** restrito. Ajustar predicado/estado de coerência para considerar `person_type` e confirmação efetiva da identidade; após cancelamento não liberar sugestões, nem aplicar automaticamente. Validar resposta assíncrona e transições da página. Adicionar regressões unitárias + teste de interação que exerça consulta → cancelamento → tentativa de aplicar. Preservar manual, backend S1, gates e escopo original. Reexecutar teste/typecheck/build, documentar, commit/push; smoke federado segue `TEST_NOT_RUN`. Não promover R1.S2 a aceite nem iniciar S3–S6 automaticamente.
