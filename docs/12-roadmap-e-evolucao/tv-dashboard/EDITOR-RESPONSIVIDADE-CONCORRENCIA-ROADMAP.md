@@ -247,6 +247,29 @@ Alinhar/distribuir/z-order só chamam `updateBlocks` se o ack falhar. Mover, tam
 
 **Métricas antes/depois do R1.** `OWN_ACK_RELOAD_COUNT`: 0→0 (mantido). `AMBIGUOUS_EVENT_RECOVERY_COUNT`: antes 0 (evento podia morrer ignorado) → 1 obrigatório por settle não confirmado. `HTTP_REQUESTS_PER_OWN_COMMIT`: inalterado. Custo residual admitido: settle rejeitado pode disparar um reload adicional além do server-wins do 409 (corrida estreita, direção segura).
 
+### Execução — VISTA-TV-EDITOR-LOCAL-VISUAL-PROJECTION-025 (P1, resposta visual imediata)
+
+**Estado anterior.** `alignSelected` (alinhar ×6, centralizar ×2, distribuir ×2, variantes `align-slide-*`) e `applyLayerOrder` (bring-to-front, send-to-back, bring-forward, send-backward) eram **ACK-first**: `applyLocal` só rodava no `.then` quando o commit retornava `null`. Clique→primeira pintura = RTT completo da mutation (~96–125ms warm, 510ms cold na playlist isolada local) + parse/aplicação.
+
+**Causa raiz.** Os handlers não usavam o mecanismo local-first já estabelecido (`updateBlocks` + `ackBlocksMutation`, mesmo padrão de `sameSizeSelected`, `nudgeSelected`, `reorderBlockLayer`, drag). `EXISTING_EQUIVALENT = YES` — nenhum reducer novo foi criado.
+
+**Decisão contratual importante.** Os comandos passaram a persistir via `upsert_block` do resultado projetado em vez dos ops `align_blocks`/`reorder_block_z`, porque:
+- `align_blocks` no backend **não reconcilia conectores** — o ack canônico carregaria geometria de conector divergente do palco já reconciliado (`reconcileConnectorsAfterDrag`);
+- `reorder_block_z` no backend atribui `max_z+1..` só aos selecionados, enquanto a projeção local reindexa 1..N — mesma ordem relativa, valores divergentes → toda mutação de camada produziria ack ≠ projeção.
+Com `upsert_block`, **persistido ≡ projetado por construção** → ack de mesma autoridade, sem salto visual sistemático. Os ops `align_blocks`/`reorder_block_z` permanecem intactos e funcionais para callers não-editor (MCP/GPT/VISTA) — verificado ao vivo (`align-left`/`align-right` RTT ~112ms, rev 16→22).
+
+**Mecanismo reutilizado.** `updateBlocks` (histórico + `syncAllConnectors`/`pruneOrphanConnectors` + autosave full-config) → `ackBlocksMutation(changed)` → `ackUpsertBlocksWithGeneration` (gate de geração contra ack stale) → `commitUpsertBlocks` → fila FIFO por playlist + `expected_revision`/CAS + `If-Match`. O conjunto `changed` é diff por identidade contra o estado anterior — captura membros alinhados/reindexados **e conectores reconciliados**. No-op real (`changed` vazio: seleção já alinhada, `<3` unidades para distribuir) não projeta nem commita.
+
+**Contratos preservados.** CAS/`expected_revision` intactos (ops passam pela mesma `applyPresentationMutations`/`withWriteEpoch`); geração descarta ack stale entre comandos consecutivos (teste A→B fora de ordem); 409 segue server-wins da infraestrutura de escrita existente; falha não-CAS mantém a projeção no palco sem fingir confirmação (mesma semântica de sameSize/drag — a recuperação é do autosave full-config e da reconciliação WS/024-R1); histórico segue um passo lógico por comando (ver quirk abaixo); WS/reconciliação não tocadas — o suppression do 024/024-R1 não usa projeção otimista como prova de incorporação.
+
+**Quirk preexistente documentado.** `parseComunicadoConfig` → `normalizeBlock` materializa defaults de estilo no ack; o fingerprint do canônico difere da projeção esparsa e `commitWithHistory` pode empilhar uma segunda entrada de histórico visualmente idêntica. É o comportamento vigente de **todos** os caminhos local-first (sameSize/drag/insert) — não introduzido aqui; correção global seria normalizar a projeção antes do upsert, fora de escopo.
+
+**Métricas.** `CLICK_TO_FIRST_VISUAL_MS`: antes = RTT mutation (~112ms warm local, >500ms cold) → depois = commit síncrono `commitWithHistory` (um React commit, <16ms alvo). `CLICK_TO_CONFIRMED_VISUAL_MS`: inalterado (~RTT). `HTTP_REQUESTS_PER_COMMAND`: 1 mutation → 1 mutation (mesma contagem; o autosave full-config existia nos dois mundos). `VISUAL_CORRECTION_COUNT`: 0 sistemático — persistido ≡ projetado.
+
+**Testes.** `useComunicadoEditorBlocks.alignProjection.test.ts` (8): pinta antes do ACK + upsert projetado (sem op align), ack idêntico sem undo extra induzido, distribute-h imediato, no-op <3 sem commit, A→B com ack stale dropado pela geração, falha não-CAS sem falso sucesso/reversão cega, z-order bringToFront imediato via upsert (sem reorder_block_z), undo pós-ack. Regressão: 103 testes dos hooks/utils/align/layer/mutation PASS; suíte completa `src/` sem novos failures (5 arquivos já falhavam no baseline; `PlaylistPreviewPage.loading` flaky sob carga, PASS isolado).
+
+**Limitações.** E2E visual dois-browsers `TEST_NOT_RUN`. Cenários multiusuário A–F regidos pelo mesmo contrato de escrita do sameSize (upsert + autosave + CAS + WS) — sem nova superfície de conflito, mas sem sessão dupla executada nesta task. Undo de projeção pode precisar de 2 passos quando o canônico normaliza estilos (quirk acima).
+
 ### Cache
 
 `notify_presentation_changed` limpa `reset_comunicado_data_block_cache` também em mutação visual. O clear em si não foi cronometrado. A consulta seguinte da TV/prévia deixa de usar o cache. Não alterar esta política sem teste de dado obsoleto.
@@ -256,7 +279,7 @@ Alinhar/distribuir/z-order só chamam `updateBlocks` se o ack falhar. Mover, tam
 | Capacidade | Existente | Decisão |
 |---|---|---|
 | Projeção local de move/estilo/grupo | YES | REUSE |
-| Projeção de alinhar/z-order com rollback | NO | EXTEND só na Fase 2, com contrato |
+| Projeção de alinhar/z-order com rollback | YES (025) | REUSED — `updateBlocks` + `ackBlocksMutation` |
 | Fila FIFO + Web Lock | YES | REUSE |
 | Revisão / 409 / server-wins | YES | REUSE |
 | Read-back `nativeConfig` | YES | REUSE |
@@ -270,7 +293,7 @@ Alinhar/distribuir/z-order só chamam `updateBlocks` se o ack falhar. Mover, tam
 Não é projeção otimista nem sala nova.
 
 1. **Fase 1 residual:** medir, no editor autenticado, fila, rede, persistência, read-back e o reload do próprio `presentation_updated`. Só então decidir se o eco sem `clientId` ou o clear de cache entram num patch. Owner: `PlaylistEditorPage` + `notify_presentation_changed`. Teste: uma sessão, comandos de alinhar e prefixo, sem gravar cenário irreversível.
-2. **Fase 2:** estender a pintura já usada por `updateBlocks` para alinhar/distribuir/z-order, com rollback no 409/falha. Não criar outro reducer. Gate: o ack continua a autoridade.
+2. **Fase 2 (feita — 025):** alinhar/distribuir/z-order projetam via `updateBlocks` + `ackBlocksMutation` (sem reducer novo; ack continua autoridade). Residual: E2E visual dois-browsers e o quirk de histórico por normalização de estilo no ack.
 3. **Fase 3:** duas sessões reais nos cenários A–F. Conflito continua 409 + aviso. Undo não pode persistir por cima da revisão do outro usuário. Sem CRDT, OT ou merge por campo até existir ADR.
 
 ### Testes nesta reancoragem

@@ -1559,49 +1559,38 @@ export function useComunicadoEditorBlocks({
   );
 
   const applyLayerOrder = useCallback(
-    (
-      transform: (blocks: ComunicadoBlock[], selectedIds: string[]) => ComunicadoBlock[],
-      command: "bring-to-front" | "send-to-back" | "bring-forward" | "send-backward",
-    ) => {
+    (transform: (blocks: ComunicadoBlock[], selectedIds: string[]) => ComunicadoBlock[]) => {
       const ids = getActionSelectedIds();
       if (ids.length === 0) return;
-      const applyLocal = () => {
-        updateBlocks(transform(configRef.current.blocks ?? [], ids));
-      };
-      if (!playlistId || !slideId) {
-        applyLocal();
-        return;
-      }
-      void commitOpsAndApplyAck({
-        ...commitWriteMeta(),
-        playlistId,
-        slideId,
-        ops: [{ op: "reorder_block_z", blockIds: ids, command }],
-        gate: mutationGateRef.current,
-        applyAck: (canonical) => {
-          commitWithHistory(canonical);
-        },
-      }).then((canonical) => {
-        if (!canonical) applyLocal();
-      });
+      // Projeção local-first (025): a reordenação local já é a canônica do
+      // editor; persistimos o resultado projetado via upsert_block (mesmo
+      // caminho de move/resize/sameSize) — `reorder_block_z` no backend
+      // atribui zIndex diferentes (max+1..), divergindo do reindex local.
+      const prev = configRef.current.blocks ?? [];
+      const next = transform(prev, ids);
+      const prevById = new Map(prev.map((block) => [block.id, block]));
+      const changed = next.filter((block) => prevById.get(block.id) !== block);
+      if (changed.length === 0) return;
+      updateBlocks(next);
+      ackBlocksMutation(changed);
     },
-    [commitWithHistory, configRef, getActionSelectedIds, playlistId, slideId, updateBlocks],
+    [ackBlocksMutation, configRef, getActionSelectedIds, updateBlocks],
   );
 
   const bringToFrontSelected = useCallback(() => {
-    applyLayerOrder(bringToFront, "bring-to-front");
+    applyLayerOrder(bringToFront);
   }, [applyLayerOrder]);
 
   const sendToBackSelected = useCallback(() => {
-    applyLayerOrder(sendToBack, "send-to-back");
+    applyLayerOrder(sendToBack);
   }, [applyLayerOrder]);
 
   const bringForwardSelected = useCallback(() => {
-    applyLayerOrder(bringForward, "bring-forward");
+    applyLayerOrder(bringForward);
   }, [applyLayerOrder]);
 
   const sendBackwardSelected = useCallback(() => {
-    applyLayerOrder(sendBackward, "send-backward");
+    applyLayerOrder(sendBackward);
   }, [applyLayerOrder]);
 
   const reorderBlockLayer = useCallback(
@@ -1746,28 +1735,21 @@ export function useComunicadoEditorBlocks({
     (command: LayoutAlignCommand) => {
       const ids = getActionSelectedIds();
       if (ids.length === 0) return;
-      const applyLocal = () => {
-        const aligned = alignComunicadoBlocks(configRef.current.blocks ?? [], ids, command);
-        updateBlocks(reconcileConnectorsAfterDrag(aligned, new Set(ids)));
-      };
-      if (!playlistId || !slideId) {
-        applyLocal();
-        return;
-      }
-      void commitOpsAndApplyAck({
-        ...commitWriteMeta(),
-        playlistId,
-        slideId,
-        ops: [{ op: "align_blocks", blockIds: ids, command }],
-        gate: mutationGateRef.current,
-        applyAck: (canonical) => {
-          commitWithHistory(canonical);
-        },
-      }).then((canonical) => {
-        if (!canonical) applyLocal();
-      });
+      // Projeção local-first (025): `alignComunicadoBlocks` é a geometria
+      // canônica do editor (o backend porta os mesmos algoritmos em
+      // `block_layout_service`). Persistimos o resultado projetado via
+      // upsert_block — `align_blocks` remoto não reconcilia conectores e
+      // reintroduziria um ack divergente do palco já pintado.
+      const prev = configRef.current.blocks ?? [];
+      const aligned = alignComunicadoBlocks(prev, ids, command);
+      const next = reconcileConnectorsAfterDrag(aligned, new Set(ids));
+      const prevById = new Map(prev.map((block) => [block.id, block]));
+      const changed = next.filter((block) => prevById.get(block.id) !== block);
+      if (changed.length === 0) return;
+      updateBlocks(next);
+      ackBlocksMutation(changed);
     },
-    [commitWithHistory, configRef, getActionSelectedIds, playlistId, slideId, updateBlocks],
+    [ackBlocksMutation, configRef, getActionSelectedIds, updateBlocks],
   );
 
   const sameSizeSelected = useCallback(
