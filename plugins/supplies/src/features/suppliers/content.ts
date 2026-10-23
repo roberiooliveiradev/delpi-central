@@ -4,7 +4,7 @@ export const SUPPLIERS_CONTENT = {
   description:
     "Cadastro central de fornecedores (SA2, empresa 01) com busca, ficha cadastral e edição governada.",
   titleHint:
-    "Cada fornecedor é identificado por código + loja (8 dígitos). CNPJ/CPF não é chave única e dados pessoais chegam mascarados do backend.",
+    "Cada fornecedor é identificado por código + loja (8 dígitos). CNPJ/CPF não é chave única e dados pessoais chegam mascarados (proteção LGPD).",
 
   searchLabel: "Buscar fornecedor",
   searchPlaceholder: "Código, loja, razão social, fantasia ou documento",
@@ -50,11 +50,22 @@ export const SUPPLIERS_CONTENT = {
   sectionFiscal: "Fiscal",
   sectionPurchasing: "Compras",
 
+  sectionIdentificationDescription:
+    "Reúne os dados que identificam o fornecedor, como documento fiscal, tipo de pessoa, razão social e nome fantasia.",
+  sectionAddressDescription:
+    "Informe a localização cadastral do fornecedor, incluindo logradouro, número, bairro, município, estado e país. Você pode consultar o CEP para obter sugestões de endereço.",
+  sectionContactDescription:
+    "Registre os canais de comunicação e as pessoas de referência do fornecedor, utilizados para contato comercial, esclarecimentos e atualização de informações.",
+  sectionFiscalDescription:
+    "Reúne informações fiscais e tributárias utilizadas no enquadramento cadastral do fornecedor, incluindo inscrições, regimes, retenções e códigos de classificação.",
+  sectionPurchasingDescription:
+    "Defina as condições comerciais e financeiras e os relacionamentos utilizados nas operações com o fornecedor, como pagamento, transportadora e outras referências cadastrais.",
+
   editAction: "Editar cadastro",
   editHint:
-    "Edite os campos cadastrais necessários — código, loja e CNPJ/CPF são protegidos e não podem ser alterados. Antes de gravar, revise as diferenças; nenhuma gravação ocorre sem confirmação.",
+    "Atualize as informações cadastrais necessárias. Código, loja e documento fiscal são protegidos. Antes de concluir, revise os campos alterados. A gravação depende da disponibilidade e das autorizações do ambiente.",
   readonlyFieldHint:
-    "Somente leitura — alteração deste campo ainda não foi homologada no contrato do ERP.",
+    "Somente leitura — a alteração deste campo ainda não foi liberada no ERP.",
   protectedFieldHint:
     "Campo protegido — documento fiscal e identidade do fornecedor não são alteráveis nesta operação.",
   cancelAction: "Cancelar",
@@ -87,8 +98,7 @@ export const SUPPLIERS_CONTENT = {
 
   createTitle: "Novo fornecedor",
   createDescription:
-    "Preencha os dados para cadastrar um fornecedor no Protheus. " +
-    "O envio só é liberado quando a escrita no ERP estiver homologada neste ambiente.",
+    "Preencha as informações cadastrais do fornecedor. Você pode consultar dados públicos pelo CNPJ ou informar os dados manualmente. Confira as informações e revise o cadastro antes de concluir. O envio ao Protheus estará disponível quando autorizado.",
   createSubmit: "Revisar dados",
   createReviewTitle: "Revisar dados do fornecedor",
   createReviewDescription:
@@ -131,6 +141,16 @@ export const SUPPLIERS_CONTENT = {
     "A consulta ao ERP ainda não reflete as alterações enviadas. Aguarde e confira novamente antes de reenviar.",
 } as const;
 
+/** Descrições funcionais das seções — fonte única inclusão/edição (S10). */
+export const supplierSectionDescriptions = {
+  identification: SUPPLIERS_CONTENT.sectionIdentificationDescription,
+  address: SUPPLIERS_CONTENT.sectionAddressDescription,
+  contact: SUPPLIERS_CONTENT.sectionContactDescription,
+  fiscal: SUPPLIERS_CONTENT.sectionFiscalDescription,
+  purchasing: SUPPLIERS_CONTENT.sectionPurchasingDescription,
+} as const;
+
+
 export function supplierPendingChangesLabel(count: number): string {
   return count === 1
     ? "1 alteração pendente"
@@ -138,7 +158,7 @@ export function supplierPendingChangesLabel(count: number): string {
 }
 
 export function supplierFieldMaxLengthHint(max: number): string {
-  return `Até ${max} caracteres, conforme o contrato de integração com o ERP.`;
+  return `Máximo de ${max} caracteres.`;
 }
 
 export function mapSuppliersFetchError(message: string, code?: string): string {

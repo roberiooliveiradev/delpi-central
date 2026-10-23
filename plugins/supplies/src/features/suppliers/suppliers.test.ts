@@ -8,6 +8,8 @@ import {
 import {
   mapSuppliersFetchError,
   SUPPLIERS_CONTENT,
+  supplierFieldMaxLengthHint,
+  supplierSectionDescriptions,
 } from "./content";
 import {
   deriveProtheusCityCode,
@@ -1039,6 +1041,82 @@ describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
         (draft as Record<string, string>)[key],
         key,
       ).toBeUndefined();
+    }
+  });
+});
+
+describe('S10 — hierarquia de ajuda hero/seção/campo', () => {
+  const SECTION_IDS = [
+    'identification',
+    'address',
+    'contact',
+    'fiscal',
+    'purchasing',
+  ] as const;
+
+  it('five sections have distinct, non-empty functional descriptions', () => {
+    const values = SECTION_IDS.map((id) => supplierSectionDescriptions[id]);
+    for (const v of values) {
+      expect(v.trim().length).toBeGreaterThanOrEqual(30);
+    }
+    expect(new Set(values).size).toBe(SECTION_IDS.length);
+  });
+
+  it('section descriptions do not contain the removed generic form help', () => {
+    const generic =
+      'Todos os campos do contrato de cadastro';
+    for (const id of SECTION_IDS) {
+      expect(supplierSectionDescriptions[id]).not.toContain(generic);
+    }
+  });
+
+  it('section ids cover both create and edit section sets (single source)', () => {
+    const createIds = SUPPLIER_CREATE_SECTIONS.map((s) => s.id);
+    const formIds = SUPPLIER_FORM_SECTIONS.map((s) => s.id);
+    for (const id of createIds) {
+      expect(supplierSectionDescriptions).toHaveProperty(id);
+    }
+    for (const id of formIds) {
+      expect(supplierSectionDescriptions).toHaveProperty(id);
+    }
+  });
+
+  it('create hero is create-specific and never promises enabled writes', () => {
+    expect(SUPPLIERS_CONTENT.createTitle).toBe('Novo fornecedor');
+    expect(SUPPLIERS_CONTENT.createDescription).toContain('CNPJ');
+    expect(SUPPLIERS_CONTENT.createDescription).toContain('revise');
+    expect(SUPPLIERS_CONTENT.createDescription).not.toMatch(
+      /já está liberado|pode ser gravado agora|escrita habilitada/i,
+    );
+    expect(SUPPLIERS_CONTENT.createDescription).toContain(
+      'quando autorizado',
+    );
+  });
+
+  it('edit hero guidance is edit-specific and never promises enabled writes', () => {
+    expect(SUPPLIERS_CONTENT.editModeTitle).toBe('Editando fornecedor');
+    expect(SUPPLIERS_CONTENT.editHint).toContain('protegidos');
+    expect(SUPPLIERS_CONTENT.editHint).toContain('revise');
+    expect(SUPPLIERS_CONTENT.editHint).not.toMatch(
+      /já está liberado|pode ser gravado agora|escrita habilitada/i,
+    );
+    // Hero de edição não replica o texto de criação.
+    expect(SUPPLIERS_CONTENT.editHint).not.toBe(
+      SUPPLIERS_CONTENT.createDescription,
+    );
+  });
+
+  it('no UX text exposes the old technical length phrasing', () => {
+    expect(
+      supplierFieldMaxLengthHint(50),
+    ).toBe('Máximo de 50 caracteres.');
+    const allTexts = [
+      ...Object.values(SUPPLIERS_CONTENT),
+      ...Object.values(supplierSectionDescriptions),
+    ];
+    for (const t of allTexts) {
+      expect(t).not.toContain('contrato de integração');
+      expect(t).not.toMatch(/\bDTO\b|\bBFF\b|serializer/i);
     }
   });
 });

@@ -22,6 +22,7 @@ import { EnrichmentSection } from "./enrichment/EnrichmentSection";
 import {
   SUPPLIERS_CONTENT as C,
   supplierPendingChangesLabel,
+  supplierSectionDescriptions,
 } from "./content";
 import {
   SupplierCatalogField,
@@ -320,11 +321,7 @@ export function SupplierDetailPage({
             <SuppliesSectionCard
               key={section.id}
               title={SECTION_LABELS[section.id]}
-              hint={
-                section.id === "identification"
-                  ? SP_HELP.suppliersIdentification
-                  : undefined
-              }
+              subtitle={supplierSectionDescriptions[section.id]}
             >
               {editing ? (
                 <SupplierFieldGrid>

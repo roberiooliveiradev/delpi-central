@@ -20,7 +20,7 @@ import {
 import { ApiRequestError } from "../../api/httpClient";
 import { SP_HELP } from "../../content/helpTooltips";
 import { createSupplier } from "./api";
-import { SUPPLIERS_CONTENT as C } from "./content";
+import { SUPPLIERS_CONTENT as C, supplierSectionDescriptions } from "./content";
 import { CreationAssistedFlow } from "./creation/CreationAssistedFlow";
 import { applyDraftPatchToEntries } from "./creation/stateMachine";
 import type { SuggestionEntryMap } from "./creation/types";
@@ -301,7 +301,7 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
         <SuppliesSectionCard
           key={section.id}
           title={CREATE_SECTION_TITLES[section.id]}
-          hint={SP_HELP.suppliersCreateFields}
+          subtitle={supplierSectionDescriptions[section.id]}
         >
           <SupplierFieldGrid>
             {section.fields.map((field) => {
