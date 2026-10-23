@@ -99,3 +99,16 @@ Reconciliados individualmente nos documentos R1/R2; verificação acumulada nest
 ## Relatório
 
 `EXECUTOR_VERDICT=EVIDENCE_READY_FOR_REVIEW` · `COORDINATION_REVIEW_REQUIRED=YES` · `R3_AUTHORIZED=NO` · `PLAN_COMPLETE=NO`.
+
+
+## Revisão independente da coordenação — 2026-10-23
+
+**REVIEWED_SHA:** `e84f79bee10030b5f90a3e311901e1b6f0529137`. **REVIEW_VERDICT:** `INCONCLUSIVE` para o fechamento funcional integral do release. **DEPLOY_EXECUTION:** `EXECUTED_REPORTED`; a verificação SSH/prod não foi refeita independentemente. **R3_AUTHORIZED=NO**.
+
+O GitHub confirma o relatório publicado e o novo harness local. A equivalência de `delia-api` entre EVALUATED_SHA e checkout produtivo, resultados da suíte e as verificações live foram relatadas pelo executor; não foram reexecutadas nesta revisão. O deploy por si só não é prova de business outcome.
+
+**Divergências materiais de classificação:** D5-R apresentou `entities.playlist` verbatim em pergunta funcional de visualizações. Isso precisa ser tratado como **FAIL funcional pontual**, ainda que a causa seja antiga; a classificação `PASS_WITH_RESIDUAL` não encerra esse controle. D8-R provou `discover` e insuficiência honesta, não prova de consulta final resolvida; classificar `PARTIAL` até evidência de objetivo concluído. D5-schema respondeu de modo honesto, porém a pergunta sobre contrato não foi demonstrada como satisfeita; `INCONCLUSIVE` para task outcome. D4/D5/D8/N1 e negativos permanecem `PASS_REPORTED`, não reexecução independente.
+
+**NEXT_BOUND_STEP:** diagnóstico factual bounded, sem code diff nem deploy: recuperar traces redigidos de D5-R e D8-R na imagem `ee155bf5a325`; confrontar entradas, subject/goal, selected capability, contract_subject, evidence source, assessment verdict, CRI composition e user-facing output com a baseline pré-R1/R2 `6a896a695d` e casos de controle positivos schema; repetir amostras controladas com mesma configuração para distinguir variância do modelo, do owner e defeito de projeção. Não divulgar credenciais/tokens. Se comprovada regressão corrigível dentro de autorização existente, usar apenas rework bounded permitido; se mudança contratual/authority, STOP e nova decisão. Revisar também credencial de homologação por mecanismo de identidade sancionado: password grant utilizado não se torna padrão autorizado automaticamente. Não executar novo ACT, não mudar arquiteturas nem promover R3. Enquanto persistir falha material de D5-R, a coordenação não aceita `BUSINESS_OUTCOME_STATUS=PASS_WITH_RESIDUALS` como fechamento global.
+
+**Ação de produção:** a implantação reportada não é revertida automaticamente por esta revisão documental. Owner operacional deve avaliar severidade/exposição, controles compensatórios e necessidade de rollback baseado em risco, registrando decisão factual; não afirmar segurança total sem evidência.
