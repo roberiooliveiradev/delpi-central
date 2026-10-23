@@ -26,10 +26,39 @@ from app.domain.integrations.protheus_rest import SUPPLIER_ID_PATTERN, ProtheusR
 # the store, which is part of the supplier identity (code+store).
 _PUT_EXCLUDED = frozenset({"tax_id", "supplier_store"})
 
+# PUT allowlist FROZEN at the F3.3 cadastral set (POST original minus
+# document/identity). The 29 fields promoted to POST in X4.FIELDS.E3 are
+# EDIT_CANDIDATE_NOT_HOMOLOGATED — upstream PUT evidence is still pending
+# (E3.S4 matrix), so they must NOT enter this allowlist by derivation.
+PUT_EDITABLE_FIELDS = frozenset(
+    {
+        "person_type",
+        "supplier_name",
+        "supplier_short_name",
+        "address",
+        "district",
+        "postal_code",
+        "state",
+        "city",
+        "city_code",
+        "area_code",
+        "phone",
+        "state_registration",
+        "municipal_registration",
+        "contact_name",
+        "email",
+        "payment_condition_code",
+        "country_code",
+        "bacen_country_code",
+        "accounting_account",
+        "financial_nature_code",
+        "rohs_indicator",
+        "payment_method_code",
+    }
+)
+
 _UPDATE_SPECS: dict[str, dict[str, Any]] = {
-    field: spec
-    for field, spec in SUPPLIER_FIELD_SPECS.items()
-    if field not in _PUT_EXCLUDED
+    field: SUPPLIER_FIELD_SPECS[field] for field in PUT_EDITABLE_FIELDS
 }
 
 # Fields that identify the supplier record or the ERP context — never writable.

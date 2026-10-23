@@ -209,6 +209,35 @@ class TestDetail:
                 "/suppliers/123456789/1", headers={"Authorization": "Bearer t"}
             ).status_code == 422
 
+    def test_detail_projects_e3_sections(self, client):
+        """E3 promoted fields surface in the curated detail sections."""
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.return_value = {
+                "success": True,
+                "data": {
+                    "fornecedor": {
+                        "supplier_name": "ACME",
+                        "address_number": "385",
+                        "cnae_code": "6201501",
+                        "carrier_code": "000001",
+                        "bank_account": "999",  # sensitive — never projected
+                        "credit_limit_amount": "10",  # accumulator — never projected
+                    }
+                },
+            }
+            resp = client.get(
+                "/suppliers/1/1", headers={"Authorization": "Bearer t"}
+            )
+        body = resp.get_json()
+        assert body["sections"]["address"]["address_number"] == "385"
+        assert body["sections"]["fiscal"]["cnae_code"] == "6201501"
+        assert body["sections"]["purchasing"]["carrier_code"] == "000001"
+        assert "bank_account" not in str(body)
+        assert "credit_limit_amount" not in str(body)
+
 
 class TestWrite:
     def test_post_rejects_codusr(self, client):
@@ -374,6 +403,50 @@ class TestWrite:
             )
         assert resp.status_code == 504
         assert resp.get_json()["outcome"] == "indeterminate"
+
+    # --- X4.FIELDS.E3 — promoted fields pass POST, stay out of PUT -------
+
+    def test_post_forwards_e3_promoted_fields(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.post.return_value = {"success": True, "data": {}}
+            resp = client.post(
+                "/suppliers",
+                json={
+                    "fornecedor": {
+                        "supplier_name": "X",
+                        "supplier_store": "01",
+                        "address_number": "385",
+                        "cnae_code": "6201501",
+                        "linked_customer_code": "000123",
+                        "person_category": "PJ",  # NOT promoted — dropped
+                    }
+                },
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 200
+        sent = gw.post.call_args.kwargs["json_body"]["fornecedor"]
+        assert sent == {
+            "supplier_name": "X",
+            "supplier_store": "01",
+            "address_number": "385",
+            "cnae_code": "6201501",
+            "linked_customer_code": "000123",
+        }
+
+    def test_put_rejects_e3_post_only_fields(self, client):
+        """E2 proved POST only — PUT allowlist stays frozen (E3.S4)."""
+        v, r = _auth()
+        for field in ("address_number", "cnae_code", "carrier_code"):
+            with v, r:
+                resp = client.put(
+                    "/suppliers/000001/01",
+                    json={"fornecedor": {field: "1"}},
+                    headers={"Authorization": "Bearer t"},
+                )
+            assert resp.status_code == 422, field
 
 
 class TestOperationStatus:

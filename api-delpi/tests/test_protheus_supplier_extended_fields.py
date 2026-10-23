@@ -1,8 +1,10 @@
-"""X4.FIELDS.E1 — local experiment tests for extended supplier fields.
+"""X4.FIELDS.E1–E3 — local experiment tests for extended supplier fields.
 
 Scope: serialization/validation only, against the isolated experimental
-module. NO upstream call is made and the published allowlist must stay
-untouched — tests assert both directions.
+module. NO upstream call is made. After X4.FIELDS.E3 the 29 proven fields
+live in the published contract — this module retains only the 7 candidates
+without persistence evidence, and the published allowlist must keep
+rejecting exactly those (tests assert both directions).
 """
 
 from __future__ import annotations
@@ -34,56 +36,20 @@ BASE_PAYLOAD = {
     "bacen_country_code": "01058",
 }
 
-# field -> (input, expected_normalized)
+# field -> (input, expected_normalized) — only the 7 unproven candidates
+# still held by the experimental module (E3 promoted the other 29).
 CANDIDATE_CASES = {
-    "address_number": ("123", "123"),
-    "po_box": ("45678", "45678"),
-    "icms_contributor": ("1", "1"),
-    "simples_nacional": ("2", "2"),
-    "cnae_code": ("4711301", "4711301"),
-    "legal_entity_type": ("3", "3"),
     "person_category": ("PJ", "PJ"),
-    "simp_regime_code": ("2", "2"),
-    "pb_regime_code": ("1", "1"),
-    "inss_withholding": ("S", "S"),
-    "iss_withholding": ("N", "N"),
-    "csll_withholding": ("1", "1"),
-    "cofins_withholding": ("1", "1"),
-    "pis_withholding": ("2", "2"),
-    "irf_calculation": ("4", "4"),
-    "inp_calculation": ("1", "1"),
-    "tax_group_code": ("010", "010"),
     "esocial_category_code": ("701", "701"),
-    "commercial_contact_name": ("MARIA", "MARIA"),
     "country_calling_code": ("55", "55"),
-    "fax": ("4733330000", "4733330000"),
-    "website": ("https://x.example", "https://x.example"),
-    "responsible_name": ("JOSE RESPONSAVEL", "JOSE RESPONSAVEL"),
-    "risk_code": ("A", "A"),
-    "swift_code": ("brsabbrr", "BRSABBRR"),
     "payee_code": ("000905", "000905"),
     "payee_store": ("04", "04"),
     "generic_supplier": ("S", "S"),
-    "purchase_price_table_code": ("001", "001"),
-    "carrier_code": ("000001", "000001"),
-    "segment_code": ("000001", "000001"),
     "link_type_code": ("01", "01"),
-    "administrator_code": ("001", "001"),
-    "linked_customer_code": ("000123", "000123"),
-    "linked_customer_store": ("01", "01"),
-    "linked_employee_code": ("000007", "000007"),
 }
 
 # field -> invalid value
 INVALID_CASES = {
-    "address_number": "12A456",  # non-digit
-    "icms_contributor": "9",  # enum violation
-    "inss_withholding": "X",  # enum violation
-    "irf_calculation": "5",  # enum violation
-    "legal_entity_type": "9",  # enum violation
-    "po_box": "123456",  # length 6 > 5
-    "website": "x" * 31,  # length
-    "fax": "FAX",  # non-digit
     "payee_store": "004",  # length 3 > 2
 }
 

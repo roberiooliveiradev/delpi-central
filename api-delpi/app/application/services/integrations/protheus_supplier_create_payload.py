@@ -34,6 +34,43 @@ SUPPLIER_FIELD_SPECS: dict[str, dict[str, Any]] = {
     "financial_nature_code": {"max": 10},
     "rohs_indicator": {"max": 1, "enum": frozenset({"S", "N", ""})},
     "payment_method_code": {"max": 2},
+    # --- X4.FIELDS.E3 — campos promovidos ao contrato público -------------
+    # Persistência comprovada em homologação DELPI_TST01 (E2, 2026-10-23,
+    # doc X4-FIELDS-E2-*). Specs SX3 idênticas ao protótipo E1 — fonte
+    # canônica única (não duplicar no módulo experimental).
+    # --- endereço ---------------------------------------------------------
+    "address_number": {"max": 6, "digits": True},
+    "po_box": {"max": 5},
+    # --- fiscal / tributário ----------------------------------------------
+    "icms_contributor": {"max": 1, "enum": frozenset({"", "1", "2"})},
+    "simples_nacional": {"max": 1, "enum": frozenset({"", "1", "2"})},
+    "cnae_code": {"max": 9, "digits": True, "conditional": "person_type_jx"},
+    "legal_entity_type": {"max": 1, "enum": frozenset({"", "1", "2", "3", "4", "5"})},
+    "simp_regime_code": {"max": 1},
+    "pb_regime_code": {"max": 1, "enum": frozenset({"", "1", "2"})},
+    "inss_withholding": {"max": 1, "enum": frozenset({"", "S", "N"})},
+    "iss_withholding": {"max": 1, "enum": frozenset({"", "S", "N"})},
+    "csll_withholding": {"max": 1, "enum": frozenset({"", "1", "2"})},
+    "cofins_withholding": {"max": 1, "enum": frozenset({"", "1", "2"})},
+    "pis_withholding": {"max": 1, "enum": frozenset({"", "1", "2"})},
+    "irf_calculation": {"max": 1, "enum": frozenset({"", "1", "2", "3", "4"})},
+    "inp_calculation": {"max": 1, "enum": frozenset({"", "1", "2"})},
+    "tax_group_code": {"max": 3},
+    # --- contato ----------------------------------------------------------
+    "commercial_contact_name": {"max": 15},
+    "fax": {"max": 15, "digits": True},
+    "website": {"max": 30},
+    "responsible_name": {"max": 45},
+    # --- comercial / referências ------------------------------------------
+    "risk_code": {"max": 3},
+    "swift_code": {"max": 30, "upper": True},
+    "purchase_price_table_code": {"max": 3},
+    "carrier_code": {"max": 6},
+    "segment_code": {"max": 6},
+    "administrator_code": {"max": 3},
+    "linked_customer_code": {"max": 6},
+    "linked_customer_store": {"max": 2},
+    "linked_employee_code": {"max": 6},
 }
 
 _ALLOWED_FIELDS = frozenset(SUPPLIER_FIELD_SPECS)
@@ -113,6 +150,21 @@ def normalize_supplier_fields(raw: Mapping[str, Any] | None) -> dict[str, str]:
             continue
         out[field] = normalize_supplier_field_value(field, value)
 
+    # Conditional rules (SX3 WHEN): cnae_code only applies to person_type
+    # J or X — same rule the experimental normalizer proved in E1/E2.
+    for field, value in out.items():
+        spec = SUPPLIER_FIELD_SPECS[field]
+        if (
+            spec.get("conditional") == "person_type_jx"
+            and value
+            and out.get("person_type") == "F"
+        ):
+            raise ProtheusRestError(
+                f"Campo {field} não se aplica a pessoa física (person_type=F).",
+                code="PROTHEUS_SUPPLIER_FIELD_CONDITIONAL",
+                status_code=422,
+                recoverable=False,
+            )
     return out
 
 

@@ -1,9 +1,14 @@
-"""X4.FIELDS.E1 — experimental supplier extended-field specs (NOT WIRED).
+"""X4.FIELDS.E1–E3 — experimental supplier extended-field specs.
 
 Isolated prototype for candidate cadastral fields of the SA2
 PUBLIC_DICTIONARY that are not part of the published POST/PUT contract.
-Nothing in the request path imports this module — promotion requires
-contract evolution, owner approval and homologation evidence.
+After the E2 homologation assay, the 29 persistence-proven fields were
+promoted to the canonical ``SUPPLIER_FIELD_SPECS`` (X4.FIELDS.E3) — this
+module now holds only the 7 candidates still without evidence (4 IGNORED
+upstream, 3 TEST_NOT_RUN) plus the merged experimental table used by the
+auditable assay script. Nothing in the request path imports this module —
+promotion requires contract evolution, owner approval and homologation
+evidence.
 
 Candidate classification follows the de-para (cadastro-fornecedor.md):
 - included here: business cadastral fields with clear SX3 type/length;
@@ -24,50 +29,23 @@ from app.application.services.integrations.protheus_supplier_create_payload impo
 )
 from app.domain.integrations.protheus_rest import ProtheusRestError
 
-# Candidate specs — max lengths and validations from SA2 SX3 (§44.3) and
-# the PUBLIC_DICTIONARY. ``conditional`` marks fields whose acceptance
-# depends on another field's value (WHEN rules), enforced below.
+# Remaining candidate specs — fields WITHOUT persistence evidence yet.
+# The 29 fields proven in the E2 homologation assay (X4-FIELDS-E2 doc)
+# were promoted to the canonical `SUPPLIER_FIELD_SPECS` in
+# `protheus_supplier_create_payload.py` (X4.FIELDS.E3) — this module keeps
+# only the unproven remainder so specs are never duplicated.
 SUPPLIER_EXTENDED_FIELD_SPECS: dict[str, dict[str, Any]] = {
-    # --- endereço ---------------------------------------------------------
-    "address_number": {"max": 6, "digits": True},
-    "po_box": {"max": 5},
-    # --- fiscal / tributário ----------------------------------------------
-    "icms_contributor": {"max": 1, "enum": frozenset({"", "1", "2"})},
-    "simples_nacional": {"max": 1, "enum": frozenset({"", "1", "2"})},
-    "cnae_code": {"max": 9, "digits": True, "conditional": "person_type_jx"},
-    "legal_entity_type": {"max": 1, "enum": frozenset({"", "1", "2", "3", "4", "5"})},
+    # IGNORED upstream in E2 — field names likely differ in the REST
+    # contract (handoff pending with Gabriel/TOTVS).
     "person_category": {"max": 2},
-    "simp_regime_code": {"max": 1},
-    "pb_regime_code": {"max": 1, "enum": frozenset({"", "1", "2"})},
-    "inss_withholding": {"max": 1, "enum": frozenset({"", "S", "N"})},
-    "iss_withholding": {"max": 1, "enum": frozenset({"", "S", "N"})},
-    "csll_withholding": {"max": 1, "enum": frozenset({"", "1", "2"})},
-    "cofins_withholding": {"max": 1, "enum": frozenset({"", "1", "2"})},
-    "pis_withholding": {"max": 1, "enum": frozenset({"", "1", "2"})},
-    "irf_calculation": {"max": 1, "enum": frozenset({"", "1", "2", "3", "4"})},
-    "inp_calculation": {"max": 1, "enum": frozenset({"", "1", "2"})},
-    "tax_group_code": {"max": 3},
-    "esocial_category_code": {"max": 3},
-    # --- contato ----------------------------------------------------------
-    "commercial_contact_name": {"max": 15},
-    "country_calling_code": {"max": 6},
-    "fax": {"max": 15, "digits": True},
-    "website": {"max": 30},
-    "responsible_name": {"max": 45},
-    # --- comercial / referências ------------------------------------------
-    "risk_code": {"max": 3},
-    "swift_code": {"max": 30, "upper": True},
     "payee_code": {"max": 6, "digits": True},
     "payee_store": {"max": 2, "digits": True},
     "generic_supplier": {"max": 1},
-    "purchase_price_table_code": {"max": 3},
-    "carrier_code": {"max": 6},
-    "segment_code": {"max": 6},
+    # TEST_NOT_RUN in E2 — no valid lookup row in DELPI_TST01 (ACJ/CC1)
+    # or owner semantics pending (S049BR).
+    "country_calling_code": {"max": 6},
     "link_type_code": {"max": 2},
-    "administrator_code": {"max": 3},
-    "linked_customer_code": {"max": 6},
-    "linked_customer_store": {"max": 2},
-    "linked_employee_code": {"max": 6},
+    "esocial_category_code": {"max": 3},
 }
 
 # Merged experimental table — published contract remains untouched.

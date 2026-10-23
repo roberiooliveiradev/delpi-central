@@ -39,7 +39,41 @@ import {
   SUPPLIER_PUT_EDITABLE_KEYS,
   type SupplierCreateDraft,
   type SupplierDetail,
+  type SupplierPostOnlyFieldKey,
 } from "./types";
+
+/** Draft vazio dos 29 campos criáveis E3 — preenchido sob demanda. */
+const EMPTY_E3_DRAFT: Pick<SupplierCreateDraft, SupplierPostOnlyFieldKey> = {
+  address_number: "",
+  po_box: "",
+  icms_contributor: "",
+  simples_nacional: "",
+  cnae_code: "",
+  legal_entity_type: "",
+  simp_regime_code: "",
+  pb_regime_code: "",
+  inss_withholding: "",
+  iss_withholding: "",
+  csll_withholding: "",
+  cofins_withholding: "",
+  pis_withholding: "",
+  irf_calculation: "",
+  inp_calculation: "",
+  tax_group_code: "",
+  commercial_contact_name: "",
+  fax: "",
+  website: "",
+  responsible_name: "",
+  risk_code: "",
+  swift_code: "",
+  purchase_price_table_code: "",
+  carrier_code: "",
+  segment_code: "",
+  administrator_code: "",
+  linked_customer_code: "",
+  linked_customer_store: "",
+  linked_employee_code: "",
+};
 
 describe("supplier routes", () => {
   it("resolves the suppliers list", () => {
@@ -169,6 +203,10 @@ describe("supplier create payload", () => {
     payment_method_code: "01",
     accounting_account: "00000000",
     financial_nature_code: "0000",
+    ...EMPTY_E3_DRAFT,
+    cnae_code: "6201501",
+    address_number: "385",
+    linked_customer_code: "000123",
   };
 
   it("sends all filled contract fields preserving leading zeros", () => {
@@ -698,6 +736,7 @@ describe('F5-UX-R3 — metadados de catálogo TOTVS', () => {
       payment_method_code: "01",
       accounting_account: "00000000",
       financial_nature_code: "0000",
+      ...EMPTY_E3_DRAFT,
     };
     const body = buildCreateFornecedor(draft);
     expect(body.payment_condition_code).toBe('001');
@@ -791,5 +830,95 @@ describe('F5-UX-R4 — consulta de CEP e conciliação CC2', () => {
     const fetcher = async () => ({ items: [] });
     const out = await reconcileMunicipality('SC', '', 'Nada', fetcher);
     expect(out.status).toBe('unmatched');
+  });
+});
+
+describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
+  const E3_KEYS = Object.keys(EMPTY_E3_DRAFT) as SupplierPostOnlyFieldKey[];
+
+  it('registra os 29 campos criáveis com evidência post-matrix', () => {
+    expect(E3_KEYS).toHaveLength(29);
+    for (const key of E3_KEYS) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key);
+      expect(spec, key).toBeDefined();
+      expect(spec!.post).toBe(true);
+      expect(spec!.evidence).toBe('post-matrix');
+    }
+  });
+
+  it('nenhum campo E3 é editável — PUT aguarda homologação E3.S4', () => {
+    for (const key of E3_KEYS) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
+      expect(spec.put, key).toBe('readonly');
+      expect(SUPPLIER_PUT_EDITABLE_KEYS).not.toContain(key);
+    }
+  });
+
+  it('distribui os campos pelas seções canônicas — nunca um bloco único', () => {
+    const sections = new Set(
+      E3_KEYS.map(
+        (key) => SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!.section,
+      ),
+    );
+    expect(sections).toEqual(
+      new Set(['identification', 'address', 'contact', 'fiscal', 'purchasing']),
+    );
+  });
+
+  it('encaminha os campos preenchidos no payload POST e omite vazios', () => {
+    const body = buildCreateFornecedor({
+      ...EMPTY_E3_DRAFT,
+      supplier_store: '01',
+      person_type: 'J',
+      tax_id: '00000000000191',
+      supplier_name: 'FORNECEDOR TESTE',
+      supplier_short_name: 'FORN TESTE',
+      address: 'RUA X',
+      district: 'CENTRO',
+      postal_code: '89120000',
+      state: 'SC',
+      city: 'TIMBO',
+      city_code: '18202',
+      area_code: '',
+      phone: '',
+      contact_name: '',
+      email: '',
+      state_registration: '',
+      municipal_registration: '',
+      country_code: '',
+      bacen_country_code: '01058',
+      rohs_indicator: 'N',
+      payment_condition_code: '010',
+      payment_method_code: '01',
+      accounting_account: '00000000',
+      financial_nature_code: '0000',
+      cnae_code: '6201501',
+      address_number: '385',
+      linked_customer_code: '000123',
+    });
+    expect(body.cnae_code).toBe('6201501');
+    expect(body.address_number).toBe('385');
+    expect(body.linked_customer_code).toBe('000123');
+    expect(body.po_box).toBeUndefined();
+    expect(body.fax).toBeUndefined();
+  });
+
+  it('draft de edição ignora campos post-only — não viram update candidato', () => {
+    const before = SUPPLIER_PUT_EDITABLE_KEYS.length;
+    const detail = {
+      sections: {
+        fiscal: { cnae_code: '6201501' },
+        purchasing: { linked_customer_code: '000123' },
+        contact: { commercial_contact_name: 'MARIA' },
+      },
+    } as unknown as SupplierDetail;
+    const draft = draftFromDetail(detail);
+    for (const key of E3_KEYS) {
+      expect(
+        (draft as Record<string, string>)[key],
+        key,
+      ).toBeUndefined();
+    }
+    expect(SUPPLIER_PUT_EDITABLE_KEYS.length).toBe(before);
   });
 });

@@ -250,12 +250,13 @@ def test_injected_field_normalizer_widens_allowlist(monkeypatch) -> None:
     assert sent["website"] == "www.example.test"
 
 
-def test_default_normalizer_still_rejects_extended_fields(monkeypatch) -> None:
-    """Public path keeps the published 24-field contract untouched."""
+def test_default_normalizer_still_rejects_unproven_fields(monkeypatch) -> None:
+    """Public path accepts the 29 E2-proven fields but rejects the
+    7 candidates still without persistence evidence (E3)."""
     uc = _uc()
     with pytest.raises(ProtheusRestError) as exc:
         uc.execute(
             actor_user_id=ACTOR,
-            fornecedor={"supplier_store": "01", "website": "www.example.test"},
+            fornecedor={"supplier_store": "01", "person_category": "PJ"},
         )
     assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"

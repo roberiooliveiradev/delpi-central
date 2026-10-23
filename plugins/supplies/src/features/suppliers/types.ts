@@ -61,10 +61,46 @@ export type SupplierWriteResponse = {
   code?: string;
 };
 
-/** Campos editáveis via PUT: todo POST cadastral exceto documento e loja. */
+/**
+ * Campos criáveis (POST homologado em E2) mas AINDA não editáveis —
+ * upstream PUT não foi homologado (E3.S4). Mantidos fora de qualquer
+ * derivação de editável até a homologação PUT dedicada.
+ */
+export type SupplierPostOnlyFieldKey =
+  | "address_number"
+  | "po_box"
+  | "icms_contributor"
+  | "simples_nacional"
+  | "cnae_code"
+  | "legal_entity_type"
+  | "simp_regime_code"
+  | "pb_regime_code"
+  | "inss_withholding"
+  | "iss_withholding"
+  | "csll_withholding"
+  | "cofins_withholding"
+  | "pis_withholding"
+  | "irf_calculation"
+  | "inp_calculation"
+  | "tax_group_code"
+  | "commercial_contact_name"
+  | "fax"
+  | "website"
+  | "responsible_name"
+  | "risk_code"
+  | "swift_code"
+  | "purchase_price_table_code"
+  | "carrier_code"
+  | "segment_code"
+  | "administrator_code"
+  | "linked_customer_code"
+  | "linked_customer_store"
+  | "linked_employee_code";
+
+/** Campos editáveis via PUT: cadastrais F3.3 exceto documento e loja. */
 export type SupplierEditableFieldKey = Exclude<
   keyof SupplierCreateDraft,
-  "tax_id" | "supplier_store"
+  "tax_id" | "supplier_store" | SupplierPostOnlyFieldKey
 >;
 
 export type SupplierEditDraft = Record<SupplierEditableFieldKey, string>;
@@ -94,6 +130,38 @@ export type SupplierCreateDraft = {
   payment_method_code: string;
   accounting_account: string;
   financial_nature_code: string;
+  // X4.FIELDS.E3 — 29 campos com persistência POST comprovada em
+  // homologação (E2). Criáveis; edição permanece `readonly` até a
+  // homologação PUT dedicada (E3.S4).
+  address_number: string;
+  po_box: string;
+  icms_contributor: string;
+  simples_nacional: string;
+  cnae_code: string;
+  legal_entity_type: string;
+  simp_regime_code: string;
+  pb_regime_code: string;
+  inss_withholding: string;
+  iss_withholding: string;
+  csll_withholding: string;
+  cofins_withholding: string;
+  pis_withholding: string;
+  irf_calculation: string;
+  inp_calculation: string;
+  tax_group_code: string;
+  commercial_contact_name: string;
+  fax: string;
+  website: string;
+  responsible_name: string;
+  risk_code: string;
+  swift_code: string;
+  purchase_price_table_code: string;
+  carrier_code: string;
+  segment_code: string;
+  administrator_code: string;
+  linked_customer_code: string;
+  linked_customer_store: string;
+  linked_employee_code: string;
 };
 
 /** Chave de campo cadastral: os campos POST mais o código (system-generated). */
@@ -434,6 +502,325 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     span: 6,
     catalog: "financial-natures",
     help: "Pesquise pelo código ou descrição e selecione a natureza financeira cadastrada no Protheus (SED/A2_NATUREZ).",
+  }),
+  // ------------------------------------------------------------------
+  // X4.FIELDS.E3 — campos com persistência POST comprovada em homologação
+  // (E2, DELPI_TST01). Criáveis via POST; edição permanece `readonly` até
+  // a homologação PUT dedicada (E3.S4). Sem catálogo contratado para os
+  // códigos de referência — seleção assistida pendente de owner (residual).
+  // ------------------------------------------------------------------
+  // Identificação — classificação cadastral
+  F({
+    key: "legal_entity_type",
+    label: "Natureza jurídica",
+    section: "identification",
+    maxLength: 1,
+    post: true,
+    span: 4,
+    help: "Tipo de pessoa jurídica do fornecedor (A2_TPJ), conforme a tabela do Protheus.",
+  }),
+  // Endereço
+  F({
+    key: "address_number",
+    label: "Número",
+    section: "address",
+    maxLength: 6,
+    digitsOnly: true,
+    post: true,
+    span: 2,
+    help: "Número do logradouro do endereço cadastral (A2_NR_END).",
+  }),
+  F({
+    key: "po_box",
+    label: "Caixa postal",
+    section: "address",
+    maxLength: 5,
+    post: true,
+    span: 3,
+    help: "Caixa postal do fornecedor (A2_CX_POST).",
+  }),
+  // Contato
+  F({
+    key: "commercial_contact_name",
+    label: "Contato comercial",
+    section: "contact",
+    maxLength: 15,
+    post: true,
+    span: 4,
+    help: "Contato comercial do fornecedor (A2_CONTCOM).",
+  }),
+  F({
+    key: "responsible_name",
+    label: "Responsável",
+    section: "contact",
+    maxLength: 45,
+    post: true,
+    span: 4,
+    help: "Nome do responsável pelo fornecedor (A2_NOMRESP).",
+  }),
+  F({
+    key: "fax",
+    label: "Fax",
+    section: "contact",
+    maxLength: 15,
+    digitsOnly: true,
+    post: true,
+    span: 2,
+    help: "Número de fax cadastrado (A2_FAX), somente dígitos.",
+  }),
+  F({
+    key: "website",
+    label: "Site",
+    section: "contact",
+    maxLength: 30,
+    post: true,
+    span: 6,
+    help: "Página eletrônica do fornecedor (A2_HPAGE).",
+  }),
+  // Fiscal e tributário
+  F({
+    key: "icms_contributor",
+    label: "Contribuinte ICMS",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "1", label: "Contribuinte" },
+      { value: "2", label: "Não contribuinte" },
+    ],
+    help: "Indica se o fornecedor é contribuinte de ICMS (A2_CONTRIB).",
+  }),
+  F({
+    key: "simples_nacional",
+    label: "Simples Nacional",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "1", label: "Optante" },
+      { value: "2", label: "Não optante" },
+    ],
+    help: "Enquadramento do fornecedor no Simples Nacional (A2_SIMPNAC).",
+  }),
+  F({
+    key: "cnae_code",
+    label: "CNAE",
+    section: "fiscal",
+    maxLength: 9,
+    digitsOnly: true,
+    post: true,
+    span: 3,
+    help: "Código CNAE do fornecedor (A2_CNAE), somente dígitos. Aplicável a pessoa jurídica (J) ou outros (X).",
+  }),
+  F({
+    key: "simp_regime_code",
+    label: "Regime SIMP",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    help: "Código de regime tributário SIMP do fornecedor (A2_REGESIM).",
+  }),
+  F({
+    key: "pb_regime_code",
+    label: "Regime PB",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "1", label: "Regime 1" },
+      { value: "2", label: "Regime 2" },
+    ],
+    help: "Código de regime de apuração PIS/COFINS (A2_REGPB).",
+  }),
+  F({
+    key: "tax_group_code",
+    label: "Grupo tributário",
+    section: "fiscal",
+    maxLength: 3,
+    post: true,
+    span: 3,
+    help: "Código do grupo tributário do fornecedor (A2_GRPTRIB).",
+  }),
+  F({
+    key: "inss_withholding",
+    label: "Retenção INSS",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "S", label: "Retém" },
+      { value: "N", label: "Não retém" },
+    ],
+    help: "Indica retenção de INSS para o fornecedor (A2_RECINSS).",
+  }),
+  F({
+    key: "iss_withholding",
+    label: "Retenção ISS",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "S", label: "Retém" },
+      { value: "N", label: "Não retém" },
+    ],
+    help: "Indica retenção de ISS para o fornecedor (A2_RECISS).",
+  }),
+  F({
+    key: "csll_withholding",
+    label: "Retenção CSLL",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "1", label: "Retém" },
+      { value: "2", label: "Não retém" },
+    ],
+    help: "Regra de retenção de CSLL (A2_RECCSLL).",
+  }),
+  F({
+    key: "cofins_withholding",
+    label: "Retenção COFINS",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "1", label: "Retém" },
+      { value: "2", label: "Não retém" },
+    ],
+    help: "Regra de retenção de COFINS (A2_RECCOFI).",
+  }),
+  F({
+    key: "pis_withholding",
+    label: "Retenção PIS",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "1", label: "Retém" },
+      { value: "2", label: "Não retém" },
+    ],
+    help: "Regra de retenção de PIS (A2_RECPIS).",
+  }),
+  F({
+    key: "irf_calculation",
+    label: "Cálculo IRRF",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "1", label: "Regra 1" },
+      { value: "2", label: "Regra 2" },
+      { value: "3", label: "Regra 3" },
+      { value: "4", label: "Regra 4" },
+    ],
+    help: "Regra de cálculo de IRRF para o fornecedor (A2_CALCIRF).",
+  }),
+  F({
+    key: "inp_calculation",
+    label: "Cálculo INP",
+    section: "fiscal",
+    maxLength: 1,
+    post: true,
+    span: 3,
+    options: [
+      { value: "1", label: "Regra 1" },
+      { value: "2", label: "Regra 2" },
+    ],
+    help: "Regra de cálculo de INPC/INP (A2_CALCINP).",
+  }),
+  // Compras e relacionamentos
+  F({
+    key: "purchase_price_table_code",
+    label: "Tabela de preços",
+    section: "purchasing",
+    maxLength: 3,
+    post: true,
+    span: 3,
+    help: "Código da tabela de preços de compra do fornecedor (A2_ZTABPRC).",
+  }),
+  F({
+    key: "risk_code",
+    label: "Código de risco",
+    section: "purchasing",
+    maxLength: 3,
+    post: true,
+    span: 3,
+    help: "Classificação de risco do fornecedor (A2_RISCO).",
+  }),
+  F({
+    key: "swift_code",
+    label: "Código SWIFT",
+    section: "purchasing",
+    maxLength: 30,
+    uppercase: true,
+    post: true,
+    span: 4,
+    help: "Código SWIFT do fornecedor para operações internacionais (A2_SWIFT).",
+  }),
+  F({
+    key: "carrier_code",
+    label: "Transportadora",
+    section: "purchasing",
+    maxLength: 6,
+    post: true,
+    span: 3,
+    help: "Código da transportadora padrão do fornecedor (A2_TRANSP, referência SA4). Seleção assistida pendente de catálogo contratado.",
+  }),
+  F({
+    key: "segment_code",
+    label: "Segmento",
+    section: "purchasing",
+    maxLength: 6,
+    post: true,
+    span: 3,
+    help: "Código do segmento de atuação do fornecedor (A2_SATIV1, tabela SX5-T3). Seleção assistida pendente de catálogo contratado.",
+  }),
+  F({
+    key: "administrator_code",
+    label: "Administrador",
+    section: "purchasing",
+    maxLength: 3,
+    post: true,
+    span: 3,
+    help: "Código do administrador do fornecedor (A2_CODADM, referência SAE). Seleção assistida pendente de catálogo contratado.",
+  }),
+  F({
+    key: "linked_customer_code",
+    label: "Cliente vinculado",
+    section: "purchasing",
+    maxLength: 6,
+    post: true,
+    span: 3,
+    help: "Código do cliente vinculado ao fornecedor (A2_CLIENTE, referência SA1). Seleção assistida pendente de catálogo contratado.",
+  }),
+  F({
+    key: "linked_customer_store",
+    label: "Loja do cliente",
+    section: "purchasing",
+    maxLength: 2,
+    digitsOnly: true,
+    post: true,
+    span: 3,
+    help: "Loja do cliente vinculado (A2_LOJCLI) — par composto com o código do cliente.",
+  }),
+  F({
+    key: "linked_employee_code",
+    label: "Funcionário vinculado",
+    section: "purchasing",
+    maxLength: 6,
+    post: true,
+    span: 4,
+    help: "Código do funcionário vinculado ao fornecedor (A2_NUMRA, referência SRA). Seleção assistida pendente de catálogo contratado.",
   }),
 ];
 

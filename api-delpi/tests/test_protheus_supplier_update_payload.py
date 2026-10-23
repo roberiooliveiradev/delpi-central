@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.application.services.integrations.protheus_supplier_update_payload import (
+    PUT_EDITABLE_FIELDS,
     build_upstream_update_body,
     normalize_supplier_update_fields,
     validate_supplier_id,
@@ -119,3 +120,52 @@ def test_length_not_truncated() -> None:
     with pytest.raises(ProtheusRestError) as exc:
         normalize_supplier_update_fields({"supplier_short_name": "X" * 21})
     assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
+
+
+# --- X4.FIELDS.E3 — PUT freeze: promoted-but-not-PUT-homologated ---------
+
+E3_POST_ONLY_FIELDS = (
+    "address_number",
+    "po_box",
+    "icms_contributor",
+    "simples_nacional",
+    "cnae_code",
+    "legal_entity_type",
+    "simp_regime_code",
+    "pb_regime_code",
+    "inss_withholding",
+    "iss_withholding",
+    "csll_withholding",
+    "cofins_withholding",
+    "pis_withholding",
+    "irf_calculation",
+    "inp_calculation",
+    "tax_group_code",
+    "commercial_contact_name",
+    "fax",
+    "website",
+    "responsible_name",
+    "risk_code",
+    "swift_code",
+    "purchase_price_table_code",
+    "carrier_code",
+    "segment_code",
+    "administrator_code",
+    "linked_customer_code",
+    "linked_customer_store",
+    "linked_employee_code",
+)
+
+
+@pytest.mark.parametrize("field", E3_POST_ONLY_FIELDS)
+def test_e3_post_only_field_rejected_in_put(field: str) -> None:
+    """E2 proved POST persistence only — PUT stays NOT_HOMOLOGATED."""
+    with pytest.raises(ProtheusRestError) as exc:
+        normalize_supplier_update_fields({field: "1"})
+    assert exc.value.code == "PROTHEUS_SUPPLIER_FIELD_NOT_EDITABLE"
+
+
+def test_put_allowlist_frozen_at_22() -> None:
+    assert len(PUT_EDITABLE_FIELDS) == 22
+    assert "tax_id" not in PUT_EDITABLE_FIELDS
+    assert "supplier_store" not in PUT_EDITABLE_FIELDS

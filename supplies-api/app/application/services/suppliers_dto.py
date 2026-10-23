@@ -36,12 +36,67 @@ POST_SUPPLIER_FIELDS = {
     "financial_nature_code",
     "rohs_indicator",
     "payment_method_code",
+    # X4.FIELDS.E3 — 29 fields with POST persistence proven in the E2
+    # DELPI_TST01 homologation assay; mirrors the api-delpi contract.
+    "address_number",
+    "po_box",
+    "icms_contributor",
+    "simples_nacional",
+    "cnae_code",
+    "legal_entity_type",
+    "simp_regime_code",
+    "pb_regime_code",
+    "inss_withholding",
+    "iss_withholding",
+    "csll_withholding",
+    "cofins_withholding",
+    "pis_withholding",
+    "irf_calculation",
+    "inp_calculation",
+    "tax_group_code",
+    "commercial_contact_name",
+    "fax",
+    "website",
+    "responsible_name",
+    "risk_code",
+    "swift_code",
+    "purchase_price_table_code",
+    "carrier_code",
+    "segment_code",
+    "administrator_code",
+    "linked_customer_code",
+    "linked_customer_store",
+    "linked_employee_code",
 }
 
-# PO decision (F3.3): all cadastral POST fields are editable via PUT except
-# the fiscal document and the identity fields (code/store). The upstream
-# write gate stays OFF until TOTVS homologation.
-PUT_SUPPLIER_FIELDS = POST_SUPPLIER_FIELDS - {"tax_id", "supplier_store"}
+# PO decision (F3.3): cadastral POST fields are editable via PUT except
+# the fiscal document and the identity fields (code/store). FROZEN at the
+# F3.3 set — the E3 fields proved POST persistence only; upstream PUT is
+# NOT homologated (E3.S4), so they must not enter this allowlist.
+PUT_SUPPLIER_FIELDS = {
+    "person_type",
+    "supplier_name",
+    "supplier_short_name",
+    "address",
+    "district",
+    "postal_code",
+    "state",
+    "city",
+    "city_code",
+    "area_code",
+    "phone",
+    "state_registration",
+    "municipal_registration",
+    "contact_name",
+    "email",
+    "payment_condition_code",
+    "country_code",
+    "bacen_country_code",
+    "accounting_account",
+    "financial_nature_code",
+    "rohs_indicator",
+    "payment_method_code",
+}
 
 # Identity/document fields — rejected explicitly, never silently dropped.
 PUT_PROTECTED_FIELDS = {"tax_id", "supplier_code", "supplier_store"}
@@ -65,10 +120,48 @@ _DETAIL_SECTION_FIELDS = {
         "supplier_name",
         "supplier_short_name",
         "person_type",
+        "legal_entity_type",
     ),
-    "address": ("address", "district", "postal_code", "city", "city_code", "state"),
-    "contact": ("contact_name", "area_code", "phone", "email"),
-    "fiscal": ("state_registration", "municipal_registration", "rohs_indicator"),
+    "address": (
+        "address",
+        "address_number",
+        "district",
+        "postal_code",
+        "po_box",
+        "city",
+        "city_code",
+        "state",
+    ),
+    "contact": (
+        "contact_name",
+        "commercial_contact_name",
+        "responsible_name",
+        "area_code",
+        "phone",
+        "fax",
+        "email",
+        "website",
+    ),
+    # Fiscal/tributário — campos E3 com persistência comprovada em homologação.
+    "fiscal": (
+        "state_registration",
+        "municipal_registration",
+        "rohs_indicator",
+        "icms_contributor",
+        "simples_nacional",
+        "cnae_code",
+        "simp_regime_code",
+        "pb_regime_code",
+        "tax_group_code",
+        "inss_withholding",
+        "iss_withholding",
+        "csll_withholding",
+        "cofins_withholding",
+        "pis_withholding",
+        "irf_calculation",
+        "inp_calculation",
+    ),
+    # Compras e relacionamentos — referências e vínculos.
     "purchasing": (
         "payment_condition_code",
         "payment_method_code",
@@ -76,6 +169,15 @@ _DETAIL_SECTION_FIELDS = {
         "accounting_account",
         "country_code",
         "bacen_country_code",
+        "purchase_price_table_code",
+        "risk_code",
+        "swift_code",
+        "carrier_code",
+        "segment_code",
+        "administrator_code",
+        "linked_customer_code",
+        "linked_customer_store",
+        "linked_employee_code",
     ),
 }
 
