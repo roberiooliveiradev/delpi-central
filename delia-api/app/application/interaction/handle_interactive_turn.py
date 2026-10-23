@@ -596,6 +596,13 @@ class HandleInteractiveConversationTurn:
             generated_at=model_result.generated_at,
             model_invocation_id=model_result.invocation_id.value,
             grounding_status=GroundingStatus.NON_GROUNDED,
+            # CP-333 decision f09acc8544: governed conversational prose
+            # (COMPOSITION_MODEL, message_kind=RESULT) is admitted to
+            # the existing presentation.v2 markdown_safe channel from
+            # exactly this validated ``content``. Display eligibility
+            # only — never grounding, facts, links or actions; the v2
+            # consumer still enforces the bounded token policy.
+            presentation_markdown=content,
         )
         _emit_terminal(sink, ActivityPhase.COMPLETED)
         return self._with_observability(

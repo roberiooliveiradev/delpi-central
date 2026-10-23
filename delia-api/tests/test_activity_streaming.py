@@ -620,7 +620,9 @@ def test_legacy_json_response_unchanged():
     assert response.content_type.startswith("application/json")
     payload = response.get_json()
     assert payload["content"]
-    assert payload["presentation"]["version"] == "1"
+    # CP-333 decision f09acc8544: conversational RESULT is admitted to
+    # v2 markdown_safe; the JSON transport itself is unchanged.
+    assert payload["presentation"]["version"] == "2"
     # No activity records leak into the legacy body.
     assert "type" not in payload
 

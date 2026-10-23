@@ -217,3 +217,69 @@ describe("G4 — compatibility and rollback", () => {
     expect(parsePresentationV2(bad).status).toBe("neutral_error");
   });
 });
+
+
+describe("Conversational admission — real producer conversational envelope", () => {
+  // CP-333 decision f09acc8544: the governed conversational
+  // COMPOSITION_MODEL result is now admitted to the same v2
+  // markdown_safe channel — same envelope shape, NON_GROUNDED, no
+  // provenance. The consumer treats it identically to governed
+  // Category-A markdown_safe: bounded tokens, authorizedLinks gate.
+  const conversationalEnvelope = {
+    version: "2",
+    message_kind: "RESULT",
+    semantic_status: "HYPOTHESIS",
+    grounding_status: "NON_GROUNDED",
+    blocks: [
+      {
+        kind: "text",
+        format: "markdown_safe",
+        text:
+          "A metodologia SIPOC organiza o processo em cinco etapas:\n\n" +
+          "**1. Suppliers (Fornecedores)**\n" +
+          "- Identificam quem fornece os insumos.\n\n" +
+          "**3. Process (Processo)**\n" +
+          "1. Recebimento do material.\n" +
+          "2. Usinagem da peca.\n\n" +
+          "Detalhes em https://unauthorized.example/doc",
+      },
+    ],
+    allowed_interactions: ["reply"],
+  };
+
+  it("parsePresentationV2 admits the conversational RESULT envelope", () => {
+    const parsed = parsePresentationV2(conversationalEnvelope);
+    expect(parsed.status).toBe("ok");
+    if (parsed.status !== "ok") return;
+    expect(presentationPrimaryTextFormat(parsed.presentation)).toBe(
+      "markdown_safe",
+    );
+    expect(presentationMarkdownSource(parsed.presentation)).toContain(
+      "Suppliers",
+    );
+  });
+
+  it("renders semantic headings/lists/emphasis through ConversationMarkdown", () => {
+    const md = markdownFromWire({
+      content: "",
+      presentation: conversationalEnvelope,
+    });
+    const { container } = render(
+      <ConversationMarkdown
+        text={md}
+        enabled={true}
+        authorizedLinks={[]}
+      />,
+    );
+    expect(
+      container.querySelectorAll("ul, ol").length,
+    ).toBeGreaterThanOrEqual(2);
+    expect(container.querySelectorAll("strong").length).toBeGreaterThan(0);
+    // Model-authored URL never becomes navigable without an
+    // authorized source — stays inert literal text.
+    expect(container.querySelector("a")).toBeNull();
+    expect(container.textContent).toContain(
+      "https://unauthorized.example/doc",
+    );
+  });
+});
