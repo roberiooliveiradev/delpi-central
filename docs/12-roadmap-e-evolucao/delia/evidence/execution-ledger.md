@@ -17690,3 +17690,22 @@ INDEPENDENT_REVIEW_PENDING NEXT=S4
 TASK_ID=DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 STEP=S4
 DECISION=SKIP_WITH_DECISION EXTRACTION_DONE=S3_labels REMAINING_BOUNDED=shared_utils_dependency
 NEW_CODE=NONE SUITE=unchanged_green NEXT=S5
+
+## §6.398 — S5 self-awareness: homologacao local integrada + consolidacao S1-S5 (2026-10-23)
+
+**2026-10-23 — DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 / STEP=S5 (PO f7b6a601cb):** avaliacao integrada executada na stack dev local via novo harness `scripts/c3_self_awareness_eval.py`. Composicao real: `_compose_turn_handler` + `SpecialistInterop`/`McpSpecialistAdapter` reais + `OpenAICompatibleModelInvocationAdapter` -> Ollama local `delia-json` (egress externo bloqueado por contrato). Identidade real de dev `e2e-delia` com grants efetivos lidos de `delpi_core`; subject token via password-grant -> `bind_subject_bearer` -> token exchange `delia-api` -> credencial resource-bound autenticando `tools/list` em DAVI/TEO/VISTA (cadeia AuthZ delegada completa, sem cache/catalogo local). 12 casos + 2 controles CRI-off; 30 chamadas de modelo locais (0.4-12.3s cada).
+
+PROVADO AO VIVO: `surface_inquiry` tipada -> listagem viva das 3 superficies com descricoes verbatim dos owners + rodape `publicacao != permissao` + NON_GROUNDED/`capability_surface_listing` (D4c, D5a/b e controles CRI-off identicos); ACT recusado pela AuthZ efetiva do owner com recusa propagada (N2); injecao contida sem vazamento de internals (N1); fail-closed real em `invalid_structured_output` do modelo local (N3/N4); superficie = tools/list do momento (rename/add/remove/reorder coberto por construcao).
+
+RESIDUAIS: (1) variancia de classificacao do modelo local - D4a/b foram a selecao operacional e projetaram catalogo TEO grounded mas tecnico; (2) D5 ao vivo parcial - reformulacoes de cobertura cairam em surface_inquiry, guidance S2 nao alcancada end-to-end; (3) D8 live pendente - selecao nao invocou o registro; rotulos PT-BR provados por suite; (4) conversacao pura limitada pelo modelo local (EXCEPTION fail-closed); (5) homologacao produtiva autenticada segue pendente - realm prod sem identidade de teste governada + gates de release/rollback.
+
+PRESERVADO: selection-only, READ!=PREPARE!=ACT, nenhuma permissao inferida de publicacao, MODEL_AUTHORED_FACTUAL_PROSE=NONE (sem prosa factual de negocio nova), zero egress externo.
+
+TASK_ID=DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 STEP=S5
+EVAL_SHA=18d67b2c49 MODEL=delia-json LOCAL_OLLAMA_ONLY IDENTITY=e2e-delia_devrealm
+D4_LIVE=PROVEN(D4c+controles) D5_LIVE=PARTIAL(surface_listing) D8_LIVE=PENDING
+SECURITY_LIVE=PASS(authz_deny+injection_contained+fail_closed) CRI_OFF_COMPAT=PASS
+EXTERNAL_LLM_CALLS=0 PRODUCTION_HOMOLOGATION=PENDING_gates
+INDEPENDENT_REVIEW_PENDING COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
