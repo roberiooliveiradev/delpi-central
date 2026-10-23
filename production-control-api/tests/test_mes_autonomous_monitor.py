@@ -375,6 +375,159 @@ def test_pulse_unavailable_records_nothing():
     assert states.events == []
 
 
+# ---------- Reconexão pós-degradação (rework: sem parada retroativa) ----------
+
+
+def test_reconnect_with_unchanged_counter_never_covers_telemetry_gap():
+    """Incremento → offline > threshold → online inalterado: nenhuma
+    parada retroativa cobre o período sem telemetria confiável."""
+    service, _, pulse, observers, states, downtimes, clock = _monitor()
+    service.tick_all()  # baseline
+    pulse.devices = [_device(counter=101)]
+    clock.at = BASE + timedelta(seconds=5)
+    service.tick_all()  # producing — last_increment_at = BASE+5
+
+    # Gap de telemetria: muito além do threshold, tudo degradado.
+    pulse.devices = [_device(counter=101, online=False)]
+    clock.at = BASE + timedelta(seconds=5 + THRESHOLD + 999)
+    assert service.tick_all() == 0
+    assert _open_downtimes(downtimes) == []
+
+    # Retorno online com contador inalterado: só reancora o cursor.
+    reconnect = clock.at + timedelta(seconds=1)
+    pulse.devices = [_device(counter=101)]
+    clock.at = reconnect
+    assert service.tick_all() == 0
+    assert _open_downtimes(downtimes) == []
+    observer = observers.get(branch="01", work_center="CT01")
+    assert observer["degraded_reason"] is None
+    # A referência de inatividade reancora no retorno — nunca no
+    # incremento anterior ao gap.
+    assert observer["last_increment_at"] == reconnect
+
+    # A parada só pode abrir a partir do novo baseline confiável.
+    clock.at = reconnect + timedelta(seconds=THRESHOLD + 1)
+    assert service.tick_all() == 1
+    dts = _open_downtimes(downtimes)
+    assert len(dts) == 1
+    assert dts[0]["started_at"] == reconnect
+
+
+def test_reconnect_then_increment_then_idle_uses_new_baseline():
+    """Após reconexão, novo incremento real → inatividade > threshold:
+    a parada parte do incremento pós-reconexão, não do baseline velho."""
+    service, _, pulse, observers, states, downtimes, clock = _monitor()
+    service.tick_all()
+    pulse.devices = [_device(counter=101)]
+    clock.at = BASE + timedelta(seconds=5)
+    service.tick_all()
+
+    pulse.devices = [_device(counter=101, online=False)]
+    clock.at = BASE + timedelta(seconds=5 + THRESHOLD + 999)
+    service.tick_all()
+
+    reconnect = clock.at + timedelta(seconds=1)
+    pulse.devices = [_device(counter=101)]
+    clock.at = reconnect
+    service.tick_all()  # rebaseline
+
+    new_increment = reconnect + timedelta(seconds=10)
+    pulse.devices = [_device(counter=102)]
+    clock.at = new_increment
+    assert service.tick_all() == 1
+    assert observers.get(branch="01", work_center="CT01")[
+        "last_increment_at"
+    ] == new_increment
+
+    clock.at = new_increment + timedelta(seconds=THRESHOLD + 1)
+    assert service.tick_all() == 1
+    dts = _open_downtimes(downtimes)
+    assert len(dts) == 1
+    assert dts[0]["started_at"] == new_increment
+
+
+def test_open_downtime_survives_telemetry_gap_without_extension():
+    """Parada legítima aberta antes da falha é preservada: o gap não a
+    duplica nem a estende retroativamente — permanece aberta e
+    classificável até atividade real."""
+    service, _, pulse, observers, states, downtimes, clock = _monitor()
+    service.tick_all()
+    pulse.devices = [_device(counter=101)]
+    clock.at = BASE + timedelta(seconds=5)
+    service.tick_all()
+    stop_at = BASE + timedelta(seconds=5 + THRESHOLD + 1)
+    clock.at = stop_at
+    service.tick_all()  # parada aberta, started_at = BASE+5
+    dts = _open_downtimes(downtimes)
+    assert len(dts) == 1
+    original_started = dts[0]["started_at"]
+
+    pulse.devices = [_device(counter=101, online=False)]
+    clock.at = stop_at + timedelta(seconds=THRESHOLD * 5)
+    service.tick_all()  # degradado — parada intacta
+
+    pulse.devices = [_device(counter=101)]
+    clock.at = stop_at + timedelta(seconds=THRESHOLD * 5 + 1)
+    service.tick_all()  # reconexão: rebaseline, parada segue aberta
+
+    dts = _open_downtimes(downtimes)
+    assert len(dts) == 1
+    assert dts[0]["started_at"] == original_started
+    assert len(downtimes.events) == 1
+    assert len(states.events) <= 2  # producing + stopped, sem duplicatas
+
+    # Retorno real fecha a parada uma única vez.
+    pulse.devices = [_device(counter=110)]
+    clock.at = clock.at + timedelta(seconds=30)
+    service.tick_all()
+    assert _open_downtimes(downtimes) == []
+    assert len(downtimes.events) == 1
+
+
+def test_intermittent_degradation_never_duplicates_facts():
+    """Flapping degradado↔online sem incremento: nenhum fato, nenhuma
+    duplicação — cada retorno só reancora o cursor."""
+    service, _, pulse, observers, states, downtimes, clock = _monitor()
+    service.tick_all()
+    pulse.devices = [_device(counter=101)]
+    clock.at = BASE + timedelta(seconds=5)
+    service.tick_all()  # producing
+
+    at = clock.at
+    for _ in range(4):
+        at += timedelta(seconds=THRESHOLD + 50)
+        pulse.devices = [_device(counter=101, online=False)]
+        clock.at = at
+        assert service.tick_all() == 0
+        at += timedelta(seconds=1)
+        pulse.devices = [_device(counter=101)]
+        clock.at = at
+        assert service.tick_all() == 0  # rebaseline a cada retorno
+        assert _open_downtimes(downtimes) == []
+    assert len(downtimes.events) == 0
+    assert _open_states(states)[0]["state"] == "producing"
+
+
+def test_degraded_then_online_without_prior_baseline_stays_silent():
+    """CT sem nenhum incremento observado (AC-10): degradado → online
+    inalterado não arma baseline — nunca nasce parada."""
+    service, _, pulse, observers, states, downtimes, clock = _monitor()
+    pulse.devices = [_device(online=False)]
+    service.tick_all()  # primeiro contato já degradado
+
+    pulse.devices = [_device(counter=100)]
+    clock.at = BASE + timedelta(seconds=1)
+    assert service.tick_all() == 0
+    assert observers.get(branch="01", work_center="CT01")[
+        "last_increment_at"
+    ] is None
+
+    clock.at = BASE + timedelta(days=3)
+    assert service.tick_all() == 0
+    assert states.events == []
+    assert downtimes.events == []
+
+
 # ---------- Concorrência / arbitragem (AC-07, AC-08, AC-13) ----------
 
 

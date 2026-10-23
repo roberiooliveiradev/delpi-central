@@ -1,11 +1,12 @@
 # MES — Monitoramento autônomo de parada por CT, independente de OP
 
-> Estado: **implementado — gates locais verdes; homologação física pendente**.
+> Estado: **implementado — merge `2794554bd` + rework pós-revisão
+> (branch `fix/pc-mes-autonomous-downtime-rework`); homologação física
+> pendente**.
 > TASK_ID: PC-MES-CT-AUTONOMOUS-DOWNTIME. Owner canônico dos fatos MES:
 > `production-control-api`. Fonte de telemetria: `production-pulse-api`
 > (contrato S2S, nunca banco). Consumidor MFE: `plugins/public-hub`.
-> BASE_HEAD: `c7586034f` (`origin/main` vigente — a branch contém a main
-> integralmente; todo o trabalho está no diff contra ela).
+> BASE_HEAD: `c7586034f`; rework reancorado em `2e9f95b45`.
 
 ## 1. Resumo executivo
 
@@ -56,6 +57,13 @@ Decisões-chave:
 - **Baseline**: a primeira observação válida só estabelece o cursor —
   nenhuma parada retroativa (AC-10). `started_at` da parada retroage a
   `last_increment_at` observado, nunca a um tempo inventado.
+- **Rebaseline pós-degradação** (rework): ao retornar de um trecho
+  degradado sem incremento novo, o cursor reancora `last_increment_at`
+  no instante do retorno — o intervalo sem telemetria confiável nunca
+  entra no cálculo de inatividade nem é imputado como perda. Só se
+  aplica quando já havia baseline real; parada autônoma aberta antes da
+  falha permanece intacta (observação de qualidade explícita) até a
+  atividade real encerrá-la.
 - **Arbitragem**: o lock advisory por CT serializa tick autônomo ×
   `start_run`; dentro do lock o monitor recheca run ativo. Handoff é
   mesmo-CT com run ativo até o commit — o tick só vê SKIP.
