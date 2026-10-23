@@ -133,3 +133,17 @@ Menu é apenas configuração de apresentação/input; não permite a criação 
 | CL-14 | Sem implementar opções fictícias da imagem de referência; extensibilidade via composição intacta |
 
 **Implementação:** task bounded `DELIA-UX-COMPOSER-SETTINGS-CLEAN-VISUAL-REFINEMENT-01`: reanchor HEAD/authorities/ledger → reuse/abstraction gate → alterar menor diff dos dois componentes e CSS → RED/GREEN + regressões → browser screenshot/QA light+dark/full-page/Dock/mobile/zoom → rework → docs/evidence/ledger → commit/push main → deploy frontend scoped → smoke/relatório. **VISUAL_RUNTIME_STATUS=IMPLEMENTED** — ver evidência VD-F06, seção Clean Select Menu. Não considerar a task concluída por mockup ou apenas CSS sem QA.
+
+
+## 10. Ajuste de interação aprovado pelo Product Owner — manter menu aberto após seleção (2026-10-23)
+
+**Status:** PRODUCT_UX_DECISION / IMPLEMENTATION_PENDING. Substitui a regra anterior de fechar o popover depois de escolher modo, sem alterar a estética clean (§9), default batch, live opt-in, contratos ou admission.
+
+- Escolher **Gravar e transcrever** ou **Transcrição em tempo real** atualiza a opção imediatamente **e mantém o menu aberto**, inclusive após múltiplas alterações. Não há botão Salvar/Aplicar.
+- O menu fecha por **clique fora**, **novo clique no botão de configurações** ou **Escape**. Também pode fechar quando o usuário inicia outra interação no composer, desde que isso decorra do dismiss externo governado pelo `AnchoredPanelPortal` e não dispare perda de foco/draft ou cancelamento de captura.
+- Escape restaura foco no trigger. Clique externo não deve **roubar foco** da ação/elemento escolhido; preservar caret e seleção para edição e ditado.
+- Enquanto grava/processa, itens de mudança seguem desabilitados; o menu pode ser consultado. Nenhuma seleção dispara gravação ou auto-submit.
+- Não usar o fechamento como efeito genérico de `onChange` nem `data-close-on-change` na seção Ditado. A possibilidade de outras seções futuras não justifica construir mecanismo genérico agora; ações explícitas com semântica diferente poderão usar contrato de fechamento quando especificadas.
+- No HEAD examinado, `ComposerSettingsMenu` possui listener `onChange` que chama `dismiss()` quando o alvo é descendente de `[data-close-on-change]`. O executor deve verificar o uso real dessa marcação e aplicar o menor diff para que a troca de rádio não feche o painel, preservando comportamento de Escape/outside/trigger e compatibilidade de outras seções existentes.
+
+**Critérios de aceite adicionais:** `CM-01` selecionar batch→live mantém painel aberto; `CM-02` live→batch idem; `CM-03` clique fora fecha sem roubar foco da interação externa; `CM-04` trigger fecha ao segundo clique; `CM-05` Escape fecha e restaura foco; `CM-06` múltiplas seleções sem remount/perda de draft/caret; `CM-07` opção bloqueada durante captura; `CM-08` full-page/Dock/mobile e regressões de dictation/queue sem auto-submit. Evidenciar SHA, testes e QA; docs-only não altera runtime.
