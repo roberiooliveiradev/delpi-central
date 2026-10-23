@@ -1,0 +1,32 @@
+# 103 — Decisão PO: 60s por chamada LLM, até 3 tentativas por chamada, 300s globais
+
+**Data:** 2026-10-23. **Fonte:** decisão explícita do Product Owner posterior ao ADR 102. **Status:** PRODUCT_DIRECTION=APPROVED; IMPLEMENTATION=NOT_STARTED; ACTIVE_RUNTIME=UNCHANGED; PRODUCTION_RETRY=OFF até os gates pertinentes.
+
+## Decisão atual (substitui os parâmetros anteriores conflitantes em 100–102)
+
+1. **LLM_CALL_TIMEOUT_SECONDS=60**: cada chamada individual real ao LLM tem teto de até 60 segundos. O corte local genérico de `MODEL_STAGE_TIMEOUT_SECONDS=10` não deve continuar limitando essas chamadas a 10 segundos; sua retirada/substituição no owner legítimo é objetivo da próxima implementação, não mudança já executada.
+2. **LLM_CALL_MAX_ATTEMPTS=3**: para uma chamada individual de modelo que falhar ou sofrer timeout, permitir no máximo três tentativas governadas, condicionadas a elegibilidade, orçamento remanescente e cancelamento. **São retries da chamada LLM, não três reexecuções automáticas do turno inteiro ou de chamadas MCP/Domain.** Quando a interrupção não é recuperável, não inventar retry; registrar a classe de falha. Evitar duplicação de contagem e de efeitos.
+3. **INTERACTION_TOTAL_CAP_SECONDS=300**: teto de proteção global de cinco minutos para a solicitação, do começo até o terminal; nunca reinicia entre retries, estágio e fluxos. É teto máximo, não meta de latência. O fluxo encerra antes se cumprir a tarefa, usuário cancelar, erro não recuperável ou segurança exigir.
+4. **B+D preservado:** decisão/consumo do LLM distinguido de execução operacional e composição; os limites específicos existentes de Core/Domain/MCP, AuthZ, postcondition e transporte devem ser respeitados. Nenhum timeout individual de API é ampliado automaticamente. Não deixar retries esgotarem a capacidade de finalizar/entregar a interação; usar deadline remanescente e classificação honesta.
+5. **Comunicação e cancelamento:** progresso factual user-facing e aviso honesto de continuidade quando uma nova tentativa começar (sem expor chain-of-thought). Preservar cancelamento/disconnect e terminal único. Não exibir progresso inventado.
+6. **Investigar causa de falhas**, não apenas aumentar timeout: diferenciar timeout individual da chamada LLM, saída estruturada inválida, indisponibilidade de adapter, erro transitório, erro não recuperável, orçamento global e fontes; instrumentação do doc 99 é o owner de observabilidade.
+
+## Interpretação e compatibilidade
+
+- A expressão do PO `três tentativas por interação de LLM` é concretizada como **até três invocações para cada chamada lógica de modelo** (tentativa inicial + até 2 retries), não três tentativas de 60s garantidas por estágio, nem três turnos reexecutados.
+- O limite global de 300s não significa que N estágios possam consumir 3×60 cada, pois a soma é limitada pelo mesmo deadline absoluto. Uma quarta tentativa nunca é admitida e uma terceira só inicia se houver tempo seguro.
+- Limite por chamada = `min(60s, remaining_global_minus_completion_guard, explicit_provider_transport_ceiling_when_lower)`, com escolha de completion guard baseada em contrato já existente; não ampliar fonte/MCP. A janela de 60s não é uma exigência de manter cada estágio artificialmente vivo por 60s.
+- Reuso antes de design: `EXISTING_EQUIVALENT=YES` (`TurnDeadline`, `_model_stage_proposal`, `ModelInvocation`, `_RESUME_STATE`, `ActivityEvent`, `turn_observability`, cancel check); `REUSE_DECISION=EXTEND` nos owners existentes, após reconferência no HEAD. **Não criar retry engine paralelo, scheduler, banco ou queue.**
+- A proposta anterior do ADR 102 de quota acumulada LLM 60s **por tentativa do turno**, `attempt_wall=90s`, `operational_reserve=25s`, `streamed=150s / buffered=60s` está **SUPERSEDED como política desejada** por 60s por chamada, até 3 tentativas por chamada e total 300s. Não implementar valores antigos por engano. Reserva operacional específica ainda exige uso do mecanismo canônico e evidência, mas não deve bloquear a execução por nova rodada abstrata de inventários.
+- Se o código atual mistura retry de chamada LLM com retry de turno inteiro, **não fingir equivalência**: explicitar diferença de responsabilidade, preservar checkpoint e evitar duplicações; implementar o menor ajuste tipado. Uma falha definitiva na chamada não deve permitir repeated destructive writes.
+- Limites de rede (gateway, edge e clients), comportamento de streaming e buffered precisam ser **testados**, sem prometer que resposta buffered por 300s funcionará em qualquer edge. Se transporte incompatível, marcar BLOCKED/PENDING naquele modo e preservar resposta segura; não implementar bypass.
+
+## Risco de revogação e ativação
+
+Revogação intra-turno R4: remediação `DEFERRED_BY_PO`, risco `OPEN`. Isso não revoga Core/Domain AuthZ nem autoriza automaticamente retries produtivos de turno. Na próxima entrega, construir e provar comportamento em dev com flags; separar release de 60s/cancelamento da habilitação de retries produtivos que ainda enfrenta gate. O PO priorizou a funcionalidade; uma restrição de segurança objetiva deve ser reportada, não removida silenciosamente.
+
+## Próxima execução — sem mais ADR de proposta
+
+**Task 2 do doc 101:** implementar a política aprovada e executar testes, com o menor diff nos owners canônicos. Reancorar no HEAD/authorities/ledger. RED/GREEN: chamada 11–60s deve poder concluir; chamada >60s deve classificar timeout; 3 tentativas elegíveis no mesmo logical call; sem quarta; falha não recuperável sem retry; cancelamento em cada tentativa; proteção 300s; composição e MCP não debitam tempo do LLM; invoke material não repetido; source timeout próprio; NDJSON progresso factual; dados por turno corretos. Ollama GPU para integração local; zero chamadas externas pagas em teste. Não ampliar scope para reescrita de planner ou R4.
+
+**DECISION_LOG:** `PO_APPROVED=LLM_CALL_TIMEOUT_60+MAX_3_PER_CALL+TURN_GLOBAL_CAP_300+B_D`; `ADR102_PREVIOUS_NUMBERS=SUPERSEDED`; `CURRENT_CODE=UNCHANGED`; `NEXT=TASK2_IMPLEMENTATION`; `RELEASE=NOT_AUTHORIZED`.
