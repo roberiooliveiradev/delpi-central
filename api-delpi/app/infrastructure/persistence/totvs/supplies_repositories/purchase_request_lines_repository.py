@@ -108,6 +108,16 @@ def _normalize_receipt_row(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+_SQL_SERVER_MAX_PARAMS = 2100
+_ORDER_KEYS_BATCH = _SQL_SERVER_MAX_PARAMS // 3  # 3 bind params per line key
+_RECEIPT_KEYS_BATCH = _SQL_SERVER_MAX_PARAMS // 6  # 6 bind params per order key
+
+
+def _batched(items: list, size: int):
+    for start in range(0, len(items), size):
+        yield items[start : start + size]
+
+
 class PurchaseRequestLinesRepository(BaseRepository):
     def _filter_kwargs(
         self,
@@ -386,24 +396,32 @@ class PurchaseRequestLinesRepository(BaseRepository):
             (line["branch"], line["request_number"], line["request_item"])
             for line in lines
         ]
-        orders_sql, orders_params = build_purchase_orders_for_lines_sql(keys)
-        with self as repo:
-            order_rows = repo.execute_query(orders_sql, tuple(orders_params))
+        order_rows: list[dict[str, Any]] = []
+        # 3 params/line key → batches stay under the SQL Server 2100-param cap.
+        for batch in _batched(keys, _ORDER_KEYS_BATCH):
+            orders_sql, orders_params = build_purchase_orders_for_lines_sql(batch)
+            with self as repo:
+                order_rows.extend(repo.execute_query(orders_sql, tuple(orders_params)))
         orders = [_normalize_order_row(row) for row in order_rows]
-        order_keys = [
-            (
-                order["branch"],
-                order["order_number"],
-                order["order_item"],
-                order["supplier_code"],
-                order["supplier_store"],
-                order["product_code"],
+        order_keys = list(
+            dict.fromkeys(
+                (
+                    order["branch"],
+                    order["order_number"],
+                    order["order_item"],
+                    order["supplier_code"],
+                    order["supplier_store"],
+                    order["product_code"],
+                )
+                for order in orders
             )
-            for order in orders
-        ]
-        receipts_sql, receipts_params = build_receipts_for_orders_sql(order_keys)
-        with self as repo:
-            receipt_rows = repo.execute_query(receipts_sql, tuple(receipts_params))
+        )
+        receipt_rows: list[dict[str, Any]] = []
+        # 6 params/order key → batches stay under the SQL Server 2100-param cap.
+        for batch in _batched(order_keys, _RECEIPT_KEYS_BATCH):
+            receipts_sql, receipts_params = build_receipts_for_orders_sql(batch)
+            with self as repo:
+                receipt_rows.extend(repo.execute_query(receipts_sql, tuple(receipts_params)))
         receipts = [_normalize_receipt_row(row) for row in receipt_rows]
         receipts_by_order: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
         for receipt in receipts:

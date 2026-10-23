@@ -202,3 +202,27 @@ def test_requesters_facet_sql_is_distinct_with_source_name() -> None:
     assert "C1_USER" in sql
     assert "USR_CODIGO" in sql
     assert "ORDER BY requester_name" in sql
+
+
+def test_attach_batches_stay_under_sql_server_param_limit() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_repository import (
+        _ORDER_KEYS_BATCH,
+        _RECEIPT_KEYS_BATCH,
+        _batched,
+    )
+
+    assert _ORDER_KEYS_BATCH * 3 <= 2100
+    assert _RECEIPT_KEYS_BATCH * 6 <= 2100
+
+    keys = [("01", str(i), str(i % 9)) for i in range(_ORDER_KEYS_BATCH + 7)]
+    batches = list(_batched(keys, _ORDER_KEYS_BATCH))
+    assert len(batches) == 2 and len(batches[0]) == _ORDER_KEYS_BATCH and len(batches[1]) == 7
+
+    order_keys = [("01", str(i), "01", "F1", "01", "P") for i in range(_RECEIPT_KEYS_BATCH + 3)]
+    batches = list(_batched(order_keys, _RECEIPT_KEYS_BATCH))
+    assert len(batches) == 2
+
+    sql, params = build_receipts_for_orders_sql(
+        [("01", str(i), "01", "F1", "01", "P") for i in range(_RECEIPT_KEYS_BATCH)]
+    )
+    assert sql.count("?") == len(params) <= 2100
