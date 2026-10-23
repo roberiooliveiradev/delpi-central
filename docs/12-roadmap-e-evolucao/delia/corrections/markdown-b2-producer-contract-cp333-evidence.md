@@ -295,3 +295,14 @@ Live results (Playwright, deployed MFE+API at HEAD):
 - screenshot: bullets + contextual bold rendered; "Sem fonte vinculada / Detalhes da evidência" preserved
 
 **Incident resolved:** `ORIGINAL_SYMPTOM_REPRODUCED=YES` then `FIXED_AND_VERIFIED_IN_PRODUCTION`. CP-333 remains `PLANNED_NOT_PASS` — this decision fixed the proven user-visible defect; final acceptance stays with coordination.
+
+
+## Architecture / Coordination independent review — production SIPOC remediation (2026-10-23)
+
+**Reviewed commits:** bounded code `8162baf1a7` and docs/ledger `b016fbf8c4`. GitHub diff inspection confirms the only production logic change is `presentation_markdown=content` in the approved `COMPOSITION_MODEL` conversational result builder, with focused negative/compatibility tests and no alternative renderer, model stage, Core RBAC or provider branches. Explicit architectural approval: `f09acc8544`.
+
+**INCIDENT_VERDICT=ACCEPT_WITH_RESIDUAL** — original production SIPOC v1/plain symptom was reproduced by the executor before the fix. Executor-reported authenticated production re-test after SSH deployment emitted `presentation.version=2`, block `format=markdown_safe`, and real full-page DOM with 2 list containers, 10 list items, 13 strong nodes, no navigable anchors or raw markup. The executor reports 2079 backend PASS/3 skipped, 353 DÉLIA PASS, 2315 plugin-ui PASS and bounded security negatives PASS. These test and browser results have **not been independently rerun by this GitHub reviewer**; the code diff and committed evidence are directly inspected. Runtime SHA `274bd790e2` was operator-reported as descendant of the bounded code commit; do not equate current main with deployed runtime.
+
+**Remaining bounded evidence:** actual production dock view `TEST_NOT_RUN`; broad CP-333 RQ/AC acceptance still requires independent gate review, including AC22 general style adaptation and AC26 public-source link binding; screen-reader residual if not separately closed. Heading count zero is not a defect when the model uses emphasis/list syntax rather than actual heading tokens. **No further Markdown architectural refactor authorized by this review.**
+
+**STATE:** `PRODUCTION_SIPOC_INCIDENT=RESOLVED_REPORTED_AND_DIFF_CONFIRMED`; `PRODUCTION_MARKDOWN_SAFE=OBSERVED_BY_EXECUTOR`; `INDEPENDENT_BROWSER_REPRODUCTION=TEST_NOT_RUN`; `INCIDENT_REVIEW=ACCEPT_WITH_RESIDUAL`; `CP-333=PLANNED_NOT_PASS`; `NEXT=targeted dock QA + remaining CP-333 acceptance reconciliation`.
