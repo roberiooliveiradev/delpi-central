@@ -259,4 +259,14 @@ describe("PurchaseRequests feature", () => {
     ).toMatch(/recorte menor/i);
     expect(mapPurchaseRequestsFetchError("timeout upstream")).toBe("timeout upstream");
   });
+
+  it("solicitante prefere display_name Minha DELPI (vínculo Core) com fallback honesto", () => {
+    const identity = readFileSync(
+      join(dir, "../../app/SuppliesDirectoryIdentity.tsx"),
+      "utf8",
+    );
+    expect(identity).toContain("person?.display_name || person?.name");
+    const types = readFileSync(join(dir, "types.ts"), "utf8");
+    expect(types).toContain("display_name");
+  });
 });

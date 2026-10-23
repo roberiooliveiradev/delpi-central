@@ -71,7 +71,7 @@ class CoreApiHttpGateway:
         if not ordered:
             return {}
 
-        url = urljoin(self.base_url, "integrations/directory/users/lookup")
+        url = urljoin(self.base_url, "me/directory/users/lookup")
         try:
             response = requests.post(
                 url,
@@ -113,6 +113,84 @@ class CoreApiHttpGateway:
                 "name": name or user_id,
                 "email": email,
             }
+        return result
+
+    def lookup_protheus_identities(
+        self,
+        *,
+        protheus_user_ids: list[str],
+    ) -> dict[str, dict]:
+        """S2S batch resolution Protheus user id → Core identity mapping.
+
+        Core contract: POST /integrations/protheus-identities/lookup,
+        max 50 ids per call, only `mapping_status == "mapped"` rows match.
+        Soft-fail ({} + warning) on transport/auth errors — callers must
+        degrade to source names, never fabricate identities.
+        """
+        token = (Settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip()
+        if not token:
+            return {}
+
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for raw in protheus_user_ids:
+            pid = str(raw or "").strip()
+            if not pid or pid in seen:
+                continue
+            seen.add(pid)
+            ordered.append(pid)
+        if not ordered:
+            return {}
+
+        auth = token if token.lower().startswith("bearer ") else f"Bearer {token}"
+        service = token[7:].strip() if token.lower().startswith("bearer ") else token
+        headers = {
+            "Authorization": auth,
+            "X-Delpi-Service-Token": service,
+            "X-Delpi-Caller-App": "supplies-api",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+        result: dict[str, dict] = {}
+        for start in range(0, len(ordered), 50):
+            chunk = ordered[start : start + 50]
+            url = urljoin(self.base_url, "integrations/protheus-identities/lookup")
+            try:
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    json={"protheus_user_ids": chunk},
+                    timeout=self.timeout,
+                )
+            except requests.RequestException:
+                logger.warning("core_api_protheus_identities_lookup_failed")
+                continue
+            if response.status_code in (401, 403):
+                logger.warning(
+                    "core_api_protheus_identities_rejected status=%s",
+                    response.status_code,
+                )
+                return {}
+            if response.status_code >= 400:
+                logger.warning(
+                    "core_api_protheus_identities_error status=%s",
+                    response.status_code,
+                )
+                continue
+            try:
+                payload = response.json()
+            except ValueError:
+                continue
+            items = payload.get("items") if isinstance(payload, dict) else None
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                pid = str(item.get("protheus_user_id") or "").strip()
+                if pid:
+                    result[pid] = item
         return result
 
     def get_person_profile(self, user_id: str) -> dict | None:

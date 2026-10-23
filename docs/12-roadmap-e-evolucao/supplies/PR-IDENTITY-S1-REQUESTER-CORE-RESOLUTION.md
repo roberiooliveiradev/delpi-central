@@ -1,0 +1,67 @@
+# PR.IDENTITY.S1 — Resolução do solicitante via vínculo Core↔TOTVS
+
+**Data:** 2026-10-23 · **Status:** PROVEN · **Página:** Solicitações de Compras (`/apps/supplies/purchase-requests`)
+
+## Problema
+
+A coluna **Solicitante** exibia o nome textual que vem do TOTVS (`C1_SOLICIT`/`USR_NOME` — ex.: "ELAINE"), não o nome oficial do usuário na Minha DELPI.
+
+## Vínculo comprovado (fonte autorizada)
+
+| Conceito | Valor |
+|---|---|
+| Identificador do solicitante na origem | `SC1.C1_USER` → `requester.protheus_user_id` (`USR_ID`) |
+| Vínculo canônico | Core `user_protheus_identities` (`protheus_user_id` → `user_id`), apenas `mapping_status = "mapped"` |
+| Contrato de resolução | `POST /integrations/protheus-identities/lookup` (S2S, batch ≤ 50 ids) |
+| Nome oficial | `POST /me/directory/users/lookup` (Bearer do usuário, batch `ids[]` → `name`) |
+
+Join determinístico: `protheus_user_id` exato → mapeamento `mapped` → nome Core. **Sem** similaridade de nome, fuzzy matching, e-mail ou inferência do usuário logado.
+
+## Fluxo implementado
+
+```text
+purchase-requests-api (items[].requester / detail.requester + lines[].requester)
+        ↓
+supplies-api RequesterIdentityService
+   1. coleta protheus_user_id distintos da página (dedup)
+   2. POST /integrations/protheus-identities/lookup  (S2S, chunks de 50)
+   3. POST /me/directory/users/lookup                (Bearer do usuário, ids únicos)
+   4. injeta requester.display_name somente quando os dois hops resolvem
+        ↓
+plugins/supplies SuppliesPersonIdentity → display_name || name || code
+```
+
+## Propriedades
+
+- **Sem N+1:** máximo 2 chamadas Core por página independente do número de linhas (dedup + batch; chunks de 50 quando > 50 solicitantes distintos).
+- **Fallback honesto:** vínculo ausente, não-`mapped`, ambíguo ou Core indisponível → `display_name` ausente e a UI exibe `name`/`code` de origem. A listagem nunca falha por causa da resolução (soft-fail + warning).
+- **Resposta minimizada:** apenas `display_name` é adicionado ao contrato público; `user_id` Core, e-mail e metadados do mapeamento não saem do BFF.
+- **AuthZ preservada:** nenhuma permission nova; nenhum endpoint novo; universo de registros inalterado; falha de auth na Core não derruba a listagem.
+- **Avatar coerente:** iniciais derivam do mesmo nome exibido (`SuppliesEntityAvatarLabel`).
+
+## Contrato público (adição backward-compatible)
+
+`requester.display_name` — `string | null` — nome oficial Minha DELPI quando o vínculo existe e resolve; ausente caso contrário. Campos `protheus_user_id`, `code`, `name` inalterados.
+
+## Testes
+
+- `supplies-api/tests/application/test_requester_identity.py` — 9 casos: resolução exata, múltiplos solicitantes, dedup, fallback sem vínculo, Core indisponível, resposta parcial, header+lines do detalhe, ausência de token, sem requester.
+- `PurchaseRequests.structural.test.ts` — guard de preferência `display_name` e presença do campo no contrato MFE.
+- Suítes completas verdes (backend e MFE) em ambos os HEADs do deploy.
+
+## Arquivos
+
+| Arquivo | Mudança |
+|---|---|
+| `supplies-api/app/application/services/requester_identity_service.py` | novo — composição da resolução |
+| `supplies-api/app/interfaces/http/routes/purchase_requests_routes.py` | wiring lista + detalhe |
+| `supplies-api/app/infrastructure/gateways/core_api_http_gateway.py` | `lookup_protheus_identities` (S2S batch) |
+| `plugins/supplies/src/features/purchase-requests/types.ts` | `PersonRef.display_name` |
+| `plugins/supplies/src/app/SuppliesDirectoryIdentity.tsx` | precedência `display_name` |
+| `docs/12-roadmap-e-evolucao/solicitacoes-compras/01-contrato-api.md` | campo documentado |
+| Help/manual | tooltip da coluna + Q&A "De onde vem o nome do solicitante?" |
+
+## Residual
+
+- O diretório retorna `name` oficial; usuários desativados mapeados continuam exibindo o nome (o vínculo é histórico do registro — comportamento contratado, não filtrado).
+- Facets/endpoint `/requesters` não são consumidos pelo MFE e não receberam enriquecimento nesta fatia.

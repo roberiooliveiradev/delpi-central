@@ -128,7 +128,7 @@ export const SP_HELP = {
   purchaseRequestsTableColumns:
     "Escolha quais colunas exibir e arraste para reordenar na Tabela. No modo Cards o menu não aparece (composição fixa dos cards). A preferência fica salva neste navegador; não altera permissões nem dados.",
   purchaseRequestsColRequester:
-    "Solicitante da SC com avatar de iniciais, no mesmo padrão visual do Portal Comercial. A ficha da pessoa ainda não existe; o avatar não abre outra página.",
+    "Solicitante da SC com avatar de iniciais. Quando o usuário Protheus tem vínculo ativo na Minha DELPI, exibe o nome oficial da plataforma; sem vínculo, exibe o nome/código que veio do TOTVS. A ficha da pessoa ainda não existe; o avatar não abre outra página.",
   purchaseRequestsColCc: "Centro de custo da linha no escopo liberado ao usuário.",
   purchaseRequestsColOpened: "Data de abertura da solicitação de compras.",
   purchaseRequestsColStage:

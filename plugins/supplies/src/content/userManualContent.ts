@@ -232,6 +232,10 @@ export const USER_MANUAL_CONTENT = {
           a: "A página de pessoa continua reservada — o avatar não navega. Para fornecedor, abra a ficha pela lista Fornecedores (clique na linha).",
         },
         {
+          q: "De onde vem o nome do solicitante?",
+          a: "Quando o usuário TOTVS da solicitação tem vínculo ativo com um cadastro da Minha DELPI, o Portal mostra o nome oficial da plataforma (a mesma identidade do login). Sem vínculo, mostra o nome ou código que veio do ERP — nunca uma correspondência inventada por semelhança de nome.",
+        },
+        {
           q: "Como cadastro um novo fornecedor?",
           a: "Na lista Fornecedores, «Novo fornecedor» oferece três inícios no mesmo formulário: consultar por CNPJ (o campo pontua o documento automaticamente, busca dados públicos e mostra sugestões com fonte e horário de Brasília — você confirma campo a campo, nada é aplicado sozinho), buscar por razão social (em homologação — indisponível até o provedor ser aprovado) ou preencher manualmente. O formulário se organiza em seções — identificação, endereço, contato, fiscal/tributário e compras/relacionamentos — e cada uma mostra sua finalidade logo abaixo do título; cada campo tem ajuda contextual com a referência no ERP. A consulta também avisa se já existe cadastro com aquele CNPJ. A gravação no ERP segue bloqueada até homologação — o Portal avisa e nada é enviado sem a revisão final.",
         },

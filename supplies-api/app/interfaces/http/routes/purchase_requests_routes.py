@@ -21,11 +21,15 @@ from app.application.security.supplies_permissions import (
     can_export_purchase_requests,
     can_use_purchase_requests,
 )
+from app.application.services.requester_identity_service import (
+    RequesterIdentityService,
+)
 from app.interfaces.http.auth_decorators import require_policy, require_unit, require_units
 
 purchase_requests_bp = Blueprint("purchase_requests", __name__)
 
 _GATEWAY = PurchaseRequestsGateway()
+_REQUESTER_IDENTITY = RequesterIdentityService()
 
 
 def _access_token() -> str:
@@ -80,7 +84,10 @@ def list_portal_purchase_requests():
         )
     except PurchaseRequestsGatewayError as exc:
         return _gateway_error_response(exc)
-    return jsonify(_unwrap_data(payload)), 200
+    data = _REQUESTER_IDENTITY.enrich_payload(
+        _unwrap_data(payload), access_token=_access_token()
+    )
+    return jsonify(data), 200
 
 
 @purchase_requests_bp.get("/purchase-requests/summary")
@@ -224,4 +231,7 @@ def get_portal_purchase_request(branch: str, request_number: str):
         )
     except PurchaseRequestsGatewayError as exc:
         return _gateway_error_response(exc)
-    return jsonify(_unwrap_data(payload)), 200
+    data = _REQUESTER_IDENTITY.enrich_payload(
+        _unwrap_data(payload), access_token=_access_token()
+    )
+    return jsonify(data), 200

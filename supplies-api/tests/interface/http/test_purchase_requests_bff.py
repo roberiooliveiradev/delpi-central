@@ -252,3 +252,58 @@ def test_summary_upstream_unavailable(mock_resolve, mock_validate):
             headers={"Authorization": "Bearer tok"},
         )
     assert response.status_code == 502
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_enriches_requester_via_identity_service(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={"supplies.access", "supplies.unit.filial-01"}
+    )
+    gateway = MagicMock()
+    gateway.list_purchase_requests.return_value = {
+        "success": True,
+        "data": {
+            "items": [
+                {
+                    "request_number": "100",
+                    "requester": {"protheus_user_id": "000123", "name": "ELAINE"},
+                }
+            ],
+            "total": 1,
+        },
+    }
+    identity = MagicMock()
+    identity.enrich_payload.side_effect = lambda payload, *, access_token: {
+        **payload,
+        "items": [
+            {
+                **item,
+                "requester": {**item["requester"], "display_name": "Elaine Souza"},
+            }
+            for item in payload.get("items", [])
+        ],
+    }
+    with (
+        patch(
+            "app.interfaces.http.routes.purchase_requests_routes._GATEWAY",
+            gateway,
+        ),
+        patch(
+            "app.interfaces.http.routes.purchase_requests_routes._REQUESTER_IDENTITY",
+            identity,
+        ),
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    item = response.get_json()["items"][0]
+    assert item["requester"]["display_name"] == "Elaine Souza"
+    assert item["requester"]["name"] == "ELAINE"
+    identity.enrich_payload.assert_called_once()

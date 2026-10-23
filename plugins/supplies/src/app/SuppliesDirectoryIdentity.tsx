@@ -19,7 +19,7 @@ export function SuppliesSupplierIdentity({ name, code, store }: SupplierIdentity
 }
 
 export function SuppliesPersonIdentity({ person }: { person?: PersonRef | null }) {
-  const name = person?.name || person?.code || "";
+  const name = person?.display_name || person?.name || person?.code || "";
   const code = person?.code || person?.protheus_user_id || "";
   return (
     <SuppliesEntityAvatarLabel

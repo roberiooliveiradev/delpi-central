@@ -21,6 +21,8 @@ export type PersonRef = {
   protheus_user_id?: string | null;
   code?: string | null;
   name?: string | null;
+  /** Minha DELPI official name — present only when the Core↔Protheus link resolved. */
+  display_name?: string | null;
 };
 
 export type CostCenterRef = {

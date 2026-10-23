@@ -316,6 +316,7 @@ Grão canônico exposto no detalhe (e base da listagem quando expandida).
 | `requester.protheus_user_id` | `string` | não | `C1_USER` |
 | `requester.code` | `string` | sim | `SYS_USR.USR_CODIGO` |
 | `requester.name` | `string` | sim | `C1_SOLICIT` ou `USR_NOME` |
+| `requester.display_name` | `string` | sim | Core `user_protheus_identities` → `users.name` (PR.IDENTITY.S1) |
 | `cost_center.code` | `string` | sim | `C1_CC` |
 | `cost_center.description` | `string` | sim | `CTT010.CTT_DESC01` |
 | `account_code` | `string` | sim | `C1_CONTA` (contábil) |
