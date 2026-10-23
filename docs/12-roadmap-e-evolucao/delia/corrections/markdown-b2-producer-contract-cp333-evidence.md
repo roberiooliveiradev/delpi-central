@@ -207,3 +207,22 @@ Live results (Playwright, deployed MFE+API at HEAD):
 **NEXT_BOUNDED:** G4 residual closure split into (A) repeatable authenticated browser full-page/dock demonstration of **actual v2 admitted response**, preferably real owner case; deterministic integrated browser fixture evidence may add coverage but does not replace owner-outcome evidence, (B) screen-reader/theme/reduced-motion/accessibility checks, (C) explicit product/contract classification of AC22 style adaptation and AC26 public external link emission, without coupling internal links or granting DÉLIA Core authority. No new engine, no architecture rediscovery, no paid LLM calls. If a material defect is found, STOP → bounded REWORK, independent review afterwards.
 
 **REVIEW_DECISION:** `G4_REVIEW=ACCEPT_WITH_RESIDUAL`, `CP333_ACCEPTANCE=PENDING`, `NEXT=G4_RESIDUAL_CLOSURE`.
+
+
+## G4 residual closure + deploy authorization — 2026-10-23 (task DELIA-C3-MARKDOWN-B2-G4-RESIDUAL-CLOSURE-TEST-FIX-DEPLOY-01)
+
+**Reanchor:** `082a8bda30` → `090a817e56` → `6b548f5d09` → `04fcc80df6` (G4 independent review `754bef3305` + doc-109 investigation `5a3c8e8c84` + P1 authorization `04fcc80df6` absorbed). Evaluated HEAD: `04fcc80df6`.
+
+**R1 — Markdown visual (TEST_FIXTURE, not live business outcome):** deterministic QA harness reused — `VITE_DELIA_DEMO=1` dev image rebuild (Dockerfile build-arg, default OFF in production builds) + `?delia-demo=markdown_code` and new `?delia-demo=markdown_full` fixture scenarios. Real chain: fixture → DeliaAssistantMessage → `parsePresentationV2` shape → `ConversationMarkdown` → `ConversationCodeBlock` → DOM/clipboard in the authenticated Portal. Verified full-page + dock: semantic headings h4/h5 (deliberate hierarchy downshift), ul/ol, strong, inert code blocks with "Copiar código" affordance, zero `<a>` (authorizedLinks=[]), zero injected script/iframe/object/embed (the `<script>alert("demo")</script>` fence content stayed literal text — visible in clipboard dump), no unexpected h-overflow at 320px, identity at 420px, dark `prefers-color-scheme` honored, reduced-motion + 200% zoom render. `LIVE_BUSINESS_OUTCOME=TEST_NOT_RUN` — admitted Category-A outcome remains unreachable with local Ollama models (`delia-json` produces conversational/records/clarification only; records are correctly non-admitted → v1). Fixture evidence does NOT masquerade as owner outcome.
+
+**R2 — Accessibility:** keyboard Tab reaches interactive elements (collapse-btn, copy controls), markdown surface not aria-hidden (SR-reachable structure), zero stray interactive elements *from markdown data* (12 focusables = 6 code-block copy buttons + icons — expected component chrome), dark color-scheme emulation renders, reduced-motion renders, 200% zoom renders. Real screen-reader run = TEST_NOT_RUN (no SR runtime in this environment).
+
+**R3 — AC22 style adaptation (validated, remains PARTIAL):** real turn "Responda em uma única frase" → short 204-char answer (intent-aware shortening observed — model prose channel is the adaptation mechanism); strict single-sentence not honored. "Organize em tópicos" → 7/7 consecutive `invalid_model_output` (local model flake — TEST_NOT_RUN for that shape). Deterministic projector does not reformat per style request; no second LLM/classifier added. `AC22=PARTIAL` documented as the correct bounded classification.
+
+**R4 — Public links:** producer emits zero URL fields; `http(s)://` is on the technical-leak redaction list; no admitted public URL source exists. `PUBLIC_LINK_EMISSION=DEFERRED`, `AC26=PARTIAL` — no provider/registry invented.
+
+**Code change (QA harness only):** `plugins/delia/src/demo/demoMode.ts` +48 (new `markdown_full` fixture exercising headings/lists/bold/code through the same admitted consumer path) + `demoMode.test.tsx` +2 (scenario resolver coverage incl. `markdown_code`). No product path changed; fixture remains gated by `VITE_DELIA_DEMO` (production builds never admit it).
+
+**Regressions on `04fcc80df6`:** focused backend 57/57; G4 consumer 14/14; demoMode 18/18; delia suite 351/351 (29 files); tsc clean; negative security 15/15 (re-run during G4 on same seams, unchanged since).
+
+**Deploy:** see ledger §6.392 — SSH operator deploy of pinned SHA to srv-api via canonical `up-prod-sequential.sh`; delta vs deployed `a6aef6a321` is tests/docs only (zero runtime code change for delia-api since RW01 already deployed).

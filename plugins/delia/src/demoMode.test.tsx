@@ -60,6 +60,8 @@ describe("resolveDemoScenario", () => {
       "error",
       "loading",
       "activity",
+      "markdown_code",
+      "markdown_full",
     ]) {
       expect(resolveDemoScenario(`/?delia-demo=${scenario}`)).toBe(
         scenario,

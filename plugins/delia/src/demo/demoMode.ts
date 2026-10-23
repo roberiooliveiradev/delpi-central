@@ -28,7 +28,8 @@ export type DeliaDemoScenario =
   | "error"
   | "loading"
   | "activity"
-  | "markdown_code";
+  | "markdown_code"
+  | "markdown_full";
 
 export const DELIA_DEMO_BANNER = "Modo demonstração — dados simulados";
 
@@ -196,6 +197,38 @@ const DEMO_MARKDOWN_CODE_SOURCE = [
 const DEMO_MARKDOWN_CODE_FALLBACK =
   "Resposta simulada com exemplos de código (demonstração — veja os blocos).";
 
+// QA-only fixture for admitted prose structure (spec 96 §17): headings,
+// bold, ordered/unordered lists and a code block — never real backend
+// output.
+const DEMO_MARKDOWN_FULL_SOURCE = [
+  "## Resumo da operação",
+  "",
+  "O turno estruturado preserva **fatos**, IDs e unidades.",
+  "",
+  "### Itens encontrados",
+  "",
+  "- Primeiro item com **ênfase**",
+  "- Segundo item com valor 42",
+  "- Terceiro item",
+  "",
+  "### Próximos passos",
+  "",
+  "1. Revisar a evidência",
+  "2. Confirmar a proveniência",
+  "3. Registrar a limitação",
+  "",
+  "Trecho técnico inerte:",
+  "",
+  "```text",
+  "SELECT campo FROM tabela WHERE id = 1;",
+  "```",
+  "",
+  "Nenhum link é emitido sem fonte admitida.",
+].join("\n");
+
+const DEMO_MARKDOWN_FULL_FALLBACK =
+  "Resposta simulada com estrutura Markdown (demonstração).";
+
 const SCENARIO_OUTCOMES: Record<DeliaDemoScenario, DemoTurnOutcome> = {
   simple: {
     delayMs: DEMO_LATENCY_MS,
@@ -284,6 +317,20 @@ const SCENARIO_OUTCOMES: Record<DeliaDemoScenario, DemoTurnOutcome> = {
       {
         contentFormat: "markdown_safe",
         markdownSource: DEMO_MARKDOWN_CODE_SOURCE,
+        authorizedLinks: [],
+      },
+    ),
+  },
+  markdown_full: {
+    delayMs: DEMO_LATENCY_MS,
+    deliaTurn: deliaTurn(
+      DEMO_MARKDOWN_FULL_FALLBACK,
+      demoPresentation("RESULT", [
+        { kind: "text", text: DEMO_MARKDOWN_FULL_FALLBACK },
+      ]),
+      {
+        contentFormat: "markdown_safe",
+        markdownSource: DEMO_MARKDOWN_FULL_SOURCE,
         authorizedLinks: [],
       },
     ),
