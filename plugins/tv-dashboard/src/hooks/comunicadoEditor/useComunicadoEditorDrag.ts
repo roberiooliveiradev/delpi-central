@@ -46,6 +46,7 @@ import { snapshotConfig } from "./useComunicadoEditorHistory";
 import {
   ackUpsertBlocksWithGeneration,
   createMutationGenerationGate,
+  type MutationErrorHandler,
 } from "../../utils/mutationAckGeneration";
 import type { WriteGuard } from "../../api/tvDashboardApi";
 import type { MutationCommitMeta } from "../../utils/presentationMutationClient";
@@ -73,7 +74,7 @@ type Options = {
   /** Revision metadata emitted after each committed mutation. */
   onWriteCommitted?: (meta: MutationCommitMeta) => void;
   /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
-  onWriteError?: (error: unknown) => void;
+  onWriteError?: MutationErrorHandler;
 };
 
 function resolveDraggedExcludeIds(

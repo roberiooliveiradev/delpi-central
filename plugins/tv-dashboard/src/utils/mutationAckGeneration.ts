@@ -16,6 +16,21 @@ import {
 
 export type MutationAckApply = (canonical: ComunicadoConfig) => void;
 
+/**
+ * Identidade da mutação que falhou (025-R2). Capturada no dispatch — a
+ * navegação do usuário para outro slide não pode reatribuir o erro ao
+ * recurso errado. Correlação apenas; nunca autorização.
+ */
+export type MutationErrorContext = {
+  playlistId: string;
+  slideId: string;
+};
+
+export type MutationErrorHandler = (
+  error: unknown,
+  context: MutationErrorContext,
+) => void;
+
 export function createMutationGenerationGate() {
   let generation = 0;
 
@@ -47,7 +62,7 @@ export async function ackUpsertBlocksWithGeneration(args: {
   applyAck: MutationAckApply;
   writeGuard?: WriteGuard;
   onCommitted?: (meta: MutationCommitMeta) => void;
-  onError?: (error: unknown) => void;
+  onError?: MutationErrorHandler;
 }): Promise<ComunicadoConfig | null> {
   const { playlistId, slideId, blocks, gate, applyAck } = args;
   if (!playlistId || !slideId || blocks.length === 0) return null;
@@ -64,7 +79,7 @@ export async function ackUpsertBlocksWithGeneration(args: {
     applyAck(canonical);
     return canonical;
   } catch (error) {
-    args.onError?.(error);
+    args.onError?.(error, { playlistId, slideId });
     return null;
   }
 }
@@ -82,7 +97,7 @@ export async function commitOpsAndApplyAck(args: {
   optimistic?: () => void;
   writeGuard?: WriteGuard;
   onCommitted?: (meta: MutationCommitMeta) => void;
-  onError?: (error: unknown) => void;
+  onError?: MutationErrorHandler;
 }): Promise<ComunicadoConfig | null> {
   const { playlistId, slideId, ops, gate, applyAck, optimistic } = args;
   if (!playlistId || !slideId || ops.length === 0) return null;
@@ -103,7 +118,7 @@ export async function commitOpsAndApplyAck(args: {
     applyAck(canonical);
     return canonical;
   } catch (error) {
-    args.onError?.(error);
+    args.onError?.(error, { playlistId, slideId });
     return null;
   }
 }

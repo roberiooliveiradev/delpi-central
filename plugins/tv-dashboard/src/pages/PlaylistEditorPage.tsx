@@ -151,6 +151,7 @@ import {
   hasPendingPlaylistWrite,
   onPlaylistWriteSettled,
 } from "../utils/playlistWriteLane";
+import type { MutationErrorContext } from "../utils/mutationAckGeneration";
 import {
   resolvePresentationSyncReloadDecision,
   shouldRecoverAmbiguousSyncEvent,
@@ -815,17 +816,27 @@ export function PlaylistEditorPage({
    * conflitado (preservado para recuperação), descarta pending/debounce
    * obsoletos e recarrega o estado autoritativo.
    */
+  /**
+   * Invalida o estado de escrita local de um slide (025-R2): usado por
+   * `applyServerWinsConflict` e pela recuperação de falhas múltiplas —
+   * cada slide falho precisa da sua própria marca de conflito.
+   */
+  const invalidateSlideWriteState = useCallback(
+    (slideId: string) => {
+      slideWriteBaseRevisionRef.current.delete(slideId);
+      markComunicadoSlideDraftConflicted(playlistId, slideId);
+      const pending = pendingComunicadoSaveRef.current;
+      if (pending?.slide.id === slideId) pendingComunicadoSaveRef.current = null;
+    },
+    [playlistId],
+  );
+
   const applyServerWinsConflict = useCallback(
     async (slideId?: string | null, message?: string) => {
       // Nova época: payloads capturados antes do conflito não podem mais
       // escrever — a lane descarta via `ifFresh` (server-wins).
       comunicadoWriteEpochRef.current += 1;
-      if (slideId) {
-        slideWriteBaseRevisionRef.current.delete(slideId);
-        markComunicadoSlideDraftConflicted(playlistId, slideId);
-        const pending = pendingComunicadoSaveRef.current;
-        if (pending?.slide.id === slideId) pendingComunicadoSaveRef.current = null;
-      }
+      if (slideId) invalidateSlideWriteState(slideId);
       // O debounce de autosave não pode disparar payload pré-conflito após o reload.
       if (saveComunicadoTimerRef.current) {
         window.clearTimeout(saveComunicadoTimerRef.current);
@@ -836,7 +847,7 @@ export function PlaylistEditorPage({
         message ?? "A programação foi alterada por outro editor. Recarregue e tente de novo.",
       );
     },
-    [playlistId, reloadPlaylistFromServer],
+    [invalidateSlideWriteState, reloadPlaylistFromServer],
   );
   useEffect(() => {
     applyServerWinsConflictRef.current = applyServerWinsConflict;
@@ -940,24 +951,32 @@ export function PlaylistEditorPage({
    * reverter escritas irmãs ainda em voo. Guarda o slide que falhou: se o
    * usuário navegar antes do dreno, a marca de conflito segue o slide certo.
    */
-  const pendingMutationRecoveryRef = useRef<string | null>(null);
+  // Set (não single): falhas em slides distintos não se descartam — todas
+  // são invalidadas e reconciliadas por um único reload autoritativo (025-R2).
+  const pendingMutationRecoveryRef = useRef<Set<string>>(new Set());
   const recoverMutationAfterFailure = useCallback(() => {
-    const failedSlideId = pendingMutationRecoveryRef.current;
-    if (!failedSlideId) return;
+    const failedSlideIds = pendingMutationRecoveryRef.current;
+    if (failedSlideIds.size === 0) return;
     if (hasPendingPlaylistWrite(playlistId)) return;
-    pendingMutationRecoveryRef.current = null;
+    const slideIds = [...failedSlideIds];
+    failedSlideIds.clear();
+    const [firstSlideId, ...restSlideIds] = slideIds;
+    for (const slideId of restSlideIds) invalidateSlideWriteState(slideId);
     void applyServerWinsConflict(
-      failedSlideId,
+      firstSlideId,
       "Não foi possível confirmar a alteração. O estado salvo foi restaurado.",
     );
-  }, [playlistId, applyServerWinsConflict]);
+  }, [playlistId, applyServerWinsConflict, invalidateSlideWriteState]);
 
   const handleMutationWriteError = useCallback(
-    (error: unknown) => {
-      const slideId = selectedSlideIdRef.current;
+    (error: unknown, context: MutationErrorContext) => {
+      // 025-R2 — a identidade vem do dispatch da mutação, não da seleção
+      // atual: navegar para outro slide durante o request não pode
+      // reatribuir o erro ao slide errado.
+      const { slideId } = context;
       void handlePlaylistWriteConflict(error, slideId).then((handled) => {
         if (handled) return;
-        pendingMutationRecoveryRef.current = slideId;
+        pendingMutationRecoveryRef.current.add(slideId);
         recoverMutationAfterFailure();
       });
     },
@@ -1148,7 +1167,7 @@ export function PlaylistEditorPage({
             })
           ) {
             // O reload autoritativo abaixo já reconcilia falhas pendentes.
-            pendingMutationRecoveryRef.current = null;
+            pendingMutationRecoveryRef.current.clear();
             void reloadPlaylistFromServer().then(() =>
               deckHistory.handleRemoteUpdate(),
             );

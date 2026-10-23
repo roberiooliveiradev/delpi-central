@@ -66,6 +66,7 @@ import {
   commitUpsertDataModel,
   type MutationCommitMeta,
 } from "../utils/presentationMutationClient";
+import type { MutationErrorHandler } from "../utils/mutationAckGeneration";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -121,7 +122,7 @@ type ProviderProps = {
   /** Revision metadata emitted after each committed mutation. */
   onWriteCommitted?: (meta: MutationCommitMeta) => void;
   /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
-  onWriteError?: (error: unknown) => void;
+  onWriteError?: MutationErrorHandler;
   children: ReactNode;
 };
 

@@ -148,6 +148,7 @@ import {
   ackUpsertBlocksWithGeneration,
   commitOpsAndApplyAck,
   createMutationGenerationGate,
+  type MutationErrorHandler,
 } from "../../utils/mutationAckGeneration";
 
 type Options = {
@@ -214,7 +215,7 @@ type Options = {
   /** Revision metadata emitted after each committed mutation. */
   onWriteCommitted?: (meta: MutationCommitMeta) => void;
   /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
-  onWriteError?: (error: unknown) => void;
+  onWriteError?: MutationErrorHandler;
   /**
    * Read-back de ACK de uma mutação que já projetou estado local: aplica o
    * canônico sem nova entrada de Undo (a projeção já registrou a ação).

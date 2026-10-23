@@ -94,8 +94,37 @@ describe("mutationAckGeneration", () => {
       onError,
     });
     expect(result).toBeNull();
-    expect(onError).toHaveBeenCalledWith(conflict);
+    // 025-R2 — o erro carrega a identidade da mutação que falhou, não da
+    // seleção atual do editor.
+    expect(onError).toHaveBeenCalledWith(conflict, {
+      playlistId: "p",
+      slideId: "s",
+    });
     // Ack rejeitado nunca aplica estado canônico.
     expect(applyAck).toHaveBeenCalledTimes(1);
+  });
+
+  it("025-R2: onError de ops carrega playlistId/slideId do dispatch", async () => {
+    const gate = createMutationGenerationGate();
+    const applyAck = vi.fn();
+    const onError = vi.fn();
+    const failure = new Error("HTTP 500");
+    vi.mocked(commitPresentationOps).mockRejectedValueOnce(failure);
+
+    const result = await commitOpsAndApplyAck({
+      playlistId: "pl-A",
+      slideId: "slide-A",
+      ops: [{ op: "align_blocks", blockIds: ["a"], command: "left" }],
+      gate,
+      applyAck,
+      onError,
+    });
+
+    expect(result).toBeNull();
+    expect(onError).toHaveBeenCalledWith(failure, {
+      playlistId: "pl-A",
+      slideId: "slide-A",
+    });
+    expect(applyAck).not.toHaveBeenCalled();
   });
 });

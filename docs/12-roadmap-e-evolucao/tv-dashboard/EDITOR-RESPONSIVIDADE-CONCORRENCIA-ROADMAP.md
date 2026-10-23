@@ -286,6 +286,20 @@ Rework da 025 após review. Dois problemas comprovados e corrigidos no owner cor
 
 **Resíduos.** (1) Recuperação é um reload autoritativo com aviso — não há preservação de rascunho visual separado; se o servidor não persistiu, a projeção é revertida após dreno da lane (política deliberada: estado autoritativo vence). (2) A6 (navegação entre slides/desmontagem com escrita pendente) segue o comportamento preexistente da lane — sem regressão, sem nova cobertura E2E. (3) E2E dois-navegadores continua `TEST_NOT_RUN`.
 
+### Execução — VISTA-TV-EDITOR-LOCAL-VISUAL-PROJECTION-025-R2 (P0, identidade da mutação)
+
+Rework da 025-R1 após review: a recuperação de falha usava `selectedSlideIdRef.current` no momento do erro — se o usuário navegasse para outro slide com a mutação em voo, o erro do slide A seria associado ao slide B (marca de conflito e limpeza de autosave no recurso errado).
+
+**Causa raiz.** `handleMutationWriteError` recebia apenas `(error)` e resolvia o slide via seleção atual. A identidade correta existia no dispatch (`args.playlistId`/`args.slideId` de `ackUpsertBlocksWithGeneration`/`commitOpsAndApplyAck`) mas não era propagada pelo callback `onError`/`onWriteError`.
+
+**Contrato de identidade.** Novo `MutationErrorContext = { playlistId, slideId }` + `MutationErrorHandler` em `mutationAckGeneration.ts`; ambos os pontos de catch chamam `onError(error, { playlistId, slideId })` com os args capturados no dispatch. Assinatura propagada: `useComunicadoEditorBlocks`/`useComunicadoEditorDrag` (`onWriteError`) → `comunicadoEditorContext` → `PlaylistEditorPage.handleMutationWriteError`. Sem fallback silencioso para a seleção — os produtores sempre conhecem os ids.
+
+**Recuperação multi-falha.** `pendingMutationRecoveryRef` virou `Set<string>`: duas falhas em slides distintos acumulam ambas as identidades; no dreno da lane, `invalidateSlideWriteState` (extraído de `applyServerWinsConflict`) marca cada slide falho e um único reload + notice reconcilia a playlist inteira. O caminho 409 usa o mesmo contexto — `applyServerWinsConflict` marca o slide de origem mesmo após navegação.
+
+**Testes.** `mutationAckGeneration.test.ts`: `onError` recebe `{playlistId, slideId}` nos dois caminhos (upsert + ops). `alignProjection.test.ts`: rerender do hook com `slideId` diferente enquanto a mutation de `sl1` está em voo → rejeição reporta `slideId: "sl1"`. Regressão: 118 testes / 19 arquivos PASS.
+
+**Resíduos.** Cenários C/E multi-slide validados por composição (lane + contexto + settle) — a camada de página não tem harness de navegação real; E2E segue `TEST_NOT_RUN`. Desmontagem durante escrita pendente: listeners da lane desinscrevem no unmount e o ref morre com o componente — reabertura sincroniza do servidor (comportamento preexistente, sem regressão).
+
 ### Cache
 
 `notify_presentation_changed` limpa `reset_comunicado_data_block_cache` também em mutação visual. O clear em si não foi cronometrado. A consulta seguinte da TV/prévia deixa de usar o cache. Não alterar esta política sem teste de dado obsoleto.

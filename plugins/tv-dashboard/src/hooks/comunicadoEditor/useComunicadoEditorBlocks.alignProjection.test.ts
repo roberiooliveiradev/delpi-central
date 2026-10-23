@@ -103,10 +103,12 @@ function renderEditor(args: {
   playlistId?: string;
   slideId?: string;
   config: ComunicadoConfig;
+  onWriteError?: (error: unknown, context: { playlistId: string; slideId: string }) => void;
 }) {
   const persistedPayloads: ComunicadoConfig[] = [];
   const selectedIdsRef = { current: [] as string[] };
-  const hook = renderHook(() => {
+  const hook = renderHook(
+    (props: { slideId?: string }) => {
     const configRef = useRef<ComunicadoConfig>(args.config);
     const removeSelectedRef = useRef(() => {});
     const updateBlockTextFieldsRef = useRef(() => {});
@@ -126,7 +128,8 @@ function renderEditor(args: {
     });
     const blocks = useComunicadoEditorBlocks({
       playlistId: args.playlistId,
-      slideId: args.slideId,
+      slideId: props.slideId,
+      onWriteError: args.onWriteError,
       configRef,
       commitWithHistory: history.commitWithHistory,
       applyServerConfig: history.applyServerConfig,
@@ -164,7 +167,9 @@ function renderEditor(args: {
       updateBlockTextFieldsRef,
     });
     return { configRef, history, blocks };
-  });
+    },
+    { initialProps: { slideId: args.slideId } },
+  );
   return { ...hook, persistedPayloads, selectedIdsRef };
 }
 
@@ -368,6 +373,39 @@ describe("alignSelected — projeção visual local (025)", () => {
     });
     // Não reverte para o estado anterior — a recuperação é do autosave/409.
     expect(frameOf(result.current.configRef.current, "b1")?.x).toBe(10);
+  });
+
+  it("025-R2: erro de mutação carrega o slideId do dispatch, não o slide atual", async () => {
+    const server = makeFakeMutationServer(twoBlockConfig());
+    mutationsMock.mockImplementation(server.controlled);
+    const onWriteError = vi.fn();
+    const { result, selectedIdsRef, rerender } = renderEditor({
+      playlistId: "pl1",
+      slideId: "sl1",
+      config: twoBlockConfig(),
+      onWriteError,
+    });
+    selectedIdsRef.current = ["a1", "b1", "c1"];
+
+    act(() => {
+      result.current.blocks.alignSelected("align-left");
+    });
+    expect(server.deferred).toHaveLength(1);
+
+    // Navegação A→B com a mutação de A ainda em voo.
+    rerender({ slideId: "sl2" });
+
+    await act(async () => {
+      server.deferred[0]!.reject(new Error("HTTP 500"));
+    });
+
+    // O erro reporta a identidade da mutação que falhou (sl1), nunca a
+    // seleção atual (sl2) — caso contrário a recuperação marcaria o slide
+    // errado como conflitado.
+    expect(onWriteError).toHaveBeenCalledWith(expect.any(Error), {
+      playlistId: "pl1",
+      slideId: "sl1",
+    });
   });
 });
 
