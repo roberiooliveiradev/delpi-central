@@ -169,13 +169,18 @@ artefato × banco **demonstrada e reproduzível, Δ R$ 0,00** →
 | — por tipo | MP 354.938,50 · PI 254,44 | soma do xlsb por `B1_TIPO` | **exato** (MP+PI+EM 39,12+MH 8,46 = total) | 0 |
 | EM ESTOQUE PA | 190.511,24 | MATR320 Saldo Atual PA | **exato** | 0 |
 | EM ESTOQUE PI | 24.528,60 | MATR320 Saldo Atual PI | **exato** | 0 |
-| EM ESTOQUE total | 3.591.191,36 | SB9 f01 ex-armazém 99 → 3.599.373,79; ex-99/50 → 3.545.071,27 | **parcial** | −8.182,43 / +46.120,09 |
-| Resumo MP/PA/PI estoque | 2.699.026,36 (MP 2.483.986,52) | SB9 MP qualquer recorte testado (loc01: 3.016.277,89) | **não reproduzido** | ≥ −532.291,37 |
-| Resumo MP/PA/PI processo | 277.941,20 (MP 277.686,77) | xlsb MEP MP = 354.938,50 | **não reproduzido** | −77.251,73 |
+| EM ESTOQUE total | 3.591.191,36 | SA_emissão (3.884.464,444) − loc99_emissão (293.273,084) — loc99 reconstruído `B9_VINI1@0831[99]+RE3+SD3[99]` = 293.273,088 (doc 80 §33.D) | **exato** | 0,004 (float) |
+| Resumo MP/PA/PI estoque | 2.699.026,36 (MP 2.483.986,52) | emissão com `as_of`/parâmetros diferentes — não reconciliável com snapshot | **pendente** | E2 parâmetros |
+| Resumo MP/PA/PI processo | 277.941,20 (MP 277.686,77) | idem — `as_of` distinto do xlsb MEP (354.938,50) | **pendente** | E2 parâmetros |
 
-As duas emissões do P7 usam filtros distintos (completo × escopo MP/PA/PI) e
-o "EM ESTOQUE" não corresponde a nenhum recorte SB9 por armazém testado —
-parâmetros por emissão pendentes (E2, TI/ERP). **→ G5 PENDING.**
+**Rodada 15 (doc 80 §33.D):** a emissão completa (`Estoque.pdf`) tem EM
+ESTOQUE = saldo físico **excluindo o armazém de processo**
+(`MV_LOCPROC='99'`) no `as_of` da emissão — prova centesimal acima.
+`EM PROCESSO` = MATR989 (medida por OP, distinta do estoque físico de
+loc 99). A emissão resumida usa parâmetros/`as_of` diferentes — segue
+`PENDING` (E2, TI/ERP). **G4/G5 permanecem PENDING**: binding de
+totalização provado; binding de **parametrização por emissão** e
+produtor (`matr460.prx`/workfile) ainda não.
 
 ## §4 — R05 · Entradas e Saídas (`MATR320.prt`)
 
@@ -203,7 +208,7 @@ em doc 80 §31.B e catálogo doc 85 §5 (BR-R05-003…010).
 |---|---|---|---|
 | Saldo Inicial | 3.315.659,021 | derivado; = ΣSB9@0831 | **0** |
 | Compras | 642.670,88 | SD1 poder3=N/est=S/tipo≠'D' `D1_CUSTO` DTDIGIT-Set + itens 001 do doc `<NF-RETIF-A>` (sanitizado) ainda vivos na emissão | **0** |
-| Movimentações Internas | −40.957,818 | SD3 OP-vazio CF[3]≠'3' (INV + DE6/RE6 + RE0-503) | ~0,48 (precisão TTAT_COLD) |
+| Movimentações Internas | −40.957,818 | SD3 OP-vazio CF[3]≠'3' (INV + DE6/RE6 + RE0-503) | **0** (residual 0,48 de §31 = artefato de sobre-reversão — doc 80 §33.A) |
 | Requisições p/ Produção | −666.114,374 | SD3 OP-preenchido não-PR a custos de emissão | **0** |
 | Transferências | 0,000 | RE4/DE4 espelhadas | **0** |
 | Produção | 0,000 | — | **0** |
@@ -219,19 +224,37 @@ Equação validada ao centavo: `SA = SI + Compras + MovInt + Requis +
 Transf + Produção − Vendas + DevV − DevC + EntPT − SaiPT` (TransfProc
 memo).
 
-### §4.3 — Divergência MP +8.631,73 — decomposição (doc 80 §31.E)
+### §4.3 — Divergência MP +8.631,73 — DECOMPOSIÇÃO COMPLETA (rodada 15, doc 80 §33.B)
 
-| Componente | Valor |
-|---|---|
-| Repricing da retificação doc `<NF-RETIF-A>` (001→085, ~20-21/10) | +9.583,19 |
-| Movimentos INVENT retroativos (insert 01/10 ~19h) | −24,95 |
-| Recálculo de custo médio pós-emissão (MATA330 c/ 25.995 updates `D3_CUSTO1`; `Analise.xlsx` ΣQ×ΔCM ≈ +10,7k agregado) | incluído |
-| Residual não decomposto | ≈ −950 |
+Ponte por produto `residual_p = VINI1@0930_p − V_emissão_p` fecha o delta
+integral: **Σ +8.631,741 vs +8.631,731 oficial** (Δ −0,010 arredondamento
+`B9_VINI1`):
+
+| Produto (alias) | Residual | Mecanismo |
+|---|---:|---|
+| `<PRODUTO-CUSTO-A>` | +5.270,252 | revalorização CM — onda retificadora (RPC + MATA241/MATA330) |
+| `<PRODUTO-CUSTO-B>` | +3.190,169 | `MATA330` 21/10 regravou `D3_CUSTO1` ~+7% |
+| `<PRODUTO-REVAL-A>` | +148,000 | revalorização CM pós-emissão |
+| `<PRODUTO-REVAL-B>` | +23,292 | idem |
+| `<PRODUTO-REVAL-C>` | +0,028 | `INVENT` repriced |
+| **Total** | **+8.631,741** | |
+
+A decomposição anterior por evento (reprice doc `<NF-RETIF-A>` +9.583,19;
+INVENT −24,95; residual ≈ −950, doc 80 §31.E) é substituída pela ponte
+por produto acima — **100% do delta atribuído a revalorização de custo
+médio pós-emissão**, sem resíduo não decomposto.
 
 **DIFERENÇA EXPLICADA**: SA impresso = estado de custo da emissão; SB9 =
 snapshot reconstruído 21/10 pós-retificação. Não é erro de fórmula nem
-de filtro — é diferença temporal de estado. **→ G5 PENDING** até
-paridade `as_of` demonstrada nas três medidas canônicas (E/S × P7 × H02).
+de filtro — é diferença temporal de estado, agora fechada por produto.
+
+### §4.4 — Escopo completo: 10 tipos × 13 colunas (rodada 15)
+
+A reconciliação §4.2 foi expandida a **todos os tipos** (EM, GG, II, MC,
+MH, MP, MS, MX, PA, PI) no estado de emissão: **120/120 colunas de fluxo
+exatas**; Saldo Atual 9/10 exato, único Δ = MP +8.631,73 (§4.3). As
+regras de classificação SD1/SD2/SD3 são **gerais**, não específicas de
+MP — validação por tipo em doc 80 §33.C.
 
 ## §5 — Demais itens (candidatos avaliados)
 

@@ -271,31 +271,44 @@ Paridade parcial: doc 84 §3.
 - Seção EM PROCESSO do P7 = `Material em processo.xlsb` — **355.240,51
   exato** (MP 354.938,50 + PI 254,44).
 
-### BR-R03-004 — EM ESTOQUE parcial — `AS-IS`/`PENDING`
+### BR-R03-004 — EM ESTOQUE — `PROVEN` (totalização; parâmetros `PENDING`)
 
 - PA/PI do P7 = Saldo Atual do MATR320 **exato** (190.511,24 / 24.528,60).
-- Total EM ESTOQUE e escopo MP/PA/PI **não reproduzidos** por nenhum recorte
-  SB9×armazém testado (Δ ≥ −8.182,43); armazéns de processo (99/50 =
-  348.024,90) excluídos do EM ESTOQUE.
-- Parâmetros por emissão (tipos, armazém, data) `PENDING` — E2.
+- Total EM ESTOQUE reproduzido **ao centavo** (rodada 15, doc 80 §33.D):
+  `EM ESTOQUE = SA_emissão − estoque loc99_emissão = 3.884.464,444 −
+  293.273,084 = 3.591.191,36` (Δ residual 0,004 float).
+- loc99 no estado de emissão reconstruído: `B9_VINI1@0831[99] +
+  RE3-in(TransfProc) + SD3[loc99] = 215.673,929 + 940.599,335 −
+  863.000,176 = 293.273,088`.
+- Parâmetros por emissão (tipos, armazém, data) seguem `PENDING` — E2;
+  a emissão `Resumo Estoque.pdf` tem `as_of`/escopo diferentes e não
+  reconcilia com o snapshot.
 
-### BR-R03-005 — Origem física — `TO_INVENTORY`
+### BR-R03-005 — Origem física — `PROVEN` (totalização) / `TO_INVENTORY` (produtor)
 
-- `SB9` (snapshot mensal de SB2) = candidato (96% no recorte, doc 80 §21);
-  vínculo P7↔SB9 **não provado** — não implementar leitura de SB9 como fonte
-  oficial sem essa prova.
-- Evidência estrutural MATR460 (doc 80 §31.G): hook `A460UNIT.prw` ajusta
-  `TOTAL/VALOR_UNIT/QUANTIDADE` por produto na tabela `MP7GDA`; arquivos de
-  trabalho `MP7_*` (PRODUTO/ARMAZEM/DATAFECHAMENTO/TIPOMOV[`aSalAtu`·`QtCus`·
-  `aDadosCF9`]/QUANTIDADE/TOTAL) persistem até ~04/2024; `MV_ALMTERC` exposto
-  no hook. `EM ESTOQUE + EM PROCESSO = TOTAL P7` (exato ao centavo).
+- Binding de totalização provado: `EM ESTOQUE` = saldo físico ex-99 no
+  `as_of` da emissão (compatível com SB9/`VINI1` no estado de emissão) e
+  `EM PROCESSO` = MATR989 (doc 80 §33.D). O `as_of` da medida é da
+  emissão, **não** do snapshot corrente — dado corrente contém o drift
+  de repricing.
+- Mecanismo produtor `TO_INVENTORY`: fonte `matr460.prx`/SP ausente;
+  hook `A460UNIT.prw` ajusta `TOTAL/VALOR_UNIT/QUANTIDADE` por produto
+  na tabela `MP7GDA`; arquivos de trabalho `MP7_*`
+  (PRODUTO/ARMAZEM/DATAFECHAMENTO/TIPOMOV[`aSalAtu`·`QtCus`·
+  `aDadosCF9`]/QUANTIDADE/TOTAL) persistem até ~04/2024; `MV_ALMTERC`
+  exposto no hook. `EM ESTOQUE + EM PROCESSO = TOTAL P7` (exato ao
+  centavo).
 
-### BR-R03-006 — EM ESTOQUE ≈ exclui armazém de processo — `PENDING`
+### BR-R03-006 — EM ESTOQUE exclui armazém de processo — `PROVEN`
 
-- `EM ESTOQUE 3.591.191,36` vs `SA MATR320 3.884.464,44`: Δ −293.273,08 ≈
-  MP no armazém 99 (293.674,80). Hipótese: P7 EM ESTOQUE exclui
-  `MV_LOCPROC`/99, com EM PROCESSO coberto por MATR989 — **não demonstrado**
-  sem parâmetros de emissão (E2) nem fonte da SP MATR460.
+- Hipótese anterior (Δ −293.273,08 ≈ armazém 99) **confirmada
+  centesimalmente** (doc 80 §33.D): EM ESTOQUE P7 = saldo físico ex-
+  `MV_LOCPROC='99'`. O armazém de processo não entra em EM ESTOQUE;
+  EM PROCESSO é medida MATR989 (saldo alocado a OPs), **diferente** do
+  saldo físico de loc 99 (355.240,51 ≠ 293.273,08) — não confundir.
+- Resta `PENDING`: extensão da exclusão a outros armazéns especiais
+  (`MV_CQ='98'`, `MV_ALMTERC`) em outras parametrizações — depende de
+  parâmetros de emissão (E2).
 
 ---
 
@@ -326,14 +339,14 @@ doc 84 §4; evidência doc 80 §31.
   **emissão de/até**, moeda, **saldo Atual/Fechamento/CalcEst**, MOD,
   OPs SIGAMNT.
 
-### BR-R05-002 — Saldo Atual = SB9 no recorte — `PROVEN` (9/10 tipos)
+### BR-R05-002 — Saldo Atual = SB9 no recorte — `PROVEN` (10/10 tipos explicados)
 
 - `SB9@30/09 f01` × `Saldo Atual` MATR320: **9/10 tipos exatos ao centavo**
-  (EM/GG/II/MC/MH/MS/MX/PA/PI); residual **MP +8.631,73** — explicado
-  como diferença de estado temporal (emissão 01/10 16:16 vs snapshot
-  SB9 reconstruído 21/10), decomposto em doc 80 §31.E.
-- Aplicação da equação canônica de conciliação restrita a medidas
-  comparáveis (mesmo instante/escopo) — doc 84 §4.
+  (EM/GG/II/MC/MH/MS/MX/PA/PI); MP +8.631,73 **integralmente decomposto**
+  (rodada 15, doc 80 §33.B): revalorização de custo médio pós-emissão em
+  5 produtos (`<PRODUTO-CUSTO-A/B>` +98% do delta; 3 micro-revalorizações).
+- `SA` impresso = saldo no `as_of` da emissão (01/10 16:16:27), não o
+  snapshot corrente — ponte por produto em doc 80 §33.B / doc 84 §4.3.
 
 ### BR-R05-003 — Seleção física por tabela — `PROVEN` (fonte + dados)
 
@@ -370,12 +383,36 @@ doc 84 §4; evidência doc 80 §31.
   `SA = SI + Compras + MovInt + Requis + Transf + Produção − Vendas
   + DevV − DevC + EntPT − SaiPT`.
 
-### BR-R05-007 — Reconciliação MP coluna a coluna — `PROVEN` (ao centavo)
+### BR-R05-007 — Reconciliação coluna a coluna — `PROVEN` (ao centavo, escopo completo)
 
-- 12/13 colunas exatas em estado de emissão (reconstrução via
-  `TTAT_COLD` para custos regravados por `MATA330`); Movimentações
-  Internas residual ~R$0,48 (precisão do log); Saldo Atual = medida de
-  estado, não snapshot. Matriz em doc 84 §4.2.
+- **13/13 colunas exatas em estado de emissão** para MP (reconstrução
+  via `TTAT_COLD` com corte `TTAT_DTIME > timestamp_de_emissão`);
+  residual MovInt ~R$0,48 de §31 **resolvido** (rodada 15, doc 80
+  §33.A — era artefato de sobre-reversão).
+- Expandida a **todos os 10 tipos** (doc 80 §33.C): 120/120 colunas de
+  fluxo exatas; único Δ no relatório = MP Saldo Atual +8.631,73
+  (decomposto, BR-R05-002). Matriz em doc 84 §4.2.
+
+### BR-R05-011 — Reconstrução `as_of` de custos via TTAT — `PROVEN`
+
+- Custos regravados in-place por `MATA330`/`MATA241`/`MATA460A`/`RPC`
+  são recuperados de `SD*_TTAT_LOG.TTAT_COLD` **somente** para updates
+  com `TTAT_DTIME > timestamp_de_emissão`. Reverter updates anteriores
+  à emissão introduz erro artificial (causa do ex-residual R$0,48).
+- Inserções pós-emissão com datas retroativas são detectadas por bloco
+  `R_E_C_N_O_`/TTAT-insert e excluídas da leitura `as_of`; linhas
+  deletadas são pares espelhados líquido-zero (BR-R05-008).
+
+### BR-R05-012 — Ponte emissão→snapshot por produto — `PROVEN`
+
+- `Δ SA↔SB9` por produto: `residual_p = B9_VINI1@0930_p −
+  (B9_VINI1@0831_p + SD1_p − SD2_p + SD3_exTransfProc_p)` no estado de
+  emissão. Para MP set/2026: Σ = +8.631,741 ≈ +8.631,731 oficial
+  (−0,010 arredondamento `B9_VINI1`), concentrado em 5 produtos —
+  mecanismo = revalorização de custo médio (doc 80 §33.B).
+- `TransfProc` (CF `RE3`) é excluído do fluxo de valor porque
+  **permanece no estoque da filial** (armazém 99) — coerente com a
+  coluna memo.
 
 ### BR-R05-008 — Retificações retroativas alteram a leitura histórica — `PROVEN`
 
@@ -524,12 +561,13 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R01-006/007 resumos/componentes | artefato+fonte | componentes `E5_VL*` | agregação por motivo/tipodoc | BFF agrega | cf-api | T-R01-07 | doc 84 §1.3 |
 | BR-R01-009 log inconsistências | PDF impresso | — | total = ΣXLSB−ΣPDF | flag "reconciled_excl_log" | cf-api | T-R01-08 | doc 84 §1.4 |
 | BR-R02-001..007 receber | artefato+SE5/SE1 | `E5_*`,`E1_VALOR`, provisão 'P' | população 649+8, VO dual | `receivables-settlements` | api-delpi (**após fonte DLP06R01** — E1) | T-R02-01..06 | doc 84 §2 |
-| BR-R03-001..005 P7 | artefatos+SB9 cand. | `B9_*`, tipos, armazém | escopo por parâmetros | `inventory-p7` (**após binding** — E2) | api-delpi | T-R03-01/02 | doc 84 §3 |
+| BR-R03-001..006 P7 | artefatos + saldo ex-99 (`PROVEN`) | `B9_*`, `D3_*`(loc99/RE3), MATR989, tipos, armazém | EM ESTOQUE ex-`MV_LOCPROC` + EM PROCESSO (MATR989) por `as_of` | `inventory-p7` (binding de totalização provado; parâmetros por emissão — E2) | api-delpi | T-R03-01..04 | doc 84 §3, doc 80 §33.D |
 | BR-R05-001/002 MATR320 | artefato+SB9 | `B9_*` por tipo | Saldo Atual por tipo | `stock-movements-summary` | api-delpi | T-R05-01 | doc 84 §4 |
 | BR-R05-003/004 SD1/SD2 | `matr320.prx` + SF4 | `D1_DTDIGIT`,`D2_EMISSAO`,`D*_CUSTO*`,`F4_PODER3`,`F4_ESTOQUE`,`D*_TIPO` | janela digitação/emissão + split poder3/TIPO='D' | `stock-movements-summary` (api-delpi TOTVS provider) | api-delpi | T-R05-02/03 | doc 80 §31.B-C |
 | BR-R05-005 SD3 | `matr320.prx` | `D3_CF`,`D3_OP`,`D3_TM`,`D3_CUSTO1`,`D3_ESTORNO` | classificação por CF/OP + sinal TM>500 | idem | api-delpi | T-R05-04/05 | doc 80 §31.B-C |
 | BR-R05-006 saldos | `matr320.prx` + SB2 | `B2_VATU<n>`,`B2_VFIM<n>` | saldo por modo par10; SI derivado | idem | api-delpi | T-R05-06 | doc 80 §31.B |
 | BR-R05-008 retificações | TTAT/RECNO | `D_E_L_E_T_`,`R_E_C_N_O_` | leitura histórica exige `as_of` | `as_of` em todo contrato histórico | cf-api | T-R05-07 | doc 80 §31.D |
+| BR-R05-011/012 as_of custo + ponte | `SD*_TTAT_LOG` | `TTAT_DTIME`,`TTAT_COLD`,`TTAT_FIELD` | custo no `as_of` da emissão + residual por produto | `as_of` + decomposição de drift em contrato histórico | api-delpi | T-R05-08/09 | doc 80 §33.A-B |
 | BR-R09 MOD rate | `SBZ010.BZ_CUSTD` + Fat×MOD | `BZ_CUSTD`, horas | rate×horas por PA/filial | `mod-cost-rate` (E6=C) | api-delpi | T-R09-01 | doc 80 §22–§25 |
 | BR-R10/11 EDAPP | SD1/SD2 | `D1_*`,`D2_*` | consulta parametrizada | `fiscal-docs-query` | api-delpi | T-R10-01 | doc 47 §11.1 |
 | BR-R12-003 Refaz | `DEL100.PRW` | SD3/SB9 | reconstrução→comparação | `rebuild-balances-audit` | api-delpi | T-R12-01 | doc 80 §24.E |
@@ -567,13 +605,17 @@ copia para BFF/frontend.
 | T-R02-05 | BR-R02-002 | pending | sem fonte: não generalizar inclusão de sem-título (3 excluídos) |
 | T-R03-01 | BR-R03-002 | limit · reproduzido | duas emissões P7 do mesmo dia → totais distintos exigem `as_of` |
 | T-R03-02 | BR-R03-003 | positive · reproduzido | EM PROCESSO = MATR989 (355.240,51) |
-| T-R05-01 | BR-R05-002 | limit · reproduzido | SB9×MATR320 9/10 tipos; MP diverge — não ocultar residual |
+| T-R03-03 | BR-R03-004/006 | positive · reproduzido | EM ESTOQUE = SA_emissão − estoque loc99_emissão (3.591.191,36 exato) |
+| T-R03-04 | BR-R03-006 | negative · candidato | armazéns especiais além de loc99 (`MV_CQ`, `MV_ALMTERC`) só entram na regra se parâmetros provarem exclusão |
+| T-R05-01 | BR-R05-002 | limit · reproduzido | SB9×MATR320 9/10 tipos exatos; MP +8.631,73 decomposto por produto — residual oculto = revalorização CM |
 | T-R05-02 | BR-R05-003 | positive · reproduzido | SD1 usa `D1_DTDIGIT` (não emissão) — doc digitação-Set/emissão-Out entra na competência |
 | T-R05-03 | BR-R05-004 | negative · reproduzido | `D*_TIPO='D'` vai para Devolução, não Compras/Vendas; poder3≠'N' vai para EntPT/SaiPT |
 | T-R05-04 | BR-R05-005 | positive · reproduzido | SD3 CF 'PR*'→Produção, RE4/DE4→Transferências, OP-vazio→MovInt, OP-preenchido→Requisições, resto→TransfProc |
 | T-R05-05 | BR-R05-005 | negative · reproduzido | `D3_TM>'500'` sinaliza saída (valor negativo); `D3_ESTORNO='S'` excluído |
 | T-R05-06 | BR-R05-006 | limit · reproduzido | SI impresso é derivado (SA − movimentos), não saldo cadastrado |
 | T-R05-07 | BR-R05-008 | negative · reproduzido | linha inserida/deletada após emissão não pode entrar/sair da reprodução `as_of` |
+| T-R05-08 | BR-R05-011 | negative · reproduzido | reversão TTAT_COLD limitada a `TTAT_DTIME > emissão` — sobre-reversão gera erro artificial |
+| T-R05-09 | BR-R05-012 | positive · reproduzido | ponte por produto: Σ residual = +8.631,741 ≈ oficial; TransfProc-RE3 fora do fluxo de valor |
 | T-R09-01 | BR-R09 | positive · reproduzido | Custo Unitário MOD = `BZ_CUSTD` por produto/filial |
 | T-R10-01 | BR-R10/11 | positive · reproduzido | export = tabela literal; consulta parametrizada equivalente |
 | T-R12-01 | BR-R12-003 | positive · reproduzido | query DEL100 vigente = 3.058/421/242 |
@@ -585,9 +627,9 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003, BR-R05-001/002/003/004/005/006/007/008 (fonte + reconciliação MP ao centavo), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
-| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001/004, BR-R05-009 (armazéns especiais), R06, R07, R08, R09 (layout), BR-R12-001/002, R15 (execução) |
-| `TO_INVENTORY` | R03 binding SB9, BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07/R08 bindings físicos, R09 vínculo DLP204, R10/11 filtros, R13 contrato externo, R14 todo |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
+| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R06, R07, R08, R09 (layout), BR-R12-001/002, R15 (execução) |
+| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07/R08 bindings físicos, R09 vínculo DLP204, R10/11 filtros, R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
 | `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |
 | `STALE_EVIDENCE` | contagens DEL100 antigas 724/672 (`EXECUTION_DRIFT`, doc 80 §23.A) |

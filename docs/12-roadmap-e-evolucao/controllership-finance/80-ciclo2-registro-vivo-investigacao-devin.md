@@ -1700,7 +1700,7 @@ SP MAT056). Evidências indiretas encontradas:
 
 ---
 
-## §32 — ERRATA DE SANITIZAÇÃO (CF-C2-HISTORICAL-SANITIZATION-001, 2026-11-05)
+## §32 — ERRATA DE SANITIZAÇÃO (CF-C2-HISTORICAL-SANITIZATION-001, 2026-10-23 — corrigida; data original registrada por engano como 05/11/2026)
 
 Auditoria de confidencialidade retroativa sobre os docs do processo
 PROC-0072 (Ciclo 1 e Ciclo 2 nesta pasta). Substituição de identificadores
@@ -1745,3 +1745,184 @@ baixa severidade em repositório privado; **nenhuma credencial, segredo
 ou dado financeiro de contraparte identificado**. Contenção adicional
 (reescrita de histórico) fica registrada como `DECISION_REQUIRED` para o
 owner de segurança — não executada nesta rodada.
+
+---
+
+## §33 — RODADA 15 (CF-C2-STOCK-RULES-CONSOLIDATION-002) — FECHAMENTO R05 + BINDING P7 LOCPROC — 2026-10-23
+
+Continuação de §31 (R05/MATR320) e §31.G (R03/P7). SELECT-only
+via `delpi-api-delpi` (mesma autorização READ da rodada anterior).
+
+### A. Residual MovInt R$0,48 — RESOLVIDO (Δ 0,000)
+
+O residual de ~R$0,48 em Movimentações Internas (§31.B) era **artefato
+de reconstrução**: a reversão `TTAT_COLD` foi aplicada em excesso.
+Com corte estrito em `TTAT_DTIME > 2026-10-01 16:16:27` (timestamp de
+emissão), apenas 8 updates pós-emissão existem no grupo MovInt
+(par espelhado doc `<DOC-MOVINT-A>` + 6 linhas `INVENT` repriced por
+`MATA330`). Reversão correta:
+
+- MovInt emissão = **−40.957,818** = impresso **exato** (Δ 0,000).
+- Linhas INVENT foram inseridas 16:02–16:14 de 01/10 (antes da
+  emissão) — `A340INVPRO`/RPC; repricing pós-emissão mínimo (+0,018
+  líquido no grupo).
+- Linhas deletadas/estornadas do grupo são **pares espelhados**
+  (DE↔RE mesmo doc/valor) → líquido zero; não explicavam residual.
+- `D3_DTLANC` vazio em **todas** as 1.050 linhas do grupo → não é
+  discriminante.
+- `SP MAT056` não existe como objeto legível no banco (`sys.procedures`
+  vazio) — execução interna Protheus; lógica `.prx` segue como espelho.
+
+**Regra derivada:** reconstrução `as_of` via TTAT exige corte por
+`TTAT_DTIME > timestamp_de_emissão` — reverter updates anteriores
+introduz erro artificial.
+
+### B. Ponte quantitativa R$8.631,73 — DECOMPOSIÇÃO COMPLETA
+
+Modelo por produto (MP, filial 01, todos os armazéns):
+
+```
+V_emissão_p = B9_VINI1@0831_p + SD1_p(DTDIGIT-set, ESTOQUE=S)
+              − SD2_p(EMISSAO-set, CUSTO1@emissão)
+              + SD3_p(signed, CUSTO1@emissão, exclui TransfProc-RE3)
+residual_p  = B9_VINI1@0930_p − V_emissão_p
+```
+
+Nota de modelo: `TransfProc` (CF `RE3`, armazém de origem, sem DE par)
+é excluído porque o valor **permanece no estoque da filial**
+(armazém 99) — consistente com a coluna memo do relatório.
+
+**Σ residual = +8.631,741** vs Δ oficial +8.631,731 (Δ −0,010
+arredondamento `B9_VINI1`). Decomposição por produto — **apenas 5**:
+
+| Produto (alias) | Residual | Mecanismo evidenciado (TTAT) |
+|---|---:|---|
+| `<PRODUTO-CUSTO-A>` | +5.270,252 | repricing onda retificadora: inserts RPC 01-02/10 + `MATA241`/`MATA330` |
+| `<PRODUTO-CUSTO-B>` | +3.190,169 | `MATA330` 21/10 07:59-08:00 regravou `D3_CUSTO1` ~+7% (8.602→9.274 etc.) |
+| `<PRODUTO-REVAL-A>` | +148,000 | repricing custo pós-emissão (RPC/`MATA460A`) |
+| `<PRODUTO-REVAL-B>` | +23,292 | idem |
+| `<PRODUTO-REVAL-C>` | +0,028 | `INVENT` repriced (259.473→259.501) |
+
+Os dois produtos da retificação concentram +8.460,42 (98%); os demais
++171,32 são micro-revalorizações do mesmo recálculo de custo médio.
+**A divergência é integralmente drift de estado de custo** entre a
+emissão (01/10 16:16) e o rebuild SB9 (21/10 ~19:13) — não é erro de
+relatório nem medida divergente.
+
+Agregados conferem o estado de emissão ao centavo:
+ΣSD1 962.193,70 = Compras+EntPT+DevV · ΣSD2 205.870,22 =
+Vendas+SaiPT+DevC · ΣSD3(ex-RE3) −707.072,19 = Requis+MovInt.
+
+### C. A3 — reconciliação expandida: 10 tipos × 13 colunas
+
+Reprodução das regras `matr320.prx` para **todos os tipos** (EM, GG,
+II, MC, MH, MP, MS, MX, PA, PI) no estado de emissão:
+
+| Resultado | Cobertura |
+|---|---|
+| 12 colunas de fluxo | **120/120 exatas** (\|Δ\| < 0,01) — inclui MP |
+| Saldo Atual | **9/10 exatos**; único Δ = MP +8.631,73 (decomposto em B) |
+
+Conclusão: as regras de classificação SD1/SD2/SD3 são **gerais**
+(valem para todos os tipos), não específicas de MP. PA `Produção`
+só fecha com reversão COLD — confirma que MATA330 regravou custos
+de produção após a emissão.
+
+### D. R03/P7 — binding EM ESTOQUE ↔ armazém de processo — `PROVEN`
+
+Hipótese §31.G (P7 EM ESTOQUE exclui `MV_LOCPROC='99'`) **demonstrada
+centesimalmente**:
+
+```
+B9_VINI1@0831[loc99]  =   215.673,929
++ RE3 in (TransfProc) =   940.599,335   (débita loc 01, credita processo)
++ SD3 loc99 líquido   =  −863.000,176   (RE2/RE9/RE4 saídas − DE0/DE4)
+= V_emissão loc99     =   293.273,088
+SA_emissão (impresso) − loc99_emissão
+= 3.884.464,444 − 293.273,084 = 3.591.191,36 = EM ESTOQUE P7 ✓
+```
+
+Δ residual 0,004 (float). Interpretação funcional:
+
+- `EM ESTOQUE` P7 = **saldo físico excluindo o armazém de processo**
+  (`MV_LOCPROC='99'`), medido no `as_of` da emissão.
+- `EM PROCESSO` P7 = **MATR989** (saldo alocado a OPs) — medida
+  distinta do estoque físico de loc 99 (355.240,51 ≠ 293.273,08);
+  ambos "material em processo" sob óticas diferentes (OP-alocado vs
+  armazém-físico). **Não confundir as duas medidas.**
+- `SA MATR320` (3.884.464,44) inclui loc99; `VINI1@0930` atual de
+  loc99 = 293.722,38 (drift +449,30 da mesma onda de repricing).
+- Emissão `Resumo Estoque.pdf` (MP/PA/PI; EM ESTOQUE 2.699.026,36 +
+  EM PROC 277.941,20) tem `as_of`/parâmetros **diferentes** — não
+  reconciliável com o snapshot; `PENDING` parâmetros (E2).
+
+Cadeia física consolidada: `MATR460 → workfile MP7* (+ hook A460UNIT
+ajustes MP7GDA) → saldo físico ex-99 (SB9-like no as_of) + MATR989 →
+relatório`. Parâmetros efetivos por emissão e fonte `matr460.prx`
+permanecem `PENDING` (E2) — o binding de **totalização** está provado,
+o binding de **parametrização** não.
+
+### E. Conciliação tripla E/S × P7 × H02 — incompatível no recorte
+
+O relato operacional (doc 03) registra a conferência
+`E/S 3.890.247,18 − P7 3.776.994,69 − H02 64.591,71 = 48.660,78`
+("resíduo"). As três parcelas pertencem a **emissões e medidas
+diferentes**: E/S do relato ≠ artefato MATR320 (3.884.464,44; Δ
+5.782,74 — outra emissão/estado); P7 do relato = emissão iterativa
+30/09 (não a final); `H02` = medida não identificada (`TO_INVENTORY`
+— provável total do bloco H02 do registro de inventário, escopo
+fiscal, não saldo contábil). A soma `E/S−P7−H02` só converge para
+0,00 se as três parcelas compartilharem `as_of`, escopo de armazém/
+tipo e base de custo — condição **não satisfeita** nos dados
+disponíveis. "Insumos 266.321,45" do relato = SA tipo II do MATR320
+(exato) — indica que a conferência operacional já usa SA por tipo,
+não o total geral.
+
+**Requisito TARGET consolidado:** a conciliação exige que cada medida
+carregue `as_of`, `escopo` (tipos/armazéns) e `base_de_custo`
+explícitos; comparar totais de emissões distintas produz "resíduo"
+estrutural, não divergência real.
+
+### F. Temporalidade consolidada (B4)
+
+| Instante | Evento |
+|---|---|
+| 30/09 ~14:47 | emissões iterativas P7 (vídeo) — totais variam |
+| 01/10 16:01 | `MATA330` recálculo CM (updates `D3_CUSTO1`) |
+| 01/10 16:02–16:14 | inserts `INVENT` (A340INVPRO) |
+| 01/10 16:16:27 | emissão MATR320 (`as_of` das colunas) |
+| 01/10 ~16:58 | `Material em processo.xlsb` (MATR989 → EM PROCESSO P7) |
+| 20–21/10 | onda retificadora: reclass `001→085` (NF-RETIF-A), inserts retroativos |
+| 21/10 07:59–08:00 | `MATA330` repricing +7% nos produtos da retificação |
+| 21/10 ~19:13 | rebuild SB9 f01 (`VINI1@0930` gravado) |
+| (verificação) 23/10 | ponte por produto: Δ +8.631,73 = revalorização de 5 produtos |
+
+`as_of` distintos: colunas MATR320 = 01/10 16:16; P7 EM ESTOQUE =
+mesmo estado (SA − loc99 provado); EM PROCESSO = estado MATR989
+~16:58; SB9@0930 = 21/10. Classificação: competência 09/2026,
+`as_of` por parcela, versão de processamento por execução.
+
+### G. Execução, autorização e classificação
+
+- **GO utilizado:** decisão PO §12 (23/10/2026) —
+  `D1-D4_READ_DISCOVERY=AUTHORIZED_WITH_VERIFIED_READ_ONLY_PRINCIPAL`;
+  principal confirmado somente-leitura. Nenhuma consulta nova fora do
+  GO; nenhum pedido de permissão adicional.
+- **SQL executado (SELECT-only):** agregações SD1×SF4
+  (`F4_ESTOQUE='S'`, `D1_DTDIGIT`), SD2×SF4 (`D2_EMISSAO`), SD3 por
+  `D3_CF`/`D3_OP`/`D3_TM`/`D3_ESTORNO`/`D3_LOCAL`/`D3_LOCALIZ` com
+  reversão `TTAT_COLD` cortada em `TTAT_DTIME > 2026-10-01 16:16:27`;
+  SB9 `B9_VINI1` por produto/armazém @0831/@0930; TTAT por RECNO
+  (`TTAT_FIELD`, `TTAT_OPERATI`, `TTAT_PROGRAM`, `TTAT_DTIME`).
+- **READ-only confirmado:** zero DML/DDL; `sys.procedures` consultado
+  apenas para constatar ausência de `MAT056` legível.
+- **Scripts de investigação:** temporários no worktree
+  (`scripts_tmp_bridge_a2.py`, `scripts_tmp_types_a3.py`,
+  `scripts_tmp_b3_loc99.py`) — não versionados; fórmulas e resultados
+  consolidados nesta seção e no doc 85.
+- **Classificações aplicadas:** `PROVEN` (binding de totalização P7,
+  MovInt Δ0,000, 120/120 colunas, ponte MP por produto); `PENDING`
+  (parametrização P7 por emissão, fonte `matr460.prx`, emissão
+  resumida, medida H02 — E2/E5); `TARGET` (exposição de `as_of`/
+  escopo/base_de_custo por medida). Nenhum requisito material
+  descartado; nenhum gate promovido além do demonstrado.

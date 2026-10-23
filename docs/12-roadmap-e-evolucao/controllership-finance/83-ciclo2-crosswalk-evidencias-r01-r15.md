@@ -75,7 +75,7 @@ Vídeo 54:44 · gravação 30/09/2026 14:31 · frames extraídos por detecção 
 
 ## §4 — Matriz R01–R15
 
-Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) · PARCIAL (parte dos vínculos) · BLOQUEADO (evidência esgotada). **Após o rework de gates (doc 47 §11.1):** nenhum item alcança VALIDADO — G4 de R02 revertido (produtor custom sem fonte) e R05 reclassificado (rotina+artefato identificados, G4–G6 abertos).
+Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) · PARCIAL (parte dos vínculos) · BLOQUEADO (evidência esgotada). **Após o rework de gates (doc 47 §11.1) e a consolidação de 15 (doc 80 §33):** R05 alcançou G1–G5 PASS (escopo completo reproduzido ao centavo + drift decomposto); G4 de R02 segue revertido (produtor custom sem fonte) e G6 de todos os itens exige aceite funcional.
 
 ### R01 — Baixas a pagar — **PARCIAL (forte)**
 
@@ -105,10 +105,10 @@ Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) 
 | Finalidade | registro fiscal-contábil do estoque no fechamento; alimenta SPED Bloco H |
 | Entrada | data estoque (30/09/2026), empresa/filial, escopo de tipos (observados: completo × MP/PA/PI), armazém |
 | Saída | CLASSIFICAÇÃO FISCAL, DISCRIMINAÇÃO, UNID, QUANTIDADE, UNITÁRIO, PARCIAL, TOTAL + RESUMO por tipo EM ESTOQUE/EM PROCESSO + TOTAL GERAL |
-| Origem física | **SB9 candidato** (snapshot de SB2 — §21 doc 80, PROVEN 96% no recorte) — vínculo P7↔SB9 **não provado**. Estrutural (doc 80 §31.G): hook `A460UNIT` ajusta `MP7GDA`; workfiles `MP7_*` com `TIPOMOV`∈{`aSalAtu`,`QtCus`,`aDadosCF9`} por produto+armazém+data-fechamento — `EM ESTOQUE+EM PROCESSO = TOTAL P7` exato |
-| Comparação | totais divergentes entre emissões (3.776.994,69 → ~2.756.1xx → 3.946.431,87 / 2.976.967,56): fechamento iterativo. **Paridade parcial (doc 84 §3):** EM PROCESSO = `Material em processo.xlsb` exato (355.240,51); PA/PI EM ESTOQUE = MATR320 exato; total EM ESTOQUE e escopo MP/PA/PI não reproduzidos (Δ ≥ −8.182,43); hipótese EM ESTOQUE≈exclui armazém 99 (Δ ≈ 293.273 vs MP loc-99 293.674,80) — PENDING |
-| Gates | **G1 PASS · G2 PASS · G3 PASS · G4 PENDING · G5 PENDING · G6 PENDING** |
-| Residual | parâmetros efetivos (filtro de tipos/armazém por versão); binding físico SB9×SB2×outras; amostra oficial p/ paridade |
+| Origem física | **Binding de totalização PROVEN (rodada 15, doc 80 §33.D):** EM ESTOQUE = saldo físico excluindo armazém de processo (`MV_LOCPROC='99'`) no `as_of` da emissão — fonte compatível SB9/`VINI1`; EM PROCESSO = MATR989 (medida por OP). Estrutural (doc 80 §31.G): hook `A460UNIT` ajusta `MP7GDA`; workfiles `MP7_*` com `TIPOMOV`∈{`aSalAtu`,`QtCus`,`aDadosCF9`} — produtor/`matr460.prx` `TO_INVENTORY` |
+| Comparação | totais divergentes entre emissões (3.776.994,69 → ~2.756.1xx → 3.946.431,87 / 2.976.967,56): fechamento iterativo. **Paridade (doc 84 §3):** EM PROCESSO = `Material em processo.xlsb` exato (355.240,51); PA/PI EM ESTOQUE = MATR320 exato; **EM ESTOQUE total exato** — `SA_emissão − loc99_emissão = 3.884.464,444 − 293.273,084 = 3.591.191,36` (Δ 0,004); emissão resumida com `as_of` distinto — parâmetros PENDING (E2) |
+| Gates | **G1 PASS · G2 PASS · G3 PASS · G4 PENDING · G5 PENDING · G6 PENDING** (binding de totalização provado; parametrização por emissão e produtor pendentes) |
+| Residual | parâmetros efetivos por emissão (filtro tipos/armazém/`as_of`); fonte `matr460.prx`/workfile produtor; binding por produto/armazém; `as_of` da emissão resumida |
 
 ### R04 — Consumo por OP — **BLOQUEADO (sem artefato novo)**
 
@@ -116,7 +116,7 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 ### R05 — Entradas e Saídas / valor estoque — **PARCIAL (rotina+artefato+fonte identificados)**
 
-`Entradas e saidas.pdf` = **`MATR320.prt`** — "Resumo das Entradas e Saidas EM R$", período 01/09–30/09/2026, MATRIZ; colunas por tipo (Tip): Saldo Inicial, Compras, Movimentações Internas, Requisições p/ Produção, Transferências, Produção, Vendas, Transf. p/ Processo, Devoluções, Poder de Terceiros, Saldo Atual + Total Geral. **Fonte localizado:** `matr320.prx` (padrão TOTVS, execução via SP `MAT056`; variante Delpi `Dmatr320.prx`/`DLPR320` zera poder3 e não foi a usada). **Reconciliação de colunas (doc 84 §4.2, doc 80 §31):** 12/13 colunas MP exatas ao centavo no estado de emissão — incluindo a retificação retroativa do doc `<NF-RETIF-A>` (sanitizado; TES 001→085, inserido ~20-21/10) que explica Compras (+94.018,81) e EntPT (−103.602,00) simultaneamente; MovInt residual ~R$0,48; SA = estado de custo da emissão (diverge +8.631,73 do SB9 reconstruído 21/10 — **explicada**: repricing +9.583,19, recálculo CM pós-emissão, INVENT −24,95, residual ~−950). Gates: **G1–G3 PASS · G4 PENDING** (bindings provados por fonte+dados na linha MP; formalização dos demais tipos pendente) · G5 PENDING (paridade `as_of` centesimal pendente na medida de saldo) · G6 PENDING.
+`Entradas e saidas.pdf` = **`MATR320.prt`** — "Resumo das Entradas e Saidas EM R$", período 01/09–30/09/2026, MATRIZ; colunas por tipo (Tip): Saldo Inicial, Compras, Movimentações Internas, Requisições p/ Produção, Transferências, Produção, Vendas, Transf. p/ Processo, Devoluções, Poder de Terceiros, Saldo Atual + Total Geral. **Fonte localizado:** `matr320.prx` (padrão TOTVS, execução via SP `MAT056`; variante Delpi `Dmatr320.prx`/`DLPR320` zera poder3 e não foi a usada). **Reconciliação de colunas (doc 84 §4.2-4.4, doc 80 §31+§33):** **escopo completo reproduzido — 10 tipos × 13 colunas, 120/120 colunas de fluxo exatas ao centavo** no estado de emissão (inclui retificação retroativa `<NF-RETIF-A>` e reversão `TTAT_COLD` com corte por timestamp de emissão); MovInt residual 0,48 eliminado (artefato de sobre-reversão); divergência MP SA +8.631,73 **integralmente decomposta por produto** (5 produtos, revalorização CM pós-emissão — Δ −0,010 arredondamento). Gates: **G1–G3 PASS · G4 PASS · G5 PASS · G6 PENDING** (aceite funcional).
 
 ### R06 — CPV / Kardex 01 — **PARCIAL**
 
@@ -163,7 +163,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | Pedido | Estado após esta rodada |
 |---|---|
 | E1 (DLP06R01) | **Parcialmente respondido (rework 23/10 + paridade):** `DLP06R01.prt`/`nat.prt` = layouts compartilhados. **Pagar:** produtor = FINR190, fonte+WHERE+paridade row-level provados — residual = versão implantada (RPO) + identidade do subconjunto do log de inconsistências. **Receber:** paridade row-level do artefato provada (G5), mas produtor `DLP06R01` custom **segue sem fonte no acervo** — pendente o fonte para G4 (owner TI/ERP). |
-| E2 (P7/MATR460) | **Substancialmente respondido:** artefato oficial (REGISTRO DE INVENTÁRIO, 2 escopos) + rotina "Registro de Inventário Modelo P7" observada + roster MATR460. Residual: parâmetros efetivos por emissão (filtro tipos/armazém), confirmação MATR460×variante, binding SB9, export p/ paridade. |
+| E2 (P7/MATR460) | **Substancialmente respondido (rodada 15):** artefato oficial + rotina observada + roster MATR460 + **binding de totalização provado** (EM ESTOQUE = saldo ex-`MV_LOCPROC` no `as_of`; EM PROCESSO = MATR989 — doc 80 §33.D). Residual: parâmetros efetivos por emissão (filtro tipos/armazém/`as_of`), fonte `matr460.prx`/variante, binding por produto/armazém, export p/ paridade. |
 | E3 (DDL views) | mantido — DBA |
 | E4 (jobs/SPs) | mantido — DBA |
 | E5 (rotina SB9) | **estreitado:** execução do fechamento observada (wizard, 14:47); falta provar qual passo grava SB9 e por que B9_I_N_S_D_T_ diverge (02/10 e 21/10). |
@@ -174,7 +174,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 - `A Receber.xlsb`/`A pagar.xlsb` são **posições em aberto** (FINR130/FINR150) — não contam como baixas (R01/R02).
 - `Analise.xlsx` = análise de variação de custo médio multimoeda (doc 58 histórico) — artefato resolvido; rotina produtora ainda `TO_INVENTORY`.
 - Totais do P7 variaram entre emissões no mesmo dia → "valor homologado" exige versão/`as_of` (coerente com AC-E6-02/08).
-- `SB9` continua candidato físico do P7, **não** comprovado.
+- `SB9` deixou de ser apenas candidato: o binding de **totalização** do P7 foi provado (EM ESTOQUE = saldo ex-99 no `as_of` da emissão — doc 80 §33.D); o binding do **produtor** (`matr460.prx`/workfile) e a parametrização por emissão seguem `TO_INVENTORY`.
 - Counts de linha XLSB são do export bruto (incluem cabeçalhos/subtotais); não equivalem diretamente às contagens de baixas da reconstrução SQL.
 - Vídeo fornece telas/params/rotinas observadas; **não** prova código implantado (fonte acervo ≠ RPO) — classificação `CODE_DEPLOYED` continua dependendo do owner para itens sem fonte canônica.
 
@@ -184,9 +184,9 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 |---|---|---|---|
 | R01 Baixas a pagar | PARCIAL | FINR190 + DLP06R01.prt/nat.prt | G2,G3,G4,**G5** (paridade row-level — doc 84) |
 | R02 Baixas a receber | PARCIAL | `DLP06R01` custom (FINR190 descartado pelo WHERE §17.D) | G2,G3,**G5** (paridade row-level do artefato — doc 84; G4 segue PENDING) |
-| R03 P7 / Bloco H | PARCIAL | "Registro de Inventário Modelo P7" (MATR460?) | G1,G2,G3 |
+| R03 P7 / Bloco H | PARCIAL | "Registro de Inventário Modelo P7" (MATR460?) | G1,G2,G3 (binding de totalização provado rodada 15 — doc 80 §33.D; G4/G5 pendentes por parametrização) |
 | R04 Consumo por OP | BLOQUEADO | — | — |
-| R05 Entradas e Saídas | PARCIAL | MATR320 (rotina+artefato identificados; G4–G6 abertos) | G1,G2,G3 |
+| R05 Entradas e Saídas | PARCIAL | MATR320 | G1,G2,G3,**G4**,**G5** (escopo completo reproduzido ao centavo + drift decomposto — doc 80 §33, doc 84 §4.4) |
 | R06 CPV / Kardex 01 | PARCIAL | MATR910 | G1,G2,G3 |
 | R07 Inventários | PARCIAL | MATR910 | G1,G2,G3 |
 | R08 Material em Processo | PARCIAL | MATR989 | G1,G2,G3 |

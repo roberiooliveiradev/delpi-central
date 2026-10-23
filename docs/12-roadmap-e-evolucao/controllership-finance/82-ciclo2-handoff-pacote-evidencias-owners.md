@@ -43,8 +43,8 @@ Referência vigente das reconstruções DEL100: **3.058 chaves / 421 valor / 242
 
 | Campo | Conteúdo |
 |---|---|
-| Evidência atual | **Resolvido em 23/10:** rotina **"Registro de Inventário Modelo P7"** observada em preview no vídeo (35:00/37:00, MATRIZ, 30/09/2026); artefatos `Estoque.pdf` (completo, TOTAL 3.946.431,87) e `Resumo Estoque.pdf` (escopo MP/PA/PI, 2.976.967,56); roster vincula "Estoque P7"→**MATR460**; SPEDFISCAL gera Bloco H; `SB9 = snapshot de SB2` (doc 80 §21) segue candidato físico |
-| Lacuna objetiva | parâmetros efetivos por emissão (filtro de tipos/armazém que distingue os dois PDFs); confirmar "Modelo P7" = MATR460 padrão ou variante custom; binding físico P7↔SB9/SD3 |
+| Evidência atual | **Resolvido em 23/10:** rotina **"Registro de Inventário Modelo P7"** observada em preview no vídeo (35:00/37:00, MATRIZ, 30/09/2026); artefatos `Estoque.pdf` (completo, TOTAL 3.946.431,87) e `Resumo Estoque.pdf` (escopo MP/PA/PI, 2.976.967,56); roster vincula "Estoque P7"→**MATR460**; SPEDFISCAL gera Bloco H. **Rodada 15 (doc 80 §33.D):** binding de totalização **provado** — `EM ESTOQUE` = saldo físico ex-`MV_LOCPROC='99'` no `as_of` da emissão (3.884.464,444 − 293.273,084 = 3.591.191,36; Δ 0,004) e `EM PROCESSO` = MATR989 |
+| Lacuna objetiva | parâmetros efetivos por emissão (filtro de tipos/armazém/`as_of` que distingue os dois PDFs — a emissão resumida não reconcilia com o snapshot); confirmar "Modelo P7" = MATR460 padrão ou variante custom; fonte `matr460.prx`/SP produtora; binding por produto/armazém (só totalização provada) |
 | Fonte esperada | print/tela de parâmetros da rotina no menu + grupo SX1 correspondente (se houver) + identificação do fonte (MATR460 padrão ou custom) |
 | Impacto PROC-0072 | é a base do gate R03 e da distinção "consulta operacional × relatório oficial" |
 | Critério de aceite | `CODE_DEPLOYED` (rotina identificada) + export oficial confrontável com SB9 |
