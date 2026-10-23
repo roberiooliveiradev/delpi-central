@@ -125,3 +125,26 @@ Essas diferenças visíveis corroboram a utilidade da conferência **por código
 **Reclassificação:** o cenário **multiloja com dois registros**, antes `TEST_NOT_RUN` em produção, passa a **`PASS (visual, neste caso)`**; **não** atualizar a classificação do cenário `>10` ou da paginação real entre páginas. O registro anterior de ausência de navegador refere-se à execução automatizada de D1; esta é **evidência posterior fornecida pelo PO**, sem reexecução de deploy ou smoke pelo GPT.
 
 **Parecer:** `ACCEPT_WITH_RESIDUAL` para deploy S8 + fluxo principal de conferência por loja; **GATE-FEATURE integral = INCONCLUSIVE** até fechamento explícito dos residuais ou aceite formal do PO conforme authority aplicável. ERP write gate permanece OFF; auditoria `TO_INVENTORY`; R1.S3 bloqueada e R1.S4–S6 não autorizadas.
+
+
+## S8.V1 — Retorno de testes manuais do Product Owner (2026-10-23)
+
+**Origem da evidência:** resultado informado expressamente pelo PO nesta conversa após execução em navegador no Portal publicado. **Não foram anexados screenshots, HAR, logs de console, viewport, URLs de cada etapa, CNPJ usado no cenário >10 nem resultados de automação para estes nove testes.** Portanto, `PASS (PO-reported, manual)` significa **declaração de execução e aprovação pelo PO**, não verificação independente via navegador/CI/SSH pelo GPT. Os três prints anteriores continuam evidência visual direta somente do fluxo com duas lojas.
+
+| Cenário manual | Resultado declarado pelo PO | Evidência adicional para auditabilidade, se necessária |
+|---|---|---|
+| 1. Preservação do rascunho | **PASS (PO-reported)** | Registro antes/depois com campos de teste não sensíveis, aba original mantida |
+| 2. Mudança de CNPJ | **PASS (PO-reported)** | CNPJ mascarado e estados antes/depois, ausência de dados obsoletos |
+| 3. Cancelamento de substituição | **PASS (PO-reported)** | Draft antes/depois, confirmação cancelada e sugestões bloqueadas |
+| 4. Paginação com mais de 10 registros | **PASS (PO-reported)** | Total observado, página 1 e página 2, IDs código/loja mascarados ou autorizados; CNPJ não fornecido |
+| 5. Navegação e F5 | **PASS (PO-reported)** | URL/ficha por código+loja e refresh sem erro |
+| 6. Layout mobile | **PASS (PO-reported)** | Viewport e captura sem corte/overflow |
+| 7. Tema claro e escuro | **PASS (PO-reported)** | Capturas de ambos os temas |
+| 8. Teclado e foco | **PASS (PO-reported)** | Sequência Tab/Shift+Tab/Enter e foco visível |
+| 9. Estados de erro | **PASS (PO-reported)** | Erro testado (ex.: CNPJ com DV inválido), mensagem e ausência de POST |
+
+**Classificação de S8.V1:** `9/9 PASS (testes manuais declarados pelo PO)`; **independent verification = TEST_NOT_RUN** para estes nove testes. Os testes não geram prova de auditoria formal, de AuthZ negativo (403), rate limiting (429), falha upstream, integridade/ordenação em todas as páginas, nem de ausência de escrita fora da janela de smoke anterior. Especialmente, `paginação >10` está **declarada PASS pelo PO**, mas sem total/identificadores/prints para reprodução e correlação com o runtime documentado em D1 (`total=1` em outro CNPJ); não afirmar `PROVEN` por instrumentação ou verificação independente.
+
+**Evidências complementares recomendadas, sem exigir refazer deploy:** captura sanitizada da contagem + páginas 1/2 do cenário >10; antes/depois do rascunho preservado; confirmação cancelada/bloqueio; captura mobile e claro/escuro; registrar versão do bundle, data/hora e perfil autorizado. Podem ser anexadas posteriormente a um repositório de evidências aprovado, sem expor tokens ou dados pessoais. Não solicitar execução disruptiva em produção.
+
+**Decisão de revisão:** `ACCEPT_WITH_RESIDUAL` permanece válida. O PO reportou sucesso para todos os cenários manuais; o gate visual manual está **PASS por declaração do PO**, porém o `GATE-FEATURE` integral não recebe `PASS` automático enquanto os critérios de evidência formal/auditoria e demais testes não demonstrados não forem explicitamente reconciliados com as authorities. Auditoria de visualização: `TO_INVENTORY`. Escrita Protheus: OFF; sem feature ou deploy adicional.
