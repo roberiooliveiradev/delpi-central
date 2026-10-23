@@ -494,9 +494,22 @@ def test_contract_facts_never_projected_for_business_records():
 
 def test_assess_contract_facts_decision_without_business_requirements():
     verdict = assess_outcome(
-        EvidenceFacts(contract_facts=("entities.process: filters",))
+        EvidenceFacts(contract_facts=("entities.process: filters",)),
+        contract_subject=True,
     )
     assert verdict.decision == OUTCOME_CONTRACT_FACTS
+
+
+def test_assess_contract_facts_require_declared_contract_subject():
+    """D5 (doc 124): schema rows never substitute for an undeclared
+    intent — a formats/product question degrades to honest envelope-
+    only instead of presenting contract metadata as the answer."""
+    facts = EvidenceFacts(contract_facts=("entities.process: filters",))
+    assert (
+        assess_outcome(facts, contract_subject=False).decision
+        == OUTCOME_ENVELOPE_ONLY
+    )
+    assert assess_outcome(facts).decision == OUTCOME_ENVELOPE_ONLY
 
 
 def test_assess_declared_business_requirements_keep_reasons():
@@ -506,6 +519,7 @@ def test_assess_declared_business_requirements_keep_reasons():
     verdict = assess_outcome(
         EvidenceFacts(contract_facts=("entities.process: filters",)),
         AnswerRequirements(min_items=1),
+        contract_subject=True,
     )
     assert verdict.decision == OUTCOME_CONTRACT_FACTS
     assert verdict.reasons
@@ -874,7 +888,7 @@ def test_cri_contract_facts_content_never_contains_directives():
     must not contain owner instruction text — the live leak showed
     ``agent_directives`` verbatim in the user-visible answer."""
     facts = _discovery_facts(_DAVI_DISCOVERY_ENVELOPE)
-    verdict = assess_outcome(facts)
+    verdict = assess_outcome(facts, contract_subject=True)
     assert verdict.decision == OUTCOME_CONTRACT_FACTS
     cri = compose_cri_response(
         verdict=verdict,

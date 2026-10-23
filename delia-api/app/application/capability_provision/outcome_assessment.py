@@ -408,6 +408,8 @@ def _unproven_requirements(
 def assess_outcome(
     facts: EvidenceFacts,
     requirements: AnswerRequirements | None = None,
+    *,
+    contract_subject: bool = False,
 ) -> OutcomeVerdict:
     """Classify task sufficiency from typed evidence facts.
 
@@ -415,6 +417,13 @@ def assess_outcome(
     never reaches this stage. ``answered`` requires business evidence,
     a complete outcome and every declared requirement proven against
     typed data — anything less degrades honestly.
+
+    ``contract_subject`` is the validated model-declared hypothesis
+    that the user asked about the published contract/schema itself.
+    Owner contract metadata only substitutes for business evidence
+    when that intent was declared — an absent declaration is unproven
+    intent and schema rows never answer a business or product-usage
+    question (D5 evidence-intent correspondence, doc 124).
     """
 
     if facts.explicit_empty:
@@ -423,7 +432,7 @@ def assess_outcome(
         # such as "no results" does not hide the empty verdict.
         return OutcomeVerdict(OUTCOME_EMPTY_RESULT)
     if not facts.has_business_evidence:
-        if facts.contract_facts:
+        if facts.contract_facts and contract_subject:
             # A DISCOVERY-class outcome carrying owner-published
             # contract data is a real answer about the capability
             # surface — but never silently substitutes for declared
