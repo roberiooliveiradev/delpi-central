@@ -56,3 +56,12 @@ Se necessário: `git checkout 54ad4cfb9e` no srv-api + `./infra/scripts/up-prod-
 ## DECISION_LOG
 
 `DEPLOY_SUCCESS=YES`; `POSTCONDITION_VERIFIED=YES`; `PRODUCTION_RETRY=OFF_PROVEN_AT_RUNTIME`; `REGIME_60_3_300=CODE_DEPLOYED_NOT_ACTIVATED`; `EDGE_300S_VERIFICATION=TEST_NOT_RUN`; `BROWSER_QA=TEST_NOT_RUN`; `PAID_LLM_CALLS=0`; `REVOCATION_RISK=OPEN/DEFERRED_BY_PO`; `ROLLBACK_EXECUTED=NO`; `PHASE_ADVANCE=NO`.
+
+
+## Parecer de coordenação — 2026-10-23
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (DEPLOY SCOPE)**. Conferidos no GitHub relatório 106 e trilha na main após deploy. Evidências remotas de SSH/containers são do executor, não reinspecionadas independentemente nesta revisão (`INDEPENDENT_PROD_RUNTIME_VERIFICATION=TEST_NOT_RUN`). O escopo autorizado `delia-api` + `delia` MFE foi implantado com imagens novas, health 200 no gateway, authentication 401 sem bearer e remoteEntry novo efetivamente servido; rollback sem migrations reportado disponível.
+
+**Configuração decisiva:** produção com LLM timeout 30, model stage 30, turn 30, interaction total 60, `DELIA_LLM_CALL_MAX_ATTEMPTS=1` e `DELIA_MAX_GOVERNED_ATTEMPTS=1`. A política 60/3/300 é código disponível e testado localmente, mas **NÃO ATIVADA**. Não interpretar o deploy como evidência da experiência de 300s em produção.
+
+**Resíduos:** `AUTHENTICATED_TURN=TEST_NOT_RUN`; `NDJSON_WIRE_PROD=TEST_NOT_RUN`; `EDGE_300S_VERIFICATION=TEST_NOT_RUN`; `BROWSER_QA=TEST_NOT_RUN`. Aceite do deploy não é aceite de business outcome nem liberação dos gates de retry. Revogação R4 permanece OPEN/DEFERRED_BY_PO. Próximo passo PO manual QA no Portal (seleção de Contexto, CRI, atividades, estados, continuidade e resultados), com uso pago somente de interações reais do próprio usuário, e decisão de ativação separada. `PHASE_ADVANCE=NO`.
