@@ -12,7 +12,7 @@
 
 **Arquivos permitidos no contrato preliminar (R0 deve reduzir a ALLOWED_FILES precisa):** Blocos de instrução e wiring estritamente autorizados em orchestration.py, recurso/loader versionado existente, testes focados e documentação.
 
-**Arquivos/mudanças proibidos:** Novo prompt registry, alteração de seleção/Policy, duplicação de instruções, migração em massa, troca de modelo ou de预算/config.
+**Arquivos/mudanças proibidos:** Novo prompt registry, alteração de seleção/Policy, duplicação de instruções, migração em massa, troca de modelo, budget ou configuração.
 
 **Passos específicos obrigatórios:** Inventariar instruction-id/version/hash/purpose/consumers; distinguir schema e lógica de strings; reutilizar loader e validar compatibilidade; criar RED/snapshot antes, fazer menor migração, eliminar string duplicada antiga e imports mortos; declarar SKIP se hash/contrato não puder ser preservado sem ADR.
 
