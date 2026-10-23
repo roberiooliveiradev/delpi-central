@@ -17507,3 +17507,17 @@ NEXT=COORDINATION_G3_APPROVAL → então RED tests → I1 projection → I2 emit
 **RED→GREEN:** 11 novos testes adversariais FAIL antes; suite focada 36/36 GREEN após. Scoped regression 288/288; backend completo 2017/2017; delia 336/336 + tsc; 15/15 negatives PASS; round-trip v2 real → parsePresentationV2 ok. v1 byte parity; v2 schema inalterado; JSON/NDJSON safe; zero links/zero authorized_links/zero eval-innerHTML.
 
 **Estado:** G3_RW01=EXECUTED_PENDING_COORDINATION_REVIEW; CP-333=PLANNED_NOT_PASS; G4_BROWSER_QA=TEST_NOT_RUN; PRODUCTION_DEPLOYMENT=NO. Retorna à coordenação para revisão do rework antes de G4.
+## §6.386 — Doc 103 implementation: LLM 60s/chamada, 3 tentativas, 300s globais + eval Ollama GPU (2026-10-23)
+
+**2026-10-23 — DELIA-C3-LLM-60S-3RETRIES-300S-FULL-IMPLEMENTATION-AND-LOCAL-EVAL-01:** politica PO (doc 103) implementada nos owners canonicos sem engine novo. Cortes efetivos removidos: MAX_TIMEOUT_SECONDS 30→60 em invoke_model (invalid_request para >30s); stage cap 30→60; turn/interaction budget 30/60→300 monotonico. Novo model_invocation/governed_retries: ate 3 invocacoes por chamada logica, elegiveis timeout/provider_unavailable/invalid_structured_output, definitivas sem retry, cancel-check entre tentativas, CONTINUING so em retry real, ledger com duracoes reais. Separacao retry-de-chamada x resume-de-turno: model_timeout com 3 invocacoes consumidas e terminal (4a impossivel); governed resume reservado a turn_budget_exhausted. Frontend: CONTINUING honesto; painel Contexto rightOpen controlado (1 clique seleciona+abre, fechar limpa realce). Backend 1986 testes exit 0; frontend 336+2315 verdes, tsc/build/federation OK. Eval real Ollama qwen2.5:3b (26 cenarios, adapter real, egress fail-closed): GPU 100% — chamada p50 0.78s/p95 2.96s/max 5.31s; turno p50 5.98s/max 17.49s; ZERO timeouts; 13 invalid_structured_output retentados; 4 EXCEPTIONs terminais honestos (3B JSON no estagio conversacional); tokens reais in 85.9k/out 4.4k. CPU fallback (watchdog): max 26.6s/chamada, turno max 67.5s — mesma corretude de contrato. Prod congelado 30/30/30/1/60. EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO RELEASE=NOT_AUTHORIZED REVOCATION_RISK=OPEN(DEFERRED_BY_PO) I04_ACCEPTED=NO.
+
+TASK_ID=DELIA-C3-LLM-60S-3RETRIES-300S-FULL-IMPLEMENTATION-AND-LOCAL-EVAL-01
+REUSE_DECISION=EXTEND (owners canonicos; novo arquivo = politica apenas, sem engine)
+LLM_CALL_TIMEOUT_EFFECTIVE=60s LEGACY_CUTOFFS=REMOVED FOURTH_ATTEMPT_BLOCKED=BY_CONSTRUCTION
+GLOBAL_INTERACTION_CAP=300s_MONOTONIC OPERATIONAL_TIMEOUTS_PRESERVED=mcp15s
+REGRESSION=backend 1986 exit0 / frontend 336+2315 / tsc+build+federation OK
+OLLAMA_EVAL=26 cenarios x2 (GPU 100% + CPU fallback); 239 chamadas reais; 0 timeouts
+GPU_METRICS=call p50 0.78s p95 2.96s max 5.31s; turn p50 5.98s max 17.49s
+CPU_METRICS=call p50 3.44s p95 10.06s max 26.61s; turn p50 14.95s max 67.49s
+RESIDUALS=3B invalid_structured_output (4 terminais); miss-selecao semantica pontual; BROWSER_QA=TEST_NOT_RUN
+PROD_VALUES=30/30/30/1/60 frozen ROLLBACK=reverter diff (valores anteriores no historico)

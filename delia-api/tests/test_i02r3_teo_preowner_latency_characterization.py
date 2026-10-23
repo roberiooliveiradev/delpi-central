@@ -419,10 +419,13 @@ def test_arguments_timeout_after_discovery_never_reaches_methodology_read():
         "Como conduzir análise de causas em um processo?",
         turn_deadline=deadline,
     )
-    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
-    assert attempt.error_code in {
-        "model_timeout",
-        "turn_budget_exhausted",
+    # Doc 103: the args stage converts post-selection budget
+    # exhaustion into a deterministic clarify instead of a bare
+    # timeout — the safety invariant is that the owner READ never
+    # happens either way.
+    assert attempt.status in {
+        GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+        GovernedCapabilityStatus.PROCESSING_TIMEOUT,
     }
     teo = providers[0]
     assert [c[0] for c in teo.calls] == ["get_catalog"]
@@ -430,7 +433,7 @@ def test_arguments_timeout_after_discovery_never_reaches_methodology_read():
     assert ARGUMENTS_INSTRUCTION_ID in {
         r.task_purpose_id for r in model.requests
     }
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
 
 
 def test_select_capability_timeout_never_reaches_owner():
@@ -889,7 +892,9 @@ def test_vista_index_contract_regression_still_reaches_guidance():
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
 
 
-def test_budget_constants_unchanged():
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
-    assert MODEL_STAGE_TIMEOUT_SECONDS == 10.0
+def test_budget_constants_doc103():
+    # Doc 103 approved policy: 300s monotonic global cap, 60s per
+    # logical LLM call.
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
+    assert MODEL_STAGE_TIMEOUT_SECONDS == 60.0
     assert MIN_VIABLE_MODEL_STAGE_SECONDS == 2.0

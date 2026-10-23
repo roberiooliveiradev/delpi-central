@@ -355,7 +355,12 @@ def test_owner_declared_index_skips_model_probe_under_tight_budget():
     clock = FakeClock()
     deadline = TurnDeadline.start(30.0, clock=clock)
     required = _required_optional_probe_headroom()
-    clock.advance(DEFAULT_TURN_BUDGET_SECONDS - (required - 1.0))
+    # Tight class: remaining well below the derived headroom but
+    # still viable for the critical path (doc 103 raised the stage
+    # cap, so required now exceeds a 30s deadline — remaining 25s
+    # keeps the same below-headroom class).
+    clock.advance(5.0)
+    assert deadline.remaining_seconds() < required
 
     index = _outcome(
         "get_product_guide",
@@ -458,7 +463,8 @@ def test_exploratory_free_string_is_forwarded_not_rendered_as_fact():
     clock = FakeClock()
     deadline = TurnDeadline.start(30.0, clock=clock)
     required = _required_optional_probe_headroom()
-    clock.advance(DEFAULT_TURN_BUDGET_SECONDS - (required - 1.0))
+    clock.advance(5.0)
+    assert deadline.remaining_seconds() < required
     provider = FakeProvider(
         "specialist_alpha",
         [
@@ -570,8 +576,9 @@ def test_global_deadline_exhausted_starts_no_new_model_stage():
     assert provider.calls == []
 
 
-def test_headroom_constants_unchanged():
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
-    assert MODEL_STAGE_TIMEOUT_SECONDS == 10.0
+def test_headroom_constants_doc103():
+    # Doc 103: 300s global cap / 60s per-call ceiling — headroom derives.
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
+    assert MODEL_STAGE_TIMEOUT_SECONDS == 60.0
     assert MIN_VIABLE_MODEL_STAGE_SECONDS == 2.0
-    assert _required_optional_probe_headroom() == 26.0
+    assert _required_optional_probe_headroom() == 126.0

@@ -348,6 +348,7 @@ def _run_teo(
     advance_on: dict | None = None,
     timeout_purposes: frozenset = frozenset(),
     proposals=None,
+    hang_on_timeout: bool = True,
 ) -> RunMetrics:
     clock = FakeClock()
     deadline = TurnDeadline.start(30.0, clock=clock)
@@ -359,6 +360,7 @@ def _run_teo(
         clock=clock,
         timeout_purposes=timeout_purposes,
         advance_on=advance_on or {},
+        hang_on_timeout=hang_on_timeout,
     )
     orch = OperationalCapabilityOrchestrator(
         providers,
@@ -420,7 +422,9 @@ def test_e0_baseline_success_path_reaches_methodology():
 
 
 def test_e0_baseline_fail_class_arguments_timeout_after_catalog():
-    """Live 561bb788 class under stage_timeout=30, guard OFF."""
+    """Live 561bb788 class under stage_timeout=30, guard OFF. Doc 103:
+    three timeouts consume the logical call's retry budget — the
+    terminal is still an honest model_timeout."""
     m = _run_teo(
         variant="E0_fail_arguments",
         stage_timeout=30.0,
@@ -432,6 +436,10 @@ def test_e0_baseline_fail_class_arguments_timeout_after_catalog():
             GOAL_INSTRUCTION_ID: 0.05,
             NATIVE_ASSESSMENT_INSTRUCTION_ID: 0.05,
         },
+        # Instant failures: retries keep the classification honest —
+        # a hanging timeout would consume the window and end as
+        # turn_budget_exhausted instead (covered by sibling classes).
+        hang_on_timeout=False,
     )
     assert m.task_success is False
     assert m.methodology_read is False
@@ -477,9 +485,11 @@ def test_e1_stage_cap_10_still_succeeds_when_stages_fit():
     assert m.methodology_read is True
 
 
-def test_e1_stage_cap_does_not_change_production_default_constant():
-    assert MODEL_STAGE_TIMEOUT_SECONDS == 10.0
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+def test_e1_stage_cap_doc103_production_default_constant():
+    # Doc 103 approved values — experimental caps in other tests are
+    # per-orchestrator settings, never the module defaults.
+    assert MODEL_STAGE_TIMEOUT_SECONDS == 60.0
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
 
 
 # ---------------------------------------------------------------------------

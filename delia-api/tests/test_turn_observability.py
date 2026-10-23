@@ -514,8 +514,10 @@ def test_no_orchestration_conversational_model_mode():
 
 
 def test_timeout_call_counted_without_fabricated_usage():
-    """A model call that timed out is counted as a call — usage stays
-    unavailable, never zeroed (RQ-P5-06/07 honest absence)."""
+    """Timed-out invocations are counted as calls — usage stays
+    unavailable, never zeroed (RQ-P5-06/07 honest absence). Doc 103:
+    a recoverable timeout is retried inside the same logical call —
+    at most three real invocations, each ledgered separately."""
 
     class _NotApplicable:
         def attempt(self, *_args, **_kwargs):
@@ -532,11 +534,12 @@ def test_timeout_call_counted_without_fabricated_usage():
     )
     result = handler.execute(_request())
     obs = result.observability
-    assert adapter.calls == 1
-    assert obs["model_calls"] == 1
-    (call,) = obs["calls"]
-    assert call["finish_status"] == "timeout"
-    assert call["input_tokens"] is None
+    assert adapter.calls == 3
+    assert obs["model_calls"] == 3
+    assert len(obs["calls"]) == 3
+    for call in obs["calls"]:
+        assert call["finish_status"] == "timeout"
+        assert call["input_tokens"] is None
     assert obs["tokens"]["status"] == USAGE_STATUS_UNAVAILABLE
     assert obs["composition_mode"] == "deterministic"
 

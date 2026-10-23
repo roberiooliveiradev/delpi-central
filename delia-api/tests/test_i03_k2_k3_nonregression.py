@@ -507,9 +507,9 @@ def test_k2_global_budget_constants_preserved():
         DEFAULT_TURN_BUDGET_SECONDS,
     )
 
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
-    # Module default stage cap remains 10s; live may set env to 30.
-    assert MODEL_STAGE_TIMEOUT_SECONDS == 10.0
+    # Doc 103: turn budget = monotonic global cap; per-call ceiling 60s.
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
+    assert MODEL_STAGE_TIMEOUT_SECONDS == 60.0
 
 
 # ---------------------------------------------------------------------------

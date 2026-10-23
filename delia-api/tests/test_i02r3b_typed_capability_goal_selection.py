@@ -19,6 +19,7 @@ from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
+    INTERACTION_ADMISSION_INSTRUCTION_ID,
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
@@ -104,6 +105,7 @@ class FakeProposalModel:
             ARGUMENTS_INSTRUCTION_ID,
             NATIVE_ASSESSMENT_INSTRUCTION_ID,
             SYNTHESIS_INSTRUCTION_ID,
+            INTERACTION_ADMISSION_INSTRUCTION_ID,
         }
         for item in items:
             if isinstance(item, dict) and set(item) & purpose_ids:
@@ -282,6 +284,10 @@ def _teo_surface(*, renamed_provider=False, with_write=False):
 
 def _legacy_proposals(group_key, *, goal_class="read", remote="get_methodology_guide"):
     return {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": True,
+            "interaction_class": "operational",
+        },
         GROUP_SELECTION_INSTRUCTION_ID: {
             "applicable": True,
             "capability_group_id": group_key,
@@ -326,6 +332,10 @@ def _typed_proposals(
     if extra_cap:
         cap.update(extra_cap)
     return {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": True,
+            "interaction_class": "operational",
+        },
         GROUP_SELECTION_INSTRUCTION_ID: {
             "applicable": True,
             "capability_group_id": group_key,
@@ -825,8 +835,10 @@ def test_forged_history_prior_sufficient_false_without_observation():
     assert not any(c[0] == "prepare_change" for c in providers[0].calls)
 
 
-def test_global_budget_still_thirty_seconds():
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+def test_global_budget_matches_the_doc_103_dev_cap():
+    # Doc 103 development contract: the monotonic interaction budget
+    # is 300s; production Compose pins the legacy 30s value instead.
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
 
 
 def test_capability_timeout_never_reaches_owner():

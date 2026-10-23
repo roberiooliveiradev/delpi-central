@@ -34,6 +34,7 @@ import pytest
 
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
+    GROUP_SELECTION_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _RESUME_STATE,
 )
@@ -95,11 +96,15 @@ from tests.test_activity_streaming import (
 def test_interaction_budget_counts_time_before_the_orchestrator():
     """5s consumed between TurnDeadline.start() (execute) and
     attempt() must reduce the second attempt's window — the 60s cap
-    is anchored at the interaction start, not at attempt() entry."""
+    is anchored at the interaction start, not at attempt() entry.
+
+    Doc 103: a lone call timeout recovers inside the logical call —
+    the governed turn resume triggers on budget exhaustion, so the
+    measured grant moves to the propagating group-selection stage."""
     clock = [1000.0]
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
-        failures={ARGUMENTS_INSTRUCTION_ID: 1},
+        failures={GROUP_SELECTION_INSTRUCTION_ID: 1},
         clock=clock,
         advance_on_failure=26.0,
     )
@@ -116,26 +121,27 @@ def test_interaction_budget_counts_time_before_the_orchestrator():
         "resumo dos indicadores",
         turn_deadline=deadline,
     )
-    args_requests = [
+    group_requests = [
         r
         for r in model.requests
-        if r.task_purpose_id == ARGUMENTS_INSTRUCTION_ID
+        if r.task_purpose_id == GROUP_SELECTION_INSTRUCTION_ID
     ]
-    assert len(args_requests) == 2
+    assert len(group_requests) == 2
     # Attempt 1 granted min(40, 30-5)=25s — the turn deadline rules.
-    assert args_requests[0].timeout_seconds <= 25.5
+    assert group_requests[0].timeout_seconds <= 25.5
     # Attempt 2 must NOT get a full 30s: only 60-5-26=29s remain of
     # the approved interaction budget. If the cap were anchored at
     # attempt() entry it would receive 30s — that is the defect.
-    assert args_requests[1].timeout_seconds <= 29.5
+    assert group_requests[1].timeout_seconds <= 29.5
 
 
-def test_no_third_attempt_ever():
-    """Two governed attempts is a hard cap: three consecutive
-    stage timeouts still produce exactly two model calls."""
+def test_no_fourth_invocation_ever():
+    """Doc 103: three real invocations per logical call is a hard cap
+    — four consecutive timeouts still produce exactly three calls, and
+    no turn resume may silently create a forbidden fourth."""
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
-        failures={ARGUMENTS_INSTRUCTION_ID: 3},
+        failures={ARGUMENTS_INSTRUCTION_ID: 4},
     )
     read = _resuming_orchestrator({"teo": TEO_TOOLS}, ("teo",), model)
     attempt = read.attempt(
@@ -143,7 +149,8 @@ def test_no_third_attempt_ever():
         turn_deadline=TurnDeadline.start(30.0),
     )
     assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
-    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 2
+    assert attempt.error_code == "model_timeout"
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 3
 
 
 def test_successful_first_attempt_never_retries():
@@ -219,16 +226,22 @@ def test_schema_change_between_attempts_revalidates_arguments():
             return self._tools.get(specialist.specialist_id, ())
 
     port = _SchemaFlipPort(tools_by_specialist={"teo": TEO_TOOLS})
+    clock = [1000.0]
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
-        failures={ARGUMENTS_INSTRUCTION_ID: 1},
+        # Exhaust the 30s turn deadline inside an early stage — the
+        # turn resume (budget exhaustion) is the governed path under
+        # doc 103; a lone call timeout now recovers inside the call.
+        failures={GROUP_SELECTION_INSTRUCTION_ID: 1},
+        clock=clock,
+        advance_on_failure=29.0,
     )
     read = _resuming_orchestrator(
         {"teo": TEO_TOOLS}, ("teo",), model, port=port
     )
     attempt = read.attempt(
         "resumo dos indicadores",
-        turn_deadline=TurnDeadline.start(30.0),
+        turn_deadline=TurnDeadline.start(30.0, clock=lambda: clock[0]),
     )
     # Fresh validation must refuse the stale arguments — a terminal
     # that is not a silent SUCCESS over an incompatible contract.
@@ -252,16 +265,22 @@ def test_surface_authorization_failure_between_attempts_is_terminal():
             return self._tools.get(specialist.specialist_id, ())
 
     port = _RevokedSurfacePort(tools_by_specialist={"teo": TEO_TOOLS})
+    clock = [1000.0]
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
-        failures={ARGUMENTS_INSTRUCTION_ID: 1},
+        # Budget exhaustion at the propagating group stage triggers
+        # the governed resume under doc 103; the revoked surface must
+        # then stop the second attempt's fresh discovery.
+        failures={GROUP_SELECTION_INSTRUCTION_ID: 1},
+        clock=clock,
+        advance_on_failure=29.0,
     )
     read = _resuming_orchestrator(
         {"teo": TEO_TOOLS}, ("teo",), model, port=port
     )
     attempt = read.attempt(
         "resumo dos indicadores",
-        turn_deadline=TurnDeadline.start(30.0),
+        turn_deadline=TurnDeadline.start(30.0, clock=lambda: clock[0]),
     )
     assert attempt.status is not GovernedCapabilityStatus.SUCCESS
     assert [c[1] for c in port.calls] == []
@@ -292,22 +311,27 @@ def test_cancel_observed_inside_second_attempt_starts_no_new_model_call():
     port = _DisconnectPort(
         tools_by_specialist={"teo": TEO_TOOLS}, flag=flag
     )
+    clock = [1000.0]
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
-        failures={ARGUMENTS_INSTRUCTION_ID: 1},
+        failures={GROUP_SELECTION_INSTRUCTION_ID: 1},
+        clock=clock,
+        advance_on_failure=29.0,
     )
     read = _resuming_orchestrator(
         {"teo": TEO_TOOLS}, ("teo",), model, port=port
     )
     attempt = read.attempt(
         "resumo dos indicadores",
-        turn_deadline=TurnDeadline.start(30.0),
+        turn_deadline=TurnDeadline.start(30.0, clock=lambda: clock[0]),
         cancel_check=lambda: flag["v"],
     )
     assert flag["v"] is True
-    # Attempt 1 asked arguments once; attempt 2 never started a new
-    # model call after the observed cancellation:
-    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 1
+    # Attempt 2 never started a new model call after the observed
+    # cancellation — the only requests are attempt 1's admission and
+    # its failed group-selection call:
+    assert len(model.requests) == 2
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 0
     assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
 
 

@@ -222,10 +222,11 @@ def test_index_probe_model_timeout_never_reaches_owner_read():
     optional-probe floor so the timeout path is still exercised.
     """
     clock = FakeClock()
-    deadline = TurnDeadline.start(30.0, clock=clock)
-    # Remaining must stay >= 2*MODEL_STAGE + MIN_VIABLE*3 (26s default)
-    # so the optional probe is eligible to start, then times out.
-    clock.advance(2.0)
+    # Doc 103: with the 60s per-call ceiling the optional-probe
+    # headroom is 2*60 + MIN_VIABLE*3 = 126s — the deadline must leave
+    # at least that for the probe to be eligible to start.
+    deadline = TurnDeadline.start(150.0, clock=clock)
+    clock.advance(20.0)
     provider = FakeProvider(
         "specialist_alpha",
         [
@@ -280,9 +281,9 @@ def test_index_probe_model_timeout_never_reaches_owner_read():
     assert INDEX_PROBE_INSTRUCTION_ID in {
         r.task_purpose_id for r in model.requests
     }
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
     assert MIN_VIABLE_MODEL_STAGE_SECONDS == 2.0
 
 
 def test_budget_constant_unchanged_by_characterization():
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0

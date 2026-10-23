@@ -130,7 +130,7 @@ const LIVE_STEP_LABEL: Record<string, string> = {
 const LIVE_TITLE: Record<string, string> = {
   REQUEST_RECEIVED: "Solicitação recebida",
   CONTEXTUALIZING: "Entendendo sua solicitação…",
-  CONTINUING: "Continuando sua consulta…",
+  CONTINUING: "Preciso de mais tempo para concluir esta análise. Vou continuar…",
   CAPABILITY_SELECTED: "Capacidade selecionada",
   SOURCE_QUERY_STARTED: "Consultando fonte autorizada…",
   SOURCE_QUERY_COMPLETED: "Consulta finalizada",

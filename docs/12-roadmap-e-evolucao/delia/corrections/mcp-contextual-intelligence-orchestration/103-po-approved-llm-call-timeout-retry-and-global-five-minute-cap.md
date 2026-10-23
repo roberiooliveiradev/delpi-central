@@ -1,6 +1,6 @@
 # 103 — Decisão PO: 60s por chamada LLM, até 3 tentativas por chamada, 300s globais
 
-**Data:** 2026-10-23. **Fonte:** decisão explícita do Product Owner posterior ao ADR 102. **Status:** PRODUCT_DIRECTION=APPROVED; IMPLEMENTATION=NOT_STARTED; ACTIVE_RUNTIME=UNCHANGED; PRODUCTION_RETRY=OFF até os gates pertinentes.
+**Data:** 2026-10-23. **Fonte:** decisão explícita do Product Owner posterior ao ADR 102. **Status:** PRODUCT_DIRECTION=APPROVED; IMPLEMENTATION=DEV_VERIFIED (doc 104); ACTIVE_RUNTIME=DEV-ONLY; PRODUCTION_RETRY=OFF até os gates pertinentes.
 
 ## Decisão atual (substitui os parâmetros anteriores conflitantes em 100–102)
 
@@ -30,3 +30,7 @@ Revogação intra-turno R4: remediação `DEFERRED_BY_PO`, risco `OPEN`. Isso n�
 **Task 2 do doc 101:** implementar a política aprovada e executar testes, com o menor diff nos owners canônicos. Reancorar no HEAD/authorities/ledger. RED/GREEN: chamada 11–60s deve poder concluir; chamada >60s deve classificar timeout; 3 tentativas elegíveis no mesmo logical call; sem quarta; falha não recuperável sem retry; cancelamento em cada tentativa; proteção 300s; composição e MCP não debitam tempo do LLM; invoke material não repetido; source timeout próprio; NDJSON progresso factual; dados por turno corretos. Ollama GPU para integração local; zero chamadas externas pagas em teste. Não ampliar scope para reescrita de planner ou R4.
 
 **DECISION_LOG:** `PO_APPROVED=LLM_CALL_TIMEOUT_60+MAX_3_PER_CALL+TURN_GLOBAL_CAP_300+B_D`; `ADR102_PREVIOUS_NUMBERS=SUPERSEDED`; `CURRENT_CODE=UNCHANGED`; `NEXT=TASK2_IMPLEMENTATION`; `RELEASE=NOT_AUTHORIZED`.
+
+## Addendum 2026-10-23 — implementação executada (Task 2)
+
+`DELIA-C3-LLM-60S-3RETRIES-300S-FULL-IMPLEMENTATION-AND-LOCAL-EVAL-01` → relatório [doc 104](./104-llm-60s-3-retries-300s-global-implementation-and-ollama-eval.md). Política implementada nos owners canônicos (sem engine novo): corte efetivo de 30s em `invoke_model` → 60s; stage cap → 60s; novo módulo `governed_retries` com elegibilidade `TIMEOUT|PROVIDER_UNAVAILABLE|INVALID_STRUCTURED_OUTPUT` e máx. 3 invocações por chamada lógica; deadline global monotônico 300s; cancelamento entre retries; `CONTINUING` somente em retry/resume real; separação explícita retry-de-chamada × resume-de-turno (timeout com 3 invocações consumidas é terminal — resume de turno reservado a `turn_budget_exhausted`). Backend 1986 testes verdes; frontend 336+2315 verdes, tsc/build/federation OK. Eval real Ollama `qwen2.5:3b` (26 cenários, 123 chamadas GPU + 116 CPU): zero timeouts, máx. 5.31s/chamada GPU, turno máx. 17.49s — tetos 60s/300s nunca atingidos; `invalid_structured_output` retentado conforme contrato; `CONTINUING` real. Prod congelado (30/30/30/1/60); retry produtivo permanece bloqueado pelo gate R4. `EXTERNAL_LLM_CALLS=0`; `RELEASE=NOT_AUTHORIZED`.

@@ -238,8 +238,8 @@ def _context():
     )
 
 
-def test_default_turn_budget_is_thirty_seconds():
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+def test_default_turn_budget_matches_doc_103_dev_cap():
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
 
 
 def test_prior_excerpt_split_is_deterministic():

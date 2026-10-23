@@ -35,8 +35,9 @@ def test_llm_max_output_tokens_parses_env(monkeypatch):
 
 
 def test_model_stage_timeout_defaults_to_bounded_cap(monkeypatch):
+    # Doc 103: the approved per-LLM-call budget is 60s.
     monkeypatch.delenv("DELIA_MODEL_STAGE_TIMEOUT_SECONDS", raising=False)
-    assert Settings().model_stage_timeout_seconds == 10.0
+    assert Settings().model_stage_timeout_seconds == 60.0
 
 
 def test_model_stage_timeout_parses_env(monkeypatch):

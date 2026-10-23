@@ -388,12 +388,13 @@
 
 /* ---------- Prompt 5 — Context panel + message selection */
 
-/* Selected assistant turn: quiet accent edge so the Context panel
-   pairing is visible without implying authority. */
+/* Selected assistant turn: subtle surface tint so the Context panel
+   pairing stays visible without an intrusive accent bar. */
 .dashboard-delia .delia-turn__bubble--selected {
-  border-left: 3px solid var(--delia-accent);
-  padding-left: 10px;
-  margin-left: -13px;
+  background: color-mix(in srgb, var(--delia-accent) 8%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--delia-accent) 30%, transparent);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 .dashboard-delia .delia-context__list {

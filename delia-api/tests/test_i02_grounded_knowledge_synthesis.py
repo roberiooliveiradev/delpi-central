@@ -443,7 +443,7 @@ def test_s3_budget_near_limit_uses_deterministic_guidance():
     assert SYNTHESIS_INSTRUCTION_ID not in [
         r.task_purpose_id for r in model.requests
     ]
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
 
 
 def test_s4_partial_truncation_declared_without_invention():

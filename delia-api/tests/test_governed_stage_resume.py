@@ -47,7 +47,12 @@ from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )
 from app.application.interaction.turn_budget import TurnDeadline
+from app.application.model_invocation.contracts import (
+    ProviderInvocationPayload,
+)
 from app.application.model_invocation.errors import (
+    INVALID_REQUEST,
+    PROVIDER_UNAVAILABLE,
     TIMEOUT,
     ModelInvocationError,
 )
@@ -214,12 +219,13 @@ def test_resume_emits_one_continuing_observation():
 # --- negative matrix (CP4 §9) -------------------------------------------
 
 
-def test_second_attempt_timeout_is_terminal():
-    """Both attempts time out -> PROCESSING_TIMEOUT once; the stage
-    ran exactly twice, never more."""
+def test_call_retry_budget_exhaustion_is_terminal():
+    """Doc 103: three consecutive timeouts consume the logical call's
+    retry budget -> PROCESSING_TIMEOUT once; the stage ran exactly
+    three real invocations, never a fourth."""
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
-        failures={ARGUMENTS_INSTRUCTION_ID: 2},
+        failures={ARGUMENTS_INSTRUCTION_ID: 3},
     )
     read = _resuming_orchestrator({"teo": TEO_TOOLS}, ("teo",), model)
     attempt = read.attempt(
@@ -228,7 +234,7 @@ def test_second_attempt_timeout_is_terminal():
     )
     assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "model_timeout"
-    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 2
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 3
 
 
 def test_exhausted_interaction_budget_blocks_second_attempt():
@@ -449,11 +455,12 @@ def test_real_provider_failure_is_not_resumed_or_blamed_on_timeout():
 
 
 def test_legacy_single_attempt_mode_is_unchanged():
-    """Recovery disabled (max_governed_attempts=1 — the production
-    default): a model timeout is terminal exactly as before."""
+    """Doc 103: max_governed_attempts governs TURN resume, not the
+    per-call retry — a single transient timeout is recovered inside
+    the same logical call; only three consecutive timeouts terminate."""
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
-        failures={ARGUMENTS_INSTRUCTION_ID: 1},
+        failures={ARGUMENTS_INSTRUCTION_ID: 3},
     )
     read = _orchestrator({"teo": TEO_TOOLS}, ("teo",), model)
     attempt = read.attempt(
@@ -462,7 +469,7 @@ def test_legacy_single_attempt_mode_is_unchanged():
     )
     assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "model_timeout"
-    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 1
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 3
 
 
 @pytest.mark.parametrize("cri_enabled", [False, True])
@@ -521,3 +528,169 @@ def test_confirmation_turn_never_resumes():
     # nothing material is invoked and nothing is re-attempted:
     assert attempt.status is not GovernedCapabilityStatus.SUCCESS
     assert [c[1] for c in port.calls] == []
+
+
+# --- doc-103 per-logical-call retry matrix -------------------------------
+#
+# One logical model call may make at most three real invocations, only
+# for recoverable classes (timeout, provider-unavailable/transient,
+# invalid structured output), only while budget remains and no
+# cancellation was observed. This is a retry of the MODEL CALL — never
+# of the turn, the MCP/Domain invoke or a material operation.
+
+
+class _CodedFailureModel(_StageModel):
+    """_StageModel that raises a chosen error code for the first N
+    invocations of a purpose, then answers validly — classifies
+    recoverable versus definitive call failures."""
+
+    def __init__(self, proposals=None, coded_failures=None):
+        super().__init__(proposals=proposals)
+        # purpose -> list of error codes, one per real invocation
+        self._coded = {k: list(v) for k, v in (coded_failures or {}).items()}
+
+    def invoke(self, request):
+        queue = self._coded.get(request.task_purpose_id)
+        if queue:
+            code = queue.pop(0)
+            self.requests.append(request)
+            raise ModelInvocationError(code, f"stage failed: {code}")
+        return super().invoke(request)
+
+
+class _MalformedThenValidModel(_StageModel):
+    """Returns a schema-incompatible payload for the first N calls of
+    a purpose, then the valid proposal — invalid structured output is
+    a recoverable class: the SAME bounded request may parse cleanly
+    on a fresh invocation."""
+
+    def __init__(self, proposals=None, malformed_purposes=None):
+        super().__init__(proposals=proposals)
+        self._malformed = dict(malformed_purposes or {})
+
+    def invoke(self, request):
+        purpose = request.task_purpose_id
+        if self._malformed.get(purpose, 0) > 0:
+            self._malformed[purpose] -= 1
+            self.requests.append(request)
+            return ProviderInvocationPayload(
+                structured_output={"unrelated_key": True},
+                generated_at="2026-01-01T00:00:00+00:00",
+            )
+        return super().invoke(request)
+
+
+def test_recoverable_failures_succeed_on_the_third_real_call():
+    """Two recoverable timeouts then a valid answer: the logical call
+    succeeds on the third real invocation — attempts not needed are
+    never spent."""
+    model = _CodedFailureModel(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        coded_failures={ARGUMENTS_INSTRUCTION_ID: [TIMEOUT, TIMEOUT]},
+    )
+    port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
+    read = _resuming_orchestrator(
+        {"teo": TEO_TOOLS}, ("teo",), model, port=port
+    )
+    attempt = read.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 3
+    # The authorized READ executed exactly once — the call retry never
+    # replayed or duplicated the material operation.
+    assert [c[1] for c in port.calls] == ["analyze"]
+
+
+def test_provider_unavailable_is_retry_eligible():
+    """A transient provider/adapter failure is recoverable: the same
+    logical call retries and succeeds on the second invocation."""
+    model = _CodedFailureModel(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        coded_failures={
+            ARGUMENTS_INSTRUCTION_ID: [PROVIDER_UNAVAILABLE]
+        },
+    )
+    port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
+    read = _resuming_orchestrator(
+        {"teo": TEO_TOOLS}, ("teo",), model, port=port
+    )
+    attempt = read.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 2
+    assert [c[1] for c in port.calls] == ["analyze"]
+
+
+def test_invalid_structured_output_is_retry_eligible():
+    """Malformed structured output is recoverable (bounded at three):
+    the stage retries and accepts the next valid payload."""
+    model = _MalformedThenValidModel(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        malformed_purposes={ARGUMENTS_INSTRUCTION_ID: 1},
+    )
+    port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
+    read = _resuming_orchestrator(
+        {"teo": TEO_TOOLS}, ("teo",), model, port=port
+    )
+    attempt = read.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 2
+    assert [c[1] for c in port.calls] == ["analyze"]
+
+
+def test_definitive_error_never_retries():
+    """A definitive failure class (invalid request) cannot succeed on
+    a fresh identical call — exactly one real invocation, no retry."""
+    model = _CodedFailureModel(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        coded_failures={ARGUMENTS_INSTRUCTION_ID: [INVALID_REQUEST]},
+    )
+    port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
+    read = _resuming_orchestrator(
+        {"teo": TEO_TOOLS}, ("teo",), model, port=port
+    )
+    attempt = read.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 1
+    assert [c[1] for c in port.calls] == []
+
+
+def test_call_timeout_grant_reaches_the_doc_103_ceiling():
+    """The legacy local cutoffs are gone: a stage call is granted up to
+    the 60s per-call ceiling — and a legitimate ~45s invocation is not
+    truncated by the removed 10s/30s stage rules."""
+    clock = [1000.0]
+
+    class _SlowStageModel(_StageModel):
+        def invoke(self, request):
+            # The call legitimately consumes 45s inside its grant.
+            clock[0] += 45.0
+            return super().invoke(request)
+
+    model = _SlowStageModel(
+        proposals=_select("teo", "analyze", {"view": "summary"})
+    )
+    read = _resuming_orchestrator(
+        {"teo": TEO_TOOLS}, ("teo",), model
+    )
+    attempt = read.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(
+            300.0, clock=lambda: clock[0]
+        ),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    first = model.requests[0]
+    # Granted the per-call ceiling (60s), not the removed stage cap —
+    # and every invocation stayed inside the granted window.
+    assert 10.0 < first.timeout_seconds <= 60.0

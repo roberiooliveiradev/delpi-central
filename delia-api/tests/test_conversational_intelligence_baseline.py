@@ -28,6 +28,8 @@ from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
+    INTERACTION_ADMISSION_INSTRUCTION_ID,
+    NATIVE_ASSESSMENT_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _is_open_vocabulary,
@@ -1111,9 +1113,16 @@ def test_budget_model_calls_per_guided_write_path():
                 },
             },
             extra={
+                INTERACTION_ADMISSION_INSTRUCTION_ID: {
+                    "requires_owner_surface": True,
+                    "interaction_class": "operational",
+                },
                 GOAL_INSTRUCTION_ID: {
                     "goal_class": "create_or_modify",
-                }
+                },
+                NATIVE_ASSESSMENT_INSTRUCTION_ID: {
+                    "status": "sufficient",
+                },
             },
         ),
     )

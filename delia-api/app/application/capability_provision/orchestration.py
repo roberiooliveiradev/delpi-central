@@ -107,6 +107,9 @@ from app.application.model_invocation.errors import (
     TIMEOUT,
     ModelInvocationError,
 )
+from app.application.model_invocation.governed_retries import (
+    call_retry_eligible,
+)
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
@@ -4856,13 +4859,14 @@ def _preview_render(preview: WriteProposalPreview) -> str:
     return body[:MAX_RENDER_CONTENT_CHARS]
 
 
-# Per-stage model proposal bound (seconds); the turn deadline can only
+# Per-call model proposal bound (seconds); the turn deadline can only
 # shorten it (LOOP-03R2A).
-# Default per model-stage wall-clock cap inside a turn. The composer may
-# override it with the configured provider stage timeout so a slower
-# provider is not killed before it can answer; the turn deadline still
-# reduction-clamps every stage.
-MODEL_STAGE_TIMEOUT_SECONDS = 10.0
+# DELIA-C3 (doc 103 PO decision): a real model invocation may take up
+# to 60s — the previous generic 10s stage cap is superseded. This is a
+# per-CALL ceiling, never a mandatory wait: a 1s answer still returns
+# in 1s. Stage-specific protections that are not generic call limits
+# (admission fast-path cap, conversational fallback reserve) remain.
+MODEL_STAGE_TIMEOUT_SECONDS = 60.0
 # Do not start a model stage that cannot finish usefully within the
 # remaining turn budget (Stage 05 multiturn latency).
 MIN_VIABLE_MODEL_STAGE_SECONDS = 2.0
@@ -4871,18 +4875,20 @@ MIN_VIABLE_MODEL_STAGE_SECONDS = 2.0
 # entire turn inside select_group when stage env cap equals the turn
 # budget (live doc 47: ~29s group propose → 504).
 CONVERSATIONAL_FALLBACK_RESERVE_SECONDS = 8.0
-# Early semantic admission (no catalog payload) — bounded stage cap.
-INTERACTION_ADMISSION_STAGE_CAP_SECONDS = 6.0
+# Doc 103: no stage-local sub-cap — every logical LLM call shares the
+# same governed per-call ceiling (settings.model_stage_timeout_seconds,
+# 60s); the global interaction cap and call retry bound the turn.
 
 # CP4 governed stage resume (docs 88 §10.2 / 90 Option B; budget
 # approved 22/10/2026): ephemeral, in-request recovery from a
-# recoverable model-stage timeout. At most two governed attempts run
-# under ONE monotonic interaction budget — never reset — and each
-# attempt receives at most min(30s, remaining). The per-attempt
-# ceiling is a hard cap, never raised.
-DEFAULT_INTERACTION_TOTAL_BUDGET_SECONDS = 60.0
+# recoverable model-stage timeout. Governed attempts run under ONE
+# monotonic interaction budget — never reset. Doc 103: the artificial
+# 30s per-attempt wall is superseded; each attempt simply receives the
+# remaining global budget (LLM calls carry their own 60s ceiling and
+# up to 3 invocations via governed call retry — retry of the call,
+# never of the turn or of a material invoke).
+DEFAULT_INTERACTION_TOTAL_BUDGET_SECONDS = 300.0
 MAX_GOVERNED_ATTEMPTS = 2
-GOVERNED_ATTEMPT_MAX_SECONDS = 30.0
 
 INTERACTION_ADMISSION_INSTRUCTION_ID = (
     "delia.capability_orchestration.interaction_admission"
@@ -5299,8 +5305,8 @@ class OperationalCapabilityOrchestrator:
             # the interaction's clock (TurnDeadline.start), never at
             # this boundary — time already consumed before the
             # orchestrator counts against the approved total. Each
-            # further attempt receives at most
-            # min(GOVERNED_ATTEMPT_MAX_SECONDS, remaining).
+            # further attempt receives the remaining global budget —
+            # no artificial per-attempt wall (doc 103).
             interaction_start = (
                 first_deadline.started_at
                 if first_deadline.started_at is not None
@@ -5346,15 +5352,23 @@ class OperationalCapabilityOrchestrator:
                     correlation,
                 )
                 remaining = interaction_end - deadline.clock()
-                per_attempt = min(
-                    GOVERNED_ATTEMPT_MAX_SECONDS, max(0.0, remaining)
-                )
+                # Doc 103: no artificial per-attempt wall — an attempt
+                # receives the remaining global budget; the 60s per-call
+                # ceiling and 3-call retry bound model work inside it.
+                per_attempt = max(0.0, remaining)
                 if (
                     checkpoint is None
                     or attempts >= self._max_governed_attempts
                     or checkpoint.mutating_invoke_started
                     or (cancel_check is not None and cancel_check())
                     or per_attempt < MIN_VIABLE_MODEL_STAGE_SECONDS
+                    # A model_timeout reaching this boundary already
+                    # consumed the governed per-call retry budget —
+                    # resuming the turn would re-invoke the same
+                    # logical call a forbidden fourth time. Only
+                    # budget exhaustion resumes the turn (checkpoint
+                    # replays provably completed work).
+                    or reason == "model_timeout"
                 ):
                     # Stage 6 attribution: which responsibility ended
                     # the turn — model stage timeout, shared budget
@@ -9520,14 +9534,12 @@ class OperationalCapabilityOrchestrator:
         # for conversational synthesis after a selection miss. Do NOT
         # apply this reserve mid-turn when remaining is already tight —
         # that would abort legitimate late stages as budget_exhausted.
+        # Doc 103: the former 15s admission sub-cap is removed — every
+        # logical LLM call shares the same 60s ceiling; no stage-local
+        # artificial cut.
         if deadline is not None:
             remaining = deadline.remaining_seconds()
-            if instruction_id == INTERACTION_ADMISSION_INSTRUCTION_ID:
-                stage_timeout = min(
-                    stage_timeout,
-                    INTERACTION_ADMISSION_STAGE_CAP_SECONDS,
-                )
-            elif (
+            if (
                 instruction_id == GROUP_SELECTION_INSTRUCTION_ID
                 and remaining
                 >= (
@@ -9562,79 +9574,140 @@ class OperationalCapabilityOrchestrator:
             if workspace_context is not None
             else ""
         )
-        # Stage 6 budget attribution: budget still available when this
-        # stage was granted its timeout — starvation evidence.
-        granted_remaining_ms = (
-            int(deadline.remaining_seconds() * 1000)
-            if deadline is not None
-            else None
-        )
-        started = time.monotonic()
-        try:
-            result = self._invoke_model.execute(
-                ModelInvocationRequest(
-                    invocation_id=ModelInvocationId(str(uuid.uuid4())),
-                    model_ref=self._model_ref,
-                    prior_context=prior_turns,
-                    input_text=(
-                        "<user_message>\n"
-                        + input_text
-                        + "\n</user_message>"
-                        + workspace_block
-                        + "\n<"
-                        + block_tag
-                        + ">\n"
-                        + block_payload
-                        + "\n</"
-                        + block_tag
-                        + ">"
-                    ),
-                    task_purpose_id=instruction_id,
-                    output_schema_id=instruction_id,
-                    output_schema_version=SELECTION_INSTRUCTION_VERSION,
-                    expected_fields=expected_fields,
-                    instruction_lineage=instruction_lineage,
-                    instruction_content=instruction,
-                    timeout_seconds=stage_timeout,
-                    declared_epistemic_class=EpistemicClass.HYPOTHESIS,
-                    untrusted_external_metadata={
-                        "interaction_surface": "delia-mfe",
-                        "input_kind": input_kind,
-                    },
-                )
+        # Doc 103: governed retry INSIDE one logical model call — the
+        # same bounded request may be invoked at most
+        # LLM_CALL_MAX_ATTEMPTS times for recoverable classes (call
+        # timeout, transient provider failure, invalid structured
+        # output), only while budget remains and no cancellation was
+        # observed. Never a retry of the turn, the MCP invoke or any
+        # material operation.
+        call_attempt = 0
+        while True:
+            call_attempt += 1
+            # Per-call ceiling: min(60s stage cap, remaining budget).
+            call_timeout = (
+                min(stage_timeout, deadline.remaining_seconds())
+                if deadline is not None
+                else stage_timeout
             )
-        except ModelInvocationError as exc:
-            # Prompt 5: a REAL model call that failed or timed out —
-            # counted as a call; usage stays absent (never fabricated).
-            ledger = current_call_ledger()
-            if ledger is not None:
-                ledger.record_error(
-                    stage=instruction_id,
-                    finish_status=(
-                        "timeout" if exc.code == TIMEOUT else "error"
-                    ),
-                    attempt=_ATTEMPT_INDEX.get(),
-                    duration_ms=int(
-                        (time.monotonic() - started) * 1000
-                    ),
-                    budget_remaining_ms=granted_remaining_ms,
-                )
-            _logger.info(
-                "orchestration stage=model_propose decision=error "
-                "purpose=%s error_code=%s timing_ms=%d "
-                "correlation_id=%s",
-                instruction_id,
-                exc.code,
-                int((time.monotonic() - started) * 1000),
-                correlation or "",
+            if deadline is not None:
+                remaining = deadline.remaining_seconds()
+                if (
+                    instruction_id == GROUP_SELECTION_INSTRUCTION_ID
+                    and remaining
+                    >= (
+                        CONVERSATIONAL_FALLBACK_RESERVE_SECONDS
+                        + MIN_VIABLE_MODEL_STAGE_SECONDS * 2
+                    )
+                ):
+                    # Retries of a selection call re-honor the fallback
+                    # reserve — a retried call may never consume the
+                    # budget reserved for conversational synthesis.
+                    call_timeout = min(
+                        call_timeout,
+                        max(
+                            0.0,
+                            remaining
+                            - CONVERSATIONAL_FALLBACK_RESERVE_SECONDS,
+                        ),
+                    )
+            if call_timeout < MIN_VIABLE_MODEL_STAGE_SECONDS:
+                raise _StageDeadlineExceeded("turn_budget_exhausted")
+            # Stage 6 budget attribution: budget still available when
+            # this invocation was granted its timeout.
+            call_remaining_ms = (
+                int(deadline.remaining_seconds() * 1000)
+                if deadline is not None
+                else None
             )
-            # LOOP-03R2A: a model-stage TIMEOUT is a governed
-            # orchestration failure — it terminates at the attempt
-            # boundary, never as a NOT_APPLICABLE that degrades into
-            # a general-model answer.
-            if exc.code == TIMEOUT:
-                raise _StageDeadlineExceeded("model_timeout") from exc
-            return None
+            started = time.monotonic()
+            try:
+                result = self._invoke_model.execute(
+                    ModelInvocationRequest(
+                        invocation_id=ModelInvocationId(str(uuid.uuid4())),
+                        model_ref=self._model_ref,
+                        prior_context=prior_turns,
+                        input_text=(
+                            "<user_message>\n"
+                            + input_text
+                            + "\n</user_message>"
+                            + workspace_block
+                            + "\n<"
+                            + block_tag
+                            + ">\n"
+                            + block_payload
+                            + "\n</"
+                            + block_tag
+                            + ">"
+                        ),
+                        task_purpose_id=instruction_id,
+                        output_schema_id=instruction_id,
+                        output_schema_version=SELECTION_INSTRUCTION_VERSION,
+                        expected_fields=expected_fields,
+                        instruction_lineage=instruction_lineage,
+                        instruction_content=instruction,
+                        timeout_seconds=call_timeout,
+                        declared_epistemic_class=EpistemicClass.HYPOTHESIS,
+                        untrusted_external_metadata={
+                            "interaction_surface": "delia-mfe",
+                            "input_kind": input_kind,
+                        },
+                    )
+                )
+                break
+            except ModelInvocationError as exc:
+                # Prompt 5: a REAL model call that failed or timed out —
+                # counted as a call; usage stays absent (never
+                # fabricated).
+                ledger = current_call_ledger()
+                if ledger is not None:
+                    ledger.record_error(
+                        stage=instruction_id,
+                        finish_status=(
+                            "timeout" if exc.code == TIMEOUT else "error"
+                        ),
+                        attempt=_ATTEMPT_INDEX.get(),
+                        duration_ms=int(
+                            (time.monotonic() - started) * 1000
+                        ),
+                        budget_remaining_ms=call_remaining_ms,
+                    )
+                _logger.info(
+                    "orchestration stage=model_propose decision=error "
+                    "purpose=%s error_code=%s call_attempt=%d "
+                    "timing_ms=%d correlation_id=%s",
+                    instruction_id,
+                    exc.code,
+                    call_attempt,
+                    int((time.monotonic() - started) * 1000),
+                    correlation or "",
+                )
+                if not call_retry_eligible(exc.code, call_attempt):
+                    # LOOP-03R2A: a model-stage TIMEOUT is a governed
+                    # orchestration failure — it terminates at the
+                    # attempt boundary, never as a NOT_APPLICABLE that
+                    # degrades into a general-model answer.
+                    if exc.code == TIMEOUT:
+                        raise _StageDeadlineExceeded(
+                            "model_timeout"
+                        ) from exc
+                    return None
+                # Cancellation between retries must not start a new
+                # real call — unwind to the honest terminal.
+                if _cancel_observed():
+                    raise _TurnCancelled()
+                _emit_activity(
+                    phase=ActivityPhase.CONTINUING,
+                    correlation=correlation,
+                )
+                _logger.info(
+                    "orchestration stage=model_propose decision=retry "
+                    "purpose=%s call_attempt=%d correlation_id=%s",
+                    instruction_id,
+                    call_attempt + 1,
+                    correlation or "",
+                )
+                continue
         # LOOP-03R1 (latency): bounded stage timing per proposal
         # purpose — no payload, no user text, no values.
         _logger.info(
@@ -9654,7 +9727,7 @@ class OperationalCapabilityOrchestrator:
                 stage=instruction_id,
                 result=result,
                 attempt=_ATTEMPT_INDEX.get(),
-                budget_remaining_ms=granted_remaining_ms,
+                budget_remaining_ms=call_remaining_ms,
             )
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
@@ -10374,7 +10447,7 @@ class OperationalCapabilityOrchestrator:
         # classify topic change vs operational continuity explicitly.
         remaining = deadline.remaining_seconds()
         if remaining < (
-            INTERACTION_ADMISSION_STAGE_CAP_SECONDS
+            MIN_VIABLE_MODEL_STAGE_SECONDS
             + CONVERSATIONAL_FALLBACK_RESERVE_SECONDS
         ):
             _logger.info(

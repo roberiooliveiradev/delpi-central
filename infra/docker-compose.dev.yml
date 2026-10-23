@@ -1816,8 +1816,10 @@ services:
       DELIA_LLM_BASE_URL: ${DELIA_LLM_BASE_URL:-}
       DELIA_LLM_MODEL: ${DELIA_LLM_MODEL:-}
       DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-}
-      DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-30}
-      DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-30}
+      # Doc 103 approved policy: each real LLM call may take up to 60s;
+      # the transport ceiling must not sit below the call budget.
+      DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-60}
+      DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-60}
 
       # VD-F03 dictation.transcription.v1 — dedicated audio-capable model;
       # unset fails closed (dictation status unavailable).
@@ -1852,15 +1854,18 @@ services:
       DELIA_MCP_TEO_HOST_HEADER: ${DELIA_MCP_TEO_HOST_HEADER:-}
       DELIA_MCP_VISTA_HOST_HEADER: ${DELIA_MCP_VISTA_HOST_HEADER:-}
       DELIA_MCP_TIMEOUT_SECONDS: ${DELIA_MCP_TIMEOUT_SECONDS:-15}
-      # LOOP-03R2A: total wall-clock budget for one interaction turn —
-      # stays >=20s under the ~100s Cloudflare edge timeout.
-      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-30}
+      # Doc 103: no artificial per-attempt wall — the turn deadline IS
+      # the monotonic global cap (300s), anchored at request start and
+      # never reset between stages, calls or retries. The 60s ceiling
+      # and max-3 retry apply per logical LLM call inside it.
+      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-300}
       # CP4 governed stage resume (docs 88 §10.2 / 90): dev-authorized
-      # — two bounded governed attempts under the approved 60s
-      # monotonic interaction budget; the 30s per-attempt ceiling is a
-      # code constant. Production default remains a single attempt.
+      # — bounded whole-turn resume attempts under the monotonic
+      # interaction budget. Per-LLM-call retry (max 3) is a separate
+      # inner mechanism (doc 103), never a turn retry. Production
+      # default remains a single attempt.
       DELIA_MAX_GOVERNED_ATTEMPTS: ${DELIA_MAX_GOVERNED_ATTEMPTS:-2}
-      DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-60}
+      DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-300}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.
       DELIA_RESPONSE_INTELLIGENCE_ENABLED: ${DELIA_RESPONSE_INTELLIGENCE_ENABLED:-}

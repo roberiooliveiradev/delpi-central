@@ -41,7 +41,11 @@ from app.domain.model_invocation.rules import (
 )
 
 
-MAX_TIMEOUT_SECONDS = 30.0
+# Doc 103 (approved): each real LLM invocation may take up to 60s —
+# the contract ceiling equals the approved per-call budget. The
+# monotonic interaction cap and transport ceilings reduce below it,
+# never above.
+MAX_TIMEOUT_SECONDS = 60.0
 MAX_INPUT_CHARS = 16_384
 
 

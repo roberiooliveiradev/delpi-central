@@ -101,11 +101,14 @@ class Settings:
         self.llm_egress_blocked_reason = llm_egress_blocked_reason(
             environment=self.environment, base_url=self.llm_base_url
         )
-        # Per model-stage wall-clock cap inside a turn. Keep it aligned
-        # with the configured provider latency: too small turns a slow
-        # provider into a deterministic timeout before it can answer.
+        # Doc 103 (approved): per-LLM-call budget for every model stage
+        # inside a turn — at most 60 real inference seconds per logical
+        # call, always clamped against the interaction deadline. Kept
+        # aligned with the provider timeout below it: the stage cap must
+        # never cut a legitimate call that the provider could still
+        # answer inside its own ceiling.
         self.model_stage_timeout_seconds = float(
-            os.getenv("DELIA_MODEL_STAGE_TIMEOUT_SECONDS") or "10.0"
+            os.getenv("DELIA_MODEL_STAGE_TIMEOUT_SECONDS") or "60.0"
         )
         # C3-MCP-INTEROP-01: approved specialist MCP connections (DAVI/TÉO/
         # VISTA only). Static global user tokens were removed in R1A —
@@ -205,24 +208,26 @@ class Settings:
         self.openapi_timeout_seconds = float(
             os.getenv("DELIA_OPENAPI_TIMEOUT_SECONDS") or "15.0"
         )
-        # LOOP-03R2A / Stage 05: total wall-clock budget for ONE
-        # interaction turn, shared by every governed stage. Default
-        # 30s is the global conversational ceiling (edge ~100s still
-        # leaves margin). Stages are reduction-clamped only.
+        # LOOP-03R2A / Stage 05 / doc 103: wall-clock budget for one
+        # interaction turn, shared by every governed stage. Under the
+        # approved 60s-per-LLM-call policy the turn deadline equals the
+        # monotonic global cap — 300s anchored at request start, never
+        # reset between stages, calls or retries. Stages are
+        # reduction-clamped only.
         self.turn_budget_seconds = float(
-            os.getenv("DELIA_TURN_BUDGET_SECONDS") or "30.0"
+            os.getenv("DELIA_TURN_BUDGET_SECONDS") or "300.0"
         )
         # CP4 governed stage resume (docs 88 §10.2 / 90): OFF by
         # default — a single attempt is the legacy behavior; setting
-        # 2 enables one bounded governed re-attempt. The approved
-        # interaction budget is 60s total; the per-attempt ceiling
-        # (30s) is a code constant, never configured upward.
+        # 2 enables one bounded governed re-attempt of the whole turn
+        # under the remaining global budget (never a per-LLM-call
+        # retry — that inner mechanism is separate, doc 103).
         self.max_governed_attempts = int(
             os.getenv("DELIA_MAX_GOVERNED_ATTEMPTS") or "1"
         )
         self.interaction_total_budget_seconds = float(
             os.getenv("DELIA_INTERACTION_TOTAL_BUDGET_SECONDS")
-            or "60.0"
+            or "300.0"
         )
         # VD-F03 dictation.transcription.v1 — dedicated audio-capable
         # model behind the same approved OpenAI-compatible provider

@@ -25,3 +25,6 @@ MODEL_TIMEOUT = "model_timeout"
 INVALID_MODEL_OUTPUT = "invalid_model_output"
 FORBIDDEN_MODEL_OUTPUT = "forbidden_model_output"
 INTERNAL_ERROR = "internal_error"
+# Cancellation observed mid-turn — the client/disconnect stopped the
+# work; never relabelled as a model or provider failure.
+CANCELLED = "cancelled"

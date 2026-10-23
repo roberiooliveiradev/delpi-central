@@ -203,8 +203,24 @@ export default function App({
   );
   const [respondingTurnId, setRespondingTurnId] = useState<string | null>(null);
   // Prompt 5: transient Context-panel message selection — ephemeral
-  // conversation state only, never persisted.
+  // conversation state only, never persisted. The panel's open state
+  // is paired with the selection: "Ver contexto" selects + opens in
+  // one action and closing the panel clears the highlight.
   const [selectedTurnId, setSelectedTurnId] = useState<string | null>(null);
+  const [contextOpen, setContextOpen] = useState(false);
+  const handleContextOpenChange = (open: boolean) => {
+    setContextOpen(open);
+    if (!open) setSelectedTurnId(null);
+  };
+  const handleSelectTurnContext = (turnId: string) => {
+    if (selectedTurnId === turnId && contextOpen) {
+      setContextOpen(false);
+      setSelectedTurnId(null);
+      return;
+    }
+    setSelectedTurnId(turnId);
+    setContextOpen(true);
+  };
   const selectedTurn = useMemo(
     () => turns.find((turn) => turn.id === selectedTurnId) ?? null,
     [turns, selectedTurnId],
@@ -662,6 +678,8 @@ export default function App({
       <main className="delia-page-stack" aria-label="DÉLIA">
         <DeliaConversationPage
           context={<DeliaTurnContextPanel turn={selectedTurn} />}
+          contextOpen={contextOpen}
+          onContextOpenChange={handleContextOpenChange}
           conversation={(panelControls) => (
         <ConversationWorkspace
           className="delia-interaction"
@@ -817,11 +835,7 @@ export default function App({
               respondingTurnId={respondingTurnId}
               onResponseMotionComplete={() => setRespondingTurnId(null)}
               selectedTurnId={selectedTurnId}
-              onSelectTurn={(turnId) =>
-                setSelectedTurnId((current) =>
-                  current === turnId ? null : turnId,
-                )
-              }
+              onSelectTurn={handleSelectTurnContext}
               userIdentity={userIdentity}
               onConfirmation={handleConfirmation}
             />

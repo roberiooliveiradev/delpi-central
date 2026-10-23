@@ -776,7 +776,7 @@ def test_budget_near_limit_terminates_without_timeout_increase():
             "model_timeout",
             "skipped_budget",
         }
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
 
 
 def test_no_prior_context_preserves_live_selection():

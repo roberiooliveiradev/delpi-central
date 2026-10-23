@@ -10,7 +10,6 @@ from app.application.capability_provision.orchestration import (
     CONVERSATIONAL_FALLBACK_RESERVE_SECONDS,
     GROUP_SELECTION_INSTRUCTION_ID,
     INTERACTION_ADMISSION_INSTRUCTION_ID,
-    INTERACTION_ADMISSION_STAGE_CAP_SECONDS,
     OperationalCapabilityOrchestrator,
     _clarification_content,
 )
@@ -113,7 +112,6 @@ def test_sem_t17_group_selection_reserves_conversational_budget():
         - CONVERSATIONAL_FALLBACK_RESERVE_SECONDS,
     )
     assert reserved == 30.0 - CONVERSATIONAL_FALLBACK_RESERVE_SECONDS
-    assert INTERACTION_ADMISSION_STAGE_CAP_SECONDS <= reserved
     assert orch is not None
 
 

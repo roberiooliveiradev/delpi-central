@@ -262,7 +262,11 @@ def _tight_deadline():
         + MODEL_STAGE_TIMEOUT_SECONDS
         + MIN_VIABLE_MODEL_STAGE_SECONDS * 3
     )
-    clock.advance(DEFAULT_TURN_BUDGET_SECONDS - (required - 1.0))
+    # Doc 103 raised the stage cap to 60s, so required headroom (126s)
+    # exceeds a 30s deadline — leave 25s remaining: same below-headroom
+    # class, still viable for the critical path.
+    clock.advance(5.0)
+    assert deadline.remaining_seconds() < required
     return clock, deadline
 
 

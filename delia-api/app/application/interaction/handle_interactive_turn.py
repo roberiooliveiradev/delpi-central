@@ -50,6 +50,7 @@ from app.application.interaction.capability_attempt import (
     SupportsGovernedCapabilityAttempt,
 )
 from app.application.interaction.errors import (
+    CANCELLED,
     CONTEXT_TOO_LARGE,
     FORBIDDEN,
     FORBIDDEN_MODEL_OUTPUT,
@@ -85,6 +86,9 @@ from app.application.model_invocation.errors import (
     INVALID_STRUCTURED_OUTPUT,
     TIMEOUT,
     ModelInvocationError,
+)
+from app.application.model_invocation.governed_retries import (
+    call_retry_eligible,
 )
 from app.application.interaction.turn_budget import (
     DEFAULT_TURN_BUDGET_SECONDS,
@@ -527,6 +531,8 @@ class HandleInteractiveConversationTurn:
                 prior_turns,
                 deadline=turn_deadline,
                 stage_cap_seconds=fallback_cap,
+                cancel_check=cancel_check,
+                sink=sink,
             )
         except InteractionError as exc:
             if (
@@ -1149,70 +1155,89 @@ class HandleInteractiveConversationTurn:
         deadline: TurnDeadline | None = None,
         *,
         stage_cap_seconds: float | None = None,
+        cancel_check: Callable[[], bool] | None = None,
+        sink: ActivityEventSink | None = None,
     ) -> ModelInvocationResult:
         configured = self._timeout_seconds
         if stage_cap_seconds is not None:
             configured = min(configured, float(stage_cap_seconds))
-        if deadline is not None:
-            if deadline.exhausted():
-                raise InteractionError(
-                    MODEL_TIMEOUT,
-                    "interaction turn budget exhausted",
+        # Doc 103: governed retry INSIDE one logical model call — at
+        # most LLM_CALL_MAX_ATTEMPTS real invocations for recoverable
+        # classes, only while budget remains and no cancellation was
+        # observed. Never a retry of the turn or a material operation.
+        call_attempt = 0
+        while True:
+            call_attempt += 1
+            if deadline is not None:
+                if deadline.exhausted():
+                    raise InteractionError(
+                        MODEL_TIMEOUT,
+                        "interaction turn budget exhausted",
+                    )
+                timeout_seconds = min(
+                    configured, deadline.remaining_seconds()
                 )
-            timeout_seconds = deadline.stage_timeout(configured)
-        else:
-            timeout_seconds = configured
-        invocation_request = ModelInvocationRequest(
-            invocation_id=ModelInvocationId(str(uuid.uuid4())),
-            model_ref=self._model_ref,
-            input_text=input_text,
-            prior_context=prior_turns,
-            task_purpose_id=TASK_PURPOSE_ID,
-            output_schema_id=OUTPUT_SCHEMA_ID,
-            output_schema_version=OUTPUT_SCHEMA_VERSION,
-            expected_fields=EXPECTED_FIELDS,
-            instruction_lineage=self._instruction_lineage,
-            instruction_content=self._instruction_content,
-            timeout_seconds=timeout_seconds,
-            declared_epistemic_class=EpistemicClass.HYPOTHESIS,
-            # Request-local correlation metadata only; no authority fields
-            # and no raw input duplication.
-            untrusted_external_metadata={
-                "interaction_surface": "delia-mfe",
-                "input_kind": "text",
-                "context_turn_count": len(prior_turns),
-            },
-        )
-        # Stage 6 budget attribution: budget still available when this
-        # conversational call was granted its timeout.
-        granted_remaining_ms = (
-            int(deadline.remaining_seconds() * 1000)
-            if deadline is not None
-            else None
-        )
-        started = time.monotonic()
-        try:
-            result = self._invoke_model.execute(invocation_request)
-        except ModelInvocationError as exc:
-            ledger = current_call_ledger()
-            if ledger is not None:
-                ledger.record_error(
-                    stage=TASK_PURPOSE_ID,
-                    finish_status=(
-                        "timeout" if exc.code == TIMEOUT else "error"
-                    ),
-                    duration_ms=int(
-                        (time.monotonic() - started) * 1000
-                    ),
-                    budget_remaining_ms=granted_remaining_ms,
-                )
-            raise _map_invocation_error(exc) from exc
+            else:
+                timeout_seconds = configured
+            invocation_request = ModelInvocationRequest(
+                invocation_id=ModelInvocationId(str(uuid.uuid4())),
+                model_ref=self._model_ref,
+                input_text=input_text,
+                prior_context=prior_turns,
+                task_purpose_id=TASK_PURPOSE_ID,
+                output_schema_id=OUTPUT_SCHEMA_ID,
+                output_schema_version=OUTPUT_SCHEMA_VERSION,
+                expected_fields=EXPECTED_FIELDS,
+                instruction_lineage=self._instruction_lineage,
+                instruction_content=self._instruction_content,
+                timeout_seconds=timeout_seconds,
+                declared_epistemic_class=EpistemicClass.HYPOTHESIS,
+                # Request-local correlation metadata only; no authority
+                # fields and no raw input duplication.
+                untrusted_external_metadata={
+                    "interaction_surface": "delia-mfe",
+                    "input_kind": "text",
+                    "context_turn_count": len(prior_turns),
+                },
+            )
+            # Stage 6 budget attribution: budget still available when
+            # this invocation was granted its timeout.
+            call_remaining_ms = (
+                int(deadline.remaining_seconds() * 1000)
+                if deadline is not None
+                else None
+            )
+            started = time.monotonic()
+            try:
+                result = self._invoke_model.execute(invocation_request)
+                break
+            except ModelInvocationError as exc:
+                ledger = current_call_ledger()
+                if ledger is not None:
+                    ledger.record_error(
+                        stage=TASK_PURPOSE_ID,
+                        finish_status=(
+                            "timeout" if exc.code == TIMEOUT else "error"
+                        ),
+                        duration_ms=int(
+                            (time.monotonic() - started) * 1000
+                        ),
+                        budget_remaining_ms=call_remaining_ms,
+                    )
+                if not call_retry_eligible(exc.code, call_attempt):
+                    raise _map_invocation_error(exc) from exc
+                if cancel_check is not None and cancel_check():
+                    raise InteractionError(
+                        CANCELLED, "interaction cancelled"
+                    )
+                if sink is not None:
+                    sink.emit(phase=ActivityPhase.CONTINUING)
         ledger = current_call_ledger()
         if ledger is not None:
             ledger.record_result(
                 stage=TASK_PURPOSE_ID,
                 result=result,
-                budget_remaining_ms=granted_remaining_ms,
+                budget_remaining_ms=call_remaining_ms,
             )
         return result
 

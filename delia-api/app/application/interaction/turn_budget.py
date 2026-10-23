@@ -20,11 +20,11 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 
-# Global conversational turn budget (Stage 05). The platform edge
-# (Cloudflare proxy) terminates proxied requests at ~100s (observed as
-# 524); 30s keeps a large edge margin while bounding end-to-end UX.
-# Per-stage timeouts remain reduction-clamped by this ceiling.
-DEFAULT_TURN_BUDGET_SECONDS = 30.0
+# Doc 103 (approved): the turn budget IS the monotonic global cap —
+# 300s anchored at request start, never reset between stages, calls or
+# retries. Per-stage timeouts remain reduction-clamped by this
+# ceiling; each real LLM call carries its own governed 60s maximum.
+DEFAULT_TURN_BUDGET_SECONDS = 300.0
 
 
 @dataclass(frozen=True, slots=True)

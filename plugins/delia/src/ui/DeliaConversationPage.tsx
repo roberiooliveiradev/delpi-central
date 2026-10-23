@@ -18,9 +18,14 @@ export type DeliaConversationPageProps = {
   /** Prompt 5: context-region content bound to the selected message —
    *  falls back to the empty render-only panel shell. */
   context?: ReactNode;
+  /** Controlled context-panel open state — the host pairs it with the
+   *  selected turn ("Ver contexto" selects + opens in one action;
+   *  closing the panel clears the selection highlight). */
+  contextOpen?: boolean;
+  onContextOpenChange?: (open: boolean) => void;
 };
 
-export function DeliaConversationPage({ conversation, context }: DeliaConversationPageProps) {
+export function DeliaConversationPage({ conversation, context, contextOpen, onContextOpenChange }: DeliaConversationPageProps) {
   const [category, setCategory] = useState<NavigationRailCategory>("conversations");
   const title = category === "projects" ? "Projetos" : category === "agents" ? "Agentes" : category === "plugins" ? "Plugins" : "Conversas";
   return (
@@ -38,6 +43,8 @@ export function DeliaConversationPage({ conversation, context }: DeliaConversati
           : <ConversationNavigation />}
       </NavigationCategoryPanel>}
       right={context ?? <ConversationContextPanel />}
+      rightOpen={contextOpen}
+      onRightOpenChange={onContextOpenChange}
       center={conversation}
     />
   );

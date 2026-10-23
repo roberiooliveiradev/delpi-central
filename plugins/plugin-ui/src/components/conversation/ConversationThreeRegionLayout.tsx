@@ -19,16 +19,28 @@ export type ConversationThreeRegionLayoutProps = {
   leftTitle?: string;
   rightTitle?: string;
   rightAvailable?: boolean;
+  /** Controlled open state for the right context surface — when set,
+   *  the host owns open/close (e.g. "Ver contexto" selects a message
+   *  and opens the panel in one action). Uncontrolled by default. */
+  rightOpen?: boolean;
+  onRightOpenChange?: (open: boolean) => void;
   className?: string;
 };
 
 /** Presentation-only: left rail stays visible; right context never takes a column. */
 export function ConversationThreeRegionLayout({
   center, left, rail, right, leftTitle = "Conversas",
-  rightTitle = "Contexto da conversa", rightAvailable = true, className,
+  rightTitle = "Contexto da conversa", rightAvailable = true,
+  rightOpen: rightOpenProp, onRightOpenChange, className,
 }: ConversationThreeRegionLayoutProps) {
   const [leftExpanded, setLeftExpanded] = useState(true);
-  const [rightOpen, setRightOpen] = useState(false);
+  const [rightOpenState, setRightOpenState] = useState(false);
+  const rightOpen = rightOpenProp ?? rightOpenState;
+  const setRightOpen = (open: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof open === "function" ? open(rightOpen) : open;
+    if (rightOpenProp === undefined) setRightOpenState(next);
+    onRightOpenChange?.(next);
+  };
   const [compact, setCompact] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const compactRef = useRef(false);

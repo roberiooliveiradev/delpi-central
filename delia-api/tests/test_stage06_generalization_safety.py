@@ -839,8 +839,8 @@ def test_r_s04_01_incomplete_owner_contract_clarifies_without_act():
 # --- Budget / personality invariants -------------------------------------
 
 
-def test_stage06_global_turn_budget_remains_thirty_seconds():
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+def test_stage06_global_turn_budget_matches_doc_103_dev_cap():
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
 
 
 def test_stage06_empty_selection_is_honest_insufficiency():

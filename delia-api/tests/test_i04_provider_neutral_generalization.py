@@ -903,7 +903,7 @@ def test_global_budget_constants_hold():
         DEFAULT_TURN_BUDGET_SECONDS,
     )
 
-    assert DEFAULT_TURN_BUDGET_SECONDS == 30.0
+    assert DEFAULT_TURN_BUDGET_SECONDS == 300.0
 
 
 # ---------------------------------------------------------------------------
