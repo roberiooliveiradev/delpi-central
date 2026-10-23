@@ -143,3 +143,18 @@ Duas correções funcionais justificadas por contrato, implementação mínima (
 `DEPLOY_STATUS=NOT_EXECUTED` — congelar `EVALUATED_SHA`, revisão independente e autorização operacional específica precedem qualquer deploy.
 
 `COORDINATION_REVIEW_REQUIRED=YES` · `R3_AUTHORIZED=NO` · `PLAN_COMPLETE=NO`
+
+
+## 12. Revisão independente da coordenação — 2026-10-23
+
+**REVIEWED_SHA:** `0b9220fa64abe8f569eb3b4336a5f10cdf29a409`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL` (código e testes reportados; sem homologação prod no SHA).  
+**DEPLOY_AUTHORIZED_BY_THIS_REVIEW:** `NO`. **R3_AUTHORIZED:** `NO`.
+
+**Inspeção GitHub:** commit da task contém cinco arquivos de aplicação/testes mais doc 135, README e ledger; foram lidos o documento, os DTOs `SpecialistOutcome.projected_content`, a composição CRI e os helpers de vínculo no orquestrador. Extensões mantêm os owners existentes e não identificamos engine/registry/sanitizer paralelo nem execução de candidato sem argumentos válidos no caminho revisado. O campo projetado é opcional e documentado. Os resultados `RED→GREEN 8/8`, `2191` testes, eval Ollama e probes MCP são **reportados pelo executor**, não reexecutados independentemente nesta revisão.
+
+**Resíduo técnico principal (não ignorar):** `_identity_tokens_bond` aceita correspondência por prefixo compartilhado de 4 caracteres entre `business_subject` proposto pelo modelo e `action_id/entity/description` providos pelo owner. Este é um gate determinístico **de apresentação contratual**, não uma decisão de capability nem AuthZ, mas pode aceitar candidato semanticamente inadequado. Por isso `D5_SCHEMA_OUTCOME=FIXED_IN_TESTED_SCOPE`, não prova de generalização irrestrita. Antes de release, executar testes adversariais com descrições genéricas, prefixos colidentes, múltiplos candidatos, subject ambíguo, metadata maliciosa e consultas contratuais positivas; verificar que nenhuma identidade apenas textual é apresentada como 'contrato da DELPI' sem vínculo legítimo.
+
+**D5-R:** a precedência de `projected_content` sobre `contract_facts` corrige o deslocamento demonstrado, mas precisa de avaliação com modelo produtivo e casos em que guidance não responde à pergunta contratual. `D5_R_OUTCOME=FIXED_IN_TESTED_SCOPE`. **D8-R:** continua limitação do owner DAVI; nenhuma mudança DAVI autorizada ou implementada.
+
+**Decisão:** aceitar com resíduos como entrega bounded de implementação. Não classificar como homologação geral, não autorizar reuso do doc 133 para este hotfix, nem iniciar R3. Gate antes de deploy: independente readiness com testes adversariais de bond e CRI, evidência de regressão/generalização e autorização operacional explícita para o release específico. Se falsos positivos apresentarem risco material, `REWORK` bounded antes de promoção; não inserir correção lexical específica de provider. `GLOBAL_BUSINESS_OUTCOME=INCONCLUSIVE` até homologação com modelo produtivo.
