@@ -37,6 +37,11 @@ LIMITATION_PRIOR_TURN_CONTINUATION = "prior_turn_evidence_only"
 # surfaced while a write intent awaits a structured confirmation.
 LIMITATION_CONFIRMATION_PENDING = "confirmation_pending"
 
+# DELIA-C3-SELF-AWARENESS (S1): the answer enumerates the live provider
+# capability surface — planning/discovery metadata observed this turn,
+# never business evidence and never an authorization statement.
+LIMITATION_CAPABILITY_SURFACE_LISTING = "capability_surface_listing"
+
 # C3-EXECUTION-SCOPE (§6.184): the published MFE echoes these exact
 # fixed labels on a structured confirmation turn. During the typed-
 # command migration window they are the ONLY free text a decision turn

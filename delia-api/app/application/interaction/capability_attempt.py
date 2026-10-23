@@ -45,6 +45,13 @@ from app.domain.specialist_interop.model import SpecialistOutcome
 # Absence of this marker is not conversational admission.
 EARLY_CONVERSATIONAL_ADMISSION = "early_conversational_admission"
 
+# DELIA-C3-SELF-AWARENESS (S1): typed admission classified the turn as
+# a question about the governed capability surface itself. The attempt
+# carries a deterministic projection of the LIVE provider surface in
+# ``content`` — observed this turn, never model-authored, never an
+# invocation. Listing a surface never grants authorization.
+SURFACE_INQUIRY_ADMISSION = "surface_inquiry_admission"
+
 
 class GovernedCapabilityStatus(str, Enum):
     """Truthful outcome classification for one governed capability

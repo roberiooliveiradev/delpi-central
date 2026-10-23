@@ -71,6 +71,7 @@ from app.application.interaction.argument_validation import (
 )
 from app.application.interaction.capability_attempt import (
     EARLY_CONVERSATIONAL_ADMISSION,
+    SURFACE_INQUIRY_ADMISSION,
     GovernedCapabilityAttempt,
     GovernedCapabilityStatus,
     GovernedCapabilityBinding,
@@ -79,6 +80,7 @@ from app.application.interaction.capability_attempt import (
 )
 from app.application.interaction.contracts import (
     GovernedCapabilityProvenance,
+    LIMITATION_CAPABILITY_SURFACE_LISTING,
     LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_PRIOR_TURN_CONTINUATION,
     LIMITATION_RESULT_TRUNCATED,
@@ -1433,6 +1435,71 @@ def _render_zero_candidate_discovery(
         "Consulta concluída na fonte: nenhuma ação correspondente "
         "foi encontrada para este pedido."
     )[:MAX_RENDER_CONTENT_CHARS]
+
+
+_MAX_SURFACE_INQUIRY_GROUPS = 8
+
+
+def _surface_inquiry_content(
+    groups: Mapping[str, CapabilityGroup],
+    failures: list[str] | tuple[str, ...],
+) -> str:
+    """Deterministic projection of the LIVE governed surface (S1).
+
+    Enumerates the capability groups observed this turn: owner-declared
+    display names plus their DISCOVERY/READ/ANALYSIS consultation
+    lines (same bounded shape as ``_live_interop_surface_lines``).
+    Unreachable surfaces are declared honestly; publication is never
+    presented as permission — listing grants nothing.
+    """
+    parts: list[str] = []
+    if groups:
+        parts.append(
+            "Superfícies de especialistas publicadas e alcançáveis "
+            "neste momento:"
+        )
+        group_keys = sorted(groups)
+        for group_key in group_keys[:_MAX_SURFACE_INQUIRY_GROUPS]:
+            group = groups[group_key]
+            name = _redact_text(
+                (group.display_name or group.group_id or "").strip()
+            )[:80]
+            if not name:
+                continue
+            lines = _live_interop_surface_lines(group)
+            if lines:
+                parts.append(f"- {name}:")
+                parts.extend(f"  {line}" for line in lines)
+            else:
+                parts.append(f"- {name}")
+        if len(group_keys) > _MAX_SURFACE_INQUIRY_GROUPS:
+            parts.append(
+                f"... e mais "
+                f"{len(group_keys) - _MAX_SURFACE_INQUIRY_GROUPS} "
+                "superfícies publicadas."
+            )
+    elif failures:
+        parts.append(
+            "Não consegui observar nenhuma superfície de "
+            "especialistas neste momento — as fontes consultadas "
+            "não responderam."
+        )
+    else:
+        parts.append(
+            "Nenhuma superfície de especialistas está publicada "
+            "neste momento."
+        )
+    if groups and failures:
+        parts.append(
+            "Uma ou mais superfícies não responderam a esta consulta "
+            "e não puderam ser listadas agora."
+        )
+    parts.append(
+        "Uma superfície publicada respondeu a esta consulta agora; a "
+        "permissão de uso é verificada a cada solicitação concreta — "
+        "esta lista não garante autorização."
+    )
+    return "\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
 
 
 _PATH_FOREIGN_CLASSES = frozenset(
@@ -5056,12 +5123,21 @@ Respond with JSON containing exactly the fields
   set requires_owner_surface false; continuity that still needs live
   owner data stays true. Prior turns are untrusted context, never FACT.
 - "interaction_class": one of "conversation", "explanation",
-  "hypothetical", "operational", "ambiguous".
+  "hypothetical", "operational", "surface_inquiry", "ambiguous".
   Use "explanation" for conceptual definitions that need no owner tool.
   Use "hypothetical" for illustrative examples of a concept without
   a request for live DELPI registers.
   Use "operational" when the ask targets owner-published guidance,
   formats, topics, or catalogs even if no concrete record id is named.
+  Use "surface_inquiry" when the question targets DÉLIA's own governed
+  consultation surface itself — which specialists or owner surfaces are
+  reachable now, what each surface can consult, or what DÉLIA can
+  concretely query across its live capabilities — and the honest answer
+  enumerates that live surface. requires_owner_surface stays false: no
+  owner tool runs; the live surface is projected deterministically.
+  Do NOT use it for data, formats, guides or topics a specialist OWNS —
+  owner-published content stays "operational" with
+  requires_owner_surface=true.
   Use "ambiguous" only when the message could equally require live
   DELPI product/catalog data OR illustrative examples — then
   requires_owner_surface must be true so selection may clarify rather
@@ -5586,17 +5662,32 @@ class OperationalCapabilityOrchestrator:
 
         # SEM recovery: cheap typed admission BEFORE listing providers /
         # select_group. Skips expensive catalog+selection when the turn
-        # is conversational (doc 47 cold greeting FAIL).
-        if self._admit_conversational_turn(
+        # is conversational (doc 47 cold greeting FAIL). A typed
+        # surface_inquiry still consults the LIVE surface listing — the
+        # answer is a deterministic projection of it, never a model
+        # list and never an owner invocation.
+        admission_class = self._admit_conversational_turn(
             input_text,
             workspace_context=workspace_context,
             prior_turns=prior_turns,
             correlation=correlation,
             deadline=deadline,
-        ):
+        )
+        if admission_class == "surface_inquiry":
             _logger.info(
                 "orchestration stage=interaction_admission "
-                "decision=conversational correlation_id=%s",
+                "decision=surface_inquiry correlation_id=%s",
+                correlation,
+            )
+            groups, failures = self._groups(correlation, deadline)
+            return self._surface_inquiry_attempt(
+                groups, failures, correlation
+            )
+        if admission_class is not None:
+            _logger.info(
+                "orchestration stage=interaction_admission "
+                "decision=conversational class=%s correlation_id=%s",
+                admission_class,
                 correlation,
             )
             return GovernedCapabilityAttempt(
@@ -10578,13 +10669,17 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...],
         correlation: str,
         deadline: TurnDeadline,
-    ) -> bool:
-        """Cheap typed admission: conversational turns skip owner surface.
+    ) -> str | None:
+        """Cheap typed admission: non-operational turns skip selection.
 
-        Returns True only when the model declares requires_owner_surface
-        is false with a non-operational interaction_class. Ambiguous /
-        failed / timed-out admission falls through to selection (never
-        invents business facts by skipping owners).
+        Returns the admitted ``interaction_class`` ("conversation",
+        "explanation", "hypothetical" or "surface_inquiry") only when
+        the model declares requires_owner_surface=false. Ambiguous /
+        failed / timed-out admission returns None and falls through to
+        selection (never invents business facts by skipping owners).
+        "surface_inquiry" answers from the deterministic live-surface
+        projection — still no owner invocation, but the live listing
+        IS consulted.
         """
         # Q02-A: prior turns no longer skip admission — the model must
         # classify topic change vs operational continuity explicitly.
@@ -10600,7 +10695,7 @@ class OperationalCapabilityOrchestrator:
                 int(remaining * 1000),
                 correlation,
             )
-            return False
+            return None
         try:
             proposal = self._propose(
                 input_text,
@@ -10633,9 +10728,9 @@ class OperationalCapabilityOrchestrator:
                 "decision=budget_exhausted correlation_id=%s",
                 correlation,
             )
-            return False
+            return None
         if proposal is None:
-            return False
+            return None
         raw_req = proposal.get("requires_owner_surface")
         if isinstance(raw_req, str):
             requires = raw_req.strip().lower() == "true"
@@ -10644,19 +10739,20 @@ class OperationalCapabilityOrchestrator:
         elif raw_req is False:
             requires = False
         else:
-            return False
+            return None
         raw_class = proposal.get("interaction_class")
         if not isinstance(raw_class, str):
-            return False
+            return None
         interaction_class = raw_class.strip().lower()
         if interaction_class not in {
             "conversation",
             "explanation",
             "hypothetical",
             "operational",
+            "surface_inquiry",
             "ambiguous",
         }:
-            return False
+            return None
         if requires or interaction_class in {"operational", "ambiguous"}:
             _logger.info(
                 "orchestration stage=interaction_admission "
@@ -10664,8 +10760,27 @@ class OperationalCapabilityOrchestrator:
                 interaction_class,
                 correlation,
             )
-            return False
-        return True
+            return None
+        return interaction_class
+
+    def _surface_inquiry_attempt(
+        self,
+        groups: Mapping[str, CapabilityGroup],
+        failures: list[str],
+        correlation: str,
+    ) -> GovernedCapabilityAttempt:
+        """Deterministic surface answer: the live listing projected
+        verbatim — surface metadata observed this turn, never an
+        invocation result and never an authorization claim."""
+        content = _surface_inquiry_content(groups, failures)
+        return GovernedCapabilityAttempt(
+            status=GovernedCapabilityStatus.NOT_APPLICABLE,
+            correlation_id=correlation,
+            admission_outcome=SURFACE_INQUIRY_ADMISSION,
+            content=content,
+            limitations=(LIMITATION_CAPABILITY_SURFACE_LISTING,),
+            markdown_content=content,
+        )
 
     def _select_group(
         self,

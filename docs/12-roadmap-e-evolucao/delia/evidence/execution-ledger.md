@@ -17656,3 +17656,14 @@ NEXT=COORDINATION_VERDICT_S0 (S1-S5 NOT_AUTHORIZED)
 ## §6.394 — Conversational markdown admission REMEDIATED + verified in production (2026-10-23)
 
 **2026-10-23 — DELIA-C3-PRODUCTION-CONVERSATIONAL-MARKDOWN-ROOT-CAUSE-REMEDIATION-01 (execução):** aprovação f09acc8544 implementada em 8162baf1a7 (presentation_markdown=content no construtor conversacional RESULT — 1 campo, canal existente). Backend 2079/3skip, delia 353, plugin-ui 2315, typecheck+build+federation PASS. Deploy canônico SSH para 274bd790e2: delia-api rebuild+recreate, health 200. VERIFICAÇÃO REAL PRODUÇÃO autenticada (mesma pergunta SIPOC): presentation.version=2, format=markdown_safe, RESULT/HYPOTHESIS/NON_GROUNDED, DOM .delpi-ui-conversation-markdown com 2 listas/10 li/13 strong, zero anchors, zero sintaxe crua. Screenshot confirmando render rico. Owner content_text/denial/confirmation seguem v1 (negativos cobertos). CP-333 permanece PLANNED_NOT_PASS.
+
+
+## §6.395 — S1 self-awareness: surface_inquiry tipada + projecao deterministica da superficie viva (2026-10-23)
+
+**2026-10-23 — DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 / STEP=S1 (PO f7b6a601cb, execucao continua S1-S5):** gap D4 (PROJECTION_PATH_GAP, doc 113) resolvido por EXTEND na fronteira canonica. Nova classe tipada surface_inquiry na INTERACTION_ADMISSION_INSTRUCTION existente; _admit_conversational_turn retorna a classe admitida (allowlist fail-closed); requires_owner_surface=false + surface_inquiry => listagem governada self._groups() (mesma fonte viva do turno) + _surface_inquiry_content projeta display_name + linhas DISCOVERY/READ/ANALYSIS bounded (mesmo shape de _live_interop_surface_lines); falhas declaradas; superficie vazia honesta; rodape publicacao != permissao; capability PREPARE/ACT nunca anunciada. Novos marcadores SURFACE_INQUIRY_ADMISSION + LIMITATION_CAPABILITY_SURFACE_LISTING; terminal _surface_inquiry_result no handler entrega OBSERVATION/NON_GROUNDED sem invocar o modelo geral. Zero engine/planner/catalogo-paralelo/branch-por-provider; contratos congelados preservados (selection-only, 60/3/300, READ!=PREPARE!=ACT). 11 testes novos (positivo/negativo/irmao/generalizacao/injecao/handler) green; suite backend completa green. INDEPENDENT_REVIEW_PENDING. Doc 114. RUNTIME_DIFF=YES (sem deploy).
+
+TASK_ID=DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 STEP=S1
+RQ_SA01_02_03=IMPLEMENTED SA06_08_09=PRESERVED
+SURFACE_INQUIRY=typed+deterministic AUTHZ_INFERENCE=NONE PREPARE_ACT_ADVERTISED=NEVER
+TESTS_NEW=11_green SUITE=all_green EXTERNAL_LLM_CALLS=0 DEPLOY=NONE
+NEXT=S2 (D5 relevancia semantica)

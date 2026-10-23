@@ -46,6 +46,7 @@ from app.application.capability_provision.contracts import (
 )
 from app.application.interaction.capability_attempt import (
     EARLY_CONVERSATIONAL_ADMISSION,
+    SURFACE_INQUIRY_ADMISSION,
     GovernedCapabilityStatus,
     SupportsGovernedCapabilityAttempt,
 )
@@ -494,6 +495,27 @@ class HandleInteractiveConversationTurn:
                 _emit_terminal(
                     sink, ActivityPhase.BLOCKED, state=ActivityState.WAITING
                 )
+            return self._with_observability(
+                result,
+                turn_deadline,
+                composition_mode=COMPOSITION_DETERMINISTIC,
+                governed_attempts=attempt.governed_attempts,
+            )
+
+        # DELIA-C3-SELF-AWARENESS (S1): a typed surface inquiry already
+        # carries its deterministic answer — the live-surface projection
+        # observed this turn. The general model is never invoked to
+        # enumerate capability surfaces (it could only invent names).
+        if attempt is not None and (
+            attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+            and attempt.admission_outcome == SURFACE_INQUIRY_ADMISSION
+            and isinstance(attempt.content, str)
+            and attempt.content.strip()
+        ):
+            result = self._surface_inquiry_result(
+                session, user_turn, attempt
+            )
+            _emit_terminal(sink, ActivityPhase.COMPLETED)
             return self._with_observability(
                 result,
                 turn_deadline,
@@ -1121,6 +1143,59 @@ class HandleInteractiveConversationTurn:
             INVALID_REQUEST,
             "max_execution_stage only accepts 'prepare' — it can "
             "reduce, never request, execution authority",
+        )
+
+    def _surface_inquiry_result(
+        self,
+        session: InteractionSession,
+        user_turn: InteractionTurn,
+        attempt,
+    ) -> InteractiveTurnResult:
+        """Record the deterministic live-surface answer (S1).
+
+        The content was projected verbatim from provider ``list_groups``
+        responses observed THIS turn — OBSERVATION class. Grounding
+        stays NON_GROUNDED: a capability surface is planning metadata,
+        never a governed DELPI business source read, and the listing
+        itself grants no permission.
+        """
+        content = attempt.content
+        if not isinstance(content, str) or not content.strip():
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "surface inquiry produced no bounded content",
+            )
+        occurred = _now_utc()
+        result_turn = InteractionTurn(
+            turn_id=str(uuid.uuid4()),
+            session_id=session.session_id,
+            kind=TurnKind.DELIA_RESULT,
+            content=content,
+            occurred_at=occurred,
+            epistemic_class=EpistemicClass.OBSERVATION,
+            limitations=attempt.limitations,
+        )
+        session, result_validation = record_interaction_turn(
+            session, result_turn
+        )
+        if not result_validation.valid:
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "surface inquiry DELIA_RESULT rejected by session rules",
+            )
+        return InteractiveTurnResult(
+            session_id=session.session_id,
+            user_turn_id=user_turn.turn_id,
+            result_turn_id=result_turn.turn_id,
+            content=content,
+            epistemic_class=EpistemicClass.OBSERVATION,
+            limitations=attempt.limitations,
+            generated_at=occurred,
+            model_invocation_id=None,
+            grounding_status=GroundingStatus.NON_GROUNDED,
+            presentation_markdown=getattr(
+                attempt, "markdown_content", None
+            ),
         )
 
     def _conversational_budget_result(
