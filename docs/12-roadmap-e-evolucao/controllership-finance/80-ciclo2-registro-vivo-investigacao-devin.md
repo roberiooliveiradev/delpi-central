@@ -548,3 +548,69 @@ Existem com dados: SB1010 (~55k), SB2010 (~77k), SB9010 (~2,28M), SD3010 (~4,69M
 | C2-R16 | C2-04 pagar | universo SE5↔SE2 + dedup | PROVEN: `DISTINCT(título,data,motivo)`=948 exato; NOR/FAT exatos; DEB/CMP/DAC divergem → INCONCLUSIVE motivo | suporta G5 parcial |
 | C2-R17 | C2-04 receber | universo SE5↔SE1 | PROVEN: 657 row-level exato | suporta G5 parcial |
 | C2-R18 | — | doc 47 | `NO_GATE_CHANGE`: falta binding campo→coluna do relatório e artefato oficial de comparação | — |
+
+---
+
+## 16. CICLO 2 — Execução Rodada 4 (CF-C2-EXEC-004) — paridade por registro
+
+> Mesmo canal read-only autorizado. Objetivo: testar se o universo SE5 reproduz funcionalmente os relatórios oficiais — não aceitar coincidência de contagem como equivalência.
+
+### 16.A — Parâmetros oficiais descobertos no dicionário SX1 — PROVEN
+
+- **FINR190 (grupo `FIN190`)**: 42 parâmetros documentados em `SX1010`, incluindo `Da/Até data de baixa` (01–02), `Do/Até Banco` (03–04), `Da/Até Filial Origem` (33–34 — **confirma `FILORI`/`E5_FILORIG` como eixo de filial**) e **`42: "Cons. Bx. por mov. bancaria ?"`** — confirma oficialmente que o relatório considera baixas por **movimento bancário (SE5)**.
+- **DLP06R01**: nenhum grupo SX1 correspondente (`DLP06*`/`%6R0%` ausentes — há DLP001–035 e DLP05R01/02, DLP10R03, DLP34R01, DLP73R01). Parâmetros da customização não persistidos no dicionário → `BLOCKED`, owner TI.
+- **Preenchimentos efetivos** usados na geração dos artefatos do Ciclo 1 não são recuperáveis via SQL (SX1 guarda definições, não a última execução) — `BLOCKED`.
+
+### 16.B — Pagar: reconstrução funcional do universo 948 — PROVEN (estrutura), residual ±2
+
+Pipeline reproduzido com evidências de campo:
+
+1. `SE5010`, `E5_RECPAG='P'`, `E5_DATA` em 09/2026 → 1.126 movimentos.
+2. Join ao título SE2 (chave `PREFIXO+NUMERO+PARCELA+TIPO+FORNECE+LOJA`, many→1, sem fan-out) → **996 com título / 130 sem título** (DH=84, TR=30, PA=8, ES=7, VL=1 — movimentos bancários avulsos, corretamente fora da relação de baixas).
+3. `E5_DTCANBX=''` (baixa não cancelada) → **957**; todos os 39 cancelados vinculados têm cancelamento no próprio mês.
+4. `E5_TIPODOC ∈ {VL, BA, CP, PA}` → **950** (exclui CM/ES/DC/MT residuais).
+
+Distribuição por `E5_MOTBX`×`E5_TIPODOC` no conjunto resultante vs artefato oficial:
+
+| Motivo oficial | Artefato | Reconstruído | Δ |
+|---|---|---|---|
+| DEB | 600 | 600 (VL) | **0** |
+| CMP | 186 | 188 (BA94+CP94) | −2 |
+| FAT | 83 | 83 (BA) | **0** |
+| NOR | 65 | 65 (PA) | **0** |
+| DAC | 14 | 14 (BA) | **0** |
+| **Total** | **948** | **950** | **−2** |
+
+- **4 de 5 motivos reproduzem exatamente** (DEB, FAT, NOR, DAC) e o total diverge por 2 eventos CMP. O `DISTINCT(título,data,motivo)=948` da rodada 3 era **coincidência aritmética** — corrigido: o mecanismo real é exclusão de cancelados + filtro de tipos de documento, não deduplicação (dedup sobre ativos daria 924).
+- Residual CMP−2: não encontrado flag discriminante (`E5_TIPOLAN`/`E5_SITUACA`/`E5_LA` uniformes). Hipóteses não testáveis sem artefato: filtro de banco (params 03–04), linhas geradas após a data de emissão do artefato, ou regra interna do programa. `INCONCLUSIVE` ±2, `TO_INVENTORY`.
+- `E5_TABORI` registra a origem do movimento: `FK2`=931, `FK5`=65 — **todos os NOR (65) vieram de FK5** (baixa por movimentação bancária direta, não por baixa de título). Isso fecha a semântica NOR='NORMAL' vs evento FK2.
+- `E5_FILORIG` está preenchido no SE5 (01=563 / 02=433) — eixo de filial disponível também no movimento bancário.
+
+### 16.C — Receber: universo 657 — PROVEN (row-level)
+
+- SE5 'R' × SE1 em 09/2026 = **657 linhas exatas**, grão movimento (inclui 1 linha com `E5_DTCANBX` preenchido — DLP06R01 aparentemente não filtra cancelamento, ou o artefato antecede o cancelamento).
+- Os 8 movimentos que diferenciam 657 linhas de 649 combinações distintas: **4 grupos (título,dia,motivo) com 2 linhas de `E5_TIPODOC` diferentes** (ex.: VL+JR do mesmo título no mesmo dia) — linhas funcionalmente distintas (juros/encargos vs valor principal), não duplicatas. Confirma grão **row-level** para o produtor de receber.
+- Assimetria de grão P (título×dia×tipo consolidado) vs R (movimento) é consistente com produtores distintos: FINR190/`_F190C` × `DLP06R01`.
+
+### 16.D — Baixas parciais e cardinalidade — PROVEN
+
+- Join SE5→SE2: cada movimento casa ≤1 título (0 fan-out; 130 movimentos sem título = avulsos).
+- 53 títulos pagos com ≥2 movimentos ativos no mês (máx. 14) → baixas parciais existem no grão de movimento; o relatório por linha de movimento as representa nativamente.
+- Tratamento de estorno: `E5_DTCANBX` (data de cancelamento da baixa) — preenchido em 41 movimentos P de 09/2026, todos cancelados no próprio mês.
+
+### 16.E — Correção de precisão sobre SB9/`I_N_S_D_T_`
+
+- Refinando §14.A: `I_N_S_D_T_` prova o **timestamp de inserção física** da linha no banco — não prova qual rotina/job a inseriu nem sua hora de agendamento. A defasagem de 19 dias da filial 01 é fato; a **causalidade** (job específico, schedule ou gatilho manual) permanece hipótese/TO_INVENTORY. Nenhuma conclusão da rodada 2 é invalidada; apenas o escopo da prova é delimitado.
+
+### 16.F — Confronto monetário — BLOCKED
+
+- Artefatos do Ciclo 1 são sanitizados sem totais monetários → comparação de `ΣE5_VALOR`/componentes (juros, desconto, abatimento) não é executável. `BLOCKED` até artefato com totais ou autorização para amostra.
+
+### 16.G — Registro desta rodada (append-only)
+
+| Run | Item | Ação | Resultado | Gate |
+|---|---|---|---|---|
+| C2-R19 | produtor | SX1 `FIN190` + `E5_TABORI` | PROVEN: relatório usa movimento bancário (param 42), filial origem (params 33–34); origem FK2/FK5 nos dados | G3/G4 parcial |
+| C2-R20 | pagar | pipeline SE5→SE2 + DTCANBX + tipodoc | PROVEN estrutura: 950 vs 948, 4/5 motivos exatos; residual CMP−2 sem flag discriminante | G5 parcial |
+| C2-R21 | receber | SE5→SE1 row-level | PROVEN: 657 exato; 8 surplus = linhas distintas por tipodoc | G5 parcial |
+| C2-R22 | — | doc 47 | `NO_GATE_CHANGE`: confronto monetário bloqueado (artefatos sem totais); G5 exige linha-a-linha com artefato | — |
