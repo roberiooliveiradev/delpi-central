@@ -226,3 +226,14 @@ Live results (Playwright, deployed MFE+API at HEAD):
 **Regressions on `04fcc80df6`:** focused backend 57/57; G4 consumer 14/14; demoMode 18/18; delia suite 351/351 (29 files); tsc clean; negative security 15/15 (re-run during G4 on same seams, unchanged since).
 
 **Deploy:** see ledger §6.392 — SSH operator deploy of pinned SHA to srv-api via canonical `up-prod-sequential.sh`; delta vs deployed `a6aef6a321` is tests/docs only (zero runtime code change for delia-api since RW01 already deployed).
+
+
+## Architecture / Coordination review — G4 residual closure and SSH deploy (2026-10-23)
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL** for task `DELIA-C3-MARKDOWN-B2-G4-RESIDUAL-CLOSURE-TEST-FIX-DEPLOY-01` at release `caac5f5452`, ledger-only follow-up `cc096cc7d3`. Direct GitHub review verified the committed demo-only QA fixture/test changes and documentary ledger/evidence. Operator-reported deployment of `delia-api` to `srv-api` via existing SSH/deploy procedure, health 200, boot without handler error, gateway/SSO reachability and unauthenticated 401 fail-closed is accepted as **operator-reported technical evidence**, not independently reproduced by this review. The branch advanced after deployment; do not equate current HEAD with runtime SHA.
+
+**Verified distinction:** browser Markdown visual evidence is `PASS_TEST_FIXTURE`, not `LIVE_OWNER_OUTCOME=PASS`. Live owner Category-A `markdown_safe` turn in production and authenticated post-deploy business turn remain `TEST_NOT_RUN`; a 200 health/SSO and 401 auth gate do not prove business outcome. Real screen-reader pass `TEST_NOT_RUN`. AC22 style adaptation `PARTIAL`; AC26 admitted public-source link emission `DEFERRED/PARTIAL`, with internal links L1 explicitly deferred and Core/Domain authority preserved. Existing G4 RQ coverage remains 20/25 IMPLEMENTED = 80% until the five partial RQs are actually closed or formally re-scoped by Product Master; not CP-333 PASS.
+
+**Required before further CP-333 acceptance:** (a) bounded authenticated production business-outcome read-only smoke with legitimate subject and governed owner, proving actual emitted presentation version and displayed result without bypass; do not force Category-A by altering planner or treating fixture as real business fact, (b) actual screen-reader QA or `TEST_NOT_RUN` retained, (c) explicit product choice whether AC22 and external public URL binding AC26 remain required for full CP or become separately phased CP with revised AC and traceability. **No unapproved runtime change or redeploy** from this review. If production access/test permissions absent, report `INCONCLUSIVE` rather than invent evidence.
+
+**Decision:** `G4_RESIDUAL_CLOSURE=ACCEPT_WITH_RESIDUAL`; `DEPLOYMENT_TECHNICAL_STATUS=SUCCESS_REPORTED_NOT_INDEPENDENTLY_REPRODUCED`; `CP-333=PLANNED_NOT_PASS`; `NEXT=authenticated post-deploy outcome smoke + Product Master scope reconciliation of remaining acceptance`. Phase unchanged.
