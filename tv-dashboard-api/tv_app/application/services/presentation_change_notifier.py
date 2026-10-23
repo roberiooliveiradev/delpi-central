@@ -50,6 +50,14 @@ def notify_presentation_changed(
     }
     if slide_id:
         payload["slideId"] = str(slide_id)
+    # Semântica do campo (VISTA-TV-024-R1): `playlistRevision` é o piso da
+    # revisão agregada — a revisão corrente lida pós-commit no momento do
+    # notify, sempre >= a revisão produzida pela escrita que disparou o
+    # evento. Um commit concorrente entre o commit e esta leitura pode
+    # elevá-la; isso nunca subestima (ler depois do commit só vê >=), então
+    # consumidores que suprimem por `eventRev <= incorporado` nunca escondem
+    # estado não visto — no pior caso recarregam uma vez a mais. Falha na
+    # leitura omite o campo e o consumidor recarrega (safe > suppression).
     resolved_playlist_revision = playlist_revision
     if resolved_playlist_revision is None:
         try:

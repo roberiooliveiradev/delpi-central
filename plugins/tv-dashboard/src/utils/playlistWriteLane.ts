@@ -20,6 +20,13 @@
  */
 const lanes = new Map<string, Promise<unknown>>();
 
+type WriteSettleListener = (info: {
+  playlistId: string;
+  outcome: "fulfilled" | "rejected";
+}) => void;
+
+const settleListeners = new Map<string, Set<WriteSettleListener>>();
+
 type LockManagerLike = {
   request: (
     name: string,
@@ -52,6 +59,41 @@ export function hasPendingPlaylistWrite(playlistId: string): boolean {
   return lanes.has(playlistId || "_");
 }
 
+/**
+ * Notifica o término de cada escrita enfileirada (sucesso ou falha). Usado
+ * pela reconciliação diferida da task 024-R1: um evento `presentation_updated`
+ * ambíguo (rev == tracked+1 com escrita em voo) só pode ser considerado
+ * incorporado quando a escrita confirma; em rejeição (409, rede, timeout,
+ * cancelamento) o evento era estrangeiro e exige reload obrigatório.
+ * Retorna função de unsubscribe. Listeners que lançam são ignorados — a
+ * lane nunca pode ser quebrada por um consumidor.
+ */
+export function onPlaylistWriteSettled(
+  playlistId: string,
+  listener: WriteSettleListener,
+): () => void {
+  const key = playlistId || "_";
+  const set = settleListeners.get(key) ?? new Set<WriteSettleListener>();
+  set.add(listener);
+  settleListeners.set(key, set);
+  return () => {
+    set.delete(listener);
+    if (!set.size) settleListeners.delete(key);
+  };
+}
+
+function notifyWriteSettled(key: string, outcome: "fulfilled" | "rejected") {
+  const set = settleListeners.get(key);
+  if (!set) return;
+  for (const listener of [...set]) {
+    try {
+      listener({ playlistId: key, outcome });
+    } catch {
+      // consumidor não pode derrubar a lane
+    }
+  }
+}
+
 export function enqueuePlaylistWrite<T>(
   playlistId: string,
   task: () => Promise<T>,
@@ -70,6 +112,15 @@ export function enqueuePlaylistWrite<T>(
     if (lanes.get(key) === next) lanes.delete(key);
   };
   // .then(cleanup, cleanup): settled em ambos os casos, sem rejeição pendurada.
-  void next.then(cleanup, cleanup);
+  void next.then(
+    () => {
+      cleanup();
+      notifyWriteSettled(key, "fulfilled");
+    },
+    () => {
+      cleanup();
+      notifyWriteSettled(key, "rejected");
+    },
+  );
   return next;
 }

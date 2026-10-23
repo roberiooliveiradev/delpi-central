@@ -147,8 +147,14 @@ import {
   publishPlaylistWriteHead,
   readSharedPlaylistRevision,
 } from "../utils/playlistWriteHead";
-import { hasPendingPlaylistWrite } from "../utils/playlistWriteLane";
-import { shouldSkipPresentationUpdatedReload } from "../utils/presentationSyncReloadDecision";
+import {
+  hasPendingPlaylistWrite,
+  onPlaylistWriteSettled,
+} from "../utils/playlistWriteLane";
+import {
+  resolvePresentationSyncReloadDecision,
+  shouldRecoverAmbiguousSyncEvent,
+} from "../utils/presentationSyncReloadDecision";
 import { handleVisualCaptureRequest } from "../utils/liveStageVisualCapture";
 import {
   applySlideBatchPatch,
@@ -262,6 +268,14 @@ export function PlaylistEditorPage({
    * sobrescrevem o estado recém-recarregado com snapshot pré-conflito.
    */
   const comunicadoWriteEpochRef = useRef(0);
+  /**
+   * Revisão de evento presentation_updated ambíguo (rev == tracked+1 com
+   * escrita em voo) aguardando confirmação. Reconciliado obrigatoriamente
+   * no settle da lane: ACK cobrindo a revisão prova commit próprio;
+   * rejeição/timeout/cancelamento sem cobertura exige reload — a remota
+   * nunca pode ficar permanentemente ignorada (VISTA-TV-024-R1).
+   */
+  const pendingAmbiguousSyncRevisionRef = useRef<number | null>(null);
   /**
    * Tick de atividade de peer por slide (drafts e commits WS de outro
    * clientId). Como o CAS é por playlist, commits de peer no mesmo slide não
@@ -605,6 +619,14 @@ export function PlaylistEditorPage({
         slideId: slideId ?? null,
         clientId: editorPresence?.clientId ?? null,
       });
+      // 024-R1: ack ≥ revisão ambígua prova incorporação — commit == amb ou
+      // a posição CAS (expected ≥ amb) só foi possível com tracked ≥ amb.
+      if (
+        pendingAmbiguousSyncRevisionRef.current != null &&
+        next >= pendingAmbiguousSyncRevisionRef.current
+      ) {
+        pendingAmbiguousSyncRevisionRef.current = null;
+      }
     },
     [playlistId, editorPresence?.clientId],
   );
@@ -1009,22 +1031,31 @@ export function PlaylistEditorPage({
       ) {
         bumpSlidePeerActivity(slidePeerActivityRef.current, event.slideId);
       }
-      // VISTA-TV-024 — dispensa reload quando a revisão do evento já está
-      // incorporada (ACK próprio, contexto irmão via write-head) ou é
-      // ambígua com escrita própria em voo (CAS 409 resolve server-wins).
+      // VISTA-TV-024/024-R1 — dispensa reload quando a revisão do evento já
+      // está incorporada (ACK próprio, contexto irmão via write-head). Rev
+      // == tracked+1 com escrita em voo é ambígua: não é prova de autoria —
+      // é registrada e reconciliada obrigatoriamente no settle da lane
+      // (fulfilled+ack cobre → incorporado; rejeitada sem cobertura →
+      // reload, a remota nunca fica permanentemente ignorada).
       // Evento sem revisão (payload antigo, reconexão) → sempre reload.
       const eventPlaylistRevision =
         typeof event?.playlistRevision === "number" &&
         Number.isFinite(event.playlistRevision)
           ? event.playlistRevision
           : null;
-      if (
-        shouldSkipPresentationUpdatedReload({
-          eventRevision: eventPlaylistRevision,
-          trackedRevision: slideBaseRevision(null),
-          hasPendingOwnWrite: hasPendingPlaylistWrite(playlistId),
-        })
-      ) {
+      const syncDecision = resolvePresentationSyncReloadDecision({
+        eventRevision: eventPlaylistRevision,
+        trackedRevision: slideBaseRevision(null),
+        hasPendingOwnWrite: hasPendingPlaylistWrite(playlistId),
+      });
+      if (syncDecision === "skip_ambiguous_pending") {
+        pendingAmbiguousSyncRevisionRef.current = Math.max(
+          pendingAmbiguousSyncRevisionRef.current ?? 0,
+          eventPlaylistRevision ?? 0,
+        );
+        return;
+      }
+      if (syncDecision === "skip_incorporated") {
         return;
       }
       // Foco só em criação/import/duplicação — nunca em slide_updated (autosave do peer).
@@ -1073,6 +1104,33 @@ export function PlaylistEditorPage({
       });
     },
   });
+
+  // 024-R1 — reconciliação diferida de evento ambíguo: avaliada um microtask
+  // após o settle para o processamento do ACK (`recordWriteRevision`)
+  // publicar o write-head primeiro; se a revisão ambígua continuar acima do
+  // rastreado (escrita rejeitada/timeout/cancelada ou ack que não a cobriu),
+  // a atualização remota é recuperada com reload obrigatório.
+  useEffect(
+    () =>
+      onPlaylistWriteSettled(playlistId, () => {
+        queueMicrotask(() => {
+          const ambiguousRevision = pendingAmbiguousSyncRevisionRef.current;
+          pendingAmbiguousSyncRevisionRef.current = null;
+          if (
+            !shouldRecoverAmbiguousSyncEvent({
+              ambiguousRevision,
+              trackedRevision: slideBaseRevision(null),
+            })
+          ) {
+            return;
+          }
+          void reloadPlaylistFromServer().then(() =>
+            deckHistory.handleRemoteUpdate(),
+          );
+        });
+      }),
+    [playlistId, slideBaseRevision, reloadPlaylistFromServer, deckHistory],
+  );
 
   /**
    * Última seleção de blocos do canvas (ComunicadoEditorProvider.onSelectionChange).

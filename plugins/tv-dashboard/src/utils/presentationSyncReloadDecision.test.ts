@@ -1,66 +1,91 @@
 import { describe, expect, it } from "vitest";
 
-import { shouldSkipPresentationUpdatedReload } from "./presentationSyncReloadDecision";
+import {
+  resolvePresentationSyncReloadDecision,
+  shouldRecoverAmbiguousSyncEvent,
+} from "./presentationSyncReloadDecision";
 
-const skip = (params: {
+const decide = (params: {
   eventRevision: number | null;
   trackedRevision: number;
   hasPendingOwnWrite: boolean;
-}) => shouldSkipPresentationUpdatedReload(params);
+}) => resolvePresentationSyncReloadDecision(params);
 
-describe("shouldSkipPresentationUpdatedReload", () => {
-  it("suprime evento do próprio ACK já incorporado (rev <= tracked)", () => {
+describe("resolvePresentationSyncReloadDecision", () => {
+  it("A1 ack incorporado: rev <= tracked → skip_incorporated", () => {
     expect(
-      skip({ eventRevision: 5, trackedRevision: 5, hasPendingOwnWrite: false }),
-    ).toBe(true);
+      decide({ eventRevision: 5, trackedRevision: 5, hasPendingOwnWrite: false }),
+    ).toBe("skip_incorporated");
   });
 
-  it("suprime evento atrasado/duplicado (rev < tracked)", () => {
+  it("evento atrasado/duplicado (rev < tracked) → skip_incorporated", () => {
     expect(
-      skip({ eventRevision: 3, trackedRevision: 7, hasPendingOwnWrite: false }),
-    ).toBe(true);
+      decide({ eventRevision: 3, trackedRevision: 7, hasPendingOwnWrite: false }),
+    ).toBe("skip_incorporated");
   });
 
-  it("WS antes do ACK: rev == tracked+1 com escrita em voo → suprime", () => {
+  it("WS antes do ACK: rev == tracked+1 com escrita em voo → skip_ambiguous_pending", () => {
     expect(
-      skip({ eventRevision: 6, trackedRevision: 5, hasPendingOwnWrite: true }),
-    ).toBe(true);
+      decide({ eventRevision: 6, trackedRevision: 5, hasPendingOwnWrite: true }),
+    ).toBe("skip_ambiguous_pending");
   });
 
-  it("WS antes do ACK sem escrita em voo → estrangeiro, recarrega", () => {
+  it("rev == tracked+1 sem escrita em voo → estrangeiro, recarrega", () => {
     expect(
-      skip({ eventRevision: 6, trackedRevision: 5, hasPendingOwnWrite: false }),
-    ).toBe(false);
+      decide({ eventRevision: 6, trackedRevision: 5, hasPendingOwnWrite: false }),
+    ).toBe("reload");
   });
 
-  it("revisão estrangeira adiante mesmo com escrita em voo → recarrega", () => {
-    // estrangeiro tomou tracked+2 — pendente próprio vira 409 server-wins,
-    // mas o reload acontece agora, sem esperar o conflito.
+  it("A5 — revisão adiante mesmo com escrita em voo → recarrega (nunca suprime)", () => {
     expect(
-      skip({ eventRevision: 7, trackedRevision: 5, hasPendingOwnWrite: true }),
-    ).toBe(false);
+      decide({ eventRevision: 7, trackedRevision: 5, hasPendingOwnWrite: true }),
+    ).toBe("reload");
+    expect(
+      decide({ eventRevision: 8, trackedRevision: 5, hasPendingOwnWrite: true }),
+    ).toBe("reload");
   });
 
   it("evento sem revisão (payload antigo/reconexão) → recarrega", () => {
     expect(
-      skip({ eventRevision: null, trackedRevision: 5, hasPendingOwnWrite: true }),
-    ).toBe(false);
+      decide({ eventRevision: null, trackedRevision: 5, hasPendingOwnWrite: true }),
+    ).toBe("reload");
   });
 
   it("revisão não-finita → recarrega", () => {
     expect(
-      skip({
-        eventRevision: Number.NaN,
-        trackedRevision: 5,
-        hasPendingOwnWrite: true,
-      }),
+      decide({ eventRevision: Number.NaN, trackedRevision: 5, hasPendingOwnWrite: true }),
+    ).toBe("reload");
+  });
+
+  it("estado inicial (tracked 0) com rev 1 e pendente → ambíguo", () => {
+    expect(
+      decide({ eventRevision: 1, trackedRevision: 0, hasPendingOwnWrite: true }),
+    ).toBe("skip_ambiguous_pending");
+  });
+});
+
+describe("shouldRecoverAmbiguousSyncEvent — reconciliação diferida no settle", () => {
+  it("A1 — ACK próprio cobriu a revisão ambígua → não recupera", () => {
+    expect(
+      shouldRecoverAmbiguousSyncEvent({ ambiguousRevision: 6, trackedRevision: 6 }),
     ).toBe(false);
   });
 
-  it("estado inicial (tracked 0) com evento rev 1 e pendente → suprime", () => {
-    // primeira escrita do editor: WS pode chegar antes do ACK.
+  it("A2/A3/A4 — rejeição/timeout/cancelamento sem cobertura → recupera", () => {
     expect(
-      skip({ eventRevision: 1, trackedRevision: 0, hasPendingOwnWrite: true }),
+      shouldRecoverAmbiguousSyncEvent({ ambiguousRevision: 6, trackedRevision: 5 }),
     ).toBe(true);
+  });
+
+  it("sem evento ambíguo registrado → não recupera", () => {
+    expect(
+      shouldRecoverAmbiguousSyncEvent({ ambiguousRevision: null, trackedRevision: 5 }),
+    ).toBe(false);
+  });
+
+  it("A6 — reload do 409 já cobriu (tracked avançou) → não recupera", () => {
+    expect(
+      shouldRecoverAmbiguousSyncEvent({ ambiguousRevision: 6, trackedRevision: 9 }),
+    ).toBe(false);
   });
 });

@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { enqueuePlaylistWrite } from "./playlistWriteLane";
+import {
+  enqueuePlaylistWrite,
+  onPlaylistWriteSettled,
+} from "./playlistWriteLane";
 
 /**
  * Web Locks API fake — o registry é por ORIGIN: dois "contextos" (abas)
@@ -166,5 +169,65 @@ describe("enqueuePlaylistWrite", () => {
     releaseFirst();
     await Promise.all([first, second]);
     expect(sentIfMatch).toEqual([3, 4]);
+  });
+});
+
+describe("onPlaylistWriteSettled — reconciliação diferida (024-R1)", () => {
+  it("notifica fulfilled no ack da escrita", async () => {
+    const seen: Array<{ playlistId: string; outcome: string }> = [];
+    const unsub = onPlaylistWriteSettled("pl-s1", (info) => seen.push(info));
+    await enqueuePlaylistWrite("pl-s1", async () => "ok");
+    unsub();
+    expect(seen).toEqual([{ playlistId: "pl-s1", outcome: "fulfilled" }]);
+  });
+
+  it("notifica rejected em falha não-CAS (rede/timeout/cancelamento)", async () => {
+    const seen: string[] = [];
+    const unsub = onPlaylistWriteSettled("pl-s2", (info) =>
+      seen.push(info.outcome),
+    );
+    await expect(
+      enqueuePlaylistWrite("pl-s2", () =>
+        Promise.reject(new Error("network timeout")),
+      ),
+    ).rejects.toThrow("network timeout");
+    unsub();
+    expect(seen).toEqual(["rejected"]);
+  });
+
+  it("A3 — escrita estrangeira N+1 + falha não-CAS local: settle rejected expõe recuperação", async () => {
+    // Simula a sequência: evento ambíguo suprimido, escrita própria falha sem
+    // 409 → o listener é o ponto único que garante reload obrigatório.
+    const outcomes: string[] = [];
+    const unsub = onPlaylistWriteSettled("pl-s3", (info) =>
+      outcomes.push(info.outcome),
+    );
+    await expect(
+      enqueuePlaylistWrite("pl-s3", () => Promise.reject(new Error("abort"))),
+    ).rejects.toThrow("abort");
+    unsub();
+    expect(outcomes).toEqual(["rejected"]);
+  });
+
+  it("unsubscribe para de receber notificações", async () => {
+    const seen: string[] = [];
+    const unsub = onPlaylistWriteSettled("pl-s4", (info) =>
+      seen.push(info.outcome),
+    );
+    unsub();
+    await enqueuePlaylistWrite("pl-s4", async () => "ok");
+    expect(seen).toEqual([]);
+  });
+
+  it("listener que lança não quebra a lane nem outros listeners", async () => {
+    const seen: string[] = [];
+    onPlaylistWriteSettled("pl-s5", () => {
+      throw new Error("listener bug");
+    });
+    onPlaylistWriteSettled("pl-s5", (info) => seen.push(info.outcome));
+    await expect(
+      enqueuePlaylistWrite("pl-s5", async () => "ok"),
+    ).resolves.toBe("ok");
+    expect(seen).toEqual(["fulfilled"]);
   });
 });
