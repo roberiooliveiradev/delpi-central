@@ -322,7 +322,7 @@ def _purchase_request_line_select_sql(where_clause: str) -> str:
         RTRIM(ISNULL(REQ.USR_CODIGO, '')) AS requester_code,
         RTRIM(COALESCE(SC1.C1_SOLICIT, REQ.USR_NOME, '')) AS requester_name,
         RTRIM(ISNULL(SC1.C1_CC, '')) AS cost_center_code,
-        RTRIM(ISNULL(CTT.CTT_DESC01, '')) AS cost_center_description,
+        RTRIM(ISNULL(CC.descr, '')) AS cost_center_description,
         RTRIM(ISNULL(SC1.C1_CONTA, '')) AS account_code,
         RTRIM(ISNULL(SC1.C1_APROV, '')) AS approval_raw,
         RTRIM(ISNULL(SC1.C1_NOMAPRO, '')) AS approver_name,
@@ -337,10 +337,14 @@ def _purchase_request_line_select_sql(where_clause: str) -> str:
     LEFT JOIN SYS_USR REQ WITH (NOLOCK)
         ON REQ.USR_ID = SC1.C1_USER
        AND REQ.D_E_L_E_T_ = ''
-    LEFT JOIN CTT010 CTT WITH (NOLOCK)
-        ON CTT.CTT_FILIAL = SC1.C1_FILIAL
-       AND CTT.CTT_CUSTO = SC1.C1_CC
-       AND CTT.D_E_L_E_T_ = ''
+    OUTER APPLY (
+        SELECT TOP 1 RTRIM(CTT.CTT_DESC01) AS descr
+        FROM CTT010 CTT WITH (NOLOCK)
+        WHERE CTT.CTT_CUSTO = SC1.C1_CC
+          AND CTT.D_E_L_E_T_ = ''
+          AND (CTT.CTT_FILIAL = SC1.C1_FILIAL OR RTRIM(CTT.CTT_FILIAL) = '')
+        ORDER BY CASE WHEN CTT.CTT_FILIAL = SC1.C1_FILIAL THEN 0 ELSE 1 END
+    ) CC
     LEFT JOIN SA2010 SA2 WITH (NOLOCK)
         ON SA2.A2_COD = SC1.C1_FORNECE
        AND SA2.A2_LOJA = SC1.C1_LOJA
@@ -465,12 +469,16 @@ def build_purchase_request_cost_centers_sql(*, where_clause: str) -> str:
     SELECT DISTINCT
         RTRIM(SC1.C1_FILIAL) AS branch,
         RTRIM(ISNULL(SC1.C1_CC, '')) AS cost_center_code,
-        RTRIM(ISNULL(CTT.CTT_DESC01, '')) AS cost_center_description
+        RTRIM(ISNULL(CC.descr, '')) AS cost_center_description
     FROM SC1010 SC1 WITH (NOLOCK)
-    LEFT JOIN CTT010 CTT WITH (NOLOCK)
-        ON CTT.CTT_FILIAL = SC1.C1_FILIAL
-       AND CTT.CTT_CUSTO = SC1.C1_CC
-       AND CTT.D_E_L_E_T_ = ''
+    OUTER APPLY (
+        SELECT TOP 1 RTRIM(CTT.CTT_DESC01) AS descr
+        FROM CTT010 CTT WITH (NOLOCK)
+        WHERE CTT.CTT_CUSTO = SC1.C1_CC
+          AND CTT.D_E_L_E_T_ = ''
+          AND (CTT.CTT_FILIAL = SC1.C1_FILIAL OR RTRIM(CTT.CTT_FILIAL) = '')
+        ORDER BY CASE WHEN CTT.CTT_FILIAL = SC1.C1_FILIAL THEN 0 ELSE 1 END
+    ) CC
     WHERE {where_clause}
       AND RTRIM(ISNULL(SC1.C1_CC, '')) <> ''
     ORDER BY cost_center_code ASC, branch ASC

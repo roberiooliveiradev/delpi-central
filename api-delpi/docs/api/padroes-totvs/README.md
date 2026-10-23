@@ -27,6 +27,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Cadastro de produto | [cadastro-produto.md](./cadastro-produto.md) | `B1_TPMAT`, `B1_CUSTD`, `B1_REFEREN`, campos SB1 recorrentes |
 | Cadastro de cliente (SA1) | [cadastro-cliente.md](./cadastro-cliente.md) | `A1_NREDUZ` vs `A1_NOME`, bloqueio, loja `1`/`01`, busca carteira |
 | Cadastro de fornecedor (SA2) | [cadastro-fornecedor.md](./cadastro-fornecedor.md) | Chave `COD+LOJA`, `GETSXENUM`, bloqueio `A2_MSBLQL`, SA5 separada; auditoria completa no playbook |
+| Centro de custo (CTT010) | [centro-custo-ctt.md](./centro-custo-ctt.md) | `CTT_FILIAL` em branco = cadastro global; join por filial estrita devolve descrição nula |
 | Centro do cliente (SA7 / ZC0) | [centro-cliente.md](./centro-cliente.md) | `A7_XCENT` na amarração produto–cliente; mestre `ZC0`; filtro `customer_centers`; classificação em `/commercial/rol/by-customer-center` |
 | CRM TOTVS (SIGATEC) | [crm-sigatec.md](./crm-sigatec.md) | Censo vivo + OV `AD1`, funis 000001/000002/000003, `AIJ`/`ADY`; colunas no playbook |
 | Materiais de terceiros / SB6 | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) | Remessa/retorno `B6_PODER3`, chave sem `B6_TPCF`, saldo atual |
