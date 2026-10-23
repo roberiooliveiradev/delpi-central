@@ -135,6 +135,11 @@ class SpecialistOutcome:
     structured: Mapping[str, object] | None = None
     limitations: tuple[str, ...] = field(default_factory=tuple)
     contract_facts: tuple[str, ...] = field(default_factory=tuple)
+    # Deterministic governed projection already produced for this
+    # outcome (e.g. the DISCOVERY terminal's guidance/render). When a
+    # verdict composition applies it presents this content FIRST —
+    # verdict scaffolds supplement, never displace, projected evidence.
+    projected_content: str | None = None
 
     @property
     def epistemic_class(self) -> EpistemicClass:

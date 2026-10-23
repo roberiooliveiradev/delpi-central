@@ -170,12 +170,19 @@ def compose_cri_response(
     ordering_event: str | None,
     vocabulary: Mapping[str, Mapping[str, str]],
     contract_facts: Sequence[str] = (),
+    projected_content: str | None = None,
 ) -> CriComposition | None:
     """Compose the governed conversational response, or ``None``.
 
     All texts come from the validated declarative vocabulary — this
     function selects *which* template applies by verdict shape and
     substitutes only evidence-derived placeholders.
+
+    ``projected_content`` carries the deterministic governed
+    projection already produced for the same outcome (guidance,
+    terminal renders). When present it leads the composition — a
+    verdict scaffold never displaces content already projected from
+    the same evidence.
     """
 
     leads = vocabulary.get("leads") or {}
@@ -237,9 +244,15 @@ def compose_cri_response(
             f"- {row[:_MAX_CONTRACT_FACT_CHARS]}"
             for row in contract_facts[:MAX_CONTRACT_FACT_ROWS]
         ]
-        return CriComposition(
-            lead + "\n" + "\n".join(rows), len(rows)
+        content = lead + "\n" + "\n".join(rows)
+        projected = (
+            projected_content.strip()
+            if isinstance(projected_content, str)
+            else ""
         )
+        if projected:
+            content = projected + "\n\n" + content
+        return CriComposition(content, len(rows))
 
     if verdict.decision != OUTCOME_ANSWERED or not records:
         return None

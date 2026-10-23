@@ -794,6 +794,56 @@ def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
     return tuple(rows)
 
 
+# Whitelisted owner-published contract fields of a single discovery
+# candidate — identity, declared requirements and the published
+# argument schema. Tokens, transport metadata and payloads are never
+# projected.
+_CANDIDATE_CONTRACT_KEYS = (
+    "action_id",
+    "entity",
+    "description",
+    "required_arguments",
+    "argument_schema",
+)
+
+
+def _candidate_contract_rows(
+    candidate: Mapping[str, Any] | None,
+) -> tuple[str, ...]:
+    """Bounded contract row for ONE owner-published candidate.
+
+    Relevance is the caller's gate — this projection itself stays
+    neutral. Legitimate only when a declared contract goal provably
+    bonds this specific candidate's published identity; the same
+    sanitize/redact/compact pipeline as ``_contract_fact_rows``
+    applies, so credentials, control-plane blobs and oversized
+    payloads stay out of user-facing content.
+    """
+    if not isinstance(candidate, Mapping):
+        return ()
+    sanitized = _sanitize_renderable(candidate)
+    if not isinstance(sanitized, Mapping):
+        return ()
+    action = sanitized.get("action_id") or sanitized.get("name")
+    descriptor = {
+        str(key): sanitized[key]
+        for key in _CANDIDATE_CONTRACT_KEYS
+        if isinstance(key, str)
+        and sanitized.get(key) is not None
+    }
+    if not isinstance(action, str) or not action.strip() or not descriptor:
+        return ()
+    text = json.dumps(
+        _without_control_plane(_compact_evidence(descriptor)),
+        ensure_ascii=False,
+        default=str,
+    )
+    return (
+        f"candidates.{action.strip()[:80]}: "
+        f"{text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}",
+    )
+
+
 def _compact_evidence(value: Any, depth: int = 0) -> Any:
     """Deterministic shrink of owner vocabulary before bounding.
 

@@ -17946,3 +17946,19 @@ EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
 Evidencia: [doc 134](../corrections/mcp-contextual-intelligence-orchestration/134-r1-r2-postdeploy-functional-causal-diagnostic.md).
 
+
+## §6.416 — Correção bounded D5-R + D5-schema: precedência de projeção + terminal de candidatos (2026-10-23)
+
+**2026-10-23 — DELIA-C3-POSTDEPLOY-D5R-D5SCHEMA-BOUNDED-REMEDIATION-01 (doc 135):** correção funcional bounded autorizada pelo PO dos dois defeitos diagnosticados no doc 134 (causas pré-existentes, não regressão R1/R2). `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` — nenhum sanitizer/renderer/registry novo.
+
+D5-R: `SpecialistOutcome.projected_content` (campo tipado aditivo, mesmo precedente de `contract_facts`) + `compose_cri_response(projected_content=...)` — no veredito `OUTCOME_CONTRACT_FACTS` a projeção determinística já produzida (guidance `ProductGuide`/`block_types`) precede `leads.contract_facts`+rows; scaffold suplementa, nunca desloca. D5-schema: terminal `candidates_present` (antes `return None` descartando envelope) -> `_unusable_candidate_terminal` sob vinculo tipado triplo: `contract_subject` declarado + `business_subject` tokenizado + bond de tokens (match exato ou prefixo >=4, fold `_canonical_key`) contra identidade publicada pelo owner de candidato especifico (`_candidate_contract_rows` — whitelist `action_id/entity/description/required_arguments/argument_schema`, `candidate_token` nunca projetado) ou da capability selecionada (`_contract_fact_rows` de superficie, candidatos excluidos). Sem bond ou sem `contract_subject` -> silencio honesto inalterado. Sibling candidate-bound coberto (`_discover_candidate` devolve envelope); `goal=None` em pagination/foreign/repair -> comportamento identico.
+
+TESTES: RED->GREEN 8/8 novos (composicao + e2e + bonds positivo/negativo/guarda); suite backend 2191 collected exit=0 zero falhas; import DAG aciclico; AP-01..20 reconciliados. LIVE PROVIDER (container dedicado, worktree, rede dev, credencial delegada token-exchange `mcp-*`): vista.get_catalog -> guidance primeiro + entities.playlist suplemento; davi.discover + subject "produtos" -> `candidates.search_products` com schema real; subject "informações delpi" + candidato protheus -> honest None (negativo exigido); guarda contract_subject=False -> None. Eval integrado HTTP verdict PASS blocking_failures=[]; selecao 3B nao alcanca grupos (variancia dev documentada). `AUTO_REWORK_USED=NO` `EXECUTION_DRIFT=NONE`.
+
+DEPLOY_STATUS=NOT_EXECUTED (gate governado pendente — EVALUATED_SHA congelado pos-revisao). Residuais: variancia `contract_subject` (hipotese modelo); falsos positivos de prefixo bounded (so apresentacao); `goal` ausente em pagination/foreign/repair; modelo forte TEST_NOT_RUN local. D8-R = CONTRACT_LIMITATION owner DAVI fora de escopo.
+
+TASK_ID=DELIA-C3-POSTDEPLOY-D5R-D5SCHEMA-BOUNDED-REMEDIATION-01
+DEPLOYED=NO CORRECTIONS_IMPLEMENTED=YES LOCAL_GREEN=YES
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
+NEXT=INDEPENDENT_REVIEW_THEN_GOVERNED_DEPLOY_GATE
+Evidência: [doc 135](../corrections/mcp-contextual-intelligence-orchestration/135-d5r-d5schema-bounded-remediation.md).

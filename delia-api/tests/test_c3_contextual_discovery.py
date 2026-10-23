@@ -28,6 +28,7 @@ from app.application.capability_provision.conversational_response import (
 )
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
+    CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
@@ -70,6 +71,7 @@ _PURPOSE_IDS = frozenset(
         ARGUMENTS_INSTRUCTION_ID,
         GOAL_INSTRUCTION_ID,
         SYNTHESIS_INSTRUCTION_ID,
+        CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
     }
 )
 
@@ -1098,3 +1100,368 @@ def test_cri_contract_facts_has_no_raw_json_for_catalog():
         joined = "\n".join(facts.contract_facts)
         assert "upsert_data_source" not in joined
         assert "agent_directives" not in joined
+
+
+# ---------------------------------------------------------------------------
+# Part 4 — DISCOVERY terminal precedence + unusable-candidate contract bond
+# (DELIA-C3-POSTDEPLOY-D5R-D5SCHEMA-BOUNDED-REMEDIATION-01, doc 134)
+# ---------------------------------------------------------------------------
+
+
+def test_compose_contract_facts_defers_to_projected_content():
+    """D5-R: when the terminal projected goal-aligned content, the
+    contract_facts composition presents that content FIRST and the
+    bounded contract rows as supplement — generic surface vocabulary
+    never displaces the semantically relevant answer."""
+    cri = compose_cri_response(
+        verdict=OutcomeVerdict(OUTCOME_CONTRACT_FACTS),
+        requirements=None,
+        records=(),
+        delivered_count=0,
+        total_count=None,
+        coverage_complete=None,
+        ordering_date=None,
+        ordering_event=None,
+        vocabulary=_VOCAB,
+        contract_facts=(
+            "entities.playlist: "
+            '{"read_operations": ["list_playlists"]}',
+        ),
+        projected_content="block_types: kpi, tabela, gráfico",
+    )
+    assert cri is not None
+    assert cri.content.startswith("block_types")
+    assert "A fonte publica" in cri.content
+    assert "entities.playlist" in cri.content
+    assert cri.content.index("block_types") < cri.content.index(
+        "entities.playlist"
+    )
+
+
+def test_compose_contract_facts_without_projected_content_unchanged():
+    """Pure contract questions keep the existing facts-only
+    composition — projected content absent means facts lead."""
+    cri = compose_cri_response(
+        verdict=OutcomeVerdict(OUTCOME_CONTRACT_FACTS),
+        requirements=None,
+        records=(),
+        delivered_count=0,
+        total_count=None,
+        coverage_complete=None,
+        ordering_date=None,
+        ordering_event=None,
+        vocabulary=_VOCAB,
+        contract_facts=("row",),
+    )
+    assert cri is not None
+    assert cri.content.startswith("A fonte publica")
+
+
+# -- D5-R orchestration-level: guided catalog + declared contract subject --
+
+_GUIDED_SURFACE = {
+    "entities": {
+        "playlist": {
+            "read_operations": ["list_playlists"],
+            "filterable_fields": ["q"],
+        }
+    },
+    "overview": "O especialista apresenta indicadores em formatos "
+    "visuais configuráveis.",
+    "block_types": ["kpi", "tabela", "grafico"],
+    "formats": {
+        "kpi": "valor único",
+        "tabela": "linhas de registros",
+        "grafico": "série temporal",
+    },
+}
+
+
+def _cri_orchestrator(providers, proposal):
+    model = FakeProposalModel(proposal)
+    return (
+        OperationalCapabilityOrchestrator(
+            providers,
+            invoke_model=InvokeModel(model),
+            model_ref=TEST_MODEL_REF,
+            response_intelligence_enabled=True,
+            cri_instruction_clause="cri",
+            cri_instruction_version="1",
+            cri_presentation_vocabulary=_VOCAB,
+        ),
+        model,
+    )
+
+
+def test_discovery_terminal_guided_content_precedes_contract_facts():
+    """D5-R e2e: guided owner surface + declared contract_subject —
+    the goal-aligned guidance leads; contract rows stay bounded
+    supplement, never the sole content."""
+    outcomes = {
+        ("docs", "get_catalog"): _outcome(
+            "docs", "get_catalog", "catalog", structured=_GUIDED_SURFACE
+        ),
+    }
+    provider = _docs_provider(outcomes=outcomes)
+    orch, _ = _cri_orchestrator(
+        [provider],
+        _select(
+            "docs",
+            "get_catalog",
+            arguments={},
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "business_subject": "visualizações",
+                    "contract_subject": True,
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Quais tipos de visualização existem?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.outcome is not None
+    assert attempt.outcome.contract_facts
+    content = attempt.content or ""
+    # guidance projected into content leads; contract rows follow.
+    assert "block_types" in content or "overview" in content
+    assert "A fonte publica" in content
+    assert content.index("A fonte publica") > 0
+
+
+def test_discovery_terminal_contract_subject_guidance_absent():
+    """Positive control: contract question over a surface WITHOUT
+    goal-aligned guidance — contract facts remain the answer."""
+    outcomes = {
+        ("docs", "get_catalog"): _outcome(
+            "docs",
+            "get_catalog",
+            "catalog",
+            structured=_CATALOG_STRUCTURED,
+        ),
+    }
+    provider = _docs_provider(outcomes=outcomes)
+    orch, _ = _cri_orchestrator(
+        [provider],
+        _select(
+            "docs",
+            "get_catalog",
+            arguments={},
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "business_subject": "contrato",
+                    "contract_subject": True,
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Quais campos o contrato expõe?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.outcome is not None
+    assert attempt.outcome.contract_facts
+    content = attempt.content or ""
+    assert "A fonte publica" in content
+    assert "filterable_fields" in content
+
+
+# -- D5-schema: candidates present but unusable — typed contract bond --
+
+_CANDIDATE_READ_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "candidate_token": {"type": "string"},
+        "arguments": {"type": "object"},
+    },
+    "required": ["candidate_token"],
+}
+
+_PROTHEUS_CANDIDATE = {
+    "candidate_token": "tok-1",
+    "action_id": "search_protheus_columns_in_table",
+    "entity": "protheus_column",
+    "description": "Protheus columns in table.",
+    "required_arguments": ["table_name", "q"],
+    "argument_schema": {
+        "type": "object",
+        "properties": {
+            "table_name": {"type": "string"},
+            "q": {"type": "string"},
+        },
+        "required": ["table_name", "q"],
+    },
+}
+
+_PRODUCT_CANDIDATE = {
+    "candidate_token": "tok-2",
+    "action_id": "search_products",
+    "entity": "product_search",
+    "description": "Search products.",
+    "required_arguments": ["code", "group_code"],
+    "argument_schema": {
+        "type": "object",
+        "properties": {
+            "code": {"type": "string"},
+            "group_code": {"type": "string"},
+        },
+        "required": ["code"],
+    },
+}
+
+
+def _candidate_envelope(*candidates):
+    return {
+        "eligible_action_count": 3,
+        "candidates": list(candidates),
+        "capability_surface": {
+            "actions": [
+                {"action_id": "search_items", "summary": "Search items"}
+            ]
+        },
+        "entities": {
+            "delpi_item": {
+                "filterable_fields": ["q", "status"],
+                "read_operations": ["search_items"],
+            }
+        },
+    }
+
+
+def _candidate_group():
+    caps = [
+        _cap(
+            "hub",
+            "acme",
+            "discover_delpi_information",
+            SpecialistOperationClass.DISCOVERY,
+            schema={"type": "object", "properties": {}},
+            desc="discover published actions",
+        ),
+        _cap(
+            "hub",
+            "acme",
+            "read_delpi_information",
+            SpecialistOperationClass.READ,
+            schema=_CANDIDATE_READ_SCHEMA,
+            desc="execute a discovered action",
+        ),
+    ]
+    return _group("acme", "hub", caps)
+
+
+def _candidate_provider(*candidates):
+    return FakeProvider(
+        "acme",
+        [_candidate_group()],
+        outcomes={
+            ("hub", "discover_delpi_information"): _outcome(
+                "hub",
+                "discover_delpi_information",
+                "discovery",
+                structured=_candidate_envelope(*candidates),
+            ),
+        },
+    )
+
+
+def _contract_goal(subject):
+    return {
+        GOAL_INSTRUCTION_ID: {
+            "goal_class": "read",
+            "business_subject": subject,
+            "contract_subject": True,
+        },
+        CANDIDATE_ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
+    }
+
+
+def test_candidates_unusable_subject_bonds_capability_surface():
+    """D5-schema: candidates found but not executable; declared
+    contract subject bonds the SELECTED capability surface — the
+    published surface is projected, the inadequate candidate's inner
+    schema is NOT elevated to the general contract."""
+    provider = _candidate_provider(_PROTHEUS_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("informações delpi"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos o contrato expõe?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.outcome is not None
+    assert attempt.outcome.contract_facts
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "entities.delpi_item" in joined
+    # the inadequate candidate's required arg is not presented as the
+    # general contract
+    assert "table_name" not in joined
+
+
+def test_candidates_unusable_subject_bonds_candidate_schema():
+    """D5-schema positive: declared subject bonds a candidate's
+    published identity — its contract fields surface, bounded."""
+    provider = _candidate_provider(_PRODUCT_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("produtos"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos aceita a consulta?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.outcome is not None
+    assert attempt.outcome.contract_facts
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "search_products" in joined or "group_code" in joined
+
+
+def test_candidates_unusable_no_bond_stays_honest():
+    """Negative: declared contract subject bonds neither capability
+    nor candidate — honest insufficiency, no schema presented."""
+    provider = _candidate_provider(_PROTHEUS_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("fornecedores"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos o contrato expõe?")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    outcome = attempt.outcome
+    assert outcome is None or not outcome.contract_facts
+
+
+def test_candidates_unusable_without_contract_subject_stays_honest():
+    """Guard: even with a bondable subject, an undeclared contract
+    intent never surfaces candidate schemas."""
+    provider = _candidate_provider(_PRODUCT_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "business_subject": "produtos",
+                    "contract_subject": False,
+                },
+                CANDIDATE_ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
+            },
+        ),
+    )
+    attempt = orch.attempt("Qual a descrição do produto?")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    outcome = attempt.outcome
+    assert outcome is None or not outcome.contract_facts

@@ -156,6 +156,7 @@ from app.application.capability_provision.outcome_assessment import (
     _RESOLVER_ENVELOPE_KEYS,
     _UUID_VALUE_RE,
     _bound_owner_evidence,
+    _candidate_contract_rows,
     _canonical_key,
     _comparable_scalar,
     _comparison_records,
@@ -943,6 +944,188 @@ def _render_zero_candidate_discovery(
         "Consulta concluída na fonte: nenhuma ação correspondente "
         "foi encontrada para este pedido."
     )[:MAX_RENDER_CONTENT_CHARS]
+
+
+# ---------------------------------------------------------------------------
+# Declared-contract bond (D5-schema remediation, doc 134/135)
+#
+# A discovery envelope that returned candidates but could not execute
+# any may legitimately project owner-published contract rows ONLY when
+# the model-declared contract subject provably bonds the selected
+# capability's identity or a specific returned candidate. Token
+# overlap uses the same ``_canonical_key`` fold the evidence pipeline
+# applies (lowercase + non-alnum strip), with a bounded prefix
+# tolerance so sibling vocabulary ("produtos" ~ "products") bonds
+# while unrelated subjects stay honestly silent. No provider, entity
+# or vocabulary blacklist — the bond derives solely from the typed
+# declared subject and the owner-published identity text.
+# ---------------------------------------------------------------------------
+
+_BOND_STOP_TOKENS = frozenset(
+    {
+        "a", "o", "as", "os", "de", "do", "da", "dos", "das", "e",
+        "em", "no", "na", "nos", "nas", "um", "uma", "para", "por",
+        "com", "que", "the", "of", "and", "in", "for", "to",
+    }
+)
+_MIN_BOND_PREFIX = 4
+
+
+def _subject_bond_tokens(subject: object) -> frozenset[str]:
+    """Comparable tokens of the model-declared business subject."""
+    if not isinstance(subject, str) or not subject.strip():
+        return frozenset()
+    return frozenset(
+        token
+        for token in (
+            _canonical_key(part)
+            for part in re.split(r"[^0-9A-Za-zÀ-ÿ]+", subject)
+        )
+        if len(token) >= 3 and token not in _BOND_STOP_TOKENS
+    )
+
+
+def _identity_tokens_bond(
+    subject_tokens: frozenset[str], identity_text: str
+) -> bool:
+    """True when a declared-subject token provably bonds an owner-
+    published identity token — exact match or a bounded shared
+    prefix (sibling vocabulary tolerance, never substring match)."""
+    identity_tokens = frozenset(
+        token
+        for token in (
+            _canonical_key(part)
+            for part in re.split(r"[^0-9A-Za-zÀ-ÿ_]+|_", identity_text)
+        )
+        if len(token) >= 3 and token not in _BOND_STOP_TOKENS
+    )
+    for subject_token in subject_tokens:
+        for token in identity_tokens:
+            if subject_token == token:
+                return True
+            if (
+                len(subject_token) >= _MIN_BOND_PREFIX
+                and len(token) >= _MIN_BOND_PREFIX
+                and subject_token[:_MIN_BOND_PREFIX]
+                == token[:_MIN_BOND_PREFIX]
+            ):
+                return True
+    return False
+
+
+def _capability_identity_text(capability: ProviderCapability) -> str:
+    """Owner-published identity surface of the selected capability."""
+    return " ".join(
+        part
+        for part in (
+            capability.remote_name,
+            capability.capability_id,
+            capability.description or "",
+        )
+        if isinstance(part, str)
+    )
+
+
+def _candidate_identity_text(candidate: Mapping[str, Any]) -> str:
+    """Owner-published identity surface of a discovery candidate."""
+    return " ".join(
+        str(part)
+        for part in (
+            candidate.get("action_id"),
+            candidate.get("name"),
+            candidate.get("entity"),
+            candidate.get("description"),
+        )
+        if isinstance(part, str)
+    )
+
+
+def _iter_bond_candidates(
+    resolved: Mapping[str, Any] | None,
+    structured: Mapping[str, Any] | None,
+):
+    """Yield the resolved candidate first, then envelope candidates —
+    bounded scan, no duplicates."""
+    seen: set[int] = set()
+    pool: list[Mapping[str, Any]] = []
+    if isinstance(resolved, Mapping):
+        pool.append(resolved)
+    candidates = (
+        structured.get("candidates")
+        if isinstance(structured, Mapping)
+        else None
+    )
+    if isinstance(candidates, (list, tuple)):
+        pool.extend(
+            item
+            for item in list(candidates)[:MAX_CANDIDATE_ENTRIES]
+            if isinstance(item, Mapping)
+        )
+    for item in pool:
+        if id(item) in seen:
+            continue
+        seen.add(id(item))
+        yield item
+
+
+def _contract_subject_bond(
+    *,
+    contract_subject: bool,
+    business_subject: object,
+    capability: ProviderCapability | None,
+    resolved_candidate: Mapping[str, Any] | None,
+    structured: Mapping[str, Any] | None,
+) -> tuple[str, Mapping[str, Any] | None] | None:
+    """Typed bond between the declared contract goal and owner
+    vocabulary. Returns ``("candidate", candidate)`` when a specific
+    candidate's published identity bonds, ``("capability", None)``
+    when the selected capability's identity bonds, or ``None`` —
+    honest silence when no legitimate contract scope is provable."""
+    if not contract_subject:
+        return None
+    subject_tokens = _subject_bond_tokens(business_subject)
+    if not subject_tokens:
+        return None
+    for candidate in _iter_bond_candidates(
+        resolved_candidate, structured
+    ):
+        if _identity_tokens_bond(
+            subject_tokens, _candidate_identity_text(candidate)
+        ):
+            return "candidate", candidate
+    if capability is not None and _identity_tokens_bond(
+        subject_tokens, _capability_identity_text(capability)
+    ):
+        return "capability", None
+    return None
+
+
+def _render_unusable_candidate_discovery(
+    action_label: object,
+) -> str:
+    """User-facing terminal for DISCOVERY that located candidate(s)
+    the declared arguments cannot execute — honest and bounded; the
+    published contract is declared, never executed."""
+    label = _redact_text(
+        str(action_label) if isinstance(action_label, str) else ""
+    ).strip()[:80]
+    if label:
+        lead = (
+            f"A busca localizou a ação publicada '{label}', mas os "
+            "dados informados não permitem executá-la com segurança."
+        )
+    else:
+        lead = (
+            "A busca localizou uma ação publicada pelo especialista, "
+            "mas os dados informados não permitem executá-la com "
+            "segurança."
+        )
+    return (
+        lead
+        + " Nenhuma operação foi realizada — discovery não autoriza "
+        "execução."
+    )[:MAX_RENDER_CONTENT_CHARS]
+
 
 _MAX_SURFACE_INQUIRY_GROUPS = 8
 
@@ -5515,6 +5698,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 prior_turns,
                 deadline,
+                goal,
             )
         except CapabilityProviderError as exc:
             if exc.code in _REPAIRABLE_SURFACE_CODES:
@@ -5706,6 +5890,7 @@ class OperationalCapabilityOrchestrator:
                 goal,
                 correlation,
                 contract_text=descriptor.description,
+                projected_content=outcome.projected_content,
             )
             if cri_verdict is not None
             else None
@@ -8054,6 +8239,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         *,
         contract_text: str | None = None,
+        projected_content: str | None = None,
     ) -> CriComposition | None:
         """CRI E3 — one grounded conversational composition.
 
@@ -8126,6 +8312,7 @@ class OperationalCapabilityOrchestrator:
             ordering_event=ordering_event,
             vocabulary=self._cri_vocabulary,
             contract_facts=facts.contract_facts,
+            projected_content=projected_content,
         )
         comp_ledger = current_call_ledger()
         if comp_ledger is not None:
@@ -10240,6 +10427,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         deadline: TurnDeadline | None = None,
+        goal: _TurnGoal | None = None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
         """Invoke honoring the owner's flow shape.
 
@@ -10258,11 +10446,29 @@ class OperationalCapabilityOrchestrator:
         selected = capabilities[remote_name]
 
         if _is_candidate_bound(selected):
-            candidate = self._discover_candidate(
+            found = self._discover_candidate(
                 group, input_text, correlation, deadline, prior_turns
             )
-            if candidate is None:
+            if found is None:
                 return None
+            candidate, discovery_outcome = found
+            if candidate is None:
+                terminal = self._unusable_candidate_terminal(
+                    discovery_outcome,
+                    capabilities.get(
+                        discovery_outcome.provenance.remote_name
+                    )
+                    if discovery_outcome is not None
+                    else None,
+                    None,
+                    goal,
+                    correlation,
+                )
+                return (
+                    (terminal, remote_name, remote_name)
+                    if terminal is not None
+                    else None
+                )
             inner = arguments.get("arguments")
             merged = self._candidate_arguments(
                 candidate,
@@ -10273,7 +10479,22 @@ class OperationalCapabilityOrchestrator:
                 deadline=deadline,
             )
             if merged is None:
-                return None
+                terminal = self._unusable_candidate_terminal(
+                    discovery_outcome,
+                    capabilities.get(
+                        discovery_outcome.provenance.remote_name
+                    )
+                    if discovery_outcome is not None
+                    else None,
+                    candidate,
+                    goal,
+                    correlation,
+                )
+                return (
+                    (terminal, remote_name, remote_name)
+                    if terminal is not None
+                    else None
+                )
             outcome = self._invoke(
                 group,
                 remote_name,
@@ -10375,7 +10596,14 @@ class OperationalCapabilityOrchestrator:
             # (capability_surface / agent_directives / telemetry)
             # stay out of user-facing content.
             if self._candidates_present(outcome.structured):
-                return None
+                terminal = self._unusable_candidate_terminal(
+                    outcome, selected, candidate, goal, correlation
+                )
+                return (
+                    (terminal, remote_name, remote_name)
+                    if terminal is not None
+                    else None
+                )
             # S2 (RQ-SA04 / D5): the DISCOVERY payload may itself
             # publish the answer — owner-authored catalog/guidance
             # sections (display formats, a guide index). Project them
@@ -10414,6 +10642,9 @@ class OperationalCapabilityOrchestrator:
                 content_text=content,
                 structured=None,
                 contract_facts=_contract_fact_rows(outcome),
+                projected_content=(
+                    content if guidance is not None else None
+                ),
             )
             return truthful, remote_name, remote_name
         return outcome, remote_name, remote_name
@@ -10425,12 +10656,15 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         deadline: TurnDeadline | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
-    ) -> Mapping[str, Any] | None:
+    ) -> tuple[Mapping[str, Any] | None, SpecialistOutcome | None] | None:
         """Owner discovery flow: exactly one DISCOVERY capability must
         exist for the candidate-bound READ to be resolvable. On a
         zero-candidate miss with prior context, one bounded retry uses
         the context-folded query (referential follow-ups carry no
-        concrete identifier on their own)."""
+        concrete identifier on their own). Returns the resolved
+        candidate (or None) plus the discovery envelope outcome, so a
+        non-executable result can still project its bounded contract
+        terminal."""
         discovery_caps = [
             cap
             for cap in group.capabilities
@@ -10453,12 +10687,12 @@ class OperationalCapabilityOrchestrator:
             deadline=deadline,
         )
         if candidate is not None:
-            return candidate
+            return candidate, outcome
         if self._candidates_present(outcome.structured):
-            return None
+            return None, outcome
         folded = _context_folded_discovery_query(input_text, prior_turns)
         if folded is None:
-            return None
+            return None, outcome
         _logger.info(
             "orchestration stage=discovery_retry "
             "decision=context_folded correlation_id=%s",
@@ -10471,12 +10705,78 @@ class OperationalCapabilityOrchestrator:
             correlation,
             deadline,
         )
-        return self._resolve_candidate(
-            retry.structured,
-            input_text,
-            (),
-            correlation=correlation,
-            deadline=deadline,
+        return (
+            self._resolve_candidate(
+                retry.structured,
+                input_text,
+                (),
+                correlation=correlation,
+                deadline=deadline,
+            ),
+            retry,
+        )
+
+    def _unusable_candidate_terminal(
+        self,
+        outcome: SpecialistOutcome | None,
+        capability: ProviderCapability | None,
+        resolved_candidate: Mapping[str, Any] | None,
+        goal: "_TurnGoal | None",
+        correlation: str,
+    ) -> SpecialistOutcome | None:
+        """Bounded contract terminal for a discovery that returned
+        candidates none of which could execute under the declared
+        arguments. Legitimate only when the model-declared contract
+        subject provably bonds a specific candidate's published
+        identity or the selected capability's surface — otherwise
+        honest silence (``None``), never schema presented as a false
+        answer."""
+        if outcome is None or not self._candidates_present(
+            outcome.structured
+        ):
+            return None
+        bond = _contract_subject_bond(
+            contract_subject=bool(
+                getattr(goal, "contract_subject", False)
+            ),
+            business_subject=getattr(goal, "business_subject", None),
+            capability=capability,
+            resolved_candidate=resolved_candidate,
+            structured=(
+                outcome.structured
+                if isinstance(outcome.structured, Mapping)
+                else None
+            ),
+        )
+        if bond is None:
+            return None
+        tier, bonded_candidate = bond
+        if tier == "candidate":
+            facts = _candidate_contract_rows(bonded_candidate)
+            action_label = (
+                bonded_candidate.get("action_id")
+                or bonded_candidate.get("name")
+                or bonded_candidate.get("entity")
+            )
+        else:
+            facts = _contract_fact_rows(outcome)
+            action_label = None
+        if not facts:
+            return None
+        content = _render_unusable_candidate_discovery(action_label)
+        _logger.info(
+            "orchestration stage=discovery_terminal "
+            "decision=UNUSABLE_CANDIDATE_CONTRACT tier=%s "
+            "correlation_id=%s",
+            tier,
+            correlation,
+        )
+        return dataclasses.replace(
+            outcome,
+            content_text=content,
+            structured=None,
+            contract_facts=facts,
+            projected_content=content,
         )
 
     @staticmethod
