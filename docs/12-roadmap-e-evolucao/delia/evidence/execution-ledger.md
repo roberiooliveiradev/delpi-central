@@ -17638,3 +17638,7 @@ D4=D5=D8_AUTHENTICATED=TEST_NOT_RUN (sem credencial de teste governada em prod; 
 CONTROL_PLANE_LEAK=NONE_proven_in_code+dev_live; PROD_WIRE=TEST_NOT_RUN
 EXTERNAL_LLM_CALLS=0 ROLLBACK=READY (imagens anteriores no host) EXECUTION_DRIFT=NONE
 NEXT=PO manual QA D4/D5/D8 no Portal OU identidade de homologacao governada (decisao owner de identidade)
+
+## §6.393 — Production conversational markdown incident — root cause PROVEN, contract proposal (2026-10-23)
+
+**2026-10-23 — DELIA-C3-PRODUCTION-CONVERSATIONAL-MARKDOWN-ROOT-CAUSE-REMEDIATION-01:** incidente SIPOC reproduzido autenticado em https://minhadelpi.com.br (turn real, sem fixture). Envelope: presentation.version=1, NON_GROUNDED, HYPOTHESIS, bloco text plain com sintaxe markdown literal. DOM: ConversationMarkdown ausente, 0 headings/lists/strong. ROOT_CAUSE=CONTRACT_ADMISSION — ramo conversacional (COMPOSITION_MODEL) constrói InteractiveTurnResult sem presentation_markdown; somente Category-A (attempt.markdown_content) admite v2 — regra G3 deliberada, não bug de transporte/frontend/config. Primeiro ponto de perda: construção do resultado em handle_interactive_turn ~L589. PROPOSTA: admitir prosa governada no v2 (presentation_markdown=content no ramo conversacional RESULT) — consumer já neutraliza links nao-autorizados (authorizedLinks), html (escaped), imagens, code inerte. ARCHITECTURE_DECISION_REQUIRED=YES — mudança material de admissão; implementação suspensa até revisão de coordenação. PRODUCTION_AUTHENTICATED_TEST=PASS (reprodução do defeito). Deploy: nenhum nesta etapa.

@@ -237,3 +237,25 @@ Live results (Playwright, deployed MFE+API at HEAD):
 **Required before further CP-333 acceptance:** (a) bounded authenticated production business-outcome read-only smoke with legitimate subject and governed owner, proving actual emitted presentation version and displayed result without bypass; do not force Category-A by altering planner or treating fixture as real business fact, (b) actual screen-reader QA or `TEST_NOT_RUN` retained, (c) explicit product choice whether AC22 and external public URL binding AC26 remain required for full CP or become separately phased CP with revised AC and traceability. **No unapproved runtime change or redeploy** from this review. If production access/test permissions absent, report `INCONCLUSIVE` rather than invent evidence.
 
 **Decision:** `G4_RESIDUAL_CLOSURE=ACCEPT_WITH_RESIDUAL`; `DEPLOYMENT_TECHNICAL_STATUS=SUCCESS_REPORTED_NOT_INDEPENDENTLY_REPRODUCED`; `CP-333=PLANNED_NOT_PASS`; `NEXT=authenticated post-deploy outcome smoke + Product Master scope reconciliation of remaining acceptance`. Phase unchanged.
+
+
+## Production conversational markdown incident — root cause + contract proposal — 2026-10-23
+
+**Incident (PO-reported, reproduced on production):** SIPOC question on `https://minhadelpi.com.br/apps/delia` → coherent 5-section answer rendered as literal text (`**1. Suppliers**`, `-` markers visible).
+
+**Reproduction (authenticated, user-provided identity, real turn — no fixture):**
+- `session_id=46a015c1-1f15-4a05-9fd1-ddd3ec966795` · `user_turn_id=f974cc69-2ddb-4a22-901b-f4c48072fe2d` · `result_turn_id=23ef7899-abcf-4854-aa38-e4c2b449615f`
+- NDJSON `turn_result`: `presentation.version="1"`, `message_kind="RESULT"`, `grounding_status="NON_GROUNDED"`, `semantic_status="HYPOTHESIS"`, block `{kind:"text", text:<model prose with markdown syntax>}` — no `format`, no `markdown_safe`, no `presentation_markdown`.
+- DOM: `.delpi-ui-conversation-markdown` absent; headings/lists/strong = 0; literal `**`/`-` characters displayed.
+
+**ROOT_CAUSE=CONTRACT_ADMISSION (proven — not transport/frontend bug).** Chain: conversational path (`COMPOSITION_MODEL`, model structured output `{"answer": str}`) → `InteractiveTurnResult` at `handle_interactive_turn.py` (~L589) built **without** `presentation_markdown` — only `_grounded_result`/`_write_lifecycle_result` set it (from `attempt.markdown_content`, Category-A `render_specialist_outcome_rich`). `compose_presentation` → `use_markdown=false` → v1 → frontend correctly renders literal text. First loss boundary: result construction in the conversational branch — deliberate G3 admission rule (Categories B/C stay plain).
+
+**CONTRACT_GAP:** model prose carries implicit presentation intent (user asked "em tópicos"; model wrote markdown) but there is no typed channel admitting governed DÉLIA prose into `markdown_safe`. No `format` field exists in the model contract (`EXPECTED_FIELDS=("answer",)`).
+
+**Consumer safety already covers model-authored markdown** (`ConversationMarkdown`/`conversationMarkdownModel`): link tokens only become `<a>` when `href` ∈ `authorizedLinks` (else plain label); autolinks same gate; `image` → text; `html` → escaped `token.raw` (no `dangerouslySetInnerHTML`); code inert; depth/node/link bounds. Maximum residual capability of admitted model markdown = typographic structure — precisely the intended outcome. Indirect prompt injection cannot mint navigable links, executable HTML, or authority.
+
+**PROPOSAL (minimal, provider-neutral, needs coordination approval):** admit governed conversational prose into the existing v2 path — populate `presentation_markdown=content` in the conversational result branch (`COMPOSITION_MODEL`, `message_kind=RESULT`, NON_GROUNDED) — reusing `compose_presentation` unchanged. Optional refinement: skip v2 emission when the prose contains no markdown structure (plain paragraph prose stays v1 visually anyway). No second LLM call, no format classifier, no new formatter, no link registry.
+
+**ALTERNATIVE (rejected):** extend model structured output with `"format":"markdown"|"plain"` — heavier contract change (instruction + schema + adapter), model-declared format is not more trustworthy than consumer sanitization; unnecessary.
+
+**ARCHITECTURE_DECISION_REQUIRED=YES** — this is a material admission-contract change (G3's explicit B/C-plain control). Implementation held pending coordination approval. Bug-level fixes within contract: none found (transport/frontend/config all correct).
