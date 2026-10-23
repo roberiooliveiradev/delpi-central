@@ -20,31 +20,31 @@ leitura posterior independente (REST read-after-write **e** SQL TST01).
 
 | Campo (REST) | Coluna SA2 | Evidência |
 |---|---|---|
-| `address_number` | A2_ENDENT | REST+SQL changed |
-| `po_box` | A2_CXPOSTA | REST+SQL changed |
-| `commercial_contact_name` | A2_CONTATO2 | REST+SQL changed |
+| `address_number` | A2_NR_END | REST+SQL changed |
+| `po_box` | A2_CX_POST | REST+SQL changed |
+| `commercial_contact_name` | A2_CONTCOM | REST+SQL changed |
 | `fax` | A2_FAX | REST+SQL changed |
 | `website` | A2_HPAGE | REST+SQL changed |
-| `responsible_name` | A2_RESPONS | REST+SQL changed |
+| `responsible_name` | A2_NOMRESP | REST+SQL changed |
 | `icms_contributor` | A2_CONTRIB | REST+SQL changed |
 | `simples_nacional` | A2_SIMPNAC | REST+SQL changed |
-| `inss_withholding` | A2_RETINSS | REST+SQL changed |
-| `iss_withholding` | A2_RETISS | REST+SQL changed |
-| `csll_withholding` | A2_RETCSLL | REST+SQL changed |
-| `cofins_withholding` | A2_RETCOF | REST+SQL changed |
-| `pis_withholding` | A2_RETPIS | REST+SQL changed |
+| `inss_withholding` | A2_RECINSS | REST+SQL changed |
+| `iss_withholding` | A2_RECISS | REST+SQL changed |
+| `csll_withholding` | A2_RECCSLL | REST+SQL changed |
+| `cofins_withholding` | A2_RECCOFI | REST+SQL changed |
+| `pis_withholding` | A2_RECPIS | REST+SQL changed |
 | `irf_calculation` | A2_CALCIRF | REST+SQL changed |
 | `inp_calculation` | A2_CALCINP | REST+SQL changed |
 | `tax_group_code` | A2_GRPTRIB | REST+SQL changed |
-| `legal_entity_type` | A2_TIPSSOC | REST+SQL changed |
+| `legal_entity_type` | A2_TPJ | REST+SQL changed |
 | `pb_regime_code` | A2_REGPB | REST+SQL changed |
 | `swift_code` | A2_SWIFT | REST+SQL changed |
-| `purchase_price_table_code` | A2_TBPRECO | REST+SQL changed |
+| `purchase_price_table_code` | A2_ZTABPRC | REST+SQL changed |
 | `carrier_code` | A2_TRANSP | REST+SQL changed |
-| `segment_code` | A2_SEGMENT | REST+SQL changed |
-| `administrator_code` | A2_ADM | REST+SQL changed |
+| `segment_code` | A2_SATIV1 | REST+SQL changed |
+| `administrator_code` | A2_CODADM | REST+SQL changed |
 | `cnae_code` | A2_CNAE | REST+SQL changed |
-| `linked_employee_code` | A2_VINCULO | REST+SQL changed |
+| `linked_employee_code` | A2_NUMRA | REST+SQL changed |
 | `risk_code` | A2_RISCO | REST+SQL changed |
 
 ### 1.2 PUT_INCONCLUSIVE — 2 campos
@@ -146,3 +146,14 @@ Operações rastreadas (ProtheusWriteTracker): `24aae7b8`, `094435f8`,
    TST01 adequada (2º cliente SA1) → promoção se `PUT_PERSISTENCE_PROVEN`.
 2. Decisão PO sobre `linked_customer_store` (campo morto upstream no PUT).
 3. Catálogos de referência: contrato de busca para selects.
+
+
+## 8. Revisão GPT — E5 (2026-10-23)
+
+**Decisão: `ACCEPT_WITH_RESIDUAL` para implementação em código; `E5_VISUAL = INCONCLUSIVE`.** O relatório do executor indica 26 campos PUT com mudança de valor e read-back em `DELPI_TST01`, 2 inconclusivos e 1 ignorado. Os resultados de ensaio e de deploy são **reportados pelo executor**; o GPT inspecionou código/script/documentação no GitHub, mas não reexecutou chamadas REST, consultas SQL, testes, SSH ou navegador autenticado.
+
+**Correção documental deste review:** a tabela original §1.1 atribuía colunas SA2 diferentes do `SA2_COLUMN` efetivamente empregado pelo script `api-delpi/scripts/protheus_supplier_put_extended_homologation.py`. 14 referências de coluna foram ajustadas para coincidir com o script de ensaio e de-para do E2; nenhum teste foi reexecutado e nenhum contrato alterado. A tabela original **não era evidência confiável de mapeamento**; a trilha de execução deve se apoiar no script e nos registros por operação. Caso haja inconsistência entre script, SX3 real e dados, classificar `EXECUTION_DRIFT` e investigar antes de nova escrita.
+
+**Escopo provado:** a allowlist PUT contém 48 campos (22 anteriores + 26 novos), com proteção de `tax_id`, código e loja; BFF acompanha a allowlist. `simp_regime_code` e `linked_customer_code` seguem inconclusivos; `linked_customer_store` permanece ignorado e excluído. Flags produtivas OFF conforme relatório. O predicado `_delpi_safety_check` do script detecta resíduos `ZZ HOMOLOG%` na base `DELPI`, mas **não prova por si só ausência de toda alteração** em outros registros de produção; essa conclusão exige roteamento e evidência operacional independentes.
+
+**Residuais:** o teste visual autenticado na E14 não ocorreu; `PUT` pela UI permanece bloqueado pelos gates produtivos desabilitados, mesmo com controles editáveis. Rollback por `git checkout` e rebuild **não é reversão imediata por imagem pronta**; conferir política de deploy/rollback no próximo ciclo. Não autorizar ativação geral da escrita de produção por este aceite.
