@@ -108,3 +108,18 @@ Execução técnica isolada: script auditável versionado (`api-delpi/scripts/pr
 - `country_calling_code`/`link_type_code`/`esocial_category_code`: semear ACJ/CC1 em TST01 ou obter valores válidos do owner; semântica S049BR.
 - Proposta de contrato público ampliado com os 29 campos comprovados — decisão de owner + versioning.
 - `DELPI_TST_WS` permanece sem owner identificado (herdado de P1).
+
+
+## 13. Revisão GPT — aceite arquitetural E2 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para o ensaio de homologação**, com base no relatório de execução e evidências registradas no GitHub (commit de implementação `12a142877d`). O GPT não repetiu operações REST/SQL nem executou os testes no runtime; os resultados por lote são **reportados pelo executor**. O ensaio controlado produziu 7 registros fictícios em `DELPI_TST01`, com tracking, read-back e gates produtivos reportados OFF. **Não há autorização implícita para ativar campos publicamente.**
+
+**Achado de precisão — contagem:** a documentação declara 24 campos publicados e 36 experimentais adicionais, atribuindo a diferença a `municipal_registration`. Porém `municipal_registration` já consta de `SUPPLIER_FIELD_SPECS` publicado; exigir comparação real de conjuntos (set difference) entre especificações publicadas e experimentais, e reconciliar `29 PERSISTED + 4 IGNORED + 3 TEST_NOT_RUN` antes de fixar cardinalidade executiva. Até a reconciliação: `COUNT_DRIFT = TO_INVENTORY`, não promover 36 como total novo comprovado.
+
+**CNPJ:** `003876/01` com DV válido persistiu `A2_CGC` conforme GET REST e SQL TST01; registros históricos sem CNPJ possuíam documentos reportados como DV inválido. A associação é evidência forte da hipótese de rejeição/limpeza upstream por DV, **mas a regra interna exata e o motivo de resposta de sucesso sem erro ainda são `TO_INVENTORY`** (owner Gabriel/TOTVS). Classificar `TAX_ID_PERSISTENCE_VALID_CASE = PROVEN`; `TAX_ID_ROOT_CAUSE_INTERNAL = INCONCLUSIVE`, em vez de atribuir execução específica ao Execauto sem observabilidade.
+
+**Evolução de contrato:** 29 campos relatados como persistidos são candidatos para **proposta** de exposição. Confirmar inventário dos campos, semântica, minimização/LGPD, dependências, AuthZ, GET/PUT e versionamento, antes de promover; quatro ignorados não entram na allowlist e três não testados continuam fora. Os 6 campos relatados como obrigatórios no upstream precisam ser distinguidos entre rejeição geral de payload incompleto e obrigação isolada de cada campo (validar evidência por campo). A `EXPERIMENTAL_PUT_ALLOWLIST` não equivale a PUT homologado.
+
+**Segurança/resíduos:** foram criados sete registros fictícios em homologação. Bloqueio futuro em `A2_MSBLQL` não é rollback reversível e exige ação/critério do owner. Verificar política de limpeza/isolamento e preservar evidência de que a base `DELPI` não foi alvo. O transporte HTTP cleartext permanece risco residual já conhecido.
+
+**Próximo gate sugerido:** E2.R1 de **reconciliação de contagem + evidência por campo + proposta de contrato**, inicialmente documental/read-only. Nenhuma nova escrita, nenhum deploy e nenhuma expansão BFF/MFE nesta revisão.
