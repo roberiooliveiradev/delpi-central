@@ -17839,3 +17839,19 @@ TASK_ID=DELIA-ORCH-REFAC-R0-BOUNDED-01
 COMMIT=576936592b+followup (docs-only) DEPLOYED=NO (proibido nesta etapa)
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## §6.408 — Composer Settings: menu Configurações + seção Ditado (2026-10-23)
+
+**2026-10-23 — DELIA-UX-DICTATION-MODE-COMPOSER-SETTINGS-REFINEMENT-01 (spec 125):** faixa permanente de modos removida; botao discreto Settings2 na toolbar abre popover ancorado (`AnchoredPanelPortal` plugin-ui — reuse total, zero primitiva nova). `ComposerSettingsMenu` (composicao via children, CS-18) + `DictationModeSettings` (radiogroup nativo, descricoes honestas, live disabled com razao). Batch default preservado; live opt-in; `incremental.available` nunca auto-seleciona; troca bloqueada em captura (trigger some em batch; opcoes disabled em live); draft/caret/selecao preservados; tooltip do mic nomeia o modo. Zero backend/contrato/provider/settings-engine.
+
+TESTES: nova suite settings 14/14 (CS-01..CS-16+extras), dual-mode+incremental atualizados, delia 413/413, typecheck+build verdes. Defeitos de ambiente corrigidos: flush explicito de selectionchange (jsdom async) no VD-F05; copia do tooltip VD-F04; radio disabled clicavel no jsdom (DM-10 prova via disabled). DEPLOY: push ff `77f1aa67c5` -> up-prod-sequential --build delia.
+
+QA PROD 36/36 (Chrome + WAV pt-BR acentuado real, batch 303 chars UTF-8 limpa): A1-A14 menu/default/batch/no-progressive/trigger-inacessivel/transcricao/sem-auto-submit; B1-B6 live opt-in/progressivo/disabled-em-captura/edicao-preservada/sem-auto-submit; C1-C2 bloqueio+desbloqueio; D1-D7 dock real (menu dentro do viewport, default batch, live progressivo); E1-E4 320/390px. DEFECTS_PROD=0.
+
+DOD: COMPOSER_SINGLE_SURFACE=PASS; PERMANENT_MODE_SELECTOR_REMOVED=PASS; COMPOSER_SETTINGS_TRIGGER=PASS; COMPOSER_SETTINGS_MENU=PASS; DICTATION_SETTINGS_SECTION=PASS; BATCH_DEFAULT=PASS; LIVE_OPT_IN=PASS; MODE_SWITCH_SAFETY=PASS; DRAFT_PRESERVED=PASS; CARET_SELECTION_PRESERVED=PASS; NO_AUTO_SUBMIT=PASS; FULLPAGE/REAL_DOCK/MOBILE_QA=PASS; SCREEN_READER_QA=TEST_NOT_RUN.
+
+TASK_ID=DELIA-UX-DICTATION-MODE-COMPOSER-SETTINGS-REFINEMENT-01
+COMMIT=77f1aa67c5(code)+docs DEPLOYED=YES PROD_QA=36/36
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION

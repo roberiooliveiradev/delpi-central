@@ -1,6 +1,6 @@
 # DÉLIA — Composer Settings e Dictation Mode Settings — Especificação UX
 
-**Data:** 2026-10-23. **Status:** PRODUCT_UX_SPEC / PLANNED. **Owner de composição:** plugins/delia; **primitivas compartilhadas:** plugins/plugin-ui. **Consumers:** full-page e Companion Dock da DÉLIA. **Fontes:** docs 119, 120, 123 §12, 124, contratos dictation.transcription.v1 e dictation.incremental.v1. **HEAD na elaboração:** 668034de3d0ede27b2f3348cdd934727b807a9e9. Reancorar no HEAD antes de executar.
+**Data:** 2026-10-23. **Status:** IMPLEMENTED_AND_HOMOLOGATED (2026-10-23, commit `77f1aa67c5`, deploy prod + QA 36/36). **Owner de composição:** plugins/delia; **primitivas compartilhadas:** plugins/plugin-ui. **Consumers:** full-page e Companion Dock da DÉLIA. **Fontes:** docs 119, 120, 123 §12, 124, contratos dictation.transcription.v1 e dictation.incremental.v1. **HEAD na elaboração:** 668034de3d0ede27b2f3348cdd934727b807a9e9. Reancorar no HEAD antes de executar.
 
 ## 1. Decisão de produto
 
@@ -92,4 +92,4 @@ Menu é apenas configuração de apresentação/input; não permite a criação 
 
 `EXISTING_EQUIVALENT=TO_INVENTORY` para menu/popover reutilizável e `REUSE_DECISION=TO_DECIDE` até examinar HEAD; a preferência é `REUSE/EXTEND`. Prioridade: menor diff no `DeliaComposer`, primitive compartilhada somente se houver necessidade legítima e reutilização. Reancorar authorities 16→50→17→49→51→52→21→20→25, contratos e ledger; testes RED/GREEN, QA, docs/evidence, commit/push main, deploy frontend scoped e validação.
 
-**Status do documento:** decisão UX documentada; **não implica implementação/runtime, testes, CP/RQ ou fase aceitos**. Futuras configurações são `PLANNED_AS_EXTENSION_POINT`, não funcionalidades anunciadas.
+**Status do documento:** implementado, deployado e homologado em produção (36/27 checks — ver evidência VD-F06, seção Composer Settings). Futuras configurações são `PLANNED_AS_EXTENSION_POINT`, não funcionalidades anunciadas. Futuras configurações são `PLANNED_AS_EXTENSION_POINT`, não funcionalidades anunciadas.

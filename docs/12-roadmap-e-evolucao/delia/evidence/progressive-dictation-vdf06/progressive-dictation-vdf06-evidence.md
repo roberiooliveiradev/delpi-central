@@ -231,3 +231,78 @@ acentuado real (Maria TTS) — áudio real percorre o pipeline completo:
 Deploy: `up-prod-sequential.sh --build plugin-ui delia` (delia rebuilt;
 plugin-ui sem mudança neste commit). Sem rebuild de backend — flag
 incremental preservada para usuários que optarem por live.
+
+
+---
+
+## Composer Settings — menu de configurações + seção Ditado (spec 125, 2026-10-23)
+
+Implementação do menu `Configurações do campo de pergunta`: a faixa
+permanente `SegmentToggle` acima do composer foi removida e a escolha
+batch/live migrou para um popover ancorado num botão discreto (Settings2)
+na toolbar do composer, ao lado do microfone.
+
+### Implementação (commit `77f1aa67c5`)
+
+- `ComposerSettingsMenu` (plugins/delia): wrapper fino de produto —
+  `IconButton` trigger (`aria-haspopup="dialog"`, `aria-expanded`,
+  tooltip) + `AnchoredPanelPortal` canônico do plugin-ui
+  (placement/flip/clamp/Escape/clique-fora/exclusividade/tema). Fecha ao
+  escolher uma opção e devolve o foco ao trigger; conteúdo por composição
+  (`children`) — futuras seções entram sem alterar o menu (CS-18).
+- `DictationModeSettings` (plugins/delia): `fieldset`/radiogroup nativo
+  "Ditado" — radios com labels/descrições honestas; live desabilitado com
+  razão textual quando não admitido; `value/onChange/disabled/
+  liveAvailable` controlados pelo host; zero conhecimento de STT/backend.
+- `DeliaComposer`: `composerSettingsAction` injetado nas
+  `secondaryActions` dos dois caminhos (batch e live) — mesmo
+  MessageComposer, mesma máquina de estados, mesmo snapshot/restore de
+  caret. `showSettings = liveAvailable || batchAvailable || live-selecionado`.
+- Tooltip do microfone passa a nomear o modo (CS-13):
+  "Ditar mensagem — Gravar e transcrever: …" /
+  "Ditar mensagem — Transcrição em tempo real: …".
+- Nenhuma primitiva nova no plugin-ui (reuse total de
+  `AnchoredPanelPortal`/`IconButton`/`HelpTooltip`); zero backend;
+  sem persistência (mount-scoped); sem settings engine/registry.
+- Durante captura batch o painel de gravação ocupa a superfície (trigger
+  inacessível → troca impossível); durante captura live o trigger
+  permanece visível e as opções ficam disabled (consultável).
+
+### Defeitos de teste corrigidos (ambiente, não produto)
+
+- `VD-F05 manual edits`: jsdom enfileira `selectionchange`
+  assincronamente — a fila liberava após a textarea desmontar; teste
+  agora faz flush explícito do evento (padrão já usado em DM-13).
+- `VD-F04 mic tooltip`: cópia atualizada para nomear o modo (CS-13) —
+  expectativa ajustada à nova redação.
+- jsdom alterna radio desabilitado (browser real não faz) — DM-10 passa
+  a provar bloqueio via `disabled` em vez de clique no-op.
+
+### Testes
+
+- Nova suíte `DeliaComposerSettings.test.tsx` — 14 testes CS-01..CS-16 +
+  extras (outside-click, open/close repetido, dois mounts, unmount).
+- Dual-mode e incremental atualizados para o fluxo via menu — 12+6.
+- Suite DÉLIA completa: 34 arquivos, **413 testes verde**; typecheck
+  limpo; build verde.
+
+### QA real de produção pós-deploy (36/36 PASS)
+
+Chrome headless + WAV pt-BR acentuado real; transcrição batch
+`Alô, alô, você pode mostrar os indicadores de produção e a situação do
+coração, por favor.` (303 chars, UTF-8 limpa).
+
+| Cenário | Resultado |
+|---|---|
+| A — menu + batch | A1–A14 PASS: faixa removida, trigger na toolbar, menu abre, seção Ditado, batch default, live não auto-selecionado, Escape fecha + foco restaurado, gravação batch, zero texto progressivo, trigger inacessível na gravação, transcrição real, UTF-8 limpa, zero auto-submit |
+| B — live opt-in | B1–B6 PASS: menu fecha na escolha, trigger só após seleção, texto progressivo, opções disabled durante captura, edição humana preservada, zero auto-submit |
+| C — bloqueio | C1–C2 PASS: opções disabled em captura live, liberadas após descartar |
+| D — Companion Dock | D1–D7 PASS: trigger no dock, menu dentro do viewport, default batch, opt-in live, texto progressivo real |
+| E — mobile | E1–E4 PASS: 320px e 390px — trigger visível, menu dentro do viewport, batch default, gravação funcional |
+
+Deploy: `up-prod-sequential.sh --build delia` (só frontend; backend
+intocado). Probe: `C:\temp\delia-qa\vd-cs-prod.mjs`,
+screenshots `C:\temp\delia-qa\shots-cs\`. Residual conhecido:
+screen-reader real `TEST_NOT_RUN` (ambiente); larguras 360/375/420 e
+zoom 200% não cobertos pelo probe (320/390 PASS; layout é
+width-content adaptativo).
