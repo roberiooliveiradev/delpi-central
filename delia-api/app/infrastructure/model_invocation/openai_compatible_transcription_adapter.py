@@ -196,7 +196,13 @@ class OpenAICompatibleTranscriptionAdapter:
         try:
             self._check_status(response.status_code)
             cumulative = ""
-            for raw in response.iter_lines(decode_unicode=True):
+            # SSE is UTF-8 by spec, but requests decodes text/* bodies as
+            # ISO-8859-1 when no charset is present — the exact mojibake
+            # observed in production ("Alô" → "AlÃ´"). Iterating byte
+            # lines is also multibyte-safe: UTF-8 never contains 0x0A,
+            # so framing on bytes and decoding whole lines keeps every
+            # sequence intact even across chunk boundaries.
+            for raw in response.iter_lines():
                 if time.monotonic() > deadline:
                     raise DictationError(
                         PROVIDER_TIMEOUT,
@@ -204,7 +210,7 @@ class OpenAICompatibleTranscriptionAdapter:
                     )
                 if not raw:
                     continue
-                line = raw.strip()
+                line = raw.decode("utf-8", errors="replace").strip()
                 if not line.startswith("data:"):
                     continue
                 data = line[5:].strip()

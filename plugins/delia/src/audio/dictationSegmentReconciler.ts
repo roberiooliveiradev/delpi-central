@@ -236,6 +236,19 @@ export class DictationSegmentReconciler {
     return { text };
   }
 
+  /**
+   * Segment-scoped failure: the segment ends without a final. Text it
+   * already contributed stays (real provider output is never erased —
+   * provisional becomes userOwned, so cancel keeps it), pending is
+   * cancelled (nothing was inserted), later events are dropped.
+   */
+  failSegment(segmentId: string): void {
+    const seg = this.segments.get(segmentId);
+    if (!seg) return;
+    if (seg.status === "pending") seg.status = "cancelled";
+    if (seg.status === "provisional") seg.status = "userOwned";
+  }
+
   /** Status snapshot for honest UI (provisional strip / a11y). */
   segmentStatus(segmentId: string): SegmentStatus | undefined {
     return this.segments.get(segmentId)?.status;

@@ -347,7 +347,31 @@ describe("pause/resume/finalize/cancel", () => {
 });
 
 describe("error events", () => {
-  it("provider error event → recoverable_error, draft preserved", async () => {
+  it("empty_transcription event → friendly notice, session keeps listening", async () => {
+    const transport = new FakeTransport();
+    transport.scripted["seg-1"] = [
+      { type: "started", sessionId: "sess-42", segmentId: "seg-1", sequence: 1, revision: 0 },
+      { type: "error", sessionId: "sess-42", segmentId: "seg-1", sequence: 1, revision: 0, code: "empty_transcription" },
+    ];
+    transport.scripted["seg-2"] = segmentEvents(
+      "sess-42", "seg-2", 2, [], "continua",
+    );
+    const capture = new FakeCapture();
+    const { controller, state } = make(transport, capture, "texto ");
+    await controller.start();
+    capture.slice();
+    await flush();
+    // Segment-scoped failure: session stays listening, raw code hidden.
+    expect(controller.getState()).toBe("listening");
+    expect(state.errors.at(-1)).toContain("continuar falando");
+    expect(state.errors.at(-1)).not.toContain("empty_transcription");
+    // Next segment transcribes normally.
+    capture.slice();
+    await flush();
+    expect(state.draft).toBe("texto continua");
+  });
+
+  it("provider error event on one segment → notice, still listening", async () => {
     const transport = new FakeTransport();
     transport.scripted["seg-1"] = [
       { type: "started", sessionId: "sess-42", segmentId: "seg-1", sequence: 1, revision: 0 },
@@ -358,8 +382,68 @@ describe("error events", () => {
     await controller.start();
     capture.slice();
     await flush();
-    expect(controller.getState()).toBe("recoverable_error");
+    expect(controller.getState()).toBe("listening");
     expect(state.draft).toBe("texto");
-    expect(state.errors.at(-1)).toContain("Falha");
+    expect(state.errors.at(-1)).not.toContain("provider_unavailable");
+    // Finalize still works after a segment error (PO incident C stuck).
+    await controller.finalize();
+    expect(controller.getState()).toBe("review");
+  });
+
+  it("segment notice clears when the next segment transcribes", async () => {
+    const transport = new FakeTransport();
+    transport.scripted["seg-1"] = [
+      { type: "started", sessionId: "sess-42", segmentId: "seg-1", sequence: 1, revision: 0 },
+      { type: "error", sessionId: "sess-42", segmentId: "seg-1", sequence: 1, revision: 0, code: "provider_timeout" },
+    ];
+    transport.scripted["seg-2"] = segmentEvents(
+      "sess-42", "seg-2", 2, ["volta"], "volta",
+    );
+    const capture = new FakeCapture();
+    const { controller, state } = make(transport, capture);
+    await controller.start();
+    capture.slice();
+    await flush();
+    expect(state.errors.at(-1)).not.toBeNull();
+    capture.slice();
+    await flush();
+    expect(state.errors.at(-1)).toBeNull();
+  });
+
+  it("thrown session_not_found mid-capture → terminal recoverable_error, capture aborted", async () => {
+    const transport = new FakeTransport();
+    const capture = new FakeCapture();
+    const { controller, state } = make(transport, capture, "texto");
+    await controller.start();
+    transport.streamError = Object.assign(new Error("gone"), {
+      code: "session_not_found",
+    });
+    capture.slice();
+    await flush();
+    expect(controller.getState()).toBe("recoverable_error");
+    expect(capture.aborted).toBe(true);
+    expect(state.draft).toBe("texto");
+    expect(state.errors.at(-1)).not.toContain("session_not_found");
+  });
+
+  it("thrown network_error on one segment → notice, session continues", async () => {
+    const transport = new FakeTransport();
+    transport.scripted["seg-2"] = segmentEvents(
+      "sess-42", "seg-2", 2, [], "depois",
+    );
+    const capture = new FakeCapture();
+    const { controller, state } = make(transport, capture);
+    await controller.start();
+    transport.streamError = Object.assign(new Error("net"), {
+      code: "network_error",
+    });
+    capture.slice();
+    await flush();
+    expect(controller.getState()).toBe("listening");
+    expect(state.errors.at(-1)).toContain("indisponível");
+    transport.streamError = null;
+    capture.slice();
+    await flush();
+    expect(state.draft).toBe("depois");
   });
 });

@@ -70,6 +70,13 @@ export function useIncrementalDictation(
 
   if (controllerRef.current === null) {
     const capture = createSegmentedPcmCapture({
+      // Measured in production (VD-F06 rework): provider first-partial
+      // latency is ~flat (~2.5s) per segment regardless of length, so
+      // the slice length dominates TIME_TO_FIRST_VISIBLE. 2s first
+      // slice + 3s steady state keeps first text ≈4.5s and lag ≈5.5s
+      // while staying under the 120-segment/5min contract bound.
+      firstSegmentMs: 2000,
+      segmentMs: 3000,
       onLevel: (level) =>
         setLevels((prev) => {
           const next = prev.slice(1);

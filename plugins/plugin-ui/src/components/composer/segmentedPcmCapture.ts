@@ -26,6 +26,12 @@ export type SegmentedPcmCapture = {
 export type SegmentedPcmCaptureOptions = {
   /** Slice length in ms (default 4000). */
   segmentMs?: number;
+  /**
+   * First slice length in ms (default = segmentMs). A shorter first
+   * slice lowers TIME_TO_FIRST_VISIBLE honestly — provider latency is
+   * ~flat per segment, so the slice length is the dominant term.
+   */
+  firstSegmentMs?: number;
   /** WAV output sample rate (default 16000). */
   targetRate?: number;
   /** Discard trailing slices shorter than this (default 300ms). */
@@ -33,6 +39,19 @@ export type SegmentedPcmCaptureOptions = {
   /** Real RMS amplitude samples for the waveform (0..1). */
   onLevel?: (level: number) => void;
 };
+
+/** Slice threshold for the Nth emitted segment (0-based). */
+export function resolveSegmentMs(
+  emittedCount: number,
+  options: Pick<
+    SegmentedPcmCaptureOptions,
+    "segmentMs" | "firstSegmentMs"
+  > = {},
+): number {
+  const segmentMs = options.segmentMs ?? 4000;
+  const firstMs = options.firstSegmentMs ?? segmentMs;
+  return emittedCount === 0 ? firstMs : segmentMs;
+}
 
 const WORKLET_SOURCE = `
 class PcmCaptureProcessor extends AudioWorkletProcessor {
@@ -60,7 +79,6 @@ export function isSegmentedPcmCaptureSupported(): boolean {
 export function createSegmentedPcmCapture(
   options: SegmentedPcmCaptureOptions = {},
 ): SegmentedPcmCapture {
-  const segmentMs = options.segmentMs ?? 4000;
   const targetRate = options.targetRate ?? 16000;
   const minSegmentMs = options.minSegmentMs ?? 300;
 
@@ -73,6 +91,7 @@ export function createSegmentedPcmCapture(
   let chunks: Float32Array[] = [];
   let chunkFrames = 0;
   let segmentStartedAt = 0;
+  let segmentsEmitted = 0;
   let closed = true;
   let emit: ((blob: Blob, durationMs: number) => void) | null = null;
 
@@ -91,6 +110,7 @@ export function createSegmentedPcmCapture(
         targetRate,
       });
       emit(blob, durationMs);
+      segmentsEmitted += 1;
     }
     chunks = [];
     chunkFrames = 0;
@@ -136,6 +156,7 @@ export function createSegmentedPcmCapture(
       teardown();
       closed = false;
       emit = onSegment;
+      segmentsEmitted = 0;
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
@@ -162,7 +183,10 @@ export function createSegmentedPcmCapture(
         }
         const rms = Math.sqrt(sum / frames.length);
         options.onLevel?.(Math.min(1, Math.max(0.06, rms * 4)));
-        if (performance.now() - segmentStartedAt >= segmentMs) {
+        if (
+          performance.now() - segmentStartedAt >=
+          resolveSegmentMs(segmentsEmitted, options)
+        ) {
           flushSegment();
         }
       };

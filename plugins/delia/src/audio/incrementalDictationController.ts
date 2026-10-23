@@ -115,6 +115,8 @@ export class IncrementalDictationController {
   private finishing = false;
   private readonly inFlight = new Set<Promise<void>>();
   private lastDraft = "";
+  /** True while a segment-scoped notice is on screen (cleared on next applied event). */
+  private notice = false;
 
   constructor(options: IncrementalDictationControllerOptions) {
     this.capture = options.capture;
@@ -141,7 +143,13 @@ export class IncrementalDictationController {
 
   /** Start an admitted incremental session: open → capture → stream. */
   async start(): Promise<void> {
-    if (this.state !== "idle" && this.state !== "review") return;
+    if (
+      this.state !== "idle" &&
+      this.state !== "review" &&
+      this.state !== "recoverable_error"
+    ) {
+      return;
+    }
     this.finishing = false;
     this.paused = false;
     this.sequence = 0;
@@ -213,6 +221,10 @@ export class IncrementalDictationController {
     this.sessionId = null;
     this.reconciler = null;
     this.finishing = false;
+    if (this.notice) {
+      this.notice = false;
+      this.hooks.onError(null);
+    }
     this.hooks.onProvisional(null, "");
     this.setState("review");
   }
@@ -248,6 +260,10 @@ export class IncrementalDictationController {
     this.sessionId = null;
     this.reconciler = null;
     this.inFlight.clear();
+    if (this.notice) {
+      this.notice = false;
+      this.hooks.onError(null);
+    }
     this.hooks.onProvisional(null, "");
     this.setState("idle");
   }
@@ -346,8 +362,19 @@ export class IncrementalDictationController {
       if (signal.aborted) return;
       // A failed segment is honest state, never fabricated text. The
       // draft keeps whatever the segment already contributed.
-      this.setState("recoverable_error");
-      this.hooks.onError(errorMessage(error));
+      this.reconciler?.failSegment(segmentId);
+      if (isTerminalSegmentError(error)) {
+        // Session-level death (expired/foreign/missing): nothing else
+        // can be admitted — stop capture and surface the terminal state.
+        this.capture.abort();
+        this.setState("recoverable_error");
+        this.hooks.onError(errorMessage(error));
+      } else {
+        // Segment-scoped transport failure: notice + keep listening —
+        // the next segment may still transcribe normally.
+        this.notice = true;
+        this.hooks.onError(errorMessage(error));
+      }
     }
   }
 
@@ -356,10 +383,12 @@ export class IncrementalDictationController {
     if (!reconciler) return;
     if (event.type === "started") return;
     if (event.type === "error") {
-      this.setState("recoverable_error");
-      this.hooks.onError(
-        `Falha na transcrição do trecho (${event.code ?? "error"}).`,
-      );
+      // Segment-scoped error event (e.g. empty_transcription on a
+      // silent stretch): this segment ends, the session keeps
+      // listening. Raw codes never reach the user.
+      reconciler.failSegment(segmentId);
+      this.notice = true;
+      this.hooks.onError(errorMessage({ code: event.code }));
       return;
     }
     if (event.type !== "partial" && event.type !== "final") return;
@@ -386,6 +415,10 @@ export class IncrementalDictationController {
     ) {
       this.hooks.setCaret(result.range.end);
     }
+    if (this.notice) {
+      this.notice = false;
+      this.hooks.onError(null);
+    }
     this.hooks.onProvisional(
       isFinal ? null : segmentId,
       isFinal ? "" : event.text ?? "",
@@ -393,12 +426,27 @@ export class IncrementalDictationController {
   }
 }
 
+/** Codes that kill the whole session — everything else is segment-scoped. */
+const TERMINAL_SEGMENT_CODES = new Set([
+  "session_not_found",
+  "session_expired",
+  "forbidden",
+  "unauthenticated",
+]);
+
+function isTerminalSegmentError(error: unknown): boolean {
+  return TERMINAL_SEGMENT_CODES.has(errorCode(error));
+}
+
+function errorCode(error: unknown): string {
+  if (error && typeof error === "object" && "code" in error) {
+    return String((error as { code: unknown }).code ?? "");
+  }
+  return "";
+}
+
 function errorMessage(error: unknown): string {
-  const code =
-    error instanceof Error && "code" in error
-      ? String((error as { code: unknown }).code)
-      : "";
-  switch (code) {
+  switch (errorCode(error)) {
     case "forbidden":
     case "unauthenticated":
       return "Você não tem permissão para transcrever áudio. Você pode digitar a mensagem.";
@@ -418,6 +466,8 @@ function errorMessage(error: unknown): string {
     case "payload_too_large":
     case "duration_exceeded":
       return "Um trecho de áudio excede o limite permitido. Dite trechos menores.";
+    case "empty_transcription":
+      return "Não consegui reconhecer esse trecho. Você pode continuar falando.";
     default:
       return "Falha na transcrição ao vivo. Você pode continuar digitando ou tentar novamente.";
   }
