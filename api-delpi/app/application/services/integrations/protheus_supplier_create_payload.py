@@ -116,9 +116,19 @@ def normalize_supplier_fields(raw: Mapping[str, Any] | None) -> dict[str, str]:
     return out
 
 
-def normalize_supplier_field_value(field: str, value: Any) -> str:
-    """Canonical per-field normalization shared by POST and PUT."""
-    spec = SUPPLIER_FIELD_SPECS[field]
+def normalize_supplier_field_value(
+    field: str,
+    value: Any,
+    *,
+    specs: Mapping[str, dict[str, Any]] | None = None,
+) -> str:
+    """Canonical per-field normalization shared by POST and PUT.
+
+    ``specs`` defaults to the published contract allowlist; experiments
+    (X4.FIELDS.E1) may inject a widened spec table without touching the
+    public contract.
+    """
+    spec = (specs or SUPPLIER_FIELD_SPECS)[field]
     # Preserve leading zeros — never cast numeric types back after stringify of ints.
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         raise ProtheusRestError(
