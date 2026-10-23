@@ -17806,3 +17806,36 @@ COMMIT=91a3913d02 DEPLOYED=YES PROD_QA=14/14 UTF8_CLEAN TTFV_MS=4550
 R01-R18=PASS (screen reader segue TEST_NOT_RUN por ambiente)
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.405 — VD dual-mode: batch default + live opt-in (2026-10-23)
+
+**2026-10-23 — DELIA-VD-DUAL-MODE-BATCH-DEFAULT-IMPLEMENT-TEST-DEPLOY-01 (spec 123 §12, decisao PO `86ab659607`):** selecao de modo bounded em `DeliaComposer` — `DictationMode` mount-scoped default `batch`; `SegmentToggle` canonico do plugin-ui; live so via opt-in explicito; `incremental.available` nunca auto-seleciona; troca bloqueada durante captura/transcricao (onCaptureActivityChange nos dois caminhos); draft+caret/selecao preservados no switch; aviso honesto se live cai apos selecao; nota de revisao no modo live. Zero contrato/backend/provider novo; zero segundo composer/gravador.
+
+TESTES: suite dual-mode 12/12 (DM-01..DM-17; DM-18=browser), incremental atualizado 6/6 (selecao explicita), delia 399/399, typecheck+build+federation verdes. DEPLOY: push ff `61ff9d02da` -> up-prod-sequential --build plugin-ui delia (delia rebuilt; backend intocado, flag incremental preservada).
+
+QA PROD 27/27 (Chrome + WAV pt-BR acentuado real): A1-A9 batch default+transcricao real 318 chars UTF-8+sem texto progressivo+travado na gravacao+sem auto-submit; B1-B6 live opt-in+progressivo+edicao preservada+sem auto-submit; C1-C2 troca bloqueada em captura; D1-D5 dock real default batch+live funcional; E1-E3 320/390px acessivel. DEFECTS_PROD=0.
+
+DOD: DEFAULT_MODE=BATCH; LIVE_MODE=OPT_IN; BATCH_REAL_TRANSCRIPTION=PASS; BATCH_NO_INCREMENTAL_SESSION=PASS; MODE_SWITCH_IDLE_ONLY=PASS; DRAFT_PRESERVED=PASS; CARET_SELECTION_PRESERVED=PASS; NO_AUTO_SUBMIT=PASS; FULLPAGE/REAL_DOCK/MOBILE_QA=PASS; BACKEND_CONTRACTS_PRESERVED=PASS.
+
+TASK_ID=DELIA-VD-DUAL-MODE-BATCH-DEFAULT-IMPLEMENT-TEST-DEPLOY-01
+COMMIT=61ff9d02da(code)+docs DEPLOYED=YES PROD_QA=27/27
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.406 — Estabilizacao funcional pre-refatoracao D4/D5/D5-R/D8/D8-R/N1 (2026-10-23)
+
+**2026-10-23 — DELIA-C3-PRE-REFACTOR-FUNCTIONAL-STABILIZATION-01 (doc 130):** pacote bounded pre-R0..R7. Causas: secoes de guidance so inteiras no packer + indice productGuide esgotava budget -> displayFormatCatalog omitido (P1); query referencial sem referente -> owner semantic search miss (P3); field_labels governados ausentes das trilhas deterministicas (P4). Fixes: retry unico context-folded na descoberta candidate-bound + instrucoes de referentes; preview limitado marcado para secoes ponteiro/enumeraveis; field_labels propagados; vocabulario CRI +12 entradas. RED/GREEN 11 testes novos + regressao i04 preservada; suite ~2139 verde; eval local delia-json limpo. Deploy: `6a896a695d` -> imagem `1201882fdceb` healthy, health 200, 401 fail-closed, rollback `3a338850ea2a`. Homologacao prod Kimi (user autorizado): D4/D5/D5-R/D5-schema/D8/D8-R/N1 = PASS. Residuo: variancia de busca semantica owner em D8-R; previews parciais por design. Plano 125 nao autorizado/iniciado.
+
+TASK_ID=DELIA-C3-PRE-REFACTOR-FUNCTIONAL-STABILIZATION-01
+COMMIT=072629e67b+6a896a695d DEPLOYED=YES PROD_HOMOLOGATION=7/7
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.407 — R0 refactor orchestrator: baseline + inventario finito M01-M10 (2026-10-23)
+
+**2026-10-23 — DELIA-ORCH-REFAC-R0-BOUNDED-01 (r0-execution-and-evidence.md):** primeira etapa do plano 125 executada sob autorizacao explicita do PO. READ-ONLY: `CODE_CHANGED=NO`, diff = 3 arquivos `.md`. BASE_SHA `9a37d19917` (ff de `7bff57f192`). Inventario AST de `orchestration.py` (12.406 linhas): 186 defs (122 funcoes modulo + 63 metodos OCO + 1 excecao) + 124 constantes — todas classificadas em M01-M10 com KEEP/EXTEND/EXTRACT?/SKIP/TO_INVENTORY, owner-alvo e consumers. DAG: orchestration importa apenas stdlib+application+domain (zero infra/adapters); unico importer runtime = `root_composer` (OCO); 44 arquivos de teste importam internals. Auditoria residual: 22 simbolos S01-S24 confirmados removidos; `render_specialist_outcome` sem consumer runtime -> DEPRECATED_ACTIVE? (decisao R6); `_single_free_text_argument_from_input` TO_INVENTORY (S18/F36); M07 guidance preserva SKIP/117. Baseline congelada: suite backend 2165 testes exit 0 no BASE_SHA; release prod `6a896a695d` img `1201882fdceb`, homologacao Kimi 7/7 (doc 130). Parecer independente: doc 132 (`578783ae34`) ACCEPT_WITH_RESIDUAL + R0_ENTRY=ELIGIBLE_FOR_PO_AUTHORIZATION; autorizacao PO = prompt direto. ALLOWED_FILES precisos definidos para R1-R6; nenhum arquivo NEW recomendado (evidence_projection.py segue candidato condicional AP-02). R1-R7 permanecem NOT_AUTHORIZED.
+
+TASK_ID=DELIA-ORCH-REFAC-R0-BOUNDED-01
+COMMIT=576936592b+followup (docs-only) DEPLOYED=NO (proibido nesta etapa)
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION

@@ -2,14 +2,24 @@ import { httpGet, suppliesApiUrl } from "./httpClient";
 
 export type HomeAttentionCardStatus = "available" | "unavailable";
 
+export type HomeAttentionPreviewItem = {
+  label: string;
+  detail?: string | null;
+};
+
+export type HomeAttentionTarget =
+  | { kind: "view"; viewId: string; query?: string | null }
+  | { kind: "href"; href: string };
+
 export type HomeAttentionCard = {
   id: string;
-  viewId: string;
   title: string;
   description: string;
-  requiredCap: string;
   count: number | null;
+  countUnit?: string | null;
   status: HomeAttentionCardStatus;
+  preview?: HomeAttentionPreviewItem[];
+  target?: HomeAttentionTarget | null;
 };
 
 export type HomeAttentionPartialFailure = {

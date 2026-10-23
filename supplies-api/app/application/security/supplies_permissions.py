@@ -8,6 +8,9 @@ SUPPLIES_ACCESS = "supplies.access"
 SUPPLIES_MANAGE = "supplies.manage"
 OPERATIONAL_UNITS = ("01", "02")
 
+# Existing app permission — reused only to gate the safety-stock deep link.
+SAFETY_STOCK_APP_ACCESS = "estoque-seguranca.access"
+
 
 def _has(user: EffectiveUser, code: str) -> bool:
     return user.has_permission(code)

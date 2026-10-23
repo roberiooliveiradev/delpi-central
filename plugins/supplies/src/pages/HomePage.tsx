@@ -12,7 +12,7 @@ import {
 import {
   type HomeAttentionCard,
 } from "../api/homeAttention";
-import { navigatePluginView } from "../app/pluginNavigation";
+import { navigatePluginPath, navigatePluginView } from "../app/pluginNavigation";
 import type { PluginRoutableView } from "../app/pluginRoutes";
 import { useSuppliesSession } from "../app/SuppliesSessionContext";
 import {
@@ -167,9 +167,9 @@ export function HomePage({ basePath }: HomePageProps) {
     : sections;
 
   const navigateRoute = useCallback(
-    (route: Pick<HubRouteDef, "viewId" | "label">) => {
+    (route: Pick<HubRouteDef, "viewId" | "label">, search?: string) => {
       setRecents(pushRecentView({ viewId: route.viewId, label: route.label }));
-      navigatePluginView(route.viewId, { basePath });
+      navigatePluginView(route.viewId, { basePath, search });
     },
     [basePath],
   );
@@ -193,8 +193,35 @@ export function HomePage({ basePath }: HomePageProps) {
   );
 
   const goToCard = (card: HomeAttentionCard) => {
-    if (!isNavigationTarget(card.viewId) || card.status === "unavailable") return;
-    navigateRoute({ viewId: card.viewId, label: card.title });
+    const target = card.target;
+    if (!target || card.status === "unavailable") return;
+    if (target.kind === "view" && isNavigationTarget(target.viewId)) {
+      navigateRoute({ viewId: target.viewId, label: card.title }, target.query ?? undefined);
+      return;
+    }
+    if (target.kind === "href") {
+      navigatePluginPath(target.href);
+    }
+  };
+
+  const cardDescription = (card: HomeAttentionCard): ReactNode => {
+    const preview = (card.preview ?? []).slice(0, 3);
+    if (!preview.length) return card.description;
+    return (
+      <>
+        {card.description}
+        <ul className="sp-home-attention__preview">
+          {preview.map((item) => (
+            <li key={`${card.id}:${item.label}`} className="sp-home-attention__preview-item">
+              <span>{item.label}</span>
+              {item.detail ? (
+                <span className="sp-home-attention__preview-detail">{item.detail}</span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </>
+    );
   };
 
   const attentionCards = attention.cards;
@@ -226,11 +253,16 @@ export function HomePage({ basePath }: HomePageProps) {
               id: card.id,
               title:
                 card.count == null ? card.title : `${card.title} · ${card.count}`,
-              description: card.description,
+              description: cardDescription(card),
               tone: card.status === "unavailable" ? "neutral" : "warning",
-              actionLabel: card.status === "unavailable" ? undefined : "Abrir",
+              actionLabel:
+                card.status === "unavailable" || !card.target
+                  ? undefined
+                  : "Abrir",
               onAction:
-                card.status === "unavailable" ? undefined : () => goToCard(card),
+                card.status === "unavailable" || !card.target
+                  ? undefined
+                  : () => goToCard(card),
             }))}
           >
             {partialMessages.length > 0 ? (

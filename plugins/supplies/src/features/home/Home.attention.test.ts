@@ -39,17 +39,41 @@ describe("Home attention UX", () => {
     expect(shell).toMatch(/loadHomeAttention/);
   });
 
+  it("renderiza contrato real: target explícito, prévia limitada e sem atalhos estáticos", () => {
+    const page = readFileSync(join(dir, "../../pages/HomePage.tsx"), "utf8");
+    const api = readFileSync(join(dir, "../../api/homeAttention.ts"), "utf8");
+    // Target explícito — navegação vem do contrato, não de viewId estático.
+    expect(api).toMatch(/kind:\s*"view"/);
+    expect(api).toMatch(/kind:\s*"href"/);
+    expect(page).toMatch(/target\.kind === "view"/);
+    expect(page).toMatch(/target\.kind === "href"/);
+    expect(page).toMatch(/target\.query/);
+    // Prévia limitada a 3 registros vindos da resposta.
+    expect(page).toMatch(/preview \?\? \[\]\)\.slice\(0, 3\)/);
+    expect(page).toMatch(/sp-home-attention__preview/);
+    // Sem cards estáticos disfarçados de pendência.
+    expect(page).not.toMatch(/my_tasks"\s*\}/);
+    expect(page).not.toMatch(/"administration"\s*\)/);
+    // Indisponível nunca vira ação nem contagem.
+    expect(page).toMatch(/status === "unavailable"/);
+  });
+
   it("positive: carrega cards e limpa erro", async () => {
     mockedGet.mockResolvedValueOnce({
       cards: [
         {
-          id: "pr",
-          viewId: "purchase_requests",
-          title: "SC",
+          id: "purchase_requests_ordering",
+          title: "Solicitações aguardando pedido",
           description: "desc",
-          requiredCap: "purchaseRequests",
-          count: null,
+          count: 2,
+          countUnit: "solicitações",
           status: "available",
+          preview: [{ label: "SC 000123", detail: "Fulano" }],
+          target: {
+            kind: "view",
+            viewId: "purchase_requests",
+            query: "overall_stage=awaiting_order",
+          },
         },
       ],
       partialFailures: [],
@@ -78,16 +102,17 @@ describe("Home attention UX", () => {
     mockedGet.mockResolvedValueOnce({
       cards: [
         {
-          id: "overview",
-          viewId: "overview",
-          title: "Visão geral",
+          id: "late_deliveries",
+          title: "Recebimentos em atraso",
           description: "desc",
-          requiredCap: "analytics",
           count: null,
-          status: "available",
+          countUnit: null,
+          status: "unavailable",
+          preview: [],
+          target: null,
         },
       ],
-      partialFailures: [{ source: "aux", message: "fonte auxiliar falhou" }],
+      partialFailures: [{ source: "late_deliveries", code: "source_unavailable" }],
     });
     await loadHomeAttention();
     expect(getHomeAttentionSnapshot().cards).toHaveLength(1);

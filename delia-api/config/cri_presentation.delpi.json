@@ -950,6 +950,66 @@
       "article": "o",
       "label": "nome fantasia",
       "suffix": "informado"
+    },
+    "groupcode": {
+      "article": "o",
+      "label": "código do grupo",
+      "suffix": "informado"
+    },
+    "productcode": {
+      "article": "o",
+      "label": "código do produto",
+      "suffix": "informado"
+    },
+    "groupcategory": {
+      "article": "a",
+      "label": "categoria do grupo",
+      "suffix": "informada"
+    },
+    "summary": {
+      "article": "o",
+      "label": "resumo",
+      "suffix": "publicado"
+    },
+    "purpose": {
+      "article": "a",
+      "label": "finalidade",
+      "suffix": "publicada"
+    },
+    "usewhen": {
+      "article": "a",
+      "label": "orientação de uso",
+      "suffix": "publicada"
+    },
+    "howtouse": {
+      "article": "a",
+      "label": "instruções de uso",
+      "suffix": "publicadas"
+    },
+    "donotusewhen": {
+      "article": "a",
+      "label": "restrições de uso",
+      "suffix": "publicadas"
+    },
+    "productguide": {
+      "article": "o",
+      "label": "guia do produto",
+      "suffix": "publicado"
+    },
+    "displayformatcatalog": {
+      "article": "o",
+      "label": "catálogo de formatos de exibição",
+      "suffix": "publicado"
+    },
+    "sections": {
+      "article": "a",
+      "label": "seções",
+      "suffix": "publicadas"
+    },
+    "topics": {
+      "article": "o",
+      "label": "tópicos",
+      "suffix": "publicados"
     }
   }
 }

@@ -4,7 +4,7 @@ const HOME_HELP = {
   vsOverview:
     "Início é ação e descoberta. Visão geral é o painel de KPIs do período — só aparece se você tiver acesso analítico.",
   attention:
-    "Atalhos autorizados para o que precisa de ação. Contagens ao vivo entram nas próximas jornadas; se este bloco falhar, os caminhos abaixo continuam disponíveis.",
+    "Pendências reais do seu escopo — solicitações sem pedido, aguardando recebimento, pedidos e recebimentos em atraso e itens abaixo do estoque de segurança — com contagem e prévia. Cada cartão abre a lista já filtrada. Se uma origem falhar, o cartão avisa a indisponibilidade sem virar zero.",
   paths:
     "Caminhos por seção liberados para o seu acesso. Busque, fixe favoritos e reabra os últimos acessos. Objetivo: chegar à ação em poucos cliques.",
   search:
@@ -14,9 +14,9 @@ const HOME_HELP = {
   recents:
     "Últimas áreas abertas neste navegador. A lista respeita as permissões atuais.",
   queueOk:
-    "Nenhum atalho de atenção pendente no momento. Os caminhos e a busca abaixo continuam disponíveis.",
+    "Todas as fontes de atenção responderam e nenhuma pendência foi confirmada no seu escopo. Os caminhos e a busca abaixo continuam disponíveis.",
   heroAttention:
-    "Quantidade de atalhos de atenção disponíveis agora. «Em dia» significa que não há pendências neste bloco.",
+    "Quantidade de situações de atenção com pendência confirmada no seu escopo. Cada cartão abaixo detalha a origem e a contagem — «Em dia» significa que todas as fontes responderam sem pendências.",
   heroUnits:
     "Quantas filiais estão liberadas no seu escopo do Portal. Os dados operacionais respeitam esse limite.",
   heroOverview:
@@ -25,7 +25,7 @@ const HOME_HELP = {
     "Filiais do recorte. Quem tem uso normal consulta Santa Catarina e Espírito Santo; a escolha é filtro, não permissão.",
   sections: {
     attention:
-      "Entrada do Portal e fila pessoal (Minhas tarefas) — ação do dia, sem misturar com o painel de KPIs.",
+      "Entrada do Portal — ação do dia, sem misturar com o painel de KPIs.",
     analytics:
       "Visão geral, negociações e indicadores do período. Não substitui o bloco Atenção do Início.",
     purchase_requests:
