@@ -125,3 +125,16 @@ Cobertura adicionada: allowlist E6 (51 PUT nas duas camadas), par composto (pair
 **supplies-api:** `suppliers_routes.py`, `suppliers_dto.py`, `tests/test_suppliers_routes.py`.
 **MFE:** `types.ts`, `supplierCatalogs.ts`, `SupplierFormFields.tsx`, `SupplierCreatePage.tsx`, `SupplierDetailPage.tsx`, `suppliers.test.ts`, `helpTooltips.ts`, `userManualContent.ts`.
 **Docs:** este arquivo + `IMPLEMENTATION-PLAN.md`.
+
+
+## 12. Revisão GPT — E6 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para a implementação E6 em código**, baseado em inspeção do relatório, dos contratos PUT api-delpi/BFF, do use case de composição de par e do componente de seleção no GitHub (source `5747665a84`). Os resultados de PUT em `DELPI_TST01`, testes (441/442/372), deploy e smoke são **reportados pelo executor**, não reexecutados pelo GPT; validação de navegador autenticado = `TEST_NOT_RUN`.
+
+**Capacidade real:** 28/29 campos E3 podem ser apresentados como editáveis (26 E5 + `simp_regime_code` + `linked_customer_store`). O conjunto PUT com 51 chaves inclui `linked_customer_code` **somente como companion imutável** do par, não como campo livremente alterável. `linked_customer_store` só pode mudar para loja válida do cliente já vinculado, com código original reobtido via GET no owner `api-delpi`. Handoff para mutation de `linked_customer_code` permanece aberto junto ao owner TOTVS.
+
+**Catálogos:** seis kinds read-only novos e enum `legal_entity_type` estão implementados; `tax-groups` e `risk-codes` continuam sem fonte/semântica contratadas. Validar em browser autenticado carregamento, filtros, chaves compostas, empty/error, teclado, escopo de filial/unidade e preservação de draft em criação e E14.
+
+**Riscos residuais a verificar:** (1) o código atual resolve o companion usando GET antes do PUT e testa igualdade explícita quando o cliente fornece código; confirmar comportamento sob alterações concorrentes (TOCTOU) com reconciliação pós-escrita; (2) no relatório, `PUT_EDITABLE_FIELDS=51` significa allowlist técnica, não 51 campos editáveis na UI; (3) `_delpi_safety_check` por prefixo de registro fictício é evidência limitada e não substitui verificação de destino REST/SQL; (4) rollback por checkout+rebuild deve ser testado/confirmado em procedimento operacional, não equivale a imagem pronta.
+
+**Conclusão de release:** `E6_CODE=ACCEPT_WITH_RESIDUAL`; `E6_RUNTIME=PASS (executor-reported smoke)`; `E6_VISUAL=INCONCLUSIVE`; `ERP_WRITE_GATES=OFF`; não ativar escrita produtiva por esta revisão. Próxima tarefa: aceitação visual autenticada dos seis catálogos e do par cliente/loja, sem POST/PUT de fornecedor real.
