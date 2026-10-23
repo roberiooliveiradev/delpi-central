@@ -620,7 +620,8 @@ export type ProductionRunSnapshot = {
 /** Parada MES aberta do run (fato realtime — diferente das paradas TOTVS). */
 export type RunDowntimeView = {
   id: string;
-  runId: string;
+  /** NULL quando a parada é autônoma (monitoramento do CT sem OP). */
+  runId: string | null;
   reasonCode: string | null;
   reasonLabel: string | null;
   category: string | null;
@@ -856,6 +857,62 @@ export async function classifyRunDowntime(
     },
   );
   return readEnvelope<RunDowntimeView>(response, "Não foi possível registrar o motivo.");
+}
+
+/** Classifica parada pela identidade real — cobre paradas sem run
+ * (monitoramento autônomo) e qualquer parada do posto da sessão. */
+export async function classifyWorkCenterDowntime(
+  token: string,
+  sessionToken: string,
+  downtimeId: string,
+  body: { reasonCode: string; note?: string | null },
+): Promise<RunDowntimeView> {
+  const response = await fetch(
+    API_BASE +
+      "/public/machine-load/" +
+      encodeURIComponent(token) +
+      "/mes/downtimes/" +
+      encodeURIComponent(downtimeId) +
+      "/classify",
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+      body: JSON.stringify({
+        reasonCode: body.reasonCode,
+        note: body.note ?? null,
+        website: "",
+      }),
+    },
+  );
+  return readEnvelope<RunDowntimeView>(response, "Não foi possível registrar o motivo.");
+}
+
+/** CTs sensorizados (vínculo pulse_counter) da filial — inclui postos sem
+ * operação publicada; alimenta o seletor do cockpit (RQ-11). */
+export async function fetchSensorizedWorkCenters(
+  token: string,
+  branch: string,
+): Promise<string[]> {
+  const params = new URLSearchParams({ branch });
+  const response = await fetch(
+    API_BASE +
+      "/public/machine-load/" +
+      encodeURIComponent(token) +
+      "/mes/work-centers?" +
+      params,
+    { headers: { Accept: "application/json" } },
+  );
+  const data = await readEnvelope<{ items: { workCenter: string }[] }>(
+    response,
+    "Postos sensorizados indisponíveis.",
+  );
+  return (data.items ?? [])
+    .map((item) => item.workCenter)
+    .filter((code): code is string => typeof code === "string" && code.length > 0);
 }
 
 // ---------------------------------------------------------------------------

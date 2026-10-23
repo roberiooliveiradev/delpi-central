@@ -1336,6 +1336,7 @@ def test_product_detail_aggregates_work_centers_in_cutoff() -> None:
         "description": "MATERIAL 50320064",
         "unit": "PC",
         "pickup_location": "A-01",
+        "inventory_blocked": False,
     }
     assert [row["work_center"] for row in data["work_centers"]] == ["CT-01", "CT-02"]
     assert data["work_centers"][0]["to_deliver_qty"] == 0.0

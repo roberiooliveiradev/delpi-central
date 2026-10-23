@@ -99,6 +99,30 @@ class IntegrationDeviceSnapshotService:
             "items": items,
         }
 
+    def list_counters_by_branch(
+        self,
+        *,
+        branch: str,
+        role_key: str | None = _PULSE_COUNTER_ROLE,
+    ) -> dict[str, Any]:
+        """Enumera todos os contadores amarrados a CTs da filial.
+
+        Contrato S2S do monitoramento autonomo do MES (PC-MES-CT-
+        AUTONOMOUS-DOWNTIME): um unico GET por filial por tick — sem N+1
+        e sem acesso direto ao banco do Pulse pelo consumidor.
+        """
+        branch_norm = str(branch or "").strip()
+        if branch_norm not in {"01", "02"}:
+            raise ValueError("Filial invalida.")
+        rows = self._placements.list_bound_devices(
+            branch=branch_norm,
+            anchor_type="work_center",
+        )
+        if role_key:
+            rows = [row for row in rows if str(row.get("role_key") or "") == role_key]
+        items = [device_row_to_integration_snapshot(row) for row in rows]
+        return {"branch": branch_norm, "items": items}
+
     def get_by_device_id(self, device_id: UUID) -> dict[str, Any]:
         device = self._devices.get_by_id(device_id)
         if device is None:

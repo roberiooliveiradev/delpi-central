@@ -114,14 +114,6 @@ class PublicMesWorkCenterTodayService:
         center = str(work_center or "").strip()
         if not center:
             raise ValueError("Informe o centro de trabalho.")
-        resources = self._machine_load.public_snapshot_work_center_resources(
-            branch=code, work_center=center
-        )
-        if resources is None:
-            raise ValueError(
-                f"Centro de trabalho «{center}» não está na fila publicada desta filial."
-            )
-
         # 3-4. Sessão de bancada obrigatória e pertencente a ESTE posto —
         # o workCenter do navegador nunca é autoridade.
         session = self._run_service.resolve_bench_session(session_token)

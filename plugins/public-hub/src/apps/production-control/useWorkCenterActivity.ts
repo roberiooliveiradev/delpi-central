@@ -16,6 +16,7 @@ const ACTIVITY_REASONS = new Set([
   "downtime_classified",
   "automatic_downtime_started",
   "automatic_downtime_ended",
+  "autonomous_activity",
 ]);
 
 const DAY_WATCH_MS = 30_000;

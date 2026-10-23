@@ -394,6 +394,12 @@ class ProductionRunService:
         workstation_type = resolve_workstation_type_snapshot(op)
 
         with self._repo.transaction() as conn:
+            # Arbitragem CT autônomo × run (ADR-03): a trava serializa com o
+            # tick do monitoramento; fatos autônomos abertos (run_id NULL)
+            # são encerrados na fronteira do run — parada pendente de
+            # classificação é preservada como linha encerrada. Nenhum pulso
+            # anterior ao Play é atribuído ao run (anchor_counter).
+            self._mes.lock_work_center(branch=branch, work_center=work_center, conn=conn)
             run = self._repo.create_run_with_segment(
                 branch=branch,
                 work_center=work_center,
@@ -418,7 +424,22 @@ class ProductionRunService:
                 conn=conn,
             )
             at = self._canonical_run_start(run)
+            closed_autonomous = self._mes.close_autonomous_open_facts(
+                branch=branch, work_center=work_center, conn=conn, at=at
+            )
             self._mes.record_run_started(run, conn=conn, at=at)
+            if closed_autonomous.get("downtime") or closed_autonomous.get("state"):
+                self._audit(
+                    "autonomous_facts_closed_on_run_start",
+                    run=run,
+                    session=session,
+                    conn=conn,
+                    occurred_at=at,
+                    details={
+                        "closedDowntimeId": (closed_autonomous.get("downtime") or {}).get("id"),
+                        "closedStateId": (closed_autonomous.get("state") or {}).get("id"),
+                    },
+                )
             self._audit(
                 "run_started", run=run, session=session, conn=conn, occurred_at=at
             )

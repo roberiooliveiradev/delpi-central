@@ -639,6 +639,48 @@ def build_production_run_service(
     )
 
 
+def build_mes_autonomous_monitor_service(
+    *, pulse_gateway: Any | None = None
+) -> Any:
+    """Monitor autônomo de CT sem run (PC-MES-CT-AUTONOMOUS-DOWNTIME)."""
+    from production_control_app.application.services.mes_autonomous_monitor_service import (  # noqa: E501
+        MesAutonomousMonitorService,
+    )
+    from production_control_app.application.services.mes_run_lifecycle_service import (
+        MesRunLifecycleService,
+    )
+    from production_control_app.infrastructure.persistence.plugins_postgres_connection import (  # noqa: E501
+        get_connection,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_repository import (  # noqa: E501
+        PostgresDowntimeEventRepository,
+        PostgresDowntimeReasonRepository,
+        PostgresMesAuditRepository,
+        PostgresWorkCenterPulseObserverRepository,
+        PostgresWorkCenterStateRepository,
+    )
+    from production_control_app.infrastructure.persistence.postgres_production_run_repository import (  # noqa: E501
+        PostgresProductionRunRepository,
+    )
+
+    return MesAutonomousMonitorService(
+        pulse_gateway=pulse_gateway or build_production_pulse_gateway(),
+        run_repository=PostgresProductionRunRepository(),
+        observer_repository=PostgresWorkCenterPulseObserverRepository(),
+        mes_lifecycle=MesRunLifecycleService(
+            states=PostgresWorkCenterStateRepository(),
+            downtimes=PostgresDowntimeEventRepository(),
+            reasons=PostgresDowntimeReasonRepository(),
+            run_lookup=PostgresProductionRunRepository().get_run,
+        ),
+        audit_repository=PostgresMesAuditRepository(),
+        connection_factory=get_connection,
+        enabled=settings.PC_MES_CT_AUTONOMOUS_ENABLED,
+        work_centers_allowlist=settings.PC_MES_CT_AUTONOMOUS_WORK_CENTERS,
+        auto_downtime_seconds=settings.PC_MES_AUTO_DOWNTIME_SECONDS,
+    )
+
+
 def build_mes_integration_read_service() -> Any:
     from production_control_app.application.services.mes_integration_read_service import (
         MesIntegrationReadService,

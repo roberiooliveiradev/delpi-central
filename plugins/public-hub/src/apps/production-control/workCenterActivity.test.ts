@@ -90,11 +90,11 @@ describe("timelineSegments", () => {
 });
 
 describe("classifiableDowntime", () => {
-  it("requires real runId and downtime id", () => {
+  it("requires the downtime id; autonomous stops (runId null) are classifiable", () => {
     assert.equal(classifiableDowntime(item({ downtime: null })), null);
-    assert.equal(
+    assert.deepEqual(
       classifiableDowntime(item({ runId: null, downtime: { id: "d1", reasonCode: null, reasonLabel: null, category: null, note: null, confirmed: false } })),
-      null,
+      { runId: null, downtimeId: "d1" },
     );
     assert.deepEqual(
       classifiableDowntime(item({ downtime: { id: "d1", reasonCode: null, reasonLabel: null, category: null, note: null, confirmed: false } })),

@@ -32,6 +32,10 @@ from production_control_app.infrastructure.persistence.plugins_postgres_connecti
 )
 
 _REASONS = f"{PC_SCHEMA_NAME}.downtime_reason_catalog"
+def _work_center_lock_key(branch: str, work_center: str) -> str:
+    return f"pc-mes-wc:{branch}:{work_center}"
+
+
 _STATE_EVENTS = f"{PC_SCHEMA_NAME}.work_center_state_events"
 _DOWNTIMES = f"{PC_SCHEMA_NAME}.downtime_events"
 
@@ -54,6 +58,20 @@ def _utc_now() -> datetime:
 
 
 class PostgresWorkCenterStateRepository:
+    def lock_work_center(self, *, branch: str, work_center: str, conn: Any) -> None:
+        """Serialização por CT dentro da transação chamadora.
+
+        pg_advisory_xact_lock sobre a chave do posto — toda escrita em
+        fatos MES do (branch, work_center) passa por aqui ou pelo
+        try_lock do tick autônomo: Play/transições e monitoramento sem
+        OP nunca produzem fatos concorrentes.
+        """
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT pg_advisory_xact_lock(hashtext(%s))",
+                (_work_center_lock_key(branch, work_center),),
+            )
+
     def get_open(
         self, *, branch: str, work_center: str, conn: Any | None = None
     ) -> dict[str, Any] | None:
@@ -716,3 +734,118 @@ class PostgresMesAuditRepository:
                     (run_id,),
                 )
                 return [dict(row) for row in cur.fetchall()]
+
+
+_OBSERVERS = f"{PC_SCHEMA_NAME}.work_center_pulse_observers"
+_OBSERVER_COLUMNS = """
+    branch, work_center, device_id::text AS device_id, counter_epoch,
+    last_counter, last_increment_at, baseline_established_at,
+    device_online, degraded_reason, last_seen_at, created_at, updated_at
+"""
+
+
+
+class PostgresWorkCenterPulseObserverRepository:
+    """Cursor durável do monitoramento autônomo + trava por centro de trabalho.
+
+    A trava advisory (pg_advisory_xact_lock sobre a chave do CT) é a
+    serialização entre o tick autônomo e as transições do run — dois
+    pollers, um Play e um tick nunca tocam os fatos do mesmo posto ao
+    mesmo tempo (ADR-03).
+    """
+
+    def try_lock_work_center(
+        self, *, branch: str, work_center: str, conn: Any
+    ) -> bool:
+        """Trava não bloqueante do CT dentro da transação chamadora.
+
+        Tick autônomo: se outro writer segura a trava, o ciclo é pulado —
+        o próximo tick reavalia, nunca empilha espera no poller.
+        """
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT pg_try_advisory_xact_lock(hashtext(%s)) AS locked",
+                (_work_center_lock_key(branch, work_center),),
+            )
+            row = cur.fetchone()
+            if row is None:
+                return False
+            # psycopg dict_row: acesso por chave — nunca posicional.
+            return bool(row.get("locked") if isinstance(row, dict) else row[0])
+
+    def lock_work_center(self, *, branch: str, work_center: str, conn: Any) -> None:
+        """Trava bloqueante do CT — transições do run aguardam o tick."""
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT pg_advisory_xact_lock(hashtext(%s))",
+                (_work_center_lock_key(branch, work_center),),
+            )
+
+    def get(self, *, branch: str, work_center: str, conn: Any) -> dict[str, Any] | None:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT {_OBSERVER_COLUMNS}
+                FROM {_OBSERVERS}
+                WHERE branch = %s AND work_center = %s
+                """,
+                (branch, work_center),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+    def upsert(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        device_id: str | None,
+        counter_epoch: int,
+        last_counter: int,
+        last_increment_at: Any | None,
+        baseline_established_at: Any | None,
+        device_online: bool,
+        degraded_reason: str | None,
+        last_seen_at: Any | None,
+        conn: Any,
+    ) -> dict[str, Any]:
+        """Atualiza o cursor — o caller passa os valores efetivos.
+
+        Quando a decisão não muda o baseline, o caller repete os valores
+        já persistidos no observador.
+        """
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {_OBSERVERS} (
+                    branch, work_center, device_id, counter_epoch,
+                    last_counter, last_increment_at, baseline_established_at,
+                    device_online, degraded_reason, last_seen_at, updated_at
+                )
+                VALUES (%s, %s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (branch, work_center) DO UPDATE SET
+                    device_id = EXCLUDED.device_id,
+                    counter_epoch = EXCLUDED.counter_epoch,
+                    last_counter = EXCLUDED.last_counter,
+                    last_increment_at = EXCLUDED.last_increment_at,
+                    baseline_established_at = EXCLUDED.baseline_established_at,
+                    device_online = EXCLUDED.device_online,
+                    degraded_reason = EXCLUDED.degraded_reason,
+                    last_seen_at = EXCLUDED.last_seen_at,
+                    updated_at = NOW()
+                RETURNING {_OBSERVER_COLUMNS}
+                """,
+                (
+                    branch,
+                    work_center,
+                    device_id,
+                    int(counter_epoch),
+                    int(last_counter),
+                    last_increment_at,
+                    baseline_established_at,
+                    bool(device_online),
+                    degraded_reason,
+                    last_seen_at,
+                ),
+            )
+            return dict(cur.fetchone())

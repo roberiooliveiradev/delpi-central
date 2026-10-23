@@ -216,6 +216,62 @@ def test_work_center_not_published_rejected() -> None:
         service.resolve(token=_token(), branch="01", work_center="CT-XX")
 
 
+def test_unpublished_but_sensorized_resolves_mes() -> None:
+    """RQ-11: CT com contador amarrado resolve mes mesmo fora da fila."""
+    data = _service(
+        pulse=FakePulse(items=[_device("dev-1")]),
+        machine_load=FakeMachineLoad(resources=None),
+    ).resolve(token=_token(), branch="01", work_center="CT-XX")
+    assert data["source"] == "mes"
+    assert data["workCenter"] == "CT-XX"
+
+
+def test_unpublished_without_binding_still_rejected() -> None:
+    """CT fora da fila e sem vínculo: segue negado — nada a expor."""
+    service = _service(
+        pulse=FakePulse(items=[]),
+        monitoring=FakeMonitoring(activity=False),
+        machine_load=FakeMachineLoad(resources=None),
+    )
+    with pytest.raises(ValueError, match="fila publicada"):
+        service.resolve(token=_token(), branch="01", work_center="CT-XX")
+
+
+def test_unpublished_with_mes_facts_today_resolves_mes() -> None:
+    """Vínculo removido mas com fatos MES no dia: leitura permitida."""
+    data = _service(
+        pulse=FakePulse(items=[]),
+        monitoring=FakeMonitoring(activity=True),
+        machine_load=FakeMachineLoad(resources=None),
+    ).resolve(token=_token(), branch="01", work_center="CT-XX")
+    assert data["source"] == "mes"
+
+
+def test_sensorized_list_requires_valid_token() -> None:
+    with pytest.raises(PublicAccessDenied):
+        _service().list_sensorized(token="bogus", branch="01")
+
+
+def test_sensorized_list_groups_by_work_center() -> None:
+    class _BranchPulse(FakePulse):
+        def fetch_branch_counter_snapshots(self, **kwargs):
+            return {
+                "items": [
+                    {"workCenterCode": "CT-02", "deviceId": "d2"},
+                    {"workCenterCode": "CT-01", "deviceId": "d1"},
+                    {"workCenterCode": "CT-02", "deviceId": "d3"},
+                ]
+            }
+
+    data = _service(pulse=_BranchPulse()).list_sensorized(
+        token=_token(), branch="01"
+    )
+    assert data == {
+        "branch": "01",
+        "items": [{"workCenter": "CT-01"}, {"workCenter": "CT-02"}],
+    }
+
+
 def test_empty_work_center_rejected() -> None:
     with pytest.raises(ValueError):
         _service().resolve(token=_token(), branch="01", work_center=" ")

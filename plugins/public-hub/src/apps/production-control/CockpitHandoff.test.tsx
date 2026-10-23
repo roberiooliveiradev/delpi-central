@@ -225,6 +225,8 @@ type Handlers = {
   /** Sequência controlada de payloads do machine-load (corrida de reload). */
   machineLoad?: (call: FetchCall) => Response | Promise<Response>;
   handoff?: (call: FetchCall) => Response | Promise<Response>;
+  /** Enumeração de CTs sensorizados (E4/RQ-11). */
+  sensorized?: () => unknown;
 };
 
 function stubCockpitFetch(handlers: Handlers = {}) {
@@ -265,6 +267,10 @@ function stubCockpitFetch(handlers: Handlers = {}) {
         });
       }
       if (target.includes("work-centers/today")) return okEnvelope({ items: [] });
+      if (target.includes("/mes/work-centers")) {
+        const value = handlers.sensorized?.() ?? { items: [] };
+        return value instanceof Response ? value : okEnvelope(value);
+      }
       if (
         target.includes("process-inspections") ||
         target.includes("appointments") ||
@@ -656,5 +662,74 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
           call.url.endsWith("/stop"),
       ),
     ).toHaveLength(0);
+  });
+});
+
+describe("seletor de postos sensorizados (E4/RQ-11)", { timeout: 30000 }, () => {
+  beforeEach(() => {
+    FakeWebSocket.instances = [];
+    vi.stubGlobal("WebSocket", FakeWebSocket);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    window.history.replaceState(null, "", window.location.pathname);
+  });
+
+  it("CT sensorizado fora da fila publicada aparece no picker sem OP inventada", async () => {
+    stubCockpitFetch({
+      sensorized: () => ({
+        items: [{ workCenter: "CT-63" }, { workCenter: "CT-99" }],
+      }),
+    });
+    render(
+      <OperatorCockpit
+        token="tok-1"
+        branch="02"
+        initial={machineLoadPayload([OPERATION, NEXT_ITEM])}
+      />,
+    );
+
+    // Fila publicada continua listada; o sensorizado sem OP entra por merge.
+    await screen.findByRole("button", { name: /CT-63/ });
+    const extra = await screen.findByRole("button", { name: /CT-99/ });
+
+    // Selecionar o CT sem OP não fabrica operação — pede a filial/CT real.
+    fireEvent.click(extra);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: /CT-99/ }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("posto salvo que só existe como sensorizado é restaurado após a enumeração", async () => {
+    stubCockpitFetch({
+      sensorized: () => ({ items: [{ workCenter: "CT-99" }] }),
+      machineLoad: () => okEnvelope(machineLoadPayload([])),
+    });
+    window.localStorage.setItem("delpi.pcp.cockpit.work-center.02", "CT-99");
+    render(
+      <OperatorCockpit
+        token="tok-1"
+        branch="02"
+        initial={machineLoadPayload([OPERATION, NEXT_ITEM])}
+      />,
+    );
+
+    // Sem OP publicada, o CT-99 sai do picker assim que o vínculo confirma.
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: /CT-99/ }),
+      ).not.toBeInTheDocument(),
+    );
+    // Nenhuma OP é fabricada: o cockpit cai no fluxo real do posto
+    // (identificação da bancada, sessão, etc.).
+    expect(
+      screen.queryByRole("button", { name: /CT-63/ }),
+    ).not.toBeInTheDocument();
   });
 });

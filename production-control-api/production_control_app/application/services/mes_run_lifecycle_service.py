@@ -314,6 +314,180 @@ class MesRunLifecycleService:
                 branch=branch, work_center=wc, ended_at=at, conn=conn
             )
 
+    def lock_work_center(self, *, branch: str, work_center: str, conn: Any) -> None:
+        """Trava serializadora do CT — o caller detém a transação (ADR-03)."""
+        self._states.lock_work_center(
+            branch=branch, work_center=work_center, conn=conn
+        )
+
+    # ---------- Monitoramento autônomo (run_id = NULL) ----------
+
+    def record_autonomous_producing(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        conn: Any,
+        at: datetime,
+    ) -> dict[str, Any] | None:
+        """Atividade observada sem run: abre producing sem vínculo de OP.
+
+        Idempotente — estado autônomo aberto igual é no-op. Fato com
+        run_id não-NULL nunca é tocado aqui (o dono do run governa).
+        """
+        open_state = self._states.get_open(
+            branch=branch, work_center=work_center, conn=conn
+        )
+        if open_state is not None:
+            if (
+                open_state["state"] == WorkCenterOperationalState.PRODUCING.value
+                and open_state.get("run_id") is None
+            ):
+                return None
+            if open_state.get("run_id") is not None:
+                raise MesStateConflict(
+                    "Existe estado operacional aberto de um run neste posto."
+                )
+            self._states.close_open(
+                branch=branch, work_center=work_center, ended_at=at, conn=conn
+            )
+        return self._states.open_event(
+            branch=branch,
+            work_center=work_center,
+            state=WorkCenterOperationalState.PRODUCING.value,
+            source="system",
+            run_id=None,
+            started_at=at,
+            conn=conn,
+        )
+
+    def record_autonomous_stopped(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        conn: Any,
+        at: datetime,
+    ) -> dict[str, Any] | None:
+        """Inatividade observada sem run: abre stopped + parada, ambos
+        run_id=NULL/source='system' — evidência temporal, nunca
+        perda de disponibilidade automática (classificação posterior
+        decide). Idempotente: parada autônoma já aberta → None."""
+        open_dt = self._downtimes.get_open(
+            branch=branch, work_center=work_center, conn=conn
+        )
+        if open_dt is not None:
+            if open_dt.get("run_id") is not None:
+                raise DowntimeConflict(
+                    "Existe parada aberta de um run neste posto."
+                )
+            return None
+        open_state = self._states.get_open(
+            branch=branch, work_center=work_center, conn=conn
+        )
+        if open_state is not None:
+            if open_state.get("run_id") is not None:
+                raise MesStateConflict(
+                    "Existe estado operacional aberto de um run neste posto."
+                )
+            self._states.close_open(
+                branch=branch, work_center=work_center, ended_at=at, conn=conn
+            )
+        stopped = self._states.open_event(
+            branch=branch,
+            work_center=work_center,
+            state=WorkCenterOperationalState.STOPPED.value,
+            source="system",
+            run_id=None,
+            started_at=at,
+            conn=conn,
+        )
+        return self._downtimes.create(
+            branch=branch,
+            work_center=work_center,
+            source="system",
+            run_id=None,
+            state_event_id=stopped["id"],
+            production_order=None,
+            operation_code=None,
+            started_at=at,
+            conn=conn,
+        )
+
+    def record_autonomous_resumed(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        conn: Any,
+        at: datetime,
+    ) -> dict[str, Any] | None:
+        """Incremento após parada autônoma: fecha parada/estado e reabre
+        producing sem run. None quando não havia parada aberta —
+        nesse caso a retomada é apenas producing."""
+        open_state = self._states.get_open(
+            branch=branch, work_center=work_center, conn=conn
+        )
+        open_dt = self._downtimes.get_open(
+            branch=branch, work_center=work_center, conn=conn
+        )
+        if open_dt is not None:
+            if open_dt.get("run_id") is not None:
+                raise DowntimeConflict(
+                    "Existe parada aberta de um run neste posto."
+                )
+            self._downtimes.close_open(
+                branch=branch, work_center=work_center, ended_at=at, conn=conn
+            )
+        if open_state is not None:
+            if open_state.get("run_id") is not None:
+                raise MesStateConflict(
+                    "Existe estado operacional aberto de um run neste posto."
+                )
+            self._states.close_open(
+                branch=branch, work_center=work_center, ended_at=at, conn=conn
+            )
+        self._states.open_event(
+            branch=branch,
+            work_center=work_center,
+            state=WorkCenterOperationalState.PRODUCING.value,
+            source="system",
+            run_id=None,
+            started_at=at,
+            conn=conn,
+        )
+        return open_dt
+
+    def close_autonomous_open_facts(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        conn: Any,
+        at: datetime,
+    ) -> dict[str, Any]:
+        """Arbitragem do Play (RQ-06): encerra fatos autônomos abertos na
+        fronteira do novo run — a parada pendente de classificação é
+        preservada como linha encerrada (classificável depois); nenhuma
+        linha é apagada. Fatos com run_id não-NULL nunca são tocados.
+        Retorna o que foi encerrado para auditoria."""
+        closed: dict[str, Any] = {"downtime": None, "state": None}
+        open_dt = self._downtimes.get_open(
+            branch=branch, work_center=work_center, conn=conn
+        )
+        if open_dt is not None and open_dt.get("run_id") is None:
+            closed["downtime"] = self._downtimes.close_open(
+                branch=branch, work_center=work_center, ended_at=at, conn=conn
+            )
+        open_state = self._states.get_open(
+            branch=branch, work_center=work_center, conn=conn
+        )
+        if open_state is not None and open_state.get("run_id") is None:
+            closed["state"] = self._states.close_open(
+                branch=branch, work_center=work_center, ended_at=at, conn=conn
+            )
+        return closed
+
     def open_state_view(self, run: dict[str, Any]) -> str | None:
         """Estado operacional aberto do run (``producing``/``stopped``/…)."""
         open_state = self._states.get_open(

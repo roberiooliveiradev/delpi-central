@@ -74,12 +74,30 @@ class TestPlayProducesProducing:
         repo = FakeRepo()
         session = service_session(repo)
         mes, states, _ = make_mes()
+        # Estado órfão de um run (run_id não-NULL sem run ativo) continua
+        # conflitando — a arbitragem só encerra fatos autônomos (NULL).
         states.open_event(
-            branch="01", work_center="CT01", state="idle", source="system"
+            branch="01", work_center="CT01", state="idle", source="system",
+            run_id="run-orphan",
         )
         service = make_service(repo, FakePulse(devices=[_device()]), mes_lifecycle=mes)
         with pytest.raises(MesStateConflict):
             _started_run(service, repo, session)
+
+    def test_start_closes_autonomous_state_without_run(self):
+        """Fato autônomo aberto (run_id NULL) encerra na fronteira do Play —
+        PC-MES-CT-AUTONOMOUS-DOWNTIME (AC-07)."""
+        repo = FakeRepo()
+        session = service_session(repo)
+        mes, states, _ = make_mes()
+        states.open_event(
+            branch="01", work_center="CT01", state="producing", source="system"
+        )
+        service = make_service(repo, FakePulse(devices=[_device()]), mes_lifecycle=mes)
+        started = _started_run(service, repo, session)
+        open_states = [e for e in states.events if e["ended_at"] is None]
+        assert len(open_states) == 1
+        assert open_states[0]["run_id"] == started["id"]
 
 
 class TestPauseProducesStoppedAndDowntime:
