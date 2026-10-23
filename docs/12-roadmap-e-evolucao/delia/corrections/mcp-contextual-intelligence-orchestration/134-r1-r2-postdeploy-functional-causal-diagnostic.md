@@ -207,3 +207,20 @@ Nenhuma recomendação contradiz ADR 58, S4/117 ou contrato de Evidence que exij
 ## 10. Próximo passo finito
 
 Retornar à coordenação com este diagnóstico: três causas-raiz PROVEN, todas pré-existentes (zero regressão R1/R2), com três propostas de correção bounded (2×DÉLIA, 1×owner DAVI) aguardando autorização. `R3_AUTHORIZED=NO`.
+
+
+## 11. Parecer independente da coordenação — 2026-10-23
+
+**REVIEWED_DELIVERY_SHA:** `3fa0b17165f3a93c99c8da64c4b92971de47cf10`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL` (diagnóstico causal, não aprovação das propostas de correção nem homologação funcional integral).  
+**R3_AUTHORIZED:** `NO`. **DEPLOY_AUTHORIZED_BY_THIS_REVIEW:** `NO`.
+
+**Verificação GitHub:** doc 134, README e ledger constam no commit entregue. O diagnóstico apresenta traces produtivos redigidos, reprodução de retrieval lexical DAVI, comparação de código e diferenças de terminal/discovery. Não houve reexecução independente de unit tests, SSH ou modelo nesta revisão; `PROVEN` descrito pelo executor não é automaticamente prova reproduzida pelo reviewer. A conclusão de zero regressão é limitada aos mecanismos examinados, não equivale a `GLOBAL_BUSINESS_OUTCOME=PASS`.
+
+**D5-R:** aceitar a causalidade `contract_subject` variável + `contract_facts` com prioridade sobre guidance já projetado. Correção bounded DÉLIA elegível apenas se validar contratos, owner, relevância da evidência e consultas contratuais positivas, sem regra lexical/provider-specific e sem transformar guidance em preferência absoluta.
+
+**D8-R:** aceitar o gap lexical `material` versus `produto` no retrieval DAVI como limitação do owner, com prova unitária reportada. Encaminhar ao owner `api-delpi/dynamic_information` para avaliar aliases governados, generalização e testes; nenhuma normalização específica na DÉLIA e nenhuma autoridade de alteração cross-bounded por este parecer.
+
+**D5-schema:** aceitar o descarte de envelope em `candidates_present → return None` como mecanismo candidato ao reparo. **Não autorizar projetar indiscriminadamente** `argument_schema` de candidato semanticamente inadequado (`search_protheus_columns_in_table`) como contrato geral da DELPI. Antes do fix, provar vínculo typed entre a pergunta contratual, o subject/capability owner e a seção contratual que será mostrada, ou retornar insuficiência honesta. Isso é gate de contrato/semântica, não detalhe cosmético.
+
+**NEXT:** duas decisões bounded separadas: (A) autorizar diagnóstico-implementação DÉLIA de precedência e preservação de envelope, condicionado a testes positivos/negativos, owner/contrato, RED→GREEN e generalização; (B) encaminhar gap DAVI a seu owner legítimo. Nenhuma task R3, novo módulo/registry, mudança de auth ou deploy automático decorre deste parecer. Antes de implementação, reancorar HEAD, 16 + ledger e autoridades completas.
