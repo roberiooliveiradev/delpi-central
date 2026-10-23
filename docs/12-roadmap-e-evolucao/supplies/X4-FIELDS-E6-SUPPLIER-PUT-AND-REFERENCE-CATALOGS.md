@@ -138,3 +138,18 @@ Cobertura adicionada: allowlist E6 (51 PUT nas duas camadas), par composto (pair
 **Riscos residuais a verificar:** (1) o código atual resolve o companion usando GET antes do PUT e testa igualdade explícita quando o cliente fornece código; confirmar comportamento sob alterações concorrentes (TOCTOU) com reconciliação pós-escrita; (2) no relatório, `PUT_EDITABLE_FIELDS=51` significa allowlist técnica, não 51 campos editáveis na UI; (3) `_delpi_safety_check` por prefixo de registro fictício é evidência limitada e não substitui verificação de destino REST/SQL; (4) rollback por checkout+rebuild deve ser testado/confirmado em procedimento operacional, não equivale a imagem pronta.
 
 **Conclusão de release:** `E6_CODE=ACCEPT_WITH_RESIDUAL`; `E6_RUNTIME=PASS (executor-reported smoke)`; `E6_VISUAL=INCONCLUSIVE`; `ERP_WRITE_GATES=OFF`; não ativar escrita produtiva por esta revisão. Próxima tarefa: aceitação visual autenticada dos seis catálogos e do par cliente/loja, sem POST/PUT de fornecedor real.
+
+
+## 13. Aceite visual E6.V1 — retorno do Product Owner (2026-10-23)
+
+**Veredito visual: `PASS (PO-reported, manual)`**. O Product Owner informou explicitamente «tudo funcionando bem. pass» após inspeção autenticada das telas E14 (edição) e Novo fornecedor (criação), com três capturas compartilhadas na conversa (não anexadas ao GitHub). As imagens evidenciam diretamente: catálogo de transportadoras aberto com pesquisa por código/descrição e resultados; controles de catálogo para tabela de preços, segmento, administrador e funcionário; formulário novo com catálogo de clientes vinculados aberto, mostrando resultados e mensagem de limite de pesquisa; loja do cliente exibida em edição, condicionada à existência do código vinculado. A renderização está coerente com o rollout E6.
+
+**Escopo do PASS:** apresentação e operação manual dos seletores conforme declaração do PO. Não afirmar que todas as combinações foram exercitadas ou que as capturas isoladamente demonstram seleção, teclado, mobile, tema claro, estados de erro, mudança de cliente/loja ou persistência. 
+
+**Limites:** 
+- `E6_VISUAL = PASS (PO-reported)` com evidência direta parcial de captura.
+- `E6_BACKEND_RUNTIME = PASS (executor-reported)`, conforme relatório técnico anterior.
+- `ERP_CREATE/UPDATE_GATE = OFF`; `E6_WRITE_VIA_PORTAL = TEST_NOT_RUN` e não foi autorizado alterar fornecedor real na base DELPI.
+- `linked_customer_code` permanece protegido para alteração via PUT; `tax-groups`/`risk-codes` seguem bloqueados por falta de catálogo contratado. Esses resíduos não invalidam o aceite visual dos controles efetivamente implementados.
+
+**Decisão arquitetural:** `E6 = ACCEPT_WITH_RESIDUAL` com **subgate visual E6.V1 encerrado como PASS (PO-reported)**. Não promover gate integral de escrita ou paridade total sem evidência adicional. Próxima etapa separada: resolver vínculo de cliente upstream e catálogos pendentes, se priorizados pelo PO.
