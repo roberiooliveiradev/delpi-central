@@ -913,6 +913,9 @@ class HandleInteractiveConversationTurn:
             model_invocation_id=None,
             grounding_status=GroundingStatus.GROUNDED,
             provenance=provenance,
+            presentation_markdown=getattr(
+                attempt, "markdown_content", None
+            ),
         )
 
     def _write_lifecycle_result(
@@ -989,6 +992,9 @@ class HandleInteractiveConversationTurn:
             provenance=provenance,
             confirmation_request=attempt.confirmation_context,
             message_kind=_WRITE_LIFECYCLE_MESSAGE_KINDS.get(attempt.status),
+            presentation_markdown=getattr(
+                attempt, "markdown_content", None
+            ),
         )
 
     def _source_terminal_result(

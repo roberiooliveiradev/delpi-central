@@ -21,6 +21,12 @@ from __future__ import annotations
 from typing import Any
 
 PRESENTATION_CONTRACT_VERSION = "1"
+# presentation.v2 (doc 84 proposal schema, G3 approval — doc 97 §10):
+# emitted only when the governed projection produced a legitimately
+# admitted ``markdown_safe`` body (Category A structured data). Every
+# other result keeps the v1 envelope unchanged — unknown to the wire.
+PRESENTATION_CONTRACT_VERSION_V2 = "2"
+TEXT_FORMAT_MARKDOWN_SAFE = "markdown_safe"
 
 # Canonical message kinds — reuse the GovernedCapabilityStatus
 # vocabulary rather than inventing parallel semantics.
@@ -96,11 +102,29 @@ def compose_presentation(result) -> dict[str, Any]:
         else:
             message_kind = MESSAGE_KIND_RESULT
 
+    # Category A only: the typed markdown projection produced by the
+    # governed renderer. Owner text, model prose, empty results and
+    # oversized payloads fail closed to the v1 plain envelope — never
+    # truncated markdown and never lexical admission.
+    markdown = getattr(result, "presentation_markdown", None)
+    use_markdown = (
+        isinstance(markdown, str)
+        and bool(markdown.strip())
+        and len(markdown) <= _MAX_BLOCK_TEXT_CHARS
+    )
     blocks = [
-        {
-            "kind": BLOCK_KIND_TEXT,
-            "text": (result.content or "")[:_MAX_BLOCK_TEXT_CHARS],
-        }
+        (
+            {
+                "kind": BLOCK_KIND_TEXT,
+                "format": TEXT_FORMAT_MARKDOWN_SAFE,
+                "text": markdown,
+            }
+            if use_markdown
+            else {
+                "kind": BLOCK_KIND_TEXT,
+                "text": (result.content or "")[:_MAX_BLOCK_TEXT_CHARS],
+            }
+        )
     ]
     if isinstance(result.owner_hint, str) and result.owner_hint:
         blocks.append(
@@ -116,7 +140,11 @@ def compose_presentation(result) -> dict[str, Any]:
             raise ValueError("non-allowlisted presentation block kind")
 
     return {
-        "version": PRESENTATION_CONTRACT_VERSION,
+        "version": (
+            PRESENTATION_CONTRACT_VERSION_V2
+            if use_markdown
+            else PRESENTATION_CONTRACT_VERSION
+        ),
         "message_kind": message_kind,
         "semantic_status": (
             result.epistemic_class.value if result.epistemic_class else None

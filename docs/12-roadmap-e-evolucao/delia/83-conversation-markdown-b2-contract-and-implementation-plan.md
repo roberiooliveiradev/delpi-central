@@ -1,6 +1,6 @@
 # 83 — DÉLIA: Plano B2 de Markdown Seguro em Respostas Conversacionais
 
-**Status vigente:** `PRODUCT_MASTER_2026_10_22_INTERNAL_L1_DEFERRED / CP-333_MAPPED / B2_CORE_NOT_BLOCKED_BY_INTERNAL_LINKS / G1_G2_ACCEPT_WITH_RESIDUAL / G3_BRIEF_APPROVED_FOR_BOUNDED_IMPLEMENTATION / RUNTIME_B2_NOT_YET_IMPLEMENTED`
+**Status vigente:** `PRODUCT_MASTER_2026_10_22_INTERNAL_L1_DEFERRED / CP-333_MAPPED / B2_CORE_NOT_BLOCKED_BY_INTERNAL_LINKS / G1_G2_ACCEPT_WITH_RESIDUAL / G3_BRIEF_APPROVED_FOR_BOUNDED_IMPLEMENTATION / G3_IMPLEMENTATION_EXECUTED_PENDING_INDEPENDENT_REVIEW / CP-333_PLANNED_NOT_PASS / PRODUCTION_B2_OFF`
 **Data:** 2026-10-16  
 **Task documental:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01`  
 **Parent:** [82 — Conversation Rich Content & Structured Presentation](./82-conversation-rich-content-and-structured-presentation-specification.md)  
@@ -555,3 +555,14 @@ Este documento é planejamento completo para decisão e execução futura, mas *
 ## Coordination gate G3 — approved for bounded implementation (2026-10-23)
 
 At the direct review of Cursor's STOP report (runtime untouched, ledger §6.383), Architecture/Coordination **approved the bounded I0–I3 implementation brief** in [97 §10](./97-markdown-b2-g3-bounded-backend-implementation-brief.md), commit `8252f1ea5aaf7021a8fe5556719343c95410b995`. `G3_TASK_BRIEF_APPROVED=YES`, `G3_IMPLEMENTATION=AUTHORIZED_NOT_EXECUTED`, `CP-333=PLANNED_NOT_PASS`, `G4=TEST_NOT_RUN`, `PRODUCTION_DEPLOYMENT=NO`. Before runtime code, Cursor MUST RED-test and reconcile `PROCESSING_TIMEOUT` in v2 schema/consumer. Internal L1 remains deferred; unproven public link sources emit no clickable links without blocking safe textual Markdown. The historical G3=BLOCKED passages above document their older state and are superseded only as to this implementation approval. No phase progression or production activation.
+
+### G3 bounded implementation — executed, pending independent review (2026-10-23)
+
+`DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01` executed I0–I3 exactly inside the approved seams (ledger §6.384):
+
+- **I0:** `delia-api/tests/test_presentation_v2_markdown_emission.py` (23 tests) — RED 21 FAIL / 2 PASS → GREEN 23/23. MUST-FIX reconciled additively: `PROCESSING_TIMEOUT` added to the v2 schema `message_kind` enum (`contracts/presentation-v2.proposal.schema.json`); v1 vocabulary and the frontend reader already carried it.
+- **I1:** `render_specialist_outcome` extended — `RenderedSpecialistOutcome{content, limitations, markdown}` via `render_specialist_outcome_rich`; `_md_*` projectors are format variants of the same deterministic selection/order/bounds (Category A only); owner values escape Markdown metacharacters; plain wrapper signature preserved; typed transport `GovernedCapabilityAttempt.markdown_content` → `InteractiveTurnResult.presentation_markdown`.
+- **I2:** `compose_presentation` extended — `version="2"` + `{kind:"text",format:"markdown_safe"}` only when an admitted non-empty bounded projection exists; otherwise the identical v1 envelope (fail-closed). `authorized_links` not introduced; zero links synthesized.
+- **I3:** frontend zero-diff — real emitted envelope round-trips through `parsePresentationV2` (`status:"ok"`, `markdown_safe` extracted).
+- **Results:** backend 2004/2004, delia 336/336 + tsc, scoped regression 288/288, 15 negative checks PASS, schema conformance PASS, NDJSON/JSON safe.
+- **State:** `G3_IMPLEMENTATION=EXECUTED_PENDING_INDEPENDENT_REVIEW`; `G4_BROWSER_QA=TEST_NOT_RUN`; `CP-333=PLANNED_NOT_PASS` (executor does not self-accept); `PRODUCTION_B2=OFF`; `PUBLIC_LINKS=ZERO_EMITTED` (no admitted public-URL source at the boundary — registered deferral, not a Markdown blocker).

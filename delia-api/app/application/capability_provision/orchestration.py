@@ -3263,23 +3263,7 @@ def _deterministic_guidance_content(
     Returns None when the payload is not guidance-shaped or no
     intent-matching section has content.
     """
-    records = _guidance_section_records(structured)
-    if not records:
-        return None
-    selected: list[Mapping[str, str]] = []
-    for family in _GUIDANCE_FAMILY_ORDER:
-        for record in records:
-            if record.get("family") == family and record not in selected:
-                selected.append(record)
-    substantive = [
-        r for r in selected if r.get("family") != "limitations"
-    ]
-    if not selected or not substantive:
-        # Cue families absent in this payload — still prefer non-meta
-        # guidance sections over a metadata-first dump.
-        selected = [
-            r for r in records if r.get("family") != "meta"
-        ][:6]
+    selected = _select_guidance_records(structured)
     if not selected:
         return None
     blocks: list[tuple[str, str]] = []
@@ -4337,12 +4321,233 @@ def _business_lines(node: Mapping, depth: int = 0) -> list[str] | None:
     return None
 
 
+# ---------------------------------------------------------------------------
+# presentation.v2 (G3): deterministic Markdown projection of the SAME
+# admitted structured payload. Format variant of the existing projection —
+# identical keys, values, order, redaction, control-plane exclusion and
+# bounds; only the surface syntax differs. Leaf values and keys escape the
+# Markdown metacharacters so owner data never becomes formatting
+# instructions. Links are never synthesized — no admitted public-URL
+# source exists at this boundary.
+# ---------------------------------------------------------------------------
+
+_MD_ESCAPE = str.maketrans(
+    {
+        "\\": "\\\\",
+        "*": "\\*",
+        "_": "\\_",
+        "`": "\\`",
+        "[": "\\[",
+        "]": "\\]",
+    }
+)
+
+
+def _md_leaf(value: object) -> str:
+    """Owner leaf as literal Markdown text — metachars stay inert."""
+    return str(value).translate(_MD_ESCAPE)
+
+
+def _md_format_structured(node: object, depth: int = 0) -> list[str]:
+    """Markdown variant of ``_format_structured``: ``- **key:** value``
+    bullets over the same traversal, control-plane filter and bounds."""
+    if depth > 3:
+        return []
+    indent = "  " * depth
+    if isinstance(node, Mapping):
+        lines: list[str] = []
+        for key, value in node.items():
+            key = str(key)
+            if _canonical_key(key) in _CONTROL_PLANE_KEYS:
+                continue
+            if isinstance(value, Mapping):
+                sub = _md_format_structured(value, depth + 1)
+                lines.append(f"{indent}- **{_md_leaf(key)}:**")
+                lines.extend(sub or [f"{indent}  - {{}}"])
+            elif isinstance(value, (list, tuple)):
+                items = list(value)[:MAX_RENDER_LIST_ITEMS]
+                if items:
+                    lines.append(f"{indent}- **{_md_leaf(key)}:**")
+                    lines.extend(_md_format_list(items, depth + 1))
+                else:
+                    lines.append(
+                        f"{indent}- **{_md_leaf(key)}:** (vazio)"
+                    )
+            else:
+                if value is None:
+                    continue
+                lines.append(
+                    f"{indent}- **{_md_leaf(key)}:** {_md_leaf(value)}"
+                )
+        return lines
+    return []
+
+
+def _md_format_list(items: list, depth: int) -> list[str]:
+    indent = "  " * depth
+    lines: list[str] = []
+    for item in items:
+        if isinstance(item, Mapping):
+            first = True
+            for key, value in item.items():
+                if _canonical_key(key) in _CONTROL_PLANE_KEYS:
+                    continue
+                if (
+                    isinstance(value, (Mapping, list, tuple))
+                    or value is None
+                ):
+                    continue
+                if first:
+                    lines.append(
+                        f"{indent}- **{_md_leaf(key)}:** {_md_leaf(value)}"
+                    )
+                    first = False
+                else:
+                    lines.append(
+                        f"{indent}  - **{_md_leaf(key)}:** {_md_leaf(value)}"
+                    )
+            if first:
+                lines.append(f"{indent}- {{}}")
+        elif isinstance(item, (list, tuple)):
+            return []
+        else:
+            lines.append(f"{indent}- {_md_leaf(item)}")
+    return lines
+
+
+def _md_format_records(items: list, depth: int = 0) -> list[str]:
+    """Bounded numbered record list — same selection/order as
+    ``_format_records`` with Markdown list syntax."""
+    indent = "  " * depth
+    lines: list[str] = []
+    for idx, item in enumerate(items, 1):
+        if isinstance(item, Mapping):
+            lines.append(f"{indent}{idx}.")
+            sub = _md_format_structured(item, depth + 1)
+            lines.extend(sub or [f"{indent}   - {{}}"])
+        else:
+            lines.append(f"{indent}{idx}. {_md_leaf(item)}")
+    return lines
+
+
+def _md_business_lines(node: Mapping, depth: int = 0) -> list[str] | None:
+    """Markdown variant of ``_business_lines`` — identical envelope
+    unwrapping and selection decisions; only the line syntax differs."""
+    if depth > 2:
+        return None
+    for key in _RESOLVER_ENVELOPE_KEYS:
+        payload = node.get(key)
+        if isinstance(payload, Mapping):
+            items = payload.get(_ITEMS_KEY)
+            if isinstance(items, list):
+                if not items:
+                    return [EMPTY_RESULT_TEXT]
+                if len(items) == 1 and isinstance(items[0], Mapping):
+                    return _md_format_structured(items[0]) or None
+                return _md_format_records(items)
+            nested = _md_business_lines(payload, depth + 1)
+            if nested is not None:
+                return nested
+            return _md_format_structured(payload) or None
+        if isinstance(payload, list):
+            if not payload:
+                return [EMPTY_RESULT_TEXT]
+            return _md_format_records(payload)
+    return None
+
+
+def _select_guidance_records(structured: object) -> list[Mapping]:
+    """Shared selection of goal-aligned guidance records (plain and
+    Markdown projections consume the same deterministic order)."""
+    records = _guidance_section_records(structured)
+    if not records:
+        return []
+    selected: list[Mapping[str, str]] = []
+    for family in _GUIDANCE_FAMILY_ORDER:
+        for record in records:
+            if record.get("family") == family and record not in selected:
+                selected.append(record)
+    substantive = [
+        r for r in selected if r.get("family") != "limitations"
+    ]
+    if not selected or not substantive:
+        selected = [
+            r for r in records if r.get("family") != "meta"
+        ][:6]
+    return selected
+
+
+def _md_guidance_content(
+    structured: object,
+    *,
+    max_chars: int = MAX_RENDER_CONTENT_CHARS,
+    owner_truncated: bool = False,
+) -> tuple[str, tuple[str, ...]] | None:
+    """Markdown variant of ``_deterministic_guidance_content`` — same
+    record selection and packing budget; sections become headings."""
+    selected = _select_guidance_records(structured)
+    if not selected:
+        return None
+    blocks: list[tuple[str, str]] = []
+    for record in selected:
+        section = record.get("section") or "section"
+        excerpt = (record.get("excerpt") or "").strip()
+        if not excerpt:
+            continue
+        blocks.append(
+            (
+                section,
+                f"### {_md_leaf(section)}\n\n"
+                + excerpt.translate(_MD_ESCAPE),
+            )
+        )
+    if not blocks:
+        return None
+    body, omitted = _pack_guidance_sections(blocks, max_chars)
+    if not body:
+        return None
+    limitations: list[str] = []
+    if owner_truncated or omitted:
+        limitations.append(LIMITATION_RESULT_TRUNCATED)
+    return body, tuple(limitations)
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class RenderedSpecialistOutcome:
+    """Bounded governed projection of one specialist outcome.
+
+    ``content`` is the existing plain bounded body. ``markdown`` is the
+    deterministic ``markdown_safe`` projection of the SAME admitted
+    structured payload — present only when structured data drove the
+    projection, never for owner free text (Category B), model prose
+    (Category C), empty results or lexical guesses.
+    """
+
+    content: str
+    limitations: tuple[str, ...]
+    markdown: str | None = None
+
+
 def render_specialist_outcome(
     outcome: SpecialistOutcome,
     *,
     input_text: str | None = None,
     invocation_arguments: Mapping[str, Any] | None = None,
 ) -> tuple[str, tuple[str, ...]]:
+    rendered = render_specialist_outcome_rich(
+        outcome,
+        input_text=input_text,
+        invocation_arguments=invocation_arguments,
+    )
+    return rendered.content, rendered.limitations
+
+
+def render_specialist_outcome_rich(
+    outcome: SpecialistOutcome,
+    *,
+    input_text: str | None = None,
+    invocation_arguments: Mapping[str, Any] | None = None,
+) -> RenderedSpecialistOutcome:
     """Bounded truthful rendering of any specialist outcome.
 
     The remote payload is untrusted content: owner text is preferred and
@@ -4371,7 +4576,9 @@ def render_specialist_outcome(
                 for item in extra:
                     if item not in limitations:
                         limitations.append(item)
-                return body, tuple(limitations)
+                return RenderedSpecialistOutcome(
+                    body, tuple(limitations)
+                )
         # I02: guidance-shaped structured data — prefer goal-aligned
         # section projection over truncating embedded content_text from
         # the front (which kept authority/meta and dropped methods).
@@ -4387,7 +4594,16 @@ def render_specialist_outcome(
                 for item in extra:
                     if item not in limitations:
                         limitations.append(item)
-                return body, tuple(limitations)
+                md_aligned = _md_guidance_content(structured)
+                return RenderedSpecialistOutcome(
+                    body,
+                    tuple(limitations),
+                    markdown=(
+                        md_aligned[0][:MAX_RENDER_CONTENT_CHARS]
+                        if md_aligned
+                        else None
+                    ),
+                )
         # Owner data lives in the structured payload; generic status
         # text alone (e.g. "Execution completed.") is not an answer.
         # Owners that already embed the same payload in content_text
@@ -4399,6 +4615,7 @@ def render_specialist_outcome(
             default=str,
         )
         if text and full_payload.strip() in text:
+            markdown_body: str | None = None
             if text.lstrip()[:1] in ("{", "["):
                 # content_text is the raw JSON payload itself — render
                 # the deterministic business projection instead.
@@ -4408,6 +4625,14 @@ def render_specialist_outcome(
                 body = (
                     "\n".join(lines) if lines else text
                 )[:MAX_RENDER_CONTENT_CHARS]
+                if lines:
+                    md_lines = _md_business_lines(sanitized) or (
+                        _md_format_structured(sanitized)
+                    )
+                    if md_lines:
+                        markdown_body = "\n".join(md_lines)[
+                            :MAX_RENDER_CONTENT_CHARS
+                        ]
             else:
                 # Embedded non-JSON text that already contains the
                 # structured payload: still prefer structured projection
@@ -4423,14 +4648,26 @@ def render_specialist_outcome(
                     for item in extra:
                         if item not in limitations:
                             limitations.append(item)
-                    return body, tuple(limitations)
+                    md_aligned = _md_guidance_content(structured)
+                    return RenderedSpecialistOutcome(
+                        body,
+                        tuple(limitations),
+                        markdown=(
+                            md_aligned[0][:MAX_RENDER_CONTENT_CHARS]
+                            if md_aligned
+                            else None
+                        ),
+                    )
                 body = text[:MAX_RENDER_CONTENT_CHARS]
             if len(body) >= MAX_RENDER_CONTENT_CHARS and (
                 LIMITATION_RESULT_TRUNCATED not in limitations
             ):
                 limitations.append(LIMITATION_RESULT_TRUNCATED)
-            return body, tuple(limitations)
+            return RenderedSpecialistOutcome(
+                body, tuple(limitations), markdown=markdown_body
+            )
         business = _business_lines(sanitized)
+        markdown_body = None
         if business is not None:
             # Authoritative business payload exists — it is the
             # primary answer. Transport envelope and generic
@@ -4440,6 +4677,12 @@ def render_specialist_outcome(
                 (body_text + "\n\n" if body_text else "")
                 + "\n".join(business)
             )
+            md_business = _md_business_lines(sanitized)
+            if md_business:
+                markdown_body = (
+                    (_md_leaf(body_text) + "\n\n" if body_text else "")
+                    + "\n".join(md_business)
+                )
         else:
             # Unknown shape — fall back to the generic sanitized
             # structured render rather than discarding data.
@@ -4454,20 +4697,33 @@ def render_specialist_outcome(
                 + "Resultado do especialista:\n"
                 + payload
             )
+            if lines:
+                markdown_body = (
+                    (_md_leaf(text) + "\n\n" if text else "")
+                    + "**Resultado do especialista:**\n\n"
+                    + "\n".join(_md_format_structured(sanitized))
+                )
         content = body[:MAX_RENDER_CONTENT_CHARS]
         if len(body) > MAX_RENDER_CONTENT_CHARS:
             if LIMITATION_RESULT_TRUNCATED not in limitations:
                 limitations.append(LIMITATION_RESULT_TRUNCATED)
             content += "\n…(resultado parcial — truncado)"
-        return content, tuple(limitations)
+        if markdown_body is not None:
+            markdown_body = markdown_body[:MAX_RENDER_CONTENT_CHARS]
+        return RenderedSpecialistOutcome(
+            content, tuple(limitations), markdown=markdown_body
+        )
     if text:
         content = text[:MAX_RENDER_CONTENT_CHARS]
         if len(text) > MAX_RENDER_CONTENT_CHARS:
             if LIMITATION_RESULT_TRUNCATED not in limitations:
                 limitations.append(LIMITATION_RESULT_TRUNCATED)
             content += "\n…(resultado parcial — truncado)"
-        return content, tuple(limitations)
-    return "O especialista retornou um resultado vazio.", tuple(limitations)
+        return RenderedSpecialistOutcome(content, tuple(limitations))
+    return RenderedSpecialistOutcome(
+        "O especialista retornou um resultado vazio.",
+        tuple(limitations),
+    )
 
 
 # ---------------- governed-write orchestration helpers ----------------
@@ -7569,9 +7825,7 @@ class OperationalCapabilityOrchestrator:
                 "decision=source_unavailable correlation_id=%s",
                 correlation,
             )
-            rendered, rendered_limitations = render_specialist_outcome(
-                outcome
-            )
+            rendered = render_specialist_outcome_rich(outcome)
             return self._outcome_attempt(
                 group_key,
                 remote_used,
@@ -7579,8 +7833,9 @@ class OperationalCapabilityOrchestrator:
                 group,
                 outcome,
                 correlation,
-                content=rendered,
-                limitations=tuple(rendered_limitations)
+                content=rendered.content,
+                markdown_content=rendered.markdown,
+                limitations=tuple(rendered.limitations)
                 + ("comparison_source_unavailable",),
             )
         left_records = _comparison_records(outcome)
@@ -7816,9 +8071,9 @@ class OperationalCapabilityOrchestrator:
             # prepare call but produced no confirmable proposal
             # (denial/invalid/expired/not-ready). Render what the owner
             # actually returned; never fabricate a preview.
-            content, render_limitations = render_specialist_outcome(outcome)
+            rendered = render_specialist_outcome_rich(outcome)
             note = _READINESS_NOTE.get(preview.readiness)
-            limitations = tuple(render_limitations) + (
+            limitations = tuple(rendered.limitations) + (
                 (note,) if note else ()
             )
             return self._outcome_attempt(
@@ -7828,7 +8083,8 @@ class OperationalCapabilityOrchestrator:
                 group,
                 outcome,
                 correlation,
-                content=content,
+                content=rendered.content,
+                markdown_content=rendered.markdown,
                 limitations=limitations,
             )
 
@@ -8405,10 +8661,15 @@ class OperationalCapabilityOrchestrator:
             decision=projection.status.value,
             execution_mode=execution_mode,
         )
-        content, limitations = render_specialist_outcome(outcome)
+        rendered = render_specialist_outcome_rich(outcome)
+        content = rendered.content
+        limitations = rendered.limitations
+        markdown_content = rendered.markdown
         note = _OUTCOME_NOTE.get(projection.status)
         if note is not None:
             content = f"{content}\n\n{note}" if content else note
+            if markdown_content is not None:
+                markdown_content = f"{markdown_content}\n\n{note}"
         return self._outcome_attempt(
             group_key,
             remote_name,
@@ -8417,6 +8678,7 @@ class OperationalCapabilityOrchestrator:
             outcome,
             correlation,
             content=content,
+            markdown_content=markdown_content,
             limitations=limitations,
         )
 
@@ -8785,6 +9047,7 @@ class OperationalCapabilityOrchestrator:
         *,
         content: str | None = None,
         limitations: tuple[str, ...] | None = None,
+        markdown_content: str | None = None,
         extra_source_refs: tuple[SourceRef, ...] = (),
         input_text: str | None = None,
         composition_mode: str | None = None,
@@ -8797,7 +9060,10 @@ class OperationalCapabilityOrchestrator:
         goal-aligned deterministic rendering when synthesis demotes.
         ``composition_mode`` carries the effective answer composition
         observed at this seam (e.g. ``"cri"``) — presentation-only,
-        never authority.
+        never authority. ``markdown_content`` carries the deterministic
+        markdown projection of the same admitted structured payload —
+        callers that synthesize prose pass ``content`` without it, so
+        model text never becomes ``markdown_safe`` (Category C).
         """
         binding = GovernedCapabilityBinding(
             binding_id=f"{group_key}.{remote_used}",
@@ -8816,8 +9082,10 @@ class OperationalCapabilityOrchestrator:
             capability_group_id=group.group_id,
         )
 
-        def _render(out: SpecialistOutcome) -> tuple[str, tuple[str, ...]]:
-            return render_specialist_outcome(out, input_text=input_text)
+        def _render(out: SpecialistOutcome) -> RenderedSpecialistOutcome:
+            return render_specialist_outcome_rich(
+                out, input_text=input_text
+            )
 
         if content is None and not extra_source_refs:
             attempt = _success_attempt(
@@ -8849,15 +9117,18 @@ class OperationalCapabilityOrchestrator:
                 ),
             )
         if content is None:
-            content, _rendered_limitations = render_specialist_outcome(
+            rendered = render_specialist_outcome_rich(
                 outcome, input_text=input_text
             )
+            content = rendered.content
+            markdown_content = rendered.markdown
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.SUCCESS,
             correlation_id=correlation,
             outcome=outcome,
             provenance=provenance,
             content=content,
+            markdown_content=markdown_content,
             # Synthesized/alternate content never drops owner-reported
             # limitations — they stay attached to the attempt.
             limitations=(

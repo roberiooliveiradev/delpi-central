@@ -738,10 +738,15 @@ def test_ndjson_stream_events_and_terminal_result():
     assert sequences == sorted(sequences)
     assert len(set(sequences)) == len(sequences)
     # turn_result carries the exact serialize_result payload —
-    # presentation.v1 included.
+    # presentation envelope included. The fixture outcome carries an
+    # admitted structured payload, so the projection legitimately
+    # emits presentation.v2 markdown_safe (G3).
     result = records[-1]["result"]
     assert records[-1]["version"] == "1"
-    assert result["presentation"]["version"] == "1"
+    assert result["presentation"]["version"] == "2"
+    assert (
+        result["presentation"]["blocks"][0]["format"] == "markdown_safe"
+    )
     assert result["grounding_status"] == "GROUNDED"
 
 

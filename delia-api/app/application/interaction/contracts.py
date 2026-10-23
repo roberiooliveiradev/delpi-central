@@ -198,6 +198,13 @@ class InteractiveTurnResult:
     # interop boundary — never a URL, credential, or raw payload.
     message_kind: str | None = None
     owner_hint: str | None = None
+    # presentation.v2 (G3): deterministic ``markdown_safe`` projection
+    # of the SAME admitted structured payload that produced ``content``.
+    # Present only when governed structured data legitimately drove the
+    # projection — never on owner free text, model prose, empty results
+    # or failure results. The presentation composer is the only
+    # consumer; legacy ``content`` stays authoritative.
+    presentation_markdown: str | None = None
     # DELIA-UX-CONTEXT-PANEL-...-01 (Prompt 5): additive bounded
     # presentation-only observability projection built by
     # turn_observability.build_turn_observability — model identity,

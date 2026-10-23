@@ -17476,3 +17476,20 @@ I04_ACCEPTED=NO
 PHASE_PROGRESSION=NONE
 NEXT=COORDINATION_G3_APPROVAL → então RED tests → I1 projection → I2 emitter
 ```
+
+
+## §6.384 — G3 Markdown B2: bounded backend implementation executada — pending independent review (2026-10-23)
+
+**2026-10-23 — DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01 (I0–I3 executado):** aprovação formal confirmada no HEAD (`8252f1ea5a` + reconciliação `d11ef7ac88`, doc 97 §10 `G3_BOUNDED_IMPLEMENTATION_APPROVAL=APPROVED_FOR_CURSOR`, spec 83). Worktree reanciado em `origin/main` (`6fe077180a`). Execução bounded exatamente nos seams autorizados — nenhum engine/registry/model-stage/provider-branch novo.
+
+**I0 RED→GREEN:** `delia-api/tests/test_presentation_v2_markdown_emission.py` (23 testes) — 21 FAIL / 2 PASS no RED (schema `PROCESSING_TIMEOUT` ausente + emitter inexistente). MUST-FIX reconciliado aditivamente: `PROCESSING_TIMEOUT` adicionado ao enum `message_kind` do schema v2 (v1 já o tinha; reader frontend também). GREEN 23/23.
+
+**I1 projeção tipada (EXTEND `render_specialist_outcome`):** `RenderedSpecialistOutcome{content, limitations, markdown}` + `render_specialist_outcome_rich` — wrapper plain preservado para callers legados. Projetores `_md_*` são variantes de formato da mesma seleção/ordem/bounds (`_md_format_structured`, `_md_format_list`, `_md_format_records`, `_md_business_lines`, `_md_guidance_content` com `_select_guidance_records` compartilhado com a projeção plain). Valores/chaves do owner escapam metacaracteres Markdown (`\* \_ \` \[ \]`); `<`/`>` não escapados — `marked.lexer` não decodifica entidades e o renderer allowlist já trata tokens `html` como texto inerte (fidelity preservada). Zero links sintetizados — nenhuma fonte de URL admitida no boundary. Transporte tipado aditivo: `GovernedCapabilityAttempt.markdown_content` + `InteractiveTurnResult.presentation_markdown`; propagação em `_grounded_result`/`_write_lifecycle_result`/`_outcome_attempt` — conteúdo sintetizado/CRI passa `markdown_content=None` (Categoria C preservada por construção).
+
+**I2 emissor (EXTEND `compose_presentation`):** `version="2"` + bloco `{kind:"text",format:"markdown_safe"}` somente quando `presentation_markdown` é str não-vazio ≤16_384; caso contrário envelope v1 idêntico ao anterior (fail-closed, nunca markdown truncado). `authorized_links` não introduzido.
+
+**I3 frontend:** ZERO diff — round-trip envelope real emitido → `parsePresentationV2` → `status:ok` → `markdown_safe` extraído (temp test executado e removido, não commitado).
+
+**Verificação factual:** nova suite 23/23; scoped regression 288/288; backend completo 2004/2004 (inclui `test_activity_streaming` atualizado — fixture estruturada emite v2 legitimamente pelo NDJSON); delia 336/336 + tsc; schema v2 conformance manual PASS (closed props, enums, bounds); 15 negative checks PASS (HTML/script como dado inerte, redação de secrets, bounds, fail-closed, NDJSON single-line); residual search: `markdown_safe` emitido somente em `presentation.py`; zero `authorized_links` no backend; zero eval/innerHTML no diff.
+
+**Estado:** `G3_IMPLEMENTATION=EXECUTED_PENDING_INDEPENDENT_REVIEW`; `G4_BROWSER_QA=TEST_NOT_RUN`; `CP-333=PLANNED_NOT_PASS` (executor não auto-aceita); `PRODUCTION_B2=OFF` (nenhum deploy); `INTERNAL_L1=DEFERRED`; `PUBLIC_LINKS=ZERO_EMITTED` (nenhuma fonte admitida no boundary — deferimento registrado, não bloqueia Markdown textual). Executor retorna à coordenação para revisão independente.

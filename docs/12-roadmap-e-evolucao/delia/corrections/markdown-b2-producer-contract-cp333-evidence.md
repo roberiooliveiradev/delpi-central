@@ -100,3 +100,14 @@ STATUS=CANONICAL_FINDINGS_RECONCILED; IMPLEMENTATION_AUTHORIZATION=NO; CONTRACT_
 ## Superseding Product Master decision — 2026-10-22
 
 The earlier statement that L1 internal binding must be completed before any G3 B2 core implementation is **SUPERSEDED**. Public HTTPS links may be clickable only when admitted under source/URL policy; internal links are optional and must not create DÉLIA-owned authorization. Core and Domain govern effective destination access; Portal handles navigation. No parallel permission system. G3 formal brief, allowed v2 producer contract, compatibility, negative tests and QA remain mandatory. Frontend/body and Markdown B2 runtime status are unchanged by this documentary update. Historical sections above remain trace evidence, not operative gates.
+
+
+## G3 bounded implementation — executed, pending independent review (2026-10-23)
+
+`DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01` executed the approved I0–I3 boundary after formal coordination approval (doc 97 §10, commit `8252f1ea5a`; spec reconciliation `d11ef7ac88`).
+
+Factual results: MUST-FIX `PROCESSING_TIMEOUT` reconciled in the v2 schema enum; RED→GREEN `test_presentation_v2_markdown_emission.py` (23 tests); `render_specialist_outcome_rich` + `RenderedSpecialistOutcome` (Category A deterministic Markdown only — B/C stay plain by construction); `compose_presentation` emits `version="2"`/`markdown_safe` solely for admitted projections; frontend zero-diff verified by real-envelope round-trip through `parsePresentationV2`. Backend 2004/2004, delia 336/336, scoped regression 288/288, 15 negative checks PASS, schema conformance PASS, JSON/NDJSON safe.
+
+Public links: zero emitted — no admitted public-URL source exists at the producer boundary (registered deferral, `AC26_PARTIAL / PUBLIC_LINK_EMISSION_DEFERRED` per doc 97 §5); internal links remain inert and deferred.
+
+STATUS=IMPLEMENTATION_EXECUTED_PENDING_INDEPENDENT_REVIEW; IMPLEMENTATION_AUTHORIZATION=G3_APPROVED_2026_10_23; CP-333=PLANNED_NOT_PASS (executor does not self-accept); G4_BROWSER_QA=TEST_NOT_RUN; PRODUCTION_DEPLOYMENT=NO.

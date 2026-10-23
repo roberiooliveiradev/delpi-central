@@ -27,7 +27,8 @@
         "WRITE_REJECTED",
         "AUTHZ_DENIED",
         "SOURCE_UNAVAILABLE",
-        "PRECONDITION_REQUIRED"
+        "PRECONDITION_REQUIRED",
+        "PROCESSING_TIMEOUT"
       ],
       "description": "Canonical producer-declared kind; drives allowed_interactions. Never derived from prose by the consumer."
     },

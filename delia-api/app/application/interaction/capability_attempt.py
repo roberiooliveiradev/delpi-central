@@ -93,6 +93,11 @@ class GovernedCapabilityAttempt:
     owner_hint: str | None = None
     content: str | None = None
     limitations: tuple[str, ...] = ()
+    # presentation.v2 (G3): deterministic ``markdown_safe`` projection
+    # of the SAME admitted structured payload — set only when governed
+    # structured data legitimately drove the projection. Never present
+    # on owner free text, model prose, empty results or failures.
+    markdown_content: str | None = None
     confirmation_context: Mapping[str, Any] | None = None
     # Typed admission outcome. Only early conversational admission
     # sets this. Later NOT_APPLICABLE leaves it empty.
@@ -127,12 +132,22 @@ class GovernedCapabilityBinding:
     capability_group_id: str | None = None
 
 
+class _SupportsRenderedOutcome(Protocol):
+    """Structural contract of the governed render result — the
+    capability_provision ``RenderedSpecialistOutcome`` satisfies it
+    without this shared module importing the orchestration layer."""
+
+    content: str
+    limitations: tuple[str, ...]
+    markdown: str | None
+
+
 def _success_attempt(
     *,
     correlation_id: str,
     binding: GovernedCapabilityBinding,
     outcome: SpecialistOutcome,
-    render: Callable[[SpecialistOutcome], tuple[str, tuple[str, ...]]],
+    render: Callable[[SpecialistOutcome], _SupportsRenderedOutcome],
 ) -> GovernedCapabilityAttempt:
     """Assemble a SUCCESS attempt: OBSERVATION outcome + provenance.
 
@@ -140,7 +155,7 @@ def _success_attempt(
     authoritative business source. Epistemic class is never elevated —
     grounding marks provenance, not FACT.
     """
-    content, limitations = render(outcome)
+    rendered = render(outcome)
     return GovernedCapabilityAttempt(
         status=GovernedCapabilityStatus.SUCCESS,
         correlation_id=correlation_id,
@@ -164,8 +179,9 @@ def _success_attempt(
             provider_id=binding.provider_id,
             capability_group_id=binding.capability_group_id,
         ),
-        content=content,
-        limitations=limitations,
+        content=rendered.content,
+        limitations=rendered.limitations,
+        markdown_content=rendered.markdown,
     )
 
 

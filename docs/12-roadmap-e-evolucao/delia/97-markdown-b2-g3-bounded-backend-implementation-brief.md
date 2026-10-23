@@ -187,3 +187,15 @@ This document is a bounded execution brief, **not** a replacement for code revie
 **Execution status after this decision:** `G3_TASK_BRIEF_APPROVED=YES`; `G3_IMPLEMENTATION=AUTHORIZED_NOT_EXECUTED`; `G4=TEST_NOT_RUN`; `CP-333=PLANNED_NOT_PASS`; `PRODUCTION_ACTIVATION=NO`; `I04_PHASE_UNCHANGED`. Executor must not self-accept; return SHA/config/tests/RQ-AC evidence for independent review.
 
 **NEXT_BOUNDED_STEP:** Cursor resumes `DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01` from current main, starts with I0 RED tests including PROCESSING_TIMEOUT, then I1/I2 minimal backend implementation, I3 frontend only if genuine contract mismatch, docs/ledger factual updates, commit/push and execution report. No deploy.
+
+## 11. Execution record — G3 bounded implementation completed, pending independent review (2026-10-23)
+
+`DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01` executed I0–I3 inside the §10 approved boundary (ledger §6.384, spec 83 "G3 bounded implementation" section):
+
+- `PROCESSING_TIMEOUT` reconciled additively in the v2 schema enum; RED suite (23 tests) → GREEN 23/23.
+- I1: `RenderedSpecialistOutcome` + `render_specialist_outcome_rich` (Category-A-only deterministic Markdown projection, same sanitization/bounds; owner metacharacters escaped; zero synthesized links); typed transport `markdown_content` → `presentation_markdown`.
+- I2: `compose_presentation` emits `version="2"` + `markdown_safe` only for admitted projections; legacy v1 envelope unchanged otherwise.
+- I3: frontend zero-diff; real emitted envelope verified against `parsePresentationV2` (`status:"ok"`).
+- Evidence: backend 2004/2004, delia 336/336, scoped regression 288/288, 15 negative checks PASS, schema conformance PASS, JSON/NDJSON safe.
+
+`G3_IMPLEMENTATION=EXECUTED_PENDING_INDEPENDENT_REVIEW`; `G4=TEST_NOT_RUN`; `CP-333=PLANNED_NOT_PASS`; `PRODUCTION_B2=OFF`; executor did not self-accept — returned to coordination for independent review.
