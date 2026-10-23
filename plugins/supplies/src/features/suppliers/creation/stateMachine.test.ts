@@ -201,13 +201,40 @@ describe("identity coherence & stale search (Defect B)", () => {
   const CNPJ_A = "00000000000191";
   const CNPJ_B = "11222333000181";
 
-  it("coerência exige mesmo documento normalizado", () => {
+  it("coerência exige mesmo documento normalizado E mesmo person_type (R2)", () => {
+    // CNPJ igual + J → coerente
     expect(
-      isIdentityCoherent({ tax_id: "00.000.000/0001-91" }, CNPJ_A),
+      isIdentityCoherent(
+        { tax_id: "00.000.000/0001-91", person_type: "J" },
+        CNPJ_A,
+        "J",
+      ),
     ).toBe(true);
-    expect(isIdentityCoherent({ tax_id: CNPJ_B }, CNPJ_A)).toBe(false);
-    expect(isIdentityCoherent({ tax_id: "" }, CNPJ_A)).toBe(false);
-    expect(isIdentityCoherent({ tax_id: CNPJ_A }, null)).toBe(false);
+    // CNPJ igual + F/X divergente → incoerente (cancelamento mantém bloqueio)
+    expect(
+      isIdentityCoherent({ tax_id: CNPJ_A, person_type: "F" }, CNPJ_A, "J"),
+    ).toBe(false);
+    expect(
+      isIdentityCoherent({ tax_id: CNPJ_A, person_type: "X" }, CNPJ_A, "J"),
+    ).toBe(false);
+    // CNPJ diferente → incoerente
+    expect(
+      isIdentityCoherent({ tax_id: CNPJ_B, person_type: "J" }, CNPJ_A, "J"),
+    ).toBe(false);
+    // Sem consulta ativa → incoerente
+    expect(
+      isIdentityCoherent({ tax_id: CNPJ_A, person_type: "J" }, null, "J"),
+    ).toBe(false);
+    expect(
+      isIdentityCoherent({ tax_id: CNPJ_A, person_type: "J" }, CNPJ_A, null),
+    ).toBe(false);
+    // person_type vazio no draft → só coerente após incorporação do tipo
+    expect(
+      isIdentityCoherent({ tax_id: CNPJ_A, person_type: "" }, CNPJ_A, "J"),
+    ).toBe(false);
+    expect(
+      isIdentityCoherent({ tax_id: CNPJ_A }, CNPJ_A, "J"),
+    ).toBe(false);
   });
 
   it("mudança de dígitos invalida; mudança só de máscara não", () => {
@@ -229,8 +256,13 @@ describe("provenance safety across identities", () => {
       suggestionApplyDecision(entries.supplier_name, "EMPRESA EXEMPLO LTDA"),
     ).toBe("apply"); // mesma fonte = idempotente
     // Mas se identidade do draft não é a do preview, o fluxo bloqueia antes
-    expect(isIdentityCoherent({ tax_id: "11222333000181" }, "00000000000191"))
-      .toBe(false);
+    expect(
+      isIdentityCoherent(
+        { tax_id: "11222333000181", person_type: "J" },
+        "00000000000191",
+        "J",
+      ),
+    ).toBe(false);
     expect(pendingApplicableEntries(entries, draft).map((e) => e.field_key))
       .toEqual(["supplier_name"]);
   });
@@ -243,6 +275,72 @@ describe("provenance safety across identities", () => {
     expect(next.supplier_name.status).toBe("CONFIRMED");
     // Esvaziar o mapa de sugestões (nova consulta) não toca o draft —
     // a reconciliação age apenas sobre patches explícitos.
+  });
+});
+
+describe("interaction scenario — cancel then re-confirm (S2.R2)", () => {
+  const CNPJ_A = "00000000000191";
+
+  it("person_type divergente: cancelar bloqueia, reconfirmar libera", () => {
+    // Draft: CNPJ A + pessoa F; preview retorna pessoa J para o mesmo CNPJ.
+    let draft: Record<string, string> = {
+      tax_id: CNPJ_A,
+      person_type: "F",
+      supplier_name: "",
+    };
+    const entries = buildSuggestionEntries(PREVIEW);
+    const person = PREVIEW.person_type;
+
+    // 1. Divergência detectada → confirmação exigida.
+    const check = identityChangeCheck(draft, CNPJ_A, person);
+    expect(check.changedKeys).toEqual(["person_type"]);
+
+    // 2. Usuário CANCELA → draft intacto, coerência falsa, aplicação vedada.
+    const userConfirmed = false;
+    if (userConfirmed) draft = { ...draft, person_type: person };
+    expect(draft).toEqual({ tax_id: CNPJ_A, person_type: "F", supplier_name: "" });
+    expect(isIdentityCoherent(draft, CNPJ_A, person)).toBe(false);
+
+    // 3. Tentativa de aplicar sugestão → guarda rejeita (espelho de applyOne).
+    if (isIdentityCoherent(draft, CNPJ_A, person)) {
+      draft = {
+        ...draft,
+        supplier_name: entries.supplier_name.suggested_value ?? "",
+      };
+    }
+    expect(draft.supplier_name).toBe("");
+
+    // 4. Usuário RECONFIRMA → tipo vira J, coerência restabelecida.
+    draft = { ...draft, person_type: person };
+    expect(isIdentityCoherent(draft, CNPJ_A, person)).toBe(true);
+
+    // 5. Sugestão elegível agora pode ser aplicada e marcada CONFIRMED.
+    const decision = suggestionApplyDecision(
+      entries.supplier_name,
+      draft.supplier_name,
+    );
+    expect(decision).toBe("apply");
+    draft = {
+      ...draft,
+      supplier_name: entries.supplier_name.suggested_value ?? "",
+    };
+    expect(draft.supplier_name).toBe("EMPRESA EXEMPLO LTDA");
+    expect(
+      applyDraftPatchToEntries(entries, draft).supplier_name.status,
+    ).toBe("CONFIRMED");
+  });
+
+  it("preview de B nunca aplica sobre identidade A mesmo com CNPJ igual em tela", () => {
+    // Identidade confirmada de A; preview de B ativo (activeTaxId=B).
+    const draft = {
+      tax_id: CNPJ_A,
+      person_type: "J",
+      supplier_name: "EMPRESA EXEMPLO LTDA",
+    };
+    const CNPJ_B = "11222333000181";
+    expect(isIdentityCoherent(draft, CNPJ_B, "J")).toBe(false);
+    // E person_type divergente não escapa pelo CNPJ igual:
+    expect(isIdentityCoherent(draft, CNPJ_A, "F")).toBe(false);
   });
 });
 

@@ -113,15 +113,23 @@ export function identityChangeCheck(
 }
 
 /**
- * Coerência de identidade: as sugestões do preview só podem ser aplicadas
- * quando o documento do formulário é o mesmo da consulta bem-sucedida.
+ * Coerência COMPLETA de identidade (S2.R2): as sugestões do preview só
+ * podem ser aplicadas quando documento E tipo de pessoa do formulário
+ * correspondem à identidade da consulta ativa. person_type divergente
+ * (ex.: "F" digitado vs "J" consultado) bloqueia da mesma forma que CNPJ
+ * divergente — a confirmação explícita é o único caminho de reconciliação.
+ * Fail-closed: consulta sem tax_id/person_type → incoerente.
  */
 export function isIdentityCoherent(
   draft: Record<string, string>,
   consultedTaxId: string | null,
+  consultedPersonType: string | null,
 ): boolean {
-  if (!consultedTaxId) return false;
-  return normalizeCnpjDigits(draft.tax_id ?? "") === consultedTaxId;
+  if (!consultedTaxId || !consultedPersonType) return false;
+  return (
+    normalizeCnpjDigits(draft.tax_id ?? "") === consultedTaxId &&
+    (draft.person_type ?? "").trim() === consultedPersonType
+  );
 }
 
 /** true quando a digitação mudou os 14 dígitos — máscara não invalida. */

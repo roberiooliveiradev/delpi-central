@@ -79,4 +79,19 @@ describe("Creation preview (X4.UX-R1.S2) — boundaries", () => {
     expect(machine).toContain("isIdentityCoherent");
     expect(machine).toContain("searchTaxIdChanged");
   });
+
+  it("coerência cobre tax_id E person_type (S2.R2)", () => {
+    const machine = read("stateMachine.ts");
+    const sig = machine.match(
+      /export function isIdentityCoherent\([\s\S]*?\n\}/,
+    );
+    expect(sig?.[0]).toContain("consultedPersonType");
+    expect(sig?.[0]).toContain("person_type");
+    const flow = read("CreationAssistedFlow.tsx");
+    expect(flow).toContain("activePersonType");
+    // guarda dupla: painel bloqueia visualmente E handlers revalidam
+    expect(flow.match(/isIdentityCoherent/g)?.length).toBeGreaterThanOrEqual(
+      3,
+    );
+  });
 });

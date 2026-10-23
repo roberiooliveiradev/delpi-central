@@ -70,6 +70,10 @@ export function CreationAssistedFlow({
   const [error, setError] = useState<string | null>(null);
   /** CNPJ (14 dígitos) da consulta em andamento ou do último preview válido. */
   const [activeTaxId, setActiveTaxId] = useState<string | null>(null);
+  /** Tipo de pessoa retornado pela consulta ativa — parte da identidade. */
+  const [activePersonType, setActivePersonType] = useState<string | null>(
+    null,
+  );
   const requestSeq = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   // Ref do draft: o callback assíncrono sempre lê a versão mais recente.
@@ -96,6 +100,7 @@ export function CreationAssistedFlow({
     setPreview(null);
     setError(null);
     setActiveTaxId(null);
+    setActivePersonType(null);
     onEntriesChange({});
   };
 
@@ -141,6 +146,7 @@ export function CreationAssistedFlow({
     setPreview(null);
     setError(null);
     setActiveTaxId(null);
+    setActivePersonType(null);
     setCnpjInput("");
     onEntriesChange({});
     setMode(next);
@@ -161,6 +167,7 @@ export function CreationAssistedFlow({
       .then((result) => {
         if (seq !== requestSeq.current) return;
         setPreview(result);
+        setActivePersonType(result.person_type || "J");
         onEntriesChange(buildSuggestionEntries(result));
         // Identidade: incorpora tax_id/person_type com confirmação quando
         // o draft já possui valor divergente — nunca sobrescreve em silêncio.
@@ -170,6 +177,7 @@ export function CreationAssistedFlow({
         if (controller.signal.aborted || seq !== requestSeq.current) return;
         setPreview(null);
         setActiveTaxId(null);
+        setActivePersonType(null);
         onEntriesChange({});
         setError(mapCreationPreviewError(err));
       })
@@ -178,14 +186,20 @@ export function CreationAssistedFlow({
       });
   };
 
-  // Aplicação exige coerência: sugestões de outro CNPJ nunca entram no draft.
+  // Aplicação exige coerência completa (tax_id + person_type): sugestões
+  // de outra identidade nunca entram no draft — guarda independente do
+  // bloqueio visual do painel.
   const applyOne = (fieldKey: string, value: string) => {
-    if (!isIdentityCoherent(draftRef.current, activeTaxId)) return;
+    if (!isIdentityCoherent(draftRef.current, activeTaxId, activePersonType)) {
+      return;
+    }
     onApplyPatch({ [fieldKey]: value });
   };
 
   const applyAll = (list: readonly { field_key: string; suggested_value: string | null }[]) => {
-    if (!isIdentityCoherent(draftRef.current, activeTaxId)) return;
+    if (!isIdentityCoherent(draftRef.current, activeTaxId, activePersonType)) {
+      return;
+    }
     const patch: Partial<SupplierCreateDraft> = {};
     for (const e of list) {
       if (e.suggested_value) {
@@ -337,7 +351,9 @@ export function CreationAssistedFlow({
             entries={entries}
             draft={draft}
             disabled={disabled}
-            identityBlocked={!isIdentityCoherent(draft, activeTaxId)}
+            identityBlocked={
+              !isIdentityCoherent(draft, activeTaxId, preview.person_type || "J")
+            }
             onConfirmIdentity={() => {
               if (activeTaxId) {
                 confirmIdentity(activeTaxId, preview.person_type || "J");

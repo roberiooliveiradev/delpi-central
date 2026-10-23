@@ -88,7 +88,23 @@ Alterados: `SupplierCreatePage.tsx` (integração), `index.css` (estilos escopad
 
 **Regressões adicionadas:** 11 unitárias novas (`identityChangeCheck` A1–A4, `isIdentityCoherent`, `searchTaxIdChanged` incl. máscara, proveniência cross-identidade) + 2 estruturais (sem patch direto de `tax_id` fora de `confirmIdentity`; invalidação/coerência presentes). Suíte: **330/330**; typecheck e build limpos; lint sem erro novo.
 
-## 12. Próximo gate
+## 12. Addendum — X4.UX-R1.S2.R2: Complete Identity Coherence
+
+**Residual da revisão R1:** `isIdentityCoherent()` verificava apenas `tax_id` — CNPJ igual + `person_type` divergente (ex.: `F` no draft vs `J` consultado) liberava sugestões mesmo com a confirmação cancelada.
+
+**Causa raiz:** regra de confirmação (`identityChangeCheck` cobre `tax_id`+`person_type`) mais ampla que a regra de aplicação (`isIdentityCoherent` só `tax_id`).
+
+**Correção (menor diff):**
+- `isIdentityCoherent(draft, consultedTaxId, consultedPersonType)` exige **ambos** coerentes; fail-closed quando a consulta não informa tipo.
+- Novo estado `activePersonType` (set no sucesso, limpo em reset/troca de modo/erro) — a identidade avaliada é sempre a do preview atual.
+- Guarda dupla mantida: painel esconde ações (`identityBlocked`) **e** `applyOne`/`applyAll` revalidam coerência com `draftRef` no momento da aplicação.
+- Invariante final: sugestões aplicáveis ⟺ `normalized(draft.tax_id) == activeTaxId` **AND** `draft.person_type == activePersonType` **AND** preview vigente (seq/abort).
+
+**Cancelamento:** preserva 100% do draft; «Usar CNPJ consultado no formulário» reabre a confirmação — só após identidade coerente as elegíveis aplicam.
+
+**Testes:** +3 cenários (coerência completa F/X/vazio, interação cancelar→bloqueado→reconfirmar→aplicar→`CONFIRMED`, preview B sobre identidade A); suíte **333/333**; typecheck/build OK; lint sem erro novo. Teste de interação implementado como cenário comportamental sobre a máquina de estados pura — o plugin não possui testing-library/DOM (`environment: "node"`); não foi acrescentada dependência ampla.
+
+## 13. Próximo gate
 
 R1.S3 (provider nominal) permanece bloqueado; S4/S5/S6 não autorizados automaticamente. Aceite federado do S2 depende de R1.S7.
 
