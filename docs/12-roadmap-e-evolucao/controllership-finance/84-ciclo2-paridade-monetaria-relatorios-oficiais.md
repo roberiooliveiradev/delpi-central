@@ -202,7 +202,7 @@ em doc 80 §31.B e catálogo doc 85 §5 (BR-R05-003…010).
 | Coluna MP | Impresso | Reconstruído (origem física) | Δ |
 |---|---|---|---|
 | Saldo Inicial | 3.315.659,021 | derivado; = ΣSB9@0831 | **0** |
-| Compras | 642.670,88 | SD1 poder3=N/est=S/tipo≠'D' `D1_CUSTO` DTDIGIT-Set + itens 001 do doc 004504505 ainda vivos na emissão | **0** |
+| Compras | 642.670,88 | SD1 poder3=N/est=S/tipo≠'D' `D1_CUSTO` DTDIGIT-Set + itens 001 do doc `<NF-RETIF-A>` (sanitizado) ainda vivos na emissão | **0** |
 | Movimentações Internas | −40.957,818 | SD3 OP-vazio CF[3]≠'3' (INV + DE6/RE6 + RE0-503) | ~0,48 (precisão TTAT_COLD) |
 | Requisições p/ Produção | −666.114,374 | SD3 OP-preenchido não-PR a custos de emissão | **0** |
 | Transferências | 0,000 | RE4/DE4 espelhadas | **0** |
@@ -211,7 +211,7 @@ em doc 80 §31.B e catálogo doc 85 §5 (BR-R05-003…010).
 | Transf. p/ Processo | 940.599,335 | SD3 CF[3]='3' OP-vazio (RE3) — **memo, fora da equação** | **0** |
 | Devolução de Vendas | 264,681 | SD1 poder3=N/est=S/tipo='D' (TES 168/1949) | **0** |
 | Devolução de Compras | 4.732,694 | SD2 poder3=N/est=S/tipo='D' (CFOP 6201) | **0** |
-| Entrada Poder Terceiros | 319.258,140 | SD1 poder3≠'N'/est=S `D1_CUSTO` DTDIGIT-Set − itens 085 do doc 004504505 (inseridos ~20-21/10 retroativos) | **0** |
+| Entrada Poder Terceiros | 319.258,140 | SD1 poder3≠'N'/est=S `D1_CUSTO` DTDIGIT-Set − itens 085 do doc `<NF-RETIF-A>` (inseridos ~20-21/10 retroativos) | **0** |
 | Saída Poder Terceiros | 36.806,805 | SD2 poder3≠'N'/est=S `D2_CUSTO1` (TES 524/x903) | **0** |
 | Saldo Atual | 3.364.910,314 | saldo no estado de custo da emissão (01/10 16:16) | +8.631,73 vs SB9@21/10 |
 
@@ -223,7 +223,7 @@ memo).
 
 | Componente | Valor |
 |---|---|
-| Repricing da retificação doc 004504505 (001→085, ~20-21/10) | +9.583,19 |
+| Repricing da retificação doc `<NF-RETIF-A>` (001→085, ~20-21/10) | +9.583,19 |
 | Movimentos INVENT retroativos (insert 01/10 ~19h) | −24,95 |
 | Recálculo de custo médio pós-emissão (MATA330 c/ 25.995 updates `D3_CUSTO1`; `Analise.xlsx` ΣQ×ΔCM ≈ +10,7k agregado) | incluído |
 | Residual não decomposto | ≈ −950 |

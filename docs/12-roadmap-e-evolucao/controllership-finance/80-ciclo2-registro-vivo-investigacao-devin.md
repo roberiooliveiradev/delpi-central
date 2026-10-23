@@ -1577,7 +1577,7 @@ Valores impressos × origem física (SELECT-only; custos em moeda 1):
 | Coluna | Impresso | Origem física | Δ |
 |---|---|---|---|
 | Saldo Inicial | 3.315.659,021 | derivado (SA − movimentos); = ΣSB9@0831 exato | 0 |
-| Compras | 642.670,88 | SD1 poder3=N/est=S/tipo≠'D' DTDIGIT-Set **+ itens 001 do doc 004504505 ainda vivos** (548.652,07 + 94.018,81) | **0** |
+| Compras | 642.670,88 | SD1 poder3=N/est=S/tipo≠'D' DTDIGIT-Set **+ itens 001 do doc `<NF-RETIF-A>` ainda vivos** (548.652,07 + 94.018,81) | **0** |
 | Movimentações Internas | −40.957,818 | SD3 OP-vazio, CF[3]≠'3' (INV DE0/RE0 net + DE6/RE6 net + RE0-503) a custos de emissão; por custo atual −40.958,297 | ~0,48 residual de precisão (TTAT_COLD) |
 | Requisições p/ Produção | −666.114,374 | SD3 OP-preenchido não-PR (RE2+RE9+RE0-999-220) a custos de emissão (TTAT_COLD) | **0** |
 | Transferências | 0,000 | SD3 CF∈{RE4,DE4} espelhadas (±259.794,011) | 0 |
@@ -1586,7 +1586,7 @@ Valores impressos × origem física (SELECT-only; custos em moeda 1):
 | Transf. p/ Processo | 940.599,335 | SD3 CF[3]='3' OP-vazio (RE3) a custos de emissão — **coluna memo fora da equação do saldo** | **0** |
 | Devolução de Vendas | 264,681 | SD1 poder3=N/est=S/tipo='D' (TES 168/CFOP 1949) | **0** |
 | Devolução de Compras | 4.732,694 | SD2 poder3=N/est=S/tipo='D' (CFOP 6201, TES 530/561) | **0** |
-| Entrada Poder Terceiros | 319.258,140 | SD1 poder3≠'N'/est=S `D1_CUSTO` DTDIGIT-Set **sem os itens 085 do doc 004504505** (422.860,14 − 103.602,00) | **0** |
+| Entrada Poder Terceiros | 319.258,140 | SD1 poder3≠'N'/est=S `D1_CUSTO` DTDIGIT-Set **sem os itens 085 do doc `<NF-RETIF-A>`** (422.860,14 − 103.602,00) | **0** |
 | Saída Poder Terceiros | 36.806,805 | SD2 poder3≠'N'/est=S `D2_CUSTO1` (TES 524 × CFOP x903) | **0** |
 | Saldo Atual | 3.364.910,314 | medida de saldo no estado de custo da emissão (01/10 16:16) | vs SB9@21/10: +8.631,73 (ver 31.D) |
 
@@ -1596,7 +1596,7 @@ Equação da linha MP (verificada ao centavo):
 
 ### 31.D — Mecanismo unificado: retificação retroativa pós-emissão
 
-Doc `004504505` (NF série 1, fornecedor 000001/11, emissão 18/09,
+Doc `<NF-RETIF-A>` (sanitizado; NF série 1, emissão 18/09,
 digitação 22/09): cada item existe em **par espelhado** —
 
 - `TES 001` **deletado** (`D_E_L_E_T_='*'`, RECNO 286517–286520,
@@ -1606,14 +1606,14 @@ digitação 22/09): cada item existe em **par espelhado** —
 Os RECNOs 288137–288140 estão num bloco cujos vizinhos têm
 `D1_DTDIGIT` = 20–21/10/2026 → **os itens 085 foram inseridos em
 ~20–21/10 com datas retroativas** (mesma onda do rebuild SB9 de
-21/10 19:13 e do insert do doc 004510648-085 em 288145). Na emissão
+21/10 19:13 e do insert do doc `<NF-RETIF-B>`-085 em RECNO contíguo). Na emissão
 (01/10 16:16) os itens eram 001/compra → explica **simultaneamente**:
 
 - Compras impresso 642.670,88 = 548.652,07 + 94.018,81 (Δ 0,00);
 - EntPT impresso 319.258,14 = 422.860,14 − 103.602,00 (Δ 0,00).
 
-Demais linhas SD1 deletadas na janela (duplicatas 000016560,
-000140318, 000499157 etc.) são housekeeping anterior à emissão —
+Demais linhas SD1 deletadas na janela (duplicatas `<dup-A>`,
+`<dup-B>`, `<dup-C>` etc., sanitizadas) são housekeeping anterior à emissão —
 caso contrário os matches centesimais não fechariam.
 
 ### 31.E — Decomposição da divergência MP (SA impresso × SB9 atual)
@@ -1621,9 +1621,9 @@ caso contrário os matches centesimais não fechariam.
 `SB9@21/10 (B9_VINI1) = 3.373.542,05` vs `SA impresso = 3.364.910,31`
 → **+8.631,73**. Componentes demonstrados:
 
-1. **Repricing da retificação** — os 4 itens do doc 004504505
+1. **Repricing da retificação** — os 4 itens do doc `<NF-RETIF-A>`
    trocaram custo 94.018,81 → 103.602,00 (**Δ +9.583,19**); dois dos
-   produtos (`10211413`, `10211414`) constam no topo do relatório de
+   produtos (`<prod-A>`, `<prod-B>`, sanitizados) constam no topo do relatório de
    variação de CM (`Analise.xlsx`) — o repricing integrou a
    revalorização do estoque.
 2. **Recálculo de custo médio pós-emissão** — `MATA330` e rotinas

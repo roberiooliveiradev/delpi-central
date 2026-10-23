@@ -2,9 +2,13 @@
 
 **Documento:** `85-ciclo2-catalogo-regras-negocio-r01-r15.md`
 **Execução:** CF-C2-PARITY-001 complemento — consolidação de conhecimento · 2026-10-23 · Devin
-**Finalidade:** preservar, em forma verificável e versionada, toda regra necessária
-para reproduzir os resultados oficiais e para implementar futuramente as rotas do
-Portal Controladoria & Finanças (PROC-0072). Nenhuma regra fica apenas em script
+**Finalidade:** preservar, em forma verificável e versionada, as regras de
+negócio **atualmente descobertas** para reproduzir os resultados oficiais
+observados e para subsidiar a futura implementação das rotas do Portal
+Controladoria & Finanças (PROC-0072). O catálogo consolida o conhecimento
+desta investigação — **não pretende conter todas as regras necessárias para
+concluir os 15 relatórios** (itens com binding/pendência declarada seguem em
+`PENDING`/`TO_INVENTORY`). Nenhuma regra descoberta fica apenas em script
 temporário, mensagem de execução ou memória da investigação.
 **Referências cruzadas:** docs 47 (gates), 80 (rodadas §17–§30), 82 (owners E1–E6),
 83 (crosswalk), 84 (paridade monetária).
@@ -83,16 +87,18 @@ Artefatos: `Pagos por dt.pdf` (33p), `Pagos por nat.pdf` (35p),
 - **Nota de implementação:** o par deve ser removido por multiset de chaves,
   não por anti-join 1:1 (chaves duplicadas com valores trocados existem).
 
-### BR-R01-003 — `Total Baixado` — `PROVEN`
+### BR-R01-003 — `Total Baixado` — `PROVEN` (emissão observada)
 
-- **Regra:** `Total Baixado = SE5.E5_VALOR` por linha.
+- **Regra:** `Total Baixado = SE5.E5_VALOR` por linha — **comprovado para a
+  emissão observada** (competência 09/2026).
 - **Detalhe do fonte:** existe campo calculado `nVlMovFin` (movimentação via
   cadeia FK quando presente) que toma precedência; nesta competência
   `FK6_TPDOC='VA'` retornou **0 em todas as 948 linhas** — valor efetivo =
   `E5_VALOR` para toda a emissão.
 - **Validação:** multiset TB×chave sem divergência (948/948, doc 84 §1).
-- **Pendência:** condição exata em que `nVlMovFin` difere de `E5_VALOR` —
-  `PENDING` (não observada nesta competência).
+- **Pendência:** quando `nVlMovFin` assumir precedência com valor diferente
+  de `E5_VALOR`, o comportamento do `Total Baixado` permanece **`PENDING`** —
+  cenário não observado, **sem expectativa de teste inventada**.
 
 ### BR-R01-004 — `Valor Original` — `PROVEN` (3 regras físicas)
 
@@ -182,9 +188,9 @@ paridade com o artefato, não de leitura de código.**
 - **8 linhas de decomposição** (`MT`/`JR`/`DC` + 1 `VL` duplicado) suprimidas:
   seus valores já estão embutidos no `E5_VALOR` da baixa `VL` principal
   (ex.: VL 587,70 contém juros 4,94 + multa 11,42 = 16,36).
-- **3 `PA`/`DEB` sem título excluídos, identificados por linha lógica:**
-  `260721799` (118,27, `FINA090`, f01) · `080926` (1.000,00, `FINA090`, f01) ·
-  `044052` (1.537,00, `FINA750`, f02).
+- **3 `PA`/`DEB` sem título excluídos, identificados por linha lógica**
+  (docs sanitizados): `<doc-A>` (118,27, `FINA090`, f01) · `<doc-B>`
+  (1.000,00, `FINA090`, f01) · `<doc-C>` (1.537,00, `FINA750`, f02).
 - **Regra geral que inclui 8 e exclui 3: `PENDING`** — dependente do fonte.
 - Demais sem-título (FOL/COF/NDF/vazio/NF-DEB) corretamente fora.
 
@@ -253,8 +259,10 @@ Paridade parcial: doc 84 §3.
 ### BR-R03-002 — Fechamento iterativo / versionamento — `PROVEN`
 
 - O P7 foi reemitido ≥4× no dia 30/09 com totais distintos (3.776.994,69 →
-  ~2.756.1xx → 3.946.431,87 / 2.976.967,56): **o fechamento é iterativo**; a
-  última versão é a homologável.
+  ~2.756.1xx → 3.946.431,87 / 2.976.967,56): **o fechamento é iterativo** e
+  emissões sucessivas variam — cada versão precisa ser rastreável.
+- A **versão homologada depende de aceite funcional** — não é
+  automaticamente a última emissão.
 - **Implicação TARGET:** todo indicador derivado exige `as_of`/versão
   (coerente com AC-E6-02/08, doc 81/82).
 
@@ -371,9 +379,10 @@ doc 84 §4; evidência doc 80 §31.
 
 ### BR-R05-008 — Retificações retroativas alteram a leitura histórica — `PROVEN`
 
-- Doc `004504505`: itens reclassificados TES `001`→`085` em ~20-21/10
-  com datas retroativas (RECNO vizinho datado 20-21/10) — na emissão
-  contavam como Compras (+94.018,81); hoje contam como EntPT (+103.602).
+- Doc `<NF-RETIF-A>` (sanitizado): itens reclassificados TES `001`→`085`
+  em ~20-21/10 com datas retroativas (RECNO vizinho datado 20-21/10) — na
+  emissão contavam como Compras (+94.018,81); hoje contam como EntPT
+  (+103.602).
 - **Regra TARGET:** todo histórico reproduzível exige `as_of` de linha
   (linha viva/emission-time) ou snapshot — dados correntes NÃO
   reproduzem relatórios emitidos antes de retificações.
@@ -502,7 +511,10 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 
 ## §15 — Matriz de handoff técnico (regra → implementação futura)
 
-> `contrato candidato` = sugestão de superfície futura; **nada foi criado**.
+> `contrato candidato` = rótulo de superfície futura (`TARGET`/`PLANNED`);
+> **nada foi criado**. Os rótulos **não são nomes de endpoints aprovados** —
+> nome, path e payload definitivos dependem de design de contrato + gate
+> transversal. Nenhuma regra muda de bounded context sem esse design.
 
 | Regra | Fonte canônica | Campos | Transformação | Contrato candidato | Owner | Testes | Evidência |
 |---|---|---|---|---|---|---|---|
@@ -532,34 +544,40 @@ copia para BFF/frontend.
 
 ## §16 — Matriz de testes derivada das regras comprovadas
 
+> Especificação documental de cenários — **nenhum teste automatizado foi
+> executado** nesta fase (READ-only). Onde o critério foi reproduzido por
+> evidência na investigação, a linha marca `reproduzido`; cenários propostos
+> sem execução marcam `candidato`; dependências de fonte/decisão marcam
+> `pending`.
+
 | Teste | Regra | Tipo | Critério |
 |---|---|---|---|
-| T-R01-01 | BR-R01-001 | positive | competência 09/2026 retorna 948 linhas, chaves multiset = XLSB |
-| T-R01-02 | BR-R01-002 | negative | par de estorno por chave 12 campos é removido; sem a remoção = 950 |
-| T-R01-03 | BR-R01-001 | negative | chave de estorno com data/valor produz 937 — regresso conhecido |
-| T-R01-04 | BR-R01-003 | limit | TB=`E5_VALOR` mesmo quando `nVlMovFin` difere (caso não observado — stub `PENDING`) |
-| T-R01-05 | BR-R01-004 | limit | VO: título comum `E2_VALOR`; INV→`E5_VALOR`; grupo NF+TX→soma |
-| T-R01-06 | BR-R01-005 | positive | título compartilhado resolve por chave, não por filial SE5 |
-| T-R01-07 | BR-R01-006/007 | positive | Baixados/Compens./BxFat/Jur/Correção batem subtotais impressos |
-| T-R01-08 | BR-R01-009 | limit | PDF=XLSB−log; log ausente → expor flag, não igualar totais |
-| T-R02-01 | BR-R02-001 | positive | 657 = 649 título + 8 PA/FINA750 |
-| T-R02-02 | BR-R02-004 | limit | VO sem título = provisão 'P' espelhada (numero/clifor) |
-| T-R02-03 | BR-R02-002 | negative | decomposições MT/JR/DC não viram linha; não-CMP não-CMP'd |
-| T-R02-04 | BR-R02-007 | limit | `Orig` só preenchida em linha sem título |
+| T-R01-01 | BR-R01-001 | positive · reproduzido | competência 09/2026 retorna 948 linhas, chaves multiset = XLSB |
+| T-R01-02 | BR-R01-002 | negative · reproduzido | par de estorno por chave 12 campos é removido; sem a remoção = 950 |
+| T-R01-03 | BR-R01-001 | negative · reproduzido | chave de estorno com data/valor produz 937 — regresso conhecido |
+| T-R01-04 | BR-R01-003 | limit · reproduzido+pending | TB=`E5_VALOR` na emissão observada (948/948); cenário `nVlMovFin`≠`E5_VALOR` = `pending`, **sem expectativa definida** (não observado — não inventar) |
+| T-R01-05 | BR-R01-004 | limit · reproduzido | VO: título comum `E2_VALOR`; INV→`E5_VALOR`; grupo NF+TX→soma |
+| T-R01-06 | BR-R01-005 | positive · reproduzido | título compartilhado resolve por chave, não por filial SE5 |
+| T-R01-07 | BR-R01-006/007 | positive · reproduzido | Baixados/Compens./BxFat/Jur/Correção batem subtotais impressos |
+| T-R01-08 | BR-R01-009 | limit · reproduzido | PDF=XLSB−log; log ausente → expor flag, não igualar totais |
+| T-R02-01 | BR-R02-001 | positive · reproduzido | 657 = 649 título + 8 PA/FINA750 |
+| T-R02-02 | BR-R02-004 | limit · reproduzido | VO sem título = provisão 'P' espelhada (numero/clifor) |
+| T-R02-03 | BR-R02-002 | negative · reproduzido | decomposições MT/JR/DC não viram linha; não-CMP não-CMP'd |
+| T-R02-04 | BR-R02-007 | limit · reproduzido | `Orig` só preenchida em linha sem título |
 | T-R02-05 | BR-R02-002 | pending | sem fonte: não generalizar inclusão de sem-título (3 excluídos) |
-| T-R03-01 | BR-R03-002 | limit | duas emissões P7 do mesmo dia → totais distintos exigem `as_of` |
-| T-R03-02 | BR-R03-003 | positive | EM PROCESSO = MATR989 (355.240,51) |
-| T-R05-01 | BR-R05-002 | limit | SB9×MATR320 9/10 tipos; MP diverge — não ocultar residual |
-| T-R05-02 | BR-R05-003 | positive | SD1 usa `D1_DTDIGIT` (não emissão) — doc digitação-Set/emissão-Out entra na competência |
-| T-R05-03 | BR-R05-004 | negative | `D*_TIPO='D'` vai para Devolução, não Compras/Vendas; poder3≠'N' vai para EntPT/SaiPT |
-| T-R05-04 | BR-R05-005 | positive | SD3 CF 'PR*'→Produção, RE4/DE4→Transferências, OP-vazio→MovInt, OP-preenchido→Requisições, resto→TransfProc |
-| T-R05-05 | BR-R05-005 | negative | `D3_TM>'500'` sinaliza saída (valor negativo); `D3_ESTORNO='S'` excluído |
-| T-R05-06 | BR-R05-006 | limit | SI impresso é derivado (SA − movimentos), não saldo cadastrado |
-| T-R05-07 | BR-R05-008 | negative | linha inserida/deletada após emissão não pode entrar/sair da reprodução `as_of` |
-| T-R09-01 | BR-R09 | positive | Custo Unitário MOD = `BZ_CUSTD` por produto/filial |
-| T-R10-01 | BR-R10/11 | positive | export = tabela literal; consulta parametrizada equivalente |
-| T-R12-01 | BR-R12-003 | positive | query DEL100 vigente = 3.058/421/242 |
-| T-R15-01 | BR-R15 | negative | snapshot com timestamp ≠ execução → não declarar produtor |
+| T-R03-01 | BR-R03-002 | limit · reproduzido | duas emissões P7 do mesmo dia → totais distintos exigem `as_of` |
+| T-R03-02 | BR-R03-003 | positive · reproduzido | EM PROCESSO = MATR989 (355.240,51) |
+| T-R05-01 | BR-R05-002 | limit · reproduzido | SB9×MATR320 9/10 tipos; MP diverge — não ocultar residual |
+| T-R05-02 | BR-R05-003 | positive · reproduzido | SD1 usa `D1_DTDIGIT` (não emissão) — doc digitação-Set/emissão-Out entra na competência |
+| T-R05-03 | BR-R05-004 | negative · reproduzido | `D*_TIPO='D'` vai para Devolução, não Compras/Vendas; poder3≠'N' vai para EntPT/SaiPT |
+| T-R05-04 | BR-R05-005 | positive · reproduzido | SD3 CF 'PR*'→Produção, RE4/DE4→Transferências, OP-vazio→MovInt, OP-preenchido→Requisições, resto→TransfProc |
+| T-R05-05 | BR-R05-005 | negative · reproduzido | `D3_TM>'500'` sinaliza saída (valor negativo); `D3_ESTORNO='S'` excluído |
+| T-R05-06 | BR-R05-006 | limit · reproduzido | SI impresso é derivado (SA − movimentos), não saldo cadastrado |
+| T-R05-07 | BR-R05-008 | negative · reproduzido | linha inserida/deletada após emissão não pode entrar/sair da reprodução `as_of` |
+| T-R09-01 | BR-R09 | positive · reproduzido | Custo Unitário MOD = `BZ_CUSTD` por produto/filial |
+| T-R10-01 | BR-R10/11 | positive · reproduzido | export = tabela literal; consulta parametrizada equivalente |
+| T-R12-01 | BR-R12-003 | positive · reproduzido | query DEL100 vigente = 3.058/421/242 |
+| T-R15-01 | BR-R15 | negative · reproduzido | snapshot com timestamp ≠ execução → não declarar produtor |
 
 ---
 
@@ -574,6 +592,11 @@ copia para BFF/frontend.
 | `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |
 | `STALE_EVIDENCE` | contagens DEL100 antigas 724/672 (`EXECUTION_DRIFT`, doc 80 §23.A) |
 
-**Garantia do critério essencial:** toda regra necessária para reproduzir os
-resultados oficiais está neste documento ou em doc 84 (paridade detalhada) —
-nenhuma ficou apenas em scripts temporários, mensagens ou memória.
+**Garantia do critério essencial:** as regras **descobertas nesta
+investigação** e necessárias para reproduzir os resultados oficiais
+observados estão consolidadas neste documento ou em doc 84 (paridade
+detalhada) — nenhuma ficou apenas em scripts temporários, mensagens ou
+memória. O catálogo **não afirma completude**: itens com binding/pendência
+declarada (R04, R06–R08, R13, R14 e pendências internas de R01–R03/R05/R15)
+não têm ainda todas as regras necessárias para conclusão — permanecem
+`PENDING`/`TO_INVENTORY`.
