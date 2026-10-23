@@ -17806,3 +17806,18 @@ COMMIT=91a3913d02 DEPLOYED=YES PROD_QA=14/14 UTF8_CLEAN TTFV_MS=4550
 R01-R18=PASS (screen reader segue TEST_NOT_RUN por ambiente)
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.405 — VD dual-mode: batch default + live opt-in (2026-10-23)
+
+**2026-10-23 — DELIA-VD-DUAL-MODE-BATCH-DEFAULT-IMPLEMENT-TEST-DEPLOY-01 (spec 123 §12, decisao PO `86ab659607`):** selecao de modo bounded em `DeliaComposer` — `DictationMode` mount-scoped default `batch`; `SegmentToggle` canonico do plugin-ui; live so via opt-in explicito; `incremental.available` nunca auto-seleciona; troca bloqueada durante captura/transcricao (onCaptureActivityChange nos dois caminhos); draft+caret/selecao preservados no switch; aviso honesto se live cai apos selecao; nota de revisao no modo live. Zero contrato/backend/provider novo; zero segundo composer/gravador.
+
+TESTES: suite dual-mode 12/12 (DM-01..DM-17; DM-18=browser), incremental atualizado 6/6 (selecao explicita), delia 399/399, typecheck+build+federation verdes. DEPLOY: push ff `61ff9d02da` -> up-prod-sequential --build plugin-ui delia (delia rebuilt; backend intocado, flag incremental preservada).
+
+QA PROD 27/27 (Chrome + WAV pt-BR acentuado real): A1-A9 batch default+transcricao real 318 chars UTF-8+sem texto progressivo+travado na gravacao+sem auto-submit; B1-B6 live opt-in+progressivo+edicao preservada+sem auto-submit; C1-C2 troca bloqueada em captura; D1-D5 dock real default batch+live funcional; E1-E3 320/390px acessivel. DEFECTS_PROD=0.
+
+DOD: DEFAULT_MODE=BATCH; LIVE_MODE=OPT_IN; BATCH_REAL_TRANSCRIPTION=PASS; BATCH_NO_INCREMENTAL_SESSION=PASS; MODE_SWITCH_IDLE_ONLY=PASS; DRAFT_PRESERVED=PASS; CARET_SELECTION_PRESERVED=PASS; NO_AUTO_SUBMIT=PASS; FULLPAGE/REAL_DOCK/MOBILE_QA=PASS; BACKEND_CONTRACTS_PRESERVED=PASS.
+
+TASK_ID=DELIA-VD-DUAL-MODE-BATCH-DEFAULT-IMPLEMENT-TEST-DEPLOY-01
+COMMIT=61ff9d02da(code)+docs DEPLOYED=YES PROD_QA=27/27
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION

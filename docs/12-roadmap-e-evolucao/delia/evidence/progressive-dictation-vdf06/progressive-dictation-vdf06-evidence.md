@@ -175,3 +175,59 @@ Incidentes reportados pelo PO em produção e causa-raiz comprovada:
 - Provider alucina em silêncio puro (24 chars) — comportamento do provider,
   documentado; aplicação trata vazio real como segmento recuperável.
 - `producal` por `produção` = erro de reconhecimento do provider, não encoding.
+
+
+---
+
+# Dual-mode dictation — batch default + live opt-in (commit `61ff9d02da`, 2026-10-23)
+
+Decisão do PO (spec 123 §12, commit `86ab659607`): "Gravar e transcrever"
+(v1) é o padrão; "Transcrição em tempo real" (incremental.v1) é opt-in.
+
+## Implementação
+
+- `dictationMode.ts` — `DictationMode = "batch" | "live"`,
+  `DEFAULT_DICTATION_MODE = "batch"`; estado de apresentação mount-scoped,
+  sem persistência (PO: nova montagem inicia em batch).
+- `DeliaComposer` — seletor `SegmentToggle` (plugin-ui canônico) acima do
+  composer; `useLive = mode==="live" && incrementalTransport`; opção live
+  desabilitada quando não admitida; seletor omitido quando não há live
+  (UX batch intacta); aviso contextual quando live selecionado e a
+  capability cai; nota de revisão não alarmista no modo live.
+- Bloqueio de troca: ambos os caminhos reportam atividade via
+  `onCaptureActivityChange` (batch: recorder blocking + preview +
+  transcribing; live: `dictation.active`).
+- Caret/seleção: snapshot via `selectionchange` + restore no remount da
+  subtree (`useLayoutEffect` na troca de modo).
+- Zero mudança de contrato, backend ou provider; nenhum segundo composer,
+  gravador ou serviço STT.
+
+## Testes
+
+- Nova suíte `DeliaComposerDualMode.test.tsx` — 12 testes cobrindo
+  DM-01..DM-17 (DM-18 = QA browser): default batch, live não
+  auto-selecionado, batch nunca abre sessão incremental, live exige
+  seleção explícita, live indisponível não ativável, fail-closed sem
+  capabilities, troca idle-only, bloqueio em gravação batch e live,
+  draft/caret preservados, merge v1, texto confirmado pós-live.
+- `DeliaComposerIncremental.test.tsx` atualizado para o novo contrato
+  (seleção explícita de live antes dos fluxos) — 6/6.
+- Suite DÉLIA completa: 33 arquivos, 399 testes verde. Typecheck limpo.
+  Build plugin-ui + delia + verify-host-exports verde.
+
+## QA real de produção pós-deploy (27/27 PASS)
+
+Chrome headless, `--use-file-for-fake-audio-capture` com WAV pt-BR
+acentuado real (Maria TTS) — áudio real percorre o pipeline completo:
+
+| Cenário | Resultado |
+|---|---|
+| A — batch default | A1–A9 PASS: seletor presente, batch ativo, live não auto-selecionado, controles batch, zero texto progressivo, seletor travado na gravação, transcrição real 318 chars UTF-8 limpa, zero auto-submit |
+| B — live opt-in | B1–B6 PASS: seleção explícita, trigger só após seleção, texto progressivo, seletor travado, edição humana preservada, zero auto-submit |
+| C — troca bloqueada | C1–C2 PASS: travada durante captura live, liberada após descartar |
+| D — Companion Dock | D1–D5 PASS: seletor no dock, default batch, opt-in live, texto progressivo real |
+| E — mobile 320/390px | E1–E3 PASS: ambos os modos acessíveis, default batch, gravação batch funcional |
+
+Deploy: `up-prod-sequential.sh --build plugin-ui delia` (delia rebuilt;
+plugin-ui sem mudança neste commit). Sem rebuild de backend — flag
+incremental preservada para usuários que optarem por live.
