@@ -186,3 +186,8 @@ http://192.168.1.231:8061` + `PATH_*` prefixados `/restall` + smoke read-only.
 **Segurança:** manter `PROTHEUS_SUPPLIER_CREATE_ENABLED=false` e `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` até verificar com owner TOTVS a publicação da rota no endpoint `192.168.1.231:8061/restall`, credenciais autorizadas, paridade de contrato, destino efetivo `DELPI` e plano operacional de release. O pino produtivo atualmente diverge do parâmetro `URL_REST@1`, resultando em fail-closed no caminho de escrita; isso é estado transitório, não destino produtivo ativo. `GET E14` ainda depende do destino antigo conforme o documento.
 
 **Próxima ação:** handoff objetivo ao Gabriel com URL, paths, respostas HTTP sanitizadas e pergunta sobre instância/serviço de publicação e credencial correta. Após correção upstream, nova pré-verificação read-only G8 e decisão de cutover; não repetir cadastro fictício em produção. Revisar também se o procedimento local homologou o BFF/AuthZ end-to-end: o relatório explicita ensaio por use cases, não fluxo de UI/BFF.
+
+
+## 14. Estado de espera / handoff entre chats (2026-10-23)
+
+**Decisão PO: aguardar a resposta do Gabriel/TOTVS.** A consolidação canônica com links, SHAs, endpoints, configurações efetivas, evidências, guard, rollback, drifts, tarefas proibidas e checklist de retomada está em [X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md](./X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md). Não tratar esse handoff como GO para mudança de `URL_REST@1` nem para CREATE/UPDATE produtivos. Reancorar HEAD e authorities ao iniciar um novo chat.
