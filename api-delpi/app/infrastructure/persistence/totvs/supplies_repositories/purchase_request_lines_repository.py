@@ -108,9 +108,9 @@ def _normalize_receipt_row(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-_SQL_SERVER_MAX_PARAMS = 2100
-_ORDER_KEYS_BATCH = _SQL_SERVER_MAX_PARAMS // 3  # 3 bind params per line key
-_RECEIPT_KEYS_BATCH = _SQL_SERVER_MAX_PARAMS // 6  # 6 bind params per order key
+_SQL_SERVER_PARAM_BUDGET = 1800  # keep margin under the 2100-param cap
+_ORDER_KEYS_BATCH = _SQL_SERVER_PARAM_BUDGET // 3  # 3 bind params per line key
+_RECEIPT_KEYS_BATCH = _SQL_SERVER_PARAM_BUDGET // 6  # 6 bind params per order key
 
 
 def _batched(items: list, size: int):
