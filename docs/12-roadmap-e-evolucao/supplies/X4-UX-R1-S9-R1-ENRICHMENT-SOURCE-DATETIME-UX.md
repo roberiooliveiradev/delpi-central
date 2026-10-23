@@ -36,7 +36,18 @@ Fallback honesto preservado: provedor desconhecido exibe o próprio identificado
 - **365 testes MFE PASS** (43 arquivos) · `tsc -b` PASS · `vite build` PASS · ESLint escopado limpo (1 warning pré-existente não relacionado).
 - Browser/visual: `TEST_NOT_RUN` — aceite visual pendente de sessão autenticada (gate S9 permanece `INCONCLUSIVE`).
 
-## 4. AC
+## 4. Deploy federado (2026-10-23, autorizado pelo PO)
+
+| Item | Antes | Depois |
+|---|---|---|
+| Prod checkout | `f4e56918c5` | `6a0b1b49e2` (pull ff-only) |
+| Imagem `infra-supplies` | `1eb05c40f27f` | `5ab977562c44` |
+| Container | running | running (Up, 0 unhealthy) |
+| Bundle | `App-DJfMgiUV.js` | `remoteEntry` → `expose_App-ogUIEhsm.js` → **`App-c4IDFO4D.js`** (200) |
+
+Procedimento oficial `infra/scripts/up-prod-sequential.sh --fase mfe --build supplies` — **somente o MFE**; supplies-api/api-delpi/core/keycloak não tocados. Markers no bundle publicado: `America/Sao_Paulo`, `horário de Brasília`, `dados públicos de terceiros`, `brasilapi-cnpj-v1` (fallback técnico), `enrichment-reviews`. Smoke: `creation-preview` e `enrichment-reviews` → 401 sem token; 0 erro nginx; gates `PROTHEUS_SUPPLIER_CREATE/UPDATE_ENABLED=false` (×2 containers). Rollback: imagem anterior pruned — reversão por rebuild do SHA `f4e56918c5`. **Visual `TEST_NOT_RUN`** — gate S9 permanece `INCONCLUSIVE`.
+
+## 5. AC
 
 - ISO bruto fora do texto principal `PASS` (código + estrutural; visual pendente)
 - Nome humanizado `PASS` · horários equivalentes criação/enriquecimento `PASS` (mesma função) · sem dupla conversão `PASS` · fallback honesto `PASS` · controles inalterados `PASS` · help sincronizado `PASS`
