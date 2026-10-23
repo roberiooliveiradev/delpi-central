@@ -353,3 +353,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 — Cruzamento narração e relatórios (23/10/2026)
 
 [Doc 78 — Crosswalk V01–V23 entre relato guiado e artefatos](./78-ciclo1-crosswalk-narracao-artefatos.md): associa docs 56/57 aos inventários 59–77, explicita divergências, limitações e nove verificações propostas para o Ciclo 2 com owners candidatos. Narrativa do PO integralmente registrada, áudio/timecodes independentes INCONCLUSIVE; paridade TOTVS TEST_NOT_RUN. Revisão ACCEPT_WITH_RESIDUAL, fechamento formal do Ciclo 1 PENDING e Ciclo 2 NO_GO. Sem alteração de contratos ou runtime.
+
+
+### Ciclo 1 — aceite formal do PO (23/10/2026)
+
+[Doc 79 — Aceite formal do Ciclo 1](./79-ciclo1-aceite-formal-po.md): após revisão e cruzamento narrativo-documental do doc 78, o PO declarou expressamente «eu aceito». `CICLO_1_DOCUMENTAL=PO_ACCEPTED_WITH_RESIDUAL`; o inventário conceitual fica formalmente aceito, com paridade TOTVS/SQL `TEST_NOT_RUN`, áudio/timecodes independentes `INCONCLUSIVE` e demais gaps rastreados. **Este aceite não autoriza o Ciclo 2:** investigação técnica aguarda GO específico; implementação e contratos novos não autorizados por esta decisão.
