@@ -2,14 +2,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import { BarChart3, Eye, MoreVertical, RefreshCw, Search, User } from "lucide-react";
 import {
+  confirmRunHandoff,
   fetchActiveProductionRun,
   fetchPublicMachineLoad,
+  isAuthError,
   stopProductionRun,
   type MachineLoadOperation,
   type MachineLoadWorkCenter,
   type ProductionRunSnapshot,
   type PublicMachineLoadPayload,
+  type RunHandoffResult,
 } from "./api.ts";
+import {
+  clearPendingHandoffIntent,
+  handoffConflictView,
+  isStructuredHandoffRejection,
+  pendingHandoffIntentFor,
+} from "./runHandoff.ts";
 import {
   BrandBar,
   CopyValueButton,
@@ -124,6 +133,17 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [downtimeOpen, setDowntimeOpen] = useState(false);
   const [queueQuery, setQueueQuery] = useState("");
   const [runUpdatedSignal, setRunUpdatedSignal] = useState(0);
+  // E2: confirmação visual da troca guiada — fora do modal, sobrevive à
+  // navegação para a nova OP.
+  const [handoffNotice, setHandoffNotice] = useState<{
+    text: string;
+    productionOrder: string;
+    operationCode: string;
+    /** Identidade do run criado — o readback só é válido se coerente. */
+    newRunId: string;
+    /** POST confirmado, mas a releitura falhou/está incoerente — Atualizar. */
+    refreshPending: boolean;
+  } | null>(null);
   // Run ativo no contador Pulse deste posto — decide o card "Agora nesta bancada".
   const [counterRun, setCounterRun] = useState<ProductionRunSnapshot | null>(null);
   const [runRealtimeEvent, setRunRealtimeEvent] = useState<MachineLoadRealtimeEvent | null>(null);
@@ -150,26 +170,50 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     }
   }, []);
 
+  /**
+   * Resultado discriminado do reload — o consumidor distingue falha de
+   * leitura, resposta superada por reload mais novo (realtime/poll) e
+   * sucesso com readback do run ativo válido ou não.
+   */
   const reload = useCallback(
     async (center: string | null, options?: { quiet?: boolean }) => {
       const quiet = options?.quiet === true;
       const generation = ++reloadGenerationRef.current;
       if (!quiet) setLoading(true);
       try {
-        const [next, activeRun] = await Promise.all([
+        const [next, activeRunResult] = await Promise.all([
           fetchPublicMachineLoad(token, branch, center),
           center
-            ? fetchActiveProductionRun(token, branch, center).catch(() => null)
-            : Promise.resolve(null),
+            ? fetchActiveProductionRun(token, branch, center).then(
+                (run) => ({ run, failed: false }),
+                () => ({ run: null, failed: true }),
+              )
+            : Promise.resolve({ run: null, failed: false }),
         ]);
-        if (generation !== reloadGenerationRef.current) return;
+        if (generation !== reloadGenerationRef.current) {
+          return { status: "superseded" as const };
+        }
         setPayload(next);
-        setCounterRun(activeRun);
+        // Falha HTTP na leitura do run não apaga o último estado
+        // conhecido — só uma leitura válida (incl. ausência legítima)
+        // substitui o que estava na tela.
+        setCounterRun((prev) =>
+          activeRunResult.failed ? prev : activeRunResult.run,
+        );
         setUpdatedAt(new Date());
         setError(null);
+        return {
+          status: "ok" as const,
+          payload: next,
+          activeRun: activeRunResult.run,
+          runReadFailed: activeRunResult.failed,
+        };
       } catch (err) {
-        if (generation !== reloadGenerationRef.current) return;
+        if (generation !== reloadGenerationRef.current) {
+          return { status: "superseded" as const };
+        }
         setError(err instanceof Error ? err.message : "Não foi possível atualizar a fila.");
+        return { status: "failed" as const };
       } finally {
         if (!quiet && generation === reloadGenerationRef.current) setLoading(false);
       }
@@ -336,6 +380,92 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     if (!selectedOperation) openQueue();
   }, [view.kind, loading, items.length, selectedOperation, openQueue]);
 
+  // E2: pós-troca guiada — fila e run são relidos do backend (autoridade
+  // mesmo sem WebSocket, AC-10), o aviso sobrevive fora do modal e a
+  // navegação segue a nova OP quando ela aparece na publicação vigente.
+  // Readback pós-troca: falha aqui NÃO significa falha da mutação (o
+  // POST já foi confirmado) — marca refreshPending e oferece uma
+  // atualização read-only, nunca repete a escrita. A reconciliação só é
+  // considerada concluída quando as leituras são válidas E coerentes com
+  // o newRun confirmado; um reload superado por outro mais novo
+  // (realtime/poll) é neutro — o efeito abaixo conclui a navegação.
+  const refreshAfterHandoff = useCallback(
+    async (order: string, newRunId: string) => {
+      const res = await reload(workCenterRef.current, { quiet: true });
+      if (res.status === "superseded") return; // leitura mais nova decide
+      const coherent =
+        res.status === "ok" &&
+        !res.runReadFailed &&
+        res.activeRun != null &&
+        res.activeRun.id === newRunId;
+      setHandoffNotice((current) =>
+        current && current.productionOrder === order
+          ? { ...current, refreshPending: !coherent }
+          : current,
+      );
+    },
+    [reload],
+  );
+
+  const handoffNavigatedRef = useRef(false);
+  const handleHandoffCompleted = useCallback(
+    (result: RunHandoffResult) => {
+      handoffNavigatedRef.current = false;
+      const nextOrder = result.newRun.productionOrder;
+      const nextCode = result.newRun.operationCode;
+      setHandoffNotice({
+        text:
+          "OP anterior encerrada. Nova OP " + nextOrder + " · " + nextCode + " iniciada.",
+        productionOrder: nextOrder,
+        operationCode: nextCode,
+        newRunId: result.newRun.id,
+        // A mutação já commitou, mas a tela só sai de "aguardando
+        // atualização" quando uma leitura autoritativa coerente com
+        // newRun for observada (reload explícito, poll ou WebSocket).
+        refreshPending: true,
+      });
+      void refreshAfterHandoff(nextOrder, result.newRun.id);
+    },
+    [refreshAfterHandoff],
+  );
+
+  // Navegação independente da disputa entre reloads: qualquer leitura
+  // válida que traga a nova OP na publicação vigente (reload explícito
+  // ou poll/realtime) conclui a navegação exatamente uma vez.
+  /**
+   * Readback pendente = a flag de refresh E nenhuma leitura vencedora
+   * trouxe o run novo no contador. Quando um reload do WS/poll já é
+   * coerente com newRun, o aviso deixa de oferecer "Atualizar" sem
+   * precisar de outra escrita ou do próprio retry explícito.
+   */
+  const handoffReadbackPending = Boolean(
+    handoffNotice?.refreshPending && counterRun?.id !== handoffNotice.newRunId,
+  );
+
+  // Navegação independente da disputa entre reloads: só quando uma
+  // leitura vencedora (explícita, WS ou poll) trouxer o contador
+  // coerente com o newRun E a fila vigente contiver a nova OP — o que
+  // garante navegação eventual para a OP certa exatamente uma vez.
+  useEffect(() => {
+    if (!handoffNotice || handoffNavigatedRef.current) return;
+    if (counterRun?.id !== handoffNotice.newRunId) return;
+    const inQueue = items.some(
+      (item) =>
+        item.production_order === handoffNotice.productionOrder &&
+        item.operation_code === handoffNotice.operationCode,
+    );
+    if (inQueue) {
+      handoffNavigatedRef.current = true;
+      openOperation(handoffNotice.productionOrder, handoffNotice.operationCode);
+    }
+  }, [handoffNotice, items, counterRun, openOperation]);
+
+  useEffect(() => {
+    if (!handoffNotice || handoffNotice.refreshPending) return;
+    const timer = window.setTimeout(() => setHandoffNotice(null), 9000);
+    return () => window.clearTimeout(timer);
+  }, [handoffNotice]);
+
   if (!workCenter) {
     return (
       <WorkCenterPicker
@@ -464,6 +594,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           feedbackUpdatedSignal={feedbackUpdatedSignal}
           feedbackRealtimeEvent={feedbackRealtimeEvent}
           hasActiveRun={Boolean(counterRun)}
+          onHandoffCompleted={handleHandoffCompleted}
           onBack={openQueue}
           onPrevious={
             previous
@@ -474,6 +605,25 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             next ? () => openOperation(next.production_order, next.operation_code) : undefined
           }
         />
+        {handoffNotice ? (
+          <p className="pcp-pub__handoff-notice" role="status">
+            {handoffNotice.text}
+            {handoffReadbackPending ? (
+              <button
+                type="button"
+                className="pcp-pub__handoff-notice-refresh"
+                onClick={() =>
+                  void refreshAfterHandoff(
+                    handoffNotice.productionOrder,
+                    handoffNotice.newRunId,
+                  )
+                }
+              >
+                Atualizar
+              </button>
+            ) : null}
+          </p>
+        ) : null}
         {downtimeModal}
       </>
     );
@@ -532,6 +682,25 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
       <div className="pcp-pub__wrap">
         {error ? <p className="pcp-pub__error">{error}</p> : null}
+        {handoffNotice ? (
+          <p className="pcp-pub__handoff-notice" role="status">
+            {handoffNotice.text}
+            {handoffReadbackPending ? (
+              <button
+                type="button"
+                className="pcp-pub__handoff-notice-refresh"
+                onClick={() =>
+                  void refreshAfterHandoff(
+                    handoffNotice.productionOrder,
+                    handoffNotice.newRunId,
+                  )
+                }
+              >
+                Atualizar
+              </button>
+            ) : null}
+          </p>
+        ) : null}
 
         {orphanRun ? (
           <OrphanRunCard
@@ -566,6 +735,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                 runRealtimeEvent={runRealtimeEvent}
                 realtimeConnected={connected}
                 onOpenVisual={setVisualTarget}
+                onHandoffCompleted={handleHandoffCompleted}
                 onOpenDetail={() =>
                   openOperation(
                     activeEntry.operation.production_order,
@@ -835,6 +1005,7 @@ function ActiveNowCard({
   realtimeConnected,
   onOpenVisual,
   onOpenDetail,
+  onHandoffCompleted,
 }: {
   entry: QueueEntry;
   token: string;
@@ -846,6 +1017,8 @@ function ActiveNowCard({
   realtimeConnected: boolean;
   onOpenVisual: (target: VisualTarget) => void;
   onOpenDetail: () => void;
+  /** E2: troca guiada confirmada — o cockpit reconcilia e navega. */
+  onHandoffCompleted?: (result: RunHandoffResult) => void;
 }) {
   const { operation } = entry;
   const baseStatus = resolveStatus(operation);
@@ -979,6 +1152,7 @@ function ActiveNowCard({
           runUpdatedSignal={runUpdatedSignal}
           runRealtimeEvent={runRealtimeEvent}
           realtimeConnected={realtimeConnected}
+          onHandoffCompleted={onHandoffCompleted}
         />
       </article>
     </section>
@@ -1168,11 +1342,72 @@ function OrphanRunCard({
   token: string;
   onStopped: () => void;
 }) {
-  const { session } = useOperatorSession();
+  const { session, invalidate } = useOperatorSession();
   const [busy, setBusy] = useState(false);
+  const [resolving, setResolving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resolveNote, setResolveNote] = useState<string | null>(null);
+  // Intenção de troca com resultado desconhecido para ESTE run bloqueia
+  // o Stop órfão — nenhuma escrita contraditória antes da resolução.
+  // A intenção persistida (mesmo requestId/contexto) é o caminho de
+  // recuperação: o POST é idempotente e o replay devolve o resultado
+  // gravado — nunca um Stop novo como fallback.
+  const handoffIntent = pendingHandoffIntentFor(run.id);
+  const handoffPending = handoffIntent != null;
+
+  const resolvePendingHandoff = async () => {
+    if (!handoffIntent || resolving) return;
+    if (!session?.sessionToken) {
+      setError("Identifique-se no posto para resolver a troca pendente.");
+      return;
+    }
+    setResolving(true);
+    setError(null);
+    setResolveNote(null);
+    try {
+      await confirmRunHandoff(token, session.sessionToken, run.id, {
+        requestId: handoffIntent.requestId,
+        branch: handoffIntent.branch,
+        workCenter: handoffIntent.workCenter,
+        expectedNext: handoffIntent.expectedNext,
+      });
+      clearPendingHandoffIntent(run.id);
+      setResolveNote("Troca resolvida. Atualizando a situação atual…");
+      onStopped();
+    } catch (err) {
+      // A sessão é validada ANTES da consulta idempotente: um 401 (ou
+      // qualquer resposta sem o código estruturado do contrato) não
+      // comprova o resultado da tentativa original — a intenção não
+      // pode ser descartada.
+      if (isAuthError(err)) {
+        invalidate();
+        setResolveNote(
+          "A sessão expirou — a tentativa segue preservada; " +
+            "identifique-se novamente e verifique a troca pendente.",
+        );
+      } else if (!isStructuredHandoffRejection(err)) {
+        setResolveNote(
+          "A resposta ainda não chegou — a tentativa segue preservada; tente novamente.",
+        );
+      } else {
+        const view = handoffConflictView(
+          (err as { code?: string }).code,
+          (err as { message?: string }).message,
+        );
+        clearPendingHandoffIntent(run.id);
+        setError(view.message);
+        setResolveNote(
+          "A tentativa anterior foi descartada pelo servidor. Atualizando a situação atual…",
+        );
+        onStopped();
+      }
+    } finally {
+      setResolving(false);
+    }
+  };
 
   const stop = async () => {
+    if (handoffPending) return;
     if (!session?.sessionToken) {
       setError("Identifique-se no posto para encerrar a produção.");
       return;
@@ -1214,16 +1449,33 @@ function OrphanRunCard({
         <p className="pcp-pub__run-note">
           Esta OP saiu da fila deste posto. Encerre a produção para liberar a troca de operador.
         </p>
+        {handoffPending ? (
+          <p className="pcp-pub__run-note">
+            Há uma troca de OP com confirmação pendente para esta produção.
+            Resolva a tentativa original antes de encerrar.
+          </p>
+        ) : null}
+        {resolveNote ? <p className="pcp-pub__run-note">{resolveNote}</p> : null}
         {error ? <p className="pcp-pub__run-error">{error}</p> : null}
         <div className="pcp-pub__run-actions">
           <button
             type="button"
             className="pcp-pub__btn pcp-pub__btn--primary"
             onClick={() => void stop()}
-            disabled={busy}
+            disabled={busy || handoffPending}
           >
             {busy ? "Encerrando…" : "Encerrar produção"}
           </button>
+          {handoffPending ? (
+            <button
+              type="button"
+              className="pcp-pub__btn"
+              onClick={() => void resolvePendingHandoff()}
+              disabled={resolving || busy}
+            >
+              {resolving ? "Verificando…" : "Verificar troca pendente"}
+            </button>
+          ) : null}
         </div>
       </article>
     </section>

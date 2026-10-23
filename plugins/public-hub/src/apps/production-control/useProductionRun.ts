@@ -184,15 +184,18 @@ export function useProductionRun({
     }
   }, [token, run, session, dropStaleSession]);
 
-  const stop = useCallback(async () => {
-    if (!run || !session) return;
+  /** Encerra o run. Retorna false em falha — quem chama decide a UI. */
+  const stop = useCallback(async (): Promise<boolean> => {
+    if (!run || !session) return false;
     setBusy(true);
     try {
       await stopProductionRun(token, session.sessionToken, run.id);
       setRun(null);
+      return true;
     } catch (err) {
       dropStaleSession(err);
       setError(err instanceof Error ? err.message : "Falha ao encerrar.");
+      return false;
     } finally {
       setBusy(false);
     }

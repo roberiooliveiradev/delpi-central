@@ -1,9 +1,15 @@
 # MES — Troca guiada de OP no cockpit (E1: backend e contrato)
 
-> Estado: **implementado e validado em testes — aguardando revisão**.
+> Estado: **integrado à `main`** — feature `00bffe316`, rework de fronteira
+> `538de379c`, merge `46771ac405ee5caf6e4fb2e817b301ab90d91968`. A revisão
+> técnica foi concluída e incorporada (corrida poller × amostra → guarda
+> `count_boundary_stale`, timestamp canônico único, snapshots revalidados
+> sob o lock da fila — já refletidos nas seções 4–6 deste documento).
 > TASK_ID: PC-MES-GUIDED-HANDOFF-E1. Escopo deste documento: E1 apenas —
-> a interface guiada do cockpit é a Etapa 2 e não foi iniciada.
-> Base factual: main @ d114f9153.
+> a interface guiada do cockpit é a Etapa 2 (ver
+> `MES-GUIDED-HANDOFF-E2.md`). Homologação E2E com Pulse real continua
+> pendente no ambiente-alvo.
+> Base factual: main @ d114f9153 (descrição original) + rework integrado.
 
 ## 1. Resumo executivo
 
