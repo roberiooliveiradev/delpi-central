@@ -73,6 +73,24 @@ const SECTION_ICONS: Record<string, ReactNode> = {
   help: <BookOpen size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
+const ATTENTION_ICONS: Record<string, ReactNode> = {
+  purchase_requests_ordering: (
+    <ClipboardList size={18} strokeWidth={1.75} aria-hidden="true" />
+  ),
+  purchase_requests_receiving: (
+    <ShoppingCart size={18} strokeWidth={1.75} aria-hidden="true" />
+  ),
+  purchase_orders_late: (
+    <Package size={18} strokeWidth={1.75} aria-hidden="true" />
+  ),
+  late_deliveries: (
+    <Package size={18} strokeWidth={1.75} aria-hidden="true" />
+  ),
+  safety_stock_below: (
+    <BarChart3 size={18} strokeWidth={1.75} aria-hidden="true" />
+  ),
+};
+
 const SECTION_HINTS: Record<string, string> = {
   attention: SP_HELP.home.sections.attention,
   analytics: SP_HELP.home.sections.analytics,
@@ -204,26 +222,6 @@ export function HomePage({ basePath }: HomePageProps) {
     }
   };
 
-  const cardDescription = (card: HomeAttentionCard): ReactNode => {
-    const preview = (card.preview ?? []).slice(0, 3);
-    if (!preview.length) return card.description;
-    return (
-      <>
-        {card.description}
-        <ul className="sp-home-attention__preview">
-          {preview.map((item) => (
-            <li key={`${card.id}:${item.label}`} className="sp-home-attention__preview-item">
-              <span>{item.label}</span>
-              {item.detail ? (
-                <span className="sp-home-attention__preview-detail">{item.detail}</span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </>
-    );
-  };
-
   const attentionCards = attention.cards;
   const attentionLoading = attention.loading;
   const attentionError = attention.error;
@@ -252,13 +250,16 @@ export function HomePage({ basePath }: HomePageProps) {
             items={attentionCards.map((card) => ({
               id: card.id,
               title:
-                card.count == null ? card.title : `${card.title} · ${card.count}`,
-              description: cardDescription(card),
+                card.count == null
+                  ? card.title
+                  : `${card.title} · ${card.count} ${card.countUnit ?? ""}`.trim(),
+              description: card.description,
               tone: card.status === "unavailable" ? "neutral" : "warning",
+              leadingIcon: ATTENTION_ICONS[card.id] ?? SECTION_ICONS.attention,
               actionLabel:
                 card.status === "unavailable" || !card.target
                   ? undefined
-                  : "Abrir",
+                  : HOME.attentionOpen,
               onAction:
                 card.status === "unavailable" || !card.target
                   ? undefined

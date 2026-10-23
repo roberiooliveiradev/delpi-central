@@ -177,9 +177,12 @@ def test_compose_counts_and_units():
     assert by_id["safety_stock_below"]["countUnit"] == "itens"
 
 
-def test_compose_targets_and_previews():
+def test_compose_targets_and_no_preview_calls():
     prs = FakePurchaseRequests()
-    result = _service(prs=prs).compose(_user(permissions={"supplies.access"}))
+    delpi = FakeDelpiReads()
+    result = _service(delpi=delpi, prs=prs).compose(
+        _user(permissions={"supplies.access"})
+    )
     by_id = {card["id"]: card for card in result["cards"]}
 
     ordering = by_id["purchase_requests_ordering"]
@@ -188,26 +191,30 @@ def test_compose_targets_and_previews():
         "viewId": "purchase_requests",
         "query": "overall_stage=awaiting_order&overall_stage=partially_ordered",
     }
-    assert len(ordering["preview"]) == 3  # capped, never the raw 5
-    assert ordering["preview"][0]["label"] == "SC 000120"
+
+    receiving = by_id["purchase_requests_receiving"]
+    assert receiving["target"] == {
+        "kind": "view",
+        "viewId": "purchase_requests",
+        "query": "overall_stage=ordered&overall_stage=awaiting_receipt"
+        "&overall_stage=partially_received",
+    }
 
     po = by_id["purchase_orders_late"]
     assert po["target"]["viewId"] == "purchase_orders"
     assert po["target"]["query"] == "late_only=true"
-    assert po["preview"][0]["label"] == "PC 100001/10"
 
     deliveries = by_id["late_deliveries"]
     assert deliveries["target"]["viewId"] == "deliveries"
     assert deliveries["target"]["query"] == "status=late"
-    assert deliveries["preview"][0]["detail"] == "4 dias de atraso"
 
     safety = by_id["safety_stock_below"]
     assert safety["target"] is None  # user lacks estoque-seguranca.access
 
-    # Preview list calls used the owner's stage filter param.
-    stages_seen = [call.get("overall_stage") for call in prs.list_calls]
-    assert ["awaiting_order", "partially_ordered"] in stages_seen
-    assert ["ordered", "awaiting_receipt", "partially_received"] in stages_seen
+    # Compact cards: no record listings — no preview/detail calls at all.
+    assert prs.list_calls == []
+    for card in result["cards"]:
+        assert "preview" not in card
 
 
 def test_safety_stock_target_when_user_has_app_access():
@@ -235,7 +242,6 @@ def test_compose_zero_counts_emit_empty():
     )
     assert result["cards"] == []
     assert result["partialFailures"] == []
-    # No preview calls when counts are zero.
     assert prs.list_calls == []
 
 
@@ -262,20 +268,25 @@ def test_compose_purchase_requests_failure_hides_both_cards():
     assert by_id["safety_stock_below"]["status"] == "available"
 
 
-def test_compose_preview_failure_keeps_count():
-    class PreviewFailPR(FakePurchaseRequests):
-        def list_purchase_requests(self, **kwargs):
-            raise PurchaseRequestsGatewayError("preview down")
+def test_compose_never_fetches_record_lists():
+    """Compact cards: summary endpoints only — detail/preview calls are
+    forbidden even when counts are positive."""
 
-    result = _service(prs=PreviewFailPR()).compose(
-        _user(permissions={"supplies.access"})
+    class GuardedDelpi(FakeDelpiReads):
+        def get_safety_stock_items(self, **kwargs):
+            raise AssertionError("preview fetch must not be called")
+
+    class GuardedPR(FakePurchaseRequests):
+        def list_purchase_requests(self, **kwargs):
+            raise AssertionError("preview fetch must not be called")
+
+    result = _service(delpi=GuardedDelpi(), prs=GuardedPR()).compose(
+        _user(permissions={"supplies.access", "estoque-seguranca.access"})
     )
-    ordering = next(
-        c for c in result["cards"] if c["id"] == "purchase_requests_ordering"
-    )
-    assert ordering["status"] == "available"
-    assert ordering["count"] == 2
-    assert ordering["preview"] == []
+    by_id = {card["id"]: card for card in result["cards"]}
+    assert by_id["purchase_requests_ordering"]["count"] == 2
+    assert by_id["safety_stock_below"]["count"] == 4
+    assert result["partialFailures"] == []
 
 
 def test_compose_old_portal_code_omits_cards():

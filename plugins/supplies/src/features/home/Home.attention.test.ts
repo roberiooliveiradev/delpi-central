@@ -39,7 +39,7 @@ describe("Home attention UX", () => {
     expect(shell).toMatch(/loadHomeAttention/);
   });
 
-  it("renderiza contrato real: target explícito, prévia limitada e sem atalhos estáticos", () => {
+  it("renderiza contrato compacto: target explícito, sem prévias e sem atalhos estáticos", () => {
     const page = readFileSync(join(dir, "../../pages/HomePage.tsx"), "utf8");
     const api = readFileSync(join(dir, "../../api/homeAttention.ts"), "utf8");
     // Target explícito — navegação vem do contrato, não de viewId estático.
@@ -48,9 +48,10 @@ describe("Home attention UX", () => {
     expect(page).toMatch(/target\.kind === "view"/);
     expect(page).toMatch(/target\.kind === "href"/);
     expect(page).toMatch(/target\.query/);
-    // Prévia limitada a 3 registros vindos da resposta.
-    expect(page).toMatch(/preview \?\? \[\]\)\.slice\(0, 3\)/);
-    expect(page).toMatch(/sp-home-attention__preview/);
+    // Cards compactos: nome + contagem + descrição + ação Abrir — sem listas.
+    expect(page).toMatch(/HOME\.attentionOpen/);
+    expect(api).not.toMatch(/preview/i);
+    expect(page).not.toMatch(/card\.preview|sp-home-attention__preview/);
     // Sem cards estáticos disfarçados de pendência.
     expect(page).not.toMatch(/my_tasks"\s*\}/);
     expect(page).not.toMatch(/"administration"\s*\)/);
@@ -68,7 +69,6 @@ describe("Home attention UX", () => {
           count: 2,
           countUnit: "solicitações",
           status: "available",
-          preview: [{ label: "SC 000123", detail: "Fulano" }],
           target: {
             kind: "view",
             viewId: "purchase_requests",
@@ -108,7 +108,6 @@ describe("Home attention UX", () => {
           count: null,
           countUnit: null,
           status: "unavailable",
-          preview: [],
           target: null,
         },
       ],

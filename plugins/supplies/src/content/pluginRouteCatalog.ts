@@ -186,6 +186,7 @@ export const HUB_CONTENT = {
     attentionLoading: "Carregando atenção…",
     attentionRefresh: "Atualizar",
     attentionQueueOk: "Atenção em dia — nenhuma pendência confirmada no seu escopo.",
+    attentionOpen: "Abrir",
     attentionOpenPaths: "Ver caminhos",
     attentionPartial:
       "Parte das fontes de atenção está indisponível no momento. O que aparece abaixo continua confiável.",

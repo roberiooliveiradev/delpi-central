@@ -66,7 +66,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver o que precisa de atenção",
           where: "Início",
-          how: "Bloco Atenção — pendências reais com contagem e prévia; cada cartão abre a lista já filtrada",
+          how: "Bloco Atenção — pendências reais com contagem; cada cartão abre a lista já filtrada",
         },
         {
           want: "Ver indicadores do período",
@@ -169,7 +169,7 @@ export const USER_MANUAL_CONTENT = {
       id: "screens",
       title: "Mapa das áreas",
       bullets: [
-        "Início — saudação com o primeiro nome da sessão, Atenção (pendências reais: solicitações sem pedido, aguardando recebimento, pedidos e recebimentos em atraso, itens abaixo do estoque de segurança — com contagem, prévia e lista filtrada; fonte indisponível é sinalizada, nunca vira zero), busca, favoritos e caminhos por capability.",
+        "Início — saudação com o primeiro nome da sessão, Atenção (pendências reais: solicitações sem pedido, aguardando recebimento, pedidos e recebimentos em atraso, itens abaixo do estoque de segurança — com contagem e lista filtrada ao Abrir; fonte indisponível é sinalizada, nunca vira zero), busca, favoritos e caminhos por capability.",
         "Visão geral — indicadores consolidados do período e das unidades selecionadas; itens operacionais em Solicitações e Operações.",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
         "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade e de Entregas / Atrasos.",

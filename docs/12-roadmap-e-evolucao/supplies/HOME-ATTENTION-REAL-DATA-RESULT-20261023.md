@@ -116,3 +116,40 @@ Ordem de exibição: SCs → pedidos em atraso → recebimentos → estoque de s
 **Observações para aceite:** (1) validar em navegador autenticado que cada deep link realmente abre recorte igual ao critério count (sobretudo período de SC e entregas) e preserva URL/F5; `target.query` existe em código, mas não é prova de aplicação final dos filtros; (2) o card `safety_stock_below` mostra `preview` com código/descrição/saldo/ESTSEG a usuários com `supplies.access`, enquanto restringe **somente o link** pelo permission `estoque-seguranca.access`. Confirmar com owner/Core que exposição dessa prévia detalhada é permitida para o mesmo público da contagem agregada; até a confirmação, classificar `STOCK_PREVIEW_AUTHZ=TO_INVENTORY` e considerar supressão da preview para perfis sem acesso ao app; (3) a composição captura exceptions e retorna `unavailable`; rever em teste de integração se 401/403 downstream não são absorvidos como falha parcial comum em desacordo com a política fail-closed; (4) confirmar no browser os estados visual, responsividade e teclado. O smoke 401 anônimo comprova somente bloqueio sem token, não todas as dimensões de AuthZ.
 
 **Estado formal:** `HOME_ATTENTION_CODE=ACCEPT_WITH_RESIDUAL`; `DEPLOY_TECHNICAL=PASS (executor-reported)`; `COUNTS_PRODUCTION=PASS (executor-reported)`; `VISUAL_AUTHENTICATED=INCONCLUSIVE`; `FOLLOW_UP=AUTHZ_DETAIL_AND_FILTERED_NAVIGATION_VALIDATION`. Essas ressalvas não autorizam alterar o cutover de fornecedores C1, que continua aguardando Gabriel/TOTVS.
+
+
+## 10. HOME-ATTENTION.P2 — Compactação padrão Portal Comercial (2026-10-23)
+
+Mudança contratual: cards passam a ser **compactos** — nome da pendência, quantidade real, descrição funcional curta e botão **Abrir** com o filtro correspondente. **Nenhuma listagem/prévia de registros é montada na Home** (decisão do PO; também remove o ponto de latência e a exposição de detalhes de itens na Home).
+
+### Backend (`supplies-api`)
+- `home_attention_service.py`: removidas todas as chamadas exclusivas de prévia —
+  - `purchase-requests/summary` apenas (as 2 chamadas `purchase-requests` list por bucket foram eliminadas);
+  - `get_purchase_orders` e `get_purchase_order_otd_panel` seguem, mas com `page_size=1` (o `summary` do producer é independente da página);
+  - `get_safety_stock_items` (preview) removido — restam só os `summary` por filial.
+- Campo `preview` removido do DTO público do card (único consumidor é o MFE Supplies — remoção direta, sem período de transição).
+- Contagens, regras de negócio, unidades, AuthZ, `unavailable`+`partialFailures` inalterados.
+
+### Frontend (`plugins/supplies`)
+- `homeAttention.ts`: tipo `HomeAttentionPreviewItem` e campo `preview` removidos.
+- `HomePage.tsx`: lista de prévia removida; item do `AlertQueue` = `title · count countUnit` + `description` + `actionLabel "Abrir"` + `leadingIcon` por categoria (mesmo padrão `EventsSection`/`AlertQueue` do Portal Comercial via `SuppliesEventsSection`).
+- `index.css`: CSS órfão `sp-home-attention-list/card/preview` removido (o kit `delpi-ui-alert-queue` já estiliza).
+- Conteúdo/Help/manual atualizados para remover menção a prévias.
+
+### Navegação validada (universo contado = universo do destino)
+| Card | Target | Evidência de filtro |
+|---|---|---|
+| SCs aguardando pedido | `purchase_requests?overall_stage=awaiting_order&overall_stage=partially_ordered` | `parseQueryFromSearch` aceita multi `overall_stage`; período default = mês corrente (mesma janela da contagem) |
+| SCs aguardando recebimento | `purchase_requests?overall_stage=ordered&…partially_received` | idem |
+| Pedidos em atraso | `purchase_orders?late_only=true` | `late_only` parseado (query.ts) e o `summary.late_lines` do producer usa a mesma regra `DIAS<0` |
+| Recebimentos em atraso | `deliveries?status=late` | `status` parseado; defaults `start/end_date` = mês corrente (mesma janela `DT_DIGITACAO` da contagem) |
+| Estoque abaixo da segurança | `/apps/estoque-seguranca` (só com `estoque-seguranca.access`) | `DEFAULT_QUERY_PARAMS.status = "below_safety_stock"` no app de destino |
+
+### Testes
+- Backend: 14 testes home-attention (inclui `test_compose_never_fetches_record_lists` — guard que falha se qualquer chamada de prévia voltar); suite completa **450 passed**.
+- MFE: 382 passed (attention: 5 — contrato compacto, sem `preview`, estados loading/error/partial/unavailable); tsc ok; build ok; eslint sem achados nos arquivos alterados.
+- Chamadas downstream por request: **10 → 6** (PR summary + PO + 2×OTD + 2×SS-summary); payload por chamada reduzido (`page_size` 3→1 nos endpoints com summary).
+
+### Residual
+- `VISUAL_AUTHENTICATED=INCONCLUSIVE` mantém-se (sem navegador autenticado).
+- A prévia detalhada de estoque deixou de existir — a observação (2) da revisão GPT sobre exposição de prévia sem `estoque-seguranca.access` fica **resolvida por remoção** (não há mais dados de itens na Home).

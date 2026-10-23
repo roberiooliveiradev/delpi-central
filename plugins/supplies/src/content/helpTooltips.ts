@@ -4,7 +4,7 @@ const HOME_HELP = {
   vsOverview:
     "Início é ação e descoberta. Visão geral é o painel de KPIs do período — só aparece se você tiver acesso analítico.",
   attention:
-    "Pendências reais do seu escopo — solicitações sem pedido, aguardando recebimento, pedidos e recebimentos em atraso e itens abaixo do estoque de segurança — com contagem e prévia. Cada cartão abre a lista já filtrada. Se uma origem falhar, o cartão avisa a indisponibilidade sem virar zero.",
+    "Pendências reais do seu escopo — solicitações sem pedido, aguardando recebimento, pedidos e recebimentos em atraso e itens abaixo do estoque de segurança — com contagem ao vivo. Cada cartão abre a lista já filtrada. Se uma origem falhar, o cartão avisa a indisponibilidade sem virar zero.",
   paths:
     "Caminhos por seção liberados para o seu acesso. Busque, fixe favoritos e reabra os últimos acessos. Objetivo: chegar à ação em poucos cliques.",
   search:

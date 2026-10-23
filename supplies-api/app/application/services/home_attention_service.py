@@ -4,6 +4,9 @@ Each card requires a proven count from an authoritative producer; navigation
 cards without a real pending source were removed (see
 HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md). A source failure renders
 the card as "unavailable" and registers a partial failure — never as zero.
+
+Cards are compact (name, count, short description, "Abrir" action) — no record
+previews are fetched on the Home (HOME-ATTENTION.P2).
 """
 
 from __future__ import annotations
@@ -34,7 +37,8 @@ SAFETY_STOCK_APP_HREF = "/apps/estoque-seguranca"
 PR_ORDERING_STAGES = ("awaiting_order", "partially_ordered")
 PR_RECEIVING_STAGES = ("ordered", "awaiting_receipt", "partially_received")
 
-_PREVIEW_LIMIT = 3
+# Smallest page that still returns the producer summary alongside items.
+_COUNT_PAGE_SIZE = 1
 
 
 def _view_target(view_id: str, query: str | None = None) -> dict[str, Any]:
@@ -56,7 +60,6 @@ def _unavailable(card_id: str, title: str) -> dict[str, Any]:
         "count": None,
         "countUnit": None,
         "status": "unavailable",
-        "preview": [],
         "target": None,
     }
 
@@ -177,16 +180,6 @@ class HomeAttentionService:
                 count = int(buckets.get(spec["bucket"]) or 0)
             except (TypeError, ValueError):
                 count = 0
-            preview: list[dict[str, Any]] = []
-            if count > 0:
-                try:
-                    preview = self._purchase_requests_preview(
-                        token, units, spec["stages"], start, end
-                    )
-                except Exception:
-                    logger.warning(
-                        "home_attention_preview_failed source=purchase_requests"
-                    )
             cards.append(
                 {
                     "id": spec["id"],
@@ -195,64 +188,12 @@ class HomeAttentionService:
                     "count": count,
                     "countUnit": spec["countUnit"],
                     "status": "available",
-                    "preview": preview,
                     "target": _view_target(
                         "purchase_requests", _stages_query(spec["stages"])
                     ),
                 }
             )
         return cards
-
-    def _purchase_requests_preview(
-        self,
-        token: str,
-        units: list[str],
-        stages: tuple[str, ...],
-        start: str,
-        end: str,
-    ) -> list[dict[str, Any]]:
-        payload = self.purchase_requests.list_purchase_requests(
-            access_token=token,
-            params={
-                "branch": units,
-                "date_from": start,
-                "date_to": end,
-                "overall_stage": list(stages),
-                "page": 1,
-                "page_size": _PREVIEW_LIMIT,
-            },
-        )
-        data = payload.get("data", payload) if isinstance(payload, dict) else {}
-        items = data.get("items") if isinstance(data, dict) else None
-        preview = []
-        seen_requests: set[str] = set()
-        for item in items or []:
-            if not isinstance(item, dict):
-                continue
-            request_number = str(item.get("request_number") or "").strip()
-            # Lines repeat the header — one preview entry per solicitação.
-            if not request_number or request_number in seen_requests:
-                continue
-            seen_requests.add(request_number)
-            requester = item.get("requester") or {}
-            requester_name = (
-                str(requester.get("name") or "").strip()
-                if isinstance(requester, dict)
-                else ""
-            )
-            branch = str(item.get("branch") or "").strip()
-            detail_parts = [part for part in (requester_name,) if part]
-            if branch:
-                detail_parts.append(f"Filial {branch}")
-            preview.append(
-                {
-                    "label": f"SC {request_number}",
-                    "detail": " · ".join(detail_parts) or None,
-                }
-            )
-            if len(preview) >= _PREVIEW_LIMIT:
-                break
-        return preview
 
     # --- api-delpi sources --------------------------------------------------
 
@@ -270,7 +211,7 @@ class HomeAttentionService:
                 branches=units,
                 late_only=True,
                 page=1,
-                page_size=_PREVIEW_LIMIT,
+                page_size=_COUNT_PAGE_SIZE,
             )
         except Exception:
             logger.warning("home_attention_source_failed source=purchase_orders")
@@ -285,26 +226,6 @@ class HomeAttentionService:
         except (TypeError, ValueError):
             count = 0
 
-        preview = []
-        for item in payload.get("items") or []:
-            if not isinstance(item, dict):
-                continue
-            order_number = str(item.get("order_number") or "").strip()
-            if not order_number:
-                continue
-            order_item = str(item.get("order_item") or "").strip()
-            supplier = str(item.get("supplier_name") or "").strip()
-            expected = str(item.get("expected_delivery_date") or "").strip()
-            label = f"PC {order_number}"
-            if order_item:
-                label = f"{label}/{order_item}"
-            detail_parts = [p for p in (supplier,) if p]
-            if expected:
-                detail_parts.append(f"previsto {expected}")
-            preview.append({"label": label, "detail": " · ".join(detail_parts) or None})
-            if len(preview) >= _PREVIEW_LIMIT:
-                break
-
         return {
             "id": card_id,
             "title": title,
@@ -312,7 +233,6 @@ class HomeAttentionService:
             "count": count,
             "countUnit": "linhas",
             "status": "available",
-            "preview": preview if count > 0 else [],
             "target": _view_target("purchase_orders", "late_only=true"),
         }
 
@@ -326,7 +246,6 @@ class HomeAttentionService:
         title = "Recebimentos em atraso"
         start, end = current_month_bounds(self._today())
         count = 0
-        preview_items: list[dict[str, Any]] = []
         try:
             for branch in units:
                 panel = self.delpi_reads.get_purchase_order_otd_panel(
@@ -336,9 +255,7 @@ class HomeAttentionService:
                     end_date=end,
                     status="late",
                     page=1,
-                    page_size=_PREVIEW_LIMIT,
-                    sort_by="days_diff",
-                    sort_dir="asc",
+                    page_size=_COUNT_PAGE_SIZE,
                 )
                 summary = (
                     panel.get("summary")
@@ -349,43 +266,12 @@ class HomeAttentionService:
                     count += int(summary.get("late_lines") or 0)
                 except (TypeError, ValueError):
                     continue
-                lines = panel.get("lines") if isinstance(panel.get("lines"), dict) else {}
-                for item in lines.get("items") or []:
-                    if isinstance(item, dict):
-                        preview_items.append(item)
         except Exception:
             logger.warning("home_attention_source_failed source=late_deliveries")
             failures.append(
                 {"source": "late_deliveries", "code": "source_unavailable"}
             )
             return _unavailable(card_id, title)
-
-        def _days(row: dict[str, Any]) -> float:
-            try:
-                return float(row.get("days_diff") or 0)
-            except (TypeError, ValueError):
-                return 0.0
-
-        preview_items.sort(key=_days)
-        preview = []
-        for item in preview_items[:_PREVIEW_LIMIT]:
-            supplier = str(
-                item.get("supplier_short_name") or item.get("supplier_name") or ""
-            ).strip()
-            order_number = str(item.get("order_number") or "").strip()
-            order_item = str(item.get("order_item") or "").strip()
-            days = item.get("days_diff")
-            label = supplier or f"PC {order_number}"
-            if order_number:
-                suffix = order_number + (f"/{order_item}" if order_item else "")
-                label = f"{suffix} · {supplier}" if supplier else f"PC {suffix}"
-            detail = None
-            if days is not None:
-                try:
-                    detail = f"{abs(int(float(days)))} dias de atraso"
-                except (TypeError, ValueError):
-                    detail = None
-            preview.append({"label": label, "detail": detail})
 
         return {
             "id": card_id,
@@ -394,7 +280,6 @@ class HomeAttentionService:
             "count": count,
             "countUnit": "linhas",
             "status": "available",
-            "preview": preview if count > 0 else [],
             "target": _view_target("deliveries", "status=late"),
         }
 
@@ -418,14 +303,6 @@ class HomeAttentionService:
                     count += int(summary.get("below_safety_stock") or 0)
                 except (TypeError, ValueError):
                     continue
-            preview: list[dict[str, Any]] = []
-            if count > 0:
-                try:
-                    preview = self._safety_stock_preview(token, units)
-                except Exception:
-                    logger.warning(
-                        "home_attention_preview_failed source=safety_stock"
-                    )
         except Exception:
             logger.warning("home_attention_source_failed source=safety_stock")
             failures.append(
@@ -444,42 +321,5 @@ class HomeAttentionService:
             "count": count,
             "countUnit": "itens",
             "status": "available",
-            "preview": preview,
             "target": target,
         }
-
-    def _safety_stock_preview(
-        self,
-        token: str,
-        units: list[str],
-    ) -> list[dict[str, Any]]:
-        preview = []
-        for branch in units:
-            payload = self.delpi_reads.get_safety_stock_items(
-                access_token=token,
-                branch=branch,
-                status="below_safety_stock",
-                page=1,
-                page_size=_PREVIEW_LIMIT,
-            )
-            for item in payload.get("items") or []:
-                if not isinstance(item, dict):
-                    continue
-                code = str(item.get("product_code") or "").strip()
-                description = str(item.get("product_description") or "").strip()
-                if not code and not description:
-                    continue
-                available = item.get("available_stock")
-                safety = item.get("safety_stock")
-                detail = None
-                if available is not None and safety is not None:
-                    detail = f"disponível {available} · segurança {safety}"
-                preview.append(
-                    {
-                        "label": " — ".join(p for p in (code, description) if p),
-                        "detail": detail,
-                    }
-                )
-                if len(preview) >= _PREVIEW_LIMIT:
-                    return preview
-        return preview
