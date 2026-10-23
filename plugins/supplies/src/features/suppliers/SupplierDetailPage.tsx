@@ -454,13 +454,6 @@ export function SupplierDetailPage({
                         ) : (
                           <SupplierFieldInput
                             spec={spec}
-                            hint={
-                              spec.key === "supplier_name"
-                                ? SP_HELP.suppliersEditName
-                                : spec.key === "supplier_short_name"
-                                  ? SP_HELP.suppliersEditShortName
-                                  : undefined
-                            }
                             value={draft[key] ?? ""}
                             onChange={(value) =>
                               setDraft((d) => ({

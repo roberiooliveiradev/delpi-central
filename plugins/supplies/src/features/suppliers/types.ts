@@ -273,7 +273,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     put: "protected",
     get: "top",
     span: 4,
-    help: "Documento fiscal (CNPJ ou CPF) que identifica o fornecedor. Na inclusão informe um documento válido; na edição é protegido e não pode ser alterado.",
+    help: "Documento fiscal do fornecedor — CNPJ para pessoa jurídica ou CPF para pessoa física. Na inclusão, identifica o cadastro e ajuda a evitar duplicidades; na edição é protegido e não pode ser alterado. (TOTVS: SA2.A2_CGC)",
   }),
   E({
     key: "person_type",
@@ -286,7 +286,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "F", label: "Física (CPF)" },
       { value: "X", label: "Outros" },
     ],
-    help: "Classificação cadastral do fornecedor conforme os tipos aceitos pelo Protheus (Jurídica, Física, Outros).",
+    help: "Natureza do cadastro: J para pessoa jurídica (CNPJ), F para pessoa física (CPF) ou X para outras situações. A escolha define como o ERP trata o documento e os dados fiscais do fornecedor. (TOTVS: SA2.A2_TIPO)",
   }),
   F({
     key: "supplier_code",
@@ -299,7 +299,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     get: "identity",
     evidence: "system",
     span: 2,
-    help: "Identificador do fornecedor no Protheus, gerado pelo ERP na inclusão; protegido na edição.",
+    help: "Código do fornecedor no Protheus, gerado na inclusão. É a identificação do cadastro e não pode ser alterado. (TOTVS: SA2.A2_COD)",
   }),
   F({
     key: "supplier_store",
@@ -313,7 +313,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     get: "identity",
     evidence: "identity",
     span: 2,
-    help: "Estabelecimento (loja) associado ao código do fornecedor. Obrigatória na inclusão e protegida na edição.",
+    help: "Loja do cadastro do fornecedor — distingue unidades ou filiais do mesmo fornecedor. Definida na inclusão e não pode ser alterada. (TOTVS: SA2.A2_LOJA)",
   }),
   F({
     key: "supplier_name",
@@ -324,7 +324,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     put: "editable",
     evidence: "put-contract",
     span: 6,
-    help: "Razão social do fornecedor no cadastro do Protheus (A2_NOME), até 50 caracteres.",
+    help: "Razão social do fornecedor, conforme o registro oficial. Use a denominação cadastral para identificar corretamente a empresa em pedidos, títulos e documentos. (TOTVS: SA2.A2_NOME)",
   }),
   F({
     key: "supplier_short_name",
@@ -335,7 +335,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     put: "editable",
     evidence: "put-contract",
     span: 6,
-    help: "Nome fantasia ou nome reduzido do fornecedor (A2_NREDUZ), até 20 caracteres.",
+    help: "Nome fantasia — forma curta pela qual o fornecedor é conhecido nas operações do dia a dia. Pode ser diferente da razão social. (TOTVS: SA2.A2_NREDUZ)",
   }),
   // Endereço
   E({
@@ -344,7 +344,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 40,
     span: 6,
-    help: "Logradouro cadastral do fornecedor (A2_END). Pode receber sugestão da consulta por CEP e ser ajustado manualmente.",
+    help: "Logradouro do endereço cadastral do fornecedor — rua, avenida ou equivalente, sem o número do imóvel. (TOTVS: SA2.A2_END)",
   }),
   E({
     key: "district",
@@ -352,7 +352,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 20,
     span: 3,
-    help: "Bairro do endereço (A2_BAIRRO). Confira a sugestão retornada pela consulta de CEP.",
+    help: "Bairro do endereço do fornecedor. (TOTVS: SA2.A2_BAIRRO)",
   }),
   E({
     key: "postal_code",
@@ -361,7 +361,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 8,
     digitsOnly: true,
     span: 3,
-    help: "Informe o CEP (somente dígitos, A2_CEP) para consultar uma sugestão de endereço. Confira os dados antes de aplicá-los.",
+    help: "CEP do endereço do fornecedor. A consulta por CEP sugere logradouro, bairro, cidade e UF — confira as sugestões antes de aplicar. (TOTVS: SA2.A2_CEP)",
   }),
   E({
     key: "city",
@@ -371,7 +371,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     span: 4,
     catalog: "municipalities",
     catalogDependsOn: "state",
-    help: "Município do fornecedor (A2_MUN), conciliado com o cadastro Protheus quando possível — selecione a UF e pesquise pelo nome.",
+    help: "Município do fornecedor. Ao escolher na lista, o código oficial do município é preenchido automaticamente. (TOTVS: SA2.A2_MUN)",
   }),
   E({
     key: "city_code",
@@ -381,7 +381,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     digitsOnly: true,
     span: 2,
     catalogDerivedFrom: "city",
-    help: "Código do município utilizado no cadastro Protheus (A2_COD_MUN). A correspondência com o código IBGE externo é validada antes de aplicar.",
+    help: "Código oficial do município, preenchido automaticamente pela seleção da cidade. Usado em obrigações fiscais. (TOTVS: SA2.A2_COD_MUN)",
   }),
   E({
     key: "state",
@@ -391,7 +391,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     uppercase: true,
     span: 2,
     catalog: "states",
-    help: "Unidade federativa do endereço (A2_EST) — selecione a UF cadastrada no Protheus; pode ser sugerida pela consulta de CEP.",
+    help: "Unidade federativa do fornecedor (UF). Para fornecedores no exterior, utilize EX. (TOTVS: SA2.A2_EST)",
   }),
   E({
     key: "country_code",
@@ -400,7 +400,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 3,
     span: 4,
     catalog: "countries",
-    help: "País cadastral do endereço (A2_PAIS) — pesquise pelo código ou descrição e selecione uma opção válida.",
+    help: "País do fornecedor — informe quando o fornecedor for estrangeiro, selecionando na lista de países. (TOTVS: SA2.A2_PAIS)",
   }),
   // Contato
   E({
@@ -409,7 +409,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "contact",
     maxLength: 15,
     span: 4,
-    help: "Pessoa de referência para comunicação com o fornecedor (A2_CONTATO).",
+    help: "Pessoa de contato do fornecedor para assuntos gerais do cadastro e da operação. (TOTVS: SA2.A2_CONTATO)",
   }),
   E({
     key: "area_code",
@@ -418,7 +418,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 3,
     digitsOnly: true,
     span: 2,
-    help: "Código de área do telefone cadastrado (A2_DDD).",
+    help: "DDD do telefone do fornecedor, somente dígitos. (TOTVS: SA2.A2_DDD)",
   }),
   E({
     key: "phone",
@@ -426,7 +426,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "contact",
     maxLength: 50,
     span: 3,
-    help: "Telefone utilizado para contato com o fornecedor (A2_TEL).",
+    help: "Telefone principal do fornecedor, somente dígitos — pode incluir ramal ou mais de um número. (TOTVS: SA2.A2_TEL)",
   }),
   E({
     key: "email",
@@ -434,7 +434,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "contact",
     maxLength: 50,
     span: 3,
-    help: "Endereço eletrônico de contato do fornecedor (A2_EMAIL).",
+    help: "E-mail principal do fornecedor para contato e envio de documentos. (TOTVS: SA2.A2_EMAIL)",
   }),
   // Fiscal
   E({
@@ -443,7 +443,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "fiscal",
     maxLength: 18,
     span: 4,
-    help: "Identificação fiscal estadual do fornecedor, quando aplicável (A2_INSCR).",
+    help: "Inscrição estadual do fornecedor — número registrado na Secretaria da Fazenda da UF. Informe ISENTO quando o fornecedor for isento. (TOTVS: SA2.A2_INSCR)",
   }),
   E({
     key: "municipal_registration",
@@ -451,7 +451,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "fiscal",
     maxLength: 18,
     span: 4,
-    help: "Identificação fiscal municipal do fornecedor, quando aplicável.",
+    help: "Inscrição municipal do fornecedor junto à prefeitura do município, quando aplicável. (TOTVS: SA2.A2_INSCRM)",
   }),
   E({
     key: "rohs_indicator",
@@ -463,7 +463,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "N", label: "Não" },
       { value: "S", label: "Sim" },
     ],
-    help: "Indicador cadastral ROHS utilizado pelo Protheus. A semântica detalhada é definida pelo ERP.",
+    help: "Indica se o fornecedor atende à diretiva RoHS de restrição de substâncias perigosas — informação usada no controle ambiental de materiais. (TOTVS: SA2.A2_YROHS)",
   }),
   E({
     key: "bacen_country_code",
@@ -473,7 +473,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     digitsOnly: true,
     span: 4,
     catalog: "bacen-countries",
-    help: "Código de país BACEN usado pelo Protheus (A2_CODPAIS) — pesquise pelo código ou nome; campo distinto do país cadastral.",
+    help: "Código do país no padrão do Banco Central, usado em operações internacionais e obrigações fiscais. Para fornecedores brasileiros, o código vigente é 01058. (TOTVS: SA2.A2_CODPAIS)",
   }),
   // Compras
   E({
@@ -483,7 +483,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 3,
     span: 4,
     catalog: "payment-conditions",
-    help: "Pesquise pelo código ou descrição e selecione a condição de pagamento cadastrada no Protheus (SE4/A2_COND).",
+    help: "Condição de pagamento padrão nas operações com o fornecedor — prazos e forma de parcelamento. Selecione uma condição cadastrada no Protheus. (TOTVS: SA2.A2_COND)",
   }),
   E({
     key: "payment_method_code",
@@ -492,7 +492,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 2,
     span: 4,
     catalog: "payment-methods",
-    help: "Selecione a forma de pagamento cadastrada no Protheus (tabela de opções 58 / A2_FORMPAG).",
+    help: "Forma de pagamento preferencial nas operações com o fornecedor. Selecione uma forma cadastrada no Protheus. (TOTVS: SA2.A2_FORMPAG)",
   }),
   E({
     key: "accounting_account",
@@ -501,7 +501,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 20,
     span: 6,
     catalog: "accounting-accounts",
-    help: "Pesquise pelo código ou descrição e selecione a conta contábil do plano de contas (CT1/A2_CONTA), até 20 caracteres.",
+    help: "Conta contábil padrão usada na contabilização das operações com o fornecedor. Selecione uma conta do plano de contas. (TOTVS: SA2.A2_CONTA)",
   }),
   E({
     key: "financial_nature_code",
@@ -510,7 +510,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 10,
     span: 6,
     catalog: "financial-natures",
-    help: "Pesquise pelo código ou descrição e selecione a natureza financeira cadastrada no Protheus (SED/A2_NATUREZ).",
+    help: "Natureza financeira padrão para classificação dos títulos gerados nas operações com o fornecedor. Selecione uma natureza cadastrada no Protheus. (TOTVS: SA2.A2_NATUREZ)",
   }),
   // ------------------------------------------------------------------
   // X4.FIELDS.E3 — campos com persistência POST comprovada em homologação
@@ -535,7 +535,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "4", label: "Cooperativa" },
       { value: "5", label: "Não optante" },
     ],
-    help: "Tipo de pessoa jurídica do fornecedor (A2_TPJ), conforme a tabela do Protheus.",
+    help: "Natureza jurídica do fornecedor conforme a classificação do cadastro — microempresa, empresa de pequeno porte, MEI ou cooperativa. Selecione a opção correspondente. (TOTVS: SA2.A2_TPJ)",
   }),
   // Endereço
   F({
@@ -548,7 +548,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     digitsOnly: true,
     post: true,
     span: 2,
-    help: "Número do logradouro do endereço cadastral (A2_NR_END).",
+    help: "Número do imóvel no endereço do fornecedor. Informe apenas o número — o logradouro permanece no campo Endereço. (TOTVS: SA2.A2_NR_END)",
   }),
   F({
     key: "po_box",
@@ -559,7 +559,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 5,
     post: true,
     span: 3,
-    help: "Caixa postal do fornecedor (A2_CX_POST).",
+    help: "Caixa postal do fornecedor — informe quando a correspondência não usa o endereço físico. (TOTVS: SA2.A2_CX_POST)",
   }),
   // Contato
   F({
@@ -571,7 +571,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 15,
     post: true,
     span: 4,
-    help: "Contato comercial do fornecedor (A2_CONTCOM).",
+    help: "Pessoa indicada pelo fornecedor para tratar de propostas, preços, negociações e demais assuntos comerciais. (TOTVS: SA2.A2_CONTCOM)",
   }),
   F({
     key: "responsible_name",
@@ -582,7 +582,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 45,
     post: true,
     span: 4,
-    help: "Nome do responsável pelo fornecedor (A2_NOMRESP).",
+    help: "Nome do responsável pelo relacionamento com o fornecedor, quando essa referência for mantida no cadastro. (TOTVS: SA2.A2_NOMRESP)",
   }),
   F({
     key: "fax",
@@ -594,7 +594,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     digitsOnly: true,
     post: true,
     span: 2,
-    help: "Número de fax cadastrado (A2_FAX), somente dígitos.",
+    help: "Número de fax do fornecedor, somente dígitos. (TOTVS: SA2.A2_FAX)",
   }),
   F({
     key: "website",
@@ -605,7 +605,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 30,
     post: true,
     span: 6,
-    help: "Página eletrônica do fornecedor (A2_HPAGE).",
+    help: "Site ou página eletrônica do fornecedor. (TOTVS: SA2.A2_HPAGE)",
   }),
   // Fiscal e tributário
   F({
@@ -621,7 +621,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "1", label: "Contribuinte" },
       { value: "2", label: "Não contribuinte" },
     ],
-    help: "Indica se o fornecedor é contribuinte de ICMS (A2_CONTRIB).",
+    help: "Indica se o fornecedor é contribuinte de ICMS — influencia o tratamento do imposto nas operações de compra. (TOTVS: SA2.A2_CONTRIB)",
   }),
   F({
     key: "simples_nacional",
@@ -636,7 +636,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "1", label: "Optante" },
       { value: "2", label: "Não optante" },
     ],
-    help: "Enquadramento do fornecedor no Simples Nacional (A2_SIMPNAC).",
+    help: "Indica se o fornecedor é optante pelo Simples Nacional — o regime simplificado altera a apuração dos impostos nas operações. (TOTVS: SA2.A2_SIMPNAC)",
   }),
   F({
     key: "cnae_code",
@@ -648,7 +648,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     digitsOnly: true,
     post: true,
     span: 3,
-    help: "Código CNAE do fornecedor (A2_CNAE), somente dígitos. Aplicável a pessoa jurídica (J) ou outros (X).",
+    help: "CNAE — código da atividade econômica principal do fornecedor, conforme a classificação oficial. Aplicável a pessoa jurídica e demais naturezas não físicas. (TOTVS: SA2.A2_CNAE)",
   }),
   F({
     key: "simp_regime_code",
@@ -663,7 +663,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "1", label: "Sim" },
       { value: "2", label: "Não" },
     ],
-    help: "Código de regime tributário SIMP do fornecedor (A2_REGESIM).",
+    help: "Indica se o fornecedor utiliza o regime simplificado de tributação aplicável no estado. Selecione conforme o enquadramento fiscal do cadastro. (TOTVS: SA2.A2_REGESIM)",
   }),
   F({
     key: "pb_regime_code",
@@ -678,7 +678,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "1", label: "Regime 1" },
       { value: "2", label: "Regime 2" },
     ],
-    help: "Código de regime de apuração PIS/COFINS (A2_REGPB).",
+    help: "Regime de apuração de PIS/COFINS do fornecedor. Selecione a opção conforme a orientação da área fiscal. (TOTVS: SA2.A2_REGPB)",
   }),
   F({
     key: "tax_group_code",
@@ -689,7 +689,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 3,
     post: true,
     span: 3,
-    help: "Código do grupo tributário do fornecedor (A2_GRPTRIB).",
+    help: "Grupo de tributação atribuído ao fornecedor para classificação fiscal interna. Informe o código definido pela área fiscal — os códigos em uso não seguem uma lista fechada no cadastro. (TOTVS: SA2.A2_GRPTRIB)",
   }),
   F({
     key: "inss_withholding",
@@ -704,7 +704,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "S", label: "Retém" },
       { value: "N", label: "Não retém" },
     ],
-    help: "Indica retenção de INSS para o fornecedor (A2_RECINSS).",
+    help: "Indica se há retenção de INSS nos pagamentos feitos ao fornecedor, conforme a legislação previdenciária aplicável. (TOTVS: SA2.A2_RECINSS)",
   }),
   F({
     key: "iss_withholding",
@@ -719,7 +719,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "S", label: "Retém" },
       { value: "N", label: "Não retém" },
     ],
-    help: "Indica retenção de ISS para o fornecedor (A2_RECISS).",
+    help: "Indica se há retenção de ISS nas operações com o fornecedor. O enquadramento deve seguir a orientação fiscal da empresa. (TOTVS: SA2.A2_RECISS)",
   }),
   F({
     key: "csll_withholding",
@@ -734,7 +734,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "1", label: "Retém" },
       { value: "2", label: "Não retém" },
     ],
-    help: "Regra de retenção de CSLL (A2_RECCSLL).",
+    help: "Regra de retenção de CSLL aplicada aos pagamentos do fornecedor, conforme o enquadramento fiscal vigente. (TOTVS: SA2.A2_RECCSLL)",
   }),
   F({
     key: "cofins_withholding",
@@ -749,7 +749,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "1", label: "Retém" },
       { value: "2", label: "Não retém" },
     ],
-    help: "Regra de retenção de COFINS (A2_RECCOFI).",
+    help: "Regra de retenção de COFINS aplicada aos pagamentos do fornecedor, conforme o enquadramento fiscal vigente. (TOTVS: SA2.A2_RECCOFI)",
   }),
   F({
     key: "pis_withholding",
@@ -764,7 +764,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "1", label: "Retém" },
       { value: "2", label: "Não retém" },
     ],
-    help: "Regra de retenção de PIS (A2_RECPIS).",
+    help: "Regra de retenção de PIS aplicada aos pagamentos do fornecedor, conforme o enquadramento fiscal vigente. (TOTVS: SA2.A2_RECPIS)",
   }),
   F({
     key: "irf_calculation",
@@ -781,7 +781,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "3", label: "Regra 3" },
       { value: "4", label: "Regra 4" },
     ],
-    help: "Regra de cálculo de IRRF para o fornecedor (A2_CALCIRF).",
+    help: "Indica se é calculado IRRF — imposto de renda retido na fonte — nos pagamentos ao fornecedor. (TOTVS: SA2.A2_CALCIRF)",
   }),
   F({
     key: "inp_calculation",
@@ -796,7 +796,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "1", label: "Regra 1" },
       { value: "2", label: "Regra 2" },
     ],
-    help: "Regra de cálculo de INPC/INP (A2_CALCINP).",
+    help: "Indica se é calculado o INSS patronal sobre os pagamentos ao fornecedor. (TOTVS: SA2.A2_CALCINP)",
   }),
   // Compras e relacionamentos
   F({
@@ -809,7 +809,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     post: true,
     span: 3,
     catalog: "price-tables",
-    help: "Código da tabela de preços de compra do fornecedor (A2_ZTABPRC).",
+    help: "Tabela de preços de compra associada ao fornecedor, usada como referência em cotações e pedidos. Selecione uma tabela cadastrada no Protheus. (TOTVS: SA2.A2_ZTABPRC)",
   }),
   F({
     key: "risk_code",
@@ -820,7 +820,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 3,
     post: true,
     span: 3,
-    help: "Classificação de risco do fornecedor (A2_RISCO).",
+    help: "Classificação de risco atribuída ao fornecedor para os processos que consultam essa informação. Informe o código conforme a política vigente — a classificação não segue uma lista fechada no cadastro. (TOTVS: SA2.A2_RISCO)",
   }),
   F({
     key: "swift_code",
@@ -832,7 +832,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     uppercase: true,
     post: true,
     span: 4,
-    help: "Código SWIFT do fornecedor para operações internacionais (A2_SWIFT).",
+    help: "Código SWIFT do banco do fornecedor, utilizado em pagamentos internacionais. (TOTVS: SA2.A2_SWIFT)",
   }),
   F({
     key: "carrier_code",
@@ -844,7 +844,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     post: true,
     span: 3,
     catalog: "carriers",
-    help: "Código da transportadora padrão do fornecedor (A2_TRANSP, referência SA4).",
+    help: "Transportadora normalmente utilizada nas entregas relacionadas ao fornecedor. Selecione uma transportadora cadastrada no Protheus. (TOTVS: SA2.A2_TRANSP)",
   }),
   F({
     key: "segment_code",
@@ -856,7 +856,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     post: true,
     span: 3,
     catalog: "segments",
-    help: "Código do segmento de atuação do fornecedor (A2_SATIV1, tabela SX5-T3).",
+    help: "Segmento de atuação do fornecedor, conforme a classificação cadastrada no Protheus. (TOTVS: SA2.A2_SATIV1)",
   }),
   F({
     key: "administrator_code",
@@ -868,7 +868,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     post: true,
     span: 3,
     catalog: "administrators",
-    help: "Código do administrador do fornecedor (A2_CODADM, referência SAE).",
+    help: "Administrador responsável pelo fornecedor nos processos financeiros. Selecione um administrador cadastrado no Protheus. (TOTVS: SA2.A2_CODADM)",
   }),
   F({
     key: "linked_customer_code",
@@ -879,7 +879,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     span: 3,
     catalog: "customers",
     catalogPairField: "linked_customer_store",
-    help: "Cliente vinculado ao fornecedor (A2_CLIENTE+A2_LOJCLI, referência SA1) — a seleção define código e loja. O vínculo não é alterável na edição (contrato upstream); apenas a loja do cliente atual pode mudar.",
+    help: "Cliente relacionado a este fornecedor no Protheus. Na inclusão, a seleção preenche código e loja do vínculo; na edição, o código do cliente vinculado não pode ser alterado — apenas a loja do vínculo existente. (TOTVS: SA2.A2_CLIENTE + SA2.A2_LOJCLI)",
   }),
   F({
     key: "linked_customer_store",
@@ -894,7 +894,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     catalog: "customers",
     catalogValueField: "store",
     catalogCodeParam: "linked_customer_code",
-    help: "Loja do cliente vinculado (A2_LOJCLI) — exige cliente vinculado; as opções são as lojas do cliente atual.",
+    help: "Loja do cliente vinculado ao fornecedor. As opções exibidas são as lojas do cliente atualmente vinculado — a troca exige que o vínculo já exista. (TOTVS: SA2.A2_LOJCLI)",
   }),
   F({
     key: "linked_employee_code",
@@ -906,7 +906,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     post: true,
     span: 4,
     catalog: "employees",
-    help: "Código do funcionário vinculado ao fornecedor (A2_NUMRA, referência SRA).",
+    help: "Funcionário da empresa vinculado a este fornecedor — contato interno ou responsável relacionado ao vínculo. Selecione um funcionário cadastrado no Protheus. (TOTVS: SA2.A2_NUMRA)",
   }),
 ];
 

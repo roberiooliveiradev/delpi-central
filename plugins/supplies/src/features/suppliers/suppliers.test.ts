@@ -593,6 +593,43 @@ describe("tax id masking", () => {
   });
 });
 
+describe('E7 — helps funcionais com referência TOTVS', () => {
+  const FORBIDDEN =
+    /contrato REST|API REST|payload|BFF|DTO|serializer|backend|field mapping|contrato de integração|normalizado/i;
+
+  it('every registry help carries a verified TOTVS physical reference', () => {
+    for (const spec of SUPPLIER_FIELD_REGISTRY) {
+      expect(
+        spec.help,
+        `help sem referência TOTVS em ${spec.key}`,
+      ).toMatch(/\(TOTVS: [A-Z0-9_.+ ]+\)/);
+    }
+  });
+
+  it('no help exposes implementation jargon', () => {
+    for (const spec of SUPPLIER_FIELD_REGISTRY) {
+      expect(spec.help, `jargão técnico em ${spec.key}`).not.toMatch(FORBIDDEN);
+    }
+  });
+
+  it('create and edit sections share the same registry help source', () => {
+    const createKeys = new Set(
+      SUPPLIER_CREATE_SECTIONS.flatMap((s) => s.fields.map((f) => f.key)),
+    );
+    const formKeys = new Set(
+      SUPPLIER_FORM_SECTIONS.flatMap((s) => s.fields.map((f) => f.key)),
+    );
+    for (const key of createKeys) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
+      expect(spec.help).toBeTruthy();
+    }
+    for (const key of formKeys) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
+      expect(spec.help).toBeTruthy();
+    }
+  });
+});
+
 describe('F5-UX-R2 — CNPJ/CPF primeiro', () => {
   it('tax_id is the first identification field in the shared form sections', () => {
     const section = SUPPLIER_FORM_SECTIONS.find(

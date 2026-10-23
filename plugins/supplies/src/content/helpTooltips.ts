@@ -77,11 +77,7 @@ export const SP_HELP = {
   suppliersColBlocked:
     "Ativo ou Bloqueado conforme o campo de bloqueio (MSBLQL) do cadastro SA2.",
   suppliersEdit:
-    "Edição governada: os campos cadastrais podem ser alterados em uma única operação — exceto código, loja, CNPJ/CPF e o código do cliente vinculado, que são protegidos. Campos com catálogo (UF, país, pagamento, natureza, conta contábil, município, transportadora, segmento, administrador, cliente, funcionário e tabela de preço) oferecem pesquisa por código ou descrição — a descrição é exibida, o código é enviado. O CEP oferece sugestão de endereço com confirmação prévia. Todas as labels têm ajuda contextual, inclusive nos campos protegidos e na revisão. Campos modificados ganham destaque e o contador mostra quantas alterações estão pendentes; «Indisponível na consulta» indica campo não retornado pelo ERP. O envio leva só os campos modificados (PUT parcial). Antes de gravar, a revisão mostra o antes/depois agrupado por seção; após o envio, «Conferir gravação» recarrega a ficha e compara os valores.",
-  suppliersEditName:
-    "Razão social do fornecedor (A2_NOME), até 50 caracteres.",
-  suppliersEditShortName:
-    "Nome fantasia / nome reduzido (A2_NREDUZ), até 20 caracteres.",
+    "Edição governada: os campos cadastrais podem ser alterados em uma única operação — exceto código, loja, CNPJ/CPF e o código do cliente vinculado, que são protegidos. Campos com catálogo (UF, país, pagamento, natureza, conta contábil, município, transportadora, segmento, administrador, cliente, funcionário e tabela de preço) oferecem pesquisa por código ou descrição — a descrição é exibida, o código é enviado. O CEP oferece sugestão de endereço com confirmação prévia. Todas as labels têm ajuda contextual com a referência física do campo no TOTVS, inclusive nos campos protegidos e na revisão. Campos modificados ganham destaque e o contador mostra quantas alterações estão pendentes; «Indisponível na consulta» indica campo não retornado pelo ERP. O envio leva só os campos modificados (PUT parcial). Antes de gravar, a revisão mostra o antes/depois agrupado por seção; após o envio, «Conferir gravação» recarrega a ficha e compara os valores.",
   suppliersIdentification:
     "Identificação cadastral: documento (CNPJ/CPF), tipo de pessoa, código, loja, razão social e fantasia — o documento é o primeiro campo em todos os modos. Código + loja compõem o identificador único do fornecedor.",
   suppliersEnrichment:
