@@ -103,4 +103,4 @@
 
 ## 10. SHA final
 
-Preenchido no commit desta etapa (ver `git log` / EXECUTION REPORT).
+`71ffc32ce8997ae202051afa255309c09e9d86f3` (`origin/main`, fast-forward).
