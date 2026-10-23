@@ -86,6 +86,12 @@ export type PresentationRealtimeEvent = {
   revision?: string;
   /** Revisão-base de um evento slide_draft (OCC efêmero). */
   baseRevision?: number;
+  /**
+   * Revisão agregada da playlist quando o backend a resolve no notify
+   * (VISTA-TV-024). Permite ao editor reconhecer commits já incorporados
+   * e dispensar reloads redundantes; ausente em payloads antigos.
+   */
+  playlistRevision?: number;
   playlistId?: string;
   slideId?: string;
   clientId?: string;

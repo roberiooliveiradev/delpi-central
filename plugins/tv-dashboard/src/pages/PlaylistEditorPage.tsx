@@ -147,6 +147,8 @@ import {
   publishPlaylistWriteHead,
   readSharedPlaylistRevision,
 } from "../utils/playlistWriteHead";
+import { hasPendingPlaylistWrite } from "../utils/playlistWriteLane";
+import { shouldSkipPresentationUpdatedReload } from "../utils/presentationSyncReloadDecision";
 import { handleVisualCaptureRequest } from "../utils/liveStageVisualCapture";
 import {
   applySlideBatchPatch,
@@ -1006,6 +1008,24 @@ export function PlaylistEditorPage({
         event.slideId
       ) {
         bumpSlidePeerActivity(slidePeerActivityRef.current, event.slideId);
+      }
+      // VISTA-TV-024 — dispensa reload quando a revisão do evento já está
+      // incorporada (ACK próprio, contexto irmão via write-head) ou é
+      // ambígua com escrita própria em voo (CAS 409 resolve server-wins).
+      // Evento sem revisão (payload antigo, reconexão) → sempre reload.
+      const eventPlaylistRevision =
+        typeof event?.playlistRevision === "number" &&
+        Number.isFinite(event.playlistRevision)
+          ? event.playlistRevision
+          : null;
+      if (
+        shouldSkipPresentationUpdatedReload({
+          eventRevision: eventPlaylistRevision,
+          trackedRevision: slideBaseRevision(null),
+          hasPendingOwnWrite: hasPendingPlaylistWrite(playlistId),
+        })
+      ) {
+        return;
       }
       // Foco só em criação/import/duplicação — nunca em slide_updated (autosave do peer).
       void reloadPlaylistFromServer({

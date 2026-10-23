@@ -50,8 +50,20 @@ def notify_presentation_changed(
     }
     if slide_id:
         payload["slideId"] = str(slide_id)
-    if playlist_revision is not None:
-        payload["playlistRevision"] = int(playlist_revision)
+    resolved_playlist_revision = playlist_revision
+    if resolved_playlist_revision is None:
+        try:
+            from tv_app.infrastructure.persistence.repositories.playlist_repository import (
+                PlaylistRepository,
+            )
+
+            resolved_playlist_revision = PlaylistRepository().get_revision(
+                UUID(str(playlist_id))
+            )
+        except Exception:
+            resolved_playlist_revision = None
+    if resolved_playlist_revision is not None:
+        payload["playlistRevision"] = int(resolved_playlist_revision)
     resolved_revision = revision
     if not resolved_revision:
         try:

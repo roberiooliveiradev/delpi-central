@@ -219,6 +219,24 @@ Alinhar/distribuir/z-order só chamam `updateBlocks` se o ack falhar. Mover, tam
 
 **Riscos residuais.** (1) Race estreita ack↔WS: reload pode resolver antes do `recordWriteRevision` publicar o head — a própria escrita seria vista como externa e a pilha zera (direção conservadora segura). (2) Desfazer mudança remota exige o painel de histórico do deck (restore governado), não mais Ctrl+Z — trade-off do contrato. (3) E2E visual em dois browsers reais continua `TEST_NOT_RUN` — a prova foi API + provider tests; validação visual multiusuário fica para a fase de smoke E2E.
 
+### Execução — VISTA-TV-EDITOR-SELF-WS-RELOAD-OPTIMIZATION-024 (P1, desempenho)
+
+**Comportamento anterior (reproduzido).** Todo `presentation_updated` — incluindo o eco do próprio commit — disparava `reloadPlaylistFromServer` incondicional (`getPlaylist` + `refreshPreviewThumbnails` + `deckHistory.handleRemoteUpdate`/`loadHistory` ≈ 3 GETs + rebuild de estado por escrita própria). O evento WS não carregava revisão da playlist nem identidade do autor — sem correlação possível entre ACK e evento. Prova no ambiente local: commit próprio `ack_rev=N` era seguido do evento que iniciava novo fetch do estado que o próprio ACK acabara de confirmar.
+
+**Causa raiz / owner.** Ausência de correlação de revisão no contrato do evento: `notify_presentation_changed` não publicava `playlistRevision`, então o consumidor não podia distinguir "rev já incorporada" de "rev desconhecida". Owner do contrato: backend `presentation_change_notifier` (ponto único de notify, cobre editor REST, MCP, GPT e copiloto). Owner do consumo: `PlaylistEditorPage.onSync`.
+
+**Correção mínima.** (1) O notifier resolve `playlistRevision` pós-commit quando não informado (`PlaylistRepository().get_revision`), falha → omite o campo (consumidor recarrega — safe). (2) `PresentationRealtimeEvent.playlistRevision?: number`. (3) `hasPendingPlaylistWrite` expõe a lane. (4) Predicado `shouldSkipPresentationUpdatedReload` decide o skip no `onSync`; reload continua para reconexão (`onSync(undefined)`), payloads antigos sem revisão e qualquer revisão acima do rastreado.
+
+**Contrato de supressão segura.** `tracked = max(knownPlaylistRevision, sharedWriteHead)`. Skip se `eventRev <= tracked` (já incorporado — próprio ACK, irmão, ou estrangeiro já carregado), ou `eventRev == tracked+1 && write em voo` (ambíguo WS-antes-do-ACK: se for estrangeiro de fato, o CAS do pendente vira 409 → server-wins — nada se perde). Caso contrário reload. Fecha o residual #1 da task 023: eco próprio não alcança mais o caminho de baseline externa.
+
+**Pipeline medido (local, WS real).** `A_OWN`: `rev 11 → ack 12 (60–95ms) → ws playlistRevision=12` → suprimido. `B_FOREIGN`: `ack 13 → A recebe playlistRevision=13` → `13 > head 12` → reload. TV pública não usa o predicado — continua refetch em todo evento (`EDITOR ≡ PREVIEW ≡ TV` preservado).
+
+**Reload count antes/depois (por commit próprio).** Antes: ~3 HTTP (playlist + preview + history) + rebuild completo. Depois: 0. Eventos externos: inalterados.
+
+**Testes.** `presentationSyncReloadDecision.test.ts` (8: ack incorporado, atrasado/duplicado, WS-antes-ACK c/ e s/ pendente, estrangeiro adiante, sem revisão, NaN, estado inicial). `test_presentation_sync.py` +2 (revisão no payload; omissão em falha de lookup). Suítes: hooks+context+utils 142 PASS; realtime 12; backend revision/realtime/sync 27 PASS. TSC/lint: somente erros pré-existentes (verificado em HEAD via stash).
+
+**Riscos residuais.** (1) Skip ambíguo `tracked+1` assume que lane em voo implica commit próximo — se a escrita falhar por outro motivo o estado local fica adiantado otimisticamente até a próxima sync (mesmo comportamento anterior ao otimismo, sem perda). (2) E2E visual com dois browsers segue `TEST_NOT_RUN`; prova coberta por WS real + testes. (3) `slide_draft`/`presence` inalterados (já filtram por `clientId`).
+
 ### Cache
 
 `notify_presentation_changed` limpa `reset_comunicado_data_block_cache` também em mutação visual. O clear em si não foi cronometrado. A consulta seguinte da TV/prévia deixa de usar o cache. Não alterar esta política sem teste de dado obsoleto.

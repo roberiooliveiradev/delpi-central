@@ -42,6 +42,16 @@ function lockName(key: string): string {
   return `tv-dashboard:playlist-write:${key}`;
 }
 
+/**
+ * Há escrita enfileirada/em voo nesta playlist? Usado pela supressão segura de
+ * `presentation_updated`: WS chegando antes do ACK com a próxima revisão
+ * prevista é tratado como possível commit próprio (o CAS resolve ambiguidade
+ * via 409 server-wins quando na verdade era estrangeiro).
+ */
+export function hasPendingPlaylistWrite(playlistId: string): boolean {
+  return lanes.has(playlistId || "_");
+}
+
 export function enqueuePlaylistWrite<T>(
   playlistId: string,
   task: () => Promise<T>,
