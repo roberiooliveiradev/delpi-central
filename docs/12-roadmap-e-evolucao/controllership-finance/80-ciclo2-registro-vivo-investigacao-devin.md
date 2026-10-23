@@ -704,3 +704,67 @@ Sem vínculo de título o WHERE oficial produz 1.059 linhas (111 com motivo em b
 - **Nota metodológica receber**: a população 657 = SE5 'R'×SE1 cru também é reproduzível pelo FINR190 se os parâmetros de exclusão estivessem desligados — porém o FINR190 sempre aplica `E5_TIPODOC NOT IN (...)` fixo no código, então o conjunto fixo torna DLP06R01/outro executor a explicação mais plausível. `INCONCLUSIVE` até fonte/parâmetros.
 - **SH6 (MOD)**: consumidores custom identificados no acervo (`10. PCP`: `PApPosAp`, `matr895`, `DLP10G03`, `MA680INC`, `MT685LOK`, `MT680VAL`, `MOBILE/PAPGETOP`) — cadeia MOD tem candidatos de relatório custom para rodada dedicada. `TO_INVENTORY`.
 - **FINR150**: `finr150_dlp.prx` presente no acervo (cheques) — não relacionado aos artefatos do ciclo.
+
+---
+
+## §18 — RODADA 6 (CF-C2-EXEC-006) — ESTOQUES, CUSTOS E MOD — 2026-10-23
+
+Cruzamento fontes DELPI (`docs/13-fontes-totvs-protheus/`) × SQL read-only × artefatos. Sem alteração de runtime/dados.
+
+### 18.A — DEL100 × SB9: fórmula, granularidade e correção — PROVEN (código) / divergência de dados
+
+**Parâmetros (TPergunta `DEL100`, grupo SX1 com 48 entradas registrado):** Data Fechamento, De/Ate Produto, De/Ate Local (default 01–99), Modo Execução (1=Alteração, 2=Somente Log).
+
+**Janela:** valida `B9_DATA=par01` existente e deriva `dDataIni` = data do snapshot **anterior** (índice 2 do SB9) — encadeamento de fechamentos.
+
+**Granularidade:** produto × armazém, por filial (`xFilial` em cada área).
+
+**Fórmula recomputada (linhas 84–145):**
+```
+calc = B9_VINI1/B9_QINI @dDataIni
+     + SD3 (D3_ESTORNO<>'S'; D3_TM<'500' entra / D3_TM>='500' sai; eixo D3_EMISSAO; D3_CUSTO1/D3_QUANT)
+     + SD1 (TES com F4_ESTOQUE='S'; eixo D1_DTDIGIT; D1_CUSTO/D1_QUANT)
+     − SD2 (TES com F4_ESTOQUE='S'; eixo D2_EMISSAO; D2_TOTAL/D2_QUANT)
+```
+Compara com SB9 @dDataFim; com modo Alteração **corrige via `RecLock`** (`B9_VINI1`, `B9_QINI`). Ausência de linha SB9 no fim gera log tipo "3" — **não cria** snapshot.
+
+**Capacidade vs execução:** a capacidade de correção retroativa existe no código; execução efetiva **não é observável via SQL** (sem trilha de execução). `TO_INVENTORY` → owner ERP.
+
+**Validação SQL da fórmula (filial 02, 20260831→20260930) — `INCONCLUSIVE`/divergente:**
+- 3.545 chaves produto×armazém; **428 sem linha SB9 no fechamento** (saldo/movimento sem snapshot gravado — evidência estrutural de incompletude de cobertura);
+- 523 linhas divergem em valor (>R$1; Σ|Δ|=4,98M), 290 em quantidade (Σ|Δ|=9,08M);
+- Interpretação: a fórmula DEL100 **não reproduz** o SB9 armazenado — ou há correções/ajustes pendentes, ou o cálculo difere em nuances (TES, custo de retorno, filial SF4). Não é a regra do produtor SB9; é rotina corretiva aproximada.
+
+### 18.B — MATR320/MATA330/P7: produtores e consumidores
+
+- **`Dmatr320.prx`** (custom de MATR320, "Resumo das entradas e saídas"): seção `{"SB1","SD1","SD2","SD3"}` — lê **SD3 por `D3_EMISSAO`** (filtros `D3_ESTORNO<>'S'`, TES/serviço) — relatório de movimentação do período, **não consome nem produz SB9**.
+- SX1: sem grupo MATR320; existem `MATA317` (6 params), `MATR325` (4) e **`DEL100` (48)**. MATR460 (P7) não tem grupo SX1 no acervo nem fonte.
+- `MA330OK` (PE do MATA330) segue como única evidência de processo upstream de fechamento (dispara SPs custom por filial); criador das linhas SB9 **não comprovado**.
+
+### 18.C — MP7*: origem e granularidade — PROVEN ad-hoc
+
+- `NOMEARQ` = nomes de spool (`SCGN000xxx`) e `TIPOMOV` = nomes de **variáveis internas** (`aSalAtu`, `QtCus`, `aDadosCF9`) → são **dumps de arrays de execução**, não exports curados do relatório P7 oficial.
+- Coberturas heterogêneas por arquivo (datas 2021–2024, 1–40 datas, armazéns variáveis) → universos **não comparáveis** a SB9 sem os parâmetros da exportação. Paridade MP7×SB9 permanece `INCONCLUSIVE`; decisão: **não usar MP7 como proxy do P7 oficial**.
+
+### 18.D — Faturamento × MOD: consumidores SH6 e cadeia de custo
+
+- **`matr895`** (Real × Previsto, fonte TOTVS no acervo): seção sobre `SH6+SC2+SB1+SH1+SH4+SG2`; join OP via `SUBSTR(H6_OP)` em `C2_NUM/C2_ITEM/C2_SEQUEN`; divisor de tempo padrão `SH1.H1_MAOOBRA`; células `HoraPrev`/`HoraReal`, `H6_QTDPROD`/`H6_QTDPERD`.
+- **`DLP10G03` (custom)**: calcula eficiência `=(G2_TEMPAD×H6_QTDPROD + setup)/H6_TEMPO×100` e **grava `H6_ZEFICI`** (campo custom) — preenchido em 308.865/457.954 linhas SH6 (67%) → rotina **efetivamente executada em produção**.
+- **`PApPosAp`**: ponto de entrada que normaliza `H6_OP`/desdobramento de OP.
+- **Custo MOD — resolvido conceitualmente**: `SH1` não tem custo monetário (`H1_MAOOBRA`, `H1_CCUSTO`, `H1_GCCUSTO`, `H1_MODFAT`); `SH4.H4_CUSTOH` existe mas está **zerado** nas 529 ferramentas → custo/hora não é carregado. Cobertura SH6→SH1 em 09/2026: **100%** dos 13.886 apontamentos com recurso válido e `H1_CCUSTO` preenchido → **o rateio MOD é via centro de custo do recurso**, não custo/hora de recurso/ferramenta. Fórmula monetária (rate × horas) depende dos rates de CC → `TO_INVENTORY`.
+- Escala: SH6 = 457.954 apontamentos; set/2026 = 13.886 (55 recursos, 1.688 produtos).
+
+### 18.E — Recebíveis: DLP06R01 — pendência mantida
+
+Sem novas evidências no acervo; produtor permanece `BLOCKED` → owner TI. Nenhuma consulta repetida.
+
+### 18.F — Registro desta rodada
+
+| Run | Item | Ação | Resultado | Gate |
+|---|---|---|---|---|
+| C2-R28 | DEL100 | leitura integral + SX1 | PROVEN: fórmula, granularidade, correção RecLock; capacidade≠execução | G4 fonte |
+| C2-R29 | SB9 fórmula | recompute SQL f02 0831→0930 | DIVERGENTE: 428 sem linha fim; 523 Δvalor / 290 Δqtd → DEL100 não é regra do produtor | — |
+| C2-R30 | MATR320 | leitura Dmatr320 | PROVEN: consome SD3+SB1 (mov. período); não produz SB9 | — |
+| C2-R31 | MP7* | perfil NOMEARQ/TIPOMOV | PROVEN: dumps de arrays de execução, não P7 oficial | — |
+| C2-R32 | MOD | matr895/DLP10G03/PApPosAp + links SH6 | PROVEN: rateio via CC (H1_CCUSTO 100%); H4_CUSTOH zerado; H6_ZEFICI em uso | G4 fonte |
+| C2-R33 | — | doc 47 | `NO_GATE_CHANGE` | — |
