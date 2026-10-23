@@ -81,3 +81,33 @@ Fluxo: `plugins/supplies → supplies-api → api-delpi | external-data-api | Co
 **Ambos convergem para o mesmo fluxo:** verificar duplicidade e permissões → apresentar dados sugeridos com origem → permitir confirmação/edição e preenchimento dos campos internos → revisão final → criação explícita somente com write gate/contrato ERP autorizado. Não selecionar automaticamente o primeiro resultado da busca nominal. Busca por razão social é `TARGET/TO_INVENTORY` quanto ao provedor e API, **não** declarar disponível em produção; lookup CNPJ existente permanece `PROVEN`. A pesquisa não cria fornecedor nem executa POST/PUT Protheus. O cadastro manual continua possível quando o usuário optar por não utilizar sugestão externa, conforme jornada de criação vigente.
 
 **Critérios de aceite para X4.UX-R1.P0:** wireframe/estados de ambas entradas; search-empty/múltiplos homônimos/erro/429; seleção de estabelecimento; consulta CNPJ automática após seleção; proveniência por campo; ausência de duplicidade indevida; fallback para entrada manual; RBAC no BFF; LGPD e fonte externa autorizada. Implementação requer novo gate e autorização.
+
+## 8. Plano de rotas e três caminhos de criação (decisão PO, 2026-10-23)
+
+**D-06 — Preservar cadastro manual integralmente.** A `SupplierCreatePage` existente permanece a única página de criação (`/apps/supplies/suppliers/new`), com **três entradas**: (1) digitar CNPJ e consultar; (2) pesquisar razão social, selecionar explicitamente um resultado com CNPJ e executar automaticamente a consulta pelo CNPJ selecionado; (3) **preenchimento manual**, sem chamada externa obrigatória. Todas convergem ao **mesmo formulário/revisão final**; informações consultadas são sugestões explícitas com fonte/hora, nunca gravação automática. Não criar rota frontend por modalidade.
+
+### Inventário confirmado no HEAD (somente arquivos inspecionados)
+
+| Camada | Rota efetiva | Estado | Decisão |
+|---|---|---|---|
+| MFE supplies | `/apps/supplies/suppliers` | PROVEN em navegação E13 | Manter; evolução de status de conferência posterior |
+| MFE supplies | `/apps/supplies/suppliers/new` | PROVEN por `SupplierCreatePage` e rota documentada | Manter; seletor de três modalidades |
+| MFE supplies | `/apps/supplies/suppliers/:code/:store` | PROVEN por E14 | Manter; detalhe/revisão |
+| BFF supplies-api | `GET /suppliers` | PROVEN `suppliers_routes.py` | Reutilizar; summary de divergências depende de read-model |
+| BFF supplies-api | `GET /suppliers/{code}/{store}` | PROVEN pelo consumidor `getSupplier`; validar decorator no P0 | Reutilizar |
+| BFF supplies-api | `POST /suppliers` | PROVEN `suppliers_routes.py` e `api.ts` | Preservar gate de criação, nunca invocar na etapa de prévia |
+| External Data API | `GET /v1/cnpj/{cnpj}` | PROVEN `cnpj_routes.py`, S2S only | Reutilizar pelo BFF para lookup CNPJ |
+| BFF supplies-api | `POST /suppliers/{code}/{store}/enrichment-reviews` e demais seis operações S2 | PROVEN | **Somente fornecedor existente**; não reutilizar como pré-cadastro |
+
+### Propostas de contrato — TARGET, NÃO CRIADAS
+
+| Owner | Candidato (relativo ao serviço) | Semântica pretendida | Gate |
+|---|---|---|---|
+| `supplies-api` | `POST /suppliers/creation-preview` | Recebe CNPJ escolhido e retorna sugestões/field mapping/proveniência/duplicidade sem criar fornecedor, autorização Core-first | Inventariar necessidade de body/GET, proteção de CNPJ, DTO e owner de duplicidade; congelar no P0 |
+| `supplies-api` | `GET /suppliers/external-search?query=...&state=...&page=...` | Busca nominal paginada e filtrada, devolve lista de candidatos para seleção humana | Depende de provider externo contratado e garantias de privacidade/abuso |
+| `external-data-api` | `GET /v1/companies/search?query=...&state=...&page=...` | Adaptador independente de consumidor para busca nominal e descoberta CNPJ | Provedor/licença/SLA/LGPD e contrato S2S pendentes; nunca presumir suporte BrasilAPI |
+| `supplies-api` | `GET /suppliers/enrichment-summaries` **ou** extensão de `GET /suppliers` | Resumo paginado, coerente com a lista e escopo do usuário, somente divergências acionáveis; sem N+1 ou busca externa por linha | Preferir extensão se for contratualmente consistente; validar snapshot e freshness/ownership |
+
+**Atenção:** nomes/HTTP methods das rotas novas são candidatos e só se tornam contratos após X4.UX-R1.P0; validar colisão com `/suppliers/<code>/<store>` e contratos de gateway. O fluxo por razão social chama discovery → usuário seleciona estabelecimento → BFF executa lookup CNPJ (ou consulta de prefill) automaticamente. MFE não recebe credenciais S2S nem executa chamadas BrasilAPI. CNPJ direto vai ao mesmo fluxo de consulta detalhada; modo manual não depende da saúde do provider. Antes do POST de criação, revisão, campos obrigatórios e duplicate-check no owner canônico; com write gate OFF, não realizar gravação ERP.
+
+**Status:** `DECISION` sobre UX de três entradas; APIs novas `TARGET/TO_INVENTORY`; implementação `NOT_AUTHORIZED`. O próximo passo é X4.UX-R1.P0 e sua matriz exata `UI action → BFF route → owner → payload/response → Core AuthZ → evidence/tests`.
