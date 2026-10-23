@@ -645,3 +645,12 @@ user creates recurring daily report
 → verified provider/business outcome when contract supports
 → Evidence/Audit/Outcome
 ```
+
+
+## 27. Especialização de execução — modularização do orquestrador e reuso/RPA
+
+Para qualquer task de refactor de orchestration.py, execução do plano 125 ou criação de módulo de inteligência compartilhável, carregar **antes do diff** [125 — plano finito](./corrections/mcp-contextual-intelligence-orchestration/125-orchestration-complete-refactoring-finite-plan.md), [128 — reuso e RPA](./corrections/mcp-contextual-intelligence-orchestration/128-cross-application-intelligence-and-rpa-capability-review.md) e [129 — conformidade e antipadrões](./corrections/mcp-contextual-intelligence-orchestration/129-refactor-implementation-conformance-and-antipattern-gates.md), além da regra .cursor/rules/delia-execution-protocol.mdc.
+
+Toda etapa precisa provar: owner, fonte, consumidores, contrato, arquivos explicitamente autorizados, alternativa REUSE/EXTEND/NEW, import DAG, AP-01…AP-20 relevantes, segurança/contratos/negativos, rollback e resultados no SHA. O Devin não pode criar arquivos candidatos sem Abstraction Gate, nem criar capacidades TARGET para alegar reuso. Aplicar STOP-THE-LINE e retorno à coordenação se decisão congelada ou ownership entrarem em conflito.
+
+Esta especialização é subordinada às authorities e **não** libera R0–R7, nova API cross-app, scheduler ou RPA runtime. Se o CI não fiscalizar um antipadrão, reportar CHECK_NOT_IMPLEMENTED ou evidência manual explícita — nunca PASS automático.
