@@ -768,3 +768,65 @@ Sem novas evidências no acervo; produtor permanece `BLOCKED` → owner TI. Nenh
 | C2-R31 | MP7* | perfil NOMEARQ/TIPOMOV | PROVEN: dumps de arrays de execução, não P7 oficial | — |
 | C2-R32 | MOD | matr895/DLP10G03/PApPosAp + links SH6 | PROVEN (recorte): associação SH6→H1_CCUSTO 100%; H4_CUSTOH zerado; H6_ZEFICI preenchido (produtor não identificado) | G4 fonte |
 | C2-R33 | — | doc 47 | `NO_GATE_CHANGE` | — |
+
+---
+
+## §19 — RODADA 7 (CF-C2-EXEC-006 continuação) — ELEGIBILIDADE SB9, DIVERGÊNCIAS E REGRA MOD — 2026-10-23
+
+### 19.A — As 428 chaves sem linha SB9: elegibilidade demonstrada empiricamente
+
+Decomposição das 428 chaves (filial 02, janela 20260831→20260930):
+
+| Classe | n |
+|---|---|
+| Com snapshot anterior, **saldo zero, sem nenhum movimento** na janela | **402** |
+| Somente movimento (sem snapshot anterior) | 26 |
+
+- **Padrão empírico de elegibilidade — `PROVEN` no recorte:** 100% das chaves prior-zero sem snapshot não tiveram movimento; e das chaves prior-zero que receberam snapshot (2.814), 2.781 (98,8%) tiveram movimento SD3. Regra implícita observada: **saldo zero + sem movimento → sem snapshot novo**. As 33 exceções prior-zero→fim-sem-SD3 têm saldos não-zero no fim (provável movimento por perna SD1/SD2 não medida nesse recorte — `TO_INVENTORY` residual).
+- Perfil das 428: concentradas no armazém 01, tipos PI(167)/PA(65)/II(36)/MO(26 sem SB2)/MC(27); 69 em armazéns 98/99/50 (MP). Todas com linha SB2 exceto as 26 de movimento.
+- **Conclusão corrigida:** as 428 são diferença de cobertura do universo investigado com explicação de elegibilidade demonstrada — **não** incompletude do fechamento.
+
+### 19.B — Divergências reconstrução×SB9: padrões identificados
+
+Recontagem com as três pernas completas (join `F4_ESTOQUE='S'` em SD1/SD2 e `B9_FILIAL/B9_LOCAL` coerentes): **724** divergências de valor e **672** de quantidade (a contagem 523/290 da R6 usava formulação parcial — número corrente é o completo; a divergência em si não mudou de natureza).
+
+| Padrão (valor) | n | Interpretação |
+|---|---|---|
+| `sb9_v == prior_v` exato ("congelado") | 224 | snapshot final repetiu o valor anterior — movimentos não refletidos |
+| `sb9_v = 0` | 266 | snapshot zerado apesar de saldo/movimento calculado |
+| demais | 234 | diferenças mistas |
+
+- **Hipótese TM999 excluída — REJEITADA:** recomputar sem `D3_TM='999'` piora divergência (724→1.470) — TM999 (transferência/dev. poder 3) **está** refletida nos saldos SB9.
+- Amostras mostram também o padrão `calc` incluindo pernas SD3 de armazéns 98/99 (CQ) que o SB9 parece não incorporar — nuance de escopo por armazém `TO_INVENTORY`.
+- Causa das divergências permanece `INCONCLUSIVE` (fórmula×correção×escopo); código DEL100 não falsificado.
+
+### 19.C — MOD: regra monetária identificada no acervo
+
+`matr860.prx` (MATR860 "Análise de OP", fonte no acervo) prova a mecânica:
+- Flag `ISMOD` = `B1_COD LIKE 'MOD%'` ou `B1_CCCUSTO<>' '` — **MOD é materializada como produto** (143 produtos `MOD*`, tipo `MO`, UM majoritária `HR`/`H` = horas).
+- "Qtd./Custo Mão de Obra" = Σ `D3_QUANT`/`D3_CUSTO1` sobre requisições (`D3_CF='RE*'`/`'DE*'`) do produto-MOD contra a OP.
+- Produção set/2026: 6.507 (f01) + 6.821 (f02) movimentos MOD `RE1`/`TM999` com **`D3_CUSTO1=0`** — as horas apropriadas não carregam custo no estoque.
+- **Cadeia MOD consolidada:** SH6 aponta horas → requisição MOD em SD3 (quantidade=horas, custo=0, `D3_OP` vinculada à OP — matches em SH6 confirmados) → custo monetário apropriado **fora do estoque** (contábil/centro de custo — `CTT_CUSTO` é código de CC hierárquico, não rate). Fórmula monetária (rate×horas e lançamento contábil) permanece `TO_INVENTORY` → rotina de apuração contábil/PCP não localizada no acervo.
+
+### 19.D — P7: inventário ampliado
+
+- SX1 **não tem nenhum grupo `MATR4%`** — MATR460/P7 oficial não tem parâmetros registrados nesta base → produtor oficial provavelmente custom/job.
+- Workfiles `TRB010` (12.799 linhas residuais @20111231: SD3/SD2/SD1, f01) e variantes `TRB*_SPMATA280`/`_36SP` confirmam uso histórico de TRB por rotinas de saldo — resíduo antigo, não prova de produtor atual.
+- `MP7*` reafirmado ad-hoc; nenhuma paridade tentada (universo não comparável).
+
+### 19.E — Pendências atualizadas
+
+- `DLP06R01`: `BLOCKED` (owner TI) — sem novidades.
+- Produtor linhas SB9: padrão de elegibilidade demonstrado, identidade do job `BLOCKED`.
+- MOD monetário: rate/fórmula de apropriação `TO_INVENTORY`.
+- Divergências reconstrução×SB9: `INCONCLUSIVE` — próximos passos: isolar perna dominante por amostra e armazéns 98/99.
+- Doc 47: `NO_GATE_CHANGE`.
+
+### 19.F — Registro
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R34 | 428 chaves | PROVEN (recorte): 402 saldo-zero+sem-mov; elegibilidade empírica | G4 fonte |
+| C2-R35 | divergências | 224 congelado/266 zero/234 mista; TM999 rejeitada; INCONCLUSIVE causa | — |
+| C2-R36 | MOD | PROVEN: MOD=produto SD3 RE1/999, horas, custo=0; monetário via apropriação fora estoque | G4 fonte |
+| C2-R37 | P7 | SX1 sem MATR4%; TRB resíduo 2011; MP7 ad-hoc | — |
