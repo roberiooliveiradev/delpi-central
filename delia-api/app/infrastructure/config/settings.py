@@ -4,6 +4,10 @@ import ipaddress
 import os
 import urllib.parse
 
+from app.application.model_invocation.governed_retries import (
+    LLM_CALL_MAX_ATTEMPTS,
+)
+
 
 _ENV_FLAG_TRUE = frozenset({"1", "true", "yes", "on"})
 _ENV_FLAG_FALSE = frozenset({"0", "false", "no", "off"})
@@ -224,6 +228,37 @@ class Settings:
         # retry — that inner mechanism is separate, doc 103).
         self.max_governed_attempts = int(
             os.getenv("DELIA_MAX_GOVERNED_ATTEMPTS") or "1"
+        )
+        # Doc 103 GATE 1 (coordination review, doc 104): per-LOGICAL-
+        # CALL LLM retry limit — a mechanism distinct from turn resume
+        # above. Fail-closed: absent or invalid values resolve to 1
+        # (retry OFF), so production can never retry involuntarily.
+        # The PO-approved capacity ceiling is LLM_CALL_MAX_ATTEMPTS=3;
+        # config can only lower it, never raise past it.
+        _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
+        self.llm_call_max_attempts_config_source = (
+            "environment"
+            if _call_attempts_raw is not None
+            else "default"
+        )
+        _call_attempts_parsed: int | None = None
+        if _call_attempts_raw is not None:
+            try:
+                _call_attempts_parsed = int(_call_attempts_raw.strip())
+            except ValueError:
+                _call_attempts_parsed = None
+        self.llm_call_max_attempts_config_invalid = (
+            _call_attempts_raw is not None
+            and (
+                _call_attempts_parsed is None
+                or not 1 <= _call_attempts_parsed <= LLM_CALL_MAX_ATTEMPTS
+            )
+        )
+        self.llm_call_max_attempts = (
+            _call_attempts_parsed
+            if _call_attempts_parsed is not None
+            and 1 <= _call_attempts_parsed <= LLM_CALL_MAX_ATTEMPTS
+            else 1
         )
         self.interaction_total_budget_seconds = float(
             os.getenv("DELIA_INTERACTION_TOTAL_BUDGET_SECONDS")

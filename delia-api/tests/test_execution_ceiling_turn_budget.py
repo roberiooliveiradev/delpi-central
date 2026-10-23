@@ -226,6 +226,7 @@ def _orchestrator(
     outcomes=None,
     port=None,
     turn_budget_seconds=80.0,
+    llm_call_max_attempts=1,
 ) -> OperationalCapabilityOrchestrator:
     port = port or FakePort(
         tools_by_specialist=tools_by_specialist, outcomes=outcomes
@@ -235,6 +236,7 @@ def _orchestrator(
         invoke_model=InvokeModel(model),
         model_ref=TEST_MODEL_REF,
         turn_budget_seconds=turn_budget_seconds,
+        llm_call_max_attempts=llm_call_max_attempts,
     )
 
 

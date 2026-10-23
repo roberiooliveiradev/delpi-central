@@ -254,6 +254,16 @@ _TERMINAL_ACTIVITY_PHASES = frozenset({
     ActivityPhase.CANCELLED,
 })
 
+# Doc 103 GATE 2: transport-level heartbeat while a turn is alive but
+# silent (e.g. a single legitimate model call lasting up to 60s). The
+# keepalive is a typed record — never an activity_event, so it can
+# never fabricate progress — and it is bounded by the worker's own
+# terminal record: when the turn ends the loop exits and no further
+# bytes are produced. 15s stays comfortably under every per-gap read
+# window observed (dev gateway 120s; ~100s edge idle) across the 300s
+# global cap without enlarging any of them.
+_INTERACTION_KEEPALIVE_SECONDS = 15.0
+
 
 def _wants_ndjson() -> bool:
     # Opt-in must be explicit. MIMEAccept.quality() resolves */* and
@@ -368,9 +378,19 @@ def _stream_interaction_turn(handler, command, logger):
         pending = [first]
         try:
             while True:
-                item_kind, item_payload = (
-                    pending.pop() if pending else items.get()
-                )
+                if pending:
+                    item_kind, item_payload = pending.pop()
+                else:
+                    try:
+                        item_kind, item_payload = items.get(
+                            timeout=_INTERACTION_KEEPALIVE_SECONDS
+                        )
+                    except queue.Empty:
+                        # The turn is still alive but silent — keep the
+                        # stream warm with a transport heartbeat. It is
+                        # not an activity_event and proves no progress.
+                        yield _keepalive_line()
+                        continue
                 if item_kind == "event":
                     yield _activity_line(item_payload)
                 elif item_kind == "result":
@@ -416,6 +436,16 @@ def _stream_interaction_turn(handler, command, logger):
     response.headers["X-Accel-Buffering"] = "no"
     response.headers["Cache-Control"] = "no-cache, no-store"
     return response
+
+
+def _keepalive_line() -> str:
+    return (
+        json.dumps(
+            {"type": "keepalive", "version": ACTIVITY_EVENT_VERSION},
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
 
 
 def _activity_line(event) -> str:

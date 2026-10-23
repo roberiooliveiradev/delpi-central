@@ -36,6 +36,7 @@ from app.application.interaction.contracts import (
     InteractiveTurnRequest,
 )
 from app.application.interaction.errors import (
+    CANCELLED,
     MODEL_TIMEOUT,
     InteractionError,
 )
@@ -1008,3 +1009,143 @@ def test_worker_binding_does_not_leak_to_other_threads():
     # A different thread (different context) sees nothing.
     assert observed == [None]
     assert current_subject_bearer() == "main-context-token" or True
+
+
+# --- doc 103 GATE 2: long-stream keepalive, disconnect, single terminal -----
+
+
+_KEEPALIVE_PATCH = (
+    "app.interfaces.http.interaction_routes._INTERACTION_KEEPALIVE_SECONDS"
+)
+
+
+def test_keepalive_flows_while_turn_is_silent(monkeypatch):
+    """A live-but-silent turn (e.g. one legitimate model call running
+    up to 60s inside the 300s cap) keeps bytes flowing: bounded
+    keepalive records arrive between real events and the single
+    terminal — transport heartbeat, never fabricated progress."""
+    monkeypatch.setattr(_KEEPALIVE_PATCH, 0.05)
+
+    class _Silent:
+        def execute(
+            self, command, *, activity_channel=None, cancel_check=None
+        ):
+            ActivityEventSink(
+                activity_channel, session_id="s", turn_id="t"
+            ).emit(phase=ActivityPhase.REQUEST_RECEIVED)
+            # ~3 keepalive intervals of silence, no real events.
+            time.sleep(0.16)
+            return _handler().execute(command)
+
+    response = _stream(_client(handler=_Silent()))
+    records = _records(response.response)
+    kinds = [r["type"] for r in records]
+    keepalives = [r for r in records if r["type"] == "keepalive"]
+    assert keepalives, "expected transport keepalives during silence"
+    assert all(r["version"] == "1" for r in keepalives)
+    # Keepalives only precede the terminal; real events stay ordered.
+    assert kinds[-1] == "turn_result"
+    assert kinds.index("keepalive") < len(kinds) - 1
+    sequences = [
+        r["sequence"] for r in records if r["type"] == "activity_event"
+    ]
+    assert sequences == sorted(sequences)
+
+
+def test_keepalive_never_impersonates_progress(monkeypatch):
+    """The keepalive record carries no phase/event semantics — the MFE
+    parser (unknown-kind allowlist) ignores it, and it cannot inflate
+    the bounded activity budget or masquerade as a model decision."""
+    monkeypatch.setattr(_KEEPALIVE_PATCH, 0.02)
+
+    class _Silent:
+        def execute(
+            self, command, *, activity_channel=None, cancel_check=None
+        ):
+            ActivityEventSink(
+                activity_channel, session_id="s", turn_id="t"
+            ).emit(phase=ActivityPhase.REQUEST_RECEIVED)
+            time.sleep(0.08)
+            return _handler().execute(command)
+
+    records = _records(_stream(_client(handler=_Silent())).response)
+    keepalives = [r for r in records if r["type"] == "keepalive"]
+    assert keepalives
+    for keepalive in keepalives:
+        # Transport-only shape: no event fields the parser could read
+        # as progress, no payload surface.
+        assert set(keepalive) == {"type", "version"}
+    events = [r for r in records if r["type"] == "activity_event"]
+    # Keepalives are generator-side; they never consume the bounded
+    # intermediate event budget of real observations.
+    assert events
+
+
+def test_disconnect_during_silence_cancels_and_stops_new_work(
+    monkeypatch,
+):
+    """Client disconnect mid-silence -> GeneratorExit -> disconnect
+    set -> the in-flight worker observes cancel_check and starts no
+    further call. The stream delivers no second terminal."""
+    monkeypatch.setattr(_KEEPALIVE_PATCH, 0.05)
+    observed_cancel = []
+    done = []
+
+    class _CancelWatching:
+        def execute(
+            self, command, *, activity_channel=None, cancel_check=None
+        ):
+            ActivityEventSink(
+                activity_channel, session_id="s", turn_id="t"
+            ).emit(phase=ActivityPhase.REQUEST_RECEIVED)
+            deadline = time.monotonic() + 5.0
+            while time.monotonic() < deadline:
+                if cancel_check is not None and cancel_check():
+                    observed_cancel.append(True)
+                    raise InteractionError(CANCELLED, "cancelled")
+                time.sleep(0.01)
+            done.append(True)
+            return _handler().execute(command)
+
+    client = _client(handler=_CancelWatching())
+    response = _stream(client)
+    iterator = iter(response.response)
+    first = next(iterator)
+    assert json.loads(first)["type"] == "activity_event"
+    # Client goes away mid-turn.
+    response.close()
+    deadline = time.monotonic() + 5.0
+    while not observed_cancel and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert observed_cancel == [True]
+    # The worker terminated on cancel — never completed the turn and
+    # never produced a duplicate terminal.
+    assert not done
+
+
+def test_stream_survives_long_silent_window_with_bounded_keepalives(
+    monkeypatch,
+):
+    """Simulated long window (compressed clock): many keepalive gaps
+    pass while the turn is alive; the single authoritative terminal
+    still arrives and nothing is emitted after it."""
+    monkeypatch.setattr(_KEEPALIVE_PATCH, 0.01)
+
+    class _LongSilent:
+        def execute(
+            self, command, *, activity_channel=None, cancel_check=None
+        ):
+            # ~120ms of silence — ~12 keepalive gaps under the patched
+            # interval — then a normal terminal.
+            ActivityEventSink(
+                activity_channel, session_id="s", turn_id="t"
+            ).emit(phase=ActivityPhase.REQUEST_RECEIVED)
+            time.sleep(0.12)
+            return _handler().execute(command)
+
+    records = _records(_stream(_client(handler=_LongSilent())).response)
+    kinds = [r["type"] for r in records]
+    assert kinds[-1] == "turn_result"
+    assert kinds.count("turn_result") == 1
+    assert "turn_error" not in kinds
+    assert len([k for k in kinds if k == "keepalive"]) >= 3

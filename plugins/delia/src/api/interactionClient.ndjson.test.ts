@@ -210,6 +210,28 @@ describe("NDJSON progressive transport", () => {
     expect(result.session_id).toBe("s-1");
   });
 
+  it("ignores transport keepalive records without counting them as events", async () => {
+    const lines = [
+      JSON.stringify(event({ sequence: 1 })),
+      JSON.stringify({ type: "keepalive", version: "1" }),
+      JSON.stringify({ type: "keepalive", version: "1" }),
+      JSON.stringify({ type: "future_record_kind", version: "1" }),
+      JSON.stringify({
+        type: "turn_result",
+        version: "1",
+        result: RESULT_PAYLOAD,
+      }),
+    ];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ndjsonResponse(lines)));
+    const events: DeliaActivityEvent[] = [];
+    const result = await submitInteractionTurn("oi", {
+      getAccessToken: token,
+      onActivityEvent: (e) => events.push(e),
+    });
+    expect(events).toHaveLength(1);
+    expect(result.session_id).toBe("s-1");
+  });
+
   it("fails closed when the stream ends without a terminal record", async () => {
     vi.stubGlobal(
       "fetch",

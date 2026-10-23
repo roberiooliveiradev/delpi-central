@@ -108,6 +108,7 @@ from app.application.model_invocation.errors import (
     ModelInvocationError,
 )
 from app.application.model_invocation.governed_retries import (
+    LLM_CALL_MAX_ATTEMPTS,
     call_retry_eligible,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
@@ -5175,6 +5176,7 @@ class OperationalCapabilityOrchestrator:
             DEFAULT_INTERACTION_TOTAL_BUDGET_SECONDS
         ),
         max_governed_attempts: int = 1,
+        llm_call_max_attempts: int = 1,
         response_intelligence_enabled: bool = False,
         cri_instruction_clause: str | None = None,
         cri_instruction_version: str | None = None,
@@ -5200,6 +5202,12 @@ class OperationalCapabilityOrchestrator:
         )
         self._max_governed_attempts = max(
             1, min(int(max_governed_attempts), MAX_GOVERNED_ATTEMPTS)
+        )
+        # Doc 103 GATE 1: governed per-LOGICAL-CALL retry limit — a
+        # mechanism distinct from turn resume above. Defaults to 1
+        # (OFF); clamped to the PO-approved ceiling, never raised.
+        self._llm_call_max_attempts = max(
+            1, min(int(llm_call_max_attempts), LLM_CALL_MAX_ATTEMPTS)
         )
         # CRI E1/E2: composition-resolved response mode — when ON, the
         # goal stage may propose typed answer requirements and the
@@ -9682,7 +9690,9 @@ class OperationalCapabilityOrchestrator:
                     int((time.monotonic() - started) * 1000),
                     correlation or "",
                 )
-                if not call_retry_eligible(exc.code, call_attempt):
+                if not call_retry_eligible(
+                    exc.code, call_attempt, self._llm_call_max_attempts
+                ):
                     # LOOP-03R2A: a model-stage TIMEOUT is a governed
                     # orchestration failure — it terminates at the
                     # attempt boundary, never as a NOT_APPLICABLE that

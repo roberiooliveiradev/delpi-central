@@ -15,6 +15,9 @@ from app.application.model_invocation.errors import (
     TIMEOUT,
 )
 
+# PO-approved ceiling (doc 103): a logical call may never exceed
+# three real invocations, whatever the configured environment
+# limit says.
 LLM_CALL_MAX_ATTEMPTS = 3
 
 # Recoverable classes: the same bounded request may legitimately
@@ -28,10 +31,21 @@ RECOVERABLE_CALL_ERROR_CODES = frozenset(
 )
 
 
-def call_retry_eligible(error_code: str, attempt: int) -> bool:
-    """Whether a failed real invocation may lawfully be retried —
-    bounded at ``LLM_CALL_MAX_ATTEMPTS`` real invocations total."""
+def call_retry_eligible(
+    error_code: str, attempt: int, max_attempts: int = 1
+) -> bool:
+    """Whether a failed real invocation may lawfully be retried.
+
+    ``max_attempts`` is the environment-governed limit
+    (``DELIA_LLM_CALL_MAX_ATTEMPTS``), distinct from the turn-resume
+    attempts governed by ``DELIA_MAX_GOVERNED_ATTEMPTS``. It defaults
+    to 1 — retry OFF — so an un-wired caller can never retry
+    involuntarily. The effective limit is clamped to
+    ``LLM_CALL_MAX_ATTEMPTS``: config can only lower it, never raise
+    it past the PO-approved ceiling.
+    """
+    effective = max(1, min(int(max_attempts), LLM_CALL_MAX_ATTEMPTS))
     return (
         error_code in RECOVERABLE_CALL_ERROR_CODES
-        and attempt < LLM_CALL_MAX_ATTEMPTS
+        and attempt < effective
     )

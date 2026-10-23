@@ -17521,3 +17521,22 @@ GPU_METRICS=call p50 0.78s p95 2.96s max 5.31s; turn p50 5.98s max 17.49s
 CPU_METRICS=call p50 3.44s p95 10.06s max 26.61s; turn p50 14.95s max 67.49s
 RESIDUALS=3B invalid_structured_output (4 terminais); miss-selecao semantica pontual; BROWSER_QA=TEST_NOT_RUN
 PROD_VALUES=30/30/30/1/60 frozen ROLLBACK=reverter diff (valores anteriores no historico)
+
+## §6.387 — Doc 104 gates: isolamento de retry por chamada + validação local de stream 300s (2026-10-23)
+
+**2026-10-23 — DELIA-C3-MODEL-RETRY-ISOLATION-AND-300S-STREAMING-VERIFICATION-01:** os dois blockers do parecer de coordenação (doc 104) resolvidos sem infra nova. GATE 1: novo `DELIA_LLM_CALL_MAX_ATTEMPTS` em settings (`*_config_source`/`_config_invalid`, fail-closed — default/ausente/fora de [1,3] → inválido → 1), injetado em `orchestration.py` e `handle_interactive_turn.py` como `llm_call_max_attempts`; `call_retry_eligible(code, attempt, max)` recebe o limite efetivo; `DELIA_MAX_GOVERNED_ATTEMPTS` (resume) intocado e ortogonal. Prod pinado 1 em `docker-compose.yml` (OFF explícito), dev 3 em `docker-compose.dev.yml`. GATE 2: `_INTERACTION_KEEPALIVE_SECONDS=15` no generator NDJSON — `items.get(timeout)` emite `{"type":"keepalive","version":"1"}` (transporte puro, sem event_id/sequence/phase); fila bounded e terminal único preservados. Wire real (container eval WSGI real, Ollama-only): keepalives fluem em silêncio; `CONTINUING` somente em retry real (attempts=3); com attempts=1 → 1 call, zero CONTINUING, `turn_error` honesto; disconnect a ~6.5s congela `adapter_calls=2` (nenhuma tentativa nova pós-cancel). Turno real :18000 com JWT Keycloak+Core /me + `qwen2.5:3b` 100% GPU → stream incremental + `turn_result` único. Teto 300s provado por fake clock; saturacao de fila preserva terminal; frontend ignora keepalive (teste novo). Backend 2036 testes exit 0; frontend delia 337 vitest + tsc + build + federation OK. Prod nao tocado; retry produtivo segue OFF (R4 OPEN/DEFERRED_BY_PO). EXTERNAL_LLM_TEST_CALLS=0 PAID_FALLBACK=DISABLED PRODUCTION_CHANGED=NO RELEASE=NOT_AUTHORIZED.
+
+TASK_ID=DELIA-C3-MODEL-RETRY-ISOLATION-AND-300S-STREAMING-VERIFICATION-01
+REUSE_DECISION=EXTEND (settings/governed_retries/consumers/transporte existentes; nenhum engine/queue/scheduler novo)
+RETRY_POLICY_OWNER=app/application/model_invocation/governed_retries.py + loops nos 2 consumers
+MODEL_CALL_RETRY_CONFIG=DELIA_LLM_CALL_MAX_ATTEMPTS TURN_RESUME_CONFIG=DELIA_MAX_GOVERNED_ATTEMPTS (inalterado)
+CONFIG_FAIL_CLOSED=YES DEV_MODEL_CALL_RETRIES=3 PROD_MODEL_CALL_RETRIES=1
+RETRY_OFF_NEGATIVE_TESTS=PASS RETRY_ON_TESTS=PASS THIRD_ATTEMPT_PROOF=PASS FOURTH_ATTEMPT_BLOCKED=BY_CONSTRUCTION+TEST
+CANCEL_BETWEEN_RETRIES=PASS(unit+wire) NO_MATERIAL_REPLAY=PASS
+GLOBAL_CAP_300S=PASS_DETERMINISTIC NDJSON_LONG_STREAM=PASS_REAL_HTTP_LOCAL KEEPALIVE=PASS TRANSPORT_ONLY
+BACKPRESSURE=PASS DISCONNECT_CANCEL=PASS(adapter_calls frozen 2->2) ORPHAN_WORKERS=NONE SINGLE_TERMINAL=PASS
+GATEWAY_LOCAL=CONFIG_VERIFIED(proxy_read_timeout 120s por gap; keepalive 15s; X-Accel-Buffering:no) GATEWAY_LIVE=TEST_NOT_RUN
+EDGE_300S_VERIFICATION=TEST_NOT_RUN BROWSER_QA=TEST_NOT_RUN(MFE stale)
+REGRESSION=backend 2036 exit0 / frontend delia 337 + tsc + build + federation OK
+PROD_VALUES=intocados ROLLBACK=git revert (prod nada a reverter)
+RESIDUALS=edge/gateway live stream, browser QA, R4 revocation OPEN

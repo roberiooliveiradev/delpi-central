@@ -2049,6 +2049,10 @@ services:
       # under the approved 60s monotonic interaction budget; the 30s
       # per-attempt ceiling is a code constant.
       DELIA_MAX_GOVERNED_ATTEMPTS: ${DELIA_MAX_GOVERNED_ATTEMPTS:-1}
+      # Doc 103 GATE 1: per-LOGICAL-CALL LLM retry — explicitly OFF in
+      # production (1) until a future activation gate authorizes it.
+      # Distinct from turn resume above; invalid values fail closed.
+      DELIA_LLM_CALL_MAX_ATTEMPTS: ${DELIA_LLM_CALL_MAX_ATTEMPTS:-1}
       DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-60}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.

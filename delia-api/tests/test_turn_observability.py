@@ -531,6 +531,7 @@ def test_timeout_call_counted_without_fabricated_usage():
     handler = HandleInteractiveConversationTurn(
         InvokeModel(adapter),
         capability_orchestration=_NotApplicable(),
+        llm_call_max_attempts=3,
     )
     result = handler.execute(_request())
     obs = result.observability
@@ -542,6 +543,39 @@ def test_timeout_call_counted_without_fabricated_usage():
         assert call["input_tokens"] is None
     assert obs["tokens"]["status"] == USAGE_STATUS_UNAVAILABLE
     assert obs["composition_mode"] == "deterministic"
+
+
+def test_retry_off_single_invocation_no_fake_continuing():
+    """GATE 1 (doc 104 coordination review): the conversational
+    consumer with the production-parity limit runs exactly ONE real
+    invocation on a recoverable timeout — no retry, no CONTINUING."""
+    from app.application.interaction.activity import ActivityPhase
+
+    class _NotApplicable:
+        def attempt(self, *_args, **_kwargs):
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id="c1",
+                governed_attempts=1,
+            )
+
+    adapter = _FailingAdapter()
+    phases = []
+    handler = HandleInteractiveConversationTurn(
+        InvokeModel(adapter),
+        capability_orchestration=_NotApplicable(),
+        llm_call_max_attempts=1,
+    )
+    result = handler.execute(
+        _request(), activity_channel=phases.append
+    )
+    assert adapter.calls == 1
+    obs = result.observability
+    assert obs["model_calls"] == 1
+    assert len(obs["calls"]) == 1
+    assert ActivityPhase.CONTINUING not in [
+        getattr(e, "phase", e) for e in phases
+    ]
 
 
 # --- stage-6 budget attribution ---------------------------------------------

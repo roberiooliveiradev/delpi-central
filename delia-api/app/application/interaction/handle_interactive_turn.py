@@ -88,6 +88,7 @@ from app.application.model_invocation.errors import (
     ModelInvocationError,
 )
 from app.application.model_invocation.governed_retries import (
+    LLM_CALL_MAX_ATTEMPTS,
     call_retry_eligible,
 )
 from app.application.interaction.turn_budget import (
@@ -250,6 +251,7 @@ class HandleInteractiveConversationTurn:
         timeout_seconds: float = INTERACTION_TIMEOUT_SECONDS,
         capability_orchestration: SupportsGovernedCapabilityAttempt | None = None,
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
+        llm_call_max_attempts: int = 1,
         response_intelligence_enabled: bool = False,
     ) -> None:
         self._invoke_model = invoke_model
@@ -271,6 +273,12 @@ class HandleInteractiveConversationTurn:
         # at most the remaining budget, so a turn can never outlive
         # the edge request deadline.
         self._turn_budget_seconds = float(turn_budget_seconds)
+        # Doc 103 GATE 1: governed per-LOGICAL-CALL retry limit —
+        # distinct from turn resume. Defaults to 1 (OFF); clamped to
+        # the PO-approved ceiling, never raised.
+        self._llm_call_max_attempts = max(
+            1, min(int(llm_call_max_attempts), LLM_CALL_MAX_ATTEMPTS)
+        )
         # CRI E1 (doc 73 §7 / spec 75 §4.1): composition-resolved
         # response mode at the governed-outcome → response boundary.
         # It marks observability only in this gate — selection,
@@ -1224,7 +1232,9 @@ class HandleInteractiveConversationTurn:
                         ),
                         budget_remaining_ms=call_remaining_ms,
                     )
-                if not call_retry_eligible(exc.code, call_attempt):
+                if not call_retry_eligible(
+                    exc.code, call_attempt, self._llm_call_max_attempts
+                ):
                     raise _map_invocation_error(exc) from exc
                 if cancel_check is not None and cancel_check():
                     raise InteractionError(

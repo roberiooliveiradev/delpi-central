@@ -52,9 +52,13 @@ from app.application.model_invocation.contracts import (
 )
 from app.application.model_invocation.errors import (
     INVALID_REQUEST,
+    INVALID_STRUCTURED_OUTPUT,
     PROVIDER_UNAVAILABLE,
     TIMEOUT,
     ModelInvocationError,
+)
+from app.application.model_invocation.governed_retries import (
+    call_retry_eligible,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.specialist_interop.contracts import (
@@ -115,6 +119,7 @@ def _resuming_orchestrator(
     turn_budget_seconds=30.0,
     interaction_total_budget_seconds=60.0,
     max_governed_attempts=2,
+    llm_call_max_attempts=3,
     **kwargs,
 ) -> OperationalCapabilityOrchestrator:
     port = port or FakePort(tools_by_specialist=tools_by_specialist)
@@ -127,6 +132,7 @@ def _resuming_orchestrator(
             interaction_total_budget_seconds
         ),
         max_governed_attempts=max_governed_attempts,
+        llm_call_max_attempts=llm_call_max_attempts,
         **kwargs,
     )
 
@@ -457,12 +463,16 @@ def test_real_provider_failure_is_not_resumed_or_blamed_on_timeout():
 def test_legacy_single_attempt_mode_is_unchanged():
     """Doc 103: max_governed_attempts governs TURN resume, not the
     per-call retry — a single transient timeout is recovered inside
-    the same logical call; only three consecutive timeouts terminate."""
+    the same logical call; only three consecutive timeouts terminate.
+    GATE 1: retries are exercised with the dev-authorized call limit
+    (3) while turn resume stays OFF (default)."""
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
         failures={ARGUMENTS_INSTRUCTION_ID: 3},
     )
-    read = _orchestrator({"teo": TEO_TOOLS}, ("teo",), model)
+    read = _orchestrator(
+        {"teo": TEO_TOOLS}, ("teo",), model, llm_call_max_attempts=3
+    )
     attempt = read.attempt(
         "resumo dos indicadores",
         turn_deadline=TurnDeadline.start(30.0),
@@ -694,3 +704,127 @@ def test_call_timeout_grant_reaches_the_doc_103_ceiling():
     # Granted the per-call ceiling (60s), not the removed stage cap —
     # and every invocation stayed inside the granted window.
     assert 10.0 < first.timeout_seconds <= 60.0
+
+
+# --- GATE 1: per-call retry isolation (doc 104 coordination review) ---------
+#
+# The per-LOGICAL-CALL retry limit is a distinct, environment-governed
+# configuration — DELIA_LLM_CALL_MAX_ATTEMPTS — separate from the
+# turn-resume DELIA_MAX_GOVERNED_ATTEMPTS. Default/absent/invalid = 1
+# (OFF): production never retries involuntarily.
+
+
+def test_call_retry_eligible_defaults_to_off():
+    """The predicate fails closed: an un-wired caller (or the absent
+    config value it resolves to) never retries."""
+    assert not call_retry_eligible(TIMEOUT, 1)
+    assert not call_retry_eligible(TIMEOUT, 1, 1)
+    # ON at the approved ceiling: attempts 1-2 may retry, the third
+    # real invocation is terminal, a fourth never exists.
+    assert call_retry_eligible(TIMEOUT, 1, 3)
+    assert call_retry_eligible(TIMEOUT, 2, 3)
+    assert not call_retry_eligible(TIMEOUT, 3, 3)
+    # Definitive classes never retry regardless of the limit.
+    assert not call_retry_eligible(INVALID_REQUEST, 1, 3)
+    # A configured value above the PO ceiling is clamped, not honored:
+    # the predicate still caps real invocations at three.
+    assert call_retry_eligible(TIMEOUT, 1, 99)
+    assert not call_retry_eligible(TIMEOUT, 3, 99)
+
+
+@pytest.mark.parametrize(
+    "code", [TIMEOUT, PROVIDER_UNAVAILABLE, INVALID_STRUCTURED_OUTPUT]
+)
+def test_retry_off_recoverable_failures_run_one_invocation(code):
+    """OFF (limit=1): every recoverable class terminates after exactly
+    one real invocation — no retry, no CONTINUING, no MCP replay."""
+    model = _CodedFailureModel(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        coded_failures={ARGUMENTS_INSTRUCTION_ID: [code] * 5},
+    )
+    sink = _SinkSpy()
+    port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
+    read = _resuming_orchestrator(
+        {"teo": TEO_TOOLS},
+        ("teo",),
+        model,
+        port=port,
+        llm_call_max_attempts=1,
+    )
+    attempt = read.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+        activity_sink=sink,
+    )
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 1
+    assert ActivityPhase.CONTINUING not in sink.phases
+    assert [c[1] for c in port.calls] == []
+
+
+def test_retry_default_is_off_for_unwired_callers():
+    """Production parity: an orchestrator built without the limit
+    (absent env -> settings default 1) performs a single invocation
+    even for a recoverable timeout."""
+    model = _CodedFailureModel(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        coded_failures={ARGUMENTS_INSTRUCTION_ID: [TIMEOUT] * 5},
+    )
+    read = _orchestrator({"teo": TEO_TOOLS}, ("teo",), model)
+    attempt = read.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 1
+
+
+def test_call_and_turn_limits_are_independent():
+    """MODEL_CALL_ATTEMPTS != TURN_RESUME_ATTEMPTS: turn resume OFF
+    (max_governed_attempts=1) with call retry ON still recovers inside
+    the logical call; call retry OFF with turn resume ON never retries
+    the call itself — resume may only re-attempt checkpointed work."""
+    model = _CodedFailureModel(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        coded_failures={ARGUMENTS_INSTRUCTION_ID: [TIMEOUT]},
+    )
+    on = _resuming_orchestrator(
+        {"teo": TEO_TOOLS},
+        ("teo",),
+        model,
+        max_governed_attempts=1,
+        llm_call_max_attempts=3,
+    )
+    attempt = on.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 2
+
+    model2 = _CodedFailureModel(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        coded_failures={GROUP_SELECTION_INSTRUCTION_ID: [TIMEOUT] * 5},
+    )
+    port2 = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
+    off = _resuming_orchestrator(
+        {"teo": TEO_TOOLS},
+        ("teo",),
+        model2,
+        port=port2,
+        max_governed_attempts=2,
+        llm_call_max_attempts=1,
+    )
+    attempt2 = off.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+    )
+    assert attempt2.status is not GovernedCapabilityStatus.SUCCESS
+    # Call retry OFF: each turn attempt issued exactly ONE real
+    # invocation of the failed stage — at most one per governed turn
+    # attempt, never a second within it.
+    assert _purposes(model2).count(
+        GROUP_SELECTION_INSTRUCTION_ID
+    ) <= 2
+    # The terminal failure never reached an owner invoke.
+    assert [c[1] for c in port2.calls] == []

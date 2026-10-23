@@ -1865,6 +1865,10 @@ services:
       # inner mechanism (doc 103), never a turn retry. Production
       # default remains a single attempt.
       DELIA_MAX_GOVERNED_ATTEMPTS: ${DELIA_MAX_GOVERNED_ATTEMPTS:-2}
+      # Doc 103 GATE 1: per-LOGICAL-CALL LLM retry limit — dev-authorized
+      # at the PO ceiling (3). Distinct from turn resume above; absent or
+      # invalid values fail closed to 1 (OFF).
+      DELIA_LLM_CALL_MAX_ATTEMPTS: ${DELIA_LLM_CALL_MAX_ATTEMPTS:-3}
       DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-300}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.

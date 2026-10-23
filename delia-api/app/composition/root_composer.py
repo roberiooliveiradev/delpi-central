@@ -349,6 +349,7 @@ def _compose_turn_handler(
                 settings.interaction_total_budget_seconds
             ),
             max_governed_attempts=settings.max_governed_attempts,
+            llm_call_max_attempts=settings.llm_call_max_attempts,
             response_intelligence_enabled=cri_effective,
             cri_instruction_clause=cri_clause,
             cri_instruction_version=cri_version,
@@ -375,11 +376,19 @@ def _compose_turn_handler(
             "delia_response_intelligence decision=fail_closed "
             "reason=invalid_env_value"
         )
+    # Doc 103 GATE 1: per-logical-call LLM retry limit — an invalid
+    # env value resolves to 1 (OFF), never to retries on.
+    if settings.llm_call_max_attempts_config_invalid:
+        _logger.warning(
+            "delia_llm_call_max_attempts decision=fail_closed "
+            "reason=invalid_env_value"
+        )
     return HandleInteractiveConversationTurn(
         invoke_model,
         model_ref=model_ref,
         capability_orchestration=orchestration,
         turn_budget_seconds=settings.turn_budget_seconds,
+        llm_call_max_attempts=settings.llm_call_max_attempts,
         response_intelligence_enabled=cri_effective,
     )
 

@@ -105,3 +105,13 @@ Ambas as execuções: **nenhuma chamada ≥60s, nenhum turno ≥300s, zero timeo
 **QUALIDADE/OUTCOME:** 239 invocações reais LLM locais reportadas, nenhuma excedeu 60s e nenhum turno atingiu 300s; limites extremos comprovados deterministicamente, não por wall-clock real; 4 EXCEPTIONs no GPU (invalid_structured_output), erros semânticos D8/D9/V4. Consultas MCP no harness ficaram autorizativamente negadas por ausência de bearer; NÃO provaram resposta grounded de negócio. Diferenciar `LOCAL_MECHANICAL_FLOW=PASS_WITH_RESIDUAL` de `BUSINESS_OUTCOME=INCONCLUSIVE`. `EXTERNAL_LLM_TEST_CALLS=0` reportado.
 
 **ENCAMINHAMENTO BOUNDED:** uma correção de isolamento de retries produtivos com teste negativo explícito em ambos call sites; uma rodada de validação do transporte/UX com build correto do Portal; avaliação de negócio só com identidade dev autorizada e Core/Domain reais, nunca forjar bearer. Preservar R4 revocation `OPEN/DEFERRED_BY_PO`, não reescrever planner, não criar outra infraestrutura, não consumir LLM externo pago. `PHASE_ADVANCE=NO`, `I04_ACCEPTED=NO` até autoridades e ledger.
+
+
+## Executor addendum — 2026-10-23 (resposta ao parecer de coordenação)
+
+Task `DELIA-C3-MODEL-RETRY-ISOLATION-AND-300S-STREAMING-VERIFICATION-01` endereçou os dois blockers:
+
+- **BLOCKER 1 resolvido:** `DELIA_LLM_CALL_MAX_ATTEMPTS` (fail-closed, default 1, teto 3) separa `MODEL_CALL_ATTEMPTS` de `TURN_RESUME_ATTEMPTS` (`DELIA_MAX_GOVERNED_ATTEMPTS`, intocado). Prod pinado a `1` em `docker-compose.yml`; dev a `3`. Provas OFF/ON por consumer + wire real.
+- **BLOCKER 2 resolvido em escopo local:** keepalive de transporte (≤15s, nunca `activity_event`), stream real HTTP local com JWT Keycloak + Core `/me` + Ollama 100% GPU, disconnect→cancel com `adapter_calls` congelado, terminal único, teto 300s determinístico por fake clock.
+
+Relatório completo: [doc 105](./105-retry-isolation-gate1-and-ndjson-long-stream-gate2-verification.md). `EDGE_300S_VERIFICATION=TEST_NOT_RUN` e `BROWSER_QA=TEST_NOT_RUN` permanecem gates honestos de release. `PRODUCTION_CHANGED=NO`; retry produtivo segue OFF até gates + R4 (`OPEN/DEFERRED_BY_PO`).
