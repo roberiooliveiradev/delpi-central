@@ -106,4 +106,12 @@ FINAL_HEAD=`aac06af292162f31723c98c65cc104339fb022bd` · ORIGIN_MAIN_FINAL=`aac0
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
-`REVIEW_SHA=PENDING` · `REVIEW_VERDICT=PENDING` · `ACCEPTANCE_REASON=PENDING` · `NEXT_STAGE_AUTHORIZED=NO`.
+**REVIEWED_SHA:** `146170360d3265dd73b83fcbd750fcf6cc6df556`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL`  
+**NEXT_STAGE_AUTHORIZED:** `NO`  
+
+**Independent checks (GitHub):** compare `f04faae571b9405f51020838ad75aada46a5fdf7...146170360d3265dd73b83fcbd750fcf6cc6df556` showed three linear commits. Scoped R1 implementation `aac06af292162f31723c98c65cc104339fb022bd` modifies orchestration, root composition, existing config loader, versioned JSON and relevant tests; other UX documentation in range is concurrent, not R1. Reviewed the actual loader, constructor wiring, snapshot/adversarial test definitions and R1 report. No reverse application→infrastructure import identified in inspected code. Resource key/identity/version/entry set/size checks and composition fail-closed are present. No new planner/registry or provider-specific branch was identified in the inspected R1 diff.
+
+**Evidence limits:** tests (2165+15), 17 bytewise instruction snapshots, RED/GREEN and AP01–AP20 are executor-reported; not independently executed. Static test definitions were examined but do not prove runtime outcome alone. Live LLM/generalization and production D4/D5/D8 re-homologation on R1 SHA are `TEST_NOT_RUN`; older production outcomes are prior baseline, not evidence on this SHA. Core composition test coverage of missing/corrupt resource → actual handler without orchestration should be confirmed before releasing R2, not inferred only from direct loader exceptions and code inspection. The broad `except Exception` in composer is pre-existing pattern reuse; verify observability and no silent partial enablement in integration tests. Direct constructors with an empty instruction map remain a documented test/backward-compatibility seam, never accepted as production path.
+
+**Decision:** `ACCEPT_WITH_RESIDUAL` for M01 scope, without claiming complete operational parity on newly deployed runtime. No known material architecture blocker in inspected code. R2 requires a separate explicit PO authorization after HEAD+ledger reanchor, verifying R1 resource wiring in integration plus actual baseline applicability. R2 candidate `evidence_projection.py` is still NOT_AUTHORIZED pending AP-02, owner, consumers and equivalence. M07 S4/117 SKIP and Q03/B1 remain frozen. `AUTO_REWORK_USED=0` reported; internal NameError was corrected before GREEN and its adversarial negative test exists. No production deployment approved.
