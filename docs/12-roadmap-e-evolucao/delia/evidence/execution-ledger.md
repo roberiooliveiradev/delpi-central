@@ -18142,3 +18142,16 @@ BUSINESS_OUTCOME_STATUS=VERIFIED ROLLBACK_EXECUTED=NO EXECUTION_DRIFT=NONE
 R3_RELEASE_ACCEPTANCE=PENDING_INDEPENDENT_REVIEW
 COORDINATION_REVIEW_REQUIRED=YES R4_AUTHORIZED=NO PLAN_COMPLETE=NO
 Evidência: [doc 141](../corrections/mcp-contextual-intelligence-orchestration/141-r3-production-deploy-and-homologation.md).
+
+## §6.425 — Clean Inline Context Card: barra azul removida, card neutro, grid de metadados e trace recolhível (2026-10-24)
+
+**2026-10-24 — DELIA-UX-INLINE-RESPONSE-CONTEXT-CLEAN-VISUAL-REFACTOR-01 (spec 127, decisão PO `b5d80ab465`):** refatoração visual do contexto inline sem tocar o disclosure. `BLUE_BAR_ROOT_CAUSE=delia-turn__bubble--context-open` (accent inset 2px, consumidor único) — classe+regra removidas. Card = `var(--delia-surface)` + borda neutra + sombra sutil; header com subtítulo aprovado; seções renomeadas (Detalhes da geração / Atividades relacionadas); `<dl>` → grid adaptativo 2→1 col; spans reais movidos para `<details>` "Rastreamento técnico" recolhido (auditoria preservada). Zero plugin-ui diff, zero backend, zero dados inventados.
+
+TESTES: delia 443/443 (+5 CLEANCTX), plugin-ui 2335/2335, tsc+build verdes. DEFECT=1: regras CSS legadas duplicadas venceram por ordem → metadata sem grid; fix dedupe + minmax 200px. DEPLOY: `35e19f60b2`, `26b8646470`, `ca83dc93b9` → `up-prod-sequential --build delia` (plugin-ui intacto).
+
+QA VISUAL PROD 26/26 (`vd-cleanctx-prod.mjs`, `ca83dc93b9`): sem barra azul, card neutro estático, grid 2/1 col, trace recolhido→expansível com spans reais, composer livre, multi-open isolado, painel global independente, 375px íntegro, reduced-motion OK. Screenshots `shots-cleanctx/`. Residuais: Dock real, 320/360/390/420, zoom 200%, dark/light, screen reader TEST_NOT_RUN.
+
+TASK_ID=DELIA-UX-INLINE-RESPONSE-CONTEXT-CLEAN-VISUAL-REFACTOR-01
+COMMITS=35e19f60b2+26b8646470+ca83dc93b9 DEPLOYED=YES PROD_QA=26/26
+EXECUTION_DRIFT=NONE ARCHITECTURE_DECISION_REQUIRED=GLOBAL_SECTIONS_CONTRACT
+NEXT=PO_ACCEPTANCE_CLEAN_VISUAL

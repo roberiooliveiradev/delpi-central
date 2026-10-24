@@ -218,3 +218,23 @@ Revalidar no HEAD: \`DeliaTurnContextPanel\` é o compositor de conteúdo em \`p
 REANCHOR HEAD/status → Project Instructions/.cursor → 16→50→17→49→51→52→21→20→25 → specs/contracts/ledger → REUSE/ABSTRACTION GATE → RED visual+semantic tests → menor diff plugin-ui e/ou delia → GREEN → regression → browser visual QA full-page/Dock/mobile/dark-light/reduced-motion → rework → docs/evidence/ledger → commit/push main → scoped frontend deploy → real outcome QA. Se o grid de metadados ou rastreamento depender de alteração relevante em primitiva pública usada por outros apps, usar variante/extensão compatível e documentar consumers antes do diff. Backend/Domain/Core/STT não são parte desta task.
 
 **Esta alteração documental não modifica runtime nem autoriza avanço de fase: RUNTIME_CHANGED=NO; TEST_NOT_RUN; PHASE_NOT_ADVANCED.**
+
+### Implementação registrada (2026-10-24) — Clean Inline Context Card
+
+`TASK_ID=DELIA-UX-INLINE-RESPONSE-CONTEXT-CLEAN-VISUAL-REFACTOR-01`. `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` — zero componente novo, zero plugin-ui diff, zero backend. Commits `35e19f60b2` + `26b8646470` + `ca83dc93b9`.
+
+- **Barra azul removida:** origem = `delia-turn__bubble--context-open` (accent inset 2px introduzido na implementação anterior, consumidor único: `DeliaAssistantMessage`). Classe e regra CSS removidas — foco de teclado (`focus-visible`) intacto.
+- **Card neutro único:** `.delia-turn__context` passa de tint de accent para `var(--delia-surface)` + `border: 1px solid var(--delia-border)` + sombra 1px 5% — superfície elevada neutra, radius 12px, sem glow azul, sem altura fixa, sem scroll próprio.
+- **Cabeçalho hierarquizado:** título semibold "Contexto desta resposta" + subtítulo muted "Detalhes da geração, evidências e atividade relacionada." + divisor neutro. Nenhum segundo controle de ocultação dentro do card.
+- **Detalhes da geração:** seção renomeada ("Detalhes" → "Detalhes da geração"); `<dl>` virou grid adaptativo `repeat(auto-fit, minmax(200px,1fr))` — 2 colunas de pares label/valor no desktop, 1 coluna no Dock/mobile; labels 0.75rem muted, valores 0.8125rem com peso 500, `overflow-wrap: anywhere` para identificadores longos. Valores seguem 100% de contrato ("Custo indisponível" preservado).
+- **Rastreamento técnico:** `ModelCalls` (spans reais `obs.calls`) movido para `<details className="delia-context__trace">` recolhido por padrão, summary "Rastreamento técnico" com chevron CSS próprio, focus-visible e reduced-motion. Auditoria permanece a um clique — nada removido.
+- **Atividades relacionadas:** seção renomeada, `ActivityViewer` real preservado (estado/duração/detalhes). Evidências idem via `EvidenceDetails`.
+- **Seções internas subordinadas:** dentro do card, headings do `ConversationContextPanel` compartilhado recebem apenas ajuste de ritmo (min-height/padding menores) via escopo `.delia-turn__context` — o painel global e outros consumidores ficam intactos.
+
+TESTES: delia 443/443 (+5 CLEANCTX: sem accent bar, header único+subtítulo, grid real, trace colapsado→expansível, seções Evidências/Atividades relacionadas/"Sem fonte vinculada" neutra), plugin-ui 2335/2335 (inalterado — zero diff), typecheck + build verdes.
+
+DEFECT+REWORK=1: primeiro deploy deixou regras legadas `flex` depois do novo grid (mesma especificidade, ordem venceu) — metadata continuava lista única; deduplicação (`26b8646470`) + minmax 200px (`ca83dc93b9`, largura real do card ~436px) → 2 colunas confirmadas em prod.
+
+QA VISUAL PROD 26/26 (`vd-cleanctx-prod.mjs` autenticado, `ca83dc93b9`): sem `--context-open`/inset azul; card `position:static` neutro rgb(255,255,255) radius 12; header único + subtítulo, sem controle duplicado; grid 2 col desktop / 1 col mobile (medido); trace recolhido, expande e mostra spans reais; scroll não cobre composer; dois contextos simultâneos + colapso independente; painel global independente com vazio honesto; 375px íntegro; reduced-motion → animation none; Enter colapsa. Screenshots `shots-cleanctx/`. Residuais: Companion Dock real, 320/360/390/420 individuais, zoom 200% real, dark/light visual e screen reader TEST_NOT_RUN.
+
+**STATUS FINAL:** `SPEC_PUBLISHED; RUNTIME_CHANGED (2026-10-24, commits 35e19f60b2/26b8646470/ca83dc93b9); TESTED; DEPLOYED; PHASE_NOT_ADVANCED; GLOBAL_SECTIONS=BLOCKED_PENDING_CONTRACT`.
