@@ -244,3 +244,8 @@ Mock apenas para camada HTTP; persistência testada em Postgres isolado
 **Estado do gate:** contratos e modelo **PRONTO PARA DECISÃO**
 (`DECISION_REQUIRED` residual: seed v1 DRAFT×PUBLISHED; UI admin mínima
 in/out do slice). Nenhum runtime autorizado.
+
+
+## 10. Decisões do PO posteriores ao gate — 2026-10-24
+
+**Fechadas as duas escolhas residuais do §9:** (1) seed v1 dos 53 itens em `DRAFT`, não `PUBLISHED`; publicação por ato administrativo governado; (2) API administrativa mínima **incluída**, sem página P6 nesta fatia. A autoridade da decisão e a solicitação formal de GO estão no [doc 97](./97-ciclo3-p6-min-p2-read-decisoes-po-e-solicitacao-go-transversal.md). `IMPLEMENTATION_AUTHORIZED=NO` até revisão transversal e autorização expressa posterior. Os contratos deste documento continuam candidatos sujeitos à ratificação; nenhum código foi executado.
