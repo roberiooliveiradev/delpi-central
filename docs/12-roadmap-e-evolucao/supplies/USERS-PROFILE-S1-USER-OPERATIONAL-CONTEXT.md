@@ -20,7 +20,7 @@ A Minha DELPI já possui ficha de perfil de usuário implementada pelo kit (`cre
 
 | Rota | Policy | Semântica |
 |---|---|---|
-| `GET /users/:user_id/related-requests` | `can_use_operations` + `_assert_can_view` | SCs cujo requester ∈ `protheus_user_id` mapeados do **target** (Core lookup `user_ids` → `requester_user_id` na purchase-requests-api); filtro `branch` opcional — validado por `require_units` **somente quando fornecido** (fail-closed); `page`/`page_size` (máx 20); degrade parcial `{error:"related_requests_unavailable"}`; `requester_unmapped:true` sem vínculo |
+| `GET /users/:user_id/related-requests` | `can_use_operations` + `_assert_can_view` | SCs cujo requester ∈ `protheus_user_id` mapeados do **target** (Core lookup `user_ids` → `requester_user_id` na purchase-requests-api); filtro `branch` opcional — validado por `require_units` **somente quando fornecido** (fail-closed); `page`/`page_size` (máx 100, S3); `sort_by`/`sort_dir` passthrough validado pelo produtor (S3); degrade parcial `{error:"related_requests_unavailable"}`; `requester_unmapped:true` sem vínculo |
 | `GET /users/:user_id/photo` | `can_use_operations` + `_assert_can_view` | Proxy S2S dos bytes da foto Core — `Cache-Control: private`, 404 quando ausente; UUID/token nunca saem do backend |
 
 `RequesterIdentityService` agora projeta `user_id` no `PersonRef` enriquecido (campo aditivo) — é o identificador opaco que habilita o link.
@@ -32,6 +32,8 @@ A Minha DELPI já possui ficha de perfil de usuário implementada pelo kit (`cre
 ## Seção «Solicitações de compra relacionadas» (hero 7.1)
 
 Lista paginada (5/pág, máx 20) na ficha do usuário: número da SC (`buildPurchaseRequestDetailPath`), data, situação, unidade; enriquecida com `display_name`/`photo_url` pelo mesmo `RequesterIdentityService` (sem N+1 — batch único deduplicado). «Ver todas» abre `/purchase-requests?requester_user_id=<pid>` — filtro já existente da lista. Estados: loading / empty (`requester_unmapped` ou zero) / error (degrade parcial) / forbidden. Tarefas e Pedidos **não** renderizados (residual documentado).
+
+> **Errata S3:** a listinha simplificada foi substituída pela `PurchaseRequestsListTable` real (reuso do componente da listagem, sort/paginação server-side, cap BFF 100, `canExport=false`). Ver [USERS-PROFILE-S3-REUSABLE-PURCHASE-REQUESTS-TABLE.md](./USERS-PROFILE-S3-REUSABLE-PURCHASE-REQUESTS-TABLE.md).
 
 ## Segurança
 

@@ -61,7 +61,13 @@ export type UserRelatedRequestsResponse = {
 
 export function getUserRelatedRequests(
   userId: string,
-  options?: { page?: number; pageSize?: number; branches?: string[] },
+  options?: {
+    page?: number;
+    pageSize?: number;
+    branches?: string[];
+    sortBy?: string;
+    sortDir?: string;
+  },
   signal?: AbortSignal,
 ): Promise<UserRelatedRequestsResponse> {
   const params = new URLSearchParams();
@@ -70,6 +76,8 @@ export function getUserRelatedRequests(
   }
   if (options?.page) params.set("page", String(options.page));
   if (options?.pageSize) params.set("page_size", String(options.pageSize));
+  if (options?.sortBy?.trim()) params.set("sort_by", options.sortBy.trim());
+  if (options?.sortDir?.trim()) params.set("sort_dir", options.sortDir.trim());
   const qs = params.toString();
   return httpGet<UserRelatedRequestsResponse>(
     suppliesApiUrl(

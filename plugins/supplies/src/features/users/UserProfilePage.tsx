@@ -43,11 +43,9 @@ import {
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { USER_PROFILE_CONTENT as C } from "./userProfileContent";
-import {
-  formatDatePtBr,
-  formatRequestNumber,
-  labelOverallStage,
-} from "../purchase-requests/query";
+import { PurchaseRequestsListTable } from "../purchase-requests/PurchaseRequestsListTable";
+import { createDefaultQuery } from "../purchase-requests/query";
+import type { PurchaseRequestsQuery } from "../purchase-requests/types";
 
 type UserProfilePageProps = {
   basePath: string;
@@ -118,6 +116,14 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
     data: UserRelatedRequestsResponse | null;
   }>({ loading: false, error: null, data: null });
   const [relatedReloadKey, setRelatedReloadKey] = useState(0);
+  const [relatedQuery, setRelatedQuery] = useState<PurchaseRequestsQuery>(() => ({
+    ...createDefaultQuery(),
+    // Compact page for the profile section — the shared table's own
+    // pagination exposes 25/50/100 and stays inside the BFF cap (100).
+    page_size: 25,
+    sort_by: "issue_date",
+    sort_dir: "desc",
+  }));
 
   const back = useMemo(() => readReturnTo(), []);
 
@@ -184,7 +190,16 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         return;
       }
       setRelated((prev) => ({ ...prev, loading: true, error: null }));
-      getUserRelatedRequests(userId, { pageSize: 5 }, controller.signal)
+      getUserRelatedRequests(
+        userId,
+        {
+          page: relatedQuery.page,
+          pageSize: relatedQuery.page_size,
+          sortBy: relatedQuery.sort_by,
+          sortDir: relatedQuery.sort_dir,
+        },
+        controller.signal,
+      )
         .then((data) => {
           if (controller.signal.aborted) return;
           // Degradation is not an empty universe — surface the error state.
@@ -201,7 +216,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         });
     });
     return () => controller.abort();
-  }, [userId, profile, relatedReloadKey]);
+  }, [userId, profile, relatedQuery, relatedReloadKey]);
 
   const shortcuts = useMemo(() => {
     const caps = profile?.capabilities ?? session.capabilities;
@@ -421,7 +436,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               title={C.relatedTitle}
               subtitle={C.relatedSubtitle}
             >
-              {related.loading ? (
+              {related.loading && !related.data ? (
                 <p className="sp-user-profile__note">{C.relatedLoading}</p>
               ) : related.error ? (
                 <>
@@ -439,45 +454,29 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                 </>
               ) : related.data && related.data.items.length > 0 ? (
                 <>
-                  <ul className="sp-user-profile__related">
-                    {related.data.items.map((item) => {
-                      const href = buildPurchaseRequestDetailPath(
-                        item.branch,
-                        item.request_number,
-                        basePath,
-                      );
-                      const stage = item.derived?.overall_stage;
-                      return (
-                        <li
-                          key={`${item.branch}-${item.request_number}-${item.request_item ?? ""}`}
-                          className="sp-user-profile__related-item"
-                        >
-                          <SuppliesEntityLink
-                            href={href}
-                            title={C.relatedOpenRequest(
-                              formatRequestNumber(item.request_number),
-                            )}
-                            className="sp-entity-link"
-                            onNavigate={() => navigatePluginPath(href)}
-                          >
-                            {formatRequestNumber(item.request_number)}
-                          </SuppliesEntityLink>
-                          <span className="sp-user-profile__related-meta">
-                            {item.branch}
-                            {item.request_issue_date
-                              ? ` · ${formatDatePtBr(item.request_issue_date)}`
-                              : ""}
-                          </span>
-                          {stage ? (
-                            <SuppliesStatusBadge
-                              label={labelOverallStage(stage)}
-                              variant="info"
-                            />
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  {/* Mesma tabela da listagem principal — reuso real de componente,
+                      contrato, colunas, ordenação e paginação server-side. */}
+                  <PurchaseRequestsListTable
+                    items={related.data.items}
+                    query={relatedQuery}
+                    total={related.data.total}
+                    loading={related.loading}
+                    canExport={false}
+                    basePath={basePath}
+                    onExport={() => {}}
+                    onPatchQuery={(patch) =>
+                      setRelatedQuery((q) => ({ ...q, ...patch }))
+                    }
+                    onSelectRow={(item) =>
+                      navigatePluginPath(
+                        buildPurchaseRequestDetailPath(
+                          item.branch,
+                          item.request_number,
+                          basePath,
+                        ),
+                      )
+                    }
+                  />
                   {(related.data.protheus_user_ids ?? []).length > 0 ? (() => {
                     const params = new URLSearchParams();
                     for (const pid of related.data.protheus_user_ids) {

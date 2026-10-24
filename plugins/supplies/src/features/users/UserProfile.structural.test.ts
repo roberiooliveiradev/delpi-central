@@ -56,6 +56,21 @@ describe("UserProfile", () => {
     expect(page).toMatch(/preferencesTitle/);
   });
 
+  it("reutiliza a tabela real de SC — sem listinha própria", () => {
+    const page = readFileSync(join(dir, "UserProfilePage.tsx"), "utf8");
+    // Same component as /purchase-requests — real reuse, not a lookalike.
+    expect(page).toMatch(
+      /import \{ PurchaseRequestsListTable \} from "\.\.\/purchase-requests\/PurchaseRequestsListTable"/,
+    );
+    expect(page).toMatch(/<PurchaseRequestsListTable/);
+    expect(page).toMatch(/onPatchQuery=\{/);
+    expect(page).toMatch(/onSelectRow=\{/);
+    expect(page).toMatch(/canExport=\{false\}/);
+    // No bespoke request list — grain/columns come from the shared table.
+    expect(page).not.toMatch(/sp-user-profile__related(-item|-meta)?\b/);
+    expect(page).not.toMatch(/<ul className="sp-user-profile__related/);
+  });
+
   it("acesso self ok · outro sem admin negado · admin ok", () => {
     const selfId = "self-1";
     const caps = {

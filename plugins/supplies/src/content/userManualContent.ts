@@ -229,7 +229,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "O avatar do solicitante abre uma ficha?",
-          a: "Sim, quando o solicitante está vinculado a um usuário da Minha DELPI e você tem permissão para ver o perfil — o clique abre a ficha do usuário no Portal, com as solicitações de compra relacionadas. Sem vínculo ou sem acesso, o avatar fica apenas informativo. O avatar e o nome do fornecedor abrem a ficha cadastral (E14) nas listas e fichas de pedidos e entregas; também dá para chegar lá pela lista Fornecedores (clique na linha).",
+          a: "Sim, quando o solicitante está vinculado a um usuário da Minha DELPI e você tem permissão para ver o perfil — o clique abre a ficha do usuário no Portal, com as solicitações de compra relacionadas na mesma tabela da listagem (colunas, ordenação e paginação; «Ver todas» abre a lista já filtrada). Sem vínculo ou sem acesso, o avatar fica apenas informativo. O avatar e o nome do fornecedor abrem a ficha cadastral (E14) nas listas e fichas de pedidos e entregas; também dá para chegar lá pela lista Fornecedores (clique na linha).",
         },
         {
           q: "De onde vem o nome do solicitante?",

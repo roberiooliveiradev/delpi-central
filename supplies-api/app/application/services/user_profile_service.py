@@ -19,7 +19,7 @@ from app.infrastructure.gateways.purchase_requests_gateway import (
 )
 from app.infrastructure.persistence.preferences_repository import PreferencesRepository
 
-_RELATED_REQUESTS_MAX_PAGE_SIZE = 20
+_RELATED_REQUESTS_MAX_PAGE_SIZE = 100
 # Explicit "authorized history" semantics: the producer applies a silent
 # 90-day lookback when date_from is absent, so the profile section pins a
 # floor date instead of inheriting an implicit window.
@@ -232,6 +232,8 @@ class UserProfileService:
         branches: list[str] | None = None,
         page: int = 1,
         page_size: int = 5,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
     ) -> dict:
         """SCs do vínculo Core↔Protheus do usuário — mesma política self|admin.
 
@@ -280,8 +282,10 @@ class UserProfileService:
             ("date_from", _RELATED_REQUESTS_DATE_FROM),
             ("page", str(page)),
             ("page_size", str(page_size)),
-            ("sort_by", "issue_date"),
-            ("sort_dir", "desc"),
+            # Client-driven sort (profile table reuse) — the producer owns
+            # the allowlist and rejects invalid keys.
+            ("sort_by", (sort_by or "issue_date").strip() or "issue_date"),
+            ("sort_dir", (sort_dir or "desc").strip() or "desc"),
         ]
         try:
             payload = self.purchase_requests_gateway.list_purchase_requests(

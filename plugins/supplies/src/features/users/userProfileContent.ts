@@ -21,7 +21,6 @@ export const USER_PROFILE_CONTENT = {
   relatedUnmapped: "Esta pessoa não tem vínculo com um usuário do ERP — sem solicitações vinculadas.",
   relatedViewAll: (total: number) => `Ver todas as solicitações (${total})`,
   relatedViewAllTitle: "Abrir Solicitações de compras filtradas por este solicitante",
-  relatedOpenRequest: (number: string) => `Abrir solicitação ${number}`,
   accessTitle: "Acesso na plataforma",
   accessSubtitle: "Permissões e capacidades do Portal Suprimentos nesta sessão.",
   accessSelfOnly: "A lista completa de permissões RBAC aparece no seu próprio perfil.",

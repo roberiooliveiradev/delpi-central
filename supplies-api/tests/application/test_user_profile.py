@@ -230,6 +230,32 @@ def test_related_self_positive_resolves_bond_and_forwards():
     core.lookup_protheus_identities.assert_called_once_with(user_ids=[SELF_ID])
 
 
+def test_related_client_sort_passthrough():
+    """Profile reuses the real PR table: server-side sort is client-driven."""
+    core = MagicMock()
+    core.lookup_protheus_identities.return_value = {
+        "000007": _mapped("000007", SELF_ID),
+    }
+    pr = MagicMock()
+    pr.list_purchase_requests.return_value = {"items": [], "total": 0}
+    service = UserProfileService(
+        core_gateway=core,
+        purchase_requests_gateway=pr,
+        requester_identity=MagicMock(
+            enrich_payload=MagicMock(side_effect=lambda data, **_: data)
+        ),
+    )
+    service.related_purchase_requests(
+        _user(permissions={"supplies.access"}),
+        SELF_ID,
+        sort_by="request_number",
+        sort_dir="asc",
+    )
+    params = dict(pr.list_purchase_requests.call_args.kwargs["params"])
+    assert params["sort_by"] == "request_number"
+    assert params["sort_dir"] == "asc"
+
+
 def test_related_no_filter_expands_actor_authorized_units():
     """Producer requires ≥1 branch: empty filter = actor's own units."""
     core = MagicMock()

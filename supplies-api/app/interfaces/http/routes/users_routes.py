@@ -41,6 +41,8 @@ def get_supplies_user_related_requests(user_id: str):
         branches=request.args.getlist("branch"),
         page=_int("page", 1),
         page_size=_int("page_size", 5),
+        sort_by=request.args.get("sort_by"),
+        sort_dir=request.args.get("sort_dir"),
     )
     return jsonify(payload), 200
 
