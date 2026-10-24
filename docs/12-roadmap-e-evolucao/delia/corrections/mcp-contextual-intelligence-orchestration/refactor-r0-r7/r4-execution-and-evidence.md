@@ -12,7 +12,7 @@
 
 ## Documento obrigatório — preenchido pelo executor
 
-**STATUS:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`
+**STATUS:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` · `DEPLOY_STATUS=EXECUTED`
 
 | Campo | Evidência |
 |---|---|
@@ -33,10 +33,11 @@
 | REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | zero regressão detectada / n/a / PASS para todo escopo testável deterministicamente |
 | AUTO_REWORK_USED / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / n/a / n/a |
 | RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | residual pesquisado: M07 guidance mantido por decisão 117 (ver § abaixo); `O2=KNOWN_RESIDUAL` funcional independente / rollback: `git checkout` do SHA anterior + imagem `513ee033b0c6` retida / zero secrets no diff |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | `PENDING` (preenchido após push) |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | `aca0f22e59` (impl) + `457088b40a` (docs) → origin/main `457088b40a` / `YES` ff-only |
 | README_LEDGER_UPDATED / DELETIONS_RATIONALE | README + ledger + plano 125 atualizados neste commit de docs / nenhuma deleção funcional — apenas reloc |
 | EXECUTION_DRIFT / RESIDUALS / STOP_REASON | `NONE` — nenhuma instrução O2, nenhum reabrir DAVI/TÉO/VISTA, nenhuma mudança funcional / residuais mantidos: O2 INCONCLUSIVE, CRI_OFF_LIVE TEST_NOT_RUN, tokens indisponíveis, variabilidade seleção D1, password-grant a confirmar / sem STOP |
 | EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `IMPLEMENTED_STRUCTURE_ONLY — evidence ready for independent review` / `YES` |
+| DEPLOY | `[1/1] delia-api` canonical `up-prod-sequential.sh --build delia-api`; new image `8a3fe498f488`; rollback `513ee033b0c6` retida; health 200, unauth POST 401, 1 turno autenticado 200/GROUNDED; zero LLM-matrix em prod |
 
 ## Evidência específica da etapa R4 — matriz MOVE/KEEP/SKIP
 
