@@ -24,16 +24,21 @@ import {
   SAFETY_STOCK_CONTENT as C,
   mapSafetyStockFetchError,
 } from "./content";
+import { SafetyStockDetailModal } from "./SafetyStockDetailModal";
 import { SafetyStockFilters } from "./SafetyStockFilters";
 import { SafetyStockListTable } from "./SafetyStockListTable";
 import {
   buildUrlSearch,
   createDefaultQuery,
   formatQuantity,
+  normalizeBranchScope,
+  parseDetailTargetFromSearch,
   parseQueryFromSearch,
   sameSafetyStockQuery,
 } from "./query";
+import { SAFETY_STOCK_ALL_SCOPE } from "./types";
 import type {
+  SafetyStockDetailTarget,
   SafetyStockItem,
   SafetyStockQuery,
   SafetyStockSummary,
@@ -77,6 +82,11 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
   const [query, setQuery] = useState<SafetyStockQuery>(() =>
     parseQueryFromSearch(readBrowserSearch()),
   );
+  // E11.S3 — detalhe endereçável por URL (item + itemBranch concretos).
+  const [detailTarget, setDetailTarget] =
+    useState<SafetyStockDetailTarget | null>(() =>
+      parseDetailTargetFromSearch(readBrowserSearch()),
+    );
   const [itemsLoading, setItemsLoading] = useState(true);
   const [itemsError, setItemsError] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -98,15 +108,17 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
       historyWriteModeRef.current = "push";
       return;
     }
-    writeBrowserSearch(buildUrlSearch(query), mode);
+    writeBrowserSearch(buildUrlSearch(query, detailTarget), mode);
     historyWriteModeRef.current = "push";
-  }, [query]);
+  }, [query, detailTarget]);
 
   useEffect(() => {
     const onPopState = () => {
-      const next = parseQueryFromSearch(readBrowserSearch());
+      const search = readBrowserSearch();
+      const next = parseQueryFromSearch(search);
       historyWriteModeRef.current = "skip";
       setQuery((current) => (sameSafetyStockQuery(current, next) ? current : next));
+      setDetailTarget(parseDetailTargetFromSearch(search));
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -193,6 +205,21 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
     historyWriteModeRef.current = "push";
     setQuery(createDefaultQuery());
   };
+
+  // Detalhe exige filial concreta: a linha carrega sua própria filial mesmo
+  // quando a listagem está consolidada em `all`.
+  const onOpenDetail = useCallback((row: SafetyStockItem) => {
+    const productCode = String(row.product_code ?? "").trim();
+    const branch = normalizeBranchScope(row.branch);
+    if (!productCode || branch === SAFETY_STOCK_ALL_SCOPE) return;
+    historyWriteModeRef.current = "push";
+    setDetailTarget({ productCode, branch });
+  }, []);
+
+  const onCloseDetail = useCallback(() => {
+    historyWriteModeRef.current = "push";
+    setDetailTarget(null);
+  }, []);
 
   // Opções de filial: catálogo operacional do BFF; fallback = unidades da sessão.
   const branchOptions = branchCatalog.length ? branchCatalog : [...units];
@@ -400,9 +427,12 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
             totalPages={totalPages}
             loading={loading}
             onPatchQuery={patchQuery}
+            onOpenDetail={onOpenDetail}
           />
         ) : null}
       </SuppliesSectionCard>
+
+      <SafetyStockDetailModal target={detailTarget} onClose={onCloseDetail} />
     </div>
   );
 }

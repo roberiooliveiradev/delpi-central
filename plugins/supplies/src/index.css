@@ -741,6 +741,191 @@
   color: var(--sp-text-muted);
 }
 
+/* E11.S3 — ação de detalhe na linha + modal de detalhe */
+.dashboard-supplies-portal .sp-safety-stock__row-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--sp-border, rgba(120, 120, 120, 0.35));
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--sp-accent, currentColor);
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dashboard-supplies-portal .sp-safety-stock__row-action:hover {
+  background: var(--sp-surface-elevated, rgba(120, 120, 120, 0.08));
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__body,
+.dashboard-supplies-portal .sp-safety-stock-detail__section {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__section {
+  gap: 0.55rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--sp-border, rgba(120, 120, 120, 0.18));
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__section-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__subsection {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 0.6rem 1rem;
+  margin: 0;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__grid dt {
+  font-size: 0.72rem;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__grid dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__metric {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--sp-border, rgba(120, 120, 120, 0.25));
+  border-radius: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__metric-label {
+  font-size: 0.68rem;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__metric-value {
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__coverage h5 {
+  margin: 0.5rem 0 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--sp-border, rgba(120, 120, 120, 0.25));
+  border-radius: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__table th,
+.dashboard-supplies-portal .sp-safety-stock-detail__table td {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--sp-border, rgba(120, 120, 120, 0.18));
+  vertical-align: top;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__table th {
+  font-size: 0.7rem;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__table th.num,
+.dashboard-supplies-portal .sp-safety-stock-detail__table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__unavailable {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sp-text-muted);
+  font-style: italic;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__warnings {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__warnings ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-detail__error {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+}
+
 .dashboard-supplies-portal .sp-purchase-orders .delpi-ui-data-list-toolbar {
   flex-wrap: wrap;
 }

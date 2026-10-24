@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   isSafetyStockFiltersResponse,
+  isSafetyStockItemDetail,
   isSafetyStockItemsResponse,
   isSafetyStockSummary,
+  isSafetyStockSuppliersResponse,
 } from "./api";
 import {
   buildItemsSearchParams,
@@ -16,6 +18,7 @@ import {
   normalizeSortDirection,
   normalizeSortField,
   normalizeStatus,
+  parseDetailTargetFromSearch,
   parseQueryFromSearch,
   sameSafetyStockQuery,
 } from "./query";
@@ -261,5 +264,96 @@ describe("safety stock presentation", () => {
     expect(formatQuantity(0)).toBe("0");
     expect(formatQuantity(null)).toBe("—");
     expect(formatQuantity(1234.5)).toContain("1.234");
+  });
+});
+
+describe("safety stock detail target (E11.S3)", () => {
+  it("URL serializa item+itemBranch junto aos filtros", () => {
+    const q = { ...createDefaultQuery(), branch: "all" as const };
+    const search = buildUrlSearch(q, {
+      productCode: "10070821",
+      branch: "01",
+    });
+    const params = new URLSearchParams(search.slice(1));
+    expect(params.get("item")).toBe("10070821");
+    expect(params.get("itemBranch")).toBe("01");
+    // Filtros permanecem intactos.
+    expect(params.get("page")).toBe("1");
+    expect(params.get("sortBy")).toBe("product_code");
+  });
+
+  it("round-trip: deep link restaura o detalhe sem abrir material errado", () => {
+    const search = buildUrlSearch(createDefaultQuery(), {
+      productCode: "10070821",
+      branch: "02",
+    });
+    expect(parseDetailTargetFromSearch(search)).toEqual({
+      productCode: "10070821",
+      branch: "02",
+    });
+  });
+
+  it("detalhe exige filial concreta — all/vazio/inválido não abrem", () => {
+    expect(
+      parseDetailTargetFromSearch("?item=10070821&itemBranch=all"),
+    ).toBeNull();
+    expect(parseDetailTargetFromSearch("?item=10070821")).toBeNull();
+    expect(
+      parseDetailTargetFromSearch("?item=10070821&itemBranch=03"),
+    ).toBeNull();
+    expect(parseDetailTargetFromSearch("?itemBranch=01")).toBeNull();
+    expect(parseDetailTargetFromSearch("")).toBeNull();
+  });
+
+  it("fechar o detalhe remove item+itemBranch e preserva filtros", () => {
+    const q = {
+      ...createDefaultQuery(),
+      branch: "02" as const,
+      status: "below_safety_stock" as const,
+    };
+    const search = buildUrlSearch(q, null);
+    const params = new URLSearchParams(search.slice(1));
+    expect(params.get("item")).toBeNull();
+    expect(params.get("itemBranch")).toBeNull();
+    expect(params.get("branch")).toBe("02");
+    expect(params.get("status")).toBe("below_safety_stock");
+  });
+});
+
+describe("safety stock detail guards (E11.S3)", () => {
+  const detail = {
+    product: { product_code: "10070821", branch: "01" },
+    stock: { safety_stock: 10 },
+  };
+
+  it("detalhe válido exige product_code + branch concretos", () => {
+    expect(isSafetyStockItemDetail(detail)).toBe(true);
+    expect(isSafetyStockItemDetail({ ...detail, stock: {} })).toBe(true);
+  });
+
+  it("payload malformado ({} / null / sem identidade) é rejeitado", () => {
+    expect(isSafetyStockItemDetail({})).toBe(false);
+    expect(isSafetyStockItemDetail(null)).toBe(false);
+    expect(isSafetyStockItemDetail({ product: {}, stock: {} })).toBe(false);
+    expect(
+      isSafetyStockItemDetail({
+        product: { product_code: "  ", branch: "01" },
+        stock: {},
+      }),
+    ).toBe(false);
+    expect(
+      isSafetyStockItemDetail({
+        product: { product_code: "X", branch: "" },
+        stock: {},
+      }),
+    ).toBe(false);
+    expect(isSafetyStockItemDetail({ product: detail.product })).toBe(false);
+  });
+
+  it("fornecedores exigem items[] + total; {} vazio é rejeitado", () => {
+    expect(isSafetyStockSuppliersResponse({ items: [], total: 0 })).toBe(true);
+    expect(isSafetyStockSuppliersResponse({})).toBe(false);
+    expect(isSafetyStockSuppliersResponse(null)).toBe(false);
+    expect(isSafetyStockSuppliersResponse({ items: [] })).toBe(false);
   });
 });

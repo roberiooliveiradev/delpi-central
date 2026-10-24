@@ -1,5 +1,6 @@
 import type {
   SafetyStockBranchScope,
+  SafetyStockDetailTarget,
   SafetyStockQuery,
   SafetyStockSortDirection,
   SafetyStockSortField,
@@ -181,7 +182,10 @@ export function buildItemsSearchParams(query: SafetyStockQuery): URLSearchParams
   return params;
 }
 
-export function buildUrlSearch(query: SafetyStockQuery): string {
+export function buildUrlSearch(
+  query: SafetyStockQuery,
+  detail?: SafetyStockDetailTarget | null,
+): string {
   const defaults = createDefaultQuery();
   const params = new URLSearchParams();
   if (query.branch !== defaults.branch) params.set("branch", query.branch);
@@ -201,8 +205,28 @@ export function buildUrlSearch(query: SafetyStockQuery): string {
   params.set("sortDirection", normalizeSortDirection(query.sortDirection));
   params.set("page", String(query.page));
   params.set("page_size", String(query.page_size));
+  if (detail) {
+    params.set("item", detail.productCode);
+    params.set("itemBranch", detail.branch);
+  }
   const qs = params.toString();
   return qs ? `?${qs}` : "";
+}
+
+/**
+ * E11.S3 — detalhe endereçável por URL (`item` + `itemBranch`).
+ * Filial concreta obrigatória: `all`/vazio/inválido → null (não abre).
+ */
+export function parseDetailTargetFromSearch(
+  search: string,
+): SafetyStockDetailTarget | null {
+  const params = new URLSearchParams(
+    search.startsWith("?") ? search.slice(1) : search,
+  );
+  const productCode = readParam(params, "item").trim();
+  const branch = normalizeBranchScope(readParam(params, "itemBranch"));
+  if (!productCode || branch === SAFETY_STOCK_ALL_SCOPE) return null;
+  return { productCode, branch };
 }
 
 /** Campos numéricos abrem em desc; campos textuais/classificação em asc. */
@@ -243,4 +267,21 @@ export function formatQuantity(value: number | null | undefined): string {
 export function formatUnitOfMeasure(value: string | null | undefined): string {
   const trimmed = String(value ?? "").trim();
   return trimmed || "—";
+}
+
+/* E11.S3 — helpers de apresentação do detalhe. */
+
+export function formatDatePtBr(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!match) return iso;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+export function formatCurrencyPtBr(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }

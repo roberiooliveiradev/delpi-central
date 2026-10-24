@@ -245,7 +245,15 @@ export const SP_HELP = {
   safetyStockDeficit:
     "Déficit = estoque de segurança menos saldo disponível (armazéns 01+98+99), nunca negativo. Calculado pelo servidor.",
   safetyStockTableMeta:
-    "Colunas visíveis e total de materiais do recorte filtrado (não só a página atual). Produto não abre ficha nesta página — o detalhe chega na próxima etapa.",
+    "Colunas visíveis e total de materiais do recorte filtrado (não só a página atual). Clique na linha ou em «Ver detalhes» para abrir a ficha do material nesta filial.",
+  safetyStockDetail:
+    "Detalhe do material nesta filial: identificação, saldos, cobertura do déficit, pedidos/solicitações/empenhos em aberto, projeção de estoque, consumo e fornecedores vinculados. Tudo calculado pelo servidor — o Portal não recalcula.",
+  safetyStockDetailCoverage:
+    "Cobertura do déficit pelos pedidos de compra elegíveis (armazéns 01/98/99 e unidade compatível). «Falta comprar» é o restante calculado pelo servidor.",
+  safetyStockDetailProjection:
+    "Extrato cronológico projetado pelo servidor: saldo inicial, entradas de pedidos elegíveis e saídas de empenhos elegíveis. Ruptura = primeiro saldo projetado negativo.",
+  safetyStockDetailSuppliers:
+    "Fornecedores vinculados ao material com dados da última compra. Identidade do fornecedor é código + loja.",
   userProfile:
     "Preferências do Portal Suprimentos (filial padrão e densidade) e atalhos por capability. O avatar na TopBar abre o perfil deste Portal; identidade global (foto, cargo, contatos) edita-se no Meu Perfil Minha DELPI (/profile) pelo menu do nome.",
   userProfilePrefs:

@@ -2,10 +2,13 @@ import { httpGet, suppliesApiUrl } from "../../api/httpClient";
 import { SAFETY_STOCK_CONTENT as C } from "./content";
 import { buildItemsSearchParams, buildScopeFilterParams } from "./query";
 import type {
+  SafetyStockDetailTarget,
   SafetyStockFiltersResponse,
+  SafetyStockItemDetail,
   SafetyStockItemsResponse,
   SafetyStockQuery,
   SafetyStockSummary,
+  SafetyStockSuppliersResponse,
 } from "./types";
 
 /**
@@ -101,5 +104,61 @@ export async function listSafetyStockItems(
     { signal },
   );
   if (!isSafetyStockItemsResponse(payload)) throw new SafetyStockContractError();
+  return payload;
+}
+
+/* E11.S3 — detalhe do item e fornecedores (filial concreta obrigatória). */
+
+export function isSafetyStockItemDetail(
+  value: unknown,
+): value is SafetyStockItemDetail {
+  if (!isRecord(value)) return false;
+  const product = value.product;
+  const stock = value.stock;
+  if (!isRecord(product) || !isRecord(stock)) return false;
+  if (typeof product.product_code !== "string" || !product.product_code.trim()) {
+    return false;
+  }
+  return typeof product.branch === "string" && Boolean(product.branch.trim());
+}
+
+export function isSafetyStockSuppliersResponse(
+  value: unknown,
+): value is SafetyStockSuppliersResponse {
+  if (!isRecord(value)) return false;
+  return Array.isArray(value.items) && typeof value.total === "number";
+}
+
+export async function getSafetyStockItemDetails(
+  target: SafetyStockDetailTarget,
+  signal?: AbortSignal,
+): Promise<SafetyStockItemDetail> {
+  const params = new URLSearchParams();
+  params.set("branch", target.branch);
+  const payload = await httpGet<unknown>(
+    suppliesApiUrl(
+      `/safety-stock/items/${encodeURIComponent(target.productCode)}/details?${params.toString()}`,
+    ),
+    { signal },
+  );
+  if (!isSafetyStockItemDetail(payload)) throw new SafetyStockContractError();
+  return payload;
+}
+
+export async function getSafetyStockItemSuppliers(
+  target: SafetyStockDetailTarget,
+  signal?: AbortSignal,
+): Promise<SafetyStockSuppliersResponse> {
+  const params = new URLSearchParams();
+  params.set("branch", target.branch);
+  const payload = await httpGet<unknown>(
+    suppliesApiUrl(
+      `/safety-stock/items/${encodeURIComponent(target.productCode)}/suppliers?${params.toString()}`,
+    ),
+    { signal },
+  );
+  if (!isSafetyStockSuppliersResponse(payload)) {
+    throw new SafetyStockContractError();
+  }
   return payload;
 }

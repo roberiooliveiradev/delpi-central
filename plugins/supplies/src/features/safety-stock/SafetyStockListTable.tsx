@@ -1,4 +1,5 @@
 import { useMemo, type CSSProperties } from "react";
+import { Eye } from "lucide-react";
 
 import { formatSuppliesUnitName } from "../../app/suppliesUnits";
 import {
@@ -18,6 +19,7 @@ import {
 import { SP_HELP } from "../../content/helpTooltips";
 import {
   SAFETY_STOCK_CONTENT as C,
+  SAFETY_STOCK_DETAIL_CONTENT as D,
   labelSafetyStockStatus,
   statusBadgeVariant,
 } from "./content";
@@ -52,6 +54,7 @@ type SafetyStockListTableProps = {
   totalPages: number;
   loading: boolean;
   onPatchQuery: (patch: Partial<SafetyStockQuery>) => void;
+  onOpenDetail?: (row: SafetyStockItem) => void;
 };
 
 export function SafetyStockListTable({
@@ -61,6 +64,7 @@ export function SafetyStockListTable({
   totalPages,
   loading,
   onPatchQuery,
+  onOpenDetail,
 }: SafetyStockListTableProps) {
   const columnPrefs = useTableColumnVisibility({
     storageKey: SAFETY_STOCK_COLUMN_STORAGE_KEY,
@@ -76,7 +80,7 @@ export function SafetyStockListTable({
     const byKey = new Map(
       SAFETY_STOCK_TABLE_COLUMNS.map((column) => [column.key, column]),
     );
-    return columnPrefs.visibleKeys
+    const mapped: DataTableColumn<SafetyStockItem>[] = columnPrefs.visibleKeys
       .map((key) => byKey.get(key as SafetyStockTableColumnKey))
       .filter((column): column is (typeof SAFETY_STOCK_TABLE_COLUMNS)[number] =>
         Boolean(column),
@@ -155,7 +159,34 @@ export function SafetyStockListTable({
           },
         };
       });
-  }, [columnPrefs.visibleKeys]);
+    if (onOpenDetail) {
+      mapped.push({
+        key: "__detail_action",
+        header: "",
+        sortable: false,
+        rowClick: "stop",
+        render: (row: SafetyStockItem) => {
+          const code = row.product_code?.trim() || "—";
+          return (
+            <button
+              type="button"
+              className="sp-safety-stock__row-action"
+              aria-label={D.openActionLabel(code)}
+              title={D.openAction}
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenDetail(row);
+              }}
+            >
+              <Eye size={15} aria-hidden="true" />
+              <span>{D.openAction}</span>
+            </button>
+          );
+        },
+      });
+    }
+    return mapped;
+  }, [columnPrefs.visibleKeys, onOpenDetail]);
 
   const visibleColumnCount = columns.length;
 
@@ -220,6 +251,13 @@ export function SafetyStockListTable({
             safetyStockRowKey(row.product_code, row.branch, index)
           }
           loading={loading}
+          onRowClick={
+            onOpenDetail
+              ? (row) => {
+                  onOpenDetail(row);
+                }
+              : undefined
+          }
           sortKey={query.sortBy}
           sortDirection={query.sortDirection}
           onSortChange={(columnKey) => {
