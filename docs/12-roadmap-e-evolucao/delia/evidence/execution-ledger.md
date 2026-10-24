@@ -70,3 +70,11 @@
 - M07 guidance: `SKIP_WITH_DECISION` por S4/117 — `_guidance_*`/`_deterministic_guidance_content`/`_pack_guidance_sections`/`_select_guidance_records` permanecem na orquestração (boundary de evidência owner→`outcome_facts`, sem consumer/destino novos provados); `_prior_excerpt_*` KEEP (projeção de evidência de sessão).
 - Paridade: 19 testes de caracterização literais (`test_r4_presentation_parity.py`) verdes antes e depois; suite delia-api completa exit 0; audits de arquitetura 0 findings; imports de 9 testes + `cri_activation_eval.py` repontados ao owner canônico. Deploy `[1/1] delia-api` canônico; smoke prod mínimo: health 200, unauth POST 401, 1 turno autenticado 200/GROUNDED (sem matriz LLM — refatoração pura com paridade determinística provada).
 - `O2=KNOWN_RESIDUAL` (não reaberto); `CRI_OFF_LIVE=TEST_NOT_RUN`; `R4_INDEPENDENT_ACCEPTANCE=PENDING`; `COORDINATION_REVIEW_REQUIRED=YES`.
+
+### Registro complementar — 2026-10-24 — R5 estrutural M08/M09 EXECUTADO (R5_BOUNDED_ONLY)
+
+- `TASK_ID=DELIA-C3-ORCHESTRATION-R5-SCHEMA-GOAL-MODEL-STAGE-REFACTOR-01`; `STATE=EXECUTED`; `IMPLEMENTATION_SHA=efcee871b6`; `R5_AUTHORIZED=YES` (review R4 `8a9a960052`: `NEXT_STAGE_AUTHORIZED=R5_BOUNDED_ONLY`); `R6_AUTHORIZED=NO`; `R7_AUTHORIZED=NO`.
+- Evidência: [r5-execution-and-evidence](../corrections/mcp-contextual-intelligence-orchestration/refactor-r0-r7/r5-execution-and-evidence.md). M08 MOVE: `_schema_required_gaps`, `_apply_owner_declared_defaults`, `_owner_entity_completeness_gaps`, `_apply_entity_defaults_to_arguments`, `_argument_completeness_gaps`, `MAX_ARGUMENT_KEYS` — verbatim para `interaction/argument_validation.py` (owner canônico de validação de argumentos); DAG `orchestration → argument_validation → outcome_assessment`, acíclico.
+- M09 KEEP: `_build_arguments`, `_model_stage_proposal`, `_propose`, `_repair_once`, `_turn_goal_from_proposal` — boundary coordinator↔model legítimo (lineage, budgets, repair rounds, `_TurnGoal` interno); caso negativo adversarial documentado.
+- Paridade: 19 caracterizações literais (`test_r5_argument_schema_parity.py`) + stage04 (36) + argument_validation (37) verdes antes/depois; suite completa exit 0; audits 0 findings.
+- `O2=KNOWN_RESIDUAL`; `CRI_OFF_LIVE=TEST_NOT_RUN`; `R5_INDEPENDENT_ACCEPTANCE=PENDING`; `COORDINATION_REVIEW_REQUIRED=YES`.

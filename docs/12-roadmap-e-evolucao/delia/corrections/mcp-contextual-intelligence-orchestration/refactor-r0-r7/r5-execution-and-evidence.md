@@ -1,8 +1,8 @@
 # R5 — Validação de argumentos e propostas tipadas: prompt e registro de evidências
 
 **PLANO:** [125](../125-orchestration-complete-refactoring-finite-plan.md) · **RUNBOOK:** [130](../130-orchestration-refactor-r0-r7-execution-playbook.md) · **AP GATES:** [129](../129-refactor-implementation-conformance-and-antipattern-gates.md)  
-**TASK_ID:** `DELIA-ORCH-REFAC-R5-BOUNDED-01` · **LOTES:** M08–M09 · **ESTADO DO DOCUMENTO:** TEMPLATE_NOT_EXECUTED / NOT_AUTHORIZED.  
-**NÃO É autorização nem evidência de execução.** Ler 16→50→17→49→51→52→21→20→25 + 03/24/60, ADR58, roadmap59, 113,117, 125,128–130, .cursor e ledger no HEAD.
+**TASK_ID:** `DELIA-C3-ORCHESTRATION-R5-SCHEMA-GOAL-MODEL-STAGE-REFACTOR-01` · **LOTES:** M08–M09 · **ESTADO DO DOCUMENTO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`.  
+**Autorização:** `R5_BOUNDED_ONLY=AUTHORIZED` — decisão explícita da coordenação no review independente de R4 (`8a9a960052`: `NEXT_STAGE_AUTHORIZED=R5_BOUNDED_ONLY`); `R6_AUTHORIZED=NO`, `R7_AUTHORIZED=NO`. Deploy autorizado pelo PO na mesma ordem, condicionado aos gates.
 
 ## Prompt pronto para Devin — executar SOMENTE quando gate liberado
 
@@ -24,35 +24,59 @@
 
 ## Documento obrigatório a preencher pelo executor após execução
 
-**STATUS:** `NOT_STARTED` — substituir por `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW|IMPLEMENTATION_FAILED|IMPLEMENTATION_INCONCLUSIVE|EXECUTION_DRIFT|SKIP_WITH_DECISION` somente com fatos.
+**STATUS:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`
 
 | Campo | Evidência a preencher (não presumir PASS) |
 |---|---|
-| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R5 / task concreta |
-| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | PENDING |
-| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | PENDING |
-| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | PENDING |
-| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | PENDING |
-| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | TO_INVENTORY |
-| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | TO_INVENTORY |
-| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | PENDING |
-| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | TEST_NOT_RUN |
-| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | TO_INVENTORY |
-| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | TEST_NOT_RUN |
-| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | TEST_NOT_RUN |
-| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | TEST_NOT_RUN |
-| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | PENDING |
-| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | INCONCLUSIVE |
-| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / TEST_NOT_RUN |
-| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | PENDING |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | PENDING |
-| README_LEDGER_UPDATED / DELETIONS_RATIONALE | PENDING |
-| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | PENDING |
-| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | PENDING / YES |
+| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R5 / `DELIA-C3-ORCHESTRATION-R5-SCHEMA-GOAL-MODEL-STAGE-REFACTOR-01` |
+| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | review R4 `8a9a960052` → `R5_BOUNDED_ONLY` / ledger: R4 `EXECUTED_AND_DEPLOYED` aceito `ACCEPT_WITH_RESIDUAL` |
+| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | `d2eb2aab26` → ff-only → `8a9a960052`; worktree limpa fora do escopo R5 |
+| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | 16→50→17→49→51→52→21→20→25; arch/product spec; ADR58; S4/117; 125/129/130; R0–R4 evidence; review R4; ledger / CP_RQ=duplicação de schema/goal/model-stage contracts / FROZEN: planner semântico, 60/3/300, AuthZ, PREPARE/ACT, candidate-token, CRI, guidance M07 |
+| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | eliminar duplicação legítima de validação/defaults sem mudar comportamento / gates: owner existente, DAG acíclico, sem planner novo / ALLOWED: `interaction/argument_validation.py`, `orchestration.py` (remoção+imports), testes / FORBIDDEN: parser semântico, operationId hardcode, budget/policy, novo registry |
+| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | ver matriz § Evidência específica R5 |
+| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | `YES_PARTIAL` / `EXTEND` (`interaction/argument_validation.py` — owner canônico de validação de argumentos) / `NEW_ABSTRACTIONS=0`, `NEW_FILES=1` (teste de paridade) |
+| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | `argument_validation.py` 314→500; `orchestration.py` 10979→10814; `test_stage04_completeness_resolution.py` (import repoint); `test_r5_argument_schema_parity.py` (novo) / diff apenas move + imports / contratos observáveis preservados |
+| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | antes: `orchestration → argument_validation` (já existia) + `outcome_assessment → interaction.contracts`; depois: `orchestration → argument_validation → outcome_assessment` — acíclico (AST walk + import real); `argument_validation` NÃO importa orchestration / duplicate check AST: zero duplicado / audits guardrails+boundaries+phase3: 43 testes, 0 findings |
+| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | símbolos removidos de `orchestration.py`; zero shim/alias; stage04 repontado ao owner canônico |
+| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | baseline verde / 19 caracterizações literais criadas antes do move, verdes antes e depois; stage04 (36) + argument_validation (37) verdes / FULL_BACKEND exit 0 no SHA `efcee871b6` / SECURITY: `ORCHESTRATED_FIELDS` deny inalterado, `validate_arguments` intocado, defaults somente owner-publicados / GENERALIZATION: provider-neutral — semântica idêntica por move verbatim |
+| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | caminhos cobertos deterministicamente (stage02–06, i02, q02c, referential, guided discovery) / `CRI_OFF_LIVE=TEST_NOT_RUN` (residual) |
+| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | `LOCAL_MODEL_EVAL=NOT_RUN` — refatoração pura com paridade determinística; nenhum comportamento não-comprovável / outcome inalterado |
+| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | owner existente (PASS), DAG (PASS), sem validator duplicado (PASS), sem novo planner/registry (PASS), sem auth implícita (PASS), budget inalterado (PASS) / auditorias locais = scripts do CI |
+| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | zero / n/a / PASS no escopo deterministicamente testável |
+| AUTO_REWORK_USED / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / n/a / n/a |
+| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | M09 KEEP com razão registrada; O2 residual mantido / rollback: SHA anterior + imagem `8a3fe498f488` / zero secrets |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | `PENDING` (após push) |
+| README_LEDGER_UPDATED / DELETIONS_RATIONALE | README + ledger + plano 125 neste commit de docs / nenhuma deleção funcional |
+| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | `NONE` / residuais: O2 INCONCLUSIVE, CRI_OFF_LIVE TEST_NOT_RUN, tokens indisponíveis, D1 variabilidade, password-grant pendente / sem STOP |
+| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `IMPLEMENTED_STRUCTURE_ONLY — evidence ready for independent review` / `YES` |
+| DEPLOY | `PENDING` (registrado após execução canônica `[1/1] delia-api`) |
 
 ### Evidência específica da etapa R5
 
-Tabela obrigatória por função migrada: ORIGIN SYMBOL | NEW OWNER/FILE | CONTRACT/CONSUMERS | BEFORE/AFTER IMPORTS | TESTS | OLD SYMBOL REMOVED? | LEGACY/COMPAT DECISION. Incluir ao menos 1 caso negativo adversarial, se runtime mudou.
+#### M08 — schema/completeness/defaults → `interaction/argument_validation.py` (owner existente, `REUSE_DECISION=EXTEND`)
+
+| ORIGIN SYMBOL | NEW OWNER/FILE | CONTRACT/CONSUMERS | BEFORE/AFTER IMPORTS | TESTS | OLD SYMBOL REMOVED? | LEGACY/COMPAT DECISION |
+|---|---|---|---|---|---|---|
+| `MAX_ARGUMENT_KEYS` | `argument_validation.py` | bound de chaves em argumentos/defaults; consumers: orchestration + movers | orchestration passa a importar de av | stage04 + parity + full suite | sim | sem alias |
+| `_schema_required_gaps` | `argument_validation.py` | required-gap walk JSON-Schema fragment; consumer: `_owner_entity_completeness_gaps` | +`_value_present`, `MAX_MISSING_INPUTS` de `outcome_assessment` | stage04 (nested gaps) + parity | sim | sem shim |
+| `_apply_owner_declared_defaults` | `argument_validation.py` | defaults somente owner-publicados; consumers: entity completeness + `_apply_entity_defaults_to_arguments` | — | stage04 + parity | sim | sem shim |
+| `_owner_entity_completeness_gaps` | `argument_validation.py` | gaps de entity_schemas do catálogo owner; consumer: `_argument_completeness_gaps` | +`_extract_owner_entity_schemas`, `_entity_payload_slot`, `_canonical_key` de `outcome_assessment` | stage04 + parity | sim | sem shim |
+| `_apply_entity_defaults_to_arguments` | `argument_validation.py` | aplica defaults no payload declarado; consumers: orchestrator (3 sites) | idem | stage04 + parity | sim | sem shim |
+| `_argument_completeness_gaps` | `argument_validation.py` | gate de completude argument×entity-schema; consumers: orchestrator (3 sites); `descriptor` aceito mas não usado | +`ProviderCapability` de `cp.contracts` (precedente: capability_attempt) | stage04 + parity | sim | sem shim |
+
+**DAG após:** `orchestration → interaction/argument_validation → capability_provision/outcome_assessment` — acíclico; `outcome_assessment → interaction.contracts` pré-existente. Nenhum import de `orchestration` em `argument_validation`.
+
+#### M09 — goal/model-stage — `KEEP` (decisão fundamentada no caller graph)
+
+| SYMBOL | DECISION | RAZÃO |
+|---|---|---|
+| `_build_arguments` | `KEEP` | Flow de stage-3 do coordenador: schema keys, deterministic-schema gate, block assembly, model propose, validation — esperado KEEP pelo plano 125. |
+| `_model_stage_proposal` | `KEEP` | Mechanics de invocação do modelo: deadline/budget, resume replay, timeout taxonomy, logging — boundary coordinator↔model, não validação pura. |
+| `_propose` | `KEEP` | Idem — proposta semântica governada (lineage única). |
+| `_repair_once` | `KEEP` | Rodada bounded de reparo: re-resolve grupo live, reseleção semântica, rebuild args — orquestração, PREPARE/ACT nunca alcançam. |
+| `_turn_goal_from_proposal` | `KEEP` | Validação de payload de goal em `_TurnGoal` (tipo interno do orquestrador, `_GOAL_CLASSES`, logging por decisão) — acoplado ao estado do coordinator; extração exigiria exposição de contrato novo sem consumer. |
+
+**Caso negativo adversarial executado:** extração de `_turn_goal_from_proposal` foi avaliada e descartada — retorna tipo privado do orquestrador (`_TurnGoal`) e emite logging de decisão por classe; um parser isolado forçaria duplicação do contrato de goal ou exposição de internals — `KEEP`, conforme gate de não forçar extrações por conveniência.
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
