@@ -24,7 +24,7 @@ TEMPLATE_ID = "11111111-1111-4111-8111-111111111111"
 
 def _claims(**overrides) -> dict:
     claims = {
-        "sub": "user-1",
+        "sub": "33333333-3333-4333-8333-333333333333",
         "email": "ana@delpi.com.br",
         "name": "Ana Souza",
         "given_name": "Ana",
@@ -35,7 +35,7 @@ def _claims(**overrides) -> dict:
 
 def _rbac(**overrides) -> dict:
     rbac = {
-        "id": "user-1",
+        "id": "33333333-3333-4333-8333-333333333333",
         "email": "ana@delpi.com.br",
         "name": "Ana Souza",
         "roles": [],
@@ -224,6 +224,7 @@ def test_inactivate(_auth_pipeline, repo):
     [
         (de.TemplateNotFound("x"), 404, "template_not_found"),
         (de.DraftAlreadyOpen("x"), 409, "draft_already_open"),
+        (de.DuplicateItemKey("x"), 409, "duplicate_item_key"),
         (de.VersionNotDraft("x"), 409, "version_not_draft"),
         (de.StaleRevision("x"), 409, "stale_revision"),
         (de.PersistenceUnavailable("x"), 503, "persistence_unavailable"),
@@ -259,3 +260,52 @@ def test_publish_invalid_period_422(_auth_pipeline, repo):
     )
     assert response.status_code == 422
     repo.publish_version.assert_not_called()
+
+
+# --- actor identity (R2) ----------------------------------------------------
+
+
+def test_publish_rejects_non_uuid_actor(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(id="user-1")
+    response = _client().post(
+        f"/admin/checklist-templates/{TEMPLATE_ID}/versions/1/publish",
+        headers=_headers(),
+        json={"effective_from_period": "2026-10"},
+    )
+    assert response.status_code == 401
+    repo.publish_version.assert_not_called()
+
+
+def test_publish_rejects_missing_actor_id(
+    _auth_pipeline, repo, monkeypatch
+):
+    """Sem `sub` no token e sem `id` no RBAC: fail-closed no middleware
+    (401) antes da rota — nenhum ator inventado alcança o repositório."""
+    _auth_pipeline["rbac"] = _rbac(id=None)
+    monkeypatch.setattr(
+        fa, "validate_token", lambda token: _claims(sub=None)
+    )
+    response = _client().post(
+        f"/admin/checklist-templates/{TEMPLATE_ID}/versions/1/publish",
+        headers=_headers(),
+        json={"effective_from_period": "2026-10"},
+    )
+    assert response.status_code == 401
+    repo.publish_version.assert_not_called()
+
+
+def test_valid_uuid_actor_reaches_repository(_auth_pipeline, repo):
+    repo.create_draft_version.return_value = {
+        "version_id": "v",
+        "version": 2,
+        "status": "DRAFT",
+        "revision": 1,
+    }
+    response = _client().post(
+        f"/admin/checklist-templates/{TEMPLATE_ID}/versions",
+        headers=_headers(),
+    )
+    assert response.status_code == 201
+    assert repo.create_draft_version.call_args.kwargs["actor"] == (
+        "33333333-3333-4333-8333-333333333333"
+    )

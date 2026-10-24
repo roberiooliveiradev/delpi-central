@@ -19,6 +19,7 @@ from controllership_finance_app.infrastructure.persistence.closing_checklist_rep
     ClosingChecklistRepository,
 )
 from controllership_finance_app.interface.http.authz import (
+    actor_subject,
     authorized_admin,
 )
 
@@ -61,10 +62,6 @@ class PublishVersionRequest(BaseModel):
 
 def _repository() -> ClosingChecklistRepository:
     return ClosingChecklistRepository()
-
-
-def _actor(user) -> str:
-    return str(getattr(user, "id", None) or getattr(user, "email", ""))
 
 
 def _domain_fail(exc: ChecklistDomainError, operation_id: str):
@@ -131,7 +128,7 @@ def create_checklist_template_draft(request: Request, template_id: str):
     user = authorized_admin(request)
     try:
         draft = _repository().create_draft_version(
-            template_id, actor=_actor(user)
+            template_id, actor=actor_subject(user)
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "create_checklist_template_draft")
@@ -160,7 +157,7 @@ def update_checklist_template_draft(
             version,
             expected_revision=body.revision,
             items=[item.model_dump() for item in body.items],
-            actor=_actor(user),
+            actor=actor_subject(user),
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "update_checklist_template_draft")
@@ -187,7 +184,7 @@ def publish_checklist_template_version(
             template_id,
             version,
             effective_from_period=body.effective_from_period,
-            actor=_actor(user),
+            actor=actor_subject(user),
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "publish_checklist_template_version")
@@ -208,7 +205,7 @@ def inactivate_checklist_template_version(
     user = authorized_admin(request)
     try:
         inactivated = _repository().inactivate_version(
-            template_id, version, actor=_actor(user)
+            template_id, version, actor=actor_subject(user)
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "inactivate_checklist_template_version")

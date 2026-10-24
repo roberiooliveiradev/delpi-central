@@ -121,3 +121,17 @@ Testes MFE: `ClosingChecklistPage.test.tsx` (6 testes: loading, snapshot 53 EXPE
 ## 4. Veredito
 
 `ACCEPT_WITH_RESIDUAL` — o incremento `P6-MIN + P2-READ` está implementado e provado (persistência isolada, seed 53 DRAFT, publicação governada por API, abertura idempotente de competência, snapshot imutável 53 `EXPECTED`, página MFE com Help, auditoria append-only, AuthZ fail-closed). Residuais: smoke autenticado não executado (`TEST_NOT_RUN`), CP-D02/CP-D03 pendentes na Controladoria, deploy de produção não autorizado nem realizado.
+
+---
+
+## Adendo — Hardening pós-revisão R1/R2/R4 (`CF-C3-P6-P2-POST-REVIEW-HARDENING-R1-R2-R4-001`)
+
+Correções internas dos resíduos menores do Documento 102, sobre BASE_SHA `73a02393dc`. Sem mudança material de contrato, permission, boundary ou persistência.
+
+| Resíduo | Correção | Evidência | Estado |
+|---|---|---|---|
+| R1 `item_key` duplicado → 500 | `DuplicateItemKey` (`duplicate_item_key`, 409) traduz `UniqueViolation` dentro da transação; rollback integral | teste PG real de atomicidade + matriz de erros HTTP | CORRIGIDO |
+| R2 fallback de ator para e-mail | `actor_subject` canônico: somente `user.id` UUID validado; ausente/malformado ⇒ 401 fail-closed | testes de rota (UUID válido, não-UUID, `sub` ausente, service principal) + auditoria UUID-only em PG real | CORRIGIDO |
+| R4 fixture `DROP SCHEMA` destrutiva | banco dedicado recriável + `assert_safe_test_database` + opt-in `CF_TEST_PG_ALLOW_DESTRUCTIVE=1` | 16 testes de guarda + probes reais (destino compartilhado bloqueado, opt-in ausente ⇒ skip, banco dedicado executa e é limpo) | CORRIGIDO |
+
+Testes: BFF `143 passed` · PG dedicado `27 passed` · MFE closing `41 passed`. Deploy de produção: NÃO REALIZADO. Detalhes e provas no adendo do Documento 102.

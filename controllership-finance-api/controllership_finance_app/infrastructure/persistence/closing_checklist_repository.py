@@ -17,6 +17,7 @@ from psycopg.rows import dict_row
 from controllership_finance_app.domain.closing_checklist.errors import (
     CompetenceNotOpened,
     DraftAlreadyOpen,
+    DuplicateItemKey,
     ItemNotFound,
     NoPublishedTemplate,
     PersistenceUnavailable,
@@ -274,31 +275,37 @@ class ClosingChecklistRepository:
                         " WHERE version_id = %s",
                         (updated["version_id"],),
                     )
-                    for position, item in enumerate(items, start=1):
-                        cur.execute(
-                            f"""
-                            INSERT INTO {_q('checklist_template_item')}
-                                (version_id, item_key, sort_order, sheet,
-                                 name, purpose, origin_kind, recipient_area,
-                                 applicability, branch_scope,
-                                 totvs_report_ref, requirement_notes)
-                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                            """,
-                            (
-                                updated["version_id"],
-                                item["item_key"],
-                                item.get("sort_order") or position,
-                                item["sheet"],
-                                item["name"],
-                                item.get("purpose"),
-                                item["origin_kind"],
-                                item.get("recipient_area"),
-                                item.get("applicability") or "REQUIRED",
-                                item.get("branch_scope") or "BOTH",
-                                item.get("totvs_report_ref"),
-                                item.get("requirement_notes"),
-                            ),
-                        )
+                    try:
+                        for position, item in enumerate(items, start=1):
+                            cur.execute(
+                                f"""
+                                INSERT INTO {_q('checklist_template_item')}
+                                    (version_id, item_key, sort_order,
+                                     sheet, name, purpose, origin_kind,
+                                     recipient_area, applicability,
+                                     branch_scope, totvs_report_ref,
+                                     requirement_notes)
+                                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                                """,
+                                (
+                                    updated["version_id"],
+                                    item["item_key"],
+                                    item.get("sort_order") or position,
+                                    item["sheet"],
+                                    item["name"],
+                                    item.get("purpose"),
+                                    item["origin_kind"],
+                                    item.get("recipient_area"),
+                                    item.get("applicability") or "REQUIRED",
+                                    item.get("branch_scope") or "BOTH",
+                                    item.get("totvs_report_ref"),
+                                    item.get("requirement_notes"),
+                                ),
+                            )
+                    except psycopg.errors.UniqueViolation as exc:
+                        raise DuplicateItemKey(
+                            "item_key duplicado no payload do rascunho."
+                        ) from exc
                     self._audit(
                         cur,
                         entity_type="checklist_template_version",

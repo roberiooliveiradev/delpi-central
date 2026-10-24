@@ -91,3 +91,36 @@ O GO `CF-C3-P6-MIN-P2-READ-RUNTIME-GO-001` foi cumprido: menor diff correto, dec
 ## 8. Próximo checkpoint permitido
 
 `CF-C3-P2-UPLOAD-CONTRACT-GATE-001` — **documental apenas**: contrato de upload (documentos externos, PDFs/extratos/planilhas, storage persistente, metadados+hash, versionamento, download autorizado, retenção/auditoria, vínculo ao item do checklist). `P2-Upload ≠ validação humana`. Implementação exige contrato fechado e GO próprio; `DEPLOY_PRODUCTION_AUTHORIZED=NO` permanece.
+
+---
+
+## Adendo — Hardening R1/R2/R4 (`CF-C3-P6-P2-POST-REVIEW-HARDENING-R1-R2-R4-001`)
+
+Executado sobre BASE_SHA `73a02393dc` (pós-revisão). Escopo estrito de hardening; nenhuma feature, tela, permission, workflow ou deploy novo. Achados históricos das seções anteriores preservados.
+
+### R1 — CORRIGIDO (PASS)
+
+- **Causa raiz:** `update_draft_items` deixava `UniqueViolation` de `item_key` duplicado escapar → HTTP 500.
+- **Correção:** novo erro de domínio `DuplicateItemKey` (`duplicate_item_key`, 409); o repositório traduz `psycopg.errors.UniqueViolation` no INSERT dos itens do DRAFT — dentro de `conn.transaction()`, logo DELETE+UPDATE+INSERT fazem rollback integral (sem substituição parcial; `revision` e itens anteriores intactos). Mesmo padrão já usado por `DraftAlreadyOpen`.
+- **Evidência:** `test_duplicate_item_key_typed_and_atomic` em PG real — payload com `item_key` duplicado levanta `DuplicateItemKey`; versão DRAFT mantém `revision`, `status=DRAFT` e lista de itens byte-a-byte; mapeamento HTTP `duplicate_item_key → 409` coberto na matriz parametrizada de erros. Concorrência/OCC: `test_stale_revision_rejected` e `test_second_draft_rejected` seguem verdes.
+
+### R2 — CORRIGIDO (PASS)
+
+- **Causa raiz:** `_actor(user) = user.id or user.email` admitia string não-UUID em coluna `UUID` → `InvalidTextRepresentation` → 500.
+- **Correção:** `actor_subject(user)` canônico em `interface/http/authz.py` — aceita somente `user.id` validado por `uuid.UUID()`; ausente/malformado ⇒ `Unauthorized` (fail-closed, antes de qualquer persistência); sem fallback, sem identidade alternativa, sem log de token/e-mail. Todas as mutações auditáveis (create/update/publish/inactivate/open) usam o resolvedor canônico.
+- **Evidência:** testes de rota — UUID válido alcança o repositório (`actor == sub`), id não-UUID ⇒ 401 sem chamada ao repo, `sub` ausente ⇒ 401 no middleware, service principal ⇒ 403 (pré-existente). Em PG real, `closing_audit_event.actor_subject` contém apenas UUIDs válidos.
+
+### R4 — CORRIGIDO (PASS)
+
+- **Causa raiz:** fixture executava `DROP SCHEMA controllership_finance CASCADE` no banco indicado por `CF_TEST_PG_*`, sem prova de descartabilidade.
+- **Correção:** banco **dedicado e recriável** (`CF_TEST_PG_NAME`), validado por `assert_safe_test_database` — nome SQL-safe, obrigado a conter `test`, e jamais `plugins_hub`/`postgres`/`delpi_core`/`template*`. A limpeza é `DROP DATABASE`/`CREATE DATABASE` do banco dedicado via conexão administrativa (`CF_TEST_PG_ADMIN_DB`, default `postgres`), exigindo opt-in `CF_TEST_PG_ALLOW_DESTRUCTIVE=1`. Destino ambíguo falha (erro de fixture) **antes de qualquer DDL**; sem opt-in a suíte faz skip explícito. Migrations produtivas intactas.
+- **Evidência:** `test_pg_test_target_guard.py` (16 casos: bancos protegidos, ambíguos, injeção, vazio × dedicados). Probes reais: `CF_TEST_PG_NAME=plugins_hub` + opt-in ⇒ 11 erros de fixture, `plugins_hub.controllership_finance` preservado; `controllership_finance_test` sem opt-in ⇒ 11 skips; com opt-in ⇒ 11 testes PG executam de verdade (migrations, publish, concorrência, idempotência, auditoria, atomicidade R1) e o banco é dropado no teardown — `plugins_hub` nunca alvo.
+
+### Regressão pós-hardening
+
+- BFF: `143 passed` (era 131; +12 testes R1/R2/guarda) + 11 skips sem env PG.
+- PG real dedicado: `27 passed` (11 integração + 16 guarda).
+- MFE closing: `41 passed`/3 arquivos — zero alteração de MFE neste diff.
+- Residual search: zero fallback de e-mail, zero `DROP SCHEMA` em fonte, `UniqueViolation` sempre traduzido, permissions inalteradas (`access`/`manage`/`home`), zero conteúdo fora de escopo.
+
+R3 (drift documental) permanece como observação de prateleira; R5–R8 inalterados. Deploy de produção: NÃO REALIZADO.

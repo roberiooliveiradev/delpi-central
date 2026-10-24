@@ -23,7 +23,7 @@ TOKEN = "viewer-test-token"
 
 def _claims(**overrides) -> dict:
     claims = {
-        "sub": "user-1",
+        "sub": "33333333-3333-4333-8333-333333333333",
         "email": "ana@delpi.com.br",
         "name": "Ana Souza",
     }
@@ -33,7 +33,7 @@ def _claims(**overrides) -> dict:
 
 def _rbac(**overrides) -> dict:
     rbac = {
-        "id": "user-1",
+        "id": "33333333-3333-4333-8333-333333333333",
         "email": "ana@delpi.com.br",
         "name": "Ana Souza",
         "roles": [],
@@ -173,6 +173,32 @@ def test_open_invalid_period_422(_auth_pipeline, repo):
     )
     assert response.status_code == 422
     repo.open_competence.assert_not_called()
+
+
+def test_open_rejects_non_uuid_actor(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(id="user-1")
+    response = _client().post(
+        "/closing/competences",
+        headers=_headers(),
+        json={"period": "2026-10"},
+    )
+    assert response.status_code == 401
+    repo.open_competence.assert_not_called()
+
+
+def test_open_actor_is_uuid_subject(_auth_pipeline, repo):
+    repo.open_competence.return_value = (
+        {"competence_id": "c", "period": "2026-10", "status": "OPEN"},
+        True,
+    )
+    _client().post(
+        "/closing/competences",
+        headers=_headers(),
+        json={"period": "2026-10"},
+    )
+    assert repo.open_competence.call_args.kwargs["actor"] == (
+        "33333333-3333-4333-8333-333333333333"
+    )
 
 
 # --- reads ------------------------------------------------------------------

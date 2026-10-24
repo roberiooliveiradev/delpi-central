@@ -5,14 +5,23 @@ prova: seed 53 itens DRAFT (sem publish automático), publish governado,
 abertura idempotente com snapshot EXPECTED, isolamento v1×v2, auditoria
 append-only e falhas de concorrência/revisão.
 
-Ativado com CF_TEST_PG_HOST/CF_TEST_PG_NAME/CF_TEST_PG_USER/CF_TEST_PG_PASSWORD
-(porta opcional CF_TEST_PG_PORT). Skip explícito quando ausente — mock não
+Isolamento (R4): os testes NUNCA tocam um banco compartilhado. O destino é
+um **banco dedicado e recriável** (`CF_TEST_PG_NAME`, obrigado a conter
+"test" e fora da lista de bancos protegidos), dropado/criado via conexão
+administrativa (`CF_TEST_PG_ADMIN_DB`, default `postgres`). Limpeza
+destrutiva exige opt-in explícito `CF_TEST_PG_ALLOW_DESTRUCTIVE=1`.
+Destino ambíguo falha antes de qualquer operação.
+
+Ativado com CF_TEST_PG_HOST/CF_TEST_PG_NAME/CF_TEST_PG_USER/
+CF_TEST_PG_PASSWORD (porta opcional CF_TEST_PG_PORT) +
+CF_TEST_PG_ALLOW_DESTRUCTIVE=1. Skip explícito quando ausente — mock não
 prova atomicidade.
 """
 
 from __future__ import annotations
 
 import os
+import re
 import uuid
 
 import psycopg
@@ -42,11 +51,62 @@ pytestmark = pytest.mark.skipif(
 ADMIN = str(uuid.uuid5(uuid.NAMESPACE_DNS, "cf-admin-test"))
 VIEWER = str(uuid.uuid5(uuid.NAMESPACE_DNS, "cf-viewer-test"))
 
+# Bancos que jamais podem ser alvo destrutivo, mesmo com opt-in.
+FORBIDDEN_TEST_TARGETS = frozenset(
+    {"postgres", "plugins_hub", "delpi_core", "template0", "template1"}
+)
+_TEST_DB_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+def assert_safe_test_database(name: str) -> None:
+    """Guarda do destino destrutivo — falha antes de qualquer DDL.
+
+    Um banco de teste deve ser dedicado (nome contém ``test``), com nome
+    SQL-safe e jamais um banco compartilhado/do sistema.
+    """
+    if not _TEST_DB_NAME.fullmatch(name):
+        raise ValueError(f"CF_TEST_PG_NAME inválido: {name!r}")
+    if name in FORBIDDEN_TEST_TARGETS:
+        raise ValueError(
+            f"CF_TEST_PG_NAME aponta para banco protegido: {name!r}"
+        )
+    if "test" not in name:
+        raise ValueError(
+            f"CF_TEST_PG_NAME deve ser um banco dedicado de teste "
+            f"(nome contendo 'test'): {name!r}"
+        )
+
+
+def _admin_connection() -> psycopg.Connection:
+    return psycopg.connect(
+        host=os.environ["CF_TEST_PG_HOST"],
+        port=int(os.getenv("CF_TEST_PG_PORT", "5432")),
+        dbname=os.getenv("CF_TEST_PG_ADMIN_DB", "postgres"),
+        user=os.environ["CF_TEST_PG_USER"],
+        password=os.environ["CF_TEST_PG_PASSWORD"],
+        autocommit=True,
+    )
+
 
 @pytest.fixture(scope="module", autouse=True)
 def _configure_db():
-    """Aponta plugins_db para o PG de teste e isola o schema."""
+    """Recria banco dedicado de teste e aponta plugins_db para ele."""
     import controllership_finance_app.config as cfg
+
+    db_name = os.environ["CF_TEST_PG_NAME"]
+    # Destino ambíguo/compartilhado: falha aqui, antes de qualquer DDL.
+    assert_safe_test_database(db_name)
+    if os.getenv("CF_TEST_PG_ALLOW_DESTRUCTIVE") != "1":
+        pytest.skip(
+            "CF_TEST_PG_ALLOW_DESTRUCTIVE=1 ausente — limpeza destrutiva "
+            "do banco de teste não autorizada"
+        )
+
+    # Banco efêmero: DROP+CREATE no banco dedicado apenas; schemas vizinhos
+    # de outros contextos vivem em outros bancos e não são tocados.
+    with _admin_connection() as conn, conn.cursor() as cur:
+        cur.execute(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)')
+        cur.execute(f'CREATE DATABASE "{db_name}"')
 
     original = {
         k: getattr(cfg.settings, k)
@@ -62,28 +122,16 @@ def _configure_db():
     }
     cfg.settings.PLUGINS_DB_HOST = os.environ["CF_TEST_PG_HOST"]
     cfg.settings.PLUGINS_DB_PORT = os.getenv("CF_TEST_PG_PORT", "5432")
-    cfg.settings.PLUGINS_DB_NAME = os.environ["CF_TEST_PG_NAME"]
+    cfg.settings.PLUGINS_DB_NAME = db_name
     cfg.settings.PLUGINS_DB_USER = os.environ["CF_TEST_PG_USER"]
     cfg.settings.PLUGINS_DB_PASSWORD = os.environ["CF_TEST_PG_PASSWORD"]
     cfg.settings.PLUGINS_DB_SSLMODE = os.getenv("CF_TEST_PG_SSLMODE", "prefer")
     cfg.settings.PLUGINS_DB_CONNECT_TIMEOUT = 10
 
-    # Schema limpo por execução — apenas o schema deste contexto.
-    with plugins_db.plugins_db_connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "DROP SCHEMA IF EXISTS controllership_finance CASCADE"
-            )
-        conn.commit()
-
     yield
 
-    with plugins_db.plugins_db_connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "DROP SCHEMA IF EXISTS controllership_finance CASCADE"
-            )
-        conn.commit()
+    with _admin_connection() as conn, conn.cursor() as cur:
+        cur.execute(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)')
     for k, v in original.items():
         setattr(cfg.settings, k, v)
 
@@ -244,6 +292,54 @@ def test_published_immutable(migrated, repo):
         repo.publish_version(
             template_id, 1, effective_from_period="2026-01", actor=ADMIN
         )
+
+
+def test_duplicate_item_key_typed_and_atomic(migrated, repo):
+    """R1: item_key duplicado ⇒ erro tipado; nenhuma mutação parcial."""
+    template_id = _template_id(repo)
+    draft_version = next(
+        v["version"]
+        for v in repo.list_versions(template_id)
+        if v["status"] == "DRAFT"
+    )
+    revision_before = repo.get_version(template_id, draft_version)[
+        "revision"
+    ]
+    items_before = repo.get_version_with_items(template_id, draft_version)[
+        "items"
+    ]
+
+    with pytest.raises(de.DuplicateItemKey):
+        repo.update_draft_items(
+            template_id,
+            draft_version,
+            expected_revision=revision_before,
+            items=[
+                {
+                    "item_key": "CK-DUP",
+                    "sheet": "ELETRONICO",
+                    "name": "a",
+                    "origin_kind": "EXTERNAL",
+                },
+                {
+                    "item_key": "CK-DUP",
+                    "sheet": "ELETRONICO",
+                    "name": "b",
+                    "origin_kind": "EXTERNAL",
+                },
+            ],
+            actor=ADMIN,
+        )
+
+    after = repo.get_version(template_id, draft_version)
+    assert after["revision"] == revision_before
+    assert after["status"] == "DRAFT"
+    items_after = repo.get_version_with_items(template_id, draft_version)[
+        "items"
+    ]
+    assert [i["item_key"] for i in items_after] == [
+        i["item_key"] for i in items_before
+    ]
 
 
 def test_audit_trail_append_only(migrated, repo):

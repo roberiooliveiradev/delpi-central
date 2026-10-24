@@ -46,6 +46,11 @@ class StaleRevision(ChecklistDomainError):
     status = 409
 
 
+class DuplicateItemKey(ChecklistDomainError):
+    code = "duplicate_item_key"
+    status = 409
+
+
 class NoPublishedTemplate(ChecklistDomainError):
     code = "no_published_template"
     status = 409

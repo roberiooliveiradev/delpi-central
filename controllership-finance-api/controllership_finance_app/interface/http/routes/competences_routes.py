@@ -18,7 +18,10 @@ from controllership_finance_app.domain.closing_checklist.errors import (
 from controllership_finance_app.infrastructure.persistence.closing_checklist_repository import (
     ClosingChecklistRepository,
 )
-from controllership_finance_app.interface.http.authz import authorized_user
+from controllership_finance_app.interface.http.authz import (
+    actor_subject,
+    authorized_user,
+)
 
 router = APIRouter(prefix="/closing/competences", tags=["Closing Competences"])
 
@@ -31,10 +34,6 @@ class OpenCompetenceRequest(BaseModel):
 
 def _repository() -> ClosingChecklistRepository:
     return ClosingChecklistRepository()
-
-
-def _actor(user) -> str:
-    return str(getattr(user, "id", None) or getattr(user, "email", ""))
 
 
 def _domain_fail(exc: ChecklistDomainError, operation_id: str):
@@ -64,7 +63,7 @@ def open_closing_competence(request: Request, body: OpenCompetenceRequest):
     user = authorized_user(request)
     try:
         competence, created = _repository().open_competence(
-            body.period, actor=_actor(user)
+            body.period, actor=actor_subject(user)
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "open_closing_competence")

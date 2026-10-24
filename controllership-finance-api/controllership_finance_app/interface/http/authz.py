@@ -12,6 +12,8 @@ Regras (docs 14/96/99):
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import Request
 
 from delpi_auth.authz_core import has_permission
@@ -50,3 +52,16 @@ def authorized_admin(request: Request):
     if not has_permission(user, MANAGE_PERMISSION):
         raise Exception("Forbidden")
     return user
+
+
+def actor_subject(user) -> str:
+    """Identidade do ator para colunas UUID (auditoria/abertura).
+
+    Aceita somente o `id` (subject UUID resolvido pelo Core `/me`) do
+    principal humano. Sem fallback para e-mail ou identidade alternativa:
+    identificador ausente/malformado é rejeitado antes de persistir.
+    """
+    try:
+        return str(uuid.UUID(str(getattr(user, "id", None))))
+    except (TypeError, ValueError):
+        raise Exception("Unauthorized") from None
