@@ -272,3 +272,34 @@ A referência aprovada ilustra estrutura e hierarquia. Itens ilustrativos (data/
 **Task bounded:** `DELIA-UX-INLINE-CONTEXT-RESPONSIVE-MULTICOLUMN-REFACTOR-01`. REANCHOR → correção documental (esta seção) → diagnóstico de largura → REUSE/CONTRACT gates → RED → implement → GREEN → QA responsivo autenticado → rework → evidência/ledger → commit/push main → deploy frontend → verify → report.
 
 **Esta alteração documental não modifica runtime: RUNTIME_CHANGED=NO; TEST_NOT_RUN; PHASE_NOT_ADVANCED.**
+
+
+### Implementação (Responsive Multi-Column) — 2026-10-24 — `664eec398c`
+
+**Task:** `DELIA-UX-INLINE-CONTEXT-RESPONSIVE-MULTICOLUMN-REFACTOR-01`. Base `7237b92a5d` (após correção documental). Scope: frontend/CSS apenas — backend, Core, Keycloak, Domain APIs, providers inalterados.
+
+**Causa-raiz do card estreito (diagnóstico §5):** o `max-width:640px` do card **não era** o constraint real. A cadeia era: `--delpi-ui-conversation-column-max: 760px` (plugin-ui) → coluna de leitura ~712px → `.delia-turn--delia { align-self:flex-start }` shrink-wrap → card delimitado pela largura do texto (~550px em 1440 e em 1920 — medido em produção antes do diff).
+
+**Implementação (menor diff, owner-correto):**
+- `index.css`: `.dashboard-delia .delpi-ui-conversation-workspace { --delpi-ui-conversation-column-max: 1120px }` — escopo DÉLIA apenas; token default inalterado para outros consumidores. Texto da resposta continua `max-width:68ch`; composer/header acompanham a coluna.
+- `index.css`: `.delia-turn:has(.delia-turn__context) { max-width:100%; width:100% }` — o turno com contexto aberto usa a largura da coluna (antes shrink-wrap ao texto). Demais turnos inalterados (88%).
+- `index.css`: `.delia-turn__context` remove `max-width:640px`, vira `container-type: inline-size`. Container queries no **próprio card** (não viewport): `<560px` 1 coluna (flex do painel compartilhado), `≥560px` 2 áreas (Detalhes à esquerda `grid-row:1/-1`; demais + trace à direita com divisória `border-left` sutil), `≥860px` 3 áreas (Detalhes | Evidências+Atividades | Rastreamento técnico). Fallback: só detalhes+trace → trace na 2ª coluna (sem coluna vazia). Sem altura fixa, sem scroll aninhado, sem overflow-x.
+- `ConversationContextPanel` (plugin-ui): EXTEND — novo prop opcional `trailing?: ReactNode` renderizado após as seções dentro do painel (genérico, sem lógica DÉLIA). Compatível com consumidores existentes (prop ausente = sem mudança).
+- `DeliaTurnContextPanel`: `<details className="delia-context__trace">` sai de dentro da seção "Detalhes" e vira `trailing` — item de layout próprio (3ª área) sem duplicar DOM; ordem semântica preservada.
+
+**Medições reais em produção (autenticado, getBoundingClientRect + computed styles):**
+
+| Viewport | Card width | Áreas (tracks) | Observações |
+|---|---|---|---|
+| 1920 | 1030px | 3 | detalhes \| ev+atividades \| trace; texto 550px |
+| 1600 | 898px | 3 | threshold ≥860 atinge wide |
+| 1440 | 738px | 2 | detalhes esq., resto dir. |
+| 320–420 | 210–305px | 1 | compacto, sem overflow |
+
+**QA autenticado (vd-wide-prod.mjs): 34/34 PASS** — WIDE-01..15 cobertos: largura ampla, 3/2/1 áreas, sem overflow, sem scroll aninhado, sem popover, sem barra azul, trace recolhível com spans reais, texto 68ch < card, composer não coberto, dois contextos independentes, painel global independente, teclado, reduced-motion.
+
+**Regressão:** delia Vitest 446/446 (+3 testes WIDE estruturais); plugin-ui Vitest 2335/2335; tsc ambos OK; build ambos OK; federation exports verify OK (`ConversationContextPanel` exportado). Deploy canônico `up-prod-sequential.sh --build plugin-ui delia`; SHA produção `664eec398c`.
+
+**Residual:** REAL_DOCK_QA TEST_NOT_RUN (container-query por largura do card garante compacto em dock estreito, mas probe do Dock real no Portal não executado); zoom 200%, dark/light visual, screen reader TEST_NOT_RUN (ARIA/ordem DOM/keyboard/reduced-motion verificados por probe+vitest).
+
+**WIDE-01..18:** 01–15 PASS; 16 PASS (regressão completa executada); 17 PASS (34/34 + medições + screenshots `shots-wide/`); 18 PASS (docs+ledger+push+deploy+verify). PHASE_NOT_ADVANCED.
