@@ -193,3 +193,10 @@ contrato PC. O badge «Em atraso» deriva do `delivery_status` dos itens
   `*ColumnHelp.ts` das novas colunas + Manual + FAQ (`feature-help-sync`,
   obrigatório em cada etapa de implementação).
 - Teclado/foco: expansões `aria-expanded`, links foco visível — padrão do kit.
+
+
+## Atualização pós-P0.R1 — decisão do PO D1/D2 (2026-10-24)
+
+- **D1 APROVADA:** 404 PC usa «Pedido não localizado entre os pedidos em aberto disponíveis para consulta.»; não anunciar conclusão.
+- **D2 APROVADA:** SC deve exibir aprovador junto ao estado de aprovação **se o produtor fornecer nome correspondente ao recurso**, fornecedor sugerido com rótulo inequívoco e **conta contábil na própria ficha principal**, dentro de uma seção contextual/administrativa por item quando a fonte for `lines[].account_code`. Não confundir conta contábil com centro de custo, não agrupar dados de diferentes linhas em um único cabeçalho sem contrato, não inferir valor faltante.
+- Esta nota prevalece sobre o wireframe anterior onde conta contábil foi excluída. A distribuição visual definitiva é implementada em fatias posteriores; esta atualização **não representa UI entregue**.
