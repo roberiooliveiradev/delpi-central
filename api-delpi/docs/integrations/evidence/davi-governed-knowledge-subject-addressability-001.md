@@ -68,3 +68,14 @@ Metamórficos: caixa alta/baixa, ordem de tokens, pontuação, termo inserido �
 ## 8. DÉLIA / R7
 
 A dependência DAVI-side identificada na R7 está endereçada: o consumidor localiza a seção por assunto sem conhecer `sNNNN`. **Não** resolve automaticamente O2/R7 — a homologação integrada ("Me dê dois exemplos de terminal bala" retornando dois registros verificáveis) pertence à Trilha B. `DÉLIA_O2=INCONCLUSIVE`; `R4_AUTHORIZED=NO`; status R7 inalterado.
+
+
+## 9. Revisão independente da coordenação — 2026-10-24
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (implementação/contrato local)**; **RELEASE_READINESS=CONDITIONAL**; **PRODUCTION_DEPLOY_AUTHORIZED=NO**. Revisados no GitHub o commit `6542b384796400c36052c4f241d2dc3599e18d89`, esta evidência e o caso de uso `read_governed_technical_knowledge`. Não houve reexecução independente de testes/SSH nesta sessão; os resultados de testes são `EXECUTOR_REPORTED_PASS`.
+
+**Aceito:** extensão opcional `subject` (1–240) mantendo `topic/section/corpus_version/page/page_size`, operação `read_governed_technical_knowledge` e duas tools MCP, corpus V1/V2 e proveniência; scoring bounded por documento e sem mapeamento hardcoded `assunto→sNNNN`; `NO_MATCH` tipado como cobertura; 30/30 RED→GREEN, suite focada 1506/1506 segundo executor, fluxo candidate-token→ASGI→READ reportado.
+
+**Condições antes da autorização operacional específica:** (1) executar **suíte DAVI completa aplicável** ou apresentar matriz objetiva das 4619 exclusões da slice e provar que não encobrem regressão; (2) caracterizar contrato `matched_terms/unmatched_terms`: atualmente os termos são calculados sobre **todos os itens ranqueados**, e não necessariamente os `selected_items` da página; provar que a semântica é de cobertura do conjunto ou ajustar contrato/testes para impedir interpretação incorreta de cobertura dos trechos entregues; (3) obter prova de generalização com subjects ambíguos, e confirmação de respostas/erros da rota OpenAPI além do caminho in-process; (4) assegurar imagem/SHA/config sob os gates de release canônicos. Nenhuma dessas condições autoriza nova arquitetura, RAG ou tool.
+
+**Delimitação:** a dependência `api-delpi` fica **localmente implementada**, não implantada nem homologada em runtime produtivo. `DELIA_O2=INCONCLUSIVE` — a disponibilidade da norma não garante sequenciamento semântico de knowledge→search na DÉLIA. Próximo passo: evidência de regressão/contrato → revisão de fechamento → **autorização operacional específica** → deploy `api-delpi` → smoke mínimo → teste R7 da DÉLIA no SHA/model/config real. Não realizar deploy em resposta a este review condicional.
