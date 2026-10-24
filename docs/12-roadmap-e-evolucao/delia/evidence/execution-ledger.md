@@ -9,8 +9,8 @@
 
 ### §6.426 — 2026-10-24 — Responsive Multi-Column Inline Context (DELIA-UX-INLINE-CONTEXT-RESPONSIVE-MULTICOLUMN-REFACTOR-01)
 
-- ; ;  (main ff; + rebuilt via ); .
-- Causa-raiz:  + turno shrink-wrap — card  não era o limitante (medido ~550px em 1440 e 1920). Fix: token  escopo , turno com contexto aberto , card vira  com áreas 3/2/1 por  (≥860px/≥560px/<560px).  EXTEND ( genérico) — trace vira área própria, DOM único, ordem semântica preservada.
-- Gates: delia 446/446, plugin-ui 2335/2335, tsc+build+federation OK. Produção autenticada  34/34: card 1030px/3 áreas @1920, 738px/2 @1440, 1 col @320–420, zero overflow, zero scroll aninhado, sem popover/barra azul, trace recolhível, dois contextos + painel global independentes, teclado + reduced-motion.
+- `STATE=COMPLETE_LIVE`; `RUNTIME_IMPLEMENTATION=EXECUTED`; `DEPLOYED_SHA=664eec398c` (main ff; `plugin-ui`+`delia` rebuilt via `up-prod-sequential.sh`); `PHASE_NOT_ADVANCED`.
+- Causa-raiz: `--delpi-ui-conversation-column-max:760px` + turno shrink-wrap — card `max-width:640` não era o limitante (medido ~550px em 1440 e 1920). Fix: token `1120px` escopo `.dashboard-delia`, turno com contexto aberto `width:100%`, card vira `container-type:inline-size` com áreas 3/2/1 por `@container` (≥860px/≥560px/<560px). `ConversationContextPanel` EXTEND (`trailing` genérico) — trace vira área própria, DOM único, ordem semântica preservada.
+- Gates: delia 446/446, plugin-ui 2335/2335, tsc+build+federation OK. Produção autenticada `vd-wide-prod.mjs` 34/34: card 1030px/3 áreas @1920, 738px/2 @1440, 1 col @320–420, zero overflow, zero scroll aninhado, sem popover/barra azul, trace recolhível, dois contextos + painel global independentes, teclado + reduced-motion.
 - Residual: REAL_DOCK_QA / zoom 200% / dark-light visual / screen reader TEST_NOT_RUN.
-- Evidência: spec 127 §decisão+implementação;  (C:\temp\delia-qa).
+- Evidência: spec 127 §decisão+implementação; `shots-wide/` (C:\temp\delia-qa).
