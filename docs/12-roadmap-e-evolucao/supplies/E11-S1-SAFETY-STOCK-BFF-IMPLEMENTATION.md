@@ -67,3 +67,12 @@ plugins/supplies (E11.S2, futuro)
 - `authorized_branches` upstream pode vir vazio em chamada BFF — mitigado por `branch_catalog` próprio.
 - Export CSV do legado: fora de escopo (`TO_INVENTORY`, decisão E11.P0).
 - `E11_S1_OUTCOME = ACCEPT`. **Readiness E11.S2:** rotas vivas e testadas; MFE pode consumir conforme contrato desta doc.
+
+
+## Revisão GPT — E11.S1 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para a implementação BFF; **`E11_S2_READY_TO_AUTHORIZE=YES`**, mas sem autorização automática de implementação frontend/deploy. Inspecionados no SHA `b21462896a`: este relatório, `safety_stock_service.py`, `safety_stock_routes.py`, `supplies_delpi_reads.py` e testes de rota. Foram confirmadas cinco rotas, `can_use_operations`, filial como filtro `all/01/02`, filial concreta nos detalhes, validação de paginação/sort e gateway BFF-only. Os resultados 499 PASS +21 SKIP e os quatro testes trusted-BFF são evidências do executor, não reexecutadas pelo GPT.
+
+**Residual de robustez de contrato a verificar:** métodos do gateway `SuppliesDelpiReads` retornam `{}` quando o `data` desenvelopado não é `dict`; em `SafetyStockService.get_filters/get_summary` há fallback semelhante. Checar resposta HTTP 200 com envelope `success:true,data:null/list` ou payload inválido, e envelope de erro `success:false`, para evitar que indisponibilidade/má formação pareça sucesso vazio. Provar caso real e caso irmão/negativo antes de alterar código. Se reproduzido, tratar como erro de integração distinto de empty/404 em task bounded ou antes do gate final E11; não bloquear o planejamento de E11.S2.
+
+**Não alterado:** ADR-009, sem permissions por filial, `api-delpi`, manifest, write ERP, frontend, deploy ou X4.PROD-C1. Gate federado/visual de E11 permanece `TEST_NOT_RUN`.
