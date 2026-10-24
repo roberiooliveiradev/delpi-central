@@ -210,6 +210,10 @@ Invariantes:
 | [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md) | estado de execução + fila; página-a-página |
 | [HOMOLOGACAO-PARIDADE.md](./HOMOLOGACAO-PARIDADE.md) | paridade mensurável |
 | [CUTOVER-RUNBOOK.md](./CUTOVER-RUNBOOK.md) | target-first, redirect-last |
+| [SC-PC-DETAIL-ENRICHMENT-P0.md](./SC-PC-DETAIL-ENRICHMENT-P0.md) | discovery P0: estado atual, gaps, owners e proposta das fichas de Detalhe da SC e do PC (`DISCOVERY_COMPLETE`/`IMPLEMENTATION_NOT_AUTHORIZED`) |
+| [SC-PC-DETAIL-DATA-CONTRACT-MATRIX.md](./SC-PC-DETAIL-DATA-CONTRACT-MATRIX.md) | matriz mestra de campos, endpoints, produtores e evidências das duas fichas |
+| [SC-PC-DETAIL-UX-WIREFRAMES.md](./SC-PC-DETAIL-UX-WIREFRAMES.md) | wireframes desktop/mobile, estados e componentes do kit das duas fichas |
+| [SC-PC-DETAIL-IMPLEMENTATION-ROADMAP.md](./SC-PC-DETAIL-IMPLEMENTATION-ROADMAP.md) | fases EN.A–EN.D, owners, gates e RQ/AC da evolução (proposta não autorizada) |
 | [DECISOES_FUNCIONAIS_PENDENTES.md](./DECISOES_FUNCIONAIS_PENDENTES.md) | somente decisões realmente não respondidas |
 | [ROADMAP-TRANSFORMA-PLUS.md](./ROADMAP-TRANSFORMA-PLUS.md) | **Visão de negócio Transforma+** (SUP-*, ondas, integrações) — descoberta/backlog; **não** duplica contratos técnicos nem autoriza implementação |
 | [BRANCH-AUTHZ-DOCS-R1-GLOBAL-RECONCILIATION.md](./BRANCH-AUTHZ-DOCS-R1-GLOBAL-RECONCILIATION.md) | reconciliação global: filial é filtro de dados, nunca autorização no Portal |
