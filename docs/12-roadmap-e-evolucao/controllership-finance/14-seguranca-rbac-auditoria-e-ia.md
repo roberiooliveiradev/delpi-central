@@ -221,25 +221,21 @@ Cobrir:
 
 ## IA
 
-Pode:
-- explicar;
-- resumir;
-- sugerir;
-- investigar;
-- apontar evidência;
-- comparar padrões.
+### Orientação e análise
 
-Não pode:
-- autorizar;
-- validar;
-- rejeitar;
-- sacramentar;
-- concluir;
-- enviar;
-- alterar configuração;
-- contornar business rules.
+IA assistiva pode explicar, resumir, sugerir, investigar, apontar evidência e comparar padrões; **não cria fonte de verdade de domínio** e não afirma aceite por inferência.
 
-Especialista MCP do Portal: [94 — CLARA](./94-clara-especialista-mcp-controladoria-financas.md) (TARGET). As regras acima permanecem vigentes; a conciliação com a equivalência de capacidades da CLARA está em aberto como `CLARA-D01` (`DECISION_REQUIRED`).
+### Decisão PO de 24/10/2026 — CLARA-D01=B: execução delegada com aval humano
+
+**A CLARA poderá executar pelo MCP as mesmas operações que o usuário efetivamente estiver autorizado a executar no Portal**, inclusive **validar, rejeitar e concluir**, mediante **solicitação e confirmação explícitas no chat para cada operação sensível**. A mesma regra se aplica a anexar, corrigir, finalizar, enviar para análise, administrar ou outra capacidade **somente quando tal operação existir no contrato do Portal e estiver autorizada ao ator**. Isso resolve o conflito anterior de proibição absoluta: **a IA não decide nem aprova por conta própria, mas pode ser o canal da ação humana delegada**. Referência: [94 — CLARA, decisão D01=B](./94-clara-especialista-mcp-controladoria-financas.md) e [93 — roadmap checkpoints MCP](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md).
+
+Para operações sensíveis, exigir `PREPARE → descrição de objeto, competência, versão, motivo/efeitos e riscos → aval explícito do usuário → ACT`, com proposta governada vinculada ao ator, versão e prazo. A confirmação não é uma permissão adicional, não é blanket consent e **não é decisão de negócio do modelo**. O backend da `controllership-finance-api` aplica **fresh effective permissions do Core AND resource_scope/ownership AND business_rule**, revalida estado e versão, impõe idempotência/concorrência, audita o ator e canal `mcp/clara` e só declara sucesso após comprovar a pós-condição.
+
+**Exemplos:** se a Joici puder anexar e validar o mesmo documento de forma separada, poderá pedir essas duas ações à CLARA, com confirmações e eventos próprios; anexar não autoaceita. Se o usuário elegível puder rejeitar evidência, a rejeição delegada exige motivo e preserva histórico. Concluir a competência exige **todas** as condições do contrato P5 (inclusive a reconciliação de C2), não apenas a palavra "concluir" no chat. O DRE/Contabilidade permanece consulta/download sem aceite na primeira versão.
+
+**Continua proibido:** a CLARA conceder permissões, fazer bypass de ownership, autenticar-se como administrador genérico, autorizar-se sozinha, validar/rejeitar/concluir sem consentimento explícito e regra válida, executar SQL arbitrário, acessar bancos vizinhos, falsificar estado/cálculo ou sacramentar no Protheus quando a operação não existir como capacidade autorizada do Portal. O **ato de sacramentação no ERP está fora da V1 P3** e não pode ser criado por equivalência genérica.
+
+**Estado de implementação:** `CLARA-D01=B / PO_APPROVED_PRODUCT_DECISION`. Contratos físicos de PREPARE/ACT, MCP, OAuth, delegação, segurança, testes e GO page-by-page continuam pendentes: `IMPLEMENTATION_AUTHORIZED=NO`. Nenhuma operação MCP sensível existe no runtime atual por esta decisão.
 
 ## Dados sensíveis
 
