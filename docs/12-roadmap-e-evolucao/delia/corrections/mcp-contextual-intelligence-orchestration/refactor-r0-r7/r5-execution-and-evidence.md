@@ -1,7 +1,7 @@
 # R5 — Validação de argumentos e propostas tipadas: prompt e registro de evidências
 
 **PLANO:** [125](../125-orchestration-complete-refactoring-finite-plan.md) · **RUNBOOK:** [130](../130-orchestration-refactor-r0-r7-execution-playbook.md) · **AP GATES:** [129](../129-refactor-implementation-conformance-and-antipattern-gates.md)  
-**TASK_ID:** `DELIA-C3-ORCHESTRATION-R5-SCHEMA-GOAL-MODEL-STAGE-REFACTOR-01` · **LOTES:** M08–M09 · **ESTADO DO DOCUMENTO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`.  
+**TASK_ID:** `DELIA-C3-ORCHESTRATION-R5-SCHEMA-GOAL-MODEL-STAGE-REFACTOR-01` · **LOTES:** M08–M09 · **ESTADO DO DOCUMENTO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` · `DEPLOY_STATUS=EXECUTED`.  
 **Autorização:** `R5_BOUNDED_ONLY=AUTHORIZED` — decisão explícita da coordenação no review independente de R4 (`8a9a960052`: `NEXT_STAGE_AUTHORIZED=R5_BOUNDED_ONLY`); `R6_AUTHORIZED=NO`, `R7_AUTHORIZED=NO`. Deploy autorizado pelo PO na mesma ordem, condicionado aos gates.
 
 ## Prompt pronto para Devin — executar SOMENTE quando gate liberado
@@ -45,11 +45,11 @@
 | REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | zero / n/a / PASS no escopo deterministicamente testável |
 | AUTO_REWORK_USED / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / n/a / n/a |
 | RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | M09 KEEP com razão registrada; O2 residual mantido / rollback: SHA anterior + imagem `8a3fe498f488` / zero secrets |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | `PENDING` (após push) |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | `e1a57f915b` (impl, rebase de `efcee871b6` — delia-api byte-idêntica à árvore testada) + `bb3c9c44f5` (docs) → origin/main `bb3c9c44f5` / `YES` ff-only |
 | README_LEDGER_UPDATED / DELETIONS_RATIONALE | README + ledger + plano 125 neste commit de docs / nenhuma deleção funcional |
 | EXECUTION_DRIFT / RESIDUALS / STOP_REASON | `NONE` / residuais: O2 INCONCLUSIVE, CRI_OFF_LIVE TEST_NOT_RUN, tokens indisponíveis, D1 variabilidade, password-grant pendente / sem STOP |
 | EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `IMPLEMENTED_STRUCTURE_ONLY — evidence ready for independent review` / `YES` |
-| DEPLOY | `PENDING` (registrado após execução canônica `[1/1] delia-api`) |
+| DEPLOY | `[1/1] delia-api` canonical `up-prod-sequential.sh --build delia-api`; nova imagem `dc9833166850`; rollback `8a3fe498f488` retida; health 200, unauth POST 401, 1 turno autenticado 200/GROUNDED; zero LLM-matrix em prod |
 
 ### Evidência específica da etapa R5
 
