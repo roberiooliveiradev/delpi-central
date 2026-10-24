@@ -137,3 +137,16 @@ Detalhe por etapa em `SC-PC-DETAIL-IMPLEMENTATION-ROADMAP.md`.
   rótulos baixa-vs-NF, página de NF só se rota/contrato provados.
 - **Fase D — Acompanhamento gerencial:** alertas, histórico auditável,
   "próximo passo/dono" — somente com owner canônico definido (D6).
+
+
+## Revisão GPT — Discovery SC/PC (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para o pacote de levantamento; `IMPLEMENTATION_NOT_AUTHORIZED` permanece.** Revisados no GitHub os quatro documentos do pacote no commit `8c90033681` (matriz de campos, proposta visual, roadmap e síntese). O inventário de campos, a separação frontend/BFF/produtores e os caminhos SC↔PC são base válida para planejar a Fase A, mas a implementação depende da reconciliação destes residuais:
+
+1. **Grandezas e unidades:** antes de expor KPIs `header.requested_quantity/ordered_quantity/received_quantity`, comprovar como são agregados e se há itens em UMs heterogêneas. Não somar UN/MT/KG como total de quantidade; preferir indicadores por UM/item ou contagem de itens quando a agregação não for semanticamente válida. Atualizar wireframes e AC antes do código.
+2. **Timeline:** é trilha de eventos de processo **derivada das fontes consultadas**, não histórico auditável completo. Usar rótulos como «Acompanhamento»/«Eventos disponíveis» e explicitar lacunas.
+3. **PC 404:** a rota só consulta pedidos abertos; 404 não demonstra por si só conclusão do pedido. Evitar mensagem categórica «concluído» e distinguir não localizado/filtro/indisponibilidade conforme contrato comprovado. D1 deve ser decidido antes de EN.A6.
+4. **Navegação e escopo:** vínculos SC↔PC exigem preservar chave composta (filial, documento e item quando material), AuthZ efetiva e escopo CC da SC no producer; link técnico não é concessão de acesso. Cobrir 403/404 e evitar vazamento de dados.
+5. **Metadados documentais:** o cabeçalho dos documentos registra `2026-06-06`, incompatível com a entrega de 24/10/2026. Corrigir a data editorial mantendo o `BASE HEAD` histórico sem reescrever evidências.
+
+**Sequência recomendada:** corrigir somente estes pontos documentais e promover decisões mínimas D1 (404 PC) e D2 (exposição de campos opcionais/sensíveis) ao PO; então planejar/autorizar EN.A1–A7 em fatias com testes positive+sibling+negative. EN.B–D permanecem apenas propostas. `NO_CODE_CHANGE`, `NO_DEPLOY`.
