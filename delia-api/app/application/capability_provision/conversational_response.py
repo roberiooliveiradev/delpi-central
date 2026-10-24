@@ -42,6 +42,13 @@ from app.application.capability_provision.outcome_assessment import (
     OUTCOME_INSUFFICIENT,
     AnswerRequirements,
     OutcomeVerdict,
+    _UUID_VALUE_RE,
+    _canonical_key,
+    _record_identifier,
+    _sanitize_renderable,
+    ordering_proof_fields,
+    parse_temporal_value,
+    verified_ordering_event,
 )
 from app.application.interaction.contracts import (
     LIMITATION_INSUFFICIENT_EVIDENCE,
@@ -472,3 +479,184 @@ def field_clause_label(
         article, label, participle = parts
         return f"{article} {label} {participle}"
     return f'o campo "{unmapped_field_label(raw_key, capitalized=False)}"'
+
+
+# ------------------------------------------------------------------
+# CRI presentation projection (R3/M05, plan 125). Record rendering
+# and ordering presentation moved from orchestration.py: the
+# composition owner now prepares PresentedRecord triples, scalar
+# leaf rendering and ordering date/event from typed evidence —
+# activation flags, call ledger and logging stay in coordinator
+# glue.
+# ------------------------------------------------------------------
+
+MAX_PRESENTED_VALUE_CHARS = 140
+
+
+def records_are_prior_excerpts(
+    records: tuple[Mapping, ...] | list[Mapping],
+) -> bool:
+    """True when every record is a prior-turn excerpt leaf only."""
+    if not records:
+        return False
+    return all(
+        isinstance(record, Mapping)
+        and bool(record)
+        and all(
+            _canonical_key(str(key)) == "excerpt" for key in record
+        )
+        for record in records
+    )
+
+
+def cri_scalar_text(value: object) -> str | None:
+    """Render one owner leaf for CRI presentation — verbatim
+    values, pt-BR readable booleans/dates, bounded."""
+    if isinstance(value, bool):
+        return "sim" if value else "não"
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        parsed = parse_temporal_value(text)
+        if parsed is not None:
+            base = parsed.strftime("%d/%m/%Y")
+            if (
+                parsed.hour
+                or parsed.minute
+                or parsed.second
+                or parsed.microsecond
+            ):
+                return f"{base} às {parsed.strftime('%Hh%M')}"
+            return base
+        return text
+    return None
+
+
+def presented_record(
+    record: Mapping,
+    field_labels: FieldLabels | None = None,
+) -> PresentedRecord:
+    """Sanitized render-ready projection of one owner record.
+
+    Scalars only — nested payloads stay out of the natural line
+    and remain reachable through the existing detail paths. Field
+    order is presentational: identifier first, then name/title,
+    then the rest in owner order. All values are verbatim
+    sanitized leaves — selection-only stays frozen.
+    """
+    sanitized = _sanitize_renderable(record)
+    if not isinstance(sanitized, Mapping):
+        return PresentedRecord()
+    triples: list[tuple[str, str, str]] = []
+    for key, value in sanitized.items():
+        rendered = cri_scalar_text(value)
+        if rendered is None:
+            continue
+        canon = _canonical_key(key)
+        # UUID leaves are surrogate references, never
+        # user-meaningful content — a record's identity is
+        # anchored by the business identifier/title; an opaque
+        # UUID under any field name adds nothing.
+        if _UUID_VALUE_RE.match(rendered):
+            continue
+        label = field_display_label(canon, key, field_labels)
+        triples.append(
+            (canon, label, rendered[:MAX_PRESENTED_VALUE_CHARS])
+        )
+    identifier = _record_identifier(record)
+    id_canon = (
+        _canonical_key(identifier[0]) if identifier else None
+    )
+    name_keys = {
+        "nome",
+        "name",
+        "titulo",
+        "title",
+        "descricao",
+        "description",
+    }
+
+    def _is_name(canon: str) -> bool:
+        return canon in name_keys or canon.startswith(
+            tuple(name_keys)
+        )
+
+    triples.sort(
+        key=lambda item: (
+            0
+            if item[0] == id_canon
+            else 1
+            if _is_name(item[0])
+            else 2
+        )
+    )
+    by_key = {canon: rendered for canon, _, rendered in triples}
+    title = next(
+        (
+            rendered
+            for canon, _, rendered in triples
+            if _is_name(canon) and canon != id_canon
+        ),
+        None,
+    )
+    return PresentedRecord(
+        fields=tuple(
+            (label, rendered) for _, label, rendered in triples
+        ),
+        identifier=(
+            by_key.get(id_canon, identifier[1])
+            if id_canon is not None
+            else None
+        ),
+        title=title,
+    )
+
+
+def ordering_presentation(
+    records: Sequence[Mapping],
+    verdict: OutcomeVerdict,
+    requirements: AnswerRequirements | None,
+    contract_text: str | None = None,
+) -> tuple[str | None, str | None]:
+    """Bounded ordering date/event for the CRI composition.
+
+    SEMANTIC-INTERPRETATION-01: the model may propose the
+    ordering's event meaning; it is claimed only after the
+    deterministic check binds the proposal to the field that
+    actually proves the ordering AND to owner-declared contract
+    text.
+    """
+    ordering_date = None
+    ordering_event = None
+    if (
+        verdict.decision == OUTCOME_ANSWERED
+        and requirements is not None
+        and requirements.ordering
+        and records
+    ):
+        ordering_field = ordering_proof_fields(records).get(
+            requirements.ordering
+        )
+        ordering_event = verified_ordering_event(
+            requirements, ordering_field, contract_text
+        )
+        raw = (
+            records[0].get(ordering_field)
+            if ordering_field is not None
+            else None
+        )
+        if raw is None and len(records) == 1:
+            raw = next(
+                (
+                    value
+                    for value in records[0].values()
+                    if parse_temporal_value(value) is not None
+                ),
+                None,
+            )
+        if parse_temporal_value(raw) is not None:
+            ordering_date = cri_scalar_text(raw)
+    return ordering_date, ordering_event

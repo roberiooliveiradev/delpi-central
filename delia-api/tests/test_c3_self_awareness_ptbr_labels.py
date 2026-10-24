@@ -20,6 +20,7 @@ import pytest
 from app.application.capability_provision.conversational_response import (
     field_clause_label,
     field_display_label,
+    presented_record,
 )
 from app.application.capability_provision.orchestration import (
     OperationalCapabilityOrchestrator,
@@ -119,9 +120,7 @@ def test_sa21_cri_presented_record_labels_ptbr():
         "email": "loja@exemplo.com",
         "b2_cm1": "7.5",
     }
-    presented = OperationalCapabilityOrchestrator._cri_presented_record(
-        orch, record
-    )
+    presented = presented_record(record, orch._field_labels)
     labels = {label for label, _value in presented.fields}
     assert "Data de atualização" in labels
     assert "E-mail" in labels

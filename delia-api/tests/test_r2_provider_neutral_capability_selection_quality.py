@@ -14,6 +14,9 @@ from app.application.capability_provision.contracts import (
     ProviderCapability,
     ProviderSurface,
 )
+from app.application.capability_provision.conversational_response import (
+    records_are_prior_excerpts,
+)
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
@@ -22,7 +25,6 @@ from app.application.capability_provision.orchestration import (
     OperationalCapabilityOrchestrator,
     _capability_payload,
     _list_header,
-    _records_are_prior_excerpts,
 )
 from tests.conftest import load_test_orchestration_instructions
 from app.application.interaction.capability_attempt import (
@@ -710,7 +712,7 @@ def test_r2_t17_owner_contract_gap_no_discovery():
 
 def test_r2_r3_framing_not_regressed():
     records = ({"excerpt": "a"}, {"excerpt": "b"})
-    assert _records_are_prior_excerpts(records)
+    assert records_are_prior_excerpts(records)
     assert "registro" not in _list_header(2, records=records).lower()
 
 

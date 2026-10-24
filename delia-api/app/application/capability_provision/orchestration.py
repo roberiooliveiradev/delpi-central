@@ -124,25 +124,25 @@ from app.application.capability_provision.contracts import (
 from app.application.capability_provision.conversational_response import (
     CriComposition,
     FieldLabels,
-    PresentedRecord,
     compose_cri_response,
     field_clause_label,
     field_display_label,
+    ordering_presentation,
+    presented_record,
+    records_are_prior_excerpts,
 )
 from app.application.capability_provision.outcome_assessment import (
     OUTCOME_ANSWERED,
-    OUTCOME_CONTRACT_FACTS,
     OUTCOME_ENVELOPE_ONLY,
     OUTCOME_INSUFFICIENT,
     AnswerRequirements,
     EvidenceFacts,
     OutcomeVerdict,
+    apply_verdict_limitation,
     assess_outcome,
     distinct_delivered_count,
-    ordering_proof_fields,
-    verified_ordering_event,
+    outcome_facts,
     parse_answer_requirements,
-    parse_temporal_value,
     MAX_CANDIDATE_ENTRIES,
     MAX_DESCRIPTION_CHARS,
     MAX_MISSING_INPUTS,
@@ -155,7 +155,6 @@ from app.application.capability_provision.outcome_assessment import (
     _CONTROL_PLANE_KEYS,
     _RESOLVER_ENTITY_KEYS,
     _RESOLVER_ENVELOPE_KEYS,
-    _UUID_VALUE_RE,
     _bound_owner_evidence,
     _candidate_contract_rows,
     _canonical_key,
@@ -163,7 +162,6 @@ from app.application.capability_provision.outcome_assessment import (
     _comparison_records,
     _contract_fact_rows,
     _entity_payload_slot,
-    _explicit_empty_business_collection,
     _extract_owner_entity_schemas,
     _is_generic_status,
     _mapping_items_excluding_control,
@@ -1994,21 +1992,6 @@ def _detail_lines(
         lines.append(f"- {label}: {value}")
     return lines
 
-def _records_are_prior_excerpts(
-    records: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]],
-) -> bool:
-    """True when every record is a prior-turn excerpt leaf only."""
-    if not records:
-        return False
-    return all(
-        isinstance(record, Mapping)
-        and bool(record)
-        and all(
-            _canonical_key(str(key)) == "excerpt" for key in record
-        )
-        for record in records
-    )
-
 def _list_header(
     count: int,
     *,
@@ -2020,7 +2003,7 @@ def _list_header(
     When the owner page reports ``has_more=True``, the returned item
     count is a page slice — never presented as an authoritative total.
     """
-    if records is not None and _records_are_prior_excerpts(records):
+    if records is not None and records_are_prior_excerpts(records):
         noun = "itens" if count != 1 else "item"
         return f"Recuperei {count} {noun} da orientação anterior:"
     if has_more is True:
@@ -5854,10 +5837,12 @@ class OperationalCapabilityOrchestrator:
         # and the grounded conversational composition — same edge,
         # same facts, never a second assessment.
         cri_facts = (
-            self._outcome_facts(
+            outcome_facts(
                 outcome,
-                operation_class=descriptor.operation_class,
-                field_labels=self._field_labels,
+                descriptor.operation_class,
+                record_resolver=lambda structured: _synthesis_records(
+                    structured, field_labels=self._field_labels
+                ),
             )
             if self._cri_active
             else None
@@ -8064,197 +8049,14 @@ class OperationalCapabilityOrchestrator:
             ",".join(verdict.reasons),
             correlation,
         )
-        if (
-            (
-                verdict.decision
-                in (OUTCOME_ENVELOPE_ONLY, OUTCOME_INSUFFICIENT)
-                or (
-                    verdict.decision == OUTCOME_CONTRACT_FACTS
-                    and verdict.reasons
-                )
-            )
-            and LIMITATION_INSUFFICIENT_EVIDENCE not in outcome.limitations
-        ):
-            return dataclasses.replace(
-                outcome,
-                limitations=(
-                    outcome.limitations
-                    + (LIMITATION_INSUFFICIENT_EVIDENCE,)
-                ),
-            )
-        return outcome
-
-    @staticmethod
-    def _outcome_facts(
-        outcome: SpecialistOutcome,
-        operation_class: SpecialistOperationClass | None = None,
-        *,
-        field_labels: FieldLabels | None = None,
-    ) -> EvidenceFacts:
-        """Bounded typed projection of a governed outcome.
-
-        Records, proven emptiness, coverage and authoritative totals
-        only — extracted through the existing structural helpers; never
-        raw payloads, never model-inferred fields. A DISCOVERY-class
-        outcome without business records additionally projects bounded
-        owner-published contract rows — capability-surface metadata,
-        never domain facts (C3 contextual discovery).
-        """
-        envelope = extract_pagination_envelope(outcome.structured)
-        if envelope is not None:
-            if envelope.has_more is True:
-                coverage: bool | None = False
-            elif envelope.has_more is False:
-                coverage = True
-            elif envelope.total_count is not None:
-                coverage = envelope.total_count <= len(envelope.items)
-            else:
-                coverage = None
-            return EvidenceFacts(
-                records=envelope.items,
-                has_business_evidence=bool(envelope.items),
-                explicit_empty=not envelope.items
-                and (
-                    envelope.has_more is False
-                    or envelope.total_count == 0
-                ),
-                is_complete=outcome.is_complete,
-                coverage_complete=coverage,
-                total_count=envelope.total_count,
-            )
-        records = _synthesis_records(
-            outcome.structured, field_labels=field_labels
-        )
-        contract_facts: tuple[str, ...] = ()
-        if not records:
-            # Terminal DISCOVERY outcomes carry bounded contract rows
-            # on the outcome itself (structured is dropped before the
-            # binding edge); non-terminal DISCOVERY payloads still
-            # project from structured directly.
-            contract_facts = outcome.contract_facts or (
-                _contract_fact_rows(outcome)
-                if operation_class is SpecialistOperationClass.DISCOVERY
-                and outcome.structured
-                else ()
-            )
-        return EvidenceFacts(
-            records=records,
-            has_business_evidence=bool(records),
-            explicit_empty=_explicit_empty_business_collection(
-                outcome.structured
-            ),
-            is_complete=outcome.is_complete,
-            contract_facts=contract_facts,
-        )
+        # R3/M04: the sufficiency->limitation rule lives in the
+        # assessment owner; the coordinator keeps activation gating
+        # and observability as minimal glue.
+        return apply_verdict_limitation(outcome, verdict)
 
     # ---- CRI E3 — grounded conversational composition ------------
 
     _CRI_RECORD_SCAN = 32
-    _CRI_MAX_VALUE_CHARS = 140
-
-    @staticmethod
-    def _cri_scalar_text(value: object) -> str | None:
-        """Render one owner leaf for CRI presentation — verbatim
-        values, pt-BR readable booleans/dates, bounded."""
-        if isinstance(value, bool):
-            return "sim" if value else "não"
-        if isinstance(value, (int, float)):
-            return str(value)
-        if isinstance(value, str):
-            text = value.strip()
-            if not text:
-                return None
-            parsed = parse_temporal_value(text)
-            if parsed is not None:
-                base = parsed.strftime("%d/%m/%Y")
-                if (
-                    parsed.hour
-                    or parsed.minute
-                    or parsed.second
-                    or parsed.microsecond
-                ):
-                    return f"{base} às {parsed.strftime('%Hh%M')}"
-                return base
-            return text
-        return None
-
-    def _cri_presented_record(
-        self, record: Mapping[str, Any]
-    ) -> PresentedRecord:
-        """Sanitized render-ready projection of one owner record.
-
-        Scalars only — nested payloads stay out of the natural line
-        and remain reachable through the existing detail paths. Field
-        order is presentational: identifier first, then name/title,
-        then the rest in owner order. All values are verbatim
-        sanitized leaves — selection-only stays frozen.
-        """
-        sanitized = _sanitize_renderable(record)
-        if not isinstance(sanitized, Mapping):
-            return PresentedRecord()
-        triples: list[tuple[str, str, str]] = []
-        for key, value in sanitized.items():
-            rendered = self._cri_scalar_text(value)
-            if rendered is None:
-                continue
-            canon = _canonical_key(key)
-            # UUID leaves are surrogate references, never
-            # user-meaningful content — a record's identity is
-            # anchored by the business identifier/title; an opaque
-            # UUID under any field name adds nothing.
-            if _UUID_VALUE_RE.match(rendered):
-                continue
-            label = field_display_label(canon, key, self._field_labels)
-            triples.append(
-                (canon, label, rendered[: self._CRI_MAX_VALUE_CHARS])
-            )
-        identifier = _record_identifier(record)
-        id_canon = (
-            _canonical_key(identifier[0]) if identifier else None
-        )
-        name_keys = {
-            "nome",
-            "name",
-            "titulo",
-            "title",
-            "descricao",
-            "description",
-        }
-
-        def _is_name(canon: str) -> bool:
-            return canon in name_keys or canon.startswith(
-                tuple(name_keys)
-            )
-
-        triples.sort(
-            key=lambda item: (
-                0
-                if item[0] == id_canon
-                else 1
-                if _is_name(item[0])
-                else 2
-            )
-        )
-        by_key = {canon: rendered for canon, _, rendered in triples}
-        title = next(
-            (
-                rendered
-                for canon, _, rendered in triples
-                if _is_name(canon) and canon != id_canon
-            ),
-            None,
-        )
-        return PresentedRecord(
-            fields=tuple(
-                (label, rendered) for _, label, rendered in triples
-            ),
-            identifier=(
-                by_key.get(id_canon, identifier[1])
-                if id_canon is not None
-                else None
-            ),
-            title=title,
-        )
 
     def _compose_cri_response(
         self,
@@ -8283,48 +8085,19 @@ class OperationalCapabilityOrchestrator:
             or verdict is None
         ):
             return None
-        if _records_are_prior_excerpts(facts.records):
+        if records_are_prior_excerpts(facts.records):
             return None
+        # R3/M05: record presentation and ordering preparation live
+        # in the composition owner; the coordinator keeps activation
+        # gating, call ledger and observability as minimal glue.
         prepared = tuple(
-            self._cri_presented_record(record)
+            presented_record(record, self._field_labels)
             for record in facts.records[: self._CRI_RECORD_SCAN]
         )
         req = goal.answer_requirements
-        ordering_date = None
-        ordering_event = None
-        if (
-            verdict.decision == OUTCOME_ANSWERED
-            and req is not None
-            and req.ordering
-            and facts.records
-        ):
-            ordering_field = ordering_proof_fields(facts.records).get(
-                req.ordering
-            )
-            # SEMANTIC-INTERPRETATION-01: the model may propose the
-            # ordering's event meaning; it is claimed only after the
-            # deterministic check binds the proposal to the field that
-            # actually proves the ordering AND to owner-declared
-            # contract text.
-            ordering_event = verified_ordering_event(
-                req, ordering_field, contract_text
-            )
-            raw = (
-                facts.records[0].get(ordering_field)
-                if ordering_field is not None
-                else None
-            )
-            if raw is None and len(facts.records) == 1:
-                raw = next(
-                    (
-                        value
-                        for value in facts.records[0].values()
-                        if parse_temporal_value(value) is not None
-                    ),
-                    None,
-                )
-            if parse_temporal_value(raw) is not None:
-                ordering_date = self._cri_scalar_text(raw)
+        ordering_date, ordering_event = ordering_presentation(
+            facts.records, verdict, req, contract_text
+        )
         comp_started = time.monotonic()
         cri = compose_cri_response(
             verdict=verdict,

@@ -12,13 +12,15 @@ Locks doc 35 remediation:
 
 from __future__ import annotations
 
+from app.application.capability_provision.conversational_response import (
+    records_are_prior_excerpts,
+)
 from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     _SELECTION_INCONCLUSIVE_CONTENT,
     _list_header,
     _prior_excerpt_records,
-    _records_are_prior_excerpts,
     _render_synthesis,
 )
 from app.application.interaction.capability_attempt import (
@@ -320,7 +322,7 @@ PRIOR = (
 
 def test_t12_method_guidance_framing():
     records = _prior_excerpt_records(PRIOR)
-    assert _records_are_prior_excerpts(records)
+    assert records_are_prior_excerpts(records)
     header = _list_header(len(records), records=records)
     assert "registro" not in header.lower()
     assert "orientação" in header.lower() or "item" in header.lower()
@@ -374,5 +376,5 @@ def test_t16_grounding_preservation():
 
 
 def test_t17_empty_evidence():
-    assert _records_are_prior_excerpts(()) is False
+    assert records_are_prior_excerpts(()) is False
     assert _list_header(0) == "Encontrei 0 registros:"

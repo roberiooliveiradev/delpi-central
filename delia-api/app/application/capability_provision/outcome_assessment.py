@@ -20,13 +20,23 @@ imports the orchestrator.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
-from app.domain.specialist_interop.model import SpecialistOutcome
+from app.application.capability_provision.paginated_result_semantics import (
+    extract_pagination_envelope,
+)
+from app.application.interaction.contracts import (
+    LIMITATION_INSUFFICIENT_EVIDENCE,
+)
+from app.domain.specialist_interop.model import (
+    SpecialistOperationClass,
+    SpecialistOutcome,
+)
 
 # Internal decision vocabulary (doc 73 §6). Logged per turn at the
 # binding edge; the wire keeps the existing limitations mechanism —
@@ -1472,3 +1482,120 @@ _GENERIC_COMPLETION_TEXTS = frozenset(
 
 def _is_generic_status(text: str) -> bool:
     return text.strip().lower() in _GENERIC_COMPLETION_TEXTS
+
+
+# ------------------------------------------------------------------
+# Outcome projection + verdict application (R3/M04, plan 125). The
+# typed EvidenceFacts projection and the verdict->limitation rule
+# moved from orchestration.py: the assessment owner now produces the
+# facts it classifies AND applies the bounded insufficiency marking.
+# Record extraction stays injectable because the synthesis resolver
+# depends on guidance machinery still owned by the coordinator
+# (later milestones).
+# ------------------------------------------------------------------
+
+
+def outcome_facts(
+    outcome: SpecialistOutcome,
+    operation_class: SpecialistOperationClass | None = None,
+    *,
+    record_resolver: (
+        Callable[[object], tuple[Mapping[str, Any], ...]] | None
+    ) = None,
+) -> EvidenceFacts:
+    """Bounded typed projection of a governed outcome.
+
+    Records, proven emptiness, coverage and authoritative totals
+    only — extracted through the existing structural helpers; never
+    raw payloads, never model-inferred fields. A DISCOVERY-class
+    outcome without business records additionally projects bounded
+    owner-published contract rows — capability-surface metadata,
+    never domain facts (C3 contextual discovery).
+
+    ``record_resolver`` is the coordinator-injected extraction step
+    (synthesis records incl. guidance machinery); when absent, the
+    resolver-entity projection is used.
+    """
+    envelope = extract_pagination_envelope(outcome.structured)
+    if envelope is not None:
+        if envelope.has_more is True:
+            coverage: bool | None = False
+        elif envelope.has_more is False:
+            coverage = True
+        elif envelope.total_count is not None:
+            coverage = envelope.total_count <= len(envelope.items)
+        else:
+            coverage = None
+        return EvidenceFacts(
+            records=envelope.items,
+            has_business_evidence=bool(envelope.items),
+            explicit_empty=not envelope.items
+            and (
+                envelope.has_more is False
+                or envelope.total_count == 0
+            ),
+            is_complete=outcome.is_complete,
+            coverage_complete=coverage,
+            total_count=envelope.total_count,
+        )
+    resolver = (
+        record_resolver
+        if record_resolver is not None
+        else _resolver_entities
+    )
+    records = resolver(outcome.structured)
+    contract_facts: tuple[str, ...] = ()
+    if not records:
+        # Terminal DISCOVERY outcomes carry bounded contract rows
+        # on the outcome itself (structured is dropped before the
+        # binding edge); non-terminal DISCOVERY payloads still
+        # project from structured directly.
+        contract_facts = outcome.contract_facts or (
+            _contract_fact_rows(outcome)
+            if operation_class is SpecialistOperationClass.DISCOVERY
+            and outcome.structured
+            else ()
+        )
+    return EvidenceFacts(
+        records=records,
+        has_business_evidence=bool(records),
+        explicit_empty=_explicit_empty_business_collection(
+            outcome.structured
+        ),
+        is_complete=outcome.is_complete,
+        contract_facts=contract_facts,
+    )
+
+
+def apply_verdict_limitation(
+    outcome: SpecialistOutcome,
+    verdict: OutcomeVerdict,
+) -> SpecialistOutcome:
+    """Mark insufficient evidence on the outcome itself.
+
+    CRI E2-R3 governed rule: an ``envelope_only``/``insufficient``
+    verdict — or ``contract_facts`` carrying reasons — re-marks the
+    outcome's own limitations so every render path carries it; the
+    wire status is never rewritten and no confident answer is
+    fabricated. CRI activation gating and observability stay in the
+    coordinator glue.
+    """
+    if (
+        (
+            verdict.decision
+            in (OUTCOME_ENVELOPE_ONLY, OUTCOME_INSUFFICIENT)
+            or (
+                verdict.decision == OUTCOME_CONTRACT_FACTS
+                and verdict.reasons
+            )
+        )
+        and LIMITATION_INSUFFICIENT_EVIDENCE not in outcome.limitations
+    ):
+        return dataclasses.replace(
+            outcome,
+            limitations=(
+                outcome.limitations
+                + (LIMITATION_INSUFFICIENT_EVIDENCE,)
+            ),
+        )
+    return outcome

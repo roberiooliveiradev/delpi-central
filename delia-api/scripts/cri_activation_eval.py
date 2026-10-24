@@ -10,7 +10,7 @@ Part D is deterministic: a TÉO-shaped records fixture (the production
 incident shape — PROC-0080 with codigo_processo / nome_processo /
 gestor_responsavel UUID / status_processo / raw ISO created_at) is fed
 through the baseline ``_render_synthesis`` and through the real CRI E3
-seam (``_cri_presented_record`` + ``compose_cri_response`` on a live
+seam (``presented_record`` + ``compose_cri_response`` on a live
 orchestrator instance with the governed vocabulary resource). No model
 is needed for this half — the render divergence is code-level.
 

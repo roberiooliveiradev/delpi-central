@@ -30,6 +30,7 @@ from app.application.capability_provision.contracts import (
 from app.application.capability_provision.conversational_response import (
     PresentedRecord,
     compose_cri_response,
+    presented_record,
 )
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
@@ -691,12 +692,13 @@ def test_presented_record_labels_humanize_snake_keys():
         _outcome("processes", structured={"items": [], "has_more": False}),
         enabled=True,
     )
-    presented = orch._cri_presented_record(
+    presented = presented_record(
         {
             "codigo_processo": "PROC-0080",
             "nome_processo": "Monitoramento de Estoque",
             "gestor_responsavel": "Ana",
-        }
+        },
+        orch._field_labels,
     )
     labels = [label for label, _ in presented.fields]
     assert "Codigo processo" in labels

@@ -34,6 +34,7 @@ from app.application.capability_provision.orchestration import (
     GROUP_SELECTION_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
+    _synthesis_records,
 )
 from app.application.capability_provision.outcome_assessment import (
     OUTCOME_CONTRACT_FACTS,
@@ -42,7 +43,18 @@ from app.application.capability_provision.outcome_assessment import (
     EvidenceFacts,
     OutcomeVerdict,
     assess_outcome,
+    outcome_facts,
 )
+
+
+def _outcome_facts(outcome, operation_class=None):
+    """Test adapter: typed facts via the assessment owner, resolving
+    records through the orchestration-owned synthesis projection."""
+    return outcome_facts(
+        outcome, operation_class, record_resolver=_synthesis_records
+    )
+
+
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )
@@ -467,14 +479,14 @@ def test_contract_facts_projected_only_for_discovery_class():
         "catalog",
         structured=_CATALOG_STRUCTURED,
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     assert facts.contract_facts
     assert any(
         "filterable_fields" in row for row in facts.contract_facts
     )
-    read_facts = OperationalCapabilityOrchestrator._outcome_facts(
+    read_facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.READ
     )
     assert read_facts.contract_facts == ()
@@ -487,7 +499,7 @@ def test_contract_facts_never_projected_for_business_records():
         "catalog",
         structured=_RECORDS_STRUCTURED,
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     assert facts.has_business_evidence is True
@@ -598,7 +610,7 @@ def test_contract_facts_redact_credential_material():
             "authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc",
         },
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     joined = "\n".join(facts.contract_facts)
@@ -628,7 +640,7 @@ def test_contract_facts_instruction_shaped_content_stays_bounded_data():
             }
         },
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     verdict = assess_outcome(facts)
@@ -646,7 +658,7 @@ def test_contract_facts_malformed_payload_fails_closed():
         "catalog",
         structured=None,
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     assert facts.contract_facts == ()
@@ -686,7 +698,7 @@ def test_contract_facts_read_surface_wins_over_write_schemas():
             },
         },
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     process_rows = [
@@ -712,7 +724,7 @@ def test_terminal_discovery_outcome_carries_facts_without_structured():
         structured=None,
         contract_facts=("entities.process: {}",),
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     assert facts.contract_facts == ("entities.process: {}",)
@@ -795,7 +807,7 @@ def _discovery_facts(structured):
         "docs", "get_catalog", "Discovery completed.",
         structured=structured,
     )
-    return OperationalCapabilityOrchestrator._outcome_facts(
+    return _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
 
@@ -933,7 +945,7 @@ def test_business_records_survive_descriptor_filter():
             ]
         },
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.READ
     )
     assert facts.has_business_evidence is True
@@ -959,7 +971,7 @@ def test_business_record_with_operation_homonym_fields_preserved():
         "teo", "get_process", "ok",
         structured={"items": [record]},
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.READ
     )
     assert facts.has_business_evidence is True
@@ -978,7 +990,7 @@ def test_sparse_descriptor_entry_still_excluded():
             ]
         },
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.READ
     )
     assert facts.has_business_evidence is False
@@ -1020,7 +1032,7 @@ def test_large_capability_catalog_bounded_and_not_business():
         },
     }
     outcome = _outcome("vista", "get_catalog", "ok", structured=catalog)
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     assert facts.has_business_evidence is False
@@ -1052,7 +1064,7 @@ def test_entity_schema_homonymous_fields_preserved():
             },
         },
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     joined = "\n".join(facts.contract_facts)
@@ -1081,7 +1093,7 @@ def test_text_payload_json_catalog_not_line_dumped():
         content_text=_json.dumps(_DAVI_DISCOVERY_ENVELOPE),
         structured=None,
     )
-    facts = OperationalCapabilityOrchestrator._outcome_facts(
+    facts = _outcome_facts(
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     joined = "\n".join(facts.contract_facts)
