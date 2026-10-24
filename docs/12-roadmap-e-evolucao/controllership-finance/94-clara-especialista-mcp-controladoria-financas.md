@@ -46,6 +46,8 @@ Equivalência de capacidades = **equivalência de autorização**, não
 execução automática. Confirmações, validações humanas e pré-condições
 exigidas pela operação no Portal são preservadas integralmente.
 
+**Decisão PO posterior (24/10/2026, `CLARA-D01=B`):** a CLARA poderá executar pelo chat atos como **validar, rejeitar e concluir** com **aval explícito por operação** do usuário autenticado que detenha essa capacidade no Portal. O MCP é um canal de delegação, não uma entidade que valida ou conclui por iniciativa própria. A confirmação do usuário não substitui autorização efetiva do Core, escopo, vínculo, business rules, versão e auditoria. A [regra de IA, doc 14](./14-seguranca-rbac-auditoria-e-ia.md), foi revisada formalmente para distinguir execução delegada de decisão autônoma. **Runtime permanece não autorizado.**
+
 ## 3. Inventário da plataforma MCP (CURRENT — verificado no HEAD)
 
 ### 3.1 Fundação compartilhada `shared/delpi_mcp`
@@ -220,17 +222,27 @@ autorizado e justificado (`PLANNED`, nenhuma prevista nesta fase).
   fail-closed.
 - Sem retry em escrita não idempotente; timeouts herdados da BFF.
 
-## 10. Decisões abertas — `DECISION_REQUIRED`
+## 10. Registro decisório CLARA-D01=B e decisões técnicas ainda abertas
 
-| ID | Questão | Evidência | Opções | Recomendação (não decidida) |
-|---|---|---|---|---|
-| **CLARA-D01** | Conciliar "executa o que o usuário pode executar" com doc 14 §IA ("IA não pode autorizar, validar, rejeitar, sacramentar, concluir, enviar, alterar configuração") | doc 14 linhas 222–240 vigentes | (A) atos de julgamento humano (validar, rejeitar, aprovar, sacramentar, finalizar, enviar pacote, alterar configuração) permanecem **fora** do ACT via MCP — apenas UI; ACT cobre operações operacionais. (B) ACT permitido para todos os atos do usuário, como delegado, com confirmação explícita obrigatória e auditoria de canal — exige revisão formal do doc 14 | **A** para a primeira fase — preserva a regra vigente; B só por decisão explícita do PO que altere o doc 14 |
-| **CLARA-D02** | Hospedagem da superfície MCP | TÉO/DAVI/VISTA embutidos na API owner (§3.2) | (A) superfície `/mcp` dentro da `controllership-finance-api` (padrão da plataforma); (B) serviço MCP separado chamando a BFF por HTTP | **A** — segue o padrão real, evita novo deploy/credencial |
-| **CLARA-D03** | Cadeia de delegação do token MCP até api-delpi | §5.2 | (A) mesmo token OAuth delegado (exige audience compatível); (B) token exchange; (C) BFF resolve identidade e mantém S2S próprio | `TO_INVENTORY` com owner de segurança/Keycloak antes de escolher |
-| **CLARA-D04** | Mecanismo PREPARE/ACT | `governed_writes` do TÉO é local ao `tm_app` | (A) replicar o padrão no owner C&F; (B) extrair para shared quando houver 2º consumidor real | A agora; B somente com 2+ consumidores (regra de shared code) |
-| **CLARA-D05** | Escopo da primeira fatia | BFF só tem READ | (A) DISCOVERY+READ+ANALYSIS sobre os 4 contratos atuais; (B) aguardar contratos P1–P6 | **A** — valor imediato, zero escrita |
+| ID | Tema | Decisão / condição | Estado |
+|---|---|---|---|
+| **CLARA-D01** | Paridade das operações do Portal, incluindo ações sensíveis no chat | **OPÇÃO B APROVADA PELO PO EM 24/10/2026:** PREPARE/ACT delegado pode validar, rejeitar, concluir e executar demais operações **que o mesmo usuário já poderia executar na UI/BFF**, com confirmação humana explícita por ação, audit e verificação de resultado. A autorização final continua na BFF/Core. [Doc 14 §IA](./14-seguranca-rbac-auditoria-e-ia.md) atualizado. | `PO_APPROVED / DESIGN_ONLY`; nenhuma ACT sensível criada |
+| **CLARA-D02** | Hospedagem MCP na API dona ou serviço separado | (A) `/mcp` owner-local na `controllership-finance-api` (padrão comprovado TÉO/VISTA, recomendado); (B) serviço separado via BFF. Não escolher por preferência antes de gate. | `DECISION_REQUIRED` |
+| **CLARA-D03** | Delegação OAuth/MCP até api-delpi | (A) mesmo token quando audience compatível; (B) token exchange; (C) identidade validada pela BFF e S2S próprio. Inventário de Keycloak/segurança antes de decidir. | `TO_INVENTORY / DECISION_REQUIRED` |
+| **CLARA-D04** | PREPARE/ACT governado | (A) aplicar padrão TÉO local no owner C&F (recomendado); (B) extrair compartilhado só com consumidor real adicional. Não importar `governed_writes` do domain alheio. | `DECISION_REQUIRED` |
+| **CLARA-D05** | Primeira fatia da CLARA | (A) DISCOVERY+READ+ANALYSIS sobre contratos existentes da BFF (recomendado); (B) aguardar P1–P6. Isto é faseamento, **não** limita capacidade final aprovada. | `DECISION_REQUIRED` |
 
-Nenhuma recomendação acima está implementada ou aprovada.
+### 10.1 Contrato de confirmação da ação delegada (TARGET aprovado funcionalmente)
+
+1. Usuário autenticado solicita uma operação concreta no chat; CLARA resolve a capacidade específica da **mesma BFF que serve a UI** e apresenta `quem / recurso / competência / versão / ação / impactos / motivo exigido`. Texto genérico como "pode fazer tudo" não vale como confirmação.
+2. PREPARE **não modifica** estado de domínio e entrega uma proposta vinculada à identidade real, escopo, objeto, versão, efeitos e expiração. Reutilizar o padrão testado TÉO/VISTA sem copiar use cases/domains alheios.
+3. Usuário **confirma explicitamente aquela operação**. Sem aval → nenhuma ACT. A confirmação é intenção/consentimento; **não concede RBAC nem substitui validação do backend**.
+4. ACT verifica novamente Core effective permission (fresca para escrita), tipo de principal humano, ownership/resource_scope, elegibilidade (incluindo validator/reviewer/administrator), business rules, snapshot da versão, concorrência, idempotência e invariantes; grava apenas pela `controllership-finance-api` e audita `mcp/clara` com ator/correlação.
+5. Após ACT, o serviço lê e verifica a pós-condição real; erro, timeout, rejeição, conflito, proposta expirada ou estado inconclusivo não viram sucesso afirmado.
+
+**Exemplos vinculantes:** (i) Joici pode anexar e depois validar um PDF quando for elegível às duas ações, mas há duas confirmações/eventos independentes e `ATTACHED != VALIDATED`; (ii) rejeição exige motivo/histórico; (iii) concluir competência exige todos os critérios P5, sem reduzir `MONTHLY_CLOSING_COMPLETED` a confirmação no chat; (iv) Contabilidade/DRE é destinatária de leitura/download futuro, **não** tem capacidade de validar ou aprovar na primeira versão; (v) sacramentação ERP é externa ao Portal V1, portanto **não é ACT delegável** enquanto não houver capacidade autorizada e contrato expresso.
+
+**Nenhuma tool de escrita ainda existe.** Esta decisão resolve D01 de produto/IA; D02–D05 e os contratos técnicos/segurança continuam pendentes. `IMPLEMENTATION_AUTHORIZED=NO`.
 
 ## 11. Requisitos e critérios de aceite
 
@@ -251,6 +263,8 @@ ledger quando aprovado o gate de design).
 | RQ-CLARA-10 | Comunicação honesta | respostas distinguem fato/hipótese/recomendação; `source_missing` não vira 0 |
 | RQ-CLARA-11 | Verificação de pós-condição | ACT só reporta sucesso após leitura da pós-condição (`OUTCOME_VERIFICATION_FAILED` caso contrário) |
 | RQ-CLARA-12 | Sem permission própria da CLARA | diff de manifest/Core da fatia CLARA não adiciona código de permission; conjunto efetivo == contrato vigente do Portal |
+| RQ-CLARA-13 | Validar, rejeitar e concluir como usuário delegado | nenhuma alteração em PREPARE; confirmação humana **específica** a cada ação/objeto/versão; ACT só na BFF com Core efetivo, ownership, role do validador e business rules, depois auditoria/postcondition |
+| RQ-CLARA-14 | Sem elevação de privilégio por consentimento no chat | usuário sem capacidade da UI recebe negação ainda que confirme; DRE read-only não valida/rejeita/conclui; proposal de outro ator, expirada ou stale não executa |
 
 ## 12. Estratégia de testes (TARGET)
 
@@ -262,16 +276,16 @@ ledger quando aprovado o gate de design).
 - Contratos: envelope da BFF preservado; erros tipados (`scope_unavailable`).
 - Escrita (quando houver): PREPARE sem side effect; ACT idempotente;
   concorrência otimista; pós-condição.
+- **Consentimento humano e paridade sensível:** três matrizes mínimas **validar, rejeitar, concluir**, cada uma com positive (ator elegível, confirmação por recurso), sibling (outro recurso/versão/competência), negative (sem consentimento, wrong actor, permission revogada, reviewer inelegível, prazo expirado, stale version, Core/owner indisponível, business state inválido). Verificar audit e read-after-write.
+- **Separar upload e validação:** mesmo ator Joici pode efetuar ambas se autorizado; nunca autoaceite pelo upload. Conclusão mensal só após critérios P5 e evidencia de pós-condição; download DRE sem aceite.
 
 ## 13. Gates de implementação
 
-1. Decisões CLARA-D01..D05 explícitas do PO/arquiteto.
-2. Inventário de delegação (D03) com owner de segurança.
-3. Gate transversal (arquitetura, segurança, contratos, qualidade,
-   delivery) antes de qualquer código.
-4. Fatia 1 (se D05=A): DISCOVERY/READ/ANALYSIS sobre contratos `CURRENT`.
-5. PREPARE/ACT somente após contratos de escrita do Portal existirem e
-   D01 decidido.
+1. **D01=B já decidida pelo PO em 24/10/2026:** confirmar que doc 14, doc 93 e RQ/AC de ações sensíveis permanecem alinhados; não pedir nova escolha para esta decisão.
+2. Resolver D02/D04/D05 com owners; inventariar D03 com segurança/Keycloak. Design de OAuth/capabilities e contrato de confirmação ainda requer gate.
+3. Gate transversal de arquitetura, segurança, contratos, qualidade e delivery **antes de implementar MCP ou tools**; autorização separada por fatia.
+4. Fatia inicial de DISCOVERY/READ/ANALYSIS só após GO próprio, independentemente de D01=B.
+5. PREPARE/ACT só depois da respectiva operação UI/BFF existir e estar homologada, da confirmação e auditoria serem contratadas e de GO **por capability**. A decisão funcional não autoriza runtime genérico.
 
 ## 14. Evidências e próximos passos
 
@@ -281,5 +295,4 @@ Evidências deste documento: `shared/delpi_mcp/*` (docstrings e testes),
 `tv-dashboard-api` conformance test,
 `controllership-finance-api/.../routes/*`, docs 14, 23, 88, 91, 93.
 
-**Próximo passo delimitado:** decisão do PO sobre CLARA-D01, D02 e D05;
-em seguida inventário D03. Nenhuma implementação decorre deste documento.
+**Próximo passo delimitado:** D01=B está aprovada e documentada; inventariar D03, submeter D02/D04/D05 e contracts ao gate transversal, iniciar a primeira fatia somente após GO explícito. Nenhuma implementação decorre deste documento.
