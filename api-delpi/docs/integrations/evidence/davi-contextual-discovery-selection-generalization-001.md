@@ -112,3 +112,20 @@ and are now covered by the 27-case selection matrix above.
   untrusted document content.
 - No domain/product/topic/provider hardcoding; no mandatory LLM; discovery
   stays deterministic and efficient.
+
+## 6. Production deploy & smoke (2026-10-24)
+
+- `DEPLOY_SOURCE_SHA=1268f5ea24465f551cbc97326486ae9a23d772eb`
+  (fast-forward push to `main`; rebase over docs-only upstream commits).
+- Image `infra-api-delpi:4de618974ea3`; rollback tags
+  `davi-discovery-sel-rollback-b6e8366a` (= previous image `b6e8366a00f4`).
+- Deploy: canonical `up-prod-sequential.sh --build api-delpi`; container
+  `delpi-api-delpi` healthy; no other services restarted.
+- Smoke (in-container, no LLM): app boot, 2 MCP tools / 0 resources,
+  OpenAPI knowledge route, V1 15 docs + V2 17 docs manifests load,
+  `/health` 200, unauthenticated document route 401.
+- Discovery live-proven on the deployed image:
+  `Normas completas descrição matérias primas e TERM. BALA` →
+  `read_governed_technical_knowledge` (sole candidate);
+  `normas de codificação de produtos intermediários` → same;
+  `Me dê dois exemplos de terminal bala` → `search_products` top-1.
