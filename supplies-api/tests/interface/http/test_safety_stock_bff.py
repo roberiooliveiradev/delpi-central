@@ -119,6 +119,13 @@ def _details_envelope() -> dict:
                 "secondary_unit": "KG",
                 "conversion_factor": 0.5,
             },
+            "stock": {
+                "safety_stock": 100.0,
+                "available_stock": 85.0,
+                "primary_stock": 60.0,
+                "deficit_quantity": 15.0,
+            },
+            "purchase_coverage": {"status": "partial"},
             "open_purchase_orders": {"items": [], "total": 0},
             "open_purchase_requests": {"items": [], "total": 0},
             "stock_projection": {"status": "sufficient"},
@@ -529,6 +536,129 @@ def test_upstream_error_mapping(mock_resolve, mock_validate):
         )
     assert response.status_code == 502
     assert response.get_json()["code"] == "bad_gateway"
+
+
+
+# ---------- E11.S4 — envelope inválido upstream (residual S1) ----------
+#
+# Reproduzido: `unwrap_delpi_envelope` devolvia `data` tal qual e o método
+# convertia payload não-dict em `{}` com HTTP 200, confundindo sucesso,
+# vazio legítimo, payload malformado e `success=false` (data=None).
+# Agora payload sem shape contratual mínimo → 502 `bad_gateway`.
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_malformed_envelope_data_none_returns_502(mock_resolve, mock_validate):
+    """`data=None` (inclui `success=false`) nunca vira `{}` com 200."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = MagicMock()
+    client = create_app().test_client()
+    malformed = {"success": False, "data": None}
+    for path in (
+        "/safety-stock/filters",
+        "/safety-stock/summary?branch=01",
+        "/safety-stock/items?branch=01",
+        "/safety-stock/items/ABC/details?branch=01",
+        "/safety-stock/items/ABC/suppliers?branch=01",
+    ):
+        response = _get(client, gateway, path, malformed)
+        assert response.status_code == 502, path
+        assert response.get_json()["code"] == "bad_gateway"
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_malformed_envelope_data_list_returns_502(mock_resolve, mock_validate):
+    """`data=[]` onde se espera objeto → 502."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = MagicMock()
+    client = create_app().test_client()
+    malformed = {"success": True, "data": []}
+    for path in (
+        "/safety-stock/summary?branch=01",
+        "/safety-stock/items/ABC/details?branch=01",
+        "/safety-stock/items/ABC/suppliers?branch=01",
+    ):
+        response = _get(client, gateway, path, malformed)
+        assert response.status_code == 502, path
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_malformed_envelope_empty_object_returns_502(mock_resolve, mock_validate):
+    """`data={}` sem as chaves contratuais mínimas → 502 (não 200 vazio)."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = MagicMock()
+    client = create_app().test_client()
+    malformed = {"success": True, "data": {}}
+    for path in (
+        "/safety-stock/filters",
+        "/safety-stock/summary?branch=01",
+        "/safety-stock/items?branch=01",
+        "/safety-stock/items/ABC/details?branch=01",
+        "/safety-stock/items/ABC/suppliers?branch=01",
+    ):
+        response = _get(client, gateway, path, malformed)
+        assert response.status_code == 502, path
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_missing_envelope_wrapper_returns_502(mock_resolve, mock_validate):
+    """Payload sem envelope compatível (string/scalar) → 502."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = MagicMock()
+    client = create_app().test_client()
+    for path in (
+        "/safety-stock/summary?branch=01",
+        "/safety-stock/items?branch=01",
+        "/safety-stock/items/ABC/details?branch=01",
+    ):
+        response = _get(client, gateway, path, "unexpected-scalar")
+        assert response.status_code == 502, path
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_details_legitimate_404_preserved(mock_resolve, mock_validate):
+    """404 real do produtor (item inexistente) continua 404, não 502 nem 200."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = MagicMock()
+    gateway.get.side_effect = DelpiApiGatewayError(
+        "not found", status_code=404
+    )
+    client = create_app().test_client()
+    with patch(_GATEWAY, return_value=gateway):
+        response = client.get(
+            "/safety-stock/items/ZZZ/details?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 404
+    assert response.get_json()["code"] == "not_found"
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_details_empty_sections_are_legitimate(mock_resolve, mock_validate):
+    """Coleções vazias dentro de um detalhe válido seguem 200 (empty real)."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = MagicMock()
+    client = create_app().test_client()
+    envelope = _details_envelope()
+    envelope["data"]["open_purchase_orders"] = {"items": [], "total": 0}
+    envelope["data"]["open_commitments"] = {"items": [], "total": 0}
+    response = _get(
+        client, gateway, "/safety-stock/items/ABC/details?branch=01", envelope
+    )
+    assert response.status_code == 200
+    assert response.get_json()["open_purchase_orders"]["items"] == []
 
 
 def test_safety_stock_routes_registered():

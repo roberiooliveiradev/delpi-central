@@ -2,8 +2,31 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGateway
+from app.infrastructure.gateways.delpi_api_gateway import (
+    DelpiApiGateway,
+    DelpiApiGatewayError,
+)
 from app.infrastructure.gateways.delpi_envelope import summary_dict, unwrap_delpi_envelope
+
+
+def _require_safety_stock_dict(
+    data: Any, operation: str, required_keys: tuple[str, ...] = ()
+) -> dict[str, Any]:
+    """Envelope upstream malformado NÃO é vazio legítimo.
+
+    `data` não-dict (None/lista/scalar) ou dict sem as chaves contratuais
+    mínimas é falha de integração canônica → 502 no BFF; nunca `{}` com
+    HTTP 200 confundindo sucesso real, vazio legítimo e payload inválido.
+    Lista vazia (`items=[]`, `total=0`) é empty legítimo e passa.
+    """
+    if not isinstance(data, dict) or any(
+        key not in data for key in required_keys
+    ):
+        raise DelpiApiGatewayError(
+            f"api-delpi returned invalid payload for {operation}",
+            code="invalid_upstream_payload",
+        )
+    return data
 
 
 class SuppliesDelpiReads:
@@ -180,7 +203,11 @@ class SuppliesDelpiReads:
                 },
             )
         )
-        return data if isinstance(data, dict) else {}
+        return _require_safety_stock_dict(
+            data,
+            "safety-stock filters",
+            ("product_groups", "units", "statuses"),
+        )
 
     def get_safety_stock_summary(
         self,
@@ -221,7 +248,9 @@ class SuppliesDelpiReads:
                 ),
             )
         )
-        return data if isinstance(data, dict) else {}
+        return _require_safety_stock_dict(
+            data, "safety-stock summary", ("total_materials",)
+        )
 
     def get_purchase_order_otd_series(
         self,
@@ -410,7 +439,9 @@ class SuppliesDelpiReads:
                 params=params,
             )
         )
-        return data if isinstance(data, dict) else {}
+        return _require_safety_stock_dict(
+            data, "safety-stock items", ("items", "total", "page")
+        )
 
     def get_safety_stock_item_details(
         self,
@@ -430,7 +461,9 @@ class SuppliesDelpiReads:
                 params={"branch": concrete},
             )
         )
-        return data if isinstance(data, dict) else {}
+        return _require_safety_stock_dict(
+            data, "safety-stock item details", ("product", "stock")
+        )
 
     def get_safety_stock_item_suppliers(
         self,
@@ -450,4 +483,6 @@ class SuppliesDelpiReads:
                 params={"branch": concrete},
             )
         )
-        return data if isinstance(data, dict) else {}
+        return _require_safety_stock_dict(
+            data, "safety-stock item suppliers", ("items", "total")
+        )
