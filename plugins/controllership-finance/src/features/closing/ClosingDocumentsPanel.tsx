@@ -1,36 +1,57 @@
 /**
- * Evidências documentais da competência — P2-Upload SLICE-1.
+ * Evidências documentais da competência — P2-Upload (SLICE-1 + SLICE-2).
  *
  * Consome `POST|GET /closing/competences/{period}/documents*` da BFF.
  * «Anexado» é estado documental — não é documento validado nem item
  * entregue: o checklist permanece «Esperado». Upload usa
  * `idempotency_key` por tentativa do usuário (retry reutiliza a mesma
- * chave — D-U7=A, sem dedup por conteúdo).
+ * chave — D-U7=A, sem dedup por conteúdo). Substituir cria uma versão
+ * nova (`SUPERSEDED` permanece referenciável); cancelar é lógico
+ * (`CANCELLED` sai da listagem, histórico e arquivos ficam íntegros).
+ * Mutações levam a `revision` do documento (OCC) — quem segurou uma
+ * visão velha recebe «atualize e tente de novo», nunca sobrescreve.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 
 import {
+  ActionButton,
   attachmentFileListBemClasses,
   AttachmentFileList,
+  ConfirmModalPanel,
   fileDropzoneBemClasses,
   FileDropzone,
 } from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
 import {
+  cancelClosingDocument,
   CLOSING_DOCUMENT_ACCEPT,
   downloadClosingDocument,
   listClosingDocuments,
+  listDocumentEvents,
+  listDocumentVersions,
+  replaceClosingDocument,
   saveDocumentBlob,
   uploadClosingDocument,
   type ClosingDocument,
+  type DocumentAuditEvent,
+  type DocumentVersion,
 } from "../../api/documentsApi";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
 } from "../../app/cfFeedbackUi";
 import {
+  CfDialog,
   CfEmptyState,
+  cfConfirmModalClassNames,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 
@@ -49,7 +70,7 @@ type PanelError = {
   message: string;
 };
 
-const UPLOAD_ERROR_MESSAGES: Record<string, string> = {
+const PANEL_ERROR_MESSAGES: Record<string, string> = {
   file_too_large: "O arquivo excede o limite de 25 MB.",
   unsupported_media_type:
     "Formato não permitido. Use PDF, imagem, XLS, XLSX ou CSV.",
@@ -64,12 +85,37 @@ const UPLOAD_ERROR_MESSAGES: Record<string, string> = {
   competence_not_opened: "A competência ainda não foi aberta.",
   persistence_unavailable:
     "Serviço de persistência indisponível. Tente novamente.",
+  rbac_unavailable:
+    "Serviço de permissões indisponível. Tente novamente.",
+  forbidden:
+    "Somente quem anexou a evidência ou um gestor pode alterá-la.",
+  document_not_found:
+    "Documento não encontrado ou fora do escopo solicitado.",
+  document_cancelled: "Este documento já foi cancelado.",
+  document_not_attached:
+    "Este documento não pode ser alterado no estado atual.",
+  stale_revision:
+    "O documento foi alterado por outra pessoa. A lista foi atualizada.",
+  file_missing:
+    "O arquivo não está disponível no armazenamento. Tente novamente mais tarde.",
+};
+
+const EVENT_LABELS: Record<string, string> = {
+  DOCUMENT_UPLOADED: "Documento anexado",
+  VERSION_ADDED: "Documento substituído",
+  DOCUMENT_CANCELLED: "Documento cancelado",
+  DOCUMENT_DOWNLOADED: "Download",
+};
+
+const VERSION_STATE_LABELS: Record<string, string> = {
+  ATTACHED: "Atual",
+  SUPERSEDED: "Substituída",
 };
 
 function toPanelError(error: unknown, fallback: string): PanelError {
   if (error instanceof ApiError) {
     const message =
-      (error.code && UPLOAD_ERROR_MESSAGES[error.code]) || error.message;
+      (error.code && PANEL_ERROR_MESSAGES[error.code]) || error.message;
     return { status: error.status, code: error.code, message };
   }
   return { status: 0, code: null, message: fallback };
@@ -121,6 +167,34 @@ function formatBytes(value: number | null): string {
   return `${Math.ceil(value / 1024)} KB`;
 }
 
+function formatDate(iso: string | null): string {
+  return iso ? new Date(iso).toLocaleDateString("pt-BR") : "";
+}
+
+function formatDateTime(iso: string | null): string {
+  return iso ? new Date(iso).toLocaleString("pt-BR") : "";
+}
+
+function eventNote(event: DocumentAuditEvent): string {
+  const parts: string[] = [];
+  if (typeof event.detail.version_no === "number") {
+    parts.push(`v${event.detail.version_no}`);
+  }
+  if (event.event_type === "DOCUMENT_DOWNLOADED") {
+    const result = event.detail.result;
+    parts.push(
+      result === "AUTHORIZED"
+        ? "autorizado"
+        : result === "DENIED"
+          ? "negado"
+          : result === "FAILED"
+            ? "falhou"
+            : "",
+    );
+  }
+  return parts.filter(Boolean).join(" · ");
+}
+
 type PendingUpload = {
   file: File;
   idempotencyKey: string;
@@ -151,8 +225,27 @@ export function ClosingDocumentsPanel({
     documentId: string;
     error: PanelError;
   } | null>(null);
+  const [mutating, setMutating] = useState(false);
+  const [mutationError, setMutationError] = useState<PanelError | null>(null);
+  const [replaceTarget, setReplaceTarget] = useState<ClosingDocument | null>(
+    null,
+  );
+  const [cancelTarget, setCancelTarget] = useState<ClosingDocument | null>(
+    null,
+  );
+  const [versionsDoc, setVersionsDoc] = useState<ClosingDocument | null>(
+    null,
+  );
+  const [versions, setVersions] = useState<DocumentVersion[] | null>(null);
+  const [versionsError, setVersionsError] = useState<PanelError | null>(
+    null,
+  );
+  const [eventsDoc, setEventsDoc] = useState<ClosingDocument | null>(null);
+  const [events, setEvents] = useState<DocumentAuditEvent[] | null>(null);
+  const [eventsError, setEventsError] = useState<PanelError | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const requestId = useRef(0);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
 
   const listKey = `${period}:${snapshotItemId ?? "competence"}:${retryNonce}`;
   const currentDocs = documents?.key === listKey ? documents.items : null;
@@ -181,6 +274,8 @@ export function ClosingDocumentsPanel({
     return () => controller.abort();
   }, [period, snapshotItemId, listKey]);
 
+  const refresh = useCallback(() => setRetryNonce((n) => n + 1), []);
+
   const doUpload = useCallback(
     (upload: PendingUpload) => {
       setPending(upload);
@@ -197,7 +292,7 @@ export function ClosingDocumentsPanel({
         .then(() => {
           setUploading(false);
           setPending(null);
-          setRetryNonce((n) => n + 1);
+          refresh();
           onUploaded?.();
         })
         .catch((err: unknown) => {
@@ -208,7 +303,7 @@ export function ClosingDocumentsPanel({
           );
         });
     },
-    [period, snapshotItemId, onUploaded],
+    [period, snapshotItemId, onUploaded, refresh],
   );
 
   const handleFiles = useCallback(
@@ -251,24 +346,134 @@ export function ClosingDocumentsPanel({
     [period],
   );
 
+  // U5 — substituição: o usuário escolhe o arquivo novo; a `revision`
+  // vista na lista viaja junto (OCC) — stale_revision ⇒ refresh honesto.
+  const startReplace = useCallback((doc: ClosingDocument) => {
+    setReplaceTarget(doc);
+    setMutationError(null);
+    replaceInputRef.current?.click();
+  }, []);
+
+  const handleReplaceFile = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0] ?? null;
+      event.target.value = "";
+      const doc = replaceTarget;
+      setReplaceTarget(null);
+      if (!file || !doc) return;
+      setMutating(true);
+      setMutationError(null);
+      replaceClosingDocument(period, doc.document_id, {
+        file,
+        revision: doc.revision,
+      })
+        .then(() => {
+          refresh();
+          onUploaded?.();
+        })
+        .catch((err: unknown) => {
+          const panelError = toPanelError(
+            err,
+            "Falha ao substituir o arquivo.",
+          );
+          setMutationError(panelError);
+          if (
+            panelError.code === "stale_revision" ||
+            panelError.code === "document_cancelled"
+          ) {
+            refresh();
+          }
+        })
+        .finally(() => setMutating(false));
+    },
+    [period, replaceTarget, onUploaded, refresh],
+  );
+
+  // U7 — cancelamento lógico com confirmação explícita.
+  const confirmCancel = useCallback(() => {
+    const doc = cancelTarget;
+    if (!doc || mutating) return;
+    setMutating(true);
+    setMutationError(null);
+    cancelClosingDocument(period, doc.document_id, {
+      revision: doc.revision,
+    })
+      .then(() => {
+        setCancelTarget(null);
+        refresh();
+        onUploaded?.();
+      })
+      .catch((err: unknown) => {
+        const panelError = toPanelError(
+          err,
+          "Falha ao cancelar o documento.",
+        );
+        setMutationError(panelError);
+        if (
+          panelError.code === "stale_revision" ||
+          panelError.code === "document_cancelled"
+        ) {
+          setCancelTarget(null);
+          refresh();
+        }
+      })
+      .finally(() => setMutating(false));
+  }, [period, cancelTarget, mutating, onUploaded, refresh]);
+
+  // U6 — histórico de versões; versões antigas baixam pelo mesmo U4.
+  const openVersions = useCallback(
+    (doc: ClosingDocument) => {
+      setVersionsDoc(doc);
+      setVersions(null);
+      setVersionsError(null);
+      listDocumentVersions(period, doc.document_id)
+        .then(setVersions)
+        .catch((err: unknown) => {
+          setVersionsError(
+            toPanelError(err, "Falha ao listar as versões."),
+          );
+        });
+    },
+    [period],
+  );
+
+  // U8 — eventos de auditoria do documento.
+  const openEvents = useCallback(
+    (doc: ClosingDocument) => {
+      setEventsDoc(doc);
+      setEvents(null);
+      setEventsError(null);
+      listDocumentEvents(period, doc.document_id)
+        .then((result) => setEvents(result.events))
+        .catch((err: unknown) => {
+          setEventsError(
+            toPanelError(err, "Falha ao listar os eventos."),
+          );
+        });
+    },
+    [period],
+  );
+
   const listItems = useMemo(
     () =>
       (currentDocs ?? []).map((doc) => ({
         id: doc.document_id,
         fileName: doc.original_name ?? doc.title ?? "Documento",
         detail: [
+          `v${doc.current_version_no}`,
           doc.title && doc.original_name ? doc.title : null,
           formatBytes(doc.size_bytes),
-          doc.created_at
-            ? new Date(doc.created_at).toLocaleDateString("pt-BR")
-            : null,
+          formatDate(doc.created_at),
         ]
           .filter(Boolean)
           .join(" · "),
-        busy: downloadingId === doc.document_id,
+        busy: downloadingId === doc.document_id || mutating,
       })),
-    [currentDocs, downloadingId],
+    [currentDocs, downloadingId, mutating],
   );
+
+  const docName = (doc: ClosingDocument) =>
+    doc.original_name ?? doc.title ?? "Documento";
 
   return (
     <div className="cf-documents-panel">
@@ -284,6 +489,16 @@ export function ClosingDocumentsPanel({
         disabled={Boolean(currentError && currentError.status === 403)}
         onFilesSelected={handleFiles}
         ariaLabel="Enviar evidência documental"
+      />
+
+      <input
+        ref={replaceInputRef}
+        type="file"
+        accept={CLOSING_DOCUMENT_ACCEPT}
+        style={{ display: "none" }}
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={handleReplaceFile}
       />
 
       {uploading && pending ? (
@@ -319,6 +534,12 @@ export function ClosingDocumentsPanel({
             </button>
           </div>
         </div>
+      ) : null}
+
+      {mutationError ? (
+        <CfFeedbackMessage intent="error" title="Ação não concluída">
+          {mutationError.message}
+        </CfFeedbackMessage>
       ) : null}
 
       {currentError ? (
@@ -381,9 +602,191 @@ export function ClosingDocumentsPanel({
               );
             }
           }}
+          itemActions={(item) => {
+            const doc = (currentDocs ?? []).find(
+              (d) => d.document_id === item.id,
+            );
+            if (!doc) return null;
+            return (
+              <>
+                <ActionButton
+                  variant="ghost"
+                  disabled={item.busy}
+                  onClick={() => startReplace(doc)}
+                >
+                  Substituir
+                </ActionButton>
+                <ActionButton
+                  variant="ghost"
+                  disabled={item.busy}
+                  onClick={() => openVersions(doc)}
+                >
+                  Versões
+                </ActionButton>
+                <ActionButton
+                  variant="ghost"
+                  disabled={item.busy}
+                  onClick={() => openEvents(doc)}
+                >
+                  Eventos
+                </ActionButton>
+                <ActionButton
+                  variant="ghost"
+                  disabled={item.busy}
+                  onClick={() => {
+                    setCancelTarget(doc);
+                    setMutationError(null);
+                  }}
+                >
+                  Cancelar
+                </ActionButton>
+              </>
+            );
+          }}
         />
         </>
       )}
+
+      {versionsDoc ? (
+        <CfDialog
+          open
+          title={`Versões — ${docName(versionsDoc)}`}
+          onClose={() => setVersionsDoc(null)}
+          closeAriaLabel="Fechar versões"
+        >
+          {versionsError ? (
+            <CfFeedbackMessage
+              intent="error"
+              title="Falha ao listar versões"
+            >
+              {versionsError.message}
+            </CfFeedbackMessage>
+          ) : versions === null ? (
+            <CfEmptyState
+              classNames={cfEmptyStateClassNames}
+              defaultMessage="Carregando versões…"
+            />
+          ) : versions.length === 0 ? (
+            <CfEmptyState
+              classNames={cfEmptyStateClassNames}
+              defaultMessage="Nenhuma versão registrada."
+            />
+          ) : (
+            <ul className="cf-documents-panel__versions">
+              {versions.map((version) => (
+                <li
+                  key={version.document_version_id}
+                  className="cf-documents-panel__version"
+                >
+                  <div className="cf-documents-panel__version-meta">
+                    <p className="cf-documents-panel__version-name">
+                      v{version.version_no} ·{" "}
+                      {VERSION_STATE_LABELS[version.state] ??
+                        version.state}
+                      {" — "}
+                      {version.original_name}
+                    </p>
+                    <p className="cf-documents-panel__version-detail">
+                      {[
+                        formatBytes(version.size_bytes),
+                        formatDateTime(version.created_at),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <ActionButton
+                    variant="ghost"
+                    disabled={downloadingId === versionsDoc.document_id}
+                    onClick={() =>
+                      handleDownload(
+                        versionsDoc.document_id,
+                        version.version_no,
+                        version.original_name,
+                      )
+                    }
+                  >
+                    Baixar
+                  </ActionButton>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CfDialog>
+      ) : null}
+
+      {eventsDoc ? (
+        <CfDialog
+          open
+          title={`Eventos — ${docName(eventsDoc)}`}
+          onClose={() => setEventsDoc(null)}
+          closeAriaLabel="Fechar eventos"
+        >
+          {eventsError ? (
+            <CfFeedbackMessage
+              intent="error"
+              title="Falha ao listar eventos"
+            >
+              {eventsError.message}
+            </CfFeedbackMessage>
+          ) : events === null ? (
+            <CfEmptyState
+              classNames={cfEmptyStateClassNames}
+              defaultMessage="Carregando eventos…"
+            />
+          ) : events.length === 0 ? (
+            <CfEmptyState
+              classNames={cfEmptyStateClassNames}
+              defaultMessage="Nenhum evento registrado."
+            />
+          ) : (
+            <ul className="cf-documents-panel__events">
+              {events.map((event) => (
+                <li
+                  key={event.event_id}
+                  className="cf-documents-panel__event"
+                >
+                  <p className="cf-documents-panel__event-name">
+                    {EVENT_LABELS[event.event_type] ?? event.event_type}
+                    {eventNote(event) ? ` · ${eventNote(event)}` : ""}
+                  </p>
+                  <p className="cf-documents-panel__event-detail">
+                    {formatDateTime(event.created_at)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CfDialog>
+      ) : null}
+
+      {cancelTarget ? (
+        <CfDialog
+          open
+          title="Cancelar documento"
+          onClose={() => {
+            if (!mutating) setCancelTarget(null);
+          }}
+          closeAriaLabel="Fechar confirmação de cancelamento"
+        >
+          <ConfirmModalPanel
+            message={
+              <>
+                Cancelar «{docName(cancelTarget)}»? O documento sai da
+                lista, mas as versões e o histórico são preservados.
+              </>
+            }
+            confirmLabel="Cancelar documento"
+            cancelLabel="Voltar"
+            variant="danger"
+            confirmBusy={mutating}
+            confirmBusyLabel="Cancelando…"
+            onConfirm={confirmCancel}
+            onCancel={() => setCancelTarget(null)}
+            classNames={cfConfirmModalClassNames}
+          />
+        </CfDialog>
+      ) : null}
 
       <p className="cf-documents-panel__honesty">
         Evidência anexada não é documento validado — o item do checklist

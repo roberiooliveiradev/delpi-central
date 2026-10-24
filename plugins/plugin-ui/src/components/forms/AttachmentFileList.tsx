@@ -38,6 +38,8 @@ export type AttachmentFileListProps = {
   classNames: AttachmentFileListClassNames;
   labels: AttachmentFileListLabels;
   leadingSlot?: ReactNode;
+  /** Ações extras por item, após Abrir/Baixar/Remover (ex.: «Substituir»). */
+  itemActions?: (item: AttachmentFileListItem) => ReactNode;
 };
 
 export function attachmentFileListBemClasses(prefix: string): AttachmentFileListClassNames {
@@ -66,6 +68,7 @@ export function AttachmentFileList({
   classNames,
   labels,
   leadingSlot,
+  itemActions,
 }: AttachmentFileListProps) {
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
 
@@ -121,6 +124,7 @@ export function AttachmentFileList({
                     {labels.remove}
                   </ActionButton>
                 ) : null}
+                {itemActions ? itemActions(item) : null}
               </div>
             </li>
           ))}

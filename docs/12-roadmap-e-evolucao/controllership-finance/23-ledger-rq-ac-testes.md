@@ -112,6 +112,18 @@ Cobertura SLICE-1 por requisito (positive/sibling/negative/security/postconditio
 | AC-P2-UP-21 | RQ-P2-22 | concurrency: replaces simultâneos | um vencedor por OCC `revision`; perdedor `stale_revision` 409 — nenhuma versão perdida |
 | AC-P2-UP-22 | retenção | D-U4: v1 não deleta nada | housekeeping só atinge `.part`/órfãos sem metadado, nunca evidências registradas |
 
+**Execução SLICE-2 (`CF-C3-P2-UPLOAD-SLICE2-IMPL-GO-001`)** — resultados reais de suíte; `TEST_NOT_RUN` explícito onde aplicável:
+
+| AC | Estado | Evidência executada |
+|---|---|---|
+| AC-P2-UP-16 | PASS | PG `test_add_version_supersedes_previous` — v2 `ATTACHED`, v1 `SUPERSEDED` e baixável (`get_version_file`), `current_version_no=2`, `VERSION_ADDED` append-only; binário anterior intocado |
+| AC-P2-UP-17 | PASS | service `test_replace_by_non_uploader_without_manage_forbidden` (`Forbidden` 403, sem escrita) + route `test_replace_typed_errors`; `access` genérico não substitui |
+| AC-P2-UP-18 | PASS | service `test_replace_by_eligible_manage_allowed` + route `test_replace_manage_user_gets_can_manage` — ator gestor registrado no `VERSION_ADDED`; `manage` sem `access` 403 (`test_replace_without_access_is_403`) |
+| AC-P2-UP-19 | PASS | PG `test_cancel_preserves_history_and_exits_active_list` — sai da listagem ativa (filtro padrão), consultável via U3/U6, `document_file`/`document_version` intactos, `DOCUMENT_CANCELLED` único (`test_cancel_twice_is_typed_conflict`) |
+| AC-P2-UP-20 | TEST_NOT_RUN | Nenhum runtime P5 existe no HEAD — não há estado de submissão canônico a consultar; `version_locked`/`document_locked` permanecem reservados no contrato e a trava ativa quando a fonte P5 existir (boundary documentado, sem permissividade inventada) |
+| AC-P2-UP-21 | PASS | PG `test_concurrent_replace_single_winner` — 4 threads, `FOR UPDATE`+`revision`: 1 vencedor, 3 `stale_revision`, `version_no` único, nenhuma versão perdida; service `test_replace_stale_revision_fails_before_write` |
+| AC-P2-UP-22 | PASS | Sem `DELETE` em `closing_document`/`document_version`/`document_file` — cancel é UPDATE de estado; compensação só remove binário novo órfão (`test_replace_persistence_failure_compensates_new_binary`); `.part` descartado em toda rejeição |
+
 ## P3 — Estoque, Cutoff e Conciliação
 
 | RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |

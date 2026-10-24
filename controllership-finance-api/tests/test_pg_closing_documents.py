@@ -454,3 +454,240 @@ def test_audit_download_denied_phase_classification(setup):
         ("FAILED", "delivery"),
         ("AUTHORIZED", "authorization"),
     ]
+
+
+# -- SLICE-2: U5 versões, U7 cancelamento, U6/U8 leituras ------------------------
+
+
+def _version_kwargs(setup, **over):
+    kw = {
+        "competence_id": setup["competence_id"],
+        "storage_key": f"{setup['competence_id']}/{uuid.uuid4().hex}.pdf",
+        "original_name": "extrato-v2.pdf",
+        "stored_name": f"{uuid.uuid4().hex}.pdf",
+        "mime_type": "application/pdf",
+        "extension": ".pdf",
+        "size_bytes": 8192,
+        "checksum_sha256": uuid.uuid4().hex * 2,
+        "actor": VIEWER,
+    }
+    kw.update(over)
+    return kw
+
+
+def test_add_version_supersedes_previous(setup):
+    """AC-P2-UP-16 — replace cria v2 ATTACHED; v1 fica SUPERSEDED e
+    referenciável; o documento segue ATTACHED com revision incrementada."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-ver-1"))
+    doc_id = str(doc["document_id"])
+    updated = docs.add_version(
+        **_version_kwargs(
+            setup, document_id=doc_id, expected_revision=1
+        )
+    )
+    assert updated["state"] == "ATTACHED"
+    assert updated["current_version_no"] == 2
+    assert updated["revision"] == 2
+    assert updated["original_name"] == "extrato-v2.pdf"
+
+    versions = docs.list_document_versions(setup["competence_id"], doc_id)
+    assert [(v["version_no"], v["state"]) for v in versions] == [
+        (2, "ATTACHED"),
+        (1, "SUPERSEDED"),
+    ]
+    # A v1 continua referenciável para download (SUPERSEDED != DELETED).
+    v1 = docs.get_version_file(setup["competence_id"], doc_id, 1)
+    assert v1["original_name"] == "extrato.pdf"
+    v2 = docs.get_version_file(setup["competence_id"], doc_id, 2)
+    assert v2["original_name"] == "extrato-v2.pdf"
+
+    events = docs.list_document_events(setup["competence_id"], doc_id)
+    assert [e["event_type"] for e in events["items"]] == [
+        "VERSION_ADDED",
+        "DOCUMENT_UPLOADED",
+    ]
+
+
+def test_add_version_stale_revision_raises(setup):
+    """AC-P2-UP-21 — quem segurava uma revision velha perde: nada muda."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-ver-stale"))
+    with pytest.raises(de.StaleRevision):
+        docs.add_version(
+            **_version_kwargs(
+                setup,
+                document_id=str(doc["document_id"]),
+                expected_revision=99,
+            )
+        )
+    fetched = docs.get_document_by_id(
+        setup["competence_id"], str(doc["document_id"])
+    )
+    assert fetched["current_version_no"] == 1
+    assert len(
+        docs.list_document_versions(
+            setup["competence_id"], str(doc["document_id"])
+        )
+    ) == 1
+
+
+def test_concurrent_replace_single_winner(setup):
+    """AC-P2-UP-21 — replaces simultâneos: FOR UPDATE + revision dão um
+    único vencedor; perdedores recebem stale_revision, versão nenhuma se
+    perde."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-ver-race"))
+    doc_id = str(doc["document_id"])
+    results: list[dict] = []
+    errors: list[Exception] = []
+    barrier = threading.Barrier(4)
+    lock = threading.Lock()
+
+    def attempt(i: int) -> None:
+        barrier.wait()
+        try:
+            out = docs.add_version(
+                **_version_kwargs(
+                    setup,
+                    document_id=doc_id,
+                    expected_revision=1,
+                    original_name=f"concorrente-{i}.pdf",
+                )
+            )
+            with lock:
+                results.append(out)
+        except Exception as exc:  # noqa: BLE001 — classificada no assert
+            with lock:
+                errors.append(exc)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(attempt, range(4)))
+
+    assert len(results) == 1
+    assert all(isinstance(e, de.StaleRevision) for e in errors)
+    assert len(errors) == 3
+    fetched = docs.get_document_by_id(setup["competence_id"], doc_id)
+    assert fetched["current_version_no"] == 2
+    versions = docs.list_document_versions(setup["competence_id"], doc_id)
+    assert len(versions) == 2
+
+
+def test_cancel_preserves_history_and_exits_active_list(setup):
+    """AC-P2-UP-19 — CANCELLED != DELETED: sai da listagem ativa, mas o
+    documento, as versões e a auditoria continuam consultáveis."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-cancel-1"))
+    doc_id = str(doc["document_id"])
+    cancelled = docs.cancel_document(
+        competence_id=setup["competence_id"],
+        document_id=doc_id,
+        expected_revision=1,
+        actor=VIEWER,
+    )
+    assert cancelled["state"] == "CANCELLED"
+    assert cancelled["revision"] == 2
+
+    active = docs.list_documents(setup["competence_id"], limit=100)
+    assert doc_id not in {str(i["document_id"]) for i in active["items"]}
+    cancelled_only = docs.list_documents(
+        setup["competence_id"], state="CANCELLED", limit=100
+    )
+    assert doc_id in {
+        str(i["document_id"]) for i in cancelled_only["items"]
+    }
+
+    # Consultável no histórico autorizado (U3/U6) e baixável (U4).
+    fetched = docs.get_document_by_id(setup["competence_id"], doc_id)
+    assert fetched["state"] == "CANCELLED"
+    v1 = docs.get_version_file(setup["competence_id"], doc_id, 1)
+    assert v1["original_name"] == "extrato.pdf"
+    versions = docs.list_document_versions(setup["competence_id"], doc_id)
+    assert len(versions) == 1
+    events = docs.list_document_events(setup["competence_id"], doc_id)
+    assert events["items"][0]["event_type"] == "DOCUMENT_CANCELLED"
+
+
+def test_cancel_twice_is_typed_conflict(setup):
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-cancel-2"))
+    doc_id = str(doc["document_id"])
+    docs.cancel_document(
+        competence_id=setup["competence_id"],
+        document_id=doc_id,
+        expected_revision=1,
+        actor=VIEWER,
+    )
+    # Replay com a revision nova encontra o estado terminal — nunca um
+    # segundo evento DOCUMENT_CANCELLED.
+    with pytest.raises(de.DocumentCancelled):
+        docs.cancel_document(
+            competence_id=setup["competence_id"],
+            document_id=doc_id,
+            expected_revision=2,
+            actor=VIEWER,
+        )
+    events = docs.list_document_events(setup["competence_id"], doc_id)
+    assert [
+        e["event_type"] for e in events["items"]
+    ].count("DOCUMENT_CANCELLED") == 1
+
+
+def test_mutation_on_cancelled_document_rejected(setup):
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-cancel-3"))
+    doc_id = str(doc["document_id"])
+    docs.cancel_document(
+        competence_id=setup["competence_id"],
+        document_id=doc_id,
+        expected_revision=1,
+        actor=VIEWER,
+    )
+    with pytest.raises(de.DocumentCancelled):
+        docs.add_version(
+            **_version_kwargs(
+                setup, document_id=doc_id, expected_revision=2
+            )
+        )
+
+
+def test_list_document_events_scoped_and_filtered(setup):
+    """U8 — só os eventos documentais do contrato, na competência do
+    documento; outra competência nunca vê o histórico."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-events"))
+    doc_id = str(doc["document_id"])
+    docs.audit_download(
+        competence_id=setup["competence_id"],
+        document_id=doc_id,
+        version_no=1,
+        actor=VIEWER,
+        result="AUTHORIZED",
+    )
+    # Evento de outra entidade na mesma competência não aparece.
+    other, _ = docs.create_document(**_doc_kwargs(setup, "k-events-2"))
+
+    result = docs.list_document_events(setup["competence_id"], doc_id)
+    assert result["total"] == 2
+    assert [e["event_type"] for e in result["items"]] == [
+        "DOCUMENT_DOWNLOADED",
+        "DOCUMENT_UPLOADED",
+    ]
+    assert all(
+        str(e["actor_subject"]) == VIEWER for e in result["items"]
+    )
+    # Sem vazamento de storage_key / stored_name no detail exposto.
+    for e in result["items"]:
+        assert "storage_key" not in e["detail"]
+        assert "stored_name" not in e["detail"]
+
+    page = docs.list_document_events(
+        setup["competence_id"], doc_id, limit=1, offset=0
+    )
+    assert page["total"] == 2 and len(page["items"]) == 1
+    other_events = docs.list_document_events(
+        setup["competence_id"], str(other["document_id"])
+    )
+    assert [e["event_type"] for e in other_events["items"]] == [
+        "DOCUMENT_UPLOADED"
+    ]

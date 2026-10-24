@@ -310,7 +310,24 @@ O PO adotou a recomendação A do rework **sem alterações** — padrão `suppl
 
 **Rework CF-C3-P2-UPLOAD-SLICE1-REWORK-001 aplicado:** R-W1 escopo efetivo (`branch_scope` declarado × herdado — `access` sozinho não alcança recurso fora do contexto; não existe membership de filial por usuário — doc 49 §8 dataset compartilhado, permission por filial proibida) · R-W2 `discard_temp()` garantido em toda rejeição pós-`write_temp` · R-W3 auditoria classificada por fase (authorization/delivery; DENIED e FAILED quando auditáveis) · R-W4 erros de download com feedback acessível no MFE (sem catch silencioso).
 
-**Não implementado (SLICE-2, conforme GO):** U5 replace, U6 histórico avançado, U7 cancel, U8 events, validação humana, P5, antivírus (capability inexistente — residual mantido), housekeeping de órfãos (PLANNED).
+**Implementado após SLICE-1 (ver §J):** U5–U8 no GO `CF-C3-P2-UPLOAD-SLICE2-IMPL-GO-001`. **Permanece não implementado:** validação humana, P5, antivírus (capability inexistente — residual mantido), housekeeping de órfãos (PLANNED).
+
+## Adendo — GO de implementação SLICE-2 (`CF-C3-P2-UPLOAD-SLICE2-IMPL-GO-001`)
+
+`GO_STATUS=PO_AUTHORIZED` · `IMPLEMENTATION_AUTHORIZED=YES` · `SCOPE=P2_UPLOAD_SLICE_2` · `PRODUCTION_DEPLOY_AUTHORIZED=NO` · `PRODUCTION_MIGRATIONS_AUTHORIZED=NO`. Baseline: SLICE-1 aceito `ACCEPT_WITH_RESIDUAL` em `7d5e0402e0c8345623f64c828dcbf5d7ee275263`.
+
+### J. Estado de implementação SLICE-2 (runtime)
+
+| Contrato | Implementação | Evidência |
+|---|---|---|
+| U5 replace | `POST .../documents/{id}/versions` multipart (`file`, `idempotency_key` nova por mutação, `revision` OCC, `branch_scope?`) — uploader original **ou** `manage` elegível (D-U1), `access` obrigatório, scope, humano; v anterior `SUPERSEDED`, nova `ATTACHED`, `FOR UPDATE`+revision ⇒ perdedor `stale_revision` 409; mesma sequência `.part`→sha256→`os.replace`→tx→compensação; `VERSION_ADDED` na tx; binário antigo nunca reescrito | `test_pg_closing_documents.py` (concorrência 4 threads → 1 vencedor), `test_closing_document_service.py` |
+| U6 versions | `GET .../documents/{id}/versions` — histórico imutável com metadados + `checksum_sha256`, sem `storage_key`; persiste após `CANCELLED`; paginação ≤100 | idem |
+| U7 cancel | `POST .../documents/{id}/cancel` (`revision` OCC) — mesma regra de ator do U5; `CANCELLED != DELETED`: sai da listagem ativa, consultável via U3/U6/U8, arquivos/versões/auditoria preservados; duplo cancel = conflito tipado | idem |
+| U8 events | `GET .../documents/{id}/events` — `DOCUMENT_UPLOADED`/`DOCUMENT_DOWNLOADED`/`VERSION_ADDED`/`DOCUMENT_CANCELLED` de `closing_audit_event` (append-only), scope autorizado, sem dados sensíveis | idem |
+| Persistência | **zero migrations novas** — `V003` já provia `state`/`current_version_no`/`revision` OCC/`document_version`/`uploaded_by`; mutações em tx única com `SELECT ... FOR UPDATE` + verificação de `revision` | suíte PG em banco efêmero R4 |
+| MFE | `ClosingDocumentsPanel` evoluído: substituir (file picker + OCC), histórico de versões com download por versão, cancelar com `ConfirmModalPanel`, histórico de auditoria — `createHostContainedModalShell` + `AttachmentFileList itemActions` do `@delpi/plugin-ui`; erros tipados (403/404/409) com retry seguro; Help sincronizado | `ClosingDocumentsPanel.test.tsx` |
+
+**Boundary P5:** nenhum runtime de submissão de pacote existe no HEAD — `version_locked`/`document_locked` ficam reservados no contrato; a trava será ativada quando a fonte canônica P5 existir (AC-P2-UP-20 `TEST_NOT_RUN`, sem permissividade inventada).
 
 ### I. Pendências que permanecem abertas após D-U7=A
 

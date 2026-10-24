@@ -9,6 +9,7 @@ import {
   cfApiUrl,
   httpGet,
   httpGetBlob,
+  httpPost,
   httpPostFormData,
 } from "./httpClient";
 
@@ -26,6 +27,7 @@ export type ClosingDocument = {
   attachment_role: string;
   state: DocumentState;
   current_version_no: number;
+  revision: number;
   uploaded_by: string;
   created_at: string | null;
   updated_at: string | null;
@@ -38,6 +40,36 @@ export type ClosingDocument = {
 
 export type DocumentListResult = {
   documents: ClosingDocument[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type DocumentVersionState = "ATTACHED" | "SUPERSEDED";
+
+export type DocumentVersion = {
+  document_version_id: string;
+  document_id: string;
+  version_no: number;
+  state: DocumentVersionState;
+  uploaded_by: string;
+  created_at: string | null;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  checksum_sha256: string;
+};
+
+export type DocumentAuditEvent = {
+  event_id: string;
+  event_type: string;
+  actor_subject: string;
+  detail: Record<string, unknown>;
+  created_at: string | null;
+};
+
+export type DocumentEventListResult = {
+  events: DocumentAuditEvent[];
   total: number;
   limit: number;
   offset: number;
@@ -151,4 +183,97 @@ export function saveDocumentBlob(blob: Blob, fileName: string): void {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+}
+
+/** U5 — substitui o arquivo; a versão anterior fica SUPERSEDED. */
+export async function replaceClosingDocument(
+  period: string,
+  documentId: string,
+  input: { file: File; revision: number },
+  options?: { signal?: AbortSignal; branchScope?: "MATRIX" | "BRANCH" | "BOTH" },
+): Promise<ClosingDocument> {
+  const formData = new FormData();
+  formData.set("file", input.file);
+  formData.set("revision", String(input.revision));
+  if (options?.branchScope) {
+    formData.set("branch_scope", options.branchScope);
+  }
+  const envelope = await httpPostFormData<Envelope<ClosingDocument>>(
+    cfApiUrl(
+      `/closing/competences/${period}/documents/${documentId}/versions`,
+    ),
+    formData,
+    { signal: options?.signal },
+  );
+  if (!envelope?.data) {
+    throw new Error("Resposta vazia ao substituir o documento.");
+  }
+  return envelope.data;
+}
+
+/** U6 — histórico imutável de versões (vN mais nova primeiro). */
+export async function listDocumentVersions(
+  period: string,
+  documentId: string,
+  options?: { signal?: AbortSignal; branchScope?: "MATRIX" | "BRANCH" | "BOTH" },
+): Promise<DocumentVersion[]> {
+  const qs = buildQuery({ branch_scope: options?.branchScope });
+  const envelope = await httpGet<Envelope<{ versions: DocumentVersion[] }>>(
+    cfApiUrl(
+      `/closing/competences/${period}/documents/${documentId}/versions` +
+        `${qs ? `?${qs}` : ""}`,
+    ),
+    { signal: options?.signal },
+  );
+  return envelope?.data?.versions ?? [];
+}
+
+/** U7 — cancelamento lógico; arquivos e histórico são preservados. */
+export async function cancelClosingDocument(
+  period: string,
+  documentId: string,
+  input: { revision: number },
+  options?: { signal?: AbortSignal; branchScope?: "MATRIX" | "BRANCH" | "BOTH" },
+): Promise<ClosingDocument> {
+  const qs = buildQuery({ branch_scope: options?.branchScope });
+  const envelope = await httpPost<Envelope<ClosingDocument>>(
+    cfApiUrl(
+      `/closing/competences/${period}/documents/${documentId}/cancel` +
+        `${qs ? `?${qs}` : ""}`,
+    ),
+    { revision: input.revision },
+    { signal: options?.signal },
+  );
+  if (!envelope?.data) {
+    throw new Error("Resposta vazia ao cancelar o documento.");
+  }
+  return envelope.data;
+}
+
+/** U8 — eventos de auditoria do documento (mais recente primeiro). */
+export async function listDocumentEvents(
+  period: string,
+  documentId: string,
+  query: {
+    branchScope?: "MATRIX" | "BRANCH" | "BOTH";
+    limit?: number;
+    offset?: number;
+  } = {},
+  options?: { signal?: AbortSignal },
+): Promise<DocumentEventListResult> {
+  const qs = buildQuery({
+    branch_scope: query.branchScope,
+    limit: query.limit !== undefined ? String(query.limit) : undefined,
+    offset: query.offset !== undefined ? String(query.offset) : undefined,
+  });
+  const envelope = await httpGet<Envelope<DocumentEventListResult>>(
+    cfApiUrl(
+      `/closing/competences/${period}/documents/${documentId}/events` +
+        `${qs ? `?${qs}` : ""}`,
+    ),
+    options,
+  );
+  return (
+    envelope?.data ?? { events: [], total: 0, limit: 50, offset: 0 }
+  );
 }

@@ -13,6 +13,10 @@ const listDocumentsMock = vi.fn();
 const uploadDocumentMock = vi.fn();
 const downloadDocumentMock = vi.fn();
 const saveBlobMock = vi.fn();
+const replaceDocumentMock = vi.fn();
+const listVersionsMock = vi.fn();
+const cancelDocumentMock = vi.fn();
+const listEventsMock = vi.fn();
 
 vi.mock("../../api/documentsApi", () => ({
   CLOSING_DOCUMENT_ACCEPT: ".pdf",
@@ -23,6 +27,14 @@ vi.mock("../../api/documentsApi", () => ({
   downloadClosingDocument: (...args: unknown[]) =>
     downloadDocumentMock(...args),
   saveDocumentBlob: (...args: unknown[]) => saveBlobMock(...args),
+  replaceClosingDocument: (...args: unknown[]) =>
+    replaceDocumentMock(...args),
+  listDocumentVersions: (...args: unknown[]) =>
+    listVersionsMock(...args),
+  cancelClosingDocument: (...args: unknown[]) =>
+    cancelDocumentMock(...args),
+  listDocumentEvents: (...args: unknown[]) =>
+    listEventsMock(...args),
 }));
 
 import { ApiError } from "../../api/httpClient";
@@ -38,6 +50,7 @@ const DOC = {
   attachment_role: "generic",
   state: "ATTACHED",
   current_version_no: 1,
+  revision: 3,
   uploaded_by: "u-1",
   created_at: "2026-05-02T10:00:00Z",
   updated_at: "2026-05-02T10:00:00Z",
@@ -291,5 +304,266 @@ describe("ClosingDocumentsPanel", () => {
       "Enviar evidência documental",
     ) as HTMLButtonElement;
     expect(dropzone.disabled).toBe(true);
+  });
+
+  it("substituir envia a revisão vista e recarrega a lista", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    replaceDocumentMock.mockResolvedValue({
+      ...DOC,
+      current_version_no: 2,
+      revision: 4,
+    });
+
+    const { container } = render(
+      <ClosingDocumentsPanel period="2026-05" />,
+    );
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Substituir"));
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(input).toBeTruthy();
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File(["%PDF-1.4 novo"], "extrato-v2.pdf", {
+            type: "application/pdf",
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() => expect(replaceDocumentMock).toHaveBeenCalled());
+    const [period, documentId, payload] = replaceDocumentMock.mock.calls[0];
+    expect(period).toBe("2026-05");
+    expect(documentId).toBe("d-1");
+    expect(payload.revision).toBe(3);
+    expect(payload.file.name).toBe("extrato-v2.pdf");
+    await waitFor(() =>
+      expect(listDocumentsMock.mock.calls.length).toBeGreaterThan(1),
+    );
+  });
+
+  it("revisão obsoleta na substituição informa e atualiza a lista", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    replaceDocumentMock.mockRejectedValue(
+      new ApiError(409, "Conflict", "stale_revision"),
+    );
+
+    const { container } = render(
+      <ClosingDocumentsPanel period="2026-05" />,
+    );
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Substituir"));
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["x"], "novo.pdf", { type: "application/pdf" })],
+      },
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/foi alterado por outra pessoa/),
+      ).toBeTruthy(),
+    );
+    await waitFor(() =>
+      expect(listDocumentsMock.mock.calls.length).toBeGreaterThan(1),
+    );
+  });
+
+  it("substituição negada informa a regra de posse", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    replaceDocumentMock.mockRejectedValue(
+      new ApiError(403, "Forbidden", "forbidden"),
+    );
+
+    const { container } = render(
+      <ClosingDocumentsPanel period="2026-05" />,
+    );
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Substituir"));
+    fireEvent.change(
+      container.querySelector('input[type="file"]') as HTMLInputElement,
+      {
+        target: {
+          files: [new File(["x"], "novo.pdf", { type: "application/pdf" })],
+        },
+      },
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Somente quem anexou/),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("cancelar exige confirmação e envia a revisão", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    cancelDocumentMock.mockResolvedValue({
+      ...DOC,
+      state: "CANCELLED",
+      revision: 4,
+    });
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Cancelar"));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/O documento sai da lista/),
+      ).toBeTruthy(),
+    );
+    expect(cancelDocumentMock).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Cancelar documento" }),
+    );
+    await waitFor(() =>
+      expect(cancelDocumentMock).toHaveBeenCalledWith(
+        "2026-05",
+        "d-1",
+        { revision: 3 },
+      ),
+    );
+    await waitFor(() =>
+      expect(listDocumentsMock.mock.calls.length).toBeGreaterThan(1),
+    );
+  });
+
+  it("versões lista o histórico e baixa versão anterior", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [{ ...DOC, current_version_no: 2 }],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    listVersionsMock.mockResolvedValue([
+      {
+        document_version_id: "v-2",
+        document_id: "d-1",
+        version_no: 2,
+        state: "ATTACHED",
+        uploaded_by: "u-1",
+        created_at: "2026-05-10T10:00:00Z",
+        original_name: "extrato-v2.pdf",
+        mime_type: "application/pdf",
+        size_bytes: 3000,
+        checksum_sha256: "b".repeat(64),
+      },
+      {
+        document_version_id: "v-1",
+        document_id: "d-1",
+        version_no: 1,
+        state: "SUPERSEDED",
+        uploaded_by: "u-1",
+        created_at: "2026-05-02T10:00:00Z",
+        original_name: "extrato.pdf",
+        mime_type: "application/pdf",
+        size_bytes: 2048,
+        checksum_sha256: "a".repeat(64),
+      },
+    ]);
+    downloadDocumentMock.mockResolvedValue(new Blob(["pdf"]));
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Versões"));
+    await waitFor(() =>
+      expect(screen.getByText(/v1 · Substituída/)).toBeTruthy(),
+    );
+    expect(screen.getByText(/v2 · Atual/)).toBeTruthy();
+    expect(listVersionsMock).toHaveBeenCalledWith("2026-05", "d-1");
+
+    // Baixar a versão anterior segue o mesmo U4 com version_no.
+    // Ordem dos «Baixar»: item da lista, depois v2 e v1 no diálogo.
+    fireEvent.click(screen.getAllByText("Baixar")[2]);
+    await waitFor(() =>
+      expect(downloadDocumentMock).toHaveBeenCalledWith(
+        "2026-05",
+        "d-1",
+        1,
+      ),
+    );
+  });
+
+  it("eventos lista a auditoria do documento", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    listEventsMock.mockResolvedValue({
+      events: [
+        {
+          event_id: "e-2",
+          event_type: "DOCUMENT_DOWNLOADED",
+          actor_subject: "u-1",
+          detail: { version_no: 1, result: "AUTHORIZED" },
+          created_at: "2026-05-03T10:00:00Z",
+        },
+        {
+          event_id: "e-1",
+          event_type: "DOCUMENT_UPLOADED",
+          actor_subject: "u-1",
+          detail: { original_name: "extrato.pdf" },
+          created_at: "2026-05-02T10:00:00Z",
+        },
+      ],
+      total: 2,
+      limit: 50,
+      offset: 0,
+    });
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Eventos"));
+    await waitFor(() =>
+      expect(screen.getByText("Documento anexado")).toBeTruthy(),
+    );
+    expect(screen.getByText(/Download/)).toBeTruthy();
+    expect(listEventsMock).toHaveBeenCalledWith("2026-05", "d-1");
   });
 });

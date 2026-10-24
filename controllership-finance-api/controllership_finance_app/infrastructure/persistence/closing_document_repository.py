@@ -18,10 +18,13 @@ from psycopg.rows import dict_row
 
 from controllership_finance_app.domain.closing_checklist.errors import (
     CompetenceNotOpened,
+    DocumentCancelled,
+    DocumentNotAttached,
     DocumentNotFound,
     IdempotencyConflict,
     ItemNotFound,
     PersistenceUnavailable,
+    StaleRevision,
 )
 from controllership_finance_app.infrastructure.persistence.plugins_db import (
     SCHEMA_NAME,
@@ -294,6 +297,10 @@ class ClosingDocumentRepository:
         if state:
             clauses.append("d.state = %s")
             params.append(state)
+        else:
+            # Listagem ativa: CANCELLED só aparece via filtro explícito —
+            # o documento permanece consultável (U3/U6/U8), nunca some.
+            clauses.append("d.state != 'CANCELLED'")
         if branch_scope and branch_scope != "BOTH":
             # Escopo herdado do item (competência = BOTH): o contexto
             # específico alcança o próprio escopo + recursos BOTH.
@@ -320,7 +327,8 @@ class ClosingDocumentRepository:
                        i.item_key AS snapshot_item_key,
                        COALESCE(i.branch_scope, 'BOTH') AS branch_scope,
                        d.link_kind, d.title, d.attachment_role, d.state,
-                       d.current_version_no, d.uploaded_by, d.created_at,
+                       d.current_version_no, d.revision, d.uploaded_by,
+                       d.created_at,
                        f.original_name, f.mime_type, f.size_bytes,
                        f.checksum_sha256
                   FROM {_q('closing_document')} d
@@ -403,7 +411,281 @@ class ClosingDocumentRepository:
                         },
                     )
 
+    # -- mutações U5/U7 (SLICE-2) -------------------------------------------------
+
+    def add_version(
+        self,
+        *,
+        competence_id: str,
+        document_id: str,
+        expected_revision: int,
+        storage_key: str,
+        original_name: str,
+        stored_name: str,
+        mime_type: str,
+        extension: str,
+        size_bytes: int,
+        checksum_sha256: str,
+        actor: str,
+    ) -> dict[str, Any]:
+        """U5 — nova versão imutável + anterior `SUPERSEDED` + audit.
+
+        `SELECT ... FOR UPDATE` serializa replaces concorrentes na linha
+        do documento: `revision` é reavaliada sob lock — perdedor recebe
+        `stale_revision` (409) e nenhuma versão se perde (AC-P2-UP-21).
+        `version_no` UNIQUE por documento garante unicidade mesmo em
+        cenários fora da serialização esperada.
+        """
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    doc = self._lock_document_for_update(
+                        cur,
+                        competence_id=competence_id,
+                        document_id=document_id,
+                    )
+                    self._assert_active_document(doc)
+                    self._assert_revision(doc, expected_revision)
+                    cur.execute(
+                        f"""
+                        INSERT INTO {_q('document_file')}
+                            (storage_key, original_name, stored_name,
+                             mime_type, extension, size_bytes,
+                             checksum_sha256, created_by)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                        RETURNING file_id
+                        """,
+                        (
+                            storage_key,
+                            original_name,
+                            stored_name,
+                            mime_type,
+                            extension,
+                            size_bytes,
+                            checksum_sha256,
+                            actor,
+                        ),
+                    )
+                    file_id = cur.fetchone()["file_id"]
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('document_version')}
+                           SET state = 'SUPERSEDED'
+                         WHERE document_id = %s AND state = 'ATTACHED'
+                        """,
+                        (document_id,),
+                    )
+                    new_version_no = doc["current_version_no"] + 1
+                    cur.execute(
+                        f"""
+                        INSERT INTO {_q('document_version')}
+                            (document_id, version_no, file_id, state,
+                             uploaded_by)
+                        VALUES (%s, %s, %s, 'ATTACHED', %s)
+                        """,
+                        (document_id, new_version_no, file_id, actor),
+                    )
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('closing_document')}
+                           SET current_version_no = %s,
+                               revision = revision + 1,
+                               updated_at = now()
+                         WHERE document_id = %s
+                        """,
+                        (new_version_no, document_id),
+                    )
+                    self._audit(
+                        cur,
+                        entity_type="closing_document",
+                        entity_id=document_id,
+                        competence_id=competence_id,
+                        event_type="VERSION_ADDED",
+                        actor=actor,
+                        detail={
+                            "version_no": new_version_no,
+                            "superseded_version_no": doc[
+                                "current_version_no"
+                            ],
+                            "original_name": original_name,
+                            "size_bytes": size_bytes,
+                            "checksum_sha256": checksum_sha256,
+                        },
+                    )
+        return self.get_document_by_id(competence_id, document_id)
+
+    def cancel_document(
+        self,
+        *,
+        competence_id: str,
+        document_id: str,
+        expected_revision: int,
+        actor: str,
+    ) -> dict[str, Any]:
+        """U7 — cancelamento lógico: `CANCELLED != DELETED`.
+
+        Mesma disciplina de OCC do `add_version`: replay ou corrida
+        obsoleta aborta com `stale_revision` antes de qualquer efeito —
+        eventos nunca são duplicados indevidamente. Arquivos, versões e
+        auditoria anteriores permanecem intactos.
+        """
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    doc = self._lock_document_for_update(
+                        cur,
+                        competence_id=competence_id,
+                        document_id=document_id,
+                    )
+                    self._assert_active_document(doc)
+                    self._assert_revision(doc, expected_revision)
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('closing_document')}
+                           SET state = 'CANCELLED',
+                               revision = revision + 1,
+                               updated_at = now()
+                         WHERE document_id = %s
+                        """,
+                        (document_id,),
+                    )
+                    self._audit(
+                        cur,
+                        entity_type="closing_document",
+                        entity_id=document_id,
+                        competence_id=competence_id,
+                        event_type="DOCUMENT_CANCELLED",
+                        actor=actor,
+                        detail={
+                            "version_no": doc["current_version_no"],
+                        },
+                    )
+        return self.get_document_by_id(competence_id, document_id)
+
+    # -- leituras U6/U8 (SLICE-2) ---------------------------------------------------
+
+    def list_document_versions(
+        self, competence_id: str, document_id: str
+    ) -> list[dict[str, Any]]:
+        """U6 — histórico completo; versões são imutáveis e nunca
+        reescritas (`SUPERSEDED != DELETED`). Não retorna storage_key."""
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT v.document_version_id, v.document_id, v.version_no,
+                       v.state, v.uploaded_by, v.created_at,
+                       f.original_name, f.mime_type, f.size_bytes,
+                       f.checksum_sha256
+                  FROM {_q('document_version')} v
+                  JOIN {_q('document_file')} f
+                    ON f.file_id = v.file_id
+                  JOIN {_q('closing_document')} d
+                    ON d.document_id = v.document_id
+                 WHERE d.competence_id = %s AND v.document_id = %s
+                 ORDER BY v.version_no DESC
+                """,
+                (competence_id, document_id),
+            )
+            return cur.fetchall()
+
+    def list_document_events(
+        self,
+        competence_id: str,
+        document_id: str,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """U8 — eventos de auditoria do documento (append-only).
+
+        Somente os eventos documentais do contrato são expostos — o
+        filtro impede vazamento de eventos internos de outros casos de
+        uso sobre a mesma entidade."""
+        clauses = [
+            "entity_type = 'closing_document'",
+            "entity_id = %s",
+            "competence_id = %s",
+            "event_type IN (%s, %s, %s, %s)",
+        ]
+        params: list[Any] = [
+            document_id,
+            competence_id,
+            "DOCUMENT_UPLOADED",
+            "DOCUMENT_DOWNLOADED",
+            "VERSION_ADDED",
+            "DOCUMENT_CANCELLED",
+        ]
+        where = " AND ".join(clauses)
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT count(*) AS total
+                  FROM {_q('closing_audit_event')}
+                 WHERE {where}
+                """,
+                params,
+            )
+            total = cur.fetchone()["total"]
+            cur.execute(
+                f"""
+                SELECT event_id, event_type, actor_subject, detail,
+                       created_at
+                  FROM {_q('closing_audit_event')}
+                 WHERE {where}
+                 ORDER BY created_at DESC, event_id
+                 LIMIT %s OFFSET %s
+                """,
+                (*params, limit, offset),
+            )
+            items = cur.fetchall()
+        return {"items": items, "total": total, "limit": limit, "offset": offset}
+
     # -- internals --------------------------------------------------------------
+
+    def _lock_document_for_update(
+        self,
+        cur,
+        *,
+        competence_id: str,
+        document_id: str,
+    ) -> dict[str, Any]:
+        """Linha do documento sob lock — escopo da competência do path
+        reavaliado na transação (cross-competence = 404)."""
+        cur.execute(
+            f"""
+            SELECT document_id, state, revision, current_version_no,
+                   uploaded_by
+              FROM {_q('closing_document')}
+             WHERE competence_id = %s AND document_id = %s
+             FOR UPDATE
+            """,
+            (competence_id, document_id),
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise DocumentNotFound("Documento não encontrado.")
+        return row
+
+    @staticmethod
+    def _assert_active_document(doc: dict[str, Any]) -> None:
+        """Mutações exigem estado `ATTACHED`; `CANCELLED` é terminal."""
+        if doc["state"] == "CANCELLED":
+            raise DocumentCancelled(
+                "Documento cancelado não pode ser alterado."
+            )
+        if doc["state"] != "ATTACHED":
+            raise DocumentNotAttached(
+                "Documento não está em estado que permita alteração."
+            )
+
+    @staticmethod
+    def _assert_revision(
+        doc: dict[str, Any], expected_revision: int
+    ) -> None:
+        if doc["revision"] != expected_revision:
+            raise StaleRevision(
+                "O documento foi alterado. Atualize e tente novamente."
+            )
 
     def _audit(
         self,

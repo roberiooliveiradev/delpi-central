@@ -208,3 +208,26 @@ Correções sobre `ad78082222`, sem reimplementar o slice:
 - **R-W3 — auditoria de download.** `DOCUMENT_DOWNLOADED` registra a decisão de autorização — `result=AUTHORIZED|DENIED|FAILED` + `phase=authorization|delivery` no detail. DENIED quando o documento existe mas está fora do contexto (auditável); FAILED quando o binário está ausente. `FileResponse` não prova transmissão: nenhuma linha afirma entrega concluída.
 - **R-W4 — erros de download no MFE.** `.catch(() => undefined)` removido; banner acessível classifica a causa (autorização 401/403, documento fora do escopo 404, arquivo indisponível `file_missing`/503, falha de rede) com «Tentar novamente».
 - Evidência: backend `242 passed` · PG isolado `58 passed` (escopo herdado, filtro por contexto, fase de auditoria) · frontend `109 passed` + `25` estrutural · `tsc -b && vite build` ok · lint limpo nos arquivos tocados.
+
+## Adendo — Evidência de execução P2-Upload SLICE-2 (CF-C3-P2-UPLOAD-SLICE2-IMPL-GO-001)
+
+Baseline: SLICE-1 aceito ACCEPT_WITH_RESIDUAL (7d5e0402e0). Zero migrations novas — V003 já provia state/current_version_no/revision OCC/document_version/uploaded_by/closing_audit_event. D-U1..D-U7=A preservadas integralmente.
+
+### E1/E2 — Backend
+
+- U5 replace (POST .../documents/{id}/versions multipart com idempotency_key, revision, branch_scope?): uploader original ou manage elegível (D-U1) — access genérico sem manage é negado; manage sem access é 403 na pipeline. FOR UPDATE + verificação de revision na mesma transação ⇒ 1 vencedor; perdedores stale_revision 409. Nova versão ATTACHED (version_no+1), anterior SUPERSEDED, binário antigo nunca reescrito, VERSION_ADDED na tx. Mesma sequência .part→sha256→os.replace→tx→compensação do U1; .part descartado em toda rejeição.
+- U6 versions (GET .../versions): histórico imutável com metadados + sha256, sem storage_key; persiste após cancel; paginação ≤100.
+- U7 cancel (POST .../cancel com revision): CANCELLED != DELETED — sai da listagem ativa, consultável via U3/U6/U8, arquivos/versões/auditoria intactos; duplo cancel = conflito tipado; DOCUMENT_CANCELLED na tx.
+- U8 events (GET .../events): closing_audit_event filtrado por documento — upload, download (result/phase), versão, cancel; sem dados sensíveis; append-only.
+- Scope aplicado em U5–U8 (capability AND resource_scope AND business_rule); cross-competence e cross-branch = 404 sem vazamento; service principal 403; ator não-UUID 401.
+
+### E3/E4 — MFE e Help
+
+- ClosingDocumentsPanel: ações por documento (substituir, versões, cancelar, baixar, eventos) via AttachmentFileList itemActions (extensão backward-compatible do kit); file picker para replace; diálogo de versões com download por versão; ConfirmModalPanel para cancelar; diálogo de eventos; erros tipados 403/404/409 com retry seguro; ações desabilitadas em CANCELLED.
+- helpTooltips atualizado: substituir, SUPERSEDED, cancelar (histórico preservado), quem pode, anexar≠validar — sem promessas de P5/validação.
+- Evidência: BFF 308 passed (PG real R4 — corrida 4 threads → 1 vencedor, cancel/histórico/eventos, escopo); MFE 115 passed vitest + 25 estrutural; tsc -b && vite build ok; lint limpo nos arquivos tocados.
+- TEST_NOT_RUN: AC-P2-UP-20 (trava P5 — runtime de submissão inexistente; boundary reservado, não improvisado); smoke autenticado ponta a ponta.
+
+### Residuais honestos preservados
+
+Antivírus inexistente · housekeeping de órfãos PLANNED · retenção corporativa · OFX/QIF/TXT com TÉO · E05/E06 · RQ-P2-039 · trava P5 pendente de runtime canônico.

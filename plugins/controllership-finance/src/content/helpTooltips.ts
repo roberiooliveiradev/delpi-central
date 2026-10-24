@@ -84,8 +84,8 @@ export const CF_HELP = {
     detail:
       "Detalhe do item com proveniência: versão do template de origem, requisitos e notas. O conteúdo é o snapshot da competência — não muda quando o template mestre evolui.",
     documents:
-      "Evidências anexadas à competência como um todo. Arraste ou selecione um arquivo (PDF, imagem, XLS, XLSX ou CSV, até 25 MB) para enviar; cada envio registra autor, data e integridade do arquivo. «Baixar» entrega o documento original — exige autorização e fica registrado na auditoria. Anexar uma evidência não valida o documento nem entrega o item: o checklist permanece «Esperado».",
+      "Evidências anexadas à competência como um todo. Arraste ou selecione um arquivo (PDF, imagem, XLS, XLSX ou CSV, até 25 MB) para enviar; cada envio registra autor, data e integridade do arquivo. «Substituir» cria uma versão nova e preserva a anterior em «Versões» — só quem anexou ou um gestor pode substituir. «Cancelar» retira o documento da lista sem apagar arquivos nem histórico, que ficam em «Eventos». «Baixar» entrega o documento original — exige autorização e fica registrado na auditoria. Anexar uma evidência não valida o documento nem entrega o item: o checklist permanece «Esperado».",
     itemDocuments:
-      "Evidências vinculadas a este item do checklist — a mesma regra de upload da competência vale aqui (PDF, imagem, XLS, XLSX ou CSV, até 25 MB). Um documento de item só pode ser anexado a um item da competência aberta. Erros comuns: arquivo acima de 25 MB, formato não permitido, arquivo vazio ou conteúdo que não corresponde à extensão.",
+      "Evidências vinculadas a este item do checklist — a mesma regra de upload da competência vale aqui (PDF, imagem, XLS, XLSX ou CSV, até 25 MB). Um documento de item só pode ser anexado a um item da competência aberta. «Substituir», «Versões», «Eventos» e «Cancelar» funcionam como nas evidências da competência: a versão substituída fica marcada como «Substituída» e continua baixável, e o cancelamento é lógico — nada é apagado. Erros comuns: arquivo acima de 25 MB, formato não permitido, arquivo vazio ou conteúdo que não corresponde à extensão.",
   },
 } as const;

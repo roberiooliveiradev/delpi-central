@@ -19,6 +19,7 @@ import uuid
 
 from fastapi import APIRouter, File, Form, Path, Query, Request, UploadFile
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 
 from controllership_finance_app.application.services.closing_document_service import (
     ClosingDocumentService,
@@ -32,9 +33,11 @@ from controllership_finance_app.domain.closing_documents.file_validation import 
     MAX_FILE_BYTES,
 )
 from controllership_finance_app.interface.http.authz import (
+    MANAGE_PERMISSION,
     actor_subject,
     authorized_user,
 )
+from delpi_auth.authz_core import has_permission
 
 router = APIRouter(prefix="/closing/competences", tags=["Closing Documents"])
 
@@ -70,6 +73,7 @@ def _document_view(row: dict) -> dict:
         "attachment_role": row["attachment_role"],
         "state": row["state"],
         "current_version_no": row["current_version_no"],
+        "revision": row["revision"],
         "uploaded_by": str(row["uploaded_by"]),
         "created_at": row["created_at"].isoformat()
         if row["created_at"]
@@ -266,4 +270,196 @@ def download_document_version(
         path,
         media_type=meta["mime_type"],
         filename=meta["original_name"],
+    )
+
+
+# -- SLICE-2: U5 substituição · U6 versões · U7 cancel · U8 eventos ---------------
+
+
+def _version_view(row: dict) -> dict:
+    """Contrato público da versão — metadados + referência estável,
+    nunca storage_key nem caminho físico (doc 103 §6)."""
+    return {
+        "document_version_id": str(row["document_version_id"]),
+        "document_id": str(row["document_id"]),
+        "version_no": row["version_no"],
+        "state": row["state"],
+        "uploaded_by": str(row["uploaded_by"]),
+        "created_at": row["created_at"].isoformat()
+        if row["created_at"]
+        else None,
+        "original_name": row["original_name"],
+        "mime_type": row["mime_type"],
+        "size_bytes": row["size_bytes"],
+        "checksum_sha256": row["checksum_sha256"],
+    }
+
+
+def _event_view(row: dict) -> dict:
+    """Contrato público do evento de auditoria — sem tokens, caminhos
+    físicos ou dados de autenticação (detail já é sanitized na escrita)."""
+    return {
+        "event_id": str(row["event_id"]),
+        "event_type": row["event_type"],
+        "actor_subject": str(row["actor_subject"]),
+        "detail": row["detail"] or {},
+        "created_at": row["created_at"].isoformat()
+        if row["created_at"]
+        else None,
+    }
+
+
+def _can_manage(request: Request):
+    """`access` efetivo primeiro (rotas do portal), depois flag `manage`
+    — D-U1=A: elegível = uploader OU `manage`, sempre com `access`."""
+    user = authorized_user(request)
+    return user, has_permission(user, MANAGE_PERMISSION)
+
+
+@router.post(
+    "/{period}/documents/{document_id}/versions",
+    operation_id="replace_document_version",
+    status_code=201,
+)
+async def replace_document_version(
+    request: Request,
+    period: str = Path(pattern=PERIOD_PATTERN),
+    document_id: uuid.UUID = Path(),
+    file: UploadFile = File(...),
+    revision: int = Form(..., ge=1),
+    branch_scope: str | None = Form(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
+):
+    """U5 — substituição governada: `access` + scope + uploader-or-manage
+    + business_rule + OCC `revision`. A versão anterior passa a
+    `SUPERSEDED` e permanece referenciável — binário nunca é sobrescrito."""
+    user, can_manage = _can_manage(request)
+    try:
+        chunks = await _read_chunks_limited(file)
+        document = _service().replace_document(
+            period=period,
+            document_id=str(document_id),
+            actor=actor_subject(user),
+            can_manage=can_manage,
+            original_name=file.filename or "evidencia",
+            declared_mime=file.content_type,
+            chunks=chunks,
+            expected_revision=revision,
+            branch_scope=branch_scope,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "replace_document_version")
+    return ok(
+        _document_view(document),
+        message="Documento substituído. A versão anterior foi preservada.",
+        status_code=201,
+        operation_id="replace_document_version",
+    )
+
+
+@router.get(
+    "/{period}/documents/{document_id}/versions",
+    operation_id="list_document_versions",
+)
+def list_document_versions(
+    request: Request,
+    period: str = Path(pattern=PERIOD_PATTERN),
+    document_id: uuid.UUID = Path(),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
+):
+    """U6 — histórico imutável de versões; downloads seguem U4 com a
+    mesma autorização (versão anterior continua acessível)."""
+    authorized_user(request)
+    try:
+        rows = _service().list_document_versions(
+            period=period,
+            document_id=str(document_id),
+            branch_scope=branch_scope,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "list_document_versions")
+    return ok(
+        {"versions": [_version_view(r) for r in rows]},
+        operation_id="list_document_versions",
+    )
+
+
+class CancelDocumentRequest(BaseModel):
+    revision: int = Field(ge=1)
+
+
+@router.post(
+    "/{period}/documents/{document_id}/cancel",
+    operation_id="cancel_document",
+)
+def cancel_document(
+    request: Request,
+    body: CancelDocumentRequest,
+    period: str = Path(pattern=PERIOD_PATTERN),
+    document_id: uuid.UUID = Path(),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
+):
+    """U7 — cancelamento lógico (`CANCELLED != DELETED`): sai da
+    listagem ativa, arquivos/versões/auditoria permanecem íntegros.
+    Mesma autorização de U5 (uploader ou `manage` elegível) + OCC."""
+    user, can_manage = _can_manage(request)
+    try:
+        document = _service().cancel_document(
+            period=period,
+            document_id=str(document_id),
+            actor=actor_subject(user),
+            can_manage=can_manage,
+            expected_revision=body.revision,
+            branch_scope=branch_scope,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "cancel_document")
+    return ok(
+        _document_view(document),
+        message="Documento cancelado. O histórico foi preservado.",
+        operation_id="cancel_document",
+    )
+
+
+@router.get(
+    "/{period}/documents/{document_id}/events",
+    operation_id="list_document_audit",
+)
+def list_document_audit(
+    request: Request,
+    period: str = Path(pattern=PERIOD_PATTERN),
+    document_id: uuid.UUID = Path(),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    """U8 — eventos de auditoria do documento (append-only): apenas os
+    tipos documentais do contrato, escopo da competência e do
+    filial-contexto declarado."""
+    authorized_user(request)
+    try:
+        result = _service().list_document_events(
+            period=period,
+            document_id=str(document_id),
+            branch_scope=branch_scope,
+            limit=limit,
+            offset=offset,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "list_document_audit")
+    return ok(
+        {
+            "events": [_event_view(r) for r in result["items"]],
+            "total": result["total"],
+            "limit": result["limit"],
+            "offset": result["offset"],
+        },
+        operation_id="list_document_audit",
     )

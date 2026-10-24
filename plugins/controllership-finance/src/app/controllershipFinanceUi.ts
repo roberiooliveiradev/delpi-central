@@ -23,8 +23,10 @@ import {
   createDashboardTopBarUserIdentity,
   createDashboardTopBarUtilityCluster,
   createDashboardViewTransition,
+  createHostContainedModalShell,
   EmptyState,
   catalogSearchBarBemClasses,
+  confirmModalBemClasses,
   emptyStateCardBemClasses,
   sectionCardPacBemClasses,
   sectionRouteCardBemClasses,
@@ -120,3 +122,9 @@ export const CfTitleWithHelp = createDashboardTitleWithHelp({
   },
 });
 export const CfSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
+export const cfConfirmModalClassNames = confirmModalBemClasses(UI_PREFIX);
+export const CfDialog = createHostContainedModalShell({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CF_PORTAL_SCOPE,
+  containedLayout: "dialog",
+});

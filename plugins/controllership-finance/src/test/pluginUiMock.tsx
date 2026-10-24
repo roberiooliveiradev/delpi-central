@@ -605,6 +605,10 @@ export function AttachmentFileList(props: {
   labels?: { empty?: string; download?: string };
   emptyMessage?: string;
   onDownload?: (item: { id: string; fileName: string }) => void;
+  itemActions?: (item: {
+    id: string;
+    fileName: string;
+  }) => ReactNode;
 }) {
   const items = props.items ?? [];
   if (items.length === 0) {
@@ -623,7 +627,66 @@ export function AttachmentFileList(props: {
           { type: "button", onClick: () => props.onDownload?.(item) },
           props.labels?.download ?? "Baixar",
         ),
+        props.itemActions?.(item) ?? null,
       ),
+    ),
+  );
+}
+
+export function createHostContainedModalShell() {
+  return function HostContainedModalShell(props: {
+    open?: boolean;
+    title?: string;
+    onClose?: () => void;
+    closeAriaLabel?: string;
+    children?: ReactNode;
+  }) {
+    if (!props.open) return null;
+    return el(
+      "div",
+      { role: "dialog", "aria-label": props.title },
+      el("h2", null, props.title),
+      el(
+        "button",
+        {
+          type: "button",
+          "aria-label": props.closeAriaLabel ?? "Fechar",
+          onClick: props.onClose,
+        },
+        "×",
+      ),
+      props.children,
+    );
+  };
+}
+
+export const confirmModalBemClasses = passthroughClasses;
+
+export function ConfirmModalPanel(props: {
+  message?: ReactNode;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  confirmBusy?: boolean;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}) {
+  return el(
+    "div",
+    null,
+    el("p", null, props.message),
+    el(
+      "button",
+      {
+        type: "button",
+        disabled: props.confirmBusy,
+        onClick: props.onConfirm,
+      },
+      props.confirmLabel ?? "Confirmar",
+    ),
+    el(
+      "button",
+      { type: "button", onClick: props.onCancel },
+      props.cancelLabel ?? "Cancelar",
     ),
   );
 }

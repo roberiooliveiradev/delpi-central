@@ -17,11 +17,15 @@ from pathlib import Path
 from typing import Iterable
 
 from controllership_finance_app.domain.closing_checklist.errors import (
+    DocumentCancelled,
+    DocumentNotAttached,
     DocumentNotFound,
     FileMissing,
+    Forbidden,
     IdempotencyConflict,
     InvalidUpload,
     ItemNotFound,
+    StaleRevision,
 )
 from controllership_finance_app.domain.closing_documents.file_validation import (
     sanitize_original_name,
@@ -315,3 +319,198 @@ class ClosingDocumentService:
             result="AUTHORIZED",
         )
         return path, version_file
+
+    # -- U5 — substituição (SLICE-2) -------------------------------------------
+
+    def replace_document(
+        self,
+        *,
+        period: str,
+        document_id: str,
+        actor: str,
+        can_manage: bool,
+        original_name: str,
+        declared_mime: str | None,
+        chunks: Iterable[bytes],
+        expected_revision: int,
+        branch_scope: str | None = None,
+    ) -> dict:
+        """Cria versão N+1 `ATTACHED` e marca a anterior `SUPERSEDED`.
+
+        Autorização D-U1=A: uploader original OU `manage` efetivo —
+        sempre somado a `access` + resource scope + business rule.
+        `manage` sozinho não chega aqui (a rota exige `access` antes).
+        OCC: a `revision` é reavaliada sob `FOR UPDATE` — concorrente
+        obsoleto recebe `stale_revision` e nenhuma versão se perde.
+        """
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        _assert_active_state(document["state"])
+        _assert_owner_or_manage(document, actor, can_manage)
+        if document["revision"] != expected_revision:
+            # Fail-fast honesto antes de escrever bytes; o repositório
+            # revalida sob lock (corrida real ainda é `stale_revision`).
+            raise StaleRevision(
+                "O documento foi alterado. Atualize e tente novamente."
+            )
+        competence_id = str(document["competence_id"])
+
+        display_name = sanitize_original_name(original_name)
+        file_uuid = uuid.uuid4()
+        tmp_path, checksum, size = self._storage.write_temp(
+            file_uuid, chunks
+        )
+        try:
+            content = tmp_path.read_bytes()
+            extension, mime_type = validate_upload_content(
+                original_name=display_name,
+                declared_mime=declared_mime,
+                content=content,
+            )
+        except Exception:
+            self._storage.discard_temp(file_uuid)
+            raise
+        try:
+            storage_key, stored_name, _final_path = self._storage.publish(
+                tmp_path,
+                competence_id=competence_id,
+                file_uuid=file_uuid,
+                extension=extension,
+            )
+        except Exception:
+            self._storage.discard_temp(file_uuid)
+            raise
+        try:
+            return self._repository.add_version(
+                competence_id=competence_id,
+                document_id=str(document["document_id"]),
+                expected_revision=expected_revision,
+                storage_key=storage_key,
+                original_name=display_name,
+                stored_name=stored_name,
+                mime_type=mime_type,
+                extension=extension,
+                size_bytes=size,
+                checksum_sha256=checksum,
+                actor=actor,
+            )
+        except Exception:
+            # Compensação C2 — binário novo publicado sem versão ⇒ remove.
+            # O binário da versão anterior NUNCA é tocado.
+            if not self._storage.remove(storage_key):
+                logger.warning(
+                    "orphan_binary_after_version_failure "
+                    "storage_key=%s",
+                    storage_key,
+                )
+            raise
+
+    # -- U7 — cancelamento (SLICE-2) --------------------------------------------
+
+    def cancel_document(
+        self,
+        *,
+        period: str,
+        document_id: str,
+        actor: str,
+        can_manage: bool,
+        expected_revision: int,
+        branch_scope: str | None = None,
+    ) -> dict:
+        """Cancelamento lógico — `CANCELLED != DELETED`: arquivos,
+        versões e auditoria permanecem consultáveis (U3/U6/U8)."""
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        _assert_active_state(document["state"])
+        _assert_owner_or_manage(document, actor, can_manage)
+        return self._repository.cancel_document(
+            competence_id=str(document["competence_id"]),
+            document_id=str(document["document_id"]),
+            expected_revision=expected_revision,
+            actor=actor,
+        )
+
+    # -- U6/U8 — histórico e eventos (SLICE-2) -----------------------------------
+
+    def list_document_versions(
+        self, *, period: str, document_id: str, branch_scope: str | None
+    ) -> list[dict]:
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        return self._repository.list_document_versions(
+            str(document["competence_id"]), str(document["document_id"])
+        )
+
+    def list_document_events(
+        self,
+        *,
+        period: str,
+        document_id: str,
+        branch_scope: str | None,
+        limit: int,
+        offset: int,
+    ) -> dict:
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        return self._repository.list_document_events(
+            str(document["competence_id"]),
+            str(document["document_id"]),
+            limit=limit,
+            offset=offset,
+        )
+
+    # -- internals ----------------------------------------------------------------
+
+    def _document_in_scope(
+        self, *, period: str, document_id: str, branch_scope: str | None
+    ) -> dict:
+        """Documento da competência do path + filial-contexto declarado.
+
+        Cross-competence e cross-scope são 404 — existência nunca vaza
+        (resource scope do contrato, mesmo critério de U3/U4)."""
+        competence_id = self._repository.get_competence_id(period)
+        request_scope = normalize_request_scope(branch_scope)
+        row = self._repository.get_document_by_id(
+            competence_id, document_id
+        )
+        if not scope_in_context(
+            request_scope=request_scope,
+            document_scope=row.get("branch_scope"),
+        ):
+            raise DocumentNotFound("Documento não encontrado.")
+        return row
+
+
+def _assert_active_state(state: str) -> None:
+    """Mutações documentais só partem de `ATTACHED`; `CANCELLED` é
+    terminal (`CANCELLED != DELETED` — histórico continua consultável)."""
+    if state == "CANCELLED":
+        raise DocumentCancelled(
+            "Documento cancelado não pode ser alterado."
+        )
+    if state != "ATTACHED":
+        raise DocumentNotAttached(
+            "Documento não está em estado que permita alteração."
+        )
+
+
+def _assert_owner_or_manage(
+    document: dict, actor: str, can_manage: bool
+) -> None:
+    """D-U1=A — mutação só pelo uploader original ou `manage` efetivo."""
+    if str(document["uploaded_by"]) != actor and not can_manage:
+        raise Forbidden(
+            "Somente quem anexou ou um gestor pode alterar esta evidência."
+        )

@@ -114,3 +114,18 @@ class FileMissing(ChecklistDomainError):
 class InvalidUpload(ChecklistDomainError):
     code = "invalid_upload"
     status = 422
+
+
+class Forbidden(ChecklistDomainError):
+    code = "forbidden"
+    status = 403
+
+
+class DocumentCancelled(ChecklistDomainError):
+    code = "document_cancelled"
+    status = 409
+
+
+class DocumentNotAttached(ChecklistDomainError):
+    code = "document_not_attached"
+    status = 409

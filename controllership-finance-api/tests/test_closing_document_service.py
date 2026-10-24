@@ -458,3 +458,333 @@ def test_download_inside_declared_scope_authorized(tmp_path):
     )
     assert path.is_file()
     assert repo.audit_download.call_args.kwargs["result"] == "AUTHORIZED"
+
+
+# -- U5/U7: mutações (SLICE-2) -------------------------------------------------
+
+
+def _attached_doc(**overrides):
+    doc = {
+        "document_id": uuid.uuid4(),
+        "competence_id": uuid.uuid4(),
+        "state": "ATTACHED",
+        "revision": 3,
+        "current_version_no": 1,
+        "uploaded_by": uuid.uuid4(),
+        "branch_scope": "BOTH",
+    }
+    doc.update(overrides)
+    return doc
+
+
+def _replace_kwargs(**overrides):
+    kw = {
+        "period": "2026-05",
+        "document_id": str(uuid.uuid4()),
+        "actor": str(uuid.uuid4()),
+        "can_manage": False,
+        "original_name": "extrato2.pdf",
+        "declared_mime": "application/pdf",
+        "chunks": [_pdf()],
+        "expected_revision": 3,
+    }
+    kw.update(overrides)
+    return kw
+
+
+def _no_finals(tmp_path) -> None:
+    assert [
+        p for p in tmp_path.rglob("*") if p.is_file() and ".tmp" not in str(p)
+    ] == []
+
+
+def test_replace_by_uploader_creates_version(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    doc = _attached_doc(uploaded_by=actor)
+    repo.get_document_by_id.return_value = doc
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.replace_document(
+        **_replace_kwargs(document_id=str(doc["document_id"]), actor=actor)
+    )
+    repo.add_version.assert_called_once()
+    call = repo.add_version.call_args.kwargs
+    assert call["document_id"] == str(doc["document_id"])
+    assert call["expected_revision"] == 3
+    assert call["actor"] == actor
+    assert call["checksum_sha256"]
+
+
+def test_replace_by_eligible_manage_allowed(tmp_path):
+    # Gestor com manage (e access — a rota exige access antes) que NÃO é
+    # o uploader pode substituir; o evento registra o ator gestor.
+    repo = _repo()
+    manager = str(uuid.uuid4())
+    repo.get_document_by_id.return_value = _attached_doc()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.replace_document(
+        **_replace_kwargs(actor=manager, can_manage=True)
+    )
+    assert repo.add_version.call_args.kwargs["actor"] == manager
+
+
+def test_replace_by_non_uploader_without_manage_forbidden(tmp_path):
+    # Ana anexou; Bruno tem access mas não é uploader nem gestor — 403.
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.Forbidden):
+        service.replace_document(**_replace_kwargs())
+    repo.add_version.assert_not_called()
+    _no_parts(tmp_path)
+    _no_finals(tmp_path)
+
+
+def test_replace_on_cancelled_document_denied(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        state="CANCELLED", uploaded_by=actor
+    )
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentCancelled):
+        service.replace_document(
+            **_replace_kwargs(actor=actor)
+        )
+    repo.add_version.assert_not_called()
+    _no_finals(tmp_path)
+
+
+def test_replace_stale_revision_fails_before_write(tmp_path):
+    # O ator viu revision 3, o documento já está em 5 — nada toca o disco.
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        revision=5, uploaded_by=actor
+    )
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.StaleRevision):
+        service.replace_document(
+            **_replace_kwargs(actor=actor, expected_revision=3)
+        )
+    repo.add_version.assert_not_called()
+    _no_parts(tmp_path)
+    _no_finals(tmp_path)
+
+
+def test_replace_outside_declared_scope_is_404(tmp_path):
+    # Evidência de item MATRIX consultada por contexto Filial — 404.
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        uploaded_by=actor, branch_scope="MATRIX"
+    )
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentNotFound):
+        service.replace_document(
+            **_replace_kwargs(actor=actor, branch_scope="BRANCH")
+        )
+    repo.add_version.assert_not_called()
+    _no_finals(tmp_path)
+
+
+def test_replace_invalid_file_leaves_no_part(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(uploaded_by=actor)
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.InvalidFileContent):
+        service.replace_document(
+            **_replace_kwargs(actor=actor, chunks=[_corrupted_pdf()])
+        )
+    repo.add_version.assert_not_called()
+    _no_parts(tmp_path)
+
+
+def test_replace_persistence_failure_compensates_new_binary(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(uploaded_by=actor)
+    repo.add_version.side_effect = de.PersistenceUnavailable("db down")
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.PersistenceUnavailable):
+        service.replace_document(**_replace_kwargs(actor=actor))
+    _no_parts(tmp_path)
+    _no_finals(tmp_path)
+
+
+def test_replace_publish_failure_leaves_no_part(tmp_path, monkeypatch):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(uploaded_by=actor)
+    storage = _storage(tmp_path)
+    monkeypatch.setattr(
+        storage, "publish", MagicMock(side_effect=OSError("disk full"))
+    )
+    service = ClosingDocumentService(repo, storage)
+    with pytest.raises(OSError):
+        service.replace_document(**_replace_kwargs(actor=actor))
+    _no_parts(tmp_path)
+    _no_finals(tmp_path)
+
+
+def test_cancel_by_uploader(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    doc = _attached_doc(uploaded_by=actor)
+    repo.get_document_by_id.return_value = doc
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.cancel_document(
+        period="2026-05",
+        document_id="doc-1",
+        actor=actor,
+        can_manage=False,
+        expected_revision=3,
+    )
+    repo.cancel_document.assert_called_once()
+    assert repo.cancel_document.call_args.kwargs["expected_revision"] == 3
+
+
+def test_cancel_by_eligible_manage_allowed(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.cancel_document(
+        period="2026-05",
+        document_id="doc-1",
+        actor=str(uuid.uuid4()),
+        can_manage=True,
+        expected_revision=3,
+    )
+    repo.cancel_document.assert_called_once()
+
+
+def test_cancel_by_non_uploader_without_manage_forbidden(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.Forbidden):
+        service.cancel_document(
+            period="2026-05",
+            document_id="doc-1",
+            actor=str(uuid.uuid4()),
+            can_manage=False,
+            expected_revision=3,
+        )
+    repo.cancel_document.assert_not_called()
+
+
+def test_cancel_already_cancelled_denied(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        state="CANCELLED", uploaded_by=actor
+    )
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentCancelled):
+        service.cancel_document(
+            period="2026-05",
+            document_id="doc-1",
+            actor=actor,
+            can_manage=False,
+            expected_revision=3,
+        )
+    repo.cancel_document.assert_not_called()
+
+
+def test_cancel_outside_declared_scope_is_404(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        uploaded_by=actor, branch_scope="MATRIX"
+    )
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentNotFound):
+        service.cancel_document(
+            period="2026-05",
+            document_id="doc-1",
+            actor=actor,
+            can_manage=False,
+            expected_revision=3,
+            branch_scope="BRANCH",
+        )
+    repo.cancel_document.assert_not_called()
+
+
+def test_cancel_stale_revision_propagates(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(uploaded_by=actor)
+    repo.cancel_document.side_effect = de.StaleRevision("stale")
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.StaleRevision):
+        service.cancel_document(
+            period="2026-05",
+            document_id="doc-1",
+            actor=actor,
+            can_manage=False,
+            expected_revision=1,
+        )
+
+
+# -- U6/U8: histórico e eventos (SLICE-2) --------------------------------------
+
+
+def test_list_versions_inside_scope(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(branch_scope="BRANCH")
+    repo.list_document_versions.return_value = [{"version_no": 2}]
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    out = service.list_document_versions(
+        period="2026-05",
+        document_id="doc-1",
+        branch_scope="BRANCH",
+    )
+    assert out == [{"version_no": 2}]
+    repo.list_document_versions.assert_called_once()
+
+
+def test_list_versions_outside_scope_is_404(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(branch_scope="MATRIX")
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentNotFound):
+        service.list_document_versions(
+            period="2026-05",
+            document_id="doc-1",
+            branch_scope="BRANCH",
+        )
+    repo.list_document_versions.assert_not_called()
+
+
+def test_list_events_inside_scope(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    repo.list_document_events.return_value = {
+        "items": [], "total": 0, "limit": 50, "offset": 0,
+    }
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.list_document_events(
+        period="2026-05",
+        document_id="doc-1",
+        branch_scope=None,
+        limit=25,
+        offset=10,
+    )
+    call = repo.list_document_events.call_args.kwargs
+    assert call["limit"] == 25 and call["offset"] == 10
+
+
+def test_list_events_outside_scope_is_404(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(branch_scope="MATRIX")
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentNotFound):
+        service.list_document_events(
+            period="2026-05",
+            document_id="doc-1",
+            branch_scope="BRANCH",
+            limit=50,
+            offset=0,
+        )
+    repo.list_document_events.assert_not_called()
