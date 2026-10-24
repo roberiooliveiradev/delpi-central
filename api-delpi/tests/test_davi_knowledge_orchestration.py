@@ -58,6 +58,18 @@ def test_source_authority_and_provider_evidence_are_separate() -> None:
         assert set(source.get("tools", [])) <= _MCP_TOOLS
 
 
+def test_knowledge_availability_is_explicit_for_external_mcp_consumers() -> None:
+    source = _ko()["sources"]["governed_knowledge"]
+    assert source["corpus_status"] == "PROVEN"
+    assert source["retrieval_surface"] == "WORKSPACE_AGENT_FILES"
+    assert source["mcp_document_access"] == "NOT_EXPOSED"
+    assert source["consumer_contract_status"] == "ARCHITECTURE_DECISION_REQUIRED"
+    assert source["tools"] == []
+    gate = _ko()["gates"]["KNOWLEDGE_GATE"]
+    assert "MCP" in gate and "agent_directives" in gate
+    assert "AuthZ" in gate
+
+
 def test_routing_references_only_registered_sources_and_directives() -> None:
     ko = _ko()
     directives = DaviAgentIntelligenceService.agent_directives()

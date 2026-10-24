@@ -53,3 +53,15 @@
 - Resultado deve discriminar `PROVEN|TO_INVENTORY|PLANNED`, `PASS|FAIL|TEST_NOT_RUN|INCONCLUSIVE`, causa-raiz versus hipótese, código SHA, evidências e rollback. `TEST_GREEN != BUSINESS_OUTCOME`.
 
 **Estado inicial:** `A0=PARTIAL_EVIDENCE`, `A1/B0/B1/B2=NOT_EXECUTED`, `DEPLOY_AUTHORIZATION=NO`, `R4_AUTHORIZATION=NO`.
+
+## Handoff DAVI — recuperação documental, inventário bounded
+
+Task independente `DAVI-KNOWLEDGE-INTELLIGENCE-DOCUMENTATION-RECOVERY-AND-PRODUCTION-DEPLOY-01`, base `ae2e82a4fbf2f7f1c44a8426d4ddec0d73c43143`. Evidência owner-local: `api-delpi/docs/integrations/evidence/davi-knowledge-documentation-recovery-01.md`.
+
+- Verify/build do corpus V1: PASS, 15 documentos e 15 tópicos, membership preservado. Isso não comprova Files/provider retrieval.
+- Introspecção read-only do servidor MCP no container produtivo: duas tools e zero resources. Files do Workspace Agent não são uma leitura documental para a DÉLIA; `MCP_DOCUMENT_ACCESS=NOT_EXPOSED`, `CONSUMER_CONTRACT=ARCHITECTURE_DECISION_REQUIRED`.
+- Normas MP e resumo PI completos foram localizados nas fontes documentais versionadas do antigo Chat; extrato READ já existe na API DELPI. Ratificação de atualidade/owner e nova versão de corpus continuam pendentes; nenhum runtime/prompt do Chat foi importado.
+- `search_products` usa OR de prefixos com ranking da frase completa. A consulta ampla não prova pertinência semântica nem inexistência de documentos; nenhuma exceção lexical ou alteração de busca foi introduzida.
+- Provider sync/K01–K10 e testes produtivos autenticados permanecem TEST_NOT_RUN sem acesso oficial disponível nesta sessão. A dependência de recuperação documental transversal não está resolvida por metadata.
+
+A autorização de deploy DAVI desta task é independente do estado histórico acima; não autoriza código DÉLIA, R4–R7 nem publicação unilateral de documentos no provider.

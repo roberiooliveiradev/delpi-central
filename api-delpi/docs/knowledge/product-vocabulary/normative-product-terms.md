@@ -10,7 +10,7 @@
 | Fonte auxiliar (50xx) | `minha-delpi-ai-api/docs/knowledge/domains/agents/minha-delpi-chat/engenharia-codigos-intermediarios-delpi.md` |
 | Origem normativa | ENGENHARIA — elaboração Robério Oliveira, revisão José, 05/06/2025 |
 | Status normativo | `BUSINESS_OWNER=TO_INVENTORY` — cópia controlada de interpretação; a norma-fonte no repositório do Chat AI permanece a referência documental até ratificação formal do owner |
-| Projeção divergente | `domains/global/normas-tecnicas-delpi.md` difere da fonte em ~11 linhas — usar a fonte `sources/gpt-instructions` como referência desta cópia |
+| Comparação das cópias | Revalidada em `ae2e82a4fbf2f7f1c44a8426d4ddec0d73c43143`: `domains/global/normas-tecnicas-delpi.md` adiciona cabeçalho de proveniência e difere na quebra final; nenhuma divergência normativa identificada. Usar `sources/gpt-instructions` como referência desta cópia. Isso não substitui ratificação do owner. |
 | Classificação | document_guidance — orienta interpretação; não é verdade de domínio nem AuthZ |
 | Política de atualização | reincorporar ao mudar a fonte; manter apenas extrato de interpretação READ (não regras de criação de descrição) |
 

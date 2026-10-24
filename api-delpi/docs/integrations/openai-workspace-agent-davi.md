@@ -441,6 +441,23 @@ FILE_CITATION_RENDERING = TO_INVENTORY
 KNOWLEDGE_RUNTIME_LIVE = TEST_NOT_RUN (manual sync not performed)
 ```
 
+### External MCP consumers — documentary access boundary
+
+The frozen corpus and Workspace Agent Files are not an MCP document-read surface.
+`governed_knowledge.status=PROVEN` describes the Git corpus only; discovery also
+projects explicit `corpus_status`, `retrieval_surface`, `mcp_document_access` and
+`consumer_contract_status`. These are guidance metadata, not recovered document
+content, backend AuthZ or proof of provider synchronization.
+
+External consumers must not infer access to Files from operational discovery
+candidates. No production document resource or third tool is introduced. Any
+future documentary-consumption boundary needs an architecture decision covering
+identity, audience, bounded payloads, provenance, pinning and typed failures.
+The existing two-tool invariant remains unchanged.
+
+Recovery inventory, MP/PI source provenance, search diagnosis and outstanding
+provider/owner gates: [bounded recovery evidence](evidence/davi-knowledge-documentation-recovery-01.md).
+
 ### Operator runbook — knowledge corpus sync (manual draft sync)
 
 Not executed yet; provider acceptance is still pending:
