@@ -1,6 +1,6 @@
 # DÉLIA — Unified Voice Capture Visual System (Batch + Live)
 
-**Data:** 2026-10-23. **Status:** PRODUCT UX DECISION / PLANNED (documentation-only). **Repositório:** roberiooliveiradev/delpi-central. **HEAD de referência:** 84306b0eb3d0b2cdd4ac50c6688fa67f02ff7fee. Reancorar antes de executar.
+**Data:** 2026-10-23. **Status:** IMPLEMENTED (2026-10-23, SHA `252fa11239`). **Repositório:** roberiooliveiradev/delpi-central. **HEAD de referência:** 84306b0eb3d0b2cdd4ac50c6688fa67f02ff7fee. Reancorar antes de executar.
 
 ## 1. Objetivo e premissas
 
@@ -81,4 +81,6 @@ Os dois modos compartilham **a mesma linguagem**, não necessariamente o mesmo D
 
 **Task:** `DELIA-UX-UNIFIED-VOICE-CONTROLS-VISUAL-REFINEMENT-01`. Reanchor git/authorities/ledger → inventory e reuse gate → contrato visual → RED testes → menor diff plugin-ui + composição DÉLIA → regressão → QA real video/frames dos dois modos, full-page, Dock, mobile, temas, zoom, reduced-motion → rework → docs/evidence/ledger → commit/push main → deploy apenas frontend afetado → smoke → report.
 
-**Status documental:** `SPEC_PUBLISHED`, `RUNTIME_NOT_CHANGED`, `PHASE_NOT_ADVANCED`. 
+**Status documental:** `SPEC_PUBLISHED`, `RUNTIME_CHANGED`, `PHASE_NOT_ADVANCED`.
+
+**Implementação (factual):** live entrou na família circular do batch — mic e controles de sessão (Pausar/Retomar/Finalizar/Descartar) a 40px `border-radius:50%`; Finalizar `tone="primary"` e Descartar `tone="danger"` (affordance neutra+hover do `IconButton` existente). Batch: alvos 36→40px, live-dot de perigo→acento institucional, entrada 160→200ms. Halos `--capturing`/`--listening` no `MessageComposer` por tokens (`color-mix` do acento); live levemente mais luminoso; pulso no dot live parado quando pausado; tudo sob `prefers-reduced-motion`. Zero mudança de STT, contratos, state machines ou backend. Evidência: `evidence/progressive-dictation-vdf06/` (seção spec 126) — 426/426 DÉLIA, 2324/2324 plugin-ui, probe prod `vd-vox-prod.mjs` **31/31** com geometria e cores medidas.

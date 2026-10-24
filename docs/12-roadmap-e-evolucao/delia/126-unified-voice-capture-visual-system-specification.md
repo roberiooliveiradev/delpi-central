@@ -2,7 +2,7 @@
 ## Especificação de produto, componentes e subcomponentes — Batch + Live
 
 **Data:** 2026-10-23  
-**Status:** PRODUCT_UX_DECISION / IMPLEMENTATION_PLANNED / RUNTIME_NOT_CHANGED  
+**Status:** IMPLEMENTED (2026-10-23, SHA `252fa11239`) / RUNTIME_CHANGED  
 **Owner produto:** DÉLIA (`plugins/delia`)  
 **Owner primitivos visuais compartilhados:** `plugins/plugin-ui`  
 **Consumers:** DÉLIA full-page, Companion Dock real, mobile  

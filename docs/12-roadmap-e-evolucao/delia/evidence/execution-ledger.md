@@ -17978,3 +17978,16 @@ DEPLOYED=NO CORRECTIONS_IMPLEMENTED=YES LOCAL_GREEN=YES
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
 NEXT=INDEPENDENT_REVIEW_THEN_GOVERNED_DEPLOY_GATE
 Evidência: [doc 136](../corrections/mcp-contextual-intelligence-orchestration/136-functional-residual-closure-f01-f06.md).
+
+## §6.418 — Unified Voice Capture Visual batch+live (2026-10-23)
+
+**2026-10-23 — DELIA-UX-UNIFIED-VOICE-CONTROLS-VISUAL-REFINEMENT-01 (spec 126):** live entrou na familia circular do batch — mic e controles 40px radius 50%, Finalizar tone=primary, Descartar tone=danger (neutro+hover perigo). Batch: alvos 36->40px, live-dot perigo->acento institucional, entrada 160->200ms. Halos --capturing/--listening no composer por tokens; live luminoso via color-mix do mesmo token; pulso no dot live parado quando pausado; prefers-reduced-motion coberto. Sem pause inventado no batch, sem waveform fake, sem segundo painel live. Zero mudanca de STT/contrato/backend/plugin-ui API.
+
+TESTES: delia 426/426 (+5 VOX), plugin-ui 2324/2324, typecheck+build+federation verdes. DEPLOY: push ff `252fa11239` -> up-prod-sequential --build plugin-ui delia.
+
+QA VISUAL PROD 31/31 (vd-vox-prod.mjs): geometria 40x40 medida nos dois modos, cores computadas (acento; live luminoso), halo captura/escuta, waveform real 24 barras, timer, pausa interrompe pulso, reduced-motion, mobile 375, dock real, transcricao pt-BR editavel, zero auto-submit. Screenshots shots-vox/. DEFECTS_PROD=0 (1 parser de cor no probe corrigido — formato color(srgb)).
+
+TASK_ID=DELIA-UX-UNIFIED-VOICE-CONTROLS-VISUAL-REFINEMENT-01
+COMMIT=252fa11239(code)+docs DEPLOYED=YES PROD_QA=31/31
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION

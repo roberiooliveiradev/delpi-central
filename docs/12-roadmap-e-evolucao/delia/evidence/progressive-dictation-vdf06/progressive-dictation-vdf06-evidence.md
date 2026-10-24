@@ -444,3 +444,50 @@ SHA `924bbeba9c` · deploy `delpi-delia` rebuild · 2026-10-23.
   Screenshots `shots-motion/`.
 
 Residual: `SCREEN_READER_QA=TEST_NOT_RUN` (sem leitor no ambiente).
+
+## Spec 126 — Unified Voice Capture Visual (batch + live)
+
+**Task:** `DELIA-UX-UNIFIED-VOICE-CONTROLS-VISUAL-REFINEMENT-01` ·
+SHA `252fa11239` · deploy `delpi-plugin-ui` + `delpi-delia` rebuild · 2026-10-23.
+
+### Implementação
+
+- Família circular unificada: mic idle e controles de sessão a 40px,
+  radius 50%/999px — live ganhou a classe `delia-dictation-live__mic`
+  e regra em `__controls`; batch subiu de 36→40px no scope
+  `delpi-ui-audio-recorder`.
+- Hierarquia de ação: Finalizar `tone="primary"` nos dois modos;
+  Descartar/Cancelar `tone="danger"` (neutro em repouso, perigo só
+  no hover — comportamento já existente do IconButton).
+- Azul institucional: live-dot do batch sai de `--danger` para
+  `--accent`; dot live usa derivação luminosa (`color-mix` 84%
+  acento + branco — mesmo token, não paleta nova).
+- Halo: `.delia-composer--capturing` (batch) e
+  `.delia-composer--listening` (live) aplicam borda+sombra sutil de
+  acento na superfície do MessageComposer.
+- Motion: entrada do painel de captura 160→200ms; pulso 1.2s no dot
+  live (parado quando pausado); tudo sob prefers-reduced-motion.
+- Não inventado: pause no batch (não existe no recorder), amplitude
+  fake (waveform usa `levels` reais), segundo painel no live.
+
+### VOX-01..VOX-20
+
+Todos PASS — evidência combinada: testes DOM (classes/tons/halo),
+geometria medida em produção (40×40px, radius ≥ metade) e cores
+computadas (acento rgb(8,155,219); live srgb 0.19/0.67/0.88 luminoso).
+
+### Testes e QA
+
+- DÉLIA: **426/426** (+5 testes VOX); plugin-ui: **2324/2324**;
+  typecheck e build verdes nos dois plugins; federation exports OK.
+- Produção (`vd-vox-prod.mjs`, Chrome real autenticado, fake mic):
+  **31/31** — batch: mic/controles circulares, dot azul, halo,
+  waveform real (24 barras), timer 00:01/05:00, Transcrevendo,
+  transcrição pt-BR inserida editável ("Alô, alô"), zero auto-submit;
+  live: mic circular, controles 40px, Finalizar primário, Descartar
+  subdued-danger, dot luminoso pulsante, pausa interrompe pulso,
+  textarea editável; reduced-motion sem pulso; mobile 375; dock real.
+  Screenshots `shots-vox/`.
+
+Residual: `SCREEN_READER_QA=TEST_NOT_RUN`; larguras 320/360/390/420 e
+zoom 200% não cobertos pelo probe (375 coberto).
