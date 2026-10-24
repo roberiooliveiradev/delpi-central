@@ -42751,6 +42751,13 @@
           "type": "string"
         },
         {
+          "name": "subject",
+          "in": "query",
+          "required": false,
+          "description": "Optional subject/designation lookup: ranks document sections deterministically by published content (headings weigh more than body; contiguous phrases get a bounded bonus). Returns only matching sections ordered by relevance; empty items with coverage=NO_MATCH when the document has no pertinent excerpt. Combinable with section (subject ranks within that scope).",
+          "type": "string"
+        },
+        {
           "name": "corpus_version",
           "in": "query",
           "required": false,

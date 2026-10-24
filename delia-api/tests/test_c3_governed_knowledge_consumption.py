@@ -657,7 +657,7 @@ def test_admission_instruction_routes_owner_domain_concepts():
         path,
         required_names=ORCHESTRATION_INSTRUCTION_KEYS,
     )
-    assert res.version == "5"
+    assert res.version == "13"
     text = res.instructions[
         "delia.capability_orchestration.interaction_admission"
     ]
@@ -672,7 +672,7 @@ def test_admission_instruction_routes_owner_domain_concepts():
 
 
 def test_nomenclature_resolution_instruction_clauses():
-    """Contract lock (resource v5, R7/O2): for record requests whose
+    """Contract lock (resource v13, R7/O2): for record requests whose
     subject is phrased in colloquial nomenclature the governed
     instructions must permit a knowledge-first consult to resolve the
     canonical owner designation, and the arguments stage must use
@@ -687,7 +687,7 @@ def test_nomenclature_resolution_instruction_clauses():
         path,
         required_names=ORCHESTRATION_INSTRUCTION_KEYS,
     )
-    assert res.version == "5"
+    assert res.version == "13"
     group_text = res.instructions[
         "delia.capability_orchestration.select_group"
     ]
@@ -700,14 +700,22 @@ def test_nomenclature_resolution_instruction_clauses():
     arg_text = res.instructions["delia.capability_orchestration.arguments"]
     # Designation-resolution discovery queries are phrased as concept
     # questions so owner retrieval surfaces guidance actions.
-    assert "canonical designation, nomenclature or naming standard" in arg_text
+    assert "naming rule, canonical designation" in arg_text
     assert "concept" in arg_text
     # Reformulation prefers canonical forms observed in owner docs.
     assert "naming rules or canonical designations" in arg_text
+    assert "canonical designation copied verbatim" in arg_text
     # Prohibitions preserved: no identifier invention, no product
     # aliases, no provider names anywhere in the additions.
-    assert "TERM." not in group_text + arg_text
-    assert "bala" not in (group_text + arg_text).lower()
+    rel_text = res.instructions[
+        "delia.capability_orchestration.goal_evidence_relevance"
+    ]
+    # Documentation/guidance evidence is never presented as business
+    # records for record goals — it feeds bounded recovery instead.
+    assert "never business records" in rel_text
+    assert "irrelevant" in rel_text
+    assert "TERM." not in group_text + arg_text + rel_text
+    assert "bala" not in (group_text + arg_text + rel_text).lower()
 
 
 def test_cri_presented_record_orders_content_before_citation():
