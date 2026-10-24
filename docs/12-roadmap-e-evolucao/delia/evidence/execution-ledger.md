@@ -18081,3 +18081,19 @@ COMMIT=da1794d68d DEPLOYED=YES PROD_QA=32/32
 EXECUTION_DRIFT=NONE ARCHITECTURE_DECISION_REQUIRED=GLOBAL_SECTIONS_CONTRACT
 COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## §6.423 — R3 (M04/M05): outcome assessment e composição CRI consolidados nos owners canônicos (2026-10-24)
+
+**2026-10-24 — DELIA-ORCH-REFAC-R3-COMPLETE-IMPLEMENTATION-AND-REMEDIATION-01 (R3 evidence):** autorização PO explícita (`REFERENCE_HEAD=51f27c0ebb`); entry gates verificados — R1 `ACCEPT_WITH_RESIDUAL` (`f7d24b3800`) e R2 `ACCEPT_WITH_RESIDUAL` (`3f6765270e`). BASE_SHA `da1794d68d`, worktree isolada, rebase limpo sobre `origin/main` (upstream docs-only).
+
+M04: `outcome_facts` + `apply_verdict_limitation` → `outcome_assessment.py` — projeção tipada `SpecialistOutcome→EvidenceFacts` (envelope/coverage/contract_facts/explicit_empty) e regra verdict→`insufficient_evidence` no owner de assessment; `_synthesis_records` injetado via `record_resolver` (guidance M07/S4-117 congelado, KEEP_WITH_DECISION). M05: `presented_record`, `cri_scalar_text`, `ordering_presentation`, `records_are_prior_excerpts` + `MAX_PRESENTED_VALUE_CHARS` → `conversational_response.py` — projeção de apresentação no owner da composição; coordinator mantém glue (gating CRI, bound 32, ledger, log). `orchestration.py` 11.221→10.994; outcome 1.474→1.601; conv_response 474→662. Diff +383/−278, 9 arquivos, 0 novos módulos. Import DAG acíclico; única aresta nova `outcome_assessment→paginated_result_semantics` (leaf); zero leaf→orchestration; `audit_backend_boundaries` findings=0.
+
+Verdict independe de apresentação; CRI não seleciona capability nem consulta provider; OFF byte-equivalente (gates antes do owner). Suite final no SHA `c914c8bc23`: **2202 passed / 3 skipped / exit=0** (REGRESSION_DELTA=0); focused M04/M05 169 + seleção CRI/outcome 366 verdes; residual search limpa; AP-01…20 manual PASS/NA. Eval Ollama local executado (`delia-json:latest` qwen2.5:3b, base local, in_units 622–624): O1/O4/O5 NON_GROUNDED honestos, O2/O3 `invalid_structured_output` fail-closed (variância 3B pré-existente), zero fabricação; pernas de especialista sem credencial local (fail-closed). ROLLBACK=`git revert c914c8bc23`.
+
+TASK_ID=DELIA-ORCH-REFAC-R3-COMPLETE-IMPLEMENTATION-AND-REMEDIATION-01
+FINAL_HEAD=c914c8bc23 PUSH_VERIFIED=YES EXECUTION_DRIFT=NONE AUTO_REWORK=0
+DEPLOY_STATUS=NOT_EXECUTED RELEASE_READINESS=READY_FOR_INDEPENDENT_REVIEW
+RESIDUALS=_synthesis_records/guidance(S4-117)+glue-legítimo+labels-cycle(R4)+eval-3B-local+doc139-eval-check(coordenação)
+COORDINATION_REVIEW_REQUIRED=YES R3_INDEPENDENT_ACCEPTANCE=PENDING R4_AUTHORIZED=NO PLAN_COMPLETE=NO
+Evidência: [r3-execution-and-evidence](../corrections/mcp-contextual-intelligence-orchestration/refactor-r0-r7/r3-execution-and-evidence.md).
