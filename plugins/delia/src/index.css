@@ -818,8 +818,8 @@
    long identifiers wrap instead of truncating. */
 .dashboard-delia .delia-context__list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px 18px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px 20px;
   margin: 0;
 }
 
@@ -895,32 +895,6 @@
     animation: none;
     transition: none;
   }
-}
-
-.dashboard-delia .delia-context__list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0;
-}
-
-.dashboard-delia .delia-context__row {
-  display: grid;
-  grid-template-columns: minmax(96px, 40%) 1fr;
-  gap: 8px;
-  align-items: baseline;
-}
-
-.dashboard-delia .delia-context__term {
-  font-size: 0.8125rem;
-  color: var(--delia-text-muted);
-}
-
-.dashboard-delia .delia-context__value {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--delia-text);
-  overflow-wrap: anywhere;
 }
 
 .dashboard-delia .delia-context__calls {
