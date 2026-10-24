@@ -53,3 +53,12 @@
 - Gates: plugin-ui 2340/2340, delia 447/447, tsc+build+federation OK. Produção `vd-rightrail-prod.mjs` 50/50: rail 344/299/296px real @1920/1600/1440 com centro redimensionado e zero overlap; @1280 fallback popover (centro <480); mobile popover; grid inline adapta 3→2→1.
 - Residual: REAL_DOCK_QA / zoom 200% / dark-light visual / screen reader TEST_NOT_RUN.
 - Evidência: spec 127 §implementação right rail; `shots-rightrail/` (C:\temp\delia-qa).
+
+### Registro complementar — 2026-10-24 — Gate pré-R4: consumo de conhecimento multi-especialista EXECUTADO E DEPLOYADO
+
+- `TASK_ID=DELIA-C3-GOVERNED-KNOWLEDGE-CONSUMPTION-AND-PRE-R4-CLOSURE-01`; `STATE=EXECUTED_AND_DEPLOYED`; `IMPLEMENTATION_SHA=becef562b9`; `DEPLOYED_SHA=becef562b9`; `IMAGE=513ee033b0c6`; `ROLLBACK=686d745b87f6`; `R4_AUTHORIZED=NO`.
+- Evidência: [doc 145](../corrections/mcp-contextual-intelligence-orchestration/145-governed-knowledge-consumption-multi-specialist-implementation.md). DÉLIA consome guidance governada de DAVI (knowledge READ via discover/execute), TÉO (guias metodologia/produto) e VISTA (guia de produto/formatos) pelo caminho canônico único; `NEW_PLANNERS=0`, `NEW_MCP_TOOLS=0`, `NEW_KNOWLEDGE_ENGINES=0`.
+- Extensões bounded: resource v4 (admission/seleção/args/síntese), miss pós-consulta dentro da única rodada de recuperação, citação abaixo de conteúdo na apresentação CRI. 11 testes novos; suite 100%; audits 0 findings.
+- Eval isolado real-model com auth sancionada (`user` password grant, sem impersonation): D1–D3, T1–T3, V1–V3, G1–G5 — knowledge READ grounded, guias metodológicos/produto grounded, clarificação honesta quando insuficiente, write recusado sem invocação, READ direto sem consulta desnecessária.
+- Deploy `[1/1] delia-api` via procedimento canônico; smoke produtivo mínimo: health 200, unauth 401, 1 turno D1 autenticado GROUNDED com excerto `text`.
+- Residual: `O2_RESOLVED=INCONCLUSIVE` — norma MP/PI publicada no corpus V2 (`mp_description_standards`, `TERM.` ratificado), lacuna remanescente é sequenciamento conhecimento→reformulação do modelo; `CRI_OFF_LIVE=TEST_NOT_RUN`; `REAL_TOKEN_USAGE=NOT_AVAILABLE`; aceite independente pendente.

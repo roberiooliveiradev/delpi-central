@@ -98,3 +98,12 @@ A fronteira documental para consumidores MCP foi ratificada pelo owner api-delpi
 
 - `B2=EXECUTED`: release produtivo local-first concluído (doc 144 §6). Auth gate do review independente resolvido — eval e smoke usaram password grant sancionado do usuário `user`, sem impersonation. Imagem `686d745b87f6`, rollback `85cdd244f531`, deploy `[1/1] delia-api`.
 - `O2_RESOLVED=INCONCLUSIVE` permanece: insuficiência honesta provada, mas os 2 registros pertinentes só respondem quando a consulta usa `term. bala` — a reformulação depende da norma de nomenclatura (Trilha A, `mcp_document_access=NOT_EXPOSED`). `R4_AUTHORIZATION=NO`; fase não avança.
+
+
+## Registro — consumo de conhecimento multi-especialista pela DÉLIA (2026-10-24)
+
+- `TASK_ID=DELIA-C3-GOVERNED-KNOWLEDGE-CONSUMPTION-AND-PRE-R4-CLOSURE-01`; `IMPLEMENTATION_SHA=becef562b9`; `DEPLOYED_SHA=becef562b9` (imagem `513ee033b0c6`, rollback `686d745b87f6`); evidência integral no [doc 145](./145-governed-knowledge-consumption-multi-specialist-implementation.md).
+- A DÉLIA consome guidance governada de **DAVI** (`discover`→`execute`→`read_governed_technical_knowledge`), **TÉO** (`get_methodology_guide`, `get_product_guide`) e **VISTA** (`get_product_guide`, catálogo de formatos) pelo mesmo caminho canônico — nenhum router, planner, adapter ou engine novo. `GUIDANCE != AUTHORIZATION`; `DOCUMENT != LIVE_BUSINESS_FACT`.
+- Extensões bounded: admission v4 (conceito owner-domain → superfície owner), cláusulas de seleção/argumentos/síntese no recurso governado, miss pós-consulta dentro da única rodada de recuperação, e citação abaixo de conteúdo na linha bounded CRI.
+- Eval isolado real-model: D1–D3, T1–T3, V1–V3, G1–G5 executados; matriz e traces no doc 145 §4.
+- `O2_RESOLVED=INCONCLUSIVE`: a dependência MP/PI foi **publicada** (corpus V2, `mp_description_standards` com `TERM.` ratificado) — a lacuna remanescente é sequenciamento do modelo, não ausência de fonte. `R4_AUTHORIZATION=NO` permanece.
