@@ -167,3 +167,24 @@
 **Environment residuals:** previous DAVI full-suite 2 FAIL and DÉLIA 2 environment-dependent FAIL remain historical facts; runner-specific reproductions strengthen environmental attribution but do not change FAIL to PASS. Obtain owner-approved exception or full configured rerun per authority. CRI OFF live remains TEST_NOT_RUN.
 
 `NEXT_ACTION=FROZEN_V16_RELIABILITY_AND_RELEASE_GATE`; `MECHANISM_REVIEW=ACCEPT_WITH_RESIDUAL`; `O2_RELIABILITY=PENDING`; `DEPLOY=BLOCKED`; `R7_CLOSED=NO`.
+
+
+### Avaliação congelada v16 — O2 reliability e gate de release — 2026-10-24 (task `DELIA-R7-PRODUCTION-DEPLOY-REAL-VALIDATION-AND-RELIABILITY-CLOSURE-01`)
+
+**Condições congeladas:** `EVALUATED_SHA=667a670cd8` (código = `17dc08b9c8`; delta docs-only) · `INSTRUCTION_VERSION=16` · `MODEL=moonshotai/kimi-k3` (OpenRouter, temp 0.2) · `MCP_DAVI=api-delpi-r7` (eval, corpus V2, `subject` no candidate schema) · token de sujeito fresco por run · matriz congelada antes da execução.
+
+**Descarte causal exigido pela revisão (antes de atribuir ao modelo):** contrato `subject` no schema do candidato — OK; transporte MCP/delegação — OK (consults completam; TTL 120s adequado após token fresco por run); evidência projetada — OK (`foreign_evidence` bounded 12k contém `TERM. BALA`; runs bem-sucedidos copiaram-na verbatim); contexto propagado — OK (`relevance_feedback`+`business_subject`+`foreign_evidence` chegam ao estágio `arguments`); validação — OK (enum-clause v16 desbloqueou `candidate_arguments`). Remanescente = variância de formulação do modelo no estágio `arguments` do re-invoke.
+
+**Denominadores completos — O2 "Me dê dois exemplos de terminal bala" N=10: 1 PASS (10%).**
+- PASS (run 7): `foreign_selection` primário → consult → `select_candidate`/`candidate_arguments` → execute → re-invoke `description=TERM.+BALA` (access log) → `corresponds` → 2 registros reais (`10080092` + TERM. BALA 1,00-2,50MM2).
+- Falhas: 1 NON_GROUNDED conversacional (admission→turn); 1 consult "no record"; 7 GROUNDED-honest (`consult completou` → re-invoke com descrição literal `terminal bala`/`TERMINAL BALA`/`TERMINAL TIPO BALA`/`TERMINAL ELETRICO BALA`/`bala` → `irrelevant` → `insufficient`).
+- Stage stats: foreign path disparou ~9/10; `foreign_invocation=ok` 8×; `candidate_arguments` prosseguiu em ~8×; **designação canônica propagada para `search_products` 1/9** — gargalo único e precisamente localizado.
+- Zero fabricação apresentada como grounded; zero PREPARE/ACT; zero writes.
+
+**Matriz congelada — siblings/negativos:** `terminal pino` 2/3 PASS (`10080683` TERMINAL PINO, caminho literal direto; 1 timeout honesto NON_GROUNDED); D1 MP/PI/PA GROUNDED doc-first (seções s0002 — correto para pergunta de definição); TÉO SIPOC NON_GROUNDED conversacional (admission miss — instabilidade conhecida); VISTA painéis GROUNDED honest-empty; consulta de nomenclatura NON_GROUNDED conversacional (miss do consult); AuthZ sem token → **401**; pedido WRITE inelegível → recusa honesta sem capacidade, **zero ACT**.
+
+**Tokens/latência (reais, por run):** cadeia O2 completa ~22–31k input / ~4.4–8.3k output; caminho direto (pino) ~10.8k/~1.7–2.1k; latência das cadeias foreign 60–100s+.
+
+**Decisão do executor (parada canônica):** `O2_SUCCESS_RATE=10% < 70%` (alvo provisório da revisão — não SLA). Conforme `667a670cd8`: reliability pobre → STOP com evidência por estágio; sem iteração v17/v18. `delia-api` NÃO promovível como release estável nesta configuração de modelo; `api-delpi` não recebeu diff nesta task (baseline sync já commitado, deploy continua gated). Deploys **não executados** — autorização operacional não concedida para nenhum serviço.
+
+`O2_STATUS=FROZEN_V16_EVAL_1/10`; `RESIDUAL=args_stage_canonical_extraction_variance (model-bound)`; `RELEASE_DECISION=COORDINATION_REQUIRED (threshold + model/config + canary-vs-hold)`; `DEPLOY=BLOCKED_NO_AUTHORIZATION`; `R7_FINAL_ACCEPT=NO`.

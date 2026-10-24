@@ -129,3 +129,10 @@
 - **Causa-raiz:** `native_assessment` especulativo era o único gate do caminho foreign (6/7 `sufficient`); recovery não tinha caminho foreign. Correção: recovery re-avalia com `relevance_feedback` (mismatch provado) e compõe estágios existentes; consult recebe contexto de feedback. Instructions v13→v16. Sem planner/router/hardcode.
 - **Denominadores:** foreign chain ~0/7 → ~5/6 dispara; O2 PASS 3/~25 (~12%) no kimi-k3 eval — bottleneck residual = formulação de args do re-invoke (variância de modelo). Backend: 2284/2286, 2 ENVIRONMENT_FAILURE provadas no base. Threshold ≥70% proposto à coordenação.
 - `R7_FINAL_ACCEPT=NO`; `COORDINATION_REVIEW_REQUIRED=YES`; `NEXT_ACTION=INDEPENDENT_REVIEW_17dc08b9c8 + threshold decision + (se aprovado) model/config decision antes de deploy`.
+
+### Registro complementar — 2026-10-24 — Avaliação congelada v16 EXECUTADA (O2 1/10; release gate não atingido)
+
+- `TASK_ID=DELIA-R7-PRODUCTION-DEPLOY-REAL-VALIDATION-AND-RELIABILITY-CLOSURE-01`; `STATE=FROZEN_EVAL_COMPLETE_DEPLOY_BLOCKED`; `EVALUATED_SHA=667a670cd8`; `INSTRUCTION_VERSION=16`; `MODEL=kimi-k3/OpenRouter`; denominadores completos, token fresco por run.
+- **O2 N=10 → 1/10 PASS** (`description=TERM.+BALA` confirmado em access log + registros `10080092`/TERM.BALA 1,00-2,50MM2). Foreign chain dispara ~9/10 e consult completa 8×; gargalo único = estágio `arguments` do re-invoke (copia canônica 1/9). Descartados: contrato, transporte, projeção de evidência, propagação de contexto, validação — residual é variância de formulação do modelo.
+- Siblings: `terminal pino` 2/3; D1 doc-first; TÉO/VISTA honestos (miss conversational/honest-empty); AuthZ 401; WRITE inelegível sem ACT; zero fabricação grounded em todas as falhas.
+- `DEPLOY_DAVI=NOT_EXECUTED (sem diff novo; autorização ausente)`; `DEPLOY_DELIA=NOT_EXECUTED (10% < 70% provisório; autorização ausente)`; `NEXT_ACTION=DECISÃO DE COORDENAÇÃO: threshold oficial + model/config + modalidade canary-vs-hold + revisão independente de cada release`.
