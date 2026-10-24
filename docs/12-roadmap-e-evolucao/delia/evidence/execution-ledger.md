@@ -78,3 +78,14 @@
 - M09 KEEP: `_build_arguments`, `_model_stage_proposal`, `_propose`, `_repair_once`, `_turn_goal_from_proposal` — boundary coordinator↔model legítimo (lineage, budgets, repair rounds, `_TurnGoal` interno); caso negativo adversarial documentado.
 - Paridade: 19 caracterizações literais (`test_r5_argument_schema_parity.py`) + stage04 (36) + argument_validation (37) verdes antes/depois; suite completa exit 0; audits 0 findings. Deploy `[1/1] delia-api` canônico; smoke prod mínimo: health 200, unauth POST 401, 1 turno autenticado 200/GROUNDED.
 - `O2=KNOWN_RESIDUAL`; `CRI_OFF_LIVE=TEST_NOT_RUN`; `R5_INDEPENDENT_ACCEPTANCE=PENDING`; `COORDINATION_REVIEW_REQUIRED=YES`.
+
+### §6.428 — 2026-10-24 — Contexto inline em duas zonas semânticas (DELIA-UX-INLINE-CONTEXT-SEMANTIC-DENSITY-REFACTOR-01)
+
+- `STATE=COMPLETE_LIVE`; `RUNTIME_IMPLEMENTATION=EXECUTED`; `DEPLOYED_SHA=97f393390b` (main ff; `delia` via `up-prod-sequential.sh`); `PHASE_NOT_ADVANCED`.
+- Decisão `26867a42df`: substituir a distribuição rígida em três áreas por duas zonas semânticas — A "Geração" (metadados em grid interno de pares) e B "Evidências e atividades" (evidências → atividades → rastreamento técnico recolhível na mesma zona). `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` — diff exclusivamente CSS em `plugins/delia/src/index.css`; zero componente/endpoint/contrato novo; `trailing` do `ConversationContextPanel` preservado.
+- Implementação: `@container` no próprio card (não viewport): ≥560px com ≥2 seções → grid `minmax(0,1.15fr)/minmax(0,1fr)`; <560px ou 1 seção → coluna única na ordem semântica (nenhuma zona vazia reservada). `.delia-context__list` = `auto-fit minmax(140px,1fr)` com cap de 2 colunas acima de 860px de card.
+- Causa-raiz dos reworks: min de par 200px → 160px → 140px ainda não cabia na zona A em 1440 (lista ~296px vs mínimo 300px); resolvido com share assimétrico da zona A + cap explícito de 2 pares em wide — correção de layout real, não de expectativa de teste (exceto @1280, onde o card de 578px legitivamente cai no modo compacto <560px de conteúdo).
+- Produção `vd-densectx-prod.mjs` 43/43 PASS: altura −19% @1920 (607→494), −18% @1600 (624→511), −19% @1440 (653→528); right rail aberto mantém 2 zonas @1920/1600 e coluna única @1440 sem overflow; @1280 fallback popover governado; @375 mobile coluna única; dark + reduced-motion OK; zero nested scroll / horizontal overflow.
+- Regressão: delia 443/443 + plugin-ui 2335/2335 + tsc + build + federation OK (verde antes do deploy; diff CSS não altera estrutura DOM testada — 38 testes de contexto preservados).
+- Residual: REAL_DOCK_QA / ZOOM_200_QA / SCREEN_READER_QA `TEST_NOT_RUN`; zoom e Dock real pendentes de evidência antes de claim integral.
+- Evidência: spec 127 §Registro de implementação DENSECTX; `C:\temp\delia-qa\shots-densectx\`.

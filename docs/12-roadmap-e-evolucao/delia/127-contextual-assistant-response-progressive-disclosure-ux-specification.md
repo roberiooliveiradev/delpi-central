@@ -429,3 +429,17 @@ Antes do código, reancorar no HEAD e mapear consumidores de \`ConversationConte
 **MODE:** REANCHOR → CONTRACT/REUSE GATE → RED TESTS → MINIMAL PRESENTATION DIFF → GREEN → VISUAL QA → REGRESSION → REWORK → DOCUMENT EVIDENCE → COMMIT/PUSH MAIN → DEPLOY SCOPED → PRODUCTION VERIFICATION → REPORT.
 
 **Document-only nesta publicação:** \`RUNTIME_CHANGED=NO\`, \`TEST_NOT_RUN\`, \`PHASE_NOT_ADVANCED\`. As medições e commits das versões anteriores são histórico, não evidência da nova organização.
+
+### Registro de implementação — duas zonas semânticas (2026-10-24, PROVEN)
+
+**STATUS: PROVEN / DEPLOYED / PHASE_NOT_ADVANCED.** Implementação CSS-bounded em `plugins/delia/src/index.css`, sem alteração de componente, DOM, contrato ou backend. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` (CSS da superfície existente). Commits: `c21c4cd0d1` (duas zonas + grid de metadados), `65e2f1b2ee` (min 160px), `121b98b55f` (min 140px), `97f393390b` (share assimétrico + cap de 2 pares). Deploy `up-prod-sequential.sh --build delia`; SHA de produção verificado `97f393390b`.
+
+**Layout efetivamente implementado:** o container `.delia-turn__context` permanece o query container (largura real do card, não viewport). Card ≥560px de conteúdo com ≥2 seções: grid de duas zonas `minmax(0,1.15fr) minmax(0,1fr)` — zona A = "Detalhes da geração" com `padding-right`+hairline; zona B = seções 2..n + `.delia-context__trace` empilhadas (Evidências → Atividades → Rastreamento). Card com apenas 1 seção ou <560px: flex de coluna única na ordem semântica Geração → Evidências → Atividades → Rastreamento — nenhuma zona vazia reservada. Grid interno `.delia-context__list`: `repeat(auto-fit, minmax(140px,1fr))` com cap `repeat(2, minmax(0,1fr))` acima de 860px de card — 2 pares/linha em wide, 1 par quando a zona A é estreita demais, até 3 pares no modo coluna cheia (<560px, largura total).
+
+**Componentes reutilizados (zero novos):** `ConversationContextPanel` (plugin-ui, com slot `trailing` intacto), `DeliaTurnContextPanel`, `EvidenceDetails`, `ActivityViewer`, trace `<details>` existente. Ordem DOM inalterada — o posicionamento é puramente visual via grid.
+
+**Medições em produção (probe autenticado `vd-densectx-prod.mjs`, 43/43 PASS):** altura do card — @1920: 607→494px (−19%, card 1030px, 2 zonas, 2 pares/linha); @1600: 624→511px (−18%, card 897px); @1440: 653→528px (−19%, card 737px); @1280: card 578px → coluna única legítima (conteúdo <560), metadados em 3 pares/linha; @375: card 262px, coluna única, sem overflow. Right rail aberto: @1920 card 834px mantém 2 zonas; @1600 card 599px 2 zonas; @1440 card 442px coluna única; @1280 fallback popover governado, sem overflow em nenhum modo. Zero scroll aninhado e zero overflow horizontal em todos os cenários. Dark mode: duas zonas sem scroll; `prefers-reduced-motion`: animação `none`.
+
+**Causa-raiz registrada:** a versão em três áreas + lista vertical de metadados causava a coluna alta e vazia; o mínimo de par inicial (200px) não cabia na zona A em 1600/1440 — corrigido com share assimétrico 1.15fr + min 140px + cap de 2 colunas em wide.
+
+**DENSECTX-01..16:** 01–07, 11 PASS via probe medido; 08–10 PASS por invariante (diff apenas CSS, zero mudança de dados/semântica); 12, 14, 15 PASS por regressão (suites verdes); 13 PARCIAL (dark + reduced-motion + mobile PASS; zoom 200% / Dock real / screen reader `TEST_NOT_RUN`); 16 PASS. Residual: REAL_DOCK_QA, ZOOM_200_QA, SCREEN_READER_QA `TEST_NOT_RUN` — sem claim integral.
