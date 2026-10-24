@@ -18031,3 +18031,21 @@ DEPLOYED=NO CORRECTIONS_IMPLEMENTED=YES LOCAL_GREEN=YES
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
 NEXT=INDEPENDENT_REVIEW_THEN_GOVERNED_DEPLOY_GATE
 Evidência: [doc 137](../corrections/mcp-contextual-intelligence-orchestration/137-davi-baseline-test-failure-remediation.md).
+
+## §6.421 — Release readiness integrado DÉLIA + DAVI: G3/G5 CLOSED_PROVEN, candidatos identificados, deploy gated (2026-10-24)
+
+**2026-10-24 — DELIA-C3-DELIA-DAVI-INTEGRATED-RELEASE-READINESS-AND-HOMOLOGATION-01 (doc 138):** fechamento dos residuais G3/G5 sob revisão independente `cd5f349f` (`ACCEPT_WITH_RESIDUAL`; `DEPLOY_AUTHORIZED=NO`). Worktree isolada `delia-release-wt`; BASE `cd5f349f71` → EVALUATED `efedddfe39` (árvores `api-delpi/`/`delia-api/` idênticas — spec-127 é plugin-UI).
+
+G3 CLOSED_PROVEN: runner canônico = GH Actions (`checkout fetch-depth 0` → git+gitdir é contrato do ambiente); imagem de teste derivada `infra-api-delpi-test:local` (camada git, Dockerfile prod intacto) + worktree/main-repo montados nos caminhos reais → `git rev-parse HEAD` ok → **api-delpi 6034 passed / 10 skipped / exit=0**. Fix de teste: `test_supplies_negotiation_savings_summary_route` recebeu o mesmo skip guard do irmão parametrizado (sheet opcional não configurada).
+
+G5 CLOSED_PROVEN: diretivas **17.151B** = 83,75% do cap 20KiB e 26,2% do teto transporte 64KiB; envelopes `gpt_get_catalog` 18.626B / `discover` 18.142B; wire MCP live 17.553B com `capability_surface` íntegro 17.173B; latência 0,167ms; oversize injetado (42KiB) rejeitado pelo gate CI (`size<=MAX` em 3 testes) — fail-closed na fronteira de governança (conteúdo só muda via commit). Residual sinalizado: envelope `discover` sem bound de runtime → defesa-em-profundidade é `ARCHITECTURE_DECISION` para a coordenação, não normalizada.
+
+PROVA DEV: eval HTTP `verdict=PASS blocking_failures=[]` (D8 GROUNDED `delpi.get_product_summary` produto real; 401/injection/unknown honestos; variância 3B documentada). Probe MCP live: 2-tool invariant; `"descricao do material 10080043"`→`search_products`@0,9125→produto real; required-args→`VALIDATION_ERROR`; sem token→401; write intent→0 candidatos.
+
+RELEASE CANDIDATES (por serviço): delia-api prod `ee155bf5a325` → delta `0b9220fa64`+`1f3bc4a640` (D5/F01–F06); api-delpi prod `edc5f2886e9f` → delta `1f3bc4a640`+`3b17610ddf` (F06+remediação 137). Rollback = revert+rebuild; imagens anteriores identificadas. `RELEASE_READINESS=READY_FOR_INDEPENDENT_REVIEW`.
+
+TASK_ID=DELIA-C3-DELIA-DAVI-INTEGRATED-RELEASE-READINESS-AND-HOMOLOGATION-01
+DEPLOYED=NO DEPLOY_STATUS=BLOCKED_PENDING_AUTHORIZATION PROD_HOMOLOGATION=NOT_EXECUTED
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
+NEXT=INDEPENDENT_READINESS_REVIEW_THEN_PO_OPERATIONAL_AUTHORIZATION
+Evidência: [doc 138](../corrections/mcp-contextual-intelligence-orchestration/138-integrated-release-readiness-and-homologation.md).

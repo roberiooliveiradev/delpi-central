@@ -93,6 +93,13 @@ def test_quality_audit_5s_summary_route(api_client: TestClient) -> None:
 
 
 def test_supplies_negotiation_savings_summary_route(api_client: TestClient) -> None:
+    if not (
+        getattr(settings, "SUPPLIES_IDD_SHEET_ID", None)
+        and getattr(settings, "SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID", None)
+    ):
+        pytest.skip(
+            "SUPPLIES_IDD_SHEET_ID/SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID não configurado"
+        )
     response = api_client.get(
         "/supplies/negotiation-savings/summary",
         params={"start_date": "2026-05-01", "end_date": "2026-05-31"},
