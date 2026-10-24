@@ -81,3 +81,12 @@ No Portal Suprimentos, **filial é filtro de dados — não existe autorização
 
 1. E11.P0 pode seguir com a receita corrigida (sem grants por filial).
 2. Nenhuma ação de Core/manifest necessária — já conformes.
+
+
+## Revisão GPT (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** — reconciliação principal aceita. Conferidos no GitHub este relatório, `README.md` e `INTEGRACOES.md` no source `c4a6ceddff`. ADR-009 prevalece: `supplies.access`/`supplies.manage`; filiais `01/02` são filtro de dados, sem `supplies.unit.*` nem grants por filial. Resultados de testes/buscas amplas e ausência de alterações de runtime são evidências reportadas pelo executor, não reexecutadas pelo GPT.
+
+**Residual documental pontual:** o README ainda usa expressões `capability + unit + resource scope`, `AuthZ access/export/unit/CC` e `BFF operations+unit`, que podem induzir o leitor a reinterpretar unidade como controle de autorização. Em `INTEGRACOES.md` persiste a frase \"o usuário tiver somente subconjunto de units\", incompatível com `OPERATIONAL_UNITS` como catálogo comum do Portal. Substituir essas formulações por **AuthZ de capacidade + recurso/ownership/regra de negócio** e **filial apenas como filtro validado pelo catálogo operacional**, sem mudar contratos de outros contextos. Isso é residual de clareza, não evidência de grant por filial no manifest ou no código.
+
+**E11.P0:** inventariar e reconciliar `BranchAccessGate`/`SAFETY_STOCK_BRANCH_VIEW_PERMS` no owner do produtor, sem replicar, remover ou contornar silenciosamente o controle legado; `E11.S1` continua `NOT_AUTHORIZED` até contract freeze. `X4.PROD-C1` permanece bloqueado e sem escrita ERP produtiva.
