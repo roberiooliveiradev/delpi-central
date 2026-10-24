@@ -182,3 +182,47 @@ No HEAD da especificação, já havia transição de `background-color` e `opaci
 ## 12. Referência cruzada — Controles de voz unificados (2026-10-23)
 
 A harmonização visual dos dois modos, com botões circulares, azul institucional, estados/motion/status, quadros visuais batch/live, subcomponentes e critérios VC-01..VC-24, está especificada em **[126 — Unified Voice Capture Visual System](./126-unified-voice-capture-visual-system-specification.md)**. Esta evolução é do **campo de voz/captura**, não do menu de configurações. O seletor clean e seu keep-open permanecem intactos. **STATUS=DOCUMENTED; IMPLEMENTATION=PLANNED; NO_DEPLOY_FROM_DOCS.**
+
+
+## 12. Composer action buttons — rótulos curtos e intenção por ícone (decisão do PO, 2026-10-23)
+
+**Status:** PRODUCT_UX_DECISION / IMPLEMENTATION_PENDING; atualização documental apenas. Esta seção amplia o padrão visual da toolbar do composer e **não** transforma Enviar, Interromper ou Fila em configurações do menu. Owners atuais verificados no GitHub: `plugins/plugin-ui/src/components/composer/ComposerSendButton.tsx`, `ComposerStopButton.tsx`, `ComposerEnqueueButton.tsx`, agregados por `MessageComposer.tsx`, consumidos na composição DÉLIA. `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` (a revalidar no HEAD de implementação). **Não** criar novos buttons/action engine ou alterar contracts/handlers da fila e interrupção.
+
+### 12.1 Regra visual — mínimo texto, ícone comunica a ação
+
+| Ação | Ícone existente/candidato | Rótulo visual curto | Nome acessível / tooltip por extenso | Hierarquia |
+|---|---|---|---|---|
+| Enviar | `SendHorizontal` existente | **Enviar** (desktop quando houver espaço), ícone apenas em composer compacto | **Enviar mensagem** | Primário azul institucional |
+| Adicionar à fila | `ListPlus` existente | **Fila** ou ícone apenas em largura reduzida | **Adicionar mensagem à fila** | Secundário, superfície neutra com hover legível |
+| Interromper resposta | `Square` existente | **Interromper** ou ícone apenas em largura reduzida | **Interromper resposta em andamento** | Primário contextual com visual coerente com Enviar |
+| Interrompendo | spinner existente | **Interrompendo…** ou spinner com nome completo acessível | **Interrompendo resposta…** | Estado ocupado, não habilitar duplicação |
+
+**Nota:** o nome de ação da API/handler (`enqueue`, `stop`, `send`) e o nome acessível completo são independentes do texto visível. Não usar apenas iconografia sem tooltip, `aria-label` e foco. Manter nomes acessíveis descritivos; nenhuma mudança semântica de cancelamento ou da fila.
+
+### 12.2 Composição e comportamento
+
+- Os três botões pertencem à **mesma família visual** (pill, alinhamento/altura consistentes, ícones e spacing harmonizados), mas **não** devem receber a mesma ênfase simultaneamente: Enviar é primário em fluxo normal; Interromper é primário contextual durante resposta cancelável; Fila é secundário enquanto admission da fila permitir.
+- Mostrar apenas ações legítimas em cada estado conforme `MessageComposer`: `idle`, `responding_cancelable`, `responding_not_cancelable`, `stopping`; não introduzir Enviar ou Fila como ação disponível quando o host não a admite. Preservar `Enter`/Shift+Enter e os gates existentes.
+- Desktop: preferir ícone + rótulo curto; em narrow/Dock/mobile: ícone somente quando espaço exigir, **sem sacrificar alvo de toque** ou nome acessível. Não esconder botões críticos por conveniência; se necessário, aplicar layout responsivo aprovado.
+- Evitar botão largo `Interromper resposta` ou `Adicionar à fila` no corpo; mover o texto explicativo para tooltip. Não criar tooltip novo se `HelpTooltip` existente servir. `ComposerStopButton` atualmente não usa `HelpTooltip`; verificar necessidade de reutilizá-lo para parity.
+- Visual: tokens compartilhados de `plugin-ui`, azul institucional no primário, neutro no secundário, borda discreta, hover/pressed/focus-visible suaves (referência 140–200ms), reduced-motion, dark/light. Dimensões por design system, não fixar 48px sem inventário responsivo.
+- Transição Enviar↔Interromper: discreta e **sem delay funcional**. Evitar fade/remount que provoque perda de foco, composição IME, caret, envio duplo ou trap de tabulação. `Stopping` é um estado real e honesto.
+
+### 12.3 Critérios CAB-01..CAB-12
+
+| ID | Critério |
+|---|---|
+| CAB-01 | Rótulos visíveis curtos: Enviar, Fila, Interromper |
+| CAB-02 | Ícones SendHorizontal, ListPlus e Square semanticamente coerentes |
+| CAB-03 | Tooltips/aria-label completos independentemente do texto visível |
+| CAB-04 | Responsive icon-only em larguras compactas, com targets adequados |
+| CAB-05 | Família visual consistente de pill, altura e alinhamento |
+| CAB-06 | Enviar primário; Fila secundário; Interromper primário contextual |
+| CAB-07 | Estados disabled/loading/stopping distinguíveis e honestos |
+| CAB-08 | Fluxos Enter/Shift+Enter, enqueue e stop intactos; sem auto-submit |
+| CAB-09 | Sem fila fora da admission e sem falsa interrupção se não cancelável |
+| CAB-10 | Full-page, Companion Dock nativo, mobile 320–420px, zoom 200% |
+| CAB-11 | Dark/light, teclado, focus-visible, reduced-motion, leitor de tela quando disponível |
+| CAB-12 | Testes por SHA, QA autenticado e documentação de evidência; sem backend novo |
+
+**Boundary:** alterar o mínimo legítimo em `plugin-ui` e composição DÉLIA; manter código/contratos de ações e Queue/Cancel/Stop existentes. Reancorar git HEAD, authorities e ledger antes de codificar. **STATUS=DOC_ONLY; RUNTIME_NOT_CHANGED; PHASE_NOT_ADVANCED.**
