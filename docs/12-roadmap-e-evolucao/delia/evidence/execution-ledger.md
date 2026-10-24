@@ -18127,3 +18127,18 @@ R3_PROD_MODEL_EVAL=EXECUTED DEPLOY_STATUS=NOT_EXECUTED EXECUTION_DRIFT=NONE
 R3_RELEASE_READINESS=EVIDENCE_READY_FOR_OPERATIONAL_GATE
 COORDINATION_REVIEW_REQUIRED=YES R4_AUTHORIZED=NO PLAN_COMPLETE=NO
 Evidência: [doc 140](../corrections/mcp-contextual-intelligence-orchestration/140-r3-production-llm-evaluation.md).
+
+
+## §6.425 — R3 deploy produtivo governado + homologacao definitiva (2026-10-24)
+
+**2026-10-24 — DELIA-ORCH-REFAC-R3-PRODUCTION-DEPLOY-AND-HOMOLOGATION-01 (doc 141):** autorizacao PO explicita nesta task, escopo `delia-api` somente. Gates: pareceres `a1b30eadb8` (R3) e `aac88d40f6` (A/B, `ELIGIBLE_FOR_OPERATIONAL_REVIEW`); freeze `git diff c914c8bc23..4ae893ca6a -- delia-api/ shared/ infra/` = vazio (build context identico ao avaliado); concorrencia = docs + `plugins/delia` `35e19f60b2` (nao deployado). Captura pre-deploy: prod `aafa5a262344` healthy, config/env registradas, imagem retida como rollback. Deploy canonico: `git pull --ff-only` (`2ad6403b1`→`4ae893ca6a`, 18 arquivos docs-only) + `up-prod-sequential.sh --build delia-api`; novo digest `sha256:85cdd244f531`; somente `delpi-delia-api` recriado. Runtime: healthy; CRI v4 `f13f9c42` + v2 `d5d0f75d`; `effective=cri`; `moonshotai/kimi-k3`; zero erros de boot. Stage logs prod: `outcome_assessment answered`×7, `cri_response composed`×7, `synthesis skip_cri_composed`×7, `provider_invoke ok`×12.
+
+HOMOLOGACAO (identidade sancionada, password grant, in-container harness): **matriz 11/11 PASS** — NEG-AUTH 401; D4 superficies; D5/D5-R GROUNDED vista; D5-schema honesto; D8 GROUNDED openapi/delpi material real `10080043` "TERM. OLHAL M6"; D8-R descoberta→execucao GROUNDED mcp/davi mesmo registro; N1 honesto; NEG-INJ sem ACT; N-UNK SAPX9 honesto sem fabricacao. **Probes 7/7** — O2 GROUNDED 2 registros reais (10450070/10450535); O3 owner_path_unbound honesto; NEG-SCHEMA listagem READ legitima; sinonimos item/produto GROUNDED; `99999999` registro real; injecao de negocio recusada com limitations explicitas. Latencia 2,4–26,2s; sem `turn_budget_limited` nesta rodada (residual monitorado); `TOKEN_USAGE_REAL=NOT_AVAILABLE`. `CRI_OFF_LIVE=TEST_NOT_RUN`; `NEG_PROVIDER=TEST_NOT_RUN`. Rollback disponivel e nao executado.
+
+TASK_ID=DELIA-ORCH-REFAC-R3-PRODUCTION-DEPLOY-AND-HOMOLOGATION-01
+R3_CODE_SHA=c914c8bc23 RELEASE_SOURCE_SHA=4ae893ca6a NEW_IMAGE=85cdd244f531 ROLLBACK_IMAGE=aafa5a262344
+DEPLOY_STATUS=EXECUTED_AND_VERIFIED PROD_HOMOLOGATION=PASS(11/11+7/7)
+BUSINESS_OUTCOME_STATUS=VERIFIED ROLLBACK_EXECUTED=NO EXECUTION_DRIFT=NONE
+R3_RELEASE_ACCEPTANCE=PENDING_INDEPENDENT_REVIEW
+COORDINATION_REVIEW_REQUIRED=YES R4_AUTHORIZED=NO PLAN_COMPLETE=NO
+Evidência: [doc 141](../corrections/mcp-contextual-intelligence-orchestration/141-r3-production-deploy-and-homologation.md).
