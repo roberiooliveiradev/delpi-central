@@ -238,3 +238,37 @@ DEFECT+REWORK=1: primeiro deploy deixou regras legadas `flex` depois do novo gri
 QA VISUAL PROD 26/26 (`vd-cleanctx-prod.mjs` autenticado, `ca83dc93b9`): sem `--context-open`/inset azul; card `position:static` neutro rgb(255,255,255) radius 12; header único + subtítulo, sem controle duplicado; grid 2 col desktop / 1 col mobile (medido); trace recolhido, expande e mostra spans reais; scroll não cobre composer; dois contextos simultâneos + colapso independente; painel global independente com vazio honesto; 375px íntegro; reduced-motion → animation none; Enter colapsa. Screenshots `shots-cleanctx/`. Residuais: Companion Dock real, 320/360/390/420 individuais, zoom 200% real, dark/light visual e screen reader TEST_NOT_RUN.
 
 **STATUS FINAL:** `SPEC_PUBLISHED; RUNTIME_CHANGED (2026-10-24, commits 35e19f60b2/26b8646470/ca83dc93b9); TESTED; DEPLOYED; PHASE_NOT_ADVANCED; GLOBAL_SECTIONS=BLOCKED_PENDING_CONTRACT`.
+
+
+## Decisão posterior do Product Owner — Responsive Multi-Column Inline Context (2026-10-24)
+
+**STATUS: PRODUCT_UX_DECISION / IMPLEMENTATION_PENDING / DOC_ONLY.** O PO aprovou a referência visual de contexto inline multicolunas mostrada na conversa. Esta decisão **complementa** a expansão inline e o Clean Inline Context Card — não os apaga nem volta ao popover. Capturas reais mostraram que o card clean permanecia excessivamente estreito em telas amplas, criando uma coluna vertical longa com grande espaço horizontal ocioso.
+
+### Regras da decisão
+
+- O contexto permanece **inline**, abaixo das ações, no fluxo da conversa — sem popover, portal, overlay, scroll aninhado ou barra lateral azul.
+- Em telas amplas, o card utiliza a largura útil da conversa e distribui o conteúdo em áreas semânticas: **Detalhes da geração**, **Evidências + Atividades relacionadas** e **Rastreamento técnico** (recolhível, secundário).
+- Em larguras intermediárias, duas áreas (Detalhes à esquerda; demais agrupadas à direita). Em telas estreitas/Dock/mobile, uma única coluna.
+- A transição depende da **largura real disponível do container**, não apenas da viewport global — o Companion Dock deve funcionar dentro de uma viewport desktop ampla.
+- A resposta textual mantém largura confortável de leitura (`68ch`); o card expandido pode usar área maior da conversa.
+- Nenhuma altura fixa, nenhum scroll vertical próprio, nenhum overflow horizontal, nenhuma coluna preenchida com dados falsos.
+- Visual clean preservado: card único neutro, borda discreta, divisórias leves, acento institucional apenas em ícones/ações.
+
+### Referência visual é conceitual
+
+A referência aprovada ilustra estrutura e hierarquia. Itens ilustrativos (data/hora, ambiente, versão, plataforma, explicações extras sobre fontes e métricas adicionais) **não autorizam novos campos ou valores sem contratos legítimos**. Somente dados reais já presentes na projeção `turn_result`/`observability`/`provenance`/`activityView` podem ser exibidos.
+
+### Estados de implementação
+
+| Item | Estado |
+|---|---|
+| Expansão inline (sem popover/overlay) | PROVEN (`2ad6403b10`, §6.424) |
+| Clean Inline Context Card (barra azul removida, card neutro, trace recolhível) | PROVEN (`ca83dc93b9`, §6.425) |
+| Ocupação horizontal ampla / layouts wide-medium-compact | PLANNED — esta task |
+| Companion Dock real, todos os widths/zoom/temas | TO_INVENTORY — QA desta task |
+| Novos campos de contexto (ambiente, versão, data/hora, métricas extras) | TARGET/BLOCKED_PENDING_CONTRACT — não implementar |
+| Seções globais do painel lateral | TARGET/BLOCKED_PENDING_CONTRACT |
+
+**Task bounded:** `DELIA-UX-INLINE-CONTEXT-RESPONSIVE-MULTICOLUMN-REFACTOR-01`. REANCHOR → correção documental (esta seção) → diagnóstico de largura → REUSE/CONTRACT gates → RED → implement → GREEN → QA responsivo autenticado → rework → evidência/ledger → commit/push main → deploy frontend → verify → report.
+
+**Esta alteração documental não modifica runtime: RUNTIME_CHANGED=NO; TEST_NOT_RUN; PHASE_NOT_ADVANCED.**
