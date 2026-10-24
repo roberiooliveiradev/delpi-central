@@ -1330,7 +1330,7 @@ Requisitos para qualquer decisão: fonte de rate-por-data com owner (Controlador
 |---|---|---|
 | **R03** P7/Bloco H | SB9=snapshot SB2 (96%), elegibilidade, 68 exceções | produtor oficial + parâmetros (E2); G1–G4 `PENDING` |
 | **R04** Consumo/OP | `matr860` decodificado (MOD via SD3, `B1_COD LIKE 'MOD%'`/`B1_CCCUSTO`) | bindings homologados + amostra oficial (G4/G5) |
-| **R09** Faturamento×MOD | fórmula+rate `PROVEN` (view), TTAT | rotina oficial do relatório (a confirmar) + DDL da view (E3) + aceite (G6) |
+| **R09** Faturamento×MOD | produtor `DLP204.prw` `SOURCE_AVAILABLE` + modelo 99,4% (rodada 24, §43); fórmula+rate `PROVEN` | SP `STP_DELPI_FORMA_PRECO_*`/RPO/parâmetros + 27 tempos + divisor (E9); DDL da view (E3); aceite (G6) — G4 PASS, G5 `INCONCLUSIVE` |
 | **R12** Refaz Saldos | `DEL100` decodificado + query vigente 421/242 | vínculo rotina-oficial↔relatório; execução observada |
 | **R15** Cutoff/SB9 | snapshot recorrente, janela comum, MA330OK hook | execução do job (E4/E5) + aceite |
 
@@ -1728,6 +1728,8 @@ sob custódia do owner, **fora do repositório**.
 | Docs SD1 duplicados (housekeeping) | `<DOC-DUPLICADO-A..C>` | doc 80 (renomeado de `<dup-A..C>`) |
 | Pessoa física (gestora do processo) | `<GESTORA-PROC>` | 23 docs — 132 ocorrências |
 | Produtos divergentes SB9×MATR989 | `<PRODUTO-WIP-A..D>` | docs 80 §41/§42, 85 §8, 84 §5.2 |
+| PAs âncora/seriais/residuais do Fat×MOD | `<PA-ÂNCORA-*>`, `<PA-SERIAL-*>`, `<PA-RESIDUAL-R09-*>` | docs 80 §43, 85 §9, 84 §5.3 |
+| Produto exemplo da hipótese QTNP (R03) | `<PRODUTO-QTNP-A>` | doc 80 §35 (sanitizado rodada 24) |
 
 Os aliases `<NF-RETIF-A>`/`<NF-RETIF-B>` da rodada anterior foram
 mantidos — mesmo objeto real = mesmo alias em todos os documentos.
@@ -2071,7 +2073,7 @@ mudança de gate nesta rodada.
   `F4_PODER3='R'/'D'` inseridos após 01/10 16:16:27) →
   **587.621,85** vs alvo 587.698,28 — **residual 76,43** (0,013 %).
   Nenhum produto fora do conjunto vale 76,43 (subset-sum ambíguo:
-  centenas de combinações; ex.: 10081855=71,21 SB6-R aberto sem QTNP).
+  centenas de combinações; ex.: `<PRODUTO-QTNP-A>`=71,21 SB6-R aberto sem QTNP).
 - **MP EM PROCESSO:** mesma família — soma MATR989 dos produtos
   `QTNP@emissão>0` = **79.194,35** vs alvo 77.251,73 —
   **residual +1.942,62**. Composição: tipo '' 64.388,66 + RE9
@@ -2570,3 +2572,103 @@ residual E8, precedente R06/R07); G5 = reconciliação reproduzível +
 residuais explicados. Métricas corrigidas: `COLETA = 43/60 = 71,7%`;
 `AUDITORIA = 49/90 = 54,4%`; `RELATORIOS_CONCLUIDOS = 0/15`; R03 não
 promovido; R08 G6 `PENDING`.
+## §43 — R09 · Faturamento × MOD — modelo físico do DLP204 (rodada 24)
+
+Escopo: `Fat x MOD.xlsb` (abas `1-Fl01`/`2-Fl02`, 4.476 linhas de detalhe).
+Resultado: produtor confirmado **com fonte** + modelo físico reconstruído
+a 99,4%; SP interna e pontos de borda → E9. Gates: **G4 PASS · G5
+INCONCLUSIVE · G6 PENDING**.
+
+### A. Produtor, variante e parâmetros — `PROVEN`
+
+- `DLP204.prw` **no acervo** (`docs/13-fontes-totvs-protheus/06.
+  Financeiro/DLP204.prw`, Gabriel, 2019) — `SOURCE_AVAILABLE`;
+  `EXECUTION_OBSERVED` pelo artefato; `CODE_DEPLOYED` não declarado
+  (RPO não vinculado — E9).
+- Emissor `FWMSEXCEL`: aba `FlNN`/tabela `Estrutura Filial NN` por
+  filial; linha `Total Produto ---->` existe só na sessão Excel
+  interativa (não persistida no XLSB).
+- SX1 `DLP204`: par01/02 datas, par03/04 produto, par05/06 grupo,
+  par07/08 tipo, par09 roteiro (default `01`), par10 filiais, par11
+  "Exibir MP?". Artefato: competência **set/2026** (reproduzida), ambas
+  filiais, par11=**Não** (sem linhas `03/05/07`).
+
+### B. Seleção e propagação — `PROVEN` (4.476/4.476)
+
+- PA-âncora = `SB1` na faixa de parâmetros **e** ∃ `SD2` da filial no
+  período com TES `F4_DUPLIC='S'` (WHERE literal do fonte — mesma
+  regra canônica de vendas). Fonte não filtra `D2_TIPO`; as 7 NFs tipo
+  `D` de set/2026 com TES duplic-S são de MPs fora do escopo —
+  `UNEXERCISED` (teste T-R09-07 candidato).
+- `Seq Comp` = `COMP` da SP = nível da expansão SG1 (`02` PA, `04`
+  componente, `06` subcomponente) — conferido por distância
+  estrutural (0/1/2).
+- `Qtd Fat.` = `QTDFAT` da SP = faturamento do PA-âncora; `QTDFAT=0` →
+  fallback = quantidade do chamador (`aModPar[4]`) — explica seriais
+  herdando a quantidade do pai faturado.
+
+### C. Expansão PA→MOD — `SOURCE_MISSING` (SP) / mecanismo `PROVEN` (99,4%)
+
+- Motor = `EXEC STP_DELPI_FORMA_PRECO_<emp> (prod, fil, roteiro, dataDe,
+  dataAte, nivel, pa_ancora)` → retorna `PA, COMP, B1_COD, B1_DESC,
+  QTDFAT, B1_UM, G2_TEMPAD, CUSTO_UNIT, CUSTO_TOTAL, CUSTOPROD, HORAS`.
+  **Procedure ausente de todos os bancos acessíveis** (legado 2019) —
+  internos inferidos por artefato → E9 (sem inventar lógica).
+- MOD = recurso da operação do **roteiro congelado da OP** (`SHY010`,
+  `HY_OP`=`C2_NUM`+`C2_ITEM`+`C2_SEQUEN` — OPs de desdobramento têm
+  item-pai + seriais como sequências) ou do roteiro cadastral `SG2010`
+  (fallback), via ponte `SH1010.H1_CCUSTO` → `MOD<cc>` — **mesma ponte
+  §22** que alimenta a `vw_Apontamentos_Eficiencia` (`SHB010.HB_CC`
+  concordante exceto CT-01C f02 → `MOD345`, onde SH1 prevalece).
+- `Quantidade` = `HY_TEMPAD` (nome `G2_TEMPAD` no contrato da SP):
+  **4.311 linhas via SHY + 138 via SG2 = 4.449/4.476 (99,4%)**. As
+  "revisões de roteiro" da investigação preliminar eram `HY_TEMPAD`
+  histórico ≠ `G2_TEMPAD` corrente (`STALE_EVIDENCE` do cadastro).
+  Fator `÷2`/÷`C2_QUANT` em itens de desdobramento (par de seriais) —
+  semântica do divisor `PENDING` (E9). **27 linhas residuais** (tempos
+  zerados / roteiro de OP não localizado — ex.: `<PA-RESIDUAL-R09-*>`).
+
+### D. Custos e fórmulas — `PROVEN`
+
+- `Horas = Qtd Fat. × Quantidade`; `Custo Total = Horas × Custo Unit`
+  — identidade aritmética 4.476/4.476.
+- `Custo Unitario` = `SBZ010.BZ_CUSTD` (filial,MOD) **vigente na
+  emissão** — cadeia `SBZ010_TTAT_LOG` com cutoff ~06-07/10/2026
+  (anterior às revalorizações `MATA019` 07-08/10, §23): **4.469/4.469**
+  linhas com rate conferem; **7 linhas** MOD sem registro SBZ na filial
+  (ausência de cadastro ≠ zero — E6).
+- `UM` = `B1_UM` do MOD (`HR`/`H`/`PC`); `Custo Produto` = `CUSTOPROD`
+  = 0 em todas as linhas (semântica não exercida — `PENDING` menor).
+- Totais derivados do artefato: f01 ΣCusto=164.985,66 / ΣHoras=2.472,58;
+  f02 ΣCusto=579.268,58 / ΣHoras=7.089,40. Sem subtotais persistidos.
+
+### E. Reuso transversal (gate §0)
+
+- Predicado `F4_DUPLIC='S'` = mesma regra canônica de vendas
+  (`REUSE_CONFIRMED` de predicado).
+- `vw_Apontamentos_Eficiencia` = `REUSE_PARTIAL`: mesmo mapa CT→MOD e
+  mesmo domínio de rate, mas semântica divergente (horas reais/
+  previstas + rate corrente retroativo §23.E **vs** tempo padrão do
+  roteiro × faturamento × rate `as_of`) — não transplantar fórmula.
+- Nenhum serviço Minha DELPI implementa a cadeia — `TARGET` doc 85 §15.
+
+### F. Residuais → E9 (owner TI/ERP, doc 82)
+
+SP `STP_DELPI_FORMA_PRECO_*` (fonte/RPO), versão compilada do DLP204,
+parâmetros efetivos da emissão (par03..11), regra de seleção de OP por
+PA dentro da SP, semântica do divisor `÷2` em desdobramento, 27 linhas
+de tempo sem roteiro localizado, 7 MODs sem SBZ (cadastro ou exceção?),
+semântica de `CUSTOPROD`. `D2_TIPO='D'` não exercido.
+
+### G. Gates e confidencialidade
+
+`G1–G3` mantidos; **`G4 PASS`** — produtor com fonte + bindings físicos
+(seleção 100%, expansão 99,4%, rate 100% das linhas com SBZ)
+demonstrados; **`G5 INCONCLUSIVE`** — paridade monetária/quantitativa
+alta mas não integral no grão linha (27 tempos + divisor + regra de
+seleção de OP na SP pendentes — sem promover por agregado); `G6
+PENDING`. Códigos de produto substituídos por aliases
+(`<PA-ÂNCORA-*>`, `<PA-SERIAL-*>`, `<PA-RESIDUAL-R09-*>`) — mapeamento
+sob custódia do owner fora do repositório. Códigos MOD (`MOD###`)
+mantidos por convenção §22 (cadastro de rates, não identificam item
+comercial).

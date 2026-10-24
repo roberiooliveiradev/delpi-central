@@ -36,4 +36,6 @@ Nas 4.476 linhas de dados examinadas, dentro da tolerancia numerica da precisao 
 ## Evidencia e restricoes
 `TWO_SHEETS=PROVEN_DOCUMENT`; `COMPONENT_PREFIX_MOD=PROVEN_DOCUMENT`; `OBSERVED_FORMULAS=PROVEN_SAMPLE`; `REPORT_PRODUCER_DLP204=TO_INVENTORY`; `OFFICIAL_CALCULATION=TO_INVENTORY`; `ERP_PARITY=TEST_NOT_RUN`; `COST_ACCOUNTING_OUTCOME=INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`.
 
+**Atualizacao rodada 24** (doc 80 §43, doc 85 §9, doc 84 §5.3): `REPORT_PRODUCER_DLP204=PROVEN` (fonte `DLP204.prw` no acervo — `SOURCE_AVAILABLE`; `CODE_DEPLOYED` RPO pendente E9); `OBSERVED_FORMULAS=PROVEN` (`Horas=QtdFat×Quantidade`, `CustoTotal=Horas×rate` — identidade 4.476/4.476); `ERP_PARITY=INCONCLUSIVE` (QtdFat 4.476/4.476, tempo roteiro-OP 4.449/4.476=99,4%, rate as_of 4.469/4.469 com SBZ — 27 tempos + divisor desdobramento + SP interna `STP_DELPI_FORMA_PRECO_*` ausente → E9); `OFFICIAL_CALCULATION=PROVEN` exceto internos da SP (`PRODUCER_INFERRED_BY_ARTIFACT`); `IMPLEMENTATION_AUTHORIZED=NO` mantido (E6=C, direcao de produto).
+
 Este documento possui somente metadados, conceitos, formulas abstratas e lacunas. Nao armazenar registros ou numeros financeiros originais no GitHub.

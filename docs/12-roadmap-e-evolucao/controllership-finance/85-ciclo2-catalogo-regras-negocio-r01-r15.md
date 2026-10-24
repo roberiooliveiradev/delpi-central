@@ -766,17 +766,141 @@ impresso
 
 ---
 
-## §9 — R09 · Faturamento × MOD (DLP204) — `AS-IS` + taxa `PROVEN`
+## §9 — R09 · Faturamento × MOD (DLP204) — modelo físico `PROVEN` (rodada 24)
 
-- `Fat x MOD.xlsb` (abas filial 01/02): explosão PA → componentes MOD:
-  PA, Seq Comp, Cod MOD, Descrição, Qtd Fat, UM=`HR`, Quantidade (horas),
-  Custo Unitário, Custo Total, Custo Produto, Horas.
-- **Custo Unitário MOD = rate por produto/filial `SBZ010.BZ_CUSTD`** —
-  `PROVEN` (MOD393 = 70,81 confere, doc 80 §22–§25).
-- Vínculo DLP204↔view/SGZ/estruturas `TO_INVENTORY`.
-- **E6 (decisão):** histórico homologado + recalculado corrente, opção **C**
-  — `PRODUCT_DIRECTION_ONLY`, `IMPLEMENTATION_AUTHORIZED=NO` (doc 81/82);
-  histórico incompleto deve ter tratamento explícito (falta ≠ zero).
+Artefato `Fat x MOD.xlsb`: abas `1-Fl01` (2.459 linhas) e `2-Fl02` (2.017),
+título `Estrutura Filial NN`, colunas `PA, Seq Comp, Cod Produto, Desc
+Produto, Qtd Fat., UM, Quantidade, Custo Unitario, Custo Total, Custo
+Produto, Horas` — 4.476 linhas de detalhe, sem linhas de total persistidas.
+
+### BR-R09-001 — Produtor e variante — `PROVEN`
+
+`DLP204.prw` **presente no acervo** (`docs/13-fontes-totvs-protheus/06.
+Financeiro/DLP204.prw`, autor Gabriel, 03/07/2019) — `SOURCE_AVAILABLE` +
+`EXECUTION_OBSERVED` (artefato). Emissor `FWMSEXCEL`: uma aba `FlNN` por
+filial, tabela `Estrutura Filial NN`, colunas exatamente as observadas;
+linha `Total Produto ---->` existe apenas na sessão Excel interativa
+(`oExcel:AddRow` por PA com `nThrs`) — não persistida no XLSB.
+`CODE_DEPLOYED` não declarado (versão RPO não vinculada — E9).
+
+### BR-R09-002 — Parâmetros (SX1 grupo `DLP204`) — `PROVEN` (catálogo) / inferido (emissão)
+
+`MV_PAR01` Data de · `MV_PAR02` Data até · `MV_PAR03/04` Produto Acabado
+de/até · `MV_PAR05/06` Grupo de/até · `MV_PAR07/08` Tipo de/até ·
+`MV_PAR09` Roteiro de Operações (default `01`) · `MV_PAR10` Seleciona
+Filiais (combo) · `MV_PAR11` "Exibir MP?" (combo). Artefato: competência
+inferida **2026-09-01→2026-09-30** (`PROVEN` por reprodução integral de
+`Qtd Fat.`), ambas filiais (par10=Sim), par11=**Não** (ausência das
+linhas `03/05/07` de componentes não-MOD — ver BR-R09-005).
+
+### BR-R09-003 — Seleção do PA-âncora (por filial) — `PROVEN`
+
+`SB1` na faixa produto/grupo/tipo (par03..08) **e** ∃ `SD2010` da filial
+com `D2_EMISSAO` ∈ [par01,par02] cujo TES (`SF4010` via
+`D2_TES=F4_CODIGO`) tem **`F4_DUPLIC='S'`** — WHERE literal do fonte. A
+fonte **não** filtra `D2_TIPO` — as 7 NFs tipo `D` de set/2026 com TES
+duplic-S são de MPs fora do escopo PA (ramo não exercido pelo artefato —
+`UNEXERCISED`). População âncora+descendentes: 1.767 (filial,PA).
+
+### BR-R09-004 — Motor da expansão PA→MOD — `SOURCE_MISSING` (SP) / contrato `PROVEN`
+
+Cada linha MOD sai de `EXEC STP_DELPI_FORMA_PRECO_<empresa> (produto,
+filial, roteiro(par09), dataDe, dataAte, nivel, pa_ancora)` — a SP
+retorna `PA, COMP, B1_COD, B1_DESC, QTDFAT, B1_UM, G2_TEMPAD, CUSTO_UNIT,
+CUSTO_TOTAL, CUSTOPROD, HORAS`. A procedure **não existe em nenhum banco
+acessível** (produção/testes) — objeto legado de 2019; internos
+inferidos por artefato (`PRODUCER_INFERRED_BY_ARTIFACT` para a semântica
+interna) → E9. O `Estrut()` ADVPL faz a recursão SG1 por nível (chamadas
+SP com nível `0`,`1`,`2`).
+
+### BR-R09-005 — `Seq Comp` = nível da expansão — `PROVEN`
+
+`COMP` retornado pela SP: `02` = PA faturado (nível 0), `04` = componente
+direto (nível 1), `06` = subcomponente (nível 2) — conferido por
+distância estrutural SG1 (0/1/2). Com par11=Sim a rotina emitiria linhas
+`03/05/07` (produtos componentes com `qty×BZ_CUSTD`) — **ausentes no
+artefato** → par11=Não.
+
+### BR-R09-006 — `Qtd Fat.` = faturamento do PA-âncora propagado — `PROVEN`
+
+`QTDFAT` (SP) = Σ `D2_QUANT` do PA-âncora no período (TES duplic-S);
+quando a SP retorna `QTDFAT=0` o ADVPL propaga a quantidade do chamador
+(`aModPar[4]`) — explica a propagação pai→componente (seriais
+compartilham o `Qtd Fat.` do PA faturado). **4.476/4.476 linhas
+explicadas** (TES `F4_DUPLIC='S'` + `D2_TIPO<>'D'`; ramo tipo-D não
+exercido — ver BR-R09-003).
+
+### BR-R09-007 — Vínculo PA→MOD via roteiro da OP — `PROVEN` (99,4%)
+
+O MOD de cada linha vem do **recurso da operação do roteiro congelado da
+OP** — `SHY010` (`HY_OP` = `C2_NUM+C2_ITEM+C2_SEQUEN`; OPs de
+desdobramento carregam item-pai + seriais como sequências da mesma OP) —
+ou, em fallback, do roteiro cadastral `SG2010`. Ponte recurso→MOD:
+`SH1010.H1_CCUSTO` (código do centro de custo espelha o sufixo `MOD*` —
+mesma ponte já documentada no doc 80 §22 e usada pela
+`vw_Apontamentos_Eficiencia`; `SHB010.HB_CC` concordante exceto `CT-01C`
+f02, onde a regra correta é SH1 → `MOD345`). Cobertura linha a linha:
+**4.311 via `HY_TEMPAD` + 138 via `G2_TEMPAD` = 4.449/4.476 (99,4%)**;
+27 residuais (tempos zerados e roteiros de OP não localizados —
+`PENDING` E9).
+
+### BR-R09-008 — `Quantidade` = tempo padrão da operação (`HY_TEMPAD`/`G2_TEMPAD`) — `PROVEN` (99,4%)
+
+A coluna `G2_TEMPAD` no contrato da SP carrega o **tempo padrão vigente
+no roteiro da OP** (`SHY010.HY_TEMPAD`) — não o cadastro corrente
+(prova: seriais com OP-roteiro CT-01A exibem `MOD20101` e tempos
+distintos do SG2 cadastro CT-23A). Fator `÷2`/÷`C2_QUANT` observado em
+itens de desdobramento (par de seriais — semântica do divisor `PENDING`,
+E9). As divergências antes lidas como "revisão de roteiro" eram
+`HY_TEMPAD` histórico ≠ `G2_TEMPAD` corrente (`STALE_EVIDENCE` do lado
+do cadastro — a fonte correta é a OP).
+
+### BR-R09-009 — Fórmulas das colunas — `PROVEN`
+
+`Horas = Qtd Fat. × Quantidade`; `Custo Total = Horas × Custo Unitario` —
+identidades verificadas nas 4.476 linhas (precisão ~4 dec). `Custo
+Produto` = `CUSTOPROD` da SP = **0 em todas as linhas** (semântica não
+exercida — provável opção de custo calculado desligada; `PENDING` baixo
+impacto).
+
+### BR-R09-010 — `Custo Unitario` = `SBZ010.BZ_CUSTD` (filial,MOD) vigente na emissão — `PROVEN`
+
+Reconstrução `as_of` via `SBZ010_TTAT_LOG` (regra: último valor ≤ corte;
+na ausência, `COLD` da primeira alteração posterior): **4.469/4.469**
+linhas com MOD portador de rate conferem com cutoff ~06-07/10/2026 —
+anterior às revalorizações `MATA019` de 07-08/10 (doc 80 §23). **7
+linhas** cujo MOD não tem registro SBZ na filial (rate blank/zero — não
+é "falta": é ausência de cadastro; falta ≠ zero — E6). Totais derivados:
+f01 ΣCustoTotal=164.985,66 · f02 ΣCustoTotal=579.268,58 · f01
+ΣHoras=2.472,5805 · f02 ΣHoras=7.089,3959.
+
+### BR-R09-011 — `UM` e metadados MOD — `PROVEN`
+
+`UM` = `B1_UM` do produto MOD (`HR` 4.025 linhas, `H` 421, `PC` 30 — MODs
+de máquina em peças). `Cod Produto` = `B1_COD` (`B1_TIPO='MO'`);
+`Desc Produto` = `B1_DESC`.
+
+### BR-R09-012 — Reuso transversal — `REUSE_PARTIAL`
+
+- **Predicado de venda** `F4_DUPLIC='S'`: idêntico à regra canônica de
+  faturamento — `REUSE_CONFIRMED` de predicado (implementação do filtro
+  literal no fonte; ver doc 85 §15).
+- **`vw_Apontamentos_Eficiencia`**: mesmo domínio (CT→MOD, rate MOD) mas
+  semântica divergente — a view usa horas **reais/previstas por
+  apontamento** e aplica `BZ_CUSTD` **corrente retroativamente** (doc 80
+  §23.E); o relatório usa **tempo padrão do roteiro da OP × quantidade
+  faturada × rate `as_of` emissão** → `REUSE_PARTIAL`, **não
+  transplantar fórmula**.
+- Nenhum serviço Minha DELPI reproduz a cadeia
+  SD2→estrutura→roteiro-OP→rate-as_of → `TARGET` futuro (§15).
+
+### BR-R09-013 — E6 (decisão) — `PRODUCT_DIRECTION_ONLY`
+
+Histórico homologado + recalculado corrente, opção **C** (doc 81/82) —
+`IMPLEMENTATION_AUTHORIZED=NO`. O comportamento do artefato (rate
+`as_of`) é compatível com a leitura histórica homologada; a divergência
+de semântica com a view (BR-R09-012) permanece registrada — falta ≠ zero
+(7 linhas sem SBZ; 224 linhas f02 com rate zero cadastrado).
 
 ---
 
@@ -869,6 +993,9 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R05-008 retificações | TTAT/RECNO | `D_E_L_E_T_`,`R_E_C_N_O_` | leitura histórica exige `as_of` | `as_of` em todo contrato histórico | cf-api | T-R05-07 | doc 80 §31.D |
 | BR-R05-011/012 as_of custo + ponte | `SD*_TTAT_LOG` | `TTAT_DTIME`,`TTAT_COLD`,`TTAT_FIELD` | custo no `as_of` da emissão + residual por produto | `as_of` + decomposição de drift em contrato histórico | api-delpi | T-R05-08/09 | doc 80 §33.A-B |
 | BR-R09 MOD rate | `SBZ010.BZ_CUSTD` + Fat×MOD | `BZ_CUSTD`, horas | rate×horas por PA/filial | `mod-cost-rate` (E6=C) | api-delpi | T-R09-01 | doc 80 §22–§25 |
+| BR-R09-003/006 população+faturamento | `DLP204.prw` + SD2/SF4/SG1 | `D2_COD`,`D2_QUANT`,`D2_EMISSAO`,`D2_TES`,`F4_DUPLIC`,`G1_*` | PA âncora = produto com SD2 TES-duplic-S no período; `Qtd Fat.` do âncora propagada aos descendentes | `billing-mod-breakdown` (`as_of` obrigatório) | api-delpi | T-R09-02/06 | doc 80 §43 |
+| BR-R09-007/008 roteiro OP→MOD+tempo | `SHY010`/`SG2010` + `SH1010` | `HY_OP`,`HY_RECURSO`,`HY_TEMPAD`,`H1_CCUSTO`,`G2_TEMPAD` | `Quantidade` = tempo do roteiro congelado da OP (fallback SG2); MOD = `MOD`+`H1_CCUSTO` do recurso | idem | api-delpi | T-R09-03/04 | doc 80 §43 |
+| BR-R09-009/010 horas+custo as_of | artefato + SBZ/TTAT | `BZ_CUSTD`,`TTAT_COLD`,`TTAT_DTIME` | `Horas=QtdFat×Quantidade`; `CustoTotal=Horas×rate`; rate `as_of` via TTAT | `billing-mod-breakdown` (`as_of`) | api-delpi | T-R09-01/05 | doc 84 §5.3 |
 | BR-R10/11 EDAPP | SD1/SD2 | `D1_*`,`D2_*` | consulta parametrizada | `fiscal-docs-query` | api-delpi | T-R10-01 | doc 47 §11.1 |
 | BR-R06-001/002/003 kardex UNION | `matr910_dlp.prx` + SD1/SD2/SD3/SF4 | `D1_DTDIGIT`,`D2_EMISSAO`,`D3_EMISSAO`,`F4_ESTOQUE`,`D3_ESTORNO`,`D*_ORIGLAN`,`D*_LOCAL` | UNION SD1+SD2+SD3 por produto/armazém com datas por tabela | `stock-kardex` (contrato futuro — `DECISION_REQUIRED`) | api-delpi | T-R06-01..04 | doc 80 §37.C |
 | BR-R06-004/005 ordem+REF | `matr910_dlp.prx` | `D*_NUMSEQ`,`D1_FORNECE`,`D2_PEDIDO`,`D3_OP`,`D3_CC` | data + NUMSEQ; REF por origem (F-/P-/OP/CC) | idem | api-delpi | T-R06-05/06 | doc 80 §37.C |
@@ -925,7 +1052,13 @@ copia para BFF/frontend.
 | T-R05-07 | BR-R05-008 | negative · reproduzido | linha inserida/deletada após emissão não pode entrar/sair da reprodução `as_of` |
 | T-R05-08 | BR-R05-011 | negative · reproduzido | reversão TTAT_COLD limitada a `TTAT_DTIME > emissão` — sobre-reversão gera erro artificial |
 | T-R05-09 | BR-R05-012 | positive · reproduzido | ponte por produto: Σ residual = +8.631,731 = oficial **exato** (agregação `CAST DECIMAL(30,9)`); TransfProc-RE3 fora do fluxo de valor |
-| T-R09-01 | BR-R09 | positive · reproduzido | Custo Unitário MOD = `BZ_CUSTD` por produto/filial |
+| T-R09-01 | BR-R09-010 | positive · reproduzido | Custo Unitário MOD = `BZ_CUSTD` por produto/filial **as_of emissão** — 4.469/4.469 linhas com SBZ conferem; 7 sem registro SBZ |
+| T-R09-02 | BR-R09-003/006 | positive · reproduzido | `Qtd Fat.` = Σ `D2_QUANT` TES `F4_DUPLIC='S'` do PA-âncora propagada — 4.476/4.476 explicadas |
+| T-R09-03 | BR-R09-008 | boundary · reproduzido | `Quantidade` = `HY_TEMPAD` do roteiro da OP — 4.311 linhas (+138 `G2_TEMPAD` fallback); 27 residuais E9 |
+| T-R09-04 | BR-R09-007 | positive · reproduzido | MOD = `MOD`+`H1_CCUSTO` do recurso da operação (SHY ou SG2); mapa 150 CTs cobre a população |
+| T-R09-05 | BR-R09-009 | positive · reproduzido | `Horas=QtdFat×Quantidade`, `CustoTotal=Horas×rate` — identidade 4.476/4.476 |
+| T-R09-06 | BR-R09-005 | positive · reproduzido | `Seq Comp` 02/04/06 = nível SG1 0/1/2 do âncora (distância estrutural conferida) |
+| T-R09-07 | BR-R09-003/006 | negative · candidato | NF `D2_TIPO='D'` com TES duplic-S não deve compor `Qtd Fat.` — não exercido nesta competência |
 | T-R10-01 | BR-R10/11 | positive · reproduzido | export = tabela literal; consulta parametrizada equivalente |
 | T-R06-01 | BR-R06-001/002 | positive · reproduzido | UNION SD1/SD2/SD3: 9.357 linhas vinculadas linha-a-linha por blocos (1.544 produtos) |
 | T-R06-02 | BR-R06-002 | negative · reproduzido | `D3_ESTORNO='S'`/deletado fora; doc com trio limpo+par estornado imprime só a linha limpa |
@@ -956,9 +1089,9 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
 | `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R08, R09 (layout), BR-R12-001/002, R15 (execução) |
-| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 vínculo DLP204, R10/11 filtros, R13 contrato externo, R14 todo |
+| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 internos da `STP_DELPI_FORMA_PRECO_*` + versão RPO DLP204 + parâmetros efetivos + 27 tempos residuais + divisor desdobramento (E9), R10/11 filtros, R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
 | `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |
 | `STALE_EVIDENCE` | contagens DEL100 antigas 724/672 (`EXECUTION_DRIFT`, doc 80 §23.A) |

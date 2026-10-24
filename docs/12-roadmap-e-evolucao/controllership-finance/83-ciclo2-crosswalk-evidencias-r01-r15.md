@@ -130,9 +130,9 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 `Material em processo.xlsb` = "Saldo em Processo (Ana" — variante **analítica** do **MATR989** (`matr989.prx` ausente do acervo — `SOURCE_MISSING`; roster oficial + título da aba). Dt.Ref 01/10/2026 16:15, 57.359 linhas × 8 colunas: `CODIGO, DESCRICAO, UM, LOCAL, ORDEM PRODUCAO, TIPO RE/DE, QTDE, VALOR EM PROCESSO`. **Dois blocos provados** (rodada 22, doc 80 §41, doc 85 §8): **(1)** 1.501 linhas com OP = 1.501 linhas `SD3010` `D3_CF IN (RE0,RE1,RE2,RE9)` de OPs **abertas na emissão** (sem `PR0` e sem `C2_DATRF` — 650/650 pares qtde+valor exatos, grão linha SD3); **(2)** 573 produtos sem OP = `SB9010`@20260930 loc99 (`B9_QINI`/`B9_VINI1` — 569 exatos + 4 Δ temporais de revalorização; errata §42: faixa SB9 f01@0930 regravada em 21/10 — impresso = posição `as_of` da emissão). Total R$355.240,51 = EM PROCESSO do P7 **exato** (Σ 3 dec = 355.240,512 — o centavo de soma de componentes é artefato de arredondamento, §42.A) — EM PROCESSO = SB9-loc99 (293.273,09) + material alocado a OP aberta (61.967,42), **não** o armazém 99 sozinho. Gates: **G1–G5 PASS · G6 PENDING** (fonte/RPO + semântica intra-dia → E8).
 
-### R09 — Faturamento × MOD — **PARCIAL**
+### R09 — Faturamento × MOD — **RECONCILIADO PARCIAL (modelo provado; SP interna pendente)**
 
-`Fat x MOD.xlsb` (abas 1-Fl01/2-Fl02): explosão PA→componentes MOD: PA, Seq Comp, Cod Produto (MOD###), Descrição, Qtd Fat, UM=HR, Quantidade (horas componente), Custo Unitario (ex.: MOD393 = 70,81), Custo Total, Custo Produto, **Horas**. Roster: **DLP204** "Fat x Mod — Custo MO". Cruzamento com doc 80: o `Custo Unitario` (70,81 MOD393) confirma uso de rate MOD por produto/filial (SBZ010.BZ_CUSTD, PROVEN §22–§25). Gates: **G1–G3 PASS · G4 PENDING** (vínculo DLP204↔view/SGZ/estruturas) · G5/G6 PENDING.
+`Fat x MOD.xlsb` (abas 1-Fl01/2-Fl02): explosão PA→componentes MOD: PA, Seq Comp, Cod Produto (MOD###), Descrição, Qtd Fat, UM=HR, Quantidade (horas componente), Custo Unitario (ex.: MOD393 = 70,81), Custo Total, Custo Produto, **Horas**. Roster: **DLP204** "Fat x Mod — Custo MO". Cruzamento com doc 80: o `Custo Unitario` (70,81 MOD393) confirma uso de rate MOD por produto/filial (SBZ010.BZ_CUSTD, PROVEN §22–§25). Gates: **G1–G4 PASS · G5 INCONCLUSIVE · G6 PENDING**. Rodada 24: `DLP204.prw` no acervo (`SOURCE_AVAILABLE`; `CODE_DEPLOYED` RPO → E9). Seleção = SD2 TES `F4_DUPLIC='S'` do PA-âncora (`Qtd Fat.` propagada aos descendentes — 4.476/4.476); MOD = recurso do roteiro congelado da OP (`SHY010.HY_TEMPAD`; fallback `SG2`) via `SH1010.H1_CCUSTO` — 4.449/4.476 (99,4%); `Custo Unitario` = `SBZ010.BZ_CUSTD` **as_of emissão** (4.469/4.469 com SBZ; 7 sem cadastro); fórmulas `Horas=QtdFat×Quantidade`, `CustoTotal=Horas×rate` (identidade integral). SP `STP_DELPI_FORMA_PRECO_*` ausente dos bancos → E9 (doc 80 §43, doc 85 §9).
 
 ### R10 — Notas por Centro de Custo — **PARCIAL**
 
@@ -192,7 +192,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R06 CPV / Kardex 01 | RECONCILIADO | MATR910 (`matr910_dlp.prx`) + `GET /supplies/cpv` (CPV canônico existente — doc 80 §39, `REUSE_PARTIAL`) | G1,G2,G3,**G4**,**G5** (UNION SD1/SD2/SD3 linha-a-linha — doc 80 §37, doc 85 §6; RPO/params → E7) |
 | R07 Inventários | RECONCILIADO | MATR910 | G1,G2,G3,**G4**,**G5** (INVENT 45/45 — doc 80 §37.D, doc 85 §7) |
 | R08 Material em Processo | RECONCILIADO | MATR989 analítico (`SOURCE_MISSING` — roster+aba) | G1,G2,G3,**G4**,**G5** (SD3 linha-a-linha 1.501/1.501 + SB9-loc99 569/573 com 4 Δ temporais explicados + total = EM PROCESSO P7 exato — doc 80 §41, doc 85 §8; fonte/RPO → E8) |
-| R09 Fat × MOD | PARCIAL | DLP204 | G1,G2,G3 |
+| R09 Fat × MOD | RECONCILIADO PARCIAL | DLP204 (`DLP204.prw` `SOURCE_AVAILABLE`) | G1,G2,G3,**G4** (G5 `INCONCLUSIVE` — 27 tempos + SP interna → E9) |
 | R10 Notas por CC | PARCIAL | EDAPP (SD1) | G1,G2,G3,G4 |
 | R11 NF desconsiderar | PARCIAL | EDAPP (SD2) | G1,G2,G3,G4 |
 | R12 Acompanha/Rep/Refaz | PARCIAL | Acompanha Custo wizard, Recálculo Reposição, DEL100 | G1,G2,G3 |

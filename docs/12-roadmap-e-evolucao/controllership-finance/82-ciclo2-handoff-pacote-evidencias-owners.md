@@ -131,6 +131,16 @@ exposição residual exige ação adicional.
 
 ---
 
+#### E9 — Stored procedure e versão implantada do DLP204 (Faturamento × MOD)
+
+| Campo | Conteúdo |
+|---|---|
+| Evidência atual | **Rodada 24:** `DLP204.prw` no acervo (`SOURCE_AVAILABLE`); modelo físico reconstruído a 99,4% — seleção SD2 TES `F4_DUPLIC='S'` (4.476/4.476 `Qtd Fat.`), expansão via `SHY010`/`SG2010` + `SH1010.H1_CCUSTO` (4.449/4.476), rate `SBZ010.BZ_CUSTD` `as_of` emissão (4.469/4.469 com SBZ) — doc 80 §43, doc 85 §9 |
+| Lacuna objetiva | (a) fonte/RPO da `STP_DELPI_FORMA_PRECO_<empresa>` — ausente de todos os bancos acessíveis (legado 2019): contém a regra de seleção de OP por PA, a semântica do divisor `÷2` em itens de desdobramento e o cálculo de `CUSTOPROD`; (b) versão compilada do DLP204 no RPO (`CODE_DEPLOYED`); (c) parâmetros efetivos da emissão (par03..11 — artefato indica par11=Não); (d) 27 linhas com tempo não localizado e 7 MODs sem registro `SBZ` na filial (cadastro ausente ou exceção intencional); (e) tratamento de NF `D2_TIPO='D'` com TES duplic-S (ramo não exercido nesta competência) |
+| Fonte esperada | DDL/source da stored procedure + identificação da build/RPO do DLP204 + registro de parametrização vinculado à emissão (aceita evidência equivalente com vínculo demonstrável) |
+| Impacto PROC-0072 | fecha a cadeia produtor→versão de R09 e os únicos pontos que impedem G5 PASS (paridade linha integral); sem a SP, a semântica interna permanece `PRODUCER_INFERRED_BY_ARTIFACT` |
+| Critério de aceite | `SOURCE_AVAILABLE` (SP) + `CODE_DEPLOYED` (RPO) + `EXECUTION_OBSERVED` (parâmetros vinculados) |
+
 ### 2.2 — Owner DBA (objetos de banco)
 
 #### E3 — DDL das views criptografadas

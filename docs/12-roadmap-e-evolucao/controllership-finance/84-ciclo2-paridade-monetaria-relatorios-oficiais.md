@@ -278,7 +278,8 @@ MP — validação por tipo em doc 80 §33.C/§34.B.
   subconjunto da consulta EDAPP do operador; filtro não documentado). G5 não
   promovido.
 - **R08** (Material em Processo): reconciliado no §5.2 — G4/G5 PASS.
-- **R04, R09, R11–R15**: sem população oficial comparável
+- **R09** (Faturamento × MOD): reconciliado no §5.3 — G4 PASS, G5 `INCONCLUSIVE`.
+- **R04, R11–R15**: sem população oficial comparável
   disponível → G5 `TEST_NOT_RUN`/PENDING preservado.
 
 ## §5.1 — R06 · Kardex CPV e R07 · Inventários (rodada 19)
@@ -337,6 +338,36 @@ existe implementada e canônica — `GET /supplies/cpv` (api-delpi,
 fechamento classificada `REUSE_PARTIAL` — lacuna `as_of`/snapshot é
 **superado para a consulta corrente**: decisão PO CPV mensal **vivo**, com correções retroativas refletidas no mês original após recálculo Protheus (doc 80 §40); evidência anteriormente homologada tem rastreabilidade distinta, sem pressupor snapshot implementado.
 
+## §5.3 — R09 · Faturamento × MOD DLP204 (rodada 24)
+
+Paridade **linha-a-linha** do artefato oficial (`Fat x MOD.xlsb`, abas
+`1-Fl01` 2.459 + `2-Fl02` 2.017 = 4.476 linhas, set/2026) — doc 80 §43,
+doc 85 §9. Fonte `DLP204.prw` `SOURCE_AVAILABLE`; SP
+`STP_DELPI_FORMA_PRECO_*` `SOURCE_MISSING` → E9.
+
+| Dimensão | Oficial | Físico | Regra | Resultado | Δ | Status |
+|---|---|---|---|---|---|---|
+| Colunas/cabeçalho | 11 colunas Fat×MOD | `fGPrdMod()`/`aColsExc` do fonte | layout literal DLP204 | 11/11 | 0 | `PASS` |
+| `Qtd Fat.` (todas as linhas) | qtd impressa | Σ `D2_QUANT` SD2 set/2026 | TES `F4_DUPLIC='S'`; valor do **PA-âncora** propagado (`aModPar[4]` quando SP retorna 0) | **4.476/4.476** | 0 | `PASS` |
+| `Seq Comp` | 02/04/06 | distância SG1 do âncora | `COMP` da SP = nível 0/1/2 | provado por nível | 0 | `PASS` |
+| `Cod Produto`/`UM` | MOD###, HR/H/PC | `B1_COD`,`B1_UM` | MOD = `MOD`+`H1_CCUSTO` do recurso da operação | mapa 150 CTs cobre população | 0 | `PASS` |
+| `Quantidade` (tempo padrão) | tempo impresso | `SHY010.HY_TEMPAD` (roteiro congelado da OP `C2_NUM+C2_ITEM+C2_SEQUEN`); fallback `SG2010.G2_TEMPAD` | OP-roteiro prevalece sobre cadastro | **4.449/4.476 (99,4%)** — 4.311 SHY + 138 SG2 | 27 linhas | `INCONCLUSIVE` (E9: tempos zerados/roteiro não localizado + divisor desdobramento) |
+| `Custo Unitario` | rate impresso | `SBZ010.BZ_CUSTD` (filial,MOD) **as_of emissão** via `SBZ010_TTAT_LOG` | último ≤ corte (~06-07/10); sem mudança posterior → `COLD` | **4.469/4.469** com SBZ | 7 MODs sem registro SBZ | `PASS` (rate); ausência cadastro → E9 |
+| `Horas` | impresso | `Qtd Fat. × Quantidade` | identidade aritmética | 4.476/4.476 | 0 | `PASS` |
+| `Custo Total` | impresso | `Horas × Custo Unitario` | identidade aritmética | 4.476/4.476 | 0 | `PASS` |
+| `Custo Produto` | 0 em todas | `CUSTOPROD` (SP) | semântica não exercida | 4.476/4.476 = 0 | — | `PASS` observacional (`PENDING` semântica) |
+| Total f01 ΣCusto / ΣHoras | 164.985,66 / 2.472,58 | derivado das linhas | soma de detalhe | reconciliado | 0 | `PASS` |
+| Total f02 ΣCusto / ΣHoras | 579.268,58 / 7.089,40 | derivado das linhas | soma de detalhe | reconciliado | 0 | `PASS` |
+
+**Hipóteses descartadas:** `Qtd Fat.` = ΣSD2 do próprio componente
+(valor é do âncora); `Quantidade` = `G2_TEMPAD` corrente (372 linhas
+divergem — é `HY_TEMPAD` da OP); `Quantidade` = tempo de apontamento
+`H6_TEMPO`; mapa CT→MOD por `SHB010.HB_CC` em f02 CT-01C (prevalece
+`H1_CCUSTO` → `MOD345`); filtro `D2_TIPO<>'D'` no fonte (ausente —
+ramo `UNEXERCISED`).
+**Residuais → E9 (TI/ERP):** SP/RPO, parâmetros efetivos, divisor `÷2`
+desdobramento, 27 tempos, 7 MODs sem SBZ, semântica `CUSTOPROD`.
+
 ## §6 — Gates e métricas resultantes
 
 | Item | Antes | Depois |
@@ -347,9 +378,13 @@ fechamento classificada `REUSE_PARTIAL` — lacuna `as_of`/snapshot é
 | R05 G4/G5 | TEST_NOT_RUN | **PASS** (rodadas 15–16: 130/130 células Δ=0,000 no `as_of`) |
 | R06 G4/G5 | PENDING/TEST_NOT_RUN | **PASS** (rodada 19: 9.357/9.357 linhas, custos 99,88% direto+TTAT, cadeia 1.544/1.544 — §5.1) |
 | R07 G4/G5 | PENDING/TEST_NOT_RUN | **PASS** (rodada 19: INVENT 45/45 vinculados — §5.1) |
+| R09 G4 | PENDING | **PASS** (rodada 24: `DLP204.prw` + bindings físicos — §5.3) |
+| R09 G5 | TEST_NOT_RUN | **INCONCLUSIVE** (4.449/4.476 tempos + SP interna → E9; demais dimensões 100%) |
 
 `COLETA = 42/60 = 70,0%` · `AUDITORIA = 47/90 = 52,2%` ·
 `CONCLUÍDOS = 0/15` (G6 exige aceite humano).
+
+**Errata rodada 24 (métricas canônicas doc 47 §11):** com R09 G4 PASS as métricas vigentes são `COLETA = 44/60 = 73,3%` · `AUDITORIA = 50/90 = 55,6%` · `CONCLUÍDOS = 0/15` — G5 R09 `INCONCLUSIVE` (não promovido por agregado).
 
 ## §7 — Segurança e método
 
