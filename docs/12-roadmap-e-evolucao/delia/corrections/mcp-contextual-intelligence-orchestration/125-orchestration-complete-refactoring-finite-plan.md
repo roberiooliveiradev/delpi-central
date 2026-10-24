@@ -458,3 +458,36 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 6. **Matriz de estados separada:** `LOCAL_TEST_STATUS`, `INDEPENDENT_REVIEW`, `DEPLOY_AUTHORIZATION`, `DEPLOY_STATUS`, `PROD_AUTH_HOMOLOGATION`, `BUSINESS_OUTCOME_STATUS` e `NEXT_STAGE_AUTHORIZED` nunca se substituem. Onde recurso real ainda não está disponível, teste e deploy = `TEST_NOT_RUN`, com blocker e dono.
 
 **Ordem executiva desejada:** implementação bounded → testes locais completos → revisão independente → autorização operacional específica → deploy por procedimento aprovado → homologação produtiva → registro no ledger → decisão separada sobre etapa seguinte. Nenhum release de produção deve ser afirmado como concluído antes da evidência física.
+
+
+## Adendo de execução prioritária — pertinência semântica e recuperação governada (2026-10-24)
+
+**TASK_ID:** `DELIA-C3-SEMANTIC-RELEVANCE-GOVERNED-RECOVERY-CROSSCUTTING-01`  
+**ORIGEM:** doc 141 §12 (O2: pedido `2 exemplos de terminal bala`, retorno `BALANCA BALMAK 1000KG` e `BALANCA ELETRONICA 50KGX5G`).  
+**CLASSE:** correção funcional transversal bounded, prioritária antes de avançar R4; **não** é nova etapa R3 nem autorização para redefinir M04/M05/M06/M07.  
+**ESTADO:** `PLANNED_FOR_IMMEDIATE_EXECUTION` (documentação apenas; runtime ainda não corrigido). `R4_AUTHORIZED=NO` e `DEPLOY_AUTHORIZED=NO`.
+
+### Falha e evidência
+
+`outcome_assessment.assess_outcome(facts, requirements, contract_subject)` comprova presença/completude e restrições tipadas, mas a aderência semântica entre objeto pedido e registros retornados não é demonstrada; seu próprio contrato declara que relevance é gate do caller. O orquestrador já tem seleção LLM semântica, `answer_requirements`, síntese/Outcome/CRI e recuperação contextual governada. **EXISTING_EQUIVALENT=YES (componentes parciais)**; `REUSE_DECISION=EXTEND`. `RELEVANCE_END_TO_END_IMPLEMENTED=TO_INVENTORY`, não presumir ausência a partir de busca residual. O2 não foi comprovado como defeito introduzido por R3 (A/B reproduziu o retorno); requer prova de pertinência contra a fonte real, não só JSON válido.
+
+### Contrato funcional esperado — antes do código, verificar owner/consumers e autoridade
+
+`USER_GOAL (original, imutável) → LLM semantic proposal → approved READ → sanitized owner evidence → semantic goal/evidence correspondence proposal → deterministic validation of provenance, constraints, policy and budget → [ANSWER | RECOVER_READ | HONEST_INSUFFICIENCY]`.
+
+- Semantic correspondence é **avaliação contextual orientada pelo LLM** sobre intenção original, evidências projetadas e limitações; não é FACT/autorização. Verificador determinístico confirma envelope, origem, completude, formato e permissões; **não** decide correspondência por substring, hardcode de SKU/termo ou metadata de provider.
+- Um retorno grounded mas semanticamente incompatível não recebe verdict `answered` de forma conclusiva nem resposta factual afirmando pertinência. Reutilizar os contratos tipados e o owner de Outcome; a decisão operacional continua no orquestrador existente, não no compositor CRI.
+- Quando não pertinente, fazer **no máximo uma recuperação semântica adicional por turno** (subject a 60s turn budget, retries legítimos e disponibilidade real), com novo plano semântico e READ revalidado. Não repetir consulta idêntica, não ampliar autorização, não produzir ACT/PREPARE nem ocultar limitações. Se não houver evidência pertinente: declarar insuficiência honestamente.
+- Preservar objeto, quantidade, qualificador, contexto e constraints originais. Não trocar silenciosamente `terminal bala` por `balança`; também não rejeitar correspondências legítimas com nomenclatura de domínio diversa sem prova da autoridade.
+- Não criar `relevance_engine`, `second_planner`, `provider_router`, novo registry ou workflow externo. Se a arquitetura atual não admitir extensão limpa por contrato existente: `ARCHITECTURE_DECISION_REQUIRED`, em vez de duplicar responsabilidade.
+
+### Implementação bounded mandatória para a task executora
+
+1. Reancorar HEAD/status, authorities 16→50→17→49→51→52→21→20→25, ADR58/S4-117, planos 125/129/130, R3/141 e ledger. Congelar SHA/config/prod baseline; verificar instrumentos existentes de relevance, `answer_requirements`, recovery e consume path. Matriz símbolo→owner→contrato→consumers→testes; discovery não é aprovação.
+2. Reproduzir O2 com as *consultas e argumentos efetivos* para `delpi.search_products`, candidate outputs e registro verdadeiro; classificar `FAIL|INCONCLUSIVE` pela pertinência real, evitando inferir somente pelo rótulo. Registrar também um caso legítimo de sinonímia de produto e caso de evidência parcialmente pertinente.
+3. Escrever RED na fronteira real de Outcome/CRI/recovery: verdadeiro-mas-irrelevante, correto, ambíguo, explicit empty, partial, absent provider, inconsistent model judgement, schema inválido, injection, no budget, single recovery max e READ-only. Separar seleção semântica da validação determinística.
+4. Fazer o menor diff nos owners existentes; reutilizar proposta semântica/model invocation e mecanismo contextual de recuperação, com tipos/versionamento apenas quando contrato provar necessário. Não acoplar a produtos, DAVI, palavras específicas ou regras por provider. Sem dependências reversas.
+5. GREEN focused + full backend, import DAG, AP01–AP20, CRI ON/OFF, D4/D5/D5-R/D5-schema/D8/D8-R/N1, safety, generalização multilíngue/sinônimos e primeiro estágio divergente. Executar avaliação com modelo real em ambiente isolado autorizado A/B (prod unchanged), medir pertinência de resposta e não só grounding. Não autoajustar expectativas do check para mascarar erro.
+6. Resolver regressões bounded na mesma task dentro dos gates do runbook; não iniciar auditoria infinita. Publicar evidência, README e ledger, push ff-only e retornar para revisão independente. Não efetuar deploy produtivo sem autorização operacional específica.
+
+**ACEITE:** `GOAL_EVIDENCE_RELEVANCE` demonstrada com casos reais e adversariais; resultado irrelevante não é afirmado como resposta; recovery apenas por READ, limitada e auditável; sem ACT, autorização paralela, loops ou overfit; insuficiência honesta após impossibilidade de recuperar; paridade da baseline não impactada; eval no SHA/config e resultados empresariais verificados. `HTTP_200 != BUSINESS_OUTCOME`, `GROUNDED != RELEVANT`, `MODEL_JUDGEMENT != FACT`. O relatório independente pode aceitar com residual documentado, mas não marcar correção concluída antes da prova.
