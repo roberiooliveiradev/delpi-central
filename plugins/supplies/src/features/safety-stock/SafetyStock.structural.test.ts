@@ -100,12 +100,52 @@ describe("Safety stock feature (E11.S2/S3)", () => {
     const filters = readFileSync(join(dir, "SafetyStockFilters.tsx"), "utf8");
     expect(filters).toContain("SuppliesSelectField");
     expect(filters).toContain("SuppliesTextField");
-    expect(filters).toContain("SuppliesFilterCheckboxField");
+    // Toggle compacto do kit: um único rótulo (sem «Incluir» duplicado).
+    expect(filters).toContain("SuppliesFilterCheckbox");
+    expect(filters).not.toContain("SuppliesFilterCheckboxField");
     expect(filters).toContain("useCommittedTextFilter");
     expect(filters).toContain("branch");
     expect(filters).toContain("productGroup");
     expect(filters).toContain("includeBlocked");
     expect(filters).toContain("includeWithoutSafetyStock");
+  });
+
+  it("todos os cabeçalhos têm Ajuda contextual via headerHint do kit", () => {
+    const table = readFileSync(join(dir, "SafetyStockListTable.tsx"), "utf8");
+    const help = readFileSync(join(dir, "safetyStockColumnHelp.ts"), "utf8");
+    const tooltips = readFileSync(join(dir, "../../content/helpTooltips.ts"), "utf8");
+    expect(table).toContain("headerHint: safetyStockColumnHelp(key)");
+    expect(table).toContain("headerHint: SP_HELP.safetyStockColActions");
+    for (const key of [
+      "safetyStockColProduct",
+      "safetyStockColDescription",
+      "safetyStockColBranch",
+      "safetyStockColType",
+      "safetyStockColGroup",
+      "safetyStockColUnit",
+      "safetyStockSafetyStock",
+      "safetyStockPrimaryStock",
+      "safetyStockWorkInProcess",
+      "safetyStockDeficit",
+      "safetyStockStatus",
+      "safetyStockColActions",
+    ]) {
+      // Cada chave é referenciada no mapeamento da coluna ou na coluna de ações.
+      expect(help + table).toContain(`SP_HELP.${key}`);
+      expect(tooltips).toContain(`${key}:`);
+    }
+  });
+
+  it("nenhum texto visível da feature usa a sigla técnica ESTSEG", () => {
+    for (const file of [
+      join(dir, "content.ts"),
+      join(dir, "../../content/helpTooltips.ts"),
+      join(dir, "../../content/userManualContent.ts"),
+    ]) {
+      const text = readFileSync(file, "utf8");
+      expect(text).not.toMatch(/ESTSEG/);
+    }
+    // Glossário mantém a sigla documentada como campo do Protheus — não é UX da página.
   });
 
   it("os nove campos de ordenação do contrato são a allowlist", () => {

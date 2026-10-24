@@ -21,6 +21,7 @@ export function normalizeSuppliesUnitCode(code: string | null | undefined): stri
 export function formatSuppliesUnitName(code: string | null | undefined): string {
   const normalized = normalizeSuppliesUnitCode(code);
   if (!normalized) return "—";
+  if (normalized.toLowerCase() === "all") return "Todas as Filiais";
   return UNIT_NAMES[normalized] || `Filial ${normalized}`;
 }
 

@@ -6,7 +6,7 @@ import { formatSuppliesUnitName } from "../../app/suppliesUnits";
 import {
   SuppliesClearFiltersButton,
   SuppliesFilterBarShell,
-  SuppliesFilterCheckboxField,
+  SuppliesFilterCheckbox,
   SuppliesSectionHintLabel,
   SuppliesSelectField,
   SuppliesTextField,
@@ -151,22 +151,26 @@ export function SafetyStockFilters({
           hint={SP_HELP.safetyStockSearch}
           placeholder={C.searchPlaceholder}
         />
-        <SuppliesFilterCheckboxField
-          id="safety-stock-include-blocked"
-          label={C.includeBlockedLabel}
-          hint={SP_HELP.safetyStockIncludeBlocked}
-          checked={query.includeBlocked}
-          onChange={(checked) => onPatch({ includeBlocked: checked, page: 1 })}
-        />
-        <SuppliesFilterCheckboxField
-          id="safety-stock-include-without"
-          label={C.includeWithoutSafetyStockLabel}
-          hint={SP_HELP.safetyStockIncludeWithoutSafetyStock}
-          checked={query.includeWithoutSafetyStock}
-          onChange={(checked) =>
-            onPatch({ includeWithoutSafetyStock: checked, page: 1 })
-          }
-        />
+        <div className="sp-field sp-field--filter-checkbox">
+          <SuppliesFilterCheckbox
+            id="safety-stock-include-blocked"
+            label={C.includeBlockedLabel}
+            hint={SP_HELP.safetyStockIncludeBlocked}
+            checked={query.includeBlocked}
+            onChange={(checked) => onPatch({ includeBlocked: checked, page: 1 })}
+          />
+        </div>
+        <div className="sp-field sp-field--filter-checkbox">
+          <SuppliesFilterCheckbox
+            id="safety-stock-include-without"
+            label={C.includeWithoutSafetyStockLabel}
+            hint={SP_HELP.safetyStockIncludeWithoutSafetyStock}
+            checked={query.includeWithoutSafetyStock}
+            onChange={(checked) =>
+              onPatch({ includeWithoutSafetyStock: checked, page: 1 })
+            }
+          />
+        </div>
       </FiltersRow>
     </form>
   );

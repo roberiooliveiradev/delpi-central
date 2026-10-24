@@ -694,6 +694,22 @@ declare module "@delpi/plugin-ui/index" {
     disabled?: boolean;
   }>;
 
+  export function NativeCheckboxControl(props: {
+    id?: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    label?: ReactNode;
+    children?: ReactNode;
+    hint?: ReactNode;
+    hintPlacement?: "inline" | "tooltip";
+    hintAriaLabel?: string;
+    disabled?: boolean;
+    className?: string;
+    inputClassName?: string;
+    boxClassName?: string;
+    "aria-label"?: string;
+  }): ReactNode;
+
   export function createDashboardDateField(config: {
     classNames: Record<string, string>;
   }): ComponentType<{

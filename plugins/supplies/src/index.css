@@ -741,6 +741,30 @@
   color: var(--sp-text-muted);
 }
 
+/* Toggles booleanos: um único rótulo, alinhado à linha dos demais controles. */
+.dashboard-supplies-portal .sp-safety-stock__filters .sp-field--filter-checkbox {
+  justify-content: flex-end;
+}
+
+.dashboard-supplies-portal .sp-safety-stock__filters .sp-field--filter-checkbox .delpi-ui-native-checkbox {
+  min-height: var(--delpi-ui-control-height, 42px);
+  align-items: center;
+}
+
+.dashboard-supplies-portal .sp-safety-stock__filters .sp-field--filter-checkbox .delpi-ui-native-checkbox__label {
+  font-weight: 400;
+  color: var(--sp-text, var(--delpi-ui-text, #111111));
+}
+
+/* Status legível sem corte: largura mínima + badge sem quebra interna. */
+.dashboard-supplies-portal .sp-safety-stock__col-status {
+  min-width: 12.5rem;
+}
+
+.dashboard-supplies-portal .sp-safety-stock__col-status .delpi-ui-status-badge {
+  white-space: nowrap;
+}
+
 /* E11.S3 — ação de detalhe na linha + modal de detalhe */
 .dashboard-supplies-portal .sp-safety-stock__row-action {
   display: inline-flex;

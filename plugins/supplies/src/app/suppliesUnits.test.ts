@@ -26,6 +26,14 @@ describe("suppliesUnits", () => {
     expect(formatSuppliesUnitName(null)).toBe("—");
   });
 
+  it("traduz o escopo consolidado all sem virar «Filial all»", () => {
+    expect(formatSuppliesUnitName("all")).toBe("Todas as Filiais");
+    expect(formatSuppliesUnitName("ALL")).toBe("Todas as Filiais");
+    expect(formatSuppliesUnitLabel("all")).toBe("Todas as Filiais");
+    // Valor técnico não muda: normalização continua devolvendo o escopo.
+    expect(normalizeSuppliesUnitCode("all")).toBe("all");
+  });
+
   it("normalizes technical identity separately from presentation", () => {
     expect(normalizeSuppliesUnitCode("01")).toBe("01");
     expect(normalizeSuppliesUnitCode("Santa Catarina")).toBe("01");

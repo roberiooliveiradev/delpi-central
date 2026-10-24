@@ -25,7 +25,7 @@ const HOME_HELP = {
     purchase_requests:
       "Acompanhamento global das solicitações. Unidade e período são filtros. Lista vazia significa ausência de item no recorte.",
     operations:
-      "Pedidos, entregas, fornecedores, produtos, estoque físico e estoque de segurança (ESTSEG).",
+      "Pedidos, entregas, fornecedores, produtos, estoque físico e estoque de segurança.",
     administration:
       "Mappings, escopos e configurações do Portal — só com permissão de administrar.",
     help: "Manual do usuário: Quero→onde, FAQ e glossário do Portal Suprimentos.",
@@ -201,7 +201,7 @@ export const SP_HELP = {
   deliveriesTableMeta:
     "Colunas visíveis e total de linhas do recorte filtrado (não só a página atual). Pedido aparece como texto — não abre ficha nesta página.",
   inventory:
-    "Posição física atual do estoque no Protheus, por produto, unidade e armazém. Inclui saldos positivos, zerados e negativos. Não é estoque de segurança (ESTSEG) nem saldo disponível.",
+    "Posição física atual do estoque no Protheus, por produto, unidade e armazém. Inclui saldos positivos, zerados e negativos. Não é estoque de segurança nem saldo disponível.",
   inventoryBranch:
     "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» = exatamente essas duas unidades liberadas no Portal — não todas as filiais do ERP. Códigos técnicos ficam só na URL e na API.",
   inventoryWarehouse:
@@ -217,11 +217,11 @@ export const SP_HELP = {
   inventoryTableMeta:
     "Colunas visíveis e total de posições do recorte filtrado (não só a página atual). Produto não abre ficha nesta página.",
   safetyStock:
-    "Materiais com estoque de segurança (ESTSEG) parametrizado no Protheus. Classificação, saldos e déficit são calculados pelo servidor — o Portal apenas exibe. Saldo disponível considera os armazéns 01, 98 e 99.",
+    "Materiais com estoque de segurança parametrizado no Protheus. Classificação, saldos e déficit são calculados pelo servidor — o Portal apenas exibe. Saldo disponível considera os armazéns 01, 98 e 99.",
   safetyStockBranch:
     "Filial do recorte (Santa Catarina, Espírito Santo ou Todas). «Todas as filiais» é uma única consulta consolidada — não soma manual de duas buscas. Filial é filtro de dados, não permissão.",
   safetyStockStatus:
-    "Situação do material em relação ao estoque de segurança, classificada pelo servidor: sem ESTSEG, abaixo, no nível ou acima.",
+    "Situação do material em relação ao estoque de segurança, classificada pelo servidor: sem estoque de segurança, abaixo, no nível ou acima.",
   safetyStockProductGroup:
     "Grupo de produto do recorte. A lista de opções vem do servidor conforme o universo da filial selecionada.",
   safetyStockUnit:
@@ -229,9 +229,9 @@ export const SP_HELP = {
   safetyStockSearch:
     "Busca por código ou descrição do produto. Aplica automaticamente após digitar (debounce) ou com Enter.",
   safetyStockIncludeBlocked:
-    "Quando ligado, materiais bloqueados no Protheus também entram no recorte — útil para avaliar ESTSEG de itens inativos.",
+    "Quando ligado, materiais bloqueados no Protheus também entram no recorte — útil para avaliar o estoque de segurança de itens inativos.",
   safetyStockIncludeWithoutSafetyStock:
-    "Quando ligado (padrão), inclui materiais sem ESTSEG parametrizado — eles aparecem com status «Sem estoque de segurança». Desligar restringe a quem tem ESTSEG definido.",
+    "Quando ligado (padrão), inclui materiais sem estoque de segurança parametrizado — eles aparecem com status «Sem estoque de segurança». Desligar restringe a quem tem estoque de segurança definido.",
   safetyStockFilters:
     "Filtros aplicam automaticamente. A URL guarda filial, status, grupo, UM, busca, toggles, página e ordenação (F5 restaura). Limpar volta a Todas as filiais sem demais filtros.",
   safetyStockRefresh:
@@ -244,6 +244,20 @@ export const SP_HELP = {
     "Saldo registrado nos armazéns de processo (50, 98 e 99).",
   safetyStockDeficit:
     "Déficit = estoque de segurança menos saldo disponível (armazéns 01+98+99), nunca negativo. Calculado pelo servidor.",
+  safetyStockColProduct:
+    "Código de identificação do material no Protheus.",
+  safetyStockColDescription:
+    "Descrição cadastrada para o material.",
+  safetyStockColBranch:
+    "Filial relacionada ao registro. Na consulta consolidada («Todas as Filiais»), a linha agrega as filiais operacionais — o detalhe abre apenas com filial concreta.",
+  safetyStockColType:
+    "Classificação do tipo de material utilizada no cadastro do Protheus.",
+  safetyStockColGroup:
+    "Grupo ao qual o material pertence no cadastro.",
+  safetyStockColUnit:
+    "Unidade de medida utilizada para representar as quantidades do material.",
+  safetyStockColActions:
+    "Permite consultar informações adicionais do material na filial correspondente.",
   safetyStockTableMeta:
     "Colunas visíveis e total de materiais do recorte filtrado (não só a página atual). Clique na linha ou em «Ver detalhes» para abrir a ficha do material nesta filial.",
   safetyStockDetail:

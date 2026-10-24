@@ -28,6 +28,7 @@ import {
   formatUnitOfMeasure,
   nextServerSort,
 } from "./query";
+import { safetyStockColumnHelp } from "./safetyStockColumnHelp";
 import {
   SAFETY_STOCK_COLUMN_STORAGE_KEY,
   SAFETY_STOCK_SORTABLE_COLUMNS,
@@ -93,11 +94,19 @@ export function SafetyStockListTable({
               className: spDataTableClassNames.colNumeric,
             }
           : {};
+        const className = [
+          numeric.className ?? "",
+          key === "status" ? "sp-safety-stock__col-status" : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
         return {
           key: column.key,
           header: column.label,
+          headerHint: safetyStockColumnHelp(key),
           sortable: SAFETY_STOCK_SORTABLE_COLUMNS.has(key),
           ...numeric,
+          ...(className ? { className } : {}),
           render: (row: SafetyStockItem) => {
             switch (key) {
               case "product_code":
@@ -162,7 +171,8 @@ export function SafetyStockListTable({
     if (onOpenDetail) {
       mapped.push({
         key: "__detail_action",
-        header: "",
+        header: C.colDetails,
+        headerHint: SP_HELP.safetyStockColActions,
         sortable: false,
         rowClick: "stop",
         render: (row: SafetyStockItem) => {

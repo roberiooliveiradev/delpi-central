@@ -119,7 +119,7 @@ export const USER_MANUAL_CONTENT = {
           how: "Clique na estrela de um caminho no Início; abra a lista pelo botão Favoritos ao lado da busca",
         },
         {
-          want: "Ver estoque de segurança (ESTSEG)",
+          want: "Ver estoque de segurança",
           where: "Estoque de segurança",
           how: "Indicadores, déficit por unidade de medida e lista classificada; clique na linha para abrir o detalhe do material na filial — não é o saldo físico",
         },
@@ -174,10 +174,10 @@ export const USER_MANUAL_CONTENT = {
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
         "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade e de Entregas / Atrasos.",
         "Entregas / Atrasos — recebimentos de matéria-prima (MP) já digitados, classificados em Em atraso ou No prazo. Período = data de digitação/entrada. Sem clique no pedido (histórico ≠ PC aberto).",
-        "Estoque — posição física atual por produto, unidade e armazém, incluindo saldos positivos, zerados e negativos. Não calcula saldo disponível e não é ESTSEG.",
-        "Estoque de segurança — materiais com ESTSEG parametrizado no ERP: indicadores do recorte, déficit por unidade de medida e lista ordenável com os quatro status. Clique na linha para o detalhe do material na filial (saldos, cobertura, pedidos/SCs/empenhos em aberto, projeção, consumo e fornecedores). Distinto de Estoque (posição física) e de Produtos (ficha cadastral).",
+        "Estoque — posição física atual por produto, unidade e armazém, incluindo saldos positivos, zerados e negativos. Não calcula saldo disponível e não é estoque de segurança.",
+        "Estoque de segurança — materiais com estoque de segurança parametrizado no ERP: indicadores do recorte, déficit por unidade de medida e lista ordenável com os quatro status. Clique na linha para o detalhe do material na filial (saldos, cobertura, pedidos/SCs/empenhos em aberto, projeção, consumo e fornecedores). Distinto de Estoque (posição física) e de Produtos (ficha cadastral).",
         "Solicitações de compras — acompanhamento global no período; o hero conta SCs e a faixa Atenção filtra a situação sem ser uma permissão. Clique na SC para a ficha; exportação Excel faz parte do uso normal.",
-        "Operações — pedidos, entregas, fornecedores, produtos, estoque físico e ESTSEG.",
+        "Operações — pedidos, entregas, fornecedores, produtos, estoque físico e estoque de segurança.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
         "Perfil — avatar na TopBar abre o perfil deste Portal; Meu perfil Minha DELPI e Preferências ficam no menu do nome.",
@@ -188,14 +188,14 @@ export const USER_MANUAL_CONTENT = {
       id: "safety-stock",
       title: "Estoque de segurança",
       intro:
-        "A página Estoque de segurança mostra os materiais com estoque de segurança (ESTSEG) parametrizado no ERP e quanto falta para atingir esse nível. Classificação, saldos, déficit e projeção são calculados pelo servidor — o Portal apenas exibe.",
+        "A página Estoque de segurança mostra os materiais com estoque de segurança parametrizado no ERP e quanto falta para atingir esse nível. Classificação, saldos, déficit e projeção são calculados pelo servidor — o Portal apenas exibe.",
       bullets: [
         "Objetivo — responder «quais materiais estão abaixo do nível de segurança e quanto falta comprar», por filial e por recorte de filtros.",
         "Filial — selecione Santa Catarina, Espírito Santo ou Todas. «Todas» é uma única consulta consolidada, não a soma de duas buscas. Filial é filtro de dados, não permissão.",
-        "Filtros — situação, grupo de produto, unidade de medida, busca por código/descrição e os toggles Incluir bloqueados e Incluir sem ESTSEG. Aplicam automaticamente e ficam na URL (F5 restaura o mesmo recorte).",
-        "Indicadores — o topo mostra totais do recorte: materiais, com/sem ESTSEG e quantos estão abaixo, no nível ou acima. Quando um dado está indisponível aparece «—», nunca zero falso.",
-        "Os quatro status — Sem estoque de segurança (sem ESTSEG parametrizado), Abaixo (saldo disponível menor que o ESTSEG), No nível e Acima. O rótulo sempre acompanha a cor.",
-        "Déficit por unidade de medida — quanto falta comprar para repor o ESTSEG, agrupado por UM. Só compare quantidades da mesma unidade.",
+        "Filtros — situação, grupo de produto, unidade de medida, busca por código/descrição e os as opções «Incluir materiais bloqueados» e «Incluir materiais sem estoque de segurança». Aplicam automaticamente e ficam na URL (F5 restaura o mesmo recorte).",
+        "Indicadores — o topo mostra totais do recorte: materiais, com/sem estoque de segurança e quantos estão abaixo, no nível ou acima. Quando um dado está indisponível aparece «—», nunca zero falso.",
+        "Os quatro status — Sem estoque de segurança (sem estoque de segurança definido), Abaixo (saldo disponível menor que o estoque de segurança), No nível e Acima. O rótulo sempre acompanha a cor.",
+        "Déficit por unidade de medida — quanto falta comprar para repor o estoque de segurança, agrupado por UM. Só compare quantidades da mesma unidade.",
         "Ordenação e paginação — clique no título da coluna para ordenar (nove campos disponíveis); a ordenação vale para o recorte inteiro, não só a página atual, e fica na URL.",
         "Detalhe do material — clique na linha ou em «Ver detalhes» para abrir a ficha do item naquela filial: identificação, saldos por armazém, cobertura do déficit, pedidos de compra, solicitações e empenhos em aberto, projeção de estoque, consumo mensal/anual e fornecedores vinculados.",
         "Cobertura — quanto do déficit já está coberto por pedidos de compra elegíveis; «Falta comprar» é o restante calculado pelo servidor.",
@@ -212,7 +212,7 @@ export const USER_MANUAL_CONTENT = {
       faqs: [
         {
           q: "Qual a diferença entre estoque e estoque de segurança?",
-          a: "Estoque é o saldo físico/posições. Estoque de segurança (ESTSEG) é a cobertura mínima planejada e o déficit — abra Estoque de segurança, não Estoque.",
+          a: "Estoque é o saldo físico/posições. Estoque de segurança é a cobertura mínima planejada e o déficit — abra Estoque de segurança, não Estoque.",
         },
         {
           q: "O que vejo no detalhe de um material no Estoque de segurança?",

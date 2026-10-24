@@ -48,6 +48,7 @@ import {
   createDashboardInlineNavLink,
   ClearFiltersButton,
   ModalShell,
+  NativeCheckboxControl,
   modalShellBemClasses,
   DataTable,
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
@@ -227,6 +228,19 @@ export const SuppliesFilterCheckboxField = createDashboardFilterCheckboxField({
   classNames: filterCheckboxFieldBemClasses(UI_PREFIX),
   labels: { defaultCheckboxLabel: "Incluir" },
 });
+
+/**
+ * Toggle compacto de filtro: um único rótulo ao lado da caixa e a explicação
+ * como tooltip no próprio rótulo (sem field-label + checkbox-label duplicados).
+ */
+export function SuppliesFilterCheckbox(
+  props: Omit<ComponentProps<typeof NativeCheckboxControl>, "hintPlacement">,
+) {
+  return createElement(NativeCheckboxControl, {
+    ...props,
+    hintPlacement: "tooltip",
+  });
+}
 export const SuppliesDataCardsGrid = createDashboardDataCardsGrid({ prefix: UI_PREFIX });
 export const SuppliesDataCardsSortBar = createDashboardDataCardsSortBar({
   prefix: UI_PREFIX,
