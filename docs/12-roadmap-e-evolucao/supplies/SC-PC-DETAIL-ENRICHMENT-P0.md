@@ -268,3 +268,13 @@ nenhuma dependência de contrato novo.
 **Decisões ainda reservadas ao PO:** **D1**, recomendar opção A, mensagem «Pedido não localizado entre os pedidos em aberto disponíveis para consulta», sem contrato novo; **D2**, recomendar nome do aprovador junto ao estado de aprovação e fornecedor identificado explicitamente como **sugerido**, quando entregues e autorizados; não mostrar conta contábil na ficha principal nesta fase. Até deliberação explícita do PO, não tratar recomendações como decisões aprovadas. **D3–D6** seguem `PLANNED/TO_INVENTORY` fora de EN.A. Links relacionados não conferem acesso automático e não devem mascarar 403/404. Nenhum teste de aplicação, runtime ou deploy foi executado nesta revisão; a execução anterior foi somente documentação.
 
 **Próximo gate:** decisão PO D1/D2 → autorização separada das fatias EN.A1–A7, com verificação do HEAD e dos payloads/contratos reais, testes positivos/irmãos/negativos e Help sincronizada.
+
+
+## Decisão vinculante do Product Owner — D1/D2 (2026-10-24)
+
+**Status: DECIDED / APPROVED_FOR_PLANNING; EN.A1–A7 IMPLEMENTATION_NOT_AUTHORIZED.** Esta decisão é posterior às recomendações e revisões acima e as substitui apenas onde conflitam.
+
+- **D1 = Opção A (APROVADA):** na ficha de PC, para 404 do universo atual de pedidos abertos, usar a mensagem neutra **«Pedido não localizado entre os pedidos em aberto disponíveis para consulta.»** Não inferir que foi concluído e não ampliar a consulta a históricos.
+- **D2 (APROVADA):** na ficha principal de SC, **exibir nome do aprovador** junto à aprovação, **exibir fornecedor sugerido** rotulado explicitamente como sugestão e **exibir conta contábil** identificada como «Conta contábil» em bloco de informações administrativas/contextuais da ficha principal, sem confundi-la com centro de custo ou destacá-la como indicador. Cada campo só é exibido quando presente no payload de recurso autorizado; ausência não vira zero, e não há busca cruzada, permission nova ou expansão de escopo CC. Conferir a granularidade por item de `account_code`, `approval.approver_name` e `suggested_supplier` e nunca promover dado de uma linha para todo o cabeçalho indevidamente.
+- **D3–D6:** permanecem propostas futuras sem autorização.
+- **Próximo passo:** preparar EN.A1 (somente tipos/contrato de apresentação e testes); o registro destas decisões **não autoriza iniciar código, EN.A2–A7 nem deploy**.
