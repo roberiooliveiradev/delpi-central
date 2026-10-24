@@ -50,6 +50,44 @@ Este ledger complementa:
 | RQ-P2-21 | evidência em pacote submetido é imutável | `version_locked` em substituição/cancelamento após submissão P5 | negative + P5 sibling | doc 12/37 | TARGET |
 | RQ-P2-22 | upload idempotente e concorrência segura | `Idempotency-Key`/dedup; `version_no` UNIQUE + OCC `revision`; replay não duplica evidência | idempotency + concurrent | doc 103 §4.1 | TARGET |
 
+### P2-Upload — critérios de aceite (AC) e escopo por slice
+
+Contrato consolidado no doc 103, Adendo §B–§E (`CF-C3-P2-UPLOAD-DECISIONS-CONTRACT-CLOSURE-001`). Todos `TARGET` — nenhum PASS de runtime atribuído.
+
+**SLICE-1** (candidato ao primeiro GO de implementação: U1 upload, U2 list, U3 get, U4 download+audit):
+
+| AC | Cobre RQ | Caso | Pós-condição verificável |
+|---|---|---|---|
+| AC-P2-UP-01 | RQ-P2-15 | happy: upload válido em item e em competência (D-U6) | documento `ATTACHED`, `version_no=1`, `link_kind` correto, item permanece `EXPECTED` |
+| AC-P2-UP-02 | RQ-P2-15 | sibling: mesmo binário anexado a dois itens | dois documentos distintos (sem dedup por hash) |
+| AC-P2-UP-03 | RQ-P2-15 | negative: `snapshot_item_id` de outra competência | 404; nenhuma gravação |
+| AC-P2-UP-04 | RQ-P2-16 | happy: arquivo sobrevive a recreate do serviço | download retorna bytes idênticos ao sha256 registrado |
+| AC-P2-UP-05 | RQ-P2-16 | negative: falha de persistência após write | binário removido (compensação); `persistence_unavailable` 503; zero metadado |
+| AC-P2-UP-06 | RQ-P2-16 | negative: metadado sem binário | download `file_missing` 503 — nunca sucesso falso |
+| AC-P2-UP-07 | RQ-P2-18 | happy: download autorizado emite `DOCUMENT_DOWNLOADED` | evento com ator UUID, versão, competência, `result=AUTHORIZED` (D-U3) |
+| AC-P2-UP-08 | RQ-P2-18 | negative: sem `access` / cross-competence / cross-branch | 401/403/404 sem vazamento de existência; `result=DENIED` quando auditável |
+| AC-P2-UP-09 | RQ-P2-20 | negative por tipo: ZIP-renomeado-xlsx, PDF truncado, arquivo vazio, extensão divergente do conteúdo, >25 MB mid-stream | `invalid_file_content`/`empty_file`/`content_type_mismatch`/`file_too_large`/`unsupported_media_type` tipados |
+| AC-P2-UP-10 | RQ-P2-20 | negative: `original_name` com separadores/`..`/NUL | nome sanitizado; stored name UUID; traversal impossível |
+| AC-P2-UP-11 | RQ-P2-22 | idempotency: replay idêntico com mesma `Idempotency-Key` | mesmo `document_id`, `deduplicated: true`, zero novo arquivo |
+| AC-P2-UP-12 | RQ-P2-22 | negative: mesma key com payload divergente | `idempotency_conflict` 409 |
+| AC-P2-UP-13 | RQ-P2-22 | concurrency: dois uploads com a mesma key | um vencedor; perdedor lê registro ou `idempotency_conflict` — nunca duplicata |
+| AC-P2-UP-14 | segurança | service principal / Core indisponível | 403 / `rbac_unavailable` 503 — fail-closed |
+| AC-P2-UP-15 | auditoria | mutações e download auditável | `actor_subject` UUID-only (hardening R2 preservado) |
+
+**SLICE-2** (substituição/cancelamento/eventos — U5/U7/U8; depende do aceite do slice 1):
+
+| AC | Cobre RQ | Caso | Pós-condição verificável |
+|---|---|---|---|
+| AC-P2-UP-16 | RQ-P2-17 | happy: replace cria v2 | v1 `SUPERSEDED` e referenciável; v2 `ATTACHED`; histórico íntegro |
+| AC-P2-UP-17 | RQ-P2-17 | negative: replace por não-uploader sem `manage` (D-U1) | 403 — nem `access` genérico substitui |
+| AC-P2-UP-18 | RQ-P2-17 | sibling: `manage` elegível substitui | permitido; evento registra ator distinto do uploader |
+| AC-P2-UP-19 | RQ-P2-19 | happy: cancel | `CANCELLED`, sai da listagem ativa, histórico/arquivos preservados (`CANCELLED != DELETED`) |
+| AC-P2-UP-20 | RQ-P2-21 | negative: replace/cancel após submissão P5 | `version_locked`/`document_locked` 409; pacote imutável |
+| AC-P2-UP-21 | RQ-P2-22 | concurrency: replaces simultâneos | um vencedor por OCC `revision`; perdedor `stale_revision` 409 — nenhuma versão perdida |
+| AC-P2-UP-22 | retenção | D-U4: v1 não deleta nada | housekeeping só atinge `.part`/órfãos sem metadado, nunca evidências registradas |
+| AC-P2-UP-23 | boundary | MFE consome só a BFF; sem URL pública/storage direto | structural test; download sempre stream autenticado |
+| AC-P2-UP-24 | invariante | upload nunca produz `VALIDATED`/`ACCEPTED` | estados persistidos limitados a `ATTACHED\|SUPERSEDED\|CANCELLED`; item segue `EXPECTED` |
+
 ## P3 — Estoque, Cutoff e Conciliação
 
 | RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |

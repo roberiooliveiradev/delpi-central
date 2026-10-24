@@ -70,3 +70,16 @@ CP00 do [doc 95](./95-ciclo3-cp00-cp01-rebaseline-e-brief-primeiro-slice-p2.md) 
 **Próxima rodada ao executor:** `CF-C3-P6-MIN-P2-READ-TRANSVERSAL-GO-REVIEW-001`. Modo READ/VERIFY/REVIEW/DOCUMENT_ONLY. Produzir avaliação objetiva de readiness do gate transversal com `GO_RECOMMENDED` ou `NO_GO`, evidências e SHA, e texto exato da solicitação de autorização PO. Se não houver bloqueios, GPT Arquiteto apresenta GO ao PO. **Não implementar runtime nem emitir autorização em nome do PO.**
 
 **Veredito desta rodada:** `ACCEPT_WITH_RESIDUAL` para decisões de produto e preparação do pedido; `IMPLEMENTATION_AUTHORIZED=NO` para execução.
+
+---
+
+## 7. Adendo — Decisões PO sobre P2-Upload (`CF-C3-P2-UPLOAD-DECISIONS-CONTRACT-CLOSURE-001`)
+
+`DECISION_SOURCE=PO_EXPLICIT` · `DECISION_STATUS=PO_APPROVED` · `IMPLEMENTATION_AUTHORIZED=NO` · `DEPLOY_PRODUCTION_AUTHORIZED=NO`. Registro literal das decisões; contratos e consequências consolidados no [doc 103](./103-ciclo3-p2-upload-contract-gate.md), Adendo §A–§E.
+
+- **D-U1=A — Owner-editability:** substituição de evidências somente pelo uploader original ou usuário elegível com `controllership-finance.manage`. Sempre `effective permissions` do Core + `access` conforme contrato vigente + resource scope/ownership + business rules. `manage` não concede bypass.
+- **D-U2=A — Limites e formatos:** 25 MB/arquivo. Allowlist V1: PDF, imagens e planilhas XLS/XLSX/CSV (doc 103). OFX/QIF/TXT bancário e demais formatos **não** aprovados na V1 — preservar inventário com TÉO/Controladoria. Validação defensiva por conteúdo real + extensão + MIME, nunca só declaração do cliente.
+- **D-U3=A — Auditoria de downloads:** `DOCUMENT_DOWNLOADED` para downloads autorizados — ator UUID, recurso, versão, competência, resultado, timestamp e contexto de autorização; tentativa/autorização/entrega separadas (sem sucesso falso); sem bytes, tokens ou dados sensíveis.
+- **D-U4=A — Retenção V1:** sem exclusão automática de evidências de negócio na V1; sem prazo formal inventado; política corporativa de retenção permanece pendência própria — a opção A **não** é retenção perpétua juridicamente aprovada. Limpeza de temporários/órfãos é especificada separadamente da retenção de evidências válidas e não está ativa neste gate.
+- **D-U5=A — Attachment role inicial:** `attachment_role=generic` explícito na V1; sem papéis inventados por item. E05 (catálogo/obrigatoriedade real) permanece pendente — bloqueia validação C05, não o upload.
+- **D-U6=A — Dois níveis de vínculo:** evidências vinculadas diretamente à competência **ou** a um item do snapshot, com integridade referencial e identificação inequívoca do tipo de vínculo; vedada referência a item de outra competência.

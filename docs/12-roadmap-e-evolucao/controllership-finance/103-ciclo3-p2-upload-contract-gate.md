@@ -196,3 +196,65 @@ CP-D02 (responsável/validador/regra por item — `TO_INVENTORY`) · CP-D03 (CK-
 ## 11. Next gate brief (H)
 
 `CF-C3-P2-UPLOAD-IMPL-GO-001` — GO de implementação do **primeiro slice**: U1 upload + U2 list + U4 download + metadados/hash + storage adapter + audit (sem substituição/cancelamento/UI de validação). Saída: evidência anexada em competência, persistente pós-recreate, íntegra (sha256), autorizada e auditada — item permanece `EXPECTED`. Dependências: aceite GPT deste gate + respostas D-U1..U3 + GO do PO. **Sem autorização automática.**
+
+---
+
+## Adendo — Fechamento de decisões PO e lacunas contratuais (`CF-C3-P2-UPLOAD-DECISIONS-CONTRACT-CLOSURE-001`)
+
+`DECISION_SOURCE=PO_EXPLICIT` · `DECISION_STATUS=PO_APPROVED` · `DOCUMENTATION_STATUS=TO_CONSOLIDATE` · `IMPLEMENTATION_AUTHORIZED=NO` · `DEPLOY_PRODUCTION_AUTHORIZED=NO`. As propostas das seções anteriores permanecem como histórico; esta seção registra o estado consolidado.
+
+### A. Decisões do PO — PO_APPROVED (literal)
+
+| Decisão | Valor | Consequência contratual |
+|---|---|---|
+| **D-U1=A** | Substituição só pelo uploader original ou `manage` elegível; MANAGE não é bypass — vale `capability AND scope AND business_rule` | U5/U7 exigem `actor == uploaded_by` OR `manage` efetivo; demais ⇒ 403 `forbidden` |
+| **D-U2=A** | 25 MB/arquivo; allowlist V1 = PDF, imagens, XLS/XLSX/CSV; OFX/QIF/TXT bancário **não** aprovados; validação por conteúdo real + extensão + MIME (nunca só declaração) | §C3 abaixo; formatos bancários seguem `TO_INVENTORY` com TÉO/Controladoria |
+| **D-U3=A** | `DOCUMENT_DOWNLOADED` auditado: ator UUID, recurso, versão, competência, resultado, timestamp, contexto de autorização; separar tentativa/autorização/entrega; sem bytes/tokens | download (U4) emite evento após autorização com `result=AUTHORIZED|DENIED|FAILED`; entrega interrompida não registra sucesso |
+| **D-U4=A** | Sem exclusão automática de evidências na V1; sem prazo inventado; retenção corporativa definitiva = pendência própria; órfãos/temp ≠ retenção de evidências válidas | housekeeping cobre **apenas** `.part` >24h e binários sem metadado — nunca evidências registradas; nada é deletado na V1 |
+| **D-U5=A** | `attachment_role=generic` explícito na V1; E05 (catálogo/obrigatoriedade) permanece pendente e não bloqueia upload | `attachment_role` default `generic`; roles reais chegam com E05 antes de C05 |
+| **D-U6=A** | Dois níveis de vínculo: `competence` OU `competence_item` | `closing_document.link_kind IN ('competence','competence_item')`; item deve pertencer à competência do path — item de outra competência ⇒ 404 |
+
+### B. C1 — Idempotência do upload (U1) — consolidado TARGET
+
+- `Idempotency-Key`: **opcional** no header; escopo `(actor_subject, competence_id, key)`; TTL **24h**; armazenada com `request_hash` (sha256 do payload de metadados + hash do binário).
+- **Replay idêntico** (mesma key + mesmo `request_hash`) ⇒ retorna o documento criado originalmente, `200` + `deduplicated: true`; nenhum segundo `document`/`version`/arquivo.
+- **Replay divergente** (mesma key, `request_hash` diferente) ⇒ `idempotency_conflict` **409**.
+- **Sem key:** cada chamada cria um `closing_document` novo — dois anexos com os mesmos bytes são atos distintos legítimos (mesmo extrato pode vincular-se a itens diferentes); dedup por hash **não** é usado para colapsar documentos (evitaria união indevida de evidências). Hash serve à integridade/auditoria, não à deduplicação.
+- **Concorrência:** requests simultâneos com a mesma key resolvem no banco (`UNIQUE (actor, competence, key)` — um vencedor persiste; o perdedor lê o registro do vencedor se `request_hash` confere, senão `idempotency_conflict`).
+- **Identidade:** `document_id` UUID criado por U1; `version_no=1` na criação.
+
+### C. C2 — Consistência Postgres × filesystem — consolidado TARGET
+
+Sequência obrigatória (sem afirmar transação atômica DB×FS):
+
+1. Validar envelope/metadados (AuthZ, scope, tamanho anunciado).
+2. Gravar binário em `<upload_dir>/.tmp/{uuid}.part` **em chunks limitados** — exceder 25 MB aborta mid-stream e remove o `.part`.
+3. Computar `sha256` durante a gravação; conferir magic bytes por tipo (§C3).
+4. `rename()` atômico (mesmo FS) para `<upload_dir>/{competence_id}/{file_uuid}{ext}` — publicação visível.
+5. Transação Postgres única: `document_file` + `closing_document` + `document_version(v1)` + `closing_audit_event(DOCUMENT_UPLOADED)` — tudo ou nada.
+6. Falha em (5) ⇒ **compensação**: `unlink` do arquivo final → `persistence_unavailable` 503. Nunca metadado sem binário nem sucesso falso.
+7. Falha em (2)–(4) ⇒ nada persistido; `.part` elegível a housekeeping.
+
+**Órfãos/referências:** `.part` >24h e finais sem linha em `document_file` ⇒ removíveis por housekeeping documentada (não ativada neste gate; rotina PLANNED, nunca toca arquivos referenciados). Metadado sem arquivo ⇒ download ⇒ `file_missing` 503. Pós-condições verificáveis: sucesso ⇒ linha+arquivo+hash consistentes; falha ⇒ nenhum documento visível.
+
+### D. C3 — Validação de conteúdo (D-U2=A) — consolidado TARGET
+
+| Tipo | Verificações obrigatórias |
+|---|---|
+| PDF | header `%PDF-` + trailer `%%EOF` nos últimos bytes; >1 KB |
+| JPEG | magic `FF D8` |
+| PNG | magic `89 50 4E 47` |
+| WebP | `RIFF` + `WEBP` no offset 8 |
+| XLS | CFB/OLE2 `D0 CF 11 E0` |
+| XLSX | ZIP `PK\x03\x04` + membros obrigatórios `xl/workbook.xml` e `[Content_Types].xml` — ZIP genérico não conta como planilha |
+| CSV | texto decodificável (UTF-8/Latin-1), sem NUL bytes, não vazio |
+
+Comum: leitura limitada (cap aplicado **durante** o stream); arquivo vazio ⇒ `empty_file` 422; truncado/inconsistente ⇒ `invalid_file_content` 422; extensão divergente do conteúdo detectado ⇒ `content_type_mismatch` 422; formato fora da allowlist ⇒ `unsupported_media_type` 415; `original_name` sanitizado (basename, sem separadores/NUL) e nome armazenado é UUID servidor — traversal impossível. Sem antivírus: capability inexistente na plataforma — registrado como lacuna, não como proteção.
+
+### E. C4 — Rastreabilidade RQ/AC (ledger doc 23)
+
+`RQ-P2-15..22` mantidos `TARGET`; AC criados `AC-P2-UP-01..24` com escopo **SLICE-1** (U1 upload, U2 list, U3 get, U4 download+audit) vs **SLICE-2** (U5 replace, U7 cancel, U8 events) — detalhe no doc 23 §P2-Upload.
+
+### F. Decisões ainda abertas (não encerradas)
+
+Retenção corporativa definitiva · inventário OFX/QIF com TÉO/Controladoria · E05 roles/obrigatoriedade · E06 motivos · CP-D02 · CP-D03 · reconciliação TÉO `RQ-P2-039` · antivírus (capability inexistente). Nenhum `DECISION_REQUIRED` novo emergiu do fechamento — C1..C3 foram resolvidos dentro das decisões aprovadas e dos padrões canônicos.
