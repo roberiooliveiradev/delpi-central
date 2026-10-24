@@ -73,7 +73,7 @@ P2 é a primeira superfície operacional que materializa o checklist de document
 **ID:** `CF-C3-P2-DOCUMENTS-CHECKLIST-READINESS-001`  
 **Modo:** READ+VERIFY+INVENTORY+DOCUMENT+REPORT, sem runtime, sem criar permission/página da Contabilidade.
 
-1. Capturar `HEAD`, branch e **git status local**; ler Project Instructions, [instrução oficial](../11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md) pelo caminho canônico `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`, apenas .cursor aplicáveis, README e docs 03/09/17/18/19/22/23/37/86/90/91/92.
+1. Capturar `HEAD`, branch e **git status local**; ler Project Instructions, instrução oficial pelo caminho canônico `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`, apenas .cursor aplicáveis, README e docs 03/09/17/18/19/22/23/37/86/90/91/92.
 2. Consultar TÉO/PROC-0072 (AS-IS/checklist e TO-BE P2 31.1–31.13, 33) e recuperar os textos completos ou atestar precisamente trechos truncados. Não reinterpretar decisões fechadas.
 3. Inspecionar código/manifest/core/rotas MFE/BFF/api-delpi/storage, producers/consumers e testes; documentar `CODE_PRESENT` versus `TARGET` e nunca converter search miss em ausência.
 4. Produzir crosswalk **por item oficial do checklist**: item e identificador, competência, filial, responsável pela produção/upload, fonte, possibilidade de automação, arquivos/evidências, regra de satisfação/validador, destinatário, versão/histórico, RQ/AC, contracts, owner, prioridade/risco.
