@@ -270,6 +270,8 @@ Saldo × ESTSEG, déficit, extrato, fornecedores, SC abertas; read-only neste ro
 
 **Decisão posterior do PO (2026-10-24) — IMPLEMENTADA (E11.S7):** o detalhe é **página própria** (`safety-stock/{branch}/{code}`, padrão dos demais detalhes internos, sem manifest novo); na listagem consolidada «Todas as Filiais» (linha com `branch=all`), «Ver detalhes» pede seleção explícita de Santa Catarina (01) ou Espírito Santo (02) antes de navegar; com filial concreta na lista, a navegação é direta. Escopo consolidado da listagem preservado no retorno (`?from=`), URL/F5/back/forward e os dois endpoints BFF existentes. Decisão: [E11-S7-DETAIL-PAGE-PO-DECISION.md](./E11-S7-DETAIL-PAGE-PO-DECISION.md) · implementação: [E11-S7-DETAIL-PAGE-IMPLEMENTATION.md](./E11-S7-DETAIL-PAGE-IMPLEMENTATION.md). O histórico E11.S3–S6 continua válido como evidência anterior. GATE E11 permanece INCONCLUSIVE.
 
+**Filtros rápidos (2026-10-24) — IMPLEMENTADOS (E11.S8):** barra «Situação» (`SuppliesScopeChipBar`, mesmo padrão do Portal Comercial e das listas SCs/POs) entre os indicadores do hero e a FilterBar: «Todos os materiais», «Abaixo», «No estoque», «Acima» e «Sem estoque de segurança» controlam o mesmo filtro Status (fonte única, um ativo por vez, `page=1` na troca, demais filtros preservados, URL/F5/back/forward intactos). Contadores omitidos — o summary do produtor é limitado ao status ativo; o hero já mostra os números do recorte. Doc: [E11-S8](./E11-S8-SAFETY-STOCK-QUICK-FILTERS.md).
+
 ### WF-17 — Análise de Consumo
 
 Consumo/lead time/comparativos/memória; decidir ao promover se é página independente ou satélite inseparável do WF-16.

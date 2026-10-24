@@ -195,6 +195,7 @@ export const USER_MANUAL_CONTENT = {
         "Filtros — situação, grupo de produto, unidade de medida, busca por código/descrição e os as opções «Incluir materiais bloqueados» e «Incluir materiais sem estoque de segurança». Aplicam automaticamente e ficam na URL (F5 restaura o mesmo recorte).",
         "Indicadores — o topo mostra totais do recorte: materiais, com/sem estoque de segurança e quantos estão abaixo, no nível ou acima. Quando um dado está indisponível aparece «—», nunca zero falso.",
         "Os quatro status — Sem estoque de segurança (sem estoque de segurança definido), Abaixo (saldo disponível menor que o estoque de segurança), No nível e Acima. O rótulo sempre acompanha a cor.",
+        "Filtros rápidos — os botões de «Situação» filtram a lista com um clique e são a mesma coisa que o filtro Status (mudar um altera o outro). «Todos os materiais» remove apenas esse filtro; filial, grupo, UM, busca e ordenação são preservados.",
         "Déficit por unidade de medida — quanto falta comprar para repor o estoque de segurança, agrupado por UM. Só compare quantidades da mesma unidade.",
         "Ordenação e paginação — clique no título da coluna para ordenar (nove campos disponíveis); a ordenação vale para o recorte inteiro, não só a página atual, e fica na URL.",
         "Detalhe do material — clique na linha ou em «Ver detalhes» para abrir a página própria da ficha do item naquela filial: identificação, saldos por armazém, cobertura do déficit, pedidos de compra, solicitações e empenhos em aberto, projeção de estoque, consumo mensal/anual e fornecedores vinculados. Na visão Todas as Filiais, escolha Santa Catarina ou Espírito Santo antes de abrir. O link «Estoque de Segurança» no topo volta à lista com os mesmos filtros.",
@@ -221,6 +222,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Como compartilho o detalhe de um material?",
           a: "O detalhe tem endereço próprio na URL (filial + código do material). Copie o link com a página aberta; F5 reabre o mesmo material e «Estoque de Segurança» no topo retorna à lista com os filtros.",
+        },
+        {
+          q: "Para que servem os botões de Situação no Estoque de segurança?",
+          a: "São atalhos do filtro Status: um clique mostra só os materiais abaixo, no nível, acima ou sem estoque de segurança, combinados com a filial e os demais filtros. «Todos os materiais» volta a listar tudo. Como as contagens do resumo refletem o recorte ativo, os botões não exibem números próprios.",
         },
         {
           q: "O que é a projeção de estoque no detalhe?",

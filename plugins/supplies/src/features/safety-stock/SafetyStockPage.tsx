@@ -16,6 +16,7 @@ import {
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
+  SuppliesScopeChipBar,
   SuppliesSectionCard,
   SuppliesSectionHintLabel,
   SuppliesStateBanner,
@@ -296,6 +297,44 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
     [branchChoiceCode, navigateToDetail],
   );
 
+  // E11.S8 — filtros rápidos = o próprio `query.status` (fonte única):
+  // chips e select Status são duas visões do mesmo estado; sem contadores
+  // (o resumo do produtor já é limitado ao filtro ativo).
+  const selectStatus = (status: SafetyStockQuery["status"]) => () =>
+    patchQuery({ status, page: 1 });
+  const statusChips = [
+    {
+      id: "all",
+      label: C.chipAll,
+      active: query.status === "",
+      onSelect: selectStatus(""),
+    },
+    {
+      id: "below",
+      label: C.chipBelow,
+      active: query.status === "below_safety_stock",
+      onSelect: selectStatus("below_safety_stock"),
+    },
+    {
+      id: "at",
+      label: C.chipAt,
+      active: query.status === "at_safety_stock",
+      onSelect: selectStatus("at_safety_stock"),
+    },
+    {
+      id: "above",
+      label: C.chipAbove,
+      active: query.status === "above_safety_stock",
+      onSelect: selectStatus("above_safety_stock"),
+    },
+    {
+      id: "without",
+      label: C.chipWithout,
+      active: query.status === "without_safety_stock",
+      onSelect: selectStatus("without_safety_stock"),
+    },
+  ];
+
   // Opções de filial: catálogo operacional do BFF; fallback = unidades da sessão.
   const branchOptions = branchCatalog.length ? branchCatalog : [...units];
 
@@ -401,6 +440,18 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
             {C.filtersUnavailable}
           </SuppliesStateBanner>
         ) : null}
+        <div className="sp-safety-stock__chip-row">
+          <SuppliesScopeChipBar
+            aria-label={C.quickFiltersAriaLabel}
+            label={
+              <SuppliesSectionHintLabel
+                label={C.quickFiltersLabel}
+                hint={SP_HELP.safetyStockQuickFilters}
+              />
+            }
+            chips={statusChips}
+          />
+        </div>
         <SafetyStockFilters
           query={query}
           branchOptions={branchOptions}

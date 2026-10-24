@@ -148,6 +148,50 @@ describe("Safety stock feature (E11.S2/S3)", () => {
     // Glossário mantém a sigla documentada como campo do Protheus — não é UX da página.
   });
 
+  it("E11.S8 — chips de situação são fonte única com o filtro Status", () => {
+    const page = readFileSync(join(dir, "SafetyStockPage.tsx"), "utf8");
+    const content = readFileSync(join(dir, "content.ts"), "utf8");
+    const tooltips = readFileSync(join(dir, "../../content/helpTooltips.ts"), "utf8");
+    // Kit canônico (mesmo padrão Comercial/SCs: createDashboardScopeChipBar).
+    expect(page).toContain("SuppliesScopeChipBar");
+    expect(page).toContain("statusChips");
+    expect(page).toContain("quickFiltersAriaLabel");
+    expect(page).toContain("SP_HELP.safetyStockQuickFilters");
+    expect(tooltips).toContain("safetyStockQuickFilters:");
+    // Os quatro status contratados + «Todos» (status vazio), na mesma fonte
+    // `query.status` — sem estado paralelo tipo quickFilterStatus.
+    for (const status of [
+      "below_safety_stock",
+      "at_safety_stock",
+      "above_safety_stock",
+      "without_safety_stock",
+    ]) {
+      expect(page).toContain(`"${status}"`);
+    }
+    expect(page).not.toContain("quickFilterStatus");
+    // Troca de chip aplica só status + volta à página 1 — nada mais muda
+    // (filial/toggles/grupo/UM/busca/ordenação preservados por omissão).
+    expect(page).toMatch(/patchQuery\(\{ status, page: 1 \}\)/);
+    expect(page).toMatch(/selectStatus\("below_safety_stock"\)/);
+    expect(page).toMatch(/selectStatus\("at_safety_stock"\)/);
+    expect(page).toMatch(/selectStatus\("above_safety_stock"\)/);
+    expect(page).toMatch(/selectStatus\("without_safety_stock"\)/);
+    expect(page).toMatch(/selectStatus\(""\)/);
+    // Sem contadores: o resumo do produtor é limitado ao filtro de status
+    // ativo — contagem em chip irmão seria semanticamente falsa.
+    expect(page).not.toMatch(/chip.*\(\$\{|chip.*Count|chipAllWithCount/);
+    // Rótulos PT-BR exigidos pela task.
+    for (const key of [
+      "chipAll",
+      "chipBelow",
+      "chipAt",
+      "chipAbove",
+      "chipWithout",
+    ]) {
+      expect(content).toContain(`${key}:`);
+    }
+  });
+
   it("os nove campos de ordenação do contrato são a allowlist", () => {
     expect([...SAFETY_STOCK_SORT_FIELDS].sort()).toEqual(
       [

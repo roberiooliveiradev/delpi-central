@@ -256,6 +256,8 @@ export const SP_HELP = {
     "Grupo ao qual o material pertence no cadastro.",
   safetyStockColUnit:
     "Unidade de medida utilizada para representar as quantidades do material.",
+  safetyStockQuickFilters:
+    "Atalhos para filtrar a lista pela situação do estoque de segurança — equivalem ao filtro Status e combinam-se com a filial e os demais filtros. Classificação e dados vêm do Protheus via serviços do Portal. «Todos os materiais» remove apenas o filtro de situação.",
   safetyStockColActions:
     "Abre a página de detalhe do material na filial correspondente. Na visão «Todas as Filiais», você escolhe a filial antes de abrir.",
   safetyStockTableMeta:
