@@ -93,3 +93,16 @@ Turnos B exibem o caminho R3 completo sob kimi-k3: `stage=model_propose` → `st
 3. Cobertura de `NEG-PROVIDER` por meio sancionado de indisponibilidade controlada — sugestão para futura avaliação com ambiente de providers isolável.
 
 **EXECUTOR_VERDICT:** `R3_EVAL_EVIDENCE_READY_FOR_COORDINATION` — comparação A/B real e governada executada; nenhuma regressão material identificada. Não declaro aceite independente nem readiness de deploy. `COORDINATION_REVIEW_REQUIRED=YES` · `R4_AUTHORIZED=NO` · `PLAN_COMPLETE=NO`.
+
+
+## 10. Parecer independente da coordenação — avaliação A/B R3 (2026-10-23)
+
+**REVIEWED_EVIDENCE_SHA:** `64bea2920de82bc8bca53015d15037a4c8f51bb4`  
+**R3_CODE_SHA:** `c914c8bc2306922ea352c69b62bb40a6b929bf95`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL` para avaliação A/B e readiness funcional do código R3; **DEPLOY_AUTHORIZATION_R3=NO**, **R4_AUTHORIZED=NO**.
+
+GitHub confirmou relatório 140, README e ledger no commit indicado. A comparação A/B reportada usa baseline `aafa5a262344…` e candidato isolado `5a5785c2473d…` sob modelo `kimi-k3`, recursos e providers equivalentes, com 11/11 checks aprovados em cada lado e probes de generalização, incluindo O2/O3 válidos. Este resultado sustenta `NO_MATERIAL_REGRESSION_IN_EVALUATED_MATRIX`; avaliações, logs e containers foram executados pelo executor e **não reproduzidos de forma independente** pela coordenação. Produção corrente não executa o código R3.
+
+**Qualificações:** (1) O2/O3 válidos em `kimi-k3` e inválidos em amostra local `qwen2.5:3b` são forte evidência de diferença de capacidade/configuração, **não prova isolada universal** de que o modelo 3B seja a única causa: as configs e condições não são integralmente equivalentes; manter `MODEL_DIFFERENCE_SUPPORTED`, não `ROOT_CAUSE_PROVEN_UNIVERSALLY`. (2) `NEG-PROVIDER=TEST_NOT_RUN` no A/B real; testes locais de fail-closed e misses honestos não substituem indisponibilidade real em ambiente isolável. (3) `N-UNK` passou nessa rodada mas o contrato do check continua sob owner de eval; não reescrever expectativa sem sua decisão. (4) latência máxima B de 43,4s e `turn_budget_limited` exigem classificação como `PERFORMANCE_RESIDUAL_TO_MONITOR`; atribuição causal exclusiva a cold start não demonstrada com amostra única. (5) tokens reais indisponíveis. (6) `7/7 probes` conforme execução reportada, com cinco casos explicitamente enumerados na seção 5: exigir correspondência entre lista de probes e contagem antes do aceite de release, sem inferir cobertura faltante.
+
+**Gate resultante:** `R3_TECHNICAL_ACCEPTANCE=ACCEPT_WITH_RESIDUAL` (revisão anterior preservada), `R3_REAL_MODEL_EVAL=ACCEPT_WITH_RESIDUAL`, `R3_RELEASE_READINESS=ELIGIBLE_FOR_OPERATIONAL_REVIEW`. Nenhum deploy é autorizado por este parecer. Antes de implantar R3, reconfirmar SHA/code tree/build contexts e alterações concorrentes, health/rollback, baseline de segurança, disparo e rastreabilidade dos checks, e autorização operacional PO específica. `R3_PROD_DEPLOY=NOT_EXECUTED`; R4 e plano completo permanecem pendentes de decisões separadas.
