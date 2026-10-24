@@ -171,7 +171,7 @@ O Cursor deve raciocinar por responsabilidades, mas **não precisa carregar todo
 | Custom GPT / GPT Actions / GPT Builder / especialista externo / `gpt-actions` | `custom-gpt-actions-integration.mdc` + `platform-api-contracts-integration.mdc` + `platform-security-identity-authorization.mdc` + `ai-external-tools-security.mdc` (+ delivery/quality quando aplicável) |
 | Apresentação do chat | `schema-first-presentation-delivered.mdc`, `presentation-operational-decoupling.mdc` |
 | Conteúdo/regex/vocabulário do chat | `assistant-content-json.mdc` |
-| SQL/TOTVS/performance | `sql-query-development.mdc` + regra TOTVS aplicável |
+| SQL/TOTVS/performance | `sql-query-development.mdc` + `totvs-product-patterns.mdc` + regra especializada aplicável; para relatórios/customizações DELPI, consultar fontes pertinentes em `docs/13-fontes-totvs-protheus/` e validar contra contratos/código/runtime antes de assumir vigência |
 | Overlay/popover/toolbar | `plugins-overlay-positioning.mdc` |
 | Module Federation patch | `mf-federation-patch-safety.mdc` |
 | Notificações/preferências | `notification-catalog-preferences.mdc` |
