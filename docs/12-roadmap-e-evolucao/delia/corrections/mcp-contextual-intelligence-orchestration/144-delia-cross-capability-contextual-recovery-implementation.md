@@ -57,3 +57,15 @@ A autenticação do eval usou **admin impersonation Keycloak** (`master` → `im
 - `CRI_OFF_LIVE=TEST_NOT_RUN`; `TOKEN_USAGE_REAL=NOT_AVAILABLE`; latência ~20–55s/turno (recuperação adiciona ~2–3 chamadas bounded).
 - Rejeição PREPARE/ACT na recuperação: coberta em teste (`rejected_class`), não exercitada live.
 - Segunda rodada nunca ocorre — guard per-interaction coberto em teste.
+
+
+## Revisão independente da coordenação — 2026-10-24
+
+**VERDICT=ACCEPT_WITH_RESIDUAL (arquitetura/implementação); RELEASE=BLOCKED; R4_AUTHORIZED=NO.** Revisão de evidências do documento 144 e arquivos do commit `394b7c738f` no GitHub; não equivale a reexecução independente de suíte, SSH ou teste live autenticado.
+
+- **Aceito no escopo técnico:** reuso de `_select_group`, `_select_capability`, `_build_arguments`, `_recover_relevance`; `relevance_feedback` bounded/untrusted; seleção revalidada contra capabilities elegíveis; rodada única, dedup, second judgment e rejeição PREPARE/ACT reportados; nenhuma ferramenta/owner criado. Testes focados 28/28 e full suite exit 0 são **EXECUTOR_REPORTED_PASS**.
+- **Outcome O2 não satisfeito:** diante de “dois exemplos de terminal bala”, três observações no candidato mostram honest insufficiency; nenhuma apresentou os dois produtos corretos automaticamente. O probe direto `term. bala` encontrou produtos pertinentes. `BUSINESS_OUTCOME=INCONCLUSIVE` e `O2_RESOLVED=NO` para o critério do doc 143; não fechar residual com teste de entrada já reformulada.
+- **Gate de segurança obrigatório:** `EXECUTION_DRIFT=AUTH_PROCEDURE`. Foi usada impersonação admin Keycloak novamente, vedada por 143/B1 e apontada em doc 142. Bloquear qualquer nova eval por esse caminho. Exigir revisão com owner Keycloak/Core, método de identidade end-user sancionado e repetição mínima da matriz O2/generalização/autorização no SHA/config efetivamente avaliado, sem expor tokens ou credenciais. Evidência técnica do executor permanece rotulada, **não aceita como gate de segurança**.
+- **Contrato DAVI:** `mcp_document_access=NOT_EXPOSED` no estado observado. A evolução de conhecimento vivo de api-delpi é trilha separada, com ratificação MP/PI pendente. Não adicionar heurística `terminal→TERM.` na DÉLIA nem presumir documentos File-provider acessíveis.
+- **Demais residuais:** CRI_OFF live `TEST_NOT_RUN`, tokens reais `NOT_AVAILABLE`, latência 20–55s reportada; seguir medição de orçamento/causas por estágio e testes de generalização, sem prometer resolução do O2 só pelo contrato futuro.
+- **NEXT:** (1) bloquear autenticação por impersonation nos procedimentos de eval; (2) homologar com identidade oficial, limited A/B e security negative; (3) avaliar a integração de guidance documental efetivamente disponibilizado e outcomes do pedido original após a Trilha A; (4) review independente do resultado antes de deploy. `R4_AUTHORIZED=NO`, `DEPLOY_AUTHORIZED=NO`.
