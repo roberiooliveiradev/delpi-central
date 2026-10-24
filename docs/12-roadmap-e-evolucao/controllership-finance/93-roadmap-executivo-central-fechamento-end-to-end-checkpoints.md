@@ -196,3 +196,8 @@ C00 autoridade / checklist / contratos / gates + CP01 prova das páginas existen
 ### Registro de decisão posterior — CP-D01=A
 
 O PO aprovou persistência isolada no contexto `controllership-finance-api`, usando schema próprio no `postgres-plugins` para templates/versionamento, competências e snapshots. Ver [doc 95 §8](./95-ciclo3-cp00-cp01-rebaseline-e-brief-primeiro-slice-p2.md). **Decisão de arquitetura de ownership aprovada; schema/DDL/rotas e autorização de implementação permanecem pendentes do gate** `CF-C3-P6-MIN-P2-READ-CONTRACT-GATE-001`. `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+### Registro de PO — P6-MIN + P2-READ · Seed e administração
+
+O PO aprovou **seed v1 dos 53 itens em DRAFT**, publicação administrativa posterior, e **API administrativa mínima sem tela P6** no primeiro slice. Consultar [doc 97 — decisões e solicitação de GO transversal](./97-ciclo3-p6-min-p2-read-decisoes-po-e-solicitacao-go-transversal.md). `CP02/CP03=PENDING`, `IMPLEMENTATION_AUTHORIZED=NO`. Próxima rodada: `CF-C3-P6-MIN-P2-READ-TRANSVERSAL-GO-REVIEW-001` (documental, sem runtime).
