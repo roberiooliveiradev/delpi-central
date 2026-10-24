@@ -170,3 +170,51 @@ TESTES: delia 438/438 (+1: describe INLINE-01..14 reescrito — DOM order, porta
 QA VISUAL PROD 39/39 (`vd-inline-prod.mjs` autenticado, `2ad6403b10`): região abre abaixo da action strip (dy=42px), `position: static`, zero portal/dialog no DOM; mensagem cresce 109→719px e empurra o turno seguinte (dy=844–1107px); scroll container não sobrepõe composer (735<754; 476<495 em 375px); dois contextos abertos simultâneos com dados isolados e colapso independente; clique fora + Escape + digitação no composer não fecham; painel global abre/reabre independente; 375px íntegro (x=103 w=250); `prefers-reduced-motion` → `animation: none`; viewport 640×450 (~zoom 200%) sem overflow. Screenshots `shots-inline/`. Residuais: Companion Dock real, 320/360/390/420px individuais, dark/light visual e screen reader TEST_NOT_RUN; regressão streaming/markdown coberta por vitest (INLINE-12), não por probe E2E.
 
 **STATUS FINAL:** `SPEC_PUBLISHED; RUNTIME_CHANGED (2026-10-24, commit 2ad6403b10); TESTED; DEPLOYED; PHASE_NOT_ADVANCED; GLOBAL_SECTIONS=BLOCKED_PENDING_CONTRACT`.
+
+
+## Decisão visual posterior — Clean Inline Context Card (2026-10-24)
+
+**STATUS: PRODUCT_UX_DECISION / IMPLEMENTATION_PENDING / DOC_ONLY.** O PO aprovou a referência visual de card técnico clean mostrada na conversa. Esta decisão **substitui exclusivamente o aspecto visual da região inline**, não o contrato de disclosure inline, nem o contexto global da conversa. A implementação corrente (commit histórico 2ad6403b10) usa região inline, mas screenshots reais mostram uma **barra azul vertical** e painel denso com metadados técnicos dominantes. A direção nova remove essa barra e eleva a legibilidade.
+
+### Anatomia visual aprovada
+
+- **Container único:** região inline abaixo de Copiar / Ocultar contexto, no fluxo natural, sem popover, overlay, nested scroll ou barra lateral azul. Fundo de superfície neutra levemente elevada, borda fina sutil, radius consistente com plugin-ui, sombra opcional muito discreta. Largura limitada ao conteúdo da mensagem (nunca maior que a conversa). Não repetir o contorno azul do estado de foco/seleção.
+- **Header:** “Contexto desta resposta”, subtítulo opcional **“Detalhes da geração, evidências e atividade relacionada”**. Ícone secundário opcional, sem inventar uma nova ação de colapso se **Ocultar contexto** já controla a região. Sem cabeçalho duplo.
+- **Detalhes da geração:** seção de metadados legível em grid adaptativo com pares label/valor; desktop pode usar duas colunas de *pares*, enquanto Dock/mobile vira uma coluna. Preservar campo/valor exatos e sua semântica, inclusive “custo indisponível” e dados de tokens somente se reais; nunca inferir números. Labels secundários, valores em primeiro plano; identificadores longos quebram linha sem overflow.
+- **Evidências:** seção separada e menos dominante, preservando proveniência e limitações legítimas. “Sem fonte vinculada” dentro do contexto técnico pode ser informação neutra, **não** alerta ou prova de falha de grounding. Se uma resposta exigir fonte e faltar, manter a limitação material visível no corpo principal conforme contrato; não esconder no card.
+- **Atividades relacionadas:** status tipado real, duração quando disponível e detalhes acessíveis, sem confundir execução concluída com business outcome verificado. Não criar status de sucesso fictício.
+- **Rastreamento técnico:** nomes de spans/eventos e contagens de tokens por etapa são opcionais e secundários, preferencialmente em disclosure interno **apenas se esses dados já existirem**, sem duplicar o ActivityViewer. Informação técnica essencial à auditabilidade continua acessível; não se deve ocultá-la ou apagá-la por estética.
+- **Iconografia e cores:** azul institucional como acento discreto dos ícones/ações, verde somente para estado comprovado de acordo com a semântica existente. Não usar blocos azuis saturados nem “cards dentro de cards” em excesso. Tokens do plugin-ui, dark/light e contraste AA.
+- **Motion:** transições leves 160–200ms onde seguras, sem animar height com truncamento, sem causar scroll jump durante streaming, respeitando prefers-reduced-motion.
+- **Responsividade:** full-page, Companion Dock real, 320/360/375/390/420px, zoom 200%; grid colapsa, sem truncamento de labels e sem rolagem horizontal. Sem tamanho fixo alto ou scrollbar dentro do contexto.
+
+### Reuse e ownership
+
+Revalidar no HEAD: \`DeliaTurnContextPanel\` é o compositor de conteúdo em \`plugins/delia/src/ui/contextPanel.tsx\`; \`ConversationContextPanel\`, \`EvidenceDetails\`, \`ActivityViewer\` e demais primitivas pertencem ao \`plugin-ui\`. \`DeliaAssistantMessage\` contém a região inline. Preferir extensão de estilos/composição existentes, sem criar um segundo renderer de evidências nem outro painel técnico. **EXISTING_EQUIVALENT=YES / REUSE_DECISION=EXTEND** como direção documental, sujeitos à prova no HEAD. Identificar origem real da barra lateral (estilo da bolha, região inline ou componente compartilhado) antes de alterar CSS; não removê-la globalmente se outros consumidores dependerem dela.
+
+### Critérios CLEANCTX-01..CLEANCTX-16
+
+| ID | Critério |
+|---|---|
+| CLEANCTX-01 | Barra vertical azul removida somente do contexto/seleção alvo sem afetar foco acessível |
+| CLEANCTX-02 | Contexto é card neutro único, borda sutil, sem card pesado |
+| CLEANCTX-03 | Cabeçalho e subtítulo com hierarquia clara, sem duplicação de controles |
+| CLEANCTX-04 | Metadados em grid responsivo label/valor, com semântica preservada |
+| CLEANCTX-05 | Valores de tokens, duração, modelos e custos não inventados |
+| CLEANCTX-06 | Evidências/proveniência mantidas e visualmente subordinadas |
+| CLEANCTX-07 | Ausência de fonte não apresentada como erro numa saudação |
+| CLEANCTX-08 | Limitações materiais não são ocultadas |
+| CLEANCTX-09 | Atividade real, status e detalhes preservados |
+| CLEANCTX-10 | Rastreamento técnico menos dominante, mas acessível e auditável |
+| CLEANCTX-11 | A região segue inline, sem popover, overlay ou scroll aninhado |
+| CLEANCTX-12 | Duas mensagens expandidas, fechamento independente e painel global preservados |
+| CLEANCTX-13 | Foco, teclado, ARIA, semântica e reduced-motion |
+| CLEANCTX-14 | Full-page, Dock real, mobile, zoom 200%, dark/light |
+| CLEANCTX-15 | Streaming, Markdown, fila, composer e rich content sem regressões |
+| CLEANCTX-16 | RED/GREEN, regressões, QA real por SHA, ledger, deploy e reporte |
+
+**Task bounded:** \`DELIA-UX-INLINE-RESPONSE-CONTEXT-CLEAN-VISUAL-REFACTOR-01\`.
+
+REANCHOR HEAD/status → Project Instructions/.cursor → 16→50→17→49→51→52→21→20→25 → specs/contracts/ledger → REUSE/ABSTRACTION GATE → RED visual+semantic tests → menor diff plugin-ui e/ou delia → GREEN → regression → browser visual QA full-page/Dock/mobile/dark-light/reduced-motion → rework → docs/evidence/ledger → commit/push main → scoped frontend deploy → real outcome QA. Se o grid de metadados ou rastreamento depender de alteração relevante em primitiva pública usada por outros apps, usar variante/extensão compatível e documentar consumers antes do diff. Backend/Domain/Core/STT não são parte desta task.
+
+**Esta alteração documental não modifica runtime nem autoriza avanço de fase: RUNTIME_CHANGED=NO; TEST_NOT_RUN; PHASE_NOT_ADVANCED.**
