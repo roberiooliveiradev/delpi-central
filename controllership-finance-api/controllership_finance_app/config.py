@@ -81,6 +81,13 @@ class Settings:
     )
     PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
 
+    # Binários de evidências P2-Upload: volume persistente dedicado
+    # (${DELPI_DATA_HOST_DIR}/cf-closing-documents nos composes).
+    CF_DOCUMENT_UPLOAD_DIR: str = _get_env(
+        "CF_DOCUMENT_UPLOAD_DIR",
+        default="/app/data/cf-closing-documents",
+    )
+
     RUN_MIGRATIONS_ON_STARTUP: bool = _get_env(
         "CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP",
         default="false",

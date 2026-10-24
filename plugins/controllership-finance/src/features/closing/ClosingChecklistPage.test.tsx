@@ -21,6 +21,21 @@ vi.mock("../../api/competencesApi", () => ({
   getCompetenceItem: (...args: unknown[]) => getItemMock(...args),
 }));
 
+const listDocumentsMock = vi.fn();
+const uploadDocumentMock = vi.fn();
+const downloadDocumentMock = vi.fn();
+
+vi.mock("../../api/documentsApi", () => ({
+  CLOSING_DOCUMENT_ACCEPT: ".pdf",
+  listClosingDocuments: (...args: unknown[]) =>
+    listDocumentsMock(...args),
+  uploadClosingDocument: (...args: unknown[]) =>
+    uploadDocumentMock(...args),
+  downloadClosingDocument: (...args: unknown[]) =>
+    downloadDocumentMock(...args),
+  saveDocumentBlob: vi.fn(),
+}));
+
 import { ApiError } from "../../api/httpClient";
 import { ClosingChecklistPage } from "./ClosingChecklistPage";
 
@@ -41,6 +56,12 @@ const ITEM = {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  listDocumentsMock.mockResolvedValue({
+    documents: [],
+    total: 0,
+    limit: 50,
+    offset: 0,
+  });
 });
 
 describe("ClosingChecklistPage", () => {

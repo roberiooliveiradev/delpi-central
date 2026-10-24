@@ -2611,6 +2611,13 @@ services:
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
       CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP: ${CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP:-true}
 
+      # Evidências P2-Upload (binário em volume persistente; metadado no
+      # schema controllership_finance) — par indissociável.
+      CF_DOCUMENT_UPLOAD_DIR: ${CF_DOCUMENT_UPLOAD_DIR:-/app/data/cf-closing-documents}
+
+    volumes:
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/cf-closing-documents:/app/data/cf-closing-documents
+
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s

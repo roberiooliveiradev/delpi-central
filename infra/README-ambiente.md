@@ -566,6 +566,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | `LNF_DANFE_UPLOAD_DIR` | `/app/data/lancamento-notas-fiscais-danfe` | `${DELPI_DATA_HOST_DIR}/lancamento-notas-fiscais-danfe` |
 | `MY_REQUESTS_ATTACHMENT_UPLOAD_DIR` | `/app/data/my-requests-attachments` | `${DELPI_DATA_HOST_DIR}/my-requests-attachments` |
 | `MY_REQUESTS_ARTIFACT_UPLOAD_DIR` | `/app/data/my-requests-artifacts` | `${DELPI_DATA_HOST_DIR}/my-requests-artifacts` |
+| `CF_DOCUMENT_UPLOAD_DIR` | `/app/data/cf-closing-documents` | `${DELPI_DATA_HOST_DIR}/cf-closing-documents` |
 
 > **Anexos do Comercial** (`COMMERCIAL_ATTACHMENT_UPLOAD_DIR`): o volume **já** monta o diretório inteiro. Não criar volume extra. Subdirs no disco: `task/{taskId}/` (tarefas) e `room_message/{messageId}/` (sala de interação). Recreate do `commercial-api` não apaga os binários enquanto o bind mount existir.
 

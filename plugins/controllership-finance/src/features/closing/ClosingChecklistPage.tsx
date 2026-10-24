@@ -54,6 +54,7 @@ import {
 import { CF_HELP } from "../../content/helpTooltips";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { navigatePluginPath } from "../../app/pluginNavigation";
+import { ClosingDocumentsPanel } from "./ClosingDocumentsPanel";
 
 const PERIOD_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -631,8 +632,24 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
                     <dd>{detail.source_version_id}</dd>
                   </div>
                 </dl>
+                <CfSectionCard
+                  title="Evidências do item"
+                  hint={CF_HELP.checklist.itemDocuments}
+                >
+                  <ClosingDocumentsPanel
+                    period={activePeriod}
+                    snapshotItemId={detail.snapshot_item_id}
+                  />
+                </CfSectionCard>
               </CfSectionCard>
             ) : null}
+
+            <CfSectionCard
+              title="Evidências da competência"
+              hint={CF_HELP.checklist.documents}
+            >
+              <ClosingDocumentsPanel period={activePeriod} />
+            </CfSectionCard>
           </>
         ) : null}
       </div>

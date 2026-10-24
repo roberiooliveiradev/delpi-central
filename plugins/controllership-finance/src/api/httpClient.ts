@@ -127,6 +127,46 @@ export async function httpPost<T>(
 }
 
 
+/** POST multipart — o browser define o boundary do Content-Type. */
+export async function httpPostFormData<T>(
+  url: string,
+  body: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  const headers = buildHeaders();
+  delete headers.Accept;
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body,
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+/** GET binário autenticado — download de evidências (sem URL pública). */
+export async function httpGetBlob(
+  url: string,
+  options: RequestOptions = {},
+): Promise<Blob> {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: buildHeaders(),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return response.blob();
+}
+
 /** Authenticated image request against this product BFF only. */
 export async function httpGetImageBlob(url: string, signal?: AbortSignal): Promise<Blob | null> {
   const response = await fetch(url, { method: "GET", headers: buildHeaders(), signal });

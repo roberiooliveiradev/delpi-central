@@ -8,3 +8,4 @@ httpx
 requests
 pytest
 psycopg[binary]==3.2.4
+python-multipart

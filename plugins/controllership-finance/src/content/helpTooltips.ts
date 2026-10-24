@@ -83,5 +83,9 @@ export const CF_HELP = {
       "Referência ao relatório ERP (R-ID) quando a origem é conhecida. Itens externos e pendências mapeadas não têm R-ID — a ausência não implica automação indisponível nem entrega dispensada.",
     detail:
       "Detalhe do item com proveniência: versão do template de origem, requisitos e notas. O conteúdo é o snapshot da competência — não muda quando o template mestre evolui.",
+    documents:
+      "Evidências anexadas à competência como um todo. Arraste ou selecione um arquivo (PDF, imagem, XLS, XLSX ou CSV, até 25 MB) para enviar; cada envio registra autor, data e integridade do arquivo. «Baixar» entrega o documento original — exige autorização e fica registrado na auditoria. Anexar uma evidência não valida o documento nem entrega o item: o checklist permanece «Esperado».",
+    itemDocuments:
+      "Evidências vinculadas a este item do checklist — a mesma regra de upload da competência vale aqui (PDF, imagem, XLS, XLSX ou CSV, até 25 MB). Um documento de item só pode ser anexado a um item da competência aberta. Erros comuns: arquivo acima de 25 MB, formato não permitido, arquivo vazio ou conteúdo que não corresponde à extensão.",
   },
 } as const;

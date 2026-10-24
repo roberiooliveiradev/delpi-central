@@ -69,3 +69,48 @@ class ItemNotFound(ChecklistDomainError):
 class PersistenceUnavailable(ChecklistDomainError):
     code = "persistence_unavailable"
     status = 503
+
+
+class DocumentNotFound(ChecklistDomainError):
+    code = "document_not_found"
+    status = 404
+
+
+class FileTooLarge(ChecklistDomainError):
+    code = "file_too_large"
+    status = 422
+
+
+class UnsupportedMediaType(ChecklistDomainError):
+    code = "unsupported_media_type"
+    status = 415
+
+
+class InvalidFileContent(ChecklistDomainError):
+    code = "invalid_file_content"
+    status = 422
+
+
+class EmptyFile(ChecklistDomainError):
+    code = "empty_file"
+    status = 422
+
+
+class ContentTypeMismatch(ChecklistDomainError):
+    code = "content_type_mismatch"
+    status = 422
+
+
+class IdempotencyConflict(ChecklistDomainError):
+    code = "idempotency_conflict"
+    status = 409
+
+
+class FileMissing(ChecklistDomainError):
+    code = "file_missing"
+    status = 503
+
+
+class InvalidUpload(ChecklistDomainError):
+    code = "invalid_upload"
+    status = 422

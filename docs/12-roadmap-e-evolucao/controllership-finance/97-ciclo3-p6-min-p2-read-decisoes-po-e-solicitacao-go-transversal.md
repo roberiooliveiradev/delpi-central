@@ -83,3 +83,9 @@ CP00 do [doc 95](./95-ciclo3-cp00-cp01-rebaseline-e-brief-primeiro-slice-p2.md) 
 - **D-U4=A — Retenção V1:** sem exclusão automática de evidências de negócio na V1; sem prazo formal inventado; política corporativa de retenção permanece pendência própria — a opção A **não** é retenção perpétua juridicamente aprovada. Limpeza de temporários/órfãos é especificada separadamente da retenção de evidências válidas e não está ativa neste gate.
 - **D-U5=A — Attachment role inicial:** `attachment_role=generic` explícito na V1; sem papéis inventados por item. E05 (catálogo/obrigatoriedade real) permanece pendente — bloqueia validação C05, não o upload.
 - **D-U6=A — Dois níveis de vínculo:** evidências vinculadas diretamente à competência **ou** a um item do snapshot, com integridade referencial e identificação inequívoca do tipo de vínculo; vedada referência a item de outra competência.
+
+## 8. Adendo — D-U7 aprovada no GO de implementação (`CF-C3-P2-UPLOAD-IMPL-GO-001`)
+
+`DECISION_SOURCE=PO_EXPLICIT` · `DECISION_STATUS=PO_APPROVED` · `IMPLEMENTATION_AUTHORIZED=YES` (SLICE-1_ONLY) · `PRODUCTION_DEPLOY_AUTHORIZED=NO` · `PRODUCTION_MIGRATIONS_AUTHORIZED=NO` · `SLICE-2_AUTHORIZED=NO`. Substitui o status anterior `DECISION_REQUIRED` registrado no doc 103, Adendo §B, e no doc 17 — a recomendação A do rework foi adotada pelo PO sem alterações.
+
+- **D-U7=A — Idempotência de upload (padrão supplies-api):** `idempotency_key` **obrigatória** no corpo do request (campo `idempotency_key` do multipart — jamais header HTTP inventado); unicidade `UNIQUE(competence_id, idempotency_key)`; `request_hash` persistido por registro; replay idêntico retorna a evidência original **sem duplicação** (`deduplicated`); payload divergente com a mesma chave ⇒ HTTP 409 `idempotency_conflict`; **sem TTL** — registros de idempotência são persistentes; hash de conteúdo **não** colapsa evidências distintas (o mesmo binário pode vincular-se a itens diferentes).

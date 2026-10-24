@@ -160,3 +160,41 @@ Revisão arquitetural independente do hardening `1ad43e04` classificou R4 como R
 **Resposta à pergunta central:** o fixture só pode destruir um banco cuja prova de ownership (token gravado pela própria execução) confere — bancos preexistentes não podem ser alvo por nome ou por opt-in. Fato observado em código e em probes adversariais; aceite formal cabe à revisão independente.
 
 Risco remanescente: execuções abortadas entre CREATE e teardown deixam resíduos `cf_test_*` no cluster de teste — seguro (nunca são presumidos próprios); limpeza manual eventual. Smoke autenticado: `TEST_NOT_RUN`. Deploy de produção: NÃO REALIZADO.
+
+## Adendo — Evidência de execução P2-Upload SLICE-1 (`CF-C3-P2-UPLOAD-IMPL-GO-001`)
+
+`GO_STATUS=PO_AUTHORIZED` · `SCOPE=SLICE-1_ONLY` · `PRODUCTION_DEPLOY=NO` · `PRODUCTION_MIGRATIONS=NO`. Evidência por etapa; `TEST_NOT_RUN` explícito.
+
+### E1 — Persistência e storage
+
+- `V003__create_closing_documents.sql`: `document_file` (storage_key UNIQUE, sha256, size ≤ 25 MB), `closing_document` (`UNIQUE(competence_id, idempotency_key)`, `request_hash`, FK composta item↔competência — D-U6, CHECK link_kind↔item, `attachment_role='generic'` — D-U5), `document_version` (`UNIQUE(document_id, version_no)`). Auditoria na mesma transação em `closing_audit_event`.
+- Sequência C2: `.part` em chunks (cap 25 MB mid-stream) → sha256 durante o write → validação de conteúdo → `os.replace` atômico no mesmo filesystem → transação Postgres → compensação `unlink` com log em falha de compensação. Sem atomicidade distribuída declarada.
+- Testes: `test_closing_document_storage.py` (cap mid-stream, rename, traversal guard, compensação, discard) · `test_closing_document_service.py` (replay, conflito, corrida, compensação, `file_missing`).
+
+### E2 — BFF U1–U4
+
+- `documents_routes.py`: `POST|GET /closing/competences/{period}/documents[/{id}[/versions/{v}/content]]` — envelope `ok/fail` canônico, `operation_id` EN, erros tipados (`file_too_large` 422, `unsupported_media_type` 415, `empty_file`/`invalid_file_content`/`content_type_mismatch`/`invalid_upload` 422, `item_not_found`/`document_not_found`/`competence_not_opened` 404, `idempotency_conflict` 409, `persistence_unavailable`/`file_missing`/`rbac_unavailable` 503).
+- D-U7=A implementada: `idempotency_key` multipart obrigatória, `UNIQUE(competence_id, key)`, `request_hash`, replay `deduplicated:true` (200), divergente 409, sem TTL.
+- Download: `FileResponse` autenticado; `DOCUMENT_DOWNLOADED result=AUTHORIZED` somente após authz + integridade — sem URL pública nem `storage_key` exposta.
+- Suíte: `test_closing_documents_routes.py` (upload/list/get/download, authz, service principal 403, ator não-UUID 401, rbac_unavailable 503, replay, conflito) + `test_closing_file_validation.py`.
+
+### E3 — MFE P2
+
+- `ClosingDocumentsPanel` integrado à `ClosingChecklistPage` — evidências da competência + evidências por item no detalhe; `FileDropzone`/`AttachmentFileList` do `@delpi/plugin-ui`; `documentsApi.ts` consome só a BFF; retry preserva a mesma `idempotency_key`; download via blob autenticado.
+- Estados honestos: «anexado ≠ validado», checklist permanece «Esperado».
+
+### E4 — Help e testes frontend
+
+- `helpTooltips.ts` sincronizado: formatos, 25 MB, competência vs item, anexar≠validar, erros comuns, autorização — sem promessas de SLICE-2.
+- `ClosingDocumentsPanel.test.tsx` (5 testes): listagem, vazio, upload com key, retry mesma key, 403.
+- MFE: `105 passed` vitest + `25 passed` estrutural · build `tsc -b && vite build` ok · lint com 3 warnings pré-existentes em arquivos não tocados.
+
+### E5 — PostgreSQL real e regressão
+
+- Banco efêmero `cf_test_*` com prova de ownership (mecanismo R4): `test_pg_closing_documents.py` — 10 testes (FK item↔competência, replay idempotente, conflito divergente, corrida 4 threads → 1 vencedor, auditoria append-only, cross-competence 404, mesmo binário 2 docs).
+- Suíte completa com `CF_TEST_PG_*` ativo: **242 passed** (BFF + PG + guardas).
+- `TEST_NOT_RUN`: recreate literal de container (durabilidade inferida de volume host + publish/resolve); smoke autenticado ponta a ponta (não há ambiente deployado).
+
+### Residuais honestos preservados
+
+Antivírus inexistente (não improvisado) · housekeeping de órfãos PLANNED (não ativo) · retenção corporativa pendente · OFX/QIF/TXT com TÉO · E05/E06 · `RQ-P2-039`.

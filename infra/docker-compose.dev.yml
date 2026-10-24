@@ -3058,9 +3058,13 @@ services:
       S2S_SCOPE: ${CF_S2S_SCOPE:-}
       S2S_TIMEOUT_SECONDS: ${CF_S2S_TIMEOUT_SECONDS:-10}
 
+      # Evidências P2-Upload — binário em volume persistente do host.
+      CF_DOCUMENT_UPLOAD_DIR: ${CF_DOCUMENT_UPLOAD_DIR:-/app/data/cf-closing-documents}
+
     volumes:
       - ../controllership-finance-api:/app
       - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/cf-closing-documents:/app/data/cf-closing-documents
 
     depends_on:
       keycloak:

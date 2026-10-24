@@ -572,3 +572,58 @@ export function createDashboardFiltersKit() {
   }
   return { FiltersRow, FilterInputField, FilterSelectField };
 }
+
+export const fileDropzoneBemClasses = passthroughClasses;
+export const attachmentFileListBemClasses = passthroughClasses;
+
+export function FileDropzone(props: {
+  labels?: { title?: string; hint?: string };
+  onFilesSelected?: (files: File[]) => void;
+  disabled?: boolean;
+  busy?: boolean;
+  ariaLabel?: string;
+}) {
+  return el(
+    "button",
+    {
+      type: "button",
+      disabled: props.disabled || props.busy,
+      "aria-label": props.ariaLabel ?? props.labels?.title,
+      onClick: () =>
+        props.onFilesSelected?.([
+          new File(["%PDF-1.4 teste"], "evidencia.pdf", {
+            type: "application/pdf",
+          }),
+        ]),
+    },
+    props.labels?.title,
+  );
+}
+
+export function AttachmentFileList(props: {
+  items?: Array<{ id: string; fileName: string; detail?: string }>;
+  labels?: { empty?: string; download?: string };
+  emptyMessage?: string;
+  onDownload?: (item: { id: string; fileName: string }) => void;
+}) {
+  const items = props.items ?? [];
+  if (items.length === 0) {
+    return el("p", null, props.emptyMessage ?? props.labels?.empty ?? "");
+  }
+  return el(
+    "ul",
+    null,
+    items.map((item) =>
+      el(
+        "li",
+        { key: item.id },
+        el("span", null, item.fileName),
+        el(
+          "button",
+          { type: "button", onClick: () => props.onDownload?.(item) },
+          props.labels?.download ?? "Baixar",
+        ),
+      ),
+    ),
+  );
+}

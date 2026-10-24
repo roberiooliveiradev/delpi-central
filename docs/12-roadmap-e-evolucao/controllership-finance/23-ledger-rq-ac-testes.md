@@ -52,7 +52,7 @@ Este ledger complementa:
 
 ### P2-Upload — critérios de aceite (AC) e escopo por slice
 
-Contrato consolidado no doc 103, Adendo §B–§E (`CF-C3-P2-UPLOAD-DECISIONS-CONTRACT-CLOSURE-001`). Todos `TARGET` — nenhum PASS de runtime atribuído.
+Contrato consolidado no doc 103, Adendo §B–§E (`CF-C3-P2-UPLOAD-DECISIONS-CONTRACT-CLOSURE-001`). SLICE-1 executado sob `CF-C3-P2-UPLOAD-IMPL-GO-001` (evidência por AC abaixo); SLICE-2 permanece `TARGET`.
 
 **SLICE-1** (candidato ao primeiro GO de implementação: U1 upload, U2 list, U3 get, U4 download+audit):
 
@@ -77,6 +77,28 @@ Contrato consolidado no doc 103, Adendo §B–§E (`CF-C3-P2-UPLOAD-DECISIONS-CO
 | AC-P2-UP-24 | invariante | upload nunca produz `VALIDATED`/`ACCEPTED` | estados persistidos limitados a `ATTACHED\|SUPERSEDED\|CANCELLED`; item segue `EXPECTED` |
 
 Cobertura SLICE-1 por requisito (positive/sibling/negative/security/postcondition conforme aplicabilidade): RQ-P2-15 → AC-01/02/03 · RQ-P2-16 → AC-04/05/06 · RQ-P2-18 → AC-07/08 · RQ-P2-20 → AC-09/10 · RQ-P2-22 → AC-11/12/13 · transversais segurança/auditoria/boundary/invariante → AC-14/15/23/24.
+
+**Execução SLICE-1 (`CF-C3-P2-UPLOAD-IMPL-GO-001`)** — resultados reais de suíte; `TEST_NOT_RUN` explícito onde aplicável:
+
+| AC | Estado | Evidência executada |
+|---|---|---|
+| AC-P2-UP-01 | PASS | `test_pg_closing_documents.py` (competence+item docs ATTACHED v1); item `EXPECTED` inalterado — nenhum caminho de mutação de estado do item existe |
+| AC-P2-UP-02 | PASS | `test_same_binary_two_documents_no_collapse` — mesmo checksum em dois documentos distintos |
+| AC-P2-UP-03 | PASS | service/PG `ItemNotFound` + route 404 — cross-competence nunca revela |
+| AC-P2-UP-04 | TEST_NOT_RUN parcial | publish→resolve provado em `test_closing_document_storage.py`; recreate literal de container não executado — durabilidade = volume host mapeado (`docker-compose*.yml`) |
+| AC-P2-UP-05 | PASS | `test_persistence_failure_compensates_binary` — binário removido, exceção propagada |
+| AC-P2-UP-06 | PASS | `test_download_missing_binary_no_success_audit` — `file_missing` 503 sem auditoria de sucesso |
+| AC-P2-UP-07 | PASS | `test_audit_upload_and_download_append_only` — `DOCUMENT_DOWNLOADED result=AUTHORIZED` com ator UUID |
+| AC-P2-UP-08 | PASS | routes: sem token 401, sem permissão 403, cross-competence 404 (`test_document_scoped_to_competence`); escopo de filial delegado ao Core (fail-closed testado) |
+| AC-P2-UP-09 | PASS | `test_closing_file_validation.py` — ZIP-renomeado, PDF truncado, vazio, divergência, oversize |
+| AC-P2-UP-10 | PASS | `test_sanitize_original_name` + traversal guard em `test_resolve_and_traversal_guard` |
+| AC-P2-UP-11 | PASS | routes replay `deduplicated` + PG `test_idempotent_replay_same_hash` — zero segundo documento |
+| AC-P2-UP-12 | PASS | `test_same_key_divergent_hash_conflict` — `idempotency_conflict` 409 |
+| AC-P2-UP-13 | PASS | `test_concurrent_same_key_single_winner` — 4 threads, um vencedor, UNIQUE no banco |
+| AC-P2-UP-14 | PASS | routes: service principal 403, `rbac_unavailable` 503 — fail-closed |
+| AC-P2-UP-15 | PASS | routes: ator não-UUID 401; `actor_subject` UUID nas colunas PG |
+| AC-P2-UP-23 | PASS | `apiBoundary.structural.test.mjs` + MFE consome só `documentsApi`/`httpClient` da BFF; download sempre stream autenticado |
+| AC-P2-UP-24 | PASS | CHECK constraint `state IN (ATTACHED\|SUPERSEDED\|CANCELLED)`; MFE afirma «anexado ≠ validado»; zero mutação de item |
 
 **SLICE-2** (U5 substituição, **U6 histórico de versões**, U7 cancelamento, U8 eventos de auditoria; depende do aceite do slice 1):
 

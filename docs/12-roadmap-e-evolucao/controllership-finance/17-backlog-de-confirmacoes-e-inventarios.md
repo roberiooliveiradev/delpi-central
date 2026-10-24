@@ -188,6 +188,8 @@ Levantadas no gate documental `CF-C3-P2-UPLOAD-CONTRACT-GATE-001` (doc 103 §8) 
 - **D-U5=A** — `attachment_role=generic` explícito na V1; não bloqueia upload. **CONCLUÍDA** — E05 permanece aberto para catálogo/obrigatoriedade (bloqueia C05, não o upload).
 - **D-U6=A** — Dois níveis de vínculo: `competence` OU `competence_item`; item deve pertencer à competência do path. **CONCLUÍDA.**
 
+**D-U7=A — concluída no GO `CF-C3-P2-UPLOAD-IMPL-GO-001`** (PO adotou a recomendação A sem alterações): `idempotency_key` obrigatória no corpo multipart, `UNIQUE(competence_id, idempotency_key)`, `request_hash`, replay idêntico retorna o documento com `deduplicated: true` (200), divergente `idempotency_conflict` 409, sem TTL, sem dedup por hash de conteúdo. Registro canônico: doc 97 §8. A entrada histórica abaixo permanece como rastro do processo:
+
 **Decisão pendente nova (rework `CF-C3-P2-UPLOAD-CONTRACT-CLOSURE-REWORK-001`):**
 
 - **D-U7** — Idempotência U1: transporte (body field `idempotency_key` do padrão supplies-api vs header `Idempotency-Key` sem precedente), obrigatoriedade, escopo da key (`competence_id` vs +`actor_subject`), status do replay (200 vs 201), TTL (nenhuma vs janela). O padrão vigente cobre: `UNIQUE(<aggregate>, key)` + `request_hash` + `IdempotencyConflictError` 409 + append-only. **Recomendação: opção A — aderir integralmente ao supplies-api** (body obrigatório, `UNIQUE(competence_id, key)`, sem TTL, replay retorna `document` com `deduplicated: true`). Owner: PO/GPT — bloqueia fechamento do contrato U1 no GO de implementação. `NO_CHANGE_APPLIED`.

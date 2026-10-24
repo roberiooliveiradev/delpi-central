@@ -365,3 +365,44 @@
     padding: 16px;
   }
 }
+
+/* P2-Upload SLICE-1 — painel de evidências documentais. */
+.dashboard-controllership-finance .cf-documents-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-controllership-finance .cf-documents-panel__upload-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dashboard-controllership-finance .cf-documents-panel__retry,
+.dashboard-controllership-finance .cf-documents-panel__discard {
+  border: 1px solid var(--cf-border);
+  border-radius: 8px;
+  background: var(--cf-surface);
+  color: var(--cf-text);
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dashboard-controllership-finance .cf-documents-panel__retry:hover:not(:disabled) {
+  border-color: var(--cf-accent);
+  color: var(--cf-accent);
+}
+
+.dashboard-controllership-finance .cf-documents-panel__retry:disabled,
+.dashboard-controllership-finance .cf-documents-panel__discard:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-controllership-finance .cf-documents-panel__honesty {
+  margin: 0;
+  color: var(--cf-text-muted);
+  font-size: 12px;
+}

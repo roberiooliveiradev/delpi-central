@@ -279,3 +279,37 @@ Erros tipados: `file_too_large` 422 · `unsupported_media_type` 415 · `invalid_
 ### F. Decisões ainda abertas (não encerradas)
 
 **D-U7** (idempotência: transporte/obrigatoriedade/escopo/TTL/status do replay — `DECISION_REQUIRED` no doc 17, recomendação A aderir ao supplies-api) · retenção corporativa definitiva · inventário OFX/QIF com TÉO/Controladoria · E05 roles/obrigatoriedade · E06 motivos · CP-D02 · CP-D03 · reconciliação TÉO `RQ-P2-039` · antivírus (capability inexistente).
+
+## Adendo — GO de implementação SLICE-1 e D-U7=A (`CF-C3-P2-UPLOAD-IMPL-GO-001`)
+
+`GO_STATUS=PO_AUTHORIZED` · `IMPLEMENTATION_AUTHORIZED=YES` · `SCOPE=SLICE-1_ONLY` · `PRODUCTION_DEPLOY_AUTHORIZED=NO` · `PRODUCTION_MIGRATIONS_AUTHORIZED=NO` · `SLICE-2_AUTHORIZED=NO`. As seções anteriores (inclusive `DECISION_REQUIRED` D-U7 no §B e §F) permanecem como histórico do processo; este adendo registra a decisão que os substitui e o estado de implementação.
+
+### G. D-U7=A — decisão PO (substitui a pendência do §B/§F)
+
+O PO adotou a recomendação A do rework **sem alterações** — padrão `supplies-api` integral:
+
+- `idempotency_key` **obrigatória** no corpo do request — campo `idempotency_key` do multipart, nunca header HTTP;
+- `UNIQUE(competence_id, idempotency_key)` + `request_hash` persistido;
+- replay idêntico ⇒ o `document` original com `deduplicated: true` (HTTP 200); divergente ⇒ `idempotency_conflict` 409;
+- **sem TTL** — registros de idempotência persistentes;
+- hash de conteúdo não deduplica — mesma key + payload divergente = 409; mesmo binário em itens diferentes = documentos distintos;
+- corrida concorrente resolvida pelo UNIQUE no banco (`ON CONFLICT DO NOTHING` + re-leitura do vencedor).
+
+### H. Estado de implementação SLICE-1 (runtime, commit no `main`)
+
+| Contrato | Implementação | Evidência |
+|---|---|---|
+| U1 upload | `POST /closing/competences/{period}/documents` multipart (`file`, `idempotency_key`, `snapshot_item_id?`, `title?`) — `access` + humano + scope; estado `ATTACHED`, `version_no=1`; item permanece `EXPECTED` | `test_closing_documents_routes.py`, `test_pg_closing_documents.py` |
+| U2 list | `GET .../documents` (`snapshot_item_id`, `link_kind`, `state`, `limit/offset` ≤100) — só competência do path | idem |
+| U3 get | `GET .../documents/{document_id}` — associação documento↔competência; cross-competence = 404; sem `storage_key` | idem |
+| U4 download | `GET .../documents/{document_id}/versions/{version_no}/content` — `FileResponse` autenticado, `DOCUMENT_DOWNLOADED result=AUTHORIZED`; `file_missing` 503 sem sucesso falso | idem |
+| Persistência | `V003__create_closing_documents.sql`: `document_file`, `closing_document` (UNIQUE competence+key, FK composta item↔competência — D-U6), `document_version`; auditoria em `closing_audit_event` na mesma transação | suíte PG em banco efêmero (ownership provado) |
+| Storage | `.part` em chunks com cap 25 MB mid-stream → sha256 durante write → magic/estrutura → `os.replace` atômico → tx Postgres → compensação `unlink` — sem atomicidade distribuída declarada | `test_closing_document_storage.py`, `test_closing_document_service.py` |
+| Validação | assinatura + estrutura + MIME/extensão convergentes; XLSX = ZIP com `xl/workbook.xml`+`[Content_Types].xml` e limite de expansão; PDF header+trailer; CSV decodificável sem NUL; nome sanitizado, stored UUID, traversal impossível | `test_closing_file_validation.py` |
+| MFE | `ClosingDocumentsPanel` na página de checklist (competência e detalhe do item) — FileDropzone + AttachmentFileList do `@delpi/plugin-ui`, retry com mesma key, Help sincronizado | `ClosingDocumentsPanel.test.tsx` |
+
+**Não implementado (SLICE-2, conforme GO):** U5 replace, U6 histórico avançado, U7 cancel, U8 events, validação humana, P5, antivírus (capability inexistente — residual mantido), housekeeping de órfãos (PLANNED).
+
+### I. Pendências que permanecem abertas após D-U7=A
+
+Retenção corporativa definitiva · inventário OFX/QIF/TXT com TÉO/Controladoria · E05 roles/obrigatoriedade · E06 motivos · CP-D02 · CP-D03 · reconciliação TÉO `RQ-P2-039` · antivírus (capability inexistente na plataforma) · housekeeping de `.part`/órfãos (PLANNED, exige especificação própria).
