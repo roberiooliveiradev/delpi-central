@@ -13,6 +13,7 @@ export type PluginView =
   | "home"
   | "financial_settlements"
   | "stock_inventory"
+  | "checklist"
   | "not_found";
 
 export type PluginNavId = "home";
@@ -20,23 +21,30 @@ export type PluginNavId = "home";
 export type PluginNavigationTarget =
   | "home"
   | "financial_settlements"
-  | "stock_inventory";
+  | "stock_inventory"
+  | "checklist";
 
 /** Mapa rota relativa → view (paths técnicos em inglês, kebab-case). */
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/financial-settlements": "financial_settlements",
   "closing/stock-inventory": "stock_inventory",
+  "closing/checklist": "checklist",
 };
 
 const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> = {
   financial_settlements: "closing/financial-settlements",
   stock_inventory: "closing/stock-inventory",
+  checklist: "closing/checklist",
 };
+
+const CHECKLIST_PERIOD_PATTERN = /^closing\/checklist\/(\d{4}-(0[1-9]|1[0-2]))$/;
 
 export type ResolvedPluginRoute = {
   view: PluginView;
   pathname: string;
   relativePath: string;
+  /** Competência YYYY-MM quando a deep route é `closing/checklist/{period}`. */
+  checklistPeriod?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -66,9 +74,17 @@ export function resolvePluginRoute(
   const relativePath = path.startsWith(`${base}/`)
     ? path.slice(base.length + 1)
     : path.slice(base.length);
-  const view = RELATIVE_TO_VIEW[relativePath] ?? "not_found";
+  const periodMatch = CHECKLIST_PERIOD_PATTERN.exec(relativePath);
+  const view = periodMatch
+    ? "checklist"
+    : RELATIVE_TO_VIEW[relativePath] ?? "not_found";
 
-  return { view, pathname: path, relativePath };
+  return {
+    view,
+    pathname: path,
+    relativePath,
+    checklistPeriod: periodMatch?.[1],
+  };
 }
 
 /** Path canônico da view (paths só via buildPluginPath — sem URL absoluta). */

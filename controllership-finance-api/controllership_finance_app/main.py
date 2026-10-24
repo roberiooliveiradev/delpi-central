@@ -10,8 +10,14 @@ from delpi_auth.credential_guard import check_credentials
 from delpi_auth.cors_policy import build_allowed_origins
 from controllership_finance_app.config import settings
 from controllership_finance_app.core.responses import fail
+from controllership_finance_app.interface.http.routes.admin_checklist_routes import (
+    router as admin_checklist_router,
+)
 from controllership_finance_app.interface.http.routes.closing_routes import (
     router as closing_router,
+)
+from controllership_finance_app.interface.http.routes.competences_routes import (
+    router as competences_router,
 )
 from controllership_finance_app.interface.http.routes.health_routes import (
     router as health_router,
@@ -20,6 +26,9 @@ from controllership_finance_app.interface.http.routes.viewer_context_routes impo
     router as viewer_context_router,
 )
 from controllership_finance_app.middleware.auth_middleware import jwt_middleware
+from controllership_finance_app.startup.run_migrations_on_startup import (
+    run_migrations_on_startup,
+)
 
 logging.basicConfig(
     level=getattr(logging, str(settings.LOG_LEVEL).upper(), logging.INFO),
@@ -36,6 +45,7 @@ ALLOWED_ORIGINS = build_allowed_origins(
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     check_credentials()
+    run_migrations_on_startup()
     yield
 
 
@@ -80,3 +90,5 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(viewer_context_router)
 app.include_router(closing_router)
+app.include_router(competences_router)
+app.include_router(admin_checklist_router)

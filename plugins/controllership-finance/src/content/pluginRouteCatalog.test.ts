@@ -13,10 +13,15 @@ import {
 describe("pluginRouteCatalog — apenas rotas implementadas", () => {
   it("cataloga somente as rotas implementadas no slice", () => {
     const routeIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
-    expect(routeIds).toEqual(["home", "financial-settlements", "stock-inventory"]);
+    expect(routeIds).toEqual([
+      "home",
+      "closing-checklist",
+      "financial-settlements",
+      "stock-inventory",
+    ]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
     expect(new Set(viewIds)).toEqual(
-      new Set(["home", "financial_settlements", "stock_inventory"]),
+      new Set(["home", "checklist", "financial_settlements", "stock_inventory"]),
     );
   });
 
@@ -39,7 +44,7 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
     const sections = resolveHubSections({ manage: false });
     expect(sections.length).toBe(2);
     expect(sections[0].routes[0].id).toBe("home");
-    expect(sections[1].routes[0].id).toBe("financial-settlements");
+    expect(sections[1].routes[0].id).toBe("closing-checklist");
   });
 });
 

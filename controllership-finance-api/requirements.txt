@@ -7,3 +7,4 @@ python-jose[cryptography]
 httpx
 requests
 pytest
+psycopg[binary]==3.2.4

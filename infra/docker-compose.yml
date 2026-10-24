@@ -2600,6 +2600,17 @@ services:
       S2S_SCOPE: ${CF_S2S_SCOPE:-}
       S2S_TIMEOUT_SECONDS: ${CF_S2S_TIMEOUT_SECONDS:-10}
 
+      # Persistência própria no postgres-plugins (CP-D01=A): schema isolado
+      # controllership_finance. Migrations no startup gated por flag.
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+      CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP: ${CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP:-true}
+
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s
@@ -2611,6 +2622,8 @@ services:
       keycloak:
         condition: service_started
       core-api:
+        condition: service_started
+      postgres-plugins:
         condition: service_started
 
     logging:

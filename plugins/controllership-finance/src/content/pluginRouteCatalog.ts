@@ -66,6 +66,23 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
     iconKey: "closing",
     routes: [
       {
+        id: "closing-checklist",
+        label: "Checklist da competência",
+        viewId: "checklist",
+        requiredCap: "always",
+        keywords: [
+          "checklist",
+          "competencia",
+          "competência",
+          "fechamento",
+          "itens",
+          "esperados",
+          "mensal",
+          "entregaveis",
+          "entregáveis",
+        ],
+      },
+      {
         id: "financial-settlements",
         label: "Baixas financeiras",
         viewId: "financial_settlements",

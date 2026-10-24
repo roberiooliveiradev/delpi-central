@@ -32,6 +32,36 @@ describe("pluginRoutes", () => {
     );
   });
 
+  it("resolve a rota do checklist da competência", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/checklist",
+    );
+    expect(resolved.view).toBe("checklist");
+    expect(resolved.relativePath).toBe("closing/checklist");
+    expect(resolved.checklistPeriod).toBeUndefined();
+    expect(buildPluginPath("checklist")).toBe(
+      "/apps/controllership-finance/closing/checklist",
+    );
+  });
+
+  it("resolve deep link com competência no checklist", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/checklist/2026-10",
+    );
+    expect(resolved.view).toBe("checklist");
+    expect(resolved.checklistPeriod).toBe("2026-10");
+  });
+
+  it("deep link de checklist com período inválido cai em not_found", () => {
+    for (const path of [
+      "/apps/controllership-finance/closing/checklist/2026-13",
+      "/apps/controllership-finance/closing/checklist/10-2026",
+      "/apps/controllership-finance/closing/checklist/extra/2026-10",
+    ]) {
+      expect(resolvePluginRoute(path).view).toBe("not_found");
+    }
+  });
+
   it("qualquer subrota não implementada cai em not_found", () => {
     for (const path of [
       "/apps/controllership-finance/overview",

@@ -1,0 +1,52 @@
+"""Helpers de autorização — backend-first, fail-closed.
+
+Regras (docs 14/96/99):
+- `principal_type == "user"` obrigatório — service principals (minted
+  superadmin) nunca executam rotas do portal humano;
+- Core é a authority de effective permissions via `has_permission`;
+- `rbac_unavailable` falha fechado com 503;
+- `access` ≠ `manage`: leitura exige `access`; administração exige
+  `manage` efetivo (escopo administrativo do slice, padrão
+  `can_administer` dos bounded contexts irmãos).
+"""
+
+from __future__ import annotations
+
+from fastapi import Request
+
+from delpi_auth.authz_core import has_permission
+
+ACCESS_PERMISSION = "controllership-finance.access"
+MANAGE_PERMISSION = "controllership-finance.manage"
+
+
+def _human_user(request: Request):
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise Exception("Unauthorized")
+    if getattr(user, "principal_type", None) != "user":
+        raise Exception("Forbidden")
+    if getattr(user, "rbac_unavailable", False):
+        raise Exception("Service Unavailable")
+    return user
+
+
+def authorized_user(request: Request):
+    """Usuário humano com `controllership-finance.access` efetivo."""
+    user = _human_user(request)
+    if not has_permission(user, ACCESS_PERMISSION):
+        raise Exception("Forbidden")
+    return user
+
+
+def authorized_admin(request: Request):
+    """Usuário humano com `controllership-finance.manage` efetivo.
+
+    Escopo administrativo do slice P6-MIN = permission `manage` (única
+    permission administrativa do produto); `access` sozinho não libera
+    mutações administrativas.
+    """
+    user = _human_user(request)
+    if not has_permission(user, MANAGE_PERMISSION):
+        raise Exception("Forbidden")
+    return user

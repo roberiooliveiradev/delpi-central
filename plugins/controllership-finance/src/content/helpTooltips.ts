@@ -66,4 +66,22 @@ export const CF_HELP = {
     table:
       "Detalhamento por produto e armazém no snapshot do mês, com a contagem do universo filtrado junto ao título. Ordenação fixa por filial, armazém e produto. Em «Colunas» você escolhe campos, em «Fonte» ajusta o texto e a borda direita de cada cabeçalho redimensiona a coluna — preferências gravadas no seu usuário. Quando o snapshot não existe para a competência, só o aviso é exibido — a tabela vazia não representaria saldo zero.",
   },
+  checklist: {
+    page:
+      "Checklist da competência: itens esperados do fechamento mensal conforme a versão publicada do checklist. Cada competência guarda um snapshot próprio — publicar uma versão nova nunca altera meses já abertos. «Esperado» significa item previsto para entrega — não indica documento entregue, recebido ou validado.",
+    competence:
+      "Competência no formato AAAA-MM. Ao abrir uma competência o Portal registra os itens do checklist vigente naquele momento — a repetição não duplica a abertura.",
+    open:
+      "Abrir a competência copia os itens da versão publicada do checklist para o mês escolhido. Se nenhuma versão estiver publicada, a abertura é recusada — não existe fallback.",
+    filters:
+      "Filtros de leitura: origem do documento, área destinataria, escopo de filial e estado. São dimensões de dados — não alteram permissões nem o snapshot.",
+    table:
+      "Itens esperados da competência. Origem indica de onde o documento costuma vir (ERP TOTVS, fonte externa ou ambos); Destinatário é a área que recebe o documento quando conhecida — «A definir» marca pendência real do checklist, não erro de dados.",
+    state:
+      "Estado do item nesta competência. «Esperado» é o estado inicial de todo item — significa que a entrega está prevista, ainda sem documento anexado nem validação.",
+    reportRef:
+      "Referência ao relatório ERP (R-ID) quando a origem é conhecida. Itens externos e pendências mapeadas não têm R-ID — a ausência não implica automação indisponível nem entrega dispensada.",
+    detail:
+      "Detalhe do item com proveniência: versão do template de origem, requisitos e notas. O conteúdo é o snapshot da competência — não muda quando o template mestre evolui.",
+  },
 } as const;

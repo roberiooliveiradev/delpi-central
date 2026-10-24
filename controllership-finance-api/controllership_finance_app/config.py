@@ -68,6 +68,24 @@ class Settings:
         _get_env("S2S_TIMEOUT_SECONDS", default="10")
     )
 
+    # postgres-plugins — schema próprio `controllership_finance` (CP-D01=A).
+    # Valores ausentes mantêm a persistência desabilitada e as rotas de
+    # competência falham fechado com 503, nunca com sucesso vazio.
+    PLUGINS_DB_HOST: str = _get_env("PLUGINS_DB_HOST", default="")
+    PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")
+    PLUGINS_DB_NAME: str = _get_env("PLUGINS_DB_NAME", default="")
+    PLUGINS_DB_USER: str = _get_env("PLUGINS_DB_USER", default="")
+    PLUGINS_DB_PASSWORD: str = _get_env("PLUGINS_DB_PASSWORD", default="")
+    PLUGINS_DB_CONNECT_TIMEOUT: int = int(
+        _get_env("PLUGINS_DB_CONNECT_TIMEOUT", default="5")
+    )
+    PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
+
+    RUN_MIGRATIONS_ON_STARTUP: bool = _get_env(
+        "CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP",
+        default="false",
+    ).lower() in ("1", "true", "yes")
+
 
 settings = Settings()
 

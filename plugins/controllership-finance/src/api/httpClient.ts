@@ -107,6 +107,25 @@ export async function httpGet<T>(
   return response.json() as Promise<T>;
 }
 
+export async function httpPost<T>(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { ...buildHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 
 /** Authenticated image request against this product BFF only. */
 export async function httpGetImageBlob(url: string, signal?: AbortSignal): Promise<Blob | null> {

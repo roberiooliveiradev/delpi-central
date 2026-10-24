@@ -46,6 +46,14 @@
       "icon": "boxes",
       "order": 32,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/closing/checklist",
+      "label": "Checklist da competência",
+      "permission": "controllership-finance.access",
+      "icon": "calendar-check",
+      "order": 33,
+      "showInMenu": false
     }
   ],
   "ui": {
