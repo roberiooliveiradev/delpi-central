@@ -5,9 +5,13 @@
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
-    "decision": "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ",
-    "reason": "Owner-ratified bounded READ of the 15 frozen V1 governed-knowledge documents via the canonical GET /knowledge/technical-guides/{topic} catalog action (api-delpi.access backend AuthZ, approved projection only, 3-excerpt pages). Documents are untrusted guidance, not domain truth or authorization. MP/PI standards remain unpublished pending business ratification. No new MCP tool, RAG, vector store, SQL or proxy capability.",
+    "taskId": "DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01",
+    "decision": "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2",
+    "reason": "Publish corpus V2 (17 documents: V1 15 + ratified full MP/PI norms, freeze-002) via the existing canonical GET /knowledge/technical-guides/{topic} catalog action with corpus_version selection (default latest). Backend api-delpi.access AuthZ, approved projection, 3-excerpt pages unchanged. Documents remain untrusted guidance, not domain truth or authorization. No new MCP tool, RAG, vector store, SQL or proxy capability.",
+    "previousDecision": {
+      "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
+      "decision": "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ",
+      "reason": "Owner-ratified bounded READ of the 15 frozen V1 governed-knowledge documents via the canonical GET /knowledge/technical-guides/{topic} catalog action (api-delpi.access backend AuthZ, approved projection only, 3-excerpt pages). Documents are untrusted guidance, not domain truth or authorization. MP/PI standards remain unpublished pending business ratification. No new MCP tool, RAG, vector store, SQL or proxy capability.",
     "previousDecision": {
       "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
       "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
@@ -35,6 +39,7 @@
           }
         }
       }
+    }
     }
     }
   },
@@ -184,7 +189,7 @@
   "operations": [
     {
       "operationId": "read_governed_technical_knowledge",
-      "reason": "Owner-ratified bounded READ of the 15 approved V1 documents; api-delpi.access backend AuthZ. No MP/PI promotion or provider dependency.",
+      "reason": "Owner-ratified bounded READ of the published governed corpus (V1 15 docs + V2 17 docs incl. ratified MP/PI norms); api-delpi.access backend AuthZ. No provider dependency.",
       "executionMode": "catalog_action",
       "responseContract": "governed_document_guidance",
       "approvedInputFields": ["topic", "section", "corpus_version", "page", "page_size"],

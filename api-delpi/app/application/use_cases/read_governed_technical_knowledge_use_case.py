@@ -5,6 +5,11 @@ import html
 import re
 from typing import Protocol
 
+from scripts.davi_governed_knowledge_bundle_lib import (
+    LATEST_CORPUS_VERSION,
+    PUBLISHED_CORPUS_VERSIONS,
+)
+
 
 class KnowledgeReadError(ValueError):
     def __init__(self, code: str, status_code: int):
@@ -14,7 +19,7 @@ class KnowledgeReadError(ValueError):
 
 
 class GovernedKnowledgeReader(Protocol):
-    def load(self) -> tuple[dict, dict, dict[str, bytes]]: ...
+    def load(self, corpus_version: int = 1) -> tuple[dict, dict, dict[str, bytes]]: ...
 
 
 def _chunks(text: str) -> list[str]:
@@ -59,12 +64,12 @@ class ReadGovernedTechnicalKnowledgeUseCase:
         self._repository = repository
 
     def execute(self, *, topic: str, section: str | None = None,
-                corpus_version: int = 1, page: int = 1, page_size: int = 3) -> dict:
-        if type(corpus_version) is not int or corpus_version != 1:
+                corpus_version: int = LATEST_CORPUS_VERSION, page: int = 1, page_size: int = 3) -> dict:
+        if type(corpus_version) is not int or corpus_version not in PUBLISHED_CORPUS_VERSIONS:
             raise KnowledgeReadError("STALE_VERSION", 409)
         if type(page) is not int or type(page_size) is not int or not 1 <= page <= 10000 or not 1 <= page_size <= 3:
             raise KnowledgeReadError("VALIDATION_ERROR", 422)
-        manifest, index, content = self._repository.load()
+        manifest, index, content = self._repository.load(corpus_version)
         selected = next((entry for entry in index["topics"] if entry["id"] == topic), None)
         if selected is None:
             raise KnowledgeReadError("NOT_FOUND", 404)

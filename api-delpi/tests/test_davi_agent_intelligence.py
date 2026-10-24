@@ -95,7 +95,7 @@ def test_product_vocabulary_source_document_exists_and_is_provenanced() -> None:
     text = doc.read_text(encoding="utf-8")
     assert "Normas_Tecnicas_DELPI.md" in text
     assert "TERM. PINO" in text
-    assert "TO_INVENTORY" in text
+    assert "corpus governado V2" in text
 
 
 def test_gpt_catalog_exposes_same_directives() -> None:

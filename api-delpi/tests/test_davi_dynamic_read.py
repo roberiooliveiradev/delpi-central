@@ -378,8 +378,11 @@ def test_allowlist_v5_multi_ops_rebaseline():
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
     assert allow.get("version") == 24
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ"
+        "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2"
     )
+    assert (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
+        "decision"
+    ) == "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ"
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
         op

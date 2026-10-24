@@ -9,6 +9,7 @@ from delpi_auth.authorization import require_any_permission
 from app.application.dto.governed_knowledge_response import GovernedKnowledgeEnvelope
 from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
 from app.application.use_cases.read_governed_technical_knowledge_use_case import KnowledgeReadError
+from scripts.davi_governed_knowledge_bundle_lib import LATEST_CORPUS_VERSION
 from app.composition.governed_knowledge_composer import (
     build_read_governed_technical_knowledge,
     published_knowledge_topics,
@@ -39,7 +40,7 @@ def read_governed_technical_knowledge(
     topic: str = Path(..., min_length=1, max_length=64, pattern=_TOPIC_PATTERN,
                       description=_TOPIC_DESCRIPTION, json_schema_extra={"enum": _TOPIC_IDS} if _TOPIC_IDS else {}),
     section: str | None = Query(None, pattern=r"^s[0-9]{4}$", description="Stable heading identifier returned in excerpts, scoped to this source version."),
-    corpus_version: int = Query(1, ge=1, le=1000, description="Required corpus version; V1 is published. Other versions return STALE_VERSION."),
+    corpus_version: int = Query(LATEST_CORPUS_VERSION, ge=1, le=1000, description="Corpus version to read. Published: 1 (V1, 15 topics), 2 (V2 adds MP/PI norms). Default is the latest published version; other versions return STALE_VERSION."),
     page: int = Query(1, ge=1, le=10000),
     page_size: int = PAGE_SIZE_QUERY("knowledge_page_3_3"),
 ):

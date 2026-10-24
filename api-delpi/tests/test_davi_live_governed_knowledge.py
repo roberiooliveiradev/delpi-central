@@ -87,7 +87,7 @@ def test_reads_real_pinned_document_with_bounded_provenance(published_corpus, to
     index = json.loads((published_corpus / "docs/integrations/evidence/davi-governed-knowledge-topics-v1.json").read_text())
     available = {entry["id"]: entry for entry in index["topics"]}
     assert topic in available
-    result = _reader(published_corpus).execute(topic=topic)
+    result = _reader(published_corpus).execute(topic=topic, corpus_version=1)
     raw = (published_corpus / available[topic]["source_path"].removeprefix("api-delpi/")).read_bytes()
     assert result["knowledge_kind"] == "GUIDANCE"
     assert result["authority"] == "GUIDANCE_NOT_DOMAIN_TRUTH"
@@ -104,7 +104,7 @@ def test_reads_real_pinned_document_with_bounded_provenance(published_corpus, to
 def test_unpublished_unknown_or_arbitrary_path_has_no_content(published_corpus, topic):
     from app.application.use_cases.read_governed_technical_knowledge_use_case import KnowledgeReadError
     with pytest.raises(KnowledgeReadError) as exc:
-        _reader(published_corpus).execute(topic=topic)
+        _reader(published_corpus).execute(topic=topic, corpus_version=1)
     assert exc.value.code == "NOT_FOUND"
 
 
@@ -131,7 +131,7 @@ def test_corrupt_corpus_fails_closed(published_corpus, change, tmp_path):
     else:
         doc.unlink()
     with pytest.raises(KnowledgeReadError) as exc:
-        _reader(published_corpus).execute(topic="product_master_sb1")
+        _reader(published_corpus).execute(topic="product_master_sb1", corpus_version=1)
     assert exc.value.code == "CORPUS_UNAVAILABLE"
     assert "script" not in str(exc.value)
 
@@ -140,14 +140,17 @@ def test_version_section_pagination_and_sizes(published_corpus):
     from app.application.use_cases.read_governed_technical_knowledge_use_case import KnowledgeReadError
     reader = _reader(published_corpus)
     with pytest.raises(KnowledgeReadError, match="STALE_VERSION"):
+        reader.execute(topic="product_master_sb1", corpus_version=3)
+    # V2 is published but not staged in this V1-only fixture -> fail closed.
+    with pytest.raises(KnowledgeReadError, match="CORPUS_UNAVAILABLE"):
         reader.execute(topic="product_master_sb1", corpus_version=2)
     with pytest.raises(KnowledgeReadError, match="NOT_FOUND"):
-        reader.execute(topic="product_master_sb1", section="missing_section")
+        reader.execute(topic="product_master_sb1", corpus_version=1, section="missing_section")
     for arguments in ({"page_size": 4}, {"page": 0}, {"page": 10001}):
         with pytest.raises(KnowledgeReadError, match="VALIDATION_ERROR"):
-            reader.execute(topic="product_master_sb1", **arguments)
-    first = reader.execute(topic="product_master_sb1", page_size=1)
-    second = reader.execute(topic="product_master_sb1", page_size=1, page=2)
+            reader.execute(topic="product_master_sb1", corpus_version=1, **arguments)
+    first = reader.execute(topic="product_master_sb1", corpus_version=1, page_size=1)
+    second = reader.execute(topic="product_master_sb1", corpus_version=1, page_size=1, page=2)
     assert first["items"] != second["items"]
     assert first["has_more"] is True
     assert first["total"] == second["total"]

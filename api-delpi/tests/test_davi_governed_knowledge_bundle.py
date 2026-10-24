@@ -270,7 +270,7 @@ def test_c06_current_freeze_membership_differs_from_pinned_fails(
     pinned = frozen_corpus_paths()
     monkeypatch.setattr(
         "davi_governed_knowledge_bundle_lib.frozen_corpus_paths",
-        lambda repo_root=None: list(
+        lambda repo_root=None, **kwargs: list(
             pinned[:-1] + ["api-delpi/docs/api/added-later.md"]
         ),
     )

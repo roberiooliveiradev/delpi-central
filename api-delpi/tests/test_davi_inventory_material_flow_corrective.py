@@ -550,7 +550,9 @@ def test_count02_baseline_and_live_counts_recomputed():
 
 
 def test_coverage_decision_chain_records_corrective():
-    coverage = _allow()["coverageDecision"]["previousDecision"]["previousDecision"]
+    coverage = (
+        _allow()["coverageDecision"]["previousDecision"]["previousDecision"]["previousDecision"]
+    )
     assert coverage["taskId"] == "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001"
     assert coverage["decision"] == (
         "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS"

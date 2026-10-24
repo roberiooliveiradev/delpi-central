@@ -64,7 +64,9 @@ def test_knowledge_availability_is_explicit_for_external_mcp_consumers() -> None
     assert source["retrieval_surface"] == "WORKSPACE_AGENT_FILES"
     assert source["mcp_document_access"] == "EXPOSED_VIA_CATALOG_ACTION_READ"
     assert source["mcp_read_operation_id"] == "read_governed_technical_knowledge"
-    assert source["consumer_contract_status"] == "RATIFIED_V1_BOUNDED"
+    assert source["consumer_contract_status"] == "RATIFIED_BOUNDED"
+    assert source["published_corpus_versions"] == [1, 2]
+    assert source["latest_corpus_version"] == 2
     assert source["tools"] == [
         "discover_delpi_information",
         "execute_delpi_information",

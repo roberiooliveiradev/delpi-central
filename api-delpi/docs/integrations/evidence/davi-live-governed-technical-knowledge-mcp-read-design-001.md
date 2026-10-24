@@ -104,3 +104,15 @@ Direção aprovada: oferecer **inteligência técnica viva** para consumidores M
 **Review notes:** GitHub commit inclui alterações extensas de baseline OpenAPI/contagem, justificadas pelo executor como regen de drift anterior; revisão completa de diffs/CI em todo contrato permanece residual. Full DAVI suite reportada `2395 PASS / 9 SKIP / 1 FAIL ambiental`, não chamar suite irrestritamente verde. Observado dois tools MCP e zero resources segundo executor; chamada do consumidor comprovou discover/execute, mas não introspecionou lista global de tools. NEXT: avaliação local-first da DÉLIA consumindo documentação real V1; após ratificação e publicação versionada de MP/PI, avaliar caso O2 completo; sem liberar R4 automaticamente.
 
 **COORDINATION_STATUS:** `DOCUMENT_READ_CONSUMER=PASS`; `RELEASE_ACCEPT_WITH_RESIDUAL`; `MP_PI_RATIFICATION=PENDING`; `DÉLIA_O2=INCONCLUSIVE`; `R4_AUTHORIZED=NO`.
+
+## 9. Corpus V2 — publicação das normas completas MP/PI (2026-10-24)
+
+**TASK:** `DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01`. Estado: `MP_PI_RATIFICATION=RATIFIED`; `MP_PI_PUBLICATION=PUBLISHED_V2`; `V1_CORPUS=INTACT`; `MCP_TOOLS_ADDED=0`.
+
+- **Gate de autoridade:** `NORMATIVE_SOURCE=Normas_Tecnicas_DELPI.md (commit histórico 63cc77bf) + engenharia-codigos-intermediarios-delpi.md`; `BUSINESS_OWNER=ENGENHARIA (Robério Oliveira — elaboração registrada no próprio texto normativo; revisão José)`; `SOURCE_VERSION=293423bb2cf92b2922f093dc66d388297a74714f (freeze-002)`; `CURRENTNESS=CURRENT` (owner do repositório ratificou conteúdo e vigência — mesma pessoa registrada como elaboradora); `APPROVAL_EVIDENCE=davi-governed-knowledge-freeze-002.md`; `NORMATIVE_SCOPE=descrição/nomenclatura/classificação MP + interpretação de códigos PI`; `INTENDED_AUDIENCE=DAVI/DÉLIA consumidores autorizados`; `PUBLICATION_AUTHORIZED=YES`.
+- **Membership V2:** 17 documentos = 15 V1 (SHA-256 byte-idênticos ao manifest V1) + `normas-tecnicas-descricao-materias-primas.md` + `codigos-intermediarios-pi.md`. `manifest_identity=b8be66246d63c12c678891c897ccd5494cfbb33ee8ea6455111257ee5795ebb5`; `freeze_sha/source_git_sha=293423bb…`.
+- **Versionamento:** `corpus_version` aceita `1` e `2` (default = latest publicado, 2); demais → `STALE_VERSION` 409. `PUBLISHED_CORPUS_VERSIONS={1,2}` na bundle lib; V1 permanece servável e verificável de forma independente (`emit-manifest/build/verify --corpus-version`).
+- **Tópicos V2:** `mp_description_standards` (TERM., famílias, estrutura de descrição) e `pi_intermediate_codes` (família 50xx, bitola, cor, terminais). O documento MP documenta explicitamente `TERM. BALA` — evidência normativa para o caso terminal bala da DÉLIA (O2), ainda pendente de homologação pela Trilha B.
+- **Discovery:** marcadores conceituais genéricos estendidos em `concept_intent_guard.py` ("o que é", "como funciona", "quais são as normas/regras/abreviações", "existe norma"), sem termos de domínio nem operationIds; seleção por descrição/aliases dos tópicos publicados.
+- **Residuais inalterados:** provider Files K01–K10 `TEST_NOT_RUN`; `SECOND_USER_AUTHZ=TEST_NOT_RUN`; DÉLIA O2 e R4 seguem nos gates da Trilha B.
+

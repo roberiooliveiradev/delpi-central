@@ -258,9 +258,9 @@ def test_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
     assert allow.get("version") >= 17
     previous = (
-        allow["coverageDecision"]["previousDecision"]["previousDecision"].get(
+        allow["coverageDecision"]["previousDecision"]["previousDecision"][
             "previousDecision"
-        )
+        ].get("previousDecision")
         or {}
     )
     assert previous.get("taskId") == (

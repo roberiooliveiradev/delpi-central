@@ -14,6 +14,7 @@ import hashlib
 import json
 import re
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -31,10 +32,77 @@ FREEZE_SHA = "d9926cc14a8a4edd1b52775b82cf7353aede75b4"
 MANIFEST_REPO_PATH = (
     "api-delpi/docs/integrations/evidence/davi-governed-knowledge-manifest-v1.json"
 )
-OUTPUT_DIR = API_ROOT / "dist" / "davi-governed-knowledge" / "v1"
+MEMBERSHIP_MARKER = "## FROZEN_FIRST_CORPUS"
 TOPIC_INDEX_REPO_PATH = (
     "api-delpi/docs/integrations/evidence/davi-governed-knowledge-topics-v1.json"
 )
+
+# Corpus V2 — additive revision: V1 15 documents byte-intact + full MP/PI norms.
+CORPUS_VERSION_V2 = 2
+FREEZE_ARTIFACT_V2 = (
+    "api-delpi/docs/integrations/evidence/davi-governed-knowledge-freeze-002.md"
+)
+FREEZE_SHA_V2 = "293423bb2cf92b2922f093dc66d388297a74714f"  # freeze-002 commit
+MANIFEST_V2_REPO_PATH = (
+    "api-delpi/docs/integrations/evidence/davi-governed-knowledge-manifest-v2.json"
+)
+MEMBERSHIP_MARKER_V2 = "## FROZEN_CORPUS_V2"
+TOPIC_INDEX_V2_REPO_PATH = (
+    "api-delpi/docs/integrations/evidence/davi-governed-knowledge-topics-v2.json"
+)
+PUBLISHED_V2_MANIFEST_IDENTITY = "b8be66246d63c12c678891c897ccd5494cfbb33ee8ea6455111257ee5795ebb5"
+
+
+@dataclass(frozen=True)
+class CorpusVersionSpec:
+    """Pinned identities for one published corpus version."""
+
+    corpus_version: int
+    manifest_repo_path: str
+    topic_index_repo_path: str
+    freeze_artifact: str
+    freeze_sha: str
+    membership_marker: str
+    manifest_identity: str
+
+
+V1_SPEC = CorpusVersionSpec(
+    corpus_version=CORPUS_VERSION,
+    manifest_repo_path=MANIFEST_REPO_PATH,
+    topic_index_repo_path=TOPIC_INDEX_REPO_PATH,
+    freeze_artifact=FREEZE_ARTIFACT,
+    freeze_sha=FREEZE_SHA,
+    membership_marker=MEMBERSHIP_MARKER,
+    manifest_identity=PUBLISHED_V1_MANIFEST_IDENTITY,
+)
+V2_SPEC = CorpusVersionSpec(
+    corpus_version=CORPUS_VERSION_V2,
+    manifest_repo_path=MANIFEST_V2_REPO_PATH,
+    topic_index_repo_path=TOPIC_INDEX_V2_REPO_PATH,
+    freeze_artifact=FREEZE_ARTIFACT_V2,
+    freeze_sha=FREEZE_SHA_V2,
+    membership_marker=MEMBERSHIP_MARKER_V2,
+    manifest_identity=PUBLISHED_V2_MANIFEST_IDENTITY,
+)
+PUBLISHED_CORPUS_VERSIONS: dict[int, CorpusVersionSpec] = {
+    spec.corpus_version: spec for spec in (V1_SPEC, V2_SPEC)
+}
+LATEST_CORPUS_VERSION = max(PUBLISHED_CORPUS_VERSIONS)
+APPROVED_TOPIC_STATUSES = frozenset({"FROZEN_V1", "FROZEN_V2"})
+
+
+def corpus_version_spec(corpus_version: int) -> CorpusVersionSpec:
+    spec = PUBLISHED_CORPUS_VERSIONS.get(corpus_version)
+    if spec is None:
+        raise BundleError("unsupported corpus version")
+    return spec
+
+
+def output_dir_for(corpus_version: int) -> Path:
+    return API_ROOT / "dist" / "davi-governed-knowledge" / f"v{corpus_version}"
+
+
+OUTPUT_DIR = output_dir_for(CORPUS_VERSION)
 TOPIC_INDEX_FILENAME = "DAVI-topic-index.md"
 TOPIC_INDEX_SCHEMA = "davi-governed-knowledge-topics-v1"
 
@@ -58,11 +126,11 @@ def resolve_source_path(rel: str, repo_root: Path = REPO_ROOT) -> Path:
     return rooted
 
 
-def _parse_corpus_paths(text: str) -> list[str]:
+def _parse_corpus_paths(text: str, marker: str = _CORPUS_SECTION) -> list[str]:
     """Corpus membership parser over freeze artifact text."""
-    if _CORPUS_SECTION not in text:
-        raise BundleError("freeze artifact lacks FROZEN_FIRST_CORPUS section")
-    section = text.split(_CORPUS_SECTION, 1)[1]
+    if marker not in text:
+        raise BundleError("freeze artifact lacks corpus membership section")
+    section = text.split(marker, 1)[1]
     end = section.find("\n## ")
     if end > 0:
         section = section[:end]
@@ -72,12 +140,14 @@ def _parse_corpus_paths(text: str) -> list[str]:
     return paths
 
 
-def frozen_corpus_paths(repo_root: Path = REPO_ROOT) -> list[str]:
+def frozen_corpus_paths(
+    repo_root: Path = REPO_ROOT, spec: CorpusVersionSpec = V1_SPEC
+) -> list[str]:
     """Corpus membership authority: parse the current freeze artifact."""
-    text = resolve_source_path(FREEZE_ARTIFACT, repo_root).read_text(
+    text = resolve_source_path(spec.freeze_artifact, repo_root).read_text(
         encoding="utf-8"
     )
-    return _parse_corpus_paths(text)
+    return _parse_corpus_paths(text, marker=spec.membership_marker)
 
 
 def _git_show_blob(sha: str, repo_rel: str, repo_root: Path) -> bytes:
@@ -151,9 +221,10 @@ def emit_manifest(
     generated_at: str,
     repo_root: Path = REPO_ROOT,
     source_git_sha: str | None = None,
+    spec: CorpusVersionSpec = V1_SPEC,
 ) -> dict[str, Any]:
     """Derive the pinned manifest from the freeze artifact corpus."""
-    paths = frozen_corpus_paths(repo_root)
+    paths = frozen_corpus_paths(repo_root, spec=spec)
     documents: list[dict[str, str]] = []
     for rel in paths:
         src = resolve_source_path(rel, repo_root)
@@ -162,10 +233,10 @@ def emit_manifest(
         documents.append({"path": rel, "sha256": sha256_file(src)})
     manifest: dict[str, Any] = {
         "corpus_id": CORPUS_ID,
-        "corpus_version": CORPUS_VERSION,
+        "corpus_version": spec.corpus_version,
         "source_git_sha": source_git_sha or current_git_sha(repo_root),
-        "freeze_artifact": FREEZE_ARTIFACT,
-        "freeze_sha": FREEZE_SHA,
+        "freeze_artifact": spec.freeze_artifact,
+        "freeze_sha": spec.freeze_sha,
         "generated_at": generated_at,
         "documents": documents,
     }
@@ -185,11 +256,19 @@ def _provenance_header(doc: dict[str, str], manifest: dict[str, Any]) -> str:
     )
 
 
-def _manifest_schema(manifest: dict[str, Any]) -> list[dict[str, str]]:
+def _manifest_spec(manifest: dict[str, Any]) -> CorpusVersionSpec:
+    """Resolve the published spec a manifest claims, or fail closed."""
+    version = manifest.get("corpus_version")
+    if type(version) is not int:
+        raise BundleError("manifest corpus_version missing")
+    return corpus_version_spec(version)
+
+
+def _manifest_schema(manifest: dict[str, Any], spec: CorpusVersionSpec) -> list[dict[str, str]]:
     """Step 1 — schema/basic fields; returns the document list."""
     if manifest.get("corpus_id") != CORPUS_ID:
         raise BundleError("manifest corpus_id mismatch")
-    if manifest.get("corpus_version") != CORPUS_VERSION:
+    if manifest.get("corpus_version") != spec.corpus_version:
         raise BundleError("manifest corpus_version mismatch")
     documents = manifest.get("documents")
     if not isinstance(documents, list) or not documents:
@@ -226,7 +305,8 @@ def verify_manifest(
 
     Returns concise evidence on PASS. Never regenerates hashes.
     """
-    documents = _manifest_schema(manifest)
+    spec = _manifest_spec(manifest)
+    documents = _manifest_schema(manifest, spec)
     if manifest.get("manifest_sha256") != manifest_sha256(manifest):
         raise BundleError("manifest_sha256 mismatch: manifest is stale or tampered")
 
@@ -242,8 +322,8 @@ def verify_manifest(
         raise BundleError("freeze_sha is not a full git SHA")
     if not resolver(freeze_sha):
         raise BundleError(f"freeze_sha does not resolve: {freeze_sha}")
-    freeze_text = reader(freeze_sha, FREEZE_ARTIFACT).decode("utf-8")
-    pinned = set(_parse_corpus_paths(freeze_text))
+    freeze_text = reader(freeze_sha, spec.freeze_artifact).decode("utf-8")
+    pinned = set(_parse_corpus_paths(freeze_text, marker=spec.membership_marker))
     manifest_set = {d["path"] for d in documents}
     extra = manifest_set - pinned
     missing = pinned - manifest_set
@@ -252,7 +332,7 @@ def verify_manifest(
     if missing:
         raise BundleError(f"expected corpus member missing: {sorted(missing)}")
 
-    current = set(frozen_corpus_paths(repo_root))
+    current = set(frozen_corpus_paths(repo_root, spec=spec))
     if current != pinned:
         raise BundleError(
             "current freeze membership diverges from pinned freeze_sha"
@@ -289,11 +369,13 @@ def verify_manifest(
 
 
 
-def load_topic_index(repo_root: Path = REPO_ROOT) -> dict[str, Any]:
+def load_topic_index(
+    repo_root: Path = REPO_ROOT, spec: CorpusVersionSpec = V1_SPEC
+) -> dict[str, Any]:
     """Load curated source pointers; this catalog is not domain authority."""
-    path = resolve_source_path(TOPIC_INDEX_REPO_PATH, repo_root)
+    path = resolve_source_path(spec.topic_index_repo_path, repo_root)
     if not path.is_file():
-        raise BundleError(f"topic index missing: {TOPIC_INDEX_REPO_PATH}")
+        raise BundleError(f"topic index missing: {spec.topic_index_repo_path}")
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, OSError) as exc:
@@ -319,7 +401,7 @@ def verify_topic_index(
         raise BundleError("topic index freeze_sha mismatch")
     if topic_index.get("authority") != "GUIDANCE_NOT_DOMAIN_TRUTH":
         raise BundleError("topic index cannot claim business/domain authority")
-    approved = {doc["path"] for doc in _manifest_schema(manifest)}
+    approved = {doc["path"] for doc in _manifest_schema(manifest, _manifest_spec(manifest))}
     topics = topic_index.get("topics")
     if not isinstance(topics, list) or len(topics) != len(approved):
         raise BundleError("topic index membership/cardinality mismatch")
@@ -336,7 +418,7 @@ def verify_topic_index(
             raise BundleError("duplicate knowledge topic id/source")
         seen_ids.add(identity)
         seen_paths.add(path)
-        if topic.get("status") != "FROZEN_V1":
+        if topic.get("status") not in APPROVED_TOPIC_STATUSES:
             raise BundleError("unapproved topic status")
         if topic.get("intent") != "CONCEPTUAL_GUIDANCE_ONLY":
             raise BundleError("knowledge topic cannot authorize live data")
@@ -402,17 +484,24 @@ def _published_bytes(api_root: Path, source_path: str) -> bytes:
     return content
 
 
-def read_published_corpus(*, api_root: Path = API_ROOT) -> tuple[dict, dict, dict[str, bytes]]:
-    manifest = json.loads(_published_bytes(api_root, MANIFEST_REPO_PATH))
-    documents = _manifest_schema(manifest)
-    if manifest.get("manifest_sha256") != manifest_sha256(manifest) or manifest["manifest_sha256"] != PUBLISHED_V1_MANIFEST_IDENTITY:
+def read_published_corpus(*, api_root: Path = API_ROOT, corpus_version: int = CORPUS_VERSION) -> tuple[dict, dict, dict[str, bytes]]:
+    spec = corpus_version_spec(corpus_version)
+    manifest = json.loads(_published_bytes(api_root, spec.manifest_repo_path))
+    spec = _manifest_spec(manifest)
+    if spec.corpus_version != corpus_version:
+        raise BundleError("Published manifest corpus_version mismatch")
+    documents = _manifest_schema(manifest, spec)
+    if manifest.get("manifest_sha256") != manifest_sha256(manifest) or manifest["manifest_sha256"] != spec.manifest_identity:
         raise BundleError("Published manifest identity mismatch")
-    if manifest.get("freeze_sha") != FREEZE_SHA or not _GIT_SHA_RE.fullmatch(str(manifest.get("source_git_sha", ""))):
+    if manifest.get("freeze_sha") != spec.freeze_sha or not _GIT_SHA_RE.fullmatch(str(manifest.get("source_git_sha", ""))):
         raise BundleError("Published source version mismatch")
-    membership = _parse_corpus_paths(_published_bytes(api_root, FREEZE_ARTIFACT).decode("utf-8"))
-    if len(documents) != 15 or {doc["path"] for doc in documents} != set(membership):
+    membership = _parse_corpus_paths(
+        _published_bytes(api_root, spec.freeze_artifact).decode("utf-8"),
+        marker=spec.membership_marker,
+    )
+    if {doc["path"] for doc in documents} != set(membership):
         raise BundleError("Published membership mismatch")
-    index = json.loads(_published_bytes(api_root, TOPIC_INDEX_REPO_PATH))
+    index = json.loads(_published_bytes(api_root, spec.topic_index_repo_path))
     verify_topic_index(index, manifest, source_exists=lambda path: bool(_published_bytes(api_root, path)))
     content = {}
     for doc in documents:
@@ -453,7 +542,7 @@ def render_topic_index(topic_index: dict[str, Any], manifest: dict[str, Any]) ->
             f"source_path: {path}",
             f"source_sha256: {hashes[path]}",
             f"sinônimos: {', '.join(topic['aliases'])}",
-            "status: FROZEN_V1 / CONCEPTUAL_GUIDANCE_ONLY",
+            f"status: {topic['status']} / CONCEPTUAL_GUIDANCE_ONLY",
             "",
         ])
     lines.extend([
@@ -487,7 +576,7 @@ def build_bundle(
         blob_reader=blob_reader,
         ref_resolver=ref_resolver,
     )
-    topic_index = load_topic_index(repo_root)
+    topic_index = load_topic_index(repo_root, spec=_manifest_spec(manifest))
     verify_topic_index(topic_index, manifest, repo_root=repo_root)
     outputs: list[tuple[Path, bytes]] = []
     for doc in manifest["documents"]:

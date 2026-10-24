@@ -42738,7 +42738,9 @@
             "third_party_materials",
             "weekly_portfolio",
             "market_rol_cfop",
-            "machine_load"
+            "machine_load",
+            "mp_description_standards",
+            "pi_intermediate_codes"
           ]
         },
         {
@@ -42752,9 +42754,9 @@
           "name": "corpus_version",
           "in": "query",
           "required": false,
-          "description": "Required corpus version; V1 is published. Other versions return STALE_VERSION.",
+          "description": "Corpus version to read. Published: 1 (V1, 15 topics), 2 (V2 adds MP/PI norms). Default is the latest published version; other versions return STALE_VERSION.",
           "type": "integer",
-          "default": 1
+          "default": 2
         },
         {
           "name": "page",

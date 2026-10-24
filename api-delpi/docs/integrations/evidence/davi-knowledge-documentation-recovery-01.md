@@ -135,3 +135,13 @@ K01, K02, K03, K04, K05, K06, K07, K08, K09, K10: each TEST_NOT_RUN on provider.
 **Impacto sobre Trilha B DÉLIA:** DÉLIA pode avançar independentemente usando apenas guidance efetivamente recebido dos MCPs e a recuperação READ governada; **não** pode pressupor acesso documental a Files, nem tratar diretivas como documento recuperado. Não desbloqueia R4 nem a dependência documental do doc 143. Próximos passos segregados: operador Agent Studio comprova sync/retrieval; business owner ratifica MP/PI; coordenação decide fronteira documental MCP; owner infra trata escopo Compose; revisão separada do resultado da Trilha B.
 
 **COORDINATION_STATUS:** `SIGNAL_FIX=ACCEPT_WITH_RESIDUAL`; `KNOWLEDGE_CONTENT_RECOVERY=NOT_PROVEN`; `DOCUMENT_CONSUMER_BOUNDARY=ARCHITECTURE_DECISION_REQUIRED`; `R4_AUTHORIZED=NO`.
+
+## Corpus V2 — MP/PI full norms published — 2026-10-24
+
+`DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01`: a ratificação pendente em "MP/PI source inventory and governance gate" foi resolvida.
+
+- **Authority gate:** `NORMATIVE_SOURCE=minha-delpi-ai-api/docs/knowledge/sources/gpt-instructions/Normas_Tecnicas_DELPI.md (+ engenharia-codigos-intermediarios-delpi.md como referência PI oficial)`; `BUSINESS_OWNER=ENGENHARIA — Robério Oliveira (elaboração registrada no próprio texto normativo por seção; revisão José)`; `CURRENTNESS=CURRENT`; `APPROVAL_EVIDENCE=davi-governed-knowledge-freeze-002.md`; `PUBLICATION_AUTHORIZED=YES`. A autorização do Product Owner cobriu a implementação; a autoridade normativa registrada é a Engenharia — não inferida por nome de área.
+- **Migração:** cópias completas sob `api-delpi/docs/api/padroes-totvs/` — `normas-tecnicas-descricao-materias-primas.md` (texto integral MP + cabeçalho de proveniência) e `codigos-intermediarios-pi.md` (resumo/referência oficial PI, autoritativa conforme owner — origem PDF externa não recuperada, registrado no freeze). Nenhum prompt/runtime do Chat importado.
+- **Corpus V2:** freeze-002 (`293423bb`), 17 membros = 15 V1 byte-idênticos + 2 normas. `manifest-v2` pinado `b8be66246d63…`; `topics-v2` indexa `mp_description_standards` e `pi_intermediate_codes`. V1 preservado: manifest/índice/freeze/sha inalterados, `verify --corpus-version 1` PASS.
+- **Runtime:** `read_governed_technical_knowledge` aceita `corpus_version` `1`|`2` (default=latest=2); demais → `STALE_VERSION`. O documento MP documenta `TERM.` e explicitamente `TERM. BALA` — evidência normativa do caso terminal bala.
+- `TRANSFER_STATUS=COMPLETED`; `GOVERNANCE_STATUS=PUBLISHED_V2`. Residuais inalterados: provider Files K01–K10 `TEST_NOT_RUN`, second-user AuthZ `TEST_NOT_RUN`, homologação DÉLIA O2 na Trilha B.

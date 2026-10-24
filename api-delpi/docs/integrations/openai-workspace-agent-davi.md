@@ -455,8 +455,15 @@ an MCP document-read surface.
 `governed_knowledge.status=PROVEN` describes the Git corpus; discovery also
 projects explicit `corpus_status`, `retrieval_surface`, `mcp_document_access`
 (`EXPOSED_VIA_CATALOG_ACTION_READ`) and `consumer_contract_status`
-(`RATIFIED_V1_BOUNDED`). These are guidance metadata, not recovered document
+(`RATIFIED_BOUNDED`). These are guidance metadata, not recovered document
 content, backend AuthZ or proof of provider synchronization.
+
+Corpus V2 is published (`corpus_version` `1` and `2`; default = latest). V2
+adds the ratified MP/PI full norms (`mp_description_standards`,
+`pi_intermediate_codes` — 17 documents, freeze-002,
+`davi-governed-knowledge-freeze-002.md`) while V1 remains readable and
+verifiable independently. The deferred FIFO/Best Fit/FEFO vendor reference
+stays unpublished.
 
 External consumers must not infer access to Files from operational discovery
 candidates. No production document resource or third tool exists. Document
@@ -471,14 +478,15 @@ provider/owner gates: [bounded recovery evidence](evidence/davi-knowledge-docume
 Not executed yet; provider acceptance is still pending:
 
 1. Verify the current provider draft state (files, instructions, auth mode).
-2. `python scripts/build_davi_governed_knowledge_bundle.py verify` —
-   authoritative local pre-provider gate. Proves manifest integrity
+2. `python scripts/build_davi_governed_knowledge_bundle.py verify --corpus-version <v>` —
+   authoritative local pre-provider gate (per published version: `1` and `2`).
+   Proves manifest integrity
    (`manifest_sha256`), pinned freeze membership at `freeze_sha`, document
    hashes at `source_git_sha`, and current-source reproducibility. It must
    PASS before any upload.
-3. Upload the 15 frozen derived docs + `DAVI-topic-index.md` +
-   `manifest.json` (17 generated files total) from
-   `dist/davi-governed-knowledge/v1/` into the Agent **Files** section
+3. Upload the frozen derived docs + `DAVI-topic-index.md` +
+   `manifest.json` (17 generated files for V1, 19 for V2) from
+   `dist/davi-governed-knowledge/v<version>/` into the Agent **Files** section
    **only after successful local `verify`**. The build now rejects any
    unexpected/stale or symlinked output file: operator should review and
    clear stale generated artifacts, then re-run `verify` and `build`.
