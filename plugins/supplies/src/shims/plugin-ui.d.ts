@@ -404,6 +404,9 @@ declare module "@delpi/plugin-ui/index" {
       description?: ReactNode;
       tone?: "neutral" | "warning" | "danger";
       loading?: boolean;
+      onSelect?: () => void;
+      active?: boolean;
+      ariaLabel?: string;
     }>;
     density?: "comfortable" | "compact";
     "aria-label"?: string;

@@ -83,6 +83,39 @@ describe("PageHero", () => {
     expect(document.querySelector("[data-loading='true']")).toBeTruthy();
   });
 
+  it("highlight com onSelect vira role=button acionável e pressed", () => {
+    const cn = pageHeroBemClasses("cm");
+    let selected = 0;
+    const { container } = render(
+      <PageHero
+        classNames={cn}
+        title="Início"
+        highlights={[
+          {
+            id: "below",
+            label: "Abaixo",
+            value: "5",
+            onSelect: () => {
+              selected += 1;
+            },
+            active: true,
+            ariaLabel: "Filtrar por Abaixo",
+          },
+          { id: "plain", label: "Neutro", value: "1" },
+        ]}
+      />,
+    );
+    const tile = screen.getByRole("button", { name: "Filtrar por Abaixo" });
+    expect(tile.getAttribute("aria-pressed")).toBe("true");
+    expect(tile.className).toContain("delpi-ui-page-hero__highlight--interactive");
+    expect(tile.className).toContain("delpi-ui-page-hero__highlight--pressed");
+    expect(tile.className).toContain("cm-page-hero__highlight--interactive");
+    tile.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(selected).toBe(1);
+    // Tile sem onSelect continua inerte (sem role=button extra).
+    expect(container.querySelectorAll("[role='button']").length).toBe(1);
+  });
+
   it("aplica density compact no root", () => {
     const cn = pageHeroBemClasses("cm");
     const { container } = render(

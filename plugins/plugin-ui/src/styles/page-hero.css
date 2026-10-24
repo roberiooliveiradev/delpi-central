@@ -167,6 +167,54 @@
   color: var(--delpi-ui-danger, #dc2626);
 }
 
+/* Tile acionável (`onSelect`) — mesmo padrão de `delpi-ui-kpi-card--interactive`. */
+.delpi-ui-page-hero__highlight--interactive {
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.delpi-ui-page-hero__highlight--interactive:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+    var(--delpi-ui-border, #e6e6e6)
+  );
+  box-shadow: 0 8px 20px -16px
+    color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 55%, transparent);
+}
+
+.delpi-ui-page-hero__highlight--interactive:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
+.delpi-ui-page-hero__highlight--interactive:active {
+  transform: translateY(1px);
+}
+
+.delpi-ui-page-hero__highlight--pressed {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 55%,
+    var(--delpi-ui-border, #e6e6e6)
+  );
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-page-hero__highlight--interactive {
+    transition: none;
+  }
+
+  .delpi-ui-page-hero__highlight--interactive:active {
+    transform: none;
+  }
+}
+
 .delpi-ui-page-hero__body {
   display: flex;
   flex-direction: column;

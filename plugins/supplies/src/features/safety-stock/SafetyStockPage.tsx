@@ -16,7 +16,6 @@ import {
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
-  SuppliesScopeChipBar,
   SuppliesSectionCard,
   SuppliesSectionHintLabel,
   SuppliesStateBanner,
@@ -297,44 +296,6 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
     [branchChoiceCode, navigateToDetail],
   );
 
-  // E11.S8 — filtros rápidos = o próprio `query.status` (fonte única):
-  // chips e select Status são duas visões do mesmo estado; sem contadores
-  // (o resumo do produtor já é limitado ao filtro ativo).
-  const selectStatus = (status: SafetyStockQuery["status"]) => () =>
-    patchQuery({ status, page: 1 });
-  const statusChips = [
-    {
-      id: "all",
-      label: C.chipAll,
-      active: query.status === "",
-      onSelect: selectStatus(""),
-    },
-    {
-      id: "below",
-      label: C.chipBelow,
-      active: query.status === "below_safety_stock",
-      onSelect: selectStatus("below_safety_stock"),
-    },
-    {
-      id: "at",
-      label: C.chipAt,
-      active: query.status === "at_safety_stock",
-      onSelect: selectStatus("at_safety_stock"),
-    },
-    {
-      id: "above",
-      label: C.chipAbove,
-      active: query.status === "above_safety_stock",
-      onSelect: selectStatus("above_safety_stock"),
-    },
-    {
-      id: "without",
-      label: C.chipWithout,
-      active: query.status === "without_safety_stock",
-      onSelect: selectStatus("without_safety_stock"),
-    },
-  ];
-
   // Opções de filial: catálogo operacional do BFF; fallback = unidades da sessão.
   const branchOptions = branchCatalog.length ? branchCatalog : [...units];
 
@@ -343,41 +304,76 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
     const unavailable = summary == null;
     const metric = (value: number | undefined) =>
       unavailable || value == null ? "—" : value.toLocaleString("pt-BR");
+    // E11.S9 — cards acionáveis = o próprio estado da consulta (fonte única;
+    // sem barra de chips separada). «Com estoque de segurança» é o recorte
+    // contratual `includeWithoutSafetyStock=false` (produtor:
+    // `status <> 'without_safety_stock'` = união abaixo/no/acima);
+    // «Materiais» restaura a inclusão completa; demais = status único.
+    const selectCard = (patch: Partial<SafetyStockQuery>) => () =>
+      patchQuery({ ...patch, page: 1 });
+    const situationClear = query.status === "";
+    const cardActive = {
+      all: situationClear && query.includeWithoutSafetyStock,
+      withSafetyStock: situationClear && !query.includeWithoutSafetyStock,
+      without: query.status === "without_safety_stock",
+      below: query.status === "below_safety_stock",
+      at: query.status === "at_safety_stock",
+      above: query.status === "above_safety_stock",
+    };
+    const cardFilterLabel = (label: string) => `Filtrar por ${label}`;
     return [
       {
         id: "total-materials",
         label: C.heroTotal,
         value: metric(summary?.total_materials),
+        active: cardActive.all,
+        onSelect: selectCard({ status: "", includeWithoutSafetyStock: true }),
+        ariaLabel: cardFilterLabel(C.heroTotal),
       },
       {
         id: "with-safety-stock",
         label: C.heroWithSafetyStock,
         value: metric(summary?.with_safety_stock),
+        active: cardActive.withSafetyStock,
+        onSelect: selectCard({ status: "", includeWithoutSafetyStock: false }),
+        ariaLabel: cardFilterLabel(C.heroWithSafetyStock),
       },
       {
         id: "without-safety-stock",
         label: C.heroWithoutSafetyStock,
         value: metric(summary?.without_safety_stock),
+        active: cardActive.without,
+        onSelect: selectCard({ status: "without_safety_stock" }),
+        ariaLabel: cardFilterLabel(C.heroWithoutSafetyStock),
       },
       {
         id: "below-safety-stock",
         label: C.heroBelow,
         value: metric(summary?.below_safety_stock),
         tone: "danger" as const,
+        active: cardActive.below,
+        onSelect: selectCard({ status: "below_safety_stock" }),
+        ariaLabel: cardFilterLabel(C.heroBelow),
       },
       {
         id: "at-safety-stock",
         label: C.heroAt,
         value: metric(summary?.at_safety_stock),
         tone: "warning" as const,
+        active: cardActive.at,
+        onSelect: selectCard({ status: "at_safety_stock" }),
+        ariaLabel: cardFilterLabel(C.heroAt),
       },
       {
         id: "above-safety-stock",
         label: C.heroAbove,
         value: metric(summary?.above_safety_stock),
+        active: cardActive.above,
+        onSelect: selectCard({ status: "above_safety_stock" }),
+        ariaLabel: cardFilterLabel(C.heroAbove),
       },
     ];
-  }, [summary]);
+  }, [summary, query.status, query.includeWithoutSafetyStock, patchQuery]);
 
   const itemsView =
     itemsState.key === itemsKey ? itemsState : itemsLoadingState(itemsKey);
@@ -440,18 +436,6 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
             {C.filtersUnavailable}
           </SuppliesStateBanner>
         ) : null}
-        <div className="sp-safety-stock__chip-row">
-          <SuppliesScopeChipBar
-            aria-label={C.quickFiltersAriaLabel}
-            label={
-              <SuppliesSectionHintLabel
-                label={C.quickFiltersLabel}
-                hint={SP_HELP.safetyStockQuickFilters}
-              />
-            }
-            chips={statusChips}
-          />
-        </div>
         <SafetyStockFilters
           query={query}
           branchOptions={branchOptions}

@@ -16,6 +16,12 @@ export type PageHeroHighlight = {
   tone?: PageHeroHighlightTone;
   /** Placeholder de valor enquanto o portal carrega o dado. */
   loading?: boolean;
+  /** Tile acionável (filtro rápido / drill-down) — renderiza `role="button"`. */
+  onSelect?: () => void;
+  /** Estado selecionado do tile acionável (`aria-pressed`). */
+  active?: boolean;
+  /** Rótulo acessível do tile acionável (descreve a ação do clique). */
+  ariaLabel?: string;
 };
 
 export type PageHeroClassNames = {
@@ -126,13 +132,18 @@ export function PageHero({
             {highlights!.map((item) => {
               const tone = item.tone && item.tone !== "neutral" ? item.tone : null;
               const tileClass = tone ? classNames.highlightTone(tone) : classNames.highlight;
-              return (
-                <div
-                  key={item.id}
-                  className={tileClass}
-                  data-tone={item.tone ?? "neutral"}
-                  data-loading={item.loading ? "true" : undefined}
-                >
+              const interactive = typeof item.onSelect === "function";
+              const finalClass = [
+                tileClass,
+                interactive ? withBemModifier(classNames.highlight, "interactive") : null,
+                interactive && item.active
+                  ? withBemModifier(classNames.highlight, "pressed")
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" ");
+              const inner = (
+                <>
                   <span className={classNames.highlightLabel}>{item.label}</span>
                   <span className={classNames.highlightValue}>
                     {item.loading ? "…" : item.value}
@@ -140,6 +151,37 @@ export function PageHero({
                   {item.description ? (
                     <span className={classNames.highlightDescription}>{item.description}</span>
                   ) : null}
+                </>
+              );
+              const dataProps = {
+                "data-tone": item.tone ?? "neutral",
+                "data-loading": item.loading ? "true" : undefined,
+              };
+              if (interactive) {
+                return (
+                  <div
+                    key={item.id}
+                    role="button"
+                    tabIndex={0}
+                    className={finalClass}
+                    {...dataProps}
+                    onClick={item.onSelect}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        item.onSelect!();
+                      }
+                    }}
+                    aria-pressed={Boolean(item.active)}
+                    aria-label={item.ariaLabel}
+                  >
+                    {inner}
+                  </div>
+                );
+              }
+              return (
+                <div key={item.id} className={finalClass} {...dataProps}>
+                  {inner}
                 </div>
               );
             })}

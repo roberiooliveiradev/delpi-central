@@ -217,7 +217,7 @@ export const SP_HELP = {
   inventoryTableMeta:
     "Colunas visíveis e total de posições do recorte filtrado (não só a página atual). Produto não abre ficha nesta página.",
   safetyStock:
-    "Materiais com estoque de segurança parametrizado no Protheus. Classificação, saldos e déficit são calculados pelo servidor — o Portal apenas exibe. Saldo disponível considera os armazéns 01, 98 e 99.",
+    "Materiais com estoque de segurança parametrizado no Protheus. Classificação, saldos e déficit são calculados pelo servidor — o Portal apenas exibe. Saldo disponível considera os armazéns 01, 98 e 99. Os cartões de indicadores também filtram a lista: clique em um para ver só aquele recorte (equivale ao filtro Status, combinado com a filial e os demais filtros).",
   safetyStockBranch:
     "Filial do recorte (Santa Catarina, Espírito Santo ou Todas). «Todas as filiais» é uma única consulta consolidada — não soma manual de duas buscas. Filial é filtro de dados, não permissão.",
   safetyStockStatus:
@@ -256,8 +256,6 @@ export const SP_HELP = {
     "Grupo ao qual o material pertence no cadastro.",
   safetyStockColUnit:
     "Unidade de medida utilizada para representar as quantidades do material.",
-  safetyStockQuickFilters:
-    "Atalhos para filtrar a lista pela situação do estoque de segurança — equivalem ao filtro Status e combinam-se com a filial e os demais filtros. Classificação e dados vêm do Protheus via serviços do Portal. «Todos os materiais» remove apenas o filtro de situação.",
   safetyStockColActions:
     "Abre a página de detalhe do material na filial correspondente. Na visão «Todas as Filiais», você escolhe a filial antes de abrir.",
   safetyStockTableMeta:
