@@ -62,3 +62,12 @@ Loading por canal (detalhe e fornecedores independentes) · empty real por cole�
 - Envelope BFF `{}` com HTTP 200 em payload upstream malformado permanece mitigado por guards MFE (correção bounded é do owner `supplies-api`).
 - `peer_branch_stock` não é enviado pelo BFF (parâmetro `peer_branch` não exposto) — não renderizado; registrar como `TO_INVENTORY` se o PO quiser comparativo SC×ES.
 - Evidência visual/smoke federado: `TEST_NOT_RUN`.
+
+
+## Revisão GPT — E11.S3 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para o detalhe MFE; **`E11_S4_READY_TO_AUTHORIZE=YES`** para preparação de Help/QA/aceite, não início automático. Inspecionados no source `9a12659570`: este documento, `SafetyStockDetailModal.tsx`, `SafetyStockPage.tsx`, `api.ts` e `query.ts`. Confirmados consumo BFF-only de detalhes/fornecedores, consulta sob demanda e cancelamento por AbortController, filial concreta, modal kit-first e suporte de URL `item+itemBranch`. O resultado 428 PASS, TypeScript e build são evidências reportadas pelo executor, não reexecutadas pelo GPT.
+
+**Residual de integridade da identidade (prioritário antes de aceite final):** `isSafetyStockItemDetail` valida apenas que `product.product_code` e `product.branch` não são vazios, sem cotejá-los com `target.productCode` e `target.branch` enviados na consulta. Adicionar guarda de correspondência exata e teste negativo (resposta de produto/filial diferente) na fatia S4 ou em fix bounded; não exibir dados discordantes sob o cabeçalho do item solicitado. Preservar distinção entre `404`, payload inválido e seção vazia. Revisar também os 2 warnings `set-state-in-effect` de S3 sem criar regressão.
+
+**Outros residuais:** contrato BFF de envelope inesperado ainda permite potencial `{}` HTTP 200 (guards MFE mitigam, não corrigem producer/BFF); comparativo `peer_branch_stock` não contratado para o Portal (`TO_INVENTORY`); smoke e evidência visual autenticada desktop/mobile, temas, teclado/foco permanecem `TEST_NOT_RUN`. `E11_GATE_FEATURE` não está fechado. Sem alteração de runtime, backend, manifest ou regra de filial nesta revisão.
