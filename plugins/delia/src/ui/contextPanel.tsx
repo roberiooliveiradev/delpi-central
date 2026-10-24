@@ -174,6 +174,9 @@ function DetailRows({ turn }: { turn: ConversationDisplayTurn }) {
   );
 }
 
+/** Technical trace of real model calls — secondary by design: collapsed
+ *  disclosure keeps long span names from dominating the first read while
+ *  audit data stays one toggle away. Same real contract rows, no registry. */
 function ModelCalls({ obs }: { obs: DeliaTurnObservability }) {
   if (!obs.calls.length) return null;
   return (
@@ -286,12 +289,19 @@ export function DeliaTurnContextPanel({ turn }: DeliaTurnContextPanelProps) {
       sections={[
         {
           id: "details",
-          title: "Detalhes",
+          title: "Detalhes da geração",
           icon: Info,
           content: (
             <>
               <DetailRows turn={turn} />
-              {obs ? <ModelCalls obs={obs} /> : null}
+              {obs && obs.calls.length ? (
+                <details className="delia-context__trace">
+                  <summary className="delia-context__trace-summary">
+                    Rastreamento técnico
+                  </summary>
+                  <ModelCalls obs={obs} />
+                </details>
+              ) : null}
             </>
           ),
         },
@@ -309,7 +319,7 @@ export function DeliaTurnContextPanel({ turn }: DeliaTurnContextPanelProps) {
           ? [
               {
                 id: "activities",
-                title: "Atividades",
+                title: "Atividades relacionadas",
                 icon: Activity,
                 content: (
                   <ActivityViewer

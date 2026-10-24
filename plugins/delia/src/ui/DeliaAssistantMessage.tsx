@@ -253,9 +253,7 @@ export function DeliaAssistantMessage({
           onMotionComplete={onResponseMotionComplete}
         />
       </span>
-      <div
-        className={`delia-turn__bubble${contextOpen ? " delia-turn__bubble--context-open" : ""}`}
-      >
+      <div className="delia-turn__bubble">
         <div className="delia-turn__head">
           <span className="delia-turn__label">DÉLIA</span>
         </div>
@@ -378,6 +376,9 @@ export function DeliaAssistantMessage({
             <h3 className="delia-turn__context-title">
               Contexto desta resposta
             </h3>
+            <p className="delia-turn__context-subtitle">
+              Detalhes da geração, evidências e atividade relacionada.
+            </p>
             <DeliaTurnContextPanel turn={turn} />
           </section>
         ) : null}

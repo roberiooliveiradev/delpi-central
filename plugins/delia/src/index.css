@@ -751,24 +751,18 @@
 
 /* ---------- Context surfaces (inline message region + global panel) */
 
-/* Turn whose context region is open: discreet left accent associating
-   message and expansion — never a heavy card border. */
-.dashboard-delia .delia-turn__bubble--context-open {
-  box-shadow: inset 2px 0 0 0
-    color-mix(in srgb, var(--delia-accent) 55%, transparent);
-  border-radius: 8px;
-}
-
-/* Inline turn-context region: participates in the conversation flow
-   (pushes the next message, never overlays it), scrolls with the
-   conversation — no fixed height, no nested vertical scroll. */
+/* Clean Inline Context Card: a single neutral surface in the
+   conversation flow — no lateral accent bar, no popover, no overlay.
+   Pushes the next message, scrolls with the conversation, never keeps
+   a nested vertical scroll or fixed height. */
 .dashboard-delia .delia-turn__context {
   margin-top: 10px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   max-width: 640px;
-  background: color-mix(in srgb, var(--delia-accent) 3%, transparent);
-  border: 1px solid color-mix(in srgb, var(--delia-accent) 16%, transparent);
-  border-radius: 10px;
+  background: var(--delia-surface);
+  border: 1px solid var(--delia-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px color-mix(in srgb, #000 5%, transparent);
   font-size: 0.8125rem;
   overflow-wrap: anywhere;
   animation: delia-turn-context-in 180ms ease-out;
@@ -786,18 +780,120 @@
 }
 
 .dashboard-delia .delia-turn__context-title {
-  margin: 0 0 8px;
-  padding-bottom: 8px;
-  font-size: 0.8125rem;
+  margin: 0;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--delia-text);
+}
+
+.dashboard-delia .delia-turn__context-subtitle {
+  margin: 3px 0 4px;
+  padding-bottom: 10px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--delia-text-muted);
   border-bottom: 1px solid
-    color-mix(in srgb, var(--delia-accent) 12%, transparent);
+    color-mix(in srgb, var(--delia-border) 60%, transparent);
+}
+
+/* Inside the card, sections keep the shared panel rhythm but sit
+   tighter and subordinate to the response. */
+.dashboard-delia
+  .delia-turn__context
+  .delpi-ui-conversation-context-panel__heading {
+  min-height: 30px;
+  padding: 4px 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.dashboard-delia
+  .delia-turn__context
+  .delpi-ui-conversation-context-panel__body {
+  padding: 2px 6px 10px 28px;
+}
+
+/* Generation metadata: responsive label/value grid — two columns when
+   there is room, one in the Dock/mobile; labels stay secondary and
+   long identifiers wrap instead of truncating. */
+.dashboard-delia .delia-context__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 18px;
+  margin: 0;
+}
+
+.dashboard-delia .delia-context__row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.dashboard-delia .delia-context__term {
+  font-size: 0.75rem;
+  color: var(--delia-text-muted);
+}
+
+.dashboard-delia .delia-context__value {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--delia-text);
+  overflow-wrap: anywhere;
+}
+
+/* Technical trace: collapsed disclosure, subordinate and quiet — the
+   audit rows stay reachable without dominating the first read. */
+.dashboard-delia .delia-context__trace {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid
+    color-mix(in srgb, var(--delia-border) 50%, transparent);
+}
+
+.dashboard-delia .delia-context__trace-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--delia-text-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.dashboard-delia .delia-context__trace-summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-delia .delia-context__trace-summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 160ms ease-out;
+}
+
+.dashboard-delia
+  .delia-context__trace[open]
+  > .delia-context__trace-summary::before {
+  transform: rotate(45deg) translateY(-1px);
+}
+
+.dashboard-delia .delia-context__trace-summary:focus-visible {
+  outline: 2px solid var(--delia-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dashboard-delia .delia-turn__context {
+  .dashboard-delia .delia-turn__context,
+  .dashboard-delia .delia-context__trace-summary::before {
     animation: none;
+    transition: none;
   }
 }
 
@@ -829,9 +925,8 @@
 
 .dashboard-delia .delia-context__calls {
   list-style: none;
-  margin: 10px 0 0;
-  padding: 8px 0 0;
-  border-top: 1px solid color-mix(in srgb, var(--delia-border) 50%, transparent);
+  margin: 8px 0 0;
+  padding: 0 0 2px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;

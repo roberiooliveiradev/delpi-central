@@ -547,3 +547,108 @@ describe("stage-6 responsibility attribution", () => {
     ).toBeTruthy();
   });
 });
+
+describe("Clean inline context card (CLEANCTX-01..CLEANCTX-16)", () => {
+  function renderMessage(turn = makeTurn()) {
+    return render(
+      <ul>
+        <li className="delia-turn delia-turn--delia delpi-ui-message-action-scope">
+          <DeliaAssistantMessage
+            turn={turn}
+            loading={false}
+            onConfirmation={vi.fn()}
+          />
+        </li>
+      </ul>,
+    );
+  }
+
+  function openContext() {
+    fireEvent.click(screen.getByRole("button", { name: "Ver contexto" }));
+    return screen.getByRole("region", { name: "Contexto desta resposta" });
+  }
+
+  it("CLEANCTX-01: no lateral accent bar is applied to the bubble", () => {
+    renderMessage();
+    const bubble = document.querySelector(".delia-turn__bubble");
+    openContext();
+    expect(bubble?.classList.contains("delia-turn__bubble--context-open")).toBe(
+      false,
+    );
+  });
+
+  it("CLEANCTX-03: header has a single title + subtitle, no duplicate control", () => {
+    renderMessage();
+    const region = openContext();
+    expect(
+      within(region).getByRole("heading", { name: "Contexto desta resposta" }),
+    ).toBeTruthy();
+    expect(
+      within(region).getByText(
+        "Detalhes da geração, evidências e atividade relacionada.",
+      ),
+    ).toBeTruthy();
+    // The only hide control stays in the message action strip.
+    expect(
+      within(region).queryByRole("button", { name: "Ocultar contexto" }),
+    ).toBeNull();
+    expect(
+      screen.getAllByRole("button", { name: "Ocultar contexto" }),
+    ).toHaveLength(1);
+  });
+
+  it("CLEANCTX-04/05: 'Detalhes da geração' renders real label/value pairs", () => {
+    renderMessage(makeTurn({ observability: OBS as never }));
+    const region = openContext();
+    expect(
+      within(region).getByRole("heading", { name: "Detalhes da geração" }),
+    ).toBeTruthy();
+    expect(within(region).getByText("qwen2.5:3b (1)")).toBeTruthy();
+    expect(within(region).getByText("Custo indisponível")).toBeTruthy();
+  });
+
+  it("CLEANCTX-10: technical trace sits in a collapsed disclosure", () => {
+    renderMessage(makeTurn({ observability: OBS as never }));
+    const region = openContext();
+    const trace = region.querySelector("details.delia-context__trace");
+    expect(trace).toBeTruthy();
+    expect(trace?.hasAttribute("open")).toBe(false);
+    expect(
+      within(region).getByText("Rastreamento técnico"),
+    ).toBeTruthy();
+    // Real span rows remain in the DOM once the disclosure opens.
+    fireEvent.click(
+      within(region).getByText("Rastreamento técnico"),
+    );
+    expect(trace?.hasAttribute("open")).toBe(true);
+    expect(
+      within(region).getByText("delia.capability_orchestration.select_group"),
+    ).toBeTruthy();
+  });
+
+  it("CLEANCTX-06/09: evidences and related activities keep real titles", () => {
+    const turn = makeTurn({
+      observability: OBS as never,
+      groundingStatus: "NON_GROUNDED",
+      activityView: {
+        title: "Atividade concluída",
+        state: "completed",
+        steps: [
+          { id: "r", label: "Solicitação recebida", state: "completed" },
+        ],
+      } as never,
+    });
+    renderMessage(turn);
+    const region = openContext();
+    expect(
+      within(region).getByRole("heading", { name: "Evidências" }),
+    ).toBeTruthy();
+    expect(
+      within(region).getByRole("heading", {
+        name: "Atividades relacionadas",
+      }),
+    ).toBeTruthy();
+    // CLEANCTX-07: "Sem fonte vinculada" is neutral context copy.
+    expect(within(region).getByText("Sem fonte vinculada")).toBeTruthy();
+  });
+});
