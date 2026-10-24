@@ -284,3 +284,12 @@ tool de checklist. Nada criado.
   não equivalentes aos oficiais, quantificado. Páginas preservadas como
   auxiliares.
 - **CP02/CP03:** `PENDING` — brief pronto; bloqueado por **CP-D01**.
+
+
+## 8. Decisão expressa do PO — CP-D01=A (2026-10-24)
+
+**CP-D01=A — APPROVED para owner/persistência e design contratual:** manter o estado próprio do workflow de competência, template versionado e snapshot no bounded context **`controllership-finance-api`**, com **schema próprio isolado no `postgres-plugins`**, seguindo o padrão vigente da plataforma, sujeito ao inventário de migrations, runners e conectividade existentes. O PO selecionou a opção A após GPT REVIEW do relatório CP00/CP01.
+
+**Alcance:** esta aprovação fecha a escolha de **ownership/persistência**, anteriormente adiada pelo D3=C no doc 45 para o contexto P1; não revisa permissões, não escolhe tabelas/DDL detalhados, não homologa contrato HTTP, nem confere autorização de implementação. `IMPLEMENTATION_AUTHORIZED=NO` para `P6-MIN + P2-READ` até gate transversal explícito e GO específico por slice.
+
+**Próximo gate:** `CF-C3-P6-MIN-P2-READ-CONTRACT-GATE-001` — inventariar padrão real `postgres-plugins`, migrations runner, schemas e BFF; definir versão/template/competência/snapshot, migrations reversíveis, portas/adapters, fail-closed Core, contratos DTO/BFF, RQ/AC e testes positive/sibling/negative. O gate deverá produzir design e solicitação de autorização; não implementar runtime nesta rodada. CP-D02 (responsável/validador) e CP-D03 (CK-E-27) permanecem pendentes, sem autoaprovação.
