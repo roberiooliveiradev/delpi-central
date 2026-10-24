@@ -75,3 +75,14 @@ Variabilidade observada (residual honesto): D1 oscilou entre `capability_unbound
 - Auth: todo o eval e smoke usaram `user`+password grant; zero impersonation. `AUTH_METHOD_POLICY_APPROVAL` segue item do owner Keycloak/Core conforme doc 144 §7.
 - `CRI_OFF_LIVE=TEST_NOT_RUN`; `REAL_TOKEN_USAGE=NOT_AVAILABLE`; latência ~11–44s/turno.
 - `COORDINATION_REVIEW_REQUIRED=YES`; `R4_AUTHORIZED=NO`.
+
+
+## 8. Revisão independente da coordenação — 2026-10-24
+
+**VERDICT=ACCEPT_WITH_RESIDUAL (implementação de consumo multi-especialista e release); PRE_R4_GATE=CLOSURE_PENDING; R4_AUTHORIZED=NO.** Foram conferidos os commits `becef562b968468a71999c3c55980f03cf20fc99` (6 arquivos de implementação/testes) e `42b7d71ce6dec34f61bac97db79da36437f3f583` (relatório/ledger). Esta revisão é documental e de diff-list, não reexecuta independentemente SSH, suíte ou chamadas produtivas; os PASS locais/live não reproduzidos são **EXECUTOR_REPORTED**.
+
+**Escopo aceito:** uso canônico DAVI `discover→candidate_token→execute`, TÉO/VISTA READ legítimos, knowledge classificado como guidance e não domain truth; v4 das instruções sob allowlist; miss→recovery dentro da rodada única; ordenação de campos substantivos antes de metadados de citação no compositor existente. Nenhum planner/engine/provider router novo. Evidências reportadas: 11/11 focused C3, 28/28 resource, 94/94 CRI, backend exit 0; deploy limitado `[1/1] delia-api`, imagem `513ee033b0c6`, rollback `686d745b87f6`, smoke mínimo D1 com conteúdo documental efetivo.
+
+**Gates pendentes:** (1) O2 original continua `BUSINESS_OUTCOME=INCONCLUSIVE`, apesar do corpus MP/PI V2 agora publicado e acessível: não concluir que mera presença da norma resolve seleção/sequenciamento pelo LLM; (2) D1 teve variabilidade `capability_unbound/owner_path_unbound` e acertos em execuções distintas — medir estabilidade sem loop de prompts produtivos; (3) política do password grant de usuário/test client exige confirmação do owner Keycloak/Core `AUTH_METHOD_POLICY_APPROVAL=TO_VERIFY`; funcionamento e ausência de impersonation não provam aprovação; (4) `CRI_OFF_LIVE=TEST_NOT_RUN` e tokens reais não disponíveis.
+
+**Decisão:** `KNOWLEDGE_CONSUMPTION_DELIVERED=YES` e `R4_AUTHORIZED=NO`; não reabrir R0–R3 nem ampliar mecanismos. Próximo bounded gate: caracterizar se, para pergunta composicional como O2, a seleção semântica existente precisa de contexto documental antes do primeiro READ ou de melhor uso de candidate guidance na única recuperação. Comparar baseline/candidato local-first com DAVI V2, TÉO, VISTA e negativas. Sem hardcode de `TERM.`, sem segundo planner, sem novo port. Se a única mudança adequada for em instructions v4, preservar snapshots e testes de generalização; se depender de fonte/contrato, registrar decisão do owner. Autorizar R4 somente por decisão subsequente explícita sobre critérios e residual.
