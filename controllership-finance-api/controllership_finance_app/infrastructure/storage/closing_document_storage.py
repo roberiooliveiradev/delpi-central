@@ -130,4 +130,14 @@ class ClosingDocumentStorage:
             return False
 
     def discard_temp(self, file_uuid: uuid.UUID) -> None:
-        (self.tmp_dir / f"{file_uuid.hex}.part").unlink(missing_ok=True)
+        """Remove o `.part` — idempotente e sem mascarar o erro original.
+
+        Falha de limpeza é registrada para housekeeping (`.part` órfão é
+        identificável por varredura), nunca reportada como sucesso nem
+        transformada em exceção que esconda a causa da rejeição."""
+        try:
+            (self.tmp_dir / f"{file_uuid.hex}.part").unlink(missing_ok=True)
+        except OSError:
+            logger.warning(
+                "temp_cleanup_failed file_uuid=%s", file_uuid
+            )

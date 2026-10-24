@@ -83,6 +83,113 @@ describe("ClosingDocumentsPanel", () => {
     );
   });
 
+  it("falha de download exibe feedback acessível e permite recuperação", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    downloadDocumentMock
+      .mockRejectedValueOnce(
+        new ApiError(404, "Not found", "document_not_found"),
+      )
+      .mockResolvedValueOnce(new Blob(["pdf"]));
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Baixar"));
+    await waitFor(() =>
+      expect(screen.getByText("Falha no download")).toBeTruthy(),
+    );
+    expect(
+      screen.getByText(/não encontrado ou fora do escopo/),
+    ).toBeTruthy();
+    expect(saveBlobMock).not.toHaveBeenCalled();
+
+    // Recuperação: retry no banner baixa com sucesso e limpa o erro.
+    fireEvent.click(screen.getByText("Tentar novamente"));
+    await waitFor(() =>
+      expect(saveBlobMock).toHaveBeenCalledTimes(1),
+    );
+    await waitFor(() =>
+      expect(screen.queryByText("Falha no download")).toBeNull(),
+    );
+  });
+
+  it("download sem autorização distingue a causa no feedback", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    downloadDocumentMock.mockRejectedValue(
+      new ApiError(403, "Forbidden", "forbidden"),
+    );
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Baixar"));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/não tem autorização para baixar/),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("erro de rede no download orienta nova tentativa", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    downloadDocumentMock.mockRejectedValue(new TypeError("fetch failed"));
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Baixar"));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Falha de comunicação ao baixar/),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("arquivo indisponível no download informa indisponibilidade", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    downloadDocumentMock.mockRejectedValue(
+      new ApiError(503, "Unavailable", "file_missing"),
+    );
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Baixar"));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/não está disponível no armazenamento/),
+      ).toBeTruthy(),
+    );
+  });
+
   it("exibe estado vazio sem inventar evidências", async () => {
     listDocumentsMock.mockResolvedValue({
       documents: [],

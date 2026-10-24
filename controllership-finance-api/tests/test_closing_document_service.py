@@ -26,14 +26,34 @@ def _pdf() -> bytes:
     return b"%PDF-1.4\n" + b"x" * 2048 + b"\n%%EOF\n"
 
 
-def _repo(doc=None, item_ok=True) -> MagicMock:
+def _corrupted_pdf() -> bytes:
+    return b"%PDF-1.4\n" + b"x" * 2048  # sem trailer %%EOF
+
+
+def _invalid_xlsx() -> bytes:
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("random.txt", "sem membros OOXML")
+    return buf.getvalue()
+
+
+def _no_parts(tmp_path) -> None:
+    assert list((tmp_path / ".tmp").glob("*.part")) == []
+
+
+def _repo(doc=None, item_ok=True, item_scope="BOTH") -> MagicMock:
     repo = MagicMock()
     repo.get_competence_id.return_value = str(uuid.uuid4())
-    repo.get_snapshot_item_id.side_effect = (
-        (lambda *a, **k: str(uuid.uuid4()))
-        if item_ok
-        else de.ItemNotFound("item")
-    )
+    if item_ok:
+        repo.get_snapshot_item.return_value = {
+            "snapshot_item_id": uuid.uuid4(),
+            "branch_scope": item_scope,
+        }
+    else:
+        repo.get_snapshot_item.side_effect = de.ItemNotFound("item")
     repo.find_document_by_idempotency.return_value = doc
     repo.create_document.return_value = (
         doc
@@ -85,7 +105,7 @@ def test_upload_to_item_validates_membership(tmp_path):
     service = ClosingDocumentService(repo, _storage(tmp_path))
     item_id = str(uuid.uuid4())
     service.upload(**_upload_kwargs(snapshot_item_id=item_id))
-    repo.get_snapshot_item_id.assert_called_once()
+    repo.get_snapshot_item.assert_called_once()
     assert (
         repo.create_document.call_args.kwargs["link_kind"]
         == "competence_item"
@@ -98,6 +118,39 @@ def test_upload_cross_competence_item_404(tmp_path):
     with pytest.raises(de.ItemNotFound):
         service.upload(**_upload_kwargs(snapshot_item_id=str(uuid.uuid4())))
     repo.create_document.assert_not_called()
+
+
+def test_upload_item_scope_matches_declared_context(tmp_path):
+    # Ana (contexto Matriz) anexa em item MATRIX — dentro do escopo.
+    repo = _repo(item_scope="MATRIX")
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    doc, created = service.upload(
+        **_upload_kwargs(
+            snapshot_item_id=str(uuid.uuid4()), branch_scope="MATRIX"
+        )
+    )
+    assert created is True
+
+
+def test_upload_item_outside_declared_scope_is_404(tmp_path):
+    # Bruno (contexto Filial) tenta anexar no mesmo item MATRIX —
+    # fora do escopo declarado: 404, sem criar documento nem arquivo.
+    repo = _repo(item_scope="MATRIX")
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.ItemNotFound):
+        service.upload(
+            **_upload_kwargs(
+                snapshot_item_id=str(uuid.uuid4()), branch_scope="BRANCH"
+            )
+        )
+    repo.create_document.assert_not_called()
+
+
+def test_upload_invalid_branch_scope_rejected(tmp_path):
+    repo = _repo()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.InvalidUpload):
+        service.upload(**_upload_kwargs(branch_scope="filial-99"))
 
 
 def test_upload_missing_idempotency_key(tmp_path):
@@ -168,6 +221,145 @@ def test_persistence_failure_compensates_binary(tmp_path):
     assert finals == []
 
 
+# -- R-W2: `.part` nunca permanece após rejeição -----------------------------
+
+
+def test_rejected_corrupted_pdf_leaves_no_part(tmp_path):
+    repo = _repo()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.InvalidFileContent):
+        service.upload(
+            **_upload_kwargs(chunks=[_corrupted_pdf()])
+        )
+    _no_parts(tmp_path)
+
+
+def test_rejected_invalid_xlsx_leaves_no_part(tmp_path):
+    repo = _repo()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.InvalidFileContent):
+        service.upload(
+            **_upload_kwargs(
+                original_name="planilha.xlsx",
+                declared_mime=(
+                    "application/vnd.openxmlformats-officedocument"
+                    ".spreadsheetml.sheet"
+                ),
+                chunks=[_invalid_xlsx()],
+            )
+        )
+    _no_parts(tmp_path)
+
+
+def test_rejected_content_type_mismatch_leaves_no_part(tmp_path):
+    repo = _repo()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.ContentTypeMismatch):
+        service.upload(
+            **_upload_kwargs(
+                original_name="extrato.pdf",
+                declared_mime="application/pdf",
+                chunks=[b"col1;col2\ntexto;plano\n"],  # CSV real
+            )
+        )
+    _no_parts(tmp_path)
+
+
+def test_rejected_unsupported_extension_leaves_no_part(tmp_path):
+    repo = _repo()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.UnsupportedMediaType):
+        service.upload(
+            **_upload_kwargs(
+                original_name="retorno.ofx",
+                declared_mime="application/x-ofx",
+                chunks=[b"OFXHEADER:100\n"],
+            )
+        )
+    _no_parts(tmp_path)
+
+
+def test_publish_failure_leaves_no_part(tmp_path, monkeypatch):
+    repo = _repo()
+    storage = _storage(tmp_path)
+    monkeypatch.setattr(
+        storage, "publish", MagicMock(side_effect=OSError("disk full"))
+    )
+    service = ClosingDocumentService(repo, storage)
+    with pytest.raises(OSError):
+        service.upload(**_upload_kwargs())
+    _no_parts(tmp_path)
+
+
+# -- R-W1: escopo de filial em U2/U3 ------------------------------------------
+
+
+def test_list_documents_forwards_scope(tmp_path):
+    repo = _repo()
+    repo.list_documents.return_value = {
+        "items": [], "total": 0, "limit": 50, "offset": 0,
+    }
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.list_documents(
+        period="2026-05",
+        snapshot_item_id=None,
+        link_kind=None,
+        state=None,
+        branch_scope="BRANCH",
+        limit=50,
+        offset=0,
+    )
+    assert repo.list_documents.call_args.kwargs["branch_scope"] == "BRANCH"
+
+
+def test_list_documents_both_context_is_unrestricted(tmp_path):
+    repo = _repo()
+    repo.list_documents.return_value = {
+        "items": [], "total": 0, "limit": 50, "offset": 0,
+    }
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.list_documents(
+        period="2026-05",
+        snapshot_item_id=None,
+        link_kind=None,
+        state=None,
+        branch_scope="BOTH",
+        limit=50,
+        offset=0,
+    )
+    assert repo.list_documents.call_args.kwargs["branch_scope"] is None
+
+
+def test_get_document_outside_declared_scope_is_404(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = {
+        "document_id": uuid.uuid4(),
+        "branch_scope": "BRANCH",
+    }
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentNotFound):
+        service.get_document(
+            period="2026-05",
+            document_id=str(uuid.uuid4()),
+            branch_scope="MATRIX",
+        )
+
+
+def test_get_document_inside_declared_scope(tmp_path):
+    repo = _repo()
+    doc = {"document_id": uuid.uuid4(), "branch_scope": "BRANCH"}
+    repo.get_document_by_id.return_value = doc
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    assert (
+        service.get_document(
+            period="2026-05",
+            document_id=str(uuid.uuid4()),
+            branch_scope="BRANCH",
+        )
+        is doc
+    )
+
+
 def test_download_resolves_and_audits(tmp_path):
     repo = _repo()
     storage = _storage(tmp_path)
@@ -196,12 +388,13 @@ def test_download_resolves_and_audits(tmp_path):
     assert repo.audit_download.call_args.kwargs["result"] == "AUTHORIZED"
 
 
-def test_download_missing_binary_no_success_audit(tmp_path):
+def test_download_missing_binary_audits_failed_never_success(tmp_path):
     repo = _repo()
     repo.get_version_file.return_value = {
         "storage_key": f"{uuid.uuid4()}/inexistente.pdf",
         "mime_type": "application/pdf",
         "original_name": "x.pdf",
+        "branch_scope": "BOTH",
     }
     service = ClosingDocumentService(repo, _storage(tmp_path))
     with pytest.raises(de.FileMissing):
@@ -211,4 +404,57 @@ def test_download_missing_binary_no_success_audit(tmp_path):
             version_no=1,
             actor=str(uuid.uuid4()),
         )
-    repo.audit_download.assert_not_called()
+    repo.audit_download.assert_called_once()
+    assert repo.audit_download.call_args.kwargs["result"] == "FAILED"
+
+
+def test_download_outside_declared_scope_denied_and_audited(tmp_path):
+    # Bruno (contexto Filial) tenta baixar evidência de item MATRIX —
+    # negação auditável (ator+recurso conhecidos); resposta é 404.
+    repo = _repo()
+    repo.get_version_file.return_value = {
+        "storage_key": f"{uuid.uuid4()}/extrato.pdf",
+        "mime_type": "application/pdf",
+        "original_name": "x.pdf",
+        "branch_scope": "MATRIX",
+    }
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentNotFound):
+        service.resolve_download(
+            period="2026-05",
+            document_id=str(uuid.uuid4()),
+            version_no=1,
+            actor=str(uuid.uuid4()),
+            branch_scope="BRANCH",
+        )
+    repo.audit_download.assert_called_once()
+    assert repo.audit_download.call_args.kwargs["result"] == "DENIED"
+
+
+def test_download_inside_declared_scope_authorized(tmp_path):
+    repo = _repo()
+    storage = _storage(tmp_path)
+    file_uuid = uuid.uuid4()
+    tmp, _d, _s = storage.write_temp(file_uuid, [_pdf()])
+    key, _n, _f = storage.publish(
+        tmp,
+        competence_id=str(uuid.uuid4()),
+        file_uuid=file_uuid,
+        extension=".pdf",
+    )
+    repo.get_version_file.return_value = {
+        "storage_key": key,
+        "mime_type": "application/pdf",
+        "original_name": "extrato.pdf",
+        "branch_scope": "MATRIX",
+    }
+    service = ClosingDocumentService(repo, storage)
+    path, _meta = service.resolve_download(
+        period="2026-05",
+        document_id=str(uuid.uuid4()),
+        version_no=1,
+        actor=str(uuid.uuid4()),
+        branch_scope="MATRIX",
+    )
+    assert path.is_file()
+    assert repo.audit_download.call_args.kwargs["result"] == "AUTHORIZED"

@@ -94,6 +94,7 @@ def _doc(**overrides) -> dict:
         "competence_id": uuid.uuid4(),
         "snapshot_item_id": None,
         "snapshot_item_key": None,
+        "branch_scope": "BOTH",
         "link_kind": "competence",
         "title": "Extrato maio",
         "attachment_role": "generic",
@@ -172,6 +173,19 @@ def test_upload_invalid_snapshot_item_uuid(service):
     assert response.json()["data"]["error"]["code"] == "invalid_upload"
 
 
+def test_upload_forwards_declared_branch_scope(service):
+    service.upload.return_value = (_doc(), True)
+    response = _upload(_client(), data={"branch_scope": "MATRIX"})
+    assert response.status_code == 201
+    assert service.upload.call_args.kwargs["branch_scope"] == "MATRIX"
+
+
+def test_upload_rejects_invalid_branch_scope(service):
+    response = _upload(_client(), data={"branch_scope": "filial-01"})
+    assert response.status_code == 422
+    service.upload.assert_not_called()
+
+
 def test_upload_typed_errors(service):
     cases = [
         (de.FileTooLarge("grande"), 422, "file_too_large"),
@@ -229,7 +243,26 @@ def test_list_documents_filters_forwarded(service):
     assert call["snapshot_item_id"] == item_id
     assert call["link_kind"] == "competence_item"
     assert call["state"] == "ATTACHED"
+    assert call["branch_scope"] is None
     assert call["limit"] == 10 and call["offset"] == 5
+
+
+def test_list_documents_forwards_branch_scope(service):
+    service.list_documents.return_value = {
+        "items": [_doc(branch_scope="MATRIX")],
+        "total": 1,
+        "limit": 50,
+        "offset": 0,
+    }
+    response = _client().get(
+        "/closing/competences/2026-05/documents?branch_scope=MATRIX",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 200
+    assert (
+        service.list_documents.call_args.kwargs["branch_scope"] == "MATRIX"
+    )
+    assert response.json()["data"]["documents"][0]["branch_scope"] == "MATRIX"
 
 
 def test_list_documents_empty(service):
@@ -273,6 +306,22 @@ def test_get_document_cross_competence_is_404(service):
     assert response.json()["data"]["error"]["code"] == "document_not_found"
 
 
+def test_get_document_outside_declared_scope_is_404(service):
+    # Usuário em contexto Filial consulta documento de item MATRIX —
+    # o backend responde 404 sem vazar existência (resource scope).
+    service.get_document.side_effect = de.DocumentNotFound("não")
+    doc_id = str(uuid.uuid4())
+    response = _client().get(
+        f"/closing/competences/2026-05/documents/{doc_id}"
+        "?branch_scope=BRANCH",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 404
+    assert (
+        service.get_document.call_args.kwargs["branch_scope"] == "BRANCH"
+    )
+
+
 # -- U4 ---------------------------------------------------------------------
 
 
@@ -310,6 +359,32 @@ def test_download_cross_competence_is_404(service):
         headers={"Authorization": f"Bearer {TOKEN}"},
     )
     assert response.status_code == 404
+
+
+def test_download_outside_declared_scope_is_404(service):
+    service.resolve_download.side_effect = de.DocumentNotFound("não")
+    doc_id = str(uuid.uuid4())
+    response = _client().get(
+        f"/closing/competences/2026-05/documents/{doc_id}"
+        "/versions/1/content?branch_scope=BRANCH",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 404
+    assert (
+        service.resolve_download.call_args.kwargs["branch_scope"]
+        == "BRANCH"
+    )
+
+
+def test_download_rejects_invalid_branch_scope(service):
+    doc_id = str(uuid.uuid4())
+    response = _client().get(
+        f"/closing/competences/2026-05/documents/{doc_id}"
+        "/versions/1/content?branch_scope=ruim",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 422
+    service.resolve_download.assert_not_called()
 
 
 # -- segurança transversal -----------------------------------------------------

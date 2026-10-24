@@ -21,6 +21,7 @@ export type ClosingDocument = {
   link_kind: DocumentLinkKind;
   snapshot_item_id: string | null;
   snapshot_item_key: string | null;
+  branch_scope: string;
   title: string | null;
   attachment_role: string;
   state: DocumentState;
@@ -95,6 +96,7 @@ export async function listClosingDocuments(
     snapshotItemId?: string | null;
     linkKind?: DocumentLinkKind;
     state?: DocumentState;
+    branchScope?: "MATRIX" | "BRANCH" | "BOTH";
     limit?: number;
     offset?: number;
   } = {},
@@ -104,6 +106,7 @@ export async function listClosingDocuments(
     snapshot_item_id: query.snapshotItemId ?? undefined,
     link_kind: query.linkKind,
     state: query.state,
+    branch_scope: query.branchScope,
     limit: query.limit !== undefined ? String(query.limit) : undefined,
     offset: query.offset !== undefined ? String(query.offset) : undefined,
   });
@@ -123,14 +126,18 @@ export async function downloadClosingDocument(
   period: string,
   documentId: string,
   versionNo: number,
-  options?: { signal?: AbortSignal },
+  options?: {
+    signal?: AbortSignal;
+    branchScope?: "MATRIX" | "BRANCH" | "BOTH";
+  },
 ): Promise<Blob> {
+  const qs = buildQuery({ branch_scope: options?.branchScope });
   return httpGetBlob(
     cfApiUrl(
       `/closing/competences/${period}/documents/${documentId}` +
-        `/versions/${versionNo}/content`,
+        `/versions/${versionNo}/content${qs ? `?${qs}` : ""}`,
     ),
-    options,
+    { signal: options?.signal },
   );
 }
 

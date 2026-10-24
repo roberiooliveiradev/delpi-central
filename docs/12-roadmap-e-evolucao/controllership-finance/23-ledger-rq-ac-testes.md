@@ -87,9 +87,9 @@ Cobertura SLICE-1 por requisito (positive/sibling/negative/security/postconditio
 | AC-P2-UP-03 | PASS | service/PG `ItemNotFound` + route 404 — cross-competence nunca revela |
 | AC-P2-UP-04 | TEST_NOT_RUN parcial | publish→resolve provado em `test_closing_document_storage.py`; recreate literal de container não executado — durabilidade = volume host mapeado (`docker-compose*.yml`) |
 | AC-P2-UP-05 | PASS | `test_persistence_failure_compensates_binary` — binário removido, exceção propagada |
-| AC-P2-UP-06 | PASS | `test_download_missing_binary_no_success_audit` — `file_missing` 503 sem auditoria de sucesso |
-| AC-P2-UP-07 | PASS | `test_audit_upload_and_download_append_only` — `DOCUMENT_DOWNLOADED result=AUTHORIZED` com ator UUID |
-| AC-P2-UP-08 | PASS | routes: sem token 401, sem permissão 403, cross-competence 404 (`test_document_scoped_to_competence`); escopo de filial delegado ao Core (fail-closed testado) |
+| AC-P2-UP-06 | PASS | `test_download_missing_binary_audits_failed_never_success` — `file_missing` 503 com `result=FAILED`/`phase=delivery`, nunca sucesso |
+| AC-P2-UP-07 | PASS | `test_audit_upload_and_download_append_only` + `test_audit_download_denied_phase_classification` — `result` + `phase` distinguem autorização de entrega; sem claim de transferência concluída |
+| AC-P2-UP-08 | PASS | routes: sem token 401, sem permissão 403, cross-competence 404 (`test_document_scoped_to_competence`); cross-branch: `branch_scope` do request × escopo herdado do item = 404 (`test_*outside_declared_scope*`, PG `test_list_documents_filters_by_request_scope`, `test_document_inherits_item_branch_scope`); DENIED auditável registrado |
 | AC-P2-UP-09 | PASS | `test_closing_file_validation.py` — ZIP-renomeado, PDF truncado, vazio, divergência, oversize |
 | AC-P2-UP-10 | PASS | `test_sanitize_original_name` + traversal guard em `test_resolve_and_traversal_guard` |
 | AC-P2-UP-11 | PASS | routes replay `deduplicated` + PG `test_idempotent_replay_same_hash` — zero segundo documento |

@@ -75,6 +75,46 @@ function toPanelError(error: unknown, fallback: string): PanelError {
   return { status: 0, code: null, message: fallback };
 }
 
+/** Classifica a falha de download em feedback honesto por causa. */
+function toDownloadError(error: unknown): PanelError {
+  if (error instanceof ApiError) {
+    if (error.status === 401 || error.status === 403) {
+      return {
+        status: error.status,
+        code: error.code,
+        message:
+          "Você não tem autorização para baixar esta evidência.",
+      };
+    }
+    if (error.status === 404 || error.code === "document_not_found") {
+      return {
+        status: error.status,
+        code: error.code,
+        message:
+          "Documento não encontrado ou fora do escopo solicitado.",
+      };
+    }
+    if (error.code === "file_missing" || error.status === 503) {
+      return {
+        status: error.status,
+        code: error.code,
+        message:
+          "O arquivo não está disponível no armazenamento. Tente novamente mais tarde.",
+      };
+    }
+    return {
+      status: error.status,
+      code: error.code,
+      message: `Falha ao baixar o arquivo (HTTP ${error.status}).`,
+    };
+  }
+  return {
+    status: 0,
+    code: null,
+    message: "Falha de comunicação ao baixar o arquivo. Tente novamente.",
+  };
+}
+
 function formatBytes(value: number | null): string {
   if (value === null || value <= 0) return "";
   if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
@@ -107,6 +147,10 @@ export function ClosingDocumentsPanel({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<PanelError | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<{
+    documentId: string;
+    error: PanelError;
+  } | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const requestId = useRef(0);
 
@@ -193,9 +237,15 @@ export function ClosingDocumentsPanel({
   const handleDownload = useCallback(
     (documentId: string, versionNo: number, fileName: string) => {
       setDownloadingId(documentId);
+      setDownloadError(null);
       downloadClosingDocument(period, documentId, versionNo)
         .then((blob) => saveDocumentBlob(blob, fileName))
-        .catch(() => undefined)
+        .catch((err: unknown) => {
+          setDownloadError({
+            documentId,
+            error: toDownloadError(err),
+          });
+        })
         .finally(() => setDownloadingId(null));
     },
     [period],
@@ -283,6 +333,36 @@ export function ClosingDocumentsPanel({
           defaultMessage="Carregando evidências…"
         />
       ) : (
+        <>
+        {downloadError ? (
+          <CfFeedbackMessage
+            intent="error"
+            title="Falha no download"
+            action={
+              <button
+                type="button"
+                className="cf-documents-panel__retry"
+                disabled={downloadingId !== null}
+                onClick={() => {
+                  const doc = (currentDocs ?? []).find(
+                    (d) => d.document_id === downloadError.documentId,
+                  );
+                  if (doc) {
+                    handleDownload(
+                      doc.document_id,
+                      doc.current_version_no,
+                      doc.original_name ?? doc.title ?? "documento",
+                    );
+                  }
+                }}
+              >
+                Tentar novamente
+              </button>
+            }
+          >
+            {downloadError.error.message}
+          </CfFeedbackMessage>
+        ) : null}
         <AttachmentFileList
           classNames={FILE_LIST_CLASSES}
           labels={FILE_LIST_LABELS}
@@ -302,6 +382,7 @@ export function ClosingDocumentsPanel({
             }
           }}
         />
+        </>
       )}
 
       <p className="cf-documents-panel__honesty">

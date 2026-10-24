@@ -69,15 +69,17 @@ class ClosingDocumentRepository:
             )
         return str(row["competence_id"])
 
-    def get_snapshot_item_id(
+    def get_snapshot_item(
         self, competence_id: str, snapshot_item_id: str
-    ) -> str:
+    ) -> dict[str, Any]:
         """Item deve pertencer à competência do path (D-U6=A) — cross-
-        competence nunca é autorizado nem revelado (404)."""
+        competence nunca é autorizado nem revelado (404). Retorna o
+        `branch_scope` do item: o documento vinculado herda esse escopo
+        (doc 103 §117)."""
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 f"""
-                SELECT snapshot_item_id
+                SELECT snapshot_item_id, branch_scope
                   FROM {_q('competence_checklist_item')}
                  WHERE competence_id = %s AND snapshot_item_id = %s
                 """,
@@ -86,7 +88,7 @@ class ClosingDocumentRepository:
             row = cur.fetchone()
         if row is None:
             raise ItemNotFound("Item do checklist não encontrado.")
-        return str(row["snapshot_item_id"])
+        return row
 
     # -- idempotência ------------------------------------------------------------
 
@@ -247,6 +249,7 @@ class ClosingDocumentRepository:
                 f"""
                 SELECT d.document_id, d.competence_id, d.snapshot_item_id,
                        i.item_key AS snapshot_item_key,
+                       COALESCE(i.branch_scope, 'BOTH') AS branch_scope,
                        d.link_kind, d.title, d.attachment_role, d.state,
                        d.current_version_no, d.revision, d.uploaded_by,
                        d.created_at, d.updated_at,
@@ -276,6 +279,7 @@ class ClosingDocumentRepository:
         snapshot_item_id: str | None = None,
         link_kind: str | None = None,
         state: str | None = None,
+        branch_scope: str | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> dict[str, Any]:
@@ -290,12 +294,21 @@ class ClosingDocumentRepository:
         if state:
             clauses.append("d.state = %s")
             params.append(state)
+        if branch_scope and branch_scope != "BOTH":
+            # Escopo herdado do item (competência = BOTH): o contexto
+            # específico alcança o próprio escopo + recursos BOTH.
+            clauses.append(
+                "COALESCE(i.branch_scope, 'BOTH') IN ('BOTH', %s)"
+            )
+            params.append(branch_scope)
         where = " AND ".join(clauses)
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 f"""
                 SELECT count(*) AS total
                   FROM {_q('closing_document')} d
+                  LEFT JOIN {_q('competence_checklist_item')} i
+                    ON i.snapshot_item_id = d.snapshot_item_id
                  WHERE {where}
                 """,
                 params,
@@ -305,6 +318,7 @@ class ClosingDocumentRepository:
                 f"""
                 SELECT d.document_id, d.competence_id, d.snapshot_item_id,
                        i.item_key AS snapshot_item_key,
+                       COALESCE(i.branch_scope, 'BOTH') AS branch_scope,
                        d.link_kind, d.title, d.attachment_role, d.state,
                        d.current_version_no, d.uploaded_by, d.created_at,
                        f.original_name, f.mime_type, f.size_bytes,
@@ -335,6 +349,7 @@ class ClosingDocumentRepository:
                 f"""
                 SELECT v.document_version_id, v.version_no, v.state,
                        v.uploaded_by, v.created_at,
+                       COALESCE(i.branch_scope, 'BOTH') AS branch_scope,
                        f.file_id, f.storage_key, f.original_name,
                        f.mime_type, f.size_bytes, f.checksum_sha256
                   FROM {_q('closing_document')} d
@@ -342,6 +357,8 @@ class ClosingDocumentRepository:
                     ON v.document_id = d.document_id
                   JOIN {_q('document_file')} f
                     ON f.file_id = v.file_id
+                  LEFT JOIN {_q('competence_checklist_item')} i
+                    ON i.snapshot_item_id = d.snapshot_item_id
                  WHERE d.competence_id = %s AND d.document_id = %s
                    AND v.version_no = %s
                 """,
@@ -361,9 +378,14 @@ class ClosingDocumentRepository:
         actor: str,
         result: str,
     ) -> None:
-        """`DOCUMENT_DOWNLOADED` — D-U3=A: autorização efetivada, sem
-        bytes/tokens; a linha distingue o resultado (AUTHORIZED agora;
-        DENIED/FAILED são reservados para fluxos que os produzam)."""
+        """`DOCUMENT_DOWNLOADED` — D-U3=A: sem bytes/tokens.
+
+        `result` distingue AUTHORIZED/DENIED/FAILED; `phase` classifica
+        explicitamente a etapa registrada — decisão de autorização
+        (AUTHORIZED/DENIED) versus falha de entrega (FAILED). O evento
+        nunca reivindica transferência concluída: a infraestrutura
+        (`FileResponse`) não prova que os bytes chegaram ao cliente."""
+        phase = "delivery" if result == "FAILED" else "authorization"
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
@@ -374,7 +396,11 @@ class ClosingDocumentRepository:
                         competence_id=competence_id,
                         event_type="DOCUMENT_DOWNLOADED",
                         actor=actor,
-                        detail={"version_no": version_no, "result": result},
+                        detail={
+                            "version_no": version_no,
+                            "result": result,
+                            "phase": phase,
+                        },
                     )
 
     # -- internals --------------------------------------------------------------

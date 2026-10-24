@@ -4,8 +4,13 @@
 mapeamento de erros dos contratos P2-READ. Upload cria evidência
 `ATTACHED` — nunca `VALIDATED`/`ACCEPTED`; o item do snapshot permanece
 `EXPECTED`. Download é stream autenticado auditado (`DOCUMENT_DOWNLOADED`
-com result=AUTHORIZED após authz+integridade) — sem URL pública, sem
+registra a decisão de autorização, não a entrega) — sem URL pública, sem
 vazamento de storage_key.
+
+Resource scope (doc 103 §92/§166): `branch_scope` declara o filial-
+contexto do request (MATRIX|BRANCH|BOTH, default BOTH); o documento herda
+o escopo do item (competência = BOTH). Recurso fora do contexto é 404 —
+`access` sozinho não alcança recurso fora do escopo declarado.
 """
 
 from __future__ import annotations
@@ -60,6 +65,7 @@ def _document_view(row: dict) -> dict:
             str(row["snapshot_item_id"]) if row["snapshot_item_id"] else None
         ),
         "snapshot_item_key": row.get("snapshot_item_key"),
+        "branch_scope": row.get("branch_scope") or "BOTH",
         "title": row["title"],
         "attachment_role": row["attachment_role"],
         "state": row["state"],
@@ -103,6 +109,9 @@ async def upload_competence_document(
     snapshot_item_id: str | None = Form(default=None),
     title: str | None = Form(default=None),
     attachment_role: str | None = Form(default=None),
+    branch_scope: str | None = Form(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
 ):
     """U1 — D-U7=A: `idempotency_key` obrigatória no body (multipart form),
     `UNIQUE(competence_id, key)`+`request_hash`; replay retorna o original."""
@@ -122,6 +131,7 @@ async def upload_competence_document(
             title=title,
             attachment_role=attachment_role,
             idempotency_key=idempotency_key,
+            branch_scope=branch_scope,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "upload_competence_document")
@@ -166,10 +176,14 @@ def list_competence_documents(
     state: str | None = Query(
         default=None, pattern="^(ATTACHED|SUPERSEDED|CANCELLED)$"
     ),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ):
-    """U2 — somente documentos da competência do path (resource scope)."""
+    """U2 — competência do path × filial-contexto declarado (resource
+    scope): fora do escopo nunca é retornado (sem vazamento)."""
     authorized_user(request)
     try:
         result = _service().list_documents(
@@ -177,6 +191,7 @@ def list_competence_documents(
             snapshot_item_id=snapshot_item_id,
             link_kind=link_kind,
             state=state,
+            branch_scope=branch_scope,
             limit=limit,
             offset=offset,
         )
@@ -201,13 +216,19 @@ def get_competence_document(
     request: Request,
     period: str = Path(pattern=PERIOD_PATTERN),
     document_id: uuid.UUID = Path(),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
 ):
     """U3 — metadados do documento; associação documento↔competência
-    sempre validada (cross-competence = 404)."""
+    sempre validada (cross-competence = 404) e escopo de filial do
+    request aplicado (cross-branch = 404)."""
     authorized_user(request)
     try:
         row = _service().get_document(
-            period=period, document_id=str(document_id)
+            period=period,
+            document_id=str(document_id),
+            branch_scope=branch_scope,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "get_competence_document")
@@ -223,10 +244,13 @@ def download_document_version(
     period: str = Path(pattern=PERIOD_PATTERN),
     document_id: uuid.UUID = Path(),
     version_no: int = Path(ge=1),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
 ):
-    """U4 — stream autenticado; `DOCUMENT_DOWNLOADED` result=AUTHORIZED
-    após authz + integridade do vínculo. Falha de entrega não gera
-    registro de sucesso (D-U3=A)."""
+    """U4 — stream autenticado; `DOCUMENT_DOWNLOADED` registra a decisão
+    de autorização (AUTHORIZED/DENIED/FAILED com `phase`), nunca a
+    entrega concluída — `FileResponse` não prova transmissão (D-U3=A)."""
     user = authorized_user(request)
     try:
         path, meta = _service().resolve_download(
@@ -234,6 +258,7 @@ def download_document_version(
             document_id=str(document_id),
             version_no=version_no,
             actor=actor_subject(user),
+            branch_scope=branch_scope,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "download_document_version")

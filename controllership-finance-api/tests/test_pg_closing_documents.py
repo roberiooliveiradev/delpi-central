@@ -166,8 +166,9 @@ def test_create_competence_document(setup):
 def test_create_item_document_membership_fk(setup):
     docs = setup["docs"]
     item_id = str(setup["item"]["snapshot_item_id"])
-    resolved = docs.get_snapshot_item_id(setup["competence_id"], item_id)
-    assert resolved == item_id
+    resolved = docs.get_snapshot_item(setup["competence_id"], item_id)
+    assert str(resolved["snapshot_item_id"]) == item_id
+    assert resolved["branch_scope"] == setup["item"]["branch_scope"]
     doc, created = docs.create_document(
         **_doc_kwargs(
             setup,
@@ -184,7 +185,7 @@ def test_create_item_document_membership_fk(setup):
 def test_cross_competence_item_rejected(setup):
     docs = setup["docs"]
     with pytest.raises(de.ItemNotFound):
-        docs.get_snapshot_item_id(setup["competence_id"], str(uuid.uuid4()))
+        docs.get_snapshot_item(setup["competence_id"], str(uuid.uuid4()))
 
 
 def test_idempotent_replay_same_hash(setup):
@@ -334,3 +335,122 @@ def test_document_scoped_to_competence(setup):
         docs.get_document_by_id(
             str(uuid.uuid4()), str(doc["document_id"])
         )
+
+
+def _seeded_item(item_key: str) -> dict:
+    items = ClosingChecklistRepository().list_competence_items(PERIOD)
+    return next(i for i in items if i["item_key"] == item_key)
+
+
+def test_document_inherits_item_branch_scope(setup):
+    """Documento vinculado herda `branch_scope` do item (MATRIX/BRANCH);
+    documento de competência reporta BOTH — escopo vem do join, não de
+    metadado duplicado."""
+    docs = setup["docs"]
+    matrix_item = _seeded_item("CK-E-01")
+    branch_item = _seeded_item("CK-E-27")
+    assert matrix_item["branch_scope"] == "MATRIX"
+    assert branch_item["branch_scope"] == "BRANCH"
+
+    matrix_doc, _ = docs.create_document(
+        **_doc_kwargs(
+            setup,
+            "k-scope-matrix",
+            snapshot_item_id=str(matrix_item["snapshot_item_id"]),
+            link_kind="competence_item",
+        )
+    )
+    branch_doc, _ = docs.create_document(
+        **_doc_kwargs(
+            setup,
+            "k-scope-branch",
+            snapshot_item_id=str(branch_item["snapshot_item_id"]),
+            link_kind="competence_item",
+        )
+    )
+    comp_doc, _ = docs.create_document(
+        **_doc_kwargs(setup, "k-scope-comp")
+    )
+
+    assert matrix_doc["branch_scope"] == "MATRIX"
+    assert branch_doc["branch_scope"] == "BRANCH"
+    assert comp_doc["branch_scope"] == "BOTH"
+
+    vf = docs.get_version_file(
+        setup["competence_id"], str(branch_doc["document_id"]), 1
+    )
+    assert vf["branch_scope"] == "BRANCH"
+
+
+def test_list_documents_filters_by_request_scope(setup):
+    """U2 — filial-contexto do request: MATRIX lista escopo MATRIX+BOTH;
+    BRANCH lista BRANCH+BOTH; BOTH é irrestrito (dataset compartilhado)."""
+    docs = setup["docs"]
+    matrix_item = _seeded_item("CK-E-01")
+    branch_item = _seeded_item("CK-E-27")
+    matrix_doc, _ = docs.create_document(
+        **_doc_kwargs(
+            setup,
+            "k-list-matrix",
+            snapshot_item_id=str(matrix_item["snapshot_item_id"]),
+            link_kind="competence_item",
+        )
+    )
+    branch_doc, _ = docs.create_document(
+        **_doc_kwargs(
+            setup,
+            "k-list-branch",
+            snapshot_item_id=str(branch_item["snapshot_item_id"]),
+            link_kind="competence_item",
+        )
+    )
+    comp_doc, _ = docs.create_document(
+        **_doc_kwargs(setup, "k-list-comp")
+    )
+    ids = {str(d["document_id"]) for d in (matrix_doc, branch_doc, comp_doc)}
+
+    def scoped_ids(scope: str) -> set[str]:
+        result = docs.list_documents(
+            setup["competence_id"], branch_scope=scope, limit=100
+        )
+        return {
+            str(i["document_id"]) for i in result["items"]
+        } & ids
+
+    matrix_id = str(matrix_doc["document_id"])
+    branch_id = str(branch_doc["document_id"])
+    comp_id = str(comp_doc["document_id"])
+
+    assert scoped_ids("MATRIX") == {matrix_id, comp_id}
+    assert scoped_ids("BRANCH") == {branch_id, comp_id}
+    assert scoped_ids("BOTH") == ids
+
+
+def test_audit_download_denied_phase_classification(setup):
+    """D-U3=A — `phase` classifica a etapa: decisão de autorização
+    (AUTHORIZED/DENIED) versus falha de entrega (FAILED); nenhuma linha
+    afirma transferência concluída."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-audit-phase"))
+    for result in ("DENIED", "FAILED", "AUTHORIZED"):
+        docs.audit_download(
+            competence_id=setup["competence_id"],
+            document_id=str(doc["document_id"]),
+            version_no=1,
+            actor=VIEWER,
+            result=result,
+        )
+    with plugins_db.plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT detail->>'result', detail->>'phase'"
+            "  FROM controllership_finance.closing_audit_event"
+            " WHERE entity_id = %s AND event_type = 'DOCUMENT_DOWNLOADED'"
+            " ORDER BY created_at",
+            (str(doc["document_id"]),),
+        )
+        rows = cur.fetchall()
+    assert rows == [
+        ("DENIED", "authorization"),
+        ("FAILED", "delivery"),
+        ("AUTHORIZED", "authorization"),
+    ]

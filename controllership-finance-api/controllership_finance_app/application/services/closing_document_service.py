@@ -17,12 +17,19 @@ from pathlib import Path
 from typing import Iterable
 
 from controllership_finance_app.domain.closing_checklist.errors import (
+    DocumentNotFound,
+    FileMissing,
     IdempotencyConflict,
     InvalidUpload,
+    ItemNotFound,
 )
 from controllership_finance_app.domain.closing_documents.file_validation import (
     sanitize_original_name,
     validate_upload_content,
+)
+from controllership_finance_app.domain.closing_documents.resource_scope import (
+    normalize_request_scope,
+    scope_in_context,
 )
 from controllership_finance_app.infrastructure.persistence.closing_document_repository import (
     ClosingDocumentRepository,
@@ -81,13 +88,19 @@ class ClosingDocumentService:
         title: str | None,
         attachment_role: str | None,
         idempotency_key: str,
+        branch_scope: str | None = None,
     ) -> tuple[dict, bool]:
         """Cria evidência `ATTACHED`; retorna ``(documento, created)``.
 
         ``created=False`` ⇒ replay idempotente (deduplicated). O item do
         snapshot nunca muda de estado — continua `EXPECTED`.
+
+        Resource scope (doc 103): o documento herda o `branch_scope` do
+        item; item fora do filial-contexto declarado é `item_not_found`
+        (404 — existência nunca vaza).
         """
         competence_id = self._repository.get_competence_id(period)
+        request_scope = normalize_request_scope(branch_scope)
 
         key = (idempotency_key or "").strip()
         if not 1 <= len(key) <= 128:
@@ -103,9 +116,15 @@ class ClosingDocumentService:
         link_kind = "competence"
         item_id = None
         if snapshot_item_id:
-            item_id = self._repository.get_snapshot_item_id(
+            item = self._repository.get_snapshot_item(
                 competence_id, snapshot_item_id
             )
+            if not scope_in_context(
+                request_scope=request_scope,
+                document_scope=item.get("branch_scope"),
+            ):
+                raise ItemNotFound("Item do checklist não encontrado.")
+            item_id = str(item["snapshot_item_id"])
             link_kind = "competence_item"
 
         display_name = sanitize_original_name(original_name)
@@ -115,22 +134,27 @@ class ClosingDocumentService:
         tmp_path, checksum, size = self._storage.write_temp(
             file_uuid, chunks
         )
-        content = tmp_path.read_bytes()
-        extension, mime_type = validate_upload_content(
-            original_name=display_name,
-            declared_mime=declared_mime,
-            content=content,
-        )
-        request_hash = _request_hash(
-            snapshot_item_id=item_id,
-            title=clean_title,
-            attachment_role=role,
-            checksum_sha256=checksum,
-        )
+        try:
+            content = tmp_path.read_bytes()
+            extension, mime_type = validate_upload_content(
+                original_name=display_name,
+                declared_mime=declared_mime,
+                content=content,
+            )
+            request_hash = _request_hash(
+                snapshot_item_id=item_id,
+                title=clean_title,
+                attachment_role=role,
+                checksum_sha256=checksum,
+            )
+            existing = self._repository.find_document_by_idempotency(
+                competence_id, key
+            )
+        except Exception:
+            # Rejeitado antes da publicação: `.part` nunca permanece.
+            self._storage.discard_temp(file_uuid)
+            raise
 
-        existing = self._repository.find_document_by_idempotency(
-            competence_id, key
-        )
         if existing is not None:
             self._storage.discard_temp(file_uuid)
             if existing["request_hash"] != request_hash:
@@ -145,12 +169,16 @@ class ClosingDocumentService:
                 False,
             )
 
-        storage_key, stored_name, _final_path = self._storage.publish(
-            tmp_path,
-            competence_id=competence_id,
-            file_uuid=file_uuid,
-            extension=extension,
-        )
+        try:
+            storage_key, stored_name, _final_path = self._storage.publish(
+                tmp_path,
+                competence_id=competence_id,
+                file_uuid=file_uuid,
+                extension=extension,
+            )
+        except Exception:
+            self._storage.discard_temp(file_uuid)
+            raise
         try:
             document, created = self._repository.create_document(
                 competence_id=competence_id,
@@ -192,41 +220,93 @@ class ClosingDocumentService:
         snapshot_item_id: str | None,
         link_kind: str | None,
         state: str | None,
+        branch_scope: str | None,
         limit: int,
         offset: int,
     ) -> dict:
         competence_id = self._repository.get_competence_id(period)
+        request_scope = normalize_request_scope(branch_scope)
         return self._repository.list_documents(
             competence_id,
             snapshot_item_id=snapshot_item_id,
             link_kind=link_kind,
             state=state,
+            branch_scope=(
+                request_scope if request_scope != "BOTH" else None
+            ),
             limit=limit,
             offset=offset,
         )
 
-    def get_document(self, *, period: str, document_id: str) -> dict:
+    def get_document(
+        self, *, period: str, document_id: str, branch_scope: str | None
+    ) -> dict:
         competence_id = self._repository.get_competence_id(period)
-        return self._repository.get_document_by_id(
+        request_scope = normalize_request_scope(branch_scope)
+        row = self._repository.get_document_by_id(
             competence_id, document_id
         )
+        # Resource scope: fora do filial-contexto declarado = 404.
+        if not scope_in_context(
+            request_scope=request_scope,
+            document_scope=row.get("branch_scope"),
+        ):
+            raise DocumentNotFound("Documento não encontrado.")
+        return row
 
     # -- U4 --------------------------------------------------------------------
 
     def resolve_download(
-        self, *, period: str, document_id: str, version_no: int, actor: str
+        self,
+        *,
+        period: str,
+        document_id: str,
+        version_no: int,
+        actor: str,
+        branch_scope: str | None = None,
     ) -> tuple[Path, dict]:
         """Versão + arquivo + auditoria `DOCUMENT_DOWNLOADED` (D-U3=A).
 
-        O evento registra a entrega autorizada (result=AUTHORIZED) —
-        separada da tentativa (request chegou) e da falha de entrega
-        (binário ausente ⇒ `file_missing` 503 antes da auditoria, sem
-        registro de sucesso)."""
+        O evento registra a *decisão de autorização* — nunca a entrega:
+        `FileResponse` não prova que os bytes chegaram ao cliente, logo
+        conclusão/interrupção de transferência não é reivindicada.
+
+        - `AUTHORIZED`/`phase=authorization`: authz concedida e binário
+          confirmado disponível; a resposta só então é iniciada.
+        - `DENIED`/`phase=authorization`: documento existe mas está fora
+          do filial-contexto declarado — auditável (ator+recurso
+          conhecidos); a resposta permanece 404 sem vazar existência.
+        - `FAILED`/`phase=delivery`: autorizado, porém o binário está
+          ausente/inválido — entrega impossível antes da transmissão.
+        """
         competence_id = self._repository.get_competence_id(period)
+        request_scope = normalize_request_scope(branch_scope)
         version_file = self._repository.get_version_file(
             competence_id, document_id, version_no
         )
-        path = self._storage.resolve(version_file["storage_key"])
+        if not scope_in_context(
+            request_scope=request_scope,
+            document_scope=version_file.get("branch_scope"),
+        ):
+            self._repository.audit_download(
+                competence_id=competence_id,
+                document_id=document_id,
+                version_no=version_no,
+                actor=actor,
+                result="DENIED",
+            )
+            raise DocumentNotFound("Documento não encontrado.")
+        try:
+            path = self._storage.resolve(version_file["storage_key"])
+        except FileMissing:
+            self._repository.audit_download(
+                competence_id=competence_id,
+                document_id=document_id,
+                version_no=version_no,
+                actor=actor,
+                result="FAILED",
+            )
+            raise
         self._repository.audit_download(
             competence_id=competence_id,
             document_id=document_id,

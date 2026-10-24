@@ -198,3 +198,13 @@ Risco remanescente: execuções abortadas entre CREATE e teardown deixam resídu
 ### Residuais honestos preservados
 
 Antivírus inexistente (não improvisado) · housekeeping de órfãos PLANNED (não ativo) · retenção corporativa pendente · OFX/QIF/TXT com TÉO · E05/E06 · `RQ-P2-039`.
+
+## Adendo — Rework funcional SLICE-1 (`CF-C3-P2-UPLOAD-SLICE1-REWORK-001`)
+
+Correções sobre `ad78082222`, sem reimplementar o slice:
+
+- **R-W1 — resource scope efetivo.** U1–U4 agora aplicam `capability AND resource_scope AND business_rule`: `branch_scope` (dimensão de dado MATRIX|BRANCH|BOTH, nunca permission) declara o filial-contexto do request; o documento herda o escopo do item (competência = BOTH). Fora do contexto = 404 sem vazamento (`item_not_found`/`document_not_found`). Não existe fonte canônica de filial por usuário — audiência `access` autorizada para o dataset compartilhado (doc 49 §8); permission por filial permanece proibida e membership não foi inventado.
+- **R-W2 — limpeza de `.part`.** Toda exceção entre `write_temp()` e `publish()` (validação de conteúdo/assinatura/extensão/MIME, request_hash, idempotência, falha de publicação) chama `discard_temp()` — idempotente e com log, nunca mascarando a causa. Testes: PDF corrompido, XLSX inválido, mismatch de tipo, extensão não suportada e falha de publish — nenhum `.part` permanece.
+- **R-W3 — auditoria de download.** `DOCUMENT_DOWNLOADED` registra a decisão de autorização — `result=AUTHORIZED|DENIED|FAILED` + `phase=authorization|delivery` no detail. DENIED quando o documento existe mas está fora do contexto (auditável); FAILED quando o binário está ausente. `FileResponse` não prova transmissão: nenhuma linha afirma entrega concluída.
+- **R-W4 — erros de download no MFE.** `.catch(() => undefined)` removido; banner acessível classifica a causa (autorização 401/403, documento fora do escopo 404, arquivo indisponível `file_missing`/503, falha de rede) com «Tentar novamente».
+- Evidência: backend `242 passed` · PG isolado `58 passed` (escopo herdado, filtro por contexto, fase de auditoria) · frontend `109 passed` + `25` estrutural · `tsc -b && vite build` ok · lint limpo nos arquivos tocados.
