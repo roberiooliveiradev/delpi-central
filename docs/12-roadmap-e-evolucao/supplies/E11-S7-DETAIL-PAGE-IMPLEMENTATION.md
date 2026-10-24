@@ -59,3 +59,12 @@ Decisão vinculante: [E11-S7-DETAIL-PAGE-PO-DECISION.md](./E11-S7-DETAIL-PAGE-PO
 - `plugins/supplies/src/features/safety-stock/SafetyStockBranchChoiceDialog.tsx` — **nova** (seleção explícita).
 - `plugins/supplies/src/features/safety-stock/SafetyStockDetailModal.tsx` — **removido**.
 - `SafetyStockPage.tsx`, `query.ts` (+test), `content.ts`, `SafetyStock.structural.test.ts`, `index.css`, `content/helpTooltips.ts`, `content/userManualContent.ts`.
+
+
+## Revisão GPT — E11.S7 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para código e publicação técnica, sem fechar `GATE-FEATURE E11`. Inspecionados no source `3039f729c8`: este documento, `pluginRoutes.ts`, `SafetyStockPage.tsx` e `SafetyStockBranchChoiceDialog.tsx`. Confirmados página interna de detalhe `safety-stock/{branch}/{productCode}`, seletor explícito de filial para linha consolidada com confirmação desabilitada antes de escolha, e ausência de filial default no seletor. A remoção do modal de detalhe, testes 437 PASS/build e deploy MFE `d525dcec01` são evidências reportadas pelo executor, não reexecutadas nesta revisão.
+
+**Residuais de aceite:** smoke autenticado e QA visual em produção ainda `INCONCLUSIVE`; verificar fluxo `all → escolher filial → página inteira → Voltar`, `01/02` diretos, F5/deep links e telas mobile/temas. O seletor implementa `role='radiogroup'` com `button role='radio'`, mas a navegação semântica completa de teclado (setas/Tab/foco, além de Enter/Espaço) ainda precisa ser comprovada por teste funcional e corrigida se não aderir ao padrão do kit. Não inferir acessibilidade PASS a partir da presença de ARIA. Nenhuma mudança em BFF, Core, manifest, API TOTVS ou RBAC é justificada por esta revisão.
+
+**Estados:** `E11_S7=ACCEPT_WITH_RESIDUAL` em código; `E11_DEPLOY_STATUS=PASS_DEPLOYED` conforme relatório; `GATE-FEATURE E11=INCONCLUSIVE` até evidências reais.
