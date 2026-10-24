@@ -94,3 +94,12 @@ Cenários autenticados (403 sem capability, `branch=01/02/all`, 422 filial invá
 ## Próxima etapa
 
 Sessão autenticada com usuário autorizado executando a jornada S5.H; ao PASS, fechar `GATE-FEATURE E11 = PASS` e atualizar README/PLAN.
+
+
+## Revisão GPT — E11.S5 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para publicação técnica; **`E11_DEPLOY_STATUS=PASS_DEPLOYED`**, **`GATE-FEATURE E11=INCONCLUSIVE`**. Conferido o relatório versionado em `e504b65c76`, com `SOURCE/DEPLOY_SHA=553a19a0e8a3b375b7f71b934e5dfa4be63e8c8e`, imagens BFF/MFE e hash do bundle federado relatados. Health, gateway e smoke 401 das cinco rotas são evidência operacional reportada pelo executor e registrada no relatório; não houve sessão produtiva autenticada disponibilizada ao GPT para reexecutar os checks.
+
+**Gate pendente:** executar com identidade autorizada efetiva as consultas `branch=all|01|02`, filtros, resumo, paginação, ordenação, detalhe por `product_code+branch`, fornecedores, F5/back, 401/403/422/404 quando aplicáveis, Help renderizada, desktop/mobile, claro/escuro e teclado/foco. Registrar URLs/horários e evidências sanitizadas. Não equiparar 401 anônimo a funcionamento autenticado nem declarar `PASS` inferido. Se indisponível, conservar `INCONCLUSIVE` e não iniciar página seguinte com dependência de gate fechado.
+
+**Residuais de manutenção:** dez erros de lint anteriores a E11 continuam `PREEXISTING_OTHER_SCOPE`; `peer_branch_stock=TO_INVENTORY`. O cabeçalho antigo de `IMPLEMENTATION-PLAN.md` ainda contém status histórico de E10 e a frase 'não iniciar E11'; harmonizar a visão atual com a cronologia documentada em task documental bounded, sem reescrever evidências históricas. **Nenhum novo deploy/código nesta revisão.**
