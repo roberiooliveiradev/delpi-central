@@ -38,13 +38,15 @@ import type {
 } from "./types";
 
 type LoadState<T> = {
+  /** Identidade do item que gerou este estado — evita exibir item anterior. */
+  key: string;
   status: "loading" | "ready" | "error";
   data: T | null;
   error: string | null;
 };
 
-function initialLoad<T>(): LoadState<T> {
-  return { status: "loading", data: null, error: null };
+function initialLoad<T>(key: string): LoadState<T> {
+  return { key, status: "loading", data: null, error: null };
 }
 
 function mapDetailError(err: unknown): string {
@@ -157,11 +159,11 @@ export function SafetyStockDetailModal({
   onClose,
 }: SafetyStockDetailModalProps) {
   const [detail, setDetail] = useState<LoadState<SafetyStockItemDetail>>(() =>
-    initialLoad(),
+    initialLoad(""),
   );
   const [suppliers, setSuppliers] = useState<
     LoadState<SafetyStockLinkedSupplier[]>
-  >(() => initialLoad());
+  >(() => initialLoad(""));
   const [retryKey, setRetryKey] = useState(0);
 
   const open = target != null;
@@ -169,43 +171,63 @@ export function SafetyStockDetailModal({
 
   // Dois canais independentes (detalhe / fornecedores): falha de um não
   // bloqueia o outro; troca de item cancela a resposta atrasada do anterior.
+  // O estado é chaveado pelo target — sem setState síncrono no effect.
   useEffect(() => {
     if (!target) return undefined;
     const controller = new AbortController();
-    setDetail(initialLoad());
+    const key = `${target.branch}|${target.productCode}`;
     getSafetyStockItemDetails(target, controller.signal)
       .then((payload) =>
-        setDetail({ status: "ready", data: payload, error: null }),
+        setDetail({ key, status: "ready", data: payload, error: null }),
       )
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
-        setDetail({ status: "error", data: null, error: mapDetailError(err) });
-      });
-    return () => controller.abort();
-  }, [target, targetKey, retryKey]);
-
-  useEffect(() => {
-    if (!target) return undefined;
-    const controller = new AbortController();
-    setSuppliers(initialLoad());
-    getSafetyStockItemSuppliers(target, controller.signal)
-      .then((payload) =>
-        setSuppliers({ status: "ready", data: payload.items, error: null }),
-      )
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        setSuppliers({
+        setDetail({
+          key,
           status: "error",
           data: null,
           error: mapDetailError(err),
         });
       });
     return () => controller.abort();
-  }, [target, targetKey, retryKey]);
+  }, [target, retryKey]);
+
+  useEffect(() => {
+    if (!target) return undefined;
+    const controller = new AbortController();
+    const key = `${target.branch}|${target.productCode}`;
+    getSafetyStockItemSuppliers(target, controller.signal)
+      .then((payload) =>
+        setSuppliers({
+          key,
+          status: "ready",
+          data: payload.items,
+          error: null,
+        }),
+      )
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setSuppliers({
+          key,
+          status: "error",
+          data: null,
+          error: mapDetailError(err),
+        });
+      });
+    return () => controller.abort();
+  }, [target, retryKey]);
 
   if (!open || !target) return null;
 
-  const data = detail.data;
+  // Estado só vale para o item corrente — troca rápida nunca exibe o anterior.
+  const detailState =
+    detail.key === targetKey ? detail : initialLoad<SafetyStockItemDetail>(targetKey);
+  const suppliersState =
+    suppliers.key === targetKey
+      ? suppliers
+      : initialLoad<SafetyStockLinkedSupplier[]>(targetKey);
+
+  const data = detailState.data;
   const product = data?.product;
   const stock = data?.stock;
   const coverage = data?.purchase_coverage;
@@ -225,14 +247,14 @@ export function SafetyStockDetailModal({
       className="sp-safety-stock-detail"
       closeAriaLabel="Fechar detalhes do material"
     >
-      {detail.status === "loading" ? (
+      {detailState.status === "loading" ? (
         <SuppliesLoadingCard title={D.loading} variant="panel" />
       ) : null}
 
-      {detail.status === "error" ? (
+      {detailState.status === "error" ? (
         <div className="sp-safety-stock-detail__error">
           <SuppliesStateBanner variant="error">
-            {detail.error ?? D.error}
+            {detailState.error ?? D.error}
           </SuppliesStateBanner>
           <SuppliesActionButton
             type="button"
@@ -244,14 +266,17 @@ export function SafetyStockDetailModal({
         </div>
       ) : null}
 
-      {detail.status === "ready" && data && product && stock ? (
+      {detailState.status === "ready" && data && product && stock ? (
         <div className="sp-safety-stock-detail__body">
           <section
             className="sp-safety-stock-detail__section"
             aria-label={D.sectionIdentification}
           >
             <h4 className="sp-safety-stock-detail__section-title">
-              {D.sectionIdentification}
+              <SuppliesSectionHintLabel
+                label={D.sectionIdentification}
+                hint={SP_HELP.safetyStockDetail}
+              />
             </h4>
             <dl className="sp-safety-stock-detail__grid">
               <div>
@@ -802,13 +827,13 @@ export function SafetyStockDetailModal({
             hint={SP_HELP.safetyStockDetailSuppliers}
           />
         </h4>
-        {suppliers.status === "loading" ? (
+        {suppliersState.status === "loading" ? (
           <SuppliesLoadingCard title={D.loadingSuppliers} variant="panel" />
         ) : null}
-        {suppliers.status === "error" ? (
+        {suppliersState.status === "error" ? (
           <div className="sp-safety-stock-detail__error">
             <SuppliesStateBanner variant="error">
-              {suppliers.error ?? D.errorSuppliers}
+              {suppliersState.error ?? D.errorSuppliers}
             </SuppliesStateBanner>
             <SuppliesActionButton
               type="button"
@@ -819,8 +844,8 @@ export function SafetyStockDetailModal({
             </SuppliesActionButton>
           </div>
         ) : null}
-        {suppliers.status === "ready" ? (
-          suppliers.data && suppliers.data.length === 0 ? (
+        {suppliersState.status === "ready" ? (
+          suppliersState.data && suppliersState.data.length === 0 ? (
             <p className="sp-safety-stock-detail__empty">{D.suppliersEmpty}</p>
           ) : (
             <div className="sp-safety-stock-detail__table-wrap">
@@ -836,7 +861,7 @@ export function SafetyStockDetailModal({
                   </tr>
                 </thead>
                 <tbody>
-                  {(suppliers.data ?? []).map((supplier) => (
+                  {(suppliersState.data ?? []).map((supplier) => (
                     <tr
                       key={`${supplier.supplier_code}|${supplier.supplier_store}`}
                     >

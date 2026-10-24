@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  detailMatchesTarget,
   isSafetyStockFiltersResponse,
   isSafetyStockItemDetail,
   isSafetyStockItemsResponse,
@@ -348,6 +349,44 @@ describe("safety stock detail guards (E11.S3)", () => {
       }),
     ).toBe(false);
     expect(isSafetyStockItemDetail({ product: detail.product })).toBe(false);
+  });
+
+  it("identidade exata: resposta deve casar produto+filial solicitados (E11.S4)", () => {
+    const target = { productCode: "10070821", branch: "01" as const };
+    const match = (product: Record<string, unknown>) =>
+      detailMatchesTarget(
+        { ...detail, product } as Parameters<typeof detailMatchesTarget>[0],
+        target,
+      );
+
+    // Positivo: mesmo produto + mesma filial.
+    expect(match({ product_code: "10070821", branch: "01" })).toBe(true);
+    // Produto incorreto + filial correta.
+    expect(match({ product_code: "99999999", branch: "01" })).toBe(false);
+    // Produto correto + filial incorreta (filial irmã não substitui).
+    expect(match({ product_code: "10070821", branch: "02" })).toBe(false);
+    // Ambos incorretos.
+    expect(match({ product_code: "99999999", branch: "02" })).toBe(false);
+  });
+
+  it("identidade preserva zeros à esquerda — sem coerção numérica nem parcial", () => {
+    const target = { productCode: "00100708", branch: "01" as const };
+    const match = (code: string, branch: string) =>
+      detailMatchesTarget(
+        {
+          ...detail,
+          product: { product_code: code, branch },
+        } as Parameters<typeof detailMatchesTarget>[0],
+        target,
+      );
+
+    expect(match("00100708", "01")).toBe(true);
+    // Zeros à esquerda são significativos: código "equivalente" sem zeros ≠.
+    expect(match("100708", "01")).toBe(false);
+    // Sem match parcial/prefixo.
+    expect(match("0010070899", "01")).toBe(false);
+    // Filial "1" não equivale a "01".
+    expect(match("00100708", "1")).toBe(false);
   });
 
   it("fornecedores exigem items[] + total; {} vazio é rejeitado", () => {

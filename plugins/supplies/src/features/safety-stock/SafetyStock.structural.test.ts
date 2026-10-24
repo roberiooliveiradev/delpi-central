@@ -149,8 +149,8 @@ describe("Safety stock item detail (E11.S3)", () => {
     expect(modal).toContain("AbortController");
     expect(modal).toContain("controller.abort()");
     // Estados independentes detalhe × fornecedores.
-    expect(modal).toContain("detail.status");
-    expect(modal).toContain("suppliers.status");
+    expect(modal).toContain("detailState.status");
+    expect(modal).toContain("suppliersState.status");
     // Seções do contrato real do produtor.
     for (const section of [
       "open_purchase_orders",

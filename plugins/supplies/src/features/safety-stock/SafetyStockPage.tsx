@@ -50,6 +50,19 @@ type SafetyStockPageProps = {
 
 type HistoryWriteMode = "replace" | "push" | "skip";
 
+type ItemsLoadState = {
+  key: string;
+  status: "loading" | "ready" | "error";
+  items: SafetyStockItem[];
+  total: number;
+  totalPages: number;
+  error: string | null;
+};
+
+function itemsLoadingState(key: string): ItemsLoadState {
+  return { key, status: "loading", items: [], total: 0, totalPages: 0, error: null };
+}
+
 function readBrowserSearch(): string {
   if (typeof window === "undefined") return "";
   return window.location.search || "";
@@ -87,19 +100,17 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
     useState<SafetyStockDetailTarget | null>(() =>
       parseDetailTargetFromSearch(readBrowserSearch()),
     );
-  const [itemsLoading, setItemsLoading] = useState(true);
-  const [itemsError, setItemsError] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [filtersError, setFiltersError] = useState<string | null>(null);
-  const [items, setItems] = useState<SafetyStockItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [summary, setSummary] = useState<SafetyStockSummary | null>(null);
   const [branchCatalog, setBranchCatalog] = useState<string[]>([]);
   const [productGroupOptions, setProductGroupOptions] = useState<string[]>([]);
   const [unitOptions, setUnitOptions] = useState<string[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [itemsState, setItemsState] = useState<ItemsLoadState>(() =>
+    itemsLoadingState(""),
+  );
 
   // Persistência de URL — F5/deep link restauram o recorte completo.
   useEffect(() => {
@@ -140,7 +151,6 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
         setFiltersError(mapSafetyStockFetchError(message));
       });
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- branch/includeBlocked afetam as opções
   }, [query.branch, query.includeBlocked, reloadKey]);
 
   // Resumo — canal independente: falha não derruba a listagem.
@@ -160,37 +170,43 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
     return () => controller.abort();
   }, [query, reloadKey]);
 
-  // Listagem — paginação e ordenação server-side.
+  // Listagem — paginação e ordenação server-side. Estado chaveado pelo
+  // recorte: troca de filtro nunca exibe itens da consulta anterior.
+  const itemsKey = useMemo(
+    () => JSON.stringify([query, reloadKey]),
+    [query, reloadKey],
+  );
   useEffect(() => {
     const controller = new AbortController();
-    setItemsLoading(true);
     listSafetyStockItems(query, controller.signal)
       .then((payload) => {
-        setItems(payload.items);
-        setTotal(payload.total);
-        setTotalPages(
-          typeof payload.total_pages === "number"
-            ? payload.total_pages
-            : Math.ceil(
-                payload.total / Math.max(1, payload.page_size || query.page_size),
-              ),
-        );
-        setItemsError(null);
+        setItemsState({
+          key: itemsKey,
+          status: "ready",
+          items: payload.items,
+          total: payload.total,
+          totalPages:
+            typeof payload.total_pages === "number"
+              ? payload.total_pages
+              : Math.ceil(
+                  payload.total /
+                    Math.max(1, payload.page_size || query.page_size),
+                ),
+          error: null,
+        });
         setLastUpdatedAt(new Date());
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
-        setItems([]);
-        setTotal(0);
-        setTotalPages(0);
         const message = err instanceof Error ? err.message : C.error;
-        setItemsError(mapSafetyStockFetchError(message));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setItemsLoading(false);
+        setItemsState({
+          ...itemsLoadingState(itemsKey),
+          status: "error",
+          error: mapSafetyStockFetchError(message),
+        });
       });
     return () => controller.abort();
-  }, [query, reloadKey]);
+  }, [query, reloadKey, itemsKey]);
 
   const homeHref = buildPluginPath("home", basePath);
 
@@ -265,8 +281,15 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
     ];
   }, [summary]);
 
+  const itemsView =
+    itemsState.key === itemsKey ? itemsState : itemsLoadingState(itemsKey);
+  const loading = itemsView.status === "loading";
+  const itemsError = itemsView.status === "error" ? itemsView.error : null;
+  const items = itemsView.items;
+  const total = itemsView.total;
+  const totalPages = itemsView.totalPages;
+
   const deficitByUnit = summary?.deficit_by_unit ?? [];
-  const loading = itemsLoading;
 
   return (
     <div className="sp-page-stack sp-safety-stock">

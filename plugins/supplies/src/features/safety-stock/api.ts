@@ -122,6 +122,22 @@ export function isSafetyStockItemDetail(
   return typeof product.branch === "string" && Boolean(product.branch.trim());
 }
 
+/**
+ * Identidade estrita: a resposta deve corresponder exatamente ao item
+ * solicitado. Comparação de strings após trim — sem coerção numérica
+ * (zeros à esquerda são significativos), sem match parcial e sem aceitar
+ * filial irmã. Revisão GPT E11.S3 — residual de integridade.
+ */
+export function detailMatchesTarget(
+  detail: SafetyStockItemDetail,
+  target: SafetyStockDetailTarget,
+): boolean {
+  return (
+    detail.product.product_code?.trim() === target.productCode.trim() &&
+    detail.product.branch?.trim() === target.branch.trim()
+  );
+}
+
 export function isSafetyStockSuppliersResponse(
   value: unknown,
 ): value is SafetyStockSuppliersResponse {
@@ -142,6 +158,9 @@ export async function getSafetyStockItemDetails(
     { signal },
   );
   if (!isSafetyStockItemDetail(payload)) throw new SafetyStockContractError();
+  if (!detailMatchesTarget(payload, target)) {
+    throw new SafetyStockContractError();
+  }
   return payload;
 }
 
