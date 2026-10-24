@@ -31,10 +31,13 @@ composition is an enhancement, never a correctness dependency.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 from app.application.capability_provision.outcome_assessment import (
+    MAX_RENDER_LIST_ITEMS,
+    MAX_SYNTHESIS_FIELDS,
     OUTCOME_ANSWERED,
     OUTCOME_CONTRACT_FACTS,
     OUTCOME_EMPTY_RESULT,
@@ -42,10 +45,13 @@ from app.application.capability_provision.outcome_assessment import (
     OUTCOME_INSUFFICIENT,
     AnswerRequirements,
     OutcomeVerdict,
+    _CONTROL_PLANE_KEYS,
+    _RESOLVER_ENVELOPE_KEYS,
     _UUID_VALUE_RE,
     _canonical_key,
     _record_identifier,
     _sanitize_renderable,
+    _synthesis_selections,
     ordering_proof_fields,
     parse_temporal_value,
     verified_ordering_event,
@@ -686,3 +692,623 @@ def ordering_presentation(
         if parse_temporal_value(raw) is not None:
             ordering_date = cri_scalar_text(raw)
     return ordering_date, ordering_event
+
+
+# ------------------------------------------------------------------
+# M06/R4 — deterministic presentation helpers relocated from the
+# orchestration coordinator (plan 125): pure format/projection
+# ownership — no capability execution, no provider access, no
+# authorization decisions. Behavior is byte-parity, not rewritten.
+# ------------------------------------------------------------------
+
+MAX_RENDER_CONTENT_CHARS = 2000
+
+def _render_synthesis(
+    proposal: Mapping[str, Any],
+    records: tuple[Mapping[str, Any], ...],
+    *,
+    has_more: bool | None = None,
+    field_labels: FieldLabels | None = None,
+) -> tuple[str | None, str]:
+    """Deterministic render of an evidence-bound synthesis proposal.
+
+    The contract is selection-only: there is no model-authored prose
+    channel, so no model text can ever introduce a factual leaf value.
+    Every rendered value is copied verbatim from the sanitized
+    records — invalid indices, unknown fields, empty selections or
+    non-scalar values reject the whole proposal. The bounded rejection
+    reason code is returned for observability (LOOP-03R2A) — never
+    proposal content.
+
+    The optional ``presentation`` field carries a closed vocabulary
+    hint (``answer`` | ``list`` | ``detail``); anything outside it is
+    ignored and the runtime derives a safe projection — a single
+    selected record composes a focused grounded sentence, several
+    records compose a bounded introduced list.
+
+    ``has_more`` (R5) prevents page-slice length from being framed as
+    an authoritative total when the owner reports more pages.
+    Presentation does not decide whether a comparison succeeded.
+    """
+    selections, reason = _synthesis_selections(proposal, records)
+    if selections is None:
+        return None, reason
+    mode = proposal.get("presentation")
+    if mode not in _PRESENTATION_INTENTS:
+        mode = "answer" if len(selections) == 1 else "list"
+    if mode == "detail":
+        lines: list[str] = []
+        for record, values in selections:
+            lines.append(_detail_header(record))
+            lines.extend(
+                _detail_lines(values, field_labels=field_labels)
+            )
+        return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
+    if mode == "list" or (
+        len(selections) > 1 and mode != "answer"
+    ):
+        selected_records = tuple(record for record, _ in selections)
+        lines = [
+            _list_header(
+                len(selections),
+                records=selected_records,
+                has_more=has_more,
+            )
+        ]
+        for _record, values in selections:
+            rendered = " — ".join(value for _, value in values).strip()
+            # A prior excerpt may already be a list item. Do not nest
+            # a second marker in front of it.
+            if re.match(r"^(?:[-*]|\d+[.)])\s+\S", rendered):
+                lines.append(rendered)
+            else:
+                lines.append(f"- {rendered}")
+        return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
+    if len(selections) == 2 and mode == "answer":
+        # Stage 05: two focused selections → grounded sentences plus
+        # deterministic field diffs from owner scalars only.
+        left_record, left_values = selections[0]
+        right_record, right_values = selections[1]
+        lines = [
+            _compose_answer(
+                left_record, left_values, field_labels=field_labels
+            ),
+            _compose_answer(
+                right_record, right_values, field_labels=field_labels
+            ),
+        ]
+        diff = _proven_field_differences(
+            left_values, right_values, field_labels=field_labels
+        )
+        if diff:
+            lines.append("Diferenças comprovadas:")
+            lines.extend(diff)
+        return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
+    record, values = selections[0]
+    return (
+        _compose_answer(record, values, field_labels=field_labels)[
+            :MAX_RENDER_CONTENT_CHARS
+        ],
+        "rendered",
+    )
+
+def _proven_field_differences(
+    left_values: list[tuple[str, str]],
+    right_values: list[tuple[str, str]],
+    *,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    """Deterministic diffs of selected scalar fields present on both sides.
+
+    Synthetic prior-turn ``excerpt`` leaves are session prose, not owner
+    registry fields — they are omitted from the diff section so the
+    technical field name never surfaces (R-S05-01).
+    """
+    right_map = {name: value for name, value in right_values}
+    lines: list[str] = []
+    for name, left_value in left_values:
+        if _canonical_key(name) == "excerpt":
+            continue
+        right_value = right_map.get(name)
+        if right_value is None or right_value == left_value:
+            continue
+        label = field_display_label(
+            _canonical_key(name), name, field_labels
+        )
+        lines.append(f"- {label}: {left_value} → {right_value}")
+    return lines[:MAX_SYNTHESIS_FIELDS]
+
+def _selected_proven_differences(
+    proposal: Mapping[str, Any] | None,
+    records: tuple[Mapping[str, Any], ...],
+    *,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    """Typed field diffs for a two-record selection.
+
+    Empty when the proposal does not select exactly two records or
+    when shared scalars do not differ. A rendered heading is not an
+    input and is not proof.
+    """
+    if not isinstance(proposal, Mapping):
+        return []
+    selections, reason = _synthesis_selections(proposal, records)
+    if reason != "ok" or not selections or len(selections) != 2:
+        return []
+    return _proven_field_differences(
+        selections[0][1], selections[1][1], field_labels=field_labels
+    )
+
+_INSUFFICIENCY_CONTENT = (
+    "Com as evidências disponíveis não consigo responder a esse "
+    "pedido de forma fundamentada. O que a fonte retornou não "
+    "sustenta a conclusão pedida — não invento dados para completar "
+    "a resposta."
+)
+
+def _insufficiency_content() -> str:
+    """Bounded honest limitation when synthesis selects no evidence."""
+    return _INSUFFICIENCY_CONTENT[:MAX_RENDER_CONTENT_CHARS]
+
+# Closed presentation vocabulary for the synthesis contract — a
+# bounded hint, never prose; anything outside it is derived
+# deterministically by the runtime.
+_PRESENTATION_INTENTS = frozenset({"answer", "list", "detail"})
+
+def _compose_answer(
+    record: Mapping[str, Any],
+    values: list[tuple[str, str]],
+    *,
+    field_labels: FieldLabels | None = None,
+) -> str:
+    """One focused grounded sentence for a single selected record.
+
+    The record's own identifier anchors the subject (``do registro
+    <id>``) — copied verbatim, never invented; when the identifier
+    field itself is the selected field it renders as the clause
+    instead of the subject.
+
+    Prior-turn continuity records use a synthetic ``excerpt`` leaf.
+    Those values are session evidence already phrased for the user —
+    render them directly instead of the technical
+    ``O campo "excerpt" é:`` wrapper (R-S05-01).
+    """
+    if values and all(
+        _canonical_key(field_name) == "excerpt" for field_name, _ in values
+    ):
+        text = " ".join(value for _, value in values).strip()
+        if not text:
+            return ""
+        if text.endswith((".", "!", "?")):
+            sentence = text
+        else:
+            sentence = text + "."
+        return sentence[:1].upper() + sentence[1:]
+
+    identifier = _record_identifier(record)
+    id_field, id_value = identifier if identifier else (None, None)
+    subject = f" do registro {id_value}" if id_value else ""
+    clauses = [(f, v) for f, v in values if f != id_field]
+    if not clauses:
+        clauses = list(values)
+        subject = ""
+    parts = [
+        f"{field_clause_label(_canonical_key(field_name), field_name, field_labels)}"
+        f" é: {value}"
+        for field_name, value in clauses
+    ]
+    first, *rest = parts
+    sentence = first.replace(" é:", subject + " é:", 1)
+    if rest:
+        sentence += "; " + "; ".join(rest)
+    return sentence[:1].upper() + sentence[1:] + "."
+
+def _detail_header(record: Mapping[str, Any]) -> str:
+    identifier = _record_identifier(record)
+    if identifier:
+        return f"Detalhes do registro {identifier[1]}:"
+    # Prior-turn excerpts are not owner registry rows — avoid the
+    # technical "registro" framing when every leaf is an excerpt.
+    if record and all(
+        _canonical_key(str(key)) == "excerpt" for key in record
+    ):
+        return "Trechos anteriores:"
+    return "Detalhes do registro:"
+
+def _detail_lines(
+    values: list[tuple[str, str]],
+    *,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    lines = []
+    for field_name, value in values:
+        if _canonical_key(field_name) == "excerpt":
+            # Presentation-only: do not expose the synthetic field name.
+            # Keep a marker the excerpt already has; do not nest another.
+            text = value.strip()
+            if re.match(r"^(?:[-*]|\d+[.)])\s+\S", text):
+                lines.append(text)
+            else:
+                lines.append(f"- {text}")
+            continue
+        label = field_display_label(
+            _canonical_key(field_name), field_name, field_labels
+        )
+        lines.append(f"- {label}: {value}")
+    return lines
+
+def _list_header(
+    count: int,
+    *,
+    records: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]] | None = None,
+    has_more: bool | None = None,
+) -> str:
+    """Bounded list introduction — outcome-aware (doc 35 R3 + R5).
+
+    When the owner page reports ``has_more=True``, the returned item
+    count is a page slice — never presented as an authoritative total.
+    """
+    if records is not None and records_are_prior_excerpts(records):
+        noun = "itens" if count != 1 else "item"
+        return f"Recuperei {count} {noun} da orientação anterior:"
+    if has_more is True:
+        return (
+            f"Mostrando {count} registro(s) nesta página; há mais "
+            f"resultados além desta página — este número não é o total."
+        )
+    noun = "registros" if count != 1 else "registro"
+    return f"Encontrei {count} {noun}:"
+
+# Bounded set of known transport-level completion texts — suppressed
+# only when authoritative business data is rendered instead. Arbitrary
+# owner text is never suppressed.
+EMPTY_RESULT_TEXT = "Nenhum resultado encontrado."
+
+_ITEMS_KEY = "items"
+
+def _format_structured(
+    node: object,
+    depth: int = 0,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    """Deterministic human-readable projection of owner data.
+
+    Formats bounded sanitized structures into key/value lines and list
+    items — formatting only: no inference, no semantic renaming, no
+    computed values. Returns [] when the node is not formattable so
+    the caller may fall back to a bounded JSON dump.
+    """
+    indent = "  " * depth
+    if depth > 3:
+        return []
+    if isinstance(node, Mapping):
+        lines: list[str] = []
+        for key, value in node.items():
+            key = str(key)
+            canon = _canonical_key(key)
+            # Owner control-plane metadata (agent directives, the
+            # capability surface) is orchestration data — never
+            # projected into the user-facing answer.
+            if canon in _CONTROL_PLANE_KEYS:
+                continue
+            display = (
+                field_display_label(canon, key, field_labels)
+                if field_labels is not None
+                else key
+            )
+            if isinstance(value, Mapping):
+                sub = _format_structured(
+                    value, depth + 1, field_labels=field_labels
+                )
+                lines.append(f"{indent}{display}:")
+                lines.extend(sub or [f"{indent}  {{}}"])
+            elif isinstance(value, (list, tuple)):
+                items = list(value)[:MAX_RENDER_LIST_ITEMS]
+                if items:
+                    lines.append(f"{indent}{display}:")
+                    lines.extend(
+                        _format_list(
+                            items, depth + 1, field_labels=field_labels
+                        )
+                    )
+                else:
+                    lines.append(f"{indent}{display}: (vazio)")
+            else:
+                if value is None:
+                    continue
+                lines.append(f"{indent}{display}: {value}")
+        return lines
+    return []
+
+def _format_list(
+    items: list,
+    depth: int,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    indent = "  " * depth
+    lines: list[str] = []
+    for item in items:
+        if isinstance(item, Mapping):
+            first = True
+            for key, value in item.items():
+                canon = _canonical_key(key)
+                if canon in _CONTROL_PLANE_KEYS:
+                    continue
+                if isinstance(value, (Mapping, list, tuple)) or value is None:
+                    continue
+                display = (
+                    field_display_label(canon, key, field_labels)
+                    if field_labels is not None
+                    else key
+                )
+                prefix = "- " if first else "  "
+                lines.append(
+                    f"{indent}{prefix}{display}: {value}"
+                )
+                first = False
+            if first:
+                lines.append(f"{indent}- {{}}")
+        elif isinstance(item, (list, tuple)):
+            return []
+        else:
+            lines.append(f"{indent}- {item}")
+    return lines
+
+def _format_records(
+    items: list,
+    depth: int = 0,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    """Bounded numbered record list for multi-item business payloads."""
+    indent = "  " * depth
+    lines: list[str] = []
+    for idx, item in enumerate(items, 1):
+        if isinstance(item, Mapping):
+            lines.append(f"{indent}{idx}.")
+            lines.extend(
+                _format_structured(
+                    item, depth + 1, field_labels=field_labels
+                )
+                or [f"{indent}  {{}}"]
+            )
+        else:
+            lines.append(f"{indent}{idx}. {item}")
+    return lines
+
+def _business_lines(
+    node: Mapping,
+    depth: int = 0,
+    field_labels: FieldLabels | None = None,
+) -> list[str] | None:
+    """Project the authoritative business payload for user display.
+
+    Owners commonly wrap business data in technical envelopes: a
+    ``data``/``result``/``payload``/``response`` member carries the
+    payload while siblings carry transport/pagination metadata that
+    must not dominate the primary answer. Unwrapping is structural,
+    recursive and bounded — never a per-specialist or per-action
+    branch. Returns ``None`` for unrecognized shapes so the caller
+    can fall back to the generic sanitized render.
+    """
+    if depth > 2:
+        return None
+    for key in _RESOLVER_ENVELOPE_KEYS:
+        payload = node.get(key)
+        if isinstance(payload, Mapping):
+            items = payload.get(_ITEMS_KEY)
+            if isinstance(items, list):
+                if not items:
+                    return [EMPTY_RESULT_TEXT]
+                if len(items) == 1 and isinstance(items[0], Mapping):
+                    return (
+                        _format_structured(
+                            items[0], field_labels=field_labels
+                        )
+                        or None
+                    )
+                return _format_records(
+                    items, field_labels=field_labels
+                )
+            nested = _business_lines(
+                payload, depth + 1, field_labels=field_labels
+            )
+            if nested is not None:
+                return nested
+            return (
+                _format_structured(payload, field_labels=field_labels)
+                or None
+            )
+        if isinstance(payload, list):
+            if not payload:
+                return [EMPTY_RESULT_TEXT]
+            return _format_records(payload, field_labels=field_labels)
+    return None
+
+# G3-RW-01: a leaf must remain literal data — the projector owns every
+# structural decision. ALL CommonMark-escapable ASCII punctuation is
+# backslash-escaped so owner text can never form emphasis, code spans,
+# links, autolinks (bare URL/email/www — verified against marked: only
+# escaping the scheme colon breaks GFM autolink detection), inline HTML
+# or entity references. Escaped punctuation renders identically, so
+# business values display verbatim.
+_MD_ESCAPABLE = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
+# CR/LF/CRLF and the Unicode line/paragraph separators inside owner
+# data normalize to a plain space — the leaf stays on the line the
+# projector emitted and `# `/`- `/`> `/``` /`---` sequences can never
+# become headings, list items, quotes, fences or rules.
+_MD_LINE_BREAKS = str.maketrans(
+    {
+        "\r": " ",
+        "\n": " ",
+        "\u2028": " ",
+        "\u2029": " ",
+    }
+)
+
+_MD_ESCAPE = str.maketrans(
+    {char: "\\" + char for char in _MD_ESCAPABLE}
+)
+
+
+def _md_leaf(value: object) -> str:
+    """Owner leaf as literal inline Markdown text — every ASCII
+    punctuation mark is escaped and embedded line separators collapse
+    to spaces, so owner data can never introduce structural elements,
+    links, autolinks or formatting instructions of its own."""
+    return str(value).translate(_MD_ESCAPE).translate(_MD_LINE_BREAKS)
+
+def _md_format_structured(
+    node: object,
+    depth: int = 0,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    """Markdown variant of ``_format_structured``: ``- **key:** value``
+    bullets over the same traversal, control-plane filter and bounds."""
+    if depth > 3:
+        return []
+    indent = "  " * depth
+    if isinstance(node, Mapping):
+        lines: list[str] = []
+        for key, value in node.items():
+            key = str(key)
+            canon = _canonical_key(key)
+            if canon in _CONTROL_PLANE_KEYS:
+                continue
+            display = (
+                field_display_label(canon, key, field_labels)
+                if field_labels is not None
+                else key
+            )
+            if isinstance(value, Mapping):
+                sub = _md_format_structured(
+                    value, depth + 1, field_labels=field_labels
+                )
+                lines.append(f"{indent}- **{_md_leaf(display)}:**")
+                lines.extend(sub or [f"{indent}  - {{}}"])
+            elif isinstance(value, (list, tuple)):
+                items = list(value)[:MAX_RENDER_LIST_ITEMS]
+                if items:
+                    lines.append(f"{indent}- **{_md_leaf(display)}:**")
+                    lines.extend(
+                        _md_format_list(
+                            items, depth + 1, field_labels=field_labels
+                        )
+                    )
+                else:
+                    lines.append(
+                        f"{indent}- **{_md_leaf(display)}:** (vazio)"
+                    )
+            else:
+                if value is None:
+                    continue
+                lines.append(
+                    f"{indent}- **{_md_leaf(display)}:** "
+                    f"{_md_leaf(value)}"
+                )
+        return lines
+    return []
+
+def _md_format_list(
+    items: list,
+    depth: int,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    indent = "  " * depth
+    lines: list[str] = []
+    for item in items:
+        if isinstance(item, Mapping):
+            first = True
+            for key, value in item.items():
+                canon = _canonical_key(key)
+                if canon in _CONTROL_PLANE_KEYS:
+                    continue
+                if (
+                    isinstance(value, (Mapping, list, tuple))
+                    or value is None
+                ):
+                    continue
+                display = (
+                    field_display_label(canon, key, field_labels)
+                    if field_labels is not None
+                    else key
+                )
+                if first:
+                    lines.append(
+                        f"{indent}- **{_md_leaf(display)}:** "
+                        f"{_md_leaf(value)}"
+                    )
+                    first = False
+                else:
+                    lines.append(
+                        f"{indent}  - **{_md_leaf(display)}:** "
+                        f"{_md_leaf(value)}"
+                    )
+            if first:
+                lines.append(f"{indent}- {{}}")
+        elif isinstance(item, (list, tuple)):
+            return []
+        else:
+            lines.append(f"{indent}- {_md_leaf(item)}")
+    return lines
+
+def _md_format_records(
+    items: list,
+    depth: int = 0,
+    field_labels: FieldLabels | None = None,
+) -> list[str]:
+    """Bounded numbered record list — same selection/order as
+    ``_format_records`` with Markdown list syntax."""
+    indent = "  " * depth
+    lines: list[str] = []
+    for idx, item in enumerate(items, 1):
+        if isinstance(item, Mapping):
+            lines.append(f"{indent}{idx}.")
+            sub = _md_format_structured(
+                item, depth + 1, field_labels=field_labels
+            )
+            lines.extend(sub or [f"{indent}   - {{}}"])
+        else:
+            lines.append(f"{indent}{idx}. {_md_leaf(item)}")
+    return lines
+
+def _md_business_lines(
+    node: Mapping,
+    depth: int = 0,
+    field_labels: FieldLabels | None = None,
+) -> list[str] | None:
+    """Markdown variant of ``_business_lines`` — identical envelope
+    unwrapping and selection decisions; only the line syntax differs."""
+    if depth > 2:
+        return None
+    for key in _RESOLVER_ENVELOPE_KEYS:
+        payload = node.get(key)
+        if isinstance(payload, Mapping):
+            items = payload.get(_ITEMS_KEY)
+            if isinstance(items, list):
+                if not items:
+                    return [EMPTY_RESULT_TEXT]
+                if len(items) == 1 and isinstance(items[0], Mapping):
+                    return (
+                        _md_format_structured(
+                            items[0], field_labels=field_labels
+                        )
+                        or None
+                    )
+                return _md_format_records(
+                    items, field_labels=field_labels
+                )
+            nested = _md_business_lines(
+                payload, depth + 1, field_labels=field_labels
+            )
+            if nested is not None:
+                return nested
+            return (
+                _md_format_structured(payload, field_labels=field_labels)
+                or None
+            )
+        if isinstance(payload, list):
+            if not payload:
+                return [EMPTY_RESULT_TEXT]
+            return _md_format_records(payload, field_labels=field_labels)
+    return None

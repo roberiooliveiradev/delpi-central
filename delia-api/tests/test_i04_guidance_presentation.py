@@ -6,11 +6,14 @@ Provider-neutral. No specialist-name branch. Budgets unchanged.
 from __future__ import annotations
 
 from app.application.capability_provision.orchestration import (
-    _detail_lines,
     _deterministic_guidance_content,
     _prior_excerpt_records,
+)
+from app.application.capability_provision.conversational_response import (
+    _detail_lines,
     _render_synthesis,
 )
+
 from app.application.interaction.contracts import LIMITATION_RESULT_TRUNCATED
 
 

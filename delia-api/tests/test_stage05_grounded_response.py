@@ -32,9 +32,12 @@ from app.application.capability_provision.orchestration import (
     GROUP_SELECTION_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
+)
+from app.application.capability_provision.conversational_response import (
     _proven_field_differences,
     _render_synthesis,
 )
+
 from tests.conftest import load_test_orchestration_instructions
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,

@@ -19,10 +19,13 @@ from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     _SELECTION_INCONCLUSIVE_CONTENT,
-    _list_header,
     _prior_excerpt_records,
+)
+from app.application.capability_provision.conversational_response import (
+    _list_header,
     _render_synthesis,
 )
+
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityAttempt,
     GovernedCapabilityStatus,

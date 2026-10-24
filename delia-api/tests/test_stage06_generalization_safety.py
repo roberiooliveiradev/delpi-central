@@ -22,11 +22,14 @@ from app.application.capability_provision.orchestration import (
     GROUP_SELECTION_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
+    _prior_excerpt_records,
+)
+from app.application.capability_provision.conversational_response import (
     _compose_answer,
     _detail_lines,
-    _prior_excerpt_records,
     _render_synthesis,
 )
+
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )

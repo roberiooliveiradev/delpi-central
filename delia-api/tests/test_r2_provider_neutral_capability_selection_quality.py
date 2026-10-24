@@ -24,8 +24,11 @@ from app.application.capability_provision.orchestration import (
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _capability_payload,
+)
+from app.application.capability_provision.conversational_response import (
     _list_header,
 )
+
 from tests.conftest import load_test_orchestration_instructions
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,

@@ -17,9 +17,12 @@ fields such as ``token_count`` / ``token_value`` remain intact.
 from __future__ import annotations
 
 from app.application.capability_provision.orchestration import (
-    MAX_RENDER_CONTENT_CHARS,
     render_specialist_outcome,
 )
+from app.application.capability_provision.conversational_response import (
+    MAX_RENDER_CONTENT_CHARS,
+)
+
 from app.application.capability_provision.outcome_assessment import (
     REDACTION_MARKER,
     _sanitize_renderable,

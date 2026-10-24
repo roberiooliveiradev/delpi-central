@@ -42,9 +42,11 @@ _spec = importlib.util.spec_from_file_location("r4_eval", _R4_PATH)
 r4 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(r4)
 
+from app.application.capability_provision.conversational_response import (
+    _render_synthesis,
+)
 from app.application.capability_provision.orchestration import (
     OperationalCapabilityOrchestrator,
-    _render_synthesis,
 )
 from app.application.capability_provision.outcome_assessment import (
     AnswerRequirements,
