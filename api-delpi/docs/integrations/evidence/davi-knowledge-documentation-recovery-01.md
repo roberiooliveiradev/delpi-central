@@ -120,3 +120,18 @@ K01, K02, K03, K04, K05, K06, K07, K08, K09, K10: each TEST_NOT_RUN on provider.
 - MP/PI publication needs current content-owner ratification and versioned membership decision.
 - External MCP documentary content requires an explicit architecture decision; Files do not satisfy that boundary.
 - Full business outcome is NOT_PROVEN even if metadata deployment succeeds. Coordination review required; no DÉLIA R4–R7 work is undertaken.
+
+
+## Revisão independente — Coordenação DÉLIA / DAVI — 2026-10-24
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (escopo técnico efetivamente entregue)**; **FULL_TASK_VERDICT=PARTIAL_BLOCKED**. Revisados no GitHub o commit de implementação `284998fbf03caca018492d4ab5c41aed80f8ae5e`, a evidência/handoff `35bceffa31c3290a6c78d30f8c83e935e8c67241` e as fontes documentais. A revisão não reexecutou testes nem acessou o servidor SSH/Agent Studio: health, imagens, testes e a ausência de restart do Transformômetro são evidências **reportadas pelo executor**, não medidas independentes.
+
+**Aceite bounded:** projeção aditiva de `corpus_status`, `retrieval_surface`, `mcp_document_access`, `consumer_contract_status`; preservação das duas tools MCP e dos limites de autoridade; diagnóstico fundamentado do filtro `search_products` por OR de prefixos. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` somente para metadata existente. `DEPLOYED_ADDITIVE_SIGNAL_ONLY` não equivale a recuperação documental.
+
+**Residuais bloqueantes para aceite integral:** (1) sync Files/preview K01–K10 `TEST_NOT_RUN`; (2) norma MP/PI localizada mas `BUSINESS_OWNER=TO_INVENTORY` e publicação no corpus posterior ao V1 não ratificada; (3) conteúdo documental **não exposto ao consumidor MCP** — `ARCHITECTURE_DECISION_REQUIRED` para um contrato legítimo de leitura/guia, sem criar terceira tool por conveniência; (4) discover/execute produtivo autenticado e second-user AuthZ `TEST_NOT_RUN`; (5) dois FAIL full-suite reproduzidos no baseline são dívida ambiental, não `FULL_SUITE_PASS` irrestrito.
+
+**Risco operacional:** o comando Compose exibiu build de `transformometro-api` apesar do filtro solicitado. A evidência de imagem/start reportada indica ausência de rebuild/restart efetivo desse serviço, porém `DEPLOY_PROCEDURE_SCOPE_DRIFT=OBSERVED`; requer correção/revisão do procedimento com owner de infraestrutura antes da próxima promoção. Não autorizar mudança em produção de outros serviços a partir deste relato. Imagem anterior de api-delpi preservada segundo evidência; rollback não executado.
+
+**Impacto sobre Trilha B DÉLIA:** DÉLIA pode avançar independentemente usando apenas guidance efetivamente recebido dos MCPs e a recuperação READ governada; **não** pode pressupor acesso documental a Files, nem tratar diretivas como documento recuperado. Não desbloqueia R4 nem a dependência documental do doc 143. Próximos passos segregados: operador Agent Studio comprova sync/retrieval; business owner ratifica MP/PI; coordenação decide fronteira documental MCP; owner infra trata escopo Compose; revisão separada do resultado da Trilha B.
+
+**COORDINATION_STATUS:** `SIGNAL_FIX=ACCEPT_WITH_RESIDUAL`; `KNOWLEDGE_CONTENT_RECOVERY=NOT_PROVEN`; `DOCUMENT_CONSUMER_BOUNDARY=ARCHITECTURE_DECISION_REQUIRED`; `R4_AUTHORIZED=NO`.
