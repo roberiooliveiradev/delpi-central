@@ -691,3 +691,8 @@ DAVI_AGENT_UNSUPPORTED_DATA_GUARD = PASS (historical search_products-only Instru
 - Behavior: prefer canonical business endpoints where sufficient; use SQL SELECT for authorized ad hoc analytics, reconciliation and cross-checks. Never invent data, and never retry by weakening validator constraints.
 - Restored on source `main`; deploy, provider rediscovery, authenticated SQL positive test and negative backend AuthZ test remain **TEST_NOT_RUN**, and must be verified independently. This statement supersedes the 2026-10-09 DAVI SQL exposure prohibition for this explicitly permitted route only; historical evidence is retained.
 
+
+
+### Direção de produto aprovada — Inteligência técnica viva no MCP existente (2026-10-24)
+
+**Especificação contratual pré-implementação:** [DAVI live governed technical knowledge — design 001](./evidence/davi-live-governed-technical-knowledge-mcp-read-design-001.md), task `DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01`. Referência funcional TÉO: índices/guias versionados recuperáveis sob demanda, classificados como orientação e não fatos empresariais. **DAVI mantém `discover_delpi_information` + `execute_delpi_information` (sem terceira tool)**; depois de gates de authority/contract, expõe uma capability READ documental governada do corpus Git no fluxo existente, com topic/section, versão, provenance, limites, erros tipados e autorização. Discovery não carrega documentos inteiros; Workspace Agent Files continuam superfície distinta e não comprovadamente publicada. Normas MP/PI do Chat ainda dependem de business-owner ratification e revisão do membership do corpus, sem alteração silenciosa do V1. A direção de produto não autoriza mudança de código em conflito com decisão congelada nem deploy automático.
