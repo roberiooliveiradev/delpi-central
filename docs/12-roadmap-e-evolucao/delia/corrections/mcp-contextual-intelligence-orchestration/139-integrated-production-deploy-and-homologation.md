@@ -105,3 +105,17 @@ R3_AUTHORIZED=NO | PLAN_COMPLETE=NO | COORDINATION_REVIEW_REQUIRED=YES
 ```
 
 **Residual para revisão de coordenação:** (1) contrato do check `neg_unknown_no_fabricated_capability` vs seleção do modelo pelo discovery governado; (2) bound de runtime do envelope `discover` (defesa em profundidade G5, inalterado nesta task).
+
+
+## 11. Parecer independente da coordenação — 2026-10-23
+
+**REVIEWED_SHA:** `78eb41d6f80fa6a5badd0ddde44b6f8411d0185a`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL` para o deploy e a homologação na matriz efetivamente provada. **DEPLOY_STATUS:** `DEPLOYED_VERIFIED_BY_EXECUTOR`; inspeção direta independente do servidor `TEST_NOT_RUN`. **R3_AUTHORIZED=NO**; **PLAN_COMPLETE=NO**.
+
+**Evidência examinada:** commit, relatório 139, rollout ordenado `api-delpi` → `delia-api`, digests novos `290587973779…` e `aafa5a262344…`, versões anteriores retidas para rollback, execução reportada `kimi-k3` com 10/11 checks aprovados e D8-R finalizado com registro empresarial real DAVI. A revisão no GitHub comprova publicação das evidências, não acesso autônomo ao host nem repetição da homologação. Sem indício documental de regressão material que determine rollback imediato; isso não dispensa monitoramento operacional.
+
+**Check divergente (N-UNK):** `neg_unknown_no_fabricated_capability` exige `provider_id=None`, mas o modelo seleciona discovery READ governado e recebe `insufficient_evidence`. Isso **não é automaticamente PASS nem defeito**. Primeiro identificar a fonte canônica do contrato do eval e verificar se o requisito real é proibir qualquer discovery ou somente impedir capability inventada/falsa provenance/ACT. Sem alterar o teste até decisão do owner: manter `CHECK_STATUS=FAIL_CONTRACT_UNDER_REVIEW` e `PROD_HOMOLOGATION=EXECUTED_WITH_RESIDUAL`. Se o contrato permitir discovery governado, admitir este fluxo com novos negativos explícitos (provider inventado, provenance falsa, dado inventado, WRITE/ACT), sem relaxar segurança. Se proibir discovery, retornar como defeito de seleção/modelo para correção bounded.
+
+**G5:** `discover` sem bound de bytes em runtime permanece risco de defesa em profundidade no owner DAVI, mitigado no corpus atual pelo gate CI e medições de wire, mas não encerrado arquiteturalmente; registrar `ARCHITECTURE_DECISION_REQUIRED` para futura decisão específica, sem criar segundo mecanismo ou reabrir R1/R2. Tokens reais `NOT_AVAILABLE`; não tratar estimativa como medição.
+
+**Decisão:** `DEPLOY_ACCEPTED_WITH_RESIDUAL`, `BUSINESS_OUTCOME=VERIFIED_FOR_TESTED_MATRIX_EXCLUDING_N_UNK_CONTRACT`. Nenhuma autorização implícita de R3. Próximo bounded step: somente decisão de contrato do check N-UNK (owner/evidence/teste de segurança), registro no ledger e disposição de G5; sem novo deploy por default. Manter monitoramento pós-deploy e rollback governado caso surja regressão material comprovada.
