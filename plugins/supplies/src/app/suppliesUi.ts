@@ -15,6 +15,7 @@ import {
   createDashboardLoadingActivityCard,
   createDashboardDataCardsGrid,
   createDashboardDataCardsSortBar,
+  createDashboardFilterCheckboxField,
   createDashboardMultiSelectField,
   createDashboardPageHero,
   createDashboardPagePath,
@@ -59,6 +60,7 @@ import {
   dataTableBemClasses,
   dateFieldBemClasses,
   emptyStateCardBemClasses,
+  filterCheckboxFieldBemClasses,
   sectionCardPacBemClasses,
   sectionRouteCardBemClasses,
   selectFieldPacClasses,
@@ -221,6 +223,10 @@ export const SuppliesMultiSelectField = createDashboardMultiSelectField({
 });
 
 export const SuppliesSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
+export const SuppliesFilterCheckboxField = createDashboardFilterCheckboxField({
+  classNames: filterCheckboxFieldBemClasses(UI_PREFIX),
+  labels: { defaultCheckboxLabel: "Incluir" },
+});
 export const SuppliesDataCardsGrid = createDashboardDataCardsGrid({ prefix: UI_PREFIX });
 export const SuppliesDataCardsSortBar = createDashboardDataCardsSortBar({
   prefix: UI_PREFIX,

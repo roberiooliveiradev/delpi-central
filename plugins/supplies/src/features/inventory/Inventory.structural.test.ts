@@ -31,7 +31,7 @@ describe("Inventory feature (E10.S3)", () => {
     expect(app).toMatch(/InventoryPage/);
     expect(app).toMatch(/view === "inventory"/);
     expect(app).not.toMatch(/inventory:\s*\{\s*title:\s*"Estoque"/);
-    expect(app).toMatch(/safety_stock:\s*\{/);
+    expect(app).toMatch(/SafetyStockPage/);
     expect(app).toMatch(/products:\s*\{/);
   });
 

@@ -216,6 +216,36 @@ export const SP_HELP = {
     "Recarrega o resumo e a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela.",
   inventoryTableMeta:
     "Colunas visíveis e total de posições do recorte filtrado (não só a página atual). Produto não abre ficha nesta página.",
+  safetyStock:
+    "Materiais com estoque de segurança (ESTSEG) parametrizado no Protheus. Classificação, saldos e déficit são calculados pelo servidor — o Portal apenas exibe. Saldo disponível considera os armazéns 01, 98 e 99.",
+  safetyStockBranch:
+    "Filial do recorte (Santa Catarina, Espírito Santo ou Todas). «Todas as filiais» é uma única consulta consolidada — não soma manual de duas buscas. Filial é filtro de dados, não permissão.",
+  safetyStockStatus:
+    "Situação do material em relação ao estoque de segurança, classificada pelo servidor: sem ESTSEG, abaixo, no nível ou acima.",
+  safetyStockProductGroup:
+    "Grupo de produto do recorte. A lista de opções vem do servidor conforme o universo da filial selecionada.",
+  safetyStockUnit:
+    "Unidade de medida do material. Filtrar por UM evita misturar quantidades de grandezas diferentes.",
+  safetyStockSearch:
+    "Busca por código ou descrição do produto. Aplica automaticamente após digitar (debounce) ou com Enter.",
+  safetyStockIncludeBlocked:
+    "Quando ligado, materiais bloqueados no Protheus também entram no recorte — útil para avaliar ESTSEG de itens inativos.",
+  safetyStockIncludeWithoutSafetyStock:
+    "Quando ligado (padrão), inclui materiais sem ESTSEG parametrizado — eles aparecem com status «Sem estoque de segurança». Desligar restringe a quem tem ESTSEG definido.",
+  safetyStockFilters:
+    "Filtros aplicam automaticamente. A URL guarda filial, status, grupo, UM, busca, toggles, página e ordenação (F5 restaura). Limpar volta a Todas as filiais sem demais filtros.",
+  safetyStockRefresh:
+    "Recarrega filtros, resumo e lista com o mesmo recorte. O horário é da última consulta bem-sucedida nesta tela.",
+  safetyStockSafetyStock:
+    "Quantidade de estoque de segurança parametrizada no Protheus para o produto naquela filial.",
+  safetyStockPrimaryStock:
+    "Saldo físico no armazém principal da filial. Não é saldo disponível — não desconta empenhos nem reservas.",
+  safetyStockWorkInProcess:
+    "Saldo registrado nos armazéns de processo (50, 98 e 99).",
+  safetyStockDeficit:
+    "Déficit = estoque de segurança menos saldo disponível (armazéns 01+98+99), nunca negativo. Calculado pelo servidor.",
+  safetyStockTableMeta:
+    "Colunas visíveis e total de materiais do recorte filtrado (não só a página atual). Produto não abre ficha nesta página — o detalhe chega na próxima etapa.",
   userProfile:
     "Preferências do Portal Suprimentos (filial padrão e densidade) e atalhos por capability. O avatar na TopBar abre o perfil deste Portal; identidade global (foto, cargo, contatos) edita-se no Meu Perfil Minha DELPI (/profile) pelo menu do nome.",
   userProfilePrefs:

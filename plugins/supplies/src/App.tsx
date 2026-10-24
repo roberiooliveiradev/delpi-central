@@ -23,6 +23,7 @@ import { PurchaseOrderDetailPage } from "./features/purchase-orders/PurchaseOrde
 import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestDetailPage } from "./features/purchase-requests/PurchaseRequestDetailPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
+import { SafetyStockPage } from "./features/safety-stock/SafetyStockPage";
 import { SupplierCreatePage } from "./features/suppliers/SupplierCreatePage";
 import { SupplierDetailPage } from "./features/suppliers/SupplierDetailPage";
 import { SuppliersPage } from "./features/suppliers/SuppliersPage";
@@ -45,10 +46,6 @@ const PLACEHOLDER: Partial<
   products: {
     title: "Produtos",
     description: "Composição 360 entra depois da fundação do shell.",
-  },
-  safety_stock: {
-    title: "Estoque de segurança",
-    description: "Deep link legado permanece até paridade.",
   },
   negotiations: {
     title: "Negociações",
@@ -177,6 +174,8 @@ function AppRoutes({
     content = <DeliveriesPage basePath={basePath} />;
   } else if (view === "inventory") {
     content = <InventoryPage basePath={basePath} />;
+  } else if (view === "safety_stock") {
+    content = <SafetyStockPage basePath={basePath} />;
   } else {
     const placeholder = PLACEHOLDER[view];
     content = placeholder ? (

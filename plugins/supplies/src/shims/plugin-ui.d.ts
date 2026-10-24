@@ -676,6 +676,24 @@ declare module "@delpi/plugin-ui/index" {
 
   export function textFieldBemClasses(prefix: string): Record<string, string>;
 
+  export function filterCheckboxFieldBemClasses(prefix: string): Record<
+    string,
+    string
+  >;
+
+  export function createDashboardFilterCheckboxField(config: {
+    classNames: Record<string, string>;
+    labels: Record<string, unknown>;
+  }): ComponentType<{
+    id: string;
+    label: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    hint?: string;
+    checkboxLabel?: string;
+    disabled?: boolean;
+  }>;
+
   export function createDashboardDateField(config: {
     classNames: Record<string, string>;
   }): ComponentType<{
