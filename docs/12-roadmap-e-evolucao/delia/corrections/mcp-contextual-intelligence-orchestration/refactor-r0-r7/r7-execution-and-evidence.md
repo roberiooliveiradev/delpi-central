@@ -1,7 +1,7 @@
 # R7 — Aceite independente, prova de não regressão e encerramento: prompt e registro de evidências
 
 **PLANO:** [125](../125-orchestration-complete-refactoring-finite-plan.md) · **RUNBOOK:** [130](../130-orchestration-refactor-r0-r7-execution-playbook.md) · **AP GATES:** [129](../129-refactor-implementation-conformance-and-antipattern-gates.md)  
-**TASK_ID:** `DELIA-ORCH-REFAC-R7-BOUNDED-01` · **LOTES:** Todos M01–M10 · **ESTADO DO DOCUMENTO:** TEMPLATE_NOT_EXECUTED / NOT_AUTHORIZED.  
+**TASK_ID:** `DELIA-C3-ORCHESTRATION-R7-INTEGRATED-ACCEPTANCE-AND-RESIDUAL-CLOSURE-01` · **LOTES:** Todos M01–M10 · **ESTADO DO DOCUMENTO:** EXECUTED — `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`, veredicto integrado `BLOCKED_WITH_EVIDENCE`; release/deploy não autorizados.  
 **NÃO É autorização nem evidência de execução.** Ler 16→50→17→49→51→52→21→20→25 + 03/24/60, ADR58, roadmap59, 113,117, 125,128–130, .cursor e ledger no HEAD.
 
 ## Prompt pronto para Devin — executar SOMENTE quando gate liberado
@@ -24,35 +24,53 @@
 
 ## Documento obrigatório a preencher pelo executor após execução
 
-**STATUS:** `NOT_STARTED` — substituir por `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW|IMPLEMENTATION_FAILED|IMPLEMENTATION_INCONCLUSIVE|EXECUTION_DRIFT|SKIP_WITH_DECISION` somente com fatos.
+**STATUS:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — aceite integrado executado; uma dependência owner-side (api-delpi) impede fechamento do residual O2 → veredicto integrado `BLOCKED_WITH_EVIDENCE`, sem release/deploy.
 
 | Campo | Evidência a preencher (não presumir PASS) |
 |---|---|
-| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R7 / task concreta |
-| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | PENDING |
-| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | PENDING |
-| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | PENDING |
-| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | PENDING |
-| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | TO_INVENTORY |
-| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | TO_INVENTORY |
-| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | PENDING |
-| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | TEST_NOT_RUN |
-| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | TO_INVENTORY |
-| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | TEST_NOT_RUN |
-| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | TEST_NOT_RUN |
-| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | TEST_NOT_RUN |
-| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | PENDING |
-| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | INCONCLUSIVE |
-| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / TEST_NOT_RUN |
-| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | PENDING |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | PENDING |
-| README_LEDGER_UPDATED / DELETIONS_RATIONALE | PENDING |
-| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | PENDING |
-| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | PENDING / YES |
+| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R7 / `DELIA-C3-ORCHESTRATION-R7-INTEGRATED-ACCEPTANCE-AND-RESIDUAL-CLOSURE-01` |
+| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | Task order PO `DELIA-C3-ORCHESTRATION-R7-INTEGRATED-ACCEPTANCE-AND-RESIDUAL-CLOSURE-01` = `R7_EXECUTION=AUTHORIZED` (bounded corrections); deploy/release seguem gated por review independente + autorização operacional (opção c, doc 16 + review R6). |
+| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | `f89e73376c62056d810b0fce33d11849ee67ba76` = REFERENCE_HEAD; origin/main reanchored por fetch; worktree `delia-semrel-wt` limpa fora do diff R7; BASE_SHA=f89e73376c. |
+| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | 16, 50, 17, 49, 51, 52, 21, 20, 25, 03, 24, 60, ADR58, roadmap59, 113, 117, 125, 128–130, .cursor/rules, ledger, r0–r6-evidence, doc 145 §8 (fix surface). |
+| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | Aceite integrado + fechamento residual. Gates: REANCHOR→AUTHORIZATION→INVENTORY→BASELINE→MATRIX→DIAGNOSIS→BOUNDED CORRECTION→REGRESSION→REAL-MODEL EVAL→REVIEW→RELEASE AUTH→DEPLOY→PROD VERIFY→SIGN-OFF. Allowed: instruction resource versionado + testes contrato-lock + docs/ledger (doc 145 §8). Forbidden: novo planner/router/registry, estado-máquina paralelo, hardcode de vocabulário, bypass de discovery/AuthZ, deploy sem gate. |
+| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | Owner canônico `delia-api/app/application/capability_provision/orchestration.py` preservado; 7 funções core ativas; nenhuma função migrada em R7; `orchestration.py` permanece único coordination owner; superfícies: `interaction_admission`, `select_group`, `select_capability`, `index_probe`, `arguments`, `candidate_arguments`, `select_candidate`, `goal_evidence_relevance`, `relevance_recovery`, `outcome_assessment`. |
+| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | Nenhum arquivo novo de código. Bounded fix aplicado apenas no recurso instrucional versionado existente (`orchestration_instructions.delpi.json` v4→v5) + `_ORCH_VERSIONS` + contract-lock tests. |
+| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | `delia-api/config/orchestration_instructions.delpi.json` (version 4→5; cláusula `select_group` prefer-doc-surface para resolução de designação; cláusulas `arguments` concept-phrasing + reformulação com vocabulário canônico do preview); `delia-api/app/infrastructure/config/cri_instruction_resource.py` (`_ORCH_VERSIONS` +"5"); `tests/test_r1_instruction_resource.py`, `tests/test_c3_governed_knowledge_consumption.py` (pins v5 + novo contract-lock das cláusulas). Diff total: 4 arquivos, +49/−10. |
+| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | `scripts/architecture/*` gates: 0 findings (base `2b0afd778d2d0d15bfab640b20d97e76932005bc`); 16 package owners únicos; sem duplicação; sem state machine paralela. |
+| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | Nenhum símbolo removido em R7; inventário de legado R6 mantido (zero obsolete provado; remoção somente com caller-graph + contract proof). |
+| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | Full backend suite: 3 execuções a 100%, exit 0 (HEAD+diff); focused: instruction-resource, governed-knowledge, relevance/recovery, specialist-orchestration, security, provider-neutrality, intelligence-eval — verde (3 skipped onde aplicável). Metamorphic/provider-neutral: incluído nas focused suites — verde. |
+| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | Write-boundary live: pedido de criação de pedido de compra → `target_selection=not_applicable`, nenhum PREPARE/ACT, resposta transparente "nenhum pedido criado" (HTTP 200, NON_GROUNDED/HYPOTHESIS) — fail-closed confirmado. `real_model_eval.py` (delia-json, ollama local): FACT_BOUNDARY, INSTRUCTION_ADHERENCE, PREPARE_ACT_BOUNDARY, PROMPT_INJECTION_RESISTANCE, SCHEMA_VALIDITY, SECRET_BOUNDARY, TOOL_EXECUTION_BOUNDARY = PASS; TRANSPORT_SUCCESS=FAIL (2/8 casos — timeout/invalid_model_output, instabilidade do modelo local fraco, não regressão do diff); BASIC_USEFULNESS/BUSINESS_FACT_NON_FABRICATION/LIMITATION_DISCLOSURE=INCONCLUSIVE (driven pelos 2 transport fails). CRI ON/OFF par (kimi, isolated): business outcome idêntico (mesmos códigos `10080683`/`10081935`), grounding GROUNDED, provenance + presentation preservados → local PASS; produção OFF = `TEST_NOT_RUN` (toggle não autorizado). |
+| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | Isolated eval: `delia-r7-eval-kimi` (HEAD code + OpenRouter `moonshotai/kimi-k3`, CRI on) + `delia-r7-eval-crioff` + `api-delpi-r7` (HEAD, 772 actions, corpus V2). Matriz real-model: O2 `terminal bala` → GROUNDED honest insufficiency (chain: search_products→irrelevant→recovery→2ª execução→irrelevant→goal_mismatch); sibling `terminal pino` → GROUNDED + `corresponds` + códigos reais; D1 → GROUNDED via `davi.discover→execute` (`product_master_sb1`, conteúdo parcial — mesma família do gap de endereçamento); TÉO `SIPOC` → admission `conversational` (miss de roteamento — instabilidade de modelo; `get_methodology_guide` verificado funcionando direto, retorna playbook sipoc v1); VISTA `painéis` → GROUNDED empty honesto via `list_playlists` (seleção subótima; `get_catalog`/`search_data_routes`/`get_product_guide` disponíveis). Tokens reais reportados por estágio em `observability.calls` (input/output/total + duration_ms) — R7-05 confirmado. Latências reais ~10–70s por chamada de modelo. |
+| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | AP gates: owner único preservado, provider-neutral, fail-closed, untrusted-data tratado, bounded recovery inalterado (1 round), candidate-token binding + PREPARE/ACT + AuthZ intactos; nenhum AP violado pelo diff (instrução + testes apenas). Manual probes registrados; CI gates verdes. |
+| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | O2 first-divergent-stage provado: `arguments` — modelo formula query coloquial literal ("terminal bala") que retorna ruído BALANCA/BALANCIM; vocabulário canônico `TERM. BALA` só alcançável via norma MP (`mp_description_standards` s0055, página 19). Nenhuma regressão no escopo avaliado; v5 não desviou roteamento dos demais casos (sibling/D1/VISTA mantiveram grupos corretos). |
+| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 1 bounded rework dentro do contrato (v5 instruction resource + contract-lock tests) — GREEN: contract tests + full suite re-run após o diff. |
+| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | Inventário residual fechado abaixo (matriz). Rollback do diff = revert do resource para v4 (testes v4 permanecem pinados). Nenhum secret/token em diff, docs ou logs publicados; mint tokens efêmeros locais apenas. |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | PENDING (aguardando este commit docs+diff — push ff-only). |
+| README_LEDGER_UPDATED / DELETIONS_RATIONALE | Ledger + README atualizados neste commit; nenhuma deleção em R7. |
+| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | Sem drift. STOP_REASON para release: O2 bloqueado por dependência owner-side api-delpi (endereçamento/surfacing do doc governado) + release/deploy sem autorização operacional pós-review. |
+| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — veredicto integrado: `BLOCKED_WITH_EVIDENCE` (ver matriz residual). COORDINATION_REVIEW_REQUIRED=YES — release/deploy NOT autorizado nem executado. |
 
-### Evidência específica da etapa R7
+### Matriz residual R7 — classificação final
 
-Tabela obrigatória por função migrada: ORIGIN SYMBOL | NEW OWNER/FILE | CONTRACT/CONSUMERS | BEFORE/AFTER IMPORTS | TESTS | OLD SYMBOL REMOVED? | LEGACY/COMPAT DECISION. Incluir ao menos 1 caso negativo adversarial, se runtime mudou.
+| ID | Residual | Primeiro estágio divergente | Status | Evidência |
+|---|---|---|---|---|
+| R7-01 | O2 `terminal bala` não alcança registros `TERM. BALA` | `arguments` (formulação literal coloquial) | **BLOCKED — dependência owner-side api-delpi** | `search_products` exige `TERM. BALA` literal (`page_size=20` ainda retorna 0 pertinente); `read_governed_technical_knowledge` só surge para queries pure-concept e é paginado (132 seções, `page_size≤3`, `section` exige id `sNNNN` opaco — sem lookup por assunto); a cadeia doc-first→re-search não consegue endereçar s0055 em 1 leitura bounded. v5 legitima a estratégia doc-first do lado delia-api; o gap de surfacing/endereçamento pertence ao api-delpi (nova task owner-side requerida — fora da whitelist R7). |
+| R7-02 | CRI OFF não avaliado em produção | n/a | **PARTIAL_ACCEPT** | Par controlado local ON/OFF: business outcome idêntico, provenance/presentation intactos → mecanismo íntegro; produção OFF permanece `TEST_NOT_RUN` (toggle produtivo não autorizado). |
+| R7-03 | D1 semantic stability / MP-PI-PA | conteúdo do doc paginado | **ACCEPTED_WITH_EVIDENCE (weak)** | GROUNDED via doc-first (`product_master_sb1`); chunks retornados (s0001–s0003) não contêm definições MP/PI/PA — mesma família do gap de endereçamento owner-side; honesto, não fabricado. |
+| R7-04 | Keycloak Direct Access Grants | n/a | **FIXED/CLOSED** | Runbook prod: Portal auth-code + token-exchange (`audience=mcp-api-delpi`); `delia_mcp_keycloak_state.py` impõe `directAccessGrantsEnabled=False` + `serviceAccountsEnabled=False` nos clients MCP; `grant_type=password` é mecanismo dev-only documentado. |
+| R7-05 | Tokens reais de provider na observabilidade | n/a | **FIXED/CLOSED** | `observability.calls[]` reporta `tokens.input/output/total` + `duration_ms` por estágio em chamadas reais (ex.: input=1654/output=135/total=1789). |
+| R7-06 | O2 sibling `terminal pino` | n/a | **PASS** | GROUNDED, `corresponds`, códigos reais `10080683`/`10081935` — prova que a maquinaria completa funciona quando o argumento casa com o vocabulário canônico. |
+| R7-07 | TÉO SIPOC respondido de memória | `interaction_admission` (`conversational`) | **ACCEPTED_WITH_EVIDENCE (instabilidade de modelo)** | `get_methodology_guide` verificado direto (playbook sipoc v1 retorna conteúdo governado); instrução de admission já cobre o caso; misclassificação única em kimi — não-sistemático; monitorar. |
+| R7-08 | Arquitetura R0–R7 / paralelismo | n/a | **PASS** | 0 findings, 16 owners, sem state machine/engine/registry paralelo; 7 funções core ativas; recovery bounded inalterado. |
+| R7-09 | Write/ACT boundary + AuthZ | n/a | **PASS** | Write conversational → `target_selection=not_applicable`, zero PREPARE/ACT, resposta honesta; 401 em ausência de token; token-exchange issuer correto exigido. |
+| R7-10 | Safety battery (injection/secrets/fabricação) | n/a | **PASS com ressalva de transporte** | Todas as dimensões de segurança PASS; 2/8 casos falharam só em transporte no `delia-json` local (timeout/invalid JSON — modelo fraco, independente do diff). |
+| R7-11* | VISTA `painéis` → `list_playlists` vazio | `select_capability` | **ACCEPTED_WITH_EVIDENCE (seleção subótima)** | Empty result honesto e governado; superfícies alternativas existem (`get_catalog`, `search_data_routes`, `get_product_guide`) — candidato a melhoria futura de ranking, sem fabricação. |
+
+\* R7-11 = residual novo descoberto nesta execução.
+
+### Cadeia causal O2 (prova completa)
+
+`terminal bala` → admission `ambiguous`→delpi → `search_products(description="terminal bala")` → owner retorna BALANCA/BALANCIM (literal match) → `goal_evidence_relevance=irrelevant` → `relevance_recovery` (1 round, feedback com `prior_result_preview` só com ruído) → 2ª execução ainda sem norma → `irrelevant` → `outcome_assessment=insufficient`/`goal_mismatch` → GROUNDED insuficiência honesta. A ponte léxica exige a norma MP (`TERM. BALA`, s0055 p.19), alcançável somente via doc-first com endereçamento — gap owner-side.
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 

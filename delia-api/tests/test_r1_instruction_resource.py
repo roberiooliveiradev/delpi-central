@@ -47,8 +47,8 @@ _RESOURCE_PATH = (
 # governed-evolution gate, not a bug.
 _SNAPSHOT = {
     "delia.capability_orchestration.select_group": (
-        "075915d09a08fd87dc828c836306d1c8d22389e4daf38dec2ebacafd85e266f4",
-        4104,
+        "fd53f920b00b1b4721dcff4039d44279b8a756ca3ec5a7a3f5188f3c0597c86b",
+        4590,
     ),
     "delia.capability_orchestration.select_capability": (
         "3d6bc40ec5f07697b99f89cbd62b48937f8c4bb0ecf8ecd8bb071229a59870be",
@@ -67,8 +67,8 @@ _SNAPSHOT = {
         989,
     ),
     "delia.capability_orchestration.arguments": (
-        "f630a89a2da9607ad710d957cfd899894c9eaeb73863da2daf15e3219a8fc5c6",
-        4590,
+        "aa5d338f2a2464d7133097739797a0f83231727e506402282fbde71fad3b3e85",
+        5176,
     ),
     "delia.capability_orchestration.select_resolver": (
         "2864d08fccfd4f87b52041c1fe572abfe1768d01489a81b8aa6e8d216bcf9b57",
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "4"
+    assert res.version == "5"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]

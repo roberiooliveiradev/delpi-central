@@ -657,7 +657,7 @@ def test_admission_instruction_routes_owner_domain_concepts():
         path,
         required_names=ORCHESTRATION_INSTRUCTION_KEYS,
     )
-    assert res.version == "4"
+    assert res.version == "5"
     text = res.instructions[
         "delia.capability_orchestration.interaction_admission"
     ]
@@ -669,6 +669,45 @@ def test_admission_instruction_routes_owner_domain_concepts():
     assert "do not concern" in text
     # The governed-guide clause is bound to the operational class.
     assert "governed guide is consulted" in text
+
+
+def test_nomenclature_resolution_instruction_clauses():
+    """Contract lock (resource v5, R7/O2): for record requests whose
+    subject is phrased in colloquial nomenclature the governed
+    instructions must permit a knowledge-first consult to resolve the
+    canonical owner designation, and the arguments stage must use
+    canonical forms carried in the recovery preview — all semantic
+    guidance, never product/provider hardcodes."""
+    path = (
+        Path(__file__).resolve().parent.parent
+        / "config"
+        / "orchestration_instructions.delpi.json"
+    )
+    res = load_orchestration_instructions(
+        path,
+        required_names=ORCHESTRATION_INSTRUCTION_KEYS,
+    )
+    assert res.version == "5"
+    group_text = res.instructions[
+        "delia.capability_orchestration.select_group"
+    ]
+    # Colloquial-nomenclature record requests may consult the
+    # documentation/knowledge surface FIRST to resolve the canonical
+    # designation — opt-in semantic preference, not a mandatory rule.
+    assert "colloquial or everyday nomenclature" in group_text
+    assert "canonical designation" in group_text
+    assert "never itself a business fact" in group_text
+    arg_text = res.instructions["delia.capability_orchestration.arguments"]
+    # Designation-resolution discovery queries are phrased as concept
+    # questions so owner retrieval surfaces guidance actions.
+    assert "canonical designation, nomenclature or naming standard" in arg_text
+    assert "concept" in arg_text
+    # Reformulation prefers canonical forms observed in owner docs.
+    assert "naming rules or canonical designations" in arg_text
+    # Prohibitions preserved: no identifier invention, no product
+    # aliases, no provider names anywhere in the additions.
+    assert "TERM." not in group_text + arg_text
+    assert "bala" not in (group_text + arg_text).lower()
 
 
 def test_cri_presented_record_orders_content_before_citation():
