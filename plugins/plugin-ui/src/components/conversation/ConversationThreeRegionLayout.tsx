@@ -48,7 +48,7 @@ export function ConversationThreeRegionLayout({
     onRightOpenChange?.(next);
   };
   const [compact, setCompact] = useState(false);
-  const rightAsRail = rightVariant === "rail" && !compact;
+  const [railSpace, setRailSpace] = useState(true);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const compactRef = useRef(false);
   const contextTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -58,6 +58,10 @@ export function ConversationThreeRegionLayout({
   const leftId = useId();
   const rightId = useId();
 
+  /* Integrated rail is only used when the center keeps a legible minimum
+     after reserving the rail column — otherwise the floating surface is
+     the legitimate compact behavior. Mirrors the CSS clamp(296px,23%,344px). */
+  const RAIL_MIN_CENTER = 480;
   useEffect(() => {
     const host = rootRef.current?.parentElement;
     if (!host) return;
@@ -68,13 +72,18 @@ export function ConversationThreeRegionLayout({
       if (isCompact && !compactRef.current) setLeftExpanded(false);
       compactRef.current = isCompact;
       setCompact(isCompact);
+      const leftW = rootRef.current?.querySelector(".delpi-ui-conversation-three-region__left")?.getBoundingClientRect().width ?? 0;
+      const catW = rootRef.current?.querySelector(".delpi-ui-conversation-three-region__category-rail")?.getBoundingClientRect().width ?? 0;
+      const railEst = Math.min(344, Math.max(296, width * 0.23));
+      setRailSpace(width - leftW - catW - railEst >= RAIL_MIN_CENTER);
     };
     sync();
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(sync);
     observer.observe(host);
     return () => observer.disconnect();
-  }, []);
+  }, [leftExpanded]);
+  const rightAsRail = rightVariant === "rail" && !compact && railSpace;
 
   useEffect(() => {
     if (!rightOpen) return;

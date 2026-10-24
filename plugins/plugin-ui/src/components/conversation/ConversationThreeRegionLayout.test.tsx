@@ -463,4 +463,40 @@ describe("ConversationThreeRegionLayout RIGHTRAIL", () => {
       vi.stubGlobal("ResizeObserver", previousObserver);
     }
   });
+  it("RR-11 falls back to the floating surface when the center would shrink below the legible minimum", () => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        const cls = typeof this.className === "string" ? this.className : "";
+        const width = cls.includes("__left") ? 248 : cls.includes("category-rail") ? 64 : 980;
+        return { width, height: 800, top: 0, left: 0, right: width, bottom: 800, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+      },
+    );
+    const previousObserver = globalThis.ResizeObserver;
+    class SizedObserver {
+      private callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe() { this.callback([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", SizedObserver);
+    try {
+      const { container } = render(
+        <ConversationThreeRegionLayout
+          rightVariant="rail"
+          rightOpen={true}
+          left={<p>Nav</p>}
+          rail={<button type="button">Categorias</button>}
+          right={<p>Conteúdo global</p>}
+          center={<p>Conversa</p>}
+        />);
+      // host 980 − left 248 − rail 64 − rail est 296 = 372 < 480 → floating surface
+      expect(container.querySelector(".delpi-ui-conversation-three-region--compact")).toBeNull();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__right-rail")).toBeNull();
+      expect(container.querySelector('.delpi-ui-conversation-three-region__context-popover[data-open="true"]')).toBeTruthy();
+    } finally {
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
+  });
 });
