@@ -78,3 +78,12 @@ Causa raiz: `FilterCheckboxField` compõe `FieldLabel(label)` + `NativeCheckboxC
 - `MFE IMAGE`: `cde6ec36fa76` (anterior `6f01d3dc5678` — rollback = rebuild no SHA `f00c6ea7` ou imagem anterior).
 - Bundle verificado no container: `App-CV1-k8vY.js` (343.475 bytes, idêntico ao build local) contém «Todas as Filiais», «Estoque de Segura…» e o CSS `sp-safety-stock__col-status` em `style-DUtxuypL.css`; `remoteEntry.js` 200 interno no container; logs limpos; `delpi-supplies-api` healthy.
 - `AUTHENTICATED_VISUAL = INCONCLUSIVE` — confirmação visual em sessão real fica com o PO.
+
+
+## Revisão GPT — E11.S6 (2026-10-24)
+
+**Veredito `ACCEPT_WITH_RESIDUAL`** para correções de nomenclatura/Help/layout e publicação técnica, com `GATE-FEATURE E11=INCONCLUSIVE` até prova visual e funcional autenticada. Inspecionados `safetyStockColumnHelp.ts`, `SafetyStockListTable.tsx`, `suppliesUnits.ts` e este relatório. Verificados `headerHint` nos cabeçalhos e `formatSuppliesUnitName('all') → 'Todas as Filiais'`. Testes 433 PASS, tsc/build e deploy `6d6af6cf657b5780642df1e8d5e6a3ae5115a677` são evidências reportadas pelo executor; não reexecutadas pelo GPT. A alteração de CSS para evitar cortes requer confirmação visual em runtime.
+
+**`EXECUTION_DRIFT` de navegabilidade identificado após revalidar o contrato consolidado:** o produtor retorna linha agregada por produto com `branch='all'`, corretamente rotulada `Todas as Filiais`, enquanto `SafetyStockPage.onOpenDetail` recusa `all` e `/items/{code}/details` exige filial concreta. Consequentemente, na consulta padrão consolidada a ação Ver detalhes está presente mas não abre o detalhe. A premissa de S3 de que cada linha de `all` manteria filial concreta não é válida para esse contrato. Não inferir `01`/`02`, não alterar o produtor nem mascarar o bloqueio. Abrir task bounded de decisão UX/contrato para escolher filial explicitamente antes da abertura (ou alternativa canônica validada), com casos positivos/irmãos/negativos e smoke autenticado. Esse drift não invalida os dados consolidados nem o deploy técnico, mas bloqueia homologação funcional completa da jornada E11 enquanto não resolvido ou explicitamente reescopado pelo PO.
+
+**Residuais:** QA autenticado desktop/mobile/temas/foco, status sem corte em runtime; lint global preexistente fora de E11. Não marcar gate PASS apenas com bundle e testes de código.
