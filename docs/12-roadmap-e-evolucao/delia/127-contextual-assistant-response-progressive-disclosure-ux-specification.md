@@ -116,3 +116,41 @@ TESTES: delia 437/437 (+13: MC-01..08, GC-01..08, isolamento por turno), plugin-
 QA VISUAL PROD 32/32 (`vd-mctx-prod.mjs` autenticado, `da1794d68d`): "Ver contexto" visível com `aria-expanded`; popover compacto w=340px ancorado à action strip (gap 4–8px, flip adaptativo); abre sem tocar o painel global; fecha por trigger/Escape/clique externo; duas mensagens → exclusividade e reancoragem sem mistura; painel "Contexto da conversa" independente com vazio honesto e zero seções fake/turno promovido; mobile 375 sem overflow (x=27 w=340). Screenshots `shots-mctx/`. Residuais: light-dismiss do painel global (contrato vigente do `ConversationThreeRegionLayout` — qualquer interação externa o fecha, inclusive o trigger do popover); Companion Dock real, 360/390/420px, zoom 200%, dark/light visual e screen reader TEST_NOT_RUN.
 
 **STATUS FINAL:** `SPEC_PUBLISHED; RUNTIME_CHANGED (2026-10-24, commit da1794d68d); TESTED; PHASE_NOT_ADVANCED; GLOBAL_SECTIONS=BLOCKED_PENDING_CONTRACT`.
+
+
+## Decisão posterior do Product Owner — contexto da mensagem INLINE (2026-10-24)
+
+**STATUS=PRODUCT_UX_DECISION / PLANNED; substitui expressamente a decisão anterior de POPOVER para contexto do turno.** O comportamento de popover introduzido na implementação `da1794d68d` foi inspecionado em produção e rejeitado visualmente: sobrepõe outras mensagens e a área do composer, gera rolagem interna própria e dificulta comparar respostas. A nova decisão é **expansão dentro do fluxo vertical da conversa**, semelhante à experiência de detalhes inline de um chat moderno.
+
+### Contrato de UX congelado
+
+- A ação **Ver contexto**, localizada junto a **Copiar**, alterna uma seção **inline sob as ações daquela própria mensagem**, usando o mesmo `turn` e o componente de conteúdo real `DeliaTurnContextPanel` (ou sua apresentação reutilizável), sem overlay, popover, `AnchoredPanelPortal`, portal ou camada flutuante.
+- **Ver contexto → Ocultar contexto** é controlado por botão com `aria-expanded`, `aria-controls` e região identificada acessivelmente conforme padrões existentes. Abrir expande a altura da mensagem e **empurra naturalmente mensagens seguintes**; usa **somente o scroll da conversa**, sem scroll aninhado exclusivo da seção contextual.
+- Clicar fora, interagir com o composer ou abrir o contexto de outra mensagem **não fecha automaticamente** o primeiro. Vários turnos podem permanecer expandidos ao mesmo tempo. Fecha apenas pela ação explícita de recolher, desmontagem legítima da conversa ou mudança de sessão, preservando isolamento por `turn_id`/identificador real.
+- Animação suave, curta (aprox. 160–200ms) e opcional, sem atrasar o conteúdo, prejudicar o foco, capturar o scroll ou deslocar texto artificialmente; `prefers-reduced-motion` respeitado. **Não usar timer, height arbitrária nem `max-height` que corte evidências**. A atualização de tamanho deve ser segura para histórico longo e streaming.
+- Visual: superfície neutra/subordinada à resposta, título **Contexto desta resposta**, seções reais de Detalhes/Fontes/Evidências/Execução apenas quando o contrato permitir. Sem card azul dominante, sem moldura de altura fixa, sem repetir fontes falsas ou ocultar avisos materiais. Conteúdo do contexto pode ter subseções próprias, mas não criar scroll vertical concorrente dentro da mensagem.
+- **Painel lateral Contexto da conversa permanece global** e independente. Nunca abrir/selecionar o painel lateral ao expandir contexto de um turno. Global Files/Links/Sources continuam `BLOCKED_PENDING_CONTRACT` enquanto não houver fontes conversation-scoped legítimas.
+- Preservar os consumidores de `ConversationAssistantActions`, os dados de `DeliaTurnContextPanel`, Evidence/Policy/Outcome e a semântica de aviso material. Sem mudança de backend ou promoção de fontes de turno a fontes globais.
+
+### Acceptance criteria INLINE-01..INLINE-14
+
+| ID | Critério |
+|---|---|
+| INLINE-01 | Botão Ver contexto expande conteúdo no DOM imediatamente abaixo das ações da própria mensagem |
+| INLINE-02 | Não usa AnchoredPanelPortal, popover, overlay nem position fixed/absolute para conteúdo de contexto |
+| INLINE-03 | O contexto expande o fluxo e empurra a mensagem seguinte, sem cobrir composer |
+| INLINE-04 | Não há scrollbar própria na região inline; usa scroll da conversa |
+| INLINE-05 | Ocultar contexto recolhe apenas a região daquele turno |
+| INLINE-06 | Clique fora e interação no composer não recolhem o contexto |
+| INLINE-07 | Dois ou mais turnos podem permanecer expandidos simultaneamente e isolados |
+| INLINE-08 | aria-expanded/aria-controls e foco/teclado corretos; leitor de tela quando disponível |
+| INLINE-09 | Conteúdo real de provenance/limitações/activity preservado, sem dados inventados |
+| INLINE-10 | Avisos materiais e confirmações continuam visíveis na mensagem |
+| INLINE-11 | Painel global continua conversation-scoped e independente |
+| INLINE-12 | Streaming, markdown, rich content, copiar, fila e scroll continuam corretos |
+| INLINE-13 | Full-page, Companion Dock nativo, 320–420px, zoom 200%, light/dark e reduced-motion |
+| INLINE-14 | RED/GREEN, regressão, screenshots reais, deploy e QA no SHA avaliado |
+
+**Task bounded:** `DELIA-UX-MESSAGE-CONTEXT-INLINE-EXPANSION-REWORK-01`. Reanchor HEAD e authorities; revalidar contratos/owners; `EXISTING_EQUIVALENT=YES` (turn panel, actions e turn state), `REUSE_DECISION=EXTEND` sujeito a inventário; trocar somente o invólucro flutuante por conteúdo inline e estilos; RED→GREEN, regressão do lifecycle/queue/shell (especialmente o antigo `setSelectedTurnId`), QA full-page/Dock/mobile; atualizar evidência e ledger; commit/push/deploy frontend após gates.
+
+**Esta publicação é DOC-ONLY: `RUNTIME_NOT_CHANGED`, `TEST_NOT_RUN`, `PHASE_NOT_ADVANCED`.** A seção anterior documenta o runtime popover histórico e não deve ser interpretada como direção UX futura.
