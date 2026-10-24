@@ -70,3 +70,11 @@ Causa raiz: `FilterCheckboxField` compõe `FieldLabel(label)` + `NativeCheckboxC
 - `POSTCONDITION`: UI sem `ESTSEG`; `all` exibido como «Todas as Filiais»; 12 cabeçalhos com Ajuda via kit; toggles single-label; Status sem corte; contrato e regras intactos.
 - `GATE-FEATURE E11`: permanece **INCONCLUSIVE** — depende da jornada autenticada + QA visual do PO (esta correção é de UX, não prova o gate).
 - Deploy canônico do MFE `supplies` executado após push (ver relatório de execução).
+
+## Deploy (2026-10-24)
+
+- `SOURCE_SHA`/`DEPLOY_SHA`: `6d6af6cf657b5780642df1e8d5e6a3ae5115a677` (main, fast-forward).
+- Procedimento canônico em `srv-api`: `git pull --ff-only` → `up-prod-sequential.sh --fase mfe --build supplies` (somente o MFE afetado; BFF intocado).
+- `MFE IMAGE`: `cde6ec36fa76` (anterior `6f01d3dc5678` — rollback = rebuild no SHA `f00c6ea7` ou imagem anterior).
+- Bundle verificado no container: `App-CV1-k8vY.js` (343.475 bytes, idêntico ao build local) contém «Todas as Filiais», «Estoque de Segura…» e o CSS `sp-safety-stock__col-status` em `style-DUtxuypL.css`; `remoteEntry.js` 200 interno no container; logs limpos; `delpi-supplies-api` healthy.
+- `AUTHENTICATED_VISUAL = INCONCLUSIVE` — confirmação visual em sessão real fica com o PO.
