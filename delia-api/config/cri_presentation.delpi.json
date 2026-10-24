@@ -1,6 +1,6 @@
 {
   "resource_id": "delia.cri.presentation_vocabulary",
-  "version": "4",
+  "version": "5",
   "kind": "presentation_vocabulary",
   "owner": "DELPI",
   "leads": {
@@ -19,6 +19,8 @@
     "oldest_first_neutral": "A data mais antiga encontrada foi {date}; a fonte não comprova que ela represente uma alteração."
   },
   "insufficiency": {
+    "goal_mismatch": "A fonte retornou registros reais, mas eles não correspondem ao que foi pedido — não vou apresentá-los como resposta.",
+    "relevance_unproven": "Encontrei registros, mas não consegui comprovar que eles correspondem ao pedido — não vou afirmar pertinência sem evidência.",
     "coverage_unproven": "Encontrei registros, mas a fonte não confirma que eles cobrem todo o conjunto — não posso garantir que este seja o resultado definitivo.",
     "ordering_unproven": "A fonte retornou registros, mas não consegui comprovar a ordenação completa — não posso afirmar com segurança qual é a posição exata.",
     "quantity_unproven": "Foram obtidos somente {delivered} dos {requested} exemplos pedidos — a fonte não comprova quantos existem no escopo consultado.",

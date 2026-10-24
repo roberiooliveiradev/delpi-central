@@ -45,7 +45,11 @@ _VOCABULARY_KIND = "presentation_vocabulary"
 # governed map of canonical field key → (article, label, suffix)
 # shared by every presentation path; absent it stays an empty map,
 # never partially loaded.
-_VOCABULARY_VERSIONS = frozenset({"2", "3", "4"})
+# Semantic relevance (plan 125 adendum): v5 adds the
+# ``goal_mismatch``/``relevance_unproven`` insufficiency entries —
+# honest degradation wording when returned evidence does not answer
+# the stated goal or pertinence cannot be proven.
+_VOCABULARY_VERSIONS = frozenset({"2", "3", "4", "5"})
 _VOCABULARY_SECTIONS = (
     "leads",
     "temporal_clauses",
@@ -132,7 +136,9 @@ _MAX_FIELD_LABEL_TEXT_CHARS = 96
 # remain typed constants in the application layer, single-sourced.
 _ORCH_RESOURCE_ID = "delia.capability_orchestration.instructions"
 _ORCH_KIND = "orchestration_instructions"
-_ORCH_VERSIONS = frozenset({"1"})
+# v2 (plan 125 adendum): adds the goal/evidence relevance judgment
+# stage and the ``relevance_feedback`` argument-block clause.
+_ORCH_VERSIONS = frozenset({"1", "2"})
 _ORCH_KEYS = frozenset(
     {"resource_id", "version", "kind", "owner", "instructions"}
 )

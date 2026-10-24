@@ -68,6 +68,10 @@ _MAX_CONTRACT_FACT_CHARS = 300
 # the reason closest to what the user actually asked leads the
 # honest explanation.
 _REASON_MESSAGES = (
+    # Semantic relevance reasons lead the proximate-cause ordering:
+    # they name WHY the evidence cannot answer (plan 125 adendum).
+    ("goal_mismatch", "goal_mismatch"),
+    ("relevance_unproven", "relevance_unproven"),
     ("coverage_unproven", "coverage_unproven"),
     ("ordering_unproven", "ordering_unproven"),
     ("fewer_than_requested", "fewer_than_requested"),

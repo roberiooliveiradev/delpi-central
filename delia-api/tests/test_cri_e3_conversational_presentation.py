@@ -34,6 +34,7 @@ from app.application.capability_provision.conversational_response import (
 )
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
+    GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
@@ -140,6 +141,7 @@ class FakeProposalModel:
                 CAPABILITY_SELECTION_INSTRUCTION_ID,
                 ARGUMENTS_INSTRUCTION_ID,
                 GOAL_INSTRUCTION_ID,
+                GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
             }:
                 for purpose, payload in item.items():
                     self._queues.setdefault(purpose, []).append(payload)
@@ -246,6 +248,12 @@ def _select(group_key, remote_name, goal=None):
             "remote_name": remote_name,
         },
         ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
+        # Plan 125 adendum: an answered business-evidence
+        # verdict is conclusive only after the bounded
+        # correspondence judgment.
+        GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+            "correspondence": "corresponds",
+        },
     }
     if goal is not None:
         proposal[CAPABILITY_SELECTION_INSTRUCTION_ID].update(goal)
@@ -319,7 +327,7 @@ def _records(*items):
 def test_vocabulary_resource_loads_with_identity_version_hash():
     vocab = _vocabulary()
     assert vocab.resource_id == "delia.cri.presentation_vocabulary"
-    assert vocab.version == "4"
+    assert vocab.version == "5"
     assert len(vocab.content_hash) == 64
     assert set(vocab.sections) == {
         "leads",
@@ -1342,12 +1350,14 @@ def test_on_adds_zero_model_calls_e3():
         goal=_goal(min_items=1),
         enabled=True,
     )
-    # CRI adds no model stage; once it owns the composition it may
-    # legitimately spend FEWER (the discarded synthesis draft is not
-    # proposed — see the skip tests below).
+    # CRI adds at most ONE bounded model stage — the plan-125
+    # adendum goal/evidence correspondence judgment on an answered
+    # business-evidence verdict; composition itself remains
+    # deterministic and may legitimately spend FEWER calls (the
+    # discarded synthesis draft is not proposed).
     assert len(orch_on._invoke_model._port.requests) <= len(
         orch_off._invoke_model._port.requests
-    )
+    ) + 1
 
 
 def test_on_skips_synthesis_model_stage_when_cri_composes():

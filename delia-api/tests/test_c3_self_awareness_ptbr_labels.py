@@ -191,10 +191,10 @@ def test_sa24_guidance_content_business_fields_preserved():
 # ---- governed resource contract ------------------------------------
 
 
-def test_sa25_vocabulary_v4_loads_field_labels():
+def test_sa25_vocabulary_v5_loads_field_labels():
     """The versioned resource loads the field_labels map — canonical
     keys, declared parts, bounded size."""
-    assert _VOCAB.version == "4"
+    assert _VOCAB.version == "5"
     assert _LABELS["updatedat"] == (
         "a",
         "data de atualização",
@@ -210,7 +210,7 @@ def test_sa26_vocabulary_unknown_version_fails_closed(tmp_path):
     path = tmp_path / "v.json"
     path.write_text(
         _VOCAB_PATH.read_text(encoding="utf-8").replace(
-            '"version": "4"', '"version": "99"'
+            '"version": "5"', '"version": "99"'
         ),
         encoding="utf-8",
     )

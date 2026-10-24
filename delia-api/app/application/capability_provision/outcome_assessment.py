@@ -1599,3 +1599,77 @@ def apply_verdict_limitation(
             ),
         )
     return outcome
+
+
+# ------------------------------------------------------------------
+# Goal/evidence semantic correspondence (plan 125 adendum /
+# DELIA-C3-SEMANTIC-RELEVANCE-GOVERNED-RECOVERY-CROSSCUTTING-01).
+#
+# ``assess_outcome`` proves structural sufficiency only: records
+# exist, coverage/quantity/ordering are as declared. Whether those
+# records semantically answer the stated goal is a bounded model
+# judgment — a proposal validated here, never authority and never a
+# FACT. The vocabulary is closed; anything outside fails closed.
+# ------------------------------------------------------------------
+
+GOAL_EVIDENCE_CORRESPONDS = "corresponds"
+GOAL_EVIDENCE_IRRELEVANT = "irrelevant"
+GOAL_EVIDENCE_UNCERTAIN = "uncertain"
+_GOAL_EVIDENCE_CORRESPONDENCES = frozenset(
+    {
+        GOAL_EVIDENCE_CORRESPONDS,
+        GOAL_EVIDENCE_IRRELEVANT,
+        GOAL_EVIDENCE_UNCERTAIN,
+    }
+)
+
+REASON_GOAL_MISMATCH = "goal_mismatch"
+REASON_RELEVANCE_UNPROVEN = "relevance_unproven"
+
+MAX_MISMATCH_HINT_CHARS = 240
+MAX_RELEVANCE_RECORDS = 16
+MAX_RELEVANCE_EVIDENCE_CHARS = 4000
+_GOAL_EVIDENCE_JUDGMENT_KEYS = frozenset(
+    {"correspondence", "mismatch_hint"}
+)
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class GoalEvidenceJudgment:
+    """Validated semantic-correspondence proposal.
+
+    Carries no authority: it can only trigger one governed READ
+    recovery or degrade the verdict to honest insufficiency.
+    """
+
+    correspondence: str
+    mismatch_hint: str | None = None
+
+
+def parse_goal_evidence_judgment(
+    value: object,
+) -> GoalEvidenceJudgment | None:
+    """Validate a proposed goal/evidence judgment — fail closed.
+
+    Returns ``None`` for any malformed shape, unknown correspondence
+    value or surplus key so the caller can degrade to
+    ``relevance_unproven`` instead of trusting the model.
+    """
+    if not isinstance(value, Mapping):
+        return None
+    if set(value) - _GOAL_EVIDENCE_JUDGMENT_KEYS:
+        return None
+    correspondence = value.get("correspondence")
+    if correspondence not in _GOAL_EVIDENCE_CORRESPONDENCES:
+        return None
+    hint = value.get("mismatch_hint")
+    if hint is not None:
+        if not isinstance(hint, str):
+            return None
+        if len(hint) > MAX_MISMATCH_HINT_CHARS:
+            return None
+        hint = hint.strip() or None
+    return GoalEvidenceJudgment(
+        correspondence=correspondence,
+        mismatch_hint=hint,
+    )

@@ -22,6 +22,7 @@ from app.application.capability_provision.contracts import (
 )
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
+    GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
     CAPABILITY_GOAL_INSTRUCTION_KEY,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
@@ -110,6 +111,7 @@ class FakeProposalModel:
                 CAPABILITY_SELECTION_INSTRUCTION_ID,
                 ARGUMENTS_INSTRUCTION_ID,
                 GOAL_INSTRUCTION_ID,
+                GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
             }:
                 for purpose, payload in item.items():
                     self._queues.setdefault(purpose, []).append(payload)
@@ -216,6 +218,12 @@ def _select(group_key, remote_name, goal=None):
             "remote_name": remote_name,
         },
         ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
+        # Plan 125 adendum: an answered business-evidence
+        # verdict is conclusive only after the bounded
+        # correspondence judgment.
+        GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+            "correspondence": "corresponds",
+        },
     }
     if goal is not None:
         # I02-R3B: the same selection proposal carries the typed goal —
@@ -721,9 +729,12 @@ def test_on_adds_zero_model_calls():
         goal=goal,
         enabled=True,
     )
-    assert len(orch_on._invoke_model._port.requests) == len(
+    # Plan 125 adendum: ON adds at most ONE bounded model stage —
+    # the goal/evidence correspondence judgment on an answered
+    # business-evidence verdict.
+    assert len(orch_on._invoke_model._port.requests) <= len(
         orch_off._invoke_model._port.requests
-    )
+    ) + 1
 
 
 def test_cri_instruction_variant_carries_requirements_clause():

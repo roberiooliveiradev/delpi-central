@@ -132,22 +132,31 @@ from app.application.capability_provision.conversational_response import (
     records_are_prior_excerpts,
 )
 from app.application.capability_provision.outcome_assessment import (
+    GOAL_EVIDENCE_CORRESPONDS,
+    GOAL_EVIDENCE_IRRELEVANT,
     OUTCOME_ANSWERED,
     OUTCOME_ENVELOPE_ONLY,
     OUTCOME_INSUFFICIENT,
+    REASON_GOAL_MISMATCH,
+    REASON_RELEVANCE_UNPROVEN,
     AnswerRequirements,
     EvidenceFacts,
+    GoalEvidenceJudgment,
     OutcomeVerdict,
     apply_verdict_limitation,
     assess_outcome,
     distinct_delivered_count,
     outcome_facts,
     parse_answer_requirements,
+    parse_goal_evidence_judgment,
     MAX_CANDIDATE_ENTRIES,
     MAX_DESCRIPTION_CHARS,
+    MAX_MISMATCH_HINT_CHARS,
     MAX_MISSING_INPUTS,
     MAX_OWNER_EVIDENCE_CHARS,
     MAX_OWNER_EVIDENCE_ENTRY_CHARS,
+    MAX_RELEVANCE_EVIDENCE_CHARS,
+    MAX_RELEVANCE_RECORDS,
     MAX_RENDER_LIST_ITEMS,
     MAX_SURFACE_ENTRIES,
     MAX_SYNTHESIS_FIELDS,
@@ -4060,6 +4069,14 @@ INTERACTION_ADMISSION_INSTRUCTION_ID = (
     "delia.capability_orchestration.interaction_admission"
 )
 
+# Semantic relevance (plan 125 adendum /
+# DELIA-C3-SEMANTIC-RELEVANCE-GOVERNED-RECOVERY-CROSSCUTTING-01): the
+# bounded model judgment of whether the returned owner evidence
+# corresponds to the stated goal — a proposal, never authority.
+GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID = (
+    "delia.capability_orchestration.goal_evidence_relevance"
+)
+
 # Refactor R1 (plan 125 / M01): instruction *text* lives in the
 # governed versioned resource config/orchestration_instructions
 # .delpi.json, loaded fail-closed by composition and injected at
@@ -4089,6 +4106,7 @@ ORCHESTRATION_INSTRUCTION_KEYS = frozenset(
         CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
         CANDIDATE_SELECTION_INSTRUCTION_ID,
         INTERACTION_ADMISSION_INSTRUCTION_ID,
+        GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
     }
 )
 
@@ -4181,6 +4199,15 @@ def _cancel_observed() -> bool:
 # replayed checkpoint proposals never produce a ledger entry at all.
 _ATTEMPT_INDEX: contextvars.ContextVar[int] = contextvars.ContextVar(
     "delia_governed_attempt_index", default=1
+)
+
+# Semantic-relevance recovery (plan 125 adendum): at most ONE
+# governed READ recovery round per interaction — request-scoped
+# guard, never instance state, same ContextVar pattern.
+_RELEVANCE_RECOVERY_USED: contextvars.ContextVar[bool] = (
+    contextvars.ContextVar(
+        "delia_relevance_recovery_used", default=False
+    )
 )
 
 def _resume_stage_key(
@@ -4461,6 +4488,7 @@ class OperationalCapabilityOrchestrator:
         sink_token = _ACTIVITY_SINK.set(activity_sink)
         resume_token = _RESUME_STATE.set(checkpoint)
         cancel_token = _CANCEL_CHECK.set(cancel_check)
+        relevance_token = _RELEVANCE_RECOVERY_USED.set(False)
         try:
             # Monotonic interaction end: anchored at the REAL start of
             # the interaction's clock (TurnDeadline.start), never at
@@ -4573,6 +4601,7 @@ class OperationalCapabilityOrchestrator:
             _ACTIVITY_SINK.reset(sink_token)
             _RESUME_STATE.reset(resume_token)
             _CANCEL_CHECK.reset(cancel_token)
+            _RELEVANCE_RECOVERY_USED.reset(relevance_token)
 
     def _attempt(
         self,
@@ -5891,6 +5920,67 @@ class OperationalCapabilityOrchestrator:
                 and _guided is not None
             )
         )
+        if not projected_answer:
+            # Semantic relevance edge (plan 125 adendum /
+            # DELIA-C3-SEMANTIC-RELEVANCE): an ``answered`` verdict on
+            # business evidence is conclusive only after the bounded
+            # goal/evidence correspondence judgment — irrelevant
+            # evidence earns ONE governed READ recovery round (same
+            # capability, revalidated gates, budget-gated); unproven
+            # or persisting mismatch degrades to honest
+            # insufficiency. Deterministic guidance/contract
+            # projections skip the judgment — they already ARE the
+            # governed answer.
+            (
+                outcome,
+                remote_used,
+                action_id,
+                cri_facts,
+                cri_verdict,
+            ) = self._apply_semantic_relevance(
+                input_text,
+                outcome,
+                cri_facts,
+                cri_verdict,
+                descriptor,
+                group_key,
+                remote_used,
+                action_id,
+                group,
+                arguments,
+                goal,
+                owner_evidence,
+                workspace_context,
+                prior_turns,
+                correlation,
+                deadline,
+            )
+            _guided = (
+                _deterministic_guidance_content(
+                    outcome.structured,
+                    owner_truncated=(
+                        LIMITATION_RESULT_TRUNCATED
+                        in outcome.limitations
+                    ),
+                )
+                if cri_verdict is not None
+                else None
+            )
+            projected_answer = cri_verdict is not None and (
+                (
+                    cri_verdict.decision
+                    in (OUTCOME_ENVELOPE_ONLY, OUTCOME_INSUFFICIENT)
+                    and not cri_facts.has_business_evidence
+                    and (
+                        bool(outcome.contract_facts)
+                        or _guided is not None
+                    )
+                )
+                or (
+                    cri_verdict.decision == OUTCOME_ANSWERED
+                    and _guided is not None
+                )
+            )
         cri = (
             None
             if projected_answer
@@ -9512,6 +9602,337 @@ class OperationalCapabilityOrchestrator:
         except CapabilityProviderError:
             return None
 
+    def _judge_goal_evidence(
+        self,
+        input_text: str,
+        facts: EvidenceFacts,
+        goal: _TurnGoal,
+        *,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        correlation: str,
+        deadline: TurnDeadline | None,
+    ) -> GoalEvidenceJudgment | None:
+        """One bounded semantic-correspondence proposal.
+
+        The model sees the stated goal subject/requirements and the
+        sanitized owner records — it classifies correspondence; the
+        deterministic parse decides. ``None`` means the proposal was
+        absent or invalid: the caller must degrade honestly, never
+        assume pertinence.
+        """
+        requirements = goal.answer_requirements
+        block: dict[str, Any] = {
+            "business_subject": goal.business_subject,
+            "scope_constraints": dict(goal.scope_constraints),
+            "records": list(facts.records)[:MAX_RELEVANCE_RECORDS],
+        }
+        if requirements is not None:
+            declared = {
+                "min_items": requirements.min_items,
+                "ordering": requirements.ordering,
+                "complete_coverage": requirements.complete_coverage,
+            }
+            block["declared_requirements"] = {
+                key: value
+                for key, value in declared.items()
+                if value not in (None, False)
+            }
+        proposal = self._propose(
+            input_text,
+            block_tag="evidence",
+            block_payload=json.dumps(
+                block,
+                ensure_ascii=False,
+                default=str,
+            )[:MAX_RELEVANCE_EVIDENCE_CHARS],
+            instruction_id=GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
+            instruction=self._instruction(
+                GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID
+            ),
+            expected_fields=("correspondence",),
+            input_kind="goal_evidence_relevance",
+            allowed_keys=frozenset(
+                {"correspondence", "mismatch_hint"}
+            ),
+            workspace_context=workspace_context,
+            prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
+        )
+        if proposal is None:
+            _logger.info(
+                "orchestration stage=goal_evidence_relevance "
+                "decision=unavailable correlation_id=%s",
+                correlation,
+            )
+            return None
+        judgment = parse_goal_evidence_judgment(proposal)
+        _logger.info(
+            "orchestration stage=goal_evidence_relevance "
+            "decision=%s correlation_id=%s",
+            (
+                judgment.correspondence
+                if judgment is not None
+                else "invalid"
+            ),
+            correlation,
+        )
+        return judgment
+
+    def _recover_relevance(
+        self,
+        input_text: str,
+        descriptor: ProviderCapability,
+        group_key: str,
+        remote_name: str,
+        group: CapabilityGroup,
+        prior_arguments: dict[str, Any] | None,
+        judgment: GoalEvidenceJudgment,
+        goal: _TurnGoal,
+        *,
+        owner_evidence: str | None,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        correlation: str,
+        deadline: TurnDeadline | None,
+    ) -> tuple[SpecialistOutcome, str, str] | None:
+        """One bounded semantic-recovery round (plan 125 adendum).
+
+        The judgment declared the returned evidence irrelevant to the
+        stated goal — re-propose the SAME capability's arguments once
+        under the bounded mismatch signal, revalidate the same
+        deterministic gates, and re-invoke a non-mutating capability
+        only. An identical query is never re-executed; any failure
+        returns ``None`` and the original outcome stands as
+        insufficient — no loops, no amplification, no PREPARE/ACT.
+        """
+        if descriptor.operation_class not in (
+            _RESUMABLE_OPERATION_CLASSES
+        ):
+            return None
+        if deadline is not None and not self._budget_allows_resolver(
+            deadline
+        ):
+            _logger.info(
+                "orchestration stage=relevance_recovery "
+                "decision=skipped_budget correlation_id=%s",
+                correlation,
+            )
+            return None
+        feedback = json.dumps(
+            {
+                "prior_correspondence": judgment.correspondence,
+                "mismatch_hint": (judgment.mismatch_hint or "")[
+                    :MAX_MISMATCH_HINT_CHARS
+                ],
+                "business_subject": goal.business_subject,
+                "scope_constraints": dict(goal.scope_constraints),
+            },
+            ensure_ascii=False,
+        )
+        _RELEVANCE_RECOVERY_USED.set(True)
+        new_args, missing = self._build_arguments(
+            input_text,
+            descriptor,
+            workspace_context,
+            owner_evidence=owner_evidence,
+            relevance_feedback=feedback,
+            business_subject=goal.business_subject,
+            prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
+        )
+        if new_args is None or missing:
+            return None
+        if _unproven_identifier_inputs(
+            new_args,
+            descriptor,
+            input_text,
+            workspace_context,
+            owner_evidence,
+        ):
+            # The informed proposal still invents an identifier —
+            # fail closed on the original insufficiency.
+            return None
+        if dict(prior_arguments or {}) == dict(new_args):
+            _logger.info(
+                "orchestration stage=relevance_recovery "
+                "decision=identical_arguments correlation_id=%s",
+                correlation,
+            )
+            return None
+        _logger.info(
+            "orchestration stage=relevance_recovery "
+            "decision=reinvoke capability=%s correlation_id=%s",
+            remote_name,
+            correlation,
+        )
+        try:
+            return self._invoke_selected(
+                group_key,
+                remote_name,
+                new_args,
+                group,
+                input_text,
+                correlation,
+                prior_turns,
+                deadline,
+            )
+        except CapabilityProviderError:
+            return None
+
+    def _apply_semantic_relevance(
+        self,
+        input_text: str,
+        outcome: SpecialistOutcome,
+        cri_facts: EvidenceFacts | None,
+        cri_verdict: OutcomeVerdict | None,
+        descriptor: ProviderCapability,
+        group_key: str,
+        remote_used: str,
+        action_id: str,
+        group: CapabilityGroup,
+        arguments: dict[str, Any] | None,
+        goal: _TurnGoal,
+        owner_evidence: str | None,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        correlation: str,
+        deadline: TurnDeadline | None,
+    ) -> tuple[
+        SpecialistOutcome,
+        str,
+        str,
+        EvidenceFacts | None,
+        OutcomeVerdict | None,
+    ]:
+        """Semantic-relevance edge (plan 125 adendum).
+
+        An ``answered`` verdict on business evidence is conclusive
+        only after the bounded correspondence judgment:
+        - ``corresponds`` -> the verdict stands;
+        - ``irrelevant``  -> ONE governed READ recovery round (when
+          not already used this interaction); a still-mismatched or
+          absent recovery degrades to honest ``goal_mismatch``
+          insufficiency;
+        - ``uncertain``/absent/invalid proposal -> ``relevance_
+          unproven`` insufficiency, never a confident fabrication.
+        """
+        unchanged = (
+            outcome,
+            remote_used,
+            action_id,
+            cri_facts,
+            cri_verdict,
+        )
+        if (
+            cri_verdict is None
+            or cri_facts is None
+            or cri_verdict.decision != OUTCOME_ANSWERED
+            or not cri_facts.has_business_evidence
+        ):
+            return unchanged
+        judgment = self._judge_goal_evidence(
+            input_text,
+            cri_facts,
+            goal,
+            workspace_context=workspace_context,
+            prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
+        )
+        if (
+            judgment is not None
+            and judgment.correspondence == GOAL_EVIDENCE_IRRELEVANT
+            and not _RELEVANCE_RECOVERY_USED.get()
+        ):
+            recovered = self._recover_relevance(
+                input_text,
+                descriptor,
+                group_key,
+                remote_used,
+                group,
+                arguments,
+                judgment,
+                goal,
+                owner_evidence=owner_evidence,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+            )
+            if recovered is not None:
+                outcome, action_id, remote_used = recovered
+                cri_facts = outcome_facts(
+                    outcome,
+                    descriptor.operation_class,
+                    record_resolver=(
+                        lambda structured: _synthesis_records(
+                            structured,
+                            field_labels=self._field_labels,
+                        )
+                    ),
+                )
+                cri_verdict = assess_outcome(
+                    cri_facts,
+                    goal.answer_requirements,
+                    contract_subject=goal.contract_subject,
+                )
+                if (
+                    cri_verdict.decision == OUTCOME_ANSWERED
+                    and cri_facts.has_business_evidence
+                ):
+                    judgment = self._judge_goal_evidence(
+                        input_text,
+                        cri_facts,
+                        goal,
+                        workspace_context=workspace_context,
+                        prior_turns=prior_turns,
+                        correlation=correlation,
+                        deadline=deadline,
+                    )
+                else:
+                    judgment = None
+        if cri_verdict is None or cri_facts is None:
+            return (
+                outcome,
+                remote_used,
+                action_id,
+                cri_facts,
+                cri_verdict,
+            )
+        if cri_verdict.decision != OUTCOME_ANSWERED:
+            return (
+                outcome,
+                remote_used,
+                action_id,
+                cri_facts,
+                cri_verdict,
+            )
+        if judgment is None or (
+            judgment.correspondence != GOAL_EVIDENCE_CORRESPONDS
+        ):
+            cri_verdict = OutcomeVerdict(
+                OUTCOME_INSUFFICIENT,
+                (
+                    (REASON_GOAL_MISMATCH,)
+                    if (
+                        judgment is not None
+                        and judgment.correspondence
+                        == GOAL_EVIDENCE_IRRELEVANT
+                    )
+                    else (REASON_RELEVANCE_UNPROVEN,)
+                ),
+            )
+        return (
+            outcome,
+            remote_used,
+            action_id,
+            cri_facts,
+            cri_verdict,
+        )
+
     def _admit_conversational_turn(
         self,
         input_text: str,
@@ -10091,6 +10512,7 @@ class OperationalCapabilityOrchestrator:
         owner_evidence: str | None = None,
         foreign_evidence: str | None = None,
         business_subject: str | None = None,
+        relevance_feedback: str | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
@@ -10141,6 +10563,13 @@ class OperationalCapabilityOrchestrator:
             # keeps query-type arguments anchored on the business
             # concept, not on host/context stopwords (LOOP-03R1 D03).
             block["business_subject"] = business_subject
+        if relevance_feedback is not None:
+            # Bounded semantic-mismatch signal from a validated
+            # goal/evidence judgment — untrusted data, never an
+            # instruction: it only re-informs this argument stage
+            # during the single governed recovery round (plan 125
+            # adendum).
+            block["relevance_feedback"] = relevance_feedback
         try:
             proposal = self._propose(
                 input_text,
