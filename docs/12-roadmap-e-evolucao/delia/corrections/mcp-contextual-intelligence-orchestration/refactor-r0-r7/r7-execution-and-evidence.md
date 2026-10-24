@@ -154,3 +154,16 @@
 **Threshold proposto para coordenação (não usado como gate unilateral):** O2 SUCCESSFUL_BUSINESS_OUTCOMES/TOTAL_VALID_RUNS ≥ 70% em matriz congelada no modelo/config homologados, antes de homologação produtiva. Medida atual ~12% — **abaixo do threshold proposto**.
 
 `O2_STATUS=MECHANISM_IMPROVED_RELIABILITY_BELOW_THRESHOLD`; `FIRST_DIVERGENT_STAGE_RESOLVED=native_assessment_speculation`; `RESIDUAL=model_formulation_variance`; `DELIA_DEPLOY=BLOCKED_PENDING_REVIEW_AND_AUTHORIZATION`; `R7_FINAL_ACCEPT=NO`.
+
+
+### Parecer independente da remediação de recovery v16 — 2026-10-24
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (bounded mechanism; reliability not accepted)**; **DELIA_DEPLOY_AUTHORIZED=NO**; **DAVI_DEPLOY_AUTHORIZED=NO**; **R7_FINAL_ACCEPT=NO**. Independently inspected GitHub commit `17dc08b9c8` paths (orchestration core, instruction v16, version allowlist and tests), doc evidence commit `2f0b19fd73`, and reported runtime baseline. Tests/live runs were not independently rerun in this review; counts are `EXECUTOR_REPORTED`.
+
+**Technical scope:** reuse of existing `_assess_native_path`, foreign capability selection/invocation and bounded relevance recovery after owner evidence mismatch is consistent with legitimate orchestration ownership; no new planner, standalone router or unbounded recovery was reported. This is not proof that model-driven foreign consult and argument extraction consistently work. `O2=3/~25` is an aggregate across varied instruction versions/configurations, **not an acceptance rate for a frozen v16 candidate**. Execution evidence reports failures after foreign consult in `candidate_arguments` and canonical designation propagation to `arguments`; further tuning without fresh causal evaluation is not authorized.
+
+**Decision:** preserve `moonshotai/kimi-k3` as the observed production model; no speculative model switch. `>=70%` is authorized only as a **provisional evaluation target**, not a canonical SLA or autonomous release authorization. Before any v16 promotion, freeze evaluation SHA/instructions/model/config/subject identity/provider versions, define sample count and confidence/decision rule and thresholds for false business facts and safety (zero material violations), run isolated paired baseline/candidate multi-run with full denominators and stage-level traces, include terminal pino/D1/TÉO/VISTA and negative cases. Report cost, token and latency; require independent review and new explicit operational authorization. If reliability remains poor, STOP with stage-local evidence; do not iterate v17/v18 prompts indefinitely or redesenhar silently.
+
+**Environment residuals:** previous DAVI full-suite 2 FAIL and DÉLIA 2 environment-dependent FAIL remain historical facts; runner-specific reproductions strengthen environmental attribution but do not change FAIL to PASS. Obtain owner-approved exception or full configured rerun per authority. CRI OFF live remains TEST_NOT_RUN.
+
+`NEXT_ACTION=FROZEN_V16_RELIABILITY_AND_RELEASE_GATE`; `MECHANISM_REVIEW=ACCEPT_WITH_RESIDUAL`; `O2_RELIABILITY=PENDING`; `DEPLOY=BLOCKED`; `R7_CLOSED=NO`.
