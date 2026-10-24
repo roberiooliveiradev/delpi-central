@@ -211,3 +211,7 @@ O PO autorizou expressamente `P6-MIN + P2-READ` sob `CF-C3-P6-MIN-P2-READ-RUNTIM
 ### Handoff pós-runtime e revisão arquitetural (24/10/2026)
 
 O executor reportou implementação `P6-MIN + P2-READ` sob GO [99](./99-ciclo3-go-runtime-p6-min-p2-read-e-handoff-devin.md) e evidência [100](./100-ciclo3-p6-min-p2-read-runtime-evidencia-de-execucao.md), commit `f27dc307a48a5c9b37e6469e1c12d5f56ddbd896`. Consulte o [doc 101 — handoff de arquitetura e prompt de reentrada](./101-ciclo3-handoff-arquitetura-pos-runtime-p6-min-p2-read.md). **Revisão arquitetural independente executada no [doc 102](./102-ciclo3-p6-min-p2-read-revisao-arquitetural.md): `ACCEPT_WITH_RESIDUAL`** — concorrência real provada em PG (8 threads → 1 competência, 53 `EXPECTED`), residuais menores R1–R8 catalogados, sem bloqueio material. Smoke autenticado `TEST_NOT_RUN`; nenhuma implantação em produção autorizada. Próximo gate: `CF-C3-P2-UPLOAD-CONTRACT-GATE-001` (documental); `CP04 P2-Upload` permanece não autorizado.
+
+## Plano mestre consolidado de execução — 24/10/2026
+
+O [Documento 104 — plano mestre E2E de implementação, aceite e deploy por Operador SSH](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md) consolida CP02–CP12 em pacotes A–D e três paradas formais (G1 decisões materiais, G2 aceite integrado, G3 release/rollback). Preserva o ledger 23 e este roadmap como authorities de RQ/AC e dependências; não declara runtime nem deploy já executados. Deploy de produção depende de operador SSH autorizado, preflight, backup, rollback e smoke real.
