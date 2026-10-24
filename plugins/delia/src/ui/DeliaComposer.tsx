@@ -650,7 +650,11 @@ function DeliaComposerBody({
   return (
     <div className="delia-composer-stack">
       <MessageComposer
-        className="delia-composer"
+        className={
+          captureActive
+            ? "delia-composer delia-composer--capturing"
+            : "delia-composer"
+        }
         inputId={inputId}
         inputLabel="Pergunte à DÉLIA"
         value={value}
@@ -792,7 +796,11 @@ function DeliaComposerIncremental({
   return (
     <div className="delia-composer-stack">
       <MessageComposer
-        className="delia-composer"
+        className={
+          dictation.active
+            ? "delia-composer delia-composer--listening"
+            : "delia-composer"
+        }
         inputId={inputId}
         inputLabel="Pergunte à DÉLIA"
         value={value}
@@ -841,6 +849,7 @@ function DeliaComposerIncremental({
               >
                 <IconButton
                   aria-label="Finalizar ditado"
+                  tone="primary"
                   onClick={dictation.finalize}
                   disabled={dictation.state === "finalizing"}
                 >
@@ -853,6 +862,7 @@ function DeliaComposerIncremental({
               >
                 <IconButton
                   aria-label="Descartar captura"
+                  tone="danger"
                   onClick={dictation.cancel}
                 >
                   <Trash2 size={18} aria-hidden="true" />
@@ -868,6 +878,7 @@ function DeliaComposerIncremental({
               >
                 <IconButton
                   aria-label="Iniciar ditado"
+                  className="delia-dictation-live__mic"
                   onClick={dictation.start}
                   disabled={inFlight && !onEnqueue}
                 >

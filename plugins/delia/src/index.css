@@ -559,7 +559,6 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--delpi-ui-danger, #d92d20);
 }
 
 .dashboard-delia .delia-dictation-live__dot[data-paused="true"] {
@@ -595,7 +594,84 @@
 .dashboard-delia .delia-dictation-live__controls {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+}
+
+/* ---------- VOX unified voice controls (spec 126)
+   Live mic + session controls join the batch circular family:
+   same 40px diameter, same radius, same icon weight. The settings
+   gear and send button keep their own neutral appearance. */
+.dashboard-delia .delia-dictation-live__mic.delpi-ui-icon-btn,
+.dashboard-delia .delia-dictation-live__controls .delpi-ui-icon-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+}
+
+/* Live reads the same institutional accent, slightly more luminous
+   than batch — a color-mix derivation of the same token, not a new
+   palette. */
+.dashboard-delia .delia-dictation-live__dot {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 84%,
+    white
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-delia .delia-dictation-live__dot:not([data-paused="true"]) {
+    animation: delia-dictation-live-pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes delia-dictation-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+}
+
+/* Subtle institutional halo marks the composer as the active voice
+   surface — batch capture and live listening use the same language;
+   live reads a touch brighter per spec 126. */
+.dashboard-delia
+  .delia-composer--capturing
+  .delpi-ui-message-composer__surface {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+    var(--delpi-ui-composer-border, var(--border, #e5e7eb))
+  );
+  box-shadow: 0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+      transparent
+    );
+}
+
+.dashboard-delia
+  .delia-composer--listening
+  .delpi-ui-message-composer__surface {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 55%,
+    var(--delpi-ui-composer-border, var(--border, #e5e7eb))
+  );
+  box-shadow: 0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+      transparent
+    );
 }
 
 @media (max-width: 420px) {

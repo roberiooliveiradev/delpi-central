@@ -38,10 +38,15 @@
   color: var(--delpi-ui-audio-text);
 }
 
-/* Circular controls — same diameter and hit area inside the capture
-   surface and on the idle mic trigger. */
+/* Circular controls — same 40px diameter and hit area inside the
+   capture surface and on the idle mic trigger (spec 126 voice
+   family). */
 .delpi-ui-audio-recorder .delpi-ui-icon-btn,
 .delpi-ui-audio-recorder__trigger.delpi-ui-icon-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   border-radius: 999px;
 }
 
@@ -51,11 +56,13 @@
 
 /* ---------- live capture indicator ---------- */
 
+/* Spec 126: active capture reads institutional blue — red stays
+   reserved for semantic danger/error feedback only. */
 .delpi-ui-audio-recorder__live-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--delpi-ui-audio-danger);
+  background: var(--delpi-ui-audio-accent);
   flex-shrink: 0;
 }
 
@@ -245,7 +252,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .delpi-ui-audio-recorder {
-    animation: delpi-ui-audio-recorder-in 160ms ease-out;
+    animation: delpi-ui-audio-recorder-in 200ms ease-out;
   }
 }
 

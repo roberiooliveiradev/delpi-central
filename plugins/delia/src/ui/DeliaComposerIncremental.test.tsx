@@ -215,6 +215,43 @@ describe("incremental dictation surface", () => {
     ).toBeInstanceOf(HTMLTextAreaElement);
   });
 
+  it("VOX-01: live mic trigger uses the circular voice family", async () => {
+    render(<Harness transport={makeTransport({})} />);
+    await selectLive();
+    const mic = screen.getByRole("button", { name: "Iniciar ditado" });
+    expect(mic.classList.contains("delia-dictation-live__mic")).toBe(true);
+  });
+
+  it("VOX-03/04: live controls share the batch action hierarchy", async () => {
+    render(<Harness transport={makeTransport(PARTIALS)} />);
+    await selectLive();
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar ditado" }));
+    await waitFor(() =>
+      screen.getByRole("button", { name: "Pausar ditado" }),
+    );
+    const finish = screen.getByRole("button", { name: "Finalizar ditado" });
+    const discard = screen.getByRole("button", {
+      name: "Descartar captura",
+    });
+    const pause = screen.getByRole("button", { name: "Pausar ditado" });
+    expect(finish.className).toContain("delpi-ui-icon-btn--primary");
+    // subdued-danger affordance: neutral at rest, danger on hover/focus
+    expect(discard.className).toContain("delpi-ui-icon-btn--danger");
+    expect(pause.className).not.toContain("--primary");
+    expect(pause.className).not.toContain("--danger");
+  });
+
+  it("VOX halo: composer signals active listening with a halo class", async () => {
+    render(<Harness transport={makeTransport(PARTIALS)} />);
+    await selectLive();
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar ditado" }));
+    await waitFor(() =>
+      expect(
+        document.querySelector(".delia-composer--listening"),
+      ).toBeTruthy(),
+    );
+  });
+
   it("start shows live controls and keeps the textarea editable", async () => {
     render(<Harness transport={makeTransport(PARTIALS)} />);
     await selectLive();

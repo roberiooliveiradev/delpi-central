@@ -898,3 +898,67 @@ describe("DeliaComposer — five-minute dictation continuity (VD-F05)", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });
+
+describe('DeliaComposer — VOX unified voice visuals (spec 126)', () => {
+  beforeEach(() => {
+    FakeMediaRecorder.instances = [];
+    Object.defineProperty(window, 'isSecureContext', {
+      configurable: true,
+      get: () => true,
+    });
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn(async () => createFakeStream()) },
+    });
+    (
+      globalThis as unknown as { MediaRecorder: typeof FakeMediaRecorder }
+    ).MediaRecorder = FakeMediaRecorder;
+    URL.createObjectURL = vi.fn(() => 'blob:test-audio');
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: originalMediaDevices,
+      });
+    }
+    if (originalMediaRecorder) {
+      (
+        globalThis as unknown as { MediaRecorder: typeof MediaRecorder }
+      ).MediaRecorder = originalMediaRecorder;
+    }
+    if (originalIsSecureContext) {
+      Object.defineProperty(window, 'isSecureContext', originalIsSecureContext);
+    }
+  });
+
+  it('VOX-01: batch mic trigger belongs to the circular voice family', () => {
+    renderDictation();
+    const mic = screen.getByRole('button', { name: 'Ditar mensagem' });
+    expect(
+      mic.classList.contains('delpi-ui-audio-recorder__trigger'),
+    ).toBe(true);
+  });
+
+  it('VOX-03/08: recording shows primary finalize, subdued-danger discard and capture halo', async () => {
+    renderDictation();
+    fireEvent.click(screen.getByRole('button', { name: 'Ditar mensagem' }));
+    await waitFor(() => screen.getByText('Gravando'));
+
+    const finish = screen.getByRole('button', {
+      name: 'Finalizar gravação',
+    });
+    const cancel = screen.getByRole('button', {
+      name: 'Cancelar gravação',
+    });
+    expect(finish.className).toContain('delpi-ui-icon-btn--primary');
+    // discard affordance: neutral by default, danger only on hover/focus
+    expect(cancel.className).toContain('delpi-ui-icon-btn--danger');
+    // capture halo marks the whole composer as the active surface
+    expect(
+      document.querySelector('.delia-composer--capturing'),
+    ).toBeTruthy();
+  });
+});
