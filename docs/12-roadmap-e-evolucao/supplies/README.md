@@ -1,11 +1,11 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (2026-09-22):** implementação incremental em andamento · **E1–E9 concluídas** · **E10 / WF-15 IN PROGRESS** (S1–S4 Help+BFF local PASS; GATE INCONCLUSIVE) · **WF-06/WF-07 GATE-FEATURE PASS**
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9 fechada · E10 aguarda deploy federado
+> **Status (2026-10-23 — rebaseline R1):** implementação incremental em andamento · **E1–E9 concluídas** · **E10 / WF-15 GATE PASS_DEPLOYED** (bundle federado verificado contém a página; residual `VISUAL_AUTHENTICATED=INCONCLUSIVE`) · **E13/E14 fornecedores implementadas** (writes ERP OFF — X4.PROD-C1 aguardando TOTVS) · **USERS.PROFILE.S1–S3** fechadas
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9/E10 fechadas c/ residual visual · **E11 READY_WITH_RESIDUAL** (contratos api-delpi completos; falta BFF+MFE)
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual
-> **Página em foco:** **E10 / WF-15 Controle de Estoques** — código HEAD completo; **GATE-FEATURE E10 = INCONCLUSIVE** (MFE federado sem InventoryPage)
-> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)**, **Detalhe do pedido (WF-06)** e **Entregas / atrasos (WF-07)**
-> **Próxima receita:** deploy federado `plugins/supplies` (+ verificar `supplies-api`) → re-smoke → redecidir GATE E10 — **não iniciar E11**
+> **Página em foco:** **E11 / WF-16 Estoque de Segurança** — readiness inventariado; promover via E11.P0 (contract freeze) — ver [ROADMAP-REBASELINE-R1-20261023.md](./ROADMAP-REBASELINE-R1-20261023.md)
+> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)**, **Detalhe do pedido (WF-06)**, **Entregas / atrasos (WF-07)**, **Controle de Estoques (WF-15)**, **Fornecedores/360 (WF-09/WF-10)** e **Perfil de usuário (`/users/:userId`)**
+> **Próxima receita:** E11.P0 contract freeze (read-only) → E11.S1 BFF — **writes ERP permanecem OFF**
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
 
 O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Ele substitui progressivamente experiências fragmentadas por jornadas coesas, preservando bounded contexts, RBAC central, paridade mensurável e rollback.
@@ -39,7 +39,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first |
 | **E8 — Detalhe do Pedido + GATE-FEATURE WF-06** | **concluída 2026-09-16** — ficha `/purchase-orders/:branch/:number`; smoke federado **PASS** em 2026-09-21 |
 | **E9 — Entregas / atrasos + P0 freeze** | **FECHADA** — **GATE-FEATURE WF-07 PASS** após redeploy BFF; FAIL inicial preservado na [evidência](./evidence/e9-wf07-federated-runtime-gate.md); [freeze](./evidence/e9-wf07-p0-contract-freeze.md) |
-| **E10 — Controle de Estoques (WF-15)** | **IN PROGRESS** — S1–S3 PASS; S4 Help+tests+BFF local PASS; **GATE INCONCLUSIVE** ([evidência](./evidence/e10-wf15-s4-final-acceptance.md)) |
+| **E10 — Controle de Estoques (WF-15)** | **FECHADA (residual visual)** — S1–S4 PASS; bundle federado verificado com a página (R1, 2026-10-23); `VISUAL_AUTHENTICATED=INCONCLUSIVE` ([evidência](./evidence/e10-wf15-s4-final-acceptance.md), [R1](./ROADMAP-REBASELINE-R1-20261023.md)) |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** — fail-closed na fronteira; permissions efetivas do Core, não claims JWT |
 | BIs externos | dump **local** 0/6 documentado; dump Core **produção** obrigatório antes do cutover |
@@ -61,7 +61,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **GATE-FEATURE WF-05** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
 | **GATE-FEATURE WF-06** | **PASS** — smoke federado em `https://minhadelpi.com.br` em 2026-09-21; residual: 403 de unidade não executado ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)) |
 | **GATE-FEATURE WF-07** | **PASS** — recovery 2026-09-21: redeploy `supplies-api` em `srv-api` + re-smoke 200 ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)) |
-| **GATE-FEATURE E10** | **INCONCLUSIVE** — Help/tests/BFF local PASS; federated MFE sem InventoryPage; `DEPLOY_REQUIRED=YES` ([evidência](./evidence/e10-wf15-s4-final-acceptance.md)) |
+| **GATE-FEATURE E10** | **PASS_DEPLOYED** — bundle federado `App-SSmBJjdj.js` contém `stock-balances`; rotas 401 protegidas em runtime; residual `VISUAL_AUTHENTICATED=INCONCLUSIVE` ([evidência](./evidence/e10-wf15-s4-final-acceptance.md), [R1](./ROADMAP-REBASELINE-R1-20261023.md)) |
 | **GATE-C2** | futuro; não autorizado enquanto prerequisites não forem provados |
 | **GATE-PARITY** | futuro; evidência quantitativa obrigatória |
 | **GATE-CUTOVER** | futuro; nenhum legado/BI pode permanecer `LEGADO_A_VALIDAR` |
@@ -95,11 +95,11 @@ selecionar página em foco
 | **3** | **Solicitações de compras** | `/purchase-requests` | **FECHADA (DoD)** · WF-04 |
 | 4 | Pedidos de compra | `/purchase-orders` | **FECHADA (DoD)** · WF-05 |
 | 5 | Detalhe do pedido | `/purchase-orders/:branch/:number` | **FECHADA (DoD)** · WF-06 |
-| 6 | Entregas / atrasos | `/deliveries` | bloqueada até autorização PO (WF-07) |
-| 7 | Controle de estoques | `/inventory` | fila |
-| 8 | Estoque de segurança | `/safety-stock` | fila |
-| 9 | Análise de consumo | `/safety-stock/consumption-analysis` | fila |
-| 10 | Fornecedores | `/suppliers` | fila / contrato de busca a confirmar |
+| 6 | Entregas / atrasos | `/deliveries` | **FECHADA (DoD)** · WF-07 |
+| 7 | Controle de estoques | `/inventory` | **FECHADA** (E10, residual visual) · WF-15 |
+| 8 | Estoque de segurança | `/safety-stock` | **próxima — E11 READY_WITH_RESIDUAL** (contratos api-delpi completos; falta BFF+MFE — ver R1) |
+| 9 | Análise de consumo | `/safety-stock/consumption-analysis` | fila (satélite E12; contrato produtor existe) |
+| 10 | Fornecedores | `/suppliers` | **FECHADA** (E13) — lista/busca/filtros; cadastro/edição em TST |
 | 11 | Fornecedor 360 | `/suppliers/:code/:store` | **FECHADA** (E14) — avatar/nome navegáveis nas listas/fichas de PC e Entregas (SUPPLIERS.NAV.S1). Ver [DIRECTORY-OBJECTS.md](./DIRECTORY-OBJECTS.md) |
 | 11b | Perfil de usuário | `/users/:userId` | **FECHADA** (USERS.PROFILE.S1) — ficha Minha DELPI reusada; avatar/nome do solicitante navegáveis nas listas/fichas de SC/PC quando `user_id` Core + acesso; seção de SCs relacionadas. `/people/:code` descartada |
 | 12 | OTD fornecedores | `/suppliers/otd` | fila |

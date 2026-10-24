@@ -23,7 +23,7 @@ Paths em inglês (`english-code-identifiers.mdc`). Ainda **não** entram no rout
 | Fornecedor (TOTVS A2) | `/apps/supplies/suppliers` | `/apps/supplies/suppliers/:code/:store` ✅ implementada (E14) |
 | Pessoa (usuário Minha DELPI) | — | `/apps/supplies/users/:userId` ✅ implementada (USERS.PROFILE.S1 — reusa a ficha de perfil do Portal; `/people/:code` descartada: chave canônica é `user_id` Core, nunca código TOTVS) |
 
-Helpers: `reservedSupplierDetailPath` e `reservedPersonDetailPath` em `plugins/supplies/src/app/suppliesDirectory.ts` (legado — não usar; `people/:code` foi substituída por `users/:userId` via `buildUserProfileHref`).
+Builders canônicos: `buildSupplierDetailPath` e `buildUserProfileHref` em `plugins/supplies/src/app/pluginRoutes.ts` (os helpers `reserved*` foram removidos no USERS.PROFILE.S1 — código morto superado pelas rotas reais).
 
 `/apps/supplies/people/:code` continua `not_found` e não será implementada — a ficha de pessoa é a rota canônica `/users/:userId`, com navegação condicionada a `user_id` Core comprovado + `canAccessUserProfile`.
 

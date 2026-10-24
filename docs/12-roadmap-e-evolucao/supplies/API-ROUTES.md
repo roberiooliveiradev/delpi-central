@@ -66,6 +66,8 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/purchase-orders/export` | `supplies.access` + units | api-delpi `GET /supplies/purchase-orders/export` → XLSX no BFF | **IMPLEMENTADO** |
 | GET | `/users/{id}/profile` | self portal; terceiro admin | Core + prefs | **IMPLEMENTADO** |
 | PATCH | `/users/{id}/profile` | self only + portal | PG prefs | **IMPLEMENTADO** |
+| GET | `/users/{id}/related-requests` | `supplies.access` + self\|admin (`_assert_can_view`) + units | SCs do vínculo target: Core `user_ids` lookup → `protheus_user_id` mapped → PR-api `requester_user_id`; `branch` opcional fail-closed; `date_from` explícito; paginação máx 100; `sort_by`/`sort_dir` passthrough; degrade `{error}`/`requester_unmapped`/`identity_lookup_unavailable` | **IMPLEMENTADO** (USERS.PROFILE.S1–S3) |
+| GET | `/users/{id}/photo` | `supplies.access` + self\|admin | proxy BFF → Core `person-profiles/{id}/photo` S2S; 404 fail-closed; `Cache-Control: private` | **IMPLEMENTADO** (USERS.PROFILE.S1) |
 
 A lista acima deve ser atualizada sempre que uma rota for realmente adicionada/removida do runtime. Não promover status por intenção de roadmap.
 
@@ -81,8 +83,8 @@ As rotas abaixo são **alvos de composição** e só entram em implementação q
 | Detalhe pedido | GET | `/purchase-orders/{branch}/{number}` | `supplies.access` + filtro de dados `01`/`02` + resource (universo aberto SC7) | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
 | Entregas | GET | `/deliveries/late` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/purchase-order-otd/panel`; BFF+MFE em prod; [P0 freeze](./evidence/e9-wf07-p0-contract-freeze.md); [gate](./evidence/e9-wf07-federated-runtime-gate.md) | **GATE PASS** — recovery redeploy BFF 2026-09-21 |
 | Estoque | GET | `/inventory/stock-value` | política a fechar na página | api-delpi stock-value | PLANEJADO |
-| Estoque | GET | `/inventory/stock-balances/summary` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/stock-balances/summary` (`only_positive=false`; Todas=`branch=01&branch=02`) | **IMPLEMENTADO** — BFF smoke local PASS; GATE E10 **INCONCLUSIVE** (federado) ([S4](./evidence/e10-wf15-s4-final-acceptance.md)) |
-| Estoque | GET | `/inventory/stock-balances/items` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/stock-balances/items` (`only_positive=false`; UM/`null`/`QATU` passthrough) | **IMPLEMENTADO** — BFF smoke local PASS; GATE E10 **INCONCLUSIVE** (federado) ([S4](./evidence/e10-wf15-s4-final-acceptance.md)) |
+| Estoque | GET | `/inventory/stock-balances/summary` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/stock-balances/summary` (`only_positive=false`; Todas=`branch=01&branch=02`) | **IMPLEMENTADO** — GATE E10 **PASS_DEPLOYED** — bundle federado verificado R1; residual `VISUAL=INCONCLUSIVE` ([S4](./evidence/e10-wf15-s4-final-acceptance.md), [R1](./ROADMAP-REBASELINE-R1-20261023.md)) |
+| Estoque | GET | `/inventory/stock-balances/items` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/stock-balances/items` (`only_positive=false`; UM/`null`/`QATU` passthrough) | **IMPLEMENTADO** — GATE E10 **PASS_DEPLOYED** — bundle federado verificado R1; residual `VISUAL=INCONCLUSIVE` ([S4](./evidence/e10-wf15-s4-final-acceptance.md), [R1](./ROADMAP-REBASELINE-R1-20261023.md)) |
 | Giro | GET | `/inventory/turnover` | analytics + unit | api-delpi inventory-turnover | PLANEJADO |
 | ESTSEG | GET | `/safety-stock/summary` | `supplies.access` + filtro de dados `01`/`02` | api-delpi safety-stock | PLANEJADO |
 | ESTSEG | GET | `/safety-stock/items` | `supplies.access` + filtro de dados `01`/`02` | api-delpi safety-stock | PLANEJADO |

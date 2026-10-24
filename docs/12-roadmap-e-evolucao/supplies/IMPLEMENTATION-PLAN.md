@@ -256,7 +256,7 @@ Suites API (41 PASS) + MFE (156 PASS) + build PASS. Smoke inicial: BFF prod **40
 
 **GATE-FEATURE WF-07 = PASS.** E9 / WF-07 = **FECHADA**. E10 permanece candidata sem autorização de implementação.
 
-## E10 — WF-15 Controle de Estoques — IN PROGRESS
+## E10 — WF-15 Controle de Estoques — COMPLETED (residual visual)
 
 Página própria de posição física (`B2_QATU`). Não misturar ESTSEG. Capability: `supplies.access` + filtro `01`/`02` (ADR-009).
 
@@ -272,13 +272,13 @@ Contrato producer estendido (`only_positive=false` default path). SHA `abf47ec1c
 
 Placeholder removido; página **Controle de Estoques** kit-first; BFF-only; Hero Produtos/Armazéns/Valor; filtros Unidade+Armazém; tabela preserva zero/negativo/UM null/armazém sem label/código vazio; sort allowlist; paginação server-side; URL/F5. Help final = S4.
 
-### E10.S4 — Help + smoke + GATE — INCONCLUSIVE
+### E10.S4 — Help + smoke + GATE — PASS_DEPLOYED
 
-Help sync PASS; suites PASS; BFF autenticado local PASS (Todas/01/02/03→422; negativo/zero/UM null/warehouse vazio amostrados). Federated Minha DELPI **sem** InventoryPage no bundle → `GATE-FEATURE E10 = INCONCLUSIVE`, `DEPLOY_REQUIRED=YES`. Evidência: [e10-wf15-s4-final-acceptance.md](./evidence/e10-wf15-s4-final-acceptance.md).
+Help sync PASS; suites PASS; BFF autenticado local PASS (Todas/01/02/03→422; negativo/zero/UM null/warehouse vazio amostrados). O bloqueio federado histórico foi superado: deploys posteriores já servem a página — bundle `App-SSmBJjdj.js` contém `stock-balances` e os endpoints respondem 401 protegidos em runtime (re-verificação R1, 2026-10-23). `GATE-FEATURE E10 = PASS_DEPLOYED`; residual `VISUAL_AUTHENTICATED=INCONCLUSIVE`. Evidência: [e10-wf15-s4-final-acceptance.md](./evidence/e10-wf15-s4-final-acceptance.md) + [ROADMAP-REBASELINE-R1](./ROADMAP-REBASELINE-R1-20261023.md).
 
-## E11 — WF-16 Estoque de Segurança
+## E11 — WF-16 Estoque de Segurança — READY_WITH_RESIDUAL
 
-Página própria, read-only neste roadmap.
+Página própria, read-only neste roadmap. Inventário R1 (2026-10-23): contratos api-delpi completos (`/supplies/safety-stock/*`, consumption-analysis, supplier price history, branch-gate), app legado `estoque-seguranca` de referência, rota `/safety-stock` já no manifest; faltam BFF `supplies-api` + página MFE + decisões de escopo (vs E12/E17/E18). Receita E11.P0/S1–S5 proposta em [ROADMAP-REBASELINE-R1](./ROADMAP-REBASELINE-R1-20261023.md). **Não iniciar S1 sem autorização.**
 
 ## E12 — WF-17 Análise de Consumo
 
@@ -606,3 +606,5 @@ X0–X3.E2E da integração CNPJ/fornecedores estão aceitos **apenas no boundar
 **USERS.PROFILE.S2 — E-mail real e SCs relacionadas na ficha (2026-10-24):** duas causas-raiz provadas e corrigidas. **A (e-mail `p***@`):** a máscara era produzida pela Core (`/me/directory/users/lookup` mascara por padrão) — `_identity_for` agora envia `reveal_email=true`, flag autorizada do próprio contrato («perfis de portal precisam do endereço real»); requester-enrichment segue mascarado (minimização). **B (lista vazia):** o produtor exige `branch` (`Query(...)`); o BFF omitia sem filtro → 422 mascarado como `relatedEmpty` pelo MFE. Fix: universo default = `allowed_units(actor)` (nunca amplia), `date_from="2000-01-01"` explícito (eliminado o lookback silencioso de 90 dias do api-delpi), `data.error` agora vira estado de erro distinto no MFE, lookup Core indisponível → `identity_lookup_unavailable` (não `requester_unmapped`). Evidência: `c8ef4b53`↔`000304` mapped; SC 178764 `C1_USER=000304` filial 01. 455 BFF + 390 MFE testes, tsc/lint/build verdes. Doc: `USERS-PROFILE-S2-EMAIL-AND-RELATED-REQUESTS-FIX.md`.
 
 **USERS.PROFILE.S3 — Tabela real de SC na ficha do usuário (2026-10-24):** a seção «Solicitações de compras» da ficha deixou a listinha simplificada e passou a renderizar a **mesma** `PurchaseRequestsListTable` da listagem principal — reuso real de componente, colunas, identidade do solicitante, badges, ordenação server-side e `SuppliesCompactPagination` (25/50/100; cap BFF 20→100, dentro do teto 200 do produtor). Grão reconciliado sem adaptador: `items: PurchaseRequestListItem[]` já era o mesmo contrato/grão (linha de item) da lista. `canExport=false` na ficha (sem contrato de export por solicitante); «Ver todas» preservado com `requester_user_id`+`date_from`. BFF ganhou passthrough `sort_by`/`sort_dir` validado pela allowlist do produtor. CSS morto `sp-user-profile__related*` removido; zero CSS novo. +1 teste BFF (sort passthrough) + 1 guard MFE de reuso real. Suíte: 481 BFF + 391 MFE, tsc/build verdes, lint sem problemas novos (32 pré-existentes em main). `VISUAL_AUTHENTICATED=INCONCLUSIVE`. Doc: `USERS-PROFILE-S3-REUSABLE-PURCHASE-REQUESTS-TABLE.md`.
+
+**ROADMAP.REBASELINE.R1 — Inventário E1–E29 + gate E10 + readiness E11 (2026-10-23):** reconciliação documental read-only. E10 promovida: bloqueio federado superado (bundle servido contém `stock-balances`, rotas 401 protegidas, S1–S3 ancestrais, 23 testes focados) → `GATE-FEATURE E10 = PASS_DEPLOYED`, residual `VISUAL_AUTHENTICATED=INCONCLUSIVE`. E11 classificada `READY_WITH_RESIDUAL`: produtor api-delpi completo, manifest já declara `/safety-stock`, faltam BFF supplies-api + página MFE + recorte vs E12/E17/E18 — receita E11.P0/S1–S5 proposta. Drifts corrigidos: fila de páginas (`/deliveries`, `/inventory`, `/suppliers`), API-ROUTES ganhou `/users/{id}/related-requests` e `/users/{id}/photo`. X4.PROD-C1 e P-01/03/04/06/07/10/11/14/15 preservados; zero código/permission/flag/deploy alterados. Doc canônico: [ROADMAP-REBASELINE-R1-20261023.md](./ROADMAP-REBASELINE-R1-20261023.md).
