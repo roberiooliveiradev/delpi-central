@@ -56,4 +56,27 @@ describe("ConversationContextPanel", () => {
     expect(screen.getByText("Detalhe autorizado")).toBeTruthy();
     expect(screen.queryByText(/Selecione uma mensagem para ver mais informações/)).toBeNull();
   });
+  it("renders custom sections and skips ones without content", () => {
+    render(<ConversationContextPanel
+      sections={[
+        { id: "files", title: "Arquivos", content: <span>relatorio.pdf</span> },
+        { id: "links", title: "Links" },
+      ]}
+    />);
+    expect(screen.getByRole("heading", { name: "Arquivos" })).toBeTruthy();
+    expect(screen.getByText("relatorio.pdf")).toBeTruthy();
+    // An empty section keeps its heading but renders no body — and the
+    // default message-scoped trio is fully replaced.
+    expect(screen.getByRole("heading", { name: "Links" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Detalhes" })).toBeNull();
+    expect(screen.queryByText(/Selecione uma mensagem/)).toBeNull();
+  });
+  it("shows only the host empty state when no section carries content", () => {
+    render(<ConversationContextPanel
+      sections={[]}
+      emptyState="Nenhum contexto adicional vinculado a esta conversa."
+    />);
+    expect(screen.getByText(/Nenhum contexto adicional vinculado/)).toBeTruthy();
+    expect(screen.queryByRole("heading")).toBeNull();
+  });
 });

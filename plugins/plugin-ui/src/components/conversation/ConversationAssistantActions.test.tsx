@@ -125,6 +125,74 @@ describe("ConversationAssistantActions", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
+  it("renders inline actions as visible buttons beside copy", () => {
+    const onSelect = vi.fn();
+    render(
+      <ConversationAssistantActions
+        copyText="x"
+        inlineActions={[
+          { id: "ctx", label: "Ver contexto", onSelect },
+        ]}
+      />,
+    );
+    const action = screen.getByRole("button", { name: "Ver contexto" });
+    expect(action).toBeTruthy();
+    fireEvent.click(action);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    // Still no "Mais opções" disclosure when moreActions is empty.
+    expect(screen.queryByRole("button", { name: "Mais opções" })).toBeNull();
+  });
+
+  it("exposes disclosure semantics on inline actions that open a panel", () => {
+    render(
+      <ConversationAssistantActions
+        copyText="x"
+        inlineActions={[
+          {
+            id: "ctx",
+            label: "Ver contexto",
+            active: true,
+            expanded: true,
+            onSelect: vi.fn(),
+          },
+        ]}
+      />,
+    );
+    const action = screen.getByRole("button", { name: "Ver contexto" });
+    expect(action.getAttribute("aria-expanded")).toBe("true");
+    expect(action.getAttribute("aria-haspopup")).toBe("dialog");
+  });
+
+  it("keeps toggle semantics (aria-pressed) on non-disclosure inline actions", () => {
+    render(
+      <ConversationAssistantActions
+        copyText="x"
+        inlineActions={[
+          { id: "pin", label: "Fixar", active: true, onSelect: vi.fn() },
+        ]}
+      />,
+    );
+    const action = screen.getByRole("button", { name: "Fixar" });
+    expect(action.getAttribute("aria-pressed")).toBe("true");
+    expect(action.getAttribute("aria-expanded")).toBeNull();
+  });
+
+  it("disables inline actions with the strip", () => {
+    render(
+      <ConversationAssistantActions
+        copyText="x"
+        loading
+        inlineActions={[
+          { id: "ctx", label: "Ver contexto", onSelect: vi.fn() },
+        ]}
+      />,
+    );
+    expect(
+      (screen.getByRole("button", { name: "Ver contexto" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
+
   it("exposes an accessible group label and keeps controls keyboard focusable", () => {
     render(<ConversationAssistantActions copyText="x" />);
     const group = screen.getByRole("group", { name: "Ações da resposta" });

@@ -60,10 +60,6 @@ export type ConversationTimelineProps = {
   loading: boolean;
   respondingTurnId?: string | null;
   onResponseMotionComplete?: () => void;
-  /** Selected assistant turn for the Context panel — transient
-   *  conversation state only, never persisted (Prompt 5). */
-  selectedTurnId?: string | null;
-  onSelectTurn?: (turnId: string) => void;
   /** Real user identity published by the platform — presentation only;
    *  absent → neutral person fallback. */
   userIdentity?: DeliaCurrentUserIdentity;
@@ -86,8 +82,6 @@ export function ConversationTimeline({
   loading,
   respondingTurnId,
   onResponseMotionComplete,
-  selectedTurnId,
-  onSelectTurn,
   userIdentity,
   onConfirmation,
 }: ConversationTimelineProps) {
@@ -105,10 +99,6 @@ export function ConversationTimeline({
               responding={turn.id === respondingTurnId}
               onResponseMotionComplete={onResponseMotionComplete}
               onConfirmation={onConfirmation}
-              selected={turn.id === selectedTurnId}
-              onSelect={
-                onSelectTurn ? () => onSelectTurn(turn.id) : undefined
-              }
             />
           ) : (
             <ConversationUserMessage

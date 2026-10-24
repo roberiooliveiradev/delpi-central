@@ -83,6 +83,55 @@
   );
 }
 
+/* Visible inline strip action (e.g. "Ver contexto") — compact ghost
+   text button aligned with the icon targets. */
+.delpi-ui-conversation-assistant-actions__inline {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin: 0;
+  padding: 0.2rem 0.55rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.delpi-ui-conversation-assistant-actions__inline:hover:not(:disabled),
+.delpi-ui-conversation-assistant-actions__inline:focus-visible {
+  background: var(--delpi-ui-surface-2, var(--surface-2, #f0f2f5));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  outline: none;
+}
+
+.delpi-ui-conversation-assistant-actions__inline:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 1px;
+}
+
+.delpi-ui-conversation-assistant-actions__inline--active {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-conversation-assistant-actions__inline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-assistant-actions__inline {
+    transition: none;
+  }
+}
+
 .delpi-ui-conversation-assistant-actions__more {
   position: relative;
   display: inline-flex;

@@ -15,12 +15,11 @@ import {
 /** Unified DÉLIA page: persistent category rail and governed, render-only panels. */
 export type DeliaConversationPageProps = {
   conversation: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
-  /** Prompt 5: context-region content bound to the selected message —
-   *  falls back to the empty render-only panel shell. */
+  /** Spec 127: context-region content scoped to the whole conversation —
+   *  per-message context lives in each message's own popover. */
   context?: ReactNode;
-  /** Controlled context-panel open state — the host pairs it with the
-   *  selected turn ("Ver contexto" selects + opens in one action;
-   *  closing the panel clears the selection highlight). */
+  /** Controlled open state of the global conversation panel — independent
+   *  of any message popover. */
   contextOpen?: boolean;
   onContextOpenChange?: (open: boolean) => void;
 };

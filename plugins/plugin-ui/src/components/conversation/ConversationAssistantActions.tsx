@@ -22,6 +22,16 @@ export type ConversationAssistantMoreAction = {
   disabled?: boolean;
 };
 
+/** Visible inline action in the strip (e.g. "Ver contexto") — a real
+ *  button, not a menu item. `active` marks the on state visually;
+ *  `expanded` adds disclosure semantics (aria-expanded + haspopup)
+ *  when the action opens a popover/panel. */
+export type ConversationAssistantInlineAction =
+  ConversationAssistantMoreAction & {
+    active?: boolean;
+    expanded?: boolean;
+  };
+
 export type ConversationAssistantActionsLabels = {
   group?: string;
   copy?: string;
@@ -63,6 +73,9 @@ export type ConversationAssistantActionsProps = {
 
   /** Contextual actions — "Mais opções" renders only when non-empty. */
   moreActions?: readonly ConversationAssistantMoreAction[];
+  /** Always-visible strip actions (e.g. "Ver contexto"), rendered as
+   *  compact text buttons before the "Mais opções" disclosure. */
+  inlineActions?: readonly ConversationAssistantInlineAction[];
 
   disabled?: boolean;
   loading?: boolean;
@@ -89,6 +102,7 @@ export function ConversationAssistantActions({
   regenerateEnabled = false,
   onRegenerate,
   moreActions = [],
+  inlineActions = [],
   disabled = false,
   loading = false,
   className,
@@ -201,6 +215,30 @@ export function ConversationAssistantActions({
           <RefreshCw size={13} />
         </IconButton>,
       )}
+
+      {inlineActions.map((action) => (
+        <button
+          key={action.id}
+          type="button"
+          className={[
+            "delpi-ui-conversation-assistant-actions__inline",
+            action.active
+              ? "delpi-ui-conversation-assistant-actions__inline--active"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-pressed={
+            action.expanded === undefined && action.active ? true : undefined
+          }
+          aria-expanded={action.expanded}
+          aria-haspopup={action.expanded !== undefined ? "dialog" : undefined}
+          disabled={action.disabled || disabled || loading}
+          onClick={action.onSelect}
+        >
+          {action.label}
+        </button>
+      ))}
 
       {showMore ? (
         <div

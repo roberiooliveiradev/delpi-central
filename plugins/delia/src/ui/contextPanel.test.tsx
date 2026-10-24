@@ -1,17 +1,21 @@
 /**
- * Prompt 5 — Context panel bound to real message data + message
- * selection affordance + wire parse of the additive observability
- * projection.
+ * Spec 127 — message context popover bound to real turn data +
+ * conversation-scoped global panel + wire parse of the additive
+ * observability projection.
  */
 import {
   cleanup,
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DeliaTurnContextPanel } from "./contextPanel";
+import {
+  DeliaConversationContextPanel,
+  DeliaTurnContextPanel,
+} from "./contextPanel";
 import { DeliaAssistantMessage } from "./DeliaAssistantMessage";
 import type { ConversationDisplayTurn } from "./ConversationTimeline";
 import { submitInteractionTurn } from "../api/interactionClient";
@@ -251,50 +255,147 @@ describe("DeliaTurnContextPanel", () => {
   });
 });
 
-describe("Message selection (Prompt 5)", () => {
-  it("offers a real 'Ver contexto' affordance on the assistant message", async () => {
-    const onSelect = vi.fn();
-    render(
+describe("Message context popover (MC-01..MC-08)", () => {
+  function renderMessage(turn = makeTurn()) {
+    return render(
       <ul>
         <li className="delia-turn delia-turn--delia delpi-ui-message-action-scope">
           <DeliaAssistantMessage
-            turn={makeTurn()}
+            turn={turn}
             loading={false}
             onConfirmation={vi.fn()}
-            selected={false}
-            onSelect={onSelect}
           />
         </li>
       </ul>,
     );
-    // The action lives in the "Mais opções" disclosure.
-    const more = screen.queryByRole("button", { name: /mais opções/i });
-    if (more) {
-      fireEvent.click(more);
-      const action = await screen.findByText("Ver contexto");
-      fireEvent.click(action);
-      expect(onSelect).toHaveBeenCalledTimes(1);
-    } else {
-      // Fallback: action rendered inline in the action bar.
-      const action = screen.getByText("Ver contexto");
-      fireEvent.click(action);
-      expect(onSelect).toHaveBeenCalledTimes(1);
+  }
+
+  it("MC-01/08: exposes 'Ver contexto' as a visible, accessible action", () => {
+    renderMessage();
+    const action = screen.getByRole("button", { name: "Ver contexto" });
+    expect(action.getAttribute("aria-expanded")).toBe("false");
+    // Copy stays available next to it.
+    expect(
+      screen.getByRole("button", { name: "Copiar resposta" }),
+    ).toBeTruthy();
+  });
+
+  it("MC-02/03: opens a popover anchored to the message — no side panel", () => {
+    renderMessage(makeTurn({ observability: OBS as never }));
+    fireEvent.click(screen.getByRole("button", { name: "Ver contexto" }));
+    const popover = screen.getByRole("dialog", {
+      name: "Contexto desta resposta",
+    });
+    expect(within(popover).getByText("Contexto desta resposta")).toBeTruthy();
+    expect(within(popover).getByText("qwen2.5:3b (1)")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Ocultar contexto" }).getAttribute(
+        "aria-expanded",
+      ),
+    ).toBe("true");
+    // No complementary/global context panel is opened by the action.
+    expect(screen.queryByRole("complementary")).toBeNull();
+  });
+
+  it("MC-04: closes via trigger, Escape and outside click", () => {
+    renderMessage();
+    const trigger = screen.getByRole("button", { name: "Ver contexto" });
+    // Trigger toggle.
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ocultar contexto" }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    // Escape.
+    fireEvent.click(trigger);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    // Outside click.
+    fireEvent.click(trigger);
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("MC-05: shows only the turn's own provenance and sources", () => {
+    renderMessage(
+      makeTurn({
+        groundingStatus: "GROUNDED",
+        provenance: {
+          specialist_id: "mcp:x",
+          remote_capability: "search_things",
+          source: {
+            source_id: "src-1",
+            source_system: "api-delpi",
+            observed_at: "2026-01-01T12:00:00Z",
+          },
+        },
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ver contexto" }));
+    const popover = screen.getByRole("dialog");
+    expect(within(popover).getByText("mcp:x")).toBeTruthy();
+    expect(within(popover).getByText("search_things")).toBeTruthy();
+  });
+
+  it("MC-06: material limitations stay visible on the message itself", () => {
+    renderMessage(makeTurn({ limitations: ["resultado truncado"] }));
+    // Visible without opening the popover.
+    expect(screen.getByText(/resultado truncado/)).toBeTruthy();
+  });
+
+  it("MC-07: opening one message's context never leaks another's", () => {
+    const obsA = { ...OBS, composition_mode: "cri" };
+    const obsB = { ...OBS, composition_mode: "model" };
+    render(
+      <ul>
+        {[
+          makeTurn({ id: "a", content: "R-A", observability: obsA as never }),
+          makeTurn({ id: "b", content: "R-B", observability: obsB as never }),
+        ].map((turn) => (
+          <li
+            key={turn.id}
+            className="delia-turn delia-turn--delia delpi-ui-message-action-scope"
+          >
+            <DeliaAssistantMessage
+              turn={turn}
+              loading={false}
+              onConfirmation={vi.fn()}
+            />
+          </li>
+        ))}
+      </ul>,
+    );
+    const triggers = screen.getAllByRole("button", { name: "Ver contexto" });
+    fireEvent.click(triggers[1]);
+    const popover = screen.getByRole("dialog");
+    expect(
+      within(popover).getByText("Resposta gerada pelo modelo"),
+    ).toBeTruthy();
+    expect(
+      within(popover).queryByText("Resposta organizada com CRI"),
+    ).toBeNull();
+  });
+});
+
+describe("DeliaConversationContextPanel (GC-01..GC-08)", () => {
+  it("GC-01/08: conversation-scoped and honestly empty without a global contract", () => {
+    render(<DeliaConversationContextPanel />);
+    expect(
+      screen.getByText(/Nenhum contexto adicional vinculado a esta conversa/i),
+    ).toBeTruthy();
+    // No fabricated sections (GC-02/03/04): no Files/Links/Sources blocks.
+    for (const heading of ["Arquivos", "Links", "Fontes"]) {
+      expect(screen.queryByText(heading)).toBeNull();
     }
   });
 
-  it("marks the selected bubble and relabels the action", () => {
-    const { container } = render(
-      <DeliaAssistantMessage
-        turn={makeTurn()}
-        loading={false}
-        onConfirmation={vi.fn()}
-        selected={true}
-        onSelect={vi.fn()}
-      />,
-    );
-    expect(
-      container.querySelector(".delia-turn__bubble--selected"),
-    ).toBeTruthy();
+  it("GC-04/05: never derives global sources from individual turns", () => {
+    render(<DeliaConversationContextPanel />);
+    // Even with grounded turns in the timeline, the panel stays empty —
+    // it receives no per-turn aggregate at all.
+    expect(screen.queryByText(/api-delpi/)).toBeNull();
+    expect(screen.queryByText(/mcp:x/)).toBeNull();
   });
 });
 

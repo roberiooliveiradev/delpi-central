@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { Activity, FileText, Info } from "lucide-react";
+
 import {
   ActivityViewer,
   ConversationContextPanel,
@@ -204,7 +206,10 @@ function ModelCalls({ obs }: { obs: DeliaTurnObservability }) {
   );
 }
 
-function EvidenceSection({ turn }: { turn: ConversationDisplayTurn }) {
+/** Real evidence/provenance projection for a turn — null when the
+ *  contract carries no source, no grounding label and no limitations,
+ *  so callers never mount an empty section. */
+function evidenceSectionProps(turn: ConversationDisplayTurn) {
   const source = turn.provenance?.source;
   const observedLabel = source?.observed_at
     ? new Intl.DateTimeFormat("pt-BR", {
@@ -228,12 +233,30 @@ function EvidenceSection({ turn }: { turn: ConversationDisplayTurn }) {
   const hasContent =
     Boolean(sourceSummary) || items.length > 0 ||
     (turn.limitations?.length ?? 0) > 0;
-  if (!hasContent) return null;
+  return hasContent
+    ? { sourceSummary, items, limitations: turn.limitations }
+    : null;
+}
+
+/**
+ * Spec 127 — Conversation-scoped context (global panel).
+ *
+ * `MESSAGE_CONTEXT != CONVERSATION_CONTEXT`: per-message context lives
+ * in the message popover (`DeliaTurnContextPanel`); this panel is bound
+ * to the conversation as a whole. Global sections (Arquivos, Links,
+ * Fontes, Contexto) exist only when a real conversation-scoped contract
+ * supplies them — none does today, so the panel renders the honest
+ * empty state instead of silently aggregating per-turn evidence into
+ * "global sources" or fabricating placeholders.
+ *
+ * GLOBAL_DATA_SOURCE=NONE | OWNER=delia-api (session contract, future)
+ * | AUTHORIZATION=session-scoped | FRONTEND_CONSUMER=none yet.
+ */
+export function DeliaConversationContextPanel() {
   return (
-    <EvidenceDetails
-      sourceSummary={sourceSummary}
-      items={items}
-      limitations={turn.limitations}
+    <ConversationContextPanel
+      sections={[]}
+      emptyState="Nenhum contexto adicional vinculado a esta conversa."
     />
   );
 }
@@ -255,25 +278,52 @@ export function DeliaTurnContextPanel({ turn }: DeliaTurnContextPanelProps) {
     turn,
   );
   const obs = turn.observability;
+  const evidence = evidenceSectionProps(turn);
+  // Only sections with legitimate contract content are mounted — the
+  // popover never shows empty placeholders.
   return (
     <ConversationContextPanel
-      details={
-        <>
-          <DetailRows turn={turn} />
-          {obs ? <ModelCalls obs={obs} /> : null}
-        </>
-      }
-      evidence={<EvidenceSection turn={turn} />}
-      activities={
-        activityView ? (
-          <ActivityViewer
-            {...activityView}
-            durationLabel={
-              formatDurationMs(obs?.duration_ms) ?? activityView.durationLabel
-            }
-          />
-        ) : null
-      }
+      sections={[
+        {
+          id: "details",
+          title: "Detalhes",
+          icon: Info,
+          content: (
+            <>
+              <DetailRows turn={turn} />
+              {obs ? <ModelCalls obs={obs} /> : null}
+            </>
+          ),
+        },
+        ...(evidence
+          ? [
+              {
+                id: "evidence",
+                title: "Evidências",
+                icon: FileText,
+                content: <EvidenceDetails {...evidence} />,
+              },
+            ]
+          : []),
+        ...(activityView
+          ? [
+              {
+                id: "activities",
+                title: "Atividades",
+                icon: Activity,
+                content: (
+                  <ActivityViewer
+                    {...activityView}
+                    durationLabel={
+                      formatDurationMs(obs?.duration_ms) ??
+                      activityView.durationLabel
+                    }
+                  />
+                ),
+              },
+            ]
+          : []),
+      ]}
     />
   );
 }

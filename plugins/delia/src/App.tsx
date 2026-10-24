@@ -5,7 +5,7 @@ import { DELIA_ROOT_CLASS } from "./ui/deliaUi";
 import { DeliaReception } from "./ui/DeliaReception";
 import { DeliaComposer } from "./ui/DeliaComposer";
 import { DeliaConversationPage } from "./ui/DeliaConversationPage";
-import { DeliaTurnContextPanel } from "./ui/contextPanel";
+import { DeliaConversationContextPanel } from "./ui/contextPanel";
 import { ConversationTimeline } from "./ui/ConversationTimeline";
 import type { ConversationDisplayTurn } from "./ui/ConversationTimeline";
 import {
@@ -214,29 +214,11 @@ export default function App({
     [liveEvents],
   );
   const [respondingTurnId, setRespondingTurnId] = useState<string | null>(null);
-  // Prompt 5: transient Context-panel message selection — ephemeral
-  // conversation state only, never persisted. The panel's open state
-  // is paired with the selection: "Ver contexto" selects + opens in
-  // one action and closing the panel clears the highlight.
-  const [selectedTurnId, setSelectedTurnId] = useState<string | null>(null);
+  // Spec 127: the right panel is conversation-scoped ("Contexto da
+  // conversa") and opens via its own header toggle — per-message
+  // context lives in the message popover, so no turn selection state
+  // exists here anymore.
   const [contextOpen, setContextOpen] = useState(false);
-  const handleContextOpenChange = (open: boolean) => {
-    setContextOpen(open);
-    if (!open) setSelectedTurnId(null);
-  };
-  const handleSelectTurnContext = (turnId: string) => {
-    if (selectedTurnId === turnId && contextOpen) {
-      setContextOpen(false);
-      setSelectedTurnId(null);
-      return;
-    }
-    setSelectedTurnId(turnId);
-    setContextOpen(true);
-  };
-  const selectedTurn = useMemo(
-    () => turns.find((turn) => turn.id === selectedTurnId) ?? null,
-    [turns, selectedTurnId],
-  );
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   /** Guards late completions (including transports ignoring abort) after STOP. */
@@ -460,7 +442,6 @@ export default function App({
           observability: result.observability,
         },
       ]);
-      setSelectedTurnId(result.result_turn_id);
       setRespondingTurnId(
         result.presentation?.messageKind && result.presentation.messageKind !== "RESULT"
           ? null
@@ -689,9 +670,9 @@ export default function App({
     <div className={`${DELIA_ROOT_CLASS} dashboard-page dashboard-page--fill`}>
       <main className="delia-page-stack" aria-label="DÉLIA">
         <DeliaConversationPage
-          context={<DeliaTurnContextPanel turn={selectedTurn} />}
+          context={<DeliaConversationContextPanel />}
           contextOpen={contextOpen}
-          onContextOpenChange={handleContextOpenChange}
+          onContextOpenChange={setContextOpen}
           conversation={(panelControls) => (
         <ConversationWorkspace
           className="delia-interaction"
@@ -873,8 +854,6 @@ export default function App({
               loading={loading}
               respondingTurnId={respondingTurnId}
               onResponseMotionComplete={() => setRespondingTurnId(null)}
-              selectedTurnId={selectedTurnId}
-              onSelectTurn={handleSelectTurnContext}
               userIdentity={userIdentity}
               onConfirmation={handleConfirmation}
             />

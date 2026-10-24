@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   TimerOff,
 } from "lucide-react";
+import { useRef, useState } from "react";
 import type { ComponentType } from "react";
 
 import type { DeliaConfirmationRequest } from "../api/interactionClient";
@@ -17,6 +18,7 @@ import {
 import type { DeliaMessageKind } from "../api/presentation";
 import {
   ActivityViewer,
+  AnchoredPanelPortal,
   ConversationAssistantActions,
   ConversationStatus,
   ConversationMarkdown,
@@ -28,6 +30,7 @@ import {
 import type { EvidenceDetailItem } from "@delpi/plugin-ui/index";
 import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
 import { buildDeliaActivityView } from "../activity/activityView";
+import { DeliaTurnContextPanel } from "./contextPanel";
 
 import type { ConversationDisplayTurn } from "./ConversationTimeline";
 
@@ -100,10 +103,6 @@ export type DeliaAssistantMessageProps = {
     request: DeliaConfirmationRequest,
     decision: "CONFIRM" | "REJECT",
   ) => void;
-  /** Context-panel selection state/affordance (Prompt 5) — transient,
-   *  presentation only. */
-  selected?: boolean;
-  onSelect?: () => void;
 };
 
 /**
@@ -125,9 +124,13 @@ export function DeliaAssistantMessage({
   responding = false,
   onResponseMotionComplete,
   onConfirmation,
-  selected = false,
-  onSelect,
 }: DeliaAssistantMessageProps) {
+  // Spec 127 separation: turn context opens as a popover anchored to
+  // this message's action strip — local state only, never the global
+  // side panel and never a persistent selection.
+  const [contextOpen, setContextOpen] = useState(false);
+  const contextAnchorRef = useRef<HTMLDivElement | null>(null);
+  const contextPanelRef = useRef<HTMLDivElement | null>(null);
   const ownerHint = presentationOwnerHint(turn.presentation ?? null);
   const displayContent = dedupeOwnerHintContent(turn.content, ownerHint);
   const presentationFault = turn.presentationFault ?? null;
@@ -249,7 +252,7 @@ export function DeliaAssistantMessage({
         />
       </span>
       <div
-        className={`delia-turn__bubble${selected ? " delia-turn__bubble--selected" : ""}`}
+        className={`delia-turn__bubble${contextOpen ? " delia-turn__bubble--context-open" : ""}`}
       >
         <div className="delia-turn__head">
           <span className="delia-turn__label">DÉLIA</span>
@@ -339,25 +342,42 @@ export function DeliaAssistantMessage({
           />
         ) : null}
 
-        <ConversationAssistantActions
-          className="delia-turn__message-actions"
-          copyText={copyText}
-          disabled={loading}
-          // Feedback/regenerate prepared visually; no backend contract yet.
-          feedbackEnabled={false}
-          regenerateEnabled={false}
-          moreActions={
-            onSelect
-              ? [
-                  {
-                    id: "view-context",
-                    label: selected ? "Ocultar contexto" : "Ver contexto",
-                    onSelect,
-                  },
-                ]
-              : []
-          }
-        />
+        <div className="delia-turn__actions-row" ref={contextAnchorRef}>
+          <ConversationAssistantActions
+            className="delia-turn__message-actions"
+            copyText={copyText}
+            disabled={loading}
+            // Feedback/regenerate prepared visually; no backend contract yet.
+            feedbackEnabled={false}
+            regenerateEnabled={false}
+            inlineActions={[
+              {
+                id: "view-context",
+                label: contextOpen ? "Ocultar contexto" : "Ver contexto",
+                active: contextOpen,
+                expanded: contextOpen,
+                onSelect: () => setContextOpen((open) => !open),
+              },
+            ]}
+          />
+          <AnchoredPanelPortal
+            open={contextOpen}
+            anchorRef={contextAnchorRef}
+            panelRef={contextPanelRef}
+            variant="shape"
+            role="dialog"
+            aria-label="Contexto desta resposta"
+            preferredPlacement="top"
+            horizontalAlign="start"
+            className="delia-turn__context-popover"
+            onDismiss={() => setContextOpen(false)}
+          >
+            <h3 className="delia-turn__context-title">
+              Contexto desta resposta
+            </h3>
+            <DeliaTurnContextPanel turn={turn} />
+          </AnchoredPanelPortal>
+        </div>
       </div>
     </>
   );
