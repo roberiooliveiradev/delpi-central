@@ -465,3 +465,7 @@ O PO aceitou o encerramento documental do Ciclo 2 com residuais e direcionou ini
 ### CP00/CP01 verificados e brief P2 (24/10/2026)
 
 [Doc 95](./95-ciclo3-cp00-cp01-rebaseline-e-brief-primeiro-slice-p2.md): checklist original lido em modo somente leitura — **53 itens em escopo** (30 Eletrônico + 23 Físico) rastreados por  com lacunas individualizadas; sem 1:1 com R01–R15 (37 sem R-ID; CK-E-27 faturamento da filial sem investigação). CP01: testes **271/271 PASS** (MFE 91+25, BFF 83, api-delpi 72) e smoke read-only de dados — as duas páginas operam, mas **não reproduzem** os oficiais (settlements lê FK2/FK1, Δ quantificado; stock é snapshot SB9, ). Brief  pronto para GO; bloqueante real:  persistência/owner (doc 45 D3=C). .
+
+### Gate contratual P6-MIN + P2-READ (24/10/2026)
+
+[Doc 96](./96-ciclo3-gate-contrato-e-persistencia-p6-min-p2-read.md): com `CP-D01=A` aprovada, o gate documenta o padrão real de persistência dos BFFs irmãos (schema por app no `postgres-plugins`, runner com checksum SHA-256, seeds por migration, testes PG reais sem mock de atomicidade), o modelo lógico (template/version/item + competence + snapshot congelado + audit append-only), contratos HTTP candidatos (admin P6-MIN + leitura/abertura P2), matriz de autorização e plano de testes. Decisões residuais: seed v1 DRAFT vs PUBLISHED; UI admin mínima no slice. `IMPLEMENTATION_AUTHORIZED=NO` — aguarda GO de runtime.
