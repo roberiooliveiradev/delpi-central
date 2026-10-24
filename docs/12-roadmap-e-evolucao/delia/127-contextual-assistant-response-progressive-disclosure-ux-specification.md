@@ -303,3 +303,49 @@ A referência aprovada ilustra estrutura e hierarquia. Itens ilustrativos (data/
 **Residual:** REAL_DOCK_QA TEST_NOT_RUN (container-query por largura do card garante compacto em dock estreito, mas probe do Dock real no Portal não executado); zoom 200%, dark/light visual, screen reader TEST_NOT_RUN (ARIA/ordem DOM/keyboard/reduced-motion verificados por probe+vitest).
 
 **WIDE-01..18:** 01–15 PASS; 16 PASS (regressão completa executada); 17 PASS (34/34 + medições + screenshots `shots-wide/`); 18 PASS (docs+ledger+push+deploy+verify). PHASE_NOT_ADVANCED.
+
+
+## Decisão posterior do PO — Right Rail integrado, sem sobreposição no desktop (2026-10-24)
+
+**STATUS: PRODUCT_UX_DECISION / PLANNED / DOC_ONLY.** Capturas reais do PO mostram que o painel global “Contexto” sobrepõe a região central e o contexto inline da resposta. A nova direção é reservar **espaço real de layout à direita** para o **Contexto da conversa**, mantendo a navegação à esquerda e a conversa (incluindo “Contexto desta resposta”) ao centro. Esta decisão **substitui apenas o padrão de sobreposição da lateral global em desktop largo**, não a decisão de inline da mensagem, nem os contratos e o ownership dos dados.
+
+### Contrato visual e comportamental
+
+- **Desktop com espaço suficiente:** layout efetivo de três regiões: navegação à esquerda, conversa/composer central, e **right rail** global integrado no fluxo do grid/flex, sem position fixed/absolute sobre a conversa. Abrir/fechar o rail altera a largura útil da região central de maneira governada, evitando clipping, sobreposição e saltos de scroll. O painel poderá ser redimensionável **somente se a primitiva existente e seu contrato o suportarem**; não criar resizer por conveniência.
+- **Right rail global:** título **Contexto da conversa**; superfícies neutras, divisórias leves, padding e hierarquia clean, toggle de abrir/fechar acessível. Conteúdo e navegação pertencem ao escopo conversation/session, não ao turno. O painel não se transforma em outro visualizador de evidência individual.
+- **Seções pretendidas:** Arquivos, Fontes, Links e Dados gerais/Contexto, **somente quando houver dados e contratos reais**. O runtime atualmente tem \`DeliaConversationContextPanel\` com \`sections=[]\` e estado vazio honesto. Não criar upload, arquivo, fonte, link, resumo, memória, campo de sessão ou métricas fictícios para preencher o espaço; não apresentar seções vazias como capabilities disponíveis. Sem contrato, manter o estado vazio coerente e indicar o bloqueio documentalmente.
+- **Centro:** respostas e ações continuam no fluxo; “Ver contexto” expande **inline por turno**. O card inline clean e seu grid 3/2/1 respondem à largura real **do centro depois de reservar a lateral direita**, não à viewport total. Não forçar três colunas no card quando o right rail reduzir espaço; preservar largura confortável de leitura da resposta, composer e queue/status.
+- **Responsividade:** quando não couberem rail + centro legível + navegação, recolher o painel direito no layout, mantendo toggle visível e acessível; em breakpoint compacto ou Companion Dock, usar o padrão responsive legítimo da plataforma (overlay/drawer quando justificável, sem sobrepor indevidamente o composer). Não afirmar que drawer seja implementado antes de provar sua primitiva e comportamento real. Não inventar breakpoint: medir mínimo dos três regions e testar 1920/1600/1440 e 1280, além de 320/360/375/390/420 e Dock real.
+- **Foco e interação:** Escape, clique externo, toggle e light-dismiss adequados a cada variante de layout. No **right rail desktop integrado**, um clique na conversa **não deve dispensar automaticamente** o painel (não é light-dismiss). Em overlay compacto, light-dismiss pode ser apropriado. Preservar focus, aria-expanded/controls, scrolling e leitura por teclado.
+- **Separação de dados:** \`MESSAGE_CONTEXT != CONVERSATION_CONTEXT\`. Fontes e evidências de turno não são promovidas automaticamente a fontes globais; ausência de contratos globais segue \`BLOCKED_PENDING_CONTRACT\`. DÉLIA não cria nova fonte de verdade; Core/AuthZ e Domain APIs mantêm suas autoridades.
+
+### Ownership e reuse gate
+
+Inventário atual no HEAD de documentação: \`DeliaConversationPage\` compõe \`ConversationThreeRegionLayout\` de \`plugin-ui\`, passando \`right\`, \`rightOpen\`, \`onRightOpenChange\` e \`center\`; \`App\` passa \`DeliaConversationContextPanel\`; o painel global usa \`ConversationContextPanel\` com estado vazio real. O **owner compartilhado do layout** é \`plugin-ui\`; a **composição de produto** permanece em \`plugins/delia\`. A execução deve ler contratos, CSS, consumidores e teste do \`ConversationThreeRegionLayout\` antes de alterá-lo e verificar \`EXISTING_EQUIVALENT=YES\`, \`REUSE_DECISION=EXTEND\` ou justificativa diferente com evidência. Não criar segundo ThreeRegionLayout ou duplicar regras por consumer. Alterações de API compartilhada devem ser compatíveis e testadas nos consumidores reais.
+
+### Critérios RIGHTRAIL-01..RIGHTRAIL-18
+
+| ID | Critério |
+|---|---|
+| RIGHTRAIL-01 | Em desktop amplo, right rail ocupa coluna própria e não sobrepõe centro/composer |
+| RIGHTRAIL-02 | Toggle abre/fecha sem light-dismiss externo na variante integrada |
+| RIGHTRAIL-03 | Região central se adapta à largura restante, sem perder resposta, ações e composer |
+| RIGHTRAIL-04 | Contexto por mensagem permanece inline e independente do global |
+| RIGHTRAIL-05 | Grid inline 3/2/1 recalcula pela largura real do centro |
+| RIGHTRAIL-06 | Não há scroll horizontal, conteúdo cortado ou sobreposição do botão Ir para o final |
+| RIGHTRAIL-07 | Navegação esquerda/rail de categorias preservados |
+| RIGHTRAIL-08 | Right rail com título, hierarquia e estilo clean da DÉLIA |
+| RIGHTRAIL-09 | Estado vazio legítimo sem arquivos/fontes/links inventados |
+| RIGHTRAIL-10 | Proveniência de turno jamais promovida silenciosamente a dado global |
+| RIGHTRAIL-11 | Breakpoints derivados de medições; comportamento intermediário/compacto governado |
+| RIGHTRAIL-12 | Companion Dock real operável com toggle, composer e painel apropriado |
+| RIGHTRAIL-13 | Full-page 1280/1440/1600/1920 e mobile 320/360/375/390/420 |
+| RIGHTRAIL-14 | Zoom 200%, dark/light, reduced motion e contraste adequados |
+| RIGHTRAIL-15 | Foco/teclado/ARIA/fechamento corretos em rail integrado e overlay compacto |
+| RIGHTRAIL-16 | Scroll, streaming, Markdown, fila, lifecycle/S2 shell, confirmações preservados |
+| RIGHTRAIL-17 | Reuse de primitives/owners e nenhum contrato/backend paralelo |
+| RIGHTRAIL-18 | RED/GREEN, QA autenticado, evidência por SHA, ledger, deploy scoped e report |
+
+**Task bounded:** \`DELIA-UX-CONVERSATION-CONTEXT-RIGHT-RAIL-LAYOUT-REFINEMENT-01\`. Reanchor HEAD/git status → Project Instructions/.cursor → 16→50→17→49→51→52→21→20→25 → arquitetura/product specs → spec 127/layout/contracts/ledger; contract + reuse gate; RED testes dos casos de sobreposição, contexto inline e light-dismiss; mínimo diff no \`ConversationThreeRegionLayout\` e composição DÉLIA; regressão full; QA full-page/Dock real/mobile/zoom/temas; rework → evidência/ledger → commit/push main → deploy frontend scoped → pós-deploy. Se integração compartilhada exigir decisão fora do escopo, registrar \`ARCHITECTURE_DECISION_REQUIRED\` e limitar o diff ao que é seguro.
+
+**Esta publicação é somente documental:** \`RUNTIME_NOT_CHANGED; TEST_NOT_RUN; PHASE_NOT_ADVANCED\`. Histórico de releases anteriores permanece preservado.
