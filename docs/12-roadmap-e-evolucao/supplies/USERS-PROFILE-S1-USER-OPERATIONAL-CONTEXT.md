@@ -56,3 +56,14 @@ Lista paginada (5/pág, máx 20) na ficha do usuário: número da SC (`buildPurc
 ## Rollback
 
 `git revert <sha>` + redeploy `supplies` e `supplies-api` (`infra/scripts/up-prod-sequential.sh --build`). Sem migração, sem flag, sem contrato removido.
+
+
+## Revisão GPT — USERS.PROFILE.S1 (2026-10-23)
+
+**Veredito:** `ACCEPT_WITH_RESIDUAL` (código e contrato), `DEPLOY=PASS (executor-reported)`, `VISUAL_AUTHENTICATED=INCONCLUSIVE`. Inspecionados no GitHub o `UserProfileService` do source `ca4dd130c8` e este documento. Reúso da ficha `/users/:userId` e composição `user_id → mapped protheus_user_id → requester_user_id` são coerentes com os owners Core e Purchase Requests; nada autoriza uma segunda base de usuários. Testes (BFF 452, MFE 390 no relatório / 391 no documento — **reconciliar contagem**) e deploy/imagens são relatados pelo executor, não reexecutados nesta revisão.
+
+**Ressalva de produto/autorização:** `_assert_can_view` restringe o perfil a `self|admin`, e `canAccessUserProfile` apenas espelha essa condição na navegação. Portanto links no avatar/nome **não estarão ativos para perfis de terceiros quando o caller não possuir permissão de administração**. Isso preserva segurança, mas a navegação universal para colegas NÃO está entregue; exigir decisão PO/Core sobre política de perfil público profissional, sem reutilizar `supplies.manage` como autorização geral para ver informações privadas. Mesmo administrador continua sujeito à minimização, e informação profissional pública deve ser separada de preferências e contatos privados, se uma futura política for autorizada.
+
+**Foco adicional de verificação:** o `UserProfileService.related_purchase_requests` valida `branches` apenas quando filtro explícito é fornecido, delegando o recorte padrão à AuthZ server-side do `purchase-requests-api`; confirmar por smoke autenticado e teste negativo que omitir `branch` nunca amplia o universo de SCs. `requester_unmapped` não deve ocultar falhas reais da Core como ausência definitiva de vínculo; distinguir degradação do lookup de lista vazia quando possível. A seção não autoriza consulta de tarefas privadas ou associação de `C7_COMPRA` por nome.
+
+**Evidência runtime ainda pendente:** abrir ficha de perfil próprio e, com caller autorizado, de terceiro; verificar foto, `related-requests` paginadas e `Ver todas` com filtro, URL/F5, 403 de terceiro para caller comum, unidade e período; sem navegador autenticado, `INCONCLUSIVE`. **Estado formal:** `USERS.PROFILE.S1=ACCEPT_WITH_RESIDUAL`; sem mudança nos gates de escrita ERP e no cutover de fornecedores.
