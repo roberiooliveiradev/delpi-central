@@ -1727,6 +1727,7 @@ sob custódia do owner, **fora do repositório**.
 | Produtos do repricing da retificação | `<PRODUTO-CUSTO-A/B>` | doc 80 (renomeado de `<prod-A/B>`) |
 | Docs SD1 duplicados (housekeeping) | `<DOC-DUPLICADO-A..C>` | doc 80 (renomeado de `<dup-A..C>`) |
 | Pessoa física (gestora do processo) | `<GESTORA-PROC>` | 23 docs — 132 ocorrências |
+| Produtos divergentes SB9×MATR989 | `<PRODUTO-WIP-A..D>` | docs 80 §41/§42, 85 §8, 84 §5.2 |
 
 Os aliases `<NF-RETIF-A>`/`<NF-RETIF-B>` da rodada anterior foram
 mantidos — mesmo objeto real = mesmo alias em todos os documentos.
@@ -2430,7 +2431,7 @@ impressos: todos existem em SC2).
 | Checagem | Resultado |
 |---|---|
 | Produtos SB9 `B9_DATA=20260930` loc 99 com saldo ≠ 0 vs artefato sem-OP | **569 exatos** (q+valor) |
-| Divergentes | 4: `10211413` ΔR$449,16 e `10120198` Δ0,144 (revalorização `B9_VINI1` pós-emissão — drift `STALE_EVIDENCE`, mesma classe R05/R06); `10080198` Δ0,01; `10090636` Δ−0,001 (resíduo de centavo) |
+| Divergentes | 4: `<PRODUTO-WIP-A>` ΔR$449,16 e `<PRODUTO-WIP-B>` Δ0,144 (revalorização `B9_VINI1` pós-emissão — drift `STALE_EVIDENCE`, mesma classe R05/R06); `<PRODUTO-WIP-C>` Δ0,01; `<PRODUTO-WIP-D>` Δ−0,001 (resíduo de centavo) — aliases §42.D |
 | SB9 ≠ 0 ausente do artefato | 0 |
 
 Exemplo: produto 180/u — SB9@0930 loc99 = 180 × 9,16 = 1.648,80 = linha
@@ -2488,3 +2489,84 @@ R08); produtor/parâmetros do P7 seguem pendentes (E2).
 população 650/650 + total P7 exato → **PASS**; `G6` homologação humana →
 `PENDING`. Residual: fonte `matr989.prx`/RPO (classe E7) + semântica
 intra-dia do corte + neteo `DE*` não exercido nesta competência.
+
+## §42 — ERRATA R08 (CF-C2-R08-MATR989-PARITY-REWORK-001 — 2026-10-23)
+
+Errata/complemento do §41. Nenhuma conclusão de fundo muda; quatro pontos
+de rigor corrigidos/reforçados.
+
+### A. Reconciliação do centavo (Frente A)
+
+Os componentes publicados no §41.E foram arredondados a 2 decimais —
+soma 355.240,**52** ≠ total 355.240,51. Com a **precisão original de 3
+decimais** do artefato, a decomposição fecha exata:
+
+| Componente | Precisão original |
+|---|---|
+| SB9 loc 99 (sem OP) | 293.273,088 |
+| `RE0` | 588,500 |
+| `RE1` loc 01 | 254,437 |
+| `RE2` | 48.713,642 |
+| `RE9` | 12.410,845 |
+| **Σ** | **355.240,512** → exibido 355.240,51 |
+
+O relatório soma em precisão cheia e arredonda o total para exibição;
+somar componentes já arredondados produz o artefato de +0,01. Regra:
+**linhas em 3 decimais; grupo e total = Σ sem arredondar, exibição a 2
+decimais** (half-up). `PROVEN` (total = P7).
+
+### B. Quatro diferenças SB9 — classificação com evidência (Frente B)
+
+Todas as **753 linhas** `SB9010` f01@0930 loc99 foram (re)inseridas em
+**21/10/2026 19:13:41** (`I_N_S_D_T_` = `S_T_A_M_P_`, verificado em
+todas) — 20 dias após a emissão do relatório (01/10 16:15). Portanto o
+artefato **não leu a SB9 atual**: o bloco sem-OP reflete a posição do
+armazém 99 **no instante da emissão**; a SB9@0930 vigente é uma
+regravação posterior do fechamento. `SB9010_TTAT_LOG`/`SB2010_TTAT_LOG`
+estão **vazios** para esses RECNOs — sem auditoria por campo; a classe
+temporal se apoia no timestamp universal de regravação + direção do drift
+de custo médio, não em hipótese.
+
+| Alias | Impresso (q/valor; cm implícito) | SB9 atual (valor; cm) | Δ (imp−atual) | Classe |
+|---|---|---|---|---|
+| `<PRODUTO-WIP-A>` | 2.000 / 16.517,702 (8,258851) | 16.966,861 (8,4834); SB2 loc99 corrente q=0, cm 8,6479 | −449,159 | `TEMPORAL` — revalorização de CM entre emissão e regravação (drift continua no SB2) |
+| `<PRODUTO-WIP-B>` | 314,31 / 90,947 (0,289354) | 91,091 (0,2898); SB2 cm corrente 0,2879 | −0,144 | `TEMPORAL` — revalorização centesimal de CM |
+| `<PRODUTO-WIP-C>` | 1.982 / 425,615 (0,214740) | 425,605 (0,2147); SB2 corrente 425,620 | +0,010 | `TEMPORAL`/arredondamento — micro-ajuste de CM na regravação |
+| `<PRODUTO-WIP-D>` | 0 / −0,001 | 0 / 0 | −0,001 | arredondamento — resíduo de centavo zerado na regravação |
+
+Efeito no total: ΣΔ = **+449,294**; SB9@0930 loc99 corrente soma
+**293.722,382** vs 293.273,088 impresso — diferença **integralmente
+decomposta** pelos 4 produtos (paridade no `as_of` da emissão preservada;
+drift pós-emissão, mesma classe R05/R06).
+
+### C. Produtor e escopo — reclassificação de rigor (Frente C)
+
+- Produtor = MATR989 variante analítica **inferido** por roster oficial +
+  título da aba (`PRODUCER_INFERRED_BY_ARTIFACT`); `matr989.prx` ausente
+  (`SOURCE_MISSING`); versão compilada não identificada. **Errata §41:**
+  a expressão "`CODE_DEPLOYED` via artefato" é retirada — relatório
+  emitido prova `EXECUTION_OBSERVED`, não identidade do código.
+- Seleção por OP aberta: reproduzida na **granularidade de dia**
+  (`as_of`-dia 01/10 — sem `PR0` e sem `C2_DATRF` naquela data). A
+  semântica **intradia** (PR0 de 01/10 antes/depois das 16:15) não é
+  observável por data e permanece pendente (E8).
+- Neteo `DE*`: **inferência estrutural** — nenhum par impresso contém
+  `DE*` nesta competência; não generalizado além da população testada
+  (T-R08-06 segue `candidato`).
+
+### D. Sanitização (Frente D)
+
+Códigos reais dos 4 produtos divergentes substituídos por aliases
+estáveis `<PRODUTO-WIP-A..D>` (mapeamento sob custódia do owner, fora do
+repositório). Os originais constaram no commit `f5c50f7c04` —
+**exposição registrada** para avaliação do owner de segurança; histórico
+Git não reescrito por decisão do PO (§32).
+
+### E. Gates e métricas (Frente E)
+
+G4/G5 sustentados: critério G4 = bindings físicos+seleção+filtros
+demonstrados (produtor inferido por artefato é suficiente — fonte é
+residual E8, precedente R06/R07); G5 = reconciliação reproduzível +
+residuais explicados. Métricas corrigidas: `COLETA = 43/60 = 71,7%`;
+`AUDITORIA = 49/90 = 54,4%`; `RELATORIOS_CONCLUIDOS = 0/15`; R03 não
+promovido; R08 G6 `PENDING`.

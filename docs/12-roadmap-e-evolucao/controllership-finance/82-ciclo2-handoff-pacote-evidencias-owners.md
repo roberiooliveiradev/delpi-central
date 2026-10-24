@@ -123,6 +123,12 @@ população; G6 exige homologação funcional da Controladoria.
 | Impacto PROC-0072 | fecha a cadeia produtor→versão de R08 (G4/G5 já PASS por reconstrução física; E8 remove o residual de fonte e prova os dois pontos não exercidos empiricamente) |
 | Critério de aceite | `SOURCE_AVAILABLE` (fonte) + `CODE_DEPLOYED` (RPO) + `EXECUTION_OBSERVED` (parâmetros vinculados) |
 
+**Residual de confidencialidade (owner segurança):** os códigos reais dos
+4 produtos divergentes SB9×MATR989 constaram no commit `f5c50f7c04` antes
+da sanitização da rodada 23 (aliases `<PRODUTO-WIP-A..D>` — doc 80 §42.D);
+histórico Git não reescrito por decisão do PO (doc 80 §32). Avaliar se a
+exposição residual exige ação adicional.
+
 ---
 
 ### 2.2 — Owner DBA (objetos de banco)

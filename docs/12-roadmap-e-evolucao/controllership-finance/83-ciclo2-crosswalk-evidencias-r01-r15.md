@@ -128,7 +128,7 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 ### R08 — Material em Processo / H02 — **RECONCILIADO**
 
-`Material em processo.xlsb` = "Saldo em Processo (Ana" — variante **analítica** do **MATR989** (`matr989.prx` ausente do acervo — `SOURCE_MISSING`; roster oficial + título da aba). Dt.Ref 01/10/2026 16:15, 57.359 linhas × 8 colunas: `CODIGO, DESCRICAO, UM, LOCAL, ORDEM PRODUCAO, TIPO RE/DE, QTDE, VALOR EM PROCESSO`. **Dois blocos provados** (rodada 22, doc 80 §41, doc 85 §8): **(1)** 1.501 linhas com OP = 1.501 linhas `SD3010` `D3_CF IN (RE0,RE1,RE2,RE9)` de OPs **abertas na emissão** (sem `PR0` e sem `C2_DATRF` — 650/650 pares qtde+valor exatos, grão linha SD3); **(2)** 573 produtos sem OP = `SB9010`@20260930 loc99 (`B9_QINI`/`B9_VINI1` — 569 exatos + 4 Δ temporais de revalorização). Total R$355.240,51 = EM PROCESSO do P7 **exato** — EM PROCESSO = SB9-loc99 (293.273,09) + material alocado a OP aberta (61.967,42), **não** o armazém 99 sozinho. Gates: **G1–G5 PASS · G6 PENDING** (fonte/RPO + semântica intra-dia → E8).
+`Material em processo.xlsb` = "Saldo em Processo (Ana" — variante **analítica** do **MATR989** (`matr989.prx` ausente do acervo — `SOURCE_MISSING`; roster oficial + título da aba). Dt.Ref 01/10/2026 16:15, 57.359 linhas × 8 colunas: `CODIGO, DESCRICAO, UM, LOCAL, ORDEM PRODUCAO, TIPO RE/DE, QTDE, VALOR EM PROCESSO`. **Dois blocos provados** (rodada 22, doc 80 §41, doc 85 §8): **(1)** 1.501 linhas com OP = 1.501 linhas `SD3010` `D3_CF IN (RE0,RE1,RE2,RE9)` de OPs **abertas na emissão** (sem `PR0` e sem `C2_DATRF` — 650/650 pares qtde+valor exatos, grão linha SD3); **(2)** 573 produtos sem OP = `SB9010`@20260930 loc99 (`B9_QINI`/`B9_VINI1` — 569 exatos + 4 Δ temporais de revalorização; errata §42: faixa SB9 f01@0930 regravada em 21/10 — impresso = posição `as_of` da emissão). Total R$355.240,51 = EM PROCESSO do P7 **exato** (Σ 3 dec = 355.240,512 — o centavo de soma de componentes é artefato de arredondamento, §42.A) — EM PROCESSO = SB9-loc99 (293.273,09) + material alocado a OP aberta (61.967,42), **não** o armazém 99 sozinho. Gates: **G1–G5 PASS · G6 PENDING** (fonte/RPO + semântica intra-dia → E8).
 
 ### R09 — Faturamento × MOD — **PARCIAL**
 
@@ -168,6 +168,8 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | E4 (jobs/SPs) | mantido — DBA |
 | E5 (rotina SB9) | **estreitado:** execução do fechamento observada (wizard, 14:47); falta provar qual passo grava SB9 e por que B9_I_N_S_D_T_ diverge (02/10 e 21/10). |
 | E6 | decidido (opção C — doc 81); pendências E6-D1..D6 conforme doc 82. |
+| E7 (RPO MATR910) | mantido — TI/ERP (R06/R07 G4/G5 já PASS pela reconstrução). |
+| E8 (MATR989) | **novo (rodada 22):** fonte `matr989.prx`/RPO + parâmetros efetivos da emissão + semântica intra-dia do corte de OP — TI/ERP (R08 G4/G5 já PASS pela reconstrução física; doc 80 §41/§42). |
 
 ## §6 — Divergências e notas de rigor
 

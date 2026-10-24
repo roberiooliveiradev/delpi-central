@@ -317,9 +317,9 @@ Paridade **linha-a-linha** do artefato oficial (filial 01, `as_of` emissão
 | Quantidade/valor movimento | impresso | `D3_QUANT`/`D3_CUSTO1` | moeda 1, custo da emissão | 650/650 pares exatos | 0 | `PASS` |
 | Escopo OP | pares impressas | `PR0` (SD3 `D3_CF LIKE 'PR%'`)+`C2_DATRF` | OP aberta na emissão: 0 PR0 impresso; 33 PR0-em-01/10 excluídas; 3 encerradas-sem-produção excluídas; 15 f02 excluídos | discriminador completo | 0 | `PASS` |
 | Corte competência | impresso | `D3_EMISSAO`≤20260930 | `RE*` de 01/10 na mesma OP fora | provado | 0 | `PASS` |
-| Linhas sem OP | 573 produtos | `SB9010` `B9_DATA=0930` `B9_LOCAL=99` | `B9_QINI`/`B9_VINI1` | 569 exatos + 4 Δ temporais (revalorização pós-emissão / centavo) | máx 449,16 | `PASS` (drift explicado, classe `STALE_EVIDENCE`) |
+| Linhas sem OP | 573 produtos | `SB9010` `B9_DATA=0930` `B9_LOCAL=99` | `B9_QINI`/`B9_VINI1` no `as_of` emissão — faixa SB9 f01@0930 **regravada 21/10 19:13** (`I_N_S_D_T_`, 753/753) | 569 exatos + 4 Δ temporais decompostos por produto (doc 80 §42.B: `<PRODUTO-WIP-A>` −449,159 reavaliação CM; `<PRODUTO-WIP-B>` −0,144; `<PRODUTO-WIP-C>` +0,010; `<PRODUTO-WIP-D>` −0,001) | ΣΔ +449,294 = SB9 corrente 293.722,382 − impresso 293.273,088 | `PASS` (drift explicado, classe `STALE_EVIDENCE`) |
 | Saldo por par | impresso | Σ`RE*`−Σ`DE*`≤corte | neteo `DE*` estrutural (não exercido nas 650 pares vivas) | 650/650 | 0 | `PASS` (regra) |
-| Total | 355.240,51 | SB9-loc99 293.273,09 + OP 61.967,42 | = EM PROCESSO P7 completo | exato | 0,00 | `PASS` |
+| Total | 355.240,51 | SB9-loc99 293.273,088 + OP 61.967,424 (precisão 3 dec: 588,500+254,437+48.713,642+12.410,845) | = EM PROCESSO P7 completo; soma cheia 355.240,512 → exibição 355.240,51 (somar componentes já arredondados daria ,52 — artefato de arredondamento, doc 80 §42.A) | exato | 0,00 | `PASS` |
 
 **Hipóteses descartadas:** net do mês (2.726 pares set net>0 ausentes),
 `C2_DATRF` como escopo (453 impressas com DATRF), grão documento,

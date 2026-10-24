@@ -647,8 +647,11 @@ testados do comportamento observado são compatíveis com o fonte.
 01/10/2026): `CODIGO, DESCRICAO, UM, LOCAL, ORDEM PRODUCAO, TIPO RE/DE,
 QTDE EM PROCESSO, VALOR EM PROCESSO`. Fonte `matr989.prx` ausente do
 acervo (`SOURCE_MISSING` — classe DLP06R01); produtor = rotina oficial
-MATR989 variante analítica (roster + título da aba), `CODE_DEPLOYED` via
-artefato. População e valores reproduzidos 100% no físico (doc 80 §41).
+MATR989 variante analítica **inferida** por roster + título da aba
+(`PRODUCER_INFERRED_BY_ARTIFACT`; relatório emitido prova
+`EXECUTION_OBSERVED`, não identidade do código implantado — versão RPO
+pendente, E8). População e valores reproduzidos 100% no físico
+(doc 80 §41/§42).
 
 ### BR-R08-001 — Grão da linha = linha física SD3 `RE*` — `PROVEN`
 
@@ -694,24 +697,33 @@ neteo é estrutural (inferido da seleção), não exercido dentro das pares
 vivas desta competência. `DE*` observados (752 movs.) pertencem a pares de
 OPs já produzidas/excluídas.
 
-### BR-R08-006 — Bloco sem OP = saldo físico `SB9`@fechamento do armazém 99 — `PROVEN`
+### BR-R08-006 — Bloco sem OP = posição do armazém 99 no `as_of` da emissão — `PROVEN`
 
-Linhas sem `ORDEM PRODUCAO` = `SB9010` `B9_DATA='20260930'`, `B9_LOCAL='99'`,
-filial 01: `QTDE`=`B9_QINI`, `VALOR`=`B9_VINI1`. **569/573 exato**; 4
-diferenças temporais: `10211413` ΔR$449,16 e `10120198` Δ0,144 (revalorização
-`B9_VINI1` pós-emissão — mesma classe `STALE_EVIDENCE` do drift R05/R06),
-`10080198` Δ0,01 e `10090636` Δ−0,001 (resíduo de centavo). Zero produtos
-SB9-loc99 ≠ 0 ausentes do artefato.
+Linhas sem `ORDEM PRODUCAO` = saldo físico do armazém 99 na data-base de
+fechamento **no estado vigente na emissão** — reconciliável com `SB9010`
+`B9_DATA='20260930'`, `B9_LOCAL='99'`, filial 01 (`QTDE`=`B9_QINI`,
+`VALOR`=`B9_VINI1`). As 753 linhas dessa faixa foram **regravadas em
+21/10 19:13** (`I_N_S_D_T_`, todas) — 20 dias após a emissão; o impresso
+carrega o custo do instante do relatório, a SB9 vigente carrega o custo
+pós-recálculo. **569/573 exato**; 4 diferenças temporais (aliases — doc 80
+§42.D): `<PRODUTO-WIP-A>` ΔR$449,16 e `<PRODUTO-WIP-B>` Δ0,144
+(revalorização `B9_VINI1` — mesma classe `STALE_EVIDENCE` do drift R05/R06),
+`<PRODUTO-WIP-C>` Δ0,01 e `<PRODUTO-WIP-D>` Δ−0,001 (resíduo de centavo).
+Zero produtos SB9-loc99 ≠ 0 ausentes do artefato. ΣΔ = +449,294 =
+SB9 corrente (293.722,382) − impresso (293.273,088), decomposto 100%.
 
 ### BR-R08-007 — EM PROCESSO do P7 = total do MATR989 — `PROVEN`
 
 Total do artefato = **R$355.240,51**, exato com EM PROCESSO do P7 completo
-(BR-R03-003). Decomposição: loc-99 sem OP 293.273,09 + `RE0` 588,50 +
-`RE1`(loc 01) 254,44 + `RE2` 48.713,64 + `RE9` 12.410,85. O bloco `RE1`
+(BR-R03-003). Decomposição em precisão original (3 dec): loc-99 sem OP
+293.273,088 + `RE0` 588,500 + `RE1`(loc 01) 254,437 + `RE2` 48.713,642 +
+`RE9` 12.410,845 = **355.240,512** → exibição 355.240,51 (half-up 2 dec).
+Somar componentes já arredondados dá 355.240,52 — artefato de
+arredondamento, não divergência (doc 80 §42.A). O bloco `RE1`
 em `LOCAL='01'` corresponde à fatia **PI** do EM PROCESSO (254,44 — doc 80
 §33.D). EM PROCESSO **não é** o saldo físico do armazém 99: é estoque do
-armazém de processo (293.273,09) **+ material alocado a OPs abertas**
-(61.967,42).
+armazém de processo (293.273,088) **+ material alocado a OPs abertas**
+(61.967,424).
 
 ### BR-R08-008 — Linhas de apresentação / catálogo — `AS-IS`
 
@@ -746,9 +758,10 @@ linhas de catálogo sem efeito nos totais. Linhas efetivas: 1.501 com OP +
 | T-R08-04 | BR-R08-007 | positive · total artefato = EM PROCESSO P7 = 355.240,51 exato |
 | T-R08-05 | BR-R08-003 | negative · movimentos `RE*` de 01/10 na mesma OP não impressos (corte 30/09) |
 
-**Pendente:** fonte `matr989.prx`/versão RPO implantada (`TO_INVENTORY` —
-mesma classe E7 de R06/R07); semântica intra-dia do corte de OP
-(`as_of`-dia vs timestamp 16:15); neteo `DE*` dentro de par impresso
+**Pendente (E8):** fonte `matr989.prx`/versão RPO implantada
+(`TO_INVENTORY` — mesma classe E7 de R06/R07); semântica intra-dia do
+corte de OP (`as_of`-dia vs timestamp 16:15); neteo `DE*` dentro de par
+impresso
 (não exercido nesta competência).
 
 ---
