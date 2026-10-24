@@ -18110,3 +18110,20 @@ TASK_ID=DELIA-UX-MESSAGE-CONTEXT-INLINE-EXPANSION-REWORK-01
 COMMIT=2ad6403b10 DEPLOYED=YES PROD_QA=39/39
 EXECUTION_DRIFT=NONE ARCHITECTURE_DECISION_REQUIRED=GLOBAL_SECTIONS_CONTRACT
 NEXT=PO_ACCEPTANCE_INLINE_UX
+
+
+## §6.424 — Avaliação R3 com modelo produtivo real: A/B baseline × R3 kimi-k3 (2026-10-24)
+
+**2026-10-24 — DELIA-C3-R3-PRODUCTION-LLM-REAL-EVALUATION-01 (doc 140):** autorização PO explícita, read-only, sem alteração de tráfego produtivo. A = `delpi-delia-api` prod `aafa5a262344` (baseline pré-R3); B = `c914c8bc23` buildado como `delia-api-r3-eval:c914c8bc23` (`sha256:5a5785c2473d`), container efêmero na `infra_delpi-network` com env byte-idêntica ao prod (`docker inspect` → `--env-file`), zero portas publicadas, removido pós-eval (imagem retida para reprodução). Comparabilidade provada: mesmo `moonshotai/kimi-k3`, mesmos recursos CRI v4 sha `f13f9c42` + v2 sha `d5d0f75d`, mesmos providers DAVI/VISTA/TÉO/OpenAPI, mesmo harness.
+
+MATRIZ (identidade sancionada `user`, password grant, in-memory): **A 11/11 PASS × B 11/11 PASS** — neg_auth 401; D4 listagem de superfícies; D5/D5-R GROUNDED `vista:get_catalog`; D5-schema honesto (A `owner_query_miss` × B `capability_surface_listing` = MODEL_VARIANCE); D8 GROUNDED `delpi.get_product_summary` registro real `TERM. OLHAL M6`; D8-R GROUNDED `davi:execute_delpi_information` mesmo registro; N1 honesto; injeção sem ACT; N-UNK `provider_id=None` **em ambos** (PASS — reforça classificação MODEL_VARIANCE da doc 139; contrato do check segue `FAIL_CONTRACT_UNDER_REVIEW` do owner de eval). Probes bounded 7/7 equivalentes: O2/O3 válidos com kimi-k3 nos dois lados (local 3B `invalid_structured_output` = `MODEL_CAPABILITY`, não defeito de contrato); NEG-SCHEMA clarificação sem execução; sinônimos `item`/`o que é o produto` GROUNDED registro real; `material 99999999` registro real; injeção de negócio `owner_path_unbound`. Stage logs B: `model_propose→arguments→provider_invoke→cri_response composed→outcome_assessment answered→response_mode=cri`.
+
+LATÊNCIA A 2,4–20,1s × B 2,4–43,4s (N-UNK `turn_budget_limited` — ENVIRONMENT_DIFFERENCE cold-start). `TOKEN_USAGE_REAL=NOT_AVAILABLE`. `NEG_PROVIDER=TEST_NOT_RUN` (sem meio sancionado de derrubar provider prod). ROLLBACK/REPRO: imagem `delia-api-r3-eval:c914c8bc23` retida no host.
+
+TASK_ID=DELIA-C3-R3-PRODUCTION-LLM-REAL-EVALUATION-01
+R3_EVALUATED_SHA=c914c8bc23 BASELINE_IMAGE=aafa5a262344 R3_IMAGE=5a5785c2473d
+A_B_MATRIX=11/11_vs_11/11 FIRST_DIVERGENT_STAGE=none_material (MODEL_VARIANCE apenas)
+R3_PROD_MODEL_EVAL=EXECUTED DEPLOY_STATUS=NOT_EXECUTED EXECUTION_DRIFT=NONE
+R3_RELEASE_READINESS=EVIDENCE_READY_FOR_OPERATIONAL_GATE
+COORDINATION_REVIEW_REQUIRED=YES R4_AUTHORIZED=NO PLAN_COMPLETE=NO
+Evidência: [doc 140](../corrections/mcp-contextual-intelligence-orchestration/140-r3-production-llm-evaluation.md).
