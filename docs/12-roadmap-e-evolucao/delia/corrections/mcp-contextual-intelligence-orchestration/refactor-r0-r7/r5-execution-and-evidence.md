@@ -86,3 +86,16 @@
 ### Complemento de gates de teste local e deploy — diretriz PO de 2026-10-23
 
 **Norma executiva superior:** 16 + plano 125 + runbook 130. Para esta etapa, testes locais completos no SHA modificado passam a ser condição explícita de aceite técnico: focused, full backend, architecture/import DAG, security, provider-neutral generalization, CRI e outcomes aplicáveis; Ollama local quando comportamento de modelo/prompt for afetado. Registre `LOCAL_TEST_STATUS`, `TEST_SHA`, `MODEL_CONFIG` e evidências. O deploy em produção é **objetivo condicionado** a review independente e autorização operacional específica com rollback; não executá-lo apenas com o prompt de implementação. Após deploy autorizado, homologar caminhos reais e registrar `DEPLOY_AUTHORIZATION`, `DEPLOY_STATUS`, `IMAGE_DIGEST`, `PROD_SHA`, `PROD_AUTH_HOMOLOGATION`, `BUSINESS_OUTCOME_STATUS`. Se não houver acesso/autorização, `TEST_NOT_RUN` com motivo. Para R1/R2 históricos, isto é regra prospectiva: não transformar campos passados em PASS e criar release/homologação separados mediante autorização. A próxima etapa continua dependente de decisão explícita da coordenação/PO.
+
+
+### Parecer independente da coordenação — 2026-10-24
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (R5 estrutural)**; **R5_STRUCTURAL_SCOPE=ACCEPTED**; **R6_BOUNDED_PREPARATION=AUTHORIZED**; **R6_CODE_EXECUTION=REQUIRES_EXPLICIT_GATE**. Revisão no GitHub dos arquivos alterados no commit `e1a57f915b`, relatório e evidências. Não foram reexecutados a suíte, SSH ou smoke; os PASS e deploy são `EXECUTOR_REPORTED`.
+
+**Escopo:** M08 cinco funções puras e `MAX_ARGUMENT_KEYS` transferidos para `interaction/argument_validation.py` sem novo owner; M09 `KEEP` fundamentado por dependências reais do coordenador. Snapshot/paridade literal 19, testes focados, full backend exit 0, 43 testes de arquitetura e imagem `dc9833166850` são resultados reportados pelo executor. O2 permanece residual externo a R5; `CRI_OFF_LIVE=TEST_NOT_RUN`.
+
+**Incidente documental:** executor registrou corrupção transitória do ledger por shell heredoc não-quotado, com restauração posterior. `DOCUMENTATION_INCIDENT=RECORDED_AND_REPORTED_FIXED`; evidência de correção no HEAD, sem afirmação de ausência histórica de drift.
+
+**Conflito de release a decidir:** seção 'Complemento de gates de teste local e deploy' deste documento exige **review independente e autorização operacional específica antes do deploy**. O executor executou deploy após testes e antes deste review, apoiado em autorização da task. As duas bases não são automaticamente equivalentes. `RELEASE_GOVERNANCE_CONFLICT=ARCHITECTURE_DECISION_REQUIRED`, `DEPLOY_PRE_REVIEW=EXECUTOR_REPORTED`, `SECURITY_OUTCOME=NO_NEW_FAILURE_REPORTED`. Não revogar silenciosamente o gate, não inventar aprovação retroativa e não ordenar rollback sem evidência de dano. Coordenação/owner deve confirmar precedência e remediar protocolo para próximas releases.
+
+**Próximo passo:** R6 poderá iniciar **reancoragem/inventário e testes de caracterização** para o core, sem mudar state machine, policy, AuthZ, PREPARE/ACT ou semântica do planner. Alterações de código R6 e nova promoção produtiva aguardam decisão explícita sobre o conflito de release; R7 não autorizado. `REVIEW_SHA=e1a57f915b`; `R5_ACCEPTANCE_REASON=OWNER_REUSE_AND_PARITY`; `R6_READY=YES_WITH_GATE`; `R7_AUTHORIZED=NO`.
