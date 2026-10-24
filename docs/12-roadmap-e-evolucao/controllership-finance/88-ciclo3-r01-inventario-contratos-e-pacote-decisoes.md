@@ -49,7 +49,7 @@ Segurança já vigente (lido no código, `closing_routes.py`,
 | Rota | Fonte física | Guarda |
 |---|---|---|
 | `/financeiro/stock-inventory` | `SB9010`+`SB1010` (snapshot por `B9_DATA`) | S2S `stock-inventory.read`, cliente allow-listed `controllership-finance-api`; `require_stock_inventory_scope` fail-closed |
-| `/financeiro/settlements/payables\|receivables\|summary` | `SE5` (baixas) | S2S + Bearer delegado |
+| `/financeiro/settlements/payables\|receivables\|summary` | `FK2010`/`FK1010` (eventos; ver errata § final) | S2S + Bearer delegado |
 | `/financeiro/despesas-centro-custo/*` | view Financeiro | superfície existente (`REUSE_PARTIAL` p/ R10) |
 | `/supplies/cpv` | SD2 vivo | `REUSE_PARTIAL` (sem `as_of`) |
 | Suprimentos: `inventory_accuracy_sql`, `non_moving_stock_sql`, `stock_value_*` | SB9/SD3/SB2 | leem `MAX(B9_DATA)` como `last_closing` internamente — capacidade existe, não exposta como contrato de competência |
@@ -98,7 +98,7 @@ novo necessário para a jornada candidata §6.
 | Última competência fechada (`MV_ULMES`) | api-delpi | `SX6` por filial | **não existe** | `TARGET` — ver C3-D04 |
 | Competências disponíveis p/ consulta | api-delpi | `SB9010.B9_DATA` distintas (`MAX(B9_DATA)` já usado internamente em supplies) | não existe como contrato | `TARGET` |
 | Snapshot mensal (produto×armazém×qtd×valor) | api-delpi | `SB9010`+`SB1010` | `get_financeiro_stock_inventory` | `REUSE_CONFIRMED` |
-| Baixas a pagar/receber (R01/R02) | api-delpi | `SE5` | `settlements/payables|receivables|summary` | `REUSE_CONFIRMED` |
+| Baixas a pagar/receber (R01/R02) | api-delpi | `FK2`/`FK1` (eventos; ver errata § final) | `settlements/payables|receivables|summary` | `REUSE_CONFIRMED` |
 | Histórico/status do wizard Acompanha Custos | TI/ERP→api-delpi | **tabela física não identificada** (lista `Fechamentos` existe na UI Protheus; writer E5) | não existe | `PENDING_EVIDENCE` → `TARGET` |
 | Estado técnico do fechamento (etapas/andamento) | api-delpi | nenhuma persistência de estado do processo identificada | não existe | `TARGET` |
 | Homologação funcional | Controladoria | **processo humano — sem fonte sistêmica** | nunca será sistêmico sem decisão | `DECISION_REQUIRED` (C3-D05) |
@@ -116,7 +116,7 @@ MFE controllership-finance
 → BFF controllership-finance-api   (human Bearer + effective access via Core)
 → api-delpi                        (S2S client-credentials próprio + Bearer delegado;
                                     scope de dataset fail-closed)
-→ Protheus (SB9/SE5/SB1)           (somente leitura)
+→ Protheus (SB9/FK1/FK2/SE5/SB1)           (somente leitura)
 → Core API                         (effective permissions — nunca do JWT)
 ```
 
@@ -308,3 +308,7 @@ O PO aprovou **para escopo e design apenas**, com `IMPLEMENTATION_AUTHORIZED=NO`
 - **D06=A:** excluir superfícies sem fonte/contrato comprovado; pendências E1–E12 continuam sob acompanhamento dos owners.
 
 **Natureza:** direção de produto aprovada, não gate de runtime, não homologação G6. A seção §7 é preservada como registro das alternativas originais; esta seção é o estado decisório vigente. Próximo gate: [doc 89](./89-ciclo3-decisoes-aprovadas-e-gate-documental-r02.md), `CF-C3-02-READONLY-DESIGN-CONTRACT-GATE-001`.
+
+## Errata — fonte física do contrato de baixas (rodada CP00/CP01, 2026-10-24)
+
+As referências a `SE5` no inventário de baixas estavam incorretas: o contrato `/financeiro/settlements/*` do HEAD lê `FK2010`/`FK1010` (eventos de baixa) + `FK7010` + `SE2`/`SE1` + `SED010` (`settlements_sql.py`). A paridade oficial R01/R02 do Ciclo 2 (doc 84) foi reconstruída sobre `SE5` com o WHERE do `FINR190`/`DLP06R01`. Consequência quantificada em [doc 95 §2.A](./95-ciclo3-cp00-cp01-rebaseline-e-brief-primeiro-slice-p2.md): o contrato não reproduz os oficiais (população e soma divergentes; `unresolved_branch` 100%) — a classificação de reuso permanece `REUSE_CONFIRMED` como **consulta operacional**, `NOT_EQUIVALENT` como entregável oficial.
