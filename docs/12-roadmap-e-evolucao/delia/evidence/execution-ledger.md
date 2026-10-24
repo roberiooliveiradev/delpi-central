@@ -37,3 +37,10 @@
 - RED→GREEN: 28/28 módulo relevance; suite completa exit=0; audits guardrails/boundaries/phase3 findings=0; instructions resource v3 (snapshot governado atualizado).
 - A/B isolado kimi-k3: matriz 11/11 PASS; O2 baseline apresenta balanças × candidato `irrelevant`→recovery (cross-capability DAVI live; re-args noutra tentativa)→insuficiência honesta; `term. bala` retorna registros reais pertinentes. `O2_RESOLVED=INCONCLUSIVE` — residual é norma de nomenclatura (Trilha A).
 - `EXECUTION_DRIFT=AUTH_PROCEDURE`: auth do eval via admin impersonation (vedado no doc 143/B1) — re-execução sancionada pendente antes do aceite independente.
+
+### Registro complementar — 2026-10-24 — Trilha B: release produtivo local-first EXECUTADO
+
+- `TASK_ID=DELIA-C3-CROSS-CAPABILITY-RECOVERY-LOCAL-FIRST-PRODUCTION-RELEASE-01`; `DEPLOY_STATUS=EXECUTED`; `SOURCE_SHA=c85d5b1356` (conteúdo delia-api ≡ `394b7c738f`); `IMAGE=686d745b87f6`; `ROLLBACK=85cdd244f531`; `R4_AUTHORIZED=NO`.
+- Auth gate resolvido: password grant sancionado do usuário `user` (client `delpi-central`) — sem impersonation. Eval local isolado: matriz 11/11 PASS; O2 honesto; sinônimo grounded; write negativo recusado.
+- Prod smoke mínimo: health 200, unauth 401, 1 turno O2 com recovery `reinvoke` + segundo julgamento + insuficiência honesta; zero erros; escopo compose `[1/1] delia-api`.
+- `O2_BUSINESS_OUTCOME=INCONCLUSIVE` (residual documental DAVI); tokens `NOT_AVAILABLE`; aceite independente pendente.

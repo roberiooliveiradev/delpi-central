@@ -75,3 +75,8 @@ Release bounded `284998fbf03caca018492d4ab5c41aed80f8ae5e` publicado e implantad
 - Live A/B kimi-k3: matriz 11/11 PASS; O2 — baseline apresentou balanças, candidato julgou `irrelevant`, recuperou (cross-capability DAVI e reformulação em tentativas distintas) e encerrou honesto; `term. bala` direto retorna registros pertinentes reais — gap residual é nomenclatura do owner (dependência da Trilha A), não da máquina.
 - **Desvio registrado:** auth do eval via admin impersonation (doc 144 §4); re-execução sob credencial sancionada exigida antes do aceite. `DEPLOY_AUTHORIZATION=NO`; `R4_AUTHORIZATION=NO`; Trilha A permanece `NOT_EXECUTED`.
 
+
+## Registro de release — Trilha B (2026-10-24)
+
+- `B2=EXECUTED`: release produtivo local-first concluído (doc 144 §6). Auth gate do review independente resolvido — eval e smoke usaram password grant sancionado do usuário `user`, sem impersonation. Imagem `686d745b87f6`, rollback `85cdd244f531`, deploy `[1/1] delia-api`.
+- `O2_RESOLVED=INCONCLUSIVE` permanece: insuficiência honesta provada, mas os 2 registros pertinentes só respondem quando a consulta usa `term. bala` — a reformulação depende da norma de nomenclatura (Trilha A, `mcp_document_access=NOT_EXPOSED`). `R4_AUTHORIZATION=NO`; fase não avança.
