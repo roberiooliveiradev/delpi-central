@@ -474,3 +474,7 @@ O PO aceitou o encerramento documental do Ciclo 2 com residuais e direcionou ini
 ### Decisões de escopo P6-MIN + P2-READ aprovadas (24/10/2026)
 
 O PO aprovou **seed inicial dos 53 itens em `DRAFT`**, com publicação governada posterior, e **API administrativa mínima sem tela P6**. [Doc 97 — registro vinculante e pedido de GO transversal](./97-ciclo3-p6-min-p2-read-decisoes-po-e-solicitacao-go-transversal.md). Contratos físicos e autorização de implementação continuam pendentes; próximo gate `CF-C3-P6-MIN-P2-READ-TRANSVERSAL-GO-REVIEW-001`. **`IMPLEMENTATION_AUTHORIZED=NO` para esse slice.**
+
+### Revisão transversal GO — `GO_RECOMMENDED` (24/10/2026)
+
+[Doc 98](./98-ciclo3-go-review-transversal-p6-min-p2-read.md): todos os gates materiais PASS (persistência padrão irmão, invariantes, contratos `CONTRACT_FREEZE=PASS`, AuthZ, UI/plugin-ui, plano de testes, escopo, decisões PO). Solicitação `CF-C3-P6-MIN-P2-READ-RUNTIME-GO-001` pronta para o PO. **`GO_RECOMMENDED` ≠ autorização** — `IMPLEMENTATION_AUTHORIZED=NO` até aprovação expressa. Deploy em gate separado.
