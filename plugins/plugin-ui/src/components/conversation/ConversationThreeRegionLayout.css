@@ -98,6 +98,52 @@
   }
 }
 
+/* Right rail (integrated variant): a real flex column that reserves
+   horizontal space — the center keeps the remaining width, nothing is
+   overlaid. Collapses to 0 when closed, keeping the element mounted so
+   the width transition is smooth and the conversation never remounts.
+   Compact hosts never render it (floating surface is used instead). */
+.delpi-ui-conversation-three-region__right-rail {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 0px;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  visibility: hidden;
+  background: var(--delpi-ui-surface, var(--surface,#fff));
+  color: var(--delpi-ui-text, var(--text,#111));
+  border-left: 1px solid transparent;
+  transition:
+    flex-basis var(--delpi-ui-conversation-motion-normal) var(--delpi-ui-conversation-motion-ease),
+    border-color var(--delpi-ui-conversation-motion-fast) ease,
+    visibility 0s linear var(--delpi-ui-conversation-motion-normal);
+}
+.delpi-ui-conversation-three-region__right-rail[data-open="true"] {
+  flex: 0 0 var(--delpi-ui-three-right);
+  visibility: visible;
+  border-left-color: color-mix(in srgb, var(--delpi-ui-border, var(--border,#ddd)) 42%, transparent);
+  transition:
+    flex-basis var(--delpi-ui-conversation-motion-normal) var(--delpi-ui-conversation-motion-ease),
+    border-color var(--delpi-ui-conversation-motion-fast) ease,
+    visibility 0s;
+}
+/* Inner chrome keeps the real rail width during the collapse motion —
+   content clips gracefully instead of squashing. */
+.delpi-ui-conversation-three-region__right-rail
+  .delpi-ui-conversation-three-region__side-heading,
+.delpi-ui-conversation-three-region__right-rail
+  .delpi-ui-conversation-three-region__side-content {
+  width: var(--delpi-ui-three-right);
+  max-width: var(--delpi-ui-three-right);
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-three-region__right-rail {
+    transition: none !important;
+  }
+}
+
 
 /* R3 — shared, restrained motion for the rail and the context surface.
    No animation library or independent provider; uses existing popover chrome. */

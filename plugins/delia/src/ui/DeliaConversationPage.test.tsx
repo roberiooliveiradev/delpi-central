@@ -17,7 +17,9 @@ describe("DeliaConversationPage", () => {
     expect(screen.getByRole("heading", { name: "Detalhes" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Evidências" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Atividades" })).toBeTruthy();
-    expect(screen.getByRole("dialog", { name: "Contexto da conversa" })).toBeTruthy();
+    // RIGHTRAIL: the global panel is an integrated complementary region,
+    // not a floating dialog over the conversation.
+    expect(screen.getByRole("complementary", { name: "Contexto da conversa" })).toBeTruthy();
     expect(container.contains(message)).toBe(true);
   });  it("uses a single category rail in collapsed state and preserves conversation", () => {
     const { container } = render(<DeliaConversationPage conversation={<p>Centro permanece</p>} />);
@@ -140,6 +142,18 @@ describe("DeliaConversationPage", () => {
     expect(screen.getByRole("region", { name: "Agentes" })).toBeTruthy();
     expect(screen.getByText(/Agentes estarão disponíveis após a integração autorizada/)).toBeTruthy();
     expect(container.contains(center)).toBe(true);
+  });
+
+
+  it("RIGHTRAIL: global context opens as an integrated right rail without overlay or light-dismiss", () => {
+    const { container } = render(<DeliaConversationPage contextOpen={true} conversation={<p>Conversa real</p>} />);
+    const rail = container.querySelector(".delpi-ui-conversation-three-region__right-rail");
+    expect(rail).toBeTruthy();
+    expect(rail?.getAttribute("data-open")).toBe("true");
+    expect(rail?.getAttribute("role")).toBe("complementary");
+    expect(container.querySelector(".delpi-ui-conversation-three-region__context-popover")).toBeNull();
+    fireEvent.pointerDown(container.querySelector(".delpi-ui-conversation-three-region__center")!);
+    expect(rail?.getAttribute("data-open")).toBe("true");
   });
 
 });

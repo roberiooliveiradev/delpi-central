@@ -44,6 +44,7 @@ export function DeliaConversationPage({ conversation, context, contextOpen, onCo
       right={context ?? <ConversationContextPanel />}
       rightOpen={contextOpen}
       onRightOpenChange={onContextOpenChange}
+      rightVariant="rail"
       center={conversation}
     />
   );

@@ -377,3 +377,90 @@ describe("ConversationThreeRegionLayout R2", () => {
   });
 
 });
+
+describe("ConversationThreeRegionLayout RIGHTRAIL", () => {
+  it("RR-01 renders an integrated complementary region, not a floating popover", () => {
+    const { container } = render(
+      <ConversationThreeRegionLayout
+        rightVariant="rail"
+        rightOpen={true}
+        right={<p>Conteúdo global</p>}
+        center={<p>Conversa</p>}
+      />);
+    const rail = container.querySelector(".delpi-ui-conversation-three-region__right-rail");
+    expect(rail).toBeTruthy();
+    expect(rail?.getAttribute("role")).toBe("complementary");
+    expect(rail?.getAttribute("data-open")).toBe("true");
+    expect(rail?.getAttribute("aria-label")).toBe("Contexto da conversa");
+    expect(container.querySelector(".delpi-ui-conversation-three-region__context-popover")).toBeNull();
+    expect(screen.getByRole("complementary", { name: "Contexto da conversa" })).toBeTruthy();
+  });
+
+  it("RR-02 has no light-dismiss — clicking the center keeps the rail open", () => {
+    const onRightOpenChange = vi.fn();
+    const { container } = render(
+      <ConversationThreeRegionLayout
+        rightVariant="rail"
+        right={<p>Conteúdo global</p>}
+        center={(controls) => <>{controls.rightToggle}<p>Conversa</p></>}
+        onRightOpenChange={onRightOpenChange}
+      />);
+    const toggle = screen.getByRole("button", { name: "Abrir contexto" });
+    fireEvent.click(toggle);
+    expect(onRightOpenChange).toHaveBeenLastCalledWith(true);
+    expect(container.querySelector('.delpi-ui-conversation-three-region__right-rail[data-open="true"]')).toBeTruthy();
+    fireEvent.pointerDown(container.querySelector(".delpi-ui-conversation-three-region__center")!);
+    expect(container.querySelector('.delpi-ui-conversation-three-region__right-rail[data-open="true"]')).toBeTruthy();
+    expect(onRightOpenChange).toHaveBeenLastCalledWith(true);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onRightOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("RR-10 toggle, close button and ARIA wiring stay correct", () => {
+    const { container } = render(
+      <ConversationThreeRegionLayout
+        rightVariant="rail"
+        right={<p>Conteúdo global</p>}
+        center={(controls) => <>{controls.rightToggle}<p>Conversa</p></>}
+      />);
+    const toggle = screen.getByRole("button", { name: "Abrir contexto" });
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    const rail = container.querySelector(".delpi-ui-conversation-three-region__right-rail");
+    expect(toggle.getAttribute("aria-controls")).toBe(rail?.id);
+    fireEvent.click(screen.getByRole("button", { name: "Fechar painel de contexto" }));
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(rail?.getAttribute("data-open")).toBe("false");
+    expect(rail?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("RR-11 compact host falls back to the floating surface even with rail variant", () => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: 375, height: 667, top: 0, left: 0, right: 375, bottom: 667, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+    );
+    const previousObserver = globalThis.ResizeObserver;
+    class SizedObserver {
+      private callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe() { this.callback([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", SizedObserver);
+    try {
+      const { container } = render(
+        <ConversationThreeRegionLayout
+          rightVariant="rail"
+          rightOpen={true}
+          right={<p>Conteúdo global</p>}
+          center={<p>Conversa</p>}
+        />);
+      expect(container.querySelector(".delpi-ui-conversation-three-region--compact")).toBeTruthy();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__right-rail")).toBeNull();
+      expect(container.querySelector('.delpi-ui-conversation-three-region__context-popover[data-open="true"]')).toBeTruthy();
+    } finally {
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
+  });
+});

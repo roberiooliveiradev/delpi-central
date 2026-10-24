@@ -24,6 +24,11 @@ export type ConversationThreeRegionLayoutProps = {
    *  and opens the panel in one action). Uncontrolled by default. */
   rightOpen?: boolean;
   onRightOpenChange?: (open: boolean) => void;
+  /** "popover" (default): floating surface with light-dismiss.
+   *  "rail": integrated right column on wide hosts — a real grid/flex
+   *  region, no light-dismiss, no overlay. Compact hosts always fall
+   *  back to the floating surface. */
+  rightVariant?: "popover" | "rail";
   className?: string;
 };
 
@@ -31,7 +36,8 @@ export type ConversationThreeRegionLayoutProps = {
 export function ConversationThreeRegionLayout({
   center, left, rail, right, leftTitle = "Conversas",
   rightTitle = "Contexto da conversa", rightAvailable = true,
-  rightOpen: rightOpenProp, onRightOpenChange, className,
+  rightOpen: rightOpenProp, onRightOpenChange, rightVariant = "popover",
+  className,
 }: ConversationThreeRegionLayoutProps) {
   const [leftExpanded, setLeftExpanded] = useState(true);
   const [rightOpenState, setRightOpenState] = useState(false);
@@ -42,6 +48,7 @@ export function ConversationThreeRegionLayout({
     onRightOpenChange?.(next);
   };
   const [compact, setCompact] = useState(false);
+  const rightAsRail = rightVariant === "rail" && !compact;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const compactRef = useRef(false);
   const contextTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -86,12 +93,13 @@ export function ConversationThreeRegionLayout({
       }
     }
     document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown);
+    // Integrated rail: no light-dismiss — only toggle/close/Escape act.
+    if (!rightAsRail) document.addEventListener("pointerdown", onPointerDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [rightOpen]);
+  }, [rightOpen, rightAsRail]);
 
   const collapsed = !leftExpanded;
   const drawerOpen = !!left && compact && leftExpanded;
@@ -123,8 +131,8 @@ export function ConversationThreeRegionLayout({
   }, [compact, rightOpen, drawerOpen]);
 
   useEffect(() => {
-    if (rightOpen && compact) contextRef.current?.querySelector<HTMLButtonElement>(".delpi-ui-conversation-three-region__context-close")?.focus();
-  }, [rightOpen, compact]);
+    if (rightOpen && (compact || rightAsRail)) contextRef.current?.querySelector<HTMLButtonElement>(".delpi-ui-conversation-three-region__context-close")?.focus();
+  }, [rightOpen, compact, rightAsRail]);
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -209,7 +217,33 @@ export function ConversationThreeRegionLayout({
           {typeof center === "function" ? center(controls) : center}
         </div>
       </div>
-      {rightAvailable && right ? (
+      {rightAvailable && right && rightAsRail ? (
+        <aside
+          ref={contextRef}
+          id={rightId}
+          role="complementary"
+          aria-label={rightTitle}
+          aria-hidden={!rightOpen}
+          data-open={rightOpen ? "true" : "false"}
+          className="delpi-ui-conversation-three-region__right-rail"
+        >
+          {rightOpen ? (
+            <>
+              <div className="delpi-ui-conversation-three-region__side-heading">
+                <strong>{rightTitle}</strong>
+                <IconButton className="delpi-ui-conversation-three-region__context-close delpi-ui-conversation-three-region__chrome-icon" aria-label="Fechar painel de contexto" onClick={() => {
+                  setRightOpen(false);
+                  contextTriggerRef.current?.focus();
+                }}>
+                  <X size={18} aria-hidden="true" />
+                </IconButton>
+              </div>
+              <div className="delpi-ui-conversation-three-region__side-content">{right}</div>
+            </>
+          ) : null}
+        </aside>
+      ) : null}
+      {rightAvailable && right && !rightAsRail ? (
         <div
           ref={contextRef}
           inert={drawerOpen}
