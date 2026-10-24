@@ -81,7 +81,7 @@ Evidência nova nesta task (read-only):
 
 ### Residuais a resolver na promoção (não aqui)
 
-1. **AuthZ:** mapear `SAFETY_STOCK_BRANCH_VIEW_PERMS` (api-delpi) → `supplies.unit.filial-*` no BFF — decidir se `supplies.access` basta ou se o BFF traduz filial por filial.
+1. **Filtro de filial (decisão PO):** filial em Suprimentos é exclusivamente filtro de dados, sem autorização por filial e sem `supplies.unit.*`. Inventariar `SAFETY_STOCK_BRANCH_VIEW_PERMS` como regra do produtor/legado e propor contrato de consulta E11 compatível com `supplies.access` e filtro `branch`, sem propagar permissões por filial ao BFF. Divergências de autorização upstream exigem decisão explícita do owner; não contornar guardas silenciosamente.
 2. **Boundary MFE:** legado chama api-delpi direto com `estoque-seguranca.access`; no Portal o padrão é BFF-only com `supplies.*` — a promoção exige composição nova em `supplies-api`, **não** importar código do plugin legado.
 3. **Escopo E11 vs E12:** `consumption-analysis/*` tem página própria na fila (linha 9) — E11 deve ficar na posição ESTSEG (summary/items/details/suppliers); consumo entra como E12 satélite ou link.
 4. **Item details/suppliers/price-history** sobrepõem E17/E18 — manter na ficha do item do ESTSEG sem duplicar o Product 360.
@@ -89,7 +89,7 @@ Evidência nova nesta task (read-only):
 
 ### Receita proposta — E11.P0 e fatias (NÃO autorizada ainda)
 
-- **E11.P0** — Contract freeze: inventariar envelopes/filtros/paginação do produtor, mapear branch-gate→`supplies.unit.*`, decidir escopo (ESTSEG somente), documentar RQ/AC.
+- **E11.P0** — Contract freeze: inventariar envelopes/filtros/paginação do produtor, confirmar filial somente como filtro (sem `supplies.unit.*`), reconciliar eventual `BranchAccessGate` de ESTSEG com o owner correto, decidir escopo (ESTSEG somente) e documentar RQ/AC.
 - **E11.S1** — BFF `supplies-api`: `GET /safety-stock/{filters,summary,items}` (+ `items/{code}/details`, `items/{code}/suppliers` se no recorte) — gateway api-delpi, `can_use_operations` + `require_units`, paginação limitada, degrade parcial.
 - **E11.S2** — MFE página kit-first `/safety-stock`: filtros (unidade/grupo/busca do contrato `/filters`), summary hero, tabela com sort/paginação server-side, URL/F5, estados completos.
 - **E11.S3** — Ficha do item (details + linked suppliers) se aprovada em P0; link para Product 360 futuro via `product_code` somente se contrato existir.
@@ -143,7 +143,7 @@ Nenhuma etapa redundante identificada; ordem canônica mantida.
 - Ler primeiro: este doc → `IMPLEMENTATION-PLAN.md` → `README.md` → `X4-PROD-C1-HANDOFF-*` (se tocar fornecedores/write).
 - Ficha do usuário: `/apps/supplies/users/:userId` (USERS.PROFILE.S1–S3). Tabela de SC reutilizável: `PurchaseRequestsListTable`.
 - Navegação contextual: `SuppliesPersonIdentity`/`SuppliesSupplierIdentity` (SUPPLIERS.NAV.S1).
-- AuthZ: `supplies.access`/`supplies.manage` + `supplies.unit.filial-*` (ADR-009); fail-closed no BFF.
+- AuthZ: permissions efetivas da Core para acesso/capacidades (`supplies.access`, `supplies.manage` quando cabível), sem permission por filial; `branch` é filtro de dados (ADR-009). O BFF mantém AuthZ server-side fail-closed para capacidade, recurso e regras aplicáveis.
 - Writes ERP: **OFF** — flags `PROTHEUS_SUPPLIER_*_ENABLED=false` até Gabriel/TOTVS.
 
 ## Arquivos inspecionados (amostra de evidência)
@@ -160,3 +160,10 @@ Nenhuma etapa redundante identificada; ordem canônica mantida.
 **Drift documental residual comprovado:** `README.md` §7 \"Próximo passo operacional\" ainda ordena deploy E10, re-smoke e \"Não iniciar E11\", em conflito com o cabeçalho e a fila R1; §\"Atualização bounded — enriquecimento\" repete E10 em foco. Não reescrever evidência histórica; marcar como histórico superado ou corrigir a instrução ativa no próximo commit documental escopado. A contagem e classificação E1–E29 permanecem úteis como matriz de planejamento, não autoridade superior a contratos/HEAD. Cuidado também com a afirmação de `E10.S4 PASS`: registrar que o S4 histórico foi `INCONCLUSIVE` e que o bloqueio foi **revalidado posteriormente** por R1, sem reclassificar retroativamente o resultado original.
 
 **Próxima tarefa aprovada para proposta (não execução automática):** `E11.P0` exclusivamente read-only/contract freeze: verificar source e grants por filial no HEAD, distinguir unidade Core de gate ESTSEG, definir escopo exato E11 vs E12/E17/E18 e congelar RQ/AC e endpoints antes de qualquer implementação. `X4.PROD-C1` permanece WAITING_ON_TOTVS_OWNER; CREATE/UPDATE OFF; nenhum cutover ou deploy autorizado por este parecer.
+
+
+## Decisão explícita do Product Owner — Filial é filtro, não autorização (2026-10-23)
+
+**Decisão canônica de produto para o Portal Suprimentos:** filial (`01`, `02`, etc.) é **filtro de consulta**, nunca uma permission ou restrição de visibilidade específica por filial. **Não criar, exigir, traduzir ou registrar no manifest** `supplies.unit.*`, `supplies.unit.filial-*` ou equivalentes. A autorização do Portal é por capacidades efetivas da Core e, onde aplicável, recurso/ownership/regra de negócio — não autorização por filial. Essa decisão corrige as propostas anteriores deste documento que indicavam mapeamento de `SAFETY_STOCK_BRANCH_VIEW_PERMS` para permissões de Suprimentos; esses trechos históricos devem ser lidos apenas como drift já reconciliado.
+
+**Manifest verificado:** `plugins/supplies/supplies.manifest.json` não contém `supplies.unit.*` nos campos inspecionados; **nenhuma alteração de manifest necessária nessa verificação**. A existência de `SAFETY_STOCK_BRANCH_VIEW_PERMS` no `api-delpi`/aplicativo ESTSEG é fato de outro boundary e exige inventário de impacto e contrato no E11.P0; não autoriza bypass de checks upstream sem decisão do owner. E11.P0 deve documentar como expor os filtros de filial coerentemente com esta regra. Nenhum código, permissão ou runtime foi alterado nesta decisão documental.
