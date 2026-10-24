@@ -101,3 +101,10 @@
 ## Veredito
 
 `ACCEPT_WITH_RESIDUAL` — correções comprovadas aplicadas nos owners corretos, suítes verdes, Help sincronizado; pendente apenas evidência visual/runtime autenticada para o gate final (E11.S5).
+
+
+## Revisão GPT — E11.S4 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para código/Help/QA; **`E11_S5_READY_TO_AUTHORIZE=YES`**, sem autorização automática de deploy ou início de S5. Revisados no source `d849f53abc`: este documento, `supplies_delpi_reads.py` e `plugins/supplies/src/features/safety-stock/api.ts`. Confirmadas a existência da validação de identidade solicitada `detailMatchesTarget` e a validação bounded de payload upstream `_require_safety_stock_dict`, que rejeita shapes incompatíveis ao invés de retornar sucesso vazio. Contagens de teste (MFE 430 PASS, BFF 505 PASS/21 SKIP), build e lint são evidências reportadas pelo executor, não reexecutadas nesta revisão.
+
+**Gates residuais:** `VISUAL_AUTHENTICATED=INCONCLUSIVE`; `FEDERATED_SMOKE=TEST_NOT_RUN`; `GATE_FEATURE_E11=INCONCLUSIVE` até prova de deploy, bundling federado, acesso autenticado e verificação visual desktop/mobile, claro/escuro, teclado/foco, filtros, detalhe e falhas. Manter `peer_branch_stock=TO_INVENTORY` fora de E11 e não promover os 10 erros de lint preexistentes a blocker sem evidência de regressão. Antes de E11.S5, revalidar HEAD, instruções oficiais, regras .cursor, imagem/bundle-alvo, estratégia de rollback e autorização explícita do PO para deploy.
