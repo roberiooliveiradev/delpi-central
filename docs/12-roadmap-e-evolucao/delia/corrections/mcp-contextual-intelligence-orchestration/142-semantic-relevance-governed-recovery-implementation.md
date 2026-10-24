@@ -1,7 +1,7 @@
 # 142 — Correção transversal de pertinência semântica + recuperação governada (O2)
 
 - **Task**: `DELIA-C3-SEMANTIC-RELEVANCE-GOVERNED-RECOVERY-CROSSCUTTING-01`
-- **Implementação**: `58a7e873c6` (sobre `2e15682b8c`)
+- **Implementação**: `acff081397` (push em `main`; avaliada como `58a7e873c6` sobre `2e15682b8c` — árvore idêntica, apenas rebase de ancestral)
 - **Autoridade**: adendo prioritário do plano 125 + revisão independente R3 `aac88d40f6` (O2) + PO
 - **Escopo**: `delia-api` — implementação + testes locais + A/B isolado. Deploy **não** autorizado.
 
