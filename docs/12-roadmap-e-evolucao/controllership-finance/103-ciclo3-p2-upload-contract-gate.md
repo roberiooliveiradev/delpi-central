@@ -80,7 +80,7 @@ Prefixo `POST/GET /closing/competences/{period}/documents*` — mesmo envelope e
 
 | # | Capability (proposta) | Método/path (proposta) | AuthZ | Idempotência | Erros novos |
 |---|---|---|---|---|---|
-| U1 | `upload_competence_document` | `POST /closing/competences/{period}/documents` multipart (`file`, `snapshot_item_id?`, `title?`, `attachment_role?`) | `access` + scope + business_rule | header `Idempotency-Key` opcional → dedup por `(actor, key)` 24h | `file_too_large` 422, `unsupported_media_type` 415, `item_not_found` 404, `competence_not_opened` 404, `competence_closed` 409 (futuro) |
+| U1 | `upload_competence_document` | `POST /closing/competences/{period}/documents` multipart (`file`, `snapshot_item_id?`, `title?`, `attachment_role?`) | `access` + scope + business_rule | idempotência `UNIQUE(<aggregate>, key)`+`request_hash`+409 tipado (padrão supplies-api); transporte/escopo/TTL **D-U7 pendente** — Adendo §B | `file_too_large` 422, `unsupported_media_type` 415, `item_not_found` 404, `competence_not_opened` 404, `competence_closed` 409 (futuro) |
 | U2 | `list_competence_documents` | `GET .../documents?item=&state=` | `access` + scope | — | filtros = dimensão de dado |
 | U3 | `get_competence_document` | `GET .../documents/{document_id}` | `access` + scope | — | `document_not_found` 404 |
 | U4 | `download_document_version` | `GET .../documents/{document_id}/versions/{version}/content` → `FileResponse` | `access` + scope + recipient rule | — | `document_not_found` 404, `forbidden` 403, `file_missing` 503 (`persistence_unavailable`-like) |
@@ -89,7 +89,7 @@ Prefixo `POST/GET /closing/competences/{period}/documents*` — mesmo envelope e
 | U7 | `cancel_document` | `POST .../documents/{document_id}/cancel` | `access` + scope + owner/admin | — | `document_locked` 409 |
 | U8 | `list_document_audit` | `GET .../documents/{document_id}/events` | `access` + scope | — | — |
 
-Para cada operação vale o contrato de plataforma: **AUTHN** JWT+Core RBAC (fail-closed, `rbac_unavailable` 503) · **RESOURCE_SCOPE** competência × filial-contexto do request · **CONCURRENCY** `revision` OCC no `closing_document` · **AUDIT** `closing_audit_event` por mutação (`DOCUMENT_UPLOADED`, `VERSION_ADDED`, `DOCUMENT_CANCELLED`, `DOCUMENT_DOWNLOADED`? — download-audit = DECISION, ver §8) · **TIMEOUT** padrão BFF · **RETRY** seguro apenas com `Idempotency-Key` · **PAGINATION** `limit/offset` ≤ 100.
+Para cada operação vale o contrato de plataforma: **AUTHN** JWT+Core RBAC (fail-closed, `rbac_unavailable` 503) · **RESOURCE_SCOPE** competência × filial-contexto do request · **CONCURRENCY** `revision` OCC no `closing_document` · **AUDIT** `closing_audit_event` por mutação (`DOCUMENT_UPLOADED`, `VERSION_ADDED`, `DOCUMENT_CANCELLED`, `DOCUMENT_DOWNLOADED`? — download-audit = DECISION, ver §8) · **TIMEOUT** padrão BFF · **RETRY** seguro apenas com `idempotency_key` (transporte = D-U7) · **PAGINATION** `limit/offset` ≤ 100.
 
 ### 4.2 Ciclo de vida proposto
 
@@ -173,7 +173,7 @@ CP-D02 (responsável/validador/regra por item — `TO_INVENTORY`) · CP-D03 (CK-
 | Concorrência perde versão | `version_no` UNIQUE por documento + OCC `revision` | concurrent replace |
 | Core down ⇒ acesso indevido | `rbac_unavailable` 503 fail-closed | negative Core |
 | Storage falha ⇒ sucesso falso | metadado só após write; erro ⇒ rollback | fault-injection |
-| Replay duplica evidência | `Idempotency-Key` + UNIQUE natural `(competence,item,hash?)` — dedup por hash opcional (DECISION no GO) | replay idempotente |
+| Replay duplica evidência | `idempotency_key` + `request_hash` + `UNIQUE(<aggregate>, key)` (padrão supplies-api); dedup por hash **não** colapsa evidências; transporte/escopo = D-U7 | replay idempotente |
 | Auditoria perde ator | `actor_subject` UUID-only já hardened | audit assert |
 | Duplicar ownership | storage é adapter do próprio CF; metadado no schema CF | boundary check |
 | Contrato viola decisão PO | §8 registra congelados × abertos; nada implementado | review GPT |
@@ -214,14 +214,20 @@ CP-D02 (responsável/validador/regra por item — `TO_INVENTORY`) · CP-D03 (CK-
 | **D-U5=A** | `attachment_role=generic` explícito na V1; E05 (catálogo/obrigatoriedade) permanece pendente e não bloqueia upload | `attachment_role` default `generic`; roles reais chegam com E05 antes de C05 |
 | **D-U6=A** | Dois níveis de vínculo: `competence` OU `competence_item` | `closing_document.link_kind IN ('competence','competence_item')`; item deve pertencer à competência do path — item de outra competência ⇒ 404 |
 
-### B. C1 — Idempotência do upload (U1) — consolidado TARGET
+### B. C1 — Idempotência do upload (U1) — origem por autoridade
 
-- `Idempotency-Key`: **opcional** no header; escopo `(actor_subject, competence_id, key)`; TTL **24h**; armazenada com `request_hash` (sha256 do payload de metadados + hash do binário).
-- **Replay idêntico** (mesma key + mesmo `request_hash`) ⇒ retorna o documento criado originalmente, `200` + `deduplicated: true`; nenhum segundo `document`/`version`/arquivo.
-- **Replay divergente** (mesma key, `request_hash` diferente) ⇒ `idempotency_conflict` **409**.
-- **Sem key:** cada chamada cria um `closing_document` novo — dois anexos com os mesmos bytes são atos distintos legítimos (mesmo extrato pode vincular-se a itens diferentes); dedup por hash **não** é usado para colapsar documentos (evitaria união indevida de evidências). Hash serve à integridade/auditoria, não à deduplicação.
-- **Concorrência:** requests simultâneos com a mesma key resolvem no banco (`UNIQUE (actor, competence, key)` — um vencedor persiste; o perdedor lê o registro do vencedor se `request_hash` confere, senão `idempotency_conflict`).
-- **Identidade:** `document_id` UUID criado por U1; `version_no=1` na criação.
+**Determinado por padrão vigente** — precedente implementado `supplies-api` (`V002__supplier_enrichment_reviews.sql`, `supplier_enrichment_repository.py`, `supplier_enrichment_routes.py`), inventariado e ratificado como padrão de referência no doc 96:
+
+- `idempotency_key` transportada no **body** do request (campo JSON, 1–128 chars, **obrigatório** no precedente);
+- `request_hash` persistido junto ao registro de operação;
+- `UNIQUE (<aggregate>, idempotency_key)` — concorrência resolve no banco: um vencedor persiste; o perdedor lê o registro do vencedor se `request_hash` confere, senão conflito;
+- mesma key + hash divergente ⇒ `IdempotencyConflictError` tipado ⇒ 409 `idempotency_conflict`;
+- registros append-only — **sem TTL** no precedente;
+- replay com hash idêntico retorna a entidade já criada, sem duplicar.
+
+**Não determinado por autoridade vigente** — nenhum PO, regra `.cursor` ou precedente cobre: transporte (body field do padrão vs header HTTP `Idempotency-Key` sem precedente na plataforma); obrigatoriedade da key (opcional deixa retry cego criar duplicata); escopo (`<aggregate>` do padrão → análogo `competence_id`, vs incluir `actor_subject`); status do replay (200 `deduplicated:true` vs 201); TTL (nenhuma vs janela). Registrado como **`DECISION_REQUIRED` D-U7** no doc 17 — **recomendação, opção A:** aderir integralmente ao supplies-api (body field obrigatório, `UNIQUE (competence_id, idempotency_key)`, sem TTL, replay idêntico retorna o `document` com `deduplicated: true`). `NO_CHANGE_APPLIED` — decisão do PO pendente antes do GO de implementação. A versão anterior deste adendo apresentava header/TTL-24h/escopo-com-ator como consolidado sem autoridade — corrigido neste rework (`CF-C3-P2-UPLOAD-CONTRACT-CLOSURE-REWORK-001`).
+
+**Fixo independentemente de D-U7:** se a key for ausente/opcional, cada chamada cria um `closing_document` novo — dedup por hash de conteúdo **não** colapsa evidências (o mesmo extrato pode vincular-se a itens diferentes); hash serve integridade/auditoria, não deduplicação. `document_id` UUID na criação; `version_no=1`.
 
 ### C. C2 — Consistência Postgres × filesystem — consolidado TARGET
 
@@ -229,32 +235,47 @@ Sequência obrigatória (sem afirmar transação atômica DB×FS):
 
 1. Validar envelope/metadados (AuthZ, scope, tamanho anunciado).
 2. Gravar binário em `<upload_dir>/.tmp/{uuid}.part` **em chunks limitados** — exceder 25 MB aborta mid-stream e remove o `.part`.
-3. Computar `sha256` durante a gravação; conferir magic bytes por tipo (§C3).
+3. Computar `sha256` durante a gravação; conferir assinatura/estrutura por tipo (§D).
 4. `rename()` atômico (mesmo FS) para `<upload_dir>/{competence_id}/{file_uuid}{ext}` — publicação visível.
 5. Transação Postgres única: `document_file` + `closing_document` + `document_version(v1)` + `closing_audit_event(DOCUMENT_UPLOADED)` — tudo ou nada.
 6. Falha em (5) ⇒ **compensação**: `unlink` do arquivo final → `persistence_unavailable` 503. Nunca metadado sem binário nem sucesso falso.
-7. Falha em (2)–(4) ⇒ nada persistido; `.part` elegível a housekeeping.
+7. Falha em (2)–(4) ⇒ nada persistido; `.part` removido ou elegível a housekeeping.
 
-**Órfãos/referências:** `.part` >24h e finais sem linha em `document_file` ⇒ removíveis por housekeeping documentada (não ativada neste gate; rotina PLANNED, nunca toca arquivos referenciados). Metadado sem arquivo ⇒ download ⇒ `file_missing` 503. Pós-condições verificáveis: sucesso ⇒ linha+arquivo+hash consistentes; falha ⇒ nenhum documento visível.
+**Matriz de falha — controle SLICE-1 vs resíduo honesto:**
 
-### D. C3 — Validação de conteúdo (D-U2=A) — consolidado TARGET
+| Falha | Controle SLICE-1 | Resíduo (sem garantia) |
+|---|---|---|
+| Falha normal em (2)–(4) | `.part` removido; nada persistido | — |
+| Erro de persistência em (5) | `unlink` do binário + `persistence_unavailable` 503 | — |
+| Erro **na compensação** (`unlink` falha) | `persistence_unavailable` 503 + log | **binário órfão sem metadado** — indetectável pela API |
+| Crash entre rename (4) e commit (5) | — | binário órfão; **nenhuma limpeza garantida em SLICE-1** |
+| Crash após commit (5) | par consistente | — |
+| Metadado sem binário (qualquer causa) | download ⇒ `file_missing` 503 | nunca sucesso falso |
 
-| Tipo | Verificações obrigatórias |
-|---|---|
-| PDF | header `%PDF-` + trailer `%%EOF` nos últimos bytes; >1 KB |
-| JPEG | magic `FF D8` |
-| PNG | magic `89 50 4E 47` |
-| WebP | `RIFF` + `WEBP` no offset 8 |
-| XLS | CFB/OLE2 `D0 CF 11 E0` |
-| XLSX | ZIP `PK\x03\x04` + membros obrigatórios `xl/workbook.xml` e `[Content_Types].xml` — ZIP genérico não conta como planilha |
-| CSV | texto decodificável (UTF-8/Latin-1), sem NUL bytes, não vazio |
+**SLICE-1 vs housekeeping futura:** SLICE-1 cobre compensação, `.part` e erro tipado. Housekeeping de órfãos/finais-sem-metadado é **PLANNED** e exige especificação própria (varredura, janela de segurança >24h, dry-run) — D-U4=A não autoriza rotina produtiva de limpeza neste gate. Nenhuma atomicidade distribuída nem limpeza garantida é reivindicada.
 
-Comum: leitura limitada (cap aplicado **durante** o stream); arquivo vazio ⇒ `empty_file` 422; truncado/inconsistente ⇒ `invalid_file_content` 422; extensão divergente do conteúdo detectado ⇒ `content_type_mismatch` 422; formato fora da allowlist ⇒ `unsupported_media_type` 415; `original_name` sanitizado (basename, sem separadores/NUL) e nome armazenado é UUID servidor — traversal impossível. Sem antivírus: capability inexistente na plataforma — registrado como lacuna, não como proteção.
+### D. C3 — Validação de conteúdo (D-U2=A) — três camadas TARGET
+
+| Camada | Objetivo | Verificações por tipo |
+|---|---|---|
+| **Assinatura** | tipo real do conteúdo | PDF `%PDF-`; JPEG `FF D8`; PNG `89 50 4E 47`; WebP `RIFF`+`WEBP`@8; XLS CFB `D0 CF 11 E0`; XLSX `PK\x03\x04`; CSV sem magic — exige texto decodificável |
+| **Estrutura** | arquivo íntegro e do tipo declarado | PDF: trailer `%%EOF` nos últimos bytes, >1 KB; imagem decodifica com codec declarado; XLS abre no parser CFB; **XLSX: ZIP estrutural válido contendo `xl/workbook.xml` e `[Content_Types].xml`** — ZIP genérico não conta como planilha; CSV decodifica UTF-8/Latin-1 sem NUL, não vazio; truncado/inconsistente ⇒ `invalid_file_content` |
+| **Segurança** | abuso operacional | cap 25 MB **mid-stream**; `original_name` sanitizado (basename, sem separadores/NUL), stored name UUID — traversal impossível; **sem antivírus** — capability inexistente na plataforma, lacuna registrada, não proteção |
+
+**Riscos explicitamente documentados:**
+
+- **ZIP malicioso/bomb em XLSX** — a camada estrutural exige ZIP válido com `workbook.xml`, mas limites de entradas/tamanho descompactado e parser streaming são **requisitos de implementação** (especificados no GO, não decisão de produto).
+- **Planilha inválida** — ZIP íntegro sem `xl/workbook.xml`, workbook corrompido ou XLS com CFB truncado ⇒ `invalid_file_content`.
+- **Conteúdo poliglota** (válido como PDF+script) — mitigado parcialmente (assinatura+estrutura exigem ambos); resíduo aceito **sem AV**.
+- **CSV adversarial** — formula injection (`=`,`-`,`+`,`@`) é risco do **consumidor** da planilha, não do storage; documentado, sem sanitização de conteúdo na V1.
+- **Extensão divergente do conteúdo** ⇒ `content_type_mismatch`; **vazio** ⇒ `empty_file`; formato fora da allowlist ⇒ `unsupported_media_type` 415; tamanho ⇒ `file_too_large` 422.
+
+Erros tipados: `file_too_large` 422 · `unsupported_media_type` 415 · `invalid_file_content`/`empty_file`/`content_type_mismatch` 422.
 
 ### E. C4 — Rastreabilidade RQ/AC (ledger doc 23)
 
-`RQ-P2-15..22` mantidos `TARGET`; AC criados `AC-P2-UP-01..24` com escopo **SLICE-1** (U1 upload, U2 list, U3 get, U4 download+audit) vs **SLICE-2** (U5 replace, U7 cancel, U8 events) — detalhe no doc 23 §P2-Upload.
+`RQ-P2-15..22` mantidos `TARGET`; `AC-P2-UP-01..24` com escopo **SLICE-1** (U1 upload, U2 list, U3 get, U4 download+audit — invariantes AC-23/24 obrigatórios já neste slice) vs **SLICE-2** (U5 replace, U6 histórico de versões, U7 cancel, U8 events). Detalhe e cobertura por requisito no doc 23 §P2-Upload.
 
 ### F. Decisões ainda abertas (não encerradas)
 
-Retenção corporativa definitiva · inventário OFX/QIF com TÉO/Controladoria · E05 roles/obrigatoriedade · E06 motivos · CP-D02 · CP-D03 · reconciliação TÉO `RQ-P2-039` · antivírus (capability inexistente). Nenhum `DECISION_REQUIRED` novo emergiu do fechamento — C1..C3 foram resolvidos dentro das decisões aprovadas e dos padrões canônicos.
+**D-U7** (idempotência: transporte/obrigatoriedade/escopo/TTL/status do replay — `DECISION_REQUIRED` no doc 17, recomendação A aderir ao supplies-api) · retenção corporativa definitiva · inventário OFX/QIF com TÉO/Controladoria · E05 roles/obrigatoriedade · E06 motivos · CP-D02 · CP-D03 · reconciliação TÉO `RQ-P2-039` · antivírus (capability inexistente).

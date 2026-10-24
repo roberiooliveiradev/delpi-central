@@ -48,7 +48,7 @@ Este ledger complementa:
 | RQ-P2-19 | `CANCELLED` preserva histórico e sai da listagem ativa | cancelamento não deleta arquivo/versões; documento cancelado permanece consultável no histórico | positive + negative | doc 103 §4.2 | TARGET |
 | RQ-P2-20 | tipo/tamanho de arquivo é allowlist com conferência de conteúdo | MIME+extensão+magic bytes; `file_too_large`/`unsupported_media_type` tipados | negative por tipo | D-U2 doc 103 | TARGET |
 | RQ-P2-21 | evidência em pacote submetido é imutável | `version_locked` em substituição/cancelamento após submissão P5 | negative + P5 sibling | doc 12/37 | TARGET |
-| RQ-P2-22 | upload idempotente e concorrência segura | `Idempotency-Key`/dedup; `version_no` UNIQUE + OCC `revision`; replay não duplica evidência | idempotency + concurrent | doc 103 §4.1 | TARGET |
+| RQ-P2-22 | upload idempotente e concorrência segura | `idempotency_key`+`request_hash`+`UNIQUE` (padrão supplies-api; transporte/escopo = D-U7); `version_no` UNIQUE + OCC `revision`; replay não duplica evidência | idempotency + concurrent | doc 103 §4.1 + Adendo §B | TARGET |
 
 ### P2-Upload — critérios de aceite (AC) e escopo por slice
 
@@ -68,13 +68,17 @@ Contrato consolidado no doc 103, Adendo §B–§E (`CF-C3-P2-UPLOAD-DECISIONS-CO
 | AC-P2-UP-08 | RQ-P2-18 | negative: sem `access` / cross-competence / cross-branch | 401/403/404 sem vazamento de existência; `result=DENIED` quando auditável |
 | AC-P2-UP-09 | RQ-P2-20 | negative por tipo: ZIP-renomeado-xlsx, PDF truncado, arquivo vazio, extensão divergente do conteúdo, >25 MB mid-stream | `invalid_file_content`/`empty_file`/`content_type_mismatch`/`file_too_large`/`unsupported_media_type` tipados |
 | AC-P2-UP-10 | RQ-P2-20 | negative: `original_name` com separadores/`..`/NUL | nome sanitizado; stored name UUID; traversal impossível |
-| AC-P2-UP-11 | RQ-P2-22 | idempotency: replay idêntico com mesma `Idempotency-Key` | mesmo `document_id`, `deduplicated: true`, zero novo arquivo |
+| AC-P2-UP-11 | RQ-P2-22 | idempotency: replay idêntico com mesma `idempotency_key` (transporte = D-U7) | mesmo `document_id`, `deduplicated: true`, zero novo arquivo |
 | AC-P2-UP-12 | RQ-P2-22 | negative: mesma key com payload divergente | `idempotency_conflict` 409 |
 | AC-P2-UP-13 | RQ-P2-22 | concurrency: dois uploads com a mesma key | um vencedor; perdedor lê registro ou `idempotency_conflict` — nunca duplicata |
 | AC-P2-UP-14 | segurança | service principal / Core indisponível | 403 / `rbac_unavailable` 503 — fail-closed |
 | AC-P2-UP-15 | auditoria | mutações e download auditável | `actor_subject` UUID-only (hardening R2 preservado) |
+| AC-P2-UP-23 | boundary | MFE consome só a BFF; sem URL pública/storage direto | structural test; download sempre stream autenticado |
+| AC-P2-UP-24 | invariante | upload nunca produz `VALIDATED`/`ACCEPTED` | estados persistidos limitados a `ATTACHED\|SUPERSEDED\|CANCELLED`; item segue `EXPECTED` |
 
-**SLICE-2** (substituição/cancelamento/eventos — U5/U7/U8; depende do aceite do slice 1):
+Cobertura SLICE-1 por requisito (positive/sibling/negative/security/postcondition conforme aplicabilidade): RQ-P2-15 → AC-01/02/03 · RQ-P2-16 → AC-04/05/06 · RQ-P2-18 → AC-07/08 · RQ-P2-20 → AC-09/10 · RQ-P2-22 → AC-11/12/13 · transversais segurança/auditoria/boundary/invariante → AC-14/15/23/24.
+
+**SLICE-2** (U5 substituição, **U6 histórico de versões**, U7 cancelamento, U8 eventos de auditoria; depende do aceite do slice 1):
 
 | AC | Cobre RQ | Caso | Pós-condição verificável |
 |---|---|---|---|
@@ -85,8 +89,6 @@ Contrato consolidado no doc 103, Adendo §B–§E (`CF-C3-P2-UPLOAD-DECISIONS-CO
 | AC-P2-UP-20 | RQ-P2-21 | negative: replace/cancel após submissão P5 | `version_locked`/`document_locked` 409; pacote imutável |
 | AC-P2-UP-21 | RQ-P2-22 | concurrency: replaces simultâneos | um vencedor por OCC `revision`; perdedor `stale_revision` 409 — nenhuma versão perdida |
 | AC-P2-UP-22 | retenção | D-U4: v1 não deleta nada | housekeeping só atinge `.part`/órfãos sem metadado, nunca evidências registradas |
-| AC-P2-UP-23 | boundary | MFE consome só a BFF; sem URL pública/storage direto | structural test; download sempre stream autenticado |
-| AC-P2-UP-24 | invariante | upload nunca produz `VALIDATED`/`ACCEPTED` | estados persistidos limitados a `ATTACHED\|SUPERSEDED\|CANCELLED`; item segue `EXPECTED` |
 
 ## P3 — Estoque, Cutoff e Conciliação
 

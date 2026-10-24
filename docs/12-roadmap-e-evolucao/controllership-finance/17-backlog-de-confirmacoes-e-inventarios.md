@@ -188,6 +188,10 @@ Levantadas no gate documental `CF-C3-P2-UPLOAD-CONTRACT-GATE-001` (doc 103 §8) 
 - **D-U5=A** — `attachment_role=generic` explícito na V1; não bloqueia upload. **CONCLUÍDA** — E05 permanece aberto para catálogo/obrigatoriedade (bloqueia C05, não o upload).
 - **D-U6=A** — Dois níveis de vínculo: `competence` OU `competence_item`; item deve pertencer à competência do path. **CONCLUÍDA.**
 
+**Decisão pendente nova (rework `CF-C3-P2-UPLOAD-CONTRACT-CLOSURE-REWORK-001`):**
+
+- **D-U7** — Idempotência U1: transporte (body field `idempotency_key` do padrão supplies-api vs header `Idempotency-Key` sem precedente), obrigatoriedade, escopo da key (`competence_id` vs +`actor_subject`), status do replay (200 vs 201), TTL (nenhuma vs janela). O padrão vigente cobre: `UNIQUE(<aggregate>, key)` + `request_hash` + `IdempotencyConflictError` 409 + append-only. **Recomendação: opção A — aderir integralmente ao supplies-api** (body obrigatório, `UNIQUE(competence_id, key)`, sem TTL, replay retorna `document` com `deduplicated: true`). Owner: PO/GPT — bloqueia fechamento do contrato U1 no GO de implementação. `NO_CHANGE_APPLIED`.
+
 Não cobertas por este gate, permanecem abertas: política definitiva de retenção (derivada de D-U4), inventário OFX/QIF (derivada de D-U2), E05, E06 (seed motivos), CP-D02 (responsável/validador/regra por item), CP-D03 (R-ID CK-E-27), reconciliação TÉO `RQ-P2-039` × ledger (doc 90 §67), antivírus (capability inexistente na plataforma).
 
 ## Stop conditions

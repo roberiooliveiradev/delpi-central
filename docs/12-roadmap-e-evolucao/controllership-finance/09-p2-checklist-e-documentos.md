@@ -532,7 +532,7 @@ plugins/controllership-finance
 
 O browser não chama Core, `api-delpi`, notification provider ou storage diretamente.
 
-> **Gate contratual executado:** o storage adapter e os contratos físicos de upload foram especificados e consolidados como TARGET no [doc 103 — P2-Upload contract gate](./103-ciclo3-p2-upload-contract-gate.md) (`CF-C3-P2-UPLOAD-CONTRACT-GATE-001` + fechamento `CF-C3-P2-UPLOAD-DECISIONS-CONTRACT-CLOSURE-001`): operações U1–U8, matriz de segurança, decisões **D-U1..U6=A PO_APPROVED** (doc 97 §7), C1–C4 fechados. Runtime/upload permanece não autorizado até revisão GPT e GO próprio.
+> **Gate contratual executado:** o storage adapter e os contratos físicos de upload foram especificados e consolidados como TARGET no [doc 103 — P2-Upload contract gate](./103-ciclo3-p2-upload-contract-gate.md) (`CF-C3-P2-UPLOAD-CONTRACT-GATE-001` + fechamento `CF-C3-P2-UPLOAD-DECISIONS-CONTRACT-CLOSURE-001`): operações U1–U8, matriz de segurança, decisões **D-U1..U6=A PO_APPROVED** (doc 97 §7), C1–C4 revisados (idempotência pendente de detalhe de transporte/escopo — D-U7). Runtime/upload permanece não autorizado até revisão GPT e GO próprio.
 
 Operações semânticas necessárias:
 
