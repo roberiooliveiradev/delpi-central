@@ -100,3 +100,10 @@ nenhum técnico; apenas decisões de apresentação (EN.A2 usa contadores, nunca
 soma de quantidades).
 
 **COMMIT_SHA:** `ver abaixo no relatório de execução`
+
+
+## Revisão GPT — EN.A1 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`.** Revisados no source `f90b1644d7`: `plugins/supplies/src/features/purchase-requests/types.ts`, `PurchaseRequestDetail.contract.test.ts` e este documento. Tipos opcionais e subtipos SC refletem os campos inventariados e preservam granularidade `account_code` por linha, vocabulário de estágios dos pedidos vinculados, timeline derivada e aviso de quantidades heterogêneas; nenhum UI/backend novo foi requerido. 447 testes, typecheck e build são evidências **reportadas** pelo executor, não reexecutadas pelo GPT.
+
+**Residuo não bloqueante:** o teste usa fixture estática tipada e asserções locais; não prova validação runtime nem foi verificado por este review contra uma resposta HTTP autenticada. A descrição da fixture menciona dois pedidos vinculados, mas o objeto `header.purchase_orders` inspecionado mostra um; ajustar descrição/fixture em manutenção de teste escopada, sem inferir cobertura de multiplicidade. A validação estrutural continua exclusivamente em compile time (`httpGet<T>` não valida resposta). A próxima fatia `EN.A2` permanece **READY_FOR_AUTHORIZATION**, não iniciada nem automaticamente liberada pelo aceite de EN.A1. Sem deploy em EN.A1.
