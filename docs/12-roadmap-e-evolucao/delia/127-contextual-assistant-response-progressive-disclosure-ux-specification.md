@@ -384,3 +384,48 @@ Inventário atual no HEAD de documentação: \`DeliaConversationPage\` compõe \
 **Residual:** REAL_DOCK_QA TEST_NOT_RUN (compact ≤920px host → popover é o contrato; probe do Dock real não executado); zoom 200%/dark-light visual/screen reader TEST_NOT_RUN; streaming/fila cobertos por vitest.
 
 **RIGHTRAIL-01..18:** 01–15 PASS; 16 PASS (regressão); 17 PASS (EXTEND, zero duplicação); 18 PASS (docs+ledger+push+deploy+verify). PHASE_NOT_ADVANCED.
+
+
+## Decisão posterior de UX — Contexto inline com duas zonas semânticas e densidade adaptativa (2026-10-24)
+
+**STATUS: PRODUCT_UX_DECISION / PLANNED / DOC_ONLY.** O PO apresentou capturas reais em dark/light comprovando desequilíbrio do componente: detalhes em lista vertical longa à esquerda, evidências quase vazias no topo, atividades deslocadas para baixo e rastreamento ocupando terceira área pouco aproveitada. A nova direção de produto **substitui a distribuição rígida em três áreas como padrão visual**. Mantém a largura responsiva do contexto e seu vínculo inline ao turno, porém organiza o conteúdo conforme os dados de fato disponíveis.
+
+### Layout aprovado
+
+- **Desktop com largura suficiente:** duas zonas semânticas flexíveis: (1) **Geração** — metadados compactos em grid interno de pares label/valor, incluindo modelo, composição, tempos, tokens, chamadas, custo e estado quando existentes; (2) **Evidências e atividades** — fontes/proveniência e atividades relacionadas próximas, seguidas de **Rastreamento técnico** em disclosure recolhível na mesma zona. As zonas devem distribuir a altura de modo equilibrado, sem criar regiões artificialmente vazias.
+- **Intermediário:** duas zonas quando a largura real comportar boa leitura; grid de metadados adapta o número de pares por linha. **Compacto/Dock/mobile:** uma zona vertical na ordem lógica Geração → Evidências → Atividades → Rastreamento.
+- **Densidade:** reduzir altura desnecessária, espaçamento e repetições, mas preservar legibilidade, todos os valores reais, auditabilidade e a semântica. Não truncar identificadores, não esconder limitações materiais e não forçar cards para cada campo se isso poluir o layout.
+- **Ausência de conteúdo:** não reservar coluna ou altura inteira para evidências vazias. A informação “Sem fonte vinculada”, quando legítima, aparece neutra dentro do contexto técnico. Não apresentar ausência de fonte como erro para saudação; não inferir inexistência de necessidade de grounding.
+- **Valores:** exibir números, custos, nomes de modelo, duração, atividade e fonte apenas conforme contrato real; a referência ilustrativa não adiciona novos campos nem valores. Não converter activity success em business outcome.
+- **Visual:** uma única superfície clean, borda neutra, ícones de baixa ênfase, títulos claros, divisórias mínimas, sem barra azul e sem três painéis aninhados. Dark/light via tokens legítimos. Preservar expansão inline, rolagem única, múltiplos turnos abertos, ações de mensagem, foco e reduced-motion.
+
+### Ownership, reuse e compatibilidade
+
+Antes do código, reancorar no HEAD e mapear consumidores de \`ConversationContextPanel\` (plugin-ui) e a composição \`DeliaTurnContextPanel\` (DÉLIA). A implementação anterior introduziu slot opcional \`trailing\`; **não apagá-lo nem quebrar consumidores compartilhados** sem prova de paridade. \`EvidenceDetails\`, \`ActivityViewer\` e rastreamento continuam sendo a fonte da apresentação real. \`EXISTING_EQUIVALENT=YES\`, \`REUSE_DECISION=EXTEND\` como direção sujeita a inventário do HEAD. A mudança é de layout/presentação, sem backend nem contrato de dados novo. O right rail global conversation-scoped permanece independente e com seções futuras \`BLOCKED_PENDING_CONTRACT\`.
+
+### Critérios DENSECTX-01..DENSECTX-16
+
+| ID | Critério |
+|---|---|
+| DENSECTX-01 | Em wide, duas zonas semânticas equilibradas em vez de três áreas rígidas |
+| DENSECTX-02 | Metadados da geração reorganizados em grid interno legível |
+| DENSECTX-03 | Ausência de grande área vazia para evidência/atividade inexistente |
+| DENSECTX-04 | Evidências e atividades agrupadas em proximidade visual |
+| DENSECTX-05 | Rastreamento técnico secundário e recolhível na mesma zona |
+| DENSECTX-06 | Compacto/Dock usa uma coluna em ordem semântica |
+| DENSECTX-07 | O layout responde à largura real do card/centro, com right rail aberto/fechado |
+| DENSECTX-08 | Valores reais, proveniência e ausência legítima de fonte preservados |
+| DENSECTX-09 | Limitações materiais e confirmações continuam perceptíveis |
+| DENSECTX-10 | Atividade concluída não se transforma em outcome empresarial |
+| DENSECTX-11 | Superfície clean sem barra azul, overlays ou scroll aninhado |
+| DENSECTX-12 | Vários contextos inline expandidos, foco/ARIA/teclado intactos |
+| DENSECTX-13 | Dark/light, mobile 320–420px, zoom 200%, Dock real e reduced motion |
+| DENSECTX-14 | Compatibilidade de API, slot trailing e consumidores plugin-ui |
+| DENSECTX-15 | Regressão queue/lifecycle/S2/streaming/Markdown/composer |
+| DENSECTX-16 | RED/GREEN, QA autenticado, evidência por SHA, ledger, deploy e report |
+
+**TASK_ID:** \`DELIA-UX-INLINE-CONTEXT-SEMANTIC-DENSITY-REFACTOR-01\`.
+
+**MODE:** REANCHOR → CONTRACT/REUSE GATE → RED TESTS → MINIMAL PRESENTATION DIFF → GREEN → VISUAL QA → REGRESSION → REWORK → DOCUMENT EVIDENCE → COMMIT/PUSH MAIN → DEPLOY SCOPED → PRODUCTION VERIFICATION → REPORT.
+
+**Document-only nesta publicação:** \`RUNTIME_CHANGED=NO\`, \`TEST_NOT_RUN\`, \`PHASE_NOT_ADVANCED\`. As medições e commits das versões anteriores são histórico, não evidência da nova organização.
