@@ -429,3 +429,8 @@ O PO aceitou o encerramento documental do Ciclo 2 com residuais e direcionou ini
 
 
 [Doc 89 — Decisões aprovadas C3-D01..D06 e gate documental R02](./89-ciclo3-decisoes-aprovadas-e-gate-documental-r02.md) (24/10/2026): PO aprovou **A/A/B/B/A/A** exclusivamente para escopo e design. V1 read-only usa seleção por período, filial e contratos vigentes de SB9/baixas; estados separados, reabertura fora, `closing-context`/`MV_ULMES` adiados, homologação humana e superfícies sem fonte excluídas. **`IMPLEMENTATION_AUTHORIZED=NO`**. Próxima rodada: `CF-C3-02-READONLY-DESIGN-CONTRACT-GATE-001` — inventário de HEAD, RQ/AC e design page-by-page sem runtime.
+
+
+### Ciclo 3 — Crosswalk E2E PROC-0072 e correção de interpretação de escopo (24/10/2026)
+
+[Doc 90 — Crosswalk completo PROC-0072/TÉO → RQ/AC → P1–P6 → capacidades, fontes, contratos e gaps](./90-ciclo3-crosswalk-end-to-end-proc0072-teo-rq-ac-portal.md): confirma que a Central de Fechamento é **workflow de ponta a ponta**, envolvendo checklist/automação dos relatórios, PDFs e extratos com validação humana P2, conciliação/cutoff P3, classificação/pendências P4, pacote/versionamento/submissão portal-first/review P5 e configuração P6. A fatia read-only C3-D01..D06 é **somente o incremento inicial de design**, não substitui P1–P6. [Doc 89 §6](./89-ciclo3-decisoes-aprovadas-e-gate-documental-r02.md) esclarece o alcance sem reabrir as decisões aprovadas; [doc 37](./37-p5-submissao-e-revisao-no-portal.md) mantém envio para análise dentro da Minha DELPI (e-mail só notificação). Resíduos de contratos e RQ-P2 detalhados continuam TO_INVENTORY, G6×15 PENDING, **nenhum GO/runtime novo**.
