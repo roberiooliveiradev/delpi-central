@@ -18067,3 +18067,17 @@ ROLLBACK_STATUS=READY G5_PROD=17151B/20480B EXECUTION_DRIFT=NONE
 RESIDUALS=discover_runtime_byte_bound(ARCHITECTURE_DECISION)+eval_check_contract(coordenação)
 COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO PLAN_COMPLETE=NO
 Evidência: [doc 139](../corrections/mcp-contextual-intelligence-orchestration/139-integrated-production-deploy-and-homologation.md).
+
+## §6.423 — Separação message context × conversation context: popover por mensagem + painel global honesto (2026-10-24)
+
+**2026-10-24 — DELIA-UX-MESSAGE-CONTEXT-AND-GLOBAL-CONVERSATION-PANEL-01 (spec 127):** `MESSAGE_CONTEXT != CONVERSATION_CONTEXT`. "Ver contexto" saiu do "Mais opções" e virou ação inline visível na strip da mensagem (`inlineActions` em `ConversationAssistantActions`, EXTEND; `expanded` → `aria-expanded`+`aria-haspopup="dialog"`). Popover `AnchoredPanelPortal` shape/dialog "Contexto desta resposta" reutilizando `DeliaTurnContextPanel` (seções vazias filtradas); estado local, Escape/clique externo/trigger, exclusividade entre popovers. Painel global: `ConversationContextPanel` ganhou `sections`/`emptyState` genéricos (EXTEND); `DeliaConversationContextPanel` novo renderiza vazio honesto — `GLOBAL_DATA_SOURCE=NONE`, sem contrato conversation-scoped → zero seções fake, zero agregado de turnos, sem engine/memória paralela (`ARCHITECTURE_DECISION_REQUIRED` p/ seções futuras). `selectedTurnId`/`onSelectTurn` removidos (só serviam ao painel-como-viewer).
+
+TESTES: delia 437/437 (+13 MC/GC), plugin-ui 2335/2335 (+7), tsc+build+federation verdes. DEFECT_FOUND=1: `setSelectedTurnId` residual → ReferenceError pós-append (error+queuePaused); regressão detectou, fix 1 linha, re-verde. DEPLOY: push ff `da1794d68d` → `up-prod-sequential --build plugin-ui delia`.
+
+QA VISUAL PROD 32/32 (`vd-mctx-prod.mjs` autenticado): popover w=340 ancorado à strip (gap 4–8px, flip adaptativo), sem abrir painel; exclusividade entre mensagens; painel "Contexto da conversa" com vazio honesto, independente; mobile 375 sem overflow. Screenshots `shots-mctx/`. Residuais: light-dismiss do painel global = contrato vigente do `ConversationThreeRegionLayout` (qualquer clique externo o fecha — incluindo trigger do popover); Companion Dock real, 360/390/420px, zoom 200%, dark/light e screen reader TEST_NOT_RUN; seções globais BLOCKED_PENDING_CONTRACT.
+
+TASK_ID=DELIA-UX-MESSAGE-CONTEXT-AND-GLOBAL-CONVERSATION-PANEL-01
+COMMIT=da1794d68d DEPLOYED=YES PROD_QA=32/32
+EXECUTION_DRIFT=NONE ARCHITECTURE_DECISION_REQUIRED=GLOBAL_SECTIONS_CONTRACT
+COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
