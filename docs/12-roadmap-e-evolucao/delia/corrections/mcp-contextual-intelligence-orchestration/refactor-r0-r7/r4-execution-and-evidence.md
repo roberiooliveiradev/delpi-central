@@ -82,3 +82,16 @@
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
 `REVIEW_SHA=PENDING` · `REVIEW_VERDICT=PENDING` · `ACCEPTANCE_REASON=PENDING` · `NEXT_STAGE_AUTHORIZED=NO`.
+
+
+### Revisão independente da coordenação — 2026-10-24
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL**; **R4_STRUCTURAL_SCOPE=ACCEPTED**; **R5_READY_FOR_BOUNDED_EXECUTION=YES**. Evidência consultada: implementação `aca0f22e59`, relatório R4 e ledger no GitHub. Esta é revisão de diff-list, contratos documentados e testes informados, **não** reexecução independente de suíte nem SSH; classificar PASS de testes e produção como `EXECUTOR_REPORTED_PASS`.
+
+- M06: migração de 17 helpers + 8 constantes ao compositor existente `conversational_response.py`, sem owner paralelo nem shims; DAG `orchestration → conversational_response → outcome_assessment` preservado, conforme AST/audits reportados.
+- M07: `SKIP_WITH_DECISION` aceito para guidance/evidence projection sob decisão S4/117; nenhum novo `guidance_projection.py` ou abstração sem contrato.
+- Paridade: 19 caracterizações literais, 242 focused, backend exit 0, gates de arquitetura 43 reportados; preservados pt-BR, Markdown/escaping, conteúdo, provenance, limites e CRI. Deploy `[1/1] delia-api` reportado com imagem `8a3fe498f488`, rollback `513ee033b0c6`, health 200, unauth 401 e um smoke GROUNDED.
+- Residuais não bloqueantes da R4 estrutural: `O2=INCONCLUSIVE`, `CRI_OFF_LIVE=TEST_NOT_RUN`, token usage real indisponível, variabilidade D1 e confirmação da política de password grant pelo owner Keycloak/Core `PENDING`. Não reclassificar esses resultados como PASS nem declarar resolução funcional.
+- **Decisão:** concluir R4 estrutural e autorizar **somente R5 bounded** nos termos do plano 125 e gates 129/130 (contracts/schema/goal/model-stage), com reancoragem no novo HEAD, reuse-before-design, zero novo planner e testes de paridade. Não autorizar R6/R7 por inferência; fase canônica não muda por este registro.
+
+`REVIEW_SHA=aca0f22e59` · `REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL` · `ACCEPTANCE_REASON=STRUCTURAL_PARITY_AND_OWNER_REUSE` · `NEXT_STAGE_AUTHORIZED=R5_BOUNDED_ONLY`.
