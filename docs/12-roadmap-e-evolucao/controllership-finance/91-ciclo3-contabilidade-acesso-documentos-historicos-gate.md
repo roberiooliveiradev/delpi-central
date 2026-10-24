@@ -42,10 +42,8 @@ Portanto adicionar a terceira permission + uma página sem redesenhar o entrypoi
 
 **Página candidata:** /apps/controllership-finance/closing/accounting-documents, UX "Documentos para Contabilidade" com seleção da competência histórica, pacotes liberados, arquivo/versão/proveniência, visualização e download. Esta página não é substituta de P2 nem P5 operacional.
 
-**Entrada no aplicativo — DECISION_REQUIRED de desenho técnico/experiência:**
-- A — entrada direcionada ao deep route autorizado via catálogo/launcher do Core, sem exigir a raiz access. **Preferência técnica para menor delta inicial**, desde que experiência via Minha DELPI atenda ao PO e passe testes reais no Shell.
-- B — Início restrito para leitores dentro da Home do Portal. Requer estudar auth de raiz, manifesto 1.0.0 (permission singular por rota), navegação e viewer-context, sem reduzir a segurança dos demais usuários.
-A opção de produto **B (nova permission)** já está aprovada e NÃO deve ser perguntada novamente. As opções acima tratam somente do **modo de entrada sob o novo privilégio**; não escolher/implementar a alternativa sem gate.
+**Entrada no aplicativo — REQUISITO funcional estabelecido no diálogo:** o usuário da Contabilidade deve poder abrir o Portal pela Minha DELPI, chegar ao **Início/entrada restrita do fechamento** e acessar a nova página de documentos. O Início atual da raiz usa access, e o manifesto 1.0.0 declara permission única por rota; não é permitido conceder access geral ou abrir dados de outras páginas para contornar esse fato. O gate técnico precisa especificar uma experiência segura de entrada restrita que preserve a intenção de navegação do PO, testada no Core/launcher/Portal/BFF. Se o modelo vigente não suportar essa experiência sem mudança adicional de contrato, devolver DECISION_REQUIRED com impacto, não implementar alternativa silenciosa.
+A **opção B de produto (nova permission)** está aprovada e NÃO deve ser perguntada novamente.
 
 **AuthZ obrigatória por requisição, inclusive download:**
 authenticated human AND effective_permission(capability específica resolvida no Core) AND recipient_assignment/ownership AND package/resource_scope AND business_rule(competência + PackageVersion + disponibilização).
