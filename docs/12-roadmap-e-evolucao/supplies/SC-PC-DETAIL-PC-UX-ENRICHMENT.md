@@ -55,3 +55,10 @@ link PC→SC e mensagem D1. Este incremento completou o delta pedido:
 
 `up-prod-sequential.sh --build supplies` em srv-api — ver relatório de
 execução para SHA/imagem/bundle/health.
+
+
+## Revisão GPT — PC Detail (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para o código `4d34f60bca`. Conferidos `PurchaseOrderDetailPage.tsx`, `purchase-orders/query.ts` e este documento: o cabeçalho apresenta fornecedor/comprador respeitando a cardinalidade observada dos itens; a tabela de recebimentos separa número e série da NF; os demais campos e o vínculo PC→SC foram preservados. Sem agregação de valor de domínio no MFE, sem timeline inexistente no contrato. **463 testes, tsc, build, lint e deploy `supplies` são reportados pelo executor, não reexecutados no review.**
+
+**Residuais aceitos:** valor total aberto no cabeçalho depende de contrato do produtor; acompanhamento histórico do PC e dias de atraso não estão contratados; navegação PC→SC entre filiais permanece condicionada à identidade disponível; smoke autenticado e verificação visual continuam `INCONCLUSIVE`. A falha de TypeScript 7 em `plugins/controllership-finance/tsconfig.app.json` foi relatada em outro worktree/contexto, sem relação material demonstrada com este diff e não deve ser corrigida nesta fatia. **Próximo passo:** homologação visual única da ficha de PC publicada, comparando desktop/mobile e recepção de NF com série; corrigir apenas defeitos reproduzidos. Não iniciar fases B–D por inferência.
