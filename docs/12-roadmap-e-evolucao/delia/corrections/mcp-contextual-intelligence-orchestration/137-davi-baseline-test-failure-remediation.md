@@ -103,3 +103,20 @@ Suíte completa `api-delpi` (6.044 testes coletados) reproduzida em worktree sob
 ## 10. Estado de readiness
 
 `RELEASE_READINESS=READY_FOR_INDEPENDENT_REVIEW` — sem regressão nova; falhas materiais do escopo resolvidas; segurança preservada; testes executados e rastreáveis; rollback = `git revert`. `DEPLOY_STATUS=NOT_EXECUTED` — próximo gate: release governado `delia-api` + `api-delpi` com autorização operacional e homologação `kimi-k3`.
+
+
+## Revisão independente da coordenação — 2026-10-23 (registro posterior à entrega)
+
+**REVIEWED_SHA:** `3b17610ddf617673c3d84ecfac3a660aa80b7368`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL` para remediação bounded; **GLOBAL_RELEASE_READINESS:** `PENDING`.  
+**DEPLOY_AUTHORIZED_BY_THIS_REVIEW:** `NO`. **R3_AUTHORIZED:** `NO`.
+
+Inspeção independente do commit no GitHub confirma alterações em código do owner DAVI/api-delpi, route contract registry, manifesto e testes. O doc 137 apresenta comparação baseline × candidato, agrupamento causal e vínculo com commits sancionados. Os números `6026 passed / 15 skipped / 3 failed` em `api-delpi`, `2202 passed / 3 skipped` em `delia-api` e reexecuções com Git são **evidências reportadas pelo executor**, não reexecução independente por esta coordenação. Uma suíte com 3 falhas não recebe status PASS incondicional; `API_DELPI_FULL_SUITE=FAIL_ENVIRONMENT_REPORTED` no ambiente padrão, e `GIT_DEPENDENT_RECHECK=PASS_REPORTED` no ambiente corrigido.
+
+**G5 — decision gate:** o aumento de `DAVI_AGENT_DIRECTIVES_MAX_BYTES` de 16 para 20 KiB é uma alteração de limite operacional de conteúdo governado, não apenas ajuste de expectativa de teste. A justificativa de preservar corpus sancionado é plausível e a comparação com teto de transporte 64 KiB é relevante, mas teto de transporte não prova ausência de truncamento no provider, budget de contexto do modelo nem ausência de impacto sobre custos/latência. **Aceite técnico condicionado a validação de consumo e bounds end-to-end** para payload real nas configurações dev/prod; se a autoridade canônica fixar 16 KiB como limite obrigatório, `ARCHITECTURE_DECISION_REQUIRED`, não reconciliar por conveniência.
+
+**G3 — harness:** formalizar invocação oficial de testes Git-dependent (git executável + gitdir e paths corretos), ou tornar imagem de testes apta por mecanismo já existente e aprovado. Reexecutar suíte completa no ambiente canônico, sem retirar testes, e registrar SHA/command/exit code. Ausência de Git que faz 3 testes falharem permanece dívida operacional mesmo que rechecks individuais passem.
+
+**Segurança:** revalidar explicitamente o contrato da restauração `execute_readonly_sql`, a postura auditada de bypass do SQL validator, AuthZ e sanitização de metadados, sem confundir testes alinhados a contrato sancionado com autorização para ampliar READ/WRITE. Registros de novas operações no registry devem corresponder a envelopes reais; falta de evidência de prod/eval não equivale a ausência de risco.
+
+**Próximo gate finito:** (1) provas G5 end-to-end e decisão de budget, (2) suíte `api-delpi` completa exit=0 sob harness suportado, (3) contrato/AuthZ/regression por serviço, (4) identificação de imagens e alterações concorrentes por `delia-api` e `api-delpi`, (5) autorização PO específica de deploy dos dois serviços, (6) homologação com `kimi-k3` e DAVI real, antes de declarar `BUSINESS_OUTCOME=PASS`. Não abrir nova refatoração R3 nesta task.
