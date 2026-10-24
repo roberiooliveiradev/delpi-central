@@ -154,3 +154,12 @@ Testes: positive/sibling/negative por endpoint; `01`, `02`, `all`, filial invál
 ## 12. Próxima decisão do PO
 
 Autorizar **E11.S1** (BFF safety-stock, receita §9) com base neste freeze — ou ajustar escopo (ex.: incluir/excluir detalhe em S3, export).
+
+
+## Revisão GPT — E11.P0 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para contract freeze documental. A matriz do produtor, as cinco rotas BFF e o recorte E11/E12/E17/E18 foram inspecionados no documento do commit `da39aa1450` e em `API-ROUTES.md`. Evidência de 198 testes PASS é reportada pelo executor, não reexecutada nesta revisão. **`E11_S1_READY_TO_AUTHORIZE=YES`**, mas S1 somente começa após autorização explícita do PO; não há implementação/deploy nesta revisão.
+
+**Guardrails obrigatórios de S1:** validar na implementação e nos testes que o reconhecimento trusted-BFF do produtor exige credenciais reais, e não apenas header de caller; `branch=all` é filtro de dados repassado ao produtor sem fan-out, enquanto detalhe requer filial concreta como chave de consulta, sem autorização por filial; preservar erro 404 de recurso inexistente distinto de lista vazia e falhas upstream distintas de sucesso vazio; não acrescentar exportação sem contrato. Manter `supplies.access` efetiva pela Core, ausência de `supplies.unit.*`, BFF-only e zero escrita ERP.
+
+**Residual:** smoke autenticado end-to-end e evidência visual são futuros gates S5; não podem ser inferidos dos testes do produtor nem da documentação. `X4.PROD-C1` permanece bloqueado e independente.
