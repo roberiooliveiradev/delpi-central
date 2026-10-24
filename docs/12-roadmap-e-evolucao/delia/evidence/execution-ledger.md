@@ -18097,3 +18097,16 @@ DEPLOY_STATUS=NOT_EXECUTED RELEASE_READINESS=READY_FOR_INDEPENDENT_REVIEW
 RESIDUALS=_synthesis_records/guidance(S4-117)+glue-legítimo+labels-cycle(R4)+eval-3B-local+doc139-eval-check(coordenação)
 COORDINATION_REVIEW_REQUIRED=YES R3_INDEPENDENT_ACCEPTANCE=PENDING R4_AUTHORIZED=NO PLAN_COMPLETE=NO
 Evidência: [r3-execution-and-evidence](../corrections/mcp-contextual-intelligence-orchestration/refactor-r0-r7/r3-execution-and-evidence.md).
+
+## §6.424 — Contexto da mensagem INLINE: popover substituído por expansão no fluxo da conversa (2026-10-24)
+
+**2026-10-24 — DELIA-UX-MESSAGE-CONTEXT-INLINE-EXPANSION-REWORK-01 (spec 127, decisão PO `774c27888d`):** o popover ancorado (`da1794d68d`) foi rejeitado visualmente e substituído por expansão inline. `DeliaAssistantMessage` removeu `AnchoredPanelPortal` para o contexto do turno (componente preservado na lib — outros consumidores) e renderiza `<section role="region">` no fluxo, abaixo da action strip, dentro do bubble — conteúdo = `DeliaTurnContextPanel` inalterado (zero segundo renderer). `inlineActions` ganhou `controls`+`icon` (chevron up/down) e perdeu `aria-haspopup="dialog"`; `useId` estável, `aria-expanded`/`aria-controls` corretos. Estado local por mensagem — multi-open isolado, recolhe só por ação explícita; clique externo/Escape/composer inertes. CSS: superfície neutra, sem overflow/max-height próprios, entrada 180ms, `prefers-reduced-motion` respeitado. Painel global intocado e independente (`GLOBAL_DATA_SOURCE=NONE`).
+
+TESTES: delia 438/438 (+1), plugin-ui 2335/2335, tsc+build+federation verdes. Regressão queue/lifecycle/s2/streaming/markdown incluída na suíte completa — verde, sem reintroduzir o antigo `setSelectedTurnId`. DEPLOY: push ff `2ad6403b10` → `up-prod-sequential --build plugin-ui delia`.
+
+QA VISUAL PROD 39/39 (`vd-inline-prod.mjs` autenticado, `2ad6403b10`): região abaixo da strip (dy=42), `position:static`, zero portal/dialog; reflow empurra turno seguinte (dy=844–1107); scroll container não sobrepõe composer; multi-open com dados isolados + colapso independente; painel global independente; 375px íntegro; reduced-motion → `animation:none`; viewport 640×450 sem overflow. Screenshots `shots-inline/`. Residuais: Companion Dock real, 320/360/390/420 individuais, dark/light visual e screen reader TEST_NOT_RUN; streaming/markdown E2E coberto por vitest.
+
+TASK_ID=DELIA-UX-MESSAGE-CONTEXT-INLINE-EXPANSION-REWORK-01
+COMMIT=2ad6403b10 DEPLOYED=YES PROD_QA=39/39
+EXECUTION_DRIFT=NONE ARCHITECTURE_DECISION_REQUIRED=GLOBAL_SECTIONS_CONTRACT
+NEXT=PO_ACCEPTANCE_INLINE_UX
