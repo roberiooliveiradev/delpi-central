@@ -13,6 +13,7 @@ alwaysApply: false
 
 # Biblioteca `padroes-totvs` — quando usar e como enriquecer
 
+**Fontes primárias de customização DELPI:** `docs/13-fontes-totvs-protheus/` (código AdvPL/PRW/PRX/TLPP e artefatos por área — inventariar somente o tema pertinente).  
 **Hub:** `api-delpi/docs/api/padroes-totvs/README.md`  
 **Playbooks:** `api-delpi/docs/api/padroes-totvs/playbooks/`  
 **Código:** `api-delpi/app/domain/totvs/`  
@@ -33,11 +34,13 @@ Esta biblioteca é a **fonte de verdade de negócio** Protheus na Delpi. Infra/D
 5. Exclui ou classifica produto (`B1_TPMAT`, tipo MP/PA, diretivas).
 6. Diagnostica **divergência vs Power BI / TOTVS / inventário**.
 7. Escreve doc de rota nova que menciona convenção de negócio.
+8. Investiga **relatório, rotina customizada, ponto de entrada, regra de cálculo, campo, alias, tabela ou divergência funcional DELPI × Protheus**, incluindo Compras, Estoque e contextos relacionados.
 
 **Fluxo mínimo:**
 
 ```text
-README hub → seção curta (armazem-custo, filiais, …)
+Fontes `docs/13-fontes-totvs-protheus/<area>/` pertinentes (quando customização/relatório DELPI for material)
+         → README hub → seção curta (armazem-custo, filiais, …)
          → playbook longo se a seção apontar
          → constante em app/domain/totvs/ se existir
          → implementar SQL/rota alinhado
@@ -111,3 +114,19 @@ README hub → seção curta (armazem-custo, filiais, …)
 | Unidades (MI) | `padroes-totvs/unidades-medida.md` + playbook conversão |
 | Cadastro SB1 / terceiro | `padroes-totvs/cadastro-produto.md` |
 | Carteira semanal previsto × realizado | `padroes-totvs/carteira-semanal-previsto-realizado.md` |
+
+
+## Fontes de customização DELPI — consulta investigativa obrigatória quando pertinente
+
+A árvore `docs/13-fontes-totvs-protheus/` contém fontes e artefatos Protheus agrupados por áreas, incluindo `02.Compras/`, `04. Estoque/`, Faturamento, Financeiro, Fiscal, PCP, Contabilidade e Qualidade. Há arquivos `.prw`, `.PRW`, `.PRX` e `.tlpp`. **Não pressupor que todos estejam vigentes, compilados, publicados ou ativos no runtime.**
+
+Quando a tarefa envolver **entender ou reproduzir um relatório, regra, rotina, filtro, join, alias, campo SX3, gatilho/ponto de entrada, cálculo ou personalização TOTVS da DELPI**:
+
+1. Localizar na árvore o módulo/rotina pertinente e ler apenas os candidatos relevantes; buscar por nomes de função, campos, tabelas, relatórios e chamadas associadas.
+2. Identificar arquivo, caminho, função, campos/tabelas envolvidos, filtros, cálculos, dependências, possíveis efeitos colaterais e evidências de versão. Distinguir leitura, atualização, customização de interface e integração.
+3. **Corroborar** a interpretação com `api-delpi/docs/api/padroes-totvs/`, contratos vigentes, implementação no HEAD, testes e, quando autorizado, evidência do ambiente TOTVS. Fonte localizada é pista/evidência de customização, **não prova isolada de implantação ou de regra atualmente vigente**.
+4. Para relatórios, reconciliar explicitamente **grão**, período, filial como filtro de dados quando no Portal Suprimentos, exclusões (`D_E_L_E_T_` etc.), joins, unidade de medida, custo, armazéns, agrupamentos, parâmetros e diferenças entre apresentação e cálculo. Não transplantar SQL/AdvPL diretamente para o MFE ou serviço que não seja owner.
+5. Se a fonte indicar comportamento que diverge de ADR, contrato, producer ou execução vigente, registrar `EXECUTION_DRIFT`/`TO_INVENTORY`; solicitar validação do owner antes de promover como autoridade. Não copiar lógica legada nem publicar alteração TOTVS com base apenas nesses arquivos.
+6. Ao produzir diagnóstico, contrato ou plano, registrar **SOURCE_PATH + função/trecho + hipótese + evidência confirmatória + estado (`PROVEN/TO_INVENTORY`) + decisão/owner**. Se a regra se provar reutilizável, enriquecer a biblioteca `padroes-totvs` segundo a seção anterior; não duplicar documentação sem necessidade.
+
+**Boundaries:** `api-delpi` é owner do SQL e das regras canônicas TOTVS. Para o Portal Suprimentos, `plugins/supplies → supplies-api → api-delpi`, e filial é apenas filtro operacional, nunca permission `supplies.unit.*`. As fontes desta pasta não substituem os contracts nem alteram RBAC, escrita ERP ou cutover.
