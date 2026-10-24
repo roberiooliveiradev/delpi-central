@@ -42,7 +42,11 @@ Decisão vinculante: [E11-S7-DETAIL-PAGE-PO-DECISION.md](./E11-S7-DETAIL-PAGE-PO
 
 ## Deploy e gate
 
-Preenchido após deploy canônico (imagem, bundle, SHA servido, rollback).
+- **Deploy canônico:** `srv-api` → `git pull --ff-only` (`d525dcec01`) → `up-prod-sequential.sh --fase mfe --build supplies` (somente o MFE afetado).
+- **Imagem:** `sha256:ffa2e9e492ff` (anterior `cde6ec36fa76`, S6). **Bundle servido:** `App-BdqsXiwp.js` no container `delpi-supplies`, contendo a rota `safety-stock/{branch}/{code}` e o seletor de filial (`branch-choice`). Logs nginx limpos.
+- **Rollback:** `git pull` para `023c53efee` + imagem `cde6ec36fa76` (S6) — não executado.
+- **AUTHENTICATED_SMOKE / QA visual:** `INCONCLUSIVE` — requer sessão real autorizada; não simulado.
+- **GATE-FEATURE E11:** permanece `INCONCLUSIVE` até jornada autenticada + homologação visual do PO.
 
 - **AUTHENTICATED_SMOKE / QA visual:** `INCONCLUSIVE` — requer sessão real autorizada; não simulado.
 - **GATE-FEATURE E11:** permanece `INCONCLUSIVE` até jornada autenticada + homologação visual do PO.
