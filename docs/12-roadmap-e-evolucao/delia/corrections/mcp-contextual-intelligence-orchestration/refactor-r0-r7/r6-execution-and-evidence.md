@@ -1,8 +1,8 @@
 # R6 — Coordenador mínimo e limpeza completa do legado comprovado: prompt e registro de evidências
 
 **PLANO:** [125](../125-orchestration-complete-refactoring-finite-plan.md) · **RUNBOOK:** [130](../130-orchestration-refactor-r0-r7-execution-playbook.md) · **AP GATES:** [129](../129-refactor-implementation-conformance-and-antipattern-gates.md)  
-**TASK_ID:** `DELIA-ORCH-REFAC-R6-BOUNDED-01` · **LOTES:** M10 + residual M01–M09 · **ESTADO DO DOCUMENTO:** TEMPLATE_NOT_EXECUTED / NOT_AUTHORIZED.  
-**NÃO É autorização nem evidência de execução.** Ler 16→50→17→49→51→52→21→20→25 + 03/24/60, ADR58, roadmap59, 113,117, 125,128–130, .cursor e ledger no HEAD.
+**TASK_ID:** `DELIA-C3-ORCHESTRATION-R6-CORE-PRESERVATION-AND-SAFETY-REGRESSION-01` · **LOTES:** M10 + residual M01–M09 · **ESTADO DO DOCUMENTO:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` · `CODE_DIFF=NONE` · `DEPLOY_STATUS=NOT_RUN_NO_RUNTIME_CHANGE`.  
+**Autorização:** `R6_BOUNDED_PREPARATION=AUTHORIZED` + `R6_CODE_EXECUTION=REQUIRES_EXPLICIT_GATE` — parecer independente R5 (`0fc131155b`); `RELEASE_GOVERNANCE_CONFLICT=ESCALATED_UNRESOLVED` (precedência é decisão da coordenação); `R7_AUTHORIZED=NO`. Execução realizada em modo preservação/regressão não-modificadora: reancoragem, inventário, caller graph, caracterização e regressão de segurança concluídos; zero alteração de produto proposta ou aplicada.
 
 ## Prompt pronto para Devin — executar SOMENTE quando gate liberado
 
@@ -24,35 +24,67 @@
 
 ## Documento obrigatório a preencher pelo executor após execução
 
-**STATUS:** `NOT_STARTED` — substituir por `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW|IMPLEMENTATION_FAILED|IMPLEMENTATION_INCONCLUSIVE|EXECUTION_DRIFT|SKIP_WITH_DECISION` somente com fatos.
+**STATUS:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`
 
 | Campo | Evidência a preencher (não presumir PASS) |
 |---|---|
-| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R6 / task concreta |
-| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | PENDING |
-| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | PENDING |
-| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | PENDING |
-| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | PENDING |
-| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | TO_INVENTORY |
-| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | TO_INVENTORY |
-| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | PENDING |
-| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | TEST_NOT_RUN |
-| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | TO_INVENTORY |
-| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | TEST_NOT_RUN |
-| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | TEST_NOT_RUN |
-| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | TEST_NOT_RUN |
-| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | PENDING |
-| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | INCONCLUSIVE |
-| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / TEST_NOT_RUN |
-| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | PENDING |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | PENDING |
-| README_LEDGER_UPDATED / DELETIONS_RATIONALE | PENDING |
-| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | PENDING |
-| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | PENDING / YES |
+| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R6 / `DELIA-C3-ORCHESTRATION-R6-CORE-PRESERVATION-AND-SAFETY-REGRESSION-01` |
+| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | Review R5 `0fc131155b`: `R6_BOUNDED_PREPARATION=AUTHORIZED`, `R6_CODE_EXECUTION=REQUIRES_EXPLICIT_GATE`; fase canônica R6 (bounded) |
+| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | `16308d2097` → pull ff → `97f393390b` = origin/main; worktree limpo; BASE_SHA=`97f393390b` |
+| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | 16→50→17→49→51→52→21→20→25; regras .cursor canônicas; plano 125; gates 129; runbook 130; evidências R0–R5; review R5 `0fc131155b`; ledger vigente; CP_RQ=preservação do core coordenador pós-R0–R5 |
+| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | Verificar core como owner legítimo, remover só obsoleto PROVADO; entry gates = reanchor + autoridades + caller graph + reuse; ALLOWED=orchestration.py/módulos aprovados/testes; FORBIDDEN=state machine PREPARE/ACT, consumer ativo, Chat runtime |
+| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | Ver "Caller graph e matriz KEEP" abaixo — 7/7 funções do core ACTIVE com consumers reais de produção |
+| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | `EXISTING_EQUIVALENT=YES` · `REUSE_DECISION=REUSE` (orchestrator como único owner da coordenação) · `NEW_FILE_GATE=NONE` — zero novos arquivos |
+| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | `CODE_DIFF=NONE` — nenhum arquivo de produto alterado; contratos preservados por ausência de diff e por regressão verde |
+| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | DAG inalterado e acíclico: orchestration→argument_validation→outcome_assessment, orchestration→conversational_response; arch gates 41 testes verdes (`test_audit_platform_guardrails`, `test_audit_architecture_phase3`, `test_interaction_runtime_architecture`) |
+| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | `DELETED=NONE` — scan AST de funções privadas: **zero zero-referência**; tabela de remoções vazia (ver seção R6 abaixo) |
+| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | Focado core+segurança: 48+227 testes verdes (provider_neutral 19, specialist_interop_security, stage02–06, r2/r45/r5-parity, c3/evidence, semantic_argument); FULL_BACKEND exit 0; GENERALIZATION PASS via test_stage06 + r2 provider-neutral |
+| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | Cri ON v5 coberto pela suíte (`test_cri_e1/e2/e3` verdes); `CRI_OFF_LIVE=TEST_NOT_RUN` (residual herdado) |
+| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | `LOCAL_MODEL_EVAL=NOT_NEEDED_FOR_STRUCTURAL_PARITY` — zero mudança em prompts, seleção, model-stage, evidence, outcome ou semântica de resposta |
+| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | Sem novo planner/engine/registry/state machine/router/branch por provider; sem shim; validação de argumentos no owner canônico (R5); apresentação no compositor (R4); outcome em outcome_assessment (R3) — manual |
+| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | `DELTA=NONE` — suíte completa verde no HEAD `97f393390b` sem nenhum diff aplicado; nenhum estágio divergente |
+| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / n/a (zero diff, zero defeito detectado) |
+| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | Residual search AST em `orchestration.py`: zero função privada sem referência; zero secrets novos; rollback n/a (sem deploy) |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | docs-only commit (ver ledger); produto intocado desde `97f393390b` |
+| README_LEDGER_UPDATED / DELETIONS_RATIONALE | README/ledger/plano 125 atualizados neste push; `DELETIONS_RATIONALE=NONE` — nada provado obsoleto |
+| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | Drift: nenhum funcional. Residuais: `RELEASE_GOVERNANCE_CONFLICT=ESCALATED_UNRESOLVED`, `CRI_OFF_LIVE=TEST_NOT_RUN`, O2=KNOWN_RESIDUAL |
+| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `CORE_VERIFIED_NO_CODE_CHANGE_REQUIRED` / YES |
 
 ### Evidência específica da etapa R6
 
 Tabela obrigatória de remoções: PATH/SYMBOL | LEGACY CLASS | STATIC+DYNAMIC CONSUMERS | PROOF OF OBSOLESCENCE | ACTION | COMMIT | TESTS | COMPAT RISK | ROLLBACK. Provar ZERO_OBSOLETE_PROVEN remaining ou bloquear encerramento. Não tocar outros bounded contexts.
+
+**Tabela de remoções:** vazia — nenhum símbolo provado obsoleto. `ZERO_OBSOLETE_PROVEN=CONFIRMED` para as funções analisadas.
+
+#### Caller graph bounded (BASE_SHA `97f393390b`, AST + grep estático)
+
+| Função | Linha | Callers | Classificação |
+|---|---|---|---|
+| `attempt()` | 3705 | `handle_interactive_turn.py:425` (wiring de produção) + 19 testes provider-neutral | ACTIVE — entry point público |
+| `_attempt` | 3872 | `attempt()` @3778 | ACTIVE — state machine principal |
+| `_select_target` | 7734 | `_attempt` @4073 | ACTIVE — seleção semântica governada |
+| `_invoke_selected` | 10044 | 6 call sites (4962, 6454, 8435, 8780, 8894, 9141) — paths READ/invoke/guidance | ACTIVE |
+| `_attempt_prepare` | 6692 | 2 call sites (4962, 5740) — paths PREPARE | ACTIVE — proposta backend-only, `proposal_ref` não vaza |
+| `_execute_prepared_act` | 7191 | 1 call site (7173) — path de confirmação | ACTIVE — só via `ConfirmationRecord` bound |
+| `_audit` | 7634 | 9 call sites (6746–7351) | ACTIVE — trilha de auditoria |
+
+Scan AST adicional: nenhuma função privada (`_*`) de `orchestration.py` sem referência dentro do módulo; nenhuma referência externa órfã em `tests/`/`scripts/`. `DEAD_CODE_PROVEN=NONE` para todo o módulo, não apenas o core.
+
+#### Matriz de decisão por responsabilidade
+
+`_attempt` KEEP · `_select_target` KEEP · `_invoke_selected` KEEP · `_attempt_prepare` KEEP · `_execute_prepared_act` KEEP · `_audit` KEEP · `attempt()` KEEP. Zero `REMOVE_PROVEN_DEAD`, zero `MINIMAL_FIX`, zero `SKIP_WITH_DECISION` — nenhum problema demonstrado; criar diff cosmético é explicitamente proibido pelo critério de alteração R6.
+
+#### Gate de release — análise do conflito (escalado, não decidido pelo executor)
+
+**Instrução A (diretriz durável):** seção "Complemento de gates de teste local e deploy — diretriz PO de 2026-10-23" deste e dos docs R* — deploy em produção é **objetivo condicionado a review independente + autorização operacional específica**, explicitando "não executá-lo apenas com o prompt de implementação". Autoridade: Product Owner, norma prospectiva registrada no documento governado.
+
+**Instrução B (autorização caso-específica):** ordem da task R5 — PO autorizou o deploy de `delia-api` condicionado aos gates técnicos, que foram cumpridos.
+
+**Ocorrência:** o deploy R5 (`dc9833166850`, ~11:16) precedeu o review independente (commit `0fc131155b`, 11:19). A sequência exigida pela instrução A não foi observada; a instrução B foi observada.
+
+**Decisão necessária (não tomada pelo executor):** se uma autorização operacional explícita por-task equivale à dupla condição do gate documental ou se o gate permanece superior. `RELEASE_GOVERNANCE_CONFLICT=ESCALATED_UNRESOLVED` — sem aprovação retroativa presumida, sem rollback ordenado (nenhuma evidência de dano; review aceitou o código no mérito). **Recomendação à coordenação:** declarar explicitamente uma das três — (a) autorização per-task sobrepõe o gate quando explícita, (b) emendar o gate documental, ou (c) manter review-independent-antes-de-deploy mesmo com autorização per-task — e fixar precedência para R7 em diante.
+
+**Consequência em R6:** `R6_CODE_EXECUTION` permanece bloqueado até decisão da coordenação; o resultado analítico `NO_CODE_CHANGE_REQUIRED` torna o bloqueio sem efeito prático nesta etapa e elimina a necessidade de qualquer deploy.
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
