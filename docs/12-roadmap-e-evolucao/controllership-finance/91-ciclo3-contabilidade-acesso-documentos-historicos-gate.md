@@ -91,3 +91,12 @@ A expressão **"fechar o pacote" não é automaticamente "submeter" nem "conclui
 **Brief proposto:** CF-C3-ACCOUNTING-DOCUMENTS-PERMISSION-CONTRACT-INVENTORY-001, modalidade READ+VERIFY+DESIGN_ONLY. Inventariar consumers do Core e do manifest, guards, MFE/BFF, owner e contrato P5/evidências, disponibilidade de download histórico; retornar pacote de decisão das lacunas acima e gate de mudança do permission freeze. **Zero diff runtime.**
 
 **Estado do pedido:** opção B = PO_APPROVED_PRODUCT_DIRECTION. **Contrato runtime = PENDING/DECISION_REQUIRED; IMPLEMENTATION_AUTHORIZED=NO.** Não inferir GO de implementação nem declarar nova permission efetiva enquanto o manifesto/Core não forem alterados após gate explícito.
+
+
+## 8. Confirmação posterior do PO — implementation deferred (2026-10-24)
+
+O PO reafirmou que as decisões deste documento devem **ficar registradas agora no GitHub**, mas a **criação efetiva da permission e da página específica será feita no momento apropriado**, após consolidação e execução incremental das capacidades de documentos e pacotes. Trata-se de **DEFERRED_IMPLEMENTATION_BY_PO**, não desistência da opção B.
+
+**Nesta fase fica expressamente vedado:** modificar o manifesto/Core/grants/guards/rotas para adicionar a nova permission, criar a página de histórico ou endpoint de download, alterar versão de plugin para esta demanda, executar migration ou deploy. O Core continuará como authority efetiva de acesso quando o contrato for implementado. O futuro leitor da Contabilidade seguirá sem aceitar/rejeitar/homologar na V1.
+
+O preparo da implementação do processo prossegue por outro gate, **P2 — Checklist/Documentos/Validação**. Referência: [doc 92](./92-ciclo3-consolidacao-e-handoff-continuacao-p2.md). A entrega P2 não poderá incluir permissões ou página de Contabilidade por acoplamento oportunista. **IMPLEMENTATION_AUTHORIZED=NO para esta alteração.**
