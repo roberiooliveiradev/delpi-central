@@ -259,3 +259,12 @@ dados comprovados/excluídos, decisões e stop conditions por etapa).
 **Resultado P0.R1:** pacote consistente; **Fase A avaliada como READY_FOR_PO**
 — todas as etapas EN.A1–A7 têm dados provados, decisões D1/D2 prontas e
 nenhuma dependência de contrato novo.
+
+
+## Revisão GPT — P0.R1 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para reconciliação documental; `FASE_A_READINESS=READY_FOR_PO`; `IMPLEMENTATION_NOT_AUTHORIZED` permanece.** Conferidos os quatro documentos da revisão `ab67150ce8`: inventário, matriz de contratos, wireframes v2 e roadmap EN.A1–A7. Foram incorporados os cinco residuais: soma transversal de quantidades sem agrupar por UM retirada dos KPIs propostos; `timeline` descrita como «Acompanhamento» com `expected_delivery` explicitamente previsto; 404 de PC aberto com texto neutro, sem inferir conclusão; vínculos SC↔PC com chaves compostas e autorização distinta por owner/escopo CC; datas editoriais corrigidas para 2026-10-24 sem alterar o baseline histórico.
+
+**Decisões ainda reservadas ao PO:** **D1**, recomendar opção A, mensagem «Pedido não localizado entre os pedidos em aberto disponíveis para consulta», sem contrato novo; **D2**, recomendar nome do aprovador junto ao estado de aprovação e fornecedor identificado explicitamente como **sugerido**, quando entregues e autorizados; não mostrar conta contábil na ficha principal nesta fase. Até deliberação explícita do PO, não tratar recomendações como decisões aprovadas. **D3–D6** seguem `PLANNED/TO_INVENTORY` fora de EN.A. Links relacionados não conferem acesso automático e não devem mascarar 403/404. Nenhum teste de aplicação, runtime ou deploy foi executado nesta revisão; a execução anterior foi somente documentação.
+
+**Próximo gate:** decisão PO D1/D2 → autorização separada das fatias EN.A1–A7, com verificação do HEAD e dos payloads/contratos reais, testes positivos/irmãos/negativos e Help sincronizada.
