@@ -268,6 +268,8 @@ Saldo/valor/localização. Não misturar ESTSEG. Política de capability do stoc
 
 Saldo × ESTSEG, déficit, extrato, fornecedores, SC abertas; read-only neste roadmap. Contrato congelado em [E11-P0-SAFETY-STOCK-CONTRACT-FREEZE.md](./E11-P0-SAFETY-STOCK-CONTRACT-FREEZE.md): FilterBar (filial/status/grupo/UM/busca/toggles) + summary hero (9 contadores + déficit por UM) + DataTable server-side + detalhe do item (saldos, projeção, POs/SCs/empenhos, consumo, fornecedores). **Página monitor + detalhe do item implementados (E11.S1+S2+S3)** — ver [E11-S2](./E11-S2-SAFETY-STOCK-MFE-IMPLEMENTATION.md) e [E11-S3](./E11-S3-SAFETY-STOCK-ITEM-DETAIL-IMPLEMENTATION.md).
 
+**Decisão posterior do PO (2026-10-24):** o detalhe deve ser **página própria, não modal**; na listagem consolidada «Todas as Filiais» (linha com `branch=all`), a ação «Ver detalhes» deve primeiro pedir seleção explícita de Santa Catarina (01) ou Espírito Santo (02); com filial concreta na lista, a navegação é direta. Manter o escopo consolidado da listagem, URL/F5/retorno e os dois endpoints BFF existentes. **PLANNED, não implementado**: [E11-S7-DETAIL-PAGE-PO-DECISION.md](./E11-S7-DETAIL-PAGE-PO-DECISION.md). Esta decisão supera apenas a UX modal anterior; o histórico E11.S3–S6 continua válido como evidência de implementação/deploy anteriores. GATE E11 permanece INCONCLUSIVE.
+
 ### WF-17 — Análise de Consumo
 
 Consumo/lead time/comparativos/memória; decidir ao promover se é página independente ou satélite inseparável do WF-16.
