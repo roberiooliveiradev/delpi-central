@@ -78,6 +78,10 @@ export const PURCHASE_ORDERS_CONTENT = {
   openScTitle: (number: string) => `Abrir solicitação de compra ${number}`,
   detailIndicatorItems: "Itens em aberto",
   detailIndicatorOverdue: "Atraso",
+  detailSupplierLabel: "Fornecedor",
+  detailSuppliersMany: (count: number) => `${count} fornecedores`,
+  detailBuyersMany: (count: number) => `${count} compradores`,
+  colInvoiceSeries: "Série",
   detailOverdueYes: "Em atraso",
   detailOverdueNone: "Sem atraso",
   detailScopeNote:

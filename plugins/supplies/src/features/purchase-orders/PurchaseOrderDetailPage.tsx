@@ -34,8 +34,10 @@ import {
   formatProductLabel,
   formatQuantity,
   labelDeliveryStatus,
+  uniqueBuyerCodes,
+  uniqueSupplierIdentities,
 } from "./query";
-import type { PurchaseOrderDetail, PurchaseOrderDetailItem, PurchaseOrderReceipt } from "./types";
+import type { PurchaseOrderDetail, PurchaseOrderDetailItem } from "./types";
 
 type PurchaseOrderDetailPageProps = {
   basePath: string;
@@ -55,13 +57,6 @@ function sourceRequestLabel(item: PurchaseOrderDetailItem): string {
   const number = (item.source_request_number || "").trim();
   const line = (item.source_request_item || "").trim();
   if (number && line) return `${number} / ${line}`;
-  return number || "—";
-}
-
-function invoiceLabel(receipt: PurchaseOrderReceipt): string {
-  const number = (receipt.invoice_number || "").trim();
-  const series = (receipt.invoice_series || "").trim();
-  if (number && series) return `${number}-${series}`;
   return number || "—";
 }
 
@@ -107,6 +102,10 @@ export function PurchaseOrderDetailPage({
   // Derived from the contracted per-item status only — no aggregate field
   // exists in the PC detail contract, so no days-overdue number is shown.
   const hasLateItem = items.some((item) => item.delivery_status === "late");
+  // Header context keeps per-item granularity: one supplier/buyer → identity;
+  // several → honest «N …» — never an arbitrary first pick.
+  const suppliers = uniqueSupplierIdentities(items);
+  const buyers = uniqueBuyerCodes(items);
 
   return (
     <div className="sp-page-stack sp-purchase-order-detail">
@@ -142,6 +141,44 @@ export function PurchaseOrderDetailPage({
           <div>
             <dt>Pedido</dt>
             <dd>{detail?.order_number || orderNumber}</dd>
+          </div>
+        </dl>
+        <dl className="sp-purchase-order-detail__identity sp-purchase-order-detail__context">
+          <div>
+            <dt>{C.detailSupplierLabel}</dt>
+            <dd>
+              {!detail ? (
+                "—"
+              ) : suppliers.length === 1 ? (
+                <SuppliesSupplierIdentity
+                  name={suppliers[0].name}
+                  code={suppliers[0].code}
+                  store={suppliers[0].store}
+                  basePath={basePath}
+                />
+              ) : suppliers.length > 1 ? (
+                C.detailSuppliersMany(suppliers.length)
+              ) : (
+                "—"
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>{C.buyerLabel}</dt>
+            <dd>
+              {!detail ? (
+                "—"
+              ) : buyers.length === 1 ? (
+                <SuppliesPersonIdentity
+                  person={{ code: buyers[0], name: buyers[0] }}
+                  basePath={basePath}
+                />
+              ) : buyers.length > 1 ? (
+                C.detailBuyersMany(buyers.length)
+              ) : (
+                "—"
+              )}
+            </dd>
           </div>
         </dl>
         <dl className="sp-purchase-order-detail__identity sp-purchase-order-detail__indicators">
@@ -316,6 +353,7 @@ export function PurchaseOrderDetailPage({
                       <thead>
                         <tr>
                           <th>{C.invoiceLabel}</th>
+                          <th>{C.colInvoiceSeries}</th>
                           <th>{C.colItem}</th>
                           <th>{C.receiptQtyLabel}</th>
                           <th>{C.unitPriceLabel}</th>
@@ -329,7 +367,8 @@ export function PurchaseOrderDetailPage({
                           <tr
                             key={`${receipt.invoice_number ?? ""}-${receipt.invoice_item ?? ""}-${index}`}
                           >
-                            <td>{invoiceLabel(receipt)}</td>
+                            <td>{receipt.invoice_number || "—"}</td>
+                            <td>{receipt.invoice_series || "—"}</td>
                             <td>{receipt.invoice_item || "—"}</td>
                             <td>{formatQuantity(receipt.quantity)}</td>
                             <td>{formatMoneyBr(receipt.unit_price)}</td>

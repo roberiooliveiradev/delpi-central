@@ -1273,6 +1273,7 @@
   font-size: 0.95rem;
 }
 
+.dashboard-supplies-portal .sp-purchase-order-detail__context,
 .dashboard-supplies-portal .sp-purchase-order-detail__indicators {
   margin-top: 0.9rem;
 }

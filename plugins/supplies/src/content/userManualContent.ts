@@ -96,7 +96,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver o detalhe de um pedido",
           where: "Pedidos de compra",
-          how: "Abra a linha; cabeçalho com itens em aberto e atraso; por item: fornecedor, quantidades, preços, recebimentos e SC origem — clique na SC para abrir a ficha dela. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista. Só pedidos em aberto",
+          how: "Abra a linha; cabeçalho com filial, fornecedor, comprador, itens em aberto e atraso; por item: quantidades, preços, recebimentos (NF, série, datas, valor) e SC origem — clique na SC para abrir a ficha dela. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista. Só pedidos em aberto",
         },
         {
           want: "Abrir solicitações de compras (SC)",

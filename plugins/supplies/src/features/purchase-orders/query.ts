@@ -23,6 +23,7 @@ export type PurchaseOrderSortableColumnKey = keyof typeof PURCHASE_ORDERS_SORTAB
 export function createDefaultQuery(
   _branches: readonly string[] = [],
 ): PurchaseOrdersQuery {
+  void _branches;
   return {
     branches: [],
     order_number: "",
@@ -209,4 +210,51 @@ export function formatMoneyBr(value: number | null | undefined): string {
 export function formatQuantity(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return value.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
+}
+
+/**
+ * Distinct supplier identities across the order's visible items, deduped by
+ * canonical (code, store) identity. The PC contract has no header supplier —
+ * the ficha shows one identity or «N fornecedores», never an arbitrary pick.
+ */
+export function uniqueSupplierIdentities(
+  items:
+    | ReadonlyArray<{
+        supplier_code?: string | null;
+        supplier_store?: string | null;
+        supplier_name?: string | null;
+      }>
+    | null
+    | undefined,
+): { code?: string | null; store?: string | null; name?: string | null }[] {
+  const seen = new Set<string>();
+  const suppliers: { code?: string | null; store?: string | null; name?: string | null }[] =
+    [];
+  for (const item of items ?? []) {
+    const code = (item.supplier_code || "").trim();
+    const store = (item.supplier_store || "").trim();
+    const name = (item.supplier_name || "").trim();
+    if (!code && !name) continue;
+    const key = `${code}|${store}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    suppliers.push({ code, store, name });
+  }
+  return suppliers;
+}
+
+/** Distinct buyer codes across the visible items (C7_COMPRA per line). */
+export function uniqueBuyerCodes(
+  items: ReadonlyArray<{ buyer_code?: string | null }> | null | undefined,
+): string[] {
+  const seen = new Set<string>();
+  const buyers: string[] = [];
+  for (const item of items ?? []) {
+    const code = (item.buyer_code || "").trim();
+    if (code && !seen.has(code)) {
+      seen.add(code);
+      buyers.push(code);
+    }
+  }
+  return buyers;
 }

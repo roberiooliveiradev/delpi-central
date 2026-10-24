@@ -232,6 +232,18 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("delivery_status === \"late\"");
     expect(page).toContain("C.detailScopeNote");
     expect(page).not.toMatch(/days_overdue|dias de atraso/i);
+    // PC-UX: header shows supplier/buyer with honest per-item granularity
+    // (one identity or «N …»), invoice series is its own column, and no
+    // financial total or fabricated timeline exists in the detail contract.
+    expect(page).toContain("uniqueSupplierIdentities");
+    expect(page).toContain("uniqueBuyerCodes");
+    expect(page).toContain("C.detailSupplierLabel");
+    expect(page).toContain("C.detailSuppliersMany");
+    expect(page).toContain("C.detailBuyersMany");
+    expect(page).toContain("C.colInvoiceSeries");
+    expect(page).toContain("receipt.invoice_series");
+    expect(page).not.toMatch(/items\.reduce|total_open_value|totalValue/i);
+    expect(page).not.toContain("SuppliesEventsSection");
 
     const content = readFileSync(join(dir, "content.ts"), "utf8");
     expect(content).toContain(

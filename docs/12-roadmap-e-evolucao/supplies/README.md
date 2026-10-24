@@ -217,6 +217,7 @@ Invariantes:
 | [SC-PC-DETAIL-EN-A1-CONTRACT-TYPES.md](./SC-PC-DETAIL-EN-A1-CONTRACT-TYPES.md) | EN.A1: tipagem e validação do contrato SC detail (`DONE`, sem mudança visual/backend) |
 | [SC-PC-DETAIL-EN-A2-SC-HERO.md](./SC-PC-DETAIL-EN-A2-SC-HERO.md) | EN.A2: hero da ficha SC em 3 níveis (`DONE`, frontend-only, sem deploy) |
 | [SC-PC-DETAIL-EN-A3-A7.md](./SC-PC-DETAIL-EN-A3-A7.md) | EN.A3–A7: itens/pedidos/recebimentos/acompanhamento SC + ficha PC + links SC↔PC + D1/D2 na UI (`DONE`) |
+| [SC-PC-DETAIL-PC-UX-ENRICHMENT.md](./SC-PC-DETAIL-PC-UX-ENRICHMENT.md) | Ficha PC enriquecida: fornecedor/comprador no cabeçalho, série NF própria, limites de contrato (`DONE`) |
 | [DECISOES_FUNCIONAIS_PENDENTES.md](./DECISOES_FUNCIONAIS_PENDENTES.md) | somente decisões realmente não respondidas |
 | [ROADMAP-TRANSFORMA-PLUS.md](./ROADMAP-TRANSFORMA-PLUS.md) | **Visão de negócio Transforma+** (SUP-*, ondas, integrações) — descoberta/backlog; **não** duplica contratos técnicos nem autoriza implementação |
 | [BRANCH-AUTHZ-DOCS-R1-GLOBAL-RECONCILIATION.md](./BRANCH-AUTHZ-DOCS-R1-GLOBAL-RECONCILIATION.md) | reconciliação global: filial é filtro de dados, nunca autorização no Portal |

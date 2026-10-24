@@ -186,7 +186,7 @@ export const SP_HELP = {
   purchaseOrdersEntityLink:
     "O número do PC abre a ficha do pedido. Você também pode clicar na linha.",
   purchaseOrderDetail:
-    "Ficha somente leitura do pedido em aberto: itens, data prometida, recebimentos e a SC de origem de cada item — a SC abre a ficha da solicitação. O indicador de atraso vem da situação de cada item; não exibe dias porque o contrato não traz esse número. Copie o endereço da página para compartilhar; atualizar restaura a mesma ficha. Pedidos encerrados não aparecem: «não localizado» significa apenas fora do universo em aberto consultável.",
+    "Ficha somente leitura do pedido em aberto: cabeçalho com filial, fornecedor e comprador (quando todos os itens têm o mesmo responsável) e indicadores de itens em aberto e atraso. Cada item traz quantidades, preços, data prometida, recebimentos e a SC de origem — a SC abre a ficha da solicitação. O indicador de atraso vem da situação de cada item; não exibe dias porque o contrato não traz esse número. Copie o endereço da página para compartilhar; atualizar restaura a mesma ficha. Pedidos encerrados não aparecem: «não localizado» significa apenas fora do universo em aberto consultável.",
   purchaseOrderDetailItems:
     "Cada item traz fornecedor, quantidades, entrega prometida e a solicitação de origem — clicável para abrir a ficha da SC. Um mesmo pedido pode ter itens de solicitações e fornecedores diferentes.",
   purchaseOrderDetailReceipts:
