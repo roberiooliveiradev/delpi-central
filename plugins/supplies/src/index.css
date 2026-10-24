@@ -950,6 +950,55 @@
   justify-items: start;
 }
 
+.dashboard-supplies-portal .sp-safety-stock-branch-choice__description {
+  margin: 0 0 0.9rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-safety-stock-branch-choice__options {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-branch-choice__option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--sp-border, rgba(120, 120, 120, 0.28));
+  border-radius: 0.65rem;
+  background: var(--sp-surface, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-branch-choice__option:hover {
+  background: var(--sp-surface-elevated, rgba(120, 120, 120, 0.08));
+}
+
+.dashboard-supplies-portal .sp-safety-stock-branch-choice__option:focus-visible {
+  outline: 2px solid var(--sp-primary, #4f7cff);
+  outline-offset: 2px;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-branch-choice__option--active {
+  border-color: var(--sp-primary, #4f7cff);
+  background: var(--sp-primary-soft, rgba(79, 124, 255, 0.1));
+}
+
+.dashboard-supplies-portal .sp-safety-stock-branch-choice__option-name {
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-safety-stock-branch-choice__option-code {
+  color: var(--sp-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .dashboard-supplies-portal .sp-purchase-orders .delpi-ui-data-list-toolbar {
   flex-wrap: wrap;
 }
@@ -1105,7 +1154,8 @@
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity,
 .dashboard-supplies-portal .sp-purchase-order-detail__item-meta,
-.dashboard-supplies-portal .sp-purchase-request-detail__identity {
+.dashboard-supplies-portal .sp-purchase-request-detail__identity,
+.dashboard-supplies-portal .sp-safety-stock-detail__identity {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
   gap: 0.75rem;
@@ -1116,20 +1166,23 @@
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity > div,
 .dashboard-supplies-portal .sp-purchase-order-detail__item-meta > div,
-.dashboard-supplies-portal .sp-purchase-request-detail__identity > div {
+.dashboard-supplies-portal .sp-purchase-request-detail__identity > div,
+.dashboard-supplies-portal .sp-safety-stock-detail__identity > div {
   min-width: 0;
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity dt,
 .dashboard-supplies-portal .sp-purchase-order-detail__item-meta dt,
-.dashboard-supplies-portal .sp-purchase-request-detail__identity dt {
+.dashboard-supplies-portal .sp-purchase-request-detail__identity dt,
+.dashboard-supplies-portal .sp-safety-stock-detail__identity dt {
   font-size: 0.75rem;
   color: var(--sp-text-muted);
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity dd,
 .dashboard-supplies-portal .sp-purchase-order-detail__item-meta dd,
-.dashboard-supplies-portal .sp-purchase-request-detail__identity dd {
+.dashboard-supplies-portal .sp-purchase-request-detail__identity dd,
+.dashboard-supplies-portal .sp-safety-stock-detail__identity dd {
   margin: 0.15rem 0 0;
   font-weight: 600;
   overflow-wrap: anywhere;

@@ -38,7 +38,7 @@ describe("Safety stock feature (E11.S2/S3)", () => {
     expect(api).toMatch(/\/safety-stock\/filters/);
     expect(api).toMatch(/\/safety-stock\/summary/);
     expect(api).toMatch(/\/safety-stock\/items/);
-    // E11.S3 — detalhe e fornecedores, somente sob interação (modal).
+    // E11.S3/S7 — detalhe e fornecedores, somente sob interação (página).
     expect(api).toMatch(/\/details/);
     expect(api).toMatch(/\/suppliers/);
     expect(api).toMatch(/suppliesApiUrl/);
@@ -173,24 +173,24 @@ describe("Safety stock feature (E11.S2/S3)", () => {
   });
 });
 
-describe("Safety stock item detail (E11.S3)", () => {
-  it("modal consome só os dois endpoints BFF com filial concreta", () => {
-    const modal = readFileSync(join(dir, "SafetyStockDetailModal.tsx"), "utf8");
-    expect(modal).toContain("getSafetyStockItemDetails");
-    expect(modal).toContain("getSafetyStockItemSuppliers");
-    // Sem prefetch: os fetchers são chamados só dentro do modal.
+describe("Safety stock item detail (E11.S3/S7 — página própria)", () => {
+  it("página de detalhe consome só os dois endpoints BFF com filial concreta", () => {
+    const page = readFileSync(join(dir, "SafetyStockDetailPage.tsx"), "utf8");
+    expect(page).toContain("getSafetyStockItemDetails");
+    expect(page).toContain("getSafetyStockItemSuppliers");
+    // Sem prefetch: os fetchers são chamados só dentro da página.
     const api = readFileSync(join(dir, "api.ts"), "utf8");
     expect(api).toMatch(/items\/\$\{encodeURIComponent/);
     expect(api).toMatch(/params\.set\("branch", target\.branch\)/);
     // Guardas de contrato (residual de envelope E11.S1).
     expect(api).toContain("isSafetyStockItemDetail");
     expect(api).toContain("isSafetyStockSuppliersResponse");
-    // Cancelamento por troca/fechamento do item.
-    expect(modal).toContain("AbortController");
-    expect(modal).toContain("controller.abort()");
+    // Cancelamento por troca de item/filial.
+    expect(page).toContain("AbortController");
+    expect(page).toContain("controller.abort()");
     // Estados independentes detalhe × fornecedores.
-    expect(modal).toContain("detailState.status");
-    expect(modal).toContain("suppliersState.status");
+    expect(page).toContain("detailState.status");
+    expect(page).toContain("suppliersState.status");
     // Seções do contrato real do produtor.
     for (const section of [
       "open_purchase_orders",
@@ -201,29 +201,85 @@ describe("Safety stock item detail (E11.S3)", () => {
       "annual_comparison",
       "purchase_coverage",
     ]) {
-      expect(modal).toContain(section);
+      expect(page).toContain(section);
     }
     // Identidade composta do fornecedor.
-    expect(modal).toContain("supplier_code");
-    expect(modal).toContain("supplier_store");
+    expect(page).toContain("supplier_code");
+    expect(page).toContain("supplier_store");
     // Sem N+1: cada fetcher é chamado exatamente uma vez por item aberto.
-    expect(modal.match(/getSafetyStockItemDetails\(target/g)).toHaveLength(1);
-    expect(modal.match(/getSafetyStockItemSuppliers\(target/g)).toHaveLength(1);
+    expect(page.match(/getSafetyStockItemDetails\(target/g)).toHaveLength(1);
+    expect(page.match(/getSafetyStockItemSuppliers\(target/g)).toHaveLength(1);
   });
 
-  it("página abre detalhe com identidade produto+filial concreta e URL", () => {
+  it("detalhe é página completa — nunca modal/drawer/overlay", () => {
+    const page = readFileSync(join(dir, "SafetyStockDetailPage.tsx"), "utf8");
+    expect(page).not.toMatch(/SuppliesModal|ModalShell|drawer/i);
+    expect(page).toContain("SuppliesPagePath");
+    expect(page).toContain("SuppliesPageHero");
+    // Voltar para a listagem com o recorte preservado (?from=).
+    expect(page).toContain("navigatePluginPath");
+    expect(page).toContain('get("from")');
+    // Filial concreta obrigatória — `all`/inválido → sem target, sem request.
+    expect(page).toMatch(/SAFETY_STOCK_ALL_SCOPE\) return null/);
+    expect(page).toContain("invalidBranchTitle");
+    // Nenhum componente da feature renderiza o modal de detalhe removido.
+    for (const file of collectSourceFiles(dir)) {
+      expect(readFileSync(file, "utf8")).not.toContain("SafetyStockDetailModal");
+    }
+    expect(() =>
+      readFileSync(join(dir, "SafetyStockDetailModal.tsx")),
+    ).toThrow();
+  });
+
+  it("rota canônica do detalhe: safety-stock/{branch}/{code} sem manifest novo", () => {
+    const routes = readFileSync(join(dir, "../../app/pluginRoutes.ts"), "utf8");
+    const app = readFileSync(join(dir, "../../App.tsx"), "utf8");
+    expect(routes).toContain('"safety_stock_detail"');
+    expect(routes).toMatch(/safety-stock\\\/\(\[\^\/\]\+\)\\\//);
+    expect(routes).toContain("buildSafetyStockDetailPath");
+    expect(app).toContain('view === "safety_stock_detail"');
+    expect(app).toContain("SafetyStockDetailPage");
+  });
+
+  it("listagem navega: filial concreta direto; `all` abre seletor explícito", () => {
     const page = readFileSync(join(dir, "SafetyStockPage.tsx"), "utf8");
-    expect(page).toContain("SafetyStockDetailModal");
-    expect(page).toContain("parseDetailTargetFromSearch");
-    expect(page).toContain("buildUrlSearch(query, detailTarget)");
-    // branch=all nunca é enviado ao detalhe.
-    expect(page).toMatch(/branch === SAFETY_STOCK_ALL_SCOPE\) return/);
+    expect(page).toContain("SafetyStockBranchChoiceDialog");
+    expect(page).toContain("buildSafetyStockDetailPath");
+    expect(page).toContain("navigatePluginPath");
+    expect(page).toContain("parseDetailTargetFromSearch"); // redirect legado
+    // branch=all abre a escolha — não navega nem consulta detalhe.
+    expect(page).toMatch(/SAFETY_STOCK_ALL_SCOPE\)[\s\S]{0,200}setBranchChoiceCode/);
+    // A listagem nunca chama os endpoints de detalhe diretamente.
+    expect(page).not.toContain("getSafetyStockItemDetails");
+    expect(page).not.toContain("getSafetyStockItemSuppliers");
+    // O recorte consolidado da lista não é substituído pela filial escolhida.
+    expect(page).not.toMatch(/setQuery\([^)]*branch[^)]*branchChoice/);
   });
 
-  it("query serializa e restaura o detalhe via item+itemBranch", () => {
+  it("seletor de filial: sem default, sem fetch de detalhe, com cancelar", () => {
+    const dialog = readFileSync(
+      join(dir, "SafetyStockBranchChoiceDialog.tsx"),
+      "utf8",
+    );
+    // Nenhum request antes da escolha.
+    expect(dialog).not.toContain("getSafetyStockItemDetails");
+    expect(dialog).not.toContain("getSafetyStockItemSuppliers");
+    // Opções concretas apenas (01/02) — `all` é filtrado fora.
+    expect(dialog).toContain("SAFETY_STOCK_ALL_SCOPE");
+    // Começa sem escolha (estado chaveado pelo material) e confirma fica
+    // desabilitado até selecionar — nunca pré-seleciona 01.
+    expect(dialog).toContain("setPicked(null)");
+    expect(dialog).toMatch(/picked\?\.key === productCode/);
+    expect(dialog).toMatch(/disabled=\{!selected\}/);
+    expect(dialog).not.toMatch(/useState[^)]*"0[12]"/);
+    expect(dialog).toContain("chooseBranchCancel");
+    expect(dialog).toContain("chooseBranchConfirm");
+  });
+
+  it("query: detalhe não é serializado na listagem; legado ainda resolve", () => {
     const query = readFileSync(join(dir, "query.ts"), "utf8");
-    expect(query).toContain('params.set("item", detail.productCode)');
-    expect(query).toContain('params.set("itemBranch", detail.branch)');
+    expect(query).not.toMatch(/params\.set\("item"/);
+    expect(query).not.toMatch(/params\.set\("itemBranch"/);
     expect(query).toContain("parseDetailTargetFromSearch");
     // Recusa filial `all` no detalhe.
     expect(query).toMatch(/branch === SAFETY_STOCK_ALL_SCOPE\) return null/);

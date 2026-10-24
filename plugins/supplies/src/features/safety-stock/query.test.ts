@@ -268,27 +268,22 @@ describe("safety stock presentation", () => {
   });
 });
 
-describe("safety stock detail target (E11.S3)", () => {
-  it("URL serializa item+itemBranch junto aos filtros", () => {
+describe("safety stock detail target (E11.S3 legado → E11.S7 rota própria)", () => {
+  it("URL da listagem não carrega mais identidade de detalhe", () => {
     const q = { ...createDefaultQuery(), branch: "all" as const };
-    const search = buildUrlSearch(q, {
-      productCode: "10070821",
-      branch: "01",
-    });
+    const search = buildUrlSearch(q);
     const params = new URLSearchParams(search.slice(1));
-    expect(params.get("item")).toBe("10070821");
-    expect(params.get("itemBranch")).toBe("01");
+    expect(params.get("item")).toBeNull();
+    expect(params.get("itemBranch")).toBeNull();
     // Filtros permanecem intactos.
     expect(params.get("page")).toBe("1");
     expect(params.get("sortBy")).toBe("product_code");
   });
 
-  it("round-trip: deep link restaura o detalhe sem abrir material errado", () => {
-    const search = buildUrlSearch(createDefaultQuery(), {
-      productCode: "10070821",
-      branch: "02",
-    });
-    expect(parseDetailTargetFromSearch(search)).toEqual({
+  it("deep link legado (item+itemBranch) ainda resolve para redirecionar", () => {
+    expect(
+      parseDetailTargetFromSearch("?item=10070821&itemBranch=02&page=4"),
+    ).toEqual({
       productCode: "10070821",
       branch: "02",
     });
@@ -306,13 +301,13 @@ describe("safety stock detail target (E11.S3)", () => {
     expect(parseDetailTargetFromSearch("")).toBeNull();
   });
 
-  it("fechar o detalhe remove item+itemBranch e preserva filtros", () => {
+  it("buildUrlSearch nunca emite item/itemBranch — preserva só os filtros", () => {
     const q = {
       ...createDefaultQuery(),
       branch: "02" as const,
       status: "below_safety_stock" as const,
     };
-    const search = buildUrlSearch(q, null);
+    const search = buildUrlSearch(q);
     const params = new URLSearchParams(search.slice(1));
     expect(params.get("item")).toBeNull();
     expect(params.get("itemBranch")).toBeNull();

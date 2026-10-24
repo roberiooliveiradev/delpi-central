@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
-import { navigatePluginView } from "../../app/pluginNavigation";
-import { buildPluginPath } from "../../app/pluginRoutes";
+import {
+  navigatePluginPath,
+  navigatePluginView,
+} from "../../app/pluginNavigation";
+import {
+  buildPluginPath,
+  buildSafetyStockDetailPath,
+} from "../../app/pluginRoutes";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
   SuppliesActionButton,
@@ -24,7 +30,7 @@ import {
   SAFETY_STOCK_CONTENT as C,
   mapSafetyStockFetchError,
 } from "./content";
-import { SafetyStockDetailModal } from "./SafetyStockDetailModal";
+import { SafetyStockBranchChoiceDialog } from "./SafetyStockBranchChoiceDialog";
 import { SafetyStockFilters } from "./SafetyStockFilters";
 import { SafetyStockListTable } from "./SafetyStockListTable";
 import {
@@ -38,7 +44,6 @@ import {
 } from "./query";
 import { SAFETY_STOCK_ALL_SCOPE } from "./types";
 import type {
-  SafetyStockDetailTarget,
   SafetyStockItem,
   SafetyStockQuery,
   SafetyStockSummary,
@@ -80,6 +85,16 @@ function writeBrowserSearch(search: string, mode: Exclude<HistoryWriteMode, "ski
   window.history.replaceState(window.history.state, "", next);
 }
 
+/** Remove `item`/`itemBranch` de deep links legados (E11.S3) da query. */
+function stripLegacyDetailParams(search: string): string {
+  const params = new URLSearchParams(
+    search.startsWith("?") ? search.slice(1) : search,
+  );
+  params.delete("item");
+  params.delete("itemBranch");
+  return params.toString();
+}
+
 function formatUpdatedAt(value: Date): string {
   return value.toLocaleTimeString("pt-BR", {
     hour: "2-digit",
@@ -95,11 +110,9 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
   const [query, setQuery] = useState<SafetyStockQuery>(() =>
     parseQueryFromSearch(readBrowserSearch()),
   );
-  // E11.S3 — detalhe endereçável por URL (item + itemBranch concretos).
-  const [detailTarget, setDetailTarget] =
-    useState<SafetyStockDetailTarget | null>(() =>
-      parseDetailTargetFromSearch(readBrowserSearch()),
-    );
+  // E11.S7 — linha consolidada (`branch=all`) pede escolha explícita de filial
+  // antes de navegar para a página de detalhe. Guarda só o código do material.
+  const [branchChoiceCode, setBranchChoiceCode] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [filtersError, setFiltersError] = useState<string | null>(null);
   const [summary, setSummary] = useState<SafetyStockSummary | null>(null);
@@ -119,9 +132,9 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
       historyWriteModeRef.current = "push";
       return;
     }
-    writeBrowserSearch(buildUrlSearch(query, detailTarget), mode);
+    writeBrowserSearch(buildUrlSearch(query), mode);
     historyWriteModeRef.current = "push";
-  }, [query, detailTarget]);
+  }, [query]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -129,7 +142,6 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
       const next = parseQueryFromSearch(search);
       historyWriteModeRef.current = "skip";
       setQuery((current) => (sameSafetyStockQuery(current, next) ? current : next));
-      setDetailTarget(parseDetailTargetFromSearch(search));
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -222,20 +234,67 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
     setQuery(createDefaultQuery());
   };
 
-  // Detalhe exige filial concreta: a linha carrega sua própria filial mesmo
-  // quando a listagem está consolidada em `all`.
-  const onOpenDetail = useCallback((row: SafetyStockItem) => {
-    const productCode = String(row.product_code ?? "").trim();
-    const branch = normalizeBranchScope(row.branch);
-    if (!productCode || branch === SAFETY_STOCK_ALL_SCOPE) return;
-    historyWriteModeRef.current = "push";
-    setDetailTarget({ productCode, branch });
-  }, []);
+  // Deep links legados (E11.S3: ?item=..&itemBranch=..) redirecionam para a
+  // rota canônica de detalhe, preservando o recorte da listagem em `?from=`.
+  useEffect(() => {
+    const legacy = parseDetailTargetFromSearch(readBrowserSearch());
+    if (!legacy) return;
+    const rest = stripLegacyDetailParams(readBrowserSearch());
+    navigatePluginPath(
+      buildSafetyStockDetailPath(
+        legacy.branch,
+        legacy.productCode,
+        basePath,
+        rest ? `?from=${encodeURIComponent(rest)}` : undefined,
+      ),
+      { replace: true },
+    );
+  }, [basePath]);
 
-  const onCloseDetail = useCallback(() => {
-    historyWriteModeRef.current = "push";
-    setDetailTarget(null);
-  }, []);
+  // Navega para a página de detalhe carregando o recorte atual da listagem —
+  // «Voltar» restaura filtros/ordenação/página exatos (inclui `branch=all`).
+  const navigateToDetail = useCallback(
+    (productCode: string, branch: string) => {
+      const listSearch = stripLegacyDetailParams(readBrowserSearch());
+      navigatePluginPath(
+        buildSafetyStockDetailPath(
+          branch,
+          productCode,
+          basePath,
+          listSearch ? `?from=${encodeURIComponent(listSearch)}` : undefined,
+        ),
+      );
+    },
+    [basePath],
+  );
+
+  // E11.S7 — filial concreta abre direto; consolidada (`all`) exige escolha
+  // explícita, sem consulta de detalhe antes da seleção.
+  const onOpenDetail = useCallback(
+    (row: SafetyStockItem) => {
+      const productCode = String(row.product_code ?? "").trim();
+      if (!productCode) return;
+      const branch = normalizeBranchScope(row.branch);
+      if (branch === SAFETY_STOCK_ALL_SCOPE) {
+        setBranchChoiceCode(productCode);
+        return;
+      }
+      navigateToDetail(productCode, branch);
+    },
+    [navigateToDetail],
+  );
+
+  const onPickDetailBranch = useCallback(
+    (branch: string) => {
+      const productCode = branchChoiceCode;
+      setBranchChoiceCode(null);
+      if (!productCode) return;
+      const normalized = normalizeBranchScope(branch);
+      if (normalized === SAFETY_STOCK_ALL_SCOPE) return;
+      navigateToDetail(productCode, normalized);
+    },
+    [branchChoiceCode, navigateToDetail],
+  );
 
   // Opções de filial: catálogo operacional do BFF; fallback = unidades da sessão.
   const branchOptions = branchCatalog.length ? branchCatalog : [...units];
@@ -455,7 +514,12 @@ export function SafetyStockPage({ basePath }: SafetyStockPageProps) {
         ) : null}
       </SuppliesSectionCard>
 
-      <SafetyStockDetailModal target={detailTarget} onClose={onCloseDetail} />
+      <SafetyStockBranchChoiceDialog
+        productCode={branchChoiceCode}
+        branches={branchOptions}
+        onPick={onPickDetailBranch}
+        onClose={() => setBranchChoiceCode(null)}
+      />
     </div>
   );
 }

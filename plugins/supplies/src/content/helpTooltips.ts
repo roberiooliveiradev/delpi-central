@@ -249,7 +249,7 @@ export const SP_HELP = {
   safetyStockColDescription:
     "Descrição cadastrada para o material.",
   safetyStockColBranch:
-    "Filial relacionada ao registro. Na consulta consolidada («Todas as Filiais»), a linha agrega as filiais operacionais — o detalhe abre apenas com filial concreta.",
+    "Filial relacionada ao registro. Na consulta consolidada («Todas as Filiais»), a linha agrega as filiais operacionais — ao abrir o detalhe, você escolhe a filial (Santa Catarina ou Espírito Santo).",
   safetyStockColType:
     "Classificação do tipo de material utilizada no cadastro do Protheus.",
   safetyStockColGroup:
@@ -257,11 +257,11 @@ export const SP_HELP = {
   safetyStockColUnit:
     "Unidade de medida utilizada para representar as quantidades do material.",
   safetyStockColActions:
-    "Permite consultar informações adicionais do material na filial correspondente.",
+    "Abre a página de detalhe do material na filial correspondente. Na visão «Todas as Filiais», você escolhe a filial antes de abrir.",
   safetyStockTableMeta:
-    "Colunas visíveis e total de materiais do recorte filtrado (não só a página atual). Clique na linha ou em «Ver detalhes» para abrir a ficha do material nesta filial.",
+    "Colunas visíveis e total de materiais do recorte filtrado (não só a página atual). Clique na linha ou em «Ver detalhes» para abrir a página de detalhe do material na filial.",
   safetyStockDetail:
-    "Detalhe do material nesta filial: identificação, saldos, cobertura do déficit, pedidos/solicitações/empenhos em aberto, projeção de estoque, consumo e fornecedores vinculados. Tudo calculado pelo servidor — o Portal não recalcula.",
+    "Página de detalhe do material nesta filial: identificação, saldos, cobertura do déficit, pedidos/solicitações/empenhos em aberto, projeção de estoque, consumo e fornecedores vinculados. Tudo calculado pelo servidor — o Portal não recalcula.",
   safetyStockDetailCoverage:
     "Cobertura do déficit pelos pedidos de compra elegíveis (armazéns 01/98/99 e unidade compatível). «Falta comprar» é o restante calculado pelo servidor.",
   safetyStockDetailProjection:

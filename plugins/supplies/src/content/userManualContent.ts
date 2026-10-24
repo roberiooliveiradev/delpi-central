@@ -121,7 +121,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver estoque de segurança",
           where: "Estoque de segurança",
-          how: "Indicadores, déficit por unidade de medida e lista classificada; clique na linha para abrir o detalhe do material na filial — não é o saldo físico",
+          how: "Indicadores, déficit por unidade de medida e lista classificada; clique na linha para abrir a página de detalhe do material — na visão Todas as Filiais, escolha a filial antes",
         },
         {
           want: "Consultar o estoque físico",
@@ -175,7 +175,7 @@ export const USER_MANUAL_CONTENT = {
         "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade e de Entregas / Atrasos.",
         "Entregas / Atrasos — recebimentos de matéria-prima (MP) já digitados, classificados em Em atraso ou No prazo. Período = data de digitação/entrada. Sem clique no pedido (histórico ≠ PC aberto).",
         "Estoque — posição física atual por produto, unidade e armazém, incluindo saldos positivos, zerados e negativos. Não calcula saldo disponível e não é estoque de segurança.",
-        "Estoque de segurança — materiais com estoque de segurança parametrizado no ERP: indicadores do recorte, déficit por unidade de medida e lista ordenável com os quatro status. Clique na linha para o detalhe do material na filial (saldos, cobertura, pedidos/SCs/empenhos em aberto, projeção, consumo e fornecedores). Distinto de Estoque (posição física) e de Produtos (ficha cadastral).",
+        "Estoque de segurança — materiais com estoque de segurança parametrizado no ERP: indicadores do recorte, déficit por unidade de medida e lista ordenável com os quatro status. Clique na linha para a página de detalhe do material (saldos, cobertura, pedidos/SCs/empenhos em aberto, projeção, consumo e fornecedores); na visão Todas as Filiais, o Portal pede a escolha de Santa Catarina ou Espírito Santo. Distinto de Estoque (posição física) e de Produtos (ficha cadastral).",
         "Solicitações de compras — acompanhamento global no período; o hero conta SCs e a faixa Atenção filtra a situação sem ser uma permissão. Clique na SC para a ficha; exportação Excel faz parte do uso normal.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque físico e estoque de segurança.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
@@ -197,7 +197,7 @@ export const USER_MANUAL_CONTENT = {
         "Os quatro status — Sem estoque de segurança (sem estoque de segurança definido), Abaixo (saldo disponível menor que o estoque de segurança), No nível e Acima. O rótulo sempre acompanha a cor.",
         "Déficit por unidade de medida — quanto falta comprar para repor o estoque de segurança, agrupado por UM. Só compare quantidades da mesma unidade.",
         "Ordenação e paginação — clique no título da coluna para ordenar (nove campos disponíveis); a ordenação vale para o recorte inteiro, não só a página atual, e fica na URL.",
-        "Detalhe do material — clique na linha ou em «Ver detalhes» para abrir a ficha do item naquela filial: identificação, saldos por armazém, cobertura do déficit, pedidos de compra, solicitações e empenhos em aberto, projeção de estoque, consumo mensal/anual e fornecedores vinculados.",
+        "Detalhe do material — clique na linha ou em «Ver detalhes» para abrir a página própria da ficha do item naquela filial: identificação, saldos por armazém, cobertura do déficit, pedidos de compra, solicitações e empenhos em aberto, projeção de estoque, consumo mensal/anual e fornecedores vinculados. Na visão Todas as Filiais, escolha Santa Catarina ou Espírito Santo antes de abrir. O link «Estoque de Segurança» no topo volta à lista com os mesmos filtros.",
         "Cobertura — quanto do déficit já está coberto por pedidos de compra elegíveis; «Falta comprar» é o restante calculado pelo servidor.",
         "Projeção — extrato cronológico do saldo: posição inicial, entradas de pedidos e saídas de empenhos. Ruptura é o primeiro saldo projetado negativo.",
         "Fornecedores vinculados — fornecedores do material com dados da última compra; a identidade é código + loja do fornecedor.",
@@ -216,11 +216,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "O que vejo no detalhe de um material no Estoque de segurança?",
-          a: "Clique na linha da lista: abrem-se identificação, saldos por armazém, cobertura do déficit, pedidos de compra, solicitações e empenhos em aberto, projeção de estoque, consumo mensal/anual e fornecedores vinculados. O detalhe vale para a filial da linha — o mesmo código pode ter situações diferentes em cada filial.",
+          a: "Clique na linha da lista: abre uma página com identificação, saldos por armazém, cobertura do déficit, pedidos de compra, solicitações e empenhos em aberto, projeção de estoque, consumo mensal/anual e fornecedores vinculados. O detalhe vale para a filial da linha — o mesmo código pode ter situações diferentes em cada filial. Na visão Todas as Filiais, você escolhe a filial (Santa Catarina ou Espírito Santo) antes de abrir.",
         },
         {
           q: "Como compartilho o detalhe de um material?",
-          a: "O detalhe tem endereço próprio na URL (item + filial). Copie o link com a ficha aberta; F5 reabre o mesmo material e voltar retorna à lista com os filtros.",
+          a: "O detalhe tem endereço próprio na URL (filial + código do material). Copie o link com a página aberta; F5 reabre o mesmo material e «Estoque de Segurança» no topo retorna à lista com os filtros.",
         },
         {
           q: "O que é a projeção de estoque no detalhe?",

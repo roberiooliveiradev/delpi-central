@@ -1,6 +1,8 @@
 # E11.S7 — Decisão do PO: detalhe em página e seleção explícita de filial
 
-**Data:** 2026-10-24 · **Status:** DECIDED / PLANNED (não implementado) · **Owner UX:** `plugins/supplies` · **Produto:** Portal Suprimentos, WF-16 / E11.
+**Data:** 2026-10-24 · **Status:** DECIDED → **IMPLEMENTADO** (ver evidências) · **Owner UX:** `plugins/supplies` · **Produto:** Portal Suprimentos, WF-16 / E11.
+
+> **Implementação (2026-10-24):** código, testes e verificação em [E11-S7-DETAIL-PAGE-IMPLEMENTATION.md](./E11-S7-DETAIL-PAGE-IMPLEMENTATION.md). O texto abaixo registra a decisão original e não foi alterado.
 
 ## Decisão vinculante do Product Owner
 

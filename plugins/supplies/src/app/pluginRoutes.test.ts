@@ -5,6 +5,7 @@ import {
   buildPluginPath,
   buildPurchaseOrderDetailPath,
   buildPurchaseRequestDetailPath,
+  buildSafetyStockDetailPath,
   resolveActiveNavId,
   resolvePluginRoute,
 } from "./pluginRoutes";
@@ -47,6 +48,44 @@ describe("pluginRoutes", () => {
 
     expect(resolveActiveNavId("purchase_request_detail")).toBe("purchase_requests");
     expect(resolveActiveNavId("purchase_requests")).toBe("purchase_requests");
+  });
+
+  it("resolves safety stock detail path, encodes segments and nav", () => {
+    const detail = resolvePluginRoute("/apps/supplies/safety-stock/01/00100708");
+    expect(detail.view).toBe("safety_stock_detail");
+    expect(detail.branch).toBe("01");
+    expect(detail.productCode).toBe("00100708");
+
+    const sibling = resolvePluginRoute("/apps/supplies/safety-stock/02/ABC");
+    expect(sibling.view).toBe("safety_stock_detail");
+    expect(sibling.branch).toBe("02");
+    expect(sibling.productCode).toBe("ABC");
+
+    // `all` resolve a rota — a página decide o estado de filial inválida.
+    expect(resolvePluginRoute("/apps/supplies/safety-stock/all/ABC").view).toBe(
+      "safety_stock_detail",
+    );
+
+    const encoded = resolvePluginRoute(
+      "/apps/supplies/safety-stock/01/A%20B",
+    );
+    expect(encoded.productCode).toBe("A B");
+
+    expect(buildSafetyStockDetailPath("01", "00100708")).toBe(
+      "/apps/supplies/safety-stock/01/00100708",
+    );
+    expect(
+      buildSafetyStockDetailPath("02", "A B", undefined, "?from=x"),
+    ).toBe("/apps/supplies/safety-stock/02/A%20B?from=x");
+
+    expect(resolveActiveNavId("safety_stock_detail")).toBe("operations");
+    // Caminho sem filial/código continua na listagem ou em not_found.
+    expect(resolvePluginRoute("/apps/supplies/safety-stock").view).toBe(
+      "safety_stock",
+    );
+    expect(resolvePluginRoute("/apps/supplies/safety-stock/01").view).toBe(
+      "not_found",
+    );
   });
 
   it("returns not_found for unknown paths", () => {

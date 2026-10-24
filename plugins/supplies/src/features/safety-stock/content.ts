@@ -110,7 +110,7 @@ export function mapSafetyStockFetchError(message: string): string {
 }
 
 /* ------------------------------------------------------------------ */
-/* E11.S3 — detalhe do item (drawer/modal)                              */
+/* E11.S3/S7 — detalhe do item (página própria + seleção de filial)     */
 /* ------------------------------------------------------------------ */
 
 export const SAFETY_STOCK_DETAIL_CONTENT = {
@@ -118,6 +118,17 @@ export const SAFETY_STOCK_DETAIL_CONTENT = {
   openActionLabel: (code: string) =>
     `Ver detalhes do material ${code}`,
   title: (code: string) => `Material ${code}`,
+  pageBackLabel: "Estoque de Segurança",
+  invalidBranchTitle: "Filial não identificada",
+  invalidBranchBody:
+    "O detalhe do material exige uma filial concreta. Volte à listagem e escolha Santa Catarina ou Espírito Santo para consultar.",
+  chooseBranchTitle: "Selecionar filial",
+  chooseBranchDescription: (code: string) =>
+    `Escolha a filial para consultar os detalhes do material ${code}.`,
+  chooseBranchOptionAria: (name: string, code: string) =>
+    `Ver detalhes em ${name} — ${code}`,
+  chooseBranchConfirm: "Ver detalhes desta filial",
+  chooseBranchCancel: "Cancelar",
   description:
     "Dados de estoque de segurança do material nesta filial, calculados pelo servidor.",
   loading: "Carregando detalhes do material…",

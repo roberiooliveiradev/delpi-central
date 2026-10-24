@@ -182,10 +182,7 @@ export function buildItemsSearchParams(query: SafetyStockQuery): URLSearchParams
   return params;
 }
 
-export function buildUrlSearch(
-  query: SafetyStockQuery,
-  detail?: SafetyStockDetailTarget | null,
-): string {
+export function buildUrlSearch(query: SafetyStockQuery): string {
   const defaults = createDefaultQuery();
   const params = new URLSearchParams();
   if (query.branch !== defaults.branch) params.set("branch", query.branch);
@@ -205,17 +202,14 @@ export function buildUrlSearch(
   params.set("sortDirection", normalizeSortDirection(query.sortDirection));
   params.set("page", String(query.page));
   params.set("page_size", String(query.page_size));
-  if (detail) {
-    params.set("item", detail.productCode);
-    params.set("itemBranch", detail.branch);
-  }
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
 
 /**
- * E11.S3 — detalhe endereçável por URL (`item` + `itemBranch`).
- * Filial concreta obrigatória: `all`/vazio/inválido → null (não abre).
+ * E11.S3 — deep links legados (`item` + `itemBranch` na query) redirecionam
+ * para a rota canônica de detalhe. Filial concreta obrigatória:
+ * `all`/vazio/inválido → null (não abre).
  */
 export function parseDetailTargetFromSearch(
   search: string,

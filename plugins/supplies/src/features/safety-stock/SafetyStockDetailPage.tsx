@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ApiRequestError } from "../../api/httpClient";
 import { formatSuppliesUnitName } from "../../app/suppliesUnits";
+import { navigatePluginPath } from "../../app/pluginNavigation";
+import { buildPluginPath } from "../../app/pluginRoutes";
 import {
   SuppliesActionButton,
+  SuppliesEmptyState,
   SuppliesLoadingCard,
-  SuppliesModal,
+  SuppliesPageHero,
+  SuppliesPagePath,
   SuppliesSectionHintLabel,
   SuppliesStateBanner,
   SuppliesStatusBadge,
@@ -30,11 +34,13 @@ import {
   formatDatePtBr,
   formatQuantity,
   formatUnitOfMeasure,
+  normalizeBranchScope,
 } from "./query";
-import type {
-  SafetyStockDetailTarget,
-  SafetyStockItemDetail,
-  SafetyStockLinkedSupplier,
+import {
+  SAFETY_STOCK_ALL_SCOPE,
+  type SafetyStockDetailTarget,
+  type SafetyStockItemDetail,
+  type SafetyStockLinkedSupplier,
 } from "./types";
 
 type LoadState<T> = {
@@ -149,15 +155,29 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
-type SafetyStockDetailModalProps = {
-  target: SafetyStockDetailTarget | null;
-  onClose: () => void;
+/** Deep link `?from=` preserva filtros/ordenação/página da listagem. */
+function readListReturnSearch(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return (
+      new URLSearchParams(window.location.search).get("from")?.trim() ?? ""
+    );
+  } catch {
+    return "";
+  }
+}
+
+type SafetyStockDetailPageProps = {
+  basePath?: string;
+  branch: string;
+  productCode: string;
 };
 
-export function SafetyStockDetailModal({
-  target,
-  onClose,
-}: SafetyStockDetailModalProps) {
+export function SafetyStockDetailPage({
+  basePath,
+  branch,
+  productCode,
+}: SafetyStockDetailPageProps) {
   const [detail, setDetail] = useState<LoadState<SafetyStockItemDetail>>(() =>
     initialLoad(""),
   );
@@ -166,8 +186,21 @@ export function SafetyStockDetailModal({
   >(() => initialLoad(""));
   const [retryKey, setRetryKey] = useState(0);
 
-  const open = target != null;
+  // Filial concreta obrigatória — `all`/inválido nunca alcança o BFF.
+  const target = useMemo<SafetyStockDetailTarget | null>(() => {
+    const code = productCode.trim();
+    const normalizedBranch = normalizeBranchScope(branch);
+    if (!code || normalizedBranch === SAFETY_STOCK_ALL_SCOPE) return null;
+    return { productCode: code, branch: normalizedBranch };
+  }, [branch, productCode]);
   const targetKey = target ? `${target.branch}|${target.productCode}` : "";
+
+  const listSearch = readListReturnSearch();
+  const listHref = buildPluginPath("safety_stock", basePath, listSearch);
+  const onNavigateBack = (event: { preventDefault(): void }) => {
+    event.preventDefault();
+    navigatePluginPath(listHref);
+  };
 
   // Dois canais independentes (detalhe / fornecedores): falha de um não
   // bloqueia o outro; troca de item cancela a resposta atrasada do anterior.
@@ -217,8 +250,6 @@ export function SafetyStockDetailModal({
     return () => controller.abort();
   }, [target, retryKey]);
 
-  if (!open || !target) return null;
-
   // Estado só vale para o item corrente — troca rápida nunca exibe o anterior.
   const detailState =
     detail.key === targetKey ? detail : initialLoad<SafetyStockItemDetail>(targetKey);
@@ -239,19 +270,63 @@ export function SafetyStockDetailModal({
   const annual = data?.annual_comparison;
 
   return (
-    <SuppliesModal
-      open={open}
-      title={D.title(target.productCode)}
-      description={D.description}
-      onClose={onClose}
-      className="sp-safety-stock-detail"
-      closeAriaLabel="Fechar detalhes do material"
-    >
-      {detailState.status === "loading" ? (
+    <div className="sp-page-stack sp-safety-stock-detail">
+      <SuppliesPagePath
+        back={{
+          label: D.pageBackLabel,
+          href: listHref,
+          onNavigate: onNavigateBack,
+        }}
+        items={[]}
+        current={D.title(productCode.trim() || "—")}
+      />
+
+      <SuppliesPageHero
+        eyebrow="Portal Suprimentos"
+        title={
+          <SuppliesSectionHintLabel
+            label={D.title(productCode.trim() || "—")}
+            hint={SP_HELP.safetyStockDetail}
+          />
+        }
+        description={
+          product?.product_description?.trim() || D.description
+        }
+      >
+        <dl className="sp-safety-stock-detail__identity">
+          <div>
+            <dt>{D.labelProduct}</dt>
+            <dd>{productCode.trim() || "—"}</dd>
+          </div>
+          <div>
+            <dt>{D.labelBranch}</dt>
+            <dd>
+              {target ? formatSuppliesUnitName(target.branch) : "—"}
+            </dd>
+          </div>
+        </dl>
+      </SuppliesPageHero>
+
+      {!target ? (
+        <SuppliesEmptyState
+          title={D.invalidBranchTitle}
+          message={D.invalidBranchBody}
+        >
+          <SuppliesActionButton
+            type="button"
+            variant="primary"
+            onClick={() => navigatePluginPath(listHref)}
+          >
+            {D.pageBackLabel}
+          </SuppliesActionButton>
+        </SuppliesEmptyState>
+      ) : null}
+
+      {target && detailState.status === "loading" ? (
         <SuppliesLoadingCard title={D.loading} variant="panel" />
       ) : null}
 
-      {detailState.status === "error" ? (
+      {target && detailState.status === "error" ? (
         <div className="sp-safety-stock-detail__error">
           <SuppliesStateBanner variant="error">
             {detailState.error ?? D.error}
@@ -266,17 +341,14 @@ export function SafetyStockDetailModal({
         </div>
       ) : null}
 
-      {detailState.status === "ready" && data && product && stock ? (
+      {target && detailState.status === "ready" && data && product && stock ? (
         <div className="sp-safety-stock-detail__body">
           <section
             className="sp-safety-stock-detail__section"
             aria-label={D.sectionIdentification}
           >
             <h4 className="sp-safety-stock-detail__section-title">
-              <SuppliesSectionHintLabel
-                label={D.sectionIdentification}
-                hint={SP_HELP.safetyStockDetail}
-              />
+              {D.sectionIdentification}
             </h4>
             <dl className="sp-safety-stock-detail__grid">
               <div>
@@ -817,83 +889,85 @@ export function SafetyStockDetailModal({
         </div>
       ) : null}
 
-      <section
-        className="sp-safety-stock-detail__section"
-        aria-label={D.sectionSuppliers}
-      >
-        <h4 className="sp-safety-stock-detail__section-title">
-          <SuppliesSectionHintLabel
-            label={D.suppliersTitle}
-            hint={SP_HELP.safetyStockDetailSuppliers}
-          />
-        </h4>
-        {suppliersState.status === "loading" ? (
-          <SuppliesLoadingCard title={D.loadingSuppliers} variant="panel" />
-        ) : null}
-        {suppliersState.status === "error" ? (
-          <div className="sp-safety-stock-detail__error">
-            <SuppliesStateBanner variant="error">
-              {suppliersState.error ?? D.errorSuppliers}
-            </SuppliesStateBanner>
-            <SuppliesActionButton
-              type="button"
-              variant="ghost"
-              onClick={() => setRetryKey((v) => v + 1)}
-            >
-              {D.retry}
-            </SuppliesActionButton>
-          </div>
-        ) : null}
-        {suppliersState.status === "ready" ? (
-          suppliersState.data && suppliersState.data.length === 0 ? (
-            <p className="sp-safety-stock-detail__empty">{D.suppliersEmpty}</p>
-          ) : (
-            <div className="sp-safety-stock-detail__table-wrap">
-              <table className="sp-safety-stock-detail__table">
-                <thead>
-                  <tr>
-                    <th>{D.colSupplierCode}</th>
-                    <th>{D.colSupplierStore}</th>
-                    <th>{D.colSupplierName}</th>
-                    <th>{D.colPartNumber}</th>
-                    <th>{D.supplierLastPurchase}</th>
-                    <th className="num">{D.colLastInvoice}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(suppliersState.data ?? []).map((supplier) => (
-                    <tr
-                      key={`${supplier.supplier_code}|${supplier.supplier_store}`}
-                    >
-                      <td>{supplier.supplier_code?.trim() || "—"}</td>
-                      <td>{supplier.supplier_store?.trim() || "—"}</td>
-                      <td>
-                        {supplier.trade_name?.trim() ||
-                          supplier.legal_name?.trim() ||
-                          "—"}
-                      </td>
-                      <td>{supplier.supplier_part_number?.trim() || "—"}</td>
-                      <td>
-                        {supplier.has_last_purchase ? (
-                          <>
-                            {formatDatePtBr(supplier.last_purchase_date)} ·{" "}
-                            {formatCurrencyPtBr(supplier.last_unit_price)}
-                          </>
-                        ) : (
-                          D.supplierNoPurchase
-                        )}
-                      </td>
-                      <td className="num">
-                        {supplier.last_invoice_number?.trim() || "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {target ? (
+        <section
+          className="sp-safety-stock-detail__section"
+          aria-label={D.sectionSuppliers}
+        >
+          <h4 className="sp-safety-stock-detail__section-title">
+            <SuppliesSectionHintLabel
+              label={D.suppliersTitle}
+              hint={SP_HELP.safetyStockDetailSuppliers}
+            />
+          </h4>
+          {suppliersState.status === "loading" ? (
+            <SuppliesLoadingCard title={D.loadingSuppliers} variant="panel" />
+          ) : null}
+          {suppliersState.status === "error" ? (
+            <div className="sp-safety-stock-detail__error">
+              <SuppliesStateBanner variant="error">
+                {suppliersState.error ?? D.errorSuppliers}
+              </SuppliesStateBanner>
+              <SuppliesActionButton
+                type="button"
+                variant="ghost"
+                onClick={() => setRetryKey((v) => v + 1)}
+              >
+                {D.retry}
+              </SuppliesActionButton>
             </div>
-          )
-        ) : null}
-      </section>
-    </SuppliesModal>
+          ) : null}
+          {suppliersState.status === "ready" ? (
+            suppliersState.data && suppliersState.data.length === 0 ? (
+              <p className="sp-safety-stock-detail__empty">{D.suppliersEmpty}</p>
+            ) : (
+              <div className="sp-safety-stock-detail__table-wrap">
+                <table className="sp-safety-stock-detail__table">
+                  <thead>
+                    <tr>
+                      <th>{D.colSupplierCode}</th>
+                      <th>{D.colSupplierStore}</th>
+                      <th>{D.colSupplierName}</th>
+                      <th>{D.colPartNumber}</th>
+                      <th>{D.supplierLastPurchase}</th>
+                      <th className="num">{D.colLastInvoice}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(suppliersState.data ?? []).map((supplier) => (
+                      <tr
+                        key={`${supplier.supplier_code}|${supplier.supplier_store}`}
+                      >
+                        <td>{supplier.supplier_code?.trim() || "—"}</td>
+                        <td>{supplier.supplier_store?.trim() || "—"}</td>
+                        <td>
+                          {supplier.trade_name?.trim() ||
+                            supplier.legal_name?.trim() ||
+                            "—"}
+                        </td>
+                        <td>{supplier.supplier_part_number?.trim() || "—"}</td>
+                        <td>
+                          {supplier.has_last_purchase ? (
+                            <>
+                              {formatDatePtBr(supplier.last_purchase_date)} ·{" "}
+                              {formatCurrencyPtBr(supplier.last_unit_price)}
+                            </>
+                          ) : (
+                            D.supplierNoPurchase
+                          )}
+                        </td>
+                        <td className="num">
+                          {supplier.last_invoice_number?.trim() || "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : null}
+        </section>
+      ) : null}
+    </div>
   );
 }

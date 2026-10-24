@@ -17,6 +17,7 @@ export type PluginView =
   | "products"
   | "inventory"
   | "safety_stock"
+  | "safety_stock_detail"
   | "negotiations"
   | "indicators"
   | "administration"
@@ -43,6 +44,7 @@ export type PluginRoutableView = Exclude<
   | "purchase_order_detail"
   | "purchase_request_detail"
   | "supplier_detail"
+  | "safety_stock_detail"
 >;
 
 export type ResolvedPluginRoute = {
@@ -55,6 +57,7 @@ export type ResolvedPluginRoute = {
   requestNumber?: string;
   supplierCode?: string;
   supplierStore?: string;
+  productCode?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -162,6 +165,18 @@ export function resolvePluginRoute(
       supplierStore: decodeURIComponent(supplierMatch[2]),
     };
   }
+  const safetyStockMatch = /^safety-stock\/([^/]+)\/([^/]+)$/.exec(
+    relativePath,
+  );
+  if (safetyStockMatch?.[1] && safetyStockMatch[2]) {
+    return {
+      view: "safety_stock_detail",
+      pathname: path,
+      relativePath,
+      branch: decodeURIComponent(safetyStockMatch[1]),
+      productCode: decodeURIComponent(safetyStockMatch[2]),
+    };
+  }
   const view = RELATIVE_TO_VIEW[relativePath];
   if (!view) {
     return { view: "not_found", pathname: path, relativePath };
@@ -214,6 +229,20 @@ export function buildSupplierCreatePath(basePath?: string): string {
   return `${base}/suppliers/new`;
 }
 
+export function buildSafetyStockDetailPath(
+  branch: string,
+  productCode: string,
+  basePath?: string,
+  search?: string,
+): string {
+  const base = normalizeBasePath(basePath);
+  const path = `${base}/safety-stock/${encodeURIComponent(branch)}/${encodeURIComponent(productCode)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  if (normalizedSearch === "?") return path;
+  return `${path}${normalizedSearch}`;
+}
+
 export function buildPluginPath(
   view: PluginRoutableView,
   basePath?: string,
@@ -251,6 +280,7 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
     case "products":
     case "inventory":
     case "safety_stock":
+    case "safety_stock_detail":
       return "operations";
     case "administration":
       return "administration";

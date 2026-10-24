@@ -23,6 +23,7 @@ import { PurchaseOrderDetailPage } from "./features/purchase-orders/PurchaseOrde
 import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestDetailPage } from "./features/purchase-requests/PurchaseRequestDetailPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
+import { SafetyStockDetailPage } from "./features/safety-stock/SafetyStockDetailPage";
 import { SafetyStockPage } from "./features/safety-stock/SafetyStockPage";
 import { SupplierCreatePage } from "./features/suppliers/SupplierCreatePage";
 import { SupplierDetailPage } from "./features/suppliers/SupplierDetailPage";
@@ -96,7 +97,7 @@ function AppRoutes({
     );
   }
 
-  const { view, userId, branch, orderNumber, requestNumber, supplierCode, supplierStore } =
+  const { view, userId, branch, orderNumber, requestNumber, supplierCode, supplierStore, productCode } =
     route;
 
   if (view === "not_found") {
@@ -176,6 +177,14 @@ function AppRoutes({
     content = <InventoryPage basePath={basePath} />;
   } else if (view === "safety_stock") {
     content = <SafetyStockPage basePath={basePath} />;
+  } else if (view === "safety_stock_detail") {
+    content = (
+      <SafetyStockDetailPage
+        basePath={basePath}
+        branch={branch || ""}
+        productCode={productCode || ""}
+      />
+    );
   } else {
     const placeholder = PLACEHOLDER[view];
     content = placeholder ? (
