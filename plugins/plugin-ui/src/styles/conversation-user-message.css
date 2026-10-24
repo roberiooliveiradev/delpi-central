@@ -29,7 +29,10 @@
   align-items: flex-end;
   gap: 4px;
   min-width: 0;
-  max-width: 100%;
+  /* Long user messages honor the conversation reading measure (68ch,
+     same bound as the assistant answer) — short/medium bubbles stay
+     fit-content via the parent's intrinsic sizing. */
+  max-width: min(100%, 68ch);
   padding: 8px 12px;
   box-sizing: border-box;
   border: 1px solid var(--delpi-ui-border, var(--border));
@@ -59,6 +62,13 @@
   color: var(--delpi-ui-text, var(--text));
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* Secondary actions sit right-aligned at the bottom of the bubble —
+   chrome and reveal remain owned by MessageActionBar. */
+.delpi-ui-conversation-user-message__actions {
+  align-self: flex-end;
+  margin-block-start: 1px;
 }
 
 .delpi-ui-conversation-user-message--compact {

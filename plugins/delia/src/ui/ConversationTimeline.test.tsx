@@ -1,5 +1,11 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ConversationTimeline } from "./ConversationTimeline";
 
@@ -67,5 +73,51 @@ describe("ConversationTimeline — shared user message", () => {
     expect(container.querySelector(".delpi-ui-unified-avatar--person")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-conversation-user-message__avatar img")).toBeNull();
     expect(container.querySelector(".delpi-ui-conversation-user-message__author")?.textContent).toBe("Você");
+  });
+
+  it("exposes a discrete copy action bound to the literal user text", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText },
+    });
+    const { container } = render(
+      <ConversationTimeline
+        loading={false}
+        onConfirmation={onConfirmation}
+        turns={[{ id: "u1", role: "user", content: "Texto literal do usuário" }]}
+      />,
+    );
+    expect(
+      container.querySelector(
+        ".delpi-ui-conversation-user-message.delpi-ui-message-action-scope",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Copiar mensagem" }));
+    expect(writeText).toHaveBeenCalledWith("Texto literal do usuário");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Mensagem copiada" }),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("does not render edit, resend or delete affordances on user turns", () => {
+    const { container } = render(
+      <ConversationTimeline
+        loading={false}
+        onConfirmation={onConfirmation}
+        turns={[{ id: "u1", role: "user", content: "Pergunta" }]}
+      />,
+    );
+    const message = container.querySelector(
+      ".delpi-ui-conversation-user-message",
+    );
+    const labels = ["Editar", "Reenviar", "Excluir"];
+    for (const label of labels) {
+      expect(
+        message?.querySelector(`[aria-label*="${label}"]`),
+      ).toBeNull();
+    }
   });
 });

@@ -1,7 +1,12 @@
 import {
   ConversationUserMessage,
+  HintAction,
+  IconButton,
+  MessageActionBar,
   UnifiedAvatar,
 } from "@delpi/plugin-ui/index";
+import { Check, Copy } from "lucide-react";
+import { useState } from "react";
 import type {
   ActivityViewerProps,
   ConversationAuthorizedLink,
@@ -55,6 +60,44 @@ export type ConversationDisplayTurn = {
   observability?: DeliaTurnObservability | null;
 };
 
+/** Discrete secondary actions for a user turn — copy only. The literal
+ *  turn text is already resolved by the timeline; clipboard feedback is
+ *  presentation-only. No edit/resend/delete without a real contract. */
+function UserMessageActions({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const label = copied ? "Mensagem copiada" : "Copiar mensagem";
+
+  function handleCopy() {
+    if (!text) return;
+    const write = navigator.clipboard?.writeText(text);
+    if (!write) return;
+    void write
+      .then(() => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => {});
+  }
+
+  return (
+    <MessageActionBar
+      density="compact"
+      align="end"
+      aria-label="Ações da mensagem"
+    >
+      <HintAction hint={label} ariaLabel={label} placement="top">
+        <IconButton
+          aria-label={label}
+          disabled={!text}
+          onClick={handleCopy}
+        >
+          {copied ? <Check size={13} /> : <Copy size={13} />}
+        </IconButton>
+      </HintAction>
+    </MessageActionBar>
+  );
+}
+
 export type ConversationTimelineProps = {
   turns: ConversationDisplayTurn[];
   loading: boolean;
@@ -103,6 +146,8 @@ export function ConversationTimeline({
           ) : (
             <ConversationUserMessage
               authorLabel="Você"
+              className="delpi-ui-message-action-scope"
+              actions={<UserMessageActions text={turn.content} />}
               avatar={
                 <UnifiedAvatar
                   kind="person"

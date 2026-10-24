@@ -84,4 +84,31 @@ describe("ConversationUserMessage", () => {
     expect(root?.hasAttribute("tabindex")).toBe(false);
     expect(container.querySelector('[role="log"], [role="alert"], [role="status"]')).toBeNull();
   });
+
+  it("renders host-supplied secondary actions inside the bubble", () => {
+    const { container } = render(
+      <ConversationUserMessage
+        authorLabel="Você"
+        actions={<button type="button">Copiar mensagem</button>}
+      >
+        Pergunta
+      </ConversationUserMessage>,
+    );
+    const bubble = container.querySelector(
+      ".delpi-ui-conversation-user-message__bubble",
+    );
+    expect(bubble?.textContent).toContain("Copiar mensagem");
+    expect(
+      bubble?.querySelector(".delpi-ui-conversation-user-message__actions"),
+    ).toBeTruthy();
+  });
+
+  it("omits the actions region when no actions are supplied", () => {
+    const { container } = render(
+      <ConversationUserMessage>Pergunta</ConversationUserMessage>,
+    );
+    expect(
+      container.querySelector(".delpi-ui-conversation-user-message__actions"),
+    ).toBeNull();
+  });
 });
