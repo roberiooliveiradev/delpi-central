@@ -3115,3 +3115,44 @@ de fechamento no Portal: `TARGET` — nada criado.
   critério de homologação, reabertura e checkpoints.
 - `SB9010` backups históricos (`SB9010_201902`, `*_BKP_*`) confirmam
   prática de virada consolidada desde 2019 — mecanismo estável.
+
+---
+
+## 48. Encerramento do Ciclo 2 — consolidação R01–R15 (rodada 29)
+
+**Tarefa:** `CF-C2-FINAL-CONSOLIDATION-AND-HANDOFF-001`. Modalidade READ →
+VERIFY → CONSOLIDATE → CLASSIFY → DOCUMENT → REPORT. Sem evidência nova de
+runtime; consolidação documental + busca residual.
+
+### 48.1 — Validação da matriz
+- Matriz do doc 47 recontada na base: **coleta 47/60 = 78,3%**
+  (G1×13, G2×12, G3×12, G4×10) · **auditoria 55/90 = 61,1%**
+  (47 + G5×8) · **0/15** concluídos (G6 pendente em todos — aceite humano).
+- R05/R06/R07/R08/R10/R11: paridade integral (row-level/célula).
+- R01: paridade provada; R02: paridade do artefato provada, fonte
+  `DLP06R01` ausente (G4 E1). R09/R12/R15: cadeias provadas com G5
+  `INCONCLUSIVE` (residuais declarados). R03: G4/G5 pendentes (E2).
+- R04/R13/R14: bloqueados por owner — sem artefato/fonte; busca residual
+  final não localizou evidência nova; pedidos específicos já registrados
+  (§8, doc 82).
+
+### 48.2 — Busca residual (consistência documental)
+- `MATA280` nunca tratado como writer auditado — sempre binding temporal
+  + SX1; RPO/instrução interna seguem E5. Ocorrências residuais são
+  erratas históricas já rotuladas.
+- `E6=C` sempre acompanhado de `IMPLEMENTATION_AUTHORIZED=NO`; CPV
+  sempre descrito como **vivo** (sem snapshot). Distinção
+  `MATA300`/`DEL100` preservada. Nenhum G6 promovido. Nenhuma correção
+  material exigida.
+
+### 48.3 — Entrega
+- **Doc 86 criado** (`86-ciclo2-relatorio-final-consolidado-e-handoff.md`):
+  síntese executável — matriz R01–R15, métricas reproduzíveis, matriz
+  vídeo, mapa de reuso, handoff por owner, decisões, readiness
+  (`READY_WITH_CONSTRAINTS` / `BLOCKED_BY_OWNER`), pacote de homologação
+  G6 e critérios de transição Nível 2/3.
+- Estado declarado: **`CYCLE2_DOCUMENTATION_READY`** — ≠
+  `IMPLEMENTATION_AUTHORIZED` / `RUNTIME_VERIFIED` / G6.
+- Rodada: zero runtime, zero SQL novo, zero contratos; veredito
+  `ACCEPT_WITH_RESIDUAL` (pendências redirecionadas aos owners E1–E12 e
+  ao PO).

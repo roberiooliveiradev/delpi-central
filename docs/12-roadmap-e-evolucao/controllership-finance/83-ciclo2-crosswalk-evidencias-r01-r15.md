@@ -208,3 +208,10 @@ Rodada 28 (doc 80 §47, doc 85 §14): **cadeia produtora identificada** — `MAT
 **Coleta:** 39/60 = **65,0%** · **Auditoria:** 41/90 = **45,6%** · **Concluídos:** 0/15. (pós-rework doc 47 §11.1 + paridade §11.2: G4 de R02 revertido — produtor receber = `DLP06R01` custom sem fonte; **G5 de R01 e R02 promovidos** — paridade row-level, doc 84)
 
 **Catálogo de regras de negócio (complemento, 23/10):** todas as regras necessárias para reproduzir os resultados oficiais estão consolidadas em **doc 85** (`BR-Rxx-NNN`, matriz de handoff e matriz de testes) — incluindo as regras de VO dual do receber (errata do residual R$1,00 em doc 80 §30) e a classificação PROVEN/AS-IS/TO_INVENTORY/TARGET/PENDING por regra.
+
+---
+
+**Nota de encerramento (rodada 29):** crosswalk validado contra a matriz
+canônica do doc 47 — estados por item inalterados. Síntese final,
+readiness e handoff consolidado em
+[doc 86](./86-ciclo2-relatorio-final-consolidado-e-handoff.md).
