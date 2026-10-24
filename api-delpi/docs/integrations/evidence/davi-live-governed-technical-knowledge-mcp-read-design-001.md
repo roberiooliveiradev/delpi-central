@@ -136,3 +136,9 @@ Direção aprovada: oferecer **inteligência técnica viva** para consumidores M
 - **Semântica:** selection document|section|subject|subject+section; zero match -> items=[] + coverage=NO_MATCH + matched/unmatched_terms; items[].relevance e heading_path expõem a fundamentação. V1/V2, manifesto, ids de seção, paginação, AuthZ e classificações GUIDANCE_NOT_DOMAIN_TRUTH/UNTRUSTED_DOCUMENT_CONTENT inalterados.
 - **Medido offline:** subject 'terminais tipo bala' -> s0054 (regra TIPO DE TERMINAL ex.: BALA) + s0055 (exemplo TERM. BALA); generaliza para PI, inventário V1 e metamórficos; execute path real via candidate token + ASGI executor comprovado. 1506 testes do slice DAVI PASS.
 - **Não resolve O2/R7 sozinho:** DELIA_O2=INCONCLUSIVE; R4_AUTHORIZED=NO; DEPLOY_AUTHORIZED=NO — aguarda revisão independente.
+
+### 11.1 Fechamento de contrato e regressão (final-acceptance-01, 2026-10-24)
+
+- **Semântica fixada:** matched_terms/unmatched_terms cobrem o conjunto ranqueado inteiro; coverage cobre a página (PARTIAL/COMPLETE_SELECTION/NO_MATCH); página vazia dentro de conjunto com match = PARTIAL, não NO_MATCH.
+- **Full suite api-delpi:** 6125 coletados → 6093 PASS / 2 FAIL ambientais (PLUGINS_DB_HOST ausente; PAC/supplies, sem relação) / 30 skips condicionais pré-existentes. Sem regressão em text_normalize compartilhado.
+- **Contrato provado na rota real:** subject no schema OpenAPI (1–240), erros 422/409/404 preservados, subject+section, NO_MATCH, permissão insuficiente, compatibilidade sem subject, execute path discover→token→ASGI→rota. 43/43 testes de endereçamento PASS; zero alteração produtiva nesta task.

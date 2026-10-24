@@ -79,3 +79,29 @@ A dependência DAVI-side identificada na R7 está endereçada: o consumidor loca
 **Condições antes da autorização operacional específica:** (1) executar **suíte DAVI completa aplicável** ou apresentar matriz objetiva das 4619 exclusões da slice e provar que não encobrem regressão; (2) caracterizar contrato `matched_terms/unmatched_terms`: atualmente os termos são calculados sobre **todos os itens ranqueados**, e não necessariamente os `selected_items` da página; provar que a semântica é de cobertura do conjunto ou ajustar contrato/testes para impedir interpretação incorreta de cobertura dos trechos entregues; (3) obter prova de generalização com subjects ambíguos, e confirmação de respostas/erros da rota OpenAPI além do caminho in-process; (4) assegurar imagem/SHA/config sob os gates de release canônicos. Nenhuma dessas condições autoriza nova arquitetura, RAG ou tool.
 
 **Delimitação:** a dependência `api-delpi` fica **localmente implementada**, não implantada nem homologada em runtime produtivo. `DELIA_O2=INCONCLUSIVE` — a disponibilidade da norma não garante sequenciamento semântico de knowledge→search na DÉLIA. Próximo passo: evidência de regressão/contrato → revisão de fechamento → **autorização operacional específica** → deploy `api-delpi` → smoke mínimo → teste R7 da DÉLIA no SHA/model/config real. Não realizar deploy em resposta a este review condicional.
+
+
+## 10. Fechamento das condições — `DAVI-…-FINAL-ACCEPTANCE-01` (2026-10-24)
+
+### C1 — Full regression
+
+`TEST_COMMAND=pytest tests -q` (suíte completa `api-delpi`, sem seleção):
+`TOTAL_COLLECTED=6125`; `TOTAL_PASSED=6093`; `TOTAL_FAILED=2`; `TOTAL_SKIPPED=30`; `TOTAL_DESELECTED=0`.
+
+- 2 falhas = **ambientais pré-existentes**: `test_pac_plan_revision_retention…` e `test_route_phase2_products_production_smoke…` abortam em `PluginsDatabaseConfigError: PLUGINS_DB_HOST ausente` — dependência de Postgres de plugins fora do container de validação; domínios PAC/supplies, sem nenhum acoplamento ao diff.
+- 30 skips = skips condicionais pré-existentes (marcadores de infra/fixture).
+- `SHARED_NORMALIZATION_REGRESSION=CLEAN`: `text_normalize` é compartilhado com `retrieval.py` (import único, sem duplicação); todos os testes de retrieval/discovery passam na suíte completa.
+
+### C2 — Semântica de cobertura (contrato fixado)
+
+Decisão contratual preservada e documentada: **`matched_terms`/`unmatched_terms` descrevem o conjunto ranqueado inteiro** ("o documento cobre o assunto?"), enquanto **`coverage` descreve a página entregue** (`PARTIAL`/`COMPLETE_SELECTION`/`NO_MATCH`) e `items` é só a fatia da página. `unmatched_terms` reporta termos ausentes do documento — nunca declara correspondência total com cobertura parcial. Página além do último item retorna `items=[]` com `coverage=PARTIAL` (o conjunto existe); `NO_MATCH` só quando nenhuma seção pontua. Fixado por 13 testes novos (`test_terms_describe_full_selection_not_page`, `test_term_coverage_is_stable_across_pages`, `test_partial_subject_coverage_is_honest`, `test_page_beyond_last_is_empty_not_no_match`, …).
+
+### C3 — Generalização ampliada
+
+Casos novos aprovados: stopwords-only → `VALIDATION_ERROR`; subject >240 → `VALIDATION_ERROR`; subject ubíquo (`descrição`) → página bounded; ambíguo (`terminais`) → 3 itens, ordem estável; headings estruturais repetidos em famílias distintas mantêm o contexto da **família correta** (`estrutura … terminais pino` → path "Pino", sem "Genérico"); itens empatados → ordem documental determinística entre execuções; correspondência parcial honesta (`vulcao` → `unmatched_terms`).
+
+### C4 — Contrato real OpenAPI/rota/MCP
+
+Provas no caminho real adicionadas: `subject` publicado no schema OpenAPI (`string, minLength 1, maxLength 240`, `operationId` estável); rota real responde subject + subject&section (`selection=subject+section`, `NO_MATCH` honesto em seção estranha); 422 (vazio/oversized), 409 (versão inválida), 404/422 (tópico inexistente); leitura sem `subject` idêntica ao comportamento anterior (`selection=document`); permissão insuficiente levanta `Forbidden` no decorator (mapeamento de status no `jwt_middleware` do app real — já provado 401 sem Bearer no smoke produtivo); execute path completo `discover → candidate_token → execute → ASGI → rota → use case` retorna `BALA` + proveniência.
+
+`TOTAL=test_davi_knowledge_subject_addressability.py: 43 PASS / 0 FAIL`. `CODE_CHANGE_REQUIRED=NO` — nenhuma alteração produtiva nesta task; apenas testes de fixação de contrato + documentação.

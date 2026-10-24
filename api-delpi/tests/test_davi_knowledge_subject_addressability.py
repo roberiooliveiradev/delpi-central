@@ -278,6 +278,139 @@ def test_metamorphic_stability(reader, subject):
     assert result["items"][0]["section"] == base
 
 
+# --------------------- C2 — term-coverage contract ---------------------------
+#
+# Contract decision (documented in evidence/design): ``matched_terms`` and
+# ``unmatched_terms`` describe the WHOLE ranked selection — "does the document
+# cover this subject?" — while ``coverage`` describes the delivered PAGE
+# (PARTIAL / COMPLETE_SELECTION / NO_MATCH). ``items`` is only the page slice.
+
+
+def test_terms_describe_full_selection_not_page(reader):
+    """A page that shows one section still reports set-level term coverage."""
+    result = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2,
+        subject="term. bala embalagem bitola", page_size=1,
+    )
+    assert len(result["items"]) == 1
+    assert result["coverage"] == "PARTIAL"
+    # `embalagem`/`bitola` are covered by OTHER ranked sections, not this page —
+    # matched_terms is deliberately set-level so the consumer knows the
+    # document covers the subject (and can page for the rest).
+    assert set(result["matched_terms"]) == {
+        "term", "bala", "embalagem", "bitola"
+    }
+    assert result["unmatched_terms"] == []
+
+
+def test_term_coverage_is_stable_across_pages(reader):
+    p1 = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2,
+        subject="term. bala embalagem bitola", page_size=1, page=1,
+    )
+    p2 = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2,
+        subject="term. bala embalagem bitola", page_size=1, page=2,
+    )
+    assert p1["matched_terms"] == p2["matched_terms"]
+    assert p1["unmatched_terms"] == p2["unmatched_terms"]
+    assert p1["items"] != p2["items"]
+
+
+def test_partial_subject_coverage_is_honest(reader):
+    """A term absent from the document is reported, never claimed."""
+    result = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2, subject="term. bala vulcao"
+    )
+    assert result["items"]
+    assert set(result["matched_terms"]) == {"term", "bala"}
+    assert result["unmatched_terms"] == ["vulcao"]
+
+
+def test_single_item_selection(reader):
+    result = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2, subject="term. bala", page_size=1
+    )
+    assert len(result["items"]) == 1
+    assert result["selection"] == "subject"
+    assert result["total"] > 1 and result["has_more"] is True
+
+
+def test_tied_items_keep_deterministic_order(reader):
+    """Equal scores resolve to document order — reruns must be identical."""
+    args = dict(topic=_MP_TOPIC, corpus_version=2, subject="term. bala")
+    first = _sections(reader.execute(**args))
+    second = _sections(reader.execute(**args))
+    assert first == second
+
+
+def test_page_beyond_last_is_empty_not_no_match(reader):
+    """Empty page inside a matched set stays PARTIAL — the doc does match."""
+    result = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2, subject="term. bala", page=9999
+    )
+    assert result["items"] == []
+    assert result["total"] > 0
+    assert result["coverage"] == "PARTIAL"
+
+
+def test_no_match_zero_terms(reader):
+    result = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2, subject="submarino nuclear"
+    )
+    assert result["items"] == []
+    assert result["coverage"] == "NO_MATCH"
+    assert result["matched_terms"] == []
+    assert set(result["unmatched_terms"]) == {"submarino", "nuclear"}
+
+
+# --------------------- C3 — generalization extras ----------------------------
+
+def test_stopwords_only_subject_is_rejected(reader):
+    """'e de a que para' yields zero content tokens → VALIDATION_ERROR."""
+    with pytest.raises(Exception) as exc:
+        reader.execute(
+            topic=_MP_TOPIC, corpus_version=2, subject="e de a que para"
+        )
+    assert getattr(exc.value, "code", "") == "VALIDATION_ERROR"
+
+
+def test_generic_subject_returns_bounded_page(reader):
+    """A ubiquitous term ranks many sections but the page stays bounded."""
+    result = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2, subject="descrição", page_size=3
+    )
+    assert len(result["items"]) <= 3
+    assert all(i["relevance"] > 0 for i in result["items"])
+
+
+def test_ambiguous_subject_orders_deterministically(reader):
+    """'terminais' matches several families — order must be stable, no crash."""
+    result = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2, subject="terminais", page_size=3
+    )
+    assert len(result["items"]) == 3
+    assert result["matched_terms"] == ["terminais"]
+
+
+def test_repeated_structural_headings_keep_own_family(reader):
+    """'Estrutura' repeats under every family; path must carry THIS family."""
+    result = reader.execute(
+        topic=_MP_TOPIC, corpus_version=2,
+        subject="estrutura da descrição terminais pino", page_size=3,
+    )
+    assert result["items"]
+    top = result["items"][0]
+    assert "Pino" in top["heading_path"] or "Pino" in top["heading"]
+    assert "enérico" not in top["heading_path"]
+
+
+def test_overlong_subject_rejected(reader):
+    with pytest.raises(Exception) as exc:
+        reader.execute(topic=_MP_TOPIC, corpus_version=2, subject="a" * 241)
+    assert getattr(exc.value, "code", "") == "VALIDATION_ERROR"
+
+
 # ------------------------------ Execute path --------------------------------
 
 def test_execute_path_binds_subject(monkeypatch):
@@ -345,3 +478,66 @@ def test_execute_path_binds_subject(monkeypatch):
         assert "BALA" in " ".join(i["text"] for i in data["items"])
     finally:
         reset_action_index_for_tests()
+
+
+def test_route_level_subject_contract(monkeypatch):
+    """C4 — the real HTTP route enforces the subject contract end to end."""
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.interface.http.routes.governed_knowledge_router import router
+
+    user = SimpleNamespace(
+        id="offline-user", permissions=["api-delpi.access"], is_superadmin=False
+    )
+    monkeypatch.setattr(
+        "delpi_auth.authorization.resolve_user_context", lambda: user
+    )
+    api = FastAPI()
+    api.include_router(router)
+    base = f"/knowledge/technical-guides/{_MP_TOPIC}"
+    with TestClient(api, raise_server_exceptions=False) as client:
+        # subject lookup over the real route
+        ok = client.get(base, params={"subject": "terminais tipo bala"})
+        assert ok.status_code == 200, ok.text
+        data = ok.json()["data"]
+        assert data["selection"] == "subject"
+        assert "BALA" in " ".join(i["text"] for i in data["items"])
+        assert data["authority"] == "GUIDANCE_NOT_DOMAIN_TRUTH"
+        assert data["trust_level"] == "UNTRUSTED_DOCUMENT_CONTENT"
+
+        # subject + section: NO_MATCH inside a foreign section, honest
+        scoped = client.get(
+            base, params={"subject": "term. bala", "section": "s0001"}
+        )
+        assert scoped.status_code == 200
+        scoped_data = scoped.json()["data"]
+        assert scoped_data["selection"] == "subject+section"
+        assert scoped_data["coverage"] == "NO_MATCH"
+
+        # contract errors preserved
+        assert client.get(base, params={"subject": ""}).status_code == 422
+        assert client.get(
+            base, params={"subject": "x" * 241}
+        ).status_code == 422
+        assert client.get(
+            base, params={"corpus_version": 99, "subject": "x"}
+        ).status_code == 409
+        assert client.get(
+            "/knowledge/technical-guides/not_a_topic",
+            params={"subject": "x"},
+        ).status_code in (404, 422)
+
+        # backward compatibility: no subject = document-paged read
+        plain = client.get(base, params={"page_size": 1})
+        assert plain.status_code == 200
+        assert plain.json()["data"]["selection"] == "document"
+
+        # AuthZ fail-closed: insufficient permission raises at the decorator
+        # (status mapping lives in jwt_middleware of the real app).
+        user.permissions = []
+        with TestClient(api, raise_server_exceptions=True) as strict:
+            with pytest.raises(Exception, match="Forbidden"):
+                strict.get(base, params={"subject": "terminais tipo bala"})
