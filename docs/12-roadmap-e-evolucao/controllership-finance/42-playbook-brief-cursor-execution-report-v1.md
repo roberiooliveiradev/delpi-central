@@ -1,5 +1,6 @@
 # 42 — Playbook GPT Brief → Cursor → Execution Report → GPT Review (V1)
 
+> **REBASELINE 24/10/2026:** O procedimento de brief/relatório abaixo permanece aplicável, mas cada execução da Central deve selecionar o **slice e checkpoint atuais** do [Documento 93 — Roadmap executivo E2E com checkpoints reais](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md); consultar também docs 90–92 e TÉO/PROC-0072. Não usar a ordem de implementação 16/10 para autorizar código novo. `IMPLEMENTATION_AUTHORIZED=NO` até GO explícito.
 **Estado:** TARGET / PLANNED / DOCUMENTATION_ONLY. Guia para os [slices IMP](./40-matriz-dependencias-e-slices-v1.md), subordinado a [39 — Roadmap](./39-roadmap-mestre-implementacao-v1.md) e aos [gates de qualidade](./41-estrategia-validacao-e-gates-implementacao-v1.md).
 
 ## 1. Regra de entrada e authorities
