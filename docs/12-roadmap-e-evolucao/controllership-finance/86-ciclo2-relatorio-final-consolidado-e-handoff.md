@@ -16,8 +16,8 @@ O Ciclo 2 investigou, com evidência física e documental, os 15 itens do
 processo de fechamento mensal da Controladoria sobre Protheus (competência
 set/2026), o arquivo de evidências do PO e a gravação oficial de 54:44.
 
-**Comprovado:** cadeia física completa das rotinas de fechamento
-(`MATA320`→`MATA300`→`MATA330`→`MATA280`→SB9), paridade integral dos
+**Comprovado:** identificação e correlação operacional das rotinas de fechamento
+(`MATA320`→`MATA300`→`MATA330`→`MATA280`→SB9), com atribuição do `INSERT` em SB9 ao MATA280 sustentada por SX1, TTAT e associação temporal (não por auditoria direta da escrita; confirmação de RPO/função interna pendente em E5); paridade integral dos
 artefatos R01/R02/R05/R06/R07/R08/R10/R11 ao nível de linha/centavo, modelo
 físico do DLP204 (R09, 99,4% com residuais declarados), e a cadeia
 produtora do snapshot SB9 com binding temporal ±4s.
@@ -153,6 +153,8 @@ todos os itens.
 **Nível 1 (base documental): pronto.** Nível 2 (design/contratos): só com
 escopo+boundary+decisões acima. Nível 3 (runtime): bloqueado até gate
 transversal explícito + homologação.
+
+**Contagem de readiness:** 11/15 itens `READY_WITH_CONSTRAINTS` (R01, R02, R05–R12 e R15) e 4/15 `BLOCKED_BY_OWNER` (R03, R04, R13 e R14). Readiness não equivale a aprovação G6, contrato ou runtime.
 
 ## 9. Priorização recomendada (não executada)
 
