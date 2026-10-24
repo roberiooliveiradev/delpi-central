@@ -114,3 +114,18 @@
 **Residuais honestos:** confiabilidade da cadeia é limitada por variância do modelo (kimi-k3 eval; produção roda `delia-json`, mais fraco) — cada elo foi provado, mas a composição não é determinística; falha ambiental C1 requer aceite formal de exceção pelo owner; deploy de `api-delpi` (baseline sync) e `delia-api` (v13) aguarda revisão independente + autorização operacional específica — **não concedidas nesta sessão**.
 
 `R7-01=CLOSED_LOCALLY_WITH_RELIABILITY_RESIDUAL` · `O2=PASS` (executor-executed) · `DEPLOY=BLOCKED_PENDING_AUTHORIZATION` · `COORDINATION_REVIEW_REQUIRED=YES` · `R7_FINAL_ACCEPT=NO` até gates independentes.
+
+
+### Revisão independente da integração DAVI/DÉLIA v13 — 2026-10-24
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (mechanism proven, outcome reliability not accepted)**; **R7_FINAL_ACCEPT=NO**; **DAVI_DEPLOY_AUTHORIZED=NO**; **DELIA_DEPLOY_AUTHORIZED=NO**. Revisados no GitHub o commit de implementação `0e84208acd` (`api-delpi/app/content/openapi_baseline.json`, instruction resource v13/version registry e testes), o documento R7 e o ledger até `11e42aeb8e`. Sem reexecução independente de modelo real, suíte ou SSH; resultados apresentados são `EXECUTOR_REPORTED`.
+
+**Comprovado na evidência do executor:** alinhamento aditivo do candidate `argument_schema` com `subject` na baseline OpenAPI; reuso do caminho existente `native_assessment → foreign_evidence_required → DAVI discover/execute → foreign_evidence → search_products` sem novo planner, engine, loop ou hardcode `TERM. BALA`. Em uma execução real isolada foi observada `description=TERM.+BALA`, `goal_evidence_relevance=corresponds` e produtos `10080092` e `10081004` verificados no owner. O2 = **PASS_ONCE / REPRODUCIBILITY_NOT_PROVEN**: apenas 1/3 ensaios completou o outcome; os outros falharam em admission ou terminaram com insuficiência. Não converter prova pontual em fechamento robusto da R7.
+
+**Residual crítico:** modelo de avaliação `moonshotai/kimi-k3` (OpenRouter) difere de `delia-json` reportado como produção; comparar configuração, versão de instructions, latência, falha de transporte e custo/tokens sob conjunto congelado. Reavaliar admissão, native_assessment, seleção documental e arguments em repetições limitadas com denominadores completos; preservar generalização negativa e TÉO/VISTA/D1. Não repetir prompt tuning sem prova causal. **Não recomendar promoção produtiva de v13 com sucesso O2 1/3 como se fosse estável.**
+
+**C1 ambiental:** dois testes falharam no runner sem `PLUGINS_DB_*`; executor reportou 23/23 verdes com dependência configurada. A causalidade ambiental está fortalecida, mas a dispensa formal de full-suite `2 FAIL` continua decisão explícita do owner de ambiente/CI; nunca reclassificar retrospectivamente os 2 FAIL como PASS.
+
+**Próxima task bounded:** `DELIA-R7-O2-RELIABILITY-AND-RELEASE-EVIDENCE-GATE-01` — baseline/candidate eval em ambiente isolado representativo do runtime, matriz pequena multirun (O2, terminal pino, D1, TÉO SIPOC, VISTA, negativos); caracterizar first-divergent-stage e thresholds de outcome pela autoridade, corrigir apenas defeito comprovado em owner legítimo, revalidar resultados contra API/telemetria. Separar rollout do DAVI (contrato READ, se gates C1 e release forem aceitos) de rollout da DÉLIA (v13 model-dependent), com revisões e autorizações específicas por serviço. CRI_OFF live permanece `TEST_NOT_RUN`. Sem aprovação retroativa nem fechamento R7.
+
+`NEXT_ACTION=BOUNDED_MODEL_RELIABILITY_EVIDENCE`; `O2_STATUS=PASS_ONCE_RELIABILITY_PENDING`; `RELEASE_GATE=BLOCKED`; `R7_CLOSED=NO`.
