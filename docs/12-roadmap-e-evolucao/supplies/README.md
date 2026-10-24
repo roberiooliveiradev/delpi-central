@@ -3,7 +3,7 @@
 > **Status (2026-10-23 — rebaseline R1):** implementação incremental em andamento · **E1–E9 concluídas** · **E10 / WF-15 GATE PASS_DEPLOYED** (bundle federado verificado contém a página; residual `VISUAL_AUTHENTICATED=INCONCLUSIVE`) · **E13/E14 fornecedores implementadas** (writes ERP OFF — X4.PROD-C1 aguardando TOTVS) · **USERS.PROFILE.S1–S3** fechadas
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9/E10 fechadas c/ residual visual · **E11 READY_WITH_RESIDUAL** (contratos api-delpi completos; falta BFF+MFE)
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual
-> **Página em foco:** **E11 / WF-16 Estoque de Segurança** — readiness inventariado; promover via E11.P0 (contract freeze) — ver [ROADMAP-REBASELINE-R1-20261023.md](./ROADMAP-REBASELINE-R1-20261023.md)
+> **Página em foco:** **E11 / WF-16 Estoque de Segurança** — `E11.P0` concluído (contract freeze); `E11_S1_READY_TO_AUTHORIZE = YES` — ver [E11-P0-SAFETY-STOCK-CONTRACT-FREEZE.md](./E11-P0-SAFETY-STOCK-CONTRACT-FREEZE.md)
 > **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)**, **Detalhe do pedido (WF-06)**, **Entregas / atrasos (WF-07)**, **Controle de Estoques (WF-15)**, **Fornecedores/360 (WF-09/WF-10)** e **Perfil de usuário (`/users/:userId`)**
 > **Próxima receita:** E11.P0 contract freeze (read-only) → E11.S1 BFF — **writes ERP permanecem OFF**
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
@@ -233,7 +233,7 @@ Invariantes:
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** **E11.P0 — contract freeze Estoque de Segurança** (read-only, receita proposta em [ROADMAP-REBASELINE-R1](./ROADMAP-REBASELINE-R1-20261023.md); não implementar S1 sem autorização). E10 está `PASS_DEPLOYED` — falta apenas o clique autenticado do PO para fechar `VISUAL_AUTHENTICATED=INCONCLUSIVE` ([evidência](./evidence/e10-wf15-s4-final-acceptance.md)).
+**Único próximo passo autorizado pelo roadmap:** **E11.S1 — BFF `supplies-api` safety-stock** (aguardando autorização formal do PO; contrato congelado em [E11-P0](./E11-P0-SAFETY-STOCK-CONTRACT-FREEZE.md), receita §9; `BRANCH_AUTHZ_RECONCILIATION = COMPATIBLE` — produtor já aceita chamada confiável do BFF). E10 está `PASS_DEPLOYED` — falta apenas o clique autenticado do PO para fechar `VISUAL_AUTHENTICATED=INCONCLUSIVE` ([evidência](./evidence/e10-wf15-s4-final-acceptance.md)).
 
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 

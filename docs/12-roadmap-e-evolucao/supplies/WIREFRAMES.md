@@ -266,7 +266,7 @@ Saldo/valor/localização. Não misturar ESTSEG. Política de capability do stoc
 
 ### WF-16 — Estoque de Segurança
 
-Saldo × ESTSEG, déficit, extrato, fornecedores, SC abertas; read-only neste roadmap.
+Saldo × ESTSEG, déficit, extrato, fornecedores, SC abertas; read-only neste roadmap. Contrato congelado em [E11-P0-SAFETY-STOCK-CONTRACT-FREEZE.md](./E11-P0-SAFETY-STOCK-CONTRACT-FREEZE.md): FilterBar (filial/status/grupo/UM/busca/toggles) + summary hero (9 contadores + déficit por UM) + DataTable server-side + detalhe do item (saldos, projeção, POs/SCs/empenhos, consumo, fornecedores).
 
 ### WF-17 — Análise de Consumo
 
