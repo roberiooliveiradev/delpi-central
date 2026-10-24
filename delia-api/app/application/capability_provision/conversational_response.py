@@ -496,6 +496,26 @@ def field_clause_label(
 
 MAX_PRESENTED_VALUE_CHARS = 140
 
+# Structural citation coordinates inside owner records (line/page
+# ranges, chunk indices, sanitize flags) — provenance metadata, not
+# the substantive content the user asked for. They stay renderable
+# but sort below every ordinary field so the bounded per-record line
+# spends its field budget on content first.
+_PRESENTATION_CITATION_KEYS = frozenset(
+    {
+        "linestart",
+        "lineend",
+        "chunk",
+        "chunkindex",
+        "offset",
+        "position",
+        "pagerange",
+        "pagestart",
+        "pageend",
+        "sanitized",
+    }
+)
+
 
 def records_are_prior_excerpts(
     records: tuple[Mapping, ...] | list[Mapping],
@@ -594,6 +614,8 @@ def presented_record(
             if item[0] == id_canon
             else 1
             if _is_name(item[0])
+            else 3
+            if item[0] in _PRESENTATION_CITATION_KEYS
             else 2
         )
     )

@@ -5795,7 +5795,42 @@ class OperationalCapabilityOrchestrator:
         if invoked is None:
             # Post-consultation miss: the owner produced no eligible
             # candidate or the owner candidate schema rejected the
-            # proposal — truthful NOT_APPLICABLE, never a fabrication.
+            # proposal. C3 pre-R4: the same single governed recovery
+            # round granted to irrelevant evidence applies to an
+            # inadequate query — the planner may reformulate the
+            # discovery arguments or reselect an eligible
+            # READ/DISCOVERY under the shared one-round flag,
+            # identical-argument dedup, budget and live-surface
+            # revalidation. Any failure keeps the truthful miss.
+            if not _RELEVANCE_RECOVERY_USED.get():
+                recovered = self._recover_relevance(
+                    input_text,
+                    descriptor,
+                    group_key,
+                    remote_name,
+                    group,
+                    groups,
+                    None,
+                    arguments,
+                    GoalEvidenceJudgment(
+                        correspondence=GOAL_EVIDENCE_IRRELEVANT,
+                        mismatch_hint=(
+                            "owner consultation produced no usable "
+                            "candidate or records"
+                        ),
+                    ),
+                    goal,
+                    owner_evidence=owner_evidence,
+                    workspace_context=workspace_context,
+                    prior_turns=prior_turns,
+                    correlation=correlation,
+                    deadline=deadline,
+                )
+                if recovered is not None:
+                    invoked = recovered
+        if invoked is None:
+            # Truthful NOT_APPLICABLE after the bounded recovery —
+            # never a fabrication.
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,

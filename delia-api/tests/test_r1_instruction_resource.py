@@ -47,8 +47,8 @@ _RESOURCE_PATH = (
 # governed-evolution gate, not a bug.
 _SNAPSHOT = {
     "delia.capability_orchestration.select_group": (
-        "d7a2de168577ae4149f3891ca010d73cd6c5d6fdad6da8578572b961ec8ef25c",
-        3748,
+        "075915d09a08fd87dc828c836306d1c8d22389e4daf38dec2ebacafd85e266f4",
+        4104,
     ),
     "delia.capability_orchestration.select_capability": (
         "3d6bc40ec5f07697b99f89cbd62b48937f8c4bb0ecf8ecd8bb071229a59870be",
@@ -67,8 +67,8 @@ _SNAPSHOT = {
         989,
     ),
     "delia.capability_orchestration.arguments": (
-        "e4350010473175dd8d1e5cc30051b8b4e5d59819bc9aa80f945c62de8b9f4b32",
-        4251,
+        "f630a89a2da9607ad710d957cfd899894c9eaeb73863da2daf15e3219a8fc5c6",
+        4590,
     ),
     "delia.capability_orchestration.select_resolver": (
         "2864d08fccfd4f87b52041c1fe572abfe1768d01489a81b8aa6e8d216bcf9b57",
@@ -83,8 +83,8 @@ _SNAPSHOT = {
         891,
     ),
     "delia.capability_orchestration.grounded_synthesis": (
-        "0421e2614711e06c971dac3fdb1ffa6ea6f1bb2c833cefe082259688dc82d69f",
-        3604,
+        "78186ca4040fe0cff0e1c7379fcc0586c06dc13aecc1ff9190fffb8d148642a9",
+        3851,
     ),
     "delia.capability_orchestration.native_assessment": (
         "c86f7fc613906321d391ca84bc2c066ce5d9ab3a1f08239d0e7d04f35fa6c72c",
@@ -111,8 +111,8 @@ _SNAPSHOT = {
         558,
     ),
     "delia.capability_orchestration.interaction_admission": (
-        "87ed2fe018c746634522035d8a7d0a02de6175be957cdae25fd5a502ec2a0810",
-        3294,
+        "1e4594d1ca7b4ebda39350a27623ca4af9fbc1d34e4190843958f79ff4f58174",
+        4176,
     ),
     "delia.capability_orchestration.goal_evidence_relevance": (
         "cd753bdd55ef6b1bf8fdfb7dc78781c6690d46806de9810709e9aaf4ca8fecb7",
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "3"
+    assert res.version == "4"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]
