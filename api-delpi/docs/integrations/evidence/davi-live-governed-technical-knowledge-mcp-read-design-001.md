@@ -126,3 +126,13 @@ Direção aprovada: oferecer **inteligência técnica viva** para consumidores M
 - **Causa medida:** a capability documental só tinha aliases lexicais genéricos (`guia técnico`, `documentação técnica`) — queries telegráficas sem sintaxe de pergunta (`normas de codificação…`) caíam no ranking lexical onde a capability marcava 0.0 e sumia (ou era deslocada por `search_products` via entity markers).
 - **Fix declarativo e genérico:** `_CONCEPT_ONLY_START` ganhou padrão telegráfico de busca documental (verbo de consulta opcional + vocabulário de documento: `normas|regras|padrão|diretrizes|convenções|nomenclatura|documentação|manual|guia|codificação`); `_MIXED_REQUEST` ganhou verbos de requisição para preservar compostas; `semanticAliases`/`entityDomainMarkers` da capability ampliados com o mesmo vocabulário (PT+EN) — sem termos de domínio, produto, tópico ou operationId.
 - **Contrato preservado:** 2 tools/0 resources; perguntas documentais → capability de conhecimento; empresariais → operações legítimas; compostas → ambas dentro de `top_k`. Benchmark 230 casos baseline↔candidato **idêntico** (top1 0.9608, hard_negative_leaks 0) — melhoria aditiva sem regressão.
+
+## 11. Endereçamento por assunto — dependência R7 da DÉLIA (2026-10-25)
+
+**TASK:** DAVI-GOVERNED-KNOWLEDGE-SEMANTIC-SECTION-ADDRESSABILITY-R7-01. Evidência integral: davi-governed-knowledge-subject-addressability-001.md.
+
+- **Lacuna R7:** a READ só endereçava trechos por ids internos sNNNN; a DÉLIA não alcançava a seção TERM. BALA por assunto sem conhecer a estrutura interna do documento.
+- **Extensão de contrato compatível:** subject opcional (1-240 chars) na rota existente; ranking determinístico lexical sobre heading_path (3x) + corpo, ponderado por IDF document-local; piso de especificidade para termos ubíquos; heading_path reconstruído com heurística documental (heading repetido herda último heading único de mesmos ancestrais); seções sem corpo não elegíveis para assunto.
+- **Semântica:** selection document|section|subject|subject+section; zero match -> items=[] + coverage=NO_MATCH + matched/unmatched_terms; items[].relevance e heading_path expõem a fundamentação. V1/V2, manifesto, ids de seção, paginação, AuthZ e classificações GUIDANCE_NOT_DOMAIN_TRUTH/UNTRUSTED_DOCUMENT_CONTENT inalterados.
+- **Medido offline:** subject 'terminais tipo bala' -> s0054 (regra TIPO DE TERMINAL ex.: BALA) + s0055 (exemplo TERM. BALA); generaliza para PI, inventário V1 e metamórficos; execute path real via candidate token + ASGI executor comprovado. 1506 testes do slice DAVI PASS.
+- **Não resolve O2/R7 sozinho:** DELIA_O2=INCONCLUSIVE; R4_AUTHORIZED=NO; DEPLOY_AUTHORIZED=NO — aguarda revisão independente.

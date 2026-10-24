@@ -21,79 +21,14 @@ from app.application.external_capabilities.dynamic_information.text_normalize im
     ordered_tokens,
     tokenize,
 )
+from app.application.external_capabilities.dynamic_information.text_normalize import (
+    _PHRASE_FILLERS,
+    tokens_compatible as _tokens_compatible,
+)
 
 # Admission floor for governed_document_guidance actions on pure-concept
 # queries: below every alias/overlap score path so lexical evidence always wins.
 _PURE_CONCEPT_GUIDANCE_FLOOR = 0.55
-
-# Portuguese function/filler words that often appear between durable semantic
-# tokens in natural questions without changing phrase identity.
-# Intentionally excludes content markers such as ``por`` (OTD por cliente) and
-# ``mais`` (clientes mais faturaram).
-_PHRASE_FILLERS = frozenset(
-    {
-        "a",
-        "ao",
-        "aos",
-        "as",
-        "com",
-        "como",
-        "da",
-        "das",
-        "de",
-        "do",
-        "dos",
-        "e",
-        "em",
-        "essa",
-        "esse",
-        "esta",
-        "este",
-        "estes",
-        "estas",
-        "esta",
-        "estao",
-        "foi",
-        "foram",
-        "ja",
-        "lhe",
-        "liste",
-        "longo",
-        "me",
-        "mostre",
-        "na",
-        "nas",
-        "neste",
-        "nesta",
-        "no",
-        "nos",
-        "nossa",
-        "nossas",
-        "nosso",
-        "nossos",
-        "o",
-        "os",
-        "ou",
-        "para",
-        "pela",
-        "pelas",
-        "pelo",
-        "pelos",
-        "que",
-        "quero",
-        "se",
-        "sem",
-        "sua",
-        "suas",
-        "um",
-        "uma",
-        "umas",
-        "uns",
-        "ver",
-        "veio",
-        "vieram",
-    }
-)
 
 
 def _quarantine_tokens() -> set[str]:
@@ -117,29 +52,6 @@ def _neutral_verb_tokens() -> set[str]:
     for item in raw:
         tokens |= tokenize(str(item))
     return tokens
-
-
-def _tokens_compatible(left: str, right: str) -> bool:
-    """Conservative PT singular/plural and shared-stem compatibility."""
-    if left == right:
-        return True
-    if len(left) > 3 and len(right) > 3:
-        left_stem = left[:-1] if left.endswith("s") and not left.endswith("ss") else left
-        right_stem = (
-            right[:-1] if right.endswith("s") and not right.endswith("ss") else right
-        )
-        if left_stem == right_stem:
-            return True
-    # Verb/noun derivation pairs (faturamos/faturamento, evoluiu/evolucao).
-    if len(left) >= 5 and len(right) >= 5 and left[:5] == right[:5]:
-        suffixes = ("mos", "ram", "iu", "ou", "cao", "sao", "mento", "veis")
-        if any(left.endswith(suf) or right.endswith(suf) for suf in suffixes):
-            return True
-    # Shared 6-char prefix covers gerund/flexion families (entregando/entrega,
-    # consultando/consulta) without uncontrolled stemming on short tokens.
-    if len(left) >= 6 and len(right) >= 6 and left[:6] == right[:6]:
-        return True
-    return False
 
 
 def _owned_quarantine_tokens_via_aliases(

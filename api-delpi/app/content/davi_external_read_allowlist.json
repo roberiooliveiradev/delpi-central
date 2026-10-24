@@ -192,17 +192,19 @@
       "reason": "Owner-ratified bounded READ of the published governed corpus (V1 15 docs + V2 17 docs incl. ratified MP/PI norms); api-delpi.access backend AuthZ. No provider dependency.",
       "executionMode": "catalog_action",
       "responseContract": "governed_document_guidance",
-      "approvedInputFields": ["topic", "section", "corpus_version", "page", "page_size"],
+      "approvedInputFields": ["topic", "section", "subject", "corpus_version", "page", "page_size"],
       "approvedResponseFields": [
         "knowledge_kind", "authority", "trust_level", "content_format", "topic", "corpus_id",
         "corpus_version", "manifest_identity", "source_path", "source_git_sha", "source_sha256",
-        "items[].section", "items[].heading", "items[].line_start", "items[].line_end",
-        "items[].chunk", "items[].text", "items[].sanitized", "page", "page_size", "total",
-        "has_more", "coverage", "selection"
+        "items[].section", "items[].heading", "items[].heading_path", "items[].line_start", "items[].line_end",
+        "items[].chunk", "items[].text", "items[].sanitized", "items[].relevance",
+        "page", "page_size", "total", "has_more", "coverage", "selection",
+        "subject", "matched_terms", "unmatched_terms"
       ],
       "argumentConstraints": {
         "page": {"minimum": 1, "maximum": 10000},
-        "page_size": {"minimum": 1, "maximum": 3}
+        "page_size": {"minimum": 1, "maximum": 3},
+        "subject": {"minLength": 1, "maxLength": 240}
       },
       "semanticAliases": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "conhecimento técnico", "technical guidance", "governed knowledge", "normas técnicas", "normas tecnicas", "regras técnicas", "regras tecnicas", "padrão técnico", "padrao tecnico", "padrões técnicos", "padroes tecnicos", "norma técnica", "norma tecnica", "regra técnica", "regra tecnica", "documentação", "documentacao", "manual técnico", "manual tecnico", "manual", "normas", "regras", "padrão", "padrao", "padrões", "padroes", "diretrizes", "convenções", "convencoes", "nomenclatura", "codificação", "codificacao", "descrição técnica", "descricao tecnica", "instruções técnicas", "instrucoes tecnicas", "guia", "normas de codificação", "normas de codificacao", "regras de codificação", "regras de codificacao", "normas de descrição", "normas de descricao", "padrão de descrição", "padrao de descricao", "technical standards", "technical rules", "coding rules", "nomenclature", "conventions", "documentation", "guidelines"],
       "entityDomainMarkers": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "technical guide", "normas", "regras", "padrão", "padrao", "nomenclatura", "codificação", "codificacao", "documentação", "documentacao", "manual", "diretrizes", "convenções", "convencoes", "guia"]
