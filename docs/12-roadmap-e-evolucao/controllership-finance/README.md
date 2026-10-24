@@ -469,3 +469,8 @@ O PO aceitou o encerramento documental do Ciclo 2 com residuais e direcionou ini
 ### Gate contratual P6-MIN + P2-READ (24/10/2026)
 
 [Doc 96](./96-ciclo3-gate-contrato-e-persistencia-p6-min-p2-read.md): com `CP-D01=A` aprovada, o gate documenta o padrão real de persistência dos BFFs irmãos (schema por app no `postgres-plugins`, runner com checksum SHA-256, seeds por migration, testes PG reais sem mock de atomicidade), o modelo lógico (template/version/item + competence + snapshot congelado + audit append-only), contratos HTTP candidatos (admin P6-MIN + leitura/abertura P2), matriz de autorização e plano de testes. Decisões residuais: seed v1 DRAFT vs PUBLISHED; UI admin mínima no slice. `IMPLEMENTATION_AUTHORIZED=NO` — aguarda GO de runtime.
+
+
+### Decisões de escopo P6-MIN + P2-READ aprovadas (24/10/2026)
+
+O PO aprovou **seed inicial dos 53 itens em `DRAFT`**, com publicação governada posterior, e **API administrativa mínima sem tela P6**. [Doc 97 — registro vinculante e pedido de GO transversal](./97-ciclo3-p6-min-p2-read-decisoes-po-e-solicitacao-go-transversal.md). Contratos físicos e autorização de implementação continuam pendentes; próximo gate `CF-C3-P6-MIN-P2-READ-TRANSVERSAL-GO-REVIEW-001`. **`IMPLEMENTATION_AUTHORIZED=NO` para esse slice.**
