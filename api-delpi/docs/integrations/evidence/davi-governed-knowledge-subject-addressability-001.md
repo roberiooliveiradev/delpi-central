@@ -105,3 +105,14 @@ Casos novos aprovados: stopwords-only → `VALIDATION_ERROR`; subject >240 → `
 Provas no caminho real adicionadas: `subject` publicado no schema OpenAPI (`string, minLength 1, maxLength 240`, `operationId` estável); rota real responde subject + subject&section (`selection=subject+section`, `NO_MATCH` honesto em seção estranha); 422 (vazio/oversized), 409 (versão inválida), 404/422 (tópico inexistente); leitura sem `subject` idêntica ao comportamento anterior (`selection=document`); permissão insuficiente levanta `Forbidden` no decorator (mapeamento de status no `jwt_middleware` do app real — já provado 401 sem Bearer no smoke produtivo); execute path completo `discover → candidate_token → execute → ASGI → rota → use case` retorna `BALA` + proveniência.
 
 `TOTAL=test_davi_knowledge_subject_addressability.py: 43 PASS / 0 FAIL`. `CODE_CHANGE_REQUIRED=NO` — nenhuma alteração produtiva nesta task; apenas testes de fixação de contrato + documentação.
+
+
+## 11. Revisão independente de fechamento — 2026-10-24
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL**; **CONTRACT_C2_C3_C4=ACCEPTED**; **C1_FULL_SUITE=6093_PASS_2_FAIL_30_SKIP**; **RELEASE_READINESS=CONDITIONAL**; **DEPLOY_AUTHORIZED=NO**. Revisado no GitHub o commit `791d0dad9a`, teste de contrato expandido e evidência §10. Nenhuma suíte/SSH foi reexecutada independentemente nesta revisão; resultados permanecem `EXECUTOR_REPORTED`.
+
+C2: `matched_terms`/`unmatched_terms` cobrem o conjunto ranqueado, não somente a página; `coverage` expressa completude da seleção paginada; esta semântica está caracterizada por testes, sem alteração produtiva. C3: evidência ampliada de ambiguidades, headings repetidos, ausências, limites e estabilidade; C4: operationId estável, rota/allowlist/candidate-token/execute caracterizados. `CODE_CHANGE_REQUIRED=NO` nesta task de fechamento.
+
+**Residual C1:** duas falhas `PluginsDatabaseConfigError` sem `PLUGINS_DB_HOST` nos testes PAC/supplies são classificadas pelo executor como ambientais e fora da superfície DAVI, mas full suite não é PASS integral. Antes de autorização operacional, responsável pelo ambiente/CI deve **comprovar a causalidade ambiental** (configuração e reprodução comparativa no SHA apropriado) e executar as duas provas com dependência disponível OU emitir aceite explícito de exceção não bloqueante com justificativa/owner/risco; preservar `2 FAIL` no histórico. Os 30 skips precisam permanecer classificados. Não iniciar nova refatoração do DAVI por essa pendência.
+
+**Gate:** `DAVI_CONTRACT_ACCEPTED=YES_WITH_RESIDUAL`, `R7_O2=INCONCLUSIVE`, `INDEPENDENT_REVIEW_COMPLETED=YES`, `OPERATIONAL_AUTHORIZATION_REQUIRED=YES`, `DEPLOY_AUTHORIZED=NO`. Após resolução formal do residual C1 e autorização de release específica, realizar deploy scoped `[1/1] api-delpi` com rollback/smoke e então reavaliar fluxo integrado DÉLIA O2 no SHA/config/modelo efetivos. Sem promoção automática e sem declaração de fechamento R7.
