@@ -135,3 +135,28 @@ Correções internas dos resíduos menores do Documento 102, sobre BASE_SHA `73a
 | R4 fixture `DROP SCHEMA` destrutiva | banco dedicado recriável + `assert_safe_test_database` + opt-in `CF_TEST_PG_ALLOW_DESTRUCTIVE=1` | 16 testes de guarda + probes reais (destino compartilhado bloqueado, opt-in ausente ⇒ skip, banco dedicado executa e é limpo) | CORRIGIDO |
 
 Testes: BFF `143 passed` · PG dedicado `27 passed` · MFE closing `41 passed`. Deploy de produção: NÃO REALIZADO. Detalhes e provas no adendo do Documento 102.
+
+---
+
+## Adendo — Rework de segurança R4 (`CF-C3-HARDENING-R4-SAFETY-REWORK-001`)
+
+Revisão arquitetural independente do hardening `1ad43e04` classificou R4 como REWORK: `assert_safe_test_database` + opt-in provavam *permissão* para destruir, mas não *ownership* do recurso — um banco preexistente chamado `plugins_hub_test` poderia ser dropado por `DROP DATABASE IF EXISTS` se credenciais bastassem. R1/R2 preservados sem alteração.
+
+**Correção:** isolamento por banco efêmero com prova de ownership (`tests/pg_test_isolation.py`):
+
+- nome único por execução `cf_test_<prefixo>_<uuid12>`; `CREATE DATABASE` sem `IF NOT EXISTS` — colisão gera outro identificador, nunca destrói o existente;
+- token de ownership gravado dentro do banco criado (`cf_test_run_ownership`);
+- teardown executa `DROP DATABASE` **somente** se o token lido no alvo conferir com o desta execução — incerteza (sem marcador, token divergente, falha de conexão) ⇒ nenhum DROP;
+- teardown usa o objeto `owned` capturado na criação — nunca releitura de env;
+- cluster declarado de teste (`CF_TEST_PG_CLUSTER=test`) + opt-in (`CF_TEST_PG_ALLOW_DESTRUCTIVE=1`) exigidos antes de qualquer DDL.
+
+**Evidências:**
+
+- 24 testes de guarda sem banco real (prefixos protegidos/ambíguos/injeção, opt-ins, colisão, ownership divergente/ausente, falha de conexão, mutação de env pós-setup, identificador malicioso);
+- prova adversarial em PostgreSQL real (cluster local descartável): isco `plugins_hub_test` preexistente apontado como `CF_TEST_PG_NAME` — **preservado** com sentinela intacta; órfão `cf_test_orphan_*` sem ownership — **preservado**; `plugins_hub` canônico — **intacto** (159 itens); banco efêmero criado, usado e dropado pela execução;
+- suíte PG real no banco efêmero: `11 passed` (migrations V001/V002, seed 53 DRAFT, publish, concorrência, idempotência, atomicidade R1, auditoria UUID);
+- BFF: `161 passed` + 11 skips sem env PG; MFE inalterado (`41 passed` closing).
+
+**Resposta à pergunta central:** o fixture só pode destruir um banco cuja prova de ownership (token gravado pela própria execução) confere — bancos preexistentes não podem ser alvo por nome ou por opt-in. Fato observado em código e em probes adversariais; aceite formal cabe à revisão independente.
+
+Risco remanescente: execuções abortadas entre CREATE e teardown deixam resíduos `cf_test_*` no cluster de teste — seguro (nunca são presumidos próprios); limpeza manual eventual. Smoke autenticado: `TEST_NOT_RUN`. Deploy de produção: NÃO REALIZADO.

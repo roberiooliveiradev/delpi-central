@@ -5,23 +5,24 @@ prova: seed 53 itens DRAFT (sem publish automático), publish governado,
 abertura idempotente com snapshot EXPECTED, isolamento v1×v2, auditoria
 append-only e falhas de concorrência/revisão.
 
-Isolamento (R4): os testes NUNCA tocam um banco compartilhado. O destino é
-um **banco dedicado e recriável** (`CF_TEST_PG_NAME`, obrigado a conter
-"test" e fora da lista de bancos protegidos), dropado/criado via conexão
-administrativa (`CF_TEST_PG_ADMIN_DB`, default `postgres`). Limpeza
-destrutiva exige opt-in explícito `CF_TEST_PG_ALLOW_DESTRUCTIVE=1`.
-Destino ambíguo falha antes de qualquer operação.
+Isolamento (R4 rework): o fixture só destrói o que a própria execução
+criou. Um banco efêmero `cf_test_<prefixo>_<uuid>` é gerado por
+`pg_test_isolation.create_owned_test_database` com prova de ownership
+(token gravado no banco); o teardown dropa exclusivamente esse recurso,
+após conferir o token — nunca um banco preexistente, jamais `plugins_hub`
+ou qualquer destino indicado por configuração. Destino ambíguo ou cluster
+não declarado falha/skipa antes de qualquer DDL.
 
-Ativado com CF_TEST_PG_HOST/CF_TEST_PG_NAME/CF_TEST_PG_USER/
-CF_TEST_PG_PASSWORD (porta opcional CF_TEST_PG_PORT) +
-CF_TEST_PG_ALLOW_DESTRUCTIVE=1. Skip explícito quando ausente — mock não
-prova atomicidade.
+Ativado com CF_TEST_PG_HOST/CF_TEST_PG_NAME (prefixo)/CF_TEST_PG_USER/
+CF_TEST_PG_PASSWORD (porta opcional CF_TEST_PG_PORT, admin opcional
+CF_TEST_PG_ADMIN_DB=postgres) + `CF_TEST_PG_CLUSTER=test` +
+`CF_TEST_PG_ALLOW_DESTRUCTIVE=1`. Skip explícito quando ausente — mock
+não prova atomicidade.
 """
 
 from __future__ import annotations
 
 import os
-import re
 import uuid
 
 import psycopg
@@ -51,37 +52,19 @@ pytestmark = pytest.mark.skipif(
 ADMIN = str(uuid.uuid5(uuid.NAMESPACE_DNS, "cf-admin-test"))
 VIEWER = str(uuid.uuid5(uuid.NAMESPACE_DNS, "cf-viewer-test"))
 
-# Bancos que jamais podem ser alvo destrutivo, mesmo com opt-in.
-FORBIDDEN_TEST_TARGETS = frozenset(
-    {"postgres", "plugins_hub", "delpi_core", "template0", "template1"}
+from pg_test_isolation import (  # noqa: E402
+    assert_safe_test_prefix,
+    create_owned_test_database,
+    drop_owned_test_database,
+    require_test_environment,
 )
-_TEST_DB_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
-def assert_safe_test_database(name: str) -> None:
-    """Guarda do destino destrutivo — falha antes de qualquer DDL.
-
-    Um banco de teste deve ser dedicado (nome contém ``test``), com nome
-    SQL-safe e jamais um banco compartilhado/do sistema.
-    """
-    if not _TEST_DB_NAME.fullmatch(name):
-        raise ValueError(f"CF_TEST_PG_NAME inválido: {name!r}")
-    if name in FORBIDDEN_TEST_TARGETS:
-        raise ValueError(
-            f"CF_TEST_PG_NAME aponta para banco protegido: {name!r}"
-        )
-    if "test" not in name:
-        raise ValueError(
-            f"CF_TEST_PG_NAME deve ser um banco dedicado de teste "
-            f"(nome contendo 'test'): {name!r}"
-        )
-
-
-def _admin_connection() -> psycopg.Connection:
+def _test_connect(dbname: str) -> psycopg.Connection:
     return psycopg.connect(
         host=os.environ["CF_TEST_PG_HOST"],
         port=int(os.getenv("CF_TEST_PG_PORT", "5432")),
-        dbname=os.getenv("CF_TEST_PG_ADMIN_DB", "postgres"),
+        dbname=dbname,
         user=os.environ["CF_TEST_PG_USER"],
         password=os.environ["CF_TEST_PG_PASSWORD"],
         autocommit=True,
@@ -90,23 +73,20 @@ def _admin_connection() -> psycopg.Connection:
 
 @pytest.fixture(scope="module", autouse=True)
 def _configure_db():
-    """Recria banco dedicado de teste e aponta plugins_db para ele."""
+    """Cria banco efêmero exclusivo desta execução e aponta plugins_db."""
     import controllership_finance_app.config as cfg
 
-    db_name = os.environ["CF_TEST_PG_NAME"]
-    # Destino ambíguo/compartilhado: falha aqui, antes de qualquer DDL.
-    assert_safe_test_database(db_name)
-    if os.getenv("CF_TEST_PG_ALLOW_DESTRUCTIVE") != "1":
-        pytest.skip(
-            "CF_TEST_PG_ALLOW_DESTRUCTIVE=1 ausente — limpeza destrutiva "
-            "do banco de teste não autorizada"
-        )
+    prefix = os.environ["CF_TEST_PG_NAME"]
+    # Configuração ambígua/protegida: falha aqui, antes de qualquer DDL.
+    assert_safe_test_prefix(prefix)
+    refusal = require_test_environment(os.environ)
+    if refusal:
+        pytest.skip(refusal)
 
-    # Banco efêmero: DROP+CREATE no banco dedicado apenas; schemas vizinhos
-    # de outros contextos vivem em outros bancos e não são tocados.
-    with _admin_connection() as conn, conn.cursor() as cur:
-        cur.execute(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)')
-        cur.execute(f'CREATE DATABASE "{db_name}"')
+    admin_db = os.getenv("CF_TEST_PG_ADMIN_DB", "postgres")
+    # CREATE-only: nenhum banco preexistente é tocado. O objeto `owned`
+    # prova que o recurso pertence a esta execução.
+    owned = create_owned_test_database(_test_connect, admin_db, prefix)
 
     original = {
         k: getattr(cfg.settings, k)
@@ -122,7 +102,7 @@ def _configure_db():
     }
     cfg.settings.PLUGINS_DB_HOST = os.environ["CF_TEST_PG_HOST"]
     cfg.settings.PLUGINS_DB_PORT = os.getenv("CF_TEST_PG_PORT", "5432")
-    cfg.settings.PLUGINS_DB_NAME = db_name
+    cfg.settings.PLUGINS_DB_NAME = owned.name
     cfg.settings.PLUGINS_DB_USER = os.environ["CF_TEST_PG_USER"]
     cfg.settings.PLUGINS_DB_PASSWORD = os.environ["CF_TEST_PG_PASSWORD"]
     cfg.settings.PLUGINS_DB_SSLMODE = os.getenv("CF_TEST_PG_SSLMODE", "prefer")
@@ -130,8 +110,9 @@ def _configure_db():
 
     yield
 
-    with _admin_connection() as conn, conn.cursor() as cur:
-        cur.execute(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)')
+    # Teardown só dropa o recurso criado e comprovado desta execução —
+    # sem releitura de env, sem varredura por convenção de nome.
+    drop_owned_test_database(_test_connect, admin_db, owned)
     for k, v in original.items():
         setattr(cfg.settings, k, v)
 

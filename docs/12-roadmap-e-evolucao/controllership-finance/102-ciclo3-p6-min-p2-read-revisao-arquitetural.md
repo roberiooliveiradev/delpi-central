@@ -124,3 +124,58 @@ Executado sobre BASE_SHA `73a02393dc` (pós-revisão). Escopo estrito de hardeni
 - Residual search: zero fallback de e-mail, zero `DROP SCHEMA` em fonte, `UniqueViolation` sempre traduzido, permissions inalteradas (`access`/`manage`/`home`), zero conteúdo fora de escopo.
 
 R3 (drift documental) permanece como observação de prateleira; R5–R8 inalterados. Deploy de produção: NÃO REALIZADO.
+
+---
+
+## Adendo 2 — Rework de segurança R4 (`CF-C3-HARDENING-R4-SAFETY-REWORK-001`)
+
+Revisão arquitetural independente do hardening `1ad43e04`: **REWORK restrito a R4**. R1/R2 aceitos como consistentes e preservados. Achados históricos das seções anteriores mantidos.
+
+### Problema residual confirmado pelo revisor
+
+A proteção anterior exigia nome com `test` + opt-in, mas executava `DROP DATABASE IF EXISTS "<CF_TEST_PG_NAME>"` sobre o nome configurado. Nome não prova descartabilidade e opt-in não prova ownership: um banco preexistente `plugins_hub_test` seria destruído com credenciais administrativas suficientes — e o próprio teste de guarda o classificava como admissível.
+
+### Mecanismo adotado — banco efêmero com prova de ownership
+
+`tests/pg_test_isolation.py` (novo, testável sem PG real):
+
+- `create_owned_test_database`: `CREATE DATABASE` sem `IF NOT EXISTS` sobre nome efêmero `cf_test_<prefixo>_<uuid12>` (retry de identificador em `DuplicateDatabase`, nunca DROP); grava `cf_test_run_ownership.run_token` dentro do banco criado;
+- `drop_owned_test_database`: lê o marcador no alvo; DROP somente se `token == owned.run_token`; qualquer incerteza ⇒ `False`, nenhum DDL;
+- o teardown usa o objeto `owned` capturado — mutação de env pós-setup não redireciona o DROP;
+- `require_test_environment` exige `CF_TEST_PG_CLUSTER=test` (cluster declarado) **e** `CF_TEST_PG_ALLOW_DESTRUCTIVE=1` (opt-in) antes de qualquer DDL;
+- `assert_safe_test_prefix` mantém fail-closed sobre prefixo ambíguo/protegido; identificadores sempre via `sql.Identifier`.
+
+### Respostas à revisão adversarial (com evidência)
+
+| Pergunta | Resposta |
+|---|---|
+| Nome manipulado alcança outro recurso? | Não — nome gerado por execução (uuid), prefixo regex-validado, quoting `sql.Identifier` (teste de injeção prova identificador único). |
+| Env muda entre setup e teardown? | Teardown usa `owned`/`admin_db` capturados — teste de mutação prova. |
+| Falha parcial ⇒ DROP no recurso errado? | Token conferido; incerteza ⇒ `False` sem DROP (3 cenários testados). |
+| Preexistente confundido com o da execução? | `CREATE` sem `IF EXISTS` + uuid + marcador — probe real com `plugins_hub_test` isco preservado. |
+| Jobs simultâneos destroem-se mutuamente? | Nomes e tokens exclusivos por execução; cada teardown só dropa o próprio token. |
+| Cleanup atrasado atinge banco reutilizado? | Token divergente ⇒ nenhum DROP. |
+| Proteção depende só de convenção de nome? | Não — ownership provado por marcador interno. |
+| Opt-in interpretado como prova de isolamento? | Opt-in apenas autoriza; a prova é o token de ownership. |
+| Credencial permite destruição fora do esperado? | `CF_TEST_PG_CLUSTER=test` exigido; mesmo em cluster errado, o único alvo possível é o efêmero próprio. |
+| Erro de conexão ⇒ comportamento inseguro? | `psycopg.Error` capturado ⇒ `False`/raise sem DROP (testado). |
+| Testes negativos verificam ausência de DDL? | Todo DDL emitido é registrado no fake; asserts exigem `DROP` ausente. |
+| Cleanup seguro diante de exceções? | Teardown do fixture roda no `yield` mesmo com falha; `drop_owned` fail-closed. |
+
+### Evidência PostgreSQL real (cluster local `delpi-postgres-plugins`, descartável)
+
+- Isco `plugins_hub_test` criado com sentinela e apontado via `CF_TEST_PG_NAME` + opt-ins completos ⇒ suite executou 45 testes; pós-condições: `plugins_hub_test` preservado com dado sentinela, `cf_test_orphan_deadbeef` (resíduo sem ownership) preservado, `plugins_hub` intacto (159 itens), efêmero `cf_test_*` criado e removido pela execução.
+- Suíte PG no efêmero próprio: `11 passed` — migrations, seed 53 DRAFT, publish, concorrência, idempotência, atomicidade `duplicate_item_key` (R1), auditoria UUID-only (R2).
+
+### Regressão
+
+- BFF: `161 passed` + 11 skips sem env PG (143 → 161: +18 testes de guarda isolamento).
+- PG real: `11 passed` (integração) + `34 passed` (guarda) = 45.
+- R1/R2: inalterados e re-verificados (`duplicate_item_key` 409 tipado + atomicidade; ator UUID fail-closed; service principal 403; access≠manage).
+- MFE: nenhuma alteração; `41 passed` closing.
+- Migrations produtivas V001/V002: intactas. Contratos HTTP/permissions: inalterados.
+- Residual search: zero `DROP SCHEMA`/`DROP DATABASE` fora do isolamento owned; zero fallback de e-mail; zero conteúdo fora de escopo.
+
+### Estado
+
+R4 re-implementado com prova de ownership — submetido à revisão arquitetural independente para aceite formal. Riscos remanescentes: resíduos `cf_test_*` de execuções abortadas (seguros; limpeza manual); dependência de role com `CREATEDB` no cluster de teste (já constatada no ambiente local). Smoke autenticado: `TEST_NOT_RUN`. Deploy de produção: NÃO REALIZADO.
