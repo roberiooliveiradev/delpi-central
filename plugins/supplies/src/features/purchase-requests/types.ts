@@ -25,6 +25,8 @@ export type PersonRef = {
   display_name?: string | null;
   /** BFF proxy path for the real user photo — only when the linked profile has one. */
   photo_url?: string | null;
+  /** Canonical Core user id (opaque) — present only when the mapping is proven. */
+  user_id?: string | null;
 };
 
 export type CostCenterRef = {

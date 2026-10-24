@@ -100,8 +100,8 @@ selecionar página em foco
 | 8 | Estoque de segurança | `/safety-stock` | fila |
 | 9 | Análise de consumo | `/safety-stock/consumption-analysis` | fila |
 | 10 | Fornecedores | `/suppliers` | fila / contrato de busca a confirmar |
-| 11 | Fornecedor 360 | `/suppliers/:code/:store` | fila — avatar já identifica o fornecedor nas listas de PC; sem href. Ver [DIRECTORY-OBJECTS.md](./DIRECTORY-OBJECTS.md) |
-| 11b | Pessoa 360 | `/people/:code` | fila reservada (solicitante / comprador); avatar nas listas de SC/PC; sem href |
+| 11 | Fornecedor 360 | `/suppliers/:code/:store` | **FECHADA** (E14) — avatar/nome navegáveis nas listas/fichas de PC e Entregas (SUPPLIERS.NAV.S1). Ver [DIRECTORY-OBJECTS.md](./DIRECTORY-OBJECTS.md) |
+| 11b | Perfil de usuário | `/users/:userId` | **FECHADA** (USERS.PROFILE.S1) — ficha Minha DELPI reusada; avatar/nome do solicitante navegáveis nas listas/fichas de SC/PC quando `user_id` Core + acesso; seção de SCs relacionadas. `/people/:code` descartada |
 | 12 | OTD fornecedores | `/suppliers/otd` | fila |
 | 13 | Produtos / MP | `/products` | fila |
 | 14 | Produto / MP 360 | `/products/:code` | fila |

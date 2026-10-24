@@ -35,7 +35,7 @@ Herdar textos já canônicos de:
 - Loading padrão: `SuppliesLoadingCard` (plugin-ui); banners só para error/partial/forbidden.
 - Manual `/help`: PageHero + SectionCard (família Comercial), conteúdo em `userManualContent.ts`.
 - Onde ver SC, ESTSEG, item, fornecedor.
-- Fornecedor e solicitante nas listas/fichas de PC e SC usam avatar de iniciais do kit (`EntityAvatarLabel`). O avatar/nome do fornecedor navega para a ficha E14 (`/suppliers/:code/:store`) quando código+loja existem no contrato; a ficha de pessoa segue reservada — avatar de solicitante não navega. Ver `SUPPLIERS-NAV-S1-CONTEXTUAL-SUPPLIER-LINKS.md` e `DIRECTORY-OBJECTS.md`.
+- Fornecedor e solicitante nas listas/fichas de PC e SC usam avatar de iniciais do kit (`EntityAvatarLabel`). O avatar/nome do fornecedor navega para a ficha E14 (`/suppliers/:code/:store`) quando código+loja existem no contrato; o avatar/nome do solicitante navega para o perfil do usuário (`/users/:userId`) quando o requester traz `user_id` Core e a sessão tem acesso (self ou manage) — sem `user_id` ou sem acesso, a identidade fica informativa. Ver `SUPPLIERS-NAV-S1-CONTEXTUAL-SUPPLIER-LINKS.md`, `USERS-PROFILE-S1-USER-OPERATIONAL-CONTEXT.md` e `DIRECTORY-OBJECTS.md`.
 - O que cada KPI do Overview significa (link fichas, linguagem de negócio).
 - 403: «sem permissão para esta filial / este módulo».
 - FAQ: diferença estoque × estoque de segurança; OTD × Entregas / Atrasos × Pedidos de compra; Overview × página OTD; Sheets × indicadores; filtros/URL; Meta parcial × Meta mês.

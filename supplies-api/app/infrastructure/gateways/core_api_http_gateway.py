@@ -118,12 +118,16 @@ class CoreApiHttpGateway:
     def lookup_protheus_identities(
         self,
         *,
-        protheus_user_ids: list[str],
+        protheus_user_ids: list[str] | None = None,
+        user_ids: list[str] | None = None,
     ) -> dict[str, dict]:
-        """S2S batch resolution Protheus user id → Core identity mapping.
+        """S2S batch resolution Protheus user id ↔ Core identity mapping.
 
-        Core contract: POST /integrations/protheus-identities/lookup,
-        max 50 ids per call, only `mapping_status == "mapped"` rows match.
+        Core contract: POST /integrations/protheus-identities/lookup accepts
+        `protheus_user_ids` and/or `user_ids` (max 50 per call, only
+        `mapping_status == "mapped"` rows match). Returns items keyed by
+        `protheus_user_id` and by `user_id` (each item carries both fields,
+        so either direction can be resolved from a single call).
         Soft-fail ({} + warning) on transport/auth errors — callers must
         degrade to source names, never fabricate identities.
         """
@@ -133,13 +137,23 @@ class CoreApiHttpGateway:
 
         ordered: list[str] = []
         seen: set[str] = set()
-        for raw in protheus_user_ids:
+        for raw in protheus_user_ids or []:
             pid = str(raw or "").strip()
             if not pid or pid in seen:
                 continue
             seen.add(pid)
             ordered.append(pid)
-        if not ordered:
+
+        ordered_users: list[str] = []
+        seen_users: set[str] = set()
+        for raw in user_ids or []:
+            uid = str(raw or "").strip()
+            if not uid or uid in seen_users:
+                continue
+            seen_users.add(uid)
+            ordered_users.append(uid)
+
+        if not ordered and not ordered_users:
             return {}
 
         auth = token if token.lower().startswith("bearer ") else f"Bearer {token}"
@@ -152,15 +166,20 @@ class CoreApiHttpGateway:
             "Content-Type": "application/json",
         }
 
-        result: dict[str, dict] = {}
+        bodies: list[dict[str, list[str]]] = []
         for start in range(0, len(ordered), 50):
-            chunk = ordered[start : start + 50]
-            url = urljoin(self.base_url, "integrations/protheus-identities/lookup")
+            bodies.append({"protheus_user_ids": ordered[start : start + 50]})
+        for start in range(0, len(ordered_users), 50):
+            bodies.append({"user_ids": ordered_users[start : start + 50]})
+
+        result: dict[str, dict] = {}
+        url = urljoin(self.base_url, "integrations/protheus-identities/lookup")
+        for body in bodies:
             try:
                 response = requests.post(
                     url,
                     headers=headers,
-                    json={"protheus_user_ids": chunk},
+                    json=body,
                     timeout=self.timeout,
                 )
             except requests.RequestException:

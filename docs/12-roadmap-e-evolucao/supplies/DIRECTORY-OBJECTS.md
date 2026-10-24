@@ -18,14 +18,14 @@ O MFE **não** baixa foto e **não** coloca `href`. Não copiar CSS de avatar no
 
 Paths em inglês (`english-code-identifiers.mdc`). Ainda **não** entram no router, no catálogo do hub nem no Manual como destino clicável.
 
-| Objeto | Coleção já placeholder | Ficha reservada |
+| Objeto | Coleção já placeholder | Ficha |
 |---|---|---|
-| Fornecedor (TOTVS A2) | `/apps/supplies/suppliers` | `/apps/supplies/suppliers/:code/:store` (loja omitida só se o dado não vier) |
-| Pessoa (solicitante / comprador) | — | `/apps/supplies/people/:code` |
+| Fornecedor (TOTVS A2) | `/apps/supplies/suppliers` | `/apps/supplies/suppliers/:code/:store` ✅ implementada (E14) |
+| Pessoa (usuário Minha DELPI) | — | `/apps/supplies/users/:userId` ✅ implementada (USERS.PROFILE.S1 — reusa a ficha de perfil do Portal; `/people/:code` descartada: chave canônica é `user_id` Core, nunca código TOTVS) |
 
-Helpers: `reservedSupplierDetailPath` e `reservedPersonDetailPath` em `plugins/supplies/src/app/suppliesDirectory.ts`.
+Helpers: `reservedSupplierDetailPath` e `reservedPersonDetailPath` em `plugins/supplies/src/app/suppliesDirectory.ts` (legado — não usar; `people/:code` foi substituída por `users/:userId` via `buildUserProfileHref`).
 
-`/apps/supplies/suppliers/:code/:store` e `/apps/supplies/people/:code` devem continuar `not_found` até a página existir. A fila de produto em `README.md` já reserva o 360 do fornecedor; pessoa ainda não tinha path — este documento o congela.
+`/apps/supplies/people/:code` continua `not_found` e não será implementada — a ficha de pessoa é a rota canônica `/users/:userId`, com navegação condicionada a `user_id` Core comprovado + `canAccessUserProfile`.
 
 ## Quando as fichas existirem
 

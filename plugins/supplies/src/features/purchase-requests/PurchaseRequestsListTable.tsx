@@ -172,6 +172,7 @@ export function PurchaseRequestsListTable({
                       dateFrom: row.request_issue_date,
                       dateTo: row.request_issue_date,
                     }}
+                    basePath={basePath}
                   />
                 );
               case "cost_center":
@@ -350,6 +351,7 @@ export function PurchaseRequestsListTable({
             }
           />
           <PurchaseRequestsCards
+            basePath={basePath}
             items={items}
             detailHref={detailHref}
             onSelectRow={onSelectRow}

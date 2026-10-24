@@ -136,7 +136,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Identificar fornecedor ou solicitante",
           where: "Pedidos de compra",
-          how: "Avatar de iniciais na lista, nos cards e na ficha — também em Solicitações de compras. Clique no avatar ou no nome do fornecedor para abrir a ficha cadastral (E14); o avatar do solicitante não navega — a página de pessoa ainda não existe",
+          how: "Avatar na lista, nos cards e na ficha — também em Solicitações de compras. Clique no avatar ou no nome do fornecedor para abrir a ficha cadastral (E14); clique no avatar ou no nome do solicitante para abrir o perfil do usuário no Portal — quando a pessoa tem vínculo com a Minha DELPI e você tem acesso",
         },
         {
           want: "Consultar fornecedor",
@@ -228,8 +228,8 @@ export const USER_MANUAL_CONTENT = {
           a: "A exportação exige a permissão de exportação além do acesso às solicitações. Ter só a lista não libera o download.",
         },
         {
-          q: "Por que o avatar do solicitante não abre uma ficha?",
-          a: "A página de pessoa continua reservada — o avatar não navega. O avatar e o nome do fornecedor abrem a ficha cadastral (E14) nas listas e fichas de pedidos e entregas; também dá para chegar lá pela lista Fornecedores (clique na linha).",
+          q: "O avatar do solicitante abre uma ficha?",
+          a: "Sim, quando o solicitante está vinculado a um usuário da Minha DELPI e você tem permissão para ver o perfil — o clique abre a ficha do usuário no Portal, com as solicitações de compra relacionadas. Sem vínculo ou sem acesso, o avatar fica apenas informativo. O avatar e o nome do fornecedor abrem a ficha cadastral (E14) nas listas e fichas de pedidos e entregas; também dá para chegar lá pela lista Fornecedores (clique na linha).",
         },
         {
           q: "De onde vem o nome do solicitante?",

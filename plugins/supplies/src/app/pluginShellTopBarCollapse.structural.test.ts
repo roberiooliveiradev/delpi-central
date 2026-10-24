@@ -38,7 +38,7 @@ describe("PluginShell TopBar collapse", () => {
     expect(slots).toMatch(/ShellFavoritesStrip/);
     expect(slots).toMatch(/searchTriggerRef/);
     expect(slots).toMatch(/SuppliesTopBarUserIdentity/);
-    expect(slots).toMatch(/buildUserProfilePath/);
+    expect(slots).toMatch(/buildSelfProfileHref/);
     expect(slots).toMatch(/avatarHref/);
     expect(slots).toMatch(/HOST_SELF_PROFILE_PATH/);
     expect(slots).toMatch(/\/profile/);

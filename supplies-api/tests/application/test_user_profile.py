@@ -175,3 +175,194 @@ def test_http_get_other_forbidden(mock_resolve, mock_validate):
             headers={"Authorization": "Bearer tok"},
         )
     assert response.status_code == 403
+
+
+# --- related purchase requests (USERS.PROFILE.S1) ------------------------------
+
+
+def _mapped(pid: str, uid: str = OTHER_ID) -> dict:
+    return {
+        "protheus_user_id": pid,
+        "user_id": uid,
+        "mapping_status": "mapped",
+    }
+
+
+def test_related_self_positive_resolves_bond_and_forwards():
+    core = MagicMock()
+    core.lookup_protheus_identities.return_value = {
+        "000007": _mapped("000007", SELF_ID),
+    }
+    pr = MagicMock()
+    pr.list_purchase_requests.return_value = {
+        "items": [{"request_number": "178764", "branch": "01"}],
+        "total": 1,
+        "page": 1,
+        "page_size": 5,
+    }
+    identity = MagicMock()
+    identity.enrich_payload.side_effect = lambda data, **_: data
+    service = UserProfileService(
+        core_gateway=core,
+        purchase_requests_gateway=pr,
+        requester_identity=identity,
+    )
+    result = service.related_purchase_requests(
+        _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
+        SELF_ID,
+        branches=["01"],
+        page=1,
+        page_size=5,
+    )
+    assert result["total"] == 1
+    assert result["protheus_user_ids"] == ["000007"]
+    params = dict(pr.list_purchase_requests.call_args.kwargs["params"])
+    assert params["requester_user_id"] == "000007"
+    assert params["branch"] == "01"
+    assert params["sort_by"] == "issue_date"
+    # Target resolution — never the actor as substitute.
+    core.lookup_protheus_identities.assert_called_once_with(user_ids=[SELF_ID])
+
+
+def test_related_other_negative_without_admin():
+    service = UserProfileService()
+    with pytest.raises(AuthorizationError):
+        service.related_purchase_requests(
+            _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
+            OTHER_ID,
+        )
+
+
+def test_related_other_sibling_admin_ok():
+    core = MagicMock()
+    core.lookup_protheus_identities.return_value = {}
+    service = UserProfileService(core_gateway=core)
+    result = service.related_purchase_requests(
+        _user(permissions={"supplies.access", "supplies.manage"}),
+        OTHER_ID,
+    )
+    assert result["items"] == []
+    assert result["requester_unmapped"] is True
+
+
+def test_related_unmapped_no_gateway_call():
+    core = MagicMock()
+    core.lookup_protheus_identities.return_value = {
+        "000007": {**_mapped("000007", SELF_ID), "mapping_status": "revoked"},
+    }
+    pr = MagicMock()
+    service = UserProfileService(core_gateway=core, purchase_requests_gateway=pr)
+    result = service.related_purchase_requests(
+        _user(permissions={"supplies.access"}),
+        SELF_ID,
+    )
+    assert result["items"] == []
+    assert result["requester_unmapped"] is True
+    pr.list_purchase_requests.assert_not_called()
+
+
+def test_related_multiple_bonds_forward_all_ids():
+    core = MagicMock()
+    core.lookup_protheus_identities.return_value = {
+        "000007": _mapped("000007", SELF_ID),
+        "000042": _mapped("000042", SELF_ID),
+    }
+    pr = MagicMock()
+    pr.list_purchase_requests.return_value = {"items": [], "total": 0}
+    identity = MagicMock()
+    identity.enrich_payload.side_effect = lambda data, **_: data
+    service = UserProfileService(
+        core_gateway=core,
+        purchase_requests_gateway=pr,
+        requester_identity=identity,
+    )
+    result = service.related_purchase_requests(
+        _user(permissions={"supplies.access"}),
+        SELF_ID,
+    )
+    params = pr.list_purchase_requests.call_args.kwargs["params"]
+    pids = [value for key, value in params if key == "requester_user_id"]
+    assert sorted(pids) == ["000007", "000042"]
+    assert result["protheus_user_ids"] == ["000007", "000042"]
+
+
+def test_related_gateway_failure_degrades_partial():
+    core = MagicMock()
+    core.lookup_protheus_identities.return_value = {
+        "000007": _mapped("000007", SELF_ID),
+    }
+    pr = MagicMock()
+    pr.list_purchase_requests.side_effect = RuntimeError("upstream down")
+    service = UserProfileService(core_gateway=core, purchase_requests_gateway=pr)
+    result = service.related_purchase_requests(
+        _user(permissions={"supplies.access"}),
+        SELF_ID,
+    )
+    assert result["error"] == "related_requests_unavailable"
+    assert result["items"] == []
+
+
+def test_photo_self_positive():
+    core = MagicMock()
+    core.get_person_profile_photo.return_value = (b"img", "image/jpeg", "a.jpg")
+    service = UserProfileService(core_gateway=core)
+    photo = service.photo(_user(permissions={"supplies.access"}), SELF_ID)
+    assert photo == (b"img", "image/jpeg", "a.jpg")
+
+
+def test_photo_other_negative_without_admin():
+    service = UserProfileService()
+    with pytest.raises(AuthorizationError):
+        service.photo(
+            _user(permissions={"supplies.access"}),
+            OTHER_ID,
+        )
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_http_related_self_positive(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={"supplies.access", "supplies.unit.filial-01"}
+    )
+    with patch(
+        "app.interfaces.http.routes.users_routes.UserProfileService"
+    ) as service_cls:
+        instance = service_cls.return_value
+        instance.related_purchase_requests.return_value = {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "page_size": 5,
+            "protheus_user_ids": ["000007"],
+        }
+        client = create_app().test_client()
+        response = client.get(
+            f"/users/{SELF_ID}/related-requests",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    assert response.get_json()["protheus_user_ids"] == ["000007"]
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_http_photo_missing_is_404(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    with patch(
+        "app.interfaces.http.routes.users_routes.UserProfileService"
+    ) as service_cls:
+        instance = service_cls.return_value
+        instance.photo.return_value = None
+        client = create_app().test_client()
+        response = client.get(
+            f"/users/{SELF_ID}/photo",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 404

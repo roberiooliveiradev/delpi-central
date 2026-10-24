@@ -12,10 +12,18 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { getUserProfile, patchUserProfile, type SuppliesUserProfile } from "../../api/userProfileApi";
+import {
+  getUserPhotoBlob,
+  getUserProfile,
+  getUserRelatedRequests,
+  patchUserProfile,
+  type SuppliesUserProfile,
+  type UserRelatedRequestsResponse,
+} from "../../api/userProfileApi";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import {
   buildPluginPath,
+  buildPurchaseRequestDetailPath,
   normalizeBasePath,
   SUPPLIES_BASE_PATH,
 } from "../../app/pluginRoutes";
@@ -23,6 +31,7 @@ import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import { useMyPersonProfile } from "../../app/useMyPersonProfile";
 import {
   SuppliesActionButton,
+  SuppliesEntityLink,
   SuppliesLoadingCard,
   SuppliesTitleWithHelp,
   SuppliesSectionCard,
@@ -34,6 +43,11 @@ import {
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { USER_PROFILE_CONTENT as C } from "./userProfileContent";
+import {
+  formatDatePtBr,
+  formatRequestNumber,
+  labelOverallStage,
+} from "../purchase-requests/query";
 
 type UserProfilePageProps = {
   basePath: string;
@@ -97,6 +111,13 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [targetPhotoUrl, setTargetPhotoUrl] = useState<string | null>(null);
+  const [related, setRelated] = useState<{
+    loading: boolean;
+    error: string | null;
+    data: UserRelatedRequestsResponse | null;
+  }>({ loading: false, error: null, data: null });
+  const [relatedReloadKey, setRelatedReloadKey] = useState(0);
 
   const back = useMemo(() => readReturnTo(), []);
 
@@ -129,6 +150,53 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
       });
     return () => controller.abort();
   }, [userId, reloadKey]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    if (isSelf !== false || !profile?.hasPhoto) {
+      void Promise.resolve().then(() => {
+        if (!controller.signal.aborted) setTargetPhotoUrl(null);
+      });
+      return () => controller.abort();
+    }
+    let objectUrl: string | null = null;
+    getUserPhotoBlob(userId, controller.signal)
+      .then((blob) => {
+        if (controller.signal.aborted) return;
+        objectUrl = URL.createObjectURL(blob);
+        setTargetPhotoUrl(objectUrl);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setTargetPhotoUrl(null);
+      });
+    return () => {
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [isSelf, profile?.hasPhoto, userId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => {
+      if (controller.signal.aborted) return;
+      if (!profile) {
+        setRelated({ loading: false, error: null, data: null });
+        return;
+      }
+      setRelated((prev) => ({ ...prev, loading: true, error: null }));
+      getUserRelatedRequests(userId, { pageSize: 5 }, controller.signal)
+        .then((data) => {
+          if (controller.signal.aborted) return;
+          setRelated({ loading: false, error: null, data });
+        })
+        .catch((err: unknown) => {
+          if (controller.signal.aborted) return;
+          const message = err instanceof Error ? err.message : C.relatedError;
+          setRelated({ loading: false, error: message, data: null });
+        });
+    });
+    return () => controller.abort();
+  }, [userId, profile, relatedReloadKey]);
 
   const shortcuts = useMemo(() => {
     const caps = profile?.capabilities ?? session.capabilities;
@@ -279,7 +347,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
           ? {
               name: profile.name,
               email: profile.email,
-              photoUrl: isSelf === true ? photoUrl : null,
+              photoUrl: isSelf === true ? photoUrl : targetPhotoUrl,
               colorKey: userId,
               jobTitle: profile.jobTitle ?? personProfile?.job_title ?? null,
               phone: profile.phone ?? personProfile?.phone_e164 ?? null,
@@ -344,6 +412,95 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               </SuppliesSectionCard>
             ) : null}
 
+            <SuppliesSectionCard
+              title={C.relatedTitle}
+              subtitle={C.relatedSubtitle}
+            >
+              {related.loading ? (
+                <p className="sp-user-profile__note">{C.relatedLoading}</p>
+              ) : related.error ? (
+                <>
+                  <SuppliesStateBanner variant="error">
+                    {C.relatedError}
+                  </SuppliesStateBanner>
+                  <SuppliesActionButton
+                    variant="ghost"
+                    onClick={() => setRelatedReloadKey((v) => v + 1)}
+                  >
+                    {C.retry}
+                  </SuppliesActionButton>
+                </>
+              ) : related.data && related.data.items.length > 0 ? (
+                <>
+                  <ul className="sp-user-profile__related">
+                    {related.data.items.map((item) => {
+                      const href = buildPurchaseRequestDetailPath(
+                        item.branch,
+                        item.request_number,
+                        basePath,
+                      );
+                      const stage = item.derived?.overall_stage;
+                      return (
+                        <li
+                          key={`${item.branch}-${item.request_number}-${item.request_item ?? ""}`}
+                          className="sp-user-profile__related-item"
+                        >
+                          <SuppliesEntityLink
+                            href={href}
+                            title={C.relatedOpenRequest(
+                              formatRequestNumber(item.request_number),
+                            )}
+                            className="sp-entity-link"
+                            onNavigate={() => navigatePluginPath(href)}
+                          >
+                            {formatRequestNumber(item.request_number)}
+                          </SuppliesEntityLink>
+                          <span className="sp-user-profile__related-meta">
+                            {item.branch}
+                            {item.request_issue_date
+                              ? ` · ${formatDatePtBr(item.request_issue_date)}`
+                              : ""}
+                          </span>
+                          {stage ? (
+                            <SuppliesStatusBadge
+                              label={labelOverallStage(stage)}
+                              variant="info"
+                            />
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {(related.data.protheus_user_ids ?? []).length > 0 ? (
+                    <SuppliesEntityLink
+                      href={`${buildPluginPath("purchase_requests", basePath)}?${related.data.protheus_user_ids.map((pid) => `requester_user_id=${encodeURIComponent(pid)}`).join("&")}`}
+                      title={C.relatedViewAllTitle}
+                      className="sp-entity-link"
+                      onNavigate={() =>
+                        navigatePluginView("purchase_requests", {
+                          basePath,
+                          search: `?${related.data!.protheus_user_ids
+                            .map(
+                              (pid) =>
+                                `requester_user_id=${encodeURIComponent(pid)}`,
+                            )
+                            .join("&")}`,
+                        })
+                      }
+                    >
+                      {C.relatedViewAll(related.data.total)}
+                    </SuppliesEntityLink>
+                  ) : null}
+                </>
+              ) : (
+                <p className="sp-user-profile__note">
+                  {related.data?.requester_unmapped
+                    ? C.relatedUnmapped
+                    : C.relatedEmpty}
+                </p>
+              )}
+            </SuppliesSectionCard>
+
             <SuppliesSectionCard title={C.accessTitle} subtitle={C.accessSubtitle}>
               {profile.isSelf ? (
                 <div className={ACCESS.access}>
@@ -407,22 +564,4 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   );
 }
 
-export function buildUserProfilePath(
-  userId: string,
-  basePath?: string,
-  search?: string,
-): string {
-  const base = normalizeBasePath(basePath);
-  const path = `${base}/users/${encodeURIComponent(userId)}`;
-  if (!search) return path;
-  const normalized = search.startsWith("?") ? search : `?${search}`;
-  return `${path}${normalized}`;
-}
 
-export function buildSelfProfileSearch(basePath: string): string {
-  const returnTo = buildPluginPath("home", basePath);
-  const params = new URLSearchParams();
-  params.set("returnTo", returnTo);
-  params.set("returnLabel", C.backFallback);
-  return `?${params.toString()}`;
-}

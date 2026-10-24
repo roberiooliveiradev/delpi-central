@@ -120,6 +120,7 @@ export function PurchaseRequestDetailPage({
                   dateFrom: header?.issue_date,
                   dateTo: header?.issue_date,
                 }}
+                basePath={basePath}
               />
             </dd>
           </div>

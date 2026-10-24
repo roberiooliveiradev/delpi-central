@@ -17,6 +17,7 @@ type PurchaseRequestsCardsProps = {
   items: PurchaseRequestListItem[];
   detailHref: (item: PurchaseRequestListItem) => string;
   onSelectRow: (item: PurchaseRequestListItem) => void;
+  basePath: string;
 };
 
 function stageBadgeVariant(
@@ -41,6 +42,7 @@ export function PurchaseRequestsCards({
   items,
   detailHref,
   onSelectRow,
+  basePath,
 }: PurchaseRequestsCardsProps) {
   return (
     <SuppliesDataCardsGrid
@@ -78,6 +80,7 @@ export function PurchaseRequestsCards({
                       dateFrom: row.request_issue_date,
                       dateTo: row.request_issue_date,
                     }}
+                    basePath={basePath}
                   />
                 </dd>
               </div>

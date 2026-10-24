@@ -105,6 +105,10 @@ class RequesterIdentityService:
             if not mapping:
                 continue
             uid = str(mapping.get("user_id") or "").strip()
+            if uid:
+                # Canonical opaque identifier — enables the client to link the
+                # avatar/name to `/users/:userId` (AuthZ stays backend-side).
+                ref["user_id"] = uid
             core_name = str(
                 (directory.get(uid) or {}).get("name") or ""
             ).strip()

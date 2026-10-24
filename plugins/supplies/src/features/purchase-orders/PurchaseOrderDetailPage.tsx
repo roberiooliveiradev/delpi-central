@@ -220,6 +220,7 @@ export function PurchaseOrderDetailPage({
                       <dd>
                         <SuppliesPersonIdentity
                           person={{ code: item.buyer_code, name: item.buyer_code }}
+                          basePath={basePath}
                         />
                       </dd>
                     </div>

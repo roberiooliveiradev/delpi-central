@@ -4,29 +4,17 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { resolvePluginRoute } from "./pluginRoutes";
-import {
-  personColorKey,
-  reservedPersonDetailPath,
-  reservedSupplierDetailPath,
-  supplierColorKey,
-} from "./suppliesDirectory";
+import { personColorKey, supplierColorKey } from "./suppliesDirectory";
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
-describe("suppliesDirectory reserved paths", () => {
-  it("builds supplier 360 with store (positive) and without store (sibling)", () => {
-    expect(reservedSupplierDetailPath("000123", "01")).toBe(
-      "/apps/supplies/suppliers/000123/01",
-    );
-    expect(reservedSupplierDetailPath("000123")).toBe("/apps/supplies/suppliers/000123");
-  });
-
-  it("builds person path and does not invent a live route (negative)", () => {
-    expect(reservedPersonDetailPath("JOSI")).toBe("/apps/supplies/people/JOSI");
-    // Supplier detail went live in S3 — the reserved path now resolves.
+describe("suppliesDirectory routes", () => {
+  it("canonical detail routes resolve; reserved /people/:code stays not_found", () => {
+    // Supplier detail went live in S3; user profile in USERS.PROFILE.S1.
     expect(resolvePluginRoute("/apps/supplies/suppliers/000123/01").view).toBe("supplier_detail");
     expect(resolvePluginRoute("/apps/supplies/people/JOSI").view).toBe("not_found");
     expect(resolvePluginRoute("/apps/supplies/suppliers").view).toBe("suppliers");
+    expect(resolvePluginRoute("/apps/supplies/users/u-1").view).toBe("user_profile");
   });
 
   it("keeps color keys stable for the same identity", () => {
@@ -51,6 +39,36 @@ describe("suppliesDirectory reserved paths", () => {
     // Forbidden shortcuts must never appear.
     expect(identity).not.toMatch(/window\.location|document\.location|useNavigate/);
     expect(identity).not.toMatch(/reservedSupplierDetailPath|reservedPersonDetailPath/);
+  });
+
+  it("person identity navigates only to the canonical user profile when authorized", () => {
+    const identity = readFileSync(join(dir, "SuppliesDirectoryIdentity.tsx"), "utf8");
+    // Canonical contract: buildUserProfileHref + SuppliesEntityLink +
+    // navigatePluginPath, gated by proven user_id + canAccessUserProfile.
+    expect(identity).toContain("buildUserProfileHref");
+    expect(identity).toContain("canAccessUserProfile");
+    expect(identity).toContain("navigatePluginPath");
+    expect(identity).toContain("sp-person-identity-link");
+    // No link without a proven Core identifier or basePath.
+    expect(identity).toMatch(/if \(!basePath \|\| !targetUserId\) return label;/);
+    // Never navigate from name/protheus id, and never invent another route.
+    expect(identity).not.toMatch(/window\.location|document\.location|useNavigate/);
+    expect(identity).not.toMatch(/\/users\/\$\{person/);
+  });
+
+  it("person consumers pass basePath to enable profile navigation", () => {
+    const featuresDir = join(dir, "..", "features");
+    const consumers = [
+      join(featuresDir, "purchase-requests", "PurchaseRequestsListTable.tsx"),
+      join(featuresDir, "purchase-requests", "PurchaseRequestsCards.tsx"),
+      join(featuresDir, "purchase-requests", "PurchaseRequestDetailPage.tsx"),
+    ];
+    for (const file of consumers) {
+      const src = readFileSync(file, "utf8");
+      const block = src.match(/<SuppliesPersonIdentity[\s\S]*?\/>/);
+      expect(block, file).not.toBeNull();
+      expect(block?.[0], file).toContain("basePath={basePath}");
+    }
   });
 
   it("operational consumers pass basePath to enable supplier navigation", () => {

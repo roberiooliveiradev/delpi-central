@@ -1,6 +1,7 @@
-import { httpGet, httpPatch, suppliesApiUrl } from "./httpClient";
+import { httpGet, httpGetBlob, httpPatch, suppliesApiUrl } from "./httpClient";
 import type { SuppliesCapabilityFlags } from "./capabilities";
 import type { SuppliesPreferences } from "./preferences";
+import type { PurchaseRequestListItem } from "../features/purchase-requests/types";
 
 export type SuppliesUserProfile = {
   userId: string;
@@ -41,6 +42,46 @@ export function patchUserProfile(
   return httpPatch<SuppliesUserProfile>(
     suppliesApiUrl(`/users/${encodeURIComponent(userId)}/profile`),
     payload,
+    { signal },
+  );
+}
+
+export type UserRelatedRequestsResponse = {
+  items: PurchaseRequestListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  protheus_user_ids: string[];
+  requester_unmapped?: boolean;
+  error?: string;
+};
+
+export function getUserRelatedRequests(
+  userId: string,
+  options?: { page?: number; pageSize?: number; branches?: string[] },
+  signal?: AbortSignal,
+): Promise<UserRelatedRequestsResponse> {
+  const params = new URLSearchParams();
+  for (const branch of options?.branches ?? []) {
+    if (branch.trim()) params.append("branch", branch.trim());
+  }
+  if (options?.page) params.set("page", String(options.page));
+  if (options?.pageSize) params.set("page_size", String(options.pageSize));
+  const qs = params.toString();
+  return httpGet<UserRelatedRequestsResponse>(
+    suppliesApiUrl(
+      `/users/${encodeURIComponent(userId)}/related-requests${qs ? `?${qs}` : ""}`,
+    ),
+    { signal },
+  );
+}
+
+export function getUserPhotoBlob(
+  userId: string,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  return httpGetBlob(
+    suppliesApiUrl(`/users/${encodeURIComponent(userId)}/photo`),
     { signal },
   );
 }

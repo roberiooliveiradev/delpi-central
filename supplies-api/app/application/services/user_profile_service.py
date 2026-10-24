@@ -8,10 +8,18 @@ from app.application.services.capability_resolution_service import (
     CapabilityResolutionService,
 )
 from app.application.services.preferences_service import PreferencesService
+from app.application.services.requester_identity_service import (
+    RequesterIdentityService,
+)
 from app.domain.entities import EffectiveUser
 from app.domain.exceptions import AuthorizationError
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
+from app.infrastructure.gateways.purchase_requests_gateway import (
+    PurchaseRequestsGateway,
+)
 from app.infrastructure.persistence.preferences_repository import PreferencesRepository
+
+_RELATED_REQUESTS_MAX_PAGE_SIZE = 20
 
 
 class UserProfileService:
@@ -25,6 +33,8 @@ class UserProfileService:
         authorization: AuthorizationService | None = None,
         core_gateway: CoreApiHttpGateway | None = None,
         preferences_repository: PreferencesRepository | None = None,
+        purchase_requests_gateway: PurchaseRequestsGateway | None = None,
+        requester_identity: RequesterIdentityService | None = None,
     ) -> None:
         self.preferences = preferences or PreferencesService()
         self.capabilities = capabilities or CapabilityResolutionService()
@@ -33,6 +43,10 @@ class UserProfileService:
         self.preferences_repository = (
             preferences_repository or PreferencesRepository()
         )
+        self.purchase_requests_gateway = (
+            purchase_requests_gateway or PurchaseRequestsGateway()
+        )
+        self.requester_identity = requester_identity or RequesterIdentityService()
 
     def _assert_can_view(self, actor: EffectiveUser, target_user_id: str) -> None:
         target = (target_user_id or "").strip()
@@ -182,6 +196,104 @@ class UserProfileService:
             payload["isSuperadmin"] = access["isSuperadmin"]
             payload["permissions"] = access["permissions"]
         return payload
+
+    def _protheus_ids_for(self, target_user_id: str) -> list[str]:
+        """Core user id → mapped Protheus user ids (deterministic join)."""
+        try:
+            mappings = self.core_gateway.lookup_protheus_identities(
+                user_ids=[target_user_id]
+            )
+        except Exception:
+            return []
+        pids = {
+            str(item.get("protheus_user_id") or "").strip()
+            for item in mappings.values()
+            if str(item.get("mapping_status") or "").strip() == "mapped"
+        }
+        pids.discard("")
+        return sorted(pids)
+
+    def related_purchase_requests(
+        self,
+        actor: EffectiveUser,
+        target_user_id: str,
+        *,
+        branches: list[str] | None = None,
+        page: int = 1,
+        page_size: int = 5,
+    ) -> dict:
+        """SCs do vínculo Core↔Protheus do usuário — mesma política self|admin.
+
+        O filtro do cliente só restringe as unidades do actor (validado pelo
+        decorator `require_units`); a resolução do requester sempre usa o
+        `protheus_user_id` mapeado do *target*, nunca o actor.
+        """
+        target = (target_user_id or "").strip()
+        self._assert_can_view(actor, target)
+        cleaned_branches = [
+            str(branch or "").strip() for branch in branches or []
+        ]
+        cleaned_branches = [branch for branch in cleaned_branches if branch]
+        if cleaned_branches:
+            # Optional restriction — every requested unit must belong to the actor.
+            self.authorization.require_units(actor, cleaned_branches)
+        pids = self._protheus_ids_for(target)
+        empty = {
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "page_size": page_size,
+            "protheus_user_ids": pids,
+            "requester_unmapped": not pids,
+        }
+        if not pids:
+            return empty
+
+        page = max(1, int(page or 1))
+        page_size = min(max(1, int(page_size or 5)), _RELATED_REQUESTS_MAX_PAGE_SIZE)
+        params: list[tuple[str, str]] = [("requester_user_id", pid) for pid in pids]
+        for branch in cleaned_branches:
+            params.append(("branch", branch))
+        params += [
+            ("page", str(page)),
+            ("page_size", str(page_size)),
+            ("sort_by", "issue_date"),
+            ("sort_dir", "desc"),
+        ]
+        try:
+            payload = self.purchase_requests_gateway.list_purchase_requests(
+                access_token=actor.access_token or "",
+                params=params,
+            )
+        except Exception as exc:
+            return {**empty, "error": "related_requests_unavailable", "detail": str(exc)}
+        data = payload if isinstance(payload, dict) else {}
+        if isinstance(data.get("data"), dict):
+            data = data["data"]
+        data = self.requester_identity.enrich_payload(
+            data, access_token=actor.access_token or ""
+        )
+        if not isinstance(data, dict):
+            data = {}
+        return {
+            "items": data.get("items") if isinstance(data.get("items"), list) else [],
+            "total": data.get("total") if isinstance(data.get("total"), int) else 0,
+            "page": data.get("page") or page,
+            "page_size": data.get("page_size") or page_size,
+            "protheus_user_ids": pids,
+            "requester_unmapped": False,
+        }
+
+    def photo(
+        self, actor: EffectiveUser, target_user_id: str
+    ) -> tuple[bytes, str, str] | None:
+        """Photo bytes for the profile avatar — self|admin, fail-closed."""
+        target = (target_user_id or "").strip()
+        self._assert_can_view(actor, target)
+        try:
+            return self.core_gateway.get_person_profile_photo(target)
+        except Exception:
+            return None
 
     def patch(self, actor: EffectiveUser, target_user_id: str, payload: dict) -> dict:
         target = (target_user_id or "").strip()

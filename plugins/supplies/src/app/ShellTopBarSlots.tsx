@@ -8,10 +8,7 @@ import {
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { SHELL_NAV_CONTENT } from "../content/shellNav";
-import {
-  buildSelfProfileSearch,
-  buildUserProfilePath,
-} from "../features/users/UserProfilePage";
+import { buildSelfProfileHref } from "../features/users/userProfileNavigation";
 import { navigatePluginPath } from "./pluginNavigation";
 import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 import { useSuppliesSession } from "./SuppliesSessionContext";
@@ -88,7 +85,7 @@ export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
 
   const userId = session.userId;
   const portalProfileHref = userId
-    ? buildUserProfilePath(userId, basePath, buildSelfProfileSearch(basePath))
+    ? buildSelfProfileHref(userId, basePath)
     : null;
 
   const goToHostProfile = useCallback(() => {

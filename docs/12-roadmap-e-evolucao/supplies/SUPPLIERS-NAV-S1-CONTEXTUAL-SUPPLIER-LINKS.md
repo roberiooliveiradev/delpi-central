@@ -90,6 +90,8 @@ de BFF/produtor foi necessária.
 
 ## Residual
 
-- Ficha de pessoa continua reservada (`reservedPersonDetailPath` inativa) —
-  avatar de solicitante não navega, conforme manual.
+- ~~Ficha de pessoa continua reservada~~ — **SUPERADO por USERS.PROFILE.S1:**
+  a ficha `/users/:userId` existe e o avatar/nome do solicitante navega quando
+  `user_id` Core é comprovado e a sessão tem acesso (ver
+  `USERS-PROFILE-S1-USER-OPERATIONAL-CONTEXT.md`).
 - Registro inexistente/não autorizado no destino é tratado pela E14 (404/403).
