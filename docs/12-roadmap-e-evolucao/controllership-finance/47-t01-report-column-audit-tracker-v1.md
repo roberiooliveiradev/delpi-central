@@ -112,6 +112,7 @@ SCOPE_CHANGE / SUPERSEDES:
 
 | 2026-10-23 | CF-C2-R10-CENTRO-CUSTO-SD1-PARITY-001 | Devin (seleção EDAPP reconstruída: `D1_DTDIGIT` mês + 13 TES-out + `D1_TP<>'MP'` + benefícios sem CC-out — 353/353 itens SD1, Σ `D1_TOTAL` 169.704,12 exato; corroborado pelo procedimento owner doc 56 §Reg.17; classe Direto/Ind/Adm = manual pós-exportação) | R10 | G5 R10 (1) | 15 | **44/60 = 73,3%** | **51/90 = 56,7%** | lista exata TES + taxonomia Direto/Ind/Adm + regra benefícios → E10 Controladoria; G6 todos — doc 80 §44, doc 84 §5.4, doc 85 §10 | commit desta rodada |
 | 2026-10-23 | CF-C2-R11-NF-DESCONSIDERAR-SD2-PARITY-001 | Devin (seleção EDAPP reconstruída por identidade de conjunto: `D2_GRUPO='9035'`∩`D2_TES='594'`∩`D2_EMISSAO` set f01 — 11/11 itens SD2, Σ `D2_TOTAL` 97.462,71 exato; "CPV zero" = `F4_ESTOQUE='N'` estrutural, prova TTAT insert `MATA460A` 0→0; 8/11 NFs casam TES 510 custo + TES 594 faturamento — industrialização p/ terceiros) | R11 | G5 R11 (1) | 15 | **44/60 = 73,3%** | **52/90 = 57,8%** | finalidade da exclusão (apuração CPV×ROL×DRE) + eixo filtro EDAPP → E11 Controladoria; G6 todos — doc 80 §45, doc 84 §5.5, doc 85 §10 | commit desta rodada |
+| 2026-10-24 | CF-C2-R12-COST-CLOSING-PROCESS-VERIFY-001 | Devin (vídeo MP4 reinspecionado diretamente: Reposição=`MATA320` SX1 `MTA320` 1:1 + TTAT `B1_CUSTD` 13.201+1.532 writes 30/09; Refaz=`MATA300` SX1 `MTA300` 1:1 + threads `c300P*`; wizard etapas 1-3 observadas, etapa 4 não exibida; `Analise.xlsx`=`B9_CM1`@30/09 1.966/1.994; `MV_ULMES`=20260930 f01+f02; DEL100=auditoria SB9 distinta) | R12 | G4 R12 (1) | 15 | **45/60 = 75,0%** | **53/90 = 58,9%** | writer SB9 + efeitos MATA300 + sequência oficial -> E12 Controladoria/TI-ERP (+E4/E5); G6 todos -- doc 80 §46, doc 85 §11, §11.6 | commit 42c8d81a36 |
 
 ## 6. Rodada L1.1 — FINR190 (20/10/2026)
 
@@ -536,10 +537,11 @@ revisão com grade+Exportar — **etapa 4 Fechamento não exibida**;
 status=sinal(variação) 1.994/1.994; (e) `MV_ULMES`=`20260930` f01+f02;
 SB9@30/09 em rajadas únicas (f02 02/10 17:58, f01 21/10 19:13).
 Erratas corrigidas: `Tempo Setup?`=`Som Tempo Propo` (não "Sem Tempo
-Proprio"); `Calcular Custos Por?`=`Ult Cust Compra` na execução
-exibida ("Estrutura" é a alternativa do dropdown); "Refaz=DEL100"
-corrigido — DEL100 é auditoria/correção SB9 distinta; MA330OK→
-`STP_DELPI_*`/`STP_PROTHEUS_*` ausentes nas bases (E4).
+Proprio"); `Calcular Custos Por?`=`Ult Cust Compra` na 1ª execução
+(MC→MP) e `Estrutura` na 2ª (PA→PI) — catálogo anterior registrava só
+o valor da 2ª; "Refaz=DEL100" corrigido — DEL100 é auditoria/correção
+SB9 distinta; MA330OK→`STP_DELPI_*`/`STP_PROTHEUS_*` ausentes nas
+bases (E4).
 **Não promovido a G5:** writer efetivo do SB9 não identificado (E5);
 etapa 4 (fechamento efetivo) não demonstrada; efeito MATA300 sem
 rastro físico; execução exibida é demonstração, não homologação.

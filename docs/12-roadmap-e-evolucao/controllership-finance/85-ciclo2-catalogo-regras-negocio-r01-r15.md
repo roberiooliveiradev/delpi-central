@@ -1056,31 +1056,111 @@ MATR910. Nenhum consumidor implementa "lista de exceções de
 faturamento" — `TARGET` se homologada (doc 56 §Reg.18: estados
 `excluded_from_analysis` etc. são `TARGET_DECISION_REQUIRED`).
 
-## §11 — R12 · Fechamento de custo / Reposição / Refaz Saldos — `AS-IS`
+## §11 — R12 · Fechamento de custo / Reposição / Refaz Saldos — `AS-IS`→`PROVEN` (bindings)
 
-### BR-R12-001 — Recálculo do Custo de Reposição — `AS-IS` (parâmetros íntegros)
+### BR-R12-001 — Recálculo do Custo de Reposição = **MATA320** — `PROVEN` (rotina + efeito)
 
-Vídeo 04:00: Utilizar Qual Moeda?=Nenhuma · Utilizar Taxa?=Diaria · Calcular
-os Custos Por?=Estrutura · Considerar Ult. Preco Compra?=Sim · Dt Final Ref
-Taxa?=30/09/2026 · Tipo de produto até=MP · Considera Mão de Obra?=Ambos ·
-Tempo Setup?=Som Tempo Propo.
+- **Binding físico:** grupo SX1 `MTA320` reproduz 1:1 os 16 parâmetros da
+  tela (`Utilizar Qual Moeda?`, `Utilizar Taxa?`, `Calcular os Custos
+  Por?`, `Considerar Ult. Preco Compra?`, `Dt.Final Ref.Taxa ?`,
+  `Do/Ate o Tipo do Produto`, `Do/Ate o Grupo`, `Considerar Qtdes.
+  Negativa?`, `Avisar Divergencia?`, `Seleciona filiais?`, `Considera
+  Mão de Obra?`, `Considera Tipo Dec. OP?`, `Tempo Setup?`, `Cod do
+  Roteiro de Operacoes?`).
+- **Campo efetivo:** a própria tela declara que o cálculo grava
+  `SB1.B1_CUSTD` (custo de reposição). `B1_CUSTD` já é lido pela
+  api-delpi como `standard_cost` (product repositories) —
+  `REUSE_CONFIRMED` (leitura).
+- **Execução provada (TTAT):** `SB1010_TTAT_LOG` registra `MATA320`
+  atualizando `B1_CUSTD` em rajada — usuário JOICI: **13.201 writes
+  30/09 14:36–14:56** (1ª execução, produtos até MP) + **1.532 writes
+  15:09–15:14** (2ª execução, PA/PI); reexecuções 01/10 16:03–17:48
+  (+15.972) — `EXECUTION_OBSERVED` confirmado em dados, não só em tela.
+- **Duas execuções observadas (doc 56 Reg.02 + TTAT):** 1ª ~03:11 —
+  `Do Tipo`=MC, `Ate`=MP, `Calcular os Custos Por?`=**Ult Custo
+  Compra**; 2ª ~03:54 — `Do Tipo`=PA, `Ate`=PI, `Calcular os Custos
+  Por?`=**Estrutura**. Comuns: Moeda=Nenhuma · Taxa=Diária ·
+  Ult. Preco Compra=Sim · Dt.Final Ref.Taxa=30/09/2026 · Mão de
+  Obra=Ambos · `Tempo Setup?`=**Som Tempo Propo** (frame 03:20 —
+  errata: doc 56 dizia "Sem Tempo Proprio").
 
-### BR-R12-002 — Wizard "Novo fechamento de custo" — `AS-IS`
+### BR-R12-002 — Wizard "Acompanha Custos → Novo fechamento de custo" — `AS-IS` (sequência `EXECUTION_OBSERVED`)
 
-Etapas observadas: Predefinição de cálculo → Cálculo de custo → Análise e
-revisão → Fechamento; checkpoints: níveis validados, arquivo de trabalho,
-transferências entre filiais, movimentações. Execução real 30/09 14:47
-(JOICI, Matriz).
+- Tela `Fechamentos` (02:08) = **histórico de execuções** com
+  status/filial/início e botão `Reabertura de estoque` — o fechamento é
+  objeto persistido com ciclo de vida, não cálculo efêmero.
+- Etapas 1–4: `Predefinição de cálculo` (02:40 — último fechamento
+  31/08/2026, data 30/09/2026, método `Diária`, `Filial corrente`) →
+  `Cálculo de custo` (14:47 — 100%, níveis validados, arquivo de
+  trabalho, transferências entre filiais, movimentações; controles
+  `Cancelar fechamento`/`Refazer cálculo`/`Próximo passo`; texto
+  menciona EventViewer) → `Análise e revisão` (16:40/36:10 — grade
+  "1991 produtos", status por moeda, CM inicial/final, Variação%,
+  botão Exportar) → `Fechamento` (**não exibida** — a etapa final não
+  aparece concluída no vídeo).
+- Execução real 30/09 ~14:4x (JOICI, Matriz) = `EXECUTION_OBSERVED`
+  das etapas 1–3; a etapa 4 e o aceite funcional ficam `PENDING`
+  (G5/G6).
 
-### BR-R12-003 — Refaz Saldos (DEL100) — `PROVEN` (reconstrução)
+### BR-R12-003 — "Refaz Saldos" do vídeo = **MATA300** — `PROVEN` (binding; DEL100 é rotina distinta)
 
-- `DEL100.PRW` decodificado: reconstrói posição a partir de SD3/SD1/SD2 e
-  compara com SB9; query vigente sanitizada **3.058/421/242** (doc 80 §24.E,
-  reproduzida 2×; SF4 compartilhada ≡ `xFilial`).
-- `STALE_EVIDENCE`: contagens antigas 724/672 superadas — preservado como
-  `EXECUTION_DRIFT` (doc 80 §23.A).
+- **Errata:** a documentação anterior associava o Refaz Saldos ao
+  DEL100. O grupo de perguntas da tela (frame 04:36) é `MTA300` — o
+  "Refaz Saldos" do vídeo é o **MATA300** (Recálculo dos Saldos),
+  rotina padrão.
+- Parâmetros `MTA300` observados: `Do Armazem?` vazio · `Ate o
+  Armazem?`=ZZ · `Do/Ate o Produto?` (faixa ampla) · `Zera o saldo de
+  produtos MOD?`=**Recalcular** · `Zera o CM de produtos MOD?`=
+  **Recalcular** (+ `Travar Registros SB2?`, `Seleciona Filiais?` no
+  grupo SX1).
+- Execução: janela `Recálculo dos Saldos` com `Log de processamento
+  das STORED PROCEDURES` — threads `c300P0101xx - Ok` (06:46).
+  Identidade dos workers `c300P*` e efeito direto em SB2:
+  `PENDING_EVIDENCE` (campos `B2_*` não auditados em TTAT — sem rastro
+  físico consultável).
+- `DEL100.PRW` (custom, acervo) = rotina **separada** de
+  auditoria/correção SB9: reconstrói posição a partir de SB9-abertura
+  + SD3 + SD1/SD2 (`F4_ESTOQUE='S'`), modo log-only ou `RecLock` em
+  `B9_VINI1`/`B9_QINI`; query vigente sanitizada **3.058/421/242**
+  (doc 80 §24.E). `STALE_EVIDENCE`: contagens antigas 724/672
+  superadas — `EXECUTION_DRIFT` (doc 80 §23.A).
 
----
+### BR-R12-004 — Persistência do fechamento (SB9 + `MV_ULMES`) — `PROVEN` no dado, writer `PENDING`
+
+- `SB9010` set/2026 existe para **as duas filiais** em rajada única
+  por filial: f02 02/10 17:58:01–03 (3.117 linhas) e f01 21/10
+  19:13:40–42 (4.812 linhas); `MV_ULMES` = `20260930` em f01 e f02 —
+  marcador de último fechamento avançado.
+- O writer efetivo (etapa 4 do wizard × MATA300 × rotina separada)
+  **não é byte-provado** — divergência temporal preservada (E5);
+  SB2/SB9 sem auditoria TTAT dos campos de saldo/custo.
+
+### BR-R12-005 — `Analise.xlsx` = export da etapa "Análise e revisão" — `PROVEN` (binding + reconciliação)
+
+- Estrutura 1:1 com a grade exibida (Status moedas, Filial, Produto,
+  Tipo, Grupo, Armazém, CM inicial/final + Variação% por moeda
+  R$/US$/UFIR/MARCO/IENE); "1991 produtos" na tela vs 1.994 linhas de
+  dados no export (Δ de contagem registrado — possível recorte/
+  distinct, `PENDING` menor).
+- Reconciliação contra SB9: **CM final ≡ `B9_CM1`@30/09 em
+  1.966/1.994 (98,6%)**; 22 linhas sem SB9 = pseudo-produtos `MOD*`
+  com custo 0 (estrutural — sem snapshot de saldo); 6 deltas = drift
+  temporal entre o cálculo exibido (30/09) e a gravação f01 (21/10).
+  CM inicial ≡ `B9_CM1`@31/08 em 1.689 linhas (283 chaves sem
+  snapshot de agosto).
+- Status×Variação consistente em **1.994/1.994** (Positivo/Negativo/
+  Neutro = sinal da variação). Artefato ligado à etapa 3 do wizard —
+  evidência do **resultado produzido**, não do fechamento persistido.
+
+### BR-R12-006 — Integração pós-fechamento `MA330OK` — `SOURCE_AVAILABLE`, execução `PENDING`
+
+- `MA330OK.PRW` (acervo) = ponto de entrada pós-MATA330: chama
+  `STP_DELPI_OP_TERCEIRO_<emp>` (`@DATADE`) e
+  `STP_PROTHEUS_DELPI_AJUSTA_OP` f01+f02 (`@ANOMES`), com gravação em
+  EventViewer — coerente com a menção a EventViewer na tela do wizard.
+- SPs `STP_DELPI_*`/`STP_PROTHEUS_*` **ausentes** nas bases
+  acessíveis; `sysjobs` inacessível à permissão — implantação/
+  execução: `PENDING` (E4).
 
 ## §12 — R13 · Extratos e aplicações — `BLOQUEADO` (fonte externa)
 
@@ -1147,7 +1227,10 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R07-001..003 INVENT | artefato + SD3/TTAT | `D3_DOC='INVENT'`,`D3_TM`,`D3_CF`,`D3_CUSTO1` | ajustes 999/RE0 saída + 499/DE0 entrada, loc 01+99 | `stock-kardex` filtro doc — mesmo contrato de R06 | api-delpi | T-R07-01/02 | doc 80 §37.D |
 | BR-R08-001..005 bloco OP | artefato + SD3/SC2 | `D3_COD`,`D3_OP`,`D3_CF`,`D3_LOCAL`,`D3_QUANT`,`D3_CUSTO1`,`C2_QUJE`,`C2_DATRF`,`PR0` | linha SD3 `RE*`≤corte de OP aberta na emissão; saldo = ΣRE−DE | `material-in-process` (`as_of` obrigatório — estado da OP muda no tempo) | api-delpi | T-R08-01/03/05 | doc 80 §41 |
 | BR-R08-006 bloco sem OP | artefato + SB9 | `B9_DATA`,`B9_LOCAL`,`B9_QINI`,`B9_VINI1` | saldo físico `SB9`@fechamento loc99 | idem — coberto por `stock_value_historical_sql` existente | api-delpi | T-R08-02 | doc 80 §41 |
-| BR-R12-003 Refaz | `DEL100.PRW` | SD3/SB9 | reconstrução→comparação | `rebuild-balances-audit` | api-delpi | T-R12-01 | doc 80 §24.E |
+| BR-R12-001 Reposição | `MATA320` (SX1 `MTA320` 1:1) + TTAT `SB1010` | `B1_CUSTD` | recálculo custo reposição (últ. compra/estrutura) | leitura existente `standard_cost` (product repos) — `REUSE_CONFIRMED` | api-delpi | T-R12-02 | doc 80 §46 |
+| BR-R12-002 Acompanha Custos | wizard (motor MATA330 custom — fonte fora do acervo) | `MV_ULMES`, SB9, workfile | etapas 1–4 ciclo de vida persistido | `cost-closing-run` (`TARGET` — orquestração/status não existem) | api-delpi | T-R12-03 | doc 80 §46 |
+| BR-R12-003 Refaz Saldos | `MATA300` (SX1 `MTA300` 1:1) + `DEL100.PRW` (auditoria SB9 distinta) | SB2 (recalc); SD3/SB9 (DEL100) | reconstrução→comparação (DEL100) | `rebuild-balances-audit` | api-delpi | T-R12-01 | doc 80 §24.E/§46 |
+| BR-R12-005 Análise e revisão | `Analise.xlsx` + SB9 | `B9_CM1`,`B9_QINI`,`B9_VINI1` | export da etapa 3; CM final ≡ SB9@fechamento 98,6% | `stock_value_official_closure_sql` existente — `REUSE_CONFIRMED` | api-delpi | T-R12-04 | doc 80 §46 |
 | BR-R15 SB9 snapshot | SB9/SB2 | `B9_*` | snapshot mensal | `month-end-stock` (**após E5**) | api-delpi | T-R15-01 | doc 80 §21 |
 
 **Divisão de camadas (TARGET):** regras físicas e WHEREs vivem na
@@ -1226,6 +1309,9 @@ copia para BFF/frontend.
 | T-R07-03 | BR-R07-002 | negative · candidato | estorno de INVENT (par `D3_ESTORNO`) deve ficar fora — mesma regra de T-R06-02 |
 | T-R07-04 | BR-R07-002 | positive · candidato | movimento retroativo INVENT digitado após emissão não entra na reprodução `as_of` |
 | T-R12-01 | BR-R12-003 | positive · reproduzido | query DEL100 vigente = 3.058/421/242 |
+| T-R12-02 | BR-R12-001 | positive | SX1 `MTA320` 16/16 params + TTAT `MATA320`→`B1_CUSTD` (13.201+1.532 writes 30/09 JOICI) |
+| T-R12-03 | BR-R12-002 | negative | etapa 4 `Fechamento` ausente no vídeo → não classificar como concluída |
+| T-R12-04 | BR-R12-005 | positive | `Analise.xlsx` CM final ≡ `B9_CM1`@30/09: 1.966/1.994 (22 MOD* estrutural + 6 drift) |
 | T-R08-01 | BR-R08-001/002/003 | positive · reproduzido | 1.501/1.501 linhas com OP = linhas SD3 `RE*` (grão linha física); 650/650 pares qtde+valor exatos |
 | T-R08-02 | BR-R08-006 | positive · reproduzido | 569/573 exato vs `SB9010`@0930 loc99; 4 Δ temporais explicados |
 | T-R08-03 | BR-R08-004 | sibling/negative · reproduzido | OP com `PR0` no Dt.Ref (33), encerrada-sem-produção (3) e filial 02 (15) excluídas; OP aberta impressa |
@@ -1240,8 +1326,8 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), **BR-R10-001..005** (seleção Controladoria SD1: digitação+TES-exclusão+MP-out+benefícios-out — corroborada owner doc 56 §Reg.17), **BR-R11-001..005** (binding+seleção 9035/594+CPV-zero estrutural+industrialização-terceiros+impacto-nulo-CPV), BR-R12-003, SB9 snapshot (recorte) |
-| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R08, R09 (layout), BR-R12-001/002, R15 (execução) |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), **BR-R10-001..005** (seleção Controladoria SD1: digitação+TES-exclusão+MP-out+benefícios-out — corroborada owner doc 56 §Reg.17), **BR-R11-001..005** (binding+seleção 9035/594+CPV-zero estrutural+industrialização-terceiros+impacto-nulo-CPV), **BR-R12-001** (MATA320 rotina+efeito TTAT `B1_CUSTD`), **BR-R12-003** (MATA300 binding SX1 + DEL100 distinto), **BR-R12-004/005** (SB9+`MV_ULMES` no dado; `Analise.xlsx`↔etapa-3↔SB9 98,6%), SB9 snapshot (recorte) |
+| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R08, R09 (layout), BR-R12-002 (wizard: etapas 1–3 `EXECUTION_OBSERVED`, etapa 4 não exibida), R15 (execução) |
 | `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 internos da `STP_DELPI_FORMA_PRECO_*` + versão RPO DLP204 + parâmetros efetivos + 27 tempos residuais + divisor desdobramento (E9), R11 finalidade da exclusão (qual apuração recebe o desconsiderar — E11), R10 mapeamento exato da lista narrada 12→13 TES + regra contábil benefícios (E10), R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
 | `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |

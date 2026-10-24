@@ -1331,7 +1331,7 @@ Requisitos para qualquer decisão: fonte de rate-por-data com owner (Controlador
 | **R03** P7/Bloco H | SB9=snapshot SB2 (96%), elegibilidade, 68 exceções | produtor oficial + parâmetros (E2); G1–G4 `PENDING` |
 | **R04** Consumo/OP | `matr860` decodificado (MOD via SD3, `B1_COD LIKE 'MOD%'`/`B1_CCCUSTO`) | bindings homologados + amostra oficial (G4/G5) |
 | **R09** Faturamento×MOD | produtor `DLP204.prw` `SOURCE_AVAILABLE` + modelo 99,4% (rodada 24, §43); fórmula+rate `PROVEN` | SP `STP_DELPI_FORMA_PRECO_*`/RPO/parâmetros + 27 tempos + divisor (E9); DDL da view (E3); aceite (G6) — G4 PASS, G5 `INCONCLUSIVE` |
-| **R12** Refaz Saldos | `DEL100` decodificado + query vigente 421/242 | vínculo rotina-oficial↔relatório; execução observada |
+| **R12** Refaz Saldos | `DEL100` decodificado + query vigente 421/242 | vínculo rotina-oficial↔relatório; execução observada — **errata r27: rotina do vídeo = MATA300, não DEL100 (§46)** |
 | **R15** Cutoff/SB9 | snapshot recorrente, janela comum, MA330OK hook | execução do job (E4/E5) + aceite |
 
 **`NO_GATE_CHANGE`**: toda evidência acima é candidata a G4/G5, mas gates exigem referência de artefato/SHA, homologação e aceite — nenhum critério completo nesta rodada.
@@ -2960,9 +2960,9 @@ Reunião iniciada ~14:31 (nome do arquivo). Wall-clock ≈ tempo de vídeo
 
 1. `Tempo Setup?` = **`Som Tempo Propo`** (frame 03:20); doc 56 dizia
    "Sem Tempo Proprio" — corrigido por adendo rastreável.
-2. `Calcular os Custos Por?` = **`Ult Cust Compra`** na execução exibida
-   ("Estrutura" é a alternativa do dropdown — o registro anterior
-   documentava o valor alternativo).
+2. `Calcular os Custos Por?` = **`Ult Cust Compra`** na 1ª execução
+   (MC→MP) e **`Estrutura`** na 2ª (PA→PI) — o registro anterior do
+   catálogo documentava apenas o valor da 2ª execução (doc 56 Reg.02).
 3. `Refaz Saldos` do vídeo = **MATA300** (binding SX1 `MTA300`), não
    DEL100.
 

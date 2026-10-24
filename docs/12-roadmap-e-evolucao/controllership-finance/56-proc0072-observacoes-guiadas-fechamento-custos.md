@@ -591,9 +591,10 @@ Verificacao direta de frames nos timestamps-chave (inspecao direta, nao
 apenas documental). Correcoes e bindings novos:
 
 1. **Errata Registro 02:** `Tempo Setup?` = **`Som Tempo Propo`** (frame
-   03:20), nao "Sem Tempo Proprio". E `Calcular os Custos Por?` =
-   **`Ult Cust Compra`** na execucao exibida — "Estrutura" e a
-   alternativa do dropdown, nao o valor selecionado naquele run.
+   03:20), nao "Sem Tempo Proprio". `Calcular os Custos Por?` confirmado
+   nas duas execucoes: **`Ult Custo Compra`** na 1a (MC→MP, ~03:11) e
+   **`Estrutura`** na 2a (PA→PI, ~03:54) — registro original correto;
+   TTAT prova as duas rajadas de escrita em `B1_CUSTD`.
 2. **Identidades fisicas provadas:** `Custo de Reposicao` = **MATA320**
    (grupo SX1 `MTA320` = 1:1 dos 16 parametros da tela; `SB1010_TTAT_LOG`
    prova `MATA320`/JOICI gravando `B1_CUSTD` — 13.201 writes 30/09

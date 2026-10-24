@@ -61,7 +61,7 @@ Vídeo 54:44 · gravação 30/09/2026 14:31 · frames extraídos por detecção 
 | Timecode | Tela observada | Evidência |
 |---|---|---|
 | 00:00–03:59 | SIGAEST home | ambiente 02.9.0004, sessão Delpi/Matriz |
-| 04:00 | **"Recálculo do Custo de Reposição"** | tela de parâmetros visível: Utilizar Qual Moeda?=Nenhuma; Utilizar Taxa?=Diaria; Calcular os Custos Por?=Estrutura; Considerar Ult. Preco Compra?=Sim; Dt Final Ref Taxa?=30/09/2026; Tipo de produto até=MP; Considera Mão de Obra?=Ambos; Tempo Setup?=Som Tempo Propo |
+| 04:00 | **"Recálculo do Custo de Reposição"** | tela de parâmetros visível: Utilizar Qual Moeda?=Nenhuma; Utilizar Taxa?=Diaria; Calcular os Custos Por?=Ult Custo Compra (1ª exec MC→MP) / Estrutura (2ª exec PA→PI); Considerar Ult. Preco Compra?=Sim; Dt Final Ref Taxa?=30/09/2026; Tipo de produto até=MP; Considera Mão de Obra?=Ambos; Tempo Setup?=Som Tempo Propo |
 | 09:00 | **"Contas a Pagar" (SIGAFIN)** | browse de títulos: Prefixo/Título/Parcela/Tipo/Natureza/Portador/Fornecedor/Emissão/Vencto/Vencto Real/Vlr.Título/DT Baixa — fonte operacional dos relatórios financeiros |
 | 13:00 | menu Financeiro > Relatórios | itens visíveis: "Relação de Baixas", **"Relação de Baixas DLP"**, "Baixas Por Lote", "Resumo Financeiro" |
 | 14:47–16:xx | **"Acompanha Custo → Novo fechamento de custo"** | wizard executado em produção: etapas `Predefinição de cálculo → Cálculo de custo → Análise e revisão → Fechamento`; etapa 2 a 100%: "Níveis validados / Arquivo de trabalho montado / Transferências entre filiais processadas / Análise das movimentações concluída"; botões Cancelar/Refazer cálculo/Próximo passo |
