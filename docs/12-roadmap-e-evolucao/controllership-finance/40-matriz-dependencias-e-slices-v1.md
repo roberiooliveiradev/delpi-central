@@ -1,5 +1,6 @@
 # 40 — Matriz de Dependências e Backlog de Slices V1
 
+> **REBASELINE 24/10/2026:** Esta matriz preserva IDs IMP, dependências e stop conditions. A **ordem atual de execução e os checkpoints CP00–CP12** da Central de Fechamento estão no [Documento 93 — Roadmap executivo E2E com checkpoints reais](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md). Linhas antigas marcadas NOT_STARTED devem ser confrontadas com Home/BFF e duas consultas CODE_PRESENT, sem promover runtime a PASS. Permission Contabilidade/DRE adiada; não abrir por acidente. `IMPLEMENTATION_AUTHORIZED=NO` para novos slices.
 **Estado:** TARGET / PLANNED / TEST_NOT_RUN — execução não autorizada. `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Leia primeiro [39 — Roadmap Mestre](./39-roadmap-mestre-implementacao-v1.md), [23 — RQ/AC](./23-ledger-rq-ac-testes.md) e [38 — gate](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
 
 ## 1. Semântica do backlog
