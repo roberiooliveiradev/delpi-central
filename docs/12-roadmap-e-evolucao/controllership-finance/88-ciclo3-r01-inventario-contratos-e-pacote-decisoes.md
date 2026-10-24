@@ -286,13 +286,25 @@ rota BFF + composição MFE.
 
 ## 11. Estado e encaminhamento
 
-- Estado da rodada: **inventário concluído, decisões pendentes do PO**.
-- O próximo gate é decisão sobre C3-D01..D06 + (se A) contrato
-  `closing-context` como proposta formal; **runtime permanece bloqueado**
-  até gate transversal + autorização page-by-page.
+- Estado da rodada: **inventário concluído; decisões C3-D01..D06 aprovadas pelo PO exclusivamente para escopo e design**.
+- O próximo gate é **C3-R02 documental**: conferir contratos e componentes existentes no HEAD, definir RQ/AC e design da fatia A usando seleção por período **sem** `closing-context` (C3-D04=B); validar gap funcional e segurança, e submeter o pacote a GPT REVIEW/PO. **Runtime permanece bloqueado** até gate transversal explícito + autorização page-by-page.
 - G6×15, métricas e gates do Ciclo 2: inalterados (47/60 · 55/90 · 0/15).
 
 *Referências: doc 87 §§3–7; doc 86 §§2/5/8; doc 48 (settlements contract);
 doc 49 (stock-inventory contract + §8 scope decision); docs 50–53 (UX);
 doc 24 (páginas comuns); doc 30 (reuse map); doc 82 (E1–E12); doc 85
 (BR/T).*
+
+
+## 12. Decisão expressa do PO — 2026-10-24 (SUPERSEDES recomendações pendentes do §7)
+
+O PO aprovou **para escopo e design apenas**, com `IMPLEMENTATION_AUTHORIZED=NO`, as opções: **C3-D01=A; C3-D02=A; C3-D03=B; C3-D04=B; C3-D05=A; C3-D06=A**.
+
+- **D01=A:** V1 read-only com competência/período, filial e superfícies de estoque/baixas já contratadas; nada de wizard ou paridade ampliada no primeiro recorte.
+- **D02=A:** cálculo, persistência, conferência e homologação separados; exibir somente estados com fonte confiável, identificando os demais como não verificados/indisponíveis, sem fabricar fonte.
+- **D03=B:** nenhuma ação, rota ou histórico novo de reabertura na V1.
+- **D04=B:** seleção por período disponível nos contratos atuais; **não** especificar/implementar `closing-context` ou leitura `MV_ULMES` como requisito da V1. A alternativa A do §7 deixa de ser recomendação ativa da primeira fatia.
+- **D05=A:** G6/homologação exige aceite explícito da Controladoria; sem inferência por SB9/`MV_ULMES`, sem nova persistência de aceite autorizada.
+- **D06=A:** excluir superfícies sem fonte/contrato comprovado; pendências E1–E12 continuam sob acompanhamento dos owners.
+
+**Natureza:** direção de produto aprovada, não gate de runtime, não homologação G6. A seção §7 é preservada como registro das alternativas originais; esta seção é o estado decisório vigente. Próximo gate: [doc 89](./89-ciclo3-decisoes-aprovadas-e-gate-documental-r02.md), `CF-C3-02-READONLY-DESIGN-CONTRACT-GATE-001`.
