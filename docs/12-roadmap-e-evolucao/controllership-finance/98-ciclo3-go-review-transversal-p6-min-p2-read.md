@@ -205,3 +205,8 @@ Deploy: gate operacional separado, independente deste GO.
 
 **Veredito da rodada:** `ACCEPT_WITH_RESIDUAL` — gates materiais fechados,
 pendências de dados e deploy fora do GO por decisão expressa do PO.
+
+
+## 11. GO expresso posterior do Product Owner — 24/10/2026
+
+**GO CONCEDIDO exclusivamente para a implementação** `CF-C3-P6-MIN-P2-READ-RUNTIME-GO-001`, sem deploy produtivo. Ver [doc 99 — registro da autorização e handoff Devin](./99-ciclo3-go-runtime-p6-min-p2-read-e-handoff-devin.md). `IMPLEMENTATION_AUTHORIZED=YES / SCOPE=P6-MIN+P2-READ_ONLY`, `DEPLOY_PRODUCTION_AUTHORIZED=NO`. A revisão original `GO_RECOMMENDED` não foi implementação; o GO subsequente é ato separado do PO. Nenhum código alterado neste registro.
