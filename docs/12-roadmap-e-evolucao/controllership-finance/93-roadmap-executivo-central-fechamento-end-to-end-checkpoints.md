@@ -201,3 +201,8 @@ O PO aprovou persistência isolada no contexto `controllership-finance-api`, usa
 ### Registro de PO — P6-MIN + P2-READ · Seed e administração
 
 O PO aprovou **seed v1 dos 53 itens em DRAFT**, publicação administrativa posterior, e **API administrativa mínima sem tela P6** no primeiro slice. Consultar [doc 97 — decisões e solicitação de GO transversal](./97-ciclo3-p6-min-p2-read-decisoes-po-e-solicitacao-go-transversal.md). `CP02/CP03=PENDING`, `IMPLEMENTATION_AUTHORIZED=NO`. Próxima rodada: `CF-C3-P6-MIN-P2-READ-TRANSVERSAL-GO-REVIEW-001` (documental, sem runtime).
+
+
+### Registro posterior — primeiro GO de runtime concedido (escopo fechado)
+
+O PO autorizou expressamente `P6-MIN + P2-READ` sob `CF-C3-P6-MIN-P2-READ-RUNTIME-GO-001`. Documento de authority para esta autorização: [99 — GO e handoff para Devin](./99-ciclo3-go-runtime-p6-min-p2-read-e-handoff-devin.md). `IMPLEMENTATION_AUTHORIZED=YES / SCOPE=P6-MIN+P2-READ_ONLY`; `DEPLOY_PRODUCTION_AUTHORIZED=NO`. **CP02/CP03 continuam não implementados e sem PASS de runtime**; execução condicionada a HEAD/status, pré-condições e provas por etapa. Nenhuma autorização para P2 upload, P3–P6 fora do mínimo, CLARA, DRE, ERP writes ou produção.
