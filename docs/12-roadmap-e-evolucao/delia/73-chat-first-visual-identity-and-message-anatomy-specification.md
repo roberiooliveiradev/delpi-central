@@ -176,6 +176,19 @@ O Devin deve tratar esta especificação como **detalhamento da decisão visual 
 - **Reuse gate:** `UnifiedAvatar=REUSE`; `MessageThread=PARTIAL/DO_NOT_REUSE`; `EntityAvatarLabel=PARTIAL/DO_NOT_REUSE`; `ConversationUserMessage=NEW`.
 - **Evidência atual:** testes direcionados e suíte DÉLIA passaram; build/federation passaram; browser QA real confirmou full page, light/dark, 320/420px, zoom 200%, múltiplos turnos e avatar real. Nenhum overflow visual material foi observado.
 
+### 13.1 Refinamento clean visual — ações subordinadas e medida de leitura (2026-10-24)
+
+**Task:** `DELIA-UX-CONVERSATION-USER-MESSAGE-CLEAN-VISUAL-REFINEMENT-01`.
+**Estado factual:** `PROVEN / DEPLOYED` no SHA `59c88987b6`. Extensão compatível (`REUSE_DECISION=EXTEND`); nenhum componente novo de mensagem.
+
+- **Extensão de API compartilhada:** `ConversationUserMessage` ganhou o slot opcional `actions?: ReactNode`, renderizado subordinado no rodapé da bolha. O contrato é presentation-only — o consumer decide quais ações existem; o reveal fica a cargo de `MessageActionBar` + marcador `delpi-ui-message-action-scope` no host.
+- **Ação legítima implementada:** `ConversationTimeline` fornece apenas **Copiar mensagem** — `MessageActionBar` (compact, `align=end`, `aria-label="Ações da mensagem"`) + `HintAction` + `IconButton` com feedback "Mensagem copiada" por 1,5s. Copia o texto literal do turno via `navigator.clipboard`. Editar/reenviar/excluir permanecem `NOT_IMPLEMENTED` — sem contrato legítimo.
+- **Largura adaptativa:** a bolha mantém `width: fit-content` + `max-width: 88%` no root; a `__bubble` ganhou `max-width: min(100%, 68ch)` — a mesma medida de leitura da resposta da DÉLIA. Mensagens curtas/médias seguem intrínsecas; longas param na medida de leitura com wrapping seguro.
+- **Medições em produção (probe autenticado `vd-usermsg-prod.mjs`, 28/28 PASS):** bolha curta 58px ("Olá"), média 413px (53 chars), longa 587px (~68ch, 300 chars multiline em 6 linhas preservadas); avatar alinhado ao topo (Δ≤2px) e à direita; ação invisível em repouso (opacity 0), revelada no hover (opacity 1), sempre visível em pointer touch; zero overflow interno e de documento em todas as larguras; right rail aberto @1920 mantém bolha fora do rail (msgR 1552 < railL 1576); mobile 375px sem overflow; dark: superfície neutra `rgb(27,32,48)` + borda 1px; `prefers-reduced-motion` → `animation: none`.
+- **Regressão:** plugin-ui 2343/2343 (+2 testes de slot), delia 449/449 (+2 testes de ação), tsc + build + federation `verify-host-exports` OK.
+- **Residuais:** `REAL_DOCK_QA`, `ZOOM_200_QA`, `SCREEN_READER_QA` = `TEST_NOT_RUN`.
+- **Não alterado:** alinhamento direito, identidade "Você"/`UnifiedAvatar`, `pre-wrap`, superfície/borda/radius neutros, animação de entrada 220ms reduzível, ausência de live region/focusable wrapper, nenhum estado visual novo.
+
 ## 14. Inventário canônico dos componentes conversacionais já implementados
 
 Esta seção registra **significado de produto + aparência + fronteira de responsabilidade** dos componentes atualmente usados na experiência conversacional. Ela não substitui o catálogo técnico do `plugin-ui`, os testes nem as specs temáticas detalhadas; serve como índice semântico para evitar que componentes visuais adquiram autoridade indevida.
