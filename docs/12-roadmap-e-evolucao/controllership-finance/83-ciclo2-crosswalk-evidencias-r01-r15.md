@@ -138,9 +138,9 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 `CC matriz.xlsb` = export direto **SD1** via EDAPP (sheet `SCAGQGA0.XML`; vídeo 47:00 mostra a mesma operação com `SCAGPOU0.XML`): Filial, Item NF, Produto, Tipo, UM, Qtd, Tipo Entrada, Tp.Oper, Vlr.Unit/Tot, **C Custo**, C Contab, IPI, ICMS + coluna sem título com classificação manual `Direto`/`Indireto`/`Adm`. Roster: **EDAPP** "Faturamento e CC" + "tabelas entrada de notas fiscais (excel)". **Rodada 25 (doc 80 §44, doc 85 §10):** 353 linhas = itens SD1 f01 `D1_DTDIGIT`∈set/2026 (eixo digitação, não emissão), Σ `D1_TOTAL` = **R$ 169.704,12 exato**; seleção = digitação no mês → 13 TES fora (`001,003,016,020,030,040,080,083,085,120,159,204,318`) → `D1_TP<>'MP'` → benefícios saúde/odonto sem CC fora — 100% reconstruída e corroborada pelo procedimento relatado (doc 56 Registro 17). Classificação Direto/Ind/Adm = coluna manual pós-exportação por CC (não é campo físico). `vw_fin_despesas_centro_custo`/rotas `despesas-centro-custo` = `REUSE_PARTIAL` (eixo emissão + CC-obrigatório + sem exclusões — 269/353 cobertura). Gates: **G1–G5 PASS · G6 PENDING**; lista exata de TES + taxonomia Direto/Ind/Adm → **E10**.
 
-### R11 — NF venda / desconsiderar — **PARCIAL**
+### R11 — NF venda / desconsiderar — **RECONCILIADO (seleção por identidade de conjunto; finalidade → E11)**
 
-`NF a desconsiderar.xlsb` = export direto **SD2** via EDAPP: Filial, Item, Produto, Qtd, Vlr, IPI, ICMS, Tipo Saida (594), Cod. Fiscal (5101). Roster: EDAPP "notas fiscais à desconsiderar do faturamento". Gates: **G1–G3 PASS · G4 PASS (SD2) · G5/G6 PENDING**.
+`NF a desconsiderar.xlsb` = export direto **SD2** via EDAPP (aba `Planilha2`, 184 colunas): Filial, Item, Produto, Qtd, Vlr, IPI, ICMS, Tipo Saida (594=`D2_TES`), Cod. Fiscal (5101). Roster: EDAPP "notas fiscais à desconsiderar do faturamento". **Rodada 26 (doc 80 §45, doc 85 §10):** 11 linhas = **exatamente** `D2_GRUPO='9035'`∩`D2_TES='594'`∩`D2_EMISSAO`∈set/2026 f01 (identidade de conjunto, não cardinalidade), Σ `D2_TOTAL` = **R$ 97.462,71 exato**; "CPV zero" = `D2_CUSTO1=0` estrutural (`F4_ESTOQUE='N'`, prova TTAT — insert MATA460A na emissão, sem alteração); semântica = faturamento de **industrialização para terceiros** (8/11 NFs casam item 510 com custo + item 594 sem custo). `GET /supplies/cpv` = `REUSE_PARTIAL` (contribuição R$0 ao numerador — coerente; exclusão é camada de conferência manual, não regra da API). Gates: **G1–G5 PASS · G6 PENDING**; qual apuração recebe o desconsiderar + eixo do filtro → **E11**.
 
 ### R12 — Acompanha Custos / Reposição / Refaz Saldos — **PARCIAL**
 
@@ -171,6 +171,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | E7 (RPO MATR910) | mantido — TI/ERP (R06/R07 G4/G5 já PASS pela reconstrução). |
 | E8 (MATR989) | **novo (rodada 22):** fonte `matr989.prx`/RPO + parâmetros efetivos da emissão + semântica intra-dia do corte de OP — TI/ERP (R08 G4/G5 já PASS pela reconstrução física; doc 80 §41/§42). |
 | E10 (R10 CC matriz) | **novo (rodada 25):** lista exata de TES excluídos (narrada 12 vs observada 13 — `016`/`159`), filtro/consulta EDAPP preservada, regra de benefícios (colaborador×empresa) e owner da taxonomia Direto/Ind/Adm — Controladoria (R10 G5 já PASS pela reconstrução física; doc 80 §44, doc 82 E10). |
+| E11 (R11 NF desconsiderar) | **novo (rodada 26):** qual apuração recebe o desconsiderar (CPV×ROL×DRE), regra×exceção por documento e eixo do filtro EDAPP — Controladoria (R11 G5 já PASS por identidade de conjunto; doc 80 §45, doc 82 E11). |
 
 ## §6 — Divergências e notas de rigor
 
@@ -195,7 +196,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R08 Material em Processo | RECONCILIADO | MATR989 analítico (`SOURCE_MISSING` — roster+aba) | G1,G2,G3,**G4**,**G5** (SD3 linha-a-linha 1.501/1.501 + SB9-loc99 569/573 com 4 Δ temporais explicados + total = EM PROCESSO P7 exato — doc 80 §41, doc 85 §8; fonte/RPO → E8) |
 | R09 Fat × MOD | RECONCILIADO PARCIAL | DLP204 (`DLP204.prw` `SOURCE_AVAILABLE`) | G1,G2,G3,**G4** (G5 `INCONCLUSIVE` — 27 tempos + SP interna → E9) |
 | R10 Notas por CC | RECONCILIADO | EDAPP (SD1) | G1,G2,G3,G4,**G5** (353/353 itens + seleção reconstruída + Σ `D1_TOTAL` exato — doc 80 §44; confirmações → E10) |
-| R11 NF desconsiderar | PARCIAL | EDAPP (SD2) | G1,G2,G3,G4 |
+| R11 NF desconsiderar | RECONCILIADO | EDAPP (SD2) | G1,G2,G3,G4,**G5** (11/11 = 9035∩594∩set, identidade de conjunto + Σ exato + CPV-zero estrutural — doc 80 §45; finalidade → E11) |
 | R12 Acompanha/Rep/Refaz | PARCIAL | Acompanha Custo wizard, Recálculo Reposição, DEL100 | G1,G2,G3 |
 | R13 Extratos/aplicações | BLOQUEADO | externa | G1 |
 | R14 Importação | BLOQUEADO | — | — |

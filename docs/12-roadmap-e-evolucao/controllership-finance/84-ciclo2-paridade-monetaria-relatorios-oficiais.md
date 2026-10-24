@@ -277,7 +277,10 @@ MP — validação por tipo em doc 80 §33.C/§34.B.
   documentais → E10).
 - **R08** (Material em Processo): reconciliado no §5.2 — G4/G5 PASS.
 - **R09** (Faturamento × MOD): reconciliado no §5.3 — G4 PASS, G5 `INCONCLUSIVE`.
-- **R04, R11–R15**: sem população oficial comparável
+- **R11** (NF a desconsiderar / SD2): reconciliado no §5.5 — G4/G5 PASS
+  (seleção 9035∩594∩emissão por identidade de conjunto + CPV-zero
+  estrutural `F4_ESTOQUE='N'`; finalidade → E11).
+- **R04, R12–R15**: sem população oficial comparável
   disponível → G5 `TEST_NOT_RUN`/PENDING preservado.
 
 ## §5.1 — R06 · Kardex CPV e R07 · Inventários (rodada 19)
@@ -400,6 +403,34 @@ exclusões: 448 linhas, 269/353 cobertura → `REUSE_PARTIAL`).
 ambiguidade `02`/`04`), filtro/consulta EDAPP preservada, regra de
 benefícios colaborador×empresa, owner da taxonomia Direto/Ind/Adm.
 
+
+## §5.5 — R11 · NF a Desconsiderar EDAPP/SD2 (rodada 26)
+
+Paridade **linha-a-linha** do artefato oficial (`NF a desconsiderar.xlsb`,
+aba `Planilha2`, 11 linhas, filial 01, set/2026) — doc 80 §45, doc 85
+§10. Produtor = exportação EDAPP do operador sobre SD2
+(`EXECUTION_OBSERVED`, roster "a desconsiderar do faturamento").
+
+| Dimensão | Oficial | Físico | Regra | Resultado | Δ | Status |
+|---|---|---|---|---|---|---|
+| Grão/binding | 11 linhas × campos SX3 `D2_*` | 11 linhas `SD2010` | chave `(D2_DOC,D2_ITEM,D2_COD,D2_TOTAL)` | **11/11** 1:1, sem ambiguidade | 0 | `PASS` |
+| Seleção | implícito | `D2_GRUPO='9035'`∩`D2_TES='594'`∩`D2_EMISSAO`∈set∩`D2_FILIAL='01'` | conjunto idêntico (não só cardinalidade); equivalência bidirecional na competência | 11/11 | 0 | `PASS` |
+| `Vlr.Total` por linha | impresso | `D2_TOTAL` | campo direto | 11/11 | 0 | `PASS` |
+| Σ `Vlr.Total` | **97.462,71** | Σ `D2_TOTAL` seleção | — | **97.462,71** | 0,00 | `PASS` |
+| Documentos | 11 | `D2_DOC` | 8 docs com 2 itens (510+594), 3 só 594 | reproduzido | 0 | `PASS` |
+| Custo | ausente do export | `D2_CUSTO1` | **0 nas 11 linhas desde a criação** (TTAT insert `MATA460A`, `COLD`=`CNEW`=0.000, sem alterações) | "CPV zero" = estrutural `F4_ESTOQUE='N'` | 0 | `PASS` |
+| Efeito no CPV canônico | — | `SUM(D2_CUSTO1)` CFOPs venda | CFOP 5101 ∈ conjunto, custo = 0 | contribuição **R$0,00** | 0 | `PASS` |
+| Itens-irmão | implícito | TES 510 "INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA" | `F4_ESTOQUE='S'`, `D2_CUSTO1`>0, CFOP 5124 | 8/11 docs casam par custo+faturamento | 0 | `PASS` |
+
+**Hipóteses descartadas:** `D2_CUSTO1=0` como predicado (91 linhas no
+mês — artefato é o subconjunto 9035/594); documento como unidade de
+seleção (a escolha é por item); `D2_TIPO` (todas 'N' — `Tipo Saida`
+exportado = `D2_TES`, errata doc 47 §11.1); custo perdido/recalculado
+(TTAT prova zero desde a criação — sem `STALE_EVIDENCE`).
+**Residuais → E11 (Controladoria):** apuração que recebe o
+desconsiderar (CPV×ROL×DRE), regra×exceção por documento, eixo do
+filtro EDAPP (grupo vs TES).
+
 ## §6 — Gates e métricas resultantes
 
 | Item | Antes | Depois |
@@ -413,6 +444,7 @@ benefícios colaborador×empresa, owner da taxonomia Direto/Ind/Adm.
 | R09 G4 | PENDING | **PASS** (rodada 24: `DLP204.prw` + bindings físicos — §5.3) |
 | R09 G5 | TEST_NOT_RUN | **INCONCLUSIVE** (4.449/4.476 tempos + SP interna → E9; demais dimensões 100%) |
 | R10 G5 | TEST_NOT_RUN | **PASS** (rodada 25: 353/353 linhas + seleção EDAPP reconstruída + Σ `D1_TOTAL` 169.704,12 exato — §5.4; confirmações → E10) |
+| R11 G5 | TEST_NOT_RUN | **PASS** (rodada 26: 11/11 linhas por identidade de conjunto 9035∩594 + Σ `D2_TOTAL` 97.462,71 exato + CPV-zero estrutural — §5.5; finalidade → E11) |
 
 `COLETA = 42/60 = 70,0%` · `AUDITORIA = 47/90 = 52,2%` ·
 `CONCLUÍDOS = 0/15` (G6 exige aceite humano).
@@ -420,6 +452,8 @@ benefícios colaborador×empresa, owner da taxonomia Direto/Ind/Adm.
 **Errata rodada 24 (métricas canônicas doc 47 §11):** com R09 G4 PASS as métricas vigentes são `COLETA = 44/60 = 73,3%` · `AUDITORIA = 50/90 = 55,6%` · `CONCLUÍDOS = 0/15` — G5 R09 `INCONCLUSIVE` (não promovido por agregado).
 
 **Errata rodada 25 (métricas canônicas doc 47 §11):** com R10 G5 PASS as métricas vigentes são `COLETA = 44/60 = 73,3%` · `AUDITORIA = 51/90 = 56,7%` · `CONCLUÍDOS = 0/15`.
+
+**Errata rodada 26 (métricas canônicas doc 47 §11):** com R11 G5 PASS as métricas vigentes são `COLETA = 44/60 = 73,3%` · `AUDITORIA = 52/90 = 57,8%` · `CONCLUÍDOS = 0/15`.
 
 ## §7 — Segurança e método
 

@@ -2795,3 +2795,87 @@ colaborador×empresa) e da fonte da classificação Direto/Ind/Adm.
 Aliases: `<PRODUTO-BENEFICIO-*>` (produtos saúde/odonto), docs/
 fornecedores individuais não publicados; TES/CFOP/CC/totais mantidos
 como evidência técnica.
+
+## §45 — R11 · NF a Desconsiderar / CPV Zero — seleção e causa física (rodada 26 — 2026-10-23)
+
+Sub-task: `CF-C2-R11-NF-DESCONSIDERAR-SD2-PARITY-001`. Artefato `NF a
+desconsiderar.xlsb`. READ-only (`delpi-api-delpi`, `db_datareader`);
+zero DML/DDL/recálculo; runtime não autorizado; fórmula do CPV canônico
+intocada.
+
+### A. Artefato e grão
+
+Aba `Planilha2`; linha 0 literal `SD2`; headers = títulos SX3 `D2_*`
+(184 colunas exportadas — sem `Emissao`, `Cliente`, `Serie`, `Custo`).
+**11 linhas efetivas**, filial 01, **11 documentos distintos**,
+Σ `Vlr.Total` = **R$ 97.462,71**. Grão = item SD2. Errata doc 47
+§11.1: a coluna `Tipo Saida` (594) é `D2_TES` — `D2_TIPO`='N' nas
+linhas (não `D2_TIPO` como anotado).
+
+### B. Binding físico (11/11 — `PROVEN`)
+
+Chave `(D2_DOC, D2_ITEM, D2_COD, D2_TOTAL)` une cada linha a exatamente
+um RECNO SD2 — sem ambiguidade, sem não-localizadas. `Vlr.Unitario`=
+`D2_PRCVEN`, `Grupo`=`D2_GRUPO`, `C Contabil`=`D2_CONTA`, `MD5`/`Campo
+UUID` = auditoria Protheus.
+
+### C. Seleção real — identidade de conjunto (`PROVEN`)
+
+Universo `SD2010` `D2_FILIAL='01'` `D_E_L_E_T_<>'*'` `D2_EMISSAO`∈
+[20260901..20260930]: `D2_GRUPO='9035'` → **11 linhas** =
+**exatamente o artefato** (mesmo conjunto, não só mesma cardinalidade).
+`D2_TES='594'` produz o mesmo conjunto — em set/2026 a equivalência é
+bidirecional (todo 594 é 9035 e vice-versa). All-time: 9035 aparece
+com TES 511/505/610/… — o predicado "9035" **não** é atemporal; é a
+interseção observada na competência. Qual eixo o operador usou (grupo
+× TES) é indistinguível pelo artefato → E11.
+
+Hipóteses descartadas: `D2_CUSTO1=0` como predicado (91 linhas no mês —
+artefato é subconjunto 9035/594); documento como unidade (seleção é por
+item — docs com 2 itens contribuem só o item 594); `D2_TIPO` (todas 'N').
+
+### D. CPV zero — causa estrutural (`PROVEN` via SF4 + TTAT)
+
+As 11 linhas têm `D2_CUSTO1=0` **desde a criação**: `SD2010_TTAT_LOG`
+registra insert `MATA460A` na data da emissão com `COLD`=`CNEW`=0.000 e
+zero alterações posteriores — não é custo faltante, correção pendente
+nem drift (`STALE_EVIDENCE` não se aplica). Causa física:
+`SF4.F4_ESTOQUE='N'` para TES 594 "VENDA DE PRODUCAO DO
+ESTABELECIMENTO" — TES sem baixa de estoque não gera custo de saída;
+`F4_DUPLIC='S'` mantém a duplicata/receita.
+
+### E. Semântica do conjunto — industrialização para terceiros
+
+Produtos grupo 9035 = itens de serviço/insumo de industrialização
+("INDUSTR./RESINAGEM/INSUMOS UTILIZADOS", `D2_TP`='PA'). **8 das 11
+NFs casam dois itens**: item 01 = produto físico `9026*` com TES **510**
+"INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA" (`F4_ESTOQUE='S'`, custo>0,
+CFOP 5124) + item 02 = faturamento da industrialização com TES 594
+(custo 0, CFOP 5101); 3 NFs só têm o item 594. Clientes = empresas
+terceiras (não intercompany) — industrialização efetuada para outra
+empresa, faturada sem baixa de estoque próprio.
+
+### F. Reuso transversal (gate §0)
+
+`GET /supplies/cpv` (`GetCPVUseCase`/`CpvQueryRepository` —
+`SUM(D2_CUSTO1)`, CFOPs 5101/5124/6101/6124, `D2_EMISSAO`): as 11
+linhas (CFOP 5101) **contribuem R$0,00 ao CPV** — inclusão no conjunto
+não altera o custo; a receita integra faturamento/ROL. `REUSE_PARTIAL`
+— coerente com o artefato, sem contradição; o "desconsiderar" é camada
+de conferência manual, não predicado da API. Regra kardex
+`F4_ESTOQUE='S'` (R06) = `REUSE_CONFIRMED` por predicado: explica a
+ausência destas linhas no MATR910. Decisão PO §40 preservada: CPV
+vivo/corrente — nada a corrigir aqui.
+
+### G. Gates, sanitização e residuais
+
+`G1–G4` mantidos; **G5 `PASS`** — população 11/11 por identidade de
+conjunto, medidas exatas (Σ 97.462,71; valores por linha), custo zero
+explicado estruturalmente; `G6 PENDING`. Residual → **E11**
+(Controladoria): qual apuração recebe o "desconsiderar" (numerador
+CPV, denominador ROL, conferência DRE/faturamento — roster diz "à
+desconsiderar do faturamento"); se a seleção é regra por TES/grupo ou
+exceção por documento; eixo efetivo do filtro EDAPP (grupo vs TES).
+Doc 67 (ciclo 1) NFEX-01/05 respondidos fisicamente; NFEX-01
+(finalidade) permanece owner. Aliases: clientes/produtos individuais
+não publicados; grupo 9035, TES, CFOP, totais = evidência técnica.

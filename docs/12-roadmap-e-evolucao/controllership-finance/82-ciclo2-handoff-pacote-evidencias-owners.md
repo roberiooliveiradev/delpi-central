@@ -219,6 +219,27 @@ confirmação documental, não uma nova investigação.
 | Impacto PROC-0072 | fixa a lista de exclusão como regra versionável e o owner da taxonomia Direto/Ind/Adm; G5 já PASS — E10 documenta, não desbloqueia gate |
 | Critério de aceite | lista de TES confirmada por escrito + filtro EDAPP preservado + regra benefícios + taxonomia de classe confirmada |
 
+#### E11 — R11 `NF a desconsiderar.xlsb`: finalidade funcional da exclusão
+
+**Contexto (doc 80 §45):** a população foi reconstruída com identidade
+de conjunto (11/11 itens = `D2_GRUPO='9035'`∩`D2_TES='594'`∩emissão
+set/2026 f01) e o "CPV zero" explicado estruturalmente (`F4_ESTOQUE='N'`
+— faturamento de industrialização para terceiros sem baixa de estoque;
+`D2_CUSTO1`=0 desde a criação, prova TTAT). G5 promovido a `PASS`.
+Abaixo só a confirmação funcional, não nova investigação.
+
+| Item | Solicitação | Evidência atual |
+|---|---|---|
+| E11.1 | **Qual apuração recebe o "desconsiderar"** — numerador do CPV, denominador ROL/faturamento, conferência DRE ou outra? | Roster EDAPP "notas fiscais à desconsiderar do faturamento"; fisicamente: contribuição R$0 ao CPV (`D2_CUSTO1`=0), receita R$ 97.462,71 em faturamento |
+| E11.2 | **A seleção é regra ou exceção?** — todas as NFs grupo 9035/TES 594 entram sempre na lista, ou é avaliação por documento na competência? | Em set/2026 os predicados coincidem (11/11); all-time 9035 aparece com outros TES |
+| E11.3 | **Eixo do filtro EDAPP efetivo** (grupo 9035, TES 594 ou seleção manual por documento) + consulta/filtro preservado | Indistinguível pelo artefato |
+
+| Campo | Conteúdo |
+|---|---|
+| Owner | Controladoria / gestora do processo (doc 67 NFEX-01/NFEX-05) |
+| Impacto PROC-0072 | fixa a finalidade da lista de exceção e o contrato da apuração afetada; G5 já PASS — E11 documenta, não desbloqueia gate |
+| Critério de aceite | apuração destino confirmada + critério regra×exceção confirmado + filtro EDAPP preservado |
+
 ---
 
 ## §3 — Estado do ciclo e marcações preservadas
@@ -231,6 +252,7 @@ confirmação documental, não uma nova investigação.
 | Receber DLP06R01 | **paridade row-level do artefato PROVEN, Δ R$0,00** (649 SE5×SE1 + 8 `PA`/`FINA750` sem título; TB=`E5_VALOR`, VO=`E1_VALOR` 649 + VO=provisão `'P'` espelhada MATA121/FINA050 8/8 — doc 84, errata doc 80 §30); residual: fonte do produtor (G4) + regra geral do sem-título (3 excluídos identificados) — **pende de TI/ERP** |
 | MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
 | R10 CC matriz (SD1 EDAPP) | **seleção reconstruída + paridade PROVEN** (353/353 itens, Σ `D1_TOTAL` 169.704,12 exato; digitação+13 TES-out+MP-out+benefícios-out — corroborado owner doc 56 §Reg.17; G5 PASS); residual: lista exata TES + taxonomia Direto/Ind/Adm — **E10** |
+| R11 NF desconsiderar (SD2 EDAPP) | **seleção reconstruída por identidade de conjunto + paridade PROVEN** (11/11 = `D2_GRUPO='9035'`∩`D2_TES='594'`∩emissão set f01; Σ `D2_TOTAL` 97.462,71 exato; CPV-zero estrutural `F4_ESTOQUE='N'` prova TTAT; G5 PASS); residual: finalidade da exclusão — **E11** |
 | SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) — **reforço 23/10:** onda retificadora de ~20-21/10 confirmada por RECNO (SD1 doc `<NF-RETIF-A>` sanitizado reclassificado 001→085 + SB9 f01 inserido 21/10 19:13) — corrobora "reexecução/etapa distinta" sem identificar o writer |
 | MATR320 (R05) | **fonte localizado 23/10:** `matr320.prx` padrão TOTVS (execução via SP `MAT056`; variante `DLPR320` descartada por poder3 zerado no fonte × não-zerado no PDF). Colunas MP reconciliadas 12/13 ao centavo em estado de emissão (doc 84 §4.2, doc 80 §31, regras doc 85 §5); residual: MovInt ~R$0,48 e `as_of` do saldo |
 | DLP06R01, P7 | **parcialmente resolvidos 23/10** — DLP06R01.prt=layout compartilhado (pagar: produtor FINR190 provado; receber: custom `DLP06R01` sem fonte — E1 pendente); P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |

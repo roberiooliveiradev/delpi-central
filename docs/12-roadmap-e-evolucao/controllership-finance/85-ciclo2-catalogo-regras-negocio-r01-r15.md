@@ -983,11 +983,78 @@ artefato (digitação + TES-exclusão + MP-out + benefícios-out) é a
 seleção do procedimento Controladoria — `TARGET` se homologada como
 consulta distinta; **não transplantar a seleção da view**.
 
-### R11 · `NF a desconsiderar.xlsb` — binding `PROVEN`, seleção `TO_INVENTORY`
+### R11 · `NF a desconsiderar.xlsb` — seleção reconstruída (rodada 26)
 
-Export EDAPP de `SD2` (linha 0 literal `SD2`, headers SX3 `D2_*`; Tipo
-Saida 594, CF 5101). Filtro de emissão = consulta parametrizada do
-operador — mesmo tratamento de R10 aguarda evidência da seleção.
+Artefato: aba `Planilha2`, linha 0 literal `SD2`, headers = títulos SX3
+`D2_*` (184 colunas exportadas; sem `Emissao`/`Cliente`/`Serie`/
+`Custo`), **11 linhas**, filial 01, **11 documentos distintos**,
+Σ `Vlr.Total` = **R$ 97.462,71**. Grão = item SD2. Errata doc 47
+§11.1: `Tipo Saida` exportado = `D2_TES` (`D2_TIPO`='N' nas linhas).
+
+#### BR-R11-001 — Binding SD2 — `PROVEN`
+
+Chave `(D2_DOC, D2_ITEM, D2_COD, D2_TOTAL)` une 11/11 linhas ao SD2
+físico sem ambiguidade. `Num. Docto.`=`D2_DOC`, `Quantidade`=
+`D2_QUANT`, `Vlr.Unitario`=`D2_PRCVEN`, `Vlr.Total`=`D2_TOTAL`,
+`Tipo Saida`=`D2_TES`, `Cod. Fiscal`=`D2_CF`, `Grupo`=`D2_GRUPO`,
+`C Contabil`=`D2_CONTA`, `Loja`=`D2_LOJA`, `MD5`/`Campo UUID` = campos
+de auditoria Protheus.
+
+#### BR-R11-002 — Seleção = grupo 9035 ∩ TES 594, competência set/2026 — `PROVEN`
+
+População física `D2_FILIAL='01'` + `D2_EMISSAO`∈[20260901..20260930] +
+`D2_GRUPO='9035'` = **11 linhas** — conjunto **idêntico** ao artefato
+(identidade, não cardinalidade). `D2_TES='594'` produz o mesmo conjunto
+em set/2026 (equivalência bidirecional nesta competência: todo 594 é
+9035 e vice-versa); all-time 9035 aparece com outros TES (511/505/610…)
+— o predicado **não** é "grupo 9035 sempre" nem "TES 594 sempre"; é a
+interseção observada na competência. Qual dos dois o operador filtrou
+(grupo vs TES) é indistinguível pelo artefato → E11.
+
+#### BR-R11-003 — CPV zero = propriedade estrutural do TES 594 — `PROVEN`
+
+As 11 linhas têm `D2_CUSTO1 = 0` **desde a criação** (TTAT
+`SD2010_TTAT_LOG`: insert MATA460A na data da emissão, `COLD`=`CNEW`=
+0.000, zero alterações posteriores). Causa: `SF4.F4_ESTOQUE='N'` — TES
+que não movimenta estoque não gera custo de saída. `F4_DUPLIC='S'`
+(gera duplicata/receita). Portanto: "CPV zero" **não** é custo faltante
+nem erro de cálculo — é venda sem baixa de estoque (faturamento de
+serviço/insumo de industrialização).
+
+#### BR-R11-004 — Semântica do conjunto: industrialização para terceiros — `PROVEN`
+
+Produtos 9035 = itens de serviço/insumo de industrialização
+(descrições "INDUSTR./RESINAGEM/INSUMOS UTILIZADOS", `B1_TIPO`='PA' na
+linha `D2_TP`). NFs típicas têm 2 itens: item 01 = produto físico
+`9026*` com TES **510** "INDUSTRIALIZACAO EFET. P/ OUTRA EMPRESA"
+(`F4_ESTOQUE='S'`, `D2_CUSTO1`>0, CFOP 5124) + item 02 = faturamento
+da industrialização com TES 594 (`F4_ESTOQUE='N'`, custo 0, CFOP 5101).
+3 NFs têm só o item 594. Clientes = terceiros (não intercompany) —
+industrialização efetuada para outra empresa. 8 das 11 notas casam
+item-custo(510)+item-faturamento(594) no mesmo documento.
+
+#### BR-R11-005 — Efeito no CPV canônico — `PROVEN` (impacto nulo no numerador)
+
+`GET /supplies/cpv` (`CpvQueryRepository`) = `SUM(D2_CUSTO1)` em
+`D2_CF∈{5101,5124,6101,6124}`: as 11 linhas (CFOP 5101) **contribuem
+R$ 0,00** ao CPV — a inclusão no conjunto não altera o custo; sua
+receita (97.462,71) integra faturamento/ROL. O arquivo é lista de
+conferência da Controladoria (receita sem custo associado), não regra
+do contrato CPV — **nenhuma alteração contratual necessária**; os
+itens-irmão (510/5124) entram normalmente no kardex (`F4_ESTOQUE='S'`)
+e no CPV. Qual apuração efetivamente desconsidera estas NFs (numerador
+CPV, denominador ROL, conferência DRE) = `OWNER_REPORTED` → E11.
+
+#### BR-R11-006 — Reuso — `REUSE_PARTIAL`
+
+`GET /supplies/cpv` = `REUSE_PARTIAL`: semântica verificada (custo por
+CFOP de venda) e **coerente** com o artefato (contribuição zero — sem
+contradição); o "desconsiderar" é camada de conferência manual, não
+predicado da API. Regra kardex `F4_ESTOQUE='S'` (R06) =
+`REUSE_CONFIRMED` por predicado: explica a ausência destas linhas no
+MATR910. Nenhum consumidor implementa "lista de exceções de
+faturamento" — `TARGET` se homologada (doc 56 §Reg.18: estados
+`excluded_from_analysis` etc. são `TARGET_DECISION_REQUIRED`).
 
 ## §11 — R12 · Fechamento de custo / Reposição / Refaz Saldos — `AS-IS`
 
@@ -1071,6 +1138,7 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R09-009/010 horas+custo as_of | artefato + SBZ/TTAT | `BZ_CUSTD`,`TTAT_COLD`,`TTAT_DTIME` | `Horas=QtdFat×Quantidade`; `CustoTotal=Horas×rate`; rate `as_of` via TTAT | `billing-mod-breakdown` (`as_of`) | api-delpi | T-R09-01/05 | doc 84 §5.3 |
 | BR-R10-002..005 seleção CC matriz | artefato + SD1/SF4/SB1 | `D1_DTDIGIT`,`D1_TES`,`D1_TP`,`D1_CC` | digitação no mês + NOT IN 13 TES + `D1_TP<>'MP'` + benefícios sem CC fora | `despesas-cc-official-scope` (owner: procedimento Controladoria, não filtro de tela genérico) | api-delpi | T-R10-01..03 | doc 80 §44 |
 | BR-R10-006 classe Direto/Ind/Adm | artefato + CTT | col. sem título, `D1_CC` | classificação manual pós-exportação por CC — sem fonte física | — (manual) | — | T-R10-04 | doc 80 §44 |
+| BR-R11-002/003 seleção + CPV-zero | artefato + SD2/SF4/SB1 | `D2_GRUPO`,`D2_TES`,`D2_CUSTO1`,`F4_ESTOQUE` | `D2_GRUPO='9035'`∩`D2_TES='594'`∩emissão mês; custo zero estrutural (`F4_ESTOQUE='N'`) | `billing-exceptions` (lista de conferência Controladoria — owner da finalidade) | api-delpi | T-R11-01..03 | doc 80 §45 |
 | BR-R10/11 EDAPP | SD1/SD2 | `D1_*`,`D2_*` | consulta parametrizada | `fiscal-docs-query` | api-delpi | T-R10-00 | doc 47 §11.1 |
 | BR-R06-001/002/003 kardex UNION | `matr910_dlp.prx` + SD1/SD2/SD3/SF4 | `D1_DTDIGIT`,`D2_EMISSAO`,`D3_EMISSAO`,`F4_ESTOQUE`,`D3_ESTORNO`,`D*_ORIGLAN`,`D*_LOCAL` | UNION SD1+SD2+SD3 por produto/armazém com datas por tabela | `stock-kardex` (contrato futuro — `DECISION_REQUIRED`) | api-delpi | T-R06-01..04 | doc 80 §37.C |
 | BR-R06-004/005 ordem+REF | `matr910_dlp.prx` | `D*_NUMSEQ`,`D1_FORNECE`,`D2_PEDIDO`,`D3_OP`,`D3_CC` | data + NUMSEQ; REF por origem (F-/P-/OP/CC) | idem | api-delpi | T-R06-05/06 | doc 80 §37.C |
@@ -1138,6 +1206,10 @@ copia para BFF/frontend.
 | T-R10-02 | BR-R10-003 | positive · reproduzido | 13 TES excluídos sem exceção (303 linhas); lista narrada owner mapeia 11/13 — `016`/`159` residuais E10 |
 | T-R10-03 | BR-R10-004/005 | positive · reproduzido | MP 302/302 fora; benefícios saúde/odonto sem CC 6/6 fora |
 | T-R10-04 | BR-R10-006 | boundary · reproduzido | classe `Direto/Indireto/Adm` = coluna manual (não SD1/CTT); 2 entradas minúsculas evidenciam edição humana |
+| T-R11-01 | BR-R11-001/002 | positive · reproduzido | 11/11 linhas = itens SD2 `D2_GRUPO='9035'`∩`D2_TES='594'`∩`D2_EMISSAO`∈set f01 — conjunto idêntico; Σ `D2_TOTAL`=97.462,71 exato |
+| T-R11-02 | BR-R11-003 | positive · reproduzido | `D2_CUSTO1`=0 nas 11 linhas desde a criação (TTAT insert MATA460A, `COLD`=`CNEW`=0) — estrutural `F4_ESTOQUE='N'` |
+| T-R11-03 | BR-R11-002 | negative · reproduzido | universo `D2_CUSTO1=0` do mês = 91 linhas — artefato é subconjunto 9035/594; `custo=0` sozinho NÃO é o predicado |
+| T-R11-04 | BR-R11-004 | sibling · reproduzido | 8/11 docs casam item 510 (custo>0, estoque-S) + item 594 (custo 0, estoque-N) — industrialização p/ terceiros |
 | T-R10-00 | BR-R10-001 | positive · reproduzido | export = tabela literal SD1; headers SX3; binding 1:1 |
 | T-R06-01 | BR-R06-001/002 | positive · reproduzido | UNION SD1/SD2/SD3: 9.357 linhas vinculadas linha-a-linha por blocos (1.544 produtos) |
 | T-R06-02 | BR-R06-002 | negative · reproduzido | `D3_ESTORNO='S'`/deletado fora; doc com trio limpo+par estornado imprime só a linha limpa |
@@ -1168,9 +1240,9 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), **BR-R10-001..005** (seleção Controladoria SD1: digitação+TES-exclusão+MP-out+benefícios-out — corroborada owner doc 56 §Reg.17), BR-R11 (binding), BR-R12-003, SB9 snapshot (recorte) |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), **BR-R10-001..005** (seleção Controladoria SD1: digitação+TES-exclusão+MP-out+benefícios-out — corroborada owner doc 56 §Reg.17), **BR-R11-001..005** (binding+seleção 9035/594+CPV-zero estrutural+industrialização-terceiros+impacto-nulo-CPV), BR-R12-003, SB9 snapshot (recorte) |
 | `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R08, R09 (layout), BR-R12-001/002, R15 (execução) |
-| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 internos da `STP_DELPI_FORMA_PRECO_*` + versão RPO DLP204 + parâmetros efetivos + 27 tempos residuais + divisor desdobramento (E9), R11 filtro, R10 mapeamento exato da lista narrada 12→13 TES + regra contábil benefícios (E10), R13 contrato externo, R14 todo |
+| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 internos da `STP_DELPI_FORMA_PRECO_*` + versão RPO DLP204 + parâmetros efetivos + 27 tempos residuais + divisor desdobramento (E9), R11 finalidade da exclusão (qual apuração recebe o desconsiderar — E11), R10 mapeamento exato da lista narrada 12→13 TES + regra contábil benefícios (E10), R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
 | `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |
 | `STALE_EVIDENCE` | contagens DEL100 antigas 724/672 (`EXECUTION_DRIFT`, doc 80 §23.A) |

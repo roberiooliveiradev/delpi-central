@@ -33,7 +33,7 @@ Para **cada item**, usar seis gates verificáveis, `0/1` cada: **G1** evidência
 | R08 | Material em Processo / H02 | `MATR989` analítico (roster + artefato 57k linhas; fonte `matr989.prx` ausente → E8) | Produção | `kp04_t07` | PASS | PASS | PASS | PASS | PASS | PENDING | Controladoria + owner da fonte |
 | R09 | Faturamento × MOD | `DLP204` (`DLP204.prw` `SOURCE_AVAILABLE`; SP `STP_DELPI_FORMA_PRECO_*` `SOURCE_MISSING` — E9) | Custos | `kp04_t06` | PASS | PASS | PASS | PASS | INCONCLUSIVE | PENDING | Controladoria + TI/ERP |
 | R10 | Notas por Centro de Custo | `EDAPP` → export SD1 (roster + vídeo + artefato) | Fiscal/Contábil | `kp04_t09` | PASS | PASS | PASS | PASS | PASS | PENDING | Controladoria (aceite G6; confirmações E10) |
-| R11 | NF venda 9035 / CPV zero | `EDAPP` → export SD2 (roster + artefato) | Fiscal | `checklist doc03` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
+| R11 | NF venda 9035 / CPV zero | `EDAPP` → export SD2 (roster + artefato) | Fiscal | `checklist doc03` | PASS | PASS | PASS | PASS | **PASS** | PENDING | Controladoria (finalidade da exclusão — E11) |
 | R12 | Acompanha Custos / Reposição / Refaz Saldos | Acompanha Custo wizard (vídeo), Recálculo Reposição (vídeo), `DEL100` (fonte) | Estoque | `kp04_t10/t11/t12` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R13 | Extratos e aplicações bancárias | externa (checklist envio) | Bancos | `kp02_t02/t03` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R14 | Importação / SWIFT / câmbio / ACSI | mista | Importações | `kp03` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
@@ -86,7 +86,7 @@ SCOPE_CHANGE / SUPERSEDES:
 |---|---|---|---|
 | L1 — delimitar relatórios | R01–R15 | G1/G2/G3 verificados com artefatos e filtros; desdobrar famílias | original inacessível → bloqueio com owner |
 | L2 — estoque crítico | R03,R15 (R05/R08 reconciliados) | bindings e paridade de P7/SB9 pendentes — Entradas-Saídas e H02 fechados r05/r22 | T03 sem owner → não inferir fechado |
-| L3 — custos e consumo | R04,R09,R10,R11,R12 (R06/R07 reconciliados; R09 modelo provado r24) | bindings e campos comprovados; R09 G4/G5-modelo provados (SP interna → E9); R10 G5 PASS r25 (seleção EDAPP reconstruída — doc 80 §44; confirmações E10); R11 paridade G5 pendente (filtro EDAPP ad-hoc) | proxy adjacente sem equivalência |
+| L3 — custos e consumo | R04,R09,R10,R11,R12 (R06/R07 reconciliados; R09 modelo provado r24) | bindings e campos comprovados; R09 G4/G5-modelo provados (SP interna → E9); R10 G5 PASS r25 (seleção EDAPP reconstruída — doc 80 §44; confirmações E10); R11 G5 PASS r26 (seleção 9035∩594 reconstruída — doc 80 §45; finalidade → E11) | proxy adjacente sem equivalência |
 | L4 — financeiro | R01,R02 | FINR190, layouts e filtros por data/natureza/carteira | divergência entre layouts |
 | L5 — externos | R13,R14 | origem, ownership, exportação, verificações de integridade e regra por banco/importação | lista de bancos divergente |
 | L6 — reconciliação | IDs pai/filhos pertinentes | paridade R$0,00 por competência/empresa/filial com evidência | divergência de centavo = FAIL |
@@ -111,6 +111,7 @@ SCOPE_CHANGE / SUPERSEDES:
 | 2026-10-23 | CF-C2-CPV-EXISTING-RULE-VERIFY-001 | Devin (verify-only: CPV existente localizado — `GET /supplies/cpv` api-delpi, `SUM(D2_CUSTO1)` CFOPs venda + ROL; consumidores dashboard-supplies/KPI-CPV/DAVI; crosswalk R06 documentado; `REUSE_PARTIAL` — lacuna `as_of` → owner) | R06 | nenhum (`NO_GATE_CHANGE`) | — | **42/60 = 70,0%** | **47/90 = 52,2%** | doc 80 §39, doc 85 §6 BR-R06-010 | commit desta rodada |
 
 | 2026-10-23 | CF-C2-R10-CENTRO-CUSTO-SD1-PARITY-001 | Devin (seleção EDAPP reconstruída: `D1_DTDIGIT` mês + 13 TES-out + `D1_TP<>'MP'` + benefícios sem CC-out — 353/353 itens SD1, Σ `D1_TOTAL` 169.704,12 exato; corroborado pelo procedimento owner doc 56 §Reg.17; classe Direto/Ind/Adm = manual pós-exportação) | R10 | G5 R10 (1) | 15 | **44/60 = 73,3%** | **51/90 = 56,7%** | lista exata TES + taxonomia Direto/Ind/Adm + regra benefícios → E10 Controladoria; G6 todos — doc 80 §44, doc 84 §5.4, doc 85 §10 | commit desta rodada |
+| 2026-10-23 | CF-C2-R11-NF-DESCONSIDERAR-SD2-PARITY-001 | Devin (seleção EDAPP reconstruída por identidade de conjunto: `D2_GRUPO='9035'`∩`D2_TES='594'`∩`D2_EMISSAO` set f01 — 11/11 itens SD2, Σ `D2_TOTAL` 97.462,71 exato; "CPV zero" = `F4_ESTOQUE='N'` estrutural, prova TTAT insert `MATA460A` 0→0; 8/11 NFs casam TES 510 custo + TES 594 faturamento — industrialização p/ terceiros) | R11 | G5 R11 (1) | 15 | **44/60 = 73,3%** | **52/90 = 57,8%** | finalidade da exclusão (apuração CPV×ROL×DRE) + eixo filtro EDAPP → E11 Controladoria; G6 todos — doc 80 §45, doc 84 §5.5, doc 85 §10 | commit desta rodada |
 
 ## 6. Rodada L1.1 — FINR190 (20/10/2026)
 
@@ -366,12 +367,12 @@ Sem mudança nas métricas do tracker; G4/G5/G6 permanecem PENDING/TEST_NOT_RUN 
 | R08 | G1,G2,G3,G4,G5 | `Material em processo.xlsb` "Saldo em Processo (Ana" 57.359 linhas; roster MATR989; bloco OP = 1.501 linhas SD3 `RE*` de OP aberta na emissão (650/650 exato) + bloco sem-OP = SB9@0930 loc99 (569/573 exato, 4 Δ temporais); total = EM PROCESSO P7 exato — doc 80 §41, doc 85 §8, doc 84 §5.2 | 2026-10-23 |
 | R09 | G1,G2,G3,G4 | `Fat x MOD.xlsb` abas Fl01/Fl02 (4.476 linhas); `DLP204.prw` no acervo (`SOURCE_AVAILABLE`); seleção SD2 TES `F4_DUPLIC='S'` 4.476/4.476; roteiro OP `SHY010.HY_TEMPAD` + `SH1010.H1_CCUSTO` 4.449/4.476; rate `SBZ010.BZ_CUSTD` as_of 4.469/4.469 — doc 80 §43, doc 85 §9, doc 84 §5.3 | 2026-10-24 |
 | R10 | G1,G2,G3,G4,**G5** | `CC matriz.xlsb` = export **SD1** (sheet `SCAGQGA0.XML`; linha 0 = literal `SD1`, headers = títulos SX3 `D1_*` — binding 1:1 monotabela); vídeo 47:00 mesma operação EDAPP (`SCAGPOU0.XML`); roster EDAPP "Faturamento e CC" — detalhe §11.1; **G5 rodada 25: seleção reconstruída 353/353 + Σ `D1_TOTAL` exato — §11.4** | 2026-10-23 |
-| R11 | G1,G2,G3,G4 | `NF a desconsiderar.xlsb` = export **SD2** (linha 0 = literal `SD2`, headers SX3 `D2_*`; Tipo Saida 594, CF 5101); roster EDAPP "NF à desconsiderar" — detalhe §11.1 | 2026-10-23 |
+| R11 | G1,G2,G3,G4,**G5** | `NF a desconsiderar.xlsb` = export **SD2** (linha 0 = literal `SD2`, headers SX3 `D2_*`; Tipo Saida 594=`D2_TES`, CF 5101); roster EDAPP "NF à desconsiderar" — detalhe §11.1; **G5 rodada 26: seleção reconstruída por identidade de conjunto (11/11 = `D2_GRUPO='9035'`∩`D2_TES='594'`∩emissão set f01) + Σ `D2_TOTAL` 97.462,71 exato + CPV-zero estrutural (`F4_ESTOQUE='N'`, prova TTAT) — §11.5** | 2026-10-23 |
 | R12 | G1,G2,G3 | vídeo 04:00 "Recálculo do Custo de Reposição" (parâmetros íntegros) + 14:47 "Acompanha Custo → Novo fechamento de custo" (execução real); `DEL100.PRW` fonte | 2026-10-23 |
 | R13 | G1 | `Arquivos de envio` checklist: Extratos/XP/BB/Aplicações — externalidade confirmada | 2026-10-23 |
 | R15 | G1,G2 | vídeo 14:47 wizard "Novo fechamento de custo" executado (JOICI, Matriz); SB9 snapshot PROVEN (doc 80 §21) | 2026-10-23 |
 
-**Não promovidos:** G4 de R02 (produtor custom `DLP06R01` sem fonte no acervo — §11.1), R03/R12/R15 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos exceto R01/R02/R05/R06/R07/R08/R10 (paridade monetária integral pendente — R09 `INCONCLUSIVE` r24: 4.449/4.476 tempos + SP interna → E9; R10 PASS r25 §11.4); G6 de todos (exige aceite humano).
+**Não promovidos:** G4 de R02 (produtor custom `DLP06R01` sem fonte no acervo — §11.1), R03/R12/R15 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos exceto R01/R02/R05/R06/R07/R08/R10/R11 (paridade monetária integral pendente — R09 `INCONCLUSIVE` r24: 4.449/4.476 tempos + SP interna → E9; R10 PASS r25 §11.4; R11 PASS r26 §11.5); G6 de todos (exige aceite humano).
 
 **Resoluções desta rodada:** `DLP06R01.prt`/`nat.prt` = **layouts** do relatório de baixas (pagos **e** recebidos) — o mesmo `.prt` é usado por rotinas distintas; para pagar, produtor = FINR190 com fonte+WHERE provados; para receber, produtor = custom `DLP06R01` **sem fonte no acervo** (FINR190 descartado pelo WHERE, doc 80 §17.D); P7 = "Registro de Inventário Modelo P7"/MATR460 com artefatos e duas emissões/escopos (E2 estreitado); execução do fechamento observada (E5 estreitado); doc 71 candidato→confirmado; docs 76/77 paths resolvidos (CC matriz=SD1, Analise=variação CM).
 
@@ -395,7 +396,7 @@ Definição canônica: G4 exige **bindings físicos (tabelas, colunas, joins, fi
 
 **R10 — G4 mantido.** `CC matriz.xlsb`, sheet `SCAGQGA0.XML`: linha 0 = literal **`SD1`**, headers = títulos SX3 das colunas `D1_*` (`Filial`, `Item NF`, `Produto`, `Tipo Entrada`, `Tp.Oper`, `Vlr.Unitario`, `Vlr.Total`, `C Custo`, `C Contabil`, …). Binding 1:1, **monotabela, sem join** — o item é uma consulta genérica EDAPP, não relatório com filtro fixo; o filtro é a consulta parametrizada pelo usuário (escopo observado nos dados: filial `01`). Vídeo 47:00 mostra a mesma operação EDAPP exportando SD1 (`SCAGPOU0.XML`). Fonte: rotina EDAPP padrão TOTVS (sem fonte custom exigido para o binding físico).
 
-**R11 — G4 mantido.** `NF a desconsiderar.xlsb`, sheet `Planilha2`: linha 0 = literal **`SD2`**, headers = títulos SX3 `D2_*` (`Tipo Saida`→`D2_TIPO`/`594`, `Cod. Fiscal`→`D2_CF`/`5101`, MD5/UUID = campos de auditoria). Mesmo raciocínio de R10: export direto da tabela via consulta genérica.
+**R11 — G4 mantido.** `NF a desconsiderar.xlsb`, sheet `Planilha2`: linha 0 = literal **`SD2`**, headers = títulos SX3 `D2_*` (`Tipo Saida`→`D2_TIPO`/`594`, `Cod. Fiscal`→`D2_CF`/`5101`, MD5/UUID = campos de auditoria). Mesmo raciocínio de R10: export direto da tabela via consulta genérica. **Errata (rodada 26):** `Tipo Saida`/`594` = **`D2_TES`**, não `D2_TIPO` — nas 11 linhas `D2_TIPO`='N' (tipo de documento); TES 594 `F4_ESTOQUE='N'` explica `D2_CUSTO1=0` estrutural (§11.5).
 
 **Recontagem:** 37 gates novos (R02 G4 revertido); `COLETA = 39/60 = 65,0%`; `AUDITORIA = 39/90 = 43,3%`. R05 reclassificado: rotina `MATR320` + artefato identificados (G1–G3), **G4–G6 abertos** — não é item "concluído" *(estado na data do rework; G4/G5 promovidos na rodada seguinte — §11.2)*.
 
@@ -473,3 +474,35 @@ Direto/Ind/Adm. Não é filtro universal de produtor — é a seleção
 operacional do procedimento Controladoria, versionável via E10.
 
 Data: 2026-10-23. Detalhe: doc 80 §44, doc 84 §5.4, doc 85 §10.
+
+### 11.5 — R11 · NF a Desconsiderar EDAPP/SD2 (rodada 26)
+
+Definição canônica aplicada: G5 = paridade reproduzível no grão linha
+por identidade de conjunto com divergências explicadas.
+
+**R11 — G5 PASS.** `NF a desconsiderar.xlsb` (11 linhas, filial 01,
+11 documentos) reconciliado integralmente: (a) binding 11/11 itens
+`SD2010` por chave `(D2_DOC,D2_ITEM,D2_COD,D2_TOTAL)` — sem
+ambiguidade; (b) seleção reconstruída por **identidade de conjunto**:
+`D2_GRUPO='9035'`∩`D2_TES='594'`∩`D2_EMISSAO`∈set/2026∩f01 = as
+mesmas 11 linhas (equivalência bidirecional na competência; all-time
+9035 aparece com outros TES — não é regra universal); (c) Σ `D2_TOTAL`
+= **R$ 97.462,71 exato**; (d) "CPV zero" explicado estruturalmente —
+`D2_CUSTO1=0` nas 11 linhas **desde a criação** (TTAT `SD2010_TTAT_LOG`:
+insert `MATA460A` na data da emissão, `COLD`=`CNEW`=0.000, zero
+alterações) porque TES 594 tem `SF4.F4_ESTOQUE='N'` (faturamento sem
+baixa de estoque); (e) semântica do conjunto = **industrialização para
+terceiros**: 8/11 NFs casam item TES 510 (`F4_ESTOQUE='S'`, custo>0,
+CFOP 5124) + item TES 594 (custo 0, CFOP 5101). Hipóteses descartadas:
+`D2_CUSTO1=0` como predicado (91 linhas no mês — artefato é o
+subconjunto 9035/594); documento como unidade (seleção é por item);
+`D2_TIPO` (todas 'N'). Efeito no CPV canônico (`GET /supplies/cpv` =
+`REUSE_PARTIAL`): as linhas (CFOP 5101) contribuem **R$0,00** ao
+numerador — a lista é camada de conferência manual da Controladoria,
+não regra da API; fórmula CPV intocada. Residual → E11
+(Controladoria): qual apuração recebe o desconsiderar (CPV×ROL×DRE),
+regra×exceção por documento, eixo efetivo do filtro EDAPP (grupo vs
+TES). Não é regra universal de exclusão — é a seleção observada da
+competência set/2026, versionável via E11.
+
+Data: 2026-10-23. Detalhe: doc 80 §45, doc 84 §5.5, doc 85 §10.
