@@ -88,6 +88,31 @@ Runtime content SHA-256: davi_agent_intelligence.json `e5523b23c95ea997754806e70
 
 Deployment authorization exists in this task, but promotion remains conditioned on gates. Canonical release: pushed exact SHA, clean server Git, git pull --ff-only, infra/scripts/up-prod-sequential.sh --build api-delpi. No rsync/scp, container patching, migrations or other service rebuilds. Retain the previous image and verify rollback readiness before promotion. Provider publication is separate and remains blocked on official access; no admin credentials/impersonation are used.
 
+## Release and production verification
+
+Code/documentation release commit: `284998fbf03caca018492d4ab5c41aed80f8ae5e`, pushed fast-forward to main and verified with ls-remote. Server clean Git at this exact SHA before and after canonical deployment. No migrations/config/secrets were changed.
+
+Rollback image preserved as `infra-api-delpi:davi-recovery-rollback-284998fbf0`, resolving to the previous image ID above. The canonical dry-run selected one service, api-delpi, plus gateway config test/reload/health verification.
+
+During execution Compose announced both api-delpi and transformometro-api image builds. The SSH command was terminated locally to investigate the unexpected announcement; cancellation did not precede API recreation and must not be called an aborted deploy. Post-checks showed transformometro image remained `sha256:dcdab5680d27953ff48b2a58ce9ec7e815ba2ab707eaaf60e72206a5fff3949f`, created `2026-10-22T14:58:53.141185552Z`, matching its running container, whose start remained `2026-10-22T19:42:52.005297654Z`. No transformometro image replacement or restart was observed. No DÉLIA/Portal/Core/Keycloak service was selected for deployment.
+
+New api-delpi image ID: `sha256:94cf0e6fde51552ac0b8a5e97aff40315c4064c1d89501444a19668b4c94b281`. Container start: `2026-10-24T09:16:19.553383603Z`; health healthy. These are Docker image IDs, not registry RepoDigests. No registry digest is claimed.
+
+Production checks after recreation:
+
+- Internal HTTP /health: 200.
+- /mcp and /apps/api-delpi/mcp without bearer: 401, not an authenticated execution test.
+- Running MCP server list_tools: exactly discover_delpi_information and execute_delpi_information; list_resources: zero.
+- Running intelligence projection contains the new corpus_status/retrieval_surface/mcp_document_access/consumer_contract_status values, with provider_status still TEST_NOT_RUN.
+- Gateway nginx configuration test and gateway-healthcheck.sh: exit 0.
+- Server source remains the exact deployment SHA; working tree clean.
+
+DEPLOY_STATUS=DEPLOYED_ADDITIVE_SIGNAL_ONLY; PRODUCTION_HOMOLOGATION=OPERATIONAL_PASS / DOCUMENT_RETRIEVAL_NOT_PROVEN. No authenticated discover/execute, provider sync, real product query or second-user test is implied. ROLLBACK_EXECUTED=NO.
+
+Rollback procedure, if required: confirm retained tag still matches previous image ID, retag that retained image as infra-api-delpi:latest, then use the canonical script with api-delpi only and without --build. Confirm container image ID, /health, gateway health and MCP negative authentication again. Do not claim rollback complete until those checks pass. Do not force-push or rewrite source history. The deployment evidence follow-up commit changes documentation only and does not require replacing the verified runtime again.
+
+K01, K02, K03, K04, K05, K06, K07, K08, K09, K10: each TEST_NOT_RUN on provider. Offline negative authorization/token-actor tests are included in the passing focused regression but are not a substitute for K06/live multi-user evidence.
+
 ## Outstanding acceptance
 
 - Provider Files visibility, manifest identity and K01–K10 require official operator access; no tokens should be sent in chat.

@@ -65,3 +65,5 @@ Task independente `DAVI-KNOWLEDGE-INTELLIGENCE-DOCUMENTATION-RECOVERY-AND-PRODUC
 - Provider sync/K01–K10 e testes produtivos autenticados permanecem TEST_NOT_RUN sem acesso oficial disponível nesta sessão. A dependência de recuperação documental transversal não está resolvida por metadata.
 
 A autorização de deploy DAVI desta task é independente do estado histórico acima; não autoriza código DÉLIA, R4–R7 nem publicação unilateral de documentos no provider.
+
+Release bounded `284998fbf03caca018492d4ab5c41aed80f8ae5e` publicado e implantado somente em api-delpi: health 200, MCP sem bearer 401, duas tools/zero resources e novos estados de disponibilidade verificados no container. Regressão: 6013 PASS, 30 SKIP, duas falhas de banco reproduzidas no baseline. Isso confirma a sinalização operacional, não recupera conteúdo documental para a DÉLIA. Provider K01–K10 e acesso documental seguem pendentes; não desbloqueia R4.
