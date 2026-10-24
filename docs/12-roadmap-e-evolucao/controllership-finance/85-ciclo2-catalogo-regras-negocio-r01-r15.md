@@ -1176,17 +1176,117 @@ faturamento" — `TARGET` se homologada (doc 56 §Reg.18: estados
 
 ---
 
-## §14 — R15 · Cutoff / sacramentação / SB9 — `AS-IS` + divergência preservada
+## §14 — R15 · Cutoff / sacramentação / SB9 — `AS-IS`→`PROVEN` (bindings)
 
-- Execução do fechamento observada (wizard, 30/09 14:47) — `EXECUTION_OBSERVED`.
-- **Divergência temporal preservada:** timestamps de inserção SB9
-  (`B9_I_N_S_D_T_`: f02 02/10, f01 21/10) ≠ execução observada. Hipóteses:
-  reexecução ("Refazer cálculo"), etapa distinta ou rotina separada —
-  **identidade do passo que grava SB9: `PENDING`** (E5).
-- `SB9` = snapshot mensal de SB2 (`PROVEN` no recorte, doc 80 §21) — usar como
-  "estoque no fechamento" depende de provar a cadeia produtora.
+> Rodada 28 (doc 80 §47): cadeia produtora do fechamento reconstruída por
+> TTAT + SX1 + timestamps físicos. Descoberta-chave: `I_N_S_D_T_` grava
+> **UTC** (prova: SD3 recno × TTAT_DTIME local = exatamente −3h). Todas as
+> rajadas SB9 caem **dentro** das janelas de execução do `MATA280`.
 
----
+### BR-R15-001 — Cutoff: fechamento só em data > último fechamento — `PROVEN`
+
+- Wizard etapa 1 (frame 02:35): campo "Data para fechamento de custo" com a
+  regra literal "O processo de fechamento de custo só pode ser realizado em
+  datas posteriores ao último fechamento." Último fechamento exibido:
+  31/08/2026; data escolhida: 30/09/2026; método `Diária`; `Filial corrente`.
+- `MV_ULMES` é **por filial** (SX6: f01=20260930, f02=20260930; global default
+  `29/02/2024` defasado) — marcador por filial, não por empresa.
+- Leitores de `MV_ULMES` no acervo: MATR860, DLP023, DLP04F04, MATA103
+  (`dDTULMES := SuperGetMV("MV_ULMES")` para validação de OP encerrada/
+  integração SIGAMNT) — evidência de consumo do marcador como cutoff; o
+  bloqueio de movimento retroativo em si é comportamento padrão TOTVS
+  (não auditável via TTAT — SX6 sem log).
+
+### BR-R15-002 — Cadeia produtora: MATA330 → MATA280 → SB9 — `PROVEN` (execução+binding; atribuição interna da escrita por timing)
+
+- **`MATA330`** (Recálculo do Custo Médio, SX1 `MTA330` 21 perguntas):
+  executor **JOICI** (host 192.168.1.23) + componente de serviço
+  (192.168.1.231); escreve SD3/SC2/SD2 massivamente. Execuções: 30/09
+  14:34–18:00 (demo), 01/10, 02/10 14:35–14:46, 21/10 07:52–16:12.
+- **`MATA280`** (Virada de Saldos — SX1 `MTA280`: "Gravar Dados Em
+  Arquivos?", "**Gera Saldo Inicial** para MOD?", "Seleciona Filial?",
+  "Atualiza Saldo Atual MOD?"): executa como serviço (TTAT_USER em branco)
+  imediatamente após/ao fim do MATA330; escreve campos de **saldo inicial de
+  OP** em SC2 (`C2_VINI1`, `C2_VINIRP1`, `C2_APRINI1/2/3` — tipo N).
+- **Rajadas SB9 × janelas MATA280 (horário local = `I_N_S_D_T_`−3h):**
+
+  | data | MATA280 (SC2 TTAT) | rajada SB9 (local) | competência/filial |
+  |---|---|---|---|
+  | 10/08 | 15:45–17:11 | 15:45–17:11 | jul — f01+f02 (28.839) |
+  | 18/09 | 14:42–16:03 | 14:42–16:03 | ago — f01 (13.936) |
+  | 01/10 | 16:29–17:45 | 17:44:46–48 | ago — f02 (3.093) |
+  | 02/10 | 14:58:05–12 | 14:58:01–03 | **set — f02 (3.117)** |
+  | 21/10 | 16:13:44–50 | 16:13:40–42 | **set — f01 (4.812)** |
+
+- 5/5 rajadas dentro da janela MATA280; nenhum outro programa com atividade
+  TTAT nos segundos das rajadas; MATA330 já havia encerrado em 02/10 e 21/10
+  (SB9 cai 2–4s antes do início do burst MATA280-SC2, dentro da mesma execução).
+- **Resíduo honesto:** SB9/SB2 não são auditados em TTAT (logs vazios
+  all-time; trigger `SB9010_STAMP` existe e está habilitada mas não popula o
+  log) — a atribuição "MATA280 escreve SB9" é binding temporal±4s + semântica
+  SX1 ("Gera Saldo Inicial"), não prova de insert auditado. Fonte MATA280 não
+  está no acervo (RPO padrão TOTVS) → E5 permanece aberto, agora **estreitado**
+  para confirmação de RPO/função interna.
+
+### BR-R15-003 — SB9 = snapshot mensal íntegro — `PROVEN`
+
+- Cadeia mensal completa ago/2025→set/2026, ambas as filiais (30/09: f01
+  4.812 linhas únicas `B9_COD+B9_LOCAL`, f02 3.117); cardinalidade 1:1 sem
+  duplicados.
+- `stock_value_official_closure_sql` lê `SB9010` por `B9_DATA` —
+  `REUSE_CONFIRMED` na api-delpi.
+- Anomalia: 2 linhas SB9 com `B9_DATA` em branco inseridas 30/09 ~16:50 local
+  (durante a demo) — placeholders estruturais, não snapshots de competência.
+
+### BR-R15-004 — `MV_ULMES` avança na virada — `PROVEN` no dado, writer `PENDING`
+
+- Valor 20260930 f01+f02; avanço ocorreu na virada de cada filial (f02 ~02/10,
+  f01 ~21/10 — posterior à demo de 30/09). Writer específico não auditável
+  (SX6 sem TTAT) — candidato MATA280/etapa-4 do wizard → E5/E12.
+
+### BR-R15-005 — Wizard persiste ciclo de vida — `EXECUTION_OBSERVED`
+
+- Lista `Fechamentos` (frame 02:05): execuções com `Iniciado em`,
+  `Iniciada na` (filial), `Status`, `Concluído em`/`Cancelado em`/`Progresso
+  atual`. Evidência: f01-ago "Concluído 18/09 16:05" = 1min após fim do
+  MATA280 (16:03:52) → status do wizard reflete o término da virada.
+- Execuções **canceladas** não produzem SB9 (f01-ago cancelada 18/09 14:30,
+  refeita 15:52); f02-ago ficou em "Análise e revisão 50%" desde 03/09 —
+  virada f02-ago só ocorreu 01/10 (explica o lag entre filiais).
+- Botões de ciclo de vida: `Novo fechamento`, `Configurar parâmetros`,
+  `Reabertura de estoque`; etapa-2 exibe `Cancelar fechamento`,
+  `Refazer cálculo`, `Próximo passo` + texto sobre EventViewer.
+
+### BR-R15-006 — Reabertura de estoque existe; semântica `PENDING` — `AS-IS`
+
+- Botão visível na lista; nenhum fluxo de reabertura demonstrado no vídeo.
+- Efeitos de reabertura (reverter `MV_ULMES`? apagar SB9? reprocessar?)
+  não comprovados → E12 (Controladoria+TI/ERP).
+- Doc 56 (Complemento Reg.12): owner reporta que divergência de período
+  anterior pode exigir reabertura+recálculo; `HISTORICAL_REOPEN=
+  OWNER_REPORTED_VIA_PO`; não automatizar no Portal.
+
+### BR-R15-007 — Correções retroativas precedem a virada — `PROVEN` (padrão temporal)
+
+- f01-set: demo 30/09 executou cálculo (MATA330 14:34–18:00) mas **sem
+  virada** (sem MATA280/SB9 naquele dia); reprocessamento MATA330 ocorreu
+  21/10 07:52–16:12 e a virada f01-set gravou 16:13 — compatível com a onda
+  retificadora ~20-21/10 (doc 80 §§anteriores). Interpretação: correções na
+  competência original são absorvidas **antes** da virada que persiste o
+  snapshot — consistente com "CPV vivo" (doc 80 §40).
+
+### T-R15 — Matriz de testes
+
+| Teste | Regra | Tipo | Resultado observado |
+|---|---|---|---|
+| T-R15-01 | BR-R15-002 | negative · preservado | timestamp de persistência ≠ execução demonstrada — refinado: `I_N_S_D_T_` é UTC (−3h local), provado por SD3 recno×TTAT |
+| T-R15-02 | BR-R15-002 | positive | rajadas SB9 dentro da janela MATA280 em 5/5 execuções registradas (10/08, 18/09, 01/10, 02/10, 21/10) |
+| T-R15-03 | BR-R15-002 | positive | `I_N_S_D_T_` (SD3) = TTAT_DTIME +3h exatos — stamp UTC |
+| T-R15-04 | BR-R15-004 | negative | `SX6010` sem TTAT — writer de `MV_ULMES` não auditável por log |
+| T-R15-05 | BR-R15-003 | positive | SB9@30/09: 4.812 (f01) + 3.117 (f02) linhas, `B9_COD+B9_LOCAL` únicos |
+| T-R15-06 | BR-R15-005 | positive | "Concluído 18/09 16:05" do wizard ≈ fim MATA280 16:03:52 (Δ~1min) |
+| T-R15-07 | BR-R15-002 | negative | `SB9010_TTAT_LOG`/`SB2010_TTAT_LOG` vazios all-time — escrita SB9 não auditável por TTAT |
+
 
 ## §15 — Matriz de handoff técnico (regra → implementação futura)
 
@@ -1231,7 +1331,8 @@ faturamento" — `TARGET` se homologada (doc 56 §Reg.18: estados
 | BR-R12-002 Acompanha Custos | wizard (motor MATA330 custom — fonte fora do acervo) | `MV_ULMES`, SB9, workfile | etapas 1–4 ciclo de vida persistido | `cost-closing-run` (`TARGET` — orquestração/status não existem) | api-delpi | T-R12-03 | doc 80 §46 |
 | BR-R12-003 Refaz Saldos | `MATA300` (SX1 `MTA300` 1:1) + `DEL100.PRW` (auditoria SB9 distinta) | SB2 (recalc); SD3/SB9 (DEL100) | reconstrução→comparação (DEL100) | `rebuild-balances-audit` | api-delpi | T-R12-01 | doc 80 §24.E/§46 |
 | BR-R12-005 Análise e revisão | `Analise.xlsx` + SB9 | `B9_CM1`,`B9_QINI`,`B9_VINI1` | export da etapa 3; CM final ≡ SB9@fechamento 98,6% | `stock_value_official_closure_sql` existente — `REUSE_CONFIRMED` | api-delpi | T-R12-04 | doc 80 §46 |
-| BR-R15 SB9 snapshot | SB9/SB2 | `B9_*` | snapshot mensal | `month-end-stock` (**após E5**) | api-delpi | T-R15-01 | doc 80 §21 |
+| BR-R15-002 cadeia fechamento | `MATA330`+`MATA280` (TTAT/SX1) | SB9, SC2 `C2_VINI*`/`C2_APRINI*`, `MV_ULMES` | cálculo→virada→snapshot | `month-end-stock` (**após E5**) | api-delpi | T-R15-02/06 | doc 80 §47 |
+| BR-R15-003 SB9 snapshot | SB9/SB2 | `B9_*` | snapshot mensal | `stock_value_official_closure_sql` existente — `REUSE_CONFIRMED` | api-delpi | T-R15-05 | doc 80 §21/§47 |
 
 **Divisão de camadas (TARGET):** regras físicas e WHEREs vivem na
 **api-delpi** (provider TOTVS — fonte única); **controllership-finance-api**
@@ -1318,7 +1419,13 @@ copia para BFF/frontend.
 | T-R08-04 | BR-R08-007 | positive · reproduzido | total = EM PROCESSO P7 = 355.240,51 exato |
 | T-R08-05 | BR-R08-003 | negative · reproduzido | `RE*` de 01/10 na mesma OP fora — corte de competência 30/09 |
 | T-R08-06 | BR-R08-005 | negative · candidato | par impresso com `DE*` deve ter saldo netado — não exercido nesta competência |
-| T-R15-01 | BR-R15 | negative · reproduzido | snapshot com timestamp ≠ execução → não declarar produtor |
+| T-R15-01 | BR-R15-002 | negative · refinado | timestamp de persistência ≠ execução — `I_N_S_D_T_` é UTC (−3h local), prova SD3 recno×TTAT |
+| T-R15-02 | BR-R15-002 | positive | rajadas SB9 dentro da janela `MATA280` em 5/5 execuções |
+| T-R15-03 | BR-R15-002 | positive | `I_N_S_D_T_` = TTAT_DTIME +3h exatos (stamp UTC) |
+| T-R15-04 | BR-R15-004 | negative | `SX6010` sem TTAT — writer `MV_ULMES` não auditável |
+| T-R15-05 | BR-R15-003 | positive | SB9@30/09: 4.812 f01 + 3.117 f02, chave única |
+| T-R15-06 | BR-R15-005 | positive | wizard "Concluído 18/09 16:05" ≈ fim MATA280 16:03:52 |
+| T-R15-07 | BR-R15-002 | negative | `SB9010_TTAT_LOG`/`SB2010_TTAT_LOG` vazios all-time |
 
 ---
 
@@ -1326,11 +1433,11 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), **BR-R10-001..005** (seleção Controladoria SD1: digitação+TES-exclusão+MP-out+benefícios-out — corroborada owner doc 56 §Reg.17), **BR-R11-001..005** (binding+seleção 9035/594+CPV-zero estrutural+industrialização-terceiros+impacto-nulo-CPV), **BR-R12-001** (MATA320 rotina+efeito TTAT `B1_CUSTD`), **BR-R12-003** (MATA300 binding SX1 + DEL100 distinto), **BR-R12-004/005** (SB9+`MV_ULMES` no dado; `Analise.xlsx`↔etapa-3↔SB9 98,6%), SB9 snapshot (recorte) |
-| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R08, R09 (layout), BR-R12-002 (wizard: etapas 1–3 `EXECUTION_OBSERVED`, etapa 4 não exibida), R15 (execução) |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), **BR-R10-001..005** (seleção Controladoria SD1: digitação+TES-exclusão+MP-out+benefícios-out — corroborada owner doc 56 §Reg.17), **BR-R11-001..005** (binding+seleção 9035/594+CPV-zero estrutural+industrialização-terceiros+impacto-nulo-CPV), **BR-R12-001** (MATA320 rotina+efeito TTAT `B1_CUSTD`), **BR-R12-003** (MATA300 binding SX1 + DEL100 distinto), **BR-R12-004/005** (SB9+`MV_ULMES` no dado; `Analise.xlsx`↔etapa-3↔SB9 98,6%), SB9 snapshot (recorte), **BR-R15-001/002/003/005/007** (cutoff por filial; cadeia MATA330→MATA280→SB9 por timing+SX1; snapshots íntegros; ciclo de vida do wizard; correções antes da virada) |
+| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R08, R09 (layout), BR-R12-002 (wizard: etapas 1–3 `EXECUTION_OBSERVED`, etapa 4 não exibida), BR-R15-006 (reabertura existe, semântica pendente) |
 | `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 internos da `STP_DELPI_FORMA_PRECO_*` + versão RPO DLP204 + parâmetros efetivos + 27 tempos residuais + divisor desdobramento (E9), R11 finalidade da exclusão (qual apuração recebe o desconsiderar — E11), R10 mapeamento exato da lista narrada 12→13 TES + regra contábil benefícios (E10), R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
-| `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |
+| `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, fonte/RPO MATA280 e writer interno do `MV_ULMES` (R15 — E5 estreitado; atribuição SB9→MATA280 por timing+semântica SX1), fonte `DLP06R01` (E1) |
 | `STALE_EVIDENCE` | contagens DEL100 antigas 724/672 (`EXECUTION_DRIFT`, doc 80 §23.A) |
 
 **Garantia do critério essencial:** as regras **descobertas nesta

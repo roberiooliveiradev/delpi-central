@@ -37,7 +37,7 @@ Para **cada item**, usar seis gates verificáveis, `0/1` cada: **G1** evidência
 | R12 | Acompanha Custos / Reposição / Refaz Saldos | `MATA320` (SX1 `MTA320` + TTAT `B1_CUSTD`), `MATA300` (SX1 `MTA300`), wizard Acompanha Custos (motor MATA330 custom), `DEL100` (auditoria SB9 distinta) | Estoque | `kp04_t10/t11/t12` | PASS | PASS | PASS | **PASS** | INCONCLUSIVE | PENDING | Controladoria + TI/ERP |
 | R13 | Extratos e aplicações bancárias | externa (checklist envio) | Bancos | `kp02_t02/t03` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R14 | Importação / SWIFT / câmbio / ACSI | mista | Importações | `kp03` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R15 | Cutoff / sacramentação / SB9 | fechamento wizard (execução observada vídeo) + SB9 candidato | Estoque | `kp08_t03/t04` | PASS | PASS | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R15 | Cutoff / sacramentação / SB9 | cadeia MATA330→MATA280→SB9 bound (TTAT+SX1+timing); wizard ciclo de vida | Estoque | `kp08_t03/t04` | PASS | PASS | PASS | PASS | INCONCLUSIVE | PENDING | Controladoria + owner da fonte |
 
 **Cada alteração de gate exige referência a uma linha no detalhe (§3), link/ID de artefato, SHA ou versão e data de validação.** G4 SQL requer identificação da tabela e coluna a partir de metadados confirmados, não nome por convenção TOTVS.
 
@@ -113,6 +113,7 @@ SCOPE_CHANGE / SUPERSEDES:
 | 2026-10-23 | CF-C2-R10-CENTRO-CUSTO-SD1-PARITY-001 | Devin (seleção EDAPP reconstruída: `D1_DTDIGIT` mês + 13 TES-out + `D1_TP<>'MP'` + benefícios sem CC-out — 353/353 itens SD1, Σ `D1_TOTAL` 169.704,12 exato; corroborado pelo procedimento owner doc 56 §Reg.17; classe Direto/Ind/Adm = manual pós-exportação) | R10 | G5 R10 (1) | 15 | **44/60 = 73,3%** | **51/90 = 56,7%** | lista exata TES + taxonomia Direto/Ind/Adm + regra benefícios → E10 Controladoria; G6 todos — doc 80 §44, doc 84 §5.4, doc 85 §10 | commit desta rodada |
 | 2026-10-23 | CF-C2-R11-NF-DESCONSIDERAR-SD2-PARITY-001 | Devin (seleção EDAPP reconstruída por identidade de conjunto: `D2_GRUPO='9035'`∩`D2_TES='594'`∩`D2_EMISSAO` set f01 — 11/11 itens SD2, Σ `D2_TOTAL` 97.462,71 exato; "CPV zero" = `F4_ESTOQUE='N'` estrutural, prova TTAT insert `MATA460A` 0→0; 8/11 NFs casam TES 510 custo + TES 594 faturamento — industrialização p/ terceiros) | R11 | G5 R11 (1) | 15 | **44/60 = 73,3%** | **52/90 = 57,8%** | finalidade da exclusão (apuração CPV×ROL×DRE) + eixo filtro EDAPP → E11 Controladoria; G6 todos — doc 80 §45, doc 84 §5.5, doc 85 §10 | commit desta rodada |
 | 2026-10-24 | CF-C2-R12-COST-CLOSING-PROCESS-VERIFY-001 | Devin (vídeo MP4 reinspecionado diretamente: Reposição=`MATA320` SX1 `MTA320` 1:1 + TTAT `B1_CUSTD` 13.201+1.532 writes 30/09; Refaz=`MATA300` SX1 `MTA300` 1:1 + threads `c300P*`; wizard etapas 1-3 observadas, etapa 4 não exibida; `Analise.xlsx`=`B9_CM1`@30/09 1.966/1.994; `MV_ULMES`=20260930 f01+f02; DEL100=auditoria SB9 distinta) | R12 | G4 R12 (1) | 15 | **45/60 = 75,0%** | **53/90 = 58,9%** | writer SB9 + efeitos MATA300 + sequência oficial -> E12 Controladoria/TI-ERP (+E4/E5); G6 todos -- doc 80 §46, doc 85 §11, §11.6 | commit 42c8d81a36 |
+| 2026-10-24 | CF-C2-R15-CUTOFF-SB9-CLOSURE-VERIFY-001 | Devin (cadeia fechamento bound: `I_N_S_D_T_`=UTC provado; MATA280 virada escreve SC2 `C2_VINI*`/`C2_APRINI*` e rajadas SB9 dentro de sua janela 5/5; wizard ciclo de vida correlacionado; MV_ULMES por filial) | R15 | G3+G4 R15 (2) | 15 | **47/60 = 78,3%** | **55/90 = 61,1%** | fonte/RPO MATA280 + writer `MV_ULMES` + reabertura → E5 estreitado/E12; SB9 sem TTAT; G6 todos — doc 80 §47, doc 85 §14, §11.7 | commit desta rodada |
 
 ## 6. Rodada L1.1 — FINR190 (20/10/2026)
 
@@ -371,13 +372,13 @@ Sem mudança nas métricas do tracker; G4/G5/G6 permanecem PENDING/TEST_NOT_RUN 
 | R11 | G1,G2,G3,G4,**G5** | `NF a desconsiderar.xlsb` = export **SD2** (linha 0 = literal `SD2`, headers SX3 `D2_*`; Tipo Saida 594=`D2_TES`, CF 5101); roster EDAPP "NF à desconsiderar" — detalhe §11.1; **G5 rodada 26: seleção reconstruída por identidade de conjunto (11/11 = `D2_GRUPO='9035'`∩`D2_TES='594'`∩emissão set f01) + Σ `D2_TOTAL` 97.462,71 exato + CPV-zero estrutural (`F4_ESTOQUE='N'`, prova TTAT) — §11.5** | 2026-10-23 |
 | R12 | G1,G2,G3,**G4** | vídeo reinspecionado: Reposição=**MATA320** (SX1 `MTA320` 1:1 + TTAT `MATA320`→`B1_CUSTD` 13.201+1.532 writes 30/09 JOICI); Refaz Saldos=**MATA300** (SX1 `MTA300` 1:1, threads `c300P* - Ok`); wizard etapas 1–3 observadas (etapa 4 não exibida); `Analise.xlsx`↔`B9_CM1`@30/09 1.966/1.994 exato (22 `MOD*` estrutural + 6 drift); `MV_ULMES`=20260930 f01+f02; DEL100=auditoria SB9 distinta; MA330OK→SPs DELPI ausentes (E4) — doc 80 §46, doc 85 §11 | 2026-10-24 |
 | R13 | G1 | `Arquivos de envio` checklist: Extratos/XP/BB/Aplicações — externalidade confirmada | 2026-10-23 |
-| R15 | G1,G2 | vídeo 14:47 wizard "Novo fechamento de custo" executado (JOICI, Matriz); SB9 snapshot PROVEN (doc 80 §21) | 2026-10-23 |
+| R15 | G1,G2,G3,**G4** | cadeia `MATA330`→`MATA280`→SB9 provada: `I_N_S_D_T_`=UTC (−3h, prova SD3×TTAT); rajadas SB9 dentro das janelas MATA280 em 5/5 execuções (10/08,18/09,01/10,02/10,21/10); MATA280 escreve `C2_VINI*`/`C2_APRINI*`; wizard "Concluído 18/09 16:05" ≈ fim virada 16:03:52; f01-set virada só em 21/10 (correções precedem snapshot); G5 `INCONCLUSIVE` (SB9/SX6 sem TTAT; writer interno `MV_ULMES` e reabertura pendentes — E5 estreitado) — doc 80 §47, doc 85 §14 | 2026-10-24 |
 
-**Não promovidos:** G4 de R02 (produtor custom `DLP06R01` sem fonte no acervo — §11.1), R03/R15 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos exceto R01/R02/R05/R06/R07/R08/R10/R11 (paridade monetária integral pendente — R09 `INCONCLUSIVE` r24: 4.449/4.476 tempos + SP interna → E9; R10 PASS r25 §11.4; R11 PASS r26 §11.5; R12 `INCONCLUSIVE` r27 §11.6: execução MATA320 verificada mas cadeia SB9 sem writer + etapa 4 não exibida); G6 de todos (exige aceite humano).
+**Não promovidos:** G4 de R02 (produtor custom `DLP06R01` sem fonte no acervo — §11.1) e R03 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos exceto R01/R02/R05/R06/R07/R08/R10/R11 (R09 `INCONCLUSIVE` r24; R10 PASS r25; R11 PASS r26; R12 `INCONCLUSIVE` r27 §11.6; R15 `INCONCLUSIVE` r28 §11.7: cadeia provada mas insert SB9 não auditável + writer `MV_ULMES`/reabertura pendentes); G6 de todos (exige aceite humano).
 
 **Resoluções desta rodada:** `DLP06R01.prt`/`nat.prt` = **layouts** do relatório de baixas (pagos **e** recebidos) — o mesmo `.prt` é usado por rotinas distintas; para pagar, produtor = FINR190 com fonte+WHERE provados; para receber, produtor = custom `DLP06R01` **sem fonte no acervo** (FINR190 descartado pelo WHERE, doc 80 §17.D); P7 = "Registro de Inventário Modelo P7"/MATR460 com artefatos e duas emissões/escopos (E2 estreitado); execução do fechamento observada (E5 estreitado); doc 71 candidato→confirmado; docs 76/77 paths resolvidos (CC matriz=SD1, Analise=variação CM).
 
-**Métricas (após rodada 27 — R12 fechamento de custos):** `COLETA = 45/60 = 75,0%`; `AUDITORIA = 53/90 = 58,9%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
+**Métricas (após rodada 28 — R15 cutoff/SB9):** `COLETA = 47/60 = 78,3%`; `AUDITORIA = 55/90 = 61,1%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`. (r27 R12: 45/60, 53/90)
 
 **Residuais por owner** (doc 83 §5, doc 82 §2, doc 84): fonte do relatório de receber `DLP06R01` custom (R02 G4, TI/ERP); subconjunto do log de inconsistências dos relatórios de baixas e versão RPO do FINR190 (TI/ERP); parâmetros da emissão resumida P7 + suas linhas de produto + fonte `matr460.prx`/RPO (R03 — totalização provada r15; hipótese poder3 ~99,99% estoque com Δ76,43 r17 — não é regra oficial, r18); artefato de consumo por OP (R04, Controladoria); **versão RPO MATR910 + parâmetros efetivos das emissões kardex (R06/R07 — E7; G4/G5 já PASS pela reconstrução)**; **fonte `matr989.prx`/RPO + parâmetros efetivos + semântica intra-dia do corte de OP + neteo `DE*` não exercido (R08 — E8; G4/G5 já PASS pela reconstrução)**; sequência oficial R12 + efeitos MATA300 + rotina "Refaz DIT" (E12, Controladoria/TI-ERP); **SP `STP_DELPI_FORMA_PRECO_*` + RPO/parâmetros DLP204 + 27 tempos + divisor desdobramento + 7 MODs sem SBZ (R09 — E9; G4 PASS pela reconstrução, G5 `INCONCLUSIVE`)**; prova de qual passo grava SB9 (R15); DDL views + jobs/SPs (DBA E3/E4); importação (R14); aceite funcional G6 de todos os itens (Controladoria). ~~Residual MP ~R$950~~ **eliminado** — ponte por produto fecha 100% do Δ +8.631,73 (doc 80 §33.B).
 
@@ -547,3 +548,18 @@ etapa 4 (fechamento efetivo) não demonstrada; efeito MATA300 sem
 rastro físico; execução exibida é demonstração, não homologação.
 Residual → E5/E4/E12. Data: 2026-10-24. Detalhe: doc 80 §46, doc 85
 §11, doc 82 E12.
+
+### 11.7 — R15 · Cutoff / sacramentação / SB9 (rodada 28)
+
+**R15 — G3 PASS · G4 PASS · G5 INCONCLUSIVE.** `I_N_S_D_T_` provado em UTC
+(Δ +3h vs `TTAT_DTIME`, via SD3 recno×TTAT). Cadeia: `MATA330` (JOICI +
+serviço; SD3/SC2/SD2) → `MATA280` (virada; serviço; SC2 `C2_VINI1`,
+`C2_VINIRP1`, `C2_APRINI1/2/3`) → rajada `SB9`. Todas as 5 rajadas SB9 de
+2026 caem dentro das janelas MATA280 (10/08 coincidente total; 18/09, 01/10,
+02/10, 21/10 ±4s). Wizard `Fechamentos`: Concluído 18/09 16:05 ≈ fim virada
+16:03:52; cancelados não geram SB9; f02-ago ficou em "Análise e revisão" até
+01/10. `MV_ULMES` por filial (f01=f02=20260930). Etapa 4 não exibida;
+`SB9010_TTAT_LOG`/`SX6` sem auditoria — insert SB9 e writer de `MV_ULMES`
+não auditáveis por log (E5 estreitado a RPO/função; E4; E12 reabertura).
+Errata interna da r27: a "divergência temporal" SB9 era fuso UTC↔local do
+`I_N_S_D_T_`, não regravação tardia.

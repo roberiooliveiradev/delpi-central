@@ -154,9 +154,9 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 Nenhuma evidência nova na pasta. Gates: todos PENDING.
 
-### R15 — Cutoff / sacramentação / SB9 — **PARCIAL**
+### R15 — Cutoff / sacramentação / SB9 — **RECONCILIADO (G3/G4 PASS; G5 `INCONCLUSIVE`)**
 
-Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento de custo", 14:47, JOICI, Matriz) — `EXECUTION_OBSERVED` do processo de fechamento. SB9 = snapshot mensal de SB2 (PROVEN, §21). Ligação wizard→gravação SB9 **não byte-provada**: timestamps de inserção B9 (f02 02/10, f01 21/10) não coincidem com a execução observada 30/09 14:47 — hipóteses: reexecução posterior ("Refazer cálculo"), etapa distinta do wizard, ou rotina separada. Gates: **G1 PASS · G2 PASS · G3 PENDING · G4 PENDING · G5/G6 PENDING**.
+Rodada 28 (doc 80 §47, doc 85 §14): **cadeia produtora identificada** — `MATA330` (Recálculo do Custo Médio; JOICI+serviço) → `MATA280` (Virada de Saldos; SX1 `MTA280` "Gera Saldo Inicial"; serviço) → rajada `SB9`. Prova-chave: `I_N_S_D_T_` grava **UTC** (Δ +3h vs `TTAT_DTIME` local, via SD3 recno×TTAT) — a "divergência temporal" anterior era fuso do timestamp. Em horário local, **5/5 rajadas SB9 de 2026 caem dentro das janelas MATA280** (10/08 coincidente; ±4s em 02/10 e 21/10). MATA280 também grava saldos iniciais de OP (`SC2.C2_VINI1`/`C2_VINIRP1`/`C2_APRINI*`). Wizard `Fechamentos` persiste ciclo de vida (Concluído 18/09 16:05 ≈ fim virada 16:03:52); cancelados não geram SB9; f02-ago parado em "Análise e revisão" até virada 01/10. `MV_ULMES` por filial = 20260930; SX6 sem auditoria → writer de `MV_ULMES` e semântica de `Reabertura` pendentes (E5 estreitado/E12). SB9/SB2 sem TTAT — insert não auditável por log. Gates: **G1·G2·G3·G4 PASS · G5 `INCONCLUSIVE` · G6 PENDING**.
 
 ## §5 — Efeito nas pendências (doc 82)
 
@@ -166,13 +166,13 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | E2 (P7/MATR460) | **Substancialmente respondido (rodada 15):** artefato oficial + rotina observada + roster MATR460 + **binding de totalização provado** (EM ESTOQUE = saldo ex-`MV_LOCPROC` no `as_of`; EM PROCESSO = MATR989 — doc 80 §33.D). Residual: parâmetros efetivos por emissão (filtro tipos/armazém/`as_of`), fonte `matr460.prx`/variante, binding por produto/armazém, export p/ paridade. |
 | E3 (DDL views) | mantido — DBA |
 | E4 (jobs/SPs) | mantido — DBA |
-| E5 (rotina SB9) | **estreitado:** execução do fechamento observada (wizard, 14:47); falta provar qual passo grava SB9 e por que B9_I_N_S_D_T_ diverge (02/10 e 21/10). |
+| E5 (rotina SB9) | **estreitado (rodada 28):** cadeia `MATA330`→`MATA280`→SB9 provada por TTAT+SX1+timing (rajadas dentro da janela MATA280 5/5); falta apenas confirmação da função interna/RPO do MATA280 que insere SB9 e avança `MV_ULMES` — SB9/SX6 não auditáveis por TTAT. |
 | E6 | decidido (opção C — doc 81); pendências E6-D1..D6 conforme doc 82. |
 | E7 (RPO MATR910) | mantido — TI/ERP (R06/R07 G4/G5 já PASS pela reconstrução). |
 | E8 (MATR989) | **novo (rodada 22):** fonte `matr989.prx`/RPO + parâmetros efetivos da emissão + semântica intra-dia do corte de OP — TI/ERP (R08 G4/G5 já PASS pela reconstrução física; doc 80 §41/§42). |
 | E10 (R10 CC matriz) | **novo (rodada 25):** lista exata de TES excluídos (narrada 12 vs observada 13 — `016`/`159`), filtro/consulta EDAPP preservada, regra de benefícios (colaborador×empresa) e owner da taxonomia Direto/Ind/Adm — Controladoria (R10 G5 já PASS pela reconstrução física; doc 80 §44, doc 82 E10). |
 | E11 (R11 NF desconsiderar) | **novo (rodada 26):** qual apuração recebe o desconsiderar (CPV×ROL×DRE), regra×exceção por documento e eixo do filtro EDAPP — Controladoria (R11 G5 já PASS por identidade de conjunto; doc 80 §45, doc 82 E11). |
-| E12 (R12 fechamento) | **novo (rodada 27):** sequência oficial/checkpoints, identidade da rotina "Refaz por DIT terceiros", efeitos do MATA300 (`Recalcular` MOD), papel do `MV_ULMES` — Controladoria + TI/ERP (R12 G4 já PASS; doc 80 §46, doc 82 E12). |
+| E12 (R12/R15 fechamento) | sequência oficial/checkpoints, identidade da rotina "Refaz por DIT terceiros", efeitos do MATA300 (`Recalcular` MOD), papel do `MV_ULMES`, **semântica da `Reabertura de estoque` e critério de homologação** (E12.6/E12.7 — rodada 28) — Controladoria + TI/ERP (doc 80 §46/§47, doc 82 E12). |
 
 ## §6 — Divergências e notas de rigor
 
@@ -201,7 +201,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R12 Acompanha/Rep/Refaz | RECONCILIADO PARCIAL | `MATA320` (reposição→`B1_CUSTD`, TTAT), `MATA300` (refaz saldos), wizard Acompanha Custos (motor MATA330 custom), `DEL100` (auditoria SB9), `Analise.xlsx`↔SB9 98,6% | G1,G2,G3,**G4** (G5 `INCONCLUSIVE` — writer SB9/etapa-4/efeito MATA300 pendentes) |
 | R13 Extratos/aplicações | BLOQUEADO | externa | G1 |
 | R14 Importação | BLOQUEADO | — | — |
-| R15 Cutoff/SB9 | PARCIAL | fechamento wizard (execução observada) | G1,G2 |
+| R15 Cutoff/SB9 | RECONCILIADO | cadeia `MATA330`→`MATA280`→SB9 + wizard ciclo de vida + `MV_ULMES` por filial | G1,G2,G3,G4 (G5 `INCONCLUSIVE`) |
 
 \* Revisão 23/10 (doc 47 §11.1): rótulo VALIDADO retirado — evidência de rotina+artefato cobre G1–G3; G4/G5/G6 permanecem abertos para todos os itens.
 

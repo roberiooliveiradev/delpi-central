@@ -97,11 +97,11 @@ população; G6 exige homologação funcional da Controladoria.
 
 | Campo | Conteúdo |
 |---|---|
-| Evidência atual | **Execução observada em 23/10:** vídeo 14:47 mostra o wizard "Acompanha Custo → Novo fechamento de custo" (4 etapas) sendo executado em produção por JOICI/Matriz na competência 09/2026. Porém `B9_I_N_S_D_T_` marca inserções f02=02/10 17h e f01=21/10 19h — **divergentes da execução de 30/09 14:47** (reexecuções? etapa distinta?). Hooks `MA330OK`/`STP_DELPI_*` = capacidade de fonte (§22.D) |
-| Lacuna objetiva | qual passo/rotina efetivamente grava as linhas SB9 e por que os timestamps de inserção divergem da execução observada; papel das SPs pós-fechamento |
-| Fonte esperada | log de execução do fechamento (wizard/Event Viewer/appserver) da competência 09/2026 + identificação do passo que escreve SB9 |
-| Impacto PROC-0072 | transforma "snapshot observado" em "produtor identificado" — destrava R12/R15 |
-| Critério de aceite | `EXECUTION_OBSERVED` (log/schedule datado da escrita SB9) + `CODE_DEPLOYED` |
+| Evidência atual | **Cadeia identificada (rodada 28, doc 80 §47):** `MATA330` (JOICI+serviço) → `MATA280` (virada; serviço) → rajada SB9. `I_N_S_D_T_` é **UTC** (prova SD3×TTAT Δ+3h) — a "divergência" era fuso. Rajadas SB9 caem dentro das janelas MATA280 em 5/5 execuções (10/08, 18/09, 01/10, 02/10, 21/10; ±4s). MATA280 escreve saldos iniciais de OP (`C2_VINI1`, `C2_VINIRP1`, `C2_APRINI1/2/3`); SX1 `MTA280` declara "Gera Saldo Inicial". SB9/SB2/SX6 sem auditoria TTAT — insert SB9 não auditável por log |
+| Lacuna objetiva | confirmação formal de que a **função interna do MATA280** (RPO vigente) é a que insere SB9 e avança `MV_ULMES`; papel das SPs pós-fechamento (`MA330OK`/`STP_DELPI_*`) |
+| Fonte esperada | `sp_helptext`/RPO do MATA280 ou log de execução do wizard (Event Viewer/appserver) vinculando a virada à competência 09/2026 |
+| Impacto PROC-0072 | converte o binding temporal ±4s em prova de linha de código — encerra E5 e a atribuição do writer |
+| Critério de aceite | `CODE_DEPLOYED` (fonte/RPO MATA280 com write SB9/`MV_ULMES`) ou `EXECUTION_OBSERVED` (log datado do passo) |
 
 #### E7 — Versão implantada do MATR910 + parâmetros efetivos do kardex
 
@@ -257,6 +257,8 @@ investigação.
 | E12.3 | **Efeitos do MATA300** (`Zera saldo/CM MOD = Recalcular`) — campos e tabelas efetivamente regravados; papel dos threads `c300P*`; se há persistência do log de SPs | Threads `- Ok` visíveis; campos `B2_*`/SB9 sem auditoria TTAT → efeito físico `PENDING_EVIDENCE` |
 | E12.4 | **`MV_ULMES` como evidência de fechamento** — o avanço do marcador é condição suficiente de conclusão para a Controladoria? | `MV_ULMES`=`20260930` f01+f02 + SB9 persistido nas duas filiais; etapa 4 do wizard não exibida no vídeo |
 | E12.5 | **Tratamento de falhas/correções** — como a Análise e revisão sinaliza erros (status/moeda) e o que dispara `Refazer cálculo`/`Cancelar fechamento` na prática | Grade de status por moeda observada; EventViewer mencionado na etapa 2; critério de limiar de variação não visível |
+| E12.6 | **Semântica da `Reabertura de estoque`** (botão na lista `Fechamentos`) — o que reverte (MV_ULMES? SB9? status), quem autoriza, rastreabilidade | Botão presente (frame 02:05); owner reportou reabertura+recálculo para divergência de período anterior (doc 56 Complemento Reg.12); nenhuma execução observada |
+| E12.7 | **Critério de homologação do fechamento** — qual estado do wizard/dado marca a competência como aceita para a Controladoria (diferenciar virada técnica de aceite) | Ciclo de vida observado (Concluído/Cancelado/Análise e revisão); "Concluído" = virada técnica — não homologação formal |
 
 | Campo | Conteúdo |
 |---|---|
@@ -278,7 +280,7 @@ investigação.
 | R10 CC matriz (SD1 EDAPP) | **seleção reconstruída + paridade PROVEN** (353/353 itens, Σ `D1_TOTAL` 169.704,12 exato; digitação+13 TES-out+MP-out+benefícios-out — corroborado owner doc 56 §Reg.17; G5 PASS); residual: lista exata TES + taxonomia Direto/Ind/Adm — **E10** |
 | R11 NF desconsiderar (SD2 EDAPP) | **seleção reconstruída por identidade de conjunto + paridade PROVEN** (11/11 = `D2_GRUPO='9035'`∩`D2_TES='594'`∩emissão set f01; Σ `D2_TOTAL` 97.462,71 exato; CPV-zero estrutural `F4_ESTOQUE='N'` prova TTAT; G5 PASS); residual: finalidade da exclusão — **E11** |
 | R12 fechamento de custos | **bindings PROVEN** (Reposição=`MATA320` via SX1 `MTA320` + TTAT `B1_CUSTD` 13.201+1.532 writes 30/09 JOICI; Refaz=`MATA300` via SX1 `MTA300` + log threads `c300P*`; wizard etapas 1–3 observadas; `Analise.xlsx`↔SB9 98,6% com Δ explicado; `MV_ULMES`=20260930 f01+f02; G4 PASS, G5 `INCONCLUSIVE`); residual: sequência oficial + efeitos MATA300 + rotina DIT — **E12** |
-| SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) — **reforço 23/10:** onda retificadora de ~20-21/10 confirmada por RECNO (SD1 doc `<NF-RETIF-A>` sanitizado reclassificado 001→085 + SB9 f01 inserido 21/10 19:13) — corrobora "reexecução/etapa distinta" sem identificar o writer |
+| SB9 | snapshot SB2 PROVEN; **writer = `MATA280` (virada)** — rajadas dentro das janelas MATA280 em 5/5 (doc 80 §47; `I_N_S_D_T_`=UTC); E5 estreitado a confirmação RPO/função interna |
 | MATR320 (R05) | **fonte localizado 23/10:** `matr320.prx` padrão TOTVS (execução via SP `MAT056`; variante `DLPR320` descartada por poder3 zerado no fonte × não-zerado no PDF). Colunas MP reconciliadas 12/13 ao centavo em estado de emissão (doc 84 §4.2, doc 80 §31, regras doc 85 §5); residual: MovInt ~R$0,48 e `as_of` do saldo |
 | DLP06R01, P7 | **parcialmente resolvidos 23/10** — DLP06R01.prt=layout compartilhado (pagar: produtor FINR190 provado; receber: custom `DLP06R01` sem fonte — E1 pendente); P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |
 | Doc 47 | crosswalk doc 83 + §11/§11.1/§11.2: **39/60 = 65,0% coleta · 41/90 = 45,6% auditoria** — 37 gates 23/10 (rework) + G5 de R01/R02 (paridade row-level, doc 84) |

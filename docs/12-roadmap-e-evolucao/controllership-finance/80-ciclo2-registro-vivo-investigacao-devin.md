@@ -2999,3 +2999,119 @@ Nenhum contrato de status/orquestração de fechamento existe —
   obrigatórios; identidade formal da rotina "Refaz por DIT terceiros";
   confirmação dos efeitos do MATA300 (`Recalcular` MOD); papel do
   `MV_ULMES` como evidência de fechamento concluído.
+
+---
+
+## §47 — R15: cutoff, sacramentação e writer do SB9 (rodada 28 — 2026-10-24)
+
+Registro append-only da rodada `CF-C2-R15-CUTOFF-SB9-CLOSURE-VERIFY-001`.
+Investigação técnica sobre TTAT, dicionários SX1/SX6/SX2, triggers,
+timestamps físicos e reinspeção do vídeo. Zero DML/DDL/job.
+
+### §47.A — Descoberta estrutural: `I_N_S_D_T_` é UTC
+
+- `SB9.I_N_S_D_T_` (e `SD3.I_N_S_D_T_`) gravam **UTC**, não horário local.
+- Prova: `SD3010` recnos escritos por `MATA241` em 02/10 — `TTAT_DTIME`
+  14:01:45,xxx (local) vs `I_N_S_D_T_` 17:01:45 (UTC) — **Δ = +3h exatos**.
+- Consequência: todas as "rajadas SB9 ~3h após o fechamento" da rodada
+  anterior são, em horário local, **coincidentes com a execução da virada**.
+  A divergência temporal da §46 era artefato de fuso do timestamp físico.
+
+### §47.B — Cadeia produtora do fechamento — identificada
+
+`MATA330` (Recálculo do Custo Médio; SX1 `MTA330`, 21 perguntas) →
+`MATA280` (Virada de Saldos; SX1 `MTA280`: "Gravar Dados Em Arquivos?",
+"**Gera Saldo Inicial** para MOD?", "Seleciona Filial?", "Atualiza Saldo
+Atual MOD?") → snapshot `SB9` + saldos iniciais de OP (`SC2`).
+
+Evidências TTAT (`CAST(TTAT_DTIME AS DATE)`):
+
+| execução | MATA330 (janela local) | MATA280 (SC2 TTAT) | rajada SB9 (UTC→local) |
+|---|---|---|---|
+| 10/08 jul f01+f02 | — | 15:45–17:11 | 18:45–20:11 UTC = 15:45–17:11 **idêntica** |
+| 18/09 ago f01 | 14:35–16:00 | 14:42–16:03 | 19:03 UTC = 16:03 local |
+| 01/10 ago f02 | 16:01–17:55 | 16:29–17:45 | 20:44 UTC = 17:44 local |
+| 02/10 set f02 | 14:35–14:46 | 14:58:05–12 | 17:58 UTC = 14:58 local (2–4s antes do burst SC2) |
+| 21/10 set f01 | 07:52–16:12 | 16:13:44–50 | 19:13 UTC = 16:13 local (2–4s antes do burst SC2) |
+
+- MATA330 executado por **JOICI** (192.168.1.23) + serviço (192.168.1.231);
+  MATA280 sempre como serviço (`TTAT_USER` em branco) — consistente com
+  virada server-side disparada pelo wizard (etapa 4) ou agendamento.
+- MATA280 escreve em SC2 os campos de **saldo inicial da OP** (`C2_VINI1`,
+  `C2_VINIRP1`, `C2_APRINI1/2/3`, tipo N) — assinatura funcional da virada.
+- Em 02/10 e 21/10 o MATA330 já havia terminado quando a rajada SB9 ocorreu
+  → SB9 se liga a MATA280, não a MATA330 (critério discriminatório).
+- `SB9010_TTAT_LOG` e `SB2010_TTAT_LOG` vazios all-time; trigger
+  `SB9010_STAMP` habilitada não popula log; definição do trigger não legível
+  pela permissão → a escrita SB9 em si **não é auditável por TTAT**.
+- Classificação: cadeia `PROVEN` por execução+SX1+timing±4s; atribuição do
+  insert SB9 à função interna de virada do MATA280 permanece binding
+  temporal forte (E5 estreitado a confirmação de RPO/função).
+
+### §47.C — Wizard "Acompanha Custos" — ciclo de vida persistido
+
+- Frame 02:05 (reinspeção direta): lista `Fechamentos` com `Iniciado em`,
+  `Iniciada na`, `Status`, `Concluído em`/`Cancelado em`/`Progresso atual`:
+  - f01-ago: iniciado 18/09 15:52 → **Concluído 18/09 16:05** ≈ fim
+    MATA280 16:03:52 (Δ~1min).
+  - f01-ago: iniciado 17/09 13:39 → Cancelado 18/09 14:30.
+  - f02-ago: iniciado 03/09 09:43 → **"Análise e revisão" 50%** (parado)
+    — virada f02-ago só ocorreu 01/10.
+  - f01-ago: iniciado 01/09 10:25 → Cancelado 17/09 13:38.
+- Botões: `Novo fechamento`, `Configurar parâmetros`, `Reabertura de
+  estoque`. Etapa 2: `Cancelar fechamento`/`Refazer cálculo`/`Próximo
+  passo` + texto sobre EventViewer (progresso salvo automaticamente).
+- Etapa 4 `Fechamento`: novamente **não exibida** (verificado 50:00 e
+  54:35 — Excel/conferências e encerramento da chamada).
+
+### §47.D — Linha do tempo set/2026 por filial (horário local)
+
+**f02:**
+- 30/09 ~15h: demo do processo (vídeo; sem virada).
+- 02/10 14:35–14:46 MATA330 → 14:58 MATA280 → **SB9 set f02 14:58:01–03**
+  (3.117 linhas) → `MV_ULMES` f02 = 20260930.
+
+**f01:**
+- 30/09 14:34–18:00 MATA330 (JOICI) — cálculo da demo; sem MATA280, sem
+  SB9 set naquele dia.
+- ~20-21/10: onda retificadora da competência (doc §§anteriores).
+- 21/10 07:52–16:12 MATA330 (JOICI, reprocessamento) → 16:13:44 MATA280 →
+  **SB9 set f01 16:13:40–42** (4.812 linhas) → `MV_ULMES` f01 = 20260930.
+
+Resposta à pergunta "por que timestamps distintos": as filiais foram
+fechadas em execuções separadas — f02 em 02/10 e f01 em 21/10 após
+correções retroativas (reprocessamento precede a virada).
+
+### §47.E — Sacramentação — estados distinguíveis
+
+| estado | evidência verificável | set/2026 |
+|---|---|---|
+| cálculo executado | MATA330 TTAT + wizard etapa 2 a 100% | ✔ 30/09 e 21/10 |
+| resultado produzido | `Analise.xlsx`↔SB9 98,6% | ✔ |
+| persistido | rajada SB9 + `MV_ULMES` + wizard "Concluído" | ✔ f02 02/10, f01 21/10 |
+| conferido | reconciliações R01–R11 (P7/kardex/CC/CPV) | parcial — homologação formal não documentada |
+| homologado | aceite Controladoria | `PENDING` (G6) |
+
+### §47.F — Reuso
+
+`stock_value_official_closure_sql`/`stock_value_historical_sql` (SB9 por
+`B9_DATA`) — `REUSE_CONFIRMED`; `standard_cost` (`B1_CUSTD`) —
+`REUSE_CONFIRMED`; nenhuma leitura de `MV_ULMES` na api-delpi (ausente, não
+contraditório); `GET /supplies/cpv` — `REUSE_PARTIAL`. Orquestração/status
+de fechamento no Portal: `TARGET` — nada criado.
+
+### §47.G — Gates e residuais
+
+- R15: **G3 PENDING→PASS** (cutoff por filial, regra "só posterior ao último",
+  escopo/artefatos demonstrados); **G4 PENDING→PASS** (cadeia MATA330→MATA280→
+  SB9 identificada com execução TTAT + binding temporal ±4s + semântica SX1);
+  **G5 INCONCLUSIVE** (insert SB9 não auditável; writer interno de
+  `MV_ULMES` e semântica de reabertura pendentes); G6 PENDING.
+- Métricas: coleta 45→**47/60 = 78,3%**; auditoria 53→**55/90 = 61,1%**;
+  concluídos 0/15.
+- E5 (TI/ERP/DBA): estreitado — confirmar fonte/RPO do MATA280 e a função
+  interna que grava SB9/`MV_ULMES` (a cadeia está provada; falta a linha de
+  código). E4 (DBA): SPs/jobs seguem inacessíveis. E12 (Controladoria+TI/ERP):
+  critério de homologação, reabertura e checkpoints.
+- `SB9010` backups históricos (`SB9010_201902`, `*_BKP_*`) confirmam
+  prática de virada consolidada desde 2019 — mecanismo estável.
