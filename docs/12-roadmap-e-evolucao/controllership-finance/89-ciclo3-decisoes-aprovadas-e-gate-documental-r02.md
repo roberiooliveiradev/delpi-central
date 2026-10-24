@@ -69,3 +69,16 @@ A redação de estados deverá ser testável, PT-BR, sem reduzir todo o fluxo à
 - Para runtime: gate transversal explícito e autorização separada page-by-page, após review, ownership, RQ/AC e decisões remanescentes.
 
 **Próximo resultado esperado:** `GPT REVIEW → decisão sobre gate de design/contratos → eventual autorização de implementação específica`, nunca execução automática.
+
+
+## 6. Esclarecimento de alcance — crosswalk PROC-0072 E2E (2026-10-24)
+
+Após consulta direta ao TÉO/Transformômetro PROC-0072 (docs 31, 31.1–31.19 e 33), confrontada com o ledger [23](./23-ledger-rq-ac-testes.md) e o contrato P5 [37](./37-p5-submissao-e-revisao-no-portal.md), registra-se o alcance **sem alterar as seis decisões C3-D01..D06**:
+
+- A escolha C3-D01=A e as demais opções delimitam **apenas a primeira fatia read-only de design**; não reduzem a funcionalidade inteira à consulta de SB9/SE5.
+- O **TARGET funcional da Central de Fechamento permanece P1–P6**: cockpit, checklist/evidências e aceites de PDFs, cutoff/conciliação, classificações/pendências, versão/submissão/review humano dos pacotes, administração/notificações.
+- A submissão P5 aprovada é **portal-first** (reviewers autenticados na Minha DELPI); e-mail é canal de notificação sem pacote anexo ([37](./37-p5-submissao-e-revisao-no-portal.md)). A validação de anexo P2, a revisão do pacote P5 e G6 do inventário de relatórios são aceites distintos.
+- “V1” em documentos de P1–P6 significa TARGET funcional V1; “primeira fatia C3” é incremento read-only. Confundir os escopos é EXECUTION_DRIFT documental, não autorização para reabrir decisões TO-BE anteriores.
+- A especificação TO-BE completa e o alinhamento por RQ/AC/contratos/gaps constam do [doc 90](./90-ciclo3-crosswalk-end-to-end-proc0072-teo-rq-ac-portal.md). Contratos físicos de P2/P5, T03/T05 e gate de runtime permanecem pendentes.
+
+**Não houve nova decisão de produto nem GO de implementação.** Para o próximo brief, consultar primeiro o crosswalk E2E, depois aplicar a fatia específica e os gates por página.
