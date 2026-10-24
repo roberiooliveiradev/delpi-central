@@ -146,3 +146,17 @@ Nota de evidência: o probe injeta goal/argumentos deterministicamente — prova
 - `DEPLOY_STATUS=BLOCKED_PENDING_AUTHORIZATION`.
 - `PROD_HOMOLOGATION=NOT_EXECUTED` — matriz produtiva com `moonshotai/kimi-k3` + DAVI real permanece gated; outcomes de negócio só serão declaráveis após homologação produtiva.
 - `R3_AUTHORIZED=NO`. `PLAN_COMPLETE=NO`. `EXECUTION_DRIFT=NONE`.
+
+
+## 9. Parecer independente de readiness — Coordenação (2026-10-23)
+
+**REVIEWED_SHA:** `fd0f9ae28862f8df61eb91c0a37fef5b16a791ee`  
+**VERDICT:** `ACCEPT_WITH_RESIDUAL` para **readiness técnico**, não para homologação produtiva.  
+**DEPLOY_AUTHORIZATION:** `NOT_GRANTED` nesta revisão; depende de autorização explícita PO para este release e ambos os serviços.  
+**R3_AUTHORIZED:** `NO`.
+
+**Revisão GitHub:** commit e doc 138 examinados: houve apenas ajuste de guarda de teste `api-delpi/tests/test_google_sheets_routes_live.py`, indexação README e ledger, sem diff produtivo de `delia-api` ou `api-delpi` nesta task. As suítes `6034 passed/10 skipped/exit 0` e `2202 passed/3 skipped/exit 0`, além dos probes dev, foram executadas e **reportadas pelo executor**, não repetidas independentemente por esta coordenação. O skip da integração Google Sheets opcional não comprova seu outcome quando configurada.
+
+**G3:** aceite técnico do harness derivado para testes, com git+gitdir e rede/env corretos, sem inflar a imagem produtiva. **G5:** aceite condicionado da elevação documentada do soft budget para 20 KiB, frente a `17151 B` medidos e envelopes wire intactos no ambiente de desenvolvimento. Sem bound de runtime em `discover` continua como **residual de defesa em profundidade**, proprietário DAVI/api-delpi; CI gate e corpus governado pinado reduzem o risco presente, mas não tornam payload arbitrário seguro nem dispensam reavaliação de alteração futura. Não afirmar runtime-fail-closed para esse envelope.
+
+**Readiness:** `READY_FOR_PO_OPERATIONAL_AUTHORIZATION` com ressalvas — congelar SHA e verificar novamente o diff por serviço imediatamente antes do deploy (main é concorrente), imagem/digest/rollback, escopo e autorização para ambos `delia-api` e `api-delpi`. Sem consentimento específico, `DEPLOY_STATUS=BLOCKED_PENDING_AUTHORIZATION`. Após consentimento, implantar exclusivamente via procedimento autorizado e homologar com `kimi-k3`, DAVI real, D5-R/D5-schema/D8-R, negativos/AuthZ e outcomes; rollback se regressão material. O aceite da prontidão não prova resultados produtivos e não autoriza R3.
