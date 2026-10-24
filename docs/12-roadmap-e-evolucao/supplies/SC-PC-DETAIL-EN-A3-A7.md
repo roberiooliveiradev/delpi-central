@@ -91,3 +91,10 @@
 - Recebimentos em «Acompanhamento» exibem eventos derivados, não trilha
   completa (aprovações/alterações continuam lacuna documentada).
 - Smoke autenticado: `INCONCLUSIVE` até evidência de sessão federada.
+
+
+## Parecer GPT — aceite técnico e publicação (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para EN.A3–A7 em código; deploy `PASS_DEPLOYED` reportado pelo executor; smoke autenticado `INCONCLUSIVE`.** Inspecionados no commit `a4def81ee7`: `PurchaseRequestDetailPage.tsx`, `PurchaseOrderDetailPage.tsx`, `purchase-requests/query.ts` e este registro. Estão presentes seções de itens, pedidos vinculados, recebimentos e acompanhamento via kit; conta contábil e fornecedor sugerido por item, links SC↔PC e copy neutra D1. Os resultados de 460 testes, build/typecheck e detalhes do deploy são relatados pelo executor e não foram reexecutados nesta revisão.
+
+**Residuais conhecidos e aceitos:** (1) a navegação PC→SC utiliza filial do PC porque o contrato não informa filial da SC de origem; um vínculo interfilial pode retornar consulta não localizada; tratar 403/404 de modo neutro, não inferir inexistência; (2) `buyer: null` é residual informativo do produtor; (3) timeline é derivada, não auditoria; (4) não há evidência de QA autenticado desktop/mobile/teclado no runtime. **Não reabrir inventário para esses pontos sem evidência de defeito real.** EN.A3–A7 concluídas em código, mas **`GATE-FEATURE` permanece `INCONCLUSIVE`** até evidência de jornada autenticada. Próximo passo: homologação visual única SC→PC→recebimentos e correções pontuais que ela revelar; nenhuma Fase B–D foi autorizada.
