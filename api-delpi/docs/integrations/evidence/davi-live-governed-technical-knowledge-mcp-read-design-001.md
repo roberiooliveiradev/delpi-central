@@ -115,4 +115,5 @@ Direção aprovada: oferecer **inteligência técnica viva** para consumidores M
 - **Tópicos V2:** `mp_description_standards` (TERM., famílias, estrutura de descrição) e `pi_intermediate_codes` (família 50xx, bitola, cor, terminais). O documento MP documenta explicitamente `TERM. BALA` — evidência normativa para o caso terminal bala da DÉLIA (O2), ainda pendente de homologação pela Trilha B.
 - **Discovery:** marcadores conceituais genéricos estendidos em `concept_intent_guard.py` ("o que é", "como funciona", "quais são as normas/regras/abreviações", "existe norma"), sem termos de domínio nem operationIds; seleção por descrição/aliases dos tópicos publicados.
 - **Residuais inalterados:** provider Files K01–K10 `TEST_NOT_RUN`; `SECOND_USER_AUTHZ=TEST_NOT_RUN`; DÉLIA O2 e R4 seguem nos gates da Trilha B.
+- **Deploy V2:** `fc9f04988c` → imagem `b6e8366a00f4`, rollback `davi-knowledge-v2-rollback-fc9f0498`. Smoke produtivo PASS: AuthZ negativa 401, 2 tools/0 resources, MP/PI reais recuperados com proveniência, V1 íntegro, `TERM. BALA` presente na norma.
 
