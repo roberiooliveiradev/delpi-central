@@ -1,0 +1,60 @@
+# DAVI — Inteligência técnica viva via MCP existente (decisão de produto / contrato pré-implementação)
+
+**TASK_ID:** `DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01`  
+**DATA:** 2026-10-24  
+**DISCOVERY_HEAD:** `d849f53abc6b81aad089f2ee55433d0519c742c9` (revalidar no trabalho executor)  
+**STATE:** `PRODUCT_DIRECTION_APPROVED; CONTRACT_AND_OWNER_GATES_PENDING; IMPLEMENTATION_NOT_RUN`. Esta especificação não afirma que a nova capacidade existe, não libera documentos MP/PI sem ratificação, nem autoriza deploy sem testes e gates operacionais.
+
+## 1. Problema e objetivo
+
+DAVI possui exatamente duas tools MCP: `discover_delpi_information` e `execute_delpi_information`. Hoje discovery oferece orientação declarativa e operações READ; consulta documental substantiva via MCP está `NOT_EXPOSED` (recovery report `davi-knowledge-documentation-recovery-01.md`, commit `35bceffa31c3290a6c78d30f8c83e935e8c67241`). O corpus governado Git V1 (15 documentos), manifesto, índice de tópicos e builder existem; o acesso Files do Workspace Agent é outra fronteira, provider-native, com sync/retrieval `TEST_NOT_RUN`. Não usar os arquivos do provider como proxy implícito de conhecimento do MCP.
+
+Direção aprovada: oferecer **inteligência técnica viva** para consumidores MCP (incluindo DÉLIA) sob demanda: índice/versionamento, trechos documentais pertinentes, fontes e orientação de interpretação, sem exposição integral em `agent_directives`; manter o contrato de 2 tools, com capability READ documental elegível descoberta e executada através do fluxo existente. Referência funcional real: TÉO `get_catalog`, `get_product_guide` (`product-guide-registry-v1`) e `get_methodology_guide` (`teo-method-playbooks-v2`) devolvem guias versionados marcados `GUIDANCE_NOT_DOMAIN_TRUTH`, mas **não** copiar ferramentas, contratos internos ou ownership do TÉO.
+
+## 2. Reuso/ownership
+
+- **Owners:** `api-delpi` para corpus, leitura documental governada e superfície DAVI; owner de negócio de cada norma valida vigência/autoridade e publicação; Core resolve AuthZ quando aplicável, Domain APIs permanecem autoridade empresarial; operador Workspace Agent governa Files independentemente.
+- **Consumers:** DAVI Workspace Agent e, pelo MCP, DÉLIA e outros clientes autorizados.
+- **EXISTING_EQUIVALENT=YES_PARTIAL** (corpus, manifest/index, bundle, Agent Intelligence, discovery/execute) / **REUSE_DECISION=EXTEND** após inventário no HEAD. Não criar novo MCP tool, novo RAG, indexador concorrente, API paralela, DB vetorial ou import de runtime do Chat.
+- **Precedence:** Project Instructions/.cursor, autoridades e arquitetura atuais, docs DAVI, freeze/manifest e o doc 143 da DÉLIA. Havendo conflito com proibição documental congelada, registrar `ARCHITECTURE_DECISION_REQUIRED` antes de alterar código. A aprovação da direção de produto **não** revoga automaticamente decisões canônicas de fronteira de leitura ou autorização.
+
+## 3. Contrato-alvo (a validar com owner antes de codificar)
+
+**Discovery:** `discover_delpi_information` poderá listar uma capability READ semântica de conhecimento aprovado (identificador final escolhido no contrato owner; por exemplo ilustrativo `read_governed_technical_knowledge`) e oferecer metadados mínimos: tópico, autoridade, versão, proveniência, limites, parâmetros aceitos. `discovery != approval`; somente capability elegível e autorizada gera `candidate_token` sob contrato atual.
+
+**Execute:** `execute_delpi_information(candidate_token, arguments)` realiza READ do corpus aprovado e versionado (não Files provider), usando mecanismo de leitura/índice já legítimo. Não aceita URL, SQL, paths arbitrários, consulta irrestrita ou ID de arquivo fora do allowlist. Argumentos possíveis (a decidir): `topic`, `section`, `query` semanticamente limitada, `version`, `page`/`limit`. Resultado: `knowledge_kind=GUIDANCE`, `authority=GUIDANCE_NOT_DOMAIN_TRUTH`, `source_path/source_sha`, `corpus_version/manifest_identity`, `topic/section`, `excerpt` com limites de bytes/tokens, `coverage` e status explícito. Ausência de texto relevante retorna `NOT_FOUND`, versão obsoleta `STALE_VERSION`, não autorizado `FORBIDDEN`, corpus inconsistente `CORPUS_UNAVAILABLE`. Definir schema completo, compatibilidade aditiva, quotas, observabilidade e sanitização antes de implementação.
+
+**Mínimo suficiente:** índice leve no discovery, conteúdo sob demanda no execute. Sem carregar os 15 documentos no prompt/discovery; sem promover markdown, metadata, tool text ou instruções do corpus a system prompt, Policy, capability authorization ou live FACT. Trechos devem ser ancorados em hashes/versionamento do corpus e filtrados pelo tópico/escopo elegível.
+
+**Separações:** `KNOWLEDGE_RETRIEVAL != BUSINESS_DATA_READ`; `DOC_GUIDANCE != LIVE_DOMAIN_FACT`; `MCP_RESULT != FACT`; `MODEL_OUTPUT != AUTHORIZATION`. LLM da DÉLIA decide quando consultar orientação, planeja READs e valida pertinência; DAVI apenas apresenta contratos e conhecimento governado autorizado.
+
+## 4. Governança das normas MP/PI
+
+- Fontes localizadas em `minha-delpi-ai-api/docs/knowledge/sources/gpt-instructions/Normas_Tecnicas_DELPI.md` e `Understanding DELPI Intermediate Product Codes.md` (introdução `63cc77bfe60e157623dd77fd7fd335e37735a4e7`). Extrato na API: `api-delpi/docs/knowledge/product-vocabulary/normative-product-terms.md`. `BUSINESS_OWNER=TO_INVENTORY` e original de engenharia do PI necessita ratificação.
+- **Não liberar MP/PI como norma vigente** até owner ratificar conteúdo/vigência, público, classificação e nova versão do corpus. Preservar membership/hash do V1; conteúdo migrável somente após gate owner, em revisão V2 ou equivalente aprovado. Proibir silent publish e prompt do Chat como instrução.
+- A capability documental pode ser implementada e avaliada com os **15 documentos V1 já aprovados**, provando generalização; MP/PI somente depois da homologação documental específica. Não afirmar que norma corrente existe no runtime antes disso.
+
+## 5. Plano finito de execução
+
+**G0 REANCHOR/CONTRACT:** git status/HEAD, Project Instructions/.cursor, autoridades, arquitetura, DAVI original, tests, doc 143/ledger; confirmar freeze/manifest e classificação `EXISTING_EQUIVALENT/REUSE_DECISION`; owner decide shape/schema, AuthZ, limites, mecanismo real de leitura e compatibilidade. Se decisão de fronteira conflitante não ratificada, STOP `ARCHITECTURE_DECISION_REQUIRED` para código, continuar documentação/testes independentes.
+
+**G1 RED:** testes de índice/documento V1: consulta por tópicos e seções, versão incorreta, ausência, escopo malicioso, path traversal, dados sensíveis, prompt injection, fail-closed por manifest mismatch, no content in directives, two-tools invariant, discover/execute candidate binding, quotas e autorização. `0 search results != absence`.
+
+**G2 MINIMAL IMPLEMENTATION:** reusar ports/adapters/corpus readers existentes, definir contrato READ com owner, integrar à discovery/execute sem terceira tool, não alterar rotas SQL genéricas, manter read-only e isolamento do provider; projeção de proveniência/versionamento/erro tipado. Sem branching por DAVI no planner DÉLIA.
+
+**G3 QA/EVAL:** focused/full api-delpi, architecture/OpenAPI/AuthZ/security gates, provider-negative/corpus version tests, testes vivos com token end-user oficialmente autorizado, leitura documental por consumidor MCP e confronto de orientações + business READ `TERM. BALA` (nenhuma heurística fixa). TÉO é referência de funcionalidade, não prova do DAVI. Reportar `TEST_NOT_RUN` onde falta conta/provider. K01–K10 Files continuam trilha independente.
+
+**G4 RELEASE:** documentação, commit/push main ff-only; deploy SSH `operador` apenas mediante gate operacional explícito, dry-run/review de escopo de Compose (desvio anterior anunciou `transformometro-api`), preservação de imagem e rollback, health, autenticação negativa, lista invariável de duas tools e zero novos recursos salvo contrato autorizado, leitura documental MCP real por cliente e prova de origem SHA. Health 200 != sucesso documental. Sem acesso legítimo, relatório `PARTIAL_BLOCKED`.
+
+## 6. Critérios de aceite
+
+1. As mesmas **duas tools** MCP permanecem; uma capability READ documental governada aparece no discover e executa conteúdo real V1 por candidate_token.
+2. Pelo menos duas consultas conceituais independentes recuperam trechos aprovados, com path/source SHA/version/authority corretos; unknown/malicious/unauthorized falham tipados e sem vazamento.
+3. Metadata não vira documento, nem instrução de autorização; arquivos provider e runtime Chat não são dependências ocultas.
+4. Contratos de `search_products` e demais capabilities existentes preservados; integração à DÉLIA apenas por contrato público futuro.
+5. MP/PI: owner ratificou e publicação V2 comprovada **ou** bloqueio formal honesto, sem falsa norma publicada.
+6. Evidência atualizada no GitHub, SHA avaliado, testes reais e auth, deploy apenas autorizado; `R4_AUTHORIZED=NO` até avaliação separada da DÉLIA.
+
+## 7. Status inicial e handoff
+
+`DESIGN_DIRECTION=APPROVED`; `IMPLEMENTATION=NOT_STARTED`; `OWNER_CONTRACT_APPROVAL=PENDING`; `MP_PI_RATIFICATION=PENDING`; `V1_CORPUS=PROVEN`; `WORKSPACE_AGENT_FILES_RETRIEVAL=TEST_NOT_RUN`; `MCP_DOCUMENT_READ=NOT_EXPOSED`; `DEPLOY=NOT_AUTHORIZED_BY_THIS_DOCUMENT`. Referências: `davi-knowledge-documentation-recovery-01.md`, `openai-workspace-agent-davi.md`, `davi-governed-knowledge-freeze-001.md`, DÉLIA doc 143.
