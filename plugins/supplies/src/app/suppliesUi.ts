@@ -114,6 +114,11 @@ export const SuppliesEmptyState = createDashboardEmptyState({
   },
   defaultMessage: "",
 });
+/** Message-only empty card for sections that already render their own heading. */
+export const SuppliesInlineEmptyState = createDashboardEmptyState({
+  classNames: spEmptyStateClassNames,
+  defaultMessage: "",
+});
 export const SuppliesStateBanner = createDashboardStateBanner({
   classNames: spStateBannerClassNames,
 });

@@ -115,8 +115,6 @@ export const PURCHASE_REQUESTS_CONTENT = {
   colSuggestedSupplier: "Fornecedor sugerido",
   colAccountCode: "Conta contábil",
   ordersTitle: "Pedidos vinculados",
-  ordersHint:
-    "Pedidos de compra gerados a partir dos itens visíveis. O número abre a ficha do pedido — respeitando suas permissões.",
   ordersEmpty: "Nenhum pedido vinculado aos itens visíveis desta solicitação.",
   openOrderTitle: (number: string) => `Abrir pedido de compra ${number}`,
   colOrderNumber: "PC",
@@ -131,8 +129,6 @@ export const PURCHASE_REQUESTS_CONTENT = {
   ordersTableScrollRegion:
     "Tabela de pedidos vinculados — deslize horizontalmente para ver todas as colunas",
   receiptsTitle: "Recebimentos",
-  receiptsHint:
-    "Documentos de entrada registrados nos pedidos vinculados aos itens visíveis.",
   receiptsEmpty: "Nenhum recebimento registrado nos pedidos vinculados.",
   colInvoice: "NF",
   colInvoiceSeries: "Série",

@@ -244,6 +244,12 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("receipt.invoice_series");
     expect(page).not.toMatch(/items\.reduce|total_open_value|totalValue/i);
     expect(page).not.toContain("SuppliesEventsSection");
+    // UX.S2: the receipts section keeps a single visible heading — the
+    // message-only empty state never repeats «Recebimentos», and receipts
+    // are never summed/reconciled against delivered quantity in the MFE.
+    expect(page).toContain("SuppliesInlineEmptyState");
+    expect(page).not.toContain("<SuppliesEmptyState title={C.receiptsTitle}");
+    expect(page).not.toMatch(/receipts\.reduce/);
 
     const content = readFileSync(join(dir, "content.ts"), "utf8");
     expect(content).toContain(

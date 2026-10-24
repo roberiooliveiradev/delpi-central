@@ -105,6 +105,12 @@ describe("PurchaseRequests feature", () => {
     expect(detail).toContain("sp-purchase-request-detail__table");
     // The timeline is «Acompanhamento», never an audit-history section.
     expect(detail).not.toMatch(/histórico|historico|audit/i);
+    // UX.S2: section-scoped empty states are message-only — the card heading
+    // already carries «Pedidos vinculados»/«Recebimentos» (no duplicated title).
+    expect(detail).toContain("SuppliesInlineEmptyState");
+    expect(detail).not.toMatch(
+      /<SuppliesEmptyState title=\{C\.(orders|receipts)Title\}/,
+    );
   });
 
   it("filtros Unidade alinhados à Visão geral", () => {

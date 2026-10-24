@@ -15,6 +15,7 @@ import {
   SuppliesEmptyState,
   SuppliesEntityLink,
   SuppliesEventsSection,
+  SuppliesInlineEmptyState,
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
@@ -400,16 +401,11 @@ export function PurchaseRequestDetailPage({
           </SuppliesSectionCard>
 
           <SuppliesSectionCard
-            title={
-              <SuppliesSectionHintLabel
-                label={C.ordersTitle}
-                hint={SP_HELP.purchaseRequestDetailOrders}
-              />
-            }
-            hint={C.ordersHint}
+            title={C.ordersTitle}
+            hint={SP_HELP.purchaseRequestDetailOrders}
           >
             {linkedOrders.length === 0 ? (
-              <SuppliesEmptyState title={C.ordersTitle} message={C.ordersEmpty} />
+              <SuppliesInlineEmptyState message={C.ordersEmpty} />
             ) : (
               <div
                 className="sp-purchase-request-detail__table-wrap"
@@ -497,16 +493,11 @@ export function PurchaseRequestDetailPage({
           </SuppliesSectionCard>
 
           <SuppliesSectionCard
-            title={
-              <SuppliesSectionHintLabel
-                label={C.receiptsTitle}
-                hint={SP_HELP.purchaseRequestDetailReceipts}
-              />
-            }
-            hint={C.receiptsHint}
+            title={C.receiptsTitle}
+            hint={SP_HELP.purchaseRequestDetailReceipts}
           >
             {receipts.length === 0 ? (
-              <SuppliesEmptyState title={C.receiptsTitle} message={C.receiptsEmpty} />
+              <SuppliesInlineEmptyState message={C.receiptsEmpty} />
             ) : (
               <div
                 className="sp-purchase-request-detail__table-wrap"

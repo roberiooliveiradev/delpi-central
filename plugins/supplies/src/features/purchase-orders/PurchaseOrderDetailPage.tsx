@@ -14,6 +14,7 @@ import {
   SuppliesActionButton,
   SuppliesEmptyState,
   SuppliesEntityLink,
+  SuppliesInlineEmptyState,
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
@@ -341,7 +342,7 @@ export function PurchaseOrderDetailPage({
                   />
                 </h3>
                 {receipts.length === 0 ? (
-                  <SuppliesEmptyState title={C.receiptsTitle} message={C.receiptsEmpty} />
+                  <SuppliesInlineEmptyState message={C.receiptsEmpty} />
                 ) : (
                   <div
                     className="sp-purchase-orders__table-wrap"
