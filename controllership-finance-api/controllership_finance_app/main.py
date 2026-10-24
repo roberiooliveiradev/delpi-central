@@ -25,6 +25,9 @@ from controllership_finance_app.interface.http.routes.documents_routes import (
 from controllership_finance_app.interface.http.routes.health_routes import (
     router as health_router,
 )
+from controllership_finance_app.interface.http.routes.validations_routes import (
+    router as validations_router,
+)
 from controllership_finance_app.interface.http.routes.viewer_context_routes import (
     router as viewer_context_router,
 )
@@ -95,4 +98,5 @@ app.include_router(viewer_context_router)
 app.include_router(closing_router)
 app.include_router(competences_router)
 app.include_router(documents_router)
+app.include_router(validations_router)
 app.include_router(admin_checklist_router)

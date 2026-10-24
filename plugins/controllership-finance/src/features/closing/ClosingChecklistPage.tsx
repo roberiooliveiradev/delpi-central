@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError } from "../../api/httpClient";
 import {
+  createExceptionalItem,
   getCompetenceItem,
   listCompetences,
   listCompetenceItems,
@@ -24,6 +25,7 @@ import {
 } from "../../api/competencesApi";
 import {
   CfActionButton,
+  CfDialog,
   CfEmptyState,
   CfSectionCard,
   CfStatusBadge,
@@ -55,6 +57,7 @@ import { CF_HELP } from "../../content/helpTooltips";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { ClosingDocumentsPanel } from "./ClosingDocumentsPanel";
+import { ItemValidationPanel } from "./ItemValidationPanel";
 
 const PERIOD_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -103,7 +106,21 @@ const BRANCH_LABELS: Record<string, string> = {
 
 const STATE_LABELS: Record<string, string> = {
   EXPECTED: "Esperado",
+  ACCEPTED: "Aceito",
+  NOT_APPLICABLE: "Não aplicável",
+  CANCELLED: "Cancelado",
 };
+
+const VALIDATION_SCOPE_LABELS: Record<string, string> = {
+  PER_ATTACHMENT: "Por anexo",
+  WHOLE_SET: "Conjunto",
+};
+
+const APPLICABILITY_OPTIONS = [
+  { value: "REQUIRED", label: "Obrigatório" },
+  { value: "CONDITIONAL", label: "Condicional" },
+  { value: "OPTIONAL", label: "Opcional" },
+] as const;
 
 type QueryError = {
   status: number;
@@ -154,6 +171,18 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
   const [origin, setOrigin] = useState("");
   const [recipient, setRecipient] = useState("");
   const [branchScope, setBranchScope] = useState("");
+
+  const [exceptionalOpen, setExceptionalOpen] = useState(false);
+  const [exceptionalBusy, setExceptionalBusy] = useState(false);
+  const [exceptionalError, setExceptionalError] = useState<string | null>(
+    null,
+  );
+  const [exName, setExName] = useState("");
+  const [exSheet, setExSheet] = useState<CompetenceSheet>("ELETRONICO");
+  const [exApplicability, setExApplicability] = useState<
+    "REQUIRED" | "CONDITIONAL" | "OPTIONAL"
+  >("CONDITIONAL");
+  const [exJustification, setExJustification] = useState("");
 
   const activePeriod = period ?? "";
   const periodValid = PERIOD_PATTERN.test(activePeriod);
@@ -286,6 +315,38 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
     },
     [activePeriod],
   );
+
+  const refreshAfterItemChange = useCallback(() => {
+    retry();
+    if (detail) openDetail(detail.item_key);
+  }, [retry, detail, openDetail]);
+
+  const submitExceptional = useCallback(() => {
+    if (!exName.trim() || !exJustification.trim()) return;
+    setExceptionalBusy(true);
+    setExceptionalError(null);
+    createExceptionalItem(activePeriod, {
+      sheet: exSheet,
+      name: exName.trim(),
+      justification: exJustification.trim(),
+      applicability: exApplicability,
+    })
+      .then(() => {
+        setExceptionalBusy(false);
+        setExceptionalOpen(false);
+        setExName("");
+        setExJustification("");
+        retry();
+      })
+      .catch((err: unknown) => {
+        setExceptionalBusy(false);
+        setExceptionalError(
+          err instanceof ApiError
+            ? err.message
+            : "Falha ao registrar o item excepcional.",
+        );
+      });
+  }, [activePeriod, exName, exSheet, exApplicability, exJustification, retry]);
 
   const columns = useMemo<DataTableColumn<CompetenceChecklistItem>[]>(
     () => [
@@ -563,6 +624,19 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
               </FiltersRow>
             </form>
 
+            <div className="cf-settlements-actions">
+              <CfActionButton
+                type="button"
+                title={CF_HELP.checklist.exceptionalItem}
+                onClick={() => {
+                  setExceptionalError(null);
+                  setExceptionalOpen(true);
+                }}
+              >
+                Adicionar item excepcional
+              </CfActionButton>
+            </div>
+
             <DataTableSection<CompetenceChecklistItem>
               title="Itens esperados"
               titleHint={CF_HELP.checklist.table}
@@ -619,7 +693,17 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
                   </div>
                   <div>
                     <dt>Estado</dt>
-                    <dd>{STATE_LABELS[detail.state] ?? detail.state}</dd>
+                    <dd>
+                      {STATE_LABELS[detail.state] ?? detail.state}
+                      {detail.exceptional ? " · excepcional" : ""}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Regra de validação</dt>
+                    <dd>
+                      {VALIDATION_SCOPE_LABELS[detail.validation_scope] ??
+                        detail.validation_scope}
+                    </dd>
                   </div>
                   {detail.requirement_notes ? (
                     <div>
@@ -629,9 +713,22 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
                   ) : null}
                   <div>
                     <dt>Versão do template</dt>
-                    <dd>{detail.source_version_id}</dd>
+                    <dd>
+                      {detail.source_version_id ??
+                        "item excepcional desta competência"}
+                    </dd>
                   </div>
                 </dl>
+                <CfSectionCard
+                  title="Validação humana"
+                  hint={CF_HELP.checklist.validation}
+                >
+                  <ItemValidationPanel
+                    period={activePeriod}
+                    item={detail}
+                    onChanged={refreshAfterItemChange}
+                  />
+                </CfSectionCard>
                 <CfSectionCard
                   title="Evidências do item"
                   hint={CF_HELP.checklist.itemDocuments}
@@ -653,6 +750,102 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
           </>
         ) : null}
       </div>
+
+      {exceptionalOpen ? (
+        <CfDialog
+          open
+          title="Adicionar item excepcional"
+          onClose={() => !exceptionalBusy && setExceptionalOpen(false)}
+          closeAriaLabel="Fechar item excepcional"
+        >
+          <div className="cf-validation-panel__form">
+            <p className="cf-validation-panel__doc-detail">
+              O item excepcional vale apenas para a competência{" "}
+              {activePeriod} — o checklist mestre não é alterado.
+            </p>
+            {exceptionalError ? (
+              <CfFeedbackMessage
+                intent="error"
+                title="Item excepcional não registrado"
+              >
+                {exceptionalError}
+              </CfFeedbackMessage>
+            ) : null}
+            <label>
+              Entregável
+              <input
+                value={exName}
+                disabled={exceptionalBusy}
+                onChange={(event) => setExName(event.target.value)}
+              />
+            </label>
+            <label>
+              Folha
+              <select
+                value={exSheet}
+                disabled={exceptionalBusy}
+                onChange={(event) =>
+                  setExSheet(event.target.value as CompetenceSheet)
+                }
+              >
+                <option value="ELETRONICO">Eletrônico</option>
+                <option value="FISICO">Físico</option>
+              </select>
+            </label>
+            <label>
+              Aplicabilidade
+              <select
+                value={exApplicability}
+                disabled={exceptionalBusy}
+                onChange={(event) =>
+                  setExApplicability(
+                    event.target.value as
+                      | "REQUIRED"
+                      | "CONDITIONAL"
+                      | "OPTIONAL",
+                  )
+                }
+              >
+                {APPLICABILITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Justificativa
+              <textarea
+                value={exJustification}
+                disabled={exceptionalBusy}
+                rows={3}
+                onChange={(event) => setExJustification(event.target.value)}
+              />
+            </label>
+            <div className="cf-validation-panel__form-actions">
+              <CfActionButton
+                type="button"
+                disabled={
+                  exceptionalBusy ||
+                  !exName.trim() ||
+                  !exJustification.trim()
+                }
+                onClick={submitExceptional}
+              >
+                {exceptionalBusy ? "Registrando…" : "Registrar item"}
+              </CfActionButton>
+              <CfActionButton
+                type="button"
+                variant="ghost"
+                disabled={exceptionalBusy}
+                onClick={() => setExceptionalOpen(false)}
+              >
+                Voltar
+              </CfActionButton>
+            </div>
+          </div>
+        </CfDialog>
+      ) : null}
     </section>
   );
 }

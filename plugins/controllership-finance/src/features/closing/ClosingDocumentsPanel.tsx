@@ -31,6 +31,11 @@ import {
 
 import { ApiError } from "../../api/httpClient";
 import {
+  decideDocumentEvidence,
+  type RejectionReason,
+} from "../../api/competencesApi";
+import { REJECTION_REASON_LABELS } from "./ItemValidationPanel";
+import {
   cancelClosingDocument,
   CLOSING_DOCUMENT_ACCEPT,
   downloadClosingDocument,
@@ -54,6 +59,7 @@ import {
   cfConfirmModalClassNames,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
+import { formatDateTime } from "../../utils/formatters";
 
 const DROPZONE_CLASSES = fileDropzoneBemClasses("cf", "evidence-dropzone");
 const FILE_LIST_CLASSES = attachmentFileListBemClasses("cf");
@@ -171,9 +177,6 @@ function formatDate(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString("pt-BR") : "";
 }
 
-function formatDateTime(iso: string | null): string {
-  return iso ? new Date(iso).toLocaleString("pt-BR") : "";
-}
 
 function eventNote(event: DocumentAuditEvent): string {
   const parts: string[] = [];
@@ -242,6 +245,12 @@ export function ClosingDocumentsPanel({
   const [cancelTarget, setCancelTarget] = useState<ClosingDocument | null>(
     null,
   );
+  const [rejectDocTarget, setRejectDocTarget] =
+    useState<ClosingDocument | null>(null);
+  const [rejectDocReason, setRejectDocReason] = useState<
+    RejectionReason | ""
+  >("");
+  const [rejectDocComment, setRejectDocComment] = useState("");
   const [versionsDoc, setVersionsDoc] = useState<ClosingDocument | null>(
     null,
   );
@@ -463,6 +472,44 @@ export function ClosingDocumentsPanel({
       })
       .finally(() => setMutating(false));
   }, [period, cancelTarget, mutating, onUploaded, refresh]);
+
+  // Validação de evidência de competência (sem item) — A2.
+  const decideEvidence = useCallback(
+    (
+      documentId: string,
+      decision: "ACCEPTED" | "REJECTED",
+      payload: { reason_code?: RejectionReason; comment?: string } = {},
+    ) => {
+      if (mutating) return;
+      setMutating(true);
+      setMutationError(null);
+      decideDocumentEvidence(period, documentId, { decision, ...payload })
+        .then(() => {
+          setRejectDocTarget(null);
+          setRejectDocReason("");
+          setRejectDocComment("");
+          refresh();
+        })
+        .catch((err: unknown) => {
+          setMutationError(
+            toPanelError(err, "Falha ao registrar a decisão."),
+          );
+        })
+        .finally(() => setMutating(false));
+    },
+    [period, mutating, refresh],
+  );
+
+  const submitDocReject = useCallback(() => {
+    const doc = rejectDocTarget;
+    if (!doc || !rejectDocReason) return;
+    decideEvidence(doc.document_id, "REJECTED", {
+      reason_code: rejectDocReason,
+      ...(rejectDocReason === "OTHER"
+        ? { comment: rejectDocComment }
+        : {}),
+    });
+  }, [rejectDocTarget, rejectDocReason, rejectDocComment, decideEvidence]);
 
   // U6 — histórico de versões; versões antigas baixam pelo mesmo U4.
   const openVersions = useCallback(
@@ -699,6 +746,31 @@ export function ClosingDocumentsPanel({
                 >
                   Cancelar
                 </ActionButton>
+                {!snapshotItemId && !doc.snapshot_item_id ? (
+                  <>
+                    <ActionButton
+                      variant="ghost"
+                      disabled={item.busy}
+                      onClick={() =>
+                        decideEvidence(doc.document_id, "ACCEPTED")
+                      }
+                    >
+                      Aceitar
+                    </ActionButton>
+                    <ActionButton
+                      variant="ghost"
+                      disabled={item.busy}
+                      onClick={() => {
+                        setRejectDocTarget(doc);
+                        setRejectDocReason("");
+                        setRejectDocComment("");
+                        setMutationError(null);
+                      }}
+                    >
+                      Rejeitar
+                    </ActionButton>
+                  </>
+                ) : null}
               </>
             );
           }}
@@ -844,6 +916,73 @@ export function ClosingDocumentsPanel({
             onCancel={() => setCancelTarget(null)}
             classNames={cfConfirmModalClassNames}
           />
+        </CfDialog>
+      ) : null}
+
+      {rejectDocTarget ? (
+        <CfDialog
+          open
+          title={`Rejeitar evidência — ${docName(rejectDocTarget)}`}
+          onClose={() => !mutating && setRejectDocTarget(null)}
+          closeAriaLabel="Fechar rejeição"
+        >
+          <div className="cf-validation-panel__form">
+            <label>
+              Motivo da rejeição
+              <select
+                value={rejectDocReason}
+                disabled={mutating}
+                onChange={(event) =>
+                  setRejectDocReason(
+                    event.target.value as RejectionReason,
+                  )
+                }
+              >
+                <option value="">Selecione…</option>
+                {Object.entries(REJECTION_REASON_LABELS).map(
+                  ([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+            {rejectDocReason === "OTHER" ? (
+              <label>
+                Comentário (obrigatório para «Outro»)
+                <textarea
+                  value={rejectDocComment}
+                  disabled={mutating}
+                  rows={3}
+                  onChange={(event) =>
+                    setRejectDocComment(event.target.value)
+                  }
+                />
+              </label>
+            ) : null}
+            <div className="cf-validation-panel__form-actions">
+              <ActionButton
+                variant="primary"
+                disabled={
+                  mutating ||
+                  !rejectDocReason ||
+                  (rejectDocReason === "OTHER" &&
+                    !rejectDocComment.trim())
+                }
+                onClick={submitDocReject}
+              >
+                Confirmar rejeição
+              </ActionButton>
+              <ActionButton
+                variant="ghost"
+                disabled={mutating}
+                onClick={() => setRejectDocTarget(null)}
+              >
+                Voltar
+              </ActionButton>
+            </div>
+          </div>
         </CfDialog>
       ) : null}
 

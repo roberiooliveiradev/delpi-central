@@ -239,3 +239,27 @@ Dois resíduos corrigidos sem redefinir decisões:
 - **Idempotência U5:** a key da mutação agora é persistida e verificada — `V004__document_version_idempotency.sql` adiciona `idempotency_key`/`request_hash` a `document_version` com `UNIQUE(document_id, key)` (v1 herda a key do upload; replaces trazem key própria — nunca a key U1 reutilizada). Replay idêntico ⇒ `deduplicated` 200 **antes** do OCC (revision obsoleta no replay não vira `stale_revision`); mesma key + payload divergente ⇒ `idempotency_conflict` 409; corrida com mesma key ⇒ 1 criador + N dedups, um único `VERSION_ADDED`; binário publicado em corrida perdida é compensado.
 - **Imutabilidade real de `document_version`:** a coluna `state` foi removida — a linha nunca é atualizada; `SUPERSEDED`/`ATTACHED` é derivado de `closing_document.current_version_no` em toda leitura (get/list/download).
 - Evidência: `test_replace_idempotent_replay_no_second_version`, `test_replace_same_key_divergent_hash_conflicts`, `test_concurrent_same_key_replace_deduplicates`, `test_version_rows_never_updated` (PG real R4); service `test_replace_idempotent_replay_deduplicates`, `test_replace_same_key_divergent_payload_conflicts`, `test_replace_requires_idempotency_key`, `test_replace_race_lost_compensates_published_binary`; rota `test_replace_deduplicated_returns_200`, `test_replace_requires_idempotency_key`; MFE retry reutiliza a mesma key. Suíte completa: **318 passed** BFF+PG.
+
+## Adendo — Evidência de execução A2 validação humana P2 (CF-PROC0072-E2E-MASTER-EXECUTION-001)
+
+Baseline: `9a1cf4ea53` remoto (A1 `883872e4a9` publicado em cima). Pacote A2 do doc 104 — validação humana do ciclo documental, sem reabrir decisões U1–U8.
+
+### Backend e dados
+
+- `V005__p2_item_validation.sql` (aditiva): `validation_scope` em template item + snapshot (`PER_ATTACHMENT`/`WHOLE_SET`), `evidence_decision` append-only (composição `document_id:version_no`, `reason_code`, `result_state`, `reverses_decision_id`), `item_correction` (request/review separados, nova `revision` no approve), `state`/`state_reason`/`exceptional`/`revision` no snapshot item; relaxa NOT NULL de origem de template para item excepcional.
+- `closing_validation_repository.py`: decisões por versão (per-attachment) e por conjunto (composição exata — drift `set_composition_changed`); recomputação de estado do item após decisão/upload/substituição/cancel (`ACCEPTED`→`EXPECTED` quando a evidência corrente muda — RQ-P2-05); N/A só em `CONDITIONAL` com justificativa (`not_applicable_not_allowed`); cancel terminal `CANCELLED` sem apagar histórico; reversão só do mesmo validador e bloqueada por versão nova (`replacement_requires_revalidation`); item excepcional só na competência (mestre intacto); correção estrutural request(ACCESS)→review(MANAGE)→nova revision; escopo `branch_scope` declarado × herdado = 404 sem vazamento; documentos de competência (sem item) decididos normalmente.
+- `validations_routes.py` registrada em `main.py` — envelope padrão, erros tipados, authorization fail-closed.
+- `closing_document_repository.add_version`/`cancel_document` reabrem a validação do item afetado na mesma transação.
+
+### MFE e Help
+
+- `ItemValidationPanel.tsx` (novo): decisões por anexo com badge/ator/data, rejeição com motivo estruturado + comentário obrigatório em «Outro», aceite/rejeição de conjunto, reversão com justificativa e estado resultante, N/A/reversão/cancelamento de item, solicitação e revisão de correção, histórico de decisões — tudo render-only, autoridade no backend.
+- `ClosingDocumentsPanel`: evidência de competência sem item ganha Aceitar/Rejeitar (motivo estruturado); item docs seguem decididos no `ItemValidationPanel`.
+- `competencesApi.ts`: contratos `ItemValidation`/`EvidenceDecision`/`ItemCorrection` + 11 operações.
+- Página do checklist: novos estados (`Aceito`, `Não aplicável`, `Cancelado`), regra de validação e flag «excepcional» no detalhe, botão «Adicionar item excepcional» com justificativa; Help sincronizado (`checklist.validation`, `checklist.state`, `checklist.exceptionalItem`).
+
+### Evidência executada
+
+- BFF: **367 passed** com PostgreSQL real descartável (suíte `test_pg_closing_validations.py` 21 casos: append-only, escopo, WHOLE_SET/per-attachment, revalidação pós-substituição, N/A, excepcional, correção, item sem evidência, `test_item_out_of_declared_scope_404`, `test_validation_events_in_audit`) + `test_closing_validations_routes.py` 28 casos.
+- MFE: **126 vitest** + 25 estruturais · `tsc -b` e `vite build` ok · lint limpo nos arquivos tocados.
+- TEST_NOT_RUN: RQ-P2-11 (notificações — dependência T02 fora de A2); smoke autenticado; demo humana (G2).

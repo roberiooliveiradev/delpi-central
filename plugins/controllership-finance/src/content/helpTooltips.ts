@@ -78,7 +78,11 @@ export const CF_HELP = {
     table:
       "Itens esperados da competência. Origem indica de onde o documento costuma vir (ERP TOTVS, fonte externa ou ambos); Destinatário é a área que recebe o documento quando conhecida — «A definir» marca pendência real do checklist, não erro de dados.",
     state:
-      "Estado do item nesta competência. «Esperado» é o estado inicial de todo item — significa que a entrega está prevista, ainda sem documento anexado nem validação.",
+      "Estado do item nesta competência. «Esperado» é o estado inicial de todo item — significa que a entrega está prevista, ainda sem documento anexado nem validação. «Aceito» marca evidência validada por pessoa autorizada. «Não aplicável» só vale para itens condicionais e exige justificativa auditada. «Cancelado» é terminal — o item sai da lista ativa com histórico preservado.",
+    validation:
+      "Validação humana da evidência — distinta do anexo: «anexado» nunca significa «validado». Cada arquivo (ou o conjunto inteiro, quando a regra é «Conjunto») exige aceite ou rejeição de validador autorizado. A rejeição pede motivo estruturado — «Outro» exige comentário — e marca a evidência para substituição. Substituir ou cancelar um anexo invalida a decisão anterior e exige nova validação. A reversão de uma rejeição só é permitida ao mesmo validador, com justificativa, enquanto nenhuma versão nova for anexada. Todo aceite, rejeição e reversão fica no histórico — nada é apagado.",
+    exceptionalItem:
+      "Item excepcional: entregável previsto só nesta competência, sem alterar o checklist mestre. Exige justificativa auditada e pode ser condicional para aceitar «Não aplicável».",
     reportRef:
       "Referência ao relatório ERP (R-ID) quando a origem é conhecida. Itens externos e pendências mapeadas não têm R-ID — a ausência não implica automação indisponível nem entrega dispensada.",
     detail:

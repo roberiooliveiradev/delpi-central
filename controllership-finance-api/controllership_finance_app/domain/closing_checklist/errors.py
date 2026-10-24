@@ -129,3 +129,53 @@ class DocumentCancelled(ChecklistDomainError):
 class DocumentNotAttached(ChecklistDomainError):
     code = "document_not_attached"
     status = 409
+
+
+class InvalidStateTransition(ChecklistDomainError):
+    code = "invalid_state_transition"
+    status = 409
+
+
+class MissingJustification(ChecklistDomainError):
+    code = "missing_justification"
+    status = 422
+
+
+class ValidationScopeMismatch(ChecklistDomainError):
+    code = "validation_scope_mismatch"
+    status = 409
+
+
+class ItemLocked(ChecklistDomainError):
+    code = "item_locked"
+    status = 409
+
+
+class NoEvidence(ChecklistDomainError):
+    code = "no_evidence"
+    status = 409
+
+
+class DecisionNotFound(ChecklistDomainError):
+    code = "decision_not_found"
+    status = 404
+
+
+class CorrectionNotFound(ChecklistDomainError):
+    code = "correction_not_found"
+    status = 404
+
+
+class CorrectionNotPending(ChecklistDomainError):
+    code = "correction_not_pending"
+    status = 409
+
+
+class ItemCancelled(ChecklistDomainError):
+    code = "item_cancelled"
+    status = 409
+
+
+class InvalidRejectionReason(ChecklistDomainError):
+    code = "invalid_rejection_reason"
+    status = 422

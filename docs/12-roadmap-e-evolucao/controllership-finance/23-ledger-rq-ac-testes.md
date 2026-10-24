@@ -28,27 +28,27 @@ Este ledger complementa:
 | RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
 |---|---|---|---|---|---|
 | RQ-P2-01 | competência usa snapshot do template vigente na abertura | publicação nova não altera competência aberta | positive + sibling | P6 | PROVEN (CP03-P2, doc 100) |
-| RQ-P2-02 | REQUIRED nunca pode N/A; CONDITIONAL pode conforme regra | tentativa inválida é rejeitada server-side | positive + negative | business rule | TARGET |
-| RQ-P2-03 | ATTACHED != VALIDATED quando validation required | upload não produz ACCEPTED automaticamente | positive + negative | validator | TARGET |
-| RQ-P2-04 | rejeição preserva versão e exige motivo estruturado | evidência rejeitada permanece histórica | positive + audit | E06 seed | TARGET |
-| RQ-P2-05 | replacement cria nova validação | nova evidência não herda aceite antigo | positive + negative | — | TARGET |
-| RQ-P2-06 | PER_ATTACHMENT e WHOLE_SET obedecem escopo de validação | rejeição parcial/conjunto seguem regra configurada | positive + sibling | config | TARGET |
-| RQ-P2-07 | item excepcional é somente da competência | criação não altera template mestre | positive + sibling | T05 | TARGET |
-| RQ-P2-08 | CANCELLED não é delete nem NOT_APPLICABLE | item cancelado sai da completude ativa e histórico permanece | positive + negative | — | TARGET |
-| RQ-P2-09 | correção estrutural pós-execução cria nova revisão | request/review/audit separados; histórico preservado | positive + stale negative | MANAGE | TARGET |
-| RQ-P2-10 | reversão de rejeição respeita nova versão | reversão é bloqueada quando replacement já existe | positive + negative | notification | TARGET |
+| RQ-P2-02 | REQUIRED nunca pode N/A; CONDITIONAL pode conforme regra | tentativa inválida é rejeitada server-side | positive + negative | business rule | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-03 | ATTACHED != VALIDATED quando validation required | upload não produz ACCEPTED automaticamente | positive + negative | validator | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-04 | rejeição preserva versão e exige motivo estruturado | evidência rejeitada permanece histórica | positive + audit | E06 seed | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-05 | replacement cria nova validação | nova evidência não herda aceite antigo | positive + negative | — | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-06 | PER_ATTACHMENT e WHOLE_SET obedecem escopo de validação | rejeição parcial/conjunto seguem regra configurada | positive + sibling | config | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-07 | item excepcional é somente da competência | criação não altera template mestre | positive + sibling | T05 | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-08 | CANCELLED não é delete nem NOT_APPLICABLE | item cancelado sai da completude ativa e histórico permanece | positive + negative | — | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-09 | correção estrutural pós-execução cria nova revisão | request/review/audit separados; histórico preservado | positive + stale negative | MANAGE | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-10 | reversão de rejeição respeita nova versão | reversão é bloqueada quando replacement já existe | positive + negative | notification | PROVEN (A2/Upload, doc 100) |
 | RQ-P2-11 | notificações seguem targets efetivos e histórico | reversão não apaga notificação anterior | positive | T02 | TARGET |
-| RQ-P2-12 | Help explica requirement, validação, N/A, replacement e correção | conteúdo contextual disponível | UI/help check | feature help | TARGET |
+| RQ-P2-12 | Help explica requirement, validação, N/A, replacement e correção | conteúdo contextual disponível | UI/help check | feature help | PROVEN (A2/Upload, doc 100) |
 | RQ-P2-13 | item `EXPECTED` não é documento entregue nem validado | UI/API nunca apresentam item esperado como entregue; estado inicial do snapshot é sempre `EXPECTED` | positive + negative + UI check | schema snapshot | PROVEN (CP03-P2/CP03-UX, doc 100) |
 | RQ-P2-14 | item sem R-ID não ganha automação fictícia | `totvs_report_ref` nulo permanece nulo; proveniência honesta sem relatório inventado | negative + UI check | seed doc 59 | PROVEN (CP03-P2/CP03-UX, doc 100) |
-| RQ-P2-15 | upload cria evidência `ATTACHED` vinculada a `(competence, item?)`, nunca valida | item permanece `EXPECTED`; estado criado é `ATTACHED`; sem autoaceite | positive + negative | doc 103 §4 | TARGET |
-| RQ-P2-16 | metadado no Postgres e binário em volume persistente são par indissociável | arquivo sobrevive a recreate/mudança controlada; falha de persistência faz rollback do binário | integration + fault-injection | persistent-upload-storage.mdc | TARGET |
-| RQ-P2-17 | substituição cria nova versão e preserva a anterior | versão substituída fica `SUPERSEDED` e referenciável; nunca deletada silenciosamente | positive + version history | doc 103 §4.2 | TARGET |
-| RQ-P2-18 | download exige `access` efetivo + scope, sem URL pública | streaming autenticado; recurso fora do scope/competência retorna 404/403 | negative + cross-competence + cross-branch | doc 103 §5 | TARGET |
-| RQ-P2-19 | `CANCELLED` preserva histórico e sai da listagem ativa | cancelamento não deleta arquivo/versões; documento cancelado permanece consultável no histórico | positive + negative | doc 103 §4.2 | TARGET |
-| RQ-P2-20 | tipo/tamanho de arquivo é allowlist com conferência de conteúdo | MIME+extensão+magic bytes; `file_too_large`/`unsupported_media_type` tipados | negative por tipo | D-U2 doc 103 | TARGET |
+| RQ-P2-15 | upload cria evidência `ATTACHED` vinculada a `(competence, item?)`, nunca valida | item permanece `EXPECTED`; estado criado é `ATTACHED`; sem autoaceite | positive + negative | doc 103 §4 | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-16 | metadado no Postgres e binário em volume persistente são par indissociável | arquivo sobrevive a recreate/mudança controlada; falha de persistência faz rollback do binário | integration + fault-injection | persistent-upload-storage.mdc | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-17 | substituição cria nova versão e preserva a anterior | versão substituída fica `SUPERSEDED` e referenciável; nunca deletada silenciosamente | positive + version history | doc 103 §4.2 | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-18 | download exige `access` efetivo + scope, sem URL pública | streaming autenticado; recurso fora do scope/competência retorna 404/403 | negative + cross-competence + cross-branch | doc 103 §5 | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-19 | `CANCELLED` preserva histórico e sai da listagem ativa | cancelamento não deleta arquivo/versões; documento cancelado permanece consultável no histórico | positive + negative | doc 103 §4.2 | PROVEN (A2/Upload, doc 100) |
+| RQ-P2-20 | tipo/tamanho de arquivo é allowlist com conferência de conteúdo | MIME+extensão+magic bytes; `file_too_large`/`unsupported_media_type` tipados | negative por tipo | D-U2 doc 103 | PROVEN (A2/Upload, doc 100) |
 | RQ-P2-21 | evidência em pacote submetido é imutável | `version_locked` em substituição/cancelamento após submissão P5 | negative + P5 sibling | doc 12/37 | TARGET |
-| RQ-P2-22 | upload idempotente e concorrência segura | `idempotency_key`+`request_hash`+`UNIQUE` (padrão supplies-api; transporte/escopo = D-U7); `version_no` UNIQUE + OCC `revision`; replay não duplica evidência | idempotency + concurrent | doc 103 §4.1 + Adendo §B | TARGET |
+| RQ-P2-22 | upload idempotente e concorrência segura | `idempotency_key`+`request_hash`+`UNIQUE` (padrão supplies-api; transporte/escopo = D-U7); `version_no` UNIQUE + OCC `revision`; replay não duplica evidência | idempotency + concurrent | doc 103 §4.1 + Adendo §B | PROVEN (A2/Upload, doc 100) |
 
 ### P2-Upload — critérios de aceite (AC) e escopo por slice
 
@@ -123,6 +123,27 @@ Cobertura SLICE-1 por requisito (positive/sibling/negative/security/postconditio
 | AC-P2-UP-20 | TEST_NOT_RUN | Nenhum runtime P5 existe no HEAD — não há estado de submissão canônico a consultar; `version_locked`/`document_locked` permanecem reservados no contrato e a trava ativa quando a fonte P5 existir (boundary documentado, sem permissividade inventada) |
 | AC-P2-UP-21 | PASS | PG `test_concurrent_replace_single_winner` (4 threads, `FOR UPDATE`+`revision`: 1 vencedor, 3 `stale_revision`) + `test_concurrent_same_key_replace_deduplicates` (mesma key: 1 criador + 3 dedup, zero stale, um `VERSION_ADDED`); service `test_replace_stale_revision_fails_before_write` + `test_replace_idempotent_replay_deduplicates` (dedup resolve antes do OCC — replay com revision obsoleta ⇒ 200) |
 | AC-P2-UP-22 | PASS | Sem `DELETE` nem UPDATE em `document_version` (V004 — estado derivado); cancel é UPDATE só no documento; compensação remove binário novo órfão inclusive em dedup de corrida (`test_replace_race_lost_compensates_published_binary`); `.part` descartado em toda rejeição |
+
+
+**A2 — validação humana P2** (`CF-PROC0072-E2E-MASTER-EXECUTION-001`, Pacote A; decisões append-only em `evidence_decision`, V005; rotas `validations_routes.py`):
+
+| AC | Cobre RQ | Estado | Evidência executada |
+|---|---|---|---|
+| AC-P2-VAL-01 | RQ-P2-02 | PASS | PG `test_na_required_item_blocked` + `test_na_conditional_and_revert` + route `test_mark_na_required_item_409`/`test_mark_na_conditional_200` — `not_applicable_not_allowed` 409; `ITEM_MARKED_NA`/`ITEM_NA_REVERTED` auditados |
+| AC-P2-VAL-02 | RQ-P2-03 | PASS | upload nunca cria decisão; `evidence_decision` só existe via rota de decisão — item permanece `EXPECTED` após anexar (invariante preservada de AC-P2-UP-24) |
+| AC-P2-VAL-03 | RQ-P2-04 | PASS | PG `test_decisions_are_append_only` + `test_reject_requires_structured_reason_db` — decisões crescem append-only; versão rejeitada permanece referenciável; `EVIDENCE_REJECTED` com `reason_code`/`comment`; `test_decide_version_other_reason_requires_comment` |
+| AC-P2-VAL-04 | RQ-P2-05 | PASS | PG `test_reject_then_replace_requires_new_validation` + `test_replace_on_accepted_item_reopens_validation` + `test_whole_set_accept_then_replace_reopens` — substituição/cancelamento rebaixa `ACCEPTED`→`EXPECTED` e decisão antiga não cobre `version_no` novo |
+| AC-P2-VAL-05 | RQ-P2-06 | PASS | PG `test_accept_attachment_derives_item_accepted` + `test_whole_set_accept_then_replace_reopens`/`test_whole_set_reject_with_reason` + route `test_per_attachment_route_on_whole_set_item_mismatch`/`test_decide_version_scope_mismatch_409` — PER_ATTACHMENT decide por versão; WHOLE_SET compara composição `document_id:version_no` exata |
+| AC-P2-VAL-06 | RQ-P2-07 | PASS | PG `test_exceptional_item_only_in_competence` + route `test_create_exceptional_item_201`/`test_create_exceptional_item_access_only` — `snapshot` ganha item `exceptional` sem tocar template mestre; outra competência não vê o item |
+| AC-P2-VAL-07 | RQ-P2-08 | PASS | PG `test_cancel_item_without_evidence` + route `test_cancel_item_200`/`test_cancel_item_with_evidence_409` — `CANCELLED` sai da completude ativa, decisões/documentos íntegros, `item_cancelled` 409 em decisão posterior; `CANCELLED != DELETED` |
+| AC-P2-VAL-08 | RQ-P2-09 | PASS | PG `test_correction_request_approve_new_revision`/`test_correction_reject_requires_reason`/`test_correction_stale_after_another_approval` + route `test_request_correction_201`/`test_review_correction_approve_200`/`test_review_correction_stale_revision_409` — request ACCESS → review MANAGE → APPROVE gera `revision` nova; request/review são eventos distintos; revisão de correção inexistente `no_correction_pending` 409 |
+| AC-P2-VAL-09 | RQ-P2-10 | PASS | PG `test_reversal_blocked_by_newer_version` + route `test_reverse_blocked_by_newer_version` — `replacement_requires_revalidation` 409; reversão só do mesmo validador (`test_reversal_same_validator_only`/`test_reverse_requires_same_validator`) com justificativa → `UNDER_REVIEW`/`ACCEPTED` |
+| AC-P2-VAL-10 | segurança | PASS | route: sem token 401, sem `access` 403, cross-competence/cross-branch 404 (`test_decide_version_item_out_of_scope_404`, PG `test_item_out_of_declared_scope_404`); MANAGE para revisão de correção; ator não-UUID 401 |
+| AC-P2-VAL-11 | auditoria | PASS | `EVIDENCE_ACCEPTED`/`EVIDENCE_REJECTED`/`DECISION_REVERSED`/`ITEM_MARKED_NA`/`ITEM_CANCELLED`/`CORRECTION_*` append-only em `closing_audit_event` (PG `test_validation_events_in_audit`) + `evidence_decision` sem UPDATE (`test_decisions_are_append_only`) |
+| AC-P2-VAL-12 | frontend | PASS | `ItemValidationPanel.test.tsx` (10) — badges de decisão, rejeição com motivo+comentário «Outro», WHOLE_SET decide conjunto, reversão, N/A condicional, correção request/review, erro tipado 403; `ClosingDocumentsPanel` valida evidência de competência sem item |
+| AC-P2-VAL-13 | RQ-P2-12 | PASS | `helpTooltips.ts` — `checklist.validation` (anexado≠validado, motivos, reversão, revalidação pós-substituição), `checklist.state` (novos estados), `checklist.exceptionalItem` |
+
+Cobertura A2 por requisito: RQ-P2-02 → VAL-01 · RQ-P2-03 → VAL-02 · RQ-P2-04 → VAL-03 · RQ-P2-05 → VAL-04 · RQ-P2-06 → VAL-05 · RQ-P2-07 → VAL-06 · RQ-P2-08 → VAL-07 · RQ-P2-09 → VAL-08 · RQ-P2-10 → VAL-09 · RQ-P2-12 → VAL-13. RQ-P2-11 (notificações) permanece `TARGET` — dependência T02 fora do escopo A2.
 
 ## P3 — Estoque, Cutoff e Conciliação
 

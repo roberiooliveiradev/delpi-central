@@ -26,6 +26,9 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     PersistenceUnavailable,
     StaleRevision,
 )
+from controllership_finance_app.infrastructure.persistence.closing_validation_repository import (
+    recompute_item_state,
+)
 from controllership_finance_app.infrastructure.persistence.plugins_db import (
     SCHEMA_NAME,
     plugins_db_connect,
@@ -552,6 +555,9 @@ class ClosingDocumentRepository:
                         """,
                         (new_version_no, document_id),
                     )
+                    revalidation = self._reopen_item_validation(
+                        cur, doc["snapshot_item_id"]
+                    )
                     self._audit(
                         cur,
                         entity_type="closing_document",
@@ -564,6 +570,7 @@ class ClosingDocumentRepository:
                             "superseded_version_no": doc[
                                 "current_version_no"
                             ],
+                            "item_revalidation_required": revalidation,
                             "original_name": original_name,
                             "size_bytes": size_bytes,
                             "checksum_sha256": checksum_sha256,
@@ -606,6 +613,9 @@ class ClosingDocumentRepository:
                         """,
                         (document_id,),
                     )
+                    revalidation = self._reopen_item_validation(
+                        cur, doc["snapshot_item_id"]
+                    )
                     self._audit(
                         cur,
                         entity_type="closing_document",
@@ -615,9 +625,52 @@ class ClosingDocumentRepository:
                         actor=actor,
                         detail={
                             "version_no": doc["current_version_no"],
+                            "item_revalidation_required": revalidation,
                         },
                     )
         return self.get_document_by_id(competence_id, document_id)
+
+    def _reopen_item_validation(
+        self, cur, snapshot_item_id
+    ) -> bool:
+        """RQ-P2-05 — mutação da evidência exige nova validação.
+
+        Recomputa o estado do item vinculado na mesma transação: item
+        `ACCEPTED` cuja composição mudou (versão nova sem decisão ou
+        conjunto alterado) volta a `EXPECTED`. Retorna True quando a
+        revalidação foi efetivamente reaberta.
+        """
+        if snapshot_item_id is None:
+            return False
+        cur.execute(
+            f"""
+            SELECT state, validation_scope
+              FROM {_q('competence_checklist_item')}
+             WHERE snapshot_item_id = %s
+             FOR UPDATE
+            """,
+            (snapshot_item_id,),
+        )
+        item = cur.fetchone()
+        if item is None or item["state"] != "ACCEPTED":
+            return False
+        new_state = recompute_item_state(
+            cur,
+            snapshot_item_id=snapshot_item_id,
+            validation_scope=item["validation_scope"],
+            current_state=item["state"],
+        )
+        if new_state == item["state"]:
+            return False
+        cur.execute(
+            f"""
+            UPDATE {_q('competence_checklist_item')}
+               SET state = %s
+             WHERE snapshot_item_id = %s
+            """,
+            (new_state, snapshot_item_id),
+        )
+        return True
 
     # -- leituras U6/U8 (SLICE-2) ---------------------------------------------------
 
@@ -666,7 +719,7 @@ class ClosingDocumentRepository:
             "entity_type = 'closing_document'",
             "entity_id = %s",
             "competence_id = %s",
-            "event_type IN (%s, %s, %s, %s)",
+            "event_type IN (%s, %s, %s, %s, %s, %s)",
         ]
         params: list[Any] = [
             document_id,
@@ -675,6 +728,8 @@ class ClosingDocumentRepository:
             "DOCUMENT_DOWNLOADED",
             "VERSION_ADDED",
             "DOCUMENT_CANCELLED",
+            "EVIDENCE_ACCEPTED",
+            "EVIDENCE_REJECTED",
         ]
         where = " AND ".join(clauses)
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
@@ -715,7 +770,7 @@ class ClosingDocumentRepository:
         cur.execute(
             f"""
             SELECT document_id, state, revision, current_version_no,
-                   uploaded_by
+                   uploaded_by, snapshot_item_id
               FROM {_q('closing_document')}
              WHERE competence_id = %s AND document_id = %s
              FOR UPDATE

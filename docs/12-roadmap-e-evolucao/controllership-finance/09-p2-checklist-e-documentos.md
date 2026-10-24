@@ -534,7 +534,7 @@ O browser não chama Core, `api-delpi`, notification provider ou storage diretam
 
 > **Gate contratual executado:** o storage adapter e os contratos físicos de upload foram especificados e consolidados como TARGET no [doc 103 — P2-Upload contract gate](./103-ciclo3-p2-upload-contract-gate.md) (`CF-C3-P2-UPLOAD-CONTRACT-GATE-001` + fechamento `CF-C3-P2-UPLOAD-DECISIONS-CONTRACT-CLOSURE-001`): operações U1–U8, matriz de segurança, decisões **D-U1..U6=A PO_APPROVED** (doc 97 §7), C1–C4 revisados (idempotência pendente de detalhe de transporte/escopo — D-U7). Runtime/upload permanece não autorizado até revisão GPT e GO próprio.
 >
-> **Estado em 24/10/2026:** os dois GOs de implementação foram executados — `CF-C3-P2-UPLOAD-IMPL-GO-001` (U1–U4: upload, listagem, consulta, download auditado) e `CF-C3-P2-UPLOAD-SLICE2-IMPL-GO-001` (U5–U8: substituição versionada com OCC, histórico de versões, cancelamento lógico, eventos de auditoria). D-U7=A decidida e implementada (idempotência por chave obrigatória + `request_hash`). Ciclo documental completo no MFE, aguardando revisão arquitetural independente — ver [doc 100](./100-ciclo3-p6-min-p2-read-runtime-evidencia-de-execucao.md) (adendos SLICE-1/SLICE-2) e [doc 103 §J](./103-ciclo3-p2-upload-contract-gate.md). Validação humana e P5 permanecem TARGET.
+> **Estado em 24/10/2026:** os dois GOs de implementação foram executados — `CF-C3-P2-UPLOAD-IMPL-GO-001` (U1–U4: upload, listagem, consulta, download auditado) e `CF-C3-P2-UPLOAD-SLICE2-IMPL-GO-001` (U5–U8: substituição versionada com OCC, histórico de versões, cancelamento lógico, eventos de auditoria). D-U7=A decidida e implementada (idempotência por chave obrigatória + `request_hash`). Ciclo documental completo no MFE, aguardando revisão arquitetural independente — ver [doc 100](./100-ciclo3-p6-min-p2-read-runtime-evidencia-de-execucao.md) (adendos SLICE-1/SLICE-2) e [doc 103 §J](./103-ciclo3-p2-upload-contract-gate.md). Validação humana implementada no Pacote A2 do plano mestre (`CF-PROC0072-E2E-MASTER-EXECUTION-001`): aceite/rejeição por anexo e por conjunto, motivo estruturado, reversão governada, N/A condicional, item excepcional e correção estrutural com request/review — V005 + `validations_routes.py` + `ItemValidationPanel`; evidência no doc 23 §A2 e doc 100. P5 permanece TARGET.
 
 Operações semânticas necessárias:
 
@@ -556,6 +556,8 @@ Operações semânticas necessárias:
 | resolveEligiblePeople | references Core autorizadas |
 
 Os nomes físicos/endpoints entram no OpenAPI futuro; esta lista congela a semântica, não a implementação.
+
+**Mapeamento físico implementado (A2, `validations_routes.py`):** `POST /closing/competences/{period}/documents/{document_id}/validation` (decisão por anexo — PER_ATTACHMENT e evidências de competência sem item) · `POST .../items/{item_key}/validation` (decisão de conjunto — WHOLE_SET) · `POST .../decisions/{decision_id}/reverse` (reversão governada) · `POST .../items/{item_key}/not-applicable` + `.../not-applicable/revert` · `POST .../items/{item_key}/cancel` · `POST .../items` (item excepcional) · `POST|GET .../items/{item_key}/corrections` + `POST .../corrections/{correction_id}/review` · `GET .../items/{item_key}/validation` (estado, decisões por versão/composição e histórico). `updateExceptionalItem`/`cancelExceptionalItem` dedicados são cobertos pela edição/cancelamento genéricos do item; `promoteToMaster`, `resolveEligiblePeople` e `listItemHistory` consolidado permanecem TARGET (P6/notificações).
 
 ### AuthZ
 

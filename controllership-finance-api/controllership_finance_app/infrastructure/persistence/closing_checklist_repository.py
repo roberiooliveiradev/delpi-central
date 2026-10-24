@@ -136,7 +136,8 @@ class ClosingChecklistRepository:
                 f"""
                 SELECT item_id, item_key, sort_order, sheet, name, purpose,
                        origin_kind, recipient_area, applicability,
-                       branch_scope, totvs_report_ref, requirement_notes
+                       branch_scope, totvs_report_ref, requirement_notes,
+                       validation_scope
                   FROM {_q('checklist_template_item')}
                  WHERE version_id = %s
                  ORDER BY sort_order
@@ -198,11 +199,12 @@ class ClosingChecklistRepository:
                                      name, purpose, origin_kind,
                                      recipient_area, applicability,
                                      branch_scope, totvs_report_ref,
-                                     requirement_notes)
+                                     requirement_notes, validation_scope)
                                 SELECT %s, item_key, sort_order, sheet, name,
                                        purpose, origin_kind, recipient_area,
                                        applicability, branch_scope,
-                                       totvs_report_ref, requirement_notes
+                                       totvs_report_ref, requirement_notes,
+                                       validation_scope
                                   FROM {_q('checklist_template_item')}
                                  WHERE version_id = %s
                                  ORDER BY sort_order
@@ -284,8 +286,8 @@ class ClosingChecklistRepository:
                                      sheet, name, purpose, origin_kind,
                                      recipient_area, applicability,
                                      branch_scope, totvs_report_ref,
-                                     requirement_notes)
-                                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                                     requirement_notes, validation_scope)
+                                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                                 """,
                                 (
                                     updated["version_id"],
@@ -300,6 +302,8 @@ class ClosingChecklistRepository:
                                     item.get("branch_scope") or "BOTH",
                                     item.get("totvs_report_ref"),
                                     item.get("requirement_notes"),
+                                    item.get("validation_scope")
+                                    or "PER_ATTACHMENT",
                                 ),
                             )
                     except psycopg.errors.UniqueViolation as exc:
@@ -489,12 +493,13 @@ class ClosingChecklistRepository:
                                  source_template_item_id, source_version_id,
                                  sheet, name, purpose, origin_kind,
                                  recipient_area, applicability, branch_scope,
-                                 totvs_report_ref, requirement_notes)
+                                 totvs_report_ref, requirement_notes,
+                                 validation_scope)
                             SELECT %s, item_key, sort_order, item_id,
                                    version_id, sheet, name, purpose,
                                    origin_kind, recipient_area, applicability,
                                    branch_scope, totvs_report_ref,
-                                   requirement_notes
+                                   requirement_notes, validation_scope
                               FROM {_q('checklist_template_item')}
                              WHERE version_id = %s
                              ORDER BY sort_order
@@ -574,7 +579,8 @@ class ClosingChecklistRepository:
                 f"""
                 SELECT snapshot_item_id, item_key, sort_order, sheet, name,
                        origin_kind, recipient_area, applicability,
-                       branch_scope, totvs_report_ref, state
+                       branch_scope, totvs_report_ref, state,
+                       validation_scope, exceptional, revision, state_reason
                   FROM {_q('competence_checklist_item')}
                  WHERE {' AND '.join(clauses)}
                  ORDER BY sort_order
@@ -594,7 +600,8 @@ class ClosingChecklistRepository:
                        source_template_item_id, source_version_id, sheet,
                        name, purpose, origin_kind, recipient_area,
                        applicability, branch_scope, totvs_report_ref,
-                       requirement_notes, state
+                       requirement_notes, state, validation_scope,
+                       exceptional, revision, state_reason
                   FROM {_q('competence_checklist_item')}
                  WHERE competence_id = %s AND item_key = %s
                 """,

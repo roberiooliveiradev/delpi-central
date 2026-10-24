@@ -1,5 +1,10 @@
 const DATE_FMT = new Intl.DateTimeFormat("pt-BR");
 
+const DATETIME_FMT = new Intl.DateTimeFormat("pt-BR", {
+  dateStyle: "short",
+  timeStyle: "short",
+});
+
 const AMOUNT_FMT = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -23,6 +28,11 @@ export function formatCivilDate(iso: string | null): string {
   const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   if (!y || !m || !d) return iso;
   return DATE_FMT.format(new Date(y, m - 1, d));
+}
+
+/** Data+hora ISO em pt-BR; vazio quando nulo. */
+export function formatDateTime(iso: string | null): string {
+  return iso ? DATETIME_FMT.format(new Date(iso)) : "";
 }
 
 export function formatAmount(raw: string): string {

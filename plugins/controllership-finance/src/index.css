@@ -406,3 +406,109 @@
   color: var(--cf-text-muted);
   font-size: 12px;
 }
+
+/* P2 validação humana — painel de decisões do item. */
+.dashboard-controllership-finance .cf-validation-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__scope {
+  margin: 0;
+  color: var(--cf-text-muted);
+  font-size: 13px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__docs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__doc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border: 1px solid var(--cf-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__doc-name {
+  margin: 0;
+  font-size: 14px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__doc-detail {
+  margin: 2px 0 0;
+  color: var(--cf-text-muted);
+  font-size: 12px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__doc-actions,
+.dashboard-controllership-finance .cf-validation-panel__set-actions,
+.dashboard-controllership-finance .cf-validation-panel__item-actions,
+.dashboard-controllership-finance .cf-validation-panel__form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__corrections ul,
+.dashboard-controllership-finance .cf-validation-panel__history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__corrections h4,
+.dashboard-controllership-finance .cf-validation-panel__history h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__corrections li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__correction-meta p {
+  margin: 0;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.dashboard-controllership-finance .cf-validation-panel__form select,
+.dashboard-controllership-finance .cf-validation-panel__form input,
+.dashboard-controllership-finance .cf-validation-panel__form textarea {
+  border: 1px solid var(--cf-border);
+  border-radius: 8px;
+  background: var(--cf-surface);
+  color: var(--cf-text);
+  padding: 8px 10px;
+  font: inherit;
+}

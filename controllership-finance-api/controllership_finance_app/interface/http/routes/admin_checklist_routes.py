@@ -49,6 +49,10 @@ class ChecklistItemInput(BaseModel):
     )
     totvs_report_ref: str | None = Field(default=None, max_length=8)
     requirement_notes: str | None = None
+    validation_scope: str = Field(
+        default="PER_ATTACHMENT",
+        pattern="^(PER_ATTACHMENT|WHOLE_SET)$",
+    )
 
 
 class UpdateDraftRequest(BaseModel):

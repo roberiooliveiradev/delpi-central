@@ -37,6 +37,12 @@ vi.mock("../../api/documentsApi", () => ({
     listEventsMock(...args),
 }));
 
+const decideEvidenceMock = vi.fn();
+vi.mock("../../api/competencesApi", () => ({
+  decideDocumentEvidence: (...args: unknown[]) =>
+    decideEvidenceMock(...args),
+}));
+
 import { ApiError } from "../../api/httpClient";
 import { ClosingDocumentsPanel } from "./ClosingDocumentsPanel";
 
@@ -613,5 +619,76 @@ describe("ClosingDocumentsPanel", () => {
     );
     expect(screen.getByText(/Download/)).toBeTruthy();
     expect(listEventsMock).toHaveBeenCalledWith("2026-05", "d-1");
+  });
+
+  it("valida evidência de competência (sem item) com aceite", async () => {
+    const competenceDoc = { ...DOC, snapshot_item_id: null };
+    listDocumentsMock.mockResolvedValue({
+      documents: [competenceDoc],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    decideEvidenceMock.mockResolvedValue({});
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Aceitar"));
+    await waitFor(() =>
+      expect(decideEvidenceMock).toHaveBeenCalledWith("2026-05", "d-1", {
+        decision: "ACCEPTED",
+      }),
+    );
+  });
+
+  it("rejeita evidência de competência com motivo estruturado", async () => {
+    const competenceDoc = { ...DOC, snapshot_item_id: null };
+    listDocumentsMock.mockResolvedValue({
+      documents: [competenceDoc],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    decideEvidenceMock.mockResolvedValue({});
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Rejeitar"));
+    fireEvent.change(screen.getByLabelText(/Motivo da rejeição/), {
+      target: { value: "WRONG_COMPETENCE" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmar rejeição" }),
+    );
+
+    await waitFor(() =>
+      expect(decideEvidenceMock).toHaveBeenCalledWith("2026-05", "d-1", {
+        decision: "REJECTED",
+        reason_code: "WRONG_COMPETENCE",
+      }),
+    );
+  });
+
+  it("não oferece decisão em documento vinculado a item", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+
+    render(<ClosingDocumentsPanel period="2026-05" />);
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    expect(screen.queryByText("Aceitar")).toBeNull();
+    expect(screen.queryByText("Rejeitar")).toBeNull();
   });
 });
