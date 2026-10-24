@@ -1,5 +1,6 @@
 # 41 — Estratégia de Validação, Matriz de Testes e Gates V1
 
+> **REBASELINE 24/10/2026:** Matriz de testes continua authority para as camadas/AC futuros; sequência e checkpoints atuais da Central são os do [Documento 93 — Roadmap executivo E2E com checkpoints reais](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md). **Existem** MFE, BFF, rotas e testes de Home/baixas/estoque no HEAD, mas **não foram executados nesta revisão**. Portanto frases datadas neste documento como "todos os slices runtime NOT_STARTED" não representam o HEAD. Smoke novo = TEST_NOT_RUN/INCONCLUSIVE até prova. `IMPLEMENTATION_AUTHORIZED=NO` para novos slices.
 **Estado:** TARGET / PLANNED / TEST_NOT_RUN. Este arquivo é uma especificação de testes futuros, **não** relata execução. `DOCUMENTATION_CLOSURE_COMPLETE=NO` e `IMPLEMENTATION_AUTHORIZED=NO` permanecem.
 
 Fontes: [.cursor — platform-quality-testing](../../../.cursor/rules/platform-quality-testing.mdc), [test-and-commit](../../../.cursor/rules/test-and-commit.mdc), [feature-help-sync](../../../.cursor/rules/feature-help-sync.mdc), [15 — requisitos](./15-requisitos-criterios-de-aceite-e-testes.md), [23 — ledger](./23-ledger-rq-ac-testes.md), [35 — A15](./35-contratos-regras-scripts-test-matrix-gate-v2.md), [38 — evidências](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
