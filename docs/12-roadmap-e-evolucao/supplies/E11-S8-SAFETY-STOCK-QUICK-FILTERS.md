@@ -52,3 +52,10 @@ Inventário do contrato: `GET /safety-stock/summary` recebe `status` e o BFF rep
 
 - `GATE-FEATURE E11` permanece **INCONCLUSIVE** — jornada autenticada + QA visual do PO (desktop/mobile, claro/escuro, teclado/foco, sync chips↔select) pendentes.
 - Rollback: `git pull` para `3039f729c8` (HEAD anterior a S8) + imagem `ffa2e9e492ff` (S7) — não executado.
+
+
+## Revisão GPT — E11.S8 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`.** Conferidos no source `0668cdeb3c`: este documento e `SafetyStockPage.tsx`. A implementação reutiliza `SuppliesScopeChipBar` e deriva os cinco chips do estado único `query.status`, aplicando `patchQuery({status, page: 1})`; não há estado de filtro paralelo. A omissão dos contadores está fundamentada no contrato: o `summary` é filtrado por status, de modo que valores nos chips irmãos não representariam totais independentes. Resultados 438 PASS, TypeScript/build e deploy (imagem `sha256:b883b846adfe`, bundle `App-1WJf6UiX.js`) são evidências reportadas pelo executor, não reexecutadas pelo GPT.
+
+**Gate:** `E11_S8=ACCEPT_WITH_RESIDUAL`; `E11_DEPLOY_STATUS=PASS_DEPLOYED` conforme relatório do executor; `GATE-FEATURE E11=INCONCLUSIVE` porque não houve sessão federada autenticada nem evidência visual/teclado/mobile. Homologar sincronização chip ↔ select ↔ URL ↔ F5/back, preservação dos filtros e relação com a página própria de detalhe. Lint global 10 erros/22 warnings preexistentes fora da feature não alterados. Nenhum novo endpoint, permission ou cálculo autorizado nesta revisão.
