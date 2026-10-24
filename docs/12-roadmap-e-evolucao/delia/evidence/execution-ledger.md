@@ -121,3 +121,11 @@
 - **O2=PASS real:** corr `9962e656` — `search_products` alvo → `foreign_evidence_required` → `davi.discover` → execute norma → `foreign_evidence` → `search_products(description=TERM.+BALA)` (access log api-delpi) → `corresponds` → 2 registros reais verificados: `10080092`, `10081004`. Confiabilidade: 1/3 runs (variância de modelo kimi-k3 eval; prod=`delia-json` mais fraco) — `RELIABILITY_RESIDUAL=OPEN`.
 - Regressão: delia focused 30/30 + **full backend 2281 pass/3 skip**; arch gate 0 findings; sibling `terminal pino` PASS (`10080683`/`10081935`); D1/VISTA/listing sem regressão.
 - `O2=PASS_EXECUTOR_EVIDENCE`; `R7-01=CLOSED_LOCALLY_WITH_RELIABILITY_RESIDUAL`; `R7_FINAL_ACCEPT=NO` até revisão independente + autorização operacional + homologação produtiva; `COORDINATION_REVIEW_REQUIRED=YES`.
+
+### Registro complementar — 2026-10-24 — R7 reliability remediation bounded EXECUTADO (mecanismo corrigido; reliability abaixo do threshold proposto)
+
+- `TASK_ID=DELIA-R7-PRODUCTION-RELIABILITY-REMEDIATION-AND-DEPLOY-01`; `STATE=BOUNDED_CORRECTION_COMMITTED_GATES_PENDING`; `BASE_SHA=1e52c597b7`; `FINAL_HEAD=17dc08b9c8`=origin/main (ff-only); `DEPLOY_STATUS=BLOCKED_PENDING_AUTHORIZATION`.
+- **Baseline prod read-only:** produção stale — instruction v4 (v13 nunca deployada), modelo efetivo kimi-k3 (divergente do `delia-json` reportado), MCP DAVI+OpenAPI habilitados, TTL delegado 120s. O2 prod (v4): literal → `irrelevant` → honest `insufficient`, GROUNDED, zero WRITE.
+- **Causa-raiz:** `native_assessment` especulativo era o único gate do caminho foreign (6/7 `sufficient`); recovery não tinha caminho foreign. Correção: recovery re-avalia com `relevance_feedback` (mismatch provado) e compõe estágios existentes; consult recebe contexto de feedback. Instructions v13→v16. Sem planner/router/hardcode.
+- **Denominadores:** foreign chain ~0/7 → ~5/6 dispara; O2 PASS 3/~25 (~12%) no kimi-k3 eval — bottleneck residual = formulação de args do re-invoke (variância de modelo). Backend: 2284/2286, 2 ENVIRONMENT_FAILURE provadas no base. Threshold ≥70% proposto à coordenação.
+- `R7_FINAL_ACCEPT=NO`; `COORDINATION_REVIEW_REQUIRED=YES`; `NEXT_ACTION=INDEPENDENT_REVIEW_17dc08b9c8 + threshold decision + (se aprovado) model/config decision antes de deploy`.

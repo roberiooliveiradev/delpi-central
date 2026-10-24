@@ -129,3 +129,28 @@
 **Próxima task bounded:** `DELIA-R7-O2-RELIABILITY-AND-RELEASE-EVIDENCE-GATE-01` — baseline/candidate eval em ambiente isolado representativo do runtime, matriz pequena multirun (O2, terminal pino, D1, TÉO SIPOC, VISTA, negativos); caracterizar first-divergent-stage e thresholds de outcome pela autoridade, corrigir apenas defeito comprovado em owner legítimo, revalidar resultados contra API/telemetria. Separar rollout do DAVI (contrato READ, se gates C1 e release forem aceitos) de rollout da DÉLIA (v13 model-dependent), com revisões e autorizações específicas por serviço. CRI_OFF live permanece `TEST_NOT_RUN`. Sem aprovação retroativa nem fechamento R7.
 
 `NEXT_ACTION=BOUNDED_MODEL_RELIABILITY_EVIDENCE`; `O2_STATUS=PASS_ONCE_RELIABILITY_PENDING`; `RELEASE_GATE=BLOCKED`; `R7_CLOSED=NO`.
+
+
+### Confiabilidade de produção, diagnóstico causal e correção bounded — 2026-10-24 (task `DELIA-R7-PRODUCTION-RELIABILITY-REMEDIATION-AND-DEPLOY-01`)
+
+**BASE_SHA=`1e52c597b7` · FINAL_HEAD=`17dc08b9c8` = origin/main (push ff-only verificado).** Reference review `e8a9402308` lida (hold on O2 reliability). Executor re-ancorou, não presumiu SHA e não deployou.
+
+**Baseline produtivo READ-only (autorizado):** `delpi-delia-api`/`delpi-api-delpi` healthy; runtime SHA reportado `7bc6e53500`; **instruction version efetiva = v4** (v13 nunca deployada — produção está stale relativo ao release candidate); modelo efetivo `moonshotai/kimi-k3` no inventário remoto (não `delia-json` como reportado antes — divergência registrada); `DELIA_MCP_DAVI_ENABLED=true`, `DELIA_OPENAPI_DELPI_ENABLED=true`, token TTL delegado 120s (cap 300, margem 15s). O2 em produção (v4): `search_products(description=terminal bala)` → registros reais mas `goal_evidence_relevance=irrelevant` → recovery literal → `insufficient` — resposta honesta, GROUNDED, zero fabricação, zero WRITE.
+
+**Diagnóstico causal (first divergent stage):** a máquina pré-correção só alcançava o caminho `foreign_evidence` quando `native_assessment` *especulava* mismatch de nomenclatura antes de qualquer evidência owner — em amostra N=7 retornou `sufficient` 6×, literal search → `irrelevant` → recovery literal → `insufficient`. O recovery pré-patch não tinha caminho foreign: a cadeia canônica dependia de previsão especulativa na primeira tentativa. Causa-raiz classificada = **orchestration implementation** (gate especulativo) + instruction resource, não transporte/AuthZ/contrato DAVI.
+
+**Correção bounded (`17dc08b9c8`, 6 arquivos, +309/−20):**
+- `orchestration.py`: `_recover_relevance` re-executa `_assess_native_path` sobre o target reselecionado **com `relevance_feedback` injetado** — assessment decide sobre mismatch *provado*, não especulação; em `foreign_evidence_required` compõe os estágios existentes `_select_foreign_capability`/`_invoke_foreign_evidence` e injeta `foreign_evidence` nos argumentos do re-invoke; o consult foreign também recebe `relevance_feedback`/`business_subject` (antes era formulado cego — só via a pergunta crua). Uma rodada de recovery, mesmos gates, fail-soft — sem planner/router/loop novo, sem hardcode de produto.
+- Instruction resource v13→v16: assessment decide sobre feedback provado; recovery prefere grupo de registros após resolução documental; designação canônica copiada verbatim (proibido repetir literal e inventar filtros como `group_code`); `candidate_arguments` ganhou cláusula para campos enum-constrained (nunca frase livre em campo enum; `missing_inputs` em vez de inventar valor).
+- Testes RED→GREEN em `test_goal_evidence_relevance.py` (+227): consult de recovery dispara em mismatch provado e permanece desligado quando o caminho reselecionado é native-suficiente.
+
+**Resultado por estágio (amostras com token fresco por run, denominadores completos):**
+- Pré-patch: foreign chain ~0/7 runs; pós-patch: `native_assessment=foreign_evidence_required` dispara em ~5/6 runs de recovery; `davi.execute_delpi_information` completa ~metade dos consults; `TERM. BALA` extraído e re-invocado com `corresponds` em runs bem-sucedidos.
+- O2 outcomes observados na sessão: **3 PASS em ~25 runs válidos (~12%)** — corridas com `description=TERM.+BALA` confirmadas no access log e registros `10080092`/`10081004` verificados. Bottleneck residual concentrado no estágio `arguments` do re-invoke (modelo reformula literal/sinônimo em vez de copiar a designação do evidence) e formulação de inner-args do consult — **variância de modelo kimi-k3 na cadeia semântica de ~10 decisões**, não defeito de mecanismo remanescente identificado.
+- Run adversarial: 1 resposta NON_GROUNDED conversacional (conteúdo de modelo, não owner) — corretamente marcada não-grounded, honestidade preservada.
+
+**Regressão:** focused suites verdes (goal_evidence_relevance, instruction_resource, governed_knowledge, recovery, evidence_relevance); **full backend 2284/2286 pass — 2 ENVIRONMENT_FAILURE** (`test_g4 fixture` requer mount `/plugins` ausente; `test_http_timeout_maps_to_504` — ambos reproduzem no base sem o diff, causalidade ambiental provada por stash-test-unstash).
+
+**Threshold proposto para coordenação (não usado como gate unilateral):** O2 SUCCESSFUL_BUSINESS_OUTCOMES/TOTAL_VALID_RUNS ≥ 70% em matriz congelada no modelo/config homologados, antes de homologação produtiva. Medida atual ~12% — **abaixo do threshold proposto**.
+
+`O2_STATUS=MECHANISM_IMPROVED_RELIABILITY_BELOW_THRESHOLD`; `FIRST_DIVERGENT_STAGE_RESOLVED=native_assessment_speculation`; `RESIDUAL=model_formulation_variance`; `DELIA_DEPLOY=BLOCKED_PENDING_REVIEW_AND_AUTHORIZATION`; `R7_FINAL_ACCEPT=NO`.
