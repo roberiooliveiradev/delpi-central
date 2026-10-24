@@ -112,3 +112,12 @@
 - Regressão: plugin-ui 2343/2343, delia 449/449, tsc+build+federation OK.
 - Residual: REAL_DOCK_QA / ZOOM_200_QA / SCREEN_READER_QA `TEST_NOT_RUN`.
 - Evidência: spec 73 §13.1; `C:\temp\delia-qa\shots-usermsg\`.
+
+### Registro complementar — 2026-10-24 — R7 fechamento integrado DAVI↔DÉLIA EXECUTADO (O2=PASS local; deploy gated)
+
+- `TASK_ID=DELIA-R7-DAVI-INTEGRATED-RELEASE-AND-O2-OUTCOME-CLOSURE-01`; `STATE=EXECUTED_EVIDENCE_READY_FOR_REVIEW`; `BASE_SHA=118e51ad84`; `FINAL_HEAD=dbb65dabe9`=origin/main (ff-only); `CODE_DIFF=BOUNDED` (api-delpi `openapi_baseline.json` +7: parâmetro `subject` no candidato discovery; delia-api instruction resource v4→v13 + version allowlist + contract-lock tests; 5 arquivos, +45/−30); `DEPLOY_STATUS=BLOCKED_PENDING_AUTHORIZATION`.
+- **DAVI gap fechado:** `subject` existia no router/OpenAPI mas não no `argument_schema` do candidato (baseline congelado) — discover→execute não endereçava por assunto. Resync canônico `scripts/sync_openapi_baseline.py`; regressão DAVI focada **188 pass**; falhas C1 = `ENVIRONMENT_FAILURE` (`PLUGINS_DB_*` ausente no runner; 23/23 verdes no container configurado; histórico 2FAIL/30SKIP preservado).
+- **DÉLIA bounded (v13):** doc-first semântico para assuntos coloquiais; doc ≠ registro para relevance; `mismatch_hint` carrega designação canônica; `native_assessment=foreign_evidence_required` + `foreign_selection` documental acionam o caminho `enrichment` já existente; reformulação imperativa verbatim no recovery/foreign args. Sem planner/loop/budget novo, sem hardcode.
+- **O2=PASS real:** corr `9962e656` — `search_products` alvo → `foreign_evidence_required` → `davi.discover` → execute norma → `foreign_evidence` → `search_products(description=TERM.+BALA)` (access log api-delpi) → `corresponds` → 2 registros reais verificados: `10080092`, `10081004`. Confiabilidade: 1/3 runs (variância de modelo kimi-k3 eval; prod=`delia-json` mais fraco) — `RELIABILITY_RESIDUAL=OPEN`.
+- Regressão: delia focused 30/30 + **full backend 2281 pass/3 skip**; arch gate 0 findings; sibling `terminal pino` PASS (`10080683`/`10081935`); D1/VISTA/listing sem regressão.
+- `O2=PASS_EXECUTOR_EVIDENCE`; `R7-01=CLOSED_LOCALLY_WITH_RELIABILITY_RESIDUAL`; `R7_FINAL_ACCEPT=NO` até revisão independente + autorização operacional + homologação produtiva; `COORDINATION_REVIEW_REQUIRED=YES`.
