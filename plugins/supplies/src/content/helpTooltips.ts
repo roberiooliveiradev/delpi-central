@@ -40,7 +40,8 @@ export const SP_HELP = {
     navMyTasks: "Fila de acompanhamento atribuída a você.",
     navPurchaseRequests:
       "Itens de solicitações de compra no período. A unidade é filtro do acompanhamento global.",
-    navOperations: "Pedidos, entregas, fornecedores, produtos e estoques autorizados.",
+    navPurchaseOrders:
+      "Pedidos de compra com saldo pendente de recebimento no recorte. Unidade e período são filtros. Entregas, fornecedores, produtos e estoques ficam no agrupamento Operações do Início.",
     navAdmin: "Mappings, escopos e configurações do Portal.",
     navHelp: "O que é o Portal, diferença para os apps antigos e o que fazer em 403.",
   },

@@ -177,7 +177,7 @@ export const USER_MANUAL_CONTENT = {
         "Estoque — posição física atual por produto, unidade e armazém, incluindo saldos positivos, zerados e negativos. Não calcula saldo disponível e não é estoque de segurança.",
         "Estoque de segurança — materiais com estoque de segurança parametrizado no ERP: indicadores do recorte, déficit por unidade de medida e lista ordenável com os quatro status. Clique na linha para a página de detalhe do material (saldos, cobertura, pedidos/SCs/empenhos em aberto, projeção, consumo e fornecedores); na visão Todas as Filiais, o Portal pede a escolha de Santa Catarina ou Espírito Santo. Distinto de Estoque (posição física) e de Produtos (ficha cadastral).",
         "Solicitações de compras — acompanhamento global no período; o hero conta SCs e a faixa Atenção filtra a situação sem ser uma permissão. Clique na SC para a ficha; exportação Excel faz parte do uso normal.",
-        "Operações — pedidos, entregas, fornecedores, produtos, estoque físico e estoque de segurança.",
+        "Operações — agrupamento do Início que reúne pedidos, entregas, fornecedores, produtos, estoque físico e estoque de segurança. Na barra de navegação, «Pedidos de compra» abre diretamente a lista de pedidos.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
         "Perfil — avatar na TopBar abre o perfil deste Portal; Meu perfil Minha DELPI e Preferências ficam no menu do nome.",

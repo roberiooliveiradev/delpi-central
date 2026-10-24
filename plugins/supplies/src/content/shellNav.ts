@@ -18,7 +18,7 @@ export const SHELL_NAV_ITEMS: readonly ShellNavItem[] = [
   { id: "overview", label: "Visão geral", requiredCap: "analytics" },
   { id: "my_tasks", label: "Minhas tarefas", requiredCap: "always" },
   { id: "purchase_requests", label: "Solicitações", requiredCap: "purchaseRequests" },
-  { id: "operations", label: "Operações", requiredCap: "operations" },
+  { id: "purchase_orders", label: "Pedidos de compra", requiredCap: "operations" },
   { id: "administration", label: "Administração", requiredCap: "administration" },
   { id: "help", label: "Ajuda", requiredCap: "always" },
 ] as const;

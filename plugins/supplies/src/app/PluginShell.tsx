@@ -51,7 +51,7 @@ const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   overview: SP_HELP.shell.navOverview,
   my_tasks: SP_HELP.shell.navMyTasks,
   purchase_requests: SP_HELP.shell.navPurchaseRequests,
-  operations: SP_HELP.shell.navOperations,
+  purchase_orders: SP_HELP.shell.navPurchaseOrders,
   administration: SP_HELP.shell.navAdmin,
   help: SP_HELP.shell.navHelp,
 };
@@ -61,7 +61,7 @@ const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   overview: <BarChart3 size={16} strokeWidth={1.75} aria-hidden="true" />,
   my_tasks: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
   purchase_requests: <ShoppingCart size={16} strokeWidth={1.75} aria-hidden="true" />,
-  operations: <Package size={16} strokeWidth={1.75} aria-hidden="true" />,
+  purchase_orders: <Package size={16} strokeWidth={1.75} aria-hidden="true" />,
   administration: <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />,
   help: <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
@@ -71,7 +71,7 @@ const NAV_TARGET: Record<PluginNavId, Parameters<typeof navigatePluginView>[0]> 
   overview: "overview",
   my_tasks: "my_tasks",
   purchase_requests: "purchase_requests",
-  operations: "purchase_orders",
+  purchase_orders: "purchase_orders",
   administration: "administration",
   help: "help",
 };

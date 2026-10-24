@@ -78,7 +78,17 @@ describe("pluginRoutes", () => {
       buildSafetyStockDetailPath("02", "A B", undefined, "?from=x"),
     ).toBe("/apps/supplies/safety-stock/02/A%20B?from=x");
 
-    expect(resolveActiveNavId("safety_stock_detail")).toBe("operations");
+    // SUPPLIES-TOPBAR: «Pedidos de compra» é destino específico da topbar —
+    // páginas do agrupamento Operações (Home) não o ativam mais.
+    expect(resolveActiveNavId("safety_stock_detail")).toBeNull();
+    expect(resolveActiveNavId("safety_stock")).toBeNull();
+    expect(resolveActiveNavId("deliveries")).toBeNull();
+    expect(resolveActiveNavId("suppliers")).toBeNull();
+    expect(resolveActiveNavId("supplier_detail")).toBeNull();
+    expect(resolveActiveNavId("products")).toBeNull();
+    expect(resolveActiveNavId("inventory")).toBeNull();
+    expect(resolveActiveNavId("purchase_orders")).toBe("purchase_orders");
+    expect(resolveActiveNavId("purchase_order_detail")).toBe("purchase_orders");
     // Caminho sem filial/código continua na listagem ou em not_found.
     expect(resolvePluginRoute("/apps/supplies/safety-stock").view).toBe(
       "safety_stock",

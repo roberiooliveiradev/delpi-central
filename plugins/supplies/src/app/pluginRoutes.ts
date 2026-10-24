@@ -31,7 +31,7 @@ export type PluginNavId =
   | "overview"
   | "my_tasks"
   | "purchase_requests"
-  | "operations"
+  | "purchase_orders"
   | "administration"
   | "help";
 
@@ -273,15 +273,7 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
       return "purchase_requests";
     case "purchase_orders":
     case "purchase_order_detail":
-    case "deliveries":
-    case "suppliers":
-    case "supplier_detail":
-    case "supplier_create":
-    case "products":
-    case "inventory":
-    case "safety_stock":
-    case "safety_stock_detail":
-      return "operations";
+      return "purchase_orders";
     case "administration":
       return "administration";
     case "help":
