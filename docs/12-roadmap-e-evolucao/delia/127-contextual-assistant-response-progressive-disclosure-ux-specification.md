@@ -1,6 +1,6 @@
 # DÉLIA — Resposta Conversacional com Contexto Progressivo — Especificação de UX
 
-**Data:** 2026-10-23. **Status:** PRODUCT_UX_DECISION / PLANNED / DOC_ONLY. **HEAD de referência:** cd5f349f7148bfc6ee059f37980b08216a0fc05a. **Produto:** DÉLIA (standalone). **Escopo:** apresentação de mensagens do assistente em full-page e Companion Dock, sem alteração de autorização, evidence/decision gate, runtime, protocolos ou modelos.
+**Data:** 2026-10-23. **Status:** IMPLEMENTED_AND_HOMOLOGATED (2026-10-24, commit `3c89d222b5`, deploy prod + QA autenticado 18/18). **HEAD de referência:** cd5f349f7148bfc6ee059f37980b08216a0fc05a. **Produto:** DÉLIA (standalone). **Escopo:** apresentação de mensagens do assistente em full-page e Companion Dock, sem alteração de autorização, evidence/decision gate, runtime, protocolos ou modelos.
 
 ## 1. Motivação e intenção do Product Owner
 
@@ -91,4 +91,14 @@ Reancorar e localizar no HEAD os documentos canônicos de conversation UI, prese
 
 REANCHOR: git HEAD/status → Project Instructions/.cursor → 16→50→17→49→51→52→21→20→25 → arquitetura/product spec → presentation/Markdown/evidence/activity specs e ledger. INVENTORY: identificar envelopes/owners/consumers/componentes reais. REUSE/CONTRACT GATES: provar equivalentes; manter classificação e provenance por dados autoritativos. Testes RED em saudação, resposta com fontes, evidência insuficiente, activity/outcome, erro/streaming. Implementar **o menor diff correto** no plugin-ui/composição, sem backend presumido. QA visual, regressão, documentação, ledger e deploy após gates. Se contrato não distinguir variantes com segurança, documentar `ARCHITECTURE_DECISION_REQUIRED` para essa parte e não inventar classificação textual; ainda executar melhorias puramente visuais seguras.
 
-**STATUS FINAL DA PUBLICAÇÃO:** `SPEC_PUBLISHED; RUNTIME_NOT_CHANGED; TEST_NOT_RUN; PHASE_NOT_ADVANCED`.
+**STATUS FINAL DA PUBLICAÇÃO:** `SPEC_PUBLISHED; RUNTIME_CHANGED (2026-10-24, commit 3c89d222b5); TESTED; PHASE_NOT_ADVANCED`.
+
+### Implementação registrada (2026-10-24)
+
+`EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` — zero componente novo, zero diff em `plugin-ui`, zero backend. Mudança confinada à composição em `plugins/delia/src/ui/DeliaAssistantMessage.tsx`:
+
+- **Variante A (conversacional):** gate por dado tipado de contrato — `observability.composition_mode === "model"` + `messageKind === "RESULT"` (sem `semanticState`) + ausência de `provenance` e `confirmationRequest`. Nesse caso o `ActivityViewer` ("Atividade concluída"/"Ver detalhes") e o resumo decorativo "Sem fonte vinculada" são suprimidos; `EvidenceDetails` permanece somente se houver `limitations` (avisos materiais não dependem de estética). Avatar, rótulo DÉLIA, conteúdo Markdown e ações (Copiar etc.) preservados.
+- **Variantes B/C (contextualizada/operacional):** inalteradas — provenance GROUNDED, semantic states, confirmation, activity real continuam com ActivityViewer + EvidenceDetails completos. Presença de `provenance` força tratamento completo mesmo sob composição model.
+- Nenhuma classificação por texto/regex; nenhuma autoridade movida ao frontend.
+
+**Evidência:** `vd-arc-prod.mjs` + `vd-arc-prod-m.mjs` autenticados — 18/18 (saudação leve h=82px sem chrome operacional; resposta SIPOC rica com Markdown; mobile 320/375 sem overflow). Testes: delia 431/431 (+5 ARC), typecheck/build verdes. Residuais: estado `stopping`-análogo transitório e resposta realmente GROUNDED não reproduzidos no probe (cobertos por vitest); 360/390/420px, zoom 200%, dark visual e screen reader TEST_NOT_RUN.

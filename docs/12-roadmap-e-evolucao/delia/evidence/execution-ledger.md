@@ -18005,6 +18005,19 @@ COMMIT=19b082dbee DEPLOYED=YES PROD_QA=21/21
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
 
+## §6.420 — Resposta assistente contextual/progressiva (spec 127) (2026-10-24)
+
+**2026-10-24 — DELIA-UX-CONTEXTUAL-ASSISTANT-RESPONSE-PROGRESSIVE-DISCLOSURE-01:** saudacao "ola" deixou de renderizar envelope operacional — "Atividade concluida"+"Ver detalhes" (ActivityViewer) e "Sem fonte vinculada"+"Detalhes da evidencia" (EvidenceDetails) agora aparecem apenas quando ha sinal operacional real. Gate por dado tipado de contrato: `observability.composition_mode === "model"` + RESULT + sem provenance + sem confirmation => variante conversacional (avatar+DELIA+conteudo+acoes). Variantes B/C (fonte real, semantic states, confirmacao, activity real) inalteradas; provenance forca tratamento completo; limitacoes sempre acessiveis. Zero componente/plugin-ui/backend diff; sem classificacao por texto.
+
+TESTES: delia 431/431 (+5 ARC: greeting leve, suppression com live events, operational mantido, limitacoes preservadas, provenance forca full). Typecheck+build verdes. DEPLOY: push ff `3c89d222b5` -> up-prod-sequential --build delia.
+
+QA VISUAL PROD 18/18 (vd-arc-prod.mjs + vd-arc-prod-m.mjs): saudacao h=82px sem chrome operacional, identidade unica, Copiar presente; resposta SIPOC rica com Markdown integro; mobile 320/375 sem overflow. Screenshots shots-arc/. Residuais: turno GROUNDED real e estado transitario nao reproduzidos no probe (vitest cobre); 360/390/420, zoom200, dark, screen-reader TEST_NOT_RUN.
+
+TASK_ID=DELIA-UX-CONTEXTUAL-ASSISTANT-RESPONSE-PROGRESSIVE-DISCLOSURE-01
+COMMIT=3c89d222b5 DEPLOYED=YES PROD_QA=18/18
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
 ## §6.420 — Remediação bounded das falhas de teste api-delpi: matriz causal, owner fixes, suíte restaurada (2026-10-24)
 
 **2026-10-24 — DELIA-C3-DAVI-BASELINE-TEST-FAILURES-BOUNDED-REMEDIATION-01 (doc 137):** pacote bounded autorizado pelo PO sob revisão independente `84306b0e` para fechar a dívida de regressão api-delpi. Worktree isolada `davia-testfix-wt` (BASE `86942f8540`); baseline x candidato byte-idêntico → `CANDIDATE_ONLY_FAILURES=∅`; "74 falhas" = 10 causas-raiz, não 74 defeitos.
