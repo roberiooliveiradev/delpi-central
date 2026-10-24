@@ -349,3 +349,38 @@ Inventário atual no HEAD de documentação: \`DeliaConversationPage\` compõe \
 **Task bounded:** \`DELIA-UX-CONVERSATION-CONTEXT-RIGHT-RAIL-LAYOUT-REFINEMENT-01\`. Reanchor HEAD/git status → Project Instructions/.cursor → 16→50→17→49→51→52→21→20→25 → arquitetura/product specs → spec 127/layout/contracts/ledger; contract + reuse gate; RED testes dos casos de sobreposição, contexto inline e light-dismiss; mínimo diff no \`ConversationThreeRegionLayout\` e composição DÉLIA; regressão full; QA full-page/Dock real/mobile/zoom/temas; rework → evidência/ledger → commit/push main → deploy frontend scoped → pós-deploy. Se integração compartilhada exigir decisão fora do escopo, registrar \`ARCHITECTURE_DECISION_REQUIRED\` e limitar o diff ao que é seguro.
 
 **Esta publicação é somente documental:** \`RUNTIME_NOT_CHANGED; TEST_NOT_RUN; PHASE_NOT_ADVANCED\`. Histórico de releases anteriores permanece preservado.
+
+
+### Implementação (Right Rail integrado) — 2026-10-24 — `f00c6ea739`
+
+**Task:** `DELIA-UX-CONVERSATION-CONTEXT-RIGHT-RAIL-LAYOUT-REFINEMENT-01`. Base `2ca5c5ea42`+`f00c6ea739`. Scope: frontend/layout apenas — backend, contratos e dados inalterados.
+
+**Causa-raiz da sobreposição (diagnóstico §5):** `ConversationThreeRegionLayout` sempre renderizou o contexto global como `__context-popover` — `position:absolute; top:66px; right:16px; z-index:30` com light-dismiss via `pointerdown` no documento e Escape. A classe `__right` com CSS de coluna real existia no stylesheet, mas o componente nunca a instanciava. Owner do layout: `plugin-ui`; composição: `plugins/delia`.
+
+**Implementação (EXTEND — direção preferencial da spec):**
+- `ConversationThreeRegionLayout` +prop `rightVariant?: "popover" | "rail"` (default `"popover"` — retrocompatível; DÉLIA é a única consumidora).
+- Variante `rail`: `<aside role="complementary" aria-label="Contexto da conversa">` como coluna flex real `flex:0 0 var(--delpi-ui-three-right)` (clamp 296–344px), `position:static`, sem overlay/z-index, sempre montada com `flex-basis:0` fechada → transição de largura suave (240ms ease, `--delpi-ui-conversation-motion-*` existente), `visibility:hidden` + `aria-hidden` quando fechada.
+- Sem light-dismiss na variante rail (`pointerdown` externo removido apenas no modo rail); Escape continua fechando e devolve foco ao toggle; close button interno preservado; `aria-expanded`/`aria-controls` intactos.
+- Fallback governado: rail apenas quando o centro projetado permanece ≥480px legível (`hostW − leftW − railIconW − clamp(296,23%,344) ≥ 480`, medido via ResizeObserver no host real, não na viewport). Abaixo disso — e sempre em compact (host ≤920px, inclui Dock e mobile) — a superfície flutuante legítima existente é usada.
+- `DeliaConversationPage` passa `rightVariant="rail"`; `DeliaConversationContextPanel` inalterado (estado vazio honesto).
+- Grid inline do contexto de mensagem adapta automaticamente (container-query no card): medido em produção — 3→2 áreas @1920/1600 com rail aberto, 2→1 @1440.
+
+**Medições reais em produção (autenticado, getBoundingClientRect):**
+
+| Viewport | Centro fechado→aberto | Rail | Card inline (tracks) |
+|---|---|---|---|
+| 1920 | 1267→924px | 344px, static | 1030→834px (3→2) |
+| 1600 | 987→689px | 299px, static | 897→599px (3→2) |
+| 1440 | 827→532px | 296px, static | 737→442px (2→1) |
+| 1280 | 668→668px | fallback popover | 578px (1) |
+| 375 | — | fallback popover | — |
+
+`centerR ≤ railL` em todas as larguras (zero sobreposição), `docOverflow=0`, composer sempre dentro do centro.
+
+**QA autenticado (vd-rightrail-prod.mjs): 50/50 PASS** — RR-01..15: coluna real, sem overlay/light-dismiss, composer preservado, Escape, dois contextos inline + rail simultâneos, mobile fallback, reduced-motion, vazio honesto, centro recupera largura ao fechar.
+
+**Regressão:** plugin-ui 2340/2340 (+5 RIGHTRAIL), delia 447/447 (+1 page rail + 1 asserção dialog→complementary atualizada), tsc+build+federation OK. Deploy `up-prod-sequential.sh --build plugin-ui delia`; SHA `f00c6ea739`.
+
+**Residual:** REAL_DOCK_QA TEST_NOT_RUN (compact ≤920px host → popover é o contrato; probe do Dock real não executado); zoom 200%/dark-light visual/screen reader TEST_NOT_RUN; streaming/fila cobertos por vitest.
+
+**RIGHTRAIL-01..18:** 01–15 PASS; 16 PASS (regressão); 17 PASS (EXTEND, zero duplicação); 18 PASS (docs+ledger+push+deploy+verify). PHASE_NOT_ADVANCED.

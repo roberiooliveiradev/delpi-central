@@ -44,3 +44,12 @@
 - Auth gate resolvido: password grant sancionado do usuário `user` (client `delpi-central`) — sem impersonation. Eval local isolado: matriz 11/11 PASS; O2 honesto; sinônimo grounded; write negativo recusado.
 - Prod smoke mínimo: health 200, unauth 401, 1 turno O2 com recovery `reinvoke` + segundo julgamento + insuficiência honesta; zero erros; escopo compose `[1/1] delia-api`.
 - `O2_BUSINESS_OUTCOME=INCONCLUSIVE` (residual documental DAVI); tokens `NOT_AVAILABLE`; aceite independente pendente.
+
+
+### §6.427 — 2026-10-24 — Right Rail integrado do Contexto da conversa (DELIA-UX-CONVERSATION-CONTEXT-RIGHT-RAIL-LAYOUT-REFINEMENT-01)
+
+- `STATE=COMPLETE_LIVE`; `RUNTIME_IMPLEMENTATION=EXECUTED`; `DEPLOYED_SHA=f00c6ea739` (main ff; `plugin-ui`+`delia` via `up-prod-sequential.sh`); `PHASE_NOT_ADVANCED`.
+- Causa-raiz: `__context-popover` era `position:absolute` overlay sobre o centro, com light-dismiss — `__right` (coluna real) existia no CSS mas nunca era instanciado. Fix: `rightVariant="rail"` no `ConversationThreeRegionLayout` — `<aside role="complementary">` como coluna flex real, sem light-dismiss, Escape preservado, transição de largura 240ms; fallback governado para a superfície flutuante quando centro projetado <480px ou host compacto ≤920px. Consumidora única DÉLIA.
+- Gates: plugin-ui 2340/2340, delia 447/447, tsc+build+federation OK. Produção `vd-rightrail-prod.mjs` 50/50: rail 344/299/296px real @1920/1600/1440 com centro redimensionado e zero overlap; @1280 fallback popover (centro <480); mobile popover; grid inline adapta 3→2→1.
+- Residual: REAL_DOCK_QA / zoom 200% / dark-light visual / screen reader TEST_NOT_RUN.
+- Evidência: spec 127 §implementação right rail; `shots-rightrail/` (C:\temp\delia-qa).
