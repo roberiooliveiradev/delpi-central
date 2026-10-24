@@ -58,3 +58,10 @@ Verificado no produtor (`safety_stock_query_repository.fetch_summary` + `build_w
 - `GATE-FEATURE E11` permanece **INCONCLUSIVE** — jornada autenticada + QA visual do PO pendentes.
 - Deploy: plugin-ui (remote, antes dos MFEs) + supplies — procedimento canônico, registrado na seção de evidência do commit/deploy abaixo.
 - Rollback: `git pull` para `0668cdeb3c` (S8) + imagens anteriores de plugin-ui e supplies — não executado.
+
+
+## Revisão GPT — E11.S9 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para código/contrato/publicação, com `GATE-FEATURE E11=INCONCLUSIVE`. Conferidos no source `910d2315a1`: este documento, `SafetyStockPage.tsx` e `plugins/plugin-ui/src/components/layout/PageHero.tsx`. O `PageHeroHighlight` ganhou `onSelect`, `active` e `ariaLabel` opcionais; seis indicadores do MFE controlam os campos contratados `query.status`/`query.includeWithoutSafetyStock` com atualização de `page:1`, sem barra de chips paralela. A seleção composta `Com estoque de segurança` possui suporte real pelo filtro `includeWithoutSafetyStock=false` conforme inventário do produtor; nenhuma regra de cálculo adicional é necessária.
+
+**Evidências reportadas pelo executor (não reexecutadas pelo GPT):** 438 testes MFE, 7 testes PageHero, tsc/build PASS, deploy remoto `plugin-ui` imagem `555b47ccf9d6` e `supplies` imagem `f99272d59581`. **Residual funcional para homologação:** `status=without_safety_stock` combinado a `includeWithoutSafetyStock=false` pode resultar em empty legítimo; verificar que a UX explica a combinação de filtros, sem modificar toggle silenciosamente. Também testar card ativo ↔ Status ↔ URL, F5/back, seleção por teclado e responsividade real em ambos os temas. `AUTHENTICATED_SMOKE=INCONCLUSIVE`; sem evidência visual autenticada não elevar o gate a PASS.
