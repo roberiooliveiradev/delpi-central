@@ -73,3 +73,10 @@ Loading por canal (itens/summary/filtros independentes) · empty real («Nenhum 
 ## Readiness E11.S3
 
 A tabela já carrega `product_code + branch` por linha (rowKey `branch|code`). E11.S3 (drawer de detalhe) pode consumir `/items/{code}/details` e `/items/{code}/suppliers` com filial concreta sem alterar a listagem.
+
+
+## Revisão GPT — E11.S2 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para a fatia MFE. Conferidos no source `9a809334b0`: este documento, `SafetyStockPage.tsx`, `api.ts` e `content.ts`. A implementação usa somente `supplies-api`, filtro de filial `all|01|02`, resumo/listagem independentes, guardas para payload inválido e não consome detalhes/fornecedores em S2. Testes `418 PASS`, TypeScript e build são evidências reportadas pelo executor e não reexecutadas nesta revisão. **`E11_S3_READY_TO_AUTHORIZE=YES`**, sem autorização automática, nem deploy.
+
+**Residuais não bloqueantes para planejar S3:** (1) `supplies-api` ainda pode converter envelope upstream malformado em `{}` com HTTP 200; guardas MFE mitigam a apresentação, mas não substituem correção bounded comprovada na origem; (2) fallback `session.allowedUnits` só é válido enquanto representar catálogo operacional de domínio, nunca grants de filial; (3) evidência visual autenticada desktop/mobile, claro/escuro, teclado/foco e smoke federado são `TEST_NOT_RUN`, pendentes do gate E11. E11.S3 deve consultar detalhe/fornecedores somente sob interação de linha com chave `branch + product_code` (sem N+1), preservando E12/E17/E18 fora do escopo.
