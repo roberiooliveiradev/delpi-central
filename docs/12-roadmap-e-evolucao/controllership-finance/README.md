@@ -1,3 +1,6 @@
+
+> **Decisão atual (24/10/2026):** `CP-D01=A` aprovada pelo PO — persistência própria do contexto `controllership-finance-api`, schema isolado em `postgres-plugins` para competência/template/snapshot. [Doc 95 §8](./95-ciclo3-cp00-cp01-rebaseline-e-brief-primeiro-slice-p2.md). **Não é GO de runtime**: segue `CF-C3-P6-MIN-P2-READ-CONTRACT-GATE-001`. `IMPLEMENTATION_AUTHORIZED=NO` para esse slice.
+
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
 > **Estado atualizado em 24/10/2026.** Primeira funcionalidade: **Central de Fechamento**, processo **PROC-0072**. **Existem** MFE, BFF e páginas read-only Home, Baixas financeiras e Estoque histórico no HEAD; **isso não é a Central P1–P6 implementada ou homologada**. Este README é o **painel de estado**; relatórios antigos A12/A14/A15/A16 são evidências datadas, não gates atuais.
