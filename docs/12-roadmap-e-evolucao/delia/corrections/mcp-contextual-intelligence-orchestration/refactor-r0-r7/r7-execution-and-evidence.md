@@ -93,3 +93,24 @@
 **Próximo bounded step:** task no owner `api-delpi` para inventariar/reutilizar mecanismos existentes de endereçamento semântico de seção/tópico em `read_governed_technical_knowledge`, sem novo MCP tool, índice RAG ou permissão paralela; contrato-first; RED→GREEN cobrindo MP `TERM. BALA`, PI e outros tópicos, negativos, provenance, version/pagination, AuthZ e disponibilidade de conhecimento para perguntas compostas. Separar discovery semântico de aprovação. Após aceite independente do owner, reexecutar matriz local de DÉLIA com o mesmo SHA/model/config, O2+D1, e avaliação TÉO/VISTA/CRI. Se não fechar, registrar first divergent stage novo; não repetir prompt tuning sem hipótese nem ampliar escopo. **Não autorizar deploy R7 nem encerrar R0–R7 até os gates e outcomes estarem cumpridos.**
 
 `NEXT_ACTION=API_DELPI_BOUNDED_KNOWLEDGE_ADDRESSABILITY`; `R7_RELEASE_GATE=BLOCKED`; `COORDINATION_REVIEW=COMPLETE_WITH_BLOCKERS`.
+
+
+### Execução integrada DAVI↔DÉLIA — 2026-10-24 (task `DELIA-R7-DAVI-INTEGRATED-RELEASE-AND-O2-OUTCOME-CLOSURE-01`)
+
+**BASE_SHA=`118e51ad84` · FINAL_HEAD=`0e84208acd` = origin/main (push ff-only verificado).** Executor re-ancorou, não presumiu SHA e não deployou.
+
+**Gap owner-side provado e corrigido (api-delpi):** `read_governed_technical_knowledge` já aceitava `subject` no router/OpenAPI vivo, mas o candidato exposto no discovery derivava de `openapi_baseline.json`, congelado antes do contrato — `subject` não aparecia no `argument_schema` do candidato (`additionalProperties:false`), então o caminho discover→execute não conseguia endereçar por assunto. Correção canônica: `scripts/sync_openapi_baseline.py --from-json` a partir do OpenAPI vivo — diff de +7 linhas (somente o parâmetro `subject`), sem alterar código nem corpus. Regressão DAVI focada pós-sync: **188 pass** (subject addressability + dynamic read + discovery selection + live V2). Falhas ambientais C1 (`pac_plan_revision_retention`, `route_phase2_products_production_smoke`): causadas por ausência de `PLUGINS_DB_*` no runner — 23/23 verdes no container configurado; classificação `ENVIRONMENT_FAILURE`, histórico 2 FAIL/30 SKIP preservado.
+
+**Correção bounded delia-api (instruction resource v4→v13, superfície governada — sem planner/loop/budget novo):**
+- `select_group`/`select_candidate`: preferência semântica por superfície documental quando o assunto é coloquial e a designação canônica pode divergir; em `relevance_feedback`, preview documental direciona à superfície de registros.
+- `arguments`: query de discovery em forma conceitual para resolução de designação; reformulação imperativa com a forma canônica copiada verbatim do preview/foreign evidence.
+- `goal_evidence_relevance`: documentação/guia nunca é registro de negócio para pedidos de registros; `mismatch_hint` deve nomear a designação canônica observada.
+- `native_assessment`/`foreign_selection`: resolução de designação como evidência estrangeira requerida — caminho `enrichment` já existente na máquina de estados (DISCOVERY permitido como classe estrangeira).
+
+**O2=PASS (real, verificado):** corr `9962e656` — `search_products` alvo → `native_assessment=foreign_evidence_required` → `foreign_selection=davi.discover_delpi_information` → discover→execute consultou a norma → `foreign_invocation=ok` → `search_products(description=TERM.+BALA)` (confirmado no access log do api-delpi) → `corresponds` → `answered`. Resposta: `10080092` TERM. BALA 0,50-2,27MM2 e `10081004` TERM. BALA 1,00-2,50MM2 — ambos verificados no owner. Variância de modelo persiste: 1/3 runs completou a cadeia (1 admission miss, 1 insuficiência honesta). Sem hardcode, sem provider name, sem instrução produto-específica.
+
+**Regressão delia:** focused contract tests 30/30; **full backend 2281 pass / 3 skip**; arch gate 0 findings. Sibling `terminal pino` PASS (`10080683`/`10081935`); D1 doc-first (conteúdo parcial como antes); VISTA honest-empty; listing real — sem regressão observada.
+
+**Residuais honestos:** confiabilidade da cadeia é limitada por variância do modelo (kimi-k3 eval; produção roda `delia-json`, mais fraco) — cada elo foi provado, mas a composição não é determinística; falha ambiental C1 requer aceite formal de exceção pelo owner; deploy de `api-delpi` (baseline sync) e `delia-api` (v13) aguarda revisão independente + autorização operacional específica — **não concedidas nesta sessão**.
+
+`R7-01=CLOSED_LOCALLY_WITH_RELIABILITY_RESIDUAL` · `O2=PASS` (executor-executed) · `DEPLOY=BLOCKED_PENDING_AUTHORIZATION` · `COORDINATION_REVIEW_REQUIRED=YES` · `R7_FINAL_ACCEPT=NO` até gates independentes.
