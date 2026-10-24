@@ -165,7 +165,22 @@ export function DeliaAssistantMessage({
         ]
       : undefined;
   const StateIcon = semanticState?.icon;
-  const activityView = buildDeliaActivityView(turn);
+
+  // Spec 127 §3/A: a governed conversational turn — model composition,
+  // plain RESULT, no provenance/confirmation — presents as a natural
+  // conversation. Boilerplate operational chrome (generic "Atividade
+  // concluída" activity, decorative "Sem fonte vinculada") is
+  // suppressed; limitations remain reachable. The gate reads only
+  // contract data (observability.composition_mode) — never response
+  // prose, never provider metadata.
+  const conversationalOnly =
+    turn.observability?.composition_mode === "model" &&
+    !semanticState &&
+    !turn.provenance &&
+    !turn.confirmationRequest;
+  const activityView = conversationalOnly
+    ? null
+    : buildDeliaActivityView(turn);
 
   // EvidenceDetails projection — user-facing only. `protocol`,
   // `remote_capability` and other control-plane identifiers are
@@ -176,40 +191,47 @@ export function DeliaAssistantMessage({
   const groundedSource =
     turn.groundingStatus === "GROUNDED" ? turn.provenance?.source : null;
   const observedLabel = formatObservedAt(turn.provenance?.observed_at);
+  // Conversational variant: provenance rows and the "Sem fonte
+  // vinculada" line are decorative noise without an operational query;
+  // real limitations stay reachable through the disclosure.
   const evidenceItems: EvidenceDetailItem[] = [];
-  if (turn.epistemicClass) {
-    evidenceItems.push({
-      label: "Classificação",
-      value: turn.epistemicClass,
-    });
-  }
-  if (groundedSource) {
-    evidenceItems.push({
-      label: "Fonte",
-      value:
-        groundedSource.source_system || groundedSource.source_id,
-    });
-    if (turn.provenance?.specialist_id) {
+  if (!conversationalOnly) {
+    if (turn.epistemicClass) {
       evidenceItems.push({
-        label: "Especialista",
-        value: turn.provenance.specialist_id,
+        label: "Classificação",
+        value: turn.epistemicClass,
       });
     }
-    if (observedLabel) {
+    if (groundedSource) {
       evidenceItems.push({
-        label: "Observado em",
-        value: observedLabel,
+        label: "Fonte",
+        value:
+          groundedSource.source_system || groundedSource.source_id,
       });
+      if (turn.provenance?.specialist_id) {
+        evidenceItems.push({
+          label: "Especialista",
+          value: turn.provenance.specialist_id,
+        });
+      }
+      if (observedLabel) {
+        evidenceItems.push({
+          label: "Observado em",
+          value: observedLabel,
+        });
+      }
     }
   }
-  const evidenceSummary = groundedSource ? (
-    <>
-      Fonte · {groundedSource.source_system || groundedSource.source_id}
-      {observedLabel ? <> · consultado em {observedLabel}</> : null}
-    </>
-  ) : turn.groundingStatus === "NON_GROUNDED" ? (
-    "Sem fonte vinculada"
-  ) : undefined;
+  const evidenceSummary = conversationalOnly
+    ? undefined
+    : groundedSource ? (
+        <>
+          Fonte · {groundedSource.source_system || groundedSource.source_id}
+          {observedLabel ? <> · consultado em {observedLabel}</> : null}
+        </>
+      ) : turn.groundingStatus === "NON_GROUNDED" ? (
+        "Sem fonte vinculada"
+      ) : undefined;
   const hasEvidence =
     Boolean(evidenceSummary) ||
     evidenceItems.length > 0 ||

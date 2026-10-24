@@ -561,3 +561,116 @@ describe("DeliaAssistantMessage — copy action", () => {
     expect(copied).not.toContain("##");
   });
 });
+
+describe('DeliaAssistantMessage — conversational presentation (spec 127)', () => {
+  const modelObservability = (
+    composition_mode: string | null = 'model',
+  ): ConversationDisplayTurn['observability'] => ({
+    model: null,
+    response_mode: null,
+    composition_mode,
+    duration_ms: null,
+    governed_attempts: null,
+    model_calls: 1,
+    calls: [],
+    operational_calls: [],
+    elapsed_ms: null,
+    timeout_source: null,
+    tokens: { status: null, input: null, output: null, total: null },
+    cost: { status: null },
+  });
+
+  it('ARC-01/02/04: greeting renders light — no activity chrome or decorative missing-source', () => {
+    const { container } = renderMessage(
+      makeTurn({
+        content: 'Olá! Tudo bem? Como posso ajudar você hoje?',
+        groundingStatus: 'NON_GROUNDED',
+        observability: modelObservability('model'),
+      }),
+    );
+    expect(screen.getByText(/Olá! Tudo bem/)).toBeTruthy();
+    expect(container.querySelector('.delia-turn__avatar svg')).toBeTruthy();
+    expect(screen.getByText('DÉLIA')).toBeTruthy();
+    expect(
+      container.querySelector('.delpi-ui-activity-viewer'),
+    ).toBeNull();
+    expect(screen.queryByText('Atividade concluída')).toBeNull();
+    expect(screen.queryByText('Sem fonte vinculada')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /Ver detalhes|Detalhes da evidência/ }),
+    ).toBeNull();
+    // actions preserved
+    expect(
+      screen.getByRole('button', { name: 'Copiar resposta' }),
+    ).toBeTruthy();
+  });
+
+  it('conversational suppression applies even when live activity events exist', () => {
+    const { container } = renderMessage(
+      makeTurn({
+        content: 'Oi!',
+        groundingStatus: 'NON_GROUNDED',
+        observability: modelObservability('model'),
+        activityView: {
+          title: 'Atividade concluída',
+          state: 'completed',
+          steps: [
+            { id: 'r', label: 'Solicitação recebida', state: 'completed' },
+          ],
+        },
+      }),
+    );
+    expect(container.querySelector('.delpi-ui-activity-viewer')).toBeNull();
+  });
+
+  it('ARC-05/09: operational composition keeps activity + evidence', () => {
+    const { container } = renderMessage(
+      makeTurn({
+        content: 'Resultado operacional.',
+        groundingStatus: 'GROUNDED',
+        observability: modelObservability('cri'),
+        provenance: {
+          source: { source_id: 's', source_system: 'delpi' },
+          specialist_id: 'delpi',
+          observed_at: '2026-10-09T12:00:00Z',
+        },
+      }),
+    );
+    expect(container.querySelector('.delpi-ui-activity-viewer')).toBeTruthy();
+    expect(screen.getByText(/Fonte · delpi/)).toBeTruthy();
+  });
+
+  it('ARC-08: limitations stay reachable on a conversational turn', () => {
+    renderMessage(
+      makeTurn({
+        content: 'Resposta simples.',
+        groundingStatus: 'NON_GROUNDED',
+        observability: modelObservability('model'),
+        limitations: ['orçamento de composição excedido'],
+      }),
+    );
+    // no decorative source line, but limitations survive via disclosure
+    expect(screen.queryByText('Sem fonte vinculada')).toBeNull();
+    fireEvent.click(
+      screen.getByRole('button', { name: /Detalhes da evidência/ }),
+    );
+    expect(
+      screen.getByText('orçamento de composição excedido'),
+    ).toBeTruthy();
+  });
+
+  it('provenance forces full treatment even under model composition', () => {
+    const { container } = renderMessage(
+      makeTurn({
+        groundingStatus: 'GROUNDED',
+        observability: modelObservability('model'),
+        provenance: {
+          source: { source_id: 's', source_system: 'delpi' },
+          observed_at: '2026-10-09T12:00:00Z',
+        },
+      }),
+    );
+    expect(container.querySelector('.delpi-ui-activity-viewer')).toBeTruthy();
+    expect(screen.getByText(/Fonte · delpi/)).toBeTruthy();
+  });
+});
