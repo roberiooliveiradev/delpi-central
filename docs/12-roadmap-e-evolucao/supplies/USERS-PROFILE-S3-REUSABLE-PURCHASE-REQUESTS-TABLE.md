@@ -99,3 +99,14 @@ permanecem no mesmo código de antes.
   autenticada pendente (browser).
 - Exportar as SCs relacionadas a partir da ficha permanece sem contrato —
   a ação de exportação da seção intencionalmente fica oculta.
+
+
+## Revisão GPT — USERS.PROFILE.S3 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para implementação e contrato; `DEPLOY=PASS (executor-reported)`; `VISUAL_AUTHENTICATED=INCONCLUSIVE`. Inspecionados no GitHub (source `0c6ac0ffcd`) o documento S3, `PurchaseRequestsListTable.tsx` e `UserProfileService`. O componente de tabela já aceita `items/query/total/loading/canExport/basePath/onExport/onPatchQuery/onSelectRow` por props; a documentação relata reuso sem extração ou duplicação visual. O BFF aceita paginação até 100 e `sort_by/sort_dir` via allowlist do producer; o recorte de unidades autorizado e `self|admin` permanecem no serviço.
+
+**Evidência do executor, sem reexecução independente pelo GPT:** BFF 481 PASS/21 SKIP, MFE 391 PASS, typecheck/build PASS, deploy `supplies-api` imagem `67ad9c895f1d` e `supplies` `289c0c45d5e2`, bundle `App-SSmBJjdj.js`. Apenas smoke anônimo 401 e health foram realizados; faltam teste visual autenticado e prova da paginação, sort, tabela/cards e navegação na ficha real. O resultado global não é PASS de runtime completo.
+
+**Residual mantido do S2, confirmado novamente no source S3:** `related_purchase_requests` ainda extrai `items/total` sem checar explicitamente `data.error` quando o producer devolve erro num envelope JSON com HTTP 200; se esse formato for possível, pode aparecer vazio falso. Inventariar o envelope real e adicionar regressão/fail-closed sem ampliar escopo da tarefa visual. **Residual de UX compartilhada:** a tabela reutiliza as mesmas chaves de preferência de layout/colunas/fonte da listagem; testar se alterações na ficha afetando preferências da lista são comportamento intencional. **Cuidado semântico:** embora o documento use 'SCs', o `total` provém de linhas de itens (`PurchaseRequestListItem`); o rótulo exibido não deve sugerir quantidade de cabeçalhos distintos sem prova.
+
+**Estado formal:** `S3_CODE=ACCEPT_WITH_RESIDUAL`, `S3_DEPLOY=PASS (executor-reported)`, `S3_VISUAL=INCONCLUSIVE`; próximo passo: PO validar na ficha da Elaine SC 178764, componentes e paginação/ordenação, além de link Ver todas com filtro correto.
