@@ -1,0 +1,198 @@
+# 103 — Gate contratual P2-Upload: inventário, contratos TARGET e readiness
+
+**Task:** `CF-C3-P2-UPLOAD-CONTRACT-GATE-001` · **Fase:** Ciclo 3 — gate **documental** P2-Upload · **Baseline:** `a9e43b339d` (rework R4, `ACCEPT_WITH_RESIDUAL`)
+
+> **Tipo de documento:** especificação TARGET proposta + inventário + decisões pendentes. **Nada aqui está implementado nem autorizado para runtime.** Contrato físico vira definitivo somente após revisão do GPT Arquiteto e GO próprio do PO. `IMPLEMENTATION_AUTHORIZED=NO` · `DEPLOY_PRODUCTION_AUTHORIZED=NO`.
+
+---
+
+## 1. Inventário real (A) — o que a plataforma já tem
+
+### 1.1 Padrão canônico de storage — PROVEN (inventariado)
+
+A plataforma **já possui padrão canônico**, codificado em `.cursor/rules/persistent-upload-storage.mdc` + `infra/README-ambiente.md`, repetido por ~13 serviços:
+
+> **Metadados no Postgres do bounded context + binário em filesystem com bind mount `${DELPI_DATA_HOST_DIR}/<subdir>` + download somente via endpoint autenticado (`FileResponse`/`StreamingResponse`).**
+
+| Fato verificado | Evidência |
+|---|---|
+| Volume canônico por produto | `${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/<subdir>:/app/data/<subdir>` nos dois composes |
+| Metadados no schema próprio | `requests-api` `migrations/V004__attachments_artifacts_events.sql` — `original_name, stored_name, storage_key, mime_type, size_bytes, checksum_sha256, uploaded_by_user_id` |
+| Storage service por bounded context | `pac_evidence_storage.py`, `receipt_storage.py`, `guide_media_storage.py` — `validate_upload` (MIME allowlist + size) + UUID filename + `resolve` com containment anti-traversal |
+| Upload multipart FastAPI | `requests_routes.py:365–479`; `action_plans_read_router.py:1592–1661` (inclui rollback do binário se persistência falhar) |
+| Download autenticado | `FileResponse(path, media_type, filename=original_name)` — sempre atrás de `request.state.user` + policy |
+| Checksum de binário | `checksum_sha256` em `request_attachments`/`request_artifacts` |
+| Hash de versão semântica | `ContentHashService` (cipa/comité) — SHA-256 de payload canônico |
+| Validação por magic bytes | `SignatureStorageService` (cipa) — rejeita não-PNG pelo header; único exemplo de conferência de conteúdo real |
+| AuthZ por objeto | `requests` `actor_for`/`has_record_branch_access` — imutabilidade por status de workflow |
+| Upload chunked >100 MB | `tv-dashboard` `media_chunked_upload_service.py` — sessão + chunks (Cloudflare ~100 MB) |
+| Export/import de pacote com binários | `transformometro` `json_backup_routes.py` — `.tmbackup.zip` |
+
+### 1.2 Gaps reais da plataforma — TO_INVENTORY (não bloqueiam o desenho)
+
+- **Sem object storage** (S3/MinIO/Azure/presigned URL) — download é streaming autenticado; doc 91 já preferia stream a signed URL permanente.
+- **Sem antivírus** (ClamAV) — mitigação contratual: allowlist MIME+extensão+magic bytes por tipo.
+- **Sem retenção central** — política por domínio; para CF é DECISION_REQUIRED.
+- **Sem backup de arquivos** por padrão — só TM tem export/import de pacote.
+- **controllership-finance-api tem ZERO capability de arquivo hoje** — nenhum `UploadFile`, storage ou volume no compose (verificado).
+
+### 1.3 MFE — componentes reutilizáveis existentes (PROVEN)
+
+`@delpi/plugin-ui` já fornece: `FileDropzone`, `AttachmentFileList`, `AttachmentPreviewStrip` (`forms/`), `DocumentReader`/`DocumentReaderToolbar` (`document/`). Consumidores reais: `my-requests` (AttachmentsPanel/StagedAttachmentsField/RequestFilePreviewModal), `commercial` (TaskAttachmentsBlock), `customer-experience` (PhotoDropzone), `kaizometro` (KaizenEvidenceDropzone). **Nenhum componente novo de UI é necessário** para o primeiro slice.
+
+## 2. Estado real P2-READ (baseline verificado)
+
+| Conceito | Real no HEAD |
+|---|---|
+| Competência | `monthly_competence(period UNIQUE)` — abertura idempotente |
+| Itens esperados | `competence_checklist_item(competence_id, item_key UNIQUE)`, `state='EXPECTED'` (CHECK — único estado válido hoje) |
+| Auditoria | `closing_audit_event` append-only, `actor_subject UUID NOT NULL` |
+| Rotas | `access`: list/open/get/items/item · `manage`: admin templates · envelope `{success,data,error.code}` |
+| Filial | `branch_scope MATRIX\|BRANCH\|BOTH` — **dimensão de dado**, nunca permission (doc-14/T05) |
+| Identidade de ator | `actor_subject` = `user.id` UUID validado, fail-closed (hardening R2) |
+| Testes PG | banco efêmero com prova de ownership (rework R4) |
+
+## 3. Modelo conceitual (B) — contrato funcional TARGET
+
+### 3.1 Conceitos e owners
+
+| Conceito | Owner | Notas |
+|---|---|---|
+| `closing_document` (evidência de negócio) | `controllership_finance` | registro vinculado a `(competence_id, snapshot_item_id?)` — evidência de item OU documento de competência (nível competência, ex.: memorial) |
+| `document_version` | `controllership_finance` | linha de versão imutável: `(document_id, version_no)`, `file_id`, `supersedes_version_id`, estado documental, `uploaded_by`, `checksum_sha256`, `original_name`, `size_bytes`, `mime_type` |
+| `document_file` (metadado do binário) | `controllership_finance` | identidade estável do arquivo físico + `storage_key` + hash; **arquivo físico ≠ registro de evidência** |
+| binário | `CfDocumentStorageService` (adapter local, padrão plataforma) | path `<dir>/<competence_id>/<file_uuid><ext>`; sem semântica de negócio |
+| estado documental | domínio CF | `ATTACHED \| SUPERSEDED \| CANCELLED` — **upload cria `ATTACHED`, nunca `VALIDATED`** |
+| estado do item | snapshot (`EXPECTED` hoje) | upload **não muta** `competence_checklist_item.state` neste slice; derivação de "entregue" é responsabilidade da validação futura (C05) — `ATTACHED != VALIDATED` preservado |
+| `attachment_role` (E05) | P6 catalog | pendente — ver §8 |
+
+### 3.2 Invariantes preservados + novos propostos
+
+Preservados verbatim (docs 09/12/96): `ATTACHED != VALIDATED` · `CANCELLED != DELETED` · `CANCELLED != NOT_APPLICABLE` · `EXPECTED != DELIVERED/VALIDATED` · `PACKAGE_SUBMITTED_FOR_REVIEW = IMMUTABLE` · `ACCESS != MANAGE` · `Finalizar != Enviar` · `source absence != zero`.
+
+Novos (TARGET): `FILE_STORED != EVIDENCE_REGISTERED` (falha na gravação do metadado ⇒ rollback do binário) · `SUPERSEDED_VERSION != DELETED` (substituição cria versão nova; anterior permanece referenciável) · `DOWNLOAD != APPROVAL` · `UPLOADED_BY != VALIDATED_BY` (mesmo ator produz dois eventos distintos — doc 93 CP05).
+
+## 4. Contrato técnico TARGET (C) — propostas, não aprovadas
+
+Prefixo `POST/GET /closing/competences/{period}/documents*` — mesmo envelope e mapeamento de erros dos contratos P2-READ vigentes. **`CF-` prefixo de decisão: operationIds são PROPOSTAS.**
+
+### 4.1 Operações propostas
+
+| # | Capability (proposta) | Método/path (proposta) | AuthZ | Idempotência | Erros novos |
+|---|---|---|---|---|---|
+| U1 | `upload_competence_document` | `POST /closing/competences/{period}/documents` multipart (`file`, `snapshot_item_id?`, `title?`, `attachment_role?`) | `access` + scope + business_rule | header `Idempotency-Key` opcional → dedup por `(actor, key)` 24h | `file_too_large` 422, `unsupported_media_type` 415, `item_not_found` 404, `competence_not_opened` 404, `competence_closed` 409 (futuro) |
+| U2 | `list_competence_documents` | `GET .../documents?item=&state=` | `access` + scope | — | filtros = dimensão de dado |
+| U3 | `get_competence_document` | `GET .../documents/{document_id}` | `access` + scope | — | `document_not_found` 404 |
+| U4 | `download_document_version` | `GET .../documents/{document_id}/versions/{version}/content` → `FileResponse` | `access` + scope + recipient rule | — | `document_not_found` 404, `forbidden` 403, `file_missing` 503 (`persistence_unavailable`-like) |
+| U5 | `replace_document_version` | `POST .../documents/{document_id}/versions` multipart | `access` + scope + uploader-or-admin rule (ver §5, DECISION) | `revision` OCC no documento | `stale_revision` 409, `version_locked` 409 (pacote P5) |
+| U6 | `list_document_versions` | `GET .../documents/{document_id}/versions` | `access` + scope | — | — |
+| U7 | `cancel_document` | `POST .../documents/{document_id}/cancel` | `access` + scope + owner/admin | — | `document_locked` 409 |
+| U8 | `list_document_audit` | `GET .../documents/{document_id}/events` | `access` + scope | — | — |
+
+Para cada operação vale o contrato de plataforma: **AUTHN** JWT+Core RBAC (fail-closed, `rbac_unavailable` 503) · **RESOURCE_SCOPE** competência × filial-contexto do request · **CONCURRENCY** `revision` OCC no `closing_document` · **AUDIT** `closing_audit_event` por mutação (`DOCUMENT_UPLOADED`, `VERSION_ADDED`, `DOCUMENT_CANCELLED`, `DOCUMENT_DOWNLOADED`? — download-audit = DECISION, ver §8) · **TIMEOUT** padrão BFF · **RETRY** seguro apenas com `Idempotency-Key` · **PAGINATION** `limit/offset` ≤ 100.
+
+### 4.2 Ciclo de vida proposto
+
+`upload (U1) → document ATTACHED v1 → replace (U5) → v2 ATTACHED + v1 SUPERSEDED → cancel (U7) → CANCELLED (terminal, sai da listagem ativa; histórico íntegro)`. Item snapshot **permanece `EXPECTED`** — completude real é decisão de C05 (validação), não deste slice. `attachment_role` por item fica pendente de E05; sem role ⇒ `generic` explícito, nunca inventado.
+
+### 4.3 Transferência e integridade — recomendação TARGET
+
+- **Transporte:** multipart único `await file.read()` para o v1 (documentos de fechamento ≪ 100 MB); chunked da TV fica como alternativa documentada caso pacotes grandes apareçam — **DECISION** se limites exigirem.
+- **MIME:** allowlist fechada `application/pdf`, `image/jpeg|png|webp`, `application/vnd.ms-excel`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `text/csv` — + conferência de magic bytes por tipo (padrão cipa). Extratos OFX/QIF? **DECISION_REQUIRED** (fonte não comprova formatos bancários exatos).
+- **Tamanho:** 25 MB por arquivo (padrão PAC/TM/planning) — recomendado; DECISION do GO.
+- **Hash:** `checksum_sha256` do binário gravado no metadado (padrão requests) + verificação opcional no download? — recomendado não verificar (streaming confia no FS; hash é registro de integridade/auditoria).
+- **Layout disco:** `${DELPI_DATA_HOST_DIR}/cf-closing-documents/{competence_id}/{file_uuid}{ext}` — novo `CF_DOCUMENT_UPLOAD_DIR` + volumes nos dois composes + README-ambiente + env.example (checklist da rule).
+- **Rollback:** se persistência do metadado falhar, binário é removido (padrão PAC).
+- **Órfãos:** `document_file` sem referência de versão > 7d ⇒ varredura housekeeping (PLANNED, fora do v1).
+- **Retenção:** **DECISION_REQUIRED** — sem política inventada; v1 não deleta nada.
+
+## 5. Matriz de segurança (D) — `capability AND resource_scope AND business_rule`
+
+| Cenário | Regra proposta | Decisão |
+|---|---|---|
+| Upload com `access` | permitido — doc 14 já lista "anexar evidências" em ACCESS | fechado |
+| Download com `access` | permitido dentro do scope filial/competência visível; URL sempre atrás de `access` efetivo (nunca link público) | fechado |
+| Substituir evidência de outro usuário | uploader OU `manage` — DECISION_REQUIRED (doc 14 não congela owner-editability) | **aberto** |
+| Cross-competence | documento pertence à competência do path; `document_id` de outra competência ⇒ 404 (não 403 — sem vazamento de existência) | recomendado |
+| Cross-branch | `branch_scope` filtra itens; documento herda escopo do item — documento de competência sem item usa `branch_scope=BOTH` | recomendado |
+| Recipient-restricted (`recipient_area`) | CONTABIL/FISCAL é metadado de destino, **não** permission — download adicional restrito por elegibilidade é P5; v1: `access` lê | recomendado |
+| Competência "encerrada" | estado futuro; `competence_closed` 409 já reservado | aberto |
+| Pacote P5 submetido | evidência referenciada ⇒ `version_locked` 409 na substituição/cancelamento; histórico imutável | fechado (doc 12/37) |
+| `manage` sem `access` | **não** autoriza — `MANAGE != ACCESS` | fechado |
+| Service principal | 403 (padrão vigente) | fechado |
+| Core indisponível | `rbac_unavailable` 503 — fail-closed | fechado |
+| Usuário sem permission | 401/403 middleware | fechado |
+
+## 6. Integração futura com P5 — boundary
+
+- Evidência e pacote relacionam-se por **referência de versão** (`document_version_id`), nunca por cópia de bytes.
+- Uma `PackageVersion` referencia o conjunto `(document_id, version_no)` no momento do envio — substituição posterior cria v_n+1 **sem** alterar a referência do pacote enviado (`PACKAGE_SUBMITTED_FOR_REVIEW = IMMUTABLE`).
+- Upload/validação/disponibilização/envio são estágios distintos — este slice não toca `competence_checklist_item.state` nem monta pacote.
+- Destinatários autorizados P5 resolvem por elegibilidade Core + assignment (doc 37 §6) — fora do escopo.
+
+## 7. UX — especificação TARGET (sem mudança de runtime)
+
+- Entrada: por item da checklist (linha → "anexar") + ação de competência ("documentos da competência"); `FileDropzone` + `AttachmentFileList` existentes.
+- Estados: `INITIAL/LOADING/REFRESHING/SUCCESS/EMPTY/PARTIAL/ERROR/FORBIDDEN/NOT_FOUND` — reuse do padrão vigente da página; `UPLOADING` progresso por arquivo; erro de transferência com retry manual.
+- `ATTACHED` exibido como "anexado — aguardando validação" **nunca** como entregue/validado (RQ-P2-13 já PROVEN, manter).
+- Download via client autenticado (blob → save-as) — sem URL pública.
+- Help contextual: novo bloco explicando anexo vs validação **somente quando o slice for implementado** (proibido neste gate).
+- A11y: dropzone com alternativa de botão (teclado), `aria-describedby` em erros, foco gerenciado — padrão plugin-ui.
+
+## 8. Registro de decisões (F)
+
+### Já congeladas
+CP-D01=A (schema próprio) · CP-D04=A (DRAFT seed) · CP-D05=A (admin por API) · `P2-Upload ≠ validação` (doc 102 §8) · `PACKAGE_SUBMITTED_FOR_REVIEW = IMMUTABLE` · `BRANCH = dimensão` (T05) · ACCESS inclui "anexar evidências" (doc 14) · metadado-Postgres + binário-volume (rule canônica) · `EMAIL_ATTACHMENT_DELIVERY = NO` (E04).
+
+### DECISION_REQUIRED
+
+| # | Tópico | Opções | Recomendação | Owner |
+|---|---|---|---|---|
+| D-U1 | **Owner-editability na substituição** | A: só uploader ou `manage` · B: qualquer `access` | A — trilha auditável e consistente com "uploader ≠ validator" | GPT/PO |
+| D-U2 | **Limite/tipos de arquivo** | A: 25 MB, allowlist PDF/img/XLS(X)/CSV · B: + formatos bancários (OFX/QIF/TXT retorno) | A + investigar OFX com TÉO/Controladoria | PO/Controladoria |
+| D-U3 | **Audit de download** | A: auditar `DOCUMENT_DOWNLOADED` · B: só mutações | A — doc 91 pede download auditável; volume de eventos pequeno | GPT |
+| D-U4 | **Retenção** | A: indefinida v1, housekeeping só de órfãos · B: política de prazo por competência | A + decisão PO de retenção em trilho próprio | PO |
+| D-U5 | **attachment_role por item (E05)** | catálogo em P6 seed vs `generic` v1 | `generic` explícito v1; E05 bloqueia validação C05, não upload | Controladoria |
+| D-U6 | **Documento de competência vs de item** | A: dois tipos (item / competência) · B: sempre vinculado a item | A — fiscais/memoriais existem no AS-IS | GPT |
+
+### Dependências abertas herdadas
+CP-D02 (responsável/validador/regra por item — `TO_INVENTORY`) · CP-D03 (CK-E-27 R-ID) · E06 (motivos de rejeição — núcleo já decidido) · reconciliação TÉO `RQ-P2-039` × ledger (doc 90 §67) · destinatário `recipient_area=NULL` honesto.
+
+## 9. Revisão adversarial obrigatória — respostas
+
+| Risco | Mitigação contratual | Teste futuro |
+|---|---|---|
+| Download cross-competence | `document_id` pertence ao path; fora do escopo ⇒ 404 | sibling cross-competence |
+| Acesso cross-branch | scope filial do request × `branch_scope` herdado | negative filial distinta |
+| Upload lido como validação | `ATTACHED` único estado criado; item segue `EXPECTED` | positive + UI assert |
+| Substituição altera pacote enviado | `version_locked` 409 pós-submissão; pacote referencia versão | negative locked |
+| Arquivo órfão | rollback do binário em falha de persistência; housekeeping PLANNED | fault-injection |
+| Metadado aponta para binário inexistente | `file_missing` 503 no download | negative fs |
+| Conteúdo inválido aceito | allowlist MIME+ext+magic bytes | negative por tipo |
+| URL temporária expõe restrito | sem URL pública — stream autenticado | negative sem token |
+| Concorrência perde versão | `version_no` UNIQUE por documento + OCC `revision` | concurrent replace |
+| Core down ⇒ acesso indevido | `rbac_unavailable` 503 fail-closed | negative Core |
+| Storage falha ⇒ sucesso falso | metadado só após write; erro ⇒ rollback | fault-injection |
+| Replay duplica evidência | `Idempotency-Key` + UNIQUE natural `(competence,item,hash?)` — dedup por hash opcional (DECISION no GO) | replay idempotente |
+| Auditoria perde ator | `actor_subject` UUID-only já hardened | audit assert |
+| Duplicar ownership | storage é adapter do próprio CF; metadado no schema CF | boundary check |
+| Contrato viola decisão PO | §8 registra congelados × abertos; nada implementado | review GPT |
+
+## 10. Readiness assessment (G) — para o futuro GO de implementação
+
+| Pré-condição | Estado |
+|---|---|
+| Inventário storage/owner | **PROVEN** — padrão canônico identificado; owner = CF bounded context |
+| Contrato TARGET proposto | **PROVEN** — §4 (pendente aceite GPT) |
+| AuthZ model | **PROVEN** conceitualmente; D-U1 aberto |
+| Storage/retention | **TARGET** — D-U2/D-U4 abertos |
+| UX/estados | **TARGET** — §7 |
+| RQ/AC | **TARGET** — doc 23 atualizado com RQ-P2-15..22 |
+| Decisões PO | **PENDING** — D-U1..U6 requerem resposta antes do GO |
+| Smoke/deploy | não autorizados |
+
+**Bloqueadores para GO:** respostas D-U1/D-U2/D-U3 (mínimas); D-U4..U6 podem ser decididas no próprio GO com default recomendado. E05/E06/CP-D02 **não bloqueiam** upload (bloqueiam validação C05).
+
+## 11. Next gate brief (H)
+
+`CF-C3-P2-UPLOAD-IMPL-GO-001` — GO de implementação do **primeiro slice**: U1 upload + U2 list + U4 download + metadados/hash + storage adapter + audit (sem substituição/cancelamento/UI de validação). Saída: evidência anexada em competência, persistente pós-recreate, íntegra (sha256), autorizada e auditada — item permanece `EXPECTED`. Dependências: aceite GPT deste gate + respostas D-U1..U3 + GO do PO. **Sem autorização automática.**

@@ -482,3 +482,7 @@ O PO aprovou **seed inicial dos 53 itens em `DRAFT`**, com publicação governad
 ### Primeiro GO de runtime concedido — 24/10/2026
 
 O PO autorizou **somente o incremento `P6-MIN + P2-READ`**, com seed v1 de 53 itens `DRAFT`, API administrativa mínima sem página P6, competências/snapshot/P2 leitura, testes e Help. **Documento vinculante:** [99 — autorização de implementação e handoff Devin](./99-ciclo3-go-runtime-p6-min-p2-read-e-handoff-devin.md). `IMPLEMENTATION_AUTHORIZED=YES / SCOPE=P6-MIN+P2-READ_ONLY` e `DEPLOY_PRODUCTION_AUTHORIZED=NO`. Registros anteriores `IMPLEMENTATION_AUTHORIZED=NO` neste README são históricos para outros slices ou antes do GO; nenhum outro runtime foi autorizado e os checkpoints CP02/CP03 ainda precisam ser provados.
+
+### Gate contratual P2-Upload executado — 24/10/2026
+
+`CF-C3-P2-UPLOAD-CONTRACT-GATE-001` (documental) publicado em [103 — inventário, contratos TARGET e readiness de P2-Upload](./103-ciclo3-p2-upload-contract-gate.md): padrão canônico de storage da plataforma inventariado (metadado no Postgres do contexto + binário em volume `${DELPI_DATA_HOST_DIR}`), modelo `closing_document`/`document_version`/`document_file` proposto, operações U1–U8 TARGET, matriz de segurança, decisões pendentes D-U1..U6 registradas no [doc 17](./17-backlog-de-confirmacoes-e-inventarios.md). **Upload/upload runtime NÃO autorizado** — aguarda revisão do GPT Arquiteto e GO próprio do PO. Antes deste gate, o hardening pós-revisão R1/R2/R4 foi concluído (commits `1ad43e04`, `a9e43b33`; adendos nos docs 100/102).

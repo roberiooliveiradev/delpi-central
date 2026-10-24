@@ -177,6 +177,19 @@ Filial/unidade pode ser filtro/dimensão do dado, mas não permission code dedic
 
 **CLOSED / PO_APPROVED em 19/10/2026.** Não adicionar trava prévia de submissão ou publicação por quantidade de revisores. **Sem pessoas elegíveis não há aceite humano; sem aceite real válido não há fechamento C2.** Se áreas estiverem vazias/não configuradas, não usar verdade vacuamente satisfeita para concluir; o pacote permanece aguardando revisão até existir aceite humano efetivo e auditado. Preservar quórum por área existente e PackageVersion vigente. Nunca inventar aprovação automática, bypass MANAGE ou gestão de permissions local. Critérios no [ledger 23](./23-ledger-rq-ac-testes.md) e [P5 37](./37-p5-submissao-e-revisao-no-portal.md).
 
+## D-U — P2-Upload: decisões pendentes do gate contratual (doc 103)
+
+Levantadas no gate documental `CF-C3-P2-UPLOAD-CONTRACT-GATE-001` (doc 103 §8). Bloqueiam o GO de implementação, não o desenho.
+
+- **D-U1** — Quem pode substituir evidência: somente uploader/`manage` (recomendado) vs qualquer `access`. Owner: GPT/PO.
+- **D-U2** — Allowlist e limite: 25 MB + PDF/imagem/XLS(X)/CSV (recomendado) vs incluir formatos bancários (OFX/QIF/retorno). Owner: PO/Controladoria — verificar com TÉO quais formatos reais de extrato chegam.
+- **D-U3** — Auditoria de download: auditar `DOCUMENT_DOWNLOADED` (recomendado, doc 91 pede) vs só mutações. Owner: GPT.
+- **D-U4** — Retenção de evidências: indefinida no v1 (recomendado; nada é deletado) vs política por competência. Owner: PO — trilho próprio, não inventar prazo.
+- **D-U5** — `attachment_role` por item (E05): `generic` explícito no v1 (recomendado) vs catálogo seedado em P6. Não bloqueia upload; bloqueia validação C05.
+- **D-U6** — Documento de competência vs documento de item: dois tipos de vínculo (recomendado — memoriais/fiscais do AS-IS não pertencem a item). Owner: GPT.
+
+Não cobertas por este gate, permanecem abertas: CP-D02 (responsável/validador/regra por item), CP-D03 (R-ID CK-E-27), E06 (seed motivos), reconciliação TÉO `RQ-P2-039` × ledger (doc 90 §67).
+
 ## Stop conditions
 
 Parar e escalar quando:

@@ -41,6 +41,14 @@ Este ledger complementa:
 | RQ-P2-12 | Help explica requirement, validação, N/A, replacement e correção | conteúdo contextual disponível | UI/help check | feature help | TARGET |
 | RQ-P2-13 | item `EXPECTED` não é documento entregue nem validado | UI/API nunca apresentam item esperado como entregue; estado inicial do snapshot é sempre `EXPECTED` | positive + negative + UI check | schema snapshot | PROVEN (CP03-P2/CP03-UX, doc 100) |
 | RQ-P2-14 | item sem R-ID não ganha automação fictícia | `totvs_report_ref` nulo permanece nulo; proveniência honesta sem relatório inventado | negative + UI check | seed doc 59 | PROVEN (CP03-P2/CP03-UX, doc 100) |
+| RQ-P2-15 | upload cria evidência `ATTACHED` vinculada a `(competence, item?)`, nunca valida | item permanece `EXPECTED`; estado criado é `ATTACHED`; sem autoaceite | positive + negative | doc 103 §4 | TARGET |
+| RQ-P2-16 | metadado no Postgres e binário em volume persistente são par indissociável | arquivo sobrevive a recreate/mudança controlada; falha de persistência faz rollback do binário | integration + fault-injection | persistent-upload-storage.mdc | TARGET |
+| RQ-P2-17 | substituição cria nova versão e preserva a anterior | versão substituída fica `SUPERSEDED` e referenciável; nunca deletada silenciosamente | positive + version history | doc 103 §4.2 | TARGET |
+| RQ-P2-18 | download exige `access` efetivo + scope, sem URL pública | streaming autenticado; recurso fora do scope/competência retorna 404/403 | negative + cross-competence + cross-branch | doc 103 §5 | TARGET |
+| RQ-P2-19 | `CANCELLED` preserva histórico e sai da listagem ativa | cancelamento não deleta arquivo/versões; documento cancelado permanece consultável no histórico | positive + negative | doc 103 §4.2 | TARGET |
+| RQ-P2-20 | tipo/tamanho de arquivo é allowlist com conferência de conteúdo | MIME+extensão+magic bytes; `file_too_large`/`unsupported_media_type` tipados | negative por tipo | D-U2 doc 103 | TARGET |
+| RQ-P2-21 | evidência em pacote submetido é imutável | `version_locked` em substituição/cancelamento após submissão P5 | negative + P5 sibling | doc 12/37 | TARGET |
+| RQ-P2-22 | upload idempotente e concorrência segura | `Idempotency-Key`/dedup; `version_no` UNIQUE + OCC `revision`; replay não duplica evidência | idempotency + concurrent | doc 103 §4.1 | TARGET |
 
 ## P3 — Estoque, Cutoff e Conciliação
 
