@@ -491,3 +491,45 @@ computadas (acento rgb(8,155,219); live srgb 0.19/0.67/0.88 luminoso).
 
 Residual: `SCREEN_READER_QA=TEST_NOT_RUN`; larguras 320/360/390/420 e
 zoom 200% não cobertos pelo probe (375 coberto).
+
+## Composer action buttons compactos (spec 125 §12) — 2026-10-24
+
+**TASK_ID:** DELIA-UX-COMPOSER-ACTION-BUTTONS-COMPACT-REFINEMENT-01
+**SHA:** 19b082dbee (code, rebased sobre 0c6ac0ffcd; push ff -> main)
+**Escopo:** rótulos curtos + nomes acessíveis completos + família pill
+unificada dos três botões de ação do composer. Zero componente novo;
+zero mudança de handler/queue/stop/send.
+
+### Diff
+
+- `ComposerSendButton`: prop `ariaLabel` ("Enviar mensagem") separada do
+  rótulo visível ("Enviar"); tooltip "Enviar mensagem."; `type=submit`,
+  loading "Enviando…" e gates preservados.
+- `ComposerEnqueueButton`: visible "Fila" + `ariaLabel` "Adicionar
+  mensagem à fila"; tooltip com nome completo + explicação; neutro.
+- `ComposerStopButton`: `HelpTooltip` parity (não existia); visible
+  "Interromper" + `ariaLabel` "Interromper resposta em andamento";
+  stopping "Interrompendo…" + "Interrompendo resposta…" disabled.
+- `MessageComposer`: default `enqueueLabel` "Adicionar à fila" -> "Fila".
+- CSS: `__stop` 40px -> 34px (mesma família); icon-only dos labels
+  adicionado ao `@container (max-width: 420px)` (dock), além do
+  `@media (max-width: 480px)` já existente; labels clipped, alvo intacto.
+- Testes: +5 assertions CAB em `MessageComposer.test.tsx`; seletores de
+  nome acessível atualizados em 9 arquivos de teste (delia + plugin-ui).
+
+### Testes e QA
+
+- plugin-ui: **2329/2329** (após patch dos seletores; 2 falhas
+  transitórias foram o próprio rename esperado, não regressão).
+- DÉLIA: **426/426**. Typecheck + build + federation verdes.
+- Produção (`vd-cab-prod.mjs`, Chrome real autenticado): **21/21** —
+  send nome "Enviar mensagem", rótulo "Enviar", h=34px, pill r=999,
+  azul rgb(8,155,219), HelpTooltip; in-flight: fila "Adicionar mensagem
+  à fila"/"Fila" neutra rgb(255,255,255) + stop "Interromper resposta
+  em andamento"/"Interromper" primário, mesma altura 34px, ícones
+  ListPlus+Square, tooltips nos três; mobile 375 icon-only com nome
+  acessível intacto; 320px/dpr2 ok. Screenshots `shots-cab/`.
+
+Residuais: estado `stopping` transitório não capturado pelo probe
+(coberto por vitest); dark/light visual e zoom 200% TEST_NOT_RUN;
+screen reader TEST_NOT_RUN.

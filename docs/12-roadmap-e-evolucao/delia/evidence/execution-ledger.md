@@ -17991,3 +17991,16 @@ TASK_ID=DELIA-UX-UNIFIED-VOICE-CONTROLS-VISUAL-REFINEMENT-01
 COMMIT=252fa11239(code)+docs DEPLOYED=YES PROD_QA=31/31
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.419 — Composer action buttons compactos (spec 125 §12) (2026-10-24)
+
+**2026-10-24 — DELIA-UX-COMPOSER-ACTION-BUTTONS-COMPACT-REFINEMENT-01:** os tres botoes de acao do composer entraram na familia compacta — visible Enviar/Fila/Interromper, nomes acessiveis completos e tooltips independentes (Enviar mensagem / Adicionar mensagem a fila / Interromper resposta em andamento / Interrompendo resposta…). `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND`: props `ariaLabel` novas nos tres componentes canonicos, `HelpTooltip` parity no Stop, `__stop` 40->34px na mesma pill family, icon-only por `@container <=420px` (dock) + media `<=480px`. Gates submit/enqueue/stop, Enter/Shift+Enter, admission, anti-duplicacao, requestMode idle/responding_cancelable/responding_not_cancelable/stopping — tudo inalterado; zero componente novo, zero backend, zero contrato.
+
+TESTES: plugin-ui 2329/2329 (+5 CAB), delia 426/426, typecheck+build+federation verdes; 9 arquivos de teste tiveram seletores de nome acessivel atualizados para os nomes completos. DEPLOY: push ff `19b082dbee` -> up-prod-sequential --build plugin-ui (delia sem diff de bundle — apenas testes).
+
+QA VISUAL PROD 21/21 (vd-cab-prod.mjs autenticado): send "Enviar mensagem"/"Enviar" h=34 r=999 azul rgb(8,155,219); in-flight Fila neutra + Interromper primario mesma altura, icones semanticos, tooltips; mobile 375 icon-only com nome intacto; 320px/dpr2. Screenshots shots-cab/. DEFECTS_PROD=0. Residuais: stopping transitorio nao capturado em probe (vitest cobre); dark/zoom200/screen-reader TEST_NOT_RUN.
+
+TASK_ID=DELIA-UX-COMPOSER-ACTION-BUTTONS-COMPACT-REFINEMENT-01
+COMMIT=19b082dbee DEPLOYED=YES PROD_QA=21/21
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
