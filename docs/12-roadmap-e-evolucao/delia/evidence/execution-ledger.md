@@ -14,3 +14,10 @@
 - Gates: delia 446/446, plugin-ui 2335/2335, tsc+build+federation OK. Produção autenticada `vd-wide-prod.mjs` 34/34: card 1030px/3 áreas @1920, 738px/2 @1440, 1 col @320–420, zero overflow, zero scroll aninhado, sem popover/barra azul, trace recolhível, dois contextos + painel global independentes, teclado + reduced-motion.
 - Residual: REAL_DOCK_QA / zoom 200% / dark-light visual / screen reader TEST_NOT_RUN.
 - Evidência: spec 127 §decisão+implementação; `shots-wide/` (C:\temp\delia-qa).
+
+### Registro complementar — 2026-10-24 — Semantic Relevance / Governed Recovery EXECUTADO
+
+- `TASK_ID=DELIA-C3-SEMANTIC-RELEVANCE-GOVERNED-RECOVERY-CROSSCUTTING-01`; `STATE=EXECUTED`; `IMPLEMENTATION_SHA=58a7e873c6` (sobre `2e15682b8c`); `DEPLOY_AUTHORIZED=NO`; `DEPLOY_STATUS=NOT_EXECUTED`; `R4_AUTHORIZED=NO`.
+- Evidência: [doc 142](../corrections/mcp-contextual-intelligence-orchestration/142-semantic-relevance-governed-recovery-implementation.md). O2 reproduzido no baseline; julgamento bounded `goal_evidence_relevance` + uma recuperação READ governada; fail-closed `goal_mismatch`/`relevance_unproven`; 23 testes novos; suite 2225/3; gates arquitetura limpos.
+- A/B isolado kimi-k3: matriz 11/11 × 11/11 PASS; O2 corrigido (irrelevant→recovery→insufficient honesto); sinônimos sem over-block; injeção recusada; zero erros; tokens `NOT_AVAILABLE`.
+- `EXISTING_EQUIVALENT=YES_PARTIAL`; `REUSE_DECISION=EXTEND`; `EXECUTION_DRIFT=NONE`; aceite independente pendente da coordenação.
