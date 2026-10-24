@@ -90,3 +90,14 @@ Nenhuma autoridade nova. Estendidos os owners existentes:
 provider-neutral implementada, testada e validada A/B com modelo produtivo;
 nenhuma engine/autoridade paralela criada. `DEPLOY_STATUS=NOT_EXECUTED`.
 `EXECUTION_DRIFT=NONE`. `R4_AUTHORIZED=NO`.
+
+
+## 7. Revisão independente da coordenação — 2026-10-24
+
+**CODE_SHA:** `acff081397739047239026d489252db9737459e8`; **EVIDENCE_SHA:** `c99ed8a5c16f2b6738b3ebbb9a7ed408b45fb9a9`. **VERDICT:** `ACCEPT_WITH_RESIDUAL` para a implementação da **retenção semântica honesta**; **PRODUCTION_RELEASE_READINESS=BLOCKED_PENDING_SECURITY_REVIEW**; **DEPLOY_AUTHORIZATION=NO**; **R4_AUTHORIZED=NO**.
+
+Foi examinada no GitHub a extensão dos owners existentes e o relato A/B. A versão B reportou 11/11 checks e, para O2, impediu a apresentação de balanças como se respondessem a 'terminal bala', com `goal_mismatch` e `insufficient_evidence`. Sinônimo legítimo continuou grounded. Os testes 2225/3, arquitetura e eval em runtime isolado são **evidências reportadas pelo executor**, não reexecutadas independentemente pela coordenação. Não declarar `SEMANTIC_RECOVERY_END_TO_END=PASS`: O2 seguiu `irrelevant → identical_arguments → insufficient`, sem invocação alternativa real; re-proposta com argumentos distintos só teve prova em teste controlado. Recuperação limitada à mesma capability satisfaz o pacote implementado, mas não prova replanejamento transversal entre fontes. Esse gap deve ser tratado por decisão contratual/fase, sem criar segundo planner nem ampliar o escopo desta task automaticamente.
+
+**SECURITY_GATE (material):** o executor informou uso de credencial administrativa do realm master, API administrativa de Keycloak e sessão de impersonação para emitir bearer do usuário de homologação. Embora declare ausência de mutação de senha, falta prova documental de autorização específica para impersonation/admin flow, rastreabilidade/auditoria, política Keycloak e inexistência de efeitos de sessão. Classificar `AUTH_TEST_PROCEDURE=INCONCLUSIVE_REQUIRES_SECURITY_REVIEW`. Não reproduzir essa técnica automaticamente. Verificar trilha de auditoria e identidade sancionada com owner Keycloak/Core, sem registrar tokens, hashes ou segredos. A avaliação funcional não equivale a aceite do método de autenticação.
+
+**NEXT_BOUNDED_ACTIONS:** (1) validar ou remediar a legitimidade do método de autenticação da prova A/B, preferindo fluxo oficial de identidade de teste e refazer o mínimo de evidência sob token autorizado, sem alterar o código funcional; (2) decidir se `relevance_feedback` deve cobrir eventual troca de capability e, se for requisito da fase, abrir correção bounded com contrato/planner semântico existente; (3) confirmar impacto de custo/latência de uma chamada LLM adicional nos caminhos CRI ativados e degradar honestamente sob budget. Não liberar deploy até o gate de segurança estar resolvido. Resultado positivo de O2 não é suficiente para autorizar produção.
