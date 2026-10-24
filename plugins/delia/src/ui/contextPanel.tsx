@@ -291,19 +291,7 @@ export function DeliaTurnContextPanel({ turn }: DeliaTurnContextPanelProps) {
           id: "details",
           title: "Detalhes da geração",
           icon: Info,
-          content: (
-            <>
-              <DetailRows turn={turn} />
-              {obs && obs.calls.length ? (
-                <details className="delia-context__trace">
-                  <summary className="delia-context__trace-summary">
-                    Rastreamento técnico
-                  </summary>
-                  <ModelCalls obs={obs} />
-                </details>
-              ) : null}
-            </>
-          ),
+          content: <DetailRows turn={turn} />,
         },
         ...(evidence
           ? [
@@ -334,6 +322,16 @@ export function DeliaTurnContextPanel({ turn }: DeliaTurnContextPanelProps) {
             ]
           : []),
       ]}
+      trailing={
+        obs && obs.calls.length ? (
+          <details className="delia-context__trace">
+            <summary className="delia-context__trace-summary">
+              Rastreamento técnico
+            </summary>
+            <ModelCalls obs={obs} />
+          </details>
+        ) : null
+      }
     />
   );
 }

@@ -651,4 +651,73 @@ describe("Clean inline context card (CLEANCTX-01..CLEANCTX-16)", () => {
     // CLEANCTX-07: "Sem fonte vinculada" is neutral context copy.
     expect(within(region).getByText("Sem fonte vinculada")).toBeTruthy();
   });
+
+  it("WIDE: technical trace is a sibling layout area, not nested in a section", () => {
+    renderMessage(makeTurn({ observability: OBS as never }));
+    const region = openContext();
+    const trace = region.querySelector("details.delia-context__trace");
+    const panel = region.querySelector(".delpi-ui-conversation-context-panel");
+    expect(trace?.parentElement).toBe(panel);
+    // Multi-column CSS places it as its own area without duplicating DOM.
+    expect(region.querySelectorAll("details.delia-context__trace")).toHaveLength(
+      1,
+    );
+  });
+
+  it("WIDE: single DOM keeps semantic order — sections then trace", () => {
+    const turn = makeTurn({
+      observability: OBS as never,
+      groundingStatus: "NON_GROUNDED",
+      activityView: {
+        title: "Atividade concluída",
+        state: "completed",
+        steps: [
+          { id: "r", label: "Solicitação recebida", state: "completed" },
+        ],
+      } as never,
+    });
+    renderMessage(turn);
+    const region = openContext();
+    const panel = region.querySelector(".delpi-ui-conversation-context-panel");
+    const order = Array.from(panel?.children ?? []).map((el) =>
+      el.classList.contains("delia-context__trace")
+        ? "trace"
+        : el.tagName.toLowerCase(),
+    );
+    expect(order).toEqual(["section", "section", "section", "trace"]);
+    // Reading order remains logical when CSS reorders visually.
+    const headings = within(region)
+      .getAllByRole("heading")
+      .map((h) => h.textContent);
+    expect(headings).toEqual([
+      "Contexto desta resposta",
+      "Detalhes da geração",
+      "Evidências",
+      "Atividades relacionadas",
+    ]);
+  });
+
+  it("WIDE: one region per message — no duplicate layout markup", () => {
+    const turn = makeTurn({
+      observability: OBS as never,
+      groundingStatus: "NON_GROUNDED",
+      activityView: {
+        title: "Atividade concluída",
+        state: "completed",
+        steps: [
+          { id: "r", label: "Solicitação recebida", state: "completed" },
+        ],
+      } as never,
+    });
+    renderMessage(turn);
+    const region = openContext();
+    expect(
+      region.querySelectorAll(".delpi-ui-conversation-context-panel"),
+    ).toHaveLength(1);
+    expect(
+      region.querySelectorAll(
+        ".delpi-ui-conversation-context-panel__section",
+      ),
+    ).toHaveLength(3);
+  });
 });

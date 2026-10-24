@@ -19,6 +19,10 @@ export type ConversationContextPanelProps = {
   sections?: readonly ConversationContextPanelSection[];
   /** Copy shown when no section carries content. */
   emptyState?: ReactNode;
+  /** Optional content rendered after the sections inside the panel
+   *  (e.g. a collapsed technical-trace disclosure). Layout consumers
+   *  may position it as another grid/track item. */
+  trailing?: ReactNode;
 };
 
 const DEFAULT_EMPTY =
@@ -31,6 +35,7 @@ export function ConversationContextPanel({
   activities,
   sections,
   emptyState = DEFAULT_EMPTY,
+  trailing,
 }: ConversationContextPanelProps) {
   const effective = sections ?? [
     { id: "details", title: "Detalhes", icon: Info, content: details },
@@ -53,6 +58,7 @@ export function ConversationContextPanel({
           {emptyState}
         </p>
       ) : null}
+      {trailing ?? null}
     </div>
   );
 }
