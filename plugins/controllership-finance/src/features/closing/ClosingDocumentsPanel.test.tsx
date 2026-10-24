@@ -347,9 +347,57 @@ describe("ClosingDocumentsPanel", () => {
     expect(documentId).toBe("d-1");
     expect(payload.revision).toBe(3);
     expect(payload.file.name).toBe("extrato-v2.pdf");
+    expect(typeof payload.idempotencyKey).toBe("string");
     await waitFor(() =>
       expect(listDocumentsMock.mock.calls.length).toBeGreaterThan(1),
     );
+  });
+
+  it("retry da substituição reutiliza a mesma idempotency_key", async () => {
+    listDocumentsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    replaceDocumentMock
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockResolvedValueOnce({ ...DOC, current_version_no: 2 });
+
+    const { container } = render(
+      <ClosingDocumentsPanel period="2026-05" />,
+    );
+    await waitFor(() =>
+      expect(screen.getByText("extrato.pdf")).toBeTruthy(),
+    );
+
+    fireEvent.click(screen.getByText("Substituir"));
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File(["%PDF-1.4 novo"], "v2.pdf", {
+            type: "application/pdf",
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText("Falha ao substituir o arquivo.")).toBeTruthy(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Tentar novamente" }),
+    );
+
+    await waitFor(() =>
+      expect(replaceDocumentMock.mock.calls.length).toBe(2),
+    );
+    const first = replaceDocumentMock.mock.calls[0][2];
+    const second = replaceDocumentMock.mock.calls[1][2];
+    expect(second.idempotencyKey).toBe(first.idempotencyKey);
   });
 
   it("revisão obsoleta na substituição informa e atualiza a lista", async () => {

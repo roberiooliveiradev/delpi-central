@@ -185,16 +185,20 @@ export function saveDocumentBlob(blob: Blob, fileName: string): void {
   URL.revokeObjectURL(url);
 }
 
-/** U5 — substitui o arquivo; a versão anterior fica SUPERSEDED. */
+/** U5 — substitui o arquivo; a versão anterior fica SUPERSEDED.
+ * `idempotencyKey` identifica ESTA mutação (nunca a do upload): retry
+ * com a mesma chave deduplica no servidor; arquivo diferente com a
+ * mesma chave = 409. */
 export async function replaceClosingDocument(
   period: string,
   documentId: string,
-  input: { file: File; revision: number },
+  input: { file: File; revision: number; idempotencyKey: string },
   options?: { signal?: AbortSignal; branchScope?: "MATRIX" | "BRANCH" | "BOTH" },
 ): Promise<ClosingDocument> {
   const formData = new FormData();
   formData.set("file", input.file);
   formData.set("revision", String(input.revision));
+  formData.set("idempotency_key", input.idempotencyKey);
   if (options?.branchScope) {
     formData.set("branch_scope", options.branchScope);
   }

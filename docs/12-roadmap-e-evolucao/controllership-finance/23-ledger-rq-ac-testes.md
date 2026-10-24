@@ -116,13 +116,13 @@ Cobertura SLICE-1 por requisito (positive/sibling/negative/security/postconditio
 
 | AC | Estado | Evidência executada |
 |---|---|---|
-| AC-P2-UP-16 | PASS | PG `test_add_version_supersedes_previous` — v2 `ATTACHED`, v1 `SUPERSEDED` e baixável (`get_version_file`), `current_version_no=2`, `VERSION_ADDED` append-only; binário anterior intocado |
+| AC-P2-UP-16 | PASS | PG `test_add_version_supersedes_previous` + `test_version_rows_never_updated` — v2 `ATTACHED`, v1 `SUPERSEDED` derivada (linha jamais UPDATEada — V004) e baixável, `current_version_no=2`, `VERSION_ADDED` append-only; binário anterior intocado |
 | AC-P2-UP-17 | PASS | service `test_replace_by_non_uploader_without_manage_forbidden` (`Forbidden` 403, sem escrita) + route `test_replace_typed_errors`; `access` genérico não substitui |
 | AC-P2-UP-18 | PASS | service `test_replace_by_eligible_manage_allowed` + route `test_replace_manage_user_gets_can_manage` — ator gestor registrado no `VERSION_ADDED`; `manage` sem `access` 403 (`test_replace_without_access_is_403`) |
 | AC-P2-UP-19 | PASS | PG `test_cancel_preserves_history_and_exits_active_list` — sai da listagem ativa (filtro padrão), consultável via U3/U6, `document_file`/`document_version` intactos, `DOCUMENT_CANCELLED` único (`test_cancel_twice_is_typed_conflict`) |
 | AC-P2-UP-20 | TEST_NOT_RUN | Nenhum runtime P5 existe no HEAD — não há estado de submissão canônico a consultar; `version_locked`/`document_locked` permanecem reservados no contrato e a trava ativa quando a fonte P5 existir (boundary documentado, sem permissividade inventada) |
-| AC-P2-UP-21 | PASS | PG `test_concurrent_replace_single_winner` — 4 threads, `FOR UPDATE`+`revision`: 1 vencedor, 3 `stale_revision`, `version_no` único, nenhuma versão perdida; service `test_replace_stale_revision_fails_before_write` |
-| AC-P2-UP-22 | PASS | Sem `DELETE` em `closing_document`/`document_version`/`document_file` — cancel é UPDATE de estado; compensação só remove binário novo órfão (`test_replace_persistence_failure_compensates_new_binary`); `.part` descartado em toda rejeição |
+| AC-P2-UP-21 | PASS | PG `test_concurrent_replace_single_winner` (4 threads, `FOR UPDATE`+`revision`: 1 vencedor, 3 `stale_revision`) + `test_concurrent_same_key_replace_deduplicates` (mesma key: 1 criador + 3 dedup, zero stale, um `VERSION_ADDED`); service `test_replace_stale_revision_fails_before_write` + `test_replace_idempotent_replay_deduplicates` (dedup resolve antes do OCC — replay com revision obsoleta ⇒ 200) |
+| AC-P2-UP-22 | PASS | Sem `DELETE` nem UPDATE em `document_version` (V004 — estado derivado); cancel é UPDATE só no documento; compensação remove binário novo órfão inclusive em dedup de corrida (`test_replace_race_lost_compensates_published_binary`); `.part` descartado em toda rejeição |
 
 ## P3 — Estoque, Cutoff e Conciliação
 

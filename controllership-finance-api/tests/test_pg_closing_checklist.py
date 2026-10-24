@@ -124,6 +124,7 @@ def migrated(_configure_db):
         "V001__create_closing_checklist_schema.sql",
         "V002__seed_monthly_closing_checklist_v1.sql",
         "V003__create_closing_documents.sql",
+        "V004__document_version_idempotency.sql",
     ]
     return True
 

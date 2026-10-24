@@ -196,11 +196,18 @@ class ClosingDocumentRepository:
                         cur.execute(
                             f"""
                             INSERT INTO {_q('document_version')}
-                                (document_id, version_no, file_id, state,
-                                 uploaded_by)
-                            VALUES (%s, 1, %s, 'ATTACHED', %s)
+                                (document_id, version_no, file_id,
+                                 uploaded_by, idempotency_key,
+                                 request_hash)
+                            VALUES (%s, 1, %s, %s, %s, %s)
                             """,
-                            (document_id, file_id, actor),
+                            (
+                                document_id,
+                                file_id,
+                                actor,
+                                idempotency_key,
+                                request_hash,
+                            ),
                         )
                         self._audit(
                             cur,
@@ -355,7 +362,10 @@ class ClosingDocumentRepository:
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 f"""
-                SELECT v.document_version_id, v.version_no, v.state,
+                SELECT v.document_version_id, v.version_no,
+                       CASE WHEN v.version_no = d.current_version_no
+                            THEN 'ATTACHED' ELSE 'SUPERSEDED'
+                       END AS state,
                        v.uploaded_by, v.created_at,
                        COALESCE(i.branch_scope, 'BOTH') AS branch_scope,
                        f.file_id, f.storage_key, f.original_name,
@@ -413,6 +423,23 @@ class ClosingDocumentRepository:
 
     # -- mutações U5/U7 (SLICE-2) -------------------------------------------------
 
+    def find_version_by_idempotency(
+        self, document_id: str, idempotency_key: str
+    ) -> dict[str, Any] | None:
+        """Registro de idempotência da mutação de versão (D-U7=A no
+        aggregate `document_version` — nunca a key U1 reutilizada)."""
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT document_version_id, document_id, version_no,
+                       idempotency_key, request_hash
+                  FROM {_q('document_version')}
+                 WHERE document_id = %s AND idempotency_key = %s
+                """,
+                (document_id, idempotency_key),
+            )
+            return cur.fetchone()
+
     def add_version(
         self,
         *,
@@ -426,15 +453,24 @@ class ClosingDocumentRepository:
         extension: str,
         size_bytes: int,
         checksum_sha256: str,
+        idempotency_key: str,
+        request_hash: str,
         actor: str,
-    ) -> dict[str, Any]:
-        """U5 — nova versão imutável + anterior `SUPERSEDED` + audit.
+    ) -> tuple[dict[str, Any], bool]:
+        """U5 — versão N+1 + audit; retorna ``(documento, created)``.
 
-        `SELECT ... FOR UPDATE` serializa replaces concorrentes na linha
-        do documento: `revision` é reavaliada sob lock — perdedor recebe
-        `stale_revision` (409) e nenhuma versão se perde (AC-P2-UP-21).
-        `version_no` UNIQUE por documento garante unicidade mesmo em
-        cenários fora da serialização esperada.
+        Ordem canônica sob `SELECT ... FOR UPDATE` na linha do documento:
+        1. **idempotência** — key já registrada ⇒ replay idêntico
+           deduplica (`created=False`, efeito já aplicado) e divergente
+           aborta com `idempotency_conflict`; o replay não recria versão
+           nem evento mesmo com `revision` já obsoleta;
+        2. **OCC** — `revision` reavaliada sob lock ⇒ perdedor recebe
+           `stale_revision` (409) e nenhuma versão se perde (AC-P2-UP-21);
+        3. **mutação** — `document_version` é linha imutável (V004):
+           nunca UPDATE; o estado documental é derivado de
+           `current_version_no` (corrente `ATTACHED`, anteriores
+           `SUPERSEDED`). `version_no` UNIQUE por documento garante
+           unicidade fora da serialização esperada.
         """
         with self._conn() as conn:
             with conn.transaction():
@@ -445,6 +481,28 @@ class ClosingDocumentRepository:
                         document_id=document_id,
                     )
                     self._assert_active_document(doc)
+                    cur.execute(
+                        f"""
+                        SELECT version_no, request_hash
+                          FROM {_q('document_version')}
+                         WHERE document_id = %s
+                           AND idempotency_key = %s
+                        """,
+                        (document_id, idempotency_key),
+                    )
+                    existing = cur.fetchone()
+                    if existing is not None:
+                        if existing["request_hash"] != request_hash:
+                            raise IdempotencyConflict(
+                                "Chave de idempotência já utilizada "
+                                "com payload divergente."
+                            )
+                        return (
+                            self.get_document_by_id(
+                                competence_id, document_id
+                            ),
+                            False,
+                        )
                     self._assert_revision(doc, expected_revision)
                     cur.execute(
                         f"""
@@ -467,23 +525,22 @@ class ClosingDocumentRepository:
                         ),
                     )
                     file_id = cur.fetchone()["file_id"]
-                    cur.execute(
-                        f"""
-                        UPDATE {_q('document_version')}
-                           SET state = 'SUPERSEDED'
-                         WHERE document_id = %s AND state = 'ATTACHED'
-                        """,
-                        (document_id,),
-                    )
                     new_version_no = doc["current_version_no"] + 1
                     cur.execute(
                         f"""
                         INSERT INTO {_q('document_version')}
-                            (document_id, version_no, file_id, state,
-                             uploaded_by)
-                        VALUES (%s, %s, %s, 'ATTACHED', %s)
+                            (document_id, version_no, file_id,
+                             uploaded_by, idempotency_key, request_hash)
+                        VALUES (%s, %s, %s, %s, %s, %s)
                         """,
-                        (document_id, new_version_no, file_id, actor),
+                        (
+                            document_id,
+                            new_version_no,
+                            file_id,
+                            actor,
+                            idempotency_key,
+                            request_hash,
+                        ),
                     )
                     cur.execute(
                         f"""
@@ -512,7 +569,7 @@ class ClosingDocumentRepository:
                             "checksum_sha256": checksum_sha256,
                         },
                     )
-        return self.get_document_by_id(competence_id, document_id)
+        return self.get_document_by_id(competence_id, document_id), True
 
     def cancel_document(
         self,
@@ -567,13 +624,17 @@ class ClosingDocumentRepository:
     def list_document_versions(
         self, competence_id: str, document_id: str
     ) -> list[dict[str, Any]]:
-        """U6 — histórico completo; versões são imutáveis e nunca
-        reescritas (`SUPERSEDED != DELETED`). Não retorna storage_key."""
+        """U6 — histórico completo; versões são linhas imutáveis
+        (`SUPERSEDED != DELETED` — V004: estado derivado de
+        `current_version_no`, nunca reescrito). Sem storage_key."""
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 f"""
                 SELECT v.document_version_id, v.document_id, v.version_no,
-                       v.state, v.uploaded_by, v.created_at,
+                       CASE WHEN v.version_no = d.current_version_no
+                            THEN 'ATTACHED' ELSE 'SUPERSEDED'
+                       END AS state,
+                       v.uploaded_by, v.created_at,
                        f.original_name, f.mime_type, f.size_bytes,
                        f.checksum_sha256
                   FROM {_q('document_version')} v

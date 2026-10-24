@@ -59,7 +59,7 @@ A plataforma **já possui padrão canônico**, codificado em `.cursor/rules/pers
 | Conceito | Owner | Notas |
 |---|---|---|
 | `closing_document` (evidência de negócio) | `controllership_finance` | registro vinculado a `(competence_id, snapshot_item_id?)` — evidência de item OU documento de competência (nível competência, ex.: memorial) |
-| `document_version` | `controllership_finance` | linha de versão imutável: `(document_id, version_no)`, `file_id`, `supersedes_version_id`, estado documental, `uploaded_by`, `checksum_sha256`, `original_name`, `size_bytes`, `mime_type` |
+| `document_version` | `controllership_finance` | linha de versão imutável: `(document_id, version_no)`, `file_id`, `supersedes_version_id`, estado documental, `uploaded_by`, `checksum_sha256`, `original_name`, `size_bytes`, `mime_type` — V004: `state` removido (derivado de `current_version_no`), `idempotency_key`/`request_hash` da mutação (§J) |
 | `document_file` (metadado do binário) | `controllership_finance` | identidade estável do arquivo físico + `storage_key` + hash; **arquivo físico ≠ registro de evidência** |
 | binário | `CfDocumentStorageService` (adapter local, padrão plataforma) | path `<dir>/<competence_id>/<file_uuid><ext>`; sem semântica de negócio |
 | estado documental | domínio CF | `ATTACHED \| SUPERSEDED \| CANCELLED` — **upload cria `ATTACHED`, nunca `VALIDATED`** |
@@ -84,7 +84,7 @@ Prefixo `POST/GET /closing/competences/{period}/documents*` — mesmo envelope e
 | U2 | `list_competence_documents` | `GET .../documents?item=&state=` | `access` + scope | — | filtros = dimensão de dado |
 | U3 | `get_competence_document` | `GET .../documents/{document_id}` | `access` + scope | — | `document_not_found` 404 |
 | U4 | `download_document_version` | `GET .../documents/{document_id}/versions/{version}/content` → `FileResponse` | `access` + scope + recipient rule | — | `document_not_found` 404, `forbidden` 403, `file_missing` 503 (`persistence_unavailable`-like) |
-| U5 | `replace_document_version` | `POST .../documents/{document_id}/versions` multipart | `access` + scope + uploader-or-admin rule (ver §5, DECISION) | `revision` OCC no documento | `stale_revision` 409, `version_locked` 409 (pacote P5) |
+| U5 | `replace_document_version` | `POST .../documents/{document_id}/versions` multipart | `access` + scope + uploader-or-admin rule (ver §5, DECISION) | `revision` OCC + `idempotency_key` da mutação (`UNIQUE(document_id, key)`+`request_hash` — D-U7=A estendida por §J/V004) | `stale_revision` 409, `idempotency_conflict` 409, `version_locked` 409 (pacote P5) |
 | U6 | `list_document_versions` | `GET .../documents/{document_id}/versions` | `access` + scope | — | — |
 | U7 | `cancel_document` | `POST .../documents/{document_id}/cancel` | `access` + scope + owner/admin | — | `document_locked` 409 |
 | U8 | `list_document_audit` | `GET .../documents/{document_id}/events` | `access` + scope | — | — |
@@ -320,11 +320,11 @@ O PO adotou a recomendação A do rework **sem alterações** — padrão `suppl
 
 | Contrato | Implementação | Evidência |
 |---|---|---|
-| U5 replace | `POST .../documents/{id}/versions` multipart (`file`, `idempotency_key` nova por mutação, `revision` OCC, `branch_scope?`) — uploader original **ou** `manage` elegível (D-U1), `access` obrigatório, scope, humano; v anterior `SUPERSEDED`, nova `ATTACHED`, `FOR UPDATE`+revision ⇒ perdedor `stale_revision` 409; mesma sequência `.part`→sha256→`os.replace`→tx→compensação; `VERSION_ADDED` na tx; binário antigo nunca reescrito | `test_pg_closing_documents.py` (concorrência 4 threads → 1 vencedor), `test_closing_document_service.py` |
+| U5 replace | `POST .../documents/{id}/versions` multipart (`file`, `idempotency_key` obrigatória **da mutação**, `revision` OCC, `branch_scope?`) — uploader original **ou** `manage` elegível (D-U1), `access` obrigatório, scope, humano; v anterior `SUPERSEDED` (derivada), nova `ATTACHED`, `FOR UPDATE`+revision ⇒ perdedor `stale_revision` 409; mesma sequência `.part`→sha256→`os.replace`→tx→compensação; `VERSION_ADDED` na tx; binário antigo nunca reescrito | `test_pg_closing_documents.py` (concorrência 4 threads → 1 vencedor; corrida mesma-key → dedup), `test_closing_document_service.py` |
 | U6 versions | `GET .../documents/{id}/versions` — histórico imutável com metadados + `checksum_sha256`, sem `storage_key`; persiste após `CANCELLED`; paginação ≤100 | idem |
 | U7 cancel | `POST .../documents/{id}/cancel` (`revision` OCC) — mesma regra de ator do U5; `CANCELLED != DELETED`: sai da listagem ativa, consultável via U3/U6/U8, arquivos/versões/auditoria preservados; duplo cancel = conflito tipado | idem |
 | U8 events | `GET .../documents/{id}/events` — `DOCUMENT_UPLOADED`/`DOCUMENT_DOWNLOADED`/`VERSION_ADDED`/`DOCUMENT_CANCELLED` de `closing_audit_event` (append-only), scope autorizado, sem dados sensíveis | idem |
-| Persistência | **zero migrations novas** — `V003` já provia `state`/`current_version_no`/`revision` OCC/`document_version`/`uploaded_by`; mutações em tx única com `SELECT ... FOR UPDATE` + verificação de `revision` | suíte PG em banco efêmero R4 |
+| Persistência | `V003` + **`V004__document_version_idempotency.sql`** (rework pós-revisão SLICE-2): `document_version` ganha `idempotency_key`/`request_hash` + `UNIQUE(document_id, key)` — D-U7=A aplicada ao aggregate da mutação (v1 herda a key do upload; replaces trazem key própria) — e perde a coluna `state`: a linha volta a ser **imutável de fato**, estado derivado de `current_version_no` | suíte PG em banco efêmero R4 |
 | MFE | `ClosingDocumentsPanel` evoluído: substituir (file picker + OCC), histórico de versões com download por versão, cancelar com `ConfirmModalPanel`, histórico de auditoria — `createHostContainedModalShell` + `AttachmentFileList itemActions` do `@delpi/plugin-ui`; erros tipados (403/404/409) com retry seguro; Help sincronizado | `ClosingDocumentsPanel.test.tsx` |
 
 **Boundary P5:** nenhum runtime de submissão de pacote existe no HEAD — `version_locked`/`document_locked` ficam reservados no contrato; a trava será ativada quando a fonte canônica P5 existir (AC-P2-UP-20 `TEST_NOT_RUN`, sem permissividade inventada).

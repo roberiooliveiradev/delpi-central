@@ -69,6 +69,20 @@ def _request_hash(
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def _version_request_hash(*, checksum_sha256: str) -> str:
+    """Hash canônico do request de substituição (D-U7=A no aggregate
+    `document_version`): o payload da mutação é o binário — `revision`
+    é entrada de OCC, não identidade do request; `branch_scope` é
+    contexto, não conteúdo. Replay idêntico (mesma key + mesmo binário)
+    deduplica; mesma key + binário divergente ⇒ `idempotency_conflict`."""
+    canonical = json.dumps(
+        {"checksum_sha256": checksum_sha256},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 class ClosingDocumentService:
     def __init__(
         self,
@@ -333,15 +347,20 @@ class ClosingDocumentService:
         declared_mime: str | None,
         chunks: Iterable[bytes],
         expected_revision: int,
+        idempotency_key: str,
         branch_scope: str | None = None,
-    ) -> dict:
-        """Cria versão N+1 `ATTACHED` e marca a anterior `SUPERSEDED`.
+    ) -> tuple[dict, bool]:
+        """Versão N+1 `ATTACHED`; retorna ``(documento, created)``.
 
-        Autorização D-U1=A: uploader original OU `manage` efetivo —
-        sempre somado a `access` + resource scope + business rule.
-        `manage` sozinho não chega aqui (a rota exige `access` antes).
-        OCC: a `revision` é reavaliada sob `FOR UPDATE` — concorrente
-        obsoleto recebe `stale_revision` e nenhuma versão se perde.
+        ``created=False`` ⇒ replay idempotente (deduplicated): a mesma
+        `idempotency_key`+`request_hash` já produziu a versão — nenhuma
+        versão, evento ou binário novo é criado. Autorização D-U1=A:
+        uploader original OU `manage` efetivo — sempre somado a `access`
+        + resource scope + business rule (`manage` sozinho não chega
+        aqui — a rota exige `access` antes). OCC: `revision` reavaliada
+        sob `FOR UPDATE` — concorrente obsoleto recebe `stale_revision`;
+        a anterior fica `SUPERSEDED` por derivação de
+        `current_version_no`, nunca por UPDATE na linha imutável.
         """
         document = self._document_in_scope(
             period=period,
@@ -350,11 +369,10 @@ class ClosingDocumentService:
         )
         _assert_active_state(document["state"])
         _assert_owner_or_manage(document, actor, can_manage)
-        if document["revision"] != expected_revision:
-            # Fail-fast honesto antes de escrever bytes; o repositório
-            # revalida sob lock (corrida real ainda é `stale_revision`).
-            raise StaleRevision(
-                "O documento foi alterado. Atualize e tente novamente."
+        key = (idempotency_key or "").strip()
+        if not 1 <= len(key) <= 128:
+            raise InvalidUpload(
+                "idempotency_key deve ter entre 1 e 128 caracteres."
             )
         competence_id = str(document["competence_id"])
 
@@ -373,6 +391,35 @@ class ClosingDocumentService:
         except Exception:
             self._storage.discard_temp(file_uuid)
             raise
+
+        # D-U7=A no aggregate da mutação: a key identifica ESTE request
+        # de substituição (nunca a key U1). Replay idêntico deduplica
+        # antes de publicar binário novo; divergente = 409; a checagem
+        # sob lock em add_version é a autoridade final de corrida.
+        request_hash = _version_request_hash(checksum_sha256=checksum)
+        prior = self._repository.find_version_by_idempotency(
+            str(document["document_id"]), key
+        )
+        if prior is not None:
+            self._storage.discard_temp(file_uuid)
+            if prior["request_hash"] != request_hash:
+                raise IdempotencyConflict(
+                    "Chave de idempotência já utilizada com payload "
+                    "divergente."
+                )
+            return (
+                self._repository.get_document_by_id(
+                    competence_id, str(document["document_id"])
+                ),
+                False,
+            )
+        if document["revision"] != expected_revision:
+            # Fail-fast honesto antes de escrever bytes; o repositório
+            # revalida sob lock (corrida real ainda é `stale_revision`).
+            self._storage.discard_temp(file_uuid)
+            raise StaleRevision(
+                "O documento foi alterado. Atualize e tente novamente."
+            )
         try:
             storage_key, stored_name, _final_path = self._storage.publish(
                 tmp_path,
@@ -384,7 +431,7 @@ class ClosingDocumentService:
             self._storage.discard_temp(file_uuid)
             raise
         try:
-            return self._repository.add_version(
+            document, created = self._repository.add_version(
                 competence_id=competence_id,
                 document_id=str(document["document_id"]),
                 expected_revision=expected_revision,
@@ -395,8 +442,15 @@ class ClosingDocumentService:
                 extension=extension,
                 size_bytes=size,
                 checksum_sha256=checksum,
+                idempotency_key=key,
+                request_hash=request_hash,
                 actor=actor,
             )
+            if not created:
+                # Corrida perdida sob lock: o vencedor já materializou a
+                # versão — o binário que publicamos é órfão e sai.
+                self._storage.remove(storage_key)
+            return document, created
         except Exception:
             # Compensação C2 — binário novo publicado sem versão ⇒ remove.
             # O binário da versão anterior NUNCA é tocado.

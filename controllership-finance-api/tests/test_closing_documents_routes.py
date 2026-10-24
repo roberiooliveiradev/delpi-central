@@ -436,35 +436,50 @@ def _replace(client: TestClient, doc_id: str, **kwargs):
     return client.post(
         f"/closing/competences/2026-05/documents/{doc_id}/versions",
         files={"file": (kwargs.pop("name", "novo.pdf"), _pdf(), "application/pdf")},
-        data={"revision": "3", **kwargs.pop("data", {})},
+        data={
+            "revision": "3",
+            "idempotency_key": "replace-key-1",
+            **kwargs.pop("data", {}),
+        },
         headers={"Authorization": f"Bearer {TOKEN}"},
     )
 
 
 def test_replace_returns_201_with_updated_document(service):
     doc_id = str(uuid.uuid4())
-    service.replace_document.return_value = _doc(
-        document_id=doc_id, current_version_no=2, revision=4
+    service.replace_document.return_value = (
+        _doc(document_id=doc_id, current_version_no=2, revision=4),
+        True,
     )
     response = _replace(_client(), doc_id)
     assert response.status_code == 201
     call = service.replace_document.call_args.kwargs
     assert call["document_id"] == doc_id
     assert call["expected_revision"] == 3
+    assert call["idempotency_key"] == "replace-key-1"
     assert call["can_manage"] is False
     assert call["actor"] == "33333333-3333-4333-8333-333333333333"
 
 
+def test_replace_deduplicated_returns_200(service):
+    # Replay idêntico (key + mesmo payload) ⇒ deduplicated, sem 201.
+    doc_id = str(uuid.uuid4())
+    service.replace_document.return_value = (_doc(document_id=doc_id), False)
+    response = _replace(_client(), doc_id)
+    assert response.status_code == 200
+    assert response.json()["data"]["deduplicated"] is True
+
+
 def test_replace_manage_user_gets_can_manage(_auth_pipeline, service):
     _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS, MANAGE])
-    service.replace_document.return_value = _doc()
+    service.replace_document.return_value = (_doc(), True)
     response = _replace(_client(), str(uuid.uuid4()))
     assert response.status_code == 201
     assert service.replace_document.call_args.kwargs["can_manage"] is True
 
 
 def test_replace_forwards_branch_scope(service):
-    service.replace_document.return_value = _doc()
+    service.replace_document.return_value = (_doc(), True)
     response = _replace(_client(), str(uuid.uuid4()), data={"branch_scope": "MATRIX"})
     assert response.status_code == 201
     assert (
@@ -476,6 +491,20 @@ def test_replace_requires_revision(service):
     response = _client().post(
         f"/closing/competences/2026-05/documents/{uuid.uuid4()}/versions",
         files={"file": ("novo.pdf", _pdf(), "application/pdf")},
+        data={"idempotency_key": "replace-key-1"},
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 422
+    service.replace_document.assert_not_called()
+
+
+def test_replace_requires_idempotency_key(service):
+    # D-U7=A na mutação: sem key o request é inválido — nunca chega ao
+    # service (replay cego não pode criar versão).
+    response = _client().post(
+        f"/closing/competences/2026-05/documents/{uuid.uuid4()}/versions",
+        files={"file": ("novo.pdf", _pdf(), "application/pdf")},
+        data={"revision": "3"},
         headers={"Authorization": f"Bearer {TOKEN}"},
     )
     assert response.status_code == 422
@@ -488,6 +517,7 @@ def test_replace_typed_errors(service):
         (de.DocumentNotFound("não"), 404, "document_not_found"),
         (de.DocumentCancelled("cancelado"), 409, "document_cancelled"),
         (de.StaleRevision("velha"), 409, "stale_revision"),
+        (de.IdempotencyConflict("conflito"), 409, "idempotency_conflict"),
         (de.UnsupportedMediaType("tipo"), 415, "unsupported_media_type"),
         (de.InvalidFileContent("corrompido"), 422, "invalid_file_content"),
         (de.PersistenceUnavailable("down"), 503, "persistence_unavailable"),

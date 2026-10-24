@@ -8,6 +8,7 @@ compensação ⇒ log, nunca sucesso falso.
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 from unittest.mock import MagicMock
 
@@ -15,6 +16,7 @@ import pytest
 
 from controllership_finance_app.application.services.closing_document_service import (
     ClosingDocumentService,
+    _version_request_hash,
 )
 from controllership_finance_app.domain.closing_checklist import errors as de
 from controllership_finance_app.infrastructure.storage.closing_document_storage import (
@@ -64,6 +66,8 @@ def _repo(doc=None, item_ok=True, item_scope="BOTH") -> MagicMock:
     repo.get_document_by_id.return_value = MagicMock(
         document_id=uuid.uuid4(), state="ATTACHED"
     )
+    repo.find_version_by_idempotency.return_value = None
+    repo.add_version.return_value = (MagicMock(), True)
     return repo
 
 
@@ -487,6 +491,7 @@ def _replace_kwargs(**overrides):
         "declared_mime": "application/pdf",
         "chunks": [_pdf()],
         "expected_revision": 3,
+        "idempotency_key": "replace-key-1",
     }
     kw.update(overrides)
     return kw
@@ -624,6 +629,89 @@ def test_replace_publish_failure_leaves_no_part(tmp_path, monkeypatch):
     service = ClosingDocumentService(repo, storage)
     with pytest.raises(OSError):
         service.replace_document(**_replace_kwargs(actor=actor))
+    _no_parts(tmp_path)
+    _no_finals(tmp_path)
+
+
+def test_replace_idempotent_replay_deduplicates(tmp_path):
+    # Mesma key + mesmo binário (request_hash igual) ⇒ efeito já
+    # aplicado: retorna o documento vigente, sem nova versão, sem novo
+    # binário — mesmo com revision do request já obsoleta.
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    doc = _attached_doc(uploaded_by=actor, revision=9)
+    repo.get_document_by_id.return_value = doc
+    prior_hash = _version_request_hash(
+        checksum_sha256=hashlib.sha256(_pdf()).hexdigest()
+    )
+    repo.find_version_by_idempotency.return_value = {
+        "version_no": 2,
+        "request_hash": prior_hash,
+    }
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    document, created = service.replace_document(
+        **_replace_kwargs(
+            document_id=str(doc["document_id"]),
+            actor=actor,
+            expected_revision=3,  # obsoleta — dedup resolve antes
+        )
+    )
+    assert created is False
+    assert document is doc
+    repo.add_version.assert_not_called()
+    _no_parts(tmp_path)
+    _no_finals(tmp_path)
+
+
+def test_replace_same_key_divergent_payload_conflicts(tmp_path):
+    # Mesma key + binário divergente ⇒ idempotency_conflict 409; nada
+    # toca disco nem repositório.
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        uploaded_by=actor
+    )
+    repo.find_version_by_idempotency.return_value = {
+        "version_no": 2,
+        "request_hash": "0" * 64,
+    }
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.IdempotencyConflict):
+        service.replace_document(**_replace_kwargs(actor=actor))
+    repo.add_version.assert_not_called()
+    _no_parts(tmp_path)
+    _no_finals(tmp_path)
+
+
+def test_replace_requires_idempotency_key(tmp_path):
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        uploaded_by=actor
+    )
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.InvalidUpload):
+        service.replace_document(
+            **_replace_kwargs(actor=actor, idempotency_key="  ")
+        )
+    repo.add_version.assert_not_called()
+    _no_finals(tmp_path)
+
+
+def test_replace_race_lost_compensates_published_binary(tmp_path):
+    # Corrida perdida sob lock (pre-check passou, add_version deduplicou
+    # o vencedor): o binário que publicamos é órfão e é removido.
+    actor = str(uuid.uuid4())
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        uploaded_by=actor
+    )
+    repo.add_version.return_value = (MagicMock(), False)
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    _, created = service.replace_document(
+        **_replace_kwargs(actor=actor)
+    )
+    assert created is False
     _no_parts(tmp_path)
     _no_finals(tmp_path)
 

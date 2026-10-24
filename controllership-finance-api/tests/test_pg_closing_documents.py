@@ -1,6 +1,6 @@
 """PostgreSQL real — evidências documentais P2-Upload SLICE-1.
 
-Migrations V001–V003 em banco efêmero exclusivo desta execução (prova de
+Migrations V001–V004 em banco efêmero exclusivo desta execução (prova de
 ownership via `pg_test_isolation` — nunca um banco preexistente). Prova:
 FK composta item↔competência (D-U6=A), idempotência UNIQUE+request_hash
 (D-U7=A), corrida concorrente resolvida no banco, auditoria append-only
@@ -12,6 +12,7 @@ Ativado com CF_TEST_PG_* + `CF_TEST_PG_CLUSTER=test` +
 
 from __future__ import annotations
 
+import hashlib
 import os
 import threading
 import uuid
@@ -114,6 +115,7 @@ def setup(_configure_db):
         "V001__create_closing_checklist_schema.sql",
         "V002__seed_monthly_closing_checklist_v1.sql",
         "V003__create_closing_documents.sql",
+        "V004__document_version_idempotency.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
@@ -469,6 +471,8 @@ def _version_kwargs(setup, **over):
         "extension": ".pdf",
         "size_bytes": 8192,
         "checksum_sha256": uuid.uuid4().hex * 2,
+        "idempotency_key": f"ver-key-{uuid.uuid4().hex[:12]}",
+        "request_hash": hashlib.sha256(b"replace-request").hexdigest(),
         "actor": VIEWER,
     }
     kw.update(over)
@@ -481,11 +485,12 @@ def test_add_version_supersedes_previous(setup):
     docs = setup["docs"]
     doc, _ = docs.create_document(**_doc_kwargs(setup, "k-ver-1"))
     doc_id = str(doc["document_id"])
-    updated = docs.add_version(
+    updated, created = docs.add_version(
         **_version_kwargs(
             setup, document_id=doc_id, expected_revision=1
         )
     )
+    assert created is True
     assert updated["state"] == "ATTACHED"
     assert updated["current_version_no"] == 2
     assert updated["revision"] == 2
@@ -547,7 +552,7 @@ def test_concurrent_replace_single_winner(setup):
     def attempt(i: int) -> None:
         barrier.wait()
         try:
-            out = docs.add_version(
+            out, _created = docs.add_version(
                 **_version_kwargs(
                     setup,
                     document_id=doc_id,
@@ -571,6 +576,147 @@ def test_concurrent_replace_single_winner(setup):
     assert fetched["current_version_no"] == 2
     versions = docs.list_document_versions(setup["competence_id"], doc_id)
     assert len(versions) == 2
+
+
+def test_replace_idempotent_replay_no_second_version(setup):
+    """D-U7=A na mutação — mesma key + mesmo payload ⇒ `created=False`,
+    sem versão duplicada e sem segundo `VERSION_ADDED`, mesmo com a
+    revision do request já obsoleta (dedup resolve antes do OCC)."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-ver-idem"))
+    doc_id = str(doc["document_id"])
+    kwargs = _version_kwargs(
+        setup,
+        document_id=doc_id,
+        expected_revision=1,
+        idempotency_key="replace-key-abc",
+        request_hash=hashlib.sha256(b"same-payload").hexdigest(),
+    )
+    first, created = docs.add_version(**kwargs)
+    assert created is True
+    assert first["current_version_no"] == 2
+    # Replay com revision obsoleta — dedup, não stale_revision.
+    replay, replayed = docs.add_version(
+        **{**kwargs, "expected_revision": 1}
+    )
+    assert replayed is False
+    assert replay["current_version_no"] == 2
+    assert len(docs.list_document_versions(setup["competence_id"], doc_id)) == 2
+    events = docs.list_document_events(setup["competence_id"], doc_id)
+    assert [e["event_type"] for e in events["items"]].count(
+        "VERSION_ADDED"
+    ) == 1
+
+
+def test_replace_same_key_divergent_hash_conflicts(setup):
+    """Mesma key + request_hash divergente ⇒ `idempotency_conflict` 409;
+    a key U1 do upload NUNCA é aceita como key da mutação (aggregate
+    distinto — document_id + key)."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-ver-div"))
+    doc_id = str(doc["document_id"])
+    key = "replace-key-xyz"
+    docs.add_version(
+        **_version_kwargs(
+            setup,
+            document_id=doc_id,
+            expected_revision=1,
+            idempotency_key=key,
+        )
+    )
+    with pytest.raises(de.IdempotencyConflict):
+        docs.add_version(
+            **_version_kwargs(
+                setup,
+                document_id=doc_id,
+                expected_revision=2,
+                idempotency_key=key,
+                request_hash=hashlib.sha256(b"divergent").hexdigest(),
+            )
+        )
+    assert len(docs.list_document_versions(setup["competence_id"], doc_id)) == 2
+
+
+def test_version_rows_never_updated(setup):
+    """V004 — `document_version` é linha imutável: após replace, a linha
+    v1 permanece byte-idêntica (file_id, key, hash, ator, timestamp);
+    `SUPERSEDED` é apenas derivação de `current_version_no`."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-ver-immut"))
+    doc_id = str(doc["document_id"])
+    import controllership_finance_app.config as cfg
+
+    with _test_connect(cfg.settings.PLUGINS_DB_NAME) as conn:
+        before = conn.execute(
+            "SELECT document_version_id, version_no, file_id, "
+            "uploaded_by, idempotency_key, request_hash, created_at "
+            "FROM controllership_finance.document_version "
+            "WHERE document_id = %s ORDER BY version_no",
+            (doc_id,),
+        ).fetchall()
+        docs.add_version(
+            **_version_kwargs(
+                setup, document_id=doc_id, expected_revision=1
+            )
+        )
+        after = conn.execute(
+            "SELECT document_version_id, version_no, file_id, "
+            "uploaded_by, idempotency_key, request_hash, created_at "
+            "FROM controllership_finance.document_version "
+            "WHERE document_id = %s ORDER BY version_no",
+            (doc_id,),
+        ).fetchall()
+    assert after[0] == before[0]  # v1 intocada
+    assert len(after) == 2
+    versions = docs.list_document_versions(setup["competence_id"], doc_id)
+    assert [(v["version_no"], v["state"]) for v in versions] == [
+        (2, "ATTACHED"),
+        (1, "SUPERSEDED"),
+    ]
+
+
+def test_concurrent_same_key_replace_deduplicates(setup):
+    """Corrida com a MESMA key: um vencedor materializa a versão; os
+    demais deduplicam — nenhum stale_revision, nenhuma versão perdida,
+    um único VERSION_ADDED."""
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-ver-samekey"))
+    doc_id = str(doc["document_id"])
+    request_hash = hashlib.sha256(b"identical-replace").hexdigest()
+    barrier = threading.Barrier(4)
+    lock = threading.Lock()
+    wins: list[dict] = []
+    dedups: list[dict] = []
+    errors: list[Exception] = []
+
+    def attempt(i: int) -> None:
+        barrier.wait()
+        try:
+            out, created = docs.add_version(
+                **_version_kwargs(
+                    setup,
+                    document_id=doc_id,
+                    expected_revision=1,
+                    idempotency_key="same-replace-key",
+                    request_hash=request_hash,
+                    original_name=f"concorrente-{i}.pdf",
+                )
+            )
+            with lock:
+                (wins if created else dedups).append(out)
+        except Exception as exc:  # noqa: BLE001 — classificada no assert
+            with lock:
+                errors.append(exc)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(attempt, range(4)))
+
+    assert len(wins) == 1 and len(dedups) == 3 and not errors
+    assert len(docs.list_document_versions(setup["competence_id"], doc_id)) == 2
+    events = docs.list_document_events(setup["competence_id"], doc_id)
+    assert [e["event_type"] for e in events["items"]].count(
+        "VERSION_ADDED"
+    ) == 1
 
 
 def test_cancel_preserves_history_and_exits_active_list(setup):

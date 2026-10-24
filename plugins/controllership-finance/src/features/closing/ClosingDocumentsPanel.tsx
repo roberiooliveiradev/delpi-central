@@ -200,6 +200,12 @@ type PendingUpload = {
   idempotencyKey: string;
 };
 
+type PendingReplace = {
+  documentId: string;
+  file: File;
+  idempotencyKey: string;
+};
+
 export function ClosingDocumentsPanel({
   period,
   snapshotItemId,
@@ -227,6 +233,9 @@ export function ClosingDocumentsPanel({
   } | null>(null);
   const [mutating, setMutating] = useState(false);
   const [mutationError, setMutationError] = useState<PanelError | null>(null);
+  const [pendingReplace, setPendingReplace] = useState<PendingReplace | null>(
+    null,
+  );
   const [replaceTarget, setReplaceTarget] = useState<ClosingDocument | null>(
     null,
   );
@@ -348,26 +357,26 @@ export function ClosingDocumentsPanel({
 
   // U5 — substituição: o usuário escolhe o arquivo novo; a `revision`
   // vista na lista viaja junto (OCC) — stale_revision ⇒ refresh honesto.
+  // A `idempotency_key` identifica ESTA tentativa (D-U7=A na mutação):
+  // retry reutiliza a mesma chave e o servidor deduplica — nunca cria
+  // duas versões para a mesma ação do usuário.
   const startReplace = useCallback((doc: ClosingDocument) => {
     setReplaceTarget(doc);
     setMutationError(null);
     replaceInputRef.current?.click();
   }, []);
 
-  const handleReplaceFile = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0] ?? null;
-      event.target.value = "";
-      const doc = replaceTarget;
-      setReplaceTarget(null);
-      if (!file || !doc) return;
+  const doReplace = useCallback(
+    (pendingMutation: PendingReplace, revision: number) => {
       setMutating(true);
       setMutationError(null);
-      replaceClosingDocument(period, doc.document_id, {
-        file,
-        revision: doc.revision,
+      replaceClosingDocument(period, pendingMutation.documentId, {
+        file: pendingMutation.file,
+        revision,
+        idempotencyKey: pendingMutation.idempotencyKey,
       })
         .then(() => {
+          setPendingReplace(null);
           refresh();
           onUploaded?.();
         })
@@ -386,8 +395,43 @@ export function ClosingDocumentsPanel({
         })
         .finally(() => setMutating(false));
     },
-    [period, replaceTarget, onUploaded, refresh],
+    [period, onUploaded, refresh],
   );
+
+  const handleReplaceFile = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0] ?? null;
+      event.target.value = "";
+      const doc = replaceTarget;
+      setReplaceTarget(null);
+      if (!file || !doc) return;
+      const pendingMutation = {
+        documentId: doc.document_id,
+        file,
+        idempotencyKey: crypto.randomUUID(),
+      };
+      setPendingReplace(pendingMutation);
+      doReplace(pendingMutation, doc.revision);
+    },
+    [replaceTarget, doReplace],
+  );
+
+  const retryReplace = useCallback(() => {
+    if (!pendingReplace || mutating) return;
+    // Revision fresca da lista: se a mutação já venceu no servidor o
+    // backend deduplica pela key; se perdeu por stale, o retry compete
+    // honestamente com a revisão atual.
+    const doc = (currentDocs ?? []).find(
+      (d) => d.document_id === pendingReplace.documentId,
+    );
+    if (!doc || doc.state !== "ATTACHED") {
+      setPendingReplace(null);
+      setMutationError(null);
+      refresh();
+      return;
+    }
+    doReplace(pendingReplace, doc.revision);
+  }, [pendingReplace, mutating, currentDocs, doReplace, refresh]);
 
   // U7 — cancelamento lógico com confirmação explícita.
   const confirmCancel = useCallback(() => {
@@ -537,7 +581,22 @@ export function ClosingDocumentsPanel({
       ) : null}
 
       {mutationError ? (
-        <CfFeedbackMessage intent="error" title="Ação não concluída">
+        <CfFeedbackMessage
+          intent="error"
+          title="Ação não concluída"
+          action={
+            pendingReplace ? (
+              <button
+                type="button"
+                className="cf-documents-panel__retry"
+                disabled={mutating}
+                onClick={retryReplace}
+              >
+                Tentar novamente
+              </button>
+            ) : undefined
+          }
+        >
           {mutationError.message}
         </CfFeedbackMessage>
       ) : null}

@@ -327,17 +327,20 @@ async def replace_document_version(
     document_id: uuid.UUID = Path(),
     file: UploadFile = File(...),
     revision: int = Form(..., ge=1),
+    idempotency_key: str = Form(...),
     branch_scope: str | None = Form(
         default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
     ),
 ):
     """U5 — substituição governada: `access` + scope + uploader-or-manage
-    + business_rule + OCC `revision`. A versão anterior passa a
-    `SUPERSEDED` e permanece referenciável — binário nunca é sobrescrito."""
+    + business_rule + OCC `revision` + D-U7=A na mutação
+    (`UNIQUE(document_id, idempotency_key)` + `request_hash`; replay
+    idêntico retorna o documento com `deduplicated`, divergente 409).
+    A versão anterior fica `SUPERSEDED` derivada — linha imutável."""
     user, can_manage = _can_manage(request)
     try:
         chunks = await _read_chunks_limited(file)
-        document = _service().replace_document(
+        document, created = _service().replace_document(
             period=period,
             document_id=str(document_id),
             actor=actor_subject(user),
@@ -346,14 +349,23 @@ async def replace_document_version(
             declared_mime=file.content_type,
             chunks=chunks,
             expected_revision=revision,
+            idempotency_key=idempotency_key,
             branch_scope=branch_scope,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "replace_document_version")
+    data = _document_view(document)
+    if not created:
+        data["deduplicated"] = True
     return ok(
-        _document_view(document),
-        message="Documento substituído. A versão anterior foi preservada.",
-        status_code=201,
+        data,
+        message=(
+            "Documento substituído. A versão anterior foi preservada."
+            if created
+            else "Substituição já registrada para esta chave "
+            "de idempotência."
+        ),
+        status_code=201 if created else 200,
         operation_id="replace_document_version",
     )
 

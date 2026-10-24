@@ -231,3 +231,11 @@ Baseline: SLICE-1 aceito ACCEPT_WITH_RESIDUAL (7d5e0402e0). Zero migrations nova
 ### Residuais honestos preservados
 
 Antivírus inexistente · housekeeping de órfãos PLANNED · retenção corporativa · OFX/QIF/TXT com TÉO · E05/E06 · RQ-P2-039 · trava P5 pendente de runtime canônico.
+
+### Rework pós-revisão SLICE-2 (REWORK do GPT sobre 62f111ea — doc 104 §1)
+
+Dois resíduos corrigidos sem redefinir decisões:
+
+- **Idempotência U5:** a key da mutação agora é persistida e verificada — `V004__document_version_idempotency.sql` adiciona `idempotency_key`/`request_hash` a `document_version` com `UNIQUE(document_id, key)` (v1 herda a key do upload; replaces trazem key própria — nunca a key U1 reutilizada). Replay idêntico ⇒ `deduplicated` 200 **antes** do OCC (revision obsoleta no replay não vira `stale_revision`); mesma key + payload divergente ⇒ `idempotency_conflict` 409; corrida com mesma key ⇒ 1 criador + N dedups, um único `VERSION_ADDED`; binário publicado em corrida perdida é compensado.
+- **Imutabilidade real de `document_version`:** a coluna `state` foi removida — a linha nunca é atualizada; `SUPERSEDED`/`ATTACHED` é derivado de `closing_document.current_version_no` em toda leitura (get/list/download).
+- Evidência: `test_replace_idempotent_replay_no_second_version`, `test_replace_same_key_divergent_hash_conflicts`, `test_concurrent_same_key_replace_deduplicates`, `test_version_rows_never_updated` (PG real R4); service `test_replace_idempotent_replay_deduplicates`, `test_replace_same_key_divergent_payload_conflicts`, `test_replace_requires_idempotency_key`, `test_replace_race_lost_compensates_published_binary`; rota `test_replace_deduplicated_returns_200`, `test_replace_requires_idempotency_key`; MFE retry reutiliza a mesma key. Suíte completa: **318 passed** BFF+PG.
