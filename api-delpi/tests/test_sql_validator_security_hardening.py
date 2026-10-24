@@ -11,7 +11,9 @@ from app.application.services.sql_validator import SqlValidator
 
 @pytest.fixture(autouse=True)
 def _whitelist_on(monkeypatch):
-    monkeypatch.delenv("DATA_SQL_SKIP_TABLE_WHITELIST", raising=False)
+    # Enforcement mode must be explicit: the sanctioned audited default is
+    # bypass ON (commit dacf4fa7ca). These tests exercise the allowlist path.
+    monkeypatch.setenv("DATA_SQL_SKIP_TABLE_WHITELIST", "false")
 
 
 @pytest.fixture()

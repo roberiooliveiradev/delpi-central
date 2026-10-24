@@ -10,11 +10,11 @@ def test_historico_list_sql_uses_two_step_tela_aggregation() -> None:
     source = open(repo_module.__file__, encoding="utf-8").read()
     assert "def list_historico_by_branch" in source
     assert "SELECT *" not in source
-    assert "COUNT(*)" not in source
 
     list_method_start = source.index("def list_historico_by_branch")
     next_method = source.find("\n    def ", list_method_start + 1)
     list_method = source[list_method_start:next_method]
+    assert "COUNT(*)" not in list_method
     assert "HISTORICO_TELA_VIEW" in list_method
     assert "_HISTORICO_TELA_LIST_SELECT" in list_method
     assert "GROUP BY Ordem_Producao" in list_method

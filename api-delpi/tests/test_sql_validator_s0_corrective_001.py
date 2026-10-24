@@ -14,7 +14,10 @@ from app.application.services.sql_validator import SqlValidator
 
 
 @pytest.fixture
-def validator():
+def validator(monkeypatch):
+    # These tests exercise allowlist enforcement; the sanctioned audited
+    # default is bypass ON (commit dacf4fa7ca), so enforcement is explicit.
+    monkeypatch.setenv("DATA_SQL_SKIP_TABLE_WHITELIST", "false")
     return SqlValidator()
 
 

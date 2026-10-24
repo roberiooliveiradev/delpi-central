@@ -28,7 +28,9 @@ def quality_losses_client() -> TestClient:
 def test_quality_losses_routes_exposed(quality_losses_client: TestClient) -> None:
     from app.interface.http.routes.quality.quality_router import router
 
-    paths = {route.path for route in router.routes if hasattr(route, "path")}
+    from tests.support.route_contract_smoke import effective_route_paths
+
+    paths = effective_route_paths(router.routes)
     assert "/quality/scrap-cost-pct" in paths
     assert "/quality/rework-cost-pct" in paths
 

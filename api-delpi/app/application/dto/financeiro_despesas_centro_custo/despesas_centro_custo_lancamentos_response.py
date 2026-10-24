@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 
 @dataclass
 class DespesasCentroCustoLancamentoItem:

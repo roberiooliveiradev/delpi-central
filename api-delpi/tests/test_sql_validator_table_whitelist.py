@@ -4,7 +4,7 @@ from app.application.services.sql_validator import SqlValidator
 
 
 def test_rejects_table_outside_allowlist_when_skip_disabled(monkeypatch) -> None:
-    monkeypatch.delenv("DATA_SQL_SKIP_TABLE_WHITELIST", raising=False)
+    monkeypatch.setenv("DATA_SQL_SKIP_TABLE_WHITELIST", "false")
     validator = SqlValidator()
     with pytest.raises(PermissionError, match="não autorizada"):
         validator.validate("SELECT TOP 1 1 AS ok FROM SUS010 WHERE D_E_L_E_T_ = '';")

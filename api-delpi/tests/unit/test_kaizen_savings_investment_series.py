@@ -5,6 +5,9 @@ from decimal import Decimal
 
 import pytest
 
+from app.domain.services.kaizen.kaizen_savings_calculator import (
+    business_days_equivalent,
+)
 from app.domain.services.kaizen.kaizen_savings_investment_series import (
     build_savings_investment_series,
 )
@@ -49,10 +52,11 @@ def test_month_series_savings_and_investment_align_with_summary_rules(
     assert result["granularity"] == "month"
     assert result["total"] == 1
     assert result["points"][0]["periodo"] == "2026-07"
-    # 10/07..20/07 = 11 dias × R$ 10
-    assert result["points"][0]["savings"] == pytest.approx(110.0)
+    # 10/07..20/07 = 11 dias corridos → equivalente em dias úteis (253/365) × R$ 10
+    expected_savings = round(10.0 * business_days_equivalent(11), 2)
+    assert result["points"][0]["savings"] == pytest.approx(expected_savings)
     assert result["points"][0]["investment"] == pytest.approx(100.0)
-    assert result["total_savings"] == pytest.approx(110.0)
+    assert result["total_savings"] == pytest.approx(expected_savings)
     assert result["total_investment"] == pytest.approx(100.0)
 
 
@@ -85,11 +89,12 @@ def test_day_series_allocates_investment_on_anchor_day(
     )
 
     by_period = {point["periodo"]: point for point in result["points"]}
+    daily = round(5.0 * business_days_equivalent(1), 2)
     assert by_period["2026-07-10"]["investment"] == 0.0
     assert by_period["2026-07-11"]["investment"] == pytest.approx(50.0)
-    assert by_period["2026-07-10"]["savings"] == pytest.approx(5.0)
-    assert by_period["2026-07-11"]["savings"] == pytest.approx(5.0)
-    assert by_period["2026-07-12"]["savings"] == pytest.approx(5.0)
+    assert by_period["2026-07-10"]["savings"] == pytest.approx(daily)
+    assert by_period["2026-07-11"]["savings"] == pytest.approx(daily)
+    assert by_period["2026-07-12"]["savings"] == pytest.approx(daily)
 
 
 def test_aprovado_counts_investment_not_savings() -> None:

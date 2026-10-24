@@ -513,8 +513,8 @@ def test_batch04_not_eligible_and_not_executable_through_broker(monkeypatch):
 
 def test_count01_allowlist_delta_exactly_expected():
     allow = _allow()
-    assert allow["version"] == 22
-    assert len(allow["operations"]) == 94
+    assert allow["version"] == 23
+    assert len(allow["operations"]) == 95
     ops = _ops()
     for kept in (
         "list_supplies_inventory_adjustments",
@@ -546,7 +546,7 @@ def test_count02_baseline_and_live_counts_recomputed():
     }
     assert len(baseline_eligible) == 92
     live_eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(live_eligible) == 94
+    assert len(live_eligible) == 95
 
 
 def test_coverage_decision_chain_records_corrective():
@@ -575,8 +575,9 @@ def test_authz01_routes_keep_api_delpi_access():
 
 def test_sql01_generic_sql_not_promoted():
     ops = _ops()
+    sql_ops = [oid for oid in ops if "sql" in oid]
+    assert sql_ops == ["execute_readonly_sql"]
     for oid in ops:
-        assert oid != "execute_readonly_sql"
         assert "data/sql" not in oid
 
 

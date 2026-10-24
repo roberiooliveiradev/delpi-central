@@ -24,7 +24,11 @@ from app.interface.http.routes.engineering.metallographic_reports_router import 
 )
 from app.interface.http.route_contract_registry import ROUTE_CONTRACTS
 from delpi_auth.request_context import clear_current_user, set_current_user
-from tests.support.route_contract_smoke import assert_envelope_meta, body_json
+from tests.support.route_contract_smoke import (
+    assert_envelope_meta,
+    body_json,
+    effective_route_paths,
+)
 
 _REPORT_ID = UUID("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee")
 _ROUTER = "app.interface.http.routes.engineering.metallographic_reports_router"
@@ -104,7 +108,7 @@ def test_operation_ids_are_explicit_and_registered() -> None:
         assert operation_id in ROUTE_CONTRACTS
     child_paths = {route.path for route in router.routes}
     assert "/metallographic-reports" in child_paths
-    parent_paths = {getattr(route, "path", "") for route in engineering_router.routes}
+    parent_paths = effective_route_paths(engineering_router.routes)
     assert any("metallographic-reports" in path for path in parent_paths)
     assert any("/lmps" in path for path in parent_paths)
 

@@ -36,7 +36,7 @@ def test_supplies_cpv_returns_meta(mock_build, _mock_enrich) -> None:
     mock_use_case.execute.return_value = {"summary": {"value": 1}}
     mock_build.return_value = mock_use_case
 
-    response = get_cpv()
+    response = get_cpv(branch=None)
     _assert_meta(
         _body(response),
         operation_id="get_supplies_cpv",
@@ -112,7 +112,7 @@ def test_quality_kaizen_summary_returns_meta(mock_build, _mock_enrich) -> None:
     mock_use_case.execute.return_value = mock_summary
     mock_build.return_value = mock_use_case
 
-    response = get_kaizen_summary()
+    response = get_kaizen_summary(branch=None)
     _assert_meta(
         _body(response),
         operation_id="get_kaizen_summary",
@@ -447,7 +447,7 @@ def test_production_otd_returns_meta(mock_build, _mock_enrich) -> None:
     mock_use_case.execute.return_value = {"otd_pct": 88.0}
     mock_build.return_value = mock_use_case
 
-    response = get_on_time_delivery_pct()
+    response = get_on_time_delivery_pct(branch=None)
     _assert_meta(
         _body(response),
         operation_id="get_on_time_delivery_pct",
@@ -554,7 +554,7 @@ def test_totvs_open_orders_returns_meta(mock_build) -> None:
     mock_build.return_value = mock_use_case
 
     response = list_totvs_open_orders_route()
-    mock_use_case.execute.assert_called_once_with(scope=None)
+    mock_use_case.execute.assert_called_once_with(scope=None, customer_centers=None)
     _assert_meta(
         _body(response),
         operation_id="list_totvs_open_orders",
@@ -578,7 +578,7 @@ def test_totvs_recently_closed_orders_returns_meta(mock_uc_cls) -> None:
     mock_uc_cls.return_value = mock_uc
 
     response = list_totvs_recently_closed_orders_route(days=30)
-    mock_uc.execute.assert_called_once_with(days=30)
+    mock_uc.execute.assert_called_once_with(days=30, customer_centers=None)
     _assert_meta(
         _body(response),
         operation_id="list_totvs_recently_closed_orders",
@@ -607,7 +607,7 @@ def test_totvs_open_orders_by_customer_returns_meta(mock_build) -> None:
         customer_code="000001",
         customer_store="06",
     )
-    mock_use_case.execute_for_customer.assert_called_once_with("000001", "06")
+    mock_use_case.execute_for_customer.assert_called_once_with("000001", "06", customer_centers=None)
     _assert_meta(
         _body(response),
         operation_id="list_totvs_open_orders_by_customer",

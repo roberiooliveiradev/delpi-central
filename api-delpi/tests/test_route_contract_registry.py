@@ -48,7 +48,7 @@ def test_financial_rol_route_returns_meta(mock_build) -> None:
     }
     mock_build.return_value = mock_use_case
 
-    response = get_rol()
+    response = get_rol(branch=None)
     body = json.loads(response.body.decode())
     assert body["meta"]["operationId"] == "get_financial_rol"
     fields = body["meta"].get("fields") or {}

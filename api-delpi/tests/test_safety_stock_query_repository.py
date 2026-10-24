@@ -308,9 +308,9 @@ def test_fetch_consumption_analysis_rows_binds_period(
         "01",
         *universe_params,
         "01",
-        "20250718",
+        SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
     ]
-    assert "10020113" in params
+    assert params[-2:] == ["20250718", "10020113"]
 
 
 @patch.object(SafetyStockQueryRepository, "execute_query")

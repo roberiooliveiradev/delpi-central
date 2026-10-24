@@ -39,6 +39,7 @@ from app.application.external_capabilities.dynamic_information.constants import 
     STATUS_DAVI_ELIGIBLE_READ,
     STATUS_EXPLICIT_PROCESSING_PROHIBITION,
     STATUS_GENERIC_SQL_FORBIDDEN,
+    STATUS_NEEDS_BOUNDED_EXECUTION,
     STATUS_NEEDS_BRANCH_AUTHZ_EVIDENCE,
     STATUS_NEEDS_MODEL_SAFE_PROJECTION,
     STATUS_NEEDS_NESTED_PROJECTION_SUPPORT,
@@ -253,6 +254,7 @@ _ALLOWLIST_OPERATION_IDS = (
     _ELIGIBLE_OPERATION_IDS
     | _PRODUCT_MASTER_SEMANTIC_POST_IDS
     | _WAVE7_SEMANTIC_POST_IDS
+    | frozenset({"execute_readonly_sql"})
 )
 
 
@@ -373,7 +375,7 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 22
+    assert allow.get("version") == 23
     assert allow.get("coverageDecision", {}).get("decision") == (
         "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS"
     )
@@ -2368,16 +2370,27 @@ def test_eligible_count_is_ninety_two():
 # ---------------------------------------------------------------------------
 
 
-def test_canonical_sql_route_not_davi_eligible():
+def test_canonical_sql_route_bounded_not_generic_capability():
     """T-1/RQ-1: execute_readonly_sql exists in the baseline OpenAPI (canonical
-    API route preserved) but must never surface as DAVI-eligible."""
+    API route preserved) as the ONLY governed SQL surface — bounded execution
+    posture, never a generic executable DAVI capability."""
     actions = _load_baseline_actions()
     sql = next(
         (a for a in actions if a.operation_id == "execute_readonly_sql"), None
     )
     assert sql is not None, "canonical route must remain in the OpenAPI baseline"
-    assert sql.davi_status == STATUS_GENERIC_SQL_FORBIDDEN
+    assert sql.davi_status == STATUS_NEEDS_BOUNDED_EXECUTION
     assert not sql.executable
+
+    allow = load_external_read_allowlist()
+    entry = next(
+        op
+        for op in allow["operations"]
+        if op["operationId"] == "execute_readonly_sql"
+    )
+    assert entry["canonicalSqlRoute"] == "CANONICAL_READONLY_SQL_ROUTE"
+    assert entry["responseContract"] == "BOUNDED_DYNAMIC_RESULTSET"
+    assert entry["approvedInputFields"] == ["sql"]
 
 
 @pytest.mark.parametrize(

@@ -187,11 +187,11 @@ def test_allowlist_v18_and_exactly_five_system_ops_promoted():
     allow = load_external_read_allowlist()
     assert allow["version"] >= 18
     ops = {o["operationId"] for o in allow["operations"]}
-    assert len(allow["operations"]) == 94
+    assert len(allow["operations"]) == 95
     assert set(_PROMOTED) <= ops
     for oid in _EXCLUDED_SYSTEM:
         assert oid not in ops
-    assert "execute_readonly_sql" not in ops
+    assert "execute_readonly_sql" in ops
 
 
 def test_exactly_five_system_ops_executable():
@@ -1296,7 +1296,7 @@ def test_registro_tokens_not_in_global_quarantine():
     quarantine = set(allow.get("retrievalQuarantineTokens") or [])
     assert "registros" not in quarantine
     assert "registro" not in quarantine
-    assert "select" in quarantine
+    assert "select" not in quarantine
 
 
 def test_promoted_ops_declare_row_intent_negative_phrases():

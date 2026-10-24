@@ -30,4 +30,4 @@ def test_list_recently_closed_orders_normalizes_and_marks_completed() -> None:
     assert result["items"][0]["kanbanStage"] == "completed"
     assert result["items"][0]["saldo"] == 0.0
     assert "created_by" not in result["items"][0]
-    repo.list_recently_closed.assert_called_once_with(days=30)
+    repo.list_recently_closed.assert_called_once_with(days=30, customer_centers=None)

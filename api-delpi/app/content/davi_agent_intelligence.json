@@ -470,7 +470,7 @@
         "report_or_gap"
       ],
       "confirmation_policy": "read_only",
-      "note": "Dicionário Protheus (SX2/SX3/sys.tables) via discover→execute only. Metadata naming a table grants ZERO authority over its rows — nome de tabela retornado NÃO autoriza ler registros de negócio dela. Backend SYSTEM_METADATA_ACCESS is final AuthZ; api-delpi.access alone is not sufficient."
+      "note": "Dicionário Protheus (SX2/SX3/sys.tables) via discover→execute only. Metadata naming a table grants ZERO authority over its rows — nome de tabela retornado NÃO autoriza ler registros de negócio dela. Backend SYSTEM_METADATA_ACCESS is final AuthZ; generic API access alone is not sufficient."
     },
     "ad_hoc_sql_read": {
       "mcp_tools": [

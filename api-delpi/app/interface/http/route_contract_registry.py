@@ -47,6 +47,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     # Custom GPT Actions V1 (004A.2)
     "gpt_get_catalog": RouteContract("gpt_actions_catalog", "composite_analysis"),
     "gpt_search_products": RouteContract("gpt_product_search", "paged_list"),
+    "gpt_get_openapi_schema": RouteContract("gpt_openapi_schema", "composite_analysis"),
     # Produtos
     "search_products": RouteContract("product_search", "paged_list"),
     "search_products_by_supplier_part_number": RouteContract(
@@ -229,6 +230,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "list_supplies_purchase_request_recent_linked_receipts": RouteContract(
         "supplies_purchase_request_linked_receipt", "list"
+    ),
+    "list_supplies_purchase_request_cost_centers": RouteContract(
+        "supplies_purchase_request_cost_center", "list"
+    ),
+    "list_supplies_purchase_request_requesters": RouteContract(
+        "supplies_purchase_request_requester", "list"
+    ),
+    "get_supplies_protheus_user_by_email": RouteContract(
+        "supplies_protheus_user", "scalar"
     ),
     "get_supplies_third_party_materials_shipments": RouteContract(
         "third_party_material_shipment", "paged_list"
@@ -990,6 +1000,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "attach_audit_5s_evidence": RouteContract("audit_5s_attachment", "scalar"),
     "complete_audit_5s_nc_action": RouteContract("audit_5s_nc_action", "scalar"),
     "reopen_audit_5s_nc_action": RouteContract("audit_5s_nc_action", "scalar"),
+    "force_close_audit_5s_nc_without_treatment": RouteContract(
+        "audit_5s_nc", "scalar"
+    ),
     "get_audit_5s_analytics_dashboard": RouteContract(
         "audit_5s_analytics", "composite_analysis"
     ),
@@ -1223,8 +1236,19 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_protheus_rest_supplier": RouteContract(
         "protheus_rest_supplier", "scalar"
     ),
+    "create_protheus_rest_supplier": RouteContract(
+        "protheus_rest_supplier", "scalar"
+    ),
+    "update_protheus_rest_supplier": RouteContract(
+        "protheus_rest_supplier", "scalar"
+    ),
     "list_supplier_field_provenance": RouteContract(
         "supplier_field_provenance", "composite_analysis"
+    ),
+    # Integration operations tracking
+    "get_integration_operation": RouteContract("integration_operation", "scalar"),
+    "list_integration_operation_events": RouteContract(
+        "integration_operation_event", "paged_list"
     ),
     # Lançamento de notas fiscais
     "search_lancamento_notas_fiscais_suppliers": RouteContract(

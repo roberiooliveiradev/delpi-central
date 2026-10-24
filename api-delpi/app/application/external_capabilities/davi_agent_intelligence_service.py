@@ -19,8 +19,11 @@ CONTENT_PATH = (
 )
 
 # Soft budget for projected directives (E0: OpenAPI GPT ~5KiB; execute 64KiB).
-# Directives ride on catalog/discover — keep well under 16KiB serialized.
-DAVI_AGENT_DIRECTIVES_MAX_BYTES = 16 * 1024
+# Directives ride on catalog/discover — keep well under the 64KiB transport
+# bound. Re-baselined 16→20KiB: allowlist v23 canonically restored the
+# governed ad_hoc_sql_read directives (~0.8KiB) over a corpus already at the
+# previous limit.
+DAVI_AGENT_DIRECTIVES_MAX_BYTES = 20 * 1024
 
 _LIST_CAP_KEYS = frozenset(
     {"examples", "examplePrompts", "anti_patterns", "forbidden", "when", "rules"}

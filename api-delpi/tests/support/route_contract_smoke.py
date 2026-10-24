@@ -42,3 +42,23 @@ def assert_envelope_meta(
     if contract is not None and shape is None and entity is None:
         assert contract.entity == expected_entity
         assert contract.shape == expected_shape
+
+
+def effective_route_paths(routes: Any) -> set[str]:
+    """Resolve route paths including lazily included routers (FastAPI _IncludedRouter)."""
+    paths: set[str] = set()
+    for route in routes:
+        path = getattr(route, "path", None)
+        if path:
+            paths.add(path)
+            continue
+        context = getattr(route, "include_context", None)
+        original = getattr(route, "original_router", None)
+        if context is None or original is None:
+            continue
+        prefix = getattr(context, "prefix", "") or ""
+        for child in getattr(original, "routes", []):
+            child_path = getattr(child, "path", None)
+            if child_path:
+                paths.add(f"{prefix}{child_path}")
+    return paths

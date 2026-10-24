@@ -37,7 +37,7 @@ def inspections_client() -> TestClient:
 
 def test_operation_inspections_sql_filters_op_and_operation_without_assay_columns() -> None:
     src = inspect.getsource(InspecoesProcessoRepository.list_operation_inspections)
-    assert "historico_tela" in src
+    assert "HISTORICO_TELA_VIEW" in src
     assert "Ordem_Producao" in src
     assert "Operacao" in src
     assert "Nome_Ensaiador" in src

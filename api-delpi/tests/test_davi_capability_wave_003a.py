@@ -228,7 +228,6 @@ def test_wave3a_collision_disambiguation(query, expected, forbidden, monkeypatch
         "pricing",
         "custo",
         "cost",
-        "sql",
         "admin",
         "inteligência de preço de matéria-prima",
         "simulação de custo",
@@ -242,6 +241,19 @@ def test_wave3a_quarantine_regression(query, monkeypatch):
     )
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
     assert discovered["candidate_count"] == 0, (query, discovered["candidates"])
+
+
+def test_wave3a_sql_intent_routes_only_to_canonical_bounded_route(monkeypatch):
+    set_actions_for_tests(_actions())
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "sec",
+    )
+    discovered = discover_delpi_information(query="sql", top_k=5, actor_id="u1")
+    sql_like = {
+        c["action_id"] for c in discovered["candidates"] if "sql" in c["action_id"]
+    }
+    assert sql_like == set(), sql_like
 
 
 @pytest.mark.parametrize(

@@ -101,9 +101,15 @@ def test_array_item_enum_is_validated(catalog):
     with pytest.raises(ArgumentValidationError):
         validate_arguments(action, {'branch':['03']})
 
-@pytest.mark.parametrize('query',['Altere o estoque sem giro', 'Execute SQL para acuracidade'])
+@pytest.mark.parametrize('query',['Altere o estoque sem giro'])
 def test_no_write_or_sql_candidate(query):
     assert discover(query)['candidate_count'] == 0
+
+def test_sql_intent_surfaces_only_governed_read_candidates():
+    result = discover('Execute SQL para acuracidade')
+    ids = {c['action_id'] for c in result['candidates']}
+    assert 'execute_readonly_sql' not in ids
+    assert all(i.startswith(('get_', 'list_', 'search_')) for i in ids)
 
 @pytest.mark.parametrize(('family','detail','query'), [
     ('inventory_accuracy', False, 'Resumo de acuracidade'),

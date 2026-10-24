@@ -51,7 +51,7 @@ def test_envelope_includes_meta_on_live_route(mock_build) -> None:
     mock_use_case.execute.return_value = {"rol": 99}
     mock_build.return_value = mock_use_case
 
-    response = get_rol()
+    response = get_rol(branch=None)
     body = json.loads(response.body.decode())
 
     assert "meta" in body

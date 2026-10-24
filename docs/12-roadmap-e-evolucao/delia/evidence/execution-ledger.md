@@ -18004,3 +18004,17 @@ TASK_ID=DELIA-UX-COMPOSER-ACTION-BUTTONS-COMPACT-REFINEMENT-01
 COMMIT=19b082dbee DEPLOYED=YES PROD_QA=21/21
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.420 — Remediação bounded das falhas de teste api-delpi: matriz causal, owner fixes, suíte restaurada (2026-10-24)
+
+**2026-10-24 — DELIA-C3-DAVI-BASELINE-TEST-FAILURES-BOUNDED-REMEDIATION-01 (doc 137):** pacote bounded autorizado pelo PO sob revisão independente `84306b0e` para fechar a dívida de regressão api-delpi. Worktree isolada `davia-testfix-wt` (BASE `86942f8540`); baseline x candidato byte-idêntico → `CANDIDATE_ONLY_FAILURES=∅`; "74 falhas" = 10 causas-raiz, não 74 defeitos.
+
+PRODUCT: import `PaginationEnvelopeBuilder` no DTO despesas (NameError real, `d85e9e09d8`); 9 operation_ids no `route_contract_registry` (entity/shape derivados de envelopes reais); `api-delpi.access` bruto fora da projeção externa (reword canônico); manifesto governed-knowledge re-pinado via `emit-manifest` (procedimento com precedentes); `DAVI_AGENT_DIRECTIVES_MAX_BYTES` 16→20KiB documentado (driver v23; teto transporte 64KiB; FLAG p/ coordenação). TEST/FIXTURE: pins v23 (95 ops, canonical sql, `select` fora de quarentena), fixtures validator explicitam enforcement, `branch=None`/`customer_centers=None` direto, `effective_route_paths` p/ lazy `_IncludedRouter` (FastAPI 0.156.8), inspecoes/kpi/safety-stock/pagination/kaizen/safety alinhados a evolução sancionada, benchmark SQL→redirect canônico POSITIVE_PRECISE.
+
+TESTES: api-delpi completa (env oficial) 6026 passed/15 skipped/3 ENVIRONMENT_CONFIGURATION (git ausente na imagem; 41 verdes com git+gitdir montados); sql_validator 116; delia-api completa 2202 passed/3 skipped/0 failed — F01–F06 preservados (bond estrito, required enforcement, guidance precedence, goal-free, aliases material). Segurança: SQL genérico continua FORBIDDEN; bypass auditado com AST; zero mudança AuthZ; DISCOVERY!=APPROVAL.
+
+TASK_ID=DELIA-C3-DAVI-BASELINE-TEST-FAILURES-BOUNDED-REMEDIATION-01
+DEPLOYED=NO CORRECTIONS_IMPLEMENTED=YES LOCAL_GREEN=YES
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
+NEXT=INDEPENDENT_REVIEW_THEN_GOVERNED_DEPLOY_GATE
+Evidência: [doc 137](../corrections/mcp-contextual-intelligence-orchestration/137-davi-baseline-test-failure-remediation.md).

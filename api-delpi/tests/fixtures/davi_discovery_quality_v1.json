@@ -2384,61 +2384,73 @@
    "id": "DQ-NEG-S-001",
    "query": "rode um SELECT * FROM SB1010",
    "language": "pt-BR",
-   "case_type": "GENERIC_SQL_NEGATIVE",
-   "family": "system_metadata",
-   "expected_action_ids": [],
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
    "top1_required": false,
-   "notes": "live-proven SQL guard"
+   "notes": "SQL intent must surface the canonical bounded route (v23 governed redirect)"
   },
   {
    "id": "DQ-NEG-S-002",
    "query": "execute SQL: SELECT top 10 * from SC5",
    "language": "pt-BR",
-   "case_type": "GENERIC_SQL_NEGATIVE",
-   "family": "system_metadata",
-   "expected_action_ids": [],
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
    "top1_required": false,
-   "notes": ""
+   "notes": "SQL intent must surface the canonical bounded route (v23 governed redirect)"
   },
   {
    "id": "DQ-NEG-S-003",
    "query": "rode uma query SQL na tabela SD3",
    "language": "pt-BR",
-   "case_type": "GENERIC_SQL_NEGATIVE",
-   "family": "system_metadata",
-   "expected_action_ids": [],
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
    "top1_required": false,
-   "notes": ""
+   "notes": "SQL intent must surface the canonical bounded route (v23 governed redirect)"
   },
   {
    "id": "DQ-NEG-S-004",
    "query": "faça uma consulta SQL arbitrária no banco",
    "language": "pt-BR",
-   "case_type": "GENERIC_SQL_NEGATIVE",
-   "family": "system_metadata",
-   "expected_action_ids": [],
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
    "top1_required": false,
-   "notes": ""
+   "notes": "SQL intent must surface the canonical bounded route (v23 governed redirect)"
   },
   {
    "id": "DQ-NEG-S-005",
    "query": "select * from SB2010",
    "language": "en",
-   "case_type": "GENERIC_SQL_NEGATIVE",
-   "family": "system_metadata",
-   "expected_action_ids": [],
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
    "top1_required": false,
-   "notes": ""
+   "notes": "SQL intent must surface the canonical bounded route (v23 governed redirect)"
   },
   {
    "id": "DQ-NEG-S-006",
    "query": "liste todos os registros da tabela SB1 via SQL",
    "language": "pt-BR",
-   "case_type": "GENERIC_SQL_NEGATIVE",
-   "family": "system_metadata",
-   "expected_action_ids": [],
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
    "top1_required": false,
-   "notes": "row dump vs metadata describe"
+   "notes": "SQL intent must surface the canonical bounded route (v23 governed redirect)"
   },
   {
    "id": "DQ-NEG-U-001",

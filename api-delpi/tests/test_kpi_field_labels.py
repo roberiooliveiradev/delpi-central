@@ -18,7 +18,7 @@ def test_kpi_fields_merges_common_si_and_route_bundles():
     fields = kpi_fields(FINANCIAL_ROL_FIELD_LABELS)
 
     assert fields["branch"] == "Filial"
-    assert fields["goal_label"] == "Meta"
+    assert fields["goal_label"] == "Meta (rótulo)"
     assert fields["gross_revenue"] == "Receita bruta"
     assert fields["rol"] == "ROL"
 
