@@ -24,7 +24,7 @@
 
 ## Decisões fechadas pelo PO/arquitetura
 
-- Unidade = `supplies.unit.filial-{TOTVS}`.
+- ~~Unidade = `supplies.unit.filial-{TOTVS}`~~ → **SUPERSEDED por ADR-009**: unidade é filtro de dados `01`/`02`; não existem `supplies.unit.*`.
 - Permission catalog mínimo; sem espelho CRUD.
 - Tasks/notas não recebem permissions read/write separadas na P0 sem risco/segregação comprovados.
 - `supplies-api` = Flask.

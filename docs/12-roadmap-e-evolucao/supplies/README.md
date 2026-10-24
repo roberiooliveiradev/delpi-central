@@ -212,6 +212,7 @@ Invariantes:
 | [CUTOVER-RUNBOOK.md](./CUTOVER-RUNBOOK.md) | target-first, redirect-last |
 | [DECISOES_FUNCIONAIS_PENDENTES.md](./DECISOES_FUNCIONAIS_PENDENTES.md) | somente decisões realmente não respondidas |
 | [ROADMAP-TRANSFORMA-PLUS.md](./ROADMAP-TRANSFORMA-PLUS.md) | **Visão de negócio Transforma+** (SUP-*, ondas, integrações) — descoberta/backlog; **não** duplica contratos técnicos nem autoriza implementação |
+| [BRANCH-AUTHZ-DOCS-R1-GLOBAL-RECONCILIATION.md](./BRANCH-AUTHZ-DOCS-R1-GLOBAL-RECONCILIATION.md) | reconciliação global: filial é filtro de dados, nunca autorização no Portal |
 | [../financeiro-controladoria/ROADMAP.md](../financeiro-controladoria/ROADMAP.md) | Irmão Controladoria (custos de importação compartilhados) |
 
 ### ADRs
@@ -223,14 +224,16 @@ Invariantes:
 | ADR-003 | coexistência/cutover |
 | ADR-004 | identidade do plugin/CSS |
 | ADR-005 | BIs externos precisam de dump Core antes do GO |
-| ADR-006 | unidade ortogonal |
-| ADR-007 | minimização de permissions |
+| ADR-006 | unidade ortogonal — **SUPERSEDED por ADR-009** |
+| ADR-007 | minimização de permissions (histórico; catálogo antigo superado) |
+| ADR-008 | `supplies.access`/`supplies.manage` (parcialmente vigente) |
+| ADR-009 | **vigente**: só `access`/`manage`; unidade = filtro de dados `01`/`02`, sem `supplies.unit.*` |
 
 ---
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** deploy federado do MFE `plugins/supplies` (e verificação do BFF inventory em prod) → re-smoke federado → redecidir **GATE-FEATURE E10**. Não iniciar E11. Evidência S4: [e10-wf15-s4-final-acceptance.md](./evidence/e10-wf15-s4-final-acceptance.md). Residual: `FILTER_EMPTY_WAREHOUSE` filtro dedicado = ACCEPTABLE; SSO headless prod flaky nesta sessão.
+**Único próximo passo autorizado pelo roadmap:** **E11.P0 — contract freeze Estoque de Segurança** (read-only, receita proposta em [ROADMAP-REBASELINE-R1](./ROADMAP-REBASELINE-R1-20261023.md); não implementar S1 sem autorização). E10 está `PASS_DEPLOYED` — falta apenas o clique autenticado do PO para fechar `VISUAL_AUTHENTICATED=INCONCLUSIVE` ([evidência](./evidence/e10-wf15-s4-final-acceptance.md)).
 
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
@@ -242,7 +245,7 @@ Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqu
 
 A frente **SHARED-INTEGRATIONS-01 X0–X3.E2E** atingiu **ACCEPT para backend/runtime de enriquecimento**, conforme [fechamento X3.E2E e readiness X4](../shared-integrations/X3-E2E-CLOSURE-AND-X4-UI-READINESS-20261022.md) e [evidência de runtime](../shared-integrations/X3-RUNTIME-EVIDENCE-20261022.md). Consulta real BrasilAPI via `external-data-api`, BFF `supplies-api`, comparação S1, persistência/revisões S2, decisões e `prepare-update` draft-only foram exercitados em produção de forma controlada; **nenhum PUT/POST ERP foi habilitado**. Contrato `person_type` PJ e replay idempotente foram esclarecidos no rework de `72427d5017` (evidência reportada).
 
-**X4.P0 — inventário e contract freeze da interface de fornecedores está autorizado pelo PO**, sem autorização de implementação/deploy MFE. A fila geral mantém E10/WF-15 em foco com gate federado `INCONCLUSIVE` segundo a última evidência desta pasta; o novo P0 precisa revalidar esse gate e reconciliar E13/WF-09 e E14/WF-10 antes de promover página. Não usar o aceite backend como `GATE-FEATURE` visual. Registro LGPD/ROPA específico permanece pendente no [backlog documentado](../shared-integrations/X3-LGPD-STATUS-AND-DEFERRED-REMEDIATION-20261022.md).
+**X4.P0 — inventário e contract freeze da interface de fornecedores está autorizado pelo PO**, sem autorização de implementação/deploy MFE. A fila geral mantinha E10/WF-15 em foco com gate federado `INCONCLUSIVE` segundo a última evidência desta pasta **(superado em 2026-10-23: `GATE-FEATURE E10 = PASS_DEPLOYED`, residual `VISUAL_AUTHENTICATED=INCONCLUSIVE` — ver R1)**; o novo P0 precisa revalidar esse gate e reconciliar E13/WF-09 e E14/WF-10 antes de promover página. Não usar o aceite backend como `GATE-FEATURE` visual. Registro LGPD/ROPA específico permanece pendente no [backlog documentado](../shared-integrations/X3-LGPD-STATUS-AND-DEFERRED-REMEDIATION-20261022.md).
 
 
 ## Handoff atual — X4.PROD-C1 (2026-10-23) — aguardando Gabriel/TOTVS

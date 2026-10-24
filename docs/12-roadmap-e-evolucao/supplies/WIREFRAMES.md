@@ -84,7 +84,7 @@ Não criar permission CRUD por existir novo botão/GET/POST/PATCH.
 | Objetivo | cockpit dos 7 KPIs P0 + série OTD + CTA para WF-OTD-A |
 | Rota | `/overview` |
 | Capability | `supplies.access` |
-| Unit | MultiSelect das unidades em `allowedUnits`; consolidado = união autorizada |
+| Unit | MultiSelect das unidades em `allowedUnits` (catálogo operacional do domínio, não grants); consolidado = união das unidades operacionais |
 | KPIs | OTD, STOCK-VALUE, TURNOVER, CPV, SAVINGS, SC-OPEN, CRITICAL-MP |
 | Filtros globais | período + `from`/`to` + `branch`; URL shareable |
 | Fora do chrome global | cliente/segmento/carteira/vendedor, `location` e `stock_method` quando não suportados por todos os KPIs |

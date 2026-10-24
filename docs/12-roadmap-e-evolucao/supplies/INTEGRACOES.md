@@ -36,8 +36,8 @@ Fluxo canônico:
 ```text
 JWT válido
 → resolver effective permissions no Core
-→ capability mínima (ADR-007)
-→ allowedUnits (ADR-006)
+→ capability mínima (`supplies.access`/`supplies.manage`, ADR-009)
+→ filtro de unidade (`branch` = filtro de dados, ADR-009 — sem permission por filial)
 → ownership/resource scope
 → business rule
 ```
@@ -94,12 +94,12 @@ A forma exata de metadata deve ser congelada no contrato antes da implementaçã
 
 ## 6. Multi-unidade
 
-`allowedUnits` é derivado das **permissions efetivas do Core** intersectadas com o catálogo `supplies.unit.filial-{TOTVS}`.
+Filial é **filtro de dados**, nunca autorização (ADR-009). Não existem `supplies.unit.*`. `allowedUnits` é o **catálogo operacional do domínio** (`OPERATIONAL_UNITS = ("01","02")` em `supplies_permissions.py`) exposto a qualquer usuário com `supplies.access` — não é grant por usuário.
 
-- branch fora do conjunto → 403;
-- branch omitido → união somente das units autorizadas;
+- branch fora do catálogo operacional → 403/422 de contrato (filtro inválido);
+- branch omitido → universo operacional inteiro do domínio (`01`+`02`), não «empresa inteira»;
 - consolidado nunca significa empresa inteira implicitamente;
-- nova filial exige um code de unidade, não permission por tela.
+- nova filial exige decisão de produto + catálogo, **nunca** permission nova.
 
 ## 7. Strategic Indicators
 

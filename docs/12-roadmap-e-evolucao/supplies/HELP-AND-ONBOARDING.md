@@ -37,7 +37,7 @@ Herdar textos já canônicos de:
 - Onde ver SC, ESTSEG, item, fornecedor.
 - Fornecedor e solicitante nas listas/fichas de PC e SC usam avatar de iniciais do kit (`EntityAvatarLabel`). O avatar/nome do fornecedor navega para a ficha E14 (`/suppliers/:code/:store`) quando código+loja existem no contrato; o avatar/nome do solicitante navega para o perfil do usuário (`/users/:userId`) quando o requester traz `user_id` Core e a sessão tem acesso (self ou manage) — sem `user_id` ou sem acesso, a identidade fica informativa. Ver `SUPPLIERS-NAV-S1-CONTEXTUAL-SUPPLIER-LINKS.md`, `USERS-PROFILE-S1-USER-OPERATIONAL-CONTEXT.md` e `DIRECTORY-OBJECTS.md`.
 - O que cada KPI do Overview significa (link fichas, linguagem de negócio).
-- 403: «sem permissão para esta filial / este módulo».
+- 403: «sem permissão para este módulo/operação» — filial nunca é motivo de 403 no Portal (é filtro de dados, ADR-009).
 - FAQ: diferença estoque × estoque de segurança; OTD × Entregas / Atrasos × Pedidos de compra; Overview × página OTD; Sheets × indicadores; filtros/URL; Meta parcial × Meta mês.
 - Onde alterar filial padrão / densidade de tabelas (perfil do plugin — WF-USER), sem confundir com `/profile` do Portal.
 - Foto, cargo e contatos: fonte Core (`/me/person-profile`); edição só no Meu Perfil do host; TopBar/WF-USER sincronizam via CustomEvent.
