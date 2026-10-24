@@ -3,7 +3,7 @@
 > **Status (2026-10-23 — rebaseline R1):** implementação incremental em andamento · **E1–E9 concluídas** · **E10 / WF-15 GATE PASS_DEPLOYED** (bundle federado verificado contém a página; residual `VISUAL_AUTHENTICATED=INCONCLUSIVE`) · **E13/E14 fornecedores implementadas** (writes ERP OFF — X4.PROD-C1 aguardando TOTVS) · **USERS.PROFILE.S1–S3** fechadas
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · E9/E10 fechadas c/ residual visual · **E11 READY_WITH_RESIDUAL** (contratos api-delpi completos; falta BFF+MFE)
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual
-> **Página em foco:** **E11 / WF-16 Estoque de Segurança** — `E11.S1` BFF + `E11.S2` página + `E11.S3` detalhe + `E11.S4` aceite em código (identidade + envelope + Help) implementados e testados — ver [E11-S2](./E11-S2-SAFETY-STOCK-MFE-IMPLEMENTATION.md), [E11-S3](./E11-S3-SAFETY-STOCK-ITEM-DETAIL-IMPLEMENTATION.md) e [E11-S4](./E11-S4-SAFETY-STOCK-ACCEPTANCE.md); próxima: **E11.S5** (smoke federado)
+> **Página em foco:** **E11 / WF-16 Estoque de Segurança** — `E11.S1`–`E11.S5` executadas: BFF+MFE publicados em produção (`PASS_DEPLOYED`); ver [E11-S4](./E11-S4-SAFETY-STOCK-ACCEPTANCE.md) e [E11-S5](./E11-S5-DEPLOY-RUNTIME-GATE.md); `GATE-FEATURE E11 = INCONCLUSIVE` — falta smoke federado autenticado
 > **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)**, **Detalhe do pedido (WF-06)**, **Entregas / atrasos (WF-07)**, **Controle de Estoques (WF-15)**, **Fornecedores/360 (WF-09/WF-10)** e **Perfil de usuário (`/users/:userId`)**
 > **Próxima receita:** E11.P0 contract freeze (read-only) → E11.S1 BFF — **writes ERP permanecem OFF**
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
@@ -97,7 +97,7 @@ selecionar página em foco
 | 5 | Detalhe do pedido | `/purchase-orders/:branch/:number` | **FECHADA (DoD)** · WF-06 |
 | 6 | Entregas / atrasos | `/deliveries` | **FECHADA (DoD)** · WF-07 |
 | 7 | Controle de estoques | `/inventory` | **FECHADA** (E10, residual visual) · WF-15 |
-| 8 | Estoque de segurança | `/safety-stock` | **IMPLEMENTADA (S1–S4, aceite em código)** — residual `VISUAL_AUTHENTICATED=INCONCLUSIVE`; falta smoke federado (S5) |
+| 8 | Estoque de segurança | `/safety-stock` | **DEPLOYED (S1–S5)** — `PASS_DEPLOYED`; `GATE-FEATURE = INCONCLUSIVE` (falta smoke autenticado/visual) |
 | 9 | Análise de consumo | `/safety-stock/consumption-analysis` | fila (satélite E12; contrato produtor existe) |
 | 10 | Fornecedores | `/suppliers` | **FECHADA** (E13) — lista/busca/filtros; cadastro/edição em TST |
 | 11 | Fornecedor 360 | `/suppliers/:code/:store` | **FECHADA** (E14) — avatar/nome navegáveis nas listas/fichas de PC e Entregas (SUPPLIERS.NAV.S1). Ver [DIRECTORY-OBJECTS.md](./DIRECTORY-OBJECTS.md) |
