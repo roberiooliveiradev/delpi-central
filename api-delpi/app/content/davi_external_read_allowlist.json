@@ -1,14 +1,18 @@
 {
-  "version": 23,
+  "version": 24,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
-    "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
-    "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
+    "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
+    "decision": "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ",
+    "reason": "Owner-ratified bounded READ of the 15 frozen V1 governed-knowledge documents via the canonical GET /knowledge/technical-guides/{topic} catalog action (api-delpi.access backend AuthZ, approved projection only, 3-excerpt pages). Documents are untrusted guidance, not domain truth or authorization. MP/PI standards remain unpublished pending business ratification. No new MCP tool, RAG, vector store, SQL or proxy capability.",
     "previousDecision": {
+      "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
+      "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
+      "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
+      "previousDecision": {
       "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
       "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
       "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
@@ -31,6 +35,7 @@
           }
         }
       }
+    }
     }
   },
   "retrievalQuarantineTokens": [
@@ -177,6 +182,26 @@
   },
   "explicitProcessingProhibitions": [],
   "operations": [
+    {
+      "operationId": "read_governed_technical_knowledge",
+      "reason": "Owner-ratified bounded READ of the 15 approved V1 documents; api-delpi.access backend AuthZ. No MP/PI promotion or provider dependency.",
+      "executionMode": "catalog_action",
+      "responseContract": "governed_document_guidance",
+      "approvedInputFields": ["topic", "section", "corpus_version", "page", "page_size"],
+      "approvedResponseFields": [
+        "knowledge_kind", "authority", "trust_level", "content_format", "topic", "corpus_id",
+        "corpus_version", "manifest_identity", "source_path", "source_git_sha", "source_sha256",
+        "items[].section", "items[].heading", "items[].line_start", "items[].line_end",
+        "items[].chunk", "items[].text", "items[].sanitized", "page", "page_size", "total",
+        "has_more", "coverage", "selection"
+      ],
+      "argumentConstraints": {
+        "page": {"minimum": 1, "maximum": 10000},
+        "page_size": {"minimum": 1, "maximum": 3}
+      },
+      "semanticAliases": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "conhecimento técnico", "technical guidance", "governed knowledge"],
+      "entityDomainMarkers": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "technical guide"]
+    },
     {
       "operationId": "search_products",
       "reason": "Product Master search — approved projection; ENGINEERING_LMP_ACCESS on backend",

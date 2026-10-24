@@ -2,6 +2,15 @@
   "version": "2026.09.04",
   "description": "Named pagination tiers for api-delpi Query params and clamps. Defaults preserve audited contracts.",
   "tiers": {
+    "knowledge_page_3_3": {
+      "id": "knowledge_page_3_3",
+      "param": "page_size",
+      "default": 3,
+      "ge": 1,
+      "le": 3,
+      "optional": false,
+      "description": "At most three governed guidance excerpts per page"
+    },
     "history_limit_optional_200": {
       "id": "history_limit_optional_200",
       "param": "history_limit",

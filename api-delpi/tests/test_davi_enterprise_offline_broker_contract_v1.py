@@ -134,8 +134,12 @@ def test_s02_pure_concept_does_not_mint_operational_candidate(
     discovered = discover_delpi_information(
         query=case["query"], actor_id=_ACTOR, top_k=10
     )
-    assert discovered["candidate_count"] == 0
-    assert discovered["candidates"] == []
+    # Pure concepts never mint an operational business candidate; the only
+    # surface offered is the ratified governed-document READ capability.
+    assert discovered["candidates"]
+    assert {
+        candidate["action_id"] for candidate in discovered["candidates"]
+    } == {"read_governed_technical_knowledge"}
     # Approved metadata inventory can exceed dynamically executable OpenAPI
     # entries (e.g. a missing baseline path or malformed response binding).
     # Compare the actual broker's availability, never a hardcoded allowlist size.
@@ -143,7 +147,7 @@ def test_s02_pure_concept_does_not_mint_operational_candidate(
         1 for action in get_technical_actions() if action.executable
     )
     assert discovered["eligible_action_count"] > 0
-    # No Knowledge answer implied: provider-native Files remain untested.
+    # Discovery offers the capability only — no document content is returned.
 
 
 def test_s03_mixed_knowledge_plus_live_read_keeps_only_governed_candidates(

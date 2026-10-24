@@ -7,7 +7,8 @@
   "commercial": "Commercial / Sales",
   "supplies": "Supplies / Purchasing / Inventory",
   "production": "Production",
-  "system_metadata": "System Metadata"
+  "system_metadata": "System Metadata",
+  "governed_knowledge": "Governed technical knowledge corpus"
  },
  "cases": [
   {
@@ -2737,6 +2738,30 @@
    ],
    "top1_required": true,
    "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
+  },
+  {
+   "id": "DQ-KNOWLEDGE-001",
+   "query": "guia técnico de unidades de medida do cadastro",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "governed_knowledge",
+   "expected_action_ids": [
+    "read_governed_technical_knowledge"
+   ],
+   "top1_required": true,
+   "notes": "Governed V1 technical document read via the existing discover/execute surface."
+  },
+  {
+   "id": "DQ-KNOWLEDGE-002",
+   "query": "documentação técnica sobre tipos de produto no Protheus",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "governed_knowledge",
+   "expected_action_ids": [
+    "read_governed_technical_knowledge"
+   ],
+   "top1_required": false,
+   "notes": "Generic knowledge phrasing must reach the same governed capability."
   }
  ]
 }

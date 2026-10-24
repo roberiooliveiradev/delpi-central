@@ -19,6 +19,7 @@ from typing import Any
 
 CORPUS_ID = "davi-governed-knowledge"
 CORPUS_VERSION = 1
+PUBLISHED_V1_MANIFEST_IDENTITY = "b830a6a979a27bdbf1845d4e7128cc00aaa2fe75d2b095cbdb4af56b79449f49"
 
 API_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = API_ROOT.parent
@@ -305,6 +306,7 @@ def load_topic_index(repo_root: Path = REPO_ROOT) -> dict[str, Any]:
 def verify_topic_index(
     topic_index: dict[str, Any], manifest: dict[str, Any], *,
     repo_root: Path = REPO_ROOT,
+    source_exists=None,
 ) -> dict[str, Any]:
     """Reject undocumented source promotion, alias injection, and stale freezes."""
     if topic_index.get("schema_version") != TOPIC_INDEX_SCHEMA:
@@ -378,9 +380,50 @@ def verify_topic_index(
             raise BundleError("deferred source is not approved")
         if candidate.get("authority") != "EXTERNAL_VENDOR_REFERENCE_NOT_HOMOLOGATED_AT_DELPI":
             raise BundleError("deferred source authority mismatch")
-        if not resolve_source_path(path, repo_root).is_file():
+        exists = source_exists(path) if source_exists else resolve_source_path(path, repo_root).is_file()
+        if not exists:
             raise BundleError(f"deferred source missing: {path}")
     return {"topics": len(topics), "deferred_sources": len(deferred)}
+
+
+def _published_bytes(api_root: Path, source_path: str) -> bytes:
+    relative = Path(source_path)
+    if relative.is_absolute() or ".." in relative.parts or not source_path.startswith("api-delpi/docs/"):
+        raise BundleError("Invalid published source")
+    target = api_root / source_path.removeprefix("api-delpi/")
+    if any(part.is_symlink() for part in (target, *target.parents)):
+        raise BundleError("Symlinked published source")
+    if not target.resolve().is_relative_to(api_root.resolve()):
+        raise BundleError("Published source escapes corpus")
+    with target.open("rb") as source:
+        content = source.read(262145)
+    if len(content) > 262144:
+        raise BundleError("Published source exceeds size limit")
+    return content
+
+
+def read_published_corpus(*, api_root: Path = API_ROOT) -> tuple[dict, dict, dict[str, bytes]]:
+    manifest = json.loads(_published_bytes(api_root, MANIFEST_REPO_PATH))
+    documents = _manifest_schema(manifest)
+    if manifest.get("manifest_sha256") != manifest_sha256(manifest) or manifest["manifest_sha256"] != PUBLISHED_V1_MANIFEST_IDENTITY:
+        raise BundleError("Published manifest identity mismatch")
+    if manifest.get("freeze_sha") != FREEZE_SHA or not _GIT_SHA_RE.fullmatch(str(manifest.get("source_git_sha", ""))):
+        raise BundleError("Published source version mismatch")
+    membership = _parse_corpus_paths(_published_bytes(api_root, FREEZE_ARTIFACT).decode("utf-8"))
+    if len(documents) != 15 or {doc["path"] for doc in documents} != set(membership):
+        raise BundleError("Published membership mismatch")
+    index = json.loads(_published_bytes(api_root, TOPIC_INDEX_REPO_PATH))
+    verify_topic_index(index, manifest, source_exists=lambda path: bool(_published_bytes(api_root, path)))
+    content = {}
+    for doc in documents:
+        if not doc["path"].startswith("api-delpi/docs/api/"):
+            raise BundleError("Unapproved published document")
+        raw = _published_bytes(api_root, doc["path"])
+        if hashlib.sha256(raw).hexdigest() != doc["sha256"]:
+            raise BundleError("Published document hash mismatch")
+        raw.decode("utf-8")
+        content[doc["path"]] = raw
+    return manifest, index, content
 
 
 def render_topic_index(topic_index: dict[str, Any], manifest: dict[str, Any]) -> bytes:

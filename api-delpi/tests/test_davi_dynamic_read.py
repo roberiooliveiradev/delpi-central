@@ -248,6 +248,7 @@ _ELIGIBLE_OPERATION_IDS = (
         "get_supplies_inventory_accuracy_items",
         "get_supplies_non_moving_stock_summary",
         "get_supplies_non_moving_stock_items",
+        "read_governed_technical_knowledge",
     })
 )
 _ALLOWLIST_OPERATION_IDS = (
@@ -375,9 +376,9 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 23
+    assert allow.get("version") == 24
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS"
+        "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
@@ -541,7 +542,7 @@ def test_classify_hard_blocks():
     )
 
 
-def test_inventory_eligible_count_is_ninety_two():
+def test_inventory_eligible_count_is_ninety_three():
     baseline = json.loads(
         (_api_root() / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
     )
@@ -550,7 +551,7 @@ def test_inventory_eligible_count_is_ninety_two():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 92
+    assert len(eligible) == 93
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -570,7 +571,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 92, query
+        assert discovered["eligible_action_count"] == 93, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -1473,7 +1474,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 92
+    assert discovered["eligible_action_count"] == 93
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -2357,11 +2358,11 @@ def test_nested_unknown_fields_dropped_and_bounds():
     assert "secret" not in projected["root"]["components"][0]
 
 
-def test_eligible_count_is_ninety_two():
+def test_eligible_count_is_ninety_three():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 92
+    assert len(eligible) == 93
 
 
 # ---------------------------------------------------------------------------

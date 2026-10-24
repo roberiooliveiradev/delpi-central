@@ -22,6 +22,10 @@ from app.application.external_capabilities.dynamic_information.text_normalize im
     tokenize,
 )
 
+# Admission floor for governed_document_guidance actions on pure-concept
+# queries: below every alias/overlap score path so lexical evidence always wins.
+_PURE_CONCEPT_GUIDANCE_FLOOR = 0.55
+
 # Portuguese function/filler words that often appear between durable semantic
 # tokens in natural questions without changing phrase identity.
 # Intentionally excludes content markers such as ``por`` (OTD por cliente) and
@@ -453,13 +457,20 @@ def retrieve_eligible_actions(
         return []
     # Pure concept questions belong to the governed Knowledge source.
     # A search miss does not prove absence of data or document knowledge.
-    if is_pure_concept_intent(query):
-        return []
+    pure_concept = is_pure_concept_intent(query)
+    if pure_concept:
+        actions = [a for a in actions if a.response_contract == "governed_document_guidance"]
 
     # Governance filter BEFORE ranking (eligible only).
     eligible = [a for a in actions if a.executable]
     token_idf = _catalog_idf(eligible)
     scored = [(a, score_action(query, a, token_idf)) for a in eligible]
+    if pure_concept:
+        # The governed knowledge capability IS the pure-concept surface: offer
+        # it even when the query carries no lexical alias evidence, so a concept
+        # question can always reach topic selection. Lexical hits still outrank
+        # the floor when several guidance actions exist.
+        scored = [(a, max(s, _PURE_CONCEPT_GUIDANCE_FLOOR)) for a, s in scored]
     scored = [(a, s) for a, s in scored if s > 0]
     scored.sort(
         key=lambda pair: (

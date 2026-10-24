@@ -3,7 +3,7 @@
 **TASK_ID:** `DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01`  
 **DATA:** 2026-10-24  
 **DISCOVERY_HEAD:** `d849f53abc6b81aad089f2ee55433d0519c742c9` (revalidar no trabalho executor)  
-**STATE:** `PRODUCT_DIRECTION_APPROVED; CONTRACT_AND_OWNER_GATES_PENDING; IMPLEMENTATION_NOT_RUN`. Esta especificação não afirma que a nova capacidade existe, não libera documentos MP/PI sem ratificação, nem autoriza deploy sem testes e gates operacionais.
+**STATE:** `PRODUCT_DIRECTION_APPROVED; CONTRACT_RATIFIED; IMPLEMENTATION_DELIVERED` (ver §8). Esta especificação não libera documentos MP/PI sem ratificação, nem autoriza deploy sem testes e gates operacionais.
 
 ## 1. Problema e objetivo
 
@@ -58,3 +58,18 @@ Direção aprovada: oferecer **inteligência técnica viva** para consumidores M
 ## 7. Status inicial e handoff
 
 `DESIGN_DIRECTION=APPROVED`; `IMPLEMENTATION=NOT_STARTED`; `OWNER_CONTRACT_APPROVAL=PENDING`; `MP_PI_RATIFICATION=PENDING`; `V1_CORPUS=PROVEN`; `WORKSPACE_AGENT_FILES_RETRIEVAL=TEST_NOT_RUN`; `MCP_DOCUMENT_READ=NOT_EXPOSED`; `DEPLOY=NOT_AUTHORIZED_BY_THIS_DOCUMENT`. Referências: `davi-knowledge-documentation-recovery-01.md`, `openai-workspace-agent-davi.md`, `davi-governed-knowledge-freeze-001.md`, DÉLIA doc 143.
+
+## 8. Resultado de implementação (2026-10-24)
+
+**Contrato ratificado pelo owner (api-delpi) e implementado:**
+
+- **HTTP:** `GET /knowledge/technical-guides/{topic}`, `operationId=read_governed_technical_knowledge`, registrada em `route_contract_registry` (`governed_technical_knowledge`/`paged_list`), `openapi_agent_metadata`, `tv_route_audience`, `pagination_tiers` (`knowledge_page_3_3`) e `openapi_baseline` regenerados.
+- **Argumentos:** `topic` (enum fechado dos 15 IDs do índice V1), `section` (opcional, `sNNNN`), `corpus_version` (apenas `1`; demais → `STALE_VERSION`), `page`/`page_size` (máx. 3 excerpts de ≤4 KiB UTF-8 escapado).
+- **Retorno:** `knowledge_kind=GUIDANCE`, `authority=GUIDANCE_NOT_DOMAIN_TRUTH`, `trust_level=UNTRUSTED_DOCUMENT_CONTENT`, `topic`, `corpus_id`/`corpus_version`, `manifest_identity`, `source_path`, `source_git_sha`, `source_sha256`, `items[]` com `section/heading/line_start/line_end/chunk/text/sanitized`, `total`, `has_more`, `coverage`, `selection`. Erros tipados: `NOT_FOUND` (404), `STALE_VERSION` (409), `CORPUS_UNAVAILABLE` (503, fail-closed), `VALIDATION_ERROR` (422). Sem paths internos ou stack traces.
+- **Integridade:** `read_published_corpus` em `scripts/davi_governed_knowledge_bundle_lib.py` verifica manifest (schema + `manifest_sha256` + identidade V1 pinada `b830a6a9…f49`), `freeze_sha`, `source_git_sha`, membership exata do freeze artifact (15 documentos), índice de tópicos (`verify_topic_index`), path confinado a `api-delpi/docs/api/`, sem symlinks, ≤256 KiB/documento e SHA-256 por documento.
+- **Integração MCP:** nenhuma tool nova (2 tools, 0 resources). A operação entrou na allowlist v24 (`executionMode=catalog_action`, `responseContract=governed_document_guidance`, projeção aprovada, `page_size≤3`) e é descoberta/executada pelo fluxo `CatalogActionPlan → backend AuthZ → projeção` existente. Discovery nunca devolve texto documental. Consultas de conceito puro filtram o catálogo para a capability documental (floor de admissão) — nunca mintam candidato operacional.
+- **AuthZ:** `require_any_permission([API_DELPI_ACCESS])` no backend; MCP sem Bearer → 401; candidate_token inválido → erro tipado.
+- **MP/PI:** `normas_mp_pi` **não** está no enum de tópicos; retorna `NOT_FOUND`. Ratificação e membership V2 continuam `PENDING`.
+- **Workspace Agent Files:** canal provider-native independente, segue `TEST_NOT_RUN` (K01–K10 não executados por ausência de sessão sancionada).
+
+`MCP_DOCUMENT_READ=EXPOSED_VIA_CATALOG_ACTION_READ`; `IMPLEMENTATION=DELIVERED`; `OWNER_CONTRACT_APPROVAL=RATIFIED`; `MP_PI_RATIFICATION=PENDING`; `MP_PI_PUBLICATION=NOT_PUBLISHED`; demais estados inalterados.

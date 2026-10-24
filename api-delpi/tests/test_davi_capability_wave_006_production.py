@@ -322,7 +322,7 @@ def test_wave006_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
     assert allow.get("version") >= 17
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-SUPPLIES-INVENTORY-VALIDATION-001"
+        "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01"
     )
     eligible = {a.operation_id for a in _actions() if a.executable}
     assert len(_PRIOR_FIFTY_THREE) == 53
@@ -877,7 +877,7 @@ def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
     coverage = (allow.get("coverageDecision") or {}).get("previousDecision") or {}
     # Wave 006 was superseded by later waves; its decision record must
     # remain chained, not silently dropped.
-    previous = coverage.get("previousDecision") or {}
+    previous = (coverage.get("previousDecision") or {}).get("previousDecision") or {}
     assert previous.get("taskId") == (
         "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001"
     )

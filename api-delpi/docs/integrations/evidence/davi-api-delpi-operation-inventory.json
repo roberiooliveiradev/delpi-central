@@ -1,48 +1,55 @@
 {
   "source": "openapi_baseline.json",
   "baseline_version": "3",
-  "baseline_operation_count": 749,
-  "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
-  "TOTAL_OPERATIONS": 749,
-  "TOTAL_GET": 545,
-  "TOTAL_WRITE_VERBS": 204,
-  "DAVI_ELIGIBLE_READ": 92,
+  "baseline_operation_count": 772,
+  "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
+  "TOTAL_OPERATIONS": 772,
+  "TOTAL_GET": 562,
+  "TOTAL_WRITE_VERBS": 210,
+  "DAVI_ELIGIBLE_READ": 93,
   "ELIGIBLE_BEFORE": 92,
-  "ELIGIBLE_AFTER": 92,
-  "NEWLY_ELIGIBLE": [],
+  "ELIGIBLE_AFTER": 93,
+  "NEWLY_ELIGIBLE": [
+    "read_governed_technical_knowledge"
+  ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 749,
-    "current_total_operations": 749,
+    "current_total_operations": 772,
     "previous_total_get": 545,
-    "current_total_get": 545,
-    "added_operations": 0,
+    "current_total_get": 562,
+    "added_operations": 23,
     "removed_operations": 0,
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
-    "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
-    "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
+    "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
+    "decision": "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ",
+    "reason": "Owner-ratified bounded READ of the 15 frozen V1 governed-knowledge documents via the canonical GET /knowledge/technical-guides/{topic} catalog action (api-delpi.access backend AuthZ, approved projection only, 3-excerpt pages). Documents are untrusted guidance, not domain truth or authorization. MP/PI standards remain unpublished pending business ratification. No new MCP tool, RAG, vector store, SQL or proxy capability.",
     "previousDecision": {
-      "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
-      "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
-      "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
+      "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
+      "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
+      "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
       "previousDecision": {
-        "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
-        "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
-        "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
+        "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
+        "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
+        "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
         "previousDecision": {
-          "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
-          "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
-          "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
+          "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
+          "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
+          "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
           "previousDecision": {
-            "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
-            "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
-            "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+            "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
+            "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
+            "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
             "previousDecision": {
-              "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-              "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+              "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+              "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+              "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+              "previousDecision": {
+                "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+                "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+              }
             }
           }
         }
@@ -198,16 +205,16 @@
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 71,
-    "DAVI_ELIGIBLE_READ": 92,
-    "DESTRUCTIVE_OUT_OF_SCOPE": 17,
+    "DAVI_ELIGIBLE_READ": 93,
+    "DESTRUCTIVE_OUT_OF_SCOPE": 19,
     "GENERIC_SQL_FORBIDDEN": 1,
     "LEGACY_UNSAFE": 2,
     "NEEDS_BOUNDED_EXECUTION": 3,
-    "NEEDS_MODEL_SAFE_PROJECTION": 342,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
+    "NEEDS_MODEL_SAFE_PROJECTION": 355,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 53,
     "SEMANTICALLY_REDUNDANT": 3,
-    "STREAM_BINARY_OUT_OF_SCOPE": 33,
-    "WRITE_OUT_OF_SCOPE": 134
+    "STREAM_BINARY_OUT_OF_SCOPE": 34,
+    "WRITE_OUT_OF_SCOPE": 138
   },
   "ELIGIBLE_OPERATION_IDS": [
     "get_commercial_rol_by_branch",
@@ -297,6 +304,7 @@
     "list_protheus_table_columns",
     "list_supplies_inventory_adjustments",
     "list_supplies_purchase_request_lines",
+    "read_governed_technical_knowledge",
     "search_products",
     "search_products_by_supplier_part_number",
     "search_protheus_columns_by_description",
@@ -1885,6 +1893,16 @@
       "executable": true
     },
     {
+      "operationId": "read_governed_technical_knowledge",
+      "method": "GET",
+      "path": "/knowledge/technical-guides/{topic}",
+      "summary": "Governed technical guide excerpt",
+      "entity": "governed_technical_knowledge",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "search_products",
       "method": "GET",
       "path": "/products/search",
@@ -2095,6 +2113,26 @@
       "executable": false
     },
     {
+      "operationId": "engineering_delete_metallographic_image",
+      "method": "DELETE",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "summary": "Delete metallographic micrograph",
+      "entity": "metallographic_report_image",
+      "shape": "scalar",
+      "davi_status": "DESTRUCTIVE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "engineering_delete_metallographic_report",
+      "method": "DELETE",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "summary": "Delete metallographic report",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "davi_status": "DESTRUCTIVE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
       "operationId": "remove_seller_customer",
       "method": "DELETE",
       "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
@@ -2148,7 +2186,7 @@
       "operationId": "list_product_inventory_blocks",
       "method": "POST",
       "path": "/products/inventory-blocks",
-      "summary": "Lista — Bloqueio de inventário sb2 (b2_dtinv/b2_dinvfim) de vários produtos no armazém",
+      "summary": "Inventory block status in batch",
       "entity": "product_inventory_blocks",
       "shape": "list",
       "davi_status": "NEEDS_BOUNDED_EXECUTION",
@@ -2162,6 +2200,36 @@
       "entity": "product_physical_locations",
       "shape": "list",
       "davi_status": "NEEDS_BOUNDED_EXECUTION",
+      "executable": false
+    },
+    {
+      "operationId": "engineering_get_metallographic_image",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "summary": "Download metallographic micrograph",
+      "entity": "metallographic_report_image",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "engineering_get_metallographic_report",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "summary": "Get metallographic report",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "engineering_list_metallographic_reports",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports",
+      "summary": "List metallographic reports",
+      "entity": "metallographic_report",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2455,6 +2523,46 @@
       "executable": false
     },
     {
+      "operationId": "get_financeiro_settlements_payables",
+      "method": "GET",
+      "path": "/financeiro/settlements/payables",
+      "summary": "Lista paginada — Financeiro settlement",
+      "entity": "financeiro_settlement",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_settlements_receivables",
+      "method": "GET",
+      "path": "/financeiro/settlements/receivables",
+      "summary": "Lista paginada — Financeiro settlement",
+      "entity": "financeiro_settlement",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_settlements_summary",
+      "method": "GET",
+      "path": "/financeiro/settlements/summary",
+      "summary": "Lista — Financeiro settlements summary",
+      "entity": "financeiro_settlements_summary",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_stock_inventory",
+      "method": "GET",
+      "path": "/financeiro/stock-inventory",
+      "summary": "Lista paginada — Financeiro stock inventory",
+      "entity": "financeiro_stock_inventory",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
       "operationId": "get_financial_ebitda_pct",
       "method": "GET",
       "path": "/financial/ebitda_pct",
@@ -2720,6 +2828,16 @@
       "path": "/inspecoes-processo/resumo",
       "summary": "In-process inspections — summary KPIs",
       "entity": "inspecoes_processo_resumo",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_integration_operation",
+      "method": "GET",
+      "path": "/integrations/operations/{operation_id}",
+      "summary": "Get Integration Operation Route",
+      "entity": "integration_operation",
       "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
@@ -4389,7 +4507,7 @@
       "method": "GET",
       "path": "/supplies/protheus-users/by-email",
       "summary": "Get Protheus User By Email Route",
-      "entity": "supplies_protheus_user_by_email",
+      "entity": "supplies_protheus_user",
       "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
@@ -4611,6 +4729,16 @@
       "summary": "Indicator — branches de rh",
       "entity": "hr_branch",
       "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_integration_operation_events",
+      "method": "GET",
+      "path": "/integrations/operations/{operation_id}/events",
+      "summary": "List Integration Operation Events Route",
+      "entity": "integration_operation_event",
+      "shape": "paged_list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -5425,6 +5553,16 @@
       "executable": false
     },
     {
+      "operationId": "list_supplies_purchase_request_cost_centers",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/cost-centers",
+      "summary": "List Supplies Purchase Request Cost Centers Route",
+      "entity": "supplies_purchase_request_cost_center",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
       "operationId": "list_supplies_purchase_request_recent_linked_orders",
       "method": "GET",
       "path": "/supplies/purchase-requests/recent-linked-orders",
@@ -5449,8 +5587,28 @@
       "method": "GET",
       "path": "/supplies/purchase-requests/requesters",
       "summary": "List Supplies Purchase Request Requesters Route",
-      "entity": "supplies_purchase_request_requesters",
-      "shape": "scalar",
+      "entity": "supplies_purchase_request_requester",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_supplies_supplier_catalog_items",
+      "method": "GET",
+      "path": "/supplies/supplier-catalogs/{catalog}",
+      "summary": "Lista — Supplies supplier catalog item",
+      "entity": "supplies_supplier_catalog_item",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_supplies_suppliers",
+      "method": "GET",
+      "path": "/supplies/suppliers",
+      "summary": "Lista paginada — Supplies supplier",
+      "entity": "supplies_supplier",
+      "shape": "paged_list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -5471,6 +5629,16 @@
       "summary": "list processos Transforma Mais",
       "entity": "transforma_mais_process",
       "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "lookup_postal_address",
+      "method": "GET",
+      "path": "/addresses/postal-codes/{postal_code}",
+      "summary": "Indicador — Postal address",
+      "entity": "postal_address",
+      "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -5590,6 +5758,16 @@
       "path": "/quality/audit-5s/analytics/dashboard",
       "summary": "Get Audit 5S Dashboard",
       "entity": "audit_5s_analytics",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_audit_5s_previous_criterion_nonconformities",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/previous-criterion-nonconformities",
+      "summary": "Get Audit Previous Criterion Nonconformities",
+      "entity": "audit_5s_previous_criterion_nonconformity",
       "shape": "composite_analysis",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
@@ -6055,6 +6233,16 @@
       "executable": false
     },
     {
+      "operationId": "list_supplier_field_provenance",
+      "method": "GET",
+      "path": "/integrations/protheus/suppliers/{supplier_id}/provenance",
+      "summary": "List Supplier Field Provenance Route",
+      "entity": "supplier_field_provenance",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
       "operationId": "list_totvs_open_orders",
       "method": "GET",
       "path": "/pedidos-venda-abertos/totvs-open-orders",
@@ -6241,6 +6429,16 @@
       "summary": "Quality action plan evidence",
       "entity": "quality_action_plan_evidence",
       "shape": "document_export",
+      "davi_status": "STREAM_BINARY_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "engineering_export_metallographic_report_pdf",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}/pdf",
+      "summary": "Export metallographic report PDF",
+      "entity": "metallographic_report_pdf",
+      "shape": "scalar",
       "davi_status": "STREAM_BINARY_OUT_OF_SCOPE",
       "executable": false
     },
@@ -6935,6 +7133,46 @@
       "executable": false
     },
     {
+      "operationId": "engineering_copy_metallographic_report",
+      "method": "POST",
+      "path": "/engineering/metallographic-reports/{report_id}/copies",
+      "summary": "Copy metallographic report",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "engineering_create_metallographic_report",
+      "method": "POST",
+      "path": "/engineering/metallographic-reports",
+      "summary": "Create metallographic report",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "engineering_put_metallographic_image",
+      "method": "PUT",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "summary": "Upload metallographic micrograph",
+      "entity": "metallographic_report_image",
+      "shape": "scalar",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "engineering_update_metallographic_report",
+      "method": "PATCH",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "summary": "Update metallographic report",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
       "operationId": "enrich_portfolio_customers",
       "method": "POST",
       "path": "/pedidos-venda-abertos/customers/enrichment",
@@ -6949,7 +7187,7 @@
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/force-close-without-treatment",
       "summary": "Force Close Nc Without Treatment",
-      "entity": "force_close_audit_5s_nc_without_treatment",
+      "entity": "audit_5s_nc",
       "shape": "scalar",
       "davi_status": "WRITE_OUT_OF_SCOPE",
       "executable": false

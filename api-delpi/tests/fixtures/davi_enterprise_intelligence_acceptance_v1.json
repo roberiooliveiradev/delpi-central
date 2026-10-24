@@ -178,11 +178,20 @@
       "name": "MI semantic definition",
       "query": "O que significa MI no cadastro de produtos?",
       "intent": "PURE_CONCEPT",
-      "source": "GOVERNED_FILES",
-      "contract_status": "GUIDANCE_PROVIDER_PENDING",
-      "operations": [],
-      "response_fields": [],
-      "required_input_fields": [],
+      "source": "API_DELPI_PLUS_GOVERNED_FILES",
+      "contract_status": "CONTRACT_PROVEN_RUNTIME_PENDING",
+      "operations": [
+        "read_governed_technical_knowledge"
+      ],
+      "response_fields": [
+        "items[].section",
+        "items[].text",
+        "corpus_version",
+        "manifest_identity"
+      ],
+      "required_input_fields": [
+        "topic"
+      ],
       "knowledge_topic": "measurement_units",
       "completeness": "verified_retrieved_document_and_corpus_identity",
       "expected": "KNOWLEDGE_ONLY_NO_OPERATIONAL_TOOL"

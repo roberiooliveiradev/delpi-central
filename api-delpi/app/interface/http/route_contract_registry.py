@@ -44,6 +44,7 @@ def presentation_strategy_for_entity(entity: str | None) -> str:
 
 
 ROUTE_CONTRACTS: dict[str, RouteContract] = {
+    "read_governed_technical_knowledge": RouteContract("governed_technical_knowledge", "paged_list"),
     # Custom GPT Actions V1 (004A.2)
     "gpt_get_catalog": RouteContract("gpt_actions_catalog", "composite_analysis"),
     "gpt_search_products": RouteContract("gpt_product_search", "paged_list"),

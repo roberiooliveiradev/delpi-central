@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-21",
-  "baselineOperationCount": 769,
-  "operationCount": 769,
-  "coveredCount": 690,
-  "gapCount": 78,
+  "generatedAt": "2026-10-24",
+  "baselineOperationCount": 772,
+  "operationCount": 772,
+  "coveredCount": 692,
+  "gapCount": 79,
   "exemptCount": 1,
   "byModule": {
     "addresses": {
@@ -121,6 +121,12 @@
       "gap": 0,
       "exempt": 0
     },
+    "knowledge": {
+      "total": 1,
+      "covered": 1,
+      "gap": 0,
+      "exempt": 0
+    },
     "lancamento-notas-fiscais": {
       "total": 24,
       "covered": 19,
@@ -182,8 +188,8 @@
       "exempt": 0
     },
     "quality": {
-      "total": 149,
-      "covered": 148,
+      "total": 150,
+      "covered": 149,
       "gap": 1,
       "exempt": 0
     },
@@ -224,9 +230,9 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 43,
+      "total": 44,
       "covered": 42,
-      "gap": 1,
+      "gap": 2,
       "exempt": 0
     },
     "system": {
@@ -2277,8 +2283,8 @@
       "method": "GET",
       "path": "/integrations/operations/{operation_id}/events",
       "module": "integrations",
-      "entity": "integration_operation_events",
-      "shape": "scalar",
+      "entity": "integration_operation_event",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -2405,6 +2411,15 @@
       "module": "invoice-issuance",
       "entity": "invoice_issuance_request",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "read_governed_technical_knowledge",
+      "method": "GET",
+      "path": "/knowledge/technical-guides/{topic}",
+      "module": "knowledge",
+      "entity": "governed_technical_knowledge",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -5369,6 +5384,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_audit_5s_previous_criterion_nonconformities",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/previous-criterion-nonconformities",
+      "module": "quality",
+      "entity": "audit_5s_previous_criterion_nonconformity",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
       "operationId": "reopen_audit_5s_evaluation",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/reopen-evaluation",
@@ -5535,7 +5559,7 @@
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/force-close-without-treatment",
       "module": "quality",
-      "entity": "force_close_audit_5s_nc_without_treatment",
+      "entity": "audit_5s_nc",
       "shape": "scalar",
       "status": "gap"
     },
@@ -6687,7 +6711,7 @@
       "method": "GET",
       "path": "/supplies/protheus-users/by-email",
       "module": "supplies",
-      "entity": "supplies_protheus_user_by_email",
+      "entity": "supplies_protheus_user",
       "shape": "scalar",
       "status": "covered"
     },
@@ -6755,6 +6779,15 @@
       "status": "covered"
     },
     {
+      "operationId": "list_supplies_purchase_request_cost_centers",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/cost-centers",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_cost_center",
+      "shape": "list",
+      "status": "gap"
+    },
+    {
       "operationId": "list_supplies_purchase_request_lines",
       "method": "GET",
       "path": "/supplies/purchase-requests/lines",
@@ -6813,8 +6846,8 @@
       "method": "GET",
       "path": "/supplies/purchase-requests/requesters",
       "module": "supplies",
-      "entity": "supplies_purchase_request_requesters",
-      "shape": "scalar",
+      "entity": "supplies_purchase_request_requester",
+      "shape": "list",
       "status": "covered"
     },
     {

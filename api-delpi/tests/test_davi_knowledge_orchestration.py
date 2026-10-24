@@ -62,9 +62,13 @@ def test_knowledge_availability_is_explicit_for_external_mcp_consumers() -> None
     source = _ko()["sources"]["governed_knowledge"]
     assert source["corpus_status"] == "PROVEN"
     assert source["retrieval_surface"] == "WORKSPACE_AGENT_FILES"
-    assert source["mcp_document_access"] == "NOT_EXPOSED"
-    assert source["consumer_contract_status"] == "ARCHITECTURE_DECISION_REQUIRED"
-    assert source["tools"] == []
+    assert source["mcp_document_access"] == "EXPOSED_VIA_CATALOG_ACTION_READ"
+    assert source["mcp_read_operation_id"] == "read_governed_technical_knowledge"
+    assert source["consumer_contract_status"] == "RATIFIED_V1_BOUNDED"
+    assert source["tools"] == [
+        "discover_delpi_information",
+        "execute_delpi_information",
+    ]
     gate = _ko()["gates"]["KNOWLEDGE_GATE"]
     assert "MCP" in gate and "agent_directives" in gate
     assert "AuthZ" in gate

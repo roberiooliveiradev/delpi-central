@@ -9421,6 +9421,75 @@
         }
       },
       "category": "products"
+    },
+    "read_governed_technical_knowledge": {
+      "locale": {
+        "en": {
+          "summary": "Governed technical guide excerpt",
+          "description": "Bounded excerpts from the approved V1 technical corpus with source hashes and provenance. Guidance only — never live business data or authorization.",
+          "whenToUse": "Use when a concept or standard needs documented technical guidance rather than an operational read.",
+          "label": "Technical guide"
+        },
+        "pt-BR": {
+          "summary": "Trecho de guia técnico governado",
+          "description": "Trechos limitados do corpus técnico V1 aprovado, com hashes de fonte e proveniência. Orientação apenas — nunca dado empresarial vivo ou autorização.",
+          "whenToUse": "Use quando um conceito ou norma exigir orientação técnica documentada em vez de leitura operacional.",
+          "label": "Guia técnico"
+        }
+      },
+      "category": "engineering",
+      "params": {
+        "topic": {
+          "locale": {
+            "en": {
+              "label": "Topic"
+            },
+            "pt-BR": {
+              "label": "Tópico"
+            }
+          }
+        },
+        "section": {
+          "locale": {
+            "en": {
+              "label": "Section"
+            },
+            "pt-BR": {
+              "label": "Seção"
+            }
+          }
+        },
+        "corpus_version": {
+          "locale": {
+            "en": {
+              "label": "Corpus version"
+            },
+            "pt-BR": {
+              "label": "Versão do corpus"
+            }
+          }
+        },
+        "page": {
+          "locale": {
+            "en": {
+              "label": "Page"
+            },
+            "pt-BR": {
+              "label": "Página"
+            }
+          }
+        },
+        "page_size": {
+          "locale": {
+            "en": {
+              "label": "Page size"
+            },
+            "pt-BR": {
+              "label": "Itens por página"
+            }
+          }
+        }
+      }
     }
   }
 }

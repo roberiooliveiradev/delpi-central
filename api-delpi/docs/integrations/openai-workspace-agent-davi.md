@@ -443,17 +443,25 @@ KNOWLEDGE_RUNTIME_LIVE = TEST_NOT_RUN (manual sync not performed)
 
 ### External MCP consumers — documentary access boundary
 
-The frozen corpus and Workspace Agent Files are not an MCP document-read surface.
-`governed_knowledge.status=PROVEN` describes the Git corpus only; discovery also
-projects explicit `corpus_status`, `retrieval_surface`, `mcp_document_access` and
-`consumer_contract_status`. These are guidance metadata, not recovered document
+The frozen corpus is exposed to authorized MCP consumers through the ratified
+catalog-action READ `read_governed_technical_knowledge`
+(`GET /knowledge/technical-guides/{topic}` — see
+[design 001 §8](evidence/davi-live-governed-technical-knowledge-mcp-read-design-001.md)):
+discovery→execute over the existing two tools, backend `api-delpi.access`
+AuthZ, approved projection only, bounded excerpts with corpus provenance.
+Workspace Agent Files remain a separate provider-native surface and are **not**
+an MCP document-read surface.
+
+`governed_knowledge.status=PROVEN` describes the Git corpus; discovery also
+projects explicit `corpus_status`, `retrieval_surface`, `mcp_document_access`
+(`EXPOSED_VIA_CATALOG_ACTION_READ`) and `consumer_contract_status`
+(`RATIFIED_V1_BOUNDED`). These are guidance metadata, not recovered document
 content, backend AuthZ or proof of provider synchronization.
 
 External consumers must not infer access to Files from operational discovery
-candidates. No production document resource or third tool is introduced. Any
-future documentary-consumption boundary needs an architecture decision covering
-identity, audience, bounded payloads, provenance, pinning and typed failures.
-The existing two-tool invariant remains unchanged.
+candidates. No production document resource or third tool exists. Document
+reads must go through the governed capability — never through Files, arbitrary
+paths or agent directives. The existing two-tool invariant remains unchanged.
 
 Recovery inventory, MP/PI source provenance, search diagnosis and outstanding
 provider/owner gates: [bounded recovery evidence](evidence/davi-knowledge-documentation-recovery-01.md).

@@ -79,6 +79,7 @@ from app.interface.http.routes.quality import kaizen_public_router
 from app.interface.http.routes.hr import hr_router
 from app.interface.http.routes.dashboard import dashboard_router
 from app.interface.http.routes.helpdesk import helpdesk_router
+from app.interface.http.routes import governed_knowledge_router
 from app.interface.http.routes.scheduling import scheduling_public_router
 from app.interface.http.routes.scheduling import scheduling_router
 from app.interface.http.routes.cultura_delpi import cultura_delpi_router
@@ -305,6 +306,7 @@ app.include_router(suppliers_router.router)
 app.include_router(third_party_materials_router.router)
 app.include_router(commercial_router.router)
 app.include_router(helpdesk_router.router)
+app.include_router(governed_knowledge_router.router)
 app.include_router(production_router.router)
 app.include_router(production_operational_router.router)
 app.include_router(unproductive_hours_router.router)

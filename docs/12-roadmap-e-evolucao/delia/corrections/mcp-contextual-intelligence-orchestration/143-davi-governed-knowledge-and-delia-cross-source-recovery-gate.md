@@ -68,6 +68,16 @@ A autorização de deploy DAVI desta task é independente do estado histórico a
 
 Release bounded `284998fbf03caca018492d4ab5c41aed80f8ae5e` publicado e implantado somente em api-delpi: health 200, MCP sem bearer 401, duas tools/zero resources e novos estados de disponibilidade verificados no container. Regressão: 6013 PASS, 30 SKIP, duas falhas de banco reproduzidas no baseline. Isso confirma a sinalização operacional, não recupera conteúdo documental para a DÉLIA. Provider K01–K10 e acesso documental seguem pendentes; não desbloqueia R4.
 
+### Handoff DAVI — inteligência técnica viva (task `DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01`)
+
+A fronteira documental para consumidores MCP foi ratificada pelo owner api-delpi e implementada como **capability READ canônica no fluxo existente** — sem terceira tool, sem resources, sem RAG/registry paralelo:
+
+- `MCP_DOCUMENT_ACCESS=EXPOSED_VIA_CATALOG_ACTION_READ`; `CONSUMER_CONTRACT=RATIFIED_V1_BOUNDED`. Operação `read_governed_technical_knowledge` (`GET /knowledge/technical-guides/{topic}`, allowlist v24, `catalog_action`) descoberta por `discover_delpi_information` e executada por `execute_delpi_information` via candidate_token, backend `api-delpi.access` e projeção aprovada.
+- Contrato: `topic` enum fechado dos 15 tópicos V1, `section` opcional, `corpus_version=1` (demais → `STALE_VERSION`), páginas de ≤3 excerpts (≤4 KiB escapado cada). Proveniência: `corpus_id`, `corpus_version`, `manifest_identity`, `source_path`, `source_git_sha`, `source_sha256`, seção/linhas/chunk, `coverage`, `authority=GUIDANCE_NOT_DOMAIN_TRUTH`. Erros tipados `NOT_FOUND|STALE_VERSION|CORPUS_UNAVAILABLE|VALIDATION_ERROR` (fail-closed); paths arbitrários, symlinks, manifest/index/documento corrompido e AuthZ negada rejeitados.
+- Integridade fail-closed: identidade do manifesto V1 pinada, membership exata do freeze, hash por documento, leitura confinada ao corpus aprovado.
+- Consultas de conceito puro oferecem **somente** a capability documental — nunca candidato operacional.
+- **Para a DÉLIA:** a dependência documental da Trilha A está resolvida em nível de contrato público — orientação técnica V1 é consumível como qualquer READ governado. Julgamento de pertinência e recuperação contextual continuam responsabilidades da DÉLIA; nenhum caso especial no planner foi introduzido. Normas MP/PI permanecem `NOT_PUBLISHED` até ratificação do owner de negócio. Workspace Agent Files e K01–K10 continuam `TEST_NOT_RUN`. `R4_AUTHORIZATION=NO` — não desbloqueia R4.
+
 ## Registro de execução — Trilha B (2026-10-24)
 
 - `B0=EXECUTED` (RED→GREEN, +5 testes, módulo 28); `B1=EXECUTED`; `B2=EVIDENCE_READY_FOR_REVIEW`. Evidência completa: [doc 144](./144-delia-cross-capability-contextual-recovery-implementation.md).

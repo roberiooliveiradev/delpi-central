@@ -5340,6 +5340,30 @@
           }
         }
       }
+    },
+    "topic": {
+      "locale": {
+        "en": {
+          "label": "Topic",
+          "description": "Approved governed-knowledge topic identifier from the corpus index."
+        },
+        "pt-BR": {
+          "label": "Tópico",
+          "description": "Identificador de tópico aprovado do índice do corpus governado."
+        }
+      }
+    },
+    "corpus_version": {
+      "locale": {
+        "en": {
+          "label": "Corpus version",
+          "description": "Required governed corpus version."
+        },
+        "pt-BR": {
+          "label": "Versão do corpus",
+          "description": "Versão exigida do corpus governado."
+        }
+      }
     }
   }
 }

@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 769,
+  "operation_count": 772,
   "operations": [
     {
       "method": "GET",
@@ -39453,6 +39453,18 @@
           ]
         },
         {
+          "name": "shift",
+          "in": "query",
+          "required": false,
+          "description": "Factory shift filter by appointment start time: 1 (1st), 2 (2nd) or 3 (3rd).",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ],
+          "type": "string"
+        },
+        {
           "name": "page",
           "in": "query",
           "required": false,
@@ -39587,6 +39599,76 @@
               "pt-BR": {
                 "description": "Quantidade de linhas por página.",
                 "label": "Tamanho da página"
+              }
+            }
+          },
+          "shift": {
+            "locale": {
+              "en": {
+                "description": "Shift filter. 5S uses TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; factory efficiency uses 1|2|3 (or CSV).",
+                "label": "Shift"
+              },
+              "pt-BR": {
+                "description": "Filtro de turno. 5S: TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; eficiência fabril: 1|2|3 (ou CSV).",
+                "label": "Turno"
+              }
+            },
+            "enumLabels": {
+              "1": {
+                "en": {
+                  "label": "1st shift"
+                },
+                "pt-BR": {
+                  "label": "1º Turno"
+                }
+              },
+              "2": {
+                "en": {
+                  "label": "2nd shift"
+                },
+                "pt-BR": {
+                  "label": "2º Turno"
+                }
+              },
+              "3": {
+                "en": {
+                  "label": "3rd shift"
+                },
+                "pt-BR": {
+                  "label": "3º Turno"
+                }
+              },
+              "ADMINISTRATIVO": {
+                "en": {
+                  "label": "Administrative"
+                },
+                "pt-BR": {
+                  "label": "Administrativo"
+                }
+              },
+              "TURNO_1": {
+                "en": {
+                  "label": "Shift 1"
+                },
+                "pt-BR": {
+                  "label": "Turno 1"
+                }
+              },
+              "TURNO_2": {
+                "en": {
+                  "label": "Shift 2"
+                },
+                "pt-BR": {
+                  "label": "Turno 2"
+                }
+              },
+              "TURNO_3": {
+                "en": {
+                  "label": "Shift 3"
+                },
+                "pt-BR": {
+                  "label": "Turno 3"
+                }
               }
             }
           },
@@ -41365,8 +41447,8 @@
         }
       ],
       "xDelpi": {
-        "entity": "integration_operation_events",
-        "shape": "scalar",
+        "entity": "integration_operation_event",
+        "shape": "paged_list",
         "params": {
           "limit": {
             "locale": {
@@ -42624,6 +42706,235 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Move a pending request to in progress for billing."
+    },
+    {
+      "method": "GET",
+      "path": "/knowledge/technical-guides/{topic}",
+      "operationId": "read_governed_technical_knowledge",
+      "summary": "Governed technical guide excerpt",
+      "tags": [
+        "Governed Knowledge"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "topic",
+          "in": "path",
+          "required": true,
+          "description": "Approved governed-knowledge topic identifier from the corpus index.",
+          "type": "string",
+          "enum": [
+            "inventory_adjustments",
+            "warehouse_stock_balances",
+            "purchase_order_otd",
+            "sales_order_otd",
+            "warehouse_cost_model",
+            "branch_semantics",
+            "measurement_units",
+            "production_stock_entry",
+            "operation_reporting_hza",
+            "product_master_sb1",
+            "production_order_key",
+            "third_party_materials",
+            "weekly_portfolio",
+            "market_rol_cfop",
+            "machine_load"
+          ]
+        },
+        {
+          "name": "section",
+          "in": "query",
+          "required": false,
+          "description": "Stable heading identifier returned in excerpts, scoped to this source version.",
+          "type": "string"
+        },
+        {
+          "name": "corpus_version",
+          "in": "query",
+          "required": false,
+          "description": "Required corpus version; V1 is published. Other versions return STALE_VERSION.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "At most three governed guidance excerpts per page",
+          "type": "integer",
+          "default": 3
+        }
+      ],
+      "xDelpi": {
+        "entity": "governed_technical_knowledge",
+        "shape": "paged_list",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Governed technical guide excerpt",
+            "description": "Bounded excerpts from the approved V1 technical corpus with source hashes and provenance. Guidance only — never live business data or authorization.",
+            "whenToUse": "Use when a concept or standard needs documented technical guidance rather than an operational read.",
+            "label": "Technical guide"
+          },
+          "pt-BR": {
+            "summary": "Trecho de guia técnico governado",
+            "description": "Trechos limitados do corpus técnico V1 aprovado, com hashes de fonte e proveniência. Orientação apenas — nunca dado empresarial vivo ou autorização.",
+            "whenToUse": "Use quando um conceito ou norma exigir orientação técnica documentada em vez de leitura operacional.",
+            "label": "Guia técnico"
+          }
+        },
+        "params": {
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Itens por página"
+              }
+            }
+          },
+          "section": {
+            "locale": {
+              "en": {
+                "description": "Section query parameter.",
+                "label": "Section"
+              },
+              "pt-BR": {
+                "description": "Seção ou bloco do formulário/checklist.",
+                "label": "Seção"
+              }
+            },
+            "enumLabels": {
+              "attachments": {
+                "en": {
+                  "label": "Attachments"
+                },
+                "pt-BR": {
+                  "label": "Anexos"
+                }
+              },
+              "containment": {
+                "en": {
+                  "label": "Containment"
+                },
+                "pt-BR": {
+                  "label": "Contenção"
+                }
+              },
+              "corrective": {
+                "en": {
+                  "label": "Corrective"
+                },
+                "pt-BR": {
+                  "label": "Corretiva"
+                }
+              },
+              "documentation": {
+                "en": {
+                  "label": "Documentation"
+                },
+                "pt-BR": {
+                  "label": "Documentação"
+                }
+              },
+              "effectiveness": {
+                "en": {
+                  "label": "Effectiveness"
+                },
+                "pt-BR": {
+                  "label": "Eficácia"
+                }
+              },
+              "general": {
+                "en": {
+                  "label": "General"
+                },
+                "pt-BR": {
+                  "label": "Geral"
+                }
+              },
+              "nc_description": {
+                "en": {
+                  "label": "NC description"
+                },
+                "pt-BR": {
+                  "label": "Descrição da NC"
+                }
+              },
+              "preventive": {
+                "en": {
+                  "label": "Preventive"
+                },
+                "pt-BR": {
+                  "label": "Preventiva"
+                }
+              },
+              "root_cause": {
+                "en": {
+                  "label": "Root cause"
+                },
+                "pt-BR": {
+                  "label": "Causa raiz"
+                }
+              }
+            }
+          },
+          "topic": {
+            "locale": {
+              "en": {
+                "description": "Approved governed-knowledge topic identifier from the corpus index.",
+                "label": "Topic"
+              },
+              "pt-BR": {
+                "description": "Identificador de tópico aprovado do índice do corpus governado.",
+                "label": "Tópico"
+              }
+            }
+          },
+          "corpus_version": {
+            "locale": {
+              "en": {
+                "description": "Required governed corpus version.",
+                "label": "Corpus version"
+              },
+              "pt-BR": {
+                "description": "Versão exigida do corpus governado.",
+                "label": "Versão do corpus"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use quando um conceito ou norma exigir orientação técnica documentada em vez de leitura operacional.",
+          "description": "Trechos limitados do corpus técnico V1 aprovado, com hashes de fonte e proveniência. Orientação apenas — nunca dado empresarial vivo ou autorização.",
+          "label": "Guia técnico"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Bounded excerpts from the approved V1 technical corpus with source hashes and provenance. Guidance only — never live business data or authorization."
     },
     {
       "method": "GET",
@@ -52928,6 +53239,20 @@
           "default": 50
         },
         {
+          "name": "sort_by",
+          "in": "query",
+          "required": false,
+          "description": "Column key for global sort across pages.",
+          "type": "string"
+        },
+        {
+          "name": "sort_direction",
+          "in": "query",
+          "required": false,
+          "description": "Sort direction: \"asc\" or \"desc\".",
+          "type": "string"
+        },
+        {
           "name": "branch",
           "in": "query",
           "required": false,
@@ -53124,6 +53449,124 @@
               }
             }
           },
+          "sort_by": {
+            "locale": {
+              "en": {
+                "description": "Sort by query parameter.",
+                "label": "Sort by"
+              },
+              "pt-BR": {
+                "description": "Campo usado para ordenar a listagem.",
+                "label": "Ordenar por"
+              }
+            },
+            "enumLabels": {
+              "customer_name": {
+                "en": {
+                  "label": "Customer name"
+                },
+                "pt-BR": {
+                  "label": "Nome do cliente"
+                }
+              },
+              "defect_description": {
+                "en": {
+                  "label": "Defect description"
+                },
+                "pt-BR": {
+                  "label": "Descrição do defeito"
+                }
+              },
+              "executed_by": {
+                "en": {
+                  "label": "Executed by"
+                },
+                "pt-BR": {
+                  "label": "Executado por"
+                }
+              },
+              "last_revision_date": {
+                "en": {
+                  "label": "Last revision date"
+                },
+                "pt-BR": {
+                  "label": "Data da última revisão"
+                }
+              },
+              "launch_date": {
+                "en": {
+                  "label": "Launch date"
+                },
+                "pt-BR": {
+                  "label": "Data de lançamento"
+                }
+              },
+              "lmp_number": {
+                "en": {
+                  "label": "LMP number"
+                },
+                "pt-BR": {
+                  "label": "Número LMP"
+                }
+              },
+              "occurrence_date": {
+                "en": {
+                  "label": "Occurrence date"
+                },
+                "pt-BR": {
+                  "label": "Data da ocorrência"
+                }
+              },
+              "problem_tags": {
+                "en": {
+                  "label": "Problem tags"
+                },
+                "pt-BR": {
+                  "label": "Tags do problema"
+                }
+              },
+              "products": {
+                "en": {
+                  "label": "Products"
+                },
+                "pt-BR": {
+                  "label": "Produtos"
+                }
+              },
+              "registered_at": {
+                "en": {
+                  "label": "Registered at"
+                },
+                "pt-BR": {
+                  "label": "Registrado em"
+                }
+              },
+              "released_by": {
+                "en": {
+                  "label": "Released by"
+                },
+                "pt-BR": {
+                  "label": "Liberado por"
+                }
+              },
+              "sale_number": {
+                "en": {
+                  "label": "Sale number"
+                },
+                "pt-BR": {
+                  "label": "Número da venda"
+                }
+              },
+              "status": {
+                "en": {
+                  "label": "Status"
+                },
+                "pt-BR": {
+                  "label": "Status"
+                }
+              }
+            }
+          },
           "start_date": {
             "locale": {
               "en": {
@@ -53254,6 +53697,20 @@
           "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
+        },
+        {
+          "name": "sort_by",
+          "in": "query",
+          "required": false,
+          "description": "Column key for global sort across pages.",
+          "type": "string"
+        },
+        {
+          "name": "sort_direction",
+          "in": "query",
+          "required": false,
+          "description": "Sort direction: \"asc\" or \"desc\".",
+          "type": "string"
         },
         {
           "name": "branch",
@@ -53452,6 +53909,124 @@
               }
             }
           },
+          "sort_by": {
+            "locale": {
+              "en": {
+                "description": "Sort by query parameter.",
+                "label": "Sort by"
+              },
+              "pt-BR": {
+                "description": "Campo usado para ordenar a listagem.",
+                "label": "Ordenar por"
+              }
+            },
+            "enumLabels": {
+              "customer_name": {
+                "en": {
+                  "label": "Customer name"
+                },
+                "pt-BR": {
+                  "label": "Nome do cliente"
+                }
+              },
+              "defect_description": {
+                "en": {
+                  "label": "Defect description"
+                },
+                "pt-BR": {
+                  "label": "Descrição do defeito"
+                }
+              },
+              "executed_by": {
+                "en": {
+                  "label": "Executed by"
+                },
+                "pt-BR": {
+                  "label": "Executado por"
+                }
+              },
+              "last_revision_date": {
+                "en": {
+                  "label": "Last revision date"
+                },
+                "pt-BR": {
+                  "label": "Data da última revisão"
+                }
+              },
+              "launch_date": {
+                "en": {
+                  "label": "Launch date"
+                },
+                "pt-BR": {
+                  "label": "Data de lançamento"
+                }
+              },
+              "lmp_number": {
+                "en": {
+                  "label": "LMP number"
+                },
+                "pt-BR": {
+                  "label": "Número LMP"
+                }
+              },
+              "occurrence_date": {
+                "en": {
+                  "label": "Occurrence date"
+                },
+                "pt-BR": {
+                  "label": "Data da ocorrência"
+                }
+              },
+              "problem_tags": {
+                "en": {
+                  "label": "Problem tags"
+                },
+                "pt-BR": {
+                  "label": "Tags do problema"
+                }
+              },
+              "products": {
+                "en": {
+                  "label": "Products"
+                },
+                "pt-BR": {
+                  "label": "Produtos"
+                }
+              },
+              "registered_at": {
+                "en": {
+                  "label": "Registered at"
+                },
+                "pt-BR": {
+                  "label": "Registrado em"
+                }
+              },
+              "released_by": {
+                "en": {
+                  "label": "Released by"
+                },
+                "pt-BR": {
+                  "label": "Liberado por"
+                }
+              },
+              "sale_number": {
+                "en": {
+                  "label": "Sale number"
+                },
+                "pt-BR": {
+                  "label": "Número da venda"
+                }
+              },
+              "status": {
+                "en": {
+                  "label": "Status"
+                },
+                "pt-BR": {
+                  "label": "Status"
+                }
+              }
+            }
+          },
           "start_date": {
             "locale": {
               "en": {
@@ -53574,6 +54149,20 @@
           "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
+        },
+        {
+          "name": "sort_by",
+          "in": "query",
+          "required": false,
+          "description": "Column key for global sort across pages.",
+          "type": "string"
+        },
+        {
+          "name": "sort_direction",
+          "in": "query",
+          "required": false,
+          "description": "Sort direction: \"asc\" or \"desc\".",
+          "type": "string"
         },
         {
           "name": "branch",
@@ -53757,6 +54346,124 @@
               "pt-BR": {
                 "description": "Texto livre de busca.",
                 "label": "Busca"
+              }
+            }
+          },
+          "sort_by": {
+            "locale": {
+              "en": {
+                "description": "Sort by query parameter.",
+                "label": "Sort by"
+              },
+              "pt-BR": {
+                "description": "Campo usado para ordenar a listagem.",
+                "label": "Ordenar por"
+              }
+            },
+            "enumLabels": {
+              "customer_name": {
+                "en": {
+                  "label": "Customer name"
+                },
+                "pt-BR": {
+                  "label": "Nome do cliente"
+                }
+              },
+              "defect_description": {
+                "en": {
+                  "label": "Defect description"
+                },
+                "pt-BR": {
+                  "label": "Descrição do defeito"
+                }
+              },
+              "executed_by": {
+                "en": {
+                  "label": "Executed by"
+                },
+                "pt-BR": {
+                  "label": "Executado por"
+                }
+              },
+              "last_revision_date": {
+                "en": {
+                  "label": "Last revision date"
+                },
+                "pt-BR": {
+                  "label": "Data da última revisão"
+                }
+              },
+              "launch_date": {
+                "en": {
+                  "label": "Launch date"
+                },
+                "pt-BR": {
+                  "label": "Data de lançamento"
+                }
+              },
+              "lmp_number": {
+                "en": {
+                  "label": "LMP number"
+                },
+                "pt-BR": {
+                  "label": "Número LMP"
+                }
+              },
+              "occurrence_date": {
+                "en": {
+                  "label": "Occurrence date"
+                },
+                "pt-BR": {
+                  "label": "Data da ocorrência"
+                }
+              },
+              "problem_tags": {
+                "en": {
+                  "label": "Problem tags"
+                },
+                "pt-BR": {
+                  "label": "Tags do problema"
+                }
+              },
+              "products": {
+                "en": {
+                  "label": "Products"
+                },
+                "pt-BR": {
+                  "label": "Produtos"
+                }
+              },
+              "registered_at": {
+                "en": {
+                  "label": "Registered at"
+                },
+                "pt-BR": {
+                  "label": "Registrado em"
+                }
+              },
+              "released_by": {
+                "en": {
+                  "label": "Released by"
+                },
+                "pt-BR": {
+                  "label": "Liberado por"
+                }
+              },
+              "sale_number": {
+                "en": {
+                  "label": "Sale number"
+                },
+                "pt-BR": {
+                  "label": "Número da venda"
+                }
+              },
+              "status": {
+                "en": {
+                  "label": "Status"
+                },
+                "pt-BR": {
+                  "label": "Status"
+                }
               }
             }
           },
@@ -81024,6 +81731,31 @@
       "description": "Create audit 5S nonconformity."
     },
     {
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/previous-criterion-nonconformities",
+      "operationId": "get_audit_5s_previous_criterion_nonconformities",
+      "summary": "Get Audit Previous Criterion Nonconformities",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "audit_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "audit_5s_previous_criterion_nonconformity",
+        "shape": "composite_analysis",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "NCs da auditoria imediatamente anterior (mesma área + turno + filial), por criterion_code."
+    },
+    {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/reopen-evaluation",
       "operationId": "reopen_audit_5s_evaluation",
@@ -83218,7 +83950,7 @@
         }
       ],
       "xDelpi": {
-        "entity": "force_close_audit_5s_nc_without_treatment",
+        "entity": "audit_5s_nc",
         "shape": "scalar",
         "presentationStrategy": "as_delivered"
       },
@@ -101339,7 +102071,7 @@
         }
       ],
       "xDelpi": {
-        "entity": "supplies_protheus_user_by_email",
+        "entity": "supplies_protheus_user",
         "shape": "scalar",
         "presentationStrategy": "as_delivered"
       }
@@ -103431,6 +104163,204 @@
     },
     {
       "method": "GET",
+      "path": "/supplies/purchase-requests/cost-centers",
+      "operationId": "list_supplies_purchase_request_cost_centers",
+      "summary": "List Supplies Purchase Request Cost Centers Route",
+      "tags": [
+        "Suprimentos — Solicitações de compra"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "One or more Protheus branch codes (01 or 02). Repeat the query param: ?branch=01&branch=02.",
+          "type": "array"
+        },
+        {
+          "name": "date_from",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "date_to",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "cost_centers",
+          "in": "query",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "cc_scope",
+          "in": "query",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "request_number",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "product_code",
+          "in": "query",
+          "required": false,
+          "description": "Product code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "supplier_code",
+          "in": "query",
+          "required": false,
+          "description": "Supplier code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "order_number",
+          "in": "query",
+          "required": false,
+          "description": "Purchase order number (SC7.C7_NUM).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_purchase_request_cost_center",
+        "shape": "list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_from": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "date_to": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "order_number": {
+            "locale": {
+              "en": {
+                "description": "Purchase order number (SC7.C7_NUM).",
+                "label": "Purchase order number"
+              },
+              "pt-BR": {
+                "description": "Número do pedido de compra (SC7.C7_NUM).",
+                "label": "Número do pedido de compra"
+              }
+            }
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "supplier_code": {
+            "locale": {
+              "en": {
+                "description": "Supplier code query parameter.",
+                "label": "Supplier code"
+              },
+              "pt-BR": {
+                "description": "Código do fornecedor no Protheus.",
+                "label": "Código do fornecedor"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Facet de centros de custo no universo autorizado.\n\n`cost_centers`/`cc_scope` chegam apenas como carriers de escopo vindos\ndo owner (purchase-requests-api) — o filtro explícito do usuário não\ndeve estreitar a própria lista de opções."
+    },
+    {
+      "method": "GET",
       "path": "/supplies/purchase-requests/lines",
       "operationId": "list_supplies_purchase_request_lines",
       "summary": "Lista paginada — Linhas de solicitações de compra (sc1)",
@@ -104634,8 +105564,8 @@
         }
       ],
       "xDelpi": {
-        "entity": "supplies_purchase_request_requesters",
-        "shape": "scalar",
+        "entity": "supplies_purchase_request_requester",
+        "shape": "list",
         "params": {
           "branch": {
             "locale": {
@@ -108080,6 +109010,13 @@
           "type": "string"
         },
         {
+          "name": "code",
+          "in": "query",
+          "required": false,
+          "description": "Exact code filter — 'customers' only (lists the stores of the given customer).",
+          "type": "string"
+        },
+        {
           "name": "limit",
           "in": "query",
           "required": false,
@@ -108092,6 +109029,18 @@
         "entity": "supplies_supplier_catalog_item",
         "shape": "list",
         "params": {
+          "code": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          },
           "limit": {
             "locale": {
               "en": {
@@ -108143,6 +109092,13 @@
           "in": "query",
           "required": false,
           "description": "Two-letter state filter (A2_EST).",
+          "type": "string"
+        },
+        {
+          "name": "tax_id",
+          "in": "query",
+          "required": false,
+          "description": "Exact document match (A2_CGC, digits normalized) for canonical duplicate checks — unlike `query`, it is not a textual search.",
           "type": "string"
         },
         {

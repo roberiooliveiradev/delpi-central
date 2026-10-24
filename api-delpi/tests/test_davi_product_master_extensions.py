@@ -242,7 +242,7 @@ def test_all_nine_executable_on_live_openapi() -> None:
 def test_baseline_fallback_keeps_semantic_posts_closed() -> None:
     """Baseline rows carry no requestBody contract → POSTs fail closed."""
     actions = {a.operation_id: a for a in _baseline_actions()}
-    assert sum(1 for a in actions.values() if a.executable) == 92
+    assert sum(1 for a in actions.values() if a.executable) == 93
     for oid in PROMOTED_POST:
         action = actions[oid]
         assert action.davi_status == STATUS_NEEDS_BOUNDED_EXECUTION, oid
@@ -791,7 +791,7 @@ def test_pos_owned_intent_discovers_candidate(_seeded, query: str, oid: str) -> 
     ]
     assert oid in ranked_ids, (query, ranked_ids)
     discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
-    assert discovered["eligible_action_count"] == 95
+    assert discovered["eligible_action_count"] == 96
     ids = [c["action_id"] for c in discovered["candidates"]]
     assert oid in ids, (query, ids)
     top = discovered["candidates"][0]

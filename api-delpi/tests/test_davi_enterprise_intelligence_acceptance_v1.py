@@ -152,8 +152,8 @@ def test_e06_third_party_knowledge_and_concepts_do_not_grant_live_reads(
             }
     mi = next(c for c in matrix["scenarios"] if c["id"] == "EI08")
     assert mi["intent"] == "PURE_CONCEPT"
-    assert mi["operations"] == []
-    assert mi["contract_status"] == "GUIDANCE_PROVIDER_PENDING"
+    assert mi["operations"] == ["read_governed_technical_knowledge"]
+    assert mi["contract_status"] == "CONTRACT_PROVEN_RUNTIME_PENDING"
 
 
 def test_e07_write_and_sql_requests_are_not_executable(matrix: dict) -> None:

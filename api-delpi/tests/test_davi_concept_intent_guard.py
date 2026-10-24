@@ -36,7 +36,12 @@ from app.application.external_capabilities.dynamic_information.retrieval import 
 )
 def test_pure_concept_never_surfaces_operational_candidates(query: str) -> None:
     assert is_pure_concept_intent(query) is True
-    assert retrieve_eligible_actions(query, get_technical_actions(), top_k=10) == []
+    ranked = retrieve_eligible_actions(query, get_technical_actions(), top_k=10)
+    # Pure concepts may only surface the governed knowledge READ capability —
+    # never an operational business action.
+    assert {a.operation_id for a, _ in ranked} <= {
+        "read_governed_technical_knowledge"
+    }
 
 
 @pytest.mark.parametrize(
@@ -65,7 +70,7 @@ def test_mixed_query_retains_approved_stock_discovery() -> None:
     assert "get_product_stock" in [action.operation_id for action, _ in ranked]
 
 
-def test_no_token_minted_for_pure_concept_query(monkeypatch) -> None:
+def test_pure_concept_only_mints_governed_knowledge_candidate(monkeypatch) -> None:
     # No production token or provider secret is used in this local test.
     monkeypatch.setattr(
         "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
@@ -74,8 +79,10 @@ def test_no_token_minted_for_pure_concept_query(monkeypatch) -> None:
     response = discover_delpi_information(
         query="O que significa MI?", actor_id="test-only-actor", top_k=5
     )
-    assert response["candidate_count"] == 0
-    assert response["candidates"] == []
+    assert response["candidates"]
+    assert {c["action_id"] for c in response["candidates"]} == {
+        "read_governed_technical_knowledge"
+    }
     directives = response["capability_surface"]["agent_directives"]
     assert directives["knowledge_orchestration"]["routing"]["PURE_CONCEPT"][
         "required"

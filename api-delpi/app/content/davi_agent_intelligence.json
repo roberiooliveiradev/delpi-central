@@ -104,10 +104,14 @@
         "corpus_status": "PROVEN",
         "provider_status": "TEST_NOT_RUN",
         "retrieval_surface": "WORKSPACE_AGENT_FILES",
-        "mcp_document_access": "NOT_EXPOSED",
-        "consumer_contract_status": "ARCHITECTURE_DECISION_REQUIRED",
-        "tools": [],
-        "note": "PROVEN refere-se somente ao corpus Git de 15 documentos. Files/provider retrieval exigem verificação do operador; MCP não entrega o conteúdo dos arquivos."
+        "mcp_document_access": "EXPOSED_VIA_CATALOG_ACTION_READ",
+        "mcp_read_operation_id": "read_governed_technical_knowledge",
+        "consumer_contract_status": "RATIFIED_V1_BOUNDED",
+        "tools": [
+          "discover_delpi_information",
+          "execute_delpi_information"
+        ],
+        "note": "Os 15 documentos V1 são lidos via capability READ canônica GET /knowledge/technical-guides/{topic} (discover→execute, AuthZ backend, projeção aprovada, excerpts limitados). A superfície provider-native Workspace Agent Files é canal distinto e segue TEST_NOT_RUN."
       },
       "domain_contracts": {
         "owner": "api-delpi domain owners",
@@ -156,7 +160,7 @@
         "directives": [
           "execution_posture"
         ],
-        "rule": "Conceito puro (MI, estoque físico/reservado): recuperar documento; não descobrir uma action por coincidência lexical. Sem Files verificados, informar gap."
+        "rule": "Conceito puro (MI, estoque físico/reservado): recuperar documento via read_governed_technical_knowledge (discover→execute); não descobrir uma action operacional por coincidência lexical. Se o tópico não estiver publicado no índice V1, informar gap."
       },
       "SIMPLE_DOMAIN_READ": {
         "required": [
