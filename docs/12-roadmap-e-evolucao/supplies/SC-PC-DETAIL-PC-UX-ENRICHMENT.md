@@ -129,3 +129,10 @@ notas fiscais preservada.
 - Nome do comprador: `TO_INVENTORY` — depende de contrato canônico de
   identidade de comprador (owner: api-delpi/supplies-api).
 - Smoke autenticado desta revisão: pendente conforme relatório.
+
+
+## Revisão GPT — UX.S2 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL`** para código `7bc6e53500`; deploy `PASS_DEPLOYED` reportado; smoke autenticado `INCONCLUSIVE`. Inspecionados `suppliesUi.ts`, `PurchaseOrderDetailPage.tsx`, `PurchaseRequestDetailPage.tsx` e esta documentação. `SuppliesInlineEmptyState` evita segundo heading de «Recebimentos» no PC e de «Pedidos vinculados»/«Recebimentos» na SC; ajuste de `SuppliesSectionCard` utiliza `title` string e `hint` na propriedade adequada. O 404 neutro, os dados de comprador e os contratos backend não foram alterados. Resultados 463 testes, `tsc -b`, build e deploy foram **reportados**, sem reexecução independente nesta revisão.
+
+**Residuais não bloqueantes:** nome do comprador permanece `TO_INVENTORY` (ausência no registro ilustrado, sem lookup canônico contratado); teste automatizado/estrutural não substitui visual autenticado de PC com recebimento parcial, que permanece `INCONCLUSIVE`. Aceite técnico da correção não implica gate de runtime PASS. **Próximo passo único:** conferir um PC com NF em ambiente autenticado e validar coluna Série, quantidades e datas; corrigir apenas defeitos reproduzidos, sem nova rodada de discovery.
