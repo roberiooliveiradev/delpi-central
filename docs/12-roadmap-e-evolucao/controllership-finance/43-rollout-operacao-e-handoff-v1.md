@@ -1,5 +1,6 @@
 # 43 — Plano de Rollout, Operação, Observabilidade e Handoff V1
 
+> **REBASELINE 24/10/2026:** As ondas W0–W5 aqui são planejamento histórico de rollout de todo o Portal. A **ordem incremental atual da Central de Fechamento**, com checkpoints de negócio e segurança, consta do [Documento 93 — Roadmap executivo E2E com checkpoints reais](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md). A permission e página histórica da Contabilidade/DRE estão adiadas pelo PO (doc 91). Nenhum release ou migração foi autorizado por esse rebaseline.
 **Estado:** TARGET / PLANNED / NOT_DEPLOYED. Somente planejamento operacional do Portal Controladoria & Finanças; **não** concede autorização de implementação, deploy, acesso a ambiente, migração ou go-live.
 
 Fontes: [39 — Roadmap](./39-roadmap-mestre-implementacao-v1.md), [40 — slices](./40-matriz-dependencias-e-slices-v1.md), [41 — gates](./41-estrategia-validacao-e-gates-implementacao-v1.md), [14 — segurança](./14-seguranca-rbac-auditoria-e-ia.md), [21 — boundaries](./21-boundaries-produtos-e-owners.md), [29 — Ajuda](./29-ajuda.md), [35 — contratos/testes](./35-contratos-regras-scripts-test-matrix-gate-v2.md). Revalidar padrões vivos de gateway, plataforma, observabilidade e operação no HEAD antes de decidir mecanismo de deploy.
