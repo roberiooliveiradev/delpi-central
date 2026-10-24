@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 
-import { navigatePluginView } from "../../app/pluginNavigation";
+import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import {
   SuppliesPersonIdentity,
   SuppliesSupplierIdentity,
 } from "../../app/SuppliesDirectoryIdentity";
-import { buildPluginPath } from "../../app/pluginRoutes";
+import {
+  buildPluginPath,
+  buildPurchaseRequestDetailPath,
+} from "../../app/pluginRoutes";
 import { formatSuppliesUnitLabel } from "../../app/suppliesUnits";
 import {
   SuppliesActionButton,
   SuppliesEmptyState,
+  SuppliesEntityLink,
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
@@ -100,6 +104,9 @@ export function PurchaseOrderDetailPage({
   }, [branch, orderNumber, reloadKey]);
 
   const items = detail?.items ?? [];
+  // Derived from the contracted per-item status only — no aggregate field
+  // exists in the PC detail contract, so no days-overdue number is shown.
+  const hasLateItem = items.some((item) => item.delivery_status === "late");
 
   return (
     <div className="sp-page-stack sp-purchase-order-detail">
@@ -137,6 +144,25 @@ export function PurchaseOrderDetailPage({
             <dd>{detail?.order_number || orderNumber}</dd>
           </div>
         </dl>
+        <dl className="sp-purchase-order-detail__identity sp-purchase-order-detail__indicators">
+          <div>
+            <dt>{C.detailIndicatorItems}</dt>
+            <dd>{detail ? items.length : "—"}</dd>
+          </div>
+          <div>
+            <dt>{C.detailIndicatorOverdue}</dt>
+            <dd>
+              {!detail ? (
+                "—"
+              ) : hasLateItem ? (
+                <SuppliesStatusBadge label={C.detailOverdueYes} variant="danger" />
+              ) : (
+                C.detailOverdueNone
+              )}
+            </dd>
+          </div>
+        </dl>
+        <p className="sp-purchase-order-detail__scope-note">{C.detailScopeNote}</p>
       </SuppliesPageHero>
 
       {errorKind === "forbidden" ? (
@@ -195,7 +221,31 @@ export function PurchaseOrderDetailPage({
                   </div>
                   <div>
                     <dt>{C.sourceRequestLabel}</dt>
-                    <dd>{sourceRequestLabel(item)}</dd>
+                    <dd>
+                      {(() => {
+                        const scNumber = (item.source_request_number || "").trim();
+                        // The origin SC shares the order's unit identity; the
+                        // linked detail keeps its own 403/404 semantics.
+                        if (!scNumber || !detail?.branch) {
+                          return sourceRequestLabel(item);
+                        }
+                        const scHref = buildPurchaseRequestDetailPath(
+                          detail.branch,
+                          scNumber,
+                          basePath,
+                        );
+                        return (
+                          <SuppliesEntityLink
+                            href={scHref}
+                            title={C.openScTitle(scNumber)}
+                            className="sp-purchase-order-detail__sc-link"
+                            onNavigate={() => navigatePluginPath(scHref)}
+                          >
+                            {sourceRequestLabel(item)}
+                          </SuppliesEntityLink>
+                        );
+                      })()}
+                    </dd>
                   </div>
                   <div>
                     <dt>{C.issueDateLabel}</dt>

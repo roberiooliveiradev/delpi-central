@@ -1210,9 +1210,77 @@
   color: var(--sp-text-muted);
 }
 
+.dashboard-supplies-portal .sp-purchase-request-detail__line-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__line-meta {
+  margin-top: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__line-meta dd {
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--sp-border, rgba(120, 120, 120, 0.25));
+  border-radius: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__table th,
+.dashboard-supplies-portal .sp-purchase-request-detail__table td {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--sp-border, rgba(120, 120, 120, 0.18));
+  vertical-align: top;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__table th {
+  font-size: 0.7rem;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__table th.num,
+.dashboard-supplies-portal .sp-purchase-request-detail__table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .dashboard-supplies-portal .sp-purchase-order-detail__receipts-title {
   margin: 1.1rem 0 0.55rem;
   font-size: 0.95rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-order-detail__indicators {
+  margin-top: 0.9rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-order-detail__scope-note {
+  margin: 0.9rem 0 0;
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__error,

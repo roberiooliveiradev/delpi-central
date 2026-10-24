@@ -141,7 +141,11 @@ export const SP_HELP = {
   purchaseRequestsEntityLink:
     "O número da SC abre a ficha em página própria (/purchase-requests/unidade/número). Você também pode clicar na linha ou no card.",
   purchaseRequestDetail:
-    "Ficha da solicitação. O cabeçalho mostra identificação, solicitante, centros de custo, aprovação e indicadores seguros (itens visíveis, pedidos vinculados e atraso) — tudo dentro do escopo de centros de custo que você enxerga. A aprovação pode variar por item; o nome do aprovador aparece quando todos os itens visíveis têm o mesmo responsável. O atraso vem das previsões de entrega dos pedidos vinculados. Use Voltar para retornar à lista com os filtros anteriores.",
+    "Ficha da solicitação. O cabeçalho mostra identificação, solicitante, centros de custo, aprovação e indicadores seguros (itens visíveis, pedidos vinculados e atraso) — tudo dentro do escopo de centros de custo que você enxerga. A aprovação pode variar por item; o nome do aprovador aparece quando todos os itens visíveis têm o mesmo responsável. O atraso vem das previsões de entrega dos pedidos vinculados. Cada item traz unidade, quantidades, necessidade, aprovação, fornecedor sugerido e conta contábil; abaixo ficam pedidos vinculados, recebimentos e o acompanhamento. Use Voltar para retornar à lista com os filtros anteriores.",
+  purchaseRequestDetailOrders:
+    "Pedidos de compra gerados a partir dos itens visíveis da solicitação. O número do PC abre a ficha do pedido — o acesso à ficha segue suas permissões: sem permissão ou fora do universo em aberto, a ficha mostra a mensagem neutra.",
+  purchaseRequestDetailReceipts:
+    "Documentos de entrada (NF) registrados nos pedidos vinculados, com quantidade, valor e datas de emissão e entrada. Lista vazia significa que ainda não houve entrada para os pedidos visíveis.",
   purchaseOrders:
     "Itens de pedidos de compra com saldo pendente de recebimento no recorte selecionado. O hero mostra linhas em aberto, valor em aberto e atrasadas (o chip Atrasados não muda os totais). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
   purchaseOrdersBranch:
@@ -182,9 +186,9 @@ export const SP_HELP = {
   purchaseOrdersEntityLink:
     "O número do PC abre a ficha do pedido. Você também pode clicar na linha.",
   purchaseOrderDetail:
-    "Ficha somente leitura do pedido em aberto: itens, data prometida, recebimentos e a SC de origem de cada item. Copie o endereço da página para compartilhar; atualizar restaura a mesma ficha. Pedidos encerrados não aparecem.",
+    "Ficha somente leitura do pedido em aberto: itens, data prometida, recebimentos e a SC de origem de cada item — a SC abre a ficha da solicitação. O indicador de atraso vem da situação de cada item; não exibe dias porque o contrato não traz esse número. Copie o endereço da página para compartilhar; atualizar restaura a mesma ficha. Pedidos encerrados não aparecem: «não localizado» significa apenas fora do universo em aberto consultável.",
   purchaseOrderDetailItems:
-    "Cada item traz fornecedor, quantidades, entrega prometida e a solicitação de origem. Um mesmo pedido pode ter itens de solicitações e fornecedores diferentes.",
+    "Cada item traz fornecedor, quantidades, entrega prometida e a solicitação de origem — clicável para abrir a ficha da SC. Um mesmo pedido pode ter itens de solicitações e fornecedores diferentes.",
   purchaseOrderDetailReceipts:
     "Recebimentos do item, com nota, quantidade, datas de emissão e entrada. Se a lista estiver vazia, ainda não há documento de entrada para aquela linha.",
   deliveries:

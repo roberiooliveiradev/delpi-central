@@ -96,7 +96,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver o detalhe de um pedido",
           where: "Pedidos de compra",
-          how: "Abra a linha; itens, entrega prometida, recebimentos e SC origem. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista. Só pedidos em aberto",
+          how: "Abra a linha; cabeçalho com itens em aberto e atraso; por item: fornecedor, quantidades, preços, recebimentos e SC origem — clique na SC para abrir a ficha dela. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista. Só pedidos em aberto",
         },
         {
           want: "Abrir solicitações de compras (SC)",
@@ -106,7 +106,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver o detalhe de uma solicitação",
           where: "Solicitações de compras",
-          how: "Abra a SC; cabeçalho com identificação, solicitante, centros de custo, aprovação e indicadores (itens visíveis, pedidos vinculados, atraso) — tudo no escopo de CC. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista com os filtros",
+          how: "Abra a SC; cabeçalho com identificação, solicitante, centros de custo, aprovação e indicadores (itens visíveis, pedidos vinculados, atraso) — tudo no escopo de CC. Cada item mostra unidade, quantidades, necessidade, aprovação, fornecedor sugerido e conta contábil; depois vêm pedidos vinculados (clique no PC para a ficha dele), recebimentos e o acompanhamento com previsões marcadas. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista com os filtros",
         },
         {
           want: "Alterar unidade padrão ou densidade das tabelas",

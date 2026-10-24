@@ -4,7 +4,15 @@ import {
   normalizeSuppliesUnitCode,
   resolveRequestedBranches,
 } from "../../app/suppliesUnits";
-import type { OverallStage, PurchaseRequestsQuery, PurchaseRequestsSortDir } from "./types";
+import type {
+  OverallStage,
+  PurchaseRequestDetailLine,
+  PurchaseRequestLinkedOrder,
+  PurchaseRequestReceipt,
+  PurchaseRequestTimelineEvent,
+  PurchaseRequestsQuery,
+  PurchaseRequestsSortDir,
+} from "./types";
 import { DEFAULT_PAGE_SIZE, OVERALL_STAGE_VALUES } from "./types";
 
 export const PURCHASE_REQUESTS_SORTABLE_COLUMNS = {
@@ -312,7 +320,11 @@ export function approvalBadgeVariant(
   }
 }
 
-/** Distinct linked purchase orders by canonical identity (branch, order_number). */
+/**
+ * Distinct linked purchase orders by canonical identity (branch, order_number).
+ * Entries with an incomplete identity (blank branch or number) are never
+ * counted — a missing key must not collapse into a fake "1 order" bucket.
+ */
 export function countLinkedOrders(
   orders:
     | ReadonlyArray<{
@@ -323,10 +335,21 @@ export function countLinkedOrders(
     | undefined,
 ): number {
   if (!orders?.length) return 0;
-  const keys = new Set(
-    orders.map((order) => `${order.branch ?? ""}|${order.order_number ?? ""}`),
-  );
+  const keys = new Set<string>();
+  for (const order of orders) {
+    const branch = (order.branch ?? "").trim();
+    const number = (order.order_number ?? "").trim();
+    if (!branch || !number) continue;
+    keys.add(`${branch}|${number}`);
+  }
   return keys.size;
+}
+
+/** True when the order carries a complete (branch, order_number) identity — linkable. */
+export function hasCompleteOrderIdentity(
+  order: { branch?: string | null; order_number?: string | null } | null | undefined,
+): boolean {
+  return Boolean(order?.branch?.trim() && order?.order_number?.trim());
 }
 
 /**
@@ -352,4 +375,127 @@ export function uniqueApproverNames(
     }
   }
   return names;
+}
+
+export function formatQuantity(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return value.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
+}
+
+export function formatMoneyBr(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Quantity always displayed with its own unit — never a unitless sum. */
+export function formatQuantityWithUnit(
+  value: number | null | undefined,
+  unit: string | null | undefined,
+): string {
+  const qty = formatQuantity(value);
+  const um = (unit || "").trim();
+  if (qty === "—") return "—";
+  return um ? `${qty} ${um}` : qty;
+}
+
+/**
+ * Deduped enriched order lines across the visible request lines
+ * (identity = branch + order_number + order_item). Full quantities,
+ * dates and receipts live only at line level — the header carries a
+ * supplier/order summary.
+ */
+export function collectLinkedOrders(
+  lines: ReadonlyArray<Pick<PurchaseRequestDetailLine, "purchase_orders">> | null | undefined,
+): PurchaseRequestLinkedOrder[] {
+  const seen = new Set<string>();
+  const orders: PurchaseRequestLinkedOrder[] = [];
+  for (const line of lines ?? []) {
+    for (const order of line.purchase_orders ?? []) {
+      const key = `${order.branch ?? ""}|${order.order_number ?? ""}|${order.order_item ?? ""}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      orders.push(order);
+    }
+  }
+  return orders;
+}
+
+/** Flattened receipts with their linked-order context preserved. */
+export function collectReceipts(
+  orders: ReadonlyArray<PurchaseRequestLinkedOrder> | null | undefined,
+): PurchaseRequestReceipt[] {
+  const receipts: PurchaseRequestReceipt[] = [];
+  for (const order of orders ?? []) {
+    for (const receipt of order.receipts ?? []) {
+      receipts.push(receipt);
+    }
+  }
+  return receipts;
+}
+
+/** Producer vocabulary for linked-order delivery (SC context, not PC list). */
+export function labelLinkedOrderDeliveryStatus(
+  status: string | null | undefined,
+): string {
+  switch ((status || "").trim()) {
+    case "received":
+      return "Recebido";
+    case "overdue":
+      return "Em atraso";
+    case "on_time":
+      return "No prazo";
+    case "not_applicable":
+      return "Não aplicável";
+    default:
+      return status || "—";
+  }
+}
+
+export function linkedOrderDeliveryVariant(
+  status: string | null | undefined,
+): "neutral" | "info" | "success" | "danger" {
+  switch ((status || "").trim()) {
+    case "received":
+      return "success";
+    case "overdue":
+      return "danger";
+    case "on_time":
+      return "info";
+    default:
+      return "neutral";
+  }
+}
+
+/**
+ * Timeline tone: `expected_delivery` is a planned milestone (marked in copy
+ * as well), every other emitted type is an occurred event.
+ */
+export function timelineEventTone(
+  type: string | null | undefined,
+): "neutral" | "info" | "warning" | "danger" {
+  return type === "expected_delivery" ? "info" : "neutral";
+}
+
+/** Short context for a derived timeline event (PC, NF or SC item reference). */
+export function timelineReferenceLabel(
+  event: PurchaseRequestTimelineEvent,
+  formatters: {
+    order: (number: string) => string;
+    invoice: (number: string) => string;
+    item: (item: string) => string;
+  },
+): string {
+  const ref = event.reference ?? {};
+  const parts: string[] = [];
+  const orderNumber = (ref.order_number ?? "").trim();
+  const invoiceNumber = (ref.invoice_number ?? "").trim();
+  const requestItem = (ref.request_item ?? "").trim();
+  if (orderNumber) parts.push(formatters.order(orderNumber));
+  if (invoiceNumber) parts.push(formatters.invoice(invoiceNumber));
+  if (requestItem) parts.push(formatters.item(requestItem));
+  return parts.join(" · ");
 }

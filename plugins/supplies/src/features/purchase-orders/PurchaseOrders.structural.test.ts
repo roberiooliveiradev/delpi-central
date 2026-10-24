@@ -220,9 +220,26 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("SuppliesPersonIdentity");
     expect(page).toContain("sp-purchase-order-detail__item-card");
     expect(page).toContain("C.receiptsTableScrollRegion");
-    expect(page).toMatch(/role=\"region\"/);
+    expect(page).toMatch(/role="region"/);
     expect(page).not.toContain("api-delpi");
     expect(page).not.toContain("detailComingSoon");
+    // EN.A5/A6: PC→SC link keeps canonical identity; the 404 message is the
+    // D1-approved neutral copy; overdue is derived from contracted item
+    // status only (no days-overdue arithmetic).
+    expect(page).toContain("buildPurchaseRequestDetailPath");
+    expect(page).toContain("SuppliesEntityLink");
+    expect(page).toContain("navigatePluginPath");
+    expect(page).toContain("delivery_status === \"late\"");
+    expect(page).toContain("C.detailScopeNote");
+    expect(page).not.toMatch(/days_overdue|dias de atraso/i);
+
+    const content = readFileSync(join(dir, "content.ts"), "utf8");
+    expect(content).toContain(
+      "Pedido não localizado entre os pedidos em aberto disponíveis para consulta.",
+    );
+    expect(content).not.toContain("Pedido não encontrado ou fora do universo em aberto");
+    // D1: never imply the order was completed.
+    expect(content).not.toMatch(/pedido foi concluí|foi concluído/i);
   });
 
   it("lista e ficha usam scroll horizontal intencional na tabela", () => {
@@ -230,7 +247,7 @@ describe("PurchaseOrders feature", () => {
     expect(list).toContain("sp-list-table-region");
     expect(list).toContain("C.tableScrollRegion");
     expect(list).toContain("SuppliesDataTable");
-    expect(list).toMatch(/layout=\"section\"/);
+    expect(list).toMatch(/layout="section"/);
 
     const page = readFileSync(join(dir, "PurchaseOrdersPage.tsx"), "utf8");
     expect(page).toContain("PurchaseOrdersListTable");

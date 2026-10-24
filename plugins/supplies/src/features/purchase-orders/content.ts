@@ -66,7 +66,7 @@ export const PURCHASE_ORDERS_CONTENT = {
   detailLoading: "Carregando o pedido…",
   detailError: "Não foi possível carregar este pedido de compra.",
   detailNotFound:
-    "Pedido não encontrado ou fora do universo em aberto. Encerrados e residual não aparecem nesta ficha.",
+    "Pedido não localizado entre os pedidos em aberto disponíveis para consulta.",
   detailForbidden:
     "Você não tem permissão para esta filial neste módulo. Peça o acesso canônico ao administrador.",
   itemsTitle: "Itens",
@@ -75,6 +75,13 @@ export const PURCHASE_ORDERS_CONTENT = {
   receiptsTitle: "Recebimentos",
   receiptsEmpty: "Nenhum recebimento registrado neste item.",
   sourceRequestLabel: "SC origem",
+  openScTitle: (number: string) => `Abrir solicitação de compra ${number}`,
+  detailIndicatorItems: "Itens em aberto",
+  detailIndicatorOverdue: "Atraso",
+  detailOverdueYes: "Em atraso",
+  detailOverdueNone: "Sem atraso",
+  detailScopeNote:
+    "A ficha consulta somente itens em aberto do pedido — encerrados e residual não aparecem.",
   buyerLabel: "Comprador",
   issueDateLabel: "Emissão",
   orderedQtyLabel: "Pedido",

@@ -157,3 +157,15 @@ visíveis, `countLinkedOrders` por identidade `(filial, número)`, atraso por
 structural test). `stageBadgeVariant`/`isKnownOverallStage` unificados em
 `query.ts`. Help + Manual sincronizados; residual da fixture EN.A1 corrigido.
 Registro: `SC-PC-DETAIL-EN-A2-SC-HERO.md`. **EN.A3 = READY_FOR_PO**.
+
+## EN.A3–A7 executadas (2026-10-24)
+
+**EN.A3–EN.A7 = DONE.** Itens da SC enriquecidos (UM+quantidades por item,
+necessidade, CC, estágio, aprovação+aprovador, fornecedor sugerido, conta
+contábil — D2); seções «Pedidos vinculados», «Recebimentos» e
+«Acompanhamento» (timeline derivada, previsão marcada); links SC↔PC
+bidirecionais com identidade canônica (`countLinkedOrders` endurecido contra
+identidades incompletas — residual EN.A2 resolvido); ficha PC com
+indicadores seguros e mensagem D1; Help/Manual sincronizados. Zero backend,
+zero endpoint, zero permission. Registro: `SC-PC-DETAIL-EN-A3-A7.md`.
+Fase A funcionalmente completa; aceite visual autenticado pendente.

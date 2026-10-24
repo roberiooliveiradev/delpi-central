@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 
-import { navigatePluginView } from "../../app/pluginNavigation";
-import { SuppliesPersonIdentity } from "../../app/SuppliesDirectoryIdentity";
-import { buildPluginPath } from "../../app/pluginRoutes";
+import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
+import {
+  SuppliesPersonIdentity,
+  SuppliesSupplierIdentity,
+} from "../../app/SuppliesDirectoryIdentity";
+import {
+  buildPluginPath,
+  buildPurchaseOrderDetailPath,
+} from "../../app/pluginRoutes";
 import { formatSuppliesUnitLabel } from "../../app/suppliesUnits";
 import {
   SuppliesActionButton,
   SuppliesEmptyState,
+  SuppliesEntityLink,
+  SuppliesEventsSection,
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
@@ -23,14 +31,24 @@ import {
 } from "./content";
 import {
   approvalBadgeVariant,
+  collectLinkedOrders,
+  collectReceipts,
   countLinkedOrders,
   formatDatePtBr,
+  formatMoneyBr,
   formatProductLabel,
+  formatQuantity,
+  formatQuantityWithUnit,
   formatRequestNumber,
+  hasCompleteOrderIdentity,
   isKnownOverallStage,
   labelApprovalStatus,
+  labelLinkedOrderDeliveryStatus,
   labelOverallStage,
+  linkedOrderDeliveryVariant,
   stageBadgeVariant,
+  timelineEventTone,
+  timelineReferenceLabel,
   uniqueApproverNames,
 } from "./query";
 import type { PurchaseRequestDetail } from "./types";
@@ -103,6 +121,12 @@ export function PurchaseRequestDetailPage({
   const linkedOrdersCount = countLinkedOrders(header?.purchase_orders);
   const hasLinkedOrders = Boolean(header?.purchase_orders?.length);
   const overdueDays = header?.max_days_overdue;
+
+  // Enriched linked orders/receipts live at line level (the header carries a
+  // deduped order+supplier summary only).
+  const linkedOrders = collectLinkedOrders(lines);
+  const receipts = collectReceipts(linkedOrders);
+  const timelineEvents = detail?.timeline ?? [];
 
   return (
     <div className="sp-page-stack sp-purchase-request-detail">
@@ -272,20 +296,289 @@ export function PurchaseRequestDetailPage({
       ) : null}
 
       {!loading && !errorKind && lines.length > 0 ? (
-        <SuppliesSectionCard title={C.itemsTitle} hint={C.detailHint}>
-          <ul className="sp-purchase-requests__detail-lines">
-            {lines.map((line, index) => (
-              <li key={`${line.request_item ?? index}-${line.product_code ?? index}`}>
-                <strong>{line.request_item || "—"}</strong>{" "}
-                {formatProductLabel(line.product_code, line.product_description)}
-                <span>
-                  {labelOverallStage(line.derived?.overall_stage)} · CC{" "}
-                  {line.cost_center_code || "—"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </SuppliesSectionCard>
+        <>
+          <SuppliesSectionCard title={C.itemsTitle} hint={C.detailHint}>
+            <ul className="sp-purchase-requests__detail-lines">
+              {lines.map((line, index) => {
+                const lineStage = line.derived?.overall_stage;
+                const lineCostCenter = line.cost_center;
+                const costCenterText = lineCostCenter?.code
+                  ? `${lineCostCenter.code}${
+                      lineCostCenter.description
+                        ? ` — ${lineCostCenter.description}`
+                        : ""
+                    }`
+                  : line.cost_center_code || "—";
+                const suggested = line.suggested_supplier;
+                const hasSuggested = Boolean(
+                  (suggested?.code || "").trim() || (suggested?.name || "").trim(),
+                );
+                const approverName = (line.approval?.approver_name || "").trim();
+                return (
+                  <li key={`${line.request_item ?? index}-${line.product_code ?? index}`}>
+                    <div className="sp-purchase-request-detail__line-head">
+                      <strong>{line.request_item || "—"}</strong>{" "}
+                      {formatProductLabel(line.product_code, line.product_description)}
+                      {isKnownOverallStage(lineStage) ? (
+                        <SuppliesStatusBadge
+                          label={labelOverallStage(lineStage)}
+                          variant={stageBadgeVariant(lineStage)}
+                        />
+                      ) : null}
+                    </div>
+                    <dl className="sp-purchase-request-detail__identity sp-purchase-request-detail__line-meta">
+                      <div>
+                        <dt>{C.colRequestedQty}</dt>
+                        <dd>
+                          {formatQuantityWithUnit(line.requested_quantity, line.unit)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{C.colOrderedQty}</dt>
+                        <dd>
+                          {formatQuantityWithUnit(line.ordered_quantity, line.unit)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{C.colOpenQty}</dt>
+                        <dd>
+                          {formatQuantityWithUnit(line.request_open_quantity, line.unit)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{C.colRequiredDate}</dt>
+                        <dd>{formatDatePtBr(line.request_required_date)}</dd>
+                      </div>
+                      <div>
+                        <dt>{C.detailCostCenterLabel}</dt>
+                        <dd>{costCenterText}</dd>
+                      </div>
+                      <div>
+                        <dt>{C.detailApprovalLabel}</dt>
+                        <dd>
+                          <SuppliesStatusBadge
+                            label={labelApprovalStatus(line.approval?.status, {
+                              approved: C.approvalApproved,
+                              rejected: C.approvalRejected,
+                              blocked: C.approvalBlocked,
+                              unknown: C.approvalUnknown,
+                            })}
+                            variant={approvalBadgeVariant(line.approval?.status)}
+                          />
+                          {approverName ? (
+                            <span className="sp-purchase-request-detail__approver">
+                              {" "}
+                              {approverName}
+                            </span>
+                          ) : null}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{C.colSuggestedSupplier}</dt>
+                        <dd>
+                          {hasSuggested ? (
+                            <SuppliesSupplierIdentity
+                              name={suggested?.name}
+                              code={suggested?.code}
+                              store={suggested?.store}
+                              basePath={basePath}
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{C.colAccountCode}</dt>
+                        <dd>{line.account_code || "—"}</dd>
+                      </div>
+                    </dl>
+                  </li>
+                );
+              })}
+            </ul>
+          </SuppliesSectionCard>
+
+          <SuppliesSectionCard
+            title={
+              <SuppliesSectionHintLabel
+                label={C.ordersTitle}
+                hint={SP_HELP.purchaseRequestDetailOrders}
+              />
+            }
+            hint={C.ordersHint}
+          >
+            {linkedOrders.length === 0 ? (
+              <SuppliesEmptyState title={C.ordersTitle} message={C.ordersEmpty} />
+            ) : (
+              <div
+                className="sp-purchase-request-detail__table-wrap"
+                role="region"
+                aria-label={C.ordersTableScrollRegion}
+                tabIndex={0}
+              >
+                <table className="sp-purchase-request-detail__table">
+                  <thead>
+                    <tr>
+                      <th>{C.colOrderNumber}</th>
+                      <th>{C.colOrderItem}</th>
+                      <th>{C.colOrderProduct}</th>
+                      <th>{C.colOrderSupplier}</th>
+                      <th className="num">{C.colOrderQty}</th>
+                      <th className="num">{C.colReceivedQty}</th>
+                      <th className="num">{C.colOrderOpenQty}</th>
+                      <th>{C.colExpectedDelivery}</th>
+                      <th>{C.colDeliveryStatus}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {linkedOrders.map((order, index) => {
+                      const orderNumber = (order.order_number || "").trim();
+                      const orderHref = hasCompleteOrderIdentity(order)
+                        ? buildPurchaseOrderDetailPath(
+                            order.branch || "",
+                            orderNumber,
+                            basePath,
+                          )
+                        : null;
+                      const key = `${order.branch ?? ""}-${order.order_number ?? ""}-${order.order_item ?? index}`;
+                      return (
+                        <tr key={key}>
+                          <td>
+                            {orderHref ? (
+                              <SuppliesEntityLink
+                                href={orderHref}
+                                title={C.openOrderTitle(orderNumber)}
+                                className="sp-purchase-request-detail__order-link"
+                                onNavigate={() => navigatePluginPath(orderHref)}
+                              >
+                                {orderNumber}
+                              </SuppliesEntityLink>
+                            ) : (
+                              orderNumber || "—"
+                            )}
+                          </td>
+                          <td>{order.order_item || "—"}</td>
+                          <td>
+                            {formatProductLabel(
+                              order.product_code,
+                              order.product_description,
+                            )}
+                          </td>
+                          <td>
+                            <SuppliesSupplierIdentity
+                              name={order.supplier_name}
+                              code={order.supplier_code}
+                              store={order.supplier_store}
+                              basePath={basePath}
+                            />
+                          </td>
+                          <td className="num">{formatQuantity(order.ordered_quantity)}</td>
+                          <td className="num">{formatQuantity(order.received_quantity)}</td>
+                          <td className="num">{formatQuantity(order.open_quantity)}</td>
+                          <td>{formatDatePtBr(order.expected_delivery_date)}</td>
+                          <td>
+                            <SuppliesStatusBadge
+                              label={labelLinkedOrderDeliveryStatus(
+                                order.derived?.delivery_status,
+                              )}
+                              variant={linkedOrderDeliveryVariant(
+                                order.derived?.delivery_status,
+                              )}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </SuppliesSectionCard>
+
+          <SuppliesSectionCard
+            title={
+              <SuppliesSectionHintLabel
+                label={C.receiptsTitle}
+                hint={SP_HELP.purchaseRequestDetailReceipts}
+              />
+            }
+            hint={C.receiptsHint}
+          >
+            {receipts.length === 0 ? (
+              <SuppliesEmptyState title={C.receiptsTitle} message={C.receiptsEmpty} />
+            ) : (
+              <div
+                className="sp-purchase-request-detail__table-wrap"
+                role="region"
+                aria-label={C.receiptsTableScrollRegion}
+                tabIndex={0}
+              >
+                <table className="sp-purchase-request-detail__table">
+                  <thead>
+                    <tr>
+                      <th>{C.colInvoice}</th>
+                      <th>{C.colInvoiceSeries}</th>
+                      <th>{C.colInvoiceItem}</th>
+                      <th>{C.colReceiptOrder}</th>
+                      <th className="num">{C.colReceiptQty}</th>
+                      <th className="num">{C.colReceiptValue}</th>
+                      <th>{C.colInvoiceDate}</th>
+                      <th>{C.colEntryDate}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {receipts.map((receipt, index) => (
+                      <tr
+                        key={`${receipt.invoice_number ?? ""}-${receipt.invoice_series ?? ""}-${receipt.invoice_item ?? index}-${index}`}
+                      >
+                        <td>{receipt.invoice_number || "—"}</td>
+                        <td>{receipt.invoice_series || "—"}</td>
+                        <td>{receipt.invoice_item || "—"}</td>
+                        <td>{receipt.purchase_order_number || "—"}</td>
+                        <td className="num">{formatQuantity(receipt.quantity)}</td>
+                        <td className="num">{formatMoneyBr(receipt.total_value)}</td>
+                        <td>{formatDatePtBr(receipt.invoice_issue_date)}</td>
+                        <td>{formatDatePtBr(receipt.entry_date)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </SuppliesSectionCard>
+
+          <SuppliesEventsSection
+            title={C.timelineTitle}
+            hint={C.timelineHint}
+            omitWhenEmpty={false}
+            emptyMessage={C.timelineEmpty}
+            listAriaLabel={C.timelineListLabel}
+            items={timelineEvents.map((event, index) => {
+              const reference = timelineReferenceLabel(event, {
+                order: C.timelineRefOrder,
+                invoice: C.timelineRefInvoice,
+                item: C.timelineRefItem,
+              });
+              const label =
+                event.type === "expected_delivery"
+                  ? `${event.label || event.type} (${C.timelinePlannedSuffix})`
+                  : event.label || event.type;
+              const description = [
+                formatDatePtBr(event.date),
+                reference,
+              ]
+                .filter((part) => part && part !== "—")
+                .join(" · ");
+              return {
+                id: `${event.type}-${event.date ?? ""}-${index}`,
+                title: label,
+                description: description || undefined,
+                tone: timelineEventTone(event.type),
+              };
+            })}
+          />
+        </>
       ) : null}
     </div>
   );

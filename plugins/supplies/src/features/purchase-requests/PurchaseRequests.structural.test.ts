@@ -77,8 +77,34 @@ describe("PurchaseRequests feature", () => {
     expect(detail).toContain("has_overdue_order");
     expect(detail).toContain("max_days_overdue");
     expect(detail).toContain("visible_items_count");
-    expect(detail).not.toMatch(/requested_quantity|ordered_quantity|received_quantity/);
-    expect(detail).not.toMatch(/approver_name/);
+    // Header-level summed quantities are never rendered (heterogeneous UM
+    // semantics); line/order quantities are allowed at line granularity.
+    expect(detail).not.toMatch(/header\?\.(requested|ordered|received)_quantity/);
+    // No approver is ever promoted to the header/summary — per-line only.
+    expect(detail).not.toMatch(/header\?\.approver_name|approval_summary\?\.approver_name/);
+    // EN.A3–A5: per-line enrichment, linked orders/receipts/timeline sections
+    // and the SC→PC link with a complete canonical identity.
+    expect(detail).toContain("formatQuantityWithUnit");
+    expect(detail).toContain("line.unit");
+    expect(detail).toContain("line.request_required_date");
+    expect(detail).toContain("line.suggested_supplier");
+    expect(detail).toContain("line.account_code");
+    expect(detail).toContain("SuppliesSupplierIdentity");
+    expect(detail).toContain("collectLinkedOrders");
+    expect(detail).toContain("collectReceipts");
+    expect(detail).toContain("hasCompleteOrderIdentity");
+    expect(detail).toContain("buildPurchaseOrderDetailPath");
+    expect(detail).toContain("SuppliesEntityLink");
+    expect(detail).toContain("labelLinkedOrderDeliveryStatus");
+    expect(detail).toContain("linkedOrderDeliveryVariant");
+    expect(detail).toContain("SuppliesEventsSection");
+    expect(detail).toContain("timelineEventTone");
+    expect(detail).toContain("timelineReferenceLabel");
+    expect(detail).toContain("SP_HELP.purchaseRequestDetailOrders");
+    expect(detail).toContain("SP_HELP.purchaseRequestDetailReceipts");
+    expect(detail).toContain("sp-purchase-request-detail__table");
+    // The timeline is «Acompanhamento», never an audit-history section.
+    expect(detail).not.toMatch(/histórico|historico|audit/i);
   });
 
   it("filtros Unidade alinhados à Visão geral", () => {
