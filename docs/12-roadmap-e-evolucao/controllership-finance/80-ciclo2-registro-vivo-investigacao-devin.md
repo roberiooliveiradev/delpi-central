@@ -1730,6 +1730,7 @@ sob custódia do owner, **fora do repositório**.
 | Produtos divergentes SB9×MATR989 | `<PRODUTO-WIP-A..D>` | docs 80 §41/§42, 85 §8, 84 §5.2 |
 | PAs âncora/seriais/residuais do Fat×MOD | `<PA-ÂNCORA-*>`, `<PA-SERIAL-*>`, `<PA-RESIDUAL-R09-*>` | docs 80 §43, 85 §9, 84 §5.3 |
 | Produto exemplo da hipótese QTNP (R03) | `<PRODUTO-QTNP-A>` | doc 80 §35 (sanitizado rodada 24) |
+| Produtos de benefícios saúde/odonto excluídos do R10 | `<PRODUTO-BENEFICIO-*>` | docs 80 §44, 82 E10 |
 
 Os aliases `<NF-RETIF-A>`/`<NF-RETIF-B>` da rodada anterior foram
 mantidos — mesmo objeto real = mesmo alias em todos os documentos.
@@ -2672,3 +2673,125 @@ PENDING`. Códigos de produto substituídos por aliases
 sob custódia do owner fora do repositório. Códigos MOD (`MOD###`)
 mantidos por convenção §22 (cadastro de rates, não identificam item
 comercial).
+
+## §44 — R10 · Notas por Centro de Custo — seleção EDAPP reconstruída e paridade (rodada 25 — 2026-10-23)
+
+Sub-task: `CF-C2-R10-CENTRO-CUSTO-SD1-PARITY-001`. Artefato `CC
+matriz.xlsb`. READ-only (`delpi-api-delpi`, `db_datareader`); zero
+DML/DDL; runtime não autorizado.
+
+### A. Artefato e grão
+
+Aba `SCAGQGA0.XML`; linha 0 literal `SD1`; headers = títulos SX3
+`D1_*`. **353 linhas efetivas**, todas filial `01`, **139 documentos**,
+46 centros de custo distintos, Σ `Vlr.Total` = **R$ 169.704,12**.
+Grão = **item SD1** (linha física de NF de entrada). Coluna sem título
+entre `C Custo` e `C Contabil` contém a classificação
+`Direto`/`Indireto`/`Adm` (ver §F).
+
+### B. Binding físico (353/353 — `PROVEN`)
+
+Chave de vínculo `(D1_DOC, D1_ITEM, D1_COD, D1_TOTAL)` une cada linha
+do artefato a **exatamente um** RECNO SD1 — sem ambiguidade, sem linha
+não localizada. Mapeamento de colunas: `Vlr.Total`=`D1_TOTAL`,
+`Vlr.Unitario`=`D1_VUNIT`, `Quantidade`=`D1_QUANT`, `Tipo Produto`=
+`D1_TP` (tipo gravado na linha; diverge de `B1_TIPO` corrente em
+casos observados), `Tipo Entrada`=`D1_TES`, `Cod. Fiscal`=`D1_CF`,
+`C Custo`=`D1_CC`, `DT Digitacao`=`D1_DTDIGIT`, `Forn/Cliente`=
+`D1_FORNECE`, `Loja`=`D1_LOJA`, `No do Pedido`=`D1_PEDIDO`,
+`Armazem`=`D1_LOCAL`. `Vlr.Total` nem sempre = `D1_QUANT`×`D1_VUNIT`
+(segunda UM/conversão/arredondamento Protheus) — a medida monetária
+autoritativa é `D1_TOTAL`, não a fórmula.
+
+### C. Seleção real — procedimento do operador (owner) × reprodução física
+
+Universo `SD1010` `D1_FILIAL='01'` `D_E_L_E_T_<>'*'`:
+`D1_DTDIGIT ∈ set/2026` → **686 linhas** (eixo digitação, não
+emissão — 80 linhas incluídas têm `D1_EMISSAO` fora de setembro, mín
+2026-08-03; universo por `D1_EMISSAO` seria 659).
+
+O procedimento relatado pelo owner (doc 56 Registro 17, 44:28–47:48 —
+`OWNER_REPORTED_VIA_PO`) reproduz fisicamente **100%** do artefato:
+
+| Passo (owner) | Regra física | Linhas | Status |
+|---|---|---|---|
+| filtro data de digitação no mês | `D1_DTDIGIT` 2026-09-01..30 | 686→base | `PROVEN` |
+| excluir "12 tipos de entrada" | `D1_TES ∉` conjunto | −303 → 383 | `PROVEN` (lista → §C.1) |
+| ordenar por produto, excluir MP | `D1_TP<>'MP'` | −24 → 359 | `PROVEN` 302/302 |
+| coparticipação plano saúde fora | benefícios GG sem CC | −6 → **353** | `PROVEN` 6/6 |
+
+Soma residual zero: 303+24+6 = 333 = 686−353. Total exato nos dois
+lados do corte.
+
+### C.1 Lista de tipos de entrada — narrada × observada
+
+Narrada (transcrição PO, 2/3 dígitos): `01,02,03,04,030,040,083,080,
+085,120,204,318` — mapeia para `001,020?,003,040?,030,040,080,083,
+085,120,204,318` (11 distintos; `02`/`04` ambíguos). **Observada
+(13 TES, zero falso-positivo/negativo):** `001,003,016,020,030,040,
+080,083,085,120,159,204,318` = COMPRAS MP (001/003), CONTA ORDEM
+(016), ENERGIA (020), COMUNICAÇÃO (030), TRANSPORTE (040), ENTRADA
+IND./VASILHAME (080/083/085), DEVOL. VENDAS (120), REMESSA INDUSTR.
+(159), TRANSF. MP (204), IMPORTAÇÃO (318). `016` e `159` estão
+fora da lista narrada — ambos `F4_DUPLIC='N'` (não geram duplicata;
+coerente com análise de despesas) — confirmação da lista exata → E10.
+
+Hipótese descartada: `F4_ESTOQUE` não discrimina (TES `S` dentro e
+fora; `N` dentro e fora). MP é excluído por `D1_TP` da linha, não por
+`B1_TIPO` — consistente com o owner ter ordenado a **coluna exportada**.
+
+### D. Benefícios excluídos (as 6 linhas residuais)
+
+TES `046`, `D1_TP='GG'`, **sem CC**, produtos do grupo de benefícios
+(plano de saúde/odontológico — aliases `<PRODUTO-BENEFICIO-*>`,
+mapeamento sob custódia do owner): R$ 6.990,44 excluídos. Casa com a
+regra relatada "parcela do colaborador fora, sem CC" — não extrapolar
+para toda despesa de plano (distinção colaborador×empresa → E10).
+
+### E. Reuso transversal (gate §0)
+
+`GET /financeiro/despesas-centro-custo/*` (api-delpi, plugin
+`financeiro-centro-custo`, `vw_fin_despesas_centro_custo`): **mesmo
+domínio**, seleção **diferente** — view usa `data_emissao`=
+`D1_EMISSAO` + exige `D1_CC<>''` + não exclui MP/TES (448 linhas
+set/26 f01, Σ R$ 545.580,00; cobre 269/353 do artefato; as 84 faltantes
+= 80 do eixo digitação + 4 sem-CC; view acrescenta 179 incl. 128 MP).
+Classificação **`REUSE_PARTIAL`** — módulo reutilizável como domínio/
+contrato de despesas por CC, **não** como reprodutor da seleção
+oficial (consulta distinta `despesas-cc-official-scope` se homologada).
+DDL da view não visível a `db_datareader` (SQL 15197) — predicados
+internos documentados como limitação, sem afirmação de regra oculta.
+
+### F. Classificação Direto/Indireto/Adm — manual pós-exportação (`AS-IS`)
+
+A coluna sem título **não existe em SD1 nem CTT** (testados
+`CTT_CLASSE/TIPO/TIPO00/TIPO01/TIPO2` — sem campo análogo). Correlação
+semântica por CC: `Direto` = CCs de máquina/produção (275, 223, 393 —
+mesmos CCs dos `MOD###` de R09) + insumos sem CC marcados manualmente;
+`Indireto` = CCs de apoio (0301–0504); `Adm` = CCs administrativos
+(01xx–02xx, 0501). 2 entradas `direto` minúsculas = edição humana.
+Owner confirma: classificação escrita manualmente na planilha, usando
+CC como indício. Subtotais derivados: Adm 99.297,81 · Indireto
+38.554,82 · Direto 31.851,49 (Σ = 169.704,12). `TARGET` exige fonte
+de classe homologada — não inferir por prefixo de CC.
+
+### G. Temporalidade
+
+Nenhuma divergência linha×linha detectada (353/353 exatas) — o SD1
+corrente **não divergiu** da exportação; nada a classificar como
+`STALE_EVIDENCE`. Correções retroativas em SD1 são raras e não
+afetaram esta competência.
+
+### H. Gates, sanitização e residuais
+
+`G1–G4` mantidos; **G5 `PASS`** — população 353/353 reconciliada no
+grão item, seleção reproduzida integralmente e corroborada pelo
+procedimento relatado do owner, medida monetária exata; `G6 PENDING`
+(aceite Controladoria). Residuais → **E10** (Controladoria/operadora):
+lista exata de tipos de entrada excluídos (narrada 12 vs observada 13
+— `016`/`159` + ambiguidade `02`/`04`), consulta/filtro salvo EDAPP ou
+data-hora da sessão, confirmação da regra de benefícios (parcela
+colaborador×empresa) e da fonte da classificação Direto/Ind/Adm.
+Aliases: `<PRODUTO-BENEFICIO-*>` (produtos saúde/odonto), docs/
+fornecedores individuais não publicados; TES/CFOP/CC/totais mantidos
+como evidência técnica.

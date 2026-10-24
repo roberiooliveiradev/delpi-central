@@ -904,17 +904,90 @@ de semântica com a view (BR-R09-012) permanece registrada — falta ≠ zero
 
 ---
 
-## §10 — R10/R11 · Consultas EDAPP (SD1/SD2) — binding `PROVEN`
+## §10 — R10/R11 · Consultas EDAPP (SD1/SD2)
 
-- Export EDAPP grava o literal da tabela na linha 0 (`SD1`/`SD2`) e headers =
-  títulos SX3 `D1_*`/`D2_*` — **binding 1:1 monotabela** (doc 47 §11.1).
-- R10 `CC matriz.xlsb` (SD1: NF entrada × centro de custo, IPI/ICMS);
-  R11 `NF a desconsiderar.xlsb` (SD2: Tipo Saida 594, CF 5101).
-- **Regra de negócio:** filtros são da consulta do usuário (operacional,
-  sem WHERE fixo de relatório) — no Portal, o equivalente é consulta
-  parametrizada sobre SD1/SD2, não reprodução de filtro ad hoc.
+### R10 · `CC matriz.xlsb` — seleção reconstruída e corroborada pelo owner (rodada 25)
 
----
+Artefato: aba `SCAGQGA0.XML`, linha 0 literal `SD1`, headers = títulos
+SX3 `D1_*`, **353 linhas**, filial 01, 139 documentos, 46 centros de
+custo, Σ `Vlr.Total` = **169.704,12**. Grão = item SD1 (linha física).
+
+#### BR-R10-001 — Binding SD1 — `PROVEN`
+
+Export EDAPP monotabela: headers são títulos SX3 de `D1_*`; chave de
+vínculo `(D1_DOC, D1_ITEM, D1_COD, D1_TOTAL)` une 353/353 linhas ao
+SD1 físico sem ambiguidade (doc 47 §11.1). `Vlr.Unitario`=`D1_VUNIT`,
+`Quantidade`=`D1_QUANT`, `Tipo Produto`=`D1_TP` (tipo gravado na linha —
+pode divergir de `B1_TIPO` corrente), `Tipo Entrada`=`D1_TES`,
+`Cod. Fiscal`=`D1_CF`, `C Custo`=`D1_CC`, `DT Digitacao`=`D1_DTDIGIT`,
+`No do Pedido`=`D1_PEDIDO`, `Armazem`=`D1_LOCAL`.
+
+#### BR-R10-002 — Competência = data de digitação — `PROVEN`
+
+Eixo `D1_DTDIGIT` ∈ [2026-09-01, 2026-09-30] (universo 686 linhas f01):
+80 linhas incluídas têm `D1_EMISSAO` fora de setembro (mín 08-03) —
+eixo digitação, não emissão. `OWNER_REPORTED_VIA_PO` (doc 56 Reg.17:
+"filtro de data de digitação no mês") + prova física.
+
+#### BR-R10-003 — Exclusão por tipo de entrada — `PROVEN` (lista exata `PENDING`)
+
+Procedimento relatado: excluir "12 tipos de entrada" — lista narrada
+`{01,02,03,04,030,040,083,080,085,120,204,318}` (doc 56 §Reg.17 —
+transcrição 2/3 dígitos). Conjunto **fisicamente excluído** (13 TES,
+zero falso-positivo/negativo): `001,003,016,020,030,040,080,083,085,
+120,159,204,318` = COMPRAS MP (001/003), CONTA ORDEM (016), ENERGIA
+(020), COMUNICAÇÃO (030), TRANSP. (040), ENTRADA IND/VASILHAME
+(080/083/085), DEVOL. VENDAS (120), REMESSA INDUSTR. (159), TRANSF. MP
+(204), IMPORT. (318). `016`/`159` observados além da lista narrada —
+ambos `F4_DUPLIC='N'` (coerente com análise de despesas); mapeamento
+exato da transcrição → E10.
+
+#### BR-R10-004 — Exclusão de matéria-prima — `PROVEN`
+
+"D1_TP='MP' fora" (owner: "ordena por produto e exclui MP — não compõe
+esta análise específica"): **302/302** linhas MP excluídas (sem
+exceção); não revoga uso de MP em outros relatórios (P7/CPV).
+
+#### BR-R10-005 — Coparticipação plano de saúde fora — `PROVEN`
+
+Regra relatada: parcela do plano de saúde que é despesa do colaborador
+fica fora da apuração (não exige CC). Única classe não coberta pelas
+regras anteriores: **6 linhas** TES 046, tipo GG, **sem CC**, produtos
+do grupo de benefícios saúde/odonto (`<PRODUTO-BENEFICIO-*>`) — R$
+6.990,44 excluídos. Nota do owner: não extrapolar para "toda
+coparticipação" — discriminar parcela colaborador × empresa (regra
+contábil → E10).
+
+#### BR-R10-006 — Classificação Direto/Indireto/Adm — `AS-IS` (manual, pós-exportação)
+
+Coluna **sem título** entre `C Custo` e `C Contabil` com valores
+`Direto`(122+2 minúsc.), `Indireto`(128), `Adm`(101): **não é campo
+SD1 nem CTT** (CTT sem campo de classe análogo) — classificação manual
+da operadora sobre a exportação, guiada pelo CC: `Direto` = CCs de
+máquina/produção (275, 223, 393, CT-## — mesmos CCs dos MOD###) +
+insumos sem CC marcados manualmente; `Indireto` = CCs de apoio
+(0301–0504); `Adm` = CCs administrativos (01xx–02xx, 0501). Subtotais
+derivados: Adm 99.297,81 · Indireto 38.554,82 · Direto 31.851,49.
+Regra de classificação **não automatizada** — `TARGET` exige fonte de
+classe homologada (não inferir de prefixo de CC sem owner).
+
+#### BR-R10-007 — Reuso transversal — `REUSE_PARTIAL` (seleção não equivalente)
+
+`GET /financeiro/despesas-centro-custo/*` (api-delpi, plugin
+`financeiro-centro-custo`) + `vw_fin_despesas_centro_custo`: **mesmo
+domínio** (SD1 por CC) mas seleção diferente — view usa
+`data_emissao`=`D1_EMISSAO`, exige `D1_CC<>''`, **não** exclui MP nem
+os 13 TES (448 linhas set/26 f01 = escopo próprio; 269/353 do artefato
+cobertos; as 84 faltantes = 80 eixo-digitação + 4 sem-CC). A regra do
+artefato (digitação + TES-exclusão + MP-out + benefícios-out) é a
+seleção do procedimento Controladoria — `TARGET` se homologada como
+consulta distinta; **não transplantar a seleção da view**.
+
+### R11 · `NF a desconsiderar.xlsb` — binding `PROVEN`, seleção `TO_INVENTORY`
+
+Export EDAPP de `SD2` (linha 0 literal `SD2`, headers SX3 `D2_*`; Tipo
+Saida 594, CF 5101). Filtro de emissão = consulta parametrizada do
+operador — mesmo tratamento de R10 aguarda evidência da seleção.
 
 ## §11 — R12 · Fechamento de custo / Reposição / Refaz Saldos — `AS-IS`
 
@@ -996,7 +1069,9 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R09-003/006 população+faturamento | `DLP204.prw` + SD2/SF4/SG1 | `D2_COD`,`D2_QUANT`,`D2_EMISSAO`,`D2_TES`,`F4_DUPLIC`,`G1_*` | PA âncora = produto com SD2 TES-duplic-S no período; `Qtd Fat.` do âncora propagada aos descendentes | `billing-mod-breakdown` (`as_of` obrigatório) | api-delpi | T-R09-02/06 | doc 80 §43 |
 | BR-R09-007/008 roteiro OP→MOD+tempo | `SHY010`/`SG2010` + `SH1010` | `HY_OP`,`HY_RECURSO`,`HY_TEMPAD`,`H1_CCUSTO`,`G2_TEMPAD` | `Quantidade` = tempo do roteiro congelado da OP (fallback SG2); MOD = `MOD`+`H1_CCUSTO` do recurso | idem | api-delpi | T-R09-03/04 | doc 80 §43 |
 | BR-R09-009/010 horas+custo as_of | artefato + SBZ/TTAT | `BZ_CUSTD`,`TTAT_COLD`,`TTAT_DTIME` | `Horas=QtdFat×Quantidade`; `CustoTotal=Horas×rate`; rate `as_of` via TTAT | `billing-mod-breakdown` (`as_of`) | api-delpi | T-R09-01/05 | doc 84 §5.3 |
-| BR-R10/11 EDAPP | SD1/SD2 | `D1_*`,`D2_*` | consulta parametrizada | `fiscal-docs-query` | api-delpi | T-R10-01 | doc 47 §11.1 |
+| BR-R10-002..005 seleção CC matriz | artefato + SD1/SF4/SB1 | `D1_DTDIGIT`,`D1_TES`,`D1_TP`,`D1_CC` | digitação no mês + NOT IN 13 TES + `D1_TP<>'MP'` + benefícios sem CC fora | `despesas-cc-official-scope` (owner: procedimento Controladoria, não filtro de tela genérico) | api-delpi | T-R10-01..03 | doc 80 §44 |
+| BR-R10-006 classe Direto/Ind/Adm | artefato + CTT | col. sem título, `D1_CC` | classificação manual pós-exportação por CC — sem fonte física | — (manual) | — | T-R10-04 | doc 80 §44 |
+| BR-R10/11 EDAPP | SD1/SD2 | `D1_*`,`D2_*` | consulta parametrizada | `fiscal-docs-query` | api-delpi | T-R10-00 | doc 47 §11.1 |
 | BR-R06-001/002/003 kardex UNION | `matr910_dlp.prx` + SD1/SD2/SD3/SF4 | `D1_DTDIGIT`,`D2_EMISSAO`,`D3_EMISSAO`,`F4_ESTOQUE`,`D3_ESTORNO`,`D*_ORIGLAN`,`D*_LOCAL` | UNION SD1+SD2+SD3 por produto/armazém com datas por tabela | `stock-kardex` (contrato futuro — `DECISION_REQUIRED`) | api-delpi | T-R06-01..04 | doc 80 §37.C |
 | BR-R06-004/005 ordem+REF | `matr910_dlp.prx` | `D*_NUMSEQ`,`D1_FORNECE`,`D2_PEDIDO`,`D3_OP`,`D3_CC` | data + NUMSEQ; REF por origem (F-/P-/OP/CC) | idem | api-delpi | T-R06-05/06 | doc 80 §37.C |
 | BR-R06-006/007 custo+saldo | `matr910_dlp.prx` + TTAT/SB9 | `D*_CUSTO*`,`TTAT_COLD`,`B9_QINI`,`B9_VINI1` | custo as_of emissão; cadeia saldo desde `CalcEst` | `as_of` obrigatório (mesma regra de BR-R05-008) | api-delpi | T-R06-07/08 | doc 80 §37.C/E |
@@ -1059,7 +1134,11 @@ copia para BFF/frontend.
 | T-R09-05 | BR-R09-009 | positive · reproduzido | `Horas=QtdFat×Quantidade`, `CustoTotal=Horas×rate` — identidade 4.476/4.476 |
 | T-R09-06 | BR-R09-005 | positive · reproduzido | `Seq Comp` 02/04/06 = nível SG1 0/1/2 do âncora (distância estrutural conferida) |
 | T-R09-07 | BR-R09-003/006 | negative · candidato | NF `D2_TIPO='D'` com TES duplic-S não deve compor `Qtd Fat.` — não exercido nesta competência |
-| T-R10-01 | BR-R10/11 | positive · reproduzido | export = tabela literal; consulta parametrizada equivalente |
+| T-R10-01 | BR-R10-001/002 | positive · reproduzido | 353/353 linhas = itens SD1 f01 `D1_DTDIGIT`∈set (Σ `D1_TOTAL`=169.704,12 exato); 80 linhas provam eixo digitação |
+| T-R10-02 | BR-R10-003 | positive · reproduzido | 13 TES excluídos sem exceção (303 linhas); lista narrada owner mapeia 11/13 — `016`/`159` residuais E10 |
+| T-R10-03 | BR-R10-004/005 | positive · reproduzido | MP 302/302 fora; benefícios saúde/odonto sem CC 6/6 fora |
+| T-R10-04 | BR-R10-006 | boundary · reproduzido | classe `Direto/Indireto/Adm` = coluna manual (não SD1/CTT); 2 entradas minúsculas evidenciam edição humana |
+| T-R10-00 | BR-R10-001 | positive · reproduzido | export = tabela literal SD1; headers SX3; binding 1:1 |
 | T-R06-01 | BR-R06-001/002 | positive · reproduzido | UNION SD1/SD2/SD3: 9.357 linhas vinculadas linha-a-linha por blocos (1.544 produtos) |
 | T-R06-02 | BR-R06-002 | negative · reproduzido | `D3_ESTORNO='S'`/deletado fora; doc com trio limpo+par estornado imprime só a linha limpa |
 | T-R06-03 | BR-R06-003 | positive · reproduzido | SD1 por `D1_DTDIGIT`: doc emitido em out/digitado em set entra na competência (281 casos dig≠emi); SD2/SD3 por `EMISSAO` |
@@ -1089,9 +1168,9 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), **BR-R09-001..011** (DLP204 fonte+parâmetros+seleção SD2-duplic-S+expansão SP+QtdFat propagado+roteiro-OP HY_TEMPAD+H1_CCUSTO+fórmulas+rate as_of; BR-R09-007/008 marcadas 99,4% com 27 residuais declarados), **BR-R10-001..005** (seleção Controladoria SD1: digitação+TES-exclusão+MP-out+benefícios-out — corroborada owner doc 56 §Reg.17), BR-R11 (binding), BR-R12-003, SB9 snapshot (recorte) |
 | `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R08, R09 (layout), BR-R12-001/002, R15 (execução) |
-| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 internos da `STP_DELPI_FORMA_PRECO_*` + versão RPO DLP204 + parâmetros efetivos + 27 tempos residuais + divisor desdobramento (E9), R10/11 filtros, R13 contrato externo, R14 todo |
+| `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 internos da `STP_DELPI_FORMA_PRECO_*` + versão RPO DLP204 + parâmetros efetivos + 27 tempos residuais + divisor desdobramento (E9), R11 filtro, R10 mapeamento exato da lista narrada 12→13 TES + regra contábil benefícios (E10), R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
 | `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |
 | `STALE_EVIDENCE` | contagens DEL100 antigas 724/672 (`EXECUTION_DRIFT`, doc 80 §23.A) |

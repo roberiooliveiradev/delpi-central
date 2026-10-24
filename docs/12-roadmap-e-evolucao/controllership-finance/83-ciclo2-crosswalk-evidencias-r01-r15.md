@@ -134,9 +134,9 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 `Fat x MOD.xlsb` (abas 1-Fl01/2-Fl02): explosão PA→componentes MOD: PA, Seq Comp, Cod Produto (MOD###), Descrição, Qtd Fat, UM=HR, Quantidade (horas componente), Custo Unitario (ex.: MOD393 = 70,81), Custo Total, Custo Produto, **Horas**. Roster: **DLP204** "Fat x Mod — Custo MO". Cruzamento com doc 80: o `Custo Unitario` (70,81 MOD393) confirma uso de rate MOD por produto/filial (SBZ010.BZ_CUSTD, PROVEN §22–§25). Gates: **G1–G4 PASS · G5 INCONCLUSIVE · G6 PENDING**. Rodada 24: `DLP204.prw` no acervo (`SOURCE_AVAILABLE`; `CODE_DEPLOYED` RPO → E9). Seleção = SD2 TES `F4_DUPLIC='S'` do PA-âncora (`Qtd Fat.` propagada aos descendentes — 4.476/4.476); MOD = recurso do roteiro congelado da OP (`SHY010.HY_TEMPAD`; fallback `SG2`) via `SH1010.H1_CCUSTO` — 4.449/4.476 (99,4%); `Custo Unitario` = `SBZ010.BZ_CUSTD` **as_of emissão** (4.469/4.469 com SBZ; 7 sem cadastro); fórmulas `Horas=QtdFat×Quantidade`, `CustoTotal=Horas×rate` (identidade integral). SP `STP_DELPI_FORMA_PRECO_*` ausente dos bancos → E9 (doc 80 §43, doc 85 §9).
 
-### R10 — Notas por Centro de Custo — **PARCIAL**
+### R10 — Notas por Centro de Custo — **RECONCILIADO (seleção reconstruída; confirmações → E10)**
 
-`CC matriz.xlsb` = export direto **SD1** via EDAPP (sheet `SCAGQGA0.XML`; vídeo 47:00 mostra a mesma operação com `SCAGPOU0.XML`): Filial, Item NF, Produto, Tipo, UM, Qtd, Tipo Entrada, Tp.Oper, Vlr.Unit/Tot, **C Custo**, C Contab, IPI, ICMS. Roster: **EDAPP** "Faturamento e CC" + "tabelas entrada de notas fiscais (excel)". Gates: **G1–G3 PASS · G4 PASS** (a própria exportação é a tabela física SD1) · G5/G6 PENDING.
+`CC matriz.xlsb` = export direto **SD1** via EDAPP (sheet `SCAGQGA0.XML`; vídeo 47:00 mostra a mesma operação com `SCAGPOU0.XML`): Filial, Item NF, Produto, Tipo, UM, Qtd, Tipo Entrada, Tp.Oper, Vlr.Unit/Tot, **C Custo**, C Contab, IPI, ICMS + coluna sem título com classificação manual `Direto`/`Indireto`/`Adm`. Roster: **EDAPP** "Faturamento e CC" + "tabelas entrada de notas fiscais (excel)". **Rodada 25 (doc 80 §44, doc 85 §10):** 353 linhas = itens SD1 f01 `D1_DTDIGIT`∈set/2026 (eixo digitação, não emissão), Σ `D1_TOTAL` = **R$ 169.704,12 exato**; seleção = digitação no mês → 13 TES fora (`001,003,016,020,030,040,080,083,085,120,159,204,318`) → `D1_TP<>'MP'` → benefícios saúde/odonto sem CC fora — 100% reconstruída e corroborada pelo procedimento relatado (doc 56 Registro 17). Classificação Direto/Ind/Adm = coluna manual pós-exportação por CC (não é campo físico). `vw_fin_despesas_centro_custo`/rotas `despesas-centro-custo` = `REUSE_PARTIAL` (eixo emissão + CC-obrigatório + sem exclusões — 269/353 cobertura). Gates: **G1–G5 PASS · G6 PENDING**; lista exata de TES + taxonomia Direto/Ind/Adm → **E10**.
 
 ### R11 — NF venda / desconsiderar — **PARCIAL**
 
@@ -170,6 +170,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | E6 | decidido (opção C — doc 81); pendências E6-D1..D6 conforme doc 82. |
 | E7 (RPO MATR910) | mantido — TI/ERP (R06/R07 G4/G5 já PASS pela reconstrução). |
 | E8 (MATR989) | **novo (rodada 22):** fonte `matr989.prx`/RPO + parâmetros efetivos da emissão + semântica intra-dia do corte de OP — TI/ERP (R08 G4/G5 já PASS pela reconstrução física; doc 80 §41/§42). |
+| E10 (R10 CC matriz) | **novo (rodada 25):** lista exata de TES excluídos (narrada 12 vs observada 13 — `016`/`159`), filtro/consulta EDAPP preservada, regra de benefícios (colaborador×empresa) e owner da taxonomia Direto/Ind/Adm — Controladoria (R10 G5 já PASS pela reconstrução física; doc 80 §44, doc 82 E10). |
 
 ## §6 — Divergências e notas de rigor
 
@@ -193,7 +194,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R07 Inventários | RECONCILIADO | MATR910 | G1,G2,G3,**G4**,**G5** (INVENT 45/45 — doc 80 §37.D, doc 85 §7) |
 | R08 Material em Processo | RECONCILIADO | MATR989 analítico (`SOURCE_MISSING` — roster+aba) | G1,G2,G3,**G4**,**G5** (SD3 linha-a-linha 1.501/1.501 + SB9-loc99 569/573 com 4 Δ temporais explicados + total = EM PROCESSO P7 exato — doc 80 §41, doc 85 §8; fonte/RPO → E8) |
 | R09 Fat × MOD | RECONCILIADO PARCIAL | DLP204 (`DLP204.prw` `SOURCE_AVAILABLE`) | G1,G2,G3,**G4** (G5 `INCONCLUSIVE` — 27 tempos + SP interna → E9) |
-| R10 Notas por CC | PARCIAL | EDAPP (SD1) | G1,G2,G3,G4 |
+| R10 Notas por CC | RECONCILIADO | EDAPP (SD1) | G1,G2,G3,G4,**G5** (353/353 itens + seleção reconstruída + Σ `D1_TOTAL` exato — doc 80 §44; confirmações → E10) |
 | R11 NF desconsiderar | PARCIAL | EDAPP (SD2) | G1,G2,G3,G4 |
 | R12 Acompanha/Rep/Refaz | PARCIAL | Acompanha Custo wizard, Recálculo Reposição, DEL100 | G1,G2,G3 |
 | R13 Extratos/aplicações | BLOQUEADO | externa | G1 |

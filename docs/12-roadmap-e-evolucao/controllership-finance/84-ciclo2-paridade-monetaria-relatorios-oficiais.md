@@ -272,11 +272,9 @@ MP — validação por tipo em doc 80 §33.C/§34.B.
 
 ## §5 — Demais itens (candidatos avaliados)
 
-- **R10** (CC matriz / SD1): artefato = 353 linhas, ΣVlr.Total 169.704,12.
-  SD1 filial 01 set/2026: eixo `D1_EMISSAO` 657 linhas / 1.218.399,30; eixo
-  `D1_DTDIGIT` 686 / 1.262.557,36 — **não reproduzível** (o artefato é
-  subconjunto da consulta EDAPP do operador; filtro não documentado). G5 não
-  promovido.
+- **R10** (CC matriz / SD1): reconciliado no §5.4 — G4/G5 PASS
+  (seleção EDAPP reconstruída + Σ `D1_TOTAL` exato; confirmações
+  documentais → E10).
 - **R08** (Material em Processo): reconciliado no §5.2 — G4/G5 PASS.
 - **R09** (Faturamento × MOD): reconciliado no §5.3 — G4 PASS, G5 `INCONCLUSIVE`.
 - **R04, R11–R15**: sem população oficial comparável
@@ -368,6 +366,40 @@ ramo `UNEXERCISED`).
 **Residuais → E9 (TI/ERP):** SP/RPO, parâmetros efetivos, divisor `÷2`
 desdobramento, 27 tempos, 7 MODs sem SBZ, semântica `CUSTOPROD`.
 
+
+## §5.4 — R10 · Notas por Centro de Custo EDAPP/SD1 (rodada 25)
+
+Paridade **linha-a-linha** do artefato oficial (`CC matriz.xlsb`, aba
+`SCAGQGA0.XML`, 353 linhas, filial 01, set/2026) — doc 80 §44,
+doc 85 §10. Produtor = exportação EDAPP do operador sobre SD1
+(`EXECUTION_OBSERVED`, vídeo 44:28–47:48).
+
+| Dimensão | Oficial | Físico | Regra | Resultado | Δ | Status |
+|---|---|---|---|---|---|---|
+| Grão/binding | 353 linhas × campos SX3 `D1_*` | 353 linhas `SD1010` | chave `(D1_DOC,D1_ITEM,D1_COD,D1_TOTAL)` | **353/353** 1:1, sem ambiguidade | 0 | `PASS` |
+| Eixo de competência | datas no mês | `D1_DTDIGIT` 2026-09-01..30 | digitação (owner: "data de digitação"); 80 linhas com `D1_EMISSAO` fora de set. | provado | 0 | `PASS` |
+| Seleção: TES fora | implícito | `D1_TES ∉ {001,003,016,020,030,040,080,083,085,120,159,204,318}` | 13 TES excluídos, zero falso-positivo/negativo | 303 linhas excluídas | 0 | `PASS` (lista exata → E10) |
+| Seleção: MP fora | implícito | `D1_TP<>'MP'` | owner: "ordena por produto e exclui MP" | 302/302 excluídas | 0 | `PASS` |
+| Seleção: benefícios fora | implícito | produtos saúde/odonto, GG, sem CC | owner: coparticipação (parcela colaborador) fora | 6/6 excluídas (R$ 6.990,44) | 0 | `PASS` (regra contábil → E10) |
+| Total excluído | — | universo digitação 686 − artefato 353 = 333 | 303 TES + 24 MP-residual + 6 benefícios = 333 | decomposição integral | 0 | `PASS` |
+| `Vlr.Total` por linha | impresso | `D1_TOTAL` | campo direto (não `QUANT×VUNIT` — 2ª UM/arredondamento) | **353/353** | 0 | `PASS` |
+| Σ `Vlr.Total` | **169.704,12** | Σ `D1_TOTAL` seleção | — | **169.704,12** | 0,00 | `PASS` |
+| Documentos | 139 | `D1_DOC` | — | 139 | 0 | `PASS` |
+| Centros de custo | 46 distintos + 5 linhas sem CC | `D1_CC` | top CCs: 0205 (60.890,93), 0407 (18.789,08), 0203 (16.587,55) | reproduzido | 0 | `PASS` |
+| Classe Direto/Ind/Adm | coluna sem título | **sem campo físico** (SD1/CTT testados) | manual pós-exportação por CC (2 `direto` minúsc. = edição humana) | Adm 99.297,81 · Ind 38.554,82 · Dir 31.851,49 | 0 | `PASS` (AS-IS manual; taxonomia → E10) |
+
+**Hipóteses descartadas:** eixo `D1_EMISSAO` (80 linhas provam
+digitação); `F4_ESTOQUE` como discriminador TES (S e N dentro e fora);
+exclusão por `B1_TIPO` (o tipo da linha `D1_TP` é o critério);
+documento/produto como unidade de exclusão (chaves compartilhadas
+incluído×excluído — exclusão é por linha/TES); `vw_fin_despesas_
+centro_custo` como reprodutora (eixo emissão + CC-obrigatório + sem
+exclusões: 448 linhas, 269/353 cobertura → `REUSE_PARTIAL`).
+**Residuais → E10 (Controladoria):** lista exata de tipos de entrada
+(narrada 12 vs observada 13 — `016`/`159`, ambos `F4_DUPLIC='N'`;
+ambiguidade `02`/`04`), filtro/consulta EDAPP preservada, regra de
+benefícios colaborador×empresa, owner da taxonomia Direto/Ind/Adm.
+
 ## §6 — Gates e métricas resultantes
 
 | Item | Antes | Depois |
@@ -380,11 +412,14 @@ desdobramento, 27 tempos, 7 MODs sem SBZ, semântica `CUSTOPROD`.
 | R07 G4/G5 | PENDING/TEST_NOT_RUN | **PASS** (rodada 19: INVENT 45/45 vinculados — §5.1) |
 | R09 G4 | PENDING | **PASS** (rodada 24: `DLP204.prw` + bindings físicos — §5.3) |
 | R09 G5 | TEST_NOT_RUN | **INCONCLUSIVE** (4.449/4.476 tempos + SP interna → E9; demais dimensões 100%) |
+| R10 G5 | TEST_NOT_RUN | **PASS** (rodada 25: 353/353 linhas + seleção EDAPP reconstruída + Σ `D1_TOTAL` 169.704,12 exato — §5.4; confirmações → E10) |
 
 `COLETA = 42/60 = 70,0%` · `AUDITORIA = 47/90 = 52,2%` ·
 `CONCLUÍDOS = 0/15` (G6 exige aceite humano).
 
 **Errata rodada 24 (métricas canônicas doc 47 §11):** com R09 G4 PASS as métricas vigentes são `COLETA = 44/60 = 73,3%` · `AUDITORIA = 50/90 = 55,6%` · `CONCLUÍDOS = 0/15` — G5 R09 `INCONCLUSIVE` (não promovido por agregado).
+
+**Errata rodada 25 (métricas canônicas doc 47 §11):** com R10 G5 PASS as métricas vigentes são `COLETA = 44/60 = 73,3%` · `AUDITORIA = 51/90 = 56,7%` · `CONCLUÍDOS = 0/15`.
 
 ## §7 — Segurança e método
 

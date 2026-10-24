@@ -196,6 +196,29 @@ Mais:
 
 > **Bloqueio deliberado:** a direção está aprovada, mas `IMPLEMENTATION_AUTHORIZED = NO` — nada será implementado antes dos detalhamentos e das homologações acima.
 
+#### E10 — R10 `CC matriz.xlsb`: confirmação da seleção EDAPP e regras de benefícios
+
+**Contexto (doc 80 §44):** a seleção do artefato foi reconstruída linha
+a linha (353/353 itens SD1, Σ `D1_TOTAL` = R$ 169.704,12 exato) e
+corresponde 1:1 ao procedimento relatado no vídeo (doc 56 Registro 17):
+digitação no mês → exclusão de tipos de entrada → exclusão de MP →
+exclusão de coparticipação de benefícios → classificação manual
+Direto/Indireto/Adm. G5 promovido a `PASS`; abaixo apenas os pontos de
+confirmação documental, não uma nova investigação.
+
+| Item | Solicitação | Evidência atual |
+|---|---|---|
+| E10.1 | **Lista exata de tipos de entrada excluídos** na sessão EDAPP (códigos 3 dígitos) | Narrada 12 códigos (`01,02,03,04,030,040,083,080,085,120,204,318`); observada 13 TES (`001,003,016,020,030,040,080,083,085,120,159,204,318`); `016`/`159` fora da lista narrada (ambos `F4_DUPLIC='N'`); `02`/`04` ambíguos → `020`/`040`? |
+| E10.2 | **Consulta/filtro salvo EDAPP** ou data-hora da sessão de exportação | Exportação é seleção de operador, não relatório de produtor fixo — confirmação fixa a lista de E10.1 como regra, não conveniência do mês |
+| E10.3 | **Regra de benefícios**: confirmação de que coparticipação plano saúde/odonto (parcela colaborador, sem CC) fica fora; tratamento da parcela empresa | 6 linhas excluídas: TES 046, tipo GG, sem CC, `<PRODUTO-BENEFICIO-*>` — R$ 6.990,44 |
+| E10.4 | **Fonte da classificação Direto/Indireto/Adm** por centro de custo (taxonomia oficial?) | Coluna sem título pós-exportação, manual, guiada pelo CC — não é campo SD1/CTT; precisa owner da taxonomia para virar regra canônica |
+
+| Campo | Conteúdo |
+|---|---|
+| Owner | Controladoria / operadora que emitiu o arquivo |
+| Impacto PROC-0072 | fixa a lista de exclusão como regra versionável e o owner da taxonomia Direto/Ind/Adm; G5 já PASS — E10 documenta, não desbloqueia gate |
+| Critério de aceite | lista de TES confirmada por escrito + filtro EDAPP preservado + regra benefícios + taxonomia de classe confirmada |
+
 ---
 
 ## §3 — Estado do ciclo e marcações preservadas
@@ -207,6 +230,7 @@ Mais:
 | Pagar FINR190 | **paridade row-level PROVEN** (948/948 chaves, TB=`E5_VALOR`, VO=`E2_VALOR`+regras aglutinado, resumos/componentes exatos — doc 84); residual: subconjunto do log + versão RPO |
 | Receber DLP06R01 | **paridade row-level do artefato PROVEN, Δ R$0,00** (649 SE5×SE1 + 8 `PA`/`FINA750` sem título; TB=`E5_VALOR`, VO=`E1_VALOR` 649 + VO=provisão `'P'` espelhada MATA121/FINA050 8/8 — doc 84, errata doc 80 §30); residual: fonte do produtor (G4) + regra geral do sem-título (3 excluídos identificados) — **pende de TI/ERP** |
 | MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
+| R10 CC matriz (SD1 EDAPP) | **seleção reconstruída + paridade PROVEN** (353/353 itens, Σ `D1_TOTAL` 169.704,12 exato; digitação+13 TES-out+MP-out+benefícios-out — corroborado owner doc 56 §Reg.17; G5 PASS); residual: lista exata TES + taxonomia Direto/Ind/Adm — **E10** |
 | SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) — **reforço 23/10:** onda retificadora de ~20-21/10 confirmada por RECNO (SD1 doc `<NF-RETIF-A>` sanitizado reclassificado 001→085 + SB9 f01 inserido 21/10 19:13) — corrobora "reexecução/etapa distinta" sem identificar o writer |
 | MATR320 (R05) | **fonte localizado 23/10:** `matr320.prx` padrão TOTVS (execução via SP `MAT056`; variante `DLPR320` descartada por poder3 zerado no fonte × não-zerado no PDF). Colunas MP reconciliadas 12/13 ao centavo em estado de emissão (doc 84 §4.2, doc 80 §31, regras doc 85 §5); residual: MovInt ~R$0,48 e `as_of` do saldo |
 | DLP06R01, P7 | **parcialmente resolvidos 23/10** — DLP06R01.prt=layout compartilhado (pagar: produtor FINR190 provado; receber: custom `DLP06R01` sem fonte — E1 pendente); P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |
