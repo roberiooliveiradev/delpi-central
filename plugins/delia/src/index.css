@@ -749,35 +749,56 @@
   max-width: 100%;
 }
 
-/* ---------- Context surfaces (message popover + global panel) */
+/* ---------- Context surfaces (inline message region + global panel) */
 
-/* Turn whose context popover is open: discreet left accent associating
-   message and popover — never a heavy card border. */
+/* Turn whose context region is open: discreet left accent associating
+   message and expansion — never a heavy card border. */
 .dashboard-delia .delia-turn__bubble--context-open {
   box-shadow: inset 2px 0 0 0
     color-mix(in srgb, var(--delia-accent) 55%, transparent);
   border-radius: 8px;
 }
 
-/* Compact anchored popover reusing the turn-context content; width is
-   adaptive within the viewport, with internal scroll when needed. */
-.dashboard-delia .delia-turn__context-popover {
-  width: min(340px, calc(100vw - 32px));
-  max-height: min(420px, calc(100vh - 96px));
-  overflow-y: auto;
+/* Inline turn-context region: participates in the conversation flow
+   (pushes the next message, never overlays it), scrolls with the
+   conversation — no fixed height, no nested vertical scroll. */
+.dashboard-delia .delia-turn__context {
+  margin-top: 10px;
   padding: 12px 14px;
+  max-width: 640px;
+  background: color-mix(in srgb, var(--delia-accent) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--delia-accent) 16%, transparent);
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+  animation: delia-turn-context-in 180ms ease-out;
+}
+
+@keyframes delia-turn-context-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .dashboard-delia .delia-turn__context-title {
   margin: 0 0 8px;
+  padding-bottom: 8px;
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--delia-text);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--delia-accent) 12%, transparent);
 }
 
-.dashboard-delia .delia-turn__actions-row {
-  display: inline-flex;
-  align-items: center;
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-delia .delia-turn__context {
+    animation: none;
+  }
 }
 
 .dashboard-delia .delia-context__list {

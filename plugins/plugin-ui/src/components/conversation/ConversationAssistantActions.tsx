@@ -1,4 +1,9 @@
-import { useRef, useState, type ReactElement } from "react";
+import {
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   Check,
   Copy,
@@ -24,12 +29,16 @@ export type ConversationAssistantMoreAction = {
 
 /** Visible inline action in the strip (e.g. "Ver contexto") — a real
  *  button, not a menu item. `active` marks the on state visually;
- *  `expanded` adds disclosure semantics (aria-expanded + haspopup)
- *  when the action opens a popover/panel. */
+ *  `expanded` + `controls` add disclosure semantics (aria-expanded +
+ *  aria-controls) when the action toggles a region in the message flow. */
 export type ConversationAssistantInlineAction =
   ConversationAssistantMoreAction & {
     active?: boolean;
     expanded?: boolean;
+    /** Id of the region the action expands/collapses (aria-controls). */
+    controls?: string;
+    /** Decorative trailing icon (e.g. chevron) — aria-hidden. */
+    icon?: ReactNode;
   };
 
 export type ConversationAssistantActionsLabels = {
@@ -232,11 +241,19 @@ export function ConversationAssistantActions({
             action.expanded === undefined && action.active ? true : undefined
           }
           aria-expanded={action.expanded}
-          aria-haspopup={action.expanded !== undefined ? "dialog" : undefined}
+          aria-controls={action.controls}
           disabled={action.disabled || disabled || loading}
           onClick={action.onSelect}
         >
           {action.label}
+          {action.icon ? (
+            <span
+              className="delpi-ui-conversation-assistant-actions__inline-icon"
+              aria-hidden="true"
+            >
+              {action.icon}
+            </span>
+          ) : null}
         </button>
       ))}
 

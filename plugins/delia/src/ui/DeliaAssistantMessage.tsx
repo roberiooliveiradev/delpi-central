@@ -1,5 +1,7 @@
 import {
   Ban,
+  ChevronDown,
+  ChevronUp,
   CircleAlert,
   CloudOff,
   ListChecks,
@@ -7,7 +9,7 @@ import {
   ShieldCheck,
   TimerOff,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useId, useState } from "react";
 import type { ComponentType } from "react";
 
 import type { DeliaConfirmationRequest } from "../api/interactionClient";
@@ -18,7 +20,6 @@ import {
 import type { DeliaMessageKind } from "../api/presentation";
 import {
   ActivityViewer,
-  AnchoredPanelPortal,
   ConversationAssistantActions,
   ConversationStatus,
   ConversationMarkdown,
@@ -125,12 +126,13 @@ export function DeliaAssistantMessage({
   onResponseMotionComplete,
   onConfirmation,
 }: DeliaAssistantMessageProps) {
-  // Spec 127 separation: turn context opens as a popover anchored to
-  // this message's action strip — local state only, never the global
-  // side panel and never a persistent selection.
+  // Spec 127 inline decision: turn context expands INSIDE the message
+  // flow — local state only, no portal/overlay, never the global side
+  // panel and never a persistent selection. It collapses only via the
+  // explicit "Ocultar contexto" action; outside clicks, composer typing
+  // and other messages' contexts never touch it.
   const [contextOpen, setContextOpen] = useState(false);
-  const contextAnchorRef = useRef<HTMLDivElement | null>(null);
-  const contextPanelRef = useRef<HTMLDivElement | null>(null);
+  const contextRegionId = `turn-context-${useId()}`;
   const ownerHint = presentationOwnerHint(turn.presentation ?? null);
   const displayContent = dedupeOwnerHintContent(turn.content, ownerHint);
   const presentationFault = turn.presentationFault ?? null;
@@ -342,42 +344,43 @@ export function DeliaAssistantMessage({
           />
         ) : null}
 
-        <div className="delia-turn__actions-row" ref={contextAnchorRef}>
-          <ConversationAssistantActions
-            className="delia-turn__message-actions"
-            copyText={copyText}
-            disabled={loading}
-            // Feedback/regenerate prepared visually; no backend contract yet.
-            feedbackEnabled={false}
-            regenerateEnabled={false}
-            inlineActions={[
-              {
-                id: "view-context",
-                label: contextOpen ? "Ocultar contexto" : "Ver contexto",
-                active: contextOpen,
-                expanded: contextOpen,
-                onSelect: () => setContextOpen((open) => !open),
-              },
-            ]}
-          />
-          <AnchoredPanelPortal
-            open={contextOpen}
-            anchorRef={contextAnchorRef}
-            panelRef={contextPanelRef}
-            variant="shape"
-            role="dialog"
+        <ConversationAssistantActions
+          className="delia-turn__message-actions"
+          copyText={copyText}
+          disabled={loading}
+          // Feedback/regenerate prepared visually; no backend contract yet.
+          feedbackEnabled={false}
+          regenerateEnabled={false}
+          inlineActions={[
+            {
+              id: "view-context",
+              label: contextOpen ? "Ocultar contexto" : "Ver contexto",
+              active: contextOpen,
+              expanded: contextOpen,
+              controls: contextRegionId,
+              icon: contextOpen ? (
+                <ChevronUp size={12} />
+              ) : (
+                <ChevronDown size={12} />
+              ),
+              onSelect: () => setContextOpen((open) => !open),
+            },
+          ]}
+        />
+
+        {contextOpen ? (
+          <section
+            id={contextRegionId}
+            role="region"
             aria-label="Contexto desta resposta"
-            preferredPlacement="top"
-            horizontalAlign="start"
-            className="delia-turn__context-popover"
-            onDismiss={() => setContextOpen(false)}
+            className="delia-turn__context"
           >
             <h3 className="delia-turn__context-title">
               Contexto desta resposta
             </h3>
             <DeliaTurnContextPanel turn={turn} />
-          </AnchoredPanelPortal>
-        </div>
+          </section>
+        ) : null}
       </div>
     </>
   );

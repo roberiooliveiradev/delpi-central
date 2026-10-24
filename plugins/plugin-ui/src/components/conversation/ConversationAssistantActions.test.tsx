@@ -143,7 +143,7 @@ describe("ConversationAssistantActions", () => {
     expect(screen.queryByRole("button", { name: "Mais opções" })).toBeNull();
   });
 
-  it("exposes disclosure semantics on inline actions that open a panel", () => {
+  it("exposes disclosure semantics on inline actions that toggle a region", () => {
     render(
       <ConversationAssistantActions
         copyText="x"
@@ -153,6 +153,7 @@ describe("ConversationAssistantActions", () => {
             label: "Ver contexto",
             active: true,
             expanded: true,
+            controls: "ctx-region",
             onSelect: vi.fn(),
           },
         ]}
@@ -160,7 +161,9 @@ describe("ConversationAssistantActions", () => {
     );
     const action = screen.getByRole("button", { name: "Ver contexto" });
     expect(action.getAttribute("aria-expanded")).toBe("true");
-    expect(action.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(action.getAttribute("aria-controls")).toBe("ctx-region");
+    // Disclosure semantics — not a popup/menu.
+    expect(action.getAttribute("aria-haspopup")).toBeNull();
   });
 
   it("keeps toggle semantics (aria-pressed) on non-disclosure inline actions", () => {

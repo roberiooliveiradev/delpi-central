@@ -255,7 +255,7 @@ describe("DeliaTurnContextPanel", () => {
   });
 });
 
-describe("Message context popover (MC-01..MC-08)", () => {
+describe("Message context inline expansion (INLINE-01..INLINE-14)", () => {
   function renderMessage(turn = makeTurn()) {
     return render(
       <ul>
@@ -270,54 +270,73 @@ describe("Message context popover (MC-01..MC-08)", () => {
     );
   }
 
-  it("MC-01/08: exposes 'Ver contexto' as a visible, accessible action", () => {
+  it("INLINE-01/08: 'Ver contexto' is a visible disclosure control bound to a region", () => {
     renderMessage();
     const action = screen.getByRole("button", { name: "Ver contexto" });
     expect(action.getAttribute("aria-expanded")).toBe("false");
-    // Copy stays available next to it.
+    expect(action.getAttribute("aria-controls")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Copiar resposta" }),
     ).toBeTruthy();
   });
 
-  it("MC-02/03: opens a popover anchored to the message — no side panel", () => {
+  it("INLINE-01/02/03: expands a real region inside the message — no portal, no overlay", () => {
     renderMessage(makeTurn({ observability: OBS as never }));
     fireEvent.click(screen.getByRole("button", { name: "Ver contexto" }));
-    const popover = screen.getByRole("dialog", {
+    const region = screen.getByRole("region", {
       name: "Contexto desta resposta",
     });
-    expect(within(popover).getByText("Contexto desta resposta")).toBeTruthy();
-    expect(within(popover).getByText("qwen2.5:3b (1)")).toBeTruthy();
+    expect(within(region).getByText("Contexto desta resposta")).toBeTruthy();
+    expect(within(region).getByText("qwen2.5:3b (1)")).toBeTruthy();
+    // INLINE-08: aria-controls points at the real region.
+    const trigger = screen.getByRole("button", { name: "Ocultar contexto" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(trigger.getAttribute("aria-controls")).toBe(region.id);
+    // INLINE-02: region lives inside the turn bubble (flow), not a body portal.
+    expect(region.closest(".delia-turn__bubble")).toBeTruthy();
+    expect(
+      region.closest(".delpi-ui-shape-menu__panel"),
+    ).toBeNull();
+    // No side/complementary panel opened.
+    expect(screen.queryByRole("complementary")).toBeNull();
+    expect(
+      document.querySelector(".delpi-ui-shape-menu__panel--portal"),
+    ).toBeNull();
+  });
+
+  it("INLINE-05: 'Ocultar contexto' collapses only that region", () => {
+    renderMessage();
+    fireEvent.click(screen.getByRole("button", { name: "Ver contexto" }));
+    expect(
+      screen.getByRole("region", { name: "Contexto desta resposta" }),
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ocultar contexto" }),
+    );
+    expect(
+      screen.queryByRole("region", { name: "Contexto desta resposta" }),
+    ).toBeNull();
+  });
+
+  it("INLINE-06: outside clicks and Escape never collapse it", () => {
+    renderMessage();
+    fireEvent.click(screen.getByRole("button", { name: "Ver contexto" }));
+    const region = screen.getByRole("region", {
+      name: "Contexto desta resposta",
+    });
+    fireEvent.pointerDown(document.body);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(
+      screen.getByRole("region", { name: "Contexto desta resposta" }),
+    ).toBe(region);
     expect(
       screen.getByRole("button", { name: "Ocultar contexto" }).getAttribute(
         "aria-expanded",
       ),
     ).toBe("true");
-    // No complementary/global context panel is opened by the action.
-    expect(screen.queryByRole("complementary")).toBeNull();
   });
 
-  it("MC-04: closes via trigger, Escape and outside click", () => {
-    renderMessage();
-    const trigger = screen.getByRole("button", { name: "Ver contexto" });
-    // Trigger toggle.
-    fireEvent.click(trigger);
-    expect(screen.getByRole("dialog")).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Ocultar contexto" }),
-    );
-    expect(screen.queryByRole("dialog")).toBeNull();
-    // Escape.
-    fireEvent.click(trigger);
-    fireEvent.keyDown(document.body, { key: "Escape" });
-    expect(screen.queryByRole("dialog")).toBeNull();
-    // Outside click.
-    fireEvent.click(trigger);
-    fireEvent.pointerDown(document.body);
-    expect(screen.queryByRole("dialog")).toBeNull();
-  });
-
-  it("MC-05: shows only the turn's own provenance and sources", () => {
+  it("INLINE-09: shows only the turn's own provenance and sources", () => {
     renderMessage(
       makeTurn({
         groundingStatus: "GROUNDED",
@@ -333,18 +352,20 @@ describe("Message context popover (MC-01..MC-08)", () => {
       }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Ver contexto" }));
-    const popover = screen.getByRole("dialog");
-    expect(within(popover).getByText("mcp:x")).toBeTruthy();
-    expect(within(popover).getByText("search_things")).toBeTruthy();
+    const region = screen.getByRole("region", {
+      name: "Contexto desta resposta",
+    });
+    expect(within(region).getByText("mcp:x")).toBeTruthy();
+    expect(within(region).getByText("search_things")).toBeTruthy();
   });
 
-  it("MC-06: material limitations stay visible on the message itself", () => {
+  it("INLINE-10: material limitations stay visible on the message itself", () => {
     renderMessage(makeTurn({ limitations: ["resultado truncado"] }));
-    // Visible without opening the popover.
+    // Visible without expanding the region.
     expect(screen.getByText(/resultado truncado/)).toBeTruthy();
   });
 
-  it("MC-07: opening one message's context never leaks another's", () => {
+  it("INLINE-07: two messages stay expanded simultaneously, isolated", () => {
     const obsA = { ...OBS, composition_mode: "cri" };
     const obsB = { ...OBS, composition_mode: "model" };
     render(
@@ -366,15 +387,35 @@ describe("Message context popover (MC-01..MC-08)", () => {
         ))}
       </ul>,
     );
-    const triggers = screen.getAllByRole("button", { name: "Ver contexto" });
-    fireEvent.click(triggers[1]);
-    const popover = screen.getByRole("dialog");
+    for (const trigger of screen.getAllByRole("button", {
+      name: "Ver contexto",
+    })) {
+      fireEvent.click(trigger);
+    }
+    const regions = screen.getAllByRole("region", {
+      name: "Contexto desta resposta",
+    });
+    expect(regions).toHaveLength(2);
     expect(
-      within(popover).getByText("Resposta gerada pelo modelo"),
+      within(regions[0]).getByText("Resposta organizada com CRI"),
     ).toBeTruthy();
     expect(
-      within(popover).queryByText("Resposta organizada com CRI"),
+      within(regions[0]).queryByText("Resposta gerada pelo modelo"),
     ).toBeNull();
+    expect(
+      within(regions[1]).getByText("Resposta gerada pelo modelo"),
+    ).toBeTruthy();
+    // Collapsing the first never touches the second.
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Ocultar contexto" })[0],
+    );
+    const remaining = screen.getAllByRole("region", {
+      name: "Contexto desta resposta",
+    });
+    expect(remaining).toHaveLength(1);
+    expect(
+      within(remaining[0]).getByText("Resposta gerada pelo modelo"),
+    ).toBeTruthy();
   });
 });
 

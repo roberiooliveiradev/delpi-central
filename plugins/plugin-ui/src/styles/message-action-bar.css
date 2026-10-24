@@ -121,6 +121,12 @@
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
+.delpi-ui-conversation-assistant-actions__inline-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25rem;
+}
+
 .delpi-ui-conversation-assistant-actions__inline:disabled {
   opacity: 0.55;
   cursor: not-allowed;
