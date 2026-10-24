@@ -239,6 +239,8 @@ Não pode:
 - alterar configuração;
 - contornar business rules.
 
+Especialista MCP do Portal: [94 — CLARA](./94-clara-especialista-mcp-controladoria-financas.md) (TARGET). As regras acima permanecem vigentes; a conciliação com a equivalência de capacidades da CLARA está em aberto como `CLARA-D01` (`DECISION_REQUIRED`).
+
 ## Dados sensíveis
 
 Não expor secrets/tokens em frontend state, prompts comuns ou logs.
