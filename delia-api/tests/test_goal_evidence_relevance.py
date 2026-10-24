@@ -24,9 +24,11 @@ from app.application.capability_provision.contracts import (
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
+    FOREIGN_SELECTION_INSTRUCTION_ID,
     GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
+    NATIVE_ASSESSMENT_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
 )
 from tests.conftest import load_test_orchestration_instructions
@@ -1099,3 +1101,228 @@ def test_recovery_feedback_carries_prior_result_preview(
         json.loads(feedback) if isinstance(feedback, str) else feedback
     )
     assert "BALANCA BALMAK" in json.dumps(parsed, ensure_ascii=False)
+
+
+def _two_provider_orchestrator(providers, proposal, *, enabled=True):
+    clause = _cri_clause() if enabled else None
+    model = FakeProposalModel(proposal)
+    orch = OperationalCapabilityOrchestrator(
+        providers,
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+        response_intelligence_enabled=enabled,
+        cri_instruction_clause=(
+            clause.text if clause is not None else None
+        ),
+        cri_instruction_version=(
+            clause.version if clause is not None else None
+        ),
+        orchestration_instructions=load_test_orchestration_instructions(),
+    )
+    return orch, model
+
+
+def _doc_cap():
+    return _cap("beta", "mcp", "read_guidance")
+
+
+def _doc_outcome():
+    return _outcome(
+        "knowledge",
+        structured={
+            "items": [
+                {
+                    "section": "s0055",
+                    "content": "Ex.: TERM. BALA 2,50-6,00MM2 NU GRANEL",
+                }
+            ]
+        },
+    )
+
+
+def test_irrelevant_recovers_via_foreign_evidence_composition(
+    capture_mode_logs,
+):
+    """Confirmed mismatch justifies the bounded foreign consult.
+
+    Inside the SAME single recovery round the native-sufficiency
+    assessment may require foreign evidence; the consult runs through
+    the owner workflow mechanics and its bounded evidence is injected
+    into the reformulated re-invocation arguments.
+    """
+    irrelevant = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "BALANCA BALMAK 1000KG"},
+                {"name": "BALANCA ELETRONICA 50KG"},
+            ]
+        },
+    )
+    relevant = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "TERM. BALA 0,50-2,27MM2"},
+                {"name": "TERM. BALA 1,00-2,50MM2"},
+            ]
+        },
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant, relevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    proposal = [
+        # Primary selection + literal arguments + irrelevant verdict.
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"}
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "records are scales, not terminals",
+            },
+        },
+        # Turn-goal extraction — defaulted.
+        {"goal_class": "record_lookup"},
+        # Primary native assessment (native-first).
+        {"status": "sufficient"},
+        # Self-index probe — declined.
+        {"probe_index": False},
+        # Recovery reselection: same group/capability.
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+        },
+        # Recovery assessment on the confirmed mismatch -> foreign
+        # evidence required; foreign leg resolves the designation.
+        {"status": "foreign_evidence_required"},
+        {"foreign_capability_id": "beta.read_guidance"},
+        # Reformulated re-invocation + conclusive judgment.
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "TERM. BALA"}
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        },
+    ]
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert pb.calls == [("read_guidance", {})]
+    assert pa.calls == [
+        ("search_items", {"query": "terminal bala"}),
+        ("search_items", {"query": "TERM. BALA"}),
+    ]
+    assert (
+        "foreign_invocation decision=ok" in capture_mode_logs.text
+    )
+    args_requests = [
+        r
+        for r in model.requests
+        if r.task_purpose_id == ARGUMENTS_INSTRUCTION_ID
+    ]
+    assert "foreign_evidence" in args_requests[-1].input_text
+
+
+def test_recovery_assessment_native_keeps_plain_reformulation(
+    capture_mode_logs,
+):
+    """When the recovery assessment still finds the owner sufficient,
+    no foreign consult runs — the single round reformulates exactly as
+    before (mechanism is gated, never unconditional)."""
+    irrelevant = _outcome(
+        "ok", structured={"items": [{"name": "BALANCA 1"}]}
+    )
+    relevant = _outcome(
+        "ok", structured={"items": [{"name": "TERM. BALA 10MM"}]}
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant, relevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    proposal = [
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"}
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "scales not terminals",
+            },
+        },
+        {"goal_class": "record_lookup"},
+        {"status": "sufficient"},
+        {"probe_index": False},
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+        },
+        {"status": "sufficient"},
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal tipo bala"}
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        },
+    ]
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert pb.calls == []
+    assert pa.calls == [
+        ("search_items", {"query": "terminal bala"}),
+        ("search_items", {"query": "terminal tipo bala"}),
+    ]
+    assert (
+        "foreign_invocation" not in capture_mode_logs.text
+    )
+    assert (
+        "relevance_recovery decision=reinvoke"
+        in capture_mode_logs.text
+    )

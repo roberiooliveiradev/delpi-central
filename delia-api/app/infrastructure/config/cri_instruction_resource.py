@@ -138,7 +138,7 @@ _ORCH_RESOURCE_ID = "delia.capability_orchestration.instructions"
 _ORCH_KIND = "orchestration_instructions"
 # v2 (plan 125 adendum): adds the goal/evidence relevance judgment
 # stage and the ``relevance_feedback`` argument-block clause.
-_ORCH_VERSIONS = frozenset({"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"})
+_ORCH_VERSIONS = frozenset({"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"})
 _ORCH_KEYS = frozenset(
     {"resource_id", "version", "kind", "owner", "instructions"}
 )

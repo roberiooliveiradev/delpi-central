@@ -6245,6 +6245,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...],
         goal: "OperationalCapabilityOrchestrator._TurnGoal" | None = None,
         deadline: TurnDeadline | None = None,
+        relevance_feedback: str | None = None,
     ) -> str:
         """Stage B/C: native sufficiency assessment (LOOP-02R1).
 
@@ -6278,6 +6279,15 @@ class OperationalCapabilityOrchestrator:
                             "business_subject": goal.business_subject,
                         }
                         if goal is not None
+                        else None
+                    ),
+                    # Bounded mismatch signal from a validated
+                    # goal/evidence judgment — present only during
+                    # the single governed recovery round; untrusted
+                    # data, never an instruction.
+                    "relevance_feedback": (
+                        json.loads(relevance_feedback)
+                        if relevance_feedback
                         else None
                     ),
                 },
@@ -6410,6 +6420,7 @@ class OperationalCapabilityOrchestrator:
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
         deadline: TurnDeadline,
+        relevance_feedback: str | None = None,
     ) -> "OperationalCapabilityOrchestrator._ForeignResult":
         """Execute the bounded foreign non-mutating step through the
         SAME owner-defined invocation mechanics as a selected target
@@ -6423,6 +6434,7 @@ class OperationalCapabilityOrchestrator:
             foreign_cap,
             workspace_context,
             correlation=correlation,
+            relevance_feedback=relevance_feedback,
             prior_turns=prior_turns,
             deadline=deadline,
         )
@@ -9095,11 +9107,61 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return None
+        # Bounded foreign composition inside the SAME recovery
+        # round (LOOP-02R1 mechanics reused verbatim): the
+        # correspondence judgment already proved the mismatch, so
+        # the native-sufficiency assessment now decides on
+        # confirmed divergence — never on speculation. A required
+        # foreign consult resolves evidence (e.g. the owner
+        # canonical designation) that is injected into the
+        # reformulated arguments of the single re-invocation.
+        # Selection/invocation failure degrades to plain
+        # reformulation — recovery is best-effort, still bounded.
+        foreign_evidence: str | None = None
+        if len(groups) > 1:
+            assessment = self._assess_native_path(
+                input_text,
+                sel_group,
+                sel_descriptor,
+                correlation,
+                workspace_context,
+                prior_turns,
+                goal=goal,
+                deadline=deadline,
+                relevance_feedback=feedback,
+            )
+            if assessment == "foreign_evidence_required":
+                found = self._select_foreign_capability(
+                    input_text,
+                    groups,
+                    sel_group_key,
+                    "enrichment",
+                    correlation,
+                    workspace_context,
+                    prior_turns,
+                    deadline,
+                )
+                if found is not None:
+                    foreign_key, foreign_cap = found
+                    foreign_result = self._invoke_foreign_evidence(
+                        input_text,
+                        foreign_key,
+                        foreign_cap,
+                        groups[foreign_key],
+                        correlation,
+                        workspace_context=workspace_context,
+                        prior_turns=prior_turns,
+                        deadline=deadline,
+                        relevance_feedback=feedback,
+                    )
+                    if foreign_result.evidence is not None:
+                        foreign_evidence = foreign_result.evidence
         new_args, missing = self._build_arguments(
             input_text,
             sel_descriptor,
             workspace_context,
             owner_evidence=owner_evidence,
+            foreign_evidence=foreign_evidence,
             relevance_feedback=feedback,
             business_subject=goal.business_subject,
             prior_turns=prior_turns,

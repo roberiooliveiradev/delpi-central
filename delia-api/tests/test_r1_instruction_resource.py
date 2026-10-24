@@ -47,12 +47,12 @@ _RESOURCE_PATH = (
 # governed-evolution gate, not a bug.
 _SNAPSHOT = {
     "delia.capability_orchestration.select_group": (
-        "7679e4316e15069e16ff00d7a189e14b9a8bb1b4045541b9227fd7440cf3974a",
-        5078,
+        "de3d5710ee13e822720e59946f7d82d0f80451aadab9fb7f29ed25804379c8a2",
+        5305,
     ),
     "delia.capability_orchestration.select_capability": (
-        "3d6bc40ec5f07697b99f89cbd62b48937f8c4bb0ecf8ecd8bb071229a59870be",
-        2838,
+        "62576be4da96c46f6b2e5f10101f32b5d7960ee213c2afee7bc9ed5dfec9111d",
+        3036,
     ),
     "delia.capability_orchestration.select_capability#with_goal": (
         "1b4c0a376870c6d4262604e8d3499901082d800b027959a53e38b697b634d9c2",
@@ -67,8 +67,8 @@ _SNAPSHOT = {
         989,
     ),
     "delia.capability_orchestration.arguments": (
-        "3569d091dec3f609f4ae13cc80d2003c5c93f4ef6b7ee0c568fb01fd50cb1e19",
-        5915,
+        "fbb3f48538057d895f2903544342f7d8fae00b9005d2405836ab8915f577ddfe",
+        5998,
     ),
     "delia.capability_orchestration.select_resolver": (
         "2864d08fccfd4f87b52041c1fe572abfe1768d01489a81b8aa6e8d216bcf9b57",
@@ -87,8 +87,8 @@ _SNAPSHOT = {
         3851,
     ),
     "delia.capability_orchestration.native_assessment": (
-        "d56b93b537d8689767377ed10f946e105d6ed8669a9a0f490449296dd123c8e0",
-        1651,
+        "b74596712aa99fe3a16400bbb3c70c0f771a44342ac8ed74602efe91538dad32",
+        2396,
     ),
     "delia.capability_orchestration.foreign_selection": (
         "5eb5bc9ce2603ee53c1e9547fc1b69a7808b0994c680bf86b62ed9d5439d108d",
@@ -103,8 +103,8 @@ _SNAPSHOT = {
         1067,
     ),
     "delia.capability_orchestration.candidate_arguments": (
-        "813e3f392445a238c53ed56e6085c9a1a725145aec9a7785e25ad78288db790e",
-        1087,
+        "057507638a56b8a03000715ea16a99b1439ae69cd83a91e8f5ccac188ea79805",
+        1385,
     ),
     "delia.capability_orchestration.select_candidate": (
         "c00fc6d9e76e5aa0620ee4b060165fddb799d9ed50edeb91453417fbe47d7101",
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "13"
+    assert res.version == "16"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]
