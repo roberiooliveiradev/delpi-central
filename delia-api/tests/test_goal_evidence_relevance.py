@@ -10,6 +10,7 @@ insufficiency — never a fabricated pertinence, never ACT/PREPARE.
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
@@ -783,3 +784,318 @@ def test_injection_in_mismatch_hint_stays_bounded(
     assert all(
         remote == "search_items" for remote, _ in provider.calls
     )
+
+
+# ---------------------------------------------------------------------------
+# D — contextual recovery: reformulation and cross-capability READ
+# ---------------------------------------------------------------------------
+
+
+def _orchestrator_multi(providers, proposal, *, enabled=True):
+    clause = _cri_clause() if enabled else None
+    return providers, OperationalCapabilityOrchestrator(
+        providers,
+        invoke_model=InvokeModel(FakeProposalModel(proposal)),
+        model_ref=TEST_MODEL_REF,
+        response_intelligence_enabled=enabled,
+        cri_instruction_clause=(
+            clause.text if clause is not None else None
+        ),
+        cri_instruction_version=(
+            clause.version if clause is not None else None
+        ),
+        orchestration_instructions=(
+            load_test_orchestration_instructions()
+        ),
+    )
+
+
+def _rel(correspondence, hint=None):
+    payload = {"correspondence": correspondence}
+    if hint:
+        payload["mismatch_hint"] = hint
+    return {GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: payload}
+
+
+def test_irrelevant_recovers_via_alternate_group_capability(
+    capture_mode_logs,
+):
+    """Cross-strategy round: a different already-live READ group may
+    supply the pertinent evidence (plan 125 adendum / doc 143 B)."""
+    alpha = FakeProvider(
+        "mcp",
+        [_group("mcp", "alpha", [_query_cap()])],
+        outcomes={
+            ("alpha", "search_items"): _outcome(
+                "ok",
+                structured={"items": [{"name": "BALANCA 1"}]},
+            )
+        },
+    )
+    beta_cap = _cap(
+        "beta",
+        "davi",
+        "consult_items",
+        schema=_QUERY_SCHEMA,
+    )
+    beta = FakeProvider(
+        "davi",
+        [_group("davi", "beta", [beta_cap])],
+        outcomes={
+            ("beta", "consult_items"): _outcome(
+                "ok",
+                structured={
+                    "items": [
+                        {"name": "TERMINAL BALA M6"},
+                        {"name": "TERMINAL BALA FEMEA 4MM"},
+                    ]
+                },
+            )
+        },
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "terminal bala"}},
+            relevance=None,
+        ),
+        _rel("irrelevant", "records are scales, not bullet terminals"),
+        # Recovery reselection: a different live group + capability.
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "davi:beta",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "consult_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "term. bala"}
+            },
+        },
+        _rel("corresponds"),
+    ]
+    providers, orch = _orchestrator_multi([alpha, beta], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert alpha.calls == [("search_items", {"query": "terminal bala"})]
+    assert beta.calls == [("consult_items", {"query": "term. bala"})]
+    assert (
+        "relevance_recovery decision=reinvoke"
+        in capture_mode_logs.text
+    )
+
+
+def test_irrelevant_recovers_same_group_alternate_capability(
+    capture_mode_logs,
+):
+    """A different READ capability of the SAME group is legitimate."""
+    wrong_cap = _cap(
+        "alpha", "mcp", "lookup_items", schema=_QUERY_SCHEMA
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "terminal bala"}},
+            relevance=None,
+        ),
+        _rel("irrelevant", "scales not terminals"),
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "mcp:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "lookup_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "term bala"}
+            },
+        },
+        _rel("corresponds"),
+    ]
+    provider, orch = _orchestrator(
+        [_query_cap(), wrong_cap],
+        {
+            ("alpha", "search_items"): _outcome(
+                "ok",
+                structured={"items": [{"name": "BALANCA 1"}]},
+            ),
+            ("alpha", "lookup_items"): _outcome(
+                "ok",
+                structured={"items": [{"name": "TERMINAL BALA M6"}]},
+            ),
+        },
+        proposal,
+    )
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert provider.calls == [
+        ("search_items", {"query": "terminal bala"}),
+        ("lookup_items", {"query": "term bala"}),
+    ]
+
+
+def test_recovery_reselection_not_applicable_falls_back_same_args_flow(
+    capture_mode_logs,
+):
+    """A not_applicable reselection keeps the same-capability
+    reformulation path (the model may still fix the query)."""
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "terminal bala"}},
+            relevance=None,
+        ),
+        _rel("irrelevant", "scales"),
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": False,
+                "capability_group_id": None,
+            },
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "term. bala"}
+            },
+        },
+        _rel("corresponds"),
+    ]
+    provider, orch = _orchestrator(
+        [_query_cap()],
+        {
+            ("alpha", "search_items"): [
+                _outcome(
+                    "ok", structured={"items": [{"name": "B1"}]}
+                ),
+                _outcome(
+                    "ok",
+                    structured={"items": [{"name": "TERMINAL BALA"}]},
+                ),
+            ],
+        },
+        proposal,
+    )
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert provider.calls == [
+        ("search_items", {"query": "terminal bala"}),
+        ("search_items", {"query": "term. bala"}),
+    ]
+
+
+def test_recovery_never_selects_non_resumable_capability(
+    capture_mode_logs,
+):
+    """Recovery reselection pointing at a PREPARE/ACT capability is
+    rejected — no mutating surface may be invoked."""
+    act_cap = _cap(
+        "alpha",
+        "mcp",
+        "create_item",
+        schema=_QUERY_SCHEMA,
+        op_class=SpecialistOperationClass.ACT,
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "terminal bala"}},
+            relevance=None,
+        ),
+        _rel("irrelevant", "scales"),
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "mcp:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "create_item",
+            },
+        },
+    ]
+    provider, orch = _orchestrator(
+        [_query_cap(), act_cap],
+        {
+            ("alpha", "search_items"): _outcome(
+                "ok", structured={"items": [{"name": "B1"}]}
+            ),
+            ("alpha", "create_item"): _outcome("ok"),
+        },
+        proposal,
+    )
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert ("create_item", {"query": "terminal bala"}) not in (
+        provider.calls
+    )
+    assert provider.calls == [
+        ("search_items", {"query": "terminal bala"})
+    ]
+
+
+def test_recovery_feedback_carries_prior_result_preview(
+    capture_mode_logs,
+):
+    """The recovery signal includes a bounded preview of what the
+    source actually returned — untrusted data, never instruction."""
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "terminal bala"}},
+            relevance=None,
+        ),
+        _rel("irrelevant", "records describe weighing scales"),
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "term. bala"}
+            },
+        },
+        _rel("corresponds"),
+    ]
+    provider, orch = _orchestrator(
+        [_query_cap()],
+        {
+            ("alpha", "search_items"): [
+                _outcome(
+                    "ok",
+                    structured={"items": [{"name": "BALANCA BALMAK"}]},
+                ),
+                _outcome(
+                    "ok",
+                    structured={"items": [{"name": "TERM BALA"}]},
+                ),
+            ],
+        },
+        proposal,
+    )
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    model = orch._invoke_model._port
+    arg_requests = [
+        r
+        for r in model.requests
+        if r.task_purpose_id == ARGUMENTS_INSTRUCTION_ID
+    ]
+    assert len(arg_requests) == 2
+    schema_block = arg_requests[1].input_text.split(
+        "<schema>", 1
+    )[1].split("</schema>", 1)[0]
+    feedback_block = json.loads(schema_block)
+    feedback = feedback_block.get("relevance_feedback")
+    assert feedback is not None
+    parsed = (
+        json.loads(feedback) if isinstance(feedback, str) else feedback
+    )
+    assert "BALANCA BALMAK" in json.dumps(parsed, ensure_ascii=False)

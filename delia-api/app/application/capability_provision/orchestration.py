@@ -151,6 +151,7 @@ from app.application.capability_provision.outcome_assessment import (
     parse_goal_evidence_judgment,
     MAX_CANDIDATE_ENTRIES,
     MAX_DESCRIPTION_CHARS,
+    MAX_EVIDENCE_RECORD_CHARS,
     MAX_MISMATCH_HINT_CHARS,
     MAX_MISSING_INPUTS,
     MAX_OWNER_EVIDENCE_CHARS,
@@ -5947,6 +5948,7 @@ class OperationalCapabilityOrchestrator:
                 remote_used,
                 action_id,
                 group,
+                groups,
                 arguments,
                 goal,
                 owner_evidence,
@@ -9687,6 +9689,8 @@ class OperationalCapabilityOrchestrator:
         group_key: str,
         remote_name: str,
         group: CapabilityGroup,
+        groups: Mapping[str, CapabilityGroup],
+        facts: EvidenceFacts | None,
         prior_arguments: dict[str, Any] | None,
         judgment: GoalEvidenceJudgment,
         goal: _TurnGoal,
@@ -9697,15 +9701,19 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         deadline: TurnDeadline | None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
-        """One bounded semantic-recovery round (plan 125 adendum).
+        """One bounded semantic-recovery round (plan 125 adendum /
+        doc 143 Trilha B).
 
         The judgment declared the returned evidence irrelevant to the
-        stated goal — re-propose the SAME capability's arguments once
-        under the bounded mismatch signal, revalidate the same
-        deterministic gates, and re-invoke a non-mutating capability
-        only. An identical query is never re-executed; any failure
-        returns ``None`` and the original outcome stands as
-        insufficient — no loops, no amplification, no PREPARE/ACT.
+        stated goal. Within this single guarded round the planner may
+        reconsider the READ strategy: re-propose arguments on the same
+        capability, or — through the same governed selection stages —
+        reselect a different live READ capability/group. Every gate
+        re-validates: live surface membership, resumable class,
+        argument validation, identifier provenance, budget. An
+        identical query on the same capability is never re-executed;
+        any failure returns ``None`` and the original outcome stands
+        as insufficient — no loops, no amplification, no PREPARE/ACT.
         """
         if descriptor.operation_class not in (
             _RESUMABLE_OPERATION_CLASSES
@@ -9728,13 +9736,68 @@ class OperationalCapabilityOrchestrator:
                 ],
                 "business_subject": goal.business_subject,
                 "scope_constraints": dict(goal.scope_constraints),
+                # Bounded preview of what the source actually
+                # returned — untrusted owner data, never
+                # instructions; lets the reformulation pivot on the
+                # observed mismatch (e.g. nomenclature, qualifiers).
+                "prior_result_preview": json.dumps(
+                    list(facts.records)[:MAX_RELEVANCE_RECORDS]
+                    if facts is not None
+                    else [],
+                    ensure_ascii=False,
+                    default=str,
+                )[:MAX_EVIDENCE_RECORD_CHARS],
             },
             ensure_ascii=False,
         )
         _RELEVANCE_RECOVERY_USED.set(True)
+        # Governed reselection inside the one allowed round: the
+        # planner may reconsider group and capability over the same
+        # live surface; falling back to the original descriptor keeps
+        # the same-capability reformulation path.
+        sel_group_key, sel_group, sel_descriptor = (
+            group_key,
+            group,
+            descriptor,
+        )
+        if len(groups) > 1 or len(group.capabilities) > 1:
+            status, maybe_key = self._select_group(
+                input_text,
+                groups,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+                relevance_feedback=feedback,
+            )
+            if status == "selected" and maybe_key in groups:
+                sel_group_key = maybe_key
+                sel_group = groups[maybe_key]
+            status, candidate = self._select_capability(
+                input_text,
+                sel_group,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+                relevance_feedback=feedback,
+            )
+            if status == "selected" and candidate is not None:
+                sel_descriptor = candidate
+        if sel_descriptor.operation_class not in (
+            _RESUMABLE_OPERATION_CLASSES
+        ):
+            _logger.info(
+                "orchestration stage=relevance_recovery "
+                "decision=rejected_class capability=%s "
+                "correlation_id=%s",
+                sel_descriptor.remote_name,
+                correlation,
+            )
+            return None
         new_args, missing = self._build_arguments(
             input_text,
-            descriptor,
+            sel_descriptor,
             workspace_context,
             owner_evidence=owner_evidence,
             relevance_feedback=feedback,
@@ -9747,7 +9810,7 @@ class OperationalCapabilityOrchestrator:
             return None
         if _unproven_identifier_inputs(
             new_args,
-            descriptor,
+            sel_descriptor,
             input_text,
             workspace_context,
             owner_evidence,
@@ -9755,7 +9818,13 @@ class OperationalCapabilityOrchestrator:
             # The informed proposal still invents an identifier —
             # fail closed on the original insufficiency.
             return None
-        if dict(prior_arguments or {}) == dict(new_args):
+        same_capability = (
+            sel_group_key == group_key
+            and sel_descriptor.remote_name == remote_name
+        )
+        if same_capability and dict(prior_arguments or {}) == dict(
+            new_args
+        ):
             _logger.info(
                 "orchestration stage=relevance_recovery "
                 "decision=identical_arguments correlation_id=%s",
@@ -9765,15 +9834,15 @@ class OperationalCapabilityOrchestrator:
         _logger.info(
             "orchestration stage=relevance_recovery "
             "decision=reinvoke capability=%s correlation_id=%s",
-            remote_name,
+            sel_descriptor.remote_name,
             correlation,
         )
         try:
             return self._invoke_selected(
-                group_key,
-                remote_name,
+                sel_group_key,
+                sel_descriptor.remote_name,
                 new_args,
-                group,
+                sel_group,
                 input_text,
                 correlation,
                 prior_turns,
@@ -9793,6 +9862,7 @@ class OperationalCapabilityOrchestrator:
         remote_used: str,
         action_id: str,
         group: CapabilityGroup,
+        groups: Mapping[str, CapabilityGroup],
         arguments: dict[str, Any] | None,
         goal: _TurnGoal,
         owner_evidence: str | None,
@@ -9853,6 +9923,8 @@ class OperationalCapabilityOrchestrator:
                 group_key,
                 remote_used,
                 group,
+                groups,
+                cri_facts,
                 arguments,
                 judgment,
                 goal,
@@ -10076,6 +10148,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
+        relevance_feedback: str | None = None,
     ) -> tuple[str, str | None]:
         """Stage 1: pick the capability group whose surface matches.
 
@@ -10093,12 +10166,25 @@ class OperationalCapabilityOrchestrator:
         # including when only one live group exists — so unproven
         # relevance cannot start an operational owner invoke.
         observation = _prior_observation_context(prior_turns)
+        group_payload = _group_summaries(
+            groups, prior_observation=observation
+        )
+        if relevance_feedback is not None:
+            # Bounded semantic-mismatch signal from a validated
+            # goal/evidence judgment — untrusted data, never an
+            # instruction: it informs the single governed recovery
+            # reselection round only (plan 125 adendum / doc 143-B).
+            group_payload = json.dumps(
+                {
+                    "capability_groups": json.loads(group_payload),
+                    "relevance_feedback": json.loads(relevance_feedback),
+                },
+                ensure_ascii=False,
+            )
         proposal = self._propose(
             input_text,
             block_tag="capability_groups",
-            block_payload=_group_summaries(
-                groups, prior_observation=observation
-            ),
+            block_payload=group_payload,
             instruction_id=GROUP_SELECTION_INSTRUCTION_ID,
             instruction=self._instruction(GROUP_SELECTION_INSTRUCTION_ID),
             expected_fields=("applicable", "capability_group_id"),
@@ -10190,6 +10276,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
+        relevance_feedback: str | None = None,
     ) -> tuple[str, ProviderCapability | None]:
         """Stage 2: pick a capability from that group's surface."""
         invocable = [
@@ -10221,12 +10308,22 @@ class OperationalCapabilityOrchestrator:
         # applicability to the user ask still requires a validated
         # proposal (applicable may be false).
         observation = _prior_observation_context(prior_turns)
+        cap_payload = _capability_payload(
+            group, prior_observation=observation
+        )
+        if relevance_feedback is not None:
+            # Same bounded recovery signal as stage 1 — untrusted data.
+            cap_payload = json.dumps(
+                {
+                    "capabilities": json.loads(cap_payload),
+                    "relevance_feedback": json.loads(relevance_feedback),
+                },
+                ensure_ascii=False,
+            )
         proposal = self._propose(
             input_text,
             block_tag="capabilities",
-            block_payload=_capability_payload(
-                group, prior_observation=observation
-            ),
+            block_payload=cap_payload,
             instruction_id=CAPABILITY_SELECTION_INSTRUCTION_ID,
             instruction=self._instruction(CAPABILITY_SELECTION_INSTRUCTION_ID),
             expected_fields=("applicable", "remote_name"),

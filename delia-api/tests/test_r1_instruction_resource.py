@@ -47,12 +47,12 @@ _RESOURCE_PATH = (
 # governed-evolution gate, not a bug.
 _SNAPSHOT = {
     "delia.capability_orchestration.select_group": (
-        "bbb52632af85308842fff7f75565728d03df20eced644a7915eba187baa62e1f",
-        3130,
+        "d7a2de168577ae4149f3891ca010d73cd6c5d6fdad6da8578572b961ec8ef25c",
+        3748,
     ),
     "delia.capability_orchestration.select_capability": (
-        "5e97bbb7246a19a6dfd28d0c16eec845bd390a82f18f81b0c846ab87b9ad9b62",
-        2335,
+        "3d6bc40ec5f07697b99f89cbd62b48937f8c4bb0ecf8ecd8bb071229a59870be",
+        2838,
     ),
     "delia.capability_orchestration.select_capability#with_goal": (
         "1b4c0a376870c6d4262604e8d3499901082d800b027959a53e38b697b634d9c2",
@@ -67,8 +67,8 @@ _SNAPSHOT = {
         989,
     ),
     "delia.capability_orchestration.arguments": (
-        "5cbc47396f4bec43361d43194529da425a7bc752e5f105c930f5ece74016fbac",
-        4098,
+        "e4350010473175dd8d1e5cc30051b8b4e5d59819bc9aa80f945c62de8b9f4b32",
+        4251,
     ),
     "delia.capability_orchestration.select_resolver": (
         "2864d08fccfd4f87b52041c1fe572abfe1768d01489a81b8aa6e8d216bcf9b57",
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "2"
+    assert res.version == "3"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]
