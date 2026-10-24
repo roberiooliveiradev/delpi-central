@@ -59,15 +59,15 @@ Testes (`tests/test_admin_checklist_routes.py`): publicação autorizada; ACCESS
 
 | operationId | Método/Path | Regra |
 |---|---|---|
-| `list_competences` | GET `/` | access efetivo |
-| `open_competence` | POST `/{period}` | access; idempotente por `period`; exige versão `PUBLISHED` vigente |
-| `get_competence` | GET `/{period}` | access |
-| `list_competence_items` | GET `/{period}/items` | access; filtros `sheet`, `origin_kind`, `recipient_area`, `branch_scope` |
-| `get_competence_item` | GET `/{period}/items/{item_key}` | access; detalhe e proveniência |
+| `list_closing_competences` | GET `/` | access efetivo |
+| `open_closing_competence` | POST `/` body `{period}` | access; idempotente por `period`; exige versão `PUBLISHED` vigente |
+| `get_closing_competence` | GET `/{period}` | access |
+| `list_closing_competence_items` | GET `/{period}/items` | access; filtros `sheet`, `origin_kind`, `recipient_area`, `branch_scope`, `state` |
+| `get_closing_competence_item` | GET `/{period}/items/{item_key}` | access; detalhe e proveniência |
 
 Invariantes provados em PG real:
 
-- abertura concorrente/replay da mesma competência ⇒ **uma única** `monthly_competence` (`UNIQUE(period)` + retorno do existente);
+- abertura concorrente/replay da mesma competência ⇒ **uma única** `monthly_competence` (`UNIQUE(period)` + `ON CONFLICT` + retorno do existente); prova com **8 threads reais** na revisão arquitetural: exatamente 1 `created`, 7 replays, snapshot completo;
 - abertura com template `DRAFT` ⇒ `no_published_template` (sem fallback);
 - snapshot persiste `template_version_id` de origem; publicar v2 **não altera** snapshot v1;
 - os 53 itens nascem `EXPECTED` — `EXPECTED != ATTACHED/VALIDATED` (RQ-P2-13);
