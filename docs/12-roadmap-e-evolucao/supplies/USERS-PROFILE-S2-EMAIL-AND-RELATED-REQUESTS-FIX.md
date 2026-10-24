@@ -43,3 +43,14 @@ Status: **CONCLUÍDO** · Escopo: `supplies-api` + `plugins/supplies` · Sem per
 ## Deploy / rollback
 
 `git revert <sha>` + redeploy `supplies` + `supplies-api`. Sem flag, sem migração, sem contrato removido (campos aditivos apenas).
+
+
+## Revisão GPT — USERS.PROFILE.S2 (2026-10-23)
+
+**Veredito:** `ACCEPT_WITH_RESIDUAL` em código/contratos; `DEPLOY=PASS (executor-reported)`; `VISUAL_AUTHENTICATED=INCONCLUSIVE`. Inspecionados no GitHub o `UserProfileService`, o `CoreApiHttpGateway` e a documentação no source `dd2373b2d7`. `_identity_for` solicita `reveal_email=True` apenas para consulta de perfil de terceiro sob `_assert_can_view(self|admin)`; os consumidores de enriquecimento de solicitante continuam com o default mascarado. A seção de SCs agora fornece `branch` do conjunto `allowed_units(actor)` quando não há seleção, e `date_from=2000-01-01` explícito para não herdar lookback de 90 dias. `None` no lookup reverso é diferenciado de `[]` (sem vínculo). Não houve mudança de owner.
+
+**Evidência reportada pelo executor (não reexecutada pelo GPT):** correspondência `Core user_id=c8ef4b53-…` ↔ `protheus_user_id=000304` ↔ `SC 178764 C1_USER=000304`, BFF 455 testes PASS, MFE 390 PASS, deploy `supplies-api` imagem `1e9740399ca5`, MFE `1cda5d133454`, bundle `App-DUTk1nyF.js`, health. Não houve smoke autenticado da ficha com e-mail pleno e SC; logo `PROFILE_EMAIL_RUNTIME=INCONCLUSIVE`, `RELATED_SC_RUNTIME=INCONCLUSIVE` até validação de sessão real.
+
+**Residual importante de contrato:** em `related_purchase_requests`, depois da chamada ao gateway, o código extrai `data/items/total` e não verifica explicitamente `data.error` caso o produtor retorne erro em envelope JSON com HTTP 200; uma falha nesse formato poderia voltar a ser interpretada como lista vazia. Inventariar formato real de falhas do produtor e adicionar teste positivo/negativo de propagação de erro antes do PASS funcional integral. Verificar também que todos os `allowed_units` são aceitos pelo produtor, e medir latência de `date_from=2000-01-01` em histórico extenso (sem regressão por scan caro). E-mail completo de terceiro permanece restrito à política Core e a `self|admin`; não generalizar para lookup de lista.
+
+**Gate final:** `USERS.PROFILE.S2_CODE=ACCEPT_WITH_RESIDUAL`; `DEPLOY=PASS (executor-reported)`; `VISUAL_AUTHENTICATED=INCONCLUSIVE`; `ERROR_ENVELOPE_CHECK=PENDING`. Próximo teste PO: abrir a ficha da usuária autorizada e confirmar e-mail completo + SC 178764; nenhum write ERP ou alteração no cutover de fornecedores.
