@@ -1,7 +1,7 @@
 # SC/PC Detail Enrichment — Matriz de Contratos e Dados (P0 Discovery)
 
 > Status: `DISCOVERY_COMPLETE` · `IMPLEMENTATION_NOT_AUTHORIZED` · `NO_CODE_CHANGE`
-> Baseline: `f89e73376c` · Data: 2026-06-06 · Autor: Devin (investigação read-only)
+> Baseline: `f89e73376c` · Data editorial: 2026-10-24 (corrigida em P0.R1) · Autor: Devin
 
 Matriz mestra de campos das fichas **Detalhe da SC** e **Detalhe do PC** do Portal Suprimentos.
 Cada campo é classificado por prova real de código — nunca por roadmap ou inferência.
@@ -56,7 +56,7 @@ SD1 (recebimentos) ──aninhados por item em ambos os produtores──▶ MFE
 | Fornecedores | `header.suppliers[{code,store,name}]` | `C7_FORNECE/C7_LOJA`+`A2_*` | **Não** | `PROVEN_IN_BFF` | idem |
 | Primeira/última emissão de pedido | `header.first_order_date`, `last_order_date` | `C7_EMISSAO` | **Não** | `PROVEN_IN_BFF` | idem |
 | Primeiro/último recebimento | `header.first_receipt_date`, `last_receipt_date` | `D1_DTDIGIT` | **Não** | `PROVEN_IN_BFF` | idem |
-| Totais solicitado/pedido/recebido | `header.requested_quantity`, `ordered_quantity`, `received_quantity` | `C1_QUANT`,`C1_QUJE`,`D1_QUANT` | **Não** | `PROVEN_IN_BFF` | idem |
+| Totais solicitado/pedido/recebido | `header.requested_quantity`, `ordered_quantity`, `received_quantity` | `C1_QUANT`,`C1_QUJE`,`C7_QUJE` | **Não** | `PROVEN_IN_BFF` ⚠ | idem — **soma sem agrupar por `unit` e sem conversão; escopo = linhas autorizadas. Não usar como KPI único (P0.R1)** |
 | Alerta de atraso | `header.has_overdue_order`, `max_days_overdue` | `C7_DATPRF` derivado | **Não** | `PROVEN_IN_BFF` | idem |
 
 ### Itens (`lines[]`)
@@ -78,11 +78,16 @@ SD1 (recebimentos) ──aninhados por item em ambos os produtores──▶ MFE
 | Resíduo | `residual` | `C1_RESIDUO='S'` | **Não** (via stage) | `PROVEN_IN_BFF` | `lines_sql.py:329` |
 | Pedidos por item | `purchase_orders[]` com `order_number`,`order_item`,`ordered_quantity`,`received_quantity`,`open_quantity`,`issue_date`,`expected_delivery_date`,`supplier_*`,`buyer`,`order_user_*`,`derived{delivery_status,days_overdue,days_until_due,receipt_status}`,`receipts[]` | SC7 + SD1 | **Não** | `PROVEN_IN_BFF` | `lines_sql.py:505-545`, `_enrich_order` |
 
-### Timeline
+### Timeline (eventos derivados — não auditoria)
 
 | Campo | Tipo | Eventos provados | Renderizado? | Classe |
 |---|---|---|---|---|
-| `timeline[]` | `{type,date,label,reference,metadata}` | `request_created`, `purchase_order_created`, `expected_delivery`, `receipt` (ordenado por data) | **Não** | `PROVEN_IN_BFF` (`_build_timeline:499`) |
+| `timeline[]` | `{type,date,label,reference,metadata}` | `request_created` (C1_EMISSAO), `purchase_order_created` (C7_EMISSAO), `expected_delivery` (C7_DATPRF — **data planejada, não evento passado**), `receipt` (D1_DTDIGIT); ordenado por data | **Não** | `PROVEN_IN_BFF` (`_build_timeline:499`) |
+
+Semântica (P0.R1): trilha derivada de campos de data das fontes, **não**
+histórico auditável — não cobre aprovação, alteração de prazo, cancelamento,
+bloqueio nem encerramento residual. Exibir como «Acompanhamento»; marcos de
+previsão (`expected_delivery`) visualmente distintos de ocorrências.
 
 ### Desejado mas NÃO comprovado — SC
 
@@ -97,9 +102,12 @@ SD1 (recebimentos) ──aninhados por item em ambos os produtores──▶ MFE
 ## Matriz mestra — PC (Detalhe do Pedido de Compra)
 
 > **Restrição estrutural provada:** `get_open_order`/`build_purchase_orders_list_filters`
-> só cobre linhas abertas (`C7_QUANT > C7_QUJE`, `C7_RESIDUO <> 'S'`).
-> Pedido totalmente entregue/residual retorna **404** — a ficha PC é uma ficha de
-> pedidos *em aberto*, não um histórico completo. Ver `CONTRACT_GAPS`.
+> (`purchase_orders_list_sql.py:178-205`) só cobre linhas abertas
+> (`C7_QUANT > C7_QUJE`, `C7_RESIDUO <> 'S'`, `D_E_L_E_T_ = ''`, filial válida).
+> **Semântica do 404:** «não localizado entre os pedidos em aberto consultáveis»
+> — engloba totalmente entregue, residual/encerrado, logicamente excluído,
+> fora da filial ou inexistente; **não permite concluir que o pedido foi
+> concluído**. Copy neutra recomendada (D1 opção A, P0.R1).
 
 ### Cabeçalho
 
@@ -154,6 +162,22 @@ SD1 (recebimentos) ──aninhados por item em ambos os produtores──▶ MFE
 - SC atendida por N pedidos: provada (`purchase_orders` agrupa por `(order_number,order_item)`).
 - Pedido com N SCs: estrutural (vínculo é por item).
 - ⚠️ `received_quantity` do pedido usa `C7_QUJE` (baixa na SC7) enquanto `receipts` somam `D1_QUANT` — divergências por reconciliação são possíveis; documentar em UX como "entregue (baixa)" vs "notas registradas".
+
+### Identidade e autorização dos links (P0.R1)
+
+- SC detail: `can_use_purchase_requests` + `@require_unit("branch")` +
+  **escopo de CC no produtor** — uma SC pode existir e retornar subconjunto
+  de linhas ou 404 conforme a visibilidade do usuário.
+- PC detail: `can_use_operations` + `@require_unit("branch")`.
+- Capabilities **diferentes** → usuário pode abrir uma ficha e receber 403 na
+  outra. Link técnico não é concessão de acesso; AuthZ permanece server-side.
+- UX: destino 403 → «Conteúdo não disponível para o seu perfil»;
+  404 → «registro não localizado» — ambos neutros, sem dados do destino.
+- Chaves de link sempre compostas por `(branch, número)` e, quando de item,
+  `(branch, número, item)` — nunca número isolado entre filiais.
+- Cenários a cobrir em testes futuros: SC com 1 PC; SC com N PCs; PC com
+  itens de SCs diferentes; recebimento parcial; vínculo→403; vínculo→404;
+  item residual; `source_request_*` incompleto/vazio.
 
 ## Endpoints BFF atuais
 
