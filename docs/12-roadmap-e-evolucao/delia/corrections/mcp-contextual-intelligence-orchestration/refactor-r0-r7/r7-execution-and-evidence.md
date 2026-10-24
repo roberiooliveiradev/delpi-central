@@ -201,3 +201,6 @@ A matriz congelada diferencia corretamente v16 dos agregados de versões anterio
 C1 ambiental DAVI permanece pendente de aceite formal do owner CI; CRI OFF live continua TEST_NOT_RUN. Release por serviço requer reviews + autorização operacional específica após comprovar confiabilidade e segurança; não houve deploy autorizado.
 
 `NEXT_ACTION=FOREIGN_EVIDENCE_TO_ARGUMENTS_CONTRACT_DIAGNOSTIC`; `O2_RELIABILITY=FAIL`; `R7_CLOSED=NO`; `DEPLOY_GATE=BLOCKED`.
+
+
+**Próximo contrato bounded (2026-10-24):** [146 — Evidence-bound arguments: especificação para Devin](../146-evidence-bound-arguments-contract-and-validation-task.md). Estado `PLANNED / AUTHORIZATION_REQUIRED_FOR_PRODUCT_DIFF`; inventariar `foreign_evidence → arguments`, escolher REUSE/EXTEND com evidência, caracterizar origem/valor e testar contra O2 e casos metamórficos. **Não autoriza nova engine, deploy ou fechamento R7**.
