@@ -117,3 +117,12 @@ Direção aprovada: oferecer **inteligência técnica viva** para consumidores M
 - **Residuais inalterados:** provider Files K01–K10 `TEST_NOT_RUN`; `SECOND_USER_AUTHZ=TEST_NOT_RUN`; DÉLIA O2 e R4 seguem nos gates da Trilha B.
 - **Deploy V2:** `fc9f04988c` → imagem `b6e8366a00f4`, rollback `davi-knowledge-v2-rollback-fc9f0498`. Smoke produtivo PASS: AuthZ negativa 401, 2 tools/0 resources, MP/PI reais recuperados com proveniência, V1 íntegro, `TERM. BALA` presente na norma.
 
+
+
+## 10. Seleção contextual documental vs operacional (2026-10-24)
+
+**TASK:** `DAVI-CONTEXTUAL-DISCOVERY-KNOWLEDGE-SELECTION-GENERALIZATION-01`. Evidência integral: `davi-contextual-discovery-selection-generalization-001.md`.
+
+- **Causa medida:** a capability documental só tinha aliases lexicais genéricos (`guia técnico`, `documentação técnica`) — queries telegráficas sem sintaxe de pergunta (`normas de codificação…`) caíam no ranking lexical onde a capability marcava 0.0 e sumia (ou era deslocada por `search_products` via entity markers).
+- **Fix declarativo e genérico:** `_CONCEPT_ONLY_START` ganhou padrão telegráfico de busca documental (verbo de consulta opcional + vocabulário de documento: `normas|regras|padrão|diretrizes|convenções|nomenclatura|documentação|manual|guia|codificação`); `_MIXED_REQUEST` ganhou verbos de requisição para preservar compostas; `semanticAliases`/`entityDomainMarkers` da capability ampliados com o mesmo vocabulário (PT+EN) — sem termos de domínio, produto, tópico ou operationId.
+- **Contrato preservado:** 2 tools/0 resources; perguntas documentais → capability de conhecimento; empresariais → operações legítimas; compostas → ambas dentro de `top_k`. Benchmark 230 casos baseline↔candidato **idêntico** (top1 0.9608, hard_negative_leaks 0) — melhoria aditiva sem regressão.

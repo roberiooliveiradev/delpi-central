@@ -107,3 +107,12 @@ A fronteira documental para consumidores MCP foi ratificada pelo owner api-delpi
 - Extensões bounded: admission v4 (conceito owner-domain → superfície owner), cláusulas de seleção/argumentos/síntese no recurso governado, miss pós-consulta dentro da única rodada de recuperação, e citação abaixo de conteúdo na linha bounded CRI.
 - Eval isolado real-model: D1–D3, T1–T3, V1–V3, G1–G5 executados; matriz e traces no doc 145 §4.
 - `O2_RESOLVED=INCONCLUSIVE`: a dependência MP/PI foi **publicada** (corpus V2, `mp_description_standards` com `TERM.` ratificado) — a lacuna remanescente é sequenciamento do modelo, não ausência de fonte. `R4_AUTHORIZATION=NO` permanece.
+
+
+## Registro — seleção contextual documental do DAVI (2026-10-24)
+
+- `TASK_ID=DAVI-CONTEXTUAL-DISCOVERY-KNOWLEDGE-SELECTION-GENERALIZATION-01`; evidência integral em `api-delpi/docs/integrations/evidence/davi-contextual-discovery-selection-generalization-001.md`.
+- Correção **causal e mínima** no discovery existente (nenhum router/planner/RAG novo): vocabulário de busca documental (`normas|regras|padrão|nomenclatura|codificação|manual|diretrizes|convenções`) agora classifica consultas telegráficas como conceito e descreve semanticamente a capability `read_governed_technical_knowledge` — sem termos de domínio, produto, tópico ou provider.
+- Queries documentais equivalentes (longas e telegráficas) selecionam consistentemente a capability de conhecimento; consultas empresariais (`terminal bala` como exemplo de produto, `SB1`, estoque, código) permanecem operacionais; compostas mantêm ambas as metades dentro do `top_k`. A composição doc+operacional continua responsabilidade da DÉLIA, conforme o contrato.
+- Benchmark 230 casos: métricas idênticas baseline↔candidato (top1 0.9608, leaks 0) — melhoria aditiva sem regressão; matriz de seleção 27 casos + suites DAVI verdes.
+- `O2_RESOLVED=INCONCLUSIVE` **permanece**: este registro cobre apenas a disponibilidade/seleção do lado DAVI — a lacuna DÉLIA O2 é sequenciamento do modelo e segue sob homologação DÉLIA (`R4_AUTHORIZATION=NO`).

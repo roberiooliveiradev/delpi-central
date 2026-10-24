@@ -204,8 +204,8 @@
         "page": {"minimum": 1, "maximum": 10000},
         "page_size": {"minimum": 1, "maximum": 3}
       },
-      "semanticAliases": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "conhecimento técnico", "technical guidance", "governed knowledge"],
-      "entityDomainMarkers": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "technical guide"]
+      "semanticAliases": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "conhecimento técnico", "technical guidance", "governed knowledge", "normas técnicas", "normas tecnicas", "regras técnicas", "regras tecnicas", "padrão técnico", "padrao tecnico", "padrões técnicos", "padroes tecnicos", "norma técnica", "norma tecnica", "regra técnica", "regra tecnica", "documentação", "documentacao", "manual técnico", "manual tecnico", "manual", "normas", "regras", "padrão", "padrao", "padrões", "padroes", "diretrizes", "convenções", "convencoes", "nomenclatura", "codificação", "codificacao", "descrição técnica", "descricao tecnica", "instruções técnicas", "instrucoes tecnicas", "guia", "normas de codificação", "normas de codificacao", "regras de codificação", "regras de codificacao", "normas de descrição", "normas de descricao", "padrão de descrição", "padrao de descricao", "technical standards", "technical rules", "coding rules", "nomenclature", "conventions", "documentation", "guidelines"],
+      "entityDomainMarkers": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "technical guide", "normas", "regras", "padrão", "padrao", "nomenclatura", "codificação", "codificacao", "documentação", "documentacao", "manual", "diretrizes", "convenções", "convencoes", "guia"]
     },
     {
       "operationId": "search_products",

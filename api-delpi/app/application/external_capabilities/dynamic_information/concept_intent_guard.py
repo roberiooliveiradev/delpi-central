@@ -29,12 +29,26 @@ _CONCEPT_ONLY_START = re.compile(
     r"quais (?:sao )?as diferencas entre\b|"
     r"como funciona(?:m)?\b|"
     r"como (?:se )?interpreta(?:r)?\b|"
-    r"quais? (?:sao )?(?:as |os )?(?:normas?|regras?|padroes?|diretrizes?|"
-    r"convencoes?|abrevia\w*|siglas?|terminologias?|nomenclaturas?)\b|"
+    r"quais? (?:sao )?(?:as |os )?(?:normas?|regras?|padroes?|padrao|"
+    r"diretrizes?|convencoes?|abrevia\w*|siglas?|terminologias?|"
+    r"nomenclaturas?|documentac\w*|manuais?|codifica\w*)\b|"
     r"(?:existe|ha) (?:uma |um |alguma )?(?:norma|padrao|diretriz|convencao|"
     r"regra|documentacao|guia)\b|"
+    # Telegraphic document-seeking starts: the query opens with document
+    # vocabulary (optionally after a consult/read request verb) instead of a
+    # question marker — "normas de codificacao…", "consultar guia tecnico…".
+    # Still syntax-level: no domain terms, entity names or operationIds.
+    r"(?:consultar|consulte|consulta|buscar|busque|busca|leia|ler|"
+    r"localize|procure|verifique|verificar)?\s*"
+    r"(?:as |os |a |o |uma |um |sobre |de |da |do )?\s*"
+    r"(?:normas?|regras?|padroes?|padrao|diretrizes?|convencoes?|"
+    r"nomenclaturas?|documentac\w*|manuais?|guias?|codifica\w*|"
+    r"descricao (?:tecnica|normativa|padrao)|instrucoes (?:tecnicas|de "
+    r"operacao))\b|"
     r"what does\b|what is the difference between\b|"
     r"how (?:does|do)\b|are there (?:any )?(?:rules|standards|guidelines)\b|"
+    r"(?:show|list|get|read) (?:me )?(?:the )?(?:rules|standards|"
+    r"guidelines|conventions|nomenclature|documentation|manual)\b|"
     r"define\b"
     r")"
 )
@@ -45,7 +59,8 @@ _MIXED_REQUEST = re.compile(
     r"\b(?:e|tambem|alem disso|and|also)\s+"
     r"(?:me\s+)?(?:qual|quais|quanto|quantos|quantas|"
     r"mostre|liste|consulte|busque|verifique|"
-    r"calcule|traga|informe|diga|show|list|check|calculate)\b"
+    r"encontre|localize|procure|obtenha|retorne|exiba|apresente|"
+    r"calcule|traga|informe|diga|show|list|check|calculate|find)\b"
 )
 
 _CURRENT_WINDOW = re.compile(
