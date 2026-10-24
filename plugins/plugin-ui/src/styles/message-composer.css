@@ -172,6 +172,19 @@ textarea.delpi-ui-native-control.delpi-ui-message-composer__input::placeholder {
   .delpi-ui-message-composer__hint {
     display: none;
   }
+
+  .delpi-ui-message-composer__send-label,
+  .delpi-ui-message-composer__enqueue-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }
 
 /* Fallback sem container queries: viewport estreito. */
@@ -221,9 +234,10 @@ textarea.delpi-ui-native-control.delpi-ui-message-composer__input::placeholder {
   min-height: 44px;
 }
 
-/* Stop is the same primary toolbar slot as Send, never a second toolbar. */
+/* Stop is the same primary toolbar slot as Send, never a second toolbar —
+   same pill family height as send/enqueue (spec 125 §12). */
 .delpi-ui-message-composer__stop {
-  min-height: 40px;
+  min-height: 34px;
   white-space: nowrap;
 }
 .delpi-ui-message-composer__stop:focus-visible {

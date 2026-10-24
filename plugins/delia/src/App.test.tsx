@@ -64,7 +64,7 @@ describe("App shell", () => {
       const input = screen.getByRole("textbox", { name: "Pergunte à DÉLIA" });
       expect(container.querySelector('.delia-interaction__pending-row')).toBeNull();
       fireEvent.change(input, { target: { value: "Pergunta de teste" } });
-      fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+      fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
       await waitFor(() => {
         expect(container.querySelector('.delia-interaction__pending-row [data-motion="processing"]')).toBeTruthy();
       });

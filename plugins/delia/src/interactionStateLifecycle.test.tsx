@@ -42,7 +42,7 @@ function submitTurn(input: string) {
   fireEvent.change(screen.getByLabelText("Pergunte à DÉLIA"), {
     target: { value: input },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+  fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
 }
 
 function mockMatchMedia(reduced: boolean) {
@@ -78,7 +78,7 @@ describe("lifecycle A — fluxo normal", () => {
     expect(container.querySelector(".delpi-ui-conversation-reception")).toBeTruthy();
     expect(container.querySelector(".delia-interaction__pending-row")).toBeNull();
     expect(container.querySelector('[data-motion="processing"]')).toBeNull();
-    expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy();
   });
 
   it("A02–A04 pending/processing durante fetch e encerra na resposta", async () => {
@@ -111,7 +111,7 @@ describe("lifecycle A — fluxo normal", () => {
         ),
       ).toBeTruthy();
     });
-    expect(screen.getByRole("button", { name: "Interromper resposta" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Interromper resposta em andamento" })).toBeTruthy();
 
     resolveFetch(
       new Response(JSON.stringify(SUCCESS_PAYLOAD), {
@@ -125,7 +125,7 @@ describe("lifecycle A — fluxo normal", () => {
       expect(container.querySelector(".delia-interaction__pending-row")).toBeNull();
       expect(container.querySelector('[data-motion="processing"]')).toBeNull();
     });
-    expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy();
   });
 
   it("A05–A06 responding one-shot volta a idle via reduced motion", async () => {
@@ -259,7 +259,7 @@ describe("lifecycle B — erros", () => {
     fireEvent.change(screen.getByLabelText("Pergunte à DÉLIA"), {
       target: { value: draft },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
     expect(container.querySelector(".delia-interaction__pending-row")).toBeNull();
@@ -321,14 +321,14 @@ describe("lifecycle C — cancelamento e concorrência", () => {
     submitTurn("cancelável");
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Interromper resposta" })).toBeTruthy(),
+      expect(screen.getByRole("button", { name: "Interromper resposta em andamento" })).toBeTruthy(),
     );
     const signal = deliaApiCalls(fetchMock)[0][1].signal as AbortSignal;
-    fireEvent.click(screen.getByRole("button", { name: "Interromper resposta" }));
+    fireEvent.click(screen.getByRole("button", { name: "Interromper resposta em andamento" }));
 
     await waitFor(() => {
       expect(container.querySelector(".delia-interaction__pending-row")).toBeNull();
-      expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy();
     });
     expect(signal.aborted).toBe(true);
 
@@ -368,11 +368,11 @@ describe("lifecycle C — cancelamento e concorrência", () => {
     render(<App getAccessToken={() => "t"} />);
     submitTurn("primeiro");
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Interromper resposta" })).toBeTruthy(),
+      expect(screen.getByRole("button", { name: "Interromper resposta em andamento" })).toBeTruthy(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Interromper resposta" }));
+    fireEvent.click(screen.getByRole("button", { name: "Interromper resposta em andamento" }));
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy(),
+      expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy(),
     );
 
     submitTurn("segundo");
@@ -393,8 +393,8 @@ describe("lifecycle C — cancelamento e concorrência", () => {
     // APPLY_PREPARED path uses responding_not_cancelable — covered via pending card flows
     // in interaction.test; here we assert idle composer has Enviar, not stop, before send.
     render(<App getAccessToken={() => "t"} />);
-    expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Interromper resposta" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Interromper resposta em andamento" })).toBeNull();
   });
 
   it("C07 desmontagem com request pendente não deixa processing no remount", async () => {
@@ -452,13 +452,13 @@ describe("lifecycle C — cancelamento e concorrência", () => {
     render(<App getAccessToken={() => "t"} />);
     submitTurn("double-stop");
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Interromper resposta" })).toBeTruthy(),
+      expect(screen.getByRole("button", { name: "Interromper resposta em andamento" })).toBeTruthy(),
     );
-    const stop = screen.getByRole("button", { name: "Interromper resposta" });
+    const stop = screen.getByRole("button", { name: "Interromper resposta em andamento" });
     fireEvent.click(stop);
     fireEvent.click(stop);
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy(),
+      expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy(),
     );
     resolveFetch(
       new Response(JSON.stringify(SUCCESS_PAYLOAD), {
@@ -536,10 +536,10 @@ describe("lifecycle E — integração conversacional", () => {
     submitTurn("bloqueio");
     await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     fireEvent.change(input, { target: { value: "segunda" } });
-    fireEvent.click(screen.getByRole("button", { name: "Interromper resposta" }));
+    fireEvent.click(screen.getByRole("button", { name: "Interromper resposta em andamento" }));
     // After stop, Enviar returns — the in-flight count stays 1 (no second POST while pending).
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy(),
+      expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy(),
     );
     expect(deliaApiCalls(fetchMock)).toHaveLength(1);
     expect(document.activeElement === input || input.value === "segunda").toBe(true);

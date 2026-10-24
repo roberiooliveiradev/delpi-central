@@ -56,7 +56,7 @@ describe("App — starter suggestions integration (F02-A-R1)", () => {
         name: "Pergunte à DÉLIA",
       });
       fireEvent.change(input, { target: { value: "pergunta qualquer" } });
-      fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+      fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
       await waitFor(() =>
         expect(
           container.querySelector(SUGGESTIONS_SECTION),

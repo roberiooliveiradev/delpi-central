@@ -7,8 +7,10 @@ export type ComposerEnqueueButtonProps = {
   /** External gates (empty draft, capture override) — never the only authority. */
   disabled?: boolean;
   onEnqueue: () => void;
-  /** Accessible name + collapsed label. */
+  /** Visible label — compact ("Fila"); icon-only on narrow containers. */
   label?: string;
+  /** Full accessible name — independent of the short visible label. */
+  ariaLabel?: string;
   /** HelpTooltip content — product may override for context. */
   helpText?: string;
   className?: string;
@@ -27,8 +29,9 @@ export type ComposerEnqueueButtonProps = {
 export function ComposerEnqueueButton({
   disabled = false,
   onEnqueue,
-  label = "Adicionar à fila",
-  helpText = "Guardar esta pergunta na fila da conversa enquanto a resposta atual termina.",
+  label = "Fila",
+  ariaLabel = "Adicionar mensagem à fila",
+  helpText = "Adicionar mensagem à fila — guardar esta pergunta na fila da conversa enquanto a resposta atual termina.",
   className,
 }: ComposerEnqueueButtonProps) {
   return (
@@ -37,7 +40,7 @@ export function ComposerEnqueueButton({
         type="button"
         variant="default"
         disabled={disabled}
-        aria-label={label}
+        aria-label={ariaLabel}
         onClick={onEnqueue}
         className={[
           "delpi-ui-message-composer__enqueue",

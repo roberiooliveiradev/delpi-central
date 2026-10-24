@@ -196,7 +196,7 @@ describe("DeliaComposer — voice dictation surface swap", () => {
       container.querySelectorAll(".delpi-ui-message-composer__surface"),
     ).toHaveLength(1);
     expect(screen.queryByLabelText("Pergunte à DÉLIA")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar mensagem" })).toBeNull();
     expect(
       screen.getByRole("region", { name: "Gravação de áudio em andamento" }),
     ).toBeTruthy();
@@ -230,7 +230,7 @@ describe("DeliaComposer — voice dictation surface swap", () => {
       screen.getByRole("region", { name: "Prévia do áudio gravado" }),
     );
     expect(screen.queryByLabelText("Pergunte à DÉLIA")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar mensagem" })).toBeNull();
     expect(onSubmit).not.toHaveBeenCalled();
     // Local-only: no audio send control, no fake transcription state.
     expect(screen.queryByRole("button", { name: "Enviar áudio" })).toBeNull();
@@ -381,7 +381,7 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
     // Real transcribing state — no textarea, no send, no fake progress.
     await waitFor(() => screen.getByText("Transcrevendo sua fala…"));
     expect(screen.queryByLabelText("Pergunte à DÉLIA")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar mensagem" })).toBeNull();
     expect(
       screen.getByRole("button", { name: "Cancelar transcrição" }),
     ).toBeTruthy();

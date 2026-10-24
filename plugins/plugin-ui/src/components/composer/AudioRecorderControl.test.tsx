@@ -388,7 +388,7 @@ describe("AudioRecorderControl — permission and capture", () => {
       "rascunho preservado",
     );
     expect(
-      (screen.getByRole("button", { name: "Enviar" }) as HTMLButtonElement)
+      (screen.getByRole("button", { name: "Enviar mensagem" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
   });
@@ -486,7 +486,7 @@ describe("MessageComposer — submitDisabled", () => {
     fireEvent.keyDown(screen.getByLabelText("Mensagem"), { key: "Enter" });
     expect(onSubmit).not.toHaveBeenCalled();
     expect(
-      (screen.getByRole("button", { name: "Enviar" }) as HTMLButtonElement)
+      (screen.getByRole("button", { name: "Enviar mensagem" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(screen.getByLabelText("Mensagem")).toHaveProperty("value", "ainda aqui");

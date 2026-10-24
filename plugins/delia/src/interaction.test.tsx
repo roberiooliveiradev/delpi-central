@@ -51,7 +51,7 @@ function submitTurn(input: string) {
   fireEvent.change(screen.getByLabelText("Pergunte à DÉLIA"), {
     target: { value: input },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+  fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
 }
 
 afterEach(() => {
@@ -66,7 +66,7 @@ describe("DÉLIA interaction surface", () => {
       screen.getByLabelText("Interação com a DÉLIA"),
     ).toBeTruthy();
     expect(screen.getByLabelText("Pergunte à DÉLIA")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy();
   });
 
   it("input accepts text", () => {
@@ -142,7 +142,7 @@ describe("DÉLIA interaction surface", () => {
     render(<App getAccessToken={() => "t"} />);
 
     const button = screen.getByRole("button", {
-      name: "Enviar",
+      name: "Enviar mensagem",
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     fireEvent.click(button);
@@ -182,10 +182,10 @@ describe("DÉLIA interaction surface", () => {
     // composer must surface stop, not a second non-cancelable "Enviando…" gate.
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Interromper resposta" }),
+        screen.getByRole("button", { name: "Interromper resposta em andamento" }),
       ).toBeTruthy(),
     );
-    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar mensagem" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Enviando…" })).toBeNull();
     resolveFetch(
       new Response(JSON.stringify(SUCCESS_PAYLOAD), {
@@ -194,7 +194,7 @@ describe("DÉLIA interaction surface", () => {
       }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy(),
+      expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy(),
     );
   });
 

@@ -23,7 +23,7 @@ function submitTurn(input: string) {
   fireEvent.change(screen.getByLabelText("Pergunte à DÉLIA"), {
     target: { value: input },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+  fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
 }
 
 afterEach(() => {

@@ -10,6 +10,8 @@ export type ComposerSendButtonProps = {
   disabled?: boolean;
   /** Visible label; may collapse to icon-only via CSS on narrow containers. */
   label?: string;
+  /** Full accessible name — independent of the short visible label. */
+  ariaLabel?: string;
   /** Accessible name while sending (honest, indeterminate). */
   loadingLabel?: string;
   /** HelpTooltip content — product may override for context. */
@@ -31,8 +33,9 @@ export function ComposerSendButton({
   loading = false,
   disabled = false,
   label = "Enviar",
+  ariaLabel = "Enviar mensagem",
   loadingLabel = "Enviando…",
-  helpText = "Enviar o texto escrito.",
+  helpText = "Enviar mensagem.",
   className,
 }: ComposerSendButtonProps) {
   return (
@@ -41,7 +44,7 @@ export function ComposerSendButton({
         type="submit"
         variant="primary"
         disabled={disabled || loading}
-        aria-label={loading ? loadingLabel : label}
+        aria-label={loading ? loadingLabel : ariaLabel}
         className={[
           "delpi-ui-message-composer__send",
           className,

@@ -108,12 +108,12 @@ function typeDraft(text: string) {
 }
 
 function sendDraft() {
-  fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+  fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
 }
 
 function enqueueDraft() {
   fireEvent.click(
-    screen.getByRole("button", { name: "Adicionar à fila" }),
+    screen.getByRole("button", { name: "Adicionar mensagem à fila" }),
   );
 }
 
@@ -157,7 +157,7 @@ describe("F03-B ephemeral conversation queue — admission", () => {
     ) as HTMLTextAreaElement;
     expect(input.disabled).toBe(false);
     expect(
-      screen.getByRole("button", { name: "Adicionar à fila" }),
+      screen.getByRole("button", { name: "Adicionar mensagem à fila" }),
     ).toBeTruthy();
   });
 
@@ -372,7 +372,7 @@ describe("F03-B ephemeral conversation queue — pause and gates", () => {
     enqueueDraft();
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Interromper resposta" }),
+      screen.getByRole("button", { name: "Interromper resposta em andamento" }),
     );
     await new Promise((r) => setTimeout(r, 30));
     expect(deliaApiCalls(fetchMock)).toHaveLength(1);

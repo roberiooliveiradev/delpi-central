@@ -99,7 +99,7 @@ export function MessageComposer({
   onChange,
   onSubmit,
   onEnqueue,
-  enqueueLabel = "Adicionar à fila",
+  enqueueLabel = "Fila",
   onClearDraft,
   inputId,
   inputLabel,

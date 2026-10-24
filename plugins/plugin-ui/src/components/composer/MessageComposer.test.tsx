@@ -29,7 +29,7 @@ describe("MessageComposer — surface e escrita", () => {
     expect(container.querySelectorAll(".delpi-ui-message-composer__surface"))
       .toHaveLength(1);
     expect(screen.getByLabelText("Pergunte")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Enviar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Enviar mensagem" })).toBeTruthy();
     // Textarea has no inner frame of its own.
     const input = container.querySelector(
       "textarea.delpi-ui-message-composer__input",
@@ -74,7 +74,7 @@ describe("MessageComposer — surface e escrita", () => {
     fireEvent.keyDown(screen.getByLabelText("Pergunte"), { key: "Enter" });
     expect(onSubmit).not.toHaveBeenCalled();
     expect(
-      (screen.getByRole("button", { name: "Enviar" }) as HTMLButtonElement)
+      (screen.getByRole("button", { name: "Enviar mensagem" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
   });
@@ -145,7 +145,7 @@ describe("MessageComposer — send button", () => {
 
   it("send click submits once and only via explicit intent", () => {
     const { onSubmit } = renderComposer({ value: "pergunta real" });
-    fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enviar mensagem" }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 });
@@ -176,8 +176,8 @@ describe("MessageComposer — stop response", () => {
     const onStop = vi.fn();
     const onSubmit = vi.fn();
     renderComposer({ value: "draft", loading: true, requestMode: "responding_cancelable", onStop, onSubmit });
-    const stop = screen.getByRole("button", { name: "Interromper resposta" });
-    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    const stop = screen.getByRole("button", { name: "Interromper resposta em andamento" });
+    expect(screen.queryByRole("button", { name: "Enviar mensagem" })).toBeNull();
     fireEvent.click(stop);
     expect(onStop).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
@@ -187,14 +187,14 @@ describe("MessageComposer — stop response", () => {
 
   it("does not display stop for non-cancelable work", () => {
     renderComposer({ value: "draft", loading: true, requestMode: "responding_not_cancelable", onStop: vi.fn() });
-    expect(screen.queryByRole("button", { name: "Interromper resposta" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Interromper resposta em andamento" })).toBeNull();
     expect((screen.getByRole("button", { name: "Enviando…" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("prevents action while stopping and keeps draft intact", () => {
     const onStop = vi.fn();
     renderComposer({ value: "rascunho", loading: true, requestMode: "stopping", onStop });
-    const stop = screen.getByRole("button", { name: "Interrompendo…" }) as HTMLButtonElement;
+    const stop = screen.getByRole("button", { name: "Interrompendo resposta…" }) as HTMLButtonElement;
     expect(stop.disabled).toBe(true);
     fireEvent.click(stop);
     expect(onStop).not.toHaveBeenCalled();
@@ -203,7 +203,7 @@ describe("MessageComposer — stop response", () => {
 
   it("does not imply a cancelable request from loading alone", () => {
     renderComposer({ value: "x", loading: true });
-    expect(screen.queryByRole("button", { name: "Interromper resposta" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Interromper resposta em andamento" })).toBeNull();
   });
 });
 
@@ -257,7 +257,7 @@ describe("MessageComposer — bodyOverride (dictation surface swap)", () => {
     expect(screen.getByTestId("capture")).toBeTruthy();
     // No hidden, focusable text field and no text send while capturing.
     expect(screen.queryByLabelText("Pergunte")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar mensagem" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Ditar" })).toBeNull();
     expect(screen.queryByText(/Enter envia/)).toBeNull();
   });
@@ -310,7 +310,7 @@ describe("MessageComposer — enqueue while in-flight (F03-B)", () => {
     const input = screen.getByLabelText("Pergunte") as HTMLTextAreaElement;
     expect(input.disabled).toBe(true);
     expect(
-      screen.queryByRole("button", { name: "Adicionar à fila" }),
+      screen.queryByRole("button", { name: "Adicionar mensagem à fila" }),
     ).toBeNull();
   });
 
@@ -327,10 +327,10 @@ describe("MessageComposer — enqueue while in-flight (F03-B)", () => {
     expect(input.disabled).toBe(false);
     // Stop stays primary — enqueue never replaces it.
     expect(
-      screen.getByRole("button", { name: "Interromper resposta" }),
+      screen.getByRole("button", { name: "Interromper resposta em andamento" }),
     ).toBeTruthy();
     const enqueue = screen.getByRole("button", {
-      name: "Adicionar à fila",
+      name: "Adicionar mensagem à fila",
     }) as HTMLButtonElement;
     expect(enqueue.disabled).toBe(false);
   });
@@ -344,7 +344,7 @@ describe("MessageComposer — enqueue while in-flight (F03-B)", () => {
       requestMode: "responding_not_cancelable",
     });
     fireEvent.click(
-      screen.getByRole("button", { name: "Adicionar à fila" }),
+      screen.getByRole("button", { name: "Adicionar mensagem à fila" }),
     );
     expect(onEnqueue).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
@@ -373,8 +373,97 @@ describe("MessageComposer — enqueue while in-flight (F03-B)", () => {
       requestMode: "responding_not_cancelable",
     });
     const enqueue = screen.getByRole("button", {
-      name: "Adicionar à fila",
+      name: "Adicionar mensagem à fila",
     }) as HTMLButtonElement;
     expect(enqueue.disabled).toBe(true);
+  });
+});
+
+describe('MessageComposer — CAB compact action buttons (spec 125 §12)', () => {
+  it('CAB-01/02/03: short visible labels, semantic icons, full accessible names', () => {
+    const { container } = renderComposer({ value: 'pergunta' });
+    const send = screen.getByRole('button', { name: 'Enviar mensagem' });
+    // visible text is the short label, not the accessible name
+    expect(
+      send.querySelector('.delpi-ui-message-composer__send-label')
+        ?.textContent,
+    ).toBe('Enviar');
+    // semantic icon present
+    expect(send.querySelector('svg')).toBeTruthy();
+    void container;
+  });
+
+  it('CAB-01/06: queue uses compact Fila label, neutral secondary variant', () => {
+    const { container } = renderComposer({
+      value: 'pergunta',
+      loading: true,
+      onEnqueue: () => {},
+    });
+    const enqueue = screen.getByRole('button', {
+      name: 'Adicionar mensagem à fila',
+    });
+    expect(
+      enqueue.querySelector('.delpi-ui-message-composer__enqueue-label')
+        ?.textContent,
+    ).toBe('Fila');
+    // secondary: default variant (not primary fill)
+    expect(enqueue.className).not.toContain('delpi-ui-action-btn--primary');
+    void container;
+  });
+
+  it('CAB-01/03/06: stop is compact, primary contextual, tooltip parity', () => {
+    renderComposer({
+      value: 'x',
+      requestMode: 'responding_cancelable',
+      onStop: () => {},
+    });
+    const stop = screen.getByRole('button', {
+      name: 'Interromper resposta em andamento',
+    });
+    expect(
+      stop.querySelector('.delpi-ui-message-composer__send-label')
+        ?.textContent,
+    ).toBe('Interromper');
+    expect(stop.className).toContain('delpi-ui-action-btn--primary');
+    // HelpTooltip wrapper exists (wrap adds a wrapping element)
+    expect(stop.closest('.delpi-ui-help-tooltip--wrap')).toBeTruthy();
+  });
+
+  it('CAB-07: stopping state shows honest label + full name, disabled', () => {
+    renderComposer({
+      value: 'x',
+      loading: true,
+      requestMode: 'stopping',
+      onStop: () => {},
+    });
+    const stop = screen.getByRole('button', {
+      name: 'Interrompendo resposta…',
+    }) as HTMLButtonElement;
+    expect(stop.disabled).toBe(true);
+    expect(
+      stop.querySelector('.delpi-ui-message-composer__send-label')
+        ?.textContent,
+    ).toBe('Interrompendo…');
+  });
+
+  it('CAB-05: all three actions share the pill family', () => {
+    renderComposer({
+      value: 'x',
+      loading: true,
+      requestMode: 'responding_cancelable',
+      onEnqueue: () => {},
+      onStop: () => {},
+    });
+    const enqueue = screen.getByRole('button', {
+      name: 'Adicionar mensagem à fila',
+    });
+    const stop = screen.getByRole('button', {
+      name: 'Interromper resposta em andamento',
+    });
+    expect(enqueue.className).toContain(
+      'delpi-ui-message-composer__enqueue',
+    );
+    expect(stop.className).toContain('delpi-ui-message-composer__send');
+    expect(stop.className).toContain('delpi-ui-message-composer__stop');
   });
 });
