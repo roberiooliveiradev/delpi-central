@@ -465,7 +465,7 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 **TASK_ID:** `DELIA-C3-SEMANTIC-RELEVANCE-GOVERNED-RECOVERY-CROSSCUTTING-01`  
 **ORIGEM:** doc 141 §12 (O2: pedido `2 exemplos de terminal bala`, retorno `BALANCA BALMAK 1000KG` e `BALANCA ELETRONICA 50KGX5G`).  
 **CLASSE:** correção funcional transversal bounded, prioritária antes de avançar R4; **não** é nova etapa R3 nem autorização para redefinir M04/M05/M06/M07.  
-**ESTADO:** `PLANNED_FOR_IMMEDIATE_EXECUTION` (documentação apenas; runtime ainda não corrigido). `R4_AUTHORIZED=NO` e `DEPLOY_AUTHORIZED=NO`.
+**ESTADO:** `EXECUTED` — evidência no [doc 142](./142-semantic-relevance-governed-recovery-implementation.md); extensão cross-capability da Trilha B no [doc 144](./144-delia-cross-capability-contextual-recovery-implementation.md). `R4_AUTHORIZED=NO` e `DEPLOY_AUTHORIZED=NO`.
 
 ### Falha e evidência
 
@@ -496,3 +496,5 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 ## Gate de correção obrigatório pré-R4 — DAVI Knowledge / DÉLIA MCP guidance (2026-10-24)
 
 **Documento executivo vinculante:** [143 — DAVI Knowledge e recuperação multi-estratégia](./143-davi-governed-knowledge-and-delia-cross-source-recovery-gate.md). `TASK_ID=DELIA-C3-DAVI-KNOWLEDGE-MCP-GUIDANCE-AND-TRANSVERSAL-RECOVERY-01`. Duas trilhas com owners distintos: (A) api-delpi/DAVI comprova oferta real de documentação governada e seu acesso por consumidores, versus corpus Git/Agent Studio Files sem sync verificado; (B) DÉLIA utiliza guidance/contexto MCP como dados não autoritativos, avalia pertinência e recupera pesquisa via planner semântico existente, inclusive reformulação `terminal→TERM.` e alternativa READ elegível quando contratualmente permitida. Caso real: `TERM. BALA` trouxe produtos pertinentes 10080092/10081004; `TERMINAL BALA` trouxe balanças, confirmando que filtros e pertinência não equivalem a resultado correto. O algoritmo de busca ainda requer inventário do owner. Norma específica de nomenclatura MP/PI `TO_INVENTORY`; documento SB1 do corpus não a comprova. Guardar AuthZ, orçamento, limites, contratos, provenance, ausência de provider mechanics no planner e security review de impersonação do doc142. **Etapa funcional prioritária antes de R4/M06–M07; R4 não está autorizado, fase não avança por documentação e nenhuma promoção produtiva é autorizada.**
+
+**Status da Trilha B (2026-10-24):** `EXECUTED` — recuperação contextual cross-capability implementada e avaliada A/B isolada; ver [doc 144](./144-delia-cross-capability-contextual-recovery-implementation.md). Residual: norma de nomenclatura MP/PI depende da Trilha A (DAVI), que permanece `NOT_EXECUTED`. `R4_AUTHORIZED=NO`.

@@ -67,3 +67,11 @@ Task independente `DAVI-KNOWLEDGE-INTELLIGENCE-DOCUMENTATION-RECOVERY-AND-PRODUC
 A autorização de deploy DAVI desta task é independente do estado histórico acima; não autoriza código DÉLIA, R4–R7 nem publicação unilateral de documentos no provider.
 
 Release bounded `284998fbf03caca018492d4ab5c41aed80f8ae5e` publicado e implantado somente em api-delpi: health 200, MCP sem bearer 401, duas tools/zero resources e novos estados de disponibilidade verificados no container. Regressão: 6013 PASS, 30 SKIP, duas falhas de banco reproduzidas no baseline. Isso confirma a sinalização operacional, não recupera conteúdo documental para a DÉLIA. Provider K01–K10 e acesso documental seguem pendentes; não desbloqueia R4.
+
+## Registro de execução — Trilha B (2026-10-24)
+
+- `B0=EXECUTED` (RED→GREEN, +5 testes, módulo 28); `B1=EXECUTED`; `B2=EVIDENCE_READY_FOR_REVIEW`. Evidência completa: [doc 144](./144-delia-cross-capability-contextual-recovery-implementation.md).
+- Implementado: `relevance_feedback` untrusted em `_select_group`/`_select_capability`/`_build_arguments`; `_recover_relevance` reexecuta seleção governada dentro da única rodada permitida (mesma capability reformulada ou READ alternativo elegível); `prior_result_preview` bounded; instruções orchestration v3; gates idênticos (live surface, resumable class, provenance, dedup, budget).
+- Live A/B kimi-k3: matriz 11/11 PASS; O2 — baseline apresentou balanças, candidato julgou `irrelevant`, recuperou (cross-capability DAVI e reformulação em tentativas distintas) e encerrou honesto; `term. bala` direto retorna registros pertinentes reais — gap residual é nomenclatura do owner (dependência da Trilha A), não da máquina.
+- **Desvio registrado:** auth do eval via admin impersonation (doc 144 §4); re-execução sob credencial sancionada exigida antes do aceite. `DEPLOY_AUTHORIZATION=NO`; `R4_AUTHORIZATION=NO`; Trilha A permanece `NOT_EXECUTED`.
+
