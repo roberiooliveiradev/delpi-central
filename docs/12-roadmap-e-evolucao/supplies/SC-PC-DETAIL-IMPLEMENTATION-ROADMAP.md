@@ -133,3 +133,15 @@ etapas usam somente dados já entregues ao MFE; pendentes apenas decisões D1/D2
 **D1=APPROVED_OPTION_A:** mensagem neutra em 404 do PC, sem inferir conclusão nem construir endpoint histórico. **D2=APPROVED:** exibir na ficha SC (quando disponíveis/autorizados) `approval.approver_name`, `suggested_supplier` (rótulo «Fornecedor sugerido») e `account_code` (rótulo «Conta contábil», seção administrativa da ficha principal). A aprovação de D2 **substitui a recomendação anterior de deixar `account_code` fora da ficha principal**. A granularidade é por item quando assim estabelecida no produtor; evitar header fictício.
 
 **EN.A1 escopo para autorização futura:** declarar e validar os DTOs SC atualmente entregues pelo BFF, inclusive campos D2, sem alterar UI, producer, BFF, segurança ou contratos de rede. Testar campos opcionais/nulos, identidades compostas e preservação de códigos. **EN.A1=READY_TO_AUTHORIZE, não autorizado automaticamente.** As etapas EN.A2–A7 seguem não autorizadas. D3–D6 permanecem fora da Fase A.
+
+## EN.A1 executada (2026-10-24)
+
+**EN.A1 = DONE.** `types.ts` da feature SC ampliado com todos os campos do
+payload real (`PurchaseRequestDetailHeader/Line`, `SupplierRef`,
+`ApprovalRef`, `PurchaseRequestLinkedOrder`, `PurchaseRequestReceipt`,
+`PurchaseRequestTimelineEvent`); `account_code` declarado por item (string,
+zeros à esquerda — conforme D2 aprovada); caveat semântico documentado nos
+totais de quantidade. Novo `PurchaseRequestDetail.contract.test.ts` (9 testes)
++ 447/447 suíte MFE + typecheck + build. Registro completo:
+`SC-PC-DETAIL-EN-A1-CONTRACT-TYPES.md`. **EN.A2 = READY_FOR_PO**
+(pendente apenas autorização; dados tipados disponíveis).
