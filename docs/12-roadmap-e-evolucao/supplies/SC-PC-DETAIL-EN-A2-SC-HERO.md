@@ -88,3 +88,10 @@ botões); `title` da lista de CCs acessível.
 **READY** — itens já têm `unit`, `request_required_date`, `ordered_quantity`,
 `request_open_quantity`, `suggested_supplier`, `account_code` (D2),
 `approval`, `purchase_orders[]` tipados. Falta apenas autorização.
+
+
+## Revisão GPT — EN.A2 (2026-10-24)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para código e documentação; `DEPLOY_STATUS=NOT_RUN`, smoke visual autenticado `INCONCLUSIVE`.** Conferidos no SHA `485c65abe1` os componentes `PurchaseRequestDetailPage.tsx`, os helpers `query.ts` e o documento desta etapa. A apresentação de identidade, centros de custo, aprovação por linha e alerta derivado de dados autorizados respeita o contrato. `header.*_quantity` não foi usado como KPI global. 452 testes, TypeScript e build PASS são **reportados** pelo executor, não reexecutados pelo GPT.
+
+**Residual técnico localizado:** `countLinkedOrders()` deduplica `branch|order_number`, mas não descarta identidade incompleta (ex.: filial vazia, número vazio). Uma coleção não vazia com referências incompletas pode produzir contador não nulo; adicionar cenário negativo e decidir renderização neutra/omissão dessas referências antes de considerar plenamente coberta a semântica da contagem. Não criar número de pedido, filial ou consulta adicional por fallback. **Residual de homologação:** layout real desktop/mobile, foco e temas permanecem sem evidência de runtime; o deploy de EN.A2 não foi autorizado/executado. EN.A3 permanece dependente de autorização específica, e o aceite de EN.A2 não a libera automaticamente.
