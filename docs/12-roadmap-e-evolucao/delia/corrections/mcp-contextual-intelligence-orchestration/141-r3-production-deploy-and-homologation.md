@@ -119,3 +119,17 @@ Harness `r1r2_integrated_eval.py` executado dentro do container produtivo contra
 | `COORDINATION_REVIEW_REQUIRED` | YES |
 | `R4_AUTHORIZED` | NO |
 | `PLAN_COMPLETE` | NO |
+
+
+## 12. Parecer independente da coordenação — 2026-10-24
+
+**REVIEWED_REPORT_SHA:** `2fc8d17304972914ba0f7b9e8de36df6fdf47cbd`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL` — deploy R3 aceito quanto à promoção e às funcionalidades comprovadas, mas não homologação irrestrita de pertinência semântica. **R4_AUTHORIZED=NO**, **PLAN_COMPLETE=NO**.
+
+A coordenação confirmou no GitHub a publicação do doc 141, README e ledger. Os digests `85cdd244f531…` (novo) e `aafa5a262344…` (rollback), os checks 11/11 e a sequência real de logs foram **reportados pelo executor**; esta revisão não acessou independentemente o runtime. Há evidência reportada suficiente para aceitar a implantação de R3, com `PROD_DEPLOY=ACCEPT_WITH_RESIDUAL`, sem determinar rollback por falta de regressão material demonstrada. CRI OFF real e NEG-PROVIDER permanecem `TEST_NOT_RUN`; tokens reais `NOT_AVAILABLE`; performance deve ser monitorada.
+
+**Ressalva de qualidade funcional O2:** a pergunta `2 exemplos de terminal bala` recebeu itens `10450070 BALANCA BALMAK 1000KG` e `10450535 BALANCA ELETRONICA 50KGX5G` segundo o doc 141. Embora o retorno seja estruturalmente válido e grounded na fonte, **a correspondência semântica entre 'terminal bala' e 'balança' não foi demonstrada**. Não registrar `O2_BUSINESS_RELEVANCE=PASS` por inferência. Exigir revisão bounded da consulta normalizada, argumentos de `delpi.search_products`, candidatos, nomes/categorias e critério de avaliação de pertinência, comparando com a baseline anterior. Classificar `O2_RELEVANCE=INCONCLUSIVE` até evidência; não alterar contratos nem criar regras lexicais/provider-specific. Se a resposta for inadequada de fato, classificar estágio divergente e corrigir em task própria governada, sem mascarar com JSON válido. Isso não prova defeito introduzido por R3: A/B doc 140 reportou o mesmo comportamento em A e B.
+
+**Observação NEG-SCHEMA:** o probe `quais dados existem do material` executou listing READ legítimo, em vez de clarificação. O teste de ausência de argumento obrigatório só é PASS se a capability invocada de fato exigia o argumento; esta rodada não comprova esse caso negativo. Manter `NEG_SCHEMA_REQUIRED_ARG=NOT_PROVEN_BY_THIS_PROBE`; testes unitários focados anteriores preservados. N-UNK passou nesta execução, mas contrato do check ainda está sob owner. O limite byte-bound runtime de discover (owner DAVI) segue decisão arquitetural separada.
+
+**Disposição final:** `R3_IMPLEMENTATION=ACCEPT_WITH_RESIDUAL`; `R3_DEPLOY=ACCEPT_WITH_RESIDUAL`; `R3_TESTED_BUSINESS_OUTCOMES=VERIFIED_FOR_D8_D8R`; `O2_RELEVANCE=INCONCLUSIVE`; `R3_GENERALIZATION=ACCEPT_WITH_RESIDUAL`. Não reabrir M04/M05 sem prova causal de regressão. Próximo trabalho bounded é a revisão semântica O2/NEG-SCHEMA pelo owner de avaliação, se prioridade; R4 segue dependente de autorização explícita e dos gates canônicos.
