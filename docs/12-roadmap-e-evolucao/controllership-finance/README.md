@@ -478,3 +478,8 @@ O PO aprovou **seed inicial dos 53 itens em `DRAFT`**, com publicação governad
 ### Revisão transversal GO — `GO_RECOMMENDED` (24/10/2026)
 
 [Doc 98](./98-ciclo3-go-review-transversal-p6-min-p2-read.md): todos os gates materiais PASS (persistência padrão irmão, invariantes, contratos `CONTRACT_FREEZE=PASS`, AuthZ, UI/plugin-ui, plano de testes, escopo, decisões PO). Solicitação `CF-C3-P6-MIN-P2-READ-RUNTIME-GO-001` pronta para o PO. **`GO_RECOMMENDED` ≠ autorização** — `IMPLEMENTATION_AUTHORIZED=NO` até aprovação expressa. Deploy em gate separado.
+
+
+### Primeiro GO de runtime concedido — 24/10/2026
+
+O PO autorizou **somente o incremento `P6-MIN + P2-READ`**, com seed v1 de 53 itens `DRAFT`, API administrativa mínima sem página P6, competências/snapshot/P2 leitura, testes e Help. **Documento vinculante:** [99 — autorização de implementação e handoff Devin](./99-ciclo3-go-runtime-p6-min-p2-read-e-handoff-devin.md). `IMPLEMENTATION_AUTHORIZED=YES / SCOPE=P6-MIN+P2-READ_ONLY` e `DEPLOY_PRODUCTION_AUTHORIZED=NO`. Registros anteriores `IMPLEMENTATION_AUTHORIZED=NO` neste README são históricos para outros slices ou antes do GO; nenhum outro runtime foi autorizado e os checkpoints CP02/CP03 ainda precisam ser provados.
