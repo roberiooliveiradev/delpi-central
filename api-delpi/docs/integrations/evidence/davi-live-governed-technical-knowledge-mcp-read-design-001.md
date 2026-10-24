@@ -7,7 +7,7 @@
 
 ## 1. Problema e objetivo
 
-DAVI possui exatamente duas tools MCP: `discover_delpi_information` e `execute_delpi_information`. Hoje discovery oferece orientação declarativa e operações READ; consulta documental substantiva via MCP está `NOT_EXPOSED` (recovery report `davi-knowledge-documentation-recovery-01.md`, commit `35bceffa31c3290a6c78d30f8c83e935e8c67241`). O corpus governado Git V1 (15 documentos), manifesto, índice de tópicos e builder existem; o acesso Files do Workspace Agent é outra fronteira, provider-native, com sync/retrieval `TEST_NOT_RUN`. Não usar os arquivos do provider como proxy implícito de conhecimento do MCP.
+DAVI possui exatamente duas tools MCP: `discover_delpi_information` e `execute_delpi_information`. Hoje discovery oferece orientação declarativa e operações READ; consulta documental substantiva via MCP estava `NOT_EXPOSED` antes desta implementação (recovery report `davi-knowledge-documentation-recovery-01.md`, commit `35bceffa31c3290a6c78d30f8c83e935e8c67241`); o estado vigente é §8/§8.1 (`EXPOSED_VIA_CATALOG_ACTION_READ`). O corpus governado Git V1 (15 documentos), manifesto, índice de tópicos e builder existem; o acesso Files do Workspace Agent é outra fronteira, provider-native, com sync/retrieval `TEST_NOT_RUN`. Não usar os arquivos do provider como proxy implícito de conhecimento do MCP.
 
 Direção aprovada: oferecer **inteligência técnica viva** para consumidores MCP (incluindo DÉLIA) sob demanda: índice/versionamento, trechos documentais pertinentes, fontes e orientação de interpretação, sem exposição integral em `agent_directives`; manter o contrato de 2 tools, com capability READ documental elegível descoberta e executada através do fluxo existente. Referência funcional real: TÉO `get_catalog`, `get_product_guide` (`product-guide-registry-v1`) e `get_methodology_guide` (`teo-method-playbooks-v2`) devolvem guias versionados marcados `GUIDANCE_NOT_DOMAIN_TRUTH`, mas **não** copiar ferramentas, contratos internos ou ownership do TÉO.
 
@@ -73,3 +73,21 @@ Direção aprovada: oferecer **inteligência técnica viva** para consumidores M
 - **Workspace Agent Files:** canal provider-native independente, segue `TEST_NOT_RUN` (K01–K10 não executados por ausência de sessão sancionada).
 
 `MCP_DOCUMENT_READ=EXPOSED_VIA_CATALOG_ACTION_READ`; `IMPLEMENTATION=DELIVERED`; `OWNER_CONTRACT_APPROVAL=RATIFIED`; `MP_PI_RATIFICATION=PENDING`; `MP_PI_PUBLICATION=NOT_PUBLISHED`; demais estados inalterados.
+
+### 8.1 Evidência de validação e deploy (2026-10-24)
+
+**Testes:** RED→GREEN em `tests/test_davi_live_governed_knowledge.py` (15 REDs antes da implementação). Focado: 68 pass. Seleção DAVI ampliada no container de validação: **2395 pass, 9 skip, 1 fail ambiental** (`test_product_sales_open_orders_returns_meta` — `PLUGINS_DB_HOST` ausente no ambiente de teste; mesma classe das falhas de baseline já registradas, sem relação com a capability).
+
+**Deploy:** commit `65753505c6213e591738074aa4e4f10b49d363b5` em `main` (ff), `git pull --ff-only` + `./infra/scripts/up-prod-sequential.sh --build api-delpi` em `operador@192.168.1.237`. Nova imagem `infra-api-delpi:54a89825914a`; container recriado e healthy; gateway `nginx -t`+reload OK. Rollback preservado: `infra-api-delpi:davi-knowledge-rollback-65753505` (= `94cf0e6fde51`).
+
+**Gate de infraestrutura (anúncio `transformometro-api`):** mecanismo explicado — `api-delpi.depends_on` inclui `transformometro-api` e `docker compose build <svc>` resolve imagens de dependências com `build:`. O plano do script contém somente `api-delpi` (match exato por fase) e `up -d --no-deps` nunca recria dependências. Pós-deploy: `infra-transformometro-api` inalterada (`dcdab5680d27`, 45 h) e container desde 2026-10-22 — nenhum rebuild/restart efetivo. O anúncio é inócuo; recomenda-se ao owner de infra registrar a exceção conhecida do Compose v2.
+
+**Homologação produtiva (container `delpi-api-delpi`, SHA `65753505c6`):**
+
+- `/health` 200; `/knowledge/technical-guides/{topic}` sem Bearer → 401; `/mcp` sem Bearer → 401; tópico traversal sem auth → 401.
+- `list_tools` ao vivo: exatamente `discover_delpi_information`, `execute_delpi_information` (2); `list_resources` = 0.
+- OpenAPI vivo expõe `/knowledge/technical-guides/{topic}` com `operationId=read_governed_technical_knowledge`.
+- Discovery service real: consulta documental → candidato `read_governed_technical_knowledge` (score 0,91, token mintado); consulta de conceito puro → somente a capability documental (floor 0,55), zero candidatos operacionais.
+- Recuperação real no uso-caso: `product_master_sb1` → `api-delpi/docs/api/padroes-totvs/cadastro-produto.md` (8 excerpts), `inventory_adjustments` → `api-delpi/docs/api/supplies-inventory-adjustments.md` (12 excerpts). Proveniência: `corpus_id=davi-governed-knowledge`, `corpus_version=1`, `manifest_identity=b830a6a9…` (pin V1), `source_git_sha`/`source_sha256` por documento, `coverage`, `GUIDANCE_NOT_DOMAIN_TRUTH`. Leitura por seção e paginação OK.
+- Negativas ao vivo: `corpus_version=2` → `STALE_VERSION` 409; tópico/seção desconhecidos → `NOT_FOUND` 404; `page_size>3` → `VALIDATION_ERROR` 422; execute wired sem Authorization → `Unauthorized`.
+- `REAL_DISCOVER`/`REAL_EXECUTE` autenticados sobre HTTP com sessão end-user sancionada: **TEST_NOT_RUN** — sem credencial de usuário final disponível nesta sessão (proibido admin impersonation/token no chat). A AuthZ do caminho está provada pelas negativas ao vivo e pelo executor request-bound.

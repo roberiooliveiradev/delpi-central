@@ -77,6 +77,7 @@ A fronteira documental para consumidores MCP foi ratificada pelo owner api-delpi
 - Integridade fail-closed: identidade do manifesto V1 pinada, membership exata do freeze, hash por documento, leitura confinada ao corpus aprovado.
 - Consultas de conceito puro oferecem **somente** a capability documental — nunca candidato operacional.
 - **Para a DÉLIA:** a dependência documental da Trilha A está resolvida em nível de contrato público — orientação técnica V1 é consumível como qualquer READ governado. Julgamento de pertinência e recuperação contextual continuam responsabilidades da DÉLIA; nenhum caso especial no planner foi introduzido. Normas MP/PI permanecem `NOT_PUBLISHED` até ratificação do owner de negócio. Workspace Agent Files e K01–K10 continuam `TEST_NOT_RUN`. `R4_AUTHORIZATION=NO` — não desbloqueia R4.
+- **Deploy/homologação (2026-10-24):** `65753505c6` implantado em `api-delpi` (imagem `54a89825914a`, rollback `davi-knowledge-rollback-65753505`). Ao vivo: health 200, sem Bearer → 401, exatamente 2 tools/0 resources, rota no OpenAPI, discovery documental e de conceito puro corretos, recuperação real com proveniência em 2 tópicos, negativas `STALE_VERSION|NOT_FOUND|VALIDATION_ERROR|Unauthorized`. Homologação autenticada end-to-end (HTTP + sessão end-user): `TEST_NOT_RUN` — sem credencial sancionada nesta sessão.
 
 ## Registro de execução — Trilha B (2026-10-24)
 
