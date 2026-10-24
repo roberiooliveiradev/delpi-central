@@ -20,6 +20,10 @@ from app.infrastructure.gateways.purchase_requests_gateway import (
 from app.infrastructure.persistence.preferences_repository import PreferencesRepository
 
 _RELATED_REQUESTS_MAX_PAGE_SIZE = 20
+# Explicit "authorized history" semantics: the producer applies a silent
+# 90-day lookback when date_from is absent, so the profile section pins a
+# floor date instead of inheriting an implicit window.
+_RELATED_REQUESTS_DATE_FROM = "2000-01-01"
 
 
 class UserProfileService:
@@ -85,6 +89,7 @@ class UserProfileService:
                 found = self.core_gateway.lookup_directory_users(
                     access_token=token,
                     user_ids=[target],
+                    reveal_email=True,
                 )
                 hit = found.get(target)
                 if hit:
@@ -197,14 +202,20 @@ class UserProfileService:
             payload["permissions"] = access["permissions"]
         return payload
 
-    def _protheus_ids_for(self, target_user_id: str) -> list[str]:
-        """Core user id → mapped Protheus user ids (deterministic join)."""
+    def _protheus_ids_for(self, target_user_id: str) -> list[str] | None:
+        """Core user id → mapped Protheus user ids (deterministic join).
+
+        Returns None when the Core lookup is unavailable — an integration
+        failure is not the same as "user has no TOTVS link".
+        """
         try:
             mappings = self.core_gateway.lookup_protheus_identities(
                 user_ids=[target_user_id]
             )
         except Exception:
-            return []
+            return None
+        if mappings is None:
+            return None
         pids = {
             str(item.get("protheus_user_id") or "").strip()
             for item in mappings.values()
@@ -237,24 +248,36 @@ class UserProfileService:
         if cleaned_branches:
             # Optional restriction — every requested unit must belong to the actor.
             self.authorization.require_units(actor, cleaned_branches)
+        # The producer contract requires at least one branch; without an
+        # explicit filter the universe is the actor's own authorized units —
+        # never wider than the caller's scope.
+        effective_branches = cleaned_branches or self.authorization.allowed_units(
+            actor
+        )
         pids = self._protheus_ids_for(target)
         empty = {
             "items": [],
             "total": 0,
             "page": 1,
             "page_size": page_size,
-            "protheus_user_ids": pids,
-            "requester_unmapped": not pids,
+            "protheus_user_ids": pids or [],
+            "requester_unmapped": pids == [],
+            "date_from": _RELATED_REQUESTS_DATE_FROM,
         }
+        if pids is None:
+            return {**empty, "error": "identity_lookup_unavailable"}
         if not pids:
+            return empty
+        if not effective_branches:
             return empty
 
         page = max(1, int(page or 1))
         page_size = min(max(1, int(page_size or 5)), _RELATED_REQUESTS_MAX_PAGE_SIZE)
         params: list[tuple[str, str]] = [("requester_user_id", pid) for pid in pids]
-        for branch in cleaned_branches:
+        for branch in effective_branches:
             params.append(("branch", branch))
         params += [
+            ("date_from", _RELATED_REQUESTS_DATE_FROM),
             ("page", str(page)),
             ("page_size", str(page_size)),
             ("sort_by", "issue_date"),
@@ -282,6 +305,7 @@ class UserProfileService:
             "page_size": data.get("page_size") or page_size,
             "protheus_user_ids": pids,
             "requester_unmapped": False,
+            "date_from": _RELATED_REQUESTS_DATE_FROM,
         }
 
     def photo(

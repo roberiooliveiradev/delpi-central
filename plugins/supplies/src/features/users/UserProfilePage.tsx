@@ -187,6 +187,11 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
       getUserRelatedRequests(userId, { pageSize: 5 }, controller.signal)
         .then((data) => {
           if (controller.signal.aborted) return;
+          // Degradation is not an empty universe — surface the error state.
+          if (data?.error) {
+            setRelated({ loading: false, error: data.error, data });
+            return;
+          }
           setRelated({ loading: false, error: null, data });
         })
         .catch((err: unknown) => {
@@ -421,7 +426,9 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
               ) : related.error ? (
                 <>
                   <SuppliesStateBanner variant="error">
-                    {C.relatedError}
+                    {related.error === "identity_lookup_unavailable"
+                      ? C.relatedIdentityUnavailable
+                      : C.relatedError}
                   </SuppliesStateBanner>
                   <SuppliesActionButton
                     variant="ghost"
@@ -471,26 +478,33 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                       );
                     })}
                   </ul>
-                  {(related.data.protheus_user_ids ?? []).length > 0 ? (
-                    <SuppliesEntityLink
-                      href={`${buildPluginPath("purchase_requests", basePath)}?${related.data.protheus_user_ids.map((pid) => `requester_user_id=${encodeURIComponent(pid)}`).join("&")}`}
-                      title={C.relatedViewAllTitle}
-                      className="sp-entity-link"
-                      onNavigate={() =>
-                        navigatePluginView("purchase_requests", {
-                          basePath,
-                          search: `?${related.data!.protheus_user_ids
-                            .map(
-                              (pid) =>
-                                `requester_user_id=${encodeURIComponent(pid)}`,
-                            )
-                            .join("&")}`,
-                        })
-                      }
-                    >
-                      {C.relatedViewAll(related.data.total)}
-                    </SuppliesEntityLink>
-                  ) : null}
+                  {(related.data.protheus_user_ids ?? []).length > 0 ? (() => {
+                    const params = new URLSearchParams();
+                    for (const pid of related.data.protheus_user_ids) {
+                      params.append("requester_user_id", pid);
+                    }
+                    // Same explicit period semantics as the section
+                    // (history floor echoed by the BFF).
+                    const dateFrom = (related.data.date_from || "").trim();
+                    if (dateFrom) params.set("date_from", dateFrom);
+                    const search = `?${params.toString()}`;
+                    const href = `${buildPluginPath("purchase_requests", basePath)}${search}`;
+                    return (
+                      <SuppliesEntityLink
+                        href={href}
+                        title={C.relatedViewAllTitle}
+                        className="sp-entity-link"
+                        onNavigate={() =>
+                          navigatePluginView("purchase_requests", {
+                            basePath,
+                            search,
+                          })
+                        }
+                      >
+                        {C.relatedViewAll(related.data.total)}
+                      </SuppliesEntityLink>
+                    );
+                  })() : null}
                 </>
               ) : (
                 <p className="sp-user-profile__note">

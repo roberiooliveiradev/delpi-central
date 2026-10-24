@@ -57,6 +57,11 @@ Lista paginada (5/pág, máx 20) na ficha do usuário: número da SC (`buildPurc
 
 `git revert <sha>` + redeploy `supplies` e `supplies-api` (`infra/scripts/up-prod-sequential.sh --build`). Sem migração, sem flag, sem contrato removido.
 
+## Errata USERS.PROFILE.S2 (2026-10-24)
+
+- **E-mail:** `_identity_for` agora usa `reveal_email=true` (flag do contrato Core) — endereço profissional real para self|admin; enriquecimento de requester segue mascarado.
+- **Solicitações relacionadas:** `branch` = unidades autorizadas do actor quando o filtro é omitido (o produtor exige ≥1 — a omissão mascarava 422 como lista vazia); `date_from` explícito (`2000-01-01`) — sem o lookback implícito de 90 dias do produtor; falha do lookup Core agora é `identity_lookup_unavailable`, não `requester_unmapped`. Detalhes em [USERS-PROFILE-S2-EMAIL-AND-RELATED-REQUESTS-FIX.md](./USERS-PROFILE-S2-EMAIL-AND-RELATED-REQUESTS-FIX.md).
+
 
 ## Revisão GPT — USERS.PROFILE.S1 (2026-10-23)
 

@@ -53,6 +53,9 @@ export type UserRelatedRequestsResponse = {
   page_size: number;
   protheus_user_ids: string[];
   requester_unmapped?: boolean;
+  /** Explicit history floor applied by the BFF (empty => list default). */
+  date_from?: string;
+  /** Degradation marker — distinct from an honestly empty universe. */
   error?: string;
 };
 

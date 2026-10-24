@@ -58,8 +58,15 @@ class CoreApiHttpGateway:
         *,
         access_token: str,
         user_ids: list[str],
+        reveal_email: bool = False,
     ) -> dict[str, dict[str, str]]:
-        """Best-effort directory lookup with the caller's Bearer (admin reading others)."""
+        """Best-effort directory lookup with the caller's Bearer (admin reading others).
+
+        `reveal_email` opts into the Core contract flag that returns the real
+        professional address — only for surfaces authorized to display it
+        (the user profile behind self|admin). Keep masked for enrichment-only
+        callers (data minimization).
+        """
         ordered: list[str] = []
         seen: set[str] = set()
         for raw in user_ids:
@@ -72,6 +79,9 @@ class CoreApiHttpGateway:
             return {}
 
         url = urljoin(self.base_url, "me/directory/users/lookup")
+        body: dict[str, object] = {"ids": ordered}
+        if reveal_email:
+            body["reveal_email"] = True
         try:
             response = requests.post(
                 url,
@@ -80,7 +90,7 @@ class CoreApiHttpGateway:
                     "Accept": "application/json",
                     "Content-Type": "application/json",
                 },
-                json={"ids": ordered},
+                json=body,
                 timeout=self.timeout,
             )
         except requests.RequestException:
@@ -120,7 +130,7 @@ class CoreApiHttpGateway:
         *,
         protheus_user_ids: list[str] | None = None,
         user_ids: list[str] | None = None,
-    ) -> dict[str, dict]:
+    ) -> dict[str, dict] | None:
         """S2S batch resolution Protheus user id ↔ Core identity mapping.
 
         Core contract: POST /integrations/protheus-identities/lookup accepts
@@ -128,8 +138,9 @@ class CoreApiHttpGateway:
         `mapping_status == "mapped"` rows match). Returns items keyed by
         `protheus_user_id` and by `user_id` (each item carries both fields,
         so either direction can be resolved from a single call).
-        Soft-fail ({} + warning) on transport/auth errors — callers must
-        degrade to source names, never fabricate identities.
+        Soft-fail on transport/auth errors: returns None when every call
+        failed (degradation) and {} when nothing was requested — callers
+        must degrade to source names, never fabricate identities.
         """
         token = (Settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip()
         if not token:
@@ -173,6 +184,7 @@ class CoreApiHttpGateway:
             bodies.append({"user_ids": ordered_users[start : start + 50]})
 
         result: dict[str, dict] = {}
+        succeeded = False
         url = urljoin(self.base_url, "integrations/protheus-identities/lookup")
         for body in bodies:
             try:
@@ -190,7 +202,7 @@ class CoreApiHttpGateway:
                     "core_api_protheus_identities_rejected status=%s",
                     response.status_code,
                 )
-                return {}
+                return None
             if response.status_code >= 400:
                 logger.warning(
                     "core_api_protheus_identities_error status=%s",
@@ -204,13 +216,14 @@ class CoreApiHttpGateway:
             items = payload.get("items") if isinstance(payload, dict) else None
             if not isinstance(items, list):
                 continue
+            succeeded = True
             for item in items:
                 if not isinstance(item, dict):
                     continue
                 pid = str(item.get("protheus_user_id") or "").strip()
                 if pid:
                     result[pid] = item
-        return result
+        return result if succeeded else None
 
     def lookup_person_profiles(
         self,

@@ -135,6 +135,8 @@ class RequesterIdentityService:
         except Exception:
             logger.exception("requester_identity_resolve_failed")
             return None
+        if not mappings:
+            return None
         mapping = mappings.get(pid) or {}
         uid = str(mapping.get("user_id") or "").strip()
         return uid or None

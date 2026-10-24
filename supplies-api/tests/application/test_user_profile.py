@@ -95,6 +95,10 @@ def test_get_other_sibling_admin_ok():
     assert result["isSelf"] is False
     assert result["name"] == "Ana Admin"
     assert result["email"] == "ana@delpi.com.br"
+    # Core-authorized flag reveals the real professional address (never masked).
+    core.lookup_directory_users.assert_called_once_with(
+        access_token="token", user_ids=[OTHER_ID], reveal_email=True
+    )
     assert result["capabilities"] is None
     assert result["allowedUnits"] == []
 
@@ -220,8 +224,61 @@ def test_related_self_positive_resolves_bond_and_forwards():
     assert params["requester_user_id"] == "000007"
     assert params["branch"] == "01"
     assert params["sort_by"] == "issue_date"
+    # Explicit history floor — never the producer's implicit lookback.
+    assert params["date_from"] == "2000-01-01"
     # Target resolution — never the actor as substitute.
     core.lookup_protheus_identities.assert_called_once_with(user_ids=[SELF_ID])
+
+
+def test_related_no_filter_expands_actor_authorized_units():
+    """Producer requires ≥1 branch: empty filter = actor's own units."""
+    core = MagicMock()
+    core.lookup_protheus_identities.return_value = {
+        "000007": _mapped("000007", SELF_ID),
+    }
+    pr = MagicMock()
+    pr.list_purchase_requests.return_value = {"items": [], "total": 0}
+    service = UserProfileService(
+        core_gateway=core,
+        purchase_requests_gateway=pr,
+        requester_identity=MagicMock(
+            enrich_payload=MagicMock(side_effect=lambda data, **_: data)
+        ),
+    )
+    result = service.related_purchase_requests(
+        _user(permissions={"supplies.access"}),
+        SELF_ID,
+    )
+    params = pr.list_purchase_requests.call_args.kwargs["params"]
+    assert sorted(v for k, v in params if k == "branch") == ["01", "02"]
+    assert dict(params)["date_from"] == "2000-01-01"
+    assert result["total"] == 0
+
+
+def test_related_lookup_failure_is_unavailable_not_unmapped():
+    """Core lookup outage is degradation — never requester_unmapped."""
+    core = MagicMock()
+    core.lookup_protheus_identities.return_value = None
+    pr = MagicMock()
+    service = UserProfileService(core_gateway=core, purchase_requests_gateway=pr)
+    result = service.related_purchase_requests(
+        _user(permissions={"supplies.access"}),
+        SELF_ID,
+    )
+    assert result["error"] == "identity_lookup_unavailable"
+    assert result["requester_unmapped"] is False
+    pr.list_purchase_requests.assert_not_called()
+
+
+def test_related_unauthorized_branch_negative():
+    core = MagicMock()
+    service = UserProfileService(core_gateway=core)
+    with pytest.raises(AuthorizationError):
+        service.related_purchase_requests(
+            _user(permissions={"supplies.access"}),
+            SELF_ID,
+            branches=["99"],
+        )
 
 
 def test_related_other_negative_without_admin():
