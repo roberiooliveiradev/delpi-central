@@ -280,7 +280,10 @@ MP — validação por tipo em doc 80 §33.C/§34.B.
 - **R11** (NF a desconsiderar / SD2): reconciliado no §5.5 — G4/G5 PASS
   (seleção 9035∩594∩emissão por identidade de conjunto + CPV-zero
   estrutural `F4_ESTOQUE='N'`; finalidade → E11).
-- **R04, R12–R15**: sem população oficial comparável
+- **R12** (fechamento de custos): não é relatório de paridade linha-a-
+  linha — evidência monetária da etapa 3 reconciliada no §5.6 —
+  G4 PASS, G5 `INCONCLUSIVE`.
+- **R04, R13–R15**: sem população oficial comparável
   disponível → G5 `TEST_NOT_RUN`/PENDING preservado.
 
 ## §5.1 — R06 · Kardex CPV e R07 · Inventários (rodada 19)
@@ -431,6 +434,26 @@ exportado = `D2_TES`, errata doc 47 §11.1); custo perdido/recalculado
 desconsiderar (CPV×ROL×DRE), regra×exceção por documento, eixo do
 filtro EDAPP (grupo vs TES).
 
+## §5.6 — R12 · Fechamento de custos — evidência monetária da etapa "Análise e revisão" (rodada 27)
+
+R12 é **sequência operacional**, não relatório — a evidência monetária
+comparável é o artefato da etapa 3 do wizard (`Analise.xlsx`, 1.994
+linhas, filial 01, armazéns 01/99/98/25/50) reconciliado contra o
+snapshot físico do fechamento:
+
+| Dimensão | Artefato (etapa 3) | Físico | Regra | Resultado | Status |
+|---|---|---|---|---|---|
+| CM final R$ | coluna CM final | `SB9010.B9_CM1` @ `B9_DATA`=30/09 | mesma competência/filial/local/produto | **1.966/1.994 exato (98,6%)** | `PASS` parcial |
+| Linhas sem SB9 | 22 | — | pseudo-produtos `MOD*` custo 0 — sem snapshot de saldo | 22 estruturais | explicado |
+| Δ CM final | 6 | `B9_CM1` | drift temporal: cálculo exibido 30/09 × gravação f01 21/10 (reexecução/retificação) | 6 explicados | `STALE_EVIDENCE` controlado |
+| CM inicial R$ | coluna CM inicial | `B9_CM1` @ 31/08 | snapshot anterior | 1.689 exatos; 283 chaves sem SB9 ago | `PASS` parcial |
+| Status moeda 1 | Positivo/Negativo/Neutro | derivado | sinal da Variação% | 1.994/1.994 | `PASS` |
+| SB2 corrente | — | `B2_CM1` | artefato ≠ saldo vivo (amostra 10/25) | descartado como fonte | — |
+| Efeito Reposição | — | `SB1010_TTAT_LOG` `B1_CUSTD` | `TTAT_PROGRAM='MATA320'` | 13.201+1.532 writes 30/09 JOICI | `PASS` (efeito) |
+
+Sem tabela de paridade monetária total (R12 não produz planilha de
+fechamento) — o gate usa a cadeia vídeo→rotina→dado→artefato→SB9.
+
 ## §6 — Gates e métricas resultantes
 
 | Item | Antes | Depois |
@@ -445,6 +468,8 @@ filtro EDAPP (grupo vs TES).
 | R09 G5 | TEST_NOT_RUN | **INCONCLUSIVE** (4.449/4.476 tempos + SP interna → E9; demais dimensões 100%) |
 | R10 G5 | TEST_NOT_RUN | **PASS** (rodada 25: 353/353 linhas + seleção EDAPP reconstruída + Σ `D1_TOTAL` 169.704,12 exato — §5.4; confirmações → E10) |
 | R11 G5 | TEST_NOT_RUN | **PASS** (rodada 26: 11/11 linhas por identidade de conjunto 9035∩594 + Σ `D2_TOTAL` 97.462,71 exato + CPV-zero estrutural — §5.5; finalidade → E11) |
+| R12 G4 | PENDING | **PASS** (rodada 27: rotinas bound — MATA320/MTA320 + MATA300/MTA300 via SX1 1:1 + TTAT `B1_CUSTD`; DEL100 desambiguado — §5.6) |
+| R12 G5 | TEST_NOT_RUN | **INCONCLUSIVE** (rodada 27: execução MATA320 provada ponta-a-ponta; writer SB9/etapa-4/efeito MATA300 pendentes — §5.6, E5/E12) |
 
 `COLETA = 42/60 = 70,0%` · `AUDITORIA = 47/90 = 52,2%` ·
 `CONCLUÍDOS = 0/15` (G6 exige aceite humano).
@@ -454,6 +479,8 @@ filtro EDAPP (grupo vs TES).
 **Errata rodada 25 (métricas canônicas doc 47 §11):** com R10 G5 PASS as métricas vigentes são `COLETA = 44/60 = 73,3%` · `AUDITORIA = 51/90 = 56,7%` · `CONCLUÍDOS = 0/15`.
 
 **Errata rodada 26 (métricas canônicas doc 47 §11):** com R11 G5 PASS as métricas vigentes são `COLETA = 44/60 = 73,3%` · `AUDITORIA = 52/90 = 57,8%` · `CONCLUÍDOS = 0/15`.
+
+**Errata rodada 27 (métricas canônicas doc 47 §11):** com R12 G4 PASS as métricas vigentes são `COLETA = 45/60 = 75,0%` · `AUDITORIA = 53/90 = 58,9%` · `CONCLUÍDOS = 0/15` — G5 R12 `INCONCLUSIVE` (não promovido).
 
 ## §7 — Segurança e método
 

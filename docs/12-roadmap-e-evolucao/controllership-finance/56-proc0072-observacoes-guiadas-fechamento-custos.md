@@ -581,3 +581,37 @@ Estados conceituais para estudo, NAO contrato aprovado: `unreviewed`, `suggested
 **Classificacao:** `MANUAL_EXPENSE_CLASSIFICATION=OWNER_REPORTED_VIA_PO`; `SPREADSHEET_EDITS=PROVEN_SCREENSHOT`; `CENTER_PREFIX_RULES=OWNER_REPORTED_VIA_PO_TO_VALIDATE`; `COPAYMENT_EMPLOYEE_SHARE_EXCLUSION=OWNER_REPORTED_VIA_PO_TO_VALIDATE`; `MISPOSTED_CENTERS=OWNER_REPORTED_VIA_PO`; `PROPOSED_SEARCH_AND_CANDIDATE_REVIEW=TARGET_DECISION_REQUIRED`; `ERP_CENTER_MASTER_DATA=TO_INVENTORY`; `OFFICIAL_COST_CENTER_ACCOUNTING=TO_INVENTORY`; `DELIVERED_EXCEL_PARITY=TEST_NOT_RUN`.
 
 **Situacao da evidencia ao final do video:** houve mapeamento qualitativo das etapas, mas nao conciliacao tecnica dos totais SD1 por centro de custo nem homologacao de classificacoes/aliases. O proximo trabalho e INVENTORY + VALIDATE, nao EXECUTE.
+
+
+---
+
+## Adendo (rodada 27 — reinspecao direta do MP4)
+
+Verificacao direta de frames nos timestamps-chave (inspecao direta, nao
+apenas documental). Correcoes e bindings novos:
+
+1. **Errata Registro 02:** `Tempo Setup?` = **`Som Tempo Propo`** (frame
+   03:20), nao "Sem Tempo Proprio". E `Calcular os Custos Por?` =
+   **`Ult Cust Compra`** na execucao exibida — "Estrutura" e a
+   alternativa do dropdown, nao o valor selecionado naquele run.
+2. **Identidades fisicas provadas:** `Custo de Reposicao` = **MATA320**
+   (grupo SX1 `MTA320` = 1:1 dos 16 parametros da tela; `SB1010_TTAT_LOG`
+   prova `MATA320`/JOICI gravando `B1_CUSTD` — 13.201 writes 30/09
+   14:36–14:56 + 1.532 em 15:09–15:14 + 15.972 em 01/10). `Refaz Saldos`
+   = **MATA300** (grupo SX1 `MTA300` = 1:1 das perguntas da tela —
+   `Zera o saldo/CM de produtos MOD?` etc.) — **nao** e o DEL100
+   (rotina custom separada de auditoria/correcao SB9).
+3. **Lista `Fechamentos` (02:08):** o Acompanha Custos mantem historico
+   de execucoes com status (Concluido/Cancelado/Analise e revisao),
+   filial e datas, e botao `Reabertura de estoque` — o fechamento e
+   objeto persistido com ciclo de vida.
+4. **Etapa 4 `Fechamento` nao exibida:** o video mostra ate a etapa 3
+   (`Analise e revisao`, "1991 produtos", botao Exportar). A conclusao
+   efetiva do fechamento nao aparece — `MV_ULMES`=20260930 f01+f02 e a
+   existencia do SB9@30/09 provam que setembro foi fechado, mas por
+   execucao posterior (rajadas 02/10 f02 e 21/10 f01) — writer `PENDING`
+   (E5).
+5. **`Analise.xlsx` = export da etapa 3:** estrutura 1:1 com a grade;
+   CM final ≡ `B9_CM1`@30/09 em 1.966/1.994 (98,6%); 22 `MOD*` sem SB9
+   (estrutural); 6 deltas = drift demo→gravacao-f01. Detalhe: doc 80
+   §46, doc 85 §11.

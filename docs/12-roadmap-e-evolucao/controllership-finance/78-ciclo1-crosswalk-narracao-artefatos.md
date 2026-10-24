@@ -6,11 +6,11 @@
 
 | Narração (doc 57) | Docs de inventário | Atividade narrada | Correspondência documental | Limite de prova |
 |---|---|---|---|---|
-| V01-V04 | 56 R01-R04 | Acompanha Custos, reposicao, Refaz Saldos | sem arquivo final especifico | OWNER_REPORTED_VIA_PO; job/algoritmo TO_INVENTORY |
+| V01-V04 | 56 R01-R04 | Acompanha Custos, reposicao, Refaz Saldos | sem arquivo final especifico | r27: rotinas bound — Reposicao=MATA320 (TTAT `B1_CUSTD`), Refaz=MATA300 (SX1 MTA300); DEL100=auditoria SB9 distinta |
 | V05,V16 | 65 | Faturamento x MOD | planilha com componentes, horas e custos | estrutura PROVEN; previsto x realizado TO_INVENTORY |
 | V07-V08 | 69,70 | Posicoes e compensacao | saldos em aberto | matching e outcome INCONCLUSIVE |
 | V09 | 71-75 | Cinco saidas auxiliares financeiras | PDFs por data/natureza e XLSBs | FINR190 candidato; paridade TEST_NOT_RUN |
-| V10 | 77 (Analise) | variacao de custo medio | custo medio inicial/final | formula oficial TO_INVENTORY |
+| V10 | 77 (Analise) | variacao de custo medio | custo medio inicial/final | r27: `Analise.xlsx` = export da etapa 3 do wizard — CM final ≡ `B9_CM1`@30/09 1.966/1.994 (98,6%, Δ explicado) |
 | V11 | 63,68 | P7 completo e variante | diferencas MP observadas | parametros TO_INVENTORY |
 | V12 | 61 | Kardex 01/99 | exportacao fisico-financeira | cobertura de armazens TO_INVENTORY |
 | V13 | 62,64 | MATR320 e processo | resumo e saldo analitico | recortes nao equivalentes |

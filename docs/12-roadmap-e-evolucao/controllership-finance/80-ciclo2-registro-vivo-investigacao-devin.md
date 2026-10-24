@@ -2879,3 +2879,123 @@ exceção por documento; eixo efetivo do filtro EDAPP (grupo vs TES).
 Doc 67 (ciclo 1) NFEX-01/05 respondidos fisicamente; NFEX-01
 (finalidade) permanece owner. Aliases: clientes/produtos individuais
 não publicados; grupo 9035, TES, CFOP, totais = evidência técnica.
+
+---
+
+## §46 — R12: sequência operacional de fechamento de custos (rodada 27)
+
+`CF-C2-R12-COST-CLOSING-PROCESS-VERIFY-001` — READ → VERIFY VIDEO →
+INSPECT CODE → CROSS-CHECK → DOCUMENT → REPORT. Vídeo oficial MP4
+**reinspecionado diretamente** (frames extraídos nos timestamps-chave;
+inspeção direta, não apenas documental). Read-only; zero DML/DDL/recálculo.
+
+### A. Linha do tempo observada (vídeo → wall-clock)
+
+Reunião iniciada ~14:31 (nome do arquivo). Wall-clock ≈ tempo de vídeo
++ ~14:27 (offset do início da gravação).
+
+| vídeo | etapa | tela/rotina | resultado visível | classificação |
+|---|---|---|---|---|
+| 01:55–02:08 | consulta | `Acompanha Custos` → lista `Fechamentos` | histórico com status (Concluído/Cancelado/Análise e revisão), filial, datas; botão `Reabertura de estoque`; modal "Novo fechamento" explica reprocessamento do CM | `EXECUTION_OBSERVED` (navegação) |
+| 02:18–02:40 | parametrização | etapa 1 `Predefinição de cálculo` | último fechamento 31/08/2026; data 30/09/2026; método `Diária`; `Filial corrente`; regra visível: fechamento só em data posterior ao último | `EXECUTION_OBSERVED` |
+| ~03:09–04:00 | execução | `Custo de Reposicao` → `Recalculo` → Perguntas | parâmetros íntegros (BR-R12-001); descrição declara escrita em `B1_CUSTD` | `EXECUTION_OBSERVED` |
+| 04:36 | parametrização | `Refaz Saldos` (grupo SX1 `MTA300`) | `Ate Armazem`=ZZ, `Zera saldo MOD`=Recalcular, `Zera CM MOD`=Recalcular | `EXECUTION_OBSERVED` |
+| ~05:34 | narração | `Refaz por DIT terceiros` | apenas citada — não executada nem exportada | relato — `PENDING` |
+| 06:04–06:46 | execução/validação | `Recálculo dos Saldos` → `Log de processamento das STORED PROCEDURES` | threads `c300P0101xx - Ok` (≥6 visíveis); sem export | `EXECUTION_OBSERVED` (log); efeito no dado `PENDING_EVIDENCE` |
+| ~14:47 | execução | wizard etapa 2 `Cálculo de custo` 100% | níveis validados, arquivo de trabalho, transferências entre filiais, movimentações — todos concluídos; controles Cancelar/Refazer/Próximo; menção EventViewer | `EXECUTION_OBSERVED` |
+| 16:40–36:10 | conferência | etapa 3 `Análise e revisão` | grade "1991 produtos", status por moeda, CM ini/fin, Variação%, Exportar | `EXECUTION_OBSERVED` |
+| — | homologação | etapa 4 `Fechamento` | **não exibida no vídeo** | lacuna registrada |
+
+### B. Rotinas — identidade física
+
+- **Custo de Reposição = `MATA320`** — grupo SX1 `MTA320` reproduz 1:1 os
+  16 parâmetros da tela. **Efeito provado:** `SB1010_TTAT_LOG` →
+  `TTAT_PROGRAM='MATA320'`, `TTAT_FIELD='B1_CUSTD'`, `TTAT_USER='JOICI'`:
+  **13.201 writes 30/09 14:36–14:56** (1ª execução, produtos até MP) +
+  **1.532 writes 15:09–15:14** (2ª execução, PA/PI); **+15.972 writes
+  01/10 16:03–17:48** (reexecuções pós-demo). Cadeia vídeo→rotina→campo→
+  escrita completa — a rotina grava `SB1.B1_CUSTD`.
+- **Refaz Saldos = `MATA300`** — grupo SX1 `MTA300` (8 perguntas) 1:1 com
+  a tela (incl. `Zera o saldo de produtos MOD?`); log exibe threads de SP
+  `c300P*` com `- Ok`. **Sem rastro TTAT** em campos `B2_*`/SB9 (campos
+  de saldo/custo não auditados) → efeito físico direto não consultável:
+  `PENDING_EVIDENCE`.
+- **Acompanha Custos** — wizard web sobre motor MATA330 customizado
+  (doc 56 Reg.14); etapas 1–3 observadas; etapa 4 não exibida.
+- **`DEL100.PRW`** — custom do acervo, **distinto do Refaz do vídeo**:
+  auditoria/correção sequencial SB9 (`RecLock` em `B9_VINI1`/`B9_QINI` no
+  modo alteração; log-only no modo auditoria). Binding anterior
+  "Refaz=DEL100" = **errata corrigida**.
+- **`MA330OK.PRW`** — PE pós-MATA330: `STP_DELPI_OP_TERCEIRO_<emp>`
+  (`@DATADE`) + `STP_PROTHEUS_DELPI_AJUSTA_OP` f01/f02 (`@ANOMES`) +
+  EventViewer (coerente com a menção na tela do wizard). SPs ausentes nas
+  bases acessíveis; `sysjobs` sem permissão → `SOURCE_AVAILABLE`,
+  execução `PENDING` (E4).
+
+### C. Persistência provada (competência 09/2026)
+
+- `MV_ULMES` = `20260930` em **f01 e f02** — marcador de último
+  fechamento avançado para setembro.
+- `SB9`@30/09: rajada única por filial — f02 02/10 17:58:01–03 (3.117
+  linhas), f01 21/10 19:13:40–42 (4.812 linhas). Writer efetivo
+  `PENDING` (E5) — divergência temporal preservada (reexecução/"Refazer
+  cálculo"/etapa distinta/rotina separada — sem byte-proof).
+
+### D. `Analise.xlsx` ↔ etapa 3 ↔ SB9
+
+- Estrutura 1:1 com a grade do wizard; export = 1.994 linhas de dados,
+  filial 01, armazéns 01/99/98/25/50; "1991 produtos" na tela vs 1.994
+  linhas (Δ de contagem registrado — `PENDING` menor).
+- **CM final ≡ `B9_CM1`@30/09 em 1.966/1.994 (98,6%)**; 22 sem SB9 =
+  pseudo-produtos `MOD*` com custo 0 (estrutural — sem snapshot de
+  saldo); 6 deltas = drift temporal cálculo-da-demo (30/09) × gravação
+  f01 (21/10). CM inicial ≡ `B9_CM1`@31/08 em 1.689 linhas (283 chaves
+  sem snapshot de agosto).
+- `Status moeda` = sinal da Variação% em 1.994/1.994 (Positivo/Negativo/
+  Neutro).
+- SB2 corrente **não** é a fonte do artefato (amostra 10/25) — o CM final
+  é o do fechamento, não o saldo vivo.
+
+### E. Erratas corrigidas
+
+1. `Tempo Setup?` = **`Som Tempo Propo`** (frame 03:20); doc 56 dizia
+   "Sem Tempo Proprio" — corrigido por adendo rastreável.
+2. `Calcular os Custos Por?` = **`Ult Cust Compra`** na execução exibida
+   ("Estrutura" é a alternativa do dropdown — o registro anterior
+   documentava o valor alternativo).
+3. `Refaz Saldos` do vídeo = **MATA300** (binding SX1 `MTA300`), não
+   DEL100.
+
+### F. Reuso (gate §0)
+
+`B1_CUSTD` lido como `standard_cost` nos product repositories —
+`REUSE_CONFIRMED` (leitura). SB9 lido por `stock_value_official_closure_sql`
+/`stock_value_historical_sql` — `REUSE_CONFIRMED` (snapshot de
+fechamento). `GET /supplies/cpv` — `REUSE_PARTIAL` (custo corrente).
+Nenhum contrato de status/orquestração de fechamento existe —
+`TARGET` futuro; nada criado nesta rodada.
+
+### G. Gates
+
+- **G4 `PASS`** (antes `PENDING`): rotinas bound (MTA320/MTA300 via SX1
+  1:1 + `TTAT_PROGRAM`), parâmetros íntegros, efeito MATA320→`B1_CUSTD`
+  provado em dados, artefato da etapa 3 reconciliado com SB9, DEL100
+  desambiguado.
+- **G5 `INCONCLUSIVE`** (antes `TEST_NOT_RUN`): MATA320 verificado
+  ponta-a-ponta; mas a cadeia fechamento→SB9 não tem writer identificado,
+  MATA300 não deixa rastro físico auditável do efeito, a etapa 4 do
+  wizard não foi exibida e a execução do vídeo é **demonstração** —
+  paridade do artefato 98,6% com Δ explicado (drift temporal + `MOD*`).
+- G6 `PENDING` — aceite Controladoria.
+- Métricas: auditoria 52→**53/90 (58,9%)**; coleta 44/60 inalterada.
+
+### H. Residuais
+
+- **E5** (TI/ERP/DBA): writer efetivo do SB9 nas rajadas 02/10 e 21/10;
+  vínculo etapa-4-do-wizard↔gravação.
+- **E4** (DBA): SPs `STP_DELPI_OP_TERCEIRO_*`/`STP_PROTHEUS_DELPI_*` e
+  jobs — ausentes/inacessíveis; existência física e origem.
+- **E12** (Controladoria/TI-ERP): sequência oficial e checkpoints
+  obrigatórios; identidade formal da rotina "Refaz por DIT terceiros";
+  confirmação dos efeitos do MATA300 (`Recalcular` MOD); papel do
+  `MV_ULMES` como evidência de fechamento concluído.

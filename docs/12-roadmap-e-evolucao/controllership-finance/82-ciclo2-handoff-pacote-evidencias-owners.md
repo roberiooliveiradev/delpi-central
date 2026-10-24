@@ -240,6 +240,30 @@ Abaixo só a confirmação funcional, não nova investigação.
 | Impacto PROC-0072 | fixa a finalidade da lista de exceção e o contrato da apuração afetada; G5 já PASS — E11 documenta, não desbloqueia gate |
 | Critério de aceite | apuração destino confirmada + critério regra×exceção confirmado + filtro EDAPP preservado |
 
+#### E12 — R12 sequência de fechamento: rotinas, checkpoints e efeitos do MATA300
+
+**Contexto (doc 80 §46, doc 85 §11):** a cadeia de rotinas foi bound
+fisicamente — Reposição=`MATA320` (SX1 `MTA320` 1:1 + TTAT prova a
+escrita em `B1_CUSTD`), Refaz Saldos=`MATA300` (SX1 `MTA300` 1:1 + log de
+threads `c300P*`), Acompanha Custos=wizard sobre motor MATA330 custom,
+DEL100=auditoria SB9 distinta, MA330OK=PE pós-MATA330. G4 promovido a
+`PASS`; G5 `INCONCLUSIVE`. Abaixo confirmações de processo, não nova
+investigação.
+
+| Item | Solicitação | Evidência atual |
+|---|---|---|
+| E12.1 | **Sequência oficial e checkpoints obrigatórios** — ordem canônica Reposição→Refaz→Acompanha→conferências→gate e quais etapas são obrigatórias vs opcionais | Ordem observada no vídeo (Reposição 03:09–04:00 → Refaz 04:36–06:46 → Acompanha 14:47→análise); lista `Fechamentos` mostra execuções com status distintos |
+| E12.2 | **Identidade formal da rotina "Refaz por DIT terceiros"** (~05:34, apenas citada) | Nome técnico `TO_VERIFY`; não executada nem exportada no trecho |
+| E12.3 | **Efeitos do MATA300** (`Zera saldo/CM MOD = Recalcular`) — campos e tabelas efetivamente regravados; papel dos threads `c300P*`; se há persistência do log de SPs | Threads `- Ok` visíveis; campos `B2_*`/SB9 sem auditoria TTAT → efeito físico `PENDING_EVIDENCE` |
+| E12.4 | **`MV_ULMES` como evidência de fechamento** — o avanço do marcador é condição suficiente de conclusão para a Controladoria? | `MV_ULMES`=`20260930` f01+f02 + SB9 persistido nas duas filiais; etapa 4 do wizard não exibida no vídeo |
+| E12.5 | **Tratamento de falhas/correções** — como a Análise e revisão sinaliza erros (status/moeda) e o que dispara `Refazer cálculo`/`Cancelar fechamento` na prática | Grade de status por moeda observada; EventViewer mencionado na etapa 2; critério de limiar de variação não visível |
+
+| Campo | Conteúdo |
+|---|---|
+| Owner | Controladoria (sequência/checkpoints/homologação) + TI/ERP (E12.2/E12.3) |
+| Impacto PROC-0072 | fixa o AS-IS operacional da Central de Fechamento e os critérios de sucesso/falha por etapa; G4 já PASS — E12 documenta, não desbloqueia gate |
+| Critério de aceite | sequência oficial confirmada + rotina DIT nomeada + efeitos MATA300 descritos + papel de `MV_ULMES` confirmado |
+
 ---
 
 ## §3 — Estado do ciclo e marcações preservadas
@@ -253,6 +277,7 @@ Abaixo só a confirmação funcional, não nova investigação.
 | MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
 | R10 CC matriz (SD1 EDAPP) | **seleção reconstruída + paridade PROVEN** (353/353 itens, Σ `D1_TOTAL` 169.704,12 exato; digitação+13 TES-out+MP-out+benefícios-out — corroborado owner doc 56 §Reg.17; G5 PASS); residual: lista exata TES + taxonomia Direto/Ind/Adm — **E10** |
 | R11 NF desconsiderar (SD2 EDAPP) | **seleção reconstruída por identidade de conjunto + paridade PROVEN** (11/11 = `D2_GRUPO='9035'`∩`D2_TES='594'`∩emissão set f01; Σ `D2_TOTAL` 97.462,71 exato; CPV-zero estrutural `F4_ESTOQUE='N'` prova TTAT; G5 PASS); residual: finalidade da exclusão — **E11** |
+| R12 fechamento de custos | **bindings PROVEN** (Reposição=`MATA320` via SX1 `MTA320` + TTAT `B1_CUSTD` 13.201+1.532 writes 30/09 JOICI; Refaz=`MATA300` via SX1 `MTA300` + log threads `c300P*`; wizard etapas 1–3 observadas; `Analise.xlsx`↔SB9 98,6% com Δ explicado; `MV_ULMES`=20260930 f01+f02; G4 PASS, G5 `INCONCLUSIVE`); residual: sequência oficial + efeitos MATA300 + rotina DIT — **E12** |
 | SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) — **reforço 23/10:** onda retificadora de ~20-21/10 confirmada por RECNO (SD1 doc `<NF-RETIF-A>` sanitizado reclassificado 001→085 + SB9 f01 inserido 21/10 19:13) — corrobora "reexecução/etapa distinta" sem identificar o writer |
 | MATR320 (R05) | **fonte localizado 23/10:** `matr320.prx` padrão TOTVS (execução via SP `MAT056`; variante `DLPR320` descartada por poder3 zerado no fonte × não-zerado no PDF). Colunas MP reconciliadas 12/13 ao centavo em estado de emissão (doc 84 §4.2, doc 80 §31, regras doc 85 §5); residual: MovInt ~R$0,48 e `as_of` do saldo |
 | DLP06R01, P7 | **parcialmente resolvidos 23/10** — DLP06R01.prt=layout compartilhado (pagar: produtor FINR190 provado; receber: custom `DLP06R01` sem fonte — E1 pendente); P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |

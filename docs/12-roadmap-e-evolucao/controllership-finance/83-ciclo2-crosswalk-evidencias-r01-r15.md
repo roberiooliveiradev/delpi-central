@@ -142,9 +142,9 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 `NF a desconsiderar.xlsb` = export direto **SD2** via EDAPP (aba `Planilha2`, 184 colunas): Filial, Item, Produto, Qtd, Vlr, IPI, ICMS, Tipo Saida (594=`D2_TES`), Cod. Fiscal (5101). Roster: EDAPP "notas fiscais à desconsiderar do faturamento". **Rodada 26 (doc 80 §45, doc 85 §10):** 11 linhas = **exatamente** `D2_GRUPO='9035'`∩`D2_TES='594'`∩`D2_EMISSAO`∈set/2026 f01 (identidade de conjunto, não cardinalidade), Σ `D2_TOTAL` = **R$ 97.462,71 exato**; "CPV zero" = `D2_CUSTO1=0` estrutural (`F4_ESTOQUE='N'`, prova TTAT — insert MATA460A na emissão, sem alteração); semântica = faturamento de **industrialização para terceiros** (8/11 NFs casam item 510 com custo + item 594 sem custo). `GET /supplies/cpv` = `REUSE_PARTIAL` (contribuição R$0 ao numerador — coerente; exclusão é camada de conferência manual, não regra da API). Gates: **G1–G5 PASS · G6 PENDING**; qual apuração recebe o desconsiderar + eixo do filtro → **E11**.
 
-### R12 — Acompanha Custos / Reposição / Refaz Saldos — **PARCIAL**
+### R12 — Acompanha Custos / Reposição / Refaz Saldos — **RECONCILIADO PARCIAL (bindings; cadeia SB9 pendente)**
 
-Vídeo 04:00 (**Recálculo do Custo de Reposição**, parâmetros íntegros observados — lista em §3) e 14:47–16:xx (**Acompanha Custo → Novo fechamento de custo**, execução real com checklist de etapas). `DEL100.PRW` decodificado (rodada 10/11) = Refaz Saldos (reconstrução SD3/SD1/SD2 → comparação SB9; query vigente 3.058/421/242 sanitizada no doc 80 §24.E). Gates: **G1–G3 PASS · G4 PENDING · G5/G6 PENDING**.
+**Rodada 27 (doc 80 §46, doc 85 §11) — inspeção direta do MP4:** cadeia física bound — **Custo de Reposição = `MATA320`** (SX1 `MTA320` 1:1 dos 16 params; TTAT `SB1010` prova `MATA320`/`JOICI` gravando `B1_CUSTD`: 13.201 writes 30/09 14:36–14:56 + 1.532 em 15:09–15:14; +15.972 em 01/10); **Refaz Saldos = `MATA300`** (SX1 `MTA300` 1:1; log threads `c300P* - Ok`; efeito físico `PENDING_EVIDENCE` — `B2_*`/SB9 não auditados); **Acompanha Custos** = wizard 4 etapas sobre motor MATA330 custom — etapas 1–3 `EXECUTION_OBSERVED`, **etapa 4 não exibida**; `Analise.xlsx` = export da etapa 3 com **CM final ≡ `B9_CM1`@30/09 em 1.966/1.994 (98,6%)** — 22 `MOD*` sem SB9 (estrutural) + 6 deltas de drift demo→gravação-f01-21/10; `MV_ULMES`=`20260930` f01+f02; SB9@30/09 em rajadas 02/10 (f02) e 21/10 (f01) — writer `PENDING` (E5). `DEL100` = auditoria SB9 **distinta** (errata corrigida); `MA330OK` = PE pós-MATA330 → SPs DELPI ausentes (E4). Gates: **G1–G4 PASS · G5 `INCONCLUSIVE` · G6 PENDING**.
 
 ### R13 — Extratos e aplicações — **BLOQUEADO (externalidade confirmada)**
 
@@ -172,11 +172,12 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | E8 (MATR989) | **novo (rodada 22):** fonte `matr989.prx`/RPO + parâmetros efetivos da emissão + semântica intra-dia do corte de OP — TI/ERP (R08 G4/G5 já PASS pela reconstrução física; doc 80 §41/§42). |
 | E10 (R10 CC matriz) | **novo (rodada 25):** lista exata de TES excluídos (narrada 12 vs observada 13 — `016`/`159`), filtro/consulta EDAPP preservada, regra de benefícios (colaborador×empresa) e owner da taxonomia Direto/Ind/Adm — Controladoria (R10 G5 já PASS pela reconstrução física; doc 80 §44, doc 82 E10). |
 | E11 (R11 NF desconsiderar) | **novo (rodada 26):** qual apuração recebe o desconsiderar (CPV×ROL×DRE), regra×exceção por documento e eixo do filtro EDAPP — Controladoria (R11 G5 já PASS por identidade de conjunto; doc 80 §45, doc 82 E11). |
+| E12 (R12 fechamento) | **novo (rodada 27):** sequência oficial/checkpoints, identidade da rotina "Refaz por DIT terceiros", efeitos do MATA300 (`Recalcular` MOD), papel do `MV_ULMES` — Controladoria + TI/ERP (R12 G4 já PASS; doc 80 §46, doc 82 E12). |
 
 ## §6 — Divergências e notas de rigor
 
 - `A Receber.xlsb`/`A pagar.xlsb` são **posições em aberto** (FINR130/FINR150) — não contam como baixas (R01/R02).
-- `Analise.xlsx` = análise de variação de custo médio multimoeda (doc 58 histórico) — artefato resolvido; rotina produtora ainda `TO_INVENTORY`.
+- `Analise.xlsx` = **export da etapa "Análise e revisão" do wizard Acompanha Custos** (rodada 27 — estrutura 1:1 + CM final ≡ `B9_CM1`@30/09 em 1.966/1.994; 22 `MOD*` estruturais + 6 deltas de drift demo→gravação-f01; doc 80 §46.D).
 - Totais do P7 variaram entre emissões no mesmo dia → "valor homologado" exige versão/`as_of` (coerente com AC-E6-02/08).
 - `SB9` deixou de ser apenas candidato: o binding de **totalização** do P7 foi provado (EM ESTOQUE = saldo ex-99 no `as_of` da emissão — doc 80 §33.D); o binding do **produtor** (`matr460.prx`/workfile) e a parametrização por emissão seguem `TO_INVENTORY`.
 - Counts de linha XLSB são do export bruto (incluem cabeçalhos/subtotais); não equivalem diretamente às contagens de baixas da reconstrução SQL.
@@ -197,7 +198,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R09 Fat × MOD | RECONCILIADO PARCIAL | DLP204 (`DLP204.prw` `SOURCE_AVAILABLE`) | G1,G2,G3,**G4** (G5 `INCONCLUSIVE` — 27 tempos + SP interna → E9) |
 | R10 Notas por CC | RECONCILIADO | EDAPP (SD1) | G1,G2,G3,G4,**G5** (353/353 itens + seleção reconstruída + Σ `D1_TOTAL` exato — doc 80 §44; confirmações → E10) |
 | R11 NF desconsiderar | RECONCILIADO | EDAPP (SD2) | G1,G2,G3,G4,**G5** (11/11 = 9035∩594∩set, identidade de conjunto + Σ exato + CPV-zero estrutural — doc 80 §45; finalidade → E11) |
-| R12 Acompanha/Rep/Refaz | PARCIAL | Acompanha Custo wizard, Recálculo Reposição, DEL100 | G1,G2,G3 |
+| R12 Acompanha/Rep/Refaz | RECONCILIADO PARCIAL | `MATA320` (reposição→`B1_CUSTD`, TTAT), `MATA300` (refaz saldos), wizard Acompanha Custos (motor MATA330 custom), `DEL100` (auditoria SB9), `Analise.xlsx`↔SB9 98,6% | G1,G2,G3,**G4** (G5 `INCONCLUSIVE` — writer SB9/etapa-4/efeito MATA300 pendentes) |
 | R13 Extratos/aplicações | BLOQUEADO | externa | G1 |
 | R14 Importação | BLOQUEADO | — | — |
 | R15 Cutoff/SB9 | PARCIAL | fechamento wizard (execução observada) | G1,G2 |
