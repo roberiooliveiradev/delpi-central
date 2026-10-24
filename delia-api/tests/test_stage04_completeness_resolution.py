@@ -20,8 +20,10 @@ from app.application.capability_provision.orchestration import (
     GROUP_SELECTION_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
-    _argument_completeness_gaps,
+)
+from app.application.interaction.argument_validation import (
     _apply_owner_declared_defaults,
+    _argument_completeness_gaps,
     _owner_entity_completeness_gaps,
     _schema_required_gaps,
 )
