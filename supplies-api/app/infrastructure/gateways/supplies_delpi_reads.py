@@ -163,12 +163,52 @@ class SuppliesDelpiReads:
         )
         return data if isinstance(data, dict) else {}
 
+    def get_safety_stock_filters(
+        self,
+        *,
+        access_token: str,
+        branch: str | None,
+        include_blocked: bool = False,
+    ) -> dict[str, Any]:
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                "/supplies/safety-stock/filters",
+                access_token=access_token,
+                params={
+                    "branch": branch or "all",
+                    "includeBlocked": "true" if include_blocked else "false",
+                },
+            )
+        )
+        return data if isinstance(data, dict) else {}
+
     def get_safety_stock_summary(
         self,
         *,
         access_token: str,
         branch: str | None,
+        include_blocked: bool | None = None,
+        product_group: str | None = None,
+        unit: str | None = None,
+        search: str | None = None,
+        status: str | None = None,
+        include_without_safety_stock: bool | None = None,
     ) -> dict[str, Any]:
+        extra: dict[str, Any] = {}
+        if include_blocked is not None:
+            extra["includeBlocked"] = "true" if include_blocked else "false"
+        if product_group:
+            extra["productGroup"] = product_group
+        if unit:
+            extra["unit"] = unit
+        if search:
+            extra["search"] = search
+        if status:
+            extra["status"] = status
+        if include_without_safety_stock is not None:
+            extra["includeWithoutSafetyStock"] = (
+                "true" if include_without_safety_stock else "false"
+            )
         data = unwrap_delpi_envelope(
             self.gateway.get(
                 "/supplies/safety-stock/summary",
@@ -177,6 +217,7 @@ class SuppliesDelpiReads:
                     branch=branch,
                     start_date=None,
                     end_date=None,
+                    extra=extra or None,
                 ),
             )
         )
@@ -325,12 +366,17 @@ class SuppliesDelpiReads:
         access_token: str,
         branch: str,
         status: str | None = None,
+        product_group: str | None = None,
+        unit: str | None = None,
+        search: str | None = None,
+        include_blocked: bool | None = None,
+        include_without_safety_stock: bool | None = None,
         page: int = 1,
         page_size: int = 50,
         sort_by: str | None = None,
         sort_direction: str | None = None,
     ) -> dict[str, Any]:
-        """Safety-stock items for one concrete branch."""
+        """Safety-stock items for one branch scope (all|01|02)."""
         concrete = str(branch or "").strip()
         if not concrete:
             raise ValueError("branch is required for safety-stock items reads")
@@ -341,15 +387,67 @@ class SuppliesDelpiReads:
         }
         if status:
             params["status"] = status
+        if product_group:
+            params["productGroup"] = product_group
+        if unit:
+            params["unit"] = unit
+        if search:
+            params["search"] = search
+        if include_blocked is not None:
+            params["includeBlocked"] = "true" if include_blocked else "false"
+        if include_without_safety_stock is not None:
+            params["includeWithoutSafetyStock"] = (
+                "true" if include_without_safety_stock else "false"
+            )
         if sort_by:
-            params["sort_by"] = sort_by
+            params["sortBy"] = sort_by
         if sort_direction:
-            params["sort_direction"] = sort_direction
+            params["sortDirection"] = sort_direction
         data = unwrap_delpi_envelope(
             self.gateway.get(
                 "/supplies/safety-stock/items",
                 access_token=access_token,
                 params=params,
+            )
+        )
+        return data if isinstance(data, dict) else {}
+
+    def get_safety_stock_item_details(
+        self,
+        *,
+        access_token: str,
+        branch: str,
+        product_code: str,
+    ) -> dict[str, Any]:
+        """Item details; requires one concrete branch (producer computes peer)."""
+        concrete = str(branch or "").strip()
+        if not concrete:
+            raise ValueError("branch is required for safety-stock item details")
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                f"/supplies/safety-stock/items/{product_code}/details",
+                access_token=access_token,
+                params={"branch": concrete},
+            )
+        )
+        return data if isinstance(data, dict) else {}
+
+    def get_safety_stock_item_suppliers(
+        self,
+        *,
+        access_token: str,
+        branch: str,
+        product_code: str,
+    ) -> dict[str, Any]:
+        """Linked suppliers for one item under a concrete branch."""
+        concrete = str(branch or "").strip()
+        if not concrete:
+            raise ValueError("branch is required for safety-stock item suppliers")
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                f"/supplies/safety-stock/items/{product_code}/suppliers",
+                access_token=access_token,
+                params={"branch": concrete},
             )
         )
         return data if isinstance(data, dict) else {}
