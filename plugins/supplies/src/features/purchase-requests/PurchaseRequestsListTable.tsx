@@ -29,6 +29,8 @@ import {
   formatProductLabel,
   formatRequestNumber,
   labelOverallStage,
+  isKnownOverallStage,
+  stageBadgeVariant,
   nextServerSort,
   PURCHASE_REQUESTS_SORTABLE_COLUMNS,
   tableSortKey,
@@ -44,12 +46,10 @@ import {
   type PurchaseRequestTableColumnKey,
 } from "./purchaseRequestsTableConfig";
 import type {
-  OverallStage,
   PurchaseRequestListItem,
   PurchaseRequestsQuery,
   PurchaseRequestsSortDir,
 } from "./types";
-import { OVERALL_STAGE_VALUES } from "./types";
 
 type PurchaseRequestsListTableProps = {
   items: PurchaseRequestListItem[];
@@ -69,30 +69,6 @@ const CARDS_SORT_OPTIONS = PURCHASE_REQUESTS_TABLE_COLUMNS.filter(
   value: column.key,
   label: column.label,
 }));
-
-function stageBadgeVariant(
-  stage: string | null | undefined,
-): "neutral" | "info" | "success" | "warning" | "danger" {
-  switch (stage) {
-    case "awaiting_order":
-    case "awaiting_receipt":
-      return "warning";
-    case "partially_ordered":
-    case "ordered":
-    case "partially_received":
-      return "info";
-    case "completed":
-      return "success";
-    case "residual_closed":
-      return "neutral";
-    default:
-      return "neutral";
-  }
-}
-
-function isKnownStage(stage: string | null | undefined): stage is OverallStage {
-  return Boolean(stage && (OVERALL_STAGE_VALUES as readonly string[]).includes(stage));
-}
 
 function buildRequestDetailHref(
   basePath: string,
@@ -182,7 +158,7 @@ export function PurchaseRequestsListTable({
               case "stage": {
                 const stage = row.derived?.overall_stage;
                 const label = labelOverallStage(stage);
-                if (!isKnownStage(stage)) return label;
+                if (!isKnownOverallStage(stage)) return label;
                 return (
                   <SuppliesStatusBadge
                     label={label}

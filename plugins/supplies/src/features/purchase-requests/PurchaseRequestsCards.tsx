@@ -10,6 +10,7 @@ import {
   formatProductLabel,
   formatRequestNumber,
   labelOverallStage,
+  stageBadgeVariant,
 } from "./query";
 import type { PurchaseRequestListItem } from "./types";
 
@@ -19,24 +20,6 @@ type PurchaseRequestsCardsProps = {
   onSelectRow: (item: PurchaseRequestListItem) => void;
   basePath: string;
 };
-
-function stageBadgeVariant(
-  stage: string | null | undefined,
-): "neutral" | "info" | "success" | "warning" {
-  switch (stage) {
-    case "awaiting_order":
-    case "awaiting_receipt":
-      return "warning";
-    case "partially_ordered":
-    case "ordered":
-    case "partially_received":
-      return "info";
-    case "completed":
-      return "success";
-    default:
-      return "neutral";
-  }
-}
 
 export function PurchaseRequestsCards({
   items,

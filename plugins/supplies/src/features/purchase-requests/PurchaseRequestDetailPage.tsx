@@ -13,6 +13,7 @@ import {
   SuppliesSectionCard,
   SuppliesSectionHintLabel,
   SuppliesStateBanner,
+  SuppliesStatusBadge,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { getPurchaseRequest } from "./api";
@@ -21,10 +22,16 @@ import {
   PURCHASE_REQUESTS_CONTENT as C,
 } from "./content";
 import {
+  approvalBadgeVariant,
+  countLinkedOrders,
   formatDatePtBr,
   formatProductLabel,
   formatRequestNumber,
+  isKnownOverallStage,
+  labelApprovalStatus,
   labelOverallStage,
+  stageBadgeVariant,
+  uniqueApproverNames,
 } from "./query";
 import type { PurchaseRequestDetail } from "./types";
 
@@ -76,6 +83,27 @@ export function PurchaseRequestDetailPage({
   const lines = detail?.lines ?? [];
   const displayNumber = formatRequestNumber(header?.request_number || requestNumber);
 
+  const stage = header?.overall_stage;
+  const costCenters = header?.cost_centers ?? [];
+  const firstCostCenter = costCenters[0];
+  const costCenterLabel = firstCostCenter
+    ? `${firstCostCenter.code}${
+        firstCostCenter.description ? ` — ${firstCostCenter.description}` : ""
+      }${costCenters.length > 1 ? ` (+${costCenters.length - 1})` : ""}`
+    : "—";
+  const costCenterTitle =
+    costCenters.length > 1
+      ? costCenters
+          .map(
+            (cc) => `${cc.code}${cc.description ? ` — ${cc.description}` : ""}`,
+          )
+          .join(" · ")
+      : undefined;
+  const approverNames = uniqueApproverNames(lines);
+  const linkedOrdersCount = countLinkedOrders(header?.purchase_orders);
+  const hasLinkedOrders = Boolean(header?.purchase_orders?.length);
+  const overdueDays = header?.max_days_overdue;
+
   return (
     <div className="sp-page-stack sp-purchase-request-detail">
       <SuppliesPagePath
@@ -104,15 +132,34 @@ export function PurchaseRequestDetailPage({
       >
         <dl className="sp-purchase-request-detail__identity">
           <div>
-            <dt>Unidade</dt>
+            <dt>{C.detailUnitLabel}</dt>
             <dd>{formatSuppliesUnitLabel(header?.branch || branch)}</dd>
           </div>
           <div>
-            <dt>Solicitação</dt>
+            <dt>{C.detailTitle}</dt>
             <dd>{displayNumber}</dd>
           </div>
           <div>
-            <dt>Solicitante</dt>
+            <dt>{C.detailOpenedLabel}</dt>
+            <dd>{formatDatePtBr(header?.issue_date)}</dd>
+          </div>
+          <div>
+            <dt>{C.detailStageLabel}</dt>
+            <dd>
+              {isKnownOverallStage(stage) ? (
+                <SuppliesStatusBadge
+                  label={labelOverallStage(stage)}
+                  variant={stageBadgeVariant(stage)}
+                />
+              ) : (
+                labelOverallStage(stage)
+              )}
+            </dd>
+          </div>
+        </dl>
+        <dl className="sp-purchase-request-detail__identity sp-purchase-request-detail__context">
+          <div>
+            <dt>{C.detailRequesterLabel}</dt>
             <dd>
               <SuppliesPersonIdentity
                 person={header?.requester}
@@ -125,18 +172,74 @@ export function PurchaseRequestDetailPage({
             </dd>
           </div>
           <div>
-            <dt>Abertura</dt>
-            <dd>{formatDatePtBr(header?.issue_date)}</dd>
+            <dt>{C.detailCostCenterLabel}</dt>
+            <dd title={costCenterTitle}>{costCenterLabel}</dd>
           </div>
           <div>
-            <dt>Situação</dt>
-            <dd>{labelOverallStage(header?.overall_stage)}</dd>
-          </div>
-          <div>
-            <dt>Itens</dt>
-            <dd>{header?.visible_items_count ?? lines.length}</dd>
+            <dt>{C.detailApprovalLabel}</dt>
+            <dd>
+              <SuppliesStatusBadge
+                label={labelApprovalStatus(header?.approval_summary?.status, {
+                  approved: C.approvalApproved,
+                  rejected: C.approvalRejected,
+                  blocked: C.approvalBlocked,
+                  unknown: C.approvalUnknown,
+                })}
+                variant={approvalBadgeVariant(
+                  header?.approval_summary?.status,
+                )}
+              />
+              {approverNames.length === 1 ? (
+                <span className="sp-purchase-request-detail__approver">
+                  {" "}
+                  {approverNames[0]}
+                </span>
+              ) : null}
+              {approverNames.length > 1 ? (
+                <span className="sp-purchase-request-detail__approver">
+                  {" "}
+                  {C.detailApproversMany(approverNames.length)}
+                </span>
+              ) : null}
+            </dd>
           </div>
         </dl>
+        <dl className="sp-purchase-request-detail__identity sp-purchase-request-detail__indicators">
+          <div>
+            <dt>{C.detailIndicatorItems}</dt>
+            <dd>{header?.visible_items_count ?? lines.length}</dd>
+          </div>
+          <div>
+            <dt>{C.detailIndicatorOrders}</dt>
+            <dd>{linkedOrdersCount}</dd>
+          </div>
+          <div>
+            <dt>{C.detailIndicatorOverdue}</dt>
+            <dd>
+              {!hasLinkedOrders ? (
+                "—"
+              ) : header?.has_overdue_order ? (
+                <>
+                  <SuppliesStatusBadge
+                    label={C.detailOverdueYes}
+                    variant="danger"
+                  />
+                  {typeof overdueDays === "number" && overdueDays > 0 ? (
+                    <span className="sp-purchase-request-detail__overdue-note">
+                      {" "}
+                      {C.detailOverdueDays(overdueDays)}
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                C.detailOverdueNone
+              )}
+            </dd>
+          </div>
+        </dl>
+        <p className="sp-purchase-request-detail__scope-note">
+          {C.detailScopeNote}
+        </p>
       </SuppliesPageHero>
 
       {errorKind === "forbidden" ? (

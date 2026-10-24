@@ -245,3 +245,111 @@ export function formatProductLabel(
   if (c && d) return `${c} — ${d}`;
   return c || d || "—";
 }
+
+/** Badge tone for the canonical SC stages — single source for list, cards and detail. */
+export function stageBadgeVariant(
+  stage: string | null | undefined,
+): "neutral" | "info" | "success" | "warning" | "danger" {
+  switch (stage) {
+    case "awaiting_order":
+    case "awaiting_receipt":
+      return "warning";
+    case "partially_ordered":
+    case "ordered":
+    case "partially_received":
+      return "info";
+    case "completed":
+      return "success";
+    case "residual_closed":
+      return "neutral";
+    default:
+      return "neutral";
+  }
+}
+
+export function isKnownOverallStage(
+  stage: string | null | undefined,
+): stage is OverallStage {
+  return Boolean(
+    stage && (OVERALL_STAGE_VALUES as readonly string[]).includes(stage),
+  );
+}
+
+/** Canonical approval label for detail header (C1_APROV mapped by producer). */
+export function labelApprovalStatus(
+  status: string | null | undefined,
+  labels: {
+    approved: string;
+    rejected: string;
+    blocked: string;
+    unknown: string;
+  },
+): string {
+  switch ((status || "").trim()) {
+    case "approved":
+      return labels.approved;
+    case "rejected":
+      return labels.rejected;
+    case "blocked":
+      return labels.blocked;
+    default:
+      return labels.unknown;
+  }
+}
+
+export function approvalBadgeVariant(
+  status: string | null | undefined,
+): "neutral" | "success" | "warning" | "danger" {
+  switch ((status || "").trim()) {
+    case "approved":
+      return "success";
+    case "rejected":
+      return "danger";
+    case "blocked":
+      return "warning";
+    default:
+      return "neutral";
+  }
+}
+
+/** Distinct linked purchase orders by canonical identity (branch, order_number). */
+export function countLinkedOrders(
+  orders:
+    | ReadonlyArray<{
+        branch?: string | null;
+        order_number?: string | null;
+      }>
+    | null
+    | undefined,
+): number {
+  if (!orders?.length) return 0;
+  const keys = new Set(
+    orders.map((order) => `${order.branch ?? ""}|${order.order_number ?? ""}`),
+  );
+  return keys.size;
+}
+
+/**
+ * Distinct approver names across visible lines — approval is per-line
+ * (C1_NOMAPRO); never promote a single line approver to the header.
+ * Returns the deduped, trimmed names in payload order.
+ */
+export function uniqueApproverNames(
+  lines:
+    | ReadonlyArray<{
+        approval?: { approver_name?: string | null } | null;
+      }>
+    | null
+    | undefined,
+): string[] {
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const line of lines ?? []) {
+    const name = (line.approval?.approver_name || "").trim();
+    if (name && !seen.has(name)) {
+      seen.add(name);
+      names.push(name);
+    }
+  }
+  return names;
+}

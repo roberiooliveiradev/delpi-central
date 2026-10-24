@@ -66,6 +66,19 @@ describe("PurchaseRequests feature", () => {
     // enriched `header.requester` PersonRef — never a raw TOTVS name string.
     expect(detail).toContain("person={header?.requester}");
     expect(detail).not.toMatch(/header\?\.requester\?\.(name|display_name)/);
+    // EN.A2: hero uses only contracted, safe indicators — never a single-UM
+    // total; approval shown with per-line granularity (no fictitious header
+    // approver); linked orders counted by canonical identity.
+    expect(detail).toContain("countLinkedOrders");
+    expect(detail).toContain("uniqueApproverNames");
+    expect(detail).toContain("labelApprovalStatus");
+    expect(detail).toContain("approvalBadgeVariant");
+    expect(detail).toContain("stageBadgeVariant");
+    expect(detail).toContain("has_overdue_order");
+    expect(detail).toContain("max_days_overdue");
+    expect(detail).toContain("visible_items_count");
+    expect(detail).not.toMatch(/requested_quantity|ordered_quantity|received_quantity/);
+    expect(detail).not.toMatch(/approver_name/);
   });
 
   it("filtros Unidade alinhados à Visão geral", () => {

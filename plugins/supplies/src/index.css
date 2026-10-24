@@ -1189,6 +1189,27 @@
   word-break: break-word;
 }
 
+.dashboard-supplies-portal .sp-purchase-request-detail__context,
+.dashboard-supplies-portal .sp-purchase-request-detail__indicators {
+  margin-top: 0.9rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__indicators dd {
+  font-size: 0.95rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__approver,
+.dashboard-supplies-portal .sp-purchase-request-detail__overdue-note {
+  font-weight: 600;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-purchase-request-detail__scope-note {
+  margin: 0.9rem 0 0;
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+}
+
 .dashboard-supplies-portal .sp-purchase-order-detail__receipts-title {
   margin: 1.1rem 0 0.55rem;
   font-size: 0.95rem;

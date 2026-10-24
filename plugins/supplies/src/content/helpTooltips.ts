@@ -141,7 +141,7 @@ export const SP_HELP = {
   purchaseRequestsEntityLink:
     "O número da SC abre a ficha em página própria (/purchase-requests/unidade/número). Você também pode clicar na linha ou no card.",
   purchaseRequestDetail:
-    "Ficha da solicitação com dados e itens. Use Voltar para retornar à lista com os filtros anteriores.",
+    "Ficha da solicitação. O cabeçalho mostra identificação, solicitante, centros de custo, aprovação e indicadores seguros (itens visíveis, pedidos vinculados e atraso) — tudo dentro do escopo de centros de custo que você enxerga. A aprovação pode variar por item; o nome do aprovador aparece quando todos os itens visíveis têm o mesmo responsável. O atraso vem das previsões de entrega dos pedidos vinculados. Use Voltar para retornar à lista com os filtros anteriores.",
   purchaseOrders:
     "Itens de pedidos de compra com saldo pendente de recebimento no recorte selecionado. O hero mostra linhas em aberto, valor em aberto e atrasadas (o chip Atrasados não muda os totais). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
   purchaseOrdersBranch:

@@ -106,7 +106,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver o detalhe de uma solicitação",
           where: "Solicitações de compras",
-          how: "Abra a SC; cabeçalho e itens no escopo de CC. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista com os filtros",
+          how: "Abra a SC; cabeçalho com identificação, solicitante, centros de custo, aprovação e indicadores (itens visíveis, pedidos vinculados, atraso) — tudo no escopo de CC. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista com os filtros",
         },
         {
           want: "Alterar unidade padrão ou densidade das tabelas",

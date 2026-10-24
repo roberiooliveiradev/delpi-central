@@ -145,3 +145,15 @@ totais de quantidade. Novo `PurchaseRequestDetail.contract.test.ts` (9 testes)
 + 447/447 suíte MFE + typecheck + build. Registro completo:
 `SC-PC-DETAIL-EN-A1-CONTRACT-TYPES.md`. **EN.A2 = READY_FOR_PO**
 (pendente apenas autorização; dados tipados disponíveis).
+
+## EN.A2 executada (2026-10-24)
+
+**EN.A2 = DONE.** Hero da ficha SC reorganizado em 3 níveis: identificação
+(unidade, nº, abertura, situação com badge), contexto (solicitante c/ foto,
+CCs c/ descrição + `+N`, aprovação c/ aprovador granular — 1 nome ou
+«N aprovadores», nunca promovido de linha) e indicadores seguros (itens
+visíveis, `countLinkedOrders` por identidade `(filial, número)`, atraso por
+`has_overdue_order`/`max_days_overdue`). Nenhum KPI de quantidade (guard no
+structural test). `stageBadgeVariant`/`isKnownOverallStage` unificados em
+`query.ts`. Help + Manual sincronizados; residual da fixture EN.A1 corrigido.
+Registro: `SC-PC-DETAIL-EN-A2-SC-HERO.md`. **EN.A3 = READY_FOR_PO**.
