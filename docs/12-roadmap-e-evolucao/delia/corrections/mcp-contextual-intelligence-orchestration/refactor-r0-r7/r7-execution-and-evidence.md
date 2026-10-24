@@ -188,3 +188,16 @@
 **Decisão do executor (parada canônica):** `O2_SUCCESS_RATE=10% < 70%` (alvo provisório da revisão — não SLA). Conforme `667a670cd8`: reliability pobre → STOP com evidência por estágio; sem iteração v17/v18. `delia-api` NÃO promovível como release estável nesta configuração de modelo; `api-delpi` não recebeu diff nesta task (baseline sync já commitado, deploy continua gated). Deploys **não executados** — autorização operacional não concedida para nenhum serviço.
 
 `O2_STATUS=FROZEN_V16_EVAL_1/10`; `RESIDUAL=args_stage_canonical_extraction_variance (model-bound)`; `RELEASE_DECISION=COORDINATION_REQUIRED (threshold + model/config + canary-vs-hold)`; `DEPLOY=BLOCKED_NO_AUTHORIZATION`; `R7_FINAL_ACCEPT=NO`.
+
+
+### Parecer independente da avaliação congelada v16 — 2026-10-24
+
+**REVIEW_VERDICT=REWORK (reliability gate)**; **V16_FROZEN_EVAL=FAIL**; **O2=1/10 (10%) EXECUTOR_REPORTED**; **DAVI_DEPLOY_AUTHORIZED=NO**; **DELIA_DEPLOY_AUTHORIZED=NO**; **R7_FINAL_ACCEPT=NO**. Conferidos no GitHub HEAD `a225e632b87ecc6a24e90d58ed738aa194cac475` e o commit documental/ledger correspondente. Não houve reexecução independente de runtime ou testes nesta sessão.
+
+A matriz congelada diferencia corretamente v16 dos agregados de versões anteriores: com `moonshotai/kimi-k3` (temp=0.2), corpus V2 e token renovado por run, O2 obteve 1/10 PASS; consulta foreign completou 8/9 vezes, mas a tradução de designação normativa para `search_products.description` só foi observada corretamente 1/9. Estes denominadores **não provam, sozinhos, ausência universal de defeito de projeção ou contrato**; evidência do executor sugere o gargalo no estágio `arguments`, a validar por payload sanitizado, critérios de seleção e provenance do trecho recebido.
+
+**Decisão:** recusar promoção produtiva v16 como release estável; não converter meta provisória >=70% em SLA canônico; rejeitar opção de canary com apenas 10% de sucesso sem autorização explícita e limite de risco, o que não está concedido. Não escolher novo modelo por especulação nem repetir v17+ prompt tuning. Autorizar somente inventário/characterization bounded do contrato `foreign_evidence → arguments`, reutilizando a fronteira existente de extração/normalização/validação e provando `EXISTING_EQUIVALENT` antes de qualquer novo mecanismo. Se o contrato já suporta preservação fiel de valor sourced, avaliar solução mínima provider-neutral e testável; caso exija mudança arquitetural, `ARCHITECTURE_DECISION_REQUIRED` antes do diff. Em paralelo, opcionalmente comparar modelos com mesma matriz congelada **sem** autorizar troca produtiva.
+
+C1 ambiental DAVI permanece pendente de aceite formal do owner CI; CRI OFF live continua TEST_NOT_RUN. Release por serviço requer reviews + autorização operacional específica após comprovar confiabilidade e segurança; não houve deploy autorizado.
+
+`NEXT_ACTION=FOREIGN_EVIDENCE_TO_ARGUMENTS_CONTRACT_DIAGNOSTIC`; `O2_RELIABILITY=FAIL`; `R7_CLOSED=NO`; `DEPLOY_GATE=BLOCKED`.
