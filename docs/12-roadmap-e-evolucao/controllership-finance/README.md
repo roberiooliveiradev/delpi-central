@@ -1,6 +1,14 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
-> **Consolidação documental: 19/10/2026.** Primeira funcionalidade: **Central de Fechamento**, processo **PROC-0072**. Documentação `TARGET`, sem implementação de runtime. Este README é o **único painel de estado vigente**; relatórios antigos de A12/A14/A15/A16 são evidências datadas, não gates atuais.
+> **Estado atualizado em 24/10/2026.** Primeira funcionalidade: **Central de Fechamento**, processo **PROC-0072**. **Existem** MFE, BFF e páginas read-only Home, Baixas financeiras e Estoque histórico no HEAD; **isso não é a Central P1–P6 implementada ou homologada**. Este README é o **painel de estado**; relatórios antigos A12/A14/A15/A16 são evidências datadas, não gates atuais.
+
+## Estado executivo vigente — 24/10/2026
+
+**Roteiro único para implementação E2E da Central:** [Documento 93 — Roadmap executivo E2E com checkpoints reais](./93-roadmap-executivo-central-fechamento-end-to-end-checkpoints.md). O documento 39 permanece plano de base anterior aos Ciclos 1–3; docs 40–43 mantêm dependências, testes, playbook e rollout, com precedência de sequenciamento/checkpoints atualizada pelo 93. **Não confundir CODE_PRESENT das duas consultas com documentos automatizados, aceitos ou pacotes publicados.**
+
+**Estado de prova:** Ciclo 1 `PO_ACCEPTED_WITH_RESIDUAL` (doc 79); Ciclo 2 coleta **47/60**, auditoria **55/90**, **G6=0/15** (docs 47/86); C3 docs 90–92 consolidaram workflow e decisões com gaps físicos. `CP00=PENDING`, `CP01=INCONCLUSIVE/TEST_NOT_RUN`; runtime P1–P6 restante `TARGET` e precisa de gates transversais + GO por página. **Nova permission/página de Contabilidade/DRE: DECIDIDA PELO PO, IMPLEMENTAÇÃO ADIADA** (doc 91); manifesto atual continua com 2 permissions. `IMPLEMENTATION_AUTHORIZED=NO` para novos slices.
+
+**Próximo pacote para executor:** `CF-C3-E2E-CP00-CP01-REBASELINE-VERIFY-001` → crosswalk linha-a-linha do checklist C1 + testes/smoke autorizado das páginas existentes, evidência de grau de equivalência R01/R02/R03; então `CF-C3-P2-DOCUMENTS-CHECKLIST-READINESS-001` (doc 92), design/contrato P6 mínimo e P2 antes do gate de runtime.
 
 ## 1. Identidade e boundaries congelados
 
@@ -17,9 +25,9 @@
 
 Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md), regras `.cursor` aplicáveis e [padrão visual da plataforma](../../11-padroes-de-desenvolvimento/padrao-visual-portais-minha-delpi.md). **`@delpi/plugin-ui` first.**
 
-## 2. Estado **vigente** e gates
+## 2. Estado histórico dos gates (19/10) — interpretar com rebaseline do Documento 93
 
-| Controle | Estado em 19/10/2026 |
+| Controle | Registro histórico de 19/10/2026 |
 |---|---|
 | AS-IS PROC-0072 | `PROVEN / TÉO CLOSED_ACCEPTED` |
 | Decisões de produto C2, P5-A..J, DEC-01..04, D-FINAL-02 | `TARGET / PO_APPROVED` |
