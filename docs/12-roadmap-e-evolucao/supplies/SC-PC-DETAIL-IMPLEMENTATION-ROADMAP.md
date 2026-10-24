@@ -126,3 +126,10 @@ etapas usam somente dados já entregues ao MFE; pendentes apenas decisões D1/D2
 | PC: fornecedor/comprador/SC/qtds/preço/aberto/datas/atraso/NFs/parciais | provado | A6 |
 | PC: comprador nome, condição pgto, moeda, obs | `TO_INVENTORY` | B2–B3, C1 |
 | PC: valor total do pedido | `PLANNED` | B1 (D3) |
+
+
+## Gate de decisão PO — D1/D2 aprovadas (2026-10-24)
+
+**D1=APPROVED_OPTION_A:** mensagem neutra em 404 do PC, sem inferir conclusão nem construir endpoint histórico. **D2=APPROVED:** exibir na ficha SC (quando disponíveis/autorizados) `approval.approver_name`, `suggested_supplier` (rótulo «Fornecedor sugerido») e `account_code` (rótulo «Conta contábil», seção administrativa da ficha principal). A aprovação de D2 **substitui a recomendação anterior de deixar `account_code` fora da ficha principal**. A granularidade é por item quando assim estabelecida no produtor; evitar header fictício.
+
+**EN.A1 escopo para autorização futura:** declarar e validar os DTOs SC atualmente entregues pelo BFF, inclusive campos D2, sem alterar UI, producer, BFF, segurança ou contratos de rede. Testar campos opcionais/nulos, identidades compostas e preservação de códigos. **EN.A1=READY_TO_AUTHORIZE, não autorizado automaticamente.** As etapas EN.A2–A7 seguem não autorizadas. D3–D6 permanecem fora da Fase A.
