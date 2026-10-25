@@ -96,6 +96,83 @@ def normalize_arguments(raw: object) -> Mapping[str, Any] | None:
     return raw
 
 
+MAX_EVIDENCE_SELECTIONS = 8
+_EVIDENCE_SELECTION_KEYS = frozenset(
+    {"argument", "source_ref", "selected_value"}
+)
+
+
+def apply_evidence_bound_selections(
+    raw_selections: object,
+    arguments: dict[str, Any],
+    evidence_blocks: Mapping[str, str],
+    schema: Mapping[str, Any] | None,
+) -> tuple[dict[str, Any], int, int]:
+    """Materialize model-selected verbatim evidence values.
+
+    The model may select a value by reference instead of regenerating
+    it: each ``selections`` item names a schema ``argument``, a
+    ``source_ref`` naming an evidence block injected into this turn's
+    argument prompt, and the ``selected_value`` observed there. The
+    value materializes only when it occurs literally in the referenced
+    block, the field is a declared non-orchestrated string-compatible
+    property not already filled in ``arguments``, and any enum admits
+    it. Every other item is skipped fail-closed — ambiguity is never
+    arbitrated by the code and no value is invented. Referencing
+    evidence is never authorization: the materialized instance still
+    passes the same owner-schema validation and READ-only invocation.
+
+    Returns ``(arguments, applied, rejected)``.
+    """
+    if not isinstance(raw_selections, (list, tuple)):
+        return arguments, 0, 0
+    if not isinstance(schema, Mapping):
+        return arguments, 0, len(
+            [x for x in raw_selections if isinstance(x, Mapping)]
+        )
+    properties = schema.get("properties")
+    if not isinstance(properties, Mapping):
+        properties = {}
+    applied = rejected = 0
+    for item in list(raw_selections)[:MAX_EVIDENCE_SELECTIONS]:
+        if not isinstance(item, Mapping):
+            rejected += 1
+            continue
+        if set(item) - _EVIDENCE_SELECTION_KEYS:
+            rejected += 1
+            continue
+        argument = item.get("argument")
+        source_ref = item.get("source_ref")
+        selected = item.get("selected_value")
+        field = properties.get(argument) if isinstance(argument, str) else None
+        if (
+            not isinstance(argument, str)
+            or not isinstance(source_ref, str)
+            or not isinstance(selected, str)
+            or not selected
+            or len(selected.encode("utf-8")) > MAX_ARGUMENT_STRING_CHARS
+            or source_ref not in evidence_blocks
+            or selected not in evidence_blocks[source_ref]
+            or argument in ORCHESTRATED_FIELDS
+            or field is None
+            or not isinstance(field, Mapping)
+            or argument in arguments
+        ):
+            rejected += 1
+            continue
+        field_type = field.get("type")
+        if isinstance(field_type, str) and field_type != "string":
+            rejected += 1
+            continue
+        enum = field.get("enum")
+        if isinstance(enum, (list, tuple)) and selected not in enum:
+            rejected += 1
+            continue
+        arguments[argument] = selected
+        applied += 1
+    return arguments, applied, rejected
+
+
 def validate_arguments(
     arguments: Mapping[str, Any],
     schema: Mapping[str, Any] | None,

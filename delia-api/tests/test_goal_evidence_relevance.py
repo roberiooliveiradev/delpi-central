@@ -1326,3 +1326,290 @@ def test_recovery_assessment_native_keeps_plain_reformulation(
         "relevance_recovery decision=reinvoke"
         in capture_mode_logs.text
     )
+
+
+def _recovery_proposal(args_response, consult_status="foreign_evidence_required"):
+    """Shared proposal queue: literal first read judged irrelevant,
+    then a recovery round whose foreign consult resolves evidence and
+    whose re-invocation uses ``args_response``."""
+    return [
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"}
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "records are scales, not terminals",
+            },
+        },
+        {"goal_class": "record_lookup"},
+        {"status": "sufficient"},
+        {"probe_index": False},
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+        },
+        {"status": consult_status},
+        {"foreign_capability_id": "beta.read_guidance"},
+        args_response,
+    ]
+
+
+def test_recovery_arguments_materialize_evidence_bound_selection(
+    capture_mode_logs,
+):
+    """Selected verbatim evidence reaches the owner unmodified.
+
+    The model selects ``TERM. BALA`` by reference to the injected
+    ``foreign_evidence`` block; deterministic validation confirms the
+    literal value occurs in the referenced evidence and materializes
+    it — the owner receives the exact designation, never a model
+    paraphrase.
+    """
+    irrelevant = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "BALANCA BALMAK 1000KG"},
+                {"name": "BALANCA ELETRONICA 50KG"},
+            ]
+        },
+    )
+    relevant = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "TERM. BALA 0,50-2,27MM2"},
+                {"name": "TERM. BALA 1,00-2,50MM2"},
+            ]
+        },
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant, relevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {},
+                "selections": [
+                    {
+                        "argument": "query",
+                        "source_ref": "foreign_evidence",
+                        "selected_value": "TERM. BALA",
+                    }
+                ],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert pa.calls == [
+        ("search_items", {"query": "terminal bala"}),
+        ("search_items", {"query": "TERM. BALA"}),
+    ]
+
+
+def test_evidence_bound_selection_value_absent_fails_closed(
+    capture_mode_logs,
+):
+    """A selected value not present in the referenced evidence is
+    never materialized — no invented fallback query reaches the
+    owner."""
+    irrelevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "BALANCA BALMAK 1000KG"}]},
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant, irrelevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {},
+                "selections": [
+                    {
+                        "argument": "query",
+                        "source_ref": "foreign_evidence",
+                        "selected_value": "TERM. FEMEA PARALELO",
+                    }
+                ],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert all(
+        call[1].get("query") != "TERM. FEMEA PARALELO"
+        for call in pa.calls
+    )
+
+
+def test_evidence_bound_selection_forged_source_ref_rejected(
+    capture_mode_logs,
+):
+    """source_ref must name an evidence block actually injected this
+    turn — ``owner_vocabulary`` was never injected here, so the
+    selection cannot bind."""
+    irrelevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "BALANCA BALMAK 1000KG"}]},
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant, irrelevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {},
+                "selections": [
+                    {
+                        "argument": "query",
+                        "source_ref": "owner_vocabulary",
+                        "selected_value": "TERM. BALA",
+                    }
+                ],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert all(
+        call[1].get("query") != "TERM. BALA" for call in pa.calls
+    )
+
+
+def test_evidence_bound_selection_conflict_keeps_typed_argument(
+    capture_mode_logs,
+):
+    """A selection naming a field already filled in ``arguments`` is
+    ambiguous — the code never arbitrates: the typed proposal stands."""
+    irrelevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "BALANCA BALMAK 1000KG"}]},
+    )
+    relevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "TERM. BALA 0,50-2,27MM2"}]},
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant, relevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "TERMINAL BALA"},
+                "selections": [
+                    {
+                        "argument": "query",
+                        "source_ref": "foreign_evidence",
+                        "selected_value": "TERM. BALA",
+                    }
+                ],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert pa.calls[1] == ("search_items", {"query": "TERMINAL BALA"})
+
+
+def test_evidence_bound_selection_rejects_orchestrated_field(
+    capture_mode_logs,
+):
+    """Orchestration-resolved fields can never be bound by a model
+    selection — the candidate_token surface stays denied."""
+    irrelevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "BALANCA BALMAK 1000KG"}]},
+    )
+    relevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "TERM. BALA 0,50-2,27MM2"}]},
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant, relevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "x"},
+                "selections": [
+                    {
+                        "argument": "candidate_token",
+                        "source_ref": "foreign_evidence",
+                        "selected_value": "TERM. BALA",
+                    }
+                ],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    for _name, args in pa.calls:
+        assert "candidate_token" not in args
+

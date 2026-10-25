@@ -72,6 +72,7 @@ from app.application.interaction.argument_validation import (
     normalize_arguments,
     validate_arguments as _validate_instance,
     validate_untyped_arguments,
+    apply_evidence_bound_selections,
 )
 from app.application.interaction.capability_attempt import (
     OWNER_PATH_UNBOUND,
@@ -10013,10 +10014,13 @@ class OperationalCapabilityOrchestrator:
             ],
             "input_schema": descriptor.input_schema,
         }
+        evidence_blocks: dict[str, str] = {}
         if owner_evidence is not None:
             block["owner_vocabulary"] = owner_evidence
+            evidence_blocks["owner_vocabulary"] = owner_evidence
         if foreign_evidence is not None:
             block["foreign_evidence"] = foreign_evidence
+            evidence_blocks["foreign_evidence"] = foreign_evidence
         if business_subject is not None:
             # Bounded semantic subject from the validated turn goal —
             # keeps query-type arguments anchored on the business
@@ -10043,7 +10047,12 @@ class OperationalCapabilityOrchestrator:
                 expected_fields=("arguments",),
                 input_kind="capability_arguments",
                 allowed_keys=frozenset(
-                    {"arguments", "missing_inputs", "limitations"}
+                    {
+                        "arguments",
+                        "missing_inputs",
+                        "limitations",
+                        "selections",
+                    }
                 ),
                 workspace_context=workspace_context,
                 prior_turns=prior_turns,
@@ -10092,6 +10101,24 @@ class OperationalCapabilityOrchestrator:
         normalized = normalize_arguments(proposal.get("arguments"))
         if normalized is None:
             return None, missing
+        normalized = dict(normalized)
+        normalized, sel_applied, sel_rejected = (
+            apply_evidence_bound_selections(
+                proposal.get("selections"),
+                normalized,
+                evidence_blocks,
+                descriptor.input_schema,
+            )
+        )
+        if sel_applied or sel_rejected:
+            _logger.info(
+                "orchestration stage=arguments "
+                "decision=evidence_bound applied=%d rejected=%d "
+                "correlation_id=%s",
+                sel_applied,
+                sel_rejected,
+                correlation,
+            )
         validated = _validate_instance(normalized, descriptor.input_schema)
         if validated is None:
             return None, missing
