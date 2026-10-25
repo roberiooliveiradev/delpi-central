@@ -822,3 +822,142 @@ HEAD `0b44b48d3d` (commits `924c7662ee`, `04b4fc3d7a`, `0b44b48d3d`).
 - Refinamento visual único: executado em nível de consistência de
   código (heros, help, a11y, tokens) — revisão visual operacional
   depende de ambiente implantado (pós-G3).
+
+---
+
+## Addendum — CF-PROC0072-FINAL-REWORK-RELEASE-001 (rework técnico)
+
+Baseline: `68d48a4a4c` → rework commit `efabbaa6f3` (main,
+fast-forward após rebase sobre `e96a669d51`).
+
+### R-105-01 — Rejeição terminal e ações P5 (PROVEN)
+
+`_require_no_terminal_rejection` (helper único no
+`closing_package_repository`) bloqueia, com
+`TerminalRejectionActive` (409, código `terminal_rejection_active`),
+todas as ações de revisão enquanto existir rejeição `ACTIVE` na
+competência: `submit_for_review`, `start_review`, `record_decision`,
+`open_clarification`, `resolve_clarification`, `reopen_version`,
+`create_complement`. `finalize_package` já era bloqueado — agora usa o
+mesmo helper (dedup). Histórico, decisões, versões e notificações
+anteriores preservados.
+
+`TaskProjection` P5 deixa de projetar `PACKAGE_REVIEW_REQUIRED` e
+`PACKAGE_CLARIFICATION_REQUIRED` sob rejeição ativa (`NOT EXISTS` no
+owner query) — recomputado on-read, sem restauração artificial após
+reversão. MFE (`PackagesPage`) oculta formulário de decisão,
+esclarecimento, resolve e ações de manage quando
+`closing.state === "TERMINALLY_REJECTED"`, com aviso explícito do
+congelamento. Reversão continua exigindo `COORDINATOR` ativo + motivo
++ auditoria (DEC-01).
+
+Testes PG: freeze de 5 ações, supressão de tasks, isolamento entre
+competências, retomada pós-reversão, bloqueio de submissão, negativo
+de reversão por ator inelegível. Rotas: 409 tipado com
+`data.error.code` + `meta.operationId`.
+
+### R-105-02 — Envelope de erros `/me` (PROVEN)
+
+`me_routes.py` reusa `authorized_user` de `authz.py` (sem authz
+duplicada) e padroniza `_domain_fail` na assinatura canônica
+`fail(message, status, data={"error": {"code": ...}}, operation_id=…)`.
+Cobertura por rota: 401 sem bearer, 403 sem `access`, 503 com
+`rbac_unavailable`/`persistence_unavailable`, 404 tipado
+(`competence_not_opened`), `operationId` presente, sem exceção
+secundária do handler.
+
+### R-105-03 — Elegibilidade Core T05 (PROVEN parcial + G1)
+
+Contrato Core vigente verificado: `GET /integrations/effective-access/subjects/<sub>`
+(S2S, `PermissionResolver`-only) resolve **permissions**, não
+grupos/funções; os grupos corporativos chegam via `load_user_rbac`
+do middleware `delpi_auth` (`user.groups` — fonte Core, não local).
+
+Implementado: binding `REVIEW_ELIGIBILITY` por área agora avaliado em
+`record_decision`, `start_review` e `open_clarification`
+(`_require_eligible_reviewer`, fail-closed por área; rotas passam
+`user_groups`). `record_decision` permanece `ACCESS AND eligibility
+AND assignment AND business_rule`. `assignment_only` segue
+**auditado como vínculo operacional, não como prova corporativa
+plena** — aparece em `audit.detail.eligibility_mode`.
+
+G1 permanece: contrato dedicado de grupo/função→área e coordenador
+formal DEC-01 exigem decisão do owner Core. Nenhuma permission nova
+criada; apenas `access`/`manage`.
+
+### R-105-04 — Concorrência do bloqueio documental (PROVEN)
+
+Mecanismo: `SELECT ... FOR UPDATE` na linha `monthly_competence` como
+ponto de serialização único. `submit_for_review` adquire o lock antes
+do lock de versão; `create_document`, `add_version` e
+`cancel_document` adquirem o mesmo lock dentro da própria transação e
+revalidam `locked_item_keys_in(cur, …)` **na mesma transação** — a
+janela TOCTOU (check pré-mutação em conexão separada) foi eliminada.
+Mesmo guard em `decide_version`, `decide_item_set` e
+`reverse_decision` via `_assert_not_package_locked(cur, competence_id,
+item_key)` in-transaction. Ordem canônica competência → versão →
+documento/item: sem deadlock (quem detém a competência nunca pede
+lock de item/documento). Compensação de binário órfão preservada.
+
+Testes PG com concorrência real (threads + lock manual):
+upload × submit, validação × submit, cancelamento × submit (perdedor
+recebe `ItemLockedBySubmittedPackage`, documento permanece ATTACHED)
+e duas submissões concorrentes (exatamente uma vence; perdedora
+recebe `InvalidPackageTransition`).
+
+### R-105-05 — Entrega de notificações (PROVEN)
+
+- Outbox transacional preservada; dispatcher pós-commit continua
+  best-effort e nunca altera negócio.
+- **Claim por evento** com `FOR UPDATE SKIP LOCKED` — poller e
+  dispatcher pós-commit (ou réplicas) nunca despacham duas vezes o
+  mesmo evento; `dedupeKey = notification_id` preservado no metadata.
+- **Recuperação sem ação do usuário**: `notification_dispatch_job.py`
+  — loop asyncio no lifespan (padrão canônico já usado por
+  `cipa-api` e `purchase-requests-api`), configurável via
+  `CF_NOTIFICATION_DISPATCH_ENABLED`/`_INTERVAL_SECONDS` (mínimo 15s),
+  cancelamento limpo no shutdown, falhas apenas logadas.
+- Distinção mantida: `EVENT_EMITTED != CORE_ACCEPTED != USER_DELIVERED`
+  (`EMITTED`/`DISPATCHED`/`FAILED`); logs sem secrets nem payload
+  sensível.
+
+Teste PG: evento FAILED é recuperado por `dispatch_pending()` global
+sem nova mutação, sem duplicidade (dedupeKey estável), segunda
+execução no-op.
+
+### Regressão final
+
+| Suíte | Resultado |
+|---|---|
+| Backend completo (domínio/app/rotas/PG/migrations) | **514 passed** |
+| `test_pg_remainder_build.py` (F1–F6 + rework) | 16 passed |
+| Rotas authz/envelope (`test_remainder_routes.py`) | 16 passed |
+| Frontend vitest | **170 passed** (22 arquivos) |
+| Estruturais .mjs | 7 passed |
+| `tsc -b` / `vite build` / eslint | limpo / OK / 0 errors |
+
+### Pauta G1 consolidada (estado final do rework)
+
+| # | Decisão material | Owner | Estado |
+|---|---|---|---|
+| 1 | T03 `closing_stock_state`: owner + contrato de sync `STOCK_CLOSED` | Estoque/TOTVS | DECISION_REQUIRED — sem sync, C2 bloqueia corretamente |
+| 2 | Fontes oficiais R04/R06/R07/R09/R12/R15 (operação real + owner) | api-delpi/Controladoria | DECISION_REQUIRED — classificação honesta preservada |
+| 3 | Contrato dedicado grupo/função→área + coordenador formal | Core/T05 | DECISION_REQUIRED — binding por catálogo é implementado e fail-closed; não é prova corporativa plena |
+| 4 | Seeds multi-área `PACKAGE_REQUIRED_AREA` (P5-H) | Controladoria | DECISION_REQUIRED — mecânica e fallback auditado prontos |
+| 5 | Seeds E01/E05/E06 (bancos/contas, motivos de rejeição, roles) | Controladoria | DECISION_REQUIRED — conteúdo, não contrato |
+| 6 | Visão geral: indicadores com owner/fórmula/origem/freshness | Controladoria | DECISION_REQUIRED |
+| 7 | Sala de interação: capability de mensagens | Plataforma | DECISION_REQUIRED |
+
+Classificação honesta: **implementação técnica validada com pendências**
+— o aceite integral não é declarado enquanto as decisões G1 não forem
+tomadas pelos owners (ou o escopo parcial for aceito explicitamente).
+
+### Estado operacional
+
+- `DEPLOY_STATUS`: não deployado neste ciclo — aguarda G2/G3.
+- `PRODUCTION_MIGRATIONS`: not run (V004–V010 pendentes de startup autorizado).
+- `SMOKE_AUTHENTICATED`: TEST_NOT_RUN.
+- `G2_HUMAN_ACCEPTANCE`: pendente — matriz pronta para a sessão única.
+- `G3_RELEASE_AUTHORIZATION`: pendente — runbook canônico
+  (`git pull --ff-only` + `up-prod-sequential.sh --build`) pronto
+  para o Operador SSH após G2.
