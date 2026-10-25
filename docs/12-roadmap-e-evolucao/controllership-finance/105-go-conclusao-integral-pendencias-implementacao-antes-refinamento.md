@@ -107,3 +107,8 @@ NEXT_ACTION:
 \`\`\`
 
 **Instrução ao Devin:** iniciar o GO imediatamente no HEAD real. Implementar cada parte que tenha contrato/authority inequívocos, sem solicitar novo prompt por feature. Agrupar decisões genuínas em G1; nenhuma escolha nova de schema/owner/permission/contract é aprovada por este plano. **Finalizar a construção antes do refinamento**, mas nunca adiar segurança, testes, Ajuda ou gates de produção.
+
+
+## 6. Supersessão de escopo aprovada pelo PO em 25/10/2026
+
+**Diretriz posterior:** [Documento 106 — CLARA batch, Keycloak/ChatGPT](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md) substitui o escopo histórico deste plano que incluía Sala de interação e expansão de Minhas tarefas. Essas funcionalidades ficam **adiadas**; preservar código preexistente sem exposição da navegação. **CLARA/MCP passa a integrar o escopo ativo**, com corpus próprio e execução múltipla governada. P1–P6/R01–R15 permanecem prioridade. G1 de owners, G2 humano e G3 Operador SSH continuam vinculantes.
