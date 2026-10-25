@@ -583,3 +583,115 @@ completo do doc 104 §D1 sem estado inferido:
    RQ-ADM-01/02/05/07/08).
 5. Escopo das superfícies RQ-OVW/RQ-ROOM/RQ-TASK/RQ-USER em roadmap
    posterior.
+
+---
+
+## CF-PROC0072-E2E-G1-G2-CLOSURE-001 — correção cirúrgica C2 + consolidação G1/G2
+
+Baseline: `215c5821be`. Escopo: segurança da decisão de conclusão C2,
+origem das áreas obrigatórias (P5-H), pauta G1 única e matriz de
+homologação G2. Pacotes A–D não reabertos; auditoria geral não repetida.
+
+### 1. Correção da segurança C2
+
+`ClosingPackageRepository.derive_closing_state` antes só exigia
+`provenance_kind=OFFICIAL` por domínio. Agora a conclusão exige a
+pré-condição P3 **vigente completa**, reutilizando
+`ClosingP3Repository.get_p3_state` como fonte canônica (sem duplicar
+fingerprint/divergência):
+
+- cutoff confirmado;
+- revalidação vigente (`input_fingerprint` igual ao estado atual);
+- todas as fontes `AVAILABLE`;
+- divergência monetária exatamente zero por domínio;
+- `provenance_kind=OFFICIAL` por domínio (registrado != comprovado).
+
+`STOCK_CLOSED` canónico **não** mascara inputs obsoletos:
+`get_p3_state` retorna `STOCK_CLOSED` antes de avaliar blockers —
+o C2 passou a consultar `p3.blockers` em vez do estado derivado, e
+`_readiness_blockers` (gate do finalize) recebeu a mesma correção.
+Estado de estoque e conclusão mensal são conceitos distintos.
+
+Blockers novos no C2: `p3_cutoff_not_confirmed`,
+`p3_revalidation_required`, `p3_source_unavailable:<dom>`,
+`p3_divergence:<dom>` — além dos já existentes
+`p3_reconciliation_missing:<dom>` / `p3_declared_only:<dom>`.
+
+### 2. Origem das áreas obrigatórias (P5-H)
+
+Antes: `required_areas` = conjunto de áreas dos assignments ativos no
+momento da submissão — conflação entre obrigação e vínculo operacional.
+
+Agora: `required_areas = [recipient_area]` congelado na PackageVersion
+na submissão. A obrigação por área vem do **tipo de pacote**; o reviewer
+assignment é vínculo operacional avaliado na decisão (um revisor
+designado depois da submissão consegue aceitar normalmente).
+
+`DECISION_REQUIRED (G1)`: o contrato P5-H pede "áreas obrigatórias
+versionadas por tipo de pacote" mantidas pelo P6. Esse catálogo físico
+P6 **não existe** (doc 37 §17 lista "P6 versioned snapshot" como
+TO_INVENTORY). A V1 assume a auto-área do pacote como obrigação —
+sem catálogo inventado. Se o PO quiser tipos com múltiplas áreas
+obrigatórias, é decisão de contrato P6, não improviso de código.
+
+### 3. Testes (PostgreSQL real, suíte `test_pg_package_c.py`)
+
+| Caso | Resultado |
+|---|---|
+| Input de conciliação alterado após submissão+aceite | `PENDING` com `p3_revalidation_required` + `p3_divergence`; decisões/versões preservadas; restaura+revalida → `COMPLETED` |
+| Fonte `UNAVAILABLE` após conclusão | `PENDING` com `p3_source_unavailable`; restaura → `COMPLETED` |
+| `STOCK_CLOSED` + inputs alterados | `PENDING` — estoque fechado não mascara inputs obsoletos |
+| `STOCK_CLOSED` + inputs limpos | `COMPLETED` (estado canónico respeitado) |
+| Submissão sem reviewer | `required_areas=["FISCAL"]` congelada; `area_not_reviewed` — nunca vacuidade |
+| Revisor designado pós-submissão | Consegue aceitar (vínculo na decisão, não na submissão) |
+| Aceite oficial + revalidação vigente | `MONTHLY_CLOSING_COMPLETED` (caminho positivo preservado) |
+
+Backend completo: **482 passed** (478 + 4 novos). E2E: 3 passed.
+
+### 4. Pauta G1 consolidada — única
+
+**Impedem a conclusão mensal C2 (material, precisam de decisão):**
+
+1. **Fonte T03 / `closing_stock_state`**: quem é o owner que escreve
+   a linha canónica? Sem sync, o estado fica `UNAVAILABLE` — não
+   bloqueia C2 (C2 exige P3, não estoque), mas o cockpit e o estado
+   `STOCK_CLOSED` dependem disso. *Decisão: owner + contrato de sync.*
+2. **Comprovação de relatórios oficiais**: owners/contrato das fontes
+   `PENDING_CONTRACT` (R04, R06, R07, R09, R12, R15). Sem elas, os
+   domínios P3 só chegam a `DECLARED` — `p3_declared_only` bloqueia
+   C2. *Decisão: qual fonte TOTVS/documento comprova cada domínio
+   (ENTRADAS_SAIDAS, P7, H02).*
+3. **Elegibilidade Core**: contrato T05 grupo/função corporativa por
+   área + designação formal de coordenador (DEC-01). Hoje assignments
+   são governados por `manage` local. Não bloqueia a *regra* C2, mas
+   bloqueia a *legitimidade* dos aceites em produção.
+
+**Podem ficar para entrega posterior (decisão do PO, não bloqueiam C2):**
+
+4. **Catálogo P6 de áreas obrigatórias multi-área por tipo de pacote**
+   — V1 usa auto-área; evoluir requer contrato físico P6.
+5. **Catálogos P6 TARGET** (bancos/contas, motivos de rejeição,
+   attachment roles, notification targets).
+6. **Superfícies comuns TARGET**: RQ-OVW / RQ-ROOM / RQ-TASK / RQ-USER.
+7. Minhas tarefas/TaskProjection P5 (depende do item 3).
+
+### 5. Matriz de homologação G2
+
+| Dimensão | Estado |
+|---|---|
+| **Funciona em runtime** | P1 abertura/snapshot; P2 anexo/validação/rejeição/reversão/substituição; P3 cutoff/conciliação/revalidação; P4 pendências/ownership; P5 pacotes/versões/submissão/revisão/esclarecimentos/rejeição terminal/reversão; C2 derivado com P3 vigente; cockpit agregado; admin P6 de versões |
+| **Comprovado com dados oficiais** | Em teste: reconciliação `OFFICIAL` exige `official_document_id` anexado — provado em PG real. Em produção: nenhuma fonte oficial sincronizada ainda (G1 itens 1–2) |
+| **Funciona manualmente** | `MANUAL_EVIDENCE` R05/R08/R10/R11: anexar artefato + `provenance_kind=OFFICIAL` via upsert autenticado — fluxo completo provado em teste |
+| **Permanece TARGET** | RQ-OVW/RQ-ROOM/RQ-TASK/RQ-USER; catálogos P6; R04/R06/R07/R09/R12/R15 `PENDING_CONTRACT`; CLARA/DRE fora de escopo |
+| **Impede conclusão mensal** | Fontes oficiais não sincronizadas (C2 exige OFFICIAL vigente); elegibilidade Core/coordenador formal pendente; sync T03 ausente |
+| **Testado com atores reais** | TEST_NOT_RUN — smoke autenticado exige sessão humana em ambiente implantado (pós-G3) |
+| **Exige aceite da Controladoria** | Fluxo completo P1→C2; classificação R01–R15; operação manual de evidências; bloqueios honestos do cockpit; critério de rejeição terminal |
+
+### 6. Estado residual
+
+- `DEPLOY_STATUS`: NÃO DEPLOYADO — `srv-api` em estado A3;
+  V004–V009 aditivas pendentes de startup autorizado.
+- `PRODUCTION_MIGRATIONS`: NOT_RUN.
+- `SMOKE_AUTHENTICATED`: TEST_NOT_RUN.
+- `G2_HUMAN_ACCEPTANCE`: PENDENTE — matriz acima pronta para decisão.
+- `G3_RELEASE_AUTHORIZATION`: PENDENTE — bloqueado por G2.

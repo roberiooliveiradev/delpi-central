@@ -59,6 +59,7 @@ PERIOD = "2026-03"
 ADMIN = str(uuid.uuid4())
 REVIEWER_A = str(uuid.uuid4())
 REVIEWER_B = str(uuid.uuid4())
+REVIEWER_LATE = str(uuid.uuid4())
 COORDINATOR = str(uuid.uuid4())
 OUTSIDER = str(uuid.uuid4())
 
@@ -519,6 +520,8 @@ def test_official_provenance_unblocks_completion(submitted):
             official_document_id=doc,
             expected_revision=row["revision"],
         )
+    # upsert muda input_fingerprint → precisa nova revalidação vigente
+    p3.revalidate(PERIOD, actor=ADMIN)
     state = repo.derive_closing_state(PERIOD)
     assert state["state"] == "MONTHLY_CLOSING_COMPLETED"
     assert state["blocking_reasons"] == []
@@ -831,3 +834,239 @@ def test_notification_failure_does_not_affect_completion(setup):
     assert not any(
         r.startswith("notification") for r in state["blocking_reasons"]
     )
+
+
+# -- C2: P3 pré-condições revalidadas na conclusão -----------------------
+
+
+def test_c2_blocked_when_reconciliation_inputs_change(setup):
+    """C2 revalida P3 vigente: input alterado após submissão/aceite
+    derruba a conclusão (revalidação obsoleta + divergência).
+    Decisões humanas e versões permanecem intactas — só o estado
+    derivado muda."""
+    repo = setup["repo"]
+    p3 = ClosingP3Repository()
+    state = repo.derive_closing_state(PERIOD)
+    assert state["state"] == "MONTHLY_CLOSING_COMPLETED"
+    recons = p3.get_p3_state(PERIOD)["reconciliations"]
+    row = next(
+        r for r in recons if r["domain"] == "ENTRADAS_SAIDAS"
+    )
+    p3.upsert_reconciliation(
+        PERIOD,
+        "ENTRADAS_SAIDAS",
+        actor=ADMIN,
+        source_state="AVAILABLE",
+        expected_amount=Decimal("1000.00"),
+        reported_amount=Decimal("2000.00"),
+        provenance_kind="OFFICIAL",
+        official_document_id=row["official_document_id"],
+        expected_revision=row["revision"],
+    )
+    state = repo.derive_closing_state(PERIOD)
+    assert state["state"] == "PENDING"
+    assert "p3_revalidation_required" in state["blocking_reasons"]
+    assert (
+        "p3_divergence:ENTRADAS_SAIDAS" in state["blocking_reasons"]
+    )
+    # Decisões/versão histórica preservadas — blocker é derivado.
+    listed = repo.list_packages(
+        PERIOD, viewer=ADMIN, is_manage=True
+    )["packages"]
+    pkg = next(
+        p for p in listed if p["recipient_area"] == "CONTABIL"
+    )
+    assert pkg["state"] == "PACKAGE_SUBMITTED_FOR_REVIEW"
+    # Restaura input e revalida → conclusão volta.
+    row2 = next(
+        r
+        for r in p3.get_p3_state(PERIOD)["reconciliations"]
+        if r["domain"] == "ENTRADAS_SAIDAS"
+    )
+    p3.upsert_reconciliation(
+        PERIOD,
+        "ENTRADAS_SAIDAS",
+        actor=ADMIN,
+        source_state="AVAILABLE",
+        expected_amount=Decimal("1000.00"),
+        reported_amount=Decimal("1000.00"),
+        provenance_kind="OFFICIAL",
+        official_document_id=row2["official_document_id"],
+        expected_revision=row2["revision"],
+    )
+    p3.revalidate(PERIOD, actor=ADMIN)
+    state = repo.derive_closing_state(PERIOD)
+    assert state["state"] == "MONTHLY_CLOSING_COMPLETED"
+
+
+def test_c2_blocked_when_source_unavailable(setup):
+    """Fonte indisponível após revisão bloqueia C2 — indisponível
+    nunca equivale a zero nem a OK."""
+    repo = setup["repo"]
+    p3 = ClosingP3Repository()
+    recons = p3.get_p3_state(PERIOD)["reconciliations"]
+    row = next(r for r in recons if r["domain"] == "P7")
+    p3.upsert_reconciliation(
+        PERIOD,
+        "P7",
+        actor=ADMIN,
+        source_state="UNAVAILABLE",
+        expected_revision=row["revision"],
+    )
+    state = repo.derive_closing_state(PERIOD)
+    assert state["state"] == "PENDING"
+    assert "p3_source_unavailable:P7" in state["blocking_reasons"]
+    # Restaura fonte + revalida → conclusão volta.
+    with plugins_db_connect() as conn, conn.cursor(
+        row_factory=dict_row
+    ) as cur:
+        competence_id = p3._competence_id(cur, PERIOD)
+    doc = _insert_official_document(competence_id)
+    row2 = next(
+        r
+        for r in p3.get_p3_state(PERIOD)["reconciliations"]
+        if r["domain"] == "P7"
+    )
+    p3.upsert_reconciliation(
+        PERIOD,
+        "P7",
+        actor=ADMIN,
+        source_state="AVAILABLE",
+        expected_amount=Decimal("1000.00"),
+        reported_amount=Decimal("1000.00"),
+        provenance_kind="OFFICIAL",
+        official_document_id=doc,
+        expected_revision=row2["revision"],
+    )
+    p3.revalidate(PERIOD, actor=ADMIN)
+    state = repo.derive_closing_state(PERIOD)
+    assert state["state"] == "MONTHLY_CLOSING_COMPLETED"
+
+
+def test_stock_closed_does_not_mask_stale_inputs(setup):
+    """STOCK_CLOSED canónico NÃO é conclusão mensal: se os inputs de
+    conciliação mudam depois, C2 fica pendente mesmo com o estoque
+    fechado — estado de estoque != conclusão mensal."""
+    repo = setup["repo"]
+    p3 = ClosingP3Repository()
+    with plugins_db_connect() as conn, conn.cursor(
+        row_factory=dict_row
+    ) as cur:
+        competence_id = p3._competence_id(cur, PERIOD)
+        cur.execute(
+            """
+            INSERT INTO controllership_finance.closing_stock_state
+                (competence_id, canonical_state, source, fetched_at)
+            VALUES (%s, 'CLOSED', 'totvs_t03_sync', now())
+            ON CONFLICT (competence_id)
+            DO UPDATE SET canonical_state = 'CLOSED'
+            """,
+            (competence_id,),
+        )
+    # Inputs limpos + stock CLOSED → conclusão válida.
+    state = repo.derive_closing_state(PERIOD)
+    assert state["state"] == "MONTHLY_CLOSING_COMPLETED"
+    # Input muda com estoque fechado → pendente (estoque != fechamento).
+    row = next(
+        r
+        for r in p3.get_p3_state(PERIOD)["reconciliations"]
+        if r["domain"] == "H02"
+    )
+    p3.upsert_reconciliation(
+        PERIOD,
+        "H02",
+        actor=ADMIN,
+        source_state="AVAILABLE",
+        expected_amount=Decimal("9999.00"),
+        reported_amount=Decimal("9999.00"),
+        provenance_kind="OFFICIAL",
+        official_document_id=row["official_document_id"],
+        expected_revision=row["revision"],
+    )
+    assert p3.get_p3_state(PERIOD)["canonical_stock_state"] == "CLOSED"
+    state = repo.derive_closing_state(PERIOD)
+    assert state["state"] == "PENDING"
+    assert "p3_revalidation_required" in state["blocking_reasons"]
+    # Limpeza: stock row fora + restaura input + revalida.
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            DELETE FROM controllership_finance.closing_stock_state
+             WHERE competence_id = %s
+            """,
+            (competence_id,),
+        )
+    row2 = next(
+        r
+        for r in p3.get_p3_state(PERIOD)["reconciliations"]
+        if r["domain"] == "H02"
+    )
+    p3.upsert_reconciliation(
+        PERIOD,
+        "H02",
+        actor=ADMIN,
+        source_state="AVAILABLE",
+        expected_amount=Decimal("1000.00"),
+        reported_amount=Decimal("1000.00"),
+        provenance_kind="OFFICIAL",
+        official_document_id=row2["official_document_id"],
+        expected_revision=row2["revision"],
+    )
+    p3.revalidate(PERIOD, actor=ADMIN)
+    state = repo.derive_closing_state(PERIOD)
+    assert state["state"] == "MONTHLY_CLOSING_COMPLETED"
+
+
+# -- P5-H: required_areas por tipo de pacote, não por assignment ----------
+
+
+def test_required_areas_from_package_type_not_assignments(setup):
+    """P5-H: required_areas congela por tipo de pacote na submissão;
+    reviewer assignment é vínculo operacional distinto. Sem reviewer
+    a área obrigatória continua existindo → area_not_reviewed, nunca
+    vacuidade. Revisor designado DEPOIS da submissão ainda consegue
+    aceitar (vínculo avaliado na decisão, não na submissão)."""
+    repo = setup["repo"]
+    period3 = "2026-05"
+    # FISCAL de period3 não tem versão nem reviewer assignment.
+    pkg_f = repo.finalize_package(period3, "FISCAL", actor=ADMIN)
+    ver_f = _latest_version_id(pkg_f)
+    repo.submit_for_review(
+        period3, ver_f, actor=ADMIN, expected_revision=1
+    )
+    listed = repo.list_packages(
+        period3, viewer=ADMIN, is_manage=True
+    )["packages"]
+    pkg = next(
+        p for p in listed if p["recipient_area"] == "FISCAL"
+    )
+    assert pkg["current_version"]["required_areas"] == ["FISCAL"]
+    state = repo.derive_closing_state(period3)
+    assert "area_not_reviewed:FISCAL:FISCAL" in state[
+        "blocking_reasons"
+    ]
+    assert not any(
+        r.startswith("no_required_areas")
+        for r in state["blocking_reasons"]
+    )
+    # Reviewer designado após a submissão consegue aceitar a área.
+    repo.assign_actor(
+        period3,
+        actor=ADMIN,
+        role="REVIEWER",
+        subject=REVIEWER_LATE,
+        recipient_area="FISCAL",
+        area="FISCAL",
+    )
+    repo.start_review(period3, ver_f, actor=REVIEWER_LATE)
+    repo.record_decision(
+        period3,
+        ver_f,
+        actor=REVIEWER_LATE,
+        area="FISCAL",
+        outcome="ACCEPTED",
+    )
+    state = repo.derive_closing_state(period3)
+    assert "area_not_reviewed:FISCAL:FISCAL" not in state[
+        "blocking_reasons"
+    ]

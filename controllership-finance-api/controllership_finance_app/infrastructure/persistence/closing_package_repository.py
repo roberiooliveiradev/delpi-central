@@ -447,9 +447,12 @@ class ClosingPackageRepository:
         )
         if cur.fetchone()["n"]:
             blockers.append("open_pendencies")
+        # STOCK_CLOSED canónico não mascara inputs obsoletos — usar
+        # blockers do P3 (cutoff, revalidação vigente, disponibilidade,
+        # divergência) em vez do estado derivado.
         p3 = ClosingP3Repository().get_p3_state(period)
-        if p3["state"] not in ("READY_TO_CLOSE", "STOCK_CLOSED"):
-            blockers.append(f"p3_not_ready:{p3['state']}")
+        if p3["blockers"]:
+            blockers.append("p3_not_ready:" + ",".join(p3["blockers"]))
         rejection = self._terminal_rejection(cur, competence_id)
         if rejection is not None and rejection["state"] == "ACTIVE":
             blockers.append("terminal_rejection_active")
@@ -912,8 +915,8 @@ class ClosingPackageRepository:
         actor: str,
         expected_revision: int,
     ) -> dict[str, Any]:
-        """Submissão in-portal: congela required_areas do snapshot de
-        assignments e emite notification outbox (nunca e-mail com
+        """Submissão in-portal: congela required_areas por tipo de
+        pacote (P5-H) e emite notification outbox (nunca e-mail com
         pacote). Falha de notificação não reverte (RQ-P5-07)."""
         with self._conn() as conn:
             with conn.transaction():
@@ -939,9 +942,14 @@ class ClosingPackageRepository:
                         competence_id,
                         package_id=version["package_id"],
                     )
-                    reviewer_areas = sorted(
-                        {a["area"] for a in assignments}
-                    )
+                    # P5-H: required_areas vem do tipo de pacote
+                    # (recipient_area) e congela nesta versão — reviewer
+                    # assignment é vínculo operacional, NÃO fonte da
+                    # obrigação. Pacote sem reviewer fica pendente de
+                    # aceite (D-FINAL-02), nunca satisfeito por vacuidade.
+                    # Catálogo P6 multi-área por tipo = DECISION_REQUIRED
+                    # (G1), contrato físico ainda não aprovado.
+                    required_areas = [version["recipient_area"]]
                     cur.execute(
                         f"""
                         UPDATE {_q('closing_package_version')}
@@ -953,7 +961,7 @@ class ClosingPackageRepository:
                          WHERE package_version_id = %s
                         """,
                         (
-                            json.dumps(reviewer_areas),
+                            json.dumps(required_areas),
                             actor,
                             package_version_id,
                         ),
@@ -996,7 +1004,7 @@ class ClosingPackageRepository:
                         detail={
                             "recipient_area": version["recipient_area"],
                             "version_no": version["version_no"],
-                            "required_areas": reviewer_areas,
+                            "required_areas": required_areas,
                             "notified_subjects": [
                                 str(a["subject"]) for a in assignments
                             ],
@@ -1590,28 +1598,25 @@ class ClosingPackageRepository:
                     blocking.append(
                         f"open_clarification:{area}"
                     )
-            # Controle B/C: conciliação registrada != oficial comprovada.
-            cur.execute(
-                f"""
-                SELECT domain, provenance_kind
-                  FROM {_q('closing_reconciliation')}
-                 WHERE competence_id = %s
-                """,
-                (competence_id,),
-            )
-            provenance = {
-                r["domain"]: r["provenance_kind"]
-                for r in cur.fetchall()
-            }
-            for domain in RECONCILIATION_DOMAINS:
-                kind = provenance.get(domain)
+            # Controle B/C: conclusão exige P3 vigente E oficial.
+            # `blockers` do P3 cobrem cutoff, revalidação vigente
+            # (fingerprint), disponibilidade de fonte e divergência
+            # monetária — `STOCK_CLOSED` canônico não mascara inputs
+            # alterados/indisponíveis (estado de estoque != conclusão).
+            # `provenance_kind` separa conciliação registrada de
+            # resultado oficial comprovado.
+            p3_state = ClosingP3Repository().get_p3_state(period)
+            for p3_blocker in p3_state["blockers"]:
+                blocking.append(f"p3_{p3_blocker}")
+            for recon in p3_state["reconciliations"]:
+                kind = recon.get("provenance_kind")
                 if kind is None:
                     blocking.append(
-                        f"p3_reconciliation_missing:{domain}"
+                        f"p3_reconciliation_missing:{recon['domain']}"
                     )
                 elif kind != "OFFICIAL":
                     blocking.append(
-                        f"p3_declared_only:{domain}"
+                        f"p3_declared_only:{recon['domain']}"
                     )
             return {
                 "period": period,
