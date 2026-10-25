@@ -213,6 +213,9 @@ class ClosingValidationRepository:
                         )
                         self._require_active(item)
                         self._require_in_context(item, request_scope)
+                        self._assert_not_package_locked(
+                            period, item["item_key"]
+                        )
                         if item["validation_scope"] != "PER_ATTACHMENT":
                             raise ValidationScopeMismatch(
                                 "Este item exige validação do conjunto "
@@ -298,6 +301,25 @@ class ClosingValidationRepository:
             "created_at": inserted["created_at"],
         }
 
+
+    @staticmethod
+    def _assert_not_package_locked(period: str, item_key: str) -> None:
+        """F4/doc 105: item na composicao de PackageVersion vigente
+        SUBMITTED tem evidencia/validacao congeladas — correcao exige
+        nova versao do pacote (reopen/complement), nunca mutacao."""
+        from controllership_finance_app.domain.closing_checklist.errors import (
+            ItemLockedBySubmittedPackage,
+        )
+        from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
+            ClosingPackageRepository,
+        )
+
+        if item_key in ClosingPackageRepository().locked_item_keys(period):
+            raise ItemLockedBySubmittedPackage(
+                f"Item {item_key} integra pacote submetido — correcao "
+                "exige nova versao do pacote (reabrir/complementar)."
+            )
+
     def _item_key_of(self, cur, snapshot_item_id: Any) -> str:
         cur.execute(
             f"SELECT item_key FROM {_q('competence_checklist_item')}"
@@ -340,6 +362,9 @@ class ClosingValidationRepository:
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
                     item = self._lock_item(cur, competence_id, item_key)
+                    self._assert_not_package_locked(
+                        period, item["item_key"]
+                    )
                     self._require_active(item)
                     self._require_in_context(item, request_scope)
                     if item["validation_scope"] != "WHOLE_SET":
@@ -474,13 +499,17 @@ class ClosingValidationRepository:
                         )
                     cur.execute(
                         f"""
-                        SELECT branch_scope
+                        SELECT branch_scope, item_key
                           FROM {_q('competence_checklist_item')}
                          WHERE snapshot_item_id = %s
                         """,
                         (original["snapshot_item_id"],),
                     )
                     scope_row = cur.fetchone() or {}
+                    if scope_row.get("item_key"):
+                        self._assert_not_package_locked(
+                            period, scope_row["item_key"]
+                        )
                     if not scope_in_context(
                         request_scope=request_scope,
                         document_scope=scope_row.get("branch_scope"),

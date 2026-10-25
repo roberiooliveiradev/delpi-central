@@ -130,6 +130,7 @@ def migrated(_configure_db):
         "V007__p3_cutoff_reconciliation.sql",
         "V008__p5_packages_review.sql",
         "V009__p3_official_provenance.sql",
+        "V010__p6_catalogs_review_lifecycle_notifications.sql",
     ]
     return True
 
@@ -174,6 +175,9 @@ def test_open_without_publish_fails(migrated, repo):
 def test_publish_open_snapshot(migrated, repo):
     template_id = _template_id(repo)
 
+    repo.submit_version_for_review(
+        template_id, 1, actor=ADMIN
+    )
     published = repo.publish_version(
         template_id, 1, effective_from_period="2026-01", actor=ADMIN
     )
@@ -224,6 +228,9 @@ def test_competence_resolution_uses_vigente(migrated, repo):
             for i in items
         ],
         actor=ADMIN,
+    )
+    repo.submit_version_for_review(
+        template_id, 2, actor=ADMIN
     )
     repo.publish_version(
         template_id, 2, effective_from_period="2026-11", actor=ADMIN
@@ -276,7 +283,7 @@ def test_published_immutable(migrated, repo):
         repo.update_draft_items(
             template_id, 1, expected_revision=1, items=[], actor=ADMIN
         )
-    with pytest.raises(de.VersionNotDraft):
+    with pytest.raises(de.VersionNotInReview):
         repo.publish_version(
             template_id, 1, effective_from_period="2026-01", actor=ADMIN
         )
@@ -359,4 +366,8 @@ def test_list_template_events(migrated, repo):
 
     filtered = repo.list_template_events(template_id, version=1)
     assert all(e["version"] == 1 for e in filtered)
-    assert all(e["event_type"] == "VERSION_PUBLISHED" for e in filtered)
+    assert all(
+        e["event_type"]
+        in ("VERSION_SUBMITTED_FOR_REVIEW", "VERSION_PUBLISHED")
+        for e in filtered
+    )

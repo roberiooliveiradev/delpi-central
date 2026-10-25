@@ -24,6 +24,7 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     Forbidden,
     IdempotencyConflict,
     InvalidUpload,
+    ItemLockedBySubmittedPackage,
     ItemNotFound,
     StaleRevision,
 )
@@ -37,6 +38,9 @@ from controllership_finance_app.domain.closing_documents.resource_scope import (
 )
 from controllership_finance_app.infrastructure.persistence.closing_document_repository import (
     ClosingDocumentRepository,
+)
+from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
+    ClosingPackageRepository,
 )
 from controllership_finance_app.infrastructure.storage.closing_document_storage import (
     ClosingDocumentStorage,
@@ -142,6 +146,15 @@ class ClosingDocumentService:
                 document_scope=item.get("branch_scope"),
             ):
                 raise ItemNotFound("Item do checklist não encontrado.")
+            # F4/doc 105: item em PackageVersion vigente SUBMITTED tem
+            # evidência congelada — correção via nova versão do pacote.
+            if item["item_key"] in ClosingPackageRepository().locked_item_keys(
+                period
+            ):
+                raise ItemLockedBySubmittedPackage(
+                    f"Item {item['item_key']} integra pacote submetido — "
+                    "correção exige nova versão do pacote."
+                )
             item_id = str(item["snapshot_item_id"])
             link_kind = "competence_item"
 
@@ -369,6 +382,19 @@ class ClosingDocumentService:
         )
         _assert_active_state(document["state"])
         _assert_owner_or_manage(document, actor, can_manage)
+        # F4/doc 105: evidência de item em pacote submetido é congelada.
+        if document.get("snapshot_item_id"):
+            _item = self._repository.get_snapshot_item(
+                str(document["competence_id"]),
+                str(document["snapshot_item_id"]),
+            )
+            if _item["item_key"] in ClosingPackageRepository().locked_item_keys(
+                period
+            ):
+                raise ItemLockedBySubmittedPackage(
+                    f"Item {_item['item_key']} integra pacote submetido — "
+                    "correção exige nova versão do pacote."
+                )
         key = (idempotency_key or "").strip()
         if not 1 <= len(key) <= 128:
             raise InvalidUpload(
@@ -483,6 +509,19 @@ class ClosingDocumentService:
         )
         _assert_active_state(document["state"])
         _assert_owner_or_manage(document, actor, can_manage)
+        # F4/doc 105: evidência de item em pacote submetido é congelada.
+        if document.get("snapshot_item_id"):
+            _item = self._repository.get_snapshot_item(
+                str(document["competence_id"]),
+                str(document["snapshot_item_id"]),
+            )
+            if _item["item_key"] in ClosingPackageRepository().locked_item_keys(
+                period
+            ):
+                raise ItemLockedBySubmittedPackage(
+                    f"Item {_item['item_key']} integra pacote submetido — "
+                    "correção exige nova versão do pacote."
+                )
         return self._repository.cancel_document(
             competence_id=str(document["competence_id"]),
             document_id=str(document["document_id"]),

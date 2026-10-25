@@ -10,6 +10,9 @@ from delpi_auth.credential_guard import check_credentials
 from delpi_auth.cors_policy import build_allowed_origins
 from controllership_finance_app.config import settings
 from controllership_finance_app.core.responses import fail
+from controllership_finance_app.interface.http.routes.admin_catalogs_routes import (
+    router as admin_catalogs_router,
+)
 from controllership_finance_app.interface.http.routes.admin_checklist_routes import (
     router as admin_checklist_router,
 )
@@ -24,6 +27,9 @@ from controllership_finance_app.interface.http.routes.documents_routes import (
 )
 from controllership_finance_app.interface.http.routes.health_routes import (
     router as health_router,
+)
+from controllership_finance_app.interface.http.routes.me_routes import (
+    router as me_router,
 )
 from controllership_finance_app.interface.http.routes.packages_routes import (
     router as packages_router,
@@ -115,4 +121,6 @@ app.include_router(pendencies_router)
 app.include_router(p3_router)
 app.include_router(packages_router)
 app.include_router(reports_router)
+app.include_router(me_router)
 app.include_router(admin_checklist_router)
+app.include_router(admin_catalogs_router)

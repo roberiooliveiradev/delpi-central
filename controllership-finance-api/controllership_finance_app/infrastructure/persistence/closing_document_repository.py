@@ -85,7 +85,7 @@ class ClosingDocumentRepository:
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 f"""
-                SELECT snapshot_item_id, branch_scope
+                SELECT snapshot_item_id, item_key, branch_scope
                   FROM {_q('competence_checklist_item')}
                  WHERE competence_id = %s AND snapshot_item_id = %s
                 """,

@@ -24,6 +24,21 @@ from controllership_finance_app.infrastructure.storage.closing_document_storage 
 )
 
 
+@pytest.fixture(autouse=True)
+def _no_package_locks(monkeypatch):
+    """Sem pacote submetido por padrão — o lock P5 é exercido em PG."""
+    from controllership_finance_app.application.services import (
+        closing_document_service as svc,
+    )
+
+    monkeypatch.setattr(
+        svc.ClosingPackageRepository,
+        "locked_item_keys",
+        lambda self, period: set(),
+    )
+
+
+
 def _pdf() -> bytes:
     return b"%PDF-1.4\n" + b"x" * 2048 + b"\n%%EOF\n"
 
@@ -52,6 +67,7 @@ def _repo(doc=None, item_ok=True, item_scope="BOTH") -> MagicMock:
     if item_ok:
         repo.get_snapshot_item.return_value = {
             "snapshot_item_id": uuid.uuid4(),
+            "item_key": "CK-T-01",
             "branch_scope": item_scope,
         }
     else:

@@ -49,10 +49,14 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     PendencyOwnershipRequired,
     PersistenceUnavailable,
     ReviewerNotAssigned,
+    ReviewerNotEligible,
     StaleRevision,
     TerminalRejectionActive,
     TerminalRejectionNotFound,
     CoordinatorRequired,
+)
+from controllership_finance_app.infrastructure.persistence.closing_catalog_repository import (
+    ClosingCatalogRepository,
 )
 from controllership_finance_app.infrastructure.persistence.closing_p3_repository import (
     ClosingP3Repository,
@@ -140,6 +144,62 @@ class ClosingPackageRepository:
                 json.dumps(detail),
             ),
         )
+
+    def _emit_outbox(
+        self,
+        cur,
+        competence_id: str,
+        *,
+        event_type: str,
+        recipients: Any,
+        payload: dict[str, Any],
+        actor: str,
+    ) -> None:
+        """Outbox atômico com a mutação (RQ-P5-05/07).
+
+        A emissão é registrada na mesma transação — prova de emissão;
+        a entrega pertence ao Core Notifications e nunca vira critério
+        de negócio. O ator não se notifica do próprio ato.
+        """
+        for recipient in sorted({str(r) for r in recipients if r}):
+            if recipient == str(actor):
+                continue
+            cur.execute(
+                f"""
+                INSERT INTO {_q('closing_notification_event')}
+                    (competence_id, event_type, recipient_subject,
+                     payload, emitted_by)
+                VALUES (%s, %s, %s, %s::jsonb, %s)
+                """,
+                (
+                    competence_id,
+                    event_type,
+                    recipient,
+                    json.dumps(payload),
+                    actor,
+                ),
+            )
+
+    def _competence_recipients(
+        self, cur, competence_id: str
+    ) -> set[str]:
+        """Destinatários operacionais da competência: assignments ativos
+        + quem submeteu versões de pacote (vínculos reais, nunca listas
+        estáticas)."""
+        cur.execute(
+            f"""
+            SELECT DISTINCT subject FROM {_q('closing_review_assignment')}
+             WHERE competence_id = %s AND active
+            UNION
+            SELECT DISTINCT v.submitted_by
+              FROM {_q('closing_package_version')} v
+              JOIN {_q('closing_package')} p
+                ON p.package_id = v.package_id
+             WHERE p.competence_id = %s AND v.submitted_by IS NOT NULL
+            """,
+            (competence_id, competence_id),
+        )
+        return {str(r["subject"]) for r in cur.fetchall()}
 
     # -- leituras base -------------------------------------------------
 
@@ -630,6 +690,36 @@ class ClosingPackageRepository:
             "p4_pendency_counts": p4,
         }
 
+    def locked_item_keys(self, period: str) -> set[str]:
+        """item_keys que integram a composição da versão vigente
+        SUBMITTED de cada pacote — evidência e validação congeladas
+        até uma nova versão (reopen/complement) governar a correção."""
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            competence_id = self._competence_id(cur, period)
+            cur.execute(
+                f"""
+                SELECT DISTINCT ON (v.package_id)
+                       v.status, v.content
+                  FROM {_q('closing_package_version')} v
+                  JOIN {_q('closing_package')} p
+                    ON p.package_id = v.package_id
+                 WHERE p.competence_id = %s
+                 ORDER BY v.package_id, v.version_no DESC
+                """,
+                (competence_id,),
+            )
+            locked: set[str] = set()
+            for row in cur.fetchall():
+                if row["status"] != "SUBMITTED":
+                    continue
+                content = row["content"] or {}
+                if isinstance(content, str):
+                    content = json.loads(content)
+                for item in content.get("items") or []:
+                    if item.get("item_key"):
+                        locked.add(item["item_key"])
+            return locked
+
     def finalize_package(
         self,
         period: str,
@@ -942,14 +1032,23 @@ class ClosingPackageRepository:
                         competence_id,
                         package_id=version["package_id"],
                     )
-                    # P5-H: required_areas vem do tipo de pacote
-                    # (recipient_area) e congela nesta versão — reviewer
-                    # assignment é vínculo operacional, NÃO fonte da
-                    # obrigação. Pacote sem reviewer fica pendente de
-                    # aceite (D-FINAL-02), nunca satisfeito por vacuidade.
-                    # Catálogo P6 multi-área por tipo = DECISION_REQUIRED
-                    # (G1), contrato físico ainda não aprovado.
-                    required_areas = [version["recipient_area"]]
+                    # P5-H: áreas obrigatórias versionadas por tipo de
+                    # pacote (catálogo P6 PACKAGE_REQUIRED_AREA); o
+                    # snapshot congela nesta versão. Reviewer assignment
+                    # é vínculo operacional, NÃO fonte da obrigação.
+                    # Catálogo sem entradas para o tipo → fallback
+                    # monoárea explícito (DECISION_REQUIRED para seeds
+                    # multi-área em G1 — nunca inferência silenciosa).
+                    catalog = ClosingCatalogRepository()
+                    catalog_areas = catalog.required_areas_for(
+                        version["recipient_area"]
+                    )
+                    if catalog_areas:
+                        required_areas = catalog_areas
+                        required_source = "catalog:PACKAGE_REQUIRED_AREA"
+                    else:
+                        required_areas = [version["recipient_area"]]
+                        required_source = "fallback_recipient_area"
                     cur.execute(
                         f"""
                         UPDATE {_q('closing_package_version')}
@@ -967,32 +1066,22 @@ class ClosingPackageRepository:
                         ),
                     )
                     for a in assignments:
-                        cur.execute(
-                            f"""
-                            INSERT INTO
-                              {_q('closing_notification_event')}
-                                (competence_id, event_type,
-                                 recipient_subject, payload, emitted_by)
-                            VALUES (%s, %s, %s, %s::jsonb, %s)
-                            """,
-                            (
-                                competence_id,
-                                "PACKAGE_SUBMITTED_FOR_REVIEW",
-                                a["subject"],
-                                json.dumps(
-                                    {
-                                        "package_version_id": str(
-                                            package_version_id
-                                        ),
-                                        "recipient_area": version[
-                                            "recipient_area"
-                                        ],
-                                        "period": period,
-                                        "area": a["area"],
-                                    }
+                        self._emit_outbox(
+                            cur,
+                            competence_id,
+                            event_type="PACKAGE_SUBMITTED_FOR_REVIEW",
+                            recipients={a["subject"]},
+                            payload={
+                                "package_version_id": str(
+                                    package_version_id
                                 ),
-                                actor,
-                            ),
+                                "recipient_area": version[
+                                    "recipient_area"
+                                ],
+                                "period": period,
+                                "area": a["area"],
+                            },
+                            actor=actor,
                         )
                     self._audit(
                         cur,
@@ -1005,6 +1094,7 @@ class ClosingPackageRepository:
                             "recipient_area": version["recipient_area"],
                             "version_no": version["version_no"],
                             "required_areas": required_areas,
+                            "required_areas_source": required_source,
                             "notified_subjects": [
                                 str(a["subject"]) for a in assignments
                             ],
@@ -1214,6 +1304,7 @@ class ClosingPackageRepository:
         area: str,
         outcome: str,
         note: str | None = None,
+        user_groups: Any = (),
     ) -> dict[str, Any]:
         outcome = (outcome or "").strip().upper()
         if outcome not in REVIEW_OUTCOMES:
@@ -1250,6 +1341,25 @@ class ClosingPackageRepository:
                         raise ReviewerNotAssigned(
                             f"Ator sem assignment para área {area_norm}."
                         )
+                    # T05/F2: quando existe binding de grupo Core
+                    # configurado para a área (REVIEW_ELIGIBILITY), o
+                    # ator precisa pertencer a ele — fail-closed. Sem
+                    # binding configurado o modo é assignment-only e
+                    # fica registrado (DECISION_REQUIRED em G1).
+                    binding = ClosingCatalogRepository().eligibility_groups_for(
+                        area_norm
+                    )
+                    if binding:
+                        matched = set(user_groups or ()) & binding
+                        if not matched:
+                            raise ReviewerNotEligible(
+                                "Ator sem grupo/função Core elegível "
+                                f"para a área {area_norm}."
+                            )
+                        eligibility_mode = "core_group_binding"
+                    else:
+                        matched = set()
+                        eligibility_mode = "assignment_only"
                     decisions = self._decisions(
                         cur, package_version_id
                     )
@@ -1289,6 +1399,8 @@ class ClosingPackageRepository:
                             "outcome": outcome,
                             "note": note,
                             "version_no": version["version_no"],
+                            "eligibility_mode": eligibility_mode,
+                            "matched_eligibility_groups": sorted(matched),
                         },
                     )
                     return row
@@ -1350,6 +1462,25 @@ class ClosingPackageRepository:
                             "question": question,
                         },
                     )
+                    self._emit_outbox(
+                        cur,
+                        competence_id,
+                        event_type="PACKAGE_CLARIFICATION_OPENED",
+                        recipients={version["submitted_by"]},
+                        payload={
+                            "package_version_id": str(
+                                package_version_id
+                            ),
+                            "recipient_area": version[
+                                "recipient_area"
+                            ],
+                            "period": period,
+                            "clarification_id": str(
+                                row["clarification_id"]
+                            ),
+                        },
+                        actor=actor,
+                    )
                     return row
 
     def resolve_clarification(
@@ -1380,7 +1511,9 @@ class ClosingPackageRepository:
                            AND v.package_id = p.package_id
                            AND c.clarification_id = %s
                            AND p.competence_id = %s
-                        RETURNING c.clarification_id, c.state
+                        RETURNING c.clarification_id, c.state,
+                                  c.opened_by, v.package_version_id,
+                                  p.recipient_area
                         """,
                         (
                             response,
@@ -1402,6 +1535,23 @@ class ClosingPackageRepository:
                         event_type="CLARIFICATION_RESOLVED",
                         actor=actor,
                         detail={"response": response},
+                    )
+                    self._emit_outbox(
+                        cur,
+                        competence_id,
+                        event_type="PACKAGE_CLARIFICATION_RESOLVED",
+                        recipients={row["opened_by"]},
+                        payload={
+                            "package_version_id": str(
+                                row["package_version_id"]
+                            ),
+                            "recipient_area": row["recipient_area"],
+                            "period": period,
+                            "clarification_id": str(
+                                row["clarification_id"]
+                            ),
+                        },
+                        actor=actor,
                     )
                     return row
 
@@ -1478,6 +1628,16 @@ class ClosingPackageRepository:
                         actor=actor,
                         detail={"reason": reason},
                     )
+                    self._emit_outbox(
+                        cur,
+                        competence_id,
+                        event_type="COMPETENCE_TERMINALLY_REJECTED",
+                        recipients=self._competence_recipients(
+                            cur, competence_id
+                        ),
+                        payload={"period": period},
+                        actor=actor,
+                    )
                     return row
 
     def revert_terminal_rejection(
@@ -1533,6 +1693,16 @@ class ClosingPackageRepository:
                         event_type="COMPETENCE_REJECTION_REVERTED",
                         actor=actor,
                         detail={"reason": reason},
+                    )
+                    self._emit_outbox(
+                        cur,
+                        competence_id,
+                        event_type="COMPETENCE_REJECTION_REVERTED",
+                        recipients=self._competence_recipients(
+                            cur, competence_id
+                        ),
+                        payload={"period": period},
+                        actor=actor,
                     )
                     return row
 

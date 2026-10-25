@@ -65,6 +65,10 @@ class PublishVersionRequest(BaseModel):
     effective_from_period: str = Field(pattern=PERIOD_PATTERN)
 
 
+class ReturnToDraftRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=2000)
+
+
 def _repository() -> ClosingChecklistRepository:
     return ClosingChecklistRepository()
 
@@ -217,6 +221,58 @@ def publish_checklist_template_version(
         published,
         message="Versão publicada.",
         operation_id="publish_checklist_template_version",
+    )
+
+
+@router.post(
+    "/{template_id}/versions/{version}/submit-review",
+    operation_id="submit_checklist_version_for_review",
+)
+def submit_checklist_version_for_review(
+    request: Request, template_id: str, version: int
+):
+    user = authorized_admin(request)
+    try:
+        submitted = _repository().submit_version_for_review(
+            template_id, version, actor=actor_subject(user)
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(
+            exc, "submit_checklist_version_for_review"
+        )
+    return ok(
+        submitted,
+        message="Versão enviada para revisão administrativa.",
+        operation_id="submit_checklist_version_for_review",
+    )
+
+
+@router.post(
+    "/{template_id}/versions/{version}/return-to-draft",
+    operation_id="return_checklist_version_to_draft",
+)
+def return_checklist_version_to_draft(
+    request: Request,
+    template_id: str,
+    version: int,
+    body: ReturnToDraftRequest,
+):
+    user = authorized_admin(request)
+    try:
+        returned = _repository().return_version_to_draft(
+            template_id,
+            version,
+            reason=body.reason,
+            actor=actor_subject(user),
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(
+            exc, "return_checklist_version_to_draft"
+        )
+    return ok(
+        returned,
+        message="Versão devolvida a rascunho.",
+        operation_id="return_checklist_version_to_draft",
     )
 
 

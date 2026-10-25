@@ -118,14 +118,18 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def setup(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-4:] == [
+    assert applied[-5:] == [
         "V006__p4_pendencies.sql",
         "V007__p3_cutoff_reconciliation.sql",
         "V008__p5_packages_review.sql",
         "V009__p3_official_provenance.sql",
+        "V010__p6_catalogs_review_lifecycle_notifications.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
+    checklist.submit_version_for_review(
+        template_id, 1, actor=ADMIN
+    )
     checklist.publish_version(
         template_id, 1, effective_from_period="2026-01", actor=ADMIN
     )

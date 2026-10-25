@@ -15,6 +15,7 @@ Autorização (backend-first, fail-closed):
 
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Path, Request
@@ -24,6 +25,9 @@ from controllership_finance_app.core.responses import fail, ok
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
     Forbidden,
+)
+from controllership_finance_app.infrastructure.gateways.core_notifications_gateway import (
+    CoreNotificationsDispatcher,
 )
 from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
     ClosingPackageRepository,
@@ -35,9 +39,24 @@ from controllership_finance_app.interface.http.authz import (
 )
 from delpi_auth.authz_core import has_permission
 
+logger = logging.getLogger("controllership_finance.packages")
+
 router = APIRouter(
     prefix="/closing/competences", tags=["Closing Packages"]
 )
+
+
+def _dispatch_notifications(period: str) -> None:
+    """Best-effort pós-commit: entrega via Core nunca falha a mutação
+    (RQ-P5-07 — NOTIFICATION_FAILURE != BUSINESS_STATE_CHANGE)."""
+    try:
+        CoreNotificationsDispatcher().dispatch_pending(period)
+    except Exception as exc:  # noqa: BLE001 — delivery nunca propaga
+        logger.warning(
+            "cf_notification_dispatch_skipped period=%s err=%s",
+            period,
+            exc,
+        )
 
 PERIOD_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"
 
@@ -236,6 +255,7 @@ def submit_package_for_review(
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "submit_package_for_review")
+    _dispatch_notifications(period)
     return ok(result, operation_id="submit_package_for_review")
 
 
@@ -316,7 +336,8 @@ def record_review_decision(
     package_version_id: uuid.UUID = Path(),
 ):
     try:
-        actor = actor_subject(authorized_user(request))
+        user = authorized_user(request)
+        actor = actor_subject(user)
         result = _repository().record_decision(
             period,
             str(package_version_id),
@@ -324,6 +345,7 @@ def record_review_decision(
             area=body.area,
             outcome=body.outcome,
             note=body.note,
+            user_groups=getattr(user, "groups", []) or [],
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "record_review_decision")
@@ -351,6 +373,7 @@ def open_package_clarification(
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "open_package_clarification")
+    _dispatch_notifications(period)
     return ok(result, operation_id="open_package_clarification")
 
 
@@ -374,6 +397,7 @@ def resolve_package_clarification(
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "resolve_package_clarification")
+    _dispatch_notifications(period)
     return ok(result, operation_id="resolve_package_clarification")
 
 
@@ -393,6 +417,7 @@ def confirm_terminal_rejection(
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "confirm_terminal_rejection")
+    _dispatch_notifications(period)
     return ok(result, operation_id="confirm_terminal_rejection")
 
 
@@ -412,6 +437,7 @@ def revert_terminal_rejection(
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "revert_terminal_rejection")
+    _dispatch_notifications(period)
     return ok(result, operation_id="revert_terminal_rejection")
 
 

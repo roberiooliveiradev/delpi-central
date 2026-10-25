@@ -314,3 +314,28 @@ class TerminalRejectionNotFound(ChecklistDomainError):
 class CoordinatorRequired(ChecklistDomainError):
     code = "coordinator_required"
     status = 403
+
+
+class CatalogEntryNotFound(ChecklistDomainError):
+    code = "catalog_entry_not_found"
+    status = 404
+
+
+class InvalidCatalogEntry(ChecklistDomainError):
+    code = "invalid_catalog_entry"
+    status = 400
+
+
+class VersionNotInReview(ChecklistDomainError):
+    code = "version_not_in_review"
+    status = 409
+
+
+class ReviewerNotEligible(ChecklistDomainError):
+    code = "reviewer_not_eligible"
+    status = 403
+
+
+class ItemLockedBySubmittedPackage(ChecklistDomainError):
+    code = "item_locked_by_submitted_package"
+    status = 409

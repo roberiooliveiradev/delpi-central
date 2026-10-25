@@ -15,6 +15,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from controllership_finance_app.domain.closing_checklist.errors import (
+    ChecklistDomainError,
     CompetenceNotOpened,
     DraftAlreadyOpen,
     DuplicateItemKey,
@@ -25,6 +26,7 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     TemplateNotFound,
     VersionNotDraft,
     VersionNotFound,
+    VersionNotInReview,
     VersionNotPublished,
 )
 from controllership_finance_app.infrastructure.persistence.plugins_db import (
@@ -355,6 +357,104 @@ class ClosingChecklistRepository:
                     )
         return updated
 
+    def submit_version_for_review(
+        self,
+        template_id: str,
+        version: int,
+        actor: str,
+    ) -> dict[str, Any]:
+        """DRAFT → REVIEW: submete a versão à revisão administrativa."""
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('checklist_template_version')}
+                           SET status = 'REVIEW', updated_at = now()
+                         WHERE template_id = %s AND version = %s
+                           AND status = 'DRAFT'
+                        RETURNING version_id, status
+                        """,
+                        (template_id, version),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        current = self._version_status(
+                            cur, template_id, version
+                        )
+                        if current is None:
+                            raise VersionNotFound(
+                                "Versão de checklist não encontrada."
+                            )
+                        raise VersionNotDraft(
+                            "Somente versões DRAFT podem ir a revisão."
+                        )
+                    self._audit(
+                        cur,
+                        entity_type="checklist_template_version",
+                        entity_id=row["version_id"],
+                        event_type="VERSION_SUBMITTED_FOR_REVIEW",
+                        actor=actor,
+                        detail={
+                            "template_id": template_id,
+                            "version": version,
+                        },
+                    )
+        return row
+
+    def return_version_to_draft(
+        self,
+        template_id: str,
+        version: int,
+        *,
+        reason: str,
+        actor: str,
+    ) -> dict[str, Any]:
+        """REVIEW → DRAFT: devolução motivada para ajuste."""
+        if not (reason and reason.strip()):
+            raise ChecklistDomainError(
+                "Devolução a DRAFT exige motivo (reason)."
+            )
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('checklist_template_version')}
+                           SET status = 'DRAFT', updated_at = now()
+                         WHERE template_id = %s AND version = %s
+                           AND status = 'REVIEW'
+                        RETURNING version_id, status
+                        """,
+                        (template_id, version),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        current = self._version_status(
+                            cur, template_id, version
+                        )
+                        if current is None:
+                            raise VersionNotFound(
+                                "Versão de checklist não encontrada."
+                            )
+                        raise VersionNotInReview(
+                            "Somente versões em REVIEW podem voltar a "
+                            "DRAFT."
+                        )
+                    self._audit(
+                        cur,
+                        entity_type="checklist_template_version",
+                        entity_id=row["version_id"],
+                        event_type="VERSION_RETURNED_TO_DRAFT",
+                        actor=actor,
+                        detail={
+                            "template_id": template_id,
+                            "version": version,
+                            "reason": reason.strip(),
+                        },
+                    )
+        return row
+
     def publish_version(
         self,
         template_id: str,
@@ -362,7 +462,8 @@ class ClosingChecklistRepository:
         effective_from_period: str,
         actor: str,
     ) -> dict[str, Any]:
-        """DRAFT → PUBLISHED atômico; recusa edição retroativa/corrida."""
+        """REVIEW → PUBLISHED atômico (lifecycle DRAFT→REVIEW→PUBLISH);
+        recusa edição retroativa/corrida."""
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
@@ -374,7 +475,7 @@ class ClosingChecklistRepository:
                                published_by = %s, published_at = now(),
                                updated_at = now()
                          WHERE template_id = %s AND version = %s
-                           AND status = 'DRAFT'
+                           AND status = 'REVIEW'
                         RETURNING version_id, status, effective_from_period,
                                   published_at
                         """,
@@ -387,8 +488,9 @@ class ClosingChecklistRepository:
                             raise VersionNotFound(
                                 "Versão de checklist não encontrada."
                             )
-                        raise VersionNotDraft(
-                            "Somente versões DRAFT podem ser publicadas."
+                        raise VersionNotInReview(
+                            "Publicação exige versão em REVIEW "
+                            "(DRAFT→REVIEW→PUBLISH)."
                         )
                     cur.execute(
                         f"SELECT count(*) FROM {_q('checklist_template_item')}"
