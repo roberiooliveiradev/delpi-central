@@ -325,3 +325,33 @@ Direção de arquitetura aprovada: LLM decide seleção semântica, backend vali
 #### Residuals R1/R2/R3 da revisão — 2026-10-25
 
 Recuperação pré-invocação **provada positivamente**: `declared-unbound → missing_inputs → _resolve_missing_inputs → READ resolver → rebuild provado → READ owner → SUCCESS` (teste de fluxo completo). Defeito irmão corrigido no mesmo owner: tail do resolver ignorava `still_missing` e `_resolved_values_proven` pulava campos ausentes — rebuild `{}` resolvia para invocação sub-filtrada; nova cobertura `_missing_inputs_bound` exige que todo input faltante esteja ligado (branch normal e `ambiguous_proven_selection`). R3: `declared_names` ordenado deterministicamente pela proposta; `MAX_EVIDENCE_SELECTIONS` limita só materialização — declarações além do cap não escapam mais como texto livre. Focused 233 verde.
+
+
+#### Remediação instrucional v19 + threading de `business_subject` + reavaliação local — 2026-10-25 (task `DELIA-R7-LOCAL-ADMISSION-INTELLIGENCE-OUTCOME-AND-DEPLOY-01`)
+
+**Defeitos causais encontrados e corrigidos (genéricos, sem hardcode de produto/provider):**
+
+- `interaction_admission` (instrução v19 + block): o bloco literalmente afirmava `"no owner catalog"` e a regra v18 isentava `"N exemplos de X"` sem marcadores — premissa falsa + regra contraditória com a cláusula de preferência `ambiguous`. Modelo 3B seguia a regra explícita → 0/10 owner path. Corrigido: block passa a declarar `owner_surface_kinds` bounded (registros/negócio, documentação, painéis, tickets) e a instrução isenta apenas exemplos **explicitamente fictícios/inventados**. Contrato de teste fixa o conteúdo do block (`owner_surface_kinds` presente, `no owner catalog` ausente).
+- `select_group` (instrução v19): cláusula genérica de matching de domínio — escolher o grupo cujas *descrições de capability* casam semanticamente com o domínio pedido, nunca ordem de lista nem nomes memorizados.
+- `foreign_selection` (instrução v19): quando a evidência requerida resolve designação coloquial → preferir capability DISCOVERY que mapeia necessidade em linguagem natural para informação governada.
+- `arguments` (instrução v19): cláusula `business_subject` — quando o bloco carrega o âncora semântica validada do turn goal, ela é o valor do campo descritivo/free-text (description/search/query/text/name), nunca de campo identificador.
+- **Gap estrutural de contexto (código):** `business_subject` existia mas nunca chegava à perna estrangeira — `_invoke_foreign_evidence` não recebia `goal`, e `_candidate_arguments`/`_propose_candidate_arguments` não recebiam nem carregavam o âncora no block. Threading: `goal` → `_invoke_foreign_evidence` → `_build_arguments` + `_invoke_selected` → `_candidate_arguments`; block de `candidate_arguments` ganha `{"business_subject", "schema"}` (shape preservado quando ausente). Instrução de `candidate_arguments` documenta o wrapper e a âncora. Semântica: probe em-processo — `davi.execute` passou a receber `description` bound → evidência filtrada (`data.total: 77–162` com registros BALA reais) vs. página não-filtrada de 55.335 itens que derrubava o estágio seguinte em prosa (4/4 `invalid_structured_output`).
+
+**Configuração de eval (sanctioned, env-only):** `DELIA_LLM_TIMEOUT_SECONDS=60`/`DELIA_MODEL_STAGE_TIMEOUT_SECONDS=60` (teto governado `MAX_TIMEOUT_SECONDS=60` — valores maiores falham `invalid_request` em toda chamada), `DELIA_LLM_CALL_MAX_ATTEMPTS=3` (teto aprovado pelo PO; default fail-closed é 1), token Keycloak fresco por turno, `delpi-ollama` reiniciado após watchdog de descoberta GPU — `delia-json` voltou de 100% CPU para 100% GPU (latência ~10× menor, ctx ativo 4096).
+
+**Reavaliação local `delia-json` (N=10 por batch, 4 batches, pergunta O2 idêntica):**
+
+| batch | admission owner_surface | target delpi.search_products | foreign davi.discover | foreign_invocation ok | arguments built | owner READ | outcome |
+|---|---|---|---|---|---|---|---|
+| retry=1 GPU | ~10/10 | ~8/10 | ~4/10 | ~3 | 1 (`arg_keys=description`) | 1 real | 0/10 |
+| retry=3 | ~10/10 | ~6/10 | ~5/10 | 4 | 0 (invalid×3 retries) | 1 irrelevant | 0/10 |
+| +candidate_bs | 10/10 | 3/10 | 1/10 | 0 (teo error) | — | — | 0/10 |
+| final | 10/10 | ~5/10 | ~2/10 | 1 | — | 1 | 0/10, **1 falso-positivo** |
+
+**Cadeia provada ponta-a-ponta:** `admission → group → capability → native_assessment(foreign_evidence_required) → foreign_selection(davi.discover) → discover → execute → search_products(arg_keys=description) → relevance` — executou com registros reais em múltiplas corridas. `search_products` chegou a invocar com `description` bound e retornar registros owner reais; juiz recusou apresentação desalinhada (honesto).
+
+**Variância residual composta (capacidade do modelo, não contrato):** cada estágio semântico isola ~50–90% em probes diretos, mas ~8–10 estágios em série compõem ~0% E2E. Falhas observadas em ambos os sentidos: honestas (`foreign_selection=none` ~40–50%, `capability_unbound`, `invalid_structured_output` no prompt ~3.2k-token de arguments, `surface_inquiry` ocasional, mispick `mcp:vista`) **e um falso-positivo de relevância** — `goal_evidence_relevance=corresponds` sobre registros VISTA `search_data_routes` (OperationIds de warehouse-balance) apresentados como GROUNDED a "terminal bala". O gate de relevância depende de fidelidade semântica do modelo: erro do juiz produz resposta grounded errada, não apenas recusa honesta.
+
+**Conclusão:** a arquitetura governada está provada funcional (rota completa, registros reais, fail-closed em todas as falhas de proposta, zero WRITE, zero fabricação); os defeitos instrucionais/de-contexto corrigidos eram reais e verificados causalmente. O resultado de negócio no `delia-json` (qwen2.5:3b) permanece **0/10** — fidelidade por estágio insuficiente para compor a cadeia, com risco de correção empresarial (falso-positivo de relevância). Regressão backend: focused suites verdes (19 resource + 258 arguments/evidence/relevance + candidate paths), full backend sem novas falhas — apenas as 2 ambientais conhecidas (`g4` fixture, `http_timeout_maps_to_504`).
+
+`O2_STATUS=ARCHITECTURE_PROVEN_MODEL_INSUFFICIENT (0/10 delia-json, 1 relevance false-positive)`; `ADMISSION_FIXED=YES (0→10/10 owner_surface)`; `DEPLOY=BLOCKED`; `MODEL_SWITCH_DECISION=REQUIRED (delia-json cannot sustain governed chain)`; `INDEPENDENT_REVIEW=PENDING`; `R7_FINAL_ACCEPT=NO`.

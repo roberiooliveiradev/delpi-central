@@ -4680,6 +4680,7 @@ class OperationalCapabilityOrchestrator:
                 workspace_context,
                 prior_turns,
                 deadline,
+                goal=goal,
             )
             if foreign_result.outcome is None and (
                 path_mode == "enrichment"
@@ -6445,6 +6446,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...],
         deadline: TurnDeadline,
         relevance_feedback: str | None = None,
+        goal: _TurnGoal | None = None,
     ) -> "OperationalCapabilityOrchestrator._ForeignResult":
         """Execute the bounded foreign non-mutating step through the
         SAME owner-defined invocation mechanics as a selected target
@@ -6459,6 +6461,9 @@ class OperationalCapabilityOrchestrator:
             workspace_context,
             correlation=correlation,
             relevance_feedback=relevance_feedback,
+            business_subject=(
+                goal.business_subject if goal is not None else None
+            ),
             prior_turns=prior_turns,
             deadline=deadline,
         )
@@ -6496,6 +6501,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 prior_turns,
                 deadline,
+                goal=goal,
             )
         except CapabilityProviderError as exc:
             _logger.info(
@@ -9177,6 +9183,7 @@ class OperationalCapabilityOrchestrator:
                         prior_turns=prior_turns,
                         deadline=deadline,
                         relevance_feedback=feedback,
+                        goal=goal,
                     )
                     if foreign_result.evidence is not None:
                         foreign_evidence = foreign_result.evidence
@@ -9436,7 +9443,17 @@ class OperationalCapabilityOrchestrator:
                 input_text,
                 block_tag="admission",
                 block_payload=(
-                    '{"note":"no owner catalog; classify interaction only"}'
+                    '{"owner_surface_kinds":['
+                    '"business records and registers (products, '
+                    'materials, parts)",'
+                    '"governed guidance, documentation and '
+                    'methodology",'
+                    '"operational panels, dashboards and '
+                    'indicators",'
+                    '"service tickets and requests"],'
+                    '"note":"classify whether the request needs '
+                    'one of these owner surfaces or can be '
+                    'answered conversationally"}'
                 ),
                 instruction_id=INTERACTION_ADMISSION_INSTRUCTION_ID,
                 instruction=self._instruction(INTERACTION_ADMISSION_INSTRUCTION_ID),
@@ -10227,6 +10244,9 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 correlation=correlation,
                 deadline=deadline,
+                business_subject=(
+                    goal.business_subject if goal is not None else None
+                ),
             )
             if merged is None:
                 terminal = self._unusable_candidate_terminal(
@@ -10315,6 +10335,11 @@ class OperationalCapabilityOrchestrator:
                     prior_turns,
                     correlation=correlation,
                     deadline=deadline,
+                    business_subject=(
+                        goal.business_subject
+                        if goal is not None
+                        else None
+                    ),
                 )
                 if merged is not None:
                     chained = self._invoke(
@@ -10657,6 +10682,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
+        business_subject: str | None = None,
     ) -> dict[str, Any] | None:
         """Resolve inner args against the candidate's own schema.
 
@@ -10700,6 +10726,7 @@ class OperationalCapabilityOrchestrator:
             prior_turns,
             correlation=correlation,
             deadline=deadline,
+            business_subject=business_subject,
         )
         if second is None:
             return None
@@ -10718,10 +10745,18 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
+        business_subject: str | None = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model proposal of inner arguments, schema-scoped."""
         schema_payload = json.dumps(
-            schema or {"type": "object"}, ensure_ascii=False, default=str
+            {
+                "business_subject": business_subject,
+                "schema": schema or {"type": "object"},
+            }
+            if business_subject is not None
+            else (schema or {"type": "object"}),
+            ensure_ascii=False,
+            default=str,
         )[:MAX_SURFACE_CHARS]
         proposal = self._model_stage_proposal(
             input_text,

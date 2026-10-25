@@ -235,3 +235,36 @@ def test_orchestrator_marks_only_typed_early_admission():
     assert later.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert later.admission_outcome is None
     assert later_port.list_calls
+
+
+def test_admission_block_declares_owner_surface_context():
+    """R7 admission defect: the <admission> block once asserted
+    "no owner catalog" — a false premise the local model read as
+    "DELPI has no catalogs", collapsing record requests to
+    hypothetical/conversational. The block must carry the bounded,
+    truthful owner-surface-kind context instead: the model still
+    classifies, but it can no longer assume no surface exists."""
+    port = FakePort(
+        tools_by_specialist={"teo": TEO_TOOLS, "vista": VISTA_TOOLS}
+    )
+    read = _read(
+        _interop(port),
+        specialist_ids=("teo", "vista"),
+        proposal={
+            INTERACTION_ADMISSION_INSTRUCTION_ID: {
+                "requires_owner_surface": False,
+                "interaction_class": "conversation",
+            }
+        },
+    )
+    read.attempt("Bom dia")
+    admission = [
+        r
+        for r in read._invoke_model._port.requests
+        if r.task_purpose_id == INTERACTION_ADMISSION_INSTRUCTION_ID
+    ]
+    assert len(admission) == 1
+    payload = admission[0].input_text
+    assert "<admission>" in payload
+    assert "owner_surface_kinds" in payload
+    assert "no owner catalog" not in payload

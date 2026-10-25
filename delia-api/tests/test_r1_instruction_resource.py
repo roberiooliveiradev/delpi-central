@@ -47,8 +47,8 @@ _RESOURCE_PATH = (
 # governed-evolution gate, not a bug.
 _SNAPSHOT = {
     "delia.capability_orchestration.select_group": (
-        "de3d5710ee13e822720e59946f7d82d0f80451aadab9fb7f29ed25804379c8a2",
-        5305,
+        "ff7d3c29d6d968d8a1356567d1a88d7f62d952d3129f8002962d1fabbdf54f42",
+        5688,
     ),
     "delia.capability_orchestration.select_capability": (
         "62576be4da96c46f6b2e5f10101f32b5d7960ee213c2afee7bc9ed5dfec9111d",
@@ -67,8 +67,8 @@ _SNAPSHOT = {
         989,
     ),
     "delia.capability_orchestration.arguments": (
-        "c0857f2bccbb08bbad5e60d86d3cf9236778438d1ddbee172664e4d42a00cd11",
-        7340,
+        "1122d5e571f3e590635410df1dc96b7cadc3839de9c020816509c7d79b97ff8b",
+        8008,
     ),
     "delia.capability_orchestration.select_resolver": (
         "2864d08fccfd4f87b52041c1fe572abfe1768d01489a81b8aa6e8d216bcf9b57",
@@ -91,8 +91,8 @@ _SNAPSHOT = {
         2396,
     ),
     "delia.capability_orchestration.foreign_selection": (
-        "5eb5bc9ce2603ee53c1e9547fc1b69a7808b0994c680bf86b62ed9d5439d108d",
-        1003,
+        "7cb5040e92a8834b48099cccd2ca57b897674e2a2bbf75185f9a8017067269c2",
+        1384,
     ),
     "delia.capability_orchestration.turn_goal": (
         "d3d698d22cc7d6fd8d48e6290b6bd169c272f54027a86c5cc56d40d569999497",
@@ -103,16 +103,16 @@ _SNAPSHOT = {
         1067,
     ),
     "delia.capability_orchestration.candidate_arguments": (
-        "057507638a56b8a03000715ea16a99b1439ae69cd83a91e8f5ccac188ea79805",
-        1385,
+        "98b63e1de917d2fb44e534fc271516b56e852f8518d5bf3c84a11733add97dc5",
+        2167,
     ),
     "delia.capability_orchestration.select_candidate": (
         "c00fc6d9e76e5aa0620ee4b060165fddb799d9ed50edeb91453417fbe47d7101",
         1211,
     ),
     "delia.capability_orchestration.interaction_admission": (
-        "1e4594d1ca7b4ebda39350a27623ca4af9fbc1d34e4190843958f79ff4f58174",
-        4176,
+        "793be681b2dee203626989ddf80e11c64fb835afa21b2914e1c90c71de484f7c",
+        4484,
     ),
     "delia.capability_orchestration.goal_evidence_relevance": (
         "6a1807f6bb7214a3181e8ab5556f34e25408cf88906ec97644bf9b56b2639e39",
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "18"
+    assert res.version == "19"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]
@@ -302,3 +302,20 @@ def test_composer_corrupt_resource_disables_orchestration(
         monkeypatch, tmp_path, resource_content="{not json"
     )
     assert handler._capability_orchestration is None
+
+
+def test_admission_instruction_scopes_conversational_exemption():
+    """R7 admission defect regression pin: v18 taught that "N exemplos
+    de X" without registration markers (cadastrados/reais/DELPI)
+    defaults to conversational/hypothetical — a rule that silently
+    contradicted the ambiguous-preference clause and collapsed real
+    catalog lookups at admission. The contract may exempt only
+    explicitly fictional/invented requests and item types with no
+    registered form; record-seeking requests stay on the owner path
+    regardless of markers."""
+    text = _load().instructions[
+        "delia.capability_orchestration.interaction_admission"
+    ]
+    assert "explicitly fictional or invented examples" in text
+    assert "could be a DELPI-registered entity" in text
+    assert "ambiguous over hypothetical" in text
