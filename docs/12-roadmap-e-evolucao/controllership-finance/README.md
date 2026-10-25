@@ -506,3 +506,8 @@ O PO autorizou a execução contínua das lacunas remanescentes da Central P1–
 ## GO de escopo atualizado — CLARA multi-ação, Keycloak e ChatGPT (25/10/2026)
 
 **Documento vigente mais recente:** [106 — CLARA batch inteligente e release SSH/ChatGPT](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md). Decisão expressa do PO: múltiplas operações do mesmo pedido com mínima interação, intenção atestada ou aprovação consolidada do lote; controles por ação. Priorizar PROC-0072 + CLARA com knowledge base própria; Sala de interação e expansão de Minhas tarefas adiadas; código preexistente preservado. Não implica G2/G3 aprovado, alteração Keycloak realizada ou deploy executado. A ficha de configuração MCP/ChatGPT deve conter somente metadados públicos comprovados.
+
+
+## Urgência PO — testar CLARA no ChatGPT antes do aceite final (25/10/2026)
+
+**Diretriz posterior:** [Documento 107 — validação antecipada CLARA no ChatGPT, conclusão do release](./107-clara-validacao-antecipada-chatgpt-release-hoje.md). Após rework de consentimento, **piloto MCP em ambiente não produtivo existente e autorizado → cadastro/teste ChatGPT → fechar G1 owners e homologação G2 → autorização G3 → produção e smoke → cadastro/teste final**. Se não houver ambiente não produtivo apto, executar G1/G2/G3 primeiro, jamais usar produção como piloto sem gates. Meta PO para 25/10/2026; objetivo, não evidência de conclusão. Atualizar Github a cada decisão material/entrega no mesmo commit e não solicitar novo prompt por pequena etapa.
