@@ -18,6 +18,7 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
       "closing-checklist",
       "financial-settlements",
       "closing-admin",
+      "pendencies",
       "stock-inventory",
     ]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
@@ -27,6 +28,7 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
         "checklist",
         "checklist_admin",
         "financial_settlements",
+        "pendencies",
         "stock_inventory",
       ]),
     );

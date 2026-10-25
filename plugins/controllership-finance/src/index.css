@@ -512,3 +512,94 @@
   padding: 8px 10px;
   font: inherit;
 }
+
+/* P3 — cutoff e conciliação (B-β) */
+.dashboard-controllership-finance .cf-p3-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-controllership-finance .cf-p3-status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-p3-cutoff-info,
+.dashboard-controllership-finance .cf-p3-revalidation {
+  color: var(--cf-text-muted, #5a6472);
+  font-size: 13px;
+  margin: 0;
+}
+
+.dashboard-controllership-finance .cf-p3-blockers {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--cf-warning-text, #8a5a00);
+  font-size: 13px;
+}
+
+.dashboard-controllership-finance .cf-p3-table,
+.dashboard-controllership-finance .cf-pend-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dashboard-controllership-finance .cf-p3-table th,
+.dashboard-controllership-finance .cf-p3-table td,
+.dashboard-controllership-finance .cf-pend-table th,
+.dashboard-controllership-finance .cf-pend-table td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--cf-border);
+}
+
+.dashboard-controllership-finance .cf-p3-table th,
+.dashboard-controllership-finance .cf-pend-table th {
+  color: var(--cf-text-muted, #5a6472);
+  font-weight: 600;
+}
+
+.dashboard-controllership-finance .cf-p3-actions,
+.dashboard-controllership-finance .cf-pend-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-p3-recon-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-controllership-finance .cf-p3-recon-form label,
+.dashboard-controllership-finance .cf-pend-table form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.dashboard-controllership-finance .cf-p3-recon-form input,
+.dashboard-controllership-finance .cf-p3-recon-form select {
+  border: 1px solid var(--cf-border);
+  border-radius: 8px;
+  background: var(--cf-surface);
+  color: var(--cf-text);
+  padding: 8px 10px;
+  font: inherit;
+}
+
+/* P4 — pendências (B-α) */
+.dashboard-controllership-finance .cf-pend-history {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}

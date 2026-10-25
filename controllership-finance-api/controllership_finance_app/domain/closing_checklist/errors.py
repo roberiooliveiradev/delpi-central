@@ -179,3 +179,68 @@ class ItemCancelled(ChecklistDomainError):
 class InvalidRejectionReason(ChecklistDomainError):
     code = "invalid_rejection_reason"
     status = 422
+
+
+class PendencyNotFound(ChecklistDomainError):
+    code = "pendency_not_found"
+    status = 404
+
+
+class PendencyTerminal(ChecklistDomainError):
+    code = "pendency_terminal"
+    status = 409
+
+
+class InvalidPendencyTransition(ChecklistDomainError):
+    code = "invalid_pendency_transition"
+    status = 409
+
+
+class MissingDismissJustification(ChecklistDomainError):
+    code = "missing_dismiss_justification"
+    status = 422
+
+
+class InvalidPendencyKind(ChecklistDomainError):
+    code = "invalid_pendency_kind"
+    status = 422
+
+
+class InvalidPendencyState(ChecklistDomainError):
+    code = "invalid_pendency_state"
+    status = 422
+
+
+class ClassificationAlreadyConfirmed(ChecklistDomainError):
+    code = "classification_already_confirmed"
+    status = 409
+
+
+class CutoffAlreadyConfirmed(ChecklistDomainError):
+    code = "cutoff_already_confirmed"
+    status = 409
+
+
+class CutoffNotConfirmed(ChecklistDomainError):
+    code = "cutoff_not_confirmed"
+    status = 409
+
+
+class ReconciliationNotFound(ChecklistDomainError):
+    code = "reconciliation_not_found"
+    status = 404
+
+
+class InvalidReconciliationDomain(ChecklistDomainError):
+    code = "invalid_reconciliation_domain"
+    status = 422
+
+
+class InvalidSourceState(ChecklistDomainError):
+    code = "invalid_source_state"
+    status = 422
+
+
+class RevalidationNotValid(ChecklistDomainError):
+    code = "revalidation_not_valid"
+    status = 409

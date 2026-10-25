@@ -58,6 +58,8 @@ import { buildPluginPath } from "../../app/pluginRoutes";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { ClosingDocumentsPanel } from "./ClosingDocumentsPanel";
 import { ItemValidationPanel } from "./ItemValidationPanel";
+import { P3CutoffPanel } from "./P3CutoffPanel";
+import { ReportsMatrixPanel } from "./ReportsMatrixPanel";
 
 const PERIOD_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -651,6 +653,10 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
               resizableColumns
               onRowClick={(row) => openDetail(row.item_key)}
             />
+
+            <P3CutoffPanel period={activePeriod} />
+
+            <ReportsMatrixPanel period={activePeriod} />
 
             {detail ? (
               <CfSectionCard

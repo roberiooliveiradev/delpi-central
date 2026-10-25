@@ -62,6 +62,14 @@
       "icon": "settings",
       "order": 34,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/closing/pendencies",
+      "label": "Pendências do fechamento",
+      "permission": "controllership-finance.access",
+      "icon": "list-todo",
+      "order": 35,
+      "showInMenu": false
     }
   ],
   "ui": {

@@ -102,4 +102,18 @@ export const CF_HELP = {
     editDraft:
       "Edição do rascunho: altere, adicione ou remova itens e salve de uma vez — a gravação é atômica. Se outra sessão publicou ou alterou a versão, o salvamento é recusado («revisão desatualizada») para nunca sobrescrever trabalho alheio: recarregue e reaplique.",
   },
+  p3: {
+    panel:
+      "Cutoff e conciliação (P3): o fechamento exige confirmação humana do cutoff — nunca é inferido de dados aparentemente estáveis. Depois do cutoff, as fontes oficiais aplicáveis (Entradas/Saídas, Inventário P7 e posição H02) são revalidadas e conciliadas. A prontidão só é alcançada com divergência monetária de exatamente R$ 0,00 em todas as fontes — R$ 0,01 ou −R$ 0,01 bloqueiam. Fonte indisponível permanece explícita: nunca é convertida em zero nem libera a prontidão. Mudar qualquer input depois da revalidação exige nova revalidação. «Estoque fechado» reflete somente o estado canônico do ERP (T03) — o Portal não fecha estoque por conta própria nem escreve no TOTVS.",
+  },
+  reports: {
+    panel:
+      "Matriz R01–R15: cobertura de evidências por relatório do processo de fechamento, derivada do snapshot da competência. «Consulta operacional» (baixas SE5, estoque SB9) é visão auxiliar — não é relatório oficial nem comprovação de paridade. «Contrato pendente» marca fontes sem owner/contrato confirmado — a captura segue fluxo manual governado de evidências. «Coberto» significa todos os itens vinculados ao R-ID validados — não é aceite de negócio do relatório.",
+  },
+  pendencies: {
+    page:
+      "Pendências e classificações (P4): registro e tratamento governado do que falta ou divergiu no fechamento — evidência ausente, rejeição, divergência de conciliação, correção estrutural ou dependência externa. Ciclo de vida fechado: Aberta → Em análise / Aguardando externo → Resolvida ou Descartada (descarte exige justificativa e não significa «não se aplica»).",
+    queue:
+      "Fila de pendências da competência. «Assumir» atribui você como responsável — muda só a responsabilidade, com histórico preservado; não concede acesso a recursos. Reatribuição e confirmação de classificação exigem permissão de gestão. Sugestões automáticas (regra ou IA) aparecem marcadas como «sugestão» — nunca são decisão: a confirmação é humana e auditada. «Idade» é tempo factual desde o registro — não é SLA nem atraso.",
+  },
 } as const;

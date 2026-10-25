@@ -32,6 +32,17 @@ describe("pluginRoutes", () => {
     );
   });
 
+  it("resolve a rota de pendências", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/pendencies",
+    );
+    expect(resolved.view).toBe("pendencies");
+    expect(resolved.relativePath).toBe("closing/pendencies");
+    expect(buildPluginPath("pendencies")).toBe(
+      "/apps/controllership-finance/closing/pendencies",
+    );
+  });
+
   it("resolve a rota do checklist da competência", () => {
     const resolved = resolvePluginRoute(
       "/apps/controllership-finance/closing/checklist",
