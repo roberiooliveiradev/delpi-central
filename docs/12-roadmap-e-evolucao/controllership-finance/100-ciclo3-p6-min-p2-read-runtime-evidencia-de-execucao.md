@@ -961,3 +961,79 @@ tomadas pelos owners (ou o escopo parcial for aceito explicitamente).
 - `G3_RELEASE_AUTHORIZATION`: pendente — runbook canônico
   (`git pull --ff-only` + `up-prod-sequential.sh --build`) pronto
   para o Operador SSH após G2.
+
+
+---
+
+## Adendo — Correção final de concorrência e escopo P5 (CF-PROC0072-FINAL-REWORK-RELEASE-001)
+
+Data do registro: pós-commit `546a93f696` (baseline anterior `2832964737`).
+
+### Correção A — Ordem transacional de locks
+
+Todos os caminhos de mutação de evidência/validação e submissão de pacote
+agora adquirem locks na **ordem canônica única**:
+
+```text
+monthly_competence (FOR UPDATE) → documento/item/versão → demais recursos
+```
+
+| Caminho | Ponto de aquisição |
+|---|---|
+| `submit_for_review` | já canônico (competência → versão) |
+| `create_document` (upload) | já canônico (competência → insert idempotente) |
+| `add_version` (replace) | já canônico (competência → documento) |
+| `cancel_document` | já canônico (competência → documento) |
+| `decide_version` | **corrigido** — competência antes do `FOR UPDATE` do documento |
+| `decide_item_set` | **corrigido** — competência antes do lock do item |
+| `reverse_decision` | **corrigido** — competência antes do lock da decisão |
+
+Todos os consumidores que tocam itens/evidência congelados passam pelo
+mesmo ponto de serialização; caminhos que não detêm o lock da
+competência nunca esperam por ele, logo não há ciclo de espera
+(ausência estrutural de deadlock).
+
+**Evidência (PostgreSQL real, threads/barreira):**
+
+- `test_upload_vs_validation_concurrent` — upload × decisão WHOLE_SET;
+- `test_replace_vs_validation_concurrent` — replace × validação;
+- `test_cancel_vs_validation_concurrent` — cancel × validação;
+- `test_submit_vs_validation_concurrent` — submit × validação: perdedor
+  recebe `ItemLockedBySubmittedPackage` tipado, evidência `ATTACHED`
+  intacta;
+- testes determinísticos prévios (upload/validação/cancel × submit,
+  submit × submit) permanecem verdes.
+
+### Correção B — Escopo de reviewer e versão vigente
+
+- `_require_eligible_reviewer`: quando uma área é explicitamente
+  requerida, o ator precisa de assignment **ATIVO para aquela área**
+  naquele pacote — `ReviewerNotAssigned` (403) caso contrário. Reviewer
+  de outra área do mesmo pacote não atua em nome de área alheia.
+- `start_review` e `open_clarification` exigem a versão **vigente**
+  `SUBMITTED` — versão histórica submetida (após `create_complement`)
+  rejeita novas ações de revisão com `InvalidPackageTransition`.
+- `assignment_only` permanece vínculo operacional auditado, **não**
+  promovido a prova corporativa T05 plena — contrato dedicado segue G1.
+
+**Evidência:**
+
+- `test_reviewer_area_must_match_active_assignment` — reviewer na área
+  correta (positivo), área sem assignment (negativo), reviewer de outra
+  área do mesmo pacote (negativo);
+- `test_start_review_and_clarification_fail_closed_eligibility` — ator
+  sem grupo Core exigido bloqueado em ambas as ações; com grupo, ações
+  fluem;
+- `test_historic_submitted_version_rejects_review_actions` — versão
+  histórica rejeita start_review/clarification/decision; competência
+  irmã independente e acionável.
+
+### Estado pós-correção
+
+| Item | Resultado |
+|---|---|
+| Backend suite | **521 passed** (514 + 7 novos) |
+| PostgreSQL real | corridas efetivas cobertas; sem deadlock |
+| Frontend | sem alteração — correções não mudam superfície visível; Help não exigido |
+| Bloqueios prévios | **não enfraquecidos** — rejeição terminal, lock de evidência, elegibilidade fail-closed preservados |
+| G1 / G2 / G3 | inalterados — decisões G1 com owners, aceite humano G2 e liberação G3 seguem pendentes; deploy produtivo **não executado** |
