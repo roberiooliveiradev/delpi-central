@@ -110,3 +110,27 @@ FINAL_VERDICT=
 **Avaliação local (`delia-json` 3.1B, único modelo autorizado):** O2 0/10, pino 0/3, D1 0/3, TÉO 0/3, VISTA 0/3, READ direto 0/3 — gargalo em `interaction_admission`/`model_propose` (capacidade do modelo, anterior ao estágio do contrato); WRITE-ineligible 3/3 recusa (0 ACT); AuthZ 401; `FALSE_POSITIVES=0`; `SELECTION_ADOPTION=0` (estágio não alcançado sob evidência documental).
 
 **Estado:** contrato implementado e provado deterministicamente; confiabilidade E2E sob o modelo local **não atingida** → `DEPLOY=BLOCKED`, `INDEPENDENT_REVIEW=PENDING`, `R7_FINAL_ACCEPT=NO`. Detalhes no relatório R7 e ledger.
+
+
+## Revisão independente da implementação v18 — 2026-10-25
+
+**REVIEW_VERDICT=REWORK**; **IMPLEMENTED_SHA=881b05200e78069fc7e6a696823261d452675c71**; **PRODUCTION_DEPLOY_AUTHORIZED=NO**; **R7_FINAL_ACCEPT=NO**. Inspecionado no GitHub commit e caminhos `argument_validation.py`, `orchestration._build_arguments`, instrução v18 e testes de `test_goal_evidence_relevance.py`. Esta revisão **não** reexecutou localmente suíte, Docker, Ollama ou produção; resultados de teste e de execução são `EXECUTOR_REPORTED`.
+
+### Achado bloqueante F1 — campo documental opcional descartado e READ amplo executado
+
+`apply_evidence_bound_selections` remove os valores de `arguments` para todo campo declarado como documental, mas retorna em `unbound_required` **somente** os nomes presentes em `schema.required`. Quando uma seleção é forjada, ausente, inválida ou bare string, um campo documental **opcional** permanece sem binding e `_build_arguments` valida e invoca com argumentos restantes/{}; o guard `if missing and not validated` não bloqueia essa invocação. Os testes novos `test_declared_evidence_argument_without_selection_drops_free_text`, `test_declared_evidence_argument_invalid_selection_stays_unbound` e `test_bare_string_selection_declares_field` comprovam explicitamente `pa.calls[1] == ("search_items", {})`. Isso **não** é fail-closed para a intenção semântica original: uma consulta potencialmente ampla e irrelevante pode ser executada, causando resultado enganoso, aumento de exposição/latência e perda do filtro. O owner schema pode legitimamente tornar `query/description` opcional; não modificá-lo para mascarar o defeito.
+
+**Remediação exigida:** distinguir `declared_unbound` de `schema_required_missing`, preservar proveniência e bloquear ou solicitar clarificação para a **operação que dependia daquele valor documental** mesmo com campo opcional; não construir fallback vazio, não inventar valor nem proibir consultas vazias legitimamente solicitadas **sem** dependência documental. Exigir testes RED/GREEN no caminho real: declarado opcional inválido → **zero segunda invocação**; não declarado com args vazios legitimamente permitidos → comportamento prévio preservado; schema required negativo; seleção válida → invocação com string verbatim. O teste atual que espera a segunda chamada com `{}` deve ser atualizado conforme contrato 147, não mantido por conveniência.
+
+### Achado adicional F2 — schema ausente não trata declaração por selections
+
+No ramo `if not isinstance(schema, Mapping)`, o código remove somente nomes de `declared=evidence_arguments`, mas não reconhece os campos declarados via `raw_selections` (mapping ou bare string), embora o contrato documente que qualquer selection nomeando campo também declara origem documental. O ramo retorna `unbound=()` e pode manter `arguments` livre. Caracterizar se esse ramo é alcançável no pipeline após schema validation; caso seja, fechar a brecha; caso inatingível, provar com teste/invariante. Não criar um novo validador.
+
+### Achados de conformidade e limites
+
+- Não foi localizada lista de strings de produtos, mapeamento `terminal bala→TERM. BALA`, regex de sinônimos, branching DAVI/O2, nova tool MCP ou segundo planner nas mudanças inspecionadas. `evidence_arguments` é uma lista **dinâmica de nomes de campos do schema**, não catálogo hardcoded de negócios; `ORCHESTRATED_FIELDS` é uma proteção técnica preexistente.
+- O mecanismo de seleção exata de v17 continua verificando referência a evidence block, presença literal, schema, field, enum e constraints posteriores; isso protege **integridade de transporte** mas não prova pertinência semântica nem autorização.
+- Execução LLM local `delia-json`, sem A/B externo nesta task, está conforme a decisão PO. Os resultados reportados `O2 0/10`, `D1 0/3`, `TÉO 0/3`, `VISTA 0/3` (um caso honest-empty), `WRITE-neg 3/3` não sustentam confiabilidade de release; erros de proposta/admission exigem evidência por estágio, não suposição universal de “capacidade 3B”.
+- Full suite relatada `2294/2296` com 2 FAIL ambientais, não PASS integral; classificação ambiental ainda requer prova/exception aplicável no SHA efetivo. Ausência de deploy nessa task foi correta.
+
+**DECISÃO:** `REWORK` para corrigir F1 antes de novo aceite técnico; investigar F2, fortalecer matriz de testes de regressão e emitir report no SHA/config final. Sem promoção da versão v18 enquanto `O2_LOCAL=0/10` e o fail-closed não estiver corrigido. Não ampliar escopo para nova engine, heurísticas de nomenclatura ou LLM externo. `NEXT_STEP=DELIA-R7-DECLARED-UNBOUND-OPTIONAL-ARGUMENT-FAIL-CLOSED-REMEDIATION`.
