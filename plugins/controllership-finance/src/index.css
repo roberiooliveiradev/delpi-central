@@ -603,3 +603,48 @@
   gap: 6px;
   font-size: 13px;
 }
+
+/* P5 — pacotes/revisão e cockpit (C) */
+.dashboard-controllership-finance .cf-actions-cell {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-controllership-finance .cf-blockers-list {
+  margin: 8px 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--cf-text);
+}
+
+.dashboard-controllership-finance .cf-decisions-list,
+.dashboard-controllership-finance .cf-clarifications-list {
+  margin: 8px 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.dashboard-controllership-finance .cf-decision-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.dashboard-controllership-finance .cf-decision-form input,
+.dashboard-controllership-finance .cf-decision-form select {
+  border: 1px solid var(--cf-border);
+  border-radius: 8px;
+  background: var(--cf-surface);
+  color: var(--cf-text);
+  padding: 8px 10px;
+  font: inherit;
+}

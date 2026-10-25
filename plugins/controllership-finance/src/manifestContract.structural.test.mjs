@@ -40,9 +40,17 @@ describe("controllership-finance manifest", () => {
   });
 
   it("somente rotas implementadas publicadas, protegidas por .access", () => {
-    assert.equal(manifest.routes.length, 6);
-    const [home, settlements, stockInventory, checklist, admin, pendencies] =
-      manifest.routes;
+    assert.equal(manifest.routes.length, 8);
+    const [
+      home,
+      settlements,
+      stockInventory,
+      checklist,
+      admin,
+      pendencies,
+      packages,
+      cockpit,
+    ] = manifest.routes;
     assert.equal(home.path, "/apps/controllership-finance");
     assert.equal(home.permission, "controllership-finance.access");
     assert.equal(home.showInMenu, true);
@@ -73,6 +81,18 @@ describe("controllership-finance manifest", () => {
     );
     assert.equal(pendencies.permission, "controllership-finance.access");
     assert.equal(pendencies.showInMenu, false);
+    assert.equal(
+      packages.path,
+      "/apps/controllership-finance/closing/packages",
+    );
+    assert.equal(packages.permission, "controllership-finance.access");
+    assert.equal(packages.showInMenu, false);
+    assert.equal(
+      cockpit.path,
+      "/apps/controllership-finance/closing/cockpit",
+    );
+    assert.equal(cockpit.permission, "controllership-finance.access");
+    assert.equal(cockpit.showInMenu, false);
     for (const route of manifest.routes) {
       if (route.path.endsWith("/admin")) {
         assert.equal(route.permission, "controllership-finance.manage");
@@ -91,7 +111,6 @@ describe("controllership-finance manifest", () => {
       "administration",
       "help",
       "closing-center",
-      "cockpit",
     ]) {
       assert.ok(
         !paths.some((p) => p.includes(forbidden)),

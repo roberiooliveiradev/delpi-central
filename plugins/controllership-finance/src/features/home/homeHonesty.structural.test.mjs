@@ -42,6 +42,8 @@ describe("home honesty", () => {
         "checklist_admin",
         "financial_settlements",
         "pendencies",
+        "packages",
+        "cockpit",
         "stock_inventory",
       ]),
     );

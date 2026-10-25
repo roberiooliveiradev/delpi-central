@@ -295,7 +295,8 @@ def transition_pendency(
     ),
 ):
     try:
-        actor = actor_subject(authorized_user(request))
+        user = authorized_user(request)
+        actor = actor_subject(user)
         pendency = _repository().transition_pendency(
             period,
             str(pendency_id),
@@ -305,6 +306,7 @@ def transition_pendency(
             justification=body.justification,
             notes=body.notes,
             request_scope=normalize_request_scope(branch_scope),
+            is_manage=has_permission(user, MANAGE_PERMISSION),
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "transition_pendency")

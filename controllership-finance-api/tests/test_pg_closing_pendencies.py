@@ -21,6 +21,7 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     InvalidPendencyTransition,
     MissingDismissJustification,
     PendencyNotFound,
+    PendencyOwnershipRequired,
     PendencyTerminal,
     StaleRevision,
 )
@@ -118,6 +119,8 @@ def setup(_configure_db):
         "V005__p2_item_validation.sql",
         "V006__p4_pendencies.sql",
         "V007__p3_cutoff_reconciliation.sql",
+        "V008__p5_packages_review.sql",
+        "V009__p3_official_provenance.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
@@ -136,6 +139,9 @@ def _create(setup, **overrides) -> dict:
         "actor": ACTOR_A,
         "kind": "OTHER",
         "title": f"Pendência {uuid.uuid4().hex[:8]}",
+        # ownership default do ator de teste — transições exigem
+        # responsável atual ou papel elegível (controle B/C).
+        "responsible_subject": ACTOR_A,
     }
     params.update(overrides)
     return setup["pend"].create_pendency(PERIOD, **params)
@@ -228,13 +234,19 @@ def test_reassign_preserves_ownership_history(setup):
 
 
 def test_stale_revision_rejected(setup):
-    p = _create(setup)
+    p = _create(setup, responsible_subject=None)
     setup["pend"].claim_pendency(
         PERIOD, p["pendency_id"], ACTOR_A, expected_revision=1
     )
+    # revision desatualizada é rejeitada mesmo pelo próprio owner.
     with pytest.raises(StaleRevision):
         setup["pend"].claim_pendency(
-            PERIOD, p["pendency_id"], ACTOR_B, expected_revision=1
+            PERIOD, p["pendency_id"], ACTOR_A, expected_revision=1
+        )
+    # claim por terceiro é bloqueado por ownership antes do OCC.
+    with pytest.raises(PendencyOwnershipRequired):
+        setup["pend"].claim_pendency(
+            PERIOD, p["pendency_id"], ACTOR_B, expected_revision=2
         )
 
 

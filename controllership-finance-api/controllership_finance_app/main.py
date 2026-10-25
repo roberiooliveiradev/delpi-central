@@ -25,6 +25,9 @@ from controllership_finance_app.interface.http.routes.documents_routes import (
 from controllership_finance_app.interface.http.routes.health_routes import (
     router as health_router,
 )
+from controllership_finance_app.interface.http.routes.packages_routes import (
+    router as packages_router,
+)
 from controllership_finance_app.interface.http.routes.p3_routes import (
     router as p3_router,
 )
@@ -110,5 +113,6 @@ app.include_router(documents_router)
 app.include_router(validations_router)
 app.include_router(pendencies_router)
 app.include_router(p3_router)
+app.include_router(packages_router)
 app.include_router(reports_router)
 app.include_router(admin_checklist_router)

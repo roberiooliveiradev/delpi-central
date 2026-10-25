@@ -11,7 +11,9 @@ import {
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { ChecklistAdminPage } from "./features/closing/ChecklistAdminPage";
 import { ClosingChecklistPage } from "./features/closing/ClosingChecklistPage";
+import { CockpitPage } from "./features/closing/CockpitPage";
 import { FinancialSettlementsPage } from "./features/closing/FinancialSettlementsPage";
+import { PackagesPage } from "./features/closing/PackagesPage";
 import { PendenciesPage } from "./features/closing/PendenciesPage";
 import { StockInventoryPage } from "./features/closing/StockInventoryPage";
 import { HomePage } from "./features/home/HomePage";
@@ -58,6 +60,10 @@ function AppRoutes({
           <ChecklistAdminPage />
         ) : resolved.view === "pendencies" ? (
           <PendenciesPage />
+        ) : resolved.view === "packages" ? (
+          <PackagesPage />
+        ) : resolved.view === "cockpit" ? (
+          <CockpitPage />
         ) : (
           <NotFoundPage basePath={basePath} />
         )}

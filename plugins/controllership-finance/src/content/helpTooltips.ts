@@ -116,4 +116,30 @@ export const CF_HELP = {
     queue:
       "Fila de pendências da competência. «Assumir» atribui você como responsável — muda só a responsabilidade, com histórico preservado; não concede acesso a recursos. Reatribuição e confirmação de classificação exigem permissão de gestão. Sugestões automáticas (regra ou IA) aparecem marcadas como «sugestão» — nunca são decisão: a confirmação é humana e auditada. «Idade» é tempo factual desde o registro — não é SLA nem atraso.",
   },
+  packages: {
+    page:
+      "Pacotes e revisão (P5): a competência é entregue em pacotes por destinatário (Contábil, Fiscal). «Finalizar» congela uma versão imutável do pacote — não envia nada a ninguém. «Enviar para análise» disponibiliza a versão dentro da Minha DELPI aos revisores designados: nunca é anexo de e-mail nem entrega externa. Cada pacote avança de forma independente — o envio de um destinatário não muda o estado dos demais.",
+    list:
+      "Pacotes por destinatário da competência. Estados: «Pacote incompleto» (em elaboração ou versão de trabalho), «Pacote finalizado» (versão congelada, ainda não enviada) e «Enviado para análise» (disponível aos revisores na Minha DELPI). A coluna Revisão reflete o estado real do ciclo de análise — incluindo bloqueios como «Aguardando esclarecimento» ou «Ajustes solicitados».",
+    detail:
+      "Detalhe do pacote do destinatário: versão vigente, áreas obrigatórias de revisão, aceites registrados, esclarecimentos e histórico de versões. Versões enviadas são imutáveis — correções exigem «Reabrir» (nova versão de trabalho) ou «Criar complemento» (nova versão vinculada). Nova versão zera as exigências de aceite: aceites anteriores ficam no histórico, mas não contam para a versão vigente.",
+    review:
+      "Revisão do pacote: cada área obrigatória da versão vigente precisa de um aceite humano real — o aceite é irreversível e auditado, sem edição nem estorno. «Solicitar ajustes» ou «Rejeitar» exigem motivo e reabrem o ciclo sem perder o histórico. Esclarecimentos abertos bloqueiam a conclusão mensal até serem respondidos. Reatribuir um revisor preserva o que ele já decidiu — o substituto atua só dali para frente.",
+    closing:
+      "Estado do fechamento mensal: a competência só conclui quando todos os pacotes aplicáveis foram enviados, aceitos por pessoa humana real e por cada área obrigatória da versão vigente, sem esclarecimentos abertos e sem rejeição terminal — o Portal nunca conclui por vacuidade ou apenas por valores declarados. A «rejeição terminal» da competência é reservada ao coordenador formal designado e bloqueia a conclusão; é distinta da rejeição de uma área num pacote.",
+  },
+  cockpit: {
+    page:
+      "Cockpit do fechamento: visão consolidada do estado real da competência — checklist/evidências (P2), cutoff e conciliação (P3), pendências (P4) e pacotes/conclusão (P5). É leitura derivada do backend: bloqueios e fontes indisponíveis aparecem como estão — nenhum card fica «verde» por cálculo local.",
+    closing:
+      "Conclusão mensal: estado derivado do contrato C2 — pacotes aplicáveis enviados e aceitos, áreas obrigatórias atendidas, sem esclarecimentos abertos, sem rejeição terminal e sem bloqueios de P2/P3/P4. Razões de bloqueio são listadas textualmente quando presentes.",
+    checklist:
+      "Checklist e evidências (P2): contagem real dos itens do snapshot por estado — aguardando evidência, aceitos, não aplicáveis ou cancelados.",
+    p3:
+      "Cutoff e conciliação (P3): estado de cada domínio — disponível/indisponível — e a proveniência do registro de conciliação: «oficial» (respaldado por artefato oficial anexado) ou «declarado» (informado pelo cliente, não comprova fechamento). Divergência mostra o valor real conciliado; fonte indisponível nunca vira zero.",
+    p4:
+      "Pendências (P4): contagem por estado — Aberta, Em análise, Aguardando externo, Resolvida, Descartada. Pendências em aberto permanecem visíveis como bloqueio.",
+    p5:
+      "Pacotes (P5): estado real de cada pacote de destinatário e do ciclo de revisão — do pacote incompleto até a revisão aceita. O fechamento mensal concluído é um estado distinto e posterior a tudo isto.",
+  },
 } as const;

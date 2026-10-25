@@ -70,6 +70,22 @@
       "icon": "list-todo",
       "order": 35,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/closing/packages",
+      "label": "Pacotes e revisão",
+      "permission": "controllership-finance.access",
+      "icon": "package",
+      "order": 36,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/closing/cockpit",
+      "label": "Cockpit do fechamento",
+      "permission": "controllership-finance.access",
+      "icon": "gauge",
+      "order": 37,
+      "showInMenu": false
     }
   ],
   "ui": {

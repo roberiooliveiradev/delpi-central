@@ -7,6 +7,8 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  * - `financial_settlements` — baixas financeiras R01/R02 (closing).
  * - `stock_inventory` — estoque histórico R03/P7 (closing).
  * - `pendencies` — fila de pendências e classificações (P4).
+ * - `packages` — pacotes por destinatário, submissão e revisão (P5).
+ * - `cockpit` — estado consolidado P2/P3/P4/P5 da competência.
  * Rotas futuras (Visão geral, Sala de interação, Minhas tarefas,
  * Administração, Ajuda) entram aqui apenas quando implementadas.
  */
@@ -17,6 +19,8 @@ export type PluginView =
   | "checklist"
   | "checklist_admin"
   | "pendencies"
+  | "packages"
+  | "cockpit"
   | "not_found";
 
 export type PluginNavId = "home";
@@ -27,7 +31,9 @@ export type PluginNavigationTarget =
   | "stock_inventory"
   | "checklist"
   | "checklist_admin"
-  | "pendencies";
+  | "pendencies"
+  | "packages"
+  | "cockpit";
 
 /** Mapa rota relativa → view (paths técnicos em inglês, kebab-case). */
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
@@ -36,6 +42,8 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/checklist": "checklist",
   "closing/admin": "checklist_admin",
   "closing/pendencies": "pendencies",
+  "closing/packages": "packages",
+  "closing/cockpit": "cockpit",
 };
 
 const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> = {
@@ -44,6 +52,8 @@ const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> 
   checklist: "closing/checklist",
   checklist_admin: "closing/admin",
   pendencies: "closing/pendencies",
+  packages: "closing/packages",
+  cockpit: "closing/cockpit",
 };
 
 const CHECKLIST_PERIOD_PATTERN = /^closing\/checklist\/(\d{4}-(0[1-9]|1[0-2]))$/;

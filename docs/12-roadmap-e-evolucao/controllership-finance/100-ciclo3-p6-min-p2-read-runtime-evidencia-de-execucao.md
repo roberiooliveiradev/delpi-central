@@ -388,3 +388,95 @@ Publicado em `main` via push `HEAD:main` (fast-forward após rebase sobre
 - Pauta G1 residual: owners/contratos das fontes PENDING_CONTRACT
   (R04, R06, R07, R09, R12, R15), sync canônico de `closing_stock_state`
   (T03), e catálogos P6 TARGET herdados do Pacote A.
+
+## ADENDO — PACOTE C (P5 packages/review/C2 + cockpit + controles B/C)
+
+Execução: CF-PROC0072-E2E-MASTER-EXECUTION-001, baseline `a2921167cf`.
+Veredito Pacote B: ACCEPT_WITH_RESIDUAL. Deploy produtivo
+**suspenso** — nenhuma ação em `srv-api`, nenhuma migration produtiva.
+
+### Implementado (código + testes, não operação)
+
+- **P5 (V008):** `closing_package` por `recipient_area`,
+  `closing_package_version` imutável (DRAFT→FINALIZED→SUBMITTED,
+  `previous_version_id`+`change_reason` para complementos/reopen),
+  `closing_review_assignment` (REVIEWER por área/pacote, COORDINATOR por
+  competência), `closing_area_decision` (append-only, por área obrigatória
+  da versão vigente, terminal — sem edição/estorno),
+  `closing_clarification` (OPEN bloqueia conclusão),
+  `closing_notification_event` (outbox informativa — nunca critério),
+  `closing_terminal_rejection` (só coordenador designado, motivo
+  obrigatório, reversível com trilha).
+- **Finalize ≠ Submit:** `finalize` congela a versão com snapshot de
+  composição (itens P2 aceitos, resultados P3, pendências P4,
+  `required_areas` derivados do snapshot) — não notifica nem envia.
+  `submit_for_review` torna a versão visível in-portal aos revisores
+  designados (nunca anexo de e-mail). Submissão usa OCC por `revision`.
+- **Revisão:** visibilidade fail-closed por assignment — revisor sem
+  vínculo não lista nem abre pacote sibling; decisão exige assignment
+  ativo na área obrigatória da versão vigente; aceite é terminal; nova
+  versão zera exigências de aceite (histórico preservado);
+  reatribuição/desativação preserva decisões passadas e autoria —
+  substituto atua só futuramente. Pacote pode ser submetido sem
+  revisor, mas nunca conclui sem aceite humano real.
+- **C2 — conclusão derivada, nunca forçável** (`derive_closing_state`):
+  todos os pacotes aplicáveis SUBMITTED + aceite por área obrigatória da
+  versão vigente + zero esclarecimento OPEN + zero rejeição terminal
+  ACTIVE + todo domínio P3 com proveniência OFFICIAL. Vacuidade nunca
+  conclui: zero pacotes aplicáveis → `no_applicable_packages`; versão
+  sem `required_areas` → `no_required_areas`.
+- **Controle B/C — P3 proveniência (V009):** `provenance_kind`
+  (DECLARED|OFFICIAL) + `official_document_id` em
+  `closing_reconciliation`. OFFICIAL exige documento anexado na
+  competência (fail-closed). Conclusão exige OFFICIAL em todos os
+  domínios — conciliação registrada/declarada não comprova fechamento.
+- **Controle B/C — ownership P4:** claim sobre pendência de terceiro e
+  transição por ator sem ownership/papel elegível são bloqueados
+  (`PendencyOwnershipRequired`, 409); ator `manage` segue elegível para
+  transições governadas; terminal continua imutável; escopo de filial
+  fail-closed.
+- **Cockpit (`GET …/cockpit`):** composição read-only dos estados reais
+  P2 (snapshot por estado), P3 (por domínio: source_state,
+  provenance_kind, divergência), P4 (por estado) e P5 (closing-state
+  derivado com `blocking_reasons`) — fonte indisponível é bloqueio,
+  nunca sucesso.
+- **MFE:** `packagesApi`, página `/closing/packages` (lista por
+  destinatário, detalhe com versões/áreas/decisões/esclarecimentos,
+  ações manage e de revisor) e `/closing/cockpit`; rotas no manifest +
+  catálogo do hub; Help contextual `packages`/`cockpit` sincronizado
+  com docs 12/29/37.
+
+### Testes executados
+
+- Backend: **475 passed** — inclui suíte PG `test_pg_package_c.py`
+  (19): ownership P4 (claim indevido, transição não-owner, owner e
+  manage positivos), proveniência P3 (OFFICIAL exige artefato, default
+  DECLARED, DECLARED bloqueia conclusão, OFFICIAL desbloqueia),
+  visibilidade sibling, finalize bloqueado por checklist pendente,
+  submit+freeze de áreas, outbox de notificação, decisão exige
+  assignment, clarification bloqueia, aceite terminal, nova versão zera
+  aceites, rejeição terminal exige coordenador, reopen preserva
+  histórico, reatribuição preserva aceite, independência entre
+  destinatários, falha de notificação não afeta conclusão, e
+  não-vacuidade (zero pacotes aplicáveis = PENDING mesmo com P3
+  oficial).
+- MFE: **158 vitest** (PackagesPage 6, CockpitPage 2) + **25
+  estruturais** + `tsc -b` limpo + `vite build` OK.
+
+### Estado honesto
+
+- `HUMAN_ACCEPTANCE`: G2 pendente — testes verdes ≠ aceite de negócio.
+- `DEPLOY_STATUS`: não deployado — `srv-api` continua no estado A3;
+  V008/V009 aditivas pendentes de aplicação produtiva no startup
+  autorizado (G3).
+- `SMOKE_AUTHENTICATED`: TEST_NOT_RUN.
+- Revisão depende de contratos Core de elegibilidade: assignments são
+  governados por `manage` localmente; a elegibilidade canônica por
+  grupo/função corporativa permanece pauta G1 (Core é owner).
+- R01–R15: classificações preservadas — nenhum relatório oficial
+  inventado, nenhuma sincronização T03 fabricada, zero escrita TOTVS.
+- Pauta G1 residual: owners/contratos das fontes `PENDING_CONTRACT`
+  (R04, R06, R07, R09, R12, R15); sync canônico de
+  `closing_stock_state` (T03); contratos Core de elegibilidade por
+  grupo/função e vínculo formal de coordenador; catálogos P6 TARGET
+  herdados.

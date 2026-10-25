@@ -19,6 +19,8 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
       "financial-settlements",
       "closing-admin",
       "pendencies",
+      "closing-packages",
+      "closing-cockpit",
       "stock-inventory",
     ]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
@@ -29,12 +31,14 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
         "checklist_admin",
         "financial_settlements",
         "pendencies",
+        "packages",
+        "cockpit",
         "stock_inventory",
       ]),
     );
   });
 
-  it("não expõe rotas futuras (Visão geral, Sala, Tarefas, Admin, Ajuda, P1–P6)", () => {
+  it("não expõe rotas futuras (Visão geral, Sala, Tarefas, Admin, Ajuda)", () => {
     const allIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
     for (const forbidden of [
       "overview",
@@ -43,7 +47,6 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
       "administration",
       "help",
       "closing_center",
-      "cockpit",
     ]) {
       expect(allIds).not.toContain(forbidden);
     }

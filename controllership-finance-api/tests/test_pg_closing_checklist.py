@@ -128,6 +128,8 @@ def migrated(_configure_db):
         "V005__p2_item_validation.sql",
         "V006__p4_pendencies.sql",
         "V007__p3_cutoff_reconciliation.sql",
+        "V008__p5_packages_review.sql",
+        "V009__p3_official_provenance.sql",
     ]
     return True
 

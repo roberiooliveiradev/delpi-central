@@ -244,3 +244,73 @@ class InvalidSourceState(ChecklistDomainError):
 class RevalidationNotValid(ChecklistDomainError):
     code = "revalidation_not_valid"
     status = 409
+
+
+class PendencyOwnershipRequired(ChecklistDomainError):
+    code = "pendency_ownership_required"
+    status = 403
+
+
+class OfficialDocumentRequired(ChecklistDomainError):
+    code = "official_document_required"
+    status = 422
+
+
+class PackageNotFound(ChecklistDomainError):
+    code = "package_not_found"
+    status = 404
+
+
+class PackageVersionNotFound(ChecklistDomainError):
+    code = "package_version_not_found"
+    status = 404
+
+
+class InvalidPackageTransition(ChecklistDomainError):
+    code = "invalid_package_transition"
+    status = 409
+
+
+class MissingReason(ChecklistDomainError):
+    code = "missing_reason"
+    status = 422
+
+
+class AssignmentNotFound(ChecklistDomainError):
+    code = "assignment_not_found"
+    status = 404
+
+
+class ReviewerNotAssigned(ChecklistDomainError):
+    code = "reviewer_not_assigned"
+    status = 403
+
+
+class AreaDecisionTerminal(ChecklistDomainError):
+    code = "area_decision_terminal"
+    status = 409
+
+
+class ClarificationNotFound(ChecklistDomainError):
+    code = "clarification_not_found"
+    status = 404
+
+
+class ClarificationResolved(ChecklistDomainError):
+    code = "clarification_resolved"
+    status = 409
+
+
+class TerminalRejectionActive(ChecklistDomainError):
+    code = "terminal_rejection_active"
+    status = 409
+
+
+class TerminalRejectionNotFound(ChecklistDomainError):
+    code = "terminal_rejection_not_found"
+    status = 404
+
+
+class CoordinatorRequired(ChecklistDomainError):
+    code = "coordinator_required"
+    status = 403

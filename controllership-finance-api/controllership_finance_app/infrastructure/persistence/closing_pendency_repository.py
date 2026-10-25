@@ -30,6 +30,7 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     InvalidPendencyTransition,
     MissingDismissJustification,
     PendencyNotFound,
+    PendencyOwnershipRequired,
     PendencyTerminal,
     PersistenceUnavailable,
     StaleRevision,
@@ -468,8 +469,13 @@ class ClosingPendencyRepository:
                         raise PendencyTerminal(
                             "Pendência terminal não admite claim."
                         )
-                    self._check_revision(row, expected_revision)
                     previous = row["responsible_subject"]
+                    if previous is not None and previous != actor:
+                        raise PendencyOwnershipRequired(
+                            "Pendência já pertence a outro responsável; "
+                            "reatribuição exige ator elegível (manage)."
+                        )
+                    self._check_revision(row, expected_revision)
                     cur.execute(
                         f"""
                         UPDATE {_q('closing_pendency')}
@@ -566,6 +572,7 @@ class ClosingPendencyRepository:
         justification: str | None = None,
         notes: str | None = None,
         request_scope: str = "BOTH",
+        is_manage: bool = False,
     ) -> dict[str, Any]:
         ctx = normalize_request_scope(request_scope)
         if to_state not in PENDENCY_STATES:
@@ -595,6 +602,14 @@ class ClosingPendencyRepository:
                     if row["state"] in TERMINAL_STATES:
                         raise PendencyTerminal(
                             "Pendência terminal não admite transição."
+                        )
+                    if (
+                        row["responsible_subject"] != actor
+                        and not is_manage
+                    ):
+                        raise PendencyOwnershipRequired(
+                            "Transição exige ser o responsável atual ou "
+                            "ator elegível (manage)."
                         )
                     allowed = _TRANSITIONS.get(row["state"], frozenset())
                     if to_state not in allowed:

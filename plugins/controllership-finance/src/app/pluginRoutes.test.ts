@@ -43,6 +43,24 @@ describe("pluginRoutes", () => {
     );
   });
 
+  it("resolve as rotas de pacotes e cockpit", () => {
+    const pkg = resolvePluginRoute(
+      "/apps/controllership-finance/closing/packages",
+    );
+    expect(pkg.view).toBe("packages");
+    expect(pkg.relativePath).toBe("closing/packages");
+    expect(buildPluginPath("packages")).toBe(
+      "/apps/controllership-finance/closing/packages",
+    );
+    const cockpit = resolvePluginRoute(
+      "/apps/controllership-finance/closing/cockpit",
+    );
+    expect(cockpit.view).toBe("cockpit");
+    expect(buildPluginPath("cockpit")).toBe(
+      "/apps/controllership-finance/closing/cockpit",
+    );
+  });
+
   it("resolve a rota do checklist da competência", () => {
     const resolved = resolvePluginRoute(
       "/apps/controllership-finance/closing/checklist",

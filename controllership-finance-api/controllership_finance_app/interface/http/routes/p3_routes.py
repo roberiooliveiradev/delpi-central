@@ -8,6 +8,7 @@ sincronizada pelo owner — nenhuma rota escreve esse estado (RQ-P3-08).
 
 from __future__ import annotations
 
+import uuid
 from decimal import Decimal
 
 from fastapi import APIRouter, Path, Request
@@ -50,6 +51,10 @@ class ReconciliationRequest(BaseModel):
     reported_amount: Decimal | None = None
     rule_version: str | None = None
     provenance: dict | None = None
+    provenance_kind: str | None = Field(
+        default=None, pattern="^(DECLARED|OFFICIAL)$"
+    )
+    official_document_id: uuid.UUID | None = None
     revision: int | None = Field(default=None, ge=1)
 
 
@@ -154,6 +159,12 @@ def upsert_p3_reconciliation(
             reported_amount=body.reported_amount,
             rule_version=body.rule_version,
             provenance=body.provenance,
+            provenance_kind=body.provenance_kind or "DECLARED",
+            official_document_id=(
+                str(body.official_document_id)
+                if body.official_document_id
+                else None
+            ),
             expected_revision=body.revision,
         )
     except ChecklistDomainError as exc:

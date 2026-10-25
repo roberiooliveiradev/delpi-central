@@ -33,6 +33,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from controllership_finance_app.domain.closing_checklist.errors import (
+    OfficialDocumentRequired,
     ChecklistDomainError,
     CompetenceNotOpened,
     CutoffAlreadyConfirmed,
@@ -138,7 +139,8 @@ class ClosingP3Repository:
             f"""
             SELECT reconciliation_id, domain, source_state,
                    expected_amount, reported_amount, fetched_at,
-                   rule_version, provenance, input_fingerprint,
+                   rule_version, provenance, provenance_kind,
+                   official_document_id, input_fingerprint,
                    revision, updated_at
               FROM {_q('closing_reconciliation')}
              WHERE competence_id = %s
@@ -323,6 +325,8 @@ class ClosingP3Repository:
         reported_amount: Decimal | None = None,
         rule_version: str | None = None,
         provenance: dict | None = None,
+        provenance_kind: str = "DECLARED",
+        official_document_id: str | None = None,
         expected_revision: int | None = None,
     ) -> dict[str, Any]:
         if domain not in RECONCILIATION_DOMAINS:
@@ -333,10 +337,38 @@ class ClosingP3Repository:
             raise InvalidSourceState(
                 f"source_state deve ser um de {sorted(SOURCE_STATES)}."
             )
+        provenance_kind = (provenance_kind or "DECLARED").strip().upper()
+        if provenance_kind not in ("DECLARED", "OFFICIAL"):
+            raise InvalidSourceState(
+                "provenance_kind deve ser DECLARED ou OFFICIAL."
+            )
+        if provenance_kind == "OFFICIAL" and not official_document_id:
+            raise OfficialDocumentRequired(
+                "provenance_kind OFFICIAL exige official_document_id "
+                "de artefato oficial anexado na competencia."
+            )
+        if provenance_kind == "DECLARED":
+            official_document_id = None
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
+                    if official_document_id is not None:
+                        cur.execute(
+                            f"""
+                            SELECT document_id
+                              FROM {_q('closing_document')}
+                             WHERE document_id = %s
+                               AND competence_id = %s
+                               AND state = 'ATTACHED'
+                            """,
+                            (official_document_id, competence_id),
+                        )
+                        if cur.fetchone() is None:
+                            raise OfficialDocumentRequired(
+                                "official_document_id nao corresponde a "
+                                "documento anexado nesta competencia."
+                            )
                     cur.execute(
                         f"""
                         SELECT reconciliation_id, revision
@@ -365,6 +397,8 @@ class ClosingP3Repository:
                                    fetched_at = now(),
                                    rule_version = %s,
                                    provenance = %s::jsonb,
+                                   provenance_kind = %s,
+                                   official_document_id = %s,
                                    revision = revision + 1,
                                    updated_at = now()
                              WHERE reconciliation_id = %s
@@ -372,6 +406,8 @@ class ClosingP3Repository:
                                        source_state, expected_amount,
                                        reported_amount, fetched_at,
                                        rule_version, provenance,
+                                       provenance_kind,
+                                       official_document_id,
                                        revision, updated_at
                             """,
                             (
@@ -382,6 +418,8 @@ class ClosingP3Repository:
                                 json.dumps(provenance)
                                 if provenance
                                 else None,
+                                provenance_kind,
+                                official_document_id,
                                 existing["reconciliation_id"],
                             ),
                         )
@@ -392,13 +430,16 @@ class ClosingP3Repository:
                             INSERT INTO {_q('closing_reconciliation')}
                                 (competence_id, domain, source_state,
                                  expected_amount, reported_amount,
-                                 fetched_at, rule_version, provenance)
+                                 fetched_at, rule_version, provenance,
+                                 provenance_kind, official_document_id)
                             VALUES (%s, %s, %s, %s, %s, now(), %s,
-                                    %s::jsonb)
+                                    %s::jsonb, %s, %s)
                             RETURNING reconciliation_id, domain,
                                       source_state, expected_amount,
                                       reported_amount, fetched_at,
                                       rule_version, provenance,
+                                      provenance_kind,
+                                      official_document_id,
                                       revision, updated_at
                             """,
                             (
@@ -411,6 +452,8 @@ class ClosingP3Repository:
                                 json.dumps(provenance)
                                 if provenance
                                 else None,
+                                provenance_kind,
+                                official_document_id,
                             ),
                         )
                         row = cur.fetchone()
@@ -424,6 +467,12 @@ class ClosingP3Repository:
                         detail={
                             "domain": domain,
                             "source_state": source_state,
+                            "provenance_kind": provenance_kind,
+                            "official_document_id": (
+                                str(official_document_id)
+                                if official_document_id
+                                else None
+                            ),
                             "expected_amount": (
                                 str(expected_amount)
                                 if expected_amount is not None
