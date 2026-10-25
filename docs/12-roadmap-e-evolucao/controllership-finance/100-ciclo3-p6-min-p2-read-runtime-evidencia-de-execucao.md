@@ -324,3 +324,67 @@ Suíte completa do contexto: **374 passed** (BFF + PG real). Pacote A (A1–A4) 
 - `DEPLOY_REPORTED`: A3 runtime verificado em produção (`8ca4e25124`, healthy, V001–V005 aplicadas).
 - `OPERATION_PROVEN`: **NO** — aceite humano G2 e smoke autenticado permanecem TEST_NOT_RUN.
 - `DEPLOY_SUSPENDED`: novos deploys produtivos suspensos até G2/G3 conforme orientação vigente.
+
+
+---
+
+## ADENDO — PACOTE B (P4 + P3 + matriz R01–R15), commit `c19d08fb31`
+
+Execução: CF-PROC0072-E2E-MASTER-EXECUTION-001, baseline `ea2bbbcd28`.
+Publicado em `main` via push `HEAD:main` (fast-forward após rebase sobre
+`405575f745`). Deploy produtivo **suspenso** — nenhuma ação em
+`srv-api`, nenhuma migration produtiva, nenhum rollback.
+
+### Implementado (código + testes, não operação)
+
+- **P4 (V006):** `closing_pendency` — grafo fechado
+  `OPEN→IN_ANALYSIS/WAITING_EXTERNAL→RESOLVED|DISMISSED`; claim e
+  reatribuição mudam só responsabilidade (histórico append-only via
+  `closing_audit_event`); sugestão determinística/IA é recomendação —
+  `confirmed_classification` exige ator humano `manage` e é uma vez;
+  `DISMISSED` exige justificativa e não é `NOT_APPLICABLE`; OCC por
+  `revision`; `branch_scope` com fail-closed fora de contexto.
+- **P3 (V007):** `closing_cutoff` (único por competência),
+  `closing_reconciliation` (ENTRADAS_SAIDAS/P7/H02, `numeric(19,2)`),
+  `closing_revalidation` (append-only, `input_fingerprint`),
+  `closing_stock_state` (somente sincronização do owner — linha ausente
+  = `UNAVAILABLE`, sem fallback manual, zero escrita TOTVS).
+  Readiness derivada: `READY_TO_CLOSE` exige cutoff + revalidação
+  vigente + todas as sources `AVAILABLE` + divergência exatamente
+  `R$ 0,00` por domínio; `R$ 0,01` ou `-R$ 0,01` bloqueiam; zero
+  pré-cutoff/revalidação é preliminar.
+- **Matriz R01–R15:** `GET /closing/competences/{period}/reports` —
+  agregação derivada do snapshot (itens por R-ID × estado de
+  validação) + catálogo canônico fonte/owner (doc 93). R01/R02/R03
+  marcados `OPERATIONAL_VIEW` (auxiliares, não oficiais); R04, R06,
+  R07, R09, R12, R15 `PENDING_CONTRACT`; R05, R08, R10, R11
+  `MANUAL_EVIDENCE`; R13, R14 `EXTERNAL`.
+- **MFE:** `P3CutoffPanel` + `ReportsMatrixPanel` embutidos no
+  checklist; página `/closing/pendencies`; clientes `p3Api`,
+  `pendenciesApi`, `reportsApi`; Help contextual sincronizado;
+  manifest + catálogo do hub atualizados.
+- **Autorização:** somente `access`/`manage` existentes — leitura e
+  claim/transições `access`; reassign, confirmação de classificação,
+  cutoff, revalidação e registro de sources `manage`. Nenhuma
+  permission nova.
+
+### Testes executados
+
+- Backend: **438 passed** (rotas P3/P4/reports + PostgreSQL real
+  descartável com prova de ownership — V001→V007).
+- MFE: **149 vitest** (inclui `P3CutoffPanel` 4, `PendenciesPage` 6) +
+  **25 estruturais** + `tsc -b` limpo + `vite build` OK.
+
+### Estado honesto
+
+- `HUMAN_ACCEPTANCE`: G2 pendente — testes verdes ≠ aceite.
+- `DEPLOY_STATUS`: não deployado — `srv-api` continua em `8ca4e25124`
+  (A3) até regularização G2/G3; V006/V007 pendentes de aplicação
+  produtiva no startup autorizado.
+- `SMOKE_AUTHENTICATED`: TEST_NOT_RUN.
+- R01–R15: nenhuma integração automática nova com fonte oficial neste
+  pacote — o que não tem owner/contrato confirmado permanece
+  `PENDING_CONTRACT`/`MANUAL_EVIDENCE` com proveniência explícita.
+- Pauta G1 residual: owners/contratos das fontes PENDING_CONTRACT
+  (R04, R06, R07, R09, R12, R15), sync canônico de `closing_stock_state`
+  (T03), e catálogos P6 TARGET herdados do Pacote A.
