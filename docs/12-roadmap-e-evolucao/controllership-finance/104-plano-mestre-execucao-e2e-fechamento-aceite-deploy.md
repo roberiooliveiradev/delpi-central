@@ -140,3 +140,8 @@ A cada pacote A–D entregar **um relatório consolidado**, não micro-relatóri
 ## 9. Atualização de escopo/release — 25/10/2026
 
 O [Documento 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md) registra decisão posterior: CLARA MCP com base própria e execução multi-ação governada integra o release da Central; Sala e expansão Minhas tarefas adiadas. Conexão ChatGPT/Keycloak segue padrão TÉO com verificação real, sem compartilhar secrets. **G2 humano e G3 Operador SSH obrigatórios**: este GO de implementação não é autorização de produção.
+
+
+## 10. Precedência operacional para validação antecipada — 25/10/2026
+
+[Documento 107](./107-clara-validacao-antecipada-chatgpt-release-hoje.md) autoriza priorizar teste integrado CLARA↔ChatGPT em **ambiente não produtivo já existente e aprovado**, antes do aceite humano G2 e da autorização produtiva G3. Produção, incluindo Keycloak, migrations e exposição do MCP real, permanece bloqueada até esses gates. Piloto deve usar dados de teste, rastreabilidade e autorização de infraestrutura; sem ambiente autorizado apto, preparar o release e obter G1/G2/G3 antes de produção. Evitar novas rodadas de micro-rework; sincronizar docs e evidências a cada decisão/commit.
