@@ -45,3 +45,24 @@ Uma única execução coordenada, **sem novo prompt por fatia**. Design/contrato
 Relatório final único: `FINAL_HEAD`, `RELEASE_SHA`, `G1`, `G2`, `G3`, `NONPROD_DEPLOY`, `CHATGPT_NONPROD_CONNECTION`, `PROD_DEPLOY`, `KEYCLOAK_PROD`, `MCP_SMOKE`, `CHATGPT_PROD_CONNECTION`, `CORPUS_VERSION`, `CONSENT_E2E`, `REMAINING_OWNER_ACTIONS`, `TEST_NOT_RUN`, `EXECUTION_DRIFT`, `NEXT_ACTION`.
 
 **Ordem operacional aprovada pelo PO:** priorizar **validação real da CLARA via ChatGPT após o rework**, e então fechar G2/G3, sem utilizar produção como atalho. O produto final só está `ACCEPT` quando os outcomes exigidos e gates pertinentes estiverem comprovados.
+
+## 6. Revisão independente V014 e passagem para piloto ChatGPT
+
+**Data da revisão:** 2026-10-25. **Commit CLARA auditado no GitHub:** `e8d9361deef6b175d36a034d036256caeec45098`. **HEAD consultado:** outro HEAD de `main` com commits DÉLIA, não interpretar como deploy CLARA. **Veredito limitado:** `ACCEPT_WITH_RESIDUAL` para os requisitos cirúrgicos R-CLARA-01/02 de design/implementação; **`INCONCLUSIVE` para E2E ChatGPT/Keycloak real e G2/G3**.
+
+### Evidência independente do código
+
+- **R-CLARA-01:** `clara_consent_challenge` V014; `approve_for_batch/approve_for_proposal` persistem challenge APPROVED + `consent_record` numa transação, com binding de ator/alvo/hash; `claim_batch_for_execution` e `claim` consomem challenge na transação do claim. `confirm_batch` exige record Portal e valida binding, ou attestation host habilitada. Não inferir aprovação apenas de JWT fresco.
+- **R-CLARA-02:** `operation_presentation.py` traduz as cinco capabilities atuais para descrição/efeito/motivo; `ClaraStepUpConsent.batch_summary` devolve plano/viabilidade/dependências; `ClaraConsentPage` usa `OperationCard` e um único botão para operações executáveis.
+- **Testes:** executor reportou `595 passed` backend, `229 passed` subset PostgreSQL, `61/61` CLARA, `13/13` MCP surface, `177` vitest e `25` complementares. **Não foram reexecutados pelo revisor**; testes com JWT assinados e conexão real do ChatGPT/Keycloak permanecem `TEST_NOT_RUN`.
+- **Limite:** o rework não fecha T03/T05/R04+, seeds, homologação humana G2 nem autorização operacional G3; não há deploy/Keycloak real comprovados.
+
+### Residuais para aceitar no piloto, sem abrir novo ciclo amplo
+
+1. **Concorrência:** `approve_for_batch` trava challenge→batch, enquanto `claim_batch_for_execution` trava batch→challenge. Um duplo clique idempotente concorrente com claim pode causar deadlock SQL. Executar teste negativo com duas conexões reais na homologação; caso reproduza, corrigir ordem canônica de lock em diff mínimo **antes de habilitar ACT em produção**, preservando os demais módulos.
+2. **Conteúdo do consentimento:** alguns rótulos/motivos usam truncamento (`_clip`) e identificador fallback. Verificar na demonstração um motivo extenso e uma operação sem lookup: o usuário deve identificar **exatamente** efeito e motivo do lote selado; caso o truncamento oculte materialidade, mostrar detalhe completo ou bloquear consentimento, sem reescrever os presenters.
+3. **Integração:** comprovar com Keycloak de homologação real callback/issuer/audience/client e fluxo Portal→BFF→MCP, não inferir de mocks/testes de PostgreSQL; não expor URLs ou secrets não verificados.
+
+### Próxima ação, não outro prompt de implementação
+
+**Executar o Documento 107, já aprovado pelo PO:** inventariar ambiente de homologação HTTPS existente e autorizado → `--check` Keycloak read-only → habilitar CLARA em **não produção com dados sintéticos/autorizados** → gerar ficha pública para conexão manual do plugin no ChatGPT → teste de knowledge/READ/consentimento batch/ACT seguro → registrar evidências reais. Em seguida G1 owner, G2 humano, G3 Operador SSH, deploy produtivo e smoke. Se não houver ambiente não produtivo autorizado, preparar ficha/runbook e obter G1/G2/G3 antes de tocar produção. Nenhuma simulação de PASS ou aprovação.
