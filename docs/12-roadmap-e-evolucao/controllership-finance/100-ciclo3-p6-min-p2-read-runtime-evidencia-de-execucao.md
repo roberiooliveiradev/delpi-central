@@ -302,3 +302,25 @@ Suíte `test_pg_package_a_acceptance.py` (PostgreSQL real, banco efêmero R4 —
 - **Autorização negativa** — ator inelegível coberto nas suítes de rota (ACCESS→403 em admin/correção-review, não-uploader→403 em replace/cancel, scope→404 sem vazamento); mesmo usuário anexa e valida somente quando autorizado independentemente para ambas as ações (ACCESS documental + decisão humana registrada por ator distinto nos testes).
 
 Suíte completa do contexto: **374 passed** (BFF + PG real). Pacote A (A1–A4) **PROVEN** no nível de implementação/teste; aceite humano de negócio = G2 pendente (não inferido de testes automatizados).
+
+## Adendo — Regularização operacional (verificação somente-leitura, PO)
+
+**Classificação:** deploy de A1–A3 em `srv-api` antes de G2/G3 = `EXECUTION_DRIFT` de release (conforme orientação do PO). Código publicado ≠ deploy autorizado ≠ aceite de negócio. Verificação somente-leitura executada via `operador@192.168.1.237` — nenhum deploy, migration ou rollback realizado durante a verificação.
+
+### Estado observado (read-only)
+
+- **SHA implantado:** `8ca4e25124` (A3) em `~/projetos/delpi-central` — idêntico ao `main` publicado à época (A4 `ea2bbbcd28` é somente-teste e não requer deploy).
+- **Containers:** `delpi-controllership-finance-api` Up **(healthy)**, `delpi-controllership-finance` Up; imagens `infra-controllership-finance{,-api}:latest` reconstruídas pelo script canônico.
+- **Migrations aplicadas** (`controllership_finance.schema_migrations`): V001–V005, aplicadas em 2026-10-24, checksums registrados.
+- **Saúde/gateway:** `…/controllership-finance-api/health` = 200; `remoteEntry.js` = 200; `admin/checklist-templates` e `closing/competences` sem credencial = **401** (fail-closed).
+- **Persistência:** volume host `/var/lib/delpi/cf-closing-documents` montado em `/app/data/cf-closing-documents`.
+- **Backup/recuperação:** `infra/scripts/restore-delpi-backups.sh` existe (pg_dump -Fc); `~/backups` contém dumps de outros contextos. **Não há evidência de dump do schema `controllership_finance` imediatamente anterior a V004/V005** — risco registrado.
+- **Exposição de funcionalidades:** nenhuma permission nova; admin gated por `controllership-finance.manage`; documentos sem URL pública; nenhuma escrita TOTVS.
+- **Riscos imediatos:** nenhum risco material de segurança/integridade detectado. Aviso pré-existente de infra: collation mismatch em `plugins_hub` (não causado por A1–A3). Funcionalidades de validação/admin estão live sob autorização vigente (ACCESS/MANAGE), porém aceite de negócio G2 permanece **pendente** — superfícies operáveis, não aprovadas.
+
+### Classificação de estado
+
+- `CODE_PUBLISHED`: A1–A4 em `main` (`883872e4a9`, `5c9d23ce6f`, `8ca4e25124`, `ea2bbbcd28`).
+- `DEPLOY_REPORTED`: A3 runtime verificado em produção (`8ca4e25124`, healthy, V001–V005 aplicadas).
+- `OPERATION_PROVEN`: **NO** — aceite humano G2 e smoke autenticado permanecem TEST_NOT_RUN.
+- `DEPLOY_SUSPENDED`: novos deploys produtivos suspensos até G2/G3 conforme orientação vigente.
