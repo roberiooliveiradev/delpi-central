@@ -47,8 +47,14 @@ from controllership_finance_app.application.clara.governed_writes import (
     _audit_mcp,
     _state_present,
 )
+from controllership_finance_app.application.clara.step_up_consent import (
+    CONSENT_TYPE_PORTAL_STEP_UP,
+    ConsentRequired,
+    clara_consent_url,
+)
 from controllership_finance_app.infrastructure.persistence.clara_batch_repository import (
     BatchActorMismatch,
+    BatchTerminal,
     ClaraBatchRepository,
 )
 from controllership_finance_app.infrastructure.persistence.clara_proposal_repository import (
@@ -312,13 +318,20 @@ class ClaraBatchOrchestrator:
                 }
                 for op in plan["operations"]
             ],
+            "confirmation_url": clara_consent_url(
+                batch_id=str(batch["batch_id"])
+            ),
             "consent_instruction": (
                 "Apresente UMA confirmação consolidada ao usuário "
                 "listando ator, competência, objetos, operações, "
-                "motivos, efeitos e dependências. Confirme o lote "
-                "inteiro com confirm_batch passando o plan_hash — "
-                "nunca uma confirmação por operação. O plano selado "
-                "não pode ser ampliado."
+                "motivos, efeitos e dependências — nunca uma "
+                "confirmação por operação. Direcione o usuário à "
+                "confirmation_url no Portal Controladoria & Finanças "
+                "para consentir o plano inteiro: responder 'sim' no "
+                "chat NÃO autoriza a execução — o consentimento é "
+                "gravado pela página do Portal com credencial fresca "
+                "que esta conversa não consegue produzir. O plano "
+                "selado não pode ser ampliado."
             ),
             "expires_at": (
                 batch["expires_at"].isoformat()
@@ -340,32 +353,73 @@ class ClaraBatchOrchestrator:
     ) -> dict:
         """Uma confirmação consolidada, vinculada ao plan_hash exato.
 
-        Modo A (HOST_ATTESTED): só é aceito quando o segredo físico
-        do host está configurado e a assinatura HMAC confere
-        ``plan_hash|actor_sub|expires_at`` — texto de modelo ou
-        ``confirmed=true`` nunca bastam. Modo B (CONSOLIDATED): a
-        própria chamada autenticada do usuário registrando o
-        plan_hash é a confirmação do plano inteiro.
+        A chamada MCP NUNCA é, por si, prova de consentimento
+        (Doc 106 §3.1). São aceitas duas evidências verificáveis:
+
+        - Modo A (HOST_ATTESTED): assinatura HMAC do host sobre
+          ``plan_hash|actor_sub|expires_at`` — texto de modelo ou
+          ``confirmed=true`` nunca bastam;
+        - Modo B (CONSOLIDATED): ``consent_record`` do tipo
+          ``portal_step_up`` já gravado pela superfície BFF de
+          consentimento — token Keycloak emitido após o PREPARE,
+          credencial que o canal MCP não consegue fabricar.
+
+        Sem evidência válida ⇒ ``consent_required`` com a URL da
+        página de consentimento do Portal.
         """
         if attestation is not None:
-            mode = "HOST_ATTESTED"
             consent_record = self._verify_attestation(
                 attestation, plan_hash=plan_hash, actor_sub=actor_sub
             )
+            updated = self._batches.record_consent(
+                handle=handle,
+                actor_sub=actor_sub,
+                plan_hash=plan_hash,
+                mode="HOST_ATTESTED",
+                consent_record=consent_record,
+            )
+            mode = "HOST_ATTESTED"
         else:
-            mode = "CONSOLIDATED"
-            consent_record = {
-                "type": "consolidated_confirmation",
-                "confirmed_by": actor_sub,
-                "plan_hash": plan_hash,
-            }
-        updated = self._batches.record_consent(
-            handle=handle,
-            actor_sub=actor_sub,
-            plan_hash=plan_hash,
-            mode=mode,
-            consent_record=consent_record,
-        )
+            batch = self._batches.load_by_handle(handle=handle)
+            if batch["actor_sub"] != actor_sub:
+                raise BatchActorMismatch(
+                    "Lote pertence a outro ator."
+                )
+            record = batch.get("consent_record") or {}
+            if isinstance(record, str):
+                record = json.loads(record)
+            trusted = (
+                record.get("type") == CONSENT_TYPE_PORTAL_STEP_UP
+                and record.get("confirmed_by") == actor_sub
+                and record.get("plan_hash") == plan_hash
+            )
+            if batch["status"] == "CONFIRMED" and trusted:
+                updated = {
+                    "batch_id": batch["batch_id"],
+                    "status": batch["status"],
+                    "confirmed_at": batch["confirmed_at"],
+                }
+                mode = "CONSOLIDATED"
+            elif batch["status"] == "CONFIRMED":
+                raise ChecklistDomainError(
+                    "plan_hash divergente do plano consentido — o "
+                    "consentimento consolidado não cobre alterações "
+                    "posteriores do plano."
+                )
+            elif batch["status"] == "PREPARED":
+                raise ConsentRequired(
+                    "Consentimento humano não registrado por "
+                    "superfície confiável. Abra a página de "
+                    "consentimento no Portal: "
+                    + clara_consent_url(
+                        batch_id=str(batch["batch_id"])
+                    )
+                )
+            else:
+                raise BatchTerminal(
+                    f"Lote em estado {batch['status']} — não "
+                    "aceita consentimento."
+                )
         _audit_mcp(
             entity_type="clara_batch",
             entity_id=str(updated["batch_id"]),
@@ -750,13 +804,12 @@ class ClaraBatchOrchestrator:
                 params = json.loads(params)
             try:
                 # Read-back direto: se a pós-condição esperada já
-                # vale, o efeito aplicou antes da interrupção.
-                post_ok = False
+                # vale, o efeito aplicou antes da interrupção —
+                # mesmo sem result gravado (falha antes do status).
                 last = self._proposals_result(row)
-                if last:
-                    post_ok = self._writes._readback(
-                        spec, params, last, actor_sub
-                    )
+                post_ok = self._writes._readback(
+                    spec, params, last or {}, actor_sub
+                )
                 if post_ok:
                     self._batches.set_operation_state(
                         operation_id=op_id, state="VERIFIED",

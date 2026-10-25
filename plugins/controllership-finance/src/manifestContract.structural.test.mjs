@@ -40,7 +40,7 @@ describe("controllership-finance manifest", () => {
   });
 
   it("somente rotas implementadas publicadas, protegidas por .access", () => {
-    assert.equal(manifest.routes.length, 8);
+    assert.equal(manifest.routes.length, 9);
     const [
       home,
       settlements,
@@ -50,6 +50,7 @@ describe("controllership-finance manifest", () => {
       pendencies,
       packages,
       cockpit,
+      claraConsent,
     ] = manifest.routes;
     assert.equal(home.path, "/apps/controllership-finance");
     assert.equal(home.permission, "controllership-finance.access");
@@ -93,6 +94,12 @@ describe("controllership-finance manifest", () => {
     );
     assert.equal(cockpit.permission, "controllership-finance.access");
     assert.equal(cockpit.showInMenu, false);
+    assert.equal(
+      claraConsent.path,
+      "/apps/controllership-finance/closing/clara-consent",
+    );
+    assert.equal(claraConsent.permission, "controllership-finance.access");
+    assert.equal(claraConsent.showInMenu, false);
     for (const route of manifest.routes) {
       if (route.path.endsWith("/admin")) {
         assert.equal(route.permission, "controllership-finance.manage");

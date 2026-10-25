@@ -220,6 +220,62 @@ class ClaraBatchRepository:
                     )
                     return cur.fetchone()
 
+    def record_consent_by_id(
+        self,
+        *,
+        batch_id: str,
+        actor_sub: str,
+        plan_hash: str,
+        mode: str,
+        consent_record: dict,
+    ) -> dict:
+        """Versão por PK do record_consent (superfície BFF step-up)."""
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT * FROM {_q('clara_batch')}
+                         WHERE batch_id = %s
+                         FOR UPDATE
+                        """,
+                        (batch_id,),
+                    )
+                    batch = cur.fetchone()
+                    if batch is None:
+                        raise BatchNotFound("Lote não encontrado.")
+                    if batch["actor_sub"] != actor_sub:
+                        raise BatchActorMismatch(
+                            "Lote pertence a outro ator."
+                        )
+                    if batch["status"] != "PREPARED":
+                        raise BatchTerminal(
+                            f"Lote em estado {batch['status']} — "
+                            "não aceita consentimento."
+                        )
+                    if batch["plan_hash"] != plan_hash:
+                        raise ChecklistDomainError(
+                            "Plano divergente do selado — reprepare o "
+                            "lote."
+                        )
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_batch')}
+                           SET consent_mode = %s,
+                               consent_record = %s::jsonb,
+                               status = 'CONFIRMED',
+                               confirmed_at = now()
+                         WHERE batch_id = %s
+                        RETURNING batch_id, status, confirmed_at
+                        """,
+                        (
+                            mode,
+                            json.dumps(consent_record, default=str),
+                            batch_id,
+                        ),
+                    )
+                    return cur.fetchone()
+
     # -- execução ----------------------------------------------------------
 
     def claim_batch_for_execution(
@@ -392,6 +448,22 @@ class ClaraBatchRepository:
                     return cur.fetchone()
 
     # -- leitura ------------------------------------------------------------
+
+    def load_by_handle(self, *, handle: str) -> dict:
+        """Leitura por handle sem lock (status/consent check)."""
+        with self._conn() as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    f"""
+                    SELECT * FROM {_q('clara_batch')}
+                     WHERE handle_hash = %s
+                    """,
+                    (handle_hash(handle),),
+                )
+                batch = cur.fetchone()
+        if batch is None:
+            raise BatchNotFound("Lote não encontrado.")
+        return batch
 
     def get_batch(self, *, batch_id: str) -> dict:
         with self._conn() as conn:

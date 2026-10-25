@@ -142,3 +142,60 @@ humanos permanecem `PENDING` até evidência externa.
 - G2: aceite humano — `PENDING`.
 - G3: autorização do operador — `PENDING`. Deploy, `--apply` Keycloak, ingestão de corpus prod e smoke autenticado somente após G2+G3.
 - `OAUTH_REDIRECT_URIS` / `MCP_PUBLIC_URL` verificados / ficha ChatGPT final: `NOT_CONFIGURED` — redirect URI só existe após o fluxo real de cadastro no ChatGPT.
+
+## Adendo 2 — consentimento por superfície confiável (V013, step-up)
+
+Registro da segunda etapa da execução
+`CF-PROC0072-FULL-IMPLEMENTATION-RELEASE-001`: o bypass de
+consentimento identificado na seção §3.1 foi encerrado — a chamada
+MCP autenticada **deixou de ser** prova de consentimento.
+
+### Decisão arquitetural aplicada
+
+O Portal/MFE autentica na BFF por Bearer token puro (sem cookie+CSRF).
+O access token MCP do assistente antecede o PREPARE e não se renova;
+o refresh token vive na sessão Keycloak do Portal. Logo, a evidência
+fisicamente verificável adotada é **step-up por token fresco**: a
+página de consentimento do Portal re-emite a sessão Keycloak e a BFF
+exige `iat >= created_at` do artefato selado — credencial que o canal
+do assistente não consegue produzir.
+
+### Implementado e verificado
+
+| Item | Estado | Evidência |
+|---|---|---|
+| Bypass `CONSOLIDATED` auto-conferido pela chamada MCP | **CLOSED** | `confirm_batch` sem attestation agora exige `consent_record` `portal_step_up` gravado pela BFF; ausente ⇒ `consent_required` (403) + `confirmation_url` (`test_direct_mcp_confirm_without_portal_consent_rejected`) |
+| `consent_required` com deep link | IMPLEMENTED | `prepare`/`prepare_batch` retornam `confirmation_url` = `/apps/controllership-finance/closing/clara-consent?batch=<id>\|proposal=<id>` |
+| Step-up service | IMPLEMENTED + TESTED | `application/clara/step_up_consent.py` — ator, `plan_hash`/`capability` exatos, `iat` posterior ao PREPARE (±skew), `iat` futuro rejeitado |
+| Rotas BFF confiáveis | IMPLEMENTED | `interface/http/routes/clara_consent_routes.py` — `GET /clara/batches/{id}`, `POST /clara/batches/{id}/consent`, `GET /clara/proposals/{id}`, `POST /clara/proposals/{id}/consent`; revalida Bearer via `validate_token` canônico + `authorized_user` |
+| `commit_proposal` sem consent | **CLOSED** | `governed_writes.commit` exige `consent_record` portal_step_up antes do claim; proposta de lote rejeitada fora do `execute_batch` |
+| `resume` em proposta CLAIMED | IMPLEMENTED + TESTED | `commit(resume=True)` reconcilia por read-back: pós-condição provada ⇒ `VERIFIED`; não provada ⇒ `UNKNOWN` terminal — nunca repete efeito (`test_commit_resume_*`) |
+| Schema | **V013** | `clara_proposal.consent_record`/`consented_at`; `clara_batch.consent_record`/`confirmed_at` (colunas já existentes reutilizadas) |
+| Superfície Portal/MFE | IMPLEMENTED | `AuthContext.getFreshAccessToken()` (Keycloak `updateToken(60)`) → `AppHost` → `httpClient.httpPostStepUp`; `ClaraConsentPage` (rota `closing/clara-consent` no manifest, oculta da navegação) com Help contextual |
+| Boolean/texto como consentimento | NEVER | nenhum parâmetro de confirmação nas tools; `confirm_batch(batch_handle, plan_hash, attestation)` e `commit_proposal(proposal_handle, resume)` — schemas sem flag de consentimento |
+| plan_hash divergente pós-consent | TESTED | `test_plan_expansion_rejected` — `plan_hash divergente` tipado; hash correto confirma |
+| Attestation (Modo A) | PRESERVED | contrato HMAC inalterado, fail-closed sem segredo |
+
+### Testes executados nesta etapa
+
+- PostgreSQL real (container efêmero, `pgvector/pgvector:pg15`):
+  **920 passed** — `test_pg_clara.py` (incl. 6 testes novos de
+  consent/step-up/UNKNOWN) + `test_pg_clara_batch.py` (incl.
+  `test_direct_mcp_confirm_without_portal_consent_rejected`) + toda a
+  regressão P1–P6 com migrations V001–V013.
+- `test_clara_mcp_surface.py`: **13 passed**.
+- MFE `controllership-finance`: **715 vitest + 52 tsx/test.mjs**
+  (`ClaraConsentPage` 5 testes; manifest contract com rota nova) e
+  `npm run build` verde.
+- Portal: `tsc -b` limpo (AuthContext/AppHost).
+
+### Notas de contrato
+
+- O token step-up é verificado por `iat` (não por claim inventado):
+  só a sessão Portal com refresh consegue `iat >= created_at`.
+- `record_consent` é escrita exclusiva da superfície BFF — repositório
+  rejeita consentimento em proposta já claimed/consumed ou vinculada
+  a lote (consentimento consolidado pelo lote).
+- Execução segue revalidando autorização canônica (Core/eligibility/
+  assignment/scope/business rules) — consentimento nunca substitui
+  autorização.

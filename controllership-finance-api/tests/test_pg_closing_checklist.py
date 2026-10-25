@@ -133,6 +133,7 @@ def migrated(_configure_db):
         "V010__p6_catalogs_review_lifecycle_notifications.sql",
         "V011__clara_knowledge_and_proposals.sql",
         "V012__clara_batch_orchestration.sql",
+        "V013__clara_step_up_consent.sql",
     ]
     return True
 

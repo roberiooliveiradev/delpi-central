@@ -339,16 +339,24 @@ def create_mcp_server() -> MCPServer:
         name="commit_proposal",
         title="Commit prepared proposal",
         description=(
-            "ACT: executa a proposta selada após confirmação explícita "
-            "do usuário. Revalida ator, expiração, estado selado e as "
-            "regras da BFF; audita canal mcp/clara e verifica a "
-            "pós-condição real."
+            "ACT: executa a proposta selada após consentimento "
+            "verificável — consent_record gravado pela página de "
+            "consentimento do Portal (confirmation_url do PREPARE) "
+            "com credencial fresca que esta conversa não produz. "
+            "Revalida ator, expiração, estado selado e as regras da "
+            "BFF; audita canal mcp/clara e verifica a pós-condição "
+            "real. resume=true reconcilia CLAIMED/UNKNOWN por "
+            "read-back, sem repetir efeito."
         ),
         annotations=_annotations("commit_proposal", "Commit proposal"),
         meta=meta,
     )
-    def commit_proposal(proposal_handle: str) -> CallToolResult:
-        return _guarded(bridge.tool_commit_proposal)(proposal_handle)
+    def commit_proposal(
+        proposal_handle: str, resume: bool = False
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_commit_proposal)(
+            proposal_handle, resume
+        )
 
     @mcp.tool(
         name="prepare_batch",
@@ -374,10 +382,14 @@ def create_mcp_server() -> MCPServer:
         name="confirm_batch",
         title="Confirm batch plan",
         description=(
-            "Registra o consentimento verificado do lote inteiro: o "
-            "usuário autenticado confirma o plan_hash exato exibido "
-            "(CONSOLIDATED) ou o host entrega atestação assinada "
-            "(HOST_ATTESTED). O plano selado não pode ser ampliado."
+            "Verifica o consentimento do lote inteiro: um "
+            "consent_record portal_step_up gravado pela página de "
+            "consentimento do Portal (CONSOLIDATED) ou atestação "
+            "assinada do host (HOST_ATTESTED), ambos vinculados ao "
+            "plan_hash exato. A chamada MCP não é prova de "
+            "consentimento — sem evidência válida retorna "
+            "consent_required com a confirmation_url. O plano selado "
+            "não pode ser ampliado."
         ),
         annotations=_annotations(
             "confirm_batch", "Confirm batch plan"

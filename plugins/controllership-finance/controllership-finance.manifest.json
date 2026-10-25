@@ -86,6 +86,14 @@
       "icon": "gauge",
       "order": 37,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/closing/clara-consent",
+      "label": "Consentimento de ações da CLARA",
+      "permission": "controllership-finance.access",
+      "icon": "shield-check",
+      "order": 38,
+      "showInMenu": false
     }
   ],
   "ui": {

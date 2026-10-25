@@ -376,3 +376,111 @@ class ClaraProposalRepository:
                             "inconsistente."
                         )
                     return row
+
+    # -- leitura/consentimento (step-up consent, V013) -------------------
+
+    def get_by_id(self, *, proposal_id: str) -> dict:
+        """Leitura por PK sem lock — uso da superfície de consent."""
+        with self._conn() as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    f"""
+                    SELECT * FROM {_q('clara_proposal')}
+                     WHERE proposal_id = %s
+                    """,
+                    (proposal_id,),
+                )
+                row = cur.fetchone()
+        if row is None:
+            raise ProposalNotFound("Proposta não encontrada.")
+        return row
+
+    def load_any_for_actor(self, *, handle: str, actor_sub: str) -> dict:
+        """Lê a proposta em qualquer estado (reconcile de UNKNOWN).
+
+        Diferente de ``load_for_actor``, não rejeita proposta
+        consumida — o caller decide como interpretar o estado.
+        """
+        with self._conn() as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    f"""
+                    SELECT * FROM {_q('clara_proposal')}
+                     WHERE handle_hash = %s
+                    """,
+                    (handle_hash(handle),),
+                )
+                row = cur.fetchone()
+        if row is None:
+            raise ProposalNotFound("Proposta não encontrada.")
+        if row["actor_sub"] != actor_sub:
+            raise ProposalActorMismatch(
+                "Proposta pertence a outro ator."
+            )
+        return row
+
+    def record_consent(
+        self,
+        *,
+        proposal_id: str,
+        actor_sub: str,
+        consent_record: dict,
+    ) -> dict:
+        """Consentimento step-up do Portal — só antes do claim.
+
+        Escrita permitida apenas por superfície confiável (rota BFF
+        com token fresco); a tool MCP nunca grava consent_record.
+        """
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT * FROM {_q('clara_proposal')}
+                         WHERE proposal_id = %s
+                         FOR UPDATE
+                        """,
+                        (proposal_id,),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        raise ProposalNotFound(
+                            "Proposta não encontrada."
+                        )
+                    if row["actor_sub"] != actor_sub:
+                        raise ProposalActorMismatch(
+                            "Proposta pertence a outro ator."
+                        )
+                    if row["batch_operation_id"] is not None:
+                        raise ChecklistDomainError(
+                            "Proposta pertence a um lote — o "
+                            "consentimento é consolidado pelo lote."
+                        )
+                    if row["claimed_at"] is not None or (
+                        row["consumed_at"] is not None
+                    ):
+                        raise ProposalConsumed(
+                            "Proposta já reivindicada ou consumida — "
+                            "consentimento tardio não é aceito."
+                        )
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_proposal')}
+                           SET consent_record = %s::jsonb,
+                               consented_at = now()
+                         WHERE proposal_id = %s
+                           AND claimed_at IS NULL
+                           AND consumed_at IS NULL
+                        RETURNING proposal_id, consented_at
+                        """,
+                        (
+                            json.dumps(consent_record, default=str),
+                            proposal_id,
+                        ),
+                    )
+                    updated = cur.fetchone()
+                    if updated is None:
+                        raise ProposalConsumed(
+                            "Proposta já reivindicada ou consumida."
+                        )
+                    return updated

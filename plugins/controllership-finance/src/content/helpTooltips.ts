@@ -26,6 +26,14 @@ export const CF_HELP = {
     recents:
       "Últimos caminhos abertos neste portal — guardados só neste navegador, sem dados sensíveis.",
   },
+  claraConsent: {
+    page:
+      "Consentimento verificável: o que a CLARA preparou só executa depois do seu clique aqui — esta página renova a sua sessão e registra a autorização com uma credencial que a conversa não consegue produzir. Responder «sim» no chat não autoriza nada.",
+    batch:
+      "O lote inteiro é consentido de uma vez: revise as operações, os recursos e a ordem — o plano não pode ser ampliado depois do consentimento.",
+    proposal:
+      "Revise a operação exata (capability, recurso, parâmetros e validade) antes de consentir — depois peça a execução na conversa com a CLARA.",
+  },
   closing: {
     page:
       "Baixas financeiras: eventos de baixa a pagar e a receber do ERP, com filtros de período, natureza e tipo de movimento. Valores são agrupados por moeda — nunca somados entre moedas — e não representam fechamento contábil oficial.",

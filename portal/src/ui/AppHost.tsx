@@ -53,7 +53,7 @@ function getUrlOrigin(url: string | undefined) {
 }
 
 export const AppHost = () => {
-  const { apps, getAccessToken, refreshToken, user } = useContext(AuthContext);
+  const { apps, getAccessToken, getFreshAccessToken, refreshToken, user } = useContext(AuthContext);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -440,6 +440,7 @@ export const AppHost = () => {
 
         const props = {
           getAccessToken,
+          getFreshAccessToken,
           basePath: app.basePath,
           pathname: location.pathname,
           search: location.search,
@@ -493,6 +494,7 @@ export const AppHost = () => {
 
     const props = {
       getAccessToken,
+      getFreshAccessToken,
       basePath: app.basePath,
       pathname: location.pathname,
       search: location.search,
@@ -511,6 +513,7 @@ export const AppHost = () => {
     location.pathname,
     location.search,
     getAccessToken,
+    getFreshAccessToken,
     route?.label,
     routeAlternateUrl,
     appRoutes,

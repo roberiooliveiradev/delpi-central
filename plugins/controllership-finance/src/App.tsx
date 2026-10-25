@@ -10,6 +10,7 @@ import {
 } from "./app/pluginRoutes";
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CatalogsAdminPage } from "./features/closing/CatalogsAdminPage";
+import { ClaraConsentPage } from "./features/closing/ClaraConsentPage";
 import { ChecklistAdminPage } from "./features/closing/ChecklistAdminPage";
 import { ClosingChecklistPage } from "./features/closing/ClosingChecklistPage";
 import { CockpitPage } from "./features/closing/CockpitPage";
@@ -23,6 +24,7 @@ import { ProfilePage } from "./features/me/ProfilePage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
+  getFreshAccessToken?: () => Promise<string | undefined>;
   pathname?: string;
   basePath?: string;
   search?: string;
@@ -67,6 +69,8 @@ function AppRoutes({
           <MyTasksPage />
         ) : resolved.view === "profile" ? (
           <ProfilePage />
+        ) : resolved.view === "clara_consent" ? (
+          <ClaraConsentPage />
         ) : resolved.view === "pendencies" ? (
           <PendenciesPage />
         ) : resolved.view === "packages" ? (
@@ -83,10 +87,14 @@ function AppRoutes({
 
 export default function App({
   getAccessToken,
+  getFreshAccessToken,
   pathname,
   basePath,
 }: AppProps) {
-  configureHttpClient(getAccessToken ?? (() => undefined));
+  configureHttpClient(
+    getAccessToken ?? (() => undefined),
+    getFreshAccessToken,
+  );
   const base = normalizeBasePath(basePath);
 
   return (

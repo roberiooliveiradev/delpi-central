@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 import threading
 import uuid
+from datetime import datetime, timezone
 from decimal import Decimal
 
 import psycopg
@@ -29,6 +30,10 @@ from psycopg.rows import dict_row
 
 from controllership_finance_app.application.clara.batch_orchestrator import (
     ClaraBatchOrchestrator,
+)
+from controllership_finance_app.application.clara.step_up_consent import (
+    ClaraStepUpConsent,
+    ConsentRequired,
 )
 from controllership_finance_app.application.clara.governed_writes import (
     ClaraGovernedWrites,
@@ -149,7 +154,7 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def env(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-1] == "V012__clara_batch_orchestration.sql"
+    assert applied[-1] == "V013__clara_step_up_consent.sql"
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(template_id, 1, actor=ADMIN)
@@ -262,11 +267,31 @@ def _open_clarification_direct(env, question="direta") -> str:
     return str(clarif["clarification_id"])
 
 
+def _consent_batch(batch_id: str, actor: str) -> None:
+    """Consentimento consolidado pela superfície confiável.
+
+    Test double honesto: chama o MESMO serviço que a rota BFF de
+    consentimento usa — token step-up com ``iat`` posterior ao
+    PREPARE, como o Portal produz via refresh Keycloak. A assinatura
+    JWT em si é validada na camada HTTP, não aqui.
+    """
+    ClaraStepUpConsent().record_batch_consent(
+        batch_id=batch_id,
+        actor_sub=actor,
+        token_claims={
+            "iat": int(datetime.now(timezone.utc).timestamp()),
+            "sub": actor,
+            "jti": uuid.uuid4().hex,
+        },
+    )
+
+
 def _full_cycle(env, operations, actor=REVIEWER_C, resume=False):
     orch = env["orchestrator"]
     prepared = orch.prepare_batch(
         operations=operations, actor_sub=actor
     )
+    _consent_batch(prepared["batch_id"], actor)
     orch.confirm_batch(
         handle=prepared["batch_handle"],
         actor_sub=actor,
@@ -357,13 +382,14 @@ def test_execute_without_consent_rejected(env):
 
 
 def test_plan_expansion_rejected(env):
-    """Consentimento vale para o plan_hash exato — mudar o plano
-    depois da apresentação invalida a confirmação."""
+    """Consentimento vale para o plan_hash exato — consentir o lote
+    e depois apresentar outro plan_hash invalida a confirmação."""
     orch = env["orchestrator"]
     prepared = orch.prepare_batch(
         operations=[_clarify_op(env, "plano A")],
         actor_sub=REVIEWER_C,
     )
+    _consent_batch(prepared["batch_id"], REVIEWER_C)
     with pytest.raises(ChecklistDomainError) as excinfo:
         orch.confirm_batch(
             handle=prepared["batch_handle"],
@@ -371,6 +397,39 @@ def test_plan_expansion_rejected(env):
             plan_hash="f" * 64,
         )
     assert "divergente" in str(excinfo.value).lower()
+    # Hash correto segue confirmando normalmente.
+    out = orch.confirm_batch(
+        handle=prepared["batch_handle"],
+        actor_sub=REVIEWER_C,
+        plan_hash=prepared["plan_hash"],
+    )
+    assert out["status"] == "CONFIRMED"
+
+
+def test_direct_mcp_confirm_without_portal_consent_rejected(env):
+    """§3.1: a chamada MCP autenticada NUNCA é prova de consentimento.
+
+    Sem consent_record portal_step_up (nem attestation válida),
+    confirm_batch rejeita com consent_required + URL da superfície
+    confiável — texto do modelo ou boolean nunca bastam."""
+    orch = env["orchestrator"]
+    prepared = orch.prepare_batch(
+        operations=[_clarify_op(env, "bypass tentativa")],
+        actor_sub=REVIEWER_C,
+    )
+    with pytest.raises(ConsentRequired) as excinfo:
+        orch.confirm_batch(
+            handle=prepared["batch_handle"],
+            actor_sub=REVIEWER_C,
+            plan_hash=prepared["plan_hash"],
+        )
+    assert excinfo.value.code == "consent_required"
+    assert "clara-consent" in str(excinfo.value)
+    # E a execução continua bloqueada.
+    with pytest.raises(BatchNotConfirmed):
+        orch.execute_batch(
+            handle=prepared["batch_handle"], actor_sub=REVIEWER_C
+        )
 
 
 def test_batch_wrong_actor_rejected(env):
@@ -655,6 +714,14 @@ def test_two_concurrent_acts_single_winner(env):
         },
         actor_sub=REVIEWER_C,
     )
+    ClaraStepUpConsent().record_proposal_consent(
+        proposal_id=str(proposal["proposal_id"]),
+        actor_sub=REVIEWER_C,
+        token_claims={
+            "iat": int(datetime.now(timezone.utc).timestamp()),
+            "sub": REVIEWER_C,
+        },
+    )
     outcomes = []
 
     def run():
@@ -685,6 +752,7 @@ def test_concurrent_batch_execute_single_runner(env):
         operations=[_clarify_op(env, "corrida batch")],
         actor_sub=REVIEWER_C,
     )
+    _consent_batch(prepared["batch_id"], REVIEWER_C)
     orch.confirm_batch(
         handle=prepared["batch_handle"],
         actor_sub=REVIEWER_C,
@@ -735,6 +803,7 @@ def test_batch_stale_op_fails_and_dependent_blocks(env):
         ],
         actor_sub=REVIEWER_C,
     )
+    _consent_batch(prepared["batch_id"], REVIEWER_C)
     orch.confirm_batch(
         handle=prepared["batch_handle"],
         actor_sub=REVIEWER_C,
@@ -765,6 +834,7 @@ def test_resume_reconciles_claimed_operation(env):
         operations=[_resolve_op(clarif_id)],
         actor_sub=REVIEWER_C,
     )
+    _consent_batch(prepared["batch_id"], REVIEWER_C)
     orch.confirm_batch(
         handle=prepared["batch_handle"],
         actor_sub=REVIEWER_C,
@@ -818,6 +888,7 @@ def test_resume_reconciles_verified_effect(env):
         operations=[_resolve_op(clarif_id)],
         actor_sub=REVIEWER_C,
     )
+    _consent_batch(prepared["batch_id"], REVIEWER_C)
     orch.confirm_batch(
         handle=prepared["batch_handle"],
         actor_sub=REVIEWER_C,
@@ -910,6 +981,7 @@ def test_batch_db_failure_marks_failed_and_reports(env, monkeypatch):
         ],
         actor_sub=REVIEWER_C,
     )
+    _consent_batch(prepared["batch_id"], REVIEWER_C)
     orch2.confirm_batch(
         handle=prepared["batch_handle"],
         actor_sub=REVIEWER_C,

@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 import psycopg
@@ -31,8 +32,14 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
     MissingReason,
 )
+from controllership_finance_app.application.clara.step_up_consent import (
+    CONSENT_TYPE_PORTAL_STEP_UP,
+    ConsentRequired,
+    clara_consent_url,
+)
 from controllership_finance_app.infrastructure.persistence.clara_proposal_repository import (
     ClaraProposalRepository,
+    ProposalExpired,
 )
 from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
     ClosingPackageRepository,
@@ -505,17 +512,24 @@ class ClaraGovernedWrites:
         expires_at = proposal["expires_at"]
         return {
             "proposal_handle": handle,
+            "proposal_id": str(proposal["proposal_id"]),
             "capability": capability,
             "resource_type": spec["resource_type"],
             "resource_key": resource_key,
             "operation": spec["describe"](params),
             "expected_state": expected_state,
             "execution_policy": "confirm_before_act",
+            "confirmation_url": clara_consent_url(
+                proposal_id=str(proposal["proposal_id"])
+            ),
             "confirmation_instruction": (
                 "Apresente a operação exata ao usuário (quem, recurso, "
-                "competência, versão, efeito, motivo) e exija uma "
-                "confirmação explícita desta operação antes de chamar "
-                "commit_proposal. A confirmação não substitui a "
+                "competência, versão, efeito, motivo) e direcione-o à "
+                "confirmation_url no Portal Controladoria & Finanças "
+                "para consentir. Responder 'sim' no chat NÃO autoriza "
+                "a execução — o consentimento é gravado pela página do "
+                "Portal com credencial fresca que esta conversa não "
+                "consegue produzir. A confirmação não substitui a "
                 "autorização efetiva — o backend revalida tudo no ACT."
             ),
             "expires_at": (
@@ -535,12 +549,44 @@ class ClaraGovernedWrites:
         actor_sub: str,
         user_groups: Any = (),
         correlation_id: str | None = None,
+        resume: bool = False,
     ) -> dict:
+        sealed = self._proposals.load_any_for_actor(
+            handle=handle, actor_sub=actor_sub
+        )
+        if sealed.get("batch_operation_id") is not None:
+            raise ChecklistDomainError(
+                "Proposta pertence a um lote — execute pelo "
+                "execute_batch com o consentimento consolidado."
+            )
+        expires_at = sealed["expires_at"]
+        if (
+            getattr(expires_at, "tzinfo", None) is None
+            and hasattr(expires_at, "replace")
+        ):
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
+            raise ProposalExpired("Proposta expirada.")
+        # Reconciliação de CLAIMED/UNKNOWN: retomada nunca repete
+        # efeito — lê a pós-condição real antes de decidir.
+        if resume:
+            recovered = self._reconcile_claimed_proposal(
+                proposal=sealed, actor_sub=actor_sub
+            )
+            if recovered is not None:
+                return recovered
         # Claim atômico ANTES de qualquer efeito: duas ACTs simultâneas
         # sobre a mesma proposta têm exatamente um vencedor; a
         # concorrente recebe `proposal_stale`. Posse do handle não
         # autoriza — claim só liga ator+proposta; autorização efetiva é
         # reaplicada pelos repositórios canônicos na execução.
+        #
+        # Consentimento verificável (Doc 106 §3.1/§3.2): a tool
+        # chamada pelo assistente não é prova de consentimento —
+        # é exigido consent_record gravado pela superfície BFF de
+        # step-up (token Keycloak emitido após o PREPARE). Boolean
+        # ou texto do modelo nunca bastam.
+        self._require_consent(sealed)
         proposal = self._proposals.claim(
             handle=handle, actor_sub=actor_sub
         )
@@ -633,5 +679,108 @@ class ClaraGovernedWrites:
             "resource_type": spec["resource_type"],
             "resource_key": proposal["resource_key"],
             "result": result,
+            "channel": MCP_CHANNEL,
+        }
+
+
+    # -- consent & reconcile ---------------------------------------------
+
+    _TRUSTED_CONSENT_TYPES = {CONSENT_TYPE_PORTAL_STEP_UP}
+
+    def _require_consent(self, proposal: dict) -> None:
+        record = proposal.get("consent_record") or {}
+        if isinstance(record, str):
+            record = json.loads(record)
+        rtype = record.get("type")
+        if rtype in self._TRUSTED_CONSENT_TYPES and (
+            record.get("confirmed_by") == proposal["actor_sub"]
+        ):
+            return
+        raise ConsentRequired(
+            "Consentimento humano não registrado por superfície "
+            "confiável. Abra a página de consentimento no Portal: "
+            + clara_consent_url(
+                proposal_id=str(proposal["proposal_id"])
+            )
+        )
+
+    def _reconcile_claimed_proposal(
+        self,
+        *,
+        proposal: dict,
+        actor_sub: str,
+    ) -> dict | None:
+        """Recuperação pós-falha: CLAIMED pode ter aplicado efeito.
+
+        Se a pós-condição já vale ⇒ VERIFIED (efeito aplicou,
+        resultado não gravou); senão ⇒ UNKNOWN terminal e honesto —
+        nunca repete efeito nem registra FAILED sem evidência.
+        """
+        state = proposal.get("execution_state")
+        if state != "CLAIMED":
+            if state in ("VERIFIED", "APPLIED"):
+                return {
+                    "executed": True,
+                    "capability": proposal["capability"],
+                    "resource_type": proposal["resource_type"],
+                    "resource_key": proposal["resource_key"],
+                    "result": proposal.get("result"),
+                    "already_terminal": state,
+                    "channel": MCP_CHANNEL,
+                }
+            # PREPARED/FAILED/UNKNOWN: segue o fluxo normal
+            # (claim/erro tipado decide) ou reporta estado.
+            if state in ("FAILED", "UNKNOWN"):
+                return {
+                    "executed": False,
+                    "capability": proposal["capability"],
+                    "resource_key": proposal["resource_key"],
+                    "state": state,
+                    "result": proposal.get("result"),
+                    "already_terminal": state,
+                    "channel": MCP_CHANNEL,
+                }
+            return None
+        spec = self._capability_table().get(proposal["capability"])
+        post_ok = False
+        if spec is not None and spec.get("postcondition"):
+            payload = proposal["payload"]
+            last = proposal.get("result") or {}
+            if isinstance(last, str):
+                last = json.loads(last)
+            try:
+                post_ok = self._readback(
+                    spec, payload, last.get("result") or last, actor_sub
+                )
+            except Exception:  # noqa: BLE001
+                post_ok = False
+        outcome = (
+            {"outcome": "executed",
+             "result": {"reconciled": True}}
+            if post_ok
+            else {"outcome": "unverified"}
+        )
+        self._proposals.record_result_by_id(
+            proposal_id=str(proposal["proposal_id"]), result=outcome
+        )
+        _audit_mcp(
+            entity_type=proposal["resource_type"],
+            entity_id=proposal["resource_key"],
+            competence_id=None,
+            event_type="CLARA_ACT_RECONCILED",
+            actor=actor_sub,
+            detail={
+                "capability": proposal["capability"],
+                "proposal_id": str(proposal["proposal_id"]),
+                "postcondition_met": post_ok,
+            },
+        )
+        return {
+            "executed": post_ok,
+            "capability": proposal["capability"],
+            "resource_type": proposal["resource_type"],
+            "resource_key": proposal["resource_key"],
+            "state": "VERIFIED" if post_ok else "UNKNOWN",
+            "reconciled": True,
             "channel": MCP_CHANNEL,
         }

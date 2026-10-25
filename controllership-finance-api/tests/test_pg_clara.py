@@ -27,6 +27,11 @@ from controllership_finance_app.application.clara.governed_writes import (
     ProposalStale,
     UnknownCapability,
 )
+from controllership_finance_app.application.clara.step_up_consent import (
+    ClaraStepUpConsent,
+    ConsentRequired,
+    StepUpTokenStale,
+)
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
 )
@@ -148,7 +153,7 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def env(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-1] == "V012__clara_batch_orchestration.sql"
+    assert applied[-1] == "V013__clara_step_up_consent.sql"
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(template_id, 1, actor=ADMIN)
@@ -371,6 +376,24 @@ def test_segment_markdown_heading_paths():
     assert segs[2].content.strip() == "corpo B"
 
 
+def _consent_proposal(proposal: dict, actor: str) -> None:
+    """Consentimento pela superfície confiável (test double honesto):
+
+    chama o MESMO serviço que a rota BFF usa — token step-up com
+    ``iat`` posterior ao PREPARE, como o Portal produz via refresh
+    Keycloak. A assinatura JWT em si é validada na camada HTTP.
+    """
+    ClaraStepUpConsent().record_proposal_consent(
+        proposal_id=str(proposal["proposal_id"]),
+        actor_sub=actor,
+        token_claims={
+            "iat": int(datetime.now(timezone.utc).timestamp()),
+            "sub": actor,
+            "jti": uuid.uuid4().hex,
+        },
+    )
+
+
 # == Governed writes (PREPARE → ACT) =======================================
 
 
@@ -465,6 +488,7 @@ def test_commit_executes_and_verifies_outcome(env):
         },
         actor_sub=REVIEWER_C,
     )
+    _consent_proposal(proposal, REVIEWER_C)
     result = writes.commit(
         handle=proposal["proposal_handle"], actor_sub=REVIEWER_C
     )
@@ -506,6 +530,7 @@ def test_commit_stale_proposal_rejected(env):
         },
         actor_sub=ADMIN,
     )
+    _consent_proposal(proposal, ADMIN)
     # Mudança externa entre PREPARE e ACT: a clarification é
     # resolvida diretamente pelo fluxo canônico — a proposta selada
     # não pode executar sobre o estado novo.
@@ -556,6 +581,7 @@ def test_act_delegates_domain_rules_fail_closed(env):
         },
         actor_sub=REVIEWER_C,
     )
+    _consent_proposal(proposal, REVIEWER_C)
     with pytest.raises(ChecklistDomainError) as excinfo:
         writes.commit(
             handle=proposal["proposal_handle"], actor_sub=REVIEWER_C
@@ -564,3 +590,175 @@ def test_act_delegates_domain_rules_fail_closed(env):
         "reviewer_not_assigned",
         "reviewer_not_eligible",
     }
+
+
+# == Step-up consent (Doc 106 §3.1/§3.2 — bypass fechado) ==================
+
+
+def test_commit_without_consent_rejected(env):
+    """A tool ACT chamada pelo assistente, mesmo autenticada, não é
+    prova de consentimento — exige consent_record da superfície
+    confiável."""
+    writes = env["writes"]
+    proposal = writes.prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Sem consentimento — não pode executar.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    with pytest.raises(ConsentRequired) as excinfo:
+        writes.commit(
+            handle=proposal["proposal_handle"], actor_sub=REVIEWER_C
+        )
+    assert excinfo.value.code == "consent_required"
+    assert "clara-consent" in str(excinfo.value)
+
+
+def test_proposal_consent_wrong_actor_rejected(env):
+    """Só o ator dono da proposta consente — OUTSIDER não grava
+    consentimento alheio pela superfície confiável."""
+    proposal = env["writes"].prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Outro ator não consente.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    with pytest.raises(ProposalActorMismatch):
+        _consent_proposal(proposal, OUTSIDER)
+
+
+def test_step_up_token_stale_rejected(env):
+    """Token emitido ANTES do PREPARE não prova presença humana
+    posterior ao selo — rejeitado pelo verificador físico."""
+    proposal = env["writes"].prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Token velho não consente.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    stale_iat = int(
+        (datetime.now(timezone.utc) - timedelta(minutes=30)).timestamp()
+    )
+    with pytest.raises(StepUpTokenStale):
+        ClaraStepUpConsent().record_proposal_consent(
+            proposal_id=str(proposal["proposal_id"]),
+            actor_sub=REVIEWER_C,
+            token_claims={"iat": stale_iat, "sub": REVIEWER_C},
+        )
+
+
+def test_step_up_token_future_iat_rejected(env):
+    """iat no futuro (relógio fora de sincronia/forjado) é rejeitado."""
+    proposal = env["writes"].prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "iat futuro não consente.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    future_iat = int(
+        (datetime.now(timezone.utc) + timedelta(minutes=10)).timestamp()
+    )
+    with pytest.raises(StepUpTokenStale):
+        ClaraStepUpConsent().record_proposal_consent(
+            proposal_id=str(proposal["proposal_id"]),
+            actor_sub=REVIEWER_C,
+            token_claims={"iat": future_iat, "sub": REVIEWER_C},
+        )
+
+
+# == Resume / reconciliação CLAIMED → UNKNOWN (§3.3) =======================
+
+
+def test_commit_resume_reconciles_applied_effect(env):
+    """Efeito aplicado mas resultado não gravado: resume lê a
+    pós-condição REAL e marca VERIFIED — sem repetir efeito."""
+    writes = env["writes"]
+    clarification_id = _open_clarification(env)
+    proposal = writes.prepare(
+        capability="clarification.resolve",
+        params={
+            "period": PERIOD,
+            "clarification_id": clarification_id,
+            "response": "Resposta aplicada fora do commit.",
+        },
+        actor_sub=ADMIN,
+    )
+    # Simula falha após o efeito: claim gravado, efeito aplicado,
+    # resultado NÃO gravado.
+    env["proposals"].claim(
+        handle=proposal["proposal_handle"], actor_sub=ADMIN
+    )
+    env["pkg"].resolve_clarification(
+        PERIOD, clarification_id,
+        actor=ADMIN, response="Resposta aplicada fora do commit.",
+    )
+    result = writes.commit(
+        handle=proposal["proposal_handle"],
+        actor_sub=ADMIN,
+        resume=True,
+    )
+    assert result["executed"] is True
+    assert result["reconciled"] is True
+    assert result["state"] == "VERIFIED"
+
+
+def test_commit_resume_unknown_never_replays(env):
+    """CLAIMED sem evidência de efeito ⇒ UNKNOWN honesto — nunca
+    executa de novo, nunca FAILED conclusivo sem prova."""
+    writes = env["writes"]
+    clarification_id = _open_clarification(env)
+    proposal = writes.prepare(
+        capability="clarification.resolve",
+        params={
+            "period": PERIOD,
+            "clarification_id": clarification_id,
+            "response": "Efeito que nunca aconteceu.",
+        },
+        actor_sub=ADMIN,
+    )
+    env["proposals"].claim(
+        handle=proposal["proposal_handle"], actor_sub=ADMIN
+    )
+    result = writes.commit(
+        handle=proposal["proposal_handle"],
+        actor_sub=ADMIN,
+        resume=True,
+    )
+    assert result["executed"] is False
+    assert result["state"] == "UNKNOWN"
+    # UNKNOWN é terminal: nova tentativa de resume reporta o estado,
+    # não re-executa.
+    second = writes.commit(
+        handle=proposal["proposal_handle"],
+        actor_sub=ADMIN,
+        resume=True,
+    )
+    assert second["executed"] is False
+    assert second["already_terminal"] == "UNKNOWN"
+    # Clarification continua OPEN — prova de que não houve replay.
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT state FROM controllership_finance.closing_clarification
+             WHERE clarification_id = %s
+            """,
+            (clarification_id,),
+        )
+        row = cur.fetchone()
+    assert row is not None and row[0] == "OPEN"

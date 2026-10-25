@@ -27,6 +27,7 @@ export type PluginView =
   | "cockpit"
   | "my_tasks"
   | "profile"
+  | "clara_consent"
   | "not_found";
 
 export type PluginNavId = "home" | "my_tasks";
@@ -55,6 +56,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/cockpit": "cockpit",
   "closing/my-tasks": "my_tasks",
   "closing/admin/catalogs": "catalogs_admin",
+  "closing/clara-consent": "clara_consent",
   "profile": "profile",
 };
 

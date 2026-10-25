@@ -590,13 +590,16 @@ def tool_prepare_governed_operation(
     return _ok(proposal)
 
 
-def tool_commit_proposal(proposal_handle: str) -> CallToolResult:
+def tool_commit_proposal(
+    proposal_handle: str, resume: bool = False
+) -> CallToolResult:
     request, user = _user_and_access()
     try:
         result = ClaraGovernedWrites().commit(
             handle=proposal_handle,
             actor_sub=actor_subject(user),
             user_groups=getattr(user, "groups", []) or [],
+            resume=resume,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc)

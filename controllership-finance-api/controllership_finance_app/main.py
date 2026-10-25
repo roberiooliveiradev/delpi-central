@@ -17,6 +17,9 @@ from controllership_finance_app.interface.http.routes.admin_catalogs_routes impo
 from controllership_finance_app.interface.http.routes.admin_checklist_routes import (
     router as admin_checklist_router,
 )
+from controllership_finance_app.interface.http.routes.clara_consent_routes import (
+    router as clara_consent_router,
+)
 from controllership_finance_app.interface.http.routes.closing_routes import (
     router as closing_router,
 )
@@ -154,6 +157,7 @@ app.include_router(reports_router)
 app.include_router(me_router)
 app.include_router(admin_checklist_router)
 app.include_router(admin_catalogs_router)
+app.include_router(clara_consent_router)
 
 # Streamable HTTP MCP — CLARA (external path:
 # /apps/controllership-finance-api/mcp). Auth via jwt_middleware com

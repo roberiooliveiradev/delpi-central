@@ -13,11 +13,16 @@ export const CONTROLLERSHIP_FINANCE_API_BASE = "/apps/controllership-finance-api
 const DELPI_CALLER_APP = "controllership-finance";
 
 let accessTokenGetter: (() => string | undefined) | null = null;
+let freshAccessTokenGetter:
+  | (() => Promise<string | undefined>)
+  | null = null;
 
 export function configureHttpClient(
   getAccessToken: () => string | undefined,
+  getFreshAccessToken?: () => Promise<string | undefined>,
 ) {
   accessTokenGetter = getAccessToken;
+  freshAccessTokenGetter = getFreshAccessToken ?? null;
 }
 
 function buildHeaders(): Record<string, string> {
@@ -184,6 +189,43 @@ export async function httpGetBlob(
   }
 
   return response.blob();
+}
+
+/**
+ * POST com token recém-emitido (step-up). A rota de consentimento da
+ * CLARA exige `iat` posterior ao PREPARE — prova de sessão humana
+ * ativa no Portal. Sem getter fresco configurado, falha fechado.
+ */
+export async function httpPostStepUp<T>(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const fresh = await freshAccessTokenGetter?.();
+  if (!fresh) {
+    throw new ApiError(
+      401,
+      "Não foi possível renovar a sessão para confirmar — recarregue a página.",
+      "step_up_unavailable",
+    );
+  }
+  const headers: Record<string, string> = {
+    ...buildHeaders(),
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${fresh}`,
+  };
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return response.json() as Promise<T>;
 }
 
 /** Authenticated image request against this product BFF only. */

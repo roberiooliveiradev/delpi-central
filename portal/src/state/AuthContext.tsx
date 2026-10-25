@@ -30,6 +30,12 @@ interface AuthContextType {
   coreLoaded: boolean;
 
   getAccessToken: () => string | undefined;
+  /**
+   * Token recém-emitido (refresh forçado). Usado por superfícies de
+   * consentimento step-up — um `iat` novo prova sessão humana ativa
+   * que um access token repassado a terceiros não consegue produzir.
+   */
+  getFreshAccessToken: () => Promise<string | undefined>;
 
   user?: MeResponse;
   apps: AppItem[];
@@ -121,6 +127,7 @@ export const AuthContext = createContext<AuthContextType>({
   coreLoaded: false,
 
   getAccessToken: () => undefined,
+  getFreshAccessToken: async () => undefined,
 
   apps: [],
   routes: [],
@@ -314,6 +321,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     })();
 
     return refreshPromiseRef.current;
+  }, []);
+
+  const getFreshAccessToken = useCallback(async (): Promise<
+    string | undefined
+  > => {
+    // updateToken(-1) força nova emissão (iat novo) — não reutiliza
+    // um refreshPromise em voo porque a prova exige emissão recente.
+    try {
+      await keycloak.updateToken(-1);
+      const nextToken = keycloak.token;
+      if (nextToken) {
+        tokenRef.current = nextToken;
+      }
+      return nextToken;
+    } catch {
+      return undefined;
+    }
   }, []);
 
   const refreshToken = useCallback(async () => {
@@ -657,6 +681,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       coreLoaded,
 
       getAccessToken,
+      getFreshAccessToken,
       user,
       apps,
       routes,
@@ -684,6 +709,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       initialized,
       coreLoaded,
       getAccessToken,
+      getFreshAccessToken,
       user,
       apps,
       routes,
