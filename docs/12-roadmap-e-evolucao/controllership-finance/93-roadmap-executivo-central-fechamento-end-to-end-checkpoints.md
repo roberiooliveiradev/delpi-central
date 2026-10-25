@@ -215,3 +215,8 @@ O executor reportou implementação `P6-MIN + P2-READ` sob GO [99](./99-ciclo3-g
 ## Plano mestre consolidado de execução — 24/10/2026
 
 O [Documento 104 — plano mestre E2E de implementação, aceite e deploy por Operador SSH](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md) consolida CP02–CP12 em pacotes A–D e três paradas formais (G1 decisões materiais, G2 aceite integrado, G3 release/rollback). Preserva o ledger 23 e este roadmap como authorities de RQ/AC e dependências; não declara runtime nem deploy já executados. Deploy de produção depende de operador SSH autorizado, preflight, backup, rollback e smoke real.
+
+
+## Atualização de execução complementar — 25/10/2026
+
+As lacunas TARGET/TO_INVENTORY posteriores à implementação dos Pacotes A–D devem ser executadas conforme o [Documento 105 — GO complementar, concluir antes de refinar](./105-go-conclusao-integral-pendencias-implementacao-antes-refinamento.md), sem falsificar estados históricos desta tabela. O Documento 105 agrega P6/P5-H, T05/Core, T03 e fontes oficiais R01–R15, notificações/TaskProjection, páginas comuns e provas E2E; decisões materiais seguem G1 e produção requer G2/G3 via Operador SSH.
