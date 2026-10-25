@@ -491,3 +491,20 @@ Largest observed actual prompt: **4670 tokens** (`arguments`) — exceeds the pr
 - Server-side default window remains a deployment concern: `OLLAMA_CONTEXT_LENGTH` passthrough exists in compose; baking `num_ctx` per model (as done in eval) is the per-model alternative — whichever production adopts must be recorded.
 - Omission is silent toward the model but **explicit in observability** (turn counts + reason). No synthetic marker turn was added — D2 remains conditional on a typed contract.
 - Still excluded: WP-B persistence (canon-frozen), WP-C summarization, WP-D mass refactor, WP-E flattening, model switch.
+
+
+## 14. Independent review — WP-A/WP-F a1f6c57236 (2026-10-25)
+
+**VERDICT=ACCEPT_WITH_RESIDUAL (implementation foundation), NOT RELEASE ACCEPT.** GitHub diff and active HEAD `a1f6c57236e64171920df31e5daa60010bbe603d` reviewed statically; no independent local Docker/Ollama/pytest re-execution. Executor evidence: 9/9 WP tests, backend 2316 PASS / 2 FAIL env, 10-scenario eval (zero reported ISO/truncation and false positives), three real records **NOT PROVEN**. `DEPLOY=BLOCKED`.
+
+**Verified in code:** `InvokeModel` central budget; reduce untrusted `prior_context` oldest complete pairs only; typed `context_too_large` before dispatch when mandatory estimate exceeds declared window; optional `ModelInvocationPort.context_window_tokens`, additive `ContextBudgetObservation`, projection into existing call ledger; provider-specific mechanics outside Domain/Application; no session persistence. Measured daemon 4096→8192 and Ollama Modelfile change are executor-reported **EVAL ENV ONLY**, not GitHub-tracked production runtime change.
+
+**R1 — estimation is not hard no-truncation guarantee:** `CHARS_PER_TOKEN_ESTIMATE=2.5`, `ADAPTER_OVERHEAD_TOKENS=260` are approximations. Tokenization can vary by content/model; exact wire request includes adapter-generated system directive and message framing not precisely tokenized. Saying 'no silent truncation' must be constrained to probed workloads/config, not universal proof. Recommend conformance property tests with adversarial unicode/JSON/long role messages, and adapter token-count if available; fallback on unknown window must be visible.
+
+**R2 — reservation mismatch risk:** `apply_context_budget` reserves `request.generation_config.max_output_units or 512`, but real adapter sends `request.generation_config.max_output_units or self._default_max_output_units` as `max_tokens`. If adapter default exceeds 512, the pre-call arithmetic reserves less than the real requested generation max. Owner/contract review, RED test, and smallest correction required before claiming bounded-window integrity.
+
+**R3 — declaration/runtime config parity:** `DELIA_LLM_CONTEXT_TOKENS` is optional and unknown disables enforcement. Model context 8192 was baked into a model in a local eval daemon, not delivered through committed prod infrastructure configuration; declared window may not match server effective window after restart/host migration/provider change. Release requires runtime parity verification/health or explicit bounded fallback; do not silently assume `DELIA_LLM_CONTEXT_TOKENS=8192` makes daemon 8192.
+
+**R4 — content preservation:** dropping pairs changes referential continuity; counts/reason are observable but the model is not told that history was omitted. A typed non-authoritative omission marker remains D2 separate design decision; do not append forged `DELIA_RESULT`. Goal cross-stage consistency and session persistence not solved by this WP.
+
+**NEXT BOUNDED STEP:** close R2 via contract-first, characterize R1 and R3 with local-only tests/config evidence, preserve current mechanism and avoid new token-engine/provider hooks; independent re-eval on frozen SHA/daemon config. Do not deploy; result 3 real records remains unproven and no model-capacity conclusion should exclude residual argument fidelity/context errors without trace evidence.
