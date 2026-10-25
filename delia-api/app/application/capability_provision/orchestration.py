@@ -9243,6 +9243,19 @@ class OperationalCapabilityOrchestrator:
             )
         except CapabilityProviderError:
             return None
+        except (_TurnCancelled, _StageDeadlineExceeded):
+            raise
+        except Exception:
+            # The recovery leg is best-effort: any provider-layer
+            # failure inside the single bounded re-invocation leaves
+            # the original insufficiency standing — never an
+            # unhandled error at the turn boundary (plan 148 WP3).
+            _logger.info(
+                "orchestration stage=relevance_recovery "
+                "decision=reinvoke_failed correlation_id=%s",
+                correlation,
+            )
+            return None
 
     def _apply_semantic_relevance(
         self,
@@ -9443,17 +9456,12 @@ class OperationalCapabilityOrchestrator:
                 input_text,
                 block_tag="admission",
                 block_payload=(
-                    '{"owner_surface_kinds":['
-                    '"business records and registers (products, '
-                    'materials, parts)",'
-                    '"governed guidance, documentation and '
-                    'methodology",'
-                    '"operational panels, dashboards and '
-                    'indicators",'
-                    '"service tickets and requests"],'
-                    '"note":"classify whether the request needs '
-                    'one of these owner surfaces or can be '
-                    'answered conversationally"}'
+                    '{"owner_surfaces":"live governed owner '
+                    'surfaces exist; their catalog is listed '
+                    'only after admission - decide whether '
+                    'the request requires governed owner '
+                    'data or can be answered '
+                    'conversationally"}'
                 ),
                 instruction_id=INTERACTION_ADMISSION_INSTRUCTION_ID,
                 instruction=self._instruction(INTERACTION_ADMISSION_INSTRUCTION_ID),

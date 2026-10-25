@@ -241,9 +241,12 @@ def test_admission_block_declares_owner_surface_context():
     """R7 admission defect: the <admission> block once asserted
     "no owner catalog" — a false premise the local model read as
     "DELPI has no catalogs", collapsing record requests to
-    hypothetical/conversational. The block must carry the bounded,
-    truthful owner-surface-kind context instead: the model still
-    classifies, but it can no longer assume no surface exists."""
+    hypothetical/conversational. The block must carry a bounded,
+    truthful neutral frame: owner surfaces exist, their catalog is
+    listed only after admission. A static surface-kind taxonomy in
+    the block would drift from the live catalog (plan 148 WP1) —
+    the semantic rule lives in the instruction, never in a
+    code-side category list."""
     port = FakePort(
         tools_by_specialist={"teo": TEO_TOOLS, "vista": VISTA_TOOLS}
     )
@@ -266,5 +269,6 @@ def test_admission_block_declares_owner_surface_context():
     assert len(admission) == 1
     payload = admission[0].input_text
     assert "<admission>" in payload
-    assert "owner_surface_kinds" in payload
+    assert "owner_surfaces" in payload
+    assert "owner_surface_kinds" not in payload
     assert "no owner catalog" not in payload

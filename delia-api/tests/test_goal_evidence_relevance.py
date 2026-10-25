@@ -2092,3 +2092,85 @@ def test_over_limit_declaration_never_escapes_as_free_text():
         [f"opt{i}" for i in range(MAX_EVIDENCE_SELECTIONS + 1)]
         + ["query"]
     )
+
+
+class _TransportFailingProvider(FakeProvider):
+    """Second invocation of ``search_items`` drops with a raw,
+    unwrapped transport failure — the worst shape a provider seam
+    can leak (WP3: recovery must fail closed, never propagate)."""
+
+    def invoke(self, capability, arguments, *, correlation_id,
+               timeout_seconds=None):
+        if (
+            capability.remote_name == "search_items"
+            and any(
+                call[0] == "search_items" for call in self.calls
+            )
+        ):
+            self.calls.append(
+                (capability.remote_name, dict(arguments))
+            )
+            raise RuntimeError("transport dropped mid-recovery")
+        return super().invoke(
+            capability,
+            arguments,
+            correlation_id=correlation_id,
+            timeout_seconds=timeout_seconds,
+        )
+
+
+def test_recovery_reinvoke_failure_keeps_original_insufficiency(
+    capture_mode_logs,
+):
+    """WP3/plan148: the bounded relevance-recovery re-invocation is
+    best-effort — any provider-layer failure inside it degrades to
+    the already-established insufficiency, never escapes the turn
+    boundary as an unhandled error."""
+    irrelevant = _outcome(
+        "ok", structured={"items": [{"name": "BALANCA 1"}]}
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "terminal bala"}},
+            relevance=None,
+        ),
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "scales not terminals",
+            }
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal tipo bala"}
+            }
+        },
+    ]
+    provider = _TransportFailingProvider(
+        "mcp",
+        [_group("mcp", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant]},
+    )
+    clause = _cri_clause()
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(FakeProposalModel(proposal)),
+        model_ref=TEST_MODEL_REF,
+        response_intelligence_enabled=True,
+        cri_instruction_clause=clause.text,
+        cri_instruction_version=clause.version,
+        orchestration_instructions=(
+            load_test_orchestration_instructions()
+        ),
+    )
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert "relevance_recovery decision=reinvoke" in (
+        capture_mode_logs.text
+    )
+    assert "relevance_recovery decision=reinvoke_failed" in (
+        capture_mode_logs.text
+    )

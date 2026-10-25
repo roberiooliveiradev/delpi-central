@@ -640,7 +640,7 @@ def _is_capability_descriptor(item: object) -> bool:
     canon = {_canonical_key(key) for key in item}
     strong = canon & _CAPABILITY_DESCRIPTOR_STRONG_KEYS
     weak = canon & _CAPABILITY_DESCRIPTOR_WEAK_KEYS
-    if len(weak) >= 2:
+    if len(weak) >= 2 or len(strong) >= 2:
         return True
     return bool(strong) and (bool(weak) or len(item) <= 4)
 
@@ -1526,9 +1526,14 @@ def outcome_facts(
             coverage = envelope.total_count <= len(envelope.items)
         else:
             coverage = None
+        items = tuple(
+            item
+            for item in envelope.items
+            if not _is_capability_descriptor(item)
+        )
         return EvidenceFacts(
-            records=envelope.items,
-            has_business_evidence=bool(envelope.items),
+            records=items,
+            has_business_evidence=bool(items),
             explicit_empty=not envelope.items
             and (
                 envelope.has_more is False
