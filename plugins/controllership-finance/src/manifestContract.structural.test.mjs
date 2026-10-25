@@ -40,8 +40,9 @@ describe("controllership-finance manifest", () => {
   });
 
   it("somente rotas implementadas publicadas, protegidas por .access", () => {
-    assert.equal(manifest.routes.length, 4);
-    const [home, settlements, stockInventory, checklist] = manifest.routes;
+    assert.equal(manifest.routes.length, 5);
+    const [home, settlements, stockInventory, checklist, admin] =
+      manifest.routes;
     assert.equal(home.path, "/apps/controllership-finance");
     assert.equal(home.permission, "controllership-finance.access");
     assert.equal(home.showInMenu, true);
@@ -63,8 +64,15 @@ describe("controllership-finance manifest", () => {
     );
     assert.equal(checklist.permission, "controllership-finance.access");
     assert.equal(checklist.showInMenu, false);
+    assert.equal(admin.path, "/apps/controllership-finance/closing/admin");
+    assert.equal(admin.permission, "controllership-finance.manage");
+    assert.equal(admin.showInMenu, false);
     for (const route of manifest.routes) {
-      assert.equal(route.permission, "controllership-finance.access");
+      if (route.path.endsWith("/admin")) {
+        assert.equal(route.permission, "controllership-finance.manage");
+      } else {
+        assert.equal(route.permission, "controllership-finance.access");
+      }
     }
   });
 

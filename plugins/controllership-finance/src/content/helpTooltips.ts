@@ -92,4 +92,14 @@ export const CF_HELP = {
     itemDocuments:
       "Evidências vinculadas a este item do checklist — a mesma regra de upload da competência vale aqui (PDF, imagem, XLS, XLSX ou CSV, até 25 MB). Um documento de item só pode ser anexado a um item da competência aberta. «Substituir», «Versões», «Eventos» e «Cancelar» funcionam como nas evidências da competência: a versão substituída fica marcada como «Substituída» e continua baixável, e o cancelamento é lógico — nada é apagado. Erros comuns: arquivo acima de 25 MB, formato não permitido, arquivo vazio ou conteúdo que não corresponde à extensão.",
   },
+  admin: {
+    page:
+      "Administração do checklist mestre — exige permissão de gestão (controllership-finance.manage). Todo ciclo é versionado: criar rascunho, editar itens, publicar com vigência prospectiva e inativar. Competências já abertas nunca mudam — elas guardam um snapshot próprio. Usuários e permissões não são administrados aqui: pertencem ao Core.",
+    versions:
+      "Versões do template: «Rascunho» editável até a publicação, «Publicada» vigente a partir da competência informada, «Inativada» preservada no histórico. Só existe um rascunho por vez por template.",
+    items:
+      "Itens da versão em modo de leitura — chave, entregável, origem, destinatário, obrigatoriedade, escopo de filial e regra de validação.",
+    editDraft:
+      "Edição do rascunho: altere, adicione ou remova itens e salve de uma vez — a gravação é atômica. Se outra sessão publicou ou alterou a versão, o salvamento é recusado («revisão desatualizada») para nunca sobrescrever trabalho alheio: recarregue e reaplique.",
+  },
 } as const;

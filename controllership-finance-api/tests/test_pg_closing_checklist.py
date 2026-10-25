@@ -342,3 +342,17 @@ def test_audit_trail_append_only(migrated, repo):
     assert "DRAFT_UPDATED" in types
     actors = {r[1] for r in rows}
     assert str(ADMIN) in actors or ADMIN in [str(a) for a in actors]
+
+
+def test_list_template_events(migrated, repo):
+    template_id = _template_id(repo)
+    events = repo.list_template_events(template_id)
+    assert events, "eventos de template devem existir após publicação/draft"
+    types = {e["event_type"] for e in events}
+    assert "VERSION_PUBLISHED" in types
+    assert "DRAFT_CREATED" in types
+    assert all("version" in e for e in events)
+
+    filtered = repo.list_template_events(template_id, version=1)
+    assert all(e["version"] == 1 for e in filtered)
+    assert all(e["event_type"] == "VERSION_PUBLISHED" for e in filtered)

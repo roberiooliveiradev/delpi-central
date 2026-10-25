@@ -209,16 +209,16 @@ Cobertura A2 por requisito: RQ-P2-02 → VAL-01 · RQ-P2-03 → VAL-02 · RQ-P2-
 
 | RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
 |---|---|---|---|---|---|
-| RQ-P6-01 | template segue DRAFT→REVIEW→PUBLISH→EFFECTIVE_FROM | salvar draft não publica | positive + negative | MANAGE | TARGET |
-| RQ-P6-02 | publicação não altera snapshot de competência aberta | competência continua na versão original | positive + sibling | P2 snapshot | TARGET |
-| RQ-P6-03 | inativação é prospectiva e sem delete físico | histórico continua referenciável | positive + negative | audit | TARGET |
-| RQ-P6-04 | ACCESS usa opções; MANAGE administra catálogos | ACCESS não altera mestre | permission negative | T05 | TARGET |
+| RQ-P6-01 | template segue DRAFT→REVIEW→PUBLISH→EFFECTIVE_FROM | salvar draft não publica | positive + negative | MANAGE | PROVEN (A3, doc 100 — ciclo atual DRAFT→PUBLISHED sem etapa REVIEW separada) |
+| RQ-P6-02 | publicação não altera snapshot de competência aberta | competência continua na versão original | positive + sibling | P2 snapshot | PROVEN (CP03-P2 + A3, doc 100) |
+| RQ-P6-03 | inativação é prospectiva e sem delete físico | histórico continua referenciável | positive + negative | audit | PROVEN (A3, doc 100) |
+| RQ-P6-04 | ACCESS usa opções; MANAGE administra catálogos | ACCESS não altera mestre | permission negative | T05 | PROVEN (A3 — ACCESS→403 em todas as rotas admin, doc 100) |
 | RQ-P6-05 | bancos/contas são configuráveis, não hardcoded | seed pode mudar sem diff de regra | config test | E01 | TARGET |
 | RQ-P6-06 | motivos de rejeição = núcleo + extensões | inativação preserva códigos históricos | positive + sibling | E06 | TARGET |
 | RQ-P6-07 | attachment roles são catalogados com genérico quando permitido | role obrigatório/configurado respeitado | positive + negative | E05 | TARGET |
 | RQ-P6-08 | notification targets usam opções governadas | targets inválidos não são free-form | positive + negative | T02 | TARGET |
-| RQ-P6-09 | MANAGE efetivo **AND** escopo administrativo publica configuração versionada | um publicador autorizado, motivo/audit e vigência prospectiva; segundo MANAGE não é requisito; ACCESS isolado e MANAGE sem scope falham | positive + sibling + permission/scope negative | T05 / DEC-04 / P5-H | TARGET / PO_APPROVED |
-| RQ-P6-10 | Help explica draft/publish/effective_from/snapshot/inativação | conteúdo contextual disponível | UI/help check | feature help | TARGET |
+| RQ-P6-09 | MANAGE efetivo **AND** escopo administrativo publica configuração versionada | um publicador autorizado, motivo/audit e vigência prospectiva; segundo MANAGE não é requisito; ACCESS isolado e MANAGE sem scope falham | positive + sibling + permission/scope negative | T05 / DEC-04 / P5-H | PROVEN (A3, doc 100) |
+| RQ-P6-10 | Help explica draft/publish/effective_from/snapshot/inativação | conteúdo contextual disponível | UI/help check | feature help | PROVEN (A3 — `CF_HELP.admin.*`) |
 
 ## Superfícies da topbar
 
@@ -275,16 +275,16 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-INT-01 | Sala de interação é contextual e não muda estado de negócio por mensagem | mensagem/comentário não valida, aprova, fecha estoque ou envia pacote | positive + resource negative | interaction contract inventory | CONTRACT_INVENTORY_REQUIRED |
 | RQ-ADM-01 | Administração exige somente MANAGE | ACCESS sozinho não altera mestre; nenhum permission code adicional | positive + permission negative | Core effective permissions | TARGET |
 | RQ-ADM-02 | IA administrativa é Painel/Templates/Catálogos/Histórico | catálogos não viram topbar/permission; deep links preservados | navigation + F5 | router + 28 | TARGET |
-| RQ-ADM-03 | template segue lifecycle canônico | DRAFT→REVIEW→PUBLISH→EFFECTIVE_FROM; save != publish; published immutable | positive + transition negative | P6 | TARGET |
-| RQ-ADM-04 | snapshot não sofre retroatividade | nova publicação não altera competência aberta/histórico | positive + sibling | P2 snapshot | TARGET |
+| RQ-ADM-03 | template segue lifecycle canônico | DRAFT→REVIEW→PUBLISH→EFFECTIVE_FROM; save != publish; published immutable | positive + transition negative | P6 | PROVEN (A3 — publicada imutável; REVIEW não modelado neste ciclo) |
+| RQ-ADM-04 | snapshot não sofre retroatividade | nova publicação não altera competência aberta/histórico | positive + sibling | P2 snapshot | PROVEN (CP03-P2 + A3) |
 | RQ-ADM-05 | catálogos são tipados | registry explicita schema/validation; sem free-form generic CRUD | contract + invalid field negative | ADM01 | TARGET |
-| RQ-ADM-06 | inativação é prospectiva | sem hard delete; reason/actor/time/effective date; histórico interpretável | positive + delete negative | audit | TARGET |
+| RQ-ADM-06 | inativação é prospectiva | sem hard delete; reason/actor/time/effective date; histórico interpretável | positive + delete negative | audit | PROVEN (A3) |
 | RQ-ADM-07 | identidades permanecem no Core | selectors usam referências elegíveis; nenhum user/role/permission write | integration + security negative | ADM06/Core | TARGET |
 | RQ-ADM-08 | notification target não é delivery engine | targets lógicos; Minha DELPI entrega; sem SMTP/preferences local | integration negative | ADM05/T02 | TARGET |
-| RQ-ADM-09 | writes tratam concorrência | stale revision rejeitada; sem overwrite silencioso | stale/concurrency negative | ADM07 | TARGET |
-| RQ-ADM-10 | histórico administrativo é auditável/read-only | actor/time/entity/action/before-after/reason/effective/version | positive + immutable negative | audit store | TARGET |
-| RQ-ADM-11 | Administração é plugin-ui first | primitives públicos; zero design-system local; mobile/dark/a11y | component + visual/a11y | plugin-ui | TARGET |
-| RQ-ADM-12 | Help acompanha P6 | lifecycle/snapshot/inativação/catálogos ensinados somente quando implementados | help sync | feature-help-sync | TARGET |
+| RQ-ADM-09 | writes tratam concorrência | stale revision rejeitada; sem overwrite silencioso | stale/concurrency negative | ADM07 | PROVEN (A3 — OCC `revision`, `stale_revision` 409; teste PG `test_stale_revision_rejected`) |
+| RQ-ADM-10 | histórico administrativo é auditável/read-only | actor/time/entity/action/before-after/reason/effective/version | positive + immutable negative | audit store | PROVEN (A3 — `GET …/events` append-only) |
+| RQ-ADM-11 | Administração é plugin-ui first | primitives públicos; zero design-system local; mobile/dark/a11y | component + visual/a11y | plugin-ui | PROVEN (A3 — página usa kit/compartilhados `cf*`) |
+| RQ-ADM-12 | Help acompanha P6 | lifecycle/snapshot/inativação/catálogos ensinados somente quando implementados | help sync | feature-help-sync | PROVEN (A3) |
 | RQ-HELP-01 | Ajuda usa manual canônico | `createDashboardUserManual` + PageHero/Path/SectionCard; zero chrome local | component + structural | plugin-ui + 29 | TARGET |
 | RQ-HELP-02 | Ajuda é rota de topbar com ACCESS | `/help` funciona em F5; sem ACCESS = 403 | navigation + permission negative | router/manifest/Core | TARGET |
 | RQ-HELP-03 | manual publica somente runtime real | feature/route futura não aparece nem vira link | route-disabled negative | feature catalog | TARGET |

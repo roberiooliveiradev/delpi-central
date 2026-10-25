@@ -16,13 +16,23 @@ STATES_DEFINED           = PASS
 TEST_MATRIX_DEFINED      = PASS
 ```
 
-Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
+Runtime do Portal Controladoria & Finanças: **PARTIAL_IMPLEMENTED (A3 — Pacote A, doc 104)**.
+
+```text
+CHECKLIST_TEMPLATE_ADMIN = IMPLEMENTED
+  listar template/versões · criar/editar DRAFT (OCC revision) ·
+  publicar vigente prospectiva · inativar · eventos de auditoria ·
+  página MFE /closing/admin gated por controllership-finance.manage
+CATALOGS (bancos/contas, motivos, attachment roles, notification
+targets, satisfaction rules) = TARGET — seguem ADM01–ADM07, sem
+CRUD genérico improvisado.
+```
 
 A fase atual é exclusivamente documental:
 
 ```text
 PORTAL_REVIEW_PHASE       = ACTIVE
-IMPLEMENTATION_AUTHORIZED = NO
+IMPLEMENTATION_AUTHORIZED = YES (escopo A3/P6 do doc 104)
 ```
 
 Este documento fecha o **Item 6 — Administração** no nível de experiência, arquitetura de informação, lifecycle administrativo, catálogos, AuthZ, contratos lógicos, auditoria, Help e testes futuros.

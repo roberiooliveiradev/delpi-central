@@ -14,6 +14,7 @@ export type PluginView =
   | "financial_settlements"
   | "stock_inventory"
   | "checklist"
+  | "checklist_admin"
   | "not_found";
 
 export type PluginNavId = "home";
@@ -22,19 +23,22 @@ export type PluginNavigationTarget =
   | "home"
   | "financial_settlements"
   | "stock_inventory"
-  | "checklist";
+  | "checklist"
+  | "checklist_admin";
 
 /** Mapa rota relativa → view (paths técnicos em inglês, kebab-case). */
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/financial-settlements": "financial_settlements",
   "closing/stock-inventory": "stock_inventory",
   "closing/checklist": "checklist",
+  "closing/admin": "checklist_admin",
 };
 
 const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> = {
   financial_settlements: "closing/financial-settlements",
   stock_inventory: "closing/stock-inventory",
   checklist: "closing/checklist",
+  checklist_admin: "closing/admin",
 };
 
 const CHECKLIST_PERIOD_PATTERN = /^closing\/checklist\/(\d{4}-(0[1-9]|1[0-2]))$/;

@@ -126,6 +126,25 @@ export async function httpPost<T>(
   return response.json() as Promise<T>;
 }
 
+export async function httpPut<T>(
+  url: string,
+  body: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { ...buildHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 
 /** POST multipart — o browser define o boundary do Content-Type. */
 export async function httpPostFormData<T>(

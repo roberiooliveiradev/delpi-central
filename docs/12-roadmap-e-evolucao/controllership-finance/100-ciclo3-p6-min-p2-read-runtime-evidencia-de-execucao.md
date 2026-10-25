@@ -263,3 +263,28 @@ Baseline: `9a1cf4ea53` remoto (A1 `883872e4a9` publicado em cima). Pacote A2 do 
 - BFF: **367 passed** com PostgreSQL real descartável (suíte `test_pg_closing_validations.py` 21 casos: append-only, escopo, WHOLE_SET/per-attachment, revalidação pós-substituição, N/A, excepcional, correção, item sem evidência, `test_item_out_of_declared_scope_404`, `test_validation_events_in_audit`) + `test_closing_validations_routes.py` 28 casos.
 - MFE: **126 vitest** + 25 estruturais · `tsc -b` e `vite build` ok · lint limpo nos arquivos tocados.
 - TEST_NOT_RUN: RQ-P2-11 (notificações — dependência T02 fora de A2); smoke autenticado; demo humana (G2).
+
+## Adendo — Evidência de execução A3 administração P6 (CF-PROC0072-E2E-MASTER-EXECUTION-001)
+
+Baseline: `5c9d23ce6f` (A2 deployado). Pacote A3 do doc 104 — superfície administrativa do checklist mestre sobre o backend P6-MIN existente, sem criar identidades/permissões locais.
+
+### Backend
+
+- `ClosingChecklistRepository.list_template_events(template_id, version?)` — eventos append-only (`closing_audit_event` ⋈ versão) com filtro opcional por versão; template inexistente → `template_not_found`.
+- Rota `GET /admin/checklist-templates/{id}/events?version=` — `authorized_admin` (MANAGE efetivo), envelope padrão; ACCESS → 403.
+- Lifecycle já vigente preservado: um DRAFT por template (índice parcial), `update_draft_items` OCC `revision` (`stale_revision` 409, `version_not_draft`, `template_not_found`), `publish_version` com `effective_from_period` prospectivo, `inactivate_version` prospectivo sem delete — zero migrations novas.
+
+### MFE
+
+- `adminApi.ts` — contratos `ChecklistTemplate(Version|Item|AuditEvent)` + 8 operações (`httpPut` adicionado ao `httpClient` para JSON mutations).
+- `ChecklistAdminPage.tsx` (`closing/admin`): versões com estado/vigência; itens read-only fora de DRAFT; edição atômica de DRAFT (adicionar/editar/remover + «Salvar rascunho» com `revision`); diálogo de publicação `AAAA-MM`; inativação confirmada; eventos por template; `stale_revision`→mensagem de recarga; erros 401/403/404/409/5xx tipados; render-only — autoridade integral no backend.
+- Rotas: `closing/admin` no `pluginRoutes`, manifest (`permission=manage`, `showInMenu=false`), hub `requiredCap="manage"` (oculto para ACCESS).
+- Help: `CF_HELP.admin.page/versions/items/editDraft` — lifecycle, snapshot imutável, OCC, sem gestão de usuários.
+
+### Evidência executada
+
+- BFF: **371 passed** (PG real R4 — `test_list_template_events`, filtros por versão; rotas: events happy/filtro/ACCESS→403).
+- MFE: **138 vitest** (9 novos: render, draft bloqueado, 403, vazio, save com revision, `stale_revision`→recarga, publish, inactivate, events) + **25 estruturais** atualizados (manifest 5 rotas, catálogo com `checklist_admin`).
+- `tsc -b`, `vite build`, lint limpos.
+- TEST_NOT_RUN: smoke autenticado da página; demo humana (G2).
+- Residual P6 mantido: catálogos bancos/motivos/roles/targets e etapa REVIEW do lifecycle permanecem `TARGET` (RQ-P6-05..08, RQ-ADM-01/02/05/07/08).

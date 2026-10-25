@@ -147,6 +147,36 @@ class ClosingChecklistRepository:
             version_row["items"] = cur.fetchall()
         return version_row
 
+    def list_template_events(
+        self, template_id: str, version: int | None = None
+    ) -> list[dict[str, Any]]:
+        """Eventos append-only das versões do template (P6 auditoria)."""
+        self.get_template(template_id)
+        clauses = [
+            "e.entity_type = 'checklist_template_version'",
+            "v.template_id = %s",
+        ]
+        params: list[Any] = [template_id]
+        if version is not None:
+            clauses.append("v.version = %s")
+            params.append(version)
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT e.event_id, e.entity_id, e.competence_id,
+                       e.event_type, e.actor_subject, e.detail,
+                       e.created_at, v.version
+                  FROM {_q('closing_audit_event')} e
+                  JOIN {_q('checklist_template_version')} v
+                    ON v.version_id = e.entity_id
+                 WHERE {' AND '.join(clauses)}
+                 ORDER BY e.created_at DESC
+                 LIMIT 200
+                """,
+                params,
+            )
+            return cur.fetchall()
+
     def create_draft_version(
         self, template_id: str, actor: str
     ) -> dict[str, Any]:

@@ -124,9 +124,12 @@ envelope `fail()` existente (`code`, `message`, `details`).
 | `updateTemplateDraft` | PUT `.../versions/{version}` | idem | itens completos + `revision`; stale ⇒ 409 `stale_revision` | +409/422 |
 | `publishTemplateVersion` | POST `.../versions/{version}:publish` | idem | `{effective_from_period}`; status→PUBLISHED, evento de audit | +409 `already_published` |
 | `inactivateTemplateVersion` | POST `.../versions/{version}:inactivate` | idem | prospectivo, sem delete | +409 |
+| `listChecklistTemplateEvents` | GET `.../{templateId}/events?version=` | idem | eventos append-only por versão (audit trail) | +404 `template_not_found` |
 
 > Escopo P6-MIN deliberado: edição de itens via API existe só para DRAFT
-> (PUT com revision). UI P6 completa é outro slice (doc 93 C02 restante).
+> (PUT com revision). Adendo A3 (doc 104): UI administrativa do checklist
+> implementada em `closing/admin` (MFE, gated por `manage`) — catálogos
+> complementares (bancos, motivos, roles, targets) seguem doc 28.
 
 ### 3.2 Operação de leitura/abertura (P2-READ)
 

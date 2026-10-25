@@ -309,3 +309,48 @@ def test_valid_uuid_actor_reaches_repository(_auth_pipeline, repo):
     assert repo.create_draft_version.call_args.kwargs["actor"] == (
         "33333333-3333-4333-8333-333333333333"
     )
+
+
+def test_list_template_events(_auth_pipeline, repo):
+    repo.list_template_events.return_value = [
+        {
+            "event_id": "e-1",
+            "event_type": "VERSION_PUBLISHED",
+            "actor_subject": "u-1",
+            "detail": {"version": 2},
+            "created_at": "2026-05-02T10:00:00Z",
+            "version": 2,
+        }
+    ]
+    response = _client().get(
+        f"/admin/checklist-templates/{TEMPLATE_ID}/events",
+        headers=_headers(),
+    )
+    assert response.status_code == 200
+    assert (
+        response.json()["data"]["events"][0]["event_type"]
+        == "VERSION_PUBLISHED"
+    )
+    repo.list_template_events.assert_called_once_with(TEMPLATE_ID, None)
+
+
+def test_list_template_events_version_filter(_auth_pipeline, repo):
+    repo.list_template_events.return_value = []
+    response = _client().get(
+        f"/admin/checklist-templates/{TEMPLATE_ID}/events?version=3",
+        headers=_headers(),
+    )
+    assert response.status_code == 200
+    repo.list_template_events.assert_called_once_with(TEMPLATE_ID, 3)
+
+
+def test_list_template_events_access_only_forbidden(
+    _auth_pipeline, repo
+):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    response = _client().get(
+        f"/admin/checklist-templates/{TEMPLATE_ID}/events",
+        headers=_headers(),
+    )
+    assert response.status_code == 403
+    repo.list_template_events.assert_not_called()

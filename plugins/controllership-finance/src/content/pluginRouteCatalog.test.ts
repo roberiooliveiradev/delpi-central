@@ -17,11 +17,18 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
       "home",
       "closing-checklist",
       "financial-settlements",
+      "closing-admin",
       "stock-inventory",
     ]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
     expect(new Set(viewIds)).toEqual(
-      new Set(["home", "checklist", "financial_settlements", "stock_inventory"]),
+      new Set([
+        "home",
+        "checklist",
+        "checklist_admin",
+        "financial_settlements",
+        "stock_inventory",
+      ]),
     );
   });
 
@@ -63,7 +70,8 @@ describe("busca do catálogo", () => {
   });
 
   it("filterRouteCatalog filtra e retorna vazio sem match", () => {
-    expect(filterRouteCatalog(HUB_SECTIONS, "ini").length).toBe(1);
+    // «ini» casa «Início» e «admINIs tração» (label da rota admin).
+    expect(filterRouteCatalog(HUB_SECTIONS, "ini").length).toBe(2);
     expect(filterRouteCatalog(HUB_SECTIONS, "xyz-inexistente").length).toBe(0);
     expect(filterRouteCatalog(HUB_SECTIONS, "").length).toBe(2);
     expect(filterRouteCatalog(HUB_SECTIONS, "baixas").length).toBe(1);

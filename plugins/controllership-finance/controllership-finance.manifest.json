@@ -54,6 +54,14 @@
       "icon": "calendar-check",
       "order": 33,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/closing/admin",
+      "label": "Administração do checklist",
+      "permission": "controllership-finance.manage",
+      "icon": "settings",
+      "order": 34,
+      "showInMenu": false
     }
   ],
   "ui": {

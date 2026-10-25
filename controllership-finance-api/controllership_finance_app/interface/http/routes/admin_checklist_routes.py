@@ -1,14 +1,15 @@
 """P6-MIN — administração do template de checklist por API (CP-D05=A).
 
-Somente operações administrativas mínimas: consultar template/versões,
-criar e editar DRAFT, publicar com vigência e inativar prospectivamente.
-Autorização: `controllership-finance.manage` efetivo (escopo administrativo
-do slice). Nenhuma página administrativa é criada neste incremento.
+Operações administrativas: consultar template/versões/eventos de
+auditoria, criar e editar DRAFT (OCC `revision`), publicar com vigência
+prospectiva e inativar. Autorização: `controllership-finance.manage`
+efetivo (Core é a única autoridade). Consumida pela página
+«Administração do checklist» do MFE (`closing/admin`).
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
 from controllership_finance_app.core.responses import fail, ok
@@ -121,6 +122,26 @@ def get_checklist_template_version(
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "get_checklist_template_version")
     return ok(version_row, operation_id="get_checklist_template_version")
+
+
+@router.get(
+    "/{template_id}/events",
+    operation_id="list_checklist_template_events",
+)
+def list_checklist_template_events(
+    request: Request,
+    template_id: str,
+    version: int | None = Query(default=None),
+):
+    authorized_admin(request)
+    try:
+        events = _repository().list_template_events(template_id, version)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "list_checklist_template_events")
+    return ok(
+        {"events": events},
+        operation_id="list_checklist_template_events",
+    )
 
 
 @router.post(

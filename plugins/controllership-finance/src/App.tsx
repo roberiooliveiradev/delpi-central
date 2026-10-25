@@ -9,6 +9,7 @@ import {
   resolvePluginRoute,
 } from "./app/pluginRoutes";
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
+import { ChecklistAdminPage } from "./features/closing/ChecklistAdminPage";
 import { ClosingChecklistPage } from "./features/closing/ClosingChecklistPage";
 import { FinancialSettlementsPage } from "./features/closing/FinancialSettlementsPage";
 import { StockInventoryPage } from "./features/closing/StockInventoryPage";
@@ -52,6 +53,8 @@ function AppRoutes({
           <StockInventoryPage />
         ) : resolved.view === "checklist" ? (
           <ClosingChecklistPage period={resolved.checklistPeriod} />
+        ) : resolved.view === "checklist_admin" ? (
+          <ChecklistAdminPage />
         ) : (
           <NotFoundPage basePath={basePath} />
         )}
