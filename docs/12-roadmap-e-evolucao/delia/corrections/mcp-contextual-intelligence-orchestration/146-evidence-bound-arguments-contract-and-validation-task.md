@@ -126,3 +126,8 @@ FINAL_VERDICT=READY_FOR_INDEPENDENT_REVIEW|BLOCKED_WITH_EVIDENCE
 ```
 
 **Ordem final ao Devin:** implementar somente após reancoragem, inventário real e contrato aprovado na hierarquia; corrigir a **fidelidade de transporte de valor selecionado** usando mecanismos preexistentes. Não usar tuning sucessivo de prompts ou troca de modelo como substituto de garantia de integridade. Exigir generalização, segurança, outcome e prova reproduzível. Sem evidência, `PENDING/INCONCLUSIVE`, nunca `PASS`.
+
+
+## 8. Decisão posterior do PO — 2026-10-25
+
+Plano de execução aprovado como direção (prevalece sobre recomendações anteriores de A/B com modelo externo): [147 — referência condicional e avaliação local](./147-conditional-evidence-reference-local-execution-and-release-plan.md). Escolha semântica continua LLM; parâmetros devem respeitar MCP/Domain API owner schema; usar binding referenciado quando o modelo **declarar** uso de valor literal de evidência; não fazer snapping fuzzy. Não realizar novas avaliações com modelos externos nesta task. PO aprova objetivo de deploy **condicionado** a avaliação local, revisão independente e autorização operacional específica por SHA/serviço/rollback. A especificação 146 segue aplicável nos testes/segurança, sem autorizar segundo planner ou novo contrato sem gate.
