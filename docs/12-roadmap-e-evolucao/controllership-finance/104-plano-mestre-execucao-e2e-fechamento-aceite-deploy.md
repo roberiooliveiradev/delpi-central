@@ -135,3 +135,8 @@ A cada pacote A–D entregar **um relatório consolidado**, não micro-relatóri
 ## 8. GO complementar de conclusão integral — 25/10/2026
 
 **Diretriz posterior do PO:** implementar todas as pendências da Central de Fechamento P1–P6 e páginas comuns que tenham autoridade/contrato suficientes, e executar **uma única etapa de refinamento ao final**. O [Documento 105 — GO de conclusão integral das pendências](./105-go-conclusao-integral-pendencias-implementacao-antes-refinamento.md) é o plano de execução complementar vigente para as lacunas após `acfdd136f1`: P6 catálogos/P5-H, T05/Core, R01–R15/T03/P3 oficial, P5 notificações/TaskProjection, OVW/ROOM/TASK/USER/Home, testes/reliability. Decisões materiais sem owner/contrato continuam concentradas no G1 e não se tornam aprovadas por suposição; G2/G3 e deploy SSH seguem obrigatórios. Não alterar o status histórico dos pacotes A–D por esta diretriz.
+
+
+## 9. Atualização de escopo/release — 25/10/2026
+
+O [Documento 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md) registra decisão posterior: CLARA MCP com base própria e execução multi-ação governada integra o release da Central; Sala e expansão Minhas tarefas adiadas. Conexão ChatGPT/Keycloak segue padrão TÉO com verificação real, sem compartilhar secrets. **G2 humano e G3 Operador SSH obrigatórios**: este GO de implementação não é autorização de produção.
