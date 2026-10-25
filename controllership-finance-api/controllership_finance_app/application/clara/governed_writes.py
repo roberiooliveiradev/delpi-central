@@ -32,10 +32,17 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
     MissingReason,
 )
+from controllership_finance_app.application.clara.operation_presentation import (
+    present_operation,
+)
 from controllership_finance_app.application.clara.step_up_consent import (
     CONSENT_TYPE_PORTAL_STEP_UP,
     ConsentRequired,
     clara_consent_url,
+    proposal_plan_hash,
+)
+from controllership_finance_app.infrastructure.persistence.clara_consent_challenge_repository import (
+    ClaraConsentChallengeRepository,
 )
 from controllership_finance_app.infrastructure.persistence.clara_proposal_repository import (
     ClaraProposalRepository,
@@ -151,6 +158,7 @@ class ClaraGovernedWrites:
         self._proposals = proposals or ClaraProposalRepository()
         self._packages = packages or ClosingPackageRepository()
         self._validations = validations or ClosingValidationRepository()
+        self._challenges = ClaraConsentChallengeRepository()
 
     # -- snapshots para staleness -------------------------------------------
 
@@ -510,6 +518,16 @@ class ClaraGovernedWrites:
             ttl_seconds=PROPOSAL_TTL_SECONDS,
         )
         expires_at = proposal["expires_at"]
+        # R-CLARA-01: desafio de consentimento emitido no PREPARE —
+        # vincula ator + plano selado + expiração (V014).
+        self._challenges.issue_for_proposal(
+            proposal_id=str(proposal["proposal_id"]),
+            actor_sub=actor_sub,
+            plan_hash=proposal_plan_hash(
+                capability, params, expected_state
+            ),
+            expires_at=expires_at,
+        )
         return {
             "proposal_handle": handle,
             "proposal_id": str(proposal["proposal_id"]),
@@ -517,6 +535,7 @@ class ClaraGovernedWrites:
             "resource_type": spec["resource_type"],
             "resource_key": resource_key,
             "operation": spec["describe"](params),
+            "presentation": present_operation(capability, params),
             "expected_state": expected_state,
             "execution_policy": "confirm_before_act",
             "confirmation_url": clara_consent_url(
@@ -695,7 +714,25 @@ class ClaraGovernedWrites:
         if rtype in self._TRUSTED_CONSENT_TYPES and (
             record.get("confirmed_by") == proposal["actor_sub"]
         ):
-            return
+            # R-CLARA-01: o consent_record só é prova quando o
+            # desafio referenciado existe, foi APROVADO/CONSUMED por
+            # superfície confiável e está vinculado a esta proposta,
+            # a este ator e a este plano (capability+params+estado).
+            payload = proposal["payload"]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            plan_hash = record.get("plan_hash") or proposal_plan_hash(
+                proposal["capability"],
+                payload,
+                proposal["expected_state"],
+            )
+            if self._challenges.verify_proposal_binding(
+                challenge_id=record.get("challenge_id"),
+                proposal_id=str(proposal["proposal_id"]),
+                actor_sub=proposal["actor_sub"],
+                plan_hash=plan_hash,
+            ):
+                return
         raise ConsentRequired(
             "Consentimento humano não registrado por superfície "
             "confiável. Abra a página de consentimento no Portal: "

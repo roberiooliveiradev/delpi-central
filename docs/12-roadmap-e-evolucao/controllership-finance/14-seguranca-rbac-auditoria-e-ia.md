@@ -247,3 +247,18 @@ Não expor secrets/tokens em frontend state, prompts comuns ou logs.
 ### Atualização PO — 25/10/2026: CLARA multi-ação (Documento 106)
 
 **SUBSTITUI o requisito histórico de confirmação conversacional por cada operação sensível, inclusive os exemplos de duas confirmações separadas acima:** uma solicitação de N ações pode ser atendida com intenção do usuário autenticado tecnicamente atestada pelo host ou com **uma confirmação consolidada** do lote, contendo operações e efeitos exatos. Cada operação mantém effective permission Core fresca, escopo, versão, business rule, idempotência, auditoria e pós-condição próprios. Nenhum boolean declarado pela IA, possession de handle ou texto recuperado da base prova consentimento. O contrato físico depende de gate de segurança; ChatGPT pode exigir confirmações nativas de tool, que não devem ser contornadas. Authority posterior: [Documento 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md). ACT fail-closed até comprovação; G2/G3 não inferidos.
+
+
+### Adendo — artefato de autorização (V014, R-CLARA-01)
+
+O contrato físico da "confirmação consolidada" acima é, desde V014,
+o **`clara_consent_challenge`**: desafio aleatório emitido pelo
+servidor no PREPARE, vinculado a `actor_sub` + `batch_id`/
+`proposal_id` + `plan_hash` + `plan_version` + origem + correlação,
+com expiração e máquina de estados `PENDING→APPROVED→CONSUMED`.
+Frescor de JWT (`iat` posterior ao desafio) prova apenas sessão —
+**não é**, isoladamente, prova de aprovação. A aprovação só existe
+como transição atômica registrada pela BFF de consentimento do
+Portal após exibição do plano completo ao usuário autenticado, e é
+consumida uma única vez na transação de claim da execução.
+Authority: [Documento 106, Adendo 4](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md#adendo-4--consent-challenge-v014-r-clara-01r-clara-02).

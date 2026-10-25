@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import psycopg
@@ -34,6 +34,9 @@ from controllership_finance_app.application.clara.batch_orchestrator import (
 from controllership_finance_app.application.clara.step_up_consent import (
     ClaraStepUpConsent,
     ConsentRequired,
+)
+from controllership_finance_app.infrastructure.persistence.clara_consent_challenge_repository import (
+    ClaraConsentChallengeRepository,
 )
 from controllership_finance_app.application.clara.governed_writes import (
     ClaraGovernedWrites,
@@ -154,7 +157,7 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def env(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-1] == "V013__clara_step_up_consent.sql"
+    assert applied[-1] == "V014__clara_consent_challenge.sql"
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(template_id, 1, actor=ADMIN)
@@ -275,6 +278,9 @@ def _consent_batch(batch_id: str, actor: str) -> None:
     PREPARE, como o Portal produz via refresh Keycloak. A assinatura
     JWT em si é validada na camada HTTP, não aqui.
     """
+    challenge = ClaraConsentChallengeRepository().latest_for_batch(
+        batch_id=batch_id
+    )
     ClaraStepUpConsent().record_batch_consent(
         batch_id=batch_id,
         actor_sub=actor,
@@ -283,6 +289,7 @@ def _consent_batch(batch_id: str, actor: str) -> None:
             "sub": actor,
             "jti": uuid.uuid4().hex,
         },
+        challenge_id=str(challenge["challenge_id"]),
     )
 
 
@@ -714,6 +721,9 @@ def test_two_concurrent_acts_single_winner(env):
         },
         actor_sub=REVIEWER_C,
     )
+    challenge = ClaraConsentChallengeRepository().latest_for_proposal(
+        proposal_id=str(proposal["proposal_id"])
+    )
     ClaraStepUpConsent().record_proposal_consent(
         proposal_id=str(proposal["proposal_id"]),
         actor_sub=REVIEWER_C,
@@ -721,6 +731,7 @@ def test_two_concurrent_acts_single_winner(env):
             "iat": int(datetime.now(timezone.utc).timestamp()),
             "sub": REVIEWER_C,
         },
+        challenge_id=str(challenge["challenge_id"]),
     )
     outcomes = []
 
@@ -1015,3 +1026,341 @@ def test_batch_status_reports_per_operation(env):
         env["orchestrator"].batch_status(
             batch_id=result["batch_id"], actor_sub=OUTSIDER
         )
+
+
+# == Consent challenge (R-CLARA-01, V014) ========================================
+
+
+def _challenge_for_batch(batch_id: str) -> dict:
+    challenge = ClaraConsentChallengeRepository().latest_for_batch(
+        batch_id=batch_id
+    )
+    assert challenge is not None
+    return challenge
+
+
+def _fresh_claims(actor: str) -> dict:
+    return {
+        "iat": int(datetime.now(timezone.utc).timestamp()),
+        "sub": actor,
+        "jti": uuid.uuid4().hex,
+    }
+
+
+def test_challenge_issued_on_prepare(env):
+    """O PREPARE emite o objeto de autorização vinculado ao plano."""
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "desafio emitido")],
+        actor_sub=REVIEWER_C,
+    )
+    challenge = _challenge_for_batch(prepared["batch_id"])
+    assert challenge["kind"] == "batch"
+    assert str(challenge["batch_id"]) == prepared["batch_id"]
+    assert challenge["actor_sub"] == REVIEWER_C
+    assert challenge["plan_hash"] == prepared["plan_hash"]
+    assert challenge["status"] == "PENDING"
+    assert challenge["origin"] == "portal"
+
+
+def test_consent_requires_challenge_id(env):
+    """JWT fresco sozinho não basta: sem o desafio do plano, sem
+    consentimento."""
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "sem challenge")],
+        actor_sub=REVIEWER_C,
+    )
+    from controllership_finance_app.application.clara.step_up_consent import (
+        ConsentChallengeRequired,
+    )
+
+    with pytest.raises(ConsentChallengeRequired):
+        ClaraStepUpConsent().record_batch_consent(
+            batch_id=prepared["batch_id"],
+            actor_sub=REVIEWER_C,
+            token_claims=_fresh_claims(REVIEWER_C),
+            challenge_id=None,
+        )
+
+
+def test_consent_challenge_from_other_batch_rejected(env):
+    """Um desafio emitido para outro lote não autoriza este plano."""
+    orch = env["orchestrator"]
+    prepared_a = orch.prepare_batch(
+        operations=[_clarify_op(env, "lote A")], actor_sub=REVIEWER_C
+    )
+    prepared_b = orch.prepare_batch(
+        operations=[_clarify_op(env, "lote B")], actor_sub=REVIEWER_C
+    )
+    challenge_b = _challenge_for_batch(prepared_b["batch_id"])
+    from controllership_finance_app.infrastructure.persistence.clara_consent_challenge_repository import (
+        ConsentChallengeMismatch,
+    )
+
+    with pytest.raises(ConsentChallengeMismatch):
+        ClaraStepUpConsent().record_batch_consent(
+            batch_id=prepared_a["batch_id"],
+            actor_sub=REVIEWER_C,
+            token_claims=_fresh_claims(REVIEWER_C),
+            challenge_id=str(challenge_b["challenge_id"]),
+        )
+
+
+def test_consent_challenge_other_actor_rejected(env):
+    """Outro usuário não pode utilizar a aprovação do requisitante."""
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "ator divergente")],
+        actor_sub=REVIEWER_C,
+    )
+    challenge = _challenge_for_batch(prepared["batch_id"])
+    with pytest.raises(BatchActorMismatch):
+        ClaraStepUpConsent().record_batch_consent(
+            batch_id=prepared["batch_id"],
+            actor_sub=OUTSIDER,
+            token_claims=_fresh_claims(OUTSIDER),
+            challenge_id=str(challenge["challenge_id"]),
+        )
+
+
+def test_consent_idempotent_double_submit(env):
+    """Dois cliques na página: o segundo devolve o estado vigente,
+    não erro."""
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "duplo clique")],
+        actor_sub=REVIEWER_C,
+    )
+    challenge = _challenge_for_batch(prepared["batch_id"])
+    first = ClaraStepUpConsent().record_batch_consent(
+        batch_id=prepared["batch_id"],
+        actor_sub=REVIEWER_C,
+        token_claims=_fresh_claims(REVIEWER_C),
+        challenge_id=str(challenge["challenge_id"]),
+    )
+    assert first["status"] == "CONFIRMED"
+    second = ClaraStepUpConsent().record_batch_consent(
+        batch_id=prepared["batch_id"],
+        actor_sub=REVIEWER_C,
+        token_claims=_fresh_claims(REVIEWER_C),
+        challenge_id=str(challenge["challenge_id"]),
+    )
+    assert second["status"] == "CONFIRMED"
+
+
+def test_forged_consent_record_rejected(env):
+    """consent_record escrito fora da superfície (sem desafio
+    aprovado) não habilita a execução — o confirm rejeita."""
+    orch = env["orchestrator"]
+    prepared = orch.prepare_batch(
+        operations=[_clarify_op(env, "forjado")], actor_sub=REVIEWER_C
+    )
+    # Injeta um consent_record que simula o formato do portal —
+    # sem challenge_id válido, confirm_batch não confia.
+    env["orchestrator"]._batches.record_consent(
+        handle=prepared["batch_handle"],
+        actor_sub=REVIEWER_C,
+        plan_hash=prepared["plan_hash"],
+        mode="CONSOLIDATED",
+        consent_record={
+            "type": "portal_step_up",
+            "confirmed_by": REVIEWER_C,
+            "plan_hash": prepared["plan_hash"],
+        },
+    )
+    with pytest.raises(ChecklistDomainError):
+        orch.confirm_batch(
+            handle=prepared["batch_handle"],
+            actor_sub=REVIEWER_C,
+            plan_hash=prepared["plan_hash"],
+        )
+
+
+def test_challenge_consumed_on_execute(env):
+    """O desafio é single-use: a execução o consome."""
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "consumo único")],
+        actor_sub=REVIEWER_C,
+    )
+    _consent_batch(prepared["batch_id"], REVIEWER_C)
+    env["orchestrator"].confirm_batch(
+        handle=prepared["batch_handle"],
+        actor_sub=REVIEWER_C,
+        plan_hash=prepared["plan_hash"],
+    )
+    env["orchestrator"].execute_batch(
+        handle=prepared["batch_handle"], actor_sub=REVIEWER_C
+    )
+    challenge = _challenge_for_batch(prepared["batch_id"])
+    assert challenge["status"] == "CONSUMED"
+    assert challenge["consumed_at"] is not None
+
+
+def test_batch_summary_presents_full_plan(env):
+    """R-CLARA-02: a superfície recebe o plano completo em
+    linguagem funcional — resumo, descrições, impedimentos."""
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[
+            _clarify_op(env, "Confirma a conciliação?"),
+            {"capability": "nao.existe", "params": {}},
+        ],
+        actor_sub=REVIEWER_C,
+    )
+    summary = ClaraStepUpConsent().batch_summary(
+        batch_id=prepared["batch_id"], actor_sub=REVIEWER_C
+    )
+    assert summary["consentable"] is True
+    assert summary["totals"]["total"] == 2
+    assert summary["totals"]["executable"] == 1
+    assert summary["totals"]["blocked"] == 1
+    assert summary["challenge"]["status"] == "PENDING"
+    assert summary["challenge"]["challenge_id"]
+    ops = summary["operations"]
+    assert ops[0]["viability"] == "executable"
+    assert "esclarecimento" in ops[0]["presentation"]["summary"].lower()
+    assert ops[0]["presentation"]["displayable"] is True
+    assert ops[0]["period"] == PERIOD
+    assert ops[1]["viability"] == "blocked"
+    assert ops[1]["block_reason"] == "unknown_capability"
+    assert ops[1]["block_message"]
+
+
+# == Contrato HTTP da superfície de consentimento (R-CLARA-01/02) ==============
+#
+# TestClient real sobre a app FastAPI: middleware de auth, rota BFF,
+# serviço de consentimento e PostgreSQL efêmero — só a ASSINATURA do
+# JWT é duplicada (responsabilidade do validator canônico, testada na
+# própria suíte); claims refletem o que Keycloak emitiria.
+
+
+@pytest.fixture
+def http_client(monkeypatch):
+    import delpi_auth.middleware.fastapi_auth as fa
+    from fastapi.testclient import TestClient
+
+    claims_holder = {
+        "claims": {
+            "sub": REVIEWER_C,
+            "email": "reviewer@delpi.com.br",
+            "name": "Revisor",
+            "iat": int(datetime.now(timezone.utc).timestamp()),
+            "jti": uuid.uuid4().hex,
+        }
+    }
+    rbac = {
+        "id": REVIEWER_C,
+        "email": "reviewer@delpi.com.br",
+        "name": "Revisor",
+        "roles": [],
+        "groups": [],
+        "permissions": ["controllership-finance.access"],
+        "is_superadmin": False,
+    }
+
+    async def _rbac_result(token, *, force_refresh=False):
+        return rbac
+
+    monkeypatch.setattr(
+        fa,
+        "request_has_valid_internal_service_token",
+        lambda request: False,
+    )
+    monkeypatch.setattr(
+        fa, "validate_token", lambda token: claims_holder["claims"]
+    )
+    monkeypatch.setattr(fa, "load_user_rbac", _rbac_result)
+    # A rota revalida o Bearer para obter iat/jti do step-up.
+    monkeypatch.setattr(
+        "controllership_finance_app.interface.http.routes."
+        "clara_consent_routes.validate_token",
+        lambda token: claims_holder["claims"],
+    )
+    from controllership_finance_app.main import app
+
+    client = TestClient(
+        app, headers={"Authorization": "Bearer portal-token"}
+    )
+    return client, claims_holder
+
+
+def test_http_get_batch_consent_view_full_plan(env, http_client):
+    """GET devolve plano completo + desafio para a página."""
+    client, _ = http_client
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "view http")],
+        actor_sub=REVIEWER_C,
+    )
+    response = client.get(f"/clara/batches/{prepared['batch_id']}")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["challenge"]["challenge_id"]
+    assert data["consentable"] is True
+    assert data["totals"]["executable"] == 1
+    assert data["operations"][0]["presentation"]["summary"]
+
+
+def test_http_post_consent_without_challenge_rejected(env, http_client):
+    """JWT válido sem challenge_id ⇒ 400 — token sozinho não prova
+    aprovação do plano."""
+    client, _ = http_client
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "sem challenge http")],
+        actor_sub=REVIEWER_C,
+    )
+    response = client.post(
+        f"/clara/batches/{prepared['batch_id']}/consent", json={}
+    )
+    assert response.status_code == 400
+    assert response.json()["data"]["error"]["code"] == (
+        "consent_challenge_required"
+    )
+
+
+def test_http_post_consent_stale_token_rejected(env, http_client):
+    """Token emitido ANTES do desafio não pode autorizá-lo."""
+    client, holder = http_client
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "stale http")],
+        actor_sub=REVIEWER_C,
+    )
+    holder["claims"]["iat"] = int(
+        (datetime.now(timezone.utc) - timedelta(minutes=30)).timestamp()
+    )
+    challenge = _challenge_for_batch(prepared["batch_id"])
+    response = client.post(
+        f"/clara/batches/{prepared['batch_id']}/consent",
+        json={"challenge_id": str(challenge["challenge_id"])},
+    )
+    assert response.status_code == 403
+    assert response.json()["data"]["error"]["code"] == (
+        "step_up_token_stale"
+    )
+
+
+def test_http_post_consent_happy_path(env, http_client):
+    """challenge_id + token fresco ⇒ CONFIRMED em uma transação."""
+    client, _ = http_client
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "happy http")],
+        actor_sub=REVIEWER_C,
+    )
+    view = client.get(
+        f"/clara/batches/{prepared['batch_id']}"
+    ).json()["data"]
+    response = client.post(
+        f"/clara/batches/{prepared['batch_id']}/consent",
+        json={"challenge_id": view["challenge"]["challenge_id"]},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "CONFIRMED"
+    challenge = _challenge_for_batch(prepared["batch_id"])
+    assert challenge["status"] == "APPROVED"
+    assert challenge["approved_by"] == REVIEWER_C
+
+
+def test_http_get_batch_wrong_actor_forbidden(env, http_client):
+    client, _ = http_client
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "outro ator http")],
+        actor_sub=OUTSIDER,
+    )
+    response = client.get(f"/clara/batches/{prepared['batch_id']}")
+    assert response.status_code == 403

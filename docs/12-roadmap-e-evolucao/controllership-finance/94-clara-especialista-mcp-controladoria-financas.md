@@ -303,3 +303,21 @@ Evidências deste documento: `shared/delpi_mcp/*` (docstrings e testes),
 ## 15. Decisão posterior vinculante — CLARA batch, Keycloak e ChatGPT (25/10/2026)
 
 **[Documento 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md) é a authority posterior para múltiplas operações com mínima interação, intenção autenticada atestada ou confirmação consolidada quando necessária, e auditoria por ação.** Substitui o requisito histórico de confirmação conversacional isolada *por operação*, não o requisito de consentimento comprovável, autorização Core, ownership/scope e invariantes C2. Os parágrafos anteriores de D01 e §10.1 sobre confirmação individual devem ser lidos como **SUPERSEDED pela aprovação do lote**. A solução física de atestação permanece DECISION_REQUIRED no gate de segurança. A implementação ACT anterior tem correções pendentes (claim antes do efeito, single-use concorrente, snapshot fail-closed e read-back independente) e deve permanecer desabilitada/fail-closed em produção até PASS. Keycloak e deploy só após G2 humano e G3 Operador SSH.
+
+
+### Adendo — consentimento por desafio e apresentação completa (V014)
+
+O consentimento consolidado deixa de ser inferido da idade do JWT
+(`iat`) e passa a ser um **artefato verificável**
+(`clara_consent_challenge`, V014): emitido no PREPARE, aprovado uma
+única vez pela superfície confiável do Portal e consumido na
+transação de claim — binding exato de ator, lote/proposta,
+`plan_hash` e versão (Documento 106, Adendo 4; R-CLARA-01).
+
+A página de consentimento passa a exibir **apresentação funcional
+completa** de cada operação — descrição em português, recurso,
+efeito, motivo, dependências e impedimentos — gerada por
+`operation_presentation.py` a partir do plano selado persistido
+(nunca reconstruída no frontend; R-CLARA-02). Operações que o
+servidor não consegue apresentar com clareza são exibidas como
+bloqueadas e não podem ser autorizadas implicitamente.

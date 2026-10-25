@@ -32,6 +32,9 @@ from controllership_finance_app.application.clara.step_up_consent import (
     ConsentRequired,
     StepUpTokenStale,
 )
+from controllership_finance_app.infrastructure.persistence.clara_consent_challenge_repository import (
+    ClaraConsentChallengeRepository,
+)
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
 )
@@ -153,7 +156,7 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def env(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-1] == "V013__clara_step_up_consent.sql"
+    assert applied[-1] == "V014__clara_consent_challenge.sql"
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     checklist.submit_version_for_review(template_id, 1, actor=ADMIN)
@@ -383,6 +386,9 @@ def _consent_proposal(proposal: dict, actor: str) -> None:
     ``iat`` posterior ao PREPARE, como o Portal produz via refresh
     Keycloak. A assinatura JWT em si é validada na camada HTTP.
     """
+    challenge = ClaraConsentChallengeRepository().latest_for_proposal(
+        proposal_id=str(proposal["proposal_id"])
+    )
     ClaraStepUpConsent().record_proposal_consent(
         proposal_id=str(proposal["proposal_id"]),
         actor_sub=actor,
@@ -391,6 +397,7 @@ def _consent_proposal(proposal: dict, actor: str) -> None:
             "sub": actor,
             "jti": uuid.uuid4().hex,
         },
+        challenge_id=str(challenge["challenge_id"]),
     )
 
 
@@ -651,11 +658,15 @@ def test_step_up_token_stale_rejected(env):
     stale_iat = int(
         (datetime.now(timezone.utc) - timedelta(minutes=30)).timestamp()
     )
+    challenge = ClaraConsentChallengeRepository().latest_for_proposal(
+        proposal_id=str(proposal["proposal_id"])
+    )
     with pytest.raises(StepUpTokenStale):
         ClaraStepUpConsent().record_proposal_consent(
             proposal_id=str(proposal["proposal_id"]),
             actor_sub=REVIEWER_C,
             token_claims={"iat": stale_iat, "sub": REVIEWER_C},
+            challenge_id=str(challenge["challenge_id"]),
         )
 
 
@@ -674,11 +685,15 @@ def test_step_up_token_future_iat_rejected(env):
     future_iat = int(
         (datetime.now(timezone.utc) + timedelta(minutes=10)).timestamp()
     )
+    challenge = ClaraConsentChallengeRepository().latest_for_proposal(
+        proposal_id=str(proposal["proposal_id"])
+    )
     with pytest.raises(StepUpTokenStale):
         ClaraStepUpConsent().record_proposal_consent(
             proposal_id=str(proposal["proposal_id"]),
             actor_sub=REVIEWER_C,
             token_claims={"iat": future_iat, "sub": REVIEWER_C},
+            challenge_id=str(challenge["challenge_id"]),
         )
 
 
@@ -762,3 +777,173 @@ def test_commit_resume_unknown_never_replays(env):
         )
         row = cur.fetchone()
     assert row is not None and row[0] == "OPEN"
+
+
+# == Consent challenge (R-CLARA-01, V014) ========================================
+
+
+def _challenge_for_proposal(proposal_id: str) -> dict:
+    challenge = ClaraConsentChallengeRepository().latest_for_proposal(
+        proposal_id=proposal_id
+    )
+    assert challenge is not None
+    return challenge
+
+
+def _fresh_claims(actor: str) -> dict:
+    return {
+        "iat": int(datetime.now(timezone.utc).timestamp()),
+        "sub": actor,
+        "jti": uuid.uuid4().hex,
+    }
+
+
+def test_proposal_challenge_issued_on_prepare(env):
+    proposal = env["writes"].prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Desafio emitido no prepare.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    challenge = _challenge_for_proposal(str(proposal["proposal_id"]))
+    assert challenge["kind"] == "proposal"
+    assert challenge["actor_sub"] == REVIEWER_C
+    assert challenge["status"] == "PENDING"
+    assert challenge["origin"] == "portal"
+    assert len(challenge["plan_hash"]) == 64
+
+
+def test_proposal_consent_requires_challenge_id(env):
+    from controllership_finance_app.application.clara.step_up_consent import (
+        ConsentChallengeRequired,
+    )
+
+    proposal = env["writes"].prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Sem challenge.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    with pytest.raises(ConsentChallengeRequired):
+        ClaraStepUpConsent().record_proposal_consent(
+            proposal_id=str(proposal["proposal_id"]),
+            actor_sub=REVIEWER_C,
+            token_claims=_fresh_claims(REVIEWER_C),
+            challenge_id=None,
+        )
+
+
+def test_proposal_consent_wrong_challenge_rejected(env):
+    from controllership_finance_app.infrastructure.persistence.clara_consent_challenge_repository import (
+        ConsentChallengeMismatch,
+    )
+
+    proposal_a = env["writes"].prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Proposta A.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    proposal_b = env["writes"].prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Proposta B.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    challenge_b = _challenge_for_proposal(str(proposal_b["proposal_id"]))
+    with pytest.raises(ConsentChallengeMismatch):
+        ClaraStepUpConsent().record_proposal_consent(
+            proposal_id=str(proposal_a["proposal_id"]),
+            actor_sub=REVIEWER_C,
+            token_claims=_fresh_claims(REVIEWER_C),
+            challenge_id=str(challenge_b["challenge_id"]),
+        )
+
+
+def test_commit_forged_consent_record_rejected(env):
+    """consent_record sem desafio aprovado não habilita o commit —
+    a verificação exige o objeto de autorização vinculado."""
+    writes = env["writes"]
+    proposal = writes.prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Registro forjado.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    env["writes"]._proposals.record_consent(
+        proposal_id=str(proposal["proposal_id"]),
+        actor_sub=REVIEWER_C,
+        consent_record={
+            "type": "portal_step_up",
+            "confirmed_by": REVIEWER_C,
+        },
+    )
+    with pytest.raises(ConsentRequired):
+        writes.commit(
+            handle=proposal["proposal_handle"],
+            actor_sub=REVIEWER_C,
+        )
+
+
+def test_proposal_challenge_consumed_on_commit(env):
+    writes = env["writes"]
+    proposal = writes.prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Consumo no claim.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    _consent_proposal(proposal, REVIEWER_C)
+    writes.commit(
+        handle=proposal["proposal_handle"], actor_sub=REVIEWER_C
+    )
+    challenge = _challenge_for_proposal(str(proposal["proposal_id"]))
+    assert challenge["status"] == "CONSUMED"
+
+
+def test_proposal_summary_presentation(env):
+    """R-CLARA-02: a superfície recebe descrição funcional, não só
+    capability/UUID."""
+    proposal = env["writes"].prepare(
+        capability="clarification.open",
+        params={
+            "period": PERIOD,
+            "package_version_id": env["version_id"],
+            "question": "Apresentação funcional.",
+            "area": "CONTABIL",
+        },
+        actor_sub=REVIEWER_C,
+    )
+    summary = ClaraStepUpConsent().proposal_summary(
+        proposal_id=str(proposal["proposal_id"]), actor_sub=REVIEWER_C
+    )
+    assert summary["consentable"] is True
+    assert summary["presentation"]["displayable"] is True
+    assert "esclarecimento" in summary["presentation"]["summary"].lower()
+    assert summary["presentation"]["motivation"]
+    assert summary["challenge"]["status"] == "PENDING"
+    assert summary["period_label"]

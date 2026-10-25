@@ -224,6 +224,17 @@ class ClaraProposalRepository:
                         raise ProposalConsumed(
                             "Proposta já reivindicada ou consumida."
                         )
+                    # Consome o desafio de consentimento no claim —
+                    # autorização single-use (V014).
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_consent_challenge')}
+                           SET status = 'CONSUMED', consumed_at = now()
+                         WHERE proposal_id = %s
+                           AND status = 'APPROVED'
+                        """,
+                        (claimed["proposal_id"],),
+                    )
                     return claimed
 
     def record_result(self, *, handle: str, result: dict) -> dict:
@@ -337,6 +348,17 @@ class ClaraProposalRepository:
                         raise ProposalConsumed(
                             "Proposta já reivindicada ou consumida."
                         )
+                    # Consome o desafio de consentimento no claim —
+                    # autorização single-use (V014).
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_consent_challenge')}
+                           SET status = 'CONSUMED', consumed_at = now()
+                         WHERE proposal_id = %s
+                           AND status = 'APPROVED'
+                        """,
+                        (claimed["proposal_id"],),
+                    )
                     return claimed
 
     def record_result_by_id(

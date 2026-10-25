@@ -57,6 +57,12 @@ from controllership_finance_app.infrastructure.persistence.clara_batch_repositor
     BatchTerminal,
     ClaraBatchRepository,
 )
+from controllership_finance_app.application.clara.operation_presentation import (
+    present_operation,
+)
+from controllership_finance_app.infrastructure.persistence.clara_consent_challenge_repository import (
+    ClaraConsentChallengeRepository,
+)
 from controllership_finance_app.infrastructure.persistence.clara_proposal_repository import (
     ClaraProposalRepository,
 )
@@ -111,6 +117,7 @@ class ClaraBatchOrchestrator:
         self._writes = writes or ClaraGovernedWrites()
         self._proposals = proposals or self._writes._proposals
         self._batches = batches or ClaraBatchRepository()
+        self._challenges = ClaraConsentChallengeRepository()
 
     # -- PLAN -----------------------------------------------------------
 
@@ -142,6 +149,9 @@ class ClaraBatchOrchestrator:
                 op["status"] = "blocked"
                 op["block_reason"] = "missing_params"
                 op["missing_params"] = missing
+                op["presentation"] = present_operation(
+                    op["capability"], op["params"]
+                )
                 classified.append(op)
                 continue
             try:
@@ -154,6 +164,12 @@ class ClaraBatchOrchestrator:
             op["resource_type"] = spec["resource_type"]
             op["resource_key"] = resource_key
             op["description"] = spec["describe"](op["params"])
+            # R-CLARA-02: apresentação funcional selada com o plano —
+            # a página de consentimento exibe exatamente o que o
+            # plan_hash cobre (mesma capability + params).
+            op["presentation"] = present_operation(
+                op["capability"], op["params"]
+            )
             # Snapshot fail-closed por operação: indisponível ⇒ blocked.
             try:
                 expected_state = self._writes._snapshot(
@@ -287,6 +303,15 @@ class ClaraBatchOrchestrator:
             ttl_seconds=BATCH_TTL_SECONDS,
             correlation_id=correlation_id,
         )
+        # R-CLARA-01: desafio de consentimento emitido com o lote —
+        # vincula ator + plan_hash + expiração (V014).
+        self._challenges.issue_for_batch(
+            batch_id=str(batch["batch_id"]),
+            actor_sub=actor_sub,
+            plan_hash=plan["plan_hash"],
+            expires_at=batch["expires_at"],
+            correlation_id=correlation_id,
+        )
         _audit_mcp(
             entity_type="clara_batch",
             entity_id=str(batch["batch_id"]),
@@ -392,6 +417,12 @@ class ClaraBatchOrchestrator:
                 record.get("type") == CONSENT_TYPE_PORTAL_STEP_UP
                 and record.get("confirmed_by") == actor_sub
                 and record.get("plan_hash") == plan_hash
+                and self._challenges.verify_batch_binding(
+                    challenge_id=record.get("challenge_id"),
+                    batch_id=str(batch["batch_id"]),
+                    actor_sub=actor_sub,
+                    plan_hash=plan_hash,
+                )
             )
             if batch["status"] == "CONFIRMED" and trusted:
                 updated = {

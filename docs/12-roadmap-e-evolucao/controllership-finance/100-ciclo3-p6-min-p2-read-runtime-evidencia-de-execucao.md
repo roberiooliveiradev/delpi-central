@@ -1132,3 +1132,22 @@ derivada autorizada (docs 54, 56, 57, 78), marcada
 | Governed writes | ciclo completo comprovado em PG real |
 | G1 remanescente | inalterado (T03, fontes oficiais R04+, T05 dedicado, seeds, OVW) |
 | G2 / G3 | **PENDENTES** — aceite humano e liberação do Operador SSH não foram realizados; deploy produtivo **não executado** |
+
+
+## Adendo — Consent challenge CLARA (CF-PROC0072-CLARA-CONSENT-FINAL-REWORK-001)
+
+Rework final do consentimento CLARA (R-CLARA-01 prova de aprovação
+vinculada ao plano; R-CLARA-02 apresentação completa), sob authority
+do Documento 106 Adendo 3.
+
+### Evidência de execução
+
+| Item | Resultado |
+|---|---|
+| Migration | V014 `clara_consent_challenge` aplicada em PG efêmero (up-only, não destrutiva); produção não tocada |
+| Backend `tests/` | **595 passed** — inclui 61 testes CLARA PG (challenge binding, ator/lote errado, plano divergente, expiração, reutilização, consumo único, concorrência de aprovação, MCP direto sem Portal, injection forjada, revogação de permissão, lotes 2/5/20 com dependências e falha parcial, reconcile UNKNOWN) |
+| Contrato HTTP | `TestClient` real sobre a app — GET plano+challenge, POST sem challenge 400, iat anterior ao desafio 403, happy path CONFIRMED/APPROVED, ator alheio 403 |
+| MCP surface | 13 passed — 18 tools, schemas sem flag de consentimento |
+| MFE | 177 vitest + 25 tsx/mjs; `ClaraConsentPage` 7 testes; build verde |
+| Portal | `tsc -b` limpo |
+| Não executado | E2E ChatGPT real, deploy produtivo — aguardam G2/G3 |

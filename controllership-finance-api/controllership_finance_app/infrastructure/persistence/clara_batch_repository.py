@@ -345,7 +345,19 @@ class ClaraBatchRepository:
                         """,
                         (batch["batch_id"],),
                     )
-                    return cur.fetchone()
+                    claimed = cur.fetchone()
+                    # Consome o desafio de consentimento do lote no
+                    # mesmo claim — autorização single-use (V014).
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_consent_challenge')}
+                           SET status = 'CONSUMED', consumed_at = now()
+                         WHERE batch_id = %s
+                           AND status = 'APPROVED'
+                        """,
+                        (batch["batch_id"],),
+                    )
+                    return claimed
 
     def list_operations(self, *, batch_id: str) -> list[dict]:
         with self._conn() as conn:

@@ -1,10 +1,12 @@
 """CLARA — superfície confiável de consentimento (Portal step-up).
 
 Estas rotas BFF são a ÚNICA forma de gravar ``consent_record`` no
-Modo B: exigem usuário humano autenticado (``access``) com token
-Keycloak emitido **depois** do PREPARE (``iat >= created_at``). O
-refresh token que produz esse JWT novo vive na sessão do Portal —
-o assistente não consegue fabricá-lo a partir do token MCP.
+Modo B. A aprovação exige o ``challenge_id`` emitido no PREPARE —
+objeto de autorização vinculado a ator, alvo, plano selado e
+expiração (V014) — mais token Keycloak emitido **depois** do desafio
+(``iat >= challenge.created_at``). O refresh token que produz esse
+JWT novo vive na sessão do Portal: nem a chamada MCP, nem um JWT
+recente isolado, nem um desafio de outro alvo autorizam o plano.
 
 O canal MCP nunca escreve consentimento; ele apenas lê o estado
 (CONFIRMED) gravado aqui.
@@ -90,11 +92,24 @@ def get_clara_batch(
     return ok(result, operation_id="get_clara_batch_consent_view")
 
 
+async def _challenge_id(request: Request) -> str | None:
+    """`challenge_id` do corpo — a aprovação é do desafio emitido no
+    PREPARE, nunca de um batch_id solto (R-CLARA-01)."""
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        return None
+    if not isinstance(body, dict):
+        return None
+    value = body.get("challenge_id")
+    return str(value) if value else None
+
+
 @router.post(
     "/batches/{batch_id}/consent",
     operation_id="record_clara_batch_consent",
 )
-def record_clara_batch_consent(
+async def record_clara_batch_consent(
     request: Request,
     batch_id: uuid.UUID = Path(),
 ):
@@ -105,6 +120,7 @@ def record_clara_batch_consent(
             batch_id=str(batch_id),
             actor_sub=actor,
             token_claims=claims,
+            challenge_id=await _challenge_id(request),
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "record_clara_batch_consent")
@@ -133,7 +149,7 @@ def get_clara_proposal(
     "/proposals/{proposal_id}/consent",
     operation_id="record_clara_proposal_consent",
 )
-def record_clara_proposal_consent(
+async def record_clara_proposal_consent(
     request: Request,
     proposal_id: uuid.UUID = Path(),
 ):
@@ -144,6 +160,7 @@ def record_clara_proposal_consent(
             proposal_id=str(proposal_id),
             actor_sub=actor,
             token_claims=claims,
+            challenge_id=await _challenge_id(request),
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "record_clara_proposal_consent")

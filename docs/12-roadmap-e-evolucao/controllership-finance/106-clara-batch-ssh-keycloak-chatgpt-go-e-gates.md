@@ -204,3 +204,127 @@ do assistente não consegue produzir.
 ## Adendo 3 — prioridade de aceite real no ChatGPT, 25/10/2026
 
 A decisão posterior do PO está em [Documento 107](./107-clara-validacao-antecipada-chatgpt-release-hoje.md): priorizar disponibilização do MCP **em ambiente de teste autorizado**, após corrigir prova de consentimento/visualização do plano, para que o usuário teste a CLARA no ChatGPT **antes** de G2/G3 de produção. Isso não altera a exigência de G2 humano e G3 Operador SSH para configuração e deploy produtivos. A ficha ChatGPT deve separar valores de TESTE e PROD, com verificações reais, sem secrets. O prazo de hoje é meta, não autorização inferida nem PASS. Nova decisão material/alteração de estado deve atualizar a documentação do GitHub antes de ser declarada encerrada.
+## Adendo 4 — Consent challenge V014 (R-CLARA-01/R-CLARA-02)
+
+`EXECUTION_ID: CF-PROC0072-CLARA-CONSENT-FINAL-REWORK-001` —
+rework final do consentimento solicitado pelo PO após revisão
+independente da entrega `d59e972a`. Duas falhas corrigidas na
+mesma entrega, sem reconstruir MCP, orquestrador, Keycloak engine
+ou fluxo P1–P6.
+
+### Problema anterior e causa raiz
+
+| Falha | Causa raiz |
+|---|---|
+| **R-CLARA-01** — consentimento excessivamente inferido do JWT | `record_*_consent` aceitava como prova de aprovação humana um `iat` posterior ao `created_at` do artefato (±skew ~10s). Um JWT recém-emitido prova apenas **sessão fresca**, não manifestação humana sobre um plano específico — qualquer superfície capaz de obter token fresco poderia "consentir" sem exibir o plano. |
+| **R-CLARA-02** — apresentação incompleta | `ClaraConsentPage` exibia capability/tipo/UUID/estado — insuficiente para o usuário compreender o que autorizava. |
+
+### Contrato adotado (authority: este documento + Doc 14)
+
+Separação explícita de provas:
+
+```text
+identidade autenticada   → Bearer canônico (validate_token) + authorized_user
+sessão válida            → middleware FastAPI canônico
+frescor de autenticação  → iat do token step-up ≥ challenge.created_at
+aprovação humana         → clara_consent_challenge APPROVED (só via BFF)
+vínculo ao plano         → challenge.actor_sub + batch_id/proposal_id +
+                           plan_hash + plan_version exatos
+consumo único            → challenge CONSUMED na mesma transação do claim
+```
+
+**`clara_consent_challenge` (V014)** é o artefato de autorização:
+`challenge_id` aleatório emitido no PREPARE, `actor_sub`,
+`batch_id`/`proposal_id`, `plan_hash`, `plan_version`, `created_at`,
+`approved_at`, `expires_at`, `consumed_at`, `status`
+(`PENDING→APPROVED→CONSUMED`, `EXPIRED`), `origin`,
+`correlation_id`, `approved_by`, `approved_jti`. Nenhum boolean ou
+texto no chat autoriza; o modelo não recebe nem pode produzir o
+challenge — ele vive entre PREPARE (servidor) → Portal (BFF) →
+consumo (transação de claim).
+
+### Fluxo físico
+
+```text
+PREPARE (prepare/prepare_batch)
+  → selo do plano (plan_hash + plan_version)
+  → issue_challenge(actor, artefato, plan_hash, version, ttl)
+  → resposta: challenge_id + confirmation_url + apresentação
+Portal (clara-consent?batch|proposal=<id>)
+  → GET /clara/{batches|proposals}/{id} → plano completo + challenge
+  → usuário lê descrição funcional de CADA operação + bloqueadas
+  → getFreshAccessToken() (Keycloak updateToken) + POST consent
+    {challenge_id}
+BFF (clara_consent_routes)
+  → validate_token canônico (iat/jti) + authorized_user
+  → approve_atomically: valida ator, artefato, plan_hash,
+    plan_version, origem, expiração, status; 1ª aprovação vence
+    corrida (idempotente no mesmo challenge+ator)
+confirm_batch / commit (MCP)
+  → lê consent_record do artefato + challenge
+  → claim transacional consome o desafio (FOR UPDATE, single-use)
+  → execução segue revalidando permissões/regras por operação
+```
+
+Permissão revogada entre aprovação e execução continua falhando —
+consentimento **nunca** substitui autorização canônica.
+
+### Implementação
+
+| Item | Estado |
+|---|---|
+| Migration | **V014** `clara_consent_challenge` — constraints de vínculo (exactly-one de batch/proposal), status enum, índices (pendentes por ator/artefato, correlation) |
+| Repositório | `clara_consent_challenge_repository.py` — `issue`, `get`, `approve_atomically` (UPDATE condicional `status='PENDING' AND expires_at>now`), `consume` (FOR UPDATE na tx do claim) |
+| Apresentação (R-CLARA-02) | `operation_presentation.py` — descrição funcional PT por capability (resumo/efeito/motivo/labels de domínio); operações indescritíveis viram `blocked` com impedimento "apresentação indisponível" |
+| `step_up_consent` | `record_*_consent` exige `challenge_id`; `iat` verificado **contra o desafio**, não como prova isolada; idempotência honesta (mesmo challenge+ator ⇒ estado vigente); GETs devolvem plano selado + challenge |
+| `batch_orchestrator` | emite desafio no `prepare_batch`; `confirm_batch` exige challenge `APPROVED` vinculado ao `plan_hash` exato; consumo no claim do `execute_batch` |
+| `governed_writes` | emite desafio no `prepare` single-op; `commit` verifica consent_record + challenge e consome no claim atômico; resume/UNKNOWN preservado |
+| Rotas BFF | POST consent aceita `{challenge_id}` (400 sem ele); GET devolve `operations[].presentation`, `totals`, `challenge`, `consentable`, `expires_at` |
+| MCP | schemas inalterados — nenhum parâmetro de confirmação; `confirm_batch`/`commit_proposal` nunca recebem flag do modelo |
+| Attestation (Modo A) | PRESERVED — contrato HMAC inalterado, fail-closed sem segredo |
+| Frontend | `ClaraConsentPage` reescrita: resumo do lote (competência, ator, totais, expiração, plan_hash/version), uma linha por operação com descrição funcional + efeito + motivo + dependências + estado, bloqueadas com impedimento, **um único botão** «Autorizar N operações», estados loading/erro/expirado/recusa/sucesso/já-confirmado acessíveis; `claraConsentApi` envia `{challenge_id}` via `httpPostStepUp` |
+| Ajuda | `helpTooltips` atualizado no mesmo commit |
+
+### Testes executados
+
+PostgreSQL real (container efêmero `pgvector/pgvector:pg15`,
+migrations V001–V014):
+
+- **61/61** `test_pg_clara.py` + `test_pg_clara_batch.py`,
+  incluindo os novos: criação/binding do desafio, ator errado,
+  lote errado, plan_hash divergente, versão divergente, expiração,
+  reutilização pós-consumo, confirmação MCP direta sem consent do
+  Portal, ACT de lote sem consent, injection `confirmed=true`
+  rejeitada, idempotência de dupla submissão, concorrência de
+  aprovação (1 vencedor), consumo single-use no claim, permissão
+  revogada entre aprovação e execução, lotes 2/5/20 operações com
+  dependências e falha parcial, reconciliação `CLAIMED→UNKNOWN`.
+- **Contrato HTTP real** (`TestClient` sobre a app FastAPI,
+  middleware de auth efetivo — só a assinatura JWT é substituída
+  pelo validator canônico em teste): GET com plano+challenge, POST
+  sem `challenge_id` ⇒ 400, token anterior ao desafio ⇒ 403,
+  happy path ⇒ CONFIRMED + APPROVED, ator alheio ⇒ 403.
+- **Regressão completa `tests/`**: 595 passed.
+- `test_clara_mcp_surface.py`: 13 passed (18 tools, schemas sem
+  flag de consentimento).
+- MFE: 177 vitest + 25 tsx/mjs — `ClaraConsentPage` 7 testes
+  (resumo, descrições, bloqueada, expirado, sessão, recusa,
+  sucesso, consentimento único, ator divergente); `npm run build`
+  verde; Portal `tsc -b` limpo.
+
+Não executado (honesto): E2E no ChatGPT real e deploy produtivo —
+aguardam G2/G3.
+
+### Residual conhecido
+
+- `iat` segue como evidência auxiliar de frescor de sessão
+  (janela de segundos); a prova de aprovação é o desafio —
+  um token fresco sem aprovação registrada não autoriza nada.
+- O `challenge_id` é um bearer secret de curta duração vinculado
+  ao ator+sessão; não é secret de plataforma e nunca sai para o
+  canal MCP.
+- Modo A (HMAC host attestation) preservado sem alteração de
+  contrato — gate físico do host segue pendente de owner.
+
+SHA: `FINAL_HEAD` do commit desta entrega em `main`
+(registrado no relatório CF-PROC0072-CLARA-CONSENT-FINAL-REWORK-001).

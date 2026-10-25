@@ -28,11 +28,11 @@ export const CF_HELP = {
   },
   claraConsent: {
     page:
-      "Consentimento verificável: o que a CLARA preparou só executa depois do seu clique aqui — esta página renova a sua sessão e registra a autorização com uma credencial que a conversa não consegue produzir. Responder «sim» no chat não autoriza nada.",
+      "Autorização verificável: o plano que a CLARA preparou só executa depois do seu clique aqui. Esta página mostra o plano selado por inteiro — o que você vê é exatamente o que será autorizado — e devolve ao servidor a autorização emitida no preparo, com sessão renovada. Responder «sim» no chat não autoriza nada.",
     batch:
-      "O lote inteiro é consentido de uma vez: revise as operações, os recursos e a ordem — o plano não pode ser ampliado depois do consentimento.",
+      "O lote inteiro é autorizado de uma vez: revise cada operação — descrição, efeito, motivo, dependências e impedimentos. Operações bloqueadas aparecem como bloqueadas e não são autorizadas. O plano não pode ser ampliado depois.",
     proposal:
-      "Revise a operação exata (capability, recurso, parâmetros e validade) antes de consentir — depois peça a execução na conversa com a CLARA.",
+      "Revise a operação exata — descrição, efeito, motivo e validade — antes de autorizar; depois peça a execução na conversa com a CLARA.",
   },
   closing: {
     page:
