@@ -22,8 +22,7 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Callable
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
@@ -34,11 +33,6 @@ from controllership_finance_app.domain.closing_checklist.errors import (
 )
 from controllership_finance_app.infrastructure.persistence.clara_proposal_repository import (
     ClaraProposalRepository,
-    ProposalConsumed,
-    ProposalNotFound,
-    ProposalActorMismatch,
-    ProposalExpired,
-    handle_hash,
 )
 from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
     ClosingPackageRepository,
@@ -68,6 +62,11 @@ class ProposalStale(ChecklistDomainError):
 class OutcomeVerificationFailed(ChecklistDomainError):
     code = "outcome_verification_failed"
     status = 502
+
+
+class SnapshotUnavailable(ChecklistDomainError):
+    code = "snapshot_unavailable"
+    status = 503
 
 
 class UnknownCapability(ChecklistDomainError):
@@ -113,6 +112,23 @@ def _audit_mcp(
                 )
     except Exception:  # noqa: BLE001 — trilha best-effort, nunca reabre ACT
         logger.warning("clara_audit_write_failed type=%s", event_type)
+
+
+def _state_present(state: dict) -> bool:
+    """True se o snapshot conhece um state/status real do recurso.
+
+    Ids ecoados dos params não provam existência — recurso
+    inexistente devolve dict de Nones e é indisponível para
+    selagem, não um estado válido.
+    """
+    for key, value in (state or {}).items():
+        if isinstance(value, dict):
+            if _state_present(value):
+                return True
+            continue
+        if key in {"state", "status"} and value is not None:
+            return True
+    return False
 
 
 class ClaraGovernedWrites:
@@ -169,9 +185,15 @@ class ClaraGovernedWrites:
                     "package_version_id": str(version_id),
                     "version": version,
                 }
-        except Exception:  # noqa: BLE001 — snapshot é best-effort
-            return {}
-        return {}
+        except ChecklistDomainError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — fail-closed
+            raise SnapshotUnavailable(
+                "Snapshot do recurso indisponível — operação bloqueada."
+            ) from exc
+        raise SnapshotUnavailable(
+            "Snapshot do recurso indisponível — operação bloqueada."
+        )
 
     def _item_key_of_document(self, period: str, document_id: Any) -> Any:
         with plugins_db_connect() as conn:
@@ -243,6 +265,35 @@ class ClaraGovernedWrites:
             "package_version_id": str(row[1]) if row else None,
         }
 
+    # -- read-back independente (S3) ------------------------------------------
+    # `verify` confere o shape do retorno; `postcondition` relê o
+    # recurso no banco e valida a pós-condição de negócio. Nunca
+    # declarar sucesso pelo identificador retornado.
+
+    def _pc_review_decision(self, decision_id: Any) -> bool:
+        with plugins_db_connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT 1 FROM {_SCHEMA}.closing_review_decision
+                 WHERE decision_id = %s
+                """,
+                (str(decision_id),),
+            ).fetchone()
+        return row is not None
+
+    def _pc_clarification_state(
+        self, clarification_id: Any, expected: str
+    ) -> bool:
+        with plugins_db_connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT state FROM {_SCHEMA}.closing_clarification
+                 WHERE clarification_id = %s
+                """,
+                (str(clarification_id),),
+            ).fetchone()
+        return bool(row) and row[0] == expected
+
     # -- capabilities --------------------------------------------------------
 
     def _capability_table(self) -> dict[str, dict]:
@@ -269,6 +320,15 @@ class ClaraGovernedWrites:
                 "verify": lambda p, result: result.get("item_state")
                 in {"ACCEPTED", "REJECTED", "EXPECTED", "NEEDS_REVIEW",
                     "PARTIAL"},
+                "postcondition": lambda p, result, actor: (
+                    self._item_state(
+                        p["period"],
+                        self._item_key_of_document(
+                            p["period"], p["document_id"]
+                        ),
+                    ).get("state")
+                    == result.get("item_state")
+                ),
             },
             "evidence.decide_item_set": {
                 "resource_type": "competence_checklist_item",
@@ -290,6 +350,12 @@ class ClaraGovernedWrites:
                 "verify": lambda p, result: result.get("item_state")
                 in {"ACCEPTED", "REJECTED", "EXPECTED", "NEEDS_REVIEW",
                     "PARTIAL"},
+                "postcondition": lambda p, result, actor: (
+                    self._item_state(p["period"], p["item_key"]).get(
+                        "state"
+                    )
+                    == result.get("item_state")
+                ),
             },
             "review.record_decision": {
                 "resource_type": "closing_package_version",
@@ -316,6 +382,11 @@ class ClaraGovernedWrites:
                 "verify": lambda p, result: bool(
                     result.get("decision_id")
                 ),
+                "postcondition": lambda p, result, actor: (
+                    self._pc_review_decision(
+                        result.get("decision_id")
+                    )
+                ),
             },
             "clarification.open": {
                 "resource_type": "closing_package_version",
@@ -339,6 +410,11 @@ class ClaraGovernedWrites:
                 "verify": lambda p, result: bool(
                     result.get("clarification_id")
                 ),
+                "postcondition": lambda p, result, actor: (
+                    self._pc_clarification_state(
+                        result.get("clarification_id"), "OPEN"
+                    )
+                ),
             },
             "clarification.resolve": {
                 "resource_type": "closing_clarification",
@@ -358,8 +434,27 @@ class ClaraGovernedWrites:
                 ),
                 "verify": lambda p, result: result.get("state")
                 == "RESOLVED",
+                "postcondition": lambda p, result, actor: (
+                    self._pc_clarification_state(
+                        p["clarification_id"], "RESOLVED"
+                    )
+                ),
             },
         }
+
+    def _readback(
+        self, spec: dict, payload: dict, result: dict, actor: str
+    ) -> bool:
+        # Pós-condição por leitura independente do recurso.
+        pc = spec.get('postcondition')
+        if pc is None:
+            return bool(result)
+        try:
+            return bool(pc(payload, result, actor))
+        except ChecklistDomainError:
+            raise
+        except Exception:  # noqa: BLE001
+            return False
 
     def capabilities(self) -> list[dict]:
         return [
@@ -391,6 +486,11 @@ class ClaraGovernedWrites:
             _require(params, name)
         resource_key = spec["resource_key"](params)
         expected_state = self._snapshot(capability, params)
+        if not expected_state or not _state_present(expected_state):
+            raise SnapshotUnavailable(
+                "Não foi possível selar o estado do recurso — "
+                "PREPARE bloqueado."
+            )
         handle = uuid.uuid4().hex + uuid.uuid4().hex
         proposal = self._proposals.create(
             handle=handle,
@@ -436,54 +536,97 @@ class ClaraGovernedWrites:
         user_groups: Any = (),
         correlation_id: str | None = None,
     ) -> dict:
-        proposal = self._proposals.load_for_actor(
+        # Claim atômico ANTES de qualquer efeito: duas ACTs simultâneas
+        # sobre a mesma proposta têm exatamente um vencedor; a
+        # concorrente recebe `proposal_stale`. Posse do handle não
+        # autoriza — claim só liga ator+proposta; autorização efetiva é
+        # reaplicada pelos repositórios canônicos na execução.
+        proposal = self._proposals.claim(
             handle=handle, actor_sub=actor_sub
         )
-        expires_at = proposal["expires_at"]
-        now = datetime.now(timezone.utc)
-        if getattr(expires_at, "tzinfo", None) is None and isinstance(
-            expires_at, datetime
-        ):
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        if expires_at < now:
-            raise ProposalExpired("Proposta expirada.")
         capability = proposal["capability"]
         spec = self._capability_table().get(capability)
         if spec is None:
+            self._proposals.record_result(
+                handle=handle,
+                result={"outcome": "failed",
+                        "error_code": "unknown_capability"},
+            )
             raise UnknownCapability(
                 f"Capability desconhecida: {capability}."
             )
         payload = proposal["payload"]
-        # Staleness: o estado vigente deve ser o selado no PREPARE.
-        current = self._snapshot(capability, payload)
-        if proposal["expected_state"] and current != proposal[
-            "expected_state"
-        ]:
+
+        def _audit(event_type: str, detail: dict) -> None:
+            _audit_mcp(
+                entity_type=spec["resource_type"],
+                entity_id=proposal["resource_key"],
+                competence_id=None,
+                event_type=event_type,
+                actor=actor_sub,
+                detail={
+                    "capability": capability,
+                    "resource_key": proposal["resource_key"],
+                    "proposal_id": str(proposal["proposal_id"]),
+                    "correlation_id": correlation_id,
+                    **detail,
+                },
+            )
+
+        _audit("CLARA_ACT_ATTEMPT", {})
+        # Staleness: o estado vigente deve ser o selado no PREPARE;
+        # snapshot indisponível bloqueia (nunca {} aceitável).
+        try:
+            current = self._snapshot(capability, payload)
+        except ChecklistDomainError as exc:
+            self._proposals.record_result(
+                handle=handle,
+                result={"outcome": "failed",
+                        "error_code": getattr(exc, "code", "error")},
+            )
+            _audit("CLARA_ACT_REJECTED",
+                   {"error_code": getattr(exc, "code", "error")})
+            raise
+        if not current or current != proposal["expected_state"]:
+            self._proposals.record_result(
+                handle=handle,
+                result={"outcome": "failed",
+                        "error_code": "proposal_stale"},
+            )
+            _audit("CLARA_ACT_REJECTED",
+                   {"error_code": "proposal_stale"})
             raise ProposalStale(
                 "O recurso mudou desde o PREPARE — reprepare a "
                 "operação a partir do estado atual."
             )
-        result = spec["execute"](payload, actor_sub, user_groups)
-        if not spec["verify"](payload, result or {}):
+        try:
+            result = spec["execute"](payload, actor_sub, user_groups)
+        except ChecklistDomainError as exc:
+            self._proposals.record_result(
+                handle=handle,
+                result={"outcome": "failed",
+                        "error_code": getattr(exc, "code", "error")},
+            )
+            _audit("CLARA_ACT_REJECTED",
+                   {"error_code": getattr(exc, "code", "error")})
+            raise
+        if not spec["verify"](payload, result or {}) or not (
+            self._readback(spec, payload, result or {}, actor_sub)
+        ):
+            self._proposals.record_result(
+                handle=handle,
+                result={"outcome": "unverified"},
+            )
+            _audit("CLARA_ACT_REJECTED",
+                   {"error_code": "outcome_verification_failed"})
             raise OutcomeVerificationFailed(
                 "A pós-condição não pôde ser confirmada por leitura."
             )
-        consumed = self._proposals.consume(
-            handle=handle, actor_sub=actor_sub, result=result or {}
+        self._proposals.record_result(
+            handle=handle,
+            result={"outcome": "executed", "result": result or {}},
         )
-        _audit_mcp(
-            entity_type=spec["resource_type"],
-            entity_id=proposal["resource_key"],
-            competence_id=None,
-            event_type="CLARA_GOVERNED_ACT",
-            actor=actor_sub,
-            detail={
-                "capability": capability,
-                "resource_key": proposal["resource_key"],
-                "proposal_id": str(consumed["proposal_id"]),
-                "correlation_id": correlation_id,
-            },
-        )
+        _audit("CLARA_GOVERNED_ACT", {"outcome": "executed"})
         return {
             "executed": True,
             "capability": capability,

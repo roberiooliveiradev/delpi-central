@@ -7,7 +7,7 @@ C3-MCP-INTEROP-01R1A..R1C; see doc 60 and ledger §6.95..§6.99):
   * generic client scope ``mcp:tools``;
   * one confidential resource client + one resource-audience client
     scope per approved specialist (mcp-api-delpi / mcp-transformometro /
-    mcp-tv-dashboard) carrying the MCP resource audience;
+    mcp-tv-dashboard / mcp-clara) carrying the MCP resource audience;
   * ONE confidential requester client ``delia-api``
     (``standard.token.exchange.enabled``, NO service account, NO
     direct access grants, NO standard/implicit flows);
@@ -96,6 +96,8 @@ SPECIALISTS = (
      "apps/transformometro-api/mcp"),
     ("mcp-tv-dashboard", "mcp-audience-tv-dashboard",
      "apps/tv-dashboard-api/mcp"),
+    ("mcp-clara", "mcp-audience-clara",
+     "apps/controllership-finance-api/mcp"),
 )
 
 REQUESTER_CLIENT_ID = "delia-api"

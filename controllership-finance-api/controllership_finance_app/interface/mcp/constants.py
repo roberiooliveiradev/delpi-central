@@ -34,9 +34,15 @@ TOOL_CLASS: dict[str, str] = {
     "list_knowledge_sources": "DISCOVERY",
     "prepare_governed_operation": "PREPARE",
     "commit_proposal": "ACT",
+    "prepare_batch": "PREPARE",
+    "confirm_batch": "PREPARE",
+    "execute_batch": "ACT",
+    "get_batch_status": "READ",
 }
 
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
 
 # commit_proposal pode executar operação sensível — anotação honesta.
-DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset({"commit_proposal"})
+DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset(
+    {"commit_proposal", "execute_batch"}
+)

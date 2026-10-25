@@ -25,6 +25,9 @@ from delpi_mcp.identity import (
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
 )
+from controllership_finance_app.application.clara.batch_orchestrator import (
+    ClaraBatchOrchestrator,
+)
 from controllership_finance_app.application.clara.governed_writes import (
     ClaraGovernedWrites,
 )
@@ -600,11 +603,73 @@ def tool_commit_proposal(proposal_handle: str) -> CallToolResult:
     return _ok(result)
 
 
+def tool_prepare_batch(operations: list) -> CallToolResult:
+    request, user = _user_and_access()
+    try:
+        result = ClaraBatchOrchestrator().prepare_batch(
+            operations=list(operations or []),
+            actor_sub=actor_subject(user),
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc)
+    return _ok(result)
+
+
+def tool_confirm_batch(
+    batch_handle: str,
+    plan_hash: str,
+    attestation: dict | None = None,
+) -> CallToolResult:
+    request, user = _user_and_access()
+    try:
+        result = ClaraBatchOrchestrator().confirm_batch(
+            handle=batch_handle,
+            actor_sub=actor_subject(user),
+            plan_hash=plan_hash,
+            attestation=attestation,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc)
+    return _ok(result)
+
+
+def tool_execute_batch(
+    batch_handle: str, resume: bool = False
+) -> CallToolResult:
+    request, user = _user_and_access()
+    try:
+        result = ClaraBatchOrchestrator().execute_batch(
+            handle=batch_handle,
+            resume=resume,
+            actor_sub=actor_subject(user),
+            user_groups=getattr(user, "groups", []) or [],
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc)
+    return _ok(result)
+
+
+def tool_get_batch_status(batch_id: str) -> CallToolResult:
+    request, user = _user_and_access()
+    try:
+        result = ClaraBatchOrchestrator().batch_status(
+            batch_id=batch_id,
+            actor_sub=actor_subject(user),
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc)
+    return _ok(result)
+
+
 __all__ = [
     "build_mcp_request",
     "handle_tool_error",
     "tool_analyze_closing_blockers",
     "tool_commit_proposal",
+    "tool_confirm_batch",
+    "tool_execute_batch",
+    "tool_get_batch_status",
+    "tool_prepare_batch",
     "tool_get_catalog",
     "tool_get_checklist_items",
     "tool_get_competence_state",

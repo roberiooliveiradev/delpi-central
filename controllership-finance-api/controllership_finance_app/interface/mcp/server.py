@@ -350,6 +350,86 @@ def create_mcp_server() -> MCPServer:
     def commit_proposal(proposal_handle: str) -> CallToolResult:
         return _guarded(bridge.tool_commit_proposal)(proposal_handle)
 
+    @mcp.tool(
+        name="prepare_batch",
+        title="Prepare operation batch",
+        description=(
+            "PREPARE_BATCH: classifica as operações pedidas (viable/"
+            "blocked), resolve dependências, sela o plano inteiro "
+            "(plan_hash) e cria uma proposta governed por operação. "
+            "Uma única confirmação consolidada (confirm_batch) cobre "
+            "o lote — nunca uma por operação."
+        ),
+        annotations=_annotations(
+            "prepare_batch", "Prepare operation batch"
+        ),
+        meta=meta,
+    )
+    def prepare_batch(
+        operations: list[dict[str, Any]]
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_prepare_batch)(operations)
+
+    @mcp.tool(
+        name="confirm_batch",
+        title="Confirm batch plan",
+        description=(
+            "Registra o consentimento verificado do lote inteiro: o "
+            "usuário autenticado confirma o plan_hash exato exibido "
+            "(CONSOLIDATED) ou o host entrega atestação assinada "
+            "(HOST_ATTESTED). O plano selado não pode ser ampliado."
+        ),
+        annotations=_annotations(
+            "confirm_batch", "Confirm batch plan"
+        ),
+        meta=meta,
+    )
+    def confirm_batch(
+        batch_handle: str,
+        plan_hash: str,
+        attestation: dict[str, Any] | None = None,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_confirm_batch)(
+            batch_handle, plan_hash, attestation
+        )
+
+    @mcp.tool(
+        name="execute_batch",
+        title="Execute confirmed batch",
+        description=(
+            "EXECUTE: executa o lote CONFIRMED em ordem topológica — "
+            "claim atômico por operação, revalidação de staleness, "
+            "execução pelas regras canônicas da BFF, read-back "
+            "independente e relatório por operação. Dependentes de "
+            "falhas são bloqueadas; independentes continuam."
+        ),
+        annotations=_annotations(
+            "execute_batch", "Execute confirmed batch"
+        ),
+        meta=meta,
+    )
+    def execute_batch(
+        batch_handle: str, resume: bool = False
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_execute_batch)(
+            batch_handle, resume
+        )
+
+    @mcp.tool(
+        name="get_batch_status",
+        title="Get batch status",
+        description=(
+            "Estado do lote e de cada operação (VERIFIED/FAILED/"
+            "BLOCKED/UNKNOWN), consent_mode e resultado consolidado."
+        ),
+        annotations=_annotations(
+            "get_batch_status", "Get batch status"
+        ),
+        meta=meta,
+    )
+    def get_batch_status(batch_id: str) -> CallToolResult:
+        return _guarded(bridge.tool_get_batch_status)(batch_id)
+
     return mcp
 
 

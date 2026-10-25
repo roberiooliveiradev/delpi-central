@@ -1,6 +1,6 @@
 """CLARA MCP — superfície e contrato (não-PG).
 
-Cobre: registro das 14 tools com classes DISCOVERY/READ/ANALYSIS/
+Cobre: registro das 18 tools com classes DISCOVERY/READ/ANALYSIS/
 PREPARE/ACT, anotações honestas (readOnly/destructive), securitySchemes
 no wire, instructions, mount paths e o guard de transporte (service
 tokens proibidos na superfície de dados).
@@ -39,7 +39,7 @@ def test_tool_names_and_classes():
     tools = _list_tools()
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
-    assert len(tools) == 14
+    assert len(tools) == 18
     for t in tools:
         assert (t.meta or {}).get("delpi/toolClass") == TOOL_CLASS[t.name]
 
@@ -62,6 +62,10 @@ def test_tool_taxonomy():
     assert TOOL_CLASS["analyze_closing_blockers"] == "ANALYSIS"
     assert TOOL_CLASS["prepare_governed_operation"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
+    assert TOOL_CLASS["get_batch_status"] == "READ"
+    assert TOOL_CLASS["prepare_batch"] == "PREPARE"
+    assert TOOL_CLASS["confirm_batch"] == "PREPARE"
+    assert TOOL_CLASS["execute_batch"] == "ACT"
 
 
 def test_annotations_readonly_and_destructive():
@@ -72,6 +76,9 @@ def test_annotations_readonly_and_destructive():
         assert bool(ann.read_only_hint) == expected_readonly, name
     assert bool(
         tools["commit_proposal"].annotations.destructive_hint
+    ) is True
+    assert bool(
+        tools["execute_batch"].annotations.destructive_hint
     ) is True
     assert bool(
         tools["prepare_governed_operation"].annotations.destructive_hint
@@ -89,7 +96,10 @@ def test_security_schemes_on_wire():
 
 def test_instructions_honesty_invariants():
     assert "never zero" in CLARA_MCP_INSTRUCTIONS
-    assert "explicit confirmation" in CLARA_MCP_INSTRUCTIONS
+    assert "explicit user confirmation" in CLARA_MCP_INSTRUCTIONS
+    assert "one confirmation per operation" in CLARA_MCP_INSTRUCTIONS
+    assert "confirm_batch" in CLARA_MCP_INSTRUCTIONS
+    assert "untrusted data" in CLARA_MCP_INSTRUCTIONS
     assert "PREPARE" in CLARA_MCP_INSTRUCTIONS
 
 

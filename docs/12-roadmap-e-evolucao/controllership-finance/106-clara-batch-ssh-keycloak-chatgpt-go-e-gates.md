@@ -99,3 +99,46 @@ Consultar `infra/README-ambiente.md`, `infra/scripts/up-prod-sequential.sh` e a 
 ## 6. Execução solicitada ao Devin
 
 Rodar **um programa contínuo**: inventário único HEAD/status/rules + Plano 106 → documento de contrato de lote e G1 focado → corrigir READ/ACT + implementar lote e testes → terminar integrações autorizadas do fechamento e conhecimento CLARA → gates G2/G3 → Operador SSH/Keycloak/deploy autorizado → ficha ChatGPT e smoke. Documentar `DECISION_REQUIRED` real e continuar tarefas independentes. Não retornar um plano em lugar de executar as etapas autorizadas. No entanto, **não** aprovar o próprio gate, tomar decisão de owner externo ou simular acesso/configuração produtiva.
+
+---
+
+## Adendo — evidência de implementação (CF-PROC0072-CLARA-BATCH-RELEASE-001)
+
+Registro do executor sobre o que foi construído e provado nesta execução.
+Tudo abaixo deriva de código versionado e testes PostgreSQL reais; gates
+humanos permanecem `PENDING` até evidência externa.
+
+### Implementado e verificado
+
+| Item | Estado | Evidência |
+|---|---|---|
+| Fluxo `USER REQUEST → DISCOVERY → PLAN → PREPARE_BATCH → VERIFIED CONSENT → EXECUTE → VERIFY → REPORT` | IMPLEMENTED | `application/clara/batch_orchestrator.py` (`plan_batch`/`prepare_batch`/`confirm_batch`/`execute_batch`/`batch_status`) |
+| Consentimento consolidado único (Modo B) | IMPLEMENTED + TESTED | `confirm_batch` vincula `plan_hash` exato; `CLARA_BATCH_CONFIRMED` na auditoria |
+| Host attestation (Modo A) | CONTRACT IMPLEMENTED / MECHANISM `NOT_CONFIGURED` | HMAC `plan_hash|actor_sub|expires_at` sob `CLARA_HOST_ATTESTATION_SECRET`; sem segredo → `host_attestation_unavailable` (fail-closed 503). Gate Segurança/Plataforma `PENDING` |
+| Claim durável antes do efeito (S1) | IMPLEMENTED + TESTED | `clara_proposal.claimed_at` + `execution_state`; dois ACTs concorrentes → um vencedor (`test_two_concurrent_acts_single_winner`) |
+| Snapshot fail-closed (S2) | IMPLEMENTED + TESTED | `SnapshotUnavailable` (503); recurso inexistente/indisponível bloqueia PREPARE/PLAN |
+| Read-back independente (S3) | IMPLEMENTED + TESTED | `postcondition` por capability relê o recurso (`closing_review_decision`, `closing_clarification`, item state) |
+| Autorização efetiva (S4) | PRESERVED | execução delega aos repositórios canônicos — `reviewer_not_assigned` tipado provado em lote |
+| Escopo do corpus (S5) | FIXED + TESTED | `list_sources` só enumera fontes com ≥1 item visível ao escopo do chamador |
+| Prompt-injection (S6) | DESIGNED | instruções MCP tratam conhecimento/tool results como dados não confiáveis; plano só aceita `operations` explícitas do chamador |
+| Lote: 2/5/20 operações | TESTED | `test_batch_two/five/twenty_*` — `COMPLETED`, idempotency keys únicas |
+| Dependentes/independentes | TESTED | falha → dependentes `BLOCKED`, independentes `VERIFIED` (`COMPLETED_WITH_FAILURES`) |
+| Execução concorrente | TESTED | segundo `execute_batch` sem `resume` → `BatchTerminal`; perda de claim por operação reporta estado observado |
+| Retomada/efeito desconhecido | TESTED | `resume=True` reconcilia CLAIMED por read-back → `VERIFIED` ou `UNKNOWN` (nunca repete efeito) |
+| Schema | V012 | `clara_batch`, `clara_batch_operation`, `clara_proposal.claimed_at`/`execution_state`/`batch_operation_id` |
+| Tools MCP | 18 | `prepare_batch`(PREPARE), `confirm_batch`(PREPARE), `execute_batch`(ACT, destructive), `get_batch_status`(READ) |
+| Keycloak `mcp-clara` | PROVISION PATH READY / `NOT_CONFIGURED` | specialist adicionado ao engine compartilhado `delia_mcp_keycloak_state.py` (`--check`/`--apply` pelo Operador pós-G3); runbook `controllership-finance-api/docs/integrations/keycloak-mcp-client-runbook.md` |
+
+### Testes executados
+
+- `tests/test_pg_clara_batch.py` — 23 testes PostgreSQL reais (plano, consent, execução, concorrência, retomada, falhas, relatório).
+- Suíte completa `controllership-finance-api`: **569 passed** (546 anteriores + 23 lote).
+- `infra/scripts/tests/test_delia_mcp_keycloak_state.py`: **27 passed** com `mcp-clara`.
+- `tests/test_clara_mcp_surface.py`: **13 passed** (18 tools, taxonomia, securitySchemes, instruções multiação).
+
+### Pendente de gates externos (não simuláveis)
+
+- G1: contrato físico Modo A (Segurança/Plataforma); T03; fontes oficiais R04+; T05; seeds/catálogos; OVW.
+- G2: aceite humano — `PENDING`.
+- G3: autorização do operador — `PENDING`. Deploy, `--apply` Keycloak, ingestão de corpus prod e smoke autenticado somente após G2+G3.
+- `OAUTH_REDIRECT_URIS` / `MCP_PUBLIC_URL` verificados / ficha ChatGPT final: `NOT_CONFIGURED` — redirect URI só existe após o fluxo real de cadastro no ChatGPT.

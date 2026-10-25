@@ -312,12 +312,14 @@ def test_apply_creates_bounded_scope(fake):
     p.converge()
     client_ids = {c["clientId"] for c in fake.clients.values()}
     assert {"mcp-api-delpi", "mcp-transformometro",
-            "mcp-tv-dashboard", "delia-api"} <= client_ids
+            "mcp-tv-dashboard", "mcp-clara",
+            "delia-api"} <= client_ids
     # scope surface
     scope_names = {s["name"] for s in fake.client_scopes.values()}
     assert {"mcp:tools", "mcp-audience-api-delpi",
             "mcp-audience-transformometro",
             "mcp-audience-tv-dashboard",
+            "mcp-audience-clara",
             "audience-delpi"} <= scope_names
 
 
@@ -480,6 +482,7 @@ def test_resource_audiences_on_scopes(converged):
         "https://minhadelpi.com.br/apps/api-delpi/mcp",
         "https://minhadelpi.com.br/apps/transformometro-api/mcp",
         "https://minhadelpi.com.br/apps/tv-dashboard-api/mcp",
+        "https://minhadelpi.com.br/apps/controllership-finance-api/mcp",
     }
 
 
@@ -492,7 +495,7 @@ def test_policy_bound_to_delia_api_only(converged):
 
 
 def test_all_specialists_get_exchange_permission(converged):
-    for cid in ("mcp-api-delpi", "mcp-transformometro", "mcp-tv-dashboard"):
+    for cid in ("mcp-api-delpi", "mcp-transformometro", "mcp-tv-dashboard", "mcp-clara"):
         uuid_ = next(u for u, c in converged.clients.items()
                      if c["clientId"] == cid)
         assert converged.mgmt_enabled.get(uuid_) is True

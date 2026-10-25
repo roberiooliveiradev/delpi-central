@@ -160,3 +160,219 @@ class ClaraProposalRepository:
                             "Proposta já consumida ou inexistente."
                         )
                     return row
+
+
+    def claim(self, *, handle: str, actor_sub: str) -> dict:
+        """Claim durável ANTES de qualquer efeito (S1).
+
+        SELECT para diagnóstico tipado + UPDATE atômico — duas ACTs
+        concorrentes sobre a mesma proposta têm exatamente um vencedor;
+        a perdedora recebe `proposal_stale`. Não autoriza por si: as
+        regras da BFF são reaplicadas na execução.
+        """
+        from datetime import datetime as _dt, timezone as _tz
+
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT * FROM {_q('clara_proposal')}
+                         WHERE handle_hash = %s
+                         FOR UPDATE
+                        """,
+                        (handle_hash(handle),),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        raise ProposalNotFound(
+                            "Proposta não encontrada."
+                        )
+                    if row["actor_sub"] != actor_sub:
+                        raise ProposalActorMismatch(
+                            "Proposta pertence a outro ator."
+                        )
+                    if row["claimed_at"] is not None or (
+                        row["consumed_at"] is not None
+                    ):
+                        raise ProposalConsumed(
+                            "Proposta já reivindicada ou consumida."
+                        )
+                    expires_at = row["expires_at"]
+                    if (
+                        getattr(expires_at, "tzinfo", None) is None
+                        and hasattr(expires_at, "replace")
+                    ):
+                        expires_at = expires_at.replace(tzinfo=_tz.utc)
+                    if expires_at < _dt.now(_tz.utc):
+                        raise ProposalExpired("Proposta expirada.")
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_proposal')}
+                           SET claimed_at = now(),
+                               execution_state = 'CLAIMED'
+                         WHERE handle_hash = %s
+                           AND actor_sub = %s
+                           AND claimed_at IS NULL
+                           AND consumed_at IS NULL
+                        RETURNING *
+                        """,
+                        (handle_hash(handle), actor_sub),
+                    )
+                    claimed = cur.fetchone()
+                    if claimed is None:
+                        raise ProposalConsumed(
+                            "Proposta já reivindicada ou consumida."
+                        )
+                    return claimed
+
+    def record_result(self, *, handle: str, result: dict) -> dict:
+        """Grava o outcome verificado e fecha a proposta (terminal).
+
+        Chamada somente após efeito+read-back — nunca antes. outcome:
+        executed→VERIFIED, applied→APPLIED, failed→FAILED,
+        unverified→UNKNOWN.
+        """
+        outcome = result.get("outcome", "failed")
+        state = {
+            "executed": "VERIFIED",
+            "applied": "APPLIED",
+            "failed": "FAILED",
+            "unverified": "UNKNOWN",
+        }.get(outcome, "FAILED")
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_proposal')}
+                           SET result = %s::jsonb,
+                               execution_state = %s,
+                               consumed_at = now()
+                         WHERE handle_hash = %s
+                           AND claimed_at IS NOT NULL
+                        RETURNING proposal_id
+                        """,
+                        (
+                            json.dumps(result, default=str),
+                            state,
+                            handle_hash(handle),
+                        ),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        raise ProposalConsumed(
+                            "Resultado sem claim prévio — estado "
+                            "inconsistente."
+                        )
+                    return row
+
+    def link_batch_operation(
+        self, *, handle: str, operation_id: str
+    ) -> None:
+        with self._conn() as conn:
+            with conn.transaction():
+                conn.execute(
+                    f"""
+                    UPDATE {_q('clara_proposal')}
+                       SET batch_operation_id = %s
+                     WHERE handle_hash = %s
+                    """,
+                    (operation_id, handle_hash(handle)),
+                )
+
+
+    def claim_by_id(self, *, proposal_id: str, actor_sub: str) -> dict:
+        """Claim durável por PK (uso do orquestrador de lote)."""
+        from datetime import datetime as _dt, timezone as _tz
+
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT * FROM {_q('clara_proposal')}
+                         WHERE proposal_id = %s
+                         FOR UPDATE
+                        """,
+                        (proposal_id,),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        raise ProposalNotFound(
+                            "Proposta não encontrada."
+                        )
+                    if row["actor_sub"] != actor_sub:
+                        raise ProposalActorMismatch(
+                            "Proposta pertence a outro ator."
+                        )
+                    if row["claimed_at"] is not None or (
+                        row["consumed_at"] is not None
+                    ):
+                        raise ProposalConsumed(
+                            "Proposta já reivindicada ou consumida."
+                        )
+                    expires_at = row["expires_at"]
+                    if (
+                        getattr(expires_at, "tzinfo", None) is None
+                        and hasattr(expires_at, "replace")
+                    ):
+                        expires_at = expires_at.replace(tzinfo=_tz.utc)
+                    if expires_at < _dt.now(_tz.utc):
+                        raise ProposalExpired("Proposta expirada.")
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_proposal')}
+                           SET claimed_at = now(),
+                               execution_state = 'CLAIMED'
+                         WHERE proposal_id = %s
+                           AND claimed_at IS NULL
+                           AND consumed_at IS NULL
+                        RETURNING *
+                        """,
+                        (proposal_id,),
+                    )
+                    claimed = cur.fetchone()
+                    if claimed is None:
+                        raise ProposalConsumed(
+                            "Proposta já reivindicada ou consumida."
+                        )
+                    return claimed
+
+    def record_result_by_id(
+        self, *, proposal_id: str, result: dict
+    ) -> dict:
+        """Versão por PK do record_result (orquestrador de lote)."""
+        outcome = result.get("outcome", "failed")
+        state = {
+            "executed": "VERIFIED",
+            "applied": "APPLIED",
+            "failed": "FAILED",
+            "unverified": "UNKNOWN",
+        }.get(outcome, "FAILED")
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('clara_proposal')}
+                           SET result = %s::jsonb,
+                               execution_state = %s,
+                               consumed_at = now()
+                         WHERE proposal_id = %s
+                           AND claimed_at IS NOT NULL
+                        RETURNING proposal_id
+                        """,
+                        (
+                            json.dumps(result, default=str),
+                            state,
+                            proposal_id,
+                        ),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        raise ProposalConsumed(
+                            "Resultado sem claim prévio — estado "
+                            "inconsistente."
+                        )
+                    return row

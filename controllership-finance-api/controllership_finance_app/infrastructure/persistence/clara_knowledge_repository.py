@@ -330,7 +330,7 @@ class ClaraKnowledgeRepository:
                     f"""
                     SELECT s.*, COUNT(k.knowledge_id) AS item_count
                       FROM {_q('clara_knowledge_source')} s
-                      LEFT JOIN {_q('clara_knowledge_item')} k
+                      JOIN {_q('clara_knowledge_item')} k
                         ON k.source_id = s.source_id
                        AND k.status = 'PUBLISHED' {scope_filter}
                      GROUP BY s.source_id
