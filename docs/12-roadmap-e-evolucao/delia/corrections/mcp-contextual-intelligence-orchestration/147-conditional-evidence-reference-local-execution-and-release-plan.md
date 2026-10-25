@@ -169,3 +169,25 @@ No ramo `if not isinstance(schema, Mapping)`, o código remove somente nomes de 
 ### Entrega verificável
 
 `LOCAL_THREE_RECORDS_OUTCOME`, `O2_LOCAL_OUTCOME`, `RECOVERY_FROM_PREINVOKE_FAILURE`, `F1`, `F2`, `MODEL_ID/CONFIG`, `SHA`, `FULL_TESTS`, `FIRST_DIVERGENT_STAGE`, `FALSE_POSITIVES`, `SECURITY`, `INDEPENDENT_REVIEW`, `OPERATIONAL_AUTHORIZATION`, `DEPLOY_SHA/DIGEST`, `PROD_OUTCOME`, `ROLLBACK`. Permitidos `FINAL_ACCEPT_READY` com prova ou `BLOCKED_WITH_EVIDENCE` para gate impeditivo real; **não** apresentar progresso parcial como tarefa concluída.
+
+
+### Remediação F1/F2 — execução — 2026-10-25 (task `DELIA-R7-LOCAL-GOAL-RECOVERY-TO-PRODUCTION-ACCEPTANCE-01`)
+
+**F1 (revisão):** `apply_evidence_bound_selections` só devolvia campos *required* não vinculados. Um campo **opcional declarado** documental que falhasse a vinculação tinha seu free-text removido mas `_build_arguments` validava `{}` e invocava o owner **sem filtro** — degradação silenciosa da proposta dependente.
+
+**Correção (owner `argument_validation.py` + `_build_arguments`):** o 4º retorno passa a ser `unbound_declared` — **todo** campo declarado (via `evidence_arguments` ou `selections`, mapping ou string solta) que não materializou seleção literal verificada. `_build_arguments` com `unbound` não-vazio retorna `(None, missing_inputs)` — **zero invocação** da proposta dependente. Os nomes entram em `missing_inputs` e seguem o mecanismo existente `_resolve_missing_inputs` (resolver bounded §6.140) → clarify honesto. Nenhum planner novo, nenhum segundo state machine, nenhum retry ilimitado.
+
+**F2 (schema ausente):** `input_schema=None` é valor válido do contrato `ProviderCapability` — o ramo é alcançável. Antes, `selections` não declaravam nomes sem schema: free-text de campo auto-declarado sobrevivia. Agora o ramo não-Mapping coleta declarações de `evidence_arguments` **e** de itens `selections` (str/Mapping, não-orquestrados), remove o free-text e devolve todos como `unbound` → fail-closed sem inventar propriedades de schema.
+
+**Recuperação pré-invocação:** suportada pelo contrato existente — `arguments=None` + `missing_inputs` já alimenta resolver bounded e ask-back; na `_recover_relevance` o mesmo retorno encerra honesto (bounded, sem rodada extra). Falha de binding bloqueia a operação inválida, **não** o objetivo (doc 147, esclarecimento PO `18b86597e3`).
+
+**RED→GREEN:** 5 testes v18 atualizados para a semântica F1 (declarado-não-vinculado ⇒ `pa.calls` sem re-invocação não filtrada) + 2 novos (`test_primary_declared_unbound_blocks_invocation`, `test_no_schema_declaration_never_bypasses`). Focused 192/192; full backend **2296 PASS / 2298** — 2 falhas ambientais pré-existentes preservadas (`test_fixture_matches_current_producer_output`, `test_http_timeout_maps_to_504`).
+
+**Reavaliação local (`delia-json` ≈ qwen2.5 3.1B Q4_K_M, `http://ollama:11434/v1`, SHA=worktree pós-fix, instructions v18):**
+- "Traga três exemplos de terminal bala" **0/10** — todas em `interaction_admission` (bypass conversacional/recusa honesta; ~1.6k in / ~110 out).
+- O2 0/3 (2 admission, 1 `invalid_model_output`); pino 0/3; D1 0/3 conversacional; TÉO 0/3 honesto (cadeia completa → insuficiência); VISTA 0/3 admission honesto.
+- **READ direto 1/3 GROUNDED** — estoque real do item `10080092` via Domain API (3 registros, branch/armazém, proveniência); 1 clarify ask-back; 1 insuficiência honesta.
+- WRITE-neg 3/3 recusa honesta (zero ACT); AuthZ 401; **zero falsos positivos**.
+- `evidence_bound` nunca disparou em runtime — o modelo 3.1B não emite `selections`/`evidence_arguments`; o contrato permanece provado por teste, não por adoção e2e.
+
+**Veredito de gate:** confiabilidade e2e local ainda < critério de release → `BLOCKED_WITH_EVIDENCE` para deploy; residuais F1/F2 do contrato **fechados**; residual aberto = capacidade do modelo local autorizado.

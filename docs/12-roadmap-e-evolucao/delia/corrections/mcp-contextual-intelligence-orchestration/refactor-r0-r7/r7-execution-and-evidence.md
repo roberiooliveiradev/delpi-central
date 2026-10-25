@@ -315,3 +315,8 @@ Direção de arquitetura aprovada: LLM decide seleção semântica, backend vali
 **Conclusão causal:** o contrato 147 está implementado e provado deterministicamente (fail-closed, verbatim, conditional); sob o modelo local autorizado a cadeia E2E não convergiu — gargalo agora é capacidade do modelo nos estágios iniciais (admission/JSON), anterior ao ponto onde `selections` atuaria. A melhoria de contrato não é refutável nem comprovável E2E com este modelo; alegação de melhoria com modelo externo permanece `NOT_TESTED` por decisão do PO.
 
 `O2_STATUS=CONTRACT_IMPLEMENTED_LOCAL_MODEL_INSUFFICIENT (0/10 delia-json)`; `DEPLOY=BLOCKED (local reliability 0% < qualquer critério)`; `INDEPENDENT_REVIEW=PENDING`; `R7_FINAL_ACCEPT=NO`.
+
+
+#### Remediação F1/F2 + reavaliação local — 2026-10-25
+
+`apply_evidence_bound_selections` agora devolve `unbound_declared` (todo campo declarado-documental sem seleção verificada) e `_build_arguments` retorna `(None, missing_inputs)` — a proposta dependente **não** invoca o owner sem filtro (F1). Ramo sem schema (`input_schema=None`, alcançável via contrato) também honra declarações de `selections`/`evidence_arguments` fail-closed (F2). O fluxo existente `missing_inputs → _resolve_missing_inputs → clarify` é o canal de recuperação bounded; em `_recover_relevance`, `(None, missing)` encerra honesto. Testes: 192 focused, 2296/2298 backend (2 falhas ambientais conhecidas). Local `delia-json`: três-exemplos 0/10 admission; direct READ 1/3 GROUNDED com registros reais; negatives preservados; 0 falsos positivos. Deploy segue gated.

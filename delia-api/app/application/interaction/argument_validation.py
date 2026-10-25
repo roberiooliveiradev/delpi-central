@@ -127,33 +127,51 @@ def apply_evidence_bound_selections(
     that field as documentally derived. A declared field accepts only
     a verified literal selection: any free-text value for it in
     ``arguments`` is dropped, never substituted, and when no valid
-    selection materializes the field stays unbound. Required fields
-    left unbound are returned so the caller can report them as
-    missing_inputs — ambiguity is never arbitrated by the code and no
-    value is invented.
+    selection materializes the field stays unbound. Every declared
+    field left unbound is returned so the caller can block the
+    invocation that depended on the documental value and report the
+    names as missing_inputs — a declared-but-invalid selection must
+    never silently degrade into an unfiltered or under-filtered call,
+    and no value is invented.
 
-    Returns ``(arguments, applied, rejected, unbound_required)``.
+    Returns ``(arguments, applied, rejected, unbound_declared)``.
     """
     if not isinstance(schema, Mapping):
-        rejected = len(
-            [
-                x
-                for x in (
-                    raw_selections
-                    if isinstance(raw_selections, (list, tuple))
-                    else ()
-                )
-                if isinstance(x, (Mapping, str))
-            ]
-        )
+        rejected = 0
+        declared_names: set[str] = set()
         if isinstance(declared, (list, tuple)):
             for name in list(declared)[:MAX_EVIDENCE_SELECTIONS]:
                 if (
                     isinstance(name, str)
                     and name not in ORCHESTRATED_FIELDS
                 ):
-                    arguments.pop(name, None)
-        return arguments, 0, rejected, ()
+                    declared_names.add(name)
+        for item in (
+            list(raw_selections)[:MAX_EVIDENCE_SELECTIONS]
+            if isinstance(raw_selections, (list, tuple))
+            else []
+        ):
+            if not isinstance(item, (Mapping, str)):
+                continue
+            rejected += 1
+            name = (
+                item.get("argument")
+                if isinstance(item, Mapping)
+                else item
+            )
+            if (
+                isinstance(name, str)
+                and name not in ORCHESTRATED_FIELDS
+            ):
+                declared_names.add(name)
+        for name in declared_names:
+            arguments.pop(name, None)
+        return (
+            arguments,
+            0,
+            rejected,
+            tuple(n for n in declared_names if n not in arguments),
+        )
     properties = schema.get("properties")
     if not isinstance(properties, Mapping):
         properties = {}
@@ -218,15 +236,12 @@ def apply_evidence_bound_selections(
             continue
         arguments[argument] = selected
         applied += 1
-    required = schema.get("required")
-    if not isinstance(required, (list, tuple)):
-        required = ()
-    unbound_required = tuple(
+    unbound_declared = tuple(
         name
         for name in declared_names
-        if name in required and name not in arguments
+        if name not in arguments
     )
-    return arguments, applied, rejected, unbound_required
+    return arguments, applied, rejected, unbound_declared
 
 
 def validate_arguments(

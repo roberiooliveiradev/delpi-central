@@ -168,3 +168,12 @@ Direção `APPROVED_DIRECTION`: seleção semântica pertence ao LLM; backend va
 ### DELIA-R7-LOCAL-GOAL-RECOVERY-TO-PRODUCTION-ACCEPTANCE-01 — PO execution direction (2026-10-25)
 
 Plano 147 atualizado: [execução local, F1/F2, recuperação orientada ao objetivo e release governado](../corrections/mcp-contextual-intelligence-orchestration/147-conditional-evidence-reference-local-execution-and-release-plan.md). PO solicita tratar falhas técnicas recuperáveis sem encerrar o objetivo do usuário, com três exemplos reais quando pedidos três; execução contínua e correções bounded até critérios locais comprovados, **sem** modelo remoto, lists de sinônimos/produtos, acoplamento a provider ou nova engine. **Status factual:** `PLANNED`; F1 `REWORK`; F2 `TO_CHARACTERIZE`; O2 local último teste `0/10 FAIL`; revisão independente futura `PENDING`; autorização PO de deploy `CONDITIONAL`, autorização operacional específica `PENDING`, deploy nesta task `NOT_EXECUTED`, R7 final `NO`. Stops de segurança/arquitetura/segunda falha do mesmo pacote são obrigatórios e não equivalem a conclusão satisfatória.
+
+
+### Registro complementar — 2026-10-25 — Remediação F1/F2 executada (goal recovery bounded) — `DELIA-R7-LOCAL-GOAL-RECOVERY-TO-PRODUCTION-ACCEPTANCE-01`
+
+- `STATE=F1_F2_REMEDIATED_LOCAL_EVAL_GATE_BLOCKED`; base `fe9ca71369`; escopo `argument_validation.py` + `orchestration._build_arguments` + testes.
+- F1: declarado-documental opcional não vinculado ⇒ `(None, missing_inputs)` — zero invocação não filtrada; nomes alimentam resolver/clarify existente. F2: ramo sem schema honra declarações via `selections`/`evidence_arguments` fail-closed.
+- `PREINVOKE_FAILURE_RECOVERY=existing` — `missing_inputs → _resolve_missing_inputs → clarify`; sem planner/segundo state machine.
+- Backend 2296/2298 (2 env pré-existentes); focused 192/192. Local `delia-json`: três-exemplos 0/10 (admission), O2 0/3, pino/D1/TÉO/VISTA 0/3, READ direto 1/3 GROUNDED real, WRITE 3/3 recusa, AuthZ 401, 0 falsos positivos.
+- `DEPLOY=BLOCKED_NO_LOCAL_RELIABILITY` — contrato pronto; executor sem modelo local autorizado que alcance o estágio governado. `NEXT_ACTION=decisão de coordenação (modelo local capaz OU autorização de avaliação externa controlada) + review independente do SHA`.

@@ -10123,9 +10123,16 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
         if sel_unbound:
+            # Declared documental origin could not be verified —
+            # running the proposal without that value would be an
+            # unfiltered or under-filtered call the model itself
+            # flagged as evidence-dependent. Route the field names
+            # through missing_inputs so the bounded resolver/clarify
+            # path answers honestly (doc 147 / review F1).
             missing = tuple(
                 dict.fromkeys(list(missing) + list(sel_unbound))
             )[:MAX_MISSING_INPUTS]
+            return None, missing
         validated = _validate_instance(normalized, descriptor.input_schema)
         if validated is None:
             return None, missing

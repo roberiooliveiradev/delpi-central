@@ -1653,7 +1653,9 @@ def test_declared_evidence_argument_without_selection_drops_free_text(
 ):
     """``evidence_arguments`` declares documental origin: a declared
     field accepts only a verified literal selection — the free-text
-    value is inadmissible and never substituted (doc 147)."""
+    value is inadmissible and the dependent invocation never runs
+    unfiltered; the unbound name routes to missing_inputs/clarify
+    (doc 147 / review F1)."""
     pa, pb = _declared_recovery_fixture()
     proposal = _recovery_proposal(
         {
@@ -1668,15 +1670,18 @@ def test_declared_evidence_argument_without_selection_drops_free_text(
     )
     orch, model = _two_provider_orchestrator([pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
-    assert pa.calls[1] == ("search_items", {})
+    assert pa.calls == [
+        ("search_items", {"query": "terminal bala"}),
+    ]
 
 
 def test_declared_evidence_argument_invalid_selection_stays_unbound(
     capture_mode_logs,
 ):
     """Declared + forged ``source_ref`` + free text: the field stays
-    unbound — an unverifiable selection can never be masked by a
-    string the evidence did not supply."""
+    unbound and the dependent read is not executed — an unverifiable
+    selection can never be masked by a string the evidence did not
+    supply."""
     pa, pb = _declared_recovery_fixture()
     proposal = _recovery_proposal(
         {
@@ -1697,12 +1702,15 @@ def test_declared_evidence_argument_invalid_selection_stays_unbound(
     )
     orch, model = _two_provider_orchestrator([pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
-    assert pa.calls[1] == ("search_items", {})
+    assert pa.calls == [
+        ("search_items", {"query": "terminal bala"}),
+    ]
 
 
 def test_bare_string_selection_declares_field(capture_mode_logs):
     """A bare field name inside ``selections`` declares documental
-    origin too — the free-text value is dropped fail-closed."""
+    origin too — free text is dropped and the dependent read never
+    runs unfiltered."""
     pa, pb = _declared_recovery_fixture()
     proposal = _recovery_proposal(
         {
@@ -1717,7 +1725,9 @@ def test_bare_string_selection_declares_field(capture_mode_logs):
     )
     orch, model = _two_provider_orchestrator([pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
-    assert pa.calls[1] == ("search_items", {})
+    assert pa.calls == [
+        ("search_items", {"query": "terminal bala"}),
+    ]
 
 
 def test_evidence_arguments_unknown_or_orchestrated_entries_ignored(
@@ -1785,3 +1795,105 @@ def test_required_declared_unbound_reports_missing(capture_mode_logs):
     orch, model = _two_provider_orchestrator([pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert len(pa.calls) == 1
+
+
+def test_primary_declared_unbound_blocks_invocation(capture_mode_logs):
+    """F1 on the primary path: when the FIRST argument build declares
+    a documental field whose value cannot be verified, the capability
+    is never invoked — the unbound name routes to the bounded
+    resolver/clarify path instead of an unfiltered read."""
+    relevant = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "TERM. BALA 0,50-2,27MM2"},
+                {"name": "TERM. BALA 1,00-2,50MM2"},
+            ]
+        },
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [relevant]},
+    )
+    proposal = [
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "evidence_arguments": ["query"],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        },
+        {"goal_class": "record_lookup"},
+        {"status": "sufficient"},
+        {"probe_index": False},
+    ]
+    orch, model = _two_provider_orchestrator([pa], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert ("search_items", {"query": "terminal bala"}) not in pa.calls
+    assert ("search_items", {}) not in pa.calls
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS or (
+        pa.calls
+        and pa.calls[0][1].get("query") != "terminal bala"
+    )
+
+
+def test_no_schema_declaration_never_bypasses(capture_mode_logs):
+    """F2: a capability without an owner inputSchema cannot verify a
+    declared documental field — the free-text value is dropped and
+    the dependent read never executes unfiltered (fail-closed)."""
+    relevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "TERM. BALA"}]},
+    )
+    no_schema_cap = ProviderCapability(
+        capability_id="alpha.search_items",
+        group_id="alpha",
+        provider_id="pa",
+        remote_name="search_items",
+        owner="alpha",
+        operation_class=SpecialistOperationClass.READ,
+        description="read items",
+        input_schema=None,
+        binding={"ref": "search_items"},
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [no_schema_cap])],
+        outcomes={("alpha", "search_items"): [relevant]},
+    )
+    proposal = [
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "selections": ["query"],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        },
+        {"goal_class": "record_lookup"},
+        {"status": "sufficient"},
+        {"probe_index": False},
+    ]
+    orch, model = _two_provider_orchestrator([pa], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert ("search_items", {"query": "terminal bala"}) not in pa.calls
