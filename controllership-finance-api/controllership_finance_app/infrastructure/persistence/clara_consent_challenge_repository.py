@@ -231,6 +231,22 @@ class ClaraConsentChallengeRepository:
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
+                    # Ordem canônica de lock: batch → challenge —
+                    # mesma do claim_batch_for_execution; impede
+                    # deadlock aprovação↔claim (revisão Doc 107 §6.1).
+                    cur.execute(
+                        f"""
+                        SELECT * FROM {_q('clara_batch')}
+                         WHERE batch_id = %s
+                         FOR UPDATE
+                        """,
+                        (batch_id,),
+                    )
+                    batch = cur.fetchone()
+                    if batch is None:
+                        raise ConsentChallengeMismatch(
+                            "Lote do desafio não existe."
+                        )
                     cur.execute(
                         f"""
                         SELECT * FROM {_q('clara_consent_challenge')}
@@ -251,19 +267,6 @@ class ClaraConsentChallengeRepository:
                         actor_sub=actor_sub,
                         plan_hash=plan_hash,
                     )
-                    cur.execute(
-                        f"""
-                        SELECT * FROM {_q('clara_batch')}
-                         WHERE batch_id = %s
-                         FOR UPDATE
-                        """,
-                        (batch_id,),
-                    )
-                    batch = cur.fetchone()
-                    if batch is None:
-                        raise ConsentChallengeMismatch(
-                            "Lote do desafio não existe."
-                        )
                     if batch["actor_sub"] != actor_sub:
                         raise ConsentChallengeMismatch(
                             "Desafio pertence a outro ator."
@@ -347,6 +350,22 @@ class ClaraConsentChallengeRepository:
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
+                    # Ordem canônica de lock: proposal → challenge —
+                    # mesma do claim em ClaraProposalRepository;
+                    # impede deadlock aprovação↔claim (Doc 107 §6.1).
+                    cur.execute(
+                        f"""
+                        SELECT * FROM {_q('clara_proposal')}
+                         WHERE proposal_id = %s
+                         FOR UPDATE
+                        """,
+                        (proposal_id,),
+                    )
+                    proposal = cur.fetchone()
+                    if proposal is None:
+                        raise ConsentChallengeMismatch(
+                            "Proposta do desafio não existe."
+                        )
                     cur.execute(
                         f"""
                         SELECT * FROM {_q('clara_consent_challenge')}
@@ -367,19 +386,6 @@ class ClaraConsentChallengeRepository:
                         actor_sub=actor_sub,
                         plan_hash=plan_hash,
                     )
-                    cur.execute(
-                        f"""
-                        SELECT * FROM {_q('clara_proposal')}
-                         WHERE proposal_id = %s
-                         FOR UPDATE
-                        """,
-                        (proposal_id,),
-                    )
-                    proposal = cur.fetchone()
-                    if proposal is None:
-                        raise ConsentChallengeMismatch(
-                            "Proposta do desafio não existe."
-                        )
                     if proposal["actor_sub"] != actor_sub:
                         raise ConsentChallengeMismatch(
                             "Desafio pertence a outro ator."

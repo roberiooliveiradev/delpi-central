@@ -66,3 +66,80 @@ Relatório final único: `FINAL_HEAD`, `RELEASE_SHA`, `G1`, `G2`, `G3`, `NONPROD
 ### Próxima ação, não outro prompt de implementação
 
 **Executar o Documento 107, já aprovado pelo PO:** inventariar ambiente de homologação HTTPS existente e autorizado → `--check` Keycloak read-only → habilitar CLARA em **não produção com dados sintéticos/autorizados** → gerar ficha pública para conexão manual do plugin no ChatGPT → teste de knowledge/READ/consentimento batch/ACT seguro → registrar evidências reais. Em seguida G1 owner, G2 humano, G3 Operador SSH, deploy produtivo e smoke. Se não houver ambiente não produtivo autorizado, preparar ficha/runbook e obter G1/G2/G3 antes de tocar produção. Nenhuma simulação de PASS ou aprovação.
+
+## Adendo 1 — GO de continuidade operacional CLARA→ChatGPT, 25/10/2026
+
+`EXECUTION_GO` do PO: prioridade = CLARA conectável e testável no
+ChatGPT, sem abrir novos ciclos gerais de implementação.
+
+### Inventário de ambiente (real, via SSH `operador@srv-api`)
+
+| Prova | Resultado |
+|---|---|
+| Hosts | **um único** — `srv-api` (192.168.1.237) = produção; nenhum host de homologação autorizado existe |
+| HTTPS público | `https://minhadelpi.com.br` (nginx gateway + Cloudflare) — único endpoint OAuth acessível ao ChatGPT |
+| Keycloak | container `infra-keycloak-1`, realm `delpi` prod — **Keycloak compartilhado de produção** |
+| Compose prod | 91 containers `delpi-*` — `delpi-controllership-finance-api` no ar |
+| Estado prod | repo no host em `8ca4e2512` (pré-rework); imagem cf-api contém migrations até V005; MCP `/mcp` responde 401 no edge (montado, contrato antigo) |
+| Non-prod | **inexistente** — workflow `homolog` é nome de environment GitHub que opera o mesmo host |
+
+Conclusão: **não há ambiente não produtivo existente e autorizado** —
+aplica-se a exceção do §1 deste documento: produção não pode ser
+tratada como piloto sem os gates; release preparado, owners listados.
+
+### Keycloak `--check` (read-only)
+
+Executado `keycloak-prod-delia-mcp-provision.sh --check`
+(`KC24_LEGACY`, realm `delpi`, base `https://minhadelpi.com.br/auth`):
+**FAIL_CLOSED — admin login recusado** (`KEYCLOAK_ADMIN`/
+`KEYCLOAK_ADMIN_PASSWORD` do env do container não autenticam em
+`realm master` — credenciais bootstrap rotacionadas). Nenhuma
+escrita tentada. `DECISION_REQUIRED`: Operador deve fornecer
+`KC_ADMIN_TOKEN`/credencial admin vigente para concluir o check e,
+após gate, o `--apply` do client `mcp-clara`.
+
+### Correções executadas neste GO (diff mínimo)
+
+- **Concorrência aprovação↔claim (residual §6.1)**: inversão de
+  ordem de lock **confirmada** — `approve_for_batch`/
+  `approve_for_proposal` travavam challenge→artefato enquanto o
+  claim trava artefato→challenge (deadlock real no duplo-clique
+  concorrente com execução). **Fix mínimo:** ordem canônica
+  artefato→challenge nos dois métodos. 3 testes novos PG —
+  `test_concurrent_double_approve_converges_single_consent`
+  (3 threads, uma aprovação, zero efeito duplicado),
+  `test_approve_after_claim_consumed_rejected` (aprovação tardia
+  rejeitada, desafio permanece CONSUMED) e
+  `test_approve_claim_race_no_deadlock` (8 lotes, re-approve
+  concorrente com claim em conexões reais — nunca
+  `DeadlockDetected`, desafio sempre CONSUMED) — **PASS**.
+- **Motivos longos (residual §6.2)**: reproduzido bloqueador real —
+  `_clip(140)` truncava `motivation` (e `question`/`response`),
+  escondendo justificativa material da aprovação. **Fix mínimo:**
+  limite `_clip` 140→4000 em `operation_presentation.py`;
+  `test_presentation_preserves_full_long_motivation` PASS.
+- Resultado: **65/65** testes CLARA PG verdes.
+
+### Ficha ChatGPT
+
+Entregue em
+`controllership-finance-api/docs/integrations/chatgpt-clara-registration-sheet.md`:
+MCP URL, issuer, authorization/token/JWKS, client `mcp-clara`,
+scopes, audience, PKCE, metadata URL — valores verificados via
+OIDC discovery real; redirect URI a obter no cadastro; secret no
+cofre.
+
+### Pendências de owner (bloqueantes, não contornáveis)
+
+1. Credencial admin Keycloak vigente (Operador) → `--check` →
+   `--apply` de `mcp-clara` (escopo apenas; não alterar TÉO/DAVI/
+   VISTA/DÉLIA).
+2. G1: owners externos, T03, T05, relatórios oficiais R04+, seeds.
+3. G2: aceite Controladoria/PO.
+4. G3: autorização Operador → `git pull --ff-only` +
+   `up-prod-sequential.sh --build controllership-finance-api portal`
+   + migrations V006–V014 + ingestão corpus + smoke autenticado +
+   cadastro ChatGPT real (callback URI) + aceite.
+
+SHA desta etapa: `FINAL_HEAD` do commit desta entrega em `main`
+(relatório CF-PROC0072-CLARA-CHATGPT-EARLY-VALIDATION-001).

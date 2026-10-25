@@ -1364,3 +1364,188 @@ def test_http_get_batch_wrong_actor_forbidden(env, http_client):
     )
     response = client.get(f"/clara/batches/{prepared['batch_id']}")
     assert response.status_code == 403
+
+
+# == GO ChatGPT: concorrência aprovação↔claim + motivos longos ================
+
+
+def test_concurrent_double_approve_converges_single_consent(env):
+    """Duas submissões concorrentes do MESMO desafio convergem:
+    uma aprovação registrada, zero efeito duplicado — a segunda
+    enxerga o estado vigente (idempotência honesta) ou recebe
+    rejeição tipada, nunca um segundo consentimento."""
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "corrida aprovação")],
+        actor_sub=REVIEWER_C,
+    )
+    challenge = _challenge_for_batch(prepared["batch_id"])
+    claims = {
+        "iat": int(datetime.now(timezone.utc).timestamp()),
+        "sub": REVIEWER_C,
+        "jti": uuid.uuid4().hex,
+    }
+    results, errors = [], []
+
+    def _approve():
+        try:
+            results.append(
+                ClaraStepUpConsent().record_batch_consent(
+                    batch_id=prepared["batch_id"],
+                    actor_sub=REVIEWER_C,
+                    token_claims=claims,
+                    challenge_id=str(challenge["challenge_id"]),
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [threading.Thread(target=_approve) for _ in range(3)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert results, f"nenhuma aprovação convergiu: {errors}"
+    # Toda repetição honesta devolve o MESMO estado; erros, se
+    # houver, são tipados — nunca efeito duplicado.
+    for error in errors:
+        assert isinstance(error, ChecklistDomainError)
+    batch = env["orchestrator"]._batches.get_batch(
+        batch_id=prepared["batch_id"]
+    )
+    assert batch["status"] == "CONFIRMED"
+    challenge_after = _challenge_for_batch(prepared["batch_id"])
+    assert challenge_after["status"] == "APPROVED"
+
+
+def test_approve_after_claim_consumed_rejected(env):
+    """Corrida aprovação↔claim resolvida pelo lock: depois que o
+    claim consumiu o desafio, uma aprovação tardia é rejeitada —
+    o desafio não ressuscita e o estado permanece consumido."""
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, "aprovação tardia")],
+        actor_sub=REVIEWER_C,
+    )
+    _consent_batch(prepared["batch_id"], REVIEWER_C)
+    env["orchestrator"].confirm_batch(
+        handle=prepared["batch_handle"],
+        actor_sub=REVIEWER_C,
+        plan_hash=prepared["plan_hash"],
+    )
+    env["orchestrator"].execute_batch(
+        handle=prepared["batch_handle"], actor_sub=REVIEWER_C
+    )
+    challenge = _challenge_for_batch(prepared["batch_id"])
+    assert challenge["status"] == "CONSUMED"
+    with pytest.raises(ChecklistDomainError):
+        ClaraStepUpConsent().record_batch_consent(
+            batch_id=prepared["batch_id"],
+            actor_sub=REVIEWER_C,
+            token_claims={
+                "iat": int(datetime.now(timezone.utc).timestamp()),
+                "sub": REVIEWER_C,
+                "jti": uuid.uuid4().hex,
+            },
+            challenge_id=str(challenge["challenge_id"]),
+        )
+    assert _challenge_for_batch(prepared["batch_id"])["status"] == (
+        "CONSUMED"
+    )
+
+
+def test_presentation_preserves_full_long_motivation(env):
+    """R-CLARA-02: motivo longo e material não pode ser truncado
+    silenciosamente — o usuário precisa ler a justificativa
+    integral que embasa a aprovação."""
+    long_reason = (
+        "Divergência de valores entre o extrato oficial e a "
+        "conciliação importada na linha 42, com impacto no saldo "
+        "de fechamento da competência; a rejeição preserva a "
+        "evidência anterior para retrabalho pela área. " * 5
+    )
+    prepared = env["orchestrator"].prepare_batch(
+        operations=[_clarify_op(env, long_reason)],
+        actor_sub=REVIEWER_C,
+    )
+    view = ClaraStepUpConsent().batch_summary(
+        batch_id=prepared["batch_id"], actor_sub=REVIEWER_C
+    )
+    op = view["operations"][0]
+    presentation = op["presentation"]
+    # O motivo exibido deve conter a justificativa INTEGRAL —
+    # truncamento silencioso esconde escopo material da aprovação.
+    assert presentation["motivation"] == f"«{long_reason.strip()}»", (
+        "motivo truncado — usuário não vê a justificativa "
+        f"integral: {presentation['motivation']!r}"
+    )
+
+
+def test_approve_claim_race_no_deadlock(env):
+    """Doc 107 §6.1 — duplo-clique de consentimento concorrente com
+    a execução: locks na ordem canônica batch→challenge em ambos os
+    caminhos ⇒ nunca DeadlockDetected; estados finais consistentes.
+
+    Executa o par em N lotes frescos com conexões reais concorrentes
+    (a janela de corrida é real: o segundo approve re-trava o par
+    batch+challenge enquanto o claim consome o desafio)."""
+    import psycopg
+    results = []
+    for _ in range(8):
+        prepared = env["orchestrator"].prepare_batch(
+            operations=[_clarify_op(env, "corrida lock")],
+            actor_sub=REVIEWER_C,
+        )
+        _consent_batch(prepared["batch_id"], REVIEWER_C)
+        env["orchestrator"].confirm_batch(
+            handle=prepared["batch_handle"],
+            actor_sub=REVIEWER_C,
+            plan_hash=prepared["plan_hash"],
+        )
+        challenge = _challenge_for_batch(prepared["batch_id"])
+        errors = []
+
+        def _reapprove():
+            try:
+                ClaraStepUpConsent().record_batch_consent(
+                    batch_id=prepared["batch_id"],
+                    actor_sub=REVIEWER_C,
+                    token_claims={
+                        "iat": int(
+                            datetime.now(timezone.utc).timestamp()
+                        ),
+                        "sub": REVIEWER_C,
+                        "jti": uuid.uuid4().hex,
+                    },
+                    challenge_id=str(challenge["challenge_id"]),
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        def _claim():
+            try:
+                env["orchestrator"].execute_batch(
+                    handle=prepared["batch_handle"],
+                    actor_sub=REVIEWER_C,
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        t1 = threading.Thread(target=_reapprove)
+        t2 = threading.Thread(target=_claim)
+        t1.start()
+        t2.start()
+        t1.join(timeout=30)
+        t2.join(timeout=30)
+        assert not t1.is_alive() and not t2.is_alive(), (
+            "thread travada — suspeita de deadlock não resolvido"
+        )
+        for error in errors:
+            # Deadlock nunca é um resultado aceitável; erros tipados
+            # de corrida honesta (estado, consumo) são legítimos.
+            assert not isinstance(
+                error, psycopg.errors.DeadlockDetected
+            ), f"deadlock real: {error}"
+        results.append(
+            _challenge_for_batch(prepared["batch_id"])["status"]
+        )
+    assert set(results) <= {"CONSUMED"}

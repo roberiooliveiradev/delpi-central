@@ -153,7 +153,10 @@ def clarification_label(period: Any, clarification_id: Any) -> dict | None:
 # -- apresentadores por capability ------------------------------------------
 
 
-def _clip(text: Any, limit: int = 140) -> str:
+def _clip(text: Any, limit: int = 4000) -> str:
+    """Clip defensivo de payload — nunca corta texto material do
+    usuário (motivo, pergunta, resposta) em tamanho que esconda
+    escopo da aprovação (R-CLARA-02)."""
     value = str(text or "").strip()
     if len(value) > limit:
         return value[: limit - 1].rstrip() + "…"
