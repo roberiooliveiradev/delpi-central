@@ -136,3 +136,10 @@
 - **O2 N=10 → 1/10 PASS** (`description=TERM.+BALA` confirmado em access log + registros `10080092`/TERM.BALA 1,00-2,50MM2). Foreign chain dispara ~9/10 e consult completa 8×; gargalo único = estágio `arguments` do re-invoke (copia canônica 1/9). Descartados: contrato, transporte, projeção de evidência, propagação de contexto, validação — residual é variância de formulação do modelo.
 - Siblings: `terminal pino` 2/3; D1 doc-first; TÉO/VISTA honestos (miss conversational/honest-empty); AuthZ 401; WRITE inelegível sem ACT; zero fabricação grounded em todas as falhas.
 - `DEPLOY_DAVI=NOT_EXECUTED (sem diff novo; autorização ausente)`; `DEPLOY_DELIA=NOT_EXECUTED (10% < 70% provisório; autorização ausente)`; `NEXT_ACTION=DECISÃO DE COORDENAÇÃO: threshold oficial + model/config + modalidade canary-vs-hold + revisão independente de cada release`.
+
+### Registro complementar — 2026-10-25 — Spec 146 evidence-bound arguments IMPLEMENTADO (mechanism provado; E2E ainda model-bound)
+
+- `TASK_ID=DELIA-R7-EVIDENCE-BOUND-ARGUMENTS-FULL-IMPLEMENTATION-AND-GOVERNED-DEPLOY-01`; `STATE=CANDIDATE_COMMITTED_GATES_PENDING`; `FINAL_HEAD=405575f745`=origin/main; `DEPLOY_STATUS=BLOCKED_PENDING_AUTHORIZATION`.
+- Contrato `selections` (argument+source_ref+selected_value) na fronteira de `_build_arguments`; validação determinística em `argument_validation.py` (EXTEND, padrão `_synthesis_selections`); fail-closed em ref forjada/valor ausente/conflito/campo orquestrado; instrução v17.
+- Denominadores: backend 2284/2286 (2 env-failures pré-existentes); RED→GREEN 5 novos testes; real-model ~3/9 uso de selections, 2/2 materialização verbatim; O2 E2E ~1/10 (inalterado — adoção baixa sob kimi-k3; v18 MUST medido/revertido = segunda falha do pacote → stop).
+- `NEXT_ACTION=INDEPENDENT_REVIEW_405575f745 + decisão model/config + autorização operacional por serviço`.

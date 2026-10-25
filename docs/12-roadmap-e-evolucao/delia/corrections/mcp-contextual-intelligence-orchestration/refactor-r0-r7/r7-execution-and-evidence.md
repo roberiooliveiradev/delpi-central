@@ -204,3 +204,27 @@ C1 ambiental DAVI permanece pendente de aceite formal do owner CI; CRI OFF live 
 
 
 **Próximo contrato bounded (2026-10-24):** [146 — Evidence-bound arguments: especificação para Devin](../146-evidence-bound-arguments-contract-and-validation-task.md). Estado `PLANNED / AUTHORIZATION_REQUIRED_FOR_PRODUCT_DIFF`; inventariar `foreign_evidence → arguments`, escolher REUSE/EXTEND com evidência, caracterizar origem/valor e testar contra O2 e casos metamórficos. **Não autoriza nova engine, deploy ou fechamento R7**.
+
+
+### Evidence-bound arguments (spec 146) — implementação, regressão e avaliação real — 2026-10-25 (task `DELIA-R7-EVIDENCE-BOUND-ARGUMENTS-FULL-IMPLEMENTATION-AND-GOVERNED-DEPLOY-01`)
+
+**IMPLEMENT_SHA=`405575f745` = origin/main (push ff-only, rebase sobre commits concorrentes sem overlap).** Baseline congelada do candidato: instruction v17, modelo kimi-k3, corpus V2.
+
+**Inventário (Reuse Before Design — provado por callers reais):** `_synthesis_selections` já implementa o padrão "modelo seleciona por referência, código materializa verbatim" (record_index+fields → scalars copiados). `SourceRef`/`EvidenceRef` são proveniência de outcome, não binding de argumento. `argument_validation.py` é o owner canônico de validação determinística de argumentos; `_build_arguments` é a fronteira que injeta evidence blocks. `EXISTING_EQUIVALENT=YES(padrão)`; `REUSE_DECISION=EXTEND`.
+
+**Contrato implementado:** campo opcional `selections` na proposta de argumentos — `[{argument, source_ref, selected_value}]`. `source_ref` só nomeia bloco de evidência efetivamente injetado no turno (`foreign_evidence`/`owner_vocabulary`); `selected_value` deve ocorrer literalmente no bloco referenciado; `argument` deve ser propriedade declarada, não-orquestrada, de tipo string-compatível, ausente de `arguments`; enum admitido exige match exato. Materialização precede `_validate_instance` — mesmo boundary READ, mesma AuthZ; referenciar evidência nunca é autorização. Fail-closed: item inválido é descartado (nunca materializado), sem fallback inventado — valor ausente → missing/clarify honesto.
+
+**Diff (7 arquivos, +400/−9):** `argument_validation.py` +77 (`apply_evidence_bound_selections`); `orchestration.py` +29 (evidence_blocks + allowed_keys + aplicação + log `decision=evidence_bound`); instrução v17 documenta o contrato opcional; pins de versão/hash; testes +287 em `test_goal_evidence_relevance.py`.
+
+**RED→GREEN:** 5 testes novos — materialização verbatim `TERM. BALA` no re-invoke (GREEN pós-implementação, RED antes); valor ausente da evidência não materializa; `source_ref` forjado rejeitado; conflito campo-em-arguments mantém o valor tipado (código nunca arbitra ambiguidade); campo orquestrado (`candidate_token`) jamais vinculável.
+
+**Regressão:** focused suites verdes; full backend `EXIT=0` (2284/2286 — 2 ENVIRONMENT_FAILURE pré-existentes provadas no base, inalteradas); siblings `terminal pino` 2/2 PASS observados (inclusive via cadeia foreign completa); AuthZ/WRITE-negatives inalterados.
+
+**Avaliação real (mesma config/modelo que baseline v16):**
+- Argument fidelity: `decision=evidence_bound applied` observado em ~3/9 oportunidades de recovery-args; **2/2 seleções válidas materializaram verbatim** (`TERM. BALA` chegou ao owner inalterado; 1 seleção inválida corretamente rejeitada fail-closed; 1 seleção materializou designação de exemplo over-specific — transporte verbatim correto, escolha semântica do modelo).
+- Business outcome O2: v17 1/10, v18 0/10 — dentro do ruído de ~10% do baseline v16 (1/10). A remoção do defeito de fidelidade é real e mensurável (`applied` → valor exato no owner), mas o gargalo migrou para a adoção: o modelo emite `selections` em minoria das oportunidades sob kimi-k3 (instrução "may"; v18 "MUST" medido e revertido — sem ganho material).
+- Pacote causal encerrado conforme regra de parada: segunda falha material do pacote "aumentar adoção via instrução" → STOP registrado; não iterar.
+
+**Residuais honestos:** confiabilidade E2E continua limitada pela cadeia semântica no modelo corrente (admission miss conversational, seleção de provider, formulation). O mecanismo é correto, testado, fail-closed e generalizável — benefício maior em modelo com melhor instruction-following ou quando a adoção aumentar; sem hardcode, sem planner, sem heurística por produto.
+
+`O2_STATUS=BINDING_IMPLEMENTED_ADOPTION_MODEL_BOUND`; `ARG_FIDELITY=VERIFIED_WHEN_USED (2/2 verbatim)`; `DEPLOY=BLOCKED_PENDING_INDEPENDENT_REVIEW_AND_AUTHORIZATION`; `R7_FINAL_ACCEPT=NO`.
