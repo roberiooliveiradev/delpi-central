@@ -480,3 +480,106 @@ Veredito Pacote B: ACCEPT_WITH_RESIDUAL. Deploy produtivo
   `closing_stock_state` (T03); contratos Core de elegibilidade por
   grupo/função e vínculo formal de coordenador; catálogos P6 TARGET
   herdados.
+
+## ADENDO — PACOTE D (E2E, integração, homologação preparada)
+
+Execução: CF-PROC0072-E2E-MASTER-EXECUTION-001, baseline `bc6d85a7f6`.
+
+### D1 — Teste integrado do fechamento (PROVEN)
+
+Suíte `tests/test_pg_e2e_closing_flow.py` em PostgreSQL real
+descartável (R4, V001→V009 em banco limpo), cobrindo o cenário
+completo do doc 104 §D1 sem estado inferido:
+
+- competência aberta do template publicado → snapshot imutável;
+- P2: attach → aceite humano; rejeição com motivo → reversão →
+  aceite; substituição → rebaixa para EXPECTED → revalidação;
+- matriz R01–R15 derivada do snapshot (itens vinculados por R-ID
+  validados — nada promovido a relatório oficial);
+- P3: cutoff único, conciliação DECLARED → READY_TO_CLOSE, upgrade
+  OFFICIAL com artefato → C2 satisfeito;
+- P4: pendência criada → classificação confirmada → claim →
+  IN_ANALYSIS → RESOLVED pelo responsável; não-owner bloqueado;
+- P5: dois destinatários (CONTABIL/FISCAL) independentes, dois
+  revisores, duas PackageVersions (complemento exige novo aceite),
+  esclarecimento open→resolve, rejeição terminal pelo coordenador →
+  reversão → conclusão derivada apenas quando C2 satisfeito;
+- negativos: revisor não designado, OCC obsoleto, divergência
+  R$ 0,01, pendência não-owner, rejeição terminal ativa;
+- trilha append-only: eventos de todos os ciclos presentes;
+- segunda competência isolada — estados não compartilhados.
+
+### D2 — Pendências de integração (verificação)
+
+| Item | Estado |
+|---|---|
+| Ownership P4 | PROVEN (claim/transição exigem owner ou manage) |
+| Elegibilidade Core p/ decisões | PARTIAL — assignments governados por `manage`; contrato Core grupo/função = pauta G1 |
+| Proveniência oficial P3 | PROVEN (DECLARED ≠ OFFICIAL, artefato obrigatório) |
+| Sync T03/STOCK_CLOSED | PROVEN (só `closing_stock_state` canônico; sem sync fabricado) |
+| Imutabilidade evidência no PackageVersion | PROVEN (snapshot referencia `document_version_id` imutável) |
+| Catálogos P6 p/ destinatários/áreas | TARGET — pauta G1 (seed CONTABIL/FISCAL funciona) |
+| Quórum de revisão por área | PROVEN (aceite por área obrigatória da versão vigente) |
+| Conclusão mensal C2 | PROVEN (derivada; vacuidade bloqueada) |
+| Notificações | PROVEN outbox EMITTED/UNAVAILABLE — nunca critério C2 |
+| Minhas tarefas | NOT_IMPLEMENTED — superfície TASK-01..12 segue TARGET |
+| Integridade arquivos pós-recreate | TEST_NOT_RUN — verificação de volume é passo G3/D4 |
+| Histórico/auditoria append-only | PROVEN |
+| R01–R15 sem contrato | PROVEN (`PENDING_CONTRACT`, sem falso oficial) |
+
+### D3 — Qualidade executada
+
+- Backend: **478 passed** (unitários, rotas HTTP/BFF, PG real R4,
+  OCC, autorização +/−, aceite pacotes A/B/C, E2E integrado).
+- Migrations: suíte PG executa V001→V009 em banco limpo a cada
+  execução; sem reset produtivo.
+- Frontend: **159 vitest** + **25 estruturais** + `tsc -b` limpo +
+  `vite build` OK.
+- Deep links `closing/packages/{period}` e `closing/cockpit/{period}`
+  adicionados; refresh é server-driven.
+- Acessibilidade: páginas usam componentes do design system
+  (CfDialog, CfSectionCard, ActionButton) — auditoria formal de
+  a11y/teclado/mobile registrada como TEST_NOT_RUN (não executada
+  com ferramenta dedicada nesta execução).
+- Core indisponível / Core contracts: rotas falham fechado (401/403)
+  — coberto na suíte de rotas.
+
+### Matriz RQ/AC (doc 23) vinculada ao SHA de release
+
+| Família | Estado |
+|---|---|
+| RQ-P1 (abertura/snapshot) | PROVEN |
+| RQ-P2 (67 — documentos/validação) | PROVEN |
+| RQ-P3 (cutoff/conciliação) | PROVEN c/ proveniência |
+| RQ-P4 (pendências) | PROVEN c/ ownership |
+| RQ-P5/P5-AREA/P5-F..J (pacotes/revisão/C2) | PROVEN |
+| RQ-P6 (admin) | PARTIAL — admin de versões PROVEN; catálogos TARGET |
+| RQ-AUTHZ/SEC (autorização/segurança) | PROVEN em rotas/repos |
+| RQ-HELP | PROVEN (help contextual sincronizado) |
+| RQ-HOME/NAV | PROVEN (hub/catálogo) |
+| RQ-OVW/RQ-ROOM/RQ-TASK/RQ-USER | TARGET — superfícies futuras, não implementadas |
+| RQ-UX | PARTIAL — padrões aplicados; auditoria a11y TEST_NOT_RUN |
+| AC-P2-UP-01..24, AC-P2-VAL-01..13, AC-P3-PARITY-01 | PROVEN (suítes dedicadas) |
+
+### G2/G3 — estado honesto
+
+- `G2_HUMAN_ACCEPTANCE`: PENDENTE — pacote de demonstração
+  preparado neste adendo; a decisão é humana e não pode ser
+  substituída por testes.
+- `G3_RELEASE_AUTHORIZATION`: PENDENTE — bloqueado por G2.
+- `DEPLOY_STATUS`: NÃO DEPLOYADO — `srv-api` permanece no estado A3.
+- `POST_DEPLOY_CHECKS` (D4): TEST_NOT_RUN — depende de G3.
+
+### Pauta G1 consolidada (decisões materiais pendentes)
+
+1. Contrato Core de elegibilidade por grupo/função corporativa e
+   vínculo formal de coordenador de competência (hoje: assignments
+   governados por `manage` local).
+2. Owners/contratos das fontes `PENDING_CONTRACT` (R04, R06, R07,
+   R09, R12, R15) e confirmação de `MANUAL_EVIDENCE`/`EXTERNAL`.
+3. Sincronização canônica de `closing_stock_state` pelo owner T03.
+4. Catálogos P6 TARGET: bancos/contas, motivos de rejeição,
+   attachment roles, notification targets (RQ-P6-05..08,
+   RQ-ADM-01/02/05/07/08).
+5. Escopo das superfícies RQ-OVW/RQ-ROOM/RQ-TASK/RQ-USER em roadmap
+   posterior.

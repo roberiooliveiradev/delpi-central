@@ -152,9 +152,13 @@ type ReasonDialogKind =
   | "reject_terminal"
   | "revert_terminal";
 
-export function PackagesPage() {
+export function PackagesPage({ period: initialPeriod }: { period?: string }) {
   const capabilities = useViewerCapabilities();
-  const [period, setPeriod] = useState(currentCompetence());
+  const [period, setPeriod] = useState(
+    initialPeriod && PERIOD_PATTERN.test(initialPeriod)
+      ? initialPeriod
+      : currentCompetence(),
+  );
   const [packages, setPackages] = useState<ClosingPackage[]>([]);
   const [closing, setClosing] = useState<MonthlyClosingState | null>(null);
   const [selected, setSelected] = useState<ClosingPackage | null>(null);

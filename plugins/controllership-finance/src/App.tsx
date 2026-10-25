@@ -61,9 +61,9 @@ function AppRoutes({
         ) : resolved.view === "pendencies" ? (
           <PendenciesPage />
         ) : resolved.view === "packages" ? (
-          <PackagesPage />
+          <PackagesPage period={resolved.checklistPeriod} />
         ) : resolved.view === "cockpit" ? (
-          <CockpitPage />
+          <CockpitPage period={resolved.checklistPeriod} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )}

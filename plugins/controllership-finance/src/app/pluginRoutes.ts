@@ -56,13 +56,20 @@ const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> 
   cockpit: "closing/cockpit",
 };
 
-const CHECKLIST_PERIOD_PATTERN = /^closing\/checklist\/(\d{4}-(0[1-9]|1[0-2]))$/;
+const PERIOD_DEEP_ROUTE_PATTERN =
+  /^closing\/(checklist|packages|cockpit)\/(\d{4}-(0[1-9]|1[0-2]))$/;
+
+const DEEP_ROUTE_VIEWS: Record<string, PluginView> = {
+  checklist: "checklist",
+  packages: "packages",
+  cockpit: "cockpit",
+};
 
 export type ResolvedPluginRoute = {
   view: PluginView;
   pathname: string;
   relativePath: string;
-  /** Competência YYYY-MM quando a deep route é `closing/checklist/{period}`. */
+  /** Competência YYYY-MM quando a deep route é `closing/{view}/{period}`. */
   checklistPeriod?: string;
 };
 
@@ -93,16 +100,16 @@ export function resolvePluginRoute(
   const relativePath = path.startsWith(`${base}/`)
     ? path.slice(base.length + 1)
     : path.slice(base.length);
-  const periodMatch = CHECKLIST_PERIOD_PATTERN.exec(relativePath);
+  const periodMatch = PERIOD_DEEP_ROUTE_PATTERN.exec(relativePath);
   const view = periodMatch
-    ? "checklist"
+    ? DEEP_ROUTE_VIEWS[periodMatch[1] ?? ""] ?? "not_found"
     : RELATIVE_TO_VIEW[relativePath] ?? "not_found";
 
   return {
     view,
     pathname: path,
     relativePath,
-    checklistPeriod: periodMatch?.[1],
+    checklistPeriod: periodMatch?.[2],
   };
 }
 

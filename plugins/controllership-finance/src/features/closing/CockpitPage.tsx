@@ -94,8 +94,12 @@ function currentCompetence(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function CockpitPage() {
-  const [period, setPeriod] = useState(currentCompetence());
+export function CockpitPage({ period: initialPeriod }: { period?: string }) {
+  const [period, setPeriod] = useState(
+    initialPeriod && PERIOD_PATTERN.test(initialPeriod)
+      ? initialPeriod
+      : currentCompetence(),
+  );
   const [cockpit, setCockpit] = useState<Cockpit | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<PanelError | null>(null);

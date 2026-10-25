@@ -61,6 +61,24 @@ describe("pluginRoutes", () => {
     );
   });
 
+  it("deep links de pacotes e cockpit com competência", () => {
+    const pkg = resolvePluginRoute(
+      "/apps/controllership-finance/closing/packages/2026-11",
+    );
+    expect(pkg.view).toBe("packages");
+    expect(pkg.checklistPeriod).toBe("2026-11");
+    const cockpit = resolvePluginRoute(
+      "/apps/controllership-finance/closing/cockpit/2026-11",
+    );
+    expect(cockpit.view).toBe("cockpit");
+    expect(cockpit.checklistPeriod).toBe("2026-11");
+    expect(
+      resolvePluginRoute(
+        "/apps/controllership-finance/closing/packages/2026-13",
+      ).view,
+    ).toBe("not_found");
+  });
+
   it("resolve a rota do checklist da competência", () => {
     const resolved = resolvePluginRoute(
       "/apps/controllership-finance/closing/checklist",
