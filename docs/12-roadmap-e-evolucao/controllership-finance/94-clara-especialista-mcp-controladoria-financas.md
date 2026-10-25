@@ -1,9 +1,12 @@
 # Documento 94 — CLARA · Especialista MCP em Controladoria & Finanças
 
 **Estado:** identidade e intenção funcional **APROVADAS** pelo usuário/PO ·
-arquitetura executável **TARGET** · `IMPLEMENTATION_AUTHORIZED=NO`.
+arquitetura executável **TARGET** · `IMPLEMENTATION_AUTHORIZED=YES`
+para as capacidades do GO `CF-PROC0072-CLARA-COMPLETE-001` (D01–D05
+decididas); G2/G3 seguem externos.
 **Natureza:** especificação de governança e arquitetura. Nenhum servidor
-MCP, tool, endpoint, banco, migration, permission ou deploy foi criado.
+MCP, tool, endpoint, banco, migration, permission ou deploy existia na
+escrita original; a primeira fatia foi implementada em `41fdcf65e1`.
 **Baseline de inventário:** HEAD `348809fa82` (2026-10-24).
 
 Legenda de estado usada neste documento: `CURRENT` (existe no HEAD,
@@ -227,10 +230,10 @@ autorizado e justificado (`PLANNED`, nenhuma prevista nesta fase).
 | ID | Tema | Decisão / condição | Estado |
 |---|---|---|---|
 | **CLARA-D01** | Paridade das operações do Portal, incluindo ações sensíveis no chat | **OPÇÃO B APROVADA PELO PO EM 24/10/2026:** PREPARE/ACT delegado pode validar, rejeitar, concluir e executar demais operações **que o mesmo usuário já poderia executar na UI/BFF**, com confirmação humana explícita por ação, audit e verificação de resultado. A autorização final continua na BFF/Core. [Doc 14 §IA](./14-seguranca-rbac-auditoria-e-ia.md) atualizado. | `PO_APPROVED / DESIGN_ONLY`; nenhuma ACT sensível criada |
-| **CLARA-D02** | Hospedagem MCP na API dona ou serviço separado | (A) `/mcp` owner-local na `controllership-finance-api` (padrão comprovado TÉO/VISTA, recomendado); (B) serviço separado via BFF. Não escolher por preferência antes de gate. | `DECISION_REQUIRED` |
-| **CLARA-D03** | Delegação OAuth/MCP até api-delpi | (A) mesmo token quando audience compatível; (B) token exchange; (C) identidade validada pela BFF e S2S próprio. Inventário de Keycloak/segurança antes de decidir. | `TO_INVENTORY / DECISION_REQUIRED` |
-| **CLARA-D04** | PREPARE/ACT governado | (A) aplicar padrão TÉO local no owner C&F (recomendado); (B) extrair compartilhado só com consumidor real adicional. Não importar `governed_writes` do domain alheio. | `DECISION_REQUIRED` |
-| **CLARA-D05** | Primeira fatia da CLARA | (A) DISCOVERY+READ+ANALYSIS sobre contratos existentes da BFF (recomendado); (B) aguardar P1–P6. Isto é faseamento, **não** limita capacidade final aprovada. | `DECISION_REQUIRED` |
+| **CLARA-D02** | Hospedagem MCP na API dona ou serviço separado | (A) `/mcp` owner-local na `controllership-finance-api` (padrão comprovado TÉO/VISTA, recomendado); (B) serviço separado via BFF. Não escolher por preferência antes de gate. | `DECIDED=A` (gate transversal CLARA-COMPLETE-001) |
+| **CLARA-D03** | Delegação OAuth/MCP até api-delpi | (A) mesmo token quando audience compatível; (B) token exchange; (C) identidade validada pela BFF e S2S próprio. Inventário de Keycloak/segurança antes de decidir. | `DECIDED=C` (BFF valida identidade + cadeia S2S vigente; gate transversal CLARA-COMPLETE-001) |
+| **CLARA-D04** | PREPARE/ACT governado | (A) aplicar padrão TÉO local no owner C&F (recomendado); (B) extrair compartilhado só com consumidor real adicional. Não importar `governed_writes` do domain alheio. | `DECIDED=A` (padrão TÉO local no owner C&F; gate transversal CLARA-COMPLETE-001) |
+| **CLARA-D05** | Primeira fatia da CLARA | (A) DISCOVERY+READ+ANALYSIS sobre contratos existentes da BFF (recomendado); (B) aguardar P1–P6. Isto é faseamento, **não** limita capacidade final aprovada. | `DECIDED=A` (DISCOVERY+READ+ANALYSIS primeiro; PREPARE/ACT só para capacidades existentes; gate transversal CLARA-COMPLETE-001) |
 
 ### 10.1 Contrato de confirmação da ação delegada (TARGET aprovado funcionalmente)
 
@@ -242,7 +245,7 @@ autorizado e justificado (`PLANNED`, nenhuma prevista nesta fase).
 
 **Exemplos vinculantes:** (i) Joici pode anexar e depois validar um PDF quando for elegível às duas ações, mas há duas confirmações/eventos independentes e `ATTACHED != VALIDATED`; (ii) rejeição exige motivo/histórico; (iii) concluir competência exige todos os critérios P5, sem reduzir `MONTHLY_CLOSING_COMPLETED` a confirmação no chat; (iv) Contabilidade/DRE é destinatária de leitura/download futuro, **não** tem capacidade de validar ou aprovar na primeira versão; (v) sacramentação ERP é externa ao Portal V1, portanto **não é ACT delegável** enquanto não houver capacidade autorizada e contrato expresso.
 
-**Nenhuma tool de escrita ainda existe.** Esta decisão resolve D01 de produto/IA; D02–D05 e os contratos técnicos/segurança continuam pendentes. `IMPLEMENTATION_AUTHORIZED=NO`.
+**Nenhuma tool de escrita ainda existia quando D01 foi aprovada.** D02–D05 foram decididas pelo PO na rodada única do GO `CF-PROC0072-CLARA-COMPLETE-001` (D02=A, D03=C, D04=A, D05=A). `IMPLEMENTATION_AUTHORIZED=YES` para as capacidades deste GO — G2/G3 seguem externos.
 
 ## 11. Requisitos e critérios de aceite
 
@@ -295,4 +298,4 @@ Evidências deste documento: `shared/delpi_mcp/*` (docstrings e testes),
 `tv-dashboard-api` conformance test,
 `controllership-finance-api/.../routes/*`, docs 14, 23, 88, 91, 93.
 
-**Próximo passo delimitado:** D01=B está aprovada e documentada; inventariar D03, submeter D02/D04/D05 e contracts ao gate transversal, iniciar a primeira fatia somente após GO explícito. Nenhuma implementação decorre deste documento.
+**Estado:** D01=B, D02=A, D03=C, D04=A, D05=A decididas. Primeira fatia implementada em `41fdcf65e1` (V011 + `/mcp` owner-local + knowledge base própria + PREPARE/ACT governado para capacidades já existentes na BFF). Gate transversal fechado para este escopo; G2 humano e G3 operador permanecem externos.

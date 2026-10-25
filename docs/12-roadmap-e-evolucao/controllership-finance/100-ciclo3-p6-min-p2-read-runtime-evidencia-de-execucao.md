@@ -1037,3 +1037,98 @@ competência nunca esperam por ele, logo não há ciclo de espera
 | Frontend | sem alteração — correções não mudam superfície visível; Help não exigido |
 | Bloqueios prévios | **não enfraquecidos** — rejeição terminal, lock de evidência, elegibilidade fail-closed preservados |
 | G1 / G2 / G3 | inalterados — decisões G1 com owners, aceite humano G2 e liberação G3 seguem pendentes; deploy produtivo **não executado** |
+
+---
+
+## Adendo — CLARA MCP (CF-PROC0072-CLARA-COMPLETE-001)
+
+Execução do GO do PO que autorizou a implementação da CLARA —
+Especialista MCP em Controladoria & Finanças com base de conhecimento
+própria — além do fechamento da pauta D02–D05 do doc 94.
+
+### Decisões fechadas nesta rodada (gate transversal)
+
+| Decisão | Escolha | Registro |
+|---|---|---|
+| CLARA-D02 | **A** — `/mcp` owner-local na `controllership-finance-api` (padrão TÉO/VISTA) | doc 94 |
+| CLARA-D03 | **C** — BFF valida identidade do usuário + cadeia S2S vigente | doc 94 |
+| CLARA-D04 | **A** — governed writes no padrão TÉO **local** ao C&F (sem import de domínio alheio) | doc 94 |
+| CLARA-D05 | **A** — DISCOVERY/READ/ANALYSIS sobre contratos existentes; PREPARE/ACT só para capacidades já homologadas na BFF | doc 94 |
+
+### Implementado
+
+- **V011** `clara_knowledge_source` / `clara_knowledge_item` /
+  `clara_corpus_version` / `clara_proposal` — schema próprio no contexto
+  C&F, não destrutiva.
+- **`/mcp` Streamable HTTP** montado na `controllership-finance-api`
+  com OAuth protected-resource metadata (RFC 9728), transport AuthN
+  MCP (user JWT obrigatório, **service tokens proibidos** na superfície
+  de dados, audience/scopes exatos, challenge `WWW-Authenticate`),
+  rewrite `/mcp` → `/mcp/` no padrão dos especialistas.
+- **14 tools** taxonomia congelada `delpi_mcp`: DISCOVERY
+  (`get_catalog`, `list_knowledge_sources`), READ (`get_my_context`,
+  `get_competence_state`, `get_checklist_items`, `list_documents`,
+  `get_p3_reconciliation`, `list_pendencies`, `get_package_review`,
+  `search_closing_knowledge`, `get_knowledge_item`), ANALYSIS
+  (`analyze_closing_blockers`), PREPARE (`prepare_governed_operation`),
+  ACT (`commit_proposal`). Anotações honestas readOnly/destructive,
+  `securitySchemes` no wire, instructions com invariantes
+  (ATTACHED≠VALIDATED, indisponível≠zero, STOCK_CLOSED≠conclusão).
+- **Paridade Portal↔MCP:** todo handler reconstrói a Request do
+  contexto `delpi_auth` e reaplica `authorized_user`/permissão
+  `manage`; leituras chamam os **mesmos repositórios canônicos** das
+  rotas HTTP — nenhuma regra duplicada, nenhum bypass.
+- **Governed writes (PREPARE→ACT):** handle opaco vinculado ao ator,
+  payload selado server-side, snapshot do recurso para staleness,
+  expiração 900 s, consumo atômico single-use, execução delegada aos
+  repositórios canônicos (regras, elegibilidade e escopo reaplicados),
+  verificação de pós-condição por read-back e trilha `mcp/clara` na
+  auditoria canônica. Capabilities iniciais: `evidence.decide_version`,
+  `evidence.decide_item_set`, `review.record_decision`,
+  `clarification.open`, `clarification.resolve` — todas já existentes e
+  homologadas na BFF. Nenhuma operação TOTVS, nenhuma permission nova.
+- **Base de conhecimento:** pipeline governado (`corpus_ingestion.py`)
+  com manifest explícito de **52 fontes autorizadas** (docs 02, 04,
+  08–15, 23, 37, 54–57, 59–90, 93–94, 100, 104–105), segmentação por
+  headings com `citation_locator` estável (documento + heading path +
+  linhas), dedup por locator, supersede governado, corpus versionado e
+  FTS português (`content_tsv` GIN). Classificações honestas de
+  evidência (PROVEN_*, OWNER_REPORTED_VIA_PO, TO_INVENTORY, TARGET,
+  APPROVED_RULE, CURRENT_IMPLEMENTATION); `INTERNAL_ONLY` nunca sai
+  para o Portal; `PORTAL_MANAGE` só para manage efetivo.
+- **Ingestão comprovada** em PostgreSQL real: 52 fontes → 1.283 itens,
+  `corpus_version` publicada, busca textual retorna itens com citação
+  verificável (documento + seção + classificação).
+
+### Fonte de vídeo
+
+`VIDEO_SOURCE_ACCESS=UNAVAILABLE` — nenhum MP4, transcrição ou índice
+bruto foi localizado no ambiente de execução nem no repositório; o
+conhecimento do vídeo foi ingerido exclusivamente via documentação
+derivada autorizada (docs 54, 56, 57, 78), marcada
+`OWNER_REPORTED_VIA_PO` — nunca apresentada como transcrição literal.
+
+### Testes adicionados
+
+- `tests/test_pg_clara.py` (12 testes, PostgreSQL real): ingestão +
+  retrieval com citação, vazamento `INTERNAL_ONLY` bloqueado, dedup +
+  supersede, corpus versionado, PREPARE sem efeito colateral, wrong
+  actor, proposta expirada, ACT com pós-condição verificada e auditoria
+  `mcp/clara`, single-use, staleness por snapshot, capability
+  desconhecida, delegação fail-closed às regras de domínio.
+- `tests/test_clara_mcp_surface.py` (13 testes): taxonomia das 14
+  tools, anotações, securitySchemes no wire, instructions, mount paths,
+  strip de root_path no guard de transporte, mapeamento de erros
+  tipados (401 challenge, domínio, 500 sem vazamento), manifest ↔
+  arquivos reais, segmentador.
+
+### Estado
+
+| Item | Resultado |
+|---|---|
+| Backend suite | **546 passed** (521 + 25 novos) |
+| V011 | aplicada em PG efêmero; não destrutiva |
+| Knowledge ingestion | 52 fontes / 1.283 itens / retrieval com citação — **PASS real** |
+| Governed writes | ciclo completo comprovado em PG real |
+| G1 remanescente | inalterado (T03, fontes oficiais R04+, T05 dedicado, seeds, OVW) |
+| G2 / G3 | **PENDENTES** — aceite humano e liberação do Operador SSH não foram realizados; deploy produtivo **não executado** |
