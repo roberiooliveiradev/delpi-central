@@ -143,3 +143,10 @@
 - Contrato `selections` (argument+source_ref+selected_value) na fronteira de `_build_arguments`; validação determinística em `argument_validation.py` (EXTEND, padrão `_synthesis_selections`); fail-closed em ref forjada/valor ausente/conflito/campo orquestrado; instrução v17.
 - Denominadores: backend 2284/2286 (2 env-failures pré-existentes); RED→GREEN 5 novos testes; real-model ~3/9 uso de selections, 2/2 materialização verbatim; O2 E2E ~1/10 (inalterado — adoção baixa sob kimi-k3; v18 MUST medido/revertido = segunda falha do pacote → stop).
 - `NEXT_ACTION=INDEPENDENT_REVIEW_405575f745 + decisão model/config + autorização operacional por serviço`.
+
+### Registro complementar — 2026-10-25 — A/B de seleção de modelo EXECUTADO (CASO B: nenhum elegível supera kimi-k3; bloqueio é contratual)
+
+- `TASK_ID=DELIA-R7-MODEL-SELECTION-ADOPTION-AND-RELIABILITY-ACCEPTANCE-01`; `STATE=AB_EVAL_COMPLETE_ARCHITECTURE_DECISION_REQUIRED`; `EVALUATED_SHA=405575f745`; `INSTRUCTION_VERSION=17`; matriz congelada O2 N=10/modelo, mesma infra/contrato/DAVI/corpus; segunda instância no container eval com `DELIA_LLM_MODEL` isolado.
+- Baseline `kimi-k3`: selections ~3/9, O2 1/10. `gpt-4o-mini`: consult 20/20 ok, **selections 0/10**, O2 verdadeiro 0/10 e **7/10 falso-positivo** (balanças `BALANCA` apresentadas como grounded — regressão de correção do juiz). `claude-sonnet-5`/`qwen-2.5-72b`/`kimi-k2.6`/`gpt-4o`: 0/10 — bypass conversacional ou decline antes do estágio arguments; gpt-4o 4/10 transporte 502. `deepseek-chat`: rota degradada (9/10 502; probe direto OK).
+- Causa: `selections` é opcional e paralelo a `arguments`; todos os modelos redigitam em vez de referenciar quando chegam ao estágio — e a maioria nem chega. Não há modelo elegível que melhore adoção sem regressão; a alavanca remanescente é contratual (obrigatoriedade condicional ou snapping determinístico) → fora da autoridade da task.
+- `MODEL_RECOMMENDATION=KEEP kimi-k3`; `NEXT_ACTION=DECISÃO DE COORDENAÇÃO: ARCHITECTURE_DECISION sobre contrato selections (opcional→condicional/snapping) antes de qualquer v19 ou novo modelo`.

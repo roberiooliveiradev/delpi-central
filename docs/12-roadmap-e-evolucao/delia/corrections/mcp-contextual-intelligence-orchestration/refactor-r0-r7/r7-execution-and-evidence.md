@@ -241,3 +241,32 @@ C1 ambiental DAVI permanece pendente de aceite formal do owner CI; CRI OFF live 
 **Próxima decisão bounded:** caracterizar, em caminho existente, por que a proposta do modelo continua usando string livre em vez de `selections`; comparar alternativas contratuais preexistentes de seleção por referência sem tornar sua adoção automática ou substituir escolha semântica. Opcionalmente realizar avaliação A/B de modelos com amostra congelada, mesma infraestrutura/contratos e custos/latência/segurança, sem troca produtiva automática. Se solução exigir novo tipo de executor ou autoridade, `ARCHITECTURE_DECISION_REQUIRED` primeiro. Fechamento R7 e deploy continuam bloqueados por confiabilidade O2, exceção C1, CRI OFF live e gates operacionais separados.
 
 `NEXT_ACTION=MODEL_SELECTION_ADOPTION_CAUSAL_GATE`; `MECHANISM_ACCEPTED_WITH_RESIDUAL=YES`; `O2_RELIABILITY=FAIL`; `DEPLOY_GATE=BLOCKED`; `R7_CLOSED=NO`.
+
+
+### Avaliação A/B de seleção de modelo — adoção de `selections` — 2026-10-25 (task `DELIA-R7-MODEL-SELECTION-ADOPTION-AND-RELIABILITY-ACCEPTANCE-01`)
+
+**Escopo congelado:** mesmo SHA avaliado `405575f745` (worktree bind-mount), instrução v17, temperatura 0.2, DAVI r7 eval (`api-delpi-r7`), corpus V2, CRI inalterado, pergunta O2 idêntica, token delegado novo por execução, N=10 por modelo. Variável única: `DELIA_LLM_MODEL` — segunda instância do app no mesmo container, mesma env (289 variáveis), porta separada, logs separados. Adapter OpenAI-compatible sem structured-output nativo — aderência a JSON é instruction-following pura.
+
+**Inventário do provider (OpenRouter, chave existente — nenhuma credencial nova):** 467 modelos listados via `/models`. Candidatos exercitados: `openai/gpt-4o-mini`, `openai/gpt-4o`, `anthropic/claude-sonnet-5`, `qwen/qwen-2.5-72b-instruct`, `moonshotai/kimi-k2.6`, `deepseek/deepseek-chat`.
+
+**Resultado O2 por modelo (N=10, todos os denominadores preservados):**
+
+| modelo | chegou a arguments | selections emitidas | O2 verdadeiro | modo de falha dominante |
+|---|---|---|---|---|
+| `moonshotai/kimi-k3` (baseline) | sim | ~3/9 | 1/10 | baixa adoção de selections |
+| `openai/gpt-4o-mini` | sim (consult 20/20 ok) | **0/10** | 0/10 — **7/10 falso-positivo** (`BALANCA` apresentada como resposta; juiz marcou `corresponds`) | ignora selections + juiz fraco |
+| `anthropic/claude-sonnet-5` | não (dead-end em `foreign_selection`) | — | 0/10 | recusa capability / resposta conversacional |
+| `qwen/qwen-2.5-72b-instruct` | não | — | 0/10 | bypass conversacional (terminais inventados) |
+| `moonshotai/kimi-k2.6` | não | — | 0/10 | timeouts em select_group + bypass |
+| `openai/gpt-4o` | 1/10 | — | 0/10 | bypass/decline + 4/10 transporte 502 |
+| `deepseek/deepseek-chat` | — | — | — | upstream 502 em 9/10 (probe direto 200 — rota degradada em payload real) |
+
+**Leituras observáveis (instância candidata, logs separados):** gpt-4o-mini — `native_assessment decision=foreign_evidence_required` 20/20, `foreign_invocation decision=ok` 20/20, **zero `decision=evidence_bound`** em toda a janela; descrições enviadas ao owner: `terminal bala`×13, `exemplos de terminal bala`×1 — nunca `TERM. BALA` apesar da evidência consultada; `goal_evidence_relevance` 8 corresponds / 11 irrelevant — os corresponds incluíram itens `BALANCA` (balanças) apresentados como resposta a terminal bala.
+
+**Custo/latência (observado):** gpt-4o-mini ~25.7k in / ~300 out por run (~US$0.004/run), cadeias ~60-90s; kimi-k3 ~21-31k in / ~4.5-9k out (~US$0.07/run — output 18× mais caro); claude-sonnet-5 ~$0.06/run equivalente mas sem completar cadeia; qwen ~$0.01/run bypass; gpt-4o ~$0.07/run com 40% de erro de transporte. Custo menor por run é irrelevante quando outcome=0 e correção regride.
+
+**Conclusão causal — CASO B:** nenhum modelo elegível melhora adoção de `selections`; todos falham **mais cedo** na cadeia (admission/capability/conversational bypass) que kimi-k3. kimi-k3 permanece o único modelo que (a) completa a cadeia governada consistentemente e (b) emite `selections` algumas vezes. O residual não é selecionável por modelo: o contrato torna `selections` opcional e paralelo ao campo `arguments` que o modelo já preenche por default — racionalmente ele redigita em vez de referenciar. Aumentar adoção exige mudança contratual (ex.: snapping determinístico de valor-contra-evidência pós-proposta, ou tornar a referência obrigatória quando a evidência contém valor elegível) — novo conceito estrutural fora da autoridade desta task.
+
+**Achado de segurança secundário:** gpt-4o-mini produziu falso-positivo empresarial (balanças apresentadas como grounded answers) — o juiz `goal_evidence_relevance` depende da qualidade semântica do modelo; troca de modelo afeta também a honestidade do outcome, não só a adoção.
+
+`NEXT_ACTION=ARCHITECTURE_DECISION_REQUIRED — contrato selections opcional vs snapping determinístico/obrigatoriedade condicional`; `MODEL_SWITCH=NONE (kimi-k3 remains best eligible)`; `DEPLOY=BLOCKED`; `R7_CLOSED=NO`.
