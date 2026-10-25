@@ -4,8 +4,10 @@
  *
  * A ordem canônica (doc 24) é Início, Visão geral, Sala de
  * interação, Minhas tarefas, Administração, Ajuda — itens entram
- * aqui apenas quando a rota existir em runtime. Implementadas:
- * «Início» e «Minhas tarefas».
+ * aqui apenas quando a rota existir em runtime. Implementada:
+ * «Início». «Minhas tarefas» permanece implementada em rota/código,
+ * mas fora da navegação desta release (CF-PROC0072-CLARA-COMPLETE-001
+ * §18 — escopo adiado, sem exclusão destrutiva).
  */
 import type { PluginNavId } from "../app/pluginRoutes";
 
@@ -19,7 +21,6 @@ export type ShellNavItem = {
 
 export const SHELL_NAV_ITEMS: readonly ShellNavItem[] = [
   { id: "home", label: "Início", requiredCap: "always" },
-  { id: "my_tasks", label: "Minhas tarefas", requiredCap: "always" },
 ] as const;
 
 export type ShellNavCapabilities = Record<
@@ -57,7 +58,6 @@ export const SHELL_NAV_CONTENT = {
     scopeOwn: "Acesso ao portal",
     highlights: {
       competence: "Competência",
-      tasks: "Tarefas pendentes",
       attention: "Atenções",
     },
     highlightsUnavailable: "—",

@@ -15,7 +15,6 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
     const routeIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
     expect(routeIds).toEqual([
       "home",
-      "my-tasks",
       "profile",
       "closing-checklist",
       "financial-settlements",
@@ -30,7 +29,6 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
     expect(new Set(viewIds)).toEqual(
       new Set([
         "home",
-        "my_tasks",
         "profile",
         "checklist",
         "checklist_admin",

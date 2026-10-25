@@ -45,7 +45,9 @@ describe("PluginShell", () => {
     };
     renderShell();
     expect(screen.getByText("Início")).toBeTruthy();
-    expect(screen.getByText("Minhas tarefas")).toBeTruthy();
+    // «Minhas tarefas» implementada, mas fora da navegação nesta
+    // release (decisão de escopo GO CLARA-COMPLETE §18).
+    expect(screen.queryByText("Minhas tarefas")).toBeNull();
     // Rotas futuras não aparecem como navegáveis.
     for (const label of [
       "Visão geral",

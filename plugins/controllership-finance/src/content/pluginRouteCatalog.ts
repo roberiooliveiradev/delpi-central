@@ -4,7 +4,9 @@
  *
  * Somente rotas implementadas em runtime podem entrar aqui. Rotas
  * futuras (Visão geral dedicada, Sala de interação, Ajuda) NÃO são
- * indexadas até existirem.
+ * indexadas até existirem. «Minhas tarefas» existe em runtime, mas
+ * está fora da navegação desta release por decisão de escopo
+ * (CF-PROC0072-CLARA-COMPLETE-001 §18) — rota e código preservados.
  */
 import type { PluginNavigationTarget } from "../app/pluginRoutes";
 
@@ -55,23 +57,6 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
           "comeco",
           "saudação",
           "saudacao",
-        ],
-      },
-      {
-        id: "my-tasks",
-        label: "Minhas tarefas",
-        viewId: "my_tasks",
-        requiredCap: "always",
-        keywords: [
-          "minhas",
-          "tarefas",
-          "trabalho",
-          "pendente",
-          "revisao",
-          "revisão",
-          "esclarecimento",
-          "atribuido",
-          "atribuído",
         ],
       },
       {

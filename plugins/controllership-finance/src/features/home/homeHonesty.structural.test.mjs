@@ -38,7 +38,6 @@ describe("home honesty", () => {
       new Set(viewIds),
       new Set([
         "home",
-        "my_tasks",
         "profile",
         "checklist",
         "checklist_admin",
