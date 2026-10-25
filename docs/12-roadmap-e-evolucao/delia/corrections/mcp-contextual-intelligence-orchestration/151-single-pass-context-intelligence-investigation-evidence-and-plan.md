@@ -393,3 +393,22 @@ DÉLIA's context handling is **architecturally disciplined and bounded by design
 The minimal path is WP-A first (declare the real window, enforce budgets honestly — small diff, highest information value), then the canonical decision on WP-B (persistence is the only item needing authority reversal), then WP-C/D/E/F as bounded extensions of mechanisms that already exist (§5).
 
 **Next interaction = architectural decision on D1-D8 + implementation authorization. No further inventory is needed.**
+
+
+## 12. Independent coordination review — 2026-10-25
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL for single-pass INVENTORY, NOT implementation approval.** Read-only document 151 and ledger at `e3055a0565` inspected independently. Runtime wire capture and Ollama effective context-window remain `TEST_NOT_RUN/TO_INVENTORY`; claims about actual prompt truncation are risks, not proven production symptoms. `SESSION_PERSISTENCE=NONE` is canonical and not open for implicit reversal.
+
+**Decision D1 / WP-A: APPROVE_DIRECTION_WITH_CONTRACT_REVIEW.** First measure effective Ollama daemon/context window using authorized local, read-only probe; confirm environment name and runtime behavior; then compare actual assembled request size by stage and measured input tokens. Avoid an unconditional `CONTEXT_TOO_LARGE` fail-closed response that degrades users when the current history can be reduced safely within existing contracts. Prefer bounded, deterministic preservation order and stage-specific budgets as a proposal, with explicit testable no-silent-truncation guarantee. Proposed `ModelAdapter.context_window_tokens` is a *new contract property* and must pass abstraction/owner/compatibility gate before implementation; estimate is not true tokens. No new generic context engine.
+
+**Decision D2 / WP-C: CONDITIONAL.** A synthetic `DELIA_RESULT` containing `[contexto anterior omitido]` could violate turn-pair semantics, be misinterpreted as assistant evidence, and lack provenance. Prefer an explicit typed non-authoritative omission indicator **only if supported by existing wire contract**, else submit smallest contract amendment before writing. Summarization instruction_id requires separate authority/version gate; do not autoadd LLM call or treat summary as fact.
+
+**Decision D3 / WP-D: APPROVE_CHARACTERIZATION, IMPLEMENTATION_CONDITIONED ON WP-A AND HEAD.** Red/green prove context preservation, budgets, role semantics and not adding latency to 23 stages; `_stage_context()` helper is not approved merely because convenient. Reuse present `prior_turns`, `_TurnGoal`, prior_observation, evidence/projection; avoid a second state machine. Current goal re-derivation is bounded approved behavior, not necessarily defect.
+
+**Decision D4 / WP-E: CONTRACT_REVIEW_REQUIRED.** Flattening prior user/assistant messages into one delimited user text loses role semantics and can strengthen prompt injection by conflation. Preserve typed roles with adapter/provider mapping; identify actual exploit before inventing delimitation layer. Residency flag and outbound prior context to external providers require governance/privacy decision, not just UI banner. No external-model evaluation.
+
+**Decision D5 / WP-F: APPROVE_DIRECTION, REUSE_EXISTING OBSERVABILITY.** Stage-level context bytes, estimated tokens clearly labeled, actual usage if provider available, omission/truncation reasons and provider context ceiling; protect secrets/PII. No new telemetry system or fake measured token values.
+
+**Decision D6 / WP-B: NOT AUTHORIZED.** Document 21 §8 explicitly freezes request-scoped session and MFE-memory-only; backend conversation DB, conversation_id, migrations, GET, retention and new ports are out of scope without canonical reversal, owner, retention and privacy authority. Do not piggyback persistence on WP-A/C/D.
+
+**Overall:** Investigative coverage accepted with residuals. One bounded implementation task may be approved first: `WP-A0 RUNTIME CONTEXT WINDOW & PRE-FLIGHT SIZE CHARACTERIZATION` (read-only local probe and trace, followed by decision on WP-A contract), optionally WP-F measurements that reuse the current ledger. All other WPs remain design gated. Local model success still not guaranteed after context fixes; evaluate against locked baseline. No deploy from investigation alone.
