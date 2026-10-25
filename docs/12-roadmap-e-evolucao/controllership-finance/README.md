@@ -496,3 +496,8 @@ GOs `CF-C3-P2-UPLOAD-IMPL-GO-001` e `CF-C3-P2-UPLOAD-SLICE2-IMPL-GO-001` (PO_AUT
 ## Plano mestre consolidado de execução — 24/10/2026
 
 O [Documento 104 — plano mestre E2E de implementação, aceite e deploy por Operador SSH](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md) consolida CP02–CP12 em pacotes A–D e três paradas formais (G1 decisões materiais, G2 aceite integrado, G3 release/rollback). Preserva o ledger 23 e este roadmap como authorities de RQ/AC e dependências; não declara runtime nem deploy já executados. Deploy de produção depende de operador SSH autorizado, preflight, backup, rollback e smoke real.
+
+
+## Execução complementar: concluir pendências antes do refinamento — 25/10/2026
+
+O PO autorizou a execução contínua das lacunas remanescentes da Central P1–P6, mantendo decisões materiais em G1 e G2/G3 de homologação e release. **Documento vigente:** [105 — GO de conclusão integral das pendências antes do refinamento](./105-go-conclusao-integral-pendencias-implementacao-antes-refinamento.md). O [104](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md) continua sendo o roteiro E2E e de deploy; o [23](./23-ledger-rq-ac-testes.md), o [37](./37-p5-submissao-e-revisao-no-portal.md) e o [100](./100-ciclo3-p6-min-p2-read-runtime-evidencia-de-execucao.md) mantêm contratos/evidências. Nenhum novo deploy foi realizado por esta atualização documental.
