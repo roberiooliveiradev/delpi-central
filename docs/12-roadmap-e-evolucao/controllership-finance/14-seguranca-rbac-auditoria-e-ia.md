@@ -242,3 +242,8 @@ Para operações sensíveis, exigir `PREPARE → descrição de objeto, competê
 Não expor secrets/tokens em frontend state, prompts comuns ou logs.
 
 **Decisões P5 vigentes:** [37 — contrato canônico de revisão, C2, P5-A..J e DEC-01..04](./37-p5-submissao-e-revisao-no-portal.md). RQ/AC em [23](./23-ledger-rq-ac-testes.md); histórico de gates não é contrato ativo. `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+### Atualização PO — 25/10/2026: CLARA multi-ação (Documento 106)
+
+**SUBSTITUI o requisito histórico de confirmação conversacional por cada operação sensível, inclusive os exemplos de duas confirmações separadas acima:** uma solicitação de N ações pode ser atendida com intenção do usuário autenticado tecnicamente atestada pelo host ou com **uma confirmação consolidada** do lote, contendo operações e efeitos exatos. Cada operação mantém effective permission Core fresca, escopo, versão, business rule, idempotência, auditoria e pós-condição próprios. Nenhum boolean declarado pela IA, possession de handle ou texto recuperado da base prova consentimento. O contrato físico depende de gate de segurança; ChatGPT pode exigir confirmações nativas de tool, que não devem ser contornadas. Authority posterior: [Documento 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md). ACT fail-closed até comprovação; G2/G3 não inferidos.
