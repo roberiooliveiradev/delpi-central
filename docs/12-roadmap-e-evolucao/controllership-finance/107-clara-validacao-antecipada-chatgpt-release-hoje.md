@@ -1,0 +1,47 @@
+# Documento 107 — Diretriz PO: teste antecipado da CLARA no ChatGPT e conclusão do release
+
+**Data:** 2026-10-25 · **ID:** `CF-PROC0072-CLARA-CHATGPT-EARLY-VALIDATION-001` · **Autoridade:** PO, como atualização posterior aos Docs [104](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md), [106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md), [94](./94-clara-especialista-mcp-controladoria-financas.md), [14](./14-seguranca-rbac-auditoria-e-ia.md). **Status:** `PO_APPROVED_SEQUENCE / EXECUTION_GO`; não equivale a G1 owner externo, G2, G3 ou deploy realizado.
+
+## 1. Objetivo, urgência e decisão do PO
+
+O PO determina que, **após a correção cirúrgica de consentimento da CLARA**, a equipe deve **disponibilizar o MCP para conexão de teste no ChatGPT o mais cedo possível**, realizar testes reais com o usuário e **prosseguir na mesma frente** para homologação G2, autorização G3 e implantação definitiva. Objetivo operacional: **concluir hoje (25/10/2026), se todos os owners e gates puderem aprovar tempestivamente**. Não transformar a meta em alegação de conclusão, autorização tácita, teste inferido, ou promessa de entrega assíncrona.
+
+**Sequência preferida:** `FINAL_REWORK → LOCAL/INTEGRATION PASS → APPROVED NON-PROD MCP PILOT → CHATGPT CONNECT/READ/SAFE BATCH E2E → G1 OWNER CLOSE → G2 HUMAN SIGN-OFF → G3 SSH RELEASE AUTHORIZATION → PROD KEYCLOAK/DEPLOY → PROD SMOKE → FINAL CHATGPT CONNECTION/ACCEPTANCE → EVIDENCE/SHA`.
+
+**Exceção de ambiente:** se não houver ambiente não produtivo **existente e autorizado** com HTTPS/OAuth/endereço acessível ao ChatGPT, **não tratar produção como piloto**. Primeiro preparar todas as evidências e executar G1/G2/G3; somente após autorização, implantação produtiva e teste no ChatGPT. Provisionar uma nova infraestrutura pública, alterar DNS, expor dados reais, operar Keycloak compartilhado ou habilitar portas externas exige os owners e a authority vigentes (DECISION_REQUIRED quando material).
+
+Escopo: Central de Fechamento P1–P6 + CLARA MCP multiação + knowledge base + integrações oficiais provadas. **Sala de interação e expansão de Minhas tarefas adiadas.** DRE/Contabilidade separado fora do GO atual. Não reabrir as escolhas de produto já aprovadas.
+
+## 2. Correção final de consentimento — apenas os gaps comprovados
+
+A revisão independente do commit de step-up (identificado no GitHub como `d59e972a47e363ee0b31931ad1eb67056ed2249c`, verificar HEAD real) exige:
+
+1. **Prova de autorização**: não usar apenas `iat` como prova de intenção humana nem um `skew` de 10 s que admita token anterior ao PREPARE como consentimento. Registrar uma ação explícita de aprovação no Portal, contra desafio/nonce não reutilizável associado ao ator, plano/capability, recursos, versões, efeitos e expiração; validar no backend, via contratos de identidade aprovados. A presença do login ou refresh de JWT não é substituto do clique/manifestação de aprovação; não criar auth paralela nem inventar attestation do host ChatGPT. A rota BFF de consent deve ser invocável somente pelo ator correto, sob permissions Core frescas e controles HTTP adequados, com event/nonce consume único.
+2. **Pré-visualização completa e idêntica ao plano selado**: a UI mostra, em português, cada ação, objeto, competência, área, parâmetro de negócio, motivo, efeito, dependência, estado de elegibilidade e bloqueio, extraídos do contrato de plano persistido e `plan_hash`. A confirmação exata pode cobrir N operações em uma única interação. Não aprovar ações ocultas, com descrição insuficiente, ou com payload diferente do exibido.
+3. Preservar claim antes do efeito, concorrência, idempotência, READ-back independente, segregação, revogação Core e `UNKNOWN` após efeito possivelmente aplicado. Não reviver `commit_proposal` sem consent nem duplicar sistemas.
+4. Demonstrar testes **HTTP/Keycloak reais quando disponíveis**, contrato MFE/BFF, 2/5/20 ações, lotes parcialmente bloqueados, cross-user, replay, stale version, nonce, CSRF/origin conforme arquitetura vigente, pós-efeito incerto, e regressão P1–P6. Evidência de unit/PG isolado não substitui acceptance E2E.
+
+## 3. Piloto antecipado no ChatGPT (somente ambiente permitido)
+
+- Inventariar staging/homologation vigente, URL pública HTTPS, gateway, isolamento de dados, Core e Keycloak de **teste**; validar que o operator/owner autoriza a exposição do MCP e alteração do client IAM de teste.
+- Prover deployment no ambiente **não produtivo autorizado** pelo runbook local apropriado e migration V013+ aplicada ao DB de teste. Preservar volumes, dados de teste, versionamento de corpus e backups aplicáveis.
+- Configurar `mcp-clara` no Keycloak do **mesmo ambiente**, audience exata por URL e scopes reais; fazer `--check` e diff antes do `--apply` autorizado; não alterar clientes irmãos (TÉO/DAVI/VISTA/DÉLIA) por arrasto.
+- Preparar ficha de ChatGPT contendo nome, endpoint, issuer, authorization/token/JWKS, protected-resource metadata, client ID, scopes, resource audience, PKCE, client authentication, callback URI *fornecida pela plataforma no fluxo real*, tool discovery, SHA/runtime, evidência smoke e status. **Não devolver ou publicar secrets, admin passwords, refresh/access tokens, valores de .env.** Referenciar cofre/canal seguro caso secret necessário.
+- Quando o usuário puder criar/conectar o plugin pelo ChatGPT, fornecer a ficha e instruções exatas; conexão depende de ação explícita do usuário e permissões do workspace. O Devin **não deve alegar que conectou o plugin dentro da conta ChatGPT** sem evidência da ação e teste efetivos.
+- Roteiro de aceite antecipado: autenticação real; descoberta MCP; READ por usuário autorizado; resposta CLARA com fonte/citação; plano de múltiplas ações; consentimento consolidado em UI confiável; ACT exclusivamente sobre dados de teste e efeitos autorizados; read-back e auditoria. Respeitar confirmações nativas do ChatGPT.
+
+## 4. G1, G2, G3 e produção — não substituir por piloto
+
+- **G1:** fechar owners externos, T03, T05, relatórios oficiais R04+, seeds P5-H/P6, fontes e demais decisões materiais, cada qual com RQ/AC/contrato/evidência. Não considerar snapshot documental ou amostra como equivalência oficial do TOTVS.
+- **G2:** Controladoria/PO aceita explicitamente a Central P1–P6 e CLARA no escopo demonstrado; registrar responsável, data, aceites/restrições e anexos da homologação.
+- **G3:** Operador SSH autorizado concede release, janela e runbook; preflight SSH prod, backup PostgreSQL/arquivos/corpus, diff do Keycloak, rollback, migrations, gateway, secrets gerenciados e smoke; sem alterações produtivas antes da aprovação.
+- **PROD:** deploy de SHA imutável, provisionamento Keycloak limitado e auditável, aplicação migrations, ingestão corpus autorizada, smoke OAuth/MCP autenticado e resultado de negócio comprovado; gerar ficha **do ambiente produtivo** após read-back. Piloto não é produção; `HTTP 200` não prova funcionamento.
+- Se G1/G2/G3 não puderem ser obtidos hoje, **encerrar a execução com o máximo tecnicamente completo**, lista única dos responsáveis e evidências faltantes, sem falso `PASS`, deixando o release preparado em vez de forçar produção.
+
+## 5. Fluxo operacional sem retrabalho
+
+Uma única execução coordenada, **sem novo prompt por fatia**. Design/contratos físicos fecham antes de implementação respectiva; usar diff mínimo e testes por risco. Após cada decisão material ou entrega verificável: **atualizar a documentação canônica no GitHub no mesmo commit**, incluindo pedido PO, decisão, owner, RQ/AC, evidência, testes, estado, SHA e status (PROVEN/TO_INVENTORY/TARGET; PASS/FAIL/PENDING/INCONCLUSIVE/TEST_NOT_RUN). Documentação não substitui runtime. Preservar HEAD, evitar reabrir assuntos já decididos.
+
+Relatório final único: `FINAL_HEAD`, `RELEASE_SHA`, `G1`, `G2`, `G3`, `NONPROD_DEPLOY`, `CHATGPT_NONPROD_CONNECTION`, `PROD_DEPLOY`, `KEYCLOAK_PROD`, `MCP_SMOKE`, `CHATGPT_PROD_CONNECTION`, `CORPUS_VERSION`, `CONSENT_E2E`, `REMAINING_OWNER_ACTIONS`, `TEST_NOT_RUN`, `EXECUTION_DRIFT`, `NEXT_ACTION`.
+
+**Ordem operacional aprovada pelo PO:** priorizar **validação real da CLARA via ChatGPT após o rework**, e então fechar G2/G3, sem utilizar produção como atalho. O produto final só está `ACCEPT` quando os outcomes exigidos e gates pertinentes estiverem comprovados.
