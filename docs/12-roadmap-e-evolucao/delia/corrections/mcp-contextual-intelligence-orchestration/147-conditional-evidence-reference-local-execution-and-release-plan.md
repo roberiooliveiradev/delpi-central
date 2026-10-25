@@ -102,3 +102,11 @@ FINAL_VERDICT=
 ```
 
 **Nota:** Não interpretar a autorização condicional de deploy do PO como revisão independente nem autorização para alterar modelos/provedores externos. Respeitar o próximo gate de autoridade presente no HEAD.
+
+## 8. Evidência de execução — 2026-10-25 (executor report)
+
+**Implementado:** `evidence_arguments` (declaração de origem documental) + declaração implícita por item de `selections`; campo declarado aceita somente seleção literal verificada — texto livre é dropado e nunca substitui a referência; required desvinculado → `missing_inputs`/clarify; entradas orquestradas/inválidas ignoradas; fail-closed sem schema do owner. Owner: `argument_validation.py` (EXTEND); boundary: `_build_arguments`. Instrução arguments → **v18**. RED→GREEN: 6 testes pelo orquestrador real + conflito invertido conforme §3. Focused 104/104; backend 2294/2296 (2 env-failures pré-existentes preservadas como FAIL ambiental).
+
+**Avaliação local (`delia-json` 3.1B, único modelo autorizado):** O2 0/10, pino 0/3, D1 0/3, TÉO 0/3, VISTA 0/3, READ direto 0/3 — gargalo em `interaction_admission`/`model_propose` (capacidade do modelo, anterior ao estágio do contrato); WRITE-ineligible 3/3 recusa (0 ACT); AuthZ 401; `FALSE_POSITIVES=0`; `SELECTION_ADOPTION=0` (estágio não alcançado sob evidência documental).
+
+**Estado:** contrato implementado e provado deterministicamente; confiabilidade E2E sob o modelo local **não atingida** → `DEPLOY=BLOCKED`, `INDEPENDENT_REVIEW=PENDING`, `R7_FINAL_ACCEPT=NO`. Detalhes no relatório R7 e ledger.

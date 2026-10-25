@@ -288,3 +288,30 @@ C1 ambiental DAVI permanece pendente de aceite formal do owner CI; CRI OFF live 
 ### Decisão do Product Owner e plano 147 — 2026-10-25
 
 Direção de arquitetura aprovada: LLM decide seleção semântica, backend valida integridade da seleção por referência e **aceita parâmetros declarados** nos contratos MCP/Domain API, preservando AuthZ/Policy/owner. Referência condicional quando o modelo declara uso de valor documental exato; sem snapping fuzzy ou hardcode de termo. **Sem novas avaliações com LLMs externos** nesta task; usar modelo local existente e registrar SHA/config. Deploy em produção é objetivo autorizado condicionalmente pelo PO, **não** bypass de revisão independente nem da autorização operacional específica do release. Ver [147 — plano executivo](../147-conditional-evidence-reference-local-execution-and-release-plan.md). O2 permanece FAIL no benchmark anterior; C1/CRI e R7 final continuam residuais até evidência nova.
+
+
+### Referência condicional de evidência (doc 147) — implementação local, regressão e avaliação com modelo local — 2026-10-25 (task `DELIA-R7-CONDITIONAL-EVIDENCE-REFERENCE-LOCAL-IMPLEMENTATION-RELEASE-01`)
+
+**Decisão de arquitetura aprovada (doc 147):** quando o LLM declara que o valor de um argumento depende de valor exato documental, esse campo deve ser resolvido por referência verificável (`selections`) — texto livre nunca é aceito como equivalente à declaração; ausência de seleção válida vira `missing_inputs`/clarify pela fronteira existente. `selections` permanece não-compulsória para argumentos sem dependência documental. Sem snapping fuzzy, sem planner novo, sem regra de produto.
+
+**Contrato implementado (EXTEND, owner `argument_validation.py` + `_build_arguments`):**
+- Novo campo opcional de proposta `evidence_arguments`: lista de nomes de campos que o modelo declara documentalmente derivados.
+- Semântica de declaração unificada: um item em `selections` que nomeia um campo (mapping **ou** string simples) **ou** um nome em `evidence_arguments` declara o campo como de origem documental.
+- Campo declarado aceita **somente** seleção literal verificada: texto livre em `arguments` para campo declarado é descartado (nunca substitui a referência); seleção inválida/ausente deixa o campo desvinculado; campos obrigatórios desvinculados entram em `missing_inputs` → clarify/missing pela fronteira existente; campos opcionais ficam honestamente ausentes.
+- Declarações nomeando campos orquestrados ou inexistentes são ignoradas (não criam obrigação). Sem schema do owner, declarações auto-atribuídas ainda removem o texto livre (fail-closed).
+- Mudança deliberada de contrato (doc 147): `selections` + `arguments` para o mesmo campo não é mais "conflito mantém texto tipado" — a entrada em `selections` é a declaração, o valor verificado vence.
+- Instrução de arguments → **v18** documenta a obrigação condicional e a semântica de `evidence_arguments` (contrato declarativo, não tuning de adoção). Pin de versão e sha256 do snapshot atualizados.
+
+**RED→GREEN (6 testes, todos pelo orquestrador real):** valor documental chega verbatim via `selections` válida; campo declarado sem seleção tem texto livre removido (`{}` ao owner, nunca substituído); declarado + `source_ref` forjada permanece desvinculado; string simples em `selections` também declara; entradas orquestradas/desconhecidas ignoradas; campo obrigatório declarado-desvinculado vira missing (sem invocação inventada). Teste de conflito atualizado para a semântica 147.
+
+**Regressão:** focused suites 104/104 verdes (`goal_evidence_relevance`, `r1_instruction_resource`, `c3_governed_knowledge_consumption`, `c3_d5_evidence_relevance`, `c3_self_awareness`, `conversational_recovery`, `semantic_recovery`); full backend **2294/2296** — as mesmas 2 falhas ambientais pré-existentes (`g4` fixture `/plugins` ausente; `http_timeout_maps_to_504`), não reclassificadas. Import DAG/arquitetura inalterados — EXTEND dentro do boundary existente.
+
+**Avaliação local (autorizada: modelo local apenas, zero LLM externo):**
+- `LOCAL_MODEL_ID=delia-json:latest` (qwen2 3.1B Q4_K_M, ctx 32k, system JSON-only) via `http://ollama:11434/v1` — mesmo modelo reportado como produção (`delpi-delia-api` env). Instância paralela no container eval, `DELIA_LLM_MODEL/BASE_URL/API_KEY` isolados, mesma instruction v18, DAVI `api-delpi-r7`, corpus V2, token fresco por run.
+- O2 `terminal bala` N=10 → **0/10**: 6 misses em `interaction_admission` (class=conversational/hypothetical), 4 `invalid_model_output` (502) — modelo 3B não sustenta a cadeia de propostas JSON.
+- Sibling `terminal pino` N=3 → 0/3 (miss de admission conversacional); D1 MP/PI/PA N=3 → 0/3 (atinge arguments, insuficiência honesta); TÉO SIPOC N=3 → 0/3 (timeouts/clarify); VISTA N=3 → 0/3 (1 honest-empty GROUNDED, 2 conversacionais); READ direto por código N=3 → 0/3 (insuficiência honesta); WRITE inelegível N=3 → 3/3 recusa honesta, **zero ACT**; AuthZ sem token → **401**.
+- `SELECTION_ADOPTION=0` (modelo nunca atingiu o estágio com evidência); `FALSE_POSITIVES=0` — todas as falhas honestas, nenhum registro fabricado apresentado como grounded; zero WRITE.
+
+**Conclusão causal:** o contrato 147 está implementado e provado deterministicamente (fail-closed, verbatim, conditional); sob o modelo local autorizado a cadeia E2E não convergiu — gargalo agora é capacidade do modelo nos estágios iniciais (admission/JSON), anterior ao ponto onde `selections` atuaria. A melhoria de contrato não é refutável nem comprovável E2E com este modelo; alegação de melhoria com modelo externo permanece `NOT_TESTED` por decisão do PO.
+
+`O2_STATUS=CONTRACT_IMPLEMENTED_LOCAL_MODEL_INSUFFICIENT (0/10 delia-json)`; `DEPLOY=BLOCKED (local reliability 0% < qualquer critério)`; `INDEPENDENT_REVIEW=PENDING`; `R7_FINAL_ACCEPT=NO`.

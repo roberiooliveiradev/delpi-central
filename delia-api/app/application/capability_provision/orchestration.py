@@ -10052,6 +10052,7 @@ class OperationalCapabilityOrchestrator:
                         "missing_inputs",
                         "limitations",
                         "selections",
+                        "evidence_arguments",
                     }
                 ),
                 workspace_context=workspace_context,
@@ -10102,23 +10103,29 @@ class OperationalCapabilityOrchestrator:
         if normalized is None:
             return None, missing
         normalized = dict(normalized)
-        normalized, sel_applied, sel_rejected = (
+        normalized, sel_applied, sel_rejected, sel_unbound = (
             apply_evidence_bound_selections(
                 proposal.get("selections"),
                 normalized,
                 evidence_blocks,
                 descriptor.input_schema,
+                declared=proposal.get("evidence_arguments"),
             )
         )
-        if sel_applied or sel_rejected:
+        if sel_applied or sel_rejected or sel_unbound:
             _logger.info(
                 "orchestration stage=arguments "
                 "decision=evidence_bound applied=%d rejected=%d "
-                "correlation_id=%s",
+                "unbound=%s correlation_id=%s",
                 sel_applied,
                 sel_rejected,
+                ",".join(sel_unbound) or "-",
                 correlation,
             )
+        if sel_unbound:
+            missing = tuple(
+                dict.fromkeys(list(missing) + list(sel_unbound))
+            )[:MAX_MISSING_INPUTS]
         validated = _validate_instance(normalized, descriptor.input_schema)
         if validated is None:
             return None, missing

@@ -155,3 +155,11 @@
 ### DELIA-R7-CONDITIONAL-EVIDENCE-REFERENCE-LOCAL-IMPLEMENTATION-RELEASE-01 — decisão PO 2026-10-25
 
 Direção `APPROVED_DIRECTION`: seleção semântica pertence ao LLM; backend valida referência/valor e aceita schema de parâmetros owner MCP/Domain API, sem snapping fuzzy/hardcode. Planejamento executivo [147](../corrections/mcp-contextual-intelligence-orchestration/147-conditional-evidence-reference-local-execution-and-release-plan.md), spec 146 atualizada e R7 evidência vinculada. Avaliação exclusivamente com LLM local existente nesta task (modelo externo `TEST_NOT_RUN_BY_PO_DECISION`); executor deve comprovar local model, SHA/config, RED→GREEN e outcome multirun. `PO_DEPLOY_DIRECTION=CONDITIONAL`; `INDEPENDENT_REVIEW=PENDING`; `OPERATIONAL_AUTHORIZATION=PENDING`; `R7_FINAL_ACCEPT=NO`. Nenhum deploy foi executado por este registro.
+
+### Registro complementar — 2026-10-25 — Contrato 147 de referência condicional IMPLEMENTADO + avaliação local (delia-json insuficiente para E2E)
+
+- `TASK_ID=DELIA-R7-CONDITIONAL-EVIDENCE-REFERENCE-LOCAL-IMPLEMENTATION-RELEASE-01`; `STATE=CONTRACT_IMPLEMENTED_LOCAL_EVAL_DONE_DEPLOY_BLOCKED`; `INSTRUCTION_VERSION=18`; `LOCAL_MODEL=delia-json (qwen2.5 3.1B Q4_K_M, ollama:11434)`.
+- EXTEND em `argument_validation.py`/`_build_arguments`: `evidence_arguments` + declaração implícita via `selections`; campo declarado aceita só seleção literal verificada — texto livre dropado, ausência vira missing/clarify; orquestrados/inválidos ignorados; fail-closed sem schema.
+- RED→GREEN: 6 testes novos (verbatim, drop-free-text, forged-ref, bare-string, ignored-entries, required-unbound→missing); conflito invertido conforme doc 147. Focused 104/104; backend 2294/2296 (2 env-failures pré-existentes).
+- Local real-model matriz: O2 0/10 (admission miss + invalid_model_output), pino 0/3, D1 0/3, TÉO 0/3, VISTA 0/3, READ direto 0/3, WRITE-ineligible 3/3 recusa (0 ACT), AuthZ 401; `FALSE_POSITIVES=0`, `SELECTION_ADOPTION=0` — 3B não atinge o estágio onde o contrato atuaria.
+- `DEPLOY=BLOCKED (local reliability 0%)`; `INDEPENDENT_REVIEW=PENDING`; `NEXT_ACTION=DECISÃO DE COORDENAÇÃO: modelo local capaz vs liberação de eval externo controlado; contrato 147 implementado aguarda revisão`.

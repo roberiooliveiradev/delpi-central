@@ -1523,11 +1523,13 @@ def test_evidence_bound_selection_forged_source_ref_rejected(
     )
 
 
-def test_evidence_bound_selection_conflict_keeps_typed_argument(
+def test_selection_declared_field_replaces_free_text(
     capture_mode_logs,
 ):
-    """A selection naming a field already filled in ``arguments`` is
-    ambiguous — the code never arbitrates: the typed proposal stands."""
+    """A ``selections`` entry declares the field as documentally
+    derived: the free-text value for the same field is inadmissible
+    and the verified literal evidence value wins (doc 147 — text
+    livre never substitutes a declared reference)."""
     irrelevant = _outcome(
         "ok",
         structured={"items": [{"name": "BALANCA BALMAK 1000KG"}]},
@@ -1565,7 +1567,7 @@ def test_evidence_bound_selection_conflict_keeps_typed_argument(
     )
     orch, model = _two_provider_orchestrator([pa, pb], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
-    assert pa.calls[1] == ("search_items", {"query": "TERMINAL BALA"})
+    assert pa.calls[1] == ("search_items", {"query": "TERM. BALA"})
 
 
 def test_evidence_bound_selection_rejects_orchestrated_field(
@@ -1613,3 +1615,173 @@ def test_evidence_bound_selection_rejects_orchestrated_field(
     for _name, args in pa.calls:
         assert "candidate_token" not in args
 
+
+
+_REQUIRED_QUERY_SCHEMA = {
+    "type": "object",
+    "properties": {"query": {"type": "string"}},
+    "required": ["query"],
+}
+
+
+def _declared_recovery_fixture():
+    """Shared fixture: first literal read judged irrelevant, doc
+    provider whose foreign evidence carries ``TERM. BALA``."""
+    irrelevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "BALANCA BALMAK 1000KG"}]},
+    )
+    relevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "TERM. BALA 0,50-2,27MM2"}]},
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [_query_cap()])],
+        outcomes={("alpha", "search_items"): [irrelevant, relevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    return pa, pb
+
+
+def test_declared_evidence_argument_without_selection_drops_free_text(
+    capture_mode_logs,
+):
+    """``evidence_arguments`` declares documental origin: a declared
+    field accepts only a verified literal selection — the free-text
+    value is inadmissible and never substituted (doc 147)."""
+    pa, pb = _declared_recovery_fixture()
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "evidence_arguments": ["query"],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert pa.calls[1] == ("search_items", {})
+
+
+def test_declared_evidence_argument_invalid_selection_stays_unbound(
+    capture_mode_logs,
+):
+    """Declared + forged ``source_ref`` + free text: the field stays
+    unbound — an unverifiable selection can never be masked by a
+    string the evidence did not supply."""
+    pa, pb = _declared_recovery_fixture()
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "selections": [
+                    {
+                        "argument": "query",
+                        "source_ref": "forged_block",
+                        "selected_value": "TERM. BALA",
+                    }
+                ],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert pa.calls[1] == ("search_items", {})
+
+
+def test_bare_string_selection_declares_field(capture_mode_logs):
+    """A bare field name inside ``selections`` declares documental
+    origin too — the free-text value is dropped fail-closed."""
+    pa, pb = _declared_recovery_fixture()
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "selections": ["query"],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert pa.calls[1] == ("search_items", {})
+
+
+def test_evidence_arguments_unknown_or_orchestrated_entries_ignored(
+    capture_mode_logs,
+):
+    """Declarations naming orchestrated or undeclared fields are
+    ignored — they create no obligation and drop nothing."""
+    pa, pb = _declared_recovery_fixture()
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "evidence_arguments": [
+                    "candidate_token",
+                    "no_such_field",
+                ],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert pa.calls == [
+        ("search_items", {"query": "terminal bala"}),
+    ]
+
+
+def test_required_declared_unbound_reports_missing(capture_mode_logs):
+    """A required field declared evidence-bound but left unbound is
+    reported as missing — the capability is never invoked with an
+    invented substitute."""
+    irrelevant = _outcome(
+        "ok",
+        structured={"items": [{"name": "BALANCA BALMAK 1000KG"}]},
+    )
+    required_cap = _cap(
+        "alpha",
+        "mcp",
+        "search_items",
+        schema=_REQUIRED_QUERY_SCHEMA,
+    )
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "alpha", [required_cap])],
+        outcomes={("alpha", "search_items"): [irrelevant]},
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "beta", [_doc_cap()])],
+        outcomes={("beta", "read_guidance"): _doc_outcome()},
+    )
+    proposal = _recovery_proposal(
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "evidence_arguments": ["query"],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        }
+    )
+    orch, model = _two_provider_orchestrator([pa, pb], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert len(pa.calls) == 1

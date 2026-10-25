@@ -107,7 +107,8 @@ def apply_evidence_bound_selections(
     arguments: dict[str, Any],
     evidence_blocks: Mapping[str, str],
     schema: Mapping[str, Any] | None,
-) -> tuple[dict[str, Any], int, int]:
+    declared: object = None,
+) -> tuple[dict[str, Any], int, int, tuple[str, ...]]:
     """Materialize model-selected verbatim evidence values.
 
     The model may select a value by reference instead of regenerating
@@ -116,25 +117,72 @@ def apply_evidence_bound_selections(
     argument prompt, and the ``selected_value`` observed there. The
     value materializes only when it occurs literally in the referenced
     block, the field is a declared non-orchestrated string-compatible
-    property not already filled in ``arguments``, and any enum admits
-    it. Every other item is skipped fail-closed — ambiguity is never
-    arbitrated by the code and no value is invented. Referencing
-    evidence is never authorization: the materialized instance still
-    passes the same owner-schema validation and READ-only invocation.
+    property, and any enum admits it. Referencing evidence is never
+    authorization: the materialized instance still passes the same
+    owner-schema validation and READ-only invocation.
 
-    Returns ``(arguments, applied, rejected)``.
+    Declared evidence origin (doc 147): a ``selections`` entry that
+    names a field — a mapping item or a bare field-name string — or a
+    field listed in the proposal's ``evidence_arguments`` declares
+    that field as documentally derived. A declared field accepts only
+    a verified literal selection: any free-text value for it in
+    ``arguments`` is dropped, never substituted, and when no valid
+    selection materializes the field stays unbound. Required fields
+    left unbound are returned so the caller can report them as
+    missing_inputs — ambiguity is never arbitrated by the code and no
+    value is invented.
+
+    Returns ``(arguments, applied, rejected, unbound_required)``.
     """
-    if not isinstance(raw_selections, (list, tuple)):
-        return arguments, 0, 0
     if not isinstance(schema, Mapping):
-        return arguments, 0, len(
-            [x for x in raw_selections if isinstance(x, Mapping)]
+        rejected = len(
+            [
+                x
+                for x in (
+                    raw_selections
+                    if isinstance(raw_selections, (list, tuple))
+                    else ()
+                )
+                if isinstance(x, (Mapping, str))
+            ]
         )
+        if isinstance(declared, (list, tuple)):
+            for name in list(declared)[:MAX_EVIDENCE_SELECTIONS]:
+                if (
+                    isinstance(name, str)
+                    and name not in ORCHESTRATED_FIELDS
+                ):
+                    arguments.pop(name, None)
+        return arguments, 0, rejected, ()
     properties = schema.get("properties")
     if not isinstance(properties, Mapping):
         properties = {}
+    declared_names: set[str] = set()
+    if isinstance(declared, (list, tuple)):
+        for name in list(declared)[:MAX_EVIDENCE_SELECTIONS]:
+            if (
+                isinstance(name, str)
+                and name in properties
+                and name not in ORCHESTRATED_FIELDS
+            ):
+                declared_names.add(name)
+    raw_items = (
+        list(raw_selections)[:MAX_EVIDENCE_SELECTIONS]
+        if isinstance(raw_selections, (list, tuple))
+        else []
+    )
+    for item in raw_items:
+        name = item.get("argument") if isinstance(item, Mapping) else item
+        if (
+            isinstance(name, str)
+            and name in properties
+            and name not in ORCHESTRATED_FIELDS
+        ):
+            declared_names.add(name)
+    for name in declared_names:
+        arguments.pop(name, None)
     applied = rejected = 0
-    for item in list(raw_selections)[:MAX_EVIDENCE_SELECTIONS]:
+    for item in raw_items:
         if not isinstance(item, Mapping):
             rejected += 1
             continue
@@ -170,7 +218,15 @@ def apply_evidence_bound_selections(
             continue
         arguments[argument] = selected
         applied += 1
-    return arguments, applied, rejected
+    required = schema.get("required")
+    if not isinstance(required, (list, tuple)):
+        required = ()
+    unbound_required = tuple(
+        name
+        for name in declared_names
+        if name in required and name not in arguments
+    )
+    return arguments, applied, rejected, unbound_required
 
 
 def validate_arguments(
