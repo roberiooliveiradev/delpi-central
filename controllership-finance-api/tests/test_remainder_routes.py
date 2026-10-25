@@ -96,6 +96,17 @@ def catalog_repo(monkeypatch):
 
 
 @pytest.fixture
+def package_repo(monkeypatch):
+    fake = MagicMock()
+    monkeypatch.setattr(
+        "controllership_finance_app.interface.http.routes."
+        "packages_routes._repository",
+        lambda: fake,
+    )
+    return fake
+
+
+@pytest.fixture
 def checklist_repo(monkeypatch):
     fake = MagicMock()
     monkeypatch.setattr(
@@ -285,3 +296,93 @@ def test_submit_review_and_return_to_draft(
         json={"reason": "revisar itens"},
     )
     assert response.status_code == 409
+
+
+# -- R-105-01: erro tipado quando rejeicao terminal congela revisao -----
+
+
+def test_decision_blocked_when_terminal_rejection_active(
+    _auth_pipeline, package_repo
+):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    package_repo.record_decision.side_effect = (
+        de.TerminalRejectionActive(
+            "Competência com rejeição terminal ativa."
+        )
+    )
+    response = _client().post(
+        "/closing/competences/2026-05/package-versions/"
+        "22222222-2222-4222-8222-222222222222/decisions",
+        headers=_headers(),
+        json={"area": "FISCAL", "outcome": "ACCEPTED"},
+    )
+    assert response.status_code == 409
+    body = response.json()
+    assert body["success"] is False
+    assert (
+        body["data"]["error"]["code"] == "terminal_rejection_active"
+    )
+    assert (
+        body["meta"]["operationId"] == "record_review_decision"
+    )
+
+
+def test_clarification_blocked_when_terminal_rejection_active(
+    _auth_pipeline, package_repo
+):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    package_repo.open_clarification.side_effect = (
+        de.TerminalRejectionActive(
+            "Competência com rejeição terminal ativa."
+        )
+    )
+    response = _client().post(
+        "/closing/competences/2026-05/package-versions/"
+        "22222222-2222-4222-8222-222222222222/clarifications",
+        headers=_headers(),
+        json={"question": "falta extrato?"},
+    )
+    assert response.status_code == 409
+    assert (
+        response.json()["data"]["error"]["code"]
+        == "terminal_rejection_active"
+    )
+
+
+# -- R-105-02: envelope /me tipado, sem excecao secundaria -------------
+
+
+def test_my_tasks_domain_error_typed(_auth_pipeline, tasks_repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    tasks_repo.list_my_tasks.side_effect = de.CompetenceNotOpened(
+        "Competência não aberta."
+    )
+    response = _client().get("/me/tasks", headers=_headers())
+    assert response.status_code == 404
+    body = response.json()
+    assert body["success"] is False
+    assert body["data"]["error"]["code"] == "competence_not_opened"
+    assert body["meta"]["operationId"] == "list_my_tasks"
+
+
+def test_my_tasks_persistence_unavailable(_auth_pipeline, tasks_repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    tasks_repo.list_my_tasks.side_effect = de.PersistenceUnavailable(
+        "Persistência indisponível."
+    )
+    response = _client().get("/me/tasks", headers=_headers())
+    assert response.status_code == 503
+    body = response.json()
+    assert body["data"]["error"]["code"] == "persistence_unavailable"
+
+
+def test_my_tasks_rbac_unavailable_503(
+    _auth_pipeline, tasks_repo, monkeypatch
+):
+    async def _failing_rbac(token, *, force_refresh=False):
+        raise RuntimeError("core down")
+
+    monkeypatch.setattr(fa, "load_user_rbac", _failing_rbac)
+    response = _client().get("/me/tasks", headers=_headers())
+    assert response.status_code == 503
+    tasks_repo.list_my_tasks.assert_not_called()

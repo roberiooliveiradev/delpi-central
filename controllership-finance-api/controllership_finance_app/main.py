@@ -1,5 +1,6 @@
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -70,7 +71,26 @@ ALLOWED_ORIGINS = build_allowed_origins(
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    yield
+    pollers: list[asyncio.Task] = []
+    if settings.CF_NOTIFICATION_DISPATCH_ENABLED not in ("0", "false"):
+        # R-105-05: recuperação da outbox sem nova ação do usuário —
+        # mesmo padrão dos pollers de cipa/purchase-requests.
+        from controllership_finance_app.startup.notification_dispatch_job import (
+            run_closing_notification_dispatch_loop,
+        )
+
+        pollers.append(
+            asyncio.create_task(
+                run_closing_notification_dispatch_loop()
+            )
+        )
+    try:
+        yield
+    finally:
+        for poller in pollers:
+            poller.cancel()
+            with suppress(asyncio.CancelledError):
+                await poller
 
 
 app = FastAPI(

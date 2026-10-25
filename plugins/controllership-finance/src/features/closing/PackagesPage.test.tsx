@@ -274,4 +274,36 @@ describe("PackagesPage", () => {
       ),
     );
   });
+
+  it("rejeição terminal congela ações de revisão no MFE", async () => {
+    manageCap = true;
+    const submitted = submittedPkg();
+    listMock.mockResolvedValue({
+      period: "2026-10",
+      applicable_areas: ["CONTABIL"],
+      packages: [submitted],
+    });
+    closingMock.mockResolvedValue(closing("TERMINALLY_REJECTED"));
+    detailMock.mockResolvedValue(submitted);
+    render(<PackagesPage />);
+    await waitFor(() =>
+      expect(screen.getByText("Contábil")).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Detalhes" }));
+    await waitFor(() => expect(detailMock).toHaveBeenCalled());
+    expect(screen.queryByLabelText("Área da decisão")).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: "Solicitar esclarecimento…",
+      }),
+    ).toBeNull();
+    expect(
+      screen.getByText(/congelada/),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", {
+        name: "Reverter rejeição terminal",
+      }),
+    ).toBeTruthy();
+  });
 });

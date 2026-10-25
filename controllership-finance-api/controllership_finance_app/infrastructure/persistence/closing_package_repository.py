@@ -89,6 +89,48 @@ def _q(table: str) -> str:
     return f"{_SCHEMA}.{table}"
 
 
+def lock_competence_row(cur, competence_id) -> None:
+    """R-105-04: ponto de serialização competência-level entre a
+    submissão de pacote (marca versão SUBMITTED → congela evidências)
+    e mutações de evidência/validação. Ordem canônica de locks:
+    competência → versão de pacote → documento/item. Quem detém a
+    competência nunca solicita lock de item/documento — sem ciclo."""
+    cur.execute(
+        f"SELECT competence_id FROM {_q('monthly_competence')} "
+        "WHERE competence_id = %s FOR UPDATE",
+        (competence_id,),
+    )
+
+
+def locked_item_keys_in(cur, competence_id) -> set[str]:
+    """item_keys das versões vigentes SUBMITTED de cada pacote —
+    mesma leitura de `locked_item_keys`, executada no cursor da
+    transação chamadora (garantia transacional compartilhada)."""
+    cur.execute(
+        f"""
+        SELECT DISTINCT ON (v.package_id)
+               v.status, v.content
+          FROM {_q('closing_package_version')} v
+          JOIN {_q('closing_package')} p
+            ON p.package_id = v.package_id
+         WHERE p.competence_id = %s
+         ORDER BY v.package_id, v.version_no DESC
+        """,
+        (competence_id,),
+    )
+    locked: set[str] = set()
+    for row in cur.fetchall():
+        if row["status"] != "SUBMITTED":
+            continue
+        content = row["content"] or {}
+        if isinstance(content, str):
+            content = json.loads(content)
+        for item in content.get("items") or []:
+            if item.get("item_key"):
+                locked.add(item["item_key"])
+    return locked
+
+
 class ClosingPackageRepository:
     """Repository/port implementation — psycopg connection-per-call."""
 
@@ -331,6 +373,20 @@ class ClosingPackageRepository:
             (competence_id,),
         )
         return cur.fetchone()
+
+    def _require_no_terminal_rejection(
+        self, cur, competence_id: str
+    ) -> None:
+        """P5-J / RQ-P5-TERM-02: rejeicao terminal ACTIVE congela o
+        fluxo de revisao da competencia — submissao, inicio de review,
+        decisoes, esclarecimentos e novas versoes ficam bloqueados ate
+        reversao autorizada por COORDINATOR (DEC-01). Historico e
+        decisoes anteriores sao preservados."""
+        rejection = self._terminal_rejection(cur, competence_id)
+        if rejection and rejection["state"] == "ACTIVE":
+            raise TerminalRejectionActive(
+                "Competência com rejeição terminal ativa."
+            )
 
     def _review_state(
         self,
@@ -696,29 +752,7 @@ class ClosingPackageRepository:
         até uma nova versão (reopen/complement) governar a correção."""
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
             competence_id = self._competence_id(cur, period)
-            cur.execute(
-                f"""
-                SELECT DISTINCT ON (v.package_id)
-                       v.status, v.content
-                  FROM {_q('closing_package_version')} v
-                  JOIN {_q('closing_package')} p
-                    ON p.package_id = v.package_id
-                 WHERE p.competence_id = %s
-                 ORDER BY v.package_id, v.version_no DESC
-                """,
-                (competence_id,),
-            )
-            locked: set[str] = set()
-            for row in cur.fetchall():
-                if row["status"] != "SUBMITTED":
-                    continue
-                content = row["content"] or {}
-                if isinstance(content, str):
-                    content = json.loads(content)
-                for item in content.get("items") or []:
-                    if item.get("item_key"):
-                        locked.add(item["item_key"])
-            return locked
+            return locked_item_keys_in(cur, competence_id)
 
     def finalize_package(
         self,
@@ -733,11 +767,9 @@ class ClosingPackageRepository:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
-                    rejection = self._terminal_rejection(cur, competence_id)
-                    if rejection and rejection["state"] == "ACTIVE":
-                        raise TerminalRejectionActive(
-                            "Competência com rejeição terminal ativa."
-                        )
+                    self._require_no_terminal_rejection(
+                        cur, competence_id
+                    )
                     blockers = self._readiness_blockers(
                         cur, competence_id, area, period
                     )
@@ -843,6 +875,9 @@ class ClosingPackageRepository:
                     version, latest = self._version_for_update(
                         cur, competence_id, package_version_id
                     )
+                    self._require_no_terminal_rejection(
+                        cur, competence_id
+                    )
                     if version["package_version_id"] != latest["package_version_id"] or version[
                         "status"
                     ] != "FINALIZED":
@@ -902,6 +937,9 @@ class ClosingPackageRepository:
                     competence_id = self._competence_id(cur, period)
                     version, latest = self._version_for_update(
                         cur, competence_id, package_version_id
+                    )
+                    self._require_no_terminal_rejection(
+                        cur, competence_id
                     )
                     if version["package_version_id"] != latest["package_version_id"] or version[
                         "status"
@@ -1012,8 +1050,12 @@ class ClosingPackageRepository:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
+                    lock_competence_row(cur, competence_id)
                     version, latest = self._version_for_update(
                         cur, competence_id, package_version_id
+                    )
+                    self._require_no_terminal_rejection(
+                        cur, competence_id
                     )
                     if version["status"] != "FINALIZED" or (
                         version["package_version_id"]
@@ -1261,12 +1303,70 @@ class ClosingPackageRepository:
             )
         return reviewers
 
+    @staticmethod
+    def _eligibility_mode(
+        area: str, user_groups
+    ) -> tuple[str, set[str]]:
+        """T05/F2 + R-105-03: binding REVIEW_ELIGIBILITY da área vs.
+        `user.groups` resolvidos pelo RBAC Core (middleware). Binding
+        configurado ⇒ interseção obrigatória (fail-closed). Sem binding
+        ⇒ `assignment_only` — vínculo operacional auditado, nunca
+        prova de elegibilidade corporativa plena (G1)."""
+        binding = ClosingCatalogRepository().eligibility_groups_for(
+            area
+        )
+        matched = set(user_groups or ()) & binding if binding else set()
+        if binding:
+            return (
+                "core_group_binding" if matched else "denied",
+                matched,
+            )
+        return "assignment_only", matched
+
+    def _require_eligible_reviewer(
+        self,
+        cur,
+        competence_id: str,
+        package_id: str,
+        actor: str,
+        user_groups,
+        *,
+        area: str | None = None,
+    ) -> tuple[list[dict], str]:
+        """Assignment + elegibilidade Core nas áreas do ator.
+
+        `area` explícita: binding avaliado só nela. Sem área: o ator
+        precisa ser elegível em AO MENOS uma das suas áreas atribuídas
+        — decisões continuam fail-closed por área em record_decision.
+        """
+        reviewers = self._require_reviewer(
+            cur, competence_id, package_id, actor
+        )
+        target_areas = (
+            [area] if area else [a["area"] for a in reviewers]
+        )
+        modes: list[str] = []
+        for a in target_areas:
+            if a is None:
+                continue
+            mode, _matched = self._eligibility_mode(a, user_groups)
+            modes.append(mode)
+            if mode == "core_group_binding":
+                return reviewers, "core_group_binding"
+        if "denied" in modes and "core_group_binding" not in modes:
+            raise ReviewerNotEligible(
+                "Ator sem grupo/função Core elegível para a área "
+                f"{target_areas[0]}."
+            )
+        return reviewers, "assignment_only"
+
     def start_review(
         self,
         period: str,
         package_version_id: str,
         *,
         actor: str,
+        user_groups: Any = (),
     ) -> dict[str, Any]:
         with self._conn() as conn:
             with conn.transaction():
@@ -1275,12 +1375,21 @@ class ClosingPackageRepository:
                     version, latest = self._version_for_update(
                         cur, competence_id, package_version_id
                     )
+                    self._require_no_terminal_rejection(
+                        cur, competence_id
+                    )
                     if version["status"] != "SUBMITTED":
                         raise InvalidPackageTransition(
                             "Review exige versão SUBMITTED."
                         )
-                    self._require_reviewer(
-                        cur, competence_id, version["package_id"], actor
+                    _reviewers, eligibility_mode = (
+                        self._require_eligible_reviewer(
+                            cur,
+                            competence_id,
+                            version["package_id"],
+                            actor,
+                            user_groups,
+                        )
                     )
                     self._audit(
                         cur,
@@ -1291,6 +1400,7 @@ class ClosingPackageRepository:
                         actor=actor,
                         detail={
                             "version_no": version["version_no"],
+                            "eligibility_mode": eligibility_mode,
                         },
                     )
                     return {"started": True}
@@ -1322,6 +1432,9 @@ class ClosingPackageRepository:
                     version, latest = self._version_for_update(
                         cur, competence_id, package_version_id
                     )
+                    self._require_no_terminal_rejection(
+                        cur, competence_id
+                    )
                     if (
                         version["package_version_id"]
                         != latest["package_version_id"]
@@ -1341,25 +1454,14 @@ class ClosingPackageRepository:
                         raise ReviewerNotAssigned(
                             f"Ator sem assignment para área {area_norm}."
                         )
-                    # T05/F2: quando existe binding de grupo Core
-                    # configurado para a área (REVIEW_ELIGIBILITY), o
-                    # ator precisa pertencer a ele — fail-closed. Sem
-                    # binding configurado o modo é assignment-only e
-                    # fica registrado (DECISION_REQUIRED em G1).
-                    binding = ClosingCatalogRepository().eligibility_groups_for(
-                        area_norm
+                    eligibility_mode, matched = self._eligibility_mode(
+                        area_norm, user_groups
                     )
-                    if binding:
-                        matched = set(user_groups or ()) & binding
-                        if not matched:
-                            raise ReviewerNotEligible(
-                                "Ator sem grupo/função Core elegível "
-                                f"para a área {area_norm}."
-                            )
-                        eligibility_mode = "core_group_binding"
-                    else:
-                        matched = set()
-                        eligibility_mode = "assignment_only"
+                    if eligibility_mode == "denied":
+                        raise ReviewerNotEligible(
+                            "Ator sem grupo/função Core elegível "
+                            f"para a área {area_norm}."
+                        )
                     decisions = self._decisions(
                         cur, package_version_id
                     )
@@ -1413,6 +1515,7 @@ class ClosingPackageRepository:
         actor: str,
         question: str,
         area: str | None = None,
+        user_groups: Any = (),
     ) -> dict[str, Any]:
         if not question or not question.strip():
             raise MissingReason("question é obrigatório.")
@@ -1423,12 +1526,20 @@ class ClosingPackageRepository:
                     version, _ = self._version_for_update(
                         cur, competence_id, package_version_id
                     )
+                    self._require_no_terminal_rejection(
+                        cur, competence_id
+                    )
                     if version["status"] != "SUBMITTED":
                         raise InvalidPackageTransition(
                             "Clarification exige versão SUBMITTED."
                         )
-                    self._require_reviewer(
-                        cur, competence_id, version["package_id"], actor
+                    self._require_eligible_reviewer(
+                        cur,
+                        competence_id,
+                        version["package_id"],
+                        actor,
+                        user_groups,
+                        area=(area or "").strip() or None,
                     )
                     cur.execute(
                         f"""
@@ -1527,6 +1638,9 @@ class ClosingPackageRepository:
                         raise ClarificationNotFound(
                             "Clarification não encontrada."
                         )
+                    self._require_no_terminal_rejection(
+                        cur, competence_id
+                    )
                     self._audit(
                         cur,
                         entity_type="closing_clarification",

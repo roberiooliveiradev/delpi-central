@@ -22,13 +22,19 @@ from decimal import Decimal
 import pytest
 from psycopg.rows import dict_row
 
+import threading
+import time
+
 from controllership_finance_app.domain.closing_checklist.errors import (
     CatalogEntryNotFound,
+    CoordinatorRequired,
+    InvalidPackageTransition,
     DraftAlreadyOpen,
     InvalidCatalogEntry,
     ItemLockedBySubmittedPackage,
     ReviewerNotEligible,
     StaleRevision,
+    TerminalRejectionActive,
     VersionNotDraft,
     VersionNotInReview,
 )
@@ -534,6 +540,7 @@ def test_outbox_dispatch_failure_never_blocks_business(setup):
         actor=REVIEWER_A,
         question="Nota fiscal do item 12 confere?",
         area="FISCAL",
+        user_groups=["cf-fiscal-reviewers"],
     )
     opened = _notifications("PACKAGE_CLARIFICATION_OPENED", P_LOCK)
     assert len(opened) == 1
@@ -563,6 +570,82 @@ def test_outbox_dispatch_failure_never_blocks_business(setup):
         if p["recipient_area"] == "FISCAL"
     )
     assert pkg["current_version"]["status"] == "SUBMITTED"
+
+
+# -- R-105-05: recuperação da outbox sem nova ação do usuário ------------
+
+
+def test_failed_notification_recovered_without_new_action(setup):
+    """Evento FAILED é reivindicado e entregue por dispatch_pending()
+    global (poller) — nenhuma mutação de negócio nova é necessária;
+    dedupe por notification_id (dedupeKey) impede duplicidade."""
+    repo = setup["packages"]
+    listed = repo.list_packages(
+        P_LOCK, viewer=ADMIN, is_manage=True
+    )
+    package = next(
+        p for p in listed["packages"]
+        if p["recipient_area"] == "FISCAL"
+    )
+    version_id = str(package["current_version"]["package_version_id"])
+    repo.open_clarification(
+        P_LOCK,
+        version_id,
+        actor=REVIEWER_A,
+        question="segue pendente?",
+        area="FISCAL",
+        user_groups=["cf-fiscal-reviewers"],
+    )
+    # dispatcher global (como o poller) — conta todas as pendências
+    # da base de teste, não só da competência corrente.
+    pending = [
+        e for e in _notifications()
+        if e["delivery_state"] in ("EMITTED", "FAILED")
+    ]
+    assert pending
+
+    # 1ª tentativa: Core indisponível → FAILED (negócio intacto)
+    def failing_post(url, *, headers, json, timeout):  # noqa: A002
+        raise ConnectionError("core down")
+
+    failing = CoreNotificationsDispatcher(
+        core_api_url="http://core-test",
+        service_token="svc-token",
+        http_post=failing_post,
+    )
+    result = failing.dispatch_pending()  # global — como o poller
+    assert result["failed"] == len(pending)
+
+    # recuperação: Core de volta → FAILED reivindicado e entregue
+    class FakeResp:
+        status_code = 202
+
+    seen: list[dict] = []
+
+    def ok_post(url, *, headers, json, timeout):  # noqa: A002
+        seen.append(json)
+        return FakeResp()
+
+    recovered = CoreNotificationsDispatcher(
+        core_api_url="http://core-test",
+        service_token="svc-token",
+        http_post=ok_post,
+    )
+    result = recovered.dispatch_pending()
+    assert result["failed"] == 0
+    assert result["dispatched"] == len(pending)
+
+    # dedupeKey estável = notification_id — retry não duplica no Core
+    keys = {
+        body["metadata"]["dedupeKey"] for body in seen
+    }
+    assert len(keys) == len(pending)
+
+    # segunda execução: nada pendente, nada reenviado
+    seen.clear()
+    result = recovered.dispatch_pending()
+    assert result["dispatched"] == 0
+    assert not seen
 
 
 # -- F4: congelamento de evidência/validação pós-submissão ---------------------
@@ -708,3 +791,396 @@ def test_submitted_package_locks_document_upload(setup, tmp_path):
             idempotency_key="lock-test-1",
             branch_scope="BOTH",
         )
+
+
+# -- R-105-01: rejeicao terminal congela o workflow de revisao --------
+
+COORDINATOR = str(uuid.uuid4())
+P_TERM = "2026-11"
+P_TERM_SIBLING = "2026-12"
+P_TERM_SUBMIT = "2027-01"
+
+
+def _confirm_terminal(setup, period: str):
+    repo = setup["packages"]
+    repo.assign_actor(
+        period,
+        actor=ADMIN,
+        role="COORDINATOR",
+        subject=COORDINATOR,
+    )
+    return repo.confirm_terminal_rejection(
+        period, actor=COORDINATOR, reason="irregularidade grave"
+    )
+
+
+def test_terminal_rejection_freezes_review_workflow(setup):
+    """RQ-P5-TERM-02: rejeicao ACTIVE bloqueia decisao, inicio de
+    revisao, esclarecimento, complemento e resolve; tarefas P5 somem;
+    historico preservado; reversao autorizada retoma acoes validas."""
+    repo = setup["packages"]
+    _open_competence(setup, P_TERM)
+    version_id = _submit_fiscal(setup, P_TERM)
+
+    # clarification aberta antes da rejeicao — historico preservado
+    clar = repo.open_clarification(
+        P_TERM,
+        version_id,
+        actor=REVIEWER_A,
+        question="falta extrato",
+        user_groups=["cf-fiscal-reviewers"],
+    )
+    _confirm_terminal(setup, P_TERM)
+
+    for action in (
+        lambda: repo.start_review(
+            P_TERM, version_id, actor=REVIEWER_A
+        ),
+        lambda: repo.record_decision(
+            P_TERM,
+            version_id,
+            actor=REVIEWER_A,
+            area="FISCAL",
+            outcome="ACCEPTED",
+        ),
+        lambda: repo.open_clarification(
+            P_TERM, version_id, actor=REVIEWER_A, question="nova?"
+        ),
+        lambda: repo.create_complement(
+            P_TERM, version_id, actor=ADMIN, reason="correcao"
+        ),
+        lambda: repo.resolve_clarification(
+            P_TERM,
+            str(clar["clarification_id"]),
+            actor=ADMIN,
+            response="resposta",
+        ),
+    ):
+        with pytest.raises(TerminalRejectionActive):
+            action()
+
+    # TaskProjections P5 deixam de ser acionaveis
+    reviewer_tasks = setup["tasks"].list_my_tasks(
+        subject=REVIEWER_A, user_groups=[], period=P_TERM
+    )
+    assert not any(
+        t["actionKind"] == "PACKAGE_REVIEW_REQUIRED"
+        for t in reviewer_tasks["items"]
+    )
+    submitter_tasks = setup["tasks"].list_my_tasks(
+        subject=ADMIN, user_groups=[], period=P_TERM
+    )
+    assert not any(
+        t["actionKind"] == "PACKAGE_CLARIFICATION_REQUIRED"
+        for t in submitter_tasks["items"]
+    )
+
+    # ator sem COORDINATOR nao reverte
+    with pytest.raises(CoordinatorRequired):
+        repo.revert_terminal_rejection(
+            P_TERM, actor=REVIEWER_A, reason="tentativa"
+        )
+
+    # outra competencia permanece independente
+    _open_competence(setup, P_TERM_SIBLING)
+    other_version = _submit_fiscal(setup, P_TERM_SIBLING)
+    decision = repo.record_decision(
+        P_TERM_SIBLING,
+        other_version,
+        actor=REVIEWER_A,
+        area="FISCAL",
+        outcome="ACCEPTED",
+        user_groups=["cf-fiscal-reviewers"],
+    )
+    assert decision["outcome"] == "ACCEPTED"
+
+    # reversao autorizada: acoes ainda validas retomam, sem restaurar
+    # tarefa obsoleta — a projection recomputa do estado vigente.
+    repo.revert_terminal_rejection(
+        P_TERM, actor=COORDINATOR, reason="acordo formalizado"
+    )
+    decision = repo.record_decision(
+        P_TERM,
+        version_id,
+        actor=REVIEWER_A,
+        area="FISCAL",
+        outcome="ACCEPTED",
+        user_groups=["cf-fiscal-reviewers"],
+    )
+    assert decision["outcome"] == "ACCEPTED"
+
+
+def test_terminal_rejection_blocks_package_submission(setup):
+    """Versao FINALIZED nao pode ser submetida durante rejeicao."""
+    repo = setup["packages"]
+    _open_competence(setup, P_TERM_SUBMIT)
+    _make_p3_ready(P_TERM_SUBMIT)
+    _accept_all_items(P_TERM_SUBMIT, "FISCAL")
+    package = repo.finalize_package(P_TERM_SUBMIT, "FISCAL", actor=ADMIN)
+    version_id = str(package["current_version"]["package_version_id"])
+
+    _confirm_terminal(setup, P_TERM_SUBMIT)
+    with pytest.raises(TerminalRejectionActive):
+        repo.submit_for_review(
+            P_TERM_SUBMIT, version_id, actor=ADMIN, expected_revision=1
+        )
+
+    # revert libera a submissao
+    repo.revert_terminal_rejection(
+        P_TERM_SUBMIT, actor=COORDINATOR, reason="ok"
+    )
+    repo.submit_for_review(
+        P_TERM_SUBMIT, version_id, actor=ADMIN, expected_revision=1
+    )
+
+
+# -- R-105-04: serializacao evidencia × submissao no lock da competencia
+
+P_RACE_UPLOAD = "2027-02"
+P_RACE_VALIDATION = "2027-03"
+P_RACE_CANCEL = "2027-04"
+P_RACE_SUBMIT2 = "2027-05"
+
+
+def _hold_competence_lock(period: str):
+    """Abre tx manual segurando FOR UPDATE na linha da competência —
+    simula a submissão vencedora em voo (mesmo ponto de serialização
+    que submit_for_review)."""
+    conn = plugins_db_connect()
+    cur = conn.cursor(row_factory=dict_row)
+    cur.execute(
+        "SELECT competence_id FROM "
+        "controllership_finance.monthly_competence WHERE period = %s",
+        (period,),
+    )
+    competence_id = cur.fetchone()["competence_id"]
+    cur.execute(
+        "SELECT competence_id FROM "
+        "controllership_finance.monthly_competence "
+        "WHERE competence_id = %s FOR UPDATE",
+        (competence_id,),
+    )
+    return conn, cur, competence_id
+
+
+def _mark_submitted(cur, version_id: str):
+    """Mutação que submit_for_review faria — executada sob o lock da
+    competência detido pela transação vencedora."""
+    cur.execute(
+        "UPDATE controllership_finance.closing_package_version "
+        "SET status = 'SUBMITTED', "
+        "    required_areas = '[\"FISCAL\"]'::jsonb, "
+        "    submitted_at = now() "
+        "WHERE package_version_id = %s",
+        (version_id,),
+    )
+
+
+def _fiscal_item(period: str):
+    with plugins_db_connect() as conn, conn.cursor(
+        row_factory=dict_row
+    ) as cur:
+        cur.execute(
+            "SELECT i.snapshot_item_id, i.item_key "
+            "FROM controllership_finance.competence_checklist_item i "
+            "JOIN controllership_finance.monthly_competence mc "
+            "  ON mc.competence_id = i.competence_id "
+            "WHERE mc.period = %s AND i.recipient_area = 'FISCAL' "
+            "LIMIT 1",
+            (period,),
+        )
+        return cur.fetchone()
+
+
+def _finalized_fiscal(setup, period: str) -> str:
+    _open_competence(setup, period)
+    _make_p3_ready(period)
+    _accept_all_items(period, "FISCAL")
+    repo = setup["packages"]
+    package = repo.finalize_package(period, "FISCAL", actor=ADMIN)
+    version_id = str(package["current_version"]["package_version_id"])
+    repo.assign_actor(
+        period,
+        actor=ADMIN,
+        role="REVIEWER",
+        subject=REVIEWER_A,
+        recipient_area="FISCAL",
+        area="FISCAL",
+    )
+    return version_id
+
+
+def test_upload_loses_race_to_submitted_package(setup, tmp_path):
+    """Upload concorrente bloqueia no lock da competência e revalida o
+    congelamento na mesma transação do INSERT — nunca grava evidência
+    em item já integrado a versão submetida."""
+    version_id = _finalized_fiscal(setup, P_RACE_UPLOAD)
+    item = _fiscal_item(P_RACE_UPLOAD)
+    assert item is not None
+
+    conn, cur, _ = _hold_competence_lock(P_RACE_UPLOAD)
+    outcome: dict = {}
+
+    def do_upload():
+        service = ClosingDocumentService(
+            storage=ClosingDocumentStorage(str(tmp_path))
+        )
+        pdf = b"%PDF-1.4\n" + b"x" * 2048 + b"\n%%EOF\n"
+        try:
+            outcome["result"] = service.upload(
+                period=P_RACE_UPLOAD,
+                actor=ADMIN,
+                original_name="extrato.pdf",
+                declared_mime="application/pdf",
+                chunks=[pdf],
+                snapshot_item_id=str(item["snapshot_item_id"]),
+                title="Extrato",
+                attachment_role=None,
+                idempotency_key="race-upload-1",
+                branch_scope="BOTH",
+            )
+        except Exception as exc:  # noqa: BLE001 — captura p/ assert
+            outcome["error"] = exc
+
+    thread = threading.Thread(target=do_upload)
+    thread.start()
+    time.sleep(0.6)
+    _mark_submitted(cur, version_id)
+    conn.commit()
+    thread.join(timeout=20)
+    conn.close()
+
+    assert isinstance(
+        outcome.get("error"), ItemLockedBySubmittedPackage
+    )
+
+
+def test_validation_loses_race_to_submitted_package(setup):
+    """decide_item_set bloqueia no lock da competência e revalida sob
+    a mesma transação — validação não decide item congelado."""
+    version_id = _finalized_fiscal(setup, P_RACE_VALIDATION)
+    item = _fiscal_item(P_RACE_VALIDATION)
+
+    conn, cur, _ = _hold_competence_lock(P_RACE_VALIDATION)
+    outcome: dict = {}
+
+    def do_decide():
+        try:
+            outcome["result"] = setup["validations"].decide_item_set(
+                P_RACE_VALIDATION,
+                item["item_key"],
+                actor=ADMIN,
+                decision="ACCEPTED",
+            )
+        except Exception as exc:  # noqa: BLE001
+            outcome["error"] = exc
+
+    thread = threading.Thread(target=do_decide)
+    thread.start()
+    time.sleep(0.6)
+    _mark_submitted(cur, version_id)
+    conn.commit()
+    thread.join(timeout=20)
+    conn.close()
+
+    assert isinstance(
+        outcome.get("error"), ItemLockedBySubmittedPackage
+    )
+
+
+def test_cancel_loses_race_to_submitted_package(setup, tmp_path):
+    """Cancelamento de documento concorrente com a submissão não
+    modifica evidência congelada — aborta tipado após o unlock."""
+    version_id = _finalized_fiscal(setup, P_RACE_CANCEL)
+    item = _fiscal_item(P_RACE_CANCEL)
+
+    service = ClosingDocumentService(
+        storage=ClosingDocumentStorage(str(tmp_path))
+    )
+    pdf = b"%PDF-1.4\n" + b"x" * 2048 + b"\n%%EOF\n"
+    document, created = service.upload(
+        period=P_RACE_CANCEL,
+        actor=ADMIN,
+        original_name="extrato.pdf",
+        declared_mime="application/pdf",
+        chunks=[pdf],
+        snapshot_item_id=str(item["snapshot_item_id"]),
+        title="Extrato",
+        attachment_role=None,
+        idempotency_key="race-cancel-upload",
+        branch_scope="BOTH",
+    )
+    assert created
+
+    conn, cur, _ = _hold_competence_lock(P_RACE_CANCEL)
+    outcome: dict = {}
+
+    def do_cancel():
+        try:
+            outcome["result"] = service.cancel_document(
+                period=P_RACE_CANCEL,
+                document_id=str(document["document_id"]),
+                actor=ADMIN,
+                can_manage=True,
+                expected_revision=document["revision"],
+                branch_scope="BOTH",
+            )
+        except Exception as exc:  # noqa: BLE001
+            outcome["error"] = exc
+
+    thread = threading.Thread(target=do_cancel)
+    thread.start()
+    time.sleep(0.6)
+    _mark_submitted(cur, version_id)
+    conn.commit()
+    thread.join(timeout=20)
+    conn.close()
+
+    assert isinstance(
+        outcome.get("error"), ItemLockedBySubmittedPackage
+    )
+    # o documento permanece ATTACHED — evidência histórica intacta
+    with plugins_db_connect() as conn2, conn2.cursor(
+        row_factory=dict_row
+    ) as cur2:
+        cur2.execute(
+            "SELECT state FROM controllership_finance.closing_document "
+            "WHERE document_id = %s",
+            (document["document_id"],),
+        )
+        assert cur2.fetchone()["state"] == "ATTACHED"
+
+
+def test_concurrent_submits_single_winner(setup):
+    """Duas submissões concorrentes da mesma versão: exatamente uma
+    vence; a perdedora recebe transição inválida, nunca efeito duplo."""
+    version_id = _finalized_fiscal(setup, P_RACE_SUBMIT2)
+    repo = setup["packages"]
+    outcomes: list = []
+
+    def do_submit():
+        try:
+            outcomes.append(
+                repo.submit_for_review(
+                    P_RACE_SUBMIT2,
+                    version_id,
+                    actor=ADMIN,
+                    expected_revision=1,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            outcomes.append(exc)
+
+    threads = [threading.Thread(target=do_submit) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=20)
+
+    wins = [r for r in outcomes if not isinstance(r, Exception)]
+    losses = [
+        r for r in outcomes if isinstance(r, InvalidPackageTransition)
+    ]
+    assert len(wins) == 1
+    assert len(losses) == 1
+    assert wins[0]["current_version"]["status"] == "SUBMITTED"

@@ -12,8 +12,6 @@ from fastapi import APIRouter, Request
 
 from controllership_finance_app.config import settings
 
-from delpi_auth.authz_core import has_permission
-
 from controllership_finance_app.core.responses import fail, ok
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
@@ -21,31 +19,20 @@ from controllership_finance_app.domain.closing_checklist.errors import (
 from controllership_finance_app.infrastructure.persistence.closing_tasks_repository import (
     ClosingTasksRepository,
 )
-
-ACCESS_PERMISSION = "controllership-finance.access"
+from controllership_finance_app.interface.http.authz import (
+    authorized_user,
+)
 
 router = APIRouter(prefix="/me", tags=["My Tasks"])
 
-
-def _require_user(request: Request):
-    user = getattr(request.state, "user", None)
-    if user is None:
-        raise Exception("Unauthorized")
-    if getattr(user, "principal_type", None) != "user":
-        raise Exception("Forbidden")
-    if getattr(user, "rbac_unavailable", False):
-        raise Exception("Service Unavailable")
-    if not has_permission(user, ACCESS_PERMISSION):
-        raise Exception("Forbidden")
-    return user
+_require_user = authorized_user
 
 
 def _domain_fail(exc: ChecklistDomainError, operation_id: str):
     return fail(
-        exc.status_code,
-        code=exc.code,
-        message=exc.message,
-        details=exc.details,
+        exc.message,
+        exc.status,
+        data={"error": {"code": exc.code}},
         operation_id=operation_id,
     )
 

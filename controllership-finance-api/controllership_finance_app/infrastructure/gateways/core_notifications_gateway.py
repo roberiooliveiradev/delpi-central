@@ -132,8 +132,7 @@ class CoreNotificationsDispatcher:
                     params.append(period)
                 cur.execute(
                     f"""
-                    SELECT notification_id, event_type, recipient_subject,
-                           payload, emitted_at
+                    SELECT notification_id
                       FROM {_q('closing_notification_event')}
                      WHERE {" AND ".join(clauses)}
                      ORDER BY emitted_at
@@ -141,14 +140,35 @@ class CoreNotificationsDispatcher:
                     """,
                     (*params, limit),
                 )
-                events = cur.fetchall()
-            for event in events:
-                outcome = self._dispatch_one(event)
-                state = (
-                    "DISPATCHED" if outcome["ok"] else "FAILED"
-                )
+                event_ids = [
+                    row["notification_id"] for row in cur.fetchall()
+                ]
+            for event_id in event_ids:
+                # R-105-05: claim por evento com FOR UPDATE SKIP LOCKED —
+                # réplicas/poller e dispatcher pós-commit nunca despacham
+                # o mesmo evento duas vezes (dedupe local; o Core ainda
+                # recebe dedupeKey no metadata).
                 with conn.transaction():
-                    with conn.cursor() as cur:
+                    with conn.cursor(row_factory=dict_row) as cur:
+                        cur.execute(
+                            f"""
+                            SELECT notification_id, event_type,
+                                   recipient_subject, payload, emitted_at
+                              FROM {_q('closing_notification_event')}
+                             WHERE notification_id = %s
+                               AND delivery_state IN ('EMITTED','FAILED')
+                             FOR UPDATE SKIP LOCKED
+                            """,
+                            (event_id,),
+                        )
+                        event = cur.fetchone()
+                        if event is None:
+                            counts["skipped"] += 1
+                            continue
+                        outcome = self._dispatch_one(event)
+                        state = (
+                            "DISPATCHED" if outcome["ok"] else "FAILED"
+                        )
                         cur.execute(
                             f"""
                             UPDATE {_q('closing_notification_event')}

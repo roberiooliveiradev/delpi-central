@@ -155,6 +155,12 @@ class ClosingTasksRepository:
                    AND a.role = 'REVIEWER'
                    AND a.active
                    AND v.package_version_id IS NOT NULL
+                   AND NOT EXISTS (
+                       SELECT 1
+                         FROM {_q('closing_terminal_rejection')} r
+                        WHERE r.competence_id = p.competence_id
+                          AND r.state = 'ACTIVE'
+                   )
                    {period_sql}
                 """,
                 params,
@@ -234,6 +240,12 @@ class ClosingTasksRepository:
                     ON mc.competence_id = p.competence_id
                  WHERE c.state = 'OPEN'
                    AND v.submitted_by = %s::uuid
+                   AND NOT EXISTS (
+                       SELECT 1
+                         FROM {_q('closing_terminal_rejection')} r
+                        WHERE r.competence_id = p.competence_id
+                          AND r.state = 'ACTIVE'
+                   )
                    {period_sql}
                 """,
                 params,

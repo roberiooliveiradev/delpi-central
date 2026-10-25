@@ -185,6 +185,7 @@ export function PackagesPage({ period: initialPeriod }: { period?: string }) {
   const [assignArea, setAssignArea] = useState("");
 
   const periodValid = PERIOD_PATTERN.test(period);
+  const terminalActive = closing?.state === "TERMINALLY_REJECTED";
 
   const reload = useCallback(async () => {
     if (!periodValid) return;
@@ -329,6 +330,7 @@ export function PackagesPage({ period: initialPeriod }: { period?: string }) {
 
   const manageActions = (pkg: ClosingPackage) => {
     const v = pkg.current_version;
+    if (terminalActive) return null;
     return (
       <span className="cf-actions-cell">
         {v === null || v.status === "DRAFT" ? (
@@ -462,6 +464,13 @@ export function PackagesPage({ period: initialPeriod }: { period?: string }) {
               >
                 Registrar rejeição terminal
               </ActionButton>
+            ) : null}
+            {closing.state === "TERMINALLY_REJECTED" ? (
+              <p className="cf-feedback cf-feedback--warning">
+                Revisão de pacotes congelada — novas decisões,
+                submissões e esclarecimentos ficam bloqueados até a
+                reversão autorizada da rejeição terminal.
+              </p>
             ) : null}
             {capabilities.manage &&
             closing.state === "TERMINALLY_REJECTED" ? (
@@ -612,8 +621,9 @@ export function PackagesPage({ period: initialPeriod }: { period?: string }) {
                       Atribuir revisor/coordenador…
                     </ActionButton>
                   ) : null}
-                  {(selected.required_areas.length > 0 ||
-                    selected.assignments.length > 0) && (
+                  {!terminalActive &&
+                    (selected.required_areas.length > 0 ||
+                      selected.assignments.length > 0) && (
                     <div className="cf-decision-form">
                       <select
                         aria-label="Área da decisão"
@@ -684,7 +694,8 @@ export function PackagesPage({ period: initialPeriod }: { period?: string }) {
                             {c.state}: {c.question}
                             {c.response ? ` → ${c.response}` : ""}
                             {c.state === "OPEN" &&
-                            capabilities.manage ? (
+                            capabilities.manage &&
+                            !terminalActive ? (
                               <ActionButton
                                 variant="ghost"
                                 disabled={busy}

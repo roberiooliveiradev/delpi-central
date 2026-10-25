@@ -22,9 +22,14 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     DocumentNotAttached,
     DocumentNotFound,
     IdempotencyConflict,
+    ItemLockedBySubmittedPackage,
     ItemNotFound,
     PersistenceUnavailable,
     StaleRevision,
+)
+from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
+    lock_competence_row,
+    locked_item_keys_in,
 )
 from controllership_finance_app.infrastructure.persistence.closing_validation_repository import (
     recompute_item_state,
@@ -58,6 +63,30 @@ class ClosingDocumentRepository:
             ) from exc
 
     # -- competência / item ----------------------------------------------------
+
+    @staticmethod
+    def _assert_snapshot_unlocked(
+        cur, competence_id: str, snapshot_item_id: str | None
+    ) -> None:
+        """R-105-04: revalida o congelamento de evidência DENTRO da
+        mesma transação e sob o lock da competência — elimina a janela
+        TOCTOU entre a checagem pré-mutação e o INSERT/UPDATE."""
+        if not snapshot_item_id:
+            return
+        cur.execute(
+            f"SELECT item_key FROM {_q('competence_checklist_item')}"
+            " WHERE snapshot_item_id = %s AND competence_id = %s",
+            (snapshot_item_id, competence_id),
+        )
+        row = cur.fetchone()
+        if row and row["item_key"] in locked_item_keys_in(
+            cur, competence_id
+        ):
+            raise ItemLockedBySubmittedPackage(
+                f"Item {row['item_key']} integra pacote submetido — "
+                "correção exige nova versão do pacote "
+                "(reabrir/complementar)."
+            )
 
     def get_competence_id(self, period: str) -> str:
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
@@ -148,6 +177,12 @@ class ClosingDocumentRepository:
             try:
                 with conn.transaction():
                     with conn.cursor(row_factory=dict_row) as cur:
+                        # R-105-04: serializa contra submit_for_review —
+                        # lock + revalidação na mesma transação.
+                        lock_competence_row(cur, competence_id)
+                        self._assert_snapshot_unlocked(
+                            cur, competence_id, snapshot_item_id
+                        )
                         cur.execute(
                             f"""
                             INSERT INTO {_q('document_file')}
@@ -478,12 +513,16 @@ class ClosingDocumentRepository:
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
+                    lock_competence_row(cur, competence_id)
                     doc = self._lock_document_for_update(
                         cur,
                         competence_id=competence_id,
                         document_id=document_id,
                     )
                     self._assert_active_document(doc)
+                    self._assert_snapshot_unlocked(
+                        cur, competence_id, doc["snapshot_item_id"]
+                    )
                     cur.execute(
                         f"""
                         SELECT version_no, request_hash
@@ -596,12 +635,16 @@ class ClosingDocumentRepository:
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
+                    lock_competence_row(cur, competence_id)
                     doc = self._lock_document_for_update(
                         cur,
                         competence_id=competence_id,
                         document_id=document_id,
                     )
                     self._assert_active_document(doc)
+                    self._assert_snapshot_unlocked(
+                        cur, competence_id, doc["snapshot_item_id"]
+                    )
                     self._assert_revision(doc, expected_revision)
                     cur.execute(
                         f"""

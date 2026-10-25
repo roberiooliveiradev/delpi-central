@@ -46,6 +46,16 @@ class Settings:
     )
     CORE_API_TIMEOUT: str = _get_env("CORE_API_TIMEOUT", default="10")
 
+    # Outbox de notificações do fechamento (R-105-05): poller
+    # best-effort recupera eventos EMITTED/FAILED sem nova ação do
+    # usuário. Intervalo mínimo efetivo: 15s.
+    CF_NOTIFICATION_DISPATCH_ENABLED: str = _get_env(
+        "CF_NOTIFICATION_DISPATCH_ENABLED", default="1"
+    )
+    CF_NOTIFICATION_DISPATCH_INTERVAL_SECONDS: str = _get_env(
+        "CF_NOTIFICATION_DISPATCH_INTERVAL_SECONDS", default="60"
+    )
+
     # api-delpi upstream (financial settlement routes, S2S individual).
     DELPI_API_URL: str = _get_env(
         "DELPI_API_URL", default="http://delpi-api-delpi:8000"

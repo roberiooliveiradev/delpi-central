@@ -214,7 +214,8 @@ class ClosingValidationRepository:
                         self._require_active(item)
                         self._require_in_context(item, request_scope)
                         self._assert_not_package_locked(
-                            period, item["item_key"]
+                            cur, competence_id,
+                            item["item_key"],
                         )
                         if item["validation_scope"] != "PER_ATTACHMENT":
                             raise ValidationScopeMismatch(
@@ -303,18 +304,23 @@ class ClosingValidationRepository:
 
 
     @staticmethod
-    def _assert_not_package_locked(period: str, item_key: str) -> None:
-        """F4/doc 105: item na composicao de PackageVersion vigente
-        SUBMITTED tem evidencia/validacao congeladas — correcao exige
-        nova versao do pacote (reopen/complement), nunca mutacao."""
+    def _assert_not_package_locked(
+        cur, competence_id, item_key: str
+    ) -> None:
+        """F4/doc 105 + R-105-04: item na composicao de PackageVersion
+        vigente SUBMITTED tem evidencia/validacao congeladas. A checagem
+        e a mutacao dividem a MESMA transacao e o lock da competencia —
+        sem janela TOCTOU contra a submissao do pacote."""
         from controllership_finance_app.domain.closing_checklist.errors import (
             ItemLockedBySubmittedPackage,
         )
         from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
-            ClosingPackageRepository,
+            lock_competence_row,
+            locked_item_keys_in,
         )
 
-        if item_key in ClosingPackageRepository().locked_item_keys(period):
+        lock_competence_row(cur, competence_id)
+        if item_key in locked_item_keys_in(cur, competence_id):
             raise ItemLockedBySubmittedPackage(
                 f"Item {item_key} integra pacote submetido — correcao "
                 "exige nova versao do pacote (reabrir/complementar)."
@@ -363,7 +369,8 @@ class ClosingValidationRepository:
                     competence_id = self._competence_id(cur, period)
                     item = self._lock_item(cur, competence_id, item_key)
                     self._assert_not_package_locked(
-                        period, item["item_key"]
+                        cur, competence_id,
+                        item["item_key"],
                     )
                     self._require_active(item)
                     self._require_in_context(item, request_scope)
@@ -508,7 +515,8 @@ class ClosingValidationRepository:
                     scope_row = cur.fetchone() or {}
                     if scope_row.get("item_key"):
                         self._assert_not_package_locked(
-                            period, scope_row["item_key"]
+                            cur, competence_id,
+                            scope_row["item_key"],
                         )
                     if not scope_in_context(
                         request_scope=request_scope,

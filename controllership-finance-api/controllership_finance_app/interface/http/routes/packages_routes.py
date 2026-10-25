@@ -316,9 +316,13 @@ def start_package_review(
     package_version_id: uuid.UUID = Path(),
 ):
     try:
-        actor = actor_subject(authorized_user(request))
+        user = authorized_user(request)
+        actor = actor_subject(user)
         result = _repository().start_review(
-            period, str(package_version_id), actor=actor
+            period,
+            str(package_version_id),
+            actor=actor,
+            user_groups=getattr(user, "groups", []) or [],
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "start_package_review")
@@ -363,13 +367,15 @@ def open_package_clarification(
     package_version_id: uuid.UUID = Path(),
 ):
     try:
-        actor = actor_subject(authorized_user(request))
+        user = authorized_user(request)
+        actor = actor_subject(user)
         result = _repository().open_clarification(
             period,
             str(package_version_id),
             actor=actor,
             question=body.question,
             area=body.area,
+            user_groups=getattr(user, "groups", []) or [],
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "open_package_clarification")
