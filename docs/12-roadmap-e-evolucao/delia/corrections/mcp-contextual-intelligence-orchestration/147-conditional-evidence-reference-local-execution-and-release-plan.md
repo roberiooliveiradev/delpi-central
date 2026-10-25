@@ -249,3 +249,8 @@ No ramo `if not isinstance(schema, Mapping)`, o código remove somente nomes de 
 **A4 — limites da evidência:** o relato documenta `0/10` business Outcome apesar de admissão `~10/10`; GPU restart e retry até 3 são configurações locais, não garantias de prod; teto governado 60s não pode ser contornado; não atribuir tudo ao modelo 3B sem separar falhas de contexto, token, schema e relevância. O deploy corretamente não ocorreu. Falhas backend ambientais (2) e CRI OFF live permanecem abertas.
 
 **NEXT:** proof-first A1 e regressões contratuais A2; reproduzir e fechar A3 em testes locais determinísticos + teste de modelo local quando possível. Documentar `EXISTING_EQUIVALENT`/`REUSE_DECISION`, corrigir diff mínimo, reavaliar matriz e obter nova revisão independente. Mudança de modelo local exige gate/capacidade operacional específica; usuário proibiu testes com modelos externos. `R7_CLOSED=NO`.
+
+
+## Encaminhamento de coordenação — Plano 148 (2026-10-25)
+
+O review v19 A1/A3 e ausência de Outcome exigem plano de remediação arquitetural orientado por padrões de produção; ver [148 — arquitetura, drift e Outcome](./148-r7-architecture-drift-remediation-and-outcome-closure-plan.md). Este plano prevalece como próximo bounded step para A1/A3: inventorizar origem de `owner_surface_kinds` e substituir conhecimento estático não autorizado por contexto de superfícies live/agnóstico, e impedir metadados de control-plane de serem apresentados como business records sem Domain API, com gates estruturais de provenance/role e relevância semântica LLM. Proibidos nova engine, nova taxonomia hardcoded, provider branches, external LLM eval. Deploy permanece BLOCKED até evidência e revisão.
