@@ -27,11 +27,13 @@ import time
 
 from controllership_finance_app.domain.closing_checklist.errors import (
     CatalogEntryNotFound,
+    ChecklistDomainError,
     CoordinatorRequired,
     InvalidPackageTransition,
     DraftAlreadyOpen,
     InvalidCatalogEntry,
     ItemLockedBySubmittedPackage,
+    ReviewerNotAssigned,
     ReviewerNotEligible,
     StaleRevision,
     TerminalRejectionActive,
@@ -1184,3 +1186,427 @@ def test_concurrent_submits_single_winner(setup):
     assert len(wins) == 1
     assert len(losses) == 1
     assert wins[0]["current_version"]["status"] == "SUBMITTED"
+
+
+# ======================================================================
+# CF-PROC0072-FINAL-REWORK-RELEASE-001 — Correções A (ordem de locks)
+# e B (escopo de reviewer + versão vigente)
+# ======================================================================
+
+
+P_SCOPE_AREA = "2027-06"
+P_HISTORIC = "2027-07"
+P_PAIR_UXV = "2027-08"
+P_PAIR_RXV = "2027-09"
+P_PAIR_CXV = "2027-10"
+P_PAIR_SXV = "2027-11"
+P_SCOPE_FAILCLOSED = "2027-12"
+P_SCOPE_SIBLING = "2028-01"
+
+
+def _run_concurrent(fn_a, fn_b):
+    """Dois fluxos concorrentes sincronizados por barreira. Prova
+    ausência de deadlock (join com timeout) e devolve resultado ou
+    exceção de cada lado."""
+    barrier = threading.Barrier(2)
+    out: dict = {}
+
+    def run(name, fn):
+        def go():
+            try:
+                barrier.wait(timeout=10)
+                out[name] = fn()
+            except Exception as exc:  # noqa: BLE001
+                out[name] = exc
+
+        return go
+
+    threads = [
+        threading.Thread(target=run("a", fn_a)),
+        threading.Thread(target=run("b", fn_b)),
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=30)
+    assert all(not t.is_alive() for t in threads), "deadlock suspeito"
+    assert "a" in out and "b" in out
+    return out
+
+
+def _pdf_chunks():
+    return [b"%PDF-1.4\n" + b"z" * 2048 + b"\n%%EOF\n"]
+
+
+def _exceptional_item(setup, period: str, suffix: str) -> dict:
+    return setup["validations"].create_exceptional_item(
+        period,
+        ADMIN,
+        sheet="ELETRONICO",
+        name=f"Item concorrência {suffix}",
+        justification="Cobertura de corrida de locks.",
+        applicability="REQUIRED",
+        validation_scope="WHOLE_SET",
+    )
+
+
+def _doc_state(document_id: str) -> str:
+    with plugins_db_connect() as conn, conn.cursor(
+        row_factory=dict_row
+    ) as cur:
+        cur.execute(
+            "SELECT state FROM controllership_finance.closing_document "
+            "WHERE document_id = %s",
+            (document_id,),
+        )
+        return cur.fetchone()["state"]
+
+
+def test_upload_vs_validation_concurrent(setup, tmp_path):
+    """Upload × decisão WHOLE_SET sob a mesma ordem de locks
+    (competência → documento/item): sem deadlock, ambas as
+    serializações são legais e o estado final é consistente."""
+    _open_competence(setup, P_PAIR_UXV)
+    item = _exceptional_item(setup, P_PAIR_UXV, "uxv")
+    service = ClosingDocumentService(
+        storage=ClosingDocumentStorage(str(tmp_path))
+    )
+    _, created = service.upload(
+        period=P_PAIR_UXV,
+        actor=ADMIN,
+        original_name="uxv-1.pdf",
+        declared_mime="application/pdf",
+        chunks=_pdf_chunks(),
+        snapshot_item_id=str(item["snapshot_item_id"]),
+        title="uxv-1",
+        attachment_role=None,
+        idempotency_key="uxv-1",
+        branch_scope="BOTH",
+    )
+    assert created
+
+    def do_upload2():
+        return service.upload(
+            period=P_PAIR_UXV,
+            actor=ADMIN,
+            original_name="uxv-2.pdf",
+            declared_mime="application/pdf",
+            chunks=_pdf_chunks(),
+            snapshot_item_id=str(item["snapshot_item_id"]),
+            title="uxv-2",
+            attachment_role=None,
+            idempotency_key="uxv-2",
+            branch_scope="BOTH",
+        )
+
+    def do_decide():
+        return setup["validations"].decide_item_set(
+            P_PAIR_UXV,
+            item["item_key"],
+            actor=ADMIN,
+            decision="ACCEPTED",
+        )
+
+    out = _run_concurrent(do_upload2, do_decide)
+    errors = [r for r in out.values() if isinstance(r, Exception)]
+    assert all(
+        isinstance(e, ChecklistDomainError) for e in errors
+    ), errors
+    decide = out["b"]
+    if not isinstance(decide, Exception):
+        assert decide["item_state"] == "ACCEPTED"
+        assert len(decide["composition"]) >= 1
+
+
+def test_replace_vs_validation_concurrent(setup, tmp_path):
+    """Replace × validação: sem deadlock; qualquer ordem de
+    serialização é consistente — versão v2 criada ou decisão sobre a
+    composição vigente, nunca estado intermediário."""
+    _open_competence(setup, P_PAIR_RXV)
+    item = _exceptional_item(setup, P_PAIR_RXV, "rxv")
+    service = ClosingDocumentService(
+        storage=ClosingDocumentStorage(str(tmp_path))
+    )
+    document, _ = service.upload(
+        period=P_PAIR_RXV,
+        actor=ADMIN,
+        original_name="rxv-1.pdf",
+        declared_mime="application/pdf",
+        chunks=_pdf_chunks(),
+        snapshot_item_id=str(item["snapshot_item_id"]),
+        title="rxv-1",
+        attachment_role=None,
+        idempotency_key="rxv-1",
+        branch_scope="BOTH",
+    )
+
+    def do_replace():
+        return service.replace_document(
+            period=P_PAIR_RXV,
+            document_id=str(document["document_id"]),
+            actor=ADMIN,
+            can_manage=True,
+            original_name="rxv-2.pdf",
+            declared_mime="application/pdf",
+            chunks=_pdf_chunks(),
+            expected_revision=document["revision"],
+            idempotency_key="rxv-2",
+            branch_scope="BOTH",
+        )
+
+    def do_decide():
+        return setup["validations"].decide_item_set(
+            P_PAIR_RXV,
+            item["item_key"],
+            actor=ADMIN,
+            decision="ACCEPTED",
+        )
+
+    out = _run_concurrent(do_replace, do_decide)
+    errors = [r for r in out.values() if isinstance(r, Exception)]
+    assert all(
+        isinstance(e, ChecklistDomainError) for e in errors
+    ), errors
+    assert _doc_state(str(document["document_id"])) == "ATTACHED"
+
+
+def test_cancel_vs_validation_concurrent(setup, tmp_path):
+    """Cancel × validação: sem deadlock — o cancelamento serializado
+    antes da decisão exclui o documento da composição; depois dela,
+    deriva o item de volta a EXPECTED. Nunca erro não tipado."""
+    _open_competence(setup, P_PAIR_CXV)
+    item = _exceptional_item(setup, P_PAIR_CXV, "cxv")
+    service = ClosingDocumentService(
+        storage=ClosingDocumentStorage(str(tmp_path))
+    )
+    doc1, _ = service.upload(
+        period=P_PAIR_CXV,
+        actor=ADMIN,
+        original_name="cxv-1.pdf",
+        declared_mime="application/pdf",
+        chunks=_pdf_chunks(),
+        snapshot_item_id=str(item["snapshot_item_id"]),
+        title="cxv-1",
+        attachment_role=None,
+        idempotency_key="cxv-1",
+        branch_scope="BOTH",
+    )
+    service.upload(
+        period=P_PAIR_CXV,
+        actor=ADMIN,
+        original_name="cxv-2.pdf",
+        declared_mime="application/pdf",
+        chunks=_pdf_chunks(),
+        snapshot_item_id=str(item["snapshot_item_id"]),
+        title="cxv-2",
+        attachment_role=None,
+        idempotency_key="cxv-2",
+        branch_scope="BOTH",
+    )
+
+    def do_cancel():
+        return service.cancel_document(
+            period=P_PAIR_CXV,
+            document_id=str(doc1["document_id"]),
+            actor=ADMIN,
+            can_manage=True,
+            expected_revision=doc1["revision"],
+            branch_scope="BOTH",
+        )
+
+    def do_decide():
+        return setup["validations"].decide_item_set(
+            P_PAIR_CXV,
+            item["item_key"],
+            actor=ADMIN,
+            decision="ACCEPTED",
+        )
+
+    out = _run_concurrent(do_cancel, do_decide)
+    errors = [r for r in out.values() if isinstance(r, Exception)]
+    assert all(
+        isinstance(e, ChecklistDomainError) for e in errors
+    ), errors
+    assert _doc_state(str(doc1["document_id"])) in (
+        "ATTACHED",
+        "CANCELLED",
+    )
+
+
+def test_submit_vs_validation_concurrent(setup, tmp_path):
+    """Submit × validação em corrida efetiva: a submissão sempre
+    vence ou serializa depois da decisão — nunca uma decisão grava
+    item congelado. Erro perdedor é `ItemLockedBySubmittedPackage`."""
+    version_id = _finalized_fiscal(setup, P_PAIR_SXV)
+    item = _fiscal_item(P_PAIR_SXV)
+    service = ClosingDocumentService(
+        storage=ClosingDocumentStorage(str(tmp_path))
+    )
+    doc, _ = service.upload(
+        period=P_PAIR_SXV,
+        actor=ADMIN,
+        original_name="sxv-1.pdf",
+        declared_mime="application/pdf",
+        chunks=_pdf_chunks(),
+        snapshot_item_id=str(item["snapshot_item_id"]),
+        title="sxv-1",
+        attachment_role=None,
+        idempotency_key="sxv-1",
+        branch_scope="BOTH",
+    )
+
+    def do_submit():
+        return setup["packages"].submit_for_review(
+            P_PAIR_SXV, version_id, actor=ADMIN, expected_revision=1
+        )
+
+    def do_decide():
+        return setup["validations"].decide_version(
+            P_PAIR_SXV,
+            str(doc["document_id"]),
+            actor=ADMIN,
+            decision="ACCEPTED",
+        )
+
+    out = _run_concurrent(do_submit, do_decide)
+    submit, decide = out["a"], out["b"]
+    assert not isinstance(submit, Exception), submit
+    assert submit["current_version"]["status"] == "SUBMITTED"
+    if isinstance(decide, Exception):
+        assert isinstance(decide, ItemLockedBySubmittedPackage), decide
+    assert _doc_state(str(doc["document_id"])) == "ATTACHED"
+
+
+# -- Correção B: escopo do reviewer e versão vigente ---------------------
+
+
+def test_reviewer_area_must_match_active_assignment(setup):
+    """Área explicitamente requerida precisa pertencer ao assignment
+    ATIVO do ator naquele pacote — reviewer de outra área não esclarece
+    em nome de área alheia."""
+    _open_competence(setup, P_SCOPE_AREA)
+    version_id = _submit_fiscal(setup, P_SCOPE_AREA, reviewer=REVIEWER_A)
+    repo = setup["packages"]
+
+    with pytest.raises(ReviewerNotAssigned):
+        repo.open_clarification(
+            P_SCOPE_AREA,
+            version_id,
+            actor=REVIEWER_A,
+            question="Pendência na área errada?",
+            area="CONTABIL",
+            user_groups=["cf-fiscal-reviewers"],
+        )
+
+    # reviewer de outra área do MESMO pacote não fala pela FISCAL
+    repo.assign_actor(
+        P_SCOPE_AREA,
+        actor=ADMIN,
+        role="REVIEWER",
+        subject=REVIEWER_B,
+        recipient_area="FISCAL",
+        area="CONTABIL",
+    )
+    with pytest.raises(ReviewerNotAssigned):
+        repo.open_clarification(
+            P_SCOPE_AREA,
+            version_id,
+            actor=REVIEWER_B,
+            question="Esclarecimento FISCAL por reviewer CONTABIL?",
+            area="FISCAL",
+            user_groups=["cf-fiscal-reviewers"],
+        )
+
+    # reviewer autorizado na área correta
+    clarification = repo.open_clarification(
+        P_SCOPE_AREA,
+        version_id,
+        actor=REVIEWER_A,
+        question="Esclarecimento legítimo.",
+        area="FISCAL",
+        user_groups=["cf-fiscal-reviewers"],
+    )
+    assert clarification["clarification_id"]
+
+
+def test_start_review_and_clarification_fail_closed_eligibility(setup):
+    """Sem o grupo Core exigido pelo binding, start_review e
+    open_clarification falham fechados — assignment_only não é prova
+    corporativa plena quando existe binding configurado."""
+    _open_competence(setup, P_SCOPE_FAILCLOSED)
+    version_id = _submit_fiscal(
+        setup, P_SCOPE_FAILCLOSED, reviewer=REVIEWER_A
+    )
+    repo = setup["packages"]
+    with pytest.raises(ReviewerNotEligible):
+        repo.start_review(
+            P_SCOPE_FAILCLOSED,
+            version_id,
+            actor=REVIEWER_A,
+            user_groups=[],
+        )
+    with pytest.raises(ReviewerNotEligible):
+        repo.open_clarification(
+            P_SCOPE_FAILCLOSED,
+            version_id,
+            actor=REVIEWER_A,
+            question="q",
+            user_groups=[],
+        )
+    assert repo.start_review(
+        P_SCOPE_FAILCLOSED,
+        version_id,
+        actor=REVIEWER_A,
+        user_groups=["cf-fiscal-reviewers"],
+    )["started"]
+
+
+def test_historic_submitted_version_rejects_review_actions(setup):
+    """Versão SUBMITTED histórica (após complemento) não aceita novas
+    ações de revisão — somente a vigente. Competência irmã permanece
+    independente e acionável."""
+    _open_competence(setup, P_HISTORIC)
+    version_id = _submit_fiscal(setup, P_HISTORIC, reviewer=REVIEWER_A)
+    repo = setup["packages"]
+    complement = repo.create_complement(
+        P_HISTORIC, version_id, actor=ADMIN, reason="correção fiscal"
+    )
+    assert complement["current_version"]["status"] == "DRAFT"
+
+    for action in (
+        lambda: repo.start_review(
+            P_HISTORIC,
+            version_id,
+            actor=REVIEWER_A,
+            user_groups=["cf-fiscal-reviewers"],
+        ),
+        lambda: repo.open_clarification(
+            P_HISTORIC,
+            version_id,
+            actor=REVIEWER_A,
+            question="q",
+            user_groups=["cf-fiscal-reviewers"],
+        ),
+        lambda: repo.record_decision(
+            P_HISTORIC,
+            version_id,
+            actor=REVIEWER_A,
+            area="FISCAL",
+            outcome="ACCEPTED",
+            user_groups=["cf-fiscal-reviewers"],
+        ),
+    ):
+        with pytest.raises(InvalidPackageTransition):
+            action()
+
+    # competência irmã independente: versão vigente continua acionável
+    _open_competence(setup, P_SCOPE_SIBLING)
+    sibling_id = _submit_fiscal(
+        setup, P_SCOPE_SIBLING, reviewer=REVIEWER_A
+    )
+    assert repo.start_review(
+        P_SCOPE_SIBLING,
+        sibling_id,
+        actor=REVIEWER_A,
+        user_groups=["cf-fiscal-reviewers"],
+    )["started"]

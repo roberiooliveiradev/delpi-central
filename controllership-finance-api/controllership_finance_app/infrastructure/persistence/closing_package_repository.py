@@ -1342,6 +1342,12 @@ class ClosingPackageRepository:
         reviewers = self._require_reviewer(
             cur, competence_id, package_id, actor
         )
+        if area is not None and not any(
+            a["area"] == area for a in reviewers
+        ):
+            raise ReviewerNotAssigned(
+                f"Ator sem assignment para área {area}."
+            )
         target_areas = (
             [area] if area else [a["area"] for a in reviewers]
         )
@@ -1378,9 +1384,13 @@ class ClosingPackageRepository:
                     self._require_no_terminal_rejection(
                         cur, competence_id
                     )
-                    if version["status"] != "SUBMITTED":
+                    if (
+                        version["package_version_id"]
+                        != latest["package_version_id"]
+                        or version["status"] != "SUBMITTED"
+                    ):
                         raise InvalidPackageTransition(
-                            "Review exige versão SUBMITTED."
+                            "Review exige a versão vigente SUBMITTED."
                         )
                     _reviewers, eligibility_mode = (
                         self._require_eligible_reviewer(
@@ -1523,15 +1533,20 @@ class ClosingPackageRepository:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
-                    version, _ = self._version_for_update(
+                    version, latest = self._version_for_update(
                         cur, competence_id, package_version_id
                     )
                     self._require_no_terminal_rejection(
                         cur, competence_id
                     )
-                    if version["status"] != "SUBMITTED":
+                    if (
+                        version["package_version_id"]
+                        != latest["package_version_id"]
+                        or version["status"] != "SUBMITTED"
+                    ):
                         raise InvalidPackageTransition(
-                            "Clarification exige versão SUBMITTED."
+                            "Clarification exige a versão vigente "
+                            "SUBMITTED."
                         )
                     self._require_eligible_reviewer(
                         cur,

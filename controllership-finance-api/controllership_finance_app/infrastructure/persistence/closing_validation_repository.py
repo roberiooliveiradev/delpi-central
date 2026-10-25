@@ -41,6 +41,9 @@ from controllership_finance_app.domain.closing_checklist.errors import (
 from controllership_finance_app.domain.closing_documents.resource_scope import (
     scope_in_context,
 )
+from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
+    lock_competence_row,
+)
 from controllership_finance_app.infrastructure.persistence.plugins_db import (
     SCHEMA_NAME,
     plugins_db_connect,
@@ -178,6 +181,7 @@ class ClosingValidationRepository:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
+                    lock_competence_row(cur, competence_id)
                     cur.execute(
                         f"""
                         SELECT d.document_id, d.snapshot_item_id, d.state,
@@ -315,7 +319,6 @@ class ClosingValidationRepository:
             ItemLockedBySubmittedPackage,
         )
         from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
-            lock_competence_row,
             locked_item_keys_in,
         )
 
@@ -367,6 +370,7 @@ class ClosingValidationRepository:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
+                    lock_competence_row(cur, competence_id)
                     item = self._lock_item(cur, competence_id, item_key)
                     self._assert_not_package_locked(
                         cur, competence_id,
@@ -484,6 +488,7 @@ class ClosingValidationRepository:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
+                    lock_competence_row(cur, competence_id)
                     cur.execute(
                         f"""
                         SELECT decision_id, snapshot_item_id, document_id,
