@@ -177,3 +177,12 @@ Plano 147 atualizado: [execução local, F1/F2, recuperação orientada ao objet
 - `PREINVOKE_FAILURE_RECOVERY=existing` — `missing_inputs → _resolve_missing_inputs → clarify`; sem planner/segundo state machine.
 - Backend 2296/2298 (2 env pré-existentes); focused 192/192. Local `delia-json`: três-exemplos 0/10 (admission), O2 0/3, pino/D1/TÉO/VISTA 0/3, READ direto 1/3 GROUNDED real, WRITE 3/3 recusa, AuthZ 401, 0 falsos positivos.
 - `DEPLOY=BLOCKED_NO_LOCAL_RELIABILITY` — contrato pronto; executor sem modelo local autorizado que alcance o estágio governado. `NEXT_ACTION=decisão de coordenação (modelo local capaz OU autorização de avaliação externa controlada) + review independente do SHA`.
+
+
+### Registro complementar — 2026-10-25 — Recovery provado + R1/R2/R3 fechados — `DELIA-R7-EXISTING-RECOVERY-AND-OUTCOME-CLOSURE-01`
+
+- `STATE=RECOVERY_PROVEN_RESIDUALS_CLOSED`; base `abccde87ac`; escopo `argument_validation.py` + `orchestration._resolve_missing_inputs` + testes.
+- R1: teste de fluxo prova `declared-unbound → resolver same-owner → rebuild → owner READ → SUCCESS` — recovery existente suficiente, sem novo engine. R2: asserts de consumidor/tentativas/proposta/owner/outcome. R3: `unbound_declared` determinístico (ordem da proposta); declarações além de `MAX_EVIDENCE_SELECTIONS` seguem fail-closed (cap limita materialização apenas).
+- Defeito irmão F1 corrigido: resolver tail resolvia com `still_missing`/campos ausentes → invocação sub-filtrada; `_missing_inputs_bound` agora exige cobertura total antes de resolver (normal + ambíguo).
+- Local `delia-json`: Outcome empresarial (3 registros) segue bloqueado por capacidade de admission do modelo autorizado — não por contrato.
+- `DEPLOY=BLOCKED` até local outcome + review + autorização operacional.

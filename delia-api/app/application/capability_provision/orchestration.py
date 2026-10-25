@@ -2395,6 +2395,20 @@ def _candidate_clarification_content(
     lines.append("Qual deles você quer usar?")
     return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
 
+def _missing_inputs_bound(
+    arguments: Mapping[str, Any],
+    missing_inputs: tuple[str, ...],
+) -> bool:
+    """Every input the target was missing is present in the rebuilt
+    instance — provenance checks skip absent fields, so coverage is
+    asserted separately to keep an under-filtered rebuild from
+    resolving into an invocation that drops the required filter."""
+    bound = {_canonical_key(key) for key in arguments}
+    return all(
+        _canonical_key(name) in bound for name in missing_inputs
+    )
+
+
 def _resolved_values_proven(
     arguments: Mapping[str, Any],
     missing_inputs: tuple[str, ...],
@@ -5472,6 +5486,7 @@ class OperationalCapabilityOrchestrator:
             )
             if (
                 rebuilt is not None
+                and _missing_inputs_bound(rebuilt, missing_inputs)
                 and not _unproven_identifier_inputs(
                     rebuilt,
                     descriptor,
@@ -5529,7 +5544,15 @@ class OperationalCapabilityOrchestrator:
                     filled, missing_inputs, outcome.structured
                 ):
                     rebuilt, still_missing = filled, ()
-        if rebuilt is None:
+        if (
+            rebuilt is None
+            or still_missing
+            or not _missing_inputs_bound(rebuilt, missing_inputs)
+        ):
+            # The rebuild did not satisfy the inputs the target
+            # semantically required — resolving here would invoke the
+            # owner under-filtered (F1 semantics at the resolver
+            # boundary). Fail closed to the original clarification.
             return self._Resolution(owner_evidence=evidence)
         if not _resolved_values_proven(
             rebuilt, missing_inputs, outcome.structured

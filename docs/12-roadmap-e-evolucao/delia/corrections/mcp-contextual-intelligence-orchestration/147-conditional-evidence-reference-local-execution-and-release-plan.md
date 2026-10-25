@@ -206,3 +206,18 @@ No ramo `if not isinstance(schema, Mapping)`, o código remove somente nomes de 
 **Residual R3 — ordenação/limites:** `declared_names` é `set`, e `unbound_declared` é obtido pela iteração desse set. A ordem do `missing_inputs` pode variar entre processos; inspecionar impacto sobre testes/UX/determinismo e normalizar pela ordem de schema/proposta quando necessário, sem semântica nova. O limite `MAX_EVIDENCE_SELECTIONS` trunca declarações excessivas; verificar que valores declarados além do limite não ficam aceitos como texto livre sem sinalizar invalid/over-limit. Este é risco a caracterizar, não violação provada em execução.
 
 **Gates:** backend ainda tem 2 FAIL ambientais reportados e precisa exceção formal ou runner corrigido; CRI OFF live segue não executado. Nenhum deploy nesta task foi correto. Não usar o argumento "modelo local 3B incapaz" como prova universal; caracterizar contexto, timeout e invalid_model_output no SHA final. `NEXT_STEP=RECOVERY_OUTCOME_AND_DECLARATION_LIMIT_CHARACTERIZATION`; sem modelos externos conforme PO; qualquer novo diff depende de causa/owner/contrato e RED.
+
+
+### Remediação R1/R2/R3 (revisão `abccde87ac`) — execução — 2026-10-25 (task `DELIA-R7-EXISTING-RECOVERY-AND-OUTCOME-CLOSURE-01`)
+
+**R1 — recuperação positiva provada:** novo teste `test_declared_unbound_recovers_via_resolver_to_owner_outcome` demonstra o caminho real completo: campo documental declarado não vinculado → `(None, missing_inputs)` → consumidor existente `_resolve_missing_inputs`/`_select_resolver` → READ resolver same-owner → rebuild com `owner_evidence` → nova proposta válida (`query=TERM. BALA` provada no payload do resolver) → READ do owner → veredito `corresponds` → `SUCCESS`. Asserts: consumidor (`select_resolver` no trace de purposes), contagem de tentativas (2 builds de argumentos), chamadas do owner (`list_nomenclatures({})` → `search_items({"query":"TERM. BALA"})`), resultado. Nenhum planner/engine novo — o canal existente bastava.
+
+**Defeito encontrado durante a prova (mesma família F1, uma borda abaixo):** o tail de `_resolve_missing_inputs` ignorava `still_missing` e `_resolved_values_proven` pula campos ausentes — um rebuild que retornava `{}` "resolvia" e invocava o owner **sub-filtrado** (na prática `search_items({})`). Correção no mesmo owner: nova checagem de cobertura `_missing_inputs_bound` — a resolução só conta quando todo input originalmente faltante está ligado; caso contrário fail-closed para clarify. Aplicado também ao branch ambíguo (`ambiguous_proven_selection`).
+
+**R2 — precisão dos testes de recovery:** o teste positivo asserta consumidor, número de tentativas de proposta, proposta gerada, owner invocado e Outcome; `test_resolver_rebuild_without_missing_inputs_never_invokes` prova o negativo (rebuild sem cobertura nunca invoca).
+
+**R3 — ordenação/limites:** `declared_names` era `set` — `unbound_declared`/`missing_inputs` tinham ordem não determinística. Agora `dict` ordenado preserva a ordem da proposta (determinístico, sem semântica nova). `MAX_EVIDENCE_SELECTIONS=8` truncava a coleta de declarações — um item `selections`/`evidence_arguments` além do cap declarava nada e seu free-text escapava como argumento comum. Agora a **declaração** varre a lista completa (scan barato de strings); o cap limita apenas materialização. Declarado além do cap → unbound → bloqueio tipado, nunca escape silencioso.
+
+**Reavaliação local `delia-json`:** pendente de nova execução no SHA final — comportamento esperado dominado por `interaction_admission` (capacidade do modelo 3.1B), contrato provado por teste.
+
+**Veredito:** residuais R1/R2/R3 fechados por teste; residual aberto permanece a capacidade do modelo local autorizado para o Outcome empresarial end-to-end.

@@ -320,3 +320,8 @@ Direção de arquitetura aprovada: LLM decide seleção semântica, backend vali
 #### Remediação F1/F2 + reavaliação local — 2026-10-25
 
 `apply_evidence_bound_selections` agora devolve `unbound_declared` (todo campo declarado-documental sem seleção verificada) e `_build_arguments` retorna `(None, missing_inputs)` — a proposta dependente **não** invoca o owner sem filtro (F1). Ramo sem schema (`input_schema=None`, alcançável via contrato) também honra declarações de `selections`/`evidence_arguments` fail-closed (F2). O fluxo existente `missing_inputs → _resolve_missing_inputs → clarify` é o canal de recuperação bounded; em `_recover_relevance`, `(None, missing)` encerra honesto. Testes: 192 focused, 2296/2298 backend (2 falhas ambientais conhecidas). Local `delia-json`: três-exemplos 0/10 admission; direct READ 1/3 GROUNDED com registros reais; negatives preservados; 0 falsos positivos. Deploy segue gated.
+
+
+#### Residuals R1/R2/R3 da revisão — 2026-10-25
+
+Recuperação pré-invocação **provada positivamente**: `declared-unbound → missing_inputs → _resolve_missing_inputs → READ resolver → rebuild provado → READ owner → SUCCESS` (teste de fluxo completo). Defeito irmão corrigido no mesmo owner: tail do resolver ignorava `still_missing` e `_resolved_values_proven` pulava campos ausentes — rebuild `{}` resolvia para invocação sub-filtrada; nova cobertura `_missing_inputs_bound` exige que todo input faltante esteja ligado (branch normal e `ambiguous_proven_selection`). R3: `declared_names` ordenado deterministicamente pela proposta; `MAX_EVIDENCE_SELECTIONS` limita só materialização — declarações além do cap não escapam mais como texto livre. Focused 233 verde.

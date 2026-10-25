@@ -29,7 +29,12 @@ from app.application.capability_provision.orchestration import (
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
+    RESOLVER_SELECTION_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
+)
+from app.application.interaction.argument_validation import (
+    MAX_EVIDENCE_SELECTIONS,
+    apply_evidence_bound_selections,
 )
 from tests.conftest import load_test_orchestration_instructions
 from app.application.capability_provision.outcome_assessment import (
@@ -1897,3 +1902,193 @@ def test_no_schema_declaration_never_bypasses(capture_mode_logs):
     orch, model = _two_provider_orchestrator([pa], proposal)
     attempt = orch.attempt("2 exemplos de terminal bala")
     assert ("search_items", {"query": "terminal bala"}) not in pa.calls
+
+
+def test_declared_unbound_recovers_via_resolver_to_owner_outcome(
+    capture_mode_logs,
+):
+    """R1/R2: the declared-unbound failure reaches the existing
+    bounded recovery consumer — the same-owner resolver — whose
+    evidence feeds a NEW valid argument proposal that invokes the
+    owner and completes the goal.
+
+    Asserted: the consumer (resolver-selection stage), the number of
+    argument proposals, the resolver READ then the owner READ with a
+    value proven in owner evidence — never the rejected free text,
+    never an unfiltered call — and the SUCCESS outcome."""
+    resolver_outcome = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "TERM. BALA 0,50-2,27MM2 ESTANHADO"},
+            ]
+        },
+    )
+    target_outcome = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "TERM. BALA 0,50-2,27MM2 ESTANHADO"},
+                {"name": "TERM. BALA 1,00-2,50MM2 NIQUELADO"},
+                {"name": "TERM. BALA 2,50-6,00MM2 NU"},
+            ]
+        },
+    )
+    pa = FakeProvider(
+        "pa",
+        [
+            _group(
+                "pa",
+                "alpha",
+                [
+                    _query_cap(),
+                    _cap("alpha", "mcp", "list_nomenclatures"),
+                ],
+            )
+        ],
+        outcomes={
+            ("alpha", "list_nomenclatures"): resolver_outcome,
+            ("alpha", "search_items"): target_outcome,
+        },
+    )
+    proposal = [
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "evidence_arguments": ["query"],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        },
+        {"goal_class": "record_lookup"},
+        {"probe_index": False},
+        {"applicable": True, "remote_name": "list_nomenclatures"},
+        {"status": "sufficient"},
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "TERM. BALA"}
+            }
+        },
+    ]
+    orch, model = _two_provider_orchestrator([pa], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    purposes = model.purposes()
+    assert RESOLVER_SELECTION_INSTRUCTION_ID in purposes
+    assert purposes.count(ARGUMENTS_INSTRUCTION_ID) == 2
+    assert pa.calls == [
+        ("list_nomenclatures", {}),
+        ("search_items", {"query": "TERM. BALA"}),
+    ]
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+
+
+def test_resolver_rebuild_without_missing_inputs_never_invokes(
+    capture_mode_logs,
+):
+    """A resolver rebuild that returns no binding for the missing
+    input must not resolve — ``_resolved_values_proven`` skips absent
+    fields, so coverage is asserted separately; the owner is never
+    invoked under-filtered and the flow ends in honest clarify."""
+    resolver_outcome = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "TERM. BALA 0,50-2,27MM2 ESTANHADO"},
+            ]
+        },
+    )
+    pa = FakeProvider(
+        "pa",
+        [
+            _group(
+                "pa",
+                "alpha",
+                [
+                    _query_cap(),
+                    _cap("alpha", "mcp", "list_nomenclatures"),
+                ],
+            )
+        ],
+        outcomes={
+            ("alpha", "list_nomenclatures"): resolver_outcome,
+        },
+    )
+    proposal = [
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "pa:alpha",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"},
+                "evidence_arguments": ["query"],
+            },
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            },
+        },
+        {"goal_class": "record_lookup"},
+        {"probe_index": False},
+        {"applicable": True, "remote_name": "list_nomenclatures"},
+        {"status": "sufficient"},
+        {ARGUMENTS_INSTRUCTION_ID: {"arguments": {}}},
+    ]
+    orch, model = _two_provider_orchestrator([pa], proposal)
+    attempt = orch.attempt("2 exemplos de terminal bala")
+    assert pa.calls == [("list_nomenclatures", {})]
+    assert ("search_items", {}) not in pa.calls
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+
+
+def test_over_limit_declaration_never_escapes_as_free_text():
+    """R3: ``MAX_EVIDENCE_SELECTIONS`` bounds materialization work,
+    not declaration — a selections item beyond the cap still declares
+    its field, the free-text value is dropped, and the field is
+    reported unbound in deterministic proposal order. Over-limit
+    declarations can never leak through as ordinary arguments."""
+    schema = {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string"},
+            **{
+                f"opt{i}": {"type": "string"}
+                for i in range(MAX_EVIDENCE_SELECTIONS + 2)
+            },
+        },
+    }
+    args = {"query": "terminal bala"}
+    selections = [
+        {
+            "argument": f"opt{i}",
+            "source_ref": "absent",
+            "selected_value": "x",
+        }
+        for i in range(MAX_EVIDENCE_SELECTIONS + 1)
+    ] + [
+        {
+            "argument": "query",
+            "source_ref": "absent",
+            "selected_value": "y",
+        }
+    ]
+    out, applied, rejected, unbound = apply_evidence_bound_selections(
+        selections, args, {}, schema
+    )
+    assert "query" not in out
+    assert unbound == tuple(
+        [f"opt{i}" for i in range(MAX_EVIDENCE_SELECTIONS + 1)]
+        + ["query"]
+    )

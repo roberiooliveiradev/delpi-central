@@ -132,22 +132,27 @@ def apply_evidence_bound_selections(
     invocation that depended on the documental value and report the
     names as missing_inputs — a declared-but-invalid selection must
     never silently degrade into an unfiltered or under-filtered call,
-    and no value is invented.
+    and no value is invented. Declarations are collected from the
+    full ``evidence_arguments``/``selections`` payload — the
+    ``MAX_EVIDENCE_SELECTIONS`` bound limits materialization work
+    only, so an over-limit declaration can never escape as free
+    text — and ``unbound_declared`` preserves proposal order
+    deterministically.
 
     Returns ``(arguments, applied, rejected, unbound_declared)``.
     """
     if not isinstance(schema, Mapping):
         rejected = 0
-        declared_names: set[str] = set()
+        declared_names: dict[str, None] = {}
         if isinstance(declared, (list, tuple)):
-            for name in list(declared)[:MAX_EVIDENCE_SELECTIONS]:
+            for name in declared:
                 if (
                     isinstance(name, str)
                     and name not in ORCHESTRATED_FIELDS
                 ):
-                    declared_names.add(name)
+                    declared_names.setdefault(name)
         for item in (
-            list(raw_selections)[:MAX_EVIDENCE_SELECTIONS]
+            list(raw_selections)
             if isinstance(raw_selections, (list, tuple))
             else []
         ):
@@ -163,7 +168,7 @@ def apply_evidence_bound_selections(
                 isinstance(name, str)
                 and name not in ORCHESTRATED_FIELDS
             ):
-                declared_names.add(name)
+                declared_names.setdefault(name)
         for name in declared_names:
             arguments.pop(name, None)
         return (
@@ -175,17 +180,17 @@ def apply_evidence_bound_selections(
     properties = schema.get("properties")
     if not isinstance(properties, Mapping):
         properties = {}
-    declared_names: set[str] = set()
+    declared_names: dict[str, None] = {}
     if isinstance(declared, (list, tuple)):
-        for name in list(declared)[:MAX_EVIDENCE_SELECTIONS]:
+        for name in declared:
             if (
                 isinstance(name, str)
                 and name in properties
                 and name not in ORCHESTRATED_FIELDS
             ):
-                declared_names.add(name)
+                declared_names.setdefault(name)
     raw_items = (
-        list(raw_selections)[:MAX_EVIDENCE_SELECTIONS]
+        list(raw_selections)
         if isinstance(raw_selections, (list, tuple))
         else []
     )
@@ -196,11 +201,11 @@ def apply_evidence_bound_selections(
             and name in properties
             and name not in ORCHESTRATED_FIELDS
         ):
-            declared_names.add(name)
+            declared_names.setdefault(name)
     for name in declared_names:
         arguments.pop(name, None)
     applied = rejected = 0
-    for item in raw_items:
+    for item in raw_items[:MAX_EVIDENCE_SELECTIONS]:
         if not isinstance(item, Mapping):
             rejected += 1
             continue
