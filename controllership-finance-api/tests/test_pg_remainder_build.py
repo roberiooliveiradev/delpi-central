@@ -32,6 +32,9 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     VersionNotDraft,
     VersionNotInReview,
 )
+from controllership_finance_app.application.services.closing_document_service import (
+    ClosingDocumentService,
+)
 from controllership_finance_app.infrastructure.gateways.core_notifications_gateway import (
     CoreNotificationsDispatcher,
 )
@@ -44,6 +47,9 @@ from controllership_finance_app.infrastructure.persistence.closing_checklist_rep
 from controllership_finance_app.infrastructure.persistence.closing_p3_repository import (
     ClosingP3Repository,
     RECONCILIATION_DOMAINS,
+)
+from controllership_finance_app.infrastructure.storage.closing_document_storage import (
+    ClosingDocumentStorage,
 )
 from controllership_finance_app.infrastructure.persistence.closing_package_repository import (
     ClosingPackageRepository,
@@ -661,3 +667,44 @@ def test_my_tasks_projection_self_only(setup):
     assert "PENDENCY_ACTION_REQUIRED" in {
         t["actionKind"] for t in mine["items"]
     }
+
+
+def test_submitted_package_locks_document_upload(setup, tmp_path):
+    """Upload de evidência em item de pacote SUBMITTED é recusado —
+    correção exige nova versão do pacote (F4/doc 105)."""
+    repo = setup["packages"]
+    locked = repo.locked_item_keys(P_LOCK)
+    assert locked
+
+    with plugins_db_connect() as conn, conn.cursor(
+        row_factory=dict_row
+    ) as cur:
+        cur.execute(
+            "SELECT snapshot_item_id, item_key FROM "
+            "controllership_finance.competence_checklist_item i "
+            "JOIN controllership_finance.monthly_competence mc "
+            "ON mc.competence_id = i.competence_id "
+            "WHERE mc.period = %s AND i.recipient_area = 'FISCAL' "
+            "AND i.state <> 'CANCELLED' LIMIT 1",
+            (P_LOCK,),
+        )
+        item = cur.fetchone()
+    assert item["item_key"] in locked
+
+    service = ClosingDocumentService(
+        storage=ClosingDocumentStorage(str(tmp_path))
+    )
+    pdf = b"%PDF-1.4\n" + b"x" * 2048 + b"\n%%EOF\n"
+    with pytest.raises(ItemLockedBySubmittedPackage):
+        service.upload(
+            period=P_LOCK,
+            actor=ADMIN,
+            original_name="extrato.pdf",
+            declared_mime="application/pdf",
+            chunks=[pdf],
+            snapshot_item_id=str(item["snapshot_item_id"]),
+            title="Extrato",
+            attachment_role=None,
+            idempotency_key="lock-test-1",
+            branch_scope="BOTH",
+        )

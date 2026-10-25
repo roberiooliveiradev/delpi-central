@@ -26,8 +26,10 @@ import {
   CfLoadingCard,
   CfSectionCard,
   CfStatusBadge,
+  CfTitleWithHelp,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
+import { ClosingHero } from "../../app/ClosingHero";
 import { useViewerContext } from "../../app/ViewerContext";
 import { CF_HELP } from "../../content/helpTooltips";
 
@@ -139,6 +141,20 @@ export function ProfilePage() {
       className="cf-page-stack cf-closing-layout"
       aria-label="Perfil do usuário"
     >
+      <ClosingHero
+        title={
+          <CfTitleWithHelp
+            title="Meu perfil"
+            hint={CF_HELP.profile.identity}
+          />
+        }
+        subtitle="Seus dados corporativos e permissões neste portal — somente você os vê."
+        filters={null}
+        updatedAt={null}
+        onRefresh={reload}
+        refreshing={loading}
+        onClearFilters={() => {}}
+      />
       <div className="cf-page-stack" aria-busy={loading}>
         {loading ? (
           <CfLoadingCard

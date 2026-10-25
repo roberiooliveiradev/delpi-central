@@ -22,6 +22,7 @@ import {
 import {
   CfEmptyState,
   CfMetricStrip,
+  CfTitleWithHelp,
   CfStatusBadge,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
@@ -184,7 +185,12 @@ export function MyTasksPage() {
       aria-label="Minhas tarefas"
     >
       <ClosingHero
-        title="Minhas tarefas"
+        title={
+          <CfTitleWithHelp
+            title="Minhas tarefas"
+            hint={CF_HELP.myTasks.page}
+          />
+        }
         subtitle="Trabalho pendente atribuído a você — pendências, revisões de pacote e esclarecimentos."
         filters={
           <form
