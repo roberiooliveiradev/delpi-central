@@ -89,6 +89,27 @@ class ModelInvocationRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class ContextBudgetObservation:
+    """Pre-call context budget outcome — estimates, never measured usage.
+
+    Estimated token counts are heuristic (chars/token); provider-reported
+    UsageMetadata remains the only actual count. Records what the
+    application boundary decided before dispatch so observability can
+    separate estimated input from actual usage.
+    """
+
+    context_window_tokens: int
+    input_chars: int
+    estimated_input_tokens: int
+    generation_reserve_tokens: int
+    prior_turns_included: int
+    prior_turns_omitted: int
+    reduction_reason: str | None
+    # within_budget | reduced | rejected
+    budget_status: str
+
+
+@dataclass(frozen=True, slots=True)
 class ProviderInvocationPayload:
     """Neutral adapter payload. Lineage/eval are assembled by the use case, not the provider."""
 
@@ -110,6 +131,9 @@ class ModelInvocationResult:
     epistemic_class: EpistemicClass
     usage: UsageMetadata | None = None
     duration_ms: int | None = None
+    # Present only when the adapter declares an effective context window;
+    # carries the pre-call budget decision (estimates, reductions).
+    context_budget: ContextBudgetObservation | None = None
 
     def is_fact(self) -> bool:
         return False

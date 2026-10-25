@@ -98,6 +98,24 @@ class Settings:
         self.llm_max_output_tokens = (
             int(llm_max_output_tokens) if llm_max_output_tokens else None
         )
+        # Declared effective input window in tokens — the runtime value
+        # the provider actually honors (e.g. server-configured num_ctx),
+        # never the model's nominal capacity. Unset/invalid → unknown →
+        # pre-call budget enforcement stays off rather than guessing.
+        llm_context_tokens = (
+            os.getenv("DELIA_LLM_CONTEXT_TOKENS") or ""
+        ).strip()
+        try:
+            parsed_window = (
+                int(llm_context_tokens) if llm_context_tokens else None
+            )
+        except ValueError:
+            parsed_window = None
+        self.llm_context_tokens = (
+            parsed_window
+            if isinstance(parsed_window, int) and parsed_window > 0
+            else None
+        )
         # C3-OLLAMA-LOCAL-LLM-TESTING-01: when set, no real provider may be
         # wired — the configured endpoint is external and this environment
         # is not production. Composition stays fail-closed and eval

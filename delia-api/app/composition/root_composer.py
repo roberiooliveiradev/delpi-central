@@ -557,6 +557,7 @@ def _wire_real_provider_handler(settings: Settings, interop, connections):
         model=settings.llm_model,
         timeout_seconds=settings.llm_timeout_seconds,
         default_max_output_units=settings.llm_max_output_tokens,
+        context_window_tokens=settings.llm_context_tokens,
     )
     model_ref = ModelRef(
         model_id=settings.llm_model,

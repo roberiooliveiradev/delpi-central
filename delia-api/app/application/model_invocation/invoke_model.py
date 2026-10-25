@@ -10,12 +10,18 @@ from __future__ import annotations
 import hashlib
 from typing import Any, Mapping
 
+from app.application.model_invocation.context_budget import (
+    REJECTED,
+    apply_context_budget,
+)
 from app.application.model_invocation.contracts import (
+    ContextBudgetObservation,
     ConversationContextTurn,
     ModelInvocationRequest,
     ModelInvocationResult,
 )
 from app.application.model_invocation.errors import (
+    CONTEXT_TOO_LARGE,
     INVALID_REQUEST,
     INVALID_STRUCTURED_OUTPUT,
     POLICY_EXPOSURE_DENIED,
@@ -56,6 +62,10 @@ class InvokeModel:
     def execute(self, request: ModelInvocationRequest) -> ModelInvocationResult:
         self._validate_request(request)
         self._enforce_exposure_policy()
+        observation = None
+        budgeted = self._enforce_context_budget(request)
+        if budgeted is not None:
+            request, observation = budgeted
         absorb_untrusted_into_authority(
             request.authority_policy,
             dict(request.untrusted_external_metadata),
@@ -108,7 +118,36 @@ class InvokeModel:
             epistemic_class=epistemic_class,
             usage=payload.usage,
             duration_ms=payload.duration_ms,
+            context_budget=observation,
         )
+
+    def _enforce_context_budget(
+        self, request: ModelInvocationRequest
+    ) -> tuple[ModelInvocationRequest, ContextBudgetObservation] | None:
+        """Pre-call budget against the adapter-declared effective window.
+
+        Unknown window (None) disables enforcement rather than guessing —
+        never rejects on an unmeasured bound. Over-budget requests are
+        reduced via untrusted prior history only; mandatory overflow
+        fails closed with CONTEXT_TOO_LARGE before any dispatch.
+        """
+        window = getattr(self._port, "context_window_tokens", None)
+        if not isinstance(window, int) or isinstance(window, bool) or window <= 0:
+            return None
+        adjusted, observation = apply_context_budget(
+            request,
+            context_window_tokens=window,
+            generation_reserve_tokens=(
+                request.generation_config.max_output_units
+            ),
+        )
+        if observation.budget_status == REJECTED:
+            raise ModelInvocationError(
+                CONTEXT_TOO_LARGE,
+                "mandatory request content exceeds declared context window",
+                context_budget=observation,
+            )
+        return adjusted, observation
 
     def _validate_request(self, request: ModelInvocationRequest) -> None:
         try:

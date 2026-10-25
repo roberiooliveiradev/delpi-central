@@ -100,6 +100,19 @@ class ModelCallObservation:
     # when this stage was granted its timeout — starvation evidence,
     # never a scheduling decision input.
     budget_remaining_ms: int | None = None
+    # Context Intelligence WP-F: pre-call budget decision carried from
+    # ModelInvocationResult/ModelInvocationError — estimates labeled as
+    # estimates, provider usage stays the only actual count.
+    error_code: str | None = None
+    instruction_version: str | None = None
+    context_window_tokens: int | None = None
+    input_chars: int | None = None
+    estimated_input_tokens: int | None = None
+    generation_reserve_tokens: int | None = None
+    prior_turns_included: int | None = None
+    prior_turns_omitted: int | None = None
+    context_reduction_reason: str | None = None
+    context_budget_status: str | None = None
 
     def to_projection(self) -> dict[str, Any]:
         return {
@@ -111,6 +124,32 @@ class ModelCallObservation:
             "output_tokens": _bounded_int(self.output_tokens),
             "budget_remaining_ms": _bounded_int(
                 self.budget_remaining_ms
+            ),
+            "error_code": _bounded_text(self.error_code),
+            "instruction_version": _bounded_text(
+                self.instruction_version
+            ),
+            "context_window_tokens": _bounded_int(
+                self.context_window_tokens
+            ),
+            "input_chars": _bounded_int(self.input_chars),
+            "estimated_input_tokens": _bounded_int(
+                self.estimated_input_tokens
+            ),
+            "generation_reserve_tokens": _bounded_int(
+                self.generation_reserve_tokens
+            ),
+            "prior_turns_included": _bounded_int(
+                self.prior_turns_included
+            ),
+            "prior_turns_omitted": _bounded_int(
+                self.prior_turns_omitted
+            ),
+            "context_reduction_reason": _bounded_text(
+                self.context_reduction_reason
+            ),
+            "context_budget_status": _bounded_text(
+                self.context_budget_status
             ),
         }
 
@@ -194,6 +233,13 @@ class ModelCallLedger:
         """Record a real completed model call — provider usage verbatim,
         never inferred."""
         usage = result.usage
+        budget = getattr(result, "context_budget", None)
+        lineage = getattr(result, "lineage", None)
+        instruction_lineage = (
+            getattr(lineage, "instruction_lineage", None)
+            if lineage is not None
+            else None
+        )
         self._append(
             ModelCallObservation(
                 stage=stage,
@@ -207,6 +253,33 @@ class ModelCallLedger:
                     usage.output_units if usage is not None else None
                 ),
                 budget_remaining_ms=budget_remaining_ms,
+                instruction_version=(
+                    instruction_lineage.version
+                    if instruction_lineage is not None
+                    else None
+                ),
+                context_window_tokens=(
+                    budget.context_window_tokens if budget else None
+                ),
+                input_chars=budget.input_chars if budget else None,
+                estimated_input_tokens=(
+                    budget.estimated_input_tokens if budget else None
+                ),
+                generation_reserve_tokens=(
+                    budget.generation_reserve_tokens if budget else None
+                ),
+                prior_turns_included=(
+                    budget.prior_turns_included if budget else None
+                ),
+                prior_turns_omitted=(
+                    budget.prior_turns_omitted if budget else None
+                ),
+                context_reduction_reason=(
+                    budget.reduction_reason if budget else None
+                ),
+                context_budget_status=(
+                    budget.budget_status if budget else None
+                ),
             )
         )
 
@@ -218,6 +291,8 @@ class ModelCallLedger:
         attempt: int = 1,
         duration_ms: int | None = None,
         budget_remaining_ms: int | None = None,
+        error_code: str | None = None,
+        context_budget: Any = None,
     ) -> None:
         """Record a real model call that failed or timed out — counted
         as a call, token fields stay absent (never fabricated)."""
@@ -228,6 +303,47 @@ class ModelCallLedger:
                 finish_status=_finish_label(finish_status),
                 duration_ms=duration_ms,
                 budget_remaining_ms=budget_remaining_ms,
+                error_code=error_code,
+                context_window_tokens=(
+                    context_budget.context_window_tokens
+                    if context_budget is not None
+                    else None
+                ),
+                input_chars=(
+                    context_budget.input_chars
+                    if context_budget is not None
+                    else None
+                ),
+                estimated_input_tokens=(
+                    context_budget.estimated_input_tokens
+                    if context_budget is not None
+                    else None
+                ),
+                generation_reserve_tokens=(
+                    context_budget.generation_reserve_tokens
+                    if context_budget is not None
+                    else None
+                ),
+                prior_turns_included=(
+                    context_budget.prior_turns_included
+                    if context_budget is not None
+                    else None
+                ),
+                prior_turns_omitted=(
+                    context_budget.prior_turns_omitted
+                    if context_budget is not None
+                    else None
+                ),
+                context_reduction_reason=(
+                    context_budget.reduction_reason
+                    if context_budget is not None
+                    else None
+                ),
+                context_budget_status=(
+                    context_budget.budget_status
+                    if context_budget is not None
+                    else None
+                ),
             )
         )
 

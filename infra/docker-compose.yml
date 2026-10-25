@@ -1994,6 +1994,10 @@ services:
       # ACTIVATION-01): 60s per real LLM call.
       DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-60}
       DELIA_LLM_MAX_OUTPUT_TOKENS: ${DELIA_LLM_MAX_OUTPUT_TOKENS:-2048}
+      # Effective input window the deployment actually honors (tokens).
+      # Declare the runtime value (e.g. Ollama server num_ctx), not the
+      # model's nominal capacity; unset disables pre-call enforcement.
+      DELIA_LLM_CONTEXT_TOKENS: ${DELIA_LLM_CONTEXT_TOKENS:-}
       DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-60}
 
       # VD-F03 dictation.transcription.v1 — dedicated audio-capable model

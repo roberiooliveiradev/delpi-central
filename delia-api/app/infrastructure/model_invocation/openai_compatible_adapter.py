@@ -76,6 +76,7 @@ class OpenAICompatibleModelInvocationAdapter:
         model: str,
         timeout_seconds: float,
         default_max_output_units: int | None = None,
+        context_window_tokens: int | None = None,
         http_post: Callable[..., Any] = deadline_http_post,
     ) -> None:
         for name, value in (
@@ -92,11 +93,24 @@ class OpenAICompatibleModelInvocationAdapter:
         self._model = model
         self._timeout_seconds = timeout_seconds
         self._default_max_output_units = default_max_output_units
+        self._context_window_tokens = (
+            context_window_tokens
+            if isinstance(context_window_tokens, int)
+            and not isinstance(context_window_tokens, bool)
+            and context_window_tokens > 0
+            else None
+        )
         self._http_post = http_post
 
     @property
     def adapter_kind(self) -> str:
         return self.ADAPTER_KIND
+
+    @property
+    def context_window_tokens(self) -> int | None:
+        # Effective input window honored by this deployment — the
+        # runtime-configured value, not the model's nominal capacity.
+        return self._context_window_tokens
 
     @property
     def exposure_class(self) -> ProviderExposureClass:

@@ -412,3 +412,82 @@ The minimal path is WP-A first (declare the real window, enforce budgets honestl
 **Decision D6 / WP-B: NOT AUTHORIZED.** Document 21 §8 explicitly freezes request-scoped session and MFE-memory-only; backend conversation DB, conversation_id, migrations, GET, retention and new ports are out of scope without canonical reversal, owner, retention and privacy authority. Do not piggyback persistence on WP-A/C/D.
 
 **Overall:** Investigative coverage accepted with residuals. One bounded implementation task may be approved first: `WP-A0 RUNTIME CONTEXT WINDOW & PRE-FLIGHT SIZE CHARACTERIZATION` (read-only local probe and trace, followed by decision on WP-A contract), optionally WP-F measurements that reuse the current ledger. All other WPs remain design gated. Local model success still not guaranteed after context fixes; evaluate against locked baseline. No deploy from investigation alone.
+
+
+## 13. Implementation evidence — WP-A + WP-F (2026-10-25, task `DELIA-C3-CONTEXT-WINDOW-BUDGET-OBSERVABILITY-FULL-IMPLEMENTATION-01`)
+
+First approved Context Intelligence implementation, executed after the §12 review: WP-A0 runtime characterization → contract gate → RED → minimal implementation → GREEN → local-model evaluation → full regression. No new engine, planner, memory, registry, provider, or session contract; every mechanism EXTENDs an existing owner.
+
+### 13.1 WP-A0 — effective runtime context window (measured, not inferred)
+
+| dimension | value | evidence method |
+|---|---|---|
+| model loaded | `delia-json:latest` (FROM qwen2.5:3b blob + custom template) | `ollama show --modelfile`, `/api/show` |
+| parameter size / quantization | 3.1B / Q4_K_M | `/api/ps` details |
+| declared model context | 32768 (`qwen2.context_length`) | `/api/show` model_info |
+| daemon default runner ctx | **4096** | `/api/ps` `context_length` after plain load |
+| effective window (pre-fix) | **4096** | empirical: 900/1100-word prompts ⇒ `prompt_eval_count` 3532 OK; ~4300-token prompt ⇒ **2050** — truncation keeps ~ctx/2, not ctx |
+| truncation destructiveness | system instruction destroyed | over-window request with `system: reply ZZTOP` ⇒ `prompt_tokens=2050`, generic prose reply (directive lost) |
+| `num_ctx` via `/v1` OpenAI-compat | **ignored** (top-level and `options.num_ctx`) | identical 2050 readings |
+| `num_ctx` via native `/api/*` | **honored** | `options.num_ctx=8192` ⇒ runner reloads at 8192, `prompt_eval_count=4098` for ~11.7k-token input |
+| daemon env | `OLLAMA_NUM_CTX`/`OLLAMA_CONTEXT_LENGTH` **absent** — repo `.env` values never reach the ollama service env block | `docker exec delpi-ollama env` |
+
+**Runtime fix applied to the eval daemon (sanctioned local config):** `PARAMETER num_ctx 8192` baked into `delia-json` via `ollama create` — `/api/ps` now reports `context_length=8192`, `/v1` accepts a 4432-token prompt verbatim, VRAM 2.4GB. The defect was never "the model cannot" — it was *silent halving of over-window prompts*, which destroyed the JSON-only system directive and produced `invalid_structured_output` on the largest stages.
+
+### 13.2 WP-A — contract gate and implementation
+
+```
+EXISTING_EQUIVALENT=YES (bounded request contract, adapter port, ledger, usage mapping)
+REUSE_DECISION=EXTEND
+OWNER=app/application/model_invocation (request/result contracts, use-case boundary)
+CONSUMERS=InvokeModel (all three call sites), orchestration._propose, direct-answer invoke
+CANONICAL_CONTRACT=ModelInvocationRequest/Result, ModelInvocationPort, ConversationContextTurn
+```
+
+Contract additions (minimal, additive-only):
+
+- `ModelInvocationPort.context_window_tokens: int | None` — adapter-declared **effective** input window (runtime-honored value, never nominal model capacity). `None` = unknown → enforcement OFF rather than guessing.
+- `ContextBudgetObservation` (contracts.py) — window, input_chars, estimated_input_tokens, generation_reserve_tokens, prior_turns_included/omitted, reduction_reason, budget_status (`within_budget|reduced|rejected`). Carried on `ModelInvocationResult` and on `ModelInvocationError` for rejects.
+- `context_budget.py` — pre-call policy at the use-case boundary: estimate `ceil(chars/2.5) + ADAPTER_OVERHEAD(260) + generation_reserve`; reduce **only untrusted prior history**, oldest first in complete USER_INPUT/DELIA_RESULT pairs (alternation invariant preserved, verified); instruction/schema/current input are never touched; mandatory overflow → `ModelInvocationError(CONTEXT_TOO_LARGE)` **before dispatch**, mapped to the interaction-level `CONTEXT_TOO_LARGE` (HTTP 400) — a typed failure, never a fabricated answer.
+- `DELIA_LLM_CONTEXT_TOKENS` — settings → adapter ctor → port property. Env passthrough added to both compose files + env examples (dev/prod). Provider-specific mechanics stay in infra config; Domain/Application see only an int.
+- Not retryable (`CONTEXT_TOO_LARGE` is not a recoverable code) — deterministic reject.
+
+### 13.3 WP-F — observability (reuses `ModelCallLedger`, no new telemetry)
+
+`ModelCallObservation` + projection now carry per stage: `error_code`, `instruction_version`, `context_window_tokens`, `input_chars`, `estimated_input_tokens` (labeled estimate), `generation_reserve_tokens`, `prior_turns_included`, `prior_turns_omitted`, `context_reduction_reason`, `context_budget_status` — alongside the already-reported `input_tokens`/`output_tokens` (provider actuals only, never fabricated) and `duration_ms`. `record_error` gained `error_code`/`context_budget` params; both call sites (`_propose`, direct-answer `_invoke`) pass them.
+
+Live wire evidence (real Ollama + real specialists): stage rows show est ≈ 1.4–2.0× actual (conservative over-estimate by design); `long_history` turn with 14.5k chars of prior context ⇒ admission/turn_goal `reduced`, `prior_turns_omitted=2`, `in=6`, `prior_turns_omitted_for_window`; stages that do not route prior context show `in=0/om=0`.
+
+### 13.4 Assembled prompt sizes by stage (measured on the live chain)
+
+| stage | input_chars | est tokens | actual prompt tokens |
+|---|---|---|---|
+| interaction_admission | ~4.8k | ~2.2k | ~1.1k |
+| turn_goal (with 14.5k history) | ~18k | ~6.9k | ~3.5k |
+| select_group | ~13.3k | ~5.6k | ~3.2k |
+| select_capability | ~5.7k | ~2.5k | ~1.4k |
+| native_assessment | ~3.6k | ~1.7k | ~0.9k |
+| foreign_selection | ~7.5k | ~3.3k | ~1.9k |
+| index_probe | ~2.2k | ~1.1k | ~0.5k |
+| arguments | ~9–17k | ~3.7–6.7k | 1.8–4.7k |
+| candidate_arguments | ~3k | ~1.3k | ~0.6k |
+
+Largest observed actual prompt: **4670 tokens** (`arguments`) — exceeds the pre-fix effective window (4096); it is exactly the class of prompt that was being halved to ~2050. Under the fixed window all stages report `within_budget` or `reduced`, zero truncation.
+
+### 13.5 Verification and regression
+
+- RED→GREEN: `tests/test_context_budget.py` (9 tests) — within/reduce/reject, pair-boundary preservation, mandatory overflow → `CONTEXT_TOO_LARGE` before dispatch (spy proves zero port calls), unknown window → no enforcement, ledger projection fields, retry idempotence, odd-first-turn defensive drop.
+- Focused: context_budget + model_invocation + real adapter + observability + interaction/orchestration suites — green; one pre-existing env failure (`http_timeout_maps_to_504`) unchanged.
+- Full backend: **2 failed / 2316 passed** — only the two known environmental failures (`g4` fixture, `http_timeout_maps_to_504`); no new failures.
+- Architecture gates: `audit_architecture_phase3`, `audit_platform_guardrails`, `audit_backend_boundaries` — 0 findings. Diff scan: no provider names, no business strings, no secrets in app changes.
+
+### 13.6 Local-model evaluation (authorized local model only)
+
+10-scenario HTTP matrix on the live chain (`DELIA_LLM_CONTEXT_TOKENS=8192`, `delia-json` num_ctx 8192, GPU): **zero `invalid_structured_output`, zero truncation events, zero fabricated content**. `three_records` and `o2` completed the full 10-stage chain GROUNDED (honest empty-collection answer — argument fidelity, not context, is the residual), `long_history` reduced+completed, `subject_switch` completed, `write_ineligible` → surface listing (zero ACT), `insufficient`/`pino`/`documental`/`direct_read` honest NON_GROUNDED, `vista_question` → live surface listing. The three-real-records business outcome remains gated by 3B per-stage argument fidelity — **context loss is no longer the blocker**; no outcome improvement is claimed beyond this.
+
+### 13.7 Remaining residuals / next WP
+
+- `DELIA_LLM_CONTEXT_TOKENS` must be materialized per deployment (dev .env / prod .env); without it enforcement is OFF by design (no false rejects on an unmeasured bound).
+- Server-side default window remains a deployment concern: `OLLAMA_CONTEXT_LENGTH` passthrough exists in compose; baking `num_ctx` per model (as done in eval) is the per-model alternative — whichever production adopts must be recorded.
+- Omission is silent toward the model but **explicit in observability** (turn counts + reason). No synthetic marker turn was added — D2 remains conditional on a typed contract.
+- Still excluded: WP-B persistence (canon-frozen), WP-C summarization, WP-D mass refactor, WP-E flattening, model switch.

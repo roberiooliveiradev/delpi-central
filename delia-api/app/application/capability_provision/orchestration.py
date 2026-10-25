@@ -8179,6 +8179,10 @@ class OperationalCapabilityOrchestrator:
                             (time.monotonic() - started) * 1000
                         ),
                         budget_remaining_ms=call_remaining_ms,
+                        error_code=exc.code,
+                        context_budget=getattr(
+                            exc, "context_budget", None
+                        ),
                     )
                 _logger.info(
                     "orchestration stage=model_propose decision=error "

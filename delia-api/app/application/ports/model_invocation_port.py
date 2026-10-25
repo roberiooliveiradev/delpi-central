@@ -26,6 +26,16 @@ class ModelInvocationPort(Protocol):
     def exposure_class(self) -> ProviderExposureClass:
         """TEST_ONLY until the real-provider gate is fully PROVEN for DÉLIA."""
 
+    @property
+    def context_window_tokens(self) -> int | None:
+        """Declared effective input window in tokens — the runtime value
+        actually honored by the provider, not the model's nominal capacity.
+
+        None means the window is unknown: the application boundary then
+        applies no pre-call budget enforcement. Configuration is owned by
+        infrastructure; the value is provider-neutral (tokens only)."""
+        return None
+
     def invoke(self, request: ModelInvocationRequest) -> ProviderInvocationPayload:
         """Execute one bounded invocation.
 

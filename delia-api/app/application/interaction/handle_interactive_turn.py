@@ -85,6 +85,7 @@ from app.application.model_invocation.contracts import (
     ModelInvocationResult,
 )
 from app.application.model_invocation.errors import (
+    CONTEXT_TOO_LARGE as INVOCATION_CONTEXT_TOO_LARGE,
     INVALID_STRUCTURED_OUTPUT,
     TIMEOUT,
     ModelInvocationError,
@@ -1406,6 +1407,10 @@ class HandleInteractiveConversationTurn:
                             (time.monotonic() - started) * 1000
                         ),
                         budget_remaining_ms=call_remaining_ms,
+                        error_code=exc.code,
+                        context_budget=getattr(
+                            exc, "context_budget", None
+                        ),
                     )
                 if not call_retry_eligible(
                     exc.code, call_attempt, self._llm_call_max_attempts
@@ -1484,6 +1489,8 @@ def _map_invocation_error(exc: ModelInvocationError) -> InteractionError:
         return InteractionError(INVALID_MODEL_OUTPUT, exc.message)
     if code == INVALID_REQUEST:
         return InteractionError(INVALID_REQUEST, exc.message)
+    if code == INVOCATION_CONTEXT_TOO_LARGE:
+        return InteractionError(CONTEXT_TOO_LARGE, exc.message)
     return InteractionError(MODEL_UNAVAILABLE, exc.message)
 
 

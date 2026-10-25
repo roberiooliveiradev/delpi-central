@@ -1819,6 +1819,9 @@ services:
       # Doc 103 approved policy: each real LLM call may take up to 60s;
       # the transport ceiling must not sit below the call budget.
       DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-60}
+      # Effective input window honored by the runtime (tokens) — see
+      # docker-compose.yml comment; unset disables budget enforcement.
+      DELIA_LLM_CONTEXT_TOKENS: ${DELIA_LLM_CONTEXT_TOKENS:-}
       DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-60}
 
       # VD-F03 dictation.transcription.v1 — dedicated audio-capable model;

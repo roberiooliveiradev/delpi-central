@@ -31,12 +31,22 @@ class DeterministicTestAdapter:
     ADAPTER_KIND = "TEST_ONLY"
     EXPOSURE_CLASS = ProviderExposureClass.TEST_ONLY
 
-    def __init__(self, *, behavior: str = "success") -> None:
+    def __init__(
+        self,
+        *,
+        behavior: str = "success",
+        context_window_tokens: int | None = None,
+    ) -> None:
         self._behavior = behavior
+        self._context_window_tokens = context_window_tokens
 
     @property
     def adapter_kind(self) -> str:
         return self.ADAPTER_KIND
+
+    @property
+    def context_window_tokens(self) -> int | None:
+        return self._context_window_tokens
 
     @property
     def exposure_class(self) -> ProviderExposureClass:
