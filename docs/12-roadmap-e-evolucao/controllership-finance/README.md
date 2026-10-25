@@ -501,3 +501,8 @@ O [Documento 104 — plano mestre E2E de implementação, aceite e deploy por Op
 ## Execução complementar: concluir pendências antes do refinamento — 25/10/2026
 
 O PO autorizou a execução contínua das lacunas remanescentes da Central P1–P6, mantendo decisões materiais em G1 e G2/G3 de homologação e release. **Documento vigente:** [105 — GO de conclusão integral das pendências antes do refinamento](./105-go-conclusao-integral-pendencias-implementacao-antes-refinamento.md). O [104](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md) continua sendo o roteiro E2E e de deploy; o [23](./23-ledger-rq-ac-testes.md), o [37](./37-p5-submissao-e-revisao-no-portal.md) e o [100](./100-ciclo3-p6-min-p2-read-runtime-evidencia-de-execucao.md) mantêm contratos/evidências. Nenhum novo deploy foi realizado por esta atualização documental.
+
+
+## GO de escopo atualizado — CLARA multi-ação, Keycloak e ChatGPT (25/10/2026)
+
+**Documento vigente mais recente:** [106 — CLARA batch inteligente e release SSH/ChatGPT](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md). Decisão expressa do PO: múltiplas operações do mesmo pedido com mínima interação, intenção atestada ou aprovação consolidada do lote; controles por ação. Priorizar PROC-0072 + CLARA com knowledge base própria; Sala de interação e expansão de Minhas tarefas adiadas; código preexistente preservado. Não implica G2/G3 aprovado, alteração Keycloak realizada ou deploy executado. A ficha de configuração MCP/ChatGPT deve conter somente metadados públicos comprovados.
