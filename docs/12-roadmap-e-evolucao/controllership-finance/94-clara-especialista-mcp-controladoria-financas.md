@@ -299,3 +299,7 @@ Evidências deste documento: `shared/delpi_mcp/*` (docstrings e testes),
 `controllership-finance-api/.../routes/*`, docs 14, 23, 88, 91, 93.
 
 **Estado:** D01=B, D02=A, D03=C, D04=A, D05=A decididas. Primeira fatia implementada em `41fdcf65e1` (V011 + `/mcp` owner-local + knowledge base própria + PREPARE/ACT governado para capacidades já existentes na BFF). Gate transversal fechado para este escopo; G2 humano e G3 operador permanecem externos.
+
+## 15. Decisão posterior vinculante — CLARA batch, Keycloak e ChatGPT (25/10/2026)
+
+**[Documento 106](./106-clara-batch-ssh-keycloak-chatgpt-go-e-gates.md) é a authority posterior para múltiplas operações com mínima interação, intenção autenticada atestada ou confirmação consolidada quando necessária, e auditoria por ação.** Substitui o requisito histórico de confirmação conversacional isolada *por operação*, não o requisito de consentimento comprovável, autorização Core, ownership/scope e invariantes C2. Os parágrafos anteriores de D01 e §10.1 sobre confirmação individual devem ser lidos como **SUPERSEDED pela aprovação do lote**. A solução física de atestação permanece DECISION_REQUIRED no gate de segurança. A implementação ACT anterior tem correções pendentes (claim antes do efeito, single-use concorrente, snapshot fail-closed e read-back independente) e deve permanecer desabilitada/fail-closed em produção até PASS. Keycloak e deploy só após G2 humano e G3 Operador SSH.
