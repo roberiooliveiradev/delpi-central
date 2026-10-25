@@ -454,7 +454,7 @@ Contract additions (minimal, additive-only):
 
 ### 13.3 WP-F — observability (reuses `ModelCallLedger`, no new telemetry)
 
-`ModelCallObservation` + projection now carry per stage: `error_code`, `instruction_version`, `context_window_tokens`, `input_chars`, `estimated_input_tokens` (labeled estimate), `generation_reserve_tokens`, `prior_turns_included`, `prior_turns_omitted`, `context_reduction_reason`, `context_budget_status` — alongside the already-reported `input_tokens`/`output_tokens` (provider actuals only, never fabricated) and `duration_ms`. `record_error` gained `error_code`/`context_budget` params; both call sites (`_propose`, direct-answer `_invoke`) pass them.
+`ModelCallObservation` + projection now carry per stage: `error_code`, `lineage_version` (instruction lineage), `context_window_tokens`, `input_chars`, `estimated_input_tokens` (labeled estimate), `generation_reserve_tokens`, `prior_turns_included`, `prior_turns_omitted`, `context_reduction_reason`, `context_budget_status` — alongside the already-reported `input_tokens`/`output_tokens` (provider actuals only, never fabricated) and `duration_ms`. `record_error` gained `error_code`/`context_budget` params; both call sites (`_propose`, direct-answer `_invoke`) pass them.
 
 Live wire evidence (real Ollama + real specialists): stage rows show est ≈ 1.4–2.0× actual (conservative over-estimate by design); `long_history` turn with 14.5k chars of prior context ⇒ admission/turn_goal `reduced`, `prior_turns_omitted=2`, `in=6`, `prior_turns_omitted_for_window`; stages that do not route prior context show `in=0/om=0`.
 
@@ -508,3 +508,58 @@ Largest observed actual prompt: **4670 tokens** (`arguments`) — exceeds the pr
 **R4 — content preservation:** dropping pairs changes referential continuity; counts/reason are observable but the model is not told that history was omitted. A typed non-authoritative omission marker remains D2 separate design decision; do not append forged `DELIA_RESULT`. Goal cross-stage consistency and session persistence not solved by this WP.
 
 **NEXT BOUNDED STEP:** close R2 via contract-first, characterize R1 and R3 with local-only tests/config evidence, preserve current mechanism and avoid new token-engine/provider hooks; independent re-eval on frozen SHA/daemon config. Do not deploy; result 3 real records remains unproven and no model-capacity conclusion should exclude residual argument fidelity/context errors without trace evidence.
+
+
+## 15. Contract hardening — R1–R4 (2026-10-25, task `DELIA-C3-CONTEXT-BUDGET-CONTRACT-HARDENING-AND-LOCAL-REVALIDATION-01`)
+
+Executed against the §14 review verdict `ACCEPT_WITH_RESIDUAL`. Corrections target the four flagged residuals; every change stays inside the already-authorized owners (no new engine/planner/registry/provider/memory).
+
+### 15.1 R2 — generation reserve parity (CLOSED)
+
+Root cause: `apply_context_budget` reserved `request.generation_config.max_output_units or 512`, while the adapter sent `request.generation_config.max_output_units or self._default_max_output_units` as `max_tokens`. An adapter default above 512 would make the wire request larger than the reserved budget.
+
+Minimal contract extension: `ModelInvocationPort.default_max_output_units: int | None` — the adapter's configured default generation cap, i.e. what is actually sent when the request omits `max_output_units`. `InvokeModel._enforce_context_budget` resolves the reserve as `request max_output_units → adapter default → 512 floor`, so the pre-call arithmetic now reserves exactly what the wire may request. Both adapters (real + deterministic test) expose the property; the real adapter normalizes the value (int, non-bool, >0) the same way as `context_window_tokens`. RED→GREEN: 5 tests covering request-explicit, adapter-default, absent-limit floor, reserve-consumes-window reject, and invalid adapter default.
+
+### 15.2 R1 — estimator conformance (CORRECTED + MEASURED)
+
+The `chars/2.5` linear estimate was measured against 21 payload classes on the governed local model (`/v1` `usage.prompt_tokens`):
+
+| class | chars | actual tok | old est/act |
+|---|---|---|---|
+| PT-BR / EN prose | 4080 / 1720 | 1222 / 542 | 1.34 / 1.27 |
+| JSON schema | 4694 | 1591 | 1.18 |
+| unicode accents | 2220 | 1782 | **0.50** |
+| emoji / ZWJ emoji / flags | 1100 / 2100 / 2200 | 1141 / 3041 / 2440 | **0.39** / — / — |
+| symbol-heavy | 1860 | 1182 | **0.63** |
+| technical identifiers | 3480 | 2281 | **0.61** |
+| pure digits / dense codes | 3000 / 3599 | 3041 / 3640 | **0.34** / **0.35** |
+| base64-like | 3000 | 2256 | **0.57** |
+| business-evidence JSON | 3325 | 1597 | **0.83** |
+| long message / multi-turn | 26407 / 1530 | 4443 / 343 | 2.38 / 1.78 |
+| doc evidence / injection-as-data | 1920 / 1650 | 612 / 417 | 1.25 / 1.58 |
+
+Underestimation was material on exactly the classes DÉLIA traffic contains — product codes and dense identifiers reach ~1.01 tok/char, 3.4× above the old factor. A single linear factor cannot bound both prose (~0.30) and dense codes (~1.0) without false-rejecting legitimate large mandatory prompts (the real `select_group` stage is ~13k chars / ~3.2k actual tokens).
+
+**Minimal correction:** `estimate_text_tokens` sums structural per-class weights per whitespace-delimited run — non-ASCII 1.55, ASCII digit 1.20, ASCII uppercase 0.65, ASCII lowercase 0.36 (0.65 when the run is longer than a normal word, since dense runs tokenize like identifiers), whitespace 0.30, mergeable structural punctuation 0.45, rare symbols 1.00 — × 1.12 global margin. The run-level split matters: the first version flagged a whole whitespace-sparse string as dense, which over-priced minified JSON payloads containing prose and produced a live false-reject of `select_group` (est 8177 vs actual 3166 → `CONTEXT_TOO_LARGE`); per-run detection prices prose-valued JSON strings as prose while still covering base64/dense-code runs. Result on the measured corpus: **zero underestimates**, worst-case margin 1.11 (base64-like); live stages re-verified dispatching (`select_group` est 6213, `within_budget`). The bound remains labeled heuristic, not a measurement; `UsageMetadata` stays the only actual count. Conformance is frozen as 23 tests — the corpus plus recorded actuals — so any future weight weakening fails the suite.
+
+### 15.3 R3 — declaration/runtime parity (CLOSED via versioned config + gate)
+
+Verified in the eval daemon (Ollama 0.40.8): `delia-json` carries `PARAMETER num_ctx 8192` in its Modelfile — `/api/ps` reports `context_length=8192` **after a daemon restart** (baked blob persists in the `ollama_data` volume), and `DELIA_LLM_CONTEXT_TOKENS=8192` in the app env — declared == effective.
+
+Versioned config fix: the `ollama` daemon service in both compose files now passes `OLLAMA_CONTEXT_LENGTH` (default 4096, the measured daemon default — the earlier `.env.dev.example` claim of 2048 was wrong; `OLLAMA_NUM_CTX` goes to the chat app service, not the daemon). Env examples (dev/prod) now state the parity requirement explicitly: `DELIA_LLM_CONTEXT_TOKENS` must equal the effective window the daemon honors (`OLLAMA_CONTEXT_LENGTH` or per-model `num_ctx`); declaring more than the runtime honors re-opens silent truncation.
+
+Residual condition (ops, not code): `DELIA_LLM_CONTEXT_TOKENS` is an application declaration — the application cannot probe the provider window over the OpenAI-compat API. Deploy gate: whoever sets the declared window must have verified the effective runtime value (per-model `num_ctx`, daemon `OLLAMA_CONTEXT_LENGTH`, or provider limit). The ledger's est-vs-actual divergence is the detective control: a runtime honoring less than declared shows `input_tokens` collapsing toward ~ctx/2 on large prompts.
+
+### 15.4 R4 — history reduction integrity (VERIFIED, residual documented)
+
+New tests prove: reduction removes exactly the oldest complete `USER_INPUT`/`DELIA_RESULT` pairs — the surviving history is a verbatim suffix of the original (no reordering, splitting or rewriting); chronological order and `user`/`assistant` roles are preserved; `input_text`, `instruction_content`, `generation_config` and `expected_fields` are never touched; the adapter receives the reduced request, not the original (spy-verified); omission count/reason are observable per stage.
+
+Characterized risk (documented, mechanism unchanged): a referential follow-up can lose its antecedent when the pair is omitted; the model is not told history was removed — it sees a shorter conversation and may answer honestly-insufficient rather than fabricate (observed: `long_history` completed reduced, honest). A typed non-authoritative omission marker remains decision D2 for coordination — no synthetic `DELIA_RESULT` was forged and none will be.
+
+### 15.5 Regression caught and fixed
+
+The WP-F `instruction_version` projection key violated the response leak-guard (`test_response_does_not_leak_provider_or_authority_internals` forbids the substring `instruction`). Projection key renamed to `lineage_version` (the value is `instruction_lineage.version`); internal observation field unchanged. GREEN.
+
+### 15.6 Local re-evaluation (frozen config)
+
+`delia-r7-eval-local` on the working tree: `DELIA_LLM_CONTEXT_TOKENS=8192`, `delia-json` num_ctx 8192, Ollama 0.40.8 GPU. 10-scenario HTTP matrix on the final estimator: zero `invalid_structured_output`, zero truncation, zero fabricated content. All stages report `within_budget` or `reduced`; the single `rejected` event is the recovery-leg `select_group` inside `write_ineligible` whose mandatory payload genuinely exceeded budget (est 8411) — typed `context_too_large`, recorded with `error_code`, turn completed honestly with zero ACT. `three_records`/`o2` and the other scenarios returned honest insufficiency/empty-source answers (3B per-stage variance); `long_history` reduced in complete pairs across stages (om 2–8, suffix-verified) and completed. Business outcome for three real records remains unmet — first divergent stage is `arguments`-side fidelity on the 3B model, not context. Estimate ratio on live traffic: ~1.4–2.0× actual for prose stages, higher for dense history (conservative over-estimate, never under).

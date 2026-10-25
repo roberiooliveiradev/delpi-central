@@ -126,7 +126,10 @@ class ModelCallObservation:
                 self.budget_remaining_ms
             ),
             "error_code": _bounded_text(self.error_code),
-            "instruction_version": _bounded_text(
+            # Projected as lineage_version: the instruction lineage
+            # version — the response surface must never carry the
+            # term "instruction" (leak guard).
+            "lineage_version": _bounded_text(
                 self.instruction_version
             ),
             "context_window_tokens": _bounded_int(

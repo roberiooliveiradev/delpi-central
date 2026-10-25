@@ -134,12 +134,13 @@ class InvokeModel:
         window = getattr(self._port, "context_window_tokens", None)
         if not isinstance(window, int) or isinstance(window, bool) or window <= 0:
             return None
+        reserve = request.generation_config.max_output_units or getattr(
+            self._port, "default_max_output_units", None
+        )
         adjusted, observation = apply_context_budget(
             request,
             context_window_tokens=window,
-            generation_reserve_tokens=(
-                request.generation_config.max_output_units
-            ),
+            generation_reserve_tokens=reserve,
         )
         if observation.budget_status == REJECTED:
             raise ModelInvocationError(

@@ -36,9 +36,17 @@ class DeterministicTestAdapter:
         *,
         behavior: str = "success",
         context_window_tokens: int | None = None,
+        default_max_output_units: int | None = None,
     ) -> None:
         self._behavior = behavior
         self._context_window_tokens = context_window_tokens
+        self._default_max_output_units = (
+            default_max_output_units
+            if isinstance(default_max_output_units, int)
+            and not isinstance(default_max_output_units, bool)
+            and default_max_output_units > 0
+            else None
+        )
 
     @property
     def adapter_kind(self) -> str:
@@ -47,6 +55,10 @@ class DeterministicTestAdapter:
     @property
     def context_window_tokens(self) -> int | None:
         return self._context_window_tokens
+
+    @property
+    def default_max_output_units(self) -> int | None:
+        return self._default_max_output_units
 
     @property
     def exposure_class(self) -> ProviderExposureClass:

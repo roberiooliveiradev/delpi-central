@@ -92,7 +92,13 @@ class OpenAICompatibleModelInvocationAdapter:
         self._api_key = api_key
         self._model = model
         self._timeout_seconds = timeout_seconds
-        self._default_max_output_units = default_max_output_units
+        self._default_max_output_units = (
+            default_max_output_units
+            if isinstance(default_max_output_units, int)
+            and not isinstance(default_max_output_units, bool)
+            and default_max_output_units > 0
+            else None
+        )
         self._context_window_tokens = (
             context_window_tokens
             if isinstance(context_window_tokens, int)
@@ -111,6 +117,13 @@ class OpenAICompatibleModelInvocationAdapter:
         # Effective input window honored by this deployment — the
         # runtime-configured value, not the model's nominal capacity.
         return self._context_window_tokens
+
+    @property
+    def default_max_output_units(self) -> int | None:
+        # Default generation cap sent as max_tokens when the request
+        # does not set generation_config.max_output_units — the budget
+        # must reserve exactly this, never an independent guess.
+        return self._default_max_output_units
 
     @property
     def exposure_class(self) -> ProviderExposureClass:

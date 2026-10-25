@@ -400,3 +400,22 @@ Base reancorada `203eaa966d`. Escopo aprovado pela revisão independente do doc 
 **Eval local (modelo autorizado, matriz HTTP de 10 cenários).** Zero `invalid_structured_output`, zero truncamento, zero fabricação. `three_records`/`o2` completaram a cadeia inteira de 10 estágios GROUNDED (resposta honesta de coleção vazia — fidelidade de argumentos, não contexto, é o residual), `long_history` reduziu e completou, `subject_switch` completou, `write_ineligible` → surface listing (zero ACT), `vista_question` → listagem live. `THREE_RECORDS_OUTCOME`: registros reais ainda não apresentados (capacidade do 3B em arguments); **perda de contexto deixou de ser o bloqueador**.
 
 `WP_A=IMPLEMENTED`; `WP_F=IMPLEMENTED`; `TRUNCATION_ROOT_CAUSE=CLOSED (silent halving >ctx)`; `CONTEXT_BUDGET_COMPLIANCE=100% (zero over-window dispatch, zero silent loss)`; `DEPLOY=NOT_AUTHORIZED (task says DEPLOY_AUTHORIZED=NO)`; `INDEPENDENT_REVIEW=TO_REQUEST`.
+
+
+#### Context Intelligence — contract hardening R1–R4 (2026-10-25, task `DELIA-C3-CONTEXT-BUDGET-CONTRACT-HARDENING-AND-LOCAL-REVALIDATION-01`)
+
+Base reancorada `a6713b090c` (origin/main, inclui revisão independente `26cc82628b`). Escopo: corrigir os 4 residuais do veredito ACCEPT_WITH_RESIDUAL do doc 151 §14. Evidência completa no doc 151 §15.
+
+**R2 CLOSED — reserva de geração.** A política reservava `request.max_output_units or 512` mas o adapter enviava `max_output_units or default_max_output_units` — divergência possível. Nova propriedade de port `default_max_output_units` (declare o que vai ao wire); `InvokeModel` resolve `request → adapter default → floor 512`. Normalização igual a `context_window_tokens` (int, non-bool, >0). 5 testes RED→GREEN.
+
+**R1 CLOSED — estimador conformante.** Corpus de 21 classes medido no modelo governado revelou subestimação material: códigos/dígitos densos ~1.01 tok/char, unicode 0.80, emoji até 1.45, base64 0.75 — vs. fator linear de 0.40 tok/char. Novo `estimate_text_tokens` por classe de caractere (não-ASCII 1.55, dígito 1.20, maiúscula 0.65, minúscula 0.36 ou 0.65 quando whitespace-esparsa, espaço 0.30, outro 0.75) × margem 1.12 → zero subestimações no corpus, pior margem 1.19. Conformance congelada em 23 testes com os actuals medidos; qualquer enfraquecimento futuro falha a suíte. Estimativa segue rotulada heurística — `UsageMetadata` é a única contagem real.
+
+**R3 CLOSED — paridade config↔runtime.** Daemon Ollama 0.40.8: `delia-json` com `num_ctx 8192` baked — `/api/ps` confirma `context_length=8192` após `docker restart` (blob persiste no volume); `DELIA_LLM_CONTEXT_TOKENS=8192` casa com o efetivo. Compose prod/dev passa `OLLAMA_CONTEXT_LENGTH` (default 4096 — o exemplo dev dizia 2048, errado; `OLLAMA_NUM_CTX` alimenta o serviço chat, não o daemon). Env examples documentam a paridade obrigatória. Residual ops: a aplicação não pode sondar a janela do provider via OpenAI-compat — deploy exige declaração já verificada; divergência est-vs-real no ledger é o controle detetivo.
+
+**R4 VERIFIED — integridade da redução.** Testes provam: remoção de pares completos mais antigos apenas; histórico restante é sufixo verbatim (ordem, papéis, conteúdo preservados); mandatório intocado; adapter recebe a request reduzida (spy). Risco referencial caracterizado no doc — marcador tipado segue como decisão D2 da coordenação.
+
+**Regressão capturada:** a chave de projeção `instruction_version` violava o leak-guard de resposta — renomeada para `lineage_version` (GREEN).
+
+**Verificação:** `tests/test_context_budget.py` 40/40; suites focadas verdes; gates de arquitetura 0 findings; matriz local de 10 cenários: 0 truncamento, 0 `invalid_structured_output`, 0 fabricação; `three_records`/`o2` GROUNDED com coleção vazia honesta (residual de fidelidade de arguments no 3B, não contexto).
+
+`R1=CLOSED`; `R2=CLOSED`; `R3=CLOSED`; `R4=VERIFIED_RESIDUAL_DOCUMENTED`; `DEPLOY=NOT_AUTHORIZED`; `INDEPENDENT_REVIEW=PENDING`.

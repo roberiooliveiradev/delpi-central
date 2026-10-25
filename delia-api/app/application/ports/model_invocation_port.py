@@ -36,6 +36,18 @@ class ModelInvocationPort(Protocol):
         infrastructure; the value is provider-neutral (tokens only)."""
         return None
 
+    @property
+    def default_max_output_units(self) -> int | None:
+        """Adapter-configured default generation cap — the limit actually
+        requested from the provider when the invocation request does not
+        set ``generation_config.max_output_units``.
+
+        The pre-call budget must reserve exactly what will be sent;
+        resolving the reserve anywhere else would diverge from the wire.
+        None means the adapter has no default: the budget then applies
+        the documented floor reserve."""
+        return None
+
     def invoke(self, request: ModelInvocationRequest) -> ProviderInvocationPayload:
         """Execute one bounded invocation.
 
