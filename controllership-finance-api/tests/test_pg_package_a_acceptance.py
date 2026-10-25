@@ -127,6 +127,7 @@ def env(_configure_db):
         "V008__p5_packages_review.sql",
         "V009__p3_official_provenance.sql",
         "V010__p6_catalogs_review_lifecycle_notifications.sql",
+        "V011__clara_knowledge_and_proposals.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])

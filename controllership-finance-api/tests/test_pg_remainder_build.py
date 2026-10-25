@@ -154,6 +154,7 @@ def _configure_db():
 def setup(_configure_db):
     applied = mr.run_migrations()
     assert "V010__p6_catalogs_review_lifecycle_notifications.sql" in applied
+    assert "V011__clara_knowledge_and_proposals.sql" in applied
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
     return {

@@ -50,6 +50,12 @@ from controllership_finance_app.interface.http.routes.validations_routes import 
 from controllership_finance_app.interface.http.routes.viewer_context_routes import (
     router as viewer_context_router,
 )
+from controllership_finance_app.interface.mcp import (
+    combine_lifespan,
+    mcp_http_app,
+    mcp_metadata_router,
+    mcp_mount_path_middleware,
+)
 from controllership_finance_app.middleware.auth_middleware import jwt_middleware
 from controllership_finance_app.startup.run_migrations_on_startup import (
     run_migrations_on_startup,
@@ -98,7 +104,7 @@ app = FastAPI(
     description="BFF do Portal Controladoria & Finanças — fundação IMP-F0.",
     version="0.1.0",
     root_path=settings.CONTROLLERSHIP_FINANCE_API_ROOT_PATH,
-    lifespan=lifespan,
+    lifespan=combine_lifespan(lifespan, mcp_http_app),
     # Evita 307 slash-redirect com Location http:// atrás de TLS termination
     # (Mixed Content no browser). Clientes devem usar o path exato da rota.
     redirect_slashes=False,
@@ -122,6 +128,9 @@ async def unhandled_exception_handler(_request: Request, exc: Exception):
 
 
 app.middleware("http")(jwt_middleware)
+# Último middleware registrado roda primeiro: reescreve /mcp → /mcp/
+# antes do Mount 307 (mesmo padrão dos especialistas TÉO/VISTA/DAVI).
+app.middleware("http")(mcp_mount_path_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
@@ -131,6 +140,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(mcp_metadata_router)
 app.include_router(health_router)
 app.include_router(viewer_context_router)
 app.include_router(closing_router)
@@ -144,3 +154,9 @@ app.include_router(reports_router)
 app.include_router(me_router)
 app.include_router(admin_checklist_router)
 app.include_router(admin_catalogs_router)
+
+# Streamable HTTP MCP — CLARA (external path:
+# /apps/controllership-finance-api/mcp). Auth via jwt_middleware com
+# gate de transporte MCP (service tokens proibidos; audience/scopes
+# exatos; AuthZ de negócio permanece nas tools/BFF).
+app.mount("/mcp", mcp_http_app)
