@@ -695,3 +695,130 @@ Backend completo: **482 passed** (478 + 4 novos). E2E: 3 passed.
 - `SMOKE_AUTHENTICATED`: TEST_NOT_RUN.
 - `G2_HUMAN_ACCEPTANCE`: PENDENTE — matriz acima pronta para decisão.
 - `G3_RELEASE_AUTHORIZATION`: PENDENTE — bloqueado por G2.
+
+---
+
+## Adendo — GO 105: conclusão integral das pendências antes do refinamento
+
+**Execução**: `CF-PROC0072-REMAINDER-BUILD-GO-001` · baseline `acfdd136f1` →
+HEAD `0b44b48d3d` (commits `924c7662ee`, `04b4fc3d7a`, `0b44b48d3d`).
+
+### F1 — P6 completo (implementado)
+
+- Lifecycle governado `DRAFT → REVIEW → PUBLISHED → INACTIVE`:
+  `submit_version_for_review`, `return_version_to_draft` (motivo
+  obrigatório, auditado), publicação somente a partir de `REVIEW`.
+  Um único slot aberto (`DRAFT|REVIEW`) por template; publicação exige
+  ≥1 item; eventos `VERSION_SUBMITTED_FOR_REVIEW` e
+  `VERSION_RETURNED_TO_DRAFT` na trilha.
+- `closing_catalog_entry` (V010): 6 catálogos governados
+  (`BANK_ACCOUNT`, `REJECTION_REASON`, `ATTACHMENT_ROLE`,
+  `NOTIFICATION_TARGET`, `PACKAGE_REQUIRED_AREA`, `REVIEW_ELIGIBILITY`),
+  código = identidade imutável, edição com `revision`/OCC, desativação
+  prospectiva, reativação, auditoria. Rotas `/admin/closing-catalogs*`
+  (MANAGE) + página `CatalogsAdminPage` no MFE.
+- P5-H: `required_areas` consumido do catálogo `PACKAGE_REQUIRED_AREA`
+  (attrs `package_type`/`recipient_area` → `areas`); sem entrada,
+  fallback auditado para `[recipient_area]` com `source` registrado —
+  nada é inferido silenciosamente. Seeds multi-área físicas = decisão
+  G1 (catálogo vazio é estado legítimo).
+
+### F2 — elegibilidade Core (implementado com binding governado)
+
+- `REVIEW_ELIGIBILITY` por área: binding configurado ⇒ decisão exige
+  interseção entre `user.groups` (resolvidos pelo RBAC Core no
+  middleware) e o conjunto configurado — `reviewer_not_eligible` 403,
+  fail-closed. Sem binding ⇒ modo `assignment_only` registrado, nunca
+  inventado. TaskProjection aplica o mesmo binding na projeção.
+- Coordenador formal/S2S group-function dedicado: **G1** (o binding por
+  catálogo cobre o caso contratual disponível; contrato Core dedicado
+  permanece decisão externa).
+
+### F3 — R01–R15, P3 e T03 (honestidade preservada)
+
+- R01/R02 (SE5 baixas) e R03 (SB9/P7 estoque) já operacionais via
+  api-delpi owner (JWT delegado + gateway S2S) — nenhuma promoção a
+  "oficial" sem contrato. Classificação da matriz preservada:
+  `PENDING_CONTRACT` (R04/R06/R07/R09/R12/R15), `MANUAL_EVIDENCE`
+  (R05/R08/R10/R11), externos (R13/R14). Contratos oficiais = G1.
+- P3: cutoff/revalidação/fingerprint/divergência R$0,00 intactos; C2
+  revalida blockers (pacote anterior). T03 `STOCK_CLOSED`: owner/sync
+  = G1 — estado tratado como `UNAVAILABLE` quando ausente, nunca
+  inferido.
+
+### F4 — P5 completo (implementado)
+
+- Outbox `closing_notification_event` (V010) + dispatcher Core T02:
+  `POST /integrations/notifications` com S2S token, `sourceApp`,
+  `portal_route` action, `userIds`, permission codes e dedupe.
+  Emissão atômica para `PACKAGE_SUBMITTED_FOR_REVIEW`,
+  `PACKAGE_CLARIFICATION_OPENED`/`RESOLVED`,
+  `COMPETENCE_TERMINALLY_REJECTED`/`REJECTION_REVERTED`. Falha de
+  entrega marca `FAILED` — nunca toca estado de negócio (testado com
+  Core indisponível).
+- TaskProjection self-only `GET /me/tasks` (pendências P4 sob
+  responsabilidade, revisões P5 pendentes por área, esclarecimentos
+  abertos do próprio submitter) — nunca task de outro usuário; deep
+  links autorizados por recurso.
+- `GET /me/profile`: read-through self-only ao Core
+  `/me/person-profile` + identidade/grupos/permissões do contexto —
+  sem cadastro paralelo; `/viewer-photo` read-through existente.
+- Lock pós-submissão: `locked_item_keys` congela evidência e decisões
+  de itens presentes na PackageVersion SUBMITTED —
+  `item_locked_by_submitted_package` (409) em upload, replace, cancel,
+  decide-per-attachment e decide-per-set; correção só via nova versão.
+
+### F5 — páginas comuns (implementado o que tem contrato)
+
+- `closing/my-tasks` — `MyTasksPage` (projeção real, filtros por
+  competência, resumo por tipo, deep links por recurso).
+- `profile` — `ProfilePage` (dados Core read-through, grupos,
+  permissões, foto; self-only, sem edição local).
+- `closing/admin/catalogs` — `CatalogsAdminPage` (cartões por
+  catálogo, CRUD com OCC, desativação confirmada, reativação).
+- `ChecklistAdminPage` — lifecycle REVIEW: "Enviar para revisão" em
+  DRAFT, "Publicar"/"Devolver" (com motivo) em REVIEW, badge `Em
+  revisão`, eventos novos no histórico.
+- Nav/home: "Minhas tarefas" entra no shell nav e no hub; highlight
+  `tasks` do hero passa a exibir contagem real de `/me/tasks`
+  (indisponível permanece "—" para competência/atenções sem fonte).
+- `Visão geral` dedicada com indicadores owner/fórmula/origem e
+  `Sala de interação`: **G1** — sem contrato de indicadores nem
+  capability de mensagens; nada foi fabricado.
+
+### F6 — qualidade
+
+- Migrations V001→V010 aplicadas limpas em PostgreSQL descartável por
+  execução (ownership-token); checksum/imutabilidade mantidos.
+- Testes novos: 9 PG (lifecycle, catálogo OCC, P5-H catálogo+fallback,
+  binding fail-closed, outbox+dispatch sucesso/falha, lock de
+  validação, lock de upload, TaskProjection self-only) + 11 rotas
+  (bearer/manage/access/self) + 8 vitest (2 lifecycle admin, 4
+  MyTasksPage, 4 CatalogsAdminPage).
+- Resultados: **502 backend passed** · **169 vitest passed** ·
+  7 estruturais .mjs passed · `tsc -b` limpo · build Vite OK ·
+  eslint sem erros (warnings iguais aos preexistentes).
+
+### Pauta G1 — estado após este GO
+
+| Item | Estado |
+|---|---|
+| T03 `closing_stock_state` owner + contrato de sync | DECISION_REQUIRED |
+| Comprovação oficial R04/R06/R07/R09/R12/R15 (owners, operações reais) | DECISION_REQUIRED |
+| Core T05: contrato S2S group/function dedicado + coordenador formal (DEC-01) | DECISION_REQUIRED (binding por catálogo implementado) |
+| Seeds físicas multi-área P5-H (`PACKAGE_REQUIRED_AREA`) | DECISION_REQUIRED (mecânica pronta, fallback auditado) |
+| Visão geral dedicada (owner/fórmula/origem dos indicadores) | DECISION_REQUIRED |
+| Sala de interação (capability de mensagens cross-app) | DECISION_REQUIRED |
+| Seeds E01/E05/E06 dos demais catálogos | DECISION_REQUIRED (conteúdo, não contrato) |
+| CLARA/MCP e Accounting/DRE | FORA DE ESCOPO — gates próprios preservados |
+
+### Residuais honestos
+
+- `G2_HUMAN_ACCEPTANCE`: PENDENTE — homologação humana, não inferível
+  de testes.
+- `G3_RELEASE_AUTHORIZATION` / deploy: PENDENTE — `srv-api` intocado;
+  migrations V004–V010 aguardam startup autorizado.
+- `SMOKE_AUTHENTICATED`: TEST_NOT_RUN.
+- Refinamento visual único: executado em nível de consistência de
+  código (heros, help, a11y, tokens) — revisão visual operacional
+  depende de ambiente implantado (pós-G3).
