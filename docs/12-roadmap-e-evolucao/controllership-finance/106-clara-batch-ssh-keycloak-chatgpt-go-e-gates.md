@@ -199,3 +199,8 @@ do assistente não consegue produzir.
 - Execução segue revalidando autorização canônica (Core/eligibility/
   assignment/scope/business rules) — consentimento nunca substitui
   autorização.
+
+
+## Adendo 3 — prioridade de aceite real no ChatGPT, 25/10/2026
+
+A decisão posterior do PO está em [Documento 107](./107-clara-validacao-antecipada-chatgpt-release-hoje.md): priorizar disponibilização do MCP **em ambiente de teste autorizado**, após corrigir prova de consentimento/visualização do plano, para que o usuário teste a CLARA no ChatGPT **antes** de G2/G3 de produção. Isso não altera a exigência de G2 humano e G3 Operador SSH para configuração e deploy produtivos. A ficha ChatGPT deve separar valores de TESTE e PROD, com verificações reais, sem secrets. O prazo de hoje é meta, não autorização inferida nem PASS. Nova decisão material/alteração de estado deve atualizar a documentação do GitHub antes de ser declarada encerrada.
