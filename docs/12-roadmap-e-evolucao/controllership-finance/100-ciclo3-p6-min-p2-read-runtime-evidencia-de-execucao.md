@@ -288,3 +288,17 @@ Baseline: `5c9d23ce6f` (A2 deployado). Pacote A3 do doc 104 — superfície admi
 - `tsc -b`, `vite build`, lint limpos.
 - TEST_NOT_RUN: smoke autenticado da página; demo humana (G2).
 - Residual P6 mantido: catálogos bancos/motivos/roles/targets e etapa REVIEW do lifecycle permanecem `TARGET` (RQ-P6-05..08, RQ-ADM-01/02/05/07/08).
+
+## Adendo — Aceite integrado do Pacote A (A4, CF-PROC0072-E2E-MASTER-EXECUTION-001)
+
+Suíte `test_pg_package_a_acceptance.py` (PostgreSQL real, banco efêmero R4 — **3 testes, PASS**) demonstra o cenário de aceite do doc 104 §4 ponta a ponta pelos repositórios canônicos:
+
+- **Duas competências independentes** (2027-01/2027-02) abertas sobre a mesma v1 publicada — snapshots separados, itens e estados isolados.
+- **Anexar ≠ validar** — `EXPECTED` até decisão humana; aceite por anexo deriva `ACCEPTED` só quando toda evidência corrente está aceita.
+- **Rejeição com motivo** (`WRONG_DOCUMENT` + comentário) mantém `EXPECTED`; **reversão** pelo mesmo validador (`REVERSED` append-only); novo aceite conclui o ciclo.
+- **Substituição exige revalidação** — `add_version` rebaixa `ACCEPTED`→`EXPECTED` na mesma transação; nova decisão sobre a versão corrente restaura `ACCEPTED`.
+- **Histórico íntegro** — sequência `evidence_decision` append-only (`ACCEPTED,ACCEPTED` / `REJECTED,REVERSED,ACCEPTED`), eventos documentais (`DOCUMENT_UPLOADED`, `EVIDENCE_REJECTED`, `EVIDENCE_ACCEPTED`) e trilha administrativa (`VERSION_PUBLISHED`, `DRAFT_CREATED`, `DRAFT_UPDATED`, `COMPETENCE_OPENED`, `VERSION_ADDED`, `REJECTION_REVERSED`).
+- **Snapshot preservado** — publicar v2 (vigência 2027-03) não reescreve itens nem estados das competências abertas; 2027-03 abre já na v2.
+- **Autorização negativa** — ator inelegível coberto nas suítes de rota (ACCESS→403 em admin/correção-review, não-uploader→403 em replace/cancel, scope→404 sem vazamento); mesmo usuário anexa e valida somente quando autorizado independentemente para ambas as ações (ACCESS documental + decisão humana registrada por ator distinto nos testes).
+
+Suíte completa do contexto: **374 passed** (BFF + PG real). Pacote A (A1–A4) **PROVEN** no nível de implementação/teste; aceite humano de negócio = G2 pendente (não inferido de testes automatizados).
