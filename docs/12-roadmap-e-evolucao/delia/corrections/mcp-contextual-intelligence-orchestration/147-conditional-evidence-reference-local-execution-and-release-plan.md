@@ -221,3 +221,16 @@ No ramo `if not isinstance(schema, Mapping)`, o código remove somente nomes de 
 **Reavaliação local `delia-json`:** pendente de nova execução no SHA final — comportamento esperado dominado por `interaction_admission` (capacidade do modelo 3.1B), contrato provado por teste.
 
 **Veredito:** residuais R1/R2/R3 fechados por teste; residual aberto permanece a capacidade do modelo local autorizado para o Outcome empresarial end-to-end.
+
+
+### Revisão independente do recovery e96a669d51 — 2026-10-25
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL** para o diff bounded `e96a669d51`; **BUSINESS_OUTCOME_LOCAL=FAIL**; **DEPLOY_GATE=BLOCKED**; **R7_FINAL_ACCEPT=NO**. Revisão estática de commit, diff e testes no GitHub, **sem reexecutar** Ollama/backend; resultados do executor são `EXECUTOR_REPORTED`. O HEAD da main avançou após o commit revisado, portanto validar novamente o SHA efetivo na próxima promoção.
+
+**Aceitos com ressalva:** `_missing_inputs_bound` e dois pontos de verificação no `_resolve_missing_inputs` impedem a reconstrução vazia de resolver em substituição aos argumentos semanticamente necessários; a validação de cobertura complementa `_resolved_values_proven`, que ignora campos ausentes. Ordenação de `unbound_declared` agora é estável pela ordem da proposta; coleta de nomes vai além do cap de materialização para impedir escape de free-text documental. Sem nova lista de strings empresariais, tabela de sinônimos, branches provider-specific, registry, engine ou planner no diff revisado.
+
+**Limites de prova:** `test_declared_unbound_recovers_via_resolver_to_owner_outcome` usa modelo de propostas fake e `FakeProvider`; confirma a cadeia interna `declared-unbound→resolver→rebuild→READ→SUCCESS` no teste, **não** capacidade autônoma de LLM local nem Outcome empresarial da Domain API. O critério '3 registros reais' continua `FAIL` (`0/10`), O2 `0/3`, e nenhum caso local atingiu `evidence_bound`. Portanto R1 é `PASS_CONTRACT_TEST` mas `PENDING_REAL_MODEL_OUTCOME`. Foco de próxima etapa é `interaction_admission` sob modelo local autorizado, não refatorar binding/recovery sem defeito novo.
+
+**Riscos residuais a caracterizar antes de aceite final:** (1) `_missing_inputs_bound` verifica presença normalizada, não suficiência semântica do valor (delegada às validações/provenance/LLM); confirmar negativos para valor vazio, `None`, alias normalizado e payload inválido nas duas branches do resolver; (2) varredura completa de declarações é permitida somente sob limites globais de payload/top-level/bytes, confirmar que listas grandes não criam custo sem bound; (3) teste positivo usa fixture com designações específicas, aceitável em **teste** desde que não transborde para código produtivo; (4) dois testes ambientais reportados como FAIL exigem exceção formal ou ambiente correto para full-suite PASS. Nenhum desses riscos comprova sozinho regressão produtiva, mas não podem ser omitidos do fechamento R7.
+
+**Decisão:** `RECOVERY_CODE=ACCEPT_WITH_RESIDUAL`; `NO_NEW_HARDCODE_IDENTIFIED`; `LOCAL_OUTCOME=FAIL`; `INDEPENDENT_REEXECUTION=TEST_NOT_RUN`; `NEXT_ACTION=LOCAL_ADMISSION_OUTCOME_CAUSAL_REVIEW`; `DEPLOY_AUTHORIZED=NO`.
