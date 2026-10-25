@@ -2,10 +2,10 @@
  * Navegação de topo do Portal Controladoria & Finanças.
  * Fonte única — o shell só aplica ícone e navega.
  *
- * IMP-MFE-HOME: somente «Início» está implementada. A ordem canônica
- * futura (doc 24) é Início, Visão geral, Sala de interação, Minhas
- * tarefas, Administração, Ajuda — itens entram aqui apenas quando a
- * rota existir em runtime.
+ * A ordem canônica (doc 24) é Início, Visão geral, Sala de
+ * interação, Minhas tarefas, Administração, Ajuda — itens entram
+ * aqui apenas quando a rota existir em runtime. Implementadas:
+ * «Início» e «Minhas tarefas».
  */
 import type { PluginNavId } from "../app/pluginRoutes";
 
@@ -19,6 +19,7 @@ export type ShellNavItem = {
 
 export const SHELL_NAV_ITEMS: readonly ShellNavItem[] = [
   { id: "home", label: "Início", requiredCap: "always" },
+  { id: "my_tasks", label: "Minhas tarefas", requiredCap: "always" },
 ] as const;
 
 export type ShellNavCapabilities = Record<

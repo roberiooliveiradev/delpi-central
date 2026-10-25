@@ -20,6 +20,8 @@ const getVersionMock = vi.fn();
 const createDraftMock = vi.fn();
 const updateDraftMock = vi.fn();
 const publishMock = vi.fn();
+const submitReviewMock = vi.fn();
+const returnDraftMock = vi.fn();
 const inactivateMock = vi.fn();
 const listEventsMock = vi.fn();
 
@@ -32,6 +34,10 @@ vi.mock("../../api/adminApi", () => ({
   createTemplateDraft: (...args: unknown[]) => createDraftMock(...args),
   updateTemplateDraft: (...args: unknown[]) => updateDraftMock(...args),
   publishTemplateVersion: (...args: unknown[]) => publishMock(...args),
+  submitVersionForReview: (...args: unknown[]) =>
+    submitReviewMock(...args),
+  returnVersionToDraft: (...args: unknown[]) =>
+    returnDraftMock(...args),
   inactivateTemplateVersion: (...args: unknown[]) =>
     inactivateMock(...args),
   listTemplateEvents: (...args: unknown[]) => listEventsMock(...args),
@@ -63,6 +69,13 @@ const VERSION_DRAFT = {
   effective_from_period: null,
   published_at: null,
   revision: 1,
+};
+
+const VERSION_REVIEW = {
+  ...VERSION_DRAFT,
+  version_id: "v-3",
+  version: 3,
+  status: "REVIEW",
 };
 
 const DRAFT_DETAIL = {
@@ -192,8 +205,12 @@ describe("ChecklistAdminPage", () => {
   });
 
   it("publishes a version with effective period", async () => {
-    setupHappy();
-    publishMock.mockResolvedValue(VERSION_DRAFT);
+    listTemplatesMock.mockResolvedValue([TEMPLATE]);
+    listVersionsMock.mockResolvedValue([
+      VERSION_PUBLISHED,
+      VERSION_REVIEW,
+    ]);
+    publishMock.mockResolvedValue(VERSION_REVIEW);
     render(<ChecklistAdminPage />);
     const publishBtn = await screen.findByRole("button", {
       name: "Publicar",
@@ -245,5 +262,45 @@ describe("ChecklistAdminPage", () => {
       expect(screen.getByText(/Versão publicada/)).toBeTruthy(),
     );
     expect(listEventsMock).toHaveBeenCalledWith("t-1");
+  });
+
+  it("submits a draft version for review", async () => {
+    setupHappy();
+    submitReviewMock.mockResolvedValue({
+      ...VERSION_DRAFT,
+      status: "REVIEW",
+    });
+    render(<ChecklistAdminPage />);
+    const btn = await screen.findByRole("button", {
+      name: "Enviar para revisão",
+    });
+    fireEvent.click(btn);
+    await waitFor(() => expect(submitReviewMock).toHaveBeenCalled());
+    expect(submitReviewMock.mock.calls[0]).toEqual(["t-1", 2]);
+  });
+
+  it("returns a review version to draft with a reason", async () => {
+    listTemplatesMock.mockResolvedValue([TEMPLATE]);
+    listVersionsMock.mockResolvedValue([
+      VERSION_PUBLISHED,
+      VERSION_REVIEW,
+    ]);
+    returnDraftMock.mockResolvedValue(VERSION_DRAFT);
+    render(<ChecklistAdminPage />);
+    const btn = await screen.findByRole("button", { name: "Devolver" });
+    fireEvent.click(btn);
+    const reason = await screen.findByRole("textbox");
+    fireEvent.change(reason, {
+      target: { value: "Ajustar item 2.3" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Devolver a rascunho" }),
+    );
+    await waitFor(() => expect(returnDraftMock).toHaveBeenCalled());
+    expect(returnDraftMock.mock.calls[0]).toEqual([
+      "t-1",
+      3,
+      { reason: "Ajustar item 2.3" },
+    ]);
   });
 });

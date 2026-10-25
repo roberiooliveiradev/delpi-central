@@ -9,8 +9,11 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  * - `pendencies` — fila de pendências e classificações (P4).
  * - `packages` — pacotes por destinatário, submissão e revisão (P5).
  * - `cockpit` — estado consolidado P2/P3/P4/P5 da competência.
- * Rotas futuras (Visão geral, Sala de interação, Minhas tarefas,
- * Administração, Ajuda) entram aqui apenas quando implementadas.
+ * - `my_tasks` — projeção self-only de pendências/revisões (P4/P5).
+ * - `profile` — dados corporativos do próprio usuário (Core).
+ * - `catalogs_admin` — catálogos governados P6 (MANAGE).
+ * Rotas futuras (Visão geral dedicada, Sala de interação, Ajuda)
+ * entram aqui apenas quando implementadas.
  */
 export type PluginView =
   | "home"
@@ -18,12 +21,15 @@ export type PluginView =
   | "stock_inventory"
   | "checklist"
   | "checklist_admin"
+  | "catalogs_admin"
   | "pendencies"
   | "packages"
   | "cockpit"
+  | "my_tasks"
+  | "profile"
   | "not_found";
 
-export type PluginNavId = "home";
+export type PluginNavId = "home" | "my_tasks";
 
 export type PluginNavigationTarget =
   | "home"
@@ -31,9 +37,12 @@ export type PluginNavigationTarget =
   | "stock_inventory"
   | "checklist"
   | "checklist_admin"
+  | "catalogs_admin"
   | "pendencies"
   | "packages"
-  | "cockpit";
+  | "cockpit"
+  | "my_tasks"
+  | "profile";
 
 /** Mapa rota relativa → view (paths técnicos em inglês, kebab-case). */
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
@@ -44,6 +53,9 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/pendencies": "pendencies",
   "closing/packages": "packages",
   "closing/cockpit": "cockpit",
+  "closing/my-tasks": "my_tasks",
+  "closing/admin/catalogs": "catalogs_admin",
+  "profile": "profile",
 };
 
 const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> = {
@@ -54,6 +66,9 @@ const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> 
   pendencies: "closing/pendencies",
   packages: "closing/packages",
   cockpit: "closing/cockpit",
+  my_tasks: "closing/my-tasks",
+  catalogs_admin: "closing/admin/catalogs",
+  profile: "profile",
 };
 
 const PERIOD_DEEP_ROUTE_PATTERN =
@@ -131,5 +146,6 @@ export function buildPluginPath(
 
 export function resolveActiveNavId(view: PluginView): PluginNavId | null {
   if (view === "home") return "home";
+  if (view === "my_tasks") return "my_tasks";
   return null;
 }

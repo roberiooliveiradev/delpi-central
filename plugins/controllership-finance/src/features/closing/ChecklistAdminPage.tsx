@@ -30,6 +30,8 @@ import {
   listTemplateEvents,
   listTemplateVersions,
   publishTemplateVersion,
+  returnVersionToDraft,
+  submitVersionForReview,
   updateTemplateDraft,
   type ChecklistTemplate,
   type ChecklistTemplateItem,
@@ -68,7 +70,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   stale_revision:
     "A versão foi alterada por outra sessão — recarregue antes de salvar.",
   draft_already_open:
-    "Já existe uma versão DRAFT aberta para este template.",
+    "Já existe uma versão DRAFT ou em revisão aberta para este template.",
+  version_not_in_review:
+    "Somente versões em revisão podem ser publicadas ou devolvidas.",
   already_published: "Esta versão já foi publicada.",
   invalid_effective_period:
     "A vigência deve ser uma competência futura no formato AAAA-MM.",
@@ -90,12 +94,17 @@ function toQueryError(error: unknown, fallback: string): QueryError {
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: "Rascunho",
+  REVIEW: "Em revisão",
   PUBLISHED: "Publicada",
   INACTIVE: "Inativada",
 };
 
-const STATUS_VARIANTS: Record<string, "neutral" | "success" | "info"> = {
+const STATUS_VARIANTS: Record<
+  string,
+  "neutral" | "success" | "info" | "warning"
+> = {
   DRAFT: "info",
+  REVIEW: "warning",
   PUBLISHED: "success",
   INACTIVE: "neutral",
 };
@@ -103,6 +112,8 @@ const STATUS_VARIANTS: Record<string, "neutral" | "success" | "info"> = {
 const EVENT_LABELS: Record<string, string> = {
   DRAFT_CREATED: "Rascunho criado",
   DRAFT_UPDATED: "Rascunho atualizado",
+  VERSION_SUBMITTED_FOR_REVIEW: "Enviada a revisão",
+  VERSION_RETURNED_TO_DRAFT: "Devolvida a rascunho",
   VERSION_PUBLISHED: "Versão publicada",
   VERSION_INACTIVATED: "Versão inativada",
 };
@@ -203,6 +214,9 @@ export function ChecklistAdminPage() {
   const [publishPeriod, setPublishPeriod] = useState("");
   const [inactivateTarget, setInactivateTarget] =
     useState<ChecklistTemplateVersion | null>(null);
+  const [returnTarget, setReturnTarget] =
+    useState<ChecklistTemplateVersion | null>(null);
+  const [returnReason, setReturnReason] = useState("");
   const [eventsTemplate, setEventsTemplate] =
     useState<ChecklistTemplate | null>(null);
   const [events, setEvents] = useState<TemplateAuditEvent[] | null>(null);
@@ -352,6 +366,30 @@ export function ChecklistAdminPage() {
     );
   }, [template, publishTarget, publishPeriod, run]);
 
+  const confirmSubmitReview = useCallback(
+    (row: ChecklistTemplateVersion) => {
+      if (!template) return;
+      run(() =>
+        submitVersionForReview(template.template_id, row.version),
+      );
+    },
+    [template, run],
+  );
+
+  const submitReturn = useCallback(() => {
+    if (!template || !returnTarget || !returnReason.trim()) return;
+    run(
+      () =>
+        returnVersionToDraft(template.template_id, returnTarget.version, {
+          reason: returnReason.trim(),
+        }),
+      () => {
+        setReturnTarget(null);
+        setReturnReason("");
+      },
+    );
+  }, [template, returnTarget, returnReason, run]);
+
   const confirmInactivate = useCallback(() => {
     if (!template || !inactivateTarget) return;
     run(
@@ -428,13 +466,34 @@ export function ChecklistAdminPage() {
               <ActionButton
                 variant="ghost"
                 disabled={busy}
-                onClick={() => {
-                  setPublishTarget(row);
-                  setPublishPeriod("");
-                }}
+                onClick={() => confirmSubmitReview(row)}
               >
-                Publicar
+                Enviar para revisão
               </ActionButton>
+            ) : null}
+            {row.status === "REVIEW" ? (
+              <>
+                <ActionButton
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setPublishTarget(row);
+                    setPublishPeriod("");
+                  }}
+                >
+                  Publicar
+                </ActionButton>
+                <ActionButton
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setReturnTarget(row);
+                    setReturnReason("");
+                  }}
+                >
+                  Devolver
+                </ActionButton>
+              </>
             ) : null}
             {row.status === "PUBLISHED" ? (
               <ActionButton
@@ -449,7 +508,7 @@ export function ChecklistAdminPage() {
         ),
       },
     ],
-    [busy, openItems],
+    [busy, openItems, confirmSubmitReview],
   );
 
   const itemColumns = useMemo<DataTableColumn<EditableItem>[]>(
@@ -737,6 +796,49 @@ export function ChecklistAdminPage() {
                 variant="ghost"
                 disabled={busy}
                 onClick={() => setPublishTarget(null)}
+              >
+                Voltar
+              </ActionButton>
+            </div>
+          </div>
+        </CfDialog>
+      ) : null}
+
+      {returnTarget ? (
+        <CfDialog
+          open
+          title={`Devolver v${returnTarget.version} a rascunho`}
+          onClose={() => !busy && setReturnTarget(null)}
+          closeAriaLabel="Fechar devolução"
+        >
+          <div className="cf-validation-panel__form">
+            <p className="cf-validation-panel__doc-detail">
+              A devolução reabre a versão para edição — o motivo fica
+              registrado no histórico de auditoria da versão.
+            </p>
+            <label>
+              Motivo da devolução
+              <textarea
+                rows={3}
+                value={returnReason}
+                disabled={busy}
+                onChange={(event) =>
+                  setReturnReason(event.target.value)
+                }
+              />
+            </label>
+            <div className="cf-validation-panel__form-actions">
+              <ActionButton
+                variant="primary"
+                disabled={busy || !returnReason.trim()}
+                onClick={submitReturn}
+              >
+                Devolver a rascunho
+              </ActionButton>
+              <ActionButton
+                variant="ghost"
+                disabled={busy}
+                onClick={() => setReturnTarget(null)}
               >
                 Voltar
               </ActionButton>

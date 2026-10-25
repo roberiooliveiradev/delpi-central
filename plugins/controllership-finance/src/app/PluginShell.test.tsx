@@ -45,11 +45,11 @@ describe("PluginShell", () => {
     };
     renderShell();
     expect(screen.getByText("Início")).toBeTruthy();
+    expect(screen.getByText("Minhas tarefas")).toBeTruthy();
     // Rotas futuras não aparecem como navegáveis.
     for (const label of [
       "Visão geral",
       "Sala de interação",
-      "Minhas tarefas",
       "Administração",
       "Ajuda",
     ]) {

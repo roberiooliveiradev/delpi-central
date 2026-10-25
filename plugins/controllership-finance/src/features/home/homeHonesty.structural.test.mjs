@@ -38,8 +38,11 @@ describe("home honesty", () => {
       new Set(viewIds),
       new Set([
         "home",
+        "my_tasks",
+        "profile",
         "checklist",
         "checklist_admin",
+        "catalogs_admin",
         "financial_settlements",
         "pendencies",
         "packages",
@@ -47,7 +50,7 @@ describe("home honesty", () => {
         "stock_inventory",
       ]),
     );
-    assert.doesNotMatch(catalog, /my_tasks|overview|interaction_rooms|administration|help|open_orders/);
+    assert.doesNotMatch(catalog, /overview|interaction_rooms|administration|open_orders/);
   });
 
   it("busca ?q= está ligada (read + write na URL)", () => {

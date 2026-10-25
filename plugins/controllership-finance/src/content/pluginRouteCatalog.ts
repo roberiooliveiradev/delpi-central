@@ -2,9 +2,9 @@
  * Catálogo canônico do hub Início: seção (1º) → rotas (2º).
  * Paths só via viewId + buildPluginPath — sem URL absoluta.
  *
- * IMP-MFE-HOME: somente rotas implementadas em runtime podem entrar
- * aqui. Rotas futuras (Central de Fechamento, Visão geral etc.) NÃO
- * são indexadas até existirem.
+ * Somente rotas implementadas em runtime podem entrar aqui. Rotas
+ * futuras (Visão geral dedicada, Sala de interação, Ajuda) NÃO são
+ * indexadas até existirem.
  */
 import type { PluginNavigationTarget } from "../app/pluginRoutes";
 
@@ -55,6 +55,41 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
           "comeco",
           "saudação",
           "saudacao",
+        ],
+      },
+      {
+        id: "my-tasks",
+        label: "Minhas tarefas",
+        viewId: "my_tasks",
+        requiredCap: "always",
+        keywords: [
+          "minhas",
+          "tarefas",
+          "trabalho",
+          "pendente",
+          "revisao",
+          "revisão",
+          "esclarecimento",
+          "atribuido",
+          "atribuído",
+        ],
+      },
+      {
+        id: "profile",
+        label: "Meu perfil",
+        viewId: "profile",
+        requiredCap: "always",
+        keywords: [
+          "perfil",
+          "usuario",
+          "usuário",
+          "identidade",
+          "foto",
+          "grupos",
+          "permissoes",
+          "permissões",
+          "vinculos",
+          "vínculos",
         ],
       },
     ],
@@ -114,6 +149,29 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
           "versão",
           "publicar",
           "mestre",
+          "configuracao",
+          "configuração",
+        ],
+      },
+      {
+        id: "catalogs-admin",
+        label: "Catálogos governados",
+        viewId: "catalogs_admin",
+        requiredCap: "manage",
+        keywords: [
+          "catalogos",
+          "catálogos",
+          "bancos",
+          "contas",
+          "motivos",
+          "rejeicao",
+          "rejeição",
+          "anexos",
+          "elegibilidade",
+          "areas",
+          "áreas",
+          "obrigatorias",
+          "obrigatórias",
           "configuracao",
           "configuração",
         ],

@@ -9,6 +9,7 @@ import {
   resolvePluginRoute,
 } from "./app/pluginRoutes";
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
+import { CatalogsAdminPage } from "./features/closing/CatalogsAdminPage";
 import { ChecklistAdminPage } from "./features/closing/ChecklistAdminPage";
 import { ClosingChecklistPage } from "./features/closing/ClosingChecklistPage";
 import { CockpitPage } from "./features/closing/CockpitPage";
@@ -17,6 +18,8 @@ import { PackagesPage } from "./features/closing/PackagesPage";
 import { PendenciesPage } from "./features/closing/PendenciesPage";
 import { StockInventoryPage } from "./features/closing/StockInventoryPage";
 import { HomePage } from "./features/home/HomePage";
+import { MyTasksPage } from "./features/me/MyTasksPage";
+import { ProfilePage } from "./features/me/ProfilePage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -58,6 +61,12 @@ function AppRoutes({
           <ClosingChecklistPage period={resolved.checklistPeriod} />
         ) : resolved.view === "checklist_admin" ? (
           <ChecklistAdminPage />
+        ) : resolved.view === "catalogs_admin" ? (
+          <CatalogsAdminPage />
+        ) : resolved.view === "my_tasks" ? (
+          <MyTasksPage />
+        ) : resolved.view === "profile" ? (
+          <ProfilePage />
         ) : resolved.view === "pendencies" ? (
           <PendenciesPage />
         ) : resolved.view === "packages" ? (

@@ -6,9 +6,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Home } from "lucide-react";
+import { Home, ListChecks } from "lucide-react";
 import { formatPortalGreeting } from "@delpi/plugin-ui/index";
 import { cfApiUrl, httpGetImageBlob } from "../api/httpClient";
+import { listMyTasks } from "../api/meApi";
 
 import {
   collectSearchHits,
@@ -42,10 +43,12 @@ type PluginShellProps = {
 
 const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
+  my_tasks: <ListChecks size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   home: CF_HELP.shell.navHome,
+  my_tasks: CF_HELP.myTasks.page,
 };
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -58,6 +61,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const { viewer } = useViewerContext();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [tasksCount, setTasksCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!viewer?.capabilities.access) {
@@ -80,6 +84,24 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [viewer?.capabilities.access, viewer?.displayName]);
+
+  useEffect(() => {
+    if (!viewer?.capabilities.access) {
+      setTasksCount(null);
+      return;
+    }
+    const controller = new AbortController();
+    void listMyTasks({ signal: controller.signal })
+      .then((projection) => {
+        if (!controller.signal.aborted) {
+          setTasksCount(projection.total);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setTasksCount(null);
+      });
+    return () => controller.abort();
+  }, [viewer?.capabilities.access]);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
@@ -109,7 +131,11 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const unavailable = heroCopy.highlightsUnavailable;
   const heroHighlights = [
     { id: "competence", label: heroCopy.highlights.competence, value: unavailable },
-    { id: "tasks", label: heroCopy.highlights.tasks, value: unavailable },
+    {
+      id: "tasks",
+      label: heroCopy.highlights.tasks,
+      value: tasksCount === null ? unavailable : String(tasksCount),
+    },
     { id: "attention", label: heroCopy.highlights.attention, value: unavailable },
   ];
 

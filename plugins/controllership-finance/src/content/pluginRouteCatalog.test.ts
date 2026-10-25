@@ -15,9 +15,12 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
     const routeIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
     expect(routeIds).toEqual([
       "home",
+      "my-tasks",
+      "profile",
       "closing-checklist",
       "financial-settlements",
       "closing-admin",
+      "catalogs-admin",
       "pendencies",
       "closing-packages",
       "closing-cockpit",
@@ -27,8 +30,11 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
     expect(new Set(viewIds)).toEqual(
       new Set([
         "home",
+        "my_tasks",
+        "profile",
         "checklist",
         "checklist_admin",
+        "catalogs_admin",
         "financial_settlements",
         "pendencies",
         "packages",
@@ -38,12 +44,11 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
     );
   });
 
-  it("não expõe rotas futuras (Visão geral, Sala, Tarefas, Admin, Ajuda)", () => {
+  it("não expõe rotas futuras (Visão geral, Sala, Admin, Ajuda)", () => {
     const allIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
     for (const forbidden of [
       "overview",
       "interaction_rooms",
-      "my_tasks",
       "administration",
       "help",
       "closing_center",

@@ -128,6 +128,32 @@ export const CF_HELP = {
     closing:
       "Estado do fechamento mensal: a competência só conclui quando todos os pacotes aplicáveis foram enviados, aceitos por pessoa humana real e por cada área obrigatória da versão vigente, sem esclarecimentos abertos e sem rejeição terminal — o Portal nunca conclui por vacuidade ou apenas por valores declarados. A «rejeição terminal» da competência é reservada ao coordenador formal designado e bloqueia a conclusão; é distinta da rejeição de uma área num pacote.",
   },
+  myTasks: {
+    page:
+      "Minhas tarefas: projeção somente do seu próprio trabalho pendente — pendências sob sua responsabilidade (P4), revisões de áreas obrigatórias de pacote aguardando seu aceite (P5) e esclarecimentos abertos em pacotes que você enviou. Cada item abre a página dona do recurso. «Pendente desde» é um dado factual de registro — não é SLA nem atraso.",
+    queue:
+      "Trabalho atribuído a você: somente itens que exigem ação sua aparecem aqui — nunca tarefas de outros usuários. A projeção respeita a elegibilidade de revisão configurada: se sua área exige vínculo a grupo corporativo do Core e o vínculo não existe, a revisão não é listada. Abrir leva à página que decide o recurso — a ação real (resolver, aceitar, responder) acontece lá.",
+    summary:
+      "Resumo por tipo de trabalho pendente: total, revisões de pacote, pendências do fechamento e esclarecimentos abertos aguardando sua resposta.",
+  },
+  profile: {
+    identity:
+      "Identidade corporativa: nome, e-mail e dados do cadastro de pessoa vêm do Core em tempo real — o Portal não mantém cadastro nem edição própria. Se o perfil corporativo estiver indisponível, só os dados básicos de sessão são exibidos.",
+    groups:
+      "Vínculos corporativos: grupos e funções do Core associados à sua identidade. Eles alimentam a elegibilidade de revisão configurada nos catálogos governados — um grupo ausente pode impedir a atribuição de revisões.",
+    permissions:
+      "Permissões efetivas neste portal: resolvidas pelo Core a cada sessão. «Acesso ao portal» permite consultar e operar suas atribuições; «Gestão» libera administração do checklist, catálogos e operações administrativas. As permissões são só suas — outro usuário não as vê aqui.",
+  },
+  catalogs: {
+    page:
+      "Catálogos governados (P6): configurações de referência da Central de Fechamento — bancos e contas, motivos de rejeição, papéis de anexo, destinos de notificação, áreas obrigatórias por tipo de pacote e elegibilidade de revisão. Exige permissão de gestão. O código de cada entrada é a identidade e não pode ser alterado; edições são versionadas (revisão/OCC) e a desativação é prospectiva — nada já registrado é reescrito.",
+    list:
+      "Catálogos disponíveis: cartões com contagem de entradas ativas e inativas. Catálogo vazio é estado legítimo — os processos aplicam o fallback documentado (ex.: área obrigatória = destinatário do pacote; elegibilidade = apenas assignment ativo) e registram a fonte na auditoria.",
+    entries:
+      "Entradas do catálogo selecionado: código (identidade imutável), rótulo, atributos livres em JSON, estado e revisão. Atributos carregam a semântica específica de cada catálogo — ex.: área destino em «áreas obrigatórias», grupos Core exigidos em «elegibilidade de revisão».",
+    form:
+      "Nova entrada ou edição: o código só é definido na criação — depois vira identidade imutável. Salvar uma edição exige a revisão vigente; se outra sessão alterou a entrada, o salvamento é recusado — recarregue e reaplique. Vigência inicial opcional define a partir de qual competência a entrada vale.",
+  },
   cockpit: {
     page:
       "Cockpit do fechamento: visão consolidada do estado real da competência — checklist/evidências (P2), cutoff e conciliação (P3), pendências (P4) e pacotes/conclusão (P5). É leitura derivada do backend: bloqueios e fontes indisponíveis aparecem como estão — nenhum card fica «verde» por cálculo local.",

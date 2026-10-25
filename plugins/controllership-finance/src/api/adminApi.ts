@@ -10,7 +10,11 @@ import type {
 
 type Envelope<T> = { data?: T };
 
-export type TemplateVersionStatus = "DRAFT" | "PUBLISHED" | "INACTIVE";
+export type TemplateVersionStatus =
+  | "DRAFT"
+  | "REVIEW"
+  | "PUBLISHED"
+  | "INACTIVE";
 
 export type ChecklistTemplate = {
   template_id: string;
@@ -137,6 +141,33 @@ export function updateTemplateDraft(
 ): Promise<ChecklistTemplateVersionDetail> {
   return httpPut<Envelope<ChecklistTemplateVersionDetail>>(
     cfApiUrl(`${BASE}/${templateId}/versions/${version}`),
+    payload,
+  ).then((envelope) => {
+    if (!envelope?.data) throw new Error("Resposta vazia da operação.");
+    return envelope.data;
+  });
+}
+
+export function submitVersionForReview(
+  templateId: string,
+  version: number,
+): Promise<ChecklistTemplateVersion> {
+  return httpPost<Envelope<ChecklistTemplateVersion>>(
+    cfApiUrl(`${BASE}/${templateId}/versions/${version}/submit-review`),
+    {},
+  ).then((envelope) => {
+    if (!envelope?.data) throw new Error("Resposta vazia da operação.");
+    return envelope.data;
+  });
+}
+
+export function returnVersionToDraft(
+  templateId: string,
+  version: number,
+  payload: { reason: string },
+): Promise<ChecklistTemplateVersion> {
+  return httpPost<Envelope<ChecklistTemplateVersion>>(
+    cfApiUrl(`${BASE}/${templateId}/versions/${version}/return-to-draft`),
     payload,
   ).then((envelope) => {
     if (!envelope?.data) throw new Error("Resposta vazia da operação.");

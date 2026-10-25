@@ -54,8 +54,9 @@ describe("HomePage", () => {
     ).toBeTruthy();
     // Catálogo contém apenas a rota implementada.
     expect(screen.getAllByText("Início").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Minhas tarefas").length)
+      .toBeGreaterThan(0);
     expect(screen.queryByText("Visão geral")).toBeNull();
-    expect(screen.queryByText("Minhas tarefas")).toBeNull();
   });
 
   it("403 do viewer-context exibe estado de acesso restrito", async () => {
