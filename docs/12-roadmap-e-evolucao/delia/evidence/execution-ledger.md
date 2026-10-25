@@ -186,3 +186,8 @@ Plano 147 atualizado: [execução local, F1/F2, recuperação orientada ao objet
 - Defeito irmão F1 corrigido: resolver tail resolvia com `still_missing`/campos ausentes → invocação sub-filtrada; `_missing_inputs_bound` agora exige cobertura total antes de resolver (normal + ambíguo).
 - Local `delia-json`: Outcome empresarial (3 registros) segue bloqueado por capacidade de admission do modelo autorizado — não por contrato.
 - `DEPLOY=BLOCKED` até local outcome + review + autorização operacional.
+
+
+### DELIA-R7-ARCHITECTURE-DRIFT-AND-GROUNDED-OUTCOME-REMEDIATION-01 — plan 148 (2026-10-25)
+
+Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-architecture-drift-remediation-and-outcome-closure-plan.md) criado e aprovado como roteiro proposto para execução condicionada a reancoragem/contrato. Revisão de v19 `6e51626b1b`: A1 `TO_INVENTORY` (owner_surface_kinds estático), A2 `EXTEND_WITH_TESTS`, A3 `FAIL_REPORTED` (VISTA control-plane apresentado como três registros empresariais), outcome local `FAIL`, deploy `BLOCKED`, R7 `OPEN`. WPs: WP0 reanchor, WP1 admission dinâmico, WP2 provenance/control-plane business gate, WP3 argumentos/recovery, WP4 local-only eval, WP5 review/release. Sem novo código ou deploy por documentação. Comparação com padrões OpenAI/Anthropic/Microsoft apenas como princípios, sem instalação de framework.
