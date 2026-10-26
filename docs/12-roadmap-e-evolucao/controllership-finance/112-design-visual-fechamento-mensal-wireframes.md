@@ -1423,3 +1423,14 @@ Na rota `/apps/controllership-finance/closing/monthly-closing`, seletor exibe **
 
 ### Próximo gate / orientação
 Sem novo prompt de expansão nem novo deploy a partir desta revisão. Validar BFF e a elegibilidade de competências históricas, distinguir **listar/consultar CLOSED** de **upload permitido em OPEN**, executar smoke autenticado e capturar resultado; então reclassificar o slice. Manter três abas, preservar P2/P3/P4/P5, rotas legadas e DRE por último. Parecer registrado: `INCONCLUSIVE`.
+
+
+## 30. Diagnostico requerido: seletor vazio e ciclo de abertura de competencia
+
+**Data:** 2026-10-26. **Entrada PO:** apos rework 01 o workspace de Fechamento mensal exibe seletor de competencia sem opcoes e “Nenhuma competencia aberta e autorizada para o seu perfil”. PO solicitou prompt exclusivamente de avaliacao: esclarecer como abrir/cadastrar a competencia, se ha template publicado, administracao, filtro de autorizacao ou defeito de listagem. **Estado:** `INCONCLUSIVE` quanto a causa no runtime, `DIAGNOSTIC_REQUESTED`, `NO_IMPLEMENTATION_AUTHORIZED`.
+
+**Achados de codigo:** `plugins/controllership-finance/src/api/competencesApi.ts` possui `listCompetences(): GET /closing/competences`, `openCompetence(period): POST /closing/competences`, `getCompetence(period): GET /closing/competences/{period}`. `ClosingChecklistPage.tsx` contem `Abrir competencia` apos `competence_not_opened`, informando que a abertura copia os itens da versao publicada do checklist. O novo `MonthlyClosingPage.tsx` lista somente as competencias retornadas pela BFF e nao cria novas competencias. Uma lista vazia nao identifica automaticamente causa (inexistencia, escopo/ACL, template nao publicado, erro de configuracao, ambiente divergente ou filtro do backend).
+
+**Direcao vigente:** nao criar fluxo alternativo, nao abrir competencia ou publicar template em producao sem diagnostico e decisao do PO. A competencia historica fechada deve permanecer consultavel se seu contrato e ACL permitirem, separando status OPEN de acesso read-only. Nao assumir que toda a listagem e somente OPEN sem ler query/owner. O diagnostico deve seguir HEAD/status → contratos/codigo BFF → evidence de runtime read-only (sem divulgar dados financeiros/segredos) → classificar hipoteses com provas → propor no maximo opcoes de UX minimalistas dentro da pagina existente → reportar `DECISION_REQUIRED` para owner/permissao/contrato. DRE permanece ultima fase. Nenhum novo prompt de implementacao foi autorizado.
+
+**Entrega esperada:** relatorio de inventario com sequencia de abertura, prerequisitos, permission/scope, razao real do vazio, coexistencia de competencia historica, UX administrativa atual e recomendacao delimitada de menor alteracao, sem commits de runtime nem deploy.
