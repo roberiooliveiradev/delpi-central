@@ -1,31 +1,34 @@
-"""Fail-closed guard for destructive PostgreSQL tests (PROC-0076 R1.1).
+"""Fail-closed guard for destructive PostgreSQL tests (PROC-0076 R1.2).
 
 ``test_market_data_repository_pg.py`` runs ``DROP SCHEMA external_data
 CASCADE`` and full migration cycles against whatever database the
 ``EXTERNAL_DATA_TEST_PG_*`` env vars point at. A mistyped host or dbname
-could hit a real database — the mere presence of env vars is no proof of
-disposability.
+could hit a real database — and the R1.1 sentinel weakened that proof by
+*self-creating* trust on an empty schema: a guard that mints its own
+"disposable" marker proves nothing.
 
-This module centralizes a four-layer check, all required before any
-mutating statement is allowed:
+R1.2 replaces self-attestation with **provisioner-originated identity**:
 
 1. ``EXTERNAL_DATA_TEST_PG_HOST`` absent → callers skip (TEST_NOT_RUN).
-2. ``EXTERNAL_DATA_TEST_PG_DISPOSABLE`` must be an explicit truthy value —
-   the operator declares "this database may be destroyed".
-3. Host must be loopback unless ``EXTERNAL_DATA_TEST_PG_ALLOW_REMOTE`` is
-   also truthy; dbname must contain ``test`` and must not be a reserved
-   name (``postgres``, ``template*``, anything looking like a real app
-   database).
-4. **Proof inside the engine**: the database must either already carry
-   the sentinel table ``public.delpi_disposable_db_guard`` (claimed as
-   disposable by a previous guarded run) or be *claimable* — the
-   ``external_data`` schema absent or empty. A database that holds rows
-   under ``external_data`` without the sentinel is treated as real and
-   refused.
+2. ``EXTERNAL_DATA_TEST_PG_DISPOSABLE`` must be truthy — explicit
+   operator opt-in.
+3. Host must be loopback unless ``EXTERNAL_DATA_TEST_PG_ALLOW_REMOTE``
+   is also truthy; dbname must contain ``test`` and must not be a
+   reserved name.
+4. ``EXTERNAL_DATA_TEST_PG_TOKEN`` must be a non-empty random token
+   emitted by ``tests/provision_pg_test_db.py`` at provisioning time.
+5. **Proof inside the engine**: ``public.delpi_disposable_db_guard``
+   must already exist and carry a row written by the provisioner
+   (``provisioned_by = 'pg_provision'``) whose ``token`` matches the env
+   var *and* whose ``dbname`` matches the connected database. The guard
+   never creates or mutates the sentinel — it only verifies it. A
+   database the provisioner did not build cannot present a matching
+   token.
 
-Nothing here trusts comments, hostnames or defaults alone: the sentinel
-is written *inside* the database by this guard itself, so only a
-database that this harness has already proven empty can be re-used.
+The token binds env and engine to the same provisioning act: an env-only
+declaration fails (no sentinel row), a pre-existing/foreign sentinel
+fails (token mismatch), and an empty ``external_data`` schema is *not*
+sufficient — empty is just a state, not an identity.
 """
 
 from __future__ import annotations
@@ -35,7 +38,9 @@ import os
 DISPOSABLE_FLAG = "EXTERNAL_DATA_TEST_PG_DISPOSABLE"
 ALLOW_REMOTE_FLAG = "EXTERNAL_DATA_TEST_PG_ALLOW_REMOTE"
 HOST_ENV = "EXTERNAL_DATA_TEST_PG_HOST"
+TOKEN_ENV = "EXTERNAL_DATA_TEST_PG_TOKEN"
 SENTINEL_TABLE = "delpi_disposable_db_guard"
+PROVISIONED_BY = "pg_provision"
 CANONICAL_SCHEMA = "external_data"
 LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 RESERVED_DB_NAMES = {"postgres", "template0", "template1"}
@@ -63,6 +68,20 @@ def require_disposable_flag(env: dict[str, str] | None = None) -> None:
             "to run mutating tests against an unproven database. Set it "
             "only when the target database is truly disposable."
         )
+
+
+def require_provision_token(env: dict[str, str] | None = None) -> str:
+    """The provisioner-emitted token — proof that a dedicated, isolated
+    database was created for this run by ``provision_pg_test_db``."""
+    env = os.environ if env is None else env
+    token = (env.get(TOKEN_ENV) or "").strip()
+    if not token:
+        raise UnsafeTestDatabaseError(
+            f"{TOKEN_ENV} is not set — refusing to run mutating tests "
+            "without provisioner-originated identity. Provision the "
+            "database with `python -m tests.provision_pg_test_db`."
+        )
+    return token
 
 
 def assert_safe_host(host: str, env: dict[str, str] | None = None) -> None:
@@ -102,50 +121,60 @@ def _fetchall(cur) -> list[dict]:
     return out
 
 
-def ensure_disposable_database(conn) -> None:
-    """Probe the engine and claim it only when provably disposable.
+def verify_sentinel(conn, *, token: str, dbname: str) -> None:
+    """Verify the provisioner-written sentinel — read-only, never creates.
 
-    Executes only read-only queries until the sentinel is written; never
-    runs destructive SQL itself. Raises ``UnsafeTestDatabaseError`` when
-    the database looks like it may contain real data.
+    Raises ``UnsafeTestDatabaseError`` when the sentinel is absent, when
+    no row was written by the provisioner for this database, or when the
+    stored token does not match the env-provided one.
     """
     with conn.cursor() as cur:
-        cur.execute("SELECT current_database() AS dbname")
-        dbname = cur.fetchone()["dbname"]
-
         cur.execute(
             "SELECT to_regclass(%s) AS sentinel",
             (f"public.{SENTINEL_TABLE}",),
         )
-        if cur.fetchone()["sentinel"] is not None:
-            return  # claimed by a previous guarded run
-
-        cur.execute(
-            "SELECT EXISTS ("
-            "  SELECT 1 FROM information_schema.tables "
-            "  WHERE table_schema = %s"
-            ") AS has_tables",
-            (CANONICAL_SCHEMA,),
-        )
-        if cur.fetchone()["has_tables"]:
+        if cur.fetchone()["sentinel"] is None:
             raise UnsafeTestDatabaseError(
-                f"Database {dbname!r} already holds objects under schema "
-                f"{CANONICAL_SCHEMA!r} but carries no disposable sentinel "
+                f"Database {dbname!r} carries no provisioner sentinel "
                 f"(public.{SENTINEL_TABLE}) — refusing to treat it as a "
                 "test database."
             )
+        cur.execute(
+            f"SELECT token, dbname, provisioned_by "
+            f"FROM public.{SENTINEL_TABLE}"
+        )
+        rows = _fetchall(cur)
+    matching = [
+        row
+        for row in rows
+        if row.get("provisioned_by") == PROVISIONED_BY
+        and row.get("dbname") == dbname
+    ]
+    if not matching:
+        raise UnsafeTestDatabaseError(
+            f"Database {dbname!r} sentinel was not written by "
+            f"{PROVISIONED_BY!r} for this database — refusing."
+        )
+    if not any(row.get("token") == token for row in matching):
+        raise UnsafeTestDatabaseError(
+            f"Sentinel token in database {dbname!r} does not match "
+            f"{TOKEN_ENV} — the env and the database were not provisioned "
+            "together; refusing."
+        )
 
-        cur.execute(
-            f"CREATE TABLE IF NOT EXISTS public.{SENTINEL_TABLE} ("
-            "  disposable boolean NOT NULL CHECK (disposable),"
-            "  declared_at timestamptz NOT NULL DEFAULT now()"
-            ")"
-        )
-        cur.execute(
-            f"INSERT INTO public.{SENTINEL_TABLE} (disposable) "
-            "VALUES (true)"
-        )
-        conn.commit()
+
+def verify_disposable(conn, env: dict[str, str] | None = None) -> None:
+    """Re-verify provisioner identity at a mutation boundary.
+
+    Read-only: never issues CREATE/DROP/INSERT. Used by the per-test
+    fixture so a swapped or rebuilt database is caught mid-suite.
+    """
+    env = os.environ if env is None else env
+    token = require_provision_token(env)
+    with conn.cursor() as cur:
+        cur.execute("SELECT current_database() AS actual")
+        actual = cur.fetchone()["actual"]
+    verify_sentinel(conn, token=token, dbname=actual)
 
 
 def validate_target(
@@ -160,6 +189,7 @@ def validate_target(
     require_disposable_flag(env)
     assert_safe_host(host, env)
     assert_safe_dbname(dbname)
+    token = require_provision_token(env)
     with conn.cursor() as cur:
         cur.execute("SELECT current_database() AS actual")
         actual = cur.fetchone()["actual"]
@@ -168,4 +198,4 @@ def validate_target(
             f"Connected database {actual!r} does not match configured "
             f"test database {dbname!r} — refusing to proceed."
         )
-    ensure_disposable_database(conn)
+    verify_sentinel(conn, token=token, dbname=actual)

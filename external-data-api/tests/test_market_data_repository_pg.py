@@ -1,10 +1,12 @@
 """Real PostgreSQL integration — migrations, constraints, upserts.
 
 Requires a *provably disposable* PostgreSQL reachable through
-EXTERNAL_DATA_TEST_PG_* env vars, plus the explicit opt-in
-``EXTERNAL_DATA_TEST_PG_DISPOSABLE=1``. When the host var is unset every
-case is skipped (TEST_NOT_RUN — environment); when configured but unsafe
-the suite hard-fails before any migration or DROP
+EXTERNAL_DATA_TEST_PG_* env vars — provisioned by
+``tests/provision_pg_test_db.py``, which creates a dedicated database,
+writes the sentinel with a random token and emits
+``EXTERNAL_DATA_TEST_PG_TOKEN``. When the host var is unset every case
+is skipped (TEST_NOT_RUN — environment); when configured but unsafe the
+suite hard-fails before any migration or DROP
 (``tests.pg_disposable_guard``). These tests prove migration-from-empty,
 upgrade path, uniqueness, decimal integrity and idempotent re-ingestion
 against the actual engine.
@@ -34,9 +36,10 @@ def pg_env():
     """Point Settings at an isolated *database* (never another schema —
     ``external_data`` is canonical and immutable).
 
-    Fail-closed (R1.1): the target must carry the disposable sentinel or
-    be provably empty — a misconfigured ``EXTERNAL_DATA_TEST_PG_*`` that
-    reaches a real database aborts *before* any migration or DROP.
+    Fail-closed (R1.2): the target must carry a provisioner-written
+    sentinel whose token matches ``EXTERNAL_DATA_TEST_PG_TOKEN`` — a
+    misconfigured ``EXTERNAL_DATA_TEST_PG_*`` that reaches a real
+    database aborts *before* any migration or DROP.
     """
     import psycopg
     from psycopg.rows import dict_row
@@ -83,14 +86,14 @@ def pg_env():
 
 @pytest.fixture(autouse=True)
 def _guard_before_mutation(pg_env):
-    """Re-verify the disposable sentinel immediately before any test that
+    """Re-verify the provisioner sentinel immediately before any test that
     may mutate the database — the probe above proved the target at fixture
     setup; this keeps the guarantee at each mutation boundary."""
     from app.infrastructure.persistence.plugins_db import get_connection
-    from tests.pg_disposable_guard import ensure_disposable_database
+    from tests.pg_disposable_guard import verify_disposable
 
     with get_connection() as conn:
-        ensure_disposable_database(conn)
+        verify_disposable(conn)
     yield
 
 
