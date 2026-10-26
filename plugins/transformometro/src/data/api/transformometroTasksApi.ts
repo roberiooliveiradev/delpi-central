@@ -26,6 +26,7 @@ export type MyTaskItemDto = {
   source_id: string;
   due_date?: string | null;
   due_date_label?: string | null;
+  created_at_label?: string | null;
   overdue?: boolean;
   assignee_user_id?: string | null;
   context_label?: string | null;
@@ -68,11 +69,15 @@ async function request<T>(
   return parseApiEnvelope<T>(response);
 }
 
+export type MyTaskScope = "received" | "delegated";
+
 export function listMyTaskItems(
   getAccessToken?: () => string | undefined,
   status = "pending",
+  scope: MyTaskScope = "received",
 ) {
-  return request<MyTaskItemsResponse>(`/my-tasks?status=${encodeURIComponent(status)}`, getAccessToken);
+  const qs = `status=${encodeURIComponent(status)}&scope=${encodeURIComponent(scope)}`;
+  return request<MyTaskItemsResponse>(`/my-tasks?${qs}`, getAccessToken);
 }
 
 export function createTask(payload: TaskWritePayload, getAccessToken?: () => string | undefined) {

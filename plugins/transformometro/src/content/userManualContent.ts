@@ -162,7 +162,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Criar ou acompanhar uma tarefa",
           where: "Minhas tarefas",
-          how: "Use Nova tarefa, os filtros Pendentes/Concluídas/Todas ou Atualizar.",
+          how: "Use Nova tarefa, alterne entre Recebidas e Atribuídas por mim, os filtros Pendentes/Concluídas/Todas ou Atualizar.",
           path: TRANSFORMOMETRO_ROUTES.myTasks,
         },
       ],

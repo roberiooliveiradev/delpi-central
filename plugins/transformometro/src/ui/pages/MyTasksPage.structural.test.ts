@@ -18,6 +18,15 @@ describe("MyTasksPage", () => {
     expect(source).toMatch(/Buscar tarefas/);
     expect(source).toMatch(/Nenhuma tarefa pendente no momento/);
     expect(source).not.toMatch(/Buscar na lista/);
+  });
+
+  it("expõe os contextos Recebidas e Atribuídas por mim com nomes resolvidos", () => {
+    expect(source).toMatch(/Recebidas/);
+    expect(source).toMatch(/Atribuídas por mim/);
+    expect(source).toMatch(/useDirectoryUserLabels/);
+    expect(source).toMatch(/Você não possui tarefas atribuídas a outras pessoas/);
+    expect(source).toMatch(/scope/);
+    expect(source).toMatch(/created_at_label/);
     expect(source).not.toMatch(/from ["']@delpi\/commercial/);
     expect(source).not.toMatch(/INSERT INTO/);
     expect(source).not.toMatch(/pendingAtas/);

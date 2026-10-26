@@ -5,7 +5,7 @@ from typing import Any, Sequence
 from uuid import uuid4
 
 from tm_app.domain.entities.transformometro_task import TaskStatus, TransformometroTask
-from tm_app.domain.ports.task_repository_port import TaskRepositoryPort
+from tm_app.domain.ports.task_repository_port import TaskOriginContext, TaskRepositoryPort
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
 
 _S = "transformometro"
@@ -133,6 +133,56 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
         )
         return [_row_to_task(row) for row in rows]
 
+    def list_delegated_by(
+        self,
+        creator_user_id: str,
+        *,
+        statuses: Sequence[TaskStatus],
+    ) -> list[TransformometroTask]:
+        rows = self.fetch_all(
+            f"""SELECT * FROM {_S}.tm_tasks
+                WHERE created_by_user_id = %s::uuid
+                  AND assignee_user_id <> %s::uuid
+                  AND status = ANY(%s)
+                ORDER BY due_date NULLS LAST, created_at DESC""",
+            (creator_user_id, creator_user_id, list(statuses)),
+        )
+        return [_row_to_task(row) for row in rows]
+
+    def origin_contexts(
+        self,
+        task_ids: Sequence[str],
+    ) -> dict[str, TaskOriginContext]:
+        ids = [str(task_id) for task_id in task_ids if str(task_id or "").strip()]
+        if not ids:
+            return {}
+        rows = self.fetch_all(
+            f"""SELECT t.id AS task_id,
+                       r.id AS room_id,
+                       NULLIF(btrim(p.nome_processo), '') AS nome_processo,
+                       NULLIF(btrim(p.codigo_processo), '') AS codigo_processo
+                FROM {_S}.tm_tasks t
+                LEFT JOIN {_S}.tm_interaction_messages m
+                    ON m.id = t.source_interaction_message_id
+                   AND m.deleted_at IS NULL
+                LEFT JOIN {_S}.tm_interaction_rooms r
+                    ON r.id = m.room_id
+                   AND r.deleted_at IS NULL
+                LEFT JOIN {_S}.processos p
+                    ON p.processo_id = r.processo_id
+                WHERE t.id = ANY(%s::uuid[])""",
+            (ids,),
+        )
+        contexts: dict[str, TaskOriginContext] = {}
+        for row in rows:
+            label = row.get("nome_processo") or row.get("codigo_processo")
+            room_id = row.get("room_id")
+            contexts[str(row["task_id"])] = TaskOriginContext(
+                room_id=str(room_id) if room_id else None,
+                context_label=str(label) if label else None,
+            )
+        return contexts
+
     def list_related_to_process(self, processo_id: str) -> list[TransformometroTask]:
         rows = self.fetch_all(
             f"""SELECT t.*
@@ -154,13 +204,24 @@ class InMemoryTaskRepository(TaskRepositoryPort):
         self.rows: dict[str, TransformometroTask] = {}
         self.message_ids: set[str] = set()
         self.message_processo_ids: dict[str, str] = {}
+        self.message_room_ids: dict[str, str] = {}
+        self.processo_labels: dict[str, str] = {}
 
     def message_exists(self, message_id: str) -> bool:
         return message_id in self.message_ids
 
-    def link_message_to_process(self, message_id: str, processo_id: str) -> None:
+    def link_message_to_process(
+        self,
+        message_id: str,
+        processo_id: str,
+        room_id: str | None = None,
+        process_label: str | None = None,
+    ) -> None:
         self.message_ids.add(message_id)
         self.message_processo_ids[message_id] = processo_id
+        self.message_room_ids[message_id] = room_id or f"room-{processo_id}"
+        if process_label:
+            self.processo_labels[processo_id] = process_label
 
     def create(self, **kwargs) -> TransformometroTask:
         now = datetime.utcnow()
@@ -213,6 +274,32 @@ class InMemoryTaskRepository(TaskRepositoryPort):
             for task in self.rows.values()
             if task.assignee_user_id == assignee_user_id and task.status in statuses
         ]
+
+    def list_delegated_by(self, creator_user_id: str, *, statuses: Sequence[TaskStatus]):
+        return [
+            task
+            for task in self.rows.values()
+            if task.created_by_user_id == creator_user_id
+            and task.assignee_user_id != creator_user_id
+            and task.status in statuses
+        ]
+
+    def origin_contexts(self, task_ids: Sequence[str]) -> dict[str, TaskOriginContext]:
+        contexts: dict[str, TaskOriginContext] = {}
+        for task_id in task_ids:
+            task = self.rows.get(str(task_id))
+            if task is None:
+                continue
+            source = task.source_interaction_message_id
+            if not source:
+                contexts[task.id] = TaskOriginContext()
+                continue
+            processo_id = self.message_processo_ids.get(source)
+            contexts[task.id] = TaskOriginContext(
+                room_id=self.message_room_ids.get(source),
+                context_label=self.processo_labels.get(processo_id or "") or processo_id,
+            )
+        return contexts
 
     def list_related_to_process(self, processo_id: str) -> list[TransformometroTask]:
         related: list[TransformometroTask] = []

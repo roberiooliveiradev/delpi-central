@@ -48,9 +48,9 @@ def _handle(exc: Exception):
 
 
 @router.get("/my-tasks", operation_id="list_my_transformometro_tasks")
-def list_my_tasks(request: Request, status: str = "pending"):
+def list_my_tasks(request: Request, status: str = "pending", scope: str = "received"):
     try:
-        return ok(_list_items.execute(request.state.user, status=status))
+        return ok(_list_items.execute(request.state.user, status=status, scope=scope))
     except Exception as exc:
         return _handle(exc)
 

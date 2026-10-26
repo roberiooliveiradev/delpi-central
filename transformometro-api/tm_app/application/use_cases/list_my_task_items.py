@@ -25,8 +25,19 @@ class ListMyTaskItemsUseCase:
         self._pending_signatures = pending_signatures
         self._policy = policy or TransformometroAuthorizationPolicy()
 
-    def execute(self, user: Any, *, status: str = "pending") -> dict[str, Any]:
+    def execute(
+        self,
+        user: Any,
+        *,
+        status: str = "pending",
+        scope: str = "received",
+    ) -> dict[str, Any]:
         self._policy.require_access(user)
+        scope_norm = (scope or "received").strip().lower()
+        if scope_norm == "delegated":
+            return self._delegated(user, status=status)
+        if scope_norm != "received":
+            raise ValueError("Escopo de consulta inválido.")
         tasks = self._commands.list_mine(user, status=status)
         signatures: list[dict[str, Any]] = []
         partial_error = None
@@ -57,6 +68,48 @@ class ListMyTaskItemsUseCase:
             },
             "partial_error": partial_error,
         }
+
+    def _delegated(self, user: Any, *, status: str) -> dict[str, Any]:
+        tasks = self._commands.list_delegated(user, status=status)
+        contexts = self._commands.origin_contexts(user, [task.id for task in tasks])
+        today = today_in_portal()
+        items = [
+            self._delegated_item(task, contexts.get(task.id), today)
+            for task in tasks
+        ]
+        items.sort(key=self._sort_key)
+        return {
+            "items": items,
+            "summary": {
+                "pending": sum(1 for item in items if item["status"] == "pending"),
+                "due_soon": sum(
+                    1
+                    for task in tasks
+                    if is_due_soon(task.status, task.due_date, today)
+                ),
+                "overdue": sum(1 for item in items if item.get("overdue")),
+            },
+            "partial_error": None,
+        }
+
+    @staticmethod
+    def _delegated_item(task: TransformometroTask, context, today) -> dict[str, Any]:
+        item = ListMyTaskItemsUseCase._manual_item(task, today)
+        room_id = context.room_id if context else None
+        item["context_label"] = context.context_label if context else None
+        item["route"] = (
+            f"/apps/transformometro/interaction-rooms/{room_id}" if room_id else None
+        )
+        item["created_at_label"] = (
+            task.created_at.strftime("%d/%m/%Y") if task.created_at else None
+        )
+        item["actions"] = {
+            "can_open": bool(room_id),
+            "can_edit": task.status == "pending",
+            "can_complete": task.status == "pending",
+            "can_cancel": task.status == "pending",
+        }
+        return item
 
     @staticmethod
     def _manual_item(task: TransformometroTask, today) -> dict[str, Any]:

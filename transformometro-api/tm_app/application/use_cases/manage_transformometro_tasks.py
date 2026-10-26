@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import Any, Sequence
 
 from tm_app.application.security.authorization_policy import TransformometroAuthorizationPolicy
 from tm_app.domain.entities.transformometro_task import TaskStatus, TransformometroTask
-from tm_app.domain.ports.task_repository_port import TaskRepositoryPort
+from tm_app.domain.ports.task_repository_port import TaskOriginContext, TaskRepositoryPort
 from tm_app.domain.services.transformometro_task_rules import (
     assert_can_cancel,
     assert_can_complete,
@@ -116,6 +116,20 @@ class TaskCommandUseCases:
         assignee = _user_id(user)
         statuses = self._statuses(status)
         return self._repo.list_for_assignee(assignee, statuses=statuses)
+
+    def list_delegated(self, user: Any, *, status: str = "pending") -> list[TransformometroTask]:
+        self._policy.require_access(user)
+        creator = _user_id(user)
+        statuses = self._statuses(status)
+        return self._repo.list_delegated_by(creator, statuses=statuses)
+
+    def origin_contexts(
+        self,
+        user: Any,
+        task_ids: Sequence[str],
+    ) -> dict[str, TaskOriginContext]:
+        self._policy.require_access(user)
+        return self._repo.origin_contexts(task_ids)
 
     def list_related_to_process(self, user: Any, processo_id: str) -> list[TransformometroTask]:
         self._policy.require_access(user)

@@ -309,3 +309,123 @@ def test_http_list_processo_related_tasks():
     assert payload["data"]["items"][0]["title"] == "Relacionada"
     assert forbidden.status_code == 403
     assert missing.status_code == 404
+
+
+def test_delegated_scope_lists_tasks_assigned_to_others():
+    commands = _commands()
+    delegated = commands.create(
+        _user(), title="Delegada", description=None, assignee_user_id=OTHER, due_date="2026-09-25"
+    )
+    commands.create(
+        _user(), title="Para mim", description=None, assignee_user_id=USER, due_date=None
+    )
+    listed = commands.list_delegated(_user(), status="pending")
+    assert [item.id for item in listed] == [delegated.id]
+    assert [item.id for item in commands.list_mine(_user(), status="all")] != [delegated.id]
+    assert all(item.id != delegated.id for item in commands.list_mine(_user(), status="pending"))
+    assert any(item.id == delegated.id for item in commands.list_mine(_user(user_id=OTHER), status="pending"))
+
+
+def test_delegated_scope_status_filters_and_completion_visibility():
+    commands = _commands()
+    delegated = commands.create(
+        _user(), title="Delegada", description=None, assignee_user_id=OTHER, due_date=None
+    )
+    assert [item.id for item in commands.list_delegated(_user(), status="pending")] == [delegated.id]
+    assert commands.list_delegated(_user(), status="completed") == []
+
+    commands.complete(_user(user_id=OTHER), delegated.id)
+    assert commands.list_delegated(_user(), status="pending") == []
+    assert [item.id for item in commands.list_delegated(_user(), status="completed")] == [delegated.id]
+    assert [item.id for item in commands.list_delegated(_user(), status="all")] == [delegated.id]
+
+
+def test_delegated_scope_ignores_third_party_tasks_and_reassignment_keeps_creator():
+    commands = _commands()
+    mine = commands.create(
+        _user(), title="Minha delegação", description=None, assignee_user_id=OTHER, due_date=None
+    )
+    third_party = commands.create(
+        _user(user_id=OTHER), title="De terceiros", description=None, assignee_user_id=USER, due_date=None
+    )
+    assert [item.id for item in commands.list_delegated(_user(), status="all")] == [mine.id]
+
+    commands.update(
+        _user(user_id=OTHER),
+        mine.id,
+        title=mine.title,
+        description=mine.description,
+        assignee_user_id="33333333-3333-3333-3333-333333333333",
+        due_date=None,
+    )
+    assert [item.id for item in commands.list_delegated(_user(), status="all")] == [mine.id]
+    assert third_party.assignee_user_id == USER
+
+
+def test_delegated_scope_authz_and_invalid_scope():
+    commands = _commands()
+    use_case = ListMyTaskItemsUseCase(commands, lambda _user: {"items": []})
+    with pytest.raises(AuthorizationDenied) as anonymous:
+        commands.list_delegated(None)
+    assert anonymous.value.status_code == 401
+    with pytest.raises(AuthorizationDenied):
+        commands.list_delegated(_user(permissions=[]))
+    with pytest.raises(ValueError):
+        use_case.execute(_user(), scope="strangers")
+
+
+def test_delegated_projection_excludes_signatures_and_exposes_context():
+    repo = InMemoryTaskRepository()
+    msg_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    repo.link_message_to_process(
+        msg_id,
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        room_id="cccccccc-cccc-cccc-cccc-cccccccccccc",
+        process_label="Compras corporativas",
+    )
+    commands = TaskCommandUseCases(repo)
+    task = commands.create(
+        _user(),
+        title="Delegada com origem",
+        description=None,
+        assignee_user_id=OTHER,
+        due_date=None,
+        source_interaction_message_id=msg_id,
+    )
+    commands.create(_user(), title="Manual sem origem", description=None, assignee_user_id=OTHER, due_date=None)
+
+    signatures = {"items": [{"id": "ata-9", "title": "Ata", "minute_number": "9", "unit_code": "01"}]}
+    result = ListMyTaskItemsUseCase(commands, lambda _user: signatures).execute(
+        _user(), status="all", scope="delegated"
+    )
+    assert {item["type"] for item in result["items"]} == {"manual_task"}
+    assert result["partial_error"] is None
+
+    with_origin = next(item for item in result["items"] if item["source_id"] == task.id)
+    assert with_origin["context_label"] == "Compras corporativas"
+    assert with_origin["route"] == "/apps/transformometro/interaction-rooms/cccccccc-cccc-cccc-cccc-cccccccccccc"
+    assert with_origin["actions"]["can_open"] is True
+    assert with_origin["assignee_user_id"] == OTHER
+    assert with_origin["created_at_label"]
+
+    without_origin = next(item for item in result["items"] if item["source_id"] != task.id)
+    assert without_origin["route"] is None
+    assert without_origin["actions"]["can_open"] is False
+
+
+def test_http_my_tasks_scope_param():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    from tm_app.interface.http.routes import task_routes
+
+    list_items = MagicMock()
+    list_items.execute.return_value = {"items": [], "summary": {"pending": 0}, "partial_error": None}
+    request = SimpleNamespace(state=SimpleNamespace(user=_user()))
+    with patch.object(task_routes, "_list_items", list_items):
+        resp = task_routes.list_my_tasks(request, status="all", scope="delegated")
+        list_items.execute.side_effect = ValueError("Escopo de consulta inválido.")
+        invalid = task_routes.list_my_tasks(request, scope="invalid")
+    assert resp.status_code == 200
+    list_items.execute.assert_any_call(request.state.user, status="all", scope="delegated")
+    assert invalid.status_code == 400

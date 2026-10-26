@@ -1,10 +1,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import date
 from typing import Sequence
 
 from tm_app.domain.entities.transformometro_task import TaskStatus, TransformometroTask
+
+
+@dataclass(frozen=True)
+class TaskOriginContext:
+    """Origem canônica da tarefa: sala de interação → processo, quando houver."""
+
+    room_id: str | None = None
+    context_label: str | None = None
 
 
 class TaskRepositoryPort(ABC):
@@ -56,6 +65,24 @@ class TaskRepositoryPort(ABC):
         *,
         statuses: Sequence[TaskStatus],
     ) -> list[TransformometroTask]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_delegated_by(
+        self,
+        creator_user_id: str,
+        *,
+        statuses: Sequence[TaskStatus],
+    ) -> list[TransformometroTask]:
+        """Tasks the creator delegated to someone else (assignee != creator)."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def origin_contexts(
+        self,
+        task_ids: Sequence[str],
+    ) -> dict[str, TaskOriginContext]:
+        """Resolve room/process context for tasks created from interaction messages."""
         raise NotImplementedError
 
     @abstractmethod

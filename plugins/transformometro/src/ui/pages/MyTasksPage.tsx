@@ -37,8 +37,10 @@ import {
   updateTask,
   type MyTaskItemDto,
   type MyTaskItemsResponse,
+  type MyTaskScope,
 } from "../../data/api/transformometroTasksApi";
 import { toTaskItemPresentation } from "./myTaskPresentation";
+import { useDirectoryUserLabels } from "../../hooks/useDirectoryUserLabels";
 import { usePersonProfilePhotoUrls } from "../../hooks/usePersonProfilePhotoUrls";
 
 const AVATAR = initialsAvatarBemClasses("ds");
@@ -60,6 +62,7 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [loading, setLoading] = useState(true);
   const [reloadNonce, setReloadNonce] = useState(0);
   const [filter, setFilter] = useState<FilterId>("pending");
+  const [scope, setScope] = useState<MyTaskScope>("received");
   const [formMode, setFormMode] = useState<FormMode>("closed");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -86,15 +89,21 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const next = await listMyTaskItems(getAccessToken, filter);
+      const next = await listMyTaskItems(getAccessToken, filter, scope);
       setPayload(next);
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Não foi possível carregar suas tarefas.");
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : scope === "delegated"
+            ? "Não foi possível carregar as tarefas que você delegou."
+            : "Não foi possível carregar suas tarefas.",
+      );
     } finally {
       setLoading(false);
     }
-  }, [filter, getAccessToken]);
+  }, [filter, scope, getAccessToken]);
 
   useEffect(() => {
     void load();
@@ -102,21 +111,31 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const refreshing = Boolean(payload) && loading;
   const items = useMemo(() => payload?.items ?? [], [payload]);
+  const assigneeIds = useMemo(
+    () => items.map((item) => item.assignee_user_id),
+    [items],
+  );
+  const { nameFor } = useDirectoryUserLabels(assigneeIds, getAccessToken);
   const rows = useMemo(() => {
     const mapped = items.map((item) =>
       toTaskItemPresentation(
         item,
-        item.assignee_user_id && me?.id === item.assignee_user_id ? me.name : null,
+        item.assignee_user_id
+          ? nameFor(
+              item.assignee_user_id,
+              me?.id === item.assignee_user_id ? me.name : null,
+            )
+          : null,
       ),
     );
     const needle = query.trim().toLowerCase();
     if (!needle) return mapped;
     return mapped.filter((row) =>
-      [row.title, row.description, row.sourceLabel, row.contextLabel]
+      [row.title, row.description, row.sourceLabel, row.contextLabel, row.assigneeLabel]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(needle)),
     );
-  }, [items, me, query]);
+  }, [items, me, nameFor, query]);
   const highlights = buildTaskWorkspaceHighlights(payload?.summary ?? { pending: 0 }, {
     loading: refreshing || (loading && !payload),
     includeDueBuckets: true,
@@ -267,6 +286,14 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
     >
       <ScopeChipBar
         classNames={CHIPS}
+        aria-label="Contexto de tarefas"
+        chips={[
+          { id: "received", label: "Recebidas", active: scope === "received", onSelect: () => setScope("received") },
+          { id: "delegated", label: "Atribuídas por mim", active: scope === "delegated", onSelect: () => setScope("delegated") },
+        ]}
+      />
+      <ScopeChipBar
+        classNames={CHIPS}
         aria-label="Filtro de tarefas"
         chips={[
           { id: "pending", label: "Pendentes", active: filter === "pending", onSelect: () => setFilter("pending") },
@@ -284,8 +311,12 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
         initialLoading={
           loading && !payload ? (
             <LoadingActivityCard
-              title="Carregando suas tarefas"
-              description="Buscando tarefas do portal e assinaturas pendentes."
+              title={scope === "delegated" ? "Carregando tarefas delegadas" : "Carregando suas tarefas"}
+              description={
+                scope === "delegated"
+                  ? "Buscando tarefas que você atribuiu a outras pessoas."
+                  : "Buscando tarefas do portal e assinaturas pendentes."
+              }
             />
           ) : undefined
         }
@@ -303,7 +334,10 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
         }
         worklist={{
           title: "Fila",
-          subtitle: "Pendentes, concluídas e assinaturas de ata.",
+          subtitle:
+            scope === "delegated"
+              ? "Tarefas que você delegou a outras pessoas."
+              : "Pendentes, concluídas e assinaturas de ata.",
           actions: (
             <>
               <ActionButton variant="primary" onClick={openCreate}>
@@ -383,20 +417,26 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
             title={
               query.trim()
                 ? "Nenhuma tarefa corresponde à busca"
-                : filter === "completed"
-                  ? "Nenhuma tarefa concluída"
-                  : filter === "all"
-                    ? "Nenhuma tarefa nesta lista"
-                    : "Nenhuma tarefa pendente"
+                : scope === "delegated"
+                  ? filter === "completed"
+                    ? "Nenhuma tarefa delegada concluída"
+                    : "Você não possui tarefas atribuídas a outras pessoas"
+                  : filter === "completed"
+                    ? "Nenhuma tarefa concluída"
+                    : filter === "all"
+                      ? "Nenhuma tarefa nesta lista"
+                      : "Nenhuma tarefa pendente"
             }
             message={
               query.trim()
                 ? "Ajuste o texto ou limpe a busca para ver o restante da fila."
-                : filter === "completed"
-                  ? "Nenhuma tarefa concluída."
-                  : filter === "all"
-                    ? "Nenhuma tarefa nesta lista."
-                    : "Nenhuma tarefa pendente no momento."
+                : scope === "delegated"
+                  ? "Quando você delegar uma tarefa a alguém, ela aparece aqui para acompanhamento."
+                  : filter === "completed"
+                    ? "Nenhuma tarefa concluída."
+                    : filter === "all"
+                      ? "Nenhuma tarefa nesta lista."
+                      : "Nenhuma tarefa pendente no momento."
             }
           >
             {!query.trim() ? (
@@ -415,6 +455,11 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
                   key={item.id}
                   item={item}
                   readOnly={item.statusTone === "success"}
+                  fields={
+                    source?.created_at_label
+                      ? [{ label: "Criada em", value: source.created_at_label }]
+                      : undefined
+                  }
                   assigneeValue={
                     assigneeId
                       ? (
