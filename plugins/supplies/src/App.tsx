@@ -179,8 +179,8 @@ function AppRoutes({
   } else if (view === "safety_stock") {
     content = <SafetyStockPage basePath={basePath} />;
   } else if (view === "market_intelligence") {
-    // PROC-0076: rota acessível por URL; sem entrada no hub/palette
-    // enquanto o gate E11 não for reconciliado.
+    // PROC-0076: rota acessível por URL e navegação do hub (gate de
+    // página reconciliado; permissão efetiva supplies.access).
     content = <MarketIntelligencePage basePath={basePath} />;
   } else if (view === "safety_stock_detail") {
     content = (

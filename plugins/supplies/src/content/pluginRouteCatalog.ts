@@ -79,6 +79,23 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         requiredCap: "analytics",
         keywords: ["indicadores", "idd"],
       },
+      {
+        id: "market_intelligence",
+        label: "Inteligência de Mercado",
+        viewId: "market_intelligence",
+        requiredCap: "analytics",
+        keywords: [
+          "mercado",
+          "inteligencia",
+          "cotacao",
+          "cambio",
+          "metais",
+          "ibge",
+          "ipp",
+          "comex",
+          "ptax",
+        ],
+      },
     ],
   },
   {

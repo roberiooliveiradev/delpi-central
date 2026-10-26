@@ -48,11 +48,11 @@ describe("market intelligence page (PROC-0076)", () => {
     ).toBe(true);
   });
 
-  it("is reachable by URL but absent from hub/palette while E11 is open", () => {
+  it("is published in the hub analytics section after page release", () => {
     const every = HUB_SECTIONS.flatMap((section) => section.routes);
-    expect(
-      every.find((route) => route.viewId === "market_intelligence"),
-    ).toBeUndefined();
+    const route = every.find((r) => r.viewId === "market_intelligence");
+    expect(route).toBeDefined();
+    expect(route?.requiredCap).toBe("analytics");
   });
 
   it("persists filters in the URL with allowlisted values", () => {
@@ -130,6 +130,8 @@ describe("market intelligence page (PROC-0076)", () => {
           fxKind: "ptax_closing_buy",
           from: "2025-01-01",
           to: "2025-12-31",
+          ncm: "",
+          ippSeries: "",
         });
       },
     );

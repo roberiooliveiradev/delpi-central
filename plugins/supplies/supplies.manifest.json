@@ -120,11 +120,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/supplies/market-intelligence",
+      "label": "Inteligência de Mercado",
+      "permission": "supplies.access",
+      "icon": "trending-up",
+      "order": 42,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/supplies/administration",
       "label": "Administração",
       "permission": "supplies.manage",
       "icon": "settings",
-      "order": 42,
+      "order": 43,
       "showInMenu": false
     },
     {
@@ -132,7 +140,7 @@
       "label": "Ajuda",
       "permission": "supplies.access",
       "icon": "circle-help",
-      "order": 43,
+      "order": 44,
       "showInMenu": false
     }
   ],
