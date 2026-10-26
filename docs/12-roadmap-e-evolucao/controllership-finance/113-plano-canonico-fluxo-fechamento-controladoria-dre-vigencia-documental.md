@@ -178,3 +178,54 @@ Fluxo canônico de delivery: local → testes → revisão → commit → push �
 ---
 
 **ATUALIZAÇÃO DE RUNTIME — 2026-10-26 (CF-PROC0072-MONTHLY-OPEN-PROD-CLARA-004):** DR-C1 está **em produção**. Deploy canônico @`052d344d90` aplicou V015 (template_version_id nullable) no startup; primeira abertura real já registrada — `2026-09` aberto sem template via Portal autenticado (audit `opened_without_template: true`, checklist vazio legítimo). DR-C2 (relatórios por mês sem competência) e DR-C3 (propagação a competência em andamento) seguem pendentes conforme §3.
+
+
+## 11. REDESIGN VISUAL — PROPOSTA V0.1: ABA VISÃO GERAL (PO REVIEW PENDING, 26/10/2026)
+
+**Estado:** `TARGET / DESIGN_PROPOSED / PENDING_PO_VISUAL_APPROVAL / NO_RUNTIME_GO`. Escopo exclusivo: Fechamento Mensal / PROC-0072. A captura de setembro/2026 mostra blocos P1–P5 em sequência, códigos `p3_source_unavailable`, listas técnicas, KPIs sem semântica evidente e muitas áreas vazias. O redesign **não apaga** domínio, backend, audit, rotas legadas ou contratos; substitui gradualmente apenas a composição de UX, após aprovação componente a componente.
+
+### 11.1 Objetivo e hierarquia visual
+O analista deve responder sem rolar extensivamente: **qual mês estou vendo? qual é o estado do fechamento? o que me impede de avançar? qual é o próximo trabalho?** A Visão geral é um **painel de decisão e acompanhamento**, não a repetição integral das telas técnicas P2/P3/P4/P5.
+
+**Wireframe textual desktop (proposta):**
+```
+Início > Fechamento mensal > Visão geral             [Ajuda]
+Fechamento mensal       [Mês de referência: 09/2026 v] [Atualizar]
+[ Visão geral | Documentos e interações | Relatórios e divergências ]
+[ Situação do fechamento: Em andamento ] [responsável/autoria e atualização]
+[ Bloqueios ]  [ Divergências ]  [ Documentos a tratar ]   (atalhos contextuais)
+[ Próximos passos / bloqueios explicados em PT-BR       ]
+[ Estado por eixo: Estoque | Documentos | Pacote DRE    ]
+[ Atividade recente / eventos materiais               ]
+[ Concluir etapa ] / [Enviar pacote]  (operações distintas; gated)
+```
+
+### 11.2 Componentes propostos
+| Ordem | Componente | Conteúdo / ação | Fonte e honestidade | Kit candidato |
+|---|---|---|---|---|
+| 1 | PagePath + header compacto | Início > Fechamento mensal > Visão geral, Help, título único | Links preservam competência/aba; sem duplicar TopBar | `createDashboardPagePath`, `createDashboardPageHero`, `HelpTooltip` |
+| 2 | Seletor mensal persistente | Escolher `YYYY-MM`, atualizar dados; navegar com F5/back | Consulta não abre automaticamente; meses sem competência permitidos | controle de período conforme API real `QuickPeriodSelector` ou campo nativo do kit, `ActionButton` |
+| 3 | Faixa de estado | Não iniciado / em andamento / etapas concluídas / histórico conforme lifecycle REAL | Não inventar status global; derivar de P1/P3/P5 com proveniência e sem falsa equivalência | `StatusBadge`, `StateBanner` |
+| 4 | Três indicadores clicáveis | Bloqueios → Visão geral; Divergências → Relatórios; Documentos a tratar → Documentos | Sem fonte = “—” + explicação; zero só com cálculo comprovado; indicadores não criam páginas | `KpiCard`, `MetricKpiCard` |
+| 5 | Próximas ações priorizadas | 2–4 situações materiais em português com causa/ação; expandir “Ver todos” | Sem mostrar códigos técnicos crus; origem/atualização no detalhe. Não deduzir prioridade arbitrária | `AlertQueue`, `WorklistItem`, `ActionButton` |
+| 6 | Estado por eixo | Estoque/conciliação, Documentos, Pacote DRE, independentes | `STOCK_CLOSED != PACKAGE_SENT != MONTHLY_CLOSING_COMPLETED`; parcial/unavailable explícito | `ProgressTracker` ou cards compartilhados, `StateBanner` |
+| 7 | Histórico compacto | 3–5 últimos eventos com autor/data e link para contexto | Se endpoint não disponibiliza eventos, empty state honesto; não inventar atividade | `Timeline`, `EmptyState` |
+| 8 | Ações de conclusão | Exibir condições e ações autorizadas para concluir Controladoria e enviar pacote separadamente | Server-side AuthZ, status e precondições; não habilitar sem contrato P5 | `ActionButton`, confirmação compartilhada após inventário |
+
+### 11.3 Regras de visual e comportamento
+- **Não repetir** cards `Checklist e evidências P2`, `Cutoff P3`, `Pendências P4`, `Pacotes P5` como seções técnicas extensas na Visão geral. Esses dados continuam acessíveis por indicadores, eixo e detalhes contextuais nas abas proprietárias.
+- **Não mostrar** códigos como `no_applicable_packages`, `p3_cutoff_not_confirmed`, `p3_source_unavailable:P7` sem tradução PT-BR e orientação simples; preservar códigos no telemetry/log/diagnóstico para suporte.
+- **Ausente ≠ zero:** o KPI de divergências não pode dizer “0” quando P7/H02/ENTRADAS_SAIDAS estão indisponíveis. Da mesma forma “Documentos a tratar” é “—” até contrato semântico provado.
+- O contador de bloqueios é diagnóstico composto; diferenciar `fonte indisponível` de divergência identificada.
+- **Quando não há fechamento:** estado informativo com botão `Abrir fechamento` apenas para access autorizada, sem bloquear consulta por mês. Com fechamento sem checklist: documentação vazia legítima.
+- Histórico finalizado é read-only; preservar snapshots históricos, origem e versões.
+- Priorizar primeiro viewport desktop; mobile empilhar KPI e eixos de forma legível, preservar teclado/foco/URL, mesmos tokens claro/escuro, Help no mesmo gate.
+- Não permitir que a simplificação visual oculte uma pendência impeditiva; usar progressão “resumo → detalhe contextual”.
+
+### 11.4 Perguntas de validação visual ao PO
+1. A faixa de estado e as **próximas ações** são o elemento principal, com três KPIs logo abaixo/acima?
+2. Deseja que **Atividade recente** fique na Visão geral ou apenas no detalhe/histórico?
+3. As ações `Concluir etapa` e `Enviar pacote` devem aparecer na Visão geral, mas só serem habilitadas quando permitidas?
+4. O acompanhamento de Estoque/Documentos/Pacote DRE em três cards compactos está adequado?
+
+**Próxima ação:** PO revisa V0.1 na conversa. Registrar ajustes e aprovação visual expressa antes de criar prompt de execução. Não remover código legado nesta fase. CLARA: registrar aprovação no corpus antes de publicar como regra consolidada; não indexar proposta V0.1 como runtime.
