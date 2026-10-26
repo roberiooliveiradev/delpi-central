@@ -1230,7 +1230,7 @@ Na própria bancada Relatórios e divergências mostrar: origem e estado da font
 
 **Substitui expressamente** a proposta anterior de quatro abas da V0.6/§23/§24 no aspecto de **navegação visual**. Abas na bancada operacional da Controladoria, somente:
 
-1. **Visão geral** — seletor de competências **existentes e autorizadas**, consulta de setembro/2026, outubro/2026 etc., status histórico do fechamento, bloqueios, eventos e entradas contextualizadas por competência;
+1. **Visão geral** — ~~seletor de competências existentes e autorizadas~~ **SUPERADO pela decisão PO de 26/10/2026 (ver §3 e §31): seleção livre de mês de referência YYYY-MM, sem exigir competência aberta** — consulta de setembro/2026, outubro/2026 etc., status histórico do fechamento, bloqueios, eventos e entradas contextualizadas por competência;
 2. **Documentos e interações** — checklist/documentos, anexos, versões (V1, V2, ...), comentários, pedidos de complemento/correção, resposta, documentação disponibilizada à audiência autorizada e histórico do item;
 3. **Relatórios e divergências** — catálogo e resultados TOTVS autorizados, parâmetros e versões da emissão referentes à competência, divergências e orientações de correção manual na origem, container de prévia PDF e disponibilização governada do arquivo resultante à documentação.
 
@@ -1252,7 +1252,7 @@ Na própria bancada Relatórios e divergências mostrar: origem e estado da font
 
 ```text
 Fechamento mensal
-[Competência existente/autorizada: Setembro/2026 ▼] [empresa/escopo autorizado]
+[Mês de referência: 2026-09 ▼]  (SUPERADO §3/§31: seleção livre, não restrita a competências abertas) [empresa/escopo autorizado]
 [Estado do fechamento e última atualização canônicos]
 [Bloqueios → contexto] [Divergências → Relatórios] [Documentos a tratar → Docs]
 
@@ -1448,3 +1448,43 @@ Sem novo prompt de expansão nem novo deploy a partir desta revisão. Validar BF
 O [Plano 113, §9](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md) contém a especificação detalhada das superfícies do **Fechamento Mensal**: Início; três abas operacionais; **detalhe de PDF/interações**; Administração (listagem, criação, edição de configuração documental); e DRE (última fase). O detalhe do PDF conserva competência, versão e mesma thread auditável entre Controladoria e DRE com ações distintas. **Desktop:** PDF/versões à esquerda, comentários/pedidos à direita e histórico embaixo. **Mobile:** seções empilhadas e foco preservado. Resposta da Controladoria NÃO encerra pedido da Contabilidade automaticamente. Cadastro e edição de configuração do documento em **páginas completas**, nunca modal. A configuração do catálogo DRE é **Manage-only**, não mais uma aba. O runtime atual e contratos futuros não se confundem com esses desenhos TARGET.
 
 Devin é obrigado a consultar `plugins/plugin-ui/src/index.ts`, `plugins/plugin-ui/docs/component-catalog.md`, registro visual e demos e aplicar a matriz por página do [doc 30](./30-plugin-ui-reuse-map.md). Não duplicar kit/chrome e validar exports reais, inclusive PagePath, preview/attachments e conversation/thread. A descrição visual não outorga GO de runtime ou remoção de legado.
+
+## 31. Execução CF-PROC0072-MONTHLY-REFERENCE-CATALOG-001 — mês de referência implementado
+
+**Data:** 2026-10-26. **Base:** `121fd93e02`. **Tipo:** implementação da decisão PO registrada em §3 (mês de referência sem abertura formal prévia). **Estado:** `IMPLEMENTED_SELECTION_LAYER` + `DECISION_REQUIRED` para contratos de dados por mês sem competência.
+
+### 31.1 O que mudou no runtime (MFE apenas)
+
+`plugins/controllership-finance/src/features/closing/MonthlyClosingPage.tsx` reescrito:
+
+- **Seleção por mês de referência:** `input type=month` (`FilterInputField` do kit) livre, sem default de mês corrente; selecionar um mês navega para `/closing/monthly-closing/{YYYY-MM}` e **nunca** executa `openCompetence`. A landing sem período lista as competências formalmente abertas como atalhos reais da BFF + empty state honesto que orienta a consulta por mês.
+- **Isolamento por período preservado:** cockpit, probe de competência e lista keyed por `period`/`nonce`, com AbortController e request-id independente por fonte — resposta fora de ordem nunca mostra mês A sob mês B.
+- **Probe de competência separado do cockpit:** `getCompetence(period)` decide a elegibilidade dos painéis derivados do checklist P2 (`ClosingDocumentsPanel`, `ReportsMatrixPanel`). `competence_not_opened`/`competence_not_found`/404 viram `NotOpenedNotice` — estado normal, não erro.
+- **`NotOpenedNotice` + ação autorizada «Abrir competência»:** alternativa A do diagnóstico §30 realizada dentro das três abas — sem nova aba/página. O botão chama o contrato real `POST /closing/competences` (permission `access`, idempotente); falhas (ex.: `409 no_published_template`) são exibidas com mensagem honesta. BFF permanece autoridade final, fail-closed.
+- **Três abas preservadas** e deep link `?tab=documents|reports` mantido em todas as transições.
+- `Documentos a tratar` permanece `—` (FM-05C `CONTRACT_TO_INVENTORY`, owner P2).
+
+### 31.2 O que NÃO mudou — lacunas classificadas
+
+- **Consulta por mês sem competência aberta é parcial:** cockpit (`GET /closing/cockpit/{period}`), matriz R01–R15 (`GET /closing/competences/{period}/reports`) e evidências P2 seguem ancorados na competência — sem ela, a aba exibe `NotOpenedNotice` + ação de abertura. Consulta de relatórios/entregáveis por mês de referência **sem** competência: `DECISION_REQUIRED` (não existe produtor canônico por mês de referência; criar endpoint novo sem gate de contrato é proibido por §4 da task).
+- **Cadastro mestre global de entregáveis com vigência por competência:** `TO_INVENTORY`/`DECISION_REQUIRED` — `admin_catalogs_routes`/`admin_checklist_routes` versionam templates de checklist com `effective_from_period`, mas não há catálogo de tipos de documento effective-dated independente do snapshot P2.
+- **Imutabilidade de fechamentos finalizados:** o snapshot `competence_checklist_item` já é imutável por construção; evidências anexadas vivem por competência e não são apagadas por mudanças em template. Regra para competência **em andamento** quando o cadastro mestre muda: `DECISION_REQUIRED` (sem contrato vigente).
+- `monthly_competence.status` só admite `OPEN` — "competência encerrada" é conceito P5 (`monthly_closing`); a listagem não omite históricas.
+
+### 31.3 Testes
+
+`MonthlyClosingPage.test.tsx` reescrito: 17/17 PASS cobrindo seleção livre sem `openCompetence`, landing com atalhos/empty state, mês sem abertura nas três abas, CTA de abertura (sucesso/reload e 409 honesto), isolamento fora de ordem, preservação de período+aba na URL, gate documental e indicadores honestos.
+
+### 31.4 Matriz de referências corrigidas nesta execução
+
+| Arquivo | Referência | Classificação | Ação |
+|---|---|---|---|
+| README.md §banner | decisão TARGET | TARGET→PARTIAL_IMPLEMENTED | delta de execução adicionado |
+| 09 §banner | TARGET NÃO IMPLEMENTADO | TARGET→PARTIAL | delta de execução adicionado |
+| 23 §banner | `PLANNED` | `PARTIAL_IMPLEMENTED` | status atualizado |
+| 112 §25.1 item 1 | seletor de competências existentes | SUPERADO | anotação inline + ponteiro §31 |
+| 112 §25.3 layout | `[Competência existente/autorizada ▼]` | SUPERADO | layout corrigido + nota |
+| 96/97/98/100/102/103/108 | snapshot na abertura, `no_published_template`, `listCompetences` | AS-IS técnico / histórico | preservados — contrato segue implementado e é o que a «Abrir competência» chama |
+| 15/24/30/32/37/46/47/91 | menções a competência/template | não relacionadas / consistentes | mantidas (Home usa "competência ativa" = contexto de launcher, não o seletor do workspace) |
+
+**Classificação final:** `IMPLEMENTED` (camada de seleção/UX) + `DECISION_REQUIRED` (produtores por mês de referência sem competência; catálogo mestre effective-dated; regra de competência em andamento). Revisão independente pendente — não é autoaceite arquitetural.

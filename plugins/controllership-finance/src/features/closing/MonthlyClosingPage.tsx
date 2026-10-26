@@ -1,7 +1,8 @@
 /**
- * Fechamento mensal — workspace da competência com exatamente três abas
- * (Visão geral / Documentos e interações / Relatórios e divergências),
- * conforme decisão visual do PO no doc 112 §§25–26 e rework §28.
+ * Fechamento mensal — workspace do mês de referência com exatamente três
+ * abas (Visão geral / Documentos e interações / Relatórios e divergências),
+ * conforme decisão visual do PO no doc 112 §§25–26 e decisão de produto
+ * de 26/10/2026 (mês de referência sem abertura formal prévia).
  *
  * Composição apenas: a aba Visão geral reutiliza o cockpit real P1–P5,
  * Documentos e interações reutiliza o painel de evidências P2 e
@@ -9,22 +10,23 @@
  * indicador ou comportamento de domínio é criado aqui — «—» significa
  * dado ainda não carregado, nunca zero confirmado.
  *
- * Invariantes do rework:
- * - O seletor lista somente competências retornadas pela BFF
- *   (`listCompetences` = existentes e autorizadas); nenhum mês arbitrário.
- * - Resultados são keyed por competência — dados de um período nunca
- *   aparecem sob outro, nem em loading/erro/resposta fora de ordem.
+ * Invariantes:
+ * - A seleção é por MÊS DE REFERÊNCIA (período YYYY-MM livre), não por
+ *   competência formalmente aberta: consultar um mês não executa
+ *   `openCompetence` nem exige `monthly_competence`/template publicado.
+ * - Resultados são keyed por período — dados de um mês nunca aparecem
+ *   sob outro, nem em loading/erro/resposta fora de ordem.
  * - Período e aba vivem na URL canônica
  *   `closing/monthly-closing/{period}?tab=…` — refresh, back/forward e
  *   deep links preservam o contexto.
- * - A aba de documentos só oferece upload quando o contrato P2
- *   (`getCompetence`) confirma que a competência existe — a BFF segue
- *   fail-closed como autoridade final.
+ * - Contratos atuais P1–P5 seguem ancorados na competência aberta: sem
+ *   competência, cada aba exibe estado honesto e a ação autorizada
+ *   «Abrir competência» (POST /closing/competences, permission access).
+ *   A BFF segue fail-closed como autoridade final de autorização.
  */
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -33,6 +35,7 @@ import { ApiError } from "../../api/httpClient";
 import {
   getCompetence,
   listCompetences,
+  openCompetence,
   type ClosingCompetence,
 } from "../../api/competencesApi";
 import {
@@ -40,10 +43,11 @@ import {
   type Cockpit,
 } from "../../api/packagesApi";
 import {
+  CfFeedbackMessage,
   CfQueryErrorBanner,
 } from "../../app/cfFeedbackUi";
 import {
-  FilterSelectField,
+  FilterInputField,
   FiltersRow,
 } from "../../app/cfFiltersUi";
 import { ClosingHero } from "../../app/ClosingHero";
@@ -86,9 +90,16 @@ const ERROR_MESSAGES: Record<string, string> = {
   competence_not_opened: "Competência não aberta.",
   competence_not_found: "Competência não encontrada.",
   not_found: "Competência não encontrada.",
+  no_published_template:
+    "Não existe versão publicada vigente do checklist para este mês.",
 };
 
 const ZERO_DIVERGENCE_PATTERN = /^-?0+([.,]0+)?$/;
+
+const NOT_OPENED_CODES = new Set([
+  "competence_not_opened",
+  "competence_not_found",
+]);
 
 function mapError(error: unknown): PanelError {
   if (error instanceof ApiError) {
@@ -103,6 +114,13 @@ function mapError(error: unknown): PanelError {
     code: null,
     message: "Falha de comunicação com a API.",
   };
+}
+
+function isNotOpened(error: PanelError): boolean {
+  return (
+    (error.code !== null && NOT_OPENED_CODES.has(error.code)) ||
+    error.status === 404
+  );
 }
 
 function parseTab(search: string): MonthlyClosingTab {
@@ -135,7 +153,16 @@ type CompetencesResult =
   | { key: string; kind: "ready"; data: ClosingCompetence[] }
   | { key: string; kind: "error"; error: PanelError };
 
-/** Caminho canônico preservando competência + aba (RW03). */
+/**
+ * Estado do contrato de competência para o mês consultado — keyed por
+ * período; `not_opened` é resposta legítima de consulta, não erro fatal.
+ */
+type CompetenceProbe =
+  | { key: string; kind: "ready"; data: ClosingCompetence }
+  | { key: string; kind: "not_opened" }
+  | { key: string; kind: "error"; error: PanelError };
+
+/** Caminho canônico preservando mês de referência + aba. */
 function monthlyPath(
   base: string,
   period: string,
@@ -147,53 +174,50 @@ function monthlyPath(
 }
 
 /**
- * Gate P2 da aba Documentos: consulta `getCompetence` separadamente do
- * cockpit. Sem competência existente/autorizada nenhum controle de upload
- * é oferecido — a BFF continua a autoridade final de autorização.
+ * Estado honesto de mês sem competência aberta — a consulta continua
+ * possível, mas os painéis derivados do checklist P2 exigem a abertura
+ * formal (POST /closing/competences, permission `access`, idempotente).
  */
-function DocumentsTab({ period }: { period: string }) {
-  const [result, setResult] = useState<
-    | { key: string; kind: "ready" }
-    | { key: string; kind: "error"; error: PanelError }
-    | null
-  >(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getCompetence(period, { signal: controller.signal })
-      .then((competence) => {
-        if (competence && competence.status === "OPEN") {
-          setResult({ key: period, kind: "ready" });
-        } else {
-          setResult({
-            key: period,
-            kind: "error",
-            error: mapError(
-              new ApiError(409, "conflict", "competence_not_opened"),
-            ),
-          });
-        }
-      })
-      .catch((err: unknown) =>
-        setResult({ key: period, kind: "error", error: mapError(err) }),
-      );
-    return () => controller.abort();
-  }, [period]);
-
-  const current = result?.key === period ? result : null;
-
-  if (!current) {
-    return <p aria-live="polite">Verificando competência…</p>;
-  }
-  if (current.kind === "error") {
-    return (
+function NotOpenedNotice({
+  period,
+  opening,
+  openError,
+  onOpen,
+}: {
+  period: string;
+  opening: boolean;
+  openError: PanelError | null;
+  onOpen: () => void;
+}) {
+  return (
+    <>
       <CfEmptyState
         classNames={cfEmptyStateClassNames}
-        defaultMessage={`A competência ${formatPeriod(period)} não está aberta ou não está acessível — envio e consulta de evidências indisponíveis.`}
+        defaultMessage={`O mês ${formatPeriod(period)} ainda não tem competência aberta.`}
       />
-    );
-  }
-  return <ClosingDocumentsPanel period={period} />;
+      <CfFeedbackMessage
+        intent="info"
+        title="Abertura necessária para os dados desta visão"
+      >
+        Entregáveis, evidências e relatórios desta competência derivam da
+        versão publicada do checklist. Abrir a competência cria o snapshot
+        do mês — nunca recria uma competência existente.
+      </CfFeedbackMessage>
+      {openError ? (
+        <CfFeedbackMessage
+          intent="error"
+          title="Falha ao abrir a competência"
+        >
+          {openError.message}
+        </CfFeedbackMessage>
+      ) : null}
+      <div className="cf-settlements-actions">
+        <CfActionButton type="button" onClick={onOpen} disabled={opening}>
+          {opening ? "Abrindo…" : "Abrir competência"}
+        </CfActionButton>
+      </div>
+    </>
+  );
 }
 
 export function MonthlyClosingPage({
@@ -204,7 +228,7 @@ export function MonthlyClosingPage({
   period?: string;
 }) {
   // Período e aba derivam da URL — refresh, back/forward e deep links
-  // preservam o contexto (RW03). Sem mês arbitrário como default (RW01).
+  // preservam o contexto. Mês de referência livre, sem default (decisão PO).
   const period =
     routePeriod && PERIOD_PATTERN.test(routePeriod) ? routePeriod : "";
   const [, setRouteEpoch] = useState(0);
@@ -215,8 +239,17 @@ export function MonthlyClosingPage({
   const [listResult, setListResult] = useState<CompetencesResult | null>(
     null,
   );
+  const [probeResult, setProbeResult] = useState<CompetenceProbe | null>(
+    null,
+  );
+  const [opening, setOpening] = useState(false);
+  const [openError, setOpenError] = useState<{
+    key: string;
+    error: PanelError;
+  } | null>(null);
   const listRequestId = useRef(0);
   const cockpitRequestId = useRef(0);
+  const probeRequestId = useRef(0);
   const base = normalizeBasePath(basePath);
 
   useEffect(() => {
@@ -232,14 +265,13 @@ export function MonthlyClosingPage({
       : "overview";
 
   const listKey = `list:${retryNonce}`;
-  const currentList =
-    listResult?.key === listKey ? listResult : null;
+  const currentList = listResult?.key === listKey ? listResult : null;
   const competences =
     currentList?.kind === "ready" ? currentList.data : null;
   const listError =
     currentList?.kind === "error" ? currentList.error : null;
 
-  // Cockpit keyed por período — nada de mês A sob mês B (RW02).
+  // Cockpit keyed por período — nada de mês A sob mês B.
   const cockpitKey = `cockpit:${period}:${retryNonce}`;
   const currentCockpit =
     period && cockpitResult?.key === cockpitKey ? cockpitResult : null;
@@ -250,6 +282,15 @@ export function MonthlyClosingPage({
   const cockpitLoading = Boolean(period) && currentCockpit === null;
   const lastUpdated =
     currentCockpit?.kind === "ready" ? currentCockpit.at : null;
+
+  // Probe da competência — autoridade sobre «mês aberto» para os painéis
+  // derivados do checklist; não inferir capability do erro do cockpit.
+  const probeKey = `probe:${period}:${retryNonce}`;
+  const probe =
+    period && probeResult?.key === probeKey ? probeResult : null;
+  const probeLoading = Boolean(period) && probe === null;
+  const openErrorForPeriod =
+    openError?.key === period ? openError.error : null;
 
   const navigateToPeriod = useCallback(
     (value: string, keepTab: MonthlyClosingTab = tab) => {
@@ -268,17 +309,34 @@ export function MonthlyClosingPage({
 
   const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
 
-  // Competências existentes e autorizadas — fonte única do seletor.
+  const openCurrentMonth = useCallback(() => {
+    if (!period || opening) return;
+    setOpening(true);
+    setOpenError(null);
+    openCompetence(period)
+      .then(() => {
+        setOpening(false);
+        retry();
+      })
+      .catch((err: unknown) => {
+        setOpening(false);
+        setOpenError({ key: period, error: mapError(err) });
+      });
+  }, [period, opening, retry]);
+
+  // Competências formalmente abertas — lista real de atalhos da landing.
   useEffect(() => {
     const id = ++listRequestId.current;
     const controller = new AbortController();
     listCompetences({ signal: controller.signal })
       .then((data) => {
-        if (controller.signal.aborted || listRequestId.current !== id) return;
+        if (controller.signal.aborted || listRequestId.current !== id)
+          return;
         setListResult({ key: listKey, kind: "ready", data });
       })
       .catch((err: unknown) => {
-        if (controller.signal.aborted || listRequestId.current !== id) return;
+        if (controller.signal.aborted || listRequestId.current !== id)
+          return;
         setListResult({ key: listKey, kind: "error", error: mapError(err) });
       });
     return () => controller.abort();
@@ -286,11 +344,35 @@ export function MonthlyClosingPage({
 
   useEffect(() => {
     if (!period) return;
+    const id = ++probeRequestId.current;
+    const controller = new AbortController();
+    getCompetence(period, { signal: controller.signal })
+      .then((data) => {
+        if (controller.signal.aborted || probeRequestId.current !== id)
+          return;
+        setProbeResult({ key: probeKey, kind: "ready", data });
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted || probeRequestId.current !== id)
+          return;
+        const error = mapError(err);
+        setProbeResult(
+          isNotOpened(error)
+            ? { key: probeKey, kind: "not_opened" }
+            : { key: probeKey, kind: "error", error },
+        );
+      });
+    return () => controller.abort();
+  }, [period, probeKey]);
+
+  useEffect(() => {
+    if (!period) return;
     const id = ++cockpitRequestId.current;
     const controller = new AbortController();
     getClosingCockpit(period, controller.signal)
       .then((data) => {
-        if (controller.signal.aborted || cockpitRequestId.current !== id) return;
+        if (controller.signal.aborted || cockpitRequestId.current !== id)
+          return;
         if (data) {
           setCockpitResult({
             key: cockpitKey,
@@ -309,7 +391,8 @@ export function MonthlyClosingPage({
         }
       })
       .catch((err: unknown) => {
-        if (controller.signal.aborted || cockpitRequestId.current !== id) return;
+        if (controller.signal.aborted || cockpitRequestId.current !== id)
+          return;
         setCockpitResult({
           key: cockpitKey,
           kind: "error",
@@ -319,46 +402,63 @@ export function MonthlyClosingPage({
     return () => controller.abort();
   }, [period, cockpitKey]);
 
-  const competenceOptions = useMemo(
-    () =>
-      (competences ?? [])
-        .map((competence) => ({
-          value: competence.period,
-          label: formatPeriod(competence.period),
-        }))
-        .sort((a, b) => b.value.localeCompare(a.value)),
-    [competences],
-  );
-
   const blockingCount = cockpit?.closing.blocking_reasons.length ?? null;
   const divergenceCount = cockpit ? countDivergences(cockpit) : null;
-  // RW04/FM-05C: «Documentos a tratar» não equivale a checklist.EXPECTED —
-  // a regra de inclusão dos estados P2 é CONTRACT_TO_INVENTORY no owner P2.
+  // «Documentos a tratar» não equivale a checklist.EXPECTED — a regra de
+  // inclusão dos estados P2 é CONTRACT_TO_INVENTORY no owner P2 (FM-05C).
   // Enquanto não houver DTO/owner com a métrica, o cartão mostra «—».
   const documentsCount: number | null = null;
 
-  const competencePicker = (
+  const referencePicker = (
     <form
       className="cf-settlements-filters"
       onSubmit={(event) => event.preventDefault()}
     >
       <FiltersRow>
-        <FilterSelectField
+        <FilterInputField
           id="cf-monthly-closing-period"
-          label="Competência"
-          options={competenceOptions}
+          label="Mês de referência"
+          type="month"
           value={period}
           onChange={(value) => navigateToPeriod(value)}
-          placeholderOption={
-            competences === null
-              ? "Carregando competências…"
-              : "Selecione uma competência"
-          }
-          searchable
         />
       </FiltersRow>
     </form>
   );
+
+  const renderProbeGate = (children: React.ReactNode) => {
+    if (probeLoading) {
+      return <p aria-live="polite">Verificando competência…</p>;
+    }
+    if (probe?.kind === "not_opened") {
+      return (
+        <NotOpenedNotice
+          period={period}
+          opening={opening}
+          openError={openErrorForPeriod}
+          onOpen={openCurrentMonth}
+        />
+      );
+    }
+    if (probe?.kind === "error") {
+      return (
+        <CfQueryErrorBanner
+          error={probe.error}
+          dataset="a competência do mês"
+          onRetry={retry}
+        />
+      );
+    }
+    if (probe?.kind === "ready" && probe.data.status !== "OPEN") {
+      return (
+        <CfEmptyState
+          classNames={cfEmptyStateClassNames}
+          defaultMessage={`A competência ${formatPeriod(period)} não está aberta para esta operação.`}
+        />
+      );
+    }
+    return children;
+  };
 
   return (
     <section
@@ -372,8 +472,8 @@ export function MonthlyClosingPage({
             hint={CF_HELP.monthlyClosing.page}
           />
         }
-        subtitle="Bancada de trabalho da competência: visão geral, documentos e relatórios do fechamento."
-        filters={competencePicker}
+        subtitle="Bancada de trabalho do mês de referência: visão geral, documentos e relatórios do fechamento."
+        filters={referencePicker}
         updatedAt={lastUpdated}
         onRefresh={retry}
         refreshing={cockpitLoading}
@@ -385,7 +485,7 @@ export function MonthlyClosingPage({
       {listError ? (
         <CfQueryErrorBanner
           error={listError}
-          dataset="as competências disponíveis"
+          dataset="as competências abertas"
           onRetry={retry}
         />
       ) : null}
@@ -452,7 +552,7 @@ export function MonthlyClosingPage({
           />
 
           <div className="cf-page-stack" aria-busy={cockpitLoading}>
-            {cockpitError ? (
+            {cockpitError && !isNotOpened(cockpitError) ? (
               <CfQueryErrorBanner
                 error={cockpitError}
                 dataset="o fechamento mensal da competência"
@@ -465,10 +565,20 @@ export function MonthlyClosingPage({
                 {cockpitLoading ? (
                   <p aria-live="polite">Carregando visão geral…</p>
                 ) : null}
+                {!cockpitLoading &&
+                cockpitError &&
+                isNotOpened(cockpitError) ? (
+                  <NotOpenedNotice
+                    period={period}
+                    opening={opening}
+                    openError={openErrorForPeriod}
+                    onOpen={openCurrentMonth}
+                  />
+                ) : null}
                 {!cockpitLoading && !cockpit && !cockpitError ? (
                   <CfEmptyState
                     classNames={cfEmptyStateClassNames}
-                    defaultMessage="Sem dados de fechamento para a competência."
+                    defaultMessage="Sem dados de fechamento para o mês de referência."
                   />
                 ) : null}
                 {cockpit ? <CockpitSummaryPanel cockpit={cockpit} /> : null}
@@ -477,7 +587,7 @@ export function MonthlyClosingPage({
 
             {tab === "documents" ? (
               <>
-                <DocumentsTab period={period} />
+                {renderProbeGate(<ClosingDocumentsPanel period={period} />)}
                 <CfSectionCard title="Checklist da competência">
                   <p>
                     A validação item a item do checklist P2 permanece na página
@@ -499,7 +609,7 @@ export function MonthlyClosingPage({
 
             {tab === "reports" ? (
               <>
-                <ReportsMatrixPanel period={period} />
+                {renderProbeGate(<ReportsMatrixPanel period={period} />)}
                 <CfSectionCard title="Consultas operacionais">
                   <ul className="cf-monthly-report-links">
                     <li>
@@ -553,7 +663,7 @@ export function MonthlyClosingPage({
           ) : null}
           {competences && competences.length > 0 ? (
             <CfSectionCard
-              title="Competências disponíveis"
+              title="Competências abertas"
               hint={CF_HELP.monthlyClosing.page}
             >
               <ul className="cf-competence-list">
@@ -579,7 +689,7 @@ export function MonthlyClosingPage({
           {competences && competences.length === 0 ? (
             <CfEmptyState
               classNames={cfEmptyStateClassNames}
-              defaultMessage="Nenhuma competência aberta e autorizada para o seu perfil."
+              defaultMessage="Nenhuma competência aberta ainda — selecione um mês de referência para consultar."
             />
           ) : null}
         </div>
