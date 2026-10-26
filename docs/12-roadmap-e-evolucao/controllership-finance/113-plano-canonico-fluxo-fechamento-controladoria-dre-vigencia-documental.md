@@ -408,3 +408,64 @@ Documento (nome e breve orientação), exigência aplicável à competência (si
 5. Quando não houver documento exigido, deve haver **anexo avulso** no mês ou somente estado vazio até Manager cadastrar tipo aplicável? (Depende também de contrato/owner.)
 
 **Próximo passo:** PO revisa a composição e escolhas antes do freeze visual; depois inventário técnico, RQ/AC, Help e CLARA e brief page-by-page. Nenhum código/deploy autorizado por esta proposta.
+
+
+## 17. Documentos e interações V0.2 — decisões PO aprovadas e wireframe detalhado (26/10/2026)
+
+**Decisões expressamente aprovadas pelo PO (PROVEN / PRODUCT_DESIGN_APPROVED):** `apresentação=cards`, `upload=detail`, `solicitações=summary`, `documentos sem exigência=optional`. Esta seção **prevalece sobre alternativas da seção 16.7**. **Estado do detalhamento:** `TARGET / DETAILED_WIREFRAME / PENDING_FINAL_VISUAL_APPROVAL`; não concede GO de runtime, migrations ou integração. Somente Fechamento Mensal (PROC-0072).
+
+### 17.1 Aba Documentos e interações — composição
+
+```text
+Início > Fechamento mensal > Documentos e interações
+[Fechamento mensal] [Mês de referência YYYY-MM] [Atualizar consulta]
+[Visão geral] [Documentos e interações] [Relatórios e divergências]
+Documentos deste mês                                   [Adicionar documento opcional*]
+[Pesquisar documento........] [Filtrar por situação v]
+[  CARD: Nome do documento | Exigido/opcional | Estado comprovado ]
+[        Arquivo/versão mais recente | Última interação | Ver documento ]
+[  CARD: ...                                                        ]
+[Solicitações que precisam de atenção — resumo real / Ver conversa]
+[Estado vazio honesto se não houver exigência nem arquivo]
+```
+
+`*Adicionar documento opcional` não modifica cadastro mestre nem cria obrigação para outras competências; visibilidade e gravação dependem do contrato/owner de anexos avulsos, resource scope e gate. Até implementação comprovada, exibir CTA apenas se ação real existir; senão registrar TO_INVENTORY e manter estado vazio honesto.
+
+**Cartões por documento, não tabela de linhas:** cada cartão tem nome, descrição curta quando disponível, selo Exigido/Adicional, situação real (não enviado, enviado, em análise, ajuste solicitado, conferido — somente se estados contratuais comprovados), versão do arquivo, data e autoria quando disponíveis, contador de solicitações em aberto se comprovado e única ação principal **Ver documento**. Informação ausente = `—`; jamais inventar estado/quantidade. Área de cartões responde em 1 coluna mobile e layout consistente desktop; foco/teclado e leitura de tela.
+
+**Filtros:** pesquisa pelo nome e filtro de situação, sem inferir estado pelo simples upload. Preservar `YYYY-MM`, `tab=documents`, busca/filtro ao navegar ao detalhe e voltar. Listagem de exigidos e adicionais diferenciada sem ocultar os opcionais.
+
+**Solicitações (resumo na aba):** seção compacta exibe os pedidos reais que demandam atenção (documento, situação, última mensagem, data/autor, quando permitido); ação **Abrir conversa** aponta ao detalhe do próprio documento. Não recriar thread completa na lista; não inferir que resposta encerrou a solicitação.
+
+**Upload:** não haverá dropzone genérico no topo da aba. Anexação/substituição de PDFs ocorre **dentro da página de detalhe do documento**, com validação de tipo/tamanho e autorização no backend. Preservar fluxo anterior até substituição testada.
+
+### 17.2 Página de detalhe — wireframe contextual
+
+```text
+Fechamento mensal > Documentos e interações > [Documento]
+[Voltar aos documentos]      [Documento • referência YYYY-MM] [Estado real]
+┌ PRÉVIA E VERSÕES (esquerda) ─────────┐ ┌ INTERAÇÕES (direita) ───────────────┐
+│ Prévia PDF inline / indisponibilidade │ │ Pedidos de ajuste e mensagens       │
+│ Versão selecionada; data e autoria   │ │ Autor/data/contexto da versão       │
+│ [Versões] [Baixar] [Anexar nova]*     │ │ [Comentar] [Solicitar ajuste]*      │
+└──────────────────────────────────────┘ │ [Responder] [Verificar atendimento]*│
+                                         └─────────────────────────────────────┘
+[HISTÓRICO AUDITÁVEL: arquivos, versões, pedidos, respostas e verificações]
+```
+
+No desktop, PDF à esquerda, interações à direita e histórico abaixo; no mobile, blocos empilhados. Toda ação `*` requer contrato, autenticação, audience, scope e business rule. Versões antigas permanecem recuperáveis conforme autorização. Falha de preview não impede download autorizado. Uma resposta da Controladoria **não** marca automaticamente pedido como atendido; a parte autorizada verifica. `ATTACHED != VALIDATED`, revisão documental não equivale a aceite P5. Página de detalhe é deep route da aba, **não quarta aba**.
+
+### 17.3 Documento opcional / sem exigências
+
+- PO aprovou **permitir documento adicional** por competência, inclusive sem exigência geral publicada, desde que usuário possua autorização efetiva de anexação.
+- Documento opcional é evidência daquele mês, **não** novo tipo obrigatório no catálogo master, **não** obrigação prospectiva nem item fictício de checklist. Não altera finalizados nem períodos vizinhos.
+- Requer inventário e decisão de modelagem/contrato para tipo livre versus tipado, vínculo ao fechamento/versão e admissibilidade P2/P5. Se o contrato atual não comportar a operação, emitir `DECISION_REQUIRED` antes de migration/novo endpoint; **não** criar item artificial no template para habilitar upload.
+- Um fechamento sem exigências continua acessível; mostrar mensagem “Nenhum documento exigido para este mês” e ação de documento opcional somente quando disponível.
+
+### 17.4 Kit, QA e gates
+
+Inventariar `plugins/plugin-ui/src/index.ts`, `plugins/plugin-ui/docs/component-catalog.md`, `visualComponents.ts` e demos. Candidatos por superfície: `createDashboardPagePath`, `createDashboardPageHero`, `DataRecordCard`/cartão real compartilhado, `StatusBadge`, `ActionButton`, `EmptyState`/`EmptyGuidance`, controle de pesquisa/filtro do kit; detalhe: `BackLink`, `SectionCard`, `EventsSection`/`Timeline`, anexo/preview e campos de mensagem **após confirmar export e contrato**. Sem duplicar chrome, padrões de layout ou importar domínio de Minhas Solicitações. Responsividade, foco, teclado, temas e Ajuda são DoD.
+
+**AC:** (1) cartões por documento, sem tabela principal; (2) upload só no detalhe; (3) resumo de solicitações na aba e thread completa no detalhe; (4) opcional por mês sem virar exigência geral; (5) versões e histórico preservados; (6) ausência de documentos é estado normal; (7) authorized audiences separadas; (8) deep link/URL/F5/voltar preservam contexto; (9) sem dados ou estados inventados; (10) nenhuma quarta aba; (11) colaboração/WebSocket somente após gates; (12) CLARA e Help atualizadas no mesmo gate da implementação comprovada.
+
+**Próxima etapa:** apresentar a V0.2 ao PO para ajuste/aprovação final do desenho (detalhe lado a lado permanece proposta anterior não contrariada pelas quatro escolhas). Após freeze e inventário, elaborar execução incremental page-by-page. Legado não será removido nesta etapa.
