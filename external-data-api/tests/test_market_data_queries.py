@@ -10,6 +10,7 @@ import pytest
 
 from app.application import market_data_queries as mdq
 from app.application.contracts import (
+    ContractNotReadyError,
     InvalidQueryError,
     StorageUnavailableError,
     UnknownInstrumentError,
@@ -134,6 +135,11 @@ def _wire(monkeypatch, repo):
     monkeypatch.setattr(
         mdq, "MarketDataRepository", lambda conn, schema: repo
     )
+    # Ready by default in use-case tests — dedicated tests below cover
+    # the propagation of ContractNotReadyError.
+    monkeypatch.setattr(
+        mdq, "check_market_contract_ready", lambda conn: None
+    )
 
 
 def _metal_row(**over):
@@ -171,6 +177,71 @@ def _fx_row(**over):
 
 
 # --- storage gate -----------------------------------------------------------
+
+def _wire_contract_not_ready(monkeypatch):
+    """Readiness gate denies: no catalog read may happen."""
+    calls = []
+    monkeypatch.setattr(mdq, "get_connection", lambda: _FakeConnCtx())
+
+    def _boom(conn):
+        raise ContractNotReadyError("revision V004 not applied")
+
+    monkeypatch.setattr(mdq, "check_market_contract_ready", _boom)
+    monkeypatch.setattr(
+        mdq,
+        "MarketDataRepository",
+        lambda conn, schema: calls.append("repo_touched"),
+    )
+    return calls
+
+
+def test_catalog_blocked_when_contract_not_ready(storage_on, monkeypatch):
+    calls = _wire_contract_not_ready(monkeypatch)
+    with pytest.raises(ContractNotReadyError) as exc:
+        mdq.get_catalog()
+    assert exc.value.code == "EXTERNAL_DATA_CONTRACT_NOT_READY"
+    assert calls == []  # repository never constructed
+
+
+def test_metal_observations_blocked_when_contract_not_ready(
+    storage_on, monkeypatch
+):
+    calls = _wire_contract_not_ready(monkeypatch)
+    with pytest.raises(ContractNotReadyError):
+        mdq.list_metal_observations(
+            instrument_code="copper",
+            date_from_raw="2026-01-01",
+            date_to_raw="2026-12-31",
+            limit_raw=None,
+            cursor_raw=None,
+        )
+    assert calls == []
+
+
+def test_fx_observations_blocked_when_contract_not_ready(
+    storage_on, monkeypatch
+):
+    calls = _wire_contract_not_ready(monkeypatch)
+    with pytest.raises(ContractNotReadyError):
+        mdq.list_fx_observations(
+            pair="USD/BRL",
+            rate_kind="ptax_closing_sell",
+            date_from_raw="2026-01-01",
+            date_to_raw="2026-12-31",
+            limit_raw=None,
+            cursor_raw=None,
+        )
+    assert calls == []
+
+
+def test_ingestion_status_blocked_when_contract_not_ready(
+    storage_on, monkeypatch
+):
+    calls = _wire_contract_not_ready(monkeypatch)
+    with pytest.raises(ContractNotReadyError):
+        mdq.get_ingestion_status()
+    assert calls == []
+
 
 
 def test_catalog_fails_closed_without_db(storage_off, monkeypatch):

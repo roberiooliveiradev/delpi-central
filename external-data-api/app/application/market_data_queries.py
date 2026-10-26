@@ -26,6 +26,9 @@ from app.domain.market_data import (
 )
 from app.domain import usage_policy
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.persistence.market_contract_readiness import (
+    check_market_contract_ready,
+)
 from app.infrastructure.persistence.market_data_repository import (
     MarketDataRepository,
     decode_cursor,
@@ -141,6 +144,7 @@ def get_catalog() -> dict[str, Any]:
     """operationId: listMarketDataCatalogV1."""
     _require_storage()
     with get_connection() as conn:
+        check_market_contract_ready(conn)
         repo = _repo(conn)
         sources = {s.source_id: s for s in repo.list_sources()}
         instruments = repo.list_instruments()
@@ -193,6 +197,7 @@ def list_metal_observations(
     cursor = _parse_cursor(cursor_raw)
 
     with get_connection() as conn:
+        check_market_contract_ready(conn)
         repo = _repo(conn)
         instrument = repo.get_instrument(code)
         if instrument is None or not instrument.active:
@@ -254,6 +259,7 @@ def list_fx_observations(
     cursor = _parse_cursor(cursor_raw)
 
     with get_connection() as conn:
+        check_market_contract_ready(conn)
         repo = _repo(conn)
         source = repo.get_source("bcb-ptax")
         _require_display(source, what=pair_code)
@@ -295,6 +301,7 @@ def get_ingestion_status() -> dict[str, Any]:
     """operationId: getMarketDataIngestionStatusV1."""
     _require_storage()
     with get_connection() as conn:
+        check_market_contract_ready(conn)
         repo = _repo(conn)
         feeds = repo.feed_statuses()
         sources = {s.source_id: s for s in repo.list_sources()}

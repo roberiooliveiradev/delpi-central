@@ -100,3 +100,12 @@ class UseNotApprovedError(ExternalDataError):
 
     http_status = 403
     code = "EXTERNAL_DATA_USE_NOT_APPROVED"
+
+
+class ContractNotReadyError(ExternalDataError):
+    """The rights-policy contract revision (e.g. V004) cannot be proven
+    in the migrations ledger — the recorded catalog predates or diverges
+    from the quarantine semantics, so no market data may be served."""
+
+    http_status = 503
+    code = "EXTERNAL_DATA_CONTRACT_NOT_READY"

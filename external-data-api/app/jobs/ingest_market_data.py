@@ -31,6 +31,9 @@ from app.domain.market_data import (
     SUPPORTED_FEEDS,
 )
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.persistence.market_contract_readiness import (
+    check_market_contract_ready,
+)
 from app.infrastructure.persistence.market_data_repository import (
     MarketDataRepository,
 )
@@ -90,6 +93,9 @@ def main(argv: list[str] | None = None) -> int:
     correlation_id = str(uuid.uuid4())
     try:
         with get_connection() as conn:
+            # The feed may be enabled by env while the rights contract is
+            # still pending — an unproven catalog must not be written to.
+            check_market_contract_ready(conn)
             repo = MarketDataRepository(
                 conn, schema=Settings.EXTERNAL_DATA_SCHEMA
             )
