@@ -53,6 +53,32 @@ class Gateway:
         self.args = kwargs
         return self.wc_timeline
     def get_downtimes(self, **kwargs): self.args = kwargs; return self.downtimes
+    def get_downtime_analytics(self, **kwargs):
+        self.args = kwargs
+        return {
+            "branch": "01", "from": "f", "to": "t", "referenceAt": "ref",
+            "timezone": "America/Sao_Paulo",
+            "appliedFilters": {"workCenter": "CT-35", "reasonCode": None,
+                               "source": None, "classification": None,
+                               "debug": "drop"},
+            "summary": {"totalStoppedSeconds": 7200, "attributedSeconds": 7200,
+                        "occurrencesCount": 2, "averageOccurrenceSeconds": 3600,
+                        "pendingCount": 1, "openCount": 1, "rawSql": "drop"},
+            "byReason": [{"key": "setup", "reasonCode": "setup", "label": "Setup",
+                          "seconds": 3600, "occurrencesCount": 1, "pendingCount": 0,
+                          "percentOfAttributed": 50.0, "cumulativePercent": 50.0,
+                          "internal": "drop"}],
+            "byWorkCenter": [{"workCenter": "CT-35", "seconds": 7200,
+                              "occurrencesCount": 2, "averageSeconds": 3600,
+                              "percentOfTotal": 100.0, "secret": "drop"}],
+            "byDay": [{"date": "2026-09-29", "weekday": 1, "seconds": 7200,
+                       "occurrencesCount": 2, "trace": "drop"}],
+            "byWeekdayHour": [{"weekday": 1, "weekdayLabel": "ter", "hour": 9,
+                               "seconds": 3600, "occurrencesCount": 1}],
+            "quality": {"overlapDetected": False, "overlapSeconds": 0,
+                        "partial": False, "factsCapped": False},
+            "internalDebug": "drop-me",
+        }
     def list_downtime_reasons(self):
         return {"items": [
             {"code": "setup", "label": "Setup", "category": "setup", "requiresNote": False,
@@ -249,6 +275,83 @@ def test_downtime_filter_options_projects_read_only_fields_and_keeps_inactive():
         {"code": "old_reason", "label": "Legado", "category": "other", "active": False},
     ]
     assert data["sources"] == [{"code": "operator_pause"}, {"code": "system"}]
+
+
+def test_downtime_analytics_forwards_filters():
+    gateway = Gateway()
+    start = datetime(2026, 9, 22, 3, tzinfo=timezone.utc)
+    end = datetime(2026, 9, 29, 3, tzinfo=timezone.utc)
+    data = MesReadService(gateway).get_downtime_analytics(
+        user(*FULL), branch="01", period_from=start, period_to=end,
+        work_center="CT-35", reason_code="setup", source="system",
+        classification="pending", permission=MES_DOWNTIMES_VIEW,
+    )
+    assert gateway.args == {
+        "branch": "01", "period_from": start, "period_to": end,
+        "work_center": "CT-35", "reason_code": "setup",
+        "source": "system", "classification": "pending",
+    }
+    # projeção estrita do contrato gerencial — nada vaza do owner
+    assert set(data) == {
+        "branch", "from", "to", "referenceAt", "timezone", "appliedFilters",
+        "summary", "byReason", "byWorkCenter", "byDay", "byWeekdayHour",
+        "quality",
+    }
+    assert set(data["appliedFilters"]) == {
+        "workCenter", "reasonCode", "source", "classification",
+    }
+    assert set(data["summary"]) == {
+        "totalStoppedSeconds", "attributedSeconds", "occurrencesCount",
+        "averageOccurrenceSeconds", "pendingCount", "openCount",
+    }
+    assert set(data["byReason"][0]) == {
+        "key", "reasonCode", "label", "seconds", "occurrencesCount",
+        "pendingCount", "percentOfAttributed", "cumulativePercent",
+    }
+    assert set(data["byWorkCenter"][0]) == {
+        "workCenter", "seconds", "occurrencesCount", "averageSeconds",
+        "percentOfTotal",
+    }
+    assert set(data["byDay"][0]) == {
+        "date", "weekday", "seconds", "occurrencesCount",
+    }
+    assert set(data["byWeekdayHour"][0]) == {
+        "weekday", "weekdayLabel", "hour", "seconds", "occurrencesCount",
+    }
+    assert set(data["quality"]) == {
+        "overlapDetected", "overlapSeconds", "partial", "factsCapped",
+    }
+
+
+def test_downtime_analytics_requires_from_and_validates():
+    with pytest.raises(ValueError, match="from"):
+        MesReadService(Gateway()).get_downtime_analytics(
+            user(*FULL), branch="01", period_from=None, period_to=None,
+            permission=MES_DOWNTIMES_VIEW,
+        )
+    with pytest.raises(ValueError):
+        MesReadService(Gateway()).get_downtime_analytics(
+            user(*FULL), branch="01",
+            period_from=datetime(2026, 9, 29, 10, tzinfo=timezone.utc),
+            period_to=None, classification="closed",
+            permission=MES_DOWNTIMES_VIEW,
+        )
+
+
+def test_downtime_analytics_requires_downtimes_permission_and_branch():
+    service = MesReadService(Gateway())
+    start = datetime(2026, 9, 22, 3, tzinfo=timezone.utc)
+    with pytest.raises(PermissionError):
+        service.get_downtime_analytics(
+            user("delpi-mes.access", "delpi-mes.view.filial-01"),
+            branch="01", period_from=start, period_to=None,
+            permission=MES_DOWNTIMES_VIEW,
+        )
+    with pytest.raises(PermissionError):
+        service.get_downtime_analytics(
+            user(*FULL), branch="02", period_from=start, period_to=None,
+            permission=MES_DOWNTIMES_VIEW,
+        )
 
 
 def test_downtime_filter_options_requires_downtimes_permission():

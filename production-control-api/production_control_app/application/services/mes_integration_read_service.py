@@ -4,7 +4,13 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable
 
+from production_control_app.application.services.downtime_analytics import (
+    aggregate_downtime_analytics,
+)
 from production_control_app.application.services.mes_timeline_builder import MesTimelineBuilder
+from production_control_app.application.services.public_mes_work_center_today_service import (
+    FACTORY_TIMEZONE,
+)
 from production_control_app.domain.errors import ProductionRunNotFound
 from production_control_app.domain.ports.mes_monitoring_read_repository import (
     MesMonitoringReadRepositoryPort,
@@ -18,6 +24,12 @@ from production_control_app.domain.services.mes_performance import (
 # Filtros gerenciais da consulta de paradas (Etapa 1 — Gestão de Paradas).
 _DOWNTIME_CLASSIFICATIONS = frozenset({"pending", "confirmed"})
 _DOWNTIME_SORTS = frozenset({"recent", "oldest"})
+
+# Limites da agregação gerencial (Etapa 2): janela máxima de 92 dias e
+# teto de fatos por consulta — a listagem paginada nunca é fonte de
+# cálculo dos indicadores (RQ-E2-01/RQ-E2-06).
+_DOWNTIME_ANALYTICS_MAX_DAYS = 92
+_DOWNTIME_ANALYTICS_MAX_FACTS = 20000
 
 # Bloco de Performance no monitoramento live — sem idealProductionSeconds
 # (reservado ao detalhamento do run) para manter o payload enxuto.
@@ -224,6 +236,82 @@ class MesIntegrationReadService:
             "pageSize": page_size,
             "total": total,
             "items": [self._downtime_item(row) for row in rows],
+        }
+
+    def get_downtime_analytics(
+        self,
+        *,
+        branch: str,
+        work_center: str | None = None,
+        period_from: datetime | None = None,
+        period_to: datetime | None = None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+    ) -> dict[str, Any]:
+        """Agregações gerenciais de paradas (Etapa 2 — Gestão de Paradas).
+
+        Mesma seleção de fatos da listagem (mesmo WHERE no repositório);
+        agregação pura em `downtime_analytics` sobre todos os eventos
+        elegíveis, nunca sobre a página atual. `referenceAt` único da
+        consulta limita paradas abertas e ancora a janela — o navegador
+        nunca é autoridade temporal.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        if period_from is None:
+            raise ValueError("from é obrigatório para a consulta analítica.")
+        reference_at = self._clock()
+        effective_to = period_to or reference_at
+        if effective_to > reference_at:
+            effective_to = reference_at
+        if period_from >= effective_to:
+            raise ValueError("O início do período deve ser anterior ao fim.")
+        if (effective_to - period_from).total_seconds() > (
+            _DOWNTIME_ANALYTICS_MAX_DAYS * 86400
+        ):
+            raise ValueError(
+                f"O período analítico deve ser de no máximo "
+                f"{_DOWNTIME_ANALYTICS_MAX_DAYS} dias."
+            )
+        normalized_classification = (classification or "").strip().lower() or None
+        if normalized_classification is not None and normalized_classification not in _DOWNTIME_CLASSIFICATIONS:
+            raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        normalized_source = (source or "").strip().lower() or None
+        if normalized_source is not None and normalized_source not in DOWNTIME_SOURCES:
+            raise ValueError("source inválida para parada MES.")
+        normalized_reason = (reason_code or "").strip().lower() or None
+        normalized_center = (work_center or "").strip() or None
+
+        result = self._repository.list_downtime_analytics_facts(
+            branch=code,
+            work_center=normalized_center,
+            period_from=period_from,
+            period_to=effective_to,
+            reason_code=normalized_reason,
+            source=normalized_source,
+            classification=normalized_classification,
+            max_facts=_DOWNTIME_ANALYTICS_MAX_FACTS,
+        )
+        aggregates = aggregate_downtime_analytics(
+            result["facts"],
+            window_from=period_from,
+            window_to=effective_to,
+            timezone_name=FACTORY_TIMEZONE,
+            facts_capped=result["capped"],
+        )
+        return {
+            "branch": code,
+            "from": period_from.isoformat(),
+            "to": effective_to.isoformat(),
+            "referenceAt": reference_at.isoformat(),
+            "timezone": FACTORY_TIMEZONE,
+            "appliedFilters": {
+                "workCenter": normalized_center,
+                "reasonCode": normalized_reason,
+                "source": normalized_source,
+                "classification": normalized_classification,
+            },
+            **aggregates,
         }
 
     def list_downtime_sources(self) -> dict[str, Any]:

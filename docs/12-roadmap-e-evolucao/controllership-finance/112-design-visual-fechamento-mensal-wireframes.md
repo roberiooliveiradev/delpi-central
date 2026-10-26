@@ -1,5 +1,12 @@
 # 112 — Design visual colaborativo: Fechamento mensal (wireframes por página)
 
+> **DECISÃO PO — UX DE CADASTRO DOCUMENTAL (26/10/2026):** criar e editar **configurações dos tipos de documentos/PDFs exigidos à DRE** deve usar **página dedicada de Administração**, e NÃO modal. Preservar listagem, botão Adicionar, rota/formulário de criação, rota/formulário de edição, retorno à listagem com contexto e foco, validação, histórico, vigência inicial/final/excepcional, responsividade e Help. Acesso à configuração apenas por `controllership-finance.manage` (ou Super Admin com autoridade efetiva); backend autoriza fail-closed. Esta página administrativa NÃO é uma quarta aba do Fechamento mensal; uploads/anexos operacionais continuam dentro da aba Documentos e interações. **TARGET**, não implementação vigente; inventariar modal atual, router, componentes `@delpi/plugin-ui`, contratos, consumidores e gates antes de executar. Preservar modal legado até substituição validada e depreciação expressamente autorizada.
+
+> **PLANO CANÔNICO DE CONTINUIDADE — 26/10/2026:** [Doc 113 — fluxo Controladoria → DRE, abertura contextual e vigência documental](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Reúne as decisões do PO para o Devin: consulta do mês sem abertura, abertura formal contextual por `.access`, operação interna com relatórios/divergências, catálogo de PDFs DRE gerido por `.manage` com vigência inicial/final/excepcional, entrega DRE restrita e tratamento de versões. TARGET ≠ runtime, gates preservados, limpeza de legado em fase posterior.
+
+> **DECISÃO VIGENTE DO PO — 26/10/2026 — CORREÇÃO DO FLUXO DE COMPETÊNCIA (TARGET; RUNTIME NÃO ALTERADO).** O usuário entra em `/apps/controllership-finance/closing/monthly-closing`, seleciona um **mês de referência** autorizado e acessa as **três abas aprovadas**: **Visão geral**, **Documentos e interações**, **Relatórios e divergências**. A **consulta** de visão geral, fontes/relatórios calculados e catálogo aplicável independe de competência formalmente aberta, checklist publicado ou documentos anexados. Sem documentos = lista vazia honesta, não bloqueio. O cadastro dos **tipos/entregáveis exigidos** é **global/versionado por vigência a partir de uma competência**, não um recadastro mensal; adições e exclusões prospectivas não alteram fechamentos já finalizados. A anexação/validação/versionamento das **evidências** é vinculada ao mês e sujeita a autorização. Selecionar mês **não é** `openCompetence`, criar snapshot ou concluir P5. Preservar histórico de fechamento, `ATTACHED != VALIDATED`, limites dos contexts, duas permissions existentes e Ajuda. **Execução atual diverge (EXECUTION_DRIFT):** `listCompetences()` lista apenas competências formalmente abertas; o relatório read-only CF-PROC0072-COMPETENCE-DIAG-001 relatou produção com zero competências e template v1 DRAFT, mas SQL e smoke autenticado ainda não foram revalidados independentemente. Não criar dataset fictício, não mudar contrato silenciosamente, não publicar template nem abrir período para contornar a tela vazia. **Pendente de gate técnico:** decidir owner/API de contexto mensal independente de abertura, derivação temporal da lista, momento de congelamento de snapshots para competências em andamento, elegibilidade de cadastro/anexo em mês sem abertura e compatibilidade P2/P5. Conteúdo anterior que apresente abertura formal como pré-requisito de **consulta** deve ser lido como histórico/AS-IS substituído por esta decisão; fluxos formais ainda exigem reconciliação, não foram revogados automaticamente.
+
+
 **Data:** 2026-10-26. **Produto:** Portal Controladoria & Finanças. **Processo:** PROC-0072. **Natureza:** abertura de ciclo de DESIGN / documentação; **nenhum GO de implementação**, nenhuma migração/alteração em runtime.
 
 **Estado:** `DESIGN_IN_PROGRESS / PENDING_PO_VISUAL_APPROVAL`. A solicitação do PO é criar a experiência de uma página central chamada **Fechamento mensal** e desenhar **todas as páginas e componentes incrementalmente**, sempre validando visualmente na conversa e atualizando o GitHub com as decisões aprovadas. Este documento registra um **wireframe V0.1 proposto**, não uma decisão definitiva sobre rotas, remoção de páginas, domínio, esquema de banco ou regras de workflow.
@@ -1223,7 +1230,7 @@ Na própria bancada Relatórios e divergências mostrar: origem e estado da font
 
 **Substitui expressamente** a proposta anterior de quatro abas da V0.6/§23/§24 no aspecto de **navegação visual**. Abas na bancada operacional da Controladoria, somente:
 
-1. **Visão geral** — seletor de competências **existentes e autorizadas**, consulta de setembro/2026, outubro/2026 etc., status histórico do fechamento, bloqueios, eventos e entradas contextualizadas por competência;
+1. **Visão geral** — ~~seletor de competências existentes e autorizadas~~ **SUPERADO pela decisão PO de 26/10/2026 (ver §3 e §31): seleção livre de mês de referência YYYY-MM, sem exigir competência aberta** — consulta de setembro/2026, outubro/2026 etc., status histórico do fechamento, bloqueios, eventos e entradas contextualizadas por competência;
 2. **Documentos e interações** — checklist/documentos, anexos, versões (V1, V2, ...), comentários, pedidos de complemento/correção, resposta, documentação disponibilizada à audiência autorizada e histórico do item;
 3. **Relatórios e divergências** — catálogo e resultados TOTVS autorizados, parâmetros e versões da emissão referentes à competência, divergências e orientações de correção manual na origem, container de prévia PDF e disponibilização governada do arquivo resultante à documentação.
 
@@ -1245,7 +1252,7 @@ Na própria bancada Relatórios e divergências mostrar: origem e estado da font
 
 ```text
 Fechamento mensal
-[Competência existente/autorizada: Setembro/2026 ▼] [empresa/escopo autorizado]
+[Mês de referência: 2026-09 ▼]  (SUPERADO §3/§31: seleção livre, não restrita a competências abertas) [empresa/escopo autorizado]
 [Estado do fechamento e última atualização canônicos]
 [Bloqueios → contexto] [Divergências → Relatórios] [Documentos a tratar → Docs]
 
@@ -1423,3 +1430,178 @@ Na rota `/apps/controllership-finance/closing/monthly-closing`, seletor exibe **
 
 ### Próximo gate / orientação
 Sem novo prompt de expansão nem novo deploy a partir desta revisão. Validar BFF e a elegibilidade de competências históricas, distinguir **listar/consultar CLOSED** de **upload permitido em OPEN**, executar smoke autenticado e capturar resultado; então reclassificar o slice. Manter três abas, preservar P2/P3/P4/P5, rotas legadas e DRE por último. Parecer registrado: `INCONCLUSIVE`.
+
+
+## 30. Diagnostico requerido: seletor vazio e ciclo de abertura de competencia
+
+**Data:** 2026-10-26. **Entrada PO:** apos rework 01 o workspace de Fechamento mensal exibe seletor de competencia sem opcoes e “Nenhuma competencia aberta e autorizada para o seu perfil”. PO solicitou prompt exclusivamente de avaliacao: esclarecer como abrir/cadastrar a competencia, se ha template publicado, administracao, filtro de autorizacao ou defeito de listagem. **Estado:** `INCONCLUSIVE` quanto a causa no runtime, `DIAGNOSTIC_REQUESTED`, `NO_IMPLEMENTATION_AUTHORIZED`.
+
+**Achados de codigo:** `plugins/controllership-finance/src/api/competencesApi.ts` possui `listCompetences(): GET /closing/competences`, `openCompetence(period): POST /closing/competences`, `getCompetence(period): GET /closing/competences/{period}`. `ClosingChecklistPage.tsx` contem `Abrir competencia` apos `competence_not_opened`, informando que a abertura copia os itens da versao publicada do checklist. O novo `MonthlyClosingPage.tsx` lista somente as competencias retornadas pela BFF e nao cria novas competencias. Uma lista vazia nao identifica automaticamente causa (inexistencia, escopo/ACL, template nao publicado, erro de configuracao, ambiente divergente ou filtro do backend).
+
+**Direcao vigente:** nao criar fluxo alternativo, nao abrir competencia ou publicar template em producao sem diagnostico e decisao do PO. A competencia historica fechada deve permanecer consultavel se seu contrato e ACL permitirem, separando status OPEN de acesso read-only. Nao assumir que toda a listagem e somente OPEN sem ler query/owner. O diagnostico deve seguir HEAD/status → contratos/codigo BFF → evidence de runtime read-only (sem divulgar dados financeiros/segredos) → classificar hipoteses com provas → propor no maximo opcoes de UX minimalistas dentro da pagina existente → reportar `DECISION_REQUIRED` para owner/permissao/contrato. DRE permanece ultima fase. Nenhum novo prompt de implementacao foi autorizado.
+
+**Entrega esperada:** relatorio de inventario com sequencia de abertura, prerequisitos, permission/scope, razao real do vazio, coexistencia de competencia historica, UX administrativa atual e recomendacao delimitada de menor alteracao, sem commits de runtime nem deploy.
+
+
+## Complemento visual pós-decisão do PO — detalhe documental e páginas de configuração (26/10/2026)
+
+O [Plano 113, §9](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md) contém a especificação detalhada das superfícies do **Fechamento Mensal**: Início; três abas operacionais; **detalhe de PDF/interações**; Administração (listagem, criação, edição de configuração documental); e DRE (última fase). O detalhe do PDF conserva competência, versão e mesma thread auditável entre Controladoria e DRE com ações distintas. **Desktop:** PDF/versões à esquerda, comentários/pedidos à direita e histórico embaixo. **Mobile:** seções empilhadas e foco preservado. Resposta da Controladoria NÃO encerra pedido da Contabilidade automaticamente. Cadastro e edição de configuração do documento em **páginas completas**, nunca modal. A configuração do catálogo DRE é **Manage-only**, não mais uma aba. O runtime atual e contratos futuros não se confundem com esses desenhos TARGET.
+
+Devin é obrigado a consultar `plugins/plugin-ui/src/index.ts`, `plugins/plugin-ui/docs/component-catalog.md`, registro visual e demos e aplicar a matriz por página do [doc 30](./30-plugin-ui-reuse-map.md). Não duplicar kit/chrome e validar exports reais, inclusive PagePath, preview/attachments e conversation/thread. A descrição visual não outorga GO de runtime ou remoção de legado.
+
+## 31. Execução CF-PROC0072-MONTHLY-REFERENCE-CATALOG-001 — mês de referência implementado
+
+**Data:** 2026-10-26. **Base:** `121fd93e02`. **Tipo:** implementação da decisão PO registrada em §3 (mês de referência sem abertura formal prévia). **Estado:** `IMPLEMENTED_SELECTION_LAYER` + `DECISION_REQUIRED` para contratos de dados por mês sem competência.
+
+### 31.1 O que mudou no runtime (MFE apenas)
+
+`plugins/controllership-finance/src/features/closing/MonthlyClosingPage.tsx` reescrito:
+
+- **Seleção por mês de referência:** `input type=month` (`FilterInputField` do kit) livre, sem default de mês corrente; selecionar um mês navega para `/closing/monthly-closing/{YYYY-MM}` e **nunca** executa `openCompetence`. A landing sem período lista as competências formalmente abertas como atalhos reais da BFF + empty state honesto que orienta a consulta por mês.
+- **Isolamento por período preservado:** cockpit, probe de competência e lista keyed por `period`/`nonce`, com AbortController e request-id independente por fonte — resposta fora de ordem nunca mostra mês A sob mês B.
+- **Probe de competência separado do cockpit:** `getCompetence(period)` decide a elegibilidade dos painéis derivados do checklist P2 (`ClosingDocumentsPanel`, `ReportsMatrixPanel`). `competence_not_opened`/`competence_not_found`/404 viram `NotOpenedNotice` — estado normal, não erro.
+- **`NotOpenedNotice` + ação autorizada «Abrir competência»:** alternativa A do diagnóstico §30 realizada dentro das três abas — sem nova aba/página. O botão chama o contrato real `POST /closing/competences` (permission `access`, idempotente); falhas (ex.: `409 no_published_template`) são exibidas com mensagem honesta. BFF permanece autoridade final, fail-closed.
+- **Três abas preservadas** e deep link `?tab=documents|reports` mantido em todas as transições.
+- `Documentos a tratar` permanece `—` (FM-05C `CONTRACT_TO_INVENTORY`, owner P2).
+
+### 31.2 O que NÃO mudou — lacunas classificadas
+
+- **Consulta por mês sem competência aberta é parcial:** cockpit (`GET /closing/cockpit/{period}`), matriz R01–R15 (`GET /closing/competences/{period}/reports`) e evidências P2 seguem ancorados na competência — sem ela, a aba exibe `NotOpenedNotice` + ação de abertura. Consulta de relatórios/entregáveis por mês de referência **sem** competência: `DECISION_REQUIRED` (não existe produtor canônico por mês de referência; criar endpoint novo sem gate de contrato é proibido por §4 da task).
+- **Cadastro mestre global de entregáveis com vigência por competência:** `TO_INVENTORY`/`DECISION_REQUIRED` — `admin_catalogs_routes`/`admin_checklist_routes` versionam templates de checklist com `effective_from_period`, mas não há catálogo de tipos de documento effective-dated independente do snapshot P2.
+- **Imutabilidade de fechamentos finalizados:** o snapshot `competence_checklist_item` já é imutável por construção; evidências anexadas vivem por competência e não são apagadas por mudanças em template. Regra para competência **em andamento** quando o cadastro mestre muda: `DECISION_REQUIRED` (sem contrato vigente).
+- `monthly_competence.status` só admite `OPEN` — "competência encerrada" é conceito P5 (`monthly_closing`); a listagem não omite históricas.
+
+### 31.3 Testes
+
+`MonthlyClosingPage.test.tsx` reescrito: 17/17 PASS cobrindo seleção livre sem `openCompetence`, landing com atalhos/empty state, mês sem abertura nas três abas, CTA de abertura (sucesso/reload e 409 honesto), isolamento fora de ordem, preservação de período+aba na URL, gate documental e indicadores honestos.
+
+### 31.4 Matriz de referências corrigidas nesta execução
+
+| Arquivo | Referência | Classificação | Ação |
+|---|---|---|---|
+| README.md §banner | decisão TARGET | TARGET→PARTIAL_IMPLEMENTED | delta de execução adicionado |
+| 09 §banner | TARGET NÃO IMPLEMENTADO | TARGET→PARTIAL | delta de execução adicionado |
+| 23 §banner | `PLANNED` | `PARTIAL_IMPLEMENTED` | status atualizado |
+| 112 §25.1 item 1 | seletor de competências existentes | SUPERADO | anotação inline + ponteiro §31 |
+| 112 §25.3 layout | `[Competência existente/autorizada ▼]` | SUPERADO | layout corrigido + nota |
+| 96/97/98/100/102/103/108 | snapshot na abertura, `no_published_template`, `listCompetences` | AS-IS técnico / histórico | preservados — contrato segue implementado e é o que a «Abrir competência» chama |
+| 15/24/30/32/37/46/47/91 | menções a competência/template | não relacionadas / consistentes | mantidas (Home usa "competência ativa" = contexto de launcher, não o seletor do workspace) |
+
+**Classificação final:** `IMPLEMENTED` (camada de seleção/UX) + `DECISION_REQUIRED` (produtores por mês de referência sem competência; catálogo mestre effective-dated; regra de competência em andamento). Revisão independente pendente — não é autoaceite arquitetural.
+
+## 32. Reconciliação de contratos — inventário de acoplamento (CF-PROC0072-CONTRACT-RECONCILIATION-002)
+
+**Data:** 2026-10-26. **Base:** `b6c370daa8`. **Tipo:** Checkpoint 1 do Plano 113 — inventário técnico obrigatório do acoplamento `monthly_competence`/`openCompetence`/template PUBLISHED/snapshot/cockpit/R01–R15/P2/P5. **Estado:** `INVENTORIED` + `DECISION_REQUIRED` (3 itens). Zero mudança de contrato nesta rodada.
+
+### 32.1 Queries que JÁ operam por `YYYY-MM` sem competência aberta [PROVEN]
+
+| Endpoint | Chave real | Fonte |
+|---|---|---|
+| `GET /closing/stock-inventory` | `period` query param | gateway api-delpi `/financeiro/stock-inventory` (TOTVS read) |
+| `GET /closing/financial-settlements` | `start_date`/`end_date` | gateway api-delpi (baixas AP/AR) |
+| `GET /closing/financial-settlements/summary` | `start_date`/`end_date` | idem |
+
+Esses são os relatórios fonte canônicos "consultáveis por mês sem abertura" do Plano 113 §5 — já cumpridos pelo contrato vigente.
+
+### 32.2 Queries HARD-COUPLED a `monthly_competence` [PROVEN]
+
+Todas sob prefixo `/closing/competences/{period}` e todas chamam `_competence_id(cur, period)` → `CompetenceNotOpened` se não há linha:
+
+| Endpoint | Repositório | Uso no workspace |
+|---|---|---|
+| `GET …/{period}` probe | checklist_repo `get_competence` | gate de elegibilidade |
+| `GET …/{period}/cockpit` | package_repo `get_cockpit` | aba Visão geral |
+| `GET …/{period}/reports` | checklist_repo `list_competence_items` | matriz R01–R15 (deriva do snapshot!) |
+| `GET …/{period}/p3`, `/p3/events` | p3_repo | divergências |
+| `GET …/{period}/pendencies*` | pendency_repo | P4 |
+| `GET …/{period}/packages*` | package_repo | P5 |
+| `documents*` | document_repo (`get_competence_id`) | evidências P2 |
+
+**Achado estrutural:** a matriz R01–R15 não é um "relatório calculado por período" — é uma **projeção do snapshot `competence_checklist_item`** copiado na abertura. Sem `monthly_competence` não existe `competence_checklist_item`, logo não existe matriz. A decisão PO de "consultar relatórios por mês sem abertura" exige um **produtor canônico novo ou semântica alternativa** — não é parametrizeável por flag.
+
+### 32.3 Acoplamento de abertura → `DECISION_REQUIRED`
+
+`open_competence` → `resolve_published_version(period)` → `NoPublishedTemplate` (409) se não há PUBLISHED vigente. Schema `V001:73` — `monthly_competence.template_version_id UUID NOT NULL REFERENCES checklist_template_version`. `competence_checklist_item.source_template_item_id NOT NULL REFERENCES checklist_template_item`.
+
+**Abrir sem template publicado exige escolha real de persistência** — cada opção tem impacto material:
+
+| Opção | Mecanismo | Impacto |
+|---|---|---|
+| A — `template_version_id` nullable | Migration `V015` + snapshot zero itens | `monthly_competence` passa a admitir "aberto sem checklist"; P2/P5 e auditoria precisam tratar competência vazia; reabertura/re-snapshot quando template aparecer é **regra nova indefinida** |
+| B — versão placeholder "vazia" | Seed de template_version PUBLISHED com 0 itens | Sem migration de schema, mas cria artefato sintético que contamina histórico/auditoria; `resolve_published_version` continua funcionando |
+| C — manter gate de template (AS-IS) | Nada muda | Contradiz TARGET do PO — abertura bloqueada até `.manage` publicar versão |
+
+**Recomendação provisória: A**, com regra explícita de "competência sem template = lista vazia legítima, re-snapshot proibido retroativamente após template aparecer" — mas exige decisão PO/owner P2 sobre o que acontece quando um template é publicado DEPOIS da abertura sem template (itens não se materializam sozinhos).
+
+### 32.4 `DECISION_REQUIRED` consolidado
+
+1. **DR-C1 — Abertura sem template publicado:** **RESOLVIDO — IMPLEMENTED** (CF-PROC0072-MONTHLY-OPEN-003). Opção A aplicada: `V015__monthly_competence_optional_template.sql` torna `template_version_id` nullable; `open_competence` abre com snapshot vazio + audit `opened_without_template`; listagens/probe usam `LEFT JOIN`. Sem re-snapshot retroativo. Rollback e gate produtivo: ver §33.
+2. **DR-C2 — Relatórios R01–R15 por mês sem competência:** hoje derivam do snapshot P2. Sem competência, opções: (i) projetar a partir do template PUBLISHED vigente para o mês — mas isso exibe "o que seria exigido", não "o que está em andamento"; (ii) novo endpoint period-keyed; (iii) aceitar que relatórios só existem pós-abertura (contradiz TARGET parcialmente).
+3. **DR-C3 — Competência aberta + alteração posterior de template:** já documentado como pendente no Plano 113 §3 — aqui confirmado pelo schema: o snapshot é cópia física, não view; mudanças no mestre não propagam por construção.
+
+### 32.5 Menor diff implementável já executado (sem gate adicional)
+
+- Copy reconciliada com Plano 113: «Abrir competência» → **«Abrir fechamento»**; "competência aberta" → "fechamento aberto"; lista landing "Fechamentos abertos". `MonthlyClosingPage.test.tsx` atualizado em conjunto (17/17 PASS).
+- Nenhuma rota, contrato, schema, permission ou endpoint criado/alterado.
+
+### 32.6 Gates
+
+| Item | Estado |
+|---|---|
+| MFE seleção por mês + estados honestos | DONE (§31) + label reconciliado |
+| Consulta TOTVS por `YYYY-MM` sem abertura | PROVEN — já vigente |
+| Abertura sem template | **IMPLEMENTED local** — V015 + open_competence opcional; produção aguarda gate de dados (§33) |
+| R01–R15 sem competência | BLOCKED — DR-C2 (não é projeção period-keyed) |
+| Cadastro mestre effective-dated de entregáveis | BLOCKED — DR-C3 + ausência de schema |
+| Compatibilidade P2/P5/legado | PRESERVADA — zero breaking |
+
+**Classificação final (atualizada):** DR-C1 `IMPLEMENTED` localmente (§33); DR-C2/DR-C3 permanecem `DECISION_REQUIRED`. Deploy produtivo de V015 gated por owner de dados + plano de rollback; a migration não é destrutiva (só alarga domínio).
+
+
+## 33. Implementação DR-C1 — abertura sem template (CF-PROC0072-MONTHLY-OPEN-003)
+
+**Estado:** `IMPLEMENTED` em código + testes locais; `PENDING` em produção (gate de dados).
+
+### 33.1 Contrato alterado
+
+- `POST /closing/competences`: versão PUBLISHED vigente deixa de ser pré-requisito. Sem template vigente a competência é persistida com `template_version_id = NULL`, zero itens em `competence_checklist_item` e auditoria `COMPETENCE_OPENED` com `opened_without_template: true`. Com template vigente, o comportamento AS-IS é preservado (snapshot `EXPECTED` da versão resolvida). Idempotência inalterada (`ON CONFLICT DO NOTHING` → `created=false`, sem evento duplicado).
+- `template_version_id` no payload de `GET /closing/competences` e `GET /closing/competences/{period}` passa a admitir `null` (alargamento backward-compatible; consumidor TS `ClosingCompetence.template_version_id: string | null`).
+- `no_published_template` permanece como código histórico no enum de erros, não mais emitido por esta rota — classificado SUPERSEDED para abertura.
+
+### 33.2 Persistência
+
+- `V015__monthly_competence_optional_template.sql`: `ALTER COLUMN template_version_id DROP NOT NULL` + `COMMENT ON COLUMN`. FK preservada; `competence_checklist_item.source_template_item_id` segue NOT NULL (itens excepcionais exigem origem rastreável). Não destrutiva, não reescreve linhas existentes.
+- Rollback: `SET NOT NULL` é seguro apenas se nenhuma competência NULL existir; caso contrário exige decisão de dados — a migration não carrega caminho destrutivo automático.
+
+### 33.3 Semântica P2/P5 com competência sem template
+
+- Checklist vazio é estado legítimo (`list_competence_items` → `[]`), sem `no_published_template`, sem status fictício, sem documento artificial.
+- Conclusão não é alcançável por vacuidade: `derive_closing_state` exige pacotes aplicáveis e conciliações P3 oficiais — competência sem checklist permanece `OPEN`/não concluível enquanto o processo exigir artefatos.
+- Re-snapshot após publicação posterior de template: **não implementado** — continua `DECISION_REQUIRED` (DR-C3); competência aberta sem template não ganha itens retroativamente.
+
+### 33.4 Evidências de teste
+
+- PG real (V001→V015 aplicadas): `test_pg_closing_checklist.py` 12/12 — inclui `test_open_without_publish_succeeds_empty_snapshot` (NULL persistido, snapshot vazio, replay idempotente sem evento duplicado, audit `opened_without_template`, listagem com `template_version: null`).
+- `test_pg_package_c.py` + `test_pg_remainder_build.py` (P4/P5): 46/46 — competência templateless não quebra lifecycle.
+- Suite backend sem PG: 401 passed / 199 skipped; rotas unitárias 23/23. Frontend: tsc OK, MonthlyClosingPage 17/17 + ClosingChecklistPage 6/6.
+- Higiene de testes corrigida no caminho: `test_pg_package_c.py` e `test_pg_remainder_build.py` não tinham `pytestmark` de skip — KeyError pré-existente sem `CF_TEST_PG_*`; adicionado o guard padrão dos irmãos.
+
+### 33.5 Gate produtivo — EXECUTADO (CF-PROC0072-MONTHLY-OPEN-PROD-CLARA-004)
+
+- `CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP` aplica migrations no startup da API ⇒ o deploy da `controllership-finance-api` executa V015 em produção. Deploy autorizado pelo PO e executado em 2026-10-26 com pré-condições verificadas:
+  - backup pré-change `pg_dump -Fc -n controllership_finance` → `~/backups/plugins-hub-controllership-finance-pre-v015-20261026201415.dump` (srv-api);
+  - estado pré-migration: coluna `NOT NULL`, `monthly_competence` com 0 linhas (sem histórico a preservar); schema_migrations V001–V014 íntegros;
+  - deploy canônico `git pull --ff-only` @`052d344d90` + `up-prod-sequential.sh --build controllership-finance-api`;
+  - pós-condições: `migration_applied V015` no startup log, `schema_migrations` max=15, `template_version_id` nullable=YES, FK preservada, container `healthy`.
+- **Primeira abertura real já ocorreu via jornada autenticada do Portal:** `POST /closing/competences` → 201, competência `2026-09` criada com `template_version_id NULL`, 0 itens no checklist, audit `COMPETENCE_OPENED` com `opened_without_template: true` (evidência read-only; ator registrado por UUID).
+- Rollback: `SET NOT NULL` é seguro somente enquanto não houver competências NULL — a partir desta abertura já existe 1 (2026-09); rollback exigiria decisão de dados (associar versão vigente ou descartar o fechamento) — ver §33.2.
+
+
+## 34. Redesign V0.1 — Visão geral (proposta ao PO, 26/10/2026)
+
+A proposta detalhada está no [Plano 113 §11](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Substituir a organização de painéis P1–P5 extensos por header + mês, estado geral, três KPIs contextuais, próximas ações legíveis, três eixos independentes e histórico compacto, sem perder blockers reais nem traduzir indisponibilidade como zero. **PENDING_PO_VISUAL_APPROVAL / NO_RUNTIME_GO**; só após revisão do PO criar brief de implementação, atualizar Help e CLARA, mantendo legado até autorização.
+
+
+## 35. Visão geral V0.2 — escolhas do PO aprovadas (26/10/2026)
+
+O PO aprovou explicitamente: **atenções/próximos passos em destaque**, **atividade recente resumida**, **conclusão e envio separados ao final da Visão geral** e **Estoque/Documentos/Pacote DRE em três cartões compactos**. A especificação de composição, componentes plugin-ui, estados e AC está no [Plano 113 §12](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Quatro opções de UX `PO_APPROVED`; desenho detalhado `PENDING_FINAL_PO_PAGE_APPROVAL`, sem GO de implementação ou remoção de legado.

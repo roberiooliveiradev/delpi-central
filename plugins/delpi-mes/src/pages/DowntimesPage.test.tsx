@@ -1,10 +1,18 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DowntimesRouteParams } from "../hooks/useDelpiMesRoute";
 import type { DowntimeItem } from "../types/mes";
 import { DowntimesPage } from "./DowntimesPage";
+
+function analyticsSection(): HTMLElement {
+  const section = document.querySelector("section.delpi-mes-analytics");
+  if (!section) {
+    throw new Error("analytics section not rendered");
+  }
+  return section as HTMLElement;
+}
 
 const DEFAULT_PARAMS: DowntimesRouteParams = {
   period: "7d",
@@ -61,6 +69,49 @@ const LIST = {
   ],
 };
 
+const ANALYTICS = {
+  branch: "01",
+  from: "2026-02-04T03:00:00.000Z",
+  to: "2026-02-10T12:00:00.000Z",
+  referenceAt: "2026-02-10T12:00:00.000Z",
+  timezone: "America/Sao_Paulo",
+  appliedFilters: {
+    workCenter: null, reasonCode: null, source: null, classification: null,
+  },
+  summary: {
+    totalStoppedSeconds: 10800,
+    attributedSeconds: 10800,
+    occurrencesCount: 3,
+    averageOccurrenceSeconds: 3600,
+    pendingCount: 1,
+    openCount: 1,
+  },
+  byReason: [
+    {
+      key: "SETUP", reasonCode: "SETUP", label: "Preparação de máquina",
+      seconds: 7200, occurrencesCount: 2, pendingCount: 0,
+      percentOfAttributed: 66.67, cumulativePercent: 66.67,
+    },
+    {
+      key: "pending", reasonCode: null, label: "Pendente de classificação",
+      seconds: 3600, occurrencesCount: 1, pendingCount: 1,
+      percentOfAttributed: 33.33, cumulativePercent: 100,
+    },
+  ],
+  byWorkCenter: [
+    { workCenter: "CT-35", seconds: 7200, occurrencesCount: 2, averageSeconds: 3600, percentOfTotal: 66.67 },
+    { workCenter: "CT-41", seconds: 3600, occurrencesCount: 1, averageSeconds: 3600, percentOfTotal: 33.33 },
+  ],
+  byDay: [
+    { date: "2026-02-09", weekday: 0, seconds: 3600, occurrencesCount: 1 },
+    { date: "2026-02-10", weekday: 1, seconds: 7200, occurrencesCount: 2 },
+  ],
+  byWeekdayHour: [
+    { weekday: 0, weekdayLabel: "seg", hour: 10, seconds: 3600, occurrencesCount: 1 },
+  ],
+  quality: { overlapDetected: false, overlapSeconds: 0, partial: false, factsCapped: false },
+};
+
 const OPTIONS = {
   reasons: [
     { code: "SETUP", label: "Preparação de máquina", category: "setup", active: true },
@@ -77,6 +128,9 @@ const envelope = (data: unknown, status = 200) =>
 
 function fetchRouter() {
   return vi.fn().mockImplementation((url: string) => {
+    if (url.includes("/downtimes/analytics")) {
+      return Promise.resolve(envelope(ANALYTICS));
+    }
     if (url.includes("/downtimes/filter-options")) {
       return Promise.resolve(envelope(OPTIONS));
     }
@@ -129,7 +183,7 @@ describe("DowntimesPage", () => {
     renderPage();
     await screen.findByText("OP-100 / 010");
     expect(screen.getByText("Sem OP vinculada")).toBeTruthy();
-    expect(screen.getByText("CT-41")).toBeTruthy();
+    expect(screen.getAllByText("CT-41").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Encerrada")).toBeTruthy();
     expect(screen.getAllByText("Confirmada").length).toBeGreaterThan(0);
     expect(screen.getByText("Aberta")).toBeTruthy();
@@ -239,6 +293,9 @@ describe("DowntimesPage", () => {
       if ((url as string).includes("/downtimes/filter-options")) {
         return Promise.resolve(envelope(OPTIONS));
       }
+      if ((url as string).includes("/downtimes/analytics")) {
+        return Promise.resolve(envelope(ANALYTICS));
+      }
       return Promise.resolve(envelope({ ...LIST, items: [], total: 0 }));
     });
     renderPage();
@@ -249,6 +306,9 @@ describe("DowntimesPage", () => {
     fetchMock.mockImplementation((url: string) => {
       if ((url as string).includes("/downtimes/filter-options")) {
         return Promise.resolve(envelope(OPTIONS));
+      }
+      if ((url as string).includes("/downtimes/analytics")) {
+        return Promise.resolve(envelope(ANALYTICS));
       }
       return Promise.resolve(envelope({ ...LIST, items: [], total: 0 }));
     });
@@ -267,4 +327,135 @@ describe("DowntimesPage", () => {
     await screen.findByText("Não foi possível carregar as paradas");
     expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeTruthy();
   });
+
+  it("renders backend-computed indicators and analytics groups above the list", async () => {
+    renderPage();
+    await screen.findByText("OP-100 / 010");
+    await screen.findByText("Indicadores do período");
+    const scope = within(analyticsSection());
+    // KPIs calculados pelo backend (nunca apenas pela página atual)
+    expect(scope.getByText("Tempo total parado")).toBeTruthy();
+    expect(scope.getByText("3h 00min")).toBeTruthy();
+    expect(scope.getByText("Duração média")).toBeTruthy();
+    expect(scope.getByText("Pendentes de classificação")).toBeTruthy();
+    expect(scope.getByText("Em aberto agora")).toBeTruthy();
+    // grupos: Pareto com código + descrição e pendências identificáveis
+    expect(scope.getByText("SETUP — Preparação de máquina")).toBeTruthy();
+    expect(scope.getByText("Pendente de classificação")).toBeTruthy();
+    // a consulta analítica não carrega paginação/ordenação/detalhe
+    const analyticsCall = fetchMock.mock.calls.find(([url]) =>
+      (url as string).includes("/downtimes/analytics"),
+    );
+    const url = analyticsCall?.[0] as string;
+    expect(url).toContain("branch=01");
+    expect(url).toContain("from=");
+    expect(url).not.toContain("page=");
+    expect(url).not.toContain("sort=");
+    expect(url).not.toContain("downtimeId=");
+  });
+
+  it("drills down from the reason Pareto into the existing list filters", async () => {
+    renderPage();
+    await screen.findByText("SETUP — Preparação de máquina");
+    fireEvent.click(
+      within(analyticsSection()).getByText("SETUP — Preparação de máquina"),
+    );
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls.map(([url]) => url as string);
+      expect(
+        calls.some(
+          (url) => url.includes("/downtimes?") && url.includes("reasonCode=SETUP"),
+        ),
+      ).toBe(true);
+      // analytics da nova consulta reflete o mesmo universo filtrado
+      expect(
+        calls.some(
+          (url) =>
+            url.includes("/downtimes/analytics") && url.includes("reasonCode=SETUP"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("drills the pending group via classification=pending, not a fake reason code", async () => {
+    renderPage();
+    // a página inteira entra em loading até a primeira resposta da lista
+    await screen.findByText("Indicadores do período");
+    await within(analyticsSection()).findByText("Pendente de classificação");
+    fireEvent.click(
+      within(analyticsSection()).getByText("Pendente de classificação"),
+    );
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls.map(([url]) => url as string);
+      expect(
+        calls.some(
+          (url) =>
+            url.includes("/downtimes?") &&
+            url.includes("classification=pending") &&
+            !url.includes("reasonCode="),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("drills down from the work-center ranking into the CT filter", async () => {
+    renderPage();
+    await screen.findByText("Indicadores do período");
+    const scope = within(analyticsSection());
+    await scope.findByText("Pendente de classificação");
+    const ctLabel = scope.getByText("CT-41");
+    const clickable = ctLabel.closest("button") ?? ctLabel;
+    fireEvent.click(clickable);
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls.map(([url]) => url as string);
+      expect(
+        calls.some(
+          (url) => url.includes("/downtimes?") && url.includes("workCenter=CT-41"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("drills a day chip into a custom single-day period filter", async () => {
+    renderPage();
+    await screen.findByText("Indicadores do período");
+    const chip = await within(analyticsSection()).findByTitle(/de 10\/02/);
+    fireEvent.click(chip);
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls.map(([url]) => url as string);
+      expect(
+        calls.some(
+          (url) =>
+            url.includes("/downtimes?") &&
+            url.includes("from=2026-02-10") &&
+            url.includes("to=2026-02-11"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("keeps the list working when the analytics request fails", async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if ((url as string).includes("/downtimes/analytics")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ success: false, message: "agregação indisponível", data: null }),
+            { status: 503, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if ((url as string).includes("/downtimes/filter-options")) {
+        return Promise.resolve(envelope(OPTIONS));
+      }
+      if ((url as string).includes("/downtimes?")) {
+        return Promise.resolve(envelope(LIST));
+      }
+      return Promise.reject(new Error("unexpected url " + url));
+    });
+    renderPage();
+    // a listagem da Etapa 1 segue funcionando normalmente
+    await screen.findByText("OP-100 / 010");
+    await screen.findByText(/Não foi possível calcular os indicadores/);
+  });
 });
+

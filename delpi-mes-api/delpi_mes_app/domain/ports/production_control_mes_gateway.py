@@ -38,6 +38,18 @@ class ProductionControlMesGatewayPort(Protocol):
 
     def list_downtime_reasons(self) -> dict[str, Any]: ...
 
+    def get_downtime_analytics(
+        self,
+        *,
+        branch: str,
+        period_from: datetime,
+        period_to: datetime | None,
+        work_center: str | None = None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+    ) -> dict[str, Any]: ...
+
     def list_downtime_sources(self) -> dict[str, Any]: ...
 
     def create_downtime_reason(self, payload: dict[str, Any]) -> dict[str, Any]: ...

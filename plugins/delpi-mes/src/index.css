@@ -1190,3 +1190,98 @@
   .delpi-mes-downtimes__filters { grid-template-columns: 1fr; }
   .delpi-mes-downtimes__detail dl > div { grid-template-columns: 1fr; gap: 0.15rem; }
 }
+
+/* Etapa 2 — análise gerencial de paradas */
+.delpi-mes-analytics { display: grid; gap: 0.9rem; }
+.delpi-mes-analytics__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+}
+.delpi-mes-analytics__head h3 {
+  margin: 0; font-size: 1.05rem; color: #22344e;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+}
+.delpi-mes-analytics__toggle {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  min-height: 2rem; padding: 0 0.75rem;
+  border: 1px solid #dde5ef; border-radius: 0.6rem;
+  background: #f4f7fb; color: #1d4ed8; font: inherit; font-size: 0.78rem;
+  font-weight: 700; cursor: pointer;
+}
+.delpi-mes-analytics__toggle:hover { background: #e8eef7; }
+.delpi-mes-analytics__toggle svg { width: 0.95rem; height: 0.95rem; }
+.delpi-mes-analytics__body { display: grid; gap: 0.9rem; }
+.delpi-mes-analytics__grid {
+  display: grid; gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+}
+.delpi-mes-analytics__error {
+  border: 1px solid #f3c1c1; border-radius: 0.75rem; background: #fdf4f4;
+  padding: 0.9rem 1rem; color: #8f2b2b;
+}
+.delpi-mes-analytics__error p { margin: 0 0 0.55rem; }
+.delpi-mes-analytics__error button,
+.delpi-mes-analytics__day-chips button {
+  min-height: 2rem; padding: 0 0.75rem;
+  border: 1px solid #dde5ef; border-radius: 0.6rem;
+  background: #f4f7fb; color: #1d4ed8; font: inherit; font-size: 0.78rem;
+  font-weight: 700; cursor: pointer;
+}
+.delpi-mes-analytics__error button:hover,
+.delpi-mes-analytics__day-chips button:hover { background: #e8eef7; }
+.delpi-mes-analytics__warning {
+  margin: 0; padding: 0.65rem 0.85rem; border-radius: 0.65rem;
+  border: 1px solid #f2d3a2; background: #fdf8ef; color: #7a4b12; font-size: 0.82rem;
+}
+.delpi-mes-analytics__note {
+  margin: 0; padding: 0.65rem 0.85rem; border-radius: 0.65rem;
+  border: 1px solid #d9e2f0; background: #f5f8fc; color: #47566d; font-size: 0.82rem;
+}
+.delpi-mes-analytics__hint { margin: 0; color: #66788f; font-size: 0.85rem; }
+.delpi-mes-analytics__metric {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  color: #5c6b80; font-size: 0.75rem; font-weight: 700;
+}
+.delpi-mes-analytics__metric select {
+  font: inherit; padding: 0.25rem 0.5rem; border: 1px solid #dde5ef;
+  border-radius: 0.5rem; background: #fff; color: #22344e;
+}
+.delpi-mes-analytics__day-chips {
+  display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.6rem;
+}
+.delpi-mes-analytics__day-chips button { min-height: 1.8rem; padding: 0 0.6rem; }
+
+/* Mapa de calor dia-da-semana × hora — matriz semântica do domínio,
+ * sem componente compartilhado especulativo. */
+.delpi-mes-heatmap { overflow-x: auto; }
+.delpi-mes-heatmap table { border-collapse: collapse; width: 100%; min-width: 34rem; }
+.delpi-mes-heatmap th {
+  font-size: 0.68rem; font-weight: 700; color: #5c6b80;
+  padding: 0.15rem 0.2rem; text-align: center; white-space: nowrap;
+}
+.delpi-mes-heatmap th[scope="row"] { text-align: right; padding-right: 0.5rem; }
+.delpi-mes-heatmap__cell {
+  width: 1.05rem; height: 1.05rem; padding: 0;
+  background: var(--delpi-mes-heat-0, #eef2f7);
+  border: 1px solid #fff; border-radius: 0.2rem;
+}
+.delpi-mes-heatmap__cell[data-level="1"] { background: var(--delpi-mes-heat-1, #cfe0f5); }
+.delpi-mes-heatmap__cell[data-level="2"] { background: var(--delpi-mes-heat-2, #93b9e8); }
+.delpi-mes-heatmap__cell[data-level="3"] { background: var(--delpi-mes-heat-3, #4f85d4); }
+.delpi-mes-heatmap__cell[data-level="4"] { background: var(--delpi-mes-heat-4, #1e63c4); }
+.delpi-mes-heatmap__legend {
+  margin: 0.5rem 0 0; font-size: 0.72rem; color: #66788f;
+}
+.delpi-mes-sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+:root[data-theme="dark"] .delpi-mes-analytics__head h3,
+.theme-dark .delpi-mes-analytics__head h3 { color: #dce6f2; }
+:root[data-theme="dark"] .delpi-mes-heatmap__cell,
+.theme-dark .delpi-mes-heatmap__cell {
+  --delpi-mes-heat-0: #223047; --delpi-mes-heat-1: #2e4a72;
+  --delpi-mes-heat-2: #3d68a5; --delpi-mes-heat-3: #4f85d4;
+  --delpi-mes-heat-4: #6ba3ea;
+  border-color: #1a2436;
+}

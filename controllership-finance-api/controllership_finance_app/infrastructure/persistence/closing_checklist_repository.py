@@ -20,7 +20,6 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     DraftAlreadyOpen,
     DuplicateItemKey,
     ItemNotFound,
-    NoPublishedTemplate,
     PersistenceUnavailable,
     StaleRevision,
     TemplateNotFound,
@@ -586,15 +585,18 @@ class ClosingChecklistRepository:
     ) -> tuple[dict[str, Any], bool]:
         """Abertura idempotente + snapshot atômico dos itens vigentes.
 
+        Sem versão PUBLISHED vigente a competência é criada com
+        `template_version_id` NULL e snapshot vazio — abertura legítima
+        sem exigências (Plano 113 §10).
+
         `ON CONFLICT DO NOTHING` torna retry/replay seguro; quando a
         competência já existe retorna a existente (created=False) sem
         duplicar snapshot nem evento.
         """
         published = self.resolve_published_version(period)
-        if published is None:
-            raise NoPublishedTemplate(
-                "Não existe versão publicada vigente para esta competência."
-            )
+        # Plano 113 §10 / doc 112 DR-C1: template PUBLISHED não é mais
+        # pré-requisito — sem versão vigente a competência abre com
+        # snapshot legitimamente vazio (template_version_id NULL).
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
@@ -607,7 +609,11 @@ class ClosingChecklistRepository:
                         RETURNING competence_id, period, template_version_id,
                                   status, opened_by, opened_at
                         """,
-                        (period, published["version_id"], actor),
+                        (
+                            period,
+                            published["version_id"] if published else None,
+                            actor,
+                        ),
                     )
                     row = cur.fetchone()
                     created = row is not None
@@ -617,7 +623,7 @@ class ClosingChecklistRepository:
                             raise PersistenceUnavailable(
                                 "Falha ao recuperar competência existente."
                             )
-                    else:
+                    elif published is not None:
                         cur.execute(
                             f"""
                             INSERT INTO {_q('competence_checklist_item')}
@@ -638,6 +644,7 @@ class ClosingChecklistRepository:
                             """,
                             (row["competence_id"], published["version_id"]),
                         )
+                    if created:
                         self._audit(
                             cur,
                             entity_type="monthly_competence",
@@ -647,10 +654,18 @@ class ClosingChecklistRepository:
                             actor=actor,
                             detail={
                                 "period": period,
-                                "template_version_id": str(
-                                    published["version_id"]
+                                "template_version_id": (
+                                    str(published["version_id"])
+                                    if published
+                                    else None
                                 ),
-                                "template_version": published["version"],
+                                "template_version": (
+                                    published["version"]
+                                    if published
+                                    else None
+                                ),
+                                "opened_without_template": published
+                                is None,
                             },
                         )
         return row, created
@@ -667,7 +682,7 @@ class ClosingChecklistRepository:
                          WHERE i.competence_id = c.competence_id
                        ) AS item_count
                   FROM {_q('monthly_competence')} c
-                  JOIN {_q('checklist_template_version')} v
+                  LEFT JOIN {_q('checklist_template_version')} v
                     ON v.version_id = c.template_version_id
                  ORDER BY c.period DESC
                 """
@@ -763,7 +778,7 @@ class ClosingChecklistRepository:
     ) -> dict[str, Any] | None:
         extra = ", v.version AS template_version" if with_version else ""
         join = (
-            f" JOIN {_q('checklist_template_version')} v"
+            f" LEFT JOIN {_q('checklist_template_version')} v"
             " ON v.version_id = c.template_version_id"
             if with_version
             else ""

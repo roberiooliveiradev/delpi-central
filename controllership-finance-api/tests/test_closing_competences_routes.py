@@ -1,8 +1,10 @@
 """P2-READ competences API — authorization + contract tests.
 
 ``access`` efetivo autoriza abertura/leitura; ``manage`` isolado não
-implica ``access``; sem versão PUBLISHED vigente a abertura falha com
-``no_published_template`` (409) — nunca fallback silencioso.
+implica ``access``. Plano 113 §10 / doc 112 DR-C1: abertura sem versão
+PUBLISHED é legítima — competência nasce com ``template_version_id``
+NULL e snapshot vazio (``no_published_template`` permanece apenas como
+mapeamento defensivo do error handler).
 """
 
 from __future__ import annotations
@@ -150,19 +152,29 @@ def test_open_competence_replay_idempotent(_auth_pipeline, repo):
     assert "já existente" in response.json()["message"]
 
 
-def test_open_without_published_template(_auth_pipeline, repo):
-    repo.open_competence.side_effect = de.NoPublishedTemplate(
-        "sem template publicado"
+def test_open_without_published_template_succeeds(_auth_pipeline, repo):
+    """DR-C1: sem template PUBLISHED a rota abre normalmente —
+    ``template_version_id`` NULL no payload, status 201."""
+    repo.open_competence.return_value = (
+        {
+            "competence_id": "c1",
+            "period": "2026-10",
+            "template_version_id": None,
+            "status": "OPEN",
+            "opened_by": "u1",
+            "opened_at": "2026-10-01T00:00:00Z",
+        },
+        True,
     )
     response = _client().post(
         "/closing/competences",
         headers=_headers(),
         json={"period": "2026-10"},
     )
-    assert response.status_code == 409
-    assert (
-        response.json()["data"]["error"]["code"] == "no_published_template"
-    )
+    assert response.status_code == 201
+    body = response.json()["data"]
+    assert body["template_version_id"] is None
+    assert body["status"] == "OPEN"
 
 
 def test_open_invalid_period_422(_auth_pipeline, repo):

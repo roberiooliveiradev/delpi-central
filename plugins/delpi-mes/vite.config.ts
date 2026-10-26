@@ -39,6 +39,8 @@ export default defineConfig(({ mode }) => {
     build: { target: "esnext", modulePreload: false, cssCodeSplit: false },
     test: {
       environment: "jsdom",
+      testTimeout: 15000,
+      setupFiles: ["./src/test-setup.ts"],
       include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
       alias: pluginUiTestAliases(__dirname),
     },

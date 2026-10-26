@@ -747,3 +747,26 @@ PLUGIN_UI_GAP_FOUND
 ```
 
 Se `LOCAL_UI_CREATED` duplicar um export já existente no kit, o slice deve ser `REWORK`.
+
+
+## Complemento aprovado de reuso — Fechamento mensal, cadastro DRE e detalhe interativo (26/10/2026)
+
+**Referência funcional:** [Plano 113](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md), §9. Todas as superfícies abaixo referem-se somente ao **Fechamento Mensal**. Entradas indicadas são **candidatas de kit**; Devin deve inspecionar export e props reais antes de implementar. Proibido copiar `plugin-ui` ou criar chrome paralelo.
+
+| Superfície | Componentes/factories a avaliar no plugin-ui | Notas obrigatórias |
+|---|---|---|
+| Início | `createDashboardPageHero`, `createDashboardEventsSection`, `createDashboardCatalogSearchBar`, `createDashboardRecentAccessStrip`, `createDashboardSectionRouteCard` | Uma entrada principal para Fechamento mensal e atalhos para abas |
+| Fechamento / Visão geral | `createDashboardPagePath`, `QuickPeriodSelector`, `KpiCard`, `MetricKpiCard`, `ProgressTracker`, `AlertQueue`, `Timeline`, `StateBanner`, `ActionButton` | Contexto por YYYY-MM; ação Abrir se inexistente; fonte dos KPIs |
+| Documentos e interações | `DataTableSection`, `DataRecordCard`, `ResizableColumns`, `Timeline`, `EmptyGuidance`, `ActionButton`, attachment kit | Lista por vigência e evidências por competência; detalhe em página |
+| Detalhe documento / interação | `createDashboardPagePath`, `BackLink`, `ResizableColumns`, preview/attachment kit, `Timeline`, `FieldLabel`, `HelpTooltip`, `ActionButton` | Prévia PDF esquerda, conversa direita, histórico abaixo; ambas audiências com projeção AuthZ |
+| Relatórios/divergências | `MetricKpiCard`, `DataTableSection`, `DataRecordCard`, `AlertQueue`, `DetailFieldGrid`, `Timeline` | Drilldown, PDF container e proveniência; sem calcular no frontend |
+| Admin — lista de documentos DRE | `createDashboardPageHero`, `createDashboardPagePath`, `DataTableSection`, `DataRecordCard`, `ActionButton`, `EmptyGuidance` | Manage; entrada para rotas de cadastro/edição |
+| Admin — cadastro (página) | `createDashboardPagePath`, `BackLink`, `ActionButton`, `FieldLabel`, `HelpTooltip`, `createDashboardNativeFormFields` | Não modal; vigência inicial/final/exceção |
+| Admin — edição (página) | mesmos do cadastro + `Timeline`, `StateBanner` | Não modal; histórico e impacto; finalizados intactos |
+| DRE — documentos recebidos | `createDashboardPageHero`, `createDashboardPagePath`, `DataTableSection`, `DataRecordCard`, `EmptyGuidance`, `ActionButton`, `Timeline` | **Última fase**; somente PDFs liberados; sem TOTVS/divergências |
+| Ajuda contextual | `createDashboardUserManual`, `HelpTooltip`, `FieldLabel` | Atualizar no mesmo gate da funcionalidade |
+
+**Verificação inicial de código-fonte do kit:** `plugins/plugin-ui/src/index.ts` e `plugins/plugin-ui/docs/component-catalog.md` foram consultados na branch `main` em 26/10/2026. O catálogo documenta `PagePath` via `createDashboardPagePath`, `KpiCard`, `QuickPeriodSelector`, `DataTableSection`, `DataRecordCard`, `Timeline`, `ActionButton`, `BackLink`, `FieldLabel`, `HelpTooltip` e `createDashboardNativeFormFields`. Para `PagePath`, `ResizableColumns`, attachments e preview, identificar o símbolo/factory exato no export reexportado; nunca confiar somente no nome mencionado em documentação.
+
+A página de configuração substitui o **modal de criação/edição** mediante gate e validação de substituição. O detalhe PDF é **uma página contextual** comum a duas audiências, não novo módulo nem aba. Seguir contratos de interação/auditoria, sem importar domínio de outro plugin.
+

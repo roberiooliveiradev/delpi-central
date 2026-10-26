@@ -283,3 +283,17 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Artefatos: doc 156; scripts catalog_presentation_probe.py + catalog_presentation_aggregate.py; seam em instruction_conflict_eval.py (eval-only); evidence catalog-presentation-snapshot.json, catalog-presentation-probe-runs.jsonl/.json, catalog-presentation-e2e/*.json.
 - Próximo bounded: experimento autorizado separado sobre tokens do capability_group_id (requer decisão de arquitetura — toca identificador canônico), hardening de robustez a ordem no stage-1, ou comparação de capacidade de modelo no corpus congelado.
 - DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
+
+
+### DELIA-C3-GROUP-SELECTION-ORDER-ROBUSTNESS-CHARACTERIZATION-01 — execução (2026-10-26)
+
+- STATE=EVALUATION_COMPLETE; base 3fdb36e883; árvore delia-api congelada = doc 156; código/instrução/catálogo/modelo NÃO modificados — permutação aplicada somente na lista serializada pós-projeção via seam de avaliação.
+- Matriz: 24 permutações completas (4 grupos) × 12 prompts × 5 reps = 1440 chamadas stage-1 intercaladas; invariants verificados por chamada — mesmo group set, cap counts, scope 4/4, omitted=1, 5989 chars, 24 shas distintos (ONLY_ORDER_CHANGED=YES).
+- Resultado stage-1: strict accuracy por permutação varia 5/60 → 32/60 (stdev .13, range .45) vs run variance ~±15%. Efeito de posição absoluta: pos1 quase nunca escolhida (0-9%), pos4 domina (36-58%) — recência, não primazia. Efeito relativo: delpi depois de teo/vista/davi → 48-61% strict em record asks vs 18-31% quando antes. Interação patológica: delpi-primeiro+davi-último (perms 21/23) colapsa em davi + 14-26 invalid outputs.
+- Holdout pré-declarado {0,5,14,16,21,23} × 8 prompts × 5 = 240 chamadas: perm 14 (melhor) 22/40 strict; perms 21/23 (piores) 1/40 com 11-17 invalids; generalização confirmada.
+- E2E (4 perms × base+holdout × 5 = 480 turnos): p14 (delpi último) triplica strict group-selection no base (24/35 vs 5/27 canonical) MAS business outcome não melhora (16/60 vs 20/60 PASS) — downstream segue divergindo. p21/p23 confirmam colapso strict 1/36, 9/28 e 5/23, 1/22 holdout.
+- Veredito: ORDER_EFFECT_CONFIRMED — recência + interação posição×ID, não primazia simples; fragilidade semântica do modelo 3B na superfície de grupos.
+- Segurança: 0 bypass AuthZ, 0 PREPARE/ACT, 0 id inventado aceito, 0 write; artefatos sem segredos.
+- Artefatos: doc 157; scripts order_robustness_probe.py + order_robustness_aggregate.py; seam EVAL_PERM_ORDER em instruction_conflict_eval.py; evidence order-robustness-*.{json,jsonl} + order-robustness-e2e/*.json.
+- Próximo bounded: comparação de capacidade de modelo na matriz congelada (autorização separada), ou decisão de arquitetura sobre mitigação de recência no contrato de superfície — sem política de ordem por provider.
+- DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.

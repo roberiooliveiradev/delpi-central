@@ -27,6 +27,7 @@ O `delpi-mes-api` não é o owner dos fatos MES. Runs, estados, paradas, contage
 | GET | `/work-centers/{workCenter}/timeline?branch=&from=&to=` | `delpi-mes.history.view` |
 | GET | `/downtimes?branch=&workCenter=&from=&to=&reasonCode=&source=&classification=&sort=&downtimeId=&page=&pageSize=` | `delpi-mes.downtimes.view` |
 | GET | `/downtimes/filter-options?branch=` | `delpi-mes.downtimes.view` |
+| GET | `/downtimes/analytics?branch=&from=&to=&workCenter=&reasonCode=&source=&classification=` | `delpi-mes.downtimes.view` |
 | GET | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
 | POST | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
 | PUT | `/registrations/downtime-reasons/{code}` | `delpi-mes.downtime-reasons.manage` |
@@ -37,6 +38,10 @@ Toda rota gerencial também exige `delpi-mes.access` e principal humano; as rota
 ### Consulta gerencial de paradas (Paradas — Etapa 1)
 
 `GET /downtimes` aceita os filtros `reasonCode`, `source`, `classification` (`pending|confirmed`), `sort` (`recent|oldest`) e `downtimeId`, além dos parâmetros originais — todos repassados ao contrato S2S do owner; `total` reflete o conjunto filtrado no backend, não a página. `downtimeId` continua escopado pela filial autorizada e serve à consulta pontual do detalhe/deep link — nunca revela ocorrência de outra filial. `classification=pending` corresponde a `confirmed IS NOT TRUE` no owner (parada sem confirmação válida, incluindo registros históricos incompletos); `classification=confirmed` exige `confirmed IS TRUE`.
+
+### Análise gerencial de paradas (Paradas — Etapa 2)
+
+`GET /downtimes/analytics` encaminha os mesmos filtros da listagem ao owner (`GET /integrations/mes/downtimes/analytics`) e projeta estritamente os campos do contrato gerencial (`summary`, `byReason`, `byWorkCenter`, `byDay`, `byWeekdayHour`, `quality`) — nenhum campo interno do Production Control vaza para o MFE. A agregação cobre **todos** os eventos elegíveis da janela (nunca a página atual), usa `referenceAt` único resolvido pelo owner para paradas abertas e honra a janela máxima e o teto de fatos do owner — `quality.partial`/`factsCapped` propagam a sinalização, e `quality.overlapDetected` informa quando `attributedSeconds` diverge do tempo deduplicado. `page`, `pageSize`, `sort` e `downtimeId` não são aceitos como determinantes de métrica. Mesma autorização da listagem: principal humano + `delpi-mes.access` + `delpi-mes.downtimes.view` + permissão da filial.
 
 `GET /downtimes/filter-options?branch=` expõe projeção estritamente de leitura para a UI de filtros — motivos do catálogo (ativos **e** inativos, pois desativar um motivo não pode tornar suas ocorrências invisíveis) e origens válidas (`GET /integrations/mes/downtime-sources`, projeção do enum de domínio do owner). Exige principal humano + `delpi-mes.access` + `delpi-mes.downtimes.view` + permissão da filial — **não** exige a permissão administrativa `delpi-mes.downtime-reasons.manage`. Campos OEE e dados administrativos nunca são propagados.
 

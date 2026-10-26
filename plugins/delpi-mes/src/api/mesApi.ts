@@ -1,6 +1,6 @@
 import { httpGet } from "./httpClient";
 import type { BranchCode } from "../constants/routes";
-import type { DowntimeFilterOptionsResponse, DowntimesQuery, DowntimesResponse, MonitoringResponse, RunPerformanceResponse, WorkCenterTimelineResponse } from "../types/mes";
+import type { DowntimeAnalyticsQuery, DowntimeAnalyticsResponse, DowntimeFilterOptionsResponse, DowntimesQuery, DowntimesResponse, MonitoringResponse, RunPerformanceResponse, WorkCenterTimelineResponse } from "../types/mes";
 
 export function getMonitoring(branch: "01" | "02", signal?: AbortSignal) {
   return httpGet<MonitoringResponse>(`/monitoring?branch=${branch}`, { signal });
@@ -29,6 +29,16 @@ export function getDowntimes(query: DowntimesQuery, signal?: AbortSignal) {
   if (query.sort) params.set("sort", query.sort);
   if (query.downtimeId) params.set("downtimeId", query.downtimeId);
   return httpGet<DowntimesResponse>("/downtimes?" + params.toString(), { signal });
+}
+
+export function getDowntimeAnalytics(query: DowntimeAnalyticsQuery, signal?: AbortSignal) {
+  const params = new URLSearchParams({ branch: query.branch, from: query.from });
+  if (query.to) params.set("to", query.to);
+  if (query.workCenter) params.set("workCenter", query.workCenter);
+  if (query.reasonCode) params.set("reasonCode", query.reasonCode);
+  if (query.source) params.set("source", query.source);
+  if (query.classification) params.set("classification", query.classification);
+  return httpGet<DowntimeAnalyticsResponse>("/downtimes/analytics?" + params.toString(), { signal });
 }
 
 export function getDowntimeFilterOptions(branch: BranchCode, signal?: AbortSignal) {

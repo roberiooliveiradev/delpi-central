@@ -1,5 +1,8 @@
 # 09 — P2 — Checklist e Documentos
 
+> **AJUSTE DE PRODUTO APROVADO PELO PO — 26/10/2026 (TARGET, NÃO IMPLEMENTADO):** distinguir (1) **cadastro geral de tipos/entregáveis requeridos**, versionado com vigência a partir de uma competência; (2) **lista aplicável ao mês** por referência e histórico; (3) **arquivos/evidências efetivamente anexados** à competência. Consultar mês, ver relatórios e iniciar o workspace não depende de template PUBLISHED nem de evidências cadastradas. Adições/retiradas posteriores não alteram fechamentos finalizados; exclusão de exigência não apaga arquivos/histórico. O contrato corrente de snapshot na `openCompetence` permanece AS-IS e exige reconciliação antes de mudar P2/P6, incluindo regra para competência **em andamento**. Preservar validação, RQ/AC não conflitantes, segurança, auditoria e P5. Ver [decisão no doc 112](./112-design-visual-fechamento-mensal-wireframes.md). Não interpretar o antigo estado de gate documental como autorização de runtime desta alteração. **Execução — 26/10/2026 (CF-PROC0072-MONTHLY-REFERENCE-CATALOG-001):** seleção por mês de referência implementada no workspace; painéis P2/relatórios continuam gated pela competência aberta (probe `getCompetence` + `NotOpenedNotice` com «Abrir competência» autorizado, fail-closed na BFF). Cadastro mestre global de entregáveis e consulta P2 por mês sem competência: `TO_INVENTORY`/`DECISION_REQUIRED`. **Execução — CF-PROC0072-MONTHLY-OPEN-003:** abertura sem template PUBLISHED implementada (DR-C1, V015): competência sem checklist vigente abre com `template_version_id` NULL e snapshot vazio legítimo; com template vigente o snapshot AS-IS é preservado. Sem re-snapshot retroativo (DR-C3 pendente).
+
+
 ## Estado
 
 **TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
@@ -968,3 +971,6 @@ LISTA CLARA
 ```
 
 Esse é o contrato visual de P2.
+
+
+> **UX DETALHE DOCUMENTAL (26/10/2026, TARGET):** o documento da competência tem **página de detalhe** que mantém PDF/versões à esquerda, interação/solicitações à direita e histórico abaixo (mobile empilhado). Controladoria e DRE acessam a mesma thread documental com projeções e ações diferentes; pedido de refazimento não se encerra pela simples resposta. A configuração geral de documentos exigidos à DRE (P6/Manage) usa listagem, **página de cadastro** e **página de edição**, não modal. Consultar [Plano 113 §9](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md) e [Mapa plugin-ui 30](./30-plugin-ui-reuse-map.md). Preservar contratos P2/P5 e histórico; sem autorização de runtime.

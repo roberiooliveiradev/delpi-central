@@ -78,9 +78,9 @@ export const CF_HELP = {
     page:
       "Checklist da competência: itens esperados do fechamento mensal conforme a versão publicada do checklist. Cada competência guarda um snapshot próprio — publicar uma versão nova nunca altera meses já abertos. «Esperado» significa item previsto para entrega — não indica documento entregue, recebido ou validado.",
     competence:
-      "Competência no formato AAAA-MM. Ao abrir uma competência o Portal registra os itens do checklist vigente naquele momento — a repetição não duplica a abertura.",
+      "Competência no formato AAAA-MM. Ao abrir um fechamento, o Portal copia os itens do checklist publicado e vigente naquele momento; se ainda não existir versão publicada, o fechamento abre mesmo assim, com a lista de exigências vazia — a repetição nunca duplica a abertura.",
     open:
-      "Abrir a competência copia os itens da versão publicada do checklist para o mês escolhido. Se nenhuma versão estiver publicada, a abertura é recusada — não existe fallback.",
+      "Abrir o fechamento copia os itens da versão publicada do checklist para o mês escolhido. Quando não há versão publicada, a abertura acontece mesmo assim e a lista começa vazia — estado legítimo, não erro. Itens publicados depois não entram retroativamente no mês já aberto.",
     filters:
       "Filtros de leitura: origem do documento, área destinataria, escopo de filial e estado. São dimensões de dados — não alteram permissões nem o snapshot.",
     table:
@@ -178,11 +178,11 @@ export const CF_HELP = {
   },
   monthlyClosing: {
     page:
-      "Fechamento mensal: bancada de trabalho da competência em três abas — Visão geral (estado real P1–P5), Documentos e interações (evidências P2) e Relatórios e divergências (matriz R01–R15 e fontes). A competência escolhida vale para as três abas.",
+      "Fechamento mensal: bancada de trabalho por mês de referência em três abas — Visão geral (estado real P1–P5), Documentos e interações (evidências P2) e Relatórios e divergências (matriz R01–R15 e fontes). Selecione o mês para consultar; escolher um mês não abre competência — meses sem abertura formal mostram explicação e a ação autorizada.",
     indicators:
-      "Indicadores derivados do cockpit do backend: Bloqueios (razões que impedem a conclusão), Divergências (domínios P3 com divergência declarada) e Documentos a tratar (itens do checklist P2 no estado «Aguardando evidência» — único estado contratual a tratar; itens aceitos, não aplicáveis ou cancelados não entram na conta). «—» significa dado ainda não carregado — nunca zero confirmado. Cada cartão abre a aba correspondente.",
+      "Indicadores derivados do cockpit do backend: Bloqueios (razões que impedem a conclusão), Divergências (domínios P3 com divergência declarada) e Documentos a tratar (contagem aguardando contrato do owner P2 — «—» até a definição). «—» significa dado ainda não carregado — nunca zero confirmado. Cada cartão abre a aba correspondente.",
     tabs:
-      "Três visões da mesma competência: Visão geral consolida o estado do fechamento; Documentos e interações abre as evidências e anexos P2; Relatórios e divergências abre a matriz de relatórios e fontes.",
+      "Três visões do mesmo mês: Visão geral consolida o estado do fechamento; Documentos e interações abre as evidências e anexos P2 (exige competência aberta); Relatórios e divergências abre a matriz de relatórios e fontes.",
     pdfPreview:
       "Área reservada à prévia de PDF dos relatórios — geração e publicação de PDF serão entregues em uma versão futura.",
   },

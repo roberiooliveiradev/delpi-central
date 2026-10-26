@@ -29,7 +29,7 @@ export type EvidenceDecisionValue =
 export type ClosingCompetence = {
   competence_id: string;
   period: string;
-  template_version_id: string;
+  template_version_id: string | null;
   template_version?: number;
   status: "OPEN";
   opened_at: string;

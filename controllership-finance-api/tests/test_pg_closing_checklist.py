@@ -2,7 +2,8 @@
 
 Executa migrations V001+V002 num schema `controllership_finance` real e
 prova: seed 53 itens DRAFT (sem publish automático), publish governado,
-abertura idempotente com snapshot EXPECTED, isolamento v1×v2, auditoria
+abertura idempotente com snapshot EXPECTED, abertura sem template
+publicado (V015/Plano 113 §10), isolamento v1×v2, auditoria
 append-only e falhas de concorrência/revisão.
 
 Isolamento (R4 rework): o fixture só destrói o que a própria execução
@@ -135,6 +136,7 @@ def migrated(_configure_db):
         "V012__clara_batch_orchestration.sql",
         "V013__clara_step_up_consent.sql",
         "V014__clara_consent_challenge.sql",
+        "V015__monthly_competence_optional_template.sql",
     ]
     return True
 
@@ -171,9 +173,40 @@ def test_migration_restart_is_noop(migrated):
     assert mr.run_migrations() == []
 
 
-def test_open_without_publish_fails(migrated, repo):
-    with pytest.raises(de.NoPublishedTemplate):
-        repo.open_competence("2026-10", actor=VIEWER)
+def test_open_without_publish_succeeds_empty_snapshot(migrated, repo):
+    """Plano 113 §10 / doc 112 DR-C1: abertura sem template PUBLISHED é
+    legítima — template_version_id NULL, zero itens, audit gravando
+    opened_without_template. Período 2026-09 isolado do fluxo v1 de
+    2026-10 (sem re-snapshot retroativo: abrir antes de publicar não
+    ganha itens depois)."""
+    competence, created = repo.open_competence("2026-09", actor=VIEWER)
+    assert created is True
+    assert competence["status"] == "OPEN"
+    assert competence["template_version_id"] is None
+    assert repo.list_competence_items("2026-09") == []
+
+    listed = repo.list_competences()
+    row = next(c for c in listed if c["period"] == "2026-09")
+    assert row["template_version"] is None
+
+    # replay idempotente — a mesma competência volta, sem recriação
+    again, created_again = repo.open_competence("2026-09", actor=VIEWER)
+    assert created_again is False
+    assert again["competence_id"] == competence["competence_id"]
+
+    with plugins_db.plugins_db_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT detail"
+                "  FROM controllership_finance.closing_audit_event"
+                " WHERE event_type = 'COMPETENCE_OPENED'"
+                "   AND detail->>'period' = '2026-09'"
+            )
+            audit_rows = cur.fetchall()
+    assert len(audit_rows) == 1
+    detail = audit_rows[0][0]
+    assert detail["opened_without_template"] is True
+    assert detail["template_version_id"] is None
 
 
 def test_publish_open_snapshot(migrated, repo):
