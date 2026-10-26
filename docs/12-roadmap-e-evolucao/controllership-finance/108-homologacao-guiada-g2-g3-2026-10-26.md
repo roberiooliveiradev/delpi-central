@@ -126,3 +126,44 @@ NEXT_GUIDED_ACTION: Na página Início, pesquisar "Checklist" em "Caminhos e fun
 ```
 
 **Este documento começa o ciclo de homologação, não o encerra. Toda evidência nova da conversa será adicionada por commit antes de mudar o estado do respectivo critério.**
+
+
+
+## 6. Rodada 2 — Busca, checklist setembro/2026 e template mestre (26/10/2026)
+
+**Origem da evidência:** sequência de **9 capturas de tela** enviada pelo testador na conversa, navegador Chrome no Portal produtivo `minhadelpi.com.br`, ~07:26–07:27 BRT, 2026-10-26. As imagens foram observadas nesta conversa, **não armazenadas no repositório**. Em todas, deve-se distinguir a URL visível no navegador dos endpoints/requests do DevTools. O teste demonstra visualmente componentes e respostas HTTP mostradas, mas não inspeciona os corpos/headers de requests nem trilhas backend. **Nenhuma mutação de negócio foi autorizada por este registro**; existe na sequência POST de tentativa de abertura recusado (409), sem competência aberta comprovada.
+
+### Achados verificáveis, por tela e critério
+
+| ID / Teste | Esperado | Evidência observada | Status estrito / Resultado | Próximo aceite |
+|---|---|---|---|---|
+| EVD-G2-0002 / G2-HOME-04A | Busca global encontra rota válida | `Ctrl+K`/palette com busca `che` mostra `Checklist da competência` e `Administração do checklist` | **PASS** para filtro/renderização da palette; busca própria do hub não verificada | Abrir resultado por seleção ou atalhos |
+| EVD-G2-0003 / G2-01 | Clique leva a rota do checklist | URL `/apps/controllership-finance/closing/checklist`; hero da Central e seletor de competência `outubro de 2026`; lista vazia, texto `Nenhuma competência aberta` | **PASS** para roteamento/renderização e estado vazio; consulta de itens `TEST_NOT_RUN` | Selecionar competência existente ou validar ausência |
+| EVD-G2-0004 / G2-02 | Deep link `2026-09` preserva contexto | URL `/closing/checklist/2026-09`; texto `A competência 2026-09 ainda não foi aberta` e botão `Abrir competência` | **PASS** no deep link, detecção de competência ausente; P2 itens `PENDING` | Publicação de template vigente é pré-condição para abrir competência |
+| EVD-G2-0005 / G2-02 | Abrir competência apenas com template vigente | Após tentativa, POST `/closing/competences` no DevTools = **409 Conflict**; mensagem backend/UI `Não existe versão publicada vigente para esta competência`; GET de `items` anteriores = **404**, e GET `competences` aparece em rede | **PASS** da proteção contra abrir sem versão publicada (resultado negado); **BLOCKER da homologação funcional** até template aprovado/publicado. `404` de itens é compatível com competência inexistente e frontend trata `competence_not_opened` separadamente; não é evidência isolada de bug | Confirmar estado/validação das versões antes de publicar. Nunca publicar por iniciativa do teste |
+| EVD-G2-0005b / OBS-005 | Mensagem distinguir falha técnica vs. impedimento de negócio | Banner `Falha de comunicação` para condição 409 com mensagem funcional `Não existe versão publicada vigente` | **FAIL UX**, severidade `MINOR`, não é prova de falha de infraestrutura | Tratar 409/domínio como `Pré-requisito pendente: publique a versão aprovada do checklist`; preservar HTTP 409 e backend fail-closed |
+| EVD-G2-0006 / G2-09 | Administração lista versões corretamente | Página `/closing/admin` lista template `monthly-closing-checklist`, versão **v1 Rascunho**, **53 itens**, sem datas de vigência/publicação; botão `Criar versão rascunho` inativo, pois existe rascunho | **PASS** apenas para leitura/estados/lista de versão; lifecycle submit/review/publish `TEST_NOT_RUN` | Revisão de conteúdo e decisão owner antes de submissão/publicação |
+| EVD-G2-0007 / G2-09 | Detalhamento read-only dos itens do draft | Tela `Itens — v1 (Rascunho)`, tabela com **53 registros**, por exemplo CK-E-01..CK-E-10, folha Eletrônico, origem Fonte externa, destinatário Contábil, Obrigatório, validação Por anexo | **PASS** para apresentação/paginação da tabela vista; **não** é aceite de correção/totalidade de 53 itens, nem prova de persistência | Controladoria valida completude, destinatário, obrigatoriedade, fonte, escopo e correspondência |
+| EVD-G2-0008 / G2-09 | Formulário de item exibe metadados controlados | Modal `Editar item CK-E-03` com chave, nome `Aplicações financeiras — conta 02`, ordem 3, folha Eletrônico, origem Fonte externa, Contábil, Obrigatório, Matriz, `Por anexo`, referência TOTVS `R13`; campos adicionais abaixo da dobra | **PASS** para abertura da UI/form pré-preenchido; mudança, gravação, permissões efetivas e referência oficial R13 `TEST_NOT_RUN/TO_INVENTORY` | Não usar `Salvar rascunho`, `Enviar para revisão` ou `Publicar` sem aceite da matriz |
+| EVD-G2-0009 / Console | Ausência de exceções no console | Nas capturas de Home/Admin, console indica `No errors`; na navegação checklist de setembro, mensagens de GET 404 e POST 409 são visíveis | **INCONCLUSIVE** para ausência geral de erros/qualidade; códigos 404/409 requerem interpretação funcional, não transmutar em erro técnico sem corpo | Capturar error code de resposta se houver ambiguidade, evitando tokens/secrets |
+
+**Correlação técnica pelo código do HEAD nesta sessão:** `plugins/controllership-finance/src/features/closing/ClosingChecklistPage.tsx` mapeia `competence_not_opened` para estado `not_opened`; `openCurrentPeriod` utiliza `openCompetence(activePeriod)` e exibe erro do servidor; `plugins/controllership-finance/src/api/competencesApi.ts` chama a BFF `GET|POST /closing/competences`; `plugins/controllership-finance/src/app/cfFeedbackUi.tsx` faz fallback para título genérico `Falha de comunicação` em erros sem correspondência especial, inclusive 409 de regra de negócio. `ChecklistAdminPage.tsx` modela etapas de rascunho/revisão/publicação com vigência; salvar rascunho **não** publica.
+
+### Findings e decisões exigidas
+
+| Finding | Severidade | Evidência | Owner | Próxima ação |
+|---|---|---|---|---|
+| **OBS-005 — checklist de setembro bloqueado sem publicação** | **BLOCKER para G2-P2 operacional**, proteção do backend consistente | Print `v1=Rascunho/53 itens`, sem vigência; POST abertura 409 | Controladoria/PO (conteúdo, competência alvo e vigência); owner P6 template | Revisar versão 1 item a item conforme contrato/planilha, decidir vigência para competência de homologação **apenas com autorização**, depois submeter/revisar/publicar pelo fluxo governado; não fazer write automaticamente |
+| **OBS-006 — erro UX confunde regra com falha de comunicação** | MINOR | 409 com banner “Falha de comunicação” | MFE `controllership-finance` | Backlog de correção tipada, sem alterar a proteção 409; não bloqueia revisão do template |
+| **OBS-007 — referência R13 em CK-E-03 sem paridade** | `TO_INVENTORY` | Form edit mostra `R13`; não houve comparação oficial | Owner das fontes/R13 e Controladoria | Conferir mapeamento correto antes de homologar/paridade; sem afirmar erro ou acerto da referência |
+| **OBS-008 — nenhuma competência aberta na lista** | `PENDING` | Home do checklist sem registro, deep route 2026-09 não aberta | P2/P6/Controladoria | Distinguir falta de setup de defeito de implementação; G2 de workflow fica sem prova até haver cenário governado |
+
+### Rebaseline do G2 e próxima etapa
+
+- **G2-01 (Home):** `PASS` **parcial** para busca global, atalho, roteamento e estado vazio. Tema claro, teclado abrangente, mobile, erro cross-user, busca dentro do hub continuam `TEST_NOT_RUN`.
+- **G2-02 (P2):** **BLOCKED_BY_PRECONDITION** — template v1 ainda `DRAFT`, nenhuma versão publicada vigente para 2026-09, não abrir competência de forma forçada. Estado correto da recusa documentado; erro de título UX separado.
+- **G2-09 (Admin/P6):** `PASS` **parcial** para listagem de 53 itens, abertura de modal e campos; DRAFT→REVIEW→PUBLISH, revision e audit não provados. A permissão MANAGE não é comprovada apenas pela visibilidade da UI.
+- **G2-03 (evidências), P3/P4/P5/C2:** `TEST_NOT_RUN`, bloqueados no cenário de competência não aberta ou dependências específicas; seguir leituras independentes quando possível.
+- **G3:** permanece `PENDING` e sem novo evento SSH nesta sessão.
+
+**Próxima ação guiada e segura, somente leitura:** fechar modal de edição sem salvar; em `Administração do checklist mestre`, abrir **`Eventos de auditoria`** e capturar seu conteúdo para comprovar histórico de template. Opcionalmente examinar item/metadados de um trecho representativo do rascunho, sem enviar para revisão/publicar. Pergunta de aceite funcional ao PO/Controladoria: **esta versão v1 com 53 entregáveis já foi conferida e autorizada para publicação, e qual competência deve ser a primeira?** Não inferir resposta sem o owner.
