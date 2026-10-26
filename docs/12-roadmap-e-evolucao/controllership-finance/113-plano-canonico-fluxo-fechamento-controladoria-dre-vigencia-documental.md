@@ -152,3 +152,24 @@ Fluxo canônico de delivery: local → testes → revisão → commit → push �
 - Se componente adequado não existir, reportar GAP/owner e propor adapter mínimo ou evolução compartilhada, sem duplicar chrome, formulário, modal ou estilos. UI consistente em tema claro/escuro, desktop/mobile, teclado/foco, URL/F5. Ajuda deve mudar no mesmo gate.
 - Testar acesso DRE vs Controladoria e Manage, ausência de documento, V1→pedido→V2→verificação, histórico imutável, fail-closed, deep link, retorno e janela de competência.
 - Este detalhamento **não amplia o GO vigente** nem autoriza execução concorrente ao prompt que Devin já recebeu.
+
+
+## 10. GO DE PRODUTO — remover travas contratuais que contrariem o fluxo aprovado (26/10/2026)
+
+**DECISÃO EXPRESSA DO PO:** implementar o Plano 113, adaptando contratos, validações, persistência e código existentes às decisões funcionais atuais. Contratos AS-IS são insumos do inventário e alvos de reconciliação, **não veto permanente ao TARGET**. Esta decisão constitui **GO de produto/escopo** para elaborar e executar incrementalmente as correções, mas não dispensa gates técnicos de migração, segurança, rollout e evidência, nem autoriza alteração direta de produção.
+
+**Comportamentos mandatórios:**
+1. Selecionar mês mostra informações disponíveis, inclusive consultas TOTVS period-keyed, mesmo sem competência formal aberta; `R01–R15` de checklist não devem ser apresentados como se fossem relatórios financeiros calculados.
+2. Usuário com `controllership-finance.access` e escopo efetivo pode **Abrir fechamento** contextual, mesmo sem template publicado ou documentos cadastrados. Abrir sem exigências resulta legitimamente em lista vazia e auditoria; jamais produzir template fictício, zero financeiro inventado ou migrar registros anteriores por conveniência.
+3. Cadastro mestre de **exigências documentais para DRE** administrado por `manage`, com vigência inicial, final opcional e exceção por referência; fechamento finalizado mantém conjunto/versões preservados. Alteração em fechamento **em andamento** exige política definida antes da mutação de dados (não atualizar snapshots silenciosamente); propor opção preservadora de histórico para validação.
+4. Analista consulta relatórios operacionais e divergências em sua aba, corrige no ERP manualmente, reconsulta; DRE vê apenas os PDFs selecionados e liberados e pode solicitar novas versões na página de detalhe compartilhada, com histórico e confirmação de atendimento separada de resposta.
+5. Preservar exatamente três abas, cadastro/edição do documento em páginas administrativas (não modais), `@delpi/plugin-ui` first, Help concomitante, rotas antigas até depreciação futura.
+
+**Orientação executiva para DR-C1/C2/C3 do doc 112 §32:**
+- DR-C1: resultado de negócio está **decidido**: abertura sem template é obrigatória. O executor deve inventariar impacto e projetar **migration versionada mínima** (nullable ou alternativa robusta) com teste de migração e rollback; não executar migration produtiva antes de gate de dados/owner e plano de rollback. Não usar placeholder PUBLISHED sintético.
+- DR-C2: resultado de negócio está **decidido**: relatórios operacionais consultáveis por mês com os dados disponíveis, sem abertura. Reusar os endpoints period-keyed existentes. Relatórios faltantes devem ter owners/producers identificados e contratos de consulta próprios; matriz documental R01–R15 permanece separada.
+- DR-C3: resultado de negócio **decidido para finalizados**: nenhuma mutação retroativa. Para abertos/em andamento, mudança que altere obrigações exige decisão de política e trilha de auditoria; oferecer duas alternativas embasadas, sem escolher silenciosamente.
+
+**Sequência de execução autorizável:** (a) inventário técnico/contratos e matriz de consumers; (b) proposta de migração e gates de dados; (c) aprovação técnica de migração e execução LOCAL/testes; (d) BFF de abertura + consulta mensal, AuthZ e auditoria; (e) catálogo de exigências effective-dated e páginas Manage; (f) relatórios/divergências; (g) documentos/interações/P5; (h) DRE por último. Entrega por slices fechados, sem commit parcial que quebre consumers. O executor deve solicitar o gate específico quando exigido e entregar `EXECUTION_REPORT` para `GPT REVIEW`. Sem smoke autenticado, resultado operacional = `INCONCLUSIVE`.
+
+**Limites:** não criar permission code, não gravar TOTVS, não expor relatórios internos à DRE, não remover legado antecipadamente. Qualquer migration, breaking change e deploy continuam sujeitos à authority transversal e owner. Não interpretar esta autorização funcional como licença para ignorar integridade ou AuthZ.
