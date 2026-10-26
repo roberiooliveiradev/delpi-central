@@ -377,14 +377,16 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 27
+    assert allow.get("version") == 28
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "EVOLVE_MATCHING_INTELLIGENCE_P1_TO_P4"
+        "EVOLVE_SUPPLIER_WEB_RESEARCH_ORCHESTRATION"
     )
-    assert (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
-        "decision"
-    ) == "PROMOTE_SIMILARITY_DISCOVERY_AND_AGENT_ORCHESTRATION"
     coverage = (allow.get("coverageDecision", {}).get("previousDecision") or {})
+    assert coverage.get("decision") == "EVOLVE_MATCHING_INTELLIGENCE_P1_TO_P4"
+    coverage = coverage.get("previousDecision") or {}
+    assert coverage.get("decision") == (
+        "PROMOTE_SIMILARITY_DISCOVERY_AND_AGENT_ORCHESTRATION"
+    )
     assert (coverage.get("previousDecision") or {}).get(
         "decision"
     ) == "PROMOTE_GOVERNED_PRODUCT_DETAIL_AND_PN_DISCOVERY"

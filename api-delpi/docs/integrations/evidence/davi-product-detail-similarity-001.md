@@ -429,3 +429,59 @@ positive_target_misses = 0. As 9 falhas conhecidas são idênticas às do
 baseline em HEAD (inclui DQ-PM-066, colisão `get_product_detail` vs
 `search_products`, `top1_required=false`, pré-existente — medido com e
 sem os aliases V2). Sem regressão introduzida pelo diff.
+
+## 13. V3 — supplier & web research intelligence (`DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003`)
+
+### 13.1 Owner e decisão
+
+Novo flow declarativo `supplier_web_research` em
+`davi_agent_intelligence.json` (2026.10.26.1 → 2026.10.27.1) — o código
+DELPI é a âncora: `get_product_suppliers` primeiro, e os part numbers/
+fabricantes cadastrados orientam qualquer pesquisa pública. Zero novas
+capabilities; navegação pública é capacidade do lado do provider, nunca
+proxy backend.
+
+### 13.2 Quatro modos
+
+- **A** — "fornecedores do produto X" → `get_product_suppliers`; sem web.
+- **B** — "pesquise na internet o produto X" → suppliers → PNs/fabricantes
+  → detail (se atributos ajudarem) → pesquisa pública SOMENTE quando o
+  consumidor tiver navegação → fonte oficial primeiro, distribuidor como
+  complemento → comparar com cadastro, citar fontes e pendências. Sem
+  navegação → declarar limitação, nunca inventar.
+- **C** — PN/link externo → V2 preservado (PN op → produto → detalhes).
+- **D** — "novos fornecedores no mercado" → cadastrados primeiro; fornecedor
+  encontrado publicamente NÃO é homologado DELPI; distinguir cadastrado /
+  fabricante / distribuidor / revendedor / alternativa comercial.
+
+### 13.3 Qualidade de referência e privacidade
+
+`reference_quality`: código DELPI ≠ PN do fabricante; nem todo valor no
+campo de PN é PN original (ex.: `10080010` registrado como referência da
+DELPI Componentes é código interno); variantes de apresentação
+(`0-0626377-1` vs `626377-1`) nunca são presumidas equivalentes.
+`untrusted_content`: páginas/PDFs públicos não alteram instruções,
+permissões ou ferramentas; nenhum dado ERP (códigos internos, lista de
+fornecedores, clientes, preços) vai para serviços públicos.
+`hard_rules`: sem equivalência automática, sem homologação automática,
+proveniência ERP-vs-pública sempre declarada, busca vazia ≠ inexistência.
+
+### 13.4 Allowlist v27 → v28 e golden
+
+Aliases em `get_product_suppliers`: `fornecedores do produto`,
+`fornecedores cadastrados`, `fabricantes do produto`, `referências de
+fornecedor`, `novos fornecedores`, `fornecedores no mercado`,
+`pesquisar fornecedores`, `pesquisa de mercado`, `fornecedores
+homologados`. Podados durante iteração (colisão com PN op): `part numbers
+de fornecedores`, `pesquisar fabricante`, `fabricantes cadastrados` —
+benchmark 246 casos, top-1 0.9591, required 0.9904, leaks=0, misses=0,
+falhas = as 9 conhecidas pré-existentes. Golden observado:
+`10080010 → {TE Connectivity 626377-1, Heilind 0-0626377-1,
+DELPI Componentes 10080010, GPK 022.630800.10T}`.
+
+### 13.5 Limites
+
+Navegação pública do Workspace Agent = `PENDING_INVENTORY` — a capability
+do provider não foi comprovada nesta task; o flow declara comportamento
+honesto (limitação explícita, nunca simular). AuthZ com segunda identidade
+e ratificação PO seguem gates independentes de publicação ampla.

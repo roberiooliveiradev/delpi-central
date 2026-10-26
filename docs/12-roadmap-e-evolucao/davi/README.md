@@ -219,16 +219,17 @@ allowlisted and is reached only via discover → execute
 CURRENT SOURCE STATE (recomputed at `DAVI-MCP-RUNTIME-REBASELINE-001`,
 SHA `7f2bfab647`; promoted counts recomputed at
 `DAVI-PRODUCT-DETAIL-SIMILARITY-001`; matching V2 at
-`DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001`):
+`DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001`; web research at
+`DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003`):
 
 ```text
-allowlist              = v27
+allowlist              = v28
 DAVI_ELIGIBLE_READ     = 94 governed ops (baseline; live index 97)
-agent intelligence     = 2026.10.26.1 (similarity_dedup_check flow V2:
-                         precedência P1 PN-exato → P2 reconciliação →
-                         P3 busca similar bounded → P4 verificação de
-                         evidência; evidência cadastral separada de
-                         avaliação técnica; equivalência nunca automática)
+agent intelligence     = 2026.10.27.1 (similarity_dedup_check V2: P1→P4;
+                         supplier_web_research: código DELPI âncora →
+                         suppliers → PN/fabricante → pesquisa pública
+                         provider-side; modos A-D; sem homologação ou
+                         equivalência automática)
 MCP tools              = exactly 2 (discover_delpi_information,
                          execute_delpi_information)
 provider live discover = PROVEN (89 eligible; PROVIDER_CHAT_RUNTIME_OBSERVATION

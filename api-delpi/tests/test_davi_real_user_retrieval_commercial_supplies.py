@@ -260,9 +260,9 @@ def test_allowlist_version_and_eligible_count():
     previous = (
         allow["coverageDecision"]["previousDecision"]["previousDecision"][
             "previousDecision"
-        ]["previousDecision"]["previousDecision"]["previousDecision"].get(
+        ]["previousDecision"]["previousDecision"]["previousDecision"][
             "previousDecision"
-        )
+        ].get("previousDecision")
         or {}
     )
     assert previous.get("taskId") == (

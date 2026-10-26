@@ -2909,6 +2909,54 @@
    ],
    "top1_required": false,
    "notes": "V2: manufacturer page + registration check."
+  },
+  {
+   "id": "DQ-PM-071",
+   "query": "quais são os fornecedores cadastrados do produto 10080010",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "get_product_suppliers"
+   ],
+   "top1_required": true,
+   "notes": "V3 flow A: registered suppliers."
+  },
+  {
+   "id": "DQ-PM-072",
+   "query": "pesquise na internet os fabricantes do produto 10080010",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "get_product_suppliers"
+   ],
+   "top1_required": false,
+   "notes": "V3 flow B: web research anchored on register."
+  },
+  {
+   "id": "DQ-PM-073",
+   "query": "procure novos fornecedores no mercado para o item 10080010",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "get_product_suppliers"
+   ],
+   "top1_required": false,
+   "notes": "V3 flow D: market suppliers."
+  },
+  {
+   "id": "DQ-PM-074",
+   "query": "pesquisa de mercado e referências de fornecedor do produto 10080010",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "get_product_suppliers"
+   ],
+   "top1_required": false,
+   "notes": "V3 market research phrasing."
   }
  ]
 }

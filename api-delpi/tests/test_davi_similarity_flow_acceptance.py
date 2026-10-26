@@ -452,8 +452,9 @@ def test_sim19_candidate_token_bound_to_actor(monkeypatch):
 
 def test_similarity_aliases_do_not_promote_writes():
     allow = load_external_read_allowlist()
-    assert allow["version"] == 27
-    prev = allow["coverageDecision"]["previousDecision"]
+    assert allow["version"] == 28
+    prev = allow["coverageDecision"]["previousDecision"][
+        "previousDecision"]
     assert prev["taskId"] == "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002"
     entry = next(
         o for o in allow["operations"] if o["operationId"] == "search_products"
@@ -642,10 +643,135 @@ def test_v2_url_vs_text_divergence_guidance():
 
 def test_v2_allowlist_v27_chain():
     allow = load_external_read_allowlist()
-    assert allow["version"] == 27
-    assert allow["coverageDecision"]["taskId"] == (
+    assert allow["version"] >= 27
+    prev = allow["coverageDecision"]["previousDecision"]
+    assert prev["taskId"] == (
         "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001")
     pn = next(o for o in allow["operations"] if o["operationId"] ==
               "search_products_by_supplier_part_number")
     assert "link do fabricante" in pn["semanticAliases"]
     assert "código do fabricante" in pn["semanticAliases"]
+
+
+# =====================================================================
+# V3 — DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003 (GLPI #530)
+# =====================================================================
+
+_SUPPLIERS_GOLDEN = {
+    "success": True, "message": "ok",
+    "data": {"items": [
+        {"product_code": "10080010", "supplier_code": "000112",
+         "supplier_store": "01", "supplier_name": "TE CONNECTIVITY",
+         "supplier_part_number": "626377-1", "unit": "PC",
+         "registered_lead_time_days": 45},
+        {"product_code": "10080010", "supplier_code": "000234",
+         "supplier_store": "01", "supplier_name": "HEILIND ELECTRONICS",
+         "supplier_part_number": "0-0626377-1", "unit": "PC",
+         "registered_lead_time_days": 30},
+        {"product_code": "10080010", "supplier_code": "000301",
+         "supplier_store": "01", "supplier_name": "DELPI COMPONENTES",
+         "supplier_part_number": "10080010", "unit": "PC",
+         "registered_lead_time_days": 5},
+        {"product_code": "10080010", "supplier_code": "000418",
+         "supplier_store": "01", "supplier_name": "GPK COMPONENTES",
+         "supplier_part_number": "022.630800.10T", "unit": "PC",
+         "registered_lead_time_days": 20},
+    ], "page": 1, "page_size": 20, "total": 4, "has_more": False},
+}
+
+
+def _flow_v3():
+    return DaviAgentIntelligenceService.document()["flows"][
+        "supplier_web_research"]
+
+
+def test_v3_flow_a_registered_suppliers_no_web(monkeypatch):
+    """Flow A: 'quais fornecedores do produto X' → registered suppliers only."""
+    discovered = _discover(
+        monkeypatch, "quais são os fornecedores do produto 10080010")
+    token = _token(discovered["candidates"], "get_product_suppliers")
+    result = _execute(
+        monkeypatch, token, {"code": "10080010"},
+        _PayloadExecutor(_SUPPLIERS_GOLDEN))
+    assert result["status"] == "ok"
+    items = result["data"]["items"]
+    names = [i["supplier_name"] for i in items]
+    assert "TE CONNECTIVITY" in names and len(items) == 4
+    # Web research is a provider-side capability — never a backend call.
+    assert "web_search" not in json.dumps(result).lower()
+
+
+def test_v3_flow_b_web_research_starts_from_register(monkeypatch):
+    for q in (
+        "pesquise na internet os fornecedores do produto 10080010",
+        "pesquise fabricantes e informações técnicas do produto 10080010",
+        "procure novos fornecedores no mercado para o produto 10080010",
+    ):
+        discovered = _discover(monkeypatch, q)
+        ids = {c["action_id"] for c in discovered["candidates"]}
+        assert "get_product_suppliers" in ids, q
+
+
+def test_v3_golden_supplier_references_interpretable():
+    """Golden: 10080010 → 4 registered refs; internal code must not be
+    treated as external manufacturer PN."""
+    items = _SUPPLIERS_GOLDEN["data"]["items"]
+    pns = {i["supplier_name"]: i["supplier_part_number"] for i in items}
+    assert pns["TE CONNECTIVITY"] == "626377-1"
+    # 0-0626377-1 is a presentation variant — never auto-equivalent.
+    assert pns["HEILIND ELECTRONICS"] != pns["TE CONNECTIVITY"]
+    # Internal DELPI code registered as supplier ref — not a public PN.
+    assert pns["DELPI COMPONENTES"] == "10080010"
+    # Flow quality rules encode this distinction.
+    rules = _flow_v3()["reference_quality"]
+    assert "10080010" in rules
+    assert "0-0626377-1" in rules
+
+
+def test_v3_flow_contract_modes_and_rules():
+    flow = _flow_v3()
+    modes = flow["flow_modes"]
+    assert set(modes) == {"A_registered_suppliers",
+                          "B_code_to_public_research",
+                          "C_external_reference_to_delpi",
+                          "D_new_market_suppliers"}
+    assert "get_product_suppliers" in flow["capabilities"]
+    # B: limitation must be declared, never simulated
+    assert "nunca inventar" in modes["B_code_to_public_research"].lower() or         "declarar" in modes["B_code_to_public_research"].lower()
+    # D: public-found supplier is never auto-homologated
+    assert "NÃO é homologado" in modes["D_new_market_suppliers"]
+    hard = " ".join(flow["hard_rules"])
+    assert "homologação automática" in hard
+    assert "equivalência" in hard
+
+
+def test_v3_privacy_and_untrusted_content():
+    flow = _flow_v3()
+    uc = flow["untrusted_content"]
+    assert "não confiáveis" in uc.lower()
+    for term in ("preços", "clientes", "fornecedores"):
+        assert term in uc
+    # External content can never mutate instructions/permissions.
+    assert "permissões" in uc or "instruções" in uc
+
+
+def test_v3_no_public_data_bypass_possible(monkeypatch):
+    """Flow B never invents results when navigation is unavailable and
+    never leaks ERP-only data into public queries — encoded as rules."""
+    b = _flow_v3()["flow_modes"]["B_code_to_public_research"]
+    assert "navegação pública" in b
+    uc = _flow_v3()["untrusted_content"]
+    assert "códigos internos" in uc
+
+
+def test_v3_allowlist_v28_chain():
+    allow = load_external_read_allowlist()
+    assert allow["version"] == 28
+    assert allow["coverageDecision"]["taskId"] == (
+        "DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003")
+    assert allow["coverageDecision"]["previousDecision"]["taskId"] == (
+        "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001")
+    sup = next(o for o in allow["operations"] if o["operationId"] ==
+               "get_product_suppliers")
+    assert "novos fornecedores" in sup["semanticAliases"]
+    assert "pesquisa de mercado" in sup["semanticAliases"]
