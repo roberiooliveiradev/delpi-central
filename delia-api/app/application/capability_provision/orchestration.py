@@ -3012,6 +3012,39 @@ def _projected_capability_names(payload: str) -> frozenset[str]:
     )
 
 
+def _projected_capability_ids(payload: str) -> frozenset[str]:
+    """Capability ids actually present in a serialized group block.
+
+    The block is the ``_group_summaries`` shape — a bare summaries
+    list or an object wrapping it under ``capability_groups`` — where
+    each summary carries a ``capabilities`` list plus an optional
+    ``capabilities_omitted`` marker. A foreign selection may only bind
+    an id the model actually saw; omitted tail entries stay
+    unselectable.
+    """
+    try:
+        block = json.loads(payload)
+    except ValueError:
+        return frozenset()
+    summaries = (
+        block
+        if isinstance(block, list)
+        else block.get("capability_groups")
+        if isinstance(block, Mapping)
+        else None
+    )
+    if not isinstance(summaries, list):
+        return frozenset()
+    return frozenset(
+        entry["capability_id"]
+        for summary in summaries
+        if isinstance(summary, Mapping)
+        for entry in (summary.get("capabilities") or ())
+        if isinstance(entry, Mapping)
+        and isinstance(entry.get("capability_id"), str)
+    )
+
+
 # Canonical sensitive credential concepts. Keys are normalized
 def _json_block(block: Any) -> str:
     return json.dumps(block, ensure_ascii=False, default=str)
@@ -6454,6 +6487,7 @@ class OperationalCapabilityOrchestrator:
             _render_synthesis(
                 proposal,
                 projected_records,
+                projected_omitted=block.get("records_omitted", 0),
                 field_labels=self._field_labels,
             )
             if isinstance(proposal, Mapping)
@@ -6671,16 +6705,21 @@ class OperationalCapabilityOrchestrator:
             for key, group in groups.items()
             if key != target_group_key
         }
+        foreign_payload = _group_summaries(
+            foreign_groups,
+            prior_observation=_prior_observation_context(
+                prior_turns
+            ),
+            business_subject=business_subject,
+        )
+        # Membership is proven against the ids the model actually saw
+        # — a capability_id matching only an entry omitted by the fit
+        # ladder (``capabilities_omitted``) was never presented.
+        visible_ids = _projected_capability_ids(foreign_payload)
         proposal = self._propose(
             input_text,
             block_tag="foreign_capability_groups",
-            block_payload=_group_summaries(
-                foreign_groups,
-                prior_observation=_prior_observation_context(
-                    prior_turns
-                ),
-                business_subject=business_subject,
-            ),
+            block_payload=foreign_payload,
             instruction_id=FOREIGN_SELECTION_INSTRUCTION_ID,
             instruction=self._instruction(FOREIGN_SELECTION_INSTRUCTION_ID),
             expected_fields=("foreign_capability_id",),
@@ -6707,8 +6746,10 @@ class OperationalCapabilityOrchestrator:
             )
             return None
         found = _find_capability(foreign_groups, foreign_id.strip())
-        if found is None or (
-            found[1].operation_class not in _PATH_FOREIGN_CLASSES
+        if (
+            found is None
+            or found[1].capability_id not in visible_ids
+            or found[1].operation_class not in _PATH_FOREIGN_CLASSES
         ):
             _logger.info(
                 "orchestration stage=foreign_selection "
@@ -9096,6 +9137,7 @@ class OperationalCapabilityOrchestrator:
                     if page_envelope is not None
                     else None
                 ),
+                projected_omitted=block.get("records_omitted", 0),
                 field_labels=self._field_labels,
             )
             if isinstance(proposal, Mapping)
@@ -9984,12 +10026,24 @@ class OperationalCapabilityOrchestrator:
             # goal/evidence judgment — untrusted data, never an
             # instruction: it informs the single governed recovery
             # reselection round only (plan 125 adendum / doc 143-B).
-            group_payload = json.dumps(
-                {
-                    "capability_groups": json.loads(group_payload),
-                    "relevance_feedback": json.loads(relevance_feedback),
-                },
-                ensure_ascii=False,
+            # The wrap happens BEFORE the final fit so an object-form
+            # inner payload (optionals present) is flattened instead
+            # of nested under a second capability_groups key, and the
+            # dispatched block keeps the compaction contract. Groups
+            # are never omitted here — every live group must stay
+            # visible for reselection.
+            wrapped: dict[str, Any] = {}
+            inner = json.loads(group_payload)
+            if isinstance(inner, list):
+                wrapped["capability_groups"] = inner
+            elif isinstance(inner, Mapping):
+                wrapped.update(inner)
+            wrapped["relevance_feedback"] = json.loads(relevance_feedback)
+            group_payload = _fit_json_block(
+                wrapped,
+                MAX_SURFACE_CHARS,
+                lambda: _drop_block_fields(wrapped, "prior_observation"),
+                lambda: _drop_block_fields(wrapped, "relevance_feedback"),
             )
         proposal = self._propose(
             input_text,
@@ -10124,22 +10178,33 @@ class OperationalCapabilityOrchestrator:
             prior_observation=observation,
             business_subject=business_subject,
         )
-        # Membership is proven against the entries the model actually
-        # saw — a remote_name matching only an omitted tail entry was
-        # never presented and is unselectable.
+        if relevance_feedback is not None:
+            # Same bounded recovery signal as stage 1 — untrusted data.
+            # The feedback is embedded in the block BEFORE the final
+            # fit, so the dispatched payload keeps the compaction
+            # contract (truthful capabilities_omitted under pressure)
+            # instead of silently outgrowing the target afterwards.
+            wrapped: dict[str, Any] = {}
+            inner = json.loads(cap_payload)
+            if isinstance(inner, list):
+                wrapped["capabilities"] = inner
+            elif isinstance(inner, Mapping):
+                wrapped.update(inner)
+            wrapped["relevance_feedback"] = json.loads(relevance_feedback)
+            cap_payload = _fit_json_block(
+                wrapped,
+                MAX_SURFACE_CHARS,
+                lambda: _omit_tail_entries(
+                    wrapped, "capabilities", "capabilities_omitted"
+                ),
+            )
+        # Membership is proven against the FINAL dispatched payload —
+        # a remote_name matching only an omitted tail entry was never
+        # presented and is unselectable.
         visible = _projected_capability_names(cap_payload)
         invocable = [
             cap for cap in invocable if cap.remote_name in visible
         ]
-        if relevance_feedback is not None:
-            # Same bounded recovery signal as stage 1 — untrusted data.
-            cap_payload = json.dumps(
-                {
-                    "capabilities": json.loads(cap_payload),
-                    "relevance_feedback": json.loads(relevance_feedback),
-                },
-                ensure_ascii=False,
-            )
         proposal = self._propose(
             input_text,
             block_tag="capabilities",

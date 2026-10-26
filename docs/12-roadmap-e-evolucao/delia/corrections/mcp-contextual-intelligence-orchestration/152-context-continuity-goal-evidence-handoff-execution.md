@@ -349,3 +349,48 @@ Residuals: (a) unknown-window admits whole payloads up to the transport bound �
 **Outcome interpretation:** The three-record case reportedly reached 12 stages and an honest empty-owner-data answer; this is NOT success in retrieving three records. `GROUNDED` status on a sourced empty response must be explained separately from `business_outcome=FAIL`. O2 = non-grounded. Remaining failures cannot yet be attributed exclusively to 3B; admission/goal, owner availability and matching remain competing explanations.
 
 **NEXT:** Stop broad context rewrites. One narrow evidence audit of residual B/C on HEAD with tests of final business-outcome gating and actual dispatched block (incl relevance feedback); fix only demonstrated defects. Keep deploy blocked pending review, runtime parity and owner/outcome evidence. Do not add a planner, new taxonomy, model swap or session persistence.
+
+
+## 16. Residual B/C closure — outcome completeness & final payload consistency — 2026-10-26
+
+Task `DELIA-C3-OUTCOME-COMPLETENESS-FINAL-PAYLOAD-CONSISTENCY-01`, base `f24ceddf6b`, closing the two residuals the independent review (§15) marked for a narrow evidence audit. No planner, engine, registry, memory, provider or second budget added; both fixes extend existing owners.
+
+### B — partial evidence must not read as complete
+
+Causal record:
+
+- PRODUCER: `_records_payload`/`_fit_json_block` writes `records_omitted=N` into the evidence block.
+- ORIGINAL_DATA: owner record set (e.g., 5 records).
+- PROJECTED_DATA: fitted prefix (e.g., 3) + `records_omitted=2`.
+- ACTUAL_MODEL_PAYLOAD: block with marker.
+- CONSUMER: `_synthesize_content`/`_prior_continuation_attempt` → `_render_synthesis` → `_list_header`.
+- VALIDATION_INPUT: `record_index` already bound to projected prefix (R2); `has_more` taken only from the owner pagination envelope.
+- OUTPUT: header rendered `Encontrei N registros:` even when `records_omitted>0` — an unqualified completeness read on a partial projection.
+- FIRST_DIVERGENCE: presentation gate never received the projection-omission signal.
+- ROOT_CAUSE: `projected_omitted` never threaded to `_render_synthesis`/`_list_header`.
+
+Fix (bounded): `conversational_response._render_synthesis` accepts `projected_omitted`; both call sites pass `bool(block.get("records_omitted"))`; `_list_header` qualifies the count when the projection was partial (partial-but-useful stays presentable, never as exhaustive). `LIMITATION_EVIDENCE_PROJECTION_PARTIAL` propagation through attempt→turn→result was verified end-to-end (already existed). `GROUNDED` remains a provenance state, not a business-outcome verdict: an authoritative empty/partial result stays honest.
+
+### C — validation must bind to the dispatched payload
+
+Causal record:
+
+- PRODUCER: `_select_capability` built `cap_payload` via `_capability_payload`, computed `visible` names from it, then wrapped `{"capabilities": json.loads(cap_payload), "relevance_feedback": …}` without re-fitting.
+- ORIGINAL_DATA: eligible capabilities + feedback.
+- PROJECTED_DATA: fitted capability list — object form `{capabilities, capabilities_omitted}` under pressure.
+- ACTUAL_MODEL_PAYLOAD (baseline): object-form inner payload became `{"capabilities": {"capabilities": [...], "capabilities_omitted": N}, ...}` — nested shape the membership contract cannot read at the documented path; marker buried one level deep; final size never re-budgeted after feedback.
+- CONSUMER: selection membership validation.
+- VALIDATION_INPUT (baseline): pre-wrap payload — diverged from dispatched shape under object-form projection.
+- OUTPUT: RED — `names=∅ marker=0` on the dispatched block while validation used the pre-wrap set. Foreign selection additionally bound `capability_id` against the full foreign group — `beta.read_5` resolved despite being omitted from the dispatched summaries (fail-open). `_select_group` showed the same wrap defect shape-wise (nested `capability_groups` under optionals) though groups are never omitted, so its membership could not diverge.
+- FIRST_DIVERGENCE: wrap executed after validation-input capture; no re-fit of the final block; foreign path had no projected-id binding at all.
+- ROOT_CAUSE: final payload assembled after the selectable universe was extracted.
+
+Fix (bounded): `_select_capability` assembles `{"capabilities": <projected entries>, "capabilities_omitted": N, "relevance_feedback": …}` first, re-fits the final block, and computes `visible` from that same dispatched payload; `_projected_capability_ids` binds foreign `capability_id` proposals to the ids actually present in the dispatched group summaries. The sibling defect in `_select_group` (feedback wrap over object-form summaries → nested `capability_groups.capability_groups` whenever `business_subject`/`prior_observation` was present) is flattened the same way and re-fitted; groups remain never-omitted, preserving the all-groups-visible invariant and `_resolve_live_group_key` membership. Tag-like feedback (`</capabilities>` inside strings) stays inert data — the envelope is prompt formatting, not a parse boundary for any consumer.
+
+### Tests and runtime evidence
+
+- `test_outcome_completeness_final_payload.py` — 15 cases (B1–B9 characterization + C1–C8). Causal RED on baseline checkout: `test_b2`, `test_b4` (partial projection rendered as complete count), `test_c3` (nested capabilities shape — dispatched block unreadable to membership contract), `test_c_foreign_selection_rejects_omitted_capability` (unprojected `beta.read_5` resolved), `test_c_group_selection_flat_final_payload_with_feedback` + `test_c_group_selection_feedback_pressure_stays_fitted` (nested `capability_groups` shape reproduced on baseline). Post-fix: GREEN.
+- Focused regression: outcome assessment, projection integrity, C3 consumption, synthesis, continuity, comparison, selection quality/envelope, recovery, context budget, model invocation, adapters, presentation, CRI E1–E3, security, resume, generalization — all green. Full backend suite green (clean env). Architecture gates: 0 findings.
+- Live Ollama eval (delia-json qwen2.5:3b, ctx 8192, instruction v22, real api-delpi DAVI via delegated exchange): 8 scenarios; 29/29 captured blocks valid JSON; three_bala reached 3 real DAVI invokes and ended in honest clarification; comparison ended honest authorization-denied; write_request refused as unauthorized; one typed `invalid_model_output` bounded failure. An invented foreign `capability_id` (`mcp:vista.get_catalog`) was rejected fail-closed live. `FALSE_POSITIVES=0`; `FALSE_COMPLETENESS=0`. Semantic capacity (3B routing) remains the outcome limiter — unchanged, documented.
+
+Residuals: (a) Residual A (unknown-window over-target) still requires an adapter-declared window — architecture decision; (b) 3B semantic capacity — no model swap claimed; (c) completeness judgement beyond the rendered-header gate remains bounded to deterministic signals (markers, owner pagination), not LLM-declared.

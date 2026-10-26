@@ -708,6 +708,7 @@ def _render_synthesis(
     records: tuple[Mapping[str, Any], ...],
     *,
     has_more: bool | None = None,
+    projected_omitted: int = 0,
     field_labels: FieldLabels | None = None,
 ) -> tuple[str | None, str]:
     """Deterministic render of an evidence-bound synthesis proposal.
@@ -728,6 +729,9 @@ def _render_synthesis(
 
     ``has_more`` (R5) prevents page-slice length from being framed as
     an authoritative total when the owner reports more pages.
+    ``projected_omitted`` (C3-B) is the count of owner records dropped
+    from the model-visible projection — the rendered list is then
+    introduced as partial, never as the complete owner result.
     Presentation does not decide whether a comparison succeeded.
     """
     selections, reason = _synthesis_selections(proposal, records)
@@ -753,6 +757,7 @@ def _render_synthesis(
                 len(selections),
                 records=selected_records,
                 has_more=has_more,
+                projected_omitted=projected_omitted,
             )
         ]
         for _record, values in selections:
@@ -942,11 +947,15 @@ def _list_header(
     *,
     records: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]] | None = None,
     has_more: bool | None = None,
+    projected_omitted: int = 0,
 ) -> str:
     """Bounded list introduction — outcome-aware (doc 35 R3 + R5).
 
     When the owner page reports ``has_more=True``, the returned item
     count is a page slice — never presented as an authoritative total.
+    ``projected_omitted`` marks owner records that stayed out of the
+    model-visible projection: the list is then introduced as partial,
+    never as the complete owner result.
     """
     if records is not None and records_are_prior_excerpts(records):
         noun = "itens" if count != 1 else "item"
@@ -955,6 +964,12 @@ def _list_header(
         return (
             f"Mostrando {count} registro(s) nesta página; há mais "
             f"resultados além desta página — este número não é o total."
+        )
+    if projected_omitted > 0:
+        return (
+            f"Mostrando {count} registro(s); a fonte retornou mais "
+            f"resultados que não foram apresentados — esta lista "
+            f"não é exaustiva."
         )
     noun = "registros" if count != 1 else "registro"
     return f"Encontrei {count} {noun}:"
