@@ -741,3 +741,122 @@ NÃO renderizar relatórios TOTVS, divergências operacionais ou botões de uplo
 - `IMPLEMENTATION_AUTHORIZED=NO`: design/documentação somente.
 
 **Próximo wireframe:** detalhar somente a **página restrita de documentos anexados para Contabilidade/DRE**, sem qualquer referência visual a relatórios TOTVS. Depois validar a jornada interna de entrega da Controladoria e a visibilidade cruzada do histórico.
+
+
+## 17. Wireframe 03 — Página exclusiva Fechamento mensal / Contabilidade-DRE V0.8
+
+**Data:** 2026-10-26. **Natureza:** design/documentação exclusiva da experiência restrita Contabilidade/DRE. **Estado:** \`TARGET / DETAIL_VISUAL_DRAFT / PENDING_PO_APPROVAL\`. **Não altera** a página Controladoria, a bancada de relatórios TOTVS, permissões ou runtime.
+
+### 17.1 Jornada e contrato de acesso
+
+**Job:** “Quero encontrar os documentos que foram anexados e disponibilizados para minha área na competência, consultá-los/baixá-los e pedir esclarecimento ou complemento, acompanhando as respostas no mesmo item.”
+
+- Entrada no menu: **Fechamento mensal**, com landing restrita documental para a audiência autorizada Contabilidade/DRE, sem acesso à Home ampla da Controladoria como efeito colateral.
+- Listar **somente anexos efetivamente existentes, vinculados a item da competência e disponibilizados para aquele recipient/resource scope**. Ausência de anexo não vira linha com botão de download; pedido de documento não entregue depende de decisão específica (o PO pediu “apenas docs anexados”).
+- O identificador de documento/item é estável; versões e decisões são rastreáveis. Download não significa aceite, validação ou conclusão.
+- Usuário pode **comentar** e **solicitar complemento** de documento disponibilizado; não pode anexar/substituir, validar/rejeitar evidência P2, aceitar/rejeitar pacote P5 ou acessar relatórios TOTVS e dados de reconciliação.
+- Ação permitida na UI é projeção; backend exige identity + **Core effective permission apropriada** + recipient_assignment/resource scope + business rule da competência/versão/estado, e falha fechado. Documento 91 registra a solicitação de terceira capability de consulta como exceção técnica **ainda não ratificada/implementada**, logo o manifest atual com \`.access/.manage\` **não atende sozinho** ao acesso restrito futuro. O PO não autorizou alteração do freeze neste wireframe.
+- Compartilhamento de comentários/solicitações com Controladoria precisa de contrato explícito e linha do tempo auditável, sem criar chat separado. A instrução “notificar todo mundo que tem acesso ao Portal, menos DRE” depende de delimitação da audiência que pode ver a competência/documento e consentimento/segurança; não enviar detalhes indiscriminadamente.
+
+### 17.2 Wireframe desktop — uma única página, sem abas de domínio do Portal amplo
+
+\`\`\`text
+┌────────────────────────────────────────────────────────────────────────────┐
+│ PORTAL SHELL / TOPBAR PADRÃO, SOMENTE DESTINOS EFETIVAMENTE AUTORIZADOS    │
+├────────────────────────────────────────────────────────────────────────────┤
+│ Controladoria & Finanças  ›  Fechamento mensal                              │
+│ FECHAMENTO MENSAL                                      [Ajuda] [Atualizar] │
+│ Documentos disponibilizados para sua área.                                 │
+│ [Competência existente/autorizada: MM/AAAA ▼]  [Área/destinatário permitido]│
+│ [Atualizado em: hh:mm/fonte, ou indisponível]                               │
+├────────────────────────────────────────────────────────────────────────────┤
+│ [Buscar documento...] [Tipo/grupo ▼] [Situação do complemento ▼]          │
+│ [N documentos liberados] [N solicitações em aberto (se houver contrato)]  │
+├─────────────────────────────────┬──────────────────────────────────────────┤
+│ DOCUMENTOS DISPONÍVEIS          │ DETALHE DO DOCUMENTO                     │
+│ Nome / origem / versão          │ Nome, competência, arquivo(s), versão    │
+│ Disponibilizado em / contexto   │ Disponibilização e destinatário         │
+│ Situação de complemento         │ [Pré-visualizar*] [Baixar]               │
+│ Última interação                │                                          │
+│ [selecionar]                    │ INTERAÇÕES                               │
+│ ...                             │ timeline com autor/data/tipo/versão      │
+│ paginação                      │ [Escrever comentário]                    │
+│                                 │ [Solicitar complemento]                  │
+│                                 │ HISTÓRICO AUDITÁVEL                      │
+│                                 │ disponibilização / downloads* / replies │
+└─────────────────────────────────┴──────────────────────────────────────────┘
+* somentes ações suportadas e autorizadas pelos contratos de preview/audit.
+SEM upload, relatórios TOTVS, paridade, divergências operacionais, administração
+ou aprovação/rejeição de P2/P5.
+\`\`\`
+
+**Layout:** cabeçalho enxuto, lista master/detail aproximadamente 40/60 com kit \`ResizableColumns\` e sem modal para detalhe principal. Destacar seleção da lista. Dividir comentários e histórico pelo tipo de evento, preservando sequência auditável. Nome “Fechamento mensal” continua sendo a entrada; subtítulo explicita o escopo documental.
+
+### 17.3 Inventário visual componente por componente
+
+| ID | Componente | Campos e comportamento | Owner/estado |
+|---|---|---|---|
+| DRE-01 | Shell restrito / PagePath | Apenas navegação autorizada; título “Fechamento mensal” + subtítulo documental | Core manifest/guards e kit; \`TARGET/CONTRACT_GATE_PENDING\` |
+| DRE-02 | CompetenceSelector | Apenas competências já existentes para aquele recipient, formatação MM/AAAA; revalidar lista/seleção ao trocar | P1/P5/Core scope; \`TO_INVENTORY\` |
+| DRE-03 | Contexto de destinatário | Área/destinatário em texto; seletor apenas para múltiplos escopos efetivamente autorizados | Core/P5; \`TO_INVENTORY\` |
+| DRE-04 | Filtros/busca | nome/código, tipo/grupo, situação de complemento e ordenação temporal quando DTO suportar | BFF projection; \`TARGET\` |
+| DRE-05 | Lista única de documentos | item, anexo liberado, versão, timestamps, destinatário, última interação; contagem somente se resposta válida | P2/P5 view; \`TARGET\` |
+| DRE-06 | Detalhe documental | metadados da versão, proveniência, estado de liberação, ações de preview/download quando existentes | P2/P5/BFF/attachment kit; \`TO_INVENTORY\` |
+| DRE-07 | Comentar | composer de texto, confirmar, feedback, linha do tempo; não é validação | Novo contrato de interação \`DECISION_REQUIRED\` |
+| DRE-08 | Solicitar complemento | formulário contextual com documento/versão, descrição objetiva, registrar; sem rejeição P2/P5 implícita | Novo contrato de ação \`DECISION_REQUIRED\` |
+| DRE-09 | Histórico compartilhado | evento, autor, data/hora, origem, vínculo a versão; disponível também à Controladoria quando scope permitir | timeline/event owners \`TO_INVENTORY\` |
+| DRE-10 | Notification projection | apenas eventos relativos a documento/competência e destinatários autorizados fora da audiência DRE | Core Notifications \`DECISION_REQUIRED\` |
+| DRE-11 | Help | como acessar documentos, baixar, comentar, solicitar e consultar resposta; limitações de acesso | \`TARGET\` no mesmo gate |
+
+**Reuso visual:** \`createDashboardPagePath\`, \`createDashboardPageHero\`, \`ResizableColumns\`, \`DataTableSection\`/\`DataRecordCard\`, \`createDashboardFiltersKit\`, \`AttachmentFileList\`, \`AttachmentPreviewStrip\`, \`Timeline\`, \`StateBanner\`, \`EmptyState\`, \`LoadingState\`, \`ConfirmModalPanel\`, \`ActionButton\`, \`BackLink\`, \`HelpTooltip\`, todos sob \`@delpi/plugin-ui/index\` após conferência de exports do HEAD.
+
+### 17.4 Microinterações propostas
+
+**Abertura:** Portal autentica → Core resolve rota/permissão específica quando aprovada → BFF retorna competências e documentos liberados só para audiência daquele usuário → página abre última competência autorizada **se contrato fornecer essa preferência**; alternativa padrão é exigir seleção. Não adivinhar competência corrente.
+
+**Selecionar arquivo:** lista mantém filtros; detalhe exibe nome, versão, data de disponibilização, origem e destinatário; preview/download reautorizados individualmente. Se houver duas versões, explicitar vigente e histórico consultável autorizado; versão rejeitada/histórica pode não estar liberada para DRE.
+
+**Comentar:** editor vinculado ao documento e à versão exibida; descrever o comentário → enviar após confirmação do usuário → backend cria evento auditado → timeline comum atualiza → notificação eventual fora da audiência DRE segundo contrato. Sem mensagens vazias ou post automático ao navegar. Não inserir upload ou anexos no compositor.
+
+**Solicitar complemento:** ação independente de “Comentar”, pede texto objetivo e referência ao documento/versão; após backend confirmar gravação, exibir etiqueta “Complemento solicitado” e evento na timeline. A existência de campos de prioridade, prazo, categoria, responsável, fechamento da solicitação e botão “Resolvido” permanece **PENDING_PRODUCT/CONTRACT**; não gerar status livre nem acoplar a P4 sem owner aprovado.
+
+**Resposta da Controladoria:** deve aparecer na mesma timeline a partir de mensagem/evento autorizado no lado interno do Portal; o usuário DRE visualiza a resposta no documento, sem editar ou apagar eventos anteriores. A possibilidade de resposta adicional DRE será definida na semântica de thread.
+
+**Atualizar:** refetch de leitura preserva competência/filtros e não duplica mensagens; erro de POST mantém texto digitado e permite retry idempotente quando contrato definir.
+
+### 17.5 Estados e segurança de experiência
+
+| Estado | Mensagem / comportamento |
+|---|---|
+| Competência sem documentos liberados | “Não há documentos disponibilizados para sua área nesta competência.” (somente se ausência real confirmada) |
+| Carregamento | Skeleton lista/detalhe, título e competência preservados |
+| Nenhuma competência acessível | “Nenhuma competência disponível para consulta.” sem revelar competências de terceiros |
+| Arquivo indisponível | Distinguir autorização negada de storage/fonte indisponível; não oferecer link inseguro |
+| Solicitação aberta | Mostrar somente se evento/status físico existir; motivo e autor/timestamp |
+| Download permitido | arquivo obtido por caminho temporário/autorizado, auditado na BFF, sem URL pública fixa |
+| 403/404 | não expor metadados de outro destinatário e não indicar existência sensível |
+| Network timeout | retry sem apagar contexto; em comentário, não duplicar gravação |
+| Troca de competência | limpar detalhe e versões anteriores antes de novo fetch |
+| Tema/mobile | claro/escuro mesma árvore; lista→detalhe full width, botões acessíveis e retorno, foco/teclado |
+
+### 17.6 Critérios de aceite visual (não equivalem a teste executado)
+
+A1: usuário DRE entra por **Fechamento mensal** e encontra exclusivamente documentos anexados e liberados do próprio scope.
+A2: não há controles, navegação, busca ou exposição de payloads TOTVS, relatórios, paridade, estoque, administração, upload ou aceite.
+A3: lista e detalhe permitem selecionar, ler e baixar arquivo/versão autorizado; download é auditável.
+A4: comentar e solicitar complemento têm modos distintos e mostram contexto do documento/versão, confirmação/feedback e trilha auditada.
+A5: quando houver resposta, o entregador autorizado e o DRE veem a mesma trilha permitida, sem duplicar documento.
+A6: o motor de notificação exclui DRE destinatário de broadcast e nunca notifica usuário sem scope; alvos finais dependem de contrato.
+A7: desktop/mobile, teclado/foco, tema claro/escuro e Help aprovados; error/empty/partial não mentem sobre dados.
+A8: testes futuros precisam cobrir acesso direto à URL TOTVS/stock/API, acesso cruzado por recipient/competência/versão, permissão revogada e falha Core fail-closed.
+
+### 17.7 DECISION_REQUIRED antes de runtime
+
+1. **D-DRE-MANIFEST-01:** exceção à identidade de duas permissions congeladas no produto e rollout Core/manifest/launcher/guards/BFF. Doc 91 registra direção de produto e adiamento; não implementar por inferência.
+2. **D-DRE-COLLAB-01:** persistência/owner/DTO do comentário e da solicitação, thread/visibilidade/resposta, estado e idempotência; mapear reuso de eventos/notifications e P2/P5.
+3. **D-DRE-NOTIFY-01:** escopo de “todo mundo menos DRE” deve restringir recipients a atores elegíveis com visibilidade do documento e competência; broadcast indiscriminado criaria exposição indevida. Exige PO + segurança/Core Notifications.
+4. **D-DRE-LIBERATION-01:** fato/estado que libera anexo individual ou PackageVersion para consulta DRE; separar de “enviado para revisão” P5 e de aceitação P2.
+5. **D-DRE-HISTORY-01:** se versões anteriores ficam visíveis à audiência externa, e quais eventos de download/comentário são partilhados.
+6. **D-DRE-ENTRY-01:** rota/URL exatas, navegação do launcher e comportamento para \`.manage\` sem acesso geral. \`MANAGE != ACCESS\`; não tratar manage como superusuário de leitura.
+
+**Próximo passo:** revisão visual PO da listagem + detalhe + composer e solicitação de complemento. \`DESIGN_V0.8=PENDING_PO\`, \`RUNTIME_GO=NO\`.
