@@ -1149,3 +1149,67 @@ prioridade material (quando real) | tipo | motivo | source | responsável | desd
 Na resposta anterior, “Próximo detalhamento — Pendências e classificações” foi apresentado como se fosse próxima página independente. **CORRIGIDO:** concluir detalhamento da **Visão geral** e avançar diretamente para **Revisão**, que é a quarta aba ainda não detalhada no mesmo nível. P4 é componente/contexto transversal a mapear sem alterar a navegação de quatro abas.
 
 **Permanecem pendentes:** componente P4 em profundidade, estados reais do P1, decisão de contrato sobre navegação em rota vs aba/deep link, PDF de cada emissão, contrato de complemento/WebSocket e gate de permissions DRE. Esta aprovação é **visual/informacional**, não GO de implementação.
+
+
+## 24. Regra PO de navegação mínima e avaliação de integração de P5 — NÃO criar páginas redundantes
+
+**Data:** 2026-10-26. **Manifestação PO:** “A gente não deve sair criando muitas páginas”; documentos a tratar pertencem a Documentos, divergências e sugestões de correção TOTVS pertencem ao próprio relatório, e o usuário não deve precisar entrar e sair de abas para concluir uma tarefa. Pergunta material: se a aba `Revisão` precisa existir ou pode ser absorvida pelas áreas existentes.
+
+**Decisão documental confirmada — `PO_APPROVED_UX_PRINCIPLE`:** **nenhuma nova aba/página por métrica, botão, categoria, pendência ou etapa técnica quando o trabalho cabe na bancada funcional já existente**. O princípio limita a navegação e preserva os owners de domínio P2/P3/P4/P5. Não criar nova permission por página nem eliminar rotas legadas sem decisão e plano de compatibilidade.
+
+### 24.1 Mapeamento canônico por trabalho do usuário
+
+| Trabalho | Lugar principal | Comportamento de entrada |
+|---|---|---|
+| Documentos a tratar, upload elegível, versões, comentários e complementos | `Documentos e interações` P2 | Cartão de indicador navega para esta aba com filtro “a tratar” quando contratado; não criar aba própria |
+| Divergências, conciliações, regra de negócio e sugestões de correção manual no TOTVS | `Relatórios e divergências` P3 / owner canônico | Card navega ao relatório/filtro correto, mostra origem, diferença, regra, evidência e orientação; **não** alterar ERP pela UI |
+| Bloqueios materiais, status dos três eixos, acontecimentos e próximo trabalho | `Visão geral` P1 | Composição/read-only de owners, sem percentual único de conclusão |
+| Pendências/classificações P4 | Subárea contextual pertinente com worklist/links ao owner P4 | Não fundir P4 com P2 nem criar quinta aba sem PO; preservar lifecycle/contratos |
+| Finalização/submissão/revisão humana do pacote consolidado | P5 `PackageVersion` | P5 é processo próprio, não sinônimo de validação de documento nem simples conciliação |
+
+**Invariante UX:** ficar no contexto da competência, com drilldown, seleção, filtros e retorno preservados. Cards FM-05 são atalhos clicáveis para a bancada funcional correspondente, não destinos top-level independentes.
+
+### 24.2 Esclarecimento canônico sobre P5 — ver doc 37
+
+P5 significa **revisão do pacote/versionamento do fechamento**, que pode abranger documentos e resultados de diferentes fluxos. O contrato vigente registra:
+
+```text
+PREPARAR PACOTE
+→ FINALIZAR (PackageVersion imutável)
+→ ENVIAR PARA ANÁLISE (reviewers elegíveis na Minha DELPI)
+→ NOTIFICAR
+→ RECEBER ANÁLISES/ACEITES HUMANOS/ESCLARECIMENTOS
+→ VERIFICAR CONDIÇÕES CANÔNICAS DE CONCLUSÃO DA COMPETÊNCIA
+```
+
+`FINALIZE != SUBMIT_FOR_REVIEW != NOTIFY != REVIEW != MONTHLY_CLOSING_COMPLETED`. Revisores P5 têm atribuição por área/versão e acesso/escopo efetivos; **destinatário Contabilidade/DRE restrito que só consulta/baixa/comenta documentos não é automaticamente reviewer P5 nem aprova na V1**. Não transferir a authority das decisões P5 para P2/P3 por reorganização visual.
+
+### 24.3 DECISION_REQUIRED — três vs quatro abas, sem substituir decisão prévia silenciosamente
+
+**A — Três abas principais (opção nova em análise):**
+1. Visão geral
+2. Documentos e interações
+3. Relatórios e divergências
+
+`Revisão` P5 seria tratada como painel/fluxo contextual a partir da Visão geral e referências do pacote, **sem perder** versões, auditoria, notificações, tarefas dos reviewers nem deep links. **Impacto:** simplifica menu, mas risco de sobrecarregar Visão geral e de ocultar decisões formais. Precisa detalhar navegação P5 e modo reviewer antes de aprovação.
+
+**B — Quatro abas principais (baseline visual V0.6 / §23):**
+1. Visão geral
+2. Documentos e interações
+3. Relatórios e divergências
+4. Revisão
+
+P5 permanece bancada própria somente para **pacote, versões, submissão, decisões humanas, esclarecimentos, critérios de conclusão**, sem duplicar o catálogo de documentos ou relatórios. **Recomendação de arquitetura atual: B** pela distinção real do fluxo, mantendo a navegação principal compacta. **PO ainda não escolheu entre A e B nesta reconsideração**; até decisão, prevalece baseline V0.6 de quatro abas, sem qualquer alteração de implementação.
+
+### 24.4 Diretrizes para sugestões de divergência
+
+Na própria bancada Relatórios e divergências mostrar: origem e estado da fonte, regra/cálculo, diferença comprovada, explicação da causa quando suportada pela regra/evidência, sugestão governada do procedimento manual no TOTVS, owner e ação para reexecutar a leitura/reconciliação. A sugestão **não executa write no ERP**, não confirma classificação P4 automaticamente e não substitui evidência de resultado. Quando a causa não for determinada, mostrar `CAUSA_NAO_CONFIRMADA` em UI como mensagem explicativa, **não** como novo enum de domínio.
+
+### 24.5 Limites e próximo passo
+
+- Estrutura: **nenhuma quinta aba** de Pendências, Documentos a tratar ou Divergências; indicadores continuam atalhos da moldura.
+- PDF: preservar apenas container de prévia/gerar/disponibilizar neste momento, detalhamento de fidelidade adiado a pedido PO.
+- DRE: landing documental restrita já decidida, sem relatórios TOTVS, independente do número de abas da Controladoria.
+- Se a escolha for A, documentar alteração **explícita** da decisão visual de quatro abas, com destino e deep links de P5, antes de runtime.
+- **`DECISION_REQUIRED / PENDING_PO`** para contêiner de P5 na opção A vs aba dedicada B.
+- **`RUNTIME_GO=NO`**: nenhum código, manifest, permission, rota, API ou schema implementado por esta discussão.
