@@ -143,3 +143,26 @@ cofre.
 
 SHA desta etapa: `FINAL_HEAD` do commit desta entrega em `main`
 (relatório CF-PROC0072-CLARA-CHATGPT-EARLY-VALIDATION-001).
+
+
+## Adendo 2 — revisão independente ecf765 e encerramento da trilha técnica
+
+**Data:** 2026-10-25 · **SHA de código revisado:** `ecf765139d77fabcf5ab28ab04cfb71f9cde41b0`. **Veredito:** `ACCEPT_WITH_RESIDUAL` para correções de concorrência e apresentação; `INCONCLUSIVE` para integração runtime/Keycloak/ChatGPT e para aceite integral do PROC-0072. **Não** declarar produção aprovada ou implantação feita.
+
+### Evidências inspecionadas no GitHub
+
+- `ClaraConsentChallengeRepository.approve_for_batch` adquire lock `clara_batch → clara_consent_challenge`, compatível com `ClaraBatchRepository.claim_batch_for_execution`; `approve_for_proposal` agora usa `clara_proposal → clara_consent_challenge` como `claim`. Testes `test_approve_claim_race_no_deadlock` com 8 lotes e demais testes concorrentes presentes no código. **Execução dos testes: reportada pelo Devin, não reexecutada pelo revisor**: 599 backend e 65 CLARA PG.
+- `operation_presentation._clip` alterado de 140 para 4000. Motivos longos comuns agora são apresentados, mas **não se inferiu ausência de truncamento de textos com >4.000 caracteres**; validar contra limites dos contratos de domínio e bloquear/expandir representação se houver caso legítimo maior.
+- Ficha `controllership-finance-api/docs/integrations/chatgpt-clara-registration-sheet.md` entregue. Issuer/endpoints OIDC reportados como verificados via discovery pelo executor; URL MCP é contratual e resposta 401 da imagem antiga **não confirma** que a CLARA V014 está servindo tools em produção.
+
+### Bloqueios operacionais consolidados
+
+- **Ambiente:** inventário SSH do executor identifica apenas `srv-api` produtivo; workflow “homolog” compartilha host, logo não equivale a ambiente separado. Informação de runtime reportada, não reverificada nesta revisão.
+- **Keycloak:** `--check` falhou por credencial admin bootstrap rotacionada; fornecer acesso administrativo **por canal seguro** ao Operador; não extrair ou publicar passwords/tokens. `--apply` exige análise read-only de diff e G3, incluindo ausência de mudanças inadvertidas em outros clients.
+- **G1 material:** fontes oficiais T03/T05/R04+, seeds e evidências de owner; não chamar fechamento integral de PASS por teste verde isolado.
+- **G2:** homologação humana Controladoria/PO ainda `PENDING`. **G3:** autorização de Operador SSH para produção ainda `PENDING`.
+- **Deploy/ChatGPT:** `NOT_DEPLOYED` e `TEST_NOT_RUN`. O SHA `ecf765139d77fabcf5ab28ab04cfb71f9cde41b0` é a referência auditada; HEAD de main avançou por outros contextos. Operador deve selecionar e verificar SHA release imutável em vez de implantar alterações concorrentes sem revisão.
+
+### Próxima ação única, sem novo rework generalista
+
+**Owner IAM/Operador:** recuperar credencial Keycloak vigente via cofre/canal administrativo, validar `--check` e impacto, sem escrita até autorização. **Controladoria/PO:** fazer demonstração G2 com escopo e pendências G1 explícitas; aceitar somente o que foi demonstrado. **Operador SSH G3:** após aceite e autorização, executar backup + runbook + migrations V006–V014 + provisionamento limitado Keycloak + ingestão corpus + smoke autenticado e revalidação da Central. **Usuário ChatGPT:** cadastrar manualmente o MCP com callback URI real, sem publicar client secret, e executar os testes READ/KNOWLEDGE/BATCH em cenário autorizado. Registrar cada decisão, SHA e resultado com proveniência. Meta PO 25/10/2026 continua prioridade, jamais substituto de gate.
