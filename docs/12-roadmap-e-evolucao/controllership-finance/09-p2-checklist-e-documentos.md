@@ -971,3 +971,6 @@ LISTA CLARA
 ```
 
 Esse é o contrato visual de P2.
+
+
+> **UX DETALHE DOCUMENTAL (26/10/2026, TARGET):** o documento da competência tem **página de detalhe** que mantém PDF/versões à esquerda, interação/solicitações à direita e histórico abaixo (mobile empilhado). Controladoria e DRE acessam a mesma thread documental com projeções e ações diferentes; pedido de refazimento não se encerra pela simples resposta. A configuração geral de documentos exigidos à DRE (P6/Manage) usa listagem, **página de cadastro** e **página de edição**, não modal. Consultar [Plano 113 §9](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md) e [Mapa plugin-ui 30](./30-plugin-ui-reuse-map.md). Preservar contratos P2/P5 e histórico; sem autorização de runtime.
