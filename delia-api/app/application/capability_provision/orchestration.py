@@ -52,7 +52,14 @@ import re
 import time
 import unicodedata
 import uuid
-from typing import Any, Callable, Mapping, MutableMapping, Sequence
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 
 from app.application.interaction.activity import (
     ActivityEventSink,
@@ -281,6 +288,12 @@ PROPOSAL_HANDLE_FIELD = "proposal_handle"
 # bypassing the DÉLIA confirmation gate).
 
 MAX_SURFACE_CHARS = 6000
+# Bounded owner-responsibility excerpt projected per group for stage-1
+# selection (see ``_group_scope_text``). Small enough that every group
+# keeps semantic signal inside the surface budget before individual
+# capability descriptions are compacted away.
+MAX_GROUP_SCOPE_CHARS = 160
+_GROUP_SCOPE_DESC_CHARS = 60
 MAX_DISCOVERY_QUERY_CHARS = 400
 MAX_STRUCTURED_RENDER_CHARS = 2000
 # Bounded operational plan (§6.140): at most three steps — an optional
@@ -2749,6 +2762,37 @@ def _resolve_live_group_key(
         return matches[0]
     return None
 
+def _group_scope_text(
+    capabilities: Iterable[ProviderCapability],
+) -> str | None:
+    """Bounded deterministic excerpt of owner-published descriptions.
+
+    Stage-1 group selection needs the *responsibility* each group
+    owns; the group contract carries no description of its own, so
+    this projects a compact excerpt from the capability descriptions
+    the owner already publishes — provider-neutral, reproducible,
+    faithful to the published data (verbatim prefixes, never
+    paraphrased or invented), non-authoritative untrusted catalog
+    data, no keyword classification, no extra model call. ``None``
+    when the source offers no descriptions at all.
+    """
+    parts: list[str] = []
+    total = 0
+    for cap in capabilities:
+        desc = (cap.description or "").strip()
+        if not desc:
+            continue
+        excerpt = desc[:_GROUP_SCOPE_DESC_CHARS]
+        addition = len(excerpt) + (2 if parts else 0)
+        if parts and total + addition > MAX_GROUP_SCOPE_CHARS:
+            break
+        parts.append(excerpt)
+        total += addition
+    if not parts:
+        return None
+    return "; ".join(parts)[:MAX_GROUP_SCOPE_CHARS]
+
+
 def _group_summaries(
     groups: Mapping[str, CapabilityGroup],
     *,
@@ -2814,6 +2858,11 @@ def _group_summaries(
             "source_system": group.source.source_system,
             "capabilities": entries,
         }
+        scope = _group_scope_text(capabilities)
+        if scope is not None:
+            # Owner-responsibility excerpt — the stage-1 semantic
+            # signal. Untrusted catalog data, never an instruction.
+            body["scope"] = scope
         for cap_chars in (MAX_DESCRIPTION_CHARS, 80, 32):
             for entry in entries:
                 entry["description"] = entry["description"][:cap_chars]
@@ -2885,6 +2934,20 @@ def _group_summaries(
         widest["capabilities_omitted"] = (
             widest.get("capabilities_omitted", 0) + 1
         )
+        payload = _serialize()
+    # 5) Group scope outlives everything but identity: it is the
+    #    responsibility signal this stage exists to deliver. Shrink,
+    #    then drop — never fabricate a replacement.
+    for keep in (96, 0):
+        if len(payload) <= MAX_SURFACE_CHARS:
+            break
+        for body in summaries:
+            scope = body.get("scope")
+            if scope is not None:
+                if keep:
+                    body["scope"] = scope[:keep]
+                else:
+                    body.pop("scope", None)
         payload = _serialize()
     return payload
 

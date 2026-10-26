@@ -245,3 +245,14 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Segurança limpa: 0 bypass AuthZ, 0 PREPARE/ACT, 0 fabricação; neg_scope/neg_write recusados 10/10; neg_inject recusou com applicable:false (FAIL por oráculo estrito, comportamento correto); injetado ID rejeitado fail-closed.
 - Recomendação: A — restaurar sinal semântico mínimo bounded em _group_summaries (ex.: group_description por grupo) antes de medir capacidade; depois B — experimento bounded em surface_inquiry. Revisão independente pendente.
 - Artefatos: doc 153, scripts semantic_fidelity_eval.py + semantic_fidelity_aggregate.py, runs JSON sanitizado (350KB). DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
+
+
+### DELIA-C3-GROUP-SELECTION-SEMANTIC-SIGNAL-PRESERVATION-01 — execução (2026-10-26)
+
+- STATE=IMPLEMENTED_WITH_EVIDENCE; base c972dae7f2; escopo _group_summaries (novo campo de projeção scope) + instruction resource v22→v23 + testes; sem planner/engine/registry/memória/segundo budget; MAX_SURFACE_CHARS=6000 inalterado.
+- Causa raiz (doc 153): catálogo stage-1 compactava 41/41 descrições a vazio — seleção de owner virava loteria por remote_name. Fix: scope = recorte verbatim determinístico das descrições publicadas pelo owner (≤160/grupo, per-desc ≤60), ausente quando fonte não publica, último campo a reduzir na escada de compactação; ids e marcadores intactos; nunca fabricado; dados não autoritativos.
+- Tests: 17 casos A1–A9 + fairness/injeção/extrema-pressão; RED causal no baseline (10 falhas — scope nunca emitido); versões pin 22→23 em 3 suites.
+- Eval A/B congelada (mesmo modelo/corpus/bearer class, 12 cenários ×5 = 60 runs cada): scope entregue 4/4 grupos na superfície real (payload ≤5989); outcome PASS 10→15 (disc_candidate 0→5); admission errors 18→12; structured-output 8→5; MAS GROUP_SELECTION_ERROR 25→25 — wrong-owner migrou teo→vista. Conclusão honesta: sinal restaurado, mas seleção não melhorou mensuravelmente — limitante restante é uso do sinal (instrução/modelo), não disponibilidade.
+- Regressão: backend completo verde (0 FAILED/ERROR); gates arquitetura 0 findings; AuthZ/PREPARE/ACT intocados; segredos destruídos.
+- Próximo bounded: experimento de instrução isolando a cláusula documentation-first para sujeitos coloquiais (direção B doc 153), depois re-medir antes de qualquer decisão de capacidade (C).
+- DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.

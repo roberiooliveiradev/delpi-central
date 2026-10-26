@@ -221,3 +221,16 @@ semantic routing. Not a 3B-capacity artifact.
 **Decision=direction A first, but contract decision before diff:** existing group/capability stage and projection are valid owners; EXISTING_EQUIVALENT=YES, REUSE_DECISION=EXTEND (conditional). Design must reserve bounded owner-level *semantic intent* in stage-1 group summaries before optional/per-capability descriptions, preserving every group, identifiers, untrusted-data boundary and 6000-character cap; use only owner/capability authoritative catalog descriptions (not hardcoded provider/material heuristics). Avoid assuming new `group_description` schema is already approved: check current contract/consumers/instruction before additive field. Include causal RED with exact captured 4-group/41-cap shape + alternate group counts; compare budget, omission and selection across repeated 3B runs on fixed corpus and snapshot. The problem is shown for stage-1 surface, not yet for all model failures.
 
 **Follow-up after structural gate:** isolate admission `surface_inquiry` misrouting in a separate bounded instruction experiment (no simultaneous changes), and evaluate argument fidelity independently with valid owner selection. Model swap is neither justified nor authorized by this diagnostic. Track frozen evaluated code SHA `cd50b85610` independently from document-only HEAD, verify effective Ollama digest/context, retain raw sanitized run artifacts and scope of oracles. DEPLOY_AUTHORIZED=NO.
+
+
+## 10. Follow-up executed — 2026-10-26
+
+Direction A implemented as bounded task
+`DELIA-C3-GROUP-SELECTION-SEMANTIC-SIGNAL-PRESERVATION-01` — see
+Documento 154. Stage-1 group summaries now carry a deterministic
+`scope` excerpt of owner-published descriptions (instruction v23):
+0/41 → 4/4 groups signalled inside the same 6 000-char budget.
+Controlled re-eval on the same frozen corpus showed signal restored
+but group-selection errors unchanged (25/60 both runs) — the
+remaining misrouting is model/instruction-level, cleanly separating
+signal availability from signal use.
