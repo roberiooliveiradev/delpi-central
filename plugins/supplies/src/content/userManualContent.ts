@@ -151,7 +151,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Verificar a integração REST de fornecedores",
           where: "Fornecedores (perfil de administração)",
-          how: "O card «Integração Protheus» mostra configuração, conectividade, autenticação e consulta REST em tempo real, além das liberações de inclusão e alteração. A verificação é somente leitura — nada é gravado no ERP",
+          how: "O widget «Integração Protheus», no canto inferior direito, mostra configuração, conectividade, autenticação e consulta REST em tempo real, além das liberações de inclusão e alteração. Expanda para os detalhes, recolha ou feche pelo «×» — reabra pelo botão flutuante. A verificação é somente leitura — nada é gravado no ERP",
         },
         {
           want: "Acompanhar pedidos em aberto",

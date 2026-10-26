@@ -9,7 +9,7 @@ function read(name: string): string {
   return readFileSync(join(dir, name), "utf8");
 }
 
-describe("SupplierIntegrationStatusCard (X4.REST-STATUS.S1) — boundaries", () => {
+describe("SupplierIntegrationStatusCard (X4.REST-STATUS.S1/S2) — boundaries", () => {
   it("fala somente com supplies-api via httpClient canônico", () => {
     const api = read("api.ts");
     expect(api).toContain('from "../../api/httpClient"');
@@ -78,5 +78,73 @@ describe("SupplierIntegrationStatusCard (X4.REST-STATUS.S1) — boundaries", () 
   it("nota de independência SQL preservada na expansão", () => {
     const card = read("SupplierIntegrationStatusCard.tsx");
     expect(card).toContain("statusSqlIndependentNote");
+  });
+
+  it("S2 — máquina de estados única closed/collapsed/expanded", () => {
+    const card = read("SupplierIntegrationStatusCard.tsx");
+    expect(card).toMatch(/"closed" \| "collapsed" \| "expanded"/);
+    // collapsed→expanded, expanded→collapsed, *→closed, closed→collapsed
+    expect(card).toContain('setView("collapsed")');
+    expect(card).toContain('setView("closed")');
+    expect(card).toContain('setView(expanded ? "collapsed" : "expanded")');
+    // estado inicial recolhido
+    expect(card).toMatch(/lastView[^=]*=\s*"collapsed"/);
+    // reabrir sempre volta para collapsed
+    expect(card).toMatch(/onClick=\{\(\) => setView\("collapsed"\)\}/);
+  });
+
+  it("S2 — flutuante no canto inferior direito, abaixo de modais do kit", () => {
+    const css = readFileSync(join(dir, "../../index.css"), "utf8");
+    const open = css.indexOf(".sp-suppliers-status-card {");
+    const card = css.slice(open, css.indexOf("}", open));
+    expect(card).toContain("position: fixed");
+    expect(card).toContain("bottom:");
+    expect(card).toContain("right:");
+    // z-index baixo — modais/overlays oficiais usam 1200
+    expect(card).toMatch(/z-index: 3[0-9]\b/);
+    expect(card).not.toMatch(/z-index: (?:[4-9][0-9]|[0-9]{3,})/);
+    expect(card).toContain("env(safe-area-inset-bottom");
+  });
+
+  it("S2 — fechar/reabrir preserva resultado sem nova chamada REST", () => {
+    const card = read("SupplierIntegrationStatusCard.tsx");
+    // cache de módulo compartilha estado entre lista e ficha sem refetch
+    expect(card).toContain("lastStatus");
+    expect(card).toContain("lastView");
+    // transições de view nunca chamam runCheck/getSuppliersIntegrationStatus
+    const viewFns = card
+      .split("onClick")
+      .filter((chunk) => chunk.includes('setView("'))
+      .join("\n");
+    expect(viewFns).not.toContain("runCheck");
+    expect(viewFns).not.toContain("getSuppliersIntegrationStatus");
+    // a única chamada REST continua sendo a ação manual explícita
+    expect(card.match(/getSuppliersIntegrationStatus\(/g)).toHaveLength(1);
+  });
+
+  it("S2 — acionador discreto de reabertura com tooltip e ícone do kit", () => {
+    const card = read("SupplierIntegrationStatusCard.tsx");
+    const content = read("content.ts");
+    expect(card).toContain("sp-suppliers-status-card__reopen");
+    expect(card).toContain("statusReopenTooltip");
+    expect(card).toContain("statusCloseAction");
+    expect(content).toContain("Abrir diagnóstico da integração Protheus");
+    expect(card).toContain('from "lucide-react"');
+  });
+
+  it("S2 — acessibilidade: aria-expanded, Escape, foco devolvido ao acionador", () => {
+    const card = read("SupplierIntegrationStatusCard.tsx");
+    expect(card).toContain("aria-expanded");
+    expect(card).toContain("aria-controls");
+    expect(card).toContain("aria-label");
+    expect(card).toContain('event.key === "Escape"');
+    // Escape só recolhe quando expandido
+    expect(card).toMatch(/Escape" && expanded/);
+    // fechar nunca deixa foco em elemento oculto — devolve ao acionador
+    expect(card).toContain("reopenRef.current?.focus()");
+    // botões reais (não divs clicáveis)
+    expect(card).toMatch(/<button[\s\S]*?type="button"/);
+    const css = readFileSync(join(dir, "../../index.css"), "utf8");
+    expect(css).toContain("prefers-reduced-motion");
   });
 });

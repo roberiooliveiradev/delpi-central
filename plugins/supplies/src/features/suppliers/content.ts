@@ -144,6 +144,8 @@ export const SUPPLIERS_CONTENT = {
   statusChecking: "Verificando…",
   statusExpandAction: "Detalhes",
   statusCollapseAction: "Recolher",
+  statusCloseAction: "Fechar diagnóstico",
+  statusReopenTooltip: "Abrir diagnóstico da integração Protheus",
   statusCheckFailed:
     "Não foi possível executar o diagnóstico agora. Tente novamente.",
   statusCheckedAtLabel: "Verificado em",

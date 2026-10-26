@@ -1,4 +1,11 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import {
+  Activity,
+  ChevronDown,
+  ChevronUp,
+  X,
+} from "lucide-react";
 
 import {
   SuppliesActionButton,
@@ -10,6 +17,15 @@ import { SUPPLIERS_CONTENT as C } from "./content";
 import type { SupplierIntegrationStatus } from "./types";
 
 type BadgeVariant = "neutral" | "info" | "success" | "warning" | "danger";
+
+// X4.REST-STATUS.S2 — widget flutuante com máquina de estados única.
+type WidgetView = "closed" | "collapsed" | "expanded";
+
+// Último resultado/view compartilhados entre lista e ficha: navegar entre as
+// páginas remonta o componente, mas não deve refazer a verificação REST nem
+// reabrir um painel que o usuário fechou deliberadamente.
+let lastStatus: SupplierIntegrationStatus | null = null;
+let lastView: WidgetView = "collapsed";
 
 function overallBadge(overall: string | null): { label: string; variant: BadgeVariant } {
   if (overall === "ready_for_attempt") {
@@ -94,11 +110,28 @@ function StatusRow({ label, badge }: RowProps) {
 }
 
 export function SupplierIntegrationStatusCard() {
-  const [expanded, setExpanded] = useState(false);
+  const [view, setViewState] = useState<WidgetView>(lastView);
   const [checking, setChecking] = useState(false);
-  const [status, setStatus] = useState<SupplierIntegrationStatus | null>(null);
+  const [status, setStatusState] = useState<SupplierIntegrationStatus | null>(lastStatus);
   const [failed, setFailed] = useState(false);
   const requestRef = useRef(0);
+  const reopenRef = useRef<HTMLButtonElement | null>(null);
+
+  const setView = useCallback((next: WidgetView) => {
+    lastView = next;
+    setViewState(next);
+  }, []);
+
+  const setStatus = useCallback((next: SupplierIntegrationStatus | null) => {
+    lastStatus = next;
+    setStatusState(next);
+  }, []);
+
+  // Ao fechar, o foco não pode ficar em elemento oculto: devolve ao acionador
+  // discreto que acabou de aparecer.
+  useEffect(() => {
+    if (view === "closed") reopenRef.current?.focus();
+  }, [view]);
 
   const runCheck = useCallback(async () => {
     if (checking) return;
@@ -114,17 +147,35 @@ export function SupplierIntegrationStatusCard() {
     } finally {
       if (requestRef.current === requestId) setChecking(false);
     }
-  }, [checking]);
+  }, [checking, setStatus]);
 
   const summary = status ? overallBadge(status.overall) : null;
   const checkedAt = status ? formatCheckedAt(status.checked_at) : "";
+  const expanded = view === "expanded";
+
+  if (view === "closed") {
+    return (
+      <button
+        ref={reopenRef}
+        type="button"
+        className="sp-suppliers-status-card__reopen"
+        title={C.statusReopenTooltip}
+        aria-label={C.statusReopenTooltip}
+        onClick={() => setView("collapsed")}
+      >
+        <Activity size={18} aria-hidden />
+      </button>
+    );
+  }
 
   return (
     <section
-      className="sp-suppliers-status-card"
+      className={`sp-suppliers-status-card${
+        expanded ? " sp-suppliers-status-card--expanded" : ""
+      }`}
       aria-label={C.statusCardTitle}
       onKeyDown={(event) => {
-        if (event.key === "Escape" && expanded) setExpanded(false);
+        if (event.key === "Escape" && expanded) setView("collapsed");
       }}
     >
       <div className="sp-suppliers-status-card__head">
@@ -133,6 +184,12 @@ export function SupplierIntegrationStatusCard() {
             className="sp-suppliers-status-card__title"
             title={SP_HELP.suppliersIntegrationStatus}
           >
+            <span
+              className={`sp-suppliers-status-card__dot${
+                summary ? ` sp-suppliers-status-card__dot--${summary.variant}` : ""
+              }`}
+              aria-hidden
+            />
             {C.statusCardTitle}
           </span>
           <span className="sp-suppliers-status-card__summary" aria-live="polite">
@@ -140,27 +197,35 @@ export function SupplierIntegrationStatusCard() {
               <SuppliesStatusBadge label={summary.label} variant={summary.variant} />
             ) : (
               <span className="sp-suppliers-status-card__idle">
-                {C.statusNeverChecked}
+                {checking ? C.statusChecking : C.statusNeverChecked}
               </span>
             )}
           </span>
         </div>
-        <SuppliesActionButton
+        <button
           type="button"
-          variant="primary"
-          disabled={checking}
-          onClick={runCheck}
-        >
-          {checking ? C.statusChecking : status ? C.statusCheckAgainAction : C.statusCheckAction}
-        </SuppliesActionButton>
-        <SuppliesActionButton
-          type="button"
-          variant="ghost"
+          className="sp-suppliers-status-card__icon-btn"
           aria-expanded={expanded}
-          onClick={() => setExpanded((current) => !current)}
+          aria-controls="sp-suppliers-status-card-details"
+          aria-label={expanded ? C.statusCollapseAction : C.statusExpandAction}
+          title={expanded ? C.statusCollapseAction : C.statusExpandAction}
+          onClick={() => setView(expanded ? "collapsed" : "expanded")}
         >
-          {expanded ? C.statusCollapseAction : C.statusExpandAction}
-        </SuppliesActionButton>
+          {expanded ? (
+            <ChevronDown size={16} aria-hidden />
+          ) : (
+            <ChevronUp size={16} aria-hidden />
+          )}
+        </button>
+        <button
+          type="button"
+          className="sp-suppliers-status-card__icon-btn"
+          aria-label={C.statusCloseAction}
+          title={C.statusCloseAction}
+          onClick={() => setView("closed")}
+        >
+          <X size={16} aria-hidden />
+        </button>
       </div>
 
       {failed ? (
@@ -170,8 +235,11 @@ export function SupplierIntegrationStatusCard() {
       ) : null}
 
       {expanded ? (
-        <div className="sp-suppliers-status-card__details" aria-live="polite">
-          <p className="sp-suppliers-status-card__env">
+        <div
+          id="sp-suppliers-status-card-details"
+          className="sp-suppliers-status-card__details"
+        >
+          <p className="sp-suppliers-status-card__env" aria-live="polite">
             {C.statusEnvironmentLabel}: {environmentLabel(status?.environment ?? null)}
             {checkedAt ? (
               <>
@@ -218,6 +286,20 @@ export function SupplierIntegrationStatusCard() {
           <p className="sp-suppliers-status-card__note">
             {C.statusSqlIndependentNote}
           </p>
+          <div className="sp-suppliers-status-card__actions">
+            <SuppliesActionButton
+              type="button"
+              variant="primary"
+              disabled={checking}
+              onClick={runCheck}
+            >
+              {checking
+                ? C.statusChecking
+                : status
+                  ? C.statusCheckAgainAction
+                  : C.statusCheckAction}
+            </SuppliesActionButton>
+          </div>
         </div>
       ) : null}
     </section>

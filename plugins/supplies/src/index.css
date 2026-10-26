@@ -2081,35 +2081,116 @@
   gap: 8px;
 }
 
-/* X4.REST-STATUS.S1 — card de diagnóstico REST (somente leitura). */
+/* X4.REST-STATUS.S1/S2 — widget flutuante de diagnóstico REST (somente
+   leitura). Fixo no canto inferior direito em todas as viewports; z-index 30
+   fica abaixo de modais/overlays oficiais do kit (1200). */
 .dashboard-supplies-portal .sp-suppliers-status-card {
+  position: fixed;
+  right: var(--sp-page-padding, 16px);
+  bottom: calc(var(--sp-page-padding, 16px) + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
   display: grid;
   gap: 10px;
-  padding: 14px 16px;
+  width: min(380px, calc(100vw - 2 * var(--sp-page-padding, 16px)));
+  padding: 12px 14px;
   border: 1px solid var(--sp-border);
   border-radius: var(--delpi-ui-radius, 12px);
   background: var(--sp-surface-elevated);
-  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.14);
+}
+
+/* Acionador discreto quando o widget está fechado (estado "closed"). */
+.dashboard-supplies-portal .sp-suppliers-status-card__reopen {
+  position: fixed;
+  right: var(--sp-page-padding, 16px);
+  bottom: calc(var(--sp-page-padding, 16px) + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--sp-border);
+  border-radius: 50%;
+  background: var(--sp-surface-elevated);
+  color: var(--sp-text);
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.14);
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__reopen:hover {
+  background: var(--sp-surface-hover, var(--sp-surface-elevated));
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__reopen:focus-visible,
+.dashboard-supplies-portal .sp-suppliers-status-card__icon-btn:focus-visible {
+  outline: 2px solid var(--sp-focus, #2563eb);
+  outline-offset: 2px;
 }
 
 .dashboard-supplies-portal .sp-suppliers-status-card__head {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dashboard-supplies-portal .sp-suppliers-status-card__head-text {
   display: grid;
   gap: 4px;
-  min-width: 140px;
+  min-width: 0;
   flex: 1 1 auto;
 }
 
 .dashboard-supplies-portal .sp-suppliers-status-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
   font-size: 0.85rem;
   color: var(--sp-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__dot--success {
+  background: var(--sp-success, #16a34a);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__dot--warning {
+  background: var(--sp-warning, #d97706);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__dot--danger {
+  background: var(--sp-danger, #dc2626);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__icon-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sp-text-muted);
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__icon-btn:hover {
+  background: var(--sp-surface-hover, rgba(16, 24, 40, 0.06));
+  color: var(--sp-text);
 }
 
 .dashboard-supplies-portal .sp-suppliers-status-card__idle {
@@ -2128,6 +2209,17 @@
   gap: 6px;
   border-top: 1px solid var(--sp-border);
   padding-top: 10px;
+  /* Painel cresce para cima (ancorado em `bottom`) e limita a altura a uma
+     fração segura da viewport — só o conteúdo interno rola. */
+  max-height: 480px;
+  max-height: min(55dvh, 480px);
+  overflow-y: auto;
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
 }
 
 .dashboard-supplies-portal .sp-suppliers-status-card__env {
@@ -2154,14 +2246,11 @@
   color: var(--sp-text-muted);
 }
 
-/* Desktop: card flutuante discreto no canto inferior direito, sem
-   encobrir ações fixas — largura limitada e z-index baixo. */
-@media (min-width: 1024px) {
-  .dashboard-supplies-portal .sp-suppliers-status-card {
-    position: fixed;
-    right: var(--sp-page-padding);
-    bottom: var(--sp-page-padding);
-    width: min(380px, 32vw);
-    z-index: 30;
+/* Movimento desabilitado para quem prefere reduzir animação — o widget não
+   usa transições animadas, mas o guard garante qualquer herança futura. */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-supplies-portal .sp-suppliers-status-card,
+  .dashboard-supplies-portal .sp-suppliers-status-card__reopen {
+    transition: none;
   }
 }
