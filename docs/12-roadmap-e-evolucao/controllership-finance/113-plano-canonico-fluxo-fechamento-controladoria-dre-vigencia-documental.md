@@ -312,3 +312,23 @@ A composição da §12 foi implementada **somente na aba Visão geral** (`Monthl
 Implementado exatamente como aprovado: atenções dominantes com códigos traduzidos (sem código técnico cru na interface), três indicadores clicáveis com «—» honesto, três eixos independentes Estoque/Documentos/Pacote DRE, atividade recente de eventos reais (escopo P3 — feed completo continua `TO_INVENTORY`), e conclusão/envio como blocos separados sem ação de conclusão inventada (estado derivado pelo backend + navegação às superfícies reais).
 
 **Pendente:** homologação visual do PO (desktop/mobile, temas) e reindexação do corpus CLARA com este registro — `PENDING`.
+
+
+## 14. Visão geral V0.3 — refinamento de linguagem simples e densidade (PO, 26/10/2026)
+
+**Decisão de direção visual:** linguagem PT-BR clara, evitar inglês e jargão; reduzir volume de texto; manter layout V0.2, três abas e integridade dos estados. **Status:** `TARGET / UX_REFINEMENT_APPROVED` para simplificação; textos finais exigem confronto com significado dos contratos; `RUNTIME_NOT_CHANGED`. O PO apontou nas capturas: 'Cutoff', 'Fonte ... indisponível', 'Conciliação P3', 'checklist', 'pacote aplicável', contagem '0 de 3 disponíveis' e enunciados extensos de conclusão.
+
+**Orientação por zona:**
+- Hero/header: compacto, manter mês, breadcrumb e atualizações sem texto de marketing repetitivo.
+- Indicadores: Bloqueios → `O que falta resolver` ou `Pendências que impedem a conclusão` conforme fonte; Divergências e Documentos a tratar conservam semântica apenas se comprovada; indisponível mostra `—`, não 0 fictício.
+- Atenções: título humano breve, uma frase sobre impacto, botão de ação direta. Evitar repetição de 'condição impeditiva de conclusão' em todas as linhas e cartões coloridos longos. Ex.: `p3_cutoff_not_confirmed` → 'Conferência do mês ainda não finalizada'; `p3_source_unavailable:P7` → 'Não foi possível consultar o relatório P7'; `p3_source_unavailable:ENTRADAS_SAIDAS` → 'Não foi possível consultar entradas e saídas'. Referência técnica pode existir em detalhe acessível, não headline.
+- Cuidado semântico: `no_applicable_packages` significa que **não há pacote configurado/aplicável**, e NÃO prova que existam documentos exigidos ainda por preparar. Mensagem recomendada: 'Não há um conjunto de documentos para envio definido neste mês', com ação coerente e ownership.
+- Cards: Estoque → 'Conferência do estoque', status + próximo passo; Documentos → 'Documentos do mês', 'Nenhum documento exigido para este fechamento' quando verdade; Pacote DRE → 'Documentos para a Contabilidade', sem atribuir estado de envio inexistente. Evitar jargão `cutoff`, `P3`, `template`, `checklist`, `snapshot`, `package`, `source` em copy primária.
+- Histórico: 'Atividades recentes', dados reais P3 apenas; informar escopo de modo discreto; ausência 'Ainda não há atividades registradas nesta conferência' sem fingir histórico completo.
+- Rodapé: 'Concluir fechamento' e 'Enviar documentos à Contabilidade' — operações distintas, sem habilitar ações novas por copy. Condições de conclusão resumidas em frase simples e link para detalhes.
+- Alertas e ações: nunca prometer 'Ver todas as pendências' se a navegação leva apenas a P4 e a contagem inclui P3/P5; permitir expandir atenção na própria Visão geral ou utilizar rótulo que corresponda ao destino real.
+- Fallback de blocking_reason desconhecido: mensagem genérica amigável, código técnico somente em telemetria/detalhe para suporte.
+
+**Componentização:** consultar `@delpi/plugin-ui/index` e catálogo real; usar o kit, sem criar novos containers decorativos. Reaproveitar V0.2; não redesenhar domínio nem rotas. Critérios: PT-BR simples, sem inglês em texto principal; curto/legível; não distorcer significado dos estados; manter zero ≠ indisponível; acessibilidade e temas; Help e CLARA no mesmo gate; testes semânticos de labels e links. Remoção de legado proibida neste refinamento.
+
+**Próximo gate:** revisar copy em código/contratos, implementar diff de apresentação após brief delimitado, homologar visual no navegador, publicar conhecimento CLARA somente como realidade implantada.
