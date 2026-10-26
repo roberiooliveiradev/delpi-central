@@ -57,7 +57,8 @@
 
 - Feed de metais permanece **OFF** (`EXTERNAL_DATA_FEED_METALS_MONTHLY_ENABLED` não habilitado em produção) — nenhum dado novo entra sem autorização.
 - Dados históricos já persistidos são **preservados** conforme orientação institucional (nenhuma remoção automática).
-- A exibição continua disponível com atribuição dupla (WB + LME) trafegada no contrato; caso a revisão institucional conclua que a exibição exige licença LME, o plano de quarentena é: desativar instrumentos no catálogo (`metal_instruments.active = false`, via migration aditiva autorizada) → BFF passa a retornar `no_data`/404 para metais → página exibe estado de indisponibilidade. Nenhum histórico é apagado automaticamente.
+- **Quarentena efetiva implementada (R1.2):** a política por operação em `external-data-api/app/domain/usage_policy.py` aplica fail-closed — `internal_display_pending_lme_review` **não** é concessão. As rotas de observações e o catálogo recusam exibição com `EXTERNAL_DATA_USE_NOT_APPROVED` (HTTP 403 no produtor), o catálogo expõe `display_allowed=false` para as seis séries LME-backed e o BFF traduz para `503 source_use_not_approved` + `selectable:false` nos filtros. Ingestão exige concessão explícita de `collect`+`store` no escopo — flag de feed ativada indevidamente não basta. O bloqueio vive no owner dos dados: nenhum consumidor HTTP contorna.
+- **Liberação futura** exige (a) decisão institucional/jurídica documentada e (b) migration aditiva alterando o `allowed_use_scope` da fonte. Não existe bypass por configuração nem endpoint administrativo de desbloqueio.
 - Decisão pendente: avaliação institucional/jurídica da necessidade de licença LME de display/non-display, ou substituição da fonte por provedor com direito de exibição comprovado.
 
 ## 3. Fontes avaliadas e **rejeitadas**

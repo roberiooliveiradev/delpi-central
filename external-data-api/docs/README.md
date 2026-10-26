@@ -170,6 +170,17 @@ WORLDBANK_PINKSHEET_TIMEOUT_SECONDS=30
   **não existem** no catálogo — ingestão recusa fonte inativa/não
   licenciada (`SOURCE_NOT_LICENSED`), sem fallback para sites
   alternativos.
+- **Quarentena fail-closed (R1.2):** a política de uso é por operação
+  (`collect`, `store`, `derive`, `internal_display`) em
+  `app/domain/usage_policy.py`. O valor `*_pending_*` no
+  `allowed_use_scope` **não** é concessão — as seis séries LME-backed
+  do Pink Sheet permanecem armazenadas (nada é apagado), mas as rotas
+  de observação/catálogo recusam `internal_display` com
+  `EXTERNAL_DATA_USE_NOT_APPROVED` e expõem `display_allowed=false`
+  no catálogo. Ingestão exige `collect`+`store` concedidos
+  explicitamente; flag de feed ativada indevidamente não basta. A
+  liberação futura exige migration aditiva após decisão institucional
+  documentada — não existe bypass por configuração.
 
 ## Migrations de market data
 
@@ -189,17 +200,23 @@ zero upstream pré-auth). Integração Redis real:
 `EXTERNAL_DATA_TEST_REDIS_URL=redis://... pytest` — cobre dois clientes,
 dois processos, concorrência, TTL, fail-closed, isolamento de namespace.
 
-**PostgreSQL real (descartável, fail-closed — R1.1):** os testes
+**PostgreSQL real (descartável, fail-closed — R1.2):** os testes
 `test_market_data_repository_pg.py` e `test_startup_migrations.py` rodam
 contra um banco isolado quando `EXTERNAL_DATA_TEST_PG_HOST` está definido
 (+ `_PORT`/`_NAME`/`_USER`/`_PASSWORD`); sem a env, são `TEST_NOT_RUN`.
 Antes de qualquer migration ou `DROP`, `tests/pg_disposable_guard.py`
 exige: (1) `EXTERNAL_DATA_TEST_PG_DISPOSABLE=1` explícito; (2) host
 loopback (ou `EXTERNAL_DATA_TEST_PG_ALLOW_REMOTE=1`); (3) dbname com
-`test` no nome e fora da lista reservada; (4) prova dentro do engine —
-sentinela `public.delpi_disposable_db_guard` ou schema `external_data`
-comprovadamente vazio. Falha de qualquer camada aborta sem SQL mutante
-(`UnsafeTestDatabaseError`). Prova cobre migrations V001–V004,
+`test` no nome e fora da lista reservada; (4) **prova independente de
+provisionamento** — `EXTERNAL_DATA_TEST_PG_TOKEN` emitido por
+`tests/provision_pg_test_db.py` deve casar com a linha
+`provisioned_by='pg_provision'` gravada pelo provisionador em
+`public.delpi_disposable_db_guard`, no mesmo banco conectado. A guarda
+**nunca** cria nem escreve a sentinela; flag, nome `*_test`, host
+loopback, schema vazio ou sentinela pré-existente/estrangeira não são
+prova suficiente. Falha de qualquer camada aborta antes de SQL mutante
+(`UnsafeTestDatabaseError`). Verificação manual:
+`python -m tests.pg_check_env`. Prova cobre migrations V001–V004,
 checksum/imutabilidade, advisory lock, constraints `NUMERIC`,
 unicidade/FK, idempotência e boot degradado. Isolamento é por database
 de teste — o schema é sempre o canônico `external_data`.

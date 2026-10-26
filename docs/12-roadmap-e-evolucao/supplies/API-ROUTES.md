@@ -169,4 +169,22 @@ Falha de AuthZ nunca vira partial success. Recurso principal inexistente continu
 | 503 | autorização/dependência crítica indisponível |
 | 429 | rate limit existente |
 
+### Inteligência de mercado — códigos dedicados (R1.2)
+
+`EXTERNAL_DATA_USE_NOT_APPROVED` do produtor é mapeado para **503 +
+`error.code = "source_use_not_approved"`** — distinto de:
+
+| Cenário | Contrato |
+|---|---|
+| usuário sem `supplies.access` no Core | 401/403 padrão (AuthN/AuthZ) |
+| fonte existe mas uso `internal_display` pendente | 503 `source_use_not_approved` |
+| fonte/ingestão/storage indisponível | 503 `external_data_unavailable` |
+| instrumento desconhecido / sem observações | 404 / `data_status=no_data` |
+
+O bloqueio de licença **nunca** vira 403 de autorização do usuário.
+`/filters` expõe `selectable: false` em instrumentos/fontes sem
+`internal_display` aprovado — o MFE esconde essas opções e nunca
+consulta seus valores; `catalog.display_allowed` no produtor é a fonte
+de verdade. Desbloqueio exige decisão institucional + migration aditiva.
+
 Mudança de contrato deve seguir a regra canônica de compatibilidade e atualizar producer + consumer + testes + Help/docs quando user-facing.
