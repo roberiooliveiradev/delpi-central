@@ -94,4 +94,9 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
     meaning:
       "Na Inteligência de mercado, indica se o período tem todas as observações esperadas: Completa (todos os pontos), Parcial (faltam pontos), Sem câmbio (falta PTAX para converter) ou Sem dados.",
   },
+  {
+    term: "Desatualizado (stale)",
+    meaning:
+      "Na Inteligência de mercado, indica que a fonte está atrasada em relação ao seu ciclo de publicação — por exemplo, o Pink Sheet mensal ainda não publicou o mês esperado. Consultar um período histórico antigo não torna o dado desatualizado: o aviso reflete o atraso da fonte, não a idade da consulta.",
+  },
 ] as const;

@@ -303,6 +303,12 @@ export function MarketIntelligencePage({
       {summary && summary.meta.data_status === "stale" ? (
         <SuppliesStateBanner>
           {MARKET_INTELLIGENCE_CONTENT.states.staleNote}
+          {summary.meta.freshness?.status === "delayed"
+            ? ` ${MARKET_INTELLIGENCE_CONTENT.states.staleEvidence(
+                summary.meta.freshness.latest_observation_date,
+                summary.meta.freshness.expected_latest_period,
+              )}`
+            : ""}
         </SuppliesStateBanner>
       ) : null}
 
@@ -330,7 +336,9 @@ export function MarketIntelligencePage({
                 )}
                 contextLabel={
                   summary.last_quote
-                    ? `${summary.last_quote.reference_date} · ${summary.instrument.label}`
+                    ? `${summary.last_quote.reference_date} · ${
+                        summary.last_quote.unit ?? summary.instrument.label
+                      }`
                     : filters.instrument?.label ?? ""
                 }
                 icon={
