@@ -1,13 +1,15 @@
 """Constantes do contrato MCP da CLARA.
 
 Technical ids não são branding — «CLARA» é identidade de produto,
-o id técnico permanece ``controllership-finance`` / ``mcp-clara``.
+o id técnico permanece ``controllership-finance`` /
+``mcp-controllership-finance`` (``mcp-clara`` = identificador OAuth
+anterior, mantido apenas como histórico).
 """
 
 from __future__ import annotations
 
 # Keycloak confidential client para a superfície MCP da CLARA.
-MCP_PREDEFINED_CLIENT_ID = "mcp-clara"
+MCP_PREDEFINED_CLIENT_ID = "mcp-controllership-finance"
 
 CANONICAL_MCP_RESOURCE_URL = (
     "https://minhadelpi.com.br/apps/controllership-finance-api/mcp"

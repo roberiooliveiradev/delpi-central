@@ -312,7 +312,7 @@ def test_apply_creates_bounded_scope(fake):
     p.converge()
     client_ids = {c["clientId"] for c in fake.clients.values()}
     assert {"mcp-api-delpi", "mcp-transformometro",
-            "mcp-tv-dashboard", "mcp-clara",
+            "mcp-tv-dashboard", "mcp-controllership-finance",
             "delia-api"} <= client_ids
     # scope surface
     scope_names = {s["name"] for s in fake.client_scopes.values()}
@@ -495,7 +495,7 @@ def test_policy_bound_to_delia_api_only(converged):
 
 
 def test_all_specialists_get_exchange_permission(converged):
-    for cid in ("mcp-api-delpi", "mcp-transformometro", "mcp-tv-dashboard", "mcp-clara"):
+    for cid in ("mcp-api-delpi", "mcp-transformometro", "mcp-tv-dashboard", "mcp-controllership-finance"):
         uuid_ = next(u for u, c in converged.clients.items()
                      if c["clientId"] == cid)
         assert converged.mgmt_enabled.get(uuid_) is True

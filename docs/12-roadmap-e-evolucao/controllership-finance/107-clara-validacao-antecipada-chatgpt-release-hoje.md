@@ -377,3 +377,21 @@ O Operador executou o handoff do [Doc 110](./110-g3-handoff-operator-iam-clara-c
 - **`CHATGPT_CONNECTED` = `TEST_NOT_RUN`** — inalterado; depende de `mcp-clara`.
 
 **Status:** `G3_OPERATOR_DECISION=GO (executado)`; `DEPLOYED_SHA=85883e5f2` com R4 ativo; `PROD_READY_GATE=PASS`; `IAM_MCP_CLARA_PROD=BLOCKED/PENDING_OWNER`.
+
+## Adendo 10 — Conciliação OAuth `mcp-clara` → `mcp-controllership-finance` (26/10/2026)
+
+Decisão PO já registrada na ficha pública: Client ID OAuth definitivo = **`mcp-controllership-finance`**; `mcp-clara` = histórico. Reconciliação executada neste ciclo:
+
+**Causa-raiz do drift:** apenas **identidade de cadastro** divergia — o transporte MCP autentica por `aud` = resource URL exata + scope `mcp:tools` + assinatura/issuer (`McpTransportAuthPolicy`); `azp`/`client_id` nunca foi consumido pela BFF. Diff mínimo:
+
+| Arquivo | Mudança |
+|---|---|
+| `interface/mcp/constants.py` | `MCP_PREDEFINED_CLIENT_ID` = `mcp-controllership-finance` (declarativo; zero consumers de runtime) |
+| `infra/scripts/delia_mcp_keycloak_state.py` | `SPECIALISTS` → `("mcp-controllership-finance", "mcp-audience-clara", "apps/controllership-finance-api/mcp")` — scope dedicado e audience inalterados |
+| `infra/scripts/tests/test_delia_mcp_keycloak_state.py` | expectativas atualizadas — 27/27 PASS |
+| `tests/test_clara_mcp_surface.py` | + `test_oauth_client_id_contract` trava o contrato — 14/14 PASS |
+| `keycloak-mcp-client-runbook.md` + ficha | documentação conciliada |
+
+**Evidência prod (read-only):** POST token `grant_type=password` com `client_id=mcp-controllership-finance` → `unauthorized_client` (client **existe** e é reconhecido; grant não habilitado — correto), vs `invalid_client` para id inexistente. Plugin ChatGPT instalado + conta OAuth conectada + redirect `https://chatgpt.com/connector_platform_oauth_redirect` = **OWNER_REPORTED**.
+
+**Residual:** `--check` do engine requer credencial admin vigente (confirmará scopes/mapper/redirect sem drift lateral em TÉO/DAVI/VISTA/DÉLIA); smoke autenticado `tools/list` + READ = `TEST_NOT_RUN` até o usuário executar no ChatGPT. `CHATGPT_CONNECTION=OWNER_REPORTED_PENDING_TOOL_EVIDENCE`.

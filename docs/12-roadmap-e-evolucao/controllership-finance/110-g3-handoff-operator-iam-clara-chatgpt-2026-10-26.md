@@ -280,3 +280,7 @@ EVIDENCE_LINKS_AND_DOC_COMMITS: este adendo; Doc 107 Adendo 9; Doc 108 seção G
 **Contratos a preservar:** `client_id=mcp-clara`; OpenID Connect, confidential/client authentication ON, Standard flow ON, PKCE `S256`, Implicit/Direct grants/Service Accounts OFF; dedicated scope `mcp-audience-clara` com audience exata `https://minhadelpi.com.br/apps/controllership-finance-api/mcp`, shared `mcp:tools` sem mapper de audience específica, `delpi-central` como audience exigida pelo servidor; callback **somente a exibida no fluxo real de cadastro ChatGPT**, registrada exatamente no client, sem wildcard. Client secret jamais copiado em print/Git/chat. Token exchange policy com DÉLIA exige IAM owner e não pode ser inferida do simples client OAuth.
 
 **Próxima evidência:** o PO abre `Clients → Create client`, insere general settings no realm `delpi` sem concluir Save, e envia captura **sem credenciais** para validar antes de gravar. Registrar depois o resultado da criação, vinculação de scopes, audience, testes de tokens e conexão ChatGPT.
+
+### 8.3 Nota posterior — Client ID OAuth definitivo
+
+O PO formalizou `mcp-controllership-finance` como Client ID (ficha pública); código, engine IAM, testes e runbooks foram reconciliados (Doc 107 Adendo 10). O `--check` pendente deve agora validar o client **`mcp-controllership-finance`** (não `mcp-clara`); se o client prod divergir do desired-state (scopes, audience mapper `mcp-audience-clara`, PKCE S256, redirect exato), o `--apply` o corrige idempotentemente — sem tocar demais specialists.

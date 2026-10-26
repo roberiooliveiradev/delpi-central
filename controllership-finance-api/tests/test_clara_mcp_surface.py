@@ -20,6 +20,7 @@ from controllership_finance_app.interface.mcp.branding import (
     CLARA_MCP_INSTRUCTIONS,
 )
 from controllership_finance_app.interface.mcp.constants import (
+    MCP_PREDEFINED_CLIENT_ID,
     MCP_TOOL_NAMES,
     TOOL_CLASS,
 )
@@ -33,6 +34,14 @@ def _list_tools():
     return asyncio.new_event_loop().run_until_complete(
         clara_mcp_server.list_tools()
     )
+
+
+def test_oauth_client_id_contract():
+    # Decisão PO 2026-10-26: client Keycloak definitivo é
+    # mcp-controllership-finance (mcp-clara = histórico). O transporte
+    # autentica por aud=resource URL + scope mcp:tools — o client_id é
+    # apenas identidade de cadastro, nunca substituto de audience.
+    assert MCP_PREDEFINED_CLIENT_ID == "mcp-controllership-finance"
 
 
 def test_tool_names_and_classes():

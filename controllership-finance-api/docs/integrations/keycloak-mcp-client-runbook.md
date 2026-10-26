@@ -1,7 +1,7 @@
 # Keycloak runbook — CLARA MCP / Controllership-Finance resource audience binding
 
 > **Specialist brand:** CLARA — Controladoria, Leitura, Análise, Resultados e Acompanhamento
-> **Technical client id:** `mcp-clara` (não renomear; não reutilizar `delpi-central` nem outros clients MCP)
+> **Technical client id:** `mcp-controllership-finance` (decisão PO 2026-10-26; `mcp-clara` = id anterior, histórico; não reutilizar `delpi-central` nem outros clients MCP)
 > **Surface:** READ + ANALYSIS + KNOWLEDGE + PREPARE + ACT + BATCH (PREPARE_BATCH → consent → EXECUTE)
 > **Status:** `KEYCLOAK_CONFIG = NOT_CONFIGURED` — provisionamento somente após G2+G3 via Operador SSH.
 > Shared onboarding: `docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md`
@@ -38,7 +38,7 @@ MCP resource URL: match exato, **sem trailing slash**.
 
 | Field | Value |
 |---|---|
-| Client ID | `mcp-clara` |
+| Client ID | `mcp-controllership-finance` |
 | Mode | `PREDEFINED` / **Cliente OAuth definido pelo usuário** no ChatGPT |
 | Capability type | OpenID Connect |
 | Access type | Confidential |
@@ -54,7 +54,7 @@ Nunca registrar client secret em docs/git/chat/relatório.
 
 ## Provisionamento idempotente (engine compartilhada)
 
-`mcp-clara` está registrado como specialist em
+`mcp-controllership-finance` está registrado como specialist em
 `infra/scripts/delia_mcp_keycloak_state.py` (`SPECIALISTS`), que
 converge: client confidencial + PKCE S256 + client scope dedicado
 `mcp-audience-clara` com o Audience mapper da resource URL exata +
@@ -66,7 +66,7 @@ Execução (somente Operador SSH autorizado, **após G2 e G3**):
 # drift report read-only (seguro, default)
 bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check
 
-# apply idempotente do contrato IAM (inclui mcp-clara)
+# apply idempotente do contrato IAM (inclui mcp-controllership-finance)
 bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --apply
 ```
 
@@ -85,7 +85,7 @@ JWT aud does NOT contain https://minhadelpi.com.br/apps/transformometro-api/mcp
 Regra herdada do incidente TÉO (PROVEN): **proibido** Audience mapper
 de resource URL específica dentro do client scope compartilhado
 `mcp:tools`. O mapper da CLARA vive apenas no dedicated scope
-`mcp-audience-clara` do client `mcp-clara`.
+`mcp-audience-clara` do client `mcp-controllership-finance`.
 
 `mcp:tools` **não** é autorização de negócio: a BFF/Core continua
 autoridade (`controllership-finance.access` / `.manage` + escopo).
@@ -98,7 +98,7 @@ conector. O fluxo real:
 1. ChatGPT → Plugins → Novo plugin → OAuth → advanced.
 2. Selecionar **Cliente OAuth definido pelo usuário**.
 3. Copiar a **URL de retorno** exatamente como exibida.
-4. Keycloak → Clients → `mcp-clara` → Valid redirect URIs → colar.
+4. Keycloak → Clients → `mcp-controllership-finance` → Valid redirect URIs → colar.
 5. Salvar → voltar ao ChatGPT.
 6. Sem wildcard `*` em produção.
 
@@ -113,7 +113,7 @@ verdade — cada Plugin pode gerar connector-id próprio.
 | Server URL | `https://minhadelpi.com.br/apps/controllership-finance-api/mcp` |
 | Authentication | OAuth |
 | Registration method | Cliente OAuth definido pelo usuário |
-| Client ID | `mcp-clara` |
+| Client ID | `mcp-controllership-finance` |
 | Token auth | `client_secret_post` |
 | Default scopes | `openid` `profile` `email` `mcp:tools` |
 | Always requested | `offline_access` |
