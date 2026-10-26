@@ -410,3 +410,6 @@ Fonte: [Plano 113 §§12–13](./113-plano-canonico-fluxo-fechamento-controlador
 | RQ-DOC-11 | Três abas preservadas | detalhe esconde abas; voltar restaura filtros | teste de página «deep link de documento» | PASS |
 | RQ-DOC-12 | QA visual mobile/temas | homologação do PO no navegador | — | PENDING (QA visual pelo PO) |
 
+
+
+> **REWORK DOC V0.3 — 26/10/2026 — TARGET/RQ a verificar:** `RQ-DOC-RW-01` download/preview autenticado com pós-condição real e sem loading infinito; `RQ-DOC-RW-02` menu três pontos no card e operação U7 de cancelamento lógico devidamente autorizada + confirmação/OCC; `RQ-DOC-RW-03` U5 nova versão sem perda do histórico; `RQ-DOC-RW-04` histórico operacional sem eventos de download repetitivos ou UUID cru (preservar trilha obrigatória backend, sujeito owner/gate); `RQ-DOC-RW-05` eliminar navegação obrigatória ao checklist legado da composição nova sem perder validação P2; `RQ-DOC-RW-06` testes positivo/negativo/sibling, temas/mobile/foco, Ajuda, CLARA, local/prod e smoke autenticado. Capturas PO comprovam falha visível, não causa raiz da BFF. Referência [Plano 113 §19](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Resultado: `PENDING`.
