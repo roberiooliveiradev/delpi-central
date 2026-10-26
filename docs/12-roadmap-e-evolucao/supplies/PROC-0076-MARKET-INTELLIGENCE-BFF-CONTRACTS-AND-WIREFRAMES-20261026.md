@@ -187,3 +187,12 @@ As 4 rotas existem conforme candidato (`/market-intelligence/{filters,summary,se
 - **Unidade/moeda:** `summary.last_quote.unit` reflete a moeda exibida (`BRL/metric ton` quando convertido; `USD/metric ton` nativo); `last_quote.native` preserva valor/moeda/unidade de origem e `last_quote.conversion` expõe `fx_kind`, `fx_rate`, `fx_reference_period`, `method`. `period_average.unit`, `series.unit`/`native_unit`, `monthly-averages.unit`/`native_unit` no envelope. Sem taxa sintetica: mes sem PTAX = `null` + `partial_reason=fx_missing`.
 - **MFE:** KPI de ultima cotacao exibe `unit` corrigida; banner stale inclui evidencia temporal (ultima observacao vs periodo esperado); erros 401/403 tem mensagens neutras distintas; glossario/manual explicam stale por cadencia. `recharts` no plugin-ui via kit (`MultiTypeSeriesChart`), sem lib paralela.
 - **Inalterado:** sem permission nova, sem calculo no MFE, zeros ficticios proibidos, granularidade day/month/year, URL/F5/back-forward, alternativa tabular acessivel, wireframe aprovado mantido.
+
+## Reconciliacao R1.1 — completude × frescor + ausencia total de FX (2026-10-27, fix/proc-0076-r1)
+
+Fechamento contratual das duas dimensões de estado, sem alterar o envelope:
+
+- **`meta.data_status` = qualidade da consulta** (somente `ok` | `partial` | `no_data`). Reflete exclusivamente se a janela solicitada está completa, parcial ou vazia. `stale` **não** é um valor de `data_status` — atraso de feed vive apenas em `meta.freshness.status` (`current` | `delayed` | `unknown`).
+- **`meta.freshness` = frescor global da fonte**, inalterado (cadência esperada, período esperado, última observação, lag, última ingestão, data de avaliação, método). Uma consulta histórica completa permanece `data_status=ok` mesmo com feed `delayed`; uma fonte atualizada não torna uma janela incompleta artificialmente completa.
+- **Ausência total de PTAX com metal disponível = `partial` + `partial_reason=fx_missing` (nunca `no_data`, nunca valor convertido zero/sintético).** `no_data` reserva-se à ausência de observações do próprio instrumento. Mesma semântica em `summary`, `series` e `monthly-averages`; consulta USD não é afetada por falta de PTAX.
+- **MFE:** o banner de atraso deriva de `summary.meta.freshness.status === "delayed"` (não de `data_status`), preservando a evidência temporal.

@@ -156,11 +156,16 @@ WORLDBANK_PINKSHEET_TIMEOUT_SECONDS=30
   USD/tonelada métrica, base `monthly_average`. **Proveniência de
   terceiros:** as descrições das séries do workbook identificam as
   cotações subjacentes como LME; a CC BY 4.0 do Banco Mundial não
-  cobre dados de terceiros. A migration V003 registra essa
-  proveniência e adiciona `no_redistribution_pending_lme_review` ao
-  escopo de uso da fonte — o uso interno atual (coleta, armazenamento,
-  derivação, exibição interna com atribuição) permanece, mas qualquer
-  redistribuição externa exige decisão formal sobre direitos LME.
+  cobre dados de terceiros. V003 registra essa proveniência; **V004
+  (R1.1)** refina o escopo para
+  `collect;store;derive;internal_display_pending_lme_review;
+  no_redistribution_pending_lme_review` — os ToU oficiais de datasets
+  do WB delegam dados de terceiros aos termos do provedor, e a LME
+  licencia exibição separadamente do uso interno limitado. Coleta,
+  armazenamento e derivação da publicação WB estão cobertos; exibição
+  interna e redistribuição aguardam decisão institucional formal.
+  Matriz de evidências:
+  `docs/12-roadmap-e-evolucao/shared-integrations/PROC-0076-SOURCE-RIGHTS-EVIDENCE-20261027.md`.
 - Fontes sem licença documental (LME direto, Shockmetais etc.)
   **não existem** no catálogo — ingestão recusa fonte inativa/não
   licenciada (`SOURCE_NOT_LICENSED`), sem fallback para sites
@@ -170,7 +175,7 @@ WORLDBANK_PINKSHEET_TIMEOUT_SECONDS=30
 
 `external-data-api/migrations/` — V001 (schema `external_data` +
 tabelas), V002 (catálogo licenciado), V003 (proveniência LME do
-Pink Sheet). Arquivos aplicados são imutáveis e verificados por
+Pink Sheet), V004 (escopo de exibição interna pendente de revisão LME). Arquivos aplicados são imutáveis e verificados por
 checksum sha256; divergência aborta o boot do módulo. O runner usa
 advisory lock PostgreSQL entre workers e, em falha, o serviço sobe
 **degradado** — CNPJ continua respondendo e market-data responde
@@ -184,14 +189,20 @@ zero upstream pré-auth). Integração Redis real:
 `EXTERNAL_DATA_TEST_REDIS_URL=redis://... pytest` — cobre dois clientes,
 dois processos, concorrência, TTL, fail-closed, isolamento de namespace.
 
-**PostgreSQL real (descartável):** os testes `test_market_data_repository_pg.py`,
-`test_market_data_migrations.py` e `test_startup_migrations.py` rodam contra
-um banco isolado quando `EXTERNAL_DATA_TEST_PG_HOST` está definido
+**PostgreSQL real (descartável, fail-closed — R1.1):** os testes
+`test_market_data_repository_pg.py` e `test_startup_migrations.py` rodam
+contra um banco isolado quando `EXTERNAL_DATA_TEST_PG_HOST` está definido
 (+ `_PORT`/`_NAME`/`_USER`/`_PASSWORD`); sem a env, são `TEST_NOT_RUN`.
-Prova cobre migrations V001–V003, checksum/imutabilidade, advisory lock,
-constraints `NUMERIC`, unicidade/FK, idempotência e boot degradado.
-Isolamento é por database de teste — o schema é sempre o canônico
-`external_data`.
+Antes de qualquer migration ou `DROP`, `tests/pg_disposable_guard.py`
+exige: (1) `EXTERNAL_DATA_TEST_PG_DISPOSABLE=1` explícito; (2) host
+loopback (ou `EXTERNAL_DATA_TEST_PG_ALLOW_REMOTE=1`); (3) dbname com
+`test` no nome e fora da lista reservada; (4) prova dentro do engine —
+sentinela `public.delpi_disposable_db_guard` ou schema `external_data`
+comprovadamente vazio. Falha de qualquer camada aborta sem SQL mutante
+(`UnsafeTestDatabaseError`). Prova cobre migrations V001–V004,
+checksum/imutabilidade, advisory lock, constraints `NUMERIC`,
+unicidade/FK, idempotência e boot degradado. Isolamento é por database
+de teste — o schema é sempre o canônico `external_data`.
 
 ## Operação local
 

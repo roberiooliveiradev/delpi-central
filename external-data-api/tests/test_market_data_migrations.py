@@ -19,7 +19,7 @@ def _files():
 def test_migrations_dir_and_versions_exist():
     files = _files()
     assert MIGRATIONS_DIR.exists()
-    assert {"V001", "V002", "V003"} <= set(files)
+    assert {"V001", "V002", "V003", "V004"} <= set(files)
 
 
 def _sql(version: str) -> str:
@@ -97,6 +97,22 @@ def test_v003_records_lme_third_party_provenance():
     assert "no_redistribution_pending_lme_review" in sql
     assert "third-party" in sql.lower()
     # Provenance is an UPDATE on the catalog — still no destructive DDL.
+    body = "\n".join(
+        line for line in sql.splitlines() if not line.strip().startswith("--")
+    )
+    for forbidden in ("DROP TABLE", "DROP SCHEMA", "TRUNCATE", "DELETE FROM"):
+        assert forbidden not in body
+
+
+def test_v004_marks_internal_display_pending_lme_review():
+    """R1.1: the WB datasets ToU defer third-party data to the provider's
+    own terms, and the LME licenses display use separately. The recorded
+    scope must therefore mark internal display as pending review too —
+    never presenting an unproven use as granted."""
+    sql = Path(_files()["V004"].path).read_text(encoding="utf-8")
+    assert "internal_display_pending_lme_review" in sql
+    assert "no_redistribution_pending_lme_review" in sql
+    assert "lme.com/market-data/market-data-licensing" in sql
     body = "\n".join(
         line for line in sql.splitlines() if not line.strip().startswith("--")
     )

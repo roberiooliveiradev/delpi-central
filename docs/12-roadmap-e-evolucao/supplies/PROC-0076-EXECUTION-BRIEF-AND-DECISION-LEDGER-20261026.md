@@ -108,3 +108,10 @@ Este documento é handoff e planejamento. Não altera a fila E11, não implement
 - **D-R1-04 (licenca):** CC BY 4.0 WB nao cobre series de terceiros (LME subjacente). Escopo da fonte registra `no_redistribution_pending_lme_review`; exibicao interna com atribuicao mantida, redistribuicao pendente de decisao formal.
 - **D-R1-05 (PTAX):** 403 WAF no egress de prod e impedimento operacional, nao bug; feed OFF, ingestao registra falha verificavel. Nenhuma tentativa de bypass autorizada.
 - **D-R1-06 (navegacao):** pagina deep-linkavel fora do hub/palette ate E11 reconciliado — mantido.
+
+## Reconciliacao R1.1 — decisoes adicionais (2026-10-27, fix/proc-0076-r1)
+
+- **D-R1.1-01 (seguranca de testes PG):** `tests/pg_disposable_guard.py` — guarda fail-closed centralizada exigida antes de qualquer SQL mutante em teste: flag explicita + host loopback/allow-remote + dbname com `test` + prova no engine (sentinela ou schema vazio). Sem prova de isolamento, nenhuma migration/DROP roda.
+- **D-R1.1-02 (completude x frescor):** `data_status` = qualidade da consulta apenas (`ok|partial|no_data`); atraso do feed vive exclusivamente em `meta.freshness.status`. Ausencia total de PTAX com metal disponivel = `partial`+`fx_missing`, nunca `no_data`. Semantica identica nos 3 endpoints; MFE deriva banner de `freshness.status==="delayed"`.
+- **D-R1.1-03 (direitos LME):** evidencia oficial (WB datasets ToU + LME licensing) mostra que `internal_display` tambem nao e uso comprovado — V004 aditiva refina escopo para `internal_display_pending_lme_review`. `SOURCE_RIGHTS=INCONCLUSIVE`; decisao institucional pendente; feed permanece OFF; historico preservado.
+- **D-R1.1-04 (gates mantidos):** E11/GATE-FEATURE INCONCLUSIVE; PTAX 403 operacional sem bypass; feeds OFF; V003/V004 so aplicam em prod no proximo deploy autorizado; sem smoke federado nesta execucao.
