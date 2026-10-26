@@ -614,3 +614,49 @@ HISTÓRICO AUDITÁVEL
 ### 14.8 Próximo review
 
 Demonstrar versão interativa da listagem e do detalhe no chat; confirmar distribuição dos blocos e o modelo de interação (um histórico compartilhado), avançando depois à bancada “Relatórios e divergências”. `DESIGN_V0.7=PENDING_PO`, `RUNTIME_GO=NO`.
+
+
+## 15. Reconciliacao do Wireframe 02 com decisao anterior Contabilidade/DRE (Doc 91)
+
+**Data:** 26/10/2026. **Origem:** PO perguntou se diferenciação de acesso já seria controlada pelo manifesto e se valeria criar página própria. **Classificação:** `PROVEN` para evidência de decisão documental anterior e manifesto HEAD; `TARGET / DECISION_REQUIRED` para nova experiência de interações. **Natureza:** documentação de arquitetura de informação, nenhuma alteração de runtime.
+
+### 15.1 Evidência de contrato vigente
+
+- Manifesto em `plugins/controllership-finance/controllership-finance.manifest.json` está em `schemaVersion 1.0.0` e declara exatamente **duas permissions**: `controllership-finance.access` e `controllership-finance.manage`. Rotas `/closing/checklist`, `/closing/pendencies`, `/closing/packages` usam `.access`. Uma rota de Contabilidade dedicada não foi registrada nesse manifesto.
+- O [Documento 91](./91-ciclo3-contabilidade-acesso-documentos-historicos-gate.md) registra decisão expressa anterior **Opção B / PRODUCT_DIRECTION_APPROVED**: uma **página própria** dentro da Central, exclusiva da audiência Contabilidade/DRE, com consulta/download de documentos e pacotes liberados por competência histórica. O documento solicita **exceção** para terceira permission específica, ainda **não ratificada como contrato runtime**. A criação da permission/rota foi **adiada pelo PO** em §8, e não revogada.
+- `controllership-finance.access/manage` continuam únicas capabilities aprovadas no baseline do projeto até gate transversal. A BFF aplica efetivas do Core **AND** recipient assignment/resource scope **AND** regra de negócio, fail-closed; UI e manifest não bastam para autorizar operação de arquivo.
+- Documento 91 estabelece **DRE sem upload, validação P2, aprovação/rejeição P5 ou aceite na V1**. A Controladoria prepara, anexa e disponibiliza, com eventos separados e trilha auditada. Este boundary é diferente da atuação dos revisores P5.
+
+### 15.2 Recomendação de composição — sem reabrir a decisão B
+
+**Preservar a decisão prévia de produto de entrada/página específica para Contabilidade/DRE dentro do mesmo Portal**, reutilizando uma única base/snapshot e os componentes da bancada de documentos, sem criar Portal paralelo nem cópias de evidência. Proposta visual:
+
+```text
+                              MESMA COMPETENCIA / ITENS / ARQUIVOS
+                                     BFF / storage / auditoria
+                                      /                \
+CONTROLADORIA / ENTREGA                CONTABILIDADE / DRE
+Página Fechamento mensal               Página Documentos para Contabilidade
+  Documentos e interações              Consulta de documentos liberados
+  lista+detalhe+envio elegível         lista+detalhe+download autorizado
+  relatórios e divergências            acompanhamento de interações autorizadas
+  revisão P5 quando aplicável          SEM upload, SEM revisão/aceite P5 na V1
+```
+
+Ambas as páginas podem utilizar a mesma composição visual `DocumentList` + `DocumentDetail` + `AttachmentFileList` + `Timeline` do `@delpi/plugin-ui`, com affordances distintas e **AuthZ de backend, não flags confiadas pelo cliente**. A página restrita deve ser descoberta e aberta via entrada segura do Core/launcher; não conceder `.access` geral para contornar raiz protegida. O path `/closing/accounting-documents` do Doc 91 permanece candidato, não rota implementada/aprovada para runtime.
+
+### 15.3 Mudança funcional que requer nova decisão
+
+O Doc 91 aprovou **consulta/download apenas** e **sem aceite** para Contabilidade/DRE. O novo pedido do PO adiciona **interações bidirecionais relativas ao documento** que também devem aparecer à entregadora. Esta é a diferença material entre:
+1. **Ver eventos/histórico**: leitura das evidências e decisões já auditadas; ou
+2. **Escrever comentário / solicitar esclarecimento / responder**: mutação governada com ator, versão, recorte e audience, notificações, AuthZ e persistência — não autorizada automaticamente por uma capability de leitura.
+
+**`D-DOC-COLLAB-01=DECISION_REQUIRED`** antes de prometer postagem de interações pelo usuário DRE. Investigar funções existentes em P2, P5 e Sala de Interação, e definir owner/action contract, sem confundir consulta DRE com revisor P5. Se decisão incluir escrita, resolver `read-only` versus `comment-only` de forma explícita, sem criar permission por botão/CRUD por conveniência.
+
+**`D-DRE-ENTRY-01=DOCUMENTED_PRODUCT_DIRECTION/DEFERRED`**: manter página própria aprovada, mas sem implementação até exceção transversal formal para permissão e entrada restrita, inclusive impacto manifest/Core launcher/router/BFF/guards/testes.
+
+**`IMPLEMENTATION_AUTHORIZED=NO`** para qualquer alteração de plugin, manifest, Core, grants, BFF, rotas, banco ou UI nesta rodada.
+
+### 15.4 Próximo refinamento visual
+
+No Wireframe 02, desenhar duas variantes reutilizando lista/detalhe: a) entregador autorizado, com upload e acompanhamento; b) Contabilidade, sem controles de upload/aceite, com consulta/download e histórico visível. A área de **nova interação escrita** permanece marcada `TARGET / DECISION_REQUIRED` até contrato. A decisão das quatro versus cinco abas da mesa Controladoria segue independente e ainda em revisão.
