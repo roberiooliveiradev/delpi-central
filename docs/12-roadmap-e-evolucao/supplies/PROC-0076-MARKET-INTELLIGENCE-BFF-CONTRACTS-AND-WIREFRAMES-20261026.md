@@ -202,3 +202,9 @@ Fechamento contratual das duas dimensões de estado, sem alterar o envelope:
 - **BFF:** mapeia o erro para **503 `error.code=source_use_not_approved`** — distinto de 401/403 de autorizacao de usuario (Core `supplies.access`) e de `503 external_data_unavailable` (falha tecnica). Nao fabrica valores.
 - **Filtros:** `GET /market-intelligence/filters` adiciona `selectable` (boolean) em instrumentos e opcoes FX, derivado de `display_allowed` do produtor — campo aditivo, retrocompativel.
 - **MFE:** esconde instrumentos `selectable:false`; selecao de URL herdada que aponte para instrumento em quarentena e substituida por default selecionavel (nunca consultada); resposta negada limpa summary/series e exibe mensagem neutra "indisponivel no momento" — sem valores antigos ou inventados.
+
+## Reconciliacao R1.3 — readiness do contrato + default-deny (2026-10-27, fix/proc-0076-r1)
+
+- **Produtor:** `check_market_contract_ready` exige revisao V004 no ledger com checksum canonico antes de qualquer leitura/escrita de mercado; catalogo V002/V003 (pre-quarentena) nunca serve precos. Falha → `EXTERNAL_DATA_CONTRACT_NOT_READY` (503). CNPJ preservado em boot degradado.
+- **BFF:** `EXTERNAL_DATA_CONTRACT_NOT_READY` → **503 `contract_not_ready`**; `selectable` so com `display_allowed === true` explicito; `default_instrument` nunca escolhe bloqueado.
+- **MFE:** `selectable === true` apenas; catalogo sem selecionaveis → banner neutro de indisponibilidade; nenhum valor antigo ou inventado.

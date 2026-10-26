@@ -181,6 +181,22 @@ WORLDBANK_PINKSHEET_TIMEOUT_SECONDS=30
   explicitamente; flag de feed ativada indevidamente não basta. A
   liberação futura exige migration aditiva após decisão institucional
   documentada — não existe bypass por configuração.
+- **Readiness do contrato de direitos (R1.3):** a política só é válida
+  se a revisão contratual que a define estiver comprovadamente
+  aplicada. `app/infrastructure/persistence/market_contract_readiness.py`
+  verifica, por invocação e dentro do engine: ledger
+  `external_data.schema_migrations` legível, revisão **V004** presente
+  com **checksum igual ao arquivo canônico**, tabela
+  `market_data_sources` e coluna `allowed_use_scope` presentes.
+  Qualquer falha (V004 ausente/falha, checksum divergente, ledger ou
+  catálogo ausente, engine ilegível) levanta
+  `EXTERNAL_DATA_CONTRACT_NOT_READY` (503) **antes** de qualquer leitura
+  — um catálogo V002/V003 com `internal_display` legado nunca serve
+  preços. O boot degradado preserva o CNPJ: a indisponibilidade é
+  restrita ao surface `/v1/market-data/*` e ao job de ingestão, que
+  exige a mesma prova antes de escrever. Sem cache — a verificação é
+  por requisição e nunca retém autorização após perda de readiness.
+  Consumers veem `contract_not_ready` (503) via BFF.
 
 ## Migrations de market data
 

@@ -82,10 +82,12 @@ def _guard_before_mutation(pg_env):
     yield
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def migrated_v1_v3(pg_env):
     """Apply ONLY V001–V003 — simulates the legacy catalog state that
-    still carries the literal ``internal_display`` grant."""
+    still carries the literal ``internal_display`` grant. Function
+    scope: each scenario gets a clean legacy database and teardown
+    drops the schema so sibling suites start from empty."""
     from app.infrastructure.persistence.plugins_db import get_connection
 
     files = [

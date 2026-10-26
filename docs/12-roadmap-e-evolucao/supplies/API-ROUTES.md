@@ -178,6 +178,7 @@ Falha de AuthZ nunca vira partial success. Recurso principal inexistente continu
 |---|---|
 | usuário sem `supplies.access` no Core | 401/403 padrão (AuthN/AuthZ) |
 | fonte existe mas uso `internal_display` pendente | 503 `source_use_not_approved` |
+| contrato de direitos do produtor não comprovado (V004 pendente/divergente) | 503 `contract_not_ready` |
 | fonte/ingestão/storage indisponível | 503 `external_data_unavailable` |
 | instrumento desconhecido / sem observações | 404 / `data_status=no_data` |
 
@@ -186,5 +187,11 @@ O bloqueio de licença **nunca** vira 403 de autorização do usuário.
 `internal_display` aprovado — o MFE esconde essas opções e nunca
 consulta seus valores; `catalog.display_allowed` no produtor é a fonte
 de verdade. Desbloqueio exige decisão institucional + migration aditiva.
+
+**Default-deny (R1.3):** `selectable` só é `true` quando o produtor
+envia `display_allowed: true` explícito — campo ausente, `null` ou
+inválido em payload de versão anterior é tratado como não-selecionável
+(o `default_instrument` nunca aponta para instrumento bloqueado). O MFE
+aplica a mesma regra (`selectable === true` apenas).
 
 Mudança de contrato deve seguir a regra canônica de compatibilidade e atualizar producer + consumer + testes + Help/docs quando user-facing.
