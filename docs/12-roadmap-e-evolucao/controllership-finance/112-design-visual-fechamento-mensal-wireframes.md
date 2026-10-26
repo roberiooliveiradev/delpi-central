@@ -1334,3 +1334,50 @@ O design de **três abas fica aprovado pelo PO** e será a nova base dos wirefra
 6. Após review, atualizar este registro, o README/roadmap pertinente e as evidências, com commit/SHA e próximo incremento **somente se aprovado**.
 
 **Próximo evento:** PO enviará a devolutiva do Devin para auditoria; até lá, `REVIEW_STATUS=PENDING_EXECUTION_REPORT`.
+
+
+## 28. GPT REVIEW — execução 01 Home + workspace três abas — REWORK
+
+**Data:** 2026-10-26. **Execução:** `CF-PROC0072-HOME-MONTHLY-CLOSING-001`. **SHA remoto inspecionado:** `b5538f1e6022a47d3ddbff6e11ab6a0da7b3e196` em `main`. **Artefatos recebidos:** EXECUTION_REPORT do Devin e quatro capturas de produção da Home e das três abas. **Resultado da revisão:** `REWORK` antes de `ACCEPT`; nenhum novo deploy realizado por este revisor.
+
+### Evidência positiva
+
+- `PROVEN_CODE`: commit em `main` contém `MonthlyClosingPage.tsx`, route/deep route, três abas, três indicadores, composição com `CockpitSummaryPanel`, `ClosingDocumentsPanel`, `ReportsMatrixPanel`, placeholder honesto de PDF; Home reduz catálogo, com entradas principal e atalhos; arquivos/rotas dos relatórios legados e permissões `.access/.manage` preservados; DRE não incluído.
+- `PROVEN_VISUAL_USER_SCREENSHOTS`: Home consolidada, rota mensal renderizada e `?tab=documents|reports`; erro de competência não aberta mostrado; PDF ainda apenas slot.
+- `REPORTED_BY_EXECUTOR`: build federado PASS; typecheck PASS; 36/36 testes afetados e 25/25 estruturais; suíte 189/190 com 1 falha e isolamento PASS; ESLint erro pré-existente; commit/push/deploy no servidor pelo fluxo canônico; HTTP GETs 200, health 200, bundle com hash alinhado. **Este GPT não reexecutou esses testes nem verificou logs/SSH/health do servidor**, portanto não transformar relato em `PROVEN_INDEPENDENT`.
+- `SMOKE_AUTH=TEST_NOT_RUN` segundo relatório. Capturas mostram render, mas não comprovam resultados autenticados de navegação completa/ACL.
+
+### Defeitos obrigatórios
+
+**RW01 / P1 — seletor de competência incorreto:** `MonthlyClosingPage.tsx` usa `FilterInputField type="month"` e `currentCompetence()` por default. Viola D-HEADER-01: **somente competências existentes e autorizadas**, não entrada arbitrária de mês. Captura em outubro/2026 exibe `competence_not_opened`. Inventariar contrato BFF atual para listar competências, states e escopo; usar só opções reais. **Não criar endpoint novo sem gate**; ausência de contrato = `DECISION_REQUIRED`, sem fabricar lista/local storage/ano fixo.
+
+**RW02 / P1 — vazamento visual de dado stale entre competências:** `reload` altera `loading/error` mas não limpa/revincula `cockpit` por período. Ao alterar `period`, indicadores derivados e `CockpitSummaryPanel` podem continuar expondo dados do mês anterior durante loading e após 404, dando falsa atribuição à competência atual. Introduzir estrutura state keyed por competência, abort/race guard, render apenas se snapshot.period===period, limpar `lastUpdated` e dados derivados em transição/falha, inclusive regressão de respostas fora de ordem e failure. A data `lastUpdated` é de carregamento local, não freshness da fonte; não rotular como freshness da base.
+
+**RW03 / P1 — deep link perde competência na troca de aba:** `selectTab` usa `navigatePluginView("monthly_closing",{search:...})`, reconstruindo `/closing/monthly-closing?tab=...` e descartando `/YYYY-MM` original. O estado local mantém um período temporariamente, mas refresh/bookmark perde o mês histórico. Gerar link canônico que preserve período existente/autorizado e tab (e contexto de escopo se contratualmente suportado), testando navegação direta, refresh, back/forward e troca de competência.
+
+**RW04 / P2 — indicador documentos a tratar não provado:** `documentsCount = cockpit ? (cockpit.checklist.EXPECTED ?? 0) : null`. `EXPECTED` não equivale semanticamente a “a tratar”; pode incluir itens sem ação pendente no sentido de produto. Inventariar contrato P2, definir contagem governada com RQ/AC/owner, exibir `—` com explicação enquanto métrica não estiver provada. Não construir métrica nova no frontend por inferência.
+
+**RW05 / P1 UX — upload quando competência não está aberta:** `MonthlyClosingPage` renderiza `ClosingDocumentsPanel` independentemente do erro `competence_not_opened`; as capturas mostram dropzone habilitada ao lado de dois erros. A BFF deve continuar negando mutação, mas UI da nova bancada deve impedir/ocultar ações quando contexto não existe ou está inacessível, com explicação e CTA de competência válida. Não reescrever P2 nem supor capability por erro de outro endpoint; verificar owner/contrato do status da competência.
+
+**RW06 / P2 — integração é parcial, não concluir o objetivo de fluxo unificado:** `ReportsMatrixPanel` e links `Baixas financeiras`/`Estoque histórico — P7` são transição aceitável no primeiro slice, mas não representam ainda visualização, diagnóstico e correção de divergência no mesmo contexto; Checklist P2 também abre rota legada. Registrar como `ACCEPT_WITH_RESIDUAL` apenas depois dos itens P1; não excluir rotas. Contratos de colaboração/DRE/PDF permanecem fora da execução.
+
+**RW07 / P1 processo — gate de runtime/deploy precisa evidência correta:** Devin classificou `PO_REQUESTED_FIRST_IMPLEMENTATION_SLICE` (§26) como `GATE_TRANSVERSAL=PROVEN`, embora texto do §26 exija identificar o **GO transversal explícito** separadamente. Solicitação do PO não substitui gate. Obter e citar decisão/autorização real de gate de runtime + production deployment e comando SSH operador/scrips, rollback, SHA, health. Se não houver, reportar `INCONCLUSIVE/EXECUTION_DRIFT` no gate, sem fingir ratificação retroativa. Smoke autenticado permanece `TEST_NOT_RUN` até rodar.
+
+**RW08 / P2 — regressão de testes declarada:** uma falha na suite completa e lint global com erro (mesmo se preexistentes) permanecem residuais `FAIL` na execução global, `PASS` somente para runs comprovadamente verdes. Atribuição “flake” exige replicação com evidência ou issue/owner; não declarar toda suite PASS.
+
+### Escopo do rework
+
+Minimal diff no componente de workspace/roteamento/catálogo/tests e, se necessário, BFF apenas após gate de contrato; **não** remover módulos históricos; **não** alterar permissions/manifest DRE; **não** publicar PDFs nem implementar WebSocket. A solução deve preservar três abas, Home simplificada, plugin-ui first, Help, P2/P3/P4/P5 owner e regras Core de AuthZ.
+
+### ACs para revalidação
+
+1. Só competências reais autorizadas e existentes aparecem no seletor; 404 não fica como landing padrão arbitrário.
+2. Alternar duas competências e forçar respostas HTTP fora de ordem/erro: UI nunca mostra A sob período B.
+3. Link `/closing/monthly-closing/YYYY-MM?tab=documents`/reports preserva período após aba, refresh e back; links para checklist mantêm mês.
+4. Indicador “Documentos a tratar” só apresenta métrica se contrato a suportar; fonte indisponível vira `—`, não zero inventado.
+5. Sem competência válida/aberta, nenhum uploader de documento aparenta disponibilidade; API continua fail-closed.
+6. Testes unitários/integração/structural/typecheck/lint/build reexecutados com outputs e SHA; regressões conhecidas classificadas sem mascarar.
+7. Deploy pela sequência local→commit→push→Git pull/build canônico com autorização, smoke autenticado real por papel/período (incluindo 403 e deep link), health e rollback evidenciados.
+8. DRE permanece excluído, legado não apagado.
+
+**Próximo passo:** enviar prompt de **rework cirúrgico** ao Devin e reavaliar diff e evidências. **Parecer nesta rodada:** `REWORK`.
