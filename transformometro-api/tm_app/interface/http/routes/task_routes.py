@@ -6,16 +6,34 @@ from pydantic import BaseModel, Field
 from tm_app.application.security.authorization_policy import AuthorizationDenied
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
 from tm_app.application.use_cases.list_my_task_items import ListMyTaskItemsUseCase
+from tm_app.application.use_cases.manage_interaction_rooms import InteractionRoomUseCases
 from tm_app.application.use_cases.manage_transformometro_tasks import TaskCommandUseCases
 from tm_app.core.responses import fail, ok
+from tm_app.infrastructure.gateways.helpdesk_bff_gateway import HelpdeskBffGateway
+from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
+from tm_app.infrastructure.persistence.repositories.interaction_room_repository import (
+    InteractionRoomRepository,
+)
 from tm_app.infrastructure.persistence.repositories.process_repository import ProcessoRepository
 from tm_app.infrastructure.persistence.repositories.task_repository import TaskRepository
 from tm_app.interface.http.branch_access_http import check_processo_view_access
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro Tasks"])
-_commands = TaskCommandUseCases(TaskRepository())
+# Room read-authorization comes from the interaction-room owner — never a
+# simplified local check. Wired before the task command use cases.
+_room_access = InteractionRoomUseCases(
+    InteractionRoomRepository(),
+    ticket_visibility=HelpdeskBffGateway(),
+    audit=AuditRepository(),
+)
+_commands = TaskCommandUseCases(TaskRepository(), room_access=_room_access.can_view_room)
 _minutes = MeetingMinutesService()
 _list_items = ListMyTaskItemsUseCase(_commands, _minutes.pending_signatures)
+
+
+def _authorization(request: Request) -> str:
+    headers = getattr(request, "headers", {}) or {}
+    return str(headers.get("authorization") or "").strip()
 
 
 class CreateTaskBody(BaseModel):
@@ -50,7 +68,14 @@ def _handle(exc: Exception):
 @router.get("/my-tasks", operation_id="list_my_transformometro_tasks")
 def list_my_tasks(request: Request, status: str = "pending", scope: str = "received"):
     try:
-        return ok(_list_items.execute(request.state.user, status=status, scope=scope))
+        return ok(
+            _list_items.execute(
+                request.state.user,
+                status=status,
+                scope=scope,
+                authorization=_authorization(request),
+            )
+        )
     except Exception as exc:
         return _handle(exc)
 

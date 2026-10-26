@@ -136,6 +136,31 @@ class InteractionRoomUseCases:
         )
         return room
 
+    def can_view_room(
+        self, user: Any, room_id: str, authorization: str | None = None
+    ) -> bool:
+        """Typed read-authorization capability for consumers that must know
+        whether a room is openable WITHOUT projecting its content. Runs the
+        same canonical intersection as content reads — scope, membership and
+        every active link's external authority — and fails closed on any
+        denial, missing session or unconfirmable external authority.
+
+        Legacy schemas (no ``access_scope``/links/participants) carry no
+        restrictive contract: the canonical decision reduces to room
+        existence for users with ``transformometro.access``. This never
+        bypasses link checks — those contracts simply do not exist on V1.
+        """
+        try:
+            self._policy.require_access(user)
+            if not self._repo.room_schema_v2():
+                return self._repo.room_exists(
+                    normalize_uuid(room_id, label="A sala")
+                )
+            self._authorized_room(user, room_id, authorization)
+            return True
+        except (AuthorizationDenied, RoomAuthorizationDenied, LookupError):
+            return False
+
     def _admin_room(self, user: Any, room_id: str) -> InteractionRoom:
         """Administrative path: owner or effective `transformometro.manage`.
         Never requires `transformometro.access` and never authorizes

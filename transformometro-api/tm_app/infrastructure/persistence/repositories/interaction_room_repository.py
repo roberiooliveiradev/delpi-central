@@ -659,6 +659,26 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         )
         return row is not None
 
+    def room_exists(self, room_id: str) -> bool:
+        row = self.fetch_one(
+            f"""SELECT 1 AS ok FROM {_S}.tm_interaction_rooms
+                WHERE id = %s::uuid AND deleted_at IS NULL""",
+            (room_id,),
+        )
+        return row is not None
+
+    def room_schema_v2(self) -> bool:
+        if getattr(self, "_schema_v2", None) is None:
+            row = self.fetch_one(
+                """SELECT COUNT(*) AS n
+                   FROM information_schema.columns
+                   WHERE table_schema = 'transformometro'
+                     AND table_name = 'tm_interaction_rooms'
+                     AND column_name = 'access_scope'"""
+            )
+            self._schema_v2 = bool(row and row.get("n"))
+        return self._schema_v2
+
     @staticmethod
     def _is_primary_conflict(exc: PluginsRepositoryError) -> bool:
         """Unique-violation backstop: the partial index on active primary
@@ -1554,6 +1574,13 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
 
     def process_exists(self, processo_id: str) -> bool:
         return processo_id in self.processes
+
+    def room_exists(self, room_id: str) -> bool:
+        room = self.rooms.get(str(room_id))
+        return room is not None and room.deleted_at is None
+
+    def room_schema_v2(self) -> bool:
+        return True
 
     def list_rooms(
         self,

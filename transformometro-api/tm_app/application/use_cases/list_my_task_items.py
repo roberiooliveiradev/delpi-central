@@ -39,11 +39,12 @@ class ListMyTaskItemsUseCase:
         *,
         status: str = "pending",
         scope: str = "received",
+        authorization: str | None = None,
     ) -> dict[str, Any]:
         self._policy.require_access(user)
         scope_norm = (scope or "received").strip().lower()
         if scope_norm == "delegated":
-            return self._delegated(user, status=status)
+            return self._delegated(user, status=status, authorization=authorization)
         if scope_norm != "received":
             raise ValueError("Escopo de consulta inválido.")
         tasks = self._commands.list_mine(user, status=status)
@@ -82,9 +83,13 @@ class ListMyTaskItemsUseCase:
             "partial_error": partial_error,
         }
 
-    def _delegated(self, user: Any, *, status: str) -> dict[str, Any]:
+    def _delegated(
+        self, user: Any, *, status: str, authorization: str | None = None
+    ) -> dict[str, Any]:
         tasks = self._commands.list_delegated(user, status=status)
-        contexts = self._commands.origin_contexts(user, [task.id for task in tasks])
+        contexts = self._commands.origin_contexts(
+            user, [task.id for task in tasks], authorization=authorization
+        )
         viewer_id = normalize_user_id(str(getattr(user, "id", "") or ""), field="Usuário autenticado")
         is_manager = self._policy.has_manage(user)
         today = today_in_portal()

@@ -93,13 +93,11 @@ class TaskRepositoryPort(ABC):
     def origin_contexts(
         self,
         task_ids: Sequence[str],
-        *,
-        viewer_id: str,
     ) -> dict[str, TaskOriginContext]:
-        """Resolve room/process context for tasks created from interaction
-        messages. Room id and context label are only projected when the
-        viewer can provably open the room — holding a task is not room
-        authorization."""
+        """Resolve room/process origin CANDIDATES for tasks created from
+        interaction messages. This is a structural projection, NOT room
+        authorization: callers must gate exposure through the canonical
+        room access check before returning these values."""
         raise NotImplementedError
 
     @abstractmethod

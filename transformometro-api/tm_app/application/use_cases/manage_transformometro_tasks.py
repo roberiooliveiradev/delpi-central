@@ -27,9 +27,14 @@ class TaskCommandUseCases:
         self,
         repo: TaskRepositoryPort,
         policy: TransformometroAuthorizationPolicy | None = None,
+        room_access: Any | None = None,
     ) -> None:
+        """``room_access(user, room_id, authorization) -> bool`` — the
+        canonical room read-authorization capability (interaction-room
+        owner). When absent, origin context is withheld (fail-closed)."""
         self._repo = repo
         self._policy = policy or TransformometroAuthorizationPolicy()
+        self._room_access = room_access
 
     def create(
         self,
@@ -143,9 +148,40 @@ class TaskCommandUseCases:
         self,
         user: Any,
         task_ids: Sequence[str],
+        *,
+        authorization: str | None = None,
     ) -> dict[str, TaskOriginContext]:
+        """Task visibility != room visibility. Origin metadata is only
+        returned for rooms the viewer can actually open under the canonical
+        room access check — every active link's external authority
+        included. Denied/unavailable/missing-session all suppress; only the
+        task itself stays visible. Decisions are evaluated once per unique
+        room (no per-task N+1)."""
         self._policy.require_access(user)
-        return self._repo.origin_contexts(task_ids, viewer_id=_user_id(user))
+        contexts = self._repo.origin_contexts(task_ids)
+        allowed = self._allowed_rooms(user, contexts, authorization)
+        return {
+            task_id: (
+                context
+                if context.room_id is None or allowed.get(context.room_id)
+                else TaskOriginContext()
+            )
+            for task_id, context in contexts.items()
+        }
+
+    def _allowed_rooms(
+        self,
+        user: Any,
+        contexts: dict[str, TaskOriginContext],
+        authorization: str | None,
+    ) -> dict[str, bool]:
+        room_ids = {c.room_id for c in contexts.values() if c.room_id}
+        if not room_ids or self._room_access is None:
+            return {}
+        return {
+            room_id: bool(self._room_access(user, room_id, authorization))
+            for room_id in room_ids
+        }
 
     def list_related_to_process(self, user: Any, processo_id: str) -> list[TransformometroTask]:
         self._policy.require_access(user)

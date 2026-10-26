@@ -278,14 +278,16 @@ class GptActionsDispatchService:
         self._decomp_writes = DecompositionWriteService()
         # Same canonical use cases as the Portal HTTP surface (task_routes /
         # interaction_room_routes) — no duplicated domain rules.
-        self._tasks = TaskCommandUseCases(TaskRepository())
-        self._task_items = ListMyTaskItemsUseCase(
-            self._tasks, self._minutes.pending_signatures
-        )
         self._rooms = InteractionRoomUseCases(
             InteractionRoomRepository(),
             ticket_visibility=HelpdeskBffGateway(),
             audit=AuditRepository(),
+        )
+        self._tasks = TaskCommandUseCases(
+            TaskRepository(), room_access=self._rooms.can_view_room
+        )
+        self._task_items = ListMyTaskItemsUseCase(
+            self._tasks, self._minutes.pending_signatures
         )
         from tm_app.application.gpt_actions.parity_capabilities_service import (
             ParityCapabilitiesService,
@@ -2433,7 +2435,13 @@ class GptActionsDispatchService:
 
     def list_my_tasks(self, request: Request, *, status: str = "pending") -> dict[str, Any]:
         try:
-            return self._task_items.execute(request.state.user, status=status)
+            return self._task_items.execute(
+                request.state.user,
+                status=status,
+                authorization=str(
+                    request.headers.get("authorization") or ""
+                ).strip(),
+            )
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc
 

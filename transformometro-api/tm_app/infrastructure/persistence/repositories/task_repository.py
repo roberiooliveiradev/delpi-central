@@ -217,32 +217,15 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
     def origin_contexts(
         self,
         task_ids: Sequence[str],
-        *,
-        viewer_id: str,
     ) -> dict[str, TaskOriginContext]:
         ids = [str(task_id) for task_id in task_ids if str(task_id or "").strip()]
         if not ids:
             return {}
-        # Membership gate only exists on the V2 room schema; on the older
-        # schema every room behaves as 'open' (the same default the room
-        # access service uses when the column is absent).
-        if self._room_v2_schema():
-            can_open = (
-                "(r.access_scope = 'open'"
-                f" OR EXISTS (SELECT 1 FROM {_S}.tm_interaction_room_participants rp"
-                " WHERE rp.room_id = r.id AND rp.user_id = %s::uuid"
-                " AND rp.removed_at IS NULL)) AS can_open"
-            )
-            params = (viewer_id, ids)
-        else:
-            can_open = "TRUE AS can_open"
-            params = (ids,)
         rows = self.fetch_all(
             f"""SELECT t.id AS task_id,
                        r.id AS room_id,
                        NULLIF(btrim(p.nome_processo), '') AS nome_processo,
-                       NULLIF(btrim(p.codigo_processo), '') AS codigo_processo,
-                       {can_open}
+                       NULLIF(btrim(p.codigo_processo), '') AS codigo_processo
                 FROM {_S}.tm_tasks t
                 LEFT JOIN {_S}.tm_interaction_messages m
                     ON m.id = t.source_interaction_message_id
@@ -253,16 +236,10 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
                 LEFT JOIN {_S}.processos p
                     ON p.processo_id = r.processo_id
                 WHERE t.id = ANY(%s::uuid[])""",
-            params,
+            (ids,),
         )
         contexts: dict[str, TaskOriginContext] = {}
         for row in rows:
-            # Without proven room access, room_id/context_label are withheld:
-            # the delegated task still lists, but the projection leaks
-            # neither the room nor its process to a viewer who cannot open it.
-            if not row.get("can_open"):
-                contexts[str(row["task_id"])] = TaskOriginContext()
-                continue
             label = row.get("nome_processo") or row.get("codigo_processo")
             room_id = row.get("room_id")
             contexts[str(row["task_id"])] = TaskOriginContext(
@@ -270,17 +247,6 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
                 context_label=str(label) if label else None,
             )
         return contexts
-
-    def _room_v2_schema(self) -> bool:
-        if getattr(self, "_room_v2", None) is None:
-            row = self.fetch_one(
-                """SELECT COUNT(*) AS n FROM information_schema.columns
-                   WHERE table_schema = 'transformometro'
-                     AND table_name = 'tm_interaction_rooms'
-                     AND column_name = 'access_scope'"""
-            )
-            self._room_v2 = bool(row and row.get("n"))
-        return self._room_v2
 
     def list_related_to_process(self, processo_id: str) -> list[TransformometroTask]:
         rows = self.fetch_all(
@@ -305,8 +271,6 @@ class InMemoryTaskRepository(TaskRepositoryPort):
         self.message_processo_ids: dict[str, str] = {}
         self.message_room_ids: dict[str, str] = {}
         self.processo_labels: dict[str, str] = {}
-        # room_id -> active participant ids; absent key = open-scope room
-        self.room_participants: dict[str, set[str]] = {}
 
     def message_exists(self, message_id: str) -> bool:
         return message_id in self.message_ids
@@ -317,14 +281,10 @@ class InMemoryTaskRepository(TaskRepositoryPort):
         processo_id: str,
         room_id: str | None = None,
         process_label: str | None = None,
-        room_participants: set[str] | None = None,
     ) -> None:
         self.message_ids.add(message_id)
         self.message_processo_ids[message_id] = processo_id
-        room = room_id or f"room-{processo_id}"
-        self.message_room_ids[message_id] = room
-        if room_participants is not None:
-            self.room_participants[room] = set(room_participants)
+        self.message_room_ids[message_id] = room_id or f"room-{processo_id}"
         if process_label:
             self.processo_labels[processo_id] = process_label
 
@@ -432,9 +392,7 @@ class InMemoryTaskRepository(TaskRepositoryPort):
             and task.status in statuses
         ]
 
-    def origin_contexts(
-        self, task_ids: Sequence[str], *, viewer_id: str
-    ) -> dict[str, TaskOriginContext]:
+    def origin_contexts(self, task_ids: Sequence[str]) -> dict[str, TaskOriginContext]:
         contexts: dict[str, TaskOriginContext] = {}
         for task_id in task_ids:
             task = self.rows.get(str(task_id))
@@ -444,14 +402,9 @@ class InMemoryTaskRepository(TaskRepositoryPort):
             if not source:
                 contexts[task.id] = TaskOriginContext()
                 continue
-            room_id = self.message_room_ids.get(source)
-            participants = self.room_participants.get(room_id or "")
-            if participants is not None and viewer_id not in participants:
-                contexts[task.id] = TaskOriginContext()
-                continue
             processo_id = self.message_processo_ids.get(source)
             contexts[task.id] = TaskOriginContext(
-                room_id=room_id,
+                room_id=self.message_room_ids.get(source),
                 context_label=self.processo_labels.get(processo_id or "") or processo_id,
             )
         return contexts

@@ -7,8 +7,10 @@ conflicting pair, coherent loser errors (never false success), and the
 final row read back authoritatively.
 
 Runs ONLY when ``DELPI_SCRATCH_DSN`` points at a database with the
-``transformometro.tm_tasks`` schema (V045+). The origin-context gating test
-additionally requires the V2 room schema (access_scope/participants)::
+``transformometro.tm_tasks`` schema (V045+). The origin-context test
+exercises the canonical ``can_view_room`` capability and branches on the
+detected room schema — V2 members-scope gating when available, V1 open
+semantics otherwise::
 
     DELPI_SCRATCH_DSN="host=localhost dbname=delpi_scratch user=delpi password=***" \
         pytest tests/test_tasks_concurrency_pg.py
@@ -26,8 +28,14 @@ import pytest
 psycopg = pytest.importorskip("psycopg")
 from psycopg.rows import dict_row
 
+from tm_app.application.use_cases.manage_interaction_rooms import (
+    InteractionRoomUseCases,
+)
 from tm_app.application.use_cases.manage_transformometro_tasks import (
     TaskCommandUseCases,
+)
+from tm_app.infrastructure.persistence.repositories.interaction_room_repository import (
+    InteractionRoomRepository,
 )
 from tm_app.infrastructure.persistence.repositories.task_repository import (
     TaskRepository,
@@ -62,7 +70,13 @@ def _connect():
 
 
 def _commands() -> TaskCommandUseCases:
-    return TaskCommandUseCases(TaskRepository(_connect()))
+    # Canonical room read-authorization — the same capability the HTTP and
+    # TÉO/GPT surfaces wire. No ticket_visibility port: external Helpdesk
+    # links fail closed (unavailable) rather than hitting the network.
+    rooms = InteractionRoomUseCases(InteractionRoomRepository())
+    return TaskCommandUseCases(
+        TaskRepository(_connect()), room_access=rooms.can_view_room
+    )
 
 
 @pytest.fixture()
@@ -212,7 +226,12 @@ def test_pg_third_party_and_manager_matrix(pending_task):
     assert done.status == "completed"
 
 
-def test_pg_origin_context_gated_by_room_membership(pending_task):
+def test_pg_origin_context_gated_by_canonical_room_access(pending_task):
+    """Origin projection follows ``can_view_room`` — the same capability the
+    HTTP/TÉO surfaces use. On V2 (access_scope/links/participants present)
+    members-scope rooms gate non-participants; on V1 the room model carries
+    no restrictive contract, so existence + transformometro.access opens it
+    — matching what the room surface itself allows."""
     conn = _connect()
     with conn.cursor() as cur:
         cur.execute(
@@ -222,35 +241,44 @@ def test_pg_origin_context_gated_by_room_membership(pending_task):
                  AND table_name = 'tm_interaction_rooms'
                  AND column_name = 'access_scope'"""
         )
-        if cur.fetchone()["n"] == 0:
-            pytest.skip("V2 room schema unavailable in scratch")
-        cur.execute(
-            "SELECT to_regclass('transformometro.tm_interaction_room_participants')"
-        )
-        if cur.fetchone()["to_regclass"] is None:
-            pytest.skip("V2 room schema unavailable in scratch")
-        cur.execute(
-            f"""INSERT INTO {S}.tm_interaction_rooms
-                    (processo_id, created_by_user_id, access_scope, title)
-                SELECT p.processo_id, %s::uuid, 'members', 'pg-room'
-                FROM {S}.processos p
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM {S}.tm_interaction_rooms r
-                    WHERE r.processo_id = p.processo_id)
-                LIMIT 1
-                RETURNING id""",
-            (USER,),
-        )
+        v2 = cur.fetchone()["n"] > 0
+        if v2:
+            cur.execute(
+                f"""INSERT INTO {S}.tm_interaction_rooms
+                        (processo_id, created_by_user_id, access_scope, title)
+                    SELECT p.processo_id, %s::uuid, 'members', 'pg-room'
+                    FROM {S}.processos p
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM {S}.tm_interaction_rooms r
+                        WHERE r.processo_id = p.processo_id)
+                    LIMIT 1
+                    RETURNING id""",
+                (USER,),
+            )
+        else:
+            cur.execute(
+                f"""INSERT INTO {S}.tm_interaction_rooms
+                        (processo_id, created_by_user_id)
+                    SELECT p.processo_id, %s::uuid
+                    FROM {S}.processos p
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM {S}.tm_interaction_rooms r
+                        WHERE r.processo_id = p.processo_id)
+                    LIMIT 1
+                    RETURNING id""",
+                (USER,),
+            )
         room = cur.fetchone()
         if room is None:
             pytest.skip("no processo row available for room fixture")
         room_id = str(room["id"])
-        cur.execute(
-            f"""INSERT INTO {S}.tm_interaction_room_participants
-                    (room_id, user_id, role, added_by_user_id)
-                VALUES (%s::uuid, %s::uuid, 'member', %s::uuid)""",
-            (room_id, OTHER, USER),
-        )
+        if v2:
+            cur.execute(
+                f"""INSERT INTO {S}.tm_interaction_room_participants
+                        (room_id, user_id, role, added_by_user_id)
+                    VALUES (%s::uuid, %s::uuid, 'member', %s::uuid)""",
+                (room_id, OTHER, USER),
+            )
         cur.execute(
             f"""INSERT INTO {S}.tm_interaction_messages
                     (room_id, author_user_id, content)
@@ -266,24 +294,31 @@ def test_pg_origin_context_gated_by_room_membership(pending_task):
         )
         conn.commit()
     try:
-        # Não-participante: room_id e rótulo suprimidos da projeção.
-        suppressed = _commands().origin_contexts(_user(USER), [pending_task])
-        assert suppressed[pending_task].room_id is None
-        assert suppressed[pending_task].context_label is None
-        # Participante: contexto resolvido.
-        allowed = _commands().origin_contexts(_user(OTHER), [pending_task])
-        assert allowed[pending_task].room_id == room_id
+        if v2:
+            # Não-participante: room_id e rótulo suprimidos da projeção.
+            suppressed = _commands().origin_contexts(_user(USER), [pending_task])
+            assert suppressed[pending_task].room_id is None
+            assert suppressed[pending_task].context_label is None
+            # Participante: contexto resolvido.
+            allowed = _commands().origin_contexts(_user(OTHER), [pending_task])
+            assert allowed[pending_task].room_id == room_id
+        else:
+            # V1: sem contrato restritivo no schema — a decisão canônica se
+            # reduz a existência da sala; qualquer usuário com access a abre.
+            open_ctx = _commands().origin_contexts(_user(USER), [pending_task])
+            assert open_ctx[pending_task].room_id == room_id
     finally:
         with conn.cursor() as cur:
             cur.execute(
                 f"DELETE FROM {S}.tm_interaction_messages WHERE room_id = %s::uuid",
                 (room_id,),
             )
-            cur.execute(
-                f"DELETE FROM {S}.tm_interaction_room_participants "
-                f"WHERE room_id = %s::uuid AND user_id = %s::uuid",
-                (room_id, OTHER),
-            )
+            if v2:
+                cur.execute(
+                    f"DELETE FROM {S}.tm_interaction_room_participants "
+                    f"WHERE room_id = %s::uuid AND user_id = %s::uuid",
+                    (room_id, OTHER),
+                )
             cur.execute(
                 f"DELETE FROM {S}.tm_interaction_rooms WHERE id = %s::uuid",
                 (room_id,),

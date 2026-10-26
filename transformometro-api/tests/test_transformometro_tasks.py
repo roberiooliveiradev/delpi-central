@@ -383,7 +383,7 @@ def test_delegated_projection_excludes_signatures_and_exposes_context():
         room_id="cccccccc-cccc-cccc-cccc-cccccccccccc",
         process_label="Compras corporativas",
     )
-    commands = TaskCommandUseCases(repo)
+    commands = TaskCommandUseCases(repo, room_access=lambda *a, **k: True)
     task = commands.create(
         _user(),
         title="Delegada com origem",
@@ -422,12 +422,27 @@ def test_http_my_tasks_scope_param():
     list_items = MagicMock()
     list_items.execute.return_value = {"items": [], "summary": {"pending": 0}, "partial_error": None}
     request = SimpleNamespace(state=SimpleNamespace(user=_user()))
+    authed = SimpleNamespace(
+        state=SimpleNamespace(user=_user()),
+        headers={"authorization": "Bearer token-xyz"},
+    )
     with patch.object(task_routes, "_list_items", list_items):
         resp = task_routes.list_my_tasks(request, status="all", scope="delegated")
+        task_routes.list_my_tasks(authed, status="all", scope="delegated")
         list_items.execute.side_effect = ValueError("Escopo de consulta inválido.")
         invalid = task_routes.list_my_tasks(request, scope="invalid")
     assert resp.status_code == 200
-    list_items.execute.assert_any_call(request.state.user, status="all", scope="delegated")
+    list_items.execute.assert_any_call(
+        request.state.user, status="all", scope="delegated", authorization=""
+    )
+    # A sessão externa segue para a autoridade canônica da sala (vínculos
+    # Helpdesk dependem dela para confirmar visibilidade).
+    list_items.execute.assert_any_call(
+        authed.state.user,
+        status="all",
+        scope="delegated",
+        authorization="Bearer token-xyz",
+    )
     assert invalid.status_code == 400
 
 
@@ -547,7 +562,7 @@ def test_write_conflict_states_are_classified_not_masked():
         commands.complete(_user(), "99999999-9999-9999-9999-999999999999")
 
 
-def test_origin_context_gated_by_room_membership():
+def test_origin_context_follows_canonical_room_authorization():
     repo = InMemoryTaskRepository()
     msg_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     room_id = "cccccccc-cccc-cccc-cccc-cccccccccccc"
@@ -556,16 +571,23 @@ def test_origin_context_gated_by_room_membership():
         "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
         room_id=room_id,
         process_label="Compras corporativas",
-        room_participants={OTHER},
     )
-    commands = TaskCommandUseCases(repo)
+    # A decisão de abrir a sala pertence ao owner canônico — aqui, apenas
+    # participantes da sala ganham contexto; o criador da tarefa, não.
+    decisions = {OTHER: True, USER: False}
+    commands = TaskCommandUseCases(
+        repo,
+        room_access=lambda user, rid, auth=None: decisions.get(
+            getattr(user, "id", ""), False
+        ),
+    )
     task = commands.create(
         _user(), title="Delegada", description=None, assignee_user_id=OTHER,
         due_date=None, source_interaction_message_id=msg_id,
     )
     use_case = ListMyTaskItemsUseCase(commands, lambda _u: {"items": []})
 
-    # Criador delegou mas não é participante da sala: a tarefa permanece
+    # Criador delegou mas não pode abrir a sala: a tarefa permanece
     # listável, sem rota nem rótulo de contexto.
     delegated = use_case.execute(_user(), status="all", scope="delegated")
     item = next(i for i in delegated["items"] if i["source_id"] == task.id)
@@ -573,13 +595,41 @@ def test_origin_context_gated_by_room_membership():
     assert item["context_label"] is None
     assert item["actions"]["can_open"] is False
 
-    # Participante da sala resolve o contexto canônico da origem.
+    # Quem pode abrir a sala recebe o contexto canônico da origem.
     contexts = commands.origin_contexts(_user(user_id=OTHER), [task.id])
     assert contexts[task.id].room_id == room_id
     assert contexts[task.id].context_label == "Compras corporativas"
     suppressed = commands.origin_contexts(_user(), [task.id])
     assert suppressed[task.id].room_id is None
     assert suppressed[task.id].context_label is None
+
+    # A decisão é reavaliada por consulta: revogação posterior suprime.
+    decisions[OTHER] = False
+    revoked = commands.origin_contexts(_user(user_id=OTHER), [task.id])
+    assert revoked[task.id].room_id is None
+
+
+def test_origin_context_without_room_capability_stays_hidden():
+    repo = InMemoryTaskRepository()
+    msg_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    repo.link_message_to_process(
+        msg_id,
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        room_id="cccccccc-cccc-cccc-cccc-cccccccccccc",
+        process_label="Compras corporativas",
+    )
+    commands = TaskCommandUseCases(repo)  # room_access=None → fail-closed
+    task = commands.create(
+        _user(), title="Delegada", description=None, assignee_user_id=OTHER,
+        due_date=None, source_interaction_message_id=msg_id,
+    )
+    delegated = ListMyTaskItemsUseCase(commands, lambda _u: {"items": []}).execute(
+        _user(), status="all", scope="delegated"
+    )
+    item = next(i for i in delegated["items"] if i["source_id"] == task.id)
+    assert item["route"] is None
+    assert item["context_label"] is None
+    assert item["actions"]["can_open"] is False
 
 
 def test_my_tasks_item_flags_follow_individual_authz():

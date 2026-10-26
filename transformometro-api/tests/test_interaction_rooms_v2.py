@@ -1054,3 +1054,76 @@ def test_legacy_process_room_unchanged():
     assert first.processo_id == PROCESS
     cases.post_message(_user(), first.id, "ok")
     assert cases.list_rooms(_user())[0].id == first.id
+
+
+# --- can_view_room: typed read-authorization capability ----------------------
+# The same canonical decision as _authorized_room, surfaced as a boolean for
+# projections (task origin context) that must not leak room content.
+
+
+def test_can_view_room_open_process_room_for_access_user():
+    cases, _, _, _ = _cases()
+    room = cases.open_for_process(_user(), PROCESS)
+    assert cases.can_view_room(_user(user_id=OTHER), room.id, BEARER) is True
+
+
+def test_can_view_room_members_scope_requires_participation():
+    cases, _, _, _ = _cases()
+    room = cases.open_standalone(_user(), "War room", participant_ids=[OTHER])
+    assert cases.can_view_room(_user(user_id=OTHER), room.id, BEARER) is True
+    assert cases.can_view_room(_user(user_id=THIRD), room.id, BEARER) is False
+    # transformometro.manage is an administrative authority, not a room read.
+    assert cases.can_view_room(_manager(), room.id, BEARER) is False
+
+
+def test_can_view_room_ticket_link_external_states_fail_closed():
+    cases, _, tickets, _ = _cases()
+    room = _ticket_room(cases)
+
+    assert cases.can_view_room(_user(), room.id, BEARER) is True
+    # Missing external session → cannot confirm visibility → closed.
+    assert cases.can_view_room(_user(), room.id, None) is False
+    tickets.states[TICKET] = LINK_STATE_RESTRICTED
+    assert cases.can_view_room(_user(), room.id, BEARER) is False
+    tickets.states[TICKET] = LINK_STATE_UNAVAILABLE
+    assert cases.can_view_room(_user(), room.id, BEARER) is False
+
+
+def test_can_view_room_fresh_decision_after_revocation():
+    cases, _, tickets, _ = _cases()
+    room = _ticket_room(cases)
+    assert cases.can_view_room(_user(), room.id, BEARER) is True
+    tickets.states[TICKET] = LINK_STATE_RESTRICTED
+    assert cases.can_view_room(_user(), room.id, BEARER) is False
+    tickets.states[TICKET] = LINK_STATE_VISIBLE
+    assert cases.can_view_room(_user(), room.id, BEARER) is True
+
+
+def test_can_view_room_missing_or_deleted_room_is_false():
+    cases, _, _, _ = _cases()
+    room = cases.open_for_process(_user(), PROCESS)
+    missing = "99999999-9999-9999-9999-999999999999"
+    assert cases.can_view_room(_user(), missing, BEARER) is False
+    cases.delete_room(_user(), room.id)
+    assert cases.can_view_room(_user(), room.id, BEARER) is False
+
+
+def test_can_view_room_requires_access_permission():
+    cases, _, _, _ = _cases()
+    room = cases.open_for_process(_user(), PROCESS)
+    outsider = _user(user_id=THIRD, permissions=[])
+    assert cases.can_view_room(outsider, room.id, BEARER) is False
+
+
+def test_can_view_room_v1_schema_reduces_to_existence():
+    """Legacy schema: no access_scope/links/participants — the model carries
+    no restrictive contract, so the canonical decision is room existence +
+    transformometro.access. Never a bypass: those checks simply do not exist."""
+    cases, repo, _, _ = _cases()
+    room = cases.open_for_process(_user(), PROCESS)
+    repo.room_schema_v2 = lambda: False
+    assert cases.can_view_room(_user(user_id=THIRD), room.id, None) is True
+    repo.rooms.pop(room.id)
+    assert cases.can_view_room(_user(user_id=THIRD), room.id, None) is False
+    outsider = _user(user_id=THIRD, permissions=[])
+    assert cases.can_view_room(outsider, "99999999-9999-9999-9999-999999999999", None) is False
