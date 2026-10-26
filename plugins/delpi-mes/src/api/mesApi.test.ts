@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getDowntimeFilterOptions, getDowntimes, getMonitoring, getRunPerformance, getWorkCenterTimeline } from "./mesApi";
+import { getDowntimeAnalytics, getDowntimeFilterOptions, getDowntimes, getMonitoring, getRunPerformance, getWorkCenterTimeline } from "./mesApi";
 
 afterEach(() => vi.unstubAllGlobals());
 const response = (data: unknown) => new Response(JSON.stringify({ success: true, message: "OK", data }), { status: 200 });
@@ -69,6 +69,33 @@ describe("MES API", () => {
     const url = fetchMock.mock.calls[0][0] as string;
     expect(url).toContain("downtimeId=42");
     expect(url).toContain("branch=01");
+  });
+
+  it("forwards only metric-determining filters to the analytics endpoint", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response({ summary: {}, byReason: [], byWorkCenter: [], byDay: [], byWeekdayHour: [], quality: {} }));
+    vi.stubGlobal("fetch", fetchMock);
+    await getDowntimeAnalytics({
+      branch: "01",
+      from: "2026-02-01T03:00:00.000Z",
+      to: "2026-02-11T03:00:00.000Z",
+      workCenter: "CT 35",
+      reasonCode: "SETUP",
+      source: "system",
+      classification: "pending",
+    });
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("/downtimes/analytics?");
+    expect(url).toContain("branch=01");
+    expect(url).toContain("from=2026-02-01T03%3A00%3A00.000Z");
+    expect(url).toContain("to=2026-02-11T03%3A00%3A00.000Z");
+    expect(url).toContain("workCenter=CT+35");
+    expect(url).toContain("reasonCode=SETUP");
+    expect(url).toContain("source=system");
+    expect(url).toContain("classification=pending");
+    // paginação, ordenação e detalhe nunca são determinantes de métrica
+    expect(url).not.toContain("page=");
+    expect(url).not.toContain("sort=");
+    expect(url).not.toContain("downtimeId=");
   });
 
   it("loads the read-only filter options scoped by branch", async () => {

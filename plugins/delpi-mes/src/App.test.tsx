@@ -118,10 +118,40 @@ describe("Delpi MES App — registrations area", () => {
   });
 });
 
+const EMPTY_ANALYTICS = {
+  branch: "01",
+  from: "2026-02-01T03:00:00.000Z",
+  to: "2026-02-10T12:00:00.000Z",
+  referenceAt: "2026-02-10T12:00:00.000Z",
+  timezone: "America/Sao_Paulo",
+  appliedFilters: {},
+  summary: {
+    totalStoppedSeconds: 0,
+    attributedSeconds: 0,
+    occurrencesCount: 0,
+    averageOccurrenceSeconds: 0,
+    pendingCount: 0,
+    openCount: 0,
+  },
+  byReason: [],
+  byWorkCenter: [],
+  byDay: [],
+  byWeekdayHour: [],
+  quality: { overlapDetected: false, overlapSeconds: 0, partial: false, factsCapped: false },
+};
+
 describe("Delpi MES App — downtimes area", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
   beforeEach(() => {
-    fetchMock = vi.fn().mockImplementation(() => Promise.resolve(envelope({ items: [], total: 0, page: 1, pageSize: 50 })));
+    fetchMock = vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(
+        envelope(
+          url.includes("/downtimes/analytics")
+            ? EMPTY_ANALYTICS
+            : { items: [], total: 0, page: 1, pageSize: 50 },
+        ),
+      ),
+    );
     vi.stubGlobal("fetch", fetchMock);
   });
   afterEach(() => {

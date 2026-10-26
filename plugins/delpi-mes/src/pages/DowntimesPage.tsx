@@ -16,21 +16,27 @@ import {
 import { RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { DowntimeAnalyticsSection } from "../components/downtimes/DowntimeAnalyticsSection";
 import type { BranchCode } from "../constants/routes";
 import { DELPI_MES_COPY } from "../content/copy";
 import type { DowntimesRouteParams } from "../hooks/useDelpiMesRoute";
+import { useDowntimeAnalytics } from "../hooks/useDowntimeAnalytics";
 import { useDowntimeFilterOptions } from "../hooks/useDowntimeFilterOptions";
 import { useDowntimesData } from "../hooks/useDowntimesData";
 import { useSelectedDowntime } from "../hooks/useSelectedDowntime";
 import { useServerClock } from "../hooks/useServerClock";
 import { useWorkCenterTimeline } from "../hooks/useWorkCenterTimeline";
-import type { DowntimeItem } from "../types/mes";
+import type { DowntimeAnalyticsReasonGroup, DowntimeItem } from "../types/mes";
 import {
   MES_BUSINESS_TIMEZONE,
   businessDayKey,
   formatBusinessClock,
   presentDayEvent,
 } from "../utils/dayTimeline";
+import {
+  PENDING_REASON_GROUP_KEY,
+  buildDowntimeAnalyticsQuery,
+} from "../utils/downtimeAnalyticsPresentation";
 import {
   DOWNTIME_PERIOD_PRESETS,
   buildDowntimesQuery,
@@ -81,6 +87,13 @@ export function DowntimesPage({
 }) {
   const query = useMemo(() => buildDowntimesQuery(branch, params), [branch, params]);
   const downtimes = useDowntimesData(query);
+  // Análise gerencial (Etapa 2): mesmo universo elegível da listagem —
+  // página, ordenação e downtimeId nunca alteram os agregados.
+  const analyticsQuery = useMemo(
+    () => buildDowntimeAnalyticsQuery(branch, params),
+    [branch, params],
+  );
+  const analytics = useDowntimeAnalytics(analyticsQuery);
   const options = useDowntimeFilterOptions(branch);
   const selected = useSelectedDowntime(branch, params.downtimeId);
   const nowMs = useServerClock(downtimes.data?.referenceAt);
@@ -121,6 +134,15 @@ export function DowntimesPage({
   const closeDetail = () => {
     setTimelineOpen(false);
     onParamsChange({ ...params, downtimeId: null });
+  };
+  const selectReasonGroup = (group: DowntimeAnalyticsReasonGroup) => {
+    if (group.key === PENDING_REASON_GROUP_KEY) {
+      apply({ reasonCode: null, classification: "pending" });
+    } else if (group.reasonCode) {
+      apply({ reasonCode: group.reasonCode, classification: null });
+    }
+    // "Motivo não informado" (confirmada sem código) não possui filtro
+    // equivalente — sem ação de drill-down.
   };
 
   const items = downtimes.data?.items ?? [];
@@ -296,6 +318,15 @@ export function DowntimesPage({
           <button type="button" onClick={options.retry}>Tentar novamente</button>
         </p>
       ) : null}
+
+      <DowntimeAnalyticsSection
+        analytics={analytics}
+        onSelectReasonGroup={selectReasonGroup}
+        onSelectWorkCenter={(workCenter) => apply({ workCenter })}
+        onSelectDay={(dayKey) =>
+          apply({ period: "custom", from: dayKey, to: dayKey })
+        }
+      />
 
       {items.length === 0 ? (
         <EmptyState

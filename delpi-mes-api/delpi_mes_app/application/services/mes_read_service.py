@@ -55,6 +55,34 @@ _DOWNTIME_SORTS = frozenset({"recent", "oldest"})
 _FILTER_REASON_FIELDS = ("code", "label", "category", "active")
 _FILTER_SOURCE_FIELDS = ("code",)
 
+# Projeção do contrato analítico da Etapa 2 — somente campos gerenciais
+# definidos no contrato; nenhum campo interno do owner vaza para o MFE.
+_DOWNTIME_ANALYTICS_FIELDS = (
+    "branch", "from", "to", "referenceAt", "timezone", "appliedFilters",
+    "summary", "byReason", "byWorkCenter", "byDay", "byWeekdayHour", "quality",
+)
+_DOWNTIME_ANALYTICS_FILTERS_FIELDS = (
+    "workCenter", "reasonCode", "source", "classification",
+)
+_DOWNTIME_ANALYTICS_SUMMARY_FIELDS = (
+    "totalStoppedSeconds", "attributedSeconds", "occurrencesCount",
+    "averageOccurrenceSeconds", "pendingCount", "openCount",
+)
+_DOWNTIME_ANALYTICS_REASON_FIELDS = (
+    "key", "reasonCode", "label", "seconds", "occurrencesCount",
+    "pendingCount", "percentOfAttributed", "cumulativePercent",
+)
+_DOWNTIME_ANALYTICS_CENTER_FIELDS = (
+    "workCenter", "seconds", "occurrencesCount", "averageSeconds", "percentOfTotal",
+)
+_DOWNTIME_ANALYTICS_DAY_FIELDS = ("date", "weekday", "seconds", "occurrencesCount")
+_DOWNTIME_ANALYTICS_CELL_FIELDS = (
+    "weekday", "weekdayLabel", "hour", "seconds", "occurrencesCount",
+)
+_DOWNTIME_ANALYTICS_QUALITY_FIELDS = (
+    "overlapDetected", "overlapSeconds", "partial", "factsCapped",
+)
+
 
 class MesReadService:
     def __init__(self, gateway: ProductionControlMesGatewayPort) -> None:
@@ -172,6 +200,70 @@ class MesReadService:
             "pageSize": data.get("pageSize"),
             "total": data.get("total"),
             "items": [self._pick(item, _DOWNTIME_ITEM_FIELDS) for item in data.get("items", [])],
+        }
+
+    def get_downtime_analytics(
+        self,
+        user: Any,
+        *,
+        branch: str,
+        period_from: datetime | None,
+        period_to: datetime | None,
+        work_center: str | None = None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        permission: str,
+    ) -> dict[str, Any]:
+        """Agregações gerenciais de paradas — mesma autorização e filtros
+        da listagem; o cálculo completo vive no owner dos fatos MES. O BFF
+        projeta estritamente os campos do contrato gerencial."""
+        code = self._authorize(user, branch=branch, permission=permission)
+        if period_from is None:
+            raise ValueError("from é obrigatório para a consulta analítica.")
+        self._validate_period(period_from, period_to)
+        if classification is not None and classification not in _DOWNTIME_CLASSIFICATIONS:
+            raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        data = self._gateway.get_downtime_analytics(
+            branch=code,
+            period_from=period_from,
+            period_to=period_to,
+            work_center=work_center,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+        )
+        return {
+            "branch": data.get("branch"),
+            "from": data.get("from"),
+            "to": data.get("to"),
+            "referenceAt": data.get("referenceAt"),
+            "timezone": data.get("timezone"),
+            "appliedFilters": self._pick(
+                data.get("appliedFilters") or {}, _DOWNTIME_ANALYTICS_FILTERS_FIELDS
+            ),
+            "summary": self._pick(
+                data.get("summary") or {}, _DOWNTIME_ANALYTICS_SUMMARY_FIELDS
+            ),
+            "byReason": [
+                self._pick(item, _DOWNTIME_ANALYTICS_REASON_FIELDS)
+                for item in data.get("byReason", [])
+            ],
+            "byWorkCenter": [
+                self._pick(item, _DOWNTIME_ANALYTICS_CENTER_FIELDS)
+                for item in data.get("byWorkCenter", [])
+            ],
+            "byDay": [
+                self._pick(item, _DOWNTIME_ANALYTICS_DAY_FIELDS)
+                for item in data.get("byDay", [])
+            ],
+            "byWeekdayHour": [
+                self._pick(item, _DOWNTIME_ANALYTICS_CELL_FIELDS)
+                for item in data.get("byWeekdayHour", [])
+            ],
+            "quality": self._pick(
+                data.get("quality") or {}, _DOWNTIME_ANALYTICS_QUALITY_FIELDS
+            ),
         }
 
     def get_downtime_filter_options(

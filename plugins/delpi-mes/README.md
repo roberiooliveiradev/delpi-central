@@ -76,7 +76,17 @@ A área **Paradas** (`/downtimes`) consulta os eventos reais de parada do MES vi
 - Paradas autônomas sem OP/run são fatos legítimos: exibem «Sem OP vinculada»/«Não informado» — nunca são descartadas.
 - Filtros, página e seleção persistem na URL (F5, voltar/avançar, compartilhamento); atualização é manual (sem polling). Requisições obsoletas são abortadas na troca de contexto.
 
-Histórico gerencial completo e as etapas seguintes de Paradas (gráficos, evidências, ações corretivas, exportações e indicadores OEE) continuam nas fases seguintes.
+Histórico gerencial completo e as etapas seguintes de Paradas (evidências, ações corretivas, exportações e indicadores OEE) continuam nas fases seguintes.
+
+## Paradas — Etapa 2 (indicadores e análise)
+
+Acima da listagem, a aba Paradas exibe uma área analítica recolhível alimentada por `GET /downtimes/analytics` do próprio BFF — todos os números vêm calculados do Production Control; o MFE nunca agrega fatos.
+
+- **Indicadores:** tempo total parado (união temporal deduplicada por CT), ocorrências, duração média, pendentes de classificação e abertas — cada card com explicação contextual. Divergência entre tempo deduplicado e tempo atribuído (histórico sobreposto) é explicada inline, não escondida.
+- **Pareto de motivos** e **ranking de CTs** via `HorizontalValueBars` clicável — selecionar um motivo aplica `reasonCode`, o grupo «Pendente de classificação» aplica `classification=pending` (nunca um código inventado), e um CT aplica `workCenter`; todos preservam filial e período.
+- **Evolução diária** via `BarSeriesChart` com alternância tempo × ocorrências e chips de dia que filtram a lista para o dia civil (`America/Sao_Paulo`). Dias sem parada aparecem com zero dentro do período.
+- **Mapa de calor** dia-da-semana × hora (matriz semântica local — o kit não possui heatmap dedicado): descritivo, com legenda e tooltip; não oferece filtro por hora porque a listagem não suporta esse recorte.
+- Os agregados respeitam os mesmos filtros da listagem e ignoram paginação, ordenação e `downtimeId`; mudança de filial/filtros isola o estado por identidade de consulta — dados da consulta anterior nunca piscam. Erro na análise é localizado e recuperável, sem quebrar a listagem.
 
 ## Cadastros — Etapa 3
 

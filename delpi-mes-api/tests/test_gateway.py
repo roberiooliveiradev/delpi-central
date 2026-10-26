@@ -43,6 +43,34 @@ def test_sends_s2s_headers_and_preserves_query(monkeypatch):
     assert dict(request.url.params)["downtimeId"] == "abc-1"
 
 
+def test_downtime_analytics_targets_s2s_route_and_maps_params(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "secret")
+    seen = {}
+    def handler(request):
+        seen["request"] = request
+        return httpx.Response(200, json={"success": True, "message": "OK", "data": {"summary": {}}})
+    subject, _ = gateway(handler)
+    subject.get_downtime_analytics(
+        branch="01",
+        period_from=datetime(2026, 9, 22, 3, tzinfo=timezone.utc),
+        period_to=datetime(2026, 9, 29, 3, tzinfo=timezone.utc),
+        work_center="CT-35", reason_code="setup",
+        source="system", classification="pending",
+    )
+    request = seen["request"]
+    assert request.url.path == "/integrations/mes/downtimes/analytics"
+    assert request.headers["X-Delpi-Service-Token"] == "secret"
+    params = dict(request.url.params)
+    assert params["branch"] == "01"
+    assert params["workCenter"] == "CT-35"
+    assert params["reasonCode"] == "setup"
+    assert params["source"] == "system"
+    assert params["classification"] == "pending"
+    assert params["from"].startswith("2026-09-22")
+    # paginação/sort/downtimeId nunca são determinantes de métrica
+    assert "page" not in params and "sort" not in params and "downtimeId" not in params
+
+
 def test_work_center_timeline_targets_consolidated_s2s_route(monkeypatch):
     monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "secret")
     seen = {}

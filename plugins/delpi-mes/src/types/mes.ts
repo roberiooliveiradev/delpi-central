@@ -51,3 +51,76 @@ export type DowntimesQuery = {
   page: number;
   pageSize: number;
 };
+
+export type DowntimeAnalyticsSummary = {
+  totalStoppedSeconds: number;
+  attributedSeconds: number;
+  occurrencesCount: number;
+  averageOccurrenceSeconds: number;
+  pendingCount: number;
+  openCount: number;
+};
+export type DowntimeAnalyticsReasonGroup = {
+  key: string;
+  reasonCode: string | null;
+  label: string;
+  seconds: number;
+  occurrencesCount: number;
+  pendingCount: number;
+  percentOfAttributed: number;
+  cumulativePercent: number;
+};
+export type DowntimeAnalyticsWorkCenter = {
+  workCenter: string;
+  seconds: number;
+  occurrencesCount: number;
+  averageSeconds: number;
+  percentOfTotal: number;
+};
+export type DowntimeAnalyticsDay = {
+  date: string;
+  weekday: number;
+  seconds: number;
+  occurrencesCount: number;
+};
+export type DowntimeAnalyticsHourCell = {
+  weekday: number;
+  weekdayLabel: string;
+  hour: number;
+  seconds: number;
+  occurrencesCount: number;
+};
+export type DowntimeAnalyticsQuality = {
+  overlapDetected: boolean;
+  overlapSeconds: number;
+  partial: boolean;
+  factsCapped: boolean;
+};
+export type DowntimeAnalyticsResponse = {
+  branch: string;
+  from: string;
+  to: string;
+  referenceAt: string;
+  timezone: string;
+  appliedFilters: {
+    workCenter: string | null;
+    reasonCode: string | null;
+    source: string | null;
+    classification: string | null;
+  };
+  summary: DowntimeAnalyticsSummary;
+  byReason: DowntimeAnalyticsReasonGroup[];
+  byWorkCenter: DowntimeAnalyticsWorkCenter[];
+  byDay: DowntimeAnalyticsDay[];
+  byWeekdayHour: DowntimeAnalyticsHourCell[];
+  quality: DowntimeAnalyticsQuality;
+};
+export type DowntimeAnalyticsQuery = {
+  branch: BranchCode;
+  from: string;
+  to?: string;
+  workCenter?: string;
+  reasonCode?: string;
+  source?: string;
+  classification?: DowntimeClassification;
+};

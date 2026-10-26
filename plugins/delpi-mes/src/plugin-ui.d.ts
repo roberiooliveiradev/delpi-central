@@ -153,5 +153,45 @@ declare module "@delpi/plugin-ui/index" {
     children?: ReactNode;
   }): ReactNode;
 
+  export function ChartCard(props: {
+    title: string;
+    titleHint?: string;
+    hint?: string;
+    children: ReactNode;
+    headerActions?: ReactNode;
+    classNames: unknown;
+    className?: string;
+    titleLevel?: 2 | 3;
+  }): ReactNode;
+  export function chartCardBemClasses(prefix: string, options?: {
+    withHeading?: boolean; withActions?: boolean; cardModifier?: string;
+    headerLayout?: "default" | "titleRow"; wide?: boolean;
+  }): unknown;
+  export type HorizontalValueBarItem = {
+    id: string; label: string; value: number; valueLabel?: string; meta?: string;
+  };
+  export function HorizontalValueBars(props: {
+    items: HorizontalValueBarItem[];
+    emptyMessage?: string;
+    max?: number;
+    formatValue?: (value: number) => string;
+    onItemClick?: (item: HorizontalValueBarItem) => void;
+    className?: string;
+    classNames?: unknown;
+    prefix?: string;
+    "aria-label"?: string;
+    leading?: ReactNode;
+  }): ReactNode;
+  export function horizontalValueBarsBemClasses(prefix: string): unknown;
+  export function BarSeriesChart(props: {
+    points: Array<{ label?: string; value?: number | null; size?: number | null; sourceIndex?: number; displayValue?: string }>;
+    seriesList?: unknown[];
+    options?: unknown;
+    chartParts?: unknown;
+    interaction?: unknown;
+    emptyMessage?: string;
+    className?: string;
+  }): ReactNode;
+
 export function todayIsoInTimeZone(now: Date, timeZone?: string): string;
 }

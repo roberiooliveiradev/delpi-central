@@ -212,6 +212,49 @@ def list_downtimes(
     return ok(data)
 
 
+@router.get(
+    "/downtimes/analytics",
+    operation_id="get_mes_integration_downtime_analytics",
+)
+def get_downtime_analytics(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+    period_from: datetime = Query(..., alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+    work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
+    reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
+    source: str | None = Query(default=None, max_length=40),
+    classification: str | None = Query(default=None, max_length=20),
+):
+    # Agregações gerenciais de paradas (Etapa 2): mesmo universo elegível
+    # da listagem, calculado no owner MES — paginação/sort/downtimeId não
+    # são determinantes de métrica e nem são aceitos aqui.
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_integration_read_service().get_downtime_analytics(
+            branch=branch,
+            work_center=work_center,
+            period_from=_aware(period_from, "from"),
+            period_to=_aware(period_to, "to"),
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_downtime_analytics_read branch=%s occurrences=%s "
+        "overlap=%s partial=%s",
+        branch,
+        data["summary"]["occurrencesCount"],
+        data["quality"]["overlapDetected"],
+        data["quality"]["partial"],
+    )
+    return ok(data)
+
+
 @router.get("/downtime-sources", operation_id="list_mes_integration_downtime_sources")
 def list_downtime_sources(request: Request):
     denied = _deny_unless_internal(request)

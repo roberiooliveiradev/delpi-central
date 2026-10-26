@@ -226,31 +226,16 @@ class PostgresMesMonitoringReadRepository:
         page: int,
         page_size: int,
     ) -> tuple[list[dict[str, Any]], int]:
-        clauses = ["d.branch = %s"]
-        params: list[Any] = [branch]
-        if work_center:
-            clauses.append("d.work_center = %s")
-            params.append(work_center)
-        if period_to is not None:
-            clauses.append("d.started_at < %s")
-            params.append(period_to)
-        if period_from is not None:
-            clauses.append("(d.ended_at IS NULL OR d.ended_at >= %s)")
-            params.append(period_from)
-        if reason_code:
-            clauses.append("d.reason_code = %s")
-            params.append(reason_code)
-        if source:
-            clauses.append("d.source = %s")
-            params.append(source)
-        if classification == "confirmed":
-            clauses.append("d.confirmed IS TRUE")
-        elif classification == "pending":
-            clauses.append("d.confirmed IS NOT TRUE")
-        if downtime_id:
-            clauses.append("d.id = %s")
-            params.append(downtime_id)
-        where = " AND ".join(clauses)
+        where, params = self._downtime_filter_clauses(
+            branch=branch,
+            work_center=work_center,
+            period_from=period_from,
+            period_to=period_to,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            downtime_id=downtime_id,
+        )
         # Ordenação por whitelist — valores do contrato nunca viram SQL livre.
         order = (
             "d.started_at ASC, d.id ASC"
@@ -277,3 +262,87 @@ class PostgresMesMonitoringReadRepository:
             )
             rows = [dict(row) for row in cur.fetchall()]
         return rows, total
+
+    @staticmethod
+    def _downtime_filter_clauses(
+        *,
+        branch: str,
+        work_center: str | None,
+        period_from: datetime | None,
+        period_to: datetime | None,
+        reason_code: str | None,
+        source: str | None,
+        classification: str | None,
+        downtime_id: str | None = None,
+    ) -> tuple[str, list[Any]]:
+        # Seleção temporal e de filtros compartilhada entre listagem e
+        # analytics — o mesmo universo elegível, sem divergência.
+        clauses = ["d.branch = %s"]
+        params: list[Any] = [branch]
+        if work_center:
+            clauses.append("d.work_center = %s")
+            params.append(work_center)
+        if period_to is not None:
+            clauses.append("d.started_at < %s")
+            params.append(period_to)
+        if period_from is not None:
+            clauses.append("(d.ended_at IS NULL OR d.ended_at >= %s)")
+            params.append(period_from)
+        if reason_code:
+            clauses.append("d.reason_code = %s")
+            params.append(reason_code)
+        if source:
+            clauses.append("d.source = %s")
+            params.append(source)
+        if classification == "confirmed":
+            clauses.append("d.confirmed IS TRUE")
+        elif classification == "pending":
+            clauses.append("d.confirmed IS NOT TRUE")
+        if downtime_id:
+            clauses.append("d.id = %s")
+            params.append(downtime_id)
+        return " AND ".join(clauses), params
+
+    def list_downtime_analytics_facts(
+        self,
+        *,
+        branch: str,
+        work_center: str | None,
+        period_from: datetime,
+        period_to: datetime,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        max_facts: int = 20000,
+    ) -> dict[str, Any]:
+        # Fatos completos da janela para agregação gerencial: mesmo WHERE
+        # da listagem (sem paginação/sort), só as colunas necessárias ao
+        # agregador. O fetch de max_facts + 1 permite detectar leitura
+        # truncada e sinalizar partial em quality.
+        where, params = self._downtime_filter_clauses(
+            branch=branch,
+            work_center=work_center,
+            period_from=period_from,
+            period_to=period_to,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+        )
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT d.id::text AS id, d.work_center, d.started_at,
+                       d.ended_at, d.source, d.reason_code,
+                       reason.label AS reason_label, reason.category,
+                       d.confirmed
+                  FROM {_DOWNTIMES} d
+             LEFT JOIN {_REASONS} reason ON reason.code = d.reason_code
+                 WHERE {where}
+              ORDER BY d.started_at ASC, d.id ASC
+                 LIMIT %s
+                """,
+                [*params, max_facts + 1],
+            )
+            rows = [dict(row) for row in cur.fetchall()]
+        capped = len(rows) > max_facts
+        return {"facts": rows[:max_facts], "capped": capped}

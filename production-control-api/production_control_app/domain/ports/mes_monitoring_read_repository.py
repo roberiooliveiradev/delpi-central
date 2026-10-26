@@ -48,3 +48,16 @@ class MesMonitoringReadRepositoryPort(Protocol):
         page: int,
         page_size: int,
     ) -> tuple[list[dict[str, Any]], int]: ...
+
+    def list_downtime_analytics_facts(
+        self,
+        *,
+        branch: str,
+        work_center: str | None,
+        period_from: datetime,
+        period_to: datetime,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        max_facts: int = 20000,
+    ) -> dict[str, Any]: ...
