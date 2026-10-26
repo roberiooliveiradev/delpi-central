@@ -90,8 +90,10 @@ export const MARKET_INTELLIGENCE_CONTENT = {
       "Dados parciais: parte do período não possui observações ou " +
       "câmbio correspondente.",
     staleNote:
-      "Dados possivelmente desatualizados: a última ingestão está mais " +
-      "antiga que o ciclo de publicação da fonte.",
+      "Dados possivelmente desatualizados: a fonte está atrasada em " +
+      "relação ao seu ciclo de publicação.",
+    staleEvidence: (latest: string | null, expected: string) =>
+      `Última observação disponível: ${latest ?? "—"}; esperada até: ${expected}.`,
     fxMissingNote: "Conversão indisponível: não há PTAX para o mês de referência.",
     sourceLabel: "Fonte",
     asOfLabel: "Última ingestão bem-sucedida",
@@ -111,6 +113,9 @@ export const MARKET_INTELLIGENCE_CONTENT = {
       "Filtros inválidos para o instrumento selecionado. Revise moeda, " +
       "granularidade e período.",
     notFound: "Instrumento não encontrado no catálogo de fontes autorizadas.",
+    unauthorized: "Sua sessão expirou. Entre novamente para continuar.",
+    forbidden:
+      "Você não possui acesso à inteligência de mercado de Suprimentos.",
   },
 } as const;
 
@@ -126,6 +131,8 @@ export function mapMarketIntelligenceError(error: unknown): string {
     error && typeof error === "object" && "code" in error
       ? String((error as { code?: string }).code ?? "")
       : "";
+  if (status === 401) return MARKET_INTELLIGENCE_CONTENT.errors.unauthorized;
+  if (status === 403) return MARKET_INTELLIGENCE_CONTENT.errors.forbidden;
   if (status === 429 || code === "rate_limited")
     return MARKET_INTELLIGENCE_CONTENT.errors.rateLimited;
   if (status === 404 || code === "not_found")

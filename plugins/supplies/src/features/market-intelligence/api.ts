@@ -13,6 +13,20 @@ export type MarketGranularity = "day" | "month" | "year";
 export type MarketFxKind = "ptax_closing_sell" | "ptax_closing_buy";
 export type MarketDataStatus = "ok" | "no_data" | "stale" | "partial";
 
+/** Feed-level freshness evaluated by the BFF against the provider's real
+publication cadence — never against the queried window. */
+export type MarketFreshness = {
+  status: "current" | "delayed" | "unknown";
+  expected_cadence: "monthly" | "business_daily";
+  expected_latest_period: string;
+  latest_observation_date: string | null;
+  lag_periods?: number | null;
+  lag_days?: number | null;
+  last_successful_ingestion_at: string | null;
+  evaluation_date: string;
+  method: string;
+};
+
 export type MarketInstrumentFilter = {
   code: string;
   kind: MarketInstrumentKind;
@@ -60,12 +74,22 @@ export type MarketSummaryResponse = {
     value: string | null;
     reference_date: string;
     currency: MarketCurrency;
+    /** Display unit — BRL/metric ton when converted, USD/metric ton natively. */
     unit: string | null;
+    /** Original source values — audit trail, present on converted quotes. */
+    native?: { value: string | null; currency: string; unit: string | null };
+    conversion?: {
+      method: string;
+      fx_kind: string;
+      fx_rate: string | null;
+      fx_reference_period: string;
+    };
   } | null;
   period_average: {
     value: string | null;
     valid_observations: number;
     coverage: string;
+    unit: string | null;
     method: string;
   };
   period_variation: {
@@ -82,6 +106,9 @@ export type MarketSummaryResponse = {
     data_status: MarketDataStatus;
     source_id: string | null;
     currency: MarketCurrency;
+    unit: string | null;
+    native_unit: string | null;
+    freshness: MarketFreshness;
     method_version: Record<string, string | null>;
     partial_reason: string | null;
     last_successful_ingestion_at: string | null;
@@ -99,12 +126,15 @@ export type MarketSeriesPoint = {
 export type MarketSeriesResponse = {
   instrument: MarketSummaryResponse["instrument"];
   currency: MarketCurrency;
+  unit: string | null;
+  native_unit: string | null;
   granularity: MarketGranularity;
   points: MarketSeriesPoint[];
   meta: {
     source_id: string | null;
     fx_source_id: string | null;
     fx_kind: MarketFxKind | null;
+    freshness: MarketFreshness;
     method_version: Record<string, string | null>;
     data_status: MarketDataStatus;
     partial_reason: string | null;
@@ -127,6 +157,8 @@ export type MarketMonthlyAverageRow = {
 export type MarketMonthlyAveragesResponse = {
   instrument: MarketSummaryResponse["instrument"];
   currency: MarketCurrency;
+  unit: string | null;
+  native_unit: string | null;
   items: MarketMonthlyAverageRow[];
   page_info: {
     page: number;

@@ -296,6 +296,19 @@ Tasks/follow-ups com capability do recurso + unit quando aplicável + ownership/
 
 Mappings, visibility scopes e settings tipados; audit obrigatório; administração não concede todas as units.
 
+### WF-MKT — Inteligência de Mercado (PROC-0076)
+
+| Campo | Conteúdo |
+|---|---|
+| Rota | `/market-intelligence` |
+| Capability | `supplies.access` (dado de mercado global; sem filtro de unidade) |
+| BFF | `GET /market-intelligence/{filters,summary,series,monthly-averages}` → external-data-api `/v1/market-data/*` via S2S |
+| Conteúdo P0 | hero + filtros (instrumento, USD/BRL, granularidade por cadência do feed, tipo PTAX, período na URL) + 4 KPIs (última cotação com unidade correta, média, variação, FX de referência) + série com alternativa tabular acessível + médias mensais paginadas + fonte/licença/metodologia/atualização |
+| Kit | `SuppliesPageHero`, `SuppliesSelectField`, `SuppliesSegmentToggle`, `SuppliesDateField`, `SuppliesKpiCard`, `ChartViewShell` + `MultiTypeSeriesChart`, `SuppliesDataTable`, `SuppliesCompactPagination`, `SuppliesStateBanner` |
+| Semântica | todo cálculo no BFF (`Decimal`, sem zero fictício); MFE é render-only; `stale` = fonte atrasada vs ciclo de publicação — consulta histórica não é stale; BRL = USD × média PTAX mensal, `null` sem câmbio |
+| Fontes | World Bank Pink Sheet (CC BY 4.0, séries subjacentes LME — `no_redistribution_pending_lme_review`) + BCB PTAX (ODbL); LME/Shockmetais fora do catálogo |
+| Estado | **DEPLOYED deep-link (PROC-0076.R1)**; `GATE-FEATURE = INCONCLUSIVE` — sem link no hub/palette até reconciliar E11 e obter smoke federado autenticado; conversão BRL depende do feed PTAX (HTTP 403 no egress de produção — bloqueio operacional documentado) |
+
 ---
 
 ## Estados obrigatórios por tela

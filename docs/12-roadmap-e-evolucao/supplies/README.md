@@ -111,6 +111,7 @@ selecionar página em foco
 | 18 | Indicadores | `/indicators` | fila |
 | 19 | Minhas Atividades | `/my-tasks` | fila |
 | 20 | Administração | `/administration` | fila |
+| — | Inteligência de mercado | `/market-intelligence` | **DEPLOYED (PROC-0076.R1)** — fora da fila WF (entrega PROC dedicada); deep-linkável, **sem link no hub/palette**; `GATE-FEATURE = INCONCLUSIVE` (E11 não reconciliado + smoke federado autenticado pendente; feed PTAX bloqueado por 403 no egress) |
 
 **Regra:** a tabela acima é uma fila de produto, não autorização para o Cursor implementar várias páginas em paralelo. O próximo plano executável contém somente a página promovida e seus satélites inevitáveis (Ajuda, contrato, testes, docs).
 

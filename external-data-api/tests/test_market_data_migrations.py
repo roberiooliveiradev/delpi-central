@@ -19,7 +19,7 @@ def _files():
 def test_migrations_dir_and_versions_exist():
     files = _files()
     assert MIGRATIONS_DIR.exists()
-    assert {"V001", "V002"} <= set(files)
+    assert {"V001", "V002", "V003"} <= set(files)
 
 
 def _sql(version: str) -> str:
@@ -86,3 +86,19 @@ def test_v002_seeds_licensed_sources_and_instruments():
     assert "'shockmetais'" not in sql.lower()
     for forbidden in ("DROP TABLE", "TRUNCATE", "DELETE FROM"):
         assert forbidden not in sql
+
+
+def test_v003_records_lme_third_party_provenance():
+    """R1: the Pink Sheet metal series are LME settlement prices —
+    third-party content excluded from the WB CC BY 4.0 grant. The
+    recorded scope must reflect that, never an unrestricted license."""
+    sql = Path(_files()["V003"].path).read_text(encoding="utf-8")
+    assert "London Metal Exchange" in sql
+    assert "no_redistribution_pending_lme_review" in sql
+    assert "third-party" in sql.lower()
+    # Provenance is an UPDATE on the catalog — still no destructive DDL.
+    body = "\n".join(
+        line for line in sql.splitlines() if not line.strip().startswith("--")
+    )
+    for forbidden in ("DROP TABLE", "DROP SCHEMA", "TRUNCATE", "DELETE FROM"):
+        assert forbidden not in body

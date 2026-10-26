@@ -134,7 +134,10 @@ KEYCLOAK_URL/KEYCLOAK_REALM/KEYCLOAK_JWKS_URL/KEYCLOAK_ISSUER/KEYCLOAK_AUDIENCE
 PLUGINS_DB_HOST/PLUGINS_DB_PORT/PLUGINS_DB_NAME/PLUGINS_DB_USER/PLUGINS_DB_PASSWORD
 PLUGINS_DB_CONNECT_TIMEOUT=5
 PLUGINS_DB_SSLMODE=prefer
-EXTERNAL_DATA_SCHEMA=external_data
+# EXTERNAL_DATA_SCHEMA é constante canônica fixa ("external_data") —
+# não configurável por env: migrations V001+ criam o schema literal e
+# isolar por nome quebraria o ledger schema_migrations vs DDL real.
+# Isolamento entre ambientes é por PLUGINS_DB_* (host/database).
 EXTERNAL_DATA_RUN_MIGRATIONS_ON_STARTUP=true
 EXTERNAL_DATA_FEED_FX_DAILY_ENABLED=false
 EXTERNAL_DATA_FEED_METALS_MONTHLY_ENABLED=false
@@ -150,10 +153,28 @@ WORLDBANK_PINKSHEET_TIMEOUT_SECONDS=30
   compra e venda). Attribution exigida e trafegada no DTO.
 - **World Bank "Pink Sheet"** — preços mensais de commodities
   (CC BY 4.0). Cobre, alumínio, zinco, níquel, chumbo e estanho,
-  USD/tonelada métrica, base `monthly_average`.
-- Fontes sem licença documental (LME, Shockmetais etc.) **não existem**
-  no catálogo — ingestão recusa fonte inativa/não licenciada
-  (`SOURCE_NOT_LICENSED`), sem fallback para sites alternativos.
+  USD/tonelada métrica, base `monthly_average`. **Proveniência de
+  terceiros:** as descrições das séries do workbook identificam as
+  cotações subjacentes como LME; a CC BY 4.0 do Banco Mundial não
+  cobre dados de terceiros. A migration V003 registra essa
+  proveniência e adiciona `no_redistribution_pending_lme_review` ao
+  escopo de uso da fonte — o uso interno atual (coleta, armazenamento,
+  derivação, exibição interna com atribuição) permanece, mas qualquer
+  redistribuição externa exige decisão formal sobre direitos LME.
+- Fontes sem licença documental (LME direto, Shockmetais etc.)
+  **não existem** no catálogo — ingestão recusa fonte inativa/não
+  licenciada (`SOURCE_NOT_LICENSED`), sem fallback para sites
+  alternativos.
+
+## Migrations de market data
+
+`external-data-api/migrations/` — V001 (schema `external_data` +
+tabelas), V002 (catálogo licenciado), V003 (proveniência LME do
+Pink Sheet). Arquivos aplicados são imutáveis e verificados por
+checksum sha256; divergência aborta o boot do módulo. O runner usa
+advisory lock PostgreSQL entre workers e, em falha, o serviço sobe
+**degradado** — CNPJ continua respondendo e market-data responde
+`STORAGE_UNAVAILABLE`, nunca derruba o processo.
 
 ## Testes
 
@@ -162,6 +183,15 @@ HTTP (S2S, envelope, correlação), segurança (spoofing, fail-closed,
 zero upstream pré-auth). Integração Redis real:
 `EXTERNAL_DATA_TEST_REDIS_URL=redis://... pytest` — cobre dois clientes,
 dois processos, concorrência, TTL, fail-closed, isolamento de namespace.
+
+**PostgreSQL real (descartável):** os testes `test_market_data_repository_pg.py`,
+`test_market_data_migrations.py` e `test_startup_migrations.py` rodam contra
+um banco isolado quando `EXTERNAL_DATA_TEST_PG_HOST` está definido
+(+ `_PORT`/`_NAME`/`_USER`/`_PASSWORD`); sem a env, são `TEST_NOT_RUN`.
+Prova cobre migrations V001–V003, checksum/imutabilidade, advisory lock,
+constraints `NUMERIC`, unicidade/FK, idempotência e boot degradado.
+Isolamento é por database de teste — o schema é sempre o canônico
+`external_data`.
 
 ## Operação local
 

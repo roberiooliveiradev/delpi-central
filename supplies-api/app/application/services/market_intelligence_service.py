@@ -41,10 +41,17 @@ MAX_RANGE_DAYS = 3660
 DEFAULT_PAGE_SIZE = 24
 MAX_PAGE_SIZE = 120
 
-# Freshness: monthly metals publish ~the 5th for the previous month;
-# PTAX publishes each business day. Beyond those horizons → stale.
-STALE_METAL_DAYS = 40
-STALE_FX_DAYS = 4
+# Freshness policy — measured against the provider's real publication
+# cadence on the *latest available* observation, never on the queried
+# window: a complete historical period is "ok", not "stale".
+# - Pink Sheet publishes monthly, a few days after month end (~5th).
+# - PTAX publishes each business day; weekends and holidays have no
+#   bulletin, so a multi-day grace is normal, not a failure.
+FRESHNESS_METHOD = "provider_publication_cadence/v1"
+PINK_SHEET_PUBLICATION_DAY = 5
+FX_STALE_GRACE_DAYS = 4
+
+_FEED_BY_KIND = {KIND_METAL: "metals-monthly", KIND_FX: "fx-daily"}
 
 
 class MarketDataNotFoundError(LookupError):
@@ -287,36 +294,150 @@ class MarketIntelligenceService:
             )
         return converted, sorted(set(missing))
 
-    def _ingestion_meta(self) -> dict[str, Any]:
+    def _ingestion_meta(self, feed: str | None = None) -> dict[str, Any]:
+        """Last successful ingestion (global) + per-feed run evidence."""
         try:
             status = self._gateway.ingestion_status()
         except Exception:
-            return {"last_successful_ingestion_at": None}
+            return {
+                "last_successful_ingestion_at": None,
+                "feed_ingestion": None,
+            }
         latest = None
-        for feed in status.get("feeds") or []:
-            stamp = feed.get("last_successful_at")
+        feed_info = None
+        for entry in status.get("feeds") or []:
+            stamp = entry.get("last_successful_at")
             if stamp and (latest is None or stamp > latest):
                 latest = stamp
-        return {"last_successful_ingestion_at": latest}
+            if feed and entry.get("feed") == feed:
+                feed_info = {
+                    "feed": entry.get("feed"),
+                    "last_run_outcome": entry.get("outcome"),
+                    "last_successful_at": entry.get("last_successful_at"),
+                    "latest_observation_date": entry.get(
+                        "latest_observation_date"
+                    ),
+                }
+        return {
+            "last_successful_ingestion_at": latest,
+            "feed_ingestion": feed_info,
+        }
+
+    def _expected_metal_period(self, today: date) -> date:
+        """Latest month the Pink Sheet should have published by ``today``."""
+        this_month = date(today.year, today.month, 1)
+        lag = 1 if today.day >= PINK_SHEET_PUBLICATION_DAY else 2
+        return _month_add(this_month, -lag)
+
+    def _last_business_day(self, today: date) -> date:
+        """Approximation: weekdays only; holidays are unknown and must
+        never be counted as missing publications."""
+        current = today
+        while current.weekday() >= 5:
+            current = date.fromordinal(current.toordinal() - 1)
+        return current
+
+    def _freshness(
+        self,
+        *,
+        kind: str,
+        latest_available: date | None,
+        feed_ingestion: dict[str, Any] | None,
+        today: date | None = None,
+    ) -> dict[str, Any]:
+        """Feed freshness by provider cadence — evaluated on the
+        instrument's latest available observation, independent of the
+        queried window."""
+        today = today or date.today()
+        if kind == KIND_METAL:
+            expected = self._expected_metal_period(today)
+            if latest_available is None:
+                status = "unknown"
+                lag = None
+            else:
+                lag = max(
+                    0,
+                    (expected.year - latest_available.year) * 12
+                    + (expected.month - latest_available.month),
+                )
+                status = "current" if lag == 0 else "delayed"
+            return {
+                "status": status,
+                "expected_cadence": "monthly",
+                "expected_latest_period": expected.isoformat(),
+                "latest_observation_date": latest_available.isoformat()
+                if latest_available
+                else None,
+                "lag_periods": lag,
+                "last_successful_ingestion_at": (feed_ingestion or {}).get(
+                    "last_successful_at"
+                ),
+                "evaluation_date": today.isoformat(),
+                "method": FRESHNESS_METHOD,
+            }
+        expected_day = self._last_business_day(today)
+        if latest_available is None:
+            status = "unknown"
+            lag_days = None
+        else:
+            lag_days = max(0, (expected_day - latest_available).days)
+            status = (
+                "current" if lag_days <= FX_STALE_GRACE_DAYS else "delayed"
+            )
+        return {
+            "status": status,
+            "expected_cadence": "business_daily",
+            "expected_latest_period": expected_day.isoformat(),
+            "latest_observation_date": latest_available.isoformat()
+            if latest_available
+            else None,
+            "lag_days": lag_days,
+            "last_successful_ingestion_at": (feed_ingestion or {}).get(
+                "last_successful_at"
+            ),
+            "evaluation_date": today.isoformat(),
+            "method": FRESHNESS_METHOD,
+        }
+
+    @staticmethod
+    def _instrument_latest(instrument: dict[str, Any]) -> date | None:
+        """Latest available observation for the instrument (catalog-wide,
+        independent of the queried window)."""
+        raw = instrument.get("latest_observation_date")
+        if not raw:
+            return None
+        try:
+            return date.fromisoformat(str(raw)[:10])
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _display_unit(instrument: dict[str, Any], currency: str) -> str:
+        """Unit of the *displayed* value — BRL conversions keep the same
+        physical unit (``USD/metric ton`` → ``BRL/metric ton``)."""
+        unit = instrument.get("unit") or ""
+        if currency == "BRL" and "/" in unit:
+            return "BRL/" + unit.split("/", 1)[1]
+        return unit or currency
 
     def _data_status(
         self,
         *,
         observed: int,
         expected: int,
-        latest_observation: date | None,
-        kind: str,
         partial_reason: str | None,
-        today: date | None = None,
+        freshness_status: str | None,
     ) -> str:
+        """Window-scoped status: coverage of the requested period first;
+        ``stale`` only when the window is fully covered but the *feed* is
+        behind its publication cadence (never because the queried period
+        itself ended in the past)."""
         if observed <= 0:
             return "no_data"
-        today = today or date.today()
-        horizon = STALE_METAL_DAYS if kind == KIND_METAL else STALE_FX_DAYS
-        if latest_observation and (today - latest_observation).days > horizon:
-            return "stale"
         if partial_reason or observed < expected:
             return "partial"
+        if freshness_status == "delayed":
+            return "stale"
         return "ok"
 
     # --- endpoints -----------------------------------------------------------
@@ -429,6 +550,9 @@ class MarketIntelligenceService:
             else len(_month_range(start, end))
         )
 
+        display_unit = self._display_unit(instrument, currency)
+        native_unit = instrument.get("unit")
+        converted = currency == "BRL" and kind == KIND_METAL
         last_quote = None
         if valid:
             latest = valid[-1]
@@ -436,13 +560,31 @@ class MarketIntelligenceService:
                 "value": _fmt(latest.value),
                 "reference_date": latest.period.isoformat(),
                 "currency": currency,
-                "unit": instrument.get("unit"),
+                "unit": display_unit,
             }
+            if converted:
+                native = next(
+                    (p for p in reversed(raw_points) if p.period == latest.period),
+                    None,
+                )
+                month_key = _month_key(latest.period)
+                last_quote["native"] = {
+                    "value": _fmt(native.value) if native else None,
+                    "currency": "USD",
+                    "unit": native_unit,
+                }
+                last_quote["conversion"] = {
+                    "method": FX_CONVERSION_METHOD,
+                    "fx_kind": fx_kind,
+                    "fx_rate": _fmt(fx_monthly.get(month_key)),
+                    "fx_reference_period": month_key,
+                }
         average_value = _mean([p.value for p in valid])
         period_average = {
             "value": _fmt(average_value),
             "valid_observations": len(valid),
             "coverage": _coverage(len(valid), expected),
+            "unit": display_unit,
             "method": PERIOD_AVERAGE_METHOD,
         }
         variation = None
@@ -468,14 +610,17 @@ class MarketIntelligenceService:
                 "reference_date": fx_points[-1].period.isoformat(),
             }
 
-        latest_obs = max((p.period for p in valid), default=None)
-        meta = self._ingestion_meta()
+        meta = self._ingestion_meta(_FEED_BY_KIND[kind])
+        freshness = self._freshness(
+            kind=kind,
+            latest_available=self._instrument_latest(instrument),
+            feed_ingestion=meta["feed_ingestion"],
+        )
         data_status = self._data_status(
             observed=len(valid),
             expected=expected,
-            latest_observation=latest_obs,
-            kind=kind,
             partial_reason=partial_reason,
+            freshness_status=freshness["status"],
         )
         return {
             "instrument": {
@@ -493,6 +638,9 @@ class MarketIntelligenceService:
                 "data_status": data_status,
                 "source_id": instrument.get("source_id"),
                 "currency": currency,
+                "unit": display_unit,
+                "native_unit": native_unit,
+                "freshness": freshness,
                 "method_version": {
                     "fx_conversion": FX_CONVERSION_METHOD
                     if currency == "BRL" and kind == KIND_METAL
@@ -579,21 +727,21 @@ class MarketIntelligenceService:
             )
             observed = sum(1 for p in points if p["value"] is not None)
 
-        latest_obs = max(
-            (p["period_date"] for p in points if p["value"] is not None),
-            default=None,
-        )
         for point in points:
             point.pop("period_date", None)
 
+        meta = self._ingestion_meta(_FEED_BY_KIND[kind])
+        freshness = self._freshness(
+            kind=kind,
+            latest_available=self._instrument_latest(instrument),
+            feed_ingestion=meta["feed_ingestion"],
+        )
         data_status = self._data_status(
             observed=observed,
             expected=expected,
-            latest_observation=latest_obs,
-            kind=kind,
             partial_reason=partial_reason,
+            freshness_status=freshness["status"],
         )
-        meta = self._ingestion_meta()
         return {
             "instrument": {
                 "code": instrument["instrument_code"],
@@ -603,10 +751,13 @@ class MarketIntelligenceService:
                 "quote_basis": instrument.get("quote_basis"),
             },
             "currency": currency,
+            "unit": self._display_unit(instrument, currency),
+            "native_unit": instrument.get("unit"),
             "granularity": granularity,
             "points": points,
             "meta": {
                 "source_id": instrument.get("source_id"),
+                "freshness": freshness,
                 "fx_source_id": "bcb-ptax"
                 if currency == "BRL" or kind == KIND_FX
                 else None,
@@ -677,7 +828,19 @@ class MarketIntelligenceService:
 
         total = len(rows)
         items = rows[(page_no - 1) * size : page_no * size]
-        meta = self._ingestion_meta()
+        meta = self._ingestion_meta(_FEED_BY_KIND[kind])
+        freshness = self._freshness(
+            kind=kind,
+            latest_available=self._instrument_latest(instrument),
+            feed_ingestion=meta["feed_ingestion"],
+        )
+        observed = sum(1 for r in rows if r["average"] is not None)
+        data_status = self._data_status(
+            observed=observed,
+            expected=total,
+            partial_reason=partial_reason,
+            freshness_status=freshness["status"],
+        )
         return {
             "instrument": {
                 "code": instrument["instrument_code"],
@@ -687,6 +850,8 @@ class MarketIntelligenceService:
                 "quote_basis": instrument.get("quote_basis"),
             },
             "currency": currency,
+            "unit": self._display_unit(instrument, currency),
+            "native_unit": instrument.get("unit"),
             "items": items,
             "page_info": {
                 "page": page_no,
@@ -702,7 +867,8 @@ class MarketIntelligenceService:
                     else None,
                     "coverage": COVERAGE_METHOD,
                 },
-                "data_status": "ok" if total else "no_data",
+                "data_status": data_status,
+                "freshness": freshness,
                 "partial_reason": partial_reason,
                 "source_id": instrument.get("source_id"),
                 "schema_version": SCHEMA_VERSION,
