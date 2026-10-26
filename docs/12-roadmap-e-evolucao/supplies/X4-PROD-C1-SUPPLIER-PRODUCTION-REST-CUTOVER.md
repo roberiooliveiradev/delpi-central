@@ -191,3 +191,12 @@ http://192.168.1.231:8061` + `PATH_*` prefixados `/restall` + smoke read-only.
 ## 14. Estado de espera / handoff entre chats (2026-10-23)
 
 **Decisão PO: aguardar a resposta do Gabriel/TOTVS.** A consolidação canônica com links, SHAs, endpoints, configurações efetivas, evidências, guard, rollback, drifts, tarefas proibidas e checklist de retomada está em [X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md](./X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md). Não tratar esse handoff como GO para mudança de `URL_REST@1` nem para CREATE/UPDATE produtivos. Reancorar HEAD e authorities ao iniciar um novo chat.
+
+
+## 15. Atualização de comunicação TOTVS — 2026-10-26
+
+Resposta de Gabriel Araújo de **23/10/2026, 16:29**, apresentada pelo PO: **nenhuma mudança foi publicada ainda**; aguarda aprovação. O owner informa reaproveitamento do endpoint REST existente e da configuração; o PO esclareceu que autenticação e configuração também **não serão alteradas**. Gabriel solicita uma janela de manutenção de **30 minutos** para criar campo de controle de alteração do usuário; Michael deverá indicar disponibilidade. Possível alteração posterior da senha pelo configurador não constitui mudança executada.
+
+**Estados atuais de decisão:** `GABRIEL_REPLIED`; `RELEASE_PREPARATION_PENDING`; `MAINTENANCE_WINDOW_PENDING`; `PROD_UPSTREAM_NOT_DEPLOYED`; `G8=FAIL_LAST_OBSERVED`; `PRODUCTION_CUTOVER=BLOCKED`. Os resultados 404/401 de 23/10 são evidência histórica ainda sem reteste; não inferir resolução somente da promessa de reutilização do endpoint. O PO informou que **vai enviar** a resposta ao Gabriel, mas **o envio ainda não foi comprovado**; não registrar como realizado.
+
+**Próxima ação:** após o envio, agendar manutenção com Michael e Gabriel; aprovar escopo técnico do campo e rollback; aguardar publicação TOTVS; reexecutar G8 **read-only** e validar destino real `DELPI`. Manter parâmetros e flags de escrita sem mudança até prova de runtime e autorização específica. A atualização **não é GO para POST/PUT produtivo ou mudança de configuração**. Para handoff operacional, consultar [X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md](./X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md).
