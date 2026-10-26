@@ -746,6 +746,11 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         if not self._table_exists(
             "tm_interaction_reads"
         ) or not self._table_exists("tm_interaction_mentions"):
+            # Without the mechanism that proves a signal, the only honest
+            # answer for unread/mentioned is empty — never presume every
+            # room matches a filter it cannot evaluate.
+            if inbox_filter != "all":
+                return []
             rows = self.fetch_all(
                 f"""SELECT base.*, 0 AS unread_count, FALSE AS mentioned
                     FROM ({self._room_select()}) base
