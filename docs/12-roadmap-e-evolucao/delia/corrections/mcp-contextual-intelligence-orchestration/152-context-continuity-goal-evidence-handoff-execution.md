@@ -285,3 +285,48 @@ Residuals: (a) `business_subject` transport is mechanism-ready but the 3B did no
 **R3 — conservative claim on cause of outcome:** three-record and O2 outcome still negative or typed error in n=1 and cases diverged at admission/goal, but evidence does not isolate model size as exclusive root cause. No live omission was observed, which limits conclusions about pressure paths; no tokens/latency delta measured. Do not autoauthorize model switch nor further broad refactor.
 
 **Next bounded step:** target contract validation of overflow/no-window cases, omission-aware verdicts, and recovery-preview compatibility with RED characterization (not another inventory or automatic engine), then revisit outcome trace under a frozen local configuration. Independent review and release gates remain separate; no production deploy authorized.
+
+
+## 14. Overflow / omission / recovery-preview contract rework — R1/R2/R3 closure — 2026-10-26
+
+Bounded follow-on to the §13 independent review (`5ba117db5028de37b5fbe55ca3b5d918601815f6`), task `DELIA-C3-PROJECTION-OVERFLOW-OMISSION-RECOVERY-CONTRACT-REWORK-01`, base `859632601b`.
+
+### R1 — overflow contract layering (pinned, no new budget)
+
+| Layer | Bound | Enforcement | Failure |
+|---|---|---|---|
+| per-block `MAX_*` | compaction target | `_fit_json_block` ordered reductions | emits WHOLE valid JSON + warning; never severs |
+| transport | `MAX_INPUT_CHARS=16384` | `InvokeModel` input gate, always on | `INVALID_REQUEST` before dispatch |
+| model window | adapter `context_window_tokens` | `apply_context_budget` when declared | `CONTEXT_TOO_LARGE` before dispatch |
+
+Unknown window (`context_window_tokens=None`) disables only the token layer — the transport bound still fails closed on mandatory content beyond 16384 chars. Between the compaction target and the transport bound a mandatory payload dispatches whole and valid; that is the documented residual, not silent corruption — the emitted document is never truncated mid-JSON. Tests pin all regimes: under-target, over-target/under-transport (dispatch whole), declared-window overflow (`CONTEXT_TOO_LARGE`), over-transport with unknown window (`INVALID_REQUEST`), plus exact-boundary and escaped-Unicode roundtrips. `_fit_json_block` now logs a warning on exhausted fits so the event stays traceable.
+
+### R2 — omission-aware consumption (fail-open closed)
+
+Proven defect class: model selections were bound to the FULL source list while the model only saw the projected prefix — an index/name matching only an omitted tail entry was treated as a valid selection (fail-open). Closed at every deterministic consumer:
+
+| Stage | Marker | Binding now proven against |
+|---|---|---|
+| grounded synthesis | `records_omitted` | projected record prefix (`_render_synthesis` + select-all-replay guard) |
+| prior-turn continuation | `records_omitted` | projected record prefix + `evidence_projection_partial` limitation |
+| comparison | `left_omitted`/`right_omitted` | projected left/right prefixes + `evidence_projection_partial` limitation |
+| capability selection (+with_goal) | `capabilities_omitted` | `_projected_capability_names(payload)` ∩ invocable |
+| resolver selection | `candidates_omitted` | projected candidate names |
+| prepare continuation | `candidates_omitted` | projected candidate names |
+| index identifier | `options_omitted` | projected `identifier` set |
+| clarification | `inputs_omitted` | marker truthful; question words only listed inputs |
+| goal-evidence relevance | `records_omitted` | block carries truthful count; verdict remains semantic |
+
+New canonical limitation code `LIMITATION_EVIDENCE_PROJECTION_PARTIAL` (interaction contracts) — surfaces when the consumed record list was truncated by projection; synthesis/comparison/prior-continuation carry it, so a partial projection can never read as a complete owner answer. v22 instruction clauses define every `*_omitted` marker and the `prior_result_preview` object shape for the semantic consumers.
+
+### R3 — prior_result_preview compatibility (pinned)
+
+`prior_result_preview` is a JSON **object** string `{"records": [...], "records_omitted"?: N}` nested inside the outer feedback JSON. Consumers are LLM-only (semantic re-selection/reformulation); the deterministic boundary never parses the inner preview into authority. Tests pin: object-with-records shape, `records_omitted` under pressure, empty preview, and injection-shaped record text surviving as escaped inert data. Recovery stays bounded (one governed round; identical-query re-execution still forbidden).
+
+### Tests and runtime evidence
+
+- `test_projection_omission_recovery_contract.py` — 25 cases. RED proven on baseline (`git stash` of the fix): baseline selected `resolve_3` never projected, rendered synthesis index 4 outside the projected prefix, and bound an omitted capability — the exact fail-open the review described. Post-fix: GREEN.
+- Focused suites: continuity/selection/envelope/relevance/C3/R1-resource — all green.
+- Live Ollama eval (frozen: delia-json qwen2.5:3b, num_ctx 8192, instruction v22, real api-delpi DAVI via delegated exchange): 7 scenarios, 31/31 captured blocks valid JSON; two over-compaction-target blocks (8599/7416 chars vs 6000 target) emitted whole and valid — the R1 layering operating live; `business_subject` observed propagating into `foreign_selection`; one governed recovery round executed on three_records; all outcomes honest (GROUNDED-with-insufficient-content or NON_GROUNDED); FALSE_POSITIVES=0.
+
+Residuals: (a) unknown-window admits whole payloads up to the transport bound — documented; hardening further requires an adapter-declared window (architecture decision, not silently implemented); (b) 3B semantic capacity remains the outcome limiter — no business-outcome claim; (c) token/latency recorded from probe usage (three_records: 24351 in / 402 out / 18.0s across 12 stages incl. recovery).

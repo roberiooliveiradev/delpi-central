@@ -87,6 +87,7 @@ from app.application.interaction.capability_attempt import (
 from app.application.interaction.contracts import (
     GovernedCapabilityProvenance,
     LIMITATION_CAPABILITY_SURFACE_LISTING,
+    LIMITATION_EVIDENCE_PROJECTION_PARTIAL,
     LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_PRIOR_TURN_CONTINUATION,
     LIMITATION_RESULT_TRUNCATED,
@@ -2981,6 +2982,36 @@ def _capability_payload(
         )
     return payload
 
+def _projected_capability_names(payload: str) -> frozenset[str]:
+    """Remote names actually present in a serialized capability block.
+
+    The block is a bare entries list or an object wrapping them under
+    ``capabilities``. A selection may only bind a capability the model
+    actually saw — entries omitted by the fit ladder are marked with
+    ``capabilities_omitted`` and are never selectable, so membership
+    must be proven against the projected list, not the source list.
+    """
+    try:
+        block = json.loads(payload)
+    except ValueError:
+        return frozenset()
+    entries = (
+        block
+        if isinstance(block, list)
+        else block.get("capabilities")
+        if isinstance(block, Mapping)
+        else None
+    )
+    if not isinstance(entries, list):
+        return frozenset()
+    return frozenset(
+        entry["remote_name"]
+        for entry in entries
+        if isinstance(entry, Mapping)
+        and isinstance(entry.get("remote_name"), str)
+    )
+
+
 # Canonical sensitive credential concepts. Keys are normalized
 def _json_block(block: Any) -> str:
     return json.dumps(block, ensure_ascii=False, default=str)
@@ -3057,12 +3088,24 @@ def _fit_json_block(
     ladder — a step is applied until exhausted, then the next — until
     the payload fits or all are exhausted. The serialized result is
     always valid JSON, never a mid-document cut; when every step is
-    exhausted the minimal valid document is emitted and the typed
-    context budget (CONTEXT_TOO_LARGE) remains the guard downstream.
+    exhausted the minimal valid document is emitted — ``budget`` is a
+    compaction target, not a hard contract bound: the typed
+    boundaries (MAX_INPUT_CHARS transport, CONTEXT_TOO_LARGE on a
+    declared context window) remain the guards downstream. The
+    over-target emission is logged so the event stays traceable.
     """
     payload = _json_block(block)
+    if len(payload) <= budget:
+        return payload
     while len(payload) > budget:
         if not any(step() for step in steps):
+            _logger.warning(
+                "projection fit exhausted: block %d chars exceeds "
+                "compaction target %d — emitting whole valid JSON; "
+                "typed transport/context bounds apply downstream",
+                len(payload),
+                budget,
+            )
             return payload
         payload = _json_block(block)
     return payload
@@ -5875,8 +5918,21 @@ class OperationalCapabilityOrchestrator:
         if not isinstance(remote_name, str):
             return None
         remote_name = remote_name.strip()
+        # Only a candidate the model actually saw is selectable — tail
+        # entries omitted by the fit ladder carry a truthful
+        # ``candidates_omitted`` marker and are never projected back.
+        projected_names = {
+            entry.get("remote_name")
+            for entry in block["resolver_candidates"]
+            if isinstance(entry, Mapping)
+        }
         return next(
-            (cap for cap in eligible if cap.remote_name == remote_name),
+            (
+                cap
+                for cap in eligible
+                if cap.remote_name == remote_name
+                and cap.remote_name in projected_names
+            ),
             None,
         )
 
@@ -6358,6 +6414,14 @@ class OperationalCapabilityOrchestrator:
             and isinstance(proposal.get("items"), (list, tuple))
             and len(proposal.get("items")) == 0
         )
+        # Selection binds to the excerpts the model actually saw —
+        # the projected prefix, not the full prior-excerpt list.
+        projected_records = tuple(block["records"])
+        projection_limitations = (
+            (LIMITATION_EVIDENCE_PROJECTION_PARTIAL,)
+            if block.get("records_omitted")
+            else ()
+        )
         selected_items = (
             proposal.get("items")
             if isinstance(proposal, Mapping)
@@ -6365,8 +6429,8 @@ class OperationalCapabilityOrchestrator:
         )
         if (
             isinstance(selected_items, (list, tuple))
-            and len(records) > 2
-            and len(selected_items) >= len(records)
+            and len(projected_records) > 2
+            and len(selected_items) >= len(projected_records)
         ):
             # Selecting every excerpt replays the prior result —
             # not a proportional transform of the new ask.
@@ -6388,7 +6452,9 @@ class OperationalCapabilityOrchestrator:
             )
         rendered, reason = (
             _render_synthesis(
-                proposal, records, field_labels=self._field_labels
+                proposal,
+                projected_records,
+                field_labels=self._field_labels,
             )
             if isinstance(proposal, Mapping)
             else (None, "proposal_absent")
@@ -6430,7 +6496,9 @@ class OperationalCapabilityOrchestrator:
                 )
         proven_differences = (
             _selected_proven_differences(
-                proposal, records, field_labels=self._field_labels
+                proposal,
+                projected_records,
+                field_labels=self._field_labels,
             )
             if isinstance(proposal, Mapping)
             else []
@@ -6476,7 +6544,8 @@ class OperationalCapabilityOrchestrator:
             status=GovernedCapabilityStatus.SUCCESS,
             correlation_id=correlation,
             content=rendered,
-            limitations=(LIMITATION_PRIOR_TURN_CONTINUATION,),
+            limitations=(LIMITATION_PRIOR_TURN_CONTINUATION,)
+            + projection_limitations,
         )
 
     def _assess_native_path(
@@ -6847,8 +6916,14 @@ class OperationalCapabilityOrchestrator:
                 correlation=correlation,
                 deadline=deadline,
             )
+            # record_index binds to the records the model actually
+            # saw — the projected prefixes, not the full outcome
+            # lists; omitted tail entries are marked left_omitted /
+            # right_omitted and are never comparable.
             compared = _compare_records(
-                left_records, right_records, proposal
+                tuple(comparison_block["left"]),
+                tuple(comparison_block["right"]),
+                proposal,
             )
             if compared is not None:
                 verdict, content = compared
@@ -6882,6 +6957,21 @@ class OperationalCapabilityOrchestrator:
         merged_limitations = tuple(
             dict.fromkeys(tuple(outcome.limitations) + foreign_limitations)
         )
+        # A verdict computed over a partially-projected record list
+        # stays honest: the omission marker becomes an outcome
+        # limitation so a projected subset is never read as the
+        # complete owner comparison surface.
+        if (
+            left_records
+            and right_records
+            and (
+                comparison_block.get("left_omitted")
+                or comparison_block.get("right_omitted")
+            )
+        ):
+            merged_limitations = merged_limitations + (
+                LIMITATION_EVIDENCE_PROJECTION_PARTIAL,
+            )
         if verdict == "agreement":
             limitations = merged_limitations
         elif verdict == "conflict":
@@ -6977,8 +7067,21 @@ class OperationalCapabilityOrchestrator:
         if not isinstance(remote_name, str):
             return None
         remote_name = remote_name.strip()
+        # Membership is proven against the projected candidates —
+        # omitted tail entries (``candidates_omitted``) were never
+        # presented to the model and stay unselectable.
+        projected_names = {
+            entry.get("remote_name")
+            for entry in block["prepare_candidates"]
+            if isinstance(entry, Mapping)
+        }
         return next(
-            (cap for cap in eligible if cap.remote_name == remote_name),
+            (
+                cap
+                for cap in eligible
+                if cap.remote_name == remote_name
+                and cap.remote_name in projected_names
+            ),
             None,
         )
 
@@ -8978,11 +9081,16 @@ class OperationalCapabilityOrchestrator:
             return None, ()
         # LOOP-03R2A (observability): the fallback carries one bounded
         # deterministic reason code — never proposal content.
+        # record_index binds to the records the model actually saw —
+        # the projected prefix, not the full outcome list; entries
+        # omitted by the fit ladder are marked ``records_omitted`` and
+        # are never renderable.
+        projected_records = tuple(block["records"])
         page_envelope = extract_pagination_envelope(outcome.structured)
         rendered, reason = (
             _render_synthesis(
                 proposal,
-                records,
+                projected_records,
                 has_more=(
                     page_envelope.has_more
                     if page_envelope is not None
@@ -9025,6 +9133,10 @@ class OperationalCapabilityOrchestrator:
             "correlation_id=%s",
             correlation,
         )
+        if block.get("records_omitted"):
+            # The rendered answer draws only on the projected records —
+            # the owner returned more rows than the model could see.
+            return rendered, (LIMITATION_EVIDENCE_PROJECTION_PARTIAL,)
         return rendered, ()
 
     def _repair_once(
@@ -10012,6 +10124,13 @@ class OperationalCapabilityOrchestrator:
             prior_observation=observation,
             business_subject=business_subject,
         )
+        # Membership is proven against the entries the model actually
+        # saw — a remote_name matching only an omitted tail entry was
+        # never presented and is unselectable.
+        visible = _projected_capability_names(cap_payload)
+        invocable = [
+            cap for cap in invocable if cap.remote_name in visible
+        ]
         if relevance_feedback is not None:
             # Same bounded recovery signal as stage 1 — untrusted data.
             cap_payload = json.dumps(
@@ -10091,12 +10210,19 @@ class OperationalCapabilityOrchestrator:
         allowed = frozenset(
             {"applicable", "remote_name", "limitations"}
         ) | self._GOAL_ALLOWED_KEYS
+        cap_payload = _capability_payload(
+            group, prior_observation=observation
+        )
+        # Same projected-membership bound as _select_capability —
+        # entries omitted by the fit ladder were never presented.
+        visible = _projected_capability_names(cap_payload)
+        invocable = [
+            cap for cap in invocable if cap.remote_name in visible
+        ]
         proposal = self._propose(
             input_text,
             block_tag="capabilities",
-            block_payload=_capability_payload(
-                group, prior_observation=observation
-            ),
+            block_payload=cap_payload,
             instruction_id=CAPABILITY_SELECTION_INSTRUCTION_ID,
             instruction=self._capability_goal_instruction,
             instruction_version=self._cri_instruction_version,
@@ -10320,6 +10446,16 @@ class OperationalCapabilityOrchestrator:
         selected = selected.strip()
         field = field.strip()
         if not selected or not field:
+            return None, None
+        # Membership is proven against the options the model actually
+        # saw — tail entries omitted by the fit ladder are marked with
+        # ``options_omitted`` and never selectable.
+        projected_ids = {
+            row.get("identifier")
+            for row in block["owner_index_options"]
+            if isinstance(row, Mapping)
+        }
+        if selected not in projected_ids:
             return None, None
         return selected, field
 

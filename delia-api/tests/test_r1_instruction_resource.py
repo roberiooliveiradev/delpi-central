@@ -47,48 +47,48 @@ _RESOURCE_PATH = (
 # governed-evolution gate, not a bug.
 _SNAPSHOT = {
     "delia.capability_orchestration.select_group": (
-        "3038225602f1404654beabec2667af92805fbb6c4505c0bb6082b7c98d6b98cc",
-        5999,
+        "d4ef70c2e17c9496d182e67677be5887093279041fbd121f77dab4344ba2bf87",
+        6454,
     ),
     "delia.capability_orchestration.select_capability": (
-        "78db36f12b5954b245dfddfa1117264fb3ab9eadbafd884ebd0533cc6c7a2c36",
-        3341,
+        "902a4dc2d4a6984d5349596d83b2630df27c7c310a3be516c5878417d2d56470",
+        3808,
     ),
     "delia.capability_orchestration.select_capability#with_goal": (
-        "227e5477e8224b61960a3d7c5d6cb4a853dd0d7a8b81807bf15bd214a8333a1e",
-        3815,
+        "4ab9e249b69913b0254ad339e4b710f36a8065ef12c62a04066878ef81569040",
+        4104,
     ),
     "delia.capability_orchestration.index_probe": (
         "5acfbc5f0843e2fa2810f456554caad27f3a5f56df49069371fbeb7731d9539a",
         1195,
     ),
     "delia.capability_orchestration.index_select": (
-        "60180b058aac1a5e8edb2adeb68fc440663b6cc73b7224321dfa1e4a72b174ed",
-        989,
+        "92dad685cd94c4a73ba8ba605d1e9a0a49b8419f75e177f268145a4005bd1c9a",
+        1225,
     ),
     "delia.capability_orchestration.arguments": (
-        "1122d5e571f3e590635410df1dc96b7cadc3839de9c020816509c7d79b97ff8b",
-        8008,
+        "5f2b656d0fe361e235eee2a09921af39e25a94439fd06e7878c1d6671a5d1d75",
+        8186,
     ),
     "delia.capability_orchestration.select_resolver": (
-        "2864d08fccfd4f87b52041c1fe572abfe1768d01489a81b8aa6e8d216bcf9b57",
-        927,
+        "d030eb7a0b71d60a7a62c3f0a718e42207c7b0857f6a27e9689498fc63667c4e",
+        1181,
     ),
     "delia.capability_orchestration.analysis_continuation": (
-        "7e0c74e4b19450b8bab0ef45dd5b49612641475785cafeca973a533554f02be8",
-        954,
+        "635fa2810b4b66d1c61ee44f003503ee462a3910b422eb47ccfc426d8d6988f8",
+        1208,
     ),
     "delia.capability_orchestration.clarification_wording": (
-        "c4658693e0adf352d3ad4c32e04f6e71a4fe2576aba23ab6368ad3fd7cf0e347",
-        891,
+        "64d2a27f5ab135a3a9e2ea955381ce0bad41343b46e501d21219a07bccd1a4b4",
+        1117,
     ),
     "delia.capability_orchestration.grounded_synthesis": (
-        "78186ca4040fe0cff0e1c7379fcc0586c06dc13aecc1ff9190fffb8d148642a9",
-        3851,
+        "f24b17ddf298766503528e9358c49045a0c8607edd616ecaaf06d356b8d5c859",
+        4163,
     ),
     "delia.capability_orchestration.native_assessment": (
-        "b74596712aa99fe3a16400bbb3c70c0f771a44342ac8ed74602efe91538dad32",
-        2396,
+        "fcdbd185527595b9083a6c83e97b70ca66adc3728b9b722fc2cb3366ed5ee35f",
+        2863,
     ),
     "delia.capability_orchestration.foreign_selection": (
         "6f033a4906bd9edfc15917a48a023c6f46314d2bab8fd66185be9bcd2976fe30",
@@ -99,8 +99,8 @@ _SNAPSHOT = {
         3344,
     ),
     "delia.capability_orchestration.comparison": (
-        "ff44ae46838b8febac48388eee73efbec1f64637df8a6a44197b4db4bb8aa315",
-        1067,
+        "9a26c820deb88cd2f48b102d7ad8826f993be937ec2d1d6ab77980228149b3bf",
+        1346,
     ),
     "delia.capability_orchestration.candidate_arguments": (
         "98b63e1de917d2fb44e534fc271516b56e852f8518d5bf3c84a11733add97dc5",
@@ -115,8 +115,8 @@ _SNAPSHOT = {
         4484,
     ),
     "delia.capability_orchestration.goal_evidence_relevance": (
-        "6a1807f6bb7214a3181e8ab5556f34e25408cf88906ec97644bf9b56b2639e39",
-        2076,
+        "14effd87356774e92ba7b6bd77cd825369114d2a52ff091bfb12ae5aa2ba4755",
+        2388,
     ),
 }
 
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "21"
+    assert res.version == "22"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]

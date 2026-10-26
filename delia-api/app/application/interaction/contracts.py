@@ -42,6 +42,12 @@ LIMITATION_CONFIRMATION_PENDING = "confirmation_pending"
 # never business evidence and never an authorization statement.
 LIMITATION_CAPABILITY_SURFACE_LISTING = "capability_surface_listing"
 
+# DELIA-C3-PROJECTION-OVERFLOW-OMISSION-RECOVERY-CONTRACT-REWORK-01:
+# context projection omitted owner records/options from the
+# model-visible block (truthful *_omitted marker) — the consumed
+# evidence list is partial, never proof of owner-side completeness.
+LIMITATION_EVIDENCE_PROJECTION_PARTIAL = "evidence_projection_partial"
+
 # C3-EXECUTION-SCOPE (§6.184): the published MFE echoes these exact
 # fixed labels on a structured confirmation turn. During the typed-
 # command migration window they are the ONLY free text a decision turn

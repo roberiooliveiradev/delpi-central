@@ -212,3 +212,14 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Tests: `test_evidence_schema_projection_integrity.py` — 23 casos RED→GREEN; RED causal: mesmas fixtures sob o corte antigo produzem `Unterminated string` em 5/5 envelopes.
 - Eval local congelada (delia-json qwen2.5:3b, ctx 8192, api-delpi real via delegated exchange): 28 blocos capturados em 7 cenários — `json_valid=100%`, `CAPABILITIES_OMITTED=0` (catálogo real 1 grupo/~2-4 caps); ref_user/ref_observation alcançaram owner real (GROUNDED path com respostas honestas); three_records/O2 honestamente NON_GROUNDED/typed; ref_assistant_only não injetou referente assistente. `FALSE_POSITIVES=0`. Sem melhoria de outcome empresarial reivindicada (variance 3B, n=1).
 - `DEPLOY=BLOCKED` (revisão independente pendente); `INDEPENDENT_REVIEW=PENDING`.
+
+
+### DELIA-C3-PROJECTION-OVERFLOW-OMISSION-RECOVERY-CONTRACT-REWORK-01 — execução (2026-10-26)
+
+- `STATE=IMPLEMENTED_WITH_EVIDENCE`; base `859632601b`; resíduos R1/R2/R3 da revisão `5ba117db50`; escopo `orchestration.py` + `contracts.py` (nova limitation) + instruction resource v22 + testes + doc 152 §14.
+- R1: layering formalizado — block `MAX_*` é alvo de compactação (emite JSON íntegro + warning ao esgotar), transporte `MAX_INPUT_CHARS=16384` sempre ativo (`INVALID_REQUEST`), janela declarada `CONTEXT_TOO_LARGE`; janela desconhecida deixa apenas transporte (residual documentado). Sem segundo budget.
+- R2: fail-open fechado em 7 sites — seleções passam a validar contra a lista projetada que o modelo viu (synthesis, prior-continuation, comparison left/right, capability x2, resolver, prepare, index); nova `LIMITATION_EVIDENCE_PROJECTION_PARTIAL` propaga projeção parcial ao outcome; v22 declara a semântica de todos os marcadores `*_omitted`.
+- R3: `prior_result_preview` pinado como objeto JSON string `{records, records_omitted?}`; consumidores LLM-only; injeção permanece dado inerte; recovery segue bounded.
+- Tests: `test_projection_omission_recovery_contract.py` — 25 casos; RED causal no baseline (stash): `resolve_3` selecionado sem projeção, synthesis renderizou índice fora do prefixo, capability omitida ligada.
+- Eval local congelada (delia-json qwen2.5:3b, ctx 8192, instrução v22, api-delpi real via delegated exchange): 7 cenários, 31/31 blocos JSON válidos; 2 blocos acima do alvo de compactação emitidos íntegros (layering R1 ao vivo); `business_subject` propagado em foreign_selection; uma rodada de recovery governada em three_records; `FALSE_POSITIVES=0`.
+- `DEPLOY=BLOCKED` (revisão independente pendente); `INDEPENDENT_REVIEW=PENDING`.
