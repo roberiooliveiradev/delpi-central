@@ -1389,3 +1389,37 @@ O PO definiu que Relatorios e divergencias devem funcionar integralmente dentro 
 A proxima entrega deve acrescentar o componente compartilhado de caminho (breadcrumb/PagePath) ja utilizado em outros portais, por exemplo Inicio > Fechamento mensal > Relatorios e divergencias > P7. Inventariar primeiro o export vigente de @delpi/plugin-ui; preservar competencia, filtros, acessibilidade, temas e Help.
 
 O PO solicitou expressamente AGUARDAR a devolutiva do rework atualmente em execucao. Nao criar novo prompt Devin nem disparar outro ciclo antes do relatorio. Registrar estas diretrizes para avaliacao e planejamento apos a devolutiva, sem aplica-las retroativamente como falhas do escopo anterior. Estado: PRODUCT_DIRECTION_APPROVED; RUNTIME_PENDING; TEST_NOT_RUN. DRE permanece ultima fase.
+
+
+## 30. GPT REVIEW — REWORK 01 / 25060ff33f — INCONCLUSIVE no resultado operacional
+
+**Data:** 2026-10-26. **SHA remoto conferido em main:** `25060ff33fa324af24349358ecdcbbde0eac30b4`. **Input:** relato de rework RW01-RW08 e duas capturas na Home mensal com seletor vazio; não houve smoke autenticado no navegador pelo executor. **Veredito global nesta rodada: `INCONCLUSIVE` para uso operacional completo**. A correção está comprovada **em código** em partes relevantes, mas o caso real de seleção/consulta de competência ainda não foi validado.
+
+### Corrigido no HEAD (PROVEN_CODE)
+- RW01: seletor deixa de utilizar calendário livre, usa `listCompetences()` pela própria BFF, sem competência de mês corrente presumida.
+- RW02: cockpit key `cockpit:period:nonce`, AbortController e request IDs separados; testes novos exercitam corrida e erro após alternância.
+- RW03: `monthlyPath(base, period, tab)` preserva deep link de competência e aba.
+- RW04: contador de “Documentos a tratar” deixa de equiparar `EXPECTED` com pendências e fica `—` até semântica P2; não inventar contagem.
+- RW05: `DocumentsTab` valida `getCompetence` e oferece `ClosingDocumentsPanel` apenas quando status == OPEN. **Ponto de atenção:** essa condição não deve impedir **leitura histórica** de documentos de competências encerradas. É aceitável bloquear *upload*, não necessariamente toda a aba/documentos; revisar regras P2, ownership e authz antes de avançar.
+- RW06: nenhuma remoção de rotas antigas no diff deste rework; DRE fora do ciclo.
+- Testes `194/194`, estruturais `25/25`, build, lint do diff, deploy canônico, SHA em servidor e health: **REPORTED_BY_EXECUTOR**, não reexecutados por este revisor. Falha flake anterior permanece residual, causa raiz não demonstrada.
+
+### Gap material de runtime evidenciado nas capturas
+
+Na rota `/apps/controllership-finance/closing/monthly-closing`, seletor exibe **“Nenhuma opção encontrada”** e estado **“Nenhuma competência aberta e autorizada para o seu perfil.”**. Isto **comprova estado visível**, não prova por si se:
+1. inexiste competência persistida para esse perfil;
+2. `GET /closing/competences` filtra por OPEN e oculta competência encerrada;
+3. escopo/permission efetivos não permitem retornar competências históricas;
+4. há erro de API/contrato, transformado em lista vazia.
+
+**Não corrigir com período hardcoded, fake, abertura automática ou bypass de Core.** Primeiro verificar corpo/HTTP da BFF autenticada para o usuário autorizado; consultar existência/status da competência 2026-09 pelos contratos, sem expor dados financeiros; confirmar com owner se CLOSED/FINALIZED/archived deve estar no seletor read-only. Esta é uma exigência aprovada pelo PO no §25 (arquivo histórico mensal).
+
+### Evidências faltantes para aceitação operacional
+- `SMOKE_AUTH=TEST_NOT_RUN` — sem comprovação de selecionar setembro, navegar três abas, back/forward, consultar documentos e relatórios por competência, estado 403 e rejeição de upload para mês não OPEN.
+- Publicação por SSH e readiness reportados, mas só há provas de HTTP 200/bundle/container, não outcome autenticado.
+- RW07: `AGENTS.md` citado como authority de deploy pelo executor sem trecho auditado nesta rodada; GO transversal/rollback precisam permanecer vinculados a evidência verificável.
+- A aba Relatórios ainda abre páginas separadas de Baixas/P7 (residual conscientemente deferido pelo PO em §29); breadcrumb/PagePath também planejado para próxima entrega. Não atribuir FAIL retroativo ao rework por essa pendência.
+- Não atualizar manifesto/permissões para DRE neste estágio.
+
+### Próximo gate / orientação
+Sem novo prompt de expansão nem novo deploy a partir desta revisão. Validar BFF e a elegibilidade de competências históricas, distinguir **listar/consultar CLOSED** de **upload permitido em OPEN**, executar smoke autenticado e capturar resultado; então reclassificar o slice. Manter três abas, preservar P2/P3/P4/P5, rotas legadas e DRE por último. Parecer registrado: `INCONCLUSIVE`.
