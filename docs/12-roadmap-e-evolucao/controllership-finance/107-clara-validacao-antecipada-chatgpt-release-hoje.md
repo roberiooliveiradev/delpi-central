@@ -198,3 +198,19 @@ bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check
 11. **Documentação contemporânea**: registrar `G1_OWNER_APPROVALS`, `G2_SIGNOFF`, `G3_OPERATOR_AUTH`, `RELEASE_SHA`, `PROD_MIGRATIONS`, `KEYCLOAK_DIFF`, `DEPLOY/SMOKE OUTCOME`, `CORPUS_VERSION`, `CHATGPT_CONNECTED`, evidence refs e rollback no GitHub. Até executar, todos ficam `PENDING/TEST_NOT_RUN`; não falsificar PASS.
 
 **Executor imediato necessário:** o Operador SSH no host produtivo com acesso IAM, acompanhado por Controladoria/PO para G2 e autorização de release G3. O GPT Arquiteto neste chat possui GitHub de leitura/escrita, **não** ferramenta de SSH para executar comandos no host; esta publicação documenta o GO e handoff, não é aplicação de migrations nem alteração de Keycloak.
+
+
+## Adendo 4 — localização das credenciais Keycloak informada pelo PO
+
+**Data:** 2026-10-25. **Correção factual expressa do PO:** as credenciais de acesso ao Keycloak estão no `infra/.env` do ambiente da plataforma. Classificação `OWNER_REPORTED`, a confirmar **somente no host SSH**; `infra/.env` é arquivo operacional gitignored e **não** está disponível como conteúdo no GitHub. Essa informação **substitui a interpretação de que o Operador necessariamente precisa receber credenciais novas**; não invalida o resultado anterior `FAIL_CLOSED` do `--check`: a combinação `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` de bootstrap tentou login e foi recusada. Isso pode ser divergência de credencial efetiva, realm/URL, modo de autenticação ou conta rotacionada — não assumir qual.
+
+**Próxima ação do Operador, sem solicitar senha em chat e sem exibir o arquivo**:
+
+1. No host `srv-api`, confirmar arquivo `infra/.env` existente, permissões de leitura autorizadas e presença **sem imprimir valores** das variáveis destinadas à administração Keycloak; conferir se `KEYCLOAK_ADMIN` é conta bootstrap ou se a authority atual utiliza `KC_ADMIN_TOKEN`/credencial admin vigente. Nunca fazer `cat`, `grep` de valores secretos em saída, `set -x`, dump de env, logs sensíveis ou commit do arquivo.
+2. Revalidar endereço HTTPS, realm `master` para emissão do token administrativo vs realm `delpi` de destino, credenciais e fluxo exatos do **runbook/provisioner oficial**, sem tentar resetar senha, excluir volume, trocar client existente, contornar Keycloak ou acessar banco diretamente.
+3. Usar a credencial correta **no próprio ambiente autorizado** e rodar `bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check` (READ-only). Registrar somente resultado sanitizado, drift e escopo real do engine compartilhado, sem tokens.
+4. Se `--check` PASS, a pendência de **descoberta de credenciais** pode ser encerrada com evidência. **`--apply` ainda depende de G3/authorization e diff controlado**; login válido não aprova alteração de produção.
+5. Se `--check` persistir FAIL, reportar **diagnóstico tipado e seguro** (sem segredo), owner IAM responsável, ambiente/realm e ação requerida, em vez de afirmar ausência de credenciais. Continuar demais preflights independentes.
+6. Prosseguir G1/G2/G3 e deploy conforme Adendo 3, sem pedir novo prompt técnico.
+
+**Estado:** `CREDENTIAL_LOCATION=OWNER_REPORTED`, `VALID_ADMIN_LOGIN=TO_VERIFY`, `KEYCLOAK_CHECK=FAIL_CLOSED (previous run)`, `KEYCLOAK_APPLY=NOT_RUN`, `PROD_DEPLOY=NOT_DEPLOYED`; nenhuma credencial foi lida ou compartilhada pelo GPT nesta etapa.
