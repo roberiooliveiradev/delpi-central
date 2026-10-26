@@ -297,3 +297,14 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Artefatos: doc 157; scripts order_robustness_probe.py + order_robustness_aggregate.py; seam EVAL_PERM_ORDER em instruction_conflict_eval.py; evidence order-robustness-*.{json,jsonl} + order-robustness-e2e/*.json.
 - Próximo bounded: comparação de capacidade de modelo na matriz congelada (autorização separada), ou decisão de arquitetura sobre mitigação de recência no contrato de superfície — sem política de ordem por provider.
 - DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
+
+## 2026-10-26 — DELIA-C3-DOWNSTREAM-CAPABILITY-ARGUMENT-FIDELITY-CAUSAL-EVAL-01 (doc 158)
+
+- Escopo: caracterização causal downstream — 4 braços harness-only (A natural, B good-group, C good-capability, D good-arguments), 11 cenários record × 5 reps, interleaved, superfície saudável verificada (4 grupos/41 caps, 0 falhas), bearer fresco por turn (JWT TTL 300s), spy de invokes com captura de erro, flags controls_engaged.
+- Resultado: 220 runs válidos; PASS apenas via exact-code (1/55 por braço controlado); delpi invocado 9× (B2/C4/D3), 6 rejeitados por goal_evidence_relevance vazio; FOREIGN_DIVERT dominante ~37/41 engaged em C/D; capability abstain 43% em B; admission surface_inquiry/hypothetical ~50% das turns.
+- Veredito: primeiro bloqueio downstream com grupo correto = desvio semântico native_assessment→foreign_selection (~90% dos turns engajados); capability abstention 43%; relevance judgments vazios ~67% dos invokes; argument fidelity real mas secundária; owner REFUTADO como gargalo.
+- Segurança: 0 bypass AuthZ (negações = TTL expirado → AUTHZ_DENIED truthful), 0 ACT/WRITE, 0 registro fabricado apresentado como real; artefatos limpos.
+- Artefatos: doc 158; scripts downstream_causal_eval.py + downstream_causal_aggregate.py + armd_stage_debug.py; evidence downstream-causal-runs.{json,jsonl} (sanitizados).
+- Drift documentado: 2 restarts em massa da stack (api-delpi zombie → openapi_document_unavailable → delpi ausente da superfície; mcp:davi down), JWT TTL vs spy success-only (batches 1–2 parcialmente invalidados, rerun em superfície saudável), senha dev-portal resetada pelo reimport do realm (restaurada), WSL blips.
+- Próximo bounded: revisão de contrato native_assessment/foreign_selection (por que foreign_evidence_required dispara em record asks diretos) + comparação de capacidade de modelo na matriz congelada — autorização separada; nenhum patch de ordem/instrução justificado.
+- DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
