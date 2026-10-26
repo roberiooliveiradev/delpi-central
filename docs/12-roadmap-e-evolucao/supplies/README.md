@@ -16,6 +16,12 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076.R3 — UX compacta e auditoria de valores (2026-10-26)
+
+O PO solicitou evolução **UX-first**, sem iniciar por alteração de cálculo: **perspectivas IBGE/Comex/PTAX no hero, filtros e KPIs por métrica, um único painel alternável Gráfico | Tabela | Comparação válida, estados vazios específicos e menos rolagem**. As capturas de produção comprovam IPP visível e seções legadas sem valores; uma investigação de payloads/DB/SIDRA é obrigatória antes de alterar regras numéricas. **R3 = TARGET**, não implementada pelo documento. [Wireframes desktop/mobile, especificação C01–C18, estados, RQ/AC e sequência UX → data audit → fix → deploy](./PROC-0076-R3-WIREFRAMES-UX-DATA-VALIDATION-20261026.md).
+
+---
+
 ## 1. Fonte de verdade e regra de execução
 
 A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cursor`: instruções oficiais → regras transversais → ADRs/contratos/código atual → testes → documentação/roadmap. Se um documento histórico divergir do runtime atual, registrar e corrigir o drift; não adaptar o código para cumprir um plano obsoleto.
