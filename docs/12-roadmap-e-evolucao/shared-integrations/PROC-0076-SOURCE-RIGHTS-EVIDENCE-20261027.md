@@ -69,10 +69,41 @@
 | Shockmetais | Termos/licença não comprovados; fora do catálogo |
 | Scraping de qualquer fonte | Proibido por política; nenhum crawler existe no código |
 
-## 4. Rastreabilidade
+## 4. Fontes R2 (2026-10-26/27) — MDIC, IBGE, BCB
+
+### 4.1 MDIC — Comex Stat (`mdic-comex-stat`)
+
+| Uso | Veredito | Evidência |
+|---|---|---|
+| collect (CSV bruto oficial) | **PASS** | Base de dados bruta pública (dados abertos, Lei de Acesso à Informação); arquivo oficial `IMP_{ano}.csv` |
+| store (agregado mensal) | **PASS** | Dados abertos governamentais, sem restrição de armazenamento |
+| derive (US$/t médio FOB) | **PASS** | Derivação aritmética sobre agregados públicos; nunca apresentada como cotação spot |
+| internal_display | **PASS** (condicionado à homologação de NCMs) | Exibição interna com atribuição MDIC; a *lista* de NCMs exibidas depende de homologação de Compras — `comex_ncm_allowlist` nasce vazia e cada série individual exige `approved_by`/`approved_at` |
+
+- Fonte: https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta
+- **Ressalva operacional (2026-10-26):** o host de download `balanca.economia.gov.br` está com o **certificado TLS expirado** (`*.economia.gov.br`, `notAfter = 2026-10-03`) e o portal `comexstat.mdic.gov.br` redireciona para `comexstat_manutencao.html` — o sistema Comex Stat está em manutenção do lado da fonte. Nenhum bypass de TLS foi implementado; o feed falha fechado com `EXTERNAL_DATA_PROVIDER_UNAVAILABLE`. Pipeline completo testado; revalidar quando a fonte voltar.
+
+### 4.2 IBGE — IPP via SIDRA (`ibge-ipp-sidra`)
+
+| Uso | Veredito | Evidência |
+|---|---|---|
+| collect (API SIDRA) | **PASS** | API pública oficial `apisidra.ibge.gov.br`; tabela 6903 confirmada por consulta real |
+| store | **PASS** | Dados abertos governamentais |
+| derive | **PASS** | Série publicada como índice/variação; BFF não a converte a moeda |
+| internal_display | **PASS** | Exibição interna com atribuição IBGE |
+
+- Contrato congelado (validado em chamada real, 2026-10-26): tabela **6903**, classificação **842** (CNAE 2.0), atividade **46641** (Metalurgia), variáveis **10008** (IPP número-índice, dez/2018=100) e **1396** (IPP variação M/M-1, %).
+- **Prova de integração real:** ingestão `--feed ipp-monthly` contra o SIDRA ao vivo persistiu 12 observações (jan–jun/2025) com `quality_status=validated`; re-execução idempotente (`skipped=12`).
+
+### 4.3 BCB — PTAX (`bcb-ptax`)
+
+Inalterado desde §1: direitos aprovados, **egress bloqueado por HTTP 403 (WAF)** — impedimento operacional; feed permanece OFF; módulo de câmbio degrada de forma independente.
+
+## 5. Rastreabilidade
 
 - Catálogo seed: `external-data-api/migrations/V002__seed_market_data_catalog.sql`
 - Proveniência LME: `external-data-api/migrations/V003__pink_sheet_lme_provenance.sql`
 - Refino de escopo R1.1: `external-data-api/migrations/V004__pink_sheet_internal_display_review.sql`
+- Fontes/tabelas R2: `external-data-api/migrations/V005__r2_comex_ipp_market_intelligence.sql`
 - Guarda de ingestão: `market_data_ingestion.py` exige fonte ativa/licenciada + feed habilitado por env
 - Atribuição ao usuário: contrato BFF → `meta.source`/`attribution` exibido na página e no glossário

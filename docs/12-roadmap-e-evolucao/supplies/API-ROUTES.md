@@ -72,6 +72,9 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/market-intelligence/summary` | `supplies.access` | external-data-api via S2S; média/variação/cobertura/frescor calculados no BFF com `Decimal`; unidade corrigida (`BRL/metric ton` quando convertido, com `native`/`conversion` auditáveis); `freshness` por cadência de publicação do provedor — consulta histórica não vira `stale` | **IMPLEMENTADO** (PROC-0076.R1) |
 | GET | `/market-intelligence/series` | `supplies.access` | external-data-api via S2S (janela ≤366 dias chunked); granularidade day/month/year; ponto BRL = observação convertida (nunca taxa sintética); `unit`/`native_unit`/`freshness` no envelope | **IMPLEMENTADO** (PROC-0076.R1) |
 | GET | `/market-intelligence/monthly-averages` | `supplies.access` | médias mensais paginadas; `fx_rate` = média PTAX do mês, `null` sem câmbio válido (nunca zero); `partial_reason` distingue `fx_missing` | **IMPLEMENTADO** (PROC-0076.R1) |
+| GET | `/market-intelligence/imports/series` | `supplies.access` | external-data-api `/v1/market-data/comex/imports` via S2S; NCM validada no catálogo (404 fora da allowlist); agregação mensal/anual de dimensões país/UF com totais FOB e peso — `unit_value_usd_per_t = ΣFOB×1000/ΣKG` (método `sum_fob_usd_x_1000_div_sum_net_weight_kg/v1`); filtros `country_code`/`state_code`; freshness por cadência MDIC | **IMPLEMENTADO** (PROC-0076.R2) |
+| GET | `/market-intelligence/producer-prices/series` | `supplies.access` | external-data-api `/v1/market-data/producer-prices/observations` via S2S; `series_id` validada no catálogo (404 fora); valor nativo IPP (índice/variação — nunca convertido a moeda); `table_code`/`activity_code`/`variable_code`/`base_reference` no envelope; freshness por cadência IBGE | **IMPLEMENTADO** (PROC-0076.R2) |
+| GET | `/market-intelligence/fx/series` | `supplies.access` | external-data-api `/v1/market-data/fx/observations` via S2S; `fx_kind` ∈ `ptax_closing_sell`/`ptax_closing_buy`; granularidade day/month/year; dias sem boletim ausentes (sem forward-fill) | **IMPLEMENTADO** (PROC-0076.R2) |
 
 A lista acima deve ser atualizada sempre que uma rota for realmente adicionada/removida do runtime. Não promover status por intenção de roadmap.
 
@@ -181,6 +184,10 @@ Falha de AuthZ nunca vira partial success. Recurso principal inexistente continu
 | contrato de direitos do produtor não comprovado (V004 pendente/divergente) | 503 `contract_not_ready` |
 | fonte/ingestão/storage indisponível | 503 `external_data_unavailable` |
 | instrumento desconhecido / sem observações | 404 / `data_status=no_data` |
+| NCM fora da allowlist homologada (R2) | 404 `not_found` — nunca expõe existência de série |
+| série IPP desconhecida/inativa (R2) | 404 `not_found` |
+| `EXTERNAL_DATA_UNKNOWN_SERIES` upstream (R2) | 404 `not_found` |
+| fonte R2 sem `internal_display` aprovado | 503 `source_use_not_approved` (mesma regra) |
 
 O bloqueio de licença **nunca** vira 403 de autorização do usuário.
 `/filters` expõe `selectable: false` em instrumentos/fontes sem
