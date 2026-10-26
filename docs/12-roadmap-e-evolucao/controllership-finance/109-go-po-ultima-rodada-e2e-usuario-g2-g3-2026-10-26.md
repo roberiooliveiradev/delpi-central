@@ -69,3 +69,12 @@ esta autorização. Evidência: Doc 108 §Rodada 4 +
 Decisões pendentes legítimas: aceite humano G2 (PO/Controladoria),
 autorização operacional G3 (Operador SSH), credencial Keycloak prod
 (owner IAM), paridade R01–R15 (owner/G5/G6). Nenhuma foi simulada.
+
+
+## Atualização formal: G2 assinado pelo PO com ressalvas — 26/10/2026
+
+**Decisão posterior à Rodada 4:** o PO confirmou expressamente `G2 = ACCEPT_WITH_RESIDUAL` para o escopo **local** demonstrado P1–P6 + CLARA, mantendo P7, relatórios oficiais e G1 sob owners externos, e aprovando a semântica V1 (aceite por área pode ocorrer com clarificação aberta, mas **C2 não pode concluir** enquanto houver clarificação). Referência do ato formal: `CF-PROC0072-G2-ACCEPT-WITH-RESIDUAL-20261026`; detalhes, escopo, fonte e evidências: [Doc 108, decisão formal](./108-homologacao-guiada-g2-g3-2026-10-26.md).
+
+**Status substitutivo:** `G2_PO_SIGNOFF=ACCEPT_WITH_RESIDUAL` — NÃO manter como PENDING a assinatura **do PO** nesta versão. A assinatura distinta da Controladoria, caso requerida pela autoridade daquele processo, não foi capturada; nunca fabricá-la. `G3_OPERATOR_SIGNOFF=PENDING`, `PROD_MCP_OAUTH_SMOKE=TEST_NOT_RUN`, `CHATGPT_CONNECTED=TEST_NOT_RUN`, `G1_OWNER_PENDING`.
+
+**Autorização de próximo passo:** organizar imediatamente um único handoff ao Operador SSH + owner IAM. O G3 requer preflight/assinatura operacional próprios e revisão transversal do engine Keycloak antes de nova alteração em produção. Não implementar ou implantar por inferência da aceitação G2. Ver [Doc 110](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md).
