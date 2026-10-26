@@ -354,3 +354,57 @@ Refinamento de apresentação/linguagem da Visão geral conforme §14 — **estr
 **Honestidade preservada:** `—` continua = indisponível/sem contrato, nunca zero; `no_applicable_packages` não afirma preparação pendente; Atividades recentes segue identificada como escopo das conferências (auditoria P3); conclusão sem botão; envio navega à página real.
 
 **Evidência:** Vitest `MonthlyClosingPage.test.tsx` 31/31 (inclui expansão in-place e fallback sem código cru); suíte do plugin 213/213; `tsc --noEmit` e ESLint limpos; build federado OK.
+
+
+## 16. Documentos e interações — proposta de wireframe V0.1 (26/10/2026)
+
+**Estado:** `DESIGN_PROPOSED / PENDING_PO_APPROVAL / NO_RUNTIME_GO`. Escopo somente **segunda aba do Fechamento Mensal**. Esta proposta não considera a mera passagem à página seguinte como aceite formal da V0.3 de Visão geral; homologação mobile/temas continua residual.
+
+### 16.1 Propósito e fluxo de uso
+O analista escolhe mês; encontra **documentos exigidos para aquela referência**, seus arquivos/versões efetivamente enviados e **solicitações em andamento**. Pode anexar quando autorizado, abrir **detalhe do documento** (deep route contextual mantendo mês/aba), acompanhar comentários/solicitações, enviar nova versão e verificar atendimento. Uma exigência é distinta de um arquivo, que é distinto de um aceite. Se não houver exigências, a aba continua útil e vazia, sem criar cadastro mestre automaticamente. **Cadastro global dos tipos e vigências é Manage/Admin em páginas próprias, não nesta aba.**
+
+### 16.2 Layout proposto — lista
+```text
+[PagePath: Início > Fechamento mensal > Documentos e interações]
+[COMPETÊNCIA COMPARTILHADA YYYY-MM] [Visão geral | Documentos e interações | Relatórios e divergências]
+Documentos deste mês                         [Pesquisar documento] [Filtro: Todos/...] 
+[Exigidos N*] [Recebidos N*] [Aguardando ajuste N*]  (* só com fonte/semântica validada)
+[Lista/tabela responsiva por DOCUMENTO: nome | exigência/estado | versão | última alteração | ação "Ver documento"]
+[Estado vazio: "Nenhum documento exigido para este fechamento"; anexos avulsos só por contrato/owner]
+[Solicitações de ajuste e mensagens: resumo de solicitações reais | ação "Ver conversa" no detalhe]
+```
+**Evitar** upload genérico solto no topo e botão que saia para checklist legado. Em vez disso **anexação contextual** pelo documento/detalhe. Preservar upload atual até substituição comprovada e homologada. Não exibir métricas inventadas. Listagem ordenada e filtro devem preservar referência na URL e teclado.
+
+### 16.3 Detalhe do documento e interações — deep route, não quarta aba
+- Breadcrumb: Fechamento mensal > Documentos e interações > Documento. Ao voltar, competência, filtro, posição/foco restaurados.
+- Desktop: painel esquerdo com prévia PDF inline, download e seletor de versões; painel direito com thread de comentários, pedidos de ajuste e respostas, com identificação de autor e data; seção de histórico de eventos embaixo.
+- Mobile: prévia e thread empilhadas; botões e áreas de toque adequados; sem modal extenso.
+- A Controladoria pode anexar/enviar nova versão e responder quando autorizada; a Contabilidade/DRE recebe apenas PDFs liberados e pode baixar, comentar e solicitar ajuste quando o gate da sua audiência existir. **Mesmo histórico/versões autorizados, projeções por audiência diferentes**. DRE continua última fase.
+- Pedido `ABERTO → RESPONDIDO/AGUARDANDO_CONFERÊNCIA → ATENDIDO` é fluxo ilustrativo, **não enum/contrato aprovado**. **Resposta não encerra automaticamente**; não inventar estados persistentes ou WebSocket antes do gate.
+- `ATTACHED != VALIDATED`, complementos não equivalem a aceite formal P2/P5; preservar as versões e snapshot de fechamentos finalizados.
+
+### 16.4 Linhas e campos mínimos
+Documento (nome e breve orientação), exigência aplicável à competência (sim/não/sem exigências), arquivo enviado e versão, situação de conferência/ajuste, última interação comprovada, ação contextual de detalhe. Sempre diferenciar **documento exigido**, **arquivo anexado**, **validação do anexo**, **liberação DRE** e **pacote formal**. Se backend não fornece dado, usar `—` + ajuda, não inferir.
+
+### 16.5 Reuso do @delpi/plugin-ui a verificar
+- PagePath: `createDashboardPagePath`; título/ajuda: `createDashboardPageHero`, `TitleWithHelp`.
+- Listagem: `DataTableSection` ou `DataRecordCard` conforme padrão responsivo real; `EmptyState`/`EmptyGuidance`, `StatusBadge`, `ActionButton`, `FieldLabel`, filtros/forms do kit.
+- Detalhe: `BackLink`, `SectionCard`, `Timeline` ou `EventsSection`, campos de anexo/preview PDF e composição lado a lado **somente depois de confirmar exports**; identificar kit real de conversas e versionamento (não supor que exista).
+- Visitar `plugins/plugin-ui/src/index.ts`, catálogo `plugins/plugin-ui/docs/component-catalog.md`, `visualComponents.ts`, demos e Portais pares; preferir reuso real à duplicação. Não importar application/domain de Minhas Solicitações.
+
+### 16.6 Contratos/gates pendentes
+- Cadastro mestre effective-dated e quais documentos são aplicáveis ao mês (P2/P6); sem criar template por mês.
+- Associação de upload a tipo/documento e competência quando checklist está vazio, preservando evidências antigas.
+- Comentários, solicitações de ajuste, versões, audiência e notificações/WebSocket, backend AuthZ e auditoria (sem inventar endpoints).
+- Regras de alteração para competência aberta versus histórica; integração P5 sem confundir anexo/validação/envio.
+- As três abas existem; a página detalhe é deep route e não altera a navegação principal.
+- Eventuais decisões de persistência, owner, integração e breaking change seguem `DECISION_REQUIRED` antes de implementar.
+
+### 16.7 Questões para o PO na validação
+1. A lista principal mostra **uma linha por documento exigido**, com anexos/versões dentro do detalhe, ou agrupa documentos em cartões?
+2. Upload ocorre prioritariamente no detalhe do documento, evitando dropzone genérico na aba?
+3. Solicitações de ajuste devem ter pequeno resumo na lista, com toda conversa dentro do detalhe?
+4. PDF e conversa lado a lado no desktop, histórico abaixo; no celular um embaixo do outro?
+5. Quando não houver documento exigido, deve haver **anexo avulso** no mês ou somente estado vazio até Manager cadastrar tipo aplicável? (Depende também de contrato/owner.)
+
+**Próximo passo:** PO revisa a composição e escolhas antes do freeze visual; depois inventário técnico, RQ/AC, Help e CLARA e brief page-by-page. Nenhum código/deploy autorizado por esta proposta.
