@@ -110,11 +110,39 @@ independentes do diagnóstico.
   não enumera fornecedores.
 - Falha de autorização no BFF não consulta a REST (fail-closed).
 
-## 6. Deploy e runtime
+## 6. Deploy e runtime (2026-10-26)
 
-_Preenchido após deploy canônico (ver Execution Report no chat)._
-Serviços materialmente afetados: `api-delpi` (contrato aditivo),
-`supplies-api` (rota nova), MFE `supplies` (bundle federado).
+Deploy canônico `up-prod-sequential.sh --build api-delpi supplies-api supplies`
+em `srv-api` (`d86d49ac20`):
+
+- `infra-api-delpi` → `sha256:6db42cc838fb` — `delpi-api-delpi` Up (healthy).
+- `infra-supplies-api` → `sha256:b7f93e98b080` — `delpi-supplies-api` Up
+  (healthy); `GET /suppliers/integration-status` sem bearer → **401**
+  (fail-closed, idêntico a `/suppliers`).
+- `infra-supplies` → imagem 2026-10-26T13:53Z — `delpi-supplies` Up; bundle
+  federado servindo `App-CUbJ58vD.js` (hash idêntico ao build local).
+
+Diagnóstico real executado no container deployado (read-only):
+
+```json
+{
+  "configuration": "ok",
+  "connectivity": "ok",
+  "authentication": "failed",
+  "authentication_http_status": 401,
+  "environment": "production",
+  "suppliers_read": "not_checked",
+  "create_gate": "enabled",
+  "update_gate": "enabled",
+  "write_target_guard": "ok",
+  "write_validation": "not_tested",
+  "overall": "upstream_pending",
+  "checked_at": "2026-10-26T13:53:50Z"
+}
+```
+
+`DEPLOY=PASS` · `DIAGNOSTIC_ENDPOINT=PASS` · `UPSTREAM=PENDING` ·
+`WRITE_VALIDATION=NOT_TESTED` · `END_TO_END=INCONCLUSIVE`.
 
 ## 7. Rollback
 
