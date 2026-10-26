@@ -660,3 +660,84 @@ O Doc 91 aprovou **consulta/download apenas** e **sem aceite** para Contabilidad
 ### 15.4 Próximo refinamento visual
 
 No Wireframe 02, desenhar duas variantes reutilizando lista/detalhe: a) entregador autorizado, com upload e acompanhamento; b) Contabilidade, sem controles de upload/aceite, com consulta/download e histórico visível. A área de **nova interação escrita** permanece marcada `TARGET / DECISION_REQUIRED` até contrato. A decisão das quatro versus cinco abas da mesa Controladoria segue independente e ainda em revisão.
+
+
+## 16. Decisão funcional do PO — acesso de Contabilidade/DRE SOMENTE a documentos anexados
+
+**Data:** 2026-10-26. **Status:** `PRODUCT_DIRECTION_APPROVED` para separação de experiências; `TARGET / DECISION_REQUIRED` para AuthZ, menu/entrada restrita, nova capability excepcional e contrato de interação. **Evidência:** manifestação explícita do PO no chat, incluindo correção enfática: **“DRE NÃO ACESSA RELATÓRIOS, APENAS OS DOCS ANEXADOS!”**. Esta seção complementa o [Doc 91](./91-ciclo3-contabilidade-acesso-documentos-historicos-gate.md), sem alterar o manifesto, o Core ou qualquer runtime. `IMPLEMENTATION_AUTHORIZED=NO`.
+
+### 16.1 Separação funcional inequívoca
+
+| Capacidade/superfície | Controladoria, conforme escopo e elegibilidade | Contabilidade/DRE restrito |
+|---|---|---|
+| Consulta de evidências anexadas e liberadas | Sim, conforme acesso autorizado | **Sim**: somente documentos efetivamente anexados/liberados ao destinatário e competência autorizados |
+| Download | Autorizado por recurso/versão | **Sim**, com BFF reautorizando recurso/versão e auditando download |
+| Comentar documento | Quando autorizado | **Sim**, no item/versão liberados, sob contrato de interação |
+| Solicitar complemento/correção | Quando autorizado | **Sim**, sem transformar solicitação em rejeição ou aceite formal P2/P5 |
+| Anexar/substituir/cancelar | Somente responsável elegível e regras P2 | **NÃO** |
+| Validar/rejeitar evidência P2 | Somente validador elegível | **NÃO** |
+| Pacote/aceite/revisão P5 | Conforme escopo e elegibilidade | **NÃO** na V1; consulta documental não é review de pacote |
+| Relatórios TOTVS, reproduções R01–R15, conferências/paridade e divergências operacionais | Conforme autorização | **NÃO: jamais apresentar ou expor DTO/API de relatórios nesse perfil** |
+| Administração/catálogos, tarefas operacionais internas, estoque/custos/baixas | Conforme acesso autorizado | **NÃO** |
+
+**Exigência mandatória do PO:** não incluir **Relatórios e divergências** no menu, nas abas, nos cartões, na busca, nos links diretos nem em respostas BFF para o perfil de Contabilidade/DRE. Não mostrar dados de relatórios nem mesmo em agregados, contagens ou previews. A checagem é de backend por effective permissions Core AND recipient/resource scope AND business rule, fail-closed — esconder item na UI não autoriza API.
+
+### 16.2 Duas experiências dentro do mesmo Portal, dados documentais compartilhados
+
+```text
+Minha DELPI / Portal Controladoria & Finanças
+       ├─ Controladoria, escopo operacional autorizado:
+       │  Fechamento mensal → Visão geral / Documentos e interações
+       │                     / Relatórios e divergências / outras visões aprovadas
+       └─ Contabilidade/DRE, escopo documental restrito:
+          Fechamento mensal → Documentos anexados e liberados
+                             [competência autorizada]
+                             [lista de arquivos] [abrir] [baixar]
+                             [comentário] [solicitar complemento] [histórico]
+                             SEM upload; SEM relatórios TOTVS; SEM análise P3/P4;
+                             SEM aprovação P2/P5; SEM administração.
+```
+
+**Uma mesma origem documental P2/P5, sem duplicar arquivo/histórico.** A vista restrita não deve exibir como arquivo disponível um item apenas `EXPECTED`: esses itens podem constar no checklist interno da Controladoria, mas **a Contabilidade visualiza apenas anexos liberados para sua audiência**, na competência/versão permitida. “Liberado” exige estado/ato verificável definido pelo owner, não implica `PACKAGE_SUBMITTED_FOR_REVIEW` por conveniência.
+
+### 16.3 Interações aprovadas e notificação — regra de audiência a fechar
+
+O PO determinou que Contabilidade/DRE pode **comentar e solicitar complementos**, e essas interações geram **mensagem/notificação** para as demais pessoas com acesso ao Portal, **excluindo a audiência Contabilidade/DRE**. Este requisito é direção de produto, **não autorização para notificação irrestrita a todos os usuários com `.access`**.
+
+**Decisão contratual pendente:** recipients efetivos devem ser resolvidos por Core/ownership e pelas competências/itens/recipients autorizados. Não enviar conteúdo de documento a usuários sem vínculo legítimo, não notificar quem não pode visualizar o item, não usar lista de usuários arbitrária por setor, não conceder acesso por notificação. Registrar quem recebeu e o resultado da entrega, auditando sem expor dados sensíveis. Usar capability de notificações da Minha DELPI já existente; reusar eventos/clarifications P2/P5 somente se seus contratos forem adequados. O comentário é ação WRITE governada, distinta de download/consulta e de validação P2/revisão P5.
+
+**Diferença importante:** o histórico pode ser compartilhado dentro do mesmo documento autorizado, mas os destinatários da **notificação** podem ser subconjunto do grupo de leitores. A Contabilidade tem permissão de escrever comentários/solicitações no contrato de interação, sem permissão para upload nem para relatórios.
+
+### 16.4 Reconciliação de manifesto e proteção de entrada
+
+O manifesto atual `plugins/controllership-finance/controllership-finance.manifest.json` declara **apenas `controllership-finance.access` e `controllership-finance.manage`**. O [Doc 91](./91-ciclo3-contabilidade-acesso-documentos-historicos-gate.md) registra aprovação funcional prévia de **página/permission específica**, mas a exception ao freeze e a implementação ficaram adiadas. **Não alterar** o manifesto por esse wireframe. A exigência de que a área restrita apareça como **Fechamento mensal** para a audiência de Contabilidade precisa de gate de Core/launcher, guard, BFF, contratos e testes, inclusive negando rotas e endpoints TOTVS mesmo que URLs sejam conhecidas.
+
+### 16.5 Wireframe restrito — proposta
+
+```text
+[TOPBAR DO PORTAL AUTORIZADA]
+Fechamento mensal                             [? Ajuda]
+Documentos disponibilizados para Contabilidade
+[Competência existente/autorizada ▼] [Última atualização]
+[Buscar documento] [Tipo/área] [Somente arquivos liberados]
+┌────────────────────────────────┬────────────────────────────────────┐
+│ DOCUMENTOS ANEXADOS            │ DETALHE DO DOCUMENTO               │
+│ Documento, versão, data, origem│ Arquivos efetivamente liberados    │
+│ Situação de complemento        │ Visualização / download autorizado │
+│ [Abrir]                        │ Comentários e solicitações         │
+│ ...                            │ Histórico auditável               │
+│                                │ [Comentar] [Solicitar complemento] │
+└────────────────────────────────┴────────────────────────────────────┘
+NÃO renderizar relatórios TOTVS, divergências operacionais ou botões de upload.
+```
+
+### 16.6 Pendências e decisões técnicas
+
+- `D-DRE-ACCESS-01`: **PRODUCT_APPROVED**: acesso somente documental, sem relatórios nem outras bancadas.
+- `D-DRE-DOC-01`: **PRODUCT_APPROVED**: consulta/download dos anexos liberados, comentar e solicitar complementos, sem upload/aceite.
+- `D-DRE-NOTIFY-01`: **PRODUCT_DIRECTION_APPROVED**: comunicar interações para não-DRE; **DECISION_REQUIRED** para regra exata de recipients, visibilidade por item/competência, notificação e auditoria.
+- `D-DRE-MANIFEST-01`: exceção de capability/rota específica no Doc 91, **DEFERRED / TRANSVERSAL_GATE_PENDING**; nenhuma permission nova, branch de menu ou BFF atualizados neste ato.
+- `D-DRE-COLLAB-01`: comentário/solicitação são mutações governadas, modelo e APIs **TO_INVENTORY / DECISION_REQUIRED**.
+- `IMPLEMENTATION_AUTHORIZED=NO`: design/documentação somente.
+
+**Próximo wireframe:** detalhar somente a **página restrita de documentos anexados para Contabilidade/DRE**, sem qualquer referência visual a relatórios TOTVS. Depois validar a jornada interna de entrega da Controladoria e a visibilidade cruzada do histórico.
