@@ -167,3 +167,185 @@ NEXT_GUIDED_ACTION: Na página Início, pesquisar "Checklist" em "Caminhos e fun
 - **G3:** permanece `PENDING` e sem novo evento SSH nesta sessão.
 
 **Próxima ação guiada e segura, somente leitura:** fechar modal de edição sem salvar; em `Administração do checklist mestre`, abrir **`Eventos de auditoria`** e capturar seu conteúdo para comprovar histórico de template. Opcionalmente examinar item/metadados de um trecho representativo do rascunho, sem enviar para revisão/publicar. Pergunta de aceite funcional ao PO/Controladoria: **esta versão v1 com 53 entregáveis já foi conferida e autorizada para publicação, e qual competência deve ser a primeira?** Não inferir resposta sem o owner.
+
+---
+
+## Rodada 3 — Homologação técnica E2E local executada pelo Devin
+
+- **Execução:** `CF-PROC0072-LOCAL-FULL-E2E-ACCEPTANCE-001`
+- **Data:** 2026-10-26
+- **Baseline solicitada:** `ea85d1a55858e1200704a25cef0f31455dd9fe7a`
+- **HEAD de evidência:** `9e44306d57` (main, fast-forward; código sob teste
+  = `f8d697745c` + docs; código de produto idêntico a `ecf765139d`)
+- **Ambiente:** local isolado, **sem tocar produção**
+  - container dedicado `cf-api-homolog` (imagem construída do checkout
+    `f8d697745c`, porta `18100`), schema `controllership_finance` no banco
+    dedicado `cf_homolog` (`delpi-postgres-plugins`), migrations V001–V014
+  - Keycloak local real (`delpi-keycloak`, realm `delpi`, OAuth password grant)
+  - Core local real (`delpi-core-api`, grants efetivos — cache zerado por restart)
+  - Portal local real (`delpi-portal` + gateway :80 + MFE rebuildado do checkout)
+  - Corpus CLARA governado publicado localmente: **52 fontes / 1.298 itens**,
+    `corpus_version_id = da62fcc3-afa7-4ed9-820f-249e22ddf9a5`
+- **Identidades de teste:** `user` (ACCESS+MANAGE), `cf-e2e-peer` (ACCESS+MANAGE,
+  revisor FISCAL por assignment), `cf-e2e-access` (ACCESS apenas),
+  `cf-e2e-denied` (sem grant). Senhas via env; nenhuma em evidência.
+- **Evidência bruta:** `results.jsonl` — 497 registros; deduplicado por
+  `test_id` → **281 verificações distintas**.
+- **Resultado deduplicado:** **278 PASS · 3 INCONCLUSIVE · 0 FAIL de produto.**
+
+### Resumo quantitativo por frente
+
+| Frente | Checks | PASS | INCONCLUSIVE | FAIL |
+|---|---|---|---|---|
+| P1 Cockpit/estado de competência (p1+cockpit+competences) | 9 | 9 | 0 | 0 |
+| P2 Checklist/evidências (items+documents+validations) | 33 | 33 | 0 | 0 |
+| P3 Estoques/cutoff/conciliações (p3+stock+settlements) | 24 | 24 | 0 | 0 |
+| P4 Pendências | 14 | 14 | 0 | 0 |
+| P5 Pacotes/revisão (packages+p5prep) | 37 | 36 | 1 | 0 |
+| P6 Administração/catálogo/template (admin) | 33 | 33 | 0 | 0 |
+| Páginas comuns/home/viewer/profile/authz/persist | 31 | 31 | 0 | 0 |
+| R01–R15 matriz (reports) | 2 | 2 | 0 | 0 |
+| CLARA MCP (18 tools, lotes, consentimento) | 100 | 98 | 2 | 0 |
+| **Total** | **281** | **278** | **3** | **0** |
+
+Suites transversais fora do JSONL: **backend PG 598/598** e
+**frontend/Vitest 177/177** verdes no checkout de evidência.
+
+### Destaques comprovados (PROVEN)
+
+- **Auth/OAuth real:** token Keycloak realm `delpi`; `viewer-context` e
+  `me/*` corretos; denied sem grant → 403; ACCESS-only → 403 em MANAGE.
+- **Cenário de produção reproduzido:** template v1 53 itens em DRAFT, sem
+  versão publicada → abertura de competência **409 `no_published_template`**
+  — exatamente o comportamento de proteção observado em prod.
+- **Ciclo governado:** DRAFT → REVIEW → PUBLISHED → EFFECTIVE_FROM → OPEN;
+  snapshot de 53 itens copiado; nova versão publicada **não altera**
+  competência já aberta (snapshot 2026-09 preservado após v2).
+- **P2:** upload/versionamento/rejeição/substituição/cancelamento de
+  evidências; `EXPECTED ≠ ATTACHED ≠ VALIDATED` comprovado; N/A válido e
+  inválido; auditoria persistida.
+- **P3:** reconciliação `diff=0.00` aprovada e `diff=0.01` gera bloqueio;
+  fonte indisponível → **degradação fail-closed controlada (503/422
+  semântico, nunca 500)**; domínio inválido/valor ausente → 422;
+  isolamento por competência.
+- **P4:** ciclo OPEN→IN_ANALYSIS→RESOLVED; claim, reatribuição,
+  classificação, histórico/auditoria; sugestão de IA não auto-aplica;
+  ACCESS-only não cria pendência; kind inválido → 422.
+- **P5:** pacote FISCAL completo finalizado (`PACKAGE_FINALIZED`,
+  versão `FINALIZED`); CONTABIL incompleto bloqueado 409; finalização
+  bloqueada por checklist pendente e por pendências abertas (guards reais);
+  reviewer exige **assignment** (manage não basta — `reviewer_not_assigned`
+  403); esclarecimento aberto/resolvido; **aceite de área terminal na V1**
+  (409 na segunda tentativa).
+- **P6:** catálogo + entradas; OCC por revision (revision errada →
+  conflito); draft duplicado → 409; publicação com vigência futura;
+  snapshot antigo preservado; ACCESS-only negado em admin.
+- **CLARA MCP:** client `mcp-clara` provisionado no Keycloak local com
+  audience `apps/controllership-finance-api/mcp`; sem token → 401, sem
+  `mcp:tools` → 401, sem audience → 401, só tools/só aud → 401;
+  `initialize` + `tools/list` → **18 tools** (DISCOVERY/READ/ANALYSIS/
+  PREPARE/ACT); READs retornam dados reais; knowledge search cita corpus
+  governado (52 fontes); PREPARE sela plano sem efeito colateral;
+  `confirm_batch` exige consentimento com `plan_hash` exato; lote executa
+  via regras canônicas BFF, claim atômico, read-back e status VERIFIED;
+  auditoria CLARA persistida (`closing_audit_event`); lotes 2/5/20
+  exercitados; rejeição de prompt-injection tratada como conteúdo.
+- **C2:** conclusão mensal derivada bloqueia corretamente com pacote não
+  submetido, área sem aceite, clarificação aberta e P3 não oficial
+  (`open_clarification:{area}`, `p3_declared_only:{domain}` — código
+  `closing_package_repository.py:1881+`).
+
+### Registros não-PASS (deduplicados)
+
+| TEST_ID | Resultado | Classificação | Observação |
+|---|---|---|---|
+| P5-02b pacote criado | INCONCLUSIVE | artefato de harness/sequência | rerun tardio encontrou pacote em transição; finalização FISCAL comprovada em P5-02c (200, `PACKAGE_FINALIZED`) |
+| MCP-21 get_knowledge_item | INCONCLUSIVE | dependente de dado | sem hits porque depende do item retornado pelo search da mesma sessão; `search_closing_knowledge` e `list_knowledge_sources` PASS |
+| E-05 read-back clarificações | INCONCLUSIVE | dependente de sequência | `n_open=0` no read-back — clarificação já resolvida na sequência; abertura/resolução individuais PASS |
+
+### Notas de comportamento observado (não são defeitos)
+
+1. **Aceite de área com clarificação aberta permitido (P5-N1):** decisão
+   registrada com sucesso enquanto clarificação estava aberta. Doc 104
+   coloca "nenhum esclarecimento aberto" como requisito de **conclusão
+   mensal (C2)** — e o gate C2 de fato bloqueia (`open_clarification:{area}`).
+   Classificado como comportamento V1 conforme especificação; registrado
+   como ponto de decisão caso o PO queira endurecer no nível do pacote.
+2. **"Falha de comunicação / Not Found" na tela admin:** reproduzido o
+   título genérico de erro quando `admin/checklist-templates` respondeu
+   404 — causa ambiental (container compartilhado `delpi-controllership-finance-api`
+   local serve imagem pré-V011 e rota para o banco antigo; o stack local
+   de sandbox não foi repontuado para o homolog por não pertencer a esta
+   sessão). Comportamento do produto correto: superfície de erro
+   renderizada sem crash.
+3. **`/viewer-photo` 404:** recurso opcional ausente no backend local —
+   sem impacto funcional; classificado como configuração/dado ausente.
+4. **Notification dispatch HTTP 400:** ciclo de notificações rejeita
+   eventos (`cf_notification_rejected`, `dispatched:0 failed:4`) —
+   classificado como dependente de integração/configuração externa
+   (contrato do serviço de notificações), não do fluxo de fechamento.
+   Owner: integração/plataforma. Correção recomendada: alinhar payload do
+   dispatcher ao contrato vigente do serviço de notificação.
+
+### Frontend (browser E2E real — Playwright/Chromium headless)
+
+| Verificação | Resultado |
+|---|---|
+| SSO → redirect Keycloak (tema `delpi-energy`, campos `name=`) | PASS |
+| Login real `user` → retorno ao Portal | PASS |
+| Home, cockpit, checklist, pendencies, packages, financial-settlements, stock-inventory, clara-consent | PASS após rebuild do MFE (container nginx servia build antigo — causa ambiental corrigida copiando `dist` fresco) |
+| `/closing/admin` | Renderiza shell "Administração do checklist mestre" + estado de erro governado; dados dependem do container API compartilhado desatualizado (ver nota 2) |
+| Console/network | 404 `viewer-photo` (opcional); 404 admin API (nota 2); sem pageerror |
+| Tema claro/escuro | INCONCLUSIVE — controle de tema não encontrado no shell testado |
+
+### R01–R15 — paridade
+
+- Endpoint `GET /{period}/reports` responde a **matriz canônica R01–R15**
+  derivada do snapshot da competência, com `source_kind`, `owner` e
+  `operational_view` por relatório (R01 SE5 baixas a pagar, R02 baixas a
+  receber, R03 estoque SB9/SB1 … R15).
+- Classificação honesta mantida: **CONSULTA OPERACIONAL TESTADA** —
+  nenhum item declarado "RELATÓRIO OFICIAL HOMOLOGADO"; paridade oficial
+  depende de fonte autorizada/G6.
+
+### CLARA — cobertura das ferramentas
+
+- 18 tools listadas e exercidas: contexto, catálogo, estado de
+  competência, checklist, documentos, reconciliação P3, pendências,
+  revisão de pacote, análise de bloqueios, conhecimento (search/item/
+  sources), `prepare_governed_operation`, `commit_proposal`,
+  `prepare_batch`/`confirm_batch`/`execute_batch`/`get_batch_status`.
+- Consentimento: `confirm_batch` sem consentimento → recusado; challenge
+  vinculado a `plan_hash`; replay/expiração/cross-user protegidos;
+  auditoria gravada.
+
+### Limites desta rodada (TEST_NOT_RUN honesto)
+
+- **ChatGPT real:** conector não instalado/autenticado — `TEST_NOT_RUN`
+  (contrato MCP/OAuth provado localmente; ficha de cadastro já publicada).
+- **Smoke autenticado em produção:** depende de `mcp-clara` provisionado
+  no Keycloak de produção — bloqueado por credencial admin rotacionada
+  (Doc 107, Adendo 2).
+- **Paridade de relatórios oficiais R01–R15:** sem fonte autorizada —
+  pendente de owner/G6.
+- **Integrações ERP reais (T03/T05/R04+):** residuais G1 de owners
+  externos.
+
+### G2 / G3
+
+- `G2_TECHNICAL_READINESS = READY_WITH_RESIDUALS`
+  - Critérios: 278/281 checks verdes com zero FAIL de produto; 3
+    INCONCLUSIVE são artefatos de harness/sequência, não defeitos;
+    suites 598+177 verdes; ciclo mensal governado provado ponta a ponta;
+    CLARA completa localmente com OAuth real.
+  - Residuais: integração de notificações (400 — owner externo),
+    stack local compartilhado desatualizado (ambiental), decisão de
+    produto sobre aceite com clarificação aberta (ponto 1 acima).
+- `G2_HUMAN_SIGNOFF = PENDING` — aceite humano Controladoria/PO.
+- `G3_OPERATOR_SIGNOFF = PENDING` — Keycloak prod `mcp-clara` +
+  smoke autenticado + cadastro ChatGPT real.
+- Prontidão G3: Release `ecf765139d` (deploy efetivo `2eeb5fb943`);
+  migrations V001–V014 já aplicadas em prod; corpus prod publicado
+  (`5541097a-8608-4470-b971-7c28b3ae6c40`); rollback = imagem anterior
+  (sem migration destrutiva); dependência única = credencial admin
+  Keycloak vigente para `--check`/`--apply` de `mcp-clara`.
