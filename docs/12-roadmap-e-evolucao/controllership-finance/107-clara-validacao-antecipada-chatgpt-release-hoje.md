@@ -235,3 +235,59 @@ bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check
 9. **EVIDÊNCIA/RELATÓRIO:** SHA, gates, snapshots before/after, migration ledger, Keycloak diff/result, URL/MCP checks, corpus version, ChatGPT connection, resíduo e rollback. Atualizar Docs 107/106/100/README e runbooks conforme ocorrido, sem falsificar PASS.
 
 **Ponto de parada formal único:** se G2/G3/credencial válida permanecer pendente, entregar preflight, backups preparados, comandos e ficha parcialmente verificada, status `NOT_DEPLOYED`/ `TEST_NOT_RUN` e responsável que libera o próximo passo. Não aplicar escrita em produção antes da autorização. O documento registra decisão do PO e **não** representa ação SSH efetuada.
+
+## Adendo 2 — Produção implantada e corpus publicado; Keycloak mcp-clara bloqueado por credencial (2026-10-26, pós-deploy)
+
+### Runtime efetivo verificado em `srv-api` (evidência de execução)
+
+O deploy produtivo foi executado no host antes deste adendo (git pull + rebuild
+sequencial): repo em `2eeb5fb943`, container `delpi-controllership-finance-api`
+recriado em 2026-10-26 10:03Z com o código de `ecf765139d` incluso — verificado
+por marcador dentro da imagem (`_clip = 4000` em `operation_presentation.py` e
+comentário de ordem canônica de lock em `clara_consent_challenge_repository.py`).
+
+| Verificação | Resultado |
+|---|---|
+| Ledger `schema_migrations` | V001–V014 aplicadas, V006–V014 em 2026-10-26 07:03 -03 |
+| `clara_consent_challenge` | tabela existe, 0 linhas, pronta |
+| `/mcp` sem token | 401 + `WWW-Authenticate: Bearer realm="clara-mcp" resource_metadata=…` (RFC 9728 vivo) |
+| `.well-known/oauth-protected-resource/mcp` | 200 — resource, issuer `delpi`, scopes `openid profile email mcp:tools` |
+| `remoteEntry.js` do plugin | 200 — MFE implantado |
+| `PUBLIC_BASE_URL` no runtime | `https://minhadelpi.com.br` — URLs de consentimento públicas |
+
+### Corpus governado publicado
+
+Ingestão executada via pipeline autorizado (`corpus_ingestion --docs-root`,
+docs copiados do repo para `/tmp` do container — write path apenas pelo
+repositório/DB):
+
+- `corpus_version_id` = `5541097a-8608-4470-b971-7c28b3ae6c40`
+- 52 fontes autorizadas, 1 298 itens, `published_at` 2026-10-26 07:07 -03.
+
+### Bloqueio remanescente — Keycloak `mcp-clara`
+
+As credenciais admin reportadas pelo PO em `infra/.env` foram testadas em todas
+as três trilhas do provisioning engine:
+
+1. `KEYCLOAK_ADMIN`/`KEYCLOAK_ADMIN_PASSWORD` → login recusado no realm `master`
+   (bootstrap rotacionado);
+2. `delpi-core-admin` client-secret → token emitido mas sem direito de leitura
+   de `/admin/serverinfo` (service account sem realm-management);
+3. password grant realm `delpi` com o usuário admin reportado → `invalid_grant`.
+
+**Consequência:** o cliente `mcp-clara` ainda não pôde ser provisionado; sem
+ele não existe client_id/redirect para o cadastro real no ChatGPT.
+`CHATGPT_PROD_CONNECTION` permanece `TEST_NOT_RUN`. Não foi feita nenhuma
+tentativa de contornar o controle de acesso do Keycloak (criação de admin via
+container/DB está fora de escopo e exige operador+gate explícito).
+
+### Status consolidado pós-deploy
+
+- `PROD_DEPLOY` — **EXECUTADO** em `2eeb5fb943` (V014 ativa, código `ecf765139d`);
+- `CORPUS_VERSION` — **5541097a** publicada (52 fontes / 1298 itens);
+- `KEYCLOAK_PROD` — **BLOCKED** por credencial admin inválida;
+- `MCP_SMOKE` autenticado / `CHATGPT_PROD_CONNECTION` — `TEST_NOT_RUN`
+  (dependem do client `mcp-clara`);
+- G1/G2/G3 — pendentes de registro formal; o deploy ocorreu por GO do
+  operador (Adendos 3–5) — a aceitação humana e a autorização formal devem
+  ser registradas para fechar a cadeia.

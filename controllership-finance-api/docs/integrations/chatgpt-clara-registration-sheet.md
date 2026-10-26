@@ -43,13 +43,21 @@ após gates; ver §Estado).
    multiação → consentimento consolidado no Portal → ACT só sobre
    dados de teste → read-back + auditoria.
 
-## Estado
+## Estado (2026-10-26, pós-deploy)
 
-| Item | Status |
+| Item | Estado |
 |---|---|
-| MCP endpoint no edge | montado (401 com challenge pós-deploy; imagem atual em prod = `8ca4e2512`, pré-V011) |
-| Client `mcp-clara` | **PENDENTE** — `--check` bloqueado: credenciais admin do Keycloak rotacionadas (bootstrap env não autentica); owner deve fornecer `KC_ADMIN_TOKEN`/admin válido |
-| Deploy do SHA `e8d9361dee` | **PENDENTE** — G2/G3 obrigatórios (Doc 107: produção não é piloto sem gates; não há ambiente de homologação autorizado separado) |
-| Migrations V006–V014 | pendentes no runtime prod (imagem atual contém até V005) |
-| Corpus governado | pendente de ingestão pós-deploy (`corpus_ingestion --docs-root`) |
-| Redirect URI real | pendente — obtida no cadastro |
+| Deploy produção | **EXECUTADO** — `2eeb5fb943` (inclui `ecf765139d`) |
+| Migrations | **V001–V014 aplicadas** (V006–V014 em 2026-10-26 07:03 -03) |
+| MCP endpoint | **live** — 401 + `WWW-Authenticate` RFC 9728 + resource_metadata |
+| Protected-resource metadata | **live** — `.well-known/oauth-protected-resource/mcp` 200 |
+| Corpus governado | **PUBLICADO** — `5541097a-8608-4470-b971-7c28b3ae6c40` (52 fontes / 1 298 itens) |
+| Cliente `mcp-clara` | **BLOCKED** — credenciais admin de Keycloak reportadas inválidas; aguarda owner IAM/Operador |
+| Cadastro ChatGPT | `TEST_NOT_RUN` — depende do client provisionado |
+| Redirect URI | `TEST_NOT_RUN` — será registrada do fluxo real |
+| G1/G2/G3 | `PENDING` — registro formal pendente (deploy por GO operador, Adendos 3–5 Doc 107) |
+
+**Próximo passo desbloqueante:** credencial admin Keycloak vigente (ou reset
+autorizado pelo operador) → `keycloak-prod-delia-mcp-provision.sh --check` →
+diff aprovado → `--apply` (somente `mcp-clara`, sem tocar TÉO/DAVI/VISTA/DÉLIA)
+→ cadastro real no ChatGPT → smoke autenticado → ficha definitiva.
