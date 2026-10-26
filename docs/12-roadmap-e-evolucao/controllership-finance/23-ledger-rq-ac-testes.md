@@ -1,5 +1,8 @@
 # 23 — Ledger de Requisitos, Critérios de Aceite e Testes
 
+> **DELTA RQ/AC APROVADO PELO PO EM 26/10/2026 — TARGET, GATE DE CONTRATOS PENDENTE:** `RQ-P1-01` deve aceitar seleção de **mês de referência** sem exigir `monthly_competence` aberta, template publicado ou documento anexado; GET de relatórios por mês continua sob owner e AuthZ, com estado ausente/erro explícito. `RQ-P2-01` na tabela abaixo registra o **contrato AS-IS de snapshot na abertura**, não é mais precondição de **consulta**. O cadastro mestre de tipos/entregáveis é versionado por vigência efetiva desde a referência escolhida, sem recadastro mensal; itens/evidências históricos de fechamentos finalizados não sofrem mutação retroativa. **AC a detalhar antes de execução:** seleção e deep link YYYY-MM; mês sem abertura; sem lista/sem anexos; relatórios com fonte disponível/indisponível; mudança futura no cadastro mestre; competência finalizada; mês em andamento; autorização de cadastro/anexo; testes de regressão P2/P5. Status de implementação desta decisão: `PLANNED` até revisão de contrato/GO. [Doc 112](./112-design-visual-fechamento-mensal-wireframes.md).
+
+
 ## Objetivo
 
 Fornecer rastreabilidade executável entre requisito funcional, página, critério de aceite, teste e dependência de implementação.
