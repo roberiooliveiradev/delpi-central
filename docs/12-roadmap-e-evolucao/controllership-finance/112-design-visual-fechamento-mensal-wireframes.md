@@ -508,3 +508,109 @@ Um relatório divergente pode **referenciar** o item/documento relacionado e vic
 Priorizar **Documentos e interações** no próximo wireframe porque o PO descreveu claramente duas jornadas complementares. Em seguida **Relatórios e divergências** por família (começando por R01/R02 ou grupo acordado), conferindo o tracker físico 47. Desenhar versões desktop/mobile/sem acesso/partial/erro, mapeando checklist, estados e ações com o owner. Manter revisão P5 autônoma e preservar o fluxo de pendências P4 até decisão.
 
 **Gates:** `USER_NEED=PROVEN_BY_PO`; `UX_REBASELINE=TARGET`; `DESIGN_APPROVAL=PENDING`; `REPORT_REPRODUCTION_ALL=NOT_PROVEN`; `RUNTIME_GO=NO`.
+
+
+## 14. Wireframe 02 — Documentos e interações / bancada compartilhada V0.7
+
+**Data:** 26/10/2026. **Estado:** `TARGET / VISUAL_DRAFT / PENDING_PO_APPROVAL`. A proposta atende à jornada explicitada pelo PO: uma pessoa entrega o arquivo, outra pessoa da Contabilidade/DRE o consulta/analisa sem enviar arquivos, ambas acompanham a mesma trilha auditável. Não confirma ainda o contrato de colaboração, elegibilidade, novas rotas ou runtime de um único workspace.
+
+### 14.1 Modelo de trabalho, componentes e hierarquia
+
+```text
+FECHAMENTO MENSAL  [competência existente/autorizada] [escopo] [situação]
+[Visão geral] [Documentos e interações]* [Relatórios e divergências] [Revisão]
+Documentos e interações                                [Ajuda] [Atualizar]
+Entregáveis e evidências vinculados ao fechamento desta competência
+
+[Todos] [Falta enviar] [Em análise] [Ajustes solicitados] [Aceitos]
+[Busca por documento] [Grupo/área] [Origem] [Estado] [Responsável?]
+┌──────────────────────────────────────┬────────────────────────────────────────┐
+│ LISTA DO CHECKLIST / Fila             │ DETALHE DO ITEM SELECIONADO              │
+│ Documento | Requisito | Estado        │ Título + requisito + origem + recipient  │
+│ Responsável | Última interação       │ Arquivos: versão, status, preview        │
+│ ... seleção preservada               │ Avaliação documental (escopo real P2)    │
+│ ... paginação                        │ Interações auditáveis contextualizadas   │
+│                                      │ Linha do tempo de eventos + solicitações │
+│                                      │ Ações elegíveis (entrega/análise)        │
+└──────────────────────────────────────┴────────────────────────────────────────┘
+* visão/rota final ainda depende de D-FM06-REBASE-01.
+```
+
+**Prioridade visual:** preservar checklist como fonte única do rol de documentos; estado do item não é substituído pelo status de um comentário. Desktop `ResizableColumns`, com aproximadamente 40% fila / 60% detalhe conforme componente existente; detalhe não é modal. Mobile: lista `DataRecordCard` → detalhe full width → `BackLink`.
+
+### 14.2 Wireframe detalhado — listagem única
+
+**Linha do item:** título de documento, exigência `REQUIRED/CONDITIONAL/OPTIONAL`, grupo/área, origem, responsável/provider se disponível, situação de evidência (não confundir `EXPECTED` com `ATTACHED`), última atividade/freshness do owner e indicador de solicitação de ajuste se houver contrato. Os exemplos “Extrato bancário”, “Comprovante de aplicação” e “Documento fiscal” são placeholders de layout; os nomes físicos provêm do snapshot P2 real.
+
+**Filtros de UI propostos:** Todos; Falta enviar; Em análise; Ajustes solicitados; Aceitos; busca por nome/código; grupo/origem/destinatário; responsáveis somente quando o DTO suportar. Os chips traduzem estados reais do P2 (não criar enum livre). O filtro “Ajustes solicitados” exige correlação auditável com decisão de rejeição/clarification; sem contrato, marcar indisponível e não simular.
+
+**Uma fila compartilhada:** mesmos identificadores e versões dentro do escopo de cada usuário; visibilidade e ações podem diferir pelo resource scope, mas não duplicar documento nem criar uma tabela “documentos Contabilidade”.
+
+### 14.3 Wireframe detalhado — detalhe do documento
+
+```text
+[Extrato bancário • exemplo]        [REQUIRED] [Estado da evidência]
+Origem / área destinatária / responsabilidade / regra de satisfação
+─────────────────────────────────────────────────────────
+ARQUIVOS E VERSÕES
+[V1 • extrato_setembro.pdf • ATTACHED]   [Ver] [Baixar autorizado]
+[Histórico V0/V1 ...]                    [Anexar/Substituir se elegível]
+─────────────────────────────────────────────────────────
+ANÁLISE DOCUMENTAL
+[Estado por anexo ou WHOLE_SET] [Validador] [Motivo estruturado]
+[Aceitar/Rejeitar/Reverter apenas se backend autorizar]
+─────────────────────────────────────────────────────────
+INTERAÇÕES E ACOMPANHAMENTO
+[Atividade 1 • autor • data • tipo • vínculo a versão/decisão]
+[Atividade 2 • solicitação ou resposta • estado]
+[Responder/Solicitar ajuste SOMENTE se operação contratada e autorizada]
+─────────────────────────────────────────────────────────
+HISTÓRICO AUDITÁVEL
+[snapshot → upload → análise → rejeição → nova versão → decisão]
+```
+
+**Nota importante:** interação documental é um conceito funcional aprovado como necessidade; **não** inferir que existe API de comentário bidirecional. O histórico canônico de eventos de P2 pode ser ponto inicial; comentários livres, menções, threads, solicitações independentes de rejeição, avisos e SLA exigem contrato e decisão explícitos.
+
+### 14.4 Duas jornadas no mesmo detalhe
+
+| Tarefa | Entregador do documento (exemplo PO: Joyce) | Usuário de Contabilidade/DRE |
+|---|---|---|
+| Ver lista e arquivos | READ conforme `access` efetivo, escopo e resource rule | Mesmo checklist/versão, READ no próprio escopo |
+| Enviar arquivo | **Permitido somente após elegibilidade de entrega por item/regra P2** | **Não exibir upload/substituição** no fluxo solicitado pelo PO; exigir bloqueio server-side |
+| Substituir rejeitado | Elegibilidade da versão/competência, com OCC e histórico | Não permitido nesse modo de trabalho |
+| Consultar análise | Resultado, motivo, responsável, versão e histórico | Resultado, versão, escopo de análise e histórico |
+| Analisar documento | Apenas se designado como validador e contrato autorizar; não derivar proibição geral pelo nome “Joyce” | Ações de análise/validação somente se designado e backend autorizar; “pode visualizar” **não** equivale automaticamente a “pode aceitar/rejeitar” |
+| Pedir complemento / responder | Receber/responder conforme operação aprovada e escopo | Solicitar ajuste/responder conforme operação aprovada e escopo |
+| Histórico | Mesmo histórico auditável autorizado, sem misturar versões | Mesmo histórico auditável autorizado, sem sobrescrever decisão |
+
+**Exemplo de status compartilhado:** entregador anexa V1 → evidência `ATTACHED`; analista autorizado identifica problema e rejeita com motivo estruturado → registro `REJECTED` preservado; entregador substitui, cria V2 e a nova composição segue regra de validação. Isto é demonstração visual de semântica P2, **não teste E2E executado**.
+
+### 14.5 Estados UX e segurança
+
+- Loading por lista/detalhe com skeleton; competência e filtros preservados.
+- `EXPECTED` ainda não tem arquivo; **não** exibir preview fantasma.
+- `ATTACHED` não equivale a `ACCEPTED`; decisões PER_ATTACHMENT e WHOLE_SET diferentes.
+- Item sem acesso: ocultar informação de recurso não autorizado; BFF reautoriza inclusive download/preview.
+- Fonte externa indisponível: `UNAVAILABLE/PARTIAL`, sem “Nenhum documento” falso.
+- Solicitação pendente e rejeição devem ter motivo e actor/timestamp reais; não inventar severidade ou SLA.
+- Mudança de competência descarta detalhe/versão antiga; deep link e retorno preservam contexto autorizado.
+- P2 valida evidência; P5 revisa pacote. Estados e aprovação de ambos não são intercambiáveis.
+- A mesma árvore suporta tema claro/escuro; teclado/foco, rótulos PT-BR, animações discretas, Help contextual atualizado.
+
+### 14.6 Componentes do kit preferenciais
+
+`createDashboardPageHero`, `createDashboardPagePath`, `createDashboardFiltersKit`, `DataTableSection`, `DataRecordCard`, `ResizableColumns`, `StatusBadge`, `AttachmentFileList`, `AttachmentPreviewStrip`, `FileDropzone`, `Timeline`, `StateBanner`, `EmptyState`, `LoadingState`, `ConfirmModalPanel`, `FloatingNoticeStack`, `BackLink`. Não criar controles duplicados; mapear exports atuais no HEAD antes de brief de implementação.
+
+### 14.7 RQ/AC e decisões materiais
+
+- **PROVEN no contrato P2 doc 09 e ledger 23:** snapshot/versionamento, entrega não valida, rejeição motivada, substituição com histórico, validação por anexo ou conjunto, AuthZ backend.
+- **REPORTADO em execução, ainda requer verificação no HEAD/runtime:** upload/list/get/download/replace/cancel e validação P2 conforme adendos doc 09/100/103.
+- **D-DOC-AUTHZ-01 = DECISION_REQUIRED:** como o BFF resolve elegibilidade para anexar vs analisar por item/recipiente/assignment, mantendo apenas `access` e `manage`; não criar terceira permission.
+- **D-DOC-COLLAB-01 = DECISION_REQUIRED:** mecanismo de mensagem/solicitação/resposta contextual com históricos; escolher reuso de eventos/clarifications/notifications existentes após inventário, ou novo contrato governado. Sem SQL/schema por conveniência.
+- **D-DOC-ENTRY-01 = PENDING_PO_VISUAL:** a listagem deve abrir primeiro, com painel de detalhe do item selecionado, sem modal de documento; recomendação: sim.
+- **D-DOC-UX-02 = PENDING_PO_VISUAL:** incluir no detalhe um bloco “Interações” separado de “Histórico”, ou uma timeline única com filtros; recomendação: “Interações e acompanhamento” como bloco visual e timeline auditável abaixo, distinguindo conversa de evento sistêmico.
+- **D-FM06-REBASE-01** segue pendente quanto às quatro vs cinco abas. Não inferir aceite porque o PO solicitou prosseguir ao próximo wireframe.
+
+### 14.8 Próximo review
+
+Demonstrar versão interativa da listagem e do detalhe no chat; confirmar distribuição dos blocos e o modelo de interação (um histórico compartilhado), avançando depois à bancada “Relatórios e divergências”. `DESIGN_V0.7=PENDING_PO`, `RUNTIME_GO=NO`.
