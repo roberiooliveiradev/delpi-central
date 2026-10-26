@@ -55,8 +55,65 @@ SCENARIO_FILTER = (
 CORPUS_MODE = os.environ.get("EVAL_CORPUS", "base")
 EVAL_TAG = os.environ.get("EVAL_TAG", f"{CORPUS_MODE}_run")
 INSTRUCTION_FILE = os.environ.get("SELECT_GROUP_INSTRUCTION_FILE")
+CATALOG_VARIANT = os.environ.get("EVAL_CATALOG_VARIANT", "real")
 
 SELECT_GROUP_ID = "delia.capability_orchestration.select_group"
+
+
+def _apply_catalog_variant(providers, variant: str) -> None:
+    """Evaluation-only presentation seam (doc 155 experiment).
+
+    Wraps each provider's ``list_groups`` so the projected catalog
+    varies ONLY non-authoritative presentation fields: group
+    ``display_name`` labels or group ordering. Canonical ids,
+    owner_ref, source_system, capability ids, remote names, schemas,
+    bindings and operation classes are returned verbatim — membership
+    validation and execution identity are untouched.
+
+    Variants:
+      real        — untouched baseline.
+      neutral     — display_name replaced by neutral labels
+                    (Group A/B/...); canonical ids unchanged.
+      respforward — display_name carries the owner-published
+                    responsibility excerpt (scope text) instead of
+                    the commercial label; canonical ids unchanged.
+      reorder     — groups returned in reversed enumeration order.
+    """
+    from dataclasses import replace
+
+    def _present(group, variant, idx):
+        if variant == "neutral":
+            return replace(
+                group, display_name=f"Group {chr(65 + idx)}"
+            )
+        if variant == "respforward":
+            # Only owner-published descriptive text — no new content.
+            parts = []
+            for cap in group.capabilities:
+                d = (cap.description or "").strip()
+                if d:
+                    parts.append(d[:60])
+                if len("; ".join(parts)) > 80:
+                    break
+            return replace(
+                group, display_name=("; ".join(parts)[:80] or "—")
+            )
+        return group
+
+    for provider in providers.values():
+        real_list = provider.list_groups
+
+        def wrapped(*args, _real=real_list, _variant=variant, **kw):
+            surface = _real(*args, **kw)
+            groups = [
+                _present(g, _variant, idx)
+                for idx, g in enumerate(surface.groups)
+            ]
+            if _variant == "reorder":
+                groups = list(reversed(groups))
+            return replace(surface, groups=tuple(groups))
+
+        provider.list_groups = wrapped  # type: ignore[method-assign]
 
 BASE_SUBSET = {
     "biz_bala3", "biz_code", "biz_o2_2", "biz_pino", "cmp_legit",
@@ -155,10 +212,37 @@ def main() -> int:
         import hashlib
 
         fingerprint = hashlib.sha256(text.encode()).hexdigest()[:16]
+    if CATALOG_VARIANT != "real":
+        _apply_catalog_variant(orch._providers, CATALOG_VARIANT)  # noqa: SLF001
+    if CATALOG_VARIANT == "reorder":
+        # Projection seam (eval only): reverse the serialized group
+        # list inside the same _group_summaries contract — group
+        # keys are sorted, so provider-return order alone cannot
+        # move the presentation order.
+        import json as _json
+
+        from app.application.capability_provision import (
+            orchestration as _orch_mod,
+        )
+
+        _real_summaries = _orch_mod._group_summaries
+
+        def _summaries_reordered(*a, **kw):
+            payload = _real_summaries(*a, **kw)
+            parsed = _json.loads(payload)
+            if isinstance(parsed, dict):
+                gl = parsed.get("capability_groups")
+                if isinstance(gl, list):
+                    parsed["capability_groups"] = list(reversed(gl))
+            elif isinstance(parsed, list):
+                parsed = list(reversed(parsed))
+            return _json.dumps(parsed, ensure_ascii=False)
+
+        _orch_mod._group_summaries = _summaries_reordered
     print(
         f"VARIANT tag={EVAL_TAG} corpus={CORPUS_MODE} "
         f"instruction_override={INSTRUCTION_FILE or 'NONE(v23)'} "
-        f"fp={fingerprint}",
+        f"catalog_variant={CATALOG_VARIANT} fp={fingerprint}",
         flush=True,
     )
 

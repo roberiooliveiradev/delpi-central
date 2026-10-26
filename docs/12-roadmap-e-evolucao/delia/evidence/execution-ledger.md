@@ -268,3 +268,18 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Segurança: injeção em descrição não sequestrou seleção; 0 bypass AuthZ, 0 PREPARE/ACT, 0 id inventado; tokens opacos redigidos no artefato.
 - Próximo bounded: comparação controlada de modelo (autorização separada) ou experimento de projeção com nomes neutros no stage-1 — tasks novas, não iniciadas.
 - DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
+
+
+### DELIA-C3-CATALOG-PRESENTATION-NAME-PRIOR-SENSITIVITY-EVAL-01 — execução (2026-10-26)
+
+- STATE=EVALUATION_COMPLETE; base 148b4e0a3a; código/instrução/catálogo/modelo produtivos NÃO modificados — variantes aplicadas apenas em projeção in-process via seam de avaliação (`EVAL_CATALOG_VARIANT`); deploy não executado.
+- WP0: agregador corrigido — classificação exclusiva por execução (ADMISSION_STOP / GROUP_CORRECT / GROUP_WRONG / GROUP_NOT_APPLICABLE_CORRECT|WRONG / GROUP_INVALID_OUTPUT / GROUP_NOT_REACHED_OTHER); `correct` nunca conta abstenção em métrica de seleção; oráculo reconciliado strict (owner de registro) vs lenient (rota davi discover→execute legítima).
+- WP1 congelado: delia-json qwen2.5:3b ctx 8192, instrução v23 fp 8eb95ebdafe8b338, superfície real 4 grupos/41 caps, payload sha256 916c063b67e54cd6… (5989/6000 chars).
+- Descoberta estrutural decisiva: o payload stage-1 despachado contém apenas capability_group_id + capabilities + scope + capabilities_omitted — display_name, owner e source_system são compactados para fora do fio sob o orçamento de 6000 chars (provado por hash: variantes neutral/respforward geram sha idêntico ao real).
+- Stage-1 (240 chamadas, 12 prompts x5 reps x4 variantes): real 27/60 lenient / 24/60 strict; neutral 26/60 / 25/60 (sha idêntico — réplica A/A, variância do modelo); respforward 21/60 / 20/60 (sha idêntico); reorder sha e0328e74 distinto → colapso posicional: davi 46/60 picks, invalid 0→13, strict correto apenas 5/60.
+- E2E (200 turnos, real vs reorder, base+holdout x5): reorder_base strict 4/40 vs real 15/37; reorder_holdout strict 0/24 vs real 11/25; invalid e2e 0→3 e 0→7; lenient sobe artificialmente (davi conta como rota legítima de registro). Wrong-owner strict reorder: davi 29 base / 17 holdout.
+- Veredito: NAME_PRIOR_NOT_CONFIRMED para rótulos de apresentação — campos de apresentação não chegam ao modelo sob o orçamento vigente; o ganho do catálogo renomeado do doc 155 é agora atribuível a priores do capability_group_id canônico (H2), não a display labels (H1 não testável). H3 viés posicional SUPPORTED (maior defeito reproduzível); H5 capacidade SUPPORTED (variância ±15% em input byte-idêntico); H6 SUPPORTED.
+- Segurança: 0 bypass AuthZ, 0 PREPARE/ACT, 0 id inventado; ids/owners/source_system/schemas remotos intactos; sem segredos nos artefatos.
+- Artefatos: doc 156; scripts catalog_presentation_probe.py + catalog_presentation_aggregate.py; seam em instruction_conflict_eval.py (eval-only); evidence catalog-presentation-snapshot.json, catalog-presentation-probe-runs.jsonl/.json, catalog-presentation-e2e/*.json.
+- Próximo bounded: experimento autorizado separado sobre tokens do capability_group_id (requer decisão de arquitetura — toca identificador canônico), hardening de robustez a ordem no stage-1, ou comparação de capacidade de modelo no corpus congelado.
+- DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.

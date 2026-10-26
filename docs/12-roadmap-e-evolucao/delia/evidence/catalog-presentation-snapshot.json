@@ -1,0 +1,293 @@
+{
+ "groups": [
+  {
+   "key": "mcp:davi",
+   "group_id": "davi",
+   "provider_id": "mcp",
+   "owner_ref": "api-delpi",
+   "display_name": "DAVI",
+   "source_system": "api-delpi",
+   "capabilities": [
+    {
+     "capability_id": "davi.discover_delpi_information",
+     "remote_name": "discover_delpi_information",
+     "operation_class": "DISCOVERY",
+     "desc_len": 245
+    },
+    {
+     "capability_id": "davi.execute_delpi_information",
+     "remote_name": "execute_delpi_information",
+     "operation_class": "READ",
+     "desc_len": 207
+    }
+   ]
+  },
+  {
+   "key": "mcp:teo",
+   "group_id": "teo",
+   "provider_id": "mcp",
+   "owner_ref": "transformometro-api",
+   "display_name": "TEO",
+   "source_system": "transformometro-api",
+   "capabilities": [
+    {
+     "capability_id": "teo.get_my_context",
+     "remote_name": "get_my_context",
+     "operation_class": "READ",
+     "desc_len": 56
+    },
+    {
+     "capability_id": "teo.get_workspace_context",
+     "remote_name": "get_workspace_context",
+     "operation_class": "READ",
+     "desc_len": 339
+    },
+    {
+     "capability_id": "teo.get_catalog",
+     "remote_name": "get_catalog",
+     "operation_class": "DISCOVERY",
+     "desc_len": 125
+    },
+    {
+     "capability_id": "teo.get_methodology_guide",
+     "remote_name": "get_methodology_guide",
+     "operation_class": "READ",
+     "desc_len": 718
+    },
+    {
+     "capability_id": "teo.get_product_guide",
+     "remote_name": "get_product_guide",
+     "operation_class": "READ",
+     "desc_len": 393
+    },
+    {
+     "capability_id": "teo.solution_read",
+     "remote_name": "solution_read",
+     "operation_class": "READ",
+     "desc_len": 547
+    },
+    {
+     "capability_id": "teo.helpdesk_read",
+     "remote_name": "helpdesk_read",
+     "operation_class": "READ",
+     "desc_len": 1121
+    },
+    {
+     "capability_id": "teo.get_process_context",
+     "remote_name": "get_process_context",
+     "operation_class": "READ",
+     "desc_len": 50
+    },
+    {
+     "capability_id": "teo.analyze",
+     "remote_name": "analyze",
+     "operation_class": "READ",
+     "desc_len": 711
+    },
+    {
+     "capability_id": "teo.record_read",
+     "remote_name": "record_read",
+     "operation_class": "READ",
+     "desc_len": 391
+    },
+    {
+     "capability_id": "teo.evidence_read",
+     "remote_name": "evidence_read",
+     "operation_class": "READ",
+     "desc_len": 172
+    },
+    {
+     "capability_id": "teo.get_process_timeline",
+     "remote_name": "get_process_timeline",
+     "operation_class": "READ",
+     "desc_len": 29
+    },
+    {
+     "capability_id": "teo.meeting_minute_read",
+     "remote_name": "meeting_minute_read",
+     "operation_class": "READ",
+     "desc_len": 239
+    },
+    {
+     "capability_id": "teo.collaboration_read",
+     "remote_name": "collaboration_read",
+     "operation_class": "READ",
+     "desc_len": 597
+    },
+    {
+     "capability_id": "teo.diagnostic_read",
+     "remote_name": "diagnostic_read",
+     "operation_class": "READ",
+     "desc_len": 388
+    },
+    {
+     "capability_id": "teo.prepare_record_change",
+     "remote_name": "prepare_record_change",
+     "operation_class": "PREPARE",
+     "desc_len": 670
+    },
+    {
+     "capability_id": "teo.prepare_governed_operation",
+     "remote_name": "prepare_governed_operation",
+     "operation_class": "PREPARE",
+     "desc_len": 940
+    },
+    {
+     "capability_id": "teo.prepare_evidence_change",
+     "remote_name": "prepare_evidence_change",
+     "operation_class": "PREPARE",
+     "desc_len": 377
+    },
+    {
+     "capability_id": "teo.prepare_meeting_minute_change",
+     "remote_name": "prepare_meeting_minute_change",
+     "operation_class": "PREPARE",
+     "desc_len": 560
+    },
+    {
+     "capability_id": "teo.prepare_collaboration_change",
+     "remote_name": "prepare_collaboration_change",
+     "operation_class": "PREPARE",
+     "desc_len": 1127
+    },
+    {
+     "capability_id": "teo.prepare_diagnostic_change",
+     "remote_name": "prepare_diagnostic_change",
+     "operation_class": "PREPARE",
+     "desc_len": 822
+    },
+    {
+     "capability_id": "teo.prepare_helpdesk_change",
+     "remote_name": "prepare_helpdesk_change",
+     "operation_class": "PREPARE",
+     "desc_len": 2142
+    },
+    {
+     "capability_id": "teo.commit_proposal",
+     "remote_name": "commit_proposal",
+     "operation_class": "ACT",
+     "desc_len": 298
+    }
+   ]
+  },
+  {
+   "key": "mcp:vista",
+   "group_id": "vista",
+   "provider_id": "mcp",
+   "owner_ref": "tv-dashboard-api",
+   "display_name": "VISTA",
+   "source_system": "tv-dashboard-api",
+   "capabilities": [
+    {
+     "capability_id": "vista.list_playlists",
+     "remote_name": "list_playlists",
+     "operation_class": "READ",
+     "desc_len": 151
+    },
+    {
+     "capability_id": "vista.get_playlist_context",
+     "remote_name": "get_playlist_context",
+     "operation_class": "READ",
+     "desc_len": 580
+    },
+    {
+     "capability_id": "vista.get_playlist_history",
+     "remote_name": "get_playlist_history",
+     "operation_class": "READ",
+     "desc_len": 737
+    },
+    {
+     "capability_id": "vista.get_catalog",
+     "remote_name": "get_catalog",
+     "operation_class": "DISCOVERY",
+     "desc_len": 163
+    },
+    {
+     "capability_id": "vista.search_data_routes",
+     "remote_name": "search_data_routes",
+     "operation_class": "READ",
+     "desc_len": 155
+    },
+    {
+     "capability_id": "vista.inspect_data_model",
+     "remote_name": "inspect_data_model",
+     "operation_class": "READ",
+     "desc_len": 179
+    },
+    {
+     "capability_id": "vista.preview_data_model",
+     "remote_name": "preview_data_model",
+     "operation_class": "READ",
+     "desc_len": 207
+    },
+    {
+     "capability_id": "vista.preview_data_block",
+     "remote_name": "preview_data_block",
+     "operation_class": "ANALYSIS",
+     "desc_len": 598
+    },
+    {
+     "capability_id": "vista.get_product_guide",
+     "remote_name": "get_product_guide",
+     "operation_class": "READ",
+     "desc_len": 290
+    },
+    {
+     "capability_id": "vista.suggest_change",
+     "remote_name": "suggest_change",
+     "operation_class": "ANALYSIS",
+     "desc_len": 574
+    },
+    {
+     "capability_id": "vista.prepare_change",
+     "remote_name": "prepare_change",
+     "operation_class": "PREPARE",
+     "desc_len": 234
+    },
+    {
+     "capability_id": "vista.commit_proposal",
+     "remote_name": "commit_proposal",
+     "operation_class": "ACT",
+     "desc_len": 368
+    }
+   ]
+  },
+  {
+   "key": "openapi:delpi",
+   "group_id": "delpi",
+   "provider_id": "openapi",
+   "owner_ref": "DELPI",
+   "display_name": "API DELPI",
+   "source_system": "DELPI",
+   "capabilities": [
+    {
+     "capability_id": "delpi.search_products",
+     "remote_name": "delpi.search_products",
+     "operation_class": "READ",
+     "desc_len": 21
+    },
+    {
+     "capability_id": "delpi.get_product_summary",
+     "remote_name": "delpi.get_product_summary",
+     "operation_class": "READ",
+     "desc_len": 23
+    },
+    {
+     "capability_id": "delpi.get_product_stock",
+     "remote_name": "delpi.get_product_stock",
+     "operation_class": "READ",
+     "desc_len": 24
+    },
+    {
+     "capability_id": "delpi.search_customers",
+     "remote_name": "delpi.search_customers",
+     "operation_class": "READ",
+     "desc_len": 21
+    }
+   ]
+  }
+ ],
+ "failures": [],
+ "payload_sha256": "916c063b67e54cd6da9802b77d4fb36a97f904c5c80796dc41d7a8a991608e6d",
+ "payload_chars": 5989
+}
