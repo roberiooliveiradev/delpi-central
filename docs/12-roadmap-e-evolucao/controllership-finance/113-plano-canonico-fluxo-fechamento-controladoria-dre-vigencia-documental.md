@@ -229,3 +229,78 @@ Fechamento mensal       [Mês de referência: 09/2026 v] [Atualizar]
 4. O acompanhamento de Estoque/Documentos/Pacote DRE em três cards compactos está adequado?
 
 **Próxima ação:** PO revisa V0.1 na conversa. Registrar ajustes e aprovação visual expressa antes de criar prompt de execução. Não remover código legado nesta fase. CLARA: registrar aprovação no corpus antes de publicar como regra consolidada; não indexar proposta V0.1 como runtime.
+
+
+## 12. VISÃO GERAL — DECISÕES PO APROVADAS E ESPECIFICAÇÃO VISUAL V0.2 (26/10/2026)
+
+**Decisões expressas do PO (PROVEN, DESIGN_APPROVED para estas quatro escolhas):**
+- `destaque=actions`: **O que precisa de atenção / Próximos passos** é a área dominante, acima de detalhes secundários.
+- `histórico=summary`: **Atividade recente** aparece na Visão geral como resumo, com acesso contextual ao histórico completo onde existir contrato.
+- `ações de conclusão=overview`: **Concluir etapa da Controladoria** e **Enviar pacote** ficam no final da Visão geral, separados, com condições e AuthZ server-side; não presumir habilitação nem transição automática.
+- `acompanhamento dos eixos=cards`: **Estoque, Documentos, Pacote DRE** apresentados em três cartões compactos independentes.
+
+**Estado:** escolhas acima `PO_APPROVED`; disposição refinada `VISUAL_SPEC_V0.2 / PENDING_FINAL_PO_PAGE_APPROVAL`; implementação `NOT_AUTHORIZED`. Seções 11.1–11.4 são histórico de proposta V0.1; esta seção resolve as quatro perguntas e prevalece em conflito de layout.
+
+### 12.1 Composição desktop (de cima para baixo)
+
+```text
+[ PagePath: Início > Fechamento mensal > Visão geral ]                         [Ajuda]
+Fechamento mensal           [Mês de referência: 09/2026] [Atualizar consulta]
+[Visão geral] [Documentos e interações] [Relatórios e divergências]
+[Estado da competência: em andamento / não iniciado / histórico; autoria e freshness]
+[ BLOQUEIOS ]       [ DIVERGÊNCIAS ]        [ DOCUMENTOS A TRATAR ]
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ O QUE PRECISA DE ATENÇÃO                                                  │
+│ 1. Conciliação sem confirmação: fontes necessárias ... [Ver detalhes]     │
+│ 2. Documentos exigidos pendentes, caso comprovados     [Ver documentos]   │
+│ 3. Pacote não preparado, caso aplicável                [Ver contexto]      │
+│ [Mostrar todas as pendências] (somente quando fonte e rota comprovadas)    │
+└─────────────────────────────────────────────────────────────────────────────┘
+[ESTOQUE: estado/fonte]    [DOCUMENTOS: estado]    [PACOTE DRE: estado]
+[ATIVIDADE RECENTE: últimos eventos comprovados, autor e momento] [Histórico]
+[CONCLUSÃO DA CONTROLADORIA: elegibilidade e bloqueios] [Concluir etapa]
+[ENVIO DO PACOTE: elegibilidade e confirmação separada] [Enviar pacote]
+```
+
+### 12.2 Conteúdo, dados, acessibilidade e interações
+
+| Componente | Contrato de UX | Fonte/gate e honestidade | Reuso obrigatório a inspecionar |
+|---|---|---|---|
+| PagePath e título | Título único, caminho e Ajuda; sem segundo chrome | Preservar YYYY-MM e aba; sem criar rota | `createDashboardPagePath`, `createDashboardPageHero`, `HelpTooltip` |
+| Mês | Referência selecionada, mudança e atualização explícita | Mudar mês **não** abre; abort/requisições keyed; história separada | `FilterInputField` type=month em uso ou equivalente oficial após inventário |
+| Estado do fechamento | Badge + autoria, data/freshness quando disponíveis; vazio sem abertura exibe CTA Abrir | Não unificar P3/P5 num status fictício, status de consulta histórica | `StatusBadge`, `StateBanner`, `ActionButton` |
+| Indicadores | Três cards clicáveis: Bloqueios→atenções da Visão geral; Divergências→aba de relatórios; Documentos a tratar→aba documental | Divergência `0` só se fontes aptas e cálculo comprovado; sem fonte `—`; documentos `—` sem semântica contratual | `KpiCard` ou `MetricKpiCard` |
+| Atenção / próximos passos | **Seção principal** com 2–4 alertas ordenados por severidade comprovada, motivo em PT-BR, ação contextual e fonte; expandir se necessário | Converter códigos técnicos a mensagens via mapa auditável, sem ocultar causa; não inventar recomendações | `AlertQueue`, `WorklistItem`, `ActionButton` |
+| Cards de eixo | Três cartões de Estoque, Documentos e Pacote DRE; estado e próximo passo curto | Eixos independentes; `ATTACHED != VALIDATED`, `PACKAGE_SENT != MONTHLY_CLOSING_COMPLETED` | `StatusBadge`, `StateBanner`, cards de layout kit |
+| Atividade recente | 3–5 eventos com tipo, autor, data/hora, link quando existente; empty state neutro | Somente eventos retornados por owner/auditoria; não inferir ações | `Timeline`, `EmptyState` |
+| Conclusão/envio | Dois blocos consecutivos no final, com elegibilidade e CTA separados; confirmação quando suportada | Regra de negócio BFF, Core effective permissions; falha de fonte impede falso PASS; P5 vigente | `ActionButton`, `StateBanner`, confirmação do kit |
+
+### 12.3 Estados de tela obrigatórios
+- **Sem mês selecionado:** instrução simples “Selecione um mês de referência”; não carregar dados cruzados.
+- **Mês não aberto:** dados de leitura disponíveis podem ser consultados; CTA **Abrir fechamento** para `access` elegível. Nenhum avanço por mutação implícita.
+- **Aberto sem checklist:** cards e lista documental com estado “Sem exigências cadastradas”, sem bloqueio de entrada nem conclusão automática.
+- **Fonte P3 indisponível:** Bloqueios podem apontar indisponibilidade, Divergências = `—` (“Não foi possível verificar”), nunca `0` falso.
+- **Histórico finalizado:** leitura contextual e snapshot preservado; sem controles de mutação.
+- **Loading/partial/error:** skeleton/spinner do kit, atualização e origem por bloco; uma falha não deve zerar dados de outros eixos nem exibir stale de competência anterior.
+- **Permissão negada:** fail-closed no backend; UI explica sem expor dados.
+- **Sem eventos recentes:** seção compacta “Nenhuma atividade registrada para esta competência”, sem dados sintéticos.
+
+### 12.4 Visual e mobile
+- Desktop: área de atenções em destaque, três KPI pequenos e três cards de eixos compactos; texto humano e espaços moderados. Histórico e ações ao final.
+- Mobile: PagePath compacto, mês em linha própria, KPIs empilhados, atenções primeiro após indicadores, eixos empilhados; sem tabela horizontal forçada, botões acessíveis e retorno ao foco após navegação.
+- Claro/escuro usam mesma estrutura com tokens do kit; contraste, teclado/enter/space, foco visível, `aria` e Help atualizada.
+- Não exibir P2/P3/P4/P5 como blocos grandes na Visão geral. **Retirada visual ≠ exclusão de backend/legacy**.
+
+### 12.5 Critérios de aceite do próximo gate visual
+1. 3 abas mantidas e contexto de referência preservado em deep link/F5.
+2. Atenções são o maior bloco informacional e têm ações para contextos reais.
+3. Histórico resumido aparece com somente eventos comprovados.
+4. Cards compactos independentes de Estoque, Documentos e Pacote DRE.
+5. Conclusão e envio separados, no rodapé operacional, condicionados a backend.
+6. Nenhum código de erro técnico cru exibido ao usuário.
+7. Não mostrar zero de divergência quando fontes estiverem indisponíveis.
+8. Desktop/mobile, teclado/foco, temas e Ajuda passam QA visual.
+9. Kit `@delpi/plugin-ui/index` conferido no export e demonstrações antes de implementação.
+10. CLARA e Help sincronizadas com o **que for implementado**, não com um wireframe não publicado.
+
+**Próxima ação:** validar refinamento V0.2 com o PO; depois fechar DESIGN_FREEZE e preparar brief limitado à aba Visão geral. Nenhum runtime/legado foi modificado por esta decisão.
