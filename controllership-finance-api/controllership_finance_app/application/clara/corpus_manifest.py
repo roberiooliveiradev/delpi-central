@@ -232,4 +232,7 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md",
        "DOCUMENT", "Plano canônico do fluxo de fechamento (PO GO)",
        "APPROVED_RULE", "fluxo-fechamento-decisoes"),
+    _s("doc-00", "README.md",
+       "DOCUMENT", "Navegação e estado do produto",
+       "CURRENT_IMPLEMENTATION", "implementacao-runtime"),
 ]
