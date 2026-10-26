@@ -44,6 +44,11 @@ def can_use_purchase_requests(user: EffectiveUser) -> bool:
     return has_canonical_access(user)
 
 
+def can_use_market_intelligence(user: EffectiveUser) -> bool:
+    # Read-only analytics surface — same ``supplies.access`` bar.
+    return has_canonical_access(user)
+
+
 def can_administer(user: EffectiveUser) -> bool:
     return has_canonical_manage(user)
 

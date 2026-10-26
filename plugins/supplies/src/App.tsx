@@ -19,6 +19,7 @@ import { UserManualPage } from "./features/help/UserManualPage";
 import { OtdAnalyticsPage } from "./features/analytics/OtdAnalyticsPage";
 import { DeliveriesPage } from "./features/deliveries/DeliveriesPage";
 import { InventoryPage } from "./features/inventory/InventoryPage";
+import { MarketIntelligencePage } from "./features/market-intelligence/MarketIntelligencePage";
 import { PurchaseOrderDetailPage } from "./features/purchase-orders/PurchaseOrderDetailPage";
 import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestDetailPage } from "./features/purchase-requests/PurchaseRequestDetailPage";
@@ -177,6 +178,10 @@ function AppRoutes({
     content = <InventoryPage basePath={basePath} />;
   } else if (view === "safety_stock") {
     content = <SafetyStockPage basePath={basePath} />;
+  } else if (view === "market_intelligence") {
+    // PROC-0076: rota acessível por URL; sem entrada no hub/palette
+    // enquanto o gate E11 não for reconciliado.
+    content = <MarketIntelligencePage basePath={basePath} />;
   } else if (view === "safety_stock_detail") {
     content = (
       <SafetyStockDetailPage

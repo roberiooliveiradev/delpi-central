@@ -8,6 +8,9 @@ from app.interfaces.http.routes.analytics_routes import analytics_bp
 from app.interfaces.http.routes.deliveries_routes import deliveries_bp
 from app.interfaces.http.routes.health_routes import health_bp
 from app.interfaces.http.routes.inventory_routes import inventory_bp
+from app.interfaces.http.routes.market_intelligence_routes import (
+    market_intelligence_bp,
+)
 from app.interfaces.http.routes.me_routes import me_bp
 from app.interfaces.http.routes.purchase_orders_routes import purchase_orders_bp
 from app.interfaces.http.routes.purchase_requests_routes import purchase_requests_bp
@@ -34,6 +37,7 @@ def create_application() -> Flask:
     app.register_blueprint(deliveries_bp)
     app.register_blueprint(inventory_bp)
     app.register_blueprint(safety_stock_bp)
+    app.register_blueprint(market_intelligence_bp)
     app.register_blueprint(suppliers_bp)
     app.register_blueprint(creation_bp)
     app.register_blueprint(enrichment_bp)

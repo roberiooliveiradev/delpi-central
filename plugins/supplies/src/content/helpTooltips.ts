@@ -98,6 +98,22 @@ export const SP_HELP = {
     "Cor desta série no gráfico. Aplica somente à série selecionada.",
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas / Atrasos (recebimentos MP no período selecionado).",
+  marketIntelligencePage:
+    "Cotações históricas de metais e câmbio de fontes autorizadas (Banco Central — PTAX, e World Bank — Pink Sheet), com atribuição e licença exibidas na própria página. Valores em USD são nativos da fonte; BRL usa a média PTAX do mês. Meses sem câmbio aparecem como indisponíveis — nunca como zero.",
+  marketIntelligenceInstrument:
+    "Instrumento do catálogo licenciado: metais industriais (média mensal World Bank Pink Sheet, em USD por tonelada métrica) ou a série diária USD/BRL (PTAX). Metais e câmbio nunca são misturados na mesma série.",
+  marketIntelligenceCurrency:
+    "USD mostra o valor nativo da fonte. BRL converte pela média PTAX de venda do mês de referência (método versionado pela API). Quando falta câmbio no mês, o ponto fica vazio e o estado parcial é sinalizado.",
+  marketIntelligenceFxKind:
+    "Tipo de cotação PTAX usada na conversão e na série de câmbio: venda (padrão, referência comercial) ou compra, ambas no fechamento do dia.",
+  marketIntelligencePeriod:
+    "Recorte da consulta. Fica na URL junto com instrumento, moeda e granularidade — F5 e compartilhamento restauram a mesma visão.",
+  marketIntelligenceSummary:
+    "Cards do período: última cotação válida, média aritmética das observações válidas, variação entre a primeira e a última observação e o dólar PTAX de referência. Ausência de dado aparece como «—», nunca como zero.",
+  marketIntelligenceSeries:
+    "Série histórica na granularidade escolhida. Pontos sem observação ficam vazios (sem interpolação). O selo indica fonte e o banner sinaliza dados parciais ou desatualizados.",
+  marketIntelligenceMonthlyTable:
+    "Alternativa tabular acessível ao gráfico: média mensal, média nativa em USD, PTAX do mês, número de observações e cobertura de cada período.",
   purchaseRequests:
     "Acompanhamento global das solicitações no período. Os indicadores contam SCs, não linhas: Solicitações é o total do recorte; Aguardando pedido reúne SCs ainda sem pedido completo; Aguardando recebimento reúne SCs já encaminhadas e ainda não concluídas. Atenção só filtra a lista — não é permissão nem um fluxo novo.",
   purchaseRequestsStage:

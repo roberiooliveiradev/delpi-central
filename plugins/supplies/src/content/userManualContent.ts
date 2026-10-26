@@ -181,6 +181,7 @@ export const USER_MANUAL_CONTENT = {
         "Entregas / Atrasos — recebimentos de matéria-prima (MP) já digitados, classificados em Em atraso ou No prazo. Período = data de digitação/entrada. Sem clique no pedido (histórico ≠ PC aberto).",
         "Estoque — posição física atual por produto, unidade e armazém, incluindo saldos positivos, zerados e negativos. Não calcula saldo disponível e não é estoque de segurança.",
         "Estoque de segurança — materiais com estoque de segurança parametrizado no ERP: indicadores do recorte, déficit por unidade de medida e lista ordenável com os quatro status. Clique na linha para a página de detalhe do material (saldos, cobertura, pedidos/SCs/empenhos em aberto, projeção, consumo e fornecedores); na visão Todas as Filiais, o Portal pede a escolha de Santa Catarina ou Espírito Santo. Distinto de Estoque (posição física) e de Produtos (ficha cadastral).",
+        "Inteligência de mercado — cotações históricas de metais e câmbio de fontes autorizadas (World Bank Pink Sheet e Banco Central PTAX), com USD nativo e conversão BRL pela média PTAX do mês. Mostra fonte, licença e estados de dados (parcial, desatualizado, sem dados) — nunca inventa valores.",
         "Solicitações de compras — acompanhamento global no período; o hero conta SCs e a faixa Atenção filtra a situação sem ser uma permissão. Clique na SC para a ficha; exportação Excel faz parte do uso normal.",
         "Operações — agrupamento do Início que reúne pedidos, entregas, fornecedores, produtos, estoque físico e estoque de segurança. Na barra de navegação, «Pedidos de compra» abre diretamente a lista de pedidos.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
@@ -210,6 +211,21 @@ export const USER_MANUAL_CONTENT = {
         "Atualizar — o botão Atualizar recarrega filtros, resumo e lista mantendo o recorte; o horário exibido é da última consulta bem-sucedida.",
         "Sem resultados — a lista vazia é um resultado legítimo do recorte: ajuste os filtros ou use Limpar. Não confunda com erro.",
         "Erros e acesso — falhas aparecem como aviso explícito com opção de tentar novamente; uma seção pode falhar sem derrubar as demais. Sem uso normal do módulo a página não abre (403) — peça o acesso ao administrador.",
+      ],
+    },
+    {
+      id: "market-intelligence",
+      title: "Inteligência de mercado",
+      intro:
+        "A página Inteligência de mercado reúne o histórico de cotações de metais e do dólar usado nas análises de compra. Os dados vêm de fontes externas autorizadas, ingeridos pelo serviço de dados externos da plataforma — a página nunca consulta a internet diretamente.",
+      bullets: [
+        "Fontes — metais industriais vêm do World Bank Pink Sheet (média mensal em USD por tonelada métrica, licença CC BY 4.0) e o câmbio vem do Banco Central do Brasil (PTAX, ODbL). Fonte, licença e horário da última ingestão aparecem na própria página.",
+        "Filtros — instrumento, moeda (USD/BRL), granularidade (diário/mensal/anual conforme o instrumento), tipo de PTAX e período. Todos ficam na URL: F5 e compartilhamento restauram a mesma visão.",
+        "Conversão para BRL — multiplica o valor mensal em USD pela média das PTAX de venda do mesmo mês. Se o mês não tiver câmbio, o ponto fica vazio e o banner de dados parciais é exibido — nunca um zero nem um valor estimado.",
+        "Resumo — última cotação válida do período, média aritmética das observações válidas, variação entre a primeira e a última observação e o dólar PTAX de referência. Ausência de dado aparece como «—».",
+        "Gráfico e tabela — a série histórica mostra a evolução; a tabela de médias mensais é a alternativa acessível, com média, média nativa em USD, PTAX do mês, número de observações e cobertura de cada período.",
+        "Estados — dados parciais, desatualizados ou indisponíveis são sinalizados por banner; limite de requisições e indisponibilidade da fonte aparecem como aviso com opção de tentar novamente.",
+        "Atualizar — recarrega catálogo, resumo, série e médias mantendo os filtros atuais.",
       ],
     },
     {
@@ -271,6 +287,18 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Onde vejo o significado de cada KPI da Visão geral?",
           a: "Nas fichas de indicadores e na Visão geral. Cada card mostra se o valor é intervalo, snapshot ou estado atual — não misture com o Início. O IDD Suprimentos e a nota do card vêm do Strategic Indicators. A meta do período acompanha o recorte; a meta mês é só referência cadastrada.",
+        },
+        {
+          q: "De onde vêm as cotações da Inteligência de mercado?",
+          a: "De fontes externas autorizadas com licença aberta: metais do World Bank Pink Sheet (média mensal em USD/t) e câmbio do Banco Central (PTAX, boletim diário). Fonte, licença e última ingestão ficam visíveis na página. A página nunca consulta a internet — os dados vêm do serviço interno de dados de mercado.",
+        },
+        {
+          q: "Por que um mês aparece vazio ou «Sem câmbio»?",
+          a: "Metais do Pink Sheet são publicados com defasagem (o mês corrente ainda não saiu) e meses antigos sem PTAX não podem ser convertidos. O Portal mostra o ponto vazio e o aviso de dados parciais — nunca inventa um valor nem exibe zero.",
+        },
+        {
+          q: "Como o valor em BRL é calculado?",
+          a: "Cotação mensal em USD × média das PTAX de venda (fechamento) do mesmo mês — método versionado pela API. O tipo de PTAX (venda/compra) pode ser trocado no filtro quando aplicável.",
         },
         {
           q: "Por que a lista de SC vem vazia?",

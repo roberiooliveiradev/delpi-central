@@ -2237,10 +2237,30 @@ services:
       BRASILAPI_TIMEOUT_SECONDS: ${BRASILAPI_TIMEOUT_SECONDS:-6}
       REDIS_URL: ${DELPI_REDIS_URL:-}
 
+      # Market data (PROC-0076) — owner schema external_data no
+      # postgres-plugins; migrations e feeds opt-in por ambiente.
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+      EXTERNAL_DATA_SCHEMA: ${EXTERNAL_DATA_SCHEMA:-external_data}
+      EXTERNAL_DATA_RUN_MIGRATIONS_ON_STARTUP: ${EXTERNAL_DATA_RUN_MIGRATIONS_ON_STARTUP:-true}
+      EXTERNAL_DATA_FEED_FX_DAILY_ENABLED: ${EXTERNAL_DATA_FEED_FX_DAILY_ENABLED:-false}
+      EXTERNAL_DATA_FEED_METALS_MONTHLY_ENABLED: ${EXTERNAL_DATA_FEED_METALS_MONTHLY_ENABLED:-false}
+      PTAX_BASE_URL: ${PTAX_BASE_URL:-https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1}
+      PTAX_TIMEOUT_SECONDS: ${PTAX_TIMEOUT_SECONDS:-15}
+      WORLDBANK_PINKSHEET_MONTHLY_URL: ${WORLDBANK_PINKSHEET_MONTHLY_URL:-https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx}
+      WORLDBANK_PINKSHEET_TIMEOUT_SECONDS: ${WORLDBANK_PINKSHEET_TIMEOUT_SECONDS:-30}
+
     depends_on:
       keycloak:
         condition: service_started
       delpi-redis:
+        condition: service_healthy
+      postgres-plugins:
         condition: service_healthy
 
     healthcheck:

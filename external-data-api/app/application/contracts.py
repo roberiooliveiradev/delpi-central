@@ -61,3 +61,33 @@ class CnpjDataSource(Protocol):
 
     def fetch(self, tax_id: str, *, correlation_id: str) -> Mapping:
         ...
+
+
+# --- Market data (PROC-0076) --------------------------------------------------
+# Codes follow the same frozen envelope ``{"detail", "code"}``; statuses mirror
+# the candidate contract table in the P0 architecture document.
+
+
+class InvalidQueryError(ExternalDataError):
+    http_status = 400
+    code = "EXTERNAL_DATA_INVALID_QUERY"
+
+
+class UnknownInstrumentError(ExternalDataError):
+    http_status = 404
+    code = "EXTERNAL_DATA_UNKNOWN_INSTRUMENT"
+
+
+class UnknownSeriesError(ExternalDataError):
+    http_status = 404
+    code = "EXTERNAL_DATA_UNKNOWN_SERIES"
+
+
+class StorageUnavailableError(ExternalDataError):
+    http_status = 503
+    code = "EXTERNAL_DATA_STORAGE_UNAVAILABLE"
+
+
+class SourceNotLicensedError(ExternalDataError):
+    http_status = 503
+    code = "EXTERNAL_DATA_SOURCE_NOT_LICENSED"

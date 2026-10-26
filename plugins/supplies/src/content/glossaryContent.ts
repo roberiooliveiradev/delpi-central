@@ -79,4 +79,19 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
     meaning:
       "Tabela de fornecedores do Protheus. O identificador é código + loja (8 dígitos); CNPJ/CPF não é chave única. O cadastro é compartilhado da empresa 01 — a filial da tela do Portal é filtro, não permissão sobre fornecedores.",
   },
+  {
+    term: "PTAX",
+    meaning:
+      "Cotação do dólar divulgada pelo Banco Central do Brasil em boletins diários (abertura, intermediárias e fechamento, de compra e venda). Na Inteligência de mercado, a conversão USD→BRL usa a média mensal da PTAX de venda no fechamento; feriados e fins de semana não têm publicação.",
+  },
+  {
+    term: "Pink Sheet",
+    meaning:
+      "Relatório mensal de preços de commodities do Banco Mundial (World Bank Commodity Markets). As cotações de metais do Portal vêm desse relatório: média mensal em USD por tonelada métrica, publicada com alguns dias de defasagem — por isso o mês corrente pode aparecer vazio.",
+  },
+  {
+    term: "Cobertura",
+    meaning:
+      "Na Inteligência de mercado, indica se o período tem todas as observações esperadas: Completa (todos os pontos), Parcial (faltam pontos), Sem câmbio (falta PTAX para converter) ou Sem dados.",
+  },
 ] as const;

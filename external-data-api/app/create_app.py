@@ -3,6 +3,7 @@ from flask import Flask
 from app.infrastructure.config.settings import Settings
 from app.interfaces.http.routes.cnpj_routes import cnpj_bp
 from app.interfaces.http.routes.health_routes import health_bp
+from app.interfaces.http.routes.market_data_routes import market_data_bp
 
 
 def create_app() -> Flask:
@@ -12,5 +13,6 @@ def create_app() -> Flask:
 
     app.register_blueprint(health_bp)
     app.register_blueprint(cnpj_bp)
+    app.register_blueprint(market_data_bp)
 
     return app

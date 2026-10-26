@@ -18,6 +18,7 @@ export type PluginView =
   | "inventory"
   | "safety_stock"
   | "safety_stock_detail"
+  | "market_intelligence"
   | "negotiations"
   | "indicators"
   | "administration"
@@ -85,6 +86,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   products: "products",
   inventory: "inventory",
   "safety-stock": "safety_stock",
+  "market-intelligence": "market_intelligence",
   negotiations: "negotiations",
   indicators: "indicators",
   administration: "administration",
@@ -104,6 +106,7 @@ export const PLUGIN_VIEW_RELATIVE_PATHS: Record<PluginRoutableView, string> = {
   products: "products",
   inventory: "inventory",
   safety_stock: "safety-stock",
+  market_intelligence: "market-intelligence",
   negotiations: "negotiations",
   indicators: "indicators",
   administration: "administration",
