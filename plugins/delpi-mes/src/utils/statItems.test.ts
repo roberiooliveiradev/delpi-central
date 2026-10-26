@@ -15,11 +15,18 @@ describe("monitoring stat cards", () => {
   it("shows appointments, producing, a single downtime card and pending reasons", () => {
     const labels = monitoringStatItems(summary()).map((item) => item.label);
     expect(labels).toEqual([
+      "Centros monitorados",
       "Apontamentos ativos",
       "Produzindo",
       "Paradas",
       "Motivos pendentes",
     ]);
+  });
+
+  it("shows monitored centers from summary and falls back to active runs", () => {
+    const cards = monitoringStatItems(summary({ monitoredCenters: 7 }));
+    expect(cards.find((item) => item.id === "monitored")?.value).toBe(7);
+    expect(monitoringStatItems(summary()).find((item) => item.id === "monitored")?.value).toBe(3);
   });
 
   it("counts a stop once when it is also a manual pause", () => {

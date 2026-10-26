@@ -50,11 +50,12 @@ class FakeRepository:
         return self.downtime_rows, len(self.downtime_rows)
 
 
-def make_service(repo):
+def make_service(repo, *, sensorized_provider=None):
     return MesIntegrationReadService(
         repository=repo,
         branch_access=BranchAccessService(),
         clock=lambda: NOW,
+        sensorized_provider=sensorized_provider,
     )
 
 
@@ -81,6 +82,7 @@ def test_live_empty_has_zero_summary_and_one_bounded_read():
     assert data["summary"] == {
         "activeRuns": 0, "producing": 0, "stopped": 0,
         "paused": 0, "unclassifiedDowntimes": 0,
+        "monitoredCenters": 0, "sensorizedCenters": 0,
     }
     assert repo.live_calls == 1
 
@@ -105,6 +107,7 @@ def test_live_preserves_run_and_operational_state_and_derives_summary():
     assert data["summary"] == {
         "activeRuns": 3, "producing": 1, "stopped": 2,
         "paused": 1, "unclassifiedDowntimes": 1,
+        "monitoredCenters": 3, "sensorizedCenters": 0,
     }
     assert data["items"][1]["runStatus"] == "running"
     assert data["items"][1]["operationalState"] == "stopped"
@@ -117,6 +120,37 @@ def test_live_does_not_invent_state_for_incomplete_run():
     item = make_service(repo).get_live_work_centers(branch="01")["items"][0]
     assert item["operationalState"] is None
     assert item["integrityStatus"] == "incomplete"
+
+
+def test_live_merges_sensorized_centers_without_mes_fact():
+    repo = FakeRepository()
+    repo.live_rows = [live_row()]
+    data = make_service(
+        repo,
+        sensorized_provider=lambda branch: ["CT-35", "CT-99", "CT-77"],
+    ).get_live_work_centers(branch="01")
+    centers = [item["workCenter"] for item in data["items"]]
+    assert centers == ["CT-35", "CT-77", "CT-99"]
+    bound = next(item for item in data["items"] if item["workCenter"] == "CT-35")
+    assert bound["runId"] == "run-1" and bound["sensorized"] is True
+    quiet = next(item for item in data["items"] if item["workCenter"] == "CT-77")
+    assert quiet["runId"] is None and quiet["operationalState"] is None
+    assert quiet["sensorized"] is True and quiet["autonomousMonitoring"] is False
+    assert data["summary"]["activeRuns"] == 1
+    assert data["summary"]["monitoredCenters"] == 3
+    assert data["summary"]["sensorizedCenters"] == 3
+
+
+def test_live_sensorized_provider_failure_degrades_to_mes_facts():
+    def boom(branch):
+        raise RuntimeError("pulse offline")
+
+    repo = FakeRepository()
+    repo.live_rows = [live_row()]
+    data = make_service(repo, sensorized_provider=boom).get_live_work_centers(branch="01")
+    assert [item["workCenter"] for item in data["items"]] == ["CT-35"]
+    assert data["items"][0]["sensorized"] is False
+    assert data["summary"]["monitoredCenters"] == 1
 
 
 def test_invalid_branch_is_controlled():

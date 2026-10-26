@@ -1,7 +1,7 @@
 import type { MonitoringItem } from "../types/mes";
 import { isPendingReason, presentMonitoringState } from "./monitoringPresentation";
 
-export type StatusFilter = "all" | "producing" | "stopped" | "paused" | "pending" | "incomplete";
+export type StatusFilter = "all" | "producing" | "stopped" | "paused" | "pending" | "incomplete" | "sensorized";
 export type SortMode = "attention" | "workCenter" | "duration" | "productionOrder";
 export type MonitoringFilters = { search: string; status: StatusFilter; reason: string; sort: SortMode };
 
@@ -9,11 +9,13 @@ export function filterMonitoringItems(items: MonitoringItem[], filters: Monitori
   const term = filters.search.trim().toLocaleLowerCase("pt-BR");
   const matchesStatus = (item: MonitoringItem) => {
     if (filters.status === "all") return true;
-    if (filters.status === "producing") return item.runStatus === "running" && item.operationalState === "producing";
+    // runStatus é NULL nos fatos autônomos — o estado operacional é o fato.
+    if (filters.status === "producing") return item.operationalState === "producing" && item.runStatus !== "paused";
     if (filters.status === "stopped") return item.operationalState === "stopped";
     if (filters.status === "paused") return item.runStatus === "paused";
     if (filters.status === "pending") return isPendingReason(item);
-    return item.integrityStatus !== "complete";
+    if (filters.status === "sensorized") return !item.runId && !item.operationalState;
+    return item.integrityStatus !== "complete" && Boolean(item.operationalState || item.runId);
   };
   const result = items.filter((item) => {
     const searchable = [item.workCenter, item.productionOrder, item.operationCode, item.operatorName, item.downtime?.reasonLabel].filter(Boolean).join(" ").toLocaleLowerCase("pt-BR");
