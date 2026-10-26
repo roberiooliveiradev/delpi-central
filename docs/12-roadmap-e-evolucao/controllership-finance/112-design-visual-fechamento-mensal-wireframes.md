@@ -1213,3 +1213,69 @@ Na própria bancada Relatórios e divergências mostrar: origem e estado da font
 - Se a escolha for A, documentar alteração **explícita** da decisão visual de quatro abas, com destino e deep links de P5, antes de runtime.
 - **`DECISION_REQUIRED / PENDING_PO`** para contêiner de P5 na opção A vs aba dedicada B.
 - **`RUNTIME_GO=NO`**: nenhum código, manifest, permission, rota, API ou schema implementado por esta discussão.
+
+
+## 25. PO aprova três abas e histórico integral por competência — decisão visual V1.1
+
+**Data:** 2026-10-26. **Origem:** decisão explícita do PO em chat: “três abas é o correto”; a revisão operacional ocorre por documento, por exemplo P7 PDF enviado, ajuste solicitado pela Contabilidade, nova versão substituída pela Joici, histórico preservado; a **Visão geral** seleciona competências mensais e apresenta contexto histórico de documentos e relatórios de cada fechamento. **Classificação:** `PO_APPROVED_INFORMATION_ARCHITECTURE` (navegação de três abas); `TARGET` (modelo de exibição temporal e revisão documental); `DECISION_REQUIRED` (reconciliação do contrato P5). `IMPLEMENTATION_AUTHORIZED=NO`.
+
+### 25.1 Decisão D-FM06-REBASE-01 = A — três abas, não quatro
+
+**Substitui expressamente** a proposta anterior de quatro abas da V0.6/§23/§24 no aspecto de **navegação visual**. Abas na bancada operacional da Controladoria, somente:
+
+1. **Visão geral** — seletor de competências **existentes e autorizadas**, consulta de setembro/2026, outubro/2026 etc., status histórico do fechamento, bloqueios, eventos e entradas contextualizadas por competência;
+2. **Documentos e interações** — checklist/documentos, anexos, versões (V1, V2, ...), comentários, pedidos de complemento/correção, resposta, documentação disponibilizada à audiência autorizada e histórico do item;
+3. **Relatórios e divergências** — catálogo e resultados TOTVS autorizados, parâmetros e versões da emissão referentes à competência, divergências e orientações de correção manual na origem, container de prévia PDF e disponibilização governada do arquivo resultante à documentação.
+
+**Não criar aba top-level** Revisão, Pendências, Documentos a tratar ou Divergências. Os três cartões clicáveis da moldura (Bloqueios, Divergências, Documentos a tratar) passam apenas filtros/foco às superfícies acima. Manter competência, empresa/filial autorizada, filtros, item/relatório selecionado e link de retorno durante drilldown. Pendências P4 preservam domínio/owner e são contexto/fila aplicável, não nova aba. A Controladoria e a Contabilidade/DRE **não** recebem a mesma experiência: DRE continua página documental restrita, sem relatórios TOTVS, uploads ou aceite formal P2/P5.
+
+### 25.2 Revisão de documento: timeline vinculada a cada entrega, não pacote novo a cada PDF
+
+**Exemplo de jornada** (sem equivalência de status garantida até contratos):
+- Joici gera/anexa versão V1 do PDF P7 vinculado à competência e ao entregável correspondente;
+- o arquivo é disponibilizado ao destinatário autorizado mediante ato explícito e auditado;
+- Contabilidade/DRE consulta, comenta ou solicita complemento/ajuste do documento; a solicitação ganha destaque e notificação interna conforme recipients autorizados;
+- a Joici responde e, quando cabível, produz/anexa V2; o binário e o evento V1 continuam no histórico, vinculados à mesma identidade de item/documento;
+- Contabilidade consulta nova versão, registra resposta/resultado de **atendimento do complemento** sob contrato futuro; isto **não equivale** a validar formalmente evidência P2 ou aceitar PackageVersion P5;
+- UI pode mostrar `V1 → pedido de ajuste → V2 → resposta`, com ator, instante, versão e vínculo, sem sobrescrita silenciosa.
+
+**Vocabulário visual:** evitar usar “primeira revisão” como estado de package review P5 se significa “primeira versão do PDF”. Exibir “Versão 1”, “Versão 2”, “Ajuste solicitado”, “Resposta registrada” e “Complemento atendido” apenas se houver status contratados. O último evento na conversa não torna documento/pacote automaticamente aceito ou competência encerrada.
+
+### 25.3 Visão geral histórica por mês: layout-alvo
+
+```text
+Fechamento mensal
+[Competência existente/autorizada: Setembro/2026 ▼] [empresa/escopo autorizado]
+[Estado do fechamento e última atualização canônicos]
+[Bloqueios → contexto] [Divergências → Relatórios] [Documentos a tratar → Docs]
+
+[Visão geral*] [Documentos e interações] [Relatórios e divergências]
+
+RESUMO DA COMPETÊNCIA
+[Estoque: status owner] [Documentos: status owner] [Pacote: status owner]
+[Acontecimentos relevantes, pendências e blockers materiais]
+
+ARQUIVO DO FECHAMENTO — ESTA COMPETÊNCIA
+[Documentos/versões disponibilizadas] [Relatórios/fontes/gerações utilizadas]
+[Histórico cronológico de eventos e alterações]
+[Contexto de finalização e submissão/decisões de pacote, se houver]
+[Filtrar tipo, período, área, origem; não misturar competências]
+```
+
+O seletor mostra competências realmente existentes e autorizadas, **não cria mês**. Cada competência usa seu snapshot histórico e preserva versões, autor, timestamp, parâmetros do relatório/fonte, destinatário, status e rastreabilidade. Não mostrar PDF atual como se fosse a versão usada no fechamento histórico; emitir novo documento é evento separado, sem mutar a prova anterior. `Disponibilizado ao DRE` depende de scope/estado de liberação real. Cada recurso permanece protegido por Core effective permissions **AND** resource/recipient scope **AND** regra de negócio, fail-closed.
+
+### 25.4 Conflito semântico material P5 — não revogado pela decisão visual
+
+O [Doc 37 P5](./37-p5-submissao-e-revisao-no-portal.md) define **PackageVersion imutável**, `FINALIZE != SUBMIT != REVIEW != MONTHLY_CLOSING_COMPLETED`, reviewers atribuídos, aceites humanos por área/versão, esclarecimentos e requisitos de conclusão. O [Doc 91](./91-ciclo3-contabilidade-acesso-documentos-historicos-gate.md) define a audiência restrita DRE **sem aceite formal** na V1. O PO descreveu revisão documental cotidiana, **não aprovou expressamente a remoção dos invariantes P5**. Assim:
+
+- **DECISION_REQUIRED: D-P5-SURFACE-01** — onde exibir preparação/finalização/submissão, decisões e status P5 **sem quarta aba**. **Recomendação:** resumo do pacote e acesso ao painel contextual na própria Visão geral, com fluxo de detalhe sob mesma competência, sem nova navegação top-level; manter owner e deep links P5 existentes até gate de compatibilidade.
+- **DECISION_REQUIRED: D-P5-CLOSURE-01** — o relato “fechado o pacote” refere-se a registro visual e arquivo histórico ou propõe alteração de regras de conclusão/aceites humanos? **Não presumir** equivalência nem retirar workflow formal do Doc 37.
+- **D-DRE-DOC-REVIEW-01:** comentário e solicitação de complemento **não são aceite P5**; confirmar quem declara complemento atendido em contrato posterior.
+- **D-ARCHIVE-SNAPSHOT-01:** recorte imutável por competência, associação de versões de PDF geradas e links aos relatórios; producer/API/evidência `TO_INVENTORY`.
+- **D-FM06-ROUTER-01:** o fato de haver três abas não autoriza apagar rotas P4/P5, alterar permission codes ou quebrar deep links; inventário + gate.
+
+### 25.5 Critério de navegação mínima e próximos wireframes
+
+O design de **três abas fica aprovado pelo PO** e será a nova base dos wireframes; a arquitetura interna de pacotes P5, histórico de competência e editabilidade temporal será refinada dentro das áreas definidas. Priorizar novo wireframe da **Visão geral histórica por competência**, depois painel contextual de pacote, depois relatório e documento em contexto mensal. O PDF final fica em container até revisão posterior da fidelidade.
+
+**Status da rodada:** `PO_APPROVED_VISUAL_THREE_TABS / P5_RECONCILIATION_PENDING / RUNTIME_GO=NO / NO_CODE_CHANGED`.
