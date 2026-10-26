@@ -266,3 +266,17 @@ EVIDENCE_LINKS_AND_DOC_COMMITS: este adendo; Doc 107 Adendo 9; Doc 108 seção G
 5. Smoke autenticado real: tools/list (18 esperadas), READ por usuário autorizado, fontes/citações do corpus, fail-closed sem scope ou com audience incorreta; lote com **uma aprovação de negócio**, somente sobre cenário produtivo de teste previamente autorizado, estado e auditoria verificados. Resultado final em Docs 107/108/110 com SHAs, responsável e teste.
 
 **Sem nova alteração produtiva automática pelo GPT.** Não requer reabrir G2 do PO; respeitar ressalvas P7, relatórios oficiais e owners G1 ainda pendentes.
+
+
+
+## 10. Sessão guiada de cadastro Keycloak/ChatGPT — evidência inicial por capturas (26/10/2026)
+
+**Origem:** o PO enviou três capturas da console administrativa Keycloak `https://minhadelpi.com.br/auth/admin/master/console/#/delpi/clients` em 26/10/2026 (interface visível; capturas permanecem na conversa, **não** anexadas ao GitHub). Realm `delpi` selecionado, sessão de console funcional. A lista filtrada por `mcp` apresenta `mcp-api-delpi`, `mcp-transformometro` e `mcp-tv-dashboard`, **sem `mcp-clara`**. O rol completo mostra também `controllership-finance-api`, `delpi-central`, `delia-api` — esses clients existentes **não substituem** o futuro `mcp-clara`.
+
+**Classificação:** `PROVEN` somente a **ausência visual do client CLARA na lista filtrada** e o acesso humano à console; login humano no navegador **não** comprova credencial válida para `KC_ADMIN_TOKEN`/provisionador, nem autoridade de mudança IAM para qualquer outro recurso. Cliente produtivo `mcp-clara` permanece `NOT_PROVISIONED` até screenshot após Save + metadata/claims verificados. ChatGPT `TEST_NOT_RUN`.
+
+**Solicitação do PO:** guiar manualmente, pela console Keycloak e interface ChatGPT, o cadastro da CLARA em etapas verificadas por captura. O projeto possui **engine IAM canônico compartilhado** `infra/scripts/delia_mcp_keycloak_state.py`; usar a console como **procedimento de provisionamento assistido** somente com autoridade IAM apropriada, verificar cada campo contra o desired-state sem inventar callback, sem modificar clients irmãos e **sem aplicar depois o engine compartilhado às cegas**. Owner IAM/Plataforma deve reconciliar qualquer drift e aprovar mudanças de scope/policy transversal.
+
+**Contratos a preservar:** `client_id=mcp-clara`; OpenID Connect, confidential/client authentication ON, Standard flow ON, PKCE `S256`, Implicit/Direct grants/Service Accounts OFF; dedicated scope `mcp-audience-clara` com audience exata `https://minhadelpi.com.br/apps/controllership-finance-api/mcp`, shared `mcp:tools` sem mapper de audience específica, `delpi-central` como audience exigida pelo servidor; callback **somente a exibida no fluxo real de cadastro ChatGPT**, registrada exatamente no client, sem wildcard. Client secret jamais copiado em print/Git/chat. Token exchange policy com DÉLIA exige IAM owner e não pode ser inferida do simples client OAuth.
+
+**Próxima evidência:** o PO abre `Clients → Create client`, insere general settings no realm `delpi` sem concluir Save, e envia captura **sem credenciais** para validar antes de gravar. Registrar depois o resultado da criação, vinculação de scopes, audience, testes de tokens e conexão ChatGPT.
