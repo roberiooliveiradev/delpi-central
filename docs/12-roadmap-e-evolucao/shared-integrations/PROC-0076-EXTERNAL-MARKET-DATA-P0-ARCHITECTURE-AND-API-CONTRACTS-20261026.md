@@ -181,3 +181,17 @@ Dados históricos externos **não** são dados próprios TOTVS do Portal. A deci
 ## 9. Handoff / stop conditions
 
 Cursor deve reportar BASE HEAD, FINAL HEAD, git status, facts PROVEN, TO_INVENTORY, EXPERIMENTS, EXECUTION_DRIFT, arquivos inspecionados/alterados, impacto contratual, testes, postconditions, residual search e NEXT BOUNDED STEP. Não inventar dado numérico de metal/câmbio para simular conexão com fonte real. Ausência de autorização de fonte/DB/schema ou quebra da fila E11 → **STOP-THE-LINE** no subgrafo impactado. Este documento é DRAFT de contrato, nunca evidência de funcionalidade implementada.
+
+---
+
+## Reconciliacao R1 — IMPLEMENTADO (2026-10-27, fix/proc-0076-r1)
+
+Este documento era PROPOSED/DESIGN-ONLY. A implementacao existe em `main` (`e1c7974327` + fixes `660ddd3983`, `fecb855107`) e foi corrigida no rework R1 (`3b13494c69`, `ebe1f54ee4`, `4f81f9c233`, `313c5469da`). Divergencias/confirmacoes vs a proposta:
+
+- **Schema:** `external_data` e **constante canonica fixa** em `Settings.EXTERNAL_DATA_SCHEMA` — nao configuravel por env (isolar por nome de schema quebraria o ledger `schema_migrations` vs DDL real). Isolamento de ambientes e por `PLUGINS_DB_*` (database/host).
+- **Migrations:** V001 (schema+tabelas), V002 (catalogo licenciado: `bcb-ptax` ODbL-1.0, `world-bank-pink-sheet` CC BY 4.0, 6 metais), **V003** (proveniencia LME das series Pink Sheet + escopo `no_redistribution_pending_lme_review` — a CC BY 4.0 do WB nao cobre dados de terceiros; uso interno preservado, redistribuicao externa exige decisao formal). Checksum sha256 + imutabilidade + advisory lock multi-worker; falha de migration = **boot degradado** (CNPJ continua), nao derruba o processo.
+- **Rotas implementadas:** `/v1/market-data/{catalog,metals/observations,fx/observations,ingestion-status}` — S2S obrigatorio, so historico persistido, janelas bounded (<=366d FX diario / <=3660d metais mensal), `limit`<=500.
+- **Provedores:** PTAX BCB OData (`CotacaoDolarPeriodo`) + Pink Sheet XLSX (aba "Monthly Prices", 6 metais USD/mt). LME direto/Shockmetais fora do catalogo (sem licenca).
+- **PTAX em producao:** HTTP 403 (WAF BCB no egress) — registrado como `EXTERNAL_DATA_PROVIDER_UNAVAILABLE` em `ingestion_runs`, sem dados ficticios; feed permanece OFF ate solucao operacional. Nao e bug de codigo.
+- **Testes:** suite inclui PostgreSQL real em banco descartavel (`EXTERNAL_DATA_TEST_PG_*`) — antes TEST_NOT_RUN; cobre migrations, checksum, advisory lock, NUMERIC, unicidade/FK, idempotencia e boot degradado.
+- **Residual:** `GATE-FEATURE` nao e escopo deste doc; ver IMPLEMENTATION-PLAN supplies. Feed flags OFF; E11 nao reconciliado.

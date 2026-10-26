@@ -317,3 +317,9 @@ Registrar contagens/exit code/ambiente; não disfarçar teste não executado. Te
 **REPORT:** BASE HEAD; ORIGIN MAIN; FINAL HEAD; GIT STATUS; STATUS; FACTS PROVEN; TO_INVENTORY; EXECUTION_DRIFT; FILES INSPECTED/CHANGED; CONTRACT IMPACT; SECURITY CHECKS; SOURCE RIGHTS; RQ/AC COVERAGE; TESTS; RESIDUAL SEARCH; POSTCONDITION/OUTCOME; UNRESOLVED; NEXT STEP.
 
 **Ordem inexorável:** READ → VERIFY → CLASSIFY → DECIDE → IMPLEMENT MINIMAL DIFF → TEST → VERIFY OUTCOME → RESIDUAL SEARCH → DOCUMENT → REPORT. Não parar a cada etapa técnica, não saltar um gate real.
+
+---
+
+## Estado de execucao — EXECUTADO + REWORK R1 (2026-10-27)
+
+Este plano foi executado: vertical completa em `main` (`e1c7974327` + `660ddd3983`, `fecb855107`) e rework R1 na branch `fix/proc-0076-r1` (`3b13494c69` freshness/unidade, `ebe1f54ee4` schema canonico + PG real, `4f81f9c233` V003 proveniencia, `313c5469da` contrato MFE). Relatorio R1 com cobertura AC-R1-01..31 emitido ao Chat 01. Pendencias reais preservadas: E11 nao reconciliado, smoke federado autenticado INCONCLUSIVE, PTAX 403 egress, feeds OFF.

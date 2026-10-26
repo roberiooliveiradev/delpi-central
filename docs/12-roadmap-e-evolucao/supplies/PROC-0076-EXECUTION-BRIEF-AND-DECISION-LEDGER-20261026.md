@@ -97,3 +97,14 @@ README informa E11.S1–S9 executadas e GATE E11 INCONCLUSIVE; IMPLEMENTATION-PL
 BASE HEAD; ORIGIN MAIN; FINAL HEAD; git status; status; FACTS PROVEN; TO_INVENTORY; EXECUTION_DRIFT; files inspected/changed; owner/contract impact; security checks; RQ/AC coverage; tests and TEST_NOT_RUN; postconditions/outcome; residual search; unresolved; next bounded step.
 
 Este documento é handoff e planejamento. Não altera a fila E11, não implementa rotas nem dá autorização para deploy.
+
+---
+
+## Reconciliacao R1 — decisoes adicionais (2026-10-27, fix/proc-0076-r1)
+
+- **D-R1-01 (freshness):** `data_status` separa (a) completude do periodo consultado de (b) atraso do feed vs cadencia de publicacao. `stale` = fonte atrasada; historico antigo completo = `ok`. Datas congeladas nos testes.
+- **D-R1-02 (unidade):** valor convertido carrega unidade convertida (`BRL/metric ton`); origem preservada em `native`/`conversion`. Nunca misturar `ptax_closing_buy`/`sell` — `fx_kind` e explicito por request e auditavel.
+- **D-R1-03 (schema):** `external_data` fixo (constante); migrations V001/V002 intocadas em producao; V003 aditiva para proveniencia LME.
+- **D-R1-04 (licenca):** CC BY 4.0 WB nao cobre series de terceiros (LME subjacente). Escopo da fonte registra `no_redistribution_pending_lme_review`; exibicao interna com atribuicao mantida, redistribuicao pendente de decisao formal.
+- **D-R1-05 (PTAX):** 403 WAF no egress de prod e impedimento operacional, nao bug; feed OFF, ingestao registra falha verificavel. Nenhuma tentativa de bypass autorizada.
+- **D-R1-06 (navegacao):** pagina deep-linkavel fora do hub/palette ate E11 reconciliado — mantido.

@@ -176,3 +176,14 @@ Atualizar no mesmo commit da feature user-facing: plugins/supplies/src/content/u
 ## 8. Roadmap de execução e GATE
 
 S1 = fontes/termos, formulação FX/UM/média, ownership DB, migrations e contract freeze. S2 = external-data-api (schema proprietário, job e read APIs). S3 = supplies-api BFF. S4 = MFE + Ajuda, somente com GATE E11 reconciliado e autorização de página. S5 = deploy + teste real federado + prova de referência e formula. Para cada S*: HEAD/git status, authorities, contratos, testes, positive+sibling+negative, evidence e SHAs; classificação PASS/FAIL/TEST_NOT_RUN/INCONCLUSIVE. Não promover PROPOSED a IMPLEMENTADO; evitar execução paralela de nova página enquanto E11 permanece INCONCLUSIVE.
+
+---
+
+## Reconciliacao R1 — contrato vigente (2026-10-27, fix/proc-0076-r1)
+
+As 4 rotas existem conforme candidato (`/market-intelligence/{filters,summary,series,monthly-averages}`, `supplies.access`, S2S external-data-api). Ajustes de semantica do R1 sobre a proposta:
+
+- **Freshness:** `meta.freshness` (objeto) substitui a heuristica antiga que marcava `stale` pela distancia hoje-ultima_observacao. Agora: `expected_cadence` (`monthly`|`business_daily`), `expected_latest_period`, `latest_observation_date`, `lag_periods`/`lag_days`, `last_successful_ingestion_at`, `evaluation_date`, `method`. Consulta historica completa **nao** e `stale`; feed atrasado vs ciclo de publicacao e. Ausencia de boletim PTAX em feriado/fds nao e falha.
+- **Unidade/moeda:** `summary.last_quote.unit` reflete a moeda exibida (`BRL/metric ton` quando convertido; `USD/metric ton` nativo); `last_quote.native` preserva valor/moeda/unidade de origem e `last_quote.conversion` expõe `fx_kind`, `fx_rate`, `fx_reference_period`, `method`. `period_average.unit`, `series.unit`/`native_unit`, `monthly-averages.unit`/`native_unit` no envelope. Sem taxa sintetica: mes sem PTAX = `null` + `partial_reason=fx_missing`.
+- **MFE:** KPI de ultima cotacao exibe `unit` corrigida; banner stale inclui evidencia temporal (ultima observacao vs periodo esperado); erros 401/403 tem mensagens neutras distintas; glossario/manual explicam stale por cadencia. `recharts` no plugin-ui via kit (`MultiTypeSeriesChart`), sem lib paralela.
+- **Inalterado:** sem permission nova, sem calculo no MFE, zeros ficticios proibidos, granularidade day/month/year, URL/F5/back-forward, alternativa tabular acessivel, wireframe aprovado mantido.

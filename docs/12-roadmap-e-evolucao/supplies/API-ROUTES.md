@@ -68,6 +68,10 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | PATCH | `/users/{id}/profile` | self only + portal | PG prefs | **IMPLEMENTADO** |
 | GET | `/users/{id}/related-requests` | `supplies.access` + self\|admin (`_assert_can_view`) + units | SCs do vínculo target: Core `user_ids` lookup → `protheus_user_id` mapped → PR-api `requester_user_id`; `branch` opcional fail-closed; `date_from` explícito; paginação máx 100; `sort_by`/`sort_dir` passthrough; degrade `{error}`/`requester_unmapped`/`identity_lookup_unavailable` | **IMPLEMENTADO** (USERS.PROFILE.S1–S3) |
 | GET | `/users/{id}/photo` | `supplies.access` + self\|admin | proxy BFF → Core `person-profiles/{id}/photo` S2S; 404 fail-closed; `Cache-Control: private` | **IMPLEMENTADO** (USERS.PROFILE.S1) |
+| GET | `/market-intelligence/filters` | `supplies.access` (sem filtro de unidade — dado de mercado global) | external-data-api `/v1/market-data/catalog` via S2S | **IMPLEMENTADO** (PROC-0076) |
+| GET | `/market-intelligence/summary` | `supplies.access` | external-data-api via S2S; média/variação/cobertura/frescor calculados no BFF com `Decimal`; unidade corrigida (`BRL/metric ton` quando convertido, com `native`/`conversion` auditáveis); `freshness` por cadência de publicação do provedor — consulta histórica não vira `stale` | **IMPLEMENTADO** (PROC-0076.R1) |
+| GET | `/market-intelligence/series` | `supplies.access` | external-data-api via S2S (janela ≤366 dias chunked); granularidade day/month/year; ponto BRL = observação convertida (nunca taxa sintética); `unit`/`native_unit`/`freshness` no envelope | **IMPLEMENTADO** (PROC-0076.R1) |
+| GET | `/market-intelligence/monthly-averages` | `supplies.access` | médias mensais paginadas; `fx_rate` = média PTAX do mês, `null` sem câmbio válido (nunca zero); `partial_reason` distingue `fx_missing` | **IMPLEMENTADO** (PROC-0076.R1) |
 
 A lista acima deve ser atualizada sempre que uma rota for realmente adicionada/removida do runtime. Não promover status por intenção de roadmap.
 
