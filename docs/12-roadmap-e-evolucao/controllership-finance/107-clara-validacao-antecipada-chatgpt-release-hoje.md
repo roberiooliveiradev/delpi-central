@@ -355,3 +355,12 @@ scope `mcp:tools` + audience mapper para
 O bloqueio de produção permanece **idêntico ao Adendo 6:** credencial
 admin Keycloak prod vigente (owner IAM). Nada mudou em produção nesta
 rodada; o gap é exclusivamente operacional, não técnico.
+
+
+## Adendo 8 — G2 PO ACCEPT_WITH_RESIDUAL e handoff G3 formalizado (26/10/2026)
+
+**Decisão PO posterior aos adendos anteriores:** o PO declarou formalmente em 26/10/2026 `G2_PO_SIGNOFF=ACCEPT_WITH_RESIDUAL` para P1–P6 e CLARA **no escopo local demonstrado** (Doc 108, Rodada 4) e aprovou manter a regra V1: aceite por área com esclarecimento aberto permitido, porém C2 bloqueia conclusão mensal enquanto houver esclarecimento em aberto. **Ressalvas mantidas:** P7 e paridade P7 oficial; R01–R15 apenas operacionais, G5/G6 pendente; T03/T05/R04+/seeds e owners G1. **Controladoria específica, se autoridade distinta exigir:** assinatura própria ainda não registrada. A assinatura do PO não concede grants IAM nem G3 SSH.
+
+**Handoff G3 formal:** [Documento 110](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md) consolida checklist por responsável, SHA pretendido/implantado, backups, migrações, autorização do operador, mudança compartilhada Core/Portal, `--check`/diff IAM, `--apply` apenas após aprovação do **escopo efetivo compartilhado**, OAuth e cadastro ChatGPT. O engine `delia_mcp_keycloak_state.py` pode alterar outros MCPs; o wrapper atual não comprova flag para limitar apply exclusivamente a CLARA. A ficha pública é contrato alvo, não cadastro realizado.
+
+**Status após este adendo:** `G2_PO=ACCEPT_WITH_RESIDUAL`; `G3_OPERATOR=PENDING`; `G1_OWNERS=PENDING`; `PROD_DEPLOY_PREVIOUS=OWNER_REPORTED` em `2eeb5fb943`; `R4_FIXES_PROD_DEPLOY=TO_VERIFY`; `IAM_MCP_CLARA_PROD=BLOCKED/PENDING_OWNER`; `CHATGPT_CONNECTED=TEST_NOT_RUN`. Nenhuma nova operação produtiva foi realizada nesta atualização documental.
