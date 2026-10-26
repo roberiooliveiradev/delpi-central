@@ -452,10 +452,9 @@ def test_sim19_candidate_token_bound_to_actor(monkeypatch):
 
 def test_similarity_aliases_do_not_promote_writes():
     allow = load_external_read_allowlist()
-    assert allow["version"] == 26
-    assert allow["coverageDecision"]["taskId"] == (
-        "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002"
-    )
+    assert allow["version"] == 27
+    prev = allow["coverageDecision"]["previousDecision"]
+    assert prev["taskId"] == "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002"
     entry = next(
         o for o in allow["operations"] if o["operationId"] == "search_products"
     )
@@ -466,3 +465,187 @@ def test_similarity_aliases_do_not_promote_writes():
     assert tuple(entry["approvedResponseFields"]) == (
         "product_code", "description", "group_category",
     )
+
+
+# =====================================================================
+# V2 — DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001 (GLPI #530)
+# =====================================================================
+
+_PN_PAYLOAD_TE = {
+    "success": True,
+    "message": "ok",
+    "data": {"items": [
+        {"product_code": "10080010",
+         "product_description": "TERM. LINGUETA 6,30X0,80 0,50-1,50MM2 NU",
+         "unit": "PC", "supplier_code": "000112", "supplier_store": "01",
+         "supplier_name": "TE CONNECTIVITY",
+         "supplier_part_number": "626377-1"},
+    ], "page": 1, "page_size": 20, "total": 1, "has_more": False},
+}
+
+_TE_DETAIL = {
+    "success": True, "message": "ok",
+    "data": {"product": {
+        "code": "10080010",
+        "description": "TERM. LINGUETA 6,30X0,80 0,50-1,50MM2 NU S/ISOLACAO",
+        "type": "MP", "group_code": "1008", "unit": "PC",
+        "rohs_indicator": "S", "make_or_buy": "C", "active": "1",
+        "blocked": "2",
+        "sale_price": 0.42, "created_by": "jsilva",  # must not leak
+    }},
+}
+
+_TE_SUPPLIERS = {
+    "success": True, "message": "ok",
+    "data": {"items": [
+        {"product_code": "10080010", "supplier_code": f"0001{i}",
+         "supplier_store": "01", "supplier_name": s,
+         "supplier_part_number": "626377-1", "unit": "PC",
+         "registered_lead_time_days": 45}
+        for i, s in enumerate(
+            ["TE CONNECTIVITY", "AVNET", "ARROW", "DIGIKEY", "FARNELL", "TTI"])
+    ], "page": 1, "page_size": 20, "total": 6, "has_more": False},
+}
+
+
+def test_v2_golden_case_te_626377_1(monkeypatch):
+    """GOLDEN: PN 626377-1 → EXACT supplier-PN evidence for DELPI 10080010."""
+    # P1 — PN-first discovery
+    discovered = _discover(
+        monkeypatch, "part number 626377-1 do fabricante")
+    token = _token(discovered["candidates"],
+                   "search_products_by_supplier_part_number")
+    found = _execute(
+        monkeypatch, token, {"supplier_part_number": "626377-1"},
+        _PayloadExecutor(_PN_PAYLOAD_TE))
+    assert found["status"] == "ok"
+    item = found["data"]["items"][0]
+    assert item["product_code"] == "10080010"
+    assert item["supplier_part_number"] == "626377-1"
+    assert item["supplier_name"] == "TE CONNECTIVITY"
+
+    # P2 — reconciliation: detail + suppliers via the same governed surface
+    d2 = _discover(monkeypatch, "detalhes do produto 10080010")
+    t2 = _token(d2["candidates"], "get_product_detail")
+    detail = _execute(
+        monkeypatch, t2, {"code": "10080010"}, _PayloadExecutor(_TE_DETAIL))
+    product = detail["data"]["product"]
+    assert product["type"] == "MP" and product["group_code"] == "1008"
+    assert "sale_price" not in product and "created_by" not in product
+
+    s3 = _discover(monkeypatch, "fornecedores do produto 10080010")
+    t3 = _token(s3["candidates"], "get_product_suppliers")
+    suppliers = _execute(
+        monkeypatch, t3, {"code": "10080010"}, _PayloadExecutor(_TE_SUPPLIERS))
+    items = suppliers["data"]["items"]
+    assert len(items) == 6
+    assert any(i["supplier_name"] == "TE CONNECTIVITY" for i in items)
+    # ENGINEERING_EQUIVALENCE remains a human authority — asserted in flow.
+
+
+def test_v2_manufacturer_link_phrasing_reaches_pn_op(monkeypatch):
+    for q in (
+        "produto do fabricante TE Connectivity part number 626377-1",
+        "encontrei no site do fabricante o part number 626377-1",
+        "código do fabricante 626377-1",
+    ):
+        discovered = _discover(monkeypatch, q)
+        ids = {c["action_id"] for c in discovered["candidates"]}
+        assert "search_products_by_supplier_part_number" in ids, q
+
+
+def test_v2_pn_not_found_empty_is_honest(monkeypatch):
+    discovered = _discover(monkeypatch, "part number XX-NOPE-000")
+    token = _token(discovered["candidates"],
+                   "search_products_by_supplier_part_number")
+    empty = {"success": True, "message": "ok", "data": {
+        "items": [], "page": 1, "page_size": 20, "total": 0,
+        "has_more": False}}
+    result = _execute(
+        monkeypatch, token, {"supplier_part_number": "XX-NOPE-000"},
+        _PayloadExecutor(empty))
+    assert result["status"] == "ok"
+    assert result["data"]["items"] == []
+    # Empty search != proof of non-existence — that rule lives in the flow.
+
+
+def test_v2_secondary_candidates_not_substitutes(monkeypatch):
+    """Golden secondary candidates (estanhado/trava/faixa menor) are reported
+    as candidates with divergences — never as substitutes."""
+    multi = {"success": True, "message": "ok", "data": {"items": [
+        {"product_code": "10080010", "product_description": "TERM. LINGUETA NU",
+         "unit": "PC", "supplier_code": "1", "supplier_store": "01",
+         "supplier_name": "TE", "supplier_part_number": "626377-1"},
+        {"product_code": "10080060", "product_description": "TERM. LINGUETA EST",
+         "unit": "PC", "supplier_code": "2", "supplier_store": "01",
+         "supplier_name": "TE", "supplier_part_number": "626377-2"},
+        {"product_code": "10081671", "product_description": "TERM. LINGUETA C/TRAVA",
+         "unit": "PC", "supplier_code": "3", "supplier_store": "01",
+         "supplier_name": "TE", "supplier_part_number": "626377-9"},
+    ], "page": 1, "page_size": 20, "total": 3, "has_more": False}}
+    discovered = _discover(monkeypatch, "part number 626377")
+    token = _token(discovered["candidates"],
+                   "search_products_by_supplier_part_number")
+    result = _execute(
+        monkeypatch, token, {"supplier_part_number": "626377"},
+        _PayloadExecutor(multi))
+    codes = [i["product_code"] for i in result["data"]["items"]]
+    assert codes == ["10080010", "10080060", "10081671"]
+    # Distinct descriptions (NU / EST / C/TRAVA) are preserved so the agent
+    # can flag divergences instead of asserting equivalence.
+    descs = [i["product_description"] for i in result["data"]["items"]]
+    assert len(set(descs)) == 3
+
+
+def test_v2_flow_contract_p1_p4():
+    flow = DaviAgentIntelligenceService.document()["flows"][
+        "similarity_dedup_check"]
+    # P1→P4 precedence contract
+    precedence = flow["search_precedence"]
+    keys = list(precedence)
+    assert keys[0].startswith("P1") and keys[-1].startswith("P4")
+    assert "ANTES" in precedence["P1_exact_part_number"] or (
+        "search_products_by_supplier_part_number" in
+        precedence["P1_exact_part_number"])
+    # Identification evidence is separate from technical evaluation
+    ev = flow["identification_evidence"]
+    assert "EXACT_SUPPLIER_PN_MATCH" in ev["levels"]
+    assert "EXTERNAL_REFERENCE_NOT_FOUND" in ev["levels"]
+    assert "classification_enum" in flow
+    # Non-equivalence invariant
+    assert "NOT_AUTOMATICALLY_AUTHORIZED" in flow["note"]
+    assert "equivalência" in ev["rule"].lower()
+
+
+def test_v2_normalization_preserves_technical_differences():
+    rules = DaviAgentIntelligenceService.document()["flows"][
+        "similarity_dedup_check"]["normalization_rules"]
+    for pair in ("LINGUETA", "FASTON", "UNINSULATED", "6,30"):
+        assert pair in rules
+    # Guard rule: normalization may never equalize technical differences.
+    assert "nunca" in rules.lower() or "NUNCA" in rules
+    assert "trava" in rules and "banho" in rules
+
+
+def test_v2_pagination_semantics_documented():
+    sem = DaviAgentIntelligenceService.document()["flows"][
+        "similarity_dedup_check"]["pagination_semantics"]
+    assert "total" in sem and "relevance" in sem.lower()
+    assert "INSUFFICIENT_INFORMATION" in sem
+
+
+def test_v2_url_vs_text_divergence_guidance():
+    p1 = DaviAgentIntelligenceService.document()["flows"][
+        "similarity_dedup_check"]["search_precedence"]["P1_exact_part_number"]
+    assert "URL" in p1 and "distribuidor" in p1
+
+
+def test_v2_allowlist_v27_chain():
+    allow = load_external_read_allowlist()
+    assert allow["version"] == 27
+    assert allow["coverageDecision"]["taskId"] == (
+        "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001")
+    pn = next(o for o in allow["operations"] if o["operationId"] ==
+              "search_products_by_supplier_part_number")
+    assert "link do fabricante" in pn["semanticAliases"]
+    assert "código do fabricante" in pn["semanticAliases"]

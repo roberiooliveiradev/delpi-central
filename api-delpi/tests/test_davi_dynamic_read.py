@@ -377,28 +377,25 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 26
+    assert allow.get("version") == 27
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_SIMILARITY_DISCOVERY_AND_AGENT_ORCHESTRATION"
+        "EVOLVE_MATCHING_INTELLIGENCE_P1_TO_P4"
     )
     assert (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
         "decision"
+    ) == "PROMOTE_SIMILARITY_DISCOVERY_AND_AGENT_ORCHESTRATION"
+    coverage = (allow.get("coverageDecision", {}).get("previousDecision") or {})
+    assert (coverage.get("previousDecision") or {}).get(
+        "decision"
     ) == "PROMOTE_GOVERNED_PRODUCT_DETAIL_AND_PN_DISCOVERY"
-    assert (
-        (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
-            "previousDecision"
-        )
-        or {}
-    ).get("decision") == "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2"
-    assert (
-        (
-            (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
-                "previousDecision"
-            )
-            or {}
-        ).get("previousDecision")
-        or {}
-    ).get("decision") == "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ"
+    coverage = coverage.get("previousDecision") or {}
+    assert (coverage.get("previousDecision") or {}).get(
+        "decision"
+    ) == "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2"
+    coverage = coverage.get("previousDecision") or {}
+    assert (coverage.get("previousDecision") or {}).get(
+        "decision"
+    ) == "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ"
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
         op

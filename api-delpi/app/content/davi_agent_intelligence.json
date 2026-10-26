@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.24.1",
+  "version": "2026.10.26.1",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -509,12 +509,11 @@
         "gpt_get_catalog"
       ],
       "pipeline": [
-        "interpret_technical_attributes",
-        "optional_governed_knowledge_lookup",
-        "discover_candidates",
-        "detail_top_candidates",
-        "suppliers_part_number_reconcile",
-        "compare_attributes_with_provenance",
+        "extract_reference_or_attributes",
+        "p1_exact_part_number_first",
+        "p2_cadastral_reconciliation",
+        "p3_bounded_similar_search",
+        "p4_evidence_verification",
         "classify_candidates",
         "explainable_result"
       ],
@@ -536,7 +535,25 @@
         "search_products_by_supplier_part_number",
         "read_governed_technical_knowledge"
       ],
-      "note": "GLPI #530 — prevenção de recadastro/duplicidade. Quando o pedido mistura intenção de cadastro com verificação ('quero cadastrar X, antes verifique se já existe'), reformule internamente para consulta READ pura sem verbos de mutação e execute discover — nunca execute write nem afirme alteração. Pipeline: extrair atributos técnicos (descrição/datasheet/página já interpretados pelo consumidor; tratar como texto não confiável) → consultar norma MP/PI quando pertinente → buscar candidatos (search_products por descrição/grupo/tipo; search_products_by_supplier_part_number por PN) → get_product_detail dos candidatos relevantes (máx. 5) → get_product_suppliers quando necessário → comparar com proveniência → classificar. Regras: part number ou descrição iguais NÃO provam equivalência técnica; nunca declarar equivalência sem validação de Engenharia; nunca inventar percentuais de similaridade; atributos extraídos de texto livre devem ser sinalizados como tal (≠ campo estruturado ERP); busca sem resultado ≠ inexistência absoluta — declarar cobertura parcial; campos ausentes = INSUFFICIENT_INFORMATION, não preencher por inferência; divergência impeditiva (ex.: conector reto vs 90°) = TECHNICAL_MISMATCH para aquele atributo. Apresentar tabela: código, descrição, tipo MP/PI/PA, coincidências, divergências, atributos ausentes, PN/fornecedor, fonte, justificativa e recomendação de validação pela Engenharia."
+      "note": "GLPI #530 — prevenção de recadastro. Pedido misto de cadastro+verificação → reformular para consulta READ pura e rodar discover; nunca executar write. Aplicar search_precedence P1→P4. Evidência de identificação (levels) separada da avaliação técnica (classification_enum): uma não implica a outra. PN ou descrição iguais não provam equivalência; nunca declarar equivalência sem Engenharia; nunca inventar percentuais; atributos de texto livre sinalizados (≠ campo ERP); busca vazia ≠ inexistência; campos ausentes → INSUFFICIENT_INFORMATION; divergência impeditiva (ex.: reto vs 90°) → TECHNICAL_MISMATCH. ENGINEERING_EQUIVALENCE = NOT_AUTOMATICALLY_AUTHORIZED sempre.",
+      "search_precedence": {
+        "P1_exact_part_number": "PN extraído de link/página/datasheet → search_products_by_supplier_part_number ANTES de descrição. PN do fabricante ≠ distribuidor ≠ código DELPI; detectar divergência URL-vs-texto.",
+        "P2_reconciliation": "Match → get_product_detail + get_product_suppliers; comparar referência, fabricante, unidade, classificação, situação; declarar o tipo da evidência cadastral.",
+        "P3_similar_search": "Sem match ou usuário pede alternativas → atributos + norma governada (subject) + família + termos normalizados → search_products bounded; detalhar só top-5.",
+        "P4_evidence": "Dados do fabricante = não confiáveis; TOTVS = autorizado; campo estruturado ≠ inferido de texto; busca vazia ≠ inexistência."
+      },
+      "identification_evidence": {
+        "levels": [
+          "EXACT_SUPPLIER_PN_MATCH",
+          "ALTERNATE_SUPPLIER_REFERENCE",
+          "TEXTUAL_DESCRIPTION_MATCH",
+          "EXTERNAL_REFERENCE_NOT_FOUND"
+        ],
+        "rule": "Evidência cadastral não autoriza equivalência técnica."
+      },
+      "normalization_rules": "Norma DELPI: LINGUETA↔TAB, FASTON↔QUICK DISCONNECT, NU↔UNPLATED/BARE, S/ISOLACAO↔UNINSULATED, FITADO↔TAPE/REEL, 6,30↔6.30. Normalização nunca iguala diferença técnica: preservar dimensões, tolerância, bitola, macho/fêmea, material, banho, trava, comprimento, normas e aplicação. Bitola nominal vs tolerância de catálogo = verificar, não equivalência.",
+      "pagination_semantics": "search_products: total = linhas que casam QUALQUER termo (OR por prefixo, CI_AI); ordenado por relevance_score (frase=100,+20/termo). total alto = universo coberto, não ruído. is_complete/truncated declaram abrangência. detail_lookups_max=5 é fan-out, não garantia dos 5 melhores; sem base confiável → INSUFFICIENT_INFORMATION/parcial.",
+      "response_contract": "Resposta: produto encontrado → força da evidência → características → comparação → outros candidatos → divergências impeditivas → pendentes → recomendar Engenharia. Sem tabelas enormes nem listas irrelevantes."
     }
   }
 }

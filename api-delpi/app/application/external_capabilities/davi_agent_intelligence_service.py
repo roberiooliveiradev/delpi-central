@@ -22,8 +22,9 @@ CONTENT_PATH = (
 # Directives ride on catalog/discover — keep well under the 64KiB transport
 # bound. Re-baselined 16→20KiB: allowlist v23 canonically restored the
 # governed ad_hoc_sql_read directives (~0.8KiB) over a corpus already at the
-# previous limit.
-DAVI_AGENT_DIRECTIVES_MAX_BYTES = 20 * 1024
+# previous limit. Re-baselined 20→24KiB: similarity_dedup_check V2 adds the
+# governed P1→P4 matching strategy (~1.5KiB) — still far below transport bound.
+DAVI_AGENT_DIRECTIVES_MAX_BYTES = 24 * 1024
 
 _LIST_CAP_KEYS = frozenset(
     {"examples", "examplePrompts", "anti_patterns", "forbidden", "when", "rules"}

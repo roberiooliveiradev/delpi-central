@@ -361,3 +361,71 @@ Official product source: https://www.te.com/pt/product-626377-1.html .
 This section updates the earlier time-specific \`LIVE_VALIDATION=PENDING\` for
 the **626377-1** case only; the separate \`MS3108E-18-1S\` Agent Studio
 scenario, authenticated USER_B negative test, and PDF transport remain open.
+
+## 12. V2 — matching intelligence (`DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001`)
+
+### 12.1 Semântica de `total` — INCONCLUSIVE → RESOLVED (não é defeito)
+
+Inspeção do owner canônico
+(`ProductQueryRepository.search_products`): o filtro de descrição é um
+**OR de `LIKE 'termo%'` por token** (COLLATE Latin1_General_CI_AI) e
+`total` = contagem de todas as linhas que casam **qualquer** termo.
+`total=1501` para `TERM. LINGUETA ...` é a cobertura real do universo
+(todo `TERM.*` casa), não inflação de contagem. Ordenação por
+`relevance_score` (frase completa =100, +20 por termo casado) já coloca os
+candidatos mais específicos primeiro; `page/is_complete/truncated`
+declaram abrangência parcial de forma honesta. **Nenhuma alteração de
+backend foi necessária** — a interpretação correta foi codificada no flow
+(`pagination_semantics`): `detail_lookups_max=5` é controle de fan-out,
+não garantia dos 5 melhores; sem base confiável → `INSUFFICIENT_INFORMATION`.
+
+### 12.2 Estratégia P1→P4 implementada (owner: `davi_agent_intelligence.json`)
+
+`flows.similarity_dedup_check` evoluído (intelligence 2026.10.24.1 →
+2026.10.26.1):
+
+- **P1** — PN do fabricante (extraído de link/página/datasheet) consulta
+  `search_products_by_supplier_part_number` ANTES de busca por descrição;
+  distinguir PN do fabricante ≠ código do distribuidor ≠ código DELPI;
+  detectar divergência URL-vs-texto.
+- **P2** — match → `get_product_detail` + `get_product_suppliers`;
+  reconciliar referência, fabricante, unidade, classificação, situação.
+- **P3** — sem match ou pedido de alternativas → atributos + norma
+  governada (subject) + família + termos normalizados →
+  `search_products` bounded; detalhar só top-5.
+- **P4** — separar dados do fabricante (não confiáveis) de dados TOTVS;
+  campo estruturado ≠ inferido de texto; busca vazia ≠ inexistência.
+
+Evidência de identificação cadastral
+(`EXACT_SUPPLIER_PN_MATCH` / `ALTERNATE_SUPPLIER_REFERENCE` /
+`TEXTUAL_DESCRIPTION_MATCH` / `EXTERNAL_REFERENCE_NOT_FOUND`) é
+contratualmente separada da avaliação técnica
+(`POSSIBLE_DUPLICATE` / `POSSIBLE_TECHNICAL_SIMILARITY` /
+`TECHNICAL_MISMATCH` / `INSUFFICIENT_INFORMATION`) — a primeira não
+implica a segunda. `normalization_rules`, `response_contract` e
+`ENGINEERING_EQUIVALENCE = NOT_AUTOMATICALLY_AUTHORIZED` codificados.
+
+Allowlist v26 → v27: aliases de phrasing de fabricante
+(`link do fabricante`, `site do fabricante`, `página do fabricante`,
+`part number do fabricante`, `código do fabricante` + variantes ASCII)
+na op `search_products_by_supplier_part_number`. Eligible READ = 94
+inalterado; MCP tools = 2; zero linhas produtivas de domínio. Budget de
+diretivas re-baselinado 20→24KiB (precedente do próprio código; transporte
+64KiB preservado).
+
+### 12.3 Golden case — TE 626377-1
+
+Regressão automatizada espelha a fotografia validada em 2026-10-26:
+PN `626377-1` → `10080010` (MP, grupo 1008), 6 vínculos de fornecedor
+incluindo TE CONNECTIVITY, candidatos secundários `10080060` (estanhado),
+`10081671` (trava), `10080225`, `10081405` reportados como candidatos
+com divergências — nunca substitutos sem Engenharia. Projeção continua
+fail-closed (preço/created_by não vazam no fixture test).
+
+### 12.4 Benchmark discovery (242 casos)
+
+top-1 = 0.9583; top1_required = 0.9903; hard_negative_leaks = 0;
+positive_target_misses = 0. As 9 falhas conhecidas são idênticas às do
+baseline em HEAD (inclui DQ-PM-066, colisão `get_product_detail` vs
+`search_products`, `top1_required=false`, pré-existente — medido com e
+sem os aliases V2). Sem regressão introduzida pelo diff.

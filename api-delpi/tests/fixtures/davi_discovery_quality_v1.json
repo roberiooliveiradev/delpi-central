@@ -2860,6 +2860,55 @@
    ],
    "top1_required": false,
    "notes": "Specification comparison phrasing."
+  },
+  {
+   "id": "DQ-PM-067",
+   "query": "produto do site do fabricante com part number 626377-1",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products_by_supplier_part_number"
+   ],
+   "top1_required": true,
+   "notes": "V2: manufacturer-site phrasing reaches supplier-PN op."
+  },
+  {
+   "id": "DQ-PM-068",
+   "query": "link do fabricante TE Connectivity código 626377-1",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products_by_supplier_part_number"
+   ],
+   "top1_required": false,
+   "notes": "V2: link do fabricante phrasing."
+  },
+  {
+   "id": "DQ-PM-069",
+   "query": "tem algum produto DELPI correspondente ao part number do fabricante XA-99",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products_by_supplier_part_number"
+   ],
+   "top1_required": false,
+   "notes": "V2: manufacturer PN explicit."
+  },
+  {
+   "id": "DQ-PM-070",
+   "query": "encontrei este componente na página do fabricante, verifique cadastro",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products_by_supplier_part_number",
+    "search_products"
+   ],
+   "top1_required": false,
+   "notes": "V2: manufacturer page + registration check."
   }
  ]
 }
