@@ -986,3 +986,87 @@ Contabilidade/DRE: Solicitar complemento (documento + versão + texto)
 O PO solicitou avançar para páginas além de documentos. Próxima proposta a revisar: **Relatórios e divergências** (área da Controladoria exclusivamente), usando a classificação R01–R15 dos [docs 46](./46-t01-report-source-inventory-v1.md) e [47](./47-t01-report-column-audit-tracker-v1.md), sem afirmar equivalência funcional de relatórios G6 pendentes. Depois: **Visão geral/Cockpit** P1 e **Revisão do fechamento** P5; **Pendências** P4 permanece owner independente e a decisão de tab próprio ou fila contextual segue aberta.
 
 **Estado de resultado desta rodada:** \`DESIGN_DOCUMENTED / CONTRACT_PENDING\`; sem revisão de runtime, \`TEST_NOT_RUN\`; próxima página \`TARGET / PENDING_PO_VISUAL_REVIEW\`.
+
+
+## 21. Wireframe Relatórios — prévia fiel PDF TOTVS + disponibilização direta a Contabilidade/DRE (V0.9)
+
+**Data:** 2026-10-26. **Origem funcional:** PO determinou que a apresentação final do relatório deve **preservar o formato do PDF exportado pela Joici**; relatórios como P7 / Bloco H são hoje extraídos em PDF e enviados ao conjunto de documentos destinado ao DRE. Novo fluxo proposto: **gerar PDF na ferramenta e disponibilizar diretamente na área documental do DRE**, sem ação manual de baixar e reenviar. PO também destacou que PDFs e demais evidências estão nas fontes do projeto. **Status:** \`PRODUCT_INTENT_PROVEN / VISUAL_TARGET_V0.9 / TECH_CONTRACT_DECISION_REQUIRED / RUNTIME_GO=NO\`.
+
+### 21.1 PDFs originais inspecionados (fontes privadas da conversa/projeto)
+
+Inspeção visual renderizada da página inicial e texto da primeira página dos seis PDFs fornecidos ao projeto (26/10/2026). **Não versionar conteúdo financeiro original, dados pessoais, screenshot das planilhas ou binários no GitHub público**. Lista, páginas, formato e títulos observados:
+
+| Arquivo-fonte privado | Páginas | Formato PDF observado | Identidade/layout observado na primeira página | Referência |
+|---|---:|---|---|---|
+| \`Pagos por dt.pdf\` | 33 | A4 paisagem | \`SIGA/DLP06R01.prt/v.12\`, “Relação dos Títulos Pagos em REAL por data de pagamento”, colunas numerosas e pagination | R01 / FINANCEIRO |
+| \`Pagos por nat.pdf\` | 35 | A4 paisagem | \`SIGA/nat.prt/v.12\`, “Relação dos Títulos Pagos em REAL por Natureza”, groupings/cabeçalho repetidos | R01 / FINANCEIRO |
+| \`Recebidos.pdf\` | 36 | A4 paisagem | \`SIGA/DLP06R01.prt/v.12\`, “Relação dos Títulos Recebidos em REAL por data de pagamento” | R02 / FINANCEIRO |
+| \`Entradas e saidas.pdf\` | 1 | A4 paisagem | \`SIGA/MATR320.prt/v.12\`, resumo entradas/saídas por tipo e valores/saldos | R05 / ESTOQUE |
+| \`Estoque.pdf\` | 1 | A4 retrato | \`REGISTRO DE INVENTÁRIO\`, firma/filial, coluna classificação fiscal, unidade, quantidade, valores | CANDIDATO R03 P7, emissão ampla |
+| \`Resumo Estoque.pdf\` | 1 | A4 retrato | \`REGISTRO DE INVENTÁRIO\`, mesma estrutura visual com totalização/escopo distinto | CANDIDATO R03 P7, emissão resumida |
+
+**Interpretação:** os PDFs são **baseline visual e de comparação** para campos, ordem, cabeçalho, agrupamentos, subtotais, quebras/páginas e proporção/saída. Não são, por si, prova de código/queries equivalentes ao Protheus nem de G6. A [trilha R03 do Doc 46](./46-t01-report-source-inventory-v1.md) distingue \`Estoque.pdf\` amplo e \`Resumo Estoque.pdf\` MP/PI/PA com totais distintos, \`PDF_CATEGORIES=PROVEN\`, \`EXACT_SELECTION_RULE=TO_INVENTORY\`, \`EXPORT_PARITY=TEST_NOT_RUN\` naquele checkpoint. Conferir versões e se o “Bloco H” mencionado pelo PO corresponde exatamente à emissão resumida; **não equiparar sem parâmetros, source e aceite**.
+
+Arquivos adicionais XLSB/XLSX, vídeo e roster do checklist também foram fornecidos no projeto. **Não assumir que os seis PDFs cobrem todos os entregáveis do snapshot P2 nem que cada relatório R01–R15 vira PDF enviado à Contabilidade**. A lista canônica de documentos obrigatórios/aplicáveis deriva do snapshot/recipient P2/P5 e das regras de liberação.
+
+### 21.2 Princípio UX: fidelidade PDF + investigação rica separada
+
+Duas superfícies do **mesmo relatório** para Controladoria:
+- **Dados e conferência:** tabela navegável, filtros, fórmulas/regras, proveniência, diferenças, destaque de inconsistências. Pode usar componentes de análise distintos do PDF, mas sem mudar o conteúdo canônico.
+- **Prévia do PDF final:** visualizar **a saída paginada que será gerada** com orientação A4, colunas, agrupamentos, labels, cabeçalhos, subtotais, rodapés, paginação e formatação monetária equivalentes ao original homologado. **Sem acrescentar badges, overlays, cores de divergência ou observações internas ao PDF oficial** salvo decisão formal de nova versão/layout. Divergências ficam no painel de conferência ao lado/aba distinta, não alteram o documento silenciosamente.
+
+**Layout desktop proposto:**
+\`\`\`text
+Relatórios e divergências — Controladoria (DRE NUNCA acessa)
+[Competência] [Empresa/filial] [Parâmetros da emissão] [Versão de layout]
+[Catálogo R01–R15] → [Relatório R03 P7] [Dados e conferência | Prévia do PDF*]
+                                                           *padrão oficial
+[Parâmetros/escopo e comparação documentada] [Status de paridade/fonte]
+┌───────────────────────────────────────────┬──────────────────────────────┐
+│ PRÉVIA DE PDF ORIGINAL                    │ INFORMAÇÃO DA EMISSÃO       │
+│ A4 retrato/paisagem conforme layout       │ Relatório/rotina/versão     │
+│ cabeçalho, título, empresa, filial        │ Competência e filtros      │
+│ linhas/colunas e totais paginados         │ Paridade e proveniência    │
+│ Folha X de Y                              │ Documentos de destino      │
+└───────────────────────────────────────────┴──────────────────────────────┘
+[Baixar PDF gerado*] [Disponibilizar para Contabilidade/DRE*]
+*habilitar somente quando os contratos/fonte/regra/aceite/autorização provarem.
+\`\`\`
+
+### 21.3 Sequência funcional desejada: gerar → conferir → disponibilizar
+
+1. **Selecionar:** competência existente/autorizada, relatório específico (ex.: P7 / layout Bloco H), empresa/filial/armazenagem e demais parâmetros da rotina homologada.
+2. **Carregar a origem:** BFF consome owner(s) canônicos via contratos; tela mostra freshness, disponibilidade e equivalência técnica; não pressupor SQL a partir de PDF.
+3. **Conferir:** render de dados e divergências no workspace; fonte parcial, regra sem paridade ou divergência material bloqueadora ficam claramente visíveis.
+4. **Pré-visualizar o PDF que será entregue:** gerar artefato de preview determinístico a partir de parâmetros/snapshot versão; comparar layout e totais à saída baseline. O preview deve representar os bytes que serão finalizados, não uma imagem simulada sem correspondência.
+5. **Gerar documento:** registrar PDF com ID, layout version, filtros, competência, scope, fonte/snapshot, hash, autor, timestamp, e integridade; permitir download autorizado.
+6. **Disponibilizar ao DRE:** ação da **Controladoria autorizada**, distinta de gerar/baixar, cria o vínculo ao **item correto de checklist/recipient e versão/competência** no contexto P2/P5, com idempotência, audit e confirmação. O PDF **não sai automaticamente só por ser gerado**; evitar envio indevido sem revisão. Se existir publicação segura já contratada, reutilizar a operação owner; não criar cópia/armazenamento paralelo.
+7. **Confirmar resultado real:** a BFF comprova que o arquivo/versão foi vinculado e **liberado** ao destinatário correto. UI mostra estado e link read-only de destino quando permitido; usuário DRE enxerga **apenas o PDF final liberado**, nunca tabelas fontes de relatório, projeções, divergências, filtros ERP nem rotas de geração. Se publicação falhar, manter PDF gerado e estado “não disponibilizado”, com retry idempotente.
+8. **Histórico:** preservar emissão anterior, quem gerou, parâmetros, quem disponibilizou, versão, hash e destinatário; reemissão não substitui versões liberadas silenciosamente.
+
+**Invariantes:** \`PDF_GENERATED != PDF_VALIDATED != EVIDENCE_P2_ACCEPTED != PDF_RELEASED_TO_DRE != PACKAGE_SUBMITTED_P5 != MONTHLY_CLOSING_COMPLETED\`. O PO pediu envio direto; a semântica exata de “liberar ao DRE” deve ser reconciliada com Doc 91 (destinatário de consulta) e P5 (review formal) sem promover estado de pacote automaticamente.
+
+### 21.4 Critérios de qualidade/aceite por relatório e não por catálogo
+
+- **R01/R02 financeiro:** A4 paisagem, cabeçalhos específicos \`DLP06R01.prt\` vs \`nat.prt\`, dados por data vs natureza, colunas/ordens, grupos, subtotais, totalizadores, números, páginas; preservar diferença de layout e período, sem afirmar reprodução oficial só por G5.
+- **R05 entradas/saídas:** A4 paisagem, categorias/colunas de saldo inicial/movimentações/saldo atual com valores conforme precisão do relatório.
+- **R03 P7/inventário:** A4 retrato e título do Registro de Inventário, classificação fiscal/discriminação/unidade/quantidade/unitário/parcial/total, cabeçalho fiscal, folha e data-base; separar emissão ampla vs resumo/Bloco H, regras de seleção e totais; prova de layout e dados antes de liberar ao DRE.
+- Reproduzir data/hora de emissão com semântica correta (emissão real, não hardcode de PDF histórico), quebras de página e cabeçalhos por folha.
+- Campos/colunas/agrupamentos devem ter rastreio no Doc 47 (G1–G6) + source producer/owner/DTO + comparação PDF baseline (amostra e diffs visuais e monetários, incluindo totalizadores).
+- Não “melhorar” layouts padrão com informação extra inserida no PDF sem gate de breaking visual; insights operacionais ficam na interface, não no PDF oficial.
+- Armazenar original/proveniência com proteção adequada; jamais subir PDFs contendo dados financeiros ao repositório GitHub.
+
+### 21.5 Decisões materiais pendentes
+
+| ID | Questão | Proposta | Estado |
+|---|---|---|---|
+| D-REPORT-PDF-01 | Preview fiel e layout por relatório | Preservar layout homologado, A4 orientação original, dados e paginação | **PO intent approved**, \`TO_INVENTORY\` layout/versões por relatório |
+| D-REPORT-PDF-02 | “Disponibilizar diretamente ao DRE” | CTA explícito depois da prévia, com confirmação e publicação no item/recipient certo | **TARGET / DECISION_REQUIRED** para release state/owner/integração P2/P5 |
+| D-REPORT-PDF-03 | Qual saída de P7/Bloco H é o documento esperado | Comparar \`Estoque.pdf\`, \`Resumo Estoque.pdf\`, parâmetros MATR460 e checklist | \`TO_INVENTORY / PENDING_FUNCTIONAL_ACCEPTANCE\` |
+| D-REPORT-PDF-04 | Política de divergências na emissão | Alertar/blocker segundo regra canônica; nunca declarar PDF aprovado sem paridade | \`DECISION_REQUIRED\` para cada bloqueio/override, não implementar por UI |
+| D-REPORT-PDF-05 | Formato de artefato + hashing/storage/download | Adapter proprietário de P2/P5 conforme padrões plataforma e source owner | \`TO_INVENTORY\` |
+| D-REPORT-PDF-06 | G6 / aceite visual e monetário | PO/Controladoria valida amostras por emissão/layout | \`TEST_NOT_RUN\` no ciclo atual |
+
+### 21.6 Próxima página/componente
+
+Dentro de Relatórios e divergências, priorizar o **componente “Prévia oficial do PDF”** com comparação visual do R03 Registro de Inventário (completo versus resumido/Bloco H), depois o CTA **Disponibilizar para Contabilidade/DRE**. Em seguida aplicar mesma matriz a R01/R02 e R05. Não implementar endpoint, render PDF ou storage por inferência enquanto não houver G6/ownership/contrato/GO.
