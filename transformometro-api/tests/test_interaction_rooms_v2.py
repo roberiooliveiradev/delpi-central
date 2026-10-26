@@ -1115,15 +1115,20 @@ def test_can_view_room_requires_access_permission():
     assert cases.can_view_room(outsider, room.id, BEARER) is False
 
 
-def test_can_view_room_v1_schema_reduces_to_existence():
-    """Legacy schema: no access_scope/links/participants — the model carries
-    no restrictive contract, so the canonical decision is room existence +
-    transformometro.access. Never a bypass: those checks simply do not exist."""
-    cases, repo, _, _ = _cases()
-    room = cases.open_for_process(_user(), PROCESS)
-    repo.room_schema_v2 = lambda: False
-    assert cases.can_view_room(_user(user_id=THIRD), room.id, None) is True
-    repo.rooms.pop(room.id)
-    assert cases.can_view_room(_user(user_id=THIRD), room.id, None) is False
-    outsider = _user(user_id=THIRD, permissions=[])
-    assert cases.can_view_room(outsider, "99999999-9999-9999-9999-999999999999", None) is False
+def test_can_view_room_matches_get_room_for_same_identity():
+    """Invariant: can_view_room=True must correspond to a detail read that
+    actually succeeds — same identity, same authorization, stable state.
+    V1-schema tolerance is proven against real PostgreSQL (PG suite)."""
+    cases, _, tickets, _ = _cases()
+    room = _ticket_room(cases)
+
+    # Authorized: both agree True.
+    assert cases.can_view_room(_user(), room.id, BEARER) is True
+    assert cases.get_room(_user(), room.id, authorization=BEARER).id == room.id
+
+    # External denial: both agree denied — capability never announces what
+    # the route cannot serve.
+    tickets.states[TICKET] = LINK_STATE_RESTRICTED
+    assert cases.can_view_room(_user(), room.id, BEARER) is False
+    with pytest.raises(RoomAuthorizationDenied):
+        cases.get_room(_user(), room.id, authorization=BEARER)

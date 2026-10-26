@@ -73,7 +73,7 @@ def _commands() -> TaskCommandUseCases:
     # Canonical room read-authorization — the same capability the HTTP and
     # TÉO/GPT surfaces wire. No ticket_visibility port: external Helpdesk
     # links fail closed (unavailable) rather than hitting the network.
-    rooms = InteractionRoomUseCases(InteractionRoomRepository())
+    rooms = InteractionRoomUseCases(InteractionRoomRepository(_connect()))
     return TaskCommandUseCases(
         TaskRepository(_connect()), room_access=rooms.can_view_room
     )
@@ -293,20 +293,27 @@ def test_pg_origin_context_gated_by_canonical_room_access(pending_task):
             (message_id, pending_task),
         )
         conn.commit()
+    rooms = InteractionRoomUseCases(InteractionRoomRepository(_connect()))
     try:
         if v2:
-            # Não-participante: room_id e rótulo suprimidos da projeção.
+            # Não-participante: room_id e rótulo suprimidos da projeção —
+            # e a rota de detalhe concorda (não abre).
             suppressed = _commands().origin_contexts(_user(USER), [pending_task])
             assert suppressed[pending_task].room_id is None
             assert suppressed[pending_task].context_label is None
-            # Participante: contexto resolvido.
+            with pytest.raises(Exception):
+                rooms.get_room(_user(USER), room_id)
+            # Participante: contexto resolvido E a sala abre de verdade.
             allowed = _commands().origin_contexts(_user(OTHER), [pending_task])
             assert allowed[pending_task].room_id == room_id
+            assert rooms.get_room(_user(OTHER), room_id).id == room_id
         else:
-            # V1: sem contrato restritivo no schema — a decisão canônica se
-            # reduz a existência da sala; qualquer usuário com access a abre.
+            # V1: sem contrato restritivo no schema — qualquer usuário com
+            # access abre. can_view_room=True deve corresponder a um GET de
+            # detalhe que realmente funciona no schema legado.
             open_ctx = _commands().origin_contexts(_user(USER), [pending_task])
             assert open_ctx[pending_task].room_id == room_id
+            assert rooms.get_room(_user(USER), room_id).id == room_id
     finally:
         with conn.cursor() as cur:
             cur.execute(

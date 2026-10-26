@@ -141,7 +141,7 @@ def _attachment(row: dict[str, Any]) -> InteractionAttachment:
 
 _ROOM_SELECT = f"""
 SELECT r.id, r.processo_id, r.created_by_user_id, r.created_at, r.updated_at,
-       r.deleted_at, r.access_scope, r.title, r.deleted_by_user_id,
+       r.deleted_at, {{v2_cols}},
        p.codigo_processo, p.nome_processo,
        m.content AS last_content, m.created_at AS last_message_at
 FROM {_S}.tm_interaction_rooms r
@@ -157,10 +157,67 @@ LEFT JOIN LATERAL (
 
 
 class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryPort):
+    def _room_columns(self) -> frozenset[str]:
+        """Columns actually present on ``tm_interaction_rooms`` — legacy
+        deployments may lack the V2 contract columns entirely."""
+        if getattr(self, "_room_cols", None) is None:
+            rows = self.fetch_all(
+                """SELECT column_name FROM information_schema.columns
+                   WHERE table_schema = %s AND table_name = 'tm_interaction_rooms'""",
+                (_S,),
+            )
+            self._room_cols = frozenset(str(r["column_name"]) for r in rows)
+        return self._room_cols
+
+    def _table_exists(self, table: str) -> bool:
+        cache = getattr(self, "_tables", None)
+        if cache is None:
+            cache = self._tables = {}
+        if table not in cache:
+            row = self.fetch_one(
+                "SELECT to_regclass(%s) AS reg", (f"{_S}.{table}",)
+            )
+            cache[table] = bool(row and row.get("reg"))
+        return cache[table]
+
+    def _v2_contract(self) -> bool:
+        """True when the schema carries the V2 access contract marker. A
+        partially migrated schema (scope column without its satellite
+        tables) must fail closed, never pretend the contract is absent."""
+        return "access_scope" in self._room_columns()
+
+    def _contract_tables_missing(self, table: str) -> bool:
+        """Legacy schemas carry no links/participants — nothing to enforce.
+        A V2-contract schema missing an AUTHORIZATION satellite is
+        structurally broken: fail loudly, never pretend the contract is
+        satisfied."""
+        if self._table_exists(table):
+            return False
+        if self._v2_contract():
+            raise PluginsRepositoryError(
+                f"Schema inconsistente: tabela {table} ausente."
+            )
+        return True
+
+    def _room_select(self) -> str:
+        cols = self._room_columns()
+        scope = (
+            "r.access_scope"
+            if "access_scope" in cols
+            else "'open'::text AS access_scope"
+        )
+        title = "r.title" if "title" in cols else "NULL::text AS title"
+        deleted_by = (
+            "r.deleted_by_user_id"
+            if "deleted_by_user_id" in cols
+            else "NULL::uuid AS deleted_by_user_id"
+        )
+        return _ROOM_SELECT.format(v2_cols=f"{scope}, {title}, {deleted_by}")
+
     def get_by_process(self, processo_id: str) -> InteractionRoom | None:
         """Read-only locate by the legacy ``processo_id`` column."""
         row = self.fetch_one(
-            f"{_ROOM_SELECT} WHERE r.processo_id = %s::uuid AND r.deleted_at IS NULL",
+            f"{self._room_select()} WHERE r.processo_id = %s::uuid AND r.deleted_at IS NULL",
             (processo_id,),
         )
         return self._with_graph(_room(row)) if row else None
@@ -244,7 +301,7 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     def get(self, room_id: str) -> InteractionRoom | None:
         """Active room only — soft-deleted rooms are invisible to reads."""
         row = self.fetch_one(
-            f"{_ROOM_SELECT} WHERE r.id = %s::uuid AND r.deleted_at IS NULL",
+            f"{self._room_select()} WHERE r.id = %s::uuid AND r.deleted_at IS NULL",
             (room_id,),
         )
         if row is None:
@@ -252,7 +309,7 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         return self._with_graph(_room(row))
 
     def get_raw(self, room_id: str) -> InteractionRoom | None:
-        row = self.fetch_one(f"{_ROOM_SELECT} WHERE r.id = %s::uuid", (room_id,))
+        row = self.fetch_one(f"{self._room_select()} WHERE r.id = %s::uuid", (room_id,))
         if row is None:
             return None
         return _room(
@@ -340,6 +397,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     def list_links(
         self, room_id: str, *, include_inactive: bool = False
     ) -> list[InteractionRoomLink]:
+        if self._contract_tables_missing("tm_interaction_room_links"):
+            return []
         inactive = "" if include_inactive else "AND deleted_at IS NULL"
         rows = self.fetch_all(
             f"""SELECT id, room_id, entity_type, entity_key, link_role,
@@ -354,8 +413,10 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     def find_active_primary_room(
         self, entity_type: str, entity_key: str
     ) -> InteractionRoom | None:
+        if self._contract_tables_missing("tm_interaction_room_links"):
+            return None
         row = self.fetch_one(
-            f"""{_ROOM_SELECT}
+            f"""{self._room_select()}
                 JOIN {_S}.tm_interaction_room_links l ON l.room_id = r.id
                 WHERE l.entity_type = %s AND l.entity_key = %s
                   AND l.link_role = 'primary' AND l.deleted_at IS NULL
@@ -559,6 +620,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     # --- participants -------------------------------------------------------
 
     def is_participant(self, room_id: str, user_id: str) -> bool:
+        if self._contract_tables_missing("tm_interaction_room_participants"):
+            return False
         row = self.fetch_one(
             f"""SELECT room_id FROM {_S}.tm_interaction_room_participants
                 WHERE room_id = %s::uuid AND user_id = %s::uuid
@@ -608,6 +671,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     def list_participants(
         self, room_id: str, *, active_only: bool = True
     ) -> list[InteractionRoomParticipant]:
+        if self._contract_tables_missing("tm_interaction_room_participants"):
+            return []
         active = "AND removed_at IS NULL" if active_only else ""
         rows = self.fetch_all(
             f"""SELECT room_id, user_id, role, added_by_user_id,
@@ -659,26 +724,6 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         )
         return row is not None
 
-    def room_exists(self, room_id: str) -> bool:
-        row = self.fetch_one(
-            f"""SELECT 1 AS ok FROM {_S}.tm_interaction_rooms
-                WHERE id = %s::uuid AND deleted_at IS NULL""",
-            (room_id,),
-        )
-        return row is not None
-
-    def room_schema_v2(self) -> bool:
-        if getattr(self, "_schema_v2", None) is None:
-            row = self.fetch_one(
-                """SELECT COUNT(*) AS n
-                   FROM information_schema.columns
-                   WHERE table_schema = 'transformometro'
-                     AND table_name = 'tm_interaction_rooms'
-                     AND column_name = 'access_scope'"""
-            )
-            self._schema_v2 = bool(row and row.get("n"))
-        return self._schema_v2
-
     @staticmethod
     def _is_primary_conflict(exc: PluginsRepositoryError) -> bool:
         """Unique-violation backstop: the partial index on active primary
@@ -696,11 +741,26 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         inbox_filter: str = "all",
     ) -> list[InteractionRoom]:
         viewer = viewer_user_id or "00000000-0000-0000-0000-000000000000"
+        # Unread/mentioned signals need the V047 satellite tables; legacy
+        # schemas without them degrade to neutral signals, never error.
+        if not self._table_exists(
+            "tm_interaction_reads"
+        ) or not self._table_exists("tm_interaction_mentions"):
+            rows = self.fetch_all(
+                f"""SELECT base.*, 0 AS unread_count, FALSE AS mentioned
+                    FROM ({self._room_select()}) base
+                    WHERE base.deleted_at IS NULL
+                    ORDER BY COALESCE(base.last_message_at, base.updated_at) DESC,
+                             base.id DESC"""
+            )
+            rooms = [_room(row) for row in rows]
+            self._attach_graphs(rooms)
+            return rooms
         rows = self.fetch_all(
             f"""SELECT base.*,
                        COALESCE(unread.qty, 0) AS unread_count,
                        COALESCE(mentioned.flag, FALSE) AS mentioned
-                FROM ({_ROOM_SELECT}) base
+                FROM ({self._room_select()}) base
                 LEFT JOIN LATERAL (
                     SELECT COUNT(*)::int AS qty
                     FROM {_S}.tm_interaction_messages msg
@@ -742,6 +802,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     def _attach_graphs(self, rooms: list[InteractionRoom]) -> None:
         """Bulk-load active links + participants for a room list — no N+1."""
         if not rooms:
+            return
+        if self._contract_tables_missing("tm_interaction_room_links"):
             return
         ids = [room.id for room in rooms]
         link_rows = self.fetch_all(
@@ -1142,30 +1204,48 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         if not messages:
             return []
         ids = [item.id for item in messages]
-        mention_rows = self.fetch_all(
-            f"""SELECT message_id, mentioned_user_id, label
-                FROM {_S}.tm_interaction_mentions
-                WHERE message_id = ANY(%s::uuid[])""",
-            (ids,),
+        # Decoration satellites are UX signals, not authorization: absent
+        # tables (legacy schema) degrade to empty, never fail the read.
+        mention_rows = (
+            []
+            if not self._table_exists("tm_interaction_mentions")
+            else self.fetch_all(
+                f"""SELECT message_id, mentioned_user_id, label
+                    FROM {_S}.tm_interaction_mentions
+                    WHERE message_id = ANY(%s::uuid[])""",
+                (ids,),
+            )
         )
-        reaction_rows = self.fetch_all(
-            f"""SELECT message_id, user_id, code
-                FROM {_S}.tm_interaction_reactions
-                WHERE message_id = ANY(%s::uuid[])""",
-            (ids,),
+        reaction_rows = (
+            []
+            if not self._table_exists("tm_interaction_reactions")
+            else self.fetch_all(
+                f"""SELECT message_id, user_id, code
+                    FROM {_S}.tm_interaction_reactions
+                    WHERE message_id = ANY(%s::uuid[])""",
+                (ids,),
+            )
         )
-        attachment_rows = self.fetch_all(
-            f"""SELECT id, message_id, room_id, file_name, stored_name, content_type, byte_size,
-                       uploaded_by_user_id, created_at
-                FROM {_S}.tm_interaction_attachments
-                WHERE message_id = ANY(%s::uuid[])
-                ORDER BY created_at ASC, id ASC""",
-            (ids,),
+        attachment_rows = (
+            []
+            if not self._table_exists("tm_interaction_attachments")
+            else self.fetch_all(
+                f"""SELECT id, message_id, room_id, file_name, stored_name, content_type, byte_size,
+                           uploaded_by_user_id, created_at
+                    FROM {_S}.tm_interaction_attachments
+                    WHERE message_id = ANY(%s::uuid[])
+                    ORDER BY created_at ASC, id ASC""",
+                (ids,),
+            )
         )
-        pin_rows = self.fetch_all(
-            f"""SELECT message_id FROM {_S}.tm_interaction_pins
-                WHERE message_id = ANY(%s::uuid[])""",
-            (ids,),
+        pin_rows = (
+            []
+            if not self._table_exists("tm_interaction_pins")
+            else self.fetch_all(
+                f"""SELECT message_id FROM {_S}.tm_interaction_pins
+                    WHERE message_id = ANY(%s::uuid[])""",
+                (ids,),
+            )
         )
         mentions: dict[str, list[InteractionMention]] = defaultdict(list)
         reactions: dict[str, list[InteractionReaction]] = defaultdict(list)
@@ -1574,13 +1654,6 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
 
     def process_exists(self, processo_id: str) -> bool:
         return processo_id in self.processes
-
-    def room_exists(self, room_id: str) -> bool:
-        room = self.rooms.get(str(room_id))
-        return room is not None and room.deleted_at is None
-
-    def room_schema_v2(self) -> bool:
-        return True
 
     def list_rooms(
         self,

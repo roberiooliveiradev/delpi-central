@@ -120,17 +120,6 @@ class InteractionRoomRepositoryPort(Protocol):
 
     # --- authorization support ----------------------------------------------
 
-    def room_exists(self, room_id: str) -> bool:
-        """Schema-safe existence check (active room only). Used on legacy
-        schemas that carry no scope/link/participant model."""
-        ...
-
-    def room_schema_v2(self) -> bool:
-        """True when the room schema carries the V2 access contract
-        (access_scope, links, participants). False on legacy schemas whose
-        rooms have no restrictive contract — open by model."""
-        ...
-
     def protected_content_count(self, room_id: str) -> int:
         """Every persisted artifact tied to the room: messages INCLUDING
         tombstones, attachments, mentions, reactions, pins and read
