@@ -187,3 +187,79 @@ Cada número abre a visão filtrada SE houver contrato de contagem e drilldown.
 **Primeiro bloco a detalhar/validar: FM-02 + FM-03 + FM-04 (cabeçalho, seleção da competência, contexto/estado).** Depois: FM-05 indicadores; FM-06 abas; FM-07/08 fila e detalhe; FM-09 estados; por fim composições das visões Divergências, Documentos, Pendências e Revisão, uma por vez.
 
 **Não aprovar implicitamente** contagem de KPIs, dataset transversal, alteração de URL, remoção dos atalhos atuais, nova entidade divergência, persistência ou endpoints com base no aceite do wireframe geral.
+
+
+## 9. Página Fechamento mensal — cabeçalho FM-02/FM-03/FM-04 — Wireframe V0.3 (26/10/2026)
+
+**Estado:** `TARGET / DETAILED_PROPOSAL / PENDING_PO_COMPONENT_APPROVAL`. Não implica aprovação de rota, endpoint, cardinalidade de selector ou implementação. A estrutura de cinco visões da bancada foi aceita como orientação, mas os elementos e comportamentos deste cabeçalho estão sob revisão.
+
+### 9.1 Hierarquia visual e limites
+
+```text
+[TOPBAR COMUM / @delpi/plugin-ui — EXISTENTE, FORA DA PÁGINA]
+Início / Central de Fechamento / Fechamento mensal
+─────────────────────────────────────────────────────────────────────────
+FECHAMENTO MENSAL                                      [? Ajuda] [↻ Atualizar]
+Acompanhe divergências, documentos e pendências desta competência.
+
+[ COMPETÊNCIA                  ] [ EMPRESA / UNIDADE — CONTEXTO         ]
+[ 09/2026 ▼                    ] [ Todas autorizadas ▼ / somente escopo ]
+[ Situação da competência: texto derivado ] [Atualizado em ... / fonte...]
+─────────────────────────────────────────────────────────────────────────
+[ ALERTA/BLOCKER CRÍTICO, SE REAL E COM FONTE ]  ← antes de indicadores
+[ cartões de indicadores: bloco separado FM-05 ]
+```
+
+**Ordem:** PagePath → título e propósito → ações utilitárias → seletor de competência e escopo → estado geral com provenance/freshness → alertas materiais. Não duplicar avatar, Buscar, Favoritos ou saudação da Home. `TopBar` permanece no shell da plataforma. No mobile, título e ações em linhas separadas, selectors empilhados.
+
+### 9.2 FM-02 — Título, contexto e ações
+
+| Campo/controle | Rótulo PT-BR | Regra |
+|---|---|---|
+| Breadcrumb | `Controladoria & Finanças / Central de Fechamento / Fechamento mensal` | Deep links só após conferir router; breadcrumbs não simulam navegação sem rota real |
+| Título | `Fechamento mensal` | H1 único da página, sem saudação pessoal |
+| Subtítulo | `Acompanhe divergências, documentos e pendências da competência selecionada.` | Sem afirmar que toda correção ocorre nesta superfície |
+| Ajuda | `Ajuda desta página` | Explica competência, divergência vs pendência vs bloqueio, documentos e revisão; sincronizar com feature |
+| Atualizar | `Atualizar dados` | Atualiza projeções de leitura, mantém seleção e filtros; spinner/indicação de sucesso/erro com timestamps quando contratados; não executa mutation |
+| Estado de atualização | `Atualizado em [data/hora] · origem [...] ` ou `Fonte indisponível` | Tempo deve vir da fonte real; não usar relógio do browser como freshness canônica |
+
+### 9.3 FM-03 — Seletor de competência e escopo
+
+**Competência** é o controle de maior prioridade no cabeçalho. Escolha de UX recomendada **para decisão**: seletor de **competências existentes e autorizadas**, com `MM/AAAA` legível e busca rápida; permitir navegação por mês/ano como filtro, **não** criar competência automaticamente ao escolher mês. Necessita inventário de endpoint/listagem e autorização real. Sem lista disponível, mostrar `Não foi possível consultar competências` + tentar novamente, e jamais criar estado inventado.
+
+**Empresa/unidade**: exibir somente se o contrato da competência envolver esse contexto. O seletor deve listar apenas recursos dentro do escopo autorizado; `Todas as unidades` só existe se a API permitir agregação explícita. Filial/unidade não vira permission code. Se só houver uma opção, mostrar chip informativo/read-only em vez de dropdown falso.
+
+**Troca de competência**: revalidar toda a bancada, remover detalhe de contexto anterior, preservar a visão ativa apenas se compatível, zerar filtros incompatíveis com aviso discreto, atualizar deep link sem deixar o usuário em rota de recurso antigo. Em erro, manter contexto anterior com alerta e retry; nunca apresentar dados do mês antigo sob título do novo.
+
+### 9.4 FM-04 — Estado geral da competência
+
+O status exibido é **resumo derivado da BFF**, não campo editável. Não usar um indicador genérico `Concluído` por percentual; preservar os eixos **Estoque / Documentos / Pacote** (P1) independentes, com bloqueio de conclusão se source não disponível ou esclarecimento aberto conforme contratos. Status possíveis **na UI ilustrativa**: `Em andamento`, `Aguardando revisão`, `Concluído`, `Informação indisponível` — mapear somente depois de conferir enum/DTO real e seu owner. Proibir status hardcoded como verdade de negócio.
+
+Mostrar `Estado geral`, um badge semântico com texto, texto auxiliar `Situação derivada dos eixos de fechamento`, botão/link `Ver critérios de conclusão` quando houver rota real. Blockers críticos visíveis **imediatamente abaixo do cabeçalho**, antes de KPIs, com fonte/owner/ação de navegação; não esconder atrás das cinco abas.
+
+### 9.5 Matriz de estados
+
+| Estado | Comportamento |
+|---|---|
+| Inicial/loading | Skeleton apenas nos campos de domínio; título/Ajuda preservados |
+| Competência não selecionada | `Selecione uma competência para começar`, sem contagens fictícias |
+| Sem competências elegíveis | Empty state `Nenhuma competência disponível no seu escopo`, distinguir autorização e ausência real |
+| Read-only/sem manage | Seleção e READ conforme access/scope; nenhuma mutação exposta |
+| Fonte indisponível | `Dados operacionais indisponíveis` e motivo/fonte; não concluir que são zero |
+| Partial/stale | Banner de parcial/freshness, contagens só das fontes válidas e explicitamente rotuladas |
+| Erro ao trocar contexto | Contexto anterior permanece; erro acessível com retry; sem mistura de dados |
+| Revogação de acesso | Fail-closed da BFF/Core; expurgar detalhes fora de escopo |
+| Competência concluída | Estado somente se owner provar conclusão humana; leitura preservada, ações condicionadas |
+
+### 9.6 Componentização plugin-ui e DoD visual
+
+`createDashboardPagePath`, `createDashboardPageHero`, `StatusBadge`, `StateBanner`, `LoadingState`, `EmptyState`, `HelpTooltip`, `ActionButton` e selectors do kit conforme catálogo vigente. Evitar criar componentes genéricos paralelos. Desktop: selectors em linha após heading; mobile: stack, affordance de seletor, refresh acessível. Foco visível e sem informação codificada exclusivamente por cor; mesma árvore em claro/escuro. Testes de mudança de competência, recuperação de rede, rota/deep link, contexto único/vários, source partial, no-access e atualização.
+
+### 9.7 Decisões reais para PO
+
+- **D-HEADER-01 (recomendação A):** seleção principal por **competências existentes e autorizadas**, exibidas no formato `MM/AAAA`, com busca por mês/ano; alternativa B: calendário livre mês/ano com verificação posterior de existência. A evita competências fictícias e favorece listas reais. **DECISION_REQUIRED / PENDING_PO**.
+- **D-HEADER-02:** se houver mais de um escopo de empresa/unidade, exibir seletor contextual quando producer real permitir; caso contrário chip informativo. **PENDING_INVENTORY** (comportamento recomendado).
+- **D-HEADER-03:** status textual derivado com detalhe dos três eixos P1 e freshness; **TARGET consistente com doc 08**, requer DTO real.
+- **D-HEADER-04:** breadcrumbs e deep link devem respeitar router existente e compatibilidade retroativa; nenhum path novo é aprovado por este wireframe.
+
+**Próximo ciclo:** apresentar visual e confirmar D-HEADER-01 com o PO; após aprovação, detalhar FM-05 (indicadores) e, depois, FM-06 abas, mantendo rastreabilidade.
