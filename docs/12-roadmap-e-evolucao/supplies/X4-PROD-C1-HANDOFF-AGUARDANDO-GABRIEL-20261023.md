@@ -255,3 +255,21 @@ X4.PROD-C1.R4.UPSTREAM        = UPSTREAM_PENDING (token 401; suppliers não prob
 X4.PROD-C1.R4.END_TO_END      = INCONCLUSIVE
 NEXT_STEP                     = Gabriel publica API + credencial válida → G8 read-only recheck → GO separado p/ 1ª escrita
 ```
+
+## 15. X4.REST-STATUS.S1 — Diagnóstico operacional implementado (2026-10-26)
+
+O diagnóstico read-only da integração REST de fornecedores foi entregue em
+produção de código/config (sem qualquer escrita ERP): card compartilhado nas
+páginas de lista e ficha de fornecedores do Portal Suprimentos, BFF
+`GET /suppliers/integration-status` sob `supplies.manage` existente e
+extensão aditiva de `GET /integrations/protheus/status` na api-delpi
+(`checked_at`, `environment`, `connectivity`, `authentication_http_status`,
+`suppliers_read`, gates, `write_target_guard`, `write_validation`,
+`overall`).
+
+Estado upstream na execução: `authentication=failed` (HTTP 401) →
+`overall=upstream_pending` — publicação da API/credencial produtiva segue
+como dependência de Gabriel (§11–§14). Nenhum POST/PUT foi executado;
+`write_validation=not_tested` por design.
+
+Evidências completas: `X4-REST-INTEGRATION-STATUS-S1-IMPLEMENTATION.md`.

@@ -376,3 +376,36 @@ def sanitize_put_body(body: Any) -> dict[str, Any]:
     if not source:
         raise ValueError("no editable supplier field provided")
     return dict(source)
+
+
+# X4.REST-STATUS.S1 — allowlist fechada do diagnóstico REST de fornecedores.
+# O BFF republica somente rótulos de estado + http status de autenticação:
+# nunca URLs, hosts, tokens, credenciais ou internals de upstream.
+_INTEGRATION_STATUS_FIELDS = frozenset(
+    {
+        "checked_at",
+        "environment",
+        "configuration",
+        "connectivity",
+        "authentication",
+        "authentication_http_status",
+        "suppliers_read",
+        "create_gate",
+        "update_gate",
+        "write_target_guard",
+        "write_validation",
+        "overall",
+    }
+)
+
+
+def project_integration_status(data: Any) -> dict[str, Any]:
+    """UX-facing projection of the Protheus REST integration diagnostic.
+
+    Emits the full field set (None when absent) so the UI contract is stable;
+    anything outside the allowlist — URLs, hosts, tokens, internals — is
+    never republished.
+    """
+    if not isinstance(data, dict):
+        data = {}
+    return {key: data.get(key) for key in _INTEGRATION_STATUS_FIELDS}

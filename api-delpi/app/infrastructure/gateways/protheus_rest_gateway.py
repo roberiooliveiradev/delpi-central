@@ -85,6 +85,7 @@ class ProtheusRestGateway:
                 "Falha na autenticação técnica com o Protheus.",
                 code="PROTHEUS_AUTH_FAILED",
                 status_code=502,
+                upstream_status=response.status_code,
             )
 
         payload = _json_payload(response)

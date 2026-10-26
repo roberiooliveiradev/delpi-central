@@ -998,3 +998,86 @@ class TestPostalLookupBoundaries:
             / 'app' / 'infrastructure' / 'gateways'
         )
         assert not (gw_dir / 'postal_address_gateway.py').exists()
+
+
+class TestIntegrationStatus:
+    """X4.REST-STATUS.S1 — read-only diagnostic proxy (supplies.manage)."""
+
+    _STATUS_DATA = {
+        "checked_at": "2026-10-26T12:00:00+00:00",
+        "environment": "production",
+        "configuration": "ok",
+        "connectivity": "ok",
+        "authentication": "failed",
+        "authentication_http_status": 401,
+        "suppliers_read": "not_checked",
+        "create_gate": "enabled",
+        "update_gate": "enabled",
+        "write_target_guard": "ok",
+        "write_validation": "not_tested",
+        "overall": "upstream_pending",
+        # Campos que NUNCA podem vazar (simulam internals sanitizados upstream):
+        "base_url": "http://internal.example:8061",
+        "auth_url": "http://internal.example:8061/restall/api/oauth2/v1/token",
+        "access_token": "secret-token",
+        "username": "tech.user",
+    }
+
+    def test_missing_bearer_401(self, client):
+        assert client.get("/suppliers/integration-status").status_code == 401
+
+    def test_operational_user_without_manage_403(self, client):
+        v, r = _auth(permissions={"supplies.access"})
+        with v, r:
+            assert client.get(
+                "/suppliers/integration-status",
+                headers={"Authorization": "Bearer t"},
+            ).status_code == 403
+
+    def test_manage_user_gets_sanitized_status(self, client):
+        v, r = _auth(permissions={"supplies.access", "supplies.manage"})
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.return_value = {
+                "success": True,
+                "data": self._STATUS_DATA,
+                "meta": {},
+            }
+            resp = client.get(
+                "/suppliers/integration-status",
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body["overall"] == "upstream_pending"
+        assert body["authentication_http_status"] == 401
+        assert body["environment"] == "production"
+        # allowlist: nada interno vaza para a UI
+        for forbidden in ("base_url", "auth_url", "access_token", "username"):
+            assert forbidden not in body
+        # caminho upstream correto + token do usuário propagado
+        args, kwargs = gw.get.call_args
+        assert args[0] == "/integrations/protheus/status"
+        assert kwargs["access_token"] == "user-jwt"
+
+    def test_upstream_failure_maps_gateway_error(self, client):
+        v, r = _auth(permissions={"supplies.access", "supplies.manage"})
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.side_effect = DelpiApiGatewayError("timeout", status_code=None)
+            resp = client.get(
+                "/suppliers/integration-status",
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 504
+        assert resp.get_json()["code"] == "upstream_unreachable"
+
+    def test_projection_handles_partial_payload(self):
+        projected = suppliers_dto.project_integration_status(
+            {"overall": "unavailable"}
+        )
+        assert projected["overall"] == "unavailable"
+        assert projected["authentication_http_status"] is None
+        assert "write_validation" in projected

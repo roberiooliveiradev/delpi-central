@@ -16,8 +16,10 @@ import {
   SuppliesStatusBadge,
 } from "../../app/suppliesUi";
 import { ApiRequestError } from "../../api/httpClient";
+import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import { SP_HELP } from "../../content/helpTooltips";
 import { getSupplier, updateSupplier } from "./api";
+import { SupplierIntegrationStatusCard } from "./SupplierIntegrationStatusCard";
 import { EnrichmentSection } from "./enrichment/EnrichmentSection";
 import {
   SUPPLIERS_CONTENT as C,
@@ -85,6 +87,7 @@ export function SupplierDetailPage({
   code,
   store,
 }: SupplierDetailPageProps) {
+  const session = useSuppliesSession();
   const [detail, setDetail] = useState<SupplierDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -256,6 +259,8 @@ export function SupplierDetailPage({
           ) : undefined
         }
       />
+
+      {session.capabilities.manage ? <SupplierIntegrationStatusCard /> : null}
 
       {writeState ? (
         <WriteOutcomeBanner

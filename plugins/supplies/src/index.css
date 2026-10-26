@@ -2080,3 +2080,88 @@
   display: grid;
   gap: 8px;
 }
+
+/* X4.REST-STATUS.S1 — card de diagnóstico REST (somente leitura). */
+.dashboard-supplies-portal .sp-suppliers-status-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--delpi-ui-radius, 12px);
+  background: var(--sp-surface-elevated);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__head-text {
+  display: grid;
+  gap: 4px;
+  min-width: 140px;
+  flex: 1 1 auto;
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--sp-title);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__idle {
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__error {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--sp-danger);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__details {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--sp-border);
+  padding-top: 10px;
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__env {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__row-label {
+  color: var(--sp-text);
+}
+
+.dashboard-supplies-portal .sp-suppliers-status-card__note {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+}
+
+/* Desktop: card flutuante discreto no canto inferior direito, sem
+   encobrir ações fixas — largura limitada e z-index baixo. */
+@media (min-width: 1024px) {
+  .dashboard-supplies-portal .sp-suppliers-status-card {
+    position: fixed;
+    right: var(--sp-page-padding);
+    bottom: var(--sp-page-padding);
+    width: min(380px, 32vw);
+    z-index: 30;
+  }
+}

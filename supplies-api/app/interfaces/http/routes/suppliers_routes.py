@@ -13,11 +13,15 @@ import re
 
 from flask import Blueprint, jsonify, request
 
-from app.application.security.supplies_permissions import can_use_operations
+from app.application.security.supplies_permissions import (
+    can_administer,
+    can_use_operations,
+)
 from app.application.services.suppliers_dto import (
     normalize_operation_id,
     normalize_supplier_id,
     project_detail,
+    project_integration_status,
     project_list_envelope,
     project_operation,
     sanitize_post_body,
@@ -246,6 +250,25 @@ def lookup_postal_code(postal_code: str):
     if data.get("result_type"):
         result["result_type"] = data["result_type"]
     return jsonify(result), 200
+
+
+@suppliers_bp.get("/suppliers/integration-status")
+@require_policy(can_administer)
+def get_suppliers_integration_status():
+    """operationId: get_portal_suppliers_integration_status — read-only diagnostic.
+
+    Administrative surface (supplies.manage): proxies the api-delpi Protheus
+    REST diagnostic and republishes only the sanitized allowlist — never
+    URLs, tokens, credentials or upstream internals. Performs no ERP write.
+    """
+    try:
+        payload = _GATEWAY.get(
+            "/integrations/protheus/status",
+            access_token=_access_token(),
+        )
+    except DelpiApiGatewayError as exc:
+        return _gateway_error_response(exc)
+    return jsonify(project_integration_status(unwrap_delpi_envelope(payload))), 200
 
 
 @suppliers_bp.get("/suppliers/<code>/<store>")

@@ -7,7 +7,6 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Body, Path, Query, Request
 
-from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
@@ -80,7 +79,11 @@ def _actor_user_id() -> UUID:
 
 
 @router.get("/status", operation_id="get_protheus_integration_status")
-@require_any_permission(PROTHEUS_INTEGRATION_READ_PERMISSIONS)
+@require_s2s_or_any_permission(
+    PROTHEUS_INTEGRATION_READ_PERMISSIONS,
+    required_scopes=("suppliers.read",),
+    allowed_clients=("supplies-api",),
+)
 def get_protheus_integration_status_route():
     try:
         data = build_get_protheus_integration_status_use_case().execute()

@@ -22,7 +22,9 @@ import {
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { ApiRequestError } from "../../api/httpClient";
+import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import { listSuppliers } from "./api";
+import { SupplierIntegrationStatusCard } from "./SupplierIntegrationStatusCard";
 import { mapSuppliersFetchError, SUPPLIERS_CONTENT as C } from "./content";
 import {
   buildUrlSearch,
@@ -51,6 +53,7 @@ function replaceBrowserSearch(search: string) {
 }
 
 export function SuppliersPage({ basePath }: SuppliersPageProps) {
+  const session = useSuppliesSession();
   const [query, setQuery] = useState<SuppliersQuery>(() =>
     parseQueryFromSearch(readBrowserSearch()),
   );
@@ -190,6 +193,8 @@ export function SuppliersPage({ basePath }: SuppliersPageProps) {
           ) : null}
         </div>
       </SuppliesPageHero>
+
+      {session.capabilities.manage ? <SupplierIntegrationStatusCard /> : null}
 
       {error ? (
         <div className="sp-suppliers__error">

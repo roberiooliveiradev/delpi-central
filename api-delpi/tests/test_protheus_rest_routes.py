@@ -278,3 +278,177 @@ def test_router_exposes_status_and_supplier_paths() -> None:
     assert "get_protheus_rest_supplier" in operation_ids
     assert "create_protheus_rest_supplier" in operation_ids
     assert "update_protheus_rest_supplier" in operation_ids
+
+
+def _status_repo() -> object:
+    class _Repo:
+        def load_raw_params(self):
+            return {
+                "USR_PROTHEUS": "tech.user",
+                "PSW_PROTHEUS": "secret",
+                "URL_REST": "https://protheus.example/rest",
+                "PATH_AUTH": "/api/oauth2/v1/token",
+                "PATH_SUPPLIERS": "/delpi/api/v1/suppliers/",
+            }
+
+    return _Repo()
+
+
+def test_status_use_case_auth_401_is_upstream_pending() -> None:
+    from app.application.use_cases.integrations.get_protheus_integration_status_use_case import (
+        GetProtheusIntegrationStatusUseCase,
+    )
+
+    class _Token:
+        def get_valid_token(self, config):
+            raise ProtheusRestError(
+                "Falha na autenticação técnica com o Protheus.",
+                code="PROTHEUS_AUTH_FAILED",
+                status_code=502,
+                upstream_status=401,
+            )
+
+    class _Gateway:
+        def get_supplier(self, *args, **kwargs):
+            raise AssertionError("read must not run without a token")
+
+    uc = GetProtheusIntegrationStatusUseCase(
+        params_repository=_status_repo(),  # type: ignore[arg-type]
+        token_service=_Token(),  # type: ignore[arg-type]
+        gateway=_Gateway(),  # type: ignore[arg-type]
+    )
+    result = uc.execute()
+    assert result["configuration"] == "ok"
+    assert result["connectivity"] == "ok"
+    assert result["authentication"] == "failed"
+    assert result["authentication_http_status"] == 401
+    assert result["suppliers_read"] == "not_checked"
+    assert result["overall"] == "upstream_pending"
+    assert result["checked_at"]
+
+
+def test_status_use_case_transport_failure_is_unavailable() -> None:
+    from app.application.use_cases.integrations.get_protheus_integration_status_use_case import (
+        GetProtheusIntegrationStatusUseCase,
+    )
+
+    class _Token:
+        def get_valid_token(self, config):
+            raise ProtheusRestError(
+                "Timeout ao contatar o Protheus.",
+                code="PROTHEUS_TIMEOUT",
+                status_code=504,
+            )
+
+    class _Gateway:
+        def get_supplier(self, *args, **kwargs):
+            raise AssertionError("unreachable")
+
+    uc = GetProtheusIntegrationStatusUseCase(
+        params_repository=_status_repo(),  # type: ignore[arg-type]
+        token_service=_Token(),  # type: ignore[arg-type]
+        gateway=_Gateway(),  # type: ignore[arg-type]
+    )
+    result = uc.execute()
+    assert result["connectivity"] == "failed"
+    assert result["authentication"] == "not_checked"
+    assert result["authentication_http_status"] is None
+    assert result["overall"] == "unavailable"
+
+
+def test_status_use_case_token_invalid_on_read_is_upstream_pending() -> None:
+    from app.application.use_cases.integrations.get_protheus_integration_status_use_case import (
+        GetProtheusIntegrationStatusUseCase,
+    )
+
+    class _Token:
+        def get_valid_token(self, config):
+            return "tok"
+
+    class _Gateway:
+        def get_supplier(self, *args, **kwargs):
+            raise ProtheusRestError(
+                "Token rejeitado.",
+                code="PROTHEUS_TOKEN_INVALID",
+                status_code=502,
+            )
+
+    uc = GetProtheusIntegrationStatusUseCase(
+        params_repository=_status_repo(),  # type: ignore[arg-type]
+        token_service=_Token(),  # type: ignore[arg-type]
+        gateway=_Gateway(),  # type: ignore[arg-type]
+    )
+    result = uc.execute()
+    assert result["authentication"] == "ok"
+    assert result["suppliers_read"] == "failed"
+    assert result["connection"] == "failed"
+    assert result["overall"] == "upstream_pending"
+
+
+def test_status_use_case_ready_requires_guard_match(monkeypatch) -> None:
+    from app.application.use_cases.integrations import (
+        get_protheus_integration_status_use_case as uc_module,
+    )
+
+    class _Token:
+        def get_valid_token(self, config):
+            return "tok"
+
+    class _Gateway:
+        def get_supplier(self, *args, **kwargs):
+            return {"supplier_id": "00000000"}
+
+    uc = uc_module.GetProtheusIntegrationStatusUseCase(
+        params_repository=_status_repo(),  # type: ignore[arg-type]
+        token_service=_Token(),  # type: ignore[arg-type]
+        gateway=_Gateway(),  # type: ignore[arg-type]
+    )
+
+    monkeypatch.setattr(uc_module.settings, "PROTHEUS_REST_EXPECTED_BASE_URL", None)
+    result = uc.execute()
+    # Pin ausente → destino não comprovado → nunca "ready_for_attempt".
+    assert result["write_target_guard"] == "unverified"
+    assert result["overall"] == "unavailable"
+
+    monkeypatch.setattr(
+        uc_module.settings,
+        "PROTHEUS_REST_EXPECTED_BASE_URL",
+        "https://protheus.example/rest",
+    )
+    monkeypatch.setattr(uc_module.settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(uc_module.settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", False)
+    result = uc.execute()
+    assert result["write_target_guard"] == "ok"
+    assert result["create_gate"] == "enabled"
+    assert result["update_gate"] == "disabled"
+    assert result["write_validation"] == "not_tested"
+    assert result["overall"] == "ready_for_attempt"
+    assert result["suppliers_read"] == "ok"
+
+
+def test_status_use_case_guard_mismatch_is_unavailable(monkeypatch) -> None:
+    from app.application.use_cases.integrations import (
+        get_protheus_integration_status_use_case as uc_module,
+    )
+
+    class _Token:
+        def get_valid_token(self, config):
+            return "tok"
+
+    class _Gateway:
+        def get_supplier(self, *args, **kwargs):
+            return {}
+
+    monkeypatch.setattr(
+        uc_module.settings,
+        "PROTHEUS_REST_EXPECTED_BASE_URL",
+        "https://other.example/rest",
+    )
+    uc = uc_module.GetProtheusIntegrationStatusUseCase(
+        params_repository=_status_repo(),  # type: ignore[arg-type]
+        token_service=_Token(),  # type: ignore[arg-type]
+        gateway=_Gateway(),  # type: ignore[arg-type]
+    )
+    result = uc.execute()
+    assert result["write_target_guard"] == "mismatch"
+    assert result["overall"] == "unavailable"

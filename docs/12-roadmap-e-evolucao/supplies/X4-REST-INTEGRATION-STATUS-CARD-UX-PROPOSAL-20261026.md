@@ -131,3 +131,30 @@ Critérios RQ/AC:
 **STOP / EXECUTION_DRIFT:** falta de owner de verificação read-only; contrato que exigiria escrita; ausência de autorização adequada; uso de informação sensível; mudança compartilhada não compatível com demais consumidores.
 
 **Resultado esperado:** especificação de UX, **não UI publicada**. Não confundir com o G8 produtivo ou o cutover já documentado.
+
+## 7. Estado de implementação — X4.REST-STATUS.S1 (20261026)
+
+Esta proposta deixou de ser apenas TARGET: a implementação S1 foi executada
+segundo o fluxo `MFE supplies → supplies-api → api-delpi → REST Protheus`,
+sem nenhuma escrita ERP. Evidências completas em
+`X4-REST-INTEGRATION-STATUS-S1-IMPLEMENTATION.md`.
+
+**Implementado:**
+- `api-delpi` — `GET /integrations/protheus/status` estendido com
+  `checked_at`, `environment`, `connectivity`, `authentication_http_status`,
+  `suppliers_read`, `create_gate`, `update_gate`, `write_target_guard`,
+  `write_validation`, `overall`; autorização `require_s2s_or_any_permission`
+  (mesmo padrão do GET de fornecedor — S2S `supplies-api`/`suppliers.read`
+  ou permission `api-delpi.integrations.protheus.read`); contratos anteriores
+  preservados (campos aditivos).
+- `supplies-api` — `GET /suppliers/integration-status` sob
+  `require_policy(can_administer)` (`supplies.manage` existente); projeção
+  por allowlist fechado, sem URLs/hosts/tokens/credenciais.
+- `plugins/supplies` — `SupplierIntegrationStatusCard` compartilhado em
+  `SuppliersPage` e `SupplierDetailPage`; verificação manual, sem polling;
+  estados `not_checked`/`checking`/`ready_for_attempt`/`upstream_pending`/
+  `unavailable`/`stale`; Help + Manual sincronizados.
+
+**Semântica preservada:** `Habilitada` = gate ligada, nunca persistência
+provada; 401/404 upstream = `upstream_pending`; falha do próprio diagnóstico
+= `unavailable`; `ready_for_attempt` exige auth + GET + guard íntegros.

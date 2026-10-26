@@ -149,6 +149,11 @@ export const USER_MANUAL_CONTENT = {
           how: "«Consultar dados externos» compara a ficha com dados públicos do CNPJ (BrasilAPI — só sugestão). Aceite ou rejeite por campo, use seleção em lote e «Preparar atualização» gera apenas um rascunho — nada é gravado no Protheus",
         },
         {
+          want: "Verificar a integração REST de fornecedores",
+          where: "Fornecedores (perfil de administração)",
+          how: "O card «Integração Protheus» mostra configuração, conectividade, autenticação e consulta REST em tempo real, além das liberações de inclusão e alteração. A verificação é somente leitura — nada é gravado no ERP",
+        },
+        {
           want: "Acompanhar pedidos em aberto",
           where: "Pedidos de compra",
           how: "Saldo pendente de recebimento; para pontualidade de recebimentos já digitados use Entregas / Atrasos",

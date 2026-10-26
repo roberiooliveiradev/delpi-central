@@ -969,3 +969,20 @@ export const SUPPLIER_PUT_EDITABLE_KEYS = SUPPLIER_FIELD_REGISTRY.filter(
 ).map((f) => f.key);
 
 export const SUPPLIERS_PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
+
+
+/** X4.REST-STATUS.S1 — diagnóstico read-only da integração REST (BFF sanitizado). */
+export type SupplierIntegrationStatus = {
+  checked_at: string | null;
+  environment: string | null;
+  configuration: string | null;
+  connectivity: string | null;
+  authentication: string | null;
+  authentication_http_status: number | null;
+  suppliers_read: string | null;
+  create_gate: string | null;
+  update_gate: string | null;
+  write_target_guard: string | null;
+  write_validation: string | null;
+  overall: string | null;
+};

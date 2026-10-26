@@ -4,6 +4,7 @@ import type {
   SupplierCreateDraft,
   SupplierDetail,
   SupplierEditDraft,
+  SupplierIntegrationStatus,
   SupplierListEnvelope,
   SupplierWriteResponse,
   SuppliersQuery,
@@ -60,6 +61,15 @@ export function updateSupplier(
   return httpPut<SupplierWriteResponse>(
     suppliesApiUrl(supplierPath(code, store)),
     { fornecedor: buildUpdateFornecedor(changes) },
+    { signal },
+  );
+}
+
+export function getSuppliersIntegrationStatus(
+  signal?: AbortSignal,
+): Promise<SupplierIntegrationStatus> {
+  return httpGet<SupplierIntegrationStatus>(
+    suppliesApiUrl("/suppliers/integration-status"),
     { signal },
   );
 }

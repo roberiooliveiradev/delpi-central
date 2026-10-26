@@ -54,12 +54,28 @@ class ProtheusAccessToken:
 
 @dataclass(frozen=True, slots=True)
 class ProtheusIntegrationStatus:
+    """Sanitized integration diagnostic — safe to expose to authorized clients.
+
+    Never carries URLs, tokens, credentials or internal hosts; states are
+    coarse labels plus the upstream HTTP status observed on authentication.
+    """
+
     integration: str
     configuration: str
     authentication: str
     connection: str
     config_path_label_mismatch: bool = False
     transport: str = "unknown"
+    checked_at: str = ""
+    environment: str = "unknown"
+    connectivity: str = "not_checked"
+    authentication_http_status: int | None = None
+    suppliers_read: str = "not_checked"
+    create_gate: str = "disabled"
+    update_gate: str = "disabled"
+    write_target_guard: str = "unverified"
+    write_validation: str = "not_tested"
+    overall: str = "unavailable"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -69,6 +85,16 @@ class ProtheusIntegrationStatus:
             "connection": self.connection,
             "config_path_label_mismatch": self.config_path_label_mismatch,
             "transport": self.transport,
+            "checked_at": self.checked_at,
+            "environment": self.environment,
+            "connectivity": self.connectivity,
+            "authentication_http_status": self.authentication_http_status,
+            "suppliers_read": self.suppliers_read,
+            "create_gate": self.create_gate,
+            "update_gate": self.update_gate,
+            "write_target_guard": self.write_target_guard,
+            "write_validation": self.write_validation,
+            "overall": self.overall,
         }
 
 
@@ -82,9 +108,11 @@ class ProtheusRestError(Exception):
         code: str,
         status_code: int = 502,
         recoverable: bool = True,
+        upstream_status: int | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.code = code
         self.status_code = status_code
         self.recoverable = recoverable
+        self.upstream_status = upstream_status
