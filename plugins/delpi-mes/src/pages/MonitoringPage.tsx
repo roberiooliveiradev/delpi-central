@@ -32,7 +32,7 @@ export function MonitoringPage({ branch, onOpenWorkCenter }: { branch: BranchCod
       <div>
         <p className="delpi-mes-eyebrow">Supervisão gerencial</p>
         <h2 id="monitoring-title">Monitoramento Industrial</h2>
-        <p>Apontamentos ativos na filial {branch === "01" ? "SC" : "ES"}.</p>
+        <p>Centros monitorados na filial {branch === "01" ? "SC" : "ES"}.</p>
       </div>
       <div className="delpi-mes-monitoring__refresh" aria-live="polite">
         <span className="delpi-mes-monitoring__updated" title={monitoring.refreshing ? "Atualizando…" : "Monitoramento ao vivo"}>
@@ -49,11 +49,11 @@ export function MonitoringPage({ branch, onOpenWorkCenter }: { branch: BranchCod
     <MonitoringStatCards items={monitoringStatItems(summary)} ariaLabel="Resumo dos apontamentos ativos" />
     <div className="delpi-mes-monitoring__filters" aria-label="Filtros do monitoramento">
       <label>Busca<input type="search" value={filters.search} placeholder="CT, OP, operação, operador ou motivo" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></label>
-      <label>Estado<select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value as StatusFilter }))}><option value="all">Todos</option><option value="producing">Produzindo</option><option value="stopped">Parada</option><option value="paused">Pausa manual</option><option value="pending">Motivo pendente</option><option value="incomplete">Dados incompletos</option></select></label>
+      <label>Estado<select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value as StatusFilter }))}><option value="all">Todos</option><option value="producing">Produzindo</option><option value="stopped">Parada</option><option value="paused">Pausa manual</option><option value="pending">Motivo pendente</option><option value="incomplete">Dados incompletos</option><option value="sensorized">Monitorado (sem produção)</option></select></label>
       <label>Motivo<select value={filters.reason} onChange={(event) => setFilters((current) => ({ ...current, reason: event.target.value }))}><option value="">Todos</option>{reasons.map((reason) => <option key={reason}>{reason}</option>)}</select></label>
       <label>Ordenação<select value={filters.sort} onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value as SortMode }))}><option value="attention">Atenção primeiro</option><option value="workCenter">Centro de trabalho</option><option value="duration">Maior tempo no estado</option><option value="productionOrder">OP</option></select></label>
       {hasFilters ? <button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button> : null}
     </div>
-    {monitoring.data.items.length === 0 ? <EmptyState title="Nenhuma produção ativa nesta filial" defaultMessage="Os centros aparecem aqui quando possuem um apontamento ativo." classNames={emptyClasses} /> : items.length === 0 ? <EmptyState title="Nenhum centro corresponde aos filtros atuais" defaultMessage="Ajuste ou limpe os filtros para voltar a visualizar os apontamentos ativos." classNames={emptyClasses}><button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button></EmptyState> : <div className="delpi-mes-work-center-grid">{items.map((item) => <WorkCenterCard key={item.runId} item={item} nowMs={nowMs} onOpen={() => onOpenWorkCenter(item.workCenter)} />)}</div>}
+    {monitoring.data.items.length === 0 ? <EmptyState title="Nenhum centro monitorado nesta filial" defaultMessage="Os centros aparecem aqui quando possuem sensor vinculado ou apontamento ativo." classNames={emptyClasses} /> : items.length === 0 ? <EmptyState title="Nenhum centro corresponde aos filtros atuais" defaultMessage="Ajuste ou limpe os filtros para voltar a visualizar os centros monitorados." classNames={emptyClasses}><button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button></EmptyState> : <div className="delpi-mes-work-center-grid">{items.map((item) => <WorkCenterCard key={item.runId ?? `wc-${item.workCenter}`} item={item} nowMs={nowMs} onOpen={() => onOpenWorkCenter(item.workCenter)} />)}</div>}
   </section>;
 }

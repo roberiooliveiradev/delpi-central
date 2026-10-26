@@ -35,17 +35,48 @@ class MesIntegrationReadService:
         timeline_builder: MesTimelineBuilder | None = None,
         calculator: MesPerformanceCalculator | None = None,
         clock: Callable[[], datetime] | None = None,
+        sensorized_provider: Callable[[str], list[str]] | None = None,
     ) -> None:
         self._repository = repository
         self._branch_access = branch_access
         self._timeline_builder = timeline_builder or MesTimelineBuilder()
         self._calculator = calculator or MesPerformanceCalculator()
         self._clock = clock or (lambda: datetime.now(timezone.utc))
+        # PC-MES-CT-AUTONOMOUS-DOWNTIME: catálogo de CTs sensorizados
+        # (vínculo pulse_counter, owner = Production Pulse). Opcional:
+        # quando injetado, a leitura live inclui também CTs sensorizados
+        # sem fato MES aberto — falha do Pulse degrada para fatos MES.
+        self._sensorized_provider = sensorized_provider
+
+    def _sensorized_work_centers(self, branch: str) -> set[str] | None:
+        if self._sensorized_provider is None:
+            return None
+        try:
+            return set(self._sensorized_provider(branch))
+        except Exception:  # noqa: BLE001 — Pulse indisponível não apaga fatos
+            return None
 
     def get_live_work_centers(self, *, branch: str) -> dict[str, Any]:
         code = self._branch_access.assert_valid_branch(branch)
         reference_at = self._clock()
         rows = self._repository.list_live_work_centers(branch=code)
+        sensorized = self._sensorized_work_centers(code)
+        if sensorized is not None:
+            present = {row["work_center"] for row in rows}
+            for row in rows:
+                row["sensorized"] = row["work_center"] in sensorized
+            rows.extend(
+                {
+                    "run_id": None,
+                    "branch": code,
+                    "work_center": center,
+                    "run_status": None,
+                    "state_id": None,
+                    "operational_state": None,
+                    "sensorized": True,
+                }
+                for center in sorted(sensorized - present)
+            )
         # Anti-N+1: uma query batch traz os state events de todos os runs;
         # o mesmo reference_at serve a timeline e Performance de todos.
         facts_by_run: dict[str, list[dict[str, Any]]] = {}
@@ -61,7 +92,15 @@ class MesIntegrationReadService:
             "branch": code,
             "referenceAt": reference_at.isoformat(),
             "summary": {
-                "activeRuns": len(items),
+                "activeRuns": sum(
+                    1
+                    for item in items
+                    if item["runId"] or item["operationalState"]
+                ),
+                "monitoredCenters": len(items),
+                "sensorizedCenters": sum(
+                    1 for item in items if item["sensorized"]
+                ),
                 "producing": sum(item["operationalState"] == "producing" for item in items),
                 "stopped": sum(item["operationalState"] == "stopped" for item in items),
                 "paused": sum(item["runStatus"] == "paused" for item in items),
@@ -241,6 +280,9 @@ class MesIntegrationReadService:
             # PC-MES-CT-AUTONOMOUS-DOWNTIME: true = fato autônomo sem run
             # (campo aditivo — consumidores antigos ignoram).
             "autonomousMonitoring": bool(row.get("autonomous_monitoring")),
+            # true = CT com vínculo pulse_counter ativo, mesmo sem fato
+            # MES aberto — a supervisão enxerga o posto sensorizado.
+            "sensorized": bool(row.get("sensorized")),
         }
 
     @staticmethod

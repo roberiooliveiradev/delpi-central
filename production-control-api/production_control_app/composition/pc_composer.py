@@ -689,9 +689,21 @@ def build_mes_integration_read_service() -> Any:
         PostgresMesMonitoringReadRepository,
     )
 
+    def _sensorized(branch: str) -> list[str]:
+        payload = build_production_pulse_gateway().fetch_branch_counter_snapshots(
+            branch=branch, role_key="pulse_counter"
+        )
+        return [
+            str(item.get("workCenterCode")).strip()
+            for item in payload.get("items") or []
+            if isinstance(item, dict)
+            and str(item.get("workCenterCode") or "").strip()
+        ]
+
     return MesIntegrationReadService(
         repository=PostgresMesMonitoringReadRepository(),
         branch_access=build_branch_access_service(),
+        sensorized_provider=_sensorized,
     )
 
 

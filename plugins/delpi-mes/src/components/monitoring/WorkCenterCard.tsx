@@ -15,7 +15,9 @@ export function WorkCenterCard({ item, nowMs, onOpen }: { item: MonitoringItem; 
   const perfValue = perf?.performancePercent != null
     ? formatPerformancePercent(perf.performancePercent)
     : (perfHint?.short ?? "—");
-  const durationLabel = `${state.actionLabel} há ${formatDuration(elapsedSeconds(item.stateStartedAt, nowMs))}`;
+  const durationLabel = item.stateStartedAt
+    ? `${state.actionLabel} há ${formatDuration(elapsedSeconds(item.stateStartedAt, nowMs))}`
+    : state.actionLabel;
 
   return (
     <button
@@ -35,7 +37,7 @@ export function WorkCenterCard({ item, nowMs, onOpen }: { item: MonitoringItem; 
           {state.secondary ? <span className="delpi-mes-work-center-card__secondary">{state.secondary}</span> : null}
           <span className="delpi-mes-work-center-card__line">
             <ClipboardList aria-hidden="true" />
-            OP {item.productionOrder || "não informada"} · Op. {item.operationCode || "—"}
+            {item.productionOrder ? `OP ${item.productionOrder} · Op. ${item.operationCode || "—"}` : "Sem produção vinculada"}
           </span>
           <span className="delpi-mes-work-center-card__line">
             <User aria-hidden="true" />
@@ -54,7 +56,7 @@ export function WorkCenterCard({ item, nowMs, onOpen }: { item: MonitoringItem; 
       <div className="delpi-mes-work-center-card__production">
         <span className="delpi-mes-work-center-card__prod-label">Produção</span>
         <span className="delpi-mes-work-center-card__prod-value">
-          {item.piecesTotal}
+          {item.piecesTotal ?? "—"}
           <small> /{item.targetPieces ? `${item.targetPieces} peças` : " peças"}</small>
           {progress !== null ? <em>{progress}%</em> : null}
         </span>
@@ -63,7 +65,7 @@ export function WorkCenterCard({ item, nowMs, onOpen }: { item: MonitoringItem; 
         </span>
         <div className="delpi-mes-work-center-card__tiles">
           <span><Target aria-hidden="true" />Meta<strong>{item.targetPieces ? `${item.targetPieces} peças` : "—"}</strong></span>
-          <span><Package aria-hidden="true" />Produzidas<strong>{item.piecesTotal} peças</strong></span>
+          <span><Package aria-hidden="true" />Produzidas<strong>{item.piecesTotal != null ? `${item.piecesTotal} peças` : "—"}</strong></span>
           <span><Gauge aria-hidden="true" />Performance<strong>{perfValue}</strong></span>
         </div>
         <PerformanceStrip performance={perf} />

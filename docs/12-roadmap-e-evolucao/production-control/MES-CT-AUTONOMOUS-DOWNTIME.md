@@ -64,6 +64,16 @@ Decisões-chave:
   aplica quando já havia baseline real; parada autônoma aberta antes da
   falha permanece intacta (observação de qualidade explícita) até a
   atividade real encerrá-la.
+- **Supervisão inclui CTs sensorizados sem fato** (rework): a leitura
+  live (`/integrations/mes/work-centers/live`) mescla runs ativos,
+  fatos autônomos abertos e todos os CTs com vínculo `pulse_counter`
+  na filial — um posto sensorizado aparece no Monitoramento Industrial
+  mesmo sem produção nem estado aberto (`runId`/`operationalState`
+  nulos + `sensorized: true`, `autonomousMonitoring: true` quando o
+  fato é autônomo). O catálogo vem do contrato Pulse por chamada;
+  indisponibilidade do Pulse degrada para fatos MES, nunca esconde o
+  que já é fato. `summary` ganha `monitoredCenters`/`sensorizedCenters`
+  (aditivo).
 - **Arbitragem**: o lock advisory por CT serializa tick autônomo ×
   `start_run`; dentro do lock o monitor recheca run ativo. Handoff é
   mesmo-CT com run ativo até o commit — o tick só vê SKIP.

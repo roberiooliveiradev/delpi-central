@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Activity, Pause, Play, TriangleAlert } from "lucide-react";
+import { Activity, MonitorCog, Pause, Play, TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import type { MonitoringSummary } from "../types/mes";
 
@@ -23,6 +23,7 @@ export function monitoringDowntimeCount(summary: MonitoringSummary): number {
 
 export function monitoringStatItems(summary: MonitoringSummary): StatCardItem[] {
   return [
+    { id: "monitored", label: "Centros monitorados", value: summary.monitoredCenters ?? summary.activeRuns, tone: "info", icon: MonitorCog },
     { id: "active", label: "Apontamentos ativos", value: summary.activeRuns, tone: "info", icon: Activity },
     { id: "producing", label: "Produzindo", value: summary.producing, tone: "success", icon: Play },
     { id: "downtime", label: "Paradas", value: monitoringDowntimeCount(summary), tone: "warning", icon: Pause },

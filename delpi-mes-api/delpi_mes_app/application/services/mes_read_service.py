@@ -11,6 +11,7 @@ from delpi_mes_app.domain.ports.production_control_mes_gateway import (
 
 _MONITORING_SUMMARY_FIELDS = (
     "activeRuns", "producing", "stopped", "paused", "unclassifiedDowntimes",
+    "monitoredCenters", "sensorizedCenters",
 )
 _TIMELINE_SUMMARY_FIELDS = (
     "elapsedSeconds", "producingSeconds", "stoppedSeconds", "stopCount",
@@ -20,6 +21,7 @@ _MONITORING_ITEM_FIELDS = (
     "stateStartedAt", "stateSource", "integrityStatus", "productionOrder",
     "operationCode", "operatorCode", "operatorName", "piecesTotal", "targetPieces",
     "lastCountActivityAt", "downtime", "performance",
+    "autonomousMonitoring", "sensorized",
 )
 _TIMELINE_FIELDS = ("runId", "branch", "workCenter", "status", "referenceAt", "summary")
 _PERFORMANCE_FIELDS = (
