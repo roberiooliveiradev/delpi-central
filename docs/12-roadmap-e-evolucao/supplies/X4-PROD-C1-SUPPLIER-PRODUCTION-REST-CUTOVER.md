@@ -224,3 +224,33 @@ aguardar a publicação do Gabriel — 401/404 upstream = `UPSTREAM_PENDING`.
 
 Estado: `CONFIG_READY=PREPARED`, `CREATE/UPDATE=OFF(prepared)`,
 `DEPLOY=n/a (sem mudança)`, `UPSTREAM=PENDING`, `END_TO_END=INCONCLUSIVE`.
+
+
+## 17. R4 — BASE_PATH aplicado e habilitação CREATE/UPDATE (2026-10-26)
+
+Execução da opção `BASE_PATH` (decisão arquitetural do PO em R4), commit `cd50b85610`:
+
+- **Resolver**: `OPTIONAL_PARAM_KEYS=("BASE_PATH",)`; loader passa a selecionar
+  chaves opcionais; prefixo composto em memória **após** a resolução semântica
+  de labels; dedup segment-aware; fail-closed em valor inválido; `base_url`
+  preservado como origem pura (pin exato inalterado).
+- **Params amb=1 (transação atômica)**: `URL_REST=http://192.168.1.231:8061`,
+  `INSERT BASE_PATH=/restall`, PATH_AUTH/PATH_SUPPLIERS idênticos; amb=2
+  intocado (`URL_REST` TST, sem `BASE_PATH`).
+- **Runtime provado**: `auth_url=…/restall/api/oauth2/v1/token`,
+  `suppliers_base_url=…/restall/delpi/api/v1/suppliers/`,
+  `assert_protheus_write_target=PASS`.
+- **Flags**: `PROTHEUS_SUPPLIER_CREATE_ENABLED=true`,
+  `PROTHEUS_SUPPLIER_UPDATE_ENABLED=true` (`.env` + env do container;
+  backup `infra/.env.bak.x4-r4-20261026`).
+- **Deploy**: `up-prod-sequential.sh --build api-delpi` @ `cd50b8561`,
+  container `Up (healthy)`; `delpi-supplies-api` saudável; logs limpos
+  (único erro = 401 de auth upstream esperado).
+- **Testes**: 610/610 focados (protheus/supplier/integration) + 10 casos
+  novos de BASE_PATH.
+- **Upstream**: token route responde **401** (rota viva, credencial/rota de
+  suppliers não publicada) → `UPSTREAM_PENDING`; `END_TO_END=INCONCLUSIVE`.
+- **Nenhum POST/PUT real executado**; primeira escrita exige autorização
+  operacional distinta.
+- **Rollback**: UPDATE reversível de `URL_REST@1` + `DELETE BASE_PATH@1`;
+  flags via restore do `.env` + redeploy; código via `git revert`.

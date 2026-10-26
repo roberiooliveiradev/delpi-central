@@ -1,6 +1,6 @@
 # HANDOFF CANÔNICO — Portal Suprimentos / X4.PROD-C1 — Resposta Gabriel e preparação do release
 **Atualizado em:** 2026-10-26  
-**Status:** `GABRIEL_REPLIED / RELEASE_PREPARATION_PENDING` + `EXECUTION_DRIFT R3` — `PRODUCTION_CUTOVER = BLOCKED` (`G8 = FAIL`) **e** `PATH_SUPPLIERS@1` (31c) > `CONTEUDO varchar(30)` (§13)  
+**Status:** `CONFIG_READY (R4)` — drift R3 resolvido via `BASE_PATH` (§14); amb=1 → REST produtiva, CREATE/UPDATE=ON, guard PASS. `UPSTREAM_PENDING`: token 401 até Gabriel provisionar credencial/API (janela Michael por confirmar). `END_TO_END = INCONCLUSIVE`  
 **Responsável pela publicação upstream:** Gabriel Araújo / TOTVS — aplicar mudança na instância produtiva após aprovação e janela operacional. Endpoint, autenticação e configuração existentes serão reutilizados, conforme resposta do owner.  
 **Decisão PO neste chat:** registrar e **aguardar a resposta do Gabriel**; não executar novos flips, POST/PUT produtivos ou ativação de flags enquanto o bloqueio estiver aberto.
 
@@ -202,4 +202,56 @@ X4.PROD-C1.R3.UPDATE_ENABLED  = OFF (prepared)
 X4.PROD-C1.R3.UPSTREAM        = UPSTREAM_PENDING (suppliers 404; token vivo)
 X4.PROD-C1.R3.END_TO_END      = INCONCLUSIVE
 NEXT_STEP                     = DECISAO varchar(30) → depois G8 recheck
+```
+
+
+## 14. X4.PROD-C1.R4 — BASE_PATH aplicado, cutover de parâmetros e flags ON (2026-10-26)
+
+**Decisão arquitetural executada:** opção 2 do §13 — parâmetro opcional `BASE_PATH` no resolver (`api-delpi`), commit `cd50b85610`. `varchar(30)` contornado **sem** DDL: `BASE_PATH=/restall` (8c) prefixa os paths efetivos em memória; `URL_REST` permanece a origem pura (pin do guard segue exato).
+
+### Resolver (backward-compatible)
+
+- `OPTIONAL_PARAM_KEYS=("BASE_PATH",)` — loader faz SELECT das chaves opcionais junto às obrigatórias; ausente/vazio = comportamento idêntico ao legado.
+- Prefixo aplicado **após** a resolução semântica de labels (auth/suppliers), com dedup segment-aware (`/restall` não confunde com `/rest`), normalização de barras e fail-closed em valores inválidos (`..`, `//`, scheme, whitespace).
+- `config.base_url` não incorpora o prefixo → `assert_protheus_write_target` compara origem exata, sem mudança de contrato do guard.
+- Testes: 10 novos casos no resolver + regressão **610/610** verdes (suíte protheus/supplier/integration).
+
+### Configuração efetiva (transação atômica, 2026-10-26)
+
+| Param | amb=1 antes | amb=1 depois | amb=2 (intocado) |
+|---|---|---|---|
+| `URL_REST` | `http://192.168.1.233:8701/rest` | `http://192.168.1.231:8061` | `http://192.168.1.233:8701/rest` |
+| `BASE_PATH` | — | `/restall` (INSERT) | — |
+| `PATH_AUTH` | `/api/oauth2/v1/token` | idem | idem |
+| `PATH_SUPPLIERS` | `/delpi/api/v1/suppliers` | idem | idem |
+
+**Resolução runtime comprovada** (in-container, read-only):
+`base_url=http://192.168.1.231:8061` · `auth_url=…/restall/api/oauth2/v1/token` · `suppliers_base_url=…/restall/delpi/api/v1/suppliers/` · `label_mismatch=false` · **`assert_protheus_write_target: PASS`** (pin `PROTHEUS_REST_EXPECTED_BASE_URL` idêntico à origem).
+
+### Flags efetivas
+
+`PROTHEUS_SUPPLIER_CREATE_ENABLED=true`, `PROTHEUS_SUPPLIER_UPDATE_ENABLED=true` no `.env` (backup `infra/.env.bak.x4-r4-20261026`), confirmadas no env do container `delpi-api-delpi` após deploy `--build api-delpi` (SHA `cd50b8561`, `Up (healthy)`).
+
+### Estado upstream e aceite
+
+- `configuration=ok`; probe de status → **HTTP 401** em `/restall/api/oauth2/v1/token` → `authentication=failed`, `connection=unavailable` = **`UPSTREAM_PENDING`** (rota viva; credencial ainda não provisionada/publicação do Gabriel pendente — janela Michael por confirmar).
+- E13 (lista de fornecedores = SQL `DELPI`): inalterado e saudável. E14 (detalhe REST): indisponibilidade específica aceita pelo PO enquanto `UPSTREAM_PENDING`.
+- BFF `supplies-api` `Up (healthy)`; api-delpi servindo 2xx; único erro nos logs = o 401 de auth esperado.
+- **Nenhum POST/PUT real executado.** Se a API for publicada pelo Gabriel, a primeira escrita exige autorização operacional distinta + reconciliação.
+
+### Rollback
+
+- Params: `UPDATE amb=1 URL_REST → http://192.168.1.233:8701/rest` + `DELETE BASE_PATH@amb=1` (snapshot pré-flip no corpo desta seção e R3).
+- Flags: restaurar `infra/.env` a partir de `infra/.env.bak.x4-r4-20261026` + redeploy `api-delpi`.
+- Código: `git revert cd50b85610` + deploy canônico.
+
+```text
+X4.PROD-C1.R4.CONFIG_READY    = PASS
+X4.PROD-C1.R4.CREATE_ENABLED  = PASS
+X4.PROD-C1.R4.UPDATE_ENABLED  = PASS
+X4.PROD-C1.R4.TARGET_GUARD    = PASS (fail-closed, pin exato)
+X4.PROD-C1.R4.AUTHZ/TRACKING  = UNCHANGED
+X4.PROD-C1.R4.UPSTREAM        = UPSTREAM_PENDING (token 401; suppliers não probeado — auth pré-requisito)
+X4.PROD-C1.R4.END_TO_END      = INCONCLUSIVE
+NEXT_STEP                     = Gabriel publica API + credencial válida → G8 read-only recheck → GO separado p/ 1ª escrita
 ```
