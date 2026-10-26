@@ -921,3 +921,19 @@ As duas imagens da interface de Minhas Solicitações apresentam:
 6. Nenhuma implementação de UI/BFF/Core/manifest/permission/storage foi autorizada neste ciclo. \`RUNTIME_GO=NO\`.
 
 **Próximo desenho recomendado:** estados da conversa (nova mensagem, complemento solicitado, resposta, somente leitura, erro, upload documental proibido) e contrato de notificações de audiência, mantendo o wireframe restrito.
+
+
+## 19. Destaque e notificação para solicitação de complemento — confirmação funcional
+
+**Data:** 2026-10-26. **Origem:** PO perguntou se a ação "Solicitar complemento" aparece em destaque e gera notificação na Minha DELPI. **Direção confirmada em design:** SIM. **Status:** `PRODUCT_BEHAVIOR_CONFIRMED / CONTRACT_PENDING / NOT_IMPLEMENTED`. Não interpretar como prova de notificação ativa em runtime.
+
+**Fluxo de interface proposto:**
+1. Contabilidade/DRE autorizada abre documento **anexado e liberado** e envia uma `solicitação de complemento`, com mensagem obrigatória e vínculo à competência, ao documento e à versão.
+2. A conversa ganha evento destacado **Complemento solicitado**, identificando autor, momento, descrição e contexto; a listagem sinaliza que há complemento solicitado. O destaque não se confunde com rejeição/validação P2 nem com aceite/revisão P5.
+3. Após gravação confirmada pela BFF, gerar evento para **Core Notifications / Minha DELPI**. Destinatários: usuários internos **não-DRE** efetivamente autorizados a acessar a competência/documento e envolvidos no tratamento, conforme regra owner/scope a contratar; **não** fazer broadcast irrestrito para toda conta com app access.
+4. A notificação abre deep link seguro para a competência/documento/conversa, sujeito a nova AuthZ na BFF; nenhuma capacidade se concede por receber notificação.
+5. A Contabilidade acompanha solicitação e respostas na mesma linha do tempo, sem poder anexar/substituir ou consultar relatórios TOTVS.
+
+**Apresentação:** selo textual `Complemento solicitado`, ícone semanticamente correspondente, marcação da mensagem na conversa e indicação discreta no registro da lista. Cor não é único sinal de status. A definição de `aberta/resolvida` e de como retirar o destaque **depende do contrato de lifecycle de solicitações**; não fabricar estado de negócio.
+
+**Dependências:** contrato de comentário/solicitação e persistência, mapeamento de audiência elegível, integração com notificações existentes, idempotência e auditoria, estados/erro/falha parcial, deep links e testes. `D-DRE-NOTIFY-01=PRODUCT_BEHAVIOR_CONFIRMED / TARGET`; `D-DRE-NOTIFY-AUDIENCE=DECISION_REQUIRED`; `IMPLEMENTATION_AUTHORIZED=NO`.
