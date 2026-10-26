@@ -93,3 +93,31 @@ def assert_can_cancel(status: TaskStatus) -> None:
 def assert_can_update(status: TaskStatus) -> None:
     if status != "pending":
         raise ValueError("Só tarefas pendentes podem ser editadas.")
+
+
+def is_task_creator(actor_id: str, task) -> bool:
+    return bool(actor_id) and task.created_by_user_id == actor_id
+
+
+def is_task_assignee(actor_id: str, task) -> bool:
+    return bool(actor_id) and task.assignee_user_id == actor_id
+
+
+def can_view_task(actor_id: str, is_manager: bool, task) -> bool:
+    """Detalhe: criador, responsável ou transformometro.manage."""
+    return is_manager or is_task_creator(actor_id, task) or is_task_assignee(actor_id, task)
+
+
+def can_update_task(actor_id: str, is_manager: bool, task) -> bool:
+    """Edição/reatribuição: criador (dono da delegação) ou manage."""
+    return is_manager or is_task_creator(actor_id, task)
+
+
+def can_complete_task(actor_id: str, is_manager: bool, task) -> bool:
+    """Conclusão: responsável, criador ou manage."""
+    return is_manager or is_task_creator(actor_id, task) or is_task_assignee(actor_id, task)
+
+
+def can_cancel_task(actor_id: str, is_manager: bool, task) -> bool:
+    """Cancelamento: criador ou manage — o responsável não descarta a delegação alheia."""
+    return is_manager or is_task_creator(actor_id, task)

@@ -351,7 +351,7 @@ def test_delegated_scope_ignores_third_party_tasks_and_reassignment_keeps_creato
     assert [item.id for item in commands.list_delegated(_user(), status="all")] == [mine.id]
 
     commands.update(
-        _user(user_id=OTHER),
+        _user(),
         mine.id,
         title=mine.title,
         description=mine.description,
@@ -429,3 +429,102 @@ def test_http_my_tasks_scope_param():
     assert resp.status_code == 200
     list_items.execute.assert_any_call(request.state.user, status="all", scope="delegated")
     assert invalid.status_code == 400
+
+
+THIRD = "33333333-3333-3333-3333-333333333333"
+MANAGER = "44444444-4444-4444-4444-444444444444"
+
+
+def _manager():
+    return _user(user_id=MANAGER, permissions=[ACCESS_PERMISSION, MANAGE_PERMISSION])
+
+
+def _delegated_task(commands: TaskCommandUseCases):
+    return commands.create(
+        _user(), title="Delegada", description=None, assignee_user_id=OTHER, due_date=None
+    )
+
+
+def test_task_get_individual_authz():
+    commands = _commands()
+    task = _delegated_task(commands)
+    assert commands.get(_user(), task.id).id == task.id
+    assert commands.get(_user(user_id=OTHER), task.id).id == task.id
+    assert commands.get(_manager(), task.id).id == task.id
+    with pytest.raises(AuthorizationDenied) as denied:
+        commands.get(_user(user_id=THIRD), task.id)
+    assert denied.value.status_code == 403
+    with pytest.raises(LookupError):
+        commands.get(_user(), "99999999-9999-9999-9999-999999999999")
+
+
+def test_task_update_only_creator_or_manage():
+    commands = _commands()
+    task = _delegated_task(commands)
+    for actor in (_user(user_id=OTHER), _user(user_id=THIRD)):
+        with pytest.raises(AuthorizationDenied):
+            commands.update(
+                actor, task.id, title="Editado", description=None,
+                assignee_user_id=OTHER, due_date=None,
+            )
+    updated = commands.update(
+        _user(), task.id, title="Editado pelo criador", description=None,
+        assignee_user_id=OTHER, due_date=None,
+    )
+    assert updated.title == "Editado pelo criador"
+    by_manager = commands.update(
+        _manager(), task.id, title="Editado por manage", description=None,
+        assignee_user_id=OTHER, due_date=None,
+    )
+    assert by_manager.title == "Editado por manage"
+
+
+def test_task_complete_assignee_creator_manage_only():
+    commands = _commands()
+    task = _delegated_task(commands)
+    with pytest.raises(AuthorizationDenied):
+        commands.complete(_user(user_id=THIRD), task.id)
+    done = commands.complete(_user(user_id=OTHER), task.id)
+    assert done.status == "completed"
+
+    task2 = _delegated_task(commands)
+    assert commands.complete(_user(), task2.id).status == "completed"
+    task3 = _delegated_task(commands)
+    assert commands.complete(_manager(), task3.id).status == "completed"
+
+
+def test_task_cancel_creator_or_manage_only():
+    commands = _commands()
+    task = _delegated_task(commands)
+    with pytest.raises(AuthorizationDenied):
+        commands.cancel(_user(user_id=OTHER), task.id)
+    with pytest.raises(AuthorizationDenied):
+        commands.cancel(_user(user_id=THIRD), task.id)
+    assert commands.cancel(_user(), task.id).status == "cancelled"
+    task2 = _delegated_task(commands)
+    assert commands.cancel(_manager(), task2.id).status == "cancelled"
+
+
+def test_my_tasks_item_flags_follow_individual_authz():
+    commands = _commands()
+    commands.create(_user(), title="Delegada", description=None, assignee_user_id=OTHER, due_date=None)
+    received = ListMyTaskItemsUseCase(commands, lambda _u: {"items": []}).execute(
+        _user(user_id=OTHER), status="all"
+    )
+    item = next(i for i in received["items"] if i["type"] == "manual_task")
+    assert item["actions"]["can_edit"] is False
+    assert item["actions"]["can_complete"] is True
+    assert item["actions"]["can_cancel"] is False
+
+    delegated = ListMyTaskItemsUseCase(commands, lambda _u: {"items": []}).execute(
+        _user(), status="all", scope="delegated"
+    )
+    ditem = delegated["items"][0]
+    assert ditem["actions"]["can_edit"] is True
+    assert ditem["actions"]["can_complete"] is True
+    assert ditem["actions"]["can_cancel"] is True
+
+    manager_view = ListMyTaskItemsUseCase(commands, lambda _u: {"items": []}).execute(
+        _manager(), status="all"
+    )
+    assert all(i["type"] != "manual_task" for i in manager_view["items"])

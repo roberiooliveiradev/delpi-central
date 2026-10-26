@@ -31,4 +31,13 @@ describe("MyTasksPage", () => {
     expect(source).not.toMatch(/INSERT INTO/);
     expect(source).not.toMatch(/pendingAtas/);
   });
+
+  it("resolve o nome do responsável no formulário e evita respostas fora de ordem", () => {
+    expect(source).toMatch(/nameFor\(source\.assignee_user_id/);
+    expect(source).not.toMatch(/me\?\.name \|\| "Responsável"/);
+    expect(source).toMatch(/requestSeq/);
+    expect(source).toMatch(/seq !== requestSeq\.current/);
+    expect(source).toMatch(/selectScope/);
+    expect(source).toMatch(/selectFilter/);
+  });
 });

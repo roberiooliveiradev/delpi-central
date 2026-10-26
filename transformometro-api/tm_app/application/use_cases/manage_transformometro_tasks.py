@@ -3,13 +3,20 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, Sequence
 
-from tm_app.application.security.authorization_policy import TransformometroAuthorizationPolicy
+from tm_app.application.security.authorization_policy import (
+    AuthorizationDenied,
+    TransformometroAuthorizationPolicy,
+)
 from tm_app.domain.entities.transformometro_task import TaskStatus, TransformometroTask
 from tm_app.domain.ports.task_repository_port import TaskOriginContext, TaskRepositoryPort
 from tm_app.domain.services.transformometro_task_rules import (
     assert_can_cancel,
     assert_can_complete,
     assert_can_update,
+    can_cancel_task,
+    can_complete_task,
+    can_update_task,
+    can_view_task,
     normalize_description,
     normalize_title,
     normalize_user_id,
@@ -75,7 +82,9 @@ class TaskCommandUseCases:
         due_date: str | date | None,
     ) -> TransformometroTask:
         self._policy.require_access(user)
-        current = self._require(task_id)
+        current = self._require_authorized(
+            user, task_id, can_update_task, "Sem autorização para editar esta tarefa."
+        )
         assert_can_update(current.status)
         updated = self._repo.update(
             task_id,
@@ -91,7 +100,9 @@ class TaskCommandUseCases:
 
     def complete(self, user: Any, task_id: str) -> TransformometroTask:
         self._policy.require_access(user)
-        current = self._require(task_id)
+        current = self._require_authorized(
+            user, task_id, can_complete_task, "Sem autorização para concluir esta tarefa."
+        )
         assert_can_complete(current.status)
         completed = self._repo.complete(task_id)
         if completed.status != "completed" or completed.completed_at is None:
@@ -100,7 +111,9 @@ class TaskCommandUseCases:
 
     def cancel(self, user: Any, task_id: str) -> TransformometroTask:
         self._policy.require_access(user)
-        current = self._require(task_id)
+        current = self._require_authorized(
+            user, task_id, can_cancel_task, "Sem autorização para cancelar esta tarefa."
+        )
         assert_can_cancel(current.status)
         cancelled = self._repo.cancel(task_id)
         if cancelled.status != "cancelled":
@@ -109,7 +122,9 @@ class TaskCommandUseCases:
 
     def get(self, user: Any, task_id: str) -> TransformometroTask:
         self._policy.require_access(user)
-        return self._require(task_id)
+        return self._require_authorized(
+            user, task_id, can_view_task, "Sem autorização para consultar esta tarefa."
+        )
 
     def list_mine(self, user: Any, *, status: str = "pending") -> list[TransformometroTask]:
         self._policy.require_access(user)
@@ -142,6 +157,19 @@ class TaskCommandUseCases:
         task = self._repo.get(task_id)
         if task is None:
             raise LookupError("Tarefa não encontrada.")
+        return task
+
+    def _require_authorized(
+        self,
+        user: Any,
+        task_id: str,
+        predicate,
+        message: str,
+    ) -> TransformometroTask:
+        task = self._require(task_id)
+        actor = _user_id(user)
+        if not predicate(actor, self._policy.has_manage(user), task):
+            raise AuthorizationDenied(message)
         return task
 
     @staticmethod

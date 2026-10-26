@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionButton,
   InitialsAvatar,
@@ -86,13 +86,17 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
       .catch(() => undefined);
   }, [getAccessToken]);
 
+  const requestSeq = useRef(0);
   const load = useCallback(async () => {
+    const seq = ++requestSeq.current;
     setLoading(true);
     try {
       const next = await listMyTaskItems(getAccessToken, filter, scope);
+      if (seq !== requestSeq.current) return;
       setPayload(next);
       setError(null);
     } catch (reason) {
+      if (seq !== requestSeq.current) return;
       setError(
         reason instanceof Error
           ? reason.message
@@ -101,13 +105,29 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
             : "Não foi possível carregar suas tarefas.",
       );
     } finally {
-      setLoading(false);
+      if (seq === requestSeq.current) setLoading(false);
     }
   }, [filter, scope, getAccessToken]);
 
   useEffect(() => {
     void load();
   }, [load, reloadNonce]);
+
+  const selectScope = (next: MyTaskScope) => {
+    if (next === scope) return;
+    requestSeq.current += 1;
+    setScope(next);
+    setPayload(null);
+    setError(null);
+  };
+
+  const selectFilter = (next: FilterId) => {
+    if (next === filter) return;
+    requestSeq.current += 1;
+    setFilter(next);
+    setPayload(null);
+    setError(null);
+  };
 
   const refreshing = Boolean(payload) && loading;
   const items = useMemo(() => payload?.items ?? [], [payload]);
@@ -181,7 +201,13 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
     setDueDate(source.due_date ?? "");
     setAssignee(
       source.assignee_user_id
-        ? [{ id: source.assignee_user_id, name: me?.name || "Responsável", email: "" }]
+        ? [
+            {
+              id: source.assignee_user_id,
+              name: nameFor(source.assignee_user_id, "Responsável"),
+              email: "",
+            },
+          ]
         : me
           ? [me]
           : [],
@@ -288,17 +314,17 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
         classNames={CHIPS}
         aria-label="Contexto de tarefas"
         chips={[
-          { id: "received", label: "Recebidas", active: scope === "received", onSelect: () => setScope("received") },
-          { id: "delegated", label: "Atribuídas por mim", active: scope === "delegated", onSelect: () => setScope("delegated") },
+          { id: "received", label: "Recebidas", active: scope === "received", onSelect: () => selectScope("received") },
+          { id: "delegated", label: "Atribuídas por mim", active: scope === "delegated", onSelect: () => selectScope("delegated") },
         ]}
       />
       <ScopeChipBar
         classNames={CHIPS}
         aria-label="Filtro de tarefas"
         chips={[
-          { id: "pending", label: "Pendentes", active: filter === "pending", onSelect: () => setFilter("pending") },
-          { id: "completed", label: "Concluídas", active: filter === "completed", onSelect: () => setFilter("completed") },
-          { id: "all", label: "Todas", active: filter === "all", onSelect: () => setFilter("all") },
+          { id: "pending", label: "Pendentes", active: filter === "pending", onSelect: () => selectFilter("pending") },
+          { id: "completed", label: "Concluídas", active: filter === "completed", onSelect: () => selectFilter("completed") },
+          { id: "all", label: "Todas", active: filter === "all", onSelect: () => selectFilter("all") },
         ]}
       />
     </PageHeader>

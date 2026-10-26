@@ -5,7 +5,15 @@ from typing import Any, Callable
 from tm_app.application.security.authorization_policy import TransformometroAuthorizationPolicy
 from tm_app.application.use_cases.manage_transformometro_tasks import TaskCommandUseCases
 from tm_app.domain.entities.transformometro_task import TransformometroTask
-from tm_app.domain.services.transformometro_task_rules import is_due_soon, is_overdue, today_in_portal
+from tm_app.domain.services.transformometro_task_rules import (
+    can_cancel_task,
+    can_complete_task,
+    can_update_task,
+    is_due_soon,
+    is_overdue,
+    normalize_user_id,
+    today_in_portal,
+)
 
 STATUS_LABELS = {
     "pending": "Pendente",
@@ -39,6 +47,8 @@ class ListMyTaskItemsUseCase:
         if scope_norm != "received":
             raise ValueError("Escopo de consulta inválido.")
         tasks = self._commands.list_mine(user, status=status)
+        viewer_id = normalize_user_id(str(getattr(user, "id", "") or ""), field="Usuário autenticado")
+        is_manager = self._policy.has_manage(user)
         signatures: list[dict[str, Any]] = []
         partial_error = None
         if status in {"pending", "all"}:
@@ -48,7 +58,10 @@ class ListMyTaskItemsUseCase:
             except Exception as exc:
                 partial_error = str(exc) or "Não foi possível carregar as assinaturas pendentes."
         today = today_in_portal()
-        items = [self._manual_item(task, today) for task in tasks]
+        items = [
+            self._manual_item(task, today, viewer_id, is_manager)
+            for task in tasks
+        ]
         if status in {"pending", "all"}:
             items.extend(self._signature_item(item) for item in signatures)
         items.sort(key=self._sort_key)
@@ -72,9 +85,11 @@ class ListMyTaskItemsUseCase:
     def _delegated(self, user: Any, *, status: str) -> dict[str, Any]:
         tasks = self._commands.list_delegated(user, status=status)
         contexts = self._commands.origin_contexts(user, [task.id for task in tasks])
+        viewer_id = normalize_user_id(str(getattr(user, "id", "") or ""), field="Usuário autenticado")
+        is_manager = self._policy.has_manage(user)
         today = today_in_portal()
         items = [
-            self._delegated_item(task, contexts.get(task.id), today)
+            self._delegated_item(task, contexts.get(task.id), today, viewer_id, is_manager)
             for task in tasks
         ]
         items.sort(key=self._sort_key)
@@ -93,8 +108,14 @@ class ListMyTaskItemsUseCase:
         }
 
     @staticmethod
-    def _delegated_item(task: TransformometroTask, context, today) -> dict[str, Any]:
-        item = ListMyTaskItemsUseCase._manual_item(task, today)
+    def _delegated_item(
+        task: TransformometroTask,
+        context,
+        today,
+        viewer_id: str,
+        is_manager: bool,
+    ) -> dict[str, Any]:
+        item = ListMyTaskItemsUseCase._manual_item(task, today, viewer_id, is_manager)
         room_id = context.room_id if context else None
         item["context_label"] = context.context_label if context else None
         item["route"] = (
@@ -103,17 +124,18 @@ class ListMyTaskItemsUseCase:
         item["created_at_label"] = (
             task.created_at.strftime("%d/%m/%Y") if task.created_at else None
         )
-        item["actions"] = {
-            "can_open": bool(room_id),
-            "can_edit": task.status == "pending",
-            "can_complete": task.status == "pending",
-            "can_cancel": task.status == "pending",
-        }
+        item["actions"]["can_open"] = bool(room_id)
         return item
 
     @staticmethod
-    def _manual_item(task: TransformometroTask, today) -> dict[str, Any]:
+    def _manual_item(
+        task: TransformometroTask,
+        today,
+        viewer_id: str = "",
+        is_manager: bool = False,
+    ) -> dict[str, Any]:
         overdue = is_overdue(task.status, task.due_date, today)
+        pending = task.status == "pending"
         return {
             "id": f"task:{task.id}",
             "type": "manual_task",
@@ -131,9 +153,9 @@ class ListMyTaskItemsUseCase:
             "route": None,
             "actions": {
                 "can_open": False,
-                "can_edit": task.status == "pending",
-                "can_complete": task.status == "pending",
-                "can_cancel": task.status == "pending",
+                "can_edit": pending and can_update_task(viewer_id, is_manager, task),
+                "can_complete": pending and can_complete_task(viewer_id, is_manager, task),
+                "can_cancel": pending and can_cancel_task(viewer_id, is_manager, task),
             },
         }
 
