@@ -1681,3 +1681,8 @@ Nenhuma migration, endpoint, permission ou contrato de colaboração criado. Doc
 ### 39.4 Evidência
 Vitest: painéis novos 17 testes + página/rotas (deep link documento, F5, período) — suíte fechamento 160/160, plugin 233/233; `tsc`, ESLint, estruturais e build federado PASS. Homologação visual do PO: `PENDING`.
 
+
+
+## 40. Evidência PO / Rework Documentos V0.3 — 26/10/2026
+
+Capturas após V0.2: upload e cartão adicional presentes, mas detalhe de `Recebidos.pdf` apresenta **Falha ao baixar o arquivo**, prévia fica em **Carregando pré-visualização**, histórico mostra muitas linhas `Download — v1` com UUID técnico e a operação de remover/cancelar não é oferecida. Ainda existe link `Checklist da competência` na nova aba. **Não considerar V0.2 plenamente aceito.** PO solicita correção do download, CRUD de arquivo dentro do detalhe, menu de três pontos por card com opção de remover, revisões/versões claras, timeline de negócio sem downloads repetidos, português simples e revisão integral da implementação. Sem exclusão física automática de versões ou evidências; U7 oferece cancelamento lógico, U5 nova versão. Contrato de auditoria de downloads deverá ser verificado antes de alterar produtor/retention. Requisitos e AC: [Plano 113 §19](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Estado: `REWORK_REQUIRED / ROOT_CAUSE_DOWNLOAD_TO_VERIFY`. O detalhe de documento é deep route, nunca quarta aba.
