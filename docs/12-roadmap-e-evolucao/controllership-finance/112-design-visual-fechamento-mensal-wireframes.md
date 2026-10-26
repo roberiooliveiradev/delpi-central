@@ -257,9 +257,70 @@ Mostrar `Estado geral`, um badge semântico com texto, texto auxiliar `Situaçã
 
 ### 9.7 Decisões reais para PO
 
-- **D-HEADER-01 (recomendação A):** seleção principal por **competências existentes e autorizadas**, exibidas no formato `MM/AAAA`, com busca por mês/ano; alternativa B: calendário livre mês/ano com verificação posterior de existência. A evita competências fictícias e favorece listas reais. **DECISION_REQUIRED / PENDING_PO**.
+- **D-HEADER-01 = A — PO_APPROVED (26/10/2026):** seleção principal **exclusivamente entre competências existentes e autorizadas**, apresentadas em `MM/AAAA`, com busca por mês/ano. Calendário livre não é navegação principal; escolher período não cria competência. O producer da listagem e deep link seguem `TO_INVENTORY`, não implicando endpoint aprovado.
 - **D-HEADER-02:** se houver mais de um escopo de empresa/unidade, exibir seletor contextual quando producer real permitir; caso contrário chip informativo. **PENDING_INVENTORY** (comportamento recomendado).
 - **D-HEADER-03:** status textual derivado com detalhe dos três eixos P1 e freshness; **TARGET consistente com doc 08**, requer DTO real.
 - **D-HEADER-04:** breadcrumbs e deep link devem respeitar router existente e compatibilidade retroativa; nenhum path novo é aprovado por este wireframe.
 
-**Próximo ciclo:** apresentar visual e confirmar D-HEADER-01 com o PO; após aprovação, detalhar FM-05 (indicadores) e, depois, FM-06 abas, mantendo rastreabilidade.
+**Próximo ciclo:** D-HEADER-01 aprovado pelo PO; detalhar FM-05 (indicadores) na V0.4, depois FM-06 abas, mantendo rastreabilidade.
+
+
+## 10. Decisão PO do cabeçalho e proposta FM-05 — Indicadores de atenção V0.4
+
+**Data:** 26/10/2026. **D-HEADER-01=A / PO_APPROVED** conforme manifestação explícita do PO no chat: “Aprovo a opção A: o seletor deve listar competências existentes e autorizadas.” A aprovação limita-se ao comportamento de seleção; não comprova producer, persistência, autorização de desenvolvimento nem aceita automaticamente o design dos demais componentes.
+
+### 10.1 FM-05 — Objetivo e posição no layout
+
+**Objetivo:** oferecer leitura rápida do que exige ação na competência, sem transformar métricas em um resumo enganoso do estado de conclusão. Os indicadores ficam **abaixo do cabeçalho de competência e do banner de blocker material** e **acima das cinco visões**. Cada cartão abre uma visão operacional já filtrada **somente quando houver contrato de contagem + drilldown**; em fonte indisponível, o cartão não apresenta zero falso.
+
+```text
+┌──────────────────────┬──────────────────────┬────────────────────────┐
+│ BLOQUEIOS            │ DIVERGÊNCIAS         │ DOCUMENTOS A TRATAR     │
+│ [—]                  │ [—]                  │ [—]                    │
+│ Impedem avançar      │ Exigem investigação  │ Pendentes/validação*   │
+│ [Ver bloqueios →]    │ [Ver divergências →] │ [Ver documentos →]     │
+└──────────────────────┴──────────────────────┴────────────────────────┘
+*subtipos reais serão aqueles do owner P2; sem inventar soma ou estado.
+```
+
+### 10.2 Cartões e semântica
+
+| ID | Título de UI | Definição visual | Origem e limite | Clique previsto | Situação |
+|---|---|---|---|---|---|
+| FM-05A | **Bloqueios** | Contagem factual dos impedimentos materiais, texto “Impedem avançar”; lista precisa mostrar motivo e owner | P1 compõe P2/P3/P5; deduplicação/total dependem de contrato; não confundir pendência qualquer com blocker | Vai à Visão geral com foco/âncora na seção de bloqueios | `TARGET / CONTRACT_TO_INVENTORY` |
+| FM-05B | **Divergências** | Contagem de diferenças/anomalias verificáveis, texto “Exigem investigação”; não inventar limite monetário | P3/owner de conciliação e/ou ocorrências P4; evitar dupla contagem e entidade nova | Vai a Divergências com filtro relevante | `TARGET / CONTRACT_TO_INVENTORY` |
+| FM-05C | **Documentos a tratar** | Contagem de evidências/itens que exigem alguma ação, texto “Envio, validação ou substituição”; subtipo esclarecido no drilldown | P2, estados reais como EXPECTED, ATTACHED, UNDER_REVIEW, REJECTED; a regra de inclusão precisa vir do DTO/owner | Vai a Documentos filtrado por tratamento | `TARGET / CONTRACT_TO_INVENTORY` |
+
+**Não somar os três cartões em um “total pendente”**: podem se sobrepor por causa e relação. Não apresentar `0` quando fonte não retornou dados válidos, nem usar `100%` como conclusão. Cartão de bloqueios pode ficar visualmente mais saliente **somente se houver blocker real**, sem badge colorido decorativo. As três legendas ajudam compreensão e leitores de tela.
+
+### 10.3 Aparência e hierarquia
+
+- Desktop amplo: 3 cartões em linha com altura coerente, título pequeno, número de maior peso, descrição, link textual de drilldown; espaço vertical econômico para preservar fila abaixo.
+- Tablet: 2 cartões na primeira linha, terceiro abaixo se o componente responsivo determinar.
+- Mobile: cartões empilhados, cada alvo clicável acessível; sem números cortados; títulos e textos permanecem visíveis.
+- Não criar CSS/chrome paralelo: preferir `MetricStrip`, `MetricKpiCard`, `StatusBadge`, `StateBanner`, `ActionButton`/link do `@delpi/plugin-ui/index` conforme catálogo aplicável. Exibir a mesma árvore lógico-semântica em temas claro e escuro.
+- Ao clicar, preservar competência, unidade autorizada e histórico navegável; filtros contextuais devem ser visíveis e removíveis, nunca “mágicos”.
+
+### 10.4 Estados completos do indicador
+
+| Estado | Valor/feedback | Ação |
+|---|---|---|
+| Loading | Skeleton e rótulo preservado | Desabilitar drilldown até resposta válida |
+| Count=0 validado | `0` acompanhado de “Nenhum item identificado nesta fonte/recorte” | Pode abrir lista vazia autêntica |
+| Count positivo validado | Número e subtipo/contexto; descrever origem/freshness quando material | Drilldown ativo se suportado |
+| Fonte parcial | “Parcial” + número somente se escopo da contagem conhecido e explicitamente rotulado | Drilldown só nos dados válidos, alerta de cobertura |
+| Fonte indisponível | `Indisponível`, jamais `0` | Link de diagnóstico ou retry, não abrir lista inventada |
+| Sem permissão de leitura | “Sem acesso” ou bloco omitido conforme contrato de exposição | Não revelar contagem de recurso fora do scope |
+| Erro de rede | Erro tipado + `Tentar novamente`; seleção mantida | Retry de leitura, não mutação |
+| Competência trocada | Descartar números anteriores; loading com novo contexto | Não apresentar dados da competência antiga |
+
+### 10.5 Critérios de aceite visual e contrato pendente
+
+- RQ/AC relacionados: P1 `RQ-P1-02/03/04` (eixos, blockers e fonte indisponível), P2 (documentos/validação) e P3/P4 (conciliação e pendências); cruzar IDs exatos e DTOs no inventário antes do GO.
+- Cada cartão possui título, explicação, valor semântico, origem quando necessária, estado de dado, interação de drilldown e foco visível.
+- Números de exemplo do wireframe não são evidência de fechamento real.
+- Não criar endpoint `/metrics` novo por conveniência sem examinar producers existentes.
+- `D-FM05-01` **PENDING_PO**: confirmar os três cartões como **Bloqueios, Divergências e Documentos a tratar** nessa ordem. Alternativa: mostrar também **Pendências**, exigindo separar blocker de tarefa sem ampliar visual desnecessariamente.
+- `D-FM05-02` **PENDING_OWNER_CONTRACT**: critérios exatos de contagem e drilldown, sem inventar dado/entidade.
+
+**Próximo review:** demonstrar os três cartões e seus estados ao PO. Após aprovação da hierarquia, detalhar FM-06 (navegação/abas), preservando a autonomia dos owners P2/P3/P4/P5.
