@@ -1,46 +1,51 @@
 {
-  "version": 24,
+  "version": 25,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01",
-    "decision": "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2",
-    "reason": "Publish corpus V2 (17 documents: V1 15 + ratified full MP/PI norms, freeze-002) via the existing canonical GET /knowledge/technical-guides/{topic} catalog action with corpus_version selection (default latest). Backend api-delpi.access AuthZ, approved projection, 3-excerpt pages unchanged. Documents remain untrusted guidance, not domain truth or authorization. No new MCP tool, RAG, vector store, SQL or proxy capability.",
+    "taskId": "DAVI-PRODUCT-DETAIL-SIMILARITY-001",
+    "decision": "PROMOTE_GOVERNED_PRODUCT_DETAIL_AND_PN_DISCOVERY",
+    "reason": "GLPI #530 similarity: promote get_product_detail (was SEMANTICALLY_REDUNDANT vs 3-field search_products) with fail-closed technical projection — 32 approved product.* paths (identity/type/classification, units+conversion, engineering/production fields, packaging/logistics, MP/PI-PA struct, RoHS/traceability/quality-MRP flags, DELPI classification). Financial/fiscal/accounting/commercial/audit/internal-control fields remain non-approved (never projected). Approved input: code only (view/legacy not exposed). Add generic part-number aliases to existing search_products_by_supplier_part_number op. Eligible READ 93->94. MCP tools remain 2. GPT Actions unchanged. No equivalence authority — candidates only.",
     "previousDecision": {
-      "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
-      "decision": "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ",
-      "reason": "Owner-ratified bounded READ of the 15 frozen V1 governed-knowledge documents via the canonical GET /knowledge/technical-guides/{topic} catalog action (api-delpi.access backend AuthZ, approved projection only, 3-excerpt pages). Documents are untrusted guidance, not domain truth or authorization. MP/PI standards remain unpublished pending business ratification. No new MCP tool, RAG, vector store, SQL or proxy capability.",
-    "previousDecision": {
-      "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
-      "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
-      "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
+      "taskId": "DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01",
+      "decision": "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2",
+      "reason": "Publish corpus V2 (17 documents: V1 15 + ratified full MP/PI norms, freeze-002) via the existing canonical GET /knowledge/technical-guides/{topic} catalog action with corpus_version selection (default latest). Backend api-delpi.access AuthZ, approved projection, 3-excerpt pages unchanged. Documents remain untrusted guidance, not domain truth or authorization. No new MCP tool, RAG, vector store, SQL or proxy capability.",
       "previousDecision": {
-      "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
-      "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
-      "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
-      "previousDecision": {
-        "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
-        "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
-        "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
+        "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
+        "decision": "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ",
+        "reason": "Owner-ratified bounded READ of the 15 frozen V1 governed-knowledge documents via the canonical GET /knowledge/technical-guides/{topic} catalog action (api-delpi.access backend AuthZ, approved projection only, 3-excerpt pages). Documents are untrusted guidance, not domain truth or authorization. MP/PI standards remain unpublished pending business ratification. No new MCP tool, RAG, vector store, SQL or proxy capability.",
         "previousDecision": {
-          "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
-          "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
-          "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
+          "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
+          "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
+          "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
           "previousDecision": {
-            "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
-            "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
-            "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+            "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
+            "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
+            "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
             "previousDecision": {
-              "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-              "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+              "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
+              "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
+              "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
+              "previousDecision": {
+                "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
+                "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
+                "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
+                "previousDecision": {
+                  "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+                  "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+                  "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+                  "previousDecision": {
+                    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+                    "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+                  }
+                }
+              }
             }
           }
         }
       }
-    }
-    }
     }
   },
   "retrievalQuarantineTokens": [
@@ -192,22 +197,138 @@
       "reason": "Owner-ratified bounded READ of the published governed corpus (V1 15 docs + V2 17 docs incl. ratified MP/PI norms); api-delpi.access backend AuthZ. No provider dependency.",
       "executionMode": "catalog_action",
       "responseContract": "governed_document_guidance",
-      "approvedInputFields": ["topic", "section", "subject", "corpus_version", "page", "page_size"],
+      "approvedInputFields": [
+        "topic",
+        "section",
+        "subject",
+        "corpus_version",
+        "page",
+        "page_size"
+      ],
       "approvedResponseFields": [
-        "knowledge_kind", "authority", "trust_level", "content_format", "topic", "corpus_id",
-        "corpus_version", "manifest_identity", "source_path", "source_git_sha", "source_sha256",
-        "items[].section", "items[].heading", "items[].heading_path", "items[].line_start", "items[].line_end",
-        "items[].chunk", "items[].text", "items[].sanitized", "items[].relevance",
-        "page", "page_size", "total", "has_more", "coverage", "selection",
-        "subject", "matched_terms", "unmatched_terms"
+        "knowledge_kind",
+        "authority",
+        "trust_level",
+        "content_format",
+        "topic",
+        "corpus_id",
+        "corpus_version",
+        "manifest_identity",
+        "source_path",
+        "source_git_sha",
+        "source_sha256",
+        "items[].section",
+        "items[].heading",
+        "items[].heading_path",
+        "items[].line_start",
+        "items[].line_end",
+        "items[].chunk",
+        "items[].text",
+        "items[].sanitized",
+        "items[].relevance",
+        "page",
+        "page_size",
+        "total",
+        "has_more",
+        "coverage",
+        "selection",
+        "subject",
+        "matched_terms",
+        "unmatched_terms"
       ],
       "argumentConstraints": {
-        "page": {"minimum": 1, "maximum": 10000},
-        "page_size": {"minimum": 1, "maximum": 3},
-        "subject": {"minLength": 1, "maxLength": 240}
+        "page": {
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "page_size": {
+          "minimum": 1,
+          "maximum": 3
+        },
+        "subject": {
+          "minLength": 1,
+          "maxLength": 240
+        }
       },
-      "semanticAliases": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "conhecimento técnico", "technical guidance", "governed knowledge", "normas técnicas", "normas tecnicas", "regras técnicas", "regras tecnicas", "padrão técnico", "padrao tecnico", "padrões técnicos", "padroes tecnicos", "norma técnica", "norma tecnica", "regra técnica", "regra tecnica", "documentação", "documentacao", "manual técnico", "manual tecnico", "manual", "normas", "regras", "padrão", "padrao", "padrões", "padroes", "diretrizes", "convenções", "convencoes", "nomenclatura", "codificação", "codificacao", "descrição técnica", "descricao tecnica", "instruções técnicas", "instrucoes tecnicas", "guia", "normas de codificação", "normas de codificacao", "regras de codificação", "regras de codificacao", "normas de descrição", "normas de descricao", "padrão de descrição", "padrao de descricao", "technical standards", "technical rules", "coding rules", "nomenclature", "conventions", "documentation", "guidelines"],
-      "entityDomainMarkers": ["guia técnico", "guia tecnico", "documentação técnica", "documentacao tecnica", "technical guide", "normas", "regras", "padrão", "padrao", "nomenclatura", "codificação", "codificacao", "documentação", "documentacao", "manual", "diretrizes", "convenções", "convencoes", "guia"]
+      "semanticAliases": [
+        "guia técnico",
+        "guia tecnico",
+        "documentação técnica",
+        "documentacao tecnica",
+        "conhecimento técnico",
+        "technical guidance",
+        "governed knowledge",
+        "normas técnicas",
+        "normas tecnicas",
+        "regras técnicas",
+        "regras tecnicas",
+        "padrão técnico",
+        "padrao tecnico",
+        "padrões técnicos",
+        "padroes tecnicos",
+        "norma técnica",
+        "norma tecnica",
+        "regra técnica",
+        "regra tecnica",
+        "documentação",
+        "documentacao",
+        "manual técnico",
+        "manual tecnico",
+        "manual",
+        "normas",
+        "regras",
+        "padrão",
+        "padrao",
+        "padrões",
+        "padroes",
+        "diretrizes",
+        "convenções",
+        "convencoes",
+        "nomenclatura",
+        "codificação",
+        "codificacao",
+        "descrição técnica",
+        "descricao tecnica",
+        "instruções técnicas",
+        "instrucoes tecnicas",
+        "guia",
+        "normas de codificação",
+        "normas de codificacao",
+        "regras de codificação",
+        "regras de codificacao",
+        "normas de descrição",
+        "normas de descricao",
+        "padrão de descrição",
+        "padrao de descricao",
+        "technical standards",
+        "technical rules",
+        "coding rules",
+        "nomenclature",
+        "conventions",
+        "documentation",
+        "guidelines"
+      ],
+      "entityDomainMarkers": [
+        "guia técnico",
+        "guia tecnico",
+        "documentação técnica",
+        "documentacao tecnica",
+        "technical guide",
+        "normas",
+        "regras",
+        "padrão",
+        "padrao",
+        "nomenclatura",
+        "codificação",
+        "codificacao",
+        "documentação",
+        "documentacao",
+        "manual",
+        "diretrizes",
+        "convenções",
+        "convencoes",
+        "guia"
+      ]
     },
     {
       "operationId": "search_products",
@@ -353,6 +474,79 @@
         "matéria-prima sem cobertura",
         "materia-prima sem cobertura"
       ]
+    },
+    {
+      "operationId": "get_product_detail",
+      "reason": "Promote governed product master READ for duplicate/similarity analysis (GLPI #530): technical/cadastral projection only — identification, engineering, units, classification, quality/MRP and packaging fields copied fail-closed under product.*; financial, fiscal/tax, accounting, commercial (prices, costs, customers refs, purchase history), internal-control and user-identity fields excluded. Null approved field = FIELD_EMPTY; field absent from contract = FIELD_NOT_AVAILABLE; non-approved field never projected = FIELD_NOT_AUTHORIZED. API_DELPI_ACCESS backend AuthZ unchanged; projection via approved fields only, never raw payload.",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code"
+      ],
+      "approvedResponseFields": [
+        "product.code",
+        "product.description",
+        "product.type",
+        "product.group_code",
+        "product.subgroup",
+        "product.previous_code",
+        "product.active",
+        "product.blocked",
+        "product.delpi_category",
+        "product.delpi_segment",
+        "product.unit",
+        "product.secondary_unit",
+        "product.conversion_factor",
+        "product.conversion_type",
+        "product.material_type",
+        "product.production_line",
+        "product.operation_decimal_type",
+        "product.drawing_code",
+        "product.current_revision",
+        "product.last_revision_date",
+        "product.net_weight",
+        "product.package_quantity",
+        "product.barcode",
+        "product.customer_packaging",
+        "product.make_or_buy",
+        "product.default_warehouse",
+        "product.qtd_pi",
+        "product.rohs_indicator",
+        "product.traceability",
+        "product.warranty_product",
+        "product.mrp_considered",
+        "product.power_control"
+      ],
+      "semanticAliases": [
+        "cadastro do produto",
+        "cadastro completo do produto",
+        "ficha do produto",
+        "ficha técnica do produto",
+        "ficha tecnica do produto",
+        "detalhes do produto",
+        "dados cadastrais do produto",
+        "dados mestres do produto",
+        "campos do produto",
+        "características do produto",
+        "caracteristicas do produto",
+        "especificação do produto",
+        "especificacao do produto",
+        "cadastro detalhado",
+        "product detail",
+        "product details",
+        "product master data",
+        "product record",
+        "product specification",
+        "full product record",
+        "material master"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "code": {
+            "minLength": 1,
+            "maxLength": 30
+          }
+        }
+      }
     },
     {
       "operationId": "get_product_suppliers",
@@ -3483,6 +3677,7 @@
         "total_pages"
       ],
       "semanticAliases": [
+        "part number",
         "part number do fornecedor",
         "código do fornecedor",
         "codigo do fornecedor",
@@ -3493,7 +3688,11 @@
         "supplier part number",
         "vendor part number",
         "manufacturer part number",
-        "supplier product code"
+        "supplier product code",
+        "pn de fabricante",
+        "partnumber",
+        "buscar por part number",
+        "produto por part number"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -5629,12 +5828,6 @@
     }
   ],
   "explicitlyNotApproved": [
-    {
-      "operationId": "get_product_detail",
-      "coverageDisposition": "SEMANTICALLY_REDUNDANT",
-      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
-      "reason": "Same Product Master slice already served by search_products; no distinct governed fields"
-    },
     {
       "operationId": "get_product_summary",
       "coverageDisposition": "DEFER",

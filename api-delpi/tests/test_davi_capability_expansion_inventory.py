@@ -123,6 +123,7 @@ _ELIGIBLE = {
     "get_supplies_safety_stock_item_details",
     "get_supplies_safety_stock_consumption_analysis_item_details",
     "read_governed_technical_knowledge",
+    "get_product_detail",
 }
 
 # Allowlisted governed SEMANTIC_READ_POST entries: the baseline fallback carries
@@ -160,7 +161,7 @@ def test_current_eligible_set_matches_allowlist() -> None:
         1 for a in actions if str(a.method).upper() == "GET"
     )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 93
+    assert len(eligible) == 94
 
 
 def test_mcp_tools_remain_two() -> None:
@@ -208,9 +209,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 93
+    assert doc["wave_1_freeze"]["current_eligible"] == 94
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 96
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 97
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 

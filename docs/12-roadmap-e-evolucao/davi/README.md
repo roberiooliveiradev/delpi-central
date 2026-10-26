@@ -217,21 +217,26 @@ allowlisted and is reached only via discover → execute
 ```
 
 CURRENT SOURCE STATE (recomputed at `DAVI-MCP-RUNTIME-REBASELINE-001`,
-SHA `7f2bfab647`):
+SHA `7f2bfab647`; promoted counts recomputed at
+`DAVI-PRODUCT-DETAIL-SIMILARITY-001`):
 
 ```text
-allowlist              = v21
-DAVI_ELIGIBLE_READ     = 89 governed ops
+allowlist              = v25
+DAVI_ELIGIBLE_READ     = 94 governed ops (baseline; live index 97)
 agent intelligence     = 2026.10.07.2
 MCP tools              = exactly 2 (discover_delpi_information,
                          execute_delpi_information)
 provider live discover = PROVEN (89 eligible; PROVIDER_CHAT_RUNTIME_OBSERVATION
-                         2026-10-08)
+                         2026-10-08 — STALE_EVIDENCE for the 94-op surface;
+                         refresh required after deploy)
 provider live execute  = PROVEN for representative families (product master,
                          stock, inventory adjustments, pricing)
-FULL 89-OP LIVE MATRIX = PARTIAL
+FULL 94-OP LIVE MATRIX = PARTIAL
+product detail         = get_product_detail promoted (GLPI #530): fail-closed
+                         technical projection, 32 product.* paths; financial/
+                         fiscal/accounting/commercial/audit fields excluded
 evidence               = api-delpi/docs/integrations/evidence/
-                         davi-mcp-runtime-rebaseline-001.md
+                         davi-product-detail-similarity-001.md
 ```
 
 Families now governed behind the same broker: Product Master & item context,

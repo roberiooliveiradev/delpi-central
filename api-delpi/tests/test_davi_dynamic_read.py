@@ -249,6 +249,7 @@ _ELIGIBLE_OPERATION_IDS = (
         "get_supplies_non_moving_stock_summary",
         "get_supplies_non_moving_stock_items",
         "read_governed_technical_knowledge",
+        "get_product_detail",
     })
 )
 _ALLOWLIST_OPERATION_IDS = (
@@ -376,13 +377,19 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 24
+    assert allow.get("version") == 25
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2"
+        "PROMOTE_GOVERNED_PRODUCT_DETAIL_AND_PN_DISCOVERY"
     )
     assert (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
         "decision"
-    ) == "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ"
+    ) == "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2"
+    assert (
+        (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
+            "previousDecision"
+        )
+        or {}
+    ).get("decision") == "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ"
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
         op
@@ -415,7 +422,7 @@ def test_allowlist_v5_multi_ops_rebaseline():
         if isinstance(x, dict)
     }
     assert "get_product_stock" not in blocked
-    assert blocked["get_product_detail"] == "SEMANTICALLY_REDUNDANT"
+    assert "get_product_detail" not in blocked
     assert blocked["get_product_summary"] == "DEFER"
     assert "get_product_pricing" not in blocked
     assert blocked["get_product_cost_impact_simulation"] == "PREPARE"
@@ -427,7 +434,7 @@ def test_allowlist_v5_multi_ops_rebaseline():
         for x in (allow.get("explicitlyNotApproved") or [])
     }
     assert "get_product_summary" in not_approved
-    assert "get_product_detail" in not_approved
+    assert "get_product_detail" not in not_approved
     assert "get_product_factory_status" not in not_approved
     assert "get_product_structure_exclusivity" not in not_approved
     assert "get_product_shipping_status" not in not_approved
@@ -554,7 +561,7 @@ def test_inventory_eligible_count_is_ninety_three():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 93
+    assert len(eligible) == 94
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -574,7 +581,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 93, query
+        assert discovered["eligible_action_count"] == 94, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -1477,7 +1484,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 93
+    assert discovered["eligible_action_count"] == 94
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -2365,7 +2372,7 @@ def test_eligible_count_is_ninety_three():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 93
+    assert len(eligible) == 94
 
 
 # ---------------------------------------------------------------------------

@@ -2762,6 +2762,54 @@
    ],
    "top1_required": false,
    "notes": "Generic knowledge phrasing must reach the same governed capability."
+  },
+  {
+   "id": "DQ-PM-059",
+   "query": "traga o cadastro completo do produto 10080001",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "get_product_detail"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #530: detailed product master record lookup by code."
+  },
+  {
+   "id": "DQ-PM-060",
+   "query": "ficha técnica do produto 10080001",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "get_product_detail"
+   ],
+   "top1_required": false,
+   "notes": "Detail phrasing must reach the governed product detail capability."
+  },
+  {
+   "id": "DQ-PM-061",
+   "query": "quero todos os dados cadastrais do item 10080001",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "get_product_detail"
+   ],
+   "top1_required": false,
+   "notes": "Cadastral-record phrasing for the promoted detail operation."
+  },
+  {
+   "id": "DQ-PM-062",
+   "query": "produto com part number MS3108E-18-1S",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products_by_supplier_part_number"
+   ],
+   "top1_required": false,
+   "notes": "GLPI #530: bare part-number lookup must reach the supplier PN op; PN match alone does not imply equivalence (straight vs 90-degree connector case)."
   }
  ]
 }
