@@ -13,7 +13,7 @@ import {
   listReportRuns,
 } from "../api/reportsApi";
 import type { ReportDefinition, ReportRun, ReportSchedule } from "../types/reports";
-import { formatDateTimeBr } from "../utils/format";
+import { formatNextRunLabel } from "../utils/format";
 import {
   definitionPath,
   REPORTS_LIST_PATH,
@@ -375,7 +375,7 @@ export function OverviewPage() {
                           <strong>{definition.name}</strong>
                         </a>
                         <span className="rp-muted">
-                          {formatDateTimeBr(schedule.nextRunAt)}
+                          {formatNextRunLabel(schedule.nextRunAt)}
                         </span>
                       </div>
                       <span
@@ -430,7 +430,7 @@ export function OverviewPage() {
                           <td>{scheduleFrequencyLabel(schedule)}</td>
                           <td>
                             {schedule?.enabled
-                              ? formatDateTimeBr(schedule.nextRunAt)
+                              ? formatNextRunLabel(schedule.nextRunAt)
                               : "—"}
                           </td>
                           <td>

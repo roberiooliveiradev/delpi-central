@@ -63,7 +63,10 @@ Frequências em `scheduleKind`:
 | `weekly` | Semanal | Um dia da semana |
 | `monthly` | Mensal (dia do mês) | Default dia 1 — Relatório Gerencial |
 
-## Cron
+## Disparo automático
+
+Poller interno na `api-delpi` (`REPORTS_SCHEDULE_POLL_SECONDS`, default 15 min).  
+Cron no host é opcional/redundante — ver [OPS.md](../../docs/12-roadmap-e-evolucao/delpi-reports/OPS.md).
 
 ```bash
 ./api-delpi/scripts/process-pending-report-schedules.sh

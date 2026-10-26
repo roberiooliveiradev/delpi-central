@@ -16,6 +16,9 @@ from app.startup.run_plugins_migrations_on_startup import (
 from app.startup.schedule_openapi_consumer_notify import (
     schedule_openapi_consumer_notify_on_startup,
 )
+from app.startup.schedule_reports_due_poller import (
+    schedule_reports_due_poller_on_startup,
+)
 from app.interface.mcp import (
     combine_lifespan,
     mcp_http_app,
@@ -137,6 +140,7 @@ check_credentials()
 async def _app_lifespan(app: FastAPI):
     run_plugins_migrations_on_startup()
     schedule_openapi_consumer_notify_on_startup()
+    schedule_reports_due_poller_on_startup()
     # Live DAVI action-index bootstrap belongs to app startup: only here is the
     # FastAPI route table complete, so app.openapi() is the authoritative source.
     try:

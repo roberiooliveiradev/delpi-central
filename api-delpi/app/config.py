@@ -454,6 +454,10 @@ class Settings:
         "REPORTS_RUN_ARTIFACTS_DIR",
         default="/app/data/reports-runs",
     )
+    # Poller interno de agendas (segundos). 0 = desliga (só cron/host externo).
+    REPORTS_SCHEDULE_POLL_SECONDS: int = int(
+        _get_env("REPORTS_SCHEDULE_POLL_SECONDS", default="900") or "900"
+    )
 
     OLLAMA_BASE_URL: str | None = _get_env("OLLAMA_BASE_URL", default="http://ollama:11434")
     EMBEDDING_MODEL: str = _get_env("EMBEDDING_MODEL", default="bge-m3")

@@ -23,6 +23,31 @@ export function formatDateTimeBr(value: string | null | undefined): string {
   });
 }
 
+/** Agenda com nextRunAt no passado — worker não reivindicou o slot. */
+export function isScheduleOverdue(
+  nextRunAt: string | null | undefined,
+  *,
+  now: Date = new Date(),
+): boolean {
+  if (!nextRunAt) return false;
+  const date = new Date(nextRunAt);
+  if (Number.isNaN(date.getTime())) return false;
+  return date.getTime() < now.getTime();
+}
+
+export function formatNextRunLabel(
+  nextRunAt: string | null | undefined,
+  *,
+  now: Date = new Date(),
+): string {
+  const formatted = formatDateTimeBr(nextRunAt);
+  if (formatted === "—") return formatted;
+  if (isScheduleOverdue(nextRunAt, now)) {
+    return `${formatted} (atrasado)`;
+  }
+  return formatted;
+}
+
 export function formatDateBr(value: string | null | undefined): string {
   if (!value) return "—";
   const text = String(value).trim();

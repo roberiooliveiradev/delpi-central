@@ -33,6 +33,8 @@ import type {
 import {
   formatBranchUnitLabel,
   formatDateTimeBr,
+  formatNextRunLabel,
+  isScheduleOverdue,
   formatRunStatusLabel,
   formatTriggerLabel,
 } from "../utils/format";
@@ -344,9 +346,13 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                   <CalendarClock size={14} aria-hidden />
                   <span>
                     <strong>Próximo disparo</strong>
-                    <em>
+                    <em data-overdue={
+                      scheduleEnabled && isScheduleOverdue(schedule?.nextRunAt)
+                        ? "true"
+                        : undefined
+                    }>
                       {scheduleEnabled && schedule?.nextRunAt
-                        ? formatDateTimeBr(schedule.nextRunAt)
+                        ? formatNextRunLabel(schedule.nextRunAt)
                         : "Agenda desligada"}
                     </em>
                   </span>
@@ -572,13 +578,25 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                     <span>Agenda habilitada</span>
                   </label>
                   {schedule?.nextRunAt ? (
-                    <p className="rp-inline-note rp-field--full">
+                    <p
+                      className="rp-inline-note rp-field--full"
+                      data-overdue={
+                        isScheduleOverdue(schedule.nextRunAt) ? "true" : undefined
+                      }
+                    >
                       Próximo disparo:{" "}
-                      <strong>{formatDateTimeBr(schedule.nextRunAt)}</strong>
+                      <strong>{formatNextRunLabel(schedule.nextRunAt)}</strong>
                       <span className="rp-inline-note__muted">
                         {" "}
                         ({schedule.timezone || "America/Sao_Paulo"})
                       </span>
+                      {isScheduleOverdue(schedule.nextRunAt) ? (
+                        <span className="rp-inline-note__muted">
+                          {" "}
+                          — o worker ainda não reivindicou este horário (verifique o
+                          poller da api-delpi / cron).
+                        </span>
+                      ) : null}
                     </p>
                   ) : null}
                 </div>
