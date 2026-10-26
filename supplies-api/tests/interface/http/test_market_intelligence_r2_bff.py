@@ -87,7 +87,7 @@ def _catalog() -> dict:
                 "variable_code": "10008",
                 "variable_label": "IPP número-índice",
                 "table_code": "6903",
-                "metric_kind": "index",
+                "metric_kind": "ipp_index",
                 "unit": "index",
                 "base_reference": "dez/2018=100",
                 "granularity": "month",
@@ -105,7 +105,7 @@ def _catalog() -> dict:
                 "variable_code": "1396",
                 "variable_label": "IPP variação mensal",
                 "table_code": "6903",
-                "metric_kind": "monthly_variation",
+                "metric_kind": "ipp_monthly_change_pct",
                 "unit": "%",
                 "base_reference": "dez/2018=100",
                 "granularity": "month",
@@ -233,6 +233,19 @@ def test_import_series_aggregates_dimensions(mock_resolve, mock_validate):
     assert payload["meta"]["method_version"]["unit_value"].startswith(
         "sum_fob_usd"
     )
+    # R3 contextual summary — latest unit value + period totals.
+    summary = payload["summary"]
+    assert summary["latest"] == {
+        "period": "2026-09",
+        "value": "2100.0",
+    }
+    assert summary["totals"]["fob_usd_total"] == "6100.0"
+    assert summary["totals"]["net_weight_t"] == "3.0"
+    assert summary["period_change_pct"] == "5.0"
+    assert summary["observed"] == 2
+    assert summary["coverage"] == "complete"
+    assert summary["missing_periods"] == []
+    assert summary["unavailable_reason"] is None
 
 
 @patch(_JWT)
@@ -314,13 +327,73 @@ def test_ipp_series_semantics_preserved(mock_resolve, mock_validate):
     assert response.status_code == 200
     payload = response.get_json()
     series = payload["series"]
-    assert series["metric_kind"] == "index"
+    assert series["metric_kind"] == "ipp_index"
     assert series["table_code"] == "6903"
     assert series["activity_code"] == "46641"
     assert series["base_reference"] == "dez/2018=100"
     points = {p["period"]: p for p in payload["points"]}
     assert points["2026-09"]["value"] == "184.02"
     assert payload["meta"]["source_id"] == "ibge-ipp-sidra"
+    # R3 contextual summary — index series keeps first_to_last change.
+    summary = payload["summary"]
+    assert summary["latest"] == {
+        "period": "2026-09",
+        "value": "184.02",
+    }
+    assert summary["period_change_pct"] == "0.8329"
+    assert summary["period_average"] is None
+    assert summary["period_min"] is None
+    assert summary["observed"] == 2
+    assert summary["expected"] == 2
+    assert summary["coverage"] == "complete"
+    assert summary["unavailable_reason"] is None
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_ipp_mom_summary_uses_amplitude_not_change(
+    mock_resolve, mock_validate
+):
+    """A percentage series has no first→last % change — the summary
+    exposes min/max amplitude instead (R3)."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user()
+    gateway = _gateway()
+    gateway.producer_price_observations.return_value = [
+        {
+            "series_id": "ipp-metalurgia-mom",
+            "reference_month": "2026-08-01",
+            "value": "-0.83",
+            "quality": "validated",
+            "source": {"source_id": "ibge-ipp-sidra"},
+        },
+        {
+            "series_id": "ipp-metalurgia-mom",
+            "reference_month": "2026-09-01",
+            "value": "2.13",
+            "quality": "validated",
+            "source": {"source_id": "ibge-ipp-sidra"},
+        },
+    ]
+    client, ctx = _client(gateway)
+    with ctx:
+        response = client.get(
+            "/market-intelligence/producer-prices/series"
+            "?series_id=ipp-metalurgia-mom"
+            "&date_from=2026-08-01&date_to=2026-09-30",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    summary = response.get_json()["summary"]
+    assert summary["period_change_pct"] is None
+    assert summary["period_min"] == {
+        "period": "2026-08",
+        "value": "-0.83",
+    }
+    assert summary["period_max"] == {
+        "period": "2026-09",
+        "value": "2.13",
+    }
 
 
 @patch(_JWT)
@@ -363,6 +436,82 @@ def test_fx_series_buy_sell_distinct(mock_resolve, mock_validate):
     assert payload["series"]["unit"] == "BRL per USD"
     assert len(payload["points"]) == 2
     assert payload["points"][0]["value"] == "5.4"
+    # R3 contextual summary — latest rate + period average + change.
+    summary = payload["summary"]
+    assert summary["latest"] == {
+        "period": "2026-10-24",
+        "value": "5.42",
+    }
+    assert summary["period_average"] == "5.41"
+    assert summary["period_change_pct"] == "0.3704"
+    assert summary["observed"] == 2
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_fx_series_empty_feed_reports_unavailable_reason(
+    mock_resolve, mock_validate
+):
+    """Feed-level failure is explained, not blank — R3 R3-08."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user()
+    gateway = _gateway()
+    gateway.fx_observations.return_value = []
+    gateway.ingestion_status.return_value = {
+        "feeds": [
+            {
+                "feed": "fx-daily",
+                "last_outcome": "failed",
+                "last_error_code": "EXTERNAL_DATA_PROVIDER_UNAVAILABLE",
+                "last_successful_at": None,
+                "latest_observation_date": None,
+                "source_active": True,
+            }
+        ]
+    }
+    client, ctx = _client(gateway)
+    with ctx:
+        response = client.get(
+            "/market-intelligence/fx/series"
+            "?fx_kind=ptax_closing_sell"
+            "&date_from=2026-10-01&date_to=2026-10-31"
+            "&granularity=month",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["meta"]["data_status"] == "no_data"
+    summary = payload["summary"]
+    assert summary["latest"] is None
+    assert summary["observed"] == 0
+    assert summary["unavailable_reason"] == "provider_unavailable"
+    assert (
+        payload["meta"]["feed_ingestion"]["last_error_code"]
+        == "EXTERNAL_DATA_PROVIDER_UNAVAILABLE"
+    )
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_fx_series_never_ingested_reports_not_collected(
+    mock_resolve, mock_validate
+):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user()
+    gateway = _gateway()
+    gateway.fx_observations.return_value = []
+    client, ctx = _client(gateway)
+    with ctx:
+        response = client.get(
+            "/market-intelligence/fx/series"
+            "?fx_kind=ptax_closing_sell"
+            "&date_from=2026-10-01&date_to=2026-10-31"
+            "&granularity=month",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    summary = response.get_json()["summary"]
+    assert summary["unavailable_reason"] == "feed_not_collected"
 
 
 @patch(_JWT)

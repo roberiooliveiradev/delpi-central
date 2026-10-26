@@ -1,31 +1,39 @@
-/** URL persistence for market intelligence filters (PROC-0076).
+/** URL persistence for market intelligence filters (PROC-0076 R3).
 
-Query contract: ``instrument``, ``currency``, ``granularity``,
-``fx_kind``, ``from``, ``to``. Values are allowlist-validated on read —
-anything outside the contract is ignored, never forwarded upstream.
+Query contract: ``view``, ``mode``, ``granularity``, ``fx_kind``,
+``ncm``, ``ipp_series``, ``from``, ``to``. Values are
+allowlist-validated on read — anything outside the contract is
+ignored, never forwarded upstream.
+
+Legacy links (R2) keep resolving: ``instrument=usd-brl`` maps to
+``view=fx``; metal instruments no longer drive a perspective, so a
+legacy metal link falls back to the catalog-driven default view.
 */
 
 import type {
-  MarketCurrency,
   MarketFxKind,
   MarketGranularity,
 } from "./api";
 
+export type MarketPerspective = "ipp" | "comex" | "fx";
+export type MarketViewMode = "chart" | "table";
+
 export type MarketIntelligenceUrlState = {
-  instrument: string;
-  currency: MarketCurrency;
+  view: MarketPerspective;
+  mode: MarketViewMode;
   granularity: MarketGranularity;
   fxKind: MarketFxKind;
   from: string;
   to: string;
-  /** R2 module selections — free-form codes validated against the
+  /** Perspective selections — free-form codes validated against the
   catalog (never forwarded unvalidated upstream). */
   ncm: string;
   ippSeries: string;
 };
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const CURRENCIES: readonly MarketCurrency[] = ["USD", "BRL"];
+const PERSPECTIVES: readonly MarketPerspective[] = ["ipp", "comex", "fx"];
+const MODES: readonly MarketViewMode[] = ["chart", "table"];
 const GRANULARITIES: readonly MarketGranularity[] = ["day", "month", "year"];
 const FX_KINDS: readonly MarketFxKind[] = [
   "ptax_closing_sell",
@@ -48,14 +56,18 @@ function parseAllowlisted<T extends string>(
 
 export function readMarketIntelligenceFromUrl(): Partial<MarketIntelligenceUrlState> {
   const params = readSearchParams();
-  const instrument = (params.get("instrument") ?? "").trim();
   const ncm = (params.get("ncm") ?? "").trim();
   const ippSeries = (params.get("ipp_series") ?? "").trim();
   const from = (params.get("from") ?? "").trim();
   const to = (params.get("to") ?? "").trim();
+  const legacyInstrument = (params.get("instrument") ?? "").trim();
+  const view =
+    parseAllowlisted(params.get("view"), PERSPECTIVES) ??
+    // R2 legacy link: the fx instrument selected the PTAX perspective.
+    (legacyInstrument === "usd-brl" ? "fx" : null);
   return {
-    instrument: instrument || undefined,
-    currency: parseAllowlisted(params.get("currency"), CURRENCIES) ?? undefined,
+    view: view ?? undefined,
+    mode: parseAllowlisted(params.get("mode"), MODES) ?? undefined,
     granularity:
       parseAllowlisted(params.get("granularity"), GRANULARITIES) ?? undefined,
     fxKind: parseAllowlisted(params.get("fx_kind"), FX_KINDS) ?? undefined,
@@ -73,10 +85,13 @@ export function writeMarketIntelligenceToUrl(
 ): void {
   if (typeof window === "undefined") return;
   const params = new URLSearchParams(window.location.search);
-  if (state.instrument) params.set("instrument", state.instrument);
-  else params.delete("instrument");
-  if (state.currency) params.set("currency", state.currency);
-  else params.delete("currency");
+  // Legacy R2 params are superseded by `view` — never re-emitted.
+  params.delete("instrument");
+  params.delete("currency");
+  if (state.view) params.set("view", state.view);
+  else params.delete("view");
+  if (state.mode) params.set("mode", state.mode);
+  else params.delete("mode");
   if (state.granularity) params.set("granularity", state.granularity);
   else params.delete("granularity");
   if (state.fxKind) params.set("fx_kind", state.fxKind);

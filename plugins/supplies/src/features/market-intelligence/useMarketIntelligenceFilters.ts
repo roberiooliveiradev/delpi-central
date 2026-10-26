@@ -1,28 +1,38 @@
-/** Filter state for the market intelligence page (PROC-0076).
+/** Filter state for the market intelligence page (PROC-0076 R3).
 
-Merges URL state with catalog constraints: instrument, currency and
-granularity are only emitted when allowed by the selected instrument —
-invalid combinations are normalized locally so the BFF never receives a
-guaranteed-422 request.
+One active perspective at a time: ``view`` selects the source
+(IBGE IPP / Comex / PTAX), ``mode`` selects the analysis panel
+(chart/table). URL state is merged with catalog constraints —
+``day`` granularity only exists for FX, invalid combinations are
+normalized locally so the BFF never receives a guaranteed-422 request.
 */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type {
-  MarketCurrency,
   MarketFxKind,
   MarketGranularity,
-  MarketInstrumentFilter,
 } from "./api";
 import {
   readMarketIntelligenceFromUrl,
   writeMarketIntelligenceToUrl,
   type MarketIntelligenceUrlState,
+  type MarketPerspective,
+  type MarketViewMode,
 } from "./marketIntelligenceUrl";
 
 const DEFAULT_FX_KIND: MarketFxKind = "ptax_closing_sell";
-const DEFAULT_CURRENCY: MarketCurrency = "USD";
 const DEFAULT_GRANULARITY: MarketGranularity = "month";
+const DEFAULT_MODE: MarketViewMode = "chart";
+
+/** Only FX has a daily series — IPP/Comex are monthly sources. */
+function normalizeGranularity(
+  view: MarketPerspective | "",
+  granularity: MarketGranularity,
+): MarketGranularity {
+  if (view !== "fx" && granularity === "day") return "month";
+  return granularity;
+}
 
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -35,69 +45,68 @@ function defaultRange(): { from: string; to: string } {
   return { from: isoDate(from), to: isoDate(to) };
 }
 
-function normalizeForInstrument(
-  state: MarketIntelligenceUrlState,
-  instrument: MarketInstrumentFilter | undefined,
-): MarketIntelligenceUrlState {
-  if (!instrument) return state;
-  const next = { ...state };
-  if (!instrument.currencies.includes(next.currency)) {
-    next.currency = instrument.currencies[0] ?? DEFAULT_CURRENCY;
-  }
-  if (!instrument.granularities.includes(next.granularity)) {
-    next.granularity = instrument.granularities[0] ?? DEFAULT_GRANULARITY;
-  }
-  return next;
-}
-
 export function useMarketIntelligenceFilters(
-  instruments: readonly MarketInstrumentFilter[],
-  defaultInstrument: string | null,
+  defaultView: MarketPerspective,
 ) {
   const initial = useMemo(() => {
     const fromUrl = readMarketIntelligenceFromUrl();
     const range = defaultRange();
+    const view = fromUrl.view ?? "";
+    const granularity = normalizeGranularity(
+      view,
+      fromUrl.granularity ?? DEFAULT_GRANULARITY,
+    );
     return {
-      instrument: fromUrl.instrument ?? "",
-      currency: fromUrl.currency ?? DEFAULT_CURRENCY,
-      granularity: fromUrl.granularity ?? DEFAULT_GRANULARITY,
+      view,
+      mode: fromUrl.mode ?? DEFAULT_MODE,
+      granularity,
       fxKind: fromUrl.fxKind ?? DEFAULT_FX_KIND,
       ncm: fromUrl.ncm ?? "",
       ippSeries: fromUrl.ippSeries ?? "",
       from: fromUrl.from ?? range.from,
       to: fromUrl.to ?? range.to,
-    } satisfies MarketIntelligenceUrlState;
+    } satisfies Omit<MarketIntelligenceUrlState, "view"> & {
+      view: MarketPerspective | "";
+    };
   }, []);
 
-  const [state, setState] = useState<MarketIntelligenceUrlState>(initial);
+  const [state, setState] =
+    useState<Omit<MarketIntelligenceUrlState, "view"> & {
+      view: MarketPerspective | "";
+    }>(initial);
 
-  const instrument = useMemo(
-    () =>
-      instruments.find((entry) => entry.code === state.instrument) ??
-      instruments.find((entry) => entry.code === defaultInstrument),
-    [instruments, state.instrument, defaultInstrument],
-  );
-
-  const effectiveState = useMemo(
-    () =>
-      normalizeForInstrument(
-        { ...state, instrument: instrument?.code ?? "" },
-        instrument,
+  /** URL selection wins; otherwise the catalog-driven default view
+  (first perspective with usable observations). */
+  const effectiveState = useMemo<MarketIntelligenceUrlState>(
+    () => ({
+      ...state,
+      view: state.view || defaultView,
+      granularity: normalizeGranularity(
+        state.view || defaultView,
+        state.granularity,
       ),
-    [state, instrument],
+    }),
+    [state, defaultView],
   );
 
   const patch = useCallback(
-    (update: Partial<MarketIntelligenceUrlState>) => {
+    (
+      update: Partial<
+        Omit<MarketIntelligenceUrlState, "view"> & {
+          view: MarketPerspective | "";
+        }
+      >,
+    ) => {
       setState((prev) => {
         const next = { ...prev, ...update };
-        return normalizeForInstrument(
-          next,
-          instruments.find((entry) => entry.code === next.instrument),
+        next.granularity = normalizeGranularity(
+          next.view || prev.view || "fx",
+          next.granularity,
         );
+        return next;
       });
     },
-    [instruments],
+    [],
   );
 
   // URL persistence (F5 + shareable links).
@@ -112,9 +121,12 @@ export function useMarketIntelligenceFilters(
       const fromUrl = readMarketIntelligenceFromUrl();
       setState((prev) => ({
         ...prev,
-        instrument: fromUrl.instrument ?? prev.instrument,
-        currency: fromUrl.currency ?? prev.currency,
-        granularity: fromUrl.granularity ?? prev.granularity,
+        view: fromUrl.view ?? prev.view,
+        mode: fromUrl.mode ?? prev.mode,
+        granularity: normalizeGranularity(
+          fromUrl.view ?? prev.view ?? "fx",
+          fromUrl.granularity ?? prev.granularity,
+        ),
         fxKind: fromUrl.fxKind ?? prev.fxKind,
         ncm: fromUrl.ncm ?? prev.ncm,
         ippSeries: fromUrl.ippSeries ?? prev.ippSeries,
@@ -126,23 +138,10 @@ export function useMarketIntelligenceFilters(
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const apiParams = useMemo(
-    () => ({
-      instrument: effectiveState.instrument,
-      currency: effectiveState.currency,
-      fx_kind: effectiveState.fxKind,
-      date_from: effectiveState.from,
-      date_to: effectiveState.to,
-    }),
-    [effectiveState],
-  );
-
   return {
     state: effectiveState,
-    instrument,
-    apiParams,
-    setInstrument: (code: string) => patch({ instrument: code }),
-    setCurrency: (currency: MarketCurrency) => patch({ currency }),
+    setView: (view: MarketPerspective) => patch({ view }),
+    setMode: (mode: MarketViewMode) => patch({ mode }),
     setGranularity: (granularity: MarketGranularity) =>
       patch({ granularity }),
     setFxKind: (fxKind: MarketFxKind) => patch({ fxKind }),

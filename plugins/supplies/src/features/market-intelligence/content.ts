@@ -1,14 +1,29 @@
-/** PT-BR copy for the market intelligence page (PROC-0076). */
+/** PT-BR copy for the market intelligence page (PROC-0076 R3). */
 
 export const MARKET_INTELLIGENCE_CONTENT = {
   title: "Inteligência de Mercado",
   eyebrow: "Portal Suprimentos",
   description:
-    "Cotações históricas de metais e câmbio de fontes autorizadas. " +
-    "Valores em USD são nativos da fonte; a conversão para BRL usa a " +
-    "média PTAX do mês de referência.",
+    "Indicadores históricos de mercado de fontes autorizadas — " +
+    "preços industriais (IBGE), importações (Comex Stat) e câmbio " +
+    "oficial (PTAX). Cada perspectiva mostra somente seus próprios " +
+    "indicadores, unidades e metodologia.",
   backToHome: "Início",
   reloadLabel: "Atualizar",
+
+  perspectives: {
+    switcherAriaLabel: "Perspectiva de dados",
+    ipp: "Preços industriais",
+    comex: "Importações",
+    fx: "Câmbio",
+    ippHint:
+      "Índice de Preços ao Produtor (IPP) do IBGE — Metalurgia. " +
+      "Índice/variação, não cotação de metal.",
+    comexHint:
+      "Importações oficiais por NCM homologada — valor FOB médio " +
+      "em US$/t. Não é cotação internacional de metal.",
+    fxHint: "Cotação PTAX de fechamento divulgada pelo Banco Central.",
+  },
 
   filters: {
     instrumentLabel: "Instrumento",
@@ -22,6 +37,74 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     granularityDay: "Diário",
     granularityMonth: "Mensal",
     granularityYear: "Anual",
+    seriesLabel: "Série",
+    ncmLabel: "NCM",
+  },
+
+  kpis: {
+    latestValueTitle: "Último valor",
+    latestValueHint:
+      "Observação mais recente dentro do período filtrado, na unidade " +
+      "nativa da série.",
+    latestRateTitle: "Última PTAX",
+    latestRateHint:
+      "Boletim de fechamento mais recente no período, divulgado pelo " +
+      "Banco Central do Brasil.",
+    latestUnitValueTitle: "Último valor médio",
+    latestUnitValueHint:
+      "Valor médio de importação (FOB ÷ peso líquido) do último mês " +
+      "com dados, em US$/t.",
+    averageTitle: "Média do período",
+    averageHint:
+      "Média aritmética das observações válidas do período (método " +
+      "versionado pela API).",
+    variationTitle: "Variação do período",
+    variationHint:
+      "Variação percentual entre a primeira e a última observação válida.",
+    minTitle: "Menor variação",
+    minHint: "Menor variação mensal observada no período.",
+    maxTitle: "Maior variação",
+    maxHint: "Maior variação mensal observada no período.",
+    fobTotalTitle: "FOB total",
+    fobTotalHint: "Soma do valor FOB (US$) dos meses com observação.",
+    weightTotalTitle: "Peso líquido total",
+    weightTotalHint: "Soma do peso líquido (t) dos meses com observação.",
+    observationsTitle: "Competências",
+    observationsHint:
+      "Meses com observação dentro do período esperado — lacunas não " +
+      "são preenchidas artificialmente.",
+    coverageTitle: "Cobertura",
+    coverageHint:
+      "Fração do período esperado com observações válidas (método " +
+      "coverage_vs_expected/v1).",
+    unavailable: "—",
+  },
+
+  panel: {
+    viewSwitcherAriaLabel: "Modo de visualização",
+    chartMode: "Gráfico",
+    tableMode: "Tabela",
+    compareMode: "Comparação",
+    compareDisabledHint:
+      "Comparação indisponível: as séries disponíveis têm unidades ou " +
+      "granularidades incompatíveis (índice, %, US$/t, R$/US$).",
+    loading: "Carregando série…",
+    emptyTitle: "Sem dados no período",
+    emptyMessage:
+      "Não há observações para a série e o período selecionados. " +
+      "Ajuste os filtros ou aguarde a próxima ingestão.",
+    typeLabel: "Tipo do gráfico",
+    seriesColorsLabel: "Cores da série",
+    seriesColorsPanelTitle: "Cor da série",
+    seriesColorsEmpty: "Sem preferências de cor",
+    seriesColorsTriggerAria: "Abrir cores da série",
+    seriesColorsReset: "Restaurar cor padrão",
+    missingPeriodsNote: (periods: string[]) =>
+      `Competências sem observação no período: ${periods.join(", ")}.`,
+    missingPeriodsExplanation:
+      "Ausência legítima: competência ainda não divulgada pela fonte ou " +
+      "fora do histórico coletado — nunca exibida como zero.",
+    methodologyLabel: "Metodologia",
   },
 
   summary: {
@@ -118,6 +201,27 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     moduleUnavailable:
       "Este indicador está indisponível no momento — a fonte não foi " +
       "ativada ou os direitos de exibição estão em revisão.",
+    comexConfigPendingTitle: "Configuração pendente",
+    comexConfigPending:
+      "Nenhuma NCM homologada por Compras está disponível para consulta. " +
+      "Quando a homologação for concluída e a fonte MDIC estiver ativa, " +
+      "as importações aparecem aqui.",
+    providerUnavailable:
+      "Fonte temporariamente indisponível: a última coleta falhou no " +
+      "provedor oficial. O serviço tenta novamente no próximo ciclo — " +
+      "nenhum valor sintético é exibido.",
+    feedFailed:
+      "A última coleta desta fonte falhou. Os dados históricos " +
+      "persistidos, quando existirem, seguem disponíveis.",
+    feedDisabled:
+      "Coleta desta fonte desativada no momento — os dados aparecem " +
+      "quando a ingestão for reativada.",
+    feedNotCollected:
+      "Nenhuma coleta concluída desta fonte até o momento — os dados " +
+      "aparecem após a primeira ingestão bem-sucedida.",
+    windowEmpty:
+      "Sem observações dentro do período filtrado — amplie o recorte " +
+      "ou aguarde a próxima publicação da fonte.",
     partialNote:
       "Dados parciais: parte do período não possui observações ou " +
       "câmbio correspondente.",
@@ -138,21 +242,20 @@ export const MARKET_INTELLIGENCE_CONTENT = {
 
   errors: {
     generic:
-      "Não foi possível carregar as cotações. Tente novamente em instantes.",
+      "Não foi possível carregar os indicadores. Tente novamente em instantes.",
     unavailable:
       "O serviço de dados de mercado está indisponível no momento.",
     timeout: "O serviço de dados de mercado demorou demais para responder.",
     rateLimited:
       "Limite de requisições atingido. Aguarde alguns instantes e tente de novo.",
     invalidFilters:
-      "Filtros inválidos para o instrumento selecionado. Revise moeda, " +
-      "granularidade e período.",
-    notFound: "Instrumento não encontrado no catálogo de fontes autorizadas.",
+      "Filtros inválidos para a série selecionada. Revise granularidade e período.",
+    notFound: "Série não encontrada no catálogo de fontes autorizadas.",
     unauthorized: "Sua sessão expirou. Entre novamente para continuar.",
     forbidden:
       "Você não possui acesso à inteligência de mercado de Suprimentos.",
     sourceNotApproved:
-      "As cotações desta fonte estão temporariamente indisponíveis " +
+      "Os dados desta fonte estão temporariamente indisponíveis " +
       "enquanto os direitos de exibição passam por revisão.",
   },
 } as const;

@@ -1,26 +1,23 @@
-/** Market intelligence page — metals & FX quotations (PROC-0076).
-
-Composition only: filters → BFF calls → kit components. All quotes,
-conversions and coverage semantics come from the supplies-api BFF.
-*/
+/** Market intelligence page — three exclusive source perspectives
+ * (PROC-0076 R3).
+ *
+ * Composition only: perspective switcher → contextual filters → one
+ * analysis panel. All metrics, conversions, coverage and availability
+ * semantics come from the supplies-api BFF.
+ */
 
 import { useEffect, useMemo, useState } from "react";
-import { LineChart, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
-import { SuppliesKpiCard } from "../../app/suppliesKpiCard";
 import {
   SuppliesActionButton,
-  SuppliesDataCardsGrid,
   SuppliesDateField,
-  SuppliesEmptyState,
-  SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
-  SuppliesSectionCard,
-  SuppliesSelectField,
   SuppliesSegmentToggle,
+  SuppliesSelectField,
   SuppliesStateBanner,
   SuppliesStatusBadge,
   SuppliesTitleWithHelp,
@@ -31,33 +28,24 @@ import {
   getMarketFxSeries,
   getMarketImportSeries,
   getMarketIntelligenceFilters,
-  getMarketIntelligenceSummary,
   getMarketProducerPriceSeries,
-  type MarketCurrency,
   type MarketFxKind,
   type MarketGranularity,
   type MarketImportPoint,
   type MarketProducerPricePoint,
   type MarketSeriesPoint,
-  type MarketSummaryResponse,
 } from "./api";
 import {
   mapMarketIntelligenceError,
   MARKET_INTELLIGENCE_CONTENT,
 } from "./content";
-import { MarketIntelligenceModuleSection } from "./MarketIntelligenceModuleSection";
-import { MarketIntelligenceMonthlyTable } from "./MarketIntelligenceMonthlyTable";
-import { MarketIntelligenceSeriesSection } from "./MarketIntelligenceSeriesSection";
+import { MarketIntelligencePanel } from "./MarketIntelligencePanel";
+import type { MarketPerspective } from "./marketIntelligenceUrl";
 import { useMarketIntelligenceFilters } from "./useMarketIntelligenceFilters";
 
 type MarketIntelligencePageProps = {
   basePath: string;
 };
-
-const CURRENCY_OPTIONS = [
-  { value: "USD", label: "USD" },
-  { value: "BRL", label: "BRL" },
-];
 
 const GRANULARITY_LABELS: Record<MarketGranularity, string> = {
   day: MARKET_INTELLIGENCE_CONTENT.filters.granularityDay,
@@ -76,28 +64,20 @@ const FX_KIND_OPTIONS = [
   },
 ];
 
-function formatQuote(raw: string | null, currency: MarketCurrency): string {
-  if (raw === null) return MARKET_INTELLIGENCE_CONTENT.summary.unavailable;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed))
-    return MARKET_INTELLIGENCE_CONTENT.summary.unavailable;
-  return `${currency === "BRL" ? "R$" : "US$"} ${parsed.toLocaleString(
-    "pt-BR",
-    { minimumFractionDigits: 2, maximumFractionDigits: 4 },
-  )}`;
-}
-
-function formatPercent(raw: string | null): string {
-  if (raw === null) return MARKET_INTELLIGENCE_CONTENT.summary.unavailable;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed))
-    return MARKET_INTELLIGENCE_CONTENT.summary.unavailable;
-  const sign = parsed > 0 ? "+" : "";
-  return `${sign}${parsed.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}%`;
-}
+const PERSPECTIVE_OPTIONS: { value: MarketPerspective; label: string }[] = [
+  {
+    value: "ipp",
+    label: MARKET_INTELLIGENCE_CONTENT.perspectives.ipp,
+  },
+  {
+    value: "comex",
+    label: MARKET_INTELLIGENCE_CONTENT.perspectives.comex,
+  },
+  {
+    value: "fx",
+    label: MARKET_INTELLIGENCE_CONTENT.perspectives.fx,
+  },
+];
 
 function formatDecimal(raw: string | null | undefined): string {
   if (raw === null || raw === undefined) return "—";
@@ -115,15 +95,6 @@ function coverageLabel(coverage: string): string {
   );
 }
 
-function dataStatusBadgeVariant(
-  status: string | undefined,
-): "success" | "warning" | "danger" | "info" | "neutral" {
-  if (status === "ok") return "success";
-  if (status === "partial") return "warning";
-  if (status === "no_data") return "neutral";
-  return "info";
-}
-
 export function MarketIntelligencePage({
   basePath,
 }: MarketIntelligencePageProps) {
@@ -133,9 +104,6 @@ export function MarketIntelligencePage({
   const [instruments, setInstruments] = useState<
     Awaited<ReturnType<typeof getMarketIntelligenceFilters>>["instruments"]
   >([]);
-  const [defaultInstrument, setDefaultInstrument] = useState<string | null>(
-    null,
-  );
   const [sources, setSources] = useState<
     Awaited<ReturnType<typeof getMarketIntelligenceFilters>>["sources"]
   >([]);
@@ -162,7 +130,6 @@ export function MarketIntelligencePage({
     getMarketIntelligenceFilters(controller.signal)
       .then((payload) => {
         setInstruments(payload.instruments);
-        setDefaultInstrument(payload.default_instrument);
         setSources(payload.sources);
         setImportNcms(payload.import_ncms ?? []);
         setIppSeriesOptions(payload.producer_price_series ?? []);
@@ -177,20 +144,8 @@ export function MarketIntelligencePage({
     return () => controller.abort();
   }, [reloadKey]);
 
-  const selectableInstruments = useMemo(
-    // Default-deny: only an explicit selectable === true offers the
-    // instrument — absent/null/legacy payloads are never permission.
-    () => instruments.filter((entry) => entry.selectable === true),
-    [instruments],
-  );
-
-  const filters = useMarketIntelligenceFilters(
-    selectableInstruments,
-    defaultInstrument,
-  );
-  const ready = Boolean(filters.state.instrument);
-
-  // R2 modules — same default-deny posture as legacy instruments.
+  // Same default-deny posture as legacy instruments — absent/null is
+  // never a permission.
   const selectableNcms = useMemo(
     () => importNcms.filter((entry) => entry.selectable === true),
     [importNcms],
@@ -199,6 +154,33 @@ export function MarketIntelligencePage({
     () => ippSeriesOptions.filter((entry) => entry.selectable === true),
     [ippSeriesOptions],
   );
+  const fxInstrument = useMemo(
+    () =>
+      instruments.find(
+        (entry) => entry.code === "usd-brl" && entry.selectable === true,
+      ),
+    [instruments],
+  );
+
+  /** Default perspective is data-driven — the first source with
+   * selectable, actually-observed data wins (never a hardcoded
+   * assumption that IBGE is always up). */
+  const defaultView = useMemo<MarketPerspective>(() => {
+    const hasObservations = (
+      list?: { selectable?: boolean; latest_observation_date: string | null }[],
+    ) =>
+      (list ?? []).some(
+        (entry) =>
+          entry.selectable === true && entry.latest_observation_date,
+      );
+    if (hasObservations(ippSeriesOptions)) return "ipp";
+    if (hasObservations(importNcms)) return "comex";
+    if (fxInstrument?.latest_observation_date) return "fx";
+    return "ipp";
+  }, [ippSeriesOptions, importNcms, fxInstrument]);
+
+  const filters = useMarketIntelligenceFilters(defaultView);
+  const view = filters.state.view;
 
   const ncmOptions = useMemo(
     () =>
@@ -218,80 +200,46 @@ export function MarketIntelligencePage({
   );
 
   const selectedNcm =
-    selectableNcms.find(
-      (entry) => entry.ncm_code === filters.state.ncm,
-    )?.ncm_code ??
+    selectableNcms.find((entry) => entry.ncm_code === filters.state.ncm)
+      ?.ncm_code ??
     selectableNcms[0]?.ncm_code ??
     "";
-  const selectedIpp =
+  const selectedIppEntry =
     selectableIpp.find(
       (entry) => entry.series_id === filters.state.ippSeries,
-    )?.series_id ??
-    selectableIpp[0]?.series_id ??
-    "";
+    ) ?? selectableIpp[0];
+  const selectedIpp = selectedIppEntry?.series_id ?? "";
 
-  const [summary, setSummary] = useState<MarketSummaryResponse | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const granularityOptions = useMemo(() => {
+    const allowed: MarketGranularity[] =
+      view === "fx" ? ["day", "month", "year"] : ["month", "year"];
+    return allowed.map((value) => ({
+      value,
+      label: GRANULARITY_LABELS[value],
+    }));
+  }, [view]);
 
-  useEffect(() => {
-    if (!ready) return;
-    const controller = new AbortController();
-    setSummaryLoading(true);
-    setSummaryError(null);
-    // Never render the previous query's data while a new fetch runs —
-    // a denied/blocked response must not resurrect stale quotes.
-    setSummary(null);
-    getMarketIntelligenceSummary(filters.apiParams, controller.signal)
-      .then(setSummary)
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        setSummary(null);
-        setSummaryError(mapMarketIntelligenceError(err));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setSummaryLoading(false);
-      });
-    return () => controller.abort();
-  }, [ready, filters.apiParams, reloadKey]);
+  /** Attribution/license of the active perspective's source. */
+  const attribution = useMemo(() => {
+    const sourceId =
+      view === "ipp"
+        ? selectedIppEntry?.source_id
+        : view === "comex"
+          ? selectableNcms.find((n) => n.ncm_code === selectedNcm)
+              ?.source_id ?? "mdic-comex-stat"
+          : "bcb-ptax";
+    const source = sources.find((s) => s.source_id === sourceId);
+    return source
+      ? `${source.attribution} · ${source.license_reference}`
+      : null;
+  }, [view, sources, selectedIppEntry, selectableNcms, selectedNcm]);
 
-  const instrumentOptions = useMemo(
-    () =>
-      selectableInstruments.map((entry) => ({
-        value: entry.code,
-        label: entry.label,
-      })),
-    [selectableInstruments],
-  );
-
-  const granularityOptions = useMemo(
-    () =>
-      (filters.instrument?.granularities ?? ["month"]).map((value) => ({
-        value,
-        label: GRANULARITY_LABELS[value],
-      })),
-    [filters.instrument],
-  );
-
-  const currencyOptions = useMemo(
-    () =>
-      CURRENCY_OPTIONS.filter((option) =>
-        (filters.instrument?.currencies ?? ["USD"]).includes(
-          option.value as MarketCurrency,
-        ),
-      ),
-    [filters.instrument],
-  );
-
-  const isMetalBrl =
-    filters.instrument?.kind === "metal" && filters.state.currency === "BRL";
-  const isFxInstrument = filters.instrument?.kind === "fx";
-
-  const sourceAttribution = useMemo(() => {
-    const sourceId = summary?.meta.source_id;
-    if (!sourceId) return null;
-    return sources.find((source) => source.source_id === sourceId) ?? null;
-  }, [sources, summary]);
+  const activeSourceId =
+    view === "ipp"
+      ? selectedIppEntry?.source_id
+      : view === "comex"
+        ? "mdic-comex-stat"
+        : "bcb-ptax";
 
   const homeHref = buildPluginPath("home", basePath);
 
@@ -320,10 +268,10 @@ export function MarketIntelligencePage({
         }
         description={MARKET_INTELLIGENCE_CONTENT.description}
         badge={
-          summary ? (
+          activeSourceId ? (
             <SuppliesStatusBadge
-              label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${summary.meta.source_id ?? "—"}`}
-              variant={dataStatusBadgeVariant(summary.meta.data_status)}
+              label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${activeSourceId}`}
+              variant="info"
             />
           ) : undefined
         }
@@ -339,22 +287,47 @@ export function MarketIntelligencePage({
         }
       >
         <FiltersRow variant="extended">
-          <SuppliesSelectField
-            label={MARKET_INTELLIGENCE_CONTENT.filters.instrumentLabel}
-            hint={SP_HELP.marketIntelligenceInstrument}
-            value={filters.state.instrument}
-            options={instrumentOptions}
-            onChange={filters.setInstrument}
-          />
-          <SuppliesSelectField
-            label={MARKET_INTELLIGENCE_CONTENT.filters.currencyLabel}
-            hint={SP_HELP.marketIntelligenceCurrency}
-            value={filters.state.currency}
-            options={currencyOptions}
-            onChange={(value) =>
-              filters.setCurrency(value as MarketCurrency)
+          <SuppliesSegmentToggle
+            ariaLabel={
+              MARKET_INTELLIGENCE_CONTENT.perspectives.switcherAriaLabel
             }
+            idPrefix="market-intelligence-view"
+            size="sm"
+            value={view}
+            options={PERSPECTIVE_OPTIONS}
+            onChange={(value) => filters.setView(value as MarketPerspective)}
           />
+          {view === "ipp" ? (
+            <SuppliesSelectField
+              label={MARKET_INTELLIGENCE_CONTENT.filters.seriesLabel}
+              hint={SP_HELP.marketIntelligenceIpp}
+              value={selectedIpp}
+              options={ippOptions}
+              onChange={filters.setIppSeries}
+            />
+          ) : null}
+          {view === "comex" && ncmOptions.length > 0 ? (
+            <SuppliesSelectField
+              label={MARKET_INTELLIGENCE_CONTENT.filters.ncmLabel}
+              hint={
+                MARKET_INTELLIGENCE_CONTENT.modules.importsNcmHint
+              }
+              value={selectedNcm}
+              options={ncmOptions}
+              onChange={filters.setNcm}
+            />
+          ) : null}
+          {view === "fx" ? (
+            <SuppliesSelectField
+              label={MARKET_INTELLIGENCE_CONTENT.filters.fxKindLabel}
+              hint={SP_HELP.marketIntelligenceFxKind}
+              value={filters.state.fxKind}
+              options={FX_KIND_OPTIONS}
+              onChange={(value) =>
+                filters.setFxKind(value as MarketFxKind)
+              }
+            />
+          ) : null}
           <SuppliesSegmentToggle
             ariaLabel={MARKET_INTELLIGENCE_CONTENT.filters.granularityLabel}
             idPrefix="market-intelligence-granularity"
@@ -365,15 +338,6 @@ export function MarketIntelligencePage({
               filters.setGranularity(value as MarketGranularity)
             }
           />
-          {(isMetalBrl || isFxInstrument) && (
-            <SuppliesSelectField
-              label={MARKET_INTELLIGENCE_CONTENT.filters.fxKindLabel}
-              hint={SP_HELP.marketIntelligenceFxKind}
-              value={filters.state.fxKind}
-              options={FX_KIND_OPTIONS}
-              onChange={(value) => filters.setFxKind(value as MarketFxKind)}
-            />
-          )}
           <SuppliesDateField
             label={MARKET_INTELLIGENCE_CONTENT.filters.fromLabel}
             hint={SP_HELP.marketIntelligencePeriod}
@@ -392,318 +356,253 @@ export function MarketIntelligencePage({
       {catalogError ? (
         <SuppliesStateBanner variant="error">{catalogError}</SuppliesStateBanner>
       ) : null}
-      {summaryError ? (
-        <SuppliesStateBanner variant="error">{summaryError}</SuppliesStateBanner>
-      ) : null}
       {!catalogLoading &&
       !catalogError &&
-      instruments.length > 0 &&
-      selectableInstruments.length === 0 ? (
+      selectableIpp.length === 0 &&
+      selectableNcms.length === 0 &&
+      !fxInstrument ? (
         <SuppliesStateBanner variant="error">
           {MARKET_INTELLIGENCE_CONTENT.states.noSelectableInstruments}
         </SuppliesStateBanner>
       ) : null}
-      {summary && summary.meta.freshness?.status === "delayed" ? (
-        <SuppliesStateBanner>
-          {MARKET_INTELLIGENCE_CONTENT.states.staleNote}
-          {` ${MARKET_INTELLIGENCE_CONTENT.states.staleEvidence(
-            summary.meta.freshness.latest_observation_date,
-            summary.meta.freshness.expected_latest_period,
-          )}`}
-        </SuppliesStateBanner>
+
+      {view === "ipp" ? (
+        <MarketIntelligencePanel<MarketProducerPricePoint>
+          title={MARKET_INTELLIGENCE_CONTENT.modules.ippTitle}
+          hint={SP_HELP.marketIntelligenceIpp}
+          enabled={!catalogError && !catalogLoading}
+          configured={selectableIpp.length > 0}
+          configState={{
+            title:
+              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
+            message:
+              MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable,
+          }}
+          selection={selectedIpp}
+          from={filters.state.from}
+          to={filters.state.to}
+          granularity={filters.state.granularity}
+          mode={filters.state.mode}
+          onModeChange={filters.setMode}
+          fetchSeries={async ({
+            selection,
+            granularity,
+            date_from,
+            date_to,
+            signal,
+          }) => {
+            const payload = await getMarketProducerPriceSeries(
+              {
+                series_id: selection,
+                granularity,
+                date_from,
+                date_to,
+              },
+              signal,
+            );
+            return {
+              points: payload.points,
+              summary: payload.summary ?? null,
+              meta: payload.meta,
+            };
+          }}
+          columns={[
+            {
+              key: "period",
+              header:
+                MARKET_INTELLIGENCE_CONTENT.modules.ippPeriodColumn,
+              render: (row) => row.period,
+            },
+            {
+              key: "value",
+              header: MARKET_INTELLIGENCE_CONTENT.modules.ippValueColumn,
+              render: (row) => formatDecimal(row.value),
+              align: "right",
+            },
+            {
+              key: "coverage",
+              header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
+              render: (row) => coverageLabel(row.coverage),
+            },
+          ]}
+          kpiLayout={
+            selectedIppEntry?.metric_kind === "ipp_index"
+              ? "index"
+              : "percent"
+          }
+          unitLabel={selectedIppEntry?.unit ?? ""}
+          valueLegend={selectedIppEntry?.label ?? "IPP"}
+          tableAriaLabel={
+            MARKET_INTELLIGENCE_CONTENT.modules.ippTitle
+          }
+          storageKey="supplies:market-intelligence:ipp"
+          exportTitle={MARKET_INTELLIGENCE_CONTENT.modules.ippTitle}
+          attribution={attribution}
+          reloadKey={reloadKey}
+        />
       ) : null}
 
-      <SuppliesSectionCard
-        title={MARKET_INTELLIGENCE_CONTENT.summary.sectionTitle}
-        hint={SP_HELP.marketIntelligenceSummary}
-      >
-        {catalogLoading || summaryLoading ? (
-          <SuppliesLoadingCard
-            title={MARKET_INTELLIGENCE_CONTENT.states.loading}
-            variant="panel"
-          />
-        ) : null}
-        {!catalogLoading && !summaryLoading && summary ? (
-          <>
-            <SuppliesDataCardsGrid>
-              <SuppliesKpiCard
-                title={MARKET_INTELLIGENCE_CONTENT.summary.lastQuoteTitle}
-                titleHint={
-                  MARKET_INTELLIGENCE_CONTENT.summary.lastQuoteHint
-                }
-                value={formatQuote(
-                  summary.last_quote?.value ?? null,
-                  filters.state.currency,
-                )}
-                contextLabel={
-                  summary.last_quote
-                    ? `${summary.last_quote.reference_date} · ${
-                        summary.last_quote.unit ?? summary.instrument.label
-                      }`
-                    : filters.instrument?.label ?? ""
-                }
-                icon={
-                  <LineChart size={22} strokeWidth={1.75} aria-hidden="true" />
-                }
-              />
-              <SuppliesKpiCard
-                title={MARKET_INTELLIGENCE_CONTENT.summary.averageTitle}
-                titleHint={MARKET_INTELLIGENCE_CONTENT.summary.averageHint}
-                value={formatQuote(
-                  summary.period_average.value,
-                  filters.state.currency,
-                )}
-                contextLabel={`${summary.period_average.valid_observations} ${MARKET_INTELLIGENCE_CONTENT.summary.validObservations}`}
-                icon={
-                  <LineChart size={22} strokeWidth={1.75} aria-hidden="true" />
-                }
-              />
-              <SuppliesKpiCard
-                title={MARKET_INTELLIGENCE_CONTENT.summary.variationTitle}
-                titleHint={MARKET_INTELLIGENCE_CONTENT.summary.variationHint}
-                value={formatPercent(summary.period_variation.percent)}
-                contextLabel={`${filters.state.from} → ${filters.state.to}`}
-                icon={
-                  <LineChart size={22} strokeWidth={1.75} aria-hidden="true" />
-                }
-              />
-              <SuppliesKpiCard
-                title={MARKET_INTELLIGENCE_CONTENT.summary.fxReferenceTitle}
-                titleHint={MARKET_INTELLIGENCE_CONTENT.summary.fxReferenceHint}
-                value={formatQuote(summary.fx_reference.value, "BRL")}
-                contextLabel={
-                  summary.fx_reference.reference_date
-                    ? `${summary.fx_reference.reference_date} · ${summary.fx_reference.rate_kind}`
-                    : ""
-                }
-                icon={
-                  <LineChart size={22} strokeWidth={1.75} aria-hidden="true" />
-                }
-              />
-            </SuppliesDataCardsGrid>
-            {sourceAttribution ? (
-              <p className="delpi-ui-section-hint-label">
-                {MARKET_INTELLIGENCE_CONTENT.states.attributionLabel}:{" "}
-                {sourceAttribution.attribution} ·{" "}
-                {sourceAttribution.license_reference}
-              </p>
-            ) : null}
-          </>
-        ) : null}
-        {!catalogLoading &&
-        !summaryLoading &&
-        !summary &&
-        !summaryError &&
-        !catalogError &&
-        !(instruments.length > 0 && selectableInstruments.length === 0) ? (
-          <SuppliesEmptyState
-            title={MARKET_INTELLIGENCE_CONTENT.chart.emptyTitle}
-            message={MARKET_INTELLIGENCE_CONTENT.chart.emptyMessage}
-          />
-        ) : null}
-      </SuppliesSectionCard>
-
-      <MarketIntelligenceModuleSection<
-        MarketImportPoint & { value: string | null }
-      >
-        title={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
-        hint={SP_HELP.marketIntelligenceImports}
-        selectorLabel={MARKET_INTELLIGENCE_CONTENT.modules.importsNcmLabel}
-        selectorHint={MARKET_INTELLIGENCE_CONTENT.modules.importsNcmHint}
-        options={ncmOptions}
-        selection={selectedNcm}
-        onSelectionChange={filters.setNcm}
-        enabled={!catalogError && !catalogLoading}
-        unavailableLabel={
-          MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable
-        }
-        from={filters.state.from}
-        to={filters.state.to}
-        granularity={filters.state.granularity}
-        fetchSeries={async ({ selection, granularity, date_from, date_to, signal }) => {
-          const payload = await getMarketImportSeries(
-            {
-              ncm: selection,
-              granularity,
-              date_from,
-              date_to,
-            },
+      {view === "comex" ? (
+        <MarketIntelligencePanel<
+          MarketImportPoint & { value: string | null }
+        >
+          title={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
+          hint={SP_HELP.marketIntelligenceImports}
+          enabled={!catalogError && !catalogLoading}
+          configured={selectableNcms.length > 0}
+          configState={{
+            title:
+              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
+            message:
+              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPending,
+          }}
+          selection={selectedNcm}
+          from={filters.state.from}
+          to={filters.state.to}
+          granularity={filters.state.granularity}
+          mode={filters.state.mode}
+          onModeChange={filters.setMode}
+          fetchSeries={async ({
+            selection,
+            granularity,
+            date_from,
+            date_to,
             signal,
-          );
-          return {
-            dataStatus: payload.meta.data_status,
-            points: payload.points.map((point) => ({
-              ...point,
-              value: point.unit_value_usd_per_t,
-            })),
-          };
-        }}
-        columns={[
-          {
-            key: "period",
-            header: MARKET_INTELLIGENCE_CONTENT.modules.importsPeriodColumn,
-            render: (row) => row.period,
-          },
-          {
-            key: "fob",
-            header: MARKET_INTELLIGENCE_CONTENT.modules.importsFobColumn,
-            render: (row) => formatDecimal(row.fob_usd_total),
-            align: "right",
-          },
-          {
-            key: "weight",
-            header: MARKET_INTELLIGENCE_CONTENT.modules.importsWeightColumn,
-            render: (row) => formatDecimal(row.net_weight_t),
-            align: "right",
-          },
-          {
-            key: "unit",
-            header: MARKET_INTELLIGENCE_CONTENT.modules.importsUnitColumn,
-            render: (row) => formatDecimal(row.unit_value_usd_per_t),
-            align: "right",
-          },
-          {
-            key: "coverage",
-            header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
-            render: (row) => coverageLabel(row.coverage),
-          },
-        ]}
-        valueAxisLabel="US$/t"
-        valueLegend={MARKET_INTELLIGENCE_CONTENT.modules.importsUnitColumn}
-        tableAriaLabel={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
-        storageKey="supplies:market-intelligence:imports"
-      />
-
-      <MarketIntelligenceModuleSection<
-        MarketProducerPricePoint & { value: string | null }
-      >
-        title={MARKET_INTELLIGENCE_CONTENT.modules.ippTitle}
-        hint={SP_HELP.marketIntelligenceIpp}
-        selectorLabel={MARKET_INTELLIGENCE_CONTENT.modules.ippSeriesLabel}
-        options={ippOptions}
-        selection={selectedIpp}
-        onSelectionChange={filters.setIppSeries}
-        enabled={!catalogError && !catalogLoading}
-        unavailableLabel={
-          MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable
-        }
-        from={filters.state.from}
-        to={filters.state.to}
-        granularity={filters.state.granularity}
-        fetchSeries={async ({ selection, granularity, date_from, date_to, signal }) => {
-          const payload = await getMarketProducerPriceSeries(
+          }) => {
+            const payload = await getMarketImportSeries(
+              {
+                ncm: selection,
+                granularity,
+                date_from,
+                date_to,
+              },
+              signal,
+            );
+            return {
+              points: payload.points.map((point) => ({
+                ...point,
+                value: point.unit_value_usd_per_t,
+              })),
+              summary: payload.summary ?? null,
+              meta: payload.meta,
+            };
+          }}
+          columns={[
             {
-              series_id: selection,
-              granularity,
-              date_from,
-              date_to,
+              key: "period",
+              header:
+                MARKET_INTELLIGENCE_CONTENT.modules.importsPeriodColumn,
+              render: (row) => row.period,
             },
-            signal,
-          );
-          return {
-            dataStatus: payload.meta.data_status,
-            points: payload.points,
-          };
-        }}
-        columns={[
-          {
-            key: "period",
-            header: MARKET_INTELLIGENCE_CONTENT.modules.ippPeriodColumn,
-            render: (row) => row.period,
-          },
-          {
-            key: "value",
-            header: MARKET_INTELLIGENCE_CONTENT.modules.ippValueColumn,
-            render: (row) => formatDecimal(row.value),
-            align: "right",
-          },
-          {
-            key: "coverage",
-            header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
-            render: (row) => coverageLabel(row.coverage),
-          },
-        ]}
-        valueAxisLabel={
-          selectableIpp.find((s) => s.series_id === selectedIpp)?.unit ??
-          MARKET_INTELLIGENCE_CONTENT.modules.ippValueColumn
-        }
-        valueLegend={
-          selectableIpp.find((s) => s.series_id === selectedIpp)?.label ??
-          "IPP"
-        }
-        tableAriaLabel={MARKET_INTELLIGENCE_CONTENT.modules.ippTitle}
-        storageKey="supplies:market-intelligence:ipp"
-      />
-
-      <MarketIntelligenceModuleSection<MarketSeriesPoint>
-        title={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
-        hint={SP_HELP.marketIntelligenceFx}
-        selectorLabel={
-          MARKET_INTELLIGENCE_CONTENT.modules.fxKindSelectorLabel
-        }
-        options={FX_KIND_OPTIONS}
-        selection={filters.state.fxKind}
-        onSelectionChange={(value) =>
-          filters.setFxKind(value as MarketFxKind)
-        }
-        enabled={!catalogError && !catalogLoading}
-        unavailableLabel={
-          MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable
-        }
-        from={filters.state.from}
-        to={filters.state.to}
-        granularity={filters.state.granularity}
-        fetchSeries={async ({ selection, granularity, date_from, date_to, signal }) => {
-          const payload = await getMarketFxSeries(
             {
-              fx_kind: selection as MarketFxKind,
-              granularity,
-              date_from,
-              date_to,
+              key: "fob",
+              header: MARKET_INTELLIGENCE_CONTENT.modules.importsFobColumn,
+              render: (row) => formatDecimal(row.fob_usd_total),
+              align: "right",
             },
+            {
+              key: "weight",
+              header:
+                MARKET_INTELLIGENCE_CONTENT.modules.importsWeightColumn,
+              render: (row) => formatDecimal(row.net_weight_t),
+              align: "right",
+            },
+            {
+              key: "unit",
+              header: MARKET_INTELLIGENCE_CONTENT.modules.importsUnitColumn,
+              render: (row) => formatDecimal(row.unit_value_usd_per_t),
+              align: "right",
+            },
+            {
+              key: "coverage",
+              header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
+              render: (row) => coverageLabel(row.coverage),
+            },
+          ]}
+          kpiLayout="import"
+          unitLabel="US$/t"
+          valueLegend={
+            MARKET_INTELLIGENCE_CONTENT.modules.importsUnitColumn
+          }
+          tableAriaLabel={
+            MARKET_INTELLIGENCE_CONTENT.modules.importsTitle
+          }
+          storageKey="supplies:market-intelligence:imports"
+          exportTitle={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
+          attribution={attribution}
+          reloadKey={reloadKey}
+        />
+      ) : null}
+
+      {view === "fx" ? (
+        <MarketIntelligencePanel<MarketSeriesPoint>
+          title={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
+          hint={SP_HELP.marketIntelligenceFx}
+          enabled={!catalogError && !catalogLoading}
+          configured={Boolean(fxInstrument)}
+          configState={{
+            title:
+              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
+            message:
+              MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable,
+          }}
+          selection={filters.state.fxKind}
+          from={filters.state.from}
+          to={filters.state.to}
+          granularity={filters.state.granularity}
+          mode={filters.state.mode}
+          onModeChange={filters.setMode}
+          fetchSeries={async ({
+            selection,
+            granularity,
+            date_from,
+            date_to,
             signal,
-          );
-          return {
-            dataStatus: payload.meta.data_status,
-            points: payload.points,
-          };
-        }}
-        columns={[
-          {
-            key: "period",
-            header: MARKET_INTELLIGENCE_CONTENT.modules.fxPeriodColumn,
-            render: (row) => row.period,
-          },
-          {
-            key: "value",
-            header: MARKET_INTELLIGENCE_CONTENT.modules.fxValueColumn,
-            render: (row) => formatDecimal(row.value),
-            align: "right",
-          },
-          {
-            key: "coverage",
-            header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
-            render: (row) => coverageLabel(row.coverage),
-          },
-        ]}
-        valueAxisLabel="R$/US$"
-        valueLegend={MARKET_INTELLIGENCE_CONTENT.modules.fxValueColumn}
-        tableAriaLabel={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
-        storageKey="supplies:market-intelligence:fx"
-      />
-
-      <MarketIntelligenceSeriesSection
-        params={filters.apiParams}
-        granularity={filters.state.granularity}
-        currencySymbol={filters.state.currency}
-        enabled={ready && !catalogError}
-      />
-
-      <MarketIntelligenceMonthlyTable
-        params={filters.apiParams}
-        showNativeAverage={isMetalBrl}
-        enabled={ready && !catalogError}
-      />
+          }) => {
+            const payload = await getMarketFxSeries(
+              {
+                fx_kind: selection as MarketFxKind,
+                granularity,
+                date_from,
+                date_to,
+              },
+              signal,
+            );
+            return {
+              points: payload.points,
+              summary: payload.summary ?? null,
+              meta: payload.meta,
+            };
+          }}
+          columns={[
+            {
+              key: "period",
+              header:
+                MARKET_INTELLIGENCE_CONTENT.modules.fxPeriodColumn,
+              render: (row) => row.period,
+            },
+            {
+              key: "value",
+              header: MARKET_INTELLIGENCE_CONTENT.modules.fxValueColumn,
+              render: (row) => formatDecimal(row.value),
+              align: "right",
+            },
+            {
+              key: "coverage",
+              header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
+              render: (row) => coverageLabel(row.coverage),
+            },
+          ]}
+          kpiLayout="fx"
+          unitLabel="R$/US$"
+          valueLegend={MARKET_INTELLIGENCE_CONTENT.modules.fxValueColumn}
+          tableAriaLabel={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
+          storageKey="supplies:market-intelligence:fx"
+          exportTitle={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
+          attribution={attribution}
+          reloadKey={reloadKey}
+        />
+      ) : null}
     </div>
   );
 }

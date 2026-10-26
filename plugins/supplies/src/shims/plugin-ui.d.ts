@@ -926,9 +926,18 @@ declare module "@delpi/plugin-ui/index" {
     ariaLabel?: string;
     idPrefix?: string;
     size?: string;
+    widthMode?: string;
+    direction?: string;
+    disabled?: boolean;
+    className?: string;
     value: string;
     onChange: (value: string) => void;
-    options: Array<{ value: string; label: string }>;
+    options: Array<{
+      value: string;
+      label: ReactNode;
+      ariaLabel?: string;
+      disabled?: boolean;
+    }>;
   }>;
 
   export type PeriodPresetId =

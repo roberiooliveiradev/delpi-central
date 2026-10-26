@@ -1,0 +1,658 @@
+/** Single analysis panel for one market-intelligence perspective
+ * (PROC-0076 R3).
+ *
+ * One panel = contextual KPIs + one view mode (chart XOR table, never
+ * both rendered) + exports + source/methodology footer. Rendering-only:
+ * every metric comes from the BFF ``summary`` read model — the MFE
+ * never recomputes variations, averages or coverage.
+ */
+
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { BarChart3, LineChart, Table2 } from "lucide-react";
+import {
+  ChartSeriesColorsPopover,
+  ChartTypeSegmentToggle,
+  ChartViewShell,
+  MultiTypeSeriesChart,
+  TIME_MULTI_SERIES_TYPES,
+  applySeriesFillPreferences,
+  runTabularExport,
+  usePersistedChartPreferences,
+  type MultiTypeSeriesSpec,
+} from "@delpi/plugin-ui/index";
+
+import { SuppliesKpiCard } from "../../app/suppliesKpiCard";
+import {
+  SuppliesDataCardsGrid,
+  SuppliesDataTable,
+  SuppliesEmptyState,
+  SuppliesLoadingCard,
+  SuppliesSectionCard,
+  SuppliesSegmentToggle,
+  SuppliesStateBanner,
+  SuppliesStatusBadge,
+  SuppliesTabularExportButtons,
+  SP_PORTAL_SCOPE,
+  type DataTableColumn,
+} from "../../app/suppliesUi";
+import { SP_CHART_SERIES_HINTS } from "../../content/helpTooltips";
+import type {
+  MarketFeedIngestion,
+  MarketFreshness,
+  MarketGranularity,
+  MarketSeriesSummary,
+} from "./api";
+import {
+  mapMarketIntelligenceError,
+  MARKET_INTELLIGENCE_CONTENT,
+} from "./content";
+import type { MarketViewMode } from "./marketIntelligenceUrl";
+
+const CHART_HEIGHT = 300;
+
+export type PanelRow = {
+  period: string;
+  value: string | null;
+  coverage: string;
+};
+
+export type PerspectiveFetchResult = {
+  points: PanelRow[];
+  summary: MarketSeriesSummary | null;
+  meta: {
+    data_status: string;
+    freshness: MarketFreshness | null;
+    source_id: string | null;
+    feed_ingestion?: MarketFeedIngestion | null;
+    last_successful_ingestion_at: string | null;
+  };
+};
+
+export type PanelFetchArgs = {
+  selection: string;
+  granularity: MarketGranularity;
+  date_from: string;
+  date_to: string;
+  signal?: AbortSignal;
+};
+
+/** KPI layout per metric kind — the BFF decides which fields exist;
+ * the layout only picks which ones to surface. */
+export type KpiLayout = "index" | "percent" | "fx" | "import";
+
+type MarketIntelligencePanelProps<R extends PanelRow> = {
+  title: string;
+  hint?: string;
+  enabled: boolean;
+  /** Whether the perspective has a selectable series/NCM — an empty
+   * allowlist renders the compact configuration state, not a blank
+   * module (R3-07). */
+  configured: boolean;
+  configState?: { title: string; message: string };
+  selection: string;
+  from: string;
+  to: string;
+  granularity: MarketGranularity;
+  mode: MarketViewMode;
+  onModeChange: (mode: MarketViewMode) => void;
+  fetchSeries: (args: PanelFetchArgs) => Promise<PerspectiveFetchResult>;
+  columns: DataTableColumn<R>[];
+  kpiLayout: KpiLayout;
+  unitLabel: string;
+  valueLegend: string;
+  tableAriaLabel: string;
+  storageKey: string;
+  exportTitle: string;
+  attribution: string | null;
+  reloadKey: number;
+};
+
+function parsePointValue(raw: string | null): number | null {
+  if (raw === null || raw === undefined) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatDecimal(raw: string | null | undefined): string {
+  if (raw === null || raw === undefined) return "—";
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return "—";
+  return parsed.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
+}
+
+function formatPercent(raw: string | null | undefined): string {
+  if (raw === null || raw === undefined) return "—";
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return "—";
+  const sign = parsed > 0 ? "+" : "";
+  return `${sign}${parsed.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}%`;
+}
+
+function coverageLabel(coverage: string | undefined): string {
+  if (!coverage) return "—";
+  return (
+    MARKET_INTELLIGENCE_CONTENT.table.coverageLabels[coverage] ?? coverage
+  );
+}
+
+function dataStatusBadgeVariant(
+  status: string | undefined,
+): "success" | "warning" | "danger" | "info" | "neutral" {
+  if (status === "ok") return "success";
+  if (status === "partial") return "warning";
+  if (status === "no_data") return "neutral";
+  return "info";
+}
+
+function unavailableReasonLabel(reason: string | null | undefined): string {
+  const states = MARKET_INTELLIGENCE_CONTENT.states;
+  switch (reason) {
+    case "provider_unavailable":
+      return states.providerUnavailable;
+    case "feed_failed":
+      return states.feedFailed;
+    case "feed_disabled":
+      return states.feedDisabled;
+    case "feed_not_collected":
+      return states.feedNotCollected;
+    case "window_empty":
+      return states.windowEmpty;
+    default:
+      return states.moduleUnavailable;
+  }
+}
+
+const KPI_ICONS = {
+  chart: <LineChart size={22} strokeWidth={1.75} aria-hidden="true" />,
+  bar: <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />,
+  table: <Table2 size={22} strokeWidth={1.75} aria-hidden="true" />,
+};
+
+export function MarketIntelligencePanel<R extends PanelRow>({
+  title,
+  hint,
+  enabled,
+  configured,
+  configState,
+  selection,
+  from,
+  to,
+  granularity,
+  mode,
+  onModeChange,
+  fetchSeries,
+  columns,
+  kpiLayout,
+  unitLabel,
+  valueLegend,
+  tableAriaLabel,
+  storageKey,
+  exportTitle,
+  attribution,
+  reloadKey,
+}: MarketIntelligencePanelProps<R>) {
+  const { preferences, setPreferences, setChartType } =
+    usePersistedChartPreferences({
+      storageKey,
+      defaults: { chartType: "line" },
+      allowedChartTypes: TIME_MULTI_SERIES_TYPES,
+    });
+  const chartType = preferences.chartType ?? "line";
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [rows, setRows] = useState<R[]>([]);
+  const [summary, setSummary] = useState<MarketSeriesSummary | null>(null);
+  const [meta, setMeta] = useState<PerspectiveFetchResult["meta"] | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!enabled || !configured || !selection) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    // Never render the previous query's data while a new fetch runs —
+    // a denied/blocked response must not resurrect stale values.
+    setRows([]);
+    setSummary(null);
+    fetchSeries({
+      selection,
+      granularity,
+      date_from: from,
+      date_to: to,
+      signal: controller.signal,
+    })
+      .then((result) => {
+        setRows(result.points as R[]);
+        setSummary(result.summary ?? null);
+        setMeta(result.meta);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setRows([]);
+        setSummary(null);
+        setError(mapMarketIntelligenceError(err));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [enabled, configured, selection, granularity, from, to, reloadKey]);
+
+  const chartPoints = useMemo(
+    () =>
+      rows.map((row) => ({
+        period: row.period,
+        value: parsePointValue(row.value),
+      })),
+    [rows],
+  );
+
+  const baseSeries = useMemo<MultiTypeSeriesSpec[]>(
+    () => [
+      {
+        dataKey: "value",
+        name: valueLegend,
+        fill: "var(--delpi-chart-series-1, #2563eb)",
+      },
+    ],
+    [valueLegend],
+  );
+
+  const series = useMemo(
+    () => applySeriesFillPreferences(baseSeries, preferences.seriesFills),
+    [baseSeries, preferences.seriesFills],
+  );
+
+  const formatValue = (value: number) =>
+    value.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    });
+
+  const hasData = chartPoints.some((point) => point.value !== null);
+  const showPartialNote =
+    !loading && !error && meta?.data_status === "partial";
+  const showStaleNote =
+    !loading && !error && meta?.freshness?.status === "delayed";
+  const missingPeriods = summary?.missing_periods ?? [];
+  const unavailableReason =
+    !loading && !error && summary && summary.observed === 0
+      ? summary.unavailable_reason
+      : null;
+
+  const handleExport = (format: string) => {
+    runTabularExport({
+      kind: "table",
+      format,
+      payload: {
+        title: exportTitle,
+        columns: columns.map((col) => ({
+          key: col.key,
+          label:
+            typeof col.header === "string" ? col.header : String(col.key),
+        })),
+        rows: rows.map((row) =>
+          Object.fromEntries(
+            columns.map((col) => {
+              const cell = col.render(row);
+              return [
+                col.key,
+                typeof cell === "string" || typeof cell === "number"
+                  ? cell
+                  : String(cell ?? "—"),
+              ];
+            }),
+          ),
+        ),
+      },
+    });
+  };
+
+  const kpis = useMemo(() => {
+    if (!summary || summary.observed === 0) return [];
+    const content = MARKET_INTELLIGENCE_CONTENT.kpis;
+    const items: {
+      title: string;
+      hint: string;
+      value: string;
+      context: string;
+      icon: ReactNode;
+    }[] = [];
+    if (kpiLayout === "import") {
+      items.push(
+        {
+          title: content.latestUnitValueTitle,
+          hint: content.latestUnitValueHint,
+          value: `${formatDecimal(summary.latest?.value)} ${unitLabel}`,
+          context: summary.latest
+            ? `Competência ${summary.latest.period}`
+            : "",
+          icon: KPI_ICONS.chart,
+        },
+        {
+          title: content.fobTotalTitle,
+          hint: content.fobTotalHint,
+          value: `US$ ${formatDecimal(summary.totals?.fob_usd_total)}`,
+          context: `${summary.observed}/${summary.expected} competências`,
+          icon: KPI_ICONS.bar,
+        },
+        {
+          title: content.weightTotalTitle,
+          hint: content.weightTotalHint,
+          value: `${formatDecimal(summary.totals?.net_weight_t)} t`,
+          context: `${from} → ${to}`,
+          icon: KPI_ICONS.bar,
+        },
+      );
+    } else {
+      items.push({
+        title:
+          kpiLayout === "fx"
+            ? content.latestRateTitle
+            : kpiLayout === "percent"
+              ? content.latestValueTitle
+              : content.latestValueTitle,
+        hint:
+          kpiLayout === "fx"
+            ? content.latestRateHint
+            : content.latestValueHint,
+        value: `${formatDecimal(summary.latest?.value)} ${unitLabel}`,
+        context: summary.latest
+          ? `Competência ${summary.latest.period}`
+          : "",
+        icon: KPI_ICONS.chart,
+      });
+      if (kpiLayout === "percent") {
+        items.push(
+          {
+            title: content.minTitle,
+            hint: content.minHint,
+            value: `${formatPercent(summary.period_min?.value)}`,
+            context: summary.period_min
+              ? `Competência ${summary.period_min.period}`
+              : "",
+            icon: KPI_ICONS.bar,
+          },
+          {
+            title: content.maxTitle,
+            hint: content.maxHint,
+            value: `${formatPercent(summary.period_max?.value)}`,
+            context: summary.period_max
+              ? `Competência ${summary.period_max.period}`
+              : "",
+            icon: KPI_ICONS.bar,
+          },
+        );
+      } else {
+        if (kpiLayout === "fx") {
+          items.push({
+            title: content.averageTitle,
+            hint: content.averageHint,
+            value: `${formatDecimal(summary.period_average)} ${unitLabel}`,
+            context: `${summary.observed} ${MARKET_INTELLIGENCE_CONTENT.summary.validObservations}`,
+            icon: KPI_ICONS.bar,
+          });
+        }
+        items.push({
+          title: content.variationTitle,
+          hint: content.variationHint,
+          value: formatPercent(summary.period_change_pct),
+          context: `${from} → ${to}`,
+          icon: KPI_ICONS.chart,
+        });
+      }
+    }
+    items.push({
+      title: content.coverageTitle,
+      hint: content.coverageHint,
+      value: `${summary.observed}/${summary.expected}`,
+      context: coverageLabel(summary.coverage),
+      icon: KPI_ICONS.table,
+    });
+    return items;
+  }, [summary, kpiLayout, unitLabel, from, to]);
+
+  const modeOptions = [
+    {
+      value: "chart" as MarketViewMode,
+      label: MARKET_INTELLIGENCE_CONTENT.panel.chartMode,
+    },
+    {
+      value: "table" as MarketViewMode,
+      label: MARKET_INTELLIGENCE_CONTENT.panel.tableMode,
+    },
+    {
+      // R3: comparison is only valid between same-unit series — no
+      // approved pair exists yet, so the mode is explicit but disabled.
+      value: "compare" as MarketViewMode,
+      label: MARKET_INTELLIGENCE_CONTENT.panel.compareMode,
+      disabled: true,
+      ariaLabel: MARKET_INTELLIGENCE_CONTENT.panel.compareDisabledHint,
+    },
+  ];
+
+  return (
+    <SuppliesSectionCard
+      title={title}
+      hint={hint}
+      actions={
+        meta?.source_id ? (
+          <SuppliesStatusBadge
+            label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${meta.source_id}`}
+            variant={dataStatusBadgeVariant(meta.data_status)}
+          />
+        ) : undefined
+      }
+    >
+      {!configured ? (
+        <SuppliesStateBanner>
+          <strong>{configState?.title ?? ""}</strong>{" "}
+          {configState?.message ??
+            MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable}
+        </SuppliesStateBanner>
+      ) : null}
+      {loading && configured ? (
+        <SuppliesLoadingCard
+          title={MARKET_INTELLIGENCE_CONTENT.panel.loading}
+          variant="panel"
+        />
+      ) : null}
+      {error ? (
+        <SuppliesStateBanner variant="error">{error}</SuppliesStateBanner>
+      ) : null}
+
+      {configured && !loading && !error ? (
+        <>
+          {unavailableReason ? (
+            <SuppliesStateBanner>
+              {unavailableReasonLabel(unavailableReason)}
+            </SuppliesStateBanner>
+          ) : null}
+          {showStaleNote ? (
+            <SuppliesStateBanner>
+              {MARKET_INTELLIGENCE_CONTENT.states.staleNote}
+              {` ${MARKET_INTELLIGENCE_CONTENT.states.staleEvidence(
+                meta?.freshness?.latest_observation_date ?? null,
+                meta?.freshness?.expected_latest_period ?? "—",
+              )}`}
+            </SuppliesStateBanner>
+          ) : null}
+          {showPartialNote ? (
+            <SuppliesStateBanner>
+              {MARKET_INTELLIGENCE_CONTENT.states.partialNote}
+            </SuppliesStateBanner>
+          ) : null}
+
+          {summary && summary.observed > 0 ? (
+            <SuppliesDataCardsGrid>
+              {kpis.map((kpi) => (
+                <SuppliesKpiCard
+                  key={kpi.title}
+                  title={kpi.title}
+                  titleHint={kpi.hint}
+                  value={kpi.value}
+                  contextLabel={kpi.context}
+                  icon={kpi.icon}
+                />
+              ))}
+            </SuppliesDataCardsGrid>
+          ) : null}
+
+          <div className="sp-module-filters">
+            <SuppliesSegmentToggle
+              ariaLabel={
+                MARKET_INTELLIGENCE_CONTENT.panel.viewSwitcherAriaLabel
+              }
+              idPrefix={`${storageKey}-mode`}
+              size="sm"
+              widthMode="content"
+              value={mode}
+              options={modeOptions}
+              onChange={(value) => onModeChange(value as MarketViewMode)}
+            />
+          </div>
+
+          {!hasData && !unavailableReason && mode === "chart" ? (
+            <SuppliesEmptyState
+              title={MARKET_INTELLIGENCE_CONTENT.panel.emptyTitle}
+              message={MARKET_INTELLIGENCE_CONTENT.panel.emptyMessage}
+            />
+          ) : null}
+          {rows.length === 0 &&
+          !unavailableReason &&
+          mode === "table" ? (
+            <SuppliesEmptyState
+              title={MARKET_INTELLIGENCE_CONTENT.panel.emptyTitle}
+              message={MARKET_INTELLIGENCE_CONTENT.panel.emptyMessage}
+            />
+          ) : null}
+
+          {hasData && mode === "chart" ? (
+            <ChartViewShell
+              prefix="sp"
+              typeToggleLabel={
+                MARKET_INTELLIGENCE_CONTENT.panel.typeLabel
+              }
+              seriesColorsLabel={
+                MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsLabel
+              }
+              typeToggle={
+                <ChartTypeSegmentToggle
+                  family="time_multi_series"
+                  value={chartType}
+                  onChange={setChartType}
+                  idPrefix={`${storageKey}-type`}
+                  prefix="sp"
+                  portalScopeClassName={SP_PORTAL_SCOPE}
+                />
+              }
+              seriesColors={
+                <ChartSeriesColorsPopover
+                  idPrefix={`${storageKey}-colors`}
+                  portalScopeClassName={SP_PORTAL_SCOPE}
+                  series={series}
+                  values={preferences.seriesFills}
+                  summaryLabel={
+                    MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsEmpty
+                  }
+                  panelTitle={
+                    MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsPanelTitle
+                  }
+                  triggerAriaLabel={
+                    MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsTriggerAria
+                  }
+                  resetLabel={
+                    MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsReset
+                  }
+                  hints={SP_CHART_SERIES_HINTS}
+                  onChange={(dataKey: string, color: string) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      seriesFills: {
+                        ...(prev.seriesFills ?? {}),
+                        [dataKey]: color,
+                      },
+                    }))
+                  }
+                  onReset={() =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      seriesFills: undefined,
+                    }))
+                  }
+                />
+              }
+              exportActions={
+                <SuppliesTabularExportButtons
+                  compact
+                  disabled={!hasData || loading}
+                  onExport={handleExport}
+                />
+              }
+            >
+              <MultiTypeSeriesChart
+                data={chartPoints}
+                categoryKey="period"
+                series={series}
+                chartType={chartType}
+                height={CHART_HEIGHT}
+                formatY={formatValue}
+                formatTooltipValue={formatValue}
+                showLegend
+              />
+            </ChartViewShell>
+          ) : null}
+
+          {mode === "table" && rows.length > 0 ? (
+            <>
+              <div className="sp-module-filters">
+                <SuppliesTabularExportButtons
+                  compact
+                  disabled={rows.length === 0 || loading}
+                  onExport={handleExport}
+                />
+              </div>
+              <div
+                className="sp-list-table-region"
+                role="region"
+                aria-label={tableAriaLabel}
+                tabIndex={0}
+              >
+                <SuppliesDataTable
+                  layout="section"
+                  columns={columns}
+                  rows={rows}
+                  rowKey={(row) => row.period}
+                  loading={false}
+                />
+              </div>
+            </>
+          ) : null}
+
+          {missingPeriods.length > 0 ? (
+            <p className="delpi-ui-section-hint-label">
+              {MARKET_INTELLIGENCE_CONTENT.panel.missingPeriodsNote(
+                missingPeriods,
+              )}{" "}
+              {MARKET_INTELLIGENCE_CONTENT.panel.missingPeriodsExplanation}
+            </p>
+          ) : null}
+          {attribution ? (
+            <p className="delpi-ui-section-hint-label">
+              {MARKET_INTELLIGENCE_CONTENT.states.attributionLabel}:{" "}
+              {attribution}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+    </SuppliesSectionCard>
+  );
+}

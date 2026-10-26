@@ -47,6 +47,10 @@ IPP_FEED = "ipp-monthly"
 
 # Methodology identifiers for the new metric kinds.
 IMPORT_UNIT_VALUE_METHOD = "sum_fob_usd_x_1000_div_sum_net_weight_kg/v1"
+IMPORT_TOTALS_METHOD = "sum_of_valid_monthly_buckets/v1"
+MIN_MAX_METHOD = "extremes_of_valid_observations/v1"
+# Maximum missing periods reported in a summary — informative, capped.
+MAX_MISSING_PERIODS = 24
 
 MAX_RANGE_DAYS = 3660
 DEFAULT_PAGE_SIZE = 24
@@ -403,7 +407,10 @@ class MarketIntelligenceService:
             if feed and entry.get("feed") == feed:
                 feed_info = {
                     "feed": entry.get("feed"),
-                    "last_run_outcome": entry.get("outcome"),
+                    "last_run_outcome": entry.get("last_outcome")
+                    or entry.get("outcome"),
+                    "last_error_code": entry.get("last_error_code"),
+                    "source_active": entry.get("source_active"),
                     "last_successful_at": entry.get("last_successful_at"),
                     "latest_observation_date": entry.get(
                         "latest_observation_date"
@@ -542,6 +549,109 @@ class MarketIntelligenceService:
         if partial_reason or observed < expected:
             return "partial"
         return "ok"
+
+    def _perspective_summary(
+        self,
+        *,
+        points: list[dict[str, Any]],
+        value_key: str,
+        granularity: str,
+        expected: int,
+        feed_ingestion: dict[str, Any] | None,
+        include_change: bool,
+        include_average: bool = False,
+        include_min_max: bool = False,
+        totals: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Contextual KPI read model for one perspective (R3).
+
+        Values come from the already-validated series points — the
+        summary never recomputes semantics the BFF doesn't own, and
+        ``None`` stays ``None`` (no zero-fill). ``unavailable_reason``
+        explains an empty perspective by feed evidence, never by guess:
+        ``provider_unavailable`` (last run failed upstream),
+        ``feed_not_collected`` (no successful run yet),
+        ``window_empty`` (ingested history exists outside the window).
+        """
+        valid = [p for p in points if p.get(value_key) is not None]
+        observed = len(valid)
+        latest = (
+            {
+                "period": valid[-1]["period"],
+                "value": valid[-1][value_key],
+            }
+            if valid
+            else None
+        )
+        change = None
+        if include_change and len(valid) >= 2:
+            first_v = _dec(valid[0][value_key])
+            last_v = _dec(valid[-1][value_key])
+            if first_v is not None and first_v != 0 and last_v is not None:
+                change = _fmt(
+                    (last_v - first_v) / first_v * Decimal(100), places=4
+                )
+        average = (
+            _fmt(_mean(_dec(p[value_key]) for p in valid))
+            if include_average
+            else None
+        )
+        min_point = max_point = None
+        if include_min_max and valid:
+            ranked = sorted(valid, key=lambda p: _dec(p[value_key]))
+            min_point = {
+                "period": ranked[0]["period"],
+                "value": ranked[0][value_key],
+            }
+            max_point = {
+                "period": ranked[-1]["period"],
+                "value": ranked[-1][value_key],
+            }
+        missing = (
+            [p["period"] for p in points if p.get(value_key) is None][
+                :MAX_MISSING_PERIODS
+            ]
+            if granularity == "month"
+            else None
+        )
+        unavailable_reason = None
+        if observed == 0:
+            feed = feed_ingestion or {}
+            error_code = feed.get("last_error_code")
+            if error_code:
+                unavailable_reason = (
+                    "provider_unavailable"
+                    if "UNAVAILABLE" in str(error_code).upper()
+                    else "feed_failed"
+                )
+            elif feed.get("source_active") is False:
+                unavailable_reason = "feed_disabled"
+            elif feed.get("last_successful_at"):
+                unavailable_reason = "window_empty"
+            else:
+                unavailable_reason = "feed_not_collected"
+        return {
+            "latest": latest,
+            "period_average": average,
+            "period_change_pct": change,
+            "period_min": min_point,
+            "period_max": max_point,
+            "totals": totals,
+            "observed": observed,
+            "expected": expected,
+            "coverage": _coverage(observed, expected),
+            "missing_periods": missing,
+            "unavailable_reason": unavailable_reason,
+            "method_version": {
+                "average": PERIOD_AVERAGE_METHOD if include_average else None,
+                "period_change": (
+                    PERIOD_VARIATION_METHOD if include_change else None
+                ),
+                "min_max": MIN_MAX_METHOD if include_min_max else None,
+                "totals": IMPORT_TOTALS_METHOD if totals else None,
+                "coverage": COVERAGE_METHOD,
+            },
+        }
 
     # --- endpoints -----------------------------------------------------------
 
@@ -1094,6 +1204,37 @@ class MarketIntelligenceService:
             latest_available=self._instrument_latest(ncm),
             feed_ingestion=meta["feed_ingestion"],
         )
+        valid_points = [
+            p for p in points if p["unit_value_usd_per_t"] is not None
+        ]
+        totals = None
+        if valid_points:
+            totals = {
+                "fob_usd_total": _fmt(
+                    sum(
+                        (_dec(p["fob_usd_total"]) or Decimal(0)
+                         for p in valid_points),
+                        Decimal(0),
+                    ),
+                    places=2,
+                ),
+                "net_weight_t": _fmt(
+                    sum(
+                        (_dec(p["net_weight_t"]) or Decimal(0)
+                         for p in valid_points),
+                        Decimal(0),
+                    )
+                ),
+            }
+        summary = self._perspective_summary(
+            points=points,
+            value_key="unit_value_usd_per_t",
+            granularity=granularity,
+            expected=expected,
+            feed_ingestion=meta["feed_ingestion"],
+            include_change=True,
+            totals=totals,
+        )
         return {
             "series": {
                 "ncm_code": ncm["ncm_code"],
@@ -1110,6 +1251,7 @@ class MarketIntelligenceService:
             },
             "granularity": granularity,
             "points": points,
+            "summary": summary,
             "meta": {
                 "source_id": "mdic-comex-stat",
                 "freshness": freshness,
@@ -1273,6 +1415,18 @@ class MarketIntelligenceService:
             latest_available=self._instrument_latest(series),
             feed_ingestion=meta["feed_ingestion"],
         )
+        is_change_series = series["metric_kind"] != "ipp_index"
+        summary = self._perspective_summary(
+            points=points,
+            value_key="value",
+            granularity=granularity,
+            expected=expected,
+            feed_ingestion=meta["feed_ingestion"],
+            # A percentage series has no period variation (a % of % is
+            # not an approved metric) — amplitude is shown instead.
+            include_change=not is_change_series,
+            include_min_max=is_change_series,
+        )
         return {
             "series": {
                 "series_id": series["series_id"],
@@ -1289,6 +1443,7 @@ class MarketIntelligenceService:
             },
             "granularity": granularity,
             "points": points,
+            "summary": summary,
             "meta": {
                 "source_id": series["source_id"],
                 "freshness": freshness,
@@ -1338,6 +1493,15 @@ class MarketIntelligenceService:
             latest_available=self._instrument_latest(instrument),
             feed_ingestion=meta["feed_ingestion"],
         )
+        summary = self._perspective_summary(
+            points=points,
+            value_key="value",
+            granularity=granularity,
+            expected=expected,
+            feed_ingestion=meta["feed_ingestion"],
+            include_change=True,
+            include_average=True,
+        )
         return {
             "series": {
                 "instrument_code": FX_INSTRUMENT_CODE,
@@ -1349,6 +1513,7 @@ class MarketIntelligenceService:
             },
             "granularity": granularity,
             "points": points,
+            "summary": summary,
             "meta": {
                 "source_id": "bcb-ptax",
                 "freshness": freshness,

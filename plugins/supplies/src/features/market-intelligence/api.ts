@@ -156,6 +156,45 @@ export type MarketSummaryResponse = {
   };
 };
 
+/** Per-feed ingestion evidence surfaced by the BFF meta (R3). */
+export type MarketFeedIngestion = {
+  feed: string;
+  last_run_outcome: string | null;
+  last_error_code: string | null;
+  source_active: boolean | null;
+  last_successful_at: string | null;
+  latest_observation_date: string | null;
+};
+
+/** Reason an active perspective has no observations — feed evidence,
+ * never a UI guess (R3). */
+export type MarketUnavailableReason =
+  | "provider_unavailable"
+  | "feed_failed"
+  | "feed_disabled"
+  | "feed_not_collected"
+  | "window_empty";
+
+/** Contextual KPI read model computed by the BFF for the selected
+ * series — never a quotation card repurposed for another metric. */
+export type MarketSeriesSummary = {
+  latest: { period: string; value: string } | null;
+  period_average: string | null;
+  period_change_pct: string | null;
+  period_min: { period: string; value: string } | null;
+  period_max: { period: string; value: string } | null;
+  totals: {
+    fob_usd_total: string | null;
+    net_weight_t: string | null;
+  } | null;
+  observed: number;
+  expected: number;
+  coverage: string;
+  missing_periods: string[] | null;
+  unavailable_reason: MarketUnavailableReason | null;
+  method_version: Record<string, string | null>;
+};
+
 export type MarketSeriesPoint = {
   period: string;
   value: string | null;
@@ -180,6 +219,7 @@ export type MarketSeriesResponse = {
     data_status: MarketDataStatus;
     partial_reason: string | null;
     schema_version: string;
+    feed_ingestion?: MarketFeedIngestion | null;
     last_successful_ingestion_at: string | null;
   };
 };
@@ -236,6 +276,7 @@ export type MarketImportSeriesResponse = {
   filters: { country_code: string | null; state_code: string | null };
   granularity: MarketGranularity;
   points: MarketImportPoint[];
+  summary?: MarketSeriesSummary;
   meta: MarketSeriesResponse["meta"];
 };
 
@@ -263,6 +304,7 @@ export type MarketProducerPriceSeriesResponse = {
   };
   granularity: MarketGranularity;
   points: MarketProducerPricePoint[];
+  summary?: MarketSeriesSummary;
   meta: MarketSeriesResponse["meta"];
 };
 
@@ -277,6 +319,7 @@ export type MarketFxSeriesResponse = {
   };
   granularity: MarketGranularity;
   points: MarketSeriesPoint[];
+  summary?: MarketSeriesSummary;
   meta: MarketSeriesResponse["meta"];
 };
 
