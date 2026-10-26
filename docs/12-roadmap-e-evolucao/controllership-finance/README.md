@@ -511,3 +511,8 @@ O PO autorizou a execução contínua das lacunas remanescentes da Central P1–
 ## Urgência PO — testar CLARA no ChatGPT antes do aceite final (25/10/2026)
 
 **Diretriz posterior:** [Documento 107 — validação antecipada CLARA no ChatGPT, conclusão do release](./107-clara-validacao-antecipada-chatgpt-release-hoje.md). Após rework de consentimento, **piloto MCP em ambiente não produtivo existente e autorizado → cadastro/teste ChatGPT → fechar G1 owners e homologação G2 → autorização G3 → produção e smoke → cadastro/teste final**. Se não houver ambiente não produtivo apto, executar G1/G2/G3 primeiro, jamais usar produção como piloto sem gates. Meta PO para 25/10/2026; objetivo, não evidência de conclusão. Atualizar Github a cada decisão material/entrega no mesmo commit e não solicitar novo prompt por pequena etapa.
+
+
+## Homologação guiada G2/G3 — 26/10/2026
+
+A sessão de validação funcional assistida pelo PO, a matriz de testes visual/runtime do Portal P1–P6, os findings, os aceites humanos G2 e as verificações de Operador SSH G3 têm agora ledger próprio: **[Documento 108 — Homologação guiada G2/G3](./108-homologacao-guiada-g2-g3-2026-10-26.md)**. Estado inicial: somente tela Início com screenshot visual; navegação, operações, OAuth/CLARA e smoke continuam TEST_NOT_RUN; sem sign-off G2/G3. Atualizar o Doc 108 por evidência e decision após cada passo, não atribuir PASS por atalhos ou deploy.
