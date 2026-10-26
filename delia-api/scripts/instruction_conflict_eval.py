@@ -214,11 +214,15 @@ def main() -> int:
         fingerprint = hashlib.sha256(text.encode()).hexdigest()[:16]
     if CATALOG_VARIANT != "real":
         _apply_catalog_variant(orch._providers, CATALOG_VARIANT)  # noqa: SLF001
-    if CATALOG_VARIANT == "reorder":
-        # Projection seam (eval only): reverse the serialized group
+    PERM_ORDER = os.environ.get("EVAL_PERM_ORDER")  # e.g. "openapi:delpi,mcp:vista,mcp:teo,mcp:davi"
+    if CATALOG_VARIANT == "reorder" or PERM_ORDER:
+        # Projection seam (eval only): reorder the serialized group
         # list inside the same _group_summaries contract — group
         # keys are sorted, so provider-return order alone cannot
-        # move the presentation order.
+        # move the presentation order. EVAL_PERM_ORDER supplies an
+        # explicit group-id order; "reorder" reverses the canonical
+        # order. Only the already-projected list is permuted — no
+        # re-compaction, no field edits.
         import json as _json
 
         from app.application.capability_provision import (
@@ -226,16 +230,39 @@ def main() -> int:
         )
 
         _real_summaries = _orch_mod._group_summaries
+        _explicit = (
+            [s.strip() for s in PERM_ORDER.split(",") if s.strip()]
+            if PERM_ORDER
+            else None
+        )
 
         def _summaries_reordered(*a, **kw):
             payload = _real_summaries(*a, **kw)
             parsed = _json.loads(payload)
-            if isinstance(parsed, dict):
-                gl = parsed.get("capability_groups")
-                if isinstance(gl, list):
-                    parsed["capability_groups"] = list(reversed(gl))
-            elif isinstance(parsed, list):
-                parsed = list(reversed(parsed))
+            is_dict = isinstance(parsed, dict)
+            gl = (
+                parsed.get("capability_groups")
+                if is_dict
+                else parsed
+            )
+            if not isinstance(gl, list):
+                return payload
+            if _explicit is None:
+                reordered = list(reversed(gl))
+            else:
+                by_id = {
+                    g.get("capability_group_id"): g
+                    for g in gl
+                    if isinstance(g, dict)
+                }
+                try:
+                    reordered = [by_id[i] for i in _explicit]
+                except KeyError:
+                    return payload
+            if is_dict:
+                parsed["capability_groups"] = reordered
+            else:
+                parsed = reordered
             return _json.dumps(parsed, ensure_ascii=False)
 
         _orch_mod._group_summaries = _summaries_reordered

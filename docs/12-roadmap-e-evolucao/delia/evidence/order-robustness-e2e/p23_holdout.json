@@ -1,0 +1,5611 @@
+{
+ "summary": {
+  "executions": 40,
+  "model_calls": 179,
+  "input_tokens": 299925,
+  "output_tokens": 6073,
+  "variant": "p23_holdout",
+  "instruction_fingerprint": null
+ },
+ "runs": [
+  {
+   "scenario": "h_rec_abracadeira",
+   "run": 0,
+   "variant": "p23_holdout",
+   "elapsed_ms": 18127,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "abraçadeira",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1092,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5917,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 785,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "abracadeira"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 614,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "get_product_guide",
+       "section": "documentation"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "pertinent_codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "names": [
+     "ABRACADEIRA  MICRO CARB (5/8 X 11/16)9MM (COMPRESSOR)",
+     "ABRACADEIRA  WETZEL 3/4 PVC CINZA",
+     "ABRACADEIRA 1'' PVC  CINZA",
+     "ABRACADEIRA 1/2 PVC CINZA",
+     "ABRACADEIRA 1/2'' PVC  CINZA",
+     "ABRACADEIRA 3/4 PVC CINZA",
+     "ABRACADEIRA 3/4'' PVC  PRETO",
+     "ABRACADEIRA AMERICANA 1,1/2",
+     "ABRACADEIRA CLAMP ARM FRANKLIN",
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4",
+     "ABRACADEIRA DE TORCAO SPIRAL CLIP NATURAL 9,6",
+     "ABRACADEIRA DO SENSOR",
+     "ABRACADEIRA FITA 1M",
+     "ABRACADEIRA FIXACAO PROTECAO TERMINAL MECAL",
+     "ABRACADEIRA G (PRESILHA) 280 X 4,8",
+     "ABRACADEIRA INSULOK PA66HS PT 100X2,45",
+     "ABRACADEIRA INSULOK PA66HS PT 202X4,6",
+     "ABRACADEIRA METAL 5/8",
+     "ABRACADEIRA NYLON T50L PRETA",
+     "ABRACADEIRA PLASTICA 4,8 X 200 MM",
+     "ABRACADEIRA PLASTICA 4,8 X 300 MM",
+     "ABRACADEIRA PPR DN 25 - HIDROJA",
+     "ABRACADEIRA PPR DN 32 - HIDROJA",
+     "ABRACADEIRA PRETA 4,60X390MM UL - ROHS",
+     "ABRACADEIRA PVC BRANCA 3/4",
+     "ABRACADEIRA ROSCA SEM FIM 11-13",
+     "ABRACADEIRA ROSCA SEM FIM 25-38",
+     "ABRACADEIRA ROSCA SEM FIM 57-70",
+     "ABRACADEIRA SCAP",
+     "ABRACADEIRA TIPO COPO 1",
+     "ABRACADEIRA TIPO COPO 2",
+     "ABRACADEIRA TIPO U  1 POLEGADA",
+     "ABRACADEIRA TIPO U 1 32MM",
+     "ABRACADEIRA TIPO U 3 75MM",
+     "ABRACADEIRA TIPO U 3/4 POLEGADA",
+     "ABRAÇADEIRA  202X4,6MM FIXAÇÃO PARA FURO (REDONDO) SERRILHADA INTERNA PRETA - RO",
+     "ABRAÇADEIRA 172X4,6MM FIXACAO POR PARAFUSSO M5 (5MM) NATURAL",
+     "ABRAÇADEIRA 3,6X150MM NATURAL - ROHS",
+     "ABRAÇADEIRA BN-3,6-140",
+     "ABRAÇADEIRA CABEÇA DE CLIPE DE PORCA PUSH NYLON CINZA 28MM - ROHS",
+     "ABRAÇADEIRA CANO 100MM",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXACAO PARA FURO DE 6,3MM NATURAL T50SSL5 - ROHS",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXAÇÃO PARA FURO 6,3MM NATURAL",
+     "ABRAÇADEIRA COM CLIP 150X3,5MM FIXACAO PARA FURO DE 6,7MM CLIP MOVEL NATURAL",
+     "ABRAÇADEIRA CV140SK",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT  (TRACTIAN)",
+     "ABRAÇADEIRA HELLERMANN 7703085050",
+     "ABRAÇADEIRA METALICA FURO M10 BAG20 SUPRENS",
+     "ABRAÇADEIRA NATURAL 7,6X377MM UL - ROHS"
+    ],
+    "total": 72
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "abraçadeira",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_abracadeira",
+   "run": 1,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6332,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "abraçadeira cadastrados",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1104,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5929,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 797,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "abraçadeira cadastrados"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 626,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "abraçadeira",
+       "section": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "pertinent_codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "names": [
+     "ABRACADEIRA  MICRO CARB (5/8 X 11/16)9MM (COMPRESSOR)",
+     "ABRACADEIRA  WETZEL 3/4 PVC CINZA",
+     "ABRACADEIRA 1'' PVC  CINZA",
+     "ABRACADEIRA 1/2 PVC CINZA",
+     "ABRACADEIRA 1/2'' PVC  CINZA",
+     "ABRACADEIRA 3/4 PVC CINZA",
+     "ABRACADEIRA 3/4'' PVC  PRETO",
+     "ABRACADEIRA AMERICANA 1,1/2",
+     "ABRACADEIRA CLAMP ARM FRANKLIN",
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4",
+     "ABRACADEIRA DE TORCAO SPIRAL CLIP NATURAL 9,6",
+     "ABRACADEIRA DO SENSOR",
+     "ABRACADEIRA FITA 1M",
+     "ABRACADEIRA FIXACAO PROTECAO TERMINAL MECAL",
+     "ABRACADEIRA G (PRESILHA) 280 X 4,8",
+     "ABRACADEIRA INSULOK PA66HS PT 100X2,45",
+     "ABRACADEIRA INSULOK PA66HS PT 202X4,6",
+     "ABRACADEIRA METAL 5/8",
+     "ABRACADEIRA NYLON T50L PRETA",
+     "ABRACADEIRA PLASTICA 4,8 X 200 MM",
+     "ABRACADEIRA PLASTICA 4,8 X 300 MM",
+     "ABRACADEIRA PPR DN 25 - HIDROJA",
+     "ABRACADEIRA PPR DN 32 - HIDROJA",
+     "ABRACADEIRA PRETA 4,60X390MM UL - ROHS",
+     "ABRACADEIRA PVC BRANCA 3/4",
+     "ABRACADEIRA ROSCA SEM FIM 11-13",
+     "ABRACADEIRA ROSCA SEM FIM 25-38",
+     "ABRACADEIRA ROSCA SEM FIM 57-70",
+     "ABRACADEIRA SCAP",
+     "ABRACADEIRA TIPO COPO 1",
+     "ABRACADEIRA TIPO COPO 2",
+     "ABRACADEIRA TIPO U  1 POLEGADA",
+     "ABRACADEIRA TIPO U 1 32MM",
+     "ABRACADEIRA TIPO U 3 75MM",
+     "ABRACADEIRA TIPO U 3/4 POLEGADA",
+     "ABRAÇADEIRA  202X4,6MM FIXAÇÃO PARA FURO (REDONDO) SERRILHADA INTERNA PRETA - RO",
+     "ABRAÇADEIRA 172X4,6MM FIXACAO POR PARAFUSSO M5 (5MM) NATURAL",
+     "ABRAÇADEIRA 3,6X150MM NATURAL - ROHS",
+     "ABRAÇADEIRA BN-3,6-140",
+     "ABRAÇADEIRA CABEÇA DE CLIPE DE PORCA PUSH NYLON CINZA 28MM - ROHS",
+     "ABRAÇADEIRA CANO 100MM",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXACAO PARA FURO DE 6,3MM NATURAL T50SSL5 - ROHS",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXAÇÃO PARA FURO 6,3MM NATURAL",
+     "ABRAÇADEIRA COM CLIP 150X3,5MM FIXACAO PARA FURO DE 6,7MM CLIP MOVEL NATURAL",
+     "ABRAÇADEIRA CV140SK",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT  (TRACTIAN)",
+     "ABRAÇADEIRA HELLERMANN 7703085050",
+     "ABRAÇADEIRA METALICA FURO M10 BAG20 SUPRENS",
+     "ABRAÇADEIRA NATURAL 7,6X377MM UL - ROHS"
+    ],
+    "total": 72
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "abraçadeira cadastrados",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_abracadeira",
+   "run": 2,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6949,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "abracadeira",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1092,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5917,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_catalog"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 785,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "abracadeira"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2188,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "abracadeira"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "abracadeira"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "pertinent_codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "names": [
+     "ABRACADEIRA  MICRO CARB (5/8 X 11/16)9MM (COMPRESSOR)",
+     "ABRACADEIRA  WETZEL 3/4 PVC CINZA",
+     "ABRACADEIRA 1'' PVC  CINZA",
+     "ABRACADEIRA 1/2 PVC CINZA",
+     "ABRACADEIRA 1/2'' PVC  CINZA",
+     "ABRACADEIRA 3/4 PVC CINZA",
+     "ABRACADEIRA 3/4'' PVC  PRETO",
+     "ABRACADEIRA AMERICANA 1,1/2",
+     "ABRACADEIRA CLAMP ARM FRANKLIN",
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4",
+     "ABRACADEIRA DE TORCAO SPIRAL CLIP NATURAL 9,6",
+     "ABRACADEIRA DO SENSOR",
+     "ABRACADEIRA FITA 1M",
+     "ABRACADEIRA FIXACAO PROTECAO TERMINAL MECAL",
+     "ABRACADEIRA G (PRESILHA) 280 X 4,8",
+     "ABRACADEIRA INSULOK PA66HS PT 100X2,45",
+     "ABRACADEIRA INSULOK PA66HS PT 202X4,6",
+     "ABRACADEIRA METAL 5/8",
+     "ABRACADEIRA NYLON T50L PRETA",
+     "ABRACADEIRA PLASTICA 4,8 X 200 MM",
+     "ABRACADEIRA PLASTICA 4,8 X 300 MM",
+     "ABRACADEIRA PPR DN 25 - HIDROJA",
+     "ABRACADEIRA PPR DN 32 - HIDROJA",
+     "ABRACADEIRA PRETA 4,60X390MM UL - ROHS",
+     "ABRACADEIRA PVC BRANCA 3/4",
+     "ABRACADEIRA ROSCA SEM FIM 11-13",
+     "ABRACADEIRA ROSCA SEM FIM 25-38",
+     "ABRACADEIRA ROSCA SEM FIM 57-70",
+     "ABRACADEIRA SCAP",
+     "ABRACADEIRA TIPO COPO 1",
+     "ABRACADEIRA TIPO COPO 2",
+     "ABRACADEIRA TIPO U  1 POLEGADA",
+     "ABRACADEIRA TIPO U 1 32MM",
+     "ABRACADEIRA TIPO U 3 75MM",
+     "ABRACADEIRA TIPO U 3/4 POLEGADA",
+     "ABRAÇADEIRA  202X4,6MM FIXAÇÃO PARA FURO (REDONDO) SERRILHADA INTERNA PRETA - RO",
+     "ABRAÇADEIRA 172X4,6MM FIXACAO POR PARAFUSSO M5 (5MM) NATURAL",
+     "ABRAÇADEIRA 3,6X150MM NATURAL - ROHS",
+     "ABRAÇADEIRA BN-3,6-140",
+     "ABRAÇADEIRA CABEÇA DE CLIPE DE PORCA PUSH NYLON CINZA 28MM - ROHS",
+     "ABRAÇADEIRA CANO 100MM",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXACAO PARA FURO DE 6,3MM NATURAL T50SSL5 - ROHS",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXAÇÃO PARA FURO 6,3MM NATURAL",
+     "ABRAÇADEIRA COM CLIP 150X3,5MM FIXACAO PARA FURO DE 6,7MM CLIP MOVEL NATURAL",
+     "ABRAÇADEIRA CV140SK",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT  (TRACTIAN)",
+     "ABRAÇADEIRA HELLERMANN 7703085050",
+     "ABRAÇADEIRA METALICA FURO M10 BAG20 SUPRENS",
+     "ABRAÇADEIRA NATURAL 7,6X377MM UL - ROHS"
+    ],
+    "total": 72
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "teo.get_catalog"
+    ],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "abracadeira",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_abracadeira",
+   "run": 3,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6290,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "abracadeira cadastrados",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1108,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5929,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_catalog"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 797,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "abracadeira cadastrados"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2200,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "abracadeira cadastrados"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "abracadeira cadastrados"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "pertinent_codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "names": [
+     "ABRACADEIRA  MICRO CARB (5/8 X 11/16)9MM (COMPRESSOR)",
+     "ABRACADEIRA  WETZEL 3/4 PVC CINZA",
+     "ABRACADEIRA 1'' PVC  CINZA",
+     "ABRACADEIRA 1/2 PVC CINZA",
+     "ABRACADEIRA 1/2'' PVC  CINZA",
+     "ABRACADEIRA 3/4 PVC CINZA",
+     "ABRACADEIRA 3/4'' PVC  PRETO",
+     "ABRACADEIRA AMERICANA 1,1/2",
+     "ABRACADEIRA CLAMP ARM FRANKLIN",
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4",
+     "ABRACADEIRA DE TORCAO SPIRAL CLIP NATURAL 9,6",
+     "ABRACADEIRA DO SENSOR",
+     "ABRACADEIRA FITA 1M",
+     "ABRACADEIRA FIXACAO PROTECAO TERMINAL MECAL",
+     "ABRACADEIRA G (PRESILHA) 280 X 4,8",
+     "ABRACADEIRA INSULOK PA66HS PT 100X2,45",
+     "ABRACADEIRA INSULOK PA66HS PT 202X4,6",
+     "ABRACADEIRA METAL 5/8",
+     "ABRACADEIRA NYLON T50L PRETA",
+     "ABRACADEIRA PLASTICA 4,8 X 200 MM",
+     "ABRACADEIRA PLASTICA 4,8 X 300 MM",
+     "ABRACADEIRA PPR DN 25 - HIDROJA",
+     "ABRACADEIRA PPR DN 32 - HIDROJA",
+     "ABRACADEIRA PRETA 4,60X390MM UL - ROHS",
+     "ABRACADEIRA PVC BRANCA 3/4",
+     "ABRACADEIRA ROSCA SEM FIM 11-13",
+     "ABRACADEIRA ROSCA SEM FIM 25-38",
+     "ABRACADEIRA ROSCA SEM FIM 57-70",
+     "ABRACADEIRA SCAP",
+     "ABRACADEIRA TIPO COPO 1",
+     "ABRACADEIRA TIPO COPO 2",
+     "ABRACADEIRA TIPO U  1 POLEGADA",
+     "ABRACADEIRA TIPO U 1 32MM",
+     "ABRACADEIRA TIPO U 3 75MM",
+     "ABRACADEIRA TIPO U 3/4 POLEGADA",
+     "ABRAÇADEIRA  202X4,6MM FIXAÇÃO PARA FURO (REDONDO) SERRILHADA INTERNA PRETA - RO",
+     "ABRAÇADEIRA 172X4,6MM FIXACAO POR PARAFUSSO M5 (5MM) NATURAL",
+     "ABRAÇADEIRA 3,6X150MM NATURAL - ROHS",
+     "ABRAÇADEIRA BN-3,6-140",
+     "ABRAÇADEIRA CABEÇA DE CLIPE DE PORCA PUSH NYLON CINZA 28MM - ROHS",
+     "ABRAÇADEIRA CANO 100MM",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXACAO PARA FURO DE 6,3MM NATURAL T50SSL5 - ROHS",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXAÇÃO PARA FURO 6,3MM NATURAL",
+     "ABRAÇADEIRA COM CLIP 150X3,5MM FIXACAO PARA FURO DE 6,7MM CLIP MOVEL NATURAL",
+     "ABRAÇADEIRA CV140SK",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT  (TRACTIAN)",
+     "ABRAÇADEIRA HELLERMANN 7703085050",
+     "ABRAÇADEIRA METALICA FURO M10 BAG20 SUPRENS",
+     "ABRAÇADEIRA NATURAL 7,6X377MM UL - ROHS"
+    ],
+    "total": 72
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "teo.get_catalog"
+    ],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "abracadeira cadastrados",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_abracadeira",
+   "run": 4,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6705,
+   "error": null,
+   "grounding": "GroundingStatus.GROUNDED",
+   "limitations": [
+    "insufficient_evidence"
+   ],
+   "content": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "hypothetical",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "abraçadeira cadastrados",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1104,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5929,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_catalog"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 797,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "abraçadeira cadastrados"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 2200,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "abraçadeira cadastrados"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "mcp",
+     "capability_id": "teo.get_catalog",
+     "arg_keys": [],
+     "args": {},
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "abraçadeira cadastrados"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "pertinent_codes": [
+     "30190985",
+     "30191869",
+     "30191695",
+     "30190908",
+     "30191694",
+     "30191874",
+     "30191675",
+     "30193842",
+     "10211536",
+     "30193688",
+     "10350022",
+     "30192068",
+     "30194007",
+     "30191449",
+     "30191182",
+     "10350041",
+     "10350040",
+     "30191945",
+     "10211537",
+     "30193945",
+     "30194008",
+     "30192260",
+     "30192259",
+     "10350038",
+     "10190060",
+     "10210826",
+     "10210834",
+     "10210824",
+     "30191192",
+     "30191765",
+     "30191766",
+     "30191878",
+     "30193696",
+     "30193707",
+     "30191879",
+     "10350031",
+     "10350012",
+     "10350006",
+     "30191088",
+     "10350030",
+     "10540130",
+     "10350001",
+     "10350021",
+     "10350011",
+     "10350010",
+     "10350033",
+     "10350034",
+     "10350007",
+     "10350017",
+     "10350025"
+    ],
+    "names": [
+     "ABRACADEIRA  MICRO CARB (5/8 X 11/16)9MM (COMPRESSOR)",
+     "ABRACADEIRA  WETZEL 3/4 PVC CINZA",
+     "ABRACADEIRA 1'' PVC  CINZA",
+     "ABRACADEIRA 1/2 PVC CINZA",
+     "ABRACADEIRA 1/2'' PVC  CINZA",
+     "ABRACADEIRA 3/4 PVC CINZA",
+     "ABRACADEIRA 3/4'' PVC  PRETO",
+     "ABRACADEIRA AMERICANA 1,1/2",
+     "ABRACADEIRA CLAMP ARM FRANKLIN",
+     "ABRACADEIRA COM PARAFUSO TIPO D 3/4",
+     "ABRACADEIRA DE TORCAO SPIRAL CLIP NATURAL 9,6",
+     "ABRACADEIRA DO SENSOR",
+     "ABRACADEIRA FITA 1M",
+     "ABRACADEIRA FIXACAO PROTECAO TERMINAL MECAL",
+     "ABRACADEIRA G (PRESILHA) 280 X 4,8",
+     "ABRACADEIRA INSULOK PA66HS PT 100X2,45",
+     "ABRACADEIRA INSULOK PA66HS PT 202X4,6",
+     "ABRACADEIRA METAL 5/8",
+     "ABRACADEIRA NYLON T50L PRETA",
+     "ABRACADEIRA PLASTICA 4,8 X 200 MM",
+     "ABRACADEIRA PLASTICA 4,8 X 300 MM",
+     "ABRACADEIRA PPR DN 25 - HIDROJA",
+     "ABRACADEIRA PPR DN 32 - HIDROJA",
+     "ABRACADEIRA PRETA 4,60X390MM UL - ROHS",
+     "ABRACADEIRA PVC BRANCA 3/4",
+     "ABRACADEIRA ROSCA SEM FIM 11-13",
+     "ABRACADEIRA ROSCA SEM FIM 25-38",
+     "ABRACADEIRA ROSCA SEM FIM 57-70",
+     "ABRACADEIRA SCAP",
+     "ABRACADEIRA TIPO COPO 1",
+     "ABRACADEIRA TIPO COPO 2",
+     "ABRACADEIRA TIPO U  1 POLEGADA",
+     "ABRACADEIRA TIPO U 1 32MM",
+     "ABRACADEIRA TIPO U 3 75MM",
+     "ABRACADEIRA TIPO U 3/4 POLEGADA",
+     "ABRAÇADEIRA  202X4,6MM FIXAÇÃO PARA FURO (REDONDO) SERRILHADA INTERNA PRETA - RO",
+     "ABRAÇADEIRA 172X4,6MM FIXACAO POR PARAFUSSO M5 (5MM) NATURAL",
+     "ABRAÇADEIRA 3,6X150MM NATURAL - ROHS",
+     "ABRAÇADEIRA BN-3,6-140",
+     "ABRAÇADEIRA CABEÇA DE CLIPE DE PORCA PUSH NYLON CINZA 28MM - ROHS",
+     "ABRAÇADEIRA CANO 100MM",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXACAO PARA FURO DE 6,3MM NATURAL T50SSL5 - ROHS",
+     "ABRAÇADEIRA COM CLIP 135X4,6MM FIXAÇÃO PARA FURO 6,3MM NATURAL",
+     "ABRAÇADEIRA COM CLIP 150X3,5MM FIXACAO PARA FURO DE 6,7MM CLIP MOVEL NATURAL",
+     "ABRAÇADEIRA CV140SK",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT",
+     "ABRAÇADEIRA DE VELCRO 152,4 X 12,70MM - PT  (TRACTIAN)",
+     "ABRAÇADEIRA HELLERMANN 7703085050",
+     "ABRAÇADEIRA METALICA FURO M10 BAG20 SUPRENS",
+     "ABRAÇADEIRA NATURAL 7,6X377MM UL - ROHS"
+    ],
+    "total": 72
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "teo.get_catalog"
+    ],
+    "admission": true,
+    "interaction_class": "hypothetical",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "abraçadeira cadastrados",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_espaguete",
+   "run": 0,
+   "variant": "p23_holdout",
+   "elapsed_ms": 8179,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "espaguete para fiação",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1102,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5927,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 795,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "exemplos de espaguete para fiação"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 624,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "espaguete para fiação"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80001654",
+     "80001655"
+    ],
+    "pertinent_codes": [
+     "80001654",
+     "80001655"
+    ],
+    "names": [
+     "ESPAGUETE Ø4X40MM CLASSE B 130°C",
+     "ESPAGUETE Ø4X60MM CLASSE B 130°C"
+    ],
+    "total": 2
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 2,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "espaguete para fiação",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_espaguete",
+   "run": 1,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6299,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "espaguete para fiação",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1102,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5927,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 795,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "espaguete para fiação"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 624,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "espaguete para fiação"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80001654",
+     "80001655"
+    ],
+    "pertinent_codes": [
+     "80001654",
+     "80001655"
+    ],
+    "names": [
+     "ESPAGUETE Ø4X40MM CLASSE B 130°C",
+     "ESPAGUETE Ø4X60MM CLASSE B 130°C"
+    ],
+    "total": 2
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 2,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "espaguete para fiação",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_espaguete",
+   "run": 2,
+   "variant": "p23_holdout",
+   "elapsed_ms": 7335,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "espaguete para fiação",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1106,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5927,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 795,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "exemplos de espaguete para fiação"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 624,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "espaguete para fiação"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80001654",
+     "80001655"
+    ],
+    "pertinent_codes": [
+     "80001654",
+     "80001655"
+    ],
+    "names": [
+     "ESPAGUETE Ø4X40MM CLASSE B 130°C",
+     "ESPAGUETE Ø4X60MM CLASSE B 130°C"
+    ],
+    "total": 2
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 2,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "espaguete para fiação",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_espaguete",
+   "run": 3,
+   "variant": "p23_holdout",
+   "elapsed_ms": 5466,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "espaguete fiação",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1097,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5922,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "mcp:vista.get_playlist_context"
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80001654",
+     "80001655"
+    ],
+    "pertinent_codes": [
+     "80001654",
+     "80001655"
+    ],
+    "names": [
+     "ESPAGUETE Ø4X40MM CLASSE B 130°C",
+     "ESPAGUETE Ø4X60MM CLASSE B 130°C"
+    ],
+    "total": 2
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 2,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "espaguete fiação",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_espaguete",
+   "run": 4,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6107,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "hypothetical",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "espaguete fiação",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1101,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5922,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 790,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "exemplos de espaguete para fiação"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 619,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "espaguete",
+       "section": "fiação"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "80001654",
+     "80001655"
+    ],
+    "pertinent_codes": [
+     "80001654",
+     "80001655"
+    ],
+    "names": [
+     "ESPAGUETE Ø4X40MM CLASSE B 130°C",
+     "ESPAGUETE Ø4X60MM CLASSE B 130°C"
+    ],
+    "total": 2
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 2,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "hypothetical",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "espaguete fiação",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_code2",
+   "run": 0,
+   "variant": "p23_holdout",
+   "elapsed_ms": 773,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081004"
+    ],
+    "pertinent_codes": [
+     "10081004"
+    ],
+    "names": [
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE"
+    ],
+    "total": null
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 1,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_code2",
+   "run": 1,
+   "variant": "p23_holdout",
+   "elapsed_ms": 979,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081004"
+    ],
+    "pertinent_codes": [
+     "10081004"
+    ],
+    "names": [
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE"
+    ],
+    "total": null
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 1,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_code2",
+   "run": 2,
+   "variant": "p23_holdout",
+   "elapsed_ms": 868,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081004"
+    ],
+    "pertinent_codes": [
+     "10081004"
+    ],
+    "names": [
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE"
+    ],
+    "total": null
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 1,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_code2",
+   "run": 3,
+   "variant": "p23_holdout",
+   "elapsed_ms": 8474,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "openapi:delpi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 829,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "delpi.get_product_summary",
+      "goal_class": "read",
+      "business_subject": "produto de código 10081004"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1110,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5716,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 270,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "code": "10081004"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 629,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "id": "10081004"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081004"
+    ],
+    "pertinent_codes": [
+     "10081004"
+    ],
+    "names": [
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE"
+    ],
+    "total": null
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 1,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "openapi:delpi",
+    "proposed_cap": "delpi.get_product_summary",
+    "chosen_group": "openapi:delpi",
+    "chosen_cap": "delpi.get_product_summary",
+    "business_subject": "produto de código 10081004",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_code2",
+   "run": 4,
+   "variant": "p23_holdout",
+   "elapsed_ms": 679,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081004"
+    ],
+    "pertinent_codes": [
+     "10081004"
+    ],
+    "names": [
+     "TERM. BALA 1,00-2,50MM2 NIQUELADO FITADO DIAM 4,80MM PLUGUE"
+    ],
+    "total": null
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 1,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_qual",
+   "run": 0,
+   "variant": "p23_holdout",
+   "elapsed_ms": 1024,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "pertinent_codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "names": [
+     "BALANCA BALMAK 1000KG X 200G PLATAFORMA 1,00 X 1,00M",
+     "BALANCA ELETRONICA 50KGX5G",
+     "BALANCIM 10A / 250 VCA PARALELO",
+     "BALANCIM 10A / 250 VCA SIMPLES",
+     "BALANCIM PULSADOR 10A / 250 SOLD WEG",
+     "BALANCIM RETRATIL PARA PARAFUSADEIRA",
+     "BALANÇA DIGITAL  PORTÁTIL ALTA PRECISÃO CAPACIDADE MÁXIMA 3 KG",
+     "BALANÇA ELETRONICA 15KGX5G PESADORA",
+     "BALANÇA ELETRONICA 30KGX5G SEM BAT PRATO 331X280MM",
+     "BALANÇA ELETRONICA 3400 30KG X 10G STANDARD",
+     "BALANÇA ELETRONICA 3400 TOLEDO",
+     "BALANÇA ELETRÔNICA 31KG X 2/5/10G C/ MEMÓRIA - URANO",
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL"
+    ],
+    "total": 77
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_qual",
+   "run": 1,
+   "variant": "p23_holdout",
+   "elapsed_ms": 11648,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminais bala para cabo de 4mm com estoque",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1128,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5949,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 817,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "terminais bala para cabo de 4mm com estoque"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 646,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "topic": "terminais bala",
+       "section": "para cabo de 4mm com estoque"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "pertinent_codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "names": [
+     "BALANCA BALMAK 1000KG X 200G PLATAFORMA 1,00 X 1,00M",
+     "BALANCA ELETRONICA 50KGX5G",
+     "BALANCIM 10A / 250 VCA PARALELO",
+     "BALANCIM 10A / 250 VCA SIMPLES",
+     "BALANCIM PULSADOR 10A / 250 SOLD WEG",
+     "BALANCIM RETRATIL PARA PARAFUSADEIRA",
+     "BALANÇA DIGITAL  PORTÁTIL ALTA PRECISÃO CAPACIDADE MÁXIMA 3 KG",
+     "BALANÇA ELETRONICA 15KGX5G PESADORA",
+     "BALANÇA ELETRONICA 30KGX5G SEM BAT PRATO 331X280MM",
+     "BALANÇA ELETRONICA 3400 30KG X 10G STANDARD",
+     "BALANÇA ELETRONICA 3400 TOLEDO",
+     "BALANÇA ELETRÔNICA 31KG X 2/5/10G C/ MEMÓRIA - URANO",
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL"
+    ],
+    "total": 77
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminais bala para cabo de 4mm com estoque",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_qual",
+   "run": 2,
+   "variant": "p23_holdout",
+   "elapsed_ms": 961,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "pertinent_codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "names": [
+     "BALANCA BALMAK 1000KG X 200G PLATAFORMA 1,00 X 1,00M",
+     "BALANCA ELETRONICA 50KGX5G",
+     "BALANCIM 10A / 250 VCA PARALELO",
+     "BALANCIM 10A / 250 VCA SIMPLES",
+     "BALANCIM PULSADOR 10A / 250 SOLD WEG",
+     "BALANCIM RETRATIL PARA PARAFUSADEIRA",
+     "BALANÇA DIGITAL  PORTÁTIL ALTA PRECISÃO CAPACIDADE MÁXIMA 3 KG",
+     "BALANÇA ELETRONICA 15KGX5G PESADORA",
+     "BALANÇA ELETRONICA 30KGX5G SEM BAT PRATO 331X280MM",
+     "BALANÇA ELETRONICA 3400 30KG X 10G STANDARD",
+     "BALANÇA ELETRONICA 3400 TOLEDO",
+     "BALANÇA ELETRÔNICA 31KG X 2/5/10G C/ MEMÓRIA - URANO",
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL"
+    ],
+    "total": 77
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_qual",
+   "run": 3,
+   "variant": "p23_holdout",
+   "elapsed_ms": 710,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "pertinent_codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "names": [
+     "BALANCA BALMAK 1000KG X 200G PLATAFORMA 1,00 X 1,00M",
+     "BALANCA ELETRONICA 50KGX5G",
+     "BALANCIM 10A / 250 VCA PARALELO",
+     "BALANCIM 10A / 250 VCA SIMPLES",
+     "BALANCIM PULSADOR 10A / 250 SOLD WEG",
+     "BALANCIM RETRATIL PARA PARAFUSADEIRA",
+     "BALANÇA DIGITAL  PORTÁTIL ALTA PRECISÃO CAPACIDADE MÁXIMA 3 KG",
+     "BALANÇA ELETRONICA 15KGX5G PESADORA",
+     "BALANÇA ELETRONICA 30KGX5G SEM BAT PRATO 331X280MM",
+     "BALANÇA ELETRONICA 3400 30KG X 10G STANDARD",
+     "BALANÇA ELETRONICA 3400 TOLEDO",
+     "BALANÇA ELETRÔNICA 31KG X 2/5/10G C/ MEMÓRIA - URANO",
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL"
+    ],
+    "total": 77
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_rec_qual",
+   "run": 4,
+   "variant": "p23_holdout",
+   "elapsed_ms": 713,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "pertinent_codes": [
+     "10450070",
+     "10450535",
+     "10210393",
+     "10210569",
+     "10210892",
+     "30192221",
+     "20010047",
+     "10450114",
+     "10450194",
+     "10450571",
+     "10450433",
+     "10450554",
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990"
+    ],
+    "names": [
+     "BALANCA BALMAK 1000KG X 200G PLATAFORMA 1,00 X 1,00M",
+     "BALANCA ELETRONICA 50KGX5G",
+     "BALANCIM 10A / 250 VCA PARALELO",
+     "BALANCIM 10A / 250 VCA SIMPLES",
+     "BALANCIM PULSADOR 10A / 250 SOLD WEG",
+     "BALANCIM RETRATIL PARA PARAFUSADEIRA",
+     "BALANÇA DIGITAL  PORTÁTIL ALTA PRECISÃO CAPACIDADE MÁXIMA 3 KG",
+     "BALANÇA ELETRONICA 15KGX5G PESADORA",
+     "BALANÇA ELETRONICA 30KGX5G SEM BAT PRATO 331X280MM",
+     "BALANÇA ELETRONICA 3400 30KG X 10G STANDARD",
+     "BALANÇA ELETRONICA 3400 TOLEDO",
+     "BALANÇA ELETRÔNICA 31KG X 2/5/10G C/ MEMÓRIA - URANO",
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL"
+    ],
+    "total": 77
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_denominacao",
+   "run": 0,
+   "variant": "p23_holdout",
+   "elapsed_ms": 16043,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminals de compressão",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1105,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5929,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "delpi.get_product_summary"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 797,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "terminals de compressão"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 267,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "code": "terminals-de-compressao"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminals de compressão",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_denominacao",
+   "run": 1,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6962,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminais de compressão",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1108,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5929,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "openapi:delpi.get_product_summary"
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminais de compressão",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_denominacao",
+   "run": 2,
+   "variant": "p23_holdout",
+   "elapsed_ms": 4912,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminais de compressão",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1108,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5929,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "delpi.get_product_summary"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 797,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "terminais de compressão"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 267,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "code": "terminais-compressao"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminais de compressão",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_denominacao",
+   "run": 3,
+   "variant": "p23_holdout",
+   "elapsed_ms": 4501,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_path_unbound"
+   ],
+   "content": "Não identifiquei nas superfícies autoritativas uma capacidade que responda a esta solicitação agora. Nenhum dado operacional foi inventado — reformule ou especifique o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminals of compression"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1109,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5930,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "openapi:delpi.get_product_summary"
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "CAPABILITY_SELECTION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminals of compression",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_denominacao",
+   "run": 4,
+   "variant": "p23_holdout",
+   "elapsed_ms": 20697,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "owner_query_miss"
+   ],
+   "content": "A fonte consultada informou que não há registro para esta solicitação. Nenhum dado operacional foi inventado.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "terminals de compressão",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1108,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5929,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "delpi.search_products"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 797,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "terminals de compressão"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 713,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [
+       "code",
+       "group_code",
+       "customer_reference"
+      ],
+      "arguments": {
+       "description": "terminals de compressão"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7690,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "terminals de comprimção"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5918,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 1142,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1338,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5929,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "delpi.search_products"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 995,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "description": "terminals de compressão"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 7972,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "terminals de compressão"
+      }
+     }
+    }
+   ],
+   "invokes": [
+    {
+     "provider": "openapi",
+     "capability_id": "delpi.search_products",
+     "arg_keys": [
+      "description"
+     ],
+     "args": {
+      "description": "terminals de compressão"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "terminals de comprimção"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    },
+    {
+     "provider": "mcp",
+     "capability_id": "davi.discover_delpi_information",
+     "arg_keys": [
+      "query"
+     ],
+     "args": {
+      "query": "terminals de compressão"
+     },
+     "status": "COMPLETED",
+     "complete": true
+    }
+   ],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [
+     "davi.discover_delpi_information",
+     "delpi.search_products"
+    ],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "terminals de compressão",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_sigla",
+   "run": 0,
+   "variant": "p23_holdout",
+   "elapsed_ms": 9634,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "O2",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1083,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5908,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 776,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "significado da sigla O2 na nomenclatura de terminais"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 605,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "terminais",
+       "section": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "O2",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_sigla",
+   "run": 1,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6894,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "O2 na nomenclatura de terminais"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1116,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5937,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 805,
+     "block_valid": true,
+     "proposal": {
+      "arguments": {
+       "query": "O2 na nomenclatura de terminais"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 634,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "O2 na nomenclatura de terminais"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "O2 na nomenclatura de terminais",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_sigla",
+   "run": 2,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6301,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "ambiguous",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "O2",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1087,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5908,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 776,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "significado da sigla O2 na nomenclatura de terminais"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 605,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "terminais",
+       "section": "None"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "ambiguous",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "O2",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_sigla",
+   "run": 3,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6414,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "O2 na nomenclatura de terminais",
+      "scope_constraints": {}
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1116,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5937,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 805,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "O2 na nomenclatura de terminais"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 634,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "O2 na nomenclatura de terminais"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "O2 na nomenclatura de terminais",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_doc_sigla",
+   "run": 4,
+   "variant": "p23_holdout",
+   "elapsed_ms": 6782,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o pedido.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "operational",
+      "requires_owner_surface": true
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_group",
+     "block_len": 5989,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "capability_group_id": "mcp:davi"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.select_capability",
+     "block_len": 819,
+     "block_valid": true,
+     "proposal": {
+      "applicable": true,
+      "remote_name": "discover_delpi_information",
+      "goal_class": "read",
+      "business_subject": "O2 na nomenclatura de terminais"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.native_assessment",
+     "block_len": 1116,
+     "block_valid": true,
+     "proposal": {
+      "status": "foreign_evidence_required"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.foreign_selection",
+     "block_len": 5937,
+     "block_valid": true,
+     "proposal": {
+      "foreign_capability_id": "teo.get_product_guide"
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 805,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "query": "O2 na nomenclatura de terminais"
+      }
+     }
+    },
+    {
+     "purpose": "delia.capability_orchestration.arguments",
+     "block_len": 634,
+     "block_valid": true,
+     "proposal": {
+      "missing_inputs": [],
+      "arguments": {
+       "topic": "terminais",
+       "section": "O2"
+      }
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "operational",
+    "proposed_group": "mcp:davi",
+    "proposed_cap": "discover_delpi_information",
+    "chosen_group": "mcp:davi",
+    "chosen_cap": "discover_delpi_information",
+    "business_subject": "O2 na nomenclatura de terminais",
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_amb_broad",
+   "run": 0,
+   "variant": "p23_holdout",
+   "elapsed_ms": 835,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "pertinent_codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "names": [
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL",
+     "TERMINAL P/ SEALTUBO 1 1/2''",
+     "TERMINAL P/ SEALTUBO 3/4 BSP PLUS",
+     "TERMINAL PARA BOMBA STIHL 1/4 8200 0404",
+     "TERMINAL PARA C1",
+     "TERMINAL PARA C3",
+     "TERMINAL PARA C4",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA GRANDE",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA PEQUENO",
+     "TERMINAL PARA CONECTOR 14 VIAS MACHO GRANDE",
+     "TERMINAL PARA CONECTOR B2",
+     "TERMINAL PARA CONECTOR C2",
+     "TERMINAL PARA CONECTOR E1"
+    ],
+    "total": 65
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_amb_broad",
+   "run": 1,
+   "variant": "p23_holdout",
+   "elapsed_ms": 715,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "pertinent_codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "names": [
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL",
+     "TERMINAL P/ SEALTUBO 1 1/2''",
+     "TERMINAL P/ SEALTUBO 3/4 BSP PLUS",
+     "TERMINAL PARA BOMBA STIHL 1/4 8200 0404",
+     "TERMINAL PARA C1",
+     "TERMINAL PARA C3",
+     "TERMINAL PARA C4",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA GRANDE",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA PEQUENO",
+     "TERMINAL PARA CONECTOR 14 VIAS MACHO GRANDE",
+     "TERMINAL PARA CONECTOR B2",
+     "TERMINAL PARA CONECTOR C2",
+     "TERMINAL PARA CONECTOR E1"
+    ],
+    "total": 65
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_amb_broad",
+   "run": 2,
+   "variant": "p23_holdout",
+   "elapsed_ms": 2099,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "pertinent_codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "names": [
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL",
+     "TERMINAL P/ SEALTUBO 1 1/2''",
+     "TERMINAL P/ SEALTUBO 3/4 BSP PLUS",
+     "TERMINAL PARA BOMBA STIHL 1/4 8200 0404",
+     "TERMINAL PARA C1",
+     "TERMINAL PARA C3",
+     "TERMINAL PARA C4",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA GRANDE",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA PEQUENO",
+     "TERMINAL PARA CONECTOR 14 VIAS MACHO GRANDE",
+     "TERMINAL PARA CONECTOR B2",
+     "TERMINAL PARA CONECTOR C2",
+     "TERMINAL PARA CONECTOR E1"
+    ],
+    "total": 65
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_amb_broad",
+   "run": 3,
+   "variant": "p23_holdout",
+   "elapsed_ms": 709,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "pertinent_codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "names": [
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL",
+     "TERMINAL P/ SEALTUBO 1 1/2''",
+     "TERMINAL P/ SEALTUBO 3/4 BSP PLUS",
+     "TERMINAL PARA BOMBA STIHL 1/4 8200 0404",
+     "TERMINAL PARA C1",
+     "TERMINAL PARA C3",
+     "TERMINAL PARA C4",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA GRANDE",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA PEQUENO",
+     "TERMINAL PARA CONECTOR 14 VIAS MACHO GRANDE",
+     "TERMINAL PARA CONECTOR B2",
+     "TERMINAL PARA CONECTOR C2",
+     "TERMINAL PARA CONECTOR E1"
+    ],
+    "total": 65
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_amb_broad",
+   "run": 4,
+   "variant": "p23_holdout",
+   "elapsed_ms": 713,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [
+    "capability_surface_listing"
+   ],
+   "content": "Superfícies de especialistas publicadas e alcançáveis neste momento:\n- DAVI:\n  - discover_delpi_information: Find the governed DELPI READ capability that best matches the user's natural-language information need. Call this first. Returns opaque candidate_token values for execute_delpi_inf\n  - execute_delpi_information: Execute one candidate returned by the current discover_delpi_information call. Requires that candidate_token. Does not accept URL, path, method, free operationId, or SQL. Backend A\n- TEO:\n  - get_my_context: Minimal personal context (name/role). Not authorization.\n  - get_worksp",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "surface_inquiry",
+      "requires_owner_surface": true
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": {
+    "status": "COMPLETED",
+    "codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "pertinent_codes": [
+     "10081171",
+     "10081172",
+     "10081182",
+     "10080663",
+     "30190928",
+     "10080747",
+     "10211144",
+     "90310073",
+     "90310005",
+     "90310072",
+     "90310006",
+     "10081295",
+     "10081551",
+     "10080838",
+     "10320006",
+     "10080749",
+     "10080753",
+     "10080750",
+     "10081784",
+     "10080728",
+     "10081745",
+     "10081534",
+     "10081344",
+     "10081026",
+     "10081853",
+     "30194074",
+     "10081270",
+     "30191745",
+     "30191742",
+     "10211451",
+     "30191741",
+     "30191743",
+     "30191744",
+     "30194039",
+     "10081246",
+     "10081345",
+     "10080067",
+     "30193990",
+     "30191623",
+     "30191651",
+     "30191939",
+     "10081170",
+     "10081169",
+     "10081165",
+     "10081197",
+     "10081244",
+     "10081198",
+     "10081164",
+     "10081166",
+     "10081167"
+    ],
+    "names": [
+     "TERMINAL 1 PARA CONECTOR B1",
+     "TERMINAL 2 PARA CONECTOR B1",
+     "TERMINAL 3 PARA CONECTOR B1",
+     "TERMINAL 6.3 GARFO GMEG - PROVISORIO",
+     "TERMINAL A PRESSAO REFORCADO 50MM",
+     "TERMINAL BARE 16MM2",
+     "TERMINAL BASE INT - OCTRON",
+     "TERMINAL BOB. CWM9-25 A1",
+     "TERMINAL BOB. CWM9-25 A1/A2",
+     "TERMINAL BOB. CWM9-25 A2",
+     "TERMINAL BOBINA PEQUENO",
+     "TERMINAL BULLET FEMEA 4.0 ISOLADO -1,5 - 2,5 MM",
+     "TERMINAL CATERPILLAR A GRANEL - ROHS",
+     "TERMINAL CHATO - FORNECIDO PELA ERZEG",
+     "TERMINAL DE BOBINA PEQUENO",
+     "TERMINAL END 0.75MM2 L=8MM",
+     "TERMINAL END 05 MM² L=8MM ORAN",
+     "TERMINAL END 2.5MM2 L=8MM",
+     "TERMINAL FEMEA  (RASTRAC)",
+     "TERMINAL FEMEA - FORNECIDO PELA ERZEG",
+     "TERMINAL FEMEA MINI FIT 28-20AWG ESTNHADO FITADO",
+     "TERMINAL FEMEA PARA PROLONGADOR 10A/20A - ROHS",
+     "TERMINAL FEMEA SPT 1,00-2,50MM",
+     "TERMINAL FÊMEA  JACK  P/  PINO BANANA  4 MM",
+     "TERMINAL FÊMEA 30-24AWG MODU NU P/ ALOJAMENTO 2,54MM FITADO",
+     "TERMINAL FÊMEA GIR. 90° JIC 37° ROSCA 9/16 X MANG. 3/8",
+     "TERMINAL FÊMEA PARA CABO COM BITOLA DE 20~16 AWG MML-TF",
+     "TERMINAL GARFO 2,5X6,0MM F5,3 KST",
+     "TERMINAL IHOS SIMPLES 4,00MM CINZA KST",
+     "TERMINAL ILHO SIMPLES - FORNECIDO PELA FALCON",
+     "TERMINAL ILHOS SIMPLES 1,5 PT",
+     "TERMINAL ILHOS SIMPLES 10MM VM KST",
+     "TERMINAL ILHOS SIMPLES 35MM",
+     "TERMINAL MACHO FIXO ROSCA 1/2 NPT X 1/2",
+     "TERMINAL MACHO PARA CONECTOR 2 VIAS",
+     "TERMINAL MACHO SPT 1,50-2,50MM",
+     "TERMINAL MK III  (0332.1878)",
+     "TERMINAL OLHAL",
+     "TERMINAL P/ SEALTUBO 1 1/2''",
+     "TERMINAL P/ SEALTUBO 3/4 BSP PLUS",
+     "TERMINAL PARA BOMBA STIHL 1/4 8200 0404",
+     "TERMINAL PARA C1",
+     "TERMINAL PARA C3",
+     "TERMINAL PARA C4",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA GRANDE",
+     "TERMINAL PARA CONECTOR 14 VIAS FEMEA PEQUENO",
+     "TERMINAL PARA CONECTOR 14 VIAS MACHO GRANDE",
+     "TERMINAL PARA CONECTOR B2",
+     "TERMINAL PARA CONECTOR C2",
+     "TERMINAL PARA CONECTOR E1"
+    ],
+    "total": 65
+   },
+   "classification": {
+    "outcome": "FAIL",
+    "first_divergent": "ADMISSION_ERROR",
+    "oracle_hits": 0,
+    "oracle_codes": 50,
+    "invoked_caps": [],
+    "admission": true,
+    "interaction_class": "surface_inquiry",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_nobiz_thanks",
+   "run": 0,
+   "variant": "p23_holdout",
+   "elapsed_ms": 1661,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "De nada! Se tiver mais alguma coisa em que possa ajudar, estarei à disposição.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": false,
+    "interaction_class": "conversation",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_nobiz_thanks",
+   "run": 1,
+   "variant": "p23_holdout",
+   "elapsed_ms": 1178,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "De nada. Estou aqui para ajudar. Se precisar de mais alguma coisa, só pede. ",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": false,
+    "interaction_class": "conversation",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_nobiz_thanks",
+   "run": 2,
+   "variant": "p23_holdout",
+   "elapsed_ms": 1337,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "De nada! Se tiver mais alguma coisa para perguntar, estou à vontade. Aguardo com prazer.",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": false,
+    "interaction_class": "conversation",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_nobiz_thanks",
+   "run": 3,
+   "variant": "p23_holdout",
+   "elapsed_ms": 1344,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "De nada. Estou à disposição para outros esclarecimentos. Procure outras perguntas se precisar.ótimo!",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": false,
+    "interaction_class": "conversation",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  },
+  {
+   "scenario": "h_nobiz_thanks",
+   "run": 4,
+   "variant": "p23_holdout",
+   "elapsed_ms": 1344,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "limitations": [],
+   "content": "De nada! Se tiver mais alguma coisa para perguntar, estou à disposição. Tenha um ótimo dia!",
+   "stages": [],
+   "proposals": [
+    {
+     "purpose": "delia.capability_orchestration.interaction_admission",
+     "block_len": 195,
+     "block_valid": true,
+     "proposal": {
+      "interaction_class": "conversation",
+      "requires_owner_surface": false
+     }
+    }
+   ],
+   "invokes": [],
+   "oracle_data": null,
+   "classification": {
+    "outcome": "PASS",
+    "first_divergent": null,
+    "oracle_hits": 0,
+    "oracle_codes": 0,
+    "invoked_caps": [],
+    "admission": false,
+    "interaction_class": "conversation",
+    "proposed_group": null,
+    "proposed_cap": null,
+    "chosen_group": null,
+    "chosen_cap": null,
+    "business_subject": null,
+    "invalid_structured": false,
+    "grounding": "GroundingStatus.NON_GROUNDED"
+   }
+  }
+ ]
+}
