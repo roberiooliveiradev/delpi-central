@@ -75,3 +75,91 @@ def test_invalid_url_raises() -> None:
     with pytest.raises(ProtheusRestError) as exc:
         resolve_protheus_rest_config(_base(URL_REST="not-a-url"))
     assert exc.value.code == "PROTHEUS_CONFIG_INVALID"
+
+
+def test_base_path_absent_keeps_legacy_paths() -> None:
+    config = resolve_protheus_rest_config(_base())
+    assert config.auth_url == "https://protheus.example/rest/api/oauth2/v1/token"
+    assert (
+        config.suppliers_base_url
+        == "https://protheus.example/rest/delpi/api/v1/suppliers/"
+    )
+    assert config.base_url == "https://protheus.example/rest"
+
+
+def test_base_path_prefixes_effective_paths() -> None:
+    config = resolve_protheus_rest_config(_base(BASE_PATH="/restall"))
+    assert config.auth_path == "/restall/api/oauth2/v1/token"
+    assert config.suppliers_path == "/restall/delpi/api/v1/suppliers/"
+    assert (
+        config.auth_url
+        == "https://protheus.example/rest/restall/api/oauth2/v1/token"
+    )
+    # Pin comparison stays exact: base_url must NOT absorb the prefix.
+    assert config.base_url == "https://protheus.example/rest"
+
+
+def test_base_path_empty_or_blank_is_noop() -> None:
+    for value in ("", "   ", None):
+        raw = _base()
+        if value is None:
+            config = resolve_protheus_rest_config(raw)
+        else:
+            config = resolve_protheus_rest_config(_base(BASE_PATH=value))
+        assert config.auth_path == "/api/oauth2/v1/token"
+
+
+def test_base_path_normalizes_slashes() -> None:
+    config = resolve_protheus_rest_config(_base(BASE_PATH="restall/"))
+    assert config.auth_path == "/restall/api/oauth2/v1/token"
+
+
+def test_base_path_not_duplicated_when_path_already_prefixed() -> None:
+    config = resolve_protheus_rest_config(
+        _base(
+            BASE_PATH="/restall",
+            PATH_AUTH="/restall/api/oauth2/v1/token",
+            PATH_SUPPLIERS="/restall/delpi/api/v1/suppliers/",
+        )
+    )
+    assert config.auth_path == "/restall/api/oauth2/v1/token"
+    assert config.suppliers_path == "/restall/delpi/api/v1/suppliers/"
+
+
+def test_base_path_applies_after_label_inversion() -> None:
+    config = resolve_protheus_rest_config(
+        _base(
+            BASE_PATH="/restall",
+            PATH_AUTH="/delpi/api/v1/suppliers/",
+            PATH_SUPPLIERS="/api/oauth2/v1/token",
+        )
+    )
+    assert config.path_label_mismatch is True
+    assert config.auth_path == "/restall/api/oauth2/v1/token"
+    assert config.suppliers_path == "/restall/delpi/api/v1/suppliers/"
+
+
+def test_base_path_does_not_dedup_on_segment_prefix_collision() -> None:
+    # /restall must not be considered a prefix of /rest (different segment).
+    config = resolve_protheus_rest_config(
+        _base(BASE_PATH="/rest")
+    )
+    assert config.auth_path == "/rest/api/oauth2/v1/token"
+
+
+@pytest.mark.parametrize(
+    "bad",
+    ["http://evil/rest", "//double", "/a/../b", "/re stall", "/rest\all", "/"],
+)
+def test_base_path_invalid_values_fail_closed(bad: str) -> None:
+    with pytest.raises(ProtheusRestError) as exc:
+        resolve_protheus_rest_config(_base(BASE_PATH=bad))
+    assert exc.value.code == "PROTHEUS_CONFIG_INVALID"
+
+
+def test_base_path_does_not_satisfy_missing_required_keys() -> None:
+    raw = _base(BASE_PATH="/restall")
+    del raw["PATH_SUPPLIERS"]
+    with pytest.raises(ProtheusRestError) as exc:
+        resolve_protheus_rest_config(raw)
+    assert exc.value.code == "PROTHEUS_CONFIG_MISSING"

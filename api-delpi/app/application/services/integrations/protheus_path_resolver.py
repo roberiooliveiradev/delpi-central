@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from urllib.parse import urlparse
 
 from app.domain.integrations.protheus_rest import (
@@ -51,6 +52,45 @@ def _normalize_path(raw: str, *, key: str) -> str:
     return value
 
 
+_BASE_PATH_PATTERN = re.compile(r"^[A-Za-z0-9_\-/]+$")
+
+
+def _normalize_base_path(raw: str | None) -> str | None:
+    """Normalize optional BASE_PATH into a path segment like `/restall`.
+
+    Returns None when absent or empty (legacy behavior). Rejects values that
+    are unsafe or would silently corrupt the effective URL — fail closed.
+    """
+    value = (raw or "").strip()
+    if not value:
+        return None
+    if not value.startswith("/"):
+        value = f"/{value}"
+    value = value.rstrip("/")
+    if (
+        not value
+        or value == "/"
+        or not _BASE_PATH_PATTERN.match(value)
+        or "//" in value
+        or ".." in value
+    ):
+        raise ProtheusRestError(
+            "Parâmetro BASE_PATH inválido na configuração Protheus.",
+            code="PROTHEUS_CONFIG_INVALID",
+            status_code=503,
+        )
+    return value
+
+
+def _apply_base_path(path: str, base_path: str | None) -> str:
+    """Prefix `path` with `base_path` unless already prefixed (segment-aware)."""
+    if not base_path:
+        return path
+    if path == base_path or path.startswith(f"{base_path}/"):
+        return path
+    return f"{base_path}{path}"
+
+
 def resolve_protheus_rest_config(raw_params: dict[str, str]) -> ProtheusRestConfig:
     """Build a safe config from PARAMETROS_MINHADELPI values.
 
@@ -71,6 +111,7 @@ def resolve_protheus_rest_config(raw_params: dict[str, str]) -> ProtheusRestConf
     username = str(raw_params["USR_PROTHEUS"]).strip()
     password = str(raw_params["PSW_PROTHEUS"]).strip()
     base_url = _normalize_base_url(str(raw_params["URL_REST"]))
+    base_path = _normalize_base_path(raw_params.get("BASE_PATH"))
     labeled_auth = _normalize_path(str(raw_params["PATH_AUTH"]), key="PATH_AUTH")
     labeled_suppliers = _normalize_path(
         str(raw_params["PATH_SUPPLIERS"]), key="PATH_SUPPLIERS"
@@ -85,37 +126,41 @@ def resolve_protheus_rest_config(raw_params: dict[str, str]) -> ProtheusRestConf
     if auth_labeled_is_auth and suppliers_labeled_is_suppliers and not (
         auth_labeled_is_suppliers or suppliers_labeled_is_auth
     ):
-        return ProtheusRestConfig(
-            username=username,
-            password=password,
-            base_url=base_url,
-            auth_path=labeled_auth,
-            suppliers_path=labeled_suppliers,
-            path_label_mismatch=False,
+        resolved_auth, resolved_suppliers, mismatch = (
+            labeled_auth,
+            labeled_suppliers,
+            False,
         )
-
     # Documented inversion: PATH_AUTH looks like suppliers AND PATH_SUPPLIERS looks like auth.
-    if (
+    elif (
         auth_labeled_is_suppliers
         and suppliers_labeled_is_auth
         and not auth_labeled_is_auth
         and not suppliers_labeled_is_suppliers
     ):
-        return ProtheusRestConfig(
-            username=username,
-            password=password,
-            base_url=base_url,
-            auth_path=labeled_suppliers,
-            suppliers_path=labeled_auth,
-            path_label_mismatch=True,
+        resolved_auth, resolved_suppliers, mismatch = (
+            labeled_suppliers,
+            labeled_auth,
+            True,
+        )
+    else:
+        raise ProtheusRestError(
+            "Paths Protheus ambíguos ou não reconhecidos. "
+            "PATH_AUTH e PATH_SUPPLIERS devem mapear inequivocamente "
+            "para autenticação (oauth/token) e fornecedores (supplier).",
+            code="PROTHEUS_CONFIG_INVALID",
+            status_code=503,
         )
 
-    raise ProtheusRestError(
-        "Paths Protheus ambíguos ou não reconhecidos. "
-        "PATH_AUTH e PATH_SUPPLIERS devem mapear inequivocamente "
-        "para autenticação (oauth/token) e fornecedores (supplier).",
-        code="PROTHEUS_CONFIG_INVALID",
-        status_code=503,
+    # BASE_PATH prefixes the effective paths AFTER semantic label resolution,
+    # so it cannot interfere with the auth/suppliers detection.
+    return ProtheusRestConfig(
+        username=username,
+        password=password,
+        base_url=base_url,
+        auth_path=_apply_base_path(resolved_auth, base_path),
+        suppliers_path=_apply_base_path(resolved_suppliers, base_path),
+        path_label_mismatch=mismatch,
     )
 
 

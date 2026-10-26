@@ -7,7 +7,11 @@ from typing import Callable
 import pyodbc
 
 from app.config import settings
-from app.domain.integrations.protheus_rest import REQUIRED_PARAM_KEYS, ProtheusRestError
+from app.domain.integrations.protheus_rest import (
+    OPTIONAL_PARAM_KEYS,
+    REQUIRED_PARAM_KEYS,
+    ProtheusRestError,
+)
 from app.infrastructure.providers.intranet.connection import create_intranet_connection
 from app.utils.logger import log_error
 
@@ -35,13 +39,14 @@ class ProtheusIntegrationParamsRepository:
                     status_code=503,
                 )
 
-        placeholders = ",".join("?" for _ in REQUIRED_PARAM_KEYS)
+        selected_keys = REQUIRED_PARAM_KEYS + OPTIONAL_PARAM_KEYS
+        placeholders = ",".join("?" for _ in selected_keys)
         query = (
             f"SELECT [{key_col}] AS param_key, [{value_col}] AS param_value "
             f"FROM [{table}] "
             f"WHERE [{key_col}] IN ({placeholders})"
         )
-        params: list[object] = list(REQUIRED_PARAM_KEYS)
+        params: list[object] = list(selected_keys)
 
         ambiente = (settings.INTRANET_PARAMS_AMBIENTE or "").strip()
         if ambiente:

@@ -14,6 +14,9 @@ REQUIRED_PARAM_KEYS = (
     "PATH_SUPPLIERS",
 )
 
+# Optional keys — fetched when present, never required (backward compatible).
+OPTIONAL_PARAM_KEYS = ("BASE_PATH",)
+
 SUPPLIER_ID_PATTERN = r"^[0-9]{8}$"
 SUPPLIER_CODE_LENGTH = 6
 SUPPLIER_STORE_LENGTH = 2
