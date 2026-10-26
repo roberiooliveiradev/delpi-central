@@ -22,5 +22,12 @@ def run_migrations_on_startup() -> None:
         return
     from app.infrastructure.persistence.migrations_runner import run_migrations
 
-    applied = run_migrations()
+    try:
+        applied = run_migrations()
+    except Exception:
+        # Degraded boot: market-data routes already fail closed (503) when
+        # storage is unreachable, so a missing schema grant must not take
+        # the CNPJ surface down with it.
+        logger.exception("market_data_migrations failed — degraded boot")
+        return
     logger.info("market_data_migrations applied=%s", applied or "none")
