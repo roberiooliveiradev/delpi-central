@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import zlib
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -132,11 +134,35 @@ def apply_migration(conn: Any, migration: MigrationFile) -> None:
         ) from exc
 
 
+def _migration_lock_key() -> int:
+    # Stable bigint so concurrent gunicorn workers serialize on the same key.
+    return zlib.crc32(f"external-data-migrations:{_schema()}".encode())
+
+
+@contextmanager
+def _migration_lock(conn: Any) -> Any:
+    """Session-level advisory lock serializing DDL across workers.
+
+    Multiple workers can boot at once, but only one applies DDL — the others
+    wait and then observe the migrations as already applied (avoids catalog
+    races such as duplicate ``CREATE SCHEMA IF NOT EXISTS``).
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT pg_advisory_lock(%s)", (_migration_lock_key(),))
+    conn.commit()
+    try:
+        yield
+    finally:
+        with conn.cursor() as cur:
+            cur.execute("SELECT pg_advisory_unlock(%s)", (_migration_lock_key(),))
+        conn.commit()
+
+
 def run_migrations() -> list[str]:
     """Apply pending migrations; returns applied versions."""
     files = list_migration_files()
     applied_versions: list[str] = []
-    with get_connection() as conn:
+    with get_connection() as conn, _migration_lock(conn):
         ensure_migrations_table(conn)
         validate_migration_history(conn, files)
         applied = get_applied_migrations(conn)
@@ -149,7 +175,7 @@ def run_migrations() -> list[str]:
 
 def show_status() -> list[tuple[str, str, str]]:
     files = list_migration_files()
-    with get_connection() as conn:
+    with get_connection() as conn, _migration_lock(conn):
         ensure_migrations_table(conn)
         validate_migration_history(conn, files)
         applied = get_applied_migrations(conn)
