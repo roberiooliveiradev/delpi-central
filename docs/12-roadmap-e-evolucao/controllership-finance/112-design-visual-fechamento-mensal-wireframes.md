@@ -1070,3 +1070,56 @@ Relatórios e divergências — Controladoria (DRE NUNCA acessa)
 ### 21.6 Próxima página/componente
 
 Dentro de Relatórios e divergências, priorizar o **componente “Prévia oficial do PDF”** com comparação visual do R03 Registro de Inventário (completo versus resumido/Bloco H), depois o CTA **Disponibilizar para Contabilidade/DRE**. Em seguida aplicar mesma matriz a R01/R02 e R05. Não implementar endpoint, render PDF ou storage por inferência enquanto não houver G6/ownership/contrato/GO.
+
+
+## 22. Prioridade de design redefinida pelo PO — PDF em container e próxima página Visão geral
+
+**Data:** 2026-10-26. **Diretriz explícita do PO:** manter o **container da prévia do PDF** na página Relatórios e divergências, mas **postergar o refinamento visual da reprodução fiel** e voltar ao desenho das demais páginas, sem gastar o ciclo em paginação/formatação de relatórios.
+
+### 22.1 Escopo congelado do PDF neste gate
+
+- **Mantido como requisito aprovado de intenção:** container para visualização do PDF final; relatório na tela pode oferecer dados/conferências; geração e disponibilização ao DRE devem ser ações conceitualmente separadas e autorizadas, com documento vinculado a item/competência/recipient correto.
+- **Adiado:** detalhe pixel a pixel de Estoque/Resumo Estoque, cabeçalhos, tipografia, paginação, margens, quebras, campos, versões de layout, testes de equivalência visual e homologação.
+- **Sem GO:** nenhum componente PDF, endpoint, storage, mutation ou botão de publicação foi implementado ou autorizado por este wireframe.
+- **Próximo foco de design:** Página Visão geral da competência (P1), depois Pendências P4 e Revisão P5, preservando o mapa de owners e sem decidir silenciosamente se Pendências é aba ou fila transversal.
+
+### 22.2 Wireframe 04 — Visão geral da competência, V1.0, proposta
+
+**Estado:** `TARGET / DESIGN_DRAFT / PENDING_PO_VISUAL_APPROVAL`. A regra canônica do [Documento 08](./08-p1-cockpit-da-competencia.md) exige: contexto → blockers materiais → eixos independentes Estoque/Documentos/Pacote → pendências prioritárias → histórico → links aos owners. Os **três cartões clicáveis já aprovados** Bloqueios/Divergências/Documentos a tratar permanecem como atalhos na moldura comum da página, não substituem os três eixos de readiness.
+
+```text
+Portal Controladoria & Finanças > Fechamento mensal
+[Competência existente autorizada ▼] [empresa/unidade escopo] [situação/freshness]
+[ALERTA DE BLOQUEIOS MATERIAIS COM FONTE E DESTINO QUANDO HOUVER]
+[Bloqueios — →] [Divergências — →] [Documentos a tratar — →]
+[Visão geral*] [Documentos e interações] [Relatórios e divergências] [Revisão]
+────────────────── VISÃO GERAL ──────────────────────────────────────────
+ESTADO DOS EIXOS — NÃO SOMAR NEM TRANSFORMAR EM 100%
+[ESTOQUE]                  [DOCUMENTOS]               [PACOTE]
+estado P3 + fonte          estado P2 + fonte           estado P5 + versão
+cutoff/paridade quando     entregáveis/validações     finalizado/submetido/
+válidos                    e bloqueios                revisão humana
+[Abrir Estoque*]           [Abrir Documentos]         [Abrir Revisão]
+* somente destinos realmente disponíveis e autorizados
+────────────────────────────────────────────────────────────────────────
+O QUE PRECISA DA SUA ATENÇÃO
+prioridade material (quando real) | tipo | motivo | source | responsável | desde
+[ver ocorrência / abrir owner]
+────────────────────────────────────────────────────────────────────────
+ÚLTIMOS ACONTECIMENTOS DA COMPETÊNCIA
+[timeline de eventos P2/P3/P4/P5, com autor, hora e versão quando disponível]
+────────────────────────────────────────────────────────────────────────
+[Acessos às áreas operacionais autorizadas, não duplicar Home como catálogo]
+```
+
+**Comportamento UX:**
+1. Usuário responde primeiro “qual competência?” e “o que está bloqueando?”; blocker material fica antes dos indicadores e eixos, sem afirmar zero se alguma fonte estiver indisponível.
+2. Os três indicadores FM-05 continuam **cartões inteiramente clicáveis**, navegando à referência/filtro conforme contrato e scope.
+3. Os três eixos de fechamento são **independentes**: estoque fechado não implica documentação validada; documentação validada não implica pacote aprovado; não usar “% fechamento”.
+4. Em **O que precisa da sua atenção**, mostrar apenas subconjunto factual de ações/pendências realmente atribuíveis/visíveis ao usuário; P4 continua owner da pendência. Nunca mostrar “atrasado” sem SLA contratada.
+5. Histórico usa events materializados/auditáveis, não mensagens de conversa arbitrárias convertidas em decisão.
+6. Link abre owner (P2/P3/P4/P5) com competência e escopo preservados; UI não executa mutation de owner na P1.
+7. Estados loading, vazio verdadeiro, partial/unavailable, permissão insuficiente, divergência de fonte e stale com mensagens específicas. Mobile empilha blockers e eixos, depois fila e histórico. `@delpi/plugin-ui/index` first: PagePath, PageHero, AlertQueue, MetricStrip, StatusBadge, SectionCard, WorklistItem, Timeline, StateBanner/EmptyState/LoadingState.
+8. O acesso restrito Contabilidade/DRE **NÃO exibe essa página completa, eixos nem relatórios TOTVS**: sua entrada Fechamento mensal abre exclusivamente os documentos anexados e liberados, conforme §§16–18.
+
+**Decisão para o próximo review visual:** confirmar a estrutura da Visão geral (blockers → 3 indicadores → 3 eixos → atenção → histórico) e se o componente de pendências prioritárias abre uma página P4 independente ou uma visão contextual. **D-FM06-REBASE-01 permanece DECISION_REQUIRED**; avanço no wireframe não revoga a decisão documental anterior nem autoriza código.
