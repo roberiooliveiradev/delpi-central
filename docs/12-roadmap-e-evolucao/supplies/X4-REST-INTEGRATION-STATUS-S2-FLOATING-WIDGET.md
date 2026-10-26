@@ -83,3 +83,10 @@ foco devolvido, `prefers-reduced-motion`. Regressão MFE: **476/476**.
   `collapsed`, por design.
 - Resultado do diagnóstico não persiste entre recarregamentos — a
   verificação é sempre explícita.
+
+
+## 9. Revisão GPT — 2026-10-26
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para implementação S2.** Inspecionados no SHA `85883e5f2e` o widget, testes estruturais e esta documentação: três estados `closed/collapsed/expanded`, posicionamento fixo inferior direito, botão de reabertura, controles acessíveis, foco devolvido após fechar, preservação do último diagnóstico em cache de módulo e ausência de GET por simples alternância da view. O escopo é MFE-only. **476 testes, build e deploy são resultados reportados pelo executor**; o GPT não reexecutou a suíte nem o smoke federado autenticado.
+
+**Residual não bloqueante:** `lastStatus` pode ser mantido entre navegações sem marcador visual explícito de desatualização por idade; manter ação de verificar manualmente e timestamp. Não promover estado cacheado a garantia de disponibilidade presente. Layout em produção, mobile, tema claro/escuro e sobreposição com controles globais ainda aguardam evidência visual autenticada (`INCONCLUSIVE`). Nenhum desenvolvimento adicional é requerido pelo aceite deste diff. Próxima ação: validar uma única vez expandir/recolher/fechar/reabrir na tela publicada; corrigir apenas defeito reproduzido.
