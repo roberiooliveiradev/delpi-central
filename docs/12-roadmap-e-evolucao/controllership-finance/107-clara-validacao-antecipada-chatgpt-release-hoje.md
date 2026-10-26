@@ -214,3 +214,24 @@ bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check
 6. Prosseguir G1/G2/G3 e deploy conforme Adendo 3, sem pedir novo prompt técnico.
 
 **Estado:** `CREDENTIAL_LOCATION=OWNER_REPORTED`, `VALID_ADMIN_LOGIN=TO_VERIFY`, `KEYCLOAK_CHECK=FAIL_CLOSED (previous run)`, `KEYCLOAK_APPLY=NOT_RUN`, `PROD_DEPLOY=NOT_DEPLOYED`; nenhuma credencial foi lida ou compartilhada pelo GPT nesta etapa.
+
+
+## Adendo 5 — GO final consolidado de execução e entrega da CLARA no ChatGPT
+
+**Data:** 2026-10-25. **Pedido expresso do PO:** elaborar um **único prompt final completo** para o Devin e o Operador SSH, cobrindo a passagem do último código CLARA aprovado para **release operacional**, migrations, Keycloak, corpus e cadastro/teste ChatGPT. Não solicitar micro-GOs, não iniciar rework generalista, preservar decisões de produto e documentação. **Autorização de planejar e conduzir a execução não substitui as provas de G1 de owners, G2 aceite humano nem G3 autorização do Operador**. O PO informou `infra/.env` como local de credenciais Keycloak: `OWNER_REPORTED`; testar a credencial real no host por canal sigiloso, sem `cat`, env dump ou secret em log.
+
+**Baseline canônica para o handoff:** código CLARA auditado `ecf765139d77fabcf5ab28ab04cfb71f9cde41b0`; `main` atualizado em paralelo por docs/outros contexts — selecionar e identificar `RELEASE_SHA` imutável após `git status`, `origin/main` e diff para não implantar alterações alheias. Ambiente `srv-api` único produtivo segundo inventário anterior; não usar `homolog` do GitHub como prova de segregação.
+
+**Ordem executável coordenada:**
+
+1. **PRÉ-GATE READ:** operadora valida SSH/host/compose, gateway/Cloudflare, Core/effective-permissions, volume Postgres plugins, volumes de evidência, compatibilidade OAuth, versão atual do banco, flag `CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP`; obter `--check` Keycloak com credencial vigente em `infra/.env` sem imprimir segredo. `--check` falhado anteriormente por admin bootstrap = diagnóstico pendente, não prova de ausência de credencial.
+2. **G1/G2/ G3:** consolidar numa pauta **única** de Controladoria/PO e Operador SSH; aceitar escopo exato demonstrado, separar R04+/T03/T05/seeds não provados, fornecer evidência explícita de aceite e autorização do release. Não mascarar pendências G1, nem instalar funcionalidade sensível sem aprovação.
+3. **BACKUP ANTES DE BUILD/RECREATE:** PostgreSQL plugins e schema, uploads, corpus, configuração Keycloak, checklist de restauração. Runner da API executa V006–V014 na inicialização quando flag ativa; verificar ordem/versionamento, não disparar antes do backup nem aplicar manualmente em duplicidade. Rollback app/DB deve reconhecer migrations up-only e impedir falsa reversibilidade.
+4. **DEPLOY:** usar apenas `./infra/scripts/up-prod-sequential.sh --build portal controllership-finance controllership-finance-api` **após** preflight/dry-run e gates, com SHA pinado. Remote `plugin-ui` somente se exigido; validar gateway e integridade pós-recreate.
+5. **IAM:** executar `bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check`, provar escopo do engine compartilhado, autorizar diff, então `--apply` para `mcp-clara` e audience exata, callback real emitido no fluxo do ChatGPT; não modificar clients TÉO/DAVI/VISTA/DÉLIA incidentalmente. Proteger credenciais.
+6. **KNOWLEDGE:** pipeline `corpus_ingestion` com `--docs-root` verdadeiro e acesso restrito às fontes, hash/proveniência/publicação, corpus version, citação. `MP4` e planilhas originais só se acessíveis de fato; não inferir ingestão de docs derivados.
+7. **AUTHENTICATED E2E:** Portal/MFE/BFF/Keycloak OAuth/discovery, MCP tools, READ e knowledge, consentimento único de lote por desafio no Portal, ACT apenas com dados e usuário autorizados, pós-condição independente e auditoria. Status honestos.
+8. **CHATGPT:** entregar a ficha pública com URL, issuer, client ID, scopes, audience, PKCE, URLs endpoints e metadata verificados no runtime; secret somente via cofre, cadastro/conexão exige ação do dono do workspace ChatGPT. Smoke real, registrar tool discovery e autorização nativa do host.
+9. **EVIDÊNCIA/RELATÓRIO:** SHA, gates, snapshots before/after, migration ledger, Keycloak diff/result, URL/MCP checks, corpus version, ChatGPT connection, resíduo e rollback. Atualizar Docs 107/106/100/README e runbooks conforme ocorrido, sem falsificar PASS.
+
+**Ponto de parada formal único:** se G2/G3/credencial válida permanecer pendente, entregar preflight, backups preparados, comandos e ficha parcialmente verificada, status `NOT_DEPLOYED`/ `TEST_NOT_RUN` e responsável que libera o próximo passo. Não aplicar escrita em produção antes da autorização. O documento registra decisão do PO e **não** representa ação SSH efetuada.
