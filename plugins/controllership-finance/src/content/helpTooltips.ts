@@ -180,24 +180,24 @@ export const CF_HELP = {
     page:
       "Fechamento mensal: bancada de trabalho por mês de referência em três abas — Visão geral (situação, atenções e próximos passos do fechamento), Documentos e interações (evidências P2) e Relatórios e divergências (matriz R01–R15 e fontes). Selecione o mês para consultar; escolher um mês não abre competência — meses sem abertura formal mostram explicação e a ação autorizada.",
     indicators:
-      "Indicadores derivados do cockpit do backend: Bloqueios (condições que impedem a conclusão — clique para ir à seção de atenção), Divergências (domínios P3 com divergência declarada — clique para abrir Relatórios) e Documentos a tratar (contagem aguardando contrato do owner P2 — «—» até a definição). «—» significa dado indisponível — nunca zero confirmado.",
+      "Indicadores deste fechamento: O que falta resolver (situações que impedem a conclusão — clique para localizar na lista), Divergências (diferenças encontradas nas conferências — clique para abrir Relatórios) e Documentos a tratar (contagem ainda indisponível — «—» até existir a métrica). «—» significa dado indisponível — nunca zero confirmado.",
     tabs:
       "Três visões do mesmo mês: Visão geral consolida o estado do fechamento; Documentos e interações abre as evidências e anexos P2 (exige competência aberta); Relatórios e divergências abre a matriz de relatórios e fontes.",
     pdfPreview:
       "Área reservada à prévia de PDF dos relatórios — geração e publicação de PDF serão entregues em uma versão futura.",
     attention:
-      "Situações reais identificadas neste fechamento, traduzidas dos códigos técnicos do backend: bloqueios de conclusão, fontes de conciliação indisponíveis, pendências P4 e itens do checklist sem evidência. Cada ação leva ao contexto real onde a situação é tratada.",
+      "Situações reais que precisam ser resolvidas neste fechamento: relatórios que não puderam ser consultados, divergências, documentos pendentes e pendências em aberto. Cada ação leva ao local onde a situação é tratada. Se houver mais situações, use «Mostrar todas» para expandir a lista aqui mesmo.",
     stockAxis:
-      "Eixo Estoque: estado do cutoff e das fontes de conciliação P3 (ENTRADAS_SAIDAS, P7 e H02). O próximo passo indicado deriva apenas do estado real retornado pelo backend.",
+      "Conferência do estoque: mostra se a conferência do mês foi finalizada e se os relatórios necessários puderam ser consultados. O próximo passo indicado vem da situação real deste fechamento.",
     docsAxis:
-      "Eixo Documentos: itens do checklist da competência por estado — aguardando evidência, aceitos, não aplicáveis ou cancelados. Mês aberto sem checklist publicado mostra «Sem exigências cadastradas», que é uma situação normal — não erro.",
+      "Documentos do mês: documentos exigidos neste fechamento e sua situação — aguardando evidência ou aceitos. «Nenhum documento exigido» é uma situação normal, não um erro.",
     packageAxis:
-      "Eixo Pacote DRE: pacotes aplicáveis ao mês e seu ciclo — em preparação, preparado para envio ou enviado para revisão. O detalhamento e as operações ficam na página de pacotes.",
+      "Documentos para a Contabilidade: situação do conjunto de documentos destinado à Contabilidade — pronto para envio ou já enviado para revisão. O envio acontece na página de gerenciamento.",
     recentActivity:
-      "Eventos reais de auditoria registrados nesta competência (fonte P3). Exibe no máximo os cinco mais recentes; ausência de registros é um estado normal — nenhum evento é simulado.",
+      "Atividades recentes: últimos registros reais das conferências deste mês (até cinco). Ainda não cobre todas as áreas — ausência de registros é normal e nenhuma atividade é simulada.",
     conclusion:
-      "A conclusão da etapa da Controladoria é derivada pelo sistema quando todas as condições são atendidas — não existe botão de concluir. As condições impeditivas aparecem na seção de atenção.",
+      "O fechamento é concluído pelo sistema quando todas as condições são atendidas — não existe botão de concluir. As situações que impedem a conclusão aparecem em «O que precisa de atenção».",
     sendPackage:
-      "O envio do pacote documental é uma operação separada da conclusão e exige confirmação humana na página de pacotes. Um pacote só pode ser enviado quando está preparado.",
+      "O envio dos documentos à Contabilidade é uma operação separada da conclusão e exige confirmação na página de gerenciamento. Um conjunto só pode ser enviado quando está pronto.",
   },
 } as const;

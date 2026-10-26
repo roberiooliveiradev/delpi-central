@@ -480,7 +480,7 @@ export function MonthlyClosingPage({
             hint={CF_HELP.monthlyClosing.page}
           />
         }
-        subtitle="Bancada de trabalho do mês de referência: visão geral, documentos e relatórios do fechamento."
+        subtitle="Acompanhamento do fechamento por mês de referência."
         filters={referencePicker}
         updatedAt={lastUpdated}
         onRefresh={retry}

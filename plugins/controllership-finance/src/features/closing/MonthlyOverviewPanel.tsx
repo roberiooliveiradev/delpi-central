@@ -50,17 +50,17 @@ const CLOSING_VARIANTS: Record<
   TERMINALLY_REJECTED: "danger",
 };
 
-const ITEM_STATE_LABELS: Record<string, string> = {
-  EXPECTED: "aguardando evidência",
-  ACCEPTED: "aceitos",
-  NOT_APPLICABLE: "não aplicáveis",
-  CANCELLED: "cancelados",
+/** Nomes de domínio P3 → linguagem simples (relatórios reais do processo). */
+const DOMAIN_LABELS: Record<string, string> = {
+  ENTRADAS_SAIDAS: "entradas e saídas",
+  P7: "o relatório P7",
+  H02: "o relatório H02",
 };
 
 const EVENT_LABELS: Record<string, string> = {
-  CUTOFF_CONFIRMED: "Cutoff confirmado",
-  P3_REVALIDATED: "Conciliações revalidadas",
-  RECONCILIATION_UPDATED: "Conciliação atualizada",
+  CUTOFF_CONFIRMED: "Conferência do mês finalizada",
+  P3_REVALIDATED: "Conferências refeitas",
+  RECONCILIATION_UPDATED: "Conferência atualizada",
   COMPETENCE_OPENED: "Fechamento aberto",
 };
 
@@ -93,6 +93,11 @@ function humanizeToken(token: string): string {
   return token.replace(/[_-]+/g, " ").trim();
 }
 
+function domainLabel(domain: string | undefined): string {
+  if (!domain) return "o relatório";
+  return DOMAIN_LABELS[domain] ?? humanizeToken(domain).toLowerCase();
+}
+
 type AttentionItem = {
   id: string;
   title: string;
@@ -104,42 +109,44 @@ type AttentionItem = {
 
 /**
  * Tradutor auditável de códigos `blocking_reasons` (contrato P5/P3) para
- * mensagens em PT-BR. Código técnico permanece visível como detalhe —
- * nunca como mensagem principal.
+ * mensagens em PT-BR simples (V0.3). Códigos desconhecidos nunca aparecem
+ * na interface — recebem uma mensagem genérica e ficam restritos aos
+ * meios de diagnóstico autorizados.
  */
 function describeBlocking(code: string): string {
   const [head, ...params] = code.split(":");
   const table: Record<string, (p: string[]) => string> = {
     terminal_rejection_active: () =>
-      "Rejeição terminal ativa — a competência não pode concluir",
+      "Este fechamento foi rejeitado e não pode ser concluído",
     no_applicable_packages: () =>
-      "Nenhum pacote aplicável configurado neste mês",
+      "Não há um conjunto de documentos para envio definido neste mês",
     package_not_submitted: (p) =>
-      `Pacote de ${humanizeToken(p[0])} ainda não enviado para revisão`,
+      `Documentos para ${humanizeToken(p[0]).toLowerCase()} ainda não enviados para revisão`,
     no_required_areas: (p) =>
-      `Pacote de ${humanizeToken(p[0])} sem áreas revisoras definidas`,
+      `Documentos para ${humanizeToken(p[0]).toLowerCase()} sem área revisora definida`,
     area_not_reviewed: (p) =>
-      `Pacote de ${humanizeToken(p[0])} aguardando revisão de ${humanizeToken(p[1] ?? "")}`,
+      `Documentos para ${humanizeToken(p[0]).toLowerCase()} aguardando revisão de ${humanizeToken(p[1] ?? "").toLowerCase()}`,
     area_not_accepted: (p) =>
-      `Pacote de ${humanizeToken(p[0])} não aceito por ${humanizeToken(p[1] ?? "")}`,
+      `Documentos para ${humanizeToken(p[0]).toLowerCase()} não aceitos por ${humanizeToken(p[1] ?? "").toLowerCase()}`,
     open_clarification: (p) =>
-      `Esclarecimento em aberto no pacote de ${humanizeToken(p[0])}`,
-    p3_cutoff_not_confirmed: () => "Cutoff do mês ainda não confirmado",
+      `Pendência de esclarecimento nos documentos para ${humanizeToken(p[0]).toLowerCase()}`,
+    p3_cutoff_not_confirmed: () =>
+      "Conferência do mês ainda não finalizada",
     p3_revalidation_required: () =>
-      "Entradas alteradas — as conciliações precisam de nova revalidação",
+      "As conferências precisam ser refeitas após alterações nas entradas",
     p3_source_unavailable: (p) =>
-      `Fonte ${p[0]} indisponível — não foi possível verificar a conciliação`,
+      `Não foi possível consultar ${domainLabel(p[0])}`,
     p3_divergence: (p) =>
-      `Divergência monetária identificada em ${p[0]}`,
+      `Divergência identificada em ${domainLabel(p[0])}`,
     p3_reconciliation_missing: (p) =>
-      `Conciliação de ${p[0]} ainda não registrada`,
+      `Conferência de ${domainLabel(p[0])} ainda não registrada`,
     p3_declared_only: (p) =>
-      `Conciliação de ${p[0]} apenas declarada — aguardando resultado oficial`,
+      `Conferência de ${domainLabel(p[0])} aguardando comprovação oficial`,
   };
   const render = table[head];
   return render
     ? render(params)
-    : `Pendência identificada pelo fechamento (${code})`;
+    : "Existe uma situação pendente que precisa ser verificada";
 }
 
 function blockingTarget(code: string): "reports" | "packages" {
@@ -236,6 +243,9 @@ export function MonthlyOverviewPanel({
   };
 
   // ── Atenção (bloco dominante) ────────────────────────────────────
+  // Expansão na própria Visão geral — nunca enviar o usuário para uma
+  // listagem parcial com rótulo de «todas as pendências».
+  const [showAllAttention, setShowAllAttention] = useState(false);
   const attentionItems: AttentionItem[] = [];
   for (const code of cockpit.closing.blocking_reasons) {
     const head = code.split(":")[0];
@@ -248,10 +258,11 @@ export function MonthlyOverviewPanel({
       title: describeBlocking(code),
       description:
         target === "reports"
-          ? "Conciliação P3 — condição impeditiva de conclusão"
-          : "Pacotes e revisão — condição impeditiva de conclusão",
+          ? "Conferência do estoque"
+          : "Envio à Contabilidade",
       tone: isBlockingSource ? "danger" : "warning",
-      actionLabel: target === "reports" ? "Ver relatórios" : "Ver pacotes",
+      actionLabel:
+        target === "reports" ? "Ver divergências" : "Ver envio",
       onAction:
         target === "reports"
           ? () => onSelectTab("reports")
@@ -261,9 +272,8 @@ export function MonthlyOverviewPanel({
   if (openPendencies > 0) {
     attentionItems.push({
       id: "pendencies",
-      title: `${openPendencies} pendência(s) em aberto`,
-      description:
-        "Registros P4 aguardando tratamento — não impedem a consulta.",
+      title: `${openPendencies} pendência(s) aguardando tratamento`,
+      description: "Pendências",
       tone: "warning",
       actionLabel: "Ver pendências",
       onAction: () => onGoTo("closing/pendencies"),
@@ -272,18 +282,19 @@ export function MonthlyOverviewPanel({
   if (expectedDocs > 0) {
     attentionItems.push({
       id: "expected-docs",
-      title: `${expectedDocs} item(ns) do checklist aguardando evidência`,
-      description:
-        "Itens previstos na abertura deste fechamento sem evidência entregue.",
+      title: `${expectedDocs} documento(s) aguardando evidência`,
+      description: "Documentos exigidos",
       tone: "warning",
       actionLabel: "Ver documentos",
       onAction: () => onSelectTab("documents"),
     });
   }
-  const attention = attentionItems.slice(0, 4);
+  const attention = showAllAttention
+    ? attentionItems
+    : attentionItems.slice(0, 4);
   const attentionOverflow = attentionItems.length - attention.length;
 
-  // ── Eixo Estoque ──────────────────────────────────────────────────
+  // ── Eixo: Conferência do estoque ──────────────────────────────────
   const stockDomains = cockpit.p3.domains;
   const stockUnavailable = stockDomains.filter(
     (d) => d.source_state === "UNAVAILABLE",
@@ -291,22 +302,31 @@ export function MonthlyOverviewPanel({
   const stockDeclared = stockDomains.filter(
     (d) => d.provenance_kind === "DECLARED",
   ).length;
+  const stockSituation = !cockpit.p3.cutoff_confirmed
+    ? "A conferência do mês ainda não foi finalizada."
+    : stockUnavailable === stockDomains.length && stockDomains.length > 0
+      ? `Não foi possível consultar nenhum dos ${stockDomains.length} relatórios necessários.`
+      : stockUnavailable > 0
+        ? `Não foi possível consultar ${stockUnavailable} de ${stockDomains.length} relatórios necessários.`
+        : divergenceCount > 0
+          ? `${divergenceCount} divergência(s) identificada(s) na conferência.`
+          : stockDeclared > 0
+            ? "Conferência realizada — aguardando comprovação oficial."
+            : "Conferência do estoque em dia.";
   const stockNextStep = !cockpit.p3.cutoff_confirmed
-    ? "Próximo passo: confirmar o cutoff do mês."
+    ? "Próximo passo: finalizar a conferência do mês."
     : stockUnavailable > 0
-      ? "Próximo passo: verificar as fontes indisponíveis."
+      ? "Próximo passo: verificar os relatórios que não puderam ser consultados."
       : divergenceCount > 0
-        ? "Próximo passo: tratar as divergências identificadas."
+        ? "Próximo passo: analisar as divergências em Relatórios e divergências."
         : stockDeclared > 0
-          ? "Próximo passo: comprovar o resultado oficial."
-          : "Conciliação oficial em dia.";
+          ? "Próximo passo: anexar a comprovação oficial."
+          : null;
 
-  // ── Eixo Documentos ───────────────────────────────────────────────
-  const docStates = Object.entries(cockpit.checklist).filter(
-    ([, n]) => n > 0,
-  );
+  // ── Eixo: Documentos do mês ───────────────────────────────────────
+  const acceptedDocs = cockpit.checklist["ACCEPTED"] ?? 0;
 
-  // ── Eixo Pacote DRE ───────────────────────────────────────────────
+  // ── Eixo: Documentos para a Contabilidade ─────────────────────────
   const packages = cockpit.closing.packages;
   const packagesReady = packages.filter(
     (p) => p.state === "PACKAGE_FINALIZED",
@@ -344,7 +364,7 @@ export function MonthlyOverviewPanel({
             Aberto em{" "}
             {dateFormatter.format(new Date(competence.opened_at))}
             {competence.template_version_id === null
-              ? " · sem checklist publicado"
+              ? " · sem lista de documentos definida"
               : ""}
           </span>
         ) : null}
@@ -355,18 +375,18 @@ export function MonthlyOverviewPanel({
         aria-label="Indicadores de atenção"
       >
         <CfInteractiveDataCard
-          ariaLabel={`Bloqueios: ${blockingCount}`}
+          ariaLabel={`O que falta resolver: ${blockingCount}`}
           fields={[
             {
               id: "value",
-              label: "Bloqueios",
+              label: "O que falta resolver",
               value: String(blockingCount),
               valueTone: "value",
               present: true,
-              hint: "condições que impedem a conclusão",
+              hint: "situações que impedem a conclusão",
             },
           ]}
-          openHint="Ver na seção de atenção"
+          openHint="Ver na lista abaixo"
           onActivate={scrollToAttention}
         />
         <CfInteractiveDataCard
@@ -381,8 +401,8 @@ export function MonthlyOverviewPanel({
               present: true,
               hint:
                 divergenceValue === null
-                  ? "não foi possível verificar — fonte indisponível"
-                  : "domínios P3 com divergência",
+                  ? "não foi possível consultar os relatórios"
+                  : "diferenças encontradas nas conferências",
             },
           ]}
           openHint="Ver em Relatórios e divergências"
@@ -397,7 +417,7 @@ export function MonthlyOverviewPanel({
               value: documentsCount === null ? "—" : String(documentsCount),
               valueTone: "value",
               present: true,
-              hint: "contagem aguardando contrato do owner P2",
+              hint: "contagem ainda não disponível",
             },
           ]}
           openHint="Ver em Documentos e interações"
@@ -415,21 +435,31 @@ export function MonthlyOverviewPanel({
           subtitle={
             attentionOverflow > 0
               ? `Mostrando ${attention.length} de ${attentionItems.length} situações`
-              : "Situações reais identificadas neste fechamento"
+              : "Situações reais deste fechamento"
           }
           hint={CF_HELP.monthlyClosing.attention}
           items={attention}
           omitWhenEmpty={false}
-          emptyMessage="Nenhuma pendência identificada neste fechamento."
+          emptyMessage="Nada pendente neste fechamento."
           listAriaLabel="O que precisa de atenção"
         />
         {attentionOverflow > 0 ? (
           <div className="cf-settlements-actions">
             <CfActionButton
               variant="ghost"
-              onClick={() => onGoTo("closing/pendencies")}
+              onClick={() => setShowAllAttention(true)}
             >
-              Ver todas as pendências
+              Mostrar todas as {attentionItems.length} situações
+            </CfActionButton>
+          </div>
+        ) : null}
+        {showAllAttention && attentionItems.length > 4 ? (
+          <div className="cf-settlements-actions">
+            <CfActionButton
+              variant="ghost"
+              onClick={() => setShowAllAttention(false)}
+            >
+              Mostrar menos
             </CfActionButton>
           </div>
         ) : null}
@@ -437,58 +467,56 @@ export function MonthlyOverviewPanel({
 
       <div className="cf-monthly-axes" aria-label="Acompanhamento por eixo">
         <CfSectionCard
-          title="Estoque"
+          title="Conferência do estoque"
           hint={CF_HELP.monthlyClosing.stockAxis}
         >
           <ul className="cf-axis-facts">
-            <li>
-              Cutoff:{" "}
-              {cockpit.p3.cutoff_confirmed
-                ? "confirmado"
-                : "não confirmado"}
-            </li>
-            <li>
-              Fontes: {stockDomains.length - stockUnavailable} de{" "}
-              {stockDomains.length} disponíveis
-              {stockUnavailable > 0
-                ? ` (${stockUnavailable} indisponível(is))`
-                : ""}
-            </li>
-            <li className="cf-axis-next">{stockNextStep}</li>
+            <li>{stockSituation}</li>
+            {stockNextStep ? (
+              <li className="cf-axis-next">{stockNextStep}</li>
+            ) : null}
           </ul>
         </CfSectionCard>
 
         <CfSectionCard
-          title="Documentos"
+          title="Documentos do mês"
           hint={CF_HELP.monthlyClosing.docsAxis}
         >
           {checklistTotal === 0 ? (
-            <p>
-              Sem exigências cadastradas — o fechamento foi aberto sem
-              checklist publicado.
-            </p>
+            <p>Nenhum documento exigido para este fechamento.</p>
           ) : (
             <ul className="cf-axis-facts">
-              {docStates.map(([state, n]) => (
-                <li key={state}>
-                  {n} {ITEM_STATE_LABELS[state] ?? humanizeToken(state)}
+              <li>
+                {checklistTotal} documento(s) exigido(s) neste mês —{" "}
+                {expectedDocs} aguardando evidência, {acceptedDocs}{" "}
+                aceito(s).
+              </li>
+              {expectedDocs > 0 ? (
+                <li className="cf-axis-next">
+                  Próximo passo: revisar em Documentos e interações.
                 </li>
-              ))}
+              ) : null}
             </ul>
           )}
         </CfSectionCard>
 
         <CfSectionCard
-          title="Pacote DRE"
+          title="Documentos para a Contabilidade"
           hint={CF_HELP.monthlyClosing.packageAxis}
         >
           {packages.length === 0 ? (
-            <p>Nenhum pacote aplicável neste mês.</p>
+            <p>
+              Não há um conjunto de documentos para envio definido neste
+              mês.
+            </p>
           ) : (
             <ul className="cf-axis-facts">
               <li>
-                {packages.length} pacote(s) — {packagesReady} preparado(s),{" "}
-                {packagesInReview} em revisão
+                {packagesReady} conjunto(s) pronto(s) para envio
+                {packagesInReview > 0
+                  ? ` · ${packagesInReview} já enviado(s) para revisão`
+                  : ""}
+                .
               </li>
             </ul>
           )}
@@ -497,31 +525,31 @@ export function MonthlyOverviewPanel({
               variant="ghost"
               onClick={() => onGoTo(`closing/packages/${period}`)}
             >
-              Ver pacotes
+              Ver detalhes
             </CfActionButton>
           </div>
         </CfSectionCard>
       </div>
 
       <CfEventsSection
-        title="Atividade recente"
-        subtitle="Eventos registrados nesta competência (auditoria P3)"
+        title="Atividades recentes"
+        subtitle="Registros reais das conferências deste mês"
         hint={CF_HELP.monthlyClosing.recentActivity}
         items={eventItems}
         omitWhenEmpty={false}
         emptyMessage={
           eventsLoading
-            ? "Carregando atividade…"
+            ? "Carregando atividades…"
             : eventsError
               ? eventsError
-              : "Nenhuma atividade registrada para esta competência."
+              : "Ainda não há atividades registradas nesta conferência."
         }
-        listAriaLabel="Atividade recente do fechamento"
+        listAriaLabel="Atividades recentes do fechamento"
       />
 
       <div className="cf-monthly-outcomes" aria-label="Conclusão e envio">
         <CfSectionCard
-          title="Conclusão da etapa da Controladoria"
+          title="Concluir fechamento"
           hint={CF_HELP.monthlyClosing.conclusion}
         >
           <p>
@@ -534,34 +562,40 @@ export function MonthlyOverviewPanel({
             <p>Este fechamento está concluído.</p>
           ) : (
             <p>
-              A conclusão é derivada pelo sistema quando todas as condições
-              são atendidas — {conclusionBlockers} condição(ões) impeditiva(s)
-              no momento.
+              O fechamento será concluído quando todas as condições forem
+              atendidas
+              {conclusionBlockers > 0
+                ? ` — ${conclusionBlockers} situação(ões) ainda impedem a conclusão`
+                : ""}
+              .
             </p>
           )}
           {conclusionBlockers > 0 ? (
             <div className="cf-settlements-actions">
               <CfActionButton variant="ghost" onClick={scrollToAttention}>
-                Ver condições impeditivas
+                Ver o que falta resolver
               </CfActionButton>
             </div>
           ) : null}
         </CfSectionCard>
 
         <CfSectionCard
-          title="Envio do pacote documental"
+          title="Enviar documentos à Contabilidade"
           hint={CF_HELP.monthlyClosing.sendPackage}
         >
           {packages.length === 0 ? (
             <p>
-              Sem pacote aplicável neste mês — o envio fica indisponível
-              até existir um pacote preparado.
+              Não há um conjunto de documentos para envio definido neste
+              mês.
             </p>
           ) : (
             <p>
-              {packagesReady} de {packages.length} pacote(s) preparado(s)
-              para envio; {packagesInReview} já em revisão. O envio é uma
-              operação separada da conclusão e exige confirmação humana.
+              {packagesReady} conjunto(s) pronto(s) para envio
+              {packagesInReview > 0
+                ? ` · ${packagesInReview} já enviado(s) para revisão`
+                : ""}
+              . O envio é uma operação separada da conclusão e exige
+              confirmação.
             </p>
           )}
           <div className="cf-settlements-actions">
@@ -569,7 +603,7 @@ export function MonthlyOverviewPanel({
               variant="ghost"
               onClick={() => onGoTo(`closing/packages/${period}`)}
             >
-              Gerenciar pacotes
+              Gerenciar envio
             </CfActionButton>
           </div>
         </CfSectionCard>

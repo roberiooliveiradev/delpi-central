@@ -348,3 +348,15 @@ Conhecimento funcional vigente sobre a organização da aba **Visão geral** (im
 - Os eixos Estoque, Documentos e Pacote DRE são independentes: «Sem exigências cadastradas» (aberto sem checklist) é estado normal, não erro.
 - **Concluir** a etapa da Controladoria é derivado pelo sistema quando as condições são atendidas — não existe ação de concluir na interface. **Enviar** o pacote documental é operação separada, na página de pacotes, com confirmação humana. Nunca confundir conclusão com envio.
 - Atividade recente exibe somente eventos reais de auditoria P3 do mês; feed completo de eventos e métrica «Documentos a tratar» seguem pendentes de contrato (`TO_INVENTORY`).
+
+## Adendo — Visão geral V0.3: linguagem simples (CF-PROC0072-OVERVIEW-UX-REWORK-005)
+
+Refinamento de apresentação da Visão geral do Fechamento mensal — a estrutura V0.2 é mantida; a CLARA deve responder sobre ela em português simples:
+
+- **Indicadores:** «O que falta resolver» (situações que impedem a conclusão — clique localiza a lista), «Divergências» (diferenças encontradas nas conferências — abre Relatórios e divergências) e «Documentos a tratar» (contagem ainda indisponível — `—`). `—` significa **indisponível**, nunca zero confirmado.
+- **O que precisa de atenção:** lista de situações reais em linguagem simples (ex.: «Conferência do mês ainda não finalizada», «Não foi possível consultar o relatório P7»). Com mais de quatro itens, o botão «Mostrar todas as N situações» expande a lista na própria página — o usuário não é enviado a uma listagem parcial.
+- **Eixos:** «Conferência do estoque» (situação + próximo passo), «Documentos do mês» (exigidos/aguardando/aceitos; «Nenhum documento exigido» é normal) e «Documentos para a Contabilidade» (prontos para envio vs já enviados para revisão).
+- **«Não há um conjunto de documentos para envio definido neste mês»** significa ausência de conjunto configurado — NÃO que documentos estejam apenas aguardando preparação.
+- **Atividades recentes:** últimos registros reais das conferências do mês (auditoria P3, até cinco). Ainda não cobre todas as áreas — histórico completo é evolução futura.
+- **Concluir ≠ Enviar:** «Concluir fechamento» mostra o estado e o que falta (conclusão é derivada pelo sistema — sem botão); «Enviar documentos à Contabilidade» mostra a situação do conjunto e leva à página de gerenciamento, onde o envio exige confirmação.
+- Códigos técnicos (`p3_cutoff_not_confirmed`, `no_applicable_packages` etc.) nunca aparecem no texto principal — servem apenas para diagnóstico/auditoria. Código desconhecido aparece como «Existe uma situação pendente que precisa ser verificada».

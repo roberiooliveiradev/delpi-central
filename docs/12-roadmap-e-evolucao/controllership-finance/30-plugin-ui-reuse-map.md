@@ -790,3 +790,7 @@ Componentes efetivamente reutilizados via `@delpi/plugin-ui/index` (verificados 
 
 `KpiCard`/`MetricKpiCard`, `Timeline`, `QuickPeriodSelector` e `ProgressTracker` foram avaliados e **não adotados** nesta fatia: os indicadores exigem ativação contextual (scroll/aba), `Timeline` exigiria um feed de eventos completo que não existe, a seleção de mês já está implementada e percentuais arbitrários foram proibidos pelo brief. Nenhum chrome paralelo criado; somente classes de layout locais (`.cf-monthly-status`, `.cf-monthly-axes`, `.cf-monthly-outcomes`, `.cf-axis-facts`).
 
+
+## Registro de execução — Visão geral V0.3 (CF-PROC0072-OVERVIEW-UX-REWORK-005, 26/10/2026)
+
+Refinamento de copy sobre a composição V0.2 — **nenhum componente adicionado, removido ou duplicado**. O conjunto de factories continua exatamente o do registro V0.2 acima (`PagePath`, `PageHero`/`ClosingHero`, `SegmentToggle`, `InteractiveDataCard`, `EventsSection`, `SectionCard`, `StatusBadge`, `ActionButton`, `EmptyState`, `TitleWithHelp`, `StateBanner`). A expansão da lista de atenção (`Mostrar todas as N situações`) usa `CfActionButton` + estado local — sem wrapper nem estilo global novo.

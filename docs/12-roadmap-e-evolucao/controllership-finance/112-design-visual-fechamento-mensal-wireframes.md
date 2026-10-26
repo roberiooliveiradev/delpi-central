@@ -1636,3 +1636,21 @@ Implementação da composição aprovada no [Plano 113 §12](./113-plano-canonic
 
 ### 36.5 Evidência
 Vitest `MonthlyClosingPage.test.tsx`: 29/29 (incl. tradução de códigos, «—» sem falso zero, eixos independentes, atividade real/vazia, conclusão≠envio, foco na seção, fail-closed 403, isolamento por período, deep link). Suíte do plugin 211/211; `tsc --noEmit` e ESLint limpos; build federado OK.
+
+## 37. Execução V0.3 — registro de implementação (CF-PROC0072-OVERVIEW-UX-REWORK-005, 26/10/2026)
+
+Refinamento de copy/densidade sobre a composição V0.2 (§36), conforme Plano 113 §14 e wireframe V0.3 §9. Diff de apresentação apenas — nenhum contrato, estado, rota ou permissão alterado.
+
+### 37.1 Antes → depois (copy)
+Ver Plano 113 §15 para a tabela completa de substituições. Princípios aplicados: sem jargão (`cutoff`, `P3`, `checklist`, `pacote`, `template`, `source`) no copy primário; um problema + um próximo passo por cartão de eixo; mensagens honestas (`no_applicable_packages` → ausência de conjunto definido, não preparação pendente).
+
+### 37.2 Correções de comportamento
+- Lista de atenção expande in-place (`Mostrar todas as N situações` / `Mostrar menos`) — eliminado o link `Ver todas as pendências` que levava apenas a P4.
+- Blocking reason desconhecido renderiza `Existe uma situação pendente que precisa ser verificada` — código restrito ao mapa interno/telemetria.
+- Ações do eixo de envio: `Ver detalhes` (cartão) e `Gerenciar envio` (rodapé) — ambos para `closing/packages/{period}` (destino real).
+
+### 37.3 Componentes
+Mesmos do §36.2 — nenhum componente novo, nenhum estilo global novo.
+
+### 37.4 Evidência
+Vitest `MonthlyClosingPage.test.tsx`: 31/31 — inclui expansão in-place, fallback sem código cru e todos os regressivos V0.2 atualizados ao copy V0.3. Suíte plugin 213/213; `tsc --noEmit`, ESLint e build federado OK. Homologação visual PO no navegador: `PENDING`.

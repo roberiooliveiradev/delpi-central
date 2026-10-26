@@ -332,3 +332,25 @@ Implementado exatamente como aprovado: atenções dominantes com códigos traduz
 **Componentização:** consultar `@delpi/plugin-ui/index` e catálogo real; usar o kit, sem criar novos containers decorativos. Reaproveitar V0.2; não redesenhar domínio nem rotas. Critérios: PT-BR simples, sem inglês em texto principal; curto/legível; não distorcer significado dos estados; manter zero ≠ indisponível; acessibilidade e temas; Help e CLARA no mesmo gate; testes semânticos de labels e links. Remoção de legado proibida neste refinamento.
 
 **Próximo gate:** revisar copy em código/contratos, implementar diff de apresentação após brief delimitado, homologar visual no navegador, publicar conhecimento CLARA somente como realidade implantada.
+
+## 15. RUNTIME UPDATE — Visão geral V0.3 implementada (CF-PROC0072-OVERVIEW-UX-REWORK-005, 26/10/2026)
+
+Refinamento de apresentação/linguagem da Visão geral conforme §14 — **estrutura V0.2 preservada** (três abas, indicadores clicáveis, atenção dominante, três eixos, atividade, conclusão/envio). Nenhum contrato, rota, cálculo ou permissão alterado; diff confinado a `MonthlyOverviewPanel.tsx`, subtítulo do hero, `helpTooltips.ts`, mock e testes.
+
+**Linguagem aplicada (antes → depois):**
+- `Cutoff do mês ainda não confirmado` → `Conferência do mês ainda não finalizada`
+- `Fonte P7 indisponível` → `Não foi possível consultar o relatório P7`
+- `Fonte ENTRADAS_SAIDAS indisponível` → `Não foi possível consultar entradas e saídas`
+- `0 de 3 fontes disponíveis` → `Não foi possível consultar N de 3 relatórios necessários`
+- `Sem checklist publicado` → `sem lista de documentos definida` (metadado) / `Nenhum documento exigido para este fechamento` (eixo)
+- `Nenhum pacote aplicável neste mês` → `Não há um conjunto de documentos para envio definido neste mês`
+- `Atividade recente` → `Atividades recentes`; vazio → `Ainda não há atividades registradas nesta conferência`
+- `Conclusão da etapa da Controladoria` → `Concluir fechamento`; `Envio do pacote documental` → `Enviar documentos à Contabilidade`
+- Indicador `Bloqueios` → `O que falta resolver`
+- Fallback de código desconhecido → `Existe uma situação pendente que precisa ser verificada` (código jamais no copy)
+
+**Correção de navegação:** `Ver todas as pendências` (destino P4 parcial) substituído por expansão in-place `Mostrar todas as N situações` / `Mostrar menos` — a lista cobre P3+P4+P5 e nenhuma promessa falsa permanece.
+
+**Honestidade preservada:** `—` continua = indisponível/sem contrato, nunca zero; `no_applicable_packages` não afirma preparação pendente; Atividades recentes segue identificada como escopo das conferências (auditoria P3); conclusão sem botão; envio navega à página real.
+
+**Evidência:** Vitest `MonthlyClosingPage.test.tsx` 31/31 (inclui expansão in-place e fallback sem código cru); suíte do plugin 213/213; `tsc --noEmit` e ESLint limpos; build federado OK.

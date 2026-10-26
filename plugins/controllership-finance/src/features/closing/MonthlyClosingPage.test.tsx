@@ -304,7 +304,7 @@ describe("isolamento de dados por mês de referência", () => {
     resolveA(cockpit("2026-10"));
     await waitFor(() => expect(cockpitMock).toHaveBeenCalledTimes(2));
     expect(
-      screen.queryByText(/Pacote de FISCAL ainda não enviado/),
+      screen.queryByText(/Documentos para fiscal ainda não enviados/),
     ).toBeNull();
     expect(
       screen.getByRole("button", { name: "Documentos a tratar: —" }),
@@ -322,13 +322,13 @@ describe("isolamento de dados por mês de referência", () => {
     const { rerender } = render(
       <MonthlyClosingPage basePath={BASE} period="2026-10" />,
     );
-    await screen.findByText(/Pacote de FISCAL ainda não enviado/);
+    await screen.findByText(/Documentos para fiscal ainda não enviados/);
 
     rerender(<MonthlyClosingPage basePath={BASE} period="2026-11" />);
 
     await screen.findByText(/ainda não foi aberto/);
     expect(
-      screen.queryByText(/Pacote de FISCAL ainda não enviado/),
+      screen.queryByText(/Documentos para fiscal ainda não enviados/),
     ).toBeNull();
     // Sem competência aberta, a V0.2 não exibe indicadores fabricados.
     expect(screen.queryByText("O que precisa de atenção")).toBeNull();
@@ -341,7 +341,7 @@ describe("período e aba preservados na URL", () => {
     listCompetencesMock.mockResolvedValue(COMPETENCES);
     mockOpenMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
-    await screen.findByText("Conclusão da etapa da Controladoria");
+    await screen.findByText("Concluir fechamento");
 
     fireEvent.click(
       screen.getByRole("button", { name: "Documentos e interações" }),
@@ -395,7 +395,7 @@ describe("indicadores honestos e gate documental", () => {
     listCompetencesMock.mockResolvedValue(COMPETENCES);
     mockOpenMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
-    await screen.findByText("contagem aguardando contrato do owner P2");
+    await screen.findByText("contagem ainda não disponível");
     expect(
       screen.getByRole("button", { name: "Documentos a tratar: —" }),
     ).toBeTruthy();
@@ -444,7 +444,7 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
 
     await screen.findByText(
-      "Pacote de FISCAL ainda não enviado para revisão",
+      "Documentos para fiscal ainda não enviados para revisão",
     );
     expect(
       screen.queryByText(/package_not_submitted/),
@@ -470,10 +470,10 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
 
     await screen.findByText(
-      "Fonte P7 indisponível — não foi possível verificar a conciliação",
+      "Não foi possível consultar o relatório P7",
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Ver relatórios" }),
+      screen.getByRole("button", { name: "Ver divergências" }),
     );
     await waitFor(() =>
       expect(window.location.search).toContain("tab=reports"),
@@ -535,14 +535,18 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     mockOpenMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
 
-    await screen.findByText("Estoque");
-    expect(screen.getByText("Documentos")).toBeTruthy();
-    expect(screen.getByText("Pacote DRE")).toBeTruthy();
-    expect(screen.getByText(/Cutoff:/)).toBeTruthy();
+    await screen.findByText("Conferência do estoque");
+    expect(screen.getByText("Documentos do mês")).toBeTruthy();
+    expect(screen.getByText("Documentos para a Contabilidade")).toBeTruthy();
+    expect(
+      screen.getByText("Não foi possível consultar 1 de 3 relatórios necessários."),
+    ).toBeTruthy();
     expect(screen.getByText(/8 aguardando evidência/)).toBeTruthy();
     expect(
-      screen.getByText("Nenhum pacote aplicável neste mês."),
-    ).toBeTruthy();
+      screen.getAllByText(
+        "Não há um conjunto de documentos para envio definido neste mês.",
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("checklist vazio (aberto sem template) é estado normal, não erro", async () => {
@@ -558,9 +562,9 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     listP3EventsMock.mockResolvedValue([]);
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
 
-    await screen.findByText(/Sem exigências cadastradas/);
+    await screen.findByText(/Nenhum documento exigido para este fechamento/);
     expect(
-      screen.getAllByText(/sem checklist publicado/).length,
+      screen.getAllByText(/sem lista de documentos definida/).length,
     ).toBeGreaterThanOrEqual(1);
   });
 
@@ -573,7 +577,7 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     );
 
     await screen.findByText(
-      "Nenhuma atividade registrada para esta competência.",
+      "Ainda não há atividades registradas nesta conferência.",
     );
 
     listP3EventsMock.mockResolvedValue([
@@ -587,7 +591,7 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     ]);
     rerender(<MonthlyClosingPage basePath={BASE} period="2026-11" />);
     rerender(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
-    await screen.findByText("Cutoff confirmado");
+    await screen.findByText("Conferência do mês finalizada");
     expect(screen.getByText(/user-1/)).toBeTruthy();
     expect(listP3EventsMock).toHaveBeenCalledWith(
       "2026-10",
@@ -601,14 +605,14 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     mockOpenMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
 
-    await screen.findByText("Conclusão da etapa da Controladoria");
-    expect(screen.getByText("Envio do pacote documental")).toBeTruthy();
+    await screen.findByText("Concluir fechamento");
+    expect(screen.getByText("Enviar documentos à Contabilidade")).toBeTruthy();
     expect(
-      screen.getByText(/condição\(ões\) impeditiva/),
+      screen.getByText(/situação\(ões\) ainda impedem/),
     ).toBeTruthy();
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Gerenciar pacotes" }),
+      screen.getByRole("button", { name: "Gerenciar envio" }),
     );
     expect(window.location.pathname).toBe(
       `${BASE}/closing/packages/2026-10`,
@@ -638,7 +642,7 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     await screen.findAllByText("Este fechamento está concluído.");
     expect(
       screen.getByText(
-        "Nenhuma pendência identificada neste fechamento.",
+        "Nada pendente neste fechamento.",
       ),
     ).toBeTruthy();
   });
@@ -649,9 +653,9 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
     mockOpenMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
 
-    await screen.findByText("2 pendência(s) em aberto");
+    await screen.findByText("2 pendência(s) aguardando tratamento");
     expect(
-      screen.getByText("8 item(ns) do checklist aguardando evidência"),
+      screen.getByText("8 documento(s) aguardando evidência"),
     ).toBeTruthy();
 
     fireEvent.click(
@@ -668,7 +672,7 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
 
     await screen.findByText("O que precisa de atenção");
     fireEvent.click(
-      screen.getByRole("button", { name: "Bloqueios: 1" }),
+      screen.getByRole("button", { name: "O que falta resolver: 1" }),
     );
     const attention = document.getElementById("cf-monthly-attention");
     expect(attention).toBeTruthy();
@@ -690,5 +694,68 @@ describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", 
       /Você não tem autorização para consultar/,
     );
     expect(screen.queryByText("O que precisa de atenção")).toBeNull();
+  });
+
+  it("expande todas as situações na própria Visão geral", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    cockpitMock.mockResolvedValue(
+      cockpit("2026-10", {
+        closing: {
+          period: "2026-10",
+          state: "PENDING",
+          blocking_reasons: [
+            "p3_cutoff_not_confirmed",
+            "p3_source_unavailable:P7",
+            "p3_source_unavailable:ENTRADAS_SAIDAS",
+            "p3_source_unavailable:H02",
+            "no_applicable_packages",
+            "package_not_submitted:FISCAL",
+          ],
+          packages: [],
+          terminal_rejection: null,
+        },
+      }),
+    );
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText(/Mostrando 4 de \d+ situações/);
+    expect(
+      screen.queryByText("Documentos para fiscal ainda não enviados para revisão"),
+    ).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Mostrar todas as \d+ situações/ }),
+    );
+    expect(
+      screen.getByText("Documentos para fiscal ainda não enviados para revisão"),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar menos" }));
+    expect(
+      screen.queryByText("Documentos para fiscal ainda não enviados para revisão"),
+    ).toBeNull();
+  });
+
+  it("código de bloqueio desconhecido usa mensagem genérica sem código cru", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    cockpitMock.mockResolvedValue(
+      cockpit("2026-10", {
+        closing: {
+          period: "2026-10",
+          state: "PENDING",
+          blocking_reasons: ["mystery_blocker_xyz"],
+          packages: [],
+          terminal_rejection: null,
+        },
+      }),
+    );
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText(
+      "Existe uma situação pendente que precisa ser verificada",
+    );
+    expect(screen.queryByText(/mystery_blocker_xyz/)).toBeNull();
   });
 });

@@ -232,6 +232,7 @@ export function createDashboardEventsSection() {
       "section",
       { "aria-label": props.listAriaLabel },
       el("h2", null, props.title),
+      props.subtitle ? el("p", null, props.subtitle) : null,
       items.length === 0
         ? el("p", null, props.emptyMessage)
         : el(

@@ -376,3 +376,19 @@ Fonte: [Plano 113 §§12–13](./113-plano-canonico-fluxo-fechamento-controlador
 | RQ-OVR-11 | Checklist vazio = estado normal | «Sem exigências cadastradas», sem erro | checklist {} + template_version_id null | PASS |
 | RQ-OVR-12 | Acessibilidade da seção de atenção | foco programático ao ativar Bloqueios | activeElement = #cf-monthly-attention | PASS |
 | RQ-OVR-13 | Mobile/temas/QA visual | layout responsivo e temas do kit | media queries implementadas; homologação visual PO | PENDING (QA visual pelo PO) |
+
+## Visão geral V0.3 — refinamento de linguagem (CF-PROC0072-OVERVIEW-UX-REWORK-005, 26/10/2026)
+
+| ID | Requisito | Critério de aceite | Evidência | Status |
+|---|---|---|---|---|
+| RQ-V03-01 | Copy primária em PT-BR simples | sem `cutoff`/`P3`/`checklist`/`pacote`/`template`/`source` em texto visível | grep sobre `MonthlyOverviewPanel.tsx` + tabela Plano 113 §15 | PASS |
+| RQ-V03-02 | Tradução de bloqueios conhecidos | mensagens humanas por código real | testes «traduz códigos», «fonte P3 indisponível» | PASS |
+| RQ-V03-03 | Fallback sem código cru | código desconhecido → mensagem genérica | teste «código de bloqueio desconhecido» | PASS |
+| RQ-V03-04 | Expansão da atenção in-place | `Mostrar todas as N situações`/`Mostrar menos`; sem link enganoso para P4 | teste «expande todas as situações» | PASS |
+| RQ-V03-05 | `no_applicable_packages` honesto | «Não há um conjunto de documentos para envio definido neste mês» | assert em «eixos independentes» | PASS |
+| RQ-V03-06 | `—` sem falso zero | fonte indisponível/sem contrato → `—` | regressivos V0.2 mantidos | PASS |
+| RQ-V03-07 | Eixos renomeados | «Conferência do estoque», «Documentos do mês», «Documentos para a Contabilidade» | teste «eixos independentes» | PASS |
+| RQ-V03-08 | Conclusão ≠ envio preservado | «Concluir fechamento» + «Enviar documentos à Contabilidade» separados | teste «conclusão e envio separados» | PASS |
+| RQ-V03-09 | Atividades = escopo conferências | subtítulo e vazio honestos («nesta conferência») | teste «atividade recente» | PASS |
+| RQ-V03-10 | Regressões V0.2 | isolamento por período, deep link, fail-closed, foco | suíte 213/213 do plugin | PASS |
+| RQ-V03-11 | QA visual desktop/mobile/temas | homologação do PO no navegador | — | PENDING (QA visual pelo PO) |
