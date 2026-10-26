@@ -223,18 +223,26 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
         ids = [str(task_id) for task_id in task_ids if str(task_id or "").strip()]
         if not ids:
             return {}
+        # Membership gate only exists on the V2 room schema; on the older
+        # schema every room behaves as 'open' (the same default the room
+        # access service uses when the column is absent).
+        if self._room_v2_schema():
+            can_open = (
+                "(r.access_scope = 'open'"
+                f" OR EXISTS (SELECT 1 FROM {_S}.tm_interaction_room_participants rp"
+                " WHERE rp.room_id = r.id AND rp.user_id = %s::uuid"
+                " AND rp.removed_at IS NULL)) AS can_open"
+            )
+            params = (viewer_id, ids)
+        else:
+            can_open = "TRUE AS can_open"
+            params = (ids,)
         rows = self.fetch_all(
             f"""SELECT t.id AS task_id,
                        r.id AS room_id,
                        NULLIF(btrim(p.nome_processo), '') AS nome_processo,
                        NULLIF(btrim(p.codigo_processo), '') AS codigo_processo,
-                       (r.access_scope = 'open'
-                        OR EXISTS (
-                            SELECT 1 FROM {_S}.tm_interaction_room_participants rp
-                            WHERE rp.room_id = r.id
-                              AND rp.user_id = %s::uuid
-                              AND rp.removed_at IS NULL)
-                       ) AS can_open
+                       {can_open}
                 FROM {_S}.tm_tasks t
                 LEFT JOIN {_S}.tm_interaction_messages m
                     ON m.id = t.source_interaction_message_id
@@ -245,13 +253,13 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
                 LEFT JOIN {_S}.processos p
                     ON p.processo_id = r.processo_id
                 WHERE t.id = ANY(%s::uuid[])""",
-            (viewer_id, ids),
+            params,
         )
         contexts: dict[str, TaskOriginContext] = {}
         for row in rows:
-            # Sem prova de acesso à sala, room_id/context_label são suprimidos:
-            # a tarefa delegada continua listável, mas a projeção não vaza
-            # sala nem processo que o viewer não pode abrir.
+            # Without proven room access, room_id/context_label are withheld:
+            # the delegated task still lists, but the projection leaks
+            # neither the room nor its process to a viewer who cannot open it.
             if not row.get("can_open"):
                 contexts[str(row["task_id"])] = TaskOriginContext()
                 continue
@@ -262,6 +270,17 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
                 context_label=str(label) if label else None,
             )
         return contexts
+
+    def _room_v2_schema(self) -> bool:
+        if getattr(self, "_room_v2", None) is None:
+            row = self.fetch_one(
+                """SELECT COUNT(*) AS n FROM information_schema.columns
+                   WHERE table_schema = 'transformometro'
+                     AND table_name = 'tm_interaction_rooms'
+                     AND column_name = 'access_scope'"""
+            )
+            self._room_v2 = bool(row and row.get("n"))
+        return self._room_v2
 
     def list_related_to_process(self, processo_id: str) -> list[TransformometroTask]:
         rows = self.fetch_all(
