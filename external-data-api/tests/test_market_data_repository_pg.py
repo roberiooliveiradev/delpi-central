@@ -1,10 +1,13 @@
 """Real PostgreSQL integration — migrations, constraints, upserts.
 
-Requires an isolated PostgreSQL reachable through EXTERNAL_DATA_TEST_PG_*
-env vars. When unset, every case is skipped (TEST_NOT_RUN — environment),
-matching the repo convention for real-engine proofs. These tests prove
-migration-from-empty, upgrade path, uniqueness, decimal integrity and
-idempotent re-ingestion against the actual engine.
+Requires a *provably disposable* PostgreSQL reachable through
+EXTERNAL_DATA_TEST_PG_* env vars, plus the explicit opt-in
+``EXTERNAL_DATA_TEST_PG_DISPOSABLE=1``. When the host var is unset every
+case is skipped (TEST_NOT_RUN — environment); when configured but unsafe
+the suite hard-fails before any migration or DROP
+(``tests.pg_disposable_guard``). These tests prove migration-from-empty,
+upgrade path, uniqueness, decimal integrity and idempotent re-ingestion
+against the actual engine.
 """
 
 from __future__ import annotations
@@ -29,8 +32,35 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture(scope="session")
 def pg_env():
     """Point Settings at an isolated *database* (never another schema —
-    ``external_data`` is canonical and immutable)."""
+    ``external_data`` is canonical and immutable).
+
+    Fail-closed (R1.1): the target must carry the disposable sentinel or
+    be provably empty — a misconfigured ``EXTERNAL_DATA_TEST_PG_*`` that
+    reaches a real database aborts *before* any migration or DROP.
+    """
+    import psycopg
+    from psycopg.rows import dict_row
+
     from app.infrastructure.config.settings import Settings
+    from tests.pg_disposable_guard import validate_target
+
+    host = os.environ["EXTERNAL_DATA_TEST_PG_HOST"]
+    port = int(os.getenv("EXTERNAL_DATA_TEST_PG_PORT", "5432"))
+    dbname = os.getenv("EXTERNAL_DATA_TEST_PG_NAME", "external_data_test")
+    user = os.getenv("EXTERNAL_DATA_TEST_PG_USER", "postgres")
+    password = os.getenv("EXTERNAL_DATA_TEST_PG_PASSWORD", "test")
+
+    with psycopg.connect(
+        host=host,
+        port=port,
+        dbname=dbname,
+        user=user,
+        password=password,
+        sslmode="disable",
+        connect_timeout=5,
+        row_factory=dict_row,
+    ) as probe:
+        validate_target(host=host, dbname=dbname, conn=probe)
 
     original = {
         "PLUGINS_DB_HOST": Settings.PLUGINS_DB_HOST,
@@ -40,23 +70,28 @@ def pg_env():
         "PLUGINS_DB_PASSWORD": Settings.PLUGINS_DB_PASSWORD,
         "PLUGINS_DB_SSLMODE": Settings.PLUGINS_DB_SSLMODE,
     }
-    Settings.PLUGINS_DB_HOST = os.environ["EXTERNAL_DATA_TEST_PG_HOST"]
-    Settings.PLUGINS_DB_PORT = int(
-        os.getenv("EXTERNAL_DATA_TEST_PG_PORT", "5432")
-    )
-    Settings.PLUGINS_DB_NAME = os.getenv(
-        "EXTERNAL_DATA_TEST_PG_NAME", "external_data_test"
-    )
-    Settings.PLUGINS_DB_USER = os.getenv(
-        "EXTERNAL_DATA_TEST_PG_USER", "postgres"
-    )
-    Settings.PLUGINS_DB_PASSWORD = os.getenv(
-        "EXTERNAL_DATA_TEST_PG_PASSWORD", "test"
-    )
+    Settings.PLUGINS_DB_HOST = host
+    Settings.PLUGINS_DB_PORT = port
+    Settings.PLUGINS_DB_NAME = dbname
+    Settings.PLUGINS_DB_USER = user
+    Settings.PLUGINS_DB_PASSWORD = password
     Settings.PLUGINS_DB_SSLMODE = "disable"
     yield
     for key, value in original.items():
         setattr(Settings, key, value)
+
+
+@pytest.fixture(autouse=True)
+def _guard_before_mutation(pg_env):
+    """Re-verify the disposable sentinel immediately before any test that
+    may mutate the database — the probe above proved the target at fixture
+    setup; this keeps the guarantee at each mutation boundary."""
+    from app.infrastructure.persistence.plugins_db import get_connection
+    from tests.pg_disposable_guard import ensure_disposable_database
+
+    with get_connection() as conn:
+        ensure_disposable_database(conn)
+    yield
 
 
 @pytest.fixture(scope="session")
