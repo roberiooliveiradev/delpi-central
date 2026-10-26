@@ -809,3 +809,35 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Lista de competências existentes/autorizadas (checklist + fechamento mensal). */
+.dashboard-controllership-finance .cf-competence-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-controllership-finance .cf-competence-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--cf-border);
+  border-radius: var(--radius, 12px);
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--cf-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.dashboard-controllership-finance .cf-competence-link:hover {
+  background: color-mix(in srgb, var(--cf-surface-muted) 60%, transparent);
+}
+
+.dashboard-controllership-finance .cf-competence-link:focus-visible {
+  outline: 2px solid var(--cf-focus, currentColor);
+  outline-offset: 2px;
+}

@@ -180,7 +180,7 @@ export const CF_HELP = {
     page:
       "Fechamento mensal: bancada de trabalho da competência em três abas — Visão geral (estado real P1–P5), Documentos e interações (evidências P2) e Relatórios e divergências (matriz R01–R15 e fontes). A competência escolhida vale para as três abas.",
     indicators:
-      "Indicadores derivados do cockpit do backend: Bloqueios (razões que impedem a conclusão), Divergências (domínios P3 com divergência declarada) e Documentos a tratar (itens do checklist aguardando evidência). «—» significa dado ainda não carregado — nunca zero confirmado. Cada cartão abre a aba correspondente.",
+      "Indicadores derivados do cockpit do backend: Bloqueios (razões que impedem a conclusão), Divergências (domínios P3 com divergência declarada) e Documentos a tratar (itens do checklist P2 no estado «Aguardando evidência» — único estado contratual a tratar; itens aceitos, não aplicáveis ou cancelados não entram na conta). «—» significa dado ainda não carregado — nunca zero confirmado. Cada cartão abre a aba correspondente.",
     tabs:
       "Três visões da mesma competência: Visão geral consolida o estado do fechamento; Documentos e interações abre as evidências e anexos P2; Relatórios e divergências abre a matriz de relatórios e fontes.",
     pdfPreview:

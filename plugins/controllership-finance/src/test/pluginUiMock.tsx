@@ -556,6 +556,7 @@ export function createDashboardFiltersKit() {
     value: string;
     onChange: (value: string) => void;
     options?: Array<{ value: string; label: string }>;
+    placeholderOption?: string;
   }) {
     return el(
       "select",
@@ -565,6 +566,9 @@ export function createDashboardFiltersKit() {
         onChange: (event: { target: { value: string } }) =>
           props.onChange(event.target.value),
       },
+      props.placeholderOption
+        ? el("option", { value: "" }, props.placeholderOption)
+        : null,
       (props.options ?? []).map((option) =>
         el("option", { key: option.value, value: option.value }, option.label),
       ),
@@ -717,6 +721,7 @@ export function createDashboardInteractiveDataCard() {
           { key: field.id },
           el("span", null, field.label),
           el("strong", null, field.value),
+          el("span", null, (field as { hint?: string }).hint),
         ),
       ),
       props.openHint,
