@@ -407,3 +407,104 @@ Atualizar as descrições visuais de abas para evitar ambiguidades:
 **Estados visuais, lista e detalhe são por owner**: P4 exibe fila/assignee/histórico e ações permitidas; P5 exibe pacotes/recipients/versionamento/decisões; P2 exibe checklist/evidências. Não fundir “pendência”, “divergência”, “documento” e “revisão” em uma única entidade, nem representar cada pendência como documento pendente. Deep links e contratos continuam `TO_INVENTORY` antes de implementação.
 
 **Estado da decisão:** `CLARIFICATION_RECORDED / FM-06_VISUAL_DETAIL_PENDING_PO`. Não altera a aprovação prévia da estrutura de cinco visões ou dos três indicadores clicáveis FM-05.
+
+
+## 13. Rebaseline de UX pela jornada real: documentos compartilhados + relatórios TOTVS (proposta V0.6)
+
+**Data:** 2026-10-26. **Origem:** feedback direto do PO durante revisão da FM-06. **Estado:** `PRODUCT_DIRECTION_RECORDED / DESIGN_V0.6_PROPOSED / DECISION_REQUIRED_ON_TAB_STRUCTURE`. Esta proposta **supersede como desenho proposto** a distribuição de cinco abas da V0.5, **sem revogar decisões previamente aprovadas** sobre seletor de competências e três cartões clicáveis. A anterior organização não deve ser implementada automaticamente.
+
+### 13.1 Necessidade expressa pelo PO
+
+- A pessoa que **entrega os documentos** (exemplo citado pelo PO: Joyce) precisa de uma lista padronizada de entregáveis obrigatórios e condicionais, incluindo extratos bancários e outras evidências, para enviar e acompanhar o tratamento.
+- A pessoa de **Contabilidade/DRE** precisa consultar os documentos recebidos e interagir com sua análise, **sem ter autorização para anexar documentos** nesse fluxo proposto.
+- Ambas visualizam no **mesmo local, por documento/item e competência**, estado, observações, solicitações, justificativas e histórico de interação.
+- A Controladoria também precisa de uma **bancada separada de relatórios TOTVS**, reproduzidos somente onde houver contrato/source/paridade comprovados, com regras e divergências rastreáveis aos ciclos 1–2 e ao AS-IS. Não confundir catálogo de relatórios com relatório homologado.
+
+**Cuidados com autoridade:** o PO descreveu duas responsabilidades funcionais. Não criar permissão por papel, página, botão, CRUD, empresa ou filial. As únicas capabilities globais permanecem `controllership-finance.access` e `controllership-finance.manage`. Se a atribuição de “anexar” vs “analisar” não estiver expressa no contrato vigente P2, a solução de authorization/ownership por recurso e regra de negócio deve voltar como `DECISION_REQUIRED`, não ser implementada por hardcode de identidade ou perfil “DRE”.
+
+### 13.2 Nova arquitetura de informação para validação
+
+**Recomendação:** começar com duas bancadas principais do fluxo real e deixar status/revisão em áreas semanticamente distintas:
+
+```text
+FECHAMENTO MENSAL
+[Competência existente/autorizada ▼] [Contexto] [Status/freshness]
+[Bloqueios] [Divergências] [Documentos a tratar]  ← os três cards clicáveis aprovados
+[Visão geral] [Documentos e interações] [Relatórios e divergências] [Revisão do fechamento]
+  ├─ Visão geral — bloqueios, três eixos e próximos passos (P1)
+  ├─ Documentos e interações — checklist P2 e colaboração contextual
+  ├─ Relatórios e divergências — biblioteca R01–R15 + execução/leitura verificada
+  │                            + comparação/regras + divergências rastreáveis (P3 e owners)
+  └─ Revisão do fechamento — pacotes/versionamento/aceites/esclarecimentos (P5)
+Pendências P4 — possíveis filtros/fila transversais dentro da Visão geral e das
+bancadas com owner e deep link; sua posição como aba separada segue em discussão.
+```
+
+**Não é aprovação para remover a aba Pendências, nem para fundir semanticamente P4 em P2/P3.** P4 segue owner de ocorrências/classificações/CC, inclusive pendências não documentais. Definir exposição como aba própria vs worklist transversal exige PO e inventário de contratos. Reutilizar `@delpi/plugin-ui`; manter páginas comuns do shell.
+
+### 13.3 Wireframe da bancada A — Documentos e interações
+
+```text
+DOCUMENTOS E INTERAÇÕES   Competência MM/AAAA   [origem/freshness]
+[Todos] [Falta enviar] [Aguardando análise] [Ajustes solicitados] [Aceitos]
+[Grupo ▼] [Origem ▼] [Destinatário ▼] [Buscar documento]
+┌───────────────────────────────────────┬─────────────────────────────────────┐
+│ LISTAGEM DO CHECKLIST REAL            │ DETALHE DO ITEM                    │
+│ Documento / requisito                 │ Identificação / requirement / owner│
+│ Quem entrega / a quem se destina      │ Arquivos, versões, preview         │
+│ Estado documental / última interação  │ Análise / esclarecimentos          │
+│ [abrir item]                          │ Histórico compartilhado / timeline│
+│ ...                                   │ Ações ELEGÍVEIS POR CONTEXTO       │
+└───────────────────────────────────────┴─────────────────────────────────────┘
+```
+
+**Modos de uso propostos**, não novos permission codes:
+- **Entrega:** usuário com elegibilidade de entrega para aquele item/competência visualiza lista, faz upload/substituição quando permitido e acompanha solicitações de ajuste; upload = `ATTACHED`, **não** `ACCEPTED`.
+- **Consulta/análise contábil:** outro usuário com resource scope/elegibilidade pode ler documentos/versões, registrar análise/esclarecimento **somente se houver operação e autorização contratadas**, sem ação de anexar/substituir no fluxo definido pelo PO.
+- **Ambos:** compartilham contexto e histórico auditável da mesma evidência/item, com mensagens/solicitações exibidas de acordo com regras de visibilidade e segurança. **Não criar chat paralelo nem banco de comentários** antes de inventariar P2/P5 e Sala de interação/notifications; integração e ownership de “interação documental” são `DECISION_REQUIRED`.
+- **Listagem padrão:** partir do snapshot P2 da competência, não montar lista manual nova; 53 `EXPECTED` no registro P6-MIN+P2-READ são evidência histórica de seed/snapshot, não garantem homologação de todos os itens atuais ou completa presença dos anexos.
+- **Sem sobreposição indevida:** o ato de validar uma evidência P2 difere de revisar pacote P5; revisor Contabilidade/DRE pode ter atribuições distintas em ambos os contextos. Não presumir que todo reviewer P5 valida evidência P2.
+
+### 13.4 Wireframe da bancada B — Relatórios e divergências TOTVS
+
+```text
+RELATÓRIOS E DIVERGÊNCIAS     Competência / período / empresa / filial autorizada
+[Financeiro] [Estoque e custos] [Fiscal/Contábil] [Outros/Externos]
+[Busca relatório] [Somente fontes disponíveis] [Ver pendências de paridade]
+┌──────────────────────────────────────┬──────────────────────────────────────┐
+│ CATÁLOGO R01–R15 / FAMÍLIAS         │ RELATÓRIO SELECIONADO                │
+│ Nome, finalidade, origem/rotina      │ Parâmetros/filtros/competência       │
+│ Disponibilidade da fonte            │ Dados tabulares, totais, agrupamento│
+│ Equivalência validada? G1..G6       │ Regras de verificação e provenance  │
+│ R01 Baixas a pagar                  │ Divergências por grupo/linha        │
+│ R02 Baixas a receber                │ Comparações e documentos associados │
+│ R03 P7 / Bloco H                    │ Detalhe, drilldown, histórico       │
+│ ... R15                             │ Export somente após contrato        │
+└──────────────────────────────────────┴──────────────────────────────────────┘
+```
+
+**Fonte:** [46 — inventário R01–R15](./46-t01-report-source-inventory-v1.md) e [47 — tracker de auditoria](./47-t01-report-column-audit-tracker-v1.md). O inventário distingue relatórios, famílias/rotinas e documentos externos, portanto não apresentar R01–R15 como quinze PDFs equivalentes nem exigir renderização SQL de extrato bancário externo. Exemplos: R01/R02 baixas, R03 P7, R04 consumo por OP (MATR860), R05 entradas/saídas, R06/07 Kardex, R08 H02, R09 faturamento × MOD, R10/11 notas, R12 rotinas de custo, R13 extratos externos, R14 importação mista, R15 cutoff. `MATR860 != MATR460/P7`.
+
+**Evidência datada no README:** Ciclo 2 registra coleta `47/60`, auditoria `55/90` e **`G6=0/15`**; o tracker 47 possui múltiplos G5 PASS em revisões técnicas, mas **nenhum item pode ser declarado oficialmente aceito pela Controladoria apenas por isso**. Os blocos de documentação de R01/R02 e runtime P1/P2 são datados; qualquer afirmação “rota já existe e é equivalente” exige HEAD, producer, resposta e paridade verificados por relatório.
+
+**Tratamento de divergências:** exibir diferença, fórmula/regra, unidade, competência, fonte/versão, campos originários, impacto e owner com evidência; P3 exige paridade monetária exata `Entradas/Saídas − P7 − H02 = R$ 0,00` após critérios corretos de cutoff/revalidação. Não inferir divergência de dado parcial/nulo, nem aplicar tolerância implícita. Sem fonte equivalente, mostrar `PARIDADE_PENDENTE` / `UNAVAILABLE_SOURCE` com diagnóstico, nunca valor inventado ou “tudo conciliado”.
+
+### 13.5 Interações entre as duas bancadas
+
+Um relatório divergente pode **referenciar** o item/documento relacionado e vice-versa, **somente se os identificadores de vínculo e permissions estiverem contratados**. Navegação e leitura de evidência não significam edição da origem. Um comentário/solicitação de Contabilidade deve ser visível ao entregador quando pertinente e autorizado, com actor/timestamp/history; definir tecnologia/owner de colaboração por inventário e decisão, não por criação livre de tabela.
+
+### 13.6 Decisões de produto pendentes
+
+| ID | Escolha material | Opções | Recomendação e estado |
+|---|---|---|---|
+| D-FM06-REBASE-01 | Navegação principal | A: Visão geral / Documentos e interações / Relatórios e divergências / Revisão, com Pendências P4 em fila contextual; B: manter Pendências como quinta aba independente | **DECISION_REQUIRED**; recomendar testar A em wireframe, preservando P4 como owner distinto |
+| D-DOC-AUTHZ-01 | Quem anexa, analisa, solicita correção e vê histórico | Vincular elegibilidade/assignment ao item e recurso pela BFF e Core; outra alternativa exige governança separada | **DECISION_REQUIRED** de boundary/contrato; nenhuma nova permission code |
+| D-DOC-COLLAB-01 | Modelo de interação documental | Reuso de comentários/clarifications/notificações existentes vs novo contrato próprio | **TO_INVENTORY → DECISION_REQUIRED**, não criar automaticamente chat ou tabela |
+| D-REPORT-01 | Quais relatórios realmente estão reproduzidos | Inventário API producer/consumer + HEAD + equivalência por R-ID | **TO_INVENTORY**; sem aprovação automática de todos os quinze |
+| D-REPORT-02 | Dashboard de divergências | Agregar somente reads derivados e rules com source e ownership | **PENDING OWNER/PARITY**, sem nova regra em frontend |
+
+### 13.7 Próximo ciclo de design
+
+Priorizar **Documentos e interações** no próximo wireframe porque o PO descreveu claramente duas jornadas complementares. Em seguida **Relatórios e divergências** por família (começando por R01/R02 ou grupo acordado), conferindo o tracker físico 47. Desenhar versões desktop/mobile/sem acesso/partial/erro, mapeando checklist, estados e ações com o owner. Manter revisão P5 autônoma e preservar o fluxo de pendências P4 até decisão.
+
+**Gates:** `USER_NEED=PROVEN_BY_PO`; `UX_REBASELINE=TARGET`; `DESIGN_APPROVAL=PENDING`; `REPORT_REPRODUCTION_ALL=NOT_PROVEN`; `RUNTIME_GO=NO`.
