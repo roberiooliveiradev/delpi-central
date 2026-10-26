@@ -1595,3 +1595,8 @@ Todas sob prefixo `/closing/competences/{period}` e todas chamam `_competence_id
   - pós-condições: `migration_applied V015` no startup log, `schema_migrations` max=15, `template_version_id` nullable=YES, FK preservada, container `healthy`.
 - **Primeira abertura real já ocorreu via jornada autenticada do Portal:** `POST /closing/competences` → 201, competência `2026-09` criada com `template_version_id NULL`, 0 itens no checklist, audit `COMPETENCE_OPENED` com `opened_without_template: true` (evidência read-only; ator registrado por UUID).
 - Rollback: `SET NOT NULL` é seguro somente enquanto não houver competências NULL — a partir desta abertura já existe 1 (2026-09); rollback exigiria decisão de dados (associar versão vigente ou descartar o fechamento) — ver §33.2.
+
+
+## 34. Redesign V0.1 — Visão geral (proposta ao PO, 26/10/2026)
+
+A proposta detalhada está no [Plano 113 §11](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Substituir a organização de painéis P1–P5 extensos por header + mês, estado geral, três KPIs contextuais, próximas ações legíveis, três eixos independentes e histórico compacto, sem perder blockers reais nem traduzir indisponibilidade como zero. **PENDING_PO_VISUAL_APPROVAL / NO_RUNTIME_GO**; só após revisão do PO criar brief de implementação, atualizar Help e CLARA, mantendo legado até autorização.
