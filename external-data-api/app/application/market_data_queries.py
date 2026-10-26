@@ -15,6 +15,7 @@ from app.application.contracts import (
     StorageUnavailableError,
     UnknownInstrumentError,
     UnknownSeriesError,
+    UseNotApprovedError,
 )
 from app.domain.market_data import (
     KIND_FX,
@@ -23,6 +24,7 @@ from app.domain.market_data import (
     SCHEMA_VERSION,
     SUPPORTED_RATE_KINDS,
 )
+from app.domain import usage_policy
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.persistence.market_data_repository import (
     MarketDataRepository,
@@ -97,10 +99,27 @@ def _source_dto(source) -> dict[str, Any]:
             if source.license_reviewed_at
             else None
         ),
+        "allowed_use_scope": source.allowed_use_scope,
     }
 
 
+def _display_allowed(source) -> bool:
+    """Fail-closed: only an explicit ``internal_display`` grant serves
+    prices to consumers; pending/unknown scopes are denied."""
+    return bool(source) and usage_policy.allows(
+        source.allowed_use_scope, usage_policy.OP_INTERNAL_DISPLAY
+    )
+
+
+def _require_display(source, *, what: str) -> None:
+    if not _display_allowed(source):
+        raise UseNotApprovedError(
+            f"source has no approved internal_display use for {what}"
+        )
+
+
 def _instrument_dto(inst, sources: dict[str, Any]) -> dict[str, Any]:
+    source = sources.get(inst.source_id)
     return {
         "instrument_code": inst.instrument_code,
         "kind": KIND_METAL,
@@ -114,6 +133,7 @@ def _instrument_dto(inst, sources: dict[str, Any]) -> dict[str, Any]:
         "granularity": inst.granularity,
         "source_id": inst.source_id,
         "active": inst.active,
+        "display_allowed": _display_allowed(source),
     }
 
 
@@ -142,6 +162,7 @@ def get_catalog() -> dict[str, Any]:
                 "unit": "BRL per USD",
                 "granularity": "day",
                 "source_id": "bcb-ptax",
+                "display_allowed": _display_allowed(sources.get("bcb-ptax")),
                 "latest_observation_date": _iso(
                     latest.get(f"{PAIR_USD_BRL}|ptax_closing_sell")
                 ),
@@ -178,6 +199,8 @@ def list_metal_observations(
             raise UnknownInstrumentError(
                 f"unknown market instrument: {code}"
             )
+        source = repo.get_source(instrument.source_id)
+        _require_display(source, what=code)
         rows = repo.list_metal_observations(
             instrument_id=instrument.instrument_id,
             date_from=date_from,
@@ -185,7 +208,6 @@ def list_metal_observations(
             limit=limit,
             cursor=cursor,
         )
-        source = repo.get_source(instrument.source_id)
 
     items, next_cursor = rows_to_page(
         rows, limit=limit, date_key="observation_date", id_key="observation_id"
@@ -233,6 +255,8 @@ def list_fx_observations(
 
     with get_connection() as conn:
         repo = _repo(conn)
+        source = repo.get_source("bcb-ptax")
+        _require_display(source, what=pair_code)
         rows = repo.list_fx_observations(
             pair_code=pair_code,
             rate_kind=kind,
@@ -241,7 +265,6 @@ def list_fx_observations(
             limit=limit,
             cursor=cursor,
         )
-        source = repo.get_source("bcb-ptax")
 
     items, next_cursor = rows_to_page(
         rows, limit=limit, date_key="reference_date", id_key="fx_id"
@@ -284,6 +307,11 @@ def get_ingestion_status() -> dict[str, Any]:
                 "source_id": feed_source.get(feed["feed"]),
                 "source_active": (
                     sources[feed_source[feed["feed"]]].active
+                    if feed_source.get(feed["feed"]) in sources
+                    else None
+                ),
+                "source_allowed_use_scope": (
+                    sources[feed_source[feed["feed"]]].allowed_use_scope
                     if feed_source.get(feed["feed"]) in sources
                     else None
                 ),

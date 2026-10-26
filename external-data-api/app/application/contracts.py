@@ -91,3 +91,12 @@ class StorageUnavailableError(ExternalDataError):
 class SourceNotLicensedError(ExternalDataError):
     http_status = 503
     code = "EXTERNAL_DATA_SOURCE_NOT_LICENSED"
+
+
+class UseNotApprovedError(ExternalDataError):
+    """The source exists and is licensed, but the requested operation
+    (e.g. ``internal_display``) is not covered by the recorded rights —
+    fail-closed quarantine, never a data leak."""
+
+    http_status = 403
+    code = "EXTERNAL_DATA_USE_NOT_APPROVED"

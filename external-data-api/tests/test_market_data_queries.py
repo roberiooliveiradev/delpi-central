@@ -14,6 +14,7 @@ from app.application.contracts import (
     StorageUnavailableError,
     UnknownInstrumentError,
     UnknownSeriesError,
+    UseNotApprovedError,
 )
 from app.domain.market_data import (
     MetalInstrument,
@@ -68,9 +69,21 @@ def _source(**over):
 class FakeRepo:
     def __init__(self, **behaviour):
         self.behaviour = behaviour
+        self.calls = []
 
     def list_sources(self):
-        return self.behaviour.get("sources", [_source()])
+        return self.behaviour.get(
+            "sources",
+            [
+                _source(),
+                _source(
+                    source_id="bcb-ptax",
+                    provider_id="bcb-ptax",
+                    attribution="Banco Central do Brasil — PTAX",
+                    license_reference="ODbL-1.0",
+                ),
+            ],
+        )
 
     def get_source(self, source_id):
         for s in self.list_sources():
@@ -91,9 +104,11 @@ class FakeRepo:
         return self.behaviour.get("latest", {})
 
     def list_metal_observations(self, **kw):
+        self.calls.append(("list_metal_observations", kw))
         return self.behaviour.get("metal_rows", [])
 
     def list_fx_observations(self, **kw):
+        self.calls.append(("list_fx_observations", kw))
         return self.behaviour.get("fx_rows", [])
 
     def feed_statuses(self):
@@ -422,3 +437,100 @@ def test_ingestion_status_reports_feeds(storage_on, monkeypatch):
     payload = mdq.get_ingestion_status()
     assert payload["feeds"][0]["feed"] == "fx-daily"
     assert payload["feeds"][0]["latest_observation_date"] == "2026-10-24"
+
+
+# --- use-rights quarantine (R1.2) -------------------------------------------
+
+LME_PENDING_SCOPE = (
+    "collect;store;derive;internal_display_pending_lme_review;"
+    "no_redistribution_pending_lme_review"
+)
+
+
+def _pending_repo(**kw):
+    return FakeRepo(
+        sources=[_source(allowed_use_scope=LME_PENDING_SCOPE)], **kw
+    )
+
+
+def test_pending_display_scope_blocks_metal_observations(
+    storage_on, monkeypatch
+):
+    """AC-R1.2-06/07/08: LME-pending scope denies the read before a
+    single row is fetched — no prices ever leave the producer."""
+    repo = _pending_repo(metal_rows=[_metal_row()])
+    _wire(monkeypatch, repo)
+    with pytest.raises(UseNotApprovedError) as exc:
+        mdq.list_metal_observations(
+            instrument_code="copper",
+            date_from_raw="2026-09-01",
+            date_to_raw="2026-09-30",
+            limit_raw=None,
+            cursor_raw=None,
+        )
+    assert exc.value.code == "EXTERNAL_DATA_USE_NOT_APPROVED"
+    assert repo.calls == []  # zero observation queries executed
+
+
+def test_pending_display_scope_blocks_fx_observations(
+    storage_on, monkeypatch
+):
+    bcb_pending = _source(
+        source_id="bcb-ptax",
+        allowed_use_scope="collect;store;internal_display_pending_review",
+    )
+    repo = FakeRepo(sources=[bcb_pending], fx_rows=[_fx_row()])
+    _wire(monkeypatch, repo)
+    with pytest.raises(UseNotApprovedError):
+        mdq.list_fx_observations(
+            pair="USD/BRL",
+            rate_kind="ptax_closing_sell",
+            date_from_raw="2026-10-01",
+            date_to_raw="2026-10-31",
+            limit_raw=None,
+            cursor_raw=None,
+        )
+    assert repo.calls == []
+
+
+def test_catalog_flags_unavailable_instrument_without_prices(
+    storage_on, monkeypatch
+):
+    """AC-R1.2-08/12: the catalog still lists the instrument with its
+    provenance, but marks display_allowed=False — availability is a
+    contract field, never leaked prices."""
+    repo = _pending_repo(latest={"copper": date(2026, 9, 1)})
+    _wire(monkeypatch, repo)
+    payload = mdq.get_catalog()
+    copper = next(
+        i for i in payload["instruments"] if i["instrument_code"] == "copper"
+    )
+    assert copper["display_allowed"] is False
+    assert "price" not in copper and "value" not in copper
+    fx = payload["fx_series"][0]
+    assert fx["display_allowed"] is False  # same source? no — bcb absent
+    sources = {s["source_id"]: s for s in payload["sources"]}
+    assert sources["world-bank-pink-sheet"]["allowed_use_scope"] == (
+        LME_PENDING_SCOPE
+    )
+
+
+def test_ingestion_status_exposes_allowed_use_scope(storage_on, monkeypatch):
+    feeds = [
+        dict(
+            feed="metals-monthly",
+            last_run_started_at=None,
+            last_run_finished_at=None,
+            last_outcome=None,
+            last_error_code=None,
+            last_successful_at=None,
+            latest_observation_date=None,
+            observation_count=0,
+        )
+    ]
+    repo = FakeRepo(feeds=feeds, sources=[_source()])
+    _wire(monkeypatch, repo)
+    payload = mdq.get_ingestion_status()
+    assert payload["feeds"][0]["source_allowed_use_scope"] == (
+        "collect;store;derive;internal_display"
+    )

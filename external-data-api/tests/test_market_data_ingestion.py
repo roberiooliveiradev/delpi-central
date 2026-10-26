@@ -311,3 +311,24 @@ def test_metals_run_uses_instrument_identity(monkeypatch):
     assert result.skipped_count == 1
     assert repo.upserts[0][1]["native_price"] == Decimal("9500.5")
     assert repo.upserts[0][1]["quote_basis"] == "monthly_average"
+
+
+def test_scope_without_collect_store_refuses_even_when_enabled(monkeypatch):
+    """AC-R1.2-11: an env-enabled feed still cannot run while the
+    recorded rights lack the operations it performs — configuration
+    alone is never a license."""
+    _enable(monkeypatch, FEED_FX_DAILY)
+    scope_less = _source()
+    scope_less.allowed_use_scope = "internal_display"
+    repo = FakeRepo(sources={"bcb-ptax": scope_less})
+    service = MarketDataIngestionService(
+        repository=repo, fx_provider=FakeFxProvider()
+    )
+    result = service.run(
+        FEED_FX_DAILY,
+        date_from=date(2026, 1, 1),
+        date_to=date(2026, 1, 31),
+    )
+    assert result.outcome == "failed"
+    assert result.error_code == "EXTERNAL_DATA_SOURCE_NOT_LICENSED"
+    assert repo.upserts == []

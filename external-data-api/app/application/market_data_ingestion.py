@@ -20,6 +20,7 @@ from app.application.contracts import (
     SourceNotLicensedError,
     StorageUnavailableError,
 )
+from app.domain import usage_policy
 from app.domain.market_data import (
     FEED_FX_DAILY,
     FEED_METALS_MONTHLY,
@@ -194,10 +195,22 @@ class MarketDataIngestionService:
         )
 
     def _check_source(self, source_id: str) -> None:
+        """Fail-closed per-operation rights (R1.2): active alone is not
+        a grant — collecting and storing require explicit ``collect`` and
+        ``store`` tokens in ``allowed_use_scope``. A feed enabled by env
+        still cannot run while the recorded rights do not cover the
+        operations it performs."""
         source = self._repo.get_source(source_id)
         if source is None or not source.active:
             raise SourceNotLicensedError(
                 f"source {source_id} is not active/licensed in the catalog"
+            )
+        if not usage_policy.allows_all(
+            source.allowed_use_scope,
+            (usage_policy.OP_COLLECT, usage_policy.OP_STORE),
+        ):
+            raise SourceNotLicensedError(
+                f"source {source_id} lacks approved collect/store use"
             )
 
     def _ingest_metals(self, date_from: date, date_to: date):
