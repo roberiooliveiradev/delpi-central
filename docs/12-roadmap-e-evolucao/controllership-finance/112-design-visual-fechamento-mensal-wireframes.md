@@ -320,7 +320,60 @@ Mostrar `Estado geral`, um badge semântico com texto, texto auxiliar `Situaçã
 - Cada cartão possui título, explicação, valor semântico, origem quando necessária, estado de dado, interação de drilldown e foco visível.
 - Números de exemplo do wireframe não são evidência de fechamento real.
 - Não criar endpoint `/metrics` novo por conveniência sem examinar producers existentes.
-- `D-FM05-01` **PENDING_PO**: confirmar os três cartões como **Bloqueios, Divergências e Documentos a tratar** nessa ordem. Alternativa: mostrar também **Pendências**, exigindo separar blocker de tarefa sem ampliar visual desnecessariamente.
+- `D-FM05-01 = A / PO_APPROVED (26/10/2026)`**: exatamente três cartões, nesta ordem: **Bloqueios, Divergências e Documentos a tratar**. Não adicionar cartão Pendências nesta faixa.
 - `D-FM05-02` **PENDING_OWNER_CONTRACT**: critérios exatos de contagem e drilldown, sem inventar dado/entidade.
 
 **Próximo review:** demonstrar os três cartões e seus estados ao PO. Após aprovação da hierarquia, detalhar FM-06 (navegação/abas), preservando a autonomia dos owners P2/P3/P4/P5.
+
+
+## 11. Aprovação PO de FM-05 e detalhamento inicial FM-06 — Navegação da bancada
+
+**Data:** 26/10/2026. **Decisão explícita do PO:** “opção A e esses indicadores são clicaveis para levar a pagina de referencia”.
+
+### 11.1 Decisão visual fechada: D-FM05-01=A + D-FM05-03=CLICKABLE
+
+**PO_APPROVED / DESIGN:** três indicadores de atenção **Bloqueios → Divergências → Documentos a tratar**, nessa ordem, e **cada cartão é inteiramente clicável** para direcionar o usuário à visão/página de referência no Fechamento Mensal. **Destino conceitual aprovado**, sem inferir path do router ainda não inventariado:
+
+| Card | Destino funcional aprovado | Filtro/contexto de entrada | Owner |
+|---|---|---|---|
+| Bloqueios | **Visão geral → seção de bloqueios** (ou detalhe canônico de blockers após inventário) | competência/escopo corrente, bloqueios materiais | P1 compondo fontes P2/P3/P5 |
+| Divergências | **Visão Divergências** | competência corrente, itens divergentes, origem explícita | P3/P4 conforme evento |
+| Documentos a tratar | **Visão Documentos** | competência corrente, itens que exigem tratamento | P2 |
+
+**Contrato de interação obrigatório:** cartão inteiro com superfície clicável, cursor/hover e foco visível, `Enter` e `Space` conforme semântica do componente; não envolver link dentro de botão nem gerar dupla ação. Link semântico de navegação será preferido se suportado pelo kit/router. Nome acessível explicativo (“Ver divergências da competência MM/AAAA”). Manter o contexto da competência e unidade autorizada, aplicar filtro inicial visível e removível; botão voltar deve preservar seleção e scroll quando o router permitir. Não criar URLs, rotas, contagens ou endpoints antes do inventário. Se fonte indisponível, o cartão não é um atalho para lista fictícia; mostrar indisponibilidade/retry e explicar o bloqueio.
+
+**Limites:** clicar **navega**, não altera a competência, não cria documento, não aprova evidência, não resolve pendência e não executa ACT. Contagens exatas e agregação permanecem `D-FM05-02=PENDING_OWNER_CONTRACT`. A aprovação do PO não autoriza implementação.
+
+### 11.2 FM-06 — Wireframe V0.5 inicial: cinco visões da bancada
+
+**Estado:** `TARGET / DESIGN_PROPOSAL / PENDING_PO_DETAIL_REVIEW`. A arquitetura visual de cinco visões já foi aceita no V0.2; agora detalha-se o comportamento.
+
+```text
+[Bloqueios: clique → Visão geral/Blockers]
+[Divergências: clique → Divergências com filtro]
+[Documentos: clique → Documentos com filtro]
+────────────────────────────────────────────────────────────────────
+[Visão geral] [Divergências] [Documentos] [Pendências] [Revisão]
+                         linha/indicador de aba ativa
+────────────────────────────────────────────────────────────────────
+[Filtros do contexto atual + estado da fonte]
+[Conteúdo específico da visão, com lista e detalhe quando aplicável]
+```
+
+| Visão | Propósito UX | Origem | Comportamento de entrada |
+|---|---|---|---|
+| Visão geral | síntese, blockers, eixos Estoque/Documentos/Pacote e trabalho prioritário | P1 composição | entrada padrão da bancada, sem ocultar blockers materiais |
+| Divergências | investigar diferenças/ocorrências com fonte e encaminhamento | P3/P4 | filtro “divergentes” vindo do cartão, quando suportado |
+| Documentos | localizar documentos a enviar/validar/substituir e inspecionar versões | P2 | filtro “a tratar” vindo do cartão, quando suportado |
+| Pendências | acompanhar solicitações/ocorrências, owner, estado e histórico | P4 | filtro por escopo/estado próprio |
+| Revisão | pacote, destinatários, decisões humanas e esclarecimentos | P5 | preservar decisões/segregação/versões |
+
+**Comportamento proposto:** uma aba ativa por vez; trocar aba mantém competência e contexto de unidade, mas não reutiliza filtros incompatíveis silenciosamente; aba ativa indicada por texto/contraste/traço, não apenas cor. Suportar deep links e botão Voltar depois de revisar o router real. Desktop: navegação horizontal compacta; mobile: faixa acessível de abas (rolagem horizontal do controle sem perder labels), conteúdo em lista→detalhe. Foco do teclado e orientação do leitor de tela devem anunciar aba ativa/contagem real quando disponível; evitar troca de aba disparando escrita. `@delpi/plugin-ui` first e Help sincronizada.
+
+**Decisões ainda abertas para revisão do PO e inventário técnico:**
+- `D-FM06-01`: usar abas dentro da página operacional (recomendação) versus destinos de subpáginas com navegação equivalente; o usuário aprovou a arquitetura visual de cinco visões, não o contrato de rotas.
+- `D-FM06-02`: URL/deep links e regras de retorno — `TO_INVENTORY` do router MFE atual.
+- `D-FM06-03`: indicadores levam a visão de referência e destacam filtro; títulos e filtros finais dependem dos read models.
+- `D-FM06-04`: quando alguma visão não tiver producer real, mostrar estado honesto de indisponibilidade ou navegação à página legada autorizada, nunca dummy data.
+
+**Próxima revisão no chat:** apresentar as cinco abas interativas e pedir aprovação do comportamento interno, sem confundir com GO de implementação.
