@@ -9,7 +9,7 @@
 ```
 BASE_SHA=bd39b100017d51d76129ebe5e06d0abd09777e2d
 EVALUATED_SHA=bd39b10 (application tree; identical at evaluation time)
-FINAL_HEAD=<this commit>
+FINAL_HEAD=8176be1a3683c1f21e1c81f01611167951d8ea67
 ORIGIN_MAIN=76e5c2553c (ff-rebase applied — concurrent cf docs only)
 AUTHORITIES_READ=review bd39b10, docs 151–157, execution ledger, rules
 CURRENT_PHASE=Context Intelligence — causal characterization
