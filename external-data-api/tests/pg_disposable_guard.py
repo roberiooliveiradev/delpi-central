@@ -110,15 +110,19 @@ def assert_safe_dbname(dbname: str) -> None:
         )
 
 
+def _row_dict(cur, row):
+    if isinstance(row, dict):
+        return row
+    return dict(zip([d[0] for d in cur.description], row))
+
+
+def _fetchone(cur) -> dict:
+    return _row_dict(cur, cur.fetchone())
+
+
 def _fetchall(cur) -> list[dict]:
     rows = cur.fetchall()
-    out = []
-    for row in rows:
-        if isinstance(row, dict):
-            out.append(row)
-        else:
-            out.append(dict(zip([d[0] for d in cur.description], row)))
-    return out
+    return [_row_dict(cur, row) for row in rows]
 
 
 def verify_sentinel(conn, *, token: str, dbname: str) -> None:
@@ -133,7 +137,7 @@ def verify_sentinel(conn, *, token: str, dbname: str) -> None:
             "SELECT to_regclass(%s) AS sentinel",
             (f"public.{SENTINEL_TABLE}",),
         )
-        if cur.fetchone()["sentinel"] is None:
+        if _fetchone(cur)["sentinel"] is None:
             raise UnsafeTestDatabaseError(
                 f"Database {dbname!r} carries no provisioner sentinel "
                 f"(public.{SENTINEL_TABLE}) — refusing to treat it as a "
@@ -173,7 +177,7 @@ def verify_disposable(conn, env: dict[str, str] | None = None) -> None:
     token = require_provision_token(env)
     with conn.cursor() as cur:
         cur.execute("SELECT current_database() AS actual")
-        actual = cur.fetchone()["actual"]
+        actual = _fetchone(cur)["actual"]
     verify_sentinel(conn, token=token, dbname=actual)
 
 
@@ -192,7 +196,7 @@ def validate_target(
     token = require_provision_token(env)
     with conn.cursor() as cur:
         cur.execute("SELECT current_database() AS actual")
-        actual = cur.fetchone()["actual"]
+        actual = _fetchone(cur)["actual"]
     if actual != dbname:
         raise UnsafeTestDatabaseError(
             f"Connected database {actual!r} does not match configured "
