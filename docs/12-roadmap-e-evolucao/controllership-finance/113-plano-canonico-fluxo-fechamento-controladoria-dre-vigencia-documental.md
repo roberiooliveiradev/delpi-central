@@ -497,3 +497,32 @@ Implementada a segunda aba do Fechamento Mensal conforme §16–17 e decisões P
 ### 18.4 Evidência
 Vitest focado: `MonthlyDocumentsPanel` 10/10, `DocumentDetailPanel` 7/7, `MonthlyClosingPage` 32/32, `pluginRoutes` 18/18. Suíte fechamento 160/160; suíte plugin completa OK. `tsc -b`/`--noEmit` e ESLint PASS; build federado OK; testes estruturais (boundary MFE→BFF, cobertura de ajuda) PASS. Smoke autenticado Devin: `TEST_NOT_RUN`; homologação visual do PO: `PENDING`.
 
+
+
+## 19. REWORK documental V0.3 — download, ações do documento, histórico e QA frontend (decisão PO 26/10/2026)
+
+**Estado:** `PO_APPROVED` para comportamento/UX; `REWORK_REQUIRED` para entrega V0.2; `RUNTIME_DIAGNOSTIC_PENDING` para erro de download e eventual mudança no audit producer. **Não confundir pedido de 'excluir' com DELETE físico:** contrato atual U7 é cancelamento lógico com retenção de versões e histórico; eventual apagamento físico/depreciação requer decisão separada de ciclo de vida, retenção, compliance e dados.
+
+### 19.1 Evidências observadas e verificações
+- Captura PO em `/closing/monthly-closing/2026-09?tab=documents`: cartões existentes, botão Adicionar documento, porém seção legada `Checklist da competência` ainda leva a página dedicada, contrariando centralização do fluxo na aba.
+- Detalhe `/closing/monthly-closing/2026-09/documents/{document_id}`: erro visível **'Falha ao baixar o arquivo'**, prévia indefinidamente **'Carregando pré-visualização...'**; histórico preenchido por muitas linhas idênticas **'Download — v1'**, com UUID técnico e sem informação útil. Isso é evidência visual do resultado, **não prova do root cause HTTP**.
+- Inspeção GitHub: `documentsApi.ts` implementa `downloadClosingDocument` (U4 bytes), `replaceClosingDocument` (U5 revisão/OCC), `listDocumentVersions` (U6), `cancelClosingDocument` (U7 cancelamento lógico), `listDocumentEvents` (U8). `DocumentDetailPanel.tsx` renderiza `DOCUMENT_DOWNLOADED` como `Download` no histórico, e não expõe ação `cancelClosingDocument`. **Reavaliar producer U4/U8 antes de remover emissão/persistência**: decisão PO é que downloads rotineiros **não compõem o histórico operacional do documento** e não devem gerar registros de negócio repetitivos. Preservar logs técnicos de segurança legalmente/contratualmente exigidos (acesso/download), se aplicável, segregados da timeline de versões e ajustes; alteração na emissão/armazenamento exige owner e security gate.
+- Os uploads e arquivos atuais, inclusive `Recebidos.pdf`, devem ser preservados; não apagar eventos históricos ou documentos produtivos para 'limpar' tela.
+
+### 19.2 UX detalhado aprovado
+1. **Card:** manter cartões, inserir menu acessível de **três pontos** (padrão real `@delpi/plugin-ui`, inspecionar export) com somente operações válidas: `Abrir documento`, `Enviar nova versão` (quando contextual/autorizado), `Remover documento`/ `Cancelar documento` conforme semântica real; ação destrutiva com confirmação clara, disabled/hidden conforme capability+scope+business rule e tratamento de erro. Não duplicar quatro botões em cada card.
+2. **Detalhe:** ações reais e completas de ciclo de vida **anexar**, **enviar nova versão**, **consultar versões**, **baixar**, **cancelar/remover logicamente** (quando permitido); oferecer nome legível e confirmação explícita do efeito (não apaga versões/auditoria). Para documento exigido, avaliar se a operação cancela arquivo U7, item de exigência P2, ou ambos — **não presumir que cancelar documento elimina obrigação**.
+3. **Preview:** prévia autenticada com erro/retry honesto, sem spinner infinito; diferenciar falha de download, ausência, 403, 404, conteúdo inválido e rede; verificar contrato HTTP, `httpGetBlob`, response/Content-Type, proxy/BFF, versão/ID/escopo, URL blob e revogação; não sugerir download funcional quando há falha.
+4. **Histórico:** mostrar versões (v1/v2), anexos, cancelamentos, solicitações, respostas e decisões **reais**, com ator/data de modo humano e sem UUID cru; **não exibir eventos `DOCUMENT_DOWNLOADED` na timeline operacional**. Evitar re-registro por prévia/refresh; confirmar se produtor U4 audita cada GET e separar auditoria de segurança do histórico do usuário.
+5. **Solicitações:** resumo na aba, detalhes e versões na página de documento; não inventar conversa livre; resposta ≠ aceite.
+6. **Aba:** remover da **composição visível atual** o bloco legado `Checklist da competência`/navegação obrigatória fora do workspace, **somente após** mapear funcionalidades de validação P2 que devem permanecer acessíveis no contexto ou registrar gate de integração. Não apagar código/rotas legados.
+7. **Terminologia:** português simples; `Excluir` no UX exige explicação de cancelamento lógico; preferir `Remover documento` com confirmação ‘o documento não aparecerá na lista ativa, mas versões e histórico serão mantidos’, caso esta seja a semântica realmente comprovada. Não renomear estado P2 como removido sem contrato.
+8. **Responsividade:** card/menu/foco em desktop e mobile, teclado Escape/Enter, tema claro/escuro, PagePath, URL/F5/voltar/preservação de competência e filtros.
+
+### 19.3 Critérios de aceite e STOP
+- Download U4 de versão existente funciona em fluxo autenticado real e prévia carrega, ou estado de erro explicita causa sem loop; HTTP 200 sozinho não basta.
+- Ação de remoção (U7) disponível em menu de três pontos e/ou detalhe, autorizada backend, confirmação e efeito em listagem; item obrigatório não se torna automaticamente não exigido; testar retry, OCC, 403/404/409, arquivo vigente, histórico e concorrência.
+- Nova revisão U5 preserva v1, atualiza versão atual e prévia, idempotência; não usar GET/download como fonte de mutações operacionais visíveis.
+- Histórico operacional legível, limitado/paginado conforme volume, sem downloads repetitivos e sem IDs técnicos crus; eventos antigos preservados no backend conforme retenção. Decisão de **não registrar novos downloads como eventos de negócio** depende de inspeção da autoridade de segurança/auditoria; jamais eliminar trilha obrigatória sem gate.
+- Cartões e detalhe aderentes §17; nenhum modal excessivo, nem perda de UX de documento adicional; seções antigas retiradas apenas da UI nova.
+- Testes backend/frontend/integrados (incluindo download real e preview), CLARA e Ajuda atualizadas; deploy local/produção conforme owner e gates; smoke autenticado PO. Se alteração de U4/U8, audit retention ou download autorização exigir breaking/security decision: `DECISION_REQUIRED` no subescopo, sem impedir o rework visual independente.
