@@ -142,6 +142,68 @@ def list_market_intelligence_series():
     return jsonify(payload), 200
 
 
+@market_intelligence_bp.get("/market-intelligence/imports/series")
+@require_policy(can_use_market_intelligence)
+def list_market_intelligence_import_series():
+    """operationId: listMarketIntelligenceImportSeriesV1."""
+    try:
+        payload = _service().list_import_series(
+            ncm_code=request.args.get("ncm"),
+            granularity=request.args.get("granularity"),
+            date_from=request.args.get("date_from"),
+            date_to=request.args.get("date_to"),
+            country_code=request.args.get("country_code"),
+            state_code=request.args.get("state_code"),
+        )
+    except MarketDataNotFoundError as exc:
+        return jsonify({"detail": str(exc), "code": "not_found"}), 404
+    except ValueError as exc:
+        return jsonify({"detail": str(exc), "code": "unprocessable"}), 422
+    except MarketDataGatewayError as exc:
+        return _gateway_error_response(exc)
+    return jsonify(payload), 200
+
+
+@market_intelligence_bp.get("/market-intelligence/producer-prices/series")
+@require_policy(can_use_market_intelligence)
+def list_market_intelligence_producer_price_series():
+    """operationId: listMarketIntelligenceProducerPriceSeriesV1."""
+    try:
+        payload = _service().list_producer_price_series(
+            series_id=request.args.get("series_id"),
+            granularity=request.args.get("granularity"),
+            date_from=request.args.get("date_from"),
+            date_to=request.args.get("date_to"),
+        )
+    except MarketDataNotFoundError as exc:
+        return jsonify({"detail": str(exc), "code": "not_found"}), 404
+    except ValueError as exc:
+        return jsonify({"detail": str(exc), "code": "unprocessable"}), 422
+    except MarketDataGatewayError as exc:
+        return _gateway_error_response(exc)
+    return jsonify(payload), 200
+
+
+@market_intelligence_bp.get("/market-intelligence/fx/series")
+@require_policy(can_use_market_intelligence)
+def list_market_intelligence_fx_series():
+    """operationId: listMarketIntelligenceFxSeriesV1."""
+    try:
+        payload = _service().list_fx_series(
+            fx_kind=request.args.get("fx_kind"),
+            granularity=request.args.get("granularity"),
+            date_from=request.args.get("date_from"),
+            date_to=request.args.get("date_to"),
+        )
+    except MarketDataNotFoundError as exc:
+        return jsonify({"detail": str(exc), "code": "not_found"}), 404
+    except ValueError as exc:
+        return jsonify({"detail": str(exc), "code": "unprocessable"}), 422
+    except MarketDataGatewayError as exc:
+        return _gateway_error_response(exc)
+    return jsonify(payload), 200
+
+
 @market_intelligence_bp.get("/market-intelligence/monthly-averages")
 @require_policy(can_use_market_intelligence)
 def list_market_intelligence_monthly_averages():

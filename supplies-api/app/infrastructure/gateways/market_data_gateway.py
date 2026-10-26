@@ -138,6 +138,41 @@ class MarketDataGateway:
             chunk_start = chunk_end + timedelta(days=1)
         return items
 
+    def comex_imports(
+        self,
+        ncm_code: str,
+        date_from: date,
+        date_to: date,
+        *,
+        country_code: str | None = None,
+        state_code: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Monthly import observations at (month × country × state) grain."""
+        params: dict[str, Any] = {
+            "ncm_code": ncm_code,
+            "date_from": date_from.isoformat(),
+            "date_to": date_to.isoformat(),
+            "limit": PAGE_LIMIT,
+        }
+        if country_code:
+            params["country_code"] = country_code
+        if state_code:
+            params["state_code"] = state_code
+        return self._paged("/v1/market-data/comex/imports", params)
+
+    def producer_price_observations(
+        self, series_id: str, date_from: date, date_to: date
+    ) -> list[dict[str, Any]]:
+        return self._paged(
+            "/v1/market-data/producer-prices/observations",
+            {
+                "series_id": series_id,
+                "date_from": date_from.isoformat(),
+                "date_to": date_to.isoformat(),
+                "limit": PAGE_LIMIT,
+            },
+        )
+
     # --- internals -----------------------------------------------------------
 
     def _paged(self, path: str, params: dict[str, Any]) -> list[dict[str, Any]]:

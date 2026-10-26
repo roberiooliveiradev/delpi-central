@@ -33,9 +33,20 @@ FX_PAIR = "USD/BRL"
 
 KIND_METAL = "metal"
 KIND_FX = "fx"
+KIND_IMPORT = "comex_import"
+KIND_IPP = "producer_price"
 
 METAL_GRANULARITIES = ("month", "year")
 FX_GRANULARITIES = ("day", "month", "year")
+IMPORT_GRANULARITIES = ("month", "year")
+IPP_GRANULARITIES = ("month", "year")
+
+# R2 feeds — must mirror ``app.domain.market_data`` on the producer.
+COMEX_FEED = "comex-import-monthly"
+IPP_FEED = "ipp-monthly"
+
+# Methodology identifiers for the new metric kinds.
+IMPORT_UNIT_VALUE_METHOD = "sum_fob_usd_x_1000_div_sum_net_weight_kg/v1"
 
 MAX_RANGE_DAYS = 3660
 DEFAULT_PAGE_SIZE = 24
@@ -49,9 +60,24 @@ MAX_PAGE_SIZE = 120
 #   bulletin, so a multi-day grace is normal, not a failure.
 FRESHNESS_METHOD = "provider_publication_cadence/v1"
 PINK_SHEET_PUBLICATION_DAY = 5
+# MDIC publishes consolidated monthly imports around mid-month; IBGE
+# publishes the IPP of month M at the end of month M+1.
+COMEX_PUBLICATION_DAY = 15
+IPP_PUBLICATION_DAY = 30
 FX_STALE_GRACE_DAYS = 4
 
-_FEED_BY_KIND = {KIND_METAL: "metals-monthly", KIND_FX: "fx-daily"}
+_FEED_BY_KIND = {
+    KIND_METAL: "metals-monthly",
+    KIND_FX: "fx-daily",
+    KIND_IMPORT: COMEX_FEED,
+    KIND_IPP: IPP_FEED,
+}
+
+_PUBLICATION_DAY_BY_KIND = {
+    KIND_METAL: PINK_SHEET_PUBLICATION_DAY,
+    KIND_IMPORT: COMEX_PUBLICATION_DAY,
+    KIND_IPP: IPP_PUBLICATION_DAY,
+}
 
 
 class MarketDataNotFoundError(LookupError):
@@ -157,6 +183,30 @@ class MarketIntelligenceService:
                 return fx
         raise MarketDataNotFoundError(f"unknown instrument: {code}")
 
+    def _resolve_import_ncm(
+        self, catalog: dict[str, Any], ncm_code: str
+    ) -> dict[str, Any]:
+        code = (ncm_code or "").strip()
+        if not code:
+            raise ValueError("ncm is required")
+        for entry in catalog.get("import_ncms") or []:
+            if entry.get("ncm_code") == code and entry.get("active"):
+                return entry
+        raise MarketDataNotFoundError(f"unknown import ncm: {code}")
+
+    def _resolve_ipp_series(
+        self, catalog: dict[str, Any], series_id: str
+    ) -> dict[str, Any]:
+        code = (series_id or "").strip()
+        if not code:
+            raise ValueError("series_id is required")
+        for entry in catalog.get("producer_price_series") or []:
+            if entry.get("series_id") == code and entry.get("active"):
+                return entry
+        raise MarketDataNotFoundError(
+            f"unknown producer price series: {code}"
+        )
+
     def _parse_range(
         self,
         date_from: str | None,
@@ -252,6 +302,47 @@ class MarketIntelligenceService:
             )
         return points
 
+    def _import_rows(
+        self,
+        ncm_code: str,
+        start: date,
+        end: date,
+        country_code: str | None,
+        state_code: str | None,
+    ) -> list[dict[str, Any]]:
+        return self._gateway.comex_imports(
+            ncm_code,
+            start,
+            end,
+            country_code=country_code,
+            state_code=state_code,
+        )
+
+    def _ipp_points(
+        self, series_id: str, start: date, end: date
+    ) -> list[Observation]:
+        items = self._gateway.producer_price_observations(
+            series_id, start, end
+        )
+        points = []
+        for item in items:
+            value = _dec(item.get("value"))
+            if value is None:
+                continue
+            try:
+                period = date.fromisoformat(item["reference_month"])
+            except (KeyError, ValueError):
+                continue
+            points.append(
+                Observation(
+                    period=period,
+                    value=value,
+                    quality=item.get("quality") or "validated",
+                    source_id=(item.get("source") or {}).get("source_id"),
+                )
+            )
+        return points
+
     def _fx_monthly_map(
         self, fx_kind: str, start: date, end: date
     ) -> dict[str, Decimal]:
@@ -323,10 +414,14 @@ class MarketIntelligenceService:
             "feed_ingestion": feed_info,
         }
 
-    def _expected_metal_period(self, today: date) -> date:
-        """Latest month the Pink Sheet should have published by ``today``."""
+    def _expected_monthly_period(
+        self, today: date, publication_day: int
+    ) -> date:
+        """Latest month a monthly source should have published by
+        ``today``, given the provider's publication day in the
+        following month."""
         this_month = date(today.year, today.month, 1)
-        lag = 1 if today.day >= PINK_SHEET_PUBLICATION_DAY else 2
+        lag = 1 if today.day >= publication_day else 2
         return _month_add(this_month, -lag)
 
     def _last_business_day(self, today: date) -> date:
@@ -349,8 +444,10 @@ class MarketIntelligenceService:
         instrument's latest available observation, independent of the
         queried window."""
         today = today or date.today()
-        if kind == KIND_METAL:
-            expected = self._expected_metal_period(today)
+        if kind != KIND_FX:
+            expected = self._expected_monthly_period(
+                today, _PUBLICATION_DAY_BY_KIND.get(kind, 5)
+            )
             if latest_available is None:
                 status = "unknown"
                 lag = None
@@ -494,6 +591,46 @@ class MarketIntelligenceService:
                     "selectable": fx.get("display_allowed") is True,
                 }
             )
+        import_ncms = [
+            {
+                "ncm_code": n["ncm_code"],
+                "kind": KIND_IMPORT,
+                "description": n["description"],
+                "family_code": n.get("family_code"),
+                "ncm_version": n.get("ncm_version"),
+                "unit": "USD/metric ton",
+                "granularities": list(IMPORT_GRANULARITIES),
+                "source_id": n.get("source_id"),
+                "latest_observation_date": n.get(
+                    "latest_observation_date"
+                ),
+                # Default-deny — identical posture to instruments.
+                "selectable": n.get("display_allowed") is True,
+            }
+            for n in catalog.get("import_ncms") or []
+        ]
+        producer_price_series = [
+            {
+                "series_id": s["series_id"],
+                "kind": KIND_IPP,
+                "label": s["label"],
+                "activity_code": s["activity_code"],
+                "activity_label": s["activity_label"],
+                "variable_code": s["variable_code"],
+                "variable_label": s["variable_label"],
+                "table_code": s["table_code"],
+                "metric_kind": s["metric_kind"],
+                "unit": s["unit"],
+                "base_reference": s["base_reference"],
+                "granularities": list(IPP_GRANULARITIES),
+                "source_id": s.get("source_id"),
+                "latest_observation_date": s.get(
+                    "latest_observation_date"
+                ),
+                "selectable": s.get("display_allowed") is True,
+            }
+            for s in catalog.get("producer_price_series") or []
+        ]
         sources = [
             {
                 "source_id": s["source_id"],
@@ -507,9 +644,14 @@ class MarketIntelligenceService:
         selectable = [i for i in instruments if i["selectable"]]
         has_data = any(
             i["latest_observation_date"] for i in selectable
+        ) or any(
+            s["selectable"] and s["latest_observation_date"]
+            for s in import_ncms + producer_price_series
         )
         return {
             "instruments": instruments,
+            "import_ncms": import_ncms,
+            "producer_price_series": producer_price_series,
             "currencies": list(CURRENCIES),
             "granularities": ["day", "month", "year"],
             "fx_kinds": list(FX_KINDS),
@@ -885,6 +1027,337 @@ class MarketIntelligenceService:
                 "freshness": freshness,
                 "partial_reason": partial_reason,
                 "source_id": instrument.get("source_id"),
+                "schema_version": SCHEMA_VERSION,
+                **meta,
+            },
+        }
+
+    def list_import_series(
+        self,
+        *,
+        ncm_code: str,
+        granularity: str | None,
+        date_from: str | None,
+        date_to: str | None,
+        country_code: str | None,
+        state_code: str | None,
+    ) -> dict[str, Any]:
+        """operationId: listMarketIntelligenceImportSeriesV1.
+
+        Monthly FOB import totals per approved NCM — ``USD/metric ton``
+        is derived from aggregate sums, never from row-level ratios.
+        """
+        catalog = self._catalog()
+        ncm = self._resolve_import_ncm(catalog, ncm_code)
+        granularity = self._validate_granularity(granularity, KIND_IMPORT)
+        start, end = self._parse_range(date_from, date_to)
+        country = (country_code or "").strip() or None
+        state = (state_code or "").strip() or None
+
+        rows = self._import_rows(
+            ncm["ncm_code"], start, end, country, state
+        )
+        by_month: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            try:
+                month = date.fromisoformat(row["reference_month"])
+            except (KeyError, ValueError):
+                continue
+            key = _month_key(month)
+            bucket = by_month.setdefault(
+                key,
+                {
+                    "fob": Decimal(0),
+                    "weight": Decimal(0),
+                    "rows": 0,
+                    "all_validated": True,
+                },
+            )
+            bucket["fob"] += _dec(row.get("fob_usd_total")) or Decimal(0)
+            bucket["weight"] += _dec(
+                row.get("net_weight_kg_total")
+            ) or Decimal(0)
+            bucket["rows"] += int(row.get("contributing_rows") or 0)
+            if (row.get("quality") or "") != "validated":
+                bucket["all_validated"] = False
+
+        points = self._import_points(granularity, start, end, by_month)
+        expected = self._expected_buckets(
+            IMPORT_GRANULARITIES, granularity, start, end
+        )
+        observed = sum(
+            1 for p in points if p["unit_value_usd_per_t"] is not None
+        )
+        meta = self._ingestion_meta(COMEX_FEED)
+        freshness = self._freshness(
+            kind=KIND_IMPORT,
+            latest_available=self._instrument_latest(ncm),
+            feed_ingestion=meta["feed_ingestion"],
+        )
+        return {
+            "series": {
+                "ncm_code": ncm["ncm_code"],
+                "ncm_version": ncm["ncm_version"],
+                "description": ncm["description"],
+                "family_code": ncm.get("family_code"),
+                "kind": KIND_IMPORT,
+                "unit": "USD/metric ton",
+                "metric_kind": "import_fob_unit_value",
+            },
+            "filters": {
+                "country_code": country,
+                "state_code": state,
+            },
+            "granularity": granularity,
+            "points": points,
+            "meta": {
+                "source_id": "mdic-comex-stat",
+                "freshness": freshness,
+                "data_status": self._data_status(
+                    observed=observed,
+                    expected=expected,
+                    partial_reason=None,
+                ),
+                "method_version": {
+                    "unit_value": IMPORT_UNIT_VALUE_METHOD,
+                    "coverage": COVERAGE_METHOD,
+                },
+                "schema_version": SCHEMA_VERSION,
+                **meta,
+            },
+        }
+
+    def _import_points(
+        self,
+        granularity: str,
+        start: date,
+        end: date,
+        by_month: dict[str, dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        def _point(key, bucket, months_in_bucket):
+            if bucket is None:
+                return {
+                    "period": key,
+                    "fob_usd_total": None,
+                    "net_weight_kg_total": None,
+                    "net_weight_t": None,
+                    "unit_value_usd_per_t": None,
+                    "contributing_rows": 0,
+                    "observation_count": 0,
+                    "coverage": "no_data",
+                }
+            tonnes = bucket["weight"] / Decimal(1000)
+            unit = (
+                bucket["fob"] / tonnes if tonnes > 0 else None
+            )
+            return {
+                "period": key,
+                "fob_usd_total": _fmt(bucket["fob"], places=2),
+                "net_weight_kg_total": _fmt(bucket["weight"], places=3),
+                "net_weight_t": _fmt(tonnes, places=6),
+                "unit_value_usd_per_t": _fmt(unit),
+                "contributing_rows": bucket["rows"],
+                "observation_count": 1,
+                "quality": "validated"
+                if bucket["all_validated"]
+                else "partial",
+                "coverage": _coverage(1, months_in_bucket)
+                if granularity == "year"
+                else "ok",
+            }
+
+        if granularity == "month":
+            return [
+                _point(
+                    _month_key(month),
+                    by_month.get(_month_key(month)),
+                    1,
+                )
+                for month in _month_range(start, end)
+            ]
+        points = []
+        for year in sorted({m.year for m in _month_range(start, end)}):
+            months = [
+                m for m in _month_range(start, end) if m.year == year
+            ]
+            fob = sum(
+                (by_month[_month_key(m)]["fob"]
+                 for m in months if _month_key(m) in by_month),
+                Decimal(0),
+            )
+            weight = sum(
+                (by_month[_month_key(m)]["weight"]
+                 for m in months if _month_key(m) in by_month),
+                Decimal(0),
+            )
+            present = [
+                by_month[_month_key(m)]
+                for m in months
+                if _month_key(m) in by_month
+            ]
+            bucket = (
+                {
+                    "fob": fob,
+                    "weight": weight,
+                    "rows": sum(b["rows"] for b in present),
+                    "all_validated": all(
+                        b["all_validated"] for b in present
+                    ),
+                }
+                if present
+                else None
+            )
+            points.append(_point(str(year), bucket, len(months)))
+        return points
+
+    def list_producer_price_series(
+        self,
+        *,
+        series_id: str,
+        granularity: str | None,
+        date_from: str | None,
+        date_to: str | None,
+    ) -> dict[str, Any]:
+        """operationId: listMarketIntelligenceProducerPriceSeriesV1."""
+        catalog = self._catalog()
+        series = self._resolve_ipp_series(catalog, series_id)
+        granularity = self._validate_granularity(granularity, KIND_IPP)
+        start, end = self._parse_range(date_from, date_to)
+
+        raw = self._ipp_points(series["series_id"], start, end)
+        by_month = {_month_key(p.period): p for p in raw}
+        points: list[dict[str, Any]] = []
+        if granularity == "month":
+            for month in _month_range(start, end):
+                key = _month_key(month)
+                point = by_month.get(key)
+                points.append(
+                    {
+                        "period": key,
+                        "value": _fmt(point.value)
+                        if point is not None
+                        else None,
+                        "quality": point.quality if point else None,
+                        "observation_count": 1 if point else 0,
+                        "coverage": "ok" if point else "no_data",
+                    }
+                )
+        else:
+            for year in sorted(
+                {m.year for m in _month_range(start, end)}
+            ):
+                months = [
+                    m for m in _month_range(start, end) if m.year == year
+                ]
+                values = [
+                    by_month[_month_key(m)].value
+                    for m in months
+                    if _month_key(m) in by_month
+                ]
+                points.append(
+                    {
+                        "period": str(year),
+                        "value": _fmt(_mean(values)) if values else None,
+                        "observation_count": len(values),
+                        "coverage": _coverage(len(values), len(months)),
+                    }
+                )
+
+        expected = self._expected_buckets(
+            IPP_GRANULARITIES, granularity, start, end
+        )
+        observed = sum(1 for p in points if p["value"] is not None)
+        meta = self._ingestion_meta(IPP_FEED)
+        freshness = self._freshness(
+            kind=KIND_IPP,
+            latest_available=self._instrument_latest(series),
+            feed_ingestion=meta["feed_ingestion"],
+        )
+        return {
+            "series": {
+                "series_id": series["series_id"],
+                "kind": KIND_IPP,
+                "label": series["label"],
+                "activity_code": series["activity_code"],
+                "activity_label": series["activity_label"],
+                "variable_code": series["variable_code"],
+                "variable_label": series["variable_label"],
+                "table_code": series["table_code"],
+                "metric_kind": series["metric_kind"],
+                "unit": series["unit"],
+                "base_reference": series["base_reference"],
+            },
+            "granularity": granularity,
+            "points": points,
+            "meta": {
+                "source_id": series["source_id"],
+                "freshness": freshness,
+                "data_status": self._data_status(
+                    observed=observed,
+                    expected=expected,
+                    partial_reason=None,
+                ),
+                "method_version": {
+                    "average": PERIOD_AVERAGE_METHOD,
+                    "coverage": COVERAGE_METHOD,
+                },
+                "schema_version": SCHEMA_VERSION,
+                **meta,
+            },
+        }
+
+    def list_fx_series(
+        self,
+        *,
+        fx_kind: str | None,
+        granularity: str | None,
+        date_from: str | None,
+        date_to: str | None,
+    ) -> dict[str, Any]:
+        """operationId: listMarketIntelligenceFxSeriesV1.
+
+        PTAX closing bulletins — buy and sell are distinct rate kinds,
+        missing business days stay missing (no forward-fill).
+        """
+        catalog = self._catalog()
+        instrument = self._resolve_instrument(catalog, FX_INSTRUMENT_CODE)
+        fx_kind = self._validate_fx_kind(fx_kind)
+        granularity = self._validate_granularity(granularity, KIND_FX)
+        start, end = self._parse_range(date_from, date_to)
+
+        points = self._fx_series(fx_kind, granularity, start, end)
+        for point in points:
+            point.pop("period_date", None)
+        expected = self._expected_buckets(
+            FX_GRANULARITIES, granularity, start, end
+        )
+        observed = sum(1 for p in points if p["value"] is not None)
+        meta = self._ingestion_meta(_FEED_BY_KIND[KIND_FX])
+        freshness = self._freshness(
+            kind=KIND_FX,
+            latest_available=self._instrument_latest(instrument),
+            feed_ingestion=meta["feed_ingestion"],
+        )
+        return {
+            "series": {
+                "instrument_code": FX_INSTRUMENT_CODE,
+                "kind": KIND_FX,
+                "label": instrument["label"],
+                "pair": FX_PAIR,
+                "rate_kind": fx_kind,
+                "unit": "BRL per USD",
+            },
+            "granularity": granularity,
+            "points": points,
+            "meta": {
+                "source_id": "bcb-ptax",
+                "freshness": freshness,
+                "data_status": self._data_status(
+                    observed=observed,
+                    expected=expected,
+                    partial_reason=None,
+                ),
+                "method_version": {"coverage": COVERAGE_METHOD},
                 "schema_version": SCHEMA_VERSION,
                 **meta,
             },
