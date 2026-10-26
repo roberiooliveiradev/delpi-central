@@ -395,3 +395,25 @@ Decisão PO já registrada na ficha pública: Client ID OAuth definitivo = **`mc
 **Evidência prod (read-only):** POST token `grant_type=password` com `client_id=mcp-controllership-finance` → `unauthorized_client` (client **existe** e é reconhecido; grant não habilitado — correto), vs `invalid_client` para id inexistente. Plugin ChatGPT instalado + conta OAuth conectada + redirect `https://chatgpt.com/connector_platform_oauth_redirect` = **OWNER_REPORTED**.
 
 **Residual:** `--check` do engine requer credencial admin vigente (confirmará scopes/mapper/redirect sem drift lateral em TÉO/DAVI/VISTA/DÉLIA); smoke autenticado `tools/list` + READ = `TEST_NOT_RUN` até o usuário executar no ChatGPT. `CHATGPT_CONNECTION=OWNER_REPORTED_PENDING_TOOL_EVIDENCE`.
+
+## Adendo 11 — Investigação forense OAuth/Keycloak/DB (26/10/2026 ~15:50 UTC, READ-ONLY)
+
+Causa-raiz do bloqueio CLARA↔ChatGPT **comprovada** no banco do Keycloak (`delpi-keycloak-db`, SELECT read-only, realm `delpi` `88f39253-…`):
+
+**O client `mcp-controllership-finance` injeta a audience ERRADA no access token.**
+
+| Evidência | DAVI/TÉO (funcionam) | CLARA (falha) |
+|---|---|---|
+| Mapper audience | `included.custom.audience` | **`included.client.audience`** |
+| Valor injetado em `aud` | `https://minhadelpi.com.br/apps/{api}-api/mcp` (URL canônica) | **`controllership-finance-api`** (client_id interno) |
+
+A BFF exige membership exata de `aud = https://minhadelpi.com.br/apps/controllership-finance-api/mcp` (`McpTransportAuthPolicy`). Todo token do client atual carrega `aud = [controllership-finance-api, delpi-central, …]` → **qualquer chamada autenticada → 401 → `tools/list` nunca retorna → ChatGPT não descobre ferramentas.**
+
+**Restante do client está correto (DB):** confidential + `client-secret`, standard_flow ON, PKCE `S256`, DAG/SA OFF, `use.refresh.tokens`, redirect exato `https://chatgpt.com/connector_platform_oauth_redirect`, scopes default incluem `mcp:tools` (escopo limpo de mappers — isolação preservada), `audience-delpi` → `delpi-central`. `mcp-clara` não existe (zero remanescente). Scope `mcp-audience-clara` também não existe (prod usa mapper client-level; `mcp-audience-*` scopes não existem para nenhum MCP — divergência do desired-state do engine que cria scope dedicado).
+
+**Correlação gateway:** `openai-mcp/1.0.0` e `Python/aiohttp` (IPs 9.129.36.x) fizeram probes 15:18–15:22Z — `GET .well-known` 200 + `POST /mcp` 401 `MISSING_BEARER` (discovery correto, sem Bearer). Nenhum request COM Bearer chegou em 72h → o erro de publicação no painel ChatGPT é **camada ChatGPT/workspace** (ou cascata da descoberta falha), não evidência de falha do nosso servidor — edge está contratualmente perfeita.
+
+**Correção mínima (owner IAM, não aplicada — investigação read-only):**
+1. Imediata: mapper `audience-controllership-finance-api` → recriar como **Custom Audience** com `included.custom.audience = https://minhadelpi.com.br/apps/controllership-finance-api/mcp` (mesmo padrão dos mappers DAVI/TÉO).
+2. Convergência: após credencial admin vigente, `keycloak-prod-delia-mcp-provision.sh --apply` cria `mcp-audience-clara` scope+mapper canônico e o anexa como default scope; remover então o mapper client-level manual para deixar estado limpo.
+3. Rerun ChatGPT: tools/list → READ autenticado.
