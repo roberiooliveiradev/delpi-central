@@ -516,3 +516,8 @@ O PO autorizou a execução contínua das lacunas remanescentes da Central P1–
 ## Homologação guiada G2/G3 — 26/10/2026
 
 A sessão de validação funcional assistida pelo PO, a matriz de testes visual/runtime do Portal P1–P6, os findings, os aceites humanos G2 e as verificações de Operador SSH G3 têm agora ledger próprio: **[Documento 108 — Homologação guiada G2/G3](./108-homologacao-guiada-g2-g3-2026-10-26.md)**. Estado inicial: somente tela Início com screenshot visual; navegação, operações, OAuth/CLARA e smoke continuam TEST_NOT_RUN; sem sign-off G2/G3. Atualizar o Doc 108 por evidência e decision após cada passo, não atribuir PASS por atalhos ou deploy.
+
+
+## G2 aprovado pelo PO com ressalvas e handoff G3 — 26/10/2026
+
+**G2 do PO foi formalizado como `ACCEPT_WITH_RESIDUAL`** para o escopo local da Central de Fechamento P1–P6 e CLARA, com P7, relatórios oficiais, T03/T05/R04+, seeds e fontes G1 pendentes, e regra V1 de clarificações abertas com C2 bloqueado. Fonte: [Doc 108](./108-homologacao-guiada-g2-g3-2026-10-26.md), decisão `CF-PROC0072-G2-ACCEPT-WITH-RESIDUAL-20261026`; rastro PO [Doc 109](./109-go-po-ultima-rodada-e2e-usuario-g2-g3-2026-10-26.md). **[Doc 110 — Handoff Operador SSH/IAM → Keycloak → ChatGPT](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md)** é a próxima authority operacional. G3 do Operador, mudanças IAM e smoke autenticado produtivo ainda não concluídos; não inferir deploy/autorização do aceite local.
