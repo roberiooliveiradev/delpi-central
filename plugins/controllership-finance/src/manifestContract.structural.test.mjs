@@ -40,7 +40,7 @@ describe("controllership-finance manifest", () => {
   });
 
   it("somente rotas implementadas publicadas, protegidas por .access", () => {
-    assert.equal(manifest.routes.length, 9);
+    assert.equal(manifest.routes.length, 10);
     const [
       home,
       settlements,
@@ -50,6 +50,7 @@ describe("controllership-finance manifest", () => {
       pendencies,
       packages,
       cockpit,
+      monthlyClosing,
       claraConsent,
     ] = manifest.routes;
     assert.equal(home.path, "/apps/controllership-finance");
@@ -94,6 +95,12 @@ describe("controllership-finance manifest", () => {
     );
     assert.equal(cockpit.permission, "controllership-finance.access");
     assert.equal(cockpit.showInMenu, false);
+    assert.equal(
+      monthlyClosing.path,
+      "/apps/controllership-finance/closing/monthly-closing",
+    );
+    assert.equal(monthlyClosing.permission, "controllership-finance.access");
+    assert.equal(monthlyClosing.showInMenu, false);
     assert.equal(
       claraConsent.path,
       "/apps/controllership-finance/closing/clara-consent",

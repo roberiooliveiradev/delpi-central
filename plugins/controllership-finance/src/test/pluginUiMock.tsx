@@ -690,3 +690,37 @@ export function ConfirmModalPanel(props: {
     ),
   );
 }
+
+export function createDashboardInteractiveDataCard() {
+  return function InteractiveDataCard(props: {
+    fields?: Array<{
+      id: string;
+      label: string;
+      value?: ReactNode;
+      present?: boolean;
+    }>;
+    ariaLabel?: string;
+    openHint?: ReactNode;
+    onActivate?: () => void;
+    children?: ReactNode;
+  }) {
+    return el(
+      "button",
+      {
+        type: "button",
+        "aria-label": props.ariaLabel,
+        onClick: props.onActivate,
+      },
+      ...(props.fields ?? []).map((field) =>
+        el(
+          "span",
+          { key: field.id },
+          el("span", null, field.label),
+          el("strong", null, field.value),
+        ),
+      ),
+      props.openHint,
+      props.children,
+    );
+  };
+}

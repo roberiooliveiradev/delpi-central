@@ -79,6 +79,37 @@ describe("pluginRoutes", () => {
     ).toBe("not_found");
   });
 
+  it("resolve a rota do workspace Fechamento mensal", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/monthly-closing",
+    );
+    expect(resolved.view).toBe("monthly_closing");
+    expect(resolved.relativePath).toBe("closing/monthly-closing");
+    expect(buildPluginPath("monthly_closing")).toBe(
+      "/apps/controllership-finance/closing/monthly-closing",
+    );
+    expect(
+      buildPluginPath(
+        "monthly_closing",
+        "/apps/controllership-finance",
+        "tab=documents",
+      ),
+    ).toBe("/apps/controllership-finance/closing/monthly-closing?tab=documents");
+  });
+
+  it("deep link de competência no Fechamento mensal", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/monthly-closing/2026-10",
+    );
+    expect(resolved.view).toBe("monthly_closing");
+    expect(resolved.checklistPeriod).toBe("2026-10");
+    expect(
+      resolvePluginRoute(
+        "/apps/controllership-finance/closing/monthly-closing/2026-13",
+      ).view,
+    ).toBe("not_found");
+  });
+
   it("resolve a rota do checklist da competência", () => {
     const resolved = resolvePluginRoute(
       "/apps/controllership-finance/closing/checklist",

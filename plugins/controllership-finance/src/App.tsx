@@ -15,6 +15,7 @@ import { ChecklistAdminPage } from "./features/closing/ChecklistAdminPage";
 import { ClosingChecklistPage } from "./features/closing/ClosingChecklistPage";
 import { CockpitPage } from "./features/closing/CockpitPage";
 import { FinancialSettlementsPage } from "./features/closing/FinancialSettlementsPage";
+import { MonthlyClosingPage } from "./features/closing/MonthlyClosingPage";
 import { PackagesPage } from "./features/closing/PackagesPage";
 import { PendenciesPage } from "./features/closing/PendenciesPage";
 import { StockInventoryPage } from "./features/closing/StockInventoryPage";
@@ -77,6 +78,11 @@ function AppRoutes({
           <PackagesPage period={resolved.checklistPeriod} />
         ) : resolved.view === "cockpit" ? (
           <CockpitPage period={resolved.checklistPeriod} />
+        ) : resolved.view === "monthly_closing" ? (
+          <MonthlyClosingPage
+            basePath={basePath}
+            period={resolved.checklistPeriod}
+          />
         ) : (
           <NotFoundPage basePath={basePath} />
         )}

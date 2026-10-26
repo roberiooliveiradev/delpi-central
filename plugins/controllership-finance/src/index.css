@@ -775,3 +775,37 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Fechamento mensal — indicadores clicáveis e slot reservado de PDF (doc 112 §§25–26). */
+.dashboard-controllership-finance .cf-monthly-indicators {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-monthly-report-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-pdf-preview-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  border: 1px dashed var(--cf-border);
+  border-radius: var(--radius, 12px);
+  padding: var(--cf-grid-gap, 16px);
+  color: var(--cf-text-muted);
+  background: color-mix(in srgb, var(--cf-surface-muted) 40%, transparent);
+}
+
+@media (max-width: 900px) {
+  .dashboard-controllership-finance .cf-monthly-indicators {
+    grid-template-columns: 1fr;
+  }
+}

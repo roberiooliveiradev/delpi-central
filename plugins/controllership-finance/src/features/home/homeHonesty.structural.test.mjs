@@ -39,14 +39,9 @@ describe("home honesty", () => {
       new Set([
         "home",
         "profile",
-        "checklist",
+        "monthly_closing",
         "checklist_admin",
         "catalogs_admin",
-        "financial_settlements",
-        "pendencies",
-        "packages",
-        "cockpit",
-        "stock_inventory",
       ]),
     );
     assert.doesNotMatch(catalog, /overview|interaction_rooms|administration|open_orders/);

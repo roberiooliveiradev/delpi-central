@@ -10,56 +10,66 @@ import {
   tokenizeQuery,
 } from "./pluginRouteCatalog";
 
-describe("pluginRouteCatalog — apenas rotas implementadas", () => {
-  it("cataloga somente as rotas implementadas no slice", () => {
+describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => {
+  it("expõe Fechamento mensal como entrada principal + atalhos contextuais", () => {
     const routeIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
     expect(routeIds).toEqual([
       "home",
       "profile",
-      "closing-checklist",
-      "financial-settlements",
+      "monthly-closing",
+      "monthly-closing-documents",
+      "monthly-closing-reports",
       "closing-admin",
       "catalogs-admin",
-      "pendencies",
-      "closing-packages",
-      "closing-cockpit",
-      "stock-inventory",
     ]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
     expect(new Set(viewIds)).toEqual(
       new Set([
         "home",
         "profile",
-        "checklist",
+        "monthly_closing",
         "checklist_admin",
         "catalogs_admin",
-        "financial_settlements",
-        "pendencies",
-        "packages",
-        "cockpit",
-        "stock_inventory",
       ]),
     );
   });
 
-  it("não expõe rotas futuras (Visão geral, Sala, Admin, Ajuda)", () => {
+  it("não expõe módulos técnicos como caminhos primários da Home", () => {
     const allIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
-    for (const forbidden of [
+    for (const removed of [
+      "closing-checklist",
+      "financial-settlements",
+      "pendencies",
+      "closing-packages",
+      "closing-cockpit",
+      "stock-inventory",
       "overview",
       "interaction_rooms",
       "administration",
       "help",
       "closing_center",
     ]) {
-      expect(allIds).not.toContain(forbidden);
+      expect(allIds).not.toContain(removed);
     }
+  });
+
+  it("atalhos contextuais apontam para abas do mesmo workspace", () => {
+    const closing = HUB_SECTIONS.find((s) => s.id === "closing");
+    const docs = closing?.routes.find((r) => r.id === "monthly-closing-documents");
+    const reports = closing?.routes.find(
+      (r) => r.id === "monthly-closing-reports",
+    );
+    expect(docs?.viewId).toBe("monthly_closing");
+    expect(docs?.search).toBe("tab=documents");
+    expect(reports?.viewId).toBe("monthly_closing");
+    expect(reports?.search).toBe("tab=reports");
   });
 
   it("resolveHubSections mantém seções com rotas always sem capabilities", () => {
     const sections = resolveHubSections({ manage: false });
     expect(sections.length).toBe(2);
     expect(sections[0].routes[0].id).toBe("home");
-    expect(sections[1].routes[0].id).toBe("closing-checklist");
+    expect(sections[1].routes[0].id).toBe("monthly-closing");
   });
 });
 

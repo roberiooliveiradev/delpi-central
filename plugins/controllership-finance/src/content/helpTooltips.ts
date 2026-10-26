@@ -176,4 +176,14 @@ export const CF_HELP = {
     p5:
       "Pacotes (P5): estado real de cada pacote de destinatário e do ciclo de revisão — do pacote incompleto até a revisão aceita. O fechamento mensal concluído é um estado distinto e posterior a tudo isto.",
   },
+  monthlyClosing: {
+    page:
+      "Fechamento mensal: bancada de trabalho da competência em três abas — Visão geral (estado real P1–P5), Documentos e interações (evidências P2) e Relatórios e divergências (matriz R01–R15 e fontes). A competência escolhida vale para as três abas.",
+    indicators:
+      "Indicadores derivados do cockpit do backend: Bloqueios (razões que impedem a conclusão), Divergências (domínios P3 com divergência declarada) e Documentos a tratar (itens do checklist aguardando evidência). «—» significa dado ainda não carregado — nunca zero confirmado. Cada cartão abre a aba correspondente.",
+    tabs:
+      "Três visões da mesma competência: Visão geral consolida o estado do fechamento; Documentos e interações abre as evidências e anexos P2; Relatórios e divergências abre a matriz de relatórios e fontes.",
+    pdfPreview:
+      "Área reservada à prévia de PDF dos relatórios — geração e publicação de PDF serão entregues em uma versão futura.",
+  },
 } as const;

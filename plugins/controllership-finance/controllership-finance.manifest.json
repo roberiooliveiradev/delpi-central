@@ -88,11 +88,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/controllership-finance/closing/monthly-closing",
+      "label": "Fechamento mensal",
+      "permission": "controllership-finance.access",
+      "icon": "calendar-check",
+      "order": 38,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/controllership-finance/closing/clara-consent",
       "label": "Consentimento de ações da CLARA",
       "permission": "controllership-finance.access",
       "icon": "shield-check",
-      "order": 38,
+      "order": 39,
       "showInMenu": false
     }
   ],

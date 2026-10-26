@@ -7,6 +7,7 @@ import {
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
   createDashboardEventsSection,
+  createDashboardInteractiveDataCard,
   createDashboardLoadingActivityCard,
   createDashboardMetricStrip,
   createMetricKpiCard,
@@ -115,6 +116,9 @@ export const CfMetricStrip = createDashboardMetricStrip({
   prefix: UI_PREFIX,
 });
 export const CfMetricKpiCard = createMetricKpiCard(UI_PREFIX);
+export const CfInteractiveDataCard = createDashboardInteractiveDataCard({
+  prefix: UI_PREFIX,
+});
 export const CfTitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpBemClasses(UI_PREFIX),
   labels: {
