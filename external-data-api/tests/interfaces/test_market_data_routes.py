@@ -14,6 +14,7 @@ from app.application.contracts import (
     InvalidQueryError,
     StorageUnavailableError,
     UnknownInstrumentError,
+    UnknownSeriesError,
 )
 from app.interfaces.http.routes import market_data_routes as routes
 from tests.conftest import FakeValidator
@@ -39,6 +40,16 @@ def _stub_queries(monkeypatch):
     )
     monkeypatch.setattr(
         routes, "get_ingestion_status", lambda: {"feeds": [], "meta": {}}
+    )
+    monkeypatch.setattr(
+        routes,
+        "list_comex_imports",
+        lambda **kw: {"items": [], "page_info": {}, "meta": {}},
+    )
+    monkeypatch.setattr(
+        routes,
+        "list_producer_price_observations",
+        lambda **kw: {"items": [], "page_info": {}, "meta": {}},
     )
 
 
@@ -105,6 +116,63 @@ def test_fx_observations_ok(client, s2s_ok):
         headers=S2S,
     )
     assert response.status_code == 200
+
+
+def test_comex_imports_ok(client, s2s_ok):
+    response = client.get(
+        "/v1/market-data/comex/imports"
+        "?ncm_code=12345678&date_from=2026-01-01&date_to=2026-12-31",
+        headers=S2S,
+    )
+    assert response.status_code == 200
+
+
+def test_comex_imports_requires_s2s(client):
+    response = client.get(
+        "/v1/market-data/comex/imports"
+        "?ncm_code=12345678&date_from=2026-01-01&date_to=2026-12-31"
+    )
+    assert response.status_code == 401
+
+
+def test_producer_prices_ok(client, s2s_ok):
+    response = client.get(
+        "/v1/market-data/producer-prices/observations"
+        "?series_id=ipp-metalurgia-index"
+        "&date_from=2026-01-01&date_to=2026-12-31",
+        headers=S2S,
+    )
+    assert response.status_code == 200
+
+
+def test_unapproved_ncm_maps_404(client, s2s_ok, monkeypatch):
+    def _raise(**kw):
+        raise UnknownSeriesError("ncm not approved")
+
+    monkeypatch.setattr(routes, "list_comex_imports", _raise)
+    response = client.get(
+        "/v1/market-data/comex/imports"
+        "?ncm_code=87654321&date_from=2026-01-01&date_to=2026-12-31",
+        headers=S2S,
+    )
+    assert response.status_code == 404
+    assert response.get_json()["code"] == "EXTERNAL_DATA_UNKNOWN_SERIES"
+
+
+def test_unknown_ipp_series_maps_404(client, s2s_ok, monkeypatch):
+    def _raise(**kw):
+        raise UnknownSeriesError("unknown series")
+
+    monkeypatch.setattr(
+        routes, "list_producer_price_observations", _raise
+    )
+    response = client.get(
+        "/v1/market-data/producer-prices/observations"
+        "?series_id=nope&date_from=2026-01-01&date_to=2026-12-31",
+        headers=S2S,
+    )
+    assert response.status_code == 404
+    assert response.get_json()["code"] == "EXTERNAL_DATA_UNKNOWN_SERIES"
 
 
 def test_invalid_query_maps_400(client, s2s_ok, monkeypatch):

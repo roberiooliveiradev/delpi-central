@@ -21,6 +21,8 @@ from app.domain.market_data import (
     KIND_FX,
     KIND_METAL,
     PAIR_USD_BRL,
+    PROVIDER_IBGE_IPP,
+    PROVIDER_MDIC_COMEX,
     SCHEMA_VERSION,
     SUPPORTED_RATE_KINDS,
 )
@@ -149,6 +151,10 @@ def get_catalog() -> dict[str, Any]:
         sources = {s.source_id: s for s in repo.list_sources()}
         instruments = repo.list_instruments()
         latest = repo.latest_observation_dates()
+        # R2 catalog segments tolerate a pre-V005 database — absent
+        # tables mean "no series", never a hard failure.
+        ncm_rows = _optional_rows(repo, "list_ncm_allowlist")
+        ipp_rows = _optional_rows(repo, "list_producer_price_series")
 
     return {
         "instruments": [
@@ -172,9 +178,61 @@ def get_catalog() -> dict[str, Any]:
                 ),
             }
         ],
+        "import_ncms": [
+            {
+                "ncm_code": n["ncm_code"],
+                "kind": "comex_import",
+                "description": n["description"],
+                "family_code": n["family_code"],
+                "ncm_version": n["ncm_version"],
+                "unit": "USD/metric ton",
+                "granularity": "month",
+                "source_id": PROVIDER_MDIC_COMEX,
+                "active": n["active"],
+                "display_allowed": _display_allowed(
+                    sources.get(PROVIDER_MDIC_COMEX)
+                ),
+                "latest_observation_date": _iso(
+                    latest.get(f"comex|{n['ncm_code']}")
+                ),
+            }
+            for n in ncm_rows
+        ],
+        "producer_price_series": [
+            {
+                "series_id": s["series_id"],
+                "kind": "producer_price",
+                "label": f"{s['activity_label']} — {s['variable_label']}",
+                "activity_code": s["activity_code"],
+                "activity_label": s["activity_label"],
+                "variable_code": s["variable_code"],
+                "variable_label": s["variable_label"],
+                "table_code": s["table_code"],
+                "metric_kind": s["metric_kind"],
+                "unit": s["unit_label"],
+                "base_reference": s["base_reference"],
+                "granularity": "month",
+                "source_id": s["source_id"],
+                "active": s["active"],
+                "display_allowed": _display_allowed(
+                    sources.get(s["source_id"])
+                ),
+                "latest_observation_date": _iso(
+                    latest.get(f"ipp|{s['series_id']}")
+                ),
+            }
+            for s in ipp_rows
+        ],
         "sources": [_source_dto(s) for s in sources.values()],
         "meta": {"schema_version": SCHEMA_VERSION},
     }
+
+
+def _optional_rows(repo, method: str):
+    try:
+        return getattr(repo, method)()
+    except Exception:
+        return []
 
 
 def list_metal_observations(
@@ -306,7 +364,12 @@ def get_ingestion_status() -> dict[str, Any]:
         feeds = repo.feed_statuses()
         sources = {s.source_id: s for s in repo.list_sources()}
 
-    feed_source = {"metals-monthly": "world-bank-pink-sheet", "fx-daily": "bcb-ptax"}
+    feed_source = {
+        "metals-monthly": "world-bank-pink-sheet",
+        "fx-daily": "bcb-ptax",
+        "comex-import-monthly": PROVIDER_MDIC_COMEX,
+        "ipp-monthly": PROVIDER_IBGE_IPP,
+    }
     return {
         "feeds": [
             {
@@ -332,6 +395,192 @@ def get_ingestion_status() -> dict[str, Any]:
             for feed in feeds
         ],
         "meta": {"schema_version": SCHEMA_VERSION},
+    }
+
+
+def list_comex_imports(
+    *,
+    ncm_code: str,
+    date_from_raw: str | None,
+    date_to_raw: str | None,
+    country_code: str | None,
+    state_code: str | None,
+    limit_raw: str | None,
+    cursor_raw: str | None,
+) -> dict[str, Any]:
+    """operationId: listComexImportObservationsV1.
+
+    Only catalog-allowlisted NCMs are queryable — an unapproved NCM is an
+    unknown series, not an empty result that could masquerade as data.
+    """
+    _require_storage()
+    code = (ncm_code or "").strip()
+    if not code:
+        raise InvalidQueryError("ncm_code is required")
+    date_from = _parse_iso_date(date_from_raw, "date_from")
+    date_to = _parse_iso_date(date_to_raw, "date_to")
+    _validate_range(date_from, date_to, max_days=MAX_RANGE_DAYS_MONTHLY)
+    limit = _parse_limit(limit_raw)
+    cursor = _parse_cursor(cursor_raw)
+
+    with get_connection() as conn:
+        check_market_contract_ready(conn)
+        repo = _repo(conn)
+        ncm = repo.get_ncm_allowlist(code)
+        if ncm is None or not ncm["active"]:
+            raise UnknownSeriesError(f"unknown import series: {code}")
+        source = repo.get_source(PROVIDER_MDIC_COMEX)
+        _require_display(source, what=code)
+        rows = repo.list_comex_observations(
+            ncm_code=code,
+            date_from=date_from,
+            date_to=date_to,
+            country_code=(country_code or "").strip() or None,
+            state_code=(state_code or "").strip() or None,
+            limit=limit,
+            cursor=cursor,
+        )
+
+    items, next_cursor = rows_to_page(
+        rows, limit=limit, date_key="reference_month", id_key="observation_id"
+    )
+    return {
+        "series": {
+            "ncm_code": code,
+            "ncm_version": ncm["ncm_version"],
+            "description": ncm["description"],
+            "metric_kind": "comex_import",
+            "unit": "USD/metric ton",
+            "granularity": "month",
+        },
+        "items": [_comex_observation_dto(r, source) for r in items],
+        "page_info": {
+            "next_cursor": next_cursor,
+            "has_more": next_cursor is not None,
+        },
+        "meta": {
+            "data_status": "ok" if items else "no_data",
+            "source_ids": [PROVIDER_MDIC_COMEX],
+            "schema_version": SCHEMA_VERSION,
+        },
+    }
+
+
+def list_producer_price_observations(
+    *,
+    series_id: str,
+    date_from_raw: str | None,
+    date_to_raw: str | None,
+    limit_raw: str | None,
+    cursor_raw: str | None,
+) -> dict[str, Any]:
+    """operationId: listProducerPriceIndexObservationsV1."""
+    _require_storage()
+    sid = (series_id or "").strip()
+    if not sid:
+        raise InvalidQueryError("series_id is required")
+    date_from = _parse_iso_date(date_from_raw, "date_from")
+    date_to = _parse_iso_date(date_to_raw, "date_to")
+    _validate_range(date_from, date_to, max_days=MAX_RANGE_DAYS_MONTHLY)
+    limit = _parse_limit(limit_raw)
+    cursor = _parse_cursor(cursor_raw)
+
+    with get_connection() as conn:
+        check_market_contract_ready(conn)
+        repo = _repo(conn)
+        series = repo.get_producer_price_series(sid)
+        if series is None or not series["active"]:
+            raise UnknownSeriesError(f"unknown producer price series: {sid}")
+        source = repo.get_source(series["source_id"])
+        _require_display(source, what=sid)
+        rows = repo.list_producer_price_observations(
+            series_id=sid,
+            date_from=date_from,
+            date_to=date_to,
+            limit=limit,
+            cursor=cursor,
+        )
+
+    items, next_cursor = rows_to_page(
+        rows, limit=limit, date_key="reference_month", id_key="observation_id"
+    )
+    return {
+        "series": {
+            "series_id": sid,
+            "metric_kind": series["metric_kind"],
+            "activity_code": series["activity_code"],
+            "activity_label": series["activity_label"],
+            "variable_code": series["variable_code"],
+            "variable_label": series["variable_label"],
+            "table_code": series["table_code"],
+            "unit": series["unit_label"],
+            "base_reference": series["base_reference"],
+            "granularity": "month",
+        },
+        "items": [_ipp_observation_dto(r, source) for r in items],
+        "page_info": {
+            "next_cursor": next_cursor,
+            "has_more": next_cursor is not None,
+        },
+        "meta": {
+            "data_status": "ok" if items else "no_data",
+            "source_ids": [series["source_id"]],
+            "schema_version": SCHEMA_VERSION,
+        },
+    }
+
+
+def _comex_observation_dto(row, source) -> dict[str, Any]:
+    return {
+        "ncm_code": row["ncm_code"],
+        "ncm_version": row["ncm_version"],
+        "reference_month": row["reference_month"].isoformat(),
+        "dimensions": {
+            "country_code": row["country_code"],
+            "state_code": row["state_code"],
+        },
+        "fob_usd_total": str(row["fob_usd_total"]),
+        "net_weight_kg_total": str(row["net_weight_kg_total"]),
+        "unit_value_usd_per_t": (
+            str(row["unit_value_usd_per_t"])
+            if row["unit_value_usd_per_t"] is not None
+            else None
+        ),
+        "unit": "USD/metric ton",
+        "contributing_rows": row["contributing_rows"],
+        "quality": row["quality_status"],
+        "dataset_year": row["dataset_year"],
+        "dataset_revision": row["dataset_revision"],
+        "source": {
+            "source_id": row["source_id"],
+            "provider_id": source.provider_id if source else None,
+            "attribution": source.attribution if source else None,
+            "retrieved_at": _iso(row["retrieved_at"]),
+            "license_reference": (
+                source.license_reference if source else None
+            ),
+            "schema_version": SCHEMA_VERSION,
+        },
+    }
+
+
+def _ipp_observation_dto(row, source) -> dict[str, Any]:
+    return {
+        "series_id": row["series_id"],
+        "reference_month": row["reference_month"].isoformat(),
+        "value": str(row["value"]),
+        "quality": row["quality_status"],
+        "source": {
+            "source_id": row["source_id"],
+            "provider_id": source.provider_id if source else None,
+            "attribution": source.attribution if source else None,
+            "retrieved_at": _iso(row["retrieved_at"]),
+            "published_at": _iso(row["published_at"]),
+            "license_reference": (
+                source.license_reference if source else None
+            ),
+            "schema_version": SCHEMA_VERSION,
+        },
     }
 
 

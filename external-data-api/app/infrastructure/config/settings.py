@@ -103,6 +103,53 @@ class Settings:
         os.getenv("WORLDBANK_PINKSHEET_TIMEOUT_SECONDS", "30") or "30"
     )
 
+    EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED = (
+        os.getenv("EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED", "false")
+        .strip().lower() in {"1", "true", "yes"}
+    )
+    EXTERNAL_DATA_FEED_IPP_MONTHLY_ENABLED = (
+        os.getenv("EXTERNAL_DATA_FEED_IPP_MONTHLY_ENABLED", "false")
+        .strip().lower() in {"1", "true", "yes"}
+    )
+
+    # R2 providers — hosts are allowlisted (SSRF guard); the Comex file
+    # is a bounded, streamed, checksummed download.
+    COMEX_IMPORT_URL_TEMPLATE = os.getenv(
+        "COMEX_IMPORT_URL_TEMPLATE",
+        "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm/"
+        "IMP_{year}.csv",
+    )
+    COMEX_ALLOWED_HOSTS = frozenset(
+        h.strip().lower()
+        for h in os.getenv(
+            "COMEX_ALLOWED_HOSTS", "balanca.economia.gov.br"
+        ).split(",")
+        if h.strip()
+    )
+    COMEX_TIMEOUT_SECONDS = float(
+        os.getenv("COMEX_TIMEOUT_SECONDS", "120") or "120"
+    )
+    COMEX_MAX_DOWNLOAD_BYTES = int(
+        os.getenv("COMEX_MAX_DOWNLOAD_BYTES", "300000000") or "300000000"
+    )
+    # Optional CA bundle path for hosts whose chain is not served
+    # complete (some gov.br endpoints); unset = system CA store.
+    COMEX_CA_BUNDLE = os.getenv("COMEX_CA_BUNDLE", "").strip() or True
+
+    IBGE_SIDRA_BASE_URL = os.getenv(
+        "IBGE_SIDRA_BASE_URL", "https://apisidra.ibge.gov.br"
+    )
+    IBGE_ALLOWED_HOSTS = frozenset(
+        h.strip().lower()
+        for h in os.getenv(
+            "IBGE_ALLOWED_HOSTS", "apisidra.ibge.gov.br"
+        ).split(",")
+        if h.strip()
+    )
+    IBGE_TIMEOUT_SECONDS = float(
+        os.getenv("IBGE_TIMEOUT_SECONDS", "20") or "20"
+    )
+
     EXTERNAL_DATA_USER_AGENT = os.getenv(
         "EXTERNAL_DATA_USER_AGENT", "delpi-external-data-api/1.0"
     )

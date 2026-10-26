@@ -16,10 +16,19 @@ from decimal import Decimal
 
 FEED_FX_DAILY = "fx-daily"
 FEED_METALS_MONTHLY = "metals-monthly"
-SUPPORTED_FEEDS = (FEED_FX_DAILY, FEED_METALS_MONTHLY)
+FEED_COMEX_MONTHLY = "comex-import-monthly"
+FEED_IPP_MONTHLY = "ipp-monthly"
+SUPPORTED_FEEDS = (
+    FEED_FX_DAILY,
+    FEED_METALS_MONTHLY,
+    FEED_COMEX_MONTHLY,
+    FEED_IPP_MONTHLY,
+)
 
 KIND_METAL = "metal"
 KIND_FX = "fx"
+KIND_COMEX = "comex"
+KIND_IPP = "producer_price"
 
 PAIR_USD_BRL = "USD/BRL"
 
@@ -39,6 +48,8 @@ GRANULARITY_DAY = "day"
 # and licensed in the database.
 PROVIDER_BCB_PTAX = "bcb-ptax"
 PROVIDER_WORLDBANK_PINK_SHEET = "world-bank-pink-sheet"
+PROVIDER_MDIC_COMEX = "mdic-comex-stat"
+PROVIDER_IBGE_IPP = "ibge-ipp-sidra"
 
 SCHEMA_VERSION = "v1"
 

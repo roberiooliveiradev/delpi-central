@@ -150,6 +150,224 @@ class MarketDataRepository:
             cur.execute(sql, params)
             return cur.fetchall()
 
+    # --- R2: Comex / IPP ---------------------------------------------------
+
+    def list_ncm_allowlist(self) -> list[dict[str, Any]]:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"SELECT * FROM {self._t('comex_ncm_allowlist')} "
+                "ORDER BY ncm_code"
+            )
+            return cur.fetchall()
+
+    def get_ncm_allowlist(self, ncm_code: str) -> dict[str, Any] | None:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"SELECT * FROM {self._t('comex_ncm_allowlist')} "
+                "WHERE ncm_code = %s",
+                (ncm_code,),
+            )
+            return cur.fetchone()
+
+    def list_comex_observations(
+        self,
+        *,
+        ncm_code: str,
+        date_from: date,
+        date_to: date,
+        country_code: str | None,
+        state_code: str | None,
+        limit: int,
+        cursor: tuple[date, int] | None = None,
+    ) -> list[dict[str, Any]]:
+        sql = f"""
+            SELECT o.observation_id, o.reference_month, o.ncm_code,
+                   o.ncm_version, o.country_code, o.state_code,
+                   o.fob_usd_total, o.net_weight_kg_total,
+                   o.unit_value_usd_per_t, o.contributing_rows,
+                   o.quality_status, o.dataset_year, o.dataset_revision,
+                   o.source_checksum, o.source_id, o.retrieved_at,
+                   o.revised_at
+            FROM {self._t('comex_import_monthly_observations')} o
+            WHERE o.ncm_code = %s
+              AND o.reference_month BETWEEN %s AND %s
+        """
+        params: list[Any] = [ncm_code, date_from, date_to]
+        if country_code:
+            sql += " AND o.country_code = %s"
+            params.append(country_code)
+        if state_code:
+            sql += " AND o.state_code = %s"
+            params.append(state_code.upper())
+        if cursor is not None:
+            sql += " AND (o.reference_month, o.observation_id) > (%s, %s)"
+            params.extend([cursor[0], cursor[1]])
+        sql += (
+            " ORDER BY o.reference_month ASC, o.observation_id ASC LIMIT %s"
+        )
+        params.append(limit + 1)
+        with self._conn.cursor() as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()
+
+    def upsert_comex_observation(
+        self,
+        *,
+        reference_month: date,
+        ncm_code: str,
+        ncm_version: str,
+        country_code: str,
+        state_code: str,
+        fob_usd_total: Decimal,
+        net_weight_kg_total: Decimal,
+        unit_value_usd_per_t: Decimal | None,
+        contributing_rows: int,
+        quality_status: str,
+        dataset_year: int,
+        dataset_revision: str | None,
+        source_checksum: str | None,
+        source_id: str,
+        retrieved_at: datetime,
+    ) -> str:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {self._t('comex_import_monthly_observations')}
+                    (reference_month, ncm_code, ncm_version, country_code,
+                     state_code, fob_usd_total, net_weight_kg_total,
+                     unit_value_usd_per_t, contributing_rows,
+                     quality_status, dataset_year, dataset_revision,
+                     source_checksum, source_id, retrieved_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s)
+                ON CONFLICT (reference_month, ncm_code, country_code,
+                             state_code, dataset_year, source_id)
+                DO UPDATE SET ncm_version = EXCLUDED.ncm_version,
+                    fob_usd_total = EXCLUDED.fob_usd_total,
+                    net_weight_kg_total = EXCLUDED.net_weight_kg_total,
+                    unit_value_usd_per_t = EXCLUDED.unit_value_usd_per_t,
+                    contributing_rows = EXCLUDED.contributing_rows,
+                    quality_status = EXCLUDED.quality_status,
+                    dataset_revision = EXCLUDED.dataset_revision,
+                    source_checksum = EXCLUDED.source_checksum,
+                    retrieved_at = EXCLUDED.retrieved_at,
+                    revised_at = NOW()
+                WHERE {self._t('comex_import_monthly_observations')}
+                      .fob_usd_total IS DISTINCT FROM
+                      EXCLUDED.fob_usd_total
+                   OR {self._t('comex_import_monthly_observations')}
+                      .net_weight_kg_total IS DISTINCT FROM
+                      EXCLUDED.net_weight_kg_total
+                   OR {self._t('comex_import_monthly_observations')}
+                      .source_checksum IS DISTINCT FROM
+                      EXCLUDED.source_checksum
+                RETURNING (xmax = 0) AS inserted
+                """,
+                (
+                    reference_month, ncm_code, ncm_version, country_code,
+                    state_code, fob_usd_total, net_weight_kg_total,
+                    unit_value_usd_per_t, contributing_rows,
+                    quality_status, dataset_year, dataset_revision,
+                    source_checksum, source_id, retrieved_at,
+                ),
+            )
+            row = cur.fetchone()
+        if row is None:
+            return "unchanged"
+        return "inserted" if row["inserted"] else "updated"
+
+    def list_producer_price_series(self) -> list[dict[str, Any]]:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"SELECT * FROM {self._t('producer_price_series')} "
+                "ORDER BY series_id"
+            )
+            return cur.fetchall()
+
+    def get_producer_price_series(
+        self, series_id: str
+    ) -> dict[str, Any] | None:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"SELECT * FROM {self._t('producer_price_series')} "
+                "WHERE series_id = %s",
+                (series_id,),
+            )
+            return cur.fetchone()
+
+    def list_producer_price_observations(
+        self,
+        *,
+        series_id: str,
+        date_from: date,
+        date_to: date,
+        limit: int,
+        cursor: tuple[date, int] | None = None,
+    ) -> list[dict[str, Any]]:
+        sql = f"""
+            SELECT o.observation_id, o.series_id, o.reference_month,
+                   o.value, o.quality_status, o.source_id,
+                   o.source_record_key, o.published_at, o.retrieved_at,
+                   o.revised_at
+            FROM {self._t('producer_price_index_observations')} o
+            WHERE o.series_id = %s
+              AND o.reference_month BETWEEN %s AND %s
+        """
+        params: list[Any] = [series_id, date_from, date_to]
+        if cursor is not None:
+            sql += " AND (o.reference_month, o.observation_id) > (%s, %s)"
+            params.extend([cursor[0], cursor[1]])
+        sql += (
+            " ORDER BY o.reference_month ASC, o.observation_id ASC LIMIT %s"
+        )
+        params.append(limit + 1)
+        with self._conn.cursor() as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()
+
+    def upsert_producer_price_observation(
+        self,
+        *,
+        series_id: str,
+        reference_month: date,
+        value: Decimal,
+        source_id: str,
+        source_record_key: str | None,
+        published_at: datetime | None,
+        retrieved_at: datetime,
+        quality_status: str = "validated",
+    ) -> str:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {self._t('producer_price_index_observations')}
+                    (series_id, reference_month, value, source_id,
+                     source_record_key, published_at, retrieved_at,
+                     quality_status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (series_id, reference_month, source_id)
+                DO UPDATE SET value = EXCLUDED.value,
+                              retrieved_at = EXCLUDED.retrieved_at,
+                              revised_at = NOW(),
+                              quality_status = EXCLUDED.quality_status,
+                              source_record_key =
+                                  EXCLUDED.source_record_key,
+                              published_at = EXCLUDED.published_at
+                WHERE {self._t('producer_price_index_observations')}.value
+                      IS DISTINCT FROM EXCLUDED.value
+                RETURNING (xmax = 0) AS inserted
+                """,
+                (
+                    series_id, reference_month, value, source_id,
+                    source_record_key, published_at, retrieved_at,
+                    quality_status,
+                ),
+            )
+            row = cur.fetchone()
+        if row is None:
+            return "unchanged"
+        return "inserted" if row["inserted"] else "updated"
+
     def list_fx_observations(
         self,
         *,
@@ -195,7 +413,32 @@ class MarketDataRepository:
                 GROUP BY pair_code, rate_kind
                 """
             )
-            return {r["key"]: r["d"] for r in cur.fetchall()}
+            rows = {r["key"]: r["d"] for r in cur.fetchall()}
+            # R2 feeds live in their own tables — the base UNION predates
+            # them, so absence is tolerated for pre-V005 databases.
+            for table, key_expr in (
+                (
+                    "comex_import_monthly_observations",
+                    "'comex|' || ncm_code",
+                ),
+                ("producer_price_index_observations", "'ipp|' || series_id"),
+            ):
+                if not self._table_exists(table):
+                    continue
+                cur.execute(
+                    f"SELECT {key_expr} AS key, MAX(reference_month) AS d "
+                    f"FROM {self._t(table)} GROUP BY 1"
+                )
+                rows.update({r["key"]: r["d"] for r in cur.fetchall()})
+            return rows
+
+    def _table_exists(self, table: str) -> bool:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "SELECT to_regclass(%s) AS regclass",
+                (f"{self._schema}.{table}",),
+            )
+            return cur.fetchone()["regclass"] is not None
 
     # --- writes (ingestion) ------------------------------------------------
 
@@ -371,8 +614,7 @@ class MarketDataRepository:
                 """
             )
             last_ok = {r["feed"]: r["ok_at"] for r in cur.fetchall()}
-            cur.execute(
-                f"""
+            freshness_sql = f"""
                 SELECT 'metals-monthly' AS feed,
                        MAX(o.observation_date) AS latest,
                        COUNT(*) AS n
@@ -381,15 +623,33 @@ class MarketDataRepository:
                 SELECT 'fx-daily' AS feed, MAX(f.reference_date),
                        COUNT(*)
                 FROM {self._t('fx_rate_observations')} f
+            """
+            feeds = ["metals-monthly", "fx-daily"]
+            # R2 feeds — tolerate absence on pre-V005 databases.
+            if self._table_exists("comex_import_monthly_observations"):
+                freshness_sql += f"""
+                UNION ALL
+                SELECT 'comex-import-monthly' AS feed,
+                       MAX(c.reference_month), COUNT(*)
+                FROM {self._t('comex_import_monthly_observations')} c
                 """
-            )
+                feeds.append("comex-import-monthly")
+            if self._table_exists("producer_price_index_observations"):
+                freshness_sql += f"""
+                UNION ALL
+                SELECT 'ipp-monthly' AS feed, MAX(p.reference_month),
+                       COUNT(*)
+                FROM {self._t('producer_price_index_observations')} p
+                """
+                feeds.append("ipp-monthly")
+            cur.execute(freshness_sql)
             freshness = {r["feed"]: r for r in cur.fetchall()}
 
-        feeds = []
-        for feed in ("metals-monthly", "fx-daily"):
+        feeds_out = []
+        for feed in feeds:
             run = last_runs.get(feed)
             fresh = freshness.get(feed) or {}
-            feeds.append(
+            feeds_out.append(
                 {
                     "feed": feed,
                     "last_run_started_at": run["started_at"] if run else None,
@@ -401,7 +661,7 @@ class MarketDataRepository:
                     "observation_count": fresh.get("n") or 0,
                 }
             )
-        return feeds
+        return feeds_out
 
     # --- advisory lock -----------------------------------------------------
 

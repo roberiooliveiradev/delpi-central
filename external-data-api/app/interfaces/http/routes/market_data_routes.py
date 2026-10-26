@@ -17,8 +17,10 @@ from app.application.contracts import ExternalDataError, RateLimitedError
 from app.application.market_data_queries import (
     get_catalog,
     get_ingestion_status,
+    list_comex_imports,
     list_fx_observations,
     list_metal_observations,
+    list_producer_price_observations,
 )
 from app.infrastructure.s2s_auth import require_s2s_service
 
@@ -89,6 +91,36 @@ def get_fx_observations():
     payload = list_fx_observations(
         pair=request.args.get("pair"),
         rate_kind=request.args.get("rate_kind"),
+        date_from_raw=request.args.get("date_from"),
+        date_to_raw=request.args.get("date_to"),
+        limit_raw=request.args.get("limit"),
+        cursor_raw=request.args.get("cursor"),
+    )
+    return _respond(payload, _correlation_id())
+
+
+@market_data_bp.get("/v1/market-data/comex/imports")
+@require_s2s_service(allowed_clients=_ALLOWED_BFF_CLIENTS)
+def get_comex_imports():
+    """operationId: listComexImportObservationsV1."""
+    payload = list_comex_imports(
+        ncm_code=request.args.get("ncm_code"),
+        date_from_raw=request.args.get("date_from"),
+        date_to_raw=request.args.get("date_to"),
+        country_code=request.args.get("country_code"),
+        state_code=request.args.get("state_code"),
+        limit_raw=request.args.get("limit"),
+        cursor_raw=request.args.get("cursor"),
+    )
+    return _respond(payload, _correlation_id())
+
+
+@market_data_bp.get("/v1/market-data/producer-prices/observations")
+@require_s2s_service(allowed_clients=_ALLOWED_BFF_CLIENTS)
+def get_producer_price_observations():
+    """operationId: listProducerPriceIndexObservationsV1."""
+    payload = list_producer_price_observations(
+        series_id=request.args.get("series_id"),
         date_from_raw=request.args.get("date_from"),
         date_to_raw=request.args.get("date_to"),
         limit_raw=request.args.get("limit"),

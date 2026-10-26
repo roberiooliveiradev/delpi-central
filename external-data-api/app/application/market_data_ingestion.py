@@ -22,9 +22,13 @@ from app.application.contracts import (
 )
 from app.domain import usage_policy
 from app.domain.market_data import (
+    FEED_COMEX_MONTHLY,
     FEED_FX_DAILY,
+    FEED_IPP_MONTHLY,
     FEED_METALS_MONTHLY,
     PROVIDER_BCB_PTAX,
+    PROVIDER_IBGE_IPP,
+    PROVIDER_MDIC_COMEX,
     PROVIDER_WORLDBANK_PINK_SHEET,
 )
 from app.infrastructure.config.settings import Settings
@@ -39,6 +43,8 @@ INGESTION_VERSION = "proc-0076-p0-v1"
 ADVISORY_LOCK_KEYS = {
     FEED_METALS_MONTHLY: 76007601,
     FEED_FX_DAILY: 76007602,
+    FEED_COMEX_MONTHLY: 76007603,
+    FEED_IPP_MONTHLY: 76007604,
 }
 
 
@@ -50,6 +56,14 @@ class FeedDisabledError(ExternalDataError):
 class IngestionLockedError(ExternalDataError):
     http_status = 503
     code = "EXTERNAL_DATA_INGESTION_LOCKED"
+
+
+class NoApprovedSeriesError(ExternalDataError):
+    """The feed is enabled and the source licensed, but the business
+    allowlist is empty — no approved NCM/SIDRA series to collect."""
+
+    http_status = 503
+    code = "EXTERNAL_DATA_NO_APPROVED_SERIES"
 
 
 @dataclass(frozen=True)
@@ -69,6 +83,10 @@ def feed_enabled(feed: str) -> bool:
         return bool(Settings.EXTERNAL_DATA_FEED_FX_DAILY_ENABLED)
     if feed == FEED_METALS_MONTHLY:
         return bool(Settings.EXTERNAL_DATA_FEED_METALS_MONTHLY_ENABLED)
+    if feed == FEED_COMEX_MONTHLY:
+        return bool(Settings.EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED)
+    if feed == FEED_IPP_MONTHLY:
+        return bool(Settings.EXTERNAL_DATA_FEED_IPP_MONTHLY_ENABLED)
     return False
 
 
@@ -76,6 +94,8 @@ def provider_id_for_feed(feed: str) -> str:
     return {
         FEED_FX_DAILY: PROVIDER_BCB_PTAX,
         FEED_METALS_MONTHLY: PROVIDER_WORLDBANK_PINK_SHEET,
+        FEED_COMEX_MONTHLY: PROVIDER_MDIC_COMEX,
+        FEED_IPP_MONTHLY: PROVIDER_IBGE_IPP,
     }[feed]
 
 
@@ -88,11 +108,15 @@ class MarketDataIngestionService:
         repository: Any,
         fx_provider: Any = None,
         metals_provider: Any = None,
+        comex_provider: Any = None,
+        ipp_provider: Any = None,
         clock: Any = utcnow,
     ) -> None:
         self._repo = repository
         self._fx_provider = fx_provider
         self._metals_provider = metals_provider
+        self._comex_provider = comex_provider
+        self._ipp_provider = ipp_provider
         self._clock = clock
 
     def run(
@@ -139,6 +163,14 @@ class MarketDataIngestionService:
         try:
             if feed == FEED_METALS_MONTHLY:
                 fetched, inserted, updated, skipped = self._ingest_metals(
+                    date_from, date_to
+                )
+            elif feed == FEED_COMEX_MONTHLY:
+                fetched, inserted, updated, skipped = self._ingest_comex(
+                    date_from, date_to
+                )
+            elif feed == FEED_IPP_MONTHLY:
+                fetched, inserted, updated, skipped = self._ingest_ipp(
                     date_from, date_to
                 )
             else:
@@ -277,6 +309,103 @@ class MarketDataIngestionService:
             else:
                 skipped += 1
         return len(rows), inserted, updated, skipped
+
+    def _ingest_comex(self, date_from: date, date_to: date):
+        source_id = PROVIDER_MDIC_COMEX
+        self._check_source(source_id)
+        approved = frozenset(
+            row["ncm_code"]
+            for row in self._repo.list_ncm_allowlist()
+            if row["active"]
+        )
+        if not approved:
+            # The NCM→product mapping is business-homologated — an empty
+            # allowlist blocks the feed rather than widening scope.
+            raise NoApprovedSeriesError(
+                "no approved NCM in the Comex allowlist"
+            )
+        ncm_meta = {
+            row["ncm_code"]: row for row in self._repo.list_ncm_allowlist()
+        }
+        years = sorted({date_from.year, date_to.year})
+        retrieved_at = self._clock()
+        fetched = inserted = updated = skipped = 0
+        for year in range(years[0], years[-1] + 1):
+            result = self._comex_provider.fetch_year(
+                year, approved_ncm_codes=approved
+            )
+            fetched += len(result.aggregates)
+            for agg in result.aggregates:
+                if not (date_from <= agg.reference_month <= date_to):
+                    skipped += 1
+                    continue
+                outcome = self._repo.upsert_comex_observation(
+                    reference_month=agg.reference_month,
+                    ncm_code=agg.ncm_code,
+                    ncm_version=ncm_meta[agg.ncm_code]["ncm_version"],
+                    country_code=agg.country_code,
+                    state_code=agg.state_code,
+                    fob_usd_total=agg.fob_usd_total,
+                    net_weight_kg_total=agg.net_weight_kg_total,
+                    unit_value_usd_per_t=agg.unit_value_usd_per_t,
+                    contributing_rows=agg.contributing_rows,
+                    quality_status=agg.quality_status,
+                    dataset_year=result.dataset_year,
+                    dataset_revision=None,
+                    source_checksum=result.source_checksum,
+                    source_id=source_id,
+                    retrieved_at=retrieved_at,
+                )
+                if outcome == "inserted":
+                    inserted += 1
+                elif outcome == "updated":
+                    updated += 1
+                else:
+                    skipped += 1
+        return fetched, inserted, updated, skipped
+
+    def _ingest_ipp(self, date_from: date, date_to: date):
+        source_id = PROVIDER_IBGE_IPP
+        self._check_source(source_id)
+        series_list = [
+            s for s in self._repo.list_producer_price_series() if s["active"]
+        ]
+        if not series_list:
+            raise NoApprovedSeriesError(
+                "no active producer price series in the catalog"
+            )
+        retrieved_at = self._clock()
+        fetched = inserted = updated = skipped = 0
+        for series in series_list:
+            rows = self._ipp_provider.fetch_series(
+                table_code=series["table_code"],
+                classification_code=series["classification_code"],
+                variable_code=series["variable_code"],
+                activity_code=series["activity_code"],
+                month_from=date_from,
+                month_to=date_to,
+            )
+            fetched += len(rows)
+            for row in rows:
+                if not (date_from <= row["reference_month"] <= date_to):
+                    skipped += 1
+                    continue
+                outcome = self._repo.upsert_producer_price_observation(
+                    series_id=series["series_id"],
+                    reference_month=row["reference_month"],
+                    value=row["value"],
+                    source_id=source_id,
+                    source_record_key=row.get("source_record_key"),
+                    published_at=None,
+                    retrieved_at=retrieved_at,
+                )
+                if outcome == "inserted":
+                    inserted += 1
+                elif outcome == "updated":
+                    updated += 1
+                else:
+                    skipped += 1
+        return fetched, inserted, updated, skipped
 
 
 def storage_ready() -> None:

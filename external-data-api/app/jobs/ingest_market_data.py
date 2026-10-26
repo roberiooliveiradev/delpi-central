@@ -26,7 +26,9 @@ from app.application.market_data_ingestion import (
     feed_enabled,
 )
 from app.domain.market_data import (
+    FEED_COMEX_MONTHLY,
     FEED_FX_DAILY,
+    FEED_IPP_MONTHLY,
     FEED_METALS_MONTHLY,
     SUPPORTED_FEEDS,
 )
@@ -38,6 +40,10 @@ from app.infrastructure.persistence.market_data_repository import (
     MarketDataRepository,
 )
 from app.infrastructure.persistence.plugins_db import get_connection
+from app.infrastructure.providers.comex_import_provider import (
+    build_comex_provider,
+)
+from app.infrastructure.providers.ibge_ipp_provider import build_ipp_provider
 from app.infrastructure.providers.ptax_fx_provider import build_ptax_provider
 from app.infrastructure.providers.worldbank_pinksheet_provider import (
     build_pinksheet_provider,
@@ -50,6 +56,8 @@ logger = logging.getLogger("external-data-api.jobs.ingest_market_data")
 _DEFAULT_WINDOW_DAYS = {
     FEED_FX_DAILY: 35,
     FEED_METALS_MONTHLY: 400,
+    FEED_COMEX_MONTHLY: 400,
+    FEED_IPP_MONTHLY: 400,
 }
 
 
@@ -103,6 +111,8 @@ def main(argv: list[str] | None = None) -> int:
                 repository=repo,
                 fx_provider=build_ptax_provider(),
                 metals_provider=build_pinksheet_provider(),
+                comex_provider=build_comex_provider(),
+                ipp_provider=build_ipp_provider(),
             )
             result = service.run(
                 feed,

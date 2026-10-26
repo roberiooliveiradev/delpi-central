@@ -23,7 +23,10 @@ REQUIRED_COLUMNS = frozenset({
     "KG_LIQUIDO", "VL_FOB",
 })
 NCM_PATTERN = re.compile(r"^[0-9]{8}$")
-MAX_ROWS = 2_000_000
+# Hard bound against runaway memory/parse — sized to accept the real
+# official annual files (IMP_2025.csv ≈ 175 MB / ≈2.4 M data rows, and
+# still growing year over year) with a wide safety margin.
+MAX_ROWS = 25_000_000
 
 
 class ComexCsvContractError(ValueError):
