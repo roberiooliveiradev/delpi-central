@@ -23,6 +23,10 @@ export type DowntimesRouteParams = {
 
 export type DelpiMesRoute = {
   area: DelpiMesArea;
+  /** True quando a URL nomeia explicitamente a área (ex.: /downtimes).
+   * Na raiz (sem segmento) é false — o App pode então redirecionar para a
+   * primeira área permitida sem transformar ausência de área em recusa. */
+  areaExplicit: boolean;
   branch: BranchCode;
   workCenter: string | null;
   registrationPage: RegistrationPage | null;
@@ -45,7 +49,7 @@ const DEFAULT_DOWNTIMES: DowntimesRouteParams = {
   pageSize: DOWNTIMES_DEFAULT_PAGE_SIZE,
 };
 
-const AREA_SEGMENTS: ReadonlySet<string> = new Set(["downtimes", "history", "registrations"]);
+const AREA_SEGMENTS: ReadonlySet<string> = new Set(["monitoring", "downtimes", "history", "registrations"]);
 const REGISTRATION_PAGES: ReadonlySet<string> = new Set(["downtime-reasons"]);
 const PERIODS: ReadonlySet<string> = new Set(["today", "7d", "30d", "custom"]);
 const CLASSIFICATIONS: ReadonlySet<string> = new Set(["pending", "confirmed"]);
@@ -83,7 +87,8 @@ export function parseDelpiMesRoute(pathname: string, search: string): DelpiMesRo
   const suffix = pathname.startsWith(BASE_PATH) ? pathname.slice(BASE_PATH.length) : "";
   const segments = suffix.split("/").filter(Boolean);
   const segment = segments[0];
-  const area: DelpiMesArea = segment && AREA_SEGMENTS.has(segment) ? (segment as DelpiMesArea) : "monitoring";
+  const areaExplicit = segment !== undefined && AREA_SEGMENTS.has(segment);
+  const area: DelpiMesArea = areaExplicit ? (segment as DelpiMesArea) : "monitoring";
   const registrationPage: RegistrationPage | null =
     area === "registrations" && segments[1] && REGISTRATION_PAGES.has(segments[1])
       ? (segments[1] as RegistrationPage)
@@ -92,7 +97,7 @@ export function parseDelpiMesRoute(pathname: string, search: string): DelpiMesRo
   const requestedBranch = params.get("branch");
   const workCenter = area === "monitoring" ? params.get("workCenter") : null;
   const downtimes = area === "downtimes" ? parseDowntimesParams(params) : DEFAULT_DOWNTIMES;
-  return { area, branch: requestedBranch === "02" ? "02" : "01", workCenter, registrationPage, downtimes };
+  return { area, areaExplicit, branch: requestedBranch === "02" ? "02" : "01", workCenter, registrationPage, downtimes };
 }
 
 export function buildDelpiMesHref(area: DelpiMesArea, branch: BranchCode, workCenter?: string): string {

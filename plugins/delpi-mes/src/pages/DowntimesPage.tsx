@@ -25,7 +25,12 @@ import { useSelectedDowntime } from "../hooks/useSelectedDowntime";
 import { useServerClock } from "../hooks/useServerClock";
 import { useWorkCenterTimeline } from "../hooks/useWorkCenterTimeline";
 import type { DowntimeItem } from "../types/mes";
-import { formatDayClock, localDayKey, presentDayEvent } from "../utils/dayTimeline";
+import {
+  MES_BUSINESS_TIMEZONE,
+  businessDayKey,
+  formatBusinessClock,
+  presentDayEvent,
+} from "../utils/dayTimeline";
 import {
   DOWNTIME_PERIOD_PRESETS,
   buildDowntimesQuery,
@@ -81,13 +86,14 @@ export function DowntimesPage({
   const nowMs = useServerClock(downtimes.data?.referenceAt);
   const [timelineOpen, setTimelineOpen] = useState(false);
 
-  const detailDayKey = selected.item?.startedAt ? localDayKey(new Date(selected.item.startedAt)) : null;
+  const detailDayKey = selected.item?.startedAt ? businessDayKey(new Date(selected.item.startedAt)) : null;
   const timeline = useWorkCenterTimeline(
     branch,
     timelineOpen ? selected.item?.workCenter ?? null : null,
     "downtimes-detail",
     canViewHistory && timelineOpen,
     detailDayKey,
+    MES_BUSINESS_TIMEZONE,
   );
 
   const apply = (partial: Partial<DowntimesRouteParams>) => {
@@ -174,17 +180,23 @@ export function DowntimesPage({
       <div className="delpi-mes-downtimes__filters" aria-label="Filtros de paradas">
         <label>
           Período
-          <select
-            value={params.period}
-            onChange={(event) => {
-              const period = event.target.value as DowntimesRouteParams["period"];
-              apply(period === "custom" ? { period } : { period, from: null, to: null });
-            }}
-          >
-            {DOWNTIME_PERIOD_PRESETS.map((preset) => (
-              <option key={preset.id} value={preset.id}>{preset.label}</option>
-            ))}
-          </select>
+          <span className="delpi-mes-downtimes__label-with-help">
+            <select
+              value={params.period}
+              onChange={(event) => {
+                const period = event.target.value as DowntimesRouteParams["period"];
+                apply(period === "custom" ? { period } : { period, from: null, to: null });
+              }}
+            >
+              {DOWNTIME_PERIOD_PRESETS.map((preset) => (
+                <option key={preset.id} value={preset.id}>{preset.label}</option>
+              ))}
+            </select>
+            <HelpTooltip
+              content={DELPI_MES_COPY.help.downtimesPeriod}
+              ariaLabel="Ajuda: período"
+            />
+          </span>
         </label>
         {params.period === "custom" ? (
           <>
@@ -489,9 +501,9 @@ function DowntimeDetail({
                   <li key={entry.stateEventId}>
                     <strong>{presentation.label}</strong>
                     <span>
-                      {formatDayClock(Date.parse(entry.startedAt))}
+                      {formatBusinessClock(Date.parse(entry.startedAt))}
                       {" – "}
-                      {entry.endedAt ? formatDayClock(Date.parse(entry.endedAt)) : "agora"}
+                      {entry.endedAt ? formatBusinessClock(Date.parse(entry.endedAt)) : "agora"}
                       {presentation.pendingReason ? " · motivo pendente" : ""}
                       {entry.productionOrder ? " · OP " + entry.productionOrder : ""}
                     </span>

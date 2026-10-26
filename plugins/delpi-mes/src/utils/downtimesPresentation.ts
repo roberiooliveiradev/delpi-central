@@ -1,6 +1,7 @@
 import type { DowntimeItem, DowntimeReasonOption, DowntimesQuery } from "../types/mes";
 import type { BranchCode } from "../constants/routes";
 import type { DowntimesRouteParams } from "../hooks/useDelpiMesRoute";
+import { MES_BUSINESS_TIMEZONE, businessDayKey, zoneDayStartMs, zoneNextDayStartMs } from "./dayTimeline";
 
 export type DowntimePeriodPreset = "today" | "7d" | "30d" | "custom";
 
@@ -24,38 +25,39 @@ export function downtimeSourceLabel(source: string | null | undefined): string {
   return SOURCE_LABELS[source] ?? source;
 }
 
-function localDayStart(date: Date): Date {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-  return start;
+function addCalendarDays(dayKey: string, deltaDays: number): string {
+  const parts = dayKey.split("-").map(Number);
+  const next = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + deltaDays));
+  return next.toISOString().slice(0, 10);
 }
 
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
+function zoneDayStartIso(dayKey: string): string | undefined {
+  const ms = zoneDayStartMs(dayKey, MES_BUSINESS_TIMEZONE);
+  return ms === null ? undefined : new Date(ms).toISOString();
 }
 
 /** Converte a seleção de período da URL em intervalo ISO para o contrato.
- * Presets são relativos ao relógio local (fuso de negócio Delpi); em
- * "custom", from/to são chaves de dia YYYY-MM-DD e o fim inclui o dia
- * inteiro (limite exclusivo = início do dia seguinte). */
+ * Dias civis são avaliados no fuso operacional canônico (America/Sao_Paulo
+ * — MES_BUSINESS_TIMEZONE), independente do fuso do navegador. Presets
+ * usam limite inferior aberto (from = início do primeiro dia da janela);
+ * em "custom", from/to são chaves de dia YYYY-MM-DD no fuso operacional e
+ * o fim cobre o dia inteiro (limite exclusivo = início do dia seguinte). */
 export function resolveDowntimePeriod(
   params: Pick<DowntimesRouteParams, "period" | "from" | "to">,
   now: Date = new Date(),
 ): { from?: string; to?: string } {
-  const today = localDayStart(now);
-  if (params.period === "today") return { from: today.toISOString() };
-  if (params.period === "7d") return { from: addDays(today, -6).toISOString() };
-  if (params.period === "30d") return { from: addDays(today, -29).toISOString() };
+  const today = businessDayKey(now);
+  if (params.period === "today") return { from: zoneDayStartIso(today) };
+  if (params.period === "7d") return { from: zoneDayStartIso(addCalendarDays(today, -6)) };
+  if (params.period === "30d") return { from: zoneDayStartIso(addCalendarDays(today, -29)) };
   const range: { from?: string; to?: string } = {};
   if (params.from) {
-    const start = new Date(params.from + "T00:00:00");
-    if (Number.isFinite(start.getTime())) range.from = start.toISOString();
+    const start = params.from ? zoneDayStartIso(params.from) : undefined;
+    if (start) range.from = start;
   }
   if (params.to) {
-    const endDay = new Date(params.to + "T00:00:00");
-    if (Number.isFinite(endDay.getTime())) range.to = addDays(endDay, 1).toISOString();
+    const end = zoneNextDayStartMs(params.to, MES_BUSINESS_TIMEZONE);
+    if (end !== null) range.to = new Date(end).toISOString();
   }
   return range;
 }
@@ -113,6 +115,7 @@ export function formatDateTime(iso: string | null | undefined): string {
   const ms = Date.parse(iso);
   if (!Number.isFinite(ms)) return "—";
   return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: MES_BUSINESS_TIMEZONE,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

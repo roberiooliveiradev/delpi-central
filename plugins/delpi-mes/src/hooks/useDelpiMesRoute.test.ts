@@ -22,7 +22,7 @@ const DEFAULT_DOWNTIMES: DowntimesRouteParams = {
   pageSize: 50,
 };
 
-const base = { branch: "01" as const, workCenter: null, registrationPage: null };
+const base = { branch: "01" as const, workCenter: null, registrationPage: null, areaExplicit: false };
 
 describe("Delpi MES routing", () => {
   it("defaults the product root to monitoring and branch 01", () => {
@@ -37,6 +37,7 @@ describe("Delpi MES routing", () => {
     expect(parseDelpiMesRoute("/apps/delpi-mes/downtimes", "?branch=02")).toEqual({
       area: "downtimes",
       ...base,
+      areaExplicit: true,
       branch: "02",
       downtimes: DEFAULT_DOWNTIMES,
     });
@@ -47,6 +48,7 @@ describe("Delpi MES routing", () => {
     expect(parseDelpiMesRoute("/apps/delpi-mes/monitoring", "?branch=01&workCenter=CT-35")).toEqual({
       area: "monitoring",
       ...base,
+      areaExplicit: true,
       workCenter: "CT-35",
       downtimes: DEFAULT_DOWNTIMES,
     });
@@ -62,6 +64,7 @@ describe("Delpi MES routing", () => {
     expect(parseDelpiMesRoute("/apps/delpi-mes/registrations", "")).toEqual({
       area: "registrations",
       ...base,
+      areaExplicit: true,
       downtimes: DEFAULT_DOWNTIMES,
     });
     expect(buildDelpiMesHref("registrations", "02")).toBe("/apps/delpi-mes/registrations");
@@ -71,12 +74,23 @@ describe("Delpi MES routing", () => {
     expect(parseDelpiMesRoute("/apps/delpi-mes/registrations/downtime-reasons", "")).toEqual({
       area: "registrations",
       ...base,
+      areaExplicit: true,
       registrationPage: "downtime-reasons",
       downtimes: DEFAULT_DOWNTIMES,
     });
     expect(buildRegistrationHref("downtime-reasons")).toBe(
       "/apps/delpi-mes/registrations/downtime-reasons",
     );
+  });
+
+  it("marks areaExplicit only when the URL names a known area", () => {
+    expect(parseDelpiMesRoute("/apps/delpi-mes", "").areaExplicit).toBe(false);
+    expect(parseDelpiMesRoute("/apps/delpi-mes/", "").areaExplicit).toBe(false);
+    expect(parseDelpiMesRoute("/apps/delpi-mes/downtimes", "").areaExplicit).toBe(true);
+    expect(parseDelpiMesRoute("/apps/delpi-mes/history", "").areaExplicit).toBe(true);
+    // Segmento desconhecido nao e area explicita — cai no fallback da rota inicial
+    expect(parseDelpiMesRoute("/apps/delpi-mes/unknown", "").areaExplicit).toBe(false);
+    expect(parseDelpiMesRoute("/apps/delpi-mes/unknown", "").area).toBe("monitoring");
   });
 
   it("ignores branch and unknown segments on registrations routes", () => {

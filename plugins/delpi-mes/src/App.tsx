@@ -66,11 +66,20 @@ export default function App({
   const areaIsGlobal = isGlobalArea(activeArea);
   const registrationsDenied =
     hasProductAccess && route.area === "registrations" && !can(DELPI_MES_DOWNTIME_REASONS_MANAGE);
+  const requestedArea = AREAS.find((area) => area.id === route.area);
+  // Acesso direto a uma área nomeada na URL sem a permissão dela resulta em
+  // recusa explícita — nunca em redirecionamento silencioso para outra área.
+  const areaDenied =
+    hasProductAccess &&
+    route.areaExplicit &&
+    requestedArea !== undefined &&
+    !requestedArea.global &&
+    !can(requestedArea.permission);
   const heroUrl = heroImageUrl();
   const logoUrl = sidebarLogoUrl();
 
   useEffect(() => {
-    if (!activeArea || registrationsDenied) return;
+    if (!activeArea || registrationsDenied || areaDenied) return;
     if (!window.location.pathname.startsWith(BASE_PATH)) return;
     const canonical = areaIsGlobal
       ? route.registrationPage
@@ -84,7 +93,7 @@ export default function App({
     if (canonical && `${window.location.pathname}${window.location.search}` !== canonical) {
       navigate(canonical);
     }
-  }, [activeArea, activeBranch, areaIsGlobal, registrationsDenied, route.registrationPage, route.downtimes, navigate]);
+  }, [activeArea, activeBranch, areaIsGlobal, registrationsDenied, areaDenied, route.registrationPage, route.downtimes, navigate]);
 
   const navigateTo = (area: DelpiMesArea, branch: BranchCode, workCenter?: string) => {
     navigate(buildDelpiMesHref(area, branch, workCenter));
@@ -169,6 +178,11 @@ export default function App({
           <section className="delpi-mes-forbidden" role="alert">
             <h2>Acesso não disponível</h2>
             <p>Seu perfil não possui permissão para administrar os cadastros do Delpi MES.</p>
+          </section>
+        ) : areaDenied ? (
+          <section className="delpi-mes-forbidden" role="alert">
+            <h2>Acesso não disponível</h2>
+            <p>Seu perfil não possui permissão para acessar esta área do Delpi MES.</p>
           </section>
         ) : activeArea && (activeBranch || areaIsGlobal) ? (
           <>

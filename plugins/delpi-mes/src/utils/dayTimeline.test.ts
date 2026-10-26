@@ -160,3 +160,56 @@ describe("work center day timeline", () => {
     expect(new Date(past.from).getHours()).toBe(0);
   });
 });
+
+describe("business day boundaries — canonical factory timezone", () => {
+  it("anchors day keys in America/Sao_Paulo for any instant", async () => {
+    const { businessDayKey, zoneDayStartMs, zoneNextDayStartMs } = await import("./dayTimeline");
+    // 2026-02-10T01:30Z = 22:30 do dia 09 em Sao Paulo
+    expect(businessDayKey(new Date("2026-02-10T01:30:00.000Z"))).toBe("2026-02-09");
+    // 03:00Z = meia-noite exata em Sao Paulo
+    expect(businessDayKey(new Date("2026-02-10T03:00:00.000Z"))).toBe("2026-02-10");
+    // inicio do dia 09 em SP = 03:00Z; fim exclusivo = 03:00Z do dia 10
+    expect(zoneDayStartMs("2026-02-09")).toBe(Date.parse("2026-02-09T03:00:00.000Z"));
+    expect(zoneNextDayStartMs("2026-02-09")).toBe(Date.parse("2026-02-10T03:00:00.000Z"));
+    expect(zoneDayStartMs("not-a-day")).toBeNull();
+  });
+
+  it("resolves business day ranges in Sao Paulo independently of the browser zone", async () => {
+    const { businessDayRangeIso } = await import("./dayTimeline");
+    const previous = process.env.TZ;
+    try {
+      const now = new Date("2026-02-10T12:00:00.000Z"); // 09:00 em SP, dia 10
+      for (const zone of ["UTC", "America/New_York", "Pacific/Kiritimati"]) {
+        process.env.TZ = zone;
+        // dia passado: intervalo fechado [inicio SP, inicio do dia seguinte SP)
+        expect(businessDayRangeIso("2026-02-09", now)).toEqual({
+          from: "2026-02-09T03:00:00.000Z",
+          to: "2026-02-10T03:00:00.000Z",
+        });
+        // dia corrente (dia 10 em SP): fim aberto
+        expect(businessDayRangeIso("2026-02-10", now)).toEqual({
+          from: "2026-02-10T03:00:00.000Z",
+        });
+        expect(businessDayRangeIso(null, now)).toEqual({
+          from: "2026-02-10T03:00:00.000Z",
+        });
+      }
+    } finally {
+      process.env.TZ = previous;
+    }
+  });
+
+  it("formats the clock in the factory timezone regardless of the browser zone", async () => {
+    const { formatBusinessClock } = await import("./dayTimeline");
+    const previous = process.env.TZ;
+    try {
+      // 2026-02-10T01:30Z = 22:30 em Sao Paulo
+      for (const zone of ["UTC", "Pacific/Kiritimati", "America/New_York"]) {
+        process.env.TZ = zone;
+        expect(formatBusinessClock(Date.parse("2026-02-10T01:30:00.000Z"))).toBe("22:30");
+      }
+    } finally {
+      process.env.TZ = previous;
+    }
+  });
+});

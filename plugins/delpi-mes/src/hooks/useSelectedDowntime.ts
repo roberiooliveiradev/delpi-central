@@ -4,36 +4,49 @@ import { getDowntimes } from "../api/mesApi";
 import type { BranchCode } from "../constants/routes";
 import type { DowntimeItem } from "../types/mes";
 
+type SelectedSnapshot = {
+  key: string;
+  item: DowntimeItem | null;
+  error: string | null;
+};
+
 /** Resolve uma ocorrência por id — consulta pontual sob demanda para o
- * detalhe/deep link, sempre escopada pela filial autorizada. */
+ * detalhe/deep link, sempre escopada pela filial autorizada. O estado é
+ * associado à identidade (filial + id): uma resposta atrasada de outro
+ * contexto nunca é exposta, nem por um único render. */
 export function useSelectedDowntime(branch: BranchCode, downtimeId: string | null) {
-  const [item, setItem] = useState<DowntimeItem | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [snapshot, setSnapshot] = useState<SelectedSnapshot | null>(null);
   const controller = useRef<AbortController | null>(null);
+  const key = downtimeId ? branch + "|" + downtimeId : null;
 
   useEffect(() => {
-    queueMicrotask(() => {
-      setItem(null);
-      setError(null);
-      setLoading(Boolean(downtimeId));
-    });
-    if (!downtimeId) return;
+    if (!key || !downtimeId) return;
+    const requestKey = key;
     const next = new AbortController();
     controller.current?.abort();
     controller.current = next;
     getDowntimes({ branch, downtimeId, page: 1, pageSize: 1 }, next.signal)
-      .then((response) => setItem(response.items[0] ?? null))
-      .catch((reason: unknown) => {
+      .then((response) => {
         if (!next.signal.aborted) {
-          setError(reason instanceof Error ? reason.message : "Falha ao carregar o detalhe da parada.");
+          setSnapshot({ key: requestKey, item: response.items[0] ?? null, error: null });
         }
       })
-      .finally(() => {
-        if (!next.signal.aborted) setLoading(false);
+      .catch((reason: unknown) => {
+        if (!next.signal.aborted) {
+          setSnapshot({
+            key: requestKey,
+            item: null,
+            error: reason instanceof Error ? reason.message : "Falha ao carregar o detalhe da parada.",
+          });
+        }
       });
     return () => next.abort();
-  }, [branch, downtimeId]);
+  }, [branch, downtimeId, key]);
 
-  return { item, error, loading };
+  const matches = key !== null && snapshot !== null && snapshot.key === key;
+  return {
+    item: matches ? snapshot.item : null,
+    error: matches ? snapshot.error : null,
+    loading: key !== null && !matches,
+  };
 }

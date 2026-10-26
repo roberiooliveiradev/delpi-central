@@ -152,4 +152,6 @@ declare module "@delpi/plugin-ui/index" {
     exclusive?: boolean;
     children?: ReactNode;
   }): ReactNode;
+
+export function todayIsoInTimeZone(now: Date, timeZone?: string): string;
 }

@@ -3,50 +3,62 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getDowntimes } from "../api/mesApi";
 import type { DowntimesQuery, DowntimesResponse } from "../types/mes";
 
+type DowntimesSnapshot = {
+  key: string;
+  data: DowntimesResponse | null;
+  error: string | null;
+  refreshing: boolean;
+};
+
 /** Lista gerencial de paradas — atualização manual (sem polling), com
- * cancelamento de requisições obsoletas e preservação do último snapshot
- * quando uma atualização falha. */
+ * cancelamento de requisições obsoletas e estado associado à identidade da
+ * consulta: dados de outra filial/consulta nunca são expostos, nem por um
+ * único render; o último snapshot da MESMA consulta é preservado quando uma
+ * atualização falha. */
 export function useDowntimesData(query: DowntimesQuery) {
-  const [data, setData] = useState<DowntimesResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [snapshot, setSnapshot] = useState<DowntimesSnapshot | null>(null);
   const controller = useRef<AbortController | null>(null);
-  const hasData = useRef(false);
   const queryKey = JSON.stringify(query);
 
   const refresh = useCallback(async () => {
+    const key = queryKey;
     controller.current?.abort();
     const next = new AbortController();
     controller.current = next;
-    setRefreshing(hasData.current);
+    setSnapshot((prev) => ({
+      key,
+      data: prev?.key === key ? prev.data : null,
+      error: null,
+      refreshing: prev?.key === key && prev.data !== null,
+    }));
     try {
-      const response = await getDowntimes(JSON.parse(queryKey), next.signal);
-      setData(response);
-      hasData.current = true;
-      setError(null);
+      const response = await getDowntimes(JSON.parse(key), next.signal);
+      if (!next.signal.aborted) {
+        setSnapshot({ key, data: response, error: null, refreshing: false });
+      }
     } catch (reason) {
       if (!next.signal.aborted) {
-        setError(reason instanceof Error ? reason.message : "Falha ao consultar as paradas.");
-      }
-    } finally {
-      if (!next.signal.aborted) {
-        setLoading(false);
-        setRefreshing(false);
+        setSnapshot((prev) => ({
+          key,
+          data: prev?.key === key ? prev.data : null,
+          error: reason instanceof Error ? reason.message : "Falha ao consultar as paradas.",
+          refreshing: false,
+        }));
       }
     }
   }, [queryKey]);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      setData(null);
-      setError(null);
-      setLoading(true);
-      hasData.current = false;
-    });
     void refresh();
     return () => controller.current?.abort();
   }, [refresh]);
 
-  return { data, error, loading, refreshing, refresh };
+  const matches = snapshot !== null && snapshot.key === queryKey;
+  return {
+    data: matches ? snapshot.data : null,
+    error: matches ? snapshot.error : null,
+    loading: !matches || (snapshot.data === null && snapshot.error === null),
+    refreshing: matches && snapshot.refreshing,
+    refresh,
+  };
 }

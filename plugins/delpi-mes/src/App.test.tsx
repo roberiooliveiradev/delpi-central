@@ -167,15 +167,48 @@ describe("Delpi MES App — downtimes area", () => {
     });
   });
 
-  it("denies the downtimes area without the area permission and issues no query", async () => {
+  it("denies an explicit downtimes route without the area permission", async () => {
     renderApp("/apps/delpi-mes/downtimes", [
       "delpi-mes.access",
       "delpi-mes.monitoring.view",
       "delpi-mes.view.filial-01",
     ]);
+    // recusa explicita — sem redirecionamento silencioso para outra area
+    await screen.findByRole("heading", { name: "Acesso não disponível" });
+    expect(
+      screen.getByText("Seu perfil não possui permissão para acessar esta área do Delpi MES."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Paradas" })).toBeNull();
+    expect(window.location.pathname).toBe("/apps/delpi-mes/downtimes");
+    // nenhuma consulta de paradas — e a area nao chega a montar outra pagina
+    const urls = fetchMock.mock.calls.map(([url]) => url as string);
+    expect(urls.some((url) => url.includes("/downtimes"))).toBe(false);
+    expect(urls).toEqual([]);
+  });
+
+  it("still redirects the product root to the first permitted area", async () => {
+    renderApp("/apps/delpi-mes", [
+      "delpi-mes.access",
+      "delpi-mes.monitoring.view",
+      "delpi-mes.view.filial-01",
+    ]);
     await waitFor(() => {
-      const urls = fetchMock.mock.calls.map(([url]) => url as string);
-      expect(urls.some((url) => url.includes("/downtimes"))).toBe(false);
+      expect(window.location.pathname).toBe("/apps/delpi-mes/monitoring");
+      expect(window.location.search).toContain("branch=01");
     });
+    expect(screen.queryByRole("heading", { name: "Acesso não disponível" })).toBeNull();
+  });
+
+  it("still redirects the root to Paradas when it is the only permitted area", async () => {
+    renderApp("/apps/delpi-mes", [
+      "delpi-mes.access",
+      "delpi-mes.downtimes.view",
+      "delpi-mes.view.filial-01",
+    ]);
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/apps/delpi-mes/downtimes");
+      expect(window.location.search).toContain("branch=01");
+    });
+    expect(screen.queryByRole("heading", { name: "Acesso não disponível" })).toBeNull();
   });
 });

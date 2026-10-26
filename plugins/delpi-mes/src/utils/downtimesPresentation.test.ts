@@ -14,13 +14,12 @@ import {
 
 const NOW = new Date("2026-02-10T12:00:00.000Z");
 
-const localMidnight = (date: Date) => {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-  return start;
-};
+// America/Sao_Paulo e UTC-3 (sem horario de verao desde 2019): o dia civil
+// operacional comeca as 03:00Z. As expectativas usam constantes explicitas
+// para provar que o calculo independe do fuso do navegador.
+const SP = "America/Sao_Paulo";
+const spDayStart = (dayKey: string) => dayKey + "T03:00:00.000Z";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const params = (overrides: Partial<DowntimesRouteParams> = {}): DowntimesRouteParams => ({
   period: "7d",
@@ -65,17 +64,65 @@ describe("downtimesPresentation", () => {
     expect(params().period).toBe("7d");
   });
 
-  it("resolves presets against local business days", () => {
-    const midnight = localMidnight(NOW);
+  it("resolves presets against business days in the canonical factory timezone", () => {
+    // NOW = 09:00 em Sao Paulo de 2026-02-10 → "hoje" e o dia 10
     expect(resolveDowntimePeriod(params({ period: "today" }), NOW)).toEqual({
-      from: midnight.toISOString(),
+      from: spDayStart("2026-02-10"),
     });
     expect(resolveDowntimePeriod(params({ period: "7d" }), NOW)).toEqual({
-      from: new Date(midnight.getTime() - 6 * DAY_MS).toISOString(),
+      from: spDayStart("2026-02-04"),
     });
     expect(resolveDowntimePeriod(params({ period: "30d" }), NOW)).toEqual({
-      from: new Date(midnight.getTime() - 29 * DAY_MS).toISOString(),
+      from: spDayStart("2026-01-12"),
     });
+  });
+
+  it("keeps presets in Sao Paulo when the instant is a different calendar day locally", () => {
+    // 01:30Z = 22:30 em Sao Paulo (dia 09) — mas 06:00 em UTC+?; o preset deve
+    // seguir o dia 09 em SP independente do fuso do navegador
+    const beforeMidnightSp = new Date("2026-02-10T01:30:00.000Z");
+    expect(resolveDowntimePeriod(params({ period: "today" }), beforeMidnightSp)).toEqual({
+      from: spDayStart("2026-02-09"),
+    });
+    // 03:00Z = meia-noite exata em Sao Paulo → virou o dia 10
+    const atMidnightSp = new Date("2026-02-10T03:00:00.000Z");
+    expect(resolveDowntimePeriod(params({ period: "today" }), atMidnightSp)).toEqual({
+      from: spDayStart("2026-02-10"),
+    });
+    // 7d/30d ancorados no dia SP, nao no dia do navegador
+    expect(resolveDowntimePeriod(params({ period: "7d" }), beforeMidnightSp)).toEqual({
+      from: spDayStart("2026-02-03"),
+    });
+    expect(resolveDowntimePeriod(params({ period: "30d" }), atMidnightSp)).toEqual({
+      from: spDayStart("2026-01-12"),
+    });
+  });
+
+  it("produces identical periods under different browser timezones", () => {
+    const previous = process.env.TZ;
+    try {
+      const zones = ["UTC", "America/New_York", "Pacific/Kiritimati", SP];
+      const reference = resolveDowntimePeriod(params({ period: "today" }), NOW);
+      const custom = resolveDowntimePeriod(
+        params({ period: "custom", from: "2026-02-01", to: "2026-02-10" }),
+        NOW,
+      );
+      for (const zone of zones) {
+        process.env.TZ = zone;
+        expect(resolveDowntimePeriod(params({ period: "today" }), NOW)).toEqual(reference);
+        expect(resolveDowntimePeriod(params({ period: "7d" }), NOW)).toEqual({
+          from: spDayStart("2026-02-04"),
+        });
+        expect(
+          resolveDowntimePeriod(
+            params({ period: "custom", from: "2026-02-01", to: "2026-02-10" }),
+            NOW,
+          ),
+        ).toEqual(custom);
+      }
+    } finally {
+      process.env.TZ = previous;
+    }
   });
 
   it("converts custom day keys into a half-open interval covering the end day", () => {
@@ -83,8 +130,9 @@ describe("downtimesPresentation", () => {
       params({ period: "custom", from: "2026-02-01", to: "2026-02-10" }),
       NOW,
     );
-    expect(window.from).toBe(localMidnight(new Date(2026, 1, 1)).toISOString());
-    expect(window.to).toBe(localMidnight(new Date(2026, 1, 11)).toISOString());
+    expect(window.from).toBe(spDayStart("2026-02-01"));
+    // fim exclusivo = inicio do dia seguinte no fuso operacional
+    expect(window.to).toBe(spDayStart("2026-02-11"));
   });
 
   it("emits only the bounds actually selected in custom mode", () => {
@@ -117,7 +165,7 @@ describe("downtimesPresentation", () => {
     expect(query.sort).toBe("oldest");
     expect(query.page).toBe(3);
     expect(query.pageSize).toBe(100);
-    expect(query.from).toBe(new Date(localMidnight(NOW).getTime() - 6 * DAY_MS).toISOString());
+    expect(query.from).toBe(spDayStart("2026-02-04"));
     expect(query.downtimeId).toBeUndefined();
   });
 
@@ -175,5 +223,21 @@ describe("downtimesPresentation", () => {
     expect(downtimeSourceLabel("integration")).toBe("Integração");
     expect(downtimeSourceLabel("some_new_source")).toBe("some_new_source");
     expect(downtimeSourceLabel(null)).toBe("Não informado");
+  });
+});
+
+describe("downtimesPresentation — canonical timezone", () => {
+  it("formats timestamps in the factory timezone regardless of the browser zone", async () => {
+    const { formatDateTime } = await import("./downtimesPresentation");
+    const previous = process.env.TZ;
+    try {
+      // 2026-02-10T01:30Z = 22:30 do dia 09 em Sao Paulo
+      for (const zone of ["UTC", "Pacific/Kiritimati", "America/New_York"]) {
+        process.env.TZ = zone;
+        expect(formatDateTime("2026-02-10T01:30:00.000Z")).toBe("09/02/2026, 22:30");
+      }
+    } finally {
+      process.env.TZ = previous;
+    }
   });
 });

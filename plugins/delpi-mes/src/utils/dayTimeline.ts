@@ -1,3 +1,5 @@
+import { todayIsoInTimeZone } from "@delpi/plugin-ui/index";
+
 import type { WorkCenterTimelineItem } from "../types/mes";
 import { downtimeReasonDisplay } from "./monitoringPresentation";
 
@@ -17,6 +19,110 @@ export function localDayKey(date = new Date()): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/** Fuso operacional canônico do MES — mesma convenção do Production Control
+ * (FACTORY_TIMEZONE) e do plugin-ui (periodPreset): o dia civil do chão de
+ * fábrica e America/Sao_Paulo, independente do fuso do navegador. */
+export const MES_BUSINESS_TIMEZONE = "America/Sao_Paulo";
+
+/** Chave de dia YYYY-MM-DD no fuso operacional (reutiliza o helper canônico
+ * do plugin-ui — funciona para qualquer instante, nao só "hoje"). */
+export function businessDayKey(
+  date: Date,
+  timeZone: string = MES_BUSINESS_TIMEZONE,
+): string {
+  return todayIsoInTimeZone(date, timeZone);
+}
+
+/** Início do dia civil YYYY-MM-DD no fuso operacional, como instante (ms).
+ * Resolve o offset real da zona via Intl — não assume -03:00 fixo, então
+ * regras históricas de horário de verão continuam corretas. Retorna null
+ * para chave inválida. */
+export function zoneDayStartMs(
+  dayKey: string,
+  timeZone: string = MES_BUSINESS_TIMEZONE,
+): number | null {
+  const parts = dayKey.split("-");
+  if (parts.length !== 3) return null;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
+  if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+  const target = Date.UTC(year, month - 1, day, 0, 0, 0);
+  let guess = target - 3 * 60 * 60 * 1000;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const zoneParts = formatter.formatToParts(new Date(guess));
+    const wallAsUtc = Date.UTC(
+      Number(zoneParts.find((p) => p.type === "year")?.value ?? "0"),
+      Number(zoneParts.find((p) => p.type === "month")?.value ?? "0") - 1,
+      Number(zoneParts.find((p) => p.type === "day")?.value ?? "0"),
+      Number(zoneParts.find((p) => p.type === "hour")?.value ?? "0"),
+      Number(zoneParts.find((p) => p.type === "minute")?.value ?? "0"),
+      Number(zoneParts.find((p) => p.type === "second")?.value ?? "0"),
+    );
+    const next = target - (wallAsUtc - guess);
+    if (next === guess) break;
+    guess = next;
+  }
+  return guess;
+}
+
+/** Início do dia seguinte no fuso operacional (limite exclusivo canônico),
+ * como instante (ms). */
+export function zoneNextDayStartMs(
+  dayKey: string,
+  timeZone: string = MES_BUSINESS_TIMEZONE,
+): number | null {
+  const parts = dayKey.split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => !Number.isInteger(n))) return null;
+  const dayAfter = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + 1));
+  const nextKey = todayIsoInTimeZone(dayAfter, "UTC");
+  return zoneDayStartMs(nextKey, timeZone);
+}
+
+/** Intervalo [início, fim) do dia civil no fuso operacional; quando o dia é
+ * o corrente, o fim aberto fica ausente (mesma semântica de dayRangeIso). */
+export function businessDayRangeIso(
+  dayKey: string | null,
+  now: Date = new Date(),
+  timeZone: string = MES_BUSINESS_TIMEZONE,
+): { from: string; to?: string } {
+  const todayKey = businessDayKey(now, timeZone);
+  const key = dayKey ?? todayKey;
+  const start = zoneDayStartMs(key, timeZone);
+  if (start === null) {
+    const fallback = zoneDayStartMs(todayKey, timeZone) ?? Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    return { from: new Date(fallback).toISOString() };
+  }
+  if (key === todayKey) return { from: new Date(start).toISOString() };
+  const end = zoneNextDayStartMs(key, timeZone);
+  return { from: new Date(start).toISOString(), to: end === null ? undefined : new Date(end).toISOString() };
+}
+
+/** Horário hh:mm no fuso operacional para a apresentação de paradas. */
+export function formatBusinessClock(
+  ms: number,
+  timeZone: string = MES_BUSINESS_TIMEZONE,
+): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(ms));
 }
 
 export function endOfLocalDayMs(dayStartMs: number): number {

@@ -30,6 +30,7 @@ export const DELPI_MES_COPY = {
   help: {
     branch: "A filial faz parte da URL para manter navegação, recarga e compartilhamento no mesmo contexto.",
     permissions: "As áreas visíveis refletem suas permissões; o backend valida novamente cada consulta.",
+    downtimesPeriod: "Os períodos seguem o dia civil do fuso operacional do MES (America/Sao_Paulo), independente do fuso do navegador. Em período personalizado, a data final cobre o dia inteiro.",
     downtimesClassification: "Confirmada: motivo classificado e confirmado. Pendente: parada sem motivo confirmado, incluindo registros históricos incompletos.",
     downtimesDuration: "Paradas encerradas usam fim menos início; paradas abertas contam até o relógio do servidor.",
   },
