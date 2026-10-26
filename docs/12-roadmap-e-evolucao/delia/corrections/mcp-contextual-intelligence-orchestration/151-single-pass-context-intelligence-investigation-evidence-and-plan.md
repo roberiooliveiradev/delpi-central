@@ -649,3 +649,17 @@ decision) and ISO at selection; `_select_prepare_continuation` /
 clarification do not receive the subject (no demonstrated loss);
 three-record and O2 outcomes remain NON_GROUNDED. Deploy not
 authorized; independent review pending.
+
+## §18 Addendum — C1 contract clarification (instruction v21)
+
+The C1/C2 rework (doc 152 §10) clarified the `business_subject`
+derivation boundary in the versioned instruction resource: the field
+is copied only from words the user actually wrote — current message
+or earlier user turns — never derived from assistant answers or tool
+output, never invented. This resolves the review's referential-
+contract condition without expanding authority: assistant content
+remains excluded from the field, and `prior_observation`
+(OBSERVATION-gated) stays the canonical channel for referents living
+in prior DELIA results. Selection-envelope JSON integrity is now
+structurally guaranteed (no mid-document cuts); omissions under
+extreme catalog pressure are truthfully marked.

@@ -258,9 +258,13 @@ def test_subject_is_untrusted_not_authority():
 def test_warm_path_goal_subject_reaches_selection():
     """End-to-end: prior non-OBSERVATION result + referential follow-up.
 
-    turn_goal resolves the referent into business_subject; the same
-    validated subject must reach the capability-selection payload even
-    though prior_observation is correctly gated out.
+    The user named the referent earlier ("terminal pino" is in the
+    prior USER_INPUT), so resolving "o segundo tipo" into
+    business_subject is a lawful production — copied from user words,
+    never from assistant output. The validated subject must reach the
+    capability-selection payload even though prior_observation is
+    correctly gated out (prior result is CALCULATION, not
+    OBSERVATION).
     """
     model = FakeProposalModel(
         {
@@ -292,12 +296,16 @@ def test_warm_path_goal_subject_reaches_selection():
     )
     orch = _orchestrator(model, {"openapi": [group]})
     prior = (
-        # DELIA_RESULT without OBSERVATION class — prior_observation
-        # is correctly gated out; only the goal handoff can carry
-        # the resolved referent.
+        # The user authored the referent — "terminal pino" is a user
+        # word, so resolving it into business_subject is authorized.
+        # DELIA_RESULT is CALCULATION: prior_observation is correctly
+        # gated out and only the goal handoff can carry the subject.
         ConversationContextTurn(
             kind=TurnKind.USER_INPUT,
-            content="Liste os tipos de terminal disponíveis.",
+            content=(
+                "Liste os tipos de terminal disponíveis, como o "
+                "terminal pino."
+            ),
         ),
         ConversationContextTurn(
             kind=TurnKind.DELIA_RESULT,
@@ -315,3 +323,60 @@ def test_warm_path_goal_subject_reaches_selection():
     payload = _payload_for(model, CAPABILITY_SELECTION_INSTRUCTION_ID)
     assert payload is not None
     assert "terminal pino" in payload
+
+
+def test_business_subject_derivation_contract_lock():
+    """C1: business_subject may only be copied from user-written words.
+
+    The versioned instruction must state the derivation boundary
+    explicitly: current message or earlier user turns are lawful
+    sources; assistant answers and tool output are not. This locks
+    the contract so no test or model behavior can quietly widen the
+    field into resolved-referent authority.
+    """
+    from pathlib import Path
+
+    resource = Path(__file__).resolve().parent.parent / "config" / (
+        "orchestration_instructions.delpi.json"
+    )
+    data = json.loads(resource.read_text(encoding="utf-8"))
+    goal_text = data["instructions"][GOAL_INSTRUCTION_ID]
+    assert "earlier user turns" in goal_text
+    assert "never derived from" in goal_text
+    assert "never invented" in goal_text
+
+
+def test_subject_from_assistant_result_alone_not_transport_fabrication():
+    """C1 negative: a referent that exists only in DELIA_RESULT prose
+    is not a lawful business_subject source — when the goal stage
+    returns null (per contract), selection must not carry one.
+    """
+    model = FakeProposalModel(
+        {
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "search_items",
+            }
+        }
+    )
+    group = _group("catalog", [_cap("catalog", "search_items")])
+    orch = _orchestrator(model, {"openapi": [group]})
+    status, _ = orch._select_capability(
+        "me mostre dois exemplos do segundo tipo",
+        group,
+        prior_turns=(
+            ConversationContextTurn(
+                kind=TurnKind.DELIA_RESULT,
+                content="terminal pino é o segundo tipo",
+                epistemic_class=EpistemicClass.CALCULATION,
+            ),
+        ),
+        business_subject=None,
+    )
+    payload = _payload_for(model, CAPABILITY_SELECTION_INSTRUCTION_ID)
+    assert status == "selected"
+    assert payload is not None
+    # CALCULATION prior is gated out of prior_observation and no
+    # lawful subject was produced — the transport fabricates nothing.
+    assert "business_subject" not in payload
+    assert "prior_observation" not in payload

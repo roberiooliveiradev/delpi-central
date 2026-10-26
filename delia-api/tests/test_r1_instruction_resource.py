@@ -55,8 +55,8 @@ _SNAPSHOT = {
         3341,
     ),
     "delia.capability_orchestration.select_capability#with_goal": (
-        "d6b18a8dcdda89235acea2076b83f2362f218653e4357cbd185d5c94548ef9a7",
-        3719,
+        "227e5477e8224b61960a3d7c5d6cb4a853dd0d7a8b81807bf15bd214a8333a1e",
+        3815,
     ),
     "delia.capability_orchestration.index_probe": (
         "5acfbc5f0843e2fa2810f456554caad27f3a5f56df49069371fbeb7731d9539a",
@@ -95,8 +95,8 @@ _SNAPSHOT = {
         1676,
     ),
     "delia.capability_orchestration.turn_goal": (
-        "d3d698d22cc7d6fd8d48e6290b6bd169c272f54027a86c5cc56d40d569999497",
-        3216,
+        "44f882de5c3d6fc29951bc72c38ba86083bd706410b9c7fa1a0cfb7f681ddc14",
+        3344,
     ),
     "delia.capability_orchestration.comparison": (
         "ff44ae46838b8febac48388eee73efbec1f64637df8a6a44197b4db4bb8aa315",
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "20"
+    assert res.version == "21"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]

@@ -2768,8 +2768,22 @@ def _group_summaries(
     group_keys = sorted(groups)
     if not group_keys:
         return "[]"
+
+    # Optional envelope fields reserve room up-front so no serialized
+    # cut can ever sever them or corrupt the document.
+    optionals: dict[str, Any] = {}
+    if prior_observation is not None:
+        optionals["prior_observation"] = dict(prior_observation)
+    if business_subject is not None:
+        optionals["business_subject"] = business_subject
+    envelope_overhead = (
+        len(json.dumps(optionals, ensure_ascii=False, default=str)) + 32
+        if optionals
+        else 0
+    )
+    catalog_budget = max(512, MAX_SURFACE_CHARS - envelope_overhead)
     per_group_budget = max(
-        512, MAX_SURFACE_CHARS // len(group_keys)
+        512, catalog_budget // len(group_keys)
     )
     summaries = []
     for group_key in group_keys:
@@ -2810,20 +2824,68 @@ def _group_summaries(
             if len(payload) <= per_group_budget:
                 break
         summaries.append(body)
-    if prior_observation is None and business_subject is None:
+
+    def _serialize() -> str:
+        if not optionals:
+            return json.dumps(
+                summaries, ensure_ascii=False, default=str
+            )
         return json.dumps(
-            summaries, ensure_ascii=False, default=str
+            {"capability_groups": summaries, **optionals},
+            ensure_ascii=False,
+            default=str,
         )
-    envelope: dict[str, Any] = {"capability_groups": summaries}
-    if prior_observation is not None:
-        envelope["prior_observation"] = dict(prior_observation)
-    if business_subject is not None:
-        envelope["business_subject"] = business_subject
-    return json.dumps(
-        envelope,
-        ensure_ascii=False,
-        default=str,
-    )[:MAX_SURFACE_CHARS]
+
+    payload = _serialize()
+    if len(payload) <= MAX_SURFACE_CHARS:
+        return payload
+
+    # Structural compaction only — the envelope must remain valid
+    # JSON; never a mid-document cut.
+    # 1) Equal description reduction across all groups (fairness).
+    for cap_chars in (32, 0):
+        for body in summaries:
+            for entry in body["capabilities"]:
+                entry["description"] = entry["description"][:cap_chars]
+        payload = _serialize()
+        if len(payload) <= MAX_SURFACE_CHARS:
+            return payload
+    # 2) Structurally reduce the bounded untrusted excerpt.
+    observation = optionals.get("prior_observation")
+    if observation is not None:
+        excerpt = str(observation.get("untrusted_excerpt") or "")
+        for keep in (256, 0):
+            observation["untrusted_excerpt"] = excerpt[:keep]
+            payload = _serialize()
+            if len(payload) <= MAX_SURFACE_CHARS:
+                return payload
+        del optionals["prior_observation"]
+        payload = _serialize()
+        if len(payload) <= MAX_SURFACE_CHARS:
+            return payload
+    # 3) Nonessential group metadata; ids and names stay.
+    for body in summaries:
+        for key in ("owner", "display_name", "source_system"):
+            body.pop(key, None)
+    payload = _serialize()
+    if len(payload) <= MAX_SURFACE_CHARS:
+        return payload
+    # 4) Trailing capability omission, widest group first so no
+    #    provider is favoured; omissions are truthfully marked.
+    while len(payload) > MAX_SURFACE_CHARS:
+        widest = max(
+            summaries,
+            key=lambda item: len(item["capabilities"]),
+            default=None,
+        )
+        if widest is None or not widest["capabilities"]:
+            break
+        widest["capabilities"].pop()
+        widest["capabilities_omitted"] = (
+            widest.get("capabilities_omitted", 0) + 1
+        )
+        payload = _serialize()
+    return payload
 
 def _capability_payload(
     group: CapabilityGroup,
@@ -2860,20 +2922,64 @@ def _capability_payload(
         if cap.operation_class is SpecialistOperationClass.DISCOVERY:
             entry["role"] = "owner_vocabulary_discovery"
         entries.append(entry)
+    optionals: dict[str, Any] = {}
+    if prior_observation is not None:
+        optionals["prior_observation"] = dict(prior_observation)
+    if business_subject is not None:
+        optionals["business_subject"] = business_subject
+
+    def _serialize() -> str:
+        if not optionals:
+            return json.dumps(
+                entries, ensure_ascii=False, default=str
+            )
+        return json.dumps(
+            {"capabilities": entries, **optionals},
+            ensure_ascii=False,
+            default=str,
+        )
+
+    payload = ""
     for cap_chars in (MAX_DESCRIPTION_CHARS, 120, 60, 24, 0):
         for entry in entries:
             entry["description"] = entry["description"][:cap_chars]
-        body: Any = entries
-        if prior_observation is not None or business_subject is not None:
-            body = {"capabilities": entries}
-            if prior_observation is not None:
-                body["prior_observation"] = dict(prior_observation)
-            if business_subject is not None:
-                body["business_subject"] = business_subject
-        payload = json.dumps(body, ensure_ascii=False, default=str)
+        payload = _serialize()
         if len(payload) <= MAX_SURFACE_CHARS:
+            return payload
+
+    # Structural compaction only — the envelope must remain valid
+    # JSON; never a mid-document cut.
+    observation = optionals.get("prior_observation")
+    if observation is not None:
+        excerpt = str(observation.get("untrusted_excerpt") or "")
+        for keep in (256, 0):
+            observation["untrusted_excerpt"] = excerpt[:keep]
+            payload = _serialize()
+            if len(payload) <= MAX_SURFACE_CHARS:
+                return payload
+        del optionals["prior_observation"]
+        payload = _serialize()
+        if len(payload) <= MAX_SURFACE_CHARS:
+            return payload
+    # Trailing entry omission — truthfully marked, never severed.
+    # The marker is serialized inside the loop so it is part of the
+    # measured budget.
+    omitted = 0
+    while len(payload) > MAX_SURFACE_CHARS:
+        if not entries:
             break
-    return payload[:MAX_SURFACE_CHARS]
+        entries.pop()
+        omitted += 1
+        payload = json.dumps(
+            {
+                "capabilities": entries,
+                "capabilities_omitted": omitted,
+                **optionals,
+            },
+            ensure_ascii=False,
+            default=str,
+        )
+    return payload
 
 # Canonical sensitive credential concepts. Keys are normalized
 # (lowercase, separators stripped) before comparison so snake_case,
@@ -6396,7 +6502,7 @@ class OperationalCapabilityOrchestrator:
                     prior_turns
                 ),
                 business_subject=business_subject,
-            )[:MAX_SURFACE_CHARS],
+            ),
             instruction_id=FOREIGN_SELECTION_INSTRUCTION_ID,
             instruction=self._instruction(FOREIGN_SELECTION_INSTRUCTION_ID),
             expected_fields=("foreign_capability_id",),

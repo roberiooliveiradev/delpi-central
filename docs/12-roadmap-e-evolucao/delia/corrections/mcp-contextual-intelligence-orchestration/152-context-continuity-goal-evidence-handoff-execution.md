@@ -163,3 +163,46 @@ DEPLOY_AUTHORIZED=NO — DEPLOY_EXECUTED=NO — INDEPENDENT_REVIEW=PENDING
 **C3 — OUTCOME AND RUNTIME LIMITATION:** Executor says real model sometimes gives `business_subject=null` and later select_capability ISO, so transport fix cannot claim the goal was semantically understood; live probe only reports subject present on 2 of 3 attempts for a different explicitly named variant. Preserve `0 extra calls`, token budget, uncertainty classification. Independently confirm final SHA/config and local tests before promotion. Full backend still 2 FAIL (environmental per executor). No deploy.
 
 **NEXT:** one bounded contract-integrity correction/review of C1/C2, not another whole context investigation; follow with frozen-SHA end-to-end eval. `REWORK` refers to accepting the whole continuity deliverable, not to rejecting the already-proven transport improvement.
+
+## 10. C1/C2 bounded rework — 2026-10-26
+
+**Task:** `DELIA-C3-CONTEXT-CONTINUITY-C1-C2-CONTRACT-INTEGRITY-REWORK-01` — resolves the §9 conditions C1 (referential subject contract) and C2 (JSON envelope integrity).
+
+### C1 — Referential Subject Contract — Caso B resolution
+
+Canonical check: `_TurnGoal.business_subject` contract (instruction resource v20, `turn_goal` + `select_capability#with_goal`) requires the field be copied from **user words only, never invented**. The prior test derived `"terminal pino"` from CALCULATION-class `DELIA_RESULT` prose — an unauthorized source under the contract. Canonical authorities confirm prior turns are never identifier provenance (doc 16) and anaphoric follow-ups are handled semantically via the OBSERVATION-gated `prior_observation` channel (commit 590e8e28d8 deliberate design, doc 20).
+
+Resolution (clarification, not extension):
+
+- `business_subject` derivation boundary made explicit in v21: **copied only from words the user actually wrote — in the current message or earlier user turns — never derived from assistant answers or tool output, never invented; null when none**. User-authored words across turns remain the same untrusted trust class; assistant-derived referents stay excluded. The referential channel for assistant content remains `prior_observation` (untrusted excerpt).
+- `test_warm_path_goal_subject_reaches_selection` corrected: the prior `USER_INPUT` now names `"terminal pino"` itself, so the routed `business_subject` is a lawful production; the CALCULATION prior still proves the handoff covers the observation-gated gap.
+- New contract-lock test `test_business_subject_derivation_contract_lock` pins the derivation boundary in the versioned resource; `test_subject_from_assistant_result_alone_not_transport_fabrication` proves transport fabricates nothing when no lawful subject exists.
+- Residual: assistant-only referents with non-OBSERVATION priors remain a documented contractual limitation — extending `business_subject` to resolved referents from assistant output would need a separate architecture decision.
+
+### C2 — JSON Envelope Integrity — fixed
+
+Root cause confirmed and widened: `[:MAX_SURFACE_CHARS]` severed mid-JSON when optional fields were present, **and** the bare-list path (no optionals) applied no bound at all.
+
+Structural fix in `_group_summaries` and `_capability_payload`:
+
+- Optional fields (`prior_observation`, `business_subject`) reserve room up-front; the serialized envelope is never cut mid-document.
+- Compaction ladder: equal description reduction across groups (fairness) → structural reduction of the bounded `untrusted_excerpt` (256→0→drop) → auxiliary group metadata strip (ids/names stay) → trailing capability omission, widest group first (no provider favoured), truthfully marked via `capabilities_omitted`.
+- `business_subject` is always kept whole when included.
+- Output is always valid JSON; `len <= MAX_SURFACE_CHARS` in every structurally feasible case.
+- Redundant `[:MAX_SURFACE_CHARS]` at the `_select_foreign_capability` call site removed (builder now bounds the envelope).
+- Same defect class in non-selection `json.dumps` blocks (records/resolver/schema/synthesis payloads at other stages) remains as residual — evidence blocks need per-shape treatment, not silent trimming; flagged for separate decision.
+
+Tests: `test_selection_envelope_integrity.py` — 12 RED→GREEN boundary cases (small/near-limit/over-limit catalogs, max subject, max observation, both, unicode/escapes, bare-list compat, fairness, truthful omission markers, identifier completeness).
+
+### Live evaluation (frozen: delia-json, num_ctx 8192, Ollama 0.40.8, instruction v21)
+
+| Scenario | Result |
+|---|---|
+| ref_user (referent in prior USER turn) | subject `"exemplos"` (user word — lawful; weak 3B extraction), transported to select_group + select_capability; AUTHZ_DENIED at arguments (fail-closed on probe token) |
+| ref_assistant_only (referent in DELIA_RESULT only) | subject `"exemplos"` — assistant-derived referent correctly NOT injected; observation gated out; NON_GROUNDED honest |
+| ref_observation | `prior_observation` present; subject transported; chain reached arguments + resolver; CLARIFICATION_REQUIRED honest |
+| subject_change | `business_subject="cliente"` — current-turn user word; correct |
+| three_records / o2 / pino (cold path) | select_group valid JSON; NON_GROUNDED / typed ISO — 3B capacity variance, not transport |
+| JSON validity | 100% of observed selection payloads parsed; all under MAX_SURFACE_CHARS |
+
+`THREE_RECORDS_OUTCOME=NON_GROUNDED`, `O2_OUTCOME=NON_GROUNDED`, `FALSE_POSITIVES=0` — transport integrity proven; business-outcome variance remains 3B semantic capacity, unchanged by this rework.
