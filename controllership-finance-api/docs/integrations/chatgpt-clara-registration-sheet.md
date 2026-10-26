@@ -20,7 +20,7 @@ após gates; ver §Estado).
 | Authorization URL | `https://minhadelpi.com.br/auth/realms/delpi/protocol/openid-connect/auth` | idem |
 | Token URL | `https://minhadelpi.com.br/auth/realms/delpi/protocol/openid-connect/token` | idem |
 | JWKS | `https://minhadelpi.com.br/auth/realms/delpi/protocol/openid-connect/certs` | idem |
-| Client ID | `mcp-clara` | desired-state `infra/scripts/delia_mcp_keycloak_state.py` (SINGLE source) — provisionamento pendente (`--apply` pós-gate) |
+| Client ID escolhido pelo PO | `mcp-controllership-finance` | DECISION_REQUIRED de compatibilização: o engine IAM ainda define `mcp-clara`; não afirmar provisionamento concluído |
 | Client authentication | `client_secret_post` | padrão comprovado ChatGPT (runbook FASE B) |
 | PKCE | `S256` | contrato do engine |
 | Grant | `authorization_code` (+ `refresh_token`/`offline_access` opcional) | discovery do realm |
@@ -61,3 +61,12 @@ após gates; ver §Estado).
 autorizado pelo operador) → `keycloak-prod-delia-mcp-provision.sh --check` →
 diff aprovado → `--apply` (somente `mcp-clara`, sem tocar TÉO/DAVI/VISTA/DÉLIA)
 → cadastro real no ChatGPT → smoke autenticado → ficha definitiva.
+
+
+## Decisão do PO — 26/10/2026 — alteração de Client ID solicitada
+
+O PO determinou **manter o Client ID `mcp-controllership-finance`** informado na tela de criação do Keycloak, em vez do ID anterior `mcp-clara`. Esta ficha passa a registrar **`mcp-controllership-finance` como TARGET aprovado de identificação do cliente OAuth**. O nome da especialista permanece CLARA; o nome do BFF e o MCP URL **não mudam**.
+
+**Estado de implementação: `DECISION_REQUIRED / PENDING_RECONCILIATION`.** O desired-state em `infra/scripts/delia_mcp_keycloak_state.py` ainda aponta para `mcp-clara` e o provisionador compartilhado não pode ser executado sem conciliação. O fluxo de cadastro no Keycloak exibido pelo PO estava em `Capability config`, antes da confirmação de criação; portanto não declarar cliente criado. Não alterar automaticamente os clients DAVI/TÉO/VISTA, nem afirmar compatibilidade OAuth até validar os consumers, claims, audience, scopes, policies, documentação e testes. O campo `Client ID` da seção anterior é a decisão de produto, **não** evidência de runtime.
+
+**Handoff técnico:** inventariar todas as referências a `mcp-clara` (código, scripts, testes, docs, env e deploy), distinguir identificador OAuth de resource/audience, preparar diff mínimo e testes, verificar necessidade de decisão IAM sobre token-exchange e alterações no engine compartilhado. Após aprovação do diff e testes, reconciliar provisionamento, obter callback exata no ChatGPT, validar login e smoke autenticado. Até lá, `CHATGPT_CONNECTION=TEST_NOT_RUN`.
