@@ -301,6 +301,10 @@ export const USER_MANUAL_CONTENT = {
           a: "Cotação mensal em USD × média das PTAX de venda (fechamento) do mesmo mês — método versionado pela API. O tipo de PTAX (venda/compra) pode ser trocado no filtro quando aplicável.",
         },
         {
+          q: "Por que um instrumento não aparece ou mostra «indisponível»?",
+          a: "Uma fonte só é exibida quando seus direitos de uso cobrem a exibição. Enquanto uma revisão de licença estiver pendente, o instrumento não fica selecionável e a página mostra um aviso neutro — nunca um valor antigo ou estimado.",
+        },
+        {
           q: "Por que a lista de SC vem vazia?",
           a: "Nesta tela o uso normal do Portal acompanha as solicitações das duas unidades. O recorte de centro de custo vale só no módulo próprio de Solicitações, não no Portal Suprimentos.",
         },

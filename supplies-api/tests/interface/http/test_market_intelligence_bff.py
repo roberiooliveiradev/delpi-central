@@ -455,3 +455,60 @@ def test_upstream_502(mock_resolve, mock_validate):
             headers={"Authorization": "Bearer tok"},
         )
     assert response.status_code == 503
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_use_not_approved_is_dedicated_code_not_user_403(
+    mock_resolve, mock_validate
+):
+    """AC-R1.2-09/15: producer license quarantine surfaces as a distinct
+    unavailability code — never as a user-facing 403 and never as
+    generic upstream failure."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = _gateway()
+    gateway.metal_observations.side_effect = MarketDataGatewayError(
+        "use not approved",
+        status_code=403,
+        code="EXTERNAL_DATA_USE_NOT_APPROVED",
+    )
+    client = create_app().test_client()
+    with patch(_GATEWAY, return_value=gateway):
+        response = client.get(
+            "/market-intelligence/summary?instrument=copper"
+            "&currency=USD&date_from=2026-01-01&date_to=2026-12-31",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 503
+    payload = response.get_json()
+    assert payload["code"] == "source_use_not_approved"
+    assert "9500" not in str(payload)  # zero price leakage
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_filters_mark_non_selectable_and_pick_displayable_default(
+    mock_resolve, mock_validate
+):
+    """AC-R1.2-14: an instrument whose source lacks the display grant is
+    flagged non-selectable and never chosen as the default."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = _gateway()
+    catalog = _catalog()
+    catalog["instruments"][0]["display_allowed"] = False
+    catalog["fx_series"][0]["display_allowed"] = True
+    gateway.catalog.return_value = catalog
+    client = create_app().test_client()
+    with patch(_GATEWAY, return_value=gateway):
+        response = client.get(
+            "/market-intelligence/filters",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    payload = response.get_json()
+    by_code = {i["code"]: i for i in payload["instruments"]}
+    assert by_code["copper"]["selectable"] is False
+    assert by_code["usd-brl"]["selectable"] is True
+    assert payload["default_instrument"] == "usd-brl"

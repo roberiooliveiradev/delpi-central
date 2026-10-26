@@ -41,6 +41,9 @@ export type MarketInstrumentFilter = {
   currencies: MarketCurrency[];
   latest_observation_date: string | null;
   source_id: string;
+  /** False when the source's recorded rights don't cover display —
+  non-selectable in the UI (R1.2 quarantine). */
+  selectable?: boolean;
 };
 
 export type MarketSourceMeta = {

@@ -468,6 +468,7 @@ class MarketIntelligenceService:
                         "latest_observation_date"
                     ),
                     "source_id": inst["source_id"],
+                    "selectable": bool(inst.get("display_allowed", True)),
                 }
             )
         for fx in catalog.get("fx_series") or []:
@@ -486,6 +487,7 @@ class MarketIntelligenceService:
                         "latest_observation_date"
                     ),
                     "source_id": fx["source_id"],
+                    "selectable": bool(fx.get("display_allowed", True)),
                 }
             )
         sources = [
@@ -498,14 +500,19 @@ class MarketIntelligenceService:
             for s in catalog.get("sources") or []
         ]
         meta = self._ingestion_meta()
-        has_data = any(i["latest_observation_date"] for i in instruments)
+        selectable = [i for i in instruments if i["selectable"]]
+        has_data = any(
+            i["latest_observation_date"] for i in selectable
+        )
         return {
             "instruments": instruments,
             "currencies": list(CURRENCIES),
             "granularities": ["day", "month", "year"],
             "fx_kinds": list(FX_KINDS),
             "default_fx_kind": FX_DEFAULT_KIND,
-            "default_instrument": instruments[0]["code"] if instruments else None,
+            "default_instrument": (
+                selectable[0]["code"] if selectable else None
+            ),
             "sources": sources,
             "meta": {
                 "data_status": "ok" if has_data else "no_data",

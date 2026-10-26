@@ -116,6 +116,9 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     unauthorized: "Sua sessão expirou. Entre novamente para continuar.",
     forbidden:
       "Você não possui acesso à inteligência de mercado de Suprimentos.",
+    sourceNotApproved:
+      "As cotações desta fonte estão temporariamente indisponíveis " +
+      "enquanto os direitos de exibição passam por revisão.",
   },
 } as const;
 
@@ -133,6 +136,8 @@ export function mapMarketIntelligenceError(error: unknown): string {
       : "";
   if (status === 401) return MARKET_INTELLIGENCE_CONTENT.errors.unauthorized;
   if (status === 403) return MARKET_INTELLIGENCE_CONTENT.errors.forbidden;
+  if (code === "source_use_not_approved")
+    return MARKET_INTELLIGENCE_CONTENT.errors.sourceNotApproved;
   if (status === 429 || code === "rate_limited")
     return MARKET_INTELLIGENCE_CONTENT.errors.rateLimited;
   if (status === 404 || code === "not_found")

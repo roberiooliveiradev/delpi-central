@@ -138,7 +138,15 @@ export function MarketIntelligencePage({
     return () => controller.abort();
   }, [reloadKey]);
 
-  const filters = useMarketIntelligenceFilters(instruments, defaultInstrument);
+  const selectableInstruments = useMemo(
+    () => instruments.filter((entry) => entry.selectable !== false),
+    [instruments],
+  );
+
+  const filters = useMarketIntelligenceFilters(
+    selectableInstruments,
+    defaultInstrument,
+  );
   const ready = Boolean(filters.state.instrument);
 
   const [summary, setSummary] = useState<MarketSummaryResponse | null>(null);
@@ -150,6 +158,9 @@ export function MarketIntelligencePage({
     const controller = new AbortController();
     setSummaryLoading(true);
     setSummaryError(null);
+    // Never render the previous query's data while a new fetch runs —
+    // a denied/blocked response must not resurrect stale quotes.
+    setSummary(null);
     getMarketIntelligenceSummary(filters.apiParams, controller.signal)
       .then(setSummary)
       .catch((err: unknown) => {
@@ -165,8 +176,11 @@ export function MarketIntelligencePage({
 
   const instrumentOptions = useMemo(
     () =>
-      instruments.map((entry) => ({ value: entry.code, label: entry.label })),
-    [instruments],
+      selectableInstruments.map((entry) => ({
+        value: entry.code,
+        label: entry.label,
+      })),
+    [selectableInstruments],
   );
 
   const granularityOptions = useMemo(

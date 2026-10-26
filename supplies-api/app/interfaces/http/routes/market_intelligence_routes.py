@@ -40,6 +40,18 @@ def _gateway_error_response(exc: MarketDataGatewayError):
             ),
             504,
         )
+    # License quarantine is a source-state, never a user permission
+    # fault — a dedicated code keeps it distinct from user 403.
+    if exc.code == "EXTERNAL_DATA_USE_NOT_APPROVED":
+        return (
+            jsonify(
+                {
+                    "detail": "Source display use pending approval",
+                    "code": "source_use_not_approved",
+                }
+            ),
+            503,
+        )
     # 401/403 upstream (S2S) are technical faults — never a user 403.
     if status in (401, 403) or status >= 500:
         return (
