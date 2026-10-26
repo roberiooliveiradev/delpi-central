@@ -471,3 +471,26 @@ estavam em `origin/main`; a divergência era de stack local.
 **Decisão aberta de produto:** aceitar na V1 decisão de área com clarificação aberta, mantendo impedimento de **conclusão mensal C2** até resolução da clarificação, conforme Doc 104; qualquer mudança exige decisão expressa do PO e revisão de contrato.
 
 **Saída:** nenhuma intervenção adicional produtiva autorizada por este parecer; a próxima ação é **uma única sessão de aceite humano G2 seguida de checklist G3 do Operador/IAM**, com evidências anexadas a Docs 108/109/107 por SHA. Não iniciar outra rodada generalista de desenvolvimento.
+
+
+## Decisão formal G2 do PO — ACCEPT_WITH_RESIDUAL (26/10/2026)
+
+**Origem:** manifestação explícita do PO nesta conversa em 26/10/2026: “Confirmo formalmente o aceite G2 ACCEPT_WITH_RESIDUAL para o escopo local demonstrado de P1–P6 e CLARA, com as ressalvas de P7, relatórios oficiais, integrações G1 e mantendo a regra V1 de clarificações abertas com C2 bloqueado. Registre a decisão no GitHub e prepare o handoff G3 ao Operador/IAM.”
+
+**DECISION_ID:** `CF-PROC0072-G2-ACCEPT-WITH-RESIDUAL-20261026`. **G2_PO_DECISION = ACCEPT_WITH_RESIDUAL**, para a **implementação P1–P6 e CLARA no escopo efetivamente demonstrado em homologação local**, com base no relatório do executor e Rodada 4 deste documento. **PO sign-off: PROVEN (declaração expressa do PO)**; não extrapolar como assinatura individual de responsável da Controladoria que não se manifestou separadamente. Identidade pessoal/assinatura eletrônica qualificada não foi fornecida; a evidência de aceite é a declaração textual desta conversa, atribuída ao papel PO, datada em 26/10/2026.
+
+**Escopo aceito:** jornadas J1–J10 localmente demonstradas (login/SSO e Home; P6 catálogo/checklist mestre e publicação local; P2 competência, documentos, validações e histórico; P3 conciliação/cutoff com fonte externa degradada; P4 pendências; P5 pacotes, revisores, esclarecimentos, C2; P1 cockpit; páginas comuns, segurança ACCESS/MANAGE; CLARA knowledge/MCP, consentimento consolidado, lote com read-back/auditoria). Matriz Rodada 4: 83 IDs únicos, 82 PASS finais reportados, 1 INCONCLUSIVE (J5-02); execução Playwright/API/DB foi reportada pelo Devin e evidência JSONL verificada quanto à consistência, **não reexecutada pelo GPT**.
+
+**Ressalvas ACEITAS, sem converter em PASS:**
+1. **P7/estoque Protheus:** origem SB9/SB1/P7 e paridade oficial indisponíveis em homologação isolada; `J5-02=INCONCLUSIVE`. Dados indisponíveis jamais viram zero nem `STOCK_CLOSED` inferido.
+2. **Relatórios oficiais:** R01–R15 possuem matriz/consultas operacionais demonstradas, mas equivalência com relatórios oficiais e aceite G5/G6 de owners permanecem `PENDING/TEST_NOT_RUN`. Consulta operacional ≠ relatório oficial.
+3. **G1/contratos externos:** T03 (`STOCK_CLOSED`), T05 (effective access/eligibility Core), R04+ e seeds P5-H/P6 e fontes canônicas seguem sob owners responsáveis; não criar decisão por aceitação G2.
+4. **Regra V1 confirmada pelo PO:** decisão/aceite de área pode ser registrada enquanto esclarecimento estiver aberto; **conclusão mensal C2 permanece bloqueada** até não haver esclarecimento aberto, além dos demais guards. Manter contrato vigente; não endurecer o nível do pacote sem decisão posterior.
+5. **Execução produtiva e ChatGPT:** G2 aceita comportamento **local demonstrado**, não prova que o SHA da Rodada 4 foi implantado em produção, nem que Keycloak `mcp-clara` foi provisionado em PROD ou que a CLARA foi conectada ao ChatGPT.
+6. **Catálogo de notificações Core/Portal:** alteração transversal presente no commit `5e9a0ddd81`, validada no stack local; sua publicação em produção requer revisão/owner Plataforma, diff e G3.
+
+**Critério de residual:** bloqueador de dado/contrato externo não invalida a demonstração local já aceita, mas impede afirmar funcionalidade oficial de produção. Qualquer defeito crítico de segurança, integridade, autorização ou regra de negócio encontrado no smoke altera a decisão de release para `STOP/REWORK` no escopo afetado, independentemente do aceite G2.
+
+**Nova situação de gates após esta declaração:** `G2_PO_SIGNOFF=ACCEPT_WITH_RESIDUAL` (**atual, substitui todos os antigos “G2_HUMAN_DECISION=PENDING” neste documento**); `G2_CONTROLADORIA_SEPARATE_SIGNOFF=NOT_RECORDED` se exigido pelo owner distinto; `G1_RESIDUALS=PENDING`; `G3_OPERATOR_SIGNOFF=PENDING`; `IAM_PROD=BLOCKED_UNTIL_AUTHORIZED`; `CHATGPT_PROD=TEST_NOT_RUN`. **G2 não concede autorização SSH nem IAM.**
+
+**Handoff operacional:** [Documento 110 — G3 Operador/IAM, Keycloak e ChatGPT](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md).
