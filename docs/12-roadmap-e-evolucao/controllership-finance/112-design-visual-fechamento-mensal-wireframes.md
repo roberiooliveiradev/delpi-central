@@ -1309,3 +1309,28 @@ O design de **três abas fica aprovado pelo PO** e será a nova base dos wirefra
 **Se o GO transversal de runtime/produção não estiver comprovado, parar antes de mutação/implantação protegida e devolver `DECISION_REQUIRED` ou `INCONCLUSIVE`; não presumir que pedido de prompt substitui gate.** Não executar DRE nem contratos de conversa/WebSocket, relatórios PDF novos, mudança ERP, schemas/migrations ou P5 agora. Gate de DRE só na etapa final do projeto.
 
 **Próximo deliverable:** prompt único do Devin para executar somente a primeira fatia, com checkpoints e evidências; o GPT revisará relatório e emitirá `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
+
+
+## 27. Handoff para executor Devin — primeiro incremento enviado, revisão pendente
+
+**Data do registro:** 2026-10-26. **Informação comunicada pelo PO:** o prompt de execução do primeiro incremento da Central de Fechamento **foi enviado ao Devin**. **Classificação:** `PROVEN_BY_PO_DISPATCH` para envio do prompt; `EXECUTION_RESULT=PENDING`; `GIT_DIFF=TO_VERIFY`; `TESTS=TEST_NOT_RUN_FROM_REVIEWER_PERSPECTIVE`; `DEPLOY=NOT_VERIFIED`. Esta anotação **não** indica que Devin concluiu qualquer alteração.
+
+### Escopo de revisão da devolutiva
+
+- Home `/apps/controllership-finance` deve deixar de expor catálogo de muitas rotas técnicas, dando destaque a `Fechamento mensal` e, se adequado, atalhos para `Documentos e interações` e `Relatórios e divergências`.
+- Workspace da Controladoria com **três abas**: `Visão geral`, `Documentos e interações`, `Relatórios e divergências`. Sem aba top-level de Revisão ou Pendências; indicadores são filtros/drilldown contextuais.
+- Preservar rotas, arquivos e imports necessários às implementações legadas e seus deep links; proibição de apagar frontend de relatórios.
+- MFE consome a própria BFF, Core effective permissions permanece authority, `@delpi/plugin-ui/index` primeiro; não criar endpoint, permission code, regra ERP ou dado simulado para runtime.
+- **DRE/Contabilidade restrito continua explicitamente FORA da execução atual**, destinado à última etapa.
+- Local-first, testes, commit/push, deploy canônico via operador SSH somente após gates autorizados, smoke autenticado real e plano de rollback. Não inferir sucesso por testes isolados.
+
+### Protocolo de GPT REVIEW quando chegar EXECUTION_REPORT
+
+1. Ler relatório com HEAD/status final, arquivos/diff, SHAs, testes e evidência de ambiente. Conferir diretamente o HEAD remoto para evitar `STALE_EVIDENCE`.
+2. Confrontar alterações com docs 24, 30, 32, 91, 112 e contrato P1/P2/P3/P5; inspecionar producers/consumers/testes e regras aplicáveis.
+3. Verificar rotas legadas, navegação/Home, três abas, filtros/competência, estados empty/error/partial, AuthZ no servidor, mobile/teclado/temas, Help, ausência de runtime DRE.
+4. Separar `PROVEN`, `TO_INVENTORY`, `TARGET` e `EXECUTION_DRIFT` para premissas inválidas. Não declarar PASS de smoke que não rodou.
+5. Emitir somente `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`; em `REWORK`, fornecer prompt cirúrgico com AC verificáveis, sem refazer tudo.
+6. Após review, atualizar este registro, o README/roadmap pertinente e as evidências, com commit/SHA e próximo incremento **somente se aprovado**.
+
+**Próximo evento:** PO enviará a devolutiva do Devin para auditoria; até lá, `REVIEW_STATUS=PENDING_EXECUTION_REPORT`.
