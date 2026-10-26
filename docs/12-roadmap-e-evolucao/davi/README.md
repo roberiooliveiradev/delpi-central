@@ -242,6 +242,35 @@ evidence               = api-delpi/docs/integrations/evidence/
                          davi-product-detail-similarity-001.md
 ```
 
+### DAVI-LIVE-TE-626377-1-20261026 — live read / similarity identification
+
+An end-user-authenticated, **ChatGPT-assisted** consumer session has now proven
+a concrete Product Master similarity/duplicate-prevention lookup using the
+connected DAVI MCP (read-only):
+
+- TE Connectivity public manufacturer part \`626377-1\` had an exact **registered
+  supplier-part-number association** to DELPI \`10080010\` (TE supplier \`000002/01\`);
+  the part-number query returned \`total=1\`, complete.
+- \`get_product_detail(10080010)\` returned the governed 32-field product
+  projection; \`get_product_suppliers(10080010)\` returned six supplier links,
+  complete. Descriptive search also surfaced candidates, including
+  \`10080060\`, \`10081671\`, \`10080225\`, and \`10081405\`.
+- **Product identified before potential recadastro = PASS**; no new master
+  record was created, no technical interchangeability was authorized, and
+  there is no claim of a measured avoided-duplicate transaction.
+- Searching increasingly specific terminal descriptions returned relevant
+  items yet reported broad \`total=1501\` and partial pagination; total/count
+  semantics and robust top-five candidate ranking remain \`TO_INVENTORY\`.
+- Independent Agent Studio SIM-20, second authenticated user's negative
+  business AuthZ, formal field-owner ratification, and PDF transport remain
+  **PENDING / TO_INVENTORY**. Do not interpret this case as wide-rollout
+  approval or a complete producer/consumer evaluation.
+
+Evidence and source split: \`api-delpi/docs/integrations/evidence/davi-product-detail-similarity-001.md\`,
+section 11. External public source: https://www.te.com/pt/product-626377-1.html .
+Operational data is from authenticated governed DAVI READs; external
+manufacturer details are supplementary, not DELPI source of truth.
+
 Families now governed behind the same broker: Product Master & item context,
 Commercial/Sales, Supplies/Purchasing/Inventory, Production, System Metadata
 (describe/search only — generic SQL remains FORBIDDEN).
