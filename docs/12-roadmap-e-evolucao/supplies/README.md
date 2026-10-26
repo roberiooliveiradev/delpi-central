@@ -16,6 +16,16 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076 R2 — decisão de fontes oficiais (2026-10-26)
+
+**Product Owner decidiu priorizar Comex Stat/MDIC (valor médio FOB de importações por NCM), IBGE IPP Metalurgia (índice setorial) e BCB PTAX (câmbio), com histórico no schema owner da external-data-api, REST interno S2S e consumo pela supplies-api e pelo dashboard.** São três métricas de natureza distinta; FOB USD/t e IPP não são cotações spot/LME. Essa frente é TARGET/PLANNED para a próxima entrega e não prova que as novas fontes já estejam conectadas.
+
+- [Decisão do PO, diferenças das fontes, RQ/AC e wireframe](./PROC-0076-R2-DECISAO-FONTES-PUBLICAS-COMEX-IBGE-BCB-20261026.md)
+- [Contratos candidatos, tabelas, rotas, sequência external-data-api → supplies-api → MFE e testes](../shared-integrations/PROC-0076-R2-EXTERNAL-DATA-COMEX-IBGE-BCB-CONTRACT-AND-EXECUTION-20261026.md)
+- A implementação anterior de Pink Sheet/LME permanece como histórico técnico e dados sujeitos a quarentena. **Não** reabrir exposição das séries com direitos pendentes, nem substituir silenciosamente o significado dos DTOs legados. O PR #113 conserva a trilha corretiva anterior; sua guarda de licença/readiness continua material.
+- **Gate de página:** E11 e smoke federado autenticado continuam INCONCLUSIVE no rebaseline desta pasta. A decisão da fonte não autoriza migration/deploy produtivos nem a navegação da página. BCB PTAX tem impedimento de egress 403 anteriormente reportado; não contornar WAF.
+
+---
 ## 1. Fonte de verdade e regra de execução
 
 A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cursor`: instruções oficiais → regras transversais → ADRs/contratos/código atual → testes → documentação/roadmap. Se um documento histórico divergir do runtime atual, registrar e corrigir o drift; não adaptar o código para cumprir um plano obsoleto.
