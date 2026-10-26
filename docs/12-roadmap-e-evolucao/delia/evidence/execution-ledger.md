@@ -233,3 +233,15 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Tests: 15 casos B1–B9/C1–C8; RED causal no baseline: b2/b4 (parcial renderizado como completo), c3 (shape aninhado ilegível ao contrato), foreign (beta.read_5 omitido resolvia), group (capability_groups aninhado sob optionals+feedback). Verde pós-fix; suites focadas + backend completo verdes (env limpo); gates arquitetura 0 findings.
 - Eval local congelada (delia-json qwen2.5:3b, ctx 8192, instrução v22, api-delpi real via delegated exchange): 8 cenários; 29/29 blocos válidos; three_bala com 3 invokes DAVI reais terminou em clarificação honesta; write_request recusado como não autorizado; capability_id inventado rejeitado fail-closed; FALSE_POSITIVES=0; FALSE_COMPLETENESS=0. Capacidade semântica 3B segue limitante documentado.
 - DEPLOY=BLOCKED (revisão independente pendente); INDEPENDENT_REVIEW=PENDING.
+
+
+### DELIA-C3-SEMANTIC-ADMISSION-GOAL-ARGUMENT-FIDELITY-EVAL-01 — execução (2026-10-26)
+
+- STATE=EVALUATION_COMPLETE; base cd50b85610 (=origin/main); READ-ONLY — zero alteração de código/prompt/modelo/budget/AuthZ; deploy não executado.
+- Corpus congelado: 25 cenários × 5 repetições = 125 execuções governadas (delia-json qwen2.5:3b, ctx 8192, instrução v22, delegated bearer READ-only, superfície real 4 grupos/41 caps). Seed NOT_SUPPORTED pelo adapter — variância medida, determinismo não reivindicado.
+- Resultado: OUTCOME_PASS=40 (guidance 15/15, negative 15/20, discovery 5/15, continuity 5/20), FAIL=85; records family 0/45. Primeiro estágio divergente: ADMISSION_ERROR 36, GROUP_SELECTION_ERROR 30, MODEL_STRUCTURED_OUTPUT_ERROR 15, CAPABILITY_SELECTION_ERROR 8. Apenas 12/125 turnos invocaram qualquer capability.
+- Causa comprovada (prova direta no payload despachado): _group_summaries entrega 0/41 descrições não-vazias — nomes+estrutura dos 4 grupos consomem ~5909 dos 6000 chars, compactação zera toda descrição; seleção de owner vira loteria por remote_name (mcp:teo 10, mcp:vista 6 escolhidos para consultas de produto). Direção A (contrato/código), não capacidade 3B.
+- Secundário comprovado: admission classifica consultas de registro como surface_inquiry (catálogo listado em vez de READ — FN=0 mas FP=30); structured output inválido 15/125; argumentos com subject em code e resolver→search_customers (infidelidade semântica).
+- Segurança limpa: 0 bypass AuthZ, 0 PREPARE/ACT, 0 fabricação; neg_scope/neg_write recusados 10/10; neg_inject recusou com applicable:false (FAIL por oráculo estrito, comportamento correto); injetado ID rejeitado fail-closed.
+- Recomendação: A — restaurar sinal semântico mínimo bounded em _group_summaries (ex.: group_description por grupo) antes de medir capacidade; depois B — experimento bounded em surface_inquiry. Revisão independente pendente.
+- Artefatos: doc 153, scripts semantic_fidelity_eval.py + semantic_fidelity_aggregate.py, runs JSON sanitizado (350KB). DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
