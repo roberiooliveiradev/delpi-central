@@ -93,3 +93,97 @@ O PO deve conseguir identificar em até uma leitura da tela: (a) competência, (
 ## 7. Próxima ação
 
 Revisar **FM-01 a FM-03 (cabeçalho, contexto e competência)** no chat com o PO. Atualizar este documento a cada aprovação e versionar os wireframes. Não iniciar código antes da aprovação de toda a composição transversal e de GO específico.
+
+
+## 8. Wireframe 01 — detalhamento V0.2 após concordância do PO com a estrutura geral
+
+**Registro de interação (26/10/2026):** PO concordou com a estrutura de cinco visões **Visão geral, Divergências, Documentos, Pendências, Revisão** e solicitou maior detalhamento da página. Isto aprova a **direção da arquitetura de informação**, **não** os campos, agregações, indicadores, mutações, rotas ou contrato técnico definidos abaixo. **Status:** `PO_APPROVED_INFORMATION_ARCHITECTURE / V0.2_COMPONENTS_UNDER_REVIEW`.
+
+### 8.1 Objetivo mensurável para o usuário
+
+Na chegada, responder nesta ordem:
+1. **Qual competência e escopo estou examinando?**
+2. **O que impede ou ameaça o fechamento?**
+3. **O que posso tratar agora, e quem é o responsável?**
+4. **Qual evidência ou documento sustenta cada ocorrência?**
+5. **Qual é o próximo passo e o estado de revisão humana?**
+
+Uma página de trabalho deve reduzir alternância entre destinos sem converter páginas existentes em novas entidades de domínio por suposição.
+
+### 8.2 Composição visual em desktop — refinamento
+
+```text
+[TopBar canônica da Minha DELPI: Início | Visão geral | ... | Administração | Ajuda]
+[PagePath] Controladoria & Finanças / Fechamento mensal
+Fechamento mensal                    [Ajuda da página] [Atualizar]
+Acompanhe a competência, investigue divergências e trate documentos.
+[Competência 09/2026 ▼] [Empresa/unidade: escopo autorizado ▼] [Status do fechamento]
+[Última atualização: origem e timestamp, ou "indisponível"]
+────────────────────────────────────────────────────────────────────────────
+[ Bloqueios relevantes — ] [ Divergências — ] [ Documentos a tratar — ]
+Cada número abre a visão filtrada SE houver contrato de contagem e drilldown.
+────────────────────────────────────────────────────────────────────────────
+[ Visão geral ] [ Divergências ] [ Documentos ] [ Pendências ] [ Revisão ]
+────────────────────────────────────────────────────────────────────────────
+[Precisa de atenção]                 [Busca] [Status ▼] [Origem ▼] [Atualizar]
+[empty/partial/error banner com fonte, motivo e freshness]
+┌────────────────────────────────────────────────┬─────────────────────────┐
+│ LISTA DE TRABALHO / AGRUPAMENTO POR ORIGEM       │ DETALHE SELECIONADO      │
+│ Prioridade | Tipo | Item | Owner | Estado        │ Título + provenance     │
+│ ... origem P2/P3/P4/P5 quando houver producer   │ Descrição, dependências  │
+│ ... nunca inventar fila unificada              │ Evidências relacionadas  │
+│ Paginação/filtro/contagem legítima              │ Timeline, ações elegíveis│
+└────────────────────────────────────────────────┴─────────────────────────┘
+[Histórico por competência] [Acessos rápidos às rotas legadas autorizadas]
+```
+
+**Densidade:** cabeçalho compacto para reservar espaço à bancada; cartões de KPI são links de contexto, nunca decoração. Sem hero de saudação duplicado da Home. Os valores `—` são apenas placeholder de wireframe; runtime precisa diferenciar carregando, sem dados e fonte indisponível.
+
+### 8.3 Matriz detalhada de componentes
+
+| ID | Detalhe de UX | Evento previsto | Dependência para runtime |
+|---|---|---|---|
+| FM-01 | TopBar compartilhada permanece constante; área de domínio nasce abaixo dela | Navegar por seção comum/voltar | plugin-ui + padrão shell (PROVEN do padrão) |
+| FM-02 | PagePath, título "Fechamento mensal", descrição breve, Ajuda contextual, Atualizar | Ajuda abre manual; refresh refaz somente reads autorizados | PageHero/Help kit; endpoint/read model de refresh TO_INVENTORY |
+| FM-03 | Seletor de competência com `MM/AAAA`, contexto de empresa/unidade por escopo real, deep link e preservação em troca de visão | Selecionar competência restaura filtros; escopo inválido gera no-access, não zero | owner de competência e contratos de contexto T05 TO_INVENTORY |
+| FM-04 | Estado oficial mostrado com rótulo e `freshness`; três eixos P2/P3/P5 não viram "concluído" por agregação arbitrária | Abrir explicação de status e blockers | P1/contratos e regras de conclusão PROVEN documental, integração TO_INVENTORY |
+| FM-05 | Três cartões: Bloqueios, Divergências, Documentos a tratar; descrição no tooltip e drilldown quando suportado | Selecionar filtro da visão respectiva | contagens/fontes e semântica de divergência TO_INVENTORY |
+| FM-06 | Abas: Visão geral / Divergências / Documentos / Pendências / Revisão, com indicador ativo sem depender apenas de cor | Trocar visão mantendo competência; deep links pendentes de decisão | URL e backward compatibility DECISION_REQUIRED |
+| FM-07 | Fila principal: prioridade, tipo, descrição, área/owner, estado, atualização, ação de abrir; busca, filtros e paginação | Selecionar registro abre detalhe sem perder filtros e scroll | read-model transversal/ordenação/ownership TO_INVENTORY; alternativa: blocos separados por owner |
+| FM-08 | Detalhe apresenta contexto, motivo, regra/fonte, anexos relacionados, timeline, ação encaminhada ao owner | Abrir documento, ver origem, navegar para tratamento permitido | P2/P3/P4/P5 producers e AuthZ; cruzamento de recursos TO_INVENTORY |
+| FM-09 | Estados: skeleton, empty real, partial, permission denied, erro de rede, indisponibilidade de source, stale | Retentar sem apagar contexto, abrir Help | kit `StateBanner`/`EmptyState`/`LoadingState`; mensagens PT-BR |
+| FM-10 | Acesso a histórico, evidências e ações de revisão | Abrir detalhe ou rota legada | não sacramentar/validar/concluir fora de P2/P5 owner |
+
+### 8.4 Comportamentos essenciais e limites de domínio
+
+- **Divergência** não significa automaticamente uma entidade nova. Pode ser resultado de conciliação P3 ou ocorrência do fluxo P4; preservar proveniência e tipos do backend.
+- **Documento** mantém estados `EXPECTED`, `ATTACHED`, validação/rejeição, versões e vínculo real. Upload não implica aceite e apenas o owner P2 executa mutação autorizada.
+- **Pendência** pertence às classificações/workflows governados existentes; prioridade e responsável devem ser derivados de contratos, não imputados pelo frontend.
+- **Revisão** mantém decisões humanas, segregação de funções, versões de pacote, esclarecimentos e blockers; sem conclusão por percentual.
+- **Competência** é eixo transversal. Se o contexto mudar, a lista e o detalhe precisam ser revalidados; evitar exibir um detalhe da competência anterior.
+- **Segurança:** UI só sinaliza elegibilidade; a BFF aplica Core effective permissions AND resource scope/ownership AND business rule, fail-closed; nenhuma permission nova.
+
+### 8.5 Cenários UX para desenhar após visual principal
+
+1. Competência selecionada com pendências reais — fila, detalhe e documento.
+2. Competência sem itens — mensagem de vazio verdadeiro, sem `0` fictício.
+3. Fonte ERP indisponível — `PARTIAL/UNAVAILABLE_SOURCE`, quais informações estão desatualizadas, origem.
+4. Usuário sem `manage` ou fora do escopo — pode ler o permitido, sem ação mutável; backend revalida.
+5. Mudança rápida de competência e filtros — cancelar detalhes anteriores, manter contexto consistente.
+6. Documento substituído/rejeitado — timeline e versões, estado atual não sobrescreve histórico.
+7. Revisão com esclarecimento aberto — blocker explicado e nenhuma conclusão indevida.
+8. Loading lento, timeout e retry — preservação de filtros e indicação de freshness.
+
+### 8.6 Desktop, mobile e acessibilidade
+
+- Desktop: bancada `master-detail` quando houver item selecionado; cabeçalho resumido e tabelas densas de trabalho.
+- Mobile: contexto e KPIs empilhados, abas navegáveis com labels, lista de cards `DataRecordCard`, detalhe como tela separada com `BackLink`, filtros recolhíveis.
+- Teclado: tab order previsível; filtros, abas e fila com foco visível; seleção e retorno de detalhe acessíveis; sem ações escondidas só em hover.
+- Tema claro/escuro usa a mesma árvore do `@delpi/plugin-ui`; tipografia, espaços, status e ícones do kit, sem duplicar CSS.
+- Help contextual deve acompanhar o gate de cada feature e explicar diferença entre divergência, pendência, evidência e bloqueio.
+
+### 8.7 Próximo review visual em componentes
+
+**Primeiro bloco a detalhar/validar: FM-02 + FM-03 + FM-04 (cabeçalho, seleção da competência, contexto/estado).** Depois: FM-05 indicadores; FM-06 abas; FM-07/08 fila e detalhe; FM-09 estados; por fim composições das visões Divergências, Documentos, Pendências e Revisão, uma por vez.
+
+**Não aprovar implicitamente** contagem de KPIs, dataset transversal, alteração de URL, remoção dos atalhos atuais, nova entidade divergência, persistência ou endpoints com base no aceite do wireframe geral.
