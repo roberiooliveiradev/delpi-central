@@ -1,6 +1,6 @@
 # HANDOFF CANÔNICO — Portal Suprimentos / X4.PROD-C1 — Resposta Gabriel e preparação do release
 **Atualizado em:** 2026-10-26  
-**Status:** `GABRIEL_REPLIED / RELEASE_PREPARATION_PENDING` — `PRODUCTION_CUTOVER = EXECUTION_DRIFT / BLOCKED` (`G8 = FAIL`)  
+**Status:** `GABRIEL_REPLIED / RELEASE_PREPARATION_PENDING` + `EXECUTION_DRIFT R3` — `PRODUCTION_CUTOVER = BLOCKED` (`G8 = FAIL`) **e** `PATH_SUPPLIERS@1` (31c) > `CONTEUDO varchar(30)` (§13)  
 **Responsável pela publicação upstream:** Gabriel Araújo / TOTVS — aplicar mudança na instância produtiva após aprovação e janela operacional. Endpoint, autenticação e configuração existentes serão reutilizados, conforme resposta do owner.  
 **Decisão PO neste chat:** registrar e **aguardar a resposta do Gabriel**; não executar novos flips, POST/PUT produtivos ou ativação de flags enquanto o bloqueio estiver aberto.
 
@@ -150,3 +150,56 @@ Os registros históricos acima permanecem intactos como evidência do diagnósti
 **Decisão operacional solicitada pelo PO:** deixar a integração produtiva pronta e, caso a configuração efetiva de AMBIENTE=1 ainda aponte a REST de teste, trocar **condicionalmente** para produção. Isso **não dispensa** validar primeiro G8 read-only após publicação upstream. Até G8 PASS, manter URL_REST@1 intacta por risco de quebrar GET E14; manter AMBIENTE=2 isolado, gates CREATE/UPDATE OFF, pin fail-closed e rollback pronto. A alteração efetiva dos parâmetros deve ser executada apenas no momento controlado com owner e janela/GO confirmados; não inferir que já ocorreu a partir deste registro.
 
 **Estado atualizado:** `PO_EMAIL_SENT=PROVEN_BY_SCREENSHOT`; `MICHAEL_WINDOWS=OFFERED`; `WINDOW_CONFIRMED=PENDING`; `GABRIEL_DEPLOY=PENDING`; `G8=FAIL_LAST_OBSERVED`; `CONFIG_CUTOVER=PENDING_CONDITIONAL`; `CREATE/UPDATE=OFF_LAST_REPORTED`.
+
+
+## 13. X4.PROD-C1.R3 — Readiness autorizada pelo PO (2026-10-26)
+
+**Decisão PO:** `PO_AUTHORIZED_FULL_MINHA_DELPI_READINESS` — apontar amb=1 para a REST produtiva, habilitar CREATE/UPDATE e deixar a Minha DELPI pronta, aceitando 401/404 upstream como `UPSTREAM_PENDING` enquanto Gabriel publica.
+
+### Evidências novas (read-only, executadas)
+
+- Container `delpi-api-delpi`: `INTRANET_PARAMS_AMBIENTE=1`, `PROTHEUS_REST_EXPECTED_BASE_URL=http://192.168.1.231:8061`, `CREATE/UPDATE=false` (estado preservado).
+- Schema real: `CONTEUDO varchar(30)` **confirmado** (INFORMATION_SCHEMA); tabela tem apenas `ID, AMBIENTE, PARAMETRO(varchar 20), CONTEUDO`.
+- Params atuais: amb=1 ≡ amb=2 → `URL_REST=http://192.168.1.233:8701/rest` (30c), `PATH_AUTH=/api/oauth2/v1/token` (20c), `PATH_SUPPLIERS=/delpi/api/v1/suppliers` (23c).
+- Probes produtivos: `GET /restall/` → 200; `POST /restall/api/oauth2/v1/token` → **400** (rota viva — auth existe); `POST /api/oauth2/v1/token` → 404 (raiz **não** serve); suppliers → 404 (`UPSTREAM_PENDING` — API não publicada).
+- Guard/resolver: 47/47 testes focados verdes no container deployado.
+
+### EXECUTION_DRIFT material — varchar(30)
+
+`URL_REST` só pode ser a origem (`http://192.168.1.231:8061`, 25c — exigido pelo pin exato), logo `/restall` deve entrar nos paths:
+
+| Param | Valor requerido | Len | Cabe? |
+|---|---|---|---|
+| `URL_REST@1` | `http://192.168.1.231:8061` | 25 | ✓ |
+| `PATH_AUTH@1` | `/restall/api/oauth2/v1/token` | 28 | ✓ |
+| `PATH_SUPPLIERS@1` | `/restall/delpi/api/v1/suppliers` | **31** | **✗ (1 char a mais)** |
+
+Não existe split válido (join `base/path` insere `/`; raiz do 8061 não serve rotas — provado). Flip parcial de amb=1 quebraria o GET E14. **Troca é atômica: nada foi alterado; amb=1 segue TST; flags seguem OFF.**
+
+### Opções de desbloqueio (decisão owner/arquiteto)
+
+1. **DDL**: `CONTEUDO varchar(30 → 50)` em `IntranetDelpiDev.dbo.PARAMETROS_MINHADELPI` (compatível p/ leitura; exige DBA/owner — tabela compartilhada com a Intranet).
+2. **Resolver**: param opcional `BASE_PATH` (ex.: `/restall`) prefixando `PATH_AUTH`/`PATH_SUPPLIERS` — evolução de contrato em `protheus_path_resolver` (api-delpi, backward-compatible).
+3. **Upstream (Gabriel)**: publicar sob raiz mais curta. Se existir alias `/rest` (ex.: `http://192.168.1.231:8061/rest` = **30c exatos**), **nenhuma** linha de path muda — mesma estrutura do TST; só `URL_REST@1` troca host.
+
+### Preparado (não executado)
+
+```sql
+-- EXECUTAR SOMENTE APÓS DESBLOQUEIO varchar(30):
+-- amb=1 → URL_REST=http://192.168.1.231:8061
+--         PATH_AUTH=/restall/api/oauth2/v1/token
+--         PATH_SUPPLIERS=/restall/delpi/api/v1/suppliers  -- 31c NÃO CABE hoje
+-- Flags (.env api-delpi): PROTHEUS_SUPPLIER_CREATE_ENABLED=true
+--                         PROTHEUS_SUPPLIER_UPDATE_ENABLED=true
+```
+
+**Flags permanecem OFF**: condição de segurança (destino resolvido = REST produtiva, sem fallback TST) não demonstrável enquanto amb=1 resolve TST. `.env.prod.example` corrigido: pin agora documenta origem pura `http://192.168.1.231:8061` (sem `/restall`).
+
+```text
+X4.PROD-C1.R3.CONFIG_READY    = PREPARED_NOT_APPLIED (varchar drift)
+X4.PROD-C1.R3.CREATE_ENABLED  = OFF (prepared)
+X4.PROD-C1.R3.UPDATE_ENABLED  = OFF (prepared)
+X4.PROD-C1.R3.UPSTREAM        = UPSTREAM_PENDING (suppliers 404; token vivo)
+X4.PROD-C1.R3.END_TO_END      = INCONCLUSIVE
+NEXT_STEP                     = DECISAO varchar(30) → depois G8 recheck
+```

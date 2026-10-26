@@ -200,3 +200,27 @@ Resposta de Gabriel Araújo de **23/10/2026, 16:29**, apresentada pelo PO: **nen
 **Estados atuais de decisão:** `GABRIEL_REPLIED`; `RELEASE_PREPARATION_PENDING`; `MAINTENANCE_WINDOW_PENDING`; `PROD_UPSTREAM_NOT_DEPLOYED`; `G8=FAIL_LAST_OBSERVED`; `PRODUCTION_CUTOVER=BLOCKED`. Os resultados 404/401 de 23/10 são evidência histórica ainda sem reteste; não inferir resolução somente da promessa de reutilização do endpoint. O PO informou que **vai enviar** a resposta ao Gabriel, mas **o envio ainda não foi comprovado**; não registrar como realizado.
 
 **Próxima ação:** após o envio, agendar manutenção com Michael e Gabriel; aprovar escopo técnico do campo e rollback; aguardar publicação TOTVS; reexecutar G8 **read-only** e validar destino real `DELPI`. Manter parâmetros e flags de escrita sem mudança até prova de runtime e autorização específica. A atualização **não é GO para POST/PUT produtivo ou mudança de configuração**. Para handoff operacional, consultar [X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md](./X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md).
+
+## 16. R3 — Readiness autorizada pelo PO (2026-10-26)
+
+`PO_AUTHORIZED_FULL_MINHA_DELPI_READINESS`: preparar produção completa
+(amb=1 → `192.168.1.231:8061` + `/restall` nos paths + flags ON), sem
+aguardar a publicação do Gabriel — 401/404 upstream = `UPSTREAM_PENDING`.
+
+### Resultado: `EXECUTION_DRIFT` (contrato real incompatível)
+
+- `CONTEUDO varchar(30)` verificado no schema real; params amb=1 ≡ amb=2.
+- Layout requerido (pin compara `base_url` exato = origem):
+  `URL_REST@1=http://192.168.1.231:8061` (25c ✓),
+  `PATH_AUTH@1=/restall/api/oauth2/v1/token` (28c ✓),
+  `PATH_SUPPLIERS@1=/restall/delpi/api/v1/suppliers` (**31c ✗**).
+- Nenhum split base/path válido; prefixo `/restall` é obrigatório
+  (`POST /restall/...token` → 400 vivo; `POST /...token` na raiz → 404).
+- **Nada aplicado**: flip parcial quebraria E14; flags OFF (condição de
+  segurança não demonstrável); nenhum POST/PUT real executado.
+- Resoluções possíveis: DDL `varchar(50)` (DBA/owner), param `BASE_PATH`
+  no resolver (api-delpi), ou raiz upstream curta (`/rest` caberia exato).
+- `.env.prod.example` alinhado: pin documenta a origem sem `/restall`.
+
+Estado: `CONFIG_READY=PREPARED`, `CREATE/UPDATE=OFF(prepared)`,
+`DEPLOY=n/a (sem mudança)`, `UPSTREAM=PENDING`, `END_TO_END=INCONCLUSIVE`.
