@@ -157,3 +157,82 @@ Após cada fase, atualizar [Doc 107](./107-clara-validacao-antecipada-chatgpt-re
 **Paradas obrigatórias:** credencial IAM não válida; drift transversal não aprovado; ausência da assinatura G3 do operador; risco de escrita não autorizada; backup insuficiente; escolha material sem owner. Prosseguir com inventário e documentação independentes, mas **não aplicar mudanças produtivas** até o gate correspondente.
 
 **Objetivo operacional:** conectar CLARA real no ChatGPT, comprovar com login e outcomes auditáveis, preservando autorização humana e governança. Este handoff não concede autorização por conta própria.
+
+## 8. Execução registrada — Operador SSH via agente Devin (26/10/2026, ~14:30 UTC)
+
+Handoff executado na mesma sessão sob GO do Operador/owner IAM ("GO PARA FECHAMENTO G3 E CLARA NO CHATGPT"). Resultados com evidência real; nenhum PASS sem prova.
+
+```text
+EXECUTION_ID: CF-PROC0072-G3-OPERATOR-IAM-CHATGPT-001
+DATE_TIME_TZ: 2026-10-26 ~14:15-14:35 UTC (srv-api)
+OPERATOR_ROLE_AND_APPROVAL_REF: GO verbal do Operador/owner IAM nesta sessão (Doc 110 §1)
+IAM_OWNER_APPROVAL_REF: n/a para alteração Keycloak — credencial inválida, nada aplicado
+CONTROLADORIA_SPECIFIC_ACCEPTANCE_IF_REQUIRED: NOT_RECORDED (não exigida para este escopo)
+G2_PO_REF: CF-PROC0072-G2-ACCEPT-WITH-RESIDUAL-20261026
+CHANGE_ID_AND_WINDOW: sessão G3 26/10 ~14:15-14:35 UTC; janela ad-hoc autorizada pelo Operador
+TARGET_HOST_AND_ENV: srv-api (192.168.1.237) — produção Minha DELPI
+BASE_HEAD: d86d49ac2037 (checkout pré-execução; já continha R4 5e9a0ddd81 como ancestral)
+RELEASE_SHA: 85883e5f2e789cd720d52b25975b9e1587ad0667
+DEPLOYED_SHA_BEFORE: d86d49ac2037a78327e51c70819cd0ec79478bc2 — TREE com fixes R4, porém
+                     IMAGENS pré-R4 (criadas 10:02-10:03Z; commit R4 = 13:48Z)
+DEPLOYED_SHA_AFTER: 85883e5f2 (script canônico fez pull --ff-only no início do build;
+                    delta = supplies S2 widget + transformometro fix — fora do escopo CF,
+                    imagens desses contextos não reconstruídas)
+GIT_STATUS_AND_IMAGE_DIGEST: tree limpa; imagens infra-{core-api,portal,controllership-
+                             finance,controllership-finance-api}:latest criadas 14:28-14:29Z
+CORE_PORTAL_BFF_DIFF: 5e9a0ddd8 (catalog Core + fallback Portal + producer BFF + banner 404/409)
+                     + d59e972a47 (step-up getFreshAccessToken, ausente na imagem portal 10-21)
+                     + 0fdb467ff8 (DeliaDock CSS, cosmético)
+CORE_NOTIFICATION_OWNER: categoria controllership_finance aditiva no catálogo canônico —
+                         diff JSON de 1 entrada; validada em runtime (grep binário=1)
+G1_OUT_OF_SCOPE: T03/T05/P7/R01-R15 oficiais permanecem fora do aceite (owners externos)
+PG_BACKUP_AND_RESTORE_PROOF: ~/backups/cf-schema-pre-g3-20261026-142452.dump (689K, -Fc,
+                             pg_restore -l lista 64 objetos TABLE — artefato restaurável)
+UPLOAD_AND_CORPUS_BACKUP: ~/backups/cf-uploads-pre-g3-20261026-142543.tgz (dir /var/lib/delpi/
+                          cf-closing-documents vazio em prod — sem uploads de usuários);
+                          corpus está no schema PG (52 fontes/1298 itens — coberto pelo dump)
+MIGRATIONS_READBACK: schema_migrations count=14 max=14 — V001-V014 íntegras, sem novas
+ROLLBACK_CAPABILITY_AND_LIMIT: imagens anteriores retidas pelo Docker (rollback = re-tag/up);
+                               migrations up-only já aplicadas (não revertíveis);
+                               .env editado com append único (reversível removendo a linha)
+G3_OPERATOR_DECISION: GO — executado conforme runbook; alinhamento de imagens aplicado
+KEYCLOAK_ADMIN_ACCESS: BLOCKED — KEYCLOAK_ADMIN em infra/.env falha login realm master
+                       (credencial bootstrap rotacionada; engine FAIL_CLOSED correto)
+KEYCLOAK_CHECK_AND_SANITIZED_DIFF: TEST_NOT_RUN — sem admin válido, --check aborta
+KEYCLOAK_SHARED_BLAST_RADIUS: não avaliado (requer --check bem-sucedido)
+KEYCLOAK_IAM_APPROVAL: PENDING — owner IAM deve fornecer credencial vigente
+KEYCLOAK_APPLY: TEST_NOT_RUN
+CLIENT_MCP_CLARA: NOT_PROVISIONED — permanece bloqueado por IAM
+OAUTH_METADATA_AND_AUDIENCES: discovery público 200; audience/alvo na ficha pública
+CHATGPT_CALLBACK_REGISTERED: TEST_NOT_RUN — depende de mcp-clara
+CHATGPT_CONNECTION: TEST_NOT_RUN
+MCP_DISCOVERY: PROVEN parcial — sem token 401 (GET e POST initialize); discovery
+               autenticado exige client mcp-clara → TEST_NOT_RUN
+MCP_READ_KNOWLEDGE_CITATIONS: TEST_NOT_RUN em prod (corpus íntegro: 52/1298/1 versão)
+MCP_BATCH_CONSENT_AND_READBACK: TEST_NOT_RUN em prod (requer mcp-clara + usuário)
+PORTAL_FUNCTIONAL_SMOKE: portal 200, core health 200, OIDC metadata 200,
+                         /ready controllership-finance-api = ready (era degraded)
+AUDIT_AND_SAFETY_NEGATIVES: MCP fail-closed 401 sem token; catalog /me/* exige auth
+                            (401); zero regressão nos demais serviços (107 Up)
+ROLLBACK_TRIGGERED: NO
+RESIDUALS_WITH_OWNER:
+  - KEYCLOAK_PROD mcp-clara: owner IAM — credencial admin vigente + --check + apply
+  - CHATGPT: owner workspace — cadastro após mcp-clara
+  - collation mismatch plugins_hub (2.41 vs 2.36): plataforma — WARNING, não bloqueante
+  - backup PG schema-only por operador: rotina full-DB existente não evidenciada nesta janela
+FINAL_VERDICT: ACCEPT_WITH_RESIDUAL — alinhamento de release executado e comprovado
+               em runtime; G3 operacional validado para o escopo de código R4;
+               ChatGPT/CLARA prod permanece bloqueado exclusivamente por credencial IAM
+EVIDENCE_LINKS_AND_DOC_COMMITS: este adendo; Doc 107 Adendo 9; Doc 108 seção G3
+```
+
+### 8.1 O que a execução provou (runtime, não hipótese)
+
+- **Drift imagem↔tree corrigido:** imagens `infra-{core-api,portal,controllership-finance,controllership-finance-api}` recriadas pelo script canônico `up-prod-sequential.sh --build` no SHA `85883e5f2`. Binário BFF em runtime tem `"category": "controllership_finance"` (gateway.py:209); catálogo Core contém a categoria; bundle Portal contém `getFreshAccessToken` + fallback; bundle MFE novo hash com mensagens tipadas.
+- **`/ready` prod `degraded` → `ready`:** causa raiz era ausência de `CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN` em `infra/.env` (compose passa `${VAR:-}` → vazio). Provisionado segredo dedicado via `openssl rand` (nunca impresso; `.env` é gitignored). `core-api` não recebe a var — o endpoint effective-access permanece fail-closed, o que é correto hoje (BFF só exige a var no gate de readiness; nenhuma chamada a usa ainda).
+- **Zero writes produtivos de negócio:** nenhum evento de notificação emitido, nenhuma competência/documento tocados, nenhum migration nova (V014 já estava aplicada).
+- **Blast radius do rebuild:** diff `d86d49ac..85883e5f2` = apenas supplies S2 + transformometro fix (imagens desses contextos não reconstruídas — sem efeito). Nos 4 serviços reconstruídos, delta de código = exatamente os commits R4 + step-up + CSS.
+
+### 8.2 Bloqueio único restante e ação exata
+
+`KEYCLOAK_ADMIN_ACCESS=BLOCKED`: `KEYCLOAK_ADMIN`/`KEYCLOAK_ADMIN_PASSWORD` presentes em `infra/.env` mas o login no realm `master` falha (`FAIL_CLOSED` no engine — comportamento correto). **Ação do owner IAM:** fornecer credencial administrativa vigente pelo canal seguro (atualizar `infra/.env` no host ou `KC_ADMIN_TOKEN` na sessão), depois `KC_BASE=https://minhadelpi.com.br/auth bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check`, revisar diff compartilhado (mcp-api-delpi, mcp-transformometro, mcp-tv-dashboard, mcp-clara, scopes/policies), aprovar explicitamente e só então `--apply`. Sem isso, nenhuma etapa de ChatGPT pode começar.

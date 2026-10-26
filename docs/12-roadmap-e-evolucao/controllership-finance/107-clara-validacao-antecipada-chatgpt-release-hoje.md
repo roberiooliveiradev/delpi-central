@@ -364,3 +364,16 @@ rodada; o gap é exclusivamente operacional, não técnico.
 **Handoff G3 formal:** [Documento 110](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md) consolida checklist por responsável, SHA pretendido/implantado, backups, migrações, autorização do operador, mudança compartilhada Core/Portal, `--check`/diff IAM, `--apply` apenas após aprovação do **escopo efetivo compartilhado**, OAuth e cadastro ChatGPT. O engine `delia_mcp_keycloak_state.py` pode alterar outros MCPs; o wrapper atual não comprova flag para limitar apply exclusivamente a CLARA. A ficha pública é contrato alvo, não cadastro realizado.
 
 **Status após este adendo:** `G2_PO=ACCEPT_WITH_RESIDUAL`; `G3_OPERATOR=PENDING`; `G1_OWNERS=PENDING`; `PROD_DEPLOY_PREVIOUS=OWNER_REPORTED` em `2eeb5fb943`; `R4_FIXES_PROD_DEPLOY=TO_VERIFY`; `IAM_MCP_CLARA_PROD=BLOCKED/PENDING_OWNER`; `CHATGPT_CONNECTED=TEST_NOT_RUN`. Nenhuma nova operação produtiva foi realizada nesta atualização documental.
+
+## Adendo 9 — Alinhamento de release prod executado (G3, 26/10/2026 ~14:30 UTC)
+
+O Operador executou o handoff do [Doc 110](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md) (seção 8, matriz preenchida). Resultados:
+
+- **Drift descoberto e corrigido:** o checkout `d86d49ac` já continha os fixes R4, mas as imagens `core-api`, `portal`, `controllership-finance`, `controllership-finance-api` haviam sido construídas ~45min antes do commit — produção rodava código anterior. Rebuild mínimo pelo script canônico no SHA `85883e5f2` (pull do script no início do build). Verificado no binário servido: categoria `controllership_finance` no BFF, catálogo Core, step-up `getFreshAccessToken` e fallback no Portal, banner tipado no MFE.
+- **`/ready` prod: `degraded` → `ready`.** Causa: `CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN` ausente de `infra/.env` (compose usa default vazio). Segredo dedicado provisionado; `core-api` intencionalmente não recebe a var (endpoint fail-closed, sem consumidor hoje).
+- **Backups pré-mudança:** dump `cf-schema-pre-g3-20261026-142452.dump` (restaurável, 64 tabelas) + tarball de uploads (dir vazio em prod). Migrations V001–V014 confirmadas; corpus 52/1298 íntegro.
+- **Smoke read-only:** MCP sem token = 401 fail-closed; OIDC metadata 200; portal 200; core health 200; 107 containers Up; zero eventos de notificação pendentes.
+- **`mcp-clara` prod: continua `BLOCKED_IAM`.** `KEYCLOAK_ADMIN` em `infra/.env` falha login (rotacionado); engine aborta antes do `--check`. Ação exata no Doc 110 §8.2.
+- **`CHATGPT_CONNECTED` = `TEST_NOT_RUN`** — inalterado; depende de `mcp-clara`.
+
+**Status:** `G3_OPERATOR_DECISION=GO (executado)`; `DEPLOYED_SHA=85883e5f2` com R4 ativo; `PROD_READY_GATE=PASS`; `IAM_MCP_CLARA_PROD=BLOCKED/PENDING_OWNER`.

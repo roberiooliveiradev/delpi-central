@@ -78,3 +78,16 @@ autorização operacional G3 (Operador SSH), credencial Keycloak prod
 **Status substitutivo:** `G2_PO_SIGNOFF=ACCEPT_WITH_RESIDUAL` — NÃO manter como PENDING a assinatura **do PO** nesta versão. A assinatura distinta da Controladoria, caso requerida pela autoridade daquele processo, não foi capturada; nunca fabricá-la. `G3_OPERATOR_SIGNOFF=PENDING`, `PROD_MCP_OAUTH_SMOKE=TEST_NOT_RUN`, `CHATGPT_CONNECTED=TEST_NOT_RUN`, `G1_OWNER_PENDING`.
 
 **Autorização de próximo passo:** organizar imediatamente um único handoff ao Operador SSH + owner IAM. O G3 requer preflight/assinatura operacional próprios e revisão transversal do engine Keycloak antes de nova alteração em produção. Não implementar ou implantar por inferência da aceitação G2. Ver [Doc 110](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md).
+
+## Registro: G3 operacional executado (26/10/2026 ~14:30 UTC)
+
+| Gate | Estado | Detalhe |
+|---|---|---|
+| `G3_OPERATOR` | `GO — EXECUTADO` | alinhamento de release em `srv-api` no SHA `85883e5f2`; imagens R4 efetivas; `/ready`=ready; backups+migrations OK — Doc 110 §8 |
+| `DEPLOYED_SHA` | `85883e5f2` | inclui `5e9a0ddd81` (R4) no runtime, não apenas no tree |
+| `PROD_SMOKE_READONLY` | `PASS` | MCP 401, OIDC 200, portal/core 200, zero regressão |
+| `KEYCLOAK_PROD` | `BLOCKED_IAM` | credencial admin rotacionada; `--check` nem inicia — owner IAM |
+| `CHATGPT_CONNECTION` | `TEST_NOT_RUN` | depende de `mcp-clara`; ficha pública pronta (Doc 107) |
+| `G1_OWNERS` | `PENDING` | T03/T05/P7/R01–R15 fora do aceite |
+
+Único bloqueio externo restante: credencial Keycloak prod vigente (owner IAM → `--check` → diff → `--apply` → cadastro ChatGPT → smoke autenticado).

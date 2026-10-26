@@ -494,3 +494,14 @@ estavam em `origin/main`; a divergência era de stack local.
 **Nova situação de gates após esta declaração:** `G2_PO_SIGNOFF=ACCEPT_WITH_RESIDUAL` (**atual, substitui todos os antigos “G2_HUMAN_DECISION=PENDING” neste documento**); `G2_CONTROLADORIA_SEPARATE_SIGNOFF=NOT_RECORDED` se exigido pelo owner distinto; `G1_RESIDUALS=PENDING`; `G3_OPERATOR_SIGNOFF=PENDING`; `IAM_PROD=BLOCKED_UNTIL_AUTHORIZED`; `CHATGPT_PROD=TEST_NOT_RUN`. **G2 não concede autorização SSH nem IAM.**
 
 **Handoff operacional:** [Documento 110 — G3 Operador/IAM, Keycloak e ChatGPT](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md).
+
+## G3 — Execução operacional registrada (26/10/2026 ~14:30 UTC)
+
+O handoff do [Doc 110](./110-g3-handoff-operator-iam-clara-chatgpt-2026-10-26.md) §8 foi executado pelo Operador sob GO desta sessão. Resultado material:
+
+- **`DEPLOYED_SHA = 85883e5f2e789`** em `srv-api`, com o pacote R4 (`5e9a0ddd81`) agora **efetivamente nas imagens** — antes desta janela o tree continha os fixes mas as imagens eram anteriores ao commit (drift detectado pelo preflight). Verificado no runtime: categoria canônica `controllership_finance` no binário BFF e no catálogo Core, `getFreshAccessToken` + fallback no bundle Portal, mensagens tipadas no bundle MFE.
+- **`/ready` produção = `ready`** (era `degraded` por `CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN` ausente; segredo provisionado via `.env`, fail-closed do Core preservado).
+- **Backups pré-mudança restauráveis** (`cf-schema-pre-g3-*.dump` + uploads); **migrations V001–V014 íntegras**; **corpus 52/1298 íntegro**; **zero writes de negócio** na janela; 107 containers Up sem regressão.
+- **Smoke read-only prod:** MCP 401 sem token; OIDC discovery 200; portal/core 200; catálogo `/me/notifications/catalog` responde 401 sem auth (roteamento correto, categoria presente no catálogo servido).
+
+**Gates após esta execução:** `G3_OPERATOR_DECISION=GO (executado)` para o alinhamento de release; `G3_OPERATOR_SIGNOFF=RECORDED` (Operador nesta sessão — Doc 110 §8); `KEYCLOAK_ADMIN_ACCESS=BLOCKED` (credencial rotacionada — owner IAM); `CLIENT_MCP_CLARA=NOT_PROVISIONED`; `CHATGPT_CONNECTION=TEST_NOT_RUN`; smoke autenticado MCP/ChatGPT = `TEST_NOT_RUN` até o gate IAM. **O bloqueio restante é único e externo: credencial administrativa Keycloak prod vigente (owner IAM), ação exata no Doc 110 §8.2.**
