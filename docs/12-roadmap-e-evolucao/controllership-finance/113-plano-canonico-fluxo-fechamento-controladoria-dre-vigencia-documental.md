@@ -94,3 +94,61 @@ Fluxo canônico de delivery: local → testes → revisão → commit → push �
 **Execução de Devin já encaminhada antes deste plano:** `CF-PROC0072-MONTHLY-REFERENCE-CATALOG-001`; nenhuma nova execução é iniciada por este documento. Ao apresentar relatório, revalidar HEAD e confrontar explicitamente os sete checkpoints. Documentos 112, 09, 23 e README possuem registros do PO anteriores a este plano; verificar e harmonizar referências com a nova decisão de fluxo sem reescrever o histórico. Relatório deve listar BASE/FINAL HEAD, git status, fatos `PROVEN|TO_INVENTORY|PLANNED|TARGET`, testes `PASS|FAIL|PENDING|INCONCLUSIVE|TEST_NOT_RUN|STALE_EVIDENCE`, drift, matriz de arquivos afetados, gaps, GO, SHA e próximo passo.
 
 **Status final deste plano:** decisão funcional `PROVEN` (PO); implementação `TARGET`; verificação operacional `INCONCLUSIVE` até evidência homologada; remoção de legado `NOT AUTHORIZED`.
+
+
+## 9. UX detalhada por superfície — decisão PO de 26/10/2026 (TARGET)
+
+**Alcance:** exclusivamente fechamento mensal. São três abas internas; a Administração é uma área de gestão separada; a página de Contabilidade/DRE será a última entrega. O detalhe de documento é **deep route contextual**, não uma quarta aba. Regra aprovada: cadastro/edição da configuração documental em **página completa, não modal**. O PO também solicitou **detalhe do documento com interação**; a disposição duas colunas e o uso de deep route são especificação visual TARGET sujeita a validação e contratos de colaboração. Não confundir definição de documento exigido com PDF anexado.
+
+### 9.1 Início
+- Hero comum Minha DELPI e entrada principal **Fechamento mensal**; atalhos a Documentos e interações e Relatórios e divergências preservando mês/tab.
+- Componentes prioritários: `createDashboardPageHero`, `createDashboardEventsSection`, `createDashboardCatalogSearchBar`, `createDashboardRecentAccessStrip`, `createDashboardSectionRouteCard`, `ActionButton`, `EmptyState`; não refazer TopBar/chrome.
+- Estados loading/empty/error e cards sem métricas inventadas.
+
+### 9.2 Fechamento mensal — Visão geral (aba 1)
+- PagePath, referência `YYYY-MM`, contexto de fechamento existente ou botão **Abrir fechamento** se ausente (Access sob AuthZ); selecionar mês não cria registro.
+- Indicadores Bloqueios, Divergências e Documentos a tratar são links contextuais às três abas, nunca novas rotas. Não exibir contagem sem fonte/semântica.
+- Estados Estoque, Documentação e Pacote separados. Conclusão distinta de envio P5.
+- Kit: `createDashboardPagePath` (verificar factory), `createDashboardPageHero`, `QuickPeriodSelector` (avaliar adequação para mês; não lista apenas OPEN), `KpiCard`, `MetricKpiCard`, `ProgressTracker`, `AlertQueue`, `WorklistItem`, `Timeline`, `StateBanner`, `EmptyState`, `ActionButton`.
+
+### 9.3 Fechamento mensal — Documentos e interações (aba 2)
+- Lista dos entregáveis aplicáveis à referência e PDFs efetivamente anexados, com estado de entrega/validação, versão, comentários, ajustes e histórico; ausência é empty state honesto.
+- Ação de abrir detalhe do documento **sem sair do contexto de competência**; anexo e replacement conforme P2. Comentários e solicitações de complemento não equivalem a aceite formal P5.
+- Kit: `DataTableSection`, `DataRecordCard`, `ResizableColumns` (validar export/factory), attachment primitives e `FilePreview` (confirmar nome real), `Timeline`, `EmptyGuidance`, `ActionButton`, `FieldLabel`, `HelpTooltip`, `StateBanner`.
+
+### 9.4 Detalhe do PDF / interações — deep route contextual
+- Entrada Controladoria: aba Documentos e interações > documento; entrada DRE: Documentos recebidos > competência > documento. **Mesma thread e histórico de documento/competência**, porém projection e ações autorizadas diferentes.
+- Desktop: **prévia PDF e versões à esquerda**, **thread/comentários/solicitações à direita**, **histórico auditável abaixo**; mobile empilha regiões e conserva foco e scroll/contexto.
+- Mostrar documento/tipo, competência, versão atual, versões anteriores, autoria/datas, estados do pedido e log de upload/substituição. Contabilidade pode comentar, baixar e pedir refazimento; Controladoria responde e anexa nova versão conforme permissões. **Responder não encerra automaticamente**: validação do atendimento pela parte autorizada. Não dar à DRE upload, relatórios TOTVS, divergências, administração, aceite P2/P5.
+- Kit candidato: `createDashboardPagePath`, `BackLink`, `ResizableColumns` (verificar API), primitives de preview/download e attachment, `Timeline`, `DataRecordCard`, `ActionButton`, `FieldLabel`, `HelpTooltip`, `StateBanner`, `EmptyState`; **conversation composer/threads apenas após verificar contrato de colaboração e exports concretos**, não importar domínio de Minhas Solicitações. Não usar `FilePreviewModal` como substituto da página completa quando preview inline disponível; identificar alternativa real.
+
+### 9.5 Fechamento mensal — Relatórios e divergências (aba 3)
+- Matriz de relatórios calculados por backend owner, totais, proveniência, diferenças, detalhe progressivo até o ponto exato corrigível no ERP, reconsulta pós-correção e container de prévia do PDF. Relatórios internos não são entregáveis DRE por padrão.
+- Kit: `DataTableSection`, `DataRecordCard`, `MetricKpiCard`, `AlertQueue`, `DetailFieldGrid`, `Timeline`, `ActionButton`, `StateBanner`, `EmptyState`, `createDashboardPagePath` (confirmar export).
+- Sem cálculo financeiro no React, sem write ERP, sem linha a linha obrigatória como fluxo principal.
+
+### 9.6 Administração — listagem dos documentos exigidos para DRE
+- Acesso somente Manage ou Super Admin com effective permission/scope. Tabela com nome, destino DRE, obrigatoriedade, vigência inicial/final/excepcional, status, versão, autoria e ações **Adicionar**/**Editar**/**Histórico**.
+- Kit: `createDashboardPageHero`, `createDashboardPagePath`, `DataTableSection`, `DataRecordCard`, `ActionButton`, `EmptyGuidance`, `StateBanner`, filtros/confirm kit público.
+- Nenhuma quarta aba no Fechamento mensal.
+
+### 9.7 Administração — página de cadastro de documento exigido
+- **Rota própria**, não modal. Formulário com nome, descrição, destinatário DRE, obrigatoriedade, vigência a partir de competência, término opcional, exceção para competência/intervalo, justificativa e ações Salvar/Cancelar.
+- Kit: `createDashboardPagePath`, `BackLink`, `createDashboardPageHero`, `ActionButton`, `FieldLabel`, `HelpTooltip`, `createDashboardNativeFormFields` (campos TextField/SelectField/TextAreaField e date nativo conforme catálogo); validar export e API antes de usar.
+- Backend efetua validação de sobreposição/vigência conforme contrato ainda a definir; não inventar schema.
+
+### 9.8 Administração — página de edição de documento exigido
+- **Rota própria** reutilizando formulário anterior; mostrar edição de vigência com preview de impacto e histórico de versões, sem retroagir sobre competências finalizadas. Cancelar/voltar preserva filtros e foco.
+- Mesmo kit do cadastro + `Timeline`, `StateBanner` e controles de confirmação do catálogo. Preservar o modal legado até substituição homologada e depreciação autorizada.
+
+### 9.9 DRE — documentos recebidos (última fase)
+- Competência selecionada, somente PDFs **liberados** para aquele público; lista com status de análise, versão, data, download, abrir detalhe e solicitar refazimento (na página de detalhe).
+- Kit: `createDashboardPageHero`, `createDashboardPagePath`, `DataTableSection`, `DataRecordCard`, `EmptyGuidance`, `ActionButton`, `StateBanner`, `Timeline`; habilitação condicionada a gate de segurança do público DRE, sem permission nova antecipada.
+- Não exibir relatórios operacionais, divergências, upload/substituição, administração ou ações de aceite P2/P5.
+
+### 9.10 Protocolo obrigatório de componentes (Devin)
+- **Visitar/inventariar antes de codificar:** `plugins/plugin-ui/src/index.ts`, `plugins/plugin-ui/docs/component-catalog.md`, `plugins/plugin-ui/src/catalog/visualComponents.ts`, exemplos em `plugins/plugin-ui/src/catalog/demos/` e, quando acessível, app de demonstração `/apps/plugin-ui`. Conferir export público, props reais, CSS/tokens e se componente é factory ou componente direto.
+- Preferir `import { ... } from "@delpi/plugin-ui/index"` e `import("@delpi/plugin-ui/styles")`, conforme mapa 30. **Nomes deste plano são candidatos de reuso, não certificação de que todos são exports diretos**. Particularmente `ResizableColumns`, `PagePath`, preview inline, editor de conversa e attachment kit exigem validação de export/factory.
+- Se componente adequado não existir, reportar GAP/owner e propor adapter mínimo ou evolução compartilhada, sem duplicar chrome, formulário, modal ou estilos. UI consistente em tema claro/escuro, desktop/mobile, teclado/foco, URL/F5. Ajuda deve mudar no mesmo gate.
+- Testar acesso DRE vs Controladoria e Manage, ausência de documento, V1→pedido→V2→verificação, histórico imutável, fail-closed, deep link, retorno e janela de competência.
+- Este detalhamento **não amplia o GO vigente** nem autoriza execução concorrente ao prompt que Devin já recebeu.
