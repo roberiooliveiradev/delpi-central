@@ -132,6 +132,28 @@ describe("SupplierIntegrationStatusCard (X4.REST-STATUS.S1/S2) — boundaries", 
     expect(card).toContain('from "lucide-react"');
   });
 
+  it("S2.R1 — widget montado via portal no body, fora do transform do host", () => {
+    const card = read("SupplierIntegrationStatusCard.tsx");
+    // âncora real na viewport: o host anima a rota com transform (fill both),
+    // que captura position:fixed — o portal no body remove o containing block.
+    expect(card).toContain('from "react-dom"');
+    expect(card).toContain("createPortal(");
+    expect(card).toContain("document.body");
+    // wrapper do portal reaplica o escopo de tokens/seletores do MFE
+    expect(card).toContain("dashboard-supplies-portal");
+    expect(card).toContain("sp-suppliers-status-card-portal");
+  });
+
+  it("S2.R1 — painel expandido nunca ultrapassa o topo da viewport", () => {
+    const css = readFileSync(join(dir, "../../index.css"), "utf8");
+    const open = css.indexOf(".sp-suppliers-status-card__details {");
+    const details = css.slice(open, css.indexOf("}", open));
+    // altura limitada pela viewport real menos o cabeçalho/ações
+    expect(details).toMatch(/calc\(100dvh - 1[0-9]{2}px\)/);
+    expect(details).toContain("overflow-y: auto");
+    expect(details).toContain("max-height");
+  });
+
   it("S2 — acessibilidade: aria-expanded, Escape, foco devolvido ao acionador", () => {
     const card = read("SupplierIntegrationStatusCard.tsx");
     expect(card).toContain("aria-expanded");

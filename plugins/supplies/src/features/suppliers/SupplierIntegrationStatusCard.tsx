@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
 
 import {
   Activity,
@@ -153,8 +160,14 @@ export function SupplierIntegrationStatusCard() {
   const checkedAt = status ? formatCheckedAt(status.checked_at) : "";
   const expanded = view === "expanded";
 
+  // X4.REST-STATUS.S2.R1 — portal no body: o host federado anima a entrada da
+  // rota com `transform` (appHostRouteEnter, fill both), o que transforma o
+  // ancestral em containing block e captura o `position: fixed` — o painel
+  // passava a ancorar no fim do conteúdo e era cortado fora da viewport.
+  // Renderizar via portal restaura a âncora real na viewport.
+  let widget: ReactNode;
   if (view === "closed") {
-    return (
+    widget = (
       <button
         ref={reopenRef}
         type="button"
@@ -166,9 +179,8 @@ export function SupplierIntegrationStatusCard() {
         <Activity size={18} aria-hidden />
       </button>
     );
-  }
-
-  return (
+  } else {
+    widget = (
     <section
       className={`sp-suppliers-status-card${
         expanded ? " sp-suppliers-status-card--expanded" : ""
@@ -303,5 +315,17 @@ export function SupplierIntegrationStatusCard() {
         </div>
       ) : null}
     </section>
+    );
+  }
+
+  if (typeof document === "undefined") return null;
+  // Escopo .dashboard-supplies-portal reaplicado no wrapper do portal: os
+  // tokens --sp-* e os seletores do widget dependem dessa classe e ela não
+  // existe acima do mount point do MFE no body.
+  return createPortal(
+    <div className="dashboard-supplies-portal sp-suppliers-status-card-portal">
+      {widget}
+    </div>,
+    document.body,
   );
 }

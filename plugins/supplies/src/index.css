@@ -2209,10 +2209,11 @@
   gap: 6px;
   border-top: 1px solid var(--sp-border);
   padding-top: 10px;
-  /* Painel cresce para cima (ancorado em `bottom`) e limita a altura a uma
-     fração segura da viewport — só o conteúdo interno rola. */
-  max-height: 480px;
-  max-height: min(55dvh, 480px);
+  /* Painel cresce para cima (ancorado em `bottom`) e limita a altura à
+     viewport real menos head/erro/ações — só o conteúdo interno rola e o
+     topo nunca sai da tela (S2.R1). */
+  max-height: 360px;
+  max-height: min(55dvh, calc(100dvh - 180px), 480px);
   overflow-y: auto;
 }
 
