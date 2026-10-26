@@ -53,8 +53,43 @@ export type MarketSourceMeta = {
   license_reference: string;
 };
 
+/** Approved import NCM offered by the R2 catalog (MDIC Comex Stat). */
+export type MarketImportNcmFilter = {
+  ncm_code: string;
+  kind: "comex_import";
+  description: string;
+  family_code: string | null;
+  ncm_version: string | null;
+  unit: string;
+  granularities: MarketGranularity[];
+  source_id: string;
+  latest_observation_date: string | null;
+  selectable?: boolean;
+};
+
+/** IBGE SIDRA producer-price series (IPP Metalurgia). */
+export type MarketProducerPriceFilter = {
+  series_id: string;
+  kind: "producer_price";
+  label: string;
+  activity_code: string;
+  activity_label: string;
+  variable_code: string;
+  variable_label: string;
+  table_code: string;
+  metric_kind: string;
+  unit: string;
+  base_reference: string | null;
+  granularities: MarketGranularity[];
+  source_id: string;
+  latest_observation_date: string | null;
+  selectable?: boolean;
+};
+
 export type MarketFiltersResponse = {
   instruments: MarketInstrumentFilter[];
+  import_ncms?: MarketImportNcmFilter[];
+  producer_price_series?: MarketProducerPriceFilter[];
   currencies: MarketCurrency[];
   granularities: MarketGranularity[];
   fx_kinds: MarketFxKind[];
@@ -176,6 +211,75 @@ export type MarketMonthlyAveragesResponse = {
   meta: MarketSeriesResponse["meta"];
 };
 
+/** One aggregated month/year of Comex import data for an approved NCM. */
+export type MarketImportPoint = {
+  period: string;
+  fob_usd_total: string | null;
+  net_weight_kg_total: string | null;
+  net_weight_t: string | null;
+  unit_value_usd_per_t: string | null;
+  contributing_rows: number;
+  observation_count: number;
+  coverage: string;
+};
+
+export type MarketImportSeriesResponse = {
+  series: {
+    ncm_code: string;
+    ncm_version: string | null;
+    description: string;
+    family_code: string | null;
+    kind: "comex_import";
+    unit: string;
+    metric_kind: string;
+  };
+  filters: { country_code: string | null; state_code: string | null };
+  granularity: MarketGranularity;
+  points: MarketImportPoint[];
+  meta: MarketSeriesResponse["meta"];
+};
+
+export type MarketProducerPricePoint = {
+  period: string;
+  value: string | null;
+  quality?: string | null;
+  observation_count: number;
+  coverage: string;
+};
+
+export type MarketProducerPriceSeriesResponse = {
+  series: {
+    series_id: string;
+    kind: "producer_price";
+    label: string;
+    activity_code: string;
+    activity_label: string;
+    variable_code: string;
+    variable_label: string;
+    table_code: string;
+    metric_kind: string;
+    unit: string;
+    base_reference: string | null;
+  };
+  granularity: MarketGranularity;
+  points: MarketProducerPricePoint[];
+  meta: MarketSeriesResponse["meta"];
+};
+
+export type MarketFxSeriesResponse = {
+  series: {
+    instrument_code: string;
+    kind: "fx";
+    label: string;
+    pair: string;
+    rate_kind: MarketFxKind;
+    unit: string;
+  };
+  granularity: MarketGranularity;
+  points: MarketSeriesPoint[];
+  meta: MarketSeriesResponse["meta"];
+};
+
 export type MarketQueryParams = {
   instrument: string;
   currency: MarketCurrency;
@@ -226,6 +330,55 @@ export function getMarketIntelligenceMonthlyAverages(
 ): Promise<MarketMonthlyAveragesResponse> {
   return httpGet(
     suppliesApiUrl(`/market-intelligence/monthly-averages${toQuery(params)}`),
+    { signal },
+  );
+}
+
+export function getMarketImportSeries(
+  params: {
+    ncm: string;
+    granularity: MarketGranularity;
+    date_from: string;
+    date_to: string;
+    country_code?: string;
+    state_code?: string;
+  },
+  signal?: AbortSignal,
+): Promise<MarketImportSeriesResponse> {
+  return httpGet(
+    suppliesApiUrl(`/market-intelligence/imports/series${toQuery(params)}`),
+    { signal },
+  );
+}
+
+export function getMarketProducerPriceSeries(
+  params: {
+    series_id: string;
+    granularity: MarketGranularity;
+    date_from: string;
+    date_to: string;
+  },
+  signal?: AbortSignal,
+): Promise<MarketProducerPriceSeriesResponse> {
+  return httpGet(
+    suppliesApiUrl(
+      `/market-intelligence/producer-prices/series${toQuery(params)}`,
+    ),
+    { signal },
+  );
+}
+
+export function getMarketFxSeries(
+  params: {
+    fx_kind: MarketFxKind;
+    granularity: MarketGranularity;
+    date_from: string;
+    date_to: string;
+  },
+  signal?: AbortSignal,
+): Promise<MarketFxSeriesResponse> {
+  return httpGet(
+    suppliesApiUrl(`/market-intelligence/fx/series${toQuery(params)}`),
     { signal },
   );
 }

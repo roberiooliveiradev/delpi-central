@@ -84,8 +84,40 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     } as Record<string, string>,
   },
 
+  modules: {
+    importsTitle: "Importações — Comex Stat (MDIC)",
+    importsHint:
+      "Valor FOB, peso líquido e valor médio de importação em US$/t " +
+      "por NCM homologada. Não é cotação internacional de metal.",
+    importsNcmLabel: "NCM",
+    importsNcmHint:
+      "Somente NCMs homologadas por Compras aparecem para consulta.",
+    importsPeriodColumn: "Período",
+    importsFobColumn: "Valor FOB (US$)",
+    importsWeightColumn: "Peso líquido (t)",
+    importsUnitColumn: "Valor médio (US$/t)",
+    importsRowsColumn: "Registros",
+    ippTitle: "Preços Industriais — IPP (IBGE)",
+    ippHint:
+      "Índice de Preços ao Produtor da atividade Metalurgia. É um " +
+      "índice/variação — não é cotação de metal nem valor monetário.",
+    ippSeriesLabel: "Série IPP",
+    ippPeriodColumn: "Período",
+    ippValueColumn: "Valor",
+    fxTitle: "Câmbio — PTAX (Banco Central)",
+    fxHint:
+      "Cotação PTAX oficial de fechamento. Dias sem boletim ficam " +
+      "ausentes — nunca são preenchidos artificialmente.",
+    fxKindSelectorLabel: "Tipo de boletim",
+    fxPeriodColumn: "Período",
+    fxValueColumn: "PTAX (R$/US$)",
+  },
+
   states: {
     loading: "Carregando inteligência de mercado…",
+    moduleUnavailable:
+      "Este indicador está indisponível no momento — a fonte não foi " +
+      "ativada ou os direitos de exibição estão em revisão.",
     partialNote:
       "Dados parciais: parte do período não possui observações ou " +
       "câmbio correspondente.",

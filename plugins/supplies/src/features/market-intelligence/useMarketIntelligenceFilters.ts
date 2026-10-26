@@ -62,6 +62,8 @@ export function useMarketIntelligenceFilters(
       currency: fromUrl.currency ?? DEFAULT_CURRENCY,
       granularity: fromUrl.granularity ?? DEFAULT_GRANULARITY,
       fxKind: fromUrl.fxKind ?? DEFAULT_FX_KIND,
+      ncm: fromUrl.ncm ?? "",
+      ippSeries: fromUrl.ippSeries ?? "",
       from: fromUrl.from ?? range.from,
       to: fromUrl.to ?? range.to,
     } satisfies MarketIntelligenceUrlState;
@@ -114,6 +116,8 @@ export function useMarketIntelligenceFilters(
         currency: fromUrl.currency ?? prev.currency,
         granularity: fromUrl.granularity ?? prev.granularity,
         fxKind: fromUrl.fxKind ?? prev.fxKind,
+        ncm: fromUrl.ncm ?? prev.ncm,
+        ippSeries: fromUrl.ippSeries ?? prev.ippSeries,
         from: fromUrl.from ?? prev.from,
         to: fromUrl.to ?? prev.to,
       }));
@@ -142,6 +146,8 @@ export function useMarketIntelligenceFilters(
     setGranularity: (granularity: MarketGranularity) =>
       patch({ granularity }),
     setFxKind: (fxKind: MarketFxKind) => patch({ fxKind }),
+    setNcm: (ncm: string) => patch({ ncm }),
+    setIppSeries: (ippSeries: string) => patch({ ippSeries }),
     setFrom: (from: string) => patch({ from }),
     setTo: (to: string) => patch({ to }),
   };

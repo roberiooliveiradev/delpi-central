@@ -114,6 +114,12 @@ export const SP_HELP = {
     "Série histórica na granularidade escolhida. Pontos sem observação ficam vazios (sem interpolação). O selo indica fonte e o banner sinaliza dados parciais ou desatualizados.",
   marketIntelligenceMonthlyTable:
     "Alternativa tabular acessível ao gráfico: média mensal, média nativa em USD, PTAX do mês, número de observações e cobertura de cada período.",
+  marketIntelligenceImports:
+    "Importações oficiais (Comex Stat / MDIC): valor FOB total, peso líquido e valor médio de importação em US$/t por NCM homologada. O valor médio é calculado sobre os totais agregados do período — é uma referência de custo de importação, não uma cotação internacional de metal.",
+  marketIntelligenceIpp:
+    "Índice de Preços ao Produtor (IPP) do IBGE para a atividade Metalurgia — número-índice (dez/2018=100) e variação mensal. É um indicador de preços industriais, não uma cotação de metal em US$/t.",
+  marketIntelligenceFx:
+    "Cotação PTAX de fechamento do Banco Central — compra e venda são séries separadas. Dias úteis sem boletim permanecem ausentes, nunca preenchidos.",
   purchaseRequests:
     "Acompanhamento global das solicitações no período. Os indicadores contam SCs, não linhas: Solicitações é o total do recorte; Aguardando pedido reúne SCs ainda sem pedido completo; Aguardando recebimento reúne SCs já encaminhadas e ainda não concluídas. Atenção só filtra a lista — não é permissão nem um fluxo novo.",
   purchaseRequestsStage:

@@ -165,6 +165,74 @@ describe("market intelligence page (PROC-0076)", () => {
     expect(content).toContain("sourceNotApproved");
   });
 
+  it("renders the three R2 source modules (R2)", () => {
+    const page = readFileSync(
+      join(here, "MarketIntelligencePage.tsx"),
+      "utf8",
+    );
+    expect(page).toContain("importsTitle");
+    expect(page).toContain("ippTitle");
+    expect(page).toContain("fxTitle");
+    // Modules consume only dedicated BFF endpoints — never upstream.
+    expect(page).toContain("getMarketImportSeries");
+    expect(page).toContain("getMarketProducerPriceSeries");
+    expect(page).toContain("getMarketFxSeries");
+    // Same default-deny posture for the new catalog sections.
+    expect(page).toContain("entry.selectable === true");
+    const module = readFileSync(
+      join(here, "MarketIntelligenceModuleSection.tsx"),
+      "utf8",
+    );
+    expect(module).toContain("setRows([])");
+    expect(module).toContain("SuppliesDataTable");
+    expect(module).toContain("MultiTypeSeriesChart");
+  });
+
+  it("documents the R2 modules without conflating metric kinds (R2)", () => {
+    const content = readFileSync(join(here, "content.ts"), "utf8");
+    // Comex FOB is never labelled a metal quote; IPP is never a price
+    // in USD/t; both carry their own PT-BR labels.
+    expect(content).toContain("valor médio de importação");
+    expect(content).toContain("Metalurgia");
+    expect(content).toContain("PTAX");
+    expect(content).toContain("moduleUnavailable");
+  });
+
+  it("URL roundtrip persists ncm and ipp_series selections (R2)", () => {
+    let written = "";
+    withWindow(
+      "?ncm=74040010&ipp_series=ipp-metalurgia-index&from=2026-01-01&to=2026-12-31",
+      (stub) => {
+        const state = readMarketIntelligenceFromUrl();
+        expect(state.ncm).toBe("74040010");
+        expect(state.ippSeries).toBe("ipp-metalurgia-index");
+        stub.history.replaceState = (_s, _t, url) => {
+          written = url;
+        };
+        writeMarketIntelligenceToUrl({
+          instrument: "",
+          currency: "USD",
+          granularity: "month",
+          fxKind: "ptax_closing_sell",
+          ncm: "74040010",
+          ippSeries: "ipp-metalurgia-mom",
+          from: "2026-01-01",
+          to: "2026-12-31",
+        });
+      },
+    );
+    expect(written).toContain("ncm=74040010");
+    expect(written).toContain("ipp_series=ipp-metalurgia-mom");
+  });
+
+  it("URL read rejects malformed module selections (R2)", () => {
+    withWindow("?ncm=12345&ipp_series=<script>", () => {
+      const state = readMarketIntelligenceFromUrl();
+      expect(state.ncm).toBeUndefined();
+      expect(state.ippSeries).toBeUndefined();
+    });
+  });
+
   it("URL read rejects out-of-contract values", () => {
     withWindow(
       "?instrument=<script>&currency=EUR&granularity=hour&fx_kind=spot&from=99%2F01%2F2025&to=nope",

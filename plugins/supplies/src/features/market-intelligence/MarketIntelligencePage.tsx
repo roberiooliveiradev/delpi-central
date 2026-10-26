@@ -28,17 +28,24 @@ import {
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import {
+  getMarketFxSeries,
+  getMarketImportSeries,
   getMarketIntelligenceFilters,
   getMarketIntelligenceSummary,
+  getMarketProducerPriceSeries,
   type MarketCurrency,
   type MarketFxKind,
   type MarketGranularity,
+  type MarketImportPoint,
+  type MarketProducerPricePoint,
+  type MarketSeriesPoint,
   type MarketSummaryResponse,
 } from "./api";
 import {
   mapMarketIntelligenceError,
   MARKET_INTELLIGENCE_CONTENT,
 } from "./content";
+import { MarketIntelligenceModuleSection } from "./MarketIntelligenceModuleSection";
 import { MarketIntelligenceMonthlyTable } from "./MarketIntelligenceMonthlyTable";
 import { MarketIntelligenceSeriesSection } from "./MarketIntelligenceSeriesSection";
 import { useMarketIntelligenceFilters } from "./useMarketIntelligenceFilters";
@@ -92,6 +99,22 @@ function formatPercent(raw: string | null): string {
   })}%`;
 }
 
+function formatDecimal(raw: string | null | undefined): string {
+  if (raw === null || raw === undefined) return "—";
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return "—";
+  return parsed.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
+}
+
+function coverageLabel(coverage: string): string {
+  return (
+    MARKET_INTELLIGENCE_CONTENT.table.coverageLabels[coverage] ?? coverage
+  );
+}
+
 function dataStatusBadgeVariant(
   status: string | undefined,
 ): "success" | "warning" | "danger" | "info" | "neutral" {
@@ -116,6 +139,20 @@ export function MarketIntelligencePage({
   const [sources, setSources] = useState<
     Awaited<ReturnType<typeof getMarketIntelligenceFilters>>["sources"]
   >([]);
+  const [importNcms, setImportNcms] = useState<
+    NonNullable<
+      Awaited<
+        ReturnType<typeof getMarketIntelligenceFilters>
+      >["import_ncms"]
+    >
+  >([]);
+  const [ippSeriesOptions, setIppSeriesOptions] = useState<
+    NonNullable<
+      Awaited<
+        ReturnType<typeof getMarketIntelligenceFilters>
+      >["producer_price_series"]
+    >
+  >([]);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -127,6 +164,8 @@ export function MarketIntelligencePage({
         setInstruments(payload.instruments);
         setDefaultInstrument(payload.default_instrument);
         setSources(payload.sources);
+        setImportNcms(payload.import_ncms ?? []);
+        setIppSeriesOptions(payload.producer_price_series ?? []);
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -150,6 +189,46 @@ export function MarketIntelligencePage({
     defaultInstrument,
   );
   const ready = Boolean(filters.state.instrument);
+
+  // R2 modules — same default-deny posture as legacy instruments.
+  const selectableNcms = useMemo(
+    () => importNcms.filter((entry) => entry.selectable === true),
+    [importNcms],
+  );
+  const selectableIpp = useMemo(
+    () => ippSeriesOptions.filter((entry) => entry.selectable === true),
+    [ippSeriesOptions],
+  );
+
+  const ncmOptions = useMemo(
+    () =>
+      selectableNcms.map((entry) => ({
+        value: entry.ncm_code,
+        label: `${entry.ncm_code} — ${entry.description}`,
+      })),
+    [selectableNcms],
+  );
+  const ippOptions = useMemo(
+    () =>
+      selectableIpp.map((entry) => ({
+        value: entry.series_id,
+        label: entry.label,
+      })),
+    [selectableIpp],
+  );
+
+  const selectedNcm =
+    selectableNcms.find(
+      (entry) => entry.ncm_code === filters.state.ncm,
+    )?.ncm_code ??
+    selectableNcms[0]?.ncm_code ??
+    "";
+  const selectedIpp =
+    selectableIpp.find(
+      (entry) => entry.series_id === filters.state.ippSeries,
+    )?.series_id ??
+    selectableIpp[0]?.series_id ??
+    "";
 
   const [summary, setSummary] = useState<MarketSummaryResponse | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -423,6 +502,195 @@ export function MarketIntelligencePage({
           />
         ) : null}
       </SuppliesSectionCard>
+
+      <MarketIntelligenceModuleSection<
+        MarketImportPoint & { value: string | null }
+      >
+        title={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
+        hint={SP_HELP.marketIntelligenceImports}
+        selectorLabel={MARKET_INTELLIGENCE_CONTENT.modules.importsNcmLabel}
+        selectorHint={MARKET_INTELLIGENCE_CONTENT.modules.importsNcmHint}
+        options={ncmOptions}
+        selection={selectedNcm}
+        onSelectionChange={filters.setNcm}
+        enabled={!catalogError && !catalogLoading}
+        unavailableLabel={
+          MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable
+        }
+        from={filters.state.from}
+        to={filters.state.to}
+        granularity={filters.state.granularity}
+        fetchSeries={async ({ selection, granularity, date_from, date_to, signal }) => {
+          const payload = await getMarketImportSeries(
+            {
+              ncm: selection,
+              granularity,
+              date_from,
+              date_to,
+            },
+            signal,
+          );
+          return {
+            dataStatus: payload.meta.data_status,
+            points: payload.points.map((point) => ({
+              ...point,
+              value: point.unit_value_usd_per_t,
+            })),
+          };
+        }}
+        columns={[
+          {
+            key: "period",
+            header: MARKET_INTELLIGENCE_CONTENT.modules.importsPeriodColumn,
+            render: (row) => row.period,
+          },
+          {
+            key: "fob",
+            header: MARKET_INTELLIGENCE_CONTENT.modules.importsFobColumn,
+            render: (row) => formatDecimal(row.fob_usd_total),
+            align: "right",
+          },
+          {
+            key: "weight",
+            header: MARKET_INTELLIGENCE_CONTENT.modules.importsWeightColumn,
+            render: (row) => formatDecimal(row.net_weight_t),
+            align: "right",
+          },
+          {
+            key: "unit",
+            header: MARKET_INTELLIGENCE_CONTENT.modules.importsUnitColumn,
+            render: (row) => formatDecimal(row.unit_value_usd_per_t),
+            align: "right",
+          },
+          {
+            key: "coverage",
+            header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
+            render: (row) => coverageLabel(row.coverage),
+          },
+        ]}
+        valueAxisLabel="US$/t"
+        valueLegend={MARKET_INTELLIGENCE_CONTENT.modules.importsUnitColumn}
+        tableAriaLabel={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
+        storageKey="supplies:market-intelligence:imports"
+      />
+
+      <MarketIntelligenceModuleSection<
+        MarketProducerPricePoint & { value: string | null }
+      >
+        title={MARKET_INTELLIGENCE_CONTENT.modules.ippTitle}
+        hint={SP_HELP.marketIntelligenceIpp}
+        selectorLabel={MARKET_INTELLIGENCE_CONTENT.modules.ippSeriesLabel}
+        options={ippOptions}
+        selection={selectedIpp}
+        onSelectionChange={filters.setIppSeries}
+        enabled={!catalogError && !catalogLoading}
+        unavailableLabel={
+          MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable
+        }
+        from={filters.state.from}
+        to={filters.state.to}
+        granularity={filters.state.granularity}
+        fetchSeries={async ({ selection, granularity, date_from, date_to, signal }) => {
+          const payload = await getMarketProducerPriceSeries(
+            {
+              series_id: selection,
+              granularity,
+              date_from,
+              date_to,
+            },
+            signal,
+          );
+          return {
+            dataStatus: payload.meta.data_status,
+            points: payload.points,
+          };
+        }}
+        columns={[
+          {
+            key: "period",
+            header: MARKET_INTELLIGENCE_CONTENT.modules.ippPeriodColumn,
+            render: (row) => row.period,
+          },
+          {
+            key: "value",
+            header: MARKET_INTELLIGENCE_CONTENT.modules.ippValueColumn,
+            render: (row) => formatDecimal(row.value),
+            align: "right",
+          },
+          {
+            key: "coverage",
+            header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
+            render: (row) => coverageLabel(row.coverage),
+          },
+        ]}
+        valueAxisLabel={
+          selectableIpp.find((s) => s.series_id === selectedIpp)?.unit ??
+          MARKET_INTELLIGENCE_CONTENT.modules.ippValueColumn
+        }
+        valueLegend={
+          selectableIpp.find((s) => s.series_id === selectedIpp)?.label ??
+          "IPP"
+        }
+        tableAriaLabel={MARKET_INTELLIGENCE_CONTENT.modules.ippTitle}
+        storageKey="supplies:market-intelligence:ipp"
+      />
+
+      <MarketIntelligenceModuleSection<MarketSeriesPoint>
+        title={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
+        hint={SP_HELP.marketIntelligenceFx}
+        selectorLabel={
+          MARKET_INTELLIGENCE_CONTENT.modules.fxKindSelectorLabel
+        }
+        options={FX_KIND_OPTIONS}
+        selection={filters.state.fxKind}
+        onSelectionChange={(value) =>
+          filters.setFxKind(value as MarketFxKind)
+        }
+        enabled={!catalogError && !catalogLoading}
+        unavailableLabel={
+          MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable
+        }
+        from={filters.state.from}
+        to={filters.state.to}
+        granularity={filters.state.granularity}
+        fetchSeries={async ({ selection, granularity, date_from, date_to, signal }) => {
+          const payload = await getMarketFxSeries(
+            {
+              fx_kind: selection as MarketFxKind,
+              granularity,
+              date_from,
+              date_to,
+            },
+            signal,
+          );
+          return {
+            dataStatus: payload.meta.data_status,
+            points: payload.points,
+          };
+        }}
+        columns={[
+          {
+            key: "period",
+            header: MARKET_INTELLIGENCE_CONTENT.modules.fxPeriodColumn,
+            render: (row) => row.period,
+          },
+          {
+            key: "value",
+            header: MARKET_INTELLIGENCE_CONTENT.modules.fxValueColumn,
+            render: (row) => formatDecimal(row.value),
+            align: "right",
+          },
+          {
+            key: "coverage",
+            header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
+            render: (row) => coverageLabel(row.coverage),
+          },
+        ]}
+        valueAxisLabel="R$/US$"
+        valueLegend={MARKET_INTELLIGENCE_CONTENT.modules.fxValueColumn}
+        tableAriaLabel={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
+        storageKey="supplies:market-intelligence:fx"
+      />
 
       <MarketIntelligenceSeriesSection
         params={filters.apiParams}

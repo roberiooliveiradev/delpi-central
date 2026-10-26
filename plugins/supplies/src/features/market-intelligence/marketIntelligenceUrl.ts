@@ -18,6 +18,10 @@ export type MarketIntelligenceUrlState = {
   fxKind: MarketFxKind;
   from: string;
   to: string;
+  /** R2 module selections — free-form codes validated against the
+  catalog (never forwarded unvalidated upstream). */
+  ncm: string;
+  ippSeries: string;
 };
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -45,6 +49,8 @@ function parseAllowlisted<T extends string>(
 export function readMarketIntelligenceFromUrl(): Partial<MarketIntelligenceUrlState> {
   const params = readSearchParams();
   const instrument = (params.get("instrument") ?? "").trim();
+  const ncm = (params.get("ncm") ?? "").trim();
+  const ippSeries = (params.get("ipp_series") ?? "").trim();
   const from = (params.get("from") ?? "").trim();
   const to = (params.get("to") ?? "").trim();
   return {
@@ -53,6 +59,10 @@ export function readMarketIntelligenceFromUrl(): Partial<MarketIntelligenceUrlSt
     granularity:
       parseAllowlisted(params.get("granularity"), GRANULARITIES) ?? undefined,
     fxKind: parseAllowlisted(params.get("fx_kind"), FX_KINDS) ?? undefined,
+    ncm: /^[0-9]{8}$/.test(ncm) ? ncm : undefined,
+    ippSeries: /^[a-z0-9-]{1,64}$/.test(ippSeries)
+      ? ippSeries
+      : undefined,
     from: ISO_DATE.test(from) ? from : undefined,
     to: ISO_DATE.test(to) ? to : undefined,
   };
@@ -71,6 +81,10 @@ export function writeMarketIntelligenceToUrl(
   else params.delete("granularity");
   if (state.fxKind) params.set("fx_kind", state.fxKind);
   else params.delete("fx_kind");
+  if (state.ncm) params.set("ncm", state.ncm);
+  else params.delete("ncm");
+  if (state.ippSeries) params.set("ipp_series", state.ippSeries);
+  else params.delete("ipp_series");
   if (state.from) params.set("from", state.from);
   else params.delete("from");
   if (state.to) params.set("to", state.to);

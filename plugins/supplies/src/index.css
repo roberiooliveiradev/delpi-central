@@ -424,6 +424,14 @@
   max-width: 100%;
 }
 
+.dashboard-supplies-portal .sp-module-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-3, 12px);
+  margin-bottom: var(--sp-space-3, 12px);
+  max-width: 420px;
+}
+
 .dashboard-supplies-portal .sp-list-table-region:focus-visible {
   outline: 2px solid var(--sp-accent, var(--primary, #089bdb));
   outline-offset: 2px;
