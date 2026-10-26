@@ -47,15 +47,27 @@ class TaskRepositoryPort(ABC):
         description: str | None,
         assignee_user_id: str,
         due_date: date | None,
+        actor_id: str,
+        actor_is_manager: bool,
     ) -> TransformometroTask:
+        """Atomic write: relationship authorization is enforced inside the
+        mutating statement, never from a read taken earlier. Raises
+        LookupError (missing), PermissionError (actor not authorized at
+        write time) or ValueError (incompatible status)."""
         raise NotImplementedError
 
     @abstractmethod
-    def complete(self, task_id: str) -> TransformometroTask:
+    def complete(
+        self, task_id: str, *, actor_id: str, actor_is_manager: bool
+    ) -> TransformometroTask:
+        """Same atomic contract as ``update``."""
         raise NotImplementedError
 
     @abstractmethod
-    def cancel(self, task_id: str) -> TransformometroTask:
+    def cancel(
+        self, task_id: str, *, actor_id: str, actor_is_manager: bool
+    ) -> TransformometroTask:
+        """Same atomic contract as ``update``."""
         raise NotImplementedError
 
     @abstractmethod
@@ -81,8 +93,13 @@ class TaskRepositoryPort(ABC):
     def origin_contexts(
         self,
         task_ids: Sequence[str],
+        *,
+        viewer_id: str,
     ) -> dict[str, TaskOriginContext]:
-        """Resolve room/process context for tasks created from interaction messages."""
+        """Resolve room/process context for tasks created from interaction
+        messages. Room id and context label are only projected when the
+        viewer can provably open the room — holding a task is not room
+        authorization."""
         raise NotImplementedError
 
     @abstractmethod

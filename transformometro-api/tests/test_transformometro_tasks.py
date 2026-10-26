@@ -462,7 +462,7 @@ def test_task_update_only_creator_or_manage():
     commands = _commands()
     task = _delegated_task(commands)
     for actor in (_user(user_id=OTHER), _user(user_id=THIRD)):
-        with pytest.raises(AuthorizationDenied):
+        with pytest.raises(PermissionError):
             commands.update(
                 actor, task.id, title="Editado", description=None,
                 assignee_user_id=OTHER, due_date=None,
@@ -482,7 +482,7 @@ def test_task_update_only_creator_or_manage():
 def test_task_complete_assignee_creator_manage_only():
     commands = _commands()
     task = _delegated_task(commands)
-    with pytest.raises(AuthorizationDenied):
+    with pytest.raises(PermissionError):
         commands.complete(_user(user_id=THIRD), task.id)
     done = commands.complete(_user(user_id=OTHER), task.id)
     assert done.status == "completed"
@@ -496,13 +496,90 @@ def test_task_complete_assignee_creator_manage_only():
 def test_task_cancel_creator_or_manage_only():
     commands = _commands()
     task = _delegated_task(commands)
-    with pytest.raises(AuthorizationDenied):
+    with pytest.raises(PermissionError):
         commands.cancel(_user(user_id=OTHER), task.id)
-    with pytest.raises(AuthorizationDenied):
+    with pytest.raises(PermissionError):
         commands.cancel(_user(user_id=THIRD), task.id)
     assert commands.cancel(_user(), task.id).status == "cancelled"
     task2 = _delegated_task(commands)
     assert commands.cancel(_manager(), task2.id).status == "cancelled"
+
+
+def test_stale_assignee_cannot_complete_after_reassignment():
+    commands = _commands()
+    task = _delegated_task(commands)
+    commands.update(
+        _user(), task.id, title=task.title, description=task.description,
+        assignee_user_id=THIRD, due_date=None,
+    )
+    # A autorização avaliada no momento da escrita reflete a linha atual:
+    # o responsável anterior não conclui mais; o novo responsável, sim.
+    with pytest.raises(PermissionError):
+        commands.complete(_user(user_id=OTHER), task.id)
+    done = commands.complete(_user(user_id=THIRD), task.id)
+    assert done.status == "completed"
+    current = commands.get(_user(), task.id)
+    assert current.assignee_user_id == THIRD
+    assert current.status == "completed"
+
+
+def test_write_conflict_states_are_classified_not_masked():
+    commands = _commands()
+    task = _delegated_task(commands)
+    done = commands.complete(_user(user_id=OTHER), task.id)
+    assert done.status == "completed"
+    with pytest.raises(ValueError, match="já está concluída"):
+        commands.complete(_user(user_id=OTHER), task.id)
+    with pytest.raises(ValueError, match="concluída não pode ser cancelada"):
+        commands.cancel(_user(), task.id)
+    with pytest.raises(ValueError, match="pendentes podem ser editadas"):
+        commands.update(
+            _user(), task.id, title="x", description=None,
+            assignee_user_id=OTHER, due_date=None,
+        )
+
+    task2 = _delegated_task(commands)
+    commands.cancel(_user(), task2.id)
+    with pytest.raises(ValueError, match="cancelada não pode ser concluída"):
+        commands.complete(_user(user_id=OTHER), task2.id)
+
+    with pytest.raises(LookupError):
+        commands.complete(_user(), "99999999-9999-9999-9999-999999999999")
+
+
+def test_origin_context_gated_by_room_membership():
+    repo = InMemoryTaskRepository()
+    msg_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    room_id = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    repo.link_message_to_process(
+        msg_id,
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        room_id=room_id,
+        process_label="Compras corporativas",
+        room_participants={OTHER},
+    )
+    commands = TaskCommandUseCases(repo)
+    task = commands.create(
+        _user(), title="Delegada", description=None, assignee_user_id=OTHER,
+        due_date=None, source_interaction_message_id=msg_id,
+    )
+    use_case = ListMyTaskItemsUseCase(commands, lambda _u: {"items": []})
+
+    # Criador delegou mas não é participante da sala: a tarefa permanece
+    # listável, sem rota nem rótulo de contexto.
+    delegated = use_case.execute(_user(), status="all", scope="delegated")
+    item = next(i for i in delegated["items"] if i["source_id"] == task.id)
+    assert item["route"] is None
+    assert item["context_label"] is None
+    assert item["actions"]["can_open"] is False
+
+    # Participante da sala resolve o contexto canônico da origem.
+    contexts = commands.origin_contexts(_user(user_id=OTHER), [task.id])
+    assert contexts[task.id].room_id == room_id
+    assert contexts[task.id].context_label == "Compras corporativas"
+    suppressed = commands.origin_contexts(_user(), [task.id])
+    assert suppressed[task.id].room_id is None
+    assert suppressed[task.id].context_label is None
 
 
 def test_my_tasks_item_flags_follow_individual_authz():

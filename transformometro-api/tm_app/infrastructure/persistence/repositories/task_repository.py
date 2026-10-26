@@ -6,6 +6,14 @@ from uuid import uuid4
 
 from tm_app.domain.entities.transformometro_task import TaskStatus, TransformometroTask
 from tm_app.domain.ports.task_repository_port import TaskOriginContext, TaskRepositoryPort
+from tm_app.domain.services.transformometro_task_rules import (
+    assert_can_cancel,
+    assert_can_complete,
+    assert_can_update,
+    can_cancel_task,
+    can_complete_task,
+    can_update_task,
+)
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
 
 _S = "transformometro"
@@ -82,42 +90,99 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
         description: str | None,
         assignee_user_id: str,
         due_date: date | None,
+        actor_id: str,
+        actor_is_manager: bool,
     ) -> TransformometroTask:
         row = self.execute_returning_one(
             f"""UPDATE {_S}.tm_tasks
                 SET title = %s, description = %s, assignee_user_id = %s::uuid,
                     due_date = %s, updated_at = NOW()
                 WHERE id = %s::uuid AND status = 'pending'
+                  AND (%s OR created_by_user_id = %s::uuid)
                 RETURNING *""",
-            (title, description, assignee_user_id, due_date, task_id),
+            (
+                title,
+                description,
+                assignee_user_id,
+                due_date,
+                task_id,
+                actor_is_manager,
+                actor_id,
+            ),
         )
         if row is None:
-            raise LookupError("Tarefa não encontrada.")
+            self._raise_write_rejected(
+                task_id,
+                actor_id=actor_id,
+                actor_is_manager=actor_is_manager,
+                allowed=can_update_task,
+                assert_allowed=assert_can_update,
+            )
         return _row_to_task(row)
 
-    def complete(self, task_id: str) -> TransformometroTask:
+    def complete(
+        self, task_id: str, *, actor_id: str, actor_is_manager: bool
+    ) -> TransformometroTask:
         row = self.execute_returning_one(
             f"""UPDATE {_S}.tm_tasks
                 SET status = 'completed', completed_at = NOW(), updated_at = NOW()
                 WHERE id = %s::uuid AND status = 'pending'
+                  AND (%s OR created_by_user_id = %s::uuid
+                       OR assignee_user_id = %s::uuid)
                 RETURNING *""",
-            (task_id,),
+            (task_id, actor_is_manager, actor_id, actor_id),
         )
         if row is None:
-            raise LookupError("Tarefa não encontrada.")
+            self._raise_write_rejected(
+                task_id,
+                actor_id=actor_id,
+                actor_is_manager=actor_is_manager,
+                allowed=can_complete_task,
+                assert_allowed=assert_can_complete,
+            )
         return _row_to_task(row)
 
-    def cancel(self, task_id: str) -> TransformometroTask:
+    def cancel(
+        self, task_id: str, *, actor_id: str, actor_is_manager: bool
+    ) -> TransformometroTask:
         row = self.execute_returning_one(
             f"""UPDATE {_S}.tm_tasks
                 SET status = 'cancelled', updated_at = NOW()
                 WHERE id = %s::uuid AND status = 'pending'
+                  AND (%s OR created_by_user_id = %s::uuid)
                 RETURNING *""",
-            (task_id,),
+            (task_id, actor_is_manager, actor_id),
         )
         if row is None:
-            raise LookupError("Tarefa não encontrada.")
+            self._raise_write_rejected(
+                task_id,
+                actor_id=actor_id,
+                actor_is_manager=actor_is_manager,
+                allowed=can_cancel_task,
+                assert_allowed=assert_can_cancel,
+            )
         return _row_to_task(row)
+
+    def _raise_write_rejected(
+        self,
+        task_id: str,
+        *,
+        actor_id: str,
+        actor_is_manager: bool,
+        allowed,
+        assert_allowed,
+    ) -> None:
+        """Classify a zero-row conditional write against the row's current
+        state: missing → LookupError, unauthorized at write time →
+        PermissionError, incompatible status → ValueError. The relationship
+        is re-read after the failed write, so stale authorizations are
+        classified against the authoritative row, never trusted."""
+        task = self.get(task_id)
+        if task is None:
+            raise LookupError("Tarefa não encontrada.")
+        if not allowed(actor_id, actor_is_manager, task):
+            raise PermissionError("Sem autorização sobre esta tarefa.")
+        assert_allowed(task.status)
 
     def list_for_assignee(
         self,
@@ -152,6 +217,8 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
     def origin_contexts(
         self,
         task_ids: Sequence[str],
+        *,
+        viewer_id: str,
     ) -> dict[str, TaskOriginContext]:
         ids = [str(task_id) for task_id in task_ids if str(task_id or "").strip()]
         if not ids:
@@ -160,7 +227,14 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
             f"""SELECT t.id AS task_id,
                        r.id AS room_id,
                        NULLIF(btrim(p.nome_processo), '') AS nome_processo,
-                       NULLIF(btrim(p.codigo_processo), '') AS codigo_processo
+                       NULLIF(btrim(p.codigo_processo), '') AS codigo_processo,
+                       (r.access_scope = 'open'
+                        OR EXISTS (
+                            SELECT 1 FROM {_S}.tm_interaction_room_participants rp
+                            WHERE rp.room_id = r.id
+                              AND rp.user_id = %s::uuid
+                              AND rp.removed_at IS NULL)
+                       ) AS can_open
                 FROM {_S}.tm_tasks t
                 LEFT JOIN {_S}.tm_interaction_messages m
                     ON m.id = t.source_interaction_message_id
@@ -171,10 +245,16 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
                 LEFT JOIN {_S}.processos p
                     ON p.processo_id = r.processo_id
                 WHERE t.id = ANY(%s::uuid[])""",
-            (ids,),
+            (viewer_id, ids),
         )
         contexts: dict[str, TaskOriginContext] = {}
         for row in rows:
+            # Sem prova de acesso à sala, room_id/context_label são suprimidos:
+            # a tarefa delegada continua listável, mas a projeção não vaza
+            # sala nem processo que o viewer não pode abrir.
+            if not row.get("can_open"):
+                contexts[str(row["task_id"])] = TaskOriginContext()
+                continue
             label = row.get("nome_processo") or row.get("codigo_processo")
             room_id = row.get("room_id")
             contexts[str(row["task_id"])] = TaskOriginContext(
@@ -206,6 +286,8 @@ class InMemoryTaskRepository(TaskRepositoryPort):
         self.message_processo_ids: dict[str, str] = {}
         self.message_room_ids: dict[str, str] = {}
         self.processo_labels: dict[str, str] = {}
+        # room_id -> active participant ids; absent key = open-scope room
+        self.room_participants: dict[str, set[str]] = {}
 
     def message_exists(self, message_id: str) -> bool:
         return message_id in self.message_ids
@@ -216,10 +298,14 @@ class InMemoryTaskRepository(TaskRepositoryPort):
         processo_id: str,
         room_id: str | None = None,
         process_label: str | None = None,
+        room_participants: set[str] | None = None,
     ) -> None:
         self.message_ids.add(message_id)
         self.message_processo_ids[message_id] = processo_id
-        self.message_room_ids[message_id] = room_id or f"room-{processo_id}"
+        room = room_id or f"room-{processo_id}"
+        self.message_room_ids[message_id] = room
+        if room_participants is not None:
+            self.room_participants[room] = set(room_participants)
         if process_label:
             self.processo_labels[processo_id] = process_label
 
@@ -239,16 +325,51 @@ class InMemoryTaskRepository(TaskRepositoryPort):
     def get(self, task_id: str) -> TransformometroTask | None:
         return self.rows.get(task_id)
 
-    def update(self, task_id: str, **kwargs) -> TransformometroTask:
-        current = self.rows[task_id]
+    def _authorized_row(
+        self, task_id: str, *, actor_id: str, actor_is_manager: bool, allowed, assert_allowed
+    ) -> TransformometroTask:
+        """Mirror of the PG conditional write: relationship + status are
+        evaluated against the current row inside the mutation step, so a
+        stale authorization never succeeds."""
+        current = self.rows.get(task_id)
+        if current is None:
+            raise LookupError("Tarefa não encontrada.")
+        if not allowed(actor_id, actor_is_manager, current):
+            raise PermissionError("Sem autorização sobre esta tarefa.")
+        assert_allowed(current.status)
+        return current
+
+    def update(
+        self,
+        task_id: str,
+        *,
+        actor_id: str,
+        actor_is_manager: bool,
+        **kwargs,
+    ) -> TransformometroTask:
+        current = self._authorized_row(
+            task_id,
+            actor_id=actor_id,
+            actor_is_manager=actor_is_manager,
+            allowed=can_update_task,
+            assert_allowed=assert_can_update,
+        )
         updated = TransformometroTask(
             **{**current.__dict__, **kwargs, "updated_at": datetime.utcnow()}
         )
         self.rows[task_id] = updated
         return updated
 
-    def complete(self, task_id: str) -> TransformometroTask:
-        current = self.rows[task_id]
+    def complete(
+        self, task_id: str, *, actor_id: str, actor_is_manager: bool
+    ) -> TransformometroTask:
+        current = self._authorized_row(
+            task_id,
+            actor_id=actor_id,
+            actor_is_manager=actor_is_manager,
+            allowed=can_complete_task,
+            assert_allowed=assert_can_complete,
+        )
         updated = TransformometroTask(
             **{
                 **current.__dict__,
@@ -260,8 +381,16 @@ class InMemoryTaskRepository(TaskRepositoryPort):
         self.rows[task_id] = updated
         return updated
 
-    def cancel(self, task_id: str) -> TransformometroTask:
-        current = self.rows[task_id]
+    def cancel(
+        self, task_id: str, *, actor_id: str, actor_is_manager: bool
+    ) -> TransformometroTask:
+        current = self._authorized_row(
+            task_id,
+            actor_id=actor_id,
+            actor_is_manager=actor_is_manager,
+            allowed=can_cancel_task,
+            assert_allowed=assert_can_cancel,
+        )
         updated = TransformometroTask(
             **{**current.__dict__, "status": "cancelled", "updated_at": datetime.utcnow()}
         )
@@ -284,7 +413,9 @@ class InMemoryTaskRepository(TaskRepositoryPort):
             and task.status in statuses
         ]
 
-    def origin_contexts(self, task_ids: Sequence[str]) -> dict[str, TaskOriginContext]:
+    def origin_contexts(
+        self, task_ids: Sequence[str], *, viewer_id: str
+    ) -> dict[str, TaskOriginContext]:
         contexts: dict[str, TaskOriginContext] = {}
         for task_id in task_ids:
             task = self.rows.get(str(task_id))
@@ -294,9 +425,14 @@ class InMemoryTaskRepository(TaskRepositoryPort):
             if not source:
                 contexts[task.id] = TaskOriginContext()
                 continue
+            room_id = self.message_room_ids.get(source)
+            participants = self.room_participants.get(room_id or "")
+            if participants is not None and viewer_id not in participants:
+                contexts[task.id] = TaskOriginContext()
+                continue
             processo_id = self.message_processo_ids.get(source)
             contexts[task.id] = TaskOriginContext(
-                room_id=self.message_room_ids.get(source),
+                room_id=room_id,
                 context_label=self.processo_labels.get(processo_id or "") or processo_id,
             )
         return contexts

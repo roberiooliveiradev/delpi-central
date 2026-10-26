@@ -10,12 +10,6 @@ from tm_app.application.security.authorization_policy import (
 from tm_app.domain.entities.transformometro_task import TaskStatus, TransformometroTask
 from tm_app.domain.ports.task_repository_port import TaskOriginContext, TaskRepositoryPort
 from tm_app.domain.services.transformometro_task_rules import (
-    assert_can_cancel,
-    assert_can_complete,
-    assert_can_update,
-    can_cancel_task,
-    can_complete_task,
-    can_update_task,
     can_view_task,
     normalize_description,
     normalize_title,
@@ -82,40 +76,47 @@ class TaskCommandUseCases:
         due_date: str | date | None,
     ) -> TransformometroTask:
         self._policy.require_access(user)
-        current = self._require_authorized(
-            user, task_id, can_update_task, "Sem autorização para editar esta tarefa."
-        )
-        assert_can_update(current.status)
+        # O vínculo autorizador é avaliado dentro do próprio UPDATE —
+        # sem read-then-write, reatribuição concorrente não concede
+        # autorização obsoleta. O responsável atual é lido apenas para
+        # compor o payload default quando `assignee_user_id` é omitido.
+        actor = _user_id(user)
+        if assignee_user_id is None:
+            current = self._repo.get(task_id)
+            if current is None:
+                raise LookupError("Tarefa não encontrada.")
+            assignee = current.assignee_user_id
+        else:
+            assignee = assignee_user_id
         updated = self._repo.update(
             task_id,
             title=normalize_title(title),
             description=normalize_description(description),
-            assignee_user_id=normalize_user_id(
-                assignee_user_id or current.assignee_user_id,
-                field="Responsável",
-            ),
+            assignee_user_id=normalize_user_id(assignee, field="Responsável"),
             due_date=parse_due_date(due_date),
+            actor_id=actor,
+            actor_is_manager=self._policy.has_manage(user),
         )
         return updated
 
     def complete(self, user: Any, task_id: str) -> TransformometroTask:
         self._policy.require_access(user)
-        current = self._require_authorized(
-            user, task_id, can_complete_task, "Sem autorização para concluir esta tarefa."
+        completed = self._repo.complete(
+            task_id,
+            actor_id=_user_id(user),
+            actor_is_manager=self._policy.has_manage(user),
         )
-        assert_can_complete(current.status)
-        completed = self._repo.complete(task_id)
         if completed.status != "completed" or completed.completed_at is None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return completed
 
     def cancel(self, user: Any, task_id: str) -> TransformometroTask:
         self._policy.require_access(user)
-        current = self._require_authorized(
-            user, task_id, can_cancel_task, "Sem autorização para cancelar esta tarefa."
+        cancelled = self._repo.cancel(
+            task_id,
+            actor_id=_user_id(user),
+            actor_is_manager=self._policy.has_manage(user),
         )
-        assert_can_cancel(current.status)
-        cancelled = self._repo.cancel(task_id)
         if cancelled.status != "cancelled":
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return cancelled
@@ -144,7 +145,7 @@ class TaskCommandUseCases:
         task_ids: Sequence[str],
     ) -> dict[str, TaskOriginContext]:
         self._policy.require_access(user)
-        return self._repo.origin_contexts(task_ids)
+        return self._repo.origin_contexts(task_ids, viewer_id=_user_id(user))
 
     def list_related_to_process(self, user: Any, processo_id: str) -> list[TransformometroTask]:
         self._policy.require_access(user)
