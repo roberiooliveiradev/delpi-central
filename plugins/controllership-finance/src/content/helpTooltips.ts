@@ -78,9 +78,9 @@ export const CF_HELP = {
     page:
       "Checklist da competência: itens esperados do fechamento mensal conforme a versão publicada do checklist. Cada competência guarda um snapshot próprio — publicar uma versão nova nunca altera meses já abertos. «Esperado» significa item previsto para entrega — não indica documento entregue, recebido ou validado.",
     competence:
-      "Competência no formato AAAA-MM. Ao abrir uma competência o Portal registra os itens do checklist vigente naquele momento — a repetição não duplica a abertura.",
+      "Competência no formato AAAA-MM. Ao abrir um fechamento, o Portal copia os itens do checklist publicado e vigente naquele momento; se ainda não existir versão publicada, o fechamento abre mesmo assim, com a lista de exigências vazia — a repetição nunca duplica a abertura.",
     open:
-      "Abrir a competência copia os itens da versão publicada do checklist para o mês escolhido. Se nenhuma versão estiver publicada, a abertura é recusada — não existe fallback.",
+      "Abrir o fechamento copia os itens da versão publicada do checklist para o mês escolhido. Quando não há versão publicada, a abertura acontece mesmo assim e a lista começa vazia — estado legítimo, não erro. Itens publicados depois não entram retroativamente no mês já aberto.",
     filters:
       "Filtros de leitura: origem do documento, área destinataria, escopo de filial e estado. São dimensões de dados — não alteram permissões nem o snapshot.",
     table:

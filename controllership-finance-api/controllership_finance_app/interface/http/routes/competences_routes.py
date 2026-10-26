@@ -1,9 +1,11 @@
 """P2-READ — competências mensais e checklist esperado (snapshot).
 
 Abertura idempotente: a mesma competência nunca é duplicada; retry/replay
-retorna a existente (200). Somente versão PUBLISHED vigente gera snapshot;
-sem fallback para DRAFT (`no_published_template`, 409). Itens do snapshot
-iniciam em `EXPECTED` — nunca representados como entregues.
+retorna a existente (200). Desde o GO do Plano 113 §10 (doc 112 DR-C1),
+versão PUBLISHED vigente não é mais pré-requisito: sem template a
+competência abre com `template_version_id` NULL e snapshot legitimamente
+vazio. Quando há versão vigente, o snapshot copia seus itens em
+`EXPECTED` — nunca representados como entregues.
 """
 
 from __future__ import annotations

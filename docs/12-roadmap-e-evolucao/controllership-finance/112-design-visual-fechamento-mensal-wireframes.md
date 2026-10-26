@@ -1535,7 +1535,7 @@ Todas sob prefixo `/closing/competences/{period}` e todas chamam `_competence_id
 
 ### 32.4 `DECISION_REQUIRED` consolidado
 
-1. **DR-C1 — Abertura sem template publicado:** opções A/B/C acima; envolve migration (V015) + semântica de re-snapshot → gate técnico + PO.
+1. **DR-C1 — Abertura sem template publicado:** **RESOLVIDO — IMPLEMENTED** (CF-PROC0072-MONTHLY-OPEN-003). Opção A aplicada: `V015__monthly_competence_optional_template.sql` torna `template_version_id` nullable; `open_competence` abre com snapshot vazio + audit `opened_without_template`; listagens/probe usam `LEFT JOIN`. Sem re-snapshot retroativo. Rollback e gate produtivo: ver §33.
 2. **DR-C2 — Relatórios R01–R15 por mês sem competência:** hoje derivam do snapshot P2. Sem competência, opções: (i) projetar a partir do template PUBLISHED vigente para o mês — mas isso exibe "o que seria exigido", não "o que está em andamento"; (ii) novo endpoint period-keyed; (iii) aceitar que relatórios só existem pós-abertura (contradiz TARGET parcialmente).
 3. **DR-C3 — Competência aberta + alteração posterior de template:** já documentado como pendente no Plano 113 §3 — aqui confirmado pelo schema: o snapshot é cópia física, não view; mudanças no mestre não propagam por construção.
 
@@ -1550,9 +1550,42 @@ Todas sob prefixo `/closing/competences/{period}` e todas chamam `_competence_id
 |---|---|
 | MFE seleção por mês + estados honestos | DONE (§31) + label reconciliado |
 | Consulta TOTVS por `YYYY-MM` sem abertura | PROVEN — já vigente |
-| Abertura sem template | BLOCKED — DR-C1 (migration V015) |
+| Abertura sem template | **IMPLEMENTED local** — V015 + open_competence opcional; produção aguarda gate de dados (§33) |
 | R01–R15 sem competência | BLOCKED — DR-C2 (não é projeção period-keyed) |
 | Cadastro mestre effective-dated de entregáveis | BLOCKED — DR-C3 + ausência de schema |
 | Compatibilidade P2/P5/legado | PRESERVADA — zero breaking |
 
-**Classificação final:** `INVENTORY_DONE` + `DECISION_REQUIRED×3`. Menor diff já entregue = copy + isolamento por mês; qualquer avanço backend exige gate explícito sobre DR-C1/DR-C2/DR-C3.
+**Classificação final (atualizada):** DR-C1 `IMPLEMENTED` localmente (§33); DR-C2/DR-C3 permanecem `DECISION_REQUIRED`. Deploy produtivo de V015 gated por owner de dados + plano de rollback; a migration não é destrutiva (só alarga domínio).
+
+
+## 33. Implementação DR-C1 — abertura sem template (CF-PROC0072-MONTHLY-OPEN-003)
+
+**Estado:** `IMPLEMENTED` em código + testes locais; `PENDING` em produção (gate de dados).
+
+### 33.1 Contrato alterado
+
+- `POST /closing/competences`: versão PUBLISHED vigente deixa de ser pré-requisito. Sem template vigente a competência é persistida com `template_version_id = NULL`, zero itens em `competence_checklist_item` e auditoria `COMPETENCE_OPENED` com `opened_without_template: true`. Com template vigente, o comportamento AS-IS é preservado (snapshot `EXPECTED` da versão resolvida). Idempotência inalterada (`ON CONFLICT DO NOTHING` → `created=false`, sem evento duplicado).
+- `template_version_id` no payload de `GET /closing/competences` e `GET /closing/competences/{period}` passa a admitir `null` (alargamento backward-compatible; consumidor TS `ClosingCompetence.template_version_id: string | null`).
+- `no_published_template` permanece como código histórico no enum de erros, não mais emitido por esta rota — classificado SUPERSEDED para abertura.
+
+### 33.2 Persistência
+
+- `V015__monthly_competence_optional_template.sql`: `ALTER COLUMN template_version_id DROP NOT NULL` + `COMMENT ON COLUMN`. FK preservada; `competence_checklist_item.source_template_item_id` segue NOT NULL (itens excepcionais exigem origem rastreável). Não destrutiva, não reescreve linhas existentes.
+- Rollback: `SET NOT NULL` é seguro apenas se nenhuma competência NULL existir; caso contrário exige decisão de dados — a migration não carrega caminho destrutivo automático.
+
+### 33.3 Semântica P2/P5 com competência sem template
+
+- Checklist vazio é estado legítimo (`list_competence_items` → `[]`), sem `no_published_template`, sem status fictício, sem documento artificial.
+- Conclusão não é alcançável por vacuidade: `derive_closing_state` exige pacotes aplicáveis e conciliações P3 oficiais — competência sem checklist permanece `OPEN`/não concluível enquanto o processo exigir artefatos.
+- Re-snapshot após publicação posterior de template: **não implementado** — continua `DECISION_REQUIRED` (DR-C3); competência aberta sem template não ganha itens retroativamente.
+
+### 33.4 Evidências de teste
+
+- PG real (V001→V015 aplicadas): `test_pg_closing_checklist.py` 12/12 — inclui `test_open_without_publish_succeeds_empty_snapshot` (NULL persistido, snapshot vazio, replay idempotente sem evento duplicado, audit `opened_without_template`, listagem com `template_version: null`).
+- `test_pg_package_c.py` + `test_pg_remainder_build.py` (P4/P5): 46/46 — competência templateless não quebra lifecycle.
+- Suite backend sem PG: 401 passed / 199 skipped; rotas unitárias 23/23. Frontend: tsc OK, MonthlyClosingPage 17/17 + ClosingChecklistPage 6/6.
+- Higiene de testes corrigida no caminho: `test_pg_package_c.py` e `test_pg_remainder_build.py` não tinham `pytestmark` de skip — KeyError pré-existente sem `CF_TEST_PG_*`; adicionado o guard padrão dos irmãos.
+
+### 33.5 Gate produtivo
+
+- `CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP` aplica migrations no startup da API ⇒ o deploy da `controllership-finance-api` executa V015 em produção. **Não deployado nesta execução** — aguarda autorização explícita do owner de dados + confirmação de plano de rollback (§33.2). MFE não precisa de redeploy (mudança frontend é type-only).

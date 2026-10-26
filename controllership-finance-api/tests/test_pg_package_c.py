@@ -48,6 +48,18 @@ from controllership_finance_app.infrastructure.persistence.plugins_db import (
     plugins_db_connect,
 )
 
+PG_ENV = (
+    "CF_TEST_PG_HOST",
+    "CF_TEST_PG_NAME",
+    "CF_TEST_PG_USER",
+    "CF_TEST_PG_PASSWORD",
+)
+
+pytestmark = pytest.mark.skipif(
+    not all(os.getenv(k) for k in PG_ENV),
+    reason="CF_TEST_PG_* ausente — integração PostgreSQL não configurada",
+)
+
 from pg_test_isolation import (  # noqa: E402
     assert_safe_test_prefix,
     create_owned_test_database,
