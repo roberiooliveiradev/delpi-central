@@ -320,7 +320,7 @@ Mostrar `Estado geral`, um badge semântico com texto, texto auxiliar `Situaçã
 - Cada cartão possui título, explicação, valor semântico, origem quando necessária, estado de dado, interação de drilldown e foco visível.
 - Números de exemplo do wireframe não são evidência de fechamento real.
 - Não criar endpoint `/metrics` novo por conveniência sem examinar producers existentes.
-- `D-FM05-01 = A / PO_APPROVED (26/10/2026)`**: exatamente três cartões, nesta ordem: **Bloqueios, Divergências e Documentos a tratar**. Não adicionar cartão Pendências nesta faixa.
+- **`D-FM05-01 = A / PO_APPROVED (26/10/2026)`**: exatamente três cartões, nesta ordem: **Bloqueios, Divergências e Documentos a tratar**. Não adicionar cartão Pendências nesta faixa.
 - `D-FM05-02` **PENDING_OWNER_CONTRACT**: critérios exatos de contagem e drilldown, sem inventar dado/entidade.
 
 **Próximo review:** demonstrar os três cartões e seus estados ao PO. Após aprovação da hierarquia, detalhar FM-06 (navegação/abas), preservando a autonomia dos owners P2/P3/P4/P5.
@@ -377,3 +377,33 @@ Mostrar `Estado geral`, um badge semântico com texto, texto auxiliar `Situaçã
 - `D-FM06-04`: quando alguma visão não tiver producer real, mostrar estado honesto de indisponibilidade ou navegação à página legada autorizada, nunca dummy data.
 
 **Próxima revisão no chat:** apresentar as cinco abas interativas e pedir aprovação do comportamento interno, sem confundir com GO de implementação.
+
+
+## 12. Esclarecimento de escopo — Pendências P4 e Revisão P5 não se limitam a documentos
+
+**Data:** 26/10/2026. **Origem:** questionamento do PO durante revisão do wireframe FM-06: “pendecias e revisão não se ferem exclusivamente a documentos, ou estou erraod?”. **Resultado:** esclarecimento documental ancorado nos contratos canônicos [P4 doc 11](./11-p4-classificacoes-e-pendencias.md) e [P5 doc 37](./37-p5-submissao-e-revisao-no-portal.md). **Classificação:** `PROVEN` no contrato TARGET; não comprova paridade do runtime de produção.
+
+### 12.1 Separação semântica obrigatória
+
+| Visão | Objeto central | Dados e ações relevantes | Limite |
+|---|---|---|---|
+| Documentos — P2 | checklist, itens, evidências e versões | upload, leitura, validação, rejeição/substituição, histórico, conforme capability | documento anexado **não** é automaticamente validado; item EXPECTED não é evidência entregue |
+| Pendências — P4 | ocorrência de fechamento e classificação/centro de custo | status `OPEN/IN_ANALYSIS/WAITING_EXTERNAL/RESOLVED/DISMISSED`, origem, fila, owner, `pending_since`, classificação e sugestão explicativa, confirmação humana quando autorizada, histórico | pode ter documentos/evidências, mas **não é uma lista de documentos**; não grava correção no ERP V1; não inventar SLA/atraso |
+| Revisão — P5 | pacote/versionamento, recipient e decisão humana de análise | finalizar pacote, submeter para revisão no Portal, acompanhar reviewers, esclarecimentos, resultado por área e versão, histórico | revisão não é só aprovar anexos; `FINALIZE != SUBMIT != REVIEW != MONTHLY_CLOSING_COMPLETED` |
+
+**P4** é owner do estado próprio de pendências e da confirmação humana de classificação no contexto do fechamento; regra upstream/CC continua em seu owner, effective permissions no Core, e sugestão da IA não significa decisão. Evidências documentais são contexto auxiliar quando relacionadas.
+
+**P5** é owner da PackageVersion, recipients, submissão, decisões humanas de áreas obrigatórias e esclarecimentos. Uma versão finalizada pode ser submetida e disponibilizada aos revisores na Minha DELPI; o e-mail é notificação, nunca transporte do pacote. Conclusão mensal C2 exige aceites humanos válidos na versão vigente, áreas obrigatórias, pacotes aplicáveis submetidos, sem esclarecimentos abertos ou rejeição terminal, conforme doc 37. O pacote pode referenciar documentos de P2 e o status de outros eixos, mas não absorve as regras de P2/P3/P4.
+
+### 12.2 Consequência para FM-06 e texto de ajuda
+
+Atualizar as descrições visuais de abas para evitar ambiguidades:
+- **Pendências:** “Acompanhe ocorrências, classificações, responsáveis e resoluções do fechamento.”
+- **Revisão:** “Prepare e envie pacotes para análise, acompanhe revisores, decisões e esclarecimentos.”
+- **Documentos:** “Consulte e trate evidências, anexos, versões e validações documentais.”
+- **Divergências:** “Investigue diferenças e inconsistências com sua origem e contexto.”
+- **Visão geral:** “Acompanhe eixos, bloqueios e o que precisa de atenção.”
+
+**Estados visuais, lista e detalhe são por owner**: P4 exibe fila/assignee/histórico e ações permitidas; P5 exibe pacotes/recipients/versionamento/decisões; P2 exibe checklist/evidências. Não fundir “pendência”, “divergência”, “documento” e “revisão” em uma única entidade, nem representar cada pendência como documento pendente. Deep links e contratos continuam `TO_INVENTORY` antes de implementação.
+
+**Estado da decisão:** `CLARIFICATION_RECORDED / FM-06_VISUAL_DETAIL_PENDING_PO`. Não altera a aprovação prévia da estrutura de cinco visões ou dos três indicadores clicáveis FM-05.
