@@ -1,7 +1,7 @@
-# HANDOFF CANÔNICO — Portal Suprimentos / X4.PROD-C1 — Aguardando Gabriel
-**Atualizado em:** 2026-10-23  
-**Status:** `WAITING_ON_TOTVS_OWNER` — `PRODUCTION_CUTOVER = EXECUTION_DRIFT / BLOCKED` (`G8 = FAIL`)  
-**Responsável pela dependência externa:** Gabriel Araújo / TOTVS — disponibilizar rota e autenticação REST de fornecedores produtiva.  
+# HANDOFF CANÔNICO — Portal Suprimentos / X4.PROD-C1 — Resposta Gabriel e preparação do release
+**Atualizado em:** 2026-10-26  
+**Status:** `GABRIEL_REPLIED / RELEASE_PREPARATION_PENDING` — `PRODUCTION_CUTOVER = EXECUTION_DRIFT / BLOCKED` (`G8 = FAIL`)  
+**Responsável pela publicação upstream:** Gabriel Araújo / TOTVS — aplicar mudança na instância produtiva após aprovação e janela operacional. Endpoint, autenticação e configuração existentes serão reutilizados, conforme resposta do owner.  
 **Decisão PO neste chat:** registrar e **aguardar a resposta do Gabriel**; não executar novos flips, POST/PUT produtivos ou ativação de flags enquanto o bloqueio estiver aberto.
 
 > **LEIA ESTE ARQUIVO PRIMEIRO EM NOVO CHAT.** Este é um handoff operacional do C1; não substitui a hierarquia de authority, os ADRs, o código no HEAD ou o [relatório C1](./X4-PROD-C1-SUPPLIER-PRODUCTION-REST-CUTOVER.md). Reancorar HEAD, git status, regras `.cursor`, contratos e runtime antes de qualquer ação.
@@ -58,7 +58,7 @@ Em `http://192.168.1.231:8061/restall`:
 2. Qual a rota de token produtiva e como provisionar/validar credencial técnica autorizada sem compartilhar segredo por e-mail?
 3. Confirmar destino produtivo `DELPI`, empresa/filial e paridade de retorno código/loja e campos POST/PUT com homologação.
 4. Há divergência contratual da operação de alteração de `A2_CLIENTE`? Trata-se de handoff separado, **não confundir com bloqueio G8**.
-**A resposta de Gabriel ainda não consta das evidências deste handoff.** Não alegar que um e-mail foi enviado automaticamente; o assistente apenas redigiu uma mensagem no chat.
+**Atualização 2026-10-26:** resposta recebida (e-mail de Gabriel em 2026-10-23); ver seção 11. Este parágrafo registra a situação histórica anterior. Não alegar que um e-mail foi enviado automaticamente; o assistente apenas redigiu uma mensagem no chat.
 
 ## 6. Estado PROD depois da execução C1 — exceção de deploy
 - `api-delpi` foi **rebuildada e publicada em `srv-api`** com a nova guarda `assert_protheus_write_target` e pin para o endpoint produtivo, apesar de `G8=FAIL`.
@@ -111,3 +111,31 @@ PROD_CREATE_GATE           = OFF
 PROD_UPDATE_GATE           = OFF
 NEXT_STEP                  = WAIT_FOR_GABRIEL -> G8_READ_ONLY_RECHECK
 ```
+
+
+## 11. Retomada — resposta de Gabriel recebida (2026-10-26)
+
+**Fonte:** e-mail apresentado pelo PO, enviado por Gabriel Araújo em **23/10/2026 às 16:29**, assunto «Re: API Fornecedor X MinhaDelpi». Estado comunicado pelo owner, não evidência de execução técnica.
+
+- Gabriel **não aplicou alterações em produção**: aguarda aval da equipe.
+- Segundo o alinhamento confirmado pelo PO, **endpoint, autenticação e configuração existentes permanecem os mesmos**; não solicitar nova rota, não pressupor alteração de caminho de token ou troca de credencial para este release. A mensagem do Gabriel declara explicitamente o reaproveitamento da configuração e a ausência de necessidade de novo endpoint REST.
+- Gabriel perguntou se os testes podem ser considerados concluídos: o PO pode confirmar **a homologação POST/PUT em DELPI_TST01 no escopo documentado**, sem declarar os gates de runtime produtivo aprovados.
+- Gabriel solicita **janela de manutenção de 30 minutos**, disponibilidade a coordenar com Michael, para criar campo de controle de alteração do usuário e realizar publicação.
+- Michael poderá alterar posteriormente a senha do usuário pelo configurador; **não significa que a senha tenha sido alterada**.
+- **E-mail de resposta do PO:** intenção de envio informada em 26/10/2026; **ENVIO NÃO CONFIRMADO** neste registro. Não afirmar aceite recebido pelo Gabriel, janela agendada ou deploy executado.
+
+### Estado operacional e decisão
+
+`GABRIEL_REPLY=RECEIVED`; `TST_HOMOLOGATION=ACCEPT_WITH_RESIDUAL` (ensaios reportados); `PRODUCTION_UPSTREAM_CHANGE=PENDING`; `MAINTENANCE_WINDOW=PENDING_MICHAEL`; `G8=FAIL_LAST_OBSERVED / RECHECK_PENDING`; `PRODUCTION_CUTOVER=BLOCKED`; `CREATE/UPDATE=OFF` (último estado reportado, revalidar no runtime).
+
+**Atenção à divergência histórica:** o diagnóstico C1 de 23/10 observou suppliers 404 e token 401 na REST produtiva. O esclarecimento de que a configuração será mantida **não apaga** tais evidências nem prova que a rota já esteja operante. Não alterar `URL_REST@1`, `PATH_AUTH`, `PATH_SUPPLIERS` ou secrets com base exclusivamente no e-mail. O campo novo deve ter nome, semântica e impacto no contrato confirmados no procedimento do owner antes da publicação.
+
+### Próximos passos limitados
+
+1. PO envia confirmação de conclusão da homologação em `DELPI_TST01`, alinhamento de reutilização do endpoint/config/auth e pedido de definição da janela com Michael; registrar o envio **somente após evidência**.
+2. Michael confirma janela, Gabriel especifica campo de controle de alteração, plano de mudança/rollback e realiza publicação upstream sob aprovação operacional.
+3. Depois da publicação: reancorar HEAD/config/runtime e reexecutar **G8 read-only** (rota válida, token com credencial autorizada já provisionada, GET fornecedor existente, destino `DELPI`, saúde/E14) sem POST/PUT em produção.
+4. Se G8 PASS, solicitar **GO separado** para cutover da configuração `AMBIENTE=1` apenas se a verificação demonstrar necessidade real; preservar `AMBIENTE=2`, GET E14, pin de escrita e rollback.
+5. **Habilitação de CREATE/UPDATE e primeira escrita real requerem autorização operacional distinta**, não decorrente deste e-mail.
+
+Os registros históricos acima permanecem intactos como evidência do diagnóstico anterior; esta seção é a atualização cronologicamente posterior e prevalece para o estado de comunicação.
