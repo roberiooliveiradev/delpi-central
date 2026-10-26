@@ -24,3 +24,48 @@ O PO declara: **"vamos solicitar ao Devin uma última rodada; ele deve fazer o f
 **Estado na data desta decisão:** autorização do PO expressa; G2 outcome/signoff ainda não demonstrado nesta mensagem; G3 operator signoff e Keycloak produtivo seguem pendentes de evidência. Não mudar status para PASS sem teste real.
 
 **Próximo passo:** uma última execução E2E integrada por Devin, demo/aceite G2 explícito, reunião operacional G3 com owner, configuração autorizada IAM e conexão real CLARA→ChatGPT.
+
+## Registro de execução — Rodada 4 concluída (26/10/2026)
+
+Execução `CF-PROC0072-USER-JOURNEY-G2-G3-FINAL-001` realizada conforme
+esta autorização. Evidência: Doc 108 §Rodada 4 +
+`108-evidence-user-journey-e2e-r4-2026-10-26.jsonl`.
+
+### Resultado consolidado
+
+- **83 test_ids únicos: 82 PASS / 0 FAIL / 1 INCONCLUSIVE** (J5-02 —
+  fonte P7/Protheus ausente no ambiente isolado; UI exibe
+  indisponibilidade explícita, sem fabricar dados).
+- Jornadas J1–J10 completas em browser real: LOGIN → ADMINISTRAÇÃO →
+  PUBLICAÇÃO LOCAL → COMPETÊNCIA → DOCUMENTOS → VALIDAÇÃO → ESTOQUES →
+  PENDÊNCIAS → PACOTES → REVISÃO → COCKPIT → CLARA.
+- Pós-condições comprovadas em UI + BFF + PostgreSQL + auditoria.
+- Negativos: 409 tipado, upload inválido, replay de consentimento,
+  acesso negado fail-closed, guard de finalização e de rascunho.
+
+### Defeitos encontrados e corrigidos (diff mínimo, autorizados)
+
+1. `delpi-portal` montava worktree obsoleto (`delia-f02a-wt`) — sem
+   `getFreshAccessToken`; consentimento CLARA falhava fechado.
+   Recriado sobre o checkout sob teste. **Ambiental**, não do produto.
+2. `delpi-plugin-ui` desatualizado — `itemActions` ausente; ações por
+   documento invisíveis. Rebuild + deploy local. **Ambiental**.
+3. `/ready` degraded por env local sem `CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN`
+   — configurado; `ready` real.
+4. Notificações 400 — categoria `controllership_finance` registrada no
+   catálogo canônico Core + fallback Portal + producer alinhado.
+5. OBS-006 — banners tipados 404/409 (`CfQueryErrorBanner` + testes).
+
+### Estado dos gates (sem aceite fabricado)
+
+| Gate | Estado | Detalhe |
+|---|---|---|
+| `G2_TECHNICAL_READINESS` | `READY` | 82/83 verde, zero FAIL, residuais externos isolados |
+| `G2_HUMAN_DECISION` | `PENDING` | aceite PO/Controladoria após demo — Doc 108 R4 é a base |
+| `G3_OPERATOR` | `PENDING` | deploy já reportado (`ecf765139d`/`2eeb5fb943`); preflight/smoke exige operador autorizado |
+| `KEYCLOAK_PROD` | `BLOCKED_IAM` | credencial admin rotacionada; receita `mcp-clara` validada localmente |
+| `CHATGPT_CONNECTION` | `TEST_NOT_RUN` | depende do gate IAM acima; ficha de cadastro pronta |
+
+Decisões pendentes legítimas: aceite humano G2 (PO/Controladoria),
+autorização operacional G3 (Operador SSH), credencial Keycloak prod
+(owner IAM), paridade R01–R15 (owner/G5/G6). Nenhuma foi simulada.

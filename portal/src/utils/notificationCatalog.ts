@@ -72,6 +72,7 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
     { id: "production_control_line_feeder_urgent", label: "Alimentador de Linha", notificationLabel: "Solicitações urgentes das bancadas", icon: "truck", mutable: true, kind: "app", sourceApps: ["production-control"], pluginId: "production-control" },
     { id: "production_pulse_device_offline", label: "Pulso de Produção", notificationLabel: "Dispositivo IoT offline", icon: "activity", mutable: true, kind: "app", sourceApps: ["production-pulse"], pluginId: "production-pulse" },
     { id: "production_pulse_operational_failure", label: "Pulso de Produção", notificationLabel: "Falhas operacionais do Pulso (OTA)", icon: "activity", mutable: true, kind: "app", sourceApps: ["production-pulse"], pluginId: "production-pulse" },
+    { id: "controllership_finance", label: "Controladoria e Finanças", notificationLabel: "Atualizações do fechamento mensal", icon: "clipboard-check", mutable: true, kind: "app", sourceApps: ["controllership-finance"], pluginId: "controllership-finance" },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",

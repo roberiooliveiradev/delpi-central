@@ -95,6 +95,36 @@ describe("CfQueryErrorBanner — catálogo de falhas", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it("404 — não encontrado com a mensagem real", () => {
+    render(
+      <CfQueryErrorBanner
+        error={{ status: 404, code: null, message: "Recurso ausente" }}
+        dataset="o estoque histórico"
+      />,
+    );
+    expect(screen.getByText("Não encontrado")).toBeTruthy();
+    expect(screen.getByText("Recurso ausente")).toBeTruthy();
+    expect(screen.queryByText("Falha de comunicação")).toBeNull();
+  });
+
+  it("409 — regra de negócio não é falha de comunicação", () => {
+    render(
+      <CfQueryErrorBanner
+        error={{
+          status: 409,
+          code: "no_published_template",
+          message: "Não há versão publicada vigente para a competência.",
+        }}
+        dataset="o checklist"
+      />,
+    );
+    expect(screen.getByText("Operação não permitida")).toBeTruthy();
+    expect(
+      screen.getByText("Não há versão publicada vigente para a competência."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Falha de comunicação")).toBeNull();
+  });
+
   it("erro genérico — mensagem real exposta com retry", () => {
     render(
       <CfQueryErrorBanner

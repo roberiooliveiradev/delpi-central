@@ -349,3 +349,96 @@ Suites transversais fora do JSONL: **backend PG 598/598** e
   (`5541097a-8608-4470-b971-7c28b3ae6c40`); rollback = imagem anterior
   (sem migration destrutiva); dependência única = credencial admin
   Keycloak vigente para `--check`/`--apply` de `mcp-clara`.
+
+## Rodada 4 — E2E final real do usuário + coordenação G2/G3 (26/10/2026)
+
+Execução `CF-PROC0072-USER-JOURNEY-G2-G3-FINAL-001`, autorizada pelo Doc 109.
+Browser real (Playwright/Chromium) sobre o stack local completo
+`BROWSER → PORTAL → MFE → BFF → CORE / KEYCLOAK / PG`, com a BFF de
+homologação dedicada (`cf-api-homolog:18100`, DB `cf_homolog`) sendo a
+mesma dos testes de contrato. Evidência JSONL sanitizada:
+`108-evidence-user-journey-e2e-r4-2026-10-26.jsonl` (161 eventos,
+83 test_ids deduplicados).
+
+### Correções de ambiente/código aplicadas e comprovadas na rodada
+
+| Defeito | Causa raiz | Correção | Comprovação |
+|---|---|---|---|
+| `/ready` = `degraded` | `CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN` ausente no env local | segredo dedicado provisionado + `PLUGINS_DB_NAME=cf_homolog` | `/ready` → `ready` |
+| Consentimento CLARA falhava (`step_up_unavailable`) | container `delpi-portal` montava worktree obsoleto `delia-f02a-wt` (sem `getFreshAccessToken`, commit `d59e972a47`) | `delpi-portal` recriado montando o checkout sob teste (`cf-stock-wt`, mesmo do MFE/BFF) | fiber props com `getFreshAccessToken`; `updateToken(-1)` emitido; consentimento registrado na UI |
+| Botões de documento (Substituir/Versões/Eventos) invisíveis | bundle `delpi-plugin-ui` desatualizado — `AttachmentFileList` sem prop `itemActions` (`62f111ea69`) | `npm run build` do `plugin-ui` no checkout sob teste + deploy do `dist` no container nginx local | J4-05/J4-08a PASS na UI real |
+| Dispatcher de notificações HTTP 400 | producer emitia categoria `controllership-finance.closing` ausente no catálogo canônico Core | categoria `controllership_finance` registrada no catálogo Core (`notification_catalog.json` + fallback do Portal); producer alinhado | dispatcher 201; 4 eventos redeliverados `DISPATCHED` |
+| UX: 409 exibia "Falha de comunicação" (OBS-006) | `CfQueryErrorBanner` sem mapeamento tipado 404/409 | banners tipados 404/409 + testes | J3-05b PASS — 2026-08 exibe "Operação não permitida" |
+| Senha das personas E2E expirada/desconhecida | credenciais locais de homolog | `kcadm set-password` no Keycloak local (cf-e2e-peer, cf-e2e-denied, cf-e2e-access) | login real das 4 personas |
+
+Sem nenhum commit de produto novo além dos fixes acima — os recursos já
+estavam em `origin/main`; a divergência era de stack local.
+
+### Resultado por jornada (estado final por test_id)
+
+| Jornada | Resultado | Evidência-chave |
+|---|---|---|
+| J1 — login, início, nav, F5, mobile, teclado, tema | **13/13 PASS** | `data-theme` light→dark; Ctrl+K; rotas diretas |
+| J2 — administração do checklist mestre | **12/12 PASS** | DRAFT→REVIEW→PUBLISHED na UI; guard rascunho duplicado; salvar rascunho; auditoria |
+| J3 — competência | **10/10 PASS** | seletor 2026-09; snapshot 53 itens; persistência F5; irmã 2026-10; 409 tipado 2026-08; template publicado só [Itens/Inativar] |
+| J4 — documentos | **9/9 PASS** | upload válido; download; estado; eventos; rejeitar/aceitar; arquivo inválido negado; Substituir/Versões/Eventos |
+| J5 — estoques/P3 | **5/6 PASS** | paridade R$0,00; divergência R$0,01; cutoff; fonte indisponível explícita |
+| J6 — pendências | **7/7 PASS** | assumir→análise→classificar→reatribuir→resolver; histórico; DB pós-condição |
+| J7 — pacotes | **10/10 PASS** | detalhe FISCAL/CONTÁBIL; bloqueios tipados; finalização com guard; revisão peer |
+| J8 — cockpit | **3/3 PASS** | estados documentos/estoque/pendências/pacotes/bloqueios |
+| J9 — páginas comuns | **6/6 PASS** | baixas; perfil; help; acesso negado fail-closed (`cf-e2e-denied`) |
+| J10 — CLARA consentimento real | **6/6 PASS** | página `?batch=`; step-up `updateToken(-1)`; `CONFIRMED→COMPLETED`; challenge `CONSUMED`; replay bloqueado |
+
+**Total: 83 test_ids — 82 PASS / 0 FAIL / 1 INCONCLUSIVE.**
+
+### INCONCLUSIVE (honesto)
+
+- **J5-02 — dados P7 reais:** fonte SB9/SB1/Protheus indisponível no
+  ambiente isolado. A UI exibe a indisponibilidade explicitamente (sem
+  fabricar zeros), que é o comportamento exigido. A paridade oficial
+  P7/MATR460 permanece pendente de owner/G6 — não é defeito.
+
+### Pós-condições verificadas fora da UI
+
+- **BFF homolog:** logs do `cf-api-homolog` registram uploads, validações,
+  competências e consentimentos vindos do browser — wiring provado.
+- **PostgreSQL `cf_homolog`:** `clara_batch COMPLETED` (consent_mode
+  CONSOLIDATED), `clara_consent_challenge CONSUMED`, 2 operações
+  `VERIFIED`, trilha `CLARA_BATCH_PREPARED→CONFIRMED→OP_EXECUTED→EXECUTED`;
+  pendência E2E `RESOLVED` com reatribuição; notificações `DISPATCHED`.
+- **Negativos:** 409 tipado (período sem versão), upload `.txt` recusado,
+  replay de consentimento recusado, acesso negado sem grant
+  (fail-closed, zero chamada de API, zero vazamento).
+
+### Residuais da Rodada 3 — situação final
+
+| Residual R3 | Estado R4 |
+|---|---|
+| `/ready` degraded | **RESOLVIDO** |
+| Divergência BFF navegador↔testes | **RESOLVIDO** (portal+MFE+plugin-ui no mesmo checkout; logs homolog) |
+| Tela Admin 404 no stack antigo | **RESOLVIDO** (bundle atual; 8+ rotas renderizam) |
+| P5-02b inconclusivo | resolvido na R3 por evidência API (sequência) |
+| MCP-21 inconclusivo | resolvido — contrato lido e exercido |
+| E-05 inconclusivo | resolvido — tema `data-theme` provado no browser |
+| Notificações 400 | **RESOLVIDO** — categoria canônica registrada |
+| UX 409 "Falha de comunicação" | **RESOLVIDO** — J3-05b PASS |
+| Tema claro/escuro | **RESOLVIDO** — J1-08 PASS |
+| Evidências com handles expostos | **RESOLVIDO** — JSONL R4 sanitizado |
+| Consentimento CLARA via página real | **RESOLVIDO** — J10 completo (era o bloqueio central) |
+
+### G2 / G3 — estado após a Rodada 4
+
+- `G2_TECHNICAL_READINESS = READY`
+  - 82/83 checks verdes em browser real; zero FAIL; 1 INCONCLUSIVE
+    ambiental honesta (fonte P7); suites de unidade/contrato verdes;
+    CLARA end-to-end com step-up real; negativos e pós-condições
+    comprovados em UI+BFF+PG+auditoria.
+- `G2_HUMAN_DECISION = PENDING` — aceite humano Controladoria/PO não é
+  simulado por este documento (Doc 109 §8).
+- `G3`: release já deployado (`ecf765139d`/deploy `2eeb5fb943`);
+  migrations V001–V014 aplicadas; rollback = imagem anterior; depende
+  de smoke autenticado autorizado + credencial Keycloak prod vigente
+  (`mcp-clara`). Nenhuma escrita produtiva feita nesta rodada.
+- `KEYCLOAK_PROD`/`CHATGPT_*`: permanecem `PENDING` por credencial
+  admin rotacionada (Doc 107) — smoke autenticado e cadastro ChatGPT
+  exigem gate IAM real, não fabricado aqui.

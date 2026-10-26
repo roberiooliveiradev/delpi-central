@@ -324,3 +324,34 @@ container/DB está fora de escopo e exige operador+gate explícito).
 5. Atualizar no mesmo ciclo `RELEASE_SHA`, `KEYCLOAK_DIFF`, `G2_SIGNOFF`, `G3_OPERATOR_AUTH`, `MCP_SMOKE_AUTHENTICATED`, `CHATGPT_CONNECTED`, evidências e status honestos. Se IAM continuar bloqueado, devolver único responsável e ação desbloqueante; sem novo rework de produto.
 
 **Veredito do GPT Arquiteto:** `EXECUTION_DRIFT` quanto à sequência de gates reportada; **`INCONCLUSIVE` quanto a funcionamento autenticado fim a fim**. Não invalidar as correções V014 nem desfazer o deploy automaticamente; preservar o estado e não expandir operações produtivas sem authority.
+
+## Adendo 7 — superfície de consentimento step-up provada no browser real (26/10/2026)
+
+Rodada 4 (`CF-PROC0072-USER-JOURNEY-G2-G3-FINAL-001`, Doc 108): a jornada
+CLARA foi exercida como usuário real, não apenas via MCP/HTTP.
+
+- Página real `closing/clara-consent?batch=<id>` carrega a view do lote
+  (operações, parâmetros, efeitos, motivos, expiração).
+- O botão **Autorizar** dispara `keycloak.updateToken(-1)` (step-up),
+  posta `challenge_id` e registra `consent_mode` na UI — `done=true`.
+- MCP `confirm_batch` → `execute_batch` → `get_batch_status` =
+  `COMPLETED`; operações `VERIFIED`; trilha de auditoria
+  `PREPARED→CONFIRMED→OP_EXECUTED→EXECUTED` persistida em
+  `cf_homolog.controllership_finance`.
+- `clara_consent_challenge` = `CONSUMED`; replay de `confirm_batch`
+  rejeitado — prova de uso único.
+
+**Defeito que bloqueava este fluxo era ambiental, não do produto:** o
+container local `delpi-portal` montava um worktree obsoleto sem
+`getFreshAccessToken` (commit `d59e972a47`, já em `origin/main`).
+Corrigido o mount para o checkout sob teste, o step-up funcionou na
+primeira tentativa. Idem para `delpi-plugin-ui` desatualizado (prop
+`itemActions` ausente), resolvido por rebuild do kit compartilhado.
+
+**Receita `mcp-clara` validada localmente:** client confidencial +
+scope `mcp:tools` + audience mapper para
+`http://localhost/apps/controllership-finance-api/mcp` — discovery de
+18 tools e lotes 2/5/20 ops exercidos com OAuth real no Keycloak local.
+O bloqueio de produção permanece **idêntico ao Adendo 6:** credencial
+admin Keycloak prod vigente (owner IAM). Nada mudou em produção nesta
+rodada; o gap é exclusivamente operacional, não técnico.

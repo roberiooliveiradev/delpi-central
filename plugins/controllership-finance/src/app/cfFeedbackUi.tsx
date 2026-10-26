@@ -114,6 +114,20 @@ export function CfQueryErrorBanner({
       </CfFeedbackMessage>
     );
   }
+  if (error.status === 404) {
+    return (
+      <CfFeedbackMessage intent="error" title="Não encontrado">
+        {error.message || `O registro de ${dataset} não foi localizado.`}
+      </CfFeedbackMessage>
+    );
+  }
+  if (error.status === 409) {
+    return (
+      <CfFeedbackMessage intent="error" title="Operação não permitida">
+        {error.message}
+      </CfFeedbackMessage>
+    );
+  }
   if (error.status === 503) {
     return (
       <CfFeedbackMessage

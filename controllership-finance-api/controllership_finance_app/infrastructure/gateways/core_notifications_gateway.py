@@ -206,7 +206,7 @@ class CoreNotificationsDispatcher:
             "title": title,
             "message": message,
             "type": "info",
-            "category": "controllership-finance.closing",
+            "category": "controllership_finance",
             "sourceApp": SOURCE_APP,
             "action": {
                 "type": "portal_route",

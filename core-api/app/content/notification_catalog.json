@@ -312,6 +312,17 @@
         "production-pulse"
       ],
       "pluginId": "production-pulse"
+    },
+    "controllership_finance": {
+      "label": "Controladoria e Finanças",
+      "notificationLabel": "Atualizações do fechamento mensal",
+      "icon": "clipboard-check",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": [
+        "controllership-finance"
+      ],
+      "pluginId": "controllership-finance"
     }
   },
   "legacyCategoryAliases": {
