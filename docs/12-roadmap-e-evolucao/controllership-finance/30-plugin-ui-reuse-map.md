@@ -770,3 +770,23 @@ Se `LOCAL_UI_CREATED` duplicar um export já existente no kit, o slice deve ser 
 
 A página de configuração substitui o **modal de criação/edição** mediante gate e validação de substituição. O detalhe PDF é **uma página contextual** comum a duas audiências, não novo módulo nem aba. Seguir contratos de interação/auditoria, sem importar domínio de outro plugin.
 
+
+## Registro de execução — Visão geral V0.2 do Fechamento mensal (CF-PROC0072-OVERVIEW-UX-004, 26/10/2026)
+
+Componentes efetivamente reutilizados via `@delpi/plugin-ui/index` (verificados em `plugins/plugin-ui/src/index.ts` antes do uso):
+
+| Superfície | Componente/factory | Alias CF |
+|---|---|---|
+| Caminho da página | `createDashboardPagePath` | `CfPagePath` (novo) |
+| Cabeçalho | `createDashboardPageHero` | `CfPageHero` via `ClosingHero` |
+| Abas | `createDashboardSegmentToggle` | `CfSegmentToggle` |
+| Indicadores clicáveis | `createDashboardInteractiveDataCard` | `CfInteractiveDataCard` |
+| Atenção + Atividade recente | `createDashboardEventsSection` (AlertQueue) | `CfEventsSection` |
+| Cartões de eixo e rodapé | `createDashboardSectionCard` | `CfSectionCard` |
+| Estado do fechamento | `createDashboardStatusBadge` | `CfStatusBadge` |
+| Ações contextuais | `ActionButton` | `CfActionButton` |
+| Estados vazios | `EmptyState` | `CfEmptyState` |
+| Ajuda | `createDashboardTitleWithHelp` + `hint` de SectionCard/EventsSection | `CfTitleWithHelp` |
+
+`KpiCard`/`MetricKpiCard`, `Timeline`, `QuickPeriodSelector` e `ProgressTracker` foram avaliados e **não adotados** nesta fatia: os indicadores exigem ativação contextual (scroll/aba), `Timeline` exigiria um feed de eventos completo que não existe, a seleção de mês já está implementada e percentuais arbitrários foram proibidos pelo brief. Nenhum chrome paralelo criado; somente classes de layout locais (`.cf-monthly-status`, `.cf-monthly-axes`, `.cf-monthly-outcomes`, `.cf-axis-facts`).
+

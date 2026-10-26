@@ -783,6 +783,53 @@
   gap: var(--cf-grid-gap, 16px);
 }
 
+/* Visão geral V0.2 — estado, eixos independentes e conclusão/envio (doc 112 §35). */
+.dashboard-controllership-finance .cf-monthly-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-monthly-status-meta {
+  color: var(--cf-text-muted);
+  font-size: 0.875rem;
+}
+
+.dashboard-controllership-finance .cf-monthly-axes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+  align-items: stretch;
+}
+
+.dashboard-controllership-finance .cf-monthly-outcomes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+  align-items: stretch;
+}
+
+.dashboard-controllership-finance .cf-axis-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-controllership-finance .cf-axis-next {
+  color: var(--cf-text-muted);
+  font-size: 0.875rem;
+}
+
+.dashboard-controllership-finance #cf-monthly-attention:focus-visible {
+  outline: 2px solid var(--cf-focus, currentColor);
+  outline-offset: 2px;
+  border-radius: var(--radius, 12px);
+}
+
 .dashboard-controllership-finance .cf-monthly-report-links {
   margin: 0;
   padding: 0;
@@ -806,6 +853,11 @@
 
 @media (max-width: 900px) {
   .dashboard-controllership-finance .cf-monthly-indicators {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-controllership-finance .cf-monthly-axes,
+  .dashboard-controllership-finance .cf-monthly-outcomes {
     grid-template-columns: 1fr;
   }
 }

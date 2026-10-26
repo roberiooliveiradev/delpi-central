@@ -12,6 +12,7 @@ import {
   createDashboardMetricStrip,
   createMetricKpiCard,
   createDashboardPageHero,
+  createDashboardPagePath,
   createDashboardRecentAccessStrip,
   createDashboardSectionCard,
   createDashboardSectionRouteCard,
@@ -66,6 +67,10 @@ export function CfPageHero(
 export const CfStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const CfViewTransition = createDashboardViewTransition({
   prefix: UI_PREFIX,
+});
+export const CfPagePath = createDashboardPagePath({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CF_PORTAL_SCOPE,
 });
 export const CfTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CfTopBarUtilityCluster = createDashboardTopBarUtilityCluster({

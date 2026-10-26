@@ -1605,3 +1605,34 @@ A proposta detalhada está no [Plano 113 §11](./113-plano-canonico-fluxo-fecham
 ## 35. Visão geral V0.2 — escolhas do PO aprovadas (26/10/2026)
 
 O PO aprovou explicitamente: **atenções/próximos passos em destaque**, **atividade recente resumida**, **conclusão e envio separados ao final da Visão geral** e **Estoque/Documentos/Pacote DRE em três cartões compactos**. A especificação de composição, componentes plugin-ui, estados e AC está no [Plano 113 §12](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Quatro opções de UX `PO_APPROVED`; desenho detalhado `PENDING_FINAL_PO_PAGE_APPROVAL`, sem GO de implementação ou remoção de legado.
+
+
+## 36. Execução V0.2 — registro de implementação (CF-PROC0072-OVERVIEW-UX-004, 26/10/2026)
+
+Implementação da composição aprovada no [Plano 113 §12](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md), limitada à aba **Visão geral**, sem novo contrato de backend, sem quarta aba e sem tocar as outras duas abas. Estado: `IMPLEMENTED` — pendente de homologação visual do PO (PENDING_PO_PAGE_APPROVAL); não autodeclarado aceite arquitetural.
+
+### 36.1 Composição renderizada (de cima para baixo)
+1. `PagePath` compacto: Início > Fechamento mensal > {aba corrente}.
+2. `ClosingHero` (PageHero compacto) com Mês de referência, Atualizar consulta, ajuda contextual e timestamp.
+3. Três abas via `SegmentToggle` (inalteradas).
+4. Faixa de estado: `StatusBadge` do fechamento + metadados reais da competência (data de abertura, «sem checklist publicado» quando `template_version_id IS NULL`).
+5. Três indicadores `InteractiveDataCard`: Bloqueios (foca a seção de atenção), Divergências (abre Relatórios; «—» quando fonte UNAVAILABLE — nunca falso zero), Documentos a tratar («—» sem contrato P2 — honesto).
+6. `EventsSection` dominante «O que precisa de atenção»: até 4 itens reais — `blocking_reasons` traduzidos por mapa auditável, pendências P4 em aberto e itens EXPECTED do checklist. Sem códigos técnicos crus; descrição indica a origem (Conciliação P3 / Pacotes e revisão). Ações navegam só para destinos reais (aba Relatórios, `closing/packages/{period}`, `closing/pendencies`, aba Documentos).
+7. Três cartões de eixo independentes: Estoque (cutoff + fontes + próximo passo derivado do estado real), Documentos (checklist por estado; «Sem exigências cadastradas» quando vazio), Pacote DRE (contagem por estado real do pacote).
+8. `EventsSection` «Atividade recente»: até 5 eventos reais de `GET /closing/competences/{period}/p3/events` (auditoria P3). Estado vazio/erro honesto; nenhum evento sintético. **Escopo real: somente eventos P3** — não é feed completo de todas as entidades (limitação registrada).
+9. Rodapé operacional em dois blocos separados: «Conclusão da etapa da Controladoria» (estado + condições impeditivas; sem botão de concluir — a conclusão é derivada pelo backend) e «Envio do pacote documental» (estado dos pacotes + ação de navegação para a página de pacotes, onde a confirmação humana ocorre).
+
+### 36.2 Componentes plugin-ui efetivamente reutilizados
+`createDashboardPagePath` (novo alias `CfPagePath`), `createDashboardPageHero` (via `ClosingHero`), `createDashboardSegmentToggle`, `createDashboardInteractiveDataCard`, `createDashboardEventsSection` (AlertQueue interno), `createDashboardSectionCard`, `createDashboardStatusBadge`, `ActionButton`, `EmptyState`, `createDashboardTitleWithHelp`, `createDashboardStateBanner` (feedback). Nenhum componente visual local duplicado; classes novas apenas de layout (`.cf-monthly-status`, `.cf-monthly-axes`, `.cf-monthly-outcomes`, `.cf-axis-facts`).
+
+### 36.3 Preservado
+`CockpitSummaryPanel` permanece servindo a rota legada `closing/cockpit` (busca residual confirmou uso). Painéis Documentos/Relatórios inalterados. Contratos, rotas, domain e BFF intocados.
+
+### 36.4 Gaps honestos registrados
+- `Documentos a tratar` sem contagem (owner P2 `TO_INVENTORY` — FM-05C).
+- Atividade recente cobre apenas auditoria P3 — feed completo de eventos de todas as entidades é `TO_INVENTORY` (sem endpoint novo nesta entrega).
+- Elegibilidade separada de conclusão e envio não existe como campo; a página apresenta o estado derivado real e navega às superfícies de operação — `PLANNED` no contrato.
+- Autoria/atualização: exibe abertura real da competência; autor por evento aparece na Atividade recente (actor_subject).
+
+### 36.5 Evidência
+Vitest `MonthlyClosingPage.test.tsx`: 29/29 (incl. tradução de códigos, «—» sem falso zero, eixos independentes, atividade real/vazia, conclusão≠envio, foco na seção, fail-closed 403, isolamento por período, deep link). Suíte do plugin 211/211; `tsc --noEmit` e ESLint limpos; build federado OK.

@@ -178,12 +178,26 @@ export const CF_HELP = {
   },
   monthlyClosing: {
     page:
-      "Fechamento mensal: bancada de trabalho por mês de referência em três abas — Visão geral (estado real P1–P5), Documentos e interações (evidências P2) e Relatórios e divergências (matriz R01–R15 e fontes). Selecione o mês para consultar; escolher um mês não abre competência — meses sem abertura formal mostram explicação e a ação autorizada.",
+      "Fechamento mensal: bancada de trabalho por mês de referência em três abas — Visão geral (situação, atenções e próximos passos do fechamento), Documentos e interações (evidências P2) e Relatórios e divergências (matriz R01–R15 e fontes). Selecione o mês para consultar; escolher um mês não abre competência — meses sem abertura formal mostram explicação e a ação autorizada.",
     indicators:
-      "Indicadores derivados do cockpit do backend: Bloqueios (razões que impedem a conclusão), Divergências (domínios P3 com divergência declarada) e Documentos a tratar (contagem aguardando contrato do owner P2 — «—» até a definição). «—» significa dado ainda não carregado — nunca zero confirmado. Cada cartão abre a aba correspondente.",
+      "Indicadores derivados do cockpit do backend: Bloqueios (condições que impedem a conclusão — clique para ir à seção de atenção), Divergências (domínios P3 com divergência declarada — clique para abrir Relatórios) e Documentos a tratar (contagem aguardando contrato do owner P2 — «—» até a definição). «—» significa dado indisponível — nunca zero confirmado.",
     tabs:
       "Três visões do mesmo mês: Visão geral consolida o estado do fechamento; Documentos e interações abre as evidências e anexos P2 (exige competência aberta); Relatórios e divergências abre a matriz de relatórios e fontes.",
     pdfPreview:
       "Área reservada à prévia de PDF dos relatórios — geração e publicação de PDF serão entregues em uma versão futura.",
+    attention:
+      "Situações reais identificadas neste fechamento, traduzidas dos códigos técnicos do backend: bloqueios de conclusão, fontes de conciliação indisponíveis, pendências P4 e itens do checklist sem evidência. Cada ação leva ao contexto real onde a situação é tratada.",
+    stockAxis:
+      "Eixo Estoque: estado do cutoff e das fontes de conciliação P3 (ENTRADAS_SAIDAS, P7 e H02). O próximo passo indicado deriva apenas do estado real retornado pelo backend.",
+    docsAxis:
+      "Eixo Documentos: itens do checklist da competência por estado — aguardando evidência, aceitos, não aplicáveis ou cancelados. Mês aberto sem checklist publicado mostra «Sem exigências cadastradas», que é uma situação normal — não erro.",
+    packageAxis:
+      "Eixo Pacote DRE: pacotes aplicáveis ao mês e seu ciclo — em preparação, preparado para envio ou enviado para revisão. O detalhamento e as operações ficam na página de pacotes.",
+    recentActivity:
+      "Eventos reais de auditoria registrados nesta competência (fonte P3). Exibe no máximo os cinco mais recentes; ausência de registros é um estado normal — nenhum evento é simulado.",
+    conclusion:
+      "A conclusão da etapa da Controladoria é derivada pelo sistema quando todas as condições são atendidas — não existe botão de concluir. As condições impeditivas aparecem na seção de atenção.",
+    sendPackage:
+      "O envio do pacote documental é uma operação separada da conclusão e exige confirmação humana na página de pacotes. Um pacote só pode ser enviado quando está preparado.",
   },
 } as const;

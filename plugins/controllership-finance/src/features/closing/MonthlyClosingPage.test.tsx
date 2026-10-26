@@ -5,7 +5,14 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiMock"));
 
@@ -13,9 +20,14 @@ const cockpitMock = vi.fn();
 const listCompetencesMock = vi.fn();
 const getCompetenceMock = vi.fn();
 const openCompetenceMock = vi.fn();
+const listP3EventsMock = vi.fn();
 
 vi.mock("../../api/packagesApi", () => ({
   getClosingCockpit: (...args: unknown[]) => cockpitMock(...args),
+}));
+
+vi.mock("../../api/p3Api", () => ({
+  listP3Events: (...args: unknown[]) => listP3EventsMock(...args),
 }));
 
 vi.mock("../../api/competencesApi", () => ({
@@ -72,7 +84,7 @@ function cockpit(period = "2026-10", overrides: Record<string, unknown> = {}) {
     closing: {
       period,
       state: "PENDING",
-      blocking_reasons: ["Package FISCAL not submitted"],
+      blocking_reasons: ["package_not_submitted:FISCAL"],
       packages: [],
       terminal_rejection: null,
     },
@@ -100,7 +112,14 @@ const COMPETENCES = [
 ];
 
 const NOT_OPENED = new ApiError(404, "not found", "competence_not_opened");
-const OPEN_COMPETENCE = { period: "2026-10", status: "OPEN" };
+const OPEN_COMPETENCE = {
+  competence_id: "c-oct",
+  period: "2026-10",
+  template_version_id: "tv1",
+  status: "OPEN",
+  opened_at: "2026-10-01T00:00:00Z",
+  item_count: 10,
+};
 
 function setLocation(path = `${BASE}/closing/monthly-closing`) {
   window.history.pushState(null, "", path);
@@ -109,12 +128,17 @@ function setLocation(path = `${BASE}/closing/monthly-closing`) {
 function mockOpenMonth() {
   cockpitMock.mockResolvedValue(cockpit());
   getCompetenceMock.mockResolvedValue(OPEN_COMPETENCE);
+  listP3EventsMock.mockResolvedValue([]);
 }
 
 function mockClosedMonth() {
   cockpitMock.mockRejectedValue(NOT_OPENED);
   getCompetenceMock.mockRejectedValue(NOT_OPENED);
 }
+
+beforeEach(() => {
+  listP3EventsMock.mockResolvedValue([]);
+});
 
 afterEach(() => {
   cleanup();
@@ -275,11 +299,13 @@ describe("isolamento de dados por mês de referência", () => {
     );
 
     rerender(<MonthlyClosingPage basePath={BASE} period="2026-11" />);
-    await screen.findByText("Fechamento mensal concluído");
+    await screen.findAllByText("Concluído");
 
     resolveA(cockpit("2026-10"));
     await waitFor(() => expect(cockpitMock).toHaveBeenCalledTimes(2));
-    expect(screen.queryByText("Package FISCAL not submitted")).toBeNull();
+    expect(
+      screen.queryByText(/Pacote de FISCAL ainda não enviado/),
+    ).toBeNull();
     expect(
       screen.getByRole("button", { name: "Documentos a tratar: —" }),
     ).toBeTruthy();
@@ -289,21 +315,23 @@ describe("isolamento de dados por mês de referência", () => {
     setLocation(`${BASE}/closing/monthly-closing/2026-10`);
     listCompetencesMock.mockResolvedValue(COMPETENCES);
     getCompetenceMock.mockResolvedValue(OPEN_COMPETENCE);
+    listP3EventsMock.mockResolvedValue([]);
     cockpitMock.mockImplementation((p: string) =>
       p === "2026-10" ? Promise.resolve(cockpit()) : Promise.reject(NOT_OPENED),
     );
     const { rerender } = render(
       <MonthlyClosingPage basePath={BASE} period="2026-10" />,
     );
-    await screen.findByText("Package FISCAL not submitted");
+    await screen.findByText(/Pacote de FISCAL ainda não enviado/);
 
     rerender(<MonthlyClosingPage basePath={BASE} period="2026-11" />);
 
     await screen.findByText(/ainda não foi aberto/);
-    expect(screen.queryByText("Package FISCAL not submitted")).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Documentos a tratar: —" }),
-    ).toBeTruthy();
+      screen.queryByText(/Pacote de FISCAL ainda não enviado/),
+    ).toBeNull();
+    // Sem competência aberta, a V0.2 não exibe indicadores fabricados.
+    expect(screen.queryByText("O que precisa de atenção")).toBeNull();
   });
 });
 
@@ -313,7 +341,7 @@ describe("período e aba preservados na URL", () => {
     listCompetencesMock.mockResolvedValue(COMPETENCES);
     mockOpenMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
-    await screen.findByText("Conclusão mensal");
+    await screen.findByText("Conclusão da etapa da Controladoria");
 
     fireEvent.click(
       screen.getByRole("button", { name: "Documentos e interações" }),
@@ -394,7 +422,7 @@ describe("indicadores honestos e gate documental", () => {
     listCompetencesMock.mockResolvedValue(COMPETENCES);
     mockOpenMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
-    await screen.findByText("Conclusão mensal");
+    await screen.findByText("O que precisa de atenção");
 
     fireEvent.click(
       screen.getByRole("button", { name: "Documentos a tratar: —" }),
@@ -405,5 +433,262 @@ describe("indicadores honestos e gate documental", () => {
     expect(window.location.pathname).toBe(
       `${BASE}/closing/monthly-closing/2026-10`,
     );
+  });
+});
+
+describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", () => {
+  it("traduz códigos técnicos de blocking_reasons para PT-BR", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText(
+      "Pacote de FISCAL ainda não enviado para revisão",
+    );
+    expect(
+      screen.queryByText(/package_not_submitted/),
+    ).toBeNull();
+  });
+
+  it("fonte P3 indisponível vira mensagem humana e leva a Relatórios", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    cockpitMock.mockResolvedValue(
+      cockpit("2026-10", {
+        closing: {
+          period: "2026-10",
+          state: "PENDING",
+          blocking_reasons: ["p3_source_unavailable:P7"],
+          packages: [],
+          terminal_rejection: null,
+        },
+      }),
+    );
+    getCompetenceMock.mockResolvedValue(OPEN_COMPETENCE);
+    listP3EventsMock.mockResolvedValue([]);
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText(
+      "Fonte P7 indisponível — não foi possível verificar a conciliação",
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver relatórios" }),
+    );
+    await waitFor(() =>
+      expect(window.location.search).toContain("tab=reports"),
+    );
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/monthly-closing/2026-10`,
+    );
+  });
+
+  it("divergências exibem «—» com fonte indisponível, nunca falso zero", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText("O que precisa de atenção");
+    expect(
+      screen.getByRole("button", { name: "Divergências: —" }),
+    ).toBeTruthy();
+  });
+
+  it("divergências contam domínios reais quando fontes estão disponíveis", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    cockpitMock.mockResolvedValue(
+      cockpit("2026-10", {
+        p3: {
+          cutoff_confirmed: true,
+          domains: [
+            {
+              domain: "P7",
+              source_state: "AVAILABLE",
+              provenance_kind: "OFFICIAL",
+              divergence: "0.00",
+            },
+            {
+              domain: "H02",
+              source_state: "AVAILABLE",
+              provenance_kind: "OFFICIAL",
+              divergence: "12.50",
+            },
+          ],
+        },
+      }),
+    );
+    getCompetenceMock.mockResolvedValue(OPEN_COMPETENCE);
+    listP3EventsMock.mockResolvedValue([]);
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText("O que precisa de atenção");
+    expect(
+      screen.getByRole("button", { name: "Divergências: 1" }),
+    ).toBeTruthy();
+  });
+
+  it("eixos Estoque, Documentos e Pacote DRE são independentes", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText("Estoque");
+    expect(screen.getByText("Documentos")).toBeTruthy();
+    expect(screen.getByText("Pacote DRE")).toBeTruthy();
+    expect(screen.getByText(/Cutoff:/)).toBeTruthy();
+    expect(screen.getByText(/8 aguardando evidência/)).toBeTruthy();
+    expect(
+      screen.getByText("Nenhum pacote aplicável neste mês."),
+    ).toBeTruthy();
+  });
+
+  it("checklist vazio (aberto sem template) é estado normal, não erro", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    cockpitMock.mockResolvedValue(
+      cockpit("2026-10", { checklist: {} }),
+    );
+    getCompetenceMock.mockResolvedValue({
+      ...OPEN_COMPETENCE,
+      template_version_id: null,
+    });
+    listP3EventsMock.mockResolvedValue([]);
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText(/Sem exigências cadastradas/);
+    expect(
+      screen.getAllByText(/sem checklist publicado/).length,
+    ).toBeGreaterThanOrEqual(1);
+  });
+
+  it("atividade recente mostra somente eventos reais ou estado vazio", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    const { rerender } = render(
+      <MonthlyClosingPage basePath={BASE} period="2026-10" />,
+    );
+
+    await screen.findByText(
+      "Nenhuma atividade registrada para esta competência.",
+    );
+
+    listP3EventsMock.mockResolvedValue([
+      {
+        event_id: 7,
+        event_type: "CUTOFF_CONFIRMED",
+        actor_subject: "user-1",
+        detail: {},
+        created_at: "2026-10-26T10:00:00Z",
+      },
+    ]);
+    rerender(<MonthlyClosingPage basePath={BASE} period="2026-11" />);
+    rerender(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+    await screen.findByText("Cutoff confirmado");
+    expect(screen.getByText(/user-1/)).toBeTruthy();
+    expect(listP3EventsMock).toHaveBeenCalledWith(
+      "2026-10",
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("conclusão e envio são blocos separados com navegação real", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText("Conclusão da etapa da Controladoria");
+    expect(screen.getByText("Envio do pacote documental")).toBeTruthy();
+    expect(
+      screen.getByText(/condição\(ões\) impeditiva/),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Gerenciar pacotes" }),
+    );
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/packages/2026-10`,
+    );
+  });
+
+  it("fechamento concluído mostra estado final sem bloqueios", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    cockpitMock.mockResolvedValue(
+      cockpit("2026-10", {
+        checklist: {},
+        p4_pendencies: {},
+        closing: {
+          period: "2026-10",
+          state: "MONTHLY_CLOSING_COMPLETED",
+          blocking_reasons: [],
+          packages: [],
+          terminal_rejection: null,
+        },
+      }),
+    );
+    getCompetenceMock.mockResolvedValue(OPEN_COMPETENCE);
+    listP3EventsMock.mockResolvedValue([]);
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findAllByText("Este fechamento está concluído.");
+    expect(
+      screen.getByText(
+        "Nenhuma pendência identificada neste fechamento.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("pendências P4 e checklist geram itens de atenção reais", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText("2 pendência(s) em aberto");
+    expect(
+      screen.getByText("8 item(ns) do checklist aguardando evidência"),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver pendências" }),
+    );
+    expect(window.location.pathname).toBe(`${BASE}/closing/pendencies`);
+  });
+
+  it("seção de atenção recebe foco ao ativar o indicador Bloqueios", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByText("O que precisa de atenção");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Bloqueios: 1" }),
+    );
+    const attention = document.getElementById("cf-monthly-attention");
+    expect(attention).toBeTruthy();
+    expect(document.activeElement).toBe(attention);
+  });
+
+  it("erro de autorização no cockpit permanece fail-closed", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    cockpitMock.mockRejectedValue(
+      new ApiError(403, "forbidden", "forbidden"),
+    );
+    getCompetenceMock.mockRejectedValue(
+      new ApiError(403, "forbidden", "forbidden"),
+    );
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findAllByText(
+      /Você não tem autorização para consultar/,
+    );
+    expect(screen.queryByText("O que precisa de atenção")).toBeNull();
   });
 });

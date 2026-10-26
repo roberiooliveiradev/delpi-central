@@ -304,3 +304,11 @@ Fechamento mensal           [Mês de referência: 09/2026] [Atualizar consulta]
 10. CLARA e Help sincronizadas com o **que for implementado**, não com um wireframe não publicado.
 
 **Próxima ação:** validar refinamento V0.2 com o PO; depois fechar DESIGN_FREEZE e preparar brief limitado à aba Visão geral. Nenhum runtime/legado foi modificado por esta decisão.
+
+## 13. RUNTIME UPDATE — Visão geral V0.2 implementada (CF-PROC0072-OVERVIEW-UX-004, 26/10/2026)
+
+A composição da §12 foi implementada **somente na aba Visão geral** (`MonthlyOverviewPanel.tsx`), render-only sobre os contratos existentes — nenhum endpoint, schema, owner ou permissão novo. As três abas, o seletor de mês, deep links, refresh, isolamento por período e a compatibilidade legada (`closing/cockpit` com `CockpitSummaryPanel`) permanecem.
+
+Implementado exatamente como aprovado: atenções dominantes com códigos traduzidos (sem código técnico cru na interface), três indicadores clicáveis com «—» honesto, três eixos independentes Estoque/Documentos/Pacote DRE, atividade recente de eventos reais (escopo P3 — feed completo continua `TO_INVENTORY`), e conclusão/envio como blocos separados sem ação de conclusão inventada (estado derivado pelo backend + navegação às superfícies reais).
+
+**Pendente:** homologação visual do PO (desktop/mobile, temas) e reindexação do corpus CLARA com este registro — `PENDING`.

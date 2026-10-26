@@ -355,3 +355,24 @@ Cada RQ material da página em execução deve aparecer no report do Cursor com:
 Nenhum RQ pode ser marcado PASS apenas porque outro RQ da mesma página passou.
 
 **Decisões P5 vigentes:** [37 — contrato canônico de revisão, C2, P5-A..J e DEC-01..04](./37-p5-submissao-e-revisao-no-portal.md). RQ/AC em [23](./23-ledger-rq-ac-testes.md); histórico de gates não é contrato ativo. `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Visão geral V0.2 — execução CF-PROC0072-OVERVIEW-UX-004 (26/10/2026)
+
+Fonte: [Plano 113 §§12–13](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md) e [doc 112 §36](./112-design-visual-fechamento-mensal-wireframes.md). Testes em `plugins/controllership-finance/src/features/closing/MonthlyClosingPage.test.tsx` (29 casos; suíte do plugin 211/211 PASS; tsc + ESLint + build federado PASS).
+
+| RQ | Requisito | Aceite mínimo | Teste mínimo | Estado |
+|---|---|---|---|---|
+| RQ-OVR-01 | Três abas preservadas, sem quarta aba | deep link ?tab + troca preserva período | troca de aba mantém /YYYY-MM; deep link período+aba | PASS |
+| RQ-OVR-02 | Atenção é o bloco dominante com itens reais | blocking_reasons + P4 abertas + EXPECTED, máx. 4, ações para destinos reais | tradução de códigos; itens P4/checklist; navegação relatórios/pacotes/pendências | PASS |
+| RQ-OVR-03 | Sem código técnico cru na interface | blocking_reasons traduzidos por mapa auditável | `package_not_submitted:FISCAL` → texto PT-BR; código ausente do DOM | PASS |
+| RQ-OVR-04 | Sem falso zero de divergência | fonte UNAVAILABLE ⇒ «—» | fixture UNAVAILABLE ⇒ «—»; fixture disponível ⇒ contagem real | PASS |
+| RQ-OVR-05 | Documentos a tratar honesto | sem contrato P2 ⇒ «—» explicado | indicador «—» + hint do owner pendente | PASS |
+| RQ-OVR-06 | Eixos independentes | Estoque/Documentos/Pacote com estados próprios | três cartões com fatos reais por eixo | PASS |
+| RQ-OVR-07 | Atividade só com eventos reais | feed P3 real; vazio/erro honesto; sem sintético | vazio + evento real (tipo/ator/data); keyed por período | PASS |
+| RQ-OVR-08 | Conclusão ≠ envio | blocos separados; sem botão de concluir; envio via página de pacotes | bloco de conclusão mostra estado/impeditivos; «Gerenciar pacotes» navega | PASS |
+| RQ-OVR-09 | Isolamento por período | resposta fora de ordem nunca vaza entre meses | rerender A→B com promise lenta + mês sem abertura | PASS |
+| RQ-OVR-10 | Fail-closed | 403 sem conteúdo inventado | banner de restrição; atenção ausente | PASS |
+| RQ-OVR-11 | Checklist vazio = estado normal | «Sem exigências cadastradas», sem erro | checklist {} + template_version_id null | PASS |
+| RQ-OVR-12 | Acessibilidade da seção de atenção | foco programático ao ativar Bloqueios | activeElement = #cf-monthly-attention | PASS |
+| RQ-OVR-13 | Mobile/temas/QA visual | layout responsivo e temas do kit | media queries implementadas; homologação visual PO | PENDING (QA visual pelo PO) |

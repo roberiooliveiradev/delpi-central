@@ -335,3 +335,16 @@ O manifest do corpus (`corpus_manifest.AUTHORIZED_SOURCES`) foi ampliado de 52 p
 - Itens publicados depois da abertura **não** entram retroativamente (re-snapshot pendente — DR-C3).
 - DRE continua TARGET — não descrever como capacidade operacional.
 - Nenhuma tool ACT de abertura existe — a CLARA não abre fechamentos por conta própria.
+
+---
+
+## Adendo — Visão geral V0.2 do Fechamento mensal (CF-PROC0072-OVERVIEW-UX-004)
+
+Conhecimento funcional vigente sobre a organização da aba **Visão geral** (implementado; homologação visual do PO pendente):
+
+- A Visão geral responde: qual mês está em acompanhamento, situação do fechamento, o que precisa de atenção, quais atividades executar, se a etapa da Controladoria pode concluir e se o pacote pode ser enviado.
+- Os três indicadores significam: **Bloqueios** = condições impeditivas de conclusão derivadas do fechamento; **Divergências** = domínios de conciliação com divergência monetária — «—» quando uma fonte está indisponível (nunca zero); **Documentos a tratar** = métrica ainda sem contrato do owner P2 — «—» até definição.
+- «O que precisa de atenção» lista situações reais traduzidas dos códigos do backend — a CLARA não deve reproduzir códigos técnicos crus (ex.: `p3_source_unavailable:P7`) ao usuário, e sim a mensagem humana («Fonte P7 indisponível»).
+- Os eixos Estoque, Documentos e Pacote DRE são independentes: «Sem exigências cadastradas» (aberto sem checklist) é estado normal, não erro.
+- **Concluir** a etapa da Controladoria é derivado pelo sistema quando as condições são atendidas — não existe ação de concluir na interface. **Enviar** o pacote documental é operação separada, na página de pacotes, com confirmação humana. Nunca confundir conclusão com envio.
+- Atividade recente exibe somente eventos reais de auditoria P3 do mês; feed completo de eventos e métrica «Documentos a tratar» seguem pendentes de contrato (`TO_INVENTORY`).

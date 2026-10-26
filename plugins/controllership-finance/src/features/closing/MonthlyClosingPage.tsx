@@ -54,7 +54,7 @@ import { ClosingHero } from "../../app/ClosingHero";
 import {
   CfActionButton,
   CfEmptyState,
-  CfInteractiveDataCard,
+  CfPagePath,
   CfSectionCard,
   CfSegmentToggle,
   CfTitleWithHelp,
@@ -64,7 +64,7 @@ import { navigatePluginPath } from "../../app/pluginNavigation";
 import { normalizeBasePath } from "../../app/pluginRoutes";
 import { CF_HELP } from "../../content/helpTooltips";
 import { ClosingDocumentsPanel } from "./ClosingDocumentsPanel";
-import { CockpitSummaryPanel } from "./CockpitSummaryPanel";
+import { MonthlyOverviewPanel } from "./MonthlyOverviewPanel";
 import { ReportsMatrixPanel } from "./ReportsMatrixPanel";
 
 type PanelError = { status: number; code: string | null; message: string };
@@ -93,8 +93,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   no_published_template:
     "Não existe versão publicada vigente do checklist para este mês.",
 };
-
-const ZERO_DIVERGENCE_PATTERN = /^-?0+([.,]0+)?$/;
 
 const NOT_OPENED_CODES = new Set([
   "competence_not_opened",
@@ -132,17 +130,6 @@ function parseTab(search: string): MonthlyClosingTab {
 function formatPeriod(period: string): string {
   const [year, month] = period.split("-");
   return `${month}/${year}`;
-}
-
-function countDivergences(cockpit: Cockpit): number {
-  return cockpit.p3.domains.filter(
-    (d) =>
-      d.divergence !== null && !ZERO_DIVERGENCE_PATTERN.test(d.divergence),
-  ).length;
-}
-
-function indicatorValue(count: number | null): string {
-  return count === null ? "—" : String(count);
 }
 
 type CockpitResult =
@@ -402,13 +389,6 @@ export function MonthlyClosingPage({
     return () => controller.abort();
   }, [period, cockpitKey]);
 
-  const blockingCount = cockpit?.closing.blocking_reasons.length ?? null;
-  const divergenceCount = cockpit ? countDivergences(cockpit) : null;
-  // «Documentos a tratar» não equivale a checklist.EXPECTED — a regra de
-  // inclusão dos estados P2 é CONTRACT_TO_INVENTORY no owner P2 (FM-05C).
-  // Enquanto não houver DTO/owner com a métrica, o cartão mostra «—».
-  const documentsCount: number | null = null;
-
   const referencePicker = (
     <form
       className="cf-settlements-filters"
@@ -460,11 +440,39 @@ export function MonthlyClosingPage({
     return children;
   };
 
+  const tabLabel =
+    TAB_OPTIONS.find((option) => option.value === tab)?.label ??
+    "Visão geral";
+
   return (
     <section
       className="cf-page-stack cf-closing-layout"
       aria-label="Fechamento mensal"
     >
+      <CfPagePath
+        ariaLabel="Caminho da página"
+        size="sm"
+        back={{
+          label: "Início",
+          href: base,
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigatePluginPath(base);
+          },
+        }}
+        items={[
+          {
+            id: "monthly-closing",
+            label: "Fechamento mensal",
+            href: monthlyPath(base, period, "overview"),
+            onNavigate: (event) => {
+              event.preventDefault();
+              navigatePluginPath(monthlyPath(base, period, "overview"));
+            },
+          },
+        ]}
+        current={tabLabel}
+      />
       <ClosingHero
         title={
           <CfTitleWithHelp
@@ -492,57 +500,6 @@ export function MonthlyClosingPage({
 
       {period ? (
         <>
-          <div
-            className="cf-monthly-indicators"
-            aria-label="Indicadores de atenção"
-          >
-            <CfInteractiveDataCard
-              ariaLabel={`Bloqueios: ${indicatorValue(blockingCount)}`}
-              fields={[
-                {
-                  id: "value",
-                  label: "Bloqueios",
-                  value: indicatorValue(blockingCount),
-                  valueTone: "value",
-                  present: true,
-                  hint: "razões que impedem a conclusão",
-                },
-              ]}
-              openHint="Ver na Visão geral"
-              onActivate={() => selectTab("overview")}
-            />
-            <CfInteractiveDataCard
-              ariaLabel={`Divergências: ${indicatorValue(divergenceCount)}`}
-              fields={[
-                {
-                  id: "value",
-                  label: "Divergências",
-                  value: indicatorValue(divergenceCount),
-                  valueTone: "value",
-                  present: true,
-                  hint: "domínios P3 com divergência",
-                },
-              ]}
-              openHint="Ver em Relatórios e divergências"
-              onActivate={() => selectTab("reports")}
-            />
-            <CfInteractiveDataCard
-              ariaLabel={`Documentos a tratar: ${indicatorValue(documentsCount)}`}
-              fields={[
-                {
-                  id: "value",
-                  label: "Documentos a tratar",
-                  value: indicatorValue(documentsCount),
-                  valueTone: "value",
-                  present: true,
-                  hint: "contagem aguardando contrato do owner P2",
-                },
-              ]}
-              openHint="Ver em Documentos e interações"
-              onActivate={() => selectTab("documents")}
-            />
-          </div>
-
           <CfSegmentToggle<MonthlyClosingTab>
             options={TAB_OPTIONS}
             value={tab}
@@ -581,7 +538,19 @@ export function MonthlyClosingPage({
                     defaultMessage="Sem dados de fechamento para o mês de referência."
                   />
                 ) : null}
-                {cockpit ? <CockpitSummaryPanel cockpit={cockpit} /> : null}
+                {cockpit ? (
+                  <MonthlyOverviewPanel
+                    cockpit={cockpit}
+                    competence={
+                      probe?.kind === "ready" ? probe.data : null
+                    }
+                    period={period}
+                    onSelectTab={selectTab}
+                    onGoTo={(relativePath) =>
+                      navigatePluginPath(`${base}/${relativePath}`)
+                    }
+                  />
+                ) : null}
               </>
             ) : null}
 

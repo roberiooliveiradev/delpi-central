@@ -217,7 +217,13 @@ export function createDashboardEventsSection() {
   return function EventsSection(props: {
     title?: ReactNode;
     subtitle?: ReactNode;
-    items?: Array<{ id: string }>;
+    items?: Array<{
+      id: string;
+      title?: ReactNode;
+      description?: ReactNode;
+      actionLabel?: string;
+      onAction?: () => void;
+    }>;
     emptyMessage?: ReactNode;
     listAriaLabel?: string;
   }) {
@@ -228,7 +234,25 @@ export function createDashboardEventsSection() {
       el("h2", null, props.title),
       items.length === 0
         ? el("p", null, props.emptyMessage)
-        : el("ul", null, items.map((i) => el("li", { key: i.id }))),
+        : el(
+            "ul",
+            null,
+            items.map((item) =>
+              el(
+                "li",
+                { key: item.id },
+                el("span", null, item.title),
+                item.description,
+                item.actionLabel
+                  ? el(
+                      "button",
+                      { type: "button", onClick: item.onAction },
+                      item.actionLabel,
+                    )
+                  : null,
+              ),
+            ),
+          ),
     );
   };
 }
@@ -726,6 +750,41 @@ export function createDashboardInteractiveDataCard() {
       ),
       props.openHint,
       props.children,
+    );
+  };
+}
+
+export const pagePathBemClasses = passthroughClasses;
+
+export function createDashboardPagePath() {
+  return function PagePath(props: {
+    back?: { label?: ReactNode; onNavigate?: (e: unknown) => void };
+    items?: Array<{
+      id: string;
+      label?: ReactNode;
+      onNavigate?: (e: unknown) => void;
+    }>;
+    current?: ReactNode;
+    ariaLabel?: string;
+  }) {
+    return el(
+      "nav",
+      { "aria-label": props.ariaLabel ?? "Caminho da página" },
+      props.back
+        ? el(
+            "button",
+            { type: "button", onClick: props.back.onNavigate },
+            props.back.label,
+          )
+        : null,
+      ...(props.items ?? []).map((item) =>
+        el(
+          "button",
+          { key: item.id, type: "button", onClick: item.onNavigate },
+          item.label,
+        ),
+      ),
+      el("span", { "aria-current": "page" }, props.current),
     );
   };
 }
