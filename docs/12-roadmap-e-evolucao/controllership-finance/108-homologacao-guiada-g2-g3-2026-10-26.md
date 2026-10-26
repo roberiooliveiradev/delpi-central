@@ -442,3 +442,32 @@ estavam em `origin/main`; a divergência era de stack local.
 - `KEYCLOAK_PROD`/`CHATGPT_*`: permanecem `PENDING` por credencial
   admin rotacionada (Doc 107) — smoke autenticado e cadastro ChatGPT
   exigem gate IAM real, não fabricado aqui.
+
+
+
+## Rodada 4 — parecer independente de evidências e transição G2/G3 (26/10/2026)
+
+**Revisão documental e de código no GitHub (não repetição de Playwright/SSH):** implementação e relatório R4 no commit `5e9a0ddd81c21cb656ecc5be4fd16fa5670efea1`; higienização sintática estrita do arquivo `108-evidence-user-journey-e2e-r4-2026-10-26.jsonl` em `c972dae7f2c27a5b58e23ff673c4e53dc3d8d90a`.
+
+**Reconciliação verificável da evidência:** arquivo JSONL agora contém **161 eventos históricos válidos**: **111 marcados PASS, 42 INCONCLUSIVE e 8 FAIL** (tentativas intermediárias incluídas); última entrada por `test_id` único produz **83 cenários, 82 PASS, 1 INCONCLUSIVE (J5-02)**. A única linha sintaticamente inválida do arquivo anterior (J10-04, leitura do status com argumento incompatível) foi regravada mantendo classificação `INCONCLUSIVE`, com motivo legível e sem handles. Os eventos negativos anteriores NÃO foram apagados nem reclassificados como êxitos. **Não dizer “zero FAIL executados”; dizer “zero FAIL pendentes no estado final por ID”, após reruns informados pelo executor.** As evidências são reportadas pelo executor, e não executadas independentemente pelo GPT.
+
+### Parecer por gate
+
+| Dimensão | Veredito | Evidência / fronteira |
+|---|---|---|
+| Entrega da Rodada 4 (teste local por navegador) | `ACCEPT_WITH_RESIDUAL` | dez jornadas reais J1–J10 reportadas; 83 cenários deduplicados; BFF local alinhada e /ready corrigido; pós-condições CLARA registradas; resultado final J5-02 inconclusivo por origem P7 indisponível |
+| G2 readiness técnica do escopo local implementado | `READY_WITH_RESIDUAL` | ponto de demonstração humana consolidada, não signoff; relatórios R01–R15 oficiais, T03/T05/R04+ e seeds não homologados |
+| Aceite funcional G2 (PO/Controladoria) | `PENDING_HUMAN_SIGNOFF` | autorização anterior do PO para realizar G2/G3 **não é** concordância formal posterior com todos os resultados; coletar decisão `ACCEPT` ou `ACCEPT_WITH_RESIDUAL`, escopo, data e responsável, depois da demo |
+| G3 release / operador | `PENDING_OPERATOR_AUTHORIZATION` | relatório de produção antiga `2eeb5fb943` sem read-back independente neste turno; o commit de correções R4 `5e9a0ddd81` **não está comprovadamente implantado em produção**; backups/rollback, IAM e smoke por operador |
+| Keycloak de produção e ChatGPT | `BLOCKED_IAM / TEST_NOT_RUN` | client `mcp-clara` de produção sem provisionamento autenticado; callback ChatGPT e smoke reais não realizados |
+
+**Residuais com dono e destino (sem nova rodada geral):**
+1. **G2 Controladoria/PO:** aceitar explicitamente apenas o escopo local comprovado de P1–P6/CLARA com ressalvas: P7 oficial não disponível, paridade G5/G6 R01–R15, T03/T05/R04+/seeds e escopo de P5 com clarificação aberta (Doc 104 bloqueia C2).
+2. **Core/Plataforma owner:** aprovar contrato transversal da categoria `controllership_finance` adicionada ao catálogo Core e fallback Portal, mesmo que dispatch local 201/4 DISPATCHED esteja provado pelo executor. Evidência de integração local não é autorização de rollout do Core.
+3. **Operador SSH/G3:** preflight e autorização contemporânea para próximas alterações produtivas; backups do PG/upload/corpus, revisão migration/rollback, inspeção dos SHAs, comparação do código de produção com R4, smoke autenticado. Não refazer deploy nem tratar rollout antigo como autorização para um novo.
+4. **IAM:** credencial administrativa legítima por canal sigiloso, `--check` e diff completo do engine Keycloak compartilhado (TÉO/DAVI/VISTA/DÉLIA), owner aprova mudanças antes de `--apply` do `mcp-clara`.
+5. **ChatGPT:** registrar callback/redirect real do workspace, consentimento, discovery, READ, KNOWLEDGE e lote ACT só em cenário e identidades autorizados. Sem OAuth prod válido = `TEST_NOT_RUN`.
+
+**Decisão aberta de produto:** aceitar na V1 decisão de área com clarificação aberta, mantendo impedimento de **conclusão mensal C2** até resolução da clarificação, conforme Doc 104; qualquer mudança exige decisão expressa do PO e revisão de contrato.
+
+**Saída:** nenhuma intervenção adicional produtiva autorizada por este parecer; a próxima ação é **uma única sessão de aceite humano G2 seguida de checklist G3 do Operador/IAM**, com evidências anexadas a Docs 108/109/107 por SHA. Não iniciar outra rodada generalista de desenvolvimento.
