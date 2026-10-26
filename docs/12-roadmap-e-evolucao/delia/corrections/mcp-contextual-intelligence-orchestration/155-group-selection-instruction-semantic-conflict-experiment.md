@@ -152,3 +152,18 @@ Artifacts: harness `scripts/instruction_conflict_eval.py`,
 `instruction_conflict_aggregate.py`, fixture
 `tests/fixtures/select_group_instruction_variant_b.txt`, sanitized
 runs `docs/.../evidence/instruction-conflict-eval-runs.json`.
+
+
+## 9. Independent coordination review — 2026-10-26
+
+**VERDICT=ACCEPT_WITH_RESIDUAL (diagnostic), INSTRUCTION_B=REJECT, DEPLOY_AUTHORIZED=NO.** Independent static review of commit `2288353dca39a82d7b3ecc5fa7228e02e9c58e47`, doc 155, experimental fixture and A/B aggregator. Local 200 end-to-end and 400 isolated calls were NOT independently rerun. Code and production instruction were unchanged by that commit. Later HEAD advanced concurrently, so this verdict attaches to evaluated code/config snapshot.
+
+**Supported experiment result:** an instruction-only variant replacing the documentation-first clause does not improve group selection in reported base (A 17/39 vs B 10/35), holdout (A 10/20 vs B 10/24), or isolated live (16/50 vs 14/50) comparisons. Rejection of B is appropriate; do not promote fixture. Documented ABBA interleave, same model, catalog and code tree reduce but do not eliminate unseeded run variance; Keycloak interruptions and restarted holdout must remain visible.
+
+**Important metric caveat:** the aggregator increments `correct` for `applicable=false` when expected family is `none` without incrementing `eligible`. Its displayed `correct/eligible` is therefore not a pure group-selection accuracy whenever no-owner cases are included; `wrong=eligible-correct-invalid` may also be biased. Per-scenario and raw traces must be used to reconstruct an exclusive confusion matrix before setting numeric acceptance thresholds. Also `GROUP_FAMILY` classifies both TEO and VISTA as `doc` and allows DAVI discovery for record-family requests; this broad oracle can overcount acceptable routes without corroborating ultimate owner relevance. Stage-specific eligible denominators must distinguish `not_applicable` from a selected wrong owner and from admission-stop.
+
+**Neutral-name effect merits follow-up but is not proof of model incapacity:** isolated accuracy reportedly changes A 16/50→35/50 and B 14/50→31/50 under catalog renaming. The intervention changes identifiers/owner/display metadata (not necessarily just nonauthoritative display labels) and can change tokenization and semantic hints. It supports sensitivity to naming priors; it does **not** isolate a property unique to the 3B model or prove that published descriptions are unambiguous for every requested business domain. Treat H2 and H3 as `SUPPORTED_HYPOTHESIS`/`INCONCLUSIVE` pending a contract-preserving label-only experiment or model comparison. Identity/group IDs must remain real in any governed execution; do not silently replace canonical authority identifiers with aliases.
+
+**Outcome vs selection:** B 18/60 vs A 16/60 end-to-end PASS is not improvement in group selection, and historical record business outcomes remain unproven. Admission and argument errors are independent competing failures. No safety bypass reported; no independent runtime security test executed here.
+
+**Next bounded decision:** choose one isolated experiment, preferably **catalog presentation name-prior sensitivity** that manipulates ONLY user-facing untrusted labels in a model-visible projection while retaining canonical IDs/owner authority and provider-neutral constraints, with fixed token budgets, frozen code/model/catalog, holdout and paired controls. If not feasible without modifying authority-bearing identity fields, STOP → ARCHITECTURE_DECISION_REQUIRED. A model-capacity comparison is a separate authorization; no model swap/deploy.
