@@ -3196,6 +3196,11 @@ services:
       PC_MES_DYNAMIC_AUTO_DOWNTIME_ENABLED: ${PC_MES_DYNAMIC_AUTO_DOWNTIME_ENABLED:-false}
       PC_MES_AUTO_DOWNTIME_MIN_SECONDS: ${PC_MES_AUTO_DOWNTIME_MIN_SECONDS:-}
       PC_MES_AUTO_DOWNTIME_MANUAL_CYCLE_MULTIPLIER: ${PC_MES_AUTO_DOWNTIME_MANUAL_CYCLE_MULTIPLIER:-3}
+      # Monitoramento autônomo por CT (PC-MES-CT-AUTONOMOUS-DOWNTIME):
+      # registra produção/parada sem OP aberta. Default ligado; allowlist
+      # por CT ("CT-35,CT-41") restringe a homologação incremental.
+      PC_MES_CT_AUTONOMOUS_ENABLED: ${PC_MES_CT_AUTONOMOUS_ENABLED:-true}
+      PC_MES_CT_AUTONOMOUS_WORK_CENTERS: ${PC_MES_CT_AUTONOMOUS_WORK_CENTERS:-*}
 
       # Portal RH — diretório de colaboradores (C2; credencial S2S dedicada)
       PORTAL_RH_API_URL: ${PORTAL_RH_API_URL:-}

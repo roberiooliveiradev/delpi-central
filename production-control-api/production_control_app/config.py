@@ -114,8 +114,9 @@ class Settings:
     )
 
     # PC-MES-CT-AUTONOMOUS-DOWNTIME — monitoramento autônomo do CT sem run.
-    # Default OFF: o deploy não liga detecção em nenhum posto. A allowlist
-    # habilita a homologação CT a CT ("*" = todos os sensorizados).
+    # O compose liga por padrão (:-true) em todos os sensorizados (*);
+    # override via .env restringe a homologação CT a CT
+    # ("CT-35,CT-41") ou desliga ("false").
     PC_MES_CT_AUTONOMOUS_ENABLED: bool = (
         str(
             _get_env("PC_MES_CT_AUTONOMOUS_ENABLED", default="false")
