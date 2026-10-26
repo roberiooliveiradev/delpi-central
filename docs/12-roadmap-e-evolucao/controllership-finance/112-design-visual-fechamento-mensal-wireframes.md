@@ -1488,3 +1488,71 @@ Devin é obrigado a consultar `plugins/plugin-ui/src/index.ts`, `plugins/plugin-
 | 15/24/30/32/37/46/47/91 | menções a competência/template | não relacionadas / consistentes | mantidas (Home usa "competência ativa" = contexto de launcher, não o seletor do workspace) |
 
 **Classificação final:** `IMPLEMENTED` (camada de seleção/UX) + `DECISION_REQUIRED` (produtores por mês de referência sem competência; catálogo mestre effective-dated; regra de competência em andamento). Revisão independente pendente — não é autoaceite arquitetural.
+
+## 32. Reconciliação de contratos — inventário de acoplamento (CF-PROC0072-CONTRACT-RECONCILIATION-002)
+
+**Data:** 2026-10-26. **Base:** `b6c370daa8`. **Tipo:** Checkpoint 1 do Plano 113 — inventário técnico obrigatório do acoplamento `monthly_competence`/`openCompetence`/template PUBLISHED/snapshot/cockpit/R01–R15/P2/P5. **Estado:** `INVENTORIED` + `DECISION_REQUIRED` (3 itens). Zero mudança de contrato nesta rodada.
+
+### 32.1 Queries que JÁ operam por `YYYY-MM` sem competência aberta [PROVEN]
+
+| Endpoint | Chave real | Fonte |
+|---|---|---|
+| `GET /closing/stock-inventory` | `period` query param | gateway api-delpi `/financeiro/stock-inventory` (TOTVS read) |
+| `GET /closing/financial-settlements` | `start_date`/`end_date` | gateway api-delpi (baixas AP/AR) |
+| `GET /closing/financial-settlements/summary` | `start_date`/`end_date` | idem |
+
+Esses são os relatórios fonte canônicos "consultáveis por mês sem abertura" do Plano 113 §5 — já cumpridos pelo contrato vigente.
+
+### 32.2 Queries HARD-COUPLED a `monthly_competence` [PROVEN]
+
+Todas sob prefixo `/closing/competences/{period}` e todas chamam `_competence_id(cur, period)` → `CompetenceNotOpened` se não há linha:
+
+| Endpoint | Repositório | Uso no workspace |
+|---|---|---|
+| `GET …/{period}` probe | checklist_repo `get_competence` | gate de elegibilidade |
+| `GET …/{period}/cockpit` | package_repo `get_cockpit` | aba Visão geral |
+| `GET …/{period}/reports` | checklist_repo `list_competence_items` | matriz R01–R15 (deriva do snapshot!) |
+| `GET …/{period}/p3`, `/p3/events` | p3_repo | divergências |
+| `GET …/{period}/pendencies*` | pendency_repo | P4 |
+| `GET …/{period}/packages*` | package_repo | P5 |
+| `documents*` | document_repo (`get_competence_id`) | evidências P2 |
+
+**Achado estrutural:** a matriz R01–R15 não é um "relatório calculado por período" — é uma **projeção do snapshot `competence_checklist_item`** copiado na abertura. Sem `monthly_competence` não existe `competence_checklist_item`, logo não existe matriz. A decisão PO de "consultar relatórios por mês sem abertura" exige um **produtor canônico novo ou semântica alternativa** — não é parametrizeável por flag.
+
+### 32.3 Acoplamento de abertura → `DECISION_REQUIRED`
+
+`open_competence` → `resolve_published_version(period)` → `NoPublishedTemplate` (409) se não há PUBLISHED vigente. Schema `V001:73` — `monthly_competence.template_version_id UUID NOT NULL REFERENCES checklist_template_version`. `competence_checklist_item.source_template_item_id NOT NULL REFERENCES checklist_template_item`.
+
+**Abrir sem template publicado exige escolha real de persistência** — cada opção tem impacto material:
+
+| Opção | Mecanismo | Impacto |
+|---|---|---|
+| A — `template_version_id` nullable | Migration `V015` + snapshot zero itens | `monthly_competence` passa a admitir "aberto sem checklist"; P2/P5 e auditoria precisam tratar competência vazia; reabertura/re-snapshot quando template aparecer é **regra nova indefinida** |
+| B — versão placeholder "vazia" | Seed de template_version PUBLISHED com 0 itens | Sem migration de schema, mas cria artefato sintético que contamina histórico/auditoria; `resolve_published_version` continua funcionando |
+| C — manter gate de template (AS-IS) | Nada muda | Contradiz TARGET do PO — abertura bloqueada até `.manage` publicar versão |
+
+**Recomendação provisória: A**, com regra explícita de "competência sem template = lista vazia legítima, re-snapshot proibido retroativamente após template aparecer" — mas exige decisão PO/owner P2 sobre o que acontece quando um template é publicado DEPOIS da abertura sem template (itens não se materializam sozinhos).
+
+### 32.4 `DECISION_REQUIRED` consolidado
+
+1. **DR-C1 — Abertura sem template publicado:** opções A/B/C acima; envolve migration (V015) + semântica de re-snapshot → gate técnico + PO.
+2. **DR-C2 — Relatórios R01–R15 por mês sem competência:** hoje derivam do snapshot P2. Sem competência, opções: (i) projetar a partir do template PUBLISHED vigente para o mês — mas isso exibe "o que seria exigido", não "o que está em andamento"; (ii) novo endpoint period-keyed; (iii) aceitar que relatórios só existem pós-abertura (contradiz TARGET parcialmente).
+3. **DR-C3 — Competência aberta + alteração posterior de template:** já documentado como pendente no Plano 113 §3 — aqui confirmado pelo schema: o snapshot é cópia física, não view; mudanças no mestre não propagam por construção.
+
+### 32.5 Menor diff implementável já executado (sem gate adicional)
+
+- Copy reconciliada com Plano 113: «Abrir competência» → **«Abrir fechamento»**; "competência aberta" → "fechamento aberto"; lista landing "Fechamentos abertos". `MonthlyClosingPage.test.tsx` atualizado em conjunto (17/17 PASS).
+- Nenhuma rota, contrato, schema, permission ou endpoint criado/alterado.
+
+### 32.6 Gates
+
+| Item | Estado |
+|---|---|
+| MFE seleção por mês + estados honestos | DONE (§31) + label reconciliado |
+| Consulta TOTVS por `YYYY-MM` sem abertura | PROVEN — já vigente |
+| Abertura sem template | BLOCKED — DR-C1 (migration V015) |
+| R01–R15 sem competência | BLOCKED — DR-C2 (não é projeção period-keyed) |
+| Cadastro mestre effective-dated de entregáveis | BLOCKED — DR-C3 + ausência de schema |
+| Compatibilidade P2/P5/legado | PRESERVADA — zero breaking |
+
+**Classificação final:** `INVENTORY_DONE` + `DECISION_REQUIRED×3`. Menor diff já entregue = copy + isolamento por mês; qualquer avanço backend exige gate explícito sobre DR-C1/DR-C2/DR-C3.

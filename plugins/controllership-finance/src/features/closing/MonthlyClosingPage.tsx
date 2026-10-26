@@ -21,7 +21,7 @@
  *   deep links preservam o contexto.
  * - Contratos atuais P1–P5 seguem ancorados na competência aberta: sem
  *   competência, cada aba exibe estado honesto e a ação autorizada
- *   «Abrir competência» (POST /closing/competences, permission access).
+ *   «Abrir fechamento» (POST /closing/competences, permission access).
  *   A BFF segue fail-closed como autoridade final de autorização.
  */
 import {
@@ -193,27 +193,27 @@ function NotOpenedNotice({
     <>
       <CfEmptyState
         classNames={cfEmptyStateClassNames}
-        defaultMessage={`O mês ${formatPeriod(period)} ainda não tem competência aberta.`}
+        defaultMessage={`O fechamento de ${formatPeriod(period)} ainda não foi aberto.`}
       />
       <CfFeedbackMessage
         intent="info"
         title="Abertura necessária para os dados desta visão"
       >
-        Entregáveis, evidências e relatórios desta competência derivam da
-        versão publicada do checklist. Abrir a competência cria o snapshot
-        do mês — nunca recria uma competência existente.
+        Entregáveis, evidências e relatórios deste fechamento derivam da
+        abertura formal. Abrir o fechamento registra o mês — nunca recria
+        um fechamento existente.
       </CfFeedbackMessage>
       {openError ? (
         <CfFeedbackMessage
           intent="error"
-          title="Falha ao abrir a competência"
+          title="Falha ao abrir o fechamento"
         >
           {openError.message}
         </CfFeedbackMessage>
       ) : null}
       <div className="cf-settlements-actions">
         <CfActionButton type="button" onClick={onOpen} disabled={opening}>
-          {opening ? "Abrindo…" : "Abrir competência"}
+          {opening ? "Abrindo…" : "Abrir fechamento"}
         </CfActionButton>
       </div>
     </>
@@ -428,7 +428,7 @@ export function MonthlyClosingPage({
 
   const renderProbeGate = (children: React.ReactNode) => {
     if (probeLoading) {
-      return <p aria-live="polite">Verificando competência…</p>;
+      return <p aria-live="polite">Verificando fechamento…</p>;
     }
     if (probe?.kind === "not_opened") {
       return (
@@ -444,7 +444,7 @@ export function MonthlyClosingPage({
       return (
         <CfQueryErrorBanner
           error={probe.error}
-          dataset="a competência do mês"
+          dataset="o fechamento do mês"
           onRetry={retry}
         />
       );
@@ -453,7 +453,7 @@ export function MonthlyClosingPage({
       return (
         <CfEmptyState
           classNames={cfEmptyStateClassNames}
-          defaultMessage={`A competência ${formatPeriod(period)} não está aberta para esta operação.`}
+          defaultMessage={`O fechamento de ${formatPeriod(period)} não está aberto para esta operação.`}
         />
       );
     }
@@ -485,7 +485,7 @@ export function MonthlyClosingPage({
       {listError ? (
         <CfQueryErrorBanner
           error={listError}
-          dataset="as competências abertas"
+          dataset="os fechamentos abertos"
           onRetry={retry}
         />
       ) : null}
@@ -601,7 +601,7 @@ export function MonthlyClosingPage({
                       )
                     }
                   >
-                    Abrir checklist da competência
+                    Abrir checklist do fechamento
                   </CfActionButton>
                 </CfSectionCard>
               </>
@@ -659,11 +659,11 @@ export function MonthlyClosingPage({
       ) : (
         <div className="cf-page-stack">
           {currentList === null && !listError ? (
-            <p aria-live="polite">Carregando competências…</p>
+            <p aria-live="polite">Carregando fechamentos…</p>
           ) : null}
           {competences && competences.length > 0 ? (
             <CfSectionCard
-              title="Competências abertas"
+              title="Fechamentos abertos"
               hint={CF_HELP.monthlyClosing.page}
             >
               <ul className="cf-competence-list">
@@ -689,7 +689,7 @@ export function MonthlyClosingPage({
           {competences && competences.length === 0 ? (
             <CfEmptyState
               classNames={cfEmptyStateClassNames}
-              defaultMessage="Nenhuma competência aberta ainda — selecione um mês de referência para consultar."
+              defaultMessage="Nenhum fechamento aberto ainda — selecione um mês de referência para consultar."
             />
           ) : null}
         </div>

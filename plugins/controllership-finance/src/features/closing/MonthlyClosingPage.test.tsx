@@ -142,7 +142,7 @@ describe("mês de referência — seleção livre e landing honesta", () => {
     listCompetencesMock.mockResolvedValue(COMPETENCES);
     render(<MonthlyClosingPage basePath={BASE} />);
 
-    await screen.findByText("Competências abertas");
+    await screen.findByText("Fechamentos abertos");
     fireEvent.click(screen.getByRole("button", { name: /10\/2026/ }));
     expect(window.location.pathname).toBe(
       `${BASE}/closing/monthly-closing/2026-10`,
@@ -153,7 +153,7 @@ describe("mês de referência — seleção livre e landing honesta", () => {
     setLocation();
     listCompetencesMock.mockResolvedValue([]);
     render(<MonthlyClosingPage basePath={BASE} />);
-    await screen.findByText(/Nenhuma competência aberta ainda/);
+    await screen.findByText(/Nenhum fechamento aberto ainda/);
     expect(screen.getByLabelText("Mês de referência")).toBeTruthy();
   });
 
@@ -179,9 +179,9 @@ describe("mês sem competência aberta — consulta possível, estados honestos"
     mockClosedMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-09" />);
 
-    await screen.findByText(/ainda não tem competência aberta/);
+    await screen.findByText(/ainda não foi aberto/);
     expect(
-      screen.getByRole("button", { name: "Abrir competência" }),
+      screen.getByRole("button", { name: "Abrir fechamento" }),
     ).toBeTruthy();
   });
 
@@ -191,10 +191,10 @@ describe("mês sem competência aberta — consulta possível, estados honestos"
     mockClosedMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-09" />);
 
-    await screen.findByText(/ainda não tem competência aberta/);
+    await screen.findByText(/ainda não foi aberto/);
     expect(screen.queryByTestId("documents-panel")).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Abrir competência" }),
+      screen.getByRole("button", { name: "Abrir fechamento" }),
     ).toBeTruthy();
   });
 
@@ -204,7 +204,7 @@ describe("mês sem competência aberta — consulta possível, estados honestos"
     mockClosedMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-09" />);
 
-    await screen.findByText(/ainda não tem competência aberta/);
+    await screen.findByText(/ainda não foi aberto/);
     expect(screen.queryByTestId("reports-panel")).toBeNull();
   });
 
@@ -216,7 +216,7 @@ describe("mês sem competência aberta — consulta possível, estados honestos"
     render(<MonthlyClosingPage basePath={BASE} period="2026-09" />);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Abrir competência" }),
+      await screen.findByRole("button", { name: "Abrir fechamento" }),
     );
     await waitFor(() =>
       expect(openCompetenceMock).toHaveBeenCalledWith("2026-09"),
@@ -237,7 +237,7 @@ describe("mês sem competência aberta — consulta possível, estados honestos"
     render(<MonthlyClosingPage basePath={BASE} period="2026-09" />);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Abrir competência" }),
+      await screen.findByRole("button", { name: "Abrir fechamento" }),
     );
     await screen.findByText(
       /Não existe versão publicada vigente do checklist/,
@@ -299,7 +299,7 @@ describe("isolamento de dados por mês de referência", () => {
 
     rerender(<MonthlyClosingPage basePath={BASE} period="2026-11" />);
 
-    await screen.findByText(/ainda não tem competência aberta/);
+    await screen.findByText(/ainda não foi aberto/);
     expect(screen.queryByText("Package FISCAL not submitted")).toBeNull();
     expect(
       screen.getByRole("button", { name: "Documentos a tratar: —" }),
@@ -385,7 +385,7 @@ describe("indicadores honestos e gate documental", () => {
       ),
     );
     expect(
-      screen.getByRole("button", { name: "Abrir checklist da competência" }),
+      screen.getByRole("button", { name: "Abrir checklist do fechamento" }),
     ).toBeTruthy();
   });
 
