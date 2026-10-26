@@ -1,5 +1,8 @@
 # 09 — P2 — Checklist e Documentos
 
+> **AJUSTE DE PRODUTO APROVADO PELO PO — 26/10/2026 (TARGET, NÃO IMPLEMENTADO):** distinguir (1) **cadastro geral de tipos/entregáveis requeridos**, versionado com vigência a partir de uma competência; (2) **lista aplicável ao mês** por referência e histórico; (3) **arquivos/evidências efetivamente anexados** à competência. Consultar mês, ver relatórios e iniciar o workspace não depende de template PUBLISHED nem de evidências cadastradas. Adições/retiradas posteriores não alteram fechamentos finalizados; exclusão de exigência não apaga arquivos/histórico. O contrato corrente de snapshot na `openCompetence` permanece AS-IS e exige reconciliação antes de mudar P2/P6, incluindo regra para competência **em andamento**. Preservar validação, RQ/AC não conflitantes, segurança, auditoria e P5. Ver [decisão no doc 112](./112-design-visual-fechamento-mensal-wireframes.md). Não interpretar o antigo estado de gate documental como autorização de runtime desta alteração.
+
+
 ## Estado
 
 **TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
