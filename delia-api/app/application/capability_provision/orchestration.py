@@ -2752,6 +2752,7 @@ def _group_summaries(
     groups: Mapping[str, CapabilityGroup],
     *,
     prior_observation: Mapping[str, Any] | None = None,
+    business_subject: str | None = None,
 ) -> str:
     """Fair bounded per-group summaries for stage-1 selection.
 
@@ -2761,6 +2762,8 @@ def _group_summaries(
     projection only — nothing is persisted. Provider identity is
     metadata, never a ranking signal. Optional ``prior_observation``
     is untrusted prior-turn text used only to resolve references.
+    Optional ``business_subject`` is the validated turn-goal subject —
+    untrusted semantic hint (goal continuity), never authority.
     """
     group_keys = sorted(groups)
     if not group_keys:
@@ -2807,15 +2810,17 @@ def _group_summaries(
             if len(payload) <= per_group_budget:
                 break
         summaries.append(body)
-    if prior_observation is None:
+    if prior_observation is None and business_subject is None:
         return json.dumps(
             summaries, ensure_ascii=False, default=str
         )
+    envelope: dict[str, Any] = {"capability_groups": summaries}
+    if prior_observation is not None:
+        envelope["prior_observation"] = dict(prior_observation)
+    if business_subject is not None:
+        envelope["business_subject"] = business_subject
     return json.dumps(
-        {
-            "capability_groups": summaries,
-            "prior_observation": dict(prior_observation),
-        },
+        envelope,
         ensure_ascii=False,
         default=str,
     )[:MAX_SURFACE_CHARS]
@@ -2824,12 +2829,15 @@ def _capability_payload(
     group: CapabilityGroup,
     *,
     prior_observation: Mapping[str, Any] | None = None,
+    business_subject: str | None = None,
 ) -> str:
     """Bounded semantic payload of ONE group's live surface.
 
     Graduated compaction keeps every capability reachable — entries
     are never dropped, descriptions shrink to fit the budget.
     Optional ``prior_observation`` is untrusted prior-turn text.
+    Optional ``business_subject`` is the validated turn-goal subject —
+    untrusted semantic hint (goal continuity), never authority.
     """
     capabilities = [
         cap
@@ -2856,11 +2864,12 @@ def _capability_payload(
         for entry in entries:
             entry["description"] = entry["description"][:cap_chars]
         body: Any = entries
-        if prior_observation is not None:
-            body = {
-                "capabilities": entries,
-                "prior_observation": dict(prior_observation),
-            }
+        if prior_observation is not None or business_subject is not None:
+            body = {"capabilities": entries}
+            if prior_observation is not None:
+                body["prior_observation"] = dict(prior_observation)
+            if business_subject is not None:
+                body["business_subject"] = business_subject
         payload = json.dumps(body, ensure_ascii=False, default=str)
         if len(payload) <= MAX_SURFACE_CHARS:
             break
@@ -4093,6 +4102,9 @@ class OperationalCapabilityOrchestrator:
             deadline,
             correlation=correlation,
             interpret_goal=(goal is None),
+            business_subject=(
+                goal.business_subject if goal is not None else None
+            ),
         )
         if selection is None or selection[0] == "not_applicable":
             # Group applicable=false / no model: conversational path.
@@ -4231,6 +4243,7 @@ class OperationalCapabilityOrchestrator:
                     prior_turns,
                     correlation=correlation,
                     deadline=deadline,
+                    business_subject=goal.business_subject,
                 )
                 if demoted is None:
                     return GovernedCapabilityAttempt(
@@ -4313,6 +4326,7 @@ class OperationalCapabilityOrchestrator:
                     workspace_context,
                     prior_turns,
                     deadline,
+                    business_subject=goal.business_subject,
                 )
                 if found is None:
                     if path_mode == "enrichment":
@@ -5035,6 +5049,7 @@ class OperationalCapabilityOrchestrator:
                     workspace_context,
                     prior_turns,
                     deadline,
+                    business_subject=goal.business_subject,
                 )
                 if repaired is not None:
                     invoked = repaired
@@ -6358,6 +6373,7 @@ class OperationalCapabilityOrchestrator:
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
         deadline: TurnDeadline,
+        business_subject: str | None = None,
     ) -> tuple[str, ProviderCapability] | None:
         """Stage: pick ONE foreign non-mutating capability — only runs
         after the native assessment justified a foreign path. The
@@ -6379,6 +6395,7 @@ class OperationalCapabilityOrchestrator:
                 prior_observation=_prior_observation_context(
                     prior_turns
                 ),
+                business_subject=business_subject,
             )[:MAX_SURFACE_CHARS],
             instruction_id=FOREIGN_SELECTION_INSTRUCTION_ID,
             instruction=self._instruction(FOREIGN_SELECTION_INSTRUCTION_ID),
@@ -7783,6 +7800,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         *,
         interpret_goal: bool = False,
+        business_subject: str | None = None,
     ) -> (
         tuple[str, str, ProviderCapability, "_TurnGoal | None"]
         | tuple[str]
@@ -7817,6 +7835,7 @@ class OperationalCapabilityOrchestrator:
             prior_turns,
             correlation=correlation,
             deadline=deadline,
+            business_subject=business_subject,
         )
         if group_status == "not_applicable":
             _logger.info(
@@ -7854,6 +7873,7 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 correlation=correlation,
                 deadline=deadline,
+                business_subject=business_subject,
             )
             selected_goal = None
         if descriptor is None:
@@ -8769,6 +8789,7 @@ class OperationalCapabilityOrchestrator:
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
         deadline: TurnDeadline | None = None,
+        business_subject: str | None = None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
         """One bounded pre-execution repair round (MAX_REPLAN_ROUNDS=1).
 
@@ -8798,6 +8819,7 @@ class OperationalCapabilityOrchestrator:
             prior_turns,
             correlation=correlation,
             deadline=deadline,
+            business_subject=business_subject,
         )
         if repick is None or not invocable_in_interactive_phase(
             repick.operation_class
@@ -9115,6 +9137,7 @@ class OperationalCapabilityOrchestrator:
                 correlation=correlation,
                 deadline=deadline,
                 relevance_feedback=feedback,
+                business_subject=goal.business_subject,
             )
             if status == "selected" and maybe_key in groups:
                 sel_group_key = maybe_key
@@ -9127,6 +9150,7 @@ class OperationalCapabilityOrchestrator:
                 correlation=correlation,
                 deadline=deadline,
                 relevance_feedback=feedback,
+                business_subject=goal.business_subject,
             )
             if status == "selected" and candidate is not None:
                 sel_descriptor = candidate
@@ -9174,6 +9198,7 @@ class OperationalCapabilityOrchestrator:
                     workspace_context,
                     prior_turns,
                     deadline,
+                    business_subject=goal.business_subject,
                 )
                 if found is not None:
                     foreign_key, foreign_cap = found
@@ -9564,6 +9589,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         deadline: TurnDeadline | None = None,
         relevance_feedback: str | None = None,
+        business_subject: str | None = None,
     ) -> tuple[str, str | None]:
         """Stage 1: pick the capability group whose surface matches.
 
@@ -9582,7 +9608,9 @@ class OperationalCapabilityOrchestrator:
         # relevance cannot start an operational owner invoke.
         observation = _prior_observation_context(prior_turns)
         group_payload = _group_summaries(
-            groups, prior_observation=observation
+            groups,
+            prior_observation=observation,
+            business_subject=business_subject,
         )
         if relevance_feedback is not None:
             # Bounded semantic-mismatch signal from a validated
@@ -9692,6 +9720,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         deadline: TurnDeadline | None = None,
         relevance_feedback: str | None = None,
+        business_subject: str | None = None,
     ) -> tuple[str, ProviderCapability | None]:
         """Stage 2: pick a capability from that group's surface."""
         invocable = [
@@ -9724,7 +9753,9 @@ class OperationalCapabilityOrchestrator:
         # proposal (applicable may be false).
         observation = _prior_observation_context(prior_turns)
         cap_payload = _capability_payload(
-            group, prior_observation=observation
+            group,
+            prior_observation=observation,
+            business_subject=business_subject,
         )
         if relevance_feedback is not None:
             # Same bounded recovery signal as stage 1 — untrusted data.

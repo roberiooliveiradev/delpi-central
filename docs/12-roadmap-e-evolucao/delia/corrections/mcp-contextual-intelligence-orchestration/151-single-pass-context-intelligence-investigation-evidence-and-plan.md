@@ -580,3 +580,72 @@ The WP-F `instruction_version` projection key violated the response leak-guard (
 **Tests:** executor reports context_budget 40/40, full backend 2348 PASS / 2 FAIL historical environment, architecture gates clean, final ten-case Ollama matrix with zero reported ISO/false positive, typed over-budget recovery rejection. These do **not** constitute full green regression; no independent runtime reproduction in this review; final three business records and O2 remain NON_GROUNDED. Attribution solely to 3B is not proven: scenario traces name semantic selection, foreign selection and authoritative owner access.
 
 **NEXT:** Do not reopen R1/R2/R3 as new broad task. Capture accepted residuals in release checklist, get independent runtime/target parity before any deploy. Prioritize a bounded **context continuity / goal-and-evidence handoff** decision using doc 151 stage matrix, with contract-first reuse, without session DB/new engine, after coordination of R7 concurrent code. If user goal is business outcome, test improvement against frozen local baseline and preserve typed Evidence/Authority/Outcome. An implementation prompt must not claim model upgrade automatically solves the observed chain.
+
+## 17. Goal & Evidence Handoff — context continuity (2026-10-25, task `DELIA-C3-CONTEXT-CONTINUITY-GOAL-EVIDENCE-HANDOFF-01`)
+
+Implements the NEXT recommended by §16: bounded continuity of goal,
+evidence and failure feedback inside a single interaction, reusing
+existing primitives only. Full execution report: doc 152.
+
+**Audit result (§3 matrix, 11 handoffs):** every consumer except the
+selection family already received the typed context it legitimately
+needs — `_build_arguments`, `_assess_native_path`, `_judge_goal_evidence`,
+`_invoke_foreign_evidence`, `_recover_relevance`, `_synthesize_content`,
+`_propose_candidate_arguments` all carry `business_subject` / typed
+records / typed feedback. The single demonstrated transport loss was:
+
+`_understand_goal` → `_select_group`/`_select_capability`
+(and the sibling `_select_foreign_capability`)
+
+On the warm path `prior_turns=()` at selection (Stage-05 latency
+contract) and `prior_observation` is OBSERVATION-gated by design
+(commit `590e8e28d8`), so a validated `business_subject` — e.g. the
+referent resolved from a non-OBSERVATION prior turn — was produced by
+`turn_goal` and then dropped: live trace showed
+`select_capability decision=not_applicable` with the subject already
+interpreted (`subject=yes`). Classification: **context-absent
+transport omission**, not semantic failure.
+
+**Fix (minimal diff):** optional `business_subject` keyword threaded
+into `_group_summaries`/`_capability_payload` envelopes and forwarded
+at `_select_group`, `_select_capability`, `_select_foreign_capability`,
+`_select_target`, `_repair_once` and the governed relevance-recovery
+reselection call sites. Payload shape unchanged when no goal subject
+exists; envelope stays inside `MAX_SURFACE_CHARS`; the value is bounded
+at `MAX_DESCRIPTION_CHARS` upstream and remains untrusted semantic
+context — never authority (negative test proves it cannot force an
+invalid selection). Cold-path `_select_capability_with_goal` unchanged:
+no goal exists before that stage produces it. Instruction resource
+v19 → v20 documents the new optional field for `select_group`,
+`select_capability`, `select_capability#with_goal` and
+`foreign_selection`; `_ORCH_VERSIONS` extended and snapshot pins
+updated (intentional contract change).
+
+**Metrics:** model-call count delta = 0; latency delta ≈ 0 (~40 bytes
+per enriched payload); ~8–12 estimated extra tokens on subject-carrying
+selection prompts; no new budget rejections; no AuthZ/evidence-class
+change; no WRITE path touched.
+
+**Live verification (delia-json @ 8192, Ollama 0.40.8):** referential
+probe with non-OBSERVATION prior — `turn_goal` →
+`business_subject="terminal"` → `select_group` payload carried the key
+and selection proceeded past the prior `not_applicable` divergence
+(2/3 runs; third run `null` subject — 3B extraction variance, key
+legitimately absent). Where selection advanced, the residual failure
+was `invalid_structured_output` at `select_capability` — typed honest
+error, zero fabrication. Cold `three_records`: honest NON_GROUNDED,
+unchanged.
+
+**RED→GREEN:** `test_goal_selection_handoff.py` 6/6 (projection at the
+three selection stages, absent-when-no-goal, subject-is-not-authority,
+warm-path end-to-end). Focused suite 247 green; full backend green
+except the two known environmental failures; instruction-resource pins
+updated for v20.
+
+**Residuals:** 3B variance can still yield `business_subject=null` for
+purely implicit referents (contract limits the field to user-stated
+words — extending it to referent resolution is a separate contract
+decision) and ISO at selection; `_select_prepare_continuation` /
+clarification do not receive the subject (no demonstrated loss);
+three-record and O2 outcomes remain NON_GROUNDED. Deploy not
+authorized; independent review pending.

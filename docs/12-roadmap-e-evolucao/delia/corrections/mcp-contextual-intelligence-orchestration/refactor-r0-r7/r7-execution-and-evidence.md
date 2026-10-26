@@ -419,3 +419,25 @@ Base reancorada `a6713b090c` (origin/main, inclui revisão independente `26cc826
 **Verificação:** `tests/test_context_budget.py` 40/40; suites focadas verdes; gates de arquitetura 0 findings; matriz local de 10 cenários: 0 truncamento, 0 `invalid_structured_output`, 0 fabricação; `three_records`/`o2` GROUNDED com coleção vazia honesta (residual de fidelidade de arguments no 3B, não contexto).
 
 `R1=CLOSED`; `R2=CLOSED`; `R3=CLOSED`; `R4=VERIFIED_RESIDUAL_DOCUMENTED`; `DEPLOY=NOT_AUTHORIZED`; `INDEPENDENT_REVIEW=PENDING`.
+
+#### Context Continuity — Goal & Evidence Handoff — 2026-10-25 (task `DELIA-C3-CONTEXT-CONTINUITY-GOAL-EVIDENCE-HANDOFF-01`)
+
+Base reancorada `2eeb5fb943` (origin/main avançou para `ea85d1a558` docs-only durante a execução — rebase trivial antes do push). Recomendação do review §16 do doc 151 (ACCEPT_WITH_RESIDUAL → "bounded context continuity / goal-and-evidence handoff"). Relatório completo: doc 152.
+
+**WP0 — baseline causal.** Cenários representativos reexecutados no `delia-json` local (8192 efetivo, Ollama 0.40.8). Divergências classificadas: a maioria é variância semântica do 3B (contexto presente, modelo declina ou emite ISO) — mas uma perda de transporte foi demonstrada: `turn_goal` produzia `business_subject` válido e `_select_group`/`_select_capability` rodavam com **zero** contexto do objetivo (prior_turns=() por contrato de latência; prior_observation é gated a OBSERVATION por decisão deliberada do commit `590e8e28d8`). Traço live: `subject=yes` → `select_capability decision=not_applicable` (`incl=0`). Classificação: context-absent, não semântico.
+
+**WP1 — goal continuity (único gap demonstrado, corrigido).** `business_subject` (já validado e bounded em `_turn_goal_from_proposal`) agora é projetado no envelope das projeções de seleção existentes — `_group_summaries`, `_capability_payload` — e encaminhado por `_select_group`, `_select_capability`, `_select_foreign_capability`, `_select_target`, `_repair_once` e pelos reselects da `_recover_relevance`. Campo opcional: payload idêntico ao anterior quando ausente; permanece contexto não confiável (teste negativo prova que não força seleção). `_select_capability_with_goal` intocado por design (no caminho cold o goal ainda não existe — o estágio o produz). Instruções `select_group`/`select_capability`/`#with_goal`/`foreign_selection` documentam o campo; resource v19→v20, `_ORCH_VERSIONS` + snapshot pins atualizados (mudança intencional, não drift silencioso).
+
+**WP2 — evidence continuity (audit-only, sem modificação).** `_build_arguments` (schema+owner_vocabulary+foreign_evidence+selections), `_judge_goal_evidence` (records tipados+subject+scope+answer_requirements), `_synthesize_content`, `_invoke_foreign_evidence`, `_propose_candidate_arguments`, `_prior_continuation_attempt` já transportam o contexto tipado correto — nenhuma perda demonstrada.
+
+**WP3 — failure feedback (audit-only + consistência).** `_recover_relevance` já recebe feedback tipado (prior_correspondence, mismatch_hint, business_subject, scope_constraints, prior_result_preview) dentro de MAX_GOVERNED_ATTEMPTS; o reselect governado agora também recebe o subject top-level por consistência com os demais estágios. Sem nova taxonomia, sem nova máquina de estados.
+
+**WP4 — orçamento/segurança.** Envelope segue sob `MAX_SURFACE_CHARS`; subject ≤ MAX_DESCRIPTION_CHARS; estimador/orçamento/erro tipado inalterados; nenhum campo de identidade/AuthZ; instrução declara o campo como untrusted, nunca fato nem autoridade.
+
+**WP5 — eval local before/after.** Antes: referential follow-up com prior não-OBSERVATION divergia em `select_capability` sem o sujeito interpretado. Depois: probe live mostra `business_subject="terminal"` chegando ao payload de `select_group` (2/3 runs; no 3º o modelo emitiu null — variância de extração, chave legitimamente ausente). `select_capability` residual: ISO tipado (fidelidade de saída 3B), zero fabricação, zero falso positivo. Cold `three_records`: NON_GROUNDED honesto, inalterado.
+
+**Métricas:** delta de chamadas ao modelo = 0; latência ≈ +40 bytes/seleção (ruído); +8–12 tokens estimados nos estágios com sujeito; zero rejeição de orçamento adicional; zero READ duplicado.
+
+**RED→GREEN:** `test_goal_selection_handoff.py` 6/6 novos (projeção nos 3 estágios, ausência mantém payload, sujeito ≠ autoridade, warm-path end-to-end). `test_r1_instruction_resource` pins v20. Suites focadas 247 verdes; full backend com apenas as 2 falhas ambientais conhecidas; gates de arquitetura 0 findings.
+
+`GOAL_CONTINUITY=IMPROVED (transport fix proven, unit + live)`; `EVIDENCE_CONTINUITY=AUDITED_NO_GAP`; `FAILURE_FEEDBACK=AUDITED_NO_GAP`; `THREE_RECORDS_OUTCOME=NON_GROUNDED (residual semântico)`; `O2_OUTCOME=NON_GROUNDED`; `DEPLOY=NOT_AUTHORIZED`; `INDEPENDENT_REVIEW=TO_REQUEST`.
