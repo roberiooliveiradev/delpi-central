@@ -256,3 +256,15 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Regressão: backend completo verde (0 FAILED/ERROR); gates arquitetura 0 findings; AuthZ/PREPARE/ACT intocados; segredos destruídos.
 - Próximo bounded: experimento de instrução isolando a cláusula documentation-first para sujeitos coloquiais (direção B doc 153), depois re-medir antes de qualquer decisão de capacidade (C).
 - DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
+
+
+### DELIA-C3-GROUP-SELECTION-INSTRUCTION-SEMANTIC-CONFLICT-EVAL-01 — execução (2026-10-26)
+
+- STATE=EVALUATION_COMPLETE; base 74fb1ba10b; código e instrução produtiva NÃO modificados — variante B injetada apenas no mapping _instructions em processo (seam de avaliação); fixture + harness + runs sanitizados publicados.
+- Experimento: v23 (A, fp 8eb95ebdafe8b338) vs cláusula única reescrita (B, fp 15855b8c1a17ed47) que torna a superfície de registros o destino de pedidos de registros mesmo com nomenclatura coloquial. Interleaving ABBA, 12 cenários base x5 + holdout 8 x5, além de isolamento de estágio (_select_group direto, 4 catálogos x10 prompts x5 reps x2 variantes = 400 chamadas).
+- Resultado: REJEITADA — stage-1 live A 16/50 vs B 14/50; e2e base A 17/39 vs B 10/35 elegíveis corretos; holdout 10/20 vs 10/24. Nenhuma dimensão melhorou.
+- Descoberta dominante: catálogo com providers renomeados (nomes neutros) quase duplica acurácia nas DUAS variantes (35/50, 31/50) — falha é dominada por priores de nome do modelo 3B, não pela cláusula. Descrições/scope são suficientes (H3 refutado).
+- Hipóteses: H1 REFUTED (conflito instrucional não é a causa operativa), H2 SUPPORTED (capacidade/modelo — nome domina sobre descrição), H3 REFUTED, H4 SUPPORTED (admission diverge independente), H5 SUPPORTED (downstream falha mesmo com grupo certo).
+- Segurança: injeção em descrição não sequestrou seleção; 0 bypass AuthZ, 0 PREPARE/ACT, 0 id inventado; tokens opacos redigidos no artefato.
+- Próximo bounded: comparação controlada de modelo (autorização separada) ou experimento de projeção com nomes neutros no stage-1 — tasks novas, não iniciadas.
+- DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
