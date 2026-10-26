@@ -2810,6 +2810,56 @@
    ],
    "top1_required": false,
    "notes": "GLPI #530: bare part-number lookup must reach the supplier PN op; PN match alone does not imply equivalence (straight vs 90-degree connector case)."
+  },
+  {
+   "id": "DQ-PM-063",
+   "query": "verifique se já existe produto similar cadastrado",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products"
+   ],
+   "top1_required": false,
+   "notes": "GLPI #530: pre-registration duplicate check phrasing."
+  },
+  {
+   "id": "DQ-PM-064",
+   "query": "quais produtos são similares ao 10080001",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products",
+    "get_product_detail"
+   ],
+   "top1_required": false,
+   "notes": "Similarity by code may reach candidate search or reference detail."
+  },
+  {
+   "id": "DQ-PM-065",
+   "query": "verificar duplicidade de material antes do cadastro",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products"
+   ],
+   "top1_required": false,
+   "notes": "Dedup intent without write verb must reach candidate search."
+  },
+  {
+   "id": "DQ-PM-066",
+   "query": "compare as especificações com materiais semelhantes cadastrados",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "product_master",
+   "expected_action_ids": [
+    "search_products",
+    "get_product_detail"
+   ],
+   "top1_required": false,
+   "notes": "Specification comparison phrasing."
   }
  ]
 }

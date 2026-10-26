@@ -322,15 +322,26 @@ def test_wave006_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
     assert allow.get("version") >= 17
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-PRODUCT-DETAIL-SIMILARITY-001"
+        "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002"
     )
     assert (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
         "taskId"
-    ) == "DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01"
+    ) == "DAVI-PRODUCT-DETAIL-SIMILARITY-001"
     assert (
         (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
             "previousDecision"
         )
+        or {}
+    ).get("taskId") == (
+        "DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01"
+    )
+    assert (
+        (
+            (allow.get("coverageDecision", {}).get("previousDecision") or {}).get(
+                "previousDecision"
+            )
+            or {}
+        ).get("previousDecision")
         or {}
     ).get("taskId") == "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01"
     eligible = {a.operation_id for a in _actions() if a.executable}
@@ -884,6 +895,7 @@ def test_wave006_bruto_quarantine_no_false_disable_of_prior_reads(monkeypatch):
 def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
     allow = load_external_read_allowlist()
     coverage = (allow.get("coverageDecision") or {}).get("previousDecision") or {}
+    coverage = coverage.get("previousDecision") or {}
     coverage = coverage.get("previousDecision") or {}
     # Wave 006 was superseded by later waves; its decision record must
     # remain chained, not silently dropped.

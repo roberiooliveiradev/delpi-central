@@ -513,7 +513,7 @@ def test_batch04_not_eligible_and_not_executable_through_broker(monkeypatch):
 
 def test_count01_allowlist_delta_exactly_expected():
     allow = _allow()
-    assert allow["version"] == 25
+    assert allow["version"] == 26
     assert len(allow["operations"]) == 97
     ops = _ops()
     for kept in (
@@ -551,7 +551,7 @@ def test_count02_baseline_and_live_counts_recomputed():
 
 def test_coverage_decision_chain_records_corrective():
     coverage = (
-        _allow()["coverageDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]
+        _allow()["coverageDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]
     )
     assert coverage["taskId"] == "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001"
     assert coverage["decision"] == (

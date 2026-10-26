@@ -176,7 +176,99 @@ Regressão do slice DAVI: 2494 pass / 1 falha ambiental pré-existente
 (`test_product_sales_open_orders_returns_meta` — exige Postgres de plugins,
 `PLUGINS_DB_HOST`), zero falhas ligadas ao diff.
 
-## 9. Limites reconhecidos
+## 9. Aceite do fluxo — `DAVI-SIMILARITY-FLOW-ACCEPTANCE-002`
+
+### 9.1 Root cause do gap de discovery
+
+Reproduzido no HEAD `74fb1ba10b`:
+
+| Query | Resultado |
+|---|---|
+| `Pesquise matérias-primas já cadastradas que possam ser similares ao terminal...` | `search_products` (OK — variante da revisão não reproduziu zero) |
+| `Cadastro completo e comparação de materiais semelhantes ao código 10080001` | `search_products` (top-1; `get_product_detail` em top-5) |
+| `Quero cadastrar uma MP, antes verifique se já existe algo igual ou similar` | **0 candidatos** — guard READ-only: token `cadastrar` = verbo de escrita explícito |
+| `verifique se já existe produto similar cadastrado` | **0 candidatos** — vocabulário de similaridade sem aliases |
+| `quais produtos são similares ao 10080001` | **0 candidatos** — idem |
+
+Causas distintas: (a) **retrieval** — nenhum alias cobria `similar/semelhante/duplicidade/equivalente/já existe cadastrado`; (b) **guard deliberado** — `cadastrar` é verbo de mutação e zera candidatos por design. O guard **não** foi enfraquecido: a reformulação da intenção composta é responsabilidade da camada de inteligência do agente (`flows.similarity_dedup_check`), não do guard nem de novo endpoint.
+
+### 9.2 Correção (menor diff, owner correto)
+
+- `search_products`: +25 aliases de similaridade/dedup (`produtos similares`, `verificar duplicidade`, `equivalente cadastrado`, `já existe cadastrado`, …).
+- `get_product_detail`: +13 aliases (`produto similar ao código`, `comparar produto`, `comparar especificações`, …).
+- `davi_agent_intelligence.json` v2026.10.24.1: novo flow `similarity_dedup_check` — pipeline de 8 etapas, enum de classificação, limites de fan-out (top_k≤5, detail≤5), regras de não-equivalência e proveniência. Projetado via `capability_surface.agent_directives` (≤20KiB, testado).
+- Allowlist v26 + coverageDecision link (cadeia = 10 decisões).
+- Benchmark de discovery: +4 casos (238 total), `top-1` e `leaks=0` mantidos.
+
+**Pós-fix:** `verifique se já existe produto similar`, `quais produtos são similares`, `verificar duplicidade`, `existe equivalente cadastrado` → `search_products`/`get_product_detail`. `quero cadastrar ... antes verifique`, `cadastre`, `crie`, `altere` → **0 candidatos preservado** (guard intacto; o agente reformula para READ puro).
+
+### 9.3 Ratificação da matriz de 32 campos
+
+| # | FIELD | SOURCE | MEANING | CLASS. | SIMILARITY VALUE | DECISION |
+|---|---|---|---|---|---|---|
+| 1 | code | SB1 B1_COD | chave do produto | público interno | chave de junção | APPROVED |
+| 2 | description | SB1 B1_DESC | descrição técnica padronizada | interno | atributo primário | APPROVED |
+| 3 | type | SB1 B1_TIPO | MP/PI/PA | interno | filtro de família | APPROVED |
+| 4 | group_code | SB1 B1_GRUPO | grupo de materiais | interno | filtro de família | APPROVED |
+| 5 | subgroup | SB1 B1_SG | subgrupo | interno | família fina | APPROVED |
+| 6 | previous_code | SB1 B1_CODITE | código anterior/legado | interno | reconciliação | APPROVED |
+| 7 | active | SB1 | ativo cadastral | interno | vigência | APPROVED |
+| 8 | blocked | SB1 B1_MSBLQL | bloqueio de uso | interno | descarte de candidato | APPROVED |
+| 9 | delpi_category | derivado | categoria DELPI | interno | família | APPROVED |
+| 10 | delpi_segment | derivado | segmento DELPI | interno | família | APPROVED |
+| 11 | unit | SB1 B1_UM | UM principal | interno | unidade p/ comparação | APPROVED |
+| 12 | secondary_unit | SB1 B1_SEGUM | UM secundária | interno | conversão | APPROVED |
+| 13 | conversion_factor | SB1 B1_CONV | fator de conversão | interno | normalização | APPROVED |
+| 14 | conversion_type | SB1 B1_TIPCONV | tipo de conversão | interno | normalização | APPROVED |
+| 15 | operation_decimal_type | SB1 | decimais por operação | interno | precisão | APPROVED |
+| 16 | material_type | SB1 B1_TIPO_? | tipo de material | interno | característica | APPROVED |
+| 17 | production_line | SB1 | linha de produção | interno | contexto fab | APPROVED |
+| 18 | drawing_code | SB1 B1_DESENHO | desenho técnico | interno | evidência técnica | APPROVED |
+| 19 | current_revision | SB1 | revisão vigente | interno | controle engenharia | APPROVED |
+| 20 | last_revision_date | SB1 | data da revisão | interno | vigência técnica | APPROVED |
+| 21 | net_weight | SB1 B1_PESO | peso líquido | interno | atributo físico | APPROVED |
+| 22 | package_quantity | SB1 B1_QB | qtd por embalagem | interno | embalagem | APPROVED |
+| 23 | barcode | SB1 B1_CODBAR | código de barras | interno | reconciliação | APPROVED |
+| 24 | customer_packaging | SB1 | embalagem p/ cliente | interno | embalagem | APPROVED |
+| 25 | default_warehouse | SB1 B1_LOCPAD | armazém padrão | interno | logística | APPROVED |
+| 26 | qtd_pi | estrutura | qtd produto intermediário | interno | composição | APPROVED |
+| 27 | rohs_indicator | SB1 | conformidade RoHS | interno | certificação | APPROVED |
+| 28 | traceability | SB1 | rastreabilidade | interno | requisito qualidade | APPROVED |
+| 29 | warranty_product | SB1 | produto garantia | interno | classificação | APPROVED |
+| 30 | mrp_considered | SB1 | considerado no MRP | interno | planejamento | APPROVED |
+| 31 | power_control | SB1 | controle de potência | interno | característica | APPROVED |
+| 32 | make_or_buy | SB1 | comprado/fabricado | interno | origem | APPROVED |
+
+**Classificação:** todos os 32 campos = dados cadastrais internos não-financeiros;
+nenhum é PII, comercial restrito ou contábil. OWNER=api-delpi/SB1;
+AUTHORITATIVE SOURCE=TOTVS SB1 (+derivados DELPI); CONSUMER=DAVI READ;
+AUTHZ=`api-delpi.access` backend — inalterada. Campos sensíveis (preço, custo,
+fiscal, contábil, comercial, `created_by`/`updated_by`, controles internos)
+permanecem **não aprovados** — nunca projetados.
+
+> Ratificação documental da matriz = este documento + decisão encadeada na
+> allowlist v25/v26. Ratificação formal de negócio por campo (PO/Engenharia) =
+> `PENDING_OWNER_REVIEW` para publicação ampla; a projeção já é a fatia mais
+> restritiva coerente com o objetivo técnico.
+
+### 9.4 Gates externos
+
+```text
+NEGATIVE_BUSINESS_AUTHZ (2ª identidade) = PENDING — não há usuário de teste
+    sancionado sem permissão; 401 anônimo e forbidden-do-executor provados,
+    mas não substituem negativa de negócio real. Publicação ampla permanece
+    bloqueada conforme §10 do briefing.
+PROVIDER_DISCOVERY (refresh pós-94 ops)   = PENDING/STALE_EVIDENCE.
+LIVE_SIMILARITY_SCENARIO (MS3108E-18-1S, conectores 10090850/10090680) =
+    PENDING — depende da superfície provider autenticada.
+DATASHEET_PDF_TRANSPORT                   = TO_INVENTORY — sem boundary
+    governada de arquivo; extração ocorre na superfície do consumidor.
+SIM-20 FLUXO REAL CONSUMIDOR              = PENDING — requer sessão ChatGPT/
+    Agent Studio autenticada; contrato e diretivas provados in-process.
+```
+
+
+## 10. Limites reconhecidos
 
 - `get_product_detail` serve **somente** por `code`. Busca por descrição usa
   `search_products` (projeção de 3 campos → depois detail por código).

@@ -221,9 +221,12 @@ SHA `7f2bfab647`; promoted counts recomputed at
 `DAVI-PRODUCT-DETAIL-SIMILARITY-001`):
 
 ```text
-allowlist              = v25
+allowlist              = v26
 DAVI_ELIGIBLE_READ     = 94 governed ops (baseline; live index 97)
-agent intelligence     = 2026.10.07.2
+agent intelligence     = 2026.10.24.1 (similarity_dedup_check flow:
+                         reformulação de intenção composta, classificação
+                         POSSIBLE_DUPLICATE/SIMILARITY/INSUFFICIENT/MISMATCH,
+                         fan-out limitado, sem equivalência unilateral)
 MCP tools              = exactly 2 (discover_delpi_information,
                          execute_delpi_information)
 provider live discover = PROVEN (89 eligible; PROVIDER_CHAT_RUNTIME_OBSERVATION
