@@ -236,3 +236,33 @@ EVIDENCE_LINKS_AND_DOC_COMMITS: este adendo; Doc 107 Adendo 9; Doc 108 seção G
 ### 8.2 Bloqueio único restante e ação exata
 
 `KEYCLOAK_ADMIN_ACCESS=BLOCKED`: `KEYCLOAK_ADMIN`/`KEYCLOAK_ADMIN_PASSWORD` presentes em `infra/.env` mas o login no realm `master` falha (`FAIL_CLOSED` no engine — comportamento correto). **Ação do owner IAM:** fornecer credencial administrativa vigente pelo canal seguro (atualizar `infra/.env` no host ou `KC_ADMIN_TOKEN` na sessão), depois `KC_BASE=https://minhadelpi.com.br/auth bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check`, revisar diff compartilhado (mcp-api-delpi, mcp-transformometro, mcp-tv-dashboard, mcp-clara, scopes/policies), aprovar explicitamente e só então `--apply`. Sem isso, nenhuma etapa de ChatGPT pode começar.
+
+
+
+## 9. Revisão independente do relatório G3 — 26/10/2026
+
+**Autoridade examinada:** commit GitHub `deaf5b1cb2174ca21d8d2da8ff81b1bf82d0b67f` (execução documental e testemunho do Operador via Devin), release referenciado `85883e5f2e789cd720d52b25975b9e1587ad0667`, [Doc 107 adendo 9](./107-clara-validacao-antecipada-chatgpt-release-hoje.md), [Doc 108 seção G3](./108-homologacao-guiada-g2-g3-2026-10-26.md), código `controllership-finance-api/controllership_finance_app/config.py`, `interface/http/routes/health_routes.py` e wrapper `infra/scripts/keycloak-prod-delia-mcp-provision.sh`. **Não houve SSH, exame de Docker/PG in loco, reprodução de backup/restore ou conexão ChatGPT pelo revisor; evidência operacional é reportada pelo executor.**
+
+### Parecer de G3 por recorte
+
+| Recorte | Parecer independente | Observação |
+|---|---|---|
+| Rebuild/alinhamento R4 no release | `ACCEPT_WITH_RESIDUAL` para o **relatório do Operador** | Imagens e conteúdo compilado declarados/registrados no doc; SHA e hash do binário ainda sem captura independente neste turno |
+| Autorização operacional G3 do release já feito | `OPERATOR_RECORDED / TO_VERIFY_ATTESTATION` | Relatório atribui GO a “Operador/owner IAM nesta sessão”, mas `OPERATOR_ROLE_AND_APPROVAL_REF` contém apenas GO verbal, sem referência verificável de identidade, change ID formal ou assinatura de pessoa habilitada. Não classificar como aprovação IAM |
+| Backup/restore | `BACKUP_REPORTED / RESTORE_TEST_NOT_RUN` | `pg_restore -l` demonstra arquivo legível/lista de objetos, **não** uma restauração de dados testada. Dump escopado a schema e uploads vazios não comprovam cobertura de outros dados; evidenciar política de backup regular e restoration drill quando aplicável, sem intervenção destrutiva |
+| /ready do BFF | `CONFIG_READY=PASS_REPORTADO`, **não `CORE_CONNECTIVITY_PROVEN`** | O código atual de `/ready` só chama `missing_required_config()`: confere nomes/valores não vazios, não realiza rede nem valida token. O relatório informa token aleatório configurado no BFF, Core não recebendo a mesma chave e "nenhuma chamada a usa ainda". Exigir testes autenticados de effective-permission e contracts se qualquer rota usar esse token; não tratar `ready` como prova de RBAC efetivo |
+| Regressão de Core/Portal | `SMOKE_READ_ONLY_PARTIAL` | 107 containers Up, 200 da Home/health, 401 fail-closed sem token são sinais válidos, mas não comprovam ausência geral de regressões nem outcome de notificações com usuário real |
+| Provisionamento `mcp-clara` prod | `BLOCKED_IAM` | Credencial administrativa fornecida no host não permite login; `--check` aborta, sem diff; `--apply` não executado |
+| Cadastro e smoke CLARA no ChatGPT | `TEST_NOT_RUN` | Sem client OAuth produtivo, callback real nem tokens com audience específica. O piloto local J10 não substitui prod |
+
+**Veredito preservando trabalho feito:** `ACCEPT_WITH_RESIDUAL` para a etapa **relatada** de alinhamento operacional do release. `INCONCLUSIVE` para a liberação end-to-end da CLARA em produção. Isso não pede novo rebuild, reset ad hoc de Keycloak ou rework de produto; são fronteiras de evidência a observar no fechamento final IAM/ChatGPT. A revisão não altera a declaração histórica `G3_OPERATOR_DECISION=GO` registrada pelo executor, mas impede tratá-la como signoff independente de IAM ou smoke autenticado.
+
+### Próxima ação única — IAM, sem senha no chat
+
+1. **Owner IAM** confirma identidade e canal seguro do Operador; fornece credencial administrativa **vigente** ou token delegado administrativo validamente emitido e suficiente para o realm `delpi`. Nunca copiar segredo/valor de env para GitHub, ChatGPT ou console de relatório; não usar conta bootstrap inválida, SQL/DB/Keycloak bypass nem ampliar service account de Core por conveniência.
+2. **Operador SSH** executa somente `--check` com as credenciais legítimas, registra resultado **sanitizado** e inventário de alterações propostas: `mcp-api-delpi`, `mcp-transformometro`, `mcp-tv-dashboard`, `mcp-clara`, DÉLIA requester, scopes, audiences e policies. O wrapper atual não comprova suporte a `--apply` exclusivo `mcp-clara`.
+3. **Owner IAM/Plataforma decide** o diff e blast radius compartilhado (se houver decisão material, devolver `DECISION_REQUIRED` com opções, não aplicar por suposição). Operador confere backup/rollback IAM e obtém GO específico para nova alteração.
+4. Após aprovação: `--apply` autorizado → novo `--check` → audience/scope/PKCE/issuer/redirect de `mcp-clara` provados sem publicar secret → dono do workspace ChatGPT obtém **callback real** no fluxo de conexão → IAM registra callback exata → usuário conclui login OAuth.
+5. Smoke autenticado real: tools/list (18 esperadas), READ por usuário autorizado, fontes/citações do corpus, fail-closed sem scope ou com audience incorreta; lote com **uma aprovação de negócio**, somente sobre cenário produtivo de teste previamente autorizado, estado e auditoria verificados. Resultado final em Docs 107/108/110 com SHAs, responsável e teste.
+
+**Sem nova alteração produtiva automática pelo GPT.** Não requer reabrir G2 do PO; respeitar ressalvas P7, relatórios oficiais e owners G1 ainda pendentes.
