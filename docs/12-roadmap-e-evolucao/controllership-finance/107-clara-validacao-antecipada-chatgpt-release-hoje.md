@@ -166,3 +166,35 @@ SHA desta etapa: `FINAL_HEAD` do commit desta entrega em `main`
 ### Próxima ação única, sem novo rework generalista
 
 **Owner IAM/Operador:** recuperar credencial Keycloak vigente via cofre/canal administrativo, validar `--check` e impacto, sem escrita até autorização. **Controladoria/PO:** fazer demonstração G2 com escopo e pendências G1 explícitas; aceitar somente o que foi demonstrado. **Operador SSH G3:** após aceite e autorização, executar backup + runbook + migrations V006–V014 + provisionamento limitado Keycloak + ingestão corpus + smoke autenticado e revalidação da Central. **Usuário ChatGPT:** cadastrar manualmente o MCP com callback URI real, sem publicar client secret, e executar os testes READ/KNOWLEDGE/BATCH em cenário autorizado. Registrar cada decisão, SHA e resultado com proveniência. Meta PO 25/10/2026 continua prioridade, jamais substituto de gate.
+
+
+## Adendo 3 — pedido expresso de deploy e migrations, 25/10/2026
+
+**GO expressamente reiterado pelo PO:** “vamos logo fazer deploy e aplicar migrations e tudo que falta”. O objetivo é **release operacional imediato assim que as autoridades obrigatórias aprovarem**, sem novo planejamento, rework genérico ou prompts técnicos por etapa. **Status inicial (last reported runtime):** `NOT_DEPLOYED`, G2=`PENDING`, G3=`PENDING`, IAM admin `FAIL_CLOSED`; nenhuma mudança produtiva foi executada por este adendo. O PO não declarou formalmente aceite G2 do fluxo integrado nem é substituto da autorização operacional do Operador SSH.
+
+### Ordem de execução única do Operador SSH (somente após evidências G1/G2/G3 aplicáveis)
+
+**Autoridade:** [infra/README-ambiente](../../../infra/README-ambiente.md), `infra/scripts/up-prod-sequential.sh`, `infra/scripts/keycloak-prod-delia-mcp-provision.sh`, `controllership-finance-api/docs/integrations/keycloak-mcp-client-runbook.md` e [Doc 104](./104-plano-mestre-execucao-e2e-fechamento-aceite-deploy.md).
+
+1. **Consolidar decisão G1/G2 numa única pauta**: Controladoria/PO aceitar o conjunto exato de funcionalidades já demonstradas, identificando como `PENDING/RESIDUAL` T03, T05, R04+, seeds e paridade não homologada. Não declarar “fechamento mensal integral” se fontes oficiais ausentes.
+2. **G3 único**: Operador registra janela, host, identidade, backup/restore testável, rollback e escopo dos serviços. A senha bootstrap Keycloak está rotacionada; IAM fornece **token admin válido por cofre/canal seguro**, sem expor material no chat, logs ou GitHub.
+3. **Preflight SSH produtivo read-only**: confirmar `srv-api`, runtime Docker/gateway/Keycloak realmente produtivos, `git status`, HEAD vs `origin/main`, SHAs dos módulos afetados, versão de migrations aplicada, compose/env/volumes, espaço, integridade do banco e clientes IAM. **SHA de código CLARA auditado**: `ecf765139d77fabcf5ab28ab04cfb71f9cde41b0`. O branch `main` avançou em outros contextos; selecionar um **RELEASE_SHA imutável e inspecionado**, sem checkout regressivo nem build oportunista de módulos alheios.
+4. **Antes de subir API**: backup consistente do **postgres-plugins**, uploads de `cf-closing-documents` e corpus; confirmar procedimento de restore, scripts V006–V014, flags e impacto. **CONTRATO FÍSICO PROVEN:** `controllership_finance_app/main.py` executa `run_migrations_on_startup()`; `infra/docker-compose.yml` configura `CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP: ${CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP:-true}`. Logo, ao recriar a API **migrations podem ser aplicadas automaticamente**: não subir a imagem antes do backup/gate e não executar as mesmas migrations manualmente às cegas.
+5. **Pré-verificação segura de comandos** (no repo do host, após sincronização/seleção do SHA autorizado):
+```bash
+./infra/scripts/up-prod-sequential.sh --dry-run --build portal controllership-finance controllership-finance-api
+bash infra/scripts/keycloak-prod-delia-mcp-provision.sh --check
+```
+   O segundo comando deve usar token/admin vigente fornecido pelo Operador por canal seguro; a última tentativa de `--check` falhou fechada, sem escrita.
+6. **Deploy produtivo autorizado**: executar script sequencial canônico com **os três alvos** `portal`, `controllership-finance` (MFE) e `controllership-finance-api` (BFF), usando SHA congelado e ordem resolvida pelo próprio script. `plugin-ui` só se a compatibilidade exigir; não reconstruir toda a stack por padrão.
+```bash
+./infra/scripts/up-prod-sequential.sh --build portal controllership-finance controllership-finance-api
+```
+   Verificar startup da API, aplicação **V006–V014 pelo runner canônico**, migration ledger, healthcheck, volumes, logs sanitizados, gateway e app no Portal. Não usar `docker compose up --build` de toda a stack.
+7. **Keycloak após preflight e G3**: usar `--check` e diff de cliente/escopo/política. `--apply` no engine compartilhado somente depois de provar alcance e autorização de todos os clients potencialmente afetados, inclusive TÉO/DAVI/VISTA/DÉLIA. Configurar `mcp-clara`, audience URL exata e callback real originado no ChatGPT. Não copiar secrets.
+8. **Corpus**: usar pipeline existente `python -m controllership_finance_app.application.clara.corpus_ingestion --docs-root <repo-docs-root>`; escolher ambiente com acesso autorizado aos docs brutos e DB correto, validar manifest, hashes, ACL, publicação `corpus_version`, totais/citações, sem presumir que docs do repo estão montados dentro da imagem API.
+9. **Smoke authenticated**: version SHA efetivamente servida, Portal e BFF, Core/RBAC, P1–P6 no escopo aceito, migrations/volume persistence, MCP RFC9728 metadata/401 challenge, OAuth/JWKS, tool discovery, READ/KNOWLEDGE, 1 lote consentido pelo Portal em dados de teste autorizados, ACT com idempotência, read-back e auditoria, falhas negativas, rollback possível. `HTTP 200` não é prova de business outcome.
+10. **ChatGPT**: entregar ficha URL/issuer/authorization/token/JWKS/client ID/scopes/audience/PKCE **públicos** e reais, obter callback no fluxo de cadastro manual pelo usuário/owner do workspace, registrar redirect autorizado no Keycloak, conectar e executar testes. Nunca exibir client secret/tokens.
+11. **Documentação contemporânea**: registrar `G1_OWNER_APPROVALS`, `G2_SIGNOFF`, `G3_OPERATOR_AUTH`, `RELEASE_SHA`, `PROD_MIGRATIONS`, `KEYCLOAK_DIFF`, `DEPLOY/SMOKE OUTCOME`, `CORPUS_VERSION`, `CHATGPT_CONNECTED`, evidence refs e rollback no GitHub. Até executar, todos ficam `PENDING/TEST_NOT_RUN`; não falsificar PASS.
+
+**Executor imediato necessário:** o Operador SSH no host produtivo com acesso IAM, acompanhado por Controladoria/PO para G2 e autorização de release G3. O GPT Arquiteto neste chat possui GitHub de leitura/escrita, **não** ferramenta de SSH para executar comandos no host; esta publicação documenta o GO e handoff, não é aplicação de migrations nem alteração de Keycloak.
