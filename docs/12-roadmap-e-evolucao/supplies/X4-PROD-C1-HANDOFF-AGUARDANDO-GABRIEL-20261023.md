@@ -139,3 +139,14 @@ NEXT_STEP                  = WAIT_FOR_GABRIEL -> G8_READ_ONLY_RECHECK
 5. **Habilitação de CREATE/UPDATE e primeira escrita real requerem autorização operacional distinta**, não decorrente deste e-mail.
 
 Os registros históricos acima permanecem intactos como evidência do diagnóstico anterior; esta seção é a atualização cronologicamente posterior e prevalece para o estado de comunicação.
+
+
+## 12. Confirmação enviada e janelas propostas — 2026-10-26
+
+**Evidência apresentada pelo PO:** captura da conversa Outlook com resposta enviada em **26/10/2026 às 07:38** a Gabriel Araújo (Michael em cópia). O PO confirmou conclusão da homologação em DELPI_TST01, reutilização de endpoint/autenticação/configuração existentes, concordância em preparar a publicação sob janela de 30 minutos; pediu a especificação do campo de controle de alteração.
+
+**Resposta de Michael (captura apresentada em 26/10):** janelas **12h–13h** ou **qualquer horário após 17h30**. **São disponibilidades, não agendamento confirmado nem implantação executada.** Falta selecionar horário com Gabriel/Michael e obter GO de operação.
+
+**Decisão operacional solicitada pelo PO:** deixar a integração produtiva pronta e, caso a configuração efetiva de AMBIENTE=1 ainda aponte a REST de teste, trocar **condicionalmente** para produção. Isso **não dispensa** validar primeiro G8 read-only após publicação upstream. Até G8 PASS, manter URL_REST@1 intacta por risco de quebrar GET E14; manter AMBIENTE=2 isolado, gates CREATE/UPDATE OFF, pin fail-closed e rollback pronto. A alteração efetiva dos parâmetros deve ser executada apenas no momento controlado com owner e janela/GO confirmados; não inferir que já ocorreu a partir deste registro.
+
+**Estado atualizado:** `PO_EMAIL_SENT=PROVEN_BY_SCREENSHOT`; `MICHAEL_WINDOWS=OFFERED`; `WINDOW_CONFIRMED=PENDING`; `GABRIEL_DEPLOY=PENDING`; `G8=FAIL_LAST_OBSERVED`; `CONFIG_CUTOVER=PENDING_CONDITIONAL`; `CREATE/UPDATE=OFF_LAST_REPORTED`.
