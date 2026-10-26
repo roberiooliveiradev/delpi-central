@@ -267,3 +267,8 @@ A frente **SHARED-INTEGRATIONS-01 X0–X3.E2E** atingiu **ACCEPT para backend/ru
 
 
 **Autorização PO posterior (2026-10-23) — HOME-ATTENTION:** Devin autorizado a executar A0–A4, testes, commit/push e deploy canônico do componente Atenção **sem checkpoints de aprovação intermediários**, apenas com gates técnicos e de segurança PASS. O plano [HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md](./HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md) é a referência atual para este escopo e substitui a classificação PLANNED acima. A autorização não afeta fornecedores C1/Gabriel.
+
+
+## Proposta UX — diagnóstico REST de Fornecedores (2026-10-26)
+
+**Estado:** `TARGET / PLANNED` — nenhuma implementação ou deploy autorizado por este documento. Proposta de card flutuante/recolhível na lista e na ficha de fornecedor, com status separado de configuração, autenticação, GET, gates e escrita não testada; mobile inline, AuthZ backend e verificação manual **read-only**. Captura atual da ficha com erro não prova indisponibilidade do Portal inteiro. Detalhes, wireframes e AC em [X4-REST-INTEGRATION-STATUS-CARD-UX-PROPOSAL-20261026.md](./X4-REST-INTEGRATION-STATUS-CARD-UX-PROPOSAL-20261026.md).
