@@ -860,3 +860,64 @@ A8: testes futuros precisam cobrir acesso direto à URL TOTVS/stock/API, acesso 
 6. **D-DRE-ENTRY-01:** rota/URL exatas, navegação do launcher e comportamento para \`.manage\` sem acesso geral. \`MANAGE != ACCESS\`; não tratar manage como superusuário de leitura.
 
 **Próximo passo:** revisão visual PO da listagem + detalhe + composer e solicitação de complemento. \`DESIGN_V0.8=PENDING_PO\`, \`RUNTIME_GO=NO\`.
+
+
+## 18. Aprovação PO — conversa inline no detalhe e reuso real do plugin-ui / Minhas Solicitações
+
+**Data:** 2026-10-26. **Entrada:** PO aprovou o wireframe DRE V0.8 e mostrou capturas do Portal **Minhas Solicitações**, apontando que o padrão de conversas já existe no \`@delpi/plugin-ui\`. **Estado:** \`PO_APPROVED_VISUAL\` para conversa e histórico permanentes no detalhe; \`PROVEN_CODE_EXPORTS\` para o reuso visual; \`CONTRACT_TO_INVENTORY\` para integração à BFF de Fechamento Mensal. A decisão não constitui autorização de runtime.
+
+### 18.1 Evidência visual das capturas anexadas pelo PO
+
+As duas imagens da interface de Minhas Solicitações apresentam:
+- tópico “Conversa sobre a solicitação” em área maior, com mensagens identificadas por ator e data/hora, alinhamentos diferenciados e miniaturas de anexos;
+- um compositor na parte inferior do histórico quando a solicitação permite mensagens;
+- no estado finalizado, aviso textual “Esta solicitação foi finalizada. A conversa está somente leitura.”, sem compositor de escrita;
+- painéis separados de documentos da solicitação e documentos gerados no atendimento.
+
+**Limite:** as capturas comprovam layout observado, não compatibilidade de DTO/API da conversa com a Central de Fechamento, nem garantem política de edição/anexo idêntica.
+
+### 18.2 Reuso técnico confirmado no HEAD do GitHub
+
+- \`plugins/my-requests/src/ui/mrUi.tsx\` importa de \`@delpi/plugin-ui/index\` os exports **\`createDashboardMessageThread\`**, **\`createDashboardMentionComposer\`**, **\`createDashboardRoomConversationShell\`** e **\`createDashboardAttachmentPreviewStrip\`**.
+- O mesmo arquivo compõe \`MyRequestsMessageThread\`, \`MyRequestsMentionComposer\` e \`MyRequestsRoomConversationChatColumn\` a partir das factories do kit (prefixo próprio \`my-requests\`).
+- \`plugins/my-requests/src/components/CommentsPanel.tsx\` utiliza esses wrappers, com API/DTO de \`RequestComment\` e métodos \`listComments/createComment/patchComment\` **específicos do contexto My Requests**.
+- Portanto **reutilizar as factories genéricas do \`@delpi/plugin-ui\`, NÃO copiar \`CommentsPanel\` nem chamar API de \`my-requests\`** a partir da Central de Fechamento; evitar import cross-context.
+- Existência de factory UI **não comprova** que já exista porta/contrato de comentários/solicitações para documentos P2/P5; novos adapters e integração somente após inventário+decisão+GO.
+
+### 18.3 Design visual aprovado para a página restrita
+
+**\`D-DRE-UX-THREAD-01=PO_APPROVED\`:** no detalhe do documento, a ordem visual é:
+1. título do documento, metadados, competência, status de disponibilização;
+2. arquivo liberado/versão e \`Visualizar\`/\`Baixar\` conforme contrato;
+3. **“Conversa sobre o documento” permanentemente visível**, em painel abaixo do arquivo, seguindo a hierarquia visual de Minhas Solicitações;
+4. mensagens de Contabilidade e Controladoria, com ator, instante, tipo \`COMENTARIO\` vs \`SOLICITACAO_COMPLEMENTO\` e vínculo à versão/competência;
+5. compositor contextual na parte inferior, com modo **Comentar** ou **Solicitar complemento**, disponível apenas quando BFF autorizar;
+6. histórico de eventos sistêmicos (disponibilização, versões, correções) auditável, junto ao diálogo ou em subseção distinguível, sem apagar mensagens.
+
+**Não transformar a conversa em área de upload documental.** O controle de anexar imagens na conversa existente em Minhas Solicitações **não autoriza anexos no contexto DRE**: por padrão no wireframe DRE, compositor **texto apenas**; suporte a imagens/anexos de comentário exige decisão própria. O usuário DRE continua sem poder carregar/substituir arquivos da documentação.
+
+**Estado somente leitura:** se o contrato da competência/versão/recorte vedar interações, apresentar explicitamente a mensagem de indisponibilidade de conversa, mantendo timeline legível; não inferir terminalidade a partir de estado P5 sem contrato.
+
+### 18.4 Mapeamento visual para a implementação futura
+
+| Necessidade | Kit first | Contexto e responsabilidade |
+|---|---|---|
+| Conversa de mensagens | \`createDashboardMessageThread\` | Renderizar mensagens da BFF do fechamento, não de my-requests |
+| Editor contextual | \`createDashboardMentionComposer\` | Usar apenas capabilities contratadas (texto sem anexo neste wireframe) |
+| Estrutura conversa | \`createDashboardRoomConversationShell\` | Adaptar grid/composição ao painel documental; não duplicar shell |
+| Lista de arquivos liberados | \`createDashboardAttachmentPreviewStrip\` ou P2 \`AttachmentFileList\` | Download e preview com AuthZ por versão na BFF |
+| Eventos sistêmicos | \`createTimeline\` | Registrar tipo, ator, timestamp, versão e source preservada |
+| Estado read-only/erro | \`StateBanner\`, \`EmptyState\`, \`LoadingState\` | Sem falsos vazios; manter conteúdo quando comentário falhar |
+
+**Visual mobile:** documento primeiro; mensagens em largura total; campo de texto acessível no final; enviar com foco/feedback; scroll da thread sem esconder cabeçalho, botão de retorno à lista. **Light/dark:** mesma árvore, tokens do kit.
+
+### 18.5 Gates ainda pendentes — não mascarar como aprovado
+
+1. **\`D-DRE-COLLAB-01\`**: owner/contrato de mensagem, comentário e solicitação de complemento, visibilidade cruzada, resposta, histórico, edição e estado aberto/resolvido.
+2. **\`D-DRE-NOTIFY-01\`**: público não-DRE autorizado a receber notificações, restrito por item/competência/scope, com payload seguro; sem broadcast sensível indiscriminado.
+3. **\`D-DRE-MANIFEST-01\`**: exceção a freeze de duas permissions, já aprovada como intenção no Doc 91, porém deferida e pendente de gate transversal.
+4. **\`D-DRE-COMPOSER-01\`**: manter texto somente (recomendação) ou permitir imagens anexas às mensagens (não confundir com envio de documento); decisão a discutir se necessária.
+5. **\`D-DRE-RELEASE-01\`**: estado que libera o anexo ao usuário DRE, com versionamento e recipient.
+6. Nenhuma implementação de UI/BFF/Core/manifest/permission/storage foi autorizada neste ciclo. \`RUNTIME_GO=NO\`.
+
+**Próximo desenho recomendado:** estados da conversa (nova mensagem, complemento solicitado, resposta, somente leitura, erro, upload documental proibido) e contrato de notificações de audiência, mantendo o wireframe restrito.
