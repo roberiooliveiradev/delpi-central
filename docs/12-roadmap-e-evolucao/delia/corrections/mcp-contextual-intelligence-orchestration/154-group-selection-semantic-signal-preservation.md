@@ -168,3 +168,16 @@ fixes 3B routing:
 - `_select_foreign_capability` shares the same block — foreign
   selection gains the same signal for free; no consumer change
   needed beyond the instruction note.
+
+
+## 8. Independent coordination review — 2026-10-26
+
+**VERDICT=ACCEPT_WITH_RESIDUAL (structural projection only), DEPLOY_AUTHORIZED=NO, BUSINESS_OUTCOME=NOT_PROVEN.** Static independent GitHub inspection of `4a3d315c764982fef38c05b6770269775faefc1d`, `_group_scope_text`, `_group_summaries`, v23 instructions, doc 154. Executor-reported tests (17 RED/GREEN and full backend), 60+60 local runs not independently rerun. HEAD had moved beyond the task commit at review time; this decision applies to that evaluated implementation, not automatic acceptance of later commits.
+
+**Confirmed code change:** provider-neutral `scope` is built from verbatim bounded capability-description prefixes and retained after the earlier global per-capability description reductions; max 160/group, no model call, no provider/material hardcode. Real reported group payload has 4/4 scopes, 5908–5989/6000 chars. The model still receives untrusted catalog data, not authority.
+
+**Controlled-result constraint:** Group-selection error unchanged 25/60 → 25/60; wrong-owner distribution moved TEO 13→4 and VISTA 4→23, with record outcomes uncorrected. PASS increased 10/60→15/60 largely on discovery; admission 18→12, but v22→v23 instruction resource also changed and runs are stochastic, so differences cannot be causally assigned to scope alone. Report outcomes by scenario and matched eligible stage denominators; 25/60 group errors and 4/4 group scopes do not establish semantic decision quality. Extra input tokens (~386k→432k, +~12%) and 1–2 omitted capabilities are real cost/coverage tradeoffs and warrant consideration before release. `scope` built from FIRST descriptions is order-sensitive to capability order, and prefixes may be incomplete; the current rename/reorder test should distinguish provider/group order from capability ordering. Do not represent these prefixes as authoritative owner-level business definitions.
+
+**Instruction-contract conflict to test, not silently fix:** the select_group v23 text still contains documentation-first for colloquial register subjects and also ends with an explicit record-asks→record-surface rule. A bounded **instruction-only** experiment should isolate these clauses with same projected payload, model, surface snapshot, oracle and repeated randomized runs. Include pure record queries vs explicit definition/guidance asks vs terminology-resolution cases where owner documentation is genuinely required; preserve comparison/foreign-evidence flow and no write. No hardcoded materials/providers or deterministic override. If improvement not robust, report no acceptance and consider separately authorized model-capability comparison. Do not change admission or arguments concurrently.
+
+**VERDICT DETAILS:** structural `scope` fix accepted with residual, no proof of improved group selection or business outcome. No production deploy authorized. NEXT=bounded group-selection instruction-semantic conflict experiment, then review outcome evidence before any implementation promotion.
