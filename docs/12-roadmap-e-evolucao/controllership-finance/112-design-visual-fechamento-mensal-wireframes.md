@@ -1279,3 +1279,33 @@ O [Doc 37 P5](./37-p5-submissao-e-revisao-no-portal.md) define **PackageVersion 
 O design de **três abas fica aprovado pelo PO** e será a nova base dos wireframes; a arquitetura interna de pacotes P5, histórico de competência e editabilidade temporal será refinada dentro das áreas definidas. Priorizar novo wireframe da **Visão geral histórica por competência**, depois painel contextual de pacote, depois relatório e documento em contexto mensal. O PDF final fica em container até revisão posterior da fidelidade.
 
 **Status da rodada:** `PO_APPROVED_VISUAL_THREE_TABS / P5_RECONCILIATION_PENDING / RUNTIME_GO=NO / NO_CODE_CHANGED`.
+
+
+## 26. Gate do primeiro incremento de implementação — Home e Fechamento mensal; DRE por último
+
+**Data:** 26/10/2026. **Ordem explícita do PO:** implementar primeiramente a página inicial da Controladoria com entrada consolidada `Fechamento mensal`; **a página restrita Contabilidade/DRE será implementada por último, não faz parte do primeiro ciclo**. PO solicitou prompt para executor Devin, desenvolvimento local, testes, commit/push e deploy via SSH operador conforme gates. **Estado:** `PO_REQUESTED_FIRST_IMPLEMENTATION_SLICE` / `TRANSVERSAL_GO_TO_VERIFY`; `RUNTIME_NOT_CHANGED_BY_THIS_DOC`.
+
+### Decisões de escopo de interface
+
+1. **Home** `/apps/controllership-finance`: reduzir a exposição da seção “Caminhos e funcionalidades” a uma entrada principal `Fechamento mensal`, podendo oferecer dois atalhos contextuais `Documentos e interações` e `Relatórios e divergências`. Evitar links de mesmo nível para cada implementação técnica/relatório.
+2. **Fechamento mensal**, novo workspace/rota a resolver pelo inventário de router e manifesto, terá exatamente três abas **Visão geral**, **Documentos e interações**, **Relatórios e divergências**; competência existente/autorizada preservada durante navegação; indicadores `Bloqueios`, `Divergências`, `Documentos a tratar` são atalhos ao conteúdo correspondente, não páginas.
+3. **Não apagar páginas, imports e arquivos preexistentes do projeto por limpeza agressiva**. Retirar antigos relatórios da *exposição da Home, indexação/paleta e navegação principal* onde pertinente, não romper resolução de rotas diretas, imports necessários ao router nem consumers. Preservar `FinancialSettlementsPage`, `StockInventoryPage`, `ClosingChecklistPage`, `CockpitPage`, `PendenciesPage`, `PackagesPage`, admin, DTOs, testes e rotas sem depreciação aprovada.
+4. Páginas comuns do Portal e topbar não ganham novas entradas por conveniência: seguir docs 24/32 e padrão visual; componente `@delpi/plugin-ui/index` primeiro, Help sincronizada. Não fabricar contagens ou competências. Se novo read model não existir, renderizar estado honesto e navegar ao owner/rota implementado no contexto da competência.
+5. **Contabilidade/DRE = FASE FINAL DEPOIS**, explicitamente excluída deste prompt de execução: não alterar permission baseline (`.access`, `.manage`), manifesto/Core/launcher/BFF para DRE nem exibir relatórios para essa audiência. Doc 91 e regra de exceção transversal continuam pendentes; nenhuma tentativa de contornar com `.access` geral ou `.manage`.
+
+### Inventário remoto pontual para verificação local pelo executor
+
+- `plugins/controllership-finance/src/features/home/HomePage.tsx`: `CfSectionRouteCard`, pesquisa/últimos acessos derivados do catálogo.
+- `plugins/controllership-finance/src/content/pluginRouteCatalog.ts`: hoje enumera checklist, baixas, administração, catálogos, P4/P5, cockpit e P7 como caminhos do launcher; reduzir *a vitrine*, sem deletar rotas.
+- `plugins/controllership-finance/src/app/pluginRoutes.ts` e `src/App.tsx`: roteiam/importam as views antigas, que devem permanecer válidas.
+- `plugins/controllership-finance/controllership-finance.manifest.json`: duas permissions e rotas legadas.
+- Docs: `README.md`, `24-inicio-e-navegacao-principal.md`, `30-plugin-ui-reuse-map.md`, `32-inicio-home.md`, `112` §§23–25.
+- `.cursor/rules/local-first-deploy.mdc`, `platform-delivery-runtime-operations.mdc`: **local-first → commit/push → pull/deploy canônico via SSH operador**, jamais editar arquivos, copiar working tree, ou docker-patch em produção.
+
+### Sequência/gates
+
+`READ HEAD + STATUS → normas e contratos → inventariar producers/consumers/testes → identificar GO transversal existente → implementar mínimo slice Controladoria se GO válido → lint/test/typecheck/build federado → regressão de deep links, AUTHZ e responsividade → evidence/report → commit/push → autorização/gate de deploy → SSH operador apenas pull/build via script oficial → health + smoke autenticado + rollback readiness → SHA e residual search`.
+
+**Se o GO transversal de runtime/produção não estiver comprovado, parar antes de mutação/implantação protegida e devolver `DECISION_REQUIRED` ou `INCONCLUSIVE`; não presumir que pedido de prompt substitui gate.** Não executar DRE nem contratos de conversa/WebSocket, relatórios PDF novos, mudança ERP, schemas/migrations ou P5 agora. Gate de DRE só na etapa final do projeto.
+
+**Próximo deliverable:** prompt único do Devin para executar somente a primeira fatia, com checkpoints e evidências; o GPT revisará relatório e emitirá `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
