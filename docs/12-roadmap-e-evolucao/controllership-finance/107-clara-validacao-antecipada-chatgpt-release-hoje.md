@@ -291,3 +291,36 @@ container/DB está fora de escopo e exige operador+gate explícito).
 - G1/G2/G3 — pendentes de registro formal; o deploy ocorreu por GO do
   operador (Adendos 3–5) — a aceitação humana e a autorização formal devem
   ser registradas para fechar a cadeia.
+
+
+## Adendo 6 — revisão arquitetural do deploy reportado e bloqueio IAM (26/10/2026)
+
+**Evidência examinada:** `main=f8d697745cb07a6df5c117c7253f2497bc89c80e` à data da verificação; commit de correção CLARA `ecf765139d77fabcf5ab28ab04cfb71f9cde41b0`; release reportado em `srv-api` com repo `2eeb5fb943e46cf8f1e50e373a4fc2cf1ca0af6b`. Fontes: Adendo pós-deploy deste documento e ficha `controllership-finance-api/docs/integrations/chatgpt-clara-registration-sheet.md`. **Não houve SSH independente pelo GPT nem smoke OAuth autenticado**; acesso HTTP externo não pôde ser confirmado por esta revisão.
+
+### Classificação de evidências
+
+| Aspecto | Status | Critério |
+|---|---|---|
+| Código CLARA V014 e fixes de lock/presentation | `PROVEN` no GitHub | SHAs `e8d9361dee` e `ecf765139d` consultados; não igual a confirmação de produção |
+| Deploy `srv-api` / V001–V014 | `OWNER_REPORTED / TO_VERIFY` independentemente | Operador relata host, imagem, ledger e 401/metadata; usar snapshot SSH/smoke readback para aceite |
+| Corpus | `OWNER_REPORTED / TO_VERIFY` independentemente | `5541097a-8608-4470-b971-7c28b3ae6c40`, 52 fontes / 1298 itens, não implica originais MP4/XLSB ingeridos |
+| Keycloak `mcp-clara` | `BLOCKED` | Três trilhas de admin falharam: bootstrap master, service account sem realm-management e password grant `invalid_grant` |
+| ChatGPT OAuth, tool discovery, READ, batch ACT | `TEST_NOT_RUN` | Sem client provisionado, callback real e token com audience correta |
+| G1 owner / G2 Controladoria / G3 Operador | `PENDING_EVIDENCE` | Nenhum registro contemporâneo de aprovação G2/G3 encontrado nesta fonte |
+| Sequência release vs gates | **`EXECUTION_DRIFT` até regularização** | A própria fonte relata alterações produtivas já executadas com G2/G3 ainda `PENDING`. GO de preparar runbook/Adendos 3–5 **não constitui**, sozinho, autorização G3 ou aceite G2. Obter provas datadas preexistentes caso existam; nunca criar sign-off retroativo fictício |
+
+### Único desbloqueio técnico real
+
+**IAM/Operador autorizado:** localizar mecanismo **vigente** de administração Keycloak por cofre/canal seguro; não reaplicar credenciais bootstrap já recusadas, não conceder privilégios ao `delpi-core-admin` por conveniência, não usar bypass container/DB. Executar `keycloak-prod-delia-mcp-provision.sh --check` apenas com credencial legítima e anotar relatório sanitizado e clients afetados.
+
+**Atenção ao escopo:** o script atual de `--apply` usa `infra/scripts/delia_mcp_keycloak_state.py` cuja tupla `SPECIALISTS` contém `mcp-api-delpi`, `mcp-transformometro`, `mcp-tv-dashboard` e `mcp-clara`, e ainda atua em requester/políticas. **Não existe flag documentada de `--apply` exclusivo `mcp-clara` nesse wrapper.** Portanto a frase anterior “`--apply` somente `mcp-clara`” é **premissa não provada**. Fazer diff e autorização transversal; se exigir mudança material de mecanismo/scope, `DECISION_REQUIRED` do owner IAM/Plataforma antes de alterar/aplicar. Nunca aplicar engine compartilhado supondo blast radius limitado.
+
+### Ordem operacional para conclusão
+
+1. **Congelar novas escritas prod**, preservar runtime atual, colher evidência de backup, migrations e aprovação contemporânea (ou registrar desvio) de G1/G2/G3. Não usar retrodatação para legitimar rollout.
+2. **Owner IAM** resolve acesso admin autorizado e gera `--check` sanitizado, sem segredos, seguido de revisão do diff transversal.
+3. **Controladoria/PO e Operador SSH** registram aceite G2 e autorização G3 válidos para próximas intervenções, com escopo/residuais separados. Não afirmar G1 integral enquanto T03/T05/R04+/seeds estiverem abertos.
+4. Somente após gates de escrita IAM: provisionar `mcp-clara` com audiência isolada, obter callback **real** do fluxo ChatGPT, registrar redirect autorizada, fazer OAuth login, tool discovery, READ e corpus com citações; ACT apenas em dados de teste autorizados por owner, com autorização consolidada, read-back e auditoria.
+5. Atualizar no mesmo ciclo `RELEASE_SHA`, `KEYCLOAK_DIFF`, `G2_SIGNOFF`, `G3_OPERATOR_AUTH`, `MCP_SMOKE_AUTHENTICATED`, `CHATGPT_CONNECTED`, evidências e status honestos. Se IAM continuar bloqueado, devolver único responsável e ação desbloqueante; sem novo rework de produto.
+
+**Veredito do GPT Arquiteto:** `EXECUTION_DRIFT` quanto à sequência de gates reportada; **`INCONCLUSIVE` quanto a funcionamento autenticado fim a fim**. Não invalidar as correções V014 nem desfazer o deploy automaticamente; preservar o estado e não expandir operações produtivas sem authority.
