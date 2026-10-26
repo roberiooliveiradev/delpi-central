@@ -1600,3 +1600,8 @@ Todas sob prefixo `/closing/competences/{period}` e todas chamam `_competence_id
 ## 34. Redesign V0.1 — Visão geral (proposta ao PO, 26/10/2026)
 
 A proposta detalhada está no [Plano 113 §11](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Substituir a organização de painéis P1–P5 extensos por header + mês, estado geral, três KPIs contextuais, próximas ações legíveis, três eixos independentes e histórico compacto, sem perder blockers reais nem traduzir indisponibilidade como zero. **PENDING_PO_VISUAL_APPROVAL / NO_RUNTIME_GO**; só após revisão do PO criar brief de implementação, atualizar Help e CLARA, mantendo legado até autorização.
+
+
+## 35. Visão geral V0.2 — escolhas do PO aprovadas (26/10/2026)
+
+O PO aprovou explicitamente: **atenções/próximos passos em destaque**, **atividade recente resumida**, **conclusão e envio separados ao final da Visão geral** e **Estoque/Documentos/Pacote DRE em três cartões compactos**. A especificação de composição, componentes plugin-ui, estados e AC está no [Plano 113 §12](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Quatro opções de UX `PO_APPROVED`; desenho detalhado `PENDING_FINAL_PO_PAGE_APPROVAL`, sem GO de implementação ou remoção de legado.
