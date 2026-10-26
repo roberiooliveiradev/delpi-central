@@ -1123,3 +1123,29 @@ prioridade material (quando real) | tipo | motivo | source | responsável | desd
 8. O acesso restrito Contabilidade/DRE **NÃO exibe essa página completa, eixos nem relatórios TOTVS**: sua entrada Fechamento mensal abre exclusivamente os documentos anexados e liberados, conforme §§16–18.
 
 **Decisão para o próximo review visual:** confirmar a estrutura da Visão geral (blockers → 3 indicadores → 3 eixos → atenção → histórico) e se o componente de pendências prioritárias abre uma página P4 independente ou uma visão contextual. **D-FM06-REBASE-01 permanece DECISION_REQUIRED**; avanço no wireframe não revoga a decisão documental anterior nem autoriza código.
+
+
+## 23. Correção de navegação conforme referência visual do PO — quatro abas do Fechamento mensal
+
+**Data:** 2026-10-26. **Evidência:** PO reapresentou captura do próprio wireframe V0.6 e afirmou: “essa eram as paginas definidas”. **Estado:** `PO_RECONFIRMED_VISUAL_INFORMATION_ARCHITECTURE`. Esta seção é a referência visual vigente e corrige as sequências posteriores que sugeriam uma aba `Pendências` como quinta página sem aprovação.
+
+### 23.1 Estrutura visual definida
+
+**Moldura:** cabeçalho `Fechamento mensal` + competência existente/autorizada + três indicadores clicáveis, **Bloqueios**, **Divergências**, **Documentos a tratar**.
+
+**Quatro visões da bancada operacional da Controladoria, na ordem da captura:**
+
+1. **Visão geral** — panorama da competência, blockers materiais, eixos estoque/documentos/pacote, fila contextual e histórico.
+2. **Documentos e interações** — checklist/entregáveis, versões de evidências, upload elegível, avaliações/interações e histórico compartilhado.
+3. **Relatórios e divergências** — relatórios TOTVS por família, conferência/diagnóstico, container de prévia do PDF final e ação futura de disponibilizar PDF liberado ao DRE.
+4. **Revisão** — pacotes, versões, submissão, esclarecimentos, aceites humanos P5 e condições de conclusão conforme contrato.
+
+`D-FM06-REBASE-01 = A / PO_RECONFIRMED_VISUAL`: **quatro abas**. Não criar quinta aba `Pendências` nesta composição, e não converter a página `Pendências e classificações` em nova navegação top-level apenas porque consta como P4 no roadmap. O processo P4 continua autônomo no domínio, com worklist contextual e eventual navegação profunda para seu owner mediante contrato e rota existente; preservar paths legados até decisão formal de alteração/depreciação. **Pendência não é sinônimo de documento.**
+
+**Contabilidade/DRE:** mantém **uma página restrita própria**, acessada como `Fechamento mensal` no escopo autorizado, com somente documentos anexados/liberados, consulta/download/comentário/complemento. **Não** é uma das quatro abas da Controladoria e não possui acesso aos relatórios TOTVS. Permission específica previamente aprovada como intenção (Doc 91) segue exceção contratual deferida; nenhum runtime nesta rodada.
+
+### 23.2 Correção no sequenciamento do projeto visual
+
+Na resposta anterior, “Próximo detalhamento — Pendências e classificações” foi apresentado como se fosse próxima página independente. **CORRIGIDO:** concluir detalhamento da **Visão geral** e avançar diretamente para **Revisão**, que é a quarta aba ainda não detalhada no mesmo nível. P4 é componente/contexto transversal a mapear sem alterar a navegação de quatro abas.
+
+**Permanecem pendentes:** componente P4 em profundidade, estados reais do P1, decisão de contrato sobre navegação em rota vs aba/deep link, PDF de cada emissão, contrato de complemento/WebSocket e gate de permissions DRE. Esta aprovação é **visual/informacional**, não GO de implementação.
