@@ -277,3 +277,87 @@ SIM-20 FLUXO REAL CONSUMIDOR              = PENDING — requer sessão ChatGPT/
 - Validação live (produto 10080001, PN MS3108E-18-1S, conectores 10090850 vs
   10090680) depende de deploy + identidade autorizada — evidência separada no
   relatório de execução.
+
+
+---
+
+## 11. Live consumer case: TE Connectivity 626377-1 (2026-10-26)
+
+**Execution context:** ChatGPT conversation with connected, end-user-authenticated DAVI
+remote MCP plus an independently retrieved public manufacturer webpage. This is an
+assisted consumer-session validation of the *existing governed READ capabilities*;
+it is **not** an Agent Studio automation/eval, PDF transport validation, complete
+inventory scan, second-user business AuthZ test, or evidence of a new deployed SHA.
+
+| Dimension | State | Observation |
+|---|---|---|
+| External reference | PROVEN | TE Connectivity official product \`626377-1\`: https://www.te.com/pt/product-626377-1.html |
+| MCP availability | PASS | \`discover_delpi_information\` + \`execute_delpi_information\`; 97 actions visible in the connected catalog |
+| Exact part-number lookup | PASS | \`search_products_by_supplier_part_number(supplier_part_number="626377-1")\` returned \`total=1\`, \`is_complete=true\`: DELPI \`10080010\`, TE supplier \`000002/01\` |
+| Governed detail | PASS | \`get_product_detail(code="10080010")\` returned 32 approved \`product.*\` fields, \`is_complete=true\`, product \`type=MP\`, \`group_code=1008\`, \`active=S\`, \`rohs_indicator=S\` |
+| Supplier links | PASS | \`get_product_suppliers(code="10080010",page=1,page_size=15)\` returned 6 links, complete; TE \`626377-1\` and Heilind \`0-0626377-1\` among them |
+| Descriptive candidate discovery | PASS with coverage limitation | \`search_products\` found same-family lingueta terminals; result set is paginated/partial, no automatic technical-equivalence determination |
+| Identification outcome | PASS | A pre-existing DELPI record was located before hypothetical creation; **no actual duplicate creation or prevention event was executed** |
+| Full Agent Studio orchestration | PENDING | This chat executed the sequence using the connected MCP; independent Agent Studio SIM-20 is not proven |
+| Negative business AuthZ (2nd user) | PENDING | 401 anonymous and simulated forbidden are not the required distinct authenticated negative user |
+| Owner ratification / broad rollout | PENDING | Formal PO/Engineering ratification of the 32-field projection remains open |
+| PDF transport / comparison | TO_INVENTORY | This case read public HTML, not an uploaded drawing/datasheet through DAVI MCP |
+
+### 11.1 Sources and technical evidence
+
+**Manufacturer (public; not DELPI SoT):** TE \`626377-1\` is a FASTON 250
+straight, uninsulated tab, 22-18 AWG / 0.32-0.82 mm2, mating width 6.35 mm,
+mating thickness 0.81 mm, brass/unplated, F-crimp, 8,000/reel; TE also lists
+UL/CSA-related approvals and recommends using the product drawing for design.
+Official product source: https://www.te.com/pt/product-626377-1.html .
+
+**DELPI (authoritative cadastral read through MCP):**
+
+- Product \`10080010\`: \`TERM. LINGUETA 6,30X0,80 0,30-0,80MM2 NU S/ISOLACAO FITADO CURTO UL ROHS\`.
+- Supplier-link match: \`supplier_code=000002\`, \`supplier_store=01\`,
+  \`supplier_name=TE CONNECTIVITY BRASIL IND DE ELET LTDA\`,
+  \`supplier_part_number=626377-1\`, \`unit=PC\`.
+- Six supplier links in the bounded complete result, including TE and Heilind.
+- Descriptive nearby candidates: \`10080060\` (estanhado), \`10081671\`
+  (trava), \`10080225\` (trava/longo), \`10081405\` (smaller wire range).
+  These are *candidates*, not approved replacements.
+- The apparent nominal differences (6.35 x 0.81 versus cadastral
+  6.30 x 0.80; 0.32-0.82 versus 0.30-0.80 mm2) must be reviewed against
+  manufacturer tolerances/controlled drawings before interchangeability.
+  \`FITADO\` versus \`reel\` requires packaging/grain validation, not an
+  automatic contradiction. TE UL/CSA mentions do not prove every DELPI
+  certification attribute. An exact SA5 supplier-PN match establishes the
+  *registered supplier reference*, **not engineering substitution authority**.
+
+### 11.2 Retrieval limitations discovered in this case
+
+- Prefix-like descriptions can have very different search results. Broad
+  \`TERM. LINGUETA 6,30X0,80\` and the more specific
+  \`TERM. LINGUETA 6,30X0,80 0,30-0,80MM2\` returned relevant candidates,
+  but the response \`total\` remained \`1501\` (group-scoped), while only the
+  visible page contained the narrower matches. **Count semantics are
+  INCONCLUSIVE** until the canonical owner repository/query is inspected.
+- The 5-detail fan-out cap in \`similarity_dedup_check\` is a safety/latency
+  limit, *not* evidence that the first five results are the top five
+  technically relevant materials. Candidate selection/ranking needs positive,
+  sibling and hard-negative evals.
+- Use a **strict precedence**: (1) exact registered supplier PN;
+  (2) canonical detailed product and supplier associations;
+  (3) controlled, bounded descriptive candidate search;
+  (4) technical comparison with attribute-level provenance. Distinguish
+  \`REGISTERED_PART_NUMBER_MATCH\` as an evidence statement from the
+  existing four classification outcomes; do not authorize equivalence on
+  that basis.
+- In the original user message, visible link text mentioned \`160404-2\`
+  while the actual target URL pointed to \`626377-1\`. Prefer verified
+  canonical URL/part number and disclose conflicts; do not silently merge
+  different references.
+
+**Verdict for this case:** \`LIVE_PN_IDENTIFICATION = PASS\`,
+\`LIVE_GOVERNED_DETAIL = PASS\`, \`LIVE_SUPPLIER_LOOKUP = PASS\`,
+\`ASSISTED_SIMILARITY_COMPARISON = PASS_WITH_LIMITATIONS\`;
+\`FULL_AGENT_STUDIO_SIM20 = PENDING\`; \`ENGINEERING_EQUIVALENCE = NOT_AUTHORIZED\`.
+
+This section updates the earlier time-specific \`LIVE_VALIDATION=PENDING\` for
+the **626377-1** case only; the separate \`MS3108E-18-1S\` Agent Studio
+scenario, authenticated USER_B negative test, and PDF transport remain open.
