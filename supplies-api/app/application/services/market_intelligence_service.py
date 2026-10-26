@@ -426,18 +426,24 @@ class MarketIntelligenceService:
         observed: int,
         expected: int,
         partial_reason: str | None,
-        freshness_status: str | None,
     ) -> str:
-        """Window-scoped status: coverage of the requested period first;
-        ``stale`` only when the window is fully covered but the *feed* is
-        behind its publication cadence (never because the queried period
-        itself ended in the past)."""
+        """Window-completeness only — one of ``ok`` | ``partial`` |
+        ``no_data`` for the *requested period*.
+
+        Feed freshness is a separate dimension reported in
+        ``meta.freshness``: a fully covered historical window stays
+        ``ok`` even when the source is currently behind its publication
+        cadence (R1.1 — two dimensions, never conflated).
+
+        ``partial_reason`` (e.g. ``fx_missing_months:*``) is only set when
+        native observations exist but could not all be represented in the
+        requested currency — that is a coverage gap, not absent data, so
+        it must yield ``partial`` even when zero points survived
+        conversion."""
         if observed <= 0:
-            return "no_data"
+            return "partial" if partial_reason else "no_data"
         if partial_reason or observed < expected:
             return "partial"
-        if freshness_status == "delayed":
-            return "stale"
         return "ok"
 
     # --- endpoints -----------------------------------------------------------
@@ -620,7 +626,6 @@ class MarketIntelligenceService:
             observed=len(valid),
             expected=expected,
             partial_reason=partial_reason,
-            freshness_status=freshness["status"],
         )
         return {
             "instrument": {
@@ -740,7 +745,6 @@ class MarketIntelligenceService:
             observed=observed,
             expected=expected,
             partial_reason=partial_reason,
-            freshness_status=freshness["status"],
         )
         return {
             "instrument": {
@@ -839,7 +843,6 @@ class MarketIntelligenceService:
             observed=observed,
             expected=total,
             partial_reason=partial_reason,
-            freshness_status=freshness["status"],
         )
         return {
             "instrument": {

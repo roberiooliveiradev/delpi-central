@@ -254,10 +254,11 @@ def test_series_200_monthly(mock_resolve, mock_validate):
     points = payload["points"]
     assert [p["period"] for p in points] == ["2026-08", "2026-09"]
     assert points[0]["value"] == "9000.0"
+    # Completeness dimension only — "stale" is reported via
+    # meta.freshness.status, never as data_status (R1.1).
     assert payload["meta"]["data_status"] in {
         "ok",
         "partial",
-        "stale",
     }
 
 

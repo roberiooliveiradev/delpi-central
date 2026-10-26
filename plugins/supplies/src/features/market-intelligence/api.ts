@@ -11,7 +11,10 @@ export type MarketInstrumentKind = "metal" | "fx";
 export type MarketCurrency = "USD" | "BRL";
 export type MarketGranularity = "day" | "month" | "year";
 export type MarketFxKind = "ptax_closing_sell" | "ptax_closing_buy";
-export type MarketDataStatus = "ok" | "no_data" | "stale" | "partial";
+// Window-completeness only (R1.1): feed delay is a separate
+// dimension reported by MarketFreshness.status === "delayed" —
+// never conflated into data_status.
+export type MarketDataStatus = "ok" | "no_data" | "partial";
 
 /** Feed-level freshness evaluated by the BFF against the provider's real
 publication cadence — never against the queried window. */

@@ -96,7 +96,7 @@ function dataStatusBadgeVariant(
   status: string | undefined,
 ): "success" | "warning" | "danger" | "info" | "neutral" {
   if (status === "ok") return "success";
-  if (status === "partial" || status === "stale") return "warning";
+  if (status === "partial") return "warning";
   if (status === "no_data") return "neutral";
   return "info";
 }
@@ -300,15 +300,13 @@ export function MarketIntelligencePage({
       {summaryError ? (
         <SuppliesStateBanner variant="error">{summaryError}</SuppliesStateBanner>
       ) : null}
-      {summary && summary.meta.data_status === "stale" ? (
+      {summary && summary.meta.freshness?.status === "delayed" ? (
         <SuppliesStateBanner>
           {MARKET_INTELLIGENCE_CONTENT.states.staleNote}
-          {summary.meta.freshness?.status === "delayed"
-            ? ` ${MARKET_INTELLIGENCE_CONTENT.states.staleEvidence(
-                summary.meta.freshness.latest_observation_date,
-                summary.meta.freshness.expected_latest_period,
-              )}`
-            : ""}
+          {` ${MARKET_INTELLIGENCE_CONTENT.states.staleEvidence(
+            summary.meta.freshness.latest_observation_date,
+            summary.meta.freshness.expected_latest_period,
+          )}`}
         </SuppliesStateBanner>
       ) : null}
 

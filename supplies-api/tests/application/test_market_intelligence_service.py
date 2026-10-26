@@ -129,9 +129,10 @@ def test_historical_complete_window_is_not_stale():
     assert result["meta"]["freshness"]["status"] == "current"
 
 
-def test_delayed_feed_marks_stale_with_evidence():
-    """AC-R1-02: complete window but the feed is behind its cadence →
-    ``stale`` with temporal evidence (expected vs latest period)."""
+def test_delayed_feed_reports_freshness_without_distorting_window():
+    """AC-R1-02 + AC-R1.1-11/12: a fully covered window keeps its
+    completeness (``ok``) even when the *feed* is behind cadence — the
+    delay is reported separately in ``meta.freshness``."""
     service = _service(
         metal=_metal([(f"2026-{m:02d}", "9000") for m in range(1, 7)]),
         metal_latest="2026-06-01",  # feed stopped in June
@@ -145,11 +146,32 @@ def test_delayed_feed_marks_stale_with_evidence():
             date_to="2026-06-30",
         )
     freshness = result["meta"]["freshness"]
-    assert result["meta"]["data_status"] == "stale"
+    # Dimension 1 — window completeness: fully covered → ok, not stale.
+    assert result["meta"]["data_status"] == "ok"
+    # Dimension 2 — feed freshness: delayed, with temporal evidence.
     assert freshness["status"] == "delayed"
     assert freshness["expected_latest_period"] == "2026-09-01"
     assert freshness["latest_observation_date"] == "2026-06-01"
     assert freshness["lag_periods"] == 3
+
+
+def test_incomplete_window_stays_partial_with_current_feed():
+    """AC-R1.1-13: a current feed cannot manufacture completeness —
+    a window missing observations is ``partial`` regardless."""
+    service = _service(
+        metal=_metal([("2026-08", "9000")]),  # only 1 of 2 months
+        metal_latest="2026-09-01",
+    )
+    with _frozen(date(2026, 10, 26)):
+        result = service.get_summary(
+            instrument_code="copper",
+            currency="USD",
+            fx_kind="ptax_closing_sell",
+            date_from="2026-08-01",
+            date_to="2026-09-30",
+        )
+    assert result["meta"]["data_status"] == "partial"
+    assert result["meta"]["freshness"]["status"] == "current"
 
 
 def test_monthly_cadence_early_month_is_current():
@@ -295,8 +317,9 @@ def test_brl_quote_reports_brl_unit_and_preserves_native():
 
 
 def test_brl_without_fx_returns_null_not_synthetic():
-    """AC-R1-09: a month without valid FX never produces a synthetic
-    rate — the converted value stays null and the state is partial."""
+    """AC-R1-09 + AC-R1.1-06/08: a month without valid FX never produces
+    a synthetic rate — converted values stay ``null``, and with metal
+    data present the state is ``partial`` (never ``no_data``)."""
     service = _service(
         metal=_metal([("2026-09", "9500.5")]),
         fx=[],  # no FX at all
@@ -311,9 +334,20 @@ def test_brl_without_fx_returns_null_not_synthetic():
             date_to="2026-09-30",
         )
     assert result["last_quote"] is None
-    assert result["meta"]["data_status"] == "no_data" or result[
-        "meta"
-    ]["data_status"] in {"no_data", "partial"}
+    assert result["meta"]["data_status"] == "partial"
+    assert result["meta"]["partial_reason"] == "fx_missing_months:2026-09"
+
+    series = service.list_series(
+        instrument_code="copper",
+        currency="BRL",
+        granularity="month",
+        fx_kind="ptax_closing_sell",
+        date_from="2026-09-01",
+        date_to="2026-09-30",
+    )
+    assert series["meta"]["data_status"] == "partial"
+    assert series["meta"]["partial_reason"] == "fx_missing_months:2026-09"
+    assert all(p["value"] is None for p in series["points"])
 
     monthly = service.list_monthly_averages(
         instrument_code="copper",
@@ -325,10 +359,75 @@ def test_brl_without_fx_returns_null_not_synthetic():
         page_size=None,
     )
     row = monthly["items"][0]
+    assert monthly["meta"]["data_status"] == "partial"
     assert row["average"] is None
     assert row["native_average"] == "9500.5"
     assert row["fx_rate"] is None
     assert row["coverage"] == "fx_missing"
+
+
+def test_usd_query_unaffected_by_missing_fx():
+    """AC-R1.1-09: USD queries never depend on FX — metal data without
+    any PTAX is still ``ok``, not ``partial``/``no_data``."""
+    service = _service(
+        metal=_metal([("2026-08", "9000"), ("2026-09", "9500")]),
+        fx=[],
+        metal_latest="2026-09-01",
+    )
+    with _frozen(date(2026, 10, 26)):
+        result = service.get_summary(
+            instrument_code="copper",
+            currency="USD",
+            fx_kind="ptax_closing_sell",
+            date_from="2026-08-01",
+            date_to="2026-09-30",
+        )
+    assert result["meta"]["data_status"] == "ok"
+    assert result["meta"]["partial_reason"] is None
+    assert result["last_quote"]["value"] == "9500.0"
+    assert result["last_quote"]["unit"] == "USD/metric ton"
+
+
+def test_unknown_instrument_raises_not_found():
+    """AC-R1.1: an instrument absent from the catalog is a 404-class
+    lookup error, never a fabricated empty series."""
+    from app.application.services.market_intelligence_service import (
+        MarketDataNotFoundError,
+    )
+
+    service = _service()
+    with pytest.raises(MarketDataNotFoundError):
+        service.get_summary(
+            instrument_code="unobtainium",
+            currency="USD",
+            fx_kind="ptax_closing_sell",
+            date_from="2026-09-01",
+            date_to="2026-09-30",
+        )
+
+
+def test_brl_partial_fx_single_month():
+    """Metal present in two months, PTAX only in one → ``partial``,
+    the converted month keeps a value and the missing one stays null."""
+    service = _service(
+        metal=_metal([("2026-08", "9000"), ("2026-09", "9500")]),
+        fx=_fx([("2026-08-03", "5.0")]),
+        metal_latest="2026-09-01",
+    )
+    with _frozen(date(2026, 10, 26)):
+        series = service.list_series(
+            instrument_code="copper",
+            currency="BRL",
+            granularity="month",
+            fx_kind="ptax_closing_sell",
+            date_from="2026-08-01",
+            date_to="2026-09-30",
+        )
+    assert series["meta"]["data_status"] == "partial"
+    assert series["meta"]["partial_reason"] == "fx_missing_months:2026-09"
+    values = {p["period"]: p["value"] for p in series["points"]}
+    assert values["2026-08"] == "45000.0"
+    assert values["2026-09"] is None
 
 
 def test_monetary_semantics_consistent_across_endpoints():
