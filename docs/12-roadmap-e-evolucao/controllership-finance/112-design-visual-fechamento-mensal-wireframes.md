@@ -1381,3 +1381,11 @@ Minimal diff no componente de workspace/roteamento/catálogo/tests e, se necess�
 8. DRE permanece excluído, legado não apagado.
 
 **Próximo passo:** enviar prompt de **rework cirúrgico** ao Devin e reavaliar diff e evidências. **Parecer nesta rodada:** `REWORK`.
+
+## 29. Diretrizes de UX para a proxima entrega (26/10/2026)
+
+O PO definiu que Relatorios e divergencias devem funcionar integralmente dentro da aba do Fechamento mensal. Joyce recebe totais e resultados ja calculados pelo contexto/backend canonico, sem precisar conferir linha a linha no fluxo principal. Detalhes de grupos e linhas devem ser abertos progressivamente, dentro da mesma pagina. Manter container de previa PDF. Fontes e regras ainda nao homologadas nao devem ser tratadas como calculadas. Preservar arquivos, rotas antigas e deep links enquanto a nova experiencia e concluida; nao apagar legado nem criar calculo financeiro no frontend.
+
+A proxima entrega deve acrescentar o componente compartilhado de caminho (breadcrumb/PagePath) ja utilizado em outros portais, por exemplo Inicio > Fechamento mensal > Relatorios e divergencias > P7. Inventariar primeiro o export vigente de @delpi/plugin-ui; preservar competencia, filtros, acessibilidade, temas e Help.
+
+O PO solicitou expressamente AGUARDAR a devolutiva do rework atualmente em execucao. Nao criar novo prompt Devin nem disparar outro ciclo antes do relatorio. Registrar estas diretrizes para avaliacao e planejamento apos a devolutiva, sem aplica-las retroativamente como falhas do escopo anterior. Estado: PRODUCT_DIRECTION_APPROVED; RUNTIME_PENDING; TEST_NOT_RUN. DRE permanece ultima fase.
