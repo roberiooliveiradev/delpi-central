@@ -1654,3 +1654,8 @@ Mesmos do §36.2 — nenhum componente novo, nenhum estilo global novo.
 
 ### 37.4 Evidência
 Vitest `MonthlyClosingPage.test.tsx`: 31/31 — inclui expansão in-place, fallback sem código cru e todos os regressivos V0.2 atualizados ao copy V0.3. Suíte plugin 213/213; `tsc --noEmit`, ESLint e build federado OK. Homologação visual PO no navegador: `PENDING`.
+
+
+## 38. Documentos e interações V0.2 — decisões PO (26/10/2026)
+
+O Product Owner aprovou: **cartões por documento**, **anexação exclusivamente no detalhe**, **resumo das solicitações na aba com conversa completa no detalhe**, e **documentos adicionais opcionais por competência mesmo quando não houver exigências cadastradas**. Os opcionais não criam obrigação no catálogo geral. Layout detalhado de lista, detalhe (PDF esquerda, interação direita, histórico abaixo), estados, teste e gates: [Plano 113 §17](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). `PRODUCT_DESIGN_APPROVED` para as quatro escolhas; wireframe detalhado `PENDING_FINAL_VISUAL_APPROVAL`. O contrato P2/P6 e a colaboração ainda exigem inventário; não inferir runtime nem apagar a página legada.
