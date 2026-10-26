@@ -39,6 +39,12 @@ class Service:
         return {"branch": "01", "workCenter": "CT-35", "from": "f", "to": "t", "referenceAt": "r", "items": []}
     def get_downtimes(self, user, **kwargs):
         return {"branch": "01", "referenceAt": "ref", "page": 1, "pageSize": 50, "total": 0, "items": []}
+    def get_downtime_filter_options(self, user, **kwargs):
+        if not getattr(user, "is_superadmin", False):
+            permissions = getattr(user, "permissions", [])
+            if "delpi-mes.access" not in permissions or "delpi-mes.downtimes.view" not in permissions:
+                raise PermissionError("Sem permissão.")
+        return {"reasons": [], "sources": []}
 
 
 def user(*permissions, superadmin=False, principal_type="user"):
@@ -89,6 +95,13 @@ def test_authorized_user_and_superadmin_are_allowed(monkeypatch):
     allowed = user("delpi-mes.access", "delpi-mes.monitoring.view", "delpi-mes.view.filial-01")
     assert route_client(monkeypatch, allowed).get("/monitoring?branch=01").status_code == 200
     assert route_client(monkeypatch, user(superadmin=True)).get("/monitoring?branch=01").status_code == 200
+
+
+def test_downtime_filter_options_requires_downtimes_view(monkeypatch):
+    allowed = user("delpi-mes.access", "delpi-mes.downtimes.view", "delpi-mes.view.filial-01")
+    denied = user("delpi-mes.access", "delpi-mes.monitoring.view", "delpi-mes.view.filial-01")
+    assert route_client(monkeypatch, allowed).get("/downtimes/filter-options?branch=01").status_code == 200
+    assert route_client(monkeypatch, denied).get("/downtimes/filter-options?branch=01").status_code == 403
 
 
 def test_work_center_timeline_requires_history_view(monkeypatch):

@@ -73,6 +73,11 @@ class ProductionControlMesGateway:
         work_center: str | None,
         period_from: datetime | None,
         period_to: datetime | None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        sort: str | None = None,
+        downtime_id: str | None = None,
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
@@ -83,10 +88,23 @@ class ProductionControlMesGateway:
             params["from"] = period_from.isoformat()
         if period_to:
             params["to"] = period_to.isoformat()
+        if reason_code:
+            params["reasonCode"] = reason_code
+        if source:
+            params["source"] = source
+        if classification:
+            params["classification"] = classification
+        if sort:
+            params["sort"] = sort
+        if downtime_id:
+            params["downtimeId"] = downtime_id
         return self._get("/integrations/mes/downtimes", params=params)
 
     def list_downtime_reasons(self) -> dict[str, Any]:
         return self._request("GET", "/integrations/mes/downtime-reasons")
+
+    def list_downtime_sources(self) -> dict[str, Any]:
+        return self._get("/integrations/mes/downtime-sources")
 
     def create_downtime_reason(self, payload: dict[str, Any]) -> dict[str, Any]:
         return self._request(

@@ -48,6 +48,13 @@ _DOWNTIME_ITEM_FIELDS = (
     "endedAt", "source", "reasonCode", "reasonLabel", "category", "confirmed", "note",
 )
 
+# Opções de filtro da consulta gerencial — enumerações do contrato BFF; a
+# origem da parada continua sendo validada no owner dos fatos.
+_DOWNTIME_CLASSIFICATIONS = frozenset({"pending", "confirmed"})
+_DOWNTIME_SORTS = frozenset({"recent", "oldest"})
+_FILTER_REASON_FIELDS = ("code", "label", "category", "active")
+_FILTER_SOURCE_FIELDS = ("code",)
+
 
 class MesReadService:
     def __init__(self, gateway: ProductionControlMesGatewayPort) -> None:
@@ -128,6 +135,11 @@ class MesReadService:
         work_center: str | None,
         period_from: datetime | None,
         period_to: datetime | None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        sort: str | None = None,
+        downtime_id: str | None = None,
         page: int,
         page_size: int,
         permission: str,
@@ -136,11 +148,20 @@ class MesReadService:
         self._validate_period(period_from, period_to)
         if page_size < 1 or page_size > 100:
             raise ValueError("pageSize deve estar entre 1 e 100.")
+        if sort is not None and sort not in _DOWNTIME_SORTS:
+            raise ValueError("sort deve ser 'recent' ou 'oldest'.")
+        if classification is not None and classification not in _DOWNTIME_CLASSIFICATIONS:
+            raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
         data = self._gateway.get_downtimes(
             branch=code,
             work_center=work_center,
             period_from=period_from,
             period_to=period_to,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            sort=sort,
+            downtime_id=downtime_id,
             page=page,
             page_size=page_size,
         )
@@ -151,6 +172,32 @@ class MesReadService:
             "pageSize": data.get("pageSize"),
             "total": data.get("total"),
             "items": [self._pick(item, _DOWNTIME_ITEM_FIELDS) for item in data.get("items", [])],
+        }
+
+    def get_downtime_filter_options(
+        self,
+        user: Any,
+        *,
+        branch: str,
+        permission: str,
+    ) -> dict[str, Any]:
+        """Opções de filtro da consulta gerencial — projeção estritamente de
+        leitura do catálogo do owner (motivos ativos e inativos: desativar um
+        motivo não pode apagar seus registros históricos) e das origens
+        válidas expostas pelo contrato S2S. Nenhum campo administrativo ou
+        de OEE é propagado."""
+        self._authorize(user, branch=branch, permission=permission)
+        reasons = self._gateway.list_downtime_reasons()
+        sources = self._gateway.list_downtime_sources()
+        return {
+            "reasons": [
+                self._pick(item, _FILTER_REASON_FIELDS)
+                for item in reasons.get("items", [])
+            ],
+            "sources": [
+                self._pick(item, _FILTER_SOURCE_FIELDS)
+                for item in sources.get("items", [])
+            ],
         }
 
     def _authorize(self, user: Any, *, branch: str, permission: str) -> str:

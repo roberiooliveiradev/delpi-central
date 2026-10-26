@@ -53,6 +53,17 @@ class Gateway:
         self.args = kwargs
         return self.wc_timeline
     def get_downtimes(self, **kwargs): self.args = kwargs; return self.downtimes
+    def list_downtime_reasons(self):
+        return {"items": [
+            {"code": "setup", "label": "Setup", "category": "setup", "requiresNote": False,
+             "active": True, "sortOrder": 1, "createdAt": "c", "updatedAt": "u"},
+            {"code": "old_reason", "label": "Legado", "category": "other", "requiresNote": True,
+             "active": False, "sortOrder": 9, "createdAt": "c", "updatedAt": "u",
+             "internalAudit": "drop-me"},
+        ]}
+    def list_downtime_sources(self):
+        return {"items": [{"code": "operator_pause", "extra": "drop"},
+                          {"code": "system"}]}
 
 
 FULL = (
@@ -194,7 +205,58 @@ def test_downtime_filters_and_pagination_are_forwarded():
         user(*FULL), branch="01", work_center="CT", period_from=start, period_to=end,
         page=2, page_size=25, permission=MES_DOWNTIMES_VIEW,
     )
-    assert gateway.args == {"branch": "01", "work_center": "CT", "period_from": start, "period_to": end, "page": 2, "page_size": 25}
+    assert gateway.args == {
+        "branch": "01", "work_center": "CT", "period_from": start,
+        "period_to": end, "reason_code": None, "source": None,
+        "classification": None, "sort": None, "downtime_id": None,
+        "page": 2, "page_size": 25,
+    }
+
+
+def test_downtime_management_filters_are_forwarded():
+    gateway = Gateway()
+    MesReadService(gateway).get_downtimes(
+        user(*FULL), branch="01", work_center=None, period_from=None,
+        period_to=None, reason_code="setup", source="system",
+        classification="pending", sort="oldest",
+        downtime_id="9f2a1b3c-1234-4abc-9def-000000000001",
+        page=1, page_size=50, permission=MES_DOWNTIMES_VIEW,
+    )
+    assert gateway.args["reason_code"] == "setup"
+    assert gateway.args["source"] == "system"
+    assert gateway.args["classification"] == "pending"
+    assert gateway.args["sort"] == "oldest"
+    assert gateway.args["downtime_id"] == "9f2a1b3c-1234-4abc-9def-000000000001"
+
+
+@pytest.mark.parametrize("kwargs", [{"sort": "random"}, {"classification": "closed"}])
+def test_downtime_management_filters_are_validated(kwargs):
+    with pytest.raises(ValueError):
+        MesReadService(Gateway()).get_downtimes(
+            user(*FULL), branch="01", work_center=None, period_from=None,
+            period_to=None, page=1, page_size=50,
+            permission=MES_DOWNTIMES_VIEW, **kwargs,
+        )
+
+
+def test_downtime_filter_options_projects_read_only_fields_and_keeps_inactive():
+    data = MesReadService(Gateway()).get_downtime_filter_options(
+        user(*FULL), branch="01", permission=MES_DOWNTIMES_VIEW,
+    )
+    assert set(data) == {"reasons", "sources"}
+    assert data["reasons"] == [
+        {"code": "setup", "label": "Setup", "category": "setup", "active": True},
+        {"code": "old_reason", "label": "Legado", "category": "other", "active": False},
+    ]
+    assert data["sources"] == [{"code": "operator_pause"}, {"code": "system"}]
+
+
+def test_downtime_filter_options_requires_downtimes_permission():
+    with pytest.raises(PermissionError):
+        MesReadService(Gateway()).get_downtime_filter_options(
+            user("delpi-mes.access", "delpi-mes.view.filial-01"),
+            branch="01", permission=MES_DOWNTIMES_VIEW,
+        )
 
 
 @pytest.mark.parametrize(

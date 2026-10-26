@@ -117,3 +117,65 @@ describe("Delpi MES App — registrations area", () => {
     expect(window.location.pathname).toBe("/apps/delpi-mes/registrations/downtime-reasons");
   });
 });
+
+describe("Delpi MES App — downtimes area", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    fetchMock = vi.fn().mockImplementation(() => Promise.resolve(envelope({ items: [], total: 0, page: 1, pageSize: 50 })));
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("renders the Paradas page for authorized users instead of the placeholder", async () => {
+    renderApp("/apps/delpi-mes/downtimes", [
+      "delpi-mes.access",
+      "delpi-mes.downtimes.view",
+      "delpi-mes.view.filial-01",
+    ]);
+    await screen.findByRole("heading", { name: "Paradas" });
+    await screen.findByText("Nenhuma parada registrada no período");
+    expect(screen.queryByText(/está em preparação|em breve/i)).toBeNull();
+    const urls = fetchMock.mock.calls.map(([url]) => url as string);
+    expect(urls.some((url) => url.includes("/downtimes?"))).toBe(true);
+    expect(urls.some((url) => url.includes("/downtimes/filter-options"))).toBe(true);
+  });
+
+  it("preserves the downtimes filters in the canonical URL", async () => {
+    window.history.pushState(
+      {},
+      "",
+      "/apps/delpi-mes/downtimes?branch=01&reasonCode=SETUP&page=2",
+    );
+    render(
+      <App
+        permissions={[
+          "delpi-mes.access",
+          "delpi-mes.downtimes.view",
+          "delpi-mes.view.filial-01",
+        ]}
+        getAccessToken={() => "token"}
+      />,
+    );
+    await screen.findByRole("heading", { name: "Paradas" });
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/apps/delpi-mes/downtimes");
+      expect(window.location.search).toContain("reasonCode=SETUP");
+      expect(window.location.search).toContain("page=2");
+    });
+  });
+
+  it("denies the downtimes area without the area permission and issues no query", async () => {
+    renderApp("/apps/delpi-mes/downtimes", [
+      "delpi-mes.access",
+      "delpi-mes.monitoring.view",
+      "delpi-mes.view.filial-01",
+    ]);
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map(([url]) => url as string);
+      expect(urls.some((url) => url.includes("/downtimes"))).toBe(false);
+    });
+  });
+});

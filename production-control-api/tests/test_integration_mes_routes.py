@@ -21,10 +21,14 @@ class FakeService:
         }
 
     def list_downtimes(self, **kwargs):
+        self.last_downtimes_kwargs = kwargs
         return {
             "branch": kwargs["branch"], "referenceAt": "2026-09-29T13:00:00+00:00",
             "page": kwargs["page"], "pageSize": kwargs["page_size"], "total": 0, "items": [],
         }
+
+    def list_downtime_sources(self):
+        return {"items": [{"code": "system"}, {"code": "operator_pause"}]}
 
 
 def client(monkeypatch):
@@ -94,6 +98,40 @@ def test_bearer_service_token_is_supported(monkeypatch):
         headers={"Authorization": "Bearer internal-secret"},
     )
     assert response.status_code == 200
+
+
+def test_downtime_management_filters_reach_the_service(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "internal-secret")
+    service = FakeService()
+    app = FastAPI()
+    app.include_router(integration_mes_routes.router)
+    monkeypatch.setattr(integration_mes_routes, "build_mes_integration_read_service", lambda: service)
+    api = TestClient(app)
+    response = api.get(
+        "/integrations/mes/downtimes?branch=01&workCenter=CT-35"
+        "&reasonCode=setup&source=system&classification=pending&sort=oldest"
+        "&downtimeId=9f2a1b3c-1234-4abc-9def-000000000001&page=1&pageSize=10",
+        headers={"X-Delpi-Service-Token": "internal-secret"},
+    )
+    assert response.status_code == 200
+    kwargs = service.last_downtimes_kwargs
+    assert kwargs["reason_code"] == "setup"
+    assert kwargs["source"] == "system"
+    assert kwargs["classification"] == "pending"
+    assert kwargs["sort"] == "oldest"
+    assert kwargs["downtime_id"] == "9f2a1b3c-1234-4abc-9def-000000000001"
+
+
+def test_downtime_sources_requires_service_token_and_returns_items(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "internal-secret")
+    api = client(monkeypatch)
+    assert api.get("/integrations/mes/downtime-sources").status_code == 401
+    response = api.get(
+        "/integrations/mes/downtime-sources",
+        headers={"X-Delpi-Service-Token": "internal-secret"},
+    )
+    assert response.status_code == 200
+    assert response.json()["data"]["items"] == [{"code": "system"}, {"code": "operator_pause"}]
 
 
 def test_integration_path_bypasses_human_jwt_middleware_only_for_route_guard():

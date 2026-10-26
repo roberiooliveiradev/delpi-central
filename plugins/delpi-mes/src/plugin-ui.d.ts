@@ -68,6 +68,72 @@ declare module "@delpi/plugin-ui/index" {
     defaultAutoDismissMs?: Partial<Record<"error" | "warning" | "success" | "info", number | null>>;
     portalScopeClassName?: string;
   }): ReactNode;
+  export type DataTableColumn<T> = {
+    key: string;
+    header: string;
+    headerHint?: string;
+    render: (row: T) => ReactNode;
+    className?: string;
+    align?: "left" | "right" | "center";
+    rowClick?: "stop" | "propagate";
+  };
+  export function DataTable<T>(props: {
+    columns: DataTableColumn<T>[];
+    rows: T[];
+    rowKey: (row: T, index: number) => string;
+    classNames: unknown;
+    labels?: {
+      emptyMessage?: string;
+      loadingMessage?: string;
+      sortByAriaLabel?: (header: string) => string;
+      headerHelpAriaLabel?: (header: string) => string;
+    };
+    loading?: boolean;
+    layout?: string;
+    onRowClick?: (row: T) => void;
+    rowClickRole?: "button" | "none";
+  }): ReactNode;
+  export function dataTableBemClasses(prefix: string): unknown;
+  export function ClearFiltersButton(props: {
+    onClick: () => void;
+    label?: string;
+    disabled?: boolean;
+    density?: "default" | "compact";
+    className?: string;
+    "aria-label"?: string;
+  }): ReactNode;
+  export function HelpTooltip(props: {
+    content: string;
+    ariaLabel?: string;
+    className?: string;
+    wrap?: boolean;
+    placement?: "top" | "bottom" | "left" | "right";
+    trigger?: "icon" | "label";
+    suppressed?: boolean;
+    children?: ReactNode;
+  }): ReactNode;
+  export function createCompactPagination(config: {
+    prefix: string;
+    labels: {
+      info: (args: { page: number; totalPages: number; total: number; pageSize: number }) => string;
+      pageSizeLabel?: string;
+      previous: ReactNode;
+      next: ReactNode;
+      previousAriaLabel?: string;
+      nextAriaLabel?: string;
+      navigationAriaLabel: string;
+    };
+    layout?: "grouped" | "flat";
+  }): (props: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages?: number;
+    pageSizeOptions?: readonly number[];
+    onPageChange: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+    disabled?: boolean;
+  }) => ReactNode;
   export function AnchoredPanelPortal(props: {
     open: boolean;
     anchorRef: { current: HTMLElement | null };

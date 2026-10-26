@@ -27,13 +27,20 @@ def test_sends_s2s_headers_and_preserves_query(monkeypatch):
     subject.get_downtimes(
         branch="01", work_center="CT-35",
         period_from=datetime(2026, 9, 29, 10, tzinfo=timezone.utc),
-        period_to=datetime(2026, 9, 29, 11, tzinfo=timezone.utc), page=2, page_size=25,
+        period_to=datetime(2026, 9, 29, 11, tzinfo=timezone.utc),
+        reason_code="setup", source="system", classification="pending",
+        sort="oldest", downtime_id="abc-1", page=2, page_size=25,
     )
     request = seen["request"]
     assert request.headers["X-Delpi-Service-Token"] == "secret"
     assert request.headers["X-Delpi-Caller-App"] == "delpi-mes-api"
     assert dict(request.url.params)["workCenter"] == "CT-35"
     assert dict(request.url.params)["pageSize"] == "25"
+    assert dict(request.url.params)["reasonCode"] == "setup"
+    assert dict(request.url.params)["source"] == "system"
+    assert dict(request.url.params)["classification"] == "pending"
+    assert dict(request.url.params)["sort"] == "oldest"
+    assert dict(request.url.params)["downtimeId"] == "abc-1"
 
 
 def test_work_center_timeline_targets_consolidated_s2s_route(monkeypatch):
@@ -91,6 +98,7 @@ import json as _json  # noqa: E402
 
 _ADMIN_CASES = [
     ("list_downtime_reasons", {}, "GET", "/integrations/mes/downtime-reasons", None),
+    ("list_downtime_sources", {}, "GET", "/integrations/mes/downtime-sources", None),
     (
         "create_downtime_reason",
         {"payload": {"code": "x", "label": "l", "category": "c",

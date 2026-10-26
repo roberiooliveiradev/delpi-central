@@ -112,6 +112,31 @@ def get_work_center_timeline(
     return ok(data)
 
 
+@router.get(
+    "/downtimes/filter-options",
+    operation_id="list_delpi_mes_downtime_filter_options",
+)
+def get_downtime_filter_options(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+):
+    try:
+        data = build_mes_read_service().get_downtime_filter_options(
+            request.state.user,
+            branch=branch,
+            permission=MES_DOWNTIMES_VIEW,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_filter_options_read branch=%s reasons=%s sources=%s",
+        branch,
+        len(data["reasons"]),
+        len(data["sources"]),
+    )
+    return ok(data)
+
+
 @router.get("/downtimes", operation_id="list_delpi_mes_downtimes")
 def get_downtimes(
     request: Request,
@@ -119,6 +144,11 @@ def get_downtimes(
     work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
     period_from: datetime | None = Query(default=None, alias="from"),
     period_to: datetime | None = Query(default=None, alias="to"),
+    reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
+    source: str | None = Query(default=None, max_length=40),
+    classification: str | None = Query(default=None, max_length=20),
+    sort: str | None = Query(default=None, max_length=10),
+    downtime_id: str | None = Query(default=None, alias="downtimeId", max_length=40),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, alias="pageSize", ge=1, le=100),
 ):
@@ -129,6 +159,11 @@ def get_downtimes(
             work_center=work_center,
             period_from=period_from,
             period_to=period_to,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            sort=sort,
+            downtime_id=downtime_id,
             page=page,
             page_size=page_size,
             permission=MES_DOWNTIMES_VIEW,

@@ -127,3 +127,57 @@ def test_downtime_read_is_bounded_and_uses_interval_overlap(monkeypatch):
     assert "d.ended_at IS NULL OR d.ended_at >= %s" in sql
     assert "LIMIT %s OFFSET %s" in sql
     assert params == ["01", "CT-35", end, start, 25, 25]
+
+
+def test_downtime_management_filters_apply_to_count_and_select(monkeypatch):
+    cursor = FakeCursor([[{"total": 3}], [{"id": "down-1"}]])
+    monkeypatch.setattr(module, "get_connection", lambda: fake_connection(cursor))
+    rows, total = module.PostgresMesMonitoringReadRepository().list_downtimes(
+        branch="01",
+        work_center=None,
+        period_from=None,
+        period_to=None,
+        reason_code="setup",
+        source="system",
+        classification="pending",
+        sort="oldest",
+        downtime_id="9f2a1b3c-1234-4abc-9def-000000000001",
+        page=1,
+        page_size=50,
+    )
+    assert rows == [{"id": "down-1"}]
+    assert total == 3
+    assert len(cursor.executions) == 2
+    count_sql, count_params = cursor.executions[0]
+    select_sql, select_params = cursor.executions[1]
+    for sql in (count_sql, select_sql):
+        assert "d.reason_code = %s" in sql
+        assert "d.source = %s" in sql
+        assert "d.confirmed IS NOT TRUE" in sql
+        assert "d.id = %s" in sql
+    # COUNT usa exatamente os mesmos filtros do SELECT (sem LIMIT/OFFSET).
+    assert count_params == [
+        "01", "setup", "system", "9f2a1b3c-1234-4abc-9def-000000000001",
+    ]
+    assert select_params == [
+        "01", "setup", "system", "9f2a1b3c-1234-4abc-9def-000000000001", 50, 0,
+    ]
+    assert "ORDER BY d.started_at ASC, d.id ASC" in select_sql
+
+
+def test_downtime_confirmed_filter_and_recent_sort(monkeypatch):
+    cursor = FakeCursor([[{"total": 1}], [{"id": "down-2"}]])
+    monkeypatch.setattr(module, "get_connection", lambda: fake_connection(cursor))
+    module.PostgresMesMonitoringReadRepository().list_downtimes(
+        branch="01",
+        work_center=None,
+        period_from=None,
+        period_to=None,
+        classification="confirmed",
+        sort="recent",
+        page=1,
+        page_size=50,
+    )
+    select_sql, _ = cursor.executions[1]
+    assert "d.confirmed IS TRUE" in select_sql
+    assert "ORDER BY d.started_at DESC, d.id DESC" in select_sql

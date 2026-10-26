@@ -8,8 +8,8 @@ export const DELPI_MES_COPY = {
   },
   downtimes: {
     title: "Paradas",
-    description: "Espaço preparado para consulta gerencial e classificação visual do histórico de paradas.",
-    guidance: "Os filtros e resultados serão conectados ao contrato paginado do Delpi MES na próxima etapa funcional.",
+    description: "Consulta gerencial dos eventos reais de parada do MES — manuais, automáticas e autônomas.",
+    guidance: "Filtre por período, centro de trabalho, motivo, origem e situação da classificação. Selecione uma ocorrência para ver o detalhe.",
   },
   history: {
     title: "Histórico",
@@ -30,5 +30,7 @@ export const DELPI_MES_COPY = {
   help: {
     branch: "A filial faz parte da URL para manter navegação, recarga e compartilhamento no mesmo contexto.",
     permissions: "As áreas visíveis refletem suas permissões; o backend valida novamente cada consulta.",
+    downtimesClassification: "Confirmada: motivo classificado e confirmado. Pendente: parada sem motivo confirmado, incluindo registros históricos incompletos.",
+    downtimesDuration: "Paradas encerradas usam fim menos início; paradas abertas contam até o relógio do servidor.",
   },
 } as const;

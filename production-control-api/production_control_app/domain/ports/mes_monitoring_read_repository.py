@@ -40,6 +40,11 @@ class MesMonitoringReadRepositoryPort(Protocol):
         work_center: str | None,
         period_from: datetime | None,
         period_to: datetime | None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        sort: str | None = None,
+        downtime_id: str | None = None,
         page: int,
         page_size: int,
     ) -> tuple[list[dict[str, Any]], int]: ...

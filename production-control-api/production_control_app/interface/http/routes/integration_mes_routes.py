@@ -175,6 +175,11 @@ def list_downtimes(
     work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
     period_from: datetime | None = Query(default=None, alias="from"),
     period_to: datetime | None = Query(default=None, alias="to"),
+    reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
+    source: str | None = Query(default=None, max_length=40),
+    classification: str | None = Query(default=None, max_length=20),
+    sort: str | None = Query(default=None, max_length=10),
+    downtime_id: str | None = Query(default=None, alias="downtimeId", max_length=40),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, alias="pageSize", ge=1, le=100),
 ):
@@ -187,6 +192,11 @@ def list_downtimes(
             work_center=work_center,
             period_from=_aware(period_from, "from"),
             period_to=_aware(period_to, "to"),
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            sort=sort,
+            downtime_id=downtime_id,
             page=page,
             page_size=page_size,
         )
@@ -197,6 +207,22 @@ def list_downtimes(
         branch,
         page,
         page_size,
+        len(data["items"]),
+    )
+    return ok(data)
+
+
+@router.get("/downtime-sources", operation_id="list_mes_integration_downtime_sources")
+def list_downtime_sources(request: Request):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_integration_read_service().list_downtime_sources()
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_downtime_sources_read item_count=%s",
         len(data["items"]),
     )
     return ok(data)

@@ -7,6 +7,7 @@ import pytest
 from production_control_app.application.services.mes_integration_read_service import (
     MesIntegrationReadService,
 )
+from production_control_app.domain.services.mes_operational_state import DOWNTIME_SOURCES
 from production_control_app.domain.errors import ProductionRunNotFound
 from production_control_app.domain.services.branch_access_service import BranchAccessService
 
@@ -289,10 +290,47 @@ def test_downtime_filters_are_forwarded_with_pagination():
     assert repo.downtime_calls == 1
     assert repo.last_downtime_args == {
         "branch": "01", "work_center": "CT-35", "period_from": start,
-        "period_to": NOW, "page": 2, "page_size": 25,
+        "period_to": NOW, "reason_code": None, "source": None,
+        "classification": None, "sort": "recent", "downtime_id": None,
+        "page": 2, "page_size": 25,
     }
 
 
 def test_downtime_page_size_is_limited():
     with pytest.raises(ValueError, match="pageSize"):
         make_service(FakeRepository()).list_downtimes(branch="01", page_size=101)
+
+
+def test_downtime_management_filters_are_normalized_and_forwarded():
+    repo = FakeRepository()
+    make_service(repo).list_downtimes(
+        branch="01",
+        reason_code=" Setup ", source="SYSTEM", classification="Pending",
+        sort="oldest", downtime_id="9f2a1b3c-1234-4abc-9def-000000000001",
+    )
+    assert repo.last_downtime_args["reason_code"] == "setup"
+    assert repo.last_downtime_args["source"] == "system"
+    assert repo.last_downtime_args["classification"] == "pending"
+    assert repo.last_downtime_args["sort"] == "oldest"
+    assert repo.last_downtime_args["downtime_id"] == "9f2a1b3c-1234-4abc-9def-000000000001"
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"sort": "random"},
+        {"classification": "closed"},
+        {"source": "totvs"},
+        {"downtime_id": "not-an-id"},
+    ],
+)
+def test_downtime_management_filters_are_validated(kwargs):
+    with pytest.raises(ValueError):
+        make_service(FakeRepository()).list_downtimes(branch="01", **kwargs)
+
+
+def test_downtime_sources_expose_domain_enum_sorted():
+    data = make_service(FakeRepository()).list_downtime_sources()
+    codes = [item["code"] for item in data["items"]]
+    assert codes == sorted(DOWNTIME_SOURCES)
+    assert set(data["items"][0]) == {"code"}

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable
 
@@ -9,9 +10,14 @@ from production_control_app.domain.ports.mes_monitoring_read_repository import (
     MesMonitoringReadRepositoryPort,
 )
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from production_control_app.domain.services.mes_operational_state import DOWNTIME_SOURCES
 from production_control_app.domain.services.mes_performance import (
     MesPerformanceCalculator,
 )
+
+# Filtros gerenciais da consulta de paradas (Etapa 1 — Gestão de Paradas).
+_DOWNTIME_CLASSIFICATIONS = frozenset({"pending", "confirmed"})
+_DOWNTIME_SORTS = frozenset({"recent", "oldest"})
 
 # Bloco de Performance no monitoramento live — sem idealProductionSeconds
 # (reservado ao detalhamento do run) para manter o payload enxuto.
@@ -166,6 +172,11 @@ class MesIntegrationReadService:
         work_center: str | None = None,
         period_from: datetime | None = None,
         period_to: datetime | None = None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        sort: str | None = None,
+        downtime_id: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -176,12 +187,33 @@ class MesIntegrationReadService:
             raise ValueError("page deve ser maior ou igual a 1.")
         if page_size < 1 or page_size > 100:
             raise ValueError("pageSize deve estar entre 1 e 100.")
+        normalized_sort = (sort or "recent").strip().lower()
+        if normalized_sort not in _DOWNTIME_SORTS:
+            raise ValueError("sort deve ser 'recent' ou 'oldest'.")
+        normalized_classification = (classification or "").strip().lower() or None
+        if normalized_classification is not None and normalized_classification not in _DOWNTIME_CLASSIFICATIONS:
+            raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        normalized_source = (source or "").strip().lower() or None
+        if normalized_source is not None and normalized_source not in DOWNTIME_SOURCES:
+            raise ValueError("source inválida para parada MES.")
+        normalized_reason = (reason_code or "").strip().lower() or None
+        normalized_downtime_id = (downtime_id or "").strip() or None
+        if normalized_downtime_id is not None:
+            try:
+                uuid.UUID(normalized_downtime_id)
+            except ValueError as exc:
+                raise ValueError("downtimeId deve ser um identificador válido.") from exc
         reference_at = self._clock()
         rows, total = self._repository.list_downtimes(
             branch=code,
             work_center=(work_center or "").strip() or None,
             period_from=period_from,
             period_to=period_to,
+            reason_code=normalized_reason,
+            source=normalized_source,
+            classification=normalized_classification,
+            sort=normalized_sort,
+            downtime_id=normalized_downtime_id,
             page=page,
             page_size=page_size,
         )
@@ -193,6 +225,11 @@ class MesIntegrationReadService:
             "total": total,
             "items": [self._downtime_item(row) for row in rows],
         }
+
+    def list_downtime_sources(self) -> dict[str, Any]:
+        """Origens válidas de parada — projeção somente leitura do enum de
+        domínio, sem duplicar a lista em consumidores S2S."""
+        return {"items": [{"code": code} for code in sorted(DOWNTIME_SOURCES)]}
 
     def _live_performance(
         self,

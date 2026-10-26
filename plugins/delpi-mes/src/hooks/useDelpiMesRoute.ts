@@ -4,15 +4,80 @@ import { BASE_PATH, type BranchCode, type DelpiMesArea } from "../constants/rout
 
 export type RegistrationPage = "downtime-reasons";
 
+export type DowntimesRouteParams = {
+  /** Preset de período exibido na UI; "custom" usa as chaves de dia from/to. */
+  period: "today" | "7d" | "30d" | "custom";
+  /** Chave de dia YYYY-MM-DD (somente período personalizado). */
+  from: string | null;
+  to: string | null;
+  workCenter: string | null;
+  reasonCode: string | null;
+  source: string | null;
+  classification: "pending" | "confirmed" | null;
+  sort: "recent" | "oldest";
+  /** Seleção/detalhe — não filtra a lista. */
+  downtimeId: string | null;
+  page: number;
+  pageSize: number;
+};
+
 export type DelpiMesRoute = {
   area: DelpiMesArea;
   branch: BranchCode;
   workCenter: string | null;
   registrationPage: RegistrationPage | null;
+  downtimes: DowntimesRouteParams;
+};
+
+export const DOWNTIMES_DEFAULT_PAGE_SIZE = 50;
+
+const DEFAULT_DOWNTIMES: DowntimesRouteParams = {
+  period: "7d",
+  from: null,
+  to: null,
+  workCenter: null,
+  reasonCode: null,
+  source: null,
+  classification: null,
+  sort: "recent",
+  downtimeId: null,
+  page: 1,
+  pageSize: DOWNTIMES_DEFAULT_PAGE_SIZE,
 };
 
 const AREA_SEGMENTS: ReadonlySet<string> = new Set(["downtimes", "history", "registrations"]);
 const REGISTRATION_PAGES: ReadonlySet<string> = new Set(["downtime-reasons"]);
+const PERIODS: ReadonlySet<string> = new Set(["today", "7d", "30d", "custom"]);
+const CLASSIFICATIONS: ReadonlySet<string> = new Set(["pending", "confirmed"]);
+const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+function positiveInt(value: string | null, fallback: number, max = 100): number {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return Number.isFinite(parsed) && parsed >= 1 && parsed <= max ? parsed : fallback;
+}
+
+function parseDowntimesParams(params: URLSearchParams): DowntimesRouteParams {
+  const period = params.get("period");
+  const classification = params.get("classification");
+  const from = params.get("from");
+  const to = params.get("to");
+  return {
+    period: period && PERIODS.has(period) ? (period as DowntimesRouteParams["period"]) : "7d",
+    from: from && DAY_KEY.test(from) ? from : null,
+    to: to && DAY_KEY.test(to) ? to : null,
+    workCenter: params.get("workCenter")?.trim() || null,
+    reasonCode: params.get("reasonCode")?.trim() || null,
+    source: params.get("source")?.trim() || null,
+    classification:
+      classification && CLASSIFICATIONS.has(classification)
+        ? (classification as DowntimesRouteParams["classification"])
+        : null,
+    sort: params.get("sort") === "oldest" ? "oldest" : "recent",
+    downtimeId: params.get("downtimeId")?.trim() || null,
+    page: positiveInt(params.get("page"), 1, Number.MAX_SAFE_INTEGER),
+    pageSize: positiveInt(params.get("pageSize"), DOWNTIMES_DEFAULT_PAGE_SIZE, 100),
+  };
+}
 
 export function parseDelpiMesRoute(pathname: string, search: string): DelpiMesRoute {
   const suffix = pathname.startsWith(BASE_PATH) ? pathname.slice(BASE_PATH.length) : "";
@@ -26,17 +91,36 @@ export function parseDelpiMesRoute(pathname: string, search: string): DelpiMesRo
   const params = new URLSearchParams(search);
   const requestedBranch = params.get("branch");
   const workCenter = area === "monitoring" ? params.get("workCenter") : null;
-  return { area, branch: requestedBranch === "02" ? "02" : "01", workCenter, registrationPage };
+  const downtimes = area === "downtimes" ? parseDowntimesParams(params) : DEFAULT_DOWNTIMES;
+  return { area, branch: requestedBranch === "02" ? "02" : "01", workCenter, registrationPage, downtimes };
 }
 
 export function buildDelpiMesHref(area: DelpiMesArea, branch: BranchCode, workCenter?: string): string {
-  if (area === "registrations") return `${BASE_PATH}/registrations`;
-  const href = `${BASE_PATH}/${area}?branch=${branch}`;
-  return workCenter ? `${href}&workCenter=${encodeURIComponent(workCenter)}` : href;
+  if (area === "registrations") return BASE_PATH + "/registrations";
+  const href = BASE_PATH + "/" + area + "?branch=" + branch;
+  return workCenter ? href + "&workCenter=" + encodeURIComponent(workCenter) : href;
+}
+
+/** Serialização determinística dos filtros de Paradas — a canonicalização
+ * do App depende de idempotência (parse(build(x)) === x). */
+export function buildDowntimesHref(branch: BranchCode, params: DowntimesRouteParams): string {
+  const search = new URLSearchParams({ branch });
+  if (params.period !== "7d") search.set("period", params.period);
+  if (params.from) search.set("from", params.from);
+  if (params.to) search.set("to", params.to);
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  if (params.reasonCode) search.set("reasonCode", params.reasonCode);
+  if (params.source) search.set("source", params.source);
+  if (params.classification) search.set("classification", params.classification);
+  if (params.sort === "oldest") search.set("sort", "oldest");
+  if (params.downtimeId) search.set("downtimeId", params.downtimeId);
+  if (params.page > 1) search.set("page", String(params.page));
+  if (params.pageSize !== DOWNTIMES_DEFAULT_PAGE_SIZE) search.set("pageSize", String(params.pageSize));
+  return BASE_PATH + "/downtimes?" + search.toString();
 }
 
 export function buildRegistrationHref(page: RegistrationPage): string {
-  return `${BASE_PATH}/registrations/${page}`;
+  return BASE_PATH + "/registrations/" + page;
 }
 
 export function useDelpiMesRoute(pathnameFromHost?: string) {

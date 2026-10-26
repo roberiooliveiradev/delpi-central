@@ -18,10 +18,12 @@ import {
 import { DELPI_MES_COPY } from "./content/copy";
 import {
   buildDelpiMesHref,
+  buildDowntimesHref,
   buildRegistrationHref,
   useDelpiMesRoute,
 } from "./hooks/useDelpiMesRoute";
 import { DowntimeReasonsPage } from "./pages/DowntimeReasonsPage";
+import { DowntimesPage } from "./pages/DowntimesPage";
 import { FoundationPage } from "./pages/FoundationPage";
 import { MonitoringPage } from "./pages/MonitoringPage";
 import { RegistrationsPage } from "./pages/RegistrationsPage";
@@ -74,13 +76,15 @@ export default function App({
       ? route.registrationPage
         ? buildRegistrationHref(route.registrationPage)
         : buildDelpiMesHref("registrations", "01")
-      : activeBranch
-        ? buildDelpiMesHref(activeArea, activeBranch)
-        : undefined;
+      : activeArea === "downtimes" && activeBranch
+        ? buildDowntimesHref(activeBranch, route.downtimes)
+        : activeBranch
+          ? buildDelpiMesHref(activeArea, activeBranch)
+          : undefined;
     if (canonical && `${window.location.pathname}${window.location.search}` !== canonical) {
       navigate(canonical);
     }
-  }, [activeArea, activeBranch, areaIsGlobal, registrationsDenied, route.registrationPage, navigate]);
+  }, [activeArea, activeBranch, areaIsGlobal, registrationsDenied, route.registrationPage, route.downtimes, navigate]);
 
   const navigateTo = (area: DelpiMesArea, branch: BranchCode, workCenter?: string) => {
     navigate(buildDelpiMesHref(area, branch, workCenter));
@@ -185,6 +189,15 @@ export default function App({
                   onOpenWorkCenter={(workCenter) => navigateTo("monitoring", activeBranch, workCenter)}
                 />
               )
+            ) : activeArea === "downtimes" && activeBranch ? (
+              <DowntimesPage
+                branch={activeBranch}
+                params={route.downtimes}
+                onParamsChange={(next) => navigate(buildDowntimesHref(activeBranch, next))}
+                canViewHistory={can("delpi-mes.history.view")}
+                canViewMonitoring={can("delpi-mes.monitoring.view")}
+                onOpenMonitoring={(workCenter) => navigateTo("monitoring", activeBranch, workCenter)}
+              />
             ) : activeArea === "registrations" ? (
               route.registrationPage === "downtime-reasons" ? (
                 <DowntimeReasonsPage onBack={() => navigate(buildDelpiMesHref("registrations", "01"))} />

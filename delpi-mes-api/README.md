@@ -25,13 +25,20 @@ O `delpi-mes-api` não é o owner dos fatos MES. Runs, estados, paradas, contage
 | GET | `/runs/{runId}/timeline` | `delpi-mes.history.view` |
 | GET | `/runs/{runId}/performance` | `delpi-mes.monitoring.view` |
 | GET | `/work-centers/{workCenter}/timeline?branch=&from=&to=` | `delpi-mes.history.view` |
-| GET | `/downtimes?branch=&workCenter=&from=&to=&page=&pageSize=` | `delpi-mes.downtimes.view` |
+| GET | `/downtimes?branch=&workCenter=&from=&to=&reasonCode=&source=&classification=&sort=&downtimeId=&page=&pageSize=` | `delpi-mes.downtimes.view` |
+| GET | `/downtimes/filter-options?branch=` | `delpi-mes.downtimes.view` |
 | GET | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
 | POST | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
 | PUT | `/registrations/downtime-reasons/{code}` | `delpi-mes.downtime-reasons.manage` |
 | PATCH | `/registrations/downtime-reasons/{code}/active` | `delpi-mes.downtime-reasons.manage` |
 
 Toda rota gerencial também exige `delpi-mes.access` e principal humano; as rotas de leitura exigem ainda `delpi-mes.view.filial-01|02` para a filial consultada. As rotas `/registrations/downtime-reasons*` administram um **catálogo global** — não recebem nem exigem `branch`/permissão de filial. O provisionamento dessas permissões e o manifesto pertencem à Fase 2.
+
+### Consulta gerencial de paradas (Paradas — Etapa 1)
+
+`GET /downtimes` aceita os filtros `reasonCode`, `source`, `classification` (`pending|confirmed`), `sort` (`recent|oldest`) e `downtimeId`, além dos parâmetros originais — todos repassados ao contrato S2S do owner; `total` reflete o conjunto filtrado no backend, não a página. `downtimeId` continua escopado pela filial autorizada e serve à consulta pontual do detalhe/deep link — nunca revela ocorrência de outra filial. `classification=pending` corresponde a `confirmed IS NOT TRUE` no owner (parada sem confirmação válida, incluindo registros históricos incompletos); `classification=confirmed` exige `confirmed IS TRUE`.
+
+`GET /downtimes/filter-options?branch=` expõe projeção estritamente de leitura para a UI de filtros — motivos do catálogo (ativos **e** inativos, pois desativar um motivo não pode tornar suas ocorrências invisíveis) e origens válidas (`GET /integrations/mes/downtime-sources`, projeção do enum de domínio do owner). Exige principal humano + `delpi-mes.access` + `delpi-mes.downtimes.view` + permissão da filial — **não** exige a permissão administrativa `delpi-mes.downtime-reasons.manage`. Campos OEE e dados administrativos nunca são propagados.
 
 ### Performance do run (Fase 2.5)
 

@@ -1062,3 +1062,131 @@
   .delpi-mes-reasons-toolbar > .delpi-mes-primary-btn { width: 100%; }
   .delpi-mes-reasons-table { min-width: 46rem; }
 }
+
+/* Paradas — Gestão de paradas (Etapa 1) */
+.delpi-mes-downtimes { display: grid; gap: 1.1rem; }
+.delpi-mes-downtimes__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.delpi-mes-downtimes__head h2 { margin: 0; font-size: clamp(1.35rem, 2vw, 1.75rem); }
+.delpi-mes-downtimes__head > div:first-child { max-width: 46rem; }
+.delpi-mes-downtimes__head p { color: #5c6b80; line-height: 1.6; margin: 0.35rem 0 0; }
+.delpi-mes-downtimes__refresh { display: flex; align-items: center; gap: 0.6rem; }
+.delpi-mes-downtimes__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.9rem;
+  background: #fff;
+}
+.delpi-mes-downtimes__filters label { display: grid; gap: 0.35rem; color: #5c6b80; font-size: 0.76rem; font-weight: 700; }
+.delpi-mes-downtimes__filters input,
+.delpi-mes-downtimes__filters select {
+  min-height: 2.4rem;
+  padding: 0 0.7rem;
+  border: 1px solid #dde5ef;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+.delpi-mes-downtimes__filters input:focus-visible,
+.delpi-mes-downtimes__filters select:focus-visible {
+  outline: 3px solid rgb(30 99 196 / 40%);
+  outline-offset: 1px;
+}
+.delpi-mes-downtimes__label-with-help { display: flex; gap: 0.4rem; align-items: center; }
+.delpi-mes-downtimes__label-with-help select { flex: 1; min-width: 0; }
+.delpi-mes-downtimes__options-warning {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid color-mix(in srgb, #d97706 35%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, #d97706 8%, transparent);
+  color: #92600a;
+  font-size: 0.85rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+.delpi-mes-downtimes__options-warning button {
+  border: 0;
+  background: none;
+  color: #1d4ed8;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.delpi-mes-downtimes__badges { display: inline-flex; gap: 0.35rem; flex-wrap: wrap; }
+.delpi-mes-downtimes__error {
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: clamp(1.2rem, 3vw, 2.2rem);
+  border: 1px solid color-mix(in srgb, #d97706 35%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, #d97706 8%, transparent);
+}
+.delpi-mes-downtimes__error h2 { margin: 0 0 0.4rem; font-size: 1.25rem; }
+.delpi-mes-downtimes__error p { color: #5c6b80; }
+.delpi-mes-downtimes__error button {
+  margin-top: 0.6rem;
+  min-height: 2.4rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: #1d4ed8;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.delpi-mes-downtimes__detail dl { display: grid; gap: 0.55rem; margin: 0; }
+.delpi-mes-downtimes__detail dl > div {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+.delpi-mes-downtimes__detail dt { color: #66788f; font-size: 0.8rem; font-weight: 700; }
+.delpi-mes-downtimes__detail dd { margin: 0; color: #22344e; overflow-wrap: anywhere; }
+.delpi-mes-downtimes__detail-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; }
+.delpi-mes-downtimes__detail-actions button {
+  min-height: 2.3rem;
+  padding: 0 0.9rem;
+  border: 1px solid #dde5ef;
+  border-radius: 0.65rem;
+  background: #f4f7fb;
+  color: #1d4ed8;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.delpi-mes-downtimes__detail-actions button:hover { background: #e8eef7; }
+.delpi-mes-downtimes__timeline { margin-top: 1rem; }
+.delpi-mes-downtimes__timeline ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.delpi-mes-downtimes__timeline li {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #eef2f7;
+  border-radius: 0.65rem;
+  background: #fbfcfe;
+}
+.delpi-mes-downtimes__timeline li span { color: #5c6b80; font-size: 0.8rem; }
+.delpi-mes-downtimes__hint { color: #66788f; font-size: 0.82rem; margin: 0.8rem 0 0; }
+
+@media (max-width: 720px) {
+  .delpi-mes-downtimes__filters { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .delpi-mes-downtimes__filters { grid-template-columns: 1fr; }
+  .delpi-mes-downtimes__detail dl > div { grid-template-columns: 1fr; gap: 0.15rem; }
+}

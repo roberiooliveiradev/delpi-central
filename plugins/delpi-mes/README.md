@@ -14,7 +14,7 @@ O MFE consome exclusivamente `/apps/delpi-mes-api`. Não contém regra industria
 
 - `/apps/delpi-mes` → monitoramento;
 - `/apps/delpi-mes/monitoring?branch=01`;
-- `/apps/delpi-mes/downtimes?branch=01`;
+- `/apps/delpi-mes/downtimes?branch=01&period=&from=&to=&workCenter=&reasonCode=&source=&classification=&sort=&page=&pageSize=&downtimeId=`;
 - `/apps/delpi-mes/history?branch=01`;
 - `/apps/delpi-mes/registrations` → hub de Cadastros;
 - `/apps/delpi-mes/registrations/downtime-reasons` → catálogo de motivos de parada.
@@ -60,7 +60,20 @@ A página de monitoramento consulta `/monitoring` a cada 5 segundos em um único
 
 Cada snapshot gera N cards sem fan-out. O detalhe usa os dados do card e, apenas ao abrir um CT e somente com `delpi-mes.history.view`, consulta o histórico do dia daquele centro (`/work-centers/{workCenter}/timeline?branch=&from=`): todos os estados do dia corrente, inclusive de runs/OPs anteriores, com refetch pontual quando o estado do CT muda — sem polling próprio e sem N+1. A visão cobre exclusivamente runs ativos; não representa catálogo de máquinas nem saúde/offline da telemetria.
 
-Paradas e Histórico completos continuam nas fases seguintes.
+## Paradas — Etapa 1
+
+A área **Paradas** (`/downtimes`) consulta os eventos reais de parada do MES via `GET /downtimes` do próprio BFF — sem chamada direta a outro contexto e sem cálculo local de fatos.
+
+- Tabela paginada pelo backend (`page`/`pageSize`/`total`), com ordenação `recent|oldest` e desempate determinístico; paradas abertas e pendentes têm badges distintos («Aberta» em perigo, «Pendente» em atenção — encerrada e classificada são condições independentes).
+- Filtros: período (Hoje, Últimos 7 dias — padrão —, Últimos 30 dias, personalizado), centro de trabalho, motivo, origem e situação da classificação. Trocar filtro reinicia na página 1; «Limpar filtros» usa o componente canônico.
+- Motivos e origens vêm de `GET /downtimes/filter-options` (leitura — não exige a permissão administrativa de Cadastros); motivos inativos permanecem filtráveis para preservar o histórico.
+- Detalhe somente leitura em `DrawerShell`: identificador, CT, OP/operação, início/término/duração, origem, motivo/categoria, confirmação e observação. `downtimeId` na URL abre o deep link por consulta pontual escopada na filial — nunca filtra a listagem.
+- Duração: encerrada = `endedAt − startedAt`; aberta = `startedAt` → relógio de referência do servidor (`referenceAt` + `useServerClock`), sem requisição por segundo. Datas inválidas nunca viram `0s` — exibem «—».
+- Com `delpi-mes.history.view`, o detalhe carrega sob demanda a linha do tempo do dia do CT (`/work-centers/{workCenter}/timeline`); sem ela, o detalhe permanece e a timeline é omitida. Com `delpi-mes.monitoring.view`, «Abrir no monitoramento» navega ao CT pela rota oficial.
+- Paradas autônomas sem OP/run são fatos legítimos: exibem «Sem OP vinculada»/«Não informado» — nunca são descartadas.
+- Filtros, página e seleção persistem na URL (F5, voltar/avançar, compartilhamento); atualização é manual (sem polling). Requisições obsoletas são abortadas na troca de contexto.
+
+Histórico gerencial completo e as etapas seguintes de Paradas (gráficos, evidências, ações corretivas, exportações e indicadores OEE) continuam nas fases seguintes.
 
 ## Cadastros — Etapa 3
 
