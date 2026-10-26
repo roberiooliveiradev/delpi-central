@@ -147,3 +147,24 @@ Este documento é handoff e planejamento. Não altera a fila E11, não implement
 - **D-R2-08 (gates mantidos):** feeds OFF por default; sem deploy; E11/GATE-FEATURE INCONCLUSIVE; pagina fora do hub/palette; quarentena LME inalterada; CNPJ preservado.
 - **D-R2-09 (compose):** `infra/docker-compose.yml` expoe as envs R2 (`EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED`, `EXTERNAL_DATA_FEED_IPP_MONTHLY_ENABLED`, `COMEX_*`, `IBGE_*`) com default OFF — ativacao por feed exige gate proprio, sem rebuild.
 - **D-R2-10 (runtime smoke local, nao-prod):** processo do worktree + PG descartavel + Keycloak local provaram a cadeia real: token S2S client-credentials do client `supplies-api` (aud `external-data-api` via mapper `audience-external-data-api` adicionado ao realm dev — gap de config local documentado) → `catalog`/`producer-prices`/`comex/imports`/`fx`/`ingestion-status` (401 sem token, 200/404 corretos); ingestao real SIDRA persistiu 24 obs; BFF local com Core real: sem auth 401, usuario sem `supplies.access` 403, `e2e-delia` (supplies.access) 200 em `/filters` + `/producer-prices/series` com 12 pontos reais + `/imports/series`/`/fx/series` `no_data` honesto. Deploy produtivo permanece bloqueado: merge nao autorizado e `srv-api` faz pull de `main`.
+## Producao R2 — deploy e evidencias (2026-10-26, srv-api)
+
+- **D-R2-PROD-01 (merge autorizado):** reconciliacao do branch R2 com  (, merge limpo — zero overlap com os commits de controllership) + push fast-forward direto a  conforme diretriz AGENTS.md (Product Master). PR #116 marcado merged (). Navegacao liberada em  e bump de manifest em . Deploy source SHA: .
+- **D-R2-PROD-02 (migrations prod):**  — V001–V005 aplicadas em ordem com checksum/ledger; tabelas  e  presentes; fontes semeadas com escopos e  conforme gate.
+- **D-R2-PROD-03 (external-data-api):** imagem  (sha256:), container  healthy;  200; sem token S2S → 401; token client-credentials real do  (aud contem  — mapper ja existente no realm prod, script  = PASS) → catalog/ingestion-status/IPP/FX 200; NCM nao homologada → 404 .
+- **D-R2-PROD-04 (feed IBGE isolado):** egress prod →  = 200; gate isolado aprovado (fonte oficial, direitos, schema, autorizacao). Ativacao:  em  (backup ) +  na fonte +  →  — 22 observacoes reais out/2025–ago/2026 persistidas (indice + M/M-1).
+- **D-R2-PROD-05 (supplies-api):** imagem  (sha256:), healthy; ; AuthZ via Core real: sem auth → 401, usuario sem  → 403,  (supplies.access, superadmin) → 200 com **11 pontos reais IBGE** em  (index e mom),   honesto,  404 (allowlist vazia — correto).
+- **D-R2-PROD-06 (frontend/nav):** bundle  (id ) contem a feature; entrada "Inteligência de Mercado" publicada na secao Analises do hub (cap  = ); rota  registrada no Core  via  (manifest 0.4.1, 201);  entrega a rota ao usuario autorizado. Gateway publico: pagina 200, remoteEntry 200, BFF externo 401→200 com dados reais.
+- **D-R2-PROD-07 (gates de fonte):** Comex OFF — fonte MDIC em manutencao/TLS expirado + allowlist NCM pendente de homologacao de Compras. PTAX OFF — BCB retorna 403 no egress. LME segue em quarentena (sem ). IBGE ON e servindo.
+- **D-R2-PROD-08 (rollback):** imagens anteriores preservadas no host; rollback = M	api-delpi/app/application/services/integrations/protheus_supplier_update_payload.py
+M	api-delpi/app/application/use_cases/integrations/update_protheus_rest_supplier_use_case.py
+M	api-delpi/app/application/use_cases/supplies/list_supplier_catalog_items_use_case.py
+M	api-delpi/app/infrastructure/persistence/totvs/supplier_repositories/totvs_supplier_catalogs_repository.py
+M	api-delpi/app/interface/http/routes/supplies/supplier_catalogs_router.py
+M	api-delpi/tests/test_protheus_supplier_update_payload.py
+M	api-delpi/tests/test_protheus_supplier_update_use_case.py
+M	api-delpi/tests/test_supplier_catalogs.py
+M	core-api/app/content/notification_catalog.json
+M	gateway/nginx.dev.conf
+Your branch is ahead of 'origin/feat/metalography-visual-fidelity' by 237 commits.
+  (use "git push" to publish your local commits) do SHA anterior + ; flags de feed revertiveis via  (backup timestamped);  desativa fonte sem apagar historico.
