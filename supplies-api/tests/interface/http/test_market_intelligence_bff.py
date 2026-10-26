@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from app.create_app import create_app
 from app.domain.entities import AuthenticatedIdentity, EffectiveUser
 from app.domain.exceptions import CoreApiUnavailableError
@@ -61,6 +63,7 @@ def _catalog() -> dict:
                 "granularity": "month",
                 "source_id": "world-bank-pink-sheet",
                 "latest_observation_date": "2026-09-01",
+                "display_allowed": True,
             }
         ],
         "fx_series": [
@@ -75,6 +78,7 @@ def _catalog() -> dict:
                 "granularity": "day",
                 "source_id": "bcb-ptax",
                 "latest_observation_date": "2026-10-24",
+                "display_allowed": True,
             }
         ],
         "sources": [
@@ -512,3 +516,65 @@ def test_filters_mark_non_selectable_and_pick_displayable_default(
     assert by_code["copper"]["selectable"] is False
     assert by_code["usd-brl"]["selectable"] is True
     assert payload["default_instrument"] == "usd-brl"
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+@pytest.mark.parametrize(
+    "display_allowed",
+    [pytest.param("ABSENT", id="absent"), None, "yes", 1],
+)
+def test_filters_default_deny_without_explicit_display_allowed(
+    mock_resolve, mock_validate, display_allowed
+):
+    """AC-R1.3-11/12/13: absent, null or invalid display_allowed is
+    never a grant — the instrument is not selectable and never chosen
+    as the default."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = _gateway()
+    catalog = _catalog()
+    if display_allowed == "ABSENT":
+        catalog["instruments"][0].pop("display_allowed", None)
+        catalog["fx_series"][0].pop("display_allowed", None)
+    else:
+        catalog["instruments"][0]["display_allowed"] = display_allowed
+        catalog["fx_series"][0]["display_allowed"] = display_allowed
+    gateway.catalog.return_value = catalog
+    client = create_app().test_client()
+    with patch(_GATEWAY, return_value=gateway):
+        response = client.get(
+            "/market-intelligence/filters",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert all(
+        i["selectable"] is False for i in payload["instruments"]
+    )
+    assert payload["default_instrument"] is None
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_contract_not_ready_maps_to_technical_unavailable(
+    mock_resolve, mock_validate
+):
+    """AC-R1.3-14: producer contract-not-ready is technical
+    unavailability — never a user permission 403."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = _gateway()
+    gateway.catalog.side_effect = MarketDataGatewayError(
+        "contract not ready",
+        status_code=503,
+        code="EXTERNAL_DATA_CONTRACT_NOT_READY",
+    )
+    client = create_app().test_client()
+    with patch(_GATEWAY, return_value=gateway):
+        response = client.get(
+            "/market-intelligence/filters",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 503
+    assert response.get_json()["code"] == "contract_not_ready"

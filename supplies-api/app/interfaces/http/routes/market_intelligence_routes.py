@@ -40,6 +40,19 @@ def _gateway_error_response(exc: MarketDataGatewayError):
             ),
             504,
         )
+    # Rights-contract drift (pending/failed migration on the producer)
+    # is technical unavailability — never a user permission fault and
+    # distinct from a license decision on a ready contract.
+    if exc.code == "EXTERNAL_DATA_CONTRACT_NOT_READY":
+        return (
+            jsonify(
+                {
+                    "detail": "External data contract not ready",
+                    "code": "contract_not_ready",
+                }
+            ),
+            503,
+        )
     # License quarantine is a source-state, never a user permission
     # fault — a dedicated code keeps it distinct from user 403.
     if exc.code == "EXTERNAL_DATA_USE_NOT_APPROVED":

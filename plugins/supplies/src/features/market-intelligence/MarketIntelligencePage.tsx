@@ -139,7 +139,9 @@ export function MarketIntelligencePage({
   }, [reloadKey]);
 
   const selectableInstruments = useMemo(
-    () => instruments.filter((entry) => entry.selectable !== false),
+    // Default-deny: only an explicit selectable === true offers the
+    // instrument — absent/null/legacy payloads are never permission.
+    () => instruments.filter((entry) => entry.selectable === true),
     [instruments],
   );
 
@@ -314,6 +316,14 @@ export function MarketIntelligencePage({
       {summaryError ? (
         <SuppliesStateBanner variant="error">{summaryError}</SuppliesStateBanner>
       ) : null}
+      {!catalogLoading &&
+      !catalogError &&
+      instruments.length > 0 &&
+      selectableInstruments.length === 0 ? (
+        <SuppliesStateBanner variant="error">
+          {MARKET_INTELLIGENCE_CONTENT.states.noSelectableInstruments}
+        </SuppliesStateBanner>
+      ) : null}
       {summary && summary.meta.freshness?.status === "delayed" ? (
         <SuppliesStateBanner>
           {MARKET_INTELLIGENCE_CONTENT.states.staleNote}
@@ -405,7 +415,8 @@ export function MarketIntelligencePage({
         !summaryLoading &&
         !summary &&
         !summaryError &&
-        !catalogError ? (
+        !catalogError &&
+        !(instruments.length > 0 && selectableInstruments.length === 0) ? (
           <SuppliesEmptyState
             title={MARKET_INTELLIGENCE_CONTENT.chart.emptyTitle}
             message={MARKET_INTELLIGENCE_CONTENT.chart.emptyMessage}

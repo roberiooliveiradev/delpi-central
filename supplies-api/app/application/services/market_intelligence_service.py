@@ -468,7 +468,11 @@ class MarketIntelligenceService:
                         "latest_observation_date"
                     ),
                     "source_id": inst["source_id"],
-                    "selectable": bool(inst.get("display_allowed", True)),
+                    # Default-deny: only an explicit display_allowed=true
+                    # from the producer is selectable — absent/null/invalid
+                    # means the producer version predates the rights
+                    # contract, which is never a permission.
+                    "selectable": inst.get("display_allowed") is True,
                 }
             )
         for fx in catalog.get("fx_series") or []:
@@ -487,7 +491,7 @@ class MarketIntelligenceService:
                         "latest_observation_date"
                     ),
                     "source_id": fx["source_id"],
-                    "selectable": bool(fx.get("display_allowed", True)),
+                    "selectable": fx.get("display_allowed") is True,
                 }
             )
         sources = [

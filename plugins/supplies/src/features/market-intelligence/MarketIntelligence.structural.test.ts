@@ -138,6 +138,33 @@ describe("market intelligence page (PROC-0076)", () => {
     expect(written).toContain("fx_kind=ptax_closing_buy");
   });
 
+  it("enforces default-deny on instrument selectability (R1.3)", () => {
+    const page = readFileSync(
+      join(here, "MarketIntelligencePage.tsx"),
+      "utf8",
+    );
+    // Legacy payloads without `selectable` must never grant selection —
+    // only an explicit true is a permission.
+    expect(page).toContain("entry.selectable === true");
+    expect(page).not.toContain("entry.selectable !== false");
+    // A catalog with zero selectable instruments renders a neutral
+    // unavailability state, never the misleading empty-data card.
+    expect(page).toContain("noSelectableInstruments");
+    // Denied responses clear previously rendered quotes.
+    expect(page).toContain("setSummary(null)");
+    const series = readFileSync(
+      join(here, "MarketIntelligenceSeriesSection.tsx"),
+      "utf8",
+    );
+    expect(series).toContain("setPoints([])");
+  });
+
+  it("declares the neutral no-selectable-instruments copy", () => {
+    const content = readFileSync(join(here, "content.ts"), "utf8");
+    expect(content).toContain("noSelectableInstruments");
+    expect(content).toContain("sourceNotApproved");
+  });
+
   it("URL read rejects out-of-contract values", () => {
     withWindow(
       "?instrument=<script>&currency=EUR&granularity=hour&fx_kind=spot&from=99%2F01%2F2025&to=nope",

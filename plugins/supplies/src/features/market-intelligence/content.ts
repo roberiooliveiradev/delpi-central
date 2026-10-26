@@ -95,6 +95,9 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     staleEvidence: (latest: string | null, expected: string) =>
       `Última observação disponível: ${latest ?? "—"}; esperada até: ${expected}.`,
     fxMissingNote: "Conversão indisponível: não há PTAX para o mês de referência.",
+    noSelectableInstruments:
+      "Nenhum instrumento está disponível para consulta no momento — " +
+      "os direitos de exibição das fontes estão em revisão.",
     sourceLabel: "Fonte",
     asOfLabel: "Última ingestão bem-sucedida",
     methodLabel: "Método",
