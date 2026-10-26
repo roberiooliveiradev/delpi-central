@@ -937,3 +937,52 @@ As duas imagens da interface de Minhas Solicitações apresentam:
 **Apresentação:** selo textual `Complemento solicitado`, ícone semanticamente correspondente, marcação da mensagem na conversa e indicação discreta no registro da lista. Cor não é único sinal de status. A definição de `aberta/resolvida` e de como retirar o destaque **depende do contrato de lifecycle de solicitações**; não fabricar estado de negócio.
 
 **Dependências:** contrato de comentário/solicitação e persistência, mapeamento de audiência elegível, integração com notificações existentes, idempotência e auditoria, estados/erro/falha parcial, deep links e testes. `D-DRE-NOTIFY-01=PRODUCT_BEHAVIOR_CONFIRMED / TARGET`; `D-DRE-NOTIFY-AUDIENCE=DECISION_REQUIRED`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## 20. Fechamento documental do Wireframe DRE — complemento validável, WebSocket e contratos posteriores
+
+**Data:** 2026-10-26. **Origem PO:** “Depois tem que ser validado a questão do complemento”; conversas atualizadas em tempo real com WebSocket; contratos da API do Portal definidos em gate posterior; retornar agora à definição das outras páginas. **Estado:** \`PRODUCT_DIRECTION_APPROVED / DESIGN_FLOW_RECORDED\`; \`API_WEBSOCKET_CONTRACT=TO_INVENTORY\`; \`RUNTIME_GO=NO\`.
+
+### 20.1 Fluxo funcional TARGET — não presumir máquina de estados existente
+
+\`\`\`text
+Contabilidade/DRE: Solicitar complemento (documento + versão + texto)
+  → BFF autoriza e persiste solicitação/evento, com idempotência
+  → mesma conversa destaca “Complemento solicitado” + lista sinaliza
+  → evento de domínio após commit → Core Notifications para internos autorizados, excluindo DRE
+  → WebSocket atualiza conversas abertas dos participantes autorizados
+  → Controladoria responde / fornece complemento conforme P2
+  → Contabilidade visualiza resposta e avalia atendimento
+  → confirmação de atendimento por ator/owner definido
+  → encerramento auditado do pedido; destaque evolui conforme estado efetivo
+\`\`\`
+
+**Invariante:** \`MENSAGEM_RESPONDIDA != COMPLEMENTO_VALIDADO != EVIDENCIA_P2_ACEITA != PACOTE_P5_APROVADO\`. Não encerrar automaticamente porque houve resposta, novo arquivo ou download. Não prometer novo enum físico/alteração de estado sem decisão.
+
+**DECISION_REQUIRED (D-DRE-COMP-VALIDATION-01):** ator autorizado a declarar complemento atendido (solicitante Contabilidade, Controladoria, outro owner?), critérios de aceite de complemento, possibilidade de devolução, estado aberto/aguardando/verificado/encerrado e SLA (não presumir). Recomendação para avaliação do PO: **Contabilidade solicitante confirma atendimento**, Controladoria só marca “Resposta enviada”, preservando ausência de aceite formal P2/P5. Isto requer compatibilidade com restrição “DRE não aprova documentos/pacotes”; confirmação do *pedido de informação* é ato diferente.
+
+### 20.2 Reuso técnico verificado — My Requests realtime
+
+**HEAD inspecionado:** \`plugins/my-requests/src/app/MyRequestsRealtimeProvider.tsx\` estabelece \`WebSocket\`, heartbeat, reconexão, joins/leaves por request e handlers \`request.created\`, \`request.changed\`, \`request.timeline\`. \`RequestDetailPage.tsx\` usa \`useMyRequestsDetailSync\` para \`reload\` do detalhe/timeline em evento. O shell visual de conversa usa \`@delpi/plugin-ui/index\` — \`createDashboardMessageThread\`, \`createDashboardMentionComposer\` e \`createDashboardRoomConversationShell\` — documentados no §18.
+
+**Diretriz:** copiar o **padrão arquitetural**, não importar application/domain/components internos de My Requests nem reutilizar API/rooms próprias do outro contexto. Identificar capability transversal de realtime da plataforma e os contratos/regras de segurança antes de definir o adapter do \`controllership-finance-api\`. Uma conexão existente em outro app não prova rota WS de Fechamento.
+
+### 20.3 Contratos a fechar em gate posterior
+
+| Plano | A verificar/definir | Segurança/resultado |
+|---|---|---|
+| Comando HTTP | criar comentário; solicitar complemento; responder; declarar atendimento; listar histórico; ler estado, ids/idempotency keys/versões | Core effective permissions + resource/recipient scope + business rule, nunca JWT como authority |
+| Read model | documento, versão, competência, thread, mensagens, estado do complemento, paginação e cursor de sincronização | somente audience autorizada, sem dados de relatório TOTVS no DRE |
+| Eventos WS | notificações de evento criado/alterado, sequência/cursor e envelope typed; eventos mínimos devem disparar reconsulta ao BFF | conexão e subscribe reautorizados; não distribuir payload sensível entre destinatários |
+| Resiliência | reconnect, resubscribe, replay/missed messages, duplicidade, ordenação e reconciliação HTTP após retorno | não perder nem duplicar mensagem; ack persistido ≠ entregue em tempo real |
+| Notificações Minha DELPI | evento após commit, filtros de destinatários, deep link documental | audiência interna não-DRE **e autorizada ao documento**; não broadcast irrestrito |
+| Históricos | autoria/instante/versão/correlação, pedido e resposta, confirmação | append-only audit, sem apagar eventos ao substituir arquivo |
+| Critérios de aceitação | duas sessões autenticadas; envio simultâneo; Core revogado; subscribe cruzado; conexão perdida e recuperada; mensagem repetida; histórico | \`TEST_NOT_RUN\` até execução com provas |
+
+**NÃO criar endpoint ou WS path nesta fase, não adicionar permission nova, não alterar manifesto/Core ou persistência.** A exceção documental do [Doc 91](./91-ciclo3-contabilidade-acesso-documentos-historicos-gate.md) permanece \`DEFERRED\`.
+
+### 20.4 Encaminhamento de UX — retorno às outras páginas
+
+O PO solicitou avançar para páginas além de documentos. Próxima proposta a revisar: **Relatórios e divergências** (área da Controladoria exclusivamente), usando a classificação R01–R15 dos [docs 46](./46-t01-report-source-inventory-v1.md) e [47](./47-t01-report-column-audit-tracker-v1.md), sem afirmar equivalência funcional de relatórios G6 pendentes. Depois: **Visão geral/Cockpit** P1 e **Revisão do fechamento** P5; **Pendências** P4 permanece owner independente e a decisão de tab próprio ou fila contextual segue aberta.
+
+**Estado de resultado desta rodada:** \`DESIGN_DOCUMENTED / CONTRACT_PENDING\`; sem revisão de runtime, \`TEST_NOT_RUN\`; próxima página \`TARGET / PENDING_PO_VISUAL_REVIEW\`.
