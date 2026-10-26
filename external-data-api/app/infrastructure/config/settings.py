@@ -51,7 +51,12 @@ class Settings:
     # The service stays functional without a database: market-data routes
     # answer STORAGE_UNAVAILABLE while the CNPJ path keeps working.
 
-    EXTERNAL_DATA_SCHEMA = os.getenv("EXTERNAL_DATA_SCHEMA", "external_data")
+    # Canonical schema — immutable. Migrations V001+ create and populate
+    # ``external_data`` literally; making it configurable would let the
+    # runner record ``schema_migrations`` in one schema while the DDL
+    # lands in another (PROC-0076 R1). Isolation between environments is
+    # by database/host (PLUGINS_DB_*), never by schema name.
+    EXTERNAL_DATA_SCHEMA = "external_data"
     PLUGINS_DB_HOST = os.getenv("PLUGINS_DB_HOST", "").strip()
     PLUGINS_DB_PORT = int(os.getenv("PLUGINS_DB_PORT", "5432") or "5432")
     PLUGINS_DB_NAME = os.getenv("PLUGINS_DB_NAME", "").strip()

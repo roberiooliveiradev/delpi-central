@@ -2,7 +2,8 @@
 
 Same PLUGINS_DB_* convention used by the other plugin APIs: the service
 connects to the shared plugins PostgreSQL but only ever touches its own
-schema (``EXTERNAL_DATA_SCHEMA``, default ``external_data``). Absent
+canonical schema (``external_data`` — fixed, never configurable, because
+the migrations create and populate it literally). Absent
 configuration is a first-class state: callers must map it to
 ``StorageUnavailableError`` rather than guessing a DSN.
 """
