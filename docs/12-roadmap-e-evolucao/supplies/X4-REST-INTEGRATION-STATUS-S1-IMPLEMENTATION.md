@@ -162,3 +162,12 @@ Diagnóstico real executado no container deployado (read-only):
 - `WRITE_VALIDATION=not_tested` por design — primeira escrita real exige
   autorização operacional distinta e reconciliação.
 - Smoke visual autenticado: `INCONCLUSIVE` sem sessão autenticada.
+
+
+## 9. Revisão GPT — X4.REST-STATUS.S1 (2026-10-26)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para código e documentação.** Conferidos no source `f53d9cf34b`: `SupplierIntegrationStatusCard.tsx`, projeção `suppliers_dto.py`, proposta UX e este relatório. O card usa BFF, verificação explícita por clique, estados de disponibilidade e gates sem declarar POST/PUT persistidos. O BFF aplica `supplies.manage` e projeção allowlist; não há evidência de exposição de token/URL no componente. Testes 615/60/471, imagens, deploy e health são evidências **reportadas pelo executor**, não reexecutadas nesta revisão.
+
+**Residual UX não bloqueante:** `SupplierIntegrationStatusCard` preserva `status` anterior quando nova tentativa cai no `catch`; `failed=true` apresenta erro, mas `summary`/`checkedAt` ainda renderizam o diagnóstico precedente. Para evitar confusão operacional, a próxima melhoria pontual deve rotular esse resultado como **anterior/desatualizado**, mantendo timestamp, ou neutralizar badge após falha; não mascarar erro do endpoint como falha comprovada do Protheus. **Residual runtime:** smoke visual autenticado ainda `INCONCLUSIVE`; token upstream 401 e consulta REST `not_checked`, sem teste de escrita por design. Aceite de monitor não constitui `G8=PASS` nem validação POST/PUT.
+
+**Próximo passo:** PO valida uma vez a lista/ficha em desktop com `supplies.manage`, confirma card e estados; eventuais ajustes ficam em uma fatia curta, sem novo discovery. A integração upstream fica aguardando Gabriel/Michael.
