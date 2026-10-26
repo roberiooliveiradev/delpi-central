@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from pathlib import Path
 
 sys.path.insert(0, "/app")
 
@@ -40,6 +41,16 @@ SELECTION_PURPOSES = {
 _BLOCK_RE = re.compile(
     r"<(capability_groups|capabilities|foreign_capability_groups)"
     r">(.*?)</\1>",
+    re.DOTALL,
+)
+
+# C3: capture EVERY block tag per request — projection integrity is a
+# cross-stage property, not only selection.
+_ANY_BLOCK_RE = re.compile(
+    r"<(capability_groups|capabilities|foreign_capability_groups|"
+    r"resolver|records|evidence|schema|capability|owner_index|"
+    r"missing_inputs|analysis_continuation|"
+    r"target_capability_group)>(.*?)</\1>",
     re.DOTALL,
 )
 
@@ -135,6 +146,27 @@ def main() -> int:
     probe: list[dict] = []
 
     def recording(request):
+        text = getattr(request, "input_text", "") or ""
+        for tag, block in _ANY_BLOCK_RE.findall(text):
+            entry = {
+                "purpose": request.task_purpose_id,
+                "block_tag": tag,
+                "block_len": len(block),
+            }
+            try:
+                parsed = json.loads(block)
+                entry["json_valid"] = True
+                if isinstance(parsed, dict):
+                    markers = {
+                        k: v
+                        for k, v in parsed.items()
+                        if k.endswith("_omitted") and v
+                    }
+                    if markers:
+                        entry["omissions"] = markers
+            except Exception:
+                entry["json_valid"] = False
+            probe.append(entry)
         if request.task_purpose_id in SELECTION_PURPOSES:
             text = getattr(request, "input_text", "") or ""
             entry: dict = {"purpose": request.task_purpose_id}
@@ -173,6 +205,24 @@ def main() -> int:
                 entry["block_found"] = False
             probe.append(entry)
         payload = real_invoke(request)
+        usage = getattr(payload, "usage", None)
+        if usage is not None:
+            probe.append(
+                {
+                    "purpose": request.task_purpose_id,
+                    "usage": {
+                        "input": getattr(
+                            usage, "input_units", None
+                        ),
+                        "output": getattr(
+                            usage, "output_units", None
+                        ),
+                    },
+                    "duration_ms": getattr(
+                        payload, "duration_ms", None
+                    ),
+                }
+            )
         if request.task_purpose_id == (
             "delia.capability_orchestration.turn_goal"
         ):
@@ -188,7 +238,11 @@ def main() -> int:
 
     guarded.invoke = recording
 
-    binding = bind_subject_bearer("probe-no-token")
+    try:
+        bearer = Path("/tmp/eval_bearer").read_text().strip()
+    except OSError:
+        bearer = "probe-no-token"
+    binding = bind_subject_bearer(bearer)
     result = None
     error = None
     try:

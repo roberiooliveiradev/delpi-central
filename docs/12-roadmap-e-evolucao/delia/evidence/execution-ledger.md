@@ -202,3 +202,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - `TEST_NOT_RUN`: captura sanitizada do wire payload (adapter tests + leitura direta provam serialização pretendida); `TO_INVENTORY`: eficácia de `OLLAMA_NUM_CTX` vs `OLLAMA_CONTEXT_LENGTH` no daemon em produção (primeira ação do WP-A).
 - Decision register: D1-D5 aprováveis pela coordenação (WP-A budget/window, WP-C marker, WP-D uniformidade, WP-E delimitação, WP-F medição); D6 WP-B persistência requer re-decisão canônica (`SESSION_PERSISTENCE=NONE`), D7 instruction resource gate, D8 residência de dados com provider externo. Inadmissível: história como autoridade, bypass AuthZ, novo planner/engine/provider.
 - `EXECUTION_DRIFT=NONE`; `NEXT=decisão arquitetural sobre D1-D8 + autorização de implementação — sem nova rodada de inventário`.
+
+
+### DELIA-C3-EVIDENCE-SCHEMA-PROJECTION-INTEGRITY-AND-COVERAGE-01 — execução (2026-10-26)
+
+- `STATE=IMPLEMENTED_WITH_EVIDENCE`; base `49dc645b0d`; escopo `orchestration.py` (projeções dos estágios não-seleção) + testes + doc 152 §12.
+- WP0: 13 sites `json.dumps(...)[:MAX_*]` em blocos estruturados classificados `DESTRUCTIVE_TRUNCATION_PROVEN` (resolver, records, synthesis, comparison, native assessment, continuation, missing_inputs, relevance, prior_result_preview, index probe/select, arguments, candidate arguments); `_resolved_values_proven` = `SAFE_BOUND` preservado.
+- Fix: `_fit_json_block`/`_json_block` ao lado dos builders C2 — redução estrutural ordenada (texto bounded → campo opcional → omissão de cauda com marcador `*_omitted` verdadeiro); `input_schema`/schema/identifiers nunca reduzidos — emitem íntegros; `MAX_INPUT_CHARS`/`CONTEXT_TOO_LARGE` seguem como boundary tipado. `evidence_blocks` sincronizado com o texto efetivamente projetado (sem verificação fail-open sobre evidência não vista).
+- Tests: `test_evidence_schema_projection_integrity.py` — 23 casos RED→GREEN; RED causal: mesmas fixtures sob o corte antigo produzem `Unterminated string` em 5/5 envelopes.
+- Eval local congelada (delia-json qwen2.5:3b, ctx 8192, api-delpi real via delegated exchange): 28 blocos capturados em 7 cenários — `json_valid=100%`, `CAPABILITIES_OMITTED=0` (catálogo real 1 grupo/~2-4 caps); ref_user/ref_observation alcançaram owner real (GROUNDED path com respostas honestas); three_records/O2 honestamente NON_GROUNDED/typed; ref_assistant_only não injetou referente assistente. `FALSE_POSITIVES=0`. Sem melhoria de outcome empresarial reivindicada (variance 3B, n=1).
+- `DEPLOY=BLOCKED` (revisão independente pendente); `INDEPENDENT_REVIEW=PENDING`.

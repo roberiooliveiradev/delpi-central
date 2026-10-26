@@ -219,3 +219,54 @@ Tests: `test_selection_envelope_integrity.py` — 12 RED→GREEN boundary cases 
 **Business Outcome:** `three_records=NON_GROUNDED`, `O2=NON_GROUNDED`; cannot ascribe sole cause to model size without controlling for omitted catalog capabilities, remaining payload cuts and authoritative owner access. No new planner/memory/provider introduced; rework scope respected.
 
 **Coordination:** Accept C1 and structural C2 corrections with explicitly bounded residuals. Retain **DEPLOY_BLOCKED**. Next bounded task should characterize whether non-selection cuts hit **required source evidence/schema** on failing chains, and whether omission markers affect selection coverage; authorize fixes only on proven handoffs under owner contracts and token budget. No generic inventory restart, no automatic model upgrade, no session persistence.
+
+
+## 12. Evidence & schema projection integrity — C3 rework execution — 2026-10-26
+
+Task: `DELIA-C3-EVIDENCE-SCHEMA-PROJECTION-INTEGRITY-AND-COVERAGE-01`
+Base: `49dc645b0d` + `origin/main` advance; reference: §11 independent review (R-C2d residual).
+
+### Truncation site matrix (all `json.dumps(...)[:MAX_*]` on structured blocks)
+
+| Site (stage) | Budget | Defect class | Resolution |
+|---|---|---|---|
+| `_select_resolver` — resolver candidates | MAX_SURFACE_CHARS | DESTRUCTIVE_PROVEN | `_fit_json_block` — candidate descriptions shrink, then truthful `candidates_omitted` |
+| `_prior_continuation_attempt` — records | MAX_SURFACE_CHARS | DESTRUCTIVE_PROVEN | tail omission + `records_omitted` |
+| `_synthesize_content` — records | MAX_SURFACE_CHARS | DESTRUCTIVE_PROVEN | tail omission + `records_omitted` |
+| `_corroborate_attempt` — `{left,right}` | MAX_SURFACE_CHARS | DESTRUCTIVE_PROVEN | balanced tail omission from the longer side + `left_omitted`/`right_omitted` |
+| `_assess_native_path` — target group | MAX_SURFACE_CHARS | DESTRUCTIVE_PROVEN | drop `relevance_feedback` → cap descriptions → `capabilities_omitted` |
+| `_select_prepare_continuation` — analysis + candidates | MAX_SURFACE_CHARS | DESTRUCTIVE_PROVEN | bounded `analysis` excerpt shrinks → descriptions → `candidates_omitted` |
+| `_clarification_question` — missing inputs | MAX_SURFACE_CHARS | DESTRUCTIVE_PROVEN | description shrinks → `inputs_omitted` |
+| `_judge_goal_evidence` — evidence records | MAX_RELEVANCE_EVIDENCE_CHARS | DESTRUCTIVE_PROVEN | tail omission + `records_omitted` |
+| `_recover_relevance` — prior_result_preview (nested JSON-in-string) | MAX_EVIDENCE_RECORD_CHARS | DESTRUCTIVE_PROVEN | preview list structurally fitted + `records_omitted` |
+| `_propose_index_probe` — capability + input_schema | MAX_ARGUMENTS_BLOCK_CHARS | DESTRUCTIVE_PROVEN | description shrinks; `input_schema` **never touched** — emits whole |
+| `_propose_index_identifier` — owner index options | MAX_ARGUMENTS_BLOCK_CHARS | DESTRUCTIVE_PROVEN | hints/label shrink → `options_omitted` |
+| `_build_arguments` — schema + evidence | MAX_ARGUMENTS_BLOCK_CHARS | DESTRUCTIVE_PROVEN | bounded evidence excerpts shrink → auxiliary fields drop; `input_schema` whole |
+| `_propose_candidate_arguments` — inner schema | MAX_SURFACE_CHARS | DESTRUCTIVE_PROVEN | schema is the contract — emits whole via `_json_block` |
+| `_resolved_values_proven` — provenance search corpus | MAX_OWNER_EVIDENCE_CHARS×4 | SAFE_BOUND | unchanged — bounded opaque corpus; worst case is a fail-closed false negative, never malformed consumer JSON |
+
+Shared mechanism: `_fit_json_block(block, budget, *steps)` beside the C2 builders — ordered structural reductions (text-field bound → optional-field drop → trailing omission with truthful `*_omitted` marker); **the serialized output is always valid JSON**. When immutable mandatory content (schema, identifiers) cannot fit the projection budget the payload emits whole — the existing typed boundary decides: `MAX_INPUT_CHARS=16384` transport bound and/or `CONTEXT_TOO_LARGE` on the adapter-declared context window. No second budget, no new context engine.
+
+Provenance hardening (`_build_arguments`): the `evidence_blocks` verification corpus for `apply_evidence_bound_selections` is synced to the post-projection text — a declared origin can only be proven against text the model actually saw (no fail-open on unprojected evidence).
+
+Tests: `test_evidence_schema_projection_integrity.py` — 23 cases RED→GREEN. RED evidence: the same fixture shapes under the old `[:MAX]` cut produce `JSONDecodeError: Unterminated string` in all five measured envelope shapes (resolver/synthesis/evidence/arguments/candidate).
+
+### Local evaluation (frozen: delia-json qwen2.5:3b, num_ctx 8192, Ollama, instruction v21, real api-delpi DAVI)
+
+Eval environment note: the chain now reaches the real owner via delegated token exchange (`mcp-api-delpi` audience, `Host: localhost:8000`) — earlier runs used a different api build.
+
+| Scenario | Stages | Blocks | json_valid | omissions | grounding | owner calls |
+|---|---|---|---|---|---|---|
+| three_records | 4 | 3 | 100% | 0 | NON_GROUNDED (honest insufficiency) | 0 |
+| o2 | 3 | 1 | 100% | 0 | typed `invalid_structured_output` | 0 |
+| pino | 3 | 1 | 100% | 0 | NON_GROUNDED (conversational fallback; illustrative text, no owner provenance) | 0 |
+| ref_user | 12 | 10 | 100% | 0 | GROUNDED path; honest insufficient-pertinence wording | 5 (davi discover+execute) |
+| ref_observation | 6 | 4 | 100% | 0 | GROUNDED; honest empty-result | 2 |
+| subject_change | 9 | 7 | 100% | 0 | NON_GROUNDED; honest "no record" | 1 |
+| ref_assistant_only | 1 | 0 | n/a | 0 | NON_GROUNDED — assistant-derived referent correctly not injected | 0 |
+
+Baseline comparison (same model/config, pre-fix orchestration): three_records took a clarification path (6 stages, 0 invokes, NON_GROUNDED); ref_user stopped at admission (1 stage, NON_GROUNDED). Both baselines also produced valid JSON on the small real catalog — the destructive defect requires size pressure; n=1 model variance prevents outcome attribution, so no business-outcome improvement is claimed.
+
+Catalog coverage (WP4): the real owner surface is small (1 group, ~2–4 capabilities, ~800–900 chars) — fits the projection budget entirely; `CAPABILITIES_OMITTED=0` observed on every live run. Under synthetic pressure the C2 compaction keeps all group identifiers listed and marks per-group `capabilities_omitted` truthfully; widest-group-first is a fairness policy, not coverage — `capabilities_omitted` remains transparency, never a reachability proof. No legitimate-capability loss reproduced on the real surface.
+
+Residuals: (a) `business_subject` transport is mechanism-ready but the 3B did not emit the field in proposals during these runs — semantic capacity, not transport loss; (b) `pino` conversational fallback produced illustrative product text with no owner provenance — correctly NON_GROUNDED, but general-knowledge content quality is a separate concern; (c) inner bounded excerpts (descriptions, `untrusted_excerpt`, `analysis`) remain `SAFE_BOUND` by contract; (d) `_resolved_values_proven` corpus cut remains SAFE_BOUND.

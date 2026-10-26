@@ -52,7 +52,7 @@ import re
 import time
 import unicodedata
 import uuid
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping, MutableMapping, Sequence
 
 from app.application.interaction.activity import (
     ActivityEventSink,
@@ -2982,6 +2982,92 @@ def _capability_payload(
     return payload
 
 # Canonical sensitive credential concepts. Keys are normalized
+def _json_block(block: Any) -> str:
+    return json.dumps(block, ensure_ascii=False, default=str)
+
+
+def _truncate_text_field(
+    block: MutableMapping[str, Any], key: str, keep: int
+) -> bool:
+    """Structural reduction step: bound one text field in-place.
+
+    Only applied to fields that are already bounded excerpts —
+    never on required schema parts, identifiers, codes or record
+    values.
+    """
+    value = block.get(key)
+    if isinstance(value, str) and len(value) > keep:
+        block[key] = value[:keep]
+        return True
+    return False
+
+
+def _truncate_entry_field(
+    block: MutableMapping[str, Any],
+    list_key: str,
+    field: str,
+    keep: int,
+) -> bool:
+    """Structural step: bound a text field across a list of entries."""
+    changed = False
+    entries = block.get(list_key)
+    if not isinstance(entries, list):
+        return False
+    for entry in entries:
+        if isinstance(entry, MutableMapping):
+            value = entry.get(field)
+            if isinstance(value, str) and len(value) > keep:
+                entry[field] = value[:keep]
+                changed = True
+    return changed
+
+
+def _drop_block_fields(
+    block: MutableMapping[str, Any], *keys: str
+) -> bool:
+    """Structural step: drop optional fields entirely."""
+    changed = False
+    for key in keys:
+        if block.pop(key, None) is not None:
+            changed = True
+    return changed
+
+
+def _omit_tail_entries(
+    block: MutableMapping[str, Any], list_key: str, marker_key: str
+) -> bool:
+    """Structural step: drop one trailing entry, truthfully marked."""
+    entries = block.get(list_key)
+    if not isinstance(entries, list) or not entries:
+        return False
+    entries.pop()
+    block[marker_key] = block.get(marker_key, 0) + 1
+    return True
+
+
+def _fit_json_block(
+    block: Any,
+    budget: int,
+    *steps: Callable[[], bool],
+) -> str:
+    """Serialize ``block`` to JSON within ``budget`` — structure only.
+
+    ``steps`` are ordered structural reductions; each mutates
+    ``block`` and returns True while it still reduces. They run as a
+    ladder — a step is applied until exhausted, then the next — until
+    the payload fits or all are exhausted. The serialized result is
+    always valid JSON, never a mid-document cut; when every step is
+    exhausted the minimal valid document is emitted and the typed
+    context budget (CONTEXT_TOO_LARGE) remains the guard downstream.
+    """
+    payload = _json_block(block)
+    while len(payload) > budget:
+        if not any(step() for step in steps):
+            return payload
+        payload = _json_block(block)
+    return payload
+
+
 # (lowercase, separators stripped) before comparison so snake_case,
 # kebab-case, camelCase, PascalCase and spaced variants all match.
 # Canonical exact names only — substring matching would produce false
@@ -5753,9 +5839,19 @@ class OperationalCapabilityOrchestrator:
         proposal = self._propose(
             input_text,
             block_tag="resolver",
-            block_payload=json.dumps(
-                block, ensure_ascii=False, default=str
-            )[:MAX_SURFACE_CHARS],
+            block_payload=_fit_json_block(
+                block,
+                MAX_SURFACE_CHARS,
+                lambda: _truncate_entry_field(
+                    block, "resolver_candidates", "description", 64
+                ),
+                lambda: _truncate_entry_field(
+                    block, "resolver_candidates", "description", 0
+                ),
+                lambda: _omit_tail_entries(
+                    block, "resolver_candidates", "candidates_omitted"
+                ),
+            ),
             instruction_id=RESOLVER_SELECTION_INSTRUCTION_ID,
             instruction=self._instruction(RESOLVER_SELECTION_INSTRUCTION_ID),
             expected_fields=("applicable", "remote_name"),
@@ -6230,11 +6326,13 @@ class OperationalCapabilityOrchestrator:
             proposal = self._propose(
                 input_text,
                 block_tag="records",
-                block_payload=json.dumps(
+                block_payload=_fit_json_block(
                     block,
-                    ensure_ascii=False,
-                    default=str,
-                )[:MAX_SURFACE_CHARS],
+                    MAX_SURFACE_CHARS,
+                    lambda: _omit_tail_entries(
+                        block, "records", "records_omitted"
+                    ),
+                ),
                 instruction_id=SYNTHESIS_INSTRUCTION_ID,
                 instruction=self._instruction(SYNTHESIS_INSTRUCTION_ID),
                 expected_fields=("items",),
@@ -6403,43 +6501,54 @@ class OperationalCapabilityOrchestrator:
         ``inconclusive``; anything unparseable or absent is native —
         foreign fan-out is never the default.
         """
+        assessment_block: dict[str, Any] = {
+            "target_capability_id": descriptor.capability_id,
+            "target_operation_class": (
+                descriptor.operation_class.value
+            ),
+            "capabilities": json.loads(
+                _capability_payload(group)
+            ),
+            "turn_goal": (
+                {
+                    "goal_class": goal.goal_class,
+                    "comparison_requested": (
+                        goal.comparison_requested
+                    ),
+                    "output_mode": goal.output_mode,
+                    "business_subject": goal.business_subject,
+                }
+                if goal is not None
+                else None
+            ),
+            # Bounded mismatch signal from a validated
+            # goal/evidence judgment — present only during
+            # the single governed recovery round; untrusted
+            # data, never an instruction.
+            "relevance_feedback": (
+                json.loads(relevance_feedback)
+                if relevance_feedback
+                else None
+            ),
+        }
         proposal = self._propose(
             input_text,
             block_tag="target_capability_group",
-            block_payload=json.dumps(
-                {
-                    "target_capability_id": descriptor.capability_id,
-                    "target_operation_class": (
-                        descriptor.operation_class.value
-                    ),
-                    "capabilities": json.loads(
-                        _capability_payload(group)
-                    ),
-                    "turn_goal": (
-                        {
-                            "goal_class": goal.goal_class,
-                            "comparison_requested": (
-                                goal.comparison_requested
-                            ),
-                            "output_mode": goal.output_mode,
-                            "business_subject": goal.business_subject,
-                        }
-                        if goal is not None
-                        else None
-                    ),
-                    # Bounded mismatch signal from a validated
-                    # goal/evidence judgment — present only during
-                    # the single governed recovery round; untrusted
-                    # data, never an instruction.
-                    "relevance_feedback": (
-                        json.loads(relevance_feedback)
-                        if relevance_feedback
-                        else None
-                    ),
-                },
-                ensure_ascii=False,
-                default=str,
-            )[:MAX_SURFACE_CHARS],
+            block_payload=_fit_json_block(
+                assessment_block,
+                MAX_SURFACE_CHARS,
+                lambda: _drop_block_fields(
+                    assessment_block, "relevance_feedback"
+                ),
+                lambda: _truncate_entry_field(
+                    assessment_block, "capabilities", "description", 0
+                ),
+                lambda: _omit_tail_entries(
+                    assessment_block,
+                    "capabilities",
+                    "capabilities_omitted",
+                ),
+            ),
             instruction_id=NATIVE_ASSESSMENT_INSTRUCTION_ID,
             instruction=self._instruction(NATIVE_ASSESSMENT_INSTRUCTION_ID),
             expected_fields=("status",),
@@ -6703,17 +6812,31 @@ class OperationalCapabilityOrchestrator:
         verdict: str | None = None
         content: str | None = None
         if left_records and right_records:
+            comparison_block: dict[str, Any] = {
+                "left": [dict(r) for r in left_records],
+                "right": [dict(r) for r in right_records],
+            }
+
+            def _omit_longer_side() -> bool:
+                left = comparison_block["left"]
+                right = comparison_block["right"]
+                side, marker = (
+                    ("left", "left_omitted")
+                    if len(left) >= len(right)
+                    else ("right", "right_omitted")
+                )
+                return _omit_tail_entries(
+                    comparison_block, side, marker
+                )
+
             proposal = self._propose(
                 input_text,
                 block_tag="records",
-                block_payload=json.dumps(
-                    {
-                        "left": [dict(r) for r in left_records],
-                        "right": [dict(r) for r in right_records],
-                    },
-                    ensure_ascii=False,
-                    default=str,
-                )[:MAX_SURFACE_CHARS],
+                block_payload=_fit_json_block(
+                    comparison_block,
+                    MAX_SURFACE_CHARS,
+                    _omit_longer_side,
+                ),
                 instruction_id=COMPARISON_INSTRUCTION_ID,
                 instruction=self._instruction(COMPARISON_INSTRUCTION_ID),
                 expected_fields=("left", "right"),
@@ -6804,9 +6927,7 @@ class OperationalCapabilityOrchestrator:
         if not eligible:
             return None
         block = {
-            "analysis": _bound_owner_evidence(analysis_outcome)[
-                :MAX_SURFACE_CHARS
-            ],
+            "analysis": _bound_owner_evidence(analysis_outcome),
             "prepare_candidates": [
                 {
                     "remote_name": cap.remote_name,
@@ -6821,9 +6942,18 @@ class OperationalCapabilityOrchestrator:
         proposal = self._propose(
             input_text,
             block_tag="analysis_continuation",
-            block_payload=json.dumps(
-                block, ensure_ascii=False, default=str
-            )[:MAX_SURFACE_CHARS],
+            block_payload=_fit_json_block(
+                block,
+                MAX_SURFACE_CHARS,
+                lambda: _truncate_text_field(block, "analysis", 1024),
+                lambda: _truncate_text_field(block, "analysis", 256),
+                lambda: _truncate_entry_field(
+                    block, "prepare_candidates", "description", 0
+                ),
+                lambda: _omit_tail_entries(
+                    block, "prepare_candidates", "candidates_omitted"
+                ),
+            ),
             instruction_id=CONTINUATION_INSTRUCTION_ID,
             instruction=self._instruction(CONTINUATION_INSTRUCTION_ID),
             expected_fields=("applicable", "remote_name"),
@@ -8466,16 +8596,25 @@ class OperationalCapabilityOrchestrator:
         Any proposal failure falls back to the generic deterministic
         ask-back — it never derives wording from missing input names.
         """
-        block_payload = json.dumps(
-            {
-                "missing_inputs": list(missing_inputs),
-                "capability_description": (descriptor.description or "")[
-                    :MAX_DESCRIPTION_CHARS
-                ],
-            },
-            ensure_ascii=False,
-            default=str,
-        )[:MAX_SURFACE_CHARS]
+        missing_block: dict[str, Any] = {
+            "missing_inputs": list(missing_inputs),
+            "capability_description": (descriptor.description or "")[
+                :MAX_DESCRIPTION_CHARS
+            ],
+        }
+        block_payload = _fit_json_block(
+            missing_block,
+            MAX_SURFACE_CHARS,
+            lambda: _truncate_text_field(
+                missing_block, "capability_description", 64
+            ),
+            lambda: _truncate_text_field(
+                missing_block, "capability_description", 0
+            ),
+            lambda: _omit_tail_entries(
+                missing_block, "missing_inputs", "inputs_omitted"
+            ),
+        )
         try:
             proposal = self._propose(
                 input_text,
@@ -8806,11 +8945,13 @@ class OperationalCapabilityOrchestrator:
             proposal = self._propose(
                 input_text,
                 block_tag="records",
-                block_payload=json.dumps(
+                block_payload=_fit_json_block(
                     block,
-                    ensure_ascii=False,
-                    default=str,
-                )[:MAX_SURFACE_CHARS],
+                    MAX_SURFACE_CHARS,
+                    lambda: _omit_tail_entries(
+                        block, "records", "records_omitted"
+                    ),
+                ),
                 instruction_id=SYNTHESIS_INSTRUCTION_ID,
                 instruction=self._instruction(SYNTHESIS_INSTRUCTION_ID),
                 expected_fields=("items",),
@@ -9117,11 +9258,13 @@ class OperationalCapabilityOrchestrator:
         proposal = self._propose(
             input_text,
             block_tag="evidence",
-            block_payload=json.dumps(
+            block_payload=_fit_json_block(
                 block,
-                ensure_ascii=False,
-                default=str,
-            )[:MAX_RELEVANCE_EVIDENCE_CHARS],
+                MAX_RELEVANCE_EVIDENCE_CHARS,
+                lambda: _omit_tail_entries(
+                    block, "records", "records_omitted"
+                ),
+            ),
             instruction_id=GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
             instruction=self._instruction(
                 GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID
@@ -9202,6 +9345,16 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return None
+        # Bounded preview of what the source actually returned —
+        # untrusted owner data, never instructions; lets the
+        # reformulation pivot on the observed mismatch (e.g.
+        # nomenclature, qualifiers). Fitted structurally so the
+        # serialized preview is never severed mid-document.
+        preview_block: dict[str, Any] = {
+            "records": list(facts.records)[:MAX_RELEVANCE_RECORDS]
+            if facts is not None
+            else []
+        }
         feedback = json.dumps(
             {
                 "prior_correspondence": judgment.correspondence,
@@ -9210,17 +9363,13 @@ class OperationalCapabilityOrchestrator:
                 ],
                 "business_subject": goal.business_subject,
                 "scope_constraints": dict(goal.scope_constraints),
-                # Bounded preview of what the source actually
-                # returned — untrusted owner data, never
-                # instructions; lets the reformulation pivot on the
-                # observed mismatch (e.g. nomenclature, qualifiers).
-                "prior_result_preview": json.dumps(
-                    list(facts.records)[:MAX_RELEVANCE_RECORDS]
-                    if facts is not None
-                    else [],
-                    ensure_ascii=False,
-                    default=str,
-                )[:MAX_EVIDENCE_RECORD_CHARS],
+                "prior_result_preview": _fit_json_block(
+                    preview_block,
+                    MAX_EVIDENCE_RECORD_CHARS,
+                    lambda: _omit_tail_entries(
+                        preview_block, "records", "records_omitted"
+                    ),
+                ),
             },
             ensure_ascii=False,
         )
@@ -10000,9 +10149,14 @@ class OperationalCapabilityOrchestrator:
         proposal = self._propose(
             input_text,
             block_tag="capability",
-            block_payload=json.dumps(
-                block, ensure_ascii=False, default=str
-            )[:MAX_ARGUMENTS_BLOCK_CHARS],
+            block_payload=_fit_json_block(
+                block,
+                MAX_ARGUMENTS_BLOCK_CHARS,
+                lambda: _truncate_text_field(
+                    block, "description", 64
+                ),
+                lambda: _truncate_text_field(block, "description", 0),
+            ),
             instruction_id=INDEX_PROBE_INSTRUCTION_ID,
             instruction=self._instruction(INDEX_PROBE_INSTRUCTION_ID),
             expected_fields=("probe_index",),
@@ -10112,9 +10266,25 @@ class OperationalCapabilityOrchestrator:
             proposal = self._propose(
                 input_text,
                 block_tag="owner_index",
-                block_payload=json.dumps(
-                    block, ensure_ascii=False, default=str
-                )[:MAX_ARGUMENTS_BLOCK_CHARS],
+                block_payload=_fit_json_block(
+                    block,
+                    MAX_ARGUMENTS_BLOCK_CHARS,
+                    lambda: _truncate_entry_field(
+                        block, "owner_index_options", "hints", 64
+                    ),
+                    lambda: _truncate_entry_field(
+                        block, "owner_index_options", "label", 64
+                    ),
+                    lambda: _truncate_entry_field(
+                        block, "owner_index_options", "hints", 0
+                    ),
+                    lambda: _truncate_entry_field(
+                        block, "owner_index_options", "label", 0
+                    ),
+                    lambda: _omit_tail_entries(
+                        block, "owner_index_options", "options_omitted"
+                    ),
+                ),
                 instruction_id=INDEX_SELECT_INSTRUCTION_ID,
                 instruction=self._instruction(INDEX_SELECT_INSTRUCTION_ID),
                 expected_fields=("selected_identifier", "argument_field"),
@@ -10222,15 +10392,37 @@ class OperationalCapabilityOrchestrator:
             # during the single governed recovery round (plan 125
             # adendum).
             block["relevance_feedback"] = relevance_feedback
+        # input_schema is the argument contract — never
+        # structurally reduced. Bounded evidence excerpts and
+        # auxiliary feedback shrink first; if the immutable fields
+        # still exceed the budget the payload emits whole so the
+        # model never sees a severed schema.
+        arguments_payload = _fit_json_block(
+            block,
+            MAX_ARGUMENTS_BLOCK_CHARS,
+            lambda: _truncate_text_field(block, "owner_vocabulary", 6000),
+            lambda: _truncate_text_field(block, "foreign_evidence", 6000),
+            lambda: _truncate_text_field(block, "owner_vocabulary", 2000),
+            lambda: _truncate_text_field(block, "foreign_evidence", 2000),
+            lambda: _drop_block_fields(block, "relevance_feedback"),
+            lambda: _drop_block_fields(block, "owner_vocabulary"),
+            lambda: _drop_block_fields(block, "foreign_evidence"),
+            lambda: _truncate_text_field(block, "description", 0),
+        )
+        # Provenance verification must run against the text the model
+        # actually saw — a declared origin that only exists in the
+        # unprojected remainder would be a fail-open check.
+        for evidence_key in ("owner_vocabulary", "foreign_evidence"):
+            effective = block.get(evidence_key)
+            if isinstance(effective, str):
+                evidence_blocks[evidence_key] = effective
+            else:
+                evidence_blocks.pop(evidence_key, None)
         try:
             proposal = self._propose(
                 input_text,
                 block_tag="schema",
-                block_payload=json.dumps(
-                    block,
-                    ensure_ascii=False,
-                    default=str,
-                )[:MAX_ARGUMENTS_BLOCK_CHARS],
+                block_payload=arguments_payload,
                 instruction_id=ARGUMENTS_INSTRUCTION_ID,
                 instruction=self._instruction(ARGUMENTS_INSTRUCTION_ID),
                 expected_fields=("arguments",),
@@ -10897,16 +11089,18 @@ class OperationalCapabilityOrchestrator:
         business_subject: str | None = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model proposal of inner arguments, schema-scoped."""
-        schema_payload = json.dumps(
+        # The candidate's inner schema is the argument contract —
+        # an immutable payload emitted whole (never severed); an
+        # over-budget schema is a typed boundary concern, not a
+        # compaction target.
+        schema_payload = _json_block(
             {
                 "business_subject": business_subject,
                 "schema": schema or {"type": "object"},
             }
             if business_subject is not None
-            else (schema or {"type": "object"}),
-            ensure_ascii=False,
-            default=str,
-        )[:MAX_SURFACE_CHARS]
+            else (schema or {"type": "object"})
+        )
         proposal = self._model_stage_proposal(
             input_text,
             block_tag="schema",
