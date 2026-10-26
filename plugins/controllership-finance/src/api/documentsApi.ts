@@ -153,6 +153,26 @@ export async function listClosingDocuments(
   );
 }
 
+/** U3 — metadados do documento (associação à competência validada). */
+export async function getClosingDocument(
+  period: string,
+  documentId: string,
+  options?: { signal?: AbortSignal; branchScope?: "MATRIX" | "BRANCH" | "BOTH" },
+): Promise<ClosingDocument> {
+  const qs = buildQuery({ branch_scope: options?.branchScope });
+  const envelope = await httpGet<Envelope<ClosingDocument>>(
+    cfApiUrl(
+      `/closing/competences/${period}/documents/${documentId}` +
+        `${qs ? `?${qs}` : ""}`,
+    ),
+    { signal: options?.signal },
+  );
+  if (!envelope?.data) {
+    throw new Error("Documento não encontrado.");
+  }
+  return envelope.data;
+}
+
 /** U4 — download autenticado; bytes só chegam após autorização. */
 export async function downloadClosingDocument(
   period: string,

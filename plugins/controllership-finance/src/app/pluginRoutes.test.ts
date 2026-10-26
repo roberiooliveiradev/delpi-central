@@ -110,6 +110,36 @@ describe("pluginRoutes", () => {
     ).toBe("not_found");
   });
 
+  it("deep link de documento preserva competência e referência", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/monthly-closing/2026-10/documents/abc-123",
+    );
+    expect(resolved.view).toBe("monthly_closing");
+    expect(resolved.checklistPeriod).toBe("2026-10");
+    expect(resolved.documentRef).toBe("abc-123");
+
+    const byItem = resolvePluginRoute(
+      "/apps/controllership-finance/closing/monthly-closing/2026-10/documents/item:doc-entradas",
+    );
+    expect(byItem.documentRef).toBe("item:doc-entradas");
+
+    expect(
+      resolvePluginRoute(
+        "/apps/controllership-finance/closing/monthly-closing/2026-10/documents/new",
+      ).documentRef,
+    ).toBe("new");
+  });
+
+  it("rota de documento com período inválido cai em not_found", () => {
+    for (const path of [
+      "/apps/controllership-finance/closing/monthly-closing/2026-13/documents/x",
+      "/apps/controllership-finance/closing/monthly-closing/2026-10/documents",
+      "/apps/controllership-finance/closing/monthly-closing/2026-10/extra/x",
+    ]) {
+      expect(resolvePluginRoute(path).view).toBe("not_found");
+    }
+  });
+
   it("resolve a rota do checklist da competência", () => {
     const resolved = resolvePluginRoute(
       "/apps/controllership-finance/closing/checklist",

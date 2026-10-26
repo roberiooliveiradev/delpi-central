@@ -63,7 +63,8 @@ import {
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { normalizeBasePath } from "../../app/pluginRoutes";
 import { CF_HELP } from "../../content/helpTooltips";
-import { ClosingDocumentsPanel } from "./ClosingDocumentsPanel";
+import { DocumentDetailPanel } from "./DocumentDetailPanel";
+import { MonthlyDocumentsPanel } from "./MonthlyDocumentsPanel";
 import { MonthlyOverviewPanel } from "./MonthlyOverviewPanel";
 import { ReportsMatrixPanel } from "./ReportsMatrixPanel";
 
@@ -210,9 +211,12 @@ function NotOpenedNotice({
 export function MonthlyClosingPage({
   basePath,
   period: routePeriod,
+  documentRef,
 }: {
   basePath: string;
   period?: string;
+  /** Referência da rota de detalhe (`{uuid}`, `item:{key}` ou `new`). */
+  documentRef?: string;
 }) {
   // Período e aba derivam da URL — refresh, back/forward e deep links
   // preservam o contexto. Mês de referência livre, sem default (decisão PO).
@@ -250,6 +254,57 @@ export function MonthlyClosingPage({
     typeof window !== "undefined"
       ? parseTab(window.location.search)
       : "overview";
+
+  // Filtros da aba Documentos vivem na query — deep link, F5 e o retorno
+  // do detalhe preservam pesquisa e situação.
+  const documentsQuery =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
+  const documentsSearch = documentsQuery.get("q") ?? "";
+  const documentsState = documentsQuery.get("state") ?? "all";
+
+  const setDocumentsFilters = useCallback(
+    (next: { search?: string; state?: string }) => {
+      const params = new URLSearchParams();
+      params.set("tab", "documents");
+      const q = next.search ?? documentsSearch;
+      const state = next.state ?? documentsState;
+      if (q) params.set("q", q);
+      if (state && state !== "all") params.set("state", state);
+      navigatePluginPath(
+        `${base}/closing/monthly-closing/${period}?${params}`,
+        { replace: true },
+      );
+    },
+    [base, period, documentsSearch, documentsState],
+  );
+
+  const openDocumentDetail = useCallback(
+    (ref: string) => {
+      const params = new URLSearchParams();
+      if (documentsSearch) params.set("q", documentsSearch);
+      if (documentsState && documentsState !== "all")
+        params.set("state", documentsState);
+      const qs = params.toString();
+      navigatePluginPath(
+        `${base}/closing/monthly-closing/${period}/documents/` +
+          `${encodeURIComponent(ref)}${qs ? `?${qs}` : ""}`,
+      );
+    },
+    [base, period, documentsSearch, documentsState],
+  );
+
+  const backToDocuments = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set("tab", "documents");
+    if (documentsSearch) params.set("q", documentsSearch);
+    if (documentsState && documentsState !== "all")
+      params.set("state", documentsState);
+    navigatePluginPath(
+      `${base}/closing/monthly-closing/${period}?${params}`,
+    );
+  }, [base, period, documentsSearch, documentsState]);
 
   const listKey = `list:${retryNonce}`;
   const currentList = listResult?.key === listKey ? listResult : null;
@@ -440,9 +495,43 @@ export function MonthlyClosingPage({
     return children;
   };
 
-  const tabLabel =
-    TAB_OPTIONS.find((option) => option.value === tab)?.label ??
-    "Visão geral";
+  const detailMode = Boolean(documentRef && period);
+  const tabLabel = detailMode
+    ? "Documento"
+    : (TAB_OPTIONS.find((option) => option.value === tab)?.label ??
+      "Visão geral");
+  const pathItems = detailMode
+    ? [
+        {
+          id: "monthly-closing",
+          label: "Fechamento mensal",
+          href: monthlyPath(base, period, "overview"),
+          onNavigate: (event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            navigatePluginPath(monthlyPath(base, period, "overview"));
+          },
+        },
+        {
+          id: "documents",
+          label: "Documentos e interações",
+          href: monthlyPath(base, period, "documents"),
+          onNavigate: (event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            backToDocuments();
+          },
+        },
+      ]
+    : [
+        {
+          id: "monthly-closing",
+          label: "Fechamento mensal",
+          href: monthlyPath(base, period, "overview"),
+          onNavigate: (event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            navigatePluginPath(monthlyPath(base, period, "overview"));
+          },
+        },
+      ];
 
   return (
     <section
@@ -460,17 +549,7 @@ export function MonthlyClosingPage({
             navigatePluginPath(base);
           },
         }}
-        items={[
-          {
-            id: "monthly-closing",
-            label: "Fechamento mensal",
-            href: monthlyPath(base, period, "overview"),
-            onNavigate: (event) => {
-              event.preventDefault();
-              navigatePluginPath(monthlyPath(base, period, "overview"));
-            },
-          },
-        ]}
+        items={pathItems}
         current={tabLabel}
       />
       <ClosingHero
@@ -498,7 +577,18 @@ export function MonthlyClosingPage({
         />
       ) : null}
 
-      {period ? (
+      {period && detailMode ? (
+        <div className="cf-page-stack">
+          {renderProbeGate(
+            <DocumentDetailPanel
+              period={period}
+              documentRef={documentRef ?? ""}
+              onBack={backToDocuments}
+              onOpenRef={openDocumentDetail}
+            />,
+          )}
+        </div>
+      ) : period ? (
         <>
           <CfSegmentToggle<MonthlyClosingTab>
             options={TAB_OPTIONS}
@@ -556,7 +646,15 @@ export function MonthlyClosingPage({
 
             {tab === "documents" ? (
               <>
-                {renderProbeGate(<ClosingDocumentsPanel period={period} />)}
+                {renderProbeGate(
+                  <MonthlyDocumentsPanel
+                    period={period}
+                    search={documentsSearch}
+                    stateFilter={documentsState}
+                    onFiltersChange={setDocumentsFilters}
+                    onOpenDetail={openDocumentDetail}
+                  />,
+                )}
                 <CfSectionCard title="Checklist da competência">
                   <p>
                     A validação item a item do checklist P2 permanece na página

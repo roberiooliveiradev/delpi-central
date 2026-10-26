@@ -392,3 +392,21 @@ Fonte: [Plano 113 §§12–13](./113-plano-canonico-fluxo-fechamento-controlador
 | RQ-V03-09 | Atividades = escopo conferências | subtítulo e vazio honestos («nesta conferência») | teste «atividade recente» | PASS |
 | RQ-V03-10 | Regressões V0.2 | isolamento por período, deep link, fail-closed, foco | suíte 213/213 do plugin | PASS |
 | RQ-V03-11 | QA visual desktop/mobile/temas | homologação do PO no navegador | — | PENDING (QA visual pelo PO) |
+
+## Documentos e interações V0.2 — aba + detalhe contextual (CF-PROC0072-DOCUMENTS-UX-006, 26/10/2026)
+
+| ID | Requisito | Critério de aceite | Evidência | Status |
+|---|---|---|---|---|
+| RQ-DOC-01 | Cartões por documento, sem tabela | cartão por exigência e por adicional com nome/situação/versão | MonthlyDocumentsPanel: «cartões», «aguardo», «adicional» | PASS |
+| RQ-DOC-02 | Pesquisa e filtro de situação | restringem cartões; preservados na URL | testes «pesquisa por nome», «filtro de situação» | PASS |
+| RQ-DOC-03 | Resumo de solicitações real | só decisões REJECTED correntes; motivo/autor/data | teste «solicitações reais» + «Abrir conversa» → `item:{key}` | PASS |
+| RQ-DOC-04 | Vazio honesto | sem exigências/arquivos → «Nenhum documento exigido», sem erro | teste «estado vazio»; CANCELLED fora da lista | PASS |
+| RQ-DOC-05 | Deep route do detalhe | `documents/{ref}` preserva período; ref `item:`/`uuid`/`new` | pluginRoutes: deep link + período inválido → not_found | PASS |
+| RQ-DOC-06 | Detalhe com prévia/download/versões | FilePreviewView por download autenticado; versões e histórico reais | testes «decisões e histórico», «download e nova versão» | PASS |
+| RQ-DOC-07 | Anexação contextual | upload no detalhe com `snapshot_item_id`; `new` sem vínculo | testes «anexo contextual», «novo adicional» | PASS |
+| RQ-DOC-08 | Nova versão preserva anterior | replace com revision+idempotency_key; SUPERSEDED | teste «nova versão preserva revisão» | PASS |
+| RQ-DOC-09 | Sem conversa fictícia | sem contrato de comentário → estado honesto declarado | teste «interações honestas» no modo adicional | PASS |
+| RQ-DOC-10 | Fail-closed | 403 → banner, sem conteúdo inventado | testes «autorização» painel e «document_not_found» detalhe | PASS |
+| RQ-DOC-11 | Três abas preservadas | detalhe esconde abas; voltar restaura filtros | teste de página «deep link de documento» | PASS |
+| RQ-DOC-12 | QA visual mobile/temas | homologação do PO no navegador | — | PENDING (QA visual pelo PO) |
+

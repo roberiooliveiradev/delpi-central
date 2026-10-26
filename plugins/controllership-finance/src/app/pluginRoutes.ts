@@ -88,12 +88,18 @@ const DEEP_ROUTE_VIEWS: Record<string, PluginView> = {
   "monthly-closing": "monthly_closing",
 };
 
+/** Detalhe de documento da aba Documentos — deep route contextual (não é aba). */
+const DOCUMENT_DETAIL_PATTERN =
+  /^closing\/monthly-closing\/(\d{4}-(0[1-9]|1[0-2]))\/documents\/([A-Za-z0-9_.:%~-]+)$/;
+
 export type ResolvedPluginRoute = {
   view: PluginView;
   pathname: string;
   relativePath: string;
   /** Competência YYYY-MM quando a deep route é `closing/{view}/{period}`. */
   checklistPeriod?: string;
+  /** Referência do documento na rota de detalhe (UUID, `item:{key}` ou `new`). */
+  documentRef?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -123,6 +129,16 @@ export function resolvePluginRoute(
   const relativePath = path.startsWith(`${base}/`)
     ? path.slice(base.length + 1)
     : path.slice(base.length);
+  const documentMatch = DOCUMENT_DETAIL_PATTERN.exec(relativePath);
+  if (documentMatch) {
+    return {
+      view: "monthly_closing",
+      pathname: path,
+      relativePath,
+      checklistPeriod: documentMatch[1],
+      documentRef: decodeURIComponent(documentMatch[3] ?? ""),
+    };
+  }
   const periodMatch = PERIOD_DEEP_ROUTE_PATTERN.exec(relativePath);
   const view = periodMatch
     ? DEEP_ROUTE_VIEWS[periodMatch[1] ?? ""] ?? "not_found"

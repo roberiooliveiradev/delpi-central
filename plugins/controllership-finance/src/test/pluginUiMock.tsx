@@ -789,3 +789,31 @@ export function createDashboardPagePath() {
     );
   };
 }
+
+export function useFilePreviewLoader(options?: {
+  source?: unknown;
+  enabled?: boolean;
+}) {
+  const enabled = options?.enabled !== false && options?.source;
+  return {
+    kind: enabled ? "pdf" : "none",
+    loading: false,
+    error: null,
+    previewUrl: enabled ? "blob:mock-preview" : null,
+    textContent: null,
+    textTruncated: false,
+    spreadsheetData: null,
+    docxData: null,
+  };
+}
+
+export function FilePreviewView(props: {
+  state?: { kind?: string; loading?: boolean; error?: unknown };
+  title?: string;
+}) {
+  return el(
+    "div",
+    { "data-testid": "file-preview" },
+    props.title ?? props.state?.kind ?? "",
+  );
+}

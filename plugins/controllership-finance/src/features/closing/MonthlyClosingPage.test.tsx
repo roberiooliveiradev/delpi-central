@@ -36,10 +36,18 @@ vi.mock("../../api/competencesApi", () => ({
   openCompetence: (...args: unknown[]) => openCompetenceMock(...args),
 }));
 
-vi.mock("./ClosingDocumentsPanel", () => ({
-  ClosingDocumentsPanel: ({ period }: { period: string }) => (
+vi.mock("./MonthlyDocumentsPanel", () => ({
+  MonthlyDocumentsPanel: ({ period }: { period: string }) => (
     <div data-testid="documents-panel">documents:{period}</div>
   ),
+}));
+
+vi.mock("./DocumentDetailPanel", () => ({
+  DocumentDetailPanel: ({
+    documentRef,
+  }: {
+    documentRef: string;
+  }) => <div data-testid="document-detail">detail:{documentRef}</div>,
 }));
 
 vi.mock("./ReportsMatrixPanel", () => ({
@@ -433,6 +441,30 @@ describe("indicadores honestos e gate documental", () => {
     expect(window.location.pathname).toBe(
       `${BASE}/closing/monthly-closing/2026-10`,
     );
+  });
+
+  it("deep link de documento abre o detalhe preservando o período", async () => {
+    setLocation(
+      `${BASE}/closing/monthly-closing/2026-10/documents/item:CK-E-01`,
+    );
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(
+      <MonthlyClosingPage
+        basePath={BASE}
+        period="2026-10"
+        documentRef="item:CK-E-01"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("document-detail").textContent).toBe(
+        "detail:item:CK-E-01",
+      ),
+    );
+    // Três abas ficam ocultas no detalhe; caminho mostra o contexto.
+    expect(screen.queryByRole("button", { name: "Relatórios e divergências" })).toBeNull();
+    expect(screen.getByText("Documentos e interações")).toBeTruthy();
   });
 });
 

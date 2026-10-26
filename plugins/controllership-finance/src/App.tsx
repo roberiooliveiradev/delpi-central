@@ -82,6 +82,7 @@ function AppRoutes({
           <MonthlyClosingPage
             basePath={basePath}
             period={resolved.checklistPeriod}
+            documentRef={resolved.documentRef}
           />
         ) : (
           <NotFoundPage basePath={basePath} />

@@ -1659,3 +1659,25 @@ Vitest `MonthlyClosingPage.test.tsx`: 31/31 — inclui expansão in-place, fallb
 ## 38. Documentos e interações V0.2 — decisões PO (26/10/2026)
 
 O Product Owner aprovou: **cartões por documento**, **anexação exclusivamente no detalhe**, **resumo das solicitações na aba com conversa completa no detalhe**, e **documentos adicionais opcionais por competência mesmo quando não houver exigências cadastradas**. Os opcionais não criam obrigação no catálogo geral. Layout detalhado de lista, detalhe (PDF esquerda, interação direita, histórico abaixo), estados, teste e gates: [Plano 113 §17](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). `PRODUCT_DESIGN_APPROVED` para as quatro escolhas; wireframe detalhado `PENDING_FINAL_VISUAL_APPROVAL`. O contrato P2/P6 e a colaboração ainda exigem inventário; não inferir runtime nem apagar a página legada.
+
+## 39. Execução Documentos V0.2 — registro de implementação (CF-PROC0072-DOCUMENTS-UX-006, 26/10/2026)
+
+Implementada a aba «Documentos e interações» conforme as quatro escolhas do §38 e o wireframe do Plano 113 §17.
+
+### 39.1 Lista (aba)
+- Cartões (não tabela): exigidos derivados do checklist real + adicionais (`link_kind=competence`); pesquisa e filtro de situação persistidos na URL (`?tab=documents&q=&state=`); «Adicionar documento» abre `documents/new`; cartão «Ver documento» abre `documents/{ref}`.
+- Resumo «Solicitações que precisam de atenção» = decisões `REJECTED` não revertidas por item, com motivo/comentário/autor/data reais e «Abrir conversa» → detalhe.
+- Vazio honesto: «Nenhum documento exigido para este fechamento» (estado normal, não erro).
+
+### 39.2 Detalhe (deep route, não quarta aba)
+- Rota `closing/monthly-closing/{period}/documents/{ref}`; breadcrumb Fechamento mensal > Documentos e interações > Documento; «Voltar» restaura `tab=documents` com filtros.
+- Três modos: `item:{key}` (exigido: seletor de anexos, prévia, versões, decisões, eventos, anexação contextual e nova versão), `{uuid}` (adicional: prévia/versões/download/eventos; interações declaradas indisponíveis — sem conversa fictícia), `new` (anexação de adicional com título; upload sem `snapshot_item_id`).
+- Desktop: documento à esquerda, interações à direita, histórico abaixo; mobile empilha (media query 760px).
+- Falha de prévia não bloqueia download; `stale_revision` informa e recarrega.
+
+### 39.3 Gates respeitados
+Nenhuma migration, endpoint, permission ou contrato de colaboração criado. Documento adicional usa o contrato U1 existente (upload com `snapshot_item_id` opcional). Conversa livre, notificações e audiência DRE permanecem `PLANNED`/`TO_INVENTORY`. `ATTACHED != VALIDATED` mantido.
+
+### 39.4 Evidência
+Vitest: painéis novos 17 testes + página/rotas (deep link documento, F5, período) — suíte fechamento 160/160, plugin 233/233; `tsc`, ESLint, estruturais e build federado PASS. Homologação visual do PO: `PENDING`.
+

@@ -469,3 +469,31 @@ Inventariar `plugins/plugin-ui/src/index.ts`, `plugins/plugin-ui/docs/component-
 **AC:** (1) cartões por documento, sem tabela principal; (2) upload só no detalhe; (3) resumo de solicitações na aba e thread completa no detalhe; (4) opcional por mês sem virar exigência geral; (5) versões e histórico preservados; (6) ausência de documentos é estado normal; (7) authorized audiences separadas; (8) deep link/URL/F5/voltar preservam contexto; (9) sem dados ou estados inventados; (10) nenhuma quarta aba; (11) colaboração/WebSocket somente após gates; (12) CLARA e Help atualizadas no mesmo gate da implementação comprovada.
 
 **Próxima etapa:** apresentar a V0.2 ao PO para ajuste/aprovação final do desenho (detalhe lado a lado permanece proposta anterior não contrariada pelas quatro escolhas). Após freeze e inventário, elaborar execução incremental page-by-page. Legado não será removido nesta etapa.
+
+## 18. RUNTIME UPDATE — Documentos e interações V0.2 implementada (CF-PROC0072-DOCUMENTS-UX-006, 26/10/2026)
+
+Implementada a segunda aba do Fechamento Mensal conforme §16–17 e decisões PO do doc 112 §38. Sem migration, sem endpoint novo, sem contrato de colaboração inventado.
+
+### 18.1 O que foi implementado
+- **Cartões por documento** (`MonthlyDocumentsPanel`): um cartão por **exigência** do checklist (badge «Exigido», estado real do item — aguardando/conferido/não se aplica) e um por **documento adicional** (`link_kind=competence`, badge «Adicional»). Versão mais recente e última alteração vêm de `listClosingDocuments`; nunca tabela como apresentação principal.
+- **Pesquisa e filtro por situação** via `FiltersRow`/`FilterInputField`/`FilterSelectField`; pesquisa (`q`) e situação (`state`) vivem na query da aba — F5, deep link e retorno do detalhe preservam o contexto.
+- **Solicitações que precisam de atenção**: decisões `REJECTED` correntes por item via `getItemValidation` — motivo estruturado, comentário, autor e data reais; «Abrir conversa» leva ao detalhe do item. Reversões (`REVERSED`) removem a solicitação do resumo.
+- **Detalhe do documento** (`DocumentDetailPanel`) na deep route `closing/monthly-closing/{YYYY-MM}/documents/{ref}` — não é quarta aba: `ref=item:{item_key}` (exigido), `ref={document_id}` (adicional), `ref=new` (anexação contextual de adicional). Layout: prévia/documento à esquerda, «Interações» à direita, «Histórico» abaixo; mobile empilha.
+- **Prévia autenticada** por `FilePreviewView` + `useFilePreviewLoader` sobre o blob de `downloadClosingDocument` — falha de prévia nunca bloqueia o download.
+- **Upload contextual**: no detalhe do item anexa com `snapshot_item_id`; em `new` anexa documento adicional sem `snapshot_item_id` (contrato U1 já admitia — **documento adicional não cria exigência geral** nem item fictício). «Enviar nova versão» usa `replaceClosingDocument` com `revision`+`idempotency_key`; versão anterior preservada (`SUPERSEDED`).
+- **Histórico real**: `listDocumentEvents` por documento (anexação, versão, download autorizado/negado, cancelamento).
+- **U3 — `getClosingDocument`** adicionado ao client `documentsApi` (endpoint GET por id já existente).
+- Legado preservado: `ClosingDocumentsPanel` continua na página `closing/checklist/{period}`; rotas legadas intactas.
+
+### 18.2 O que NÃO existe (honestidade)
+- **Conversa livre por documento não possui contrato** — a coluna «Interações» mostra decisões reais (ajuste solicitado/conferido/revertido) e declara explicitamente que a conversa livre ainda não está disponível. Nenhuma mensagem é simulada.
+- Notificações/WebSocket: `PLANNED`, sem afirmação de tempo real.
+- Audiência DRE/Contabilidade no detalhe: `PLANNED` para fase futura; sem permissão nova.
+- `ATTACHED != VALIDATED`; resposta/decisão não encerra solicitação automaticamente.
+
+### 18.3 Componentes do kit efetivamente usados
+`createDashboardPagePath`, `createDashboardPageHero`, `createDashboardSectionCard` (com `hint`), `createDashboardStatusBadge`, `ActionButton`, `EmptyState`, `StateBanner`/QueryErrorBanner, `FiltersRow`+`FilterInputField`+`FilterSelectField`, `FileDropzone`, `FilePreviewView`, `useFilePreviewLoader`, `TitleWithHelp`. Nenhum componente copiado; nenhum chrome paralelo.
+
+### 18.4 Evidência
+Vitest focado: `MonthlyDocumentsPanel` 10/10, `DocumentDetailPanel` 7/7, `MonthlyClosingPage` 32/32, `pluginRoutes` 18/18. Suíte fechamento 160/160; suíte plugin completa OK. `tsc -b`/`--noEmit` e ESLint PASS; build federado OK; testes estruturais (boundary MFE→BFF, cobertura de ajuda) PASS. Smoke autenticado Devin: `TEST_NOT_RUN`; homologação visual do PO: `PENDING`.
+

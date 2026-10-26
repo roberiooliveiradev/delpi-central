@@ -360,3 +360,16 @@ Refinamento de apresentação da Visão geral do Fechamento mensal — a estrutu
 - **Atividades recentes:** últimos registros reais das conferências do mês (auditoria P3, até cinco). Ainda não cobre todas as áreas — histórico completo é evolução futura.
 - **Concluir ≠ Enviar:** «Concluir fechamento» mostra o estado e o que falta (conclusão é derivada pelo sistema — sem botão); «Enviar documentos à Contabilidade» mostra a situação do conjunto e leva à página de gerenciamento, onde o envio exige confirmação.
 - Códigos técnicos (`p3_cutoff_not_confirmed`, `no_applicable_packages` etc.) nunca aparecem no texto principal — servem apenas para diagnóstico/auditoria. Código desconhecido aparece como «Existe uma situação pendente que precisa ser verificada».
+
+## Adendo — Documentos e interações V0.2 (CF-PROC0072-DOCUMENTS-UX-006)
+
+A segunda aba do Fechamento mensal está implementada — a CLARA deve descrevê-la em português simples:
+
+- **Cartões:** cada documento exigido (da lista definida para o mês) vira um cartão «Exigido»; arquivos anexados só àquele mês viram cartões «Adicional». Não existe tabela principal.
+- **Pesquisa e filtro:** pesquisar por nome e filtrar por situação (aguardando documento, com ajuste solicitado, com arquivo enviado, conferido) ficam na URL — a troca de mês e o retorno do detalhe preservam o contexto.
+- **Documento adicional:** arquivo anexado somente àquele fechamento. Não vira exigência geral, não se torna obrigatório nos meses seguintes e não altera fechamentos concluídos.
+- **Detalhe do documento:** aberto pelo cartão ou por deep link `…/documents/{ref}`. Mostra prévia do arquivo, versões (a anterior fica preservada ao enviar nova versão), download autorizado, solicitações/decisões reais e histórico auditável (anexação, versão, download, cancelamento).
+- **Solicitações de ajuste:** são decisões reais registradas pelos revisores, com motivo e comentário. «Abrir conversa» leva ao detalhe. **Não existe conversa livre por documento ainda** — a CLARA não deve afirmar que há chat/mensagens; o que existe são decisões e histórico.
+- **Anexo ≠ validação ≠ liberação:** arquivo enviado (`ATTACHED`) não significa conferido nem liberado para a Contabilidade/DRE. Uma resposta não encerra a solicitação automaticamente.
+- Estado vazio («Nenhum documento exigido para este fechamento») é normal, não erro.
+

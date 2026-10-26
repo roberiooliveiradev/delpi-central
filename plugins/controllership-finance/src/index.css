@@ -893,3 +893,119 @@
   outline: 2px solid var(--cf-focus, currentColor);
   outline-offset: 2px;
 }
+
+/* Documentos e interações V0.2 — cartões, detalhe contextual */
+.dashboard-controllership-finance .cf-monthly-documents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-section-subtitle {
+  margin: 0 0 8px;
+  color: var(--cf-text-muted);
+  font-size: 0.875rem;
+}
+
+.dashboard-controllership-finance .cf-document-cards {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-document-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--cf-border, rgba(127, 127, 127, 0.25));
+  border-radius: var(--radius, 12px);
+}
+
+.dashboard-controllership-finance .cf-document-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-document-card__meta,
+.dashboard-controllership-finance .cf-request-list__meta,
+.dashboard-controllership-finance .cf-document-detail__meta {
+  color: var(--cf-text-muted);
+  font-size: 0.8125rem;
+}
+
+.dashboard-controllership-finance .cf-document-card__attention {
+  color: var(--cf-danger, #b3261e);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.dashboard-controllership-finance .cf-request-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-controllership-finance .cf-document-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-document-detail__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-document-detail__title {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-controllership-finance .cf-document-detail__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--cf-grid-gap, 16px);
+  align-items: start;
+}
+
+.dashboard-controllership-finance .cf-document-detail__doclist,
+.dashboard-controllership-finance .cf-document-detail__versions,
+.dashboard-controllership-finance .cf-document-detail__interactions,
+.dashboard-controllership-finance .cf-document-detail__history {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-controllership-finance .cf-document-detail__docpick {
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+
+.dashboard-controllership-finance .cf-document-detail__docpick[aria-pressed="true"] {
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .dashboard-controllership-finance .cf-document-detail__columns {
+    grid-template-columns: 1fr;
+  }
+}
