@@ -173,3 +173,8 @@ Fluxo canônico de delivery: local → testes → revisão → commit → push �
 **Sequência de execução autorizável:** (a) inventário técnico/contratos e matriz de consumers; (b) proposta de migração e gates de dados; (c) aprovação técnica de migração e execução LOCAL/testes; (d) BFF de abertura + consulta mensal, AuthZ e auditoria; (e) catálogo de exigências effective-dated e páginas Manage; (f) relatórios/divergências; (g) documentos/interações/P5; (h) DRE por último. Entrega por slices fechados, sem commit parcial que quebre consumers. O executor deve solicitar o gate específico quando exigido e entregar `EXECUTION_REPORT` para `GPT REVIEW`. Sem smoke autenticado, resultado operacional = `INCONCLUSIVE`.
 
 **Limites:** não criar permission code, não gravar TOTVS, não expor relatórios internos à DRE, não remover legado antecipadamente. Qualquer migration, breaking change e deploy continuam sujeitos à authority transversal e owner. Não interpretar esta autorização funcional como licença para ignorar integridade ou AuthZ.
+
+
+---
+
+**ATUALIZAÇÃO DE RUNTIME — 2026-10-26 (CF-PROC0072-MONTHLY-OPEN-PROD-CLARA-004):** DR-C1 está **em produção**. Deploy canônico @`052d344d90` aplicou V015 (template_version_id nullable) no startup; primeira abertura real já registrada — `2026-09` aberto sem template via Portal autenticado (audit `opened_without_template: true`, checklist vazio legítimo). DR-C2 (relatórios por mês sem competência) e DR-C3 (propagação a competência em andamento) seguem pendentes conforme §3.

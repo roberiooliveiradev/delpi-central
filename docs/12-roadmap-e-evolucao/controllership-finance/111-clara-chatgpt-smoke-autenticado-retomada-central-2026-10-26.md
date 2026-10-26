@@ -65,3 +65,10 @@ A solicitação atual do PO é **retornar ao desenvolvimento do fechamento mensa
 `NEXT_ACTION=READ_ONLY_P1_P6_INVENTORY_AND_NEXT_SLICE_GATE`.
 
 **Regra:** READ → VERIFY → CLASSIFY → DECIDE → (GO explícito) IMPLEMENT MINIMAL DIFF → TEST → VERIFY OUTCOME → DOCUMENT → REPORT.
+
+
+---
+
+## Adendo de evidência — abertura real em produção (2026-10-26)
+
+Após o deploy canônico @`052d344d90` (V015 aplicada via startup migrations, pré-backup `plugins-hub-controllership-finance-pre-v015-20261026201415.dump`), uma abertura **real e autenticada** ocorreu pelo Portal: `POST /closing/competences` → 201 para `2026-09`. Estado pós-condição verificado read-only: `template_version_id NULL`, `competence_checklist_item` com 0 itens, evento `COMPETENCE_OPENED` com `opened_without_template: true`. Esta é a primeira competência em produção aberta sem checklist publicado — prova funcional do contrato DR-C1 em runtime produtivo.

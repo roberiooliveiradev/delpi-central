@@ -321,3 +321,17 @@ efeito, motivo, dependências e impedimentos — gerada por
 (nunca reconstruída no frontend; R-CLARA-02). Operações que o
 servidor não consegue apresentar com clareza são exibidas como
 bloqueadas e não podem ser autorizadas implicitamente.
+
+
+---
+
+## Adendo — sincronização de corpus (CF-PROC0072-MONTHLY-OPEN-PROD-CLARA-004)
+
+O manifest do corpus (`corpus_manifest.AUTHORIZED_SOURCES`) foi ampliado de 52 para 55 fontes autorizadas, incluindo os documentos 111 (evidência de smoke autenticado), 112 (decisões UX + inventário + DR-C1 resolvido) e 113 (plano canônico com GO do PO). Conhecimento funcional vigente que o corpus passa a representar:
+
+- Selecionar mês de referência **não** abre fechamento (consulta ≠ operação formal).
+- `access` efetivo abre o fechamento **sem** checklist publicado e sem documentos — lista vazia é estado legítimo, não erro; `no_published_template` deixou de ser regra vigente de abertura.
+- Abertura é idempotente e auditada (`opened_without_template`); não conclui P2/P3/P5 por vacuidade.
+- Itens publicados depois da abertura **não** entram retroativamente (re-snapshot pendente — DR-C3).
+- DRE continua TARGET — não descrever como capacidade operacional.
+- Nenhuma tool ACT de abertura existe — a CLARA não abre fechamentos por conta própria.

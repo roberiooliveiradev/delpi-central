@@ -219,4 +219,17 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
        "105-go-conclusao-integral-pendencias-implementacao-antes-refinamento.md",
        "DOCUMENT", "GO de conclusão integral", "APPROVED_RULE",
        "aceites-decisoes"),
+    # -- Plano canônico, decisões UX e evidência autenticada -----------
+    _s("doc-111",
+       "111-clara-chatgpt-smoke-autenticado-retomada-central-2026-10-26.md",
+       "TEST_EVIDENCE", "Smoke autenticado CLARA/ChatGPT",
+       "CURRENT_IMPLEMENTATION", "implementacao-runtime"),
+    _s("doc-112",
+       "112-design-visual-fechamento-mensal-wireframes.md",
+       "DOCUMENT", "Design do fechamento mensal, decisões e inventário",
+       "APPROVED_RULE", "fluxo-fechamento-decisoes"),
+    _s("doc-113",
+       "113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md",
+       "DOCUMENT", "Plano canônico do fluxo de fechamento (PO GO)",
+       "APPROVED_RULE", "fluxo-fechamento-decisoes"),
 ]

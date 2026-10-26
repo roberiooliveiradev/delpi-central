@@ -1586,6 +1586,12 @@ Todas sob prefixo `/closing/competences/{period}` e todas chamam `_competence_id
 - Suite backend sem PG: 401 passed / 199 skipped; rotas unitárias 23/23. Frontend: tsc OK, MonthlyClosingPage 17/17 + ClosingChecklistPage 6/6.
 - Higiene de testes corrigida no caminho: `test_pg_package_c.py` e `test_pg_remainder_build.py` não tinham `pytestmark` de skip — KeyError pré-existente sem `CF_TEST_PG_*`; adicionado o guard padrão dos irmãos.
 
-### 33.5 Gate produtivo
+### 33.5 Gate produtivo — EXECUTADO (CF-PROC0072-MONTHLY-OPEN-PROD-CLARA-004)
 
-- `CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP` aplica migrations no startup da API ⇒ o deploy da `controllership-finance-api` executa V015 em produção. **Não deployado nesta execução** — aguarda autorização explícita do owner de dados + confirmação de plano de rollback (§33.2). MFE não precisa de redeploy (mudança frontend é type-only).
+- `CONTROLLERSHIP_FINANCE_RUN_MIGRATIONS_ON_STARTUP` aplica migrations no startup da API ⇒ o deploy da `controllership-finance-api` executa V015 em produção. Deploy autorizado pelo PO e executado em 2026-10-26 com pré-condições verificadas:
+  - backup pré-change `pg_dump -Fc -n controllership_finance` → `~/backups/plugins-hub-controllership-finance-pre-v015-20261026201415.dump` (srv-api);
+  - estado pré-migration: coluna `NOT NULL`, `monthly_competence` com 0 linhas (sem histórico a preservar); schema_migrations V001–V014 íntegros;
+  - deploy canônico `git pull --ff-only` @`052d344d90` + `up-prod-sequential.sh --build controllership-finance-api`;
+  - pós-condições: `migration_applied V015` no startup log, `schema_migrations` max=15, `template_version_id` nullable=YES, FK preservada, container `healthy`.
+- **Primeira abertura real já ocorreu via jornada autenticada do Portal:** `POST /closing/competences` → 201, competência `2026-09` criada com `template_version_id NULL`, 0 itens no checklist, audit `COMPETENCE_OPENED` com `opened_without_template: true` (evidência read-only; ator registrado por UUID).
+- Rollback: `SET NOT NULL` é seguro somente enquanto não houver competências NULL — a partir desta abertura já existe 1 (2026-09); rollback exigiria decisão de dados (associar versão vigente ou descartar o fechamento) — ver §33.2.
