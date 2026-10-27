@@ -186,3 +186,40 @@ Justificativa: é a menor evolução de contrato possível — um guard de valid
 4. **422 vs permitir** `empty_resulting_checklist` — depende da decisão DR-2.
 
 **Próximo gate:** GPT Arquiteto revisa este contrato → PO decide DR-2 → autorização de implementação (DR-1 + decisão DR-2 juntos ou DR-1 com `empty_resulting_checklist` mantido).
+
+
+## 7. Decisão PO e revisão contratual — 27/10/2026 (GATE-013-R1)
+
+**DECISÃO CONCEITUAL, NÃO GATE DE IMPLEMENTAÇÃO.** O PO aprova conceitualmente DR-2 **alternativa A: versão PUBLISHED com zero itens**, sujeita a confirmação da semântica e compatibilidade dos consumidores antes do runtime. DR-1 permanece aprovado apenas em direção (comando transacional BFF). Não criar endpoint, migration, alterar schema, publicar checklist vazio nem modificar runtime neste gate.
+
+### 7.1 Concorrência transversal: comando novo e endpoints legados
+- Inventariar os pontos de escrita nas rotas antigas DRAFT/UPDATE/REVIEW/PUBLISH/INACTIVATE, respectiva ordem de locks e transações. O lock `SELECT ... FOR UPDATE` no template **não serializa** um writer legado que não adquira o mesmo lock.
+- Propor protocolo comum de serialização por template para todos os writers concorrentes, inclusive publicação legada, ou estratégia de conflito/rollout que bloqueie interleavings. Testar dois admins, duas rotas, commit concorrente, deadlock/timeout, revisão stale e publicação fora de ordem. Nenhuma alteração do legado está autorizada nesta fase.
+- DRAFT/REVIEW pré-existente: definir se bloqueia nova operação, se exige rebase ou se pode coexistir; não presumir segurança por versão imutável.
+
+### 7.2 Idempotência e controle de revisão
+- Não confundir igualdade do estado final com identidade de requisição. Propor `Idempotency-Key` persistida e escopada por template, ator/tenant conforme Core, operação, payload hash e janela; retry com mesma chave/payload retorna a resposta original, chave igual com payload diferente gera conflito; definir expiração e armazenamento transacional/limpeza.
+- Para gravações baseadas em leitura prévia, definir `expected_revision`/`base_version` obrigatório e o token de revisão que muda em **qualquer** publicação relevante, inclusive por endpoint legado; documentar retorno 409, retry após atualização e regras de no-op. Não assumir que `max(version)` sozinho resolve toda concorrência.
+- Especificar eventos de auditoria sem duplicação para retries; request/response e código de conflito devem ser congelados apenas após inventário.
+
+### 7.3 REVIEW — inventário de governança obrigatório, sem escolha antecipada
+- Inspecionar owner e regras de DRAFT→REVIEW→PUBLISHED, quem pode submeter/aprovar/publicar, trilha de eventos e consumidores (inclusive documentação de processo, TÉO se AS-IS relevante). Separar transição técnica de aprovação independente.
+- Comparar: (A) transação BFF com publicação direta somente se REVIEW não tiver aprovação obrigatória; (B) preparação/revisão governada e confirmação transacional da janela após aprovação. Evidenciar efeitos sobre atomicidade, auditoria, perfis, segregação de funções e UX. Devolver `DECISION_REQUIRED` se houver escolha real de governança; não bypassar REVIEW por conveniência.
+
+### 7.4 Competências abertas e prospectividade
+- Uma versão publicada após a abertura de um fechamento **não altera** seu snapshot, mesmo que `effective_from` corresponda ao mês atual. Identificar se o comando deve rejeitar períodos com competência já aberta, permitir com aviso explícito de aplicação somente a futuras aberturas ou restringir a competência posterior — escolha de regra de negócio exige decisão do PO.
+- Testar competência atual aberta, futura não aberta, já finalizada, várias filiais quando pertinente, data de abertura versus publicação, períodos sem versão, e reabertura se existente. Exibir no retorno o alcance efetivo e snapshots não afetados, sem prometer aplicação retroativa.
+- `retroactive_effective_period` 422 no comando novo é **TARGET proposto**, não regra congelada para endpoints legados; qualquer endurecimento do legado precisa de gate separado e compatibilidade comprovada.
+
+### 7.5 DR-2 alternativa A — condições de aceite
+- Confirmar `template_version_id` não nulo com 0 itens versus NULL quando não existe versão aplicável; validar todos os consumidores de snapshot, P2/P5, fechamento, pacotes, auditoria, CLARA e acesso. Testar encerramento do último item, reativação e estados de listagem, com zero documento fictício.
+- Definir proteção contra publicação vazia acidental, por intenção explícita (`allow_empty` ou contrato equivalente), sem afirmar que esse campo está implementado. Verificar se a proposta requer relaxar validadores de endpoints legados ou somente o novo comando.
+
+### 7.6 RQ/AC complementares e testes de contrato (todos TARGET/TEST_NOT_RUN)
+- RQ-ADM-DR1-05: escritores novos e legados não produzem atualização perdida; conflitos/locks testados em PostgreSQL.
+- RQ-ADM-DR1-06: idempotency-key, payload hash, revisão obrigatória e auditoria convergem sob retry/concorrência.
+- RQ-ADM-DR1-07: governança REVIEW inventariada e preservada ou alterada somente após decisão explícita.
+- RQ-ADM-DR1-08: resultado do comando distingue vigência planejada de efeito sobre snapshots já abertos.
+- RQ-ADM-DR2-03: checklist publicado vazio distinguível de ausência de versão, com consumers e snapshots compatíveis.
+
+**Próxima entrega:** inventário READ-ONLY dos writers legados, da governança REVIEW, dos consumidores de competência aberta e das dependências da alternativa A; contrato DR-1 revisado, matriz RQ/AC/testes e proposta de rollout. **GATE DE RUNTIME = BLOQUEADO** até revisão arquitetural e autorização explícita do PO.
