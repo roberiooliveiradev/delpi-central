@@ -13,6 +13,8 @@ from decimal import Decimal
 from typing import Any, Iterable
 
 from app.domain.market_data import (
+    MetalInstrumentBinding,
+    RETENTION_PERMANENT,
     FeedStatus,
     FxObservation,
     IngestionRun,
@@ -43,6 +45,26 @@ def _source_from_row(row: dict[str, Any]) -> MarketDataSource:
         license_reference=row["license_reference"],
         license_reviewed_at=row["license_reviewed_at"],
         allowed_use_scope=row["allowed_use_scope"],
+        active=row["active"],
+        # Pre-V007 databases lack the column — treat as permanent.
+        observation_retention=row.get(
+            "observation_retention", RETENTION_PERMANENT
+        ),
+    )
+
+
+def _binding_from_row(row: dict[str, Any]) -> MetalInstrumentBinding:
+    return MetalInstrumentBinding(
+        binding_id=row["binding_id"],
+        instrument_id=row["instrument_id"],
+        instrument_code=row["instrument_code"],
+        source_id=row["source_id"],
+        source_series_key=row["source_series_key"],
+        granularity=row["granularity"],
+        quotation_basis=row["quotation_basis"],
+        native_currency=row["native_currency"],
+        unit_code=row["unit_code"],
+        priority=row["priority"],
         active=row["active"],
     )
 
@@ -119,6 +141,42 @@ class MarketDataRepository:
             row = cur.fetchone()
         return _instrument_from_row(row) if row else None
 
+    # --- instrument source bindings (R5) ------------------------------------
+
+    def list_instrument_sources(
+        self,
+        *,
+        instrument_id: int | None = None,
+        source_id: str | None = None,
+        active_only: bool = False,
+    ) -> list[MetalInstrumentBinding]:
+        """Alternative source bindings per instrument (V007+).
+
+        Tolerates a pre-V007 database — absent table means no bindings,
+        which preserves the single-source read path."""
+        if not self._table_exists("metal_instrument_sources"):
+            return []
+        sql = f"""
+            SELECT b.*, i.instrument_code
+            FROM {self._t('metal_instrument_sources')} b
+            JOIN {self._t('metal_instruments')} i
+              ON i.instrument_id = b.instrument_id
+            WHERE 1 = 1
+        """
+        params: list[Any] = []
+        if instrument_id is not None:
+            sql += " AND b.instrument_id = %s"
+            params.append(instrument_id)
+        if source_id is not None:
+            sql += " AND b.source_id = %s"
+            params.append(source_id)
+        if active_only:
+            sql += " AND b.active"
+        sql += " ORDER BY b.instrument_id, b.priority, b.binding_id"
+        with self._conn.cursor() as cur:
+            cur.execute(sql, params)
+            return [_binding_from_row(r) for r in cur.fetchall()]
+
     # --- reads -------------------------------------------------------------
 
     def list_metal_observations(
@@ -145,6 +203,41 @@ class MarketDataRepository:
             sql += " AND (o.observation_date, o.observation_id) > (%s, %s)"
             params.extend([cursor[0], cursor[1]])
         sql += " ORDER BY o.observation_date ASC, o.observation_id ASC LIMIT %s"
+        params.append(limit + 1)
+        with self._conn.cursor() as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()
+
+    def list_metal_cache(
+        self,
+        *,
+        instrument_id: int,
+        source_id: str,
+        date_from: date,
+        date_to: date,
+        limit: int,
+        cursor: tuple[date, int] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Unexpired TTL-cache rows — same shape as observations so the
+        read DTO stays uniform across retention classes."""
+        sql = f"""
+            SELECT c.cache_id AS observation_id, c.observation_date,
+                   c.native_price, c.native_currency, c.unit_code,
+                   c.quote_basis, c.quality_status, c.source_id,
+                   c.source_record_key, c.retrieved_at,
+                   NULL::timestamptz AS revised_at,
+                   c.observation_timestamp, c.expires_at
+            FROM {self._t('metal_quote_cache')} c
+            WHERE c.instrument_id = %s
+              AND c.source_id = %s
+              AND c.expires_at > NOW()
+              AND c.observation_date BETWEEN %s AND %s
+        """
+        params: list[Any] = [instrument_id, source_id, date_from, date_to]
+        if cursor is not None:
+            sql += " AND (c.observation_date, c.cache_id) > (%s, %s)"
+            params.extend([cursor[0], cursor[1]])
+        sql += " ORDER BY c.observation_date ASC, c.cache_id ASC LIMIT %s"
         params.append(limit + 1)
         with self._conn.cursor() as cur:
             cur.execute(sql, params)
@@ -430,6 +523,25 @@ class MarketDataRepository:
                     f"FROM {self._t(table)} GROUP BY 1"
                 )
                 rows.update({r["key"]: r["d"] for r in cur.fetchall()})
+            # TTL cache (R5) — unexpired rows count as observable data;
+            # an expired cache must not advertise freshness it no
+            # longer has.
+            if self._table_exists("metal_quote_cache"):
+                cur.execute(
+                    f"""
+                    SELECT i.instrument_code AS key,
+                           MAX(c.observation_date) AS d
+                    FROM {self._t('metal_quote_cache')} c
+                    JOIN {self._t('metal_instruments')} i
+                      ON i.instrument_id = c.instrument_id
+                    WHERE c.expires_at > NOW()
+                    GROUP BY i.instrument_code
+                    """
+                )
+                for r in cur.fetchall():
+                    prev = rows.get(r["key"])
+                    if prev is None or (r["d"] and r["d"] > prev):
+                        rows[r["key"]] = r["d"]
             return rows
 
     def _table_exists(self, table: str) -> bool:
@@ -538,6 +650,128 @@ class MarketDataRepository:
             return "unchanged"
         return "inserted" if row["inserted"] else "updated"
 
+    def upsert_metal_cache(
+        self,
+        *,
+        instrument_id: int,
+        source_id: str,
+        observation_date: date,
+        native_price: Decimal,
+        native_currency: str,
+        unit_code: str,
+        quote_basis: str,
+        source_record_key: str | None,
+        retrieved_at: datetime,
+        expires_at: datetime,
+        observation_timestamp: datetime | None = None,
+        quality_status: str = "validated",
+    ) -> str:
+        """Insert or refresh a TTL-cache row. Every write carries a new
+        expiry — 'updated' resets the retention clock deliberately."""
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {self._t('metal_quote_cache')}
+                    (instrument_id, source_id, observation_date,
+                     observation_timestamp, native_price, native_currency,
+                     unit_code, quote_basis, source_record_key,
+                     retrieved_at, expires_at, quality_status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (instrument_id, observation_date, source_id)
+                DO UPDATE SET native_price = EXCLUDED.native_price,
+                              observation_timestamp =
+                                  EXCLUDED.observation_timestamp,
+                              retrieved_at = EXCLUDED.retrieved_at,
+                              expires_at = EXCLUDED.expires_at,
+                              quality_status = EXCLUDED.quality_status,
+                              source_record_key = EXCLUDED.source_record_key
+                RETURNING (xmax = 0) AS inserted
+                """,
+                (
+                    instrument_id,
+                    source_id,
+                    observation_date,
+                    observation_timestamp,
+                    native_price,
+                    native_currency,
+                    unit_code,
+                    quote_basis,
+                    source_record_key,
+                    retrieved_at,
+                    expires_at,
+                    quality_status,
+                ),
+            )
+            row = cur.fetchone()
+        return "inserted" if row is None or row["inserted"] else "updated"
+
+    def purge_expired_cache(self) -> int:
+        """Delete TTL-expired cache rows — enforces the no-permanent-
+        retention policy for cache-class sources."""
+        if not self._table_exists("metal_quote_cache"):
+            return 0
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"DELETE FROM {self._t('metal_quote_cache')} "
+                "WHERE expires_at <= NOW()"
+            )
+            return cur.rowcount or 0
+
+    # --- upstream call ledger (R5) -----------------------------------------
+
+    def record_api_call(
+        self,
+        *,
+        source_id: str,
+        endpoint: str,
+        params_hash: str,
+        weight: int,
+        http_status: int | None,
+        correlation_id: str | None,
+    ) -> bool:
+        """Record one upstream call for allowance accounting. The
+        per-minute dedup index collapses an exact retry — returns False
+        when the same call was already recorded this minute."""
+        if not self._table_exists("source_api_call_ledger"):
+            return True
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {self._t('source_api_call_ledger')}
+                    (source_id, endpoint, params_hash, weight,
+                     http_status, called_minute, correlation_id)
+                VALUES (%s, %s, %s, %s, %s,
+                        date_trunc('minute', now()), %s)
+                ON CONFLICT DO NOTHING
+                RETURNING call_id
+                """,
+                (
+                    source_id,
+                    endpoint,
+                    params_hash,
+                    weight,
+                    http_status,
+                    correlation_id,
+                ),
+            )
+            return cur.fetchone() is not None
+
+    def sum_api_call_weight(
+        self, *, source_id: str, since: datetime
+    ) -> int:
+        if not self._table_exists("source_api_call_ledger"):
+            return 0
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT COALESCE(SUM(weight), 0) AS total
+                FROM {self._t('source_api_call_ledger')}
+                WHERE source_id = %s AND called_at >= %s
+                """,
+                (source_id, since),
+            )
+            return int(cur.fetchone()["total"])
+
     # --- ingestion runs ----------------------------------------------------
 
     def create_ingestion_run(
@@ -642,6 +876,15 @@ class MarketDataRepository:
                 FROM {self._t('producer_price_index_observations')} p
                 """
                 feeds.append("ipp-monthly")
+            if self._table_exists("metal_quote_cache"):
+                freshness_sql += f"""
+                UNION ALL
+                SELECT 'metals-daily' AS feed,
+                       MAX(c.observation_date), COUNT(*)
+                FROM {self._t('metal_quote_cache')} c
+                WHERE c.expires_at > NOW()
+                """
+                feeds.append("metals-daily")
             cur.execute(freshness_sql)
             freshness = {r["feed"]: r for r in cur.fetchall()}
 

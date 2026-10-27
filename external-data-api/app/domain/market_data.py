@@ -16,11 +16,13 @@ from decimal import Decimal
 
 FEED_FX_DAILY = "fx-daily"
 FEED_METALS_MONTHLY = "metals-monthly"
+FEED_METALS_DAILY = "metals-daily"
 FEED_COMEX_MONTHLY = "comex-import-monthly"
 FEED_IPP_MONTHLY = "ipp-monthly"
 SUPPORTED_FEEDS = (
     FEED_FX_DAILY,
     FEED_METALS_MONTHLY,
+    FEED_METALS_DAILY,
     FEED_COMEX_MONTHLY,
     FEED_IPP_MONTHLY,
 )
@@ -50,6 +52,13 @@ PROVIDER_BCB_PTAX = "bcb-ptax"
 PROVIDER_WORLDBANK_PINK_SHEET = "world-bank-pink-sheet"
 PROVIDER_MDIC_COMEX = "mdic-comex-stat"
 PROVIDER_IBGE_IPP = "ibge-ipp-sidra"
+PROVIDER_METALCHARTS = "metalcharts"
+
+# Observation retention classes recorded per source — 'ttl_cache' marks
+# a source whose rights permit operational caching but not permanent
+# retention (MetalCharts Free terms, PROC-0076 R5).
+RETENTION_PERMANENT = "permanent"
+RETENTION_TTL_CACHE = "ttl_cache"
 
 SCHEMA_VERSION = "v1"
 
@@ -63,6 +72,29 @@ class MarketDataSource:
     license_reference: str
     license_reviewed_at: date | None
     allowed_use_scope: str
+    active: bool
+    observation_retention: str = RETENTION_PERMANENT
+
+
+@dataclass(frozen=True)
+class MetalInstrumentBinding:
+    """Per-instrument link to an alternative source (PROC-0076 R5).
+
+    The canonical instrument row keeps its original source; a binding
+    adds another provider for the same metal without mixing sources
+    inside a series — readers pick one effective binding per read.
+    """
+
+    binding_id: int
+    instrument_id: int
+    instrument_code: str
+    source_id: str
+    source_series_key: str | None
+    granularity: str
+    quotation_basis: str
+    native_currency: str
+    unit_code: str | None
+    priority: int
     active: bool
 
 

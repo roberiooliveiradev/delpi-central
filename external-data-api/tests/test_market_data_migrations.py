@@ -135,3 +135,25 @@ def test_v006_prepares_daily_and_intraday_metal_instruments():
     )
     for forbidden in ("DROP TABLE", "DROP SCHEMA", "TRUNCATE", "DELETE FROM"):
         assert forbidden not in body
+
+
+def test_v007_metalcharts_readiness_is_additive_and_fail_closed():
+    """R5: MetalCharts source row is INACTIVE with a store_cache_only
+    scope (no permanent retention), bindings are seeded inactive with
+    NULL series keys except verified copper HG, and the TTL cache table
+    structurally requires an expiry."""
+    sql = Path(_files()["V007"].path).read_text(encoding="utf-8")
+    assert "'metalcharts'" in sql
+    assert "store_cache_only" in sql
+    assert "no_redistribute" in sql
+    assert "ttl_cache" in sql
+    assert "metal_instrument_sources" in sql
+    assert "metal_quote_cache" in sql
+    assert "source_api_call_ledger" in sql
+    assert "expires_at            TIMESTAMPTZ NOT NULL" in sql
+    assert "WHEN 'copper' THEN 'HG'" in sql
+    body = "\n".join(
+        line for line in sql.splitlines() if not line.strip().startswith("--")
+    )
+    for forbidden in ("DROP TABLE", "DROP SCHEMA", "TRUNCATE", "DELETE FROM"):
+        assert forbidden not in body

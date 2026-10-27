@@ -99,11 +99,62 @@
 
 Inalterado desde §1: direitos aprovados, **egress bloqueado por HTTP 403 (WAF)** — impedimento operacional; feed permanece OFF; módulo de câmbio degrada de forma independente.
 
-## 5. Rastreabilidade
+## 5. MetalCharts (`metalcharts`) — R5 (2026-10-27)
+
+### 5.1 Base normativa consultada
+
+| Fonte oficial | URL | Fato verificado |
+|---|---|---|
+| MetalCharts API docs | https://api.metalcharts.org/docs | REST/HTTPS, Bearer `mc_live_*`; `GET /v1/prices` retorna todos os metais em 1 chamada (1 weight); `GET /v1/history/{symbol}` (2 weight); spot 1 weight |
+| Planos | https://metalcharts.org/metals-api | Free = 200 weight/mês/conta, 10 weight/minuto/chave, 1 chave, histórico diário dos últimos 30 dias |
+| Termos | https://metalcharts.org/api-terms | Uso comercial interno permitido; gráficos/cálculos derivados permitidos; cache operacional dentro de limites razoáveis; **retenção histórica permanente NÃO expressamente autorizada**; fontes terceiras podem impor restrições adicionais |
+| Página do cobre (docs) | https://api.metalcharts.org/docs | Símbolo `HG` (futuros COMEX), cotado USD/libra — único símbolo verificado |
+
+### 5.2 Matriz de direitos por uso
+
+| Uso | Veredito | Fundamento |
+|---|---|---|
+| collect | **PASS** | API oficial documentada, Bearer, TLS, host allowlisted |
+| store permanente | **PENDING** | Retenção histórica permanente não expressamente autorizada — permanece fail-closed (`store` ausente do escopo) |
+| store cache operacional (TTL) | **PASS** | "Cache operacional dentro de limites razoáveis" — implementado como `metal_quote_cache` com `expires_at` obrigatório |
+| derive | **PASS** | Derivados/gráficos permitidos pelos termos |
+| internal_display | **PASS** | Uso comercial interno permitido em todos os planos; UI já carrega atribuição da fonte |
+| redistribution / public display | **PENDING** | Exibição pública exige crédito visível à fonte; fontes terceiras (COMEX/LME upstream) podem impor restrições — `no_redistribute` registrado |
+
+Escopo persistido (V007): `collect;derive;internal_display;store_cache_only;no_redistribute`, `observation_retention='ttl_cache'`, `active=false`, `license_reviewed_at=NULL` — a fonte nasce **inativa** até a homologação S1 com chave real.
+
+### 5.3 Cobertura dos seis metais (S1)
+
+| Metal | Símbolo | Free disponível | Unidade | Histórico 30d | Status |
+|---|---|---|---|---|---|
+| Cobre | `HG` (COMEX futures) | TEST_NOT_RUN | USD/lb (verificado) | TEST_NOT_RUN | binding inativo |
+| Alumínio | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
+| Zinco | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
+| Níquel | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
+| Chumbo | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
+| Estanho | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
+
+Sem chave `METALCHARTS_API_KEY` provisionada, a homologação real está classificada **TEST_NOT_RUN**. Nenhum símbolo foi adivinhado: bindings inativos com `source_series_key=NULL` falham fechado (`NoApprovedSeriesError`).
+
+### 5.4 Franquia (Free plan)
+
+- Budget servidor-side em `app/application/metalcharts_budget.py`: **160 weight/mês** e **8 weight/minuto** (headroom reservado sob 200/10 para homologação, recuperação e ops).
+- Ledger `source_api_call_ledger` registra cada chamada upstream com peso; dedup por minuto via `(source_id, endpoint, params_hash, called_minute)` — um refresh de página nunca multiplica chamadas (a leitura é servida pelo cache TTL; a ingestão é por job, não por request).
+- Kill switch duplo: `EXTERNAL_DATA_FEED_METALS_DAILY_ENABLED=false` (default) + fonte `active=false` no catálogo + guarda de direitos (`collect`+`store_cache_only`) na ingestão.
+
+### 5.5 Política de retenção (S3)
+
+- `metal_quote_cache.expires_at` é `NOT NULL` — a ausência de retenção permanente é estrutural, não convenção.
+- Resolução de binding efetivo (queries): o primeiro binding ativo com direito de exibição decide a família de tabela — `ttl_cache` → `metal_quote_cache`; `permanent` → `metal_observations`. Binding metalcharts inativo → fallback ao caminho Pink Sheet existente, preservando `source_use_pending`/quarentena LME.
+- Não há mistura de fontes dentro de uma série: a binding liga `(instrument_id, source_id)` com prioridade explícita.
+
+## 6. Rastreabilidade
 
 - Catálogo seed: `external-data-api/migrations/V002__seed_market_data_catalog.sql`
 - Proveniência LME: `external-data-api/migrations/V003__pink_sheet_lme_provenance.sql`
 - Refino de escopo R1.1: `external-data-api/migrations/V004__pink_sheet_internal_display_review.sql`
 - Fontes/tabelas R2: `external-data-api/migrations/V005__r2_comex_ipp_market_intelligence.sql`
+- Preparação diária R4: `external-data-api/migrations/V006__r4_daily_ready_metal_instruments.sql`
+- Adapter readiness R5: `external-data-api/migrations/V007__r5_metalcharts_adapter_readiness.sql` (fonte metalcharts inativa, bindings, cache TTL, ledger de franquia)
 - Guarda de ingestão: `market_data_ingestion.py` exige fonte ativa/licenciada + feed habilitado por env
 - Atribuição ao usuário: contrato BFF → `meta.source`/`attribution` exibido na página e no glossário

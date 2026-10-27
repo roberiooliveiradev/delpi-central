@@ -16,6 +16,13 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076.R5 — MetalCharts Free API: adapter readiness (2026-10-27)
+
+Integração da MetalCharts como segunda fonte de metais na `external-data-api` — **feed OFF por padrão, sem dados reais até a homologação S1 com chave válida**. V007 semeia fonte inativa (`store_cache_only`, `ttl_cache`), bindings por instrumento (só cobre `HG` verificado, USD/lb), cache operacional com TTL estrutural e ledger de franquia (160/8 weight sob 200/10 do Free). Queries resolvem binding efetivo; fallback preserva Pink Sheet e `source_use_pending` (quarentena LME intacta). BFF/frontend inalterados — contratos R4 reutilizados.
+
+- [Implementação, runbook de ativação e evidência de testes](../shared-integrations/PROC-0076-R5-METALCHARTS-IMPLEMENTATION-AND-EVIDENCE-20261027.md)
+- [Direitos de uso — matriz MetalCharts e classificação de retenção](../shared-integrations/PROC-0076-SOURCE-RIGHTS-EVIDENCE-20261027.md)
+
 ## PROC-0076.R4 — Implementação e produção (2026-10-27)
 
 R4 **implementada e em produção** (`3369a1327f`, origin/main): três perspectivas Metais | Câmbio | Indicadores, seis cards de metais multi-selecionáveis (`selectable_in_ui` ≠ `data_access_allowed`, D-04), granularidade Dia | Semana | Mês | Ano (week derivada por ISO week), `quotes/series` multi-instrumento e `quotes/compare` no BFF, V006 aplicada em produção, IBGE IPP preservado com dados reais. Metais seguem em `METALS_REAL_DATA_PENDING_SOURCE_APPROVAL` — `source_use_pending`, sem preços retornados.

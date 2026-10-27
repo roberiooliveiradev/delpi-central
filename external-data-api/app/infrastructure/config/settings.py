@@ -103,6 +103,42 @@ class Settings:
         os.getenv("WORLDBANK_PINKSHEET_TIMEOUT_SECONDS", "30") or "30"
     )
 
+    EXTERNAL_DATA_FEED_METALS_DAILY_ENABLED = (
+        os.getenv("EXTERNAL_DATA_FEED_METALS_DAILY_ENABLED", "false")
+        .strip().lower() in {"1", "true", "yes"}
+    )
+
+    # MetalCharts (PROC-0076 R5) — Bearer key lives only in backend env;
+    # never logged, never returned in payloads. The feed flag AND the
+    # catalog source both default OFF (kill switch until S1 homologation
+    # verifies symbols/coverage with a real key).
+    METALCHARTS_API_KEY = os.getenv("METALCHARTS_API_KEY", "").strip()
+    METALCHARTS_BASE_URL = os.getenv(
+        "METALCHARTS_BASE_URL", "https://api.metalcharts.org"
+    )
+    METALCHARTS_ALLOWED_HOSTS = frozenset(
+        h.strip().lower()
+        for h in os.getenv(
+            "METALCHARTS_ALLOWED_HOSTS", "api.metalcharts.org"
+        ).split(",")
+        if h.strip()
+    )
+    METALCHARTS_TIMEOUT_SECONDS = float(
+        os.getenv("METALCHARTS_TIMEOUT_SECONDS", "15") or "15"
+    )
+    # Free-plan allowance is 200 weight/month and 10 weight/minute; the
+    # budgets below deliberately reserve headroom for homologation,
+    # manual recovery and ops — never the full allowance.
+    METALCHARTS_MONTHLY_WEIGHT_BUDGET = int(
+        os.getenv("METALCHARTS_MONTHLY_WEIGHT_BUDGET", "160") or "160"
+    )
+    METALCHARTS_MINUTE_WEIGHT_BUDGET = int(
+        os.getenv("METALCHARTS_MINUTE_WEIGHT_BUDGET", "8") or "8"
+    )
+    METALCHARTS_CACHE_TTL_HOURS = int(
+        os.getenv("METALCHARTS_CACHE_TTL_HOURS", "48") or "48"
+    )
+
     EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED = (
         os.getenv("EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED", "false")
         .strip().lower() in {"1", "true", "yes"}

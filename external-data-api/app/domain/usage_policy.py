@@ -13,6 +13,7 @@ from __future__ import annotations
 
 OP_COLLECT = "collect"
 OP_STORE = "store"
+OP_STORE_CACHE_ONLY = "store_cache_only"
 OP_DERIVE = "derive"
 OP_INTERNAL_DISPLAY = "internal_display"
 OP_REDISTRIBUTE = "redistribute"
@@ -24,6 +25,10 @@ KNOWN_OPERATIONS = (
     OP_INTERNAL_DISPLAY,
     OP_REDISTRIBUTE,
 )
+
+# ``store_cache_only`` is deliberately NOT a ``store`` grant: it
+# authorizes operational TTL caching while permanent retention stays
+# fail-closed (MetalCharts Free terms, PROC-0076 R5).
 
 
 def parse_scope(scope: str | None) -> frozenset[str]:

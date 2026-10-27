@@ -23,6 +23,8 @@ from app.domain.market_data import (
     PAIR_USD_BRL,
     PROVIDER_IBGE_IPP,
     PROVIDER_MDIC_COMEX,
+    PROVIDER_METALCHARTS,
+    RETENTION_TTL_CACHE,
     SCHEMA_VERSION,
     SUPPORTED_RATE_KINDS,
 )
@@ -141,8 +143,45 @@ def _supported_granularities(native: str | None) -> list[str]:
     )
 
 
-def _instrument_dto(inst, sources: dict[str, Any]) -> dict[str, Any]:
-    source = sources.get(inst.source_id)
+def _effective_binding(inst, bindings, sources):
+    """Lowest-priority active binding whose source is active and
+    displayable — the reader's effective provider for this instrument.
+
+    Sources are never mixed: when a binding is displayable it supplies
+    the whole series; when none is, the canonical instrument source
+    (e.g. Pink Sheet, possibly quarantined) defines the honest state."""
+    for binding in bindings:
+        source = sources.get(binding.source_id)
+        if (
+            binding.active
+            and binding.source_series_key
+            and source
+            and source.active
+            and _display_allowed(source)
+        ):
+            return binding
+    return None
+
+
+def _instrument_dto(
+    inst, sources: dict[str, Any], bindings=None
+) -> dict[str, Any]:
+    binding = _effective_binding(inst, bindings or [], sources)
+    if binding is not None:
+        source_id = binding.source_id
+        granularity = binding.granularity
+        quote_basis = binding.quotation_basis
+        currency = binding.native_currency
+        unit_code = binding.unit_code
+        unit_label = binding.unit_code or inst.unit_label
+    else:
+        source_id = inst.source_id
+        granularity = inst.granularity
+        quote_basis = inst.quotation_basis
+        currency = inst.native_currency
+        unit_code = inst.unit_code
+        unit_label = inst.unit_label
+    source = sources.get(source_id)
     display_allowed = _display_allowed(source)
     return {
         "instrument_code": inst.instrument_code,
@@ -150,15 +189,15 @@ def _instrument_dto(inst, sources: dict[str, Any]) -> dict[str, Any]:
         "metal_code": inst.metal_code,
         "label": inst.label,
         "market": inst.market,
-        "quote_basis": inst.quotation_basis,
-        "currency": inst.native_currency,
-        "unit_code": inst.unit_code,
-        "unit": inst.unit_label,
-        "granularity": inst.granularity,
+        "quote_basis": quote_basis,
+        "currency": currency,
+        "unit_code": unit_code,
+        "unit": unit_label,
+        "granularity": granularity,
         "supported_granularities": _supported_granularities(
-            inst.granularity
+            granularity
         ),
-        "source_id": inst.source_id,
+        "source_id": source_id,
         "active": inst.active,
         "display_allowed": display_allowed,
         # R4 D-04: catalog presence is a UI fact; data access is the
@@ -177,6 +216,11 @@ def get_catalog() -> dict[str, Any]:
         repo = _repo(conn)
         sources = {s.source_id: s for s in repo.list_sources()}
         instruments = repo.list_instruments()
+        bindings_by_instrument: dict[int, list[Any]] = {}
+        for binding in _optional_rows(repo, "list_instrument_sources"):
+            bindings_by_instrument.setdefault(
+                binding.instrument_id, []
+            ).append(binding)
         latest = repo.latest_observation_dates()
         # R2 catalog segments tolerate a pre-V005 database — absent
         # tables mean "no series", never a hard failure.
@@ -185,7 +229,16 @@ def get_catalog() -> dict[str, Any]:
 
     return {
         "instruments": [
-            {**_instrument_dto(i, sources), "latest_observation_date": _iso(latest.get(i.instrument_code))}
+            {
+                **_instrument_dto(
+                    i,
+                    sources,
+                    bindings_by_instrument.get(i.instrument_id, []),
+                ),
+                "latest_observation_date": _iso(
+                    latest.get(i.instrument_code)
+                ),
+            }
             for i in instruments
         ],
         "fx_series": [
@@ -310,21 +363,46 @@ def list_metal_observations(
             raise UnknownInstrumentError(
                 f"unknown market instrument: {code}"
             )
-        source = repo.get_source(instrument.source_id)
-        _require_display(source, what=code)
-        rows = repo.list_metal_observations(
-            instrument_id=instrument.instrument_id,
-            date_from=date_from,
-            date_to=date_to,
-            limit=limit,
-            cursor=cursor,
+        sources = {s.source_id: s for s in repo.list_sources()}
+        try:
+            bindings = repo.list_instrument_sources(
+                instrument_id=instrument.instrument_id
+            )
+        except Exception:
+            bindings = []
+        binding = _effective_binding(instrument, bindings, sources)
+        effective_source_id = (
+            binding.source_id if binding is not None
+            else instrument.source_id
         )
+        source = sources.get(effective_source_id)
+        _require_display(source, what=code)
+        if (
+            source is not None
+            and source.observation_retention == RETENTION_TTL_CACHE
+        ):
+            rows = repo.list_metal_cache(
+                instrument_id=instrument.instrument_id,
+                source_id=effective_source_id,
+                date_from=date_from,
+                date_to=date_to,
+                limit=limit,
+                cursor=cursor,
+            )
+        else:
+            rows = repo.list_metal_observations(
+                instrument_id=instrument.instrument_id,
+                date_from=date_from,
+                date_to=date_to,
+                limit=limit,
+                cursor=cursor,
+            )
 
     items, next_cursor = rows_to_page(
         rows, limit=limit, date_key="observation_date", id_key="observation_id"
     )
     return {
-        "instrument": _instrument_dto(instrument, {}),
+        "instrument": _instrument_dto(instrument, sources, bindings),
         "items": [_metal_observation_dto(r, instrument, source) for r in items],
         "page_info": {
             "next_cursor": next_cursor,
@@ -333,7 +411,7 @@ def list_metal_observations(
         "meta": {
             "as_of": None,
             "data_status": "ok" if items else "no_data",
-            "source_ids": [instrument.source_id],
+            "source_ids": [effective_source_id],
             "schema_version": SCHEMA_VERSION,
         },
     }
@@ -414,6 +492,7 @@ def get_ingestion_status() -> dict[str, Any]:
 
     feed_source = {
         "metals-monthly": "world-bank-pink-sheet",
+        "metals-daily": PROVIDER_METALCHARTS,
         "fx-daily": "bcb-ptax",
         "comex-import-monthly": PROVIDER_MDIC_COMEX,
         "ipp-monthly": PROVIDER_IBGE_IPP,
@@ -638,7 +717,10 @@ def _metal_observation_dto(row, instrument, source) -> dict[str, Any]:
         "observation_date": row["observation_date"].isoformat(),
         "price": str(row["native_price"]),
         "currency": row["native_currency"],
-        "unit": instrument.unit_label,
+        # The row's own unit_code is authoritative — a binding may
+        # serve a different native unit than the instrument default
+        # (e.g. USD/lb COMEX vs USD/metric ton Pink Sheet).
+        "unit": row.get("unit_code") or instrument.unit_label,
         "quote_basis": row["quote_basis"],
         "quality": row["quality_status"],
         "source": {

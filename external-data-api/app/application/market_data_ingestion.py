@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from app.application.contracts import (
@@ -25,14 +25,22 @@ from app.domain.market_data import (
     FEED_COMEX_MONTHLY,
     FEED_FX_DAILY,
     FEED_IPP_MONTHLY,
+    FEED_METALS_DAILY,
     FEED_METALS_MONTHLY,
     PROVIDER_BCB_PTAX,
     PROVIDER_IBGE_IPP,
     PROVIDER_MDIC_COMEX,
+    PROVIDER_METALCHARTS,
     PROVIDER_WORLDBANK_PINK_SHEET,
+    QUALITY_VALIDATED,
 )
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.persistence.market_data_repository import utcnow
+from app.infrastructure.providers.metalcharts_provider import (
+    WEIGHT_HISTORY,
+    params_hash,
+)
+from app.application.metalcharts_budget import MetalChartsBudget
 
 logger = logging.getLogger("external-data-api.ingestion")
 
@@ -45,6 +53,7 @@ ADVISORY_LOCK_KEYS = {
     FEED_FX_DAILY: 76007602,
     FEED_COMEX_MONTHLY: 76007603,
     FEED_IPP_MONTHLY: 76007604,
+    FEED_METALS_DAILY: 76007605,
 }
 
 
@@ -83,6 +92,8 @@ def feed_enabled(feed: str) -> bool:
         return bool(Settings.EXTERNAL_DATA_FEED_FX_DAILY_ENABLED)
     if feed == FEED_METALS_MONTHLY:
         return bool(Settings.EXTERNAL_DATA_FEED_METALS_MONTHLY_ENABLED)
+    if feed == FEED_METALS_DAILY:
+        return bool(Settings.EXTERNAL_DATA_FEED_METALS_DAILY_ENABLED)
     if feed == FEED_COMEX_MONTHLY:
         return bool(Settings.EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED)
     if feed == FEED_IPP_MONTHLY:
@@ -94,6 +105,7 @@ def provider_id_for_feed(feed: str) -> str:
     return {
         FEED_FX_DAILY: PROVIDER_BCB_PTAX,
         FEED_METALS_MONTHLY: PROVIDER_WORLDBANK_PINK_SHEET,
+        FEED_METALS_DAILY: PROVIDER_METALCHARTS,
         FEED_COMEX_MONTHLY: PROVIDER_MDIC_COMEX,
         FEED_IPP_MONTHLY: PROVIDER_IBGE_IPP,
     }[feed]
@@ -108,6 +120,8 @@ class MarketDataIngestionService:
         repository: Any,
         fx_provider: Any = None,
         metals_provider: Any = None,
+        metalcharts_provider: Any = None,
+        metalcharts_budget: Any = None,
         comex_provider: Any = None,
         ipp_provider: Any = None,
         clock: Any = utcnow,
@@ -115,6 +129,8 @@ class MarketDataIngestionService:
         self._repo = repository
         self._fx_provider = fx_provider
         self._metals_provider = metals_provider
+        self._metalcharts_provider = metalcharts_provider
+        self._metalcharts_budget = metalcharts_budget
         self._comex_provider = comex_provider
         self._ipp_provider = ipp_provider
         self._clock = clock
@@ -164,6 +180,12 @@ class MarketDataIngestionService:
             if feed == FEED_METALS_MONTHLY:
                 fetched, inserted, updated, skipped = self._ingest_metals(
                     date_from, date_to
+                )
+            elif feed == FEED_METALS_DAILY:
+                fetched, inserted, updated, skipped = (
+                    self._ingest_metals_daily(
+                        date_from, date_to, correlation_id
+                    )
                 )
             elif feed == FEED_COMEX_MONTHLY:
                 fetched, inserted, updated, skipped = self._ingest_comex(
@@ -245,6 +267,28 @@ class MarketDataIngestionService:
                 f"source {source_id} lacks approved collect/store use"
             )
 
+    def _check_cache_source(self, source_id: str) -> None:
+        """TTL-cache feeds need ``collect`` + ``store_cache_only`` —
+        deliberately NOT the permanent ``store`` grant, so a source
+        whose terms forbid retention can never reach the permanent
+        observation tables through this path either."""
+        source = self._repo.get_source(source_id)
+        if source is None or not source.active:
+            raise SourceNotLicensedError(
+                f"source {source_id} is not active/licensed in the catalog"
+            )
+        if not usage_policy.allows_all(
+            source.allowed_use_scope,
+            (
+                usage_policy.OP_COLLECT,
+                usage_policy.OP_STORE_CACHE_ONLY,
+            ),
+        ):
+            raise SourceNotLicensedError(
+                f"source {source_id} lacks approved "
+                "collect/store_cache_only use"
+            )
+
     def _ingest_metals(self, date_from: date, date_to: date):
         source_id = PROVIDER_WORLDBANK_PINK_SHEET
         self._check_source(source_id)
@@ -282,6 +326,94 @@ class MarketDataIngestionService:
             else:
                 skipped += 1
         return len(rows), inserted, updated, skipped
+
+    def _ingest_metals_daily(
+        self, date_from: date, date_to: date, correlation_id: str
+    ):
+        """MetalCharts daily bars → TTL cache (PROC-0076 R5).
+
+        Only active bindings with a verified ``source_series_key`` are
+        collected — an unverified symbol is never guessed. Every call
+        is pre-charged against the monthly + per-minute weight budget
+        and recorded in the ledger; rows land in ``metal_quote_cache``
+        with a mandatory ``expires_at`` (operational cache, not
+        permanent retention)."""
+        source_id = PROVIDER_METALCHARTS
+        self._check_cache_source(source_id)
+        if self._metalcharts_provider is None or not getattr(
+            self._metalcharts_provider, "configured", lambda: True
+        )():
+            raise SourceNotLicensedError(
+                "metalcharts provider is not configured (no api key)"
+            )
+        bindings = [
+            b
+            for b in self._repo.list_instrument_sources(
+                source_id=source_id, active_only=True
+            )
+            if b.source_series_key
+        ]
+        if not bindings:
+            raise NoApprovedSeriesError(
+                "no active metalcharts bindings with verified symbols"
+            )
+        budget = self._metalcharts_budget or MetalChartsBudget(
+            repository=self._repo, clock=self._clock
+        )
+        retrieved_at = self._clock()
+        expires_at = retrieved_at + timedelta(
+            hours=Settings.METALCHARTS_CACHE_TTL_HOURS
+        )
+        fetched = inserted = updated = skipped = 0
+        for binding in bindings:
+            weight = WEIGHT_HISTORY
+            budget.acquire(weight=weight)
+            bars = self._metalcharts_provider.fetch_history(
+                binding.source_series_key, date_from, date_to
+            )
+            budget.record(
+                endpoint="history",
+                params_key=params_hash(
+                    binding.source_series_key,
+                    date_from.isoformat(),
+                    date_to.isoformat(),
+                    "1d",
+                ),
+                weight=weight,
+                http_status=200,
+                correlation_id=correlation_id,
+            )
+            fetched += len(bars)
+            for bar in bars:
+                if not (
+                    date_from <= bar["observation_date"] <= date_to
+                ):
+                    skipped += 1
+                    continue
+                outcome = self._repo.upsert_metal_cache(
+                    instrument_id=binding.instrument_id,
+                    source_id=source_id,
+                    observation_date=bar["observation_date"],
+                    native_price=bar["close"],
+                    native_currency=binding.native_currency,
+                    unit_code=binding.unit_code or "unknown",
+                    quote_basis=binding.quotation_basis,
+                    source_record_key=(
+                        f"metalcharts:{binding.source_series_key}:"
+                        f"{bar['observation_date'].isoformat()}"
+                    ),
+                    retrieved_at=retrieved_at,
+                    expires_at=expires_at,
+                    quality_status=QUALITY_VALIDATED,
+                )
+                if outcome == "inserted":
+                    inserted += 1
+                elif outcome == "updated":
+                    updated += 1
+                else:
+                    skipped += 1
+        self._repo.purge_expired_cache()
+        return fetched, inserted, updated, skipped
 
     def _ingest_fx(self, date_from: date, date_to: date):
         source_id = PROVIDER_BCB_PTAX
