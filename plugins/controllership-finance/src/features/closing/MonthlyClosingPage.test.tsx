@@ -420,9 +420,11 @@ describe("indicadores honestos e gate documental", () => {
         "documents:2026-10",
       ),
     );
+    // Validação item a item acontece no detalhe do documento — a aba não
+    // obriga o usuário a sair para o checklist legado.
     expect(
-      screen.getByRole("button", { name: "Abrir checklist do fechamento" }),
-    ).toBeTruthy();
+      screen.queryByRole("button", { name: "Abrir checklist do fechamento" }),
+    ).toBeNull();
   });
 
   it("indicador clicável abre a aba correspondente mantendo período", async () => {

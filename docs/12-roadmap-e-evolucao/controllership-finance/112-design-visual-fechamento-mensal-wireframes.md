@@ -1686,3 +1686,26 @@ Vitest: painéis novos 17 testes + página/rotas (deep link documento, F5, perí
 ## 40. Evidência PO / Rework Documentos V0.3 — 26/10/2026
 
 Capturas após V0.2: upload e cartão adicional presentes, mas detalhe de `Recebidos.pdf` apresenta **Falha ao baixar o arquivo**, prévia fica em **Carregando pré-visualização**, histórico mostra muitas linhas `Download — v1` com UUID técnico e a operação de remover/cancelar não é oferecida. Ainda existe link `Checklist da competência` na nova aba. **Não considerar V0.2 plenamente aceito.** PO solicita correção do download, CRUD de arquivo dentro do detalhe, menu de três pontos por card com opção de remover, revisões/versões claras, timeline de negócio sem downloads repetidos, português simples e revisão integral da implementação. Sem exclusão física automática de versões ou evidências; U7 oferece cancelamento lógico, U5 nova versão. Contrato de auditoria de downloads deverá ser verificado antes de alterar produtor/retention. Requisitos e AC: [Plano 113 §19](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Estado: `REWORK_REQUIRED / ROOT_CAUSE_DOWNLOAD_TO_VERIFY`. O detalhe de documento é deep route, nunca quarta aba.
+
+
+
+## 41. Execução do rework documental — registro de implementação (CF-PROC0072-DOCUMENTS-REWORK-007, 26/10/2026)
+
+Resposta ao §40: causa raiz comprovada no frontend (identidade instável do `source` do `useFilePreviewLoader` → loop render→fetch→auditoria→render), não no backend U4.
+
+### 41.1 Lista (aba)
+- Menu ⋮ acessível por cartão (`ContextMenu` real do kit, role `menu`, trigger com `aria-label`): «Abrir documento» sempre; «Enviar nova versão»/«Remover documento» somente quando há arquivo vigente.
+- «Enviar nova versão» usa U5 com `revision` + `idempotency_key`; «Remover documento» abre confirmação (`ConfirmModalPanel`) nomeando o arquivo e a consequência; item exigido avisa que a exigência permanece.
+- Bloco «Checklist da competência» removido da composição — a validação P2 acontece no detalhe; rota/página legadas preservadas.
+
+### 41.2 Detalhe
+- Prévia estabilizada: um fetch U4 por documento/versão, erro finito + «Tentar novamente», download independente da prévia, seletor de versões (v1 consultável), abort ao trocar de documento.
+- `ItemValidationPanel` embutido no item exigido (decisões/correções reais).
+- Histórico operacional filtra `DOCUMENT_DOWNLOADED` e declara que a trilha de auditoria técnica é preservada no backend.
+- Remoção U7 no detalhe: adicional volta à lista; item exigido atualiza in-place.
+
+### 41.3 Gates respeitados
+Nenhuma migration, endpoint, permission ou mudança de produtor de auditoria. Eventos `DOCUMENT_DOWNLOADED` históricos preservados; decisão sobre emissão futura pertence ao owner de auditoria + security gate. Sem DELETE físico; `CANCELLED != DELETED`; `PACKAGE_SENT` intocável.
+
+### 41.4 Evidência
+Vitest: painéis 28 testes (inclui regressão de fetch único, retry, versão anterior, U7/U5, menu); página/rotas 50 testes — suíte fechamento 171/171, plugin 244/244; `tsc`, ESLint do escopo, estruturais e build federado PASS. Homologação visual do PO: `PENDING`.

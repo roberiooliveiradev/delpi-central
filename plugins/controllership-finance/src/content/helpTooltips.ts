@@ -200,16 +200,16 @@ export const CF_HELP = {
     sendPackage:
       "O envio dos documentos à Contabilidade é uma operação separada da conclusão e exige confirmação na página de gerenciamento. Um conjunto só pode ser enviado quando está pronto.",
     documentsTab:
-      "Cartões por documento: «Exigido» vem da lista de documentos definida para o mês; «Adicional» é um arquivo anexado só a este fechamento. «Ver documento» abre a página de detalhe com prévia, versões e histórico. Pesquisa e filtro ficam na URL.",
+      "Cartões por documento: «Exigido» vem da lista de documentos definida para o mês; «Adicional» é um arquivo anexado só a este fechamento. «Ver documento» abre a página de detalhe com prévia, versões e histórico. O menu ⋮ de cada cartão oferece abrir, enviar nova versão e remover. Pesquisa e filtro ficam na URL.",
     requestsSummary:
       "Solicitações reais de ajuste registradas pelos revisores (decisões com motivo e comentário). «Abrir conversa» leva ao detalhe do documento, onde o contexto completo fica disponível. Responder não encerra a solicitação automaticamente.",
     additionalDocument:
       "Documento adicional: arquivo anexado somente a este fechamento. Não cria exigência geral, não se torna obrigatório nos próximos meses e não altera fechamentos concluídos.",
     detailFile:
-      "Prévia, download e versões do arquivo. «Enviar nova versão» cria uma versão nova — a anterior fica preservada no histórico. Se a prévia falhar, o download continua disponível.",
+      "Prévia, download e versões do arquivo. «Enviar nova versão» cria uma versão nova — a anterior fica preservada no histórico e pode ser selecionada na lista de versões. Se a prévia falhar, «Tentar novamente» recarrega e o download continua disponível. «Remover documento» retira o arquivo da lista sem apagar versões e histórico — a exigência continua valendo.",
     detailInteractions:
       "Solicitações e decisões reais registradas neste documento (ajuste solicitado, conferido, revertido) com autor e data. A conversa livre por documento ainda não está disponível.",
     detailHistory:
-      "Registros auditáveis do documento: anexação, novas versões, downloads e cancelamento — sempre com autor e data. Versões anteriores permanecem disponíveis.",
+      "Linha do tempo operacional do documento: anexação, novas versões e remoção — sempre com autor e data. Downloads ficam na trilha de auditoria técnica e não aparecem aqui. Versões anteriores permanecem disponíveis.",
   },
 } as const;

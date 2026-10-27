@@ -25,6 +25,7 @@ import {
 } from "react";
 
 import {
+  ConfirmModalPanel,
   FileDropzone,
   fileDropzoneBemClasses,
   FilePreviewView,
@@ -34,11 +35,10 @@ import {
 import { ApiError } from "../../api/httpClient";
 import {
   getCompetenceItem,
-  getItemValidation,
   type CompetenceChecklistItemDetail,
-  type ItemValidation,
 } from "../../api/competencesApi";
 import {
+  cancelClosingDocument,
   CLOSING_DOCUMENT_ACCEPT,
   downloadClosingDocument,
   getClosingDocument,
@@ -61,14 +61,16 @@ import {
 } from "../../app/cfFiltersUi";
 import {
   CfActionButton,
+  CfDialog,
   CfEmptyState,
   CfSectionCard,
   CfStatusBadge,
+  cfConfirmModalClassNames,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/formatters";
-import { REJECTION_REASON_LABELS } from "./ItemValidationPanel";
+import { ItemValidationPanel } from "./ItemValidationPanel";
 
 type PanelError = { status: number; code: string | null; message: string };
 
@@ -85,6 +87,10 @@ const DETAIL_ERROR_MESSAGES: Record<string, string> = {
   stale_revision:
     "O documento foi alterado por outra pessoa. Os dados foram atualizados.",
   document_cancelled: "Este documento foi cancelado.",
+  file_missing:
+    "O arquivo não está disponível no armazenamento — avise o suporte.",
+  item_locked_by_submitted_package:
+    "Este documento integra um conjunto já enviado — a correção exige nova versão do conjunto.",
 };
 
 function toPanelError(error: unknown, fallback: string): PanelError {
@@ -154,7 +160,6 @@ type DetailResult =
       kind: "item";
       item: CompetenceChecklistItemDetail;
       documents: ClosingDocument[];
-      validation: ItemValidation;
     }
   | { kind: "document"; document: ClosingDocument };
 
@@ -190,6 +195,14 @@ export function DocumentDetailPanel({
     items: DocumentAuditEvent[];
   } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<ClosingDocument | null>(
+    null,
+  );
+  const [selectedVersion, setSelectedVersion] = useState<{
+    key: string;
+    versionNo: number;
+  } | null>(null);
+  const [previewNonce, setPreviewNonce] = useState(0);
   const [feedback, setFeedback] = useState<{
     intent: "info" | "error" | "success";
     message: string;
@@ -242,16 +255,11 @@ export function DocumentDetailPanel({
           const item = await getCompetenceItem(period, itemKey, {
             signal: controller.signal,
           });
-          const [docs, validation] = await Promise.all([
-            listClosingDocuments(
-              period,
-              { snapshotItemId: item.snapshot_item_id },
-              { signal: controller.signal },
-            ),
-            getItemValidation(period, itemKey, {
-              signal: controller.signal,
-            }),
-          ]);
+          const docs = await listClosingDocuments(
+            period,
+            { snapshotItemId: item.snapshot_item_id },
+            { signal: controller.signal },
+          );
           if (!alive()) return;
           setResult({
             key,
@@ -261,7 +269,6 @@ export function DocumentDetailPanel({
               documents: docs.documents.filter(
                 (d) => d.state !== "CANCELLED",
               ),
-              validation,
             },
           });
           setError(null);
@@ -308,21 +315,37 @@ export function DocumentDetailPanel({
     return () => controller.abort();
   }, [period, selectedDoc]);
 
+  // Versão exibida na prévia/download — a seleção é «carimbada» com o id
+  // do documento, então trocar de documento nunca mostra versão antiga.
+  const effectiveVersionNo =
+    selectedDoc && selectedVersion?.key === selectedDoc.document_id
+      ? selectedVersion.versionNo
+      : (selectedDoc?.current_version_no ?? 0);
+
   // Prévia via contrato de download autenticado (falha de prévia nunca
-  // bloqueia o download).
+  // bloqueia o download). `source` DEVE ter identidade estável: uma
+  // closure nova por render refaz o fetch a cada render — loop infinito
+  // de spinner + enxurrada de eventos DOCUMENT_DOWNLOADED no backend.
+  // Ela só muda com período/documento/versão ou retry explícito (nonce).
+  const previewDocId = selectedDoc?.document_id ?? null;
+  const previewSource = useCallback(() => {
+    // `previewNonce` só entra na identidade: incrementá-lo força refetch
+    // (retry explícito) sem precisar de canal lateral no hook do kit.
+    void previewNonce;
+    return previewDocId
+      ? downloadClosingDocument(period, previewDocId, effectiveVersionNo)
+      : Promise.reject(new Error("Sem documento."));
+  }, [period, previewDocId, effectiveVersionNo, previewNonce]);
   const preview = useFilePreviewLoader({
-    source: selectedDoc
-      ? () =>
-          downloadClosingDocument(
-            period,
-            selectedDoc.document_id,
-            selectedDoc.current_version_no,
-          )
-      : null,
+    source: previewDocId ? previewSource : null,
     mimeType: selectedDoc?.mime_type ?? null,
     fileName: selectedDoc?.original_name ?? null,
     enabled: Boolean(selectedDoc),
   });
+  const retryPreview = useCallback(
+    () => setPreviewNonce((n) => n + 1),
+    [],
+  );
 
   const handleAttachFiles = useCallback(
     (files: File[]) => {
@@ -407,7 +430,7 @@ export function DocumentDetailPanel({
   const handleDownload = useCallback(() => {
     const doc = selectedDoc;
     if (!doc) return;
-    downloadClosingDocument(period, doc.document_id, doc.current_version_no)
+    downloadClosingDocument(period, doc.document_id, effectiveVersionNo)
       .then((blob) =>
         saveDocumentBlob(blob, doc.original_name ?? "documento"),
       )
@@ -417,7 +440,45 @@ export function DocumentDetailPanel({
           message: toPanelError(err, "Falha ao baixar o arquivo.").message,
         });
       });
-  }, [period, selectedDoc]);
+  }, [period, selectedDoc, effectiveVersionNo]);
+
+  // U7 — remoção lógica: o documento sai da lista ativa; versões e
+  // histórico permanecem. Remover o arquivo NÃO cancela a exigência.
+  const confirmCancel = useCallback(() => {
+    const doc = cancelTarget;
+    if (!doc) return;
+    setUploading(true);
+    cancelClosingDocument(period, doc.document_id, {
+      revision: doc.revision,
+    })
+      .then(() => {
+        setUploading(false);
+        setCancelTarget(null);
+        if (data?.kind === "document") {
+          // Documento adicional removido: sai da lista ativa — voltar.
+          onBack();
+        } else {
+          setFeedback({
+            intent: "success",
+            message:
+              "Documento removido. As versões e o histórico foram preservados.",
+          });
+          refresh();
+        }
+      })
+      .catch((err: unknown) => {
+        setUploading(false);
+        setCancelTarget(null);
+        setFeedback({
+          intent: "error",
+          message: toPanelError(err, "Falha ao remover o documento.")
+            .message,
+        });
+        if (err instanceof ApiError && err.code === "stale_revision") {
+          refresh();
+        }
+      });
+  }, [period, cancelTarget, data, onBack, refresh]);
 
   const title =
     isNew
@@ -445,9 +506,6 @@ export function DocumentDetailPanel({
         }
       />
     ) : null;
-
-  const decisions =
-    data?.kind === "item" ? data.validation.decisions : [];
 
   return (
     <div className="cf-document-detail">
@@ -549,27 +607,52 @@ export function DocumentDetailPanel({
                     state={preview}
                     title={selectedDoc.original_name ?? title}
                   />
+                  {preview.error ? (
+                    <CfActionButton
+                      variant="ghost"
+                      onClick={retryPreview}
+                    >
+                      Tentar novamente
+                    </CfActionButton>
+                  ) : null}
                   <p className="cf-document-detail__meta">
                     {selectedDoc.original_name ?? "arquivo"}
                     {selectedDoc.size_bytes
                       ? ` · ${formatBytes(selectedDoc.size_bytes)}`
                       : ""}
-                    {` · v${selectedDoc.current_version_no}`}
+                    {` · v${effectiveVersionNo}`}
+                    {effectiveVersionNo !== selectedDoc.current_version_no
+                      ? " (versão anterior)"
+                      : ""}
                     {selectedDoc.uploaded_by
                       ? ` · ${selectedDoc.uploaded_by}`
                       : ""}
                   </p>
-                  {versionList && versionList.length > 1 ? (
+                  {versionList && versionList.length > 0 ? (
                     <ul className="cf-document-detail__versions">
                       {versionList.map((version) => (
                         <li key={version.document_version_id}>
-                          v{version.version_no} —{" "}
-                          {version.state === "ATTACHED"
-                            ? "atual"
-                            : "substituída"}
-                          {version.created_at
-                            ? ` · ${formatDateTime(version.created_at)}`
-                            : ""}
+                          <button
+                            type="button"
+                            className="cf-document-detail__docpick"
+                            aria-pressed={
+                              version.version_no === effectiveVersionNo
+                            }
+                            onClick={() =>
+                              setSelectedVersion({
+                                key: selectedDoc.document_id,
+                                versionNo: version.version_no,
+                              })
+                            }
+                          >
+                            v{version.version_no} —{" "}
+                            {version.state === "ATTACHED"
+                              ? "atual"
+                              : "substituída"}
+                            {version.created_at
+                              ? ` · ${formatDateTime(version.created_at)}`
+                              : ""}
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -588,6 +671,15 @@ export function DocumentDetailPanel({
                     >
                       {uploading ? "Enviando…" : "Enviar nova versão"}
                     </CfActionButton>
+                    {selectedDoc.state === "ATTACHED" ? (
+                      <CfActionButton
+                        variant="ghost"
+                        disabled={uploading}
+                        onClick={() => setCancelTarget(selectedDoc)}
+                      >
+                        Remover documento
+                      </CfActionButton>
+                    ) : null}
                   </div>
                   <input
                     ref={replaceInputRef}
@@ -626,46 +718,21 @@ export function DocumentDetailPanel({
               title="Interações"
               hint={CF_HELP.monthlyClosing.detailInteractions}
             >
-              {decisions.length === 0 ? (
+              {data.kind === "item" ? (
+                <ItemValidationPanel
+                  period={period}
+                  item={data.item}
+                  onChanged={refresh}
+                />
+              ) : (
                 <CfEmptyState
                   classNames={cfEmptyStateClassNames}
                   defaultMessage="Nenhuma solicitação registrada neste documento."
                 />
-              ) : (
-                <ul
-                  className="cf-document-detail__interactions"
-                  aria-label="Solicitações e decisões"
-                >
-                  {decisions.map((decision) => (
-                    <li key={decision.decision_id}>
-                      <strong>
-                        {decision.decision === "REJECTED"
-                          ? "Ajuste solicitado"
-                          : decision.decision === "ACCEPTED"
-                            ? "Documento conferido"
-                            : "Decisão revertida"}
-                      </strong>
-                      {decision.reason_code
-                        ? ` — ${
-                            REJECTION_REASON_LABELS[decision.reason_code] ??
-                            decision.reason_code
-                          }`
-                        : ""}
-                      {decision.comment ? ` · ${decision.comment}` : ""}
-                      <span className="cf-request-list__meta">
-                        {" "}
-                        · {decision.decided_by}
-                        {decision.created_at
-                          ? ` · ${formatDateTime(decision.created_at)}`
-                          : ""}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
               )}
               <p className="cf-document-detail__meta">
                 A conversa livre por documento ainda não está disponível —
-                as decisões registradas aparecem acima.
+                as solicitações e decisões registradas aparecem acima.
               </p>
             </CfSectionCard>
           </div>
@@ -674,12 +741,18 @@ export function DocumentDetailPanel({
             title="Histórico"
             hint={CF_HELP.monthlyClosing.detailHistory}
           >
-            {selectedDoc && eventList && eventList.length > 0 ? (
+            {selectedDoc &&
+            eventList &&
+            eventList.filter(
+              (e) => e.event_type !== "DOCUMENT_DOWNLOADED",
+            ).length > 0 ? (
               <ul
                 className="cf-document-detail__history"
                 aria-label="Histórico do documento"
               >
-                {eventList.map((event) => (
+                {eventList
+                  .filter((e) => e.event_type !== "DOCUMENT_DOWNLOADED")
+                  .map((event) => (
                   <li key={event.event_id}>
                     <strong>
                       {EVENT_LABELS[event.event_type] ?? event.event_type}
@@ -701,7 +774,46 @@ export function DocumentDetailPanel({
                 defaultMessage="Nenhum registro de histórico neste documento."
               />
             )}
+            {selectedDoc ? (
+              <p className="cf-document-detail__meta">
+                Downloads ficam registrados na trilha de auditoria, não
+                nesta linha do tempo.
+              </p>
+            ) : null}
           </CfSectionCard>
+
+          {cancelTarget ? (
+            <CfDialog
+              open
+              title="Remover documento"
+              onClose={() => {
+                if (!uploading) setCancelTarget(null);
+              }}
+              closeAriaLabel="Fechar confirmação de remoção"
+            >
+              <ConfirmModalPanel
+                message={
+                  <>
+                    Remover «
+                    {cancelTarget.original_name ?? title}
+                    »? O documento sai da lista, mas as versões e o
+                    histórico ficam preservados.
+                    {data?.kind === "item"
+                      ? " A exigência deste documento continua valendo."
+                      : ""}
+                  </>
+                }
+                confirmLabel="Remover documento"
+                cancelLabel="Voltar"
+                variant="danger"
+                confirmBusy={uploading}
+                confirmBusyLabel="Removendo…"
+                onConfirm={confirmCancel}
+                onCancel={() => setCancelTarget(null)}
+                classNames={cfConfirmModalClassNames}
+              />
+            </CfDialog>
+          ) : null}
         </>
       ) : null}
     </div>

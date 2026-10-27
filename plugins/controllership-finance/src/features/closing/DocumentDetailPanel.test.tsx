@@ -5,12 +5,20 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiMock"));
 
 const getItemMock = vi.fn();
 const getValidationMock = vi.fn();
+const listCorrectionsMock = vi.fn();
 const listDocsMock = vi.fn();
 const getDocMock = vi.fn();
 const listVersionsMock = vi.fn();
@@ -19,10 +27,29 @@ const downloadMock = vi.fn();
 const saveBlobMock = vi.fn();
 const uploadMock = vi.fn();
 const replaceMock = vi.fn();
+const cancelDocMock = vi.fn();
 
 vi.mock("../../api/competencesApi", () => ({
   getCompetenceItem: (...args: unknown[]) => getItemMock(...args),
   getItemValidation: (...args: unknown[]) => getValidationMock(...args),
+  listItemCorrections: (...args: unknown[]) =>
+    listCorrectionsMock(...args),
+  cancelChecklistItem: () =>
+    Promise.reject(new Error("not mocked")),
+  decideDocumentEvidence: () =>
+    Promise.reject(new Error("not mocked")),
+  decideItemEvidenceSet: () =>
+    Promise.reject(new Error("not mocked")),
+  markItemNotApplicable: () =>
+    Promise.reject(new Error("not mocked")),
+  requestItemCorrection: () =>
+    Promise.reject(new Error("not mocked")),
+  reverseRejection: () =>
+    Promise.reject(new Error("not mocked")),
+  reviewItemCorrection: () =>
+    Promise.reject(new Error("not mocked")),
+  revertItemNotApplicable: () =>
+    Promise.reject(new Error("not mocked")),
 }));
 
 vi.mock("../../api/documentsApi", () => ({
@@ -35,6 +62,7 @@ vi.mock("../../api/documentsApi", () => ({
   saveDocumentBlob: (...args: unknown[]) => saveBlobMock(...args),
   uploadClosingDocument: (...args: unknown[]) => uploadMock(...args),
   replaceClosingDocument: (...args: unknown[]) => replaceMock(...args),
+  cancelClosingDocument: (...args: unknown[]) => cancelDocMock(...args),
 }));
 
 import { ApiError } from "../../api/httpClient";
@@ -105,6 +133,19 @@ function renderDetail(documentRef: string, extras?: {
     />,
   );
 }
+
+beforeEach(() => {
+  listCorrectionsMock.mockResolvedValue([]);
+  getValidationMock.mockResolvedValue(VALIDATION);
+  listVersionsMock.mockResolvedValue([]);
+  listEventsMock.mockResolvedValue({
+    events: [],
+    total: 0,
+    limit: 50,
+    offset: 0,
+  });
+  downloadMock.mockResolvedValue(new Blob(["pdf"]));
+});
 
 afterEach(() => {
   cleanup();
@@ -182,8 +223,9 @@ describe("DocumentDetailPanel — item exigido", () => {
       { snapshotItemId: "s-1" },
       expect.anything(),
     );
+    // Decisões reais de validação renderizadas pelo painel embutido.
     await waitFor(() =>
-      expect(screen.getByText(/Ajuste solicitado/)).toBeTruthy(),
+      expect(screen.getAllByText(/Rejeitado/).length).toBeGreaterThan(0),
     );
     expect(screen.getByText(/Arquivo ilegível/)).toBeTruthy();
     expect(screen.getByText(/revisor-1/)).toBeTruthy();
@@ -350,5 +392,190 @@ describe("DocumentDetailPanel — estados honestos", () => {
 
     fireEvent.click(screen.getByText(/Voltar aos documentos/));
     expect(onBack).toHaveBeenCalled();
+  });
+});
+
+describe("DocumentDetailPanel — prévia e ciclo de vida", () => {
+  const DOC_WITH_VERSIONS = [
+    {
+      document_version_id: "v-1",
+      document_id: "d-1",
+      version_no: 1,
+      state: "SUPERSEDED",
+      uploaded_by: "u-1",
+      created_at: "2026-05-02T10:00:00Z",
+      original_name: "balancete.pdf",
+      mime_type: "application/pdf",
+      size_bytes: 2048,
+      checksum_sha256: "a".repeat(64),
+    },
+    {
+      document_version_id: "v-2",
+      document_id: "d-1",
+      version_no: 2,
+      state: "ATTACHED",
+      uploaded_by: "u-2",
+      created_at: "2026-05-10T10:00:00Z",
+      original_name: "balancete.pdf",
+      mime_type: "application/pdf",
+      size_bytes: 4096,
+      checksum_sha256: "b".repeat(64),
+    },
+  ];
+
+  it("regressão: a prévia chama o download uma única vez por documento", async () => {
+    getDocMock.mockResolvedValue({
+      ...DOC,
+      link_kind: "competence",
+      snapshot_item_id: null,
+      current_version_no: 2,
+    });
+
+    renderDetail("d-1");
+
+    await waitFor(() =>
+      expect(downloadMock).toHaveBeenCalledWith("2026-05", "d-1", 2),
+    );
+    // Re-renderizações subsequentes NÃO podem refazer o fetch (raiz do
+    // bug produtivo: spinner infinito + enxurrada de DOCUMENT_DOWNLOADED).
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(downloadMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("falha na prévia oferece retry sem travar o download manual", async () => {
+    getDocMock.mockResolvedValue({
+      ...DOC,
+      link_kind: "competence",
+      snapshot_item_id: null,
+    });
+    downloadMock
+      .mockRejectedValueOnce(new ApiError(500, "erro", null))
+      .mockResolvedValue(new Blob(["pdf"]));
+
+    renderDetail("d-1");
+
+    await waitFor(() =>
+      expect(screen.getByText("Tentar novamente")).toBeTruthy(),
+    );
+    // Download manual independe da prévia.
+    fireEvent.click(screen.getByText("Baixar"));
+    await waitFor(() =>
+      expect(saveBlobMock).toHaveBeenCalled(),
+    );
+
+    fireEvent.click(screen.getByText("Tentar novamente"));
+    await waitFor(() =>
+      expect(downloadMock).toHaveBeenCalledTimes(3),
+    );
+  });
+
+  it("selecionar versão anterior troca prévia e download para v1", async () => {
+    getDocMock.mockResolvedValue({
+      ...DOC,
+      link_kind: "competence",
+      snapshot_item_id: null,
+      current_version_no: 2,
+    });
+    listVersionsMock.mockResolvedValue(DOC_WITH_VERSIONS);
+
+    renderDetail("d-1");
+
+    await waitFor(() =>
+      expect(downloadMock).toHaveBeenCalledWith("2026-05", "d-1", 2),
+    );
+    fireEvent.click(screen.getByText(/v1 — substituída/));
+    await waitFor(() =>
+      expect(downloadMock).toHaveBeenCalledWith("2026-05", "d-1", 1),
+    );
+    fireEvent.click(screen.getByText("Baixar"));
+    await waitFor(() =>
+      expect(downloadMock).toHaveBeenLastCalledWith("2026-05", "d-1", 1),
+    );
+  });
+
+  it("remoção lógica: confirma, chama U7 com a revisão e sai da lista", async () => {
+    getDocMock.mockResolvedValue({
+      ...DOC,
+      link_kind: "competence",
+      snapshot_item_id: null,
+    });
+    cancelDocMock.mockResolvedValue({ ...DOC, state: "CANCELLED" });
+    const onBack = vi.fn();
+
+    renderDetail("d-1", { onBack });
+
+    await waitFor(() =>
+      expect(screen.getByText("Remover documento")).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByText("Remover documento"));
+    const removeButtons = screen.getAllByRole("button", {
+      name: "Remover documento",
+    });
+    fireEvent.click(removeButtons[removeButtons.length - 1]);
+
+    await waitFor(() =>
+      expect(cancelDocMock).toHaveBeenCalledWith(
+        "2026-05",
+        "d-1",
+        { revision: 3 },
+      ),
+    );
+    await waitFor(() => expect(onBack).toHaveBeenCalled());
+  });
+
+  it("cancelamento da confirmação não chama U7", async () => {
+    getDocMock.mockResolvedValue({
+      ...DOC,
+      link_kind: "competence",
+      snapshot_item_id: null,
+    });
+
+    renderDetail("d-1");
+
+    await waitFor(() =>
+      expect(screen.getByText("Remover documento")).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByText("Remover documento"));
+    fireEvent.click(screen.getByText("Voltar"));
+    expect(cancelDocMock).not.toHaveBeenCalled();
+  });
+
+  it("histórico operacional não exibe eventos de download", async () => {
+    getDocMock.mockResolvedValue({
+      ...DOC,
+      link_kind: "competence",
+      snapshot_item_id: null,
+    });
+    listEventsMock.mockResolvedValue({
+      events: [
+        {
+          event_id: "e-1",
+          event_type: "DOCUMENT_UPLOADED",
+          actor_subject: "u-1",
+          detail: { version_no: 1 },
+          created_at: "2026-05-02T10:00:00Z",
+        },
+        {
+          event_id: "e-2",
+          event_type: "DOCUMENT_DOWNLOADED",
+          actor_subject: "u-1",
+          detail: { version_no: 1, result: "AUTHORIZED" },
+          created_at: "2026-05-02T11:00:00Z",
+        },
+      ],
+      total: 2,
+      limit: 50,
+      offset: 0,
+    });
+
+    renderDetail("d-1");
+
+    await waitFor(() =>
+      expect(screen.getByText("Arquivo anexado")).toBeTruthy(),
+    );
+    expect(screen.queryByText("Download", { exact: true })).toBeNull();
+    expect(
+      screen.getByText(/trilha de auditoria/),
+    ).toBeTruthy();
   });
 });

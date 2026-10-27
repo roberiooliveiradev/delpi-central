@@ -526,3 +526,26 @@ Vitest focado: `MonthlyDocumentsPanel` 10/10, `DocumentDetailPanel` 7/7, `Monthl
 - Histórico operacional legível, limitado/paginado conforme volume, sem downloads repetitivos e sem IDs técnicos crus; eventos antigos preservados no backend conforme retenção. Decisão de **não registrar novos downloads como eventos de negócio** depende de inspeção da autoridade de segurança/auditoria; jamais eliminar trilha obrigatória sem gate.
 - Cartões e detalhe aderentes §17; nenhum modal excessivo, nem perda de UX de documento adicional; seções antigas retiradas apenas da UI nova.
 - Testes backend/frontend/integrados (incluindo download real e preview), CLARA e Ajuda atualizadas; deploy local/produção conforme owner e gates; smoke autenticado PO. Se alteração de U4/U8, audit retention ou download autorização exigir breaking/security decision: `DECISION_REQUIRED` no subescopo, sem impedir o rework visual independente.
+
+
+## 20. RUNTIME UPDATE — Rework documental executado (CF-PROC0072-DOCUMENTS-REWORK-007, 26/10/2026)
+
+Correção dos defeitos comprovados na V0.2 conforme §19. Sem migration, sem endpoint novo, sem permission nova, sem alteração de produtor de auditoria.
+
+### 20.1 Causa raiz comprovada do download
+O fluxo `DocumentDetailPanel → downloadClosingDocument → httpGetBlob → BFF U4 → autorização → storage → FileResponse` foi rastreado ponta a ponta: rota, método, versão, competence, effective permission, resource scope, `Content-Type` e auditoria estavam **corretos** no backend. A falha era um **loop de identidade no frontend**: o `source` passado ao `useFilePreviewLoader` era uma arrow function nova a cada render; o `useEffect` do hook depende da identidade de `source`, então cada `setState` provocava novo render → nova identidade → novo GET U4 → novo `DOCUMENT_DOWNLOADED` → novo render. Resultado: prévia presa em «Carregando pré-visualização…», enxurrada de eventos de download no histórico e interferência no download manual. Correção na fonte: `source` estabilizado via `useCallback` com deps `[period, documentId, versionNo, previewNonce]` — refetch somente por mudança real de alvo ou retry explícito.
+
+### 20.2 Correções entregues
+- **Prévia**: identidade estável (§20.1), estado de erro finito com «Tentar novamente» (`previewNonce`), download manual independente da prévia, seleção de versão carimbada por `document_id` (versão anterior nunca vaza para outro documento), abort/cleanup nativo do hook ao trocar de documento.
+- **Menu de três pontos** nos cartões: `ContextMenu`/`ContextMenuItem`/`ContextMenuDivider` reais do `@delpi/plugin-ui` (portal, role `menu`/`menuitem`, Escape, foco, `aria-label` no trigger). Ações: «Abrir documento»; «Enviar nova versão» (U5) e «Remover documento» (U7) só quando existe documento vigente — exigência sem arquivo não oferece ação impossível.
+- **Remoção lógica (U7)**: confirmação via `ConfirmModalPanel` com nome do arquivo, consequência («sai da lista, versões e histórico preservados») e, para item exigido, aviso explícito de que **a exigência continua valendo**. `revision` (OCC) + tratamento de `stale_revision` com refresh. Sucesso em documento adicional retorna à lista; em item exigido, atualiza in-place. `CANCELLED != DELETED` preservado; sem DELETE físico.
+- **Nova versão (U5)** acessível no detalhe e no cartão: `revision` + `idempotency_key`, versão anterior preservada (`SUPERSEDED`), prévia/download respeitam a versão selecionada.
+- **Histórico operacional**: eventos `DOCUMENT_DOWNLOADED` removidos da timeline visível; rodapé declara que downloads ficam na trilha de auditoria. **Nenhum evento histórico foi apagado e nenhum produtor foi alterado** — o backend continua auditando autorização/storage do U4 conforme contrato; eventual redução de emissão na origem exige owner de segurança/auditoria + gate próprio (`PLANNED`, não executado).
+- **Interações reais**: `ItemValidationPanel` embutido no detalhe do item exigido — decisões ACCEPTED/REJECTED, correções e reversões reais, sem conversa fictícia.
+- **Bloco legado removido da composição**: «Checklist da competência» não aparece mais na aba porque a validação item a item agora acontece no próprio detalhe do documento (`ItemValidationPanel`). Rota e página `closing/checklist/{period}` **permanecem intactas** — apenas a navegação obrigatória foi eliminada.
+
+### 20.3 Componentes do kit efetivamente usados (acréscimo ao §18.3)
+`ContextMenu`, `ContextMenuItem`, `ContextMenuDivider`, `ConfirmModalPanel`, `CfDialog` (wrapper local do kit), `ItemValidationPanel` (componente do próprio plugin já existente). Nenhum componente de menu/confirmação paralelo criado.
+
+### 20.4 Evidência
+Vitest focado: `MonthlyDocumentsPanel` 15/15 (menu, ações, U5, U7, confirmação/cancelamento), `DocumentDetailPanel` 13/13 (regressão de fetch único U4, retry, versão anterior, remoção, histórico sem downloads), `MonthlyClosingPage` 32/32 (sem bloco legado), `pluginRoutes` 18/18. Suíte fechamento 171/171; plugin 244/244. `tsc -b` PASS; ESLint dos arquivos do escopo limpo; estruturais (manifest, boundary MFE→BFF, cobertura de ajuda) PASS; build federado PASS (`App-C81K9e6S.js`). Smoke autenticado Devin: `TEST_NOT_RUN`; homologação visual PO: `PENDING`.

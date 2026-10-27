@@ -794,3 +794,15 @@ Componentes efetivamente reutilizados via `@delpi/plugin-ui/index` (verificados 
 ## Registro de execução — Visão geral V0.3 (CF-PROC0072-OVERVIEW-UX-REWORK-005, 26/10/2026)
 
 Refinamento de copy sobre a composição V0.2 — **nenhum componente adicionado, removido ou duplicado**. O conjunto de factories continua exatamente o do registro V0.2 acima (`PagePath`, `PageHero`/`ClosingHero`, `SegmentToggle`, `InteractiveDataCard`, `EventsSection`, `SectionCard`, `StatusBadge`, `ActionButton`, `EmptyState`, `TitleWithHelp`, `StateBanner`). A expansão da lista de atenção (`Mostrar todas as N situações`) usa `CfActionButton` + estado local — sem wrapper nem estilo global novo.
+
+
+## Registro de execução — Rework documentos (CF-PROC0072-DOCUMENTS-REWORK-007, 26/10/2026)
+
+| Superfície | Componente do kit | Bound local |
+|---|---|---|
+| Menu três pontos do cartão | `ContextMenu`, `ContextMenuItem`, `ContextMenuDivider` (portal, role `menu`/`menuitem`, Escape, hint) | trigger `<button>` com `aria-label` + estado de posição |
+| Confirmação de remoção (U7) | `ConfirmModalPanel` dentro de `CfDialog` | `cfConfirmModalClassNames` |
+| Prévia autenticada | `FilePreviewView` + `useFilePreviewLoader` | `source` estabilizado por `useCallback` (causa raiz V0.2) |
+| Validação P2 no detalhe | `ItemValidationPanel` (componente do plugin, já existente) | embed direto, `onChanged` → refresh |
+
+Nenhum componente de menu/contexto ou confirmação paralelo criado; nenhum chrome copiado.

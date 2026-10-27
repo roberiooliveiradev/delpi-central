@@ -12,6 +12,8 @@ vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiM
 const listItemsMock = vi.fn();
 const getValidationMock = vi.fn();
 const listDocsMock = vi.fn();
+const replaceMock = vi.fn();
+const cancelDocMock = vi.fn();
 
 vi.mock("../../api/competencesApi", () => ({
   listCompetenceItems: (...args: unknown[]) => listItemsMock(...args),
@@ -19,7 +21,10 @@ vi.mock("../../api/competencesApi", () => ({
 }));
 
 vi.mock("../../api/documentsApi", () => ({
+  CLOSING_DOCUMENT_ACCEPT: ".pdf",
   listClosingDocuments: (...args: unknown[]) => listDocsMock(...args),
+  replaceClosingDocument: (...args: unknown[]) => replaceMock(...args),
+  cancelClosingDocument: (...args: unknown[]) => cancelDocMock(...args),
 }));
 
 import { ApiError } from "../../api/httpClient";
@@ -318,5 +323,188 @@ describe("MonthlyDocumentsPanel — cartões V0.2", () => {
       ).toBeTruthy(),
     );
     expect(screen.queryByText("Planilha extra")).toBeNull();
+  });
+});
+
+describe("MonthlyDocumentsPanel — menu de três pontos", () => {
+  it("abre menu acessível com ações do documento", async () => {
+    listItemsMock.mockResolvedValue([ITEM]);
+    listDocsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    getValidationMock.mockResolvedValue(EMPTY_VALIDATION);
+    const onOpenDetail = vi.fn();
+
+    renderPanel({ onOpenDetail });
+
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Ações de Balancete mensal"),
+      ).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByLabelText("Ações de Balancete mensal"));
+
+    const menu = screen.getByRole("menu");
+    expect(menu).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: "Abrir documento" }),
+    );
+    expect(onOpenDetail).toHaveBeenCalledWith("item:CK-E-01");
+  });
+
+  it("item sem arquivo não oferece nova versão nem remoção", async () => {
+    listItemsMock.mockResolvedValue([ITEM]);
+    listDocsMock.mockResolvedValue({
+      documents: [],
+      total: 0,
+      limit: 50,
+      offset: 0,
+    });
+    getValidationMock.mockResolvedValue(EMPTY_VALIDATION);
+
+    renderPanel({});
+
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Ações de Balancete mensal"),
+      ).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByLabelText("Ações de Balancete mensal"));
+
+    expect(
+      screen.getByRole("menuitem", { name: "Abrir documento" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("menuitem", { name: "Enviar nova versão" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("menuitem", { name: "Remover documento" }),
+    ).toBeNull();
+  });
+
+  it("nova versão pelo cartão usa U5 com revisão e idempotência", async () => {
+    listItemsMock.mockResolvedValue([]);
+    listDocsMock.mockResolvedValue({
+      documents: [ADDITIONAL_DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    replaceMock.mockResolvedValue({
+      ...ADDITIONAL_DOC,
+      current_version_no: 3,
+    });
+
+    const { container } = renderPanel({});
+
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Ações de Planilha extra"),
+      ).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByLabelText("Ações de Planilha extra"));
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: "Enviar nova versão" }),
+    );
+    fireEvent.change(
+      container.querySelector("input[type=file]") as HTMLInputElement,
+      {
+        target: {
+          files: [new File(["x"], "v3.xlsx")],
+        },
+      },
+    );
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalled());
+    const [, documentId, payload] = replaceMock.mock.calls[0];
+    expect(documentId).toBe("d-2");
+    expect(payload.revision).toBe(3);
+    expect(payload.idempotencyKey).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByText(/versão anterior foi preservada/)).toBeTruthy(),
+    );
+  });
+
+  it("remoção lógica pelo cartão confirma e chama U7", async () => {
+    listItemsMock.mockResolvedValue([]);
+    listDocsMock.mockResolvedValue({
+      documents: [ADDITIONAL_DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    cancelDocMock.mockResolvedValue({
+      ...ADDITIONAL_DOC,
+      state: "CANCELLED",
+    });
+
+    renderPanel({});
+
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Ações de Planilha extra"),
+      ).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByLabelText("Ações de Planilha extra"));
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: "Remover documento" }),
+    );
+
+    // Confirmação cita o arquivo e a preservação do histórico.
+    expect(screen.getByText(/planilha-extra\.xlsx/)).toBeTruthy();
+    expect(
+      screen.getByText(/versões e o histórico ficam preservados/),
+    ).toBeTruthy();
+
+    const confirm = screen.getAllByRole("button", {
+      name: "Remover documento",
+    });
+    fireEvent.click(confirm[confirm.length - 1]);
+
+    await waitFor(() =>
+      expect(cancelDocMock).toHaveBeenCalledWith(
+        "2026-05",
+        "d-2",
+        { revision: 3 },
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText(/histórico foram preservados/),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("confirmação de remoção em item exigido avisa que a exigência permanece", async () => {
+    listItemsMock.mockResolvedValue([ITEM]);
+    listDocsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    getValidationMock.mockResolvedValue(EMPTY_VALIDATION);
+
+    renderPanel({});
+
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText("Ações de Balancete mensal"),
+      ).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByLabelText("Ações de Balancete mensal"));
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: "Remover documento" }),
+    );
+
+    expect(
+      screen.getByText(/exigência deste documento continua valendo/),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByText("Voltar"));
+    expect(cancelDocMock).not.toHaveBeenCalled();
   });
 });

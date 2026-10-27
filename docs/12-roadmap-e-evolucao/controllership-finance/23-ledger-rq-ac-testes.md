@@ -412,4 +412,17 @@ Fonte: [Plano 113 §§12–13](./113-plano-canonico-fluxo-fechamento-controlador
 
 
 
-> **REWORK DOC V0.3 — 26/10/2026 — TARGET/RQ a verificar:** `RQ-DOC-RW-01` download/preview autenticado com pós-condição real e sem loading infinito; `RQ-DOC-RW-02` menu três pontos no card e operação U7 de cancelamento lógico devidamente autorizada + confirmação/OCC; `RQ-DOC-RW-03` U5 nova versão sem perda do histórico; `RQ-DOC-RW-04` histórico operacional sem eventos de download repetitivos ou UUID cru (preservar trilha obrigatória backend, sujeito owner/gate); `RQ-DOC-RW-05` eliminar navegação obrigatória ao checklist legado da composição nova sem perder validação P2; `RQ-DOC-RW-06` testes positivo/negativo/sibling, temas/mobile/foco, Ajuda, CLARA, local/prod e smoke autenticado. Capturas PO comprovam falha visível, não causa raiz da BFF. Referência [Plano 113 §19](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Resultado: `PENDING`.
+> **REWORK DOC V0.3 — 26/10/2026 — TARGET/RQ a verificar:** `RQ-DOC-RW-01` download/preview autenticado com pós-condição real e sem loading infinito; `RQ-DOC-RW-02` menu três pontos no card e operação U7 de cancelamento lógico devidamente autorizada + confirmação/OCC; `RQ-DOC-RW-03` U5 nova versão sem perda do histórico; `RQ-DOC-RW-04` histórico operacional sem eventos de download repetitivos ou UUID cru (preservar trilha obrigatória backend, sujeito owner/gate); `RQ-DOC-RW-05` eliminar navegação obrigatória ao checklist legado da composição nova sem perder validação P2; `RQ-DOC-RW-06` testes positivo/negativo/sibling, temas/mobile/foco, Ajuda, CLARA, local/prod e smoke autenticado. Capturas PO comprovam falha visível, não causa raiz da BFF. Referência [Plano 113 §19](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). Resultado: executado — ver tabela abaixo.
+
+## Rework Documentos V0.3 — resultado (CF-PROC0072-DOCUMENTS-REWORK-007, 26/10/2026)
+
+Causa raiz comprovada: `source` do `useFilePreviewLoader` com identidade nova a cada render → loop render→fetch U4→`DOCUMENT_DOWNLOADED`→render (spinner infinito + histórico inundado). Backend U4 íntegro.
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-DOC-RW-01 | Download/preview autenticado, sem loading infinito, erro+retry | testes «fetch único por documento» (regressão), «falha na prévia oferece retry» | PASS |
+| RQ-DOC-RW-02 | Menu três pontos + U7 autorizado, confirmação, OCC | testes «menu acessível», «sem ação impossível», «remoção confirma e chama U7», «cancelamento não chama U7», «exigência permanece» | PASS |
+| RQ-DOC-RW-03 | U5 preserva histórico/versão anterior | testes «nova versão pelo cartão» (revision+idempotency), «selecionar versão anterior» | PASS |
+| RQ-DOC-RW-04 | Timeline sem downloads repetidos; trilha backend preservada | filtro `DOCUMENT_DOWNLOADED` na UI + nota de auditoria; nenhum evento apagado; emissão na origem `PLANNED` (gate auditoria) | PASS (UI) / PLANNED (producer) |
+| RQ-DOC-RW-05 | Sem navegação obrigatória ao checklist legado | `ItemValidationPanel` embutido no detalhe; bloco removido da aba; rota legada intacta | PASS |
+| RQ-DOC-RW-06 | Testes, Ajuda, CLARA, deploy | plugin 244/244, tsc/eslint/estruturais/build PASS; Ajuda atualizada; CLARA reindexada | PASS / smoke autenticado PO PENDING |

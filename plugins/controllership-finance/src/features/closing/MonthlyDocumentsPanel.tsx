@@ -15,7 +15,22 @@
  *
  * Sem falso zero: dados ausentes/indisponíveis exibem «—».
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type MouseEvent,
+} from "react";
+
+import {
+  ConfirmModalPanel,
+  ContextMenu,
+  ContextMenuDivider,
+  ContextMenuItem,
+} from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
 import {
@@ -25,10 +40,16 @@ import {
   type ItemValidation,
 } from "../../api/competencesApi";
 import {
+  cancelClosingDocument,
+  CLOSING_DOCUMENT_ACCEPT,
   listClosingDocuments,
+  replaceClosingDocument,
   type ClosingDocument,
 } from "../../api/documentsApi";
-import { CfQueryErrorBanner } from "../../app/cfFeedbackUi";
+import {
+  CfFeedbackMessage,
+  CfQueryErrorBanner,
+} from "../../app/cfFeedbackUi";
 import {
   FilterInputField,
   FiltersRow,
@@ -36,9 +57,11 @@ import {
 } from "../../app/cfFiltersUi";
 import {
   CfActionButton,
+  CfDialog,
   CfEmptyState,
   CfSectionCard,
   CfStatusBadge,
+  cfConfirmModalClassNames,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 import { CF_HELP } from "../../content/helpTooltips";
@@ -50,6 +73,19 @@ type PanelError = { status: number; code: string | null; message: string };
 const LIST_ERROR_MESSAGES: Record<string, string> = {
   forbidden: "Você não tem autorização para consultar os documentos.",
   competence_not_opened: "O fechamento deste mês ainda não foi aberto.",
+};
+
+const ACTION_ERROR_MESSAGES: Record<string, string> = {
+  forbidden: "Você não tem autorização para esta ação no documento.",
+  document_not_found: "Documento não encontrado ou fora do escopo.",
+  stale_revision:
+    "O documento foi alterado por outra pessoa. A lista foi atualizada.",
+  document_cancelled: "Este documento já foi removido.",
+  file_too_large: "O arquivo excede o limite de 25 MB.",
+  unsupported_media_type:
+    "Formato não permitido. Use PDF, imagem, XLS, XLSX ou CSV.",
+  item_locked_by_submitted_package:
+    "Este documento integra um conjunto já enviado — a correção exige nova versão do conjunto.",
 };
 
 function toPanelError(error: unknown, fallback: string): PanelError {
@@ -104,6 +140,10 @@ export type DocumentCard = {
   versionText: string | null;
   updatedAt: string | null;
   pendingRequests: number;
+  /** Documento vigente alvo das ações (nulo = exigência sem arquivo). */
+  documentId: string | null;
+  revision: number | null;
+  fileName: string | null;
 };
 
 function latestDecisionRejected(validation: ItemValidation): number {
@@ -148,6 +188,23 @@ export function MonthlyDocumentsPanel({
   );
   const requestId = useRef(0);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [menu, setMenu] = useState<{
+    card: DocumentCard;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<DocumentCard | null>(
+    null,
+  );
+  const [replaceTarget, setReplaceTarget] = useState<DocumentCard | null>(
+    null,
+  );
+  const [mutating, setMutating] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    intent: "info" | "error" | "success";
+    message: string;
+  } | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   const key = `docs:${period}:${retryNonce}`;
 
   const items = itemsResult?.key === key ? itemsResult.items : null;
@@ -216,6 +273,92 @@ export function MonthlyDocumentsPanel({
 
   const retry = () => setRetryNonce((n) => n + 1);
 
+  const actionMessage = (err: unknown, fallback: string) =>
+    (err instanceof ApiError && err.code
+      ? (ACTION_ERROR_MESSAGES[err.code] ?? err.message)
+      : fallback) ??
+    fallback;
+
+  const openMenu = useCallback(
+    (card: DocumentCard, event: MouseEvent<HTMLButtonElement>) => {
+      setMenu({ card, x: event.clientX, y: event.clientY });
+    },
+    [],
+  );
+
+  // U5 — nova versão direto do cartão (OCC revision + idempotência).
+  const handleReplaceFile = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0] ?? null;
+      event.target.value = "";
+      const card = replaceTarget;
+      setReplaceTarget(null);
+      if (!file || !card?.documentId || card.revision === null) return;
+      setMutating(true);
+      setFeedback(null);
+      replaceClosingDocument(period, card.documentId, {
+        file,
+        revision: card.revision,
+        idempotencyKey: crypto.randomUUID(),
+      })
+        .then(() => {
+          setMutating(false);
+          setFeedback({
+            intent: "success",
+            message:
+              "Nova versão enviada. A versão anterior foi preservada.",
+          });
+          retry();
+        })
+        .catch((err: unknown) => {
+          setMutating(false);
+          setFeedback({
+            intent: "error",
+            message: actionMessage(
+              err,
+              "Falha ao enviar a nova versão.",
+            ),
+          });
+          if (err instanceof ApiError && err.code === "stale_revision") {
+            retry();
+          }
+        });
+    },
+    [period, replaceTarget],
+  );
+
+  // U7 — remoção lógica: sai da lista ativa; histórico preservado.
+  // Remover o arquivo NÃO cancela a exigência do item.
+  const confirmCancel = useCallback(() => {
+    const card = cancelTarget;
+    if (!card?.documentId || card.revision === null) return;
+    setMutating(true);
+    cancelClosingDocument(period, card.documentId, {
+      revision: card.revision,
+    })
+      .then(() => {
+        setMutating(false);
+        setCancelTarget(null);
+        setFeedback({
+          intent: "success",
+          message:
+            "Documento removido. As versões e o histórico foram preservados.",
+        });
+        retry();
+      })
+      .catch((err: unknown) => {
+        setMutating(false);
+        setCancelTarget(null);
+        setFeedback({
+          intent: "error",
+          message: actionMessage(err, "Falha ao remover o documento."),
+        });
+        if (err instanceof ApiError && err.code === "stale_revision") {
+          retry();
+        }
+      });
+  }, [period, cancelTarget]);
+
   const docsByItem = useMemo(() => {
     const map = new Map<string, ClosingDocument[]>();
     for (const doc of documents ?? []) {
@@ -282,6 +425,9 @@ export function MonthlyDocumentsPanel({
           ? (latest.updated_at ?? latest.created_at)
           : null,
         pendingRequests: pending,
+        documentId: latest?.document_id ?? null,
+        revision: latest?.revision ?? null,
+        fileName: latest?.original_name ?? null,
       });
     }
     for (const doc of additionalDocs) {
@@ -295,6 +441,9 @@ export function MonthlyDocumentsPanel({
         versionText: `v${doc.current_version_no}`,
         updatedAt: doc.updated_at ?? doc.created_at,
         pendingRequests: 0,
+        documentId: doc.document_id,
+        revision: doc.revision,
+        fileName: doc.original_name,
       });
     }
     return list;
@@ -418,10 +567,22 @@ export function MonthlyDocumentsPanel({
               <li key={card.ref} className="cf-document-card">
                 <div className="cf-document-card__head">
                   <strong>{card.name}</strong>
-                  <CfStatusBadge
-                    variant={card.stateVariant}
-                    label={card.stateLabel}
-                  />
+                  <span className="cf-document-card__badges">
+                    <CfStatusBadge
+                      variant={card.stateVariant}
+                      label={card.stateLabel}
+                    />
+                    <button
+                      type="button"
+                      className="cf-document-card__menu-trigger"
+                      aria-label={`Ações de ${card.name}`}
+                      aria-haspopup="menu"
+                      disabled={mutating}
+                      onClick={(event) => openMenu(card, event)}
+                    >
+                      ⋮
+                    </button>
+                  </span>
                 </div>
                 <p className="cf-document-card__meta">
                   {card.kind === "required" ? "Exigido" : "Adicional"}
@@ -482,6 +643,99 @@ export function MonthlyDocumentsPanel({
           </ul>
         )}
       </CfSectionCard>
+
+      {feedback ? (
+        <CfFeedbackMessage
+          intent={feedback.intent}
+          title={feedback.intent === "error" ? "Erro" : "Documento"}
+        >
+          {feedback.message}
+        </CfFeedbackMessage>
+      ) : null}
+
+      {menu ? (
+        <ContextMenu
+          open
+          position={{ x: menu.x, y: menu.y }}
+          onClose={() => setMenu(null)}
+          aria-label={`Ações de ${menu.card.name}`}
+          portalScopeClassName="dashboard-controllership-finance"
+        >
+          <ContextMenuItem
+            label="Abrir documento"
+            onSelect={() => {
+              const ref = menu.card.ref;
+              setMenu(null);
+              onOpenDetail(ref);
+            }}
+          />
+          {menu.card.documentId ? (
+            <ContextMenuItem
+              label="Enviar nova versão"
+              hint="Envia um arquivo novo sem apagar a versão atual — ela fica preservada no histórico."
+              onSelect={() => {
+                setReplaceTarget(menu.card);
+                setMenu(null);
+                replaceInputRef.current?.click();
+              }}
+            />
+          ) : null}
+          {menu.card.documentId ? <ContextMenuDivider /> : null}
+          {menu.card.documentId ? (
+            <ContextMenuItem
+              label="Remover documento"
+              destructive
+              hint="O documento sai da lista, mas versões e histórico ficam preservados. A exigência não é cancelada."
+              onSelect={() => {
+                setCancelTarget(menu.card);
+                setMenu(null);
+              }}
+            />
+          ) : null}
+        </ContextMenu>
+      ) : null}
+
+      <input
+        ref={replaceInputRef}
+        type="file"
+        accept={CLOSING_DOCUMENT_ACCEPT}
+        style={{ display: "none" }}
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={handleReplaceFile}
+      />
+
+      {cancelTarget ? (
+        <CfDialog
+          open
+          title="Remover documento"
+          onClose={() => {
+            if (!mutating) setCancelTarget(null);
+          }}
+          closeAriaLabel="Fechar confirmação de remoção"
+        >
+          <ConfirmModalPanel
+            message={
+              <>
+                Remover «{cancelTarget.fileName ?? cancelTarget.name}»? O
+                documento sai da lista, mas as versões e o histórico ficam
+                preservados.
+                {cancelTarget.kind === "required"
+                  ? " A exigência deste documento continua valendo."
+                  : ""}
+              </>
+            }
+            confirmLabel="Remover documento"
+            cancelLabel="Voltar"
+            variant="danger"
+            confirmBusy={mutating}
+            confirmBusyLabel="Removendo…"
+            onConfirm={confirmCancel}
+            onCancel={() => setCancelTarget(null)}
+            classNames={cfConfirmModalClassNames}
+          />
+        </CfDialog>
+      ) : null}
     </div>
   );
 }

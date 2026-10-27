@@ -645,33 +645,15 @@ export function MonthlyClosingPage({
             ) : null}
 
             {tab === "documents" ? (
-              <>
-                {renderProbeGate(
-                  <MonthlyDocumentsPanel
-                    period={period}
-                    search={documentsSearch}
-                    stateFilter={documentsState}
-                    onFiltersChange={setDocumentsFilters}
-                    onOpenDetail={openDocumentDetail}
-                  />,
-                )}
-                <CfSectionCard title="Checklist da competência">
-                  <p>
-                    A validação item a item do checklist P2 permanece na página
-                    dedicada.
-                  </p>
-                  <CfActionButton
-                    variant="ghost"
-                    onClick={() =>
-                      navigatePluginPath(
-                        `${base}/closing/checklist/${period}`,
-                      )
-                    }
-                  >
-                    Abrir checklist do fechamento
-                  </CfActionButton>
-                </CfSectionCard>
-              </>
+              renderProbeGate(
+                <MonthlyDocumentsPanel
+                  period={period}
+                  search={documentsSearch}
+                  stateFilter={documentsState}
+                  onFiltersChange={setDocumentsFilters}
+                  onOpenDetail={openDocumentDetail}
+                />,
+              )
             ) : null}
 
             {tab === "reports" ? (

@@ -2,7 +2,13 @@
  * Stub Vitest de `@delpi/plugin-ui/index` — mesmo padrão dos MFEs irmãos:
  * renderiza labels/props essenciais sem carregar o barrel (recharts/xyflow).
  */
-import { createElement, forwardRef, type ReactNode } from "react";
+import {
+  createElement,
+  forwardRef,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 type AnyProps = Record<string, unknown>;
 
@@ -691,6 +697,40 @@ export function createHostContainedModalShell() {
 
 export const confirmModalBemClasses = passthroughClasses;
 
+export function ContextMenu(props: {
+  open?: boolean;
+  "aria-label"?: string;
+  children?: ReactNode;
+}) {
+  if (!props.open) return null;
+  return el(
+    "div",
+    { role: "menu", "aria-label": props["aria-label"] },
+    props.children,
+  );
+}
+
+export function ContextMenuItem(props: {
+  label?: string;
+  disabled?: boolean;
+  onSelect?: () => void;
+}) {
+  return el(
+    "button",
+    {
+      type: "button",
+      role: "menuitem",
+      disabled: props.disabled,
+      onClick: props.onSelect,
+    },
+    props.label,
+  );
+}
+
+export function ContextMenuDivider() {
+  return el("hr", null);
+}
+
 export function ConfirmModalPanel(props: {
   message?: ReactNode;
   confirmLabel?: string;
@@ -790,30 +830,96 @@ export function createDashboardPagePath() {
   };
 }
 
+type MockPreviewState = {
+  kind: string;
+  loading: boolean;
+  error: string | null;
+  previewUrl: string | null;
+  textContent: string | null;
+  textTruncated: boolean;
+  spreadsheetData: null;
+  docxData: null;
+};
+
+const MOCK_PREVIEW_EMPTY: MockPreviewState = {
+  kind: "none",
+  loading: false,
+  error: null,
+  previewUrl: null,
+  textContent: null,
+  textTruncated: false,
+  spreadsheetData: null,
+  docxData: null,
+};
+
+/**
+ * Réplica fiel do comportamento relevante do hook real: resolve `source`
+ * em efeito dependente da IDENTIDADE de `source` — uma closure nova por
+ * render provocaria refetch a cada render (regressão real do U4).
+ */
 export function useFilePreviewLoader(options?: {
-  source?: unknown;
+  source?: (() => Promise<Blob>) | Blob | null;
+  mimeType?: string | null;
+  fileName?: string | null;
   enabled?: boolean;
-}) {
-  const enabled = options?.enabled !== false && options?.source;
-  return {
+}): MockPreviewState {
+  const enabled = options?.enabled !== false && Boolean(options?.source);
+  const [state, setState] = useState<MockPreviewState>({
+    ...MOCK_PREVIEW_EMPTY,
     kind: enabled ? "pdf" : "none",
-    loading: false,
-    error: null,
-    previewUrl: enabled ? "blob:mock-preview" : null,
-    textContent: null,
-    textTruncated: false,
-    spreadsheetData: null,
-    docxData: null,
-  };
+    loading: enabled,
+  });
+  useEffect(() => {
+    let cancelled = false;
+    const source = enabled ? (options?.source ?? null) : null;
+    Promise.resolve()
+      .then(() => {
+        if (cancelled) return null;
+        if (!source) {
+          setState({ ...MOCK_PREVIEW_EMPTY });
+          return null;
+        }
+        setState((current) => ({
+          ...current,
+          kind: "pdf",
+          loading: true,
+          error: null,
+          previewUrl: null,
+        }));
+        return typeof source === "function" ? source() : source;
+      })
+      .then((blob) => {
+        if (cancelled || !blob) return;
+        setState({
+          ...MOCK_PREVIEW_EMPTY,
+          kind: "pdf",
+          previewUrl: "blob:mock-preview",
+        });
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setState({
+          ...MOCK_PREVIEW_EMPTY,
+          kind: "pdf",
+          error: err instanceof Error ? err.message : "load_failed",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [options?.source, enabled]);
+  return state;
 }
 
 export function FilePreviewView(props: {
   state?: { kind?: string; loading?: boolean; error?: unknown };
   title?: string;
 }) {
-  return el(
-    "div",
-    { "data-testid": "file-preview" },
-    props.title ?? props.state?.kind ?? "",
-  );
+  const state = props.state;
+  const content = state?.loading
+    ? "Carregando pré-visualização..."
+    : state?.error
+      ? `Falha na pré-visualização: ${String(state.error)}`
+      : (props.title ?? state?.kind ?? "");
+  return el("div", { "data-testid": "file-preview" }, content);
 }
