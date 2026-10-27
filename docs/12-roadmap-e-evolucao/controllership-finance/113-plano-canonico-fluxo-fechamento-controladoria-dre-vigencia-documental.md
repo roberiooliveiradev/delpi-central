@@ -1154,3 +1154,29 @@ Em setembro/2026, as capturas do PO mostram a consulta operacional `stock-invent
   vazia acidental.
 - **Próximo gate:** revisão arquitetural + decisão PO de DR-2 →
   autorização de implementação.
+
+### 28.4 Registro — GATE-014 fechamento contratual DR-1/DR-2 (28/10/2026, READ-ONLY)
+
+**PROPOSTA consolidada no doc 114 §8 — nenhum runtime alterado.**
+
+- **Writers/locks:** matriz completa em doc 114 §8.1; `SELECT FOR UPDATE`
+  no template sozinho não basta — os writers legados de
+  publicação/inativação passam a adquirir o mesmo lock (mudança interna,
+  sem contrato novo).
+- **REVIEW:** estágio de conferência aprovado em V010, SEM segregação de
+  funções (mesmo MANAGE submete e publica; devolução exige motivo).
+  Recomendada alternativa A: transição DRAFT→REVIEW→PUBLISHED auditada
+  dentro da transação única — trilha idêntica ao fluxo manual.
+- **Idempotência:** header `Idempotency-Key` obrigatório + tabela
+  `document_requirement_operation` (UNIQUE template_id+key, request_hash,
+  result) — padrão canônico V004; mesma chave+payload divergente → 409
+  `idempotency_conflict`; replay → resultado armazenado.
+- **OCC:** `base_version` = MAX(version) → 409 `stale_revision`.
+- **Competências abertas:** recomendado rejeitar janela que intersecte
+  competência aberta (`422 window_covers_open_competence`); corretivo
+  permanece o item excepcional por competência — contratos não misturados.
+- **DR-2:** alternativa A (versão publicada com 0 itens) provada
+  compatível com todos os consumers de snapshot (V015 já produz snapshot
+  vazio idêntico); proteção `allow_empty` explícito; distinção
+  sem-template (NULL) vs checklist-vazio preservada na auditoria.
+- **Decisões pendentes D1–D5** no doc 114 §8.8.
