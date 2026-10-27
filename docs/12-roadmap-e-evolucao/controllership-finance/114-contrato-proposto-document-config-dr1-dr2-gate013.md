@@ -329,3 +329,32 @@ Rollback: endpoint novo é aditivo — desativar rota/devolver orquestração MF
 | D3 | Política `window_covers_open_competence` (rejeitar vs warning) | Rejeitar (422) |
 | D4 | Publicação direta com trilha REVIEW auditada (A) vs preparação/confirm em duas chamadas (B) | A — REVIEW não é aprovação independente |
 | D5 | `base_version` obrigatório vs opcional | Opcional (compat com clientes simples); MFE envia |
+
+
+## 9. Deliberação PO pós-GATE-014 — contrato condicionado e gate de implementação (27/10/2026)
+
+**DECISÃO FORMAL DE PRODUTO, NÃO EVIDÊNCIA DE RUNTIME.** PO delibera:
+- **D1:** AUTORIZAR a implementação **somente após** incorporar os ajustes contratuais abaixo, verificar as autoridades e ultrapassar gates transversais e de deploy aplicáveis. Esta decisão não permite começar runtime sem o fechamento dos gates.
+- **D2 / DR-2:** preservar alternativa **A** — versão PUBLISHED com zero itens, acionada com intenção explícita; nenhuma versão vazia ou migration foi implementada nesta etapa.
+- **D3:** **REJEITAR** com HTTP 422 `window_covers_open_competence` qualquer janela de alteração de exigência que intersecte competência já aberta; correção excepcional em competência aberta permanece em contrato próprio. Verificar colisão transacional com abertura simultânea.
+- **D4:** **REVIEW AUDITADO DENTRO DA TRANSAÇÃO**, mantendo eventos DRAFT_CREATED → VERSION_SUBMITTED_FOR_REVIEW → VERSION_PUBLISHED por versão e resumo DOCUMENT_CONFIG_APPLIED; sem janela humana independente, conforme inventário GATE-014. Não suprimir provenance de eventos.
+- **D5:** `base_version` **OBRIGATÓRIO**, não opcional, para mutações documentais. Validar no backend e devolver 409 stale_revision após comparação com token de versão atual. `Idempotency-Key` continua independente, obrigatória e distinta do OCC.
+
+### 9.1 Ajustes de contrato obrigatórios antes de runtime
+1. Substituir na proposta §8.6 `base_version?: int` por `base_version: int` requerido; proibir omissão e definir 400/422 de validação para campo ausente, respeitando convenção vigente. A política de replay idempotente deve preceder a avaliação de revisão stale para retries da **mesma** operação concluída, evitando falha falsa após sucesso; chave igual + hash diferente retorna 409.
+2. Definir `allow_empty` explícito e consistente em novo comando e operações legadas aplicáveis (normalização da intenção, default false, erro sem intenção). Separar versão vazia de template ausente pelo `template_version_id` e auditoria. Confirmar invariantes dos consumers e a interação entre publicar zero itens e snapshots.
+3. Compartilhar protocolo de lock (template antes de versão/itens) entre comando novo, publicação/inativação legadas **e abertura da competência**, com ordem e isolamento definidos; a regra D3 deve ser checada sob o mesmo controle transacional capaz de impedir corrida com uma abertura simultânea. Se a abertura não puder adquirir o mesmo lock sem impacto indevido, emitir `EXECUTION_DRIFT/DECISION_REQUIRED` antes de implementar, com alternativas.
+4. Integrar `Idempotency-Key` em persistência transacional e escopo comprovado com hash canônico do payload, incluindo a semântica de `base_version` no replay. Definir audit event idempotente, tenant/actor/scope e estratégia para falha de commit e retry.
+5. Determinar a semântica de `effective_from` para competência atual ainda não aberta e o resultado retornado para competência já aberta/erro 422; preservar prospectividade, imutabilidade do snapshot, autorização manage fail-closed e compatibilidade.
+6. Especificar rollout/rollback seguro para migração aditiva, endpoint, writers legados, abertura e MFE, incluindo compatibilidade de versões e plano de testes PostgreSQL com concorrência real.
+
+### 9.2 Próximo gate de execução — IMPLEMENTATION-GATE-015 (condicional)
+**Primeira entrega:** inventário HEAD/status e diff contratual de §8.6-§8.8 alinhado a D1-D5, matriz de consumers/writers e plano de migrations/testes. **GATE TRANSVERSAL EXPLÍCITO** antes de editar runtime ou schema. Depois, implementar em etapas pequenas e verificáveis: (a) backend/domain/application/ports/adapters, locks inclusive abertura e testes concorrentes; (b) endpoint + autorização fail-closed + idempotência, versão vazia explicitamente intencional e migração governada; (c) MFE troca orquestração por chamada única mantendo UX-012 e legacy; (d) regressão P2/P5/documentos/histórico e Help; (e) deploy local, verificação de resultado, produção só após gate separado, docs/evidência/CLARA. Nenhuma etapa de runtime executada nesta deliberação.
+
+### 9.3 RQ/AC adicionais (TARGET / TEST_NOT_RUN)
+- **RQ-ADM-DR1-09:** `base_version` exigido e 409 no stale; replay da mesma operação concluída é determinístico sem duplicar.
+- **RQ-ADM-DR1-10:** publicação e abertura concorrentes não escapam de D3; 422 quando a competência já abriu, ou snapshot novo coerente quando abertura vem depois da publicação.
+- **RQ-ADM-DR2-04:** `allow_empty` é intencional e auditado; último item pode terminar sem documento-sentinela, sem modificar snapshots anteriores.
+- **RQ-ADM-DR1-11:** etapa REVIEW audita transições na mesma transação, rollback elimina também eventos de auditoria em falha.
+
+**Classificação:** D1-D5 = PRODUCT_APPROVED com condições; contrato atualizado = TARGET; implementation/tests/deploy = NOT_STARTED/TEST_NOT_RUN. Sem autorização genérica para criar mudanças de runtime sem gates.
