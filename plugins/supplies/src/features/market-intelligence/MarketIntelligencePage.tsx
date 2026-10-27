@@ -429,7 +429,7 @@ export function MarketIntelligencePage({
                     ] ?? entry.quote_basis,
                     entry.latest_observation_date
                       ? MARKET_INTELLIGENCE_CONTENT.metals.latestRefLabel(
-                          entry.latest_observation_date,
+                          formatMarketDate(entry.latest_observation_date),
                         )
                       : null,
                   ]

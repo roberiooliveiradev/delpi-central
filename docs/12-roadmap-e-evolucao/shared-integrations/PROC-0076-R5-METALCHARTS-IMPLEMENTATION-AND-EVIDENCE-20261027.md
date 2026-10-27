@@ -196,6 +196,21 @@ Escopo: evolução visual/funcional do dashboard R4.1 — sem dados sintéticos,
 - Cards de estado zerado: no máximo 3 itens compactos (última tentativa, última observação, cobertura) — motivo longo permanece no banner contextual, nunca como valor de KPI; outcome `failed`→"Falhou" etc.; datas/timestamps em pt-BR (`27/10/2026`, `27/10/2026 às 04:48`); card redundante de série removido.
 - `partialNote` corrigida: cita apenas observações da própria série (IPP não depende de câmbio).
 
+### 11.5 Auditoria end-to-end (R5.S4, `b90f2d51de`)
+
+**Causa-raiz dos KPIs IPP vazios:** o BFF (`_perspective_summary`) emitia `include_average`/`include_min_max` apenas para séries de variação (`metric_kind != ipp_index`); o layout `index` do MFE renderiza cards de média/mín/máx, então exibia `—`. O teste de contrato R2 travava os `null`. Correção no owner (supplies-api): índice recebe `mean_of_valid_observations/v1` + `extremes_of_valid_observations/v1`; série `%` segue com amplitude apenas (média de % não é métrica aprovada e não há card para ela).
+
+**Smoke autenticado de produção (recomputação independente dos KPIs a partir dos pontos emitidos):**
+
+- IPP índice: 11/14 competências (`partial` honesto, faltantes `2025-09/2026-09/2026-10`), `latest 186.3691` (2026-08), `avg 180.8905`, `min 172.8565` (2025-11), `max 186.3691`, `chg +7,45 %` — todos PASS vs. recomputação.
+- IPP variação mensal: `latest 2.13 %`, `min -1.01`, `max 2.75`, `chg`/`avg` = `null` por contrato — PASS.
+- PTAX venda/compra: 250 obs cada, `R$/US$`, latest/avg PASS; week 53/53, month 13/13, year 2/2.
+- Metais: cobre `US$/lb` COMEX, alumínio/níquel `US$/t` LME, zinco/chumbo `US$/t` SPOT — latest/avg PASS; chumbo `partial` (5/6) honesto; estanho `selectable=false` e `422` em consulta solo (fail-closed).
+- Compare: mesmo eixo só dentro da unidade — misto retorna séries separadas por unidade (`US$/lb`,`US$/t`), agrupamento é do MFE.
+- Comex: 0 NCMs → `404 unknown import ncm` honesto, sem dados fictícios.
+- Negativos: 401/403/404/422 íntegros.
+- Datas: contextos de KPI em pt-BR (`Competência 08/2026`, `Semana 44/2026`, `27/10/2026`); `partialNote` em produção já sem menção a câmbio (o aviso observado era do bundle anterior ao deploy S3).
+
 ## 12. Pendências
 
 1. ~~Chave e homologação S1~~ → **concluído** (V008 ativa fonte + 5 bindings verificados; estanho permanece inativo).

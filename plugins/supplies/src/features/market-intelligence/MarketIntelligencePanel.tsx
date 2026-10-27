@@ -314,7 +314,9 @@ export function MarketIntelligencePanel<R extends PanelRow>({
       icon: ReactNode;
     }[] = [];
     const latestContext = [
-      summary.latest ? `Competência ${summary.latest.period}` : "",
+      summary.latest
+        ? `Competência ${formatMarketDate(summary.latest.period)}`
+        : "",
       unitDetail ?? "",
     ]
       .filter(Boolean)
@@ -364,7 +366,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
             hint: content.minHint,
             value: `${formatMarketPercent(summary.period_min?.value)}`,
             context: summary.period_min
-              ? `Competência ${summary.period_min.period}`
+              ? `Competência ${formatMarketDate(summary.period_min.period)}`
               : "",
             icon: KPI_ICONS.bar,
           },
@@ -373,7 +375,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
             hint: content.maxHint,
             value: `${formatMarketPercent(summary.period_max?.value)}`,
             context: summary.period_max
-              ? `Competência ${summary.period_max.period}`
+              ? `Competência ${formatMarketDate(summary.period_max.period)}`
               : "",
             icon: KPI_ICONS.bar,
           },
@@ -395,7 +397,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
               hint: content.minValueHint,
               value: `${formatMarketDecimal(summary.period_min?.value)} ${friendlyUnit}`,
               context: summary.period_min
-                ? `Competência ${summary.period_min.period}`
+                ? `Competência ${formatMarketDate(summary.period_min.period)}`
                 : "",
               icon: KPI_ICONS.bar,
             },
@@ -404,7 +406,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
               hint: content.maxValueHint,
               value: `${formatMarketDecimal(summary.period_max?.value)} ${friendlyUnit}`,
               context: summary.period_max
-                ? `Competência ${summary.period_max.period}`
+                ? `Competência ${formatMarketDate(summary.period_max.period)}`
                 : "",
               icon: KPI_ICONS.bar,
             },
@@ -588,8 +590,12 @@ export function MarketIntelligencePanel<R extends PanelRow>({
             <SuppliesStateBanner>
               {MARKET_INTELLIGENCE_CONTENT.states.staleNote}
               {` ${MARKET_INTELLIGENCE_CONTENT.states.staleEvidence(
-                meta?.freshness?.latest_observation_date ?? null,
-                meta?.freshness?.expected_latest_period ?? "—",
+                formatMarketDate(
+                  meta?.freshness?.latest_observation_date ?? null,
+                ),
+                formatMarketDate(
+                  meta?.freshness?.expected_latest_period ?? null,
+                ),
               )}`}
             </SuppliesStateBanner>
           ) : null}
@@ -720,7 +726,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
           {missingPeriods.length > 0 && !unavailableReason ? (
             <p className="delpi-ui-section-hint-label">
               {MARKET_INTELLIGENCE_CONTENT.panel.missingPeriodsNote(
-                missingPeriods,
+                missingPeriods.map(formatMarketDate),
               )}{" "}
               {MARKET_INTELLIGENCE_CONTENT.panel.missingPeriodsExplanation}
             </p>

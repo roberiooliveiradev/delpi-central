@@ -334,15 +334,30 @@ def test_ipp_series_semantics_preserved(mock_resolve, mock_validate):
     points = {p["period"]: p for p in payload["points"]}
     assert points["2026-09"]["value"] == "184.02"
     assert payload["meta"]["source_id"] == "ibge-ipp-sidra"
-    # R3 contextual summary — index series keeps first_to_last change.
+    # R3 contextual summary — index series keeps first_to_last change
+    # plus mean/amplitude of the real observations (R5.S4: the KPI
+    # cards require them — previously emitted as nulls).
     summary = payload["summary"]
     assert summary["latest"] == {
         "period": "2026-09",
         "value": "184.02",
     }
     assert summary["period_change_pct"] == "0.8329"
-    assert summary["period_average"] is None
-    assert summary["period_min"] is None
+    assert summary["period_average"] == "183.26"
+    assert summary["period_min"] == {
+        "period": "2026-08",
+        "value": "182.5",
+    }
+    assert summary["period_max"] == {
+        "period": "2026-09",
+        "value": "184.02",
+    }
+    assert summary["method_version"]["average"] == (
+        "mean_of_valid_observations/v1"
+    )
+    assert summary["method_version"]["min_max"] == (
+        "extremes_of_valid_observations/v1"
+    )
     assert summary["observed"] == 2
     assert summary["expected"] == 2
     assert summary["coverage"] == "complete"
