@@ -931,6 +931,8 @@ export type MockMessageThreadItem = {
   bodyText: string;
   createdAtLabel?: string;
   authorName?: string | null;
+  authorUserId?: string | null;
+  authorSrc?: string | null;
   mine?: boolean;
 };
 
@@ -948,7 +950,12 @@ export function createDashboardMessageThread() {
       items.map((item) =>
         el(
           "li",
-          { key: item.id, "data-mine": item.mine ? "true" : "false" },
+          {
+            key: item.id,
+            "data-mine": item.mine ? "true" : "false",
+            "data-author-id": item.authorUserId ?? "",
+            "data-author-src": item.authorSrc ?? "",
+          },
           `${item.authorName ?? ""} ${item.createdAtLabel ?? ""} ${item.bodyText}`,
         ),
       ),
@@ -987,5 +994,56 @@ export function createDashboardMentionComposer() {
       ),
     );
   };
+}
+
+// -- Linha do tempo + avatar (UX-009) ---------------------------------------
+
+export type MockTimelineItem = {
+  id: string;
+  title?: unknown;
+  timeLabel?: unknown;
+  detail?: unknown;
+  meta?: unknown;
+  marker?: unknown;
+};
+
+export function createTimeline() {
+  return function Timeline(props: {
+    items?: readonly MockTimelineItem[];
+    emptyMessage?: string;
+    "aria-label"?: string;
+  }) {
+    const items = props.items ?? [];
+    return el(
+      "ol",
+      { "aria-label": props["aria-label"] },
+      items.length === 0
+        ? el("li", null, props.emptyMessage)
+        : null,
+      items.map((item) =>
+        el(
+          "li",
+          { key: item.id },
+          item.marker as never,
+          el("strong", null, item.title as never),
+          el("span", null, `${item.timeLabel ?? ""}`),
+          el("span", null, `${item.detail ?? ""}`),
+          el("span", null, `${item.meta ?? ""}`),
+        ),
+      ),
+    );
+  };
+}
+
+export function UnifiedAvatar(props: {
+  kind?: string;
+  imageUrl?: string | null;
+  fallbackText?: string | null;
+}) {
+  return el("span", {
+    "data-avatar-kind": props.kind ?? "",
+    "data-avatar-src": props.imageUrl ?? "",
+    "data-avatar-name": props.fallbackText ?? "",
+  });
 }
 

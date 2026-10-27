@@ -445,3 +445,23 @@ Decisão PO ([Plano 113 §21](./113-plano-canonico-fluxo-fechamento-controladori
 | RQ-MSG-10 | Auditoria obrigatória | `DOCUMENT_MESSAGE_POSTED` na mesma transação; incluso em U8; fora da timeline operacional | PASS |
 | RQ-MSG-11 | Sem anexos/tempo real/notificação inventados | fora de escopo declarado; nenhum código criado | PASS (ausente por contrato) |
 | RQ-MSG-12 | Testes, Ajuda, CLARA, deploy | backend 110/110+30/30+175/175 · frontend detalhe 18/18, closing 176/176, plugin 249/249 · tsc/eslint/build PASS · help+docs atualizados | PASS / homologação visual PO PENDING |
+
+
+## Refinamento do detalhe UX-009 — resultado (CF-PROC0072-DOCUMENT-DETAIL-UX-009, 26/10/2026)
+
+Decisão PO ([Plano 113 §23](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md), doc-112 §44): conversa com altura mínima, histórico em linha do tempo compartilhada e avatar autorizado dos participantes. U9/U1–U8, permissões e lifecycle preservados.
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-UX-01 | Altura mínima da conversa no desktop (faixa 480–560) | `.cf-document-conversation min-height: 520px`; thread `flex:1` rola até 560px; composer no rodapé com 0/1/N mensagens | PASS |
+| RQ-UX-02 | Rolagem interna + composer acessível | `fill`/`overflow-y` do kit; `submitOnEnter=false`, `rows=3`; mobile `60vh` sem aprisionar | PASS |
+| RQ-UX-03 | Histórico como timeline compartilhada | `CfTimeline = createTimeline` do kit (mesmo da CIPA); `EventsSection` confirmado como alertas e rejeitado | PASS |
+| RQ-UX-04 | Somente eventos materiais ordenados | U8: upload/versão/cancelamento/EVIDENCE_* com tom; `DOCUMENT_DOWNLOADED`+`DOCUMENT_MESSAGE_POSTED` fora; auditoria íntegra | PASS |
+| RQ-UX-05 | Sem UUID/enums na UI | labels PT por evento; responsável = display_name do diretório ou «Participante»; teste asserta ausência do UUID | PASS |
+| RQ-UX-06 | Empty state honesto | «Ainda não há alterações registradas neste documento.»; nenhum evento artificial | PASS |
+| RQ-UX-07 | Avatar oficial ou fallback legítimo | `UnifiedAvatar`/`InitialsAvatar`; foto via proxy S2S Core person-profile; sem foto → iniciais; nunca foto do viewer para terceiros | PASS |
+| RQ-UX-08 | Nome oficial autorizado | `POST /closing/participants/lookup` → diretório Core com bearer do caller; `display_name=null` → neutro | PASS |
+| RQ-UX-09 | Permissões congeladas | ambos endpoints exigem `access`; sem token/sem access → 401/403; nenhuma permission nova | PASS |
+| RQ-UX-10 | U9 preservada | mensagens/idempotência/auditoria/escopo inalterados; regressão detalhe 23/23, plugin 254/254 | PASS |
+| RQ-UX-11 | Falhas honestas de perfil | Core fora → lookup `{}`→fallback; avatar 404→iniciais; gateway 503; UUID inválido 422; lote>50 rejeitado | PASS |
+| RQ-UX-12 | Testes + docs + CLARA | rotas 10/10 · gateway 10/10 · detalhe 23/23 · plugin 254/254 · tsc/ESLint/estruturais PASS · help atualizado | PASS / homologação visual PO PENDING |

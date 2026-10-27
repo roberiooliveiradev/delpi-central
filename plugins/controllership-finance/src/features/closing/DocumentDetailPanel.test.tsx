@@ -25,6 +25,8 @@ const listVersionsMock = vi.fn();
 const listEventsMock = vi.fn();
 const listMessagesMock = vi.fn();
 const postMessageMock = vi.fn();
+const lookupParticipantsMock = vi.fn();
+const downloadAvatarMock = vi.fn();
 const downloadMock = vi.fn();
 const saveBlobMock = vi.fn();
 const uploadMock = vi.fn();
@@ -67,6 +69,13 @@ vi.mock("../../api/documentsApi", () => ({
   cancelClosingDocument: (...args: unknown[]) => cancelDocMock(...args),
   listDocumentMessages: (...args: unknown[]) => listMessagesMock(...args),
   postDocumentMessage: (...args: unknown[]) => postMessageMock(...args),
+}));
+
+vi.mock("../../api/participantsApi", () => ({
+  lookupParticipants: (...args: unknown[]) =>
+    lookupParticipantsMock(...args),
+  downloadParticipantAvatar: (...args: unknown[]) =>
+    downloadAvatarMock(...args),
 }));
 
 import { ApiError } from "../../api/httpClient";
@@ -154,6 +163,8 @@ beforeEach(() => {
     limit: 100,
     offset: 0,
   });
+  lookupParticipantsMock.mockResolvedValue({ items: [] });
+  downloadAvatarMock.mockResolvedValue(new Blob(["png"]));
   downloadMock.mockResolvedValue(new Blob(["pdf"]));
 });
 
@@ -777,5 +788,193 @@ describe("DocumentDetailPanel — conversa do documento (U9)", () => {
     expect(
       screen.getByRole("button", { name: "Enviar mensagem" }),
     ).toBeTruthy();
+  });
+});
+
+describe("DocumentDetailPanel — linha do tempo e avatares (UX-009)", () => {
+  const EVENT = {
+    event_id: "ev-1",
+    event_type: "DOCUMENT_UPLOADED",
+    actor_subject: "11111111-2222-3333-4444-555555555555",
+    detail: { version_no: 1 },
+    created_at: "2026-05-02T10:00:00Z",
+  };
+
+  function renderDocument() {
+    getDocMock.mockResolvedValue({ ...DOC });
+    renderDetail("d-1");
+  }
+
+  it("apresenta o histórico como linha do tempo com nome oficial do autor", async () => {
+    listEventsMock.mockResolvedValue({
+      events: [EVENT],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    lookupParticipantsMock.mockResolvedValue({
+      items: [
+        {
+          user_id: EVENT.actor_subject,
+          display_name: "Ana Souza",
+          has_photo: false,
+        },
+      ],
+    });
+
+    renderDocument();
+
+    await waitFor(() =>
+      expect(screen.getByText("Arquivo anexado")).toBeTruthy(),
+    );
+    // UUID nunca aparece na UI; nome oficial do diretório Core sim.
+    expect(screen.queryByText(new RegExp(EVENT.actor_subject))).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByText("Ana Souza")).toBeTruthy(),
+    );
+    expect(lookupParticipantsMock).toHaveBeenCalledWith(
+      [EVENT.actor_subject],
+      expect.anything(),
+    );
+  });
+
+  it("mantém downloads e mensagens fora da linha do tempo", async () => {
+    listEventsMock.mockResolvedValue({
+      events: [
+        EVENT,
+        {
+          ...EVENT,
+          event_id: "ev-2",
+          event_type: "DOCUMENT_DOWNLOADED",
+        },
+        {
+          ...EVENT,
+          event_id: "ev-3",
+          event_type: "DOCUMENT_MESSAGE_POSTED",
+        },
+      ],
+      total: 3,
+      limit: 50,
+      offset: 0,
+    });
+
+    renderDocument();
+
+    await waitFor(() =>
+      expect(screen.getByText("Arquivo anexado")).toBeTruthy(),
+    );
+    expect(screen.queryByText("Download")).toBeNull();
+  });
+
+  it("exibe o estado vazio honesto quando não há eventos materiais", async () => {
+    renderDocument();
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Ainda não há alterações registradas neste documento.",
+        ),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("resolve a foto do autor da mensagem via contrato de participantes", async () => {
+    const author = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    listMessagesMock.mockResolvedValue({
+      messages: [
+        {
+          message_id: "m-1",
+          document_id: "d-1",
+          competence_id: "c-1",
+          version_no: 1,
+          audience: "INTERNAL",
+          body: "Conferido o balancete.",
+          author_subject: author,
+          author_name: null,
+          created_at: "2026-05-12T10:00:00Z",
+          mine: false,
+        },
+      ],
+      total: 1,
+      limit: 100,
+      offset: 0,
+    });
+    lookupParticipantsMock.mockResolvedValue({
+      items: [
+        {
+          user_id: author,
+          display_name: "Robério Oliveira",
+          has_photo: true,
+        },
+      ],
+    });
+    const createUrl = vi.fn(() => "blob:http://localhost/photo-1");
+    const revokeUrl = vi.fn();
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: createUrl,
+      revokeObjectURL: revokeUrl,
+    });
+    try {
+      const { container } = render(
+        <DocumentDetailPanel
+          period="2026-05"
+          documentRef="d-1"
+          onBack={() => {}}
+          onOpenRef={() => {}}
+        />,
+      );
+
+      await waitFor(() =>
+        expect(downloadAvatarMock).toHaveBeenCalledWith(
+          author,
+          expect.anything(),
+        ),
+      );
+      const item = container.querySelector(
+        "li[data-author-src]",
+      ) as HTMLElement | null;
+      expect(item?.dataset.authorSrc).toBe(
+        "blob:http://localhost/photo-1",
+      );
+      expect(screen.getByText(/Robério Oliveira/)).toBeTruthy();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("perfil indisponível cai em identificação neutra, nunca UUID", async () => {
+    listMessagesMock.mockResolvedValue({
+      messages: [
+        {
+          message_id: "m-2",
+          document_id: "d-1",
+          competence_id: "c-1",
+          version_no: 1,
+          audience: "INTERNAL",
+          body: "Olá.",
+          author_subject:
+            "ffffffff-1111-2222-3333-444444444444",
+          author_name: null,
+          created_at: "2026-05-12T10:00:00Z",
+          mine: false,
+        },
+      ],
+      total: 1,
+      limit: 100,
+      offset: 0,
+    });
+    lookupParticipantsMock.mockRejectedValue(
+      new Error("core down"),
+    );
+
+    renderDocument();
+
+    await waitFor(() =>
+      expect(screen.getByText(/Participante/)).toBeTruthy(),
+    );
+    expect(
+      screen.queryByText(/ffffffff-1111/),
+    ).toBeNull();
   });
 });

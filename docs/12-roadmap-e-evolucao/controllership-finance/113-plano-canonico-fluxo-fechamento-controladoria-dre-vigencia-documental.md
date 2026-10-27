@@ -724,3 +724,80 @@ fora — §20).
 - **Execução seguinte:** inventário da timeline real dos Portais e perfil/avatars Core → contrato/gate se necessário → diff mínimo frontend → testes → deploy local/produção autorizados → smoke PO → documentos/CLARA com evidências.
 
 **Pendente:** escolha técnica exata do componente cronológico e fonte confiável de avatar. A regra visual/experiência já está aprovada pelo PO.
+
+
+### 23.5 Implementação UX-009 — RUNTIME PROVEN (26/10/2026)
+
+Gate de implementação executado e comprovado. Nada nesta seção altera o
+contrato U9, permissões congeladas ou o lifecycle documental.
+
+**Timeline compartilhada (PROVEN).** O histórico do detalhe deixou de
+ser `<ul>` local e passa a usar `createTimeline` do `@delpi/plugin-ui`
+— o mesmo componente cronológico já utilizado pelo Portal CIPA
+(`CipaTimeline`), com trilha, marcadores por tom (`info/success/
+warning/danger`), título, detalhe e data. `EventsSection` (AlertQueue)
+confirmado como componente de alertas — **não** é a timeline e não foi
+usado. Fonte: eventos U8 existentes (`DOCUMENT_UPLOADED`,
+`VERSION_ADDED`, `DOCUMENT_CANCELLED`, `EVIDENCE_ACCEPTED`,
+`EVIDENCE_REJECTED`); `DOCUMENT_DOWNLOADED` e
+`DOCUMENT_MESSAGE_POSTED` permanecem na auditoria e fora da trilha
+operacional. UUID nunca é exibido: o responsável é resolvido pelo
+contrato de participantes; sem perfil, «Participante».
+
+**Altura mínima da conversa (PROVEN).** `.cf-document-conversation`
+recebeu `min-height: 520px` no desktop (faixa de design 480–560 do
+§23.1) com a thread em `flex: 1` + `max-height: 560px` — rolagem
+interna, composer ancorado no rodapé e estado vazio centralizado sem
+colapsar a coluna. Em `max-width: 760px` a coluna empilha com
+`max-height: 60vh` na thread — sem aprisionar a rolagem mobile.
+
+**Avatar e nome oficiais (PROVEN — contrato mínimo aprovado na
+implementação).** Owner do dado: Core (`core-api`). Dois canais
+canônicos reutilizados, sem storage local de identidade:
+
+- **Nomes:** `POST /me/directory/users/lookup` do Core, chamado pelo
+  gateway da BFF com o **bearer do próprio usuário** (a autorização de
+  leitura do diretório continua sendo a do caller; e-mails nunca
+  trafegam — `mask_email` default). Mesmo padrão do proxy
+  `viewer-photo` já existente na API.
+- **Fotos:** `GET /integrations/person-profiles/{user_id}/photo` +
+  `POST /integrations/person-profiles/lookup` via S2S
+  (`CORE_API_INTEGRATIONS_SERVICE_TOKEN`) — mesmo contrato usado pelo
+  `requests-api`/`CorePersonProfileAdapter`. Proxy read-through, sem
+  persistência, `Cache-Control: private, max-age=300`, `nosniff`,
+  allowlist `image/jpeg|png|webp`, limite 2 MB.
+
+Rotas novas da `controllership-finance-api` (operation_ids
+`lookup_closing_participants`, `get_closing_participant_avatar`):
+
+- `POST /closing/participants/lookup` — `{ids: [...]}` (máx. 50,
+  UUIDs inválidos filtrados) → `{items: [{user_id, display_name,
+  has_photo}]}`; `display_name = null` para histórico/inativo.
+- `GET /closing/participants/{user_id}/avatar` — blob da foto; 404
+  sem foto; 503 sem configuração Core; 422 UUID inválido.
+- Ambas exigem `controllership-finance.access` efetivo — nenhuma
+  permission nova, nenhuma foto por convenção, nunca foto do viewer
+  para terceiros.
+
+**Frontend.** `participantsApi.ts` + hook `useParticipantProfiles`
+(padrão `useParticipantAvatarUrls` de Minhas Solicitações: lookup em
+lote → blob apenas quando `has_photo`, `createObjectURL` com revogação
+por ciclo e no unmount, `AbortController` por troca de documento). A
+thread U9 recebe `authorUserId`/`authorSrc`/`authorName` nativos do
+`MessageThread` (`InitialsAvatar` interno = fallback legítimo); a
+timeline usa `UnifiedAvatar kind="person"` no marcador. Ordem de nome:
+diretório oficial → snapshot `author_name` do envio → «Participante».
+
+**Evidências.** Testes: detalhe 23/23 (timeline com autor oficial, sem
+UUID, downloads/mensagens fora, empty state, foto resolvida, perfil
+indisponível); rotas de participantes 10/10 (positive/sibling/negative:
+sem access 403, UUID inválido 422, sem foto 404, Core fora 503, lote
+>50 rejeitado); gateway 10/10 (404/timeout/conteúdo inválido → `None`,
+bearer do caller no diretório). Plugin 254/254, `tsc -b` e ESLint
+limpos.
+
+**Pendências honestas:** `has_photo=false` sem foto publicada continua
+com iniciais (comportamento aprovado); homologação visual do PO no
+navegador = PENDING. Audiência DRE para conversa/eventos permanece
+`TARGET` — o endpoint de participantes **não** abre identidade para
+fora do `access` da Controladoria.

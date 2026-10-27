@@ -28,7 +28,9 @@ import {
   createDashboardTopBarUtilityCluster,
   createDashboardViewTransition,
   createHostContainedModalShell,
+  createTimeline,
   EmptyState,
+  UnifiedAvatar,
   catalogSearchBarBemClasses,
   confirmModalBemClasses,
   emptyStateCardBemClasses,
@@ -135,6 +137,8 @@ export const CfTitleWithHelp = createDashboardTitleWithHelp({
 export const CfSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
 export const CfMessageThread = createDashboardMessageThread(UI_PREFIX);
 export const CfMentionComposer = createDashboardMentionComposer(UI_PREFIX);
+export const CfTimeline = createTimeline({ prefix: UI_PREFIX });
+export const CfUnifiedAvatar = UnifiedAvatar;
 export const cfConfirmModalClassNames = confirmModalBemClasses(UI_PREFIX);
 export const CfDialog = createHostContainedModalShell({
   prefix: UI_PREFIX,

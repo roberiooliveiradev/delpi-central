@@ -38,6 +38,10 @@ import {
   CfMessageThread,
 } from "../../app/controllershipFinanceUi";
 import { formatDateTime } from "../../utils/formatters";
+import {
+  useParticipantProfiles,
+  type ParticipantVisual,
+} from "./useParticipantProfiles";
 import type { MessageThreadItem } from "@delpi/plugin-ui/index";
 
 const COMPOSER_LABELS = {
@@ -87,7 +91,10 @@ function toSendError(error: unknown): string {
   return "Falha ao enviar a mensagem. Tente novamente.";
 }
 
-function toThreadItem(message: DocumentMessage): MessageThreadItem {
+function toThreadItem(
+  message: DocumentMessage,
+  profile: ParticipantVisual | undefined,
+): MessageThreadItem {
   return {
     id: message.message_id,
     kind: "text",
@@ -95,8 +102,14 @@ function toThreadItem(message: DocumentMessage): MessageThreadItem {
     createdAtLabel: message.created_at
       ? formatDateTime(message.created_at)
       : "",
-    authorName: message.author_name || "Participante",
+    // Nome oficial do diretório → snapshot do envio → identificação
+    // neutra; UUID nunca é exibido como nome.
+    authorName:
+      profile?.displayName?.trim() ||
+      message.author_name ||
+      "Participante",
     authorUserId: message.author_subject,
+    authorSrc: profile?.photoUrl ?? null,
     mine: Boolean(message.mine),
   };
 }
@@ -181,9 +194,19 @@ export function DocumentConversationPanel({
     [period, documentId, sending],
   );
 
+  const profiles = useParticipantProfiles(
+    useMemo(
+      () => (loaded ?? []).map((msg) => msg.author_subject),
+      [loaded],
+    ),
+  );
+
   const threadItems = useMemo(
-    () => (loaded ?? []).map(toThreadItem),
-    [loaded],
+    () =>
+      (loaded ?? []).map((msg) =>
+        toThreadItem(msg, profiles.get(msg.author_subject)),
+      ),
+    [loaded, profiles],
   );
 
   return (

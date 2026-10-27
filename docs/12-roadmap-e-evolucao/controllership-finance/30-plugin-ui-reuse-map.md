@@ -820,3 +820,17 @@ Nenhum componente de menu/contexto ou confirmação paralelo criado; nenhum chro
 Mesmo padrão de Minhas Solicitações (CommentsPanel) — somente factories
 do kit + adapter do MFE; nenhum componente de chat copiado, nenhum
 import de domain/API de outro contexto.
+
+
+## Registro de execução — Refinamento do detalhe (CF-PROC0072-DOCUMENT-DETAIL-UX-009, 26/10/2026)
+
+| Superfície | Componente do kit | Bound local |
+|---|---|---|
+| Linha do tempo do histórico | `createTimeline({ prefix })` — mesmo componente cronológico da CIPA (`CipaTimeline`) | `CfTimeline` em controllershipFinanceUi.ts — itens com título PT, tom por evento, `v{n}`, data e `meta` do responsável |
+| Avatar do participante | `UnifiedAvatar` (`kind="person"`, `imageUrl`, `fallbackText`) | `CfUnifiedAvatar` — marcador da timeline; thread usa `authorSrc`/`authorUserId` nativos do `MessageThread` (`InitialsAvatar` interno) |
+| Perfil de participantes | `useParticipantProfiles` + `participantsApi.ts` (padrão `useParticipantAvatarUrls` de Minhas Solicitações) | lookup em lote `/closing/participants/lookup` (diretório Core, bearer do caller) + blob `/closing/participants/{id}/avatar` (S2S person-profile); `createObjectURL` revogado por ciclo/unmount |
+| Altura da conversa | thread `flex: 1` + `fill` (rolagem interna do kit) | `.cf-document-conversation` `min-height: 520px` desktop; `≤760px` sem altura aprisionada (`60vh`) |
+
+`EventsSection` inventariado e **não usado** — é fila de alertas
+(AlertQueue), não timeline cronológica. Nenhuma lista/avatar/timeline
+paralela criada.

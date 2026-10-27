@@ -387,3 +387,15 @@ A conversa livre por documento está **implementada** — a CLARA deve descrevê
 - **Confiabilidade do envio:** se o envio falhar, o texto é preservado para nova tentativa; tentativas repetidas não criam mensagens duplicadas (deduplicação por chave idempotente do servidor).
 - **Sem tempo real:** as mensagens aparecem na tela após a confirmação do envio; não há notificação, contador de não-lidas nem atualização ao vivo (WebSocket) — a CLARA não deve prometer esses recursos.
 - **Escopo da CLARA:** não existe tool MCP para ler ou escrever mensagens — a CLARA conhece o funcionamento, mas não participa da conversa.
+
+
+## Adendo — Refinamento visual do detalhe (CF-PROC0072-DOCUMENT-DETAIL-UX-009, 27/10/2026)
+
+O detalhe do documento foi refinado — a CLARA deve descrever em português simples:
+
+- **Altura da conversa:** a coluna «Conversa sobre o documento» mantém altura mínima confortável mesmo sem mensagens ou com apenas uma; a área de mensagens rola internamente e o campo de escrita permanece sempre no rodapé da coluna. No celular, PDF, conversa e histórico ficam empilhados.
+- **Histórico em linha do tempo:** o histórico do documento deixou de ser uma lista simples e virou uma linha do tempo com marcos visuais — anexação, nova versão, remoção, evidência conferida e ajuste solicitado, cada um com responsável e data.
+- **Downloads e mensagens fora da linha do tempo:** consultas de download e as mensagens da conversa não aparecem como eventos — a auditoria técnica completa continua registrada no sistema; a linha do tempo mostra só alterações do documento.
+- **Foto e nome dos participantes:** mensagens e eventos exibem a foto oficial do perfil do autor (cadastro de pessoas do Portal). Quando a pessoa não tem foto, aparecem as iniciais do nome; quando o perfil não está disponível, aparece «Participante» — nunca um código técnico (UUID) como nome.
+- **Mensagem ≠ evento:** a conversa é discussão livre (não gera marco na linha do tempo nem validação); a linha do tempo registra alterações materiais do documento. Finalidades diferentes, as duas preservadas.
+- **Escopo da CLARA:** a CLARA não lê mensagens, não lê a linha do tempo e não vê fotos — descreve o funcionamento, sem tool MCP nova.

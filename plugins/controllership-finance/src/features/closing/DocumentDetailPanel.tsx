@@ -30,6 +30,7 @@ import {
   fileDropzoneBemClasses,
   FilePreviewView,
   useFilePreviewLoader,
+  type TimelineItemModel,
 } from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
@@ -65,6 +66,8 @@ import {
   CfEmptyState,
   CfSectionCard,
   CfStatusBadge,
+  CfTimeline,
+  CfUnifiedAvatar,
   cfConfirmModalClassNames,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
@@ -72,6 +75,10 @@ import { CF_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/formatters";
 import { DocumentConversationPanel } from "./DocumentConversationPanel";
 import { ItemValidationPanel } from "./ItemValidationPanel";
+import {
+  useParticipantProfiles,
+  type ParticipantVisual,
+} from "./useParticipantProfiles";
 
 type PanelError = { status: number; code: string | null; message: string };
 
@@ -109,8 +116,19 @@ function toPanelError(error: unknown, fallback: string): PanelError {
 const EVENT_LABELS: Record<string, string> = {
   DOCUMENT_UPLOADED: "Arquivo anexado",
   VERSION_ADDED: "Nova versão enviada",
-  DOCUMENT_CANCELLED: "Documento cancelado",
+  DOCUMENT_CANCELLED: "Documento removido",
   DOCUMENT_DOWNLOADED: "Download",
+  EVIDENCE_ACCEPTED: "Evidência conferida",
+  EVIDENCE_REJECTED: "Ajuste solicitado",
+};
+
+/** Tons do marcador por evento material — semântica visual do kit. */
+const EVENT_TONES: Record<string, TimelineItemModel["tone"]> = {
+  DOCUMENT_UPLOADED: "info",
+  VERSION_ADDED: "info",
+  DOCUMENT_CANCELLED: "danger",
+  EVIDENCE_ACCEPTED: "success",
+  EVIDENCE_REJECTED: "warning",
 };
 
 /** Eventos auditados que NÃO aparecem na linha do tempo operacional:
@@ -162,6 +180,34 @@ function eventNote(event: DocumentAuditEvent): string {
     );
   }
   return parts.filter(Boolean).join(" · ");
+}
+
+/** Evento U8 → item de linha do tempo do kit (doc 112 §44):
+ * título/data PT-BR, autor identificado pelo perfil oficial — UUID
+ * nunca aparece na UI. */
+function toTimelineItem(
+  event: DocumentAuditEvent,
+  profile: ParticipantVisual | undefined,
+): TimelineItemModel {
+  const actorName = profile?.displayName?.trim() || "Participante";
+  const note = eventNote(event);
+  return {
+    id: event.event_id,
+    title: EVENT_LABELS[event.event_type] ?? "Atualização no documento",
+    occurredAt: event.created_at ?? undefined,
+    timeLabel: event.created_at ? formatDateTime(event.created_at) : "",
+    detail: note || undefined,
+    meta: actorName,
+    marker: (
+      <CfUnifiedAvatar
+        kind="person"
+        label={actorName}
+        imageUrl={profile?.photoUrl ?? null}
+        fallbackText={actorName}
+      />
+    ),
+    tone: EVENT_TONES[event.event_type] ?? "default",
+  };
 }
 
 type DetailResult =
@@ -248,6 +294,15 @@ export function DocumentDetailPanel({
     selectedDoc && events?.key === selectedDoc.document_id
       ? events.items
       : null;
+  const timelineEvents = (eventList ?? []).filter(
+    (event) => !TIMELINE_HIDDEN_EVENTS.has(event.event_type),
+  );
+  const eventProfiles = useParticipantProfiles(
+    timelineEvents.map((event) => event.actor_subject),
+  );
+  const timelineItems = timelineEvents.map((event) =>
+    toTimelineItem(event, eventProfiles.get(event.actor_subject)),
+  );
 
   const refresh = useCallback(() => setRetryNonce((n) => n + 1), []);
 
@@ -758,37 +813,16 @@ export function DocumentDetailPanel({
             title="Histórico"
             hint={CF_HELP.monthlyClosing.detailHistory}
           >
-            {selectedDoc &&
-            eventList &&
-            eventList.filter(
-              (e) => !TIMELINE_HIDDEN_EVENTS.has(e.event_type),
-            ).length > 0 ? (
-              <ul
-                className="cf-document-detail__history"
+            {selectedDoc && eventList ? (
+              <CfTimeline
+                items={timelineItems}
                 aria-label="Histórico do documento"
-              >
-                {eventList
-                  .filter((e) => !TIMELINE_HIDDEN_EVENTS.has(e.event_type))
-                  .map((event) => (
-                  <li key={event.event_id}>
-                    <strong>
-                      {EVENT_LABELS[event.event_type] ?? event.event_type}
-                    </strong>
-                    {eventNote(event) ? ` — ${eventNote(event)}` : ""}
-                    <span className="cf-request-list__meta">
-                      {" "}
-                      · {event.actor_subject}
-                      {event.created_at
-                        ? ` · ${formatDateTime(event.created_at)}`
-                        : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                emptyMessage="Ainda não há alterações registradas neste documento."
+              />
             ) : (
               <CfEmptyState
                 classNames={cfEmptyStateClassNames}
-                defaultMessage="Nenhum registro de histórico neste documento."
+                defaultMessage="Ainda não há alterações registradas neste documento."
               />
             )}
             {selectedDoc ? (

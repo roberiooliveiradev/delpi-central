@@ -29,6 +29,9 @@ from controllership_finance_app.interface.http.routes.competences_routes import 
 from controllership_finance_app.interface.http.routes.documents_routes import (
     router as documents_router,
 )
+from controllership_finance_app.interface.http.routes.participants_routes import (  # noqa: E501
+    router as participants_router,
+)
 from controllership_finance_app.interface.http.routes.health_routes import (
     router as health_router,
 )
@@ -149,6 +152,7 @@ app.include_router(viewer_context_router)
 app.include_router(closing_router)
 app.include_router(competences_router)
 app.include_router(documents_router)
+app.include_router(participants_router)
 app.include_router(validations_router)
 app.include_router(pendencies_router)
 app.include_router(p3_router)

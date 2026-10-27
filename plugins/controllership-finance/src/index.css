@@ -1040,12 +1040,38 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 0;
+  /* Altura mínima confortável mesmo sem mensagens (doc 112 §44):
+     a trilha cresce e rola internamente; o composer permanece no
+     rodapé da coluna. */
+  min-height: 520px;
+  min-width: 0;
 }
 
 .dashboard-controllership-finance .cf-document-conversation .cf-message-thread {
-  max-height: 420px;
+  flex: 1;
+  min-height: 0;
+  max-height: 560px;
   overflow-y: auto;
+}
+
+.dashboard-controllership-finance .cf-document-conversation .cf-message-thread .delpi-ui-message-thread__empty,
+.dashboard-controllership-finance .cf-document-conversation .cf-message-thread .cf-message-thread__empty {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .dashboard-controllership-finance .cf-document-conversation {
+    min-height: 0;
+  }
+
+  .dashboard-controllership-finance .cf-document-conversation .cf-message-thread {
+    flex: none;
+    max-height: 60vh;
+  }
 }
 
 .dashboard-controllership-finance .cf-link-button {

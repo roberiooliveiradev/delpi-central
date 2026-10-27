@@ -1746,3 +1746,28 @@ Backend: 110/110 rotas+service · PG 30/30 (incl. deduplicação, conflito, FK, 
 ## 44. Refinamento documental V0.5 — conversa com altura padrão, timeline e avatar (PO, 26/10/2026)
 
 O PO aprovou dar altura mínima consistente à conversa, mantendo o campo de escrita no rodapé mesmo sem mensagens, substituir a lista de histórico por linha do tempo compartilhada e exibir avatar autorizado dos autores nas mensagens e eventos. Capturas da U9 mostram thread curta diante de PDF alto e histórico vazio. Evidências/inventário e especificação no [Plano 113 §23](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). `PRODUCT_APPROVED / TARGET`; não inferir avatar do JWT ou usar foto do usuário logado para terceiros; timeline real e perfil Core exigem inventário.
+
+
+### 44.1 Runtime implementado (UX-009, 26/10/2026)
+
+Implementado conforme Plano 113 §23.5:
+
+- **Conversa:** coluna `.cf-document-conversation` com `min-height:
+  520px` no desktop; thread `flex: 1` rola internamente até 560px;
+  composer permanece ancorado ao rodapé com 0/1/N mensagens; estado
+  vazio «Nenhuma mensagem ainda. Você pode iniciar a conversa sobre
+  este documento.» centralizado. Mobile (`≤760px`): `min-height` livre
+  e thread até `60vh`.
+- **Linha do tempo:** `CfTimeline = createTimeline({ prefix: "cf" })`
+  — componente compartilhado do kit (mesmo da CIPA), com marcadores
+  por tom, título PT-BR («Arquivo anexado», «Nova versão enviada»,
+  «Documento removido», «Evidência conferida», «Ajuste solicitado»),
+  referência `v{n}` e data formatada. Downloads e mensagens não
+  aparecem — auditoria técnica U8 permanece íntegra. Empty state:
+  «Ainda não há alterações registradas neste documento.»
+- **Avatar:** `UnifiedAvatar kind="person"` no marcador da timeline;
+  `authorSrc`/`authorUserId` nativos do `MessageThread` na conversa.
+  Foto via proxy BFF `/closing/participants/{id}/avatar` (Core
+  person-profile S2S); nome oficial via diretório Core com bearer do
+  usuário. Sem foto → iniciais; sem perfil → «Participante». UUID
+  nunca visível.
