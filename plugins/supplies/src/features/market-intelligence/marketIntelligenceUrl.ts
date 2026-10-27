@@ -32,7 +32,10 @@ export type MarketIntelligenceUrlState = {
   catalog (never forwarded unvalidated upstream). */
   metals: string[];
   indicator: MarketIndicatorKind;
+  /** Comma-separated allowlisted NCM codes (multi-NCM aggregate). */
   ncm: string;
+  /** Comma-separated selected SB1010 product codes (Comex picker). */
+  comexProducts: string[];
   ippSeries: string;
 };
 
@@ -74,7 +77,15 @@ function parseAllowlisted<T extends string>(
 
 export function readMarketIntelligenceFromUrl(): Partial<MarketIntelligenceUrlState> {
   const params = readSearchParams();
-  const ncm = (params.get("ncm") ?? "").trim();
+  const ncm = (params.get("ncm") ?? "")
+    .split(",")
+    .map((code) => code.trim())
+    .filter((code) => /^[0-9]{8}$/.test(code))
+    .join(",");
+  const comexProducts = (params.get("products") ?? "")
+    .split(",")
+    .map((code) => code.trim())
+    .filter((code) => /^[A-Za-z0-9_.\-/]{1,64}$/.test(code));
   const ippSeries = (params.get("ipp_series") ?? "").trim();
   const from = (params.get("from") ?? "").trim();
   const to = (params.get("to") ?? "").trim();
@@ -115,7 +126,8 @@ export function readMarketIntelligenceFromUrl(): Partial<MarketIntelligenceUrlSt
     fxKind: parseAllowlisted(params.get("fx_kind"), FX_KINDS) ?? undefined,
     indicator: indicator ?? undefined,
     metals: metals.length ? metals : undefined,
-    ncm: /^[0-9]{8}$/.test(ncm) ? ncm : undefined,
+    ncm: ncm || undefined,
+    comexProducts: comexProducts.length ? comexProducts : undefined,
     ippSeries: INSTRUMENT_CODE.test(ippSeries) ? ippSeries : undefined,
     from: ISO_DATE.test(from) ? from : undefined,
     to: ISO_DATE.test(to) ? to : undefined,
@@ -144,6 +156,9 @@ export function writeMarketIntelligenceToUrl(
   else params.delete("fx_kind");
   if (state.ncm) params.set("ncm", state.ncm);
   else params.delete("ncm");
+  if (state.comexProducts.length)
+    params.set("products", state.comexProducts.join(","));
+  else params.delete("products");
   if (state.ippSeries) params.set("ipp_series", state.ippSeries);
   else params.delete("ipp_series");
   if (state.from) params.set("from", state.from);

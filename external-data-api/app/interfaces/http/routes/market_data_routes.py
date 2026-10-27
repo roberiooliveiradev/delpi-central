@@ -14,6 +14,7 @@ import uuid
 from flask import Blueprint, g, jsonify, request
 
 from app.application.contracts import ExternalDataError, RateLimitedError
+from app.application.market_data_allowlist import upsert_ncm_allowlist
 from app.application.market_data_queries import (
     get_catalog,
     get_ingestion_status,
@@ -134,3 +135,17 @@ def get_producer_price_observations():
 def get_market_ingestion_status():
     """operationId: getMarketDataIngestionStatusV1."""
     return _respond(get_ingestion_status(), _correlation_id())
+
+
+@market_data_bp.put("/v1/market-data/comex/ncm-allowlist/<ncm_code>")
+@require_s2s_service(allowed_clients=_ALLOWED_BFF_CLIENTS)
+def put_comex_ncm_allowlist(ncm_code: str):
+    """operationId: upsertComexNcmAllowlistV1 — governance-synced write."""
+    identity = getattr(g, "service_identity", None)
+    actor = getattr(identity, "client_id", None) or "unknown-service"
+    payload = upsert_ncm_allowlist(
+        ncm_code=ncm_code,
+        body=request.get_json(silent=True),
+        actor=actor,
+    )
+    return _respond(payload, _correlation_id(), status=200)

@@ -662,3 +662,140 @@ def test_new_routes_require_access(mock_resolve, mock_validate):
             path, headers={"Authorization": "Bearer tok"}
         )
         assert response.status_code == 403, path
+
+
+# --- imports/series — multi-NCM aggregation (COMEX.S4) --------------------------
+
+
+def _multi_gateway() -> MagicMock:
+    """Two allowlisted NCMs — observations are per-(month,ncm) so a
+    shared month must sum across NCMs, never recount the same row."""
+    gateway = MagicMock()
+    catalog = _catalog()
+    catalog["import_ncms"].append(
+        {
+            "ncm_code": "74081190",
+            "kind": "comex_import",
+            "description": "Refined copper wire",
+            "family_code": "copper",
+            "ncm_version": "NCM2022",
+            "unit": "USD/metric ton",
+            "granularity": "month",
+            "source_id": "mdic-comex-stat",
+            "active": True,
+            "display_allowed": True,
+            "latest_observation_date": "2026-09-01",
+        }
+    )
+    gateway.catalog.return_value = catalog
+    gateway.ingestion_status.return_value = {"feeds": []}
+
+    def _imports(ncm_code, start, end, **kwargs):
+        if ncm_code == "74040010":
+            return [
+                {
+                    "ncm_code": "74040010",
+                    "reference_month": "2026-08-01",
+                    "dimensions": {"country_code": "160", "state_code": "SC"},
+                    "fob_usd_total": "1000.00",
+                    "net_weight_kg_total": "500.000",
+                    "unit_value_usd_per_t": "2000.000000",
+                    "contributing_rows": 3,
+                    "quality": "validated",
+                    "source": {"source_id": "mdic-comex-stat"},
+                }
+            ]
+        return [
+            {
+                "ncm_code": "74081190",
+                "reference_month": "2026-08-01",
+                "dimensions": {"country_code": "160", "state_code": "SC"},
+                "fob_usd_total": "3000.00",
+                "net_weight_kg_total": "1500.000",
+                "unit_value_usd_per_t": "2000.000000",
+                "contributing_rows": 2,
+                "quality": "validated",
+                "source": {"source_id": "mdic-comex-stat"},
+            }
+        ]
+
+    gateway.comex_imports.side_effect = _imports
+    gateway.producer_price_observations.return_value = []
+    gateway.fx_observations.return_value = []
+    return gateway
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_import_series_multi_ncm_aggregates_and_dedups(
+    mock_resolve, mock_validate
+):
+    """CSV selection fetches each distinct NCM once — duplicate codes in
+    the selection are fetched a single time (no double count)."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user()
+    gateway = _multi_gateway()
+    client = create_app().test_client()
+    with patch(_GATEWAY, return_value=gateway):
+        response = client.get(
+            "/market-intelligence/imports/series"
+            "?ncm=74040010,74081190,74081190"
+            "&date_from=2026-08-01&date_to=2026-08-31",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["series"]["ncm_code"] is None
+    assert payload["series"]["ncm_codes"] == ["74040010", "74081190"]
+    assert payload["unresolved_ncms"] == []
+    # 1000+3000 USD over 500+1500 kg → 2000 USD/t aggregate.
+    point = payload["points"][0]
+    assert point["fob_usd_total"] == "4000.0"
+    assert point["unit_value_usd_per_t"] == "2000.0"
+    assert point["contributing_rows"] == 5
+    # Each NCM fetched exactly once despite the repeated code.
+    called = [c.args[0] for c in gateway.comex_imports.call_args_list]
+    assert sorted(called) == ["74040010", "74081190"]
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_import_series_partial_ncm_resolution_is_honest(
+    mock_resolve, mock_validate
+):
+    """An unknown sibling NCM is reported, not silently dropped."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user()
+    gateway = _multi_gateway()
+    client = create_app().test_client()
+    with patch(_GATEWAY, return_value=gateway):
+        response = client.get(
+            "/market-intelligence/imports/series"
+            "?ncm=74040010,99999999"
+            "&date_from=2026-08-01&date_to=2026-08-31",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["unresolved_ncms"] == ["99999999"]
+    assert payload["series"]["ncm_codes"] == ["74040010"]
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
+def test_import_series_all_ncms_unknown_still_404(
+    mock_resolve, mock_validate
+):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user()
+    gateway = _multi_gateway()
+    client = create_app().test_client()
+    with patch(_GATEWAY, return_value=gateway):
+        response = client.get(
+            "/market-intelligence/imports/series"
+            "?ncm=99999998,99999999"
+            "&date_from=2026-08-01&date_to=2026-08-31",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 404
+    gateway.comex_imports.assert_not_called()

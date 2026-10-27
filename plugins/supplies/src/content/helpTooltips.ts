@@ -118,6 +118,8 @@ export const SP_HELP = {
     "Alternativa tabular acessível ao gráfico: média mensal, média nativa em USD, PTAX do mês, número de observações e cobertura de cada período.",
   marketIntelligenceImports:
     "Importações oficiais (Comex Stat / MDIC): valor FOB total, peso líquido e valor médio de importação em US$/t por NCM homologada. O valor médio é calculado sobre os totais agregados do período — é uma referência de custo de importação, não uma cotação internacional de metal.",
+  marketIntelligenceComexSelector:
+    "Pesquise produtos reais do cadastro (MP, PI ou PA) e selecione vários itens — cada um mostra a NCM registrada no ERP e seu estado de homologação. Somente NCMs aprovadas entram na análise; pendentes podem ser solicitadas aqui mesmo e aguardam decisão de quem governa a classificação fiscal. Selecionar vários produtos que usam a mesma NCM nunca duplica o valor de importação. É possível salvar a análise como uma visualização pessoal e reabri-la depois.",
   marketIntelligenceIpp:
     "Índice de Preços ao Produtor (IPP) do IBGE para a atividade Metalurgia — número-índice (dez/2018=100) e variação mensal. É um indicador de preços industriais, não uma cotação de metal em US$/t.",
   marketIntelligenceFx:

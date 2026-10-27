@@ -17,6 +17,7 @@ import {
 
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
+import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
   SuppliesActionButton,
   SuppliesDateField,
@@ -40,10 +41,12 @@ import {
   type MarketProducerPricePoint,
   type MarketSeriesPoint,
 } from "./api";
+import type { ComexSavedView } from "./comexApi";
 import {
   mapMarketIntelligenceError,
   MARKET_INTELLIGENCE_CONTENT,
 } from "./content";
+import { MarketComexSelector } from "./MarketComexSelector";
 import { MarketInstrumentCard } from "./MarketInstrumentCard";
 import { MarketIntelligencePanel } from "./MarketIntelligencePanel";
 import { MarketMetalsPanel } from "./MarketMetalsPanel";
@@ -211,6 +214,7 @@ export function MarketIntelligencePage({
   }, [metalCards, ippSeriesOptions, fxInstrument]);
 
   const filters = useMarketIntelligenceFilters(defaultView);
+  const session = useSuppliesSession();
   const view = filters.state.view;
   const indicator = filters.state.indicator;
 
@@ -245,6 +249,23 @@ export function MarketIntelligencePage({
       ?.ncm_code ??
     selectableNcms[0]?.ncm_code ??
     "";
+
+  /** Multi-NCM analysis (PROC-0076.COMEX.S4): the ``ncm`` URL param is
+   * CSV — every code is catalog-validated before reaching the BFF, in
+   * the order the URL/user declared. */
+  const analysisNcmCodes = useMemo(() => {
+    const allowed = new Set(
+      selectableNcms.map((entry) => entry.ncm_code),
+    );
+    const codes = filters.state.ncm
+      .split(",")
+      .map((code) => code.trim())
+      .filter((code) => allowed.has(code));
+    return [...new Set(codes)];
+  }, [filters.state.ncm, selectableNcms]);
+  const comexSelection = analysisNcmCodes.length
+    ? analysisNcmCodes.join(",")
+    : selectedNcm;
   const selectedIppEntry =
     selectableIpp.find(
       (entry) => entry.series_id === filters.state.ippSeries,
@@ -648,9 +669,51 @@ export function MarketIntelligencePage({
       ) : null}
 
       {view === "indicators" && indicator === "comex" ? (
-        <MarketIntelligencePanel<
-          MarketImportPoint & { value: string | null }
-        >
+        <>
+          <MarketComexSelector
+            selectedProducts={filters.state.comexProducts}
+            onProductsChange={filters.setComexProducts}
+            approvedNcms={selectableNcms.map((entry) => ({
+              ncm_code: entry.ncm_code,
+              description: entry.description,
+            }))}
+            analysisNcms={analysisNcmCodes}
+            onAnalysisNcmsChange={(codes) =>
+              filters.setNcm(codes.join(","))
+            }
+            canManage={session.capabilities.manage}
+            buildViewPayload={() => ({
+              selected_product_codes: filters.state.comexProducts,
+              approved_ncm_references: analysisNcmCodes,
+              selected_metrics: ["fob", "weight", "unit_value"],
+              date_range: {
+                date_from: filters.state.from,
+                date_to: filters.state.to,
+              },
+              granularity:
+                filters.state.granularity === "year" ? "year" : "month",
+              view_mode:
+                filters.state.mode === "table" ? "table" : "chart",
+            })}
+            onApplyView={(savedView: ComexSavedView) => {
+              filters.setComexProducts(savedView.selected_product_codes);
+              filters.setNcm(
+                savedView.approved_ncm_references.join(","),
+              );
+              if (savedView.date_range) {
+                filters.setFrom(savedView.date_range.date_from);
+                filters.setTo(savedView.date_range.date_to);
+              }
+              filters.setGranularity(savedView.granularity);
+              filters.setMode(savedView.view_mode);
+            }}
+            onCatalogDirty={() =>
+              setReloadKey((value) => value + 1)
+            }
+          />
+          <MarketIntelligencePanel<
+            MarketImportPoint & { value: string | null }
+          >
           title={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
           hint={SP_HELP.marketIntelligenceImports}
           sectionIcon={
@@ -687,20 +750,20 @@ export function MarketIntelligencePage({
               },
             ],
           }}
-          selection={selectedNcm}
-          from={filters.state.from}
-          to={filters.state.to}
-          granularity={filters.state.granularity}
-          mode={filters.state.mode}
-          onModeChange={filters.setMode}
-          fetchSeries={async ({
-            selection,
-            granularity,
-            date_from,
-            date_to,
-            signal,
-          }) => {
-            const payload = await getMarketImportSeries(
+            selection={comexSelection}
+            from={filters.state.from}
+            to={filters.state.to}
+            granularity={filters.state.granularity}
+            mode={filters.state.mode}
+            onModeChange={filters.setMode}
+            fetchSeries={async ({
+              selection,
+              granularity,
+              date_from,
+              date_to,
+              signal,
+            }) => {
+              const payload = await getMarketImportSeries(
               {
                 ncm: selection,
                 granularity,
@@ -753,7 +816,8 @@ export function MarketIntelligencePage({
           kpiLayout="import"
           unitLabel={formatMarketUnit(
             selectableNcms.find(
-              (entry) => entry.ncm_code === selectedNcm,
+              (entry) =>
+                entry.ncm_code === comexSelection.split(",")[0],
             )?.unit ?? "US$/t",
           )}
           valueLegend={
@@ -766,7 +830,8 @@ export function MarketIntelligencePage({
           exportTitle={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
           attribution={attribution}
           reloadKey={reloadKey}
-        />
+          />
+        </>
       ) : null}
 
       {view === "fx" ? (

@@ -209,6 +209,17 @@ router = APIRouter()
 def search_products_route(
     code: Optional[str] = Query(None),
     group_code: Optional[str] = Query(None),
+    subgroup: Optional[str] = Query(
+        None,
+        description="Filtro opcional por subgrupo (SB1.B1_SUBGRUP, exato).",
+    ),
+    product_type: Optional[str] = Query(
+        None,
+        description=(
+            "Filtro opcional por tipo de produto (SB1.B1_TIPO). Aceita lista "
+            "separada por vírgula — ex.: MP,PI,PA. Valores de 2 caracteres."
+        ),
+    ),
     description: Optional[str] = Query(None),
     customer_reference: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
@@ -218,9 +229,23 @@ def search_products_route(
 ):
     try:
 
+        type_list = (
+            [t.strip() for t in product_type.split(",") if t.strip()]
+            if product_type
+            else None
+        )
+        if type_list and any(len(t) != 2 for t in type_list):
+            return error_response(
+                "product_type inválido: use códigos de 2 caracteres "
+                "separados por vírgula (ex.: MP,PI,PA).",
+                status_code=400,
+            )
+
         dto = ListProductsRequest(
             code=code,
             group_code=group_code,
+            subgroup=subgroup,
+            product_type=type_list,
             description=description,
             customer_reference=customer_reference,
             page=page,

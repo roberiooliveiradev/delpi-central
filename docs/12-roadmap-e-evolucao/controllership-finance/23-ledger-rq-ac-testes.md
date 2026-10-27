@@ -299,6 +299,11 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-ADM-DR1-04 | autorização e auditoria completas | MANAGE; evento por versão + DOCUMENT_CONFIG_APPLIED; retro ativo 422 | permission negative + audit | doc 114 §2.2/§2.4 | TARGET |
 | RQ-ADM-DR2-01 | ausência de exigências sem documento fictício | sem-template ≠ checklist vazio; distinção auditável | decision + negative | doc 114 §3 | DECISION_REQUIRED (recomendado A) |
 | RQ-ADM-DR2-02 | consumers de snapshot inalterados | abertura, P2/P5, validações, pacotes, CLARA, histórico | compat suite | doc 114 §3.2 | TARGET |
+| RQ-ADM-DR2-03 | versão vazia exige intenção explícita | publish/update com itens vazios só via `allow_empty`; sem documento-sentinela | contract negative | doc 114 §8.5 | TARGET |
+| RQ-ADM-DR1-05 | operação idempotente por chave | Idempotency-Key + request_hash; replay retorna resultado sem duplicar versão/auditoria; mesma chave + payload divergente → 409 | positive + conflict negative | doc 114 §8.3 (padrão V004) | TARGET |
+| RQ-ADM-DR1-06 | serialização de publicações | lock FOR UPDATE no template em writers novos e legados; ordem fixa; lock_timeout → 409 busy | concurrency + legacy interleave | doc 114 §8.1/§8.3 | TARGET |
+| RQ-ADM-DR1-07 | janela nunca cobre competência aberta | window intersecting open competence → 422 window_covers_open_competence; correção via item excepcional | negative + sibling | doc 114 §8.4 | TARGET |
+| RQ-ADM-DR1-08 | trilha de auditoria equivalente ao lifecycle | DRAFT_CREATED→SUBMITTED→PUBLISHED por versão + DOCUMENT_CONFIG_APPLIED resumo dentro da transação | audit positive | doc 114 §8.2/§8.6 | TARGET |
 | RQ-HELP-01 | Ajuda usa manual canônico | `createDashboardUserManual` + PageHero/Path/SectionCard; zero chrome local | component + structural | plugin-ui + 29 | TARGET |
 | RQ-HELP-02 | Ajuda é rota de topbar com ACCESS | `/help` funciona em F5; sem ACCESS = 403 | navigation + permission negative | router/manifest/Core | TARGET |
 | RQ-HELP-03 | manual publica somente runtime real | feature/route futura não aparece nem vira link | route-disabled negative | feature catalog | TARGET |

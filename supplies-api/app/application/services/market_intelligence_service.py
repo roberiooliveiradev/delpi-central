@@ -58,6 +58,7 @@ COMPARE_ALIGNMENT_METHOD = "period_outer_join_same_unit/v1"
 MAX_MISSING_PERIODS = 24
 
 MAX_RANGE_DAYS = 3660
+MAX_IMPORT_NCMS = 20
 DEFAULT_PAGE_SIZE = 24
 MAX_PAGE_SIZE = 120
 MAX_QUOTE_INSTRUMENTS = 8
@@ -220,6 +221,32 @@ class MarketIntelligenceService:
             if entry.get("ncm_code") == code and entry.get("active"):
                 return entry
         raise MarketDataNotFoundError(f"unknown import ncm: {code}")
+
+    def _resolve_import_ncms(
+        self, catalog: dict[str, Any], raw: str
+    ) -> tuple[list[dict[str, Any]], list[str]]:
+        """Dedup a CSV of NCM codes — order-preserving, capped, each
+        resolved against the active allowlist. Unresolvable codes are
+        collected instead of aborting the whole aggregate."""
+        codes: list[str] = []
+        for part in (raw or "").split(","):
+            code = part.strip()
+            if code and code not in codes:
+                codes.append(code)
+        if not codes:
+            raise ValueError("ncm is required")
+        if len(codes) > MAX_IMPORT_NCMS:
+            raise ValueError(
+                f"ncm selection exceeds the {MAX_IMPORT_NCMS}-NCM limit"
+            )
+        resolved: list[dict[str, Any]] = []
+        unresolved: list[str] = []
+        for code in codes:
+            try:
+                resolved.append(self._resolve_import_ncm(catalog, code))
+            except MarketDataNotFoundError:
+                unresolved.append(code)
+        return resolved, unresolved
 
     def _resolve_ipp_series(
         self, catalog: dict[str, Any], series_id: str
@@ -1481,17 +1508,34 @@ class MarketIntelligenceService:
 
         Monthly FOB import totals per approved NCM — ``USD/metric ton``
         is derived from aggregate sums, never from row-level ratios.
+
+        ``ncm_code`` accepts a CSV of allowlisted NCMs (COMEX.S4):
+        distinct codes are fetched and aggregated so a shared NCM is
+        never double-counted when several selected products map to it.
+        A single code keeps the historical contract — unknown NCM 404s;
+        with multiple codes, unresolvable ones are reported in
+        ``unresolved_ncms`` while resolved ones still aggregate (all
+        unresolvable → the same 404).
         """
         catalog = self._catalog()
-        ncm = self._resolve_import_ncm(catalog, ncm_code)
+        ncms, unresolved_ncms = self._resolve_import_ncms(catalog, ncm_code)
+        if not ncms:
+            raise MarketDataNotFoundError(
+                f"unknown import ncm: {ncm_code}"
+            )
+        ncm = ncms[0]
         granularity = self._validate_granularity(granularity, KIND_IMPORT)
         start, end = self._parse_range(date_from, date_to)
         country = (country_code or "").strip() or None
         state = (state_code or "").strip() or None
 
-        rows = self._import_rows(
-            ncm["ncm_code"], start, end, country, state
-        )
+        rows: list[dict[str, Any]] = []
+        for entry in ncms:
+            rows.extend(
+                self._import_rows(
+                    entry["ncm_code"], start, end, country, state
+                )
+            )
         by_month: dict[str, dict[str, Any]] = {}
         for row in rows:
             try:
@@ -1526,7 +1570,16 @@ class MarketIntelligenceService:
         meta = self._ingestion_meta(COMEX_FEED)
         freshness = self._freshness(
             kind=KIND_IMPORT,
-            latest_available=self._instrument_latest(ncm),
+            latest_available=max(
+                (
+                    latest
+                    for latest in (
+                        self._instrument_latest(entry) for entry in ncms
+                    )
+                    if latest is not None
+                ),
+                default=None,
+            ),
             feed_ingestion=meta["feed_ingestion"],
         )
         valid_points = [
@@ -1560,16 +1613,23 @@ class MarketIntelligenceService:
             include_change=True,
             totals=totals,
         )
+        multi = len(ncms) > 1
         return {
             "series": {
-                "ncm_code": ncm["ncm_code"],
-                "ncm_version": ncm["ncm_version"],
-                "description": ncm["description"],
-                "family_code": ncm.get("family_code"),
+                "ncm_code": ncm["ncm_code"] if not multi else None,
+                "ncm_codes": [entry["ncm_code"] for entry in ncms],
+                "ncm_version": ncm["ncm_version"] if not multi else None,
+                "description": (
+                    ncm["description"]
+                    if not multi
+                    else f"Agregado de {len(ncms)} NCMs homologadas"
+                ),
+                "family_code": ncm.get("family_code") if not multi else None,
                 "kind": KIND_IMPORT,
                 "unit": "USD/metric ton",
                 "metric_kind": "import_fob_unit_value",
             },
+            "unresolved_ncms": unresolved_ncms,
             "filters": {
                 "country_code": country,
                 "state_code": state,

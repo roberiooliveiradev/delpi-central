@@ -183,6 +183,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_supplies_supplier_catalog_items": RouteContract(
         "supplies_supplier_catalog_item", "list"
     ),
+    "search_supplies_products": RouteContract(
+        "supplies_product", "paged_list"
+    ),
     "lookup_postal_address": RouteContract("postal_address", "scalar"),
     "get_supplies_safety_stock_supplier_purchase_price_history": RouteContract(
         "supplies_safety_stock_supplier_price_history", "playbook_report"

@@ -15,6 +15,8 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         group=None,
         description=None,
         customer_reference=None,
+        product_type=None,
+        subgroup=None,
         page=1,
         page_size=50,
         sort=None,
@@ -41,6 +43,31 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         if group:
             where_clauses.append("SB1.B1_GRUPO = ?")
             where_params.append(group)
+
+        # -----------------------------
+        # SUBGROUP (B1_SUBGRUP)
+        # -----------------------------
+
+        if subgroup:
+            where_clauses.append("LTRIM(RTRIM(SB1.B1_SUBGRUP)) = ?")
+            where_params.append(subgroup.strip())
+
+        # -----------------------------
+        # PRODUCT TYPE LIST (B1_TIPO)
+        # -----------------------------
+
+        if product_type:
+            types = [
+                str(t).strip().upper()
+                for t in product_type
+                if str(t).strip()
+            ]
+            if types:
+                placeholders = ", ".join("?" for _ in types)
+                where_clauses.append(
+                    f"SB1.B1_TIPO IN ({placeholders})"
+                )
+                where_params.extend(types)
 
         # -----------------------------
         # CUSTOMER REFERENCE (B1_REFEREN)

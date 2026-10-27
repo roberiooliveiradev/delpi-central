@@ -18,6 +18,8 @@ class SearchProductsUseCase:
            description = request.description,
            group=request.group_code,
            customer_reference=request.customer_reference,
+           product_type=request.product_type,
+           subgroup=request.subgroup,
            page = request.page,
            page_size = request.page_size,
            sort=request.sort,

@@ -223,3 +223,138 @@ Justificativa: é a menor evolução de contrato possível — um guard de valid
 - RQ-ADM-DR2-03: checklist publicado vazio distinguível de ausência de versão, com consumers e snapshots compatíveis.
 
 **Próxima entrega:** inventário READ-ONLY dos writers legados, da governança REVIEW, dos consumidores de competência aberta e das dependências da alternativa A; contrato DR-1 revisado, matriz RQ/AC/testes e proposta de rollout. **GATE DE RUNTIME = BLOQUEADO** até revisão arquitetural e autorização explícita do PO.
+
+---
+
+## 8. Consolidação GATE-014 (28/10/2026) — especificação apta à decisão final
+
+**Status:** `TARGET` — proposta revisada; nenhum runtime alterado.
+
+### 8.1 Inventário de writers do checklist (CP1 — PROVEN)
+
+| Operação | Endpoint | Tx | Concorrência | Auditoria |
+|---|---|---|---|---|
+| Criar rascunho | `POST /admin/checklist-templates/{id}/versions` | sim | índice único parcial `ck_template_version_one_open` (DRAFT **ou** REVIEW) | `DRAFT_CREATED` |
+| Editar itens do draft | `PUT .../versions/{v}` | sim (delete+insert) | OCC `revision` → `stale_revision` | `DRAFT_UPDATED` |
+| Submeter revisão | `POST .../submit-review` | sim | status DRAFT-only | `VERSION_SUBMITTED_FOR_REVIEW` |
+| Devolver a rascunho | `POST .../return-to-draft` | sim | status REVIEW-only + `reason` obrigatório | `VERSION_RETURNED_TO_DRAFT` |
+| Publicar | `POST .../publish` | sim | status REVIEW-only; ≥1 item | `VERSION_PUBLISHED` |
+| Inativar | `POST .../inactivate` | sim | status PUBLISHED-only | `VERSION_INACTIVATED` |
+| Item excepcional | `POST /closing/competences/{p}/items` | sim | snapshot da competência (contrato distinto) | `ITEM_CREATED` |
+| Abertura | `POST /closing/competences` | sim | `ON CONFLICT DO NOTHING` | `COMPETENCE_OPENED` |
+
+**Resposta à questão central:** `SELECT … FOR UPDATE` no template NÃO basta sozinho — os writers legados não adquirem o mesmo lock hoje. **Estratégia:** adquirir o lock de linha do template (ordem fixa: sempre `checklist_template` → tabelas de versão/itens) em TODOS os writers que tocam o estado publicado (`publish_version`, `inactivate_version`) e na operação nova; writers de draft/review podem manter o índice `one_open` + OCC — a corrida residual "draft publicado entre fetch e lock" é serializada pelo lock da publicação. Sem alteração de contrato — mudança interna de repositório.
+
+### 8.2 Parecer sobre REVIEW (CP2 — PROVEN)
+
+- **Semântica:** estágio de conferência do lifecycle P6 aprovado (V010: `DRAFT → REVIEW → PUBLISHED → INACTIVE`); "salvar ≠ publicar" (doc 13 §Template mestre).
+- **Aprovação independente?** NÃO — o mesmo `authorized_admin` (MANAGE) cria, submete, devolve e publica; não há capability nem ator distinto (D-FINAL-02 não exige mínimo de revisores). REVIEW é janela de conferência auditada, não segregação de funções.
+- **Consumidores:** nenhum consumer de runtime depende de REVIEW (só a página admin legacy lista o estado).
+- **Recomendação — Alternativa A com paridade de auditoria:** a operação `document-config` publica em transação única registrando, por versão gerada, a sequência de eventos `DRAFT_CREATED` → `VERSION_SUBMITTED_FOR_REVIEW` → `VERSION_PUBLISHED` + resumo `DOCUMENT_CONFIG_APPLIED`. A linha pode transitar DRAFT→REVIEW→PUBLISHED **dentro** da mesma transação — a trilha de auditoria fica idêntica ao fluxo manual e o estágio continua registrado, sem janela intermediária persistida. Alternativa B (preparar→revisar→confirmar em duas chamadas) só se justifica se o PO quiser janela de conferência humana para configurações de documento — o fluxo UX-012 nunca a teve (já publica em sequência). Sem `DECISION_REQUIRED` adicional — a escolha é consistente com a autoridade vigente; fica registrada para confirmação do PO.
+
+### 8.3 Idempotência e concorrência (CP3)
+
+**Idempotency-Key (padrão canônico V004/upload — `document_version.idempotency_key` + `request_hash`):**
+
+- Header `Idempotency-Key` obrigatório (1–128 chars).
+- Escopo: `UNIQUE (template_id, idempotency_key)` em tabela nova `document_requirement_operation` — registra `request_hash`, `actor`, `result JSONB`, `created_at` (auditoria-grade, sem expiração).
+- `request_hash` = SHA-256 do JSON canônico de `{item_key, item, effective_from, effective_until}` — `base_version` fica fora (é OCC, não identidade — mesmo precedente de `revision` no upload).
+- Mesma chave + mesmo hash → retorna o resultado armazenado (`replayed: true`, sem duplicar versão nem auditoria).
+- Mesma chave + hash divergente → `409 idempotency_conflict`.
+- Igualdade de conteúdo dos boundaries permanece apenas como otimização de skip, NUNCA como prova de identidade da operação.
+
+**OCC / concorrência:**
+
+- `base_version` = `MAX(version)` visto pelo cliente; divergente → `409 stale_revision` (cobre toda mudança de timeline, inclusive de endpoints legados, porque qualquer publicação cria versão nova).
+- Lock: `SELECT template_id … FOR UPDATE` no início da transação; ordem fixa de aquisição (template → versões → itens) → sem ciclo de deadlock.
+- `lock_timeout` ~5s → `409 busy` honesto; READ COMMITTED basta (serialização pelo lock).
+- Writers legados que publicam/inativam adquirem o mesmo lock (compatibilidade interna, §8.1).
+- Edição simultânea de documentos diferentes ou competências diferentes → serializados pelo mesmo lock do template (menor unidade de serialização, correto: qualquer versão publicada recompõe o conjunto inteiro).
+
+### 8.4 Competências já abertas (CP4 — política recomendada)
+
+Fatos PROVEN: `monthly_competence.status` admite apenas `OPEN`; snapshots são congelados; `open_competence` resolve a versão vigente UMA vez na abertura. Logo, publicar `effective_from ≤` competência já aberta cria divergência catálogo/snapshot silenciosa (o catálogo diria "exigido" num mês cujo checklist não o contém).
+
+**Recomendação: rejeitar** — `422 window_covers_open_competence` quando a janela `[effective_from, effective_until]` intersecta o período de qualquer competência já aberta. Corretivo legítimo para competência aberta permanece o **item excepcional** (`POST /closing/competences/{p}/items`) — contrato distinto, preservado. Alternativa avaliada: permitir com warning explícito — registrada, mas a rejeição elimina a divergência em vez de apenas declará-la. Confirmação do PO registrada como pendência formal.
+
+### 8.5 DR-2 — compatibilidade da versão publicada vazia (PROVEN por inspeção)
+
+- `publish_version`: único guard `item_count == 0` — liberação condicionada a intenção explícita: `PublishVersionRequest.allow_empty: bool = false` → sem `allow_empty` continua 422/400 (proteção contra erro operacional, sem inventar documento).
+- `UpdateDraftRequest.items`: `min_length=1` → aceitar `[]` somente com `allow_empty: true` no mesmo request.
+- `resolve_published_version`: inalterado — devolve a versão vazia.
+- `open_competence`: grava `template_version_id` NOT NULL + snapshot com 0 itens → válido; distinção sem-template (NULL) vs checklist-vazio preservada e auditável (`item_count: 0` no evento).
+- Consumers de snapshot (P2, P5, validações, pendências, pacotes, CLARA, histórico, ajuda): todos leem listas — vazio ≡ hoje (PROVEN por `V015`: a abertura sem template já produz snapshot vazio idêntico).
+- Reativação: publicar versão com itens — mecanismo existente.
+- `derive_closing_state`/conclusão: vacuidade de checklist nunca conclui por vacuidade (pacotes/conciliações regem a conclusão — comentário normativo de V015).
+
+### 8.6 Contrato DR-1 consolidado
+
+```
+PUT /admin/checklist-templates/{template_id}/documents/{item_key}/requirement
+operation_id: upsert_document_requirement
+Headers: Idempotency-Key (obrigatório)
+Body: {
+  item?: ChecklistItemInput,            # presente = upsert; ausente = encerramento
+  effective_from: "YYYY-MM",            # > última competência aberta
+  effective_until?: "YYYY-MM"|null,
+  base_version?: int
+}
+Response 200: { item_key, published_versions[], skipped_boundaries[],
+                no_changes, replayed, audit_event_ids[] }
+Erros: 400 invalid_period|invalid_window|item_required|allow_empty_required
+       401 unauthorized · 403 forbidden (sem MANAGE)
+       404 template_not_found
+       409 idempotency_conflict|stale_revision|busy
+       422 retroactive_effective_period|window_covers_open_competence|
+           empty_resulting_checklist (absent allow_empty)
+```
+
+Transação: `FOR UPDATE` template → verifica idempotência → valida janela/abertura → plano de boundaries → insere versões com trilha DRAFT→REVIEW→PUBLISHED auditada → grava operação idempotente → commit. Rollback integral por construção. Migration prevista (V017, **não executada**): tabela `document_requirement_operation` + `allow_empty` no publish legado (decisão DR-2).
+
+### 8.7 Rollout
+
+1. Migration V017 (tabela de idempotência) + guard `allow_empty`.
+2. Endpoint + repository (`FOR UPDATE` também nos writers legados de publicação/inativação).
+3. MFE `documentCatalog.ts` passa a chamar a operação única (remove orquestração multi-chamada; mantém derivação de vigências).
+4. Endpoints legados permanecem (edição manual de template).
+
+Rollback: endpoint novo é aditivo — desativar rota/devolver orquestração MFE; dados já publicados são versões regulares (compatíveis).
+
+### 8.8 Decisões pendentes (fechamento para o PO)
+
+| # | Decisão | Recomendação |
+|---|---|---|
+| D1 | Autorizar implementação do endpoint transacional | Sim (spec pronta) |
+| D2 | DR-2 alternativa A com `allow_empty` explícito | A (PO já aprovou conceitualmente) |
+| D3 | Política `window_covers_open_competence` (rejeitar vs warning) | Rejeitar (422) |
+| D4 | Publicação direta com trilha REVIEW auditada (A) vs preparação/confirm em duas chamadas (B) | A — REVIEW não é aprovação independente |
+| D5 | `base_version` obrigatório vs opcional | Opcional (compat com clientes simples); MFE envia |
+
+
+## 9. Deliberação PO pós-GATE-014 — contrato condicionado e gate de implementação (27/10/2026)
+
+**DECISÃO FORMAL DE PRODUTO, NÃO EVIDÊNCIA DE RUNTIME.** PO delibera:
+- **D1:** AUTORIZAR a implementação **somente após** incorporar os ajustes contratuais abaixo, verificar as autoridades e ultrapassar gates transversais e de deploy aplicáveis. Esta decisão não permite começar runtime sem o fechamento dos gates.
+- **D2 / DR-2:** preservar alternativa **A** — versão PUBLISHED com zero itens, acionada com intenção explícita; nenhuma versão vazia ou migration foi implementada nesta etapa.
+- **D3:** **REJEITAR** com HTTP 422 `window_covers_open_competence` qualquer janela de alteração de exigência que intersecte competência já aberta; correção excepcional em competência aberta permanece em contrato próprio. Verificar colisão transacional com abertura simultânea.
+- **D4:** **REVIEW AUDITADO DENTRO DA TRANSAÇÃO**, mantendo eventos DRAFT_CREATED → VERSION_SUBMITTED_FOR_REVIEW → VERSION_PUBLISHED por versão e resumo DOCUMENT_CONFIG_APPLIED; sem janela humana independente, conforme inventário GATE-014. Não suprimir provenance de eventos.
+- **D5:** `base_version` **OBRIGATÓRIO**, não opcional, para mutações documentais. Validar no backend e devolver 409 stale_revision após comparação com token de versão atual. `Idempotency-Key` continua independente, obrigatória e distinta do OCC.
+
+### 9.1 Ajustes de contrato obrigatórios antes de runtime
+1. Substituir na proposta §8.6 `base_version?: int` por `base_version: int` requerido; proibir omissão e definir 400/422 de validação para campo ausente, respeitando convenção vigente. A política de replay idempotente deve preceder a avaliação de revisão stale para retries da **mesma** operação concluída, evitando falha falsa após sucesso; chave igual + hash diferente retorna 409.
+2. Definir `allow_empty` explícito e consistente em novo comando e operações legadas aplicáveis (normalização da intenção, default false, erro sem intenção). Separar versão vazia de template ausente pelo `template_version_id` e auditoria. Confirmar invariantes dos consumers e a interação entre publicar zero itens e snapshots.
+3. Compartilhar protocolo de lock (template antes de versão/itens) entre comando novo, publicação/inativação legadas **e abertura da competência**, com ordem e isolamento definidos; a regra D3 deve ser checada sob o mesmo controle transacional capaz de impedir corrida com uma abertura simultânea. Se a abertura não puder adquirir o mesmo lock sem impacto indevido, emitir `EXECUTION_DRIFT/DECISION_REQUIRED` antes de implementar, com alternativas.
+4. Integrar `Idempotency-Key` em persistência transacional e escopo comprovado com hash canônico do payload, incluindo a semântica de `base_version` no replay. Definir audit event idempotente, tenant/actor/scope e estratégia para falha de commit e retry.
+5. Determinar a semântica de `effective_from` para competência atual ainda não aberta e o resultado retornado para competência já aberta/erro 422; preservar prospectividade, imutabilidade do snapshot, autorização manage fail-closed e compatibilidade.
+6. Especificar rollout/rollback seguro para migração aditiva, endpoint, writers legados, abertura e MFE, incluindo compatibilidade de versões e plano de testes PostgreSQL com concorrência real.
+
+### 9.2 Próximo gate de execução — IMPLEMENTATION-GATE-015 (condicional)
+**Primeira entrega:** inventário HEAD/status e diff contratual de §8.6-§8.8 alinhado a D1-D5, matriz de consumers/writers e plano de migrations/testes. **GATE TRANSVERSAL EXPLÍCITO** antes de editar runtime ou schema. Depois, implementar em etapas pequenas e verificáveis: (a) backend/domain/application/ports/adapters, locks inclusive abertura e testes concorrentes; (b) endpoint + autorização fail-closed + idempotência, versão vazia explicitamente intencional e migração governada; (c) MFE troca orquestração por chamada única mantendo UX-012 e legacy; (d) regressão P2/P5/documentos/histórico e Help; (e) deploy local, verificação de resultado, produção só após gate separado, docs/evidência/CLARA. Nenhuma etapa de runtime executada nesta deliberação.
+
+### 9.3 RQ/AC adicionais (TARGET / TEST_NOT_RUN)
+- **RQ-ADM-DR1-09:** `base_version` exigido e 409 no stale; replay da mesma operação concluída é determinístico sem duplicar.
+- **RQ-ADM-DR1-10:** publicação e abertura concorrentes não escapam de D3; 422 quando a competência já abriu, ou snapshot novo coerente quando abertura vem depois da publicação.
+- **RQ-ADM-DR2-04:** `allow_empty` é intencional e auditado; último item pode terminar sem documento-sentinela, sem modificar snapshots anteriores.
+- **RQ-ADM-DR1-11:** etapa REVIEW audita transições na mesma transação, rollback elimina também eventos de auditoria em falha.
+
+**Classificação:** D1-D5 = PRODUCT_APPROVED com condições; contrato atualizado = TARGET; implementation/tests/deploy = NOT_STARTED/TEST_NOT_RUN. Sem autorização genérica para criar mudanças de runtime sem gates.
