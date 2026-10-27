@@ -858,3 +858,47 @@ S2S no navegador.
 
 **Audiência.** Conversa/perfil permanecem `INTERNAL` — audiência DRE
 segue `TARGET`. Nenhuma regra de negócio do fechamento foi alterada.
+
+
+## 24. Relatórios e divergências — proposta de organização V0.1 (27/10/2026)
+
+**Estado:** `DESIGN_PROPOSED / PENDING_PO_APPROVAL / NO_IMPLEMENTATION_GO`. Próxima página de trabalho, **terceira aba existente**, não quarta área. Preserva as escolhas aprovadas no §9.5 e §3 (DR-C2 resultado de negócio decidido), sem alegar disponibilidade de produtores R01–R15.
+
+### Finalidade e hierarquia visual
+O analista escolhe a referência mensal, consulta indicadores e relatórios produzidos pelos owners canônicos e encontra as **divergências comprovadas que exigem correção manual no TOTVS**, com totais/agrupamentos já calculados pelo backend. A UX deve ser limpa: situação/ação primeiro, detalhe sob demanda, PDF em área própria.
+
+```text
+[PagePath Início > Fechamento mensal > Relatórios e divergências]
+[Competência YYYY-MM compartilhada] [Visão geral | Documentos e interações | Relatórios e divergências]
+Relatórios e divergências                            [Atualizar dados]
+[Resumo: Relatórios disponíveis | Divergências identificadas | Fontes sem consulta]
+[ÁREA PRIORITÁRIA: Divergências encontradas / Fontes não verificadas]
+  [Grupo de divergência: relatório, valor/quantidade real, descrição, prioridade]
+    [Ver detalhes] → linhas/grupos dentro da própria aba
+    [Como corrigir no TOTVS] → orientação comprovada (manual)
+[RELATÓRIOS DISPONÍVEIS: cards por família de relatórios, status e última atualização]
+  [Card: Baixas financeiras] [Card: Estoque] [demais somente com produtor canônico]
+  [Selecionar relatório] → painel de resultado abaixo, sem sair da aba
+[PAINEL CONTEXTUAL: totais calculados, grupos, origem, filtros/seleção, detalhes]
+[PRÉVIA DO PDF: container preservado; PDF real só mediante produtor/contrato]
+```
+
+### Invariantes
+- `R01–R15` na matriz de checklist = **classificação/entregáveis**, não quinze relatórios calculados automaticamente. Não converter documentos manuais em dados financeiros ou inventar totais.
+- Baixas financeiras e consulta operacional de estoque já possuem endpoints period-keyed, mas não devem ser rotuladas como relatório oficial Protheus P7 sem homologação.
+- Fonte indisponível / dado não processado / falta de reconciliação = `—` ou estado informativo, nunca divergências `0` comprovadas.
+- Divergência de conciliação estoque segue `ENTRADAS_SAIDAS - P7 - H02`, paridade somente em R$0,00, quando três entradas comparáveis e válidas forem comprovadas. Causas e instruções de correção apenas com evidência de produtor/owner; nada de write ERP.
+- Dentro da aba: expansão dos grupos, seleção de relatório, prévia PDF e navegação pelo PagePath; preservar mês, filtros, URL/F5/voltar. Rota legada continua até decisão de depreciação.
+- Nenhum relatório operacional TOTVS é enviado automaticamente à DRE. A DRE, fase final, receberá apenas PDFs documentais designados e liberados por seu fluxo próprio.
+
+### Componentes do kit — candidatos a verificar
+`createDashboardPagePath`, `PageHero`, `SegmentToggle`, `InteractiveDataCard`, `SectionCard`, `StatusBadge`, `DataRecordCard` (catálogo), `EmptyState`, filtros e controles do plugin-ui, e componente oficial de detalhe progressivo/accordion, se existir. **Inventariar exports reais do `@delpi/plugin-ui` antes de implementar.** Evitar tabela R01–R15 como fluxo principal; preservar rastreabilidade num detalhe técnico de cobertura e fonte.
+
+### Decisões visuais propostas para aprovação PO
+A. Dar **prioridade às divergências e ações** acima do catálogo de relatórios; agrupá-las por relatório/fonte e permitir detalhe expansível.
+B. Mostrar **cards por família de relatório**, não a matriz técnica R01–R15 como lista principal.
+C. Selecionar um card abre resultado/detalhe **na mesma aba**, sem rota separada; conservar PDF no painel inferior.
+D. Preservar a distinção visual entre `divergência comprovada` e `não foi possível consultar`, sem falso zero.
+E. Manter PDF como prévia do relatório selecionado, quando houver geração homologada; caso contrário container com estado claro.
+
+**Próximo passo:** o PO revisa e modifica/aprova a composição; após aprovação inventariar producers/consumers e RQ/AC, documentar V0.2 detalhada, só então preparar prompt incremental de implementação e CLARA/Help.
