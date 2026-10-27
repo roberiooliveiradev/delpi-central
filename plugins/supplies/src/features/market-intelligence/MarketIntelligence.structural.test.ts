@@ -41,6 +41,7 @@ const BASE_STATE = {
   indicator: "ipp" as const,
   ncm: "",
   comexProducts: [] as string[],
+  comexDirectNcms: [] as string[],
   ippSeries: "",
   from: "2025-01-01",
   to: "2025-12-31",
@@ -110,6 +111,21 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     );
   });
 
+  it("parses direct-entry NCMs and drops malformed codes (S6)", () => {
+    withWindow(
+      "?view=indicators&indicator=comex&direct_ncm=85444200,8544.49.00,abc,74040010",
+      () => {
+        const state = readMarketIntelligenceFromUrl();
+        // Only exact 8-digit codes survive — "8544.49.00" keeps its
+        // punctuation and is dropped by the URL contract.
+        expect(state.comexDirectNcms).toEqual([
+          "85444200",
+          "74040010",
+        ]);
+      },
+    );
+  });
+
   it("drops malformed NCM codes and product codes from the URL", () => {
     withWindow("?ncm=74040010,abc,123&products=OK-1,<script>", () => {
       const state = readMarketIntelligenceFromUrl();
@@ -134,6 +150,21 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     expect(written).toContain("indicator=comex");
     expect(written).toContain("ncm=74040010%2C85444900");
     expect(written).toContain("products=MP0001");
+  });
+
+  it("round-trips the direct NCM selection to the URL (S6)", () => {
+    let written = "";
+    withWindow("", (stub) => {
+      stub.history.replaceState = (_s, _t, url) => {
+        written = url;
+      };
+      writeMarketIntelligenceToUrl({
+        ...BASE_STATE,
+        indicator: "comex",
+        comexDirectNcms: ["85444200", "74040010"],
+      });
+    });
+    expect(written).toContain("direct_ncm=85444200%2C74040010");
   });
 
   it("maps a legacy R2 link (instrument=usd-brl) to the fx view", () => {

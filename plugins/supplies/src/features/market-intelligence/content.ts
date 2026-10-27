@@ -284,9 +284,26 @@ export const MARKET_INTELLIGENCE_CONTENT = {
   comex: {
     selectionTitle: "Seleção de produtos e NCMs",
     selectionHint:
-      "Pesquise produtos reais da DELPI (SB1010), selecione um ou mais " +
-      "itens e acompanhe a NCM de cada um. Somente NCMs homologadas " +
-      "alimentam o gráfico — pendentes ficam visíveis com seu estado.",
+      "Selecione produtos reais da DELPI (SB1010) ou consulte uma " +
+      "NCM diretamente — ambos alimentam a mesma análise. Somente " +
+      "NCMs homologadas entram no gráfico.",
+    originProducts: "Produtos DELPI",
+    originNcm: "Consultar NCM",
+    directNcmLabel: "NCM (8 dígitos)",
+    directNcmPlaceholder: "Ex.: 85444200 ou 8544.42.00",
+    directNcmHint:
+      "Cole um ou mais códigos — espaços, pontos e vírgulas são " +
+      "ignorados. A validação confere apenas o formato; a vigência " +
+      "fiscal segue o fluxo de homologação.",
+    directNcmAdd: "Adicionar NCM",
+    directNcmInvalid: (entries: string[]) =>
+      `Códigos ignorados — a NCM exige exatamente 8 dígitos: ${entries.join(", ")}`,
+    directNcmLimit:
+      "Limite de 20 NCMs por análise atingido — remova itens da " +
+      "seleção antes de adicionar novos.",
+    directNcmDuplicated:
+      "Todos os códigos informados já estão na seleção.",
+    removeNcm: (code: string) => `Remover NCM ${code}`,
     productTypeAll: "Todos",
     productTypeMp: "MP",
     productTypePi: "PI",
@@ -362,14 +379,12 @@ export const MARKET_INTELLIGENCE_CONTENT = {
       "ativada ou os direitos de exibição estão em revisão.",
     comexConfigPendingTitle: "Comex — configuração pendente",
     comexConfigPending:
-      "Nenhuma NCM homologada por Compras está disponível para consulta. " +
-      "Quando a homologação for concluída e a fonte MDIC estiver ativa, " +
-      "as importações aparecem aqui.",
+      "Nenhuma NCM homologada está disponível para consulta — ou " +
+      "nenhuma foi selecionada na análise.",
     comexNextSteps:
-      "Próximo passo: homologar a lista de NCMs de interesse com " +
-      "Compras e confirmar a fonte MDIC Comex Stat ativa. A estrutura " +
-      "abaixo mostra os indicadores que serão preenchidos — nenhum " +
-      "valor é simulado.",
+      "Use a seleção acima: escolha produtos DELPI ou informe a NCM " +
+      "de 8 dígitos e solicite a homologação. Quando uma NCM estiver " +
+      "aprovada e a fonte MDIC ativa, as importações aparecem aqui.",
     providerUnavailable:
       "Temporariamente indisponível: a última coleta não foi " +
       "concluída. Os dados serão exibidos quando a conexão com a fonte " +

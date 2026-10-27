@@ -95,6 +95,7 @@ export function useMarketIntelligenceFilters(
       indicator: fromUrl.indicator ?? DEFAULT_INDICATOR,
       ncm: fromUrl.ncm ?? "",
       comexProducts: fromUrl.comexProducts ?? [],
+      comexDirectNcms: fromUrl.comexDirectNcms ?? [],
       ippSeries: fromUrl.ippSeries ?? "",
       from: fromUrl.from ?? range.from,
       to: fromUrl.to ?? range.to,
@@ -148,6 +149,8 @@ export function useMarketIntelligenceFilters(
           indicator: fromUrl.indicator ?? prev.indicator,
           ncm: fromUrl.ncm ?? prev.ncm,
           comexProducts: fromUrl.comexProducts ?? prev.comexProducts,
+          comexDirectNcms:
+            fromUrl.comexDirectNcms ?? prev.comexDirectNcms,
           ippSeries: fromUrl.ippSeries ?? prev.ippSeries,
           from: fromUrl.from ?? prev.from,
           to: fromUrl.to ?? prev.to,
@@ -183,6 +186,8 @@ export function useMarketIntelligenceFilters(
     setNcm: (ncm: string) => patch({ ncm }),
     setComexProducts: (comexProducts: string[]) =>
       patch({ comexProducts }),
+    setComexDirectNcms: (comexDirectNcms: string[]) =>
+      patch({ comexDirectNcms }),
     setIppSeries: (ippSeries: string) => patch({ ippSeries }),
     toggleMetal,
     setFrom: (from: string) => patch({ from }),
