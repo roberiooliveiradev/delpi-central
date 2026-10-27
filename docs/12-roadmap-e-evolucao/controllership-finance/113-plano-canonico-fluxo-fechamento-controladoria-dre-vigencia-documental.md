@@ -1044,3 +1044,35 @@ Pendentes: paridade oficial FINR190/MATR460 segue `TEST_NOT_RUN`; produtor de PD
 - **Validação/segurança:** enums com allowlist (`side`, `sort`, `dir`, `branch`, `scope`), `page` ≥ 1, datas `YYYY-MM-DD` com `start ≤ end` e **dentro da competência da rota** — par inválido ou de outro mês cai no intervalo da rota, nunca consulta outra competência. A competência de Estoque não é serializável: permanece travada na rota. Nenhum dado financeiro/token na URL; autorização continua na BFF.
 - **Legado:** modo legado (`reportContext` ausente) não ativa a sincronização — comportamento idêntico ao anterior.
 - **Testes:** +20 casos — helper 10 (defaults, round-trip, par fora da competência, enums/página inválidos, `pickFamilyParams` sem vazamento), Baixas 4 (F5/deep link restaura e consulta com os valores, datas de outro mês descartadas + URL normalizada, serialização ao editar, back/forward reidrata página), Estoque 4 (idem + filtro inválido → default + competência nunca serializada), página 3 (voltar preserva filtros no hub, reabertura repassa, família diferente abre limpa).
+
+
+## 27. Incremento aprovado pelo PO — relatórios reais, conciliação e simplificação do frontend (27/10/2026)
+
+**PRODUCT_APPROVED | DESIGN_TARGET | IMPLEMENTATION_GATE_PENDING.** O PO aprovou prosseguir com as melhorias de Relatórios e divergências e **conectar as fontes canônicas para obter dados e análises efetivos**, sem esconder indisponibilidades. Este registro não afirma que os contratos de P3 já estejam ligados às consultas period-keyed, nem autoriza criar uma fórmula ou fonte paralela.
+
+### 27.1 Sintoma observado e hipóteses, sem diagnóstico presumido
+Em setembro/2026, as capturas do PO mostram a consulta operacional `stock-inventory` disponível (SB9, 7.929 itens, 2 filiais, total histórico apresentado), enquanto a conciliação P3 acusa `ENTRADAS_SAIDAS`, `P7` e `H02` indisponíveis. **São fluxos/produtores distintos**: disponibilidade de SB9 não prova equivalência ao P7 oficial (MATR460), nem prova que evidência P3 foi registrada/validada. A causa pode envolver resolução de fontes, associação de competência, contrato de captura, execução, qualificação ou estado de reconciliação; investigar código+payload sanitizado+logs antes de decidir. `UNAVAILABLE` não é divergência comprovada; zero de divergências só após cobertura suficiente.
+
+### 27.2 Melhorias de UX aprovadas para refinamento
+1. **Atenção compacta e acionável:** agrupar situações por relatório/origem; evitar cards repetidos de R05/R03/R08 com `Ver detalhes` + `Abrir relatório` simultâneos. Ação principal contextual **Abrir relatório**; informação diagnóstica e ação específica dentro da página; expansão secundária apenas se necessária.
+2. **Cabeçalho sem duplicação:** nas páginas contextuais P7 e Baixas, reduzir redundância de dois heroes grandes; manter um título do relatório, contexto da competência e breadcrumb/voltar.
+3. **Qualidade dos dados clara:** distingir fonte indisponível, consulta operacional disponível, paridade oficial não homologada, conferência não realizada, evidência não registrada e divergência provada. Explicar `natureza não identificada`/filial faltante em Baixas, preservando valores reais e sem fabricar vínculo.
+4. **Tabelas como padrão:** preservar DataTableSection do `@delpi/plugin-ui`, colunas alinhadas, formatação PT-BR, paginação e filtros da URL; não regredir para linhas/cartões com texto concatenado.
+5. **Resultados e correção orientados à ação:** na página contextual indicar fonte, data de consulta/competência, valor comparável, diferença comprovada, causa apenas quando homologada e instrução para correção manual no TOTVS; sem escrita ERP.
+6. **Matriz R01–R15** secundária em disclosure; PDF contextual somente com produtor homologado. Três abas e DRE por último.
+
+### 27.3 Plano de reconciliação de fontes (preflight READ-ONLY)
+- Revalidar HEAD/git status, instruções oficiais, .cursor aplicável, owners, RQ/AC e gates, Plano 113, doc 112, doc 83 (crosswalk Ciclo 2), registros Ciclo 1/2, TÉO (AS-IS) e vídeo de Estoques/Custos 30/09/2026. Buscar evidência de cada alegação; não deduzir conteúdo do vídeo sem inspeção.
+- Traçar **BFF P3**: `GET /closing/competences/{period}/p3`, estado/registro de cada domínio `ENTRADAS_SAIDAS/P7/H02`, producer, armazenamento, snapshot, cutoff, critérios de disponibilidade, autor, data, bloqueios e API de captura. Traçar separadamente `GET /closing/stock-inventory?period` (SB9) e consultas de baixas SE5. Localizar produtor canônico de P7 oficial e H02, se houver; search miss != ausência.
+- Testar somente leitura com perfil autorizado e payload/log **sanitizado** de 2026-09: disponibilidade, origem, competência, snapshot, mensagens de erro, proveniência, critérios de aceite. Nenhum POST/SQL write para simular dados.
+- Matriz obrigatória por R01–R15: **necessidade da analista → relatório/arquivo → operação atual → owner → produtor/API/SQL → campos e total → comparabilidade → divergência/correção → documento de evidência → status**. Registrar a paridade oficial FINR190/MATR460 como `TEST_NOT_RUN` até confronto real.
+
+### 27.4 Checkpoints e gates
+**CP1 INVENTORY READ-ONLY** traçado de producers/consumers, gap de P3, dados reais autorizados, Ciclos 1/2/vídeo, caminhos existentes de integração e componentes plugin-ui. Entrega: diagnóstico causal com evidência e matriz de dependências.
+**CP2 DESIGN/CONTRACT** definir estados UX, tabelas e mínima evolução de contrato necessária; separar integrações já autorizadas de novas. Em caso de owner, cálculo, persistência, integração, permissão, contrato breaking ou PDF novos: `DECISION_REQUIRED`, não implementar sem gate.
+**CP3 FRONTEND** implementar apenas refinamentos de apresentação aprovados e integrações sustentadas por contrato, mantendo URL/F5/back-forward, temas, mobile, teclado, BFF-only e fail-closed.
+**CP4 BACKEND/INTEGRATION** após gate, integrar fontes via owner canônico, sem inferir equivalência SB9=P7, sem calcular divergência no browser, sem sobrescrever evidência histórica.
+**CP5 VERIFY** testes positivos/sibling/negativos, competência 2026-09 e outra, source missing != zero, proveniência, paridade quando aplicável, smoke autenticado; build e deploy local primeiro; produção somente pelo operador/gates.
+**CP6 DOCS/CLARA** atualizar docs 23/30/94/112/113/README, Ajuda; republicar corpus CLARA apenas com afirmações de runtime comprovadas e testar retrieval.
+
+**Ação imediata:** iniciar CP1 read-only; não publicar alterações de serviço ou mexer em registros financeiros antes do diagnóstico e gate. Não excluir legado; página DRE segue última fase.
