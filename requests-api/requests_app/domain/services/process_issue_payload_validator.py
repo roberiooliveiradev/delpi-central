@@ -22,7 +22,12 @@ PROCESS_ISSUE_SOURCE = "operator_cockpit"
 # Origem autenticada do Portal PCP — o analista abre a solicitacao pela Carga
 # Maquina com identidade de usuario real (criacao autenticada, nao S2S).
 PCP_PORTAL_SOURCE = "pcp_portal"
-PROCESS_ISSUE_SOURCES = frozenset({PROCESS_ISSUE_SOURCE, PCP_PORTAL_SOURCE})
+# Origem autenticada do Delpi MES — triagem gerencial de paradas encaminha
+# process-issue com identidade de usuario real (Bearer), nunca S2S fabricada.
+DELPI_MES_SOURCE = "delpi_mes"
+PROCESS_ISSUE_SOURCES = frozenset(
+    {PROCESS_ISSUE_SOURCE, PCP_PORTAL_SOURCE, DELPI_MES_SOURCE}
+)
 
 _TEXT_LIMITS: dict[str, int] = {
     "reportedToolCode": 60,
@@ -91,10 +96,39 @@ class ProcessIssuePayloadValidator(PayloadValidatorPort):
                 raise _invalid("requester.name", "requester.name excede 150 caracteres.")
 
         operation = payload.get("operation")
-        if not isinstance(operation, dict):
-            raise _invalid("operation", "Contexto da operação é obrigatório.")
-        for field in ("productionOrder", "operationCode", "reportedWorkCenter"):
-            _require_text(operation, field)
+        if source == DELPI_MES_SOURCE:
+            # Parada MES pode não ter OP vinculada — a âncora do problema é o
+            # bloco mesDowntime; operation é opcional e, quando presente,
+            # segue o mesmo contrato das demais origens.
+            mes_downtime = payload.get("mesDowntime")
+            if not isinstance(mes_downtime, dict):
+                raise _invalid(
+                    "mesDowntime", "Contexto da parada MES é obrigatório."
+                )
+            for field in ("downtimeId", "branch", "workCenter"):
+                _require_text(mes_downtime, field)
+            if operation is not None:
+                if not isinstance(operation, dict):
+                    raise _invalid(
+                        "operation", "Contexto da operação inválido."
+                    )
+                for field in (
+                    "productionOrder",
+                    "operationCode",
+                    "reportedWorkCenter",
+                ):
+                    _require_text(operation, field)
+        else:
+            if not isinstance(operation, dict):
+                raise _invalid(
+                    "operation", "Contexto da operação é obrigatório."
+                )
+            for field in (
+                "productionOrder",
+                "operationCode",
+                "reportedWorkCenter",
+            ):
+                _require_text(operation, field)
 
         available = payload.get("materialsSnapshotAvailable")
         if available is not None and not isinstance(available, bool):

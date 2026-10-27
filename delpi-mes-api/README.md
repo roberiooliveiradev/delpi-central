@@ -25,13 +25,19 @@ O `delpi-mes-api` não é o owner dos fatos MES. Runs, estados, paradas, contage
 | GET | `/runs/{runId}/timeline` | `delpi-mes.history.view` |
 | GET | `/runs/{runId}/performance` | `delpi-mes.monitoring.view` |
 | GET | `/work-centers/{workCenter}/timeline?branch=&from=&to=` | `delpi-mes.history.view` |
-| GET | `/downtimes?branch=&workCenter=&from=&to=&reasonCode=&source=&classification=&sort=&downtimeId=&page=&pageSize=` | `delpi-mes.downtimes.view` |
+| GET | `/downtimes?branch=&workCenter=&from=&to=&reasonCode=&source=&classification=&status=&sort=&downtimeId=&page=&pageSize=` | `delpi-mes.downtimes.view` |
 | GET | `/downtimes/filter-options?branch=` | `delpi-mes.downtimes.view` |
-| GET | `/downtimes/analytics?branch=&from=&to=&workCenter=&reasonCode=&source=&classification=` | `delpi-mes.downtimes.view` |
+| GET | `/downtimes/analytics?branch=&from=&to=&workCenter=&reasonCode=&source=&classification=&status=` | `delpi-mes.downtimes.view` |
 | GET | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
 | POST | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
 | PUT | `/registrations/downtime-reasons/{code}` | `delpi-mes.downtime-reasons.manage` |
 | PATCH | `/registrations/downtime-reasons/{code}/active` | `delpi-mes.downtime-reasons.manage` |
+| POST | `/downtimes/{downtimeId}/classification` | `delpi-mes.downtimes.classify` |
+| GET | `/downtimes/{downtimeId}/treatment?branch=` | `delpi-mes.downtimes.view` |
+| PUT | `/downtimes/{downtimeId}/treatment` | `delpi-mes.downtimes.treat` |
+| POST | `/downtimes/{downtimeId}/treatment/referrals` | `delpi-mes.downtimes.treat` + `my-requests.process-issue.create` |
+| POST | `/downtimes/{downtimeId}/treatment/conclusion` | `delpi-mes.downtimes.treat` |
+| GET | `/downtimes/{downtimeId}/history?branch=` | `delpi-mes.downtimes.view` |
 
 Toda rota gerencial também exige `delpi-mes.access` e principal humano; as rotas de leitura exigem ainda `delpi-mes.view.filial-01|02` para a filial consultada. As rotas `/registrations/downtime-reasons*` administram um **catálogo global** — não recebem nem exigem `branch`/permissão de filial. O provisionamento dessas permissões e o manifesto pertencem à Fase 2.
 
@@ -44,6 +50,10 @@ Toda rota gerencial também exige `delpi-mes.access` e principal humano; as rota
 `GET /downtimes/analytics` encaminha os mesmos filtros da listagem ao owner (`GET /integrations/mes/downtimes/analytics`) e projeta estritamente os campos do contrato gerencial (`summary`, `byReason`, `byWorkCenter`, `byDay`, `byWeekdayHour`, `quality`) — nenhum campo interno do Production Control vaza para o MFE. A agregação cobre **todos** os eventos elegíveis da janela (nunca a página atual), usa `referenceAt` único resolvido pelo owner para paradas abertas e honra a janela máxima e o teto de fatos do owner — `quality.partial`/`factsCapped` propagam a sinalização, e `quality.overlapDetected` informa quando `attributedSeconds` diverge do tempo deduplicado. `page`, `pageSize`, `sort` e `downtimeId` não são aceitos como determinantes de métrica. Mesma autorização da listagem: principal humano + `delpi-mes.access` + `delpi-mes.downtimes.view` + permissão da filial.
 
 `GET /downtimes/filter-options?branch=` expõe projeção estritamente de leitura para a UI de filtros — motivos do catálogo (ativos **e** inativos, pois desativar um motivo não pode tornar suas ocorrências invisíveis) e origens válidas (`GET /integrations/mes/downtime-sources`, projeção do enum de domínio do owner). Exige principal humano + `delpi-mes.access` + `delpi-mes.downtimes.view` + permissão da filial — **não** exige a permissão administrativa `delpi-mes.downtime-reasons.manage`. Campos OEE e dados administrativos nunca são propagados.
+
+### Gestão de paradas (Paradas — Etapa 3)
+
+Classificação, triagem e encaminhamento são orquestrados pelo `MesDowntimeManagementService` — o BFF nunca é owner dos fatos: Production Control valida catálogo, precondição de concorrência (`expectedUpdatedAt` → 409, submissão idêntica idempotente) e persiste classificação/tratamento; o requests-api é owner do lifecycle da solicitação. Toda escrita exige principal humano (`is_human_user`), `delpi-mes.access`, a permissão da operação e a filial autorizada — service principals são rejeitados. O encaminhamento cria a solicitação `process-issue` **com o Bearer do próprio usuário** e `Idempotency-Key` determinística por parada+tipo (retry não duplica solicitação), depois registra o vínculo no PC — idempotente, sem auditoria duplicada. O status vivo da solicitação é hidratado via `GET /v1/requests/{id}` com o token do usuário; quando ilegível, `requestStatusAvailable=false` e o vínculo permanece visível. A conclusão exige solicitação vinculada concluída. O histórico projeta `mes_audit_events` escopados por `downtimeId` — mesma fonte de auditoria do owner.
 
 ### Performance do run (Fase 2.5)
 

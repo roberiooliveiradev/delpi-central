@@ -8,16 +8,23 @@ from pydantic import BaseModel, Field
 
 from delpi_auth.service_token import request_has_valid_internal_service_token
 from production_control_app.composition.pc_composer import (
+    build_mes_downtime_classification_service,
     build_mes_downtime_reason_admin_service,
+    build_mes_downtime_treatment_service,
     build_mes_integration_read_service,
     build_mes_run_performance_service,
 )
 from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
+    DowntimeConflict,
+    DowntimeNotFound,
     DowntimeReasonConflict,
     DowntimeReasonNotFound,
+    DowntimeTreatmentConflict,
+    DowntimeTreatmentNotFound,
     InvalidBranch,
     InvalidDowntimeReason,
+    InvalidMesEvent,
     ProductionRunNotFound,
 )
 
@@ -69,7 +76,13 @@ def _error(exc: Exception):
         return fail(str(exc), 404)
     if isinstance(exc, DowntimeReasonConflict):
         return fail(str(exc), 409)
-    if isinstance(exc, (InvalidDowntimeReason, InvalidBranch, ValueError)):
+    if isinstance(exc, (DowntimeNotFound, DowntimeTreatmentNotFound)):
+        return fail(str(exc), 404)
+    if isinstance(exc, (DowntimeConflict, DowntimeTreatmentConflict)):
+        return fail(str(exc), 409)
+    if isinstance(
+        exc, (InvalidDowntimeReason, InvalidMesEvent, InvalidBranch, ValueError)
+    ):
         return fail(str(exc), 422)
     raise exc
 
@@ -178,6 +191,7 @@ def list_downtimes(
     reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
     source: str | None = Query(default=None, max_length=40),
     classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
     sort: str | None = Query(default=None, max_length=10),
     downtime_id: str | None = Query(default=None, alias="downtimeId", max_length=40),
     page: int = Query(default=1, ge=1),
@@ -195,6 +209,7 @@ def list_downtimes(
             reason_code=reason_code,
             source=source,
             classification=classification,
+            status=status,
             sort=sort,
             downtime_id=downtime_id,
             page=page,
@@ -225,6 +240,7 @@ def get_downtime_analytics(
     reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
     source: str | None = Query(default=None, max_length=40),
     classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
 ):
     # Agregações gerenciais de paradas (Etapa 2): mesmo universo elegível
     # da listagem, calculado no owner MES — paginação/sort/downtimeId não
@@ -241,6 +257,7 @@ def get_downtime_analytics(
             reason_code=reason_code,
             source=source,
             classification=classification,
+            status=status,
         )
     except Exception as exc:  # noqa: BLE001
         return _error(exc)
@@ -338,3 +355,222 @@ def set_downtime_reason_active(request: Request, code: str, body: DowntimeReason
         return _error(exc)
     logger.info("mes_downtime_reason_admin_active code=%s active=%s", data["code"], data["active"])
     return ok(data)
+
+
+class DowntimeClassifyBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    reason_code: str = Field(..., alias="reasonCode", min_length=1, max_length=40)
+    note: str | None = Field(default=None, max_length=500)
+    expected_updated_at: datetime = Field(..., alias="expectedUpdatedAt")
+    actor_ref: str = Field(..., alias="actorRef", min_length=1, max_length=120)
+    actor_name: str = Field(..., alias="actorName", min_length=1, max_length=160)
+
+
+class DowntimeTreatmentUpsertBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    analysis: str = Field(..., min_length=1, max_length=2000)
+    cause_kind: str = Field(..., alias="causeKind", min_length=1, max_length=20)
+    cause_note: str | None = Field(default=None, alias="causeNote", max_length=500)
+    action_needed: bool = Field(..., alias="actionNeeded")
+    justification: str = Field(..., min_length=1, max_length=2000)
+    expected_updated_at: datetime | None = Field(
+        default=None, alias="expectedUpdatedAt"
+    )
+    actor_ref: str = Field(..., alias="actorRef", min_length=1, max_length=120)
+    actor_name: str = Field(..., alias="actorName", min_length=1, max_length=160)
+
+
+class DowntimeRequestLinkBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    request_id: str = Field(..., alias="requestId", min_length=1, max_length=60)
+    request_type_code: str = Field(
+        ..., alias="requestTypeCode", min_length=1, max_length=80
+    )
+    actor_ref: str = Field(..., alias="actorRef", min_length=1, max_length=120)
+    actor_name: str = Field(..., alias="actorName", min_length=1, max_length=160)
+
+
+class DowntimeConclusionBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    reason: str = Field(..., min_length=1, max_length=2000)
+    linked_request_completed: bool = Field(
+        default=False, alias="linkedRequestCompleted"
+    )
+    actor_ref: str = Field(..., alias="actorRef", min_length=1, max_length=120)
+    actor_name: str = Field(..., alias="actorName", min_length=1, max_length=160)
+
+
+@router.post(
+    "/downtimes/{downtime_id}/classification",
+    operation_id="classify_mes_integration_downtime",
+)
+def classify_downtime(
+    request: Request, downtime_id: str, body: DowntimeClassifyBody
+):
+    """Classificação gerencial da parada — autorização humana no BFF.
+
+    O ator chega resolvido (BFF já validou o usuário humano + permissões);
+    aqui vale a filial contra a parada e a precondição otimista.
+    """
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_classification_service().classify_managed(
+            downtime_id,
+            branch=body.branch,
+            reason_code=body.reason_code,
+            note=body.note,
+            expected_updated_at=body.expected_updated_at,
+            actor_ref=body.actor_ref,
+            actor_name=body.actor_name,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_downtime_classified downtime=%s reason=%s actor=%s",
+        downtime_id,
+        data["reasonCode"],
+        body.actor_ref,
+    )
+    return ok(data)
+
+
+@router.get(
+    "/downtimes/{downtime_id}/treatment",
+    operation_id="get_mes_integration_downtime_treatment",
+)
+def get_downtime_treatment(
+    request: Request,
+    downtime_id: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_treatment_service().get_treatment(
+            downtime_id, branch=branch
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    return ok({"treatment": data})
+
+
+@router.put(
+    "/downtimes/{downtime_id}/treatment",
+    operation_id="upsert_mes_integration_downtime_treatment",
+)
+def upsert_downtime_treatment(
+    request: Request, downtime_id: str, body: DowntimeTreatmentUpsertBody
+):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_treatment_service().upsert_treatment(
+            downtime_id,
+            branch=body.branch,
+            analysis=body.analysis,
+            cause_kind=body.cause_kind,
+            cause_note=body.cause_note,
+            action_needed=body.action_needed,
+            justification=body.justification,
+            expected_updated_at=body.expected_updated_at,
+            actor_ref=body.actor_ref,
+            actor_name=body.actor_name,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_downtime_treatment_saved downtime=%s status=%s",
+        downtime_id,
+        data["status"],
+    )
+    return ok(data)
+
+
+@router.post(
+    "/downtimes/{downtime_id}/treatment/request-link",
+    operation_id="link_mes_integration_downtime_request",
+)
+def link_downtime_request(
+    request: Request, downtime_id: str, body: DowntimeRequestLinkBody
+):
+    """Vincula a solicitação criada no requests-api — idempotente por id."""
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_treatment_service().link_request(
+            downtime_id,
+            branch=body.branch,
+            request_id=body.request_id,
+            request_type_code=body.request_type_code,
+            actor_ref=body.actor_ref,
+            actor_name=body.actor_name,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_downtime_request_linked downtime=%s request=%s",
+        downtime_id,
+        body.request_id,
+    )
+    return ok(data)
+
+
+@router.post(
+    "/downtimes/{downtime_id}/treatment/conclusion",
+    operation_id="conclude_mes_integration_downtime_treatment",
+)
+def conclude_downtime_treatment(
+    request: Request, downtime_id: str, body: DowntimeConclusionBody
+):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_treatment_service().conclude(
+            downtime_id,
+            branch=body.branch,
+            reason=body.reason,
+            linked_request_completed=body.linked_request_completed,
+            actor_ref=body.actor_ref,
+            actor_name=body.actor_name,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_downtime_treatment_concluded downtime=%s", downtime_id
+    )
+    return ok(data)
+
+
+@router.get(
+    "/downtimes/{downtime_id}/history",
+    operation_id="get_mes_integration_downtime_history",
+)
+def get_downtime_history(
+    request: Request,
+    downtime_id: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        items = build_mes_downtime_treatment_service().history(
+            downtime_id, branch=branch
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    return ok({"items": items})

@@ -30,6 +30,7 @@ class ProductionControlMesGatewayPort(Protocol):
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         sort: str | None = None,
         downtime_id: str | None = None,
         page: int,
@@ -48,6 +49,7 @@ class ProductionControlMesGatewayPort(Protocol):
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
     ) -> dict[str, Any]: ...
 
     def list_downtime_sources(self) -> dict[str, Any]: ...
@@ -60,4 +62,28 @@ class ProductionControlMesGatewayPort(Protocol):
 
     def set_downtime_reason_active(
         self, code: str, *, active: bool
+    ) -> dict[str, Any]: ...
+
+    def classify_downtime(
+        self, downtime_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
+    def get_downtime_treatment(
+        self, downtime_id: str, *, branch: str
+    ) -> dict[str, Any]: ...
+
+    def upsert_downtime_treatment(
+        self, downtime_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
+    def link_downtime_request(
+        self, downtime_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
+    def conclude_downtime_treatment(
+        self, downtime_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
+    def get_downtime_history(
+        self, downtime_id: str, *, branch: str
     ) -> dict[str, Any]: ...

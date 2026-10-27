@@ -78,6 +78,17 @@ A área **Paradas** (`/downtimes`) consulta os eventos reais de parada do MES vi
 
 Histórico gerencial completo e as etapas seguintes de Paradas (evidências, ações corretivas, exportações e indicadores OEE) continuam nas fases seguintes.
 
+## Paradas — Etapa 3 (classificação e tratamento gerencial)
+
+O detalhe da parada no drawer passa a oferecer gestão em seções, sempre render-only — nenhuma regra de negócio, validação de catálogo ou semântica temporal mora no MFE:
+
+- **Classificação** (`delpi-mes.downtimes.classify`): atribui ou corrige o motivo via `POST /downtimes/{id}/classification` enviando `expectedUpdatedAt` — conflito 409 mostra a mensagem do owner com ação de atualização; perfil sem permissão vê somente leitura.
+- **Triagem e tratamento** (`delpi-mes.downtimes.treat`): análise, tipo de causa (hipótese/confirmada), ação corretiva e justificativa via `PUT .../treatment` idempotente; encaminhamento ao departamento de Processos via `POST .../treatment/referrals` com catálogo local de tipos de problema (requer também `my-requests.process-issue.create`); conclusão via `POST .../treatment/conclusion` — bloqueada pelo backend enquanto a solicitação vinculada não estiver concluída, e a UI já sinaliza esse estado. O status vivo da solicitação aparece quando legível; indisponibilidade nunca esconde o vínculo.
+- **Histórico**: linha auditável da parada (`GET .../history`) com ação, ator e instante — mesma fonte `mes_audit_events` do owner.
+
+O filtro **Estado** (Abertas/Encerradas) usa `status=open|closed` na listagem e na análise — mesmo predicado compartilhado do owner. Estados de carregamento, conflito, acesso negado e fonte indisponível são visíveis em cada seção.
+
+
 ## Paradas — Etapa 2 (indicadores e análise)
 
 Acima da listagem, a aba Paradas exibe uma área analítica recolhível alimentada por `GET /downtimes/analytics` do próprio BFF — todos os números vêm calculados do Production Control; o MFE nunca agrega fatos.

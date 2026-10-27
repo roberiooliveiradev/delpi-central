@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { getDowntimes } from "../api/mesApi";
 import type { BranchCode } from "../constants/routes";
@@ -16,8 +16,10 @@ type SelectedSnapshot = {
  * contexto nunca é exposta, nem por um único render. */
 export function useSelectedDowntime(branch: BranchCode, downtimeId: string | null) {
   const [snapshot, setSnapshot] = useState<SelectedSnapshot | null>(null);
+  const [version, setVersion] = useState(0);
   const controller = useRef<AbortController | null>(null);
   const key = downtimeId ? branch + "|" + downtimeId : null;
+  const reload = useCallback(() => setVersion((current) => current + 1), []);
 
   useEffect(() => {
     if (!key || !downtimeId) return;
@@ -41,12 +43,13 @@ export function useSelectedDowntime(branch: BranchCode, downtimeId: string | nul
         }
       });
     return () => next.abort();
-  }, [branch, downtimeId, key]);
+  }, [branch, downtimeId, key, version]);
 
   const matches = key !== null && snapshot !== null && snapshot.key === key;
   return {
     item: matches ? snapshot.item : null,
     error: matches ? snapshot.error : null,
     loading: key !== null && !matches,
+    reload,
   };
 }

@@ -6,7 +6,7 @@ class InvalidBranch(MesError):
     pass
 
 
-class BranchAccessDenied(MesError):
+class BranchAccessDenied(MesError, PermissionError):
     pass
 
 

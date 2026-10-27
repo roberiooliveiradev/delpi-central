@@ -17,6 +17,7 @@ const PARAMS: DowntimesRouteParams = {
   reasonCode: null,
   source: null,
   classification: null,
+  status: null,
   sort: "recent",
   downtimeId: null,
   page: 1,

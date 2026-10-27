@@ -29,6 +29,7 @@ const params = (overrides: Partial<DowntimesRouteParams> = {}): DowntimesRoutePa
   reasonCode: null,
   source: null,
   classification: null,
+  status: null,
   sort: "recent",
   downtimeId: null,
   page: 1,
@@ -50,6 +51,10 @@ const item = (overrides: Partial<DowntimeItem> = {}): DowntimeItem => ({
   category: null,
   confirmed: false,
   note: null,
+  updatedAt: null,
+  confirmedAt: null,
+  confirmedByType: null,
+  confirmedByRef: null,
   ...overrides,
 });
 

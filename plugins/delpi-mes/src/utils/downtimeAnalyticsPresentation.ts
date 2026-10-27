@@ -26,6 +26,7 @@ export function buildDowntimeAnalyticsQuery(
     reasonCode: params.reasonCode || undefined,
     source: params.source || undefined,
     classification: params.classification || undefined,
+    status: params.status || undefined,
   };
 }
 

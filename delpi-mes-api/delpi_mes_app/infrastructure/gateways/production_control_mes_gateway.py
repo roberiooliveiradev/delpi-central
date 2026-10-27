@@ -76,6 +76,7 @@ class ProductionControlMesGateway:
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         sort: str | None = None,
         downtime_id: str | None = None,
         page: int,
@@ -94,6 +95,8 @@ class ProductionControlMesGateway:
             params["source"] = source
         if classification:
             params["classification"] = classification
+        if status:
+            params["status"] = status
         if sort:
             params["sort"] = sort
         if downtime_id:
@@ -110,6 +113,7 @@ class ProductionControlMesGateway:
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {"branch": branch, "from": period_from.isoformat()}
         if period_to:
@@ -122,6 +126,8 @@ class ProductionControlMesGateway:
             params["source"] = source
         if classification:
             params["classification"] = classification
+        if status:
+            params["status"] = status
         return self._get("/integrations/mes/downtimes/analytics", params=params)
 
     def list_downtime_reasons(self) -> dict[str, Any]:
@@ -149,6 +155,64 @@ class ProductionControlMesGateway:
             "PATCH",
             f"/integrations/mes/downtime-reasons/{quote(str(code), safe='')}/active",
             json={"active": bool(active)},
+        )
+
+    def classify_downtime(
+        self, downtime_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        encoded = quote(str(downtime_id), safe="")
+        return self._request(
+            "POST",
+            f"/integrations/mes/downtimes/{encoded}/classification",
+            json=payload,
+        )
+
+    def get_downtime_treatment(
+        self, downtime_id: str, *, branch: str
+    ) -> dict[str, Any]:
+        encoded = quote(str(downtime_id), safe="")
+        return self._get(
+            f"/integrations/mes/downtimes/{encoded}/treatment",
+            params={"branch": branch},
+        )
+
+    def upsert_downtime_treatment(
+        self, downtime_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        encoded = quote(str(downtime_id), safe="")
+        return self._request(
+            "PUT",
+            f"/integrations/mes/downtimes/{encoded}/treatment",
+            json=payload,
+        )
+
+    def link_downtime_request(
+        self, downtime_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        encoded = quote(str(downtime_id), safe="")
+        return self._request(
+            "POST",
+            f"/integrations/mes/downtimes/{encoded}/treatment/request-link",
+            json=payload,
+        )
+
+    def conclude_downtime_treatment(
+        self, downtime_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        encoded = quote(str(downtime_id), safe="")
+        return self._request(
+            "POST",
+            f"/integrations/mes/downtimes/{encoded}/treatment/conclusion",
+            json=payload,
+        )
+
+    def get_downtime_history(
+        self, downtime_id: str, *, branch: str
+    ) -> dict[str, Any]:
+        encoded = quote(str(downtime_id), safe="")
+        return self._get(
+            f"/integrations/mes/downtimes/{encoded}/history",
+            params={"branch": branch},
         )
 
     def _headers(self) -> dict[str, str]:

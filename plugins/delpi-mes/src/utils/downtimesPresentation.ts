@@ -78,6 +78,7 @@ export function buildDowntimesQuery(
     reasonCode: params.reasonCode || undefined,
     source: params.source || undefined,
     classification: params.classification || undefined,
+    status: params.status || undefined,
     sort: params.sort === "oldest" ? "oldest" : "recent",
     page: Math.max(1, params.page),
     pageSize: params.pageSize,
@@ -90,6 +91,7 @@ export function hasActiveDowntimeFilters(params: DowntimesRouteParams): boolean 
       params.reasonCode ||
       params.source ||
       params.classification ||
+      params.status ||
       params.sort === "oldest" ||
       params.period !== "7d" ||
       params.from ||

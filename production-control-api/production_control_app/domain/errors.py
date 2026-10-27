@@ -129,6 +129,14 @@ class DowntimeClassificationRequired(ProductionRunConflict):
     """Resume/Stop bloqueado: parada MES aberta ainda sem motivo classificado."""
 
 
+class DowntimeTreatmentNotFound(ProductionControlError):
+    """Triagem gerencial da parada inexistente."""
+
+
+class DowntimeTreatmentConflict(ProductionControlError):
+    """Triagem diverge do estado esperado (concorrência ou transição inválida)."""
+
+
 class DowntimeReasonNotFound(ProductionControlError):
     """Motivo de parada inexistente no catálogo."""
 

@@ -3,6 +3,8 @@ import { useEffect, useMemo } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
 import {
+  DELPI_MES_DOWNTIMES_CLASSIFY,
+  DELPI_MES_DOWNTIMES_TREAT,
   DELPI_MES_DOWNTIME_REASONS_MANAGE,
   canUseDelpiMes,
   hasDelpiMesProductAccess,
@@ -210,6 +212,9 @@ export default function App({
                 onParamsChange={(next) => navigate(buildDowntimesHref(activeBranch, next))}
                 canViewHistory={can("delpi-mes.history.view")}
                 canViewMonitoring={can("delpi-mes.monitoring.view")}
+                canClassify={can(DELPI_MES_DOWNTIMES_CLASSIFY)}
+                canTreat={can(DELPI_MES_DOWNTIMES_TREAT)}
+                canCreateProcessIssue={can("my-requests.process-issue.create")}
                 onOpenMonitoring={(workCenter) => navigateTo("monitoring", activeBranch, workCenter)}
               />
             ) : activeArea === "registrations" ? (
