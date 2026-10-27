@@ -44,6 +44,8 @@ export function formatMarketDate(raw: string | null | undefined): string {
   if (dayMatch) return `${dayMatch[3]}/${dayMatch[2]}/${dayMatch[1]}`;
   const monthMatch = /^(\d{4})-(\d{2})$/.exec(text);
   if (monthMatch) return `${monthMatch[2]}/${monthMatch[1]}`;
+  const weekMatch = /^(\d{4})-W(\d{2})$/.exec(text);
+  if (weekMatch) return `Semana ${weekMatch[2]}/${weekMatch[1]}`;
   const stamp = new Date(text);
   if (!Number.isNaN(stamp.getTime())) {
     return stamp.toLocaleDateString("pt-BR");

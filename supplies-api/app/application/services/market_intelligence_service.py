@@ -1748,9 +1748,13 @@ class MarketIntelligenceService:
             expected=expected,
             feed_ingestion=meta["feed_ingestion"],
             # A percentage series has no period variation (a % of % is
-            # not an approved metric) — amplitude is shown instead.
+            # not an approved metric) — amplitude is shown instead. The
+            # index level keeps mean/amplitude of the real observations
+            # (mean_of_valid_observations + extremes_of_valid_observations);
+            # a % series keeps amplitude only.
             include_change=not is_change_series,
-            include_min_max=is_change_series,
+            include_average=not is_change_series,
+            include_min_max=True,
         )
         return {
             "series": {
