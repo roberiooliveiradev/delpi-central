@@ -540,3 +540,16 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | RQ-REP-27 | Retorno e reabertura | `backToReports` → `?tab=reports&report={família}&{filtros}`; `openReport` repassa somente quando `report=` é a família aberta — família diferente abre limpa | PASS |
 | RQ-REP-28 | Validação e isolamento | allowlists de enums, `page` ≥ 1, datas `YYYY-MM-DD`/`start ≤ end`/dentro do mês; `pickFamilyParams` prova ausência de vazamento entre famílias; sem `localStorage`/dados financeiros na URL | PASS |
 | RQ-REP-29 | UX V0.3 preservada | zero mudança visual; modo legado (`reportContext` ausente) não sincroniza — comportamento idêntico; sem novo endpoint/permissão/cálculo | PASS |
+
+### Catálogo mestre de documentos — administração (UX-012, 28/10/2026)
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-ADM-01 | Listagem derivada do contrato | `documentCatalog.deriveDocumentCatalog` agrega `item_key` da timeline publicada; janelas de vigência por versão vencedora — testado (contínuo, futuro, descontínuo, só-rascunho) | PASS |
+| RQ-ADM-02 | Cadastro em página completa | `closing/admin/documents/new` — `DocumentConfigFormPage`; validação nome/competência/intervalo/key antes do backend; slug automático; sem modal | PASS |
+| RQ-ADM-03 | Edição em página completa | `closing/admin/documents/{itemKey}` — carrega configuração publicada mais recente, situação, janelas e histórico de eventos; não encontra → estado honesto | PASS |
+| RQ-ADM-04 | Vigência prospectiva | `saveDocumentConfig` publica versão com `effective_from_period`; «até» agenda versão de remoção em `nextPeriod`; snapshots congelados; `effective_from ≥` competência atual | PASS |
+| RQ-ADM-05 | Encerrar exigência | `publishRemovalVersion` — confirmação `ConfirmModalPanel`; último item recusado (`CatalogSaveError`); histórico preservado | PASS |
+| RQ-ADM-06 | Filtros persistentes | `q`, `status`, `dest` na URL via `useReportQuerySync`; deep link/F5 restauram; retorno do formulário devolve a query | PASS |
+| RQ-ADM-07 | Isolamento de escrita | orquestração draft→update→review→publish nos endpoints existentes; `draft_already_open` → banner honesto; nenhum endpoint/permissão/migration novo; 403 seguro | PASS |
+| RQ-ADM-08 | Sem premissas inventadas | destino `CONTABIL`/`FISCAL`/uso-interno conforme contrato; excepcional-por-competência não exposto aqui (conceito distinto); página DRE fora de escopo | PASS |

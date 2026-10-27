@@ -901,3 +901,17 @@ Rework de navegação — **nenhum componente visual novo**: o diff é de estado
 | Retorno ao hub | `backToReports`/`openReport` da `MonthlyClosingPage` | agregam/repassam somente os params da família (`pickFamilyParams`) |
 
 Sem helper paralelo por página: um único owner de params/parse/serialize e um único hook de sincronização; modo legado (`reportContext` ausente) não ativa o sync. `localStorage`/`sessionStorage` não usados — a URL é a fonte recuperável autorizada.
+
+### UX-012 — Documentos do fechamento (28/10/2026)
+
+| Necessidade | Componente/fábrica real | Consumo |
+|---|---|---|
+| Breadcrumb | `createDashboardPagePath` → `CfPagePath` | listagem e formulário (Início > Administração > Documentos) |
+| Título + ajuda | `createDashboardTitleWithHelp` → `CfTitleWithHelp` + `CF_HELP.documentsAdmin.*` | página, listagem, formulário, vigência, histórico |
+| Filtros | `createDashboardFiltersKit` → `FiltersRow`/`FilterInputField`/`FilterSelectField` | pesquisa, situação, destino — estado na URL |
+| Tabela | `DataTableSection` (`cfDataTableUi`) | tipos de documento com colunas explícitas |
+| Situação | `createDashboardStatusBadge` → `CfStatusBadge` | vigente/futuro/encerrado |
+| Seções do formulário | `createDashboardSectionCard` → `CfSectionCard` | Identificação, Exigência, Vigência, Histórico |
+| Ações | `ActionButton`/`CfActionButton` | adicionar, salvar, cancelar, editar, encerrar |
+| Confirmação destrutiva | `ConfirmModalPanel` + `CfDialog` | «Encerrar exigência» |
+| Estados | `EmptyState`/`CfEmptyState`, `CfQueryErrorBanner`, `CfFeedbackMessage` | vazio, 403/erro, rascunho aberto, validação |

@@ -45,6 +45,20 @@ contexto, datas fora da competência da rota são descartadas e filtros
 da última família só retornam na reabertura dela (sem vazamento entre
 relatórios).
 
+Central de Fechamento — Documentos do fechamento (UX-012): catálogo
+mestre administrativo em `closing/admin/documents` (MANAGE). A listagem
+deriva cada tipo de documento (`item_key`) da timeline de versões
+publicadas do checklist mestre — janelas de vigência, situação
+(vigente/futuro/encerrado), exigência e destino — sem persistência
+paralela. Cadastro (`/new`) e edição (`/{itemKey}`) abrem páginas
+completas, nunca modal, e gravam orquestrando o contrato versionado
+existente (DRAFT → REVIEW → PUBLISHED com `effective_from_period`;
+vigência final publica versão de remoção no período seguinte) — sempre
+prospectivo, snapshots de competências abertas/encerradas preservados.
+Filtros da listagem (`q`, `status`, `dest`) ficam na URL; o retorno do
+formulário preserva a consulta. Rascunho/revisão aberta bloqueia o
+salvamento com estado honesto (`draft_already_open`).
+
 Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
 `cfDataTableUi` — banda única com ícone + título + pill de contagem do
 universo filtrado à esquerda e controles nativos (itens/página + Fonte +

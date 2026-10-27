@@ -86,6 +86,101 @@ def test_fetch_url_uses_us_date_format():
     assert "01-10-2026" in seen["url"]
 
 
+def test_fetch_url_includes_odata_segment():
+    """Live contract: the service 403s function calls without /odata/."""
+    seen = {}
+
+    def transport(url, headers, timeout):
+        seen["url"] = url
+        return _resp(200, {"value": []})
+
+    _provider(transport).fetch_period(date(2026, 1, 5), date(2026, 1, 10))
+    assert "/odata/CotacaoDolarPeriodo" in seen["url"]
+    assert "/v1/CotacaoDolarPeriodo" not in seen["url"]
+
+
+def test_fetch_url_not_doubled_when_base_has_odata():
+    seen = {}
+
+    def transport(url, headers, timeout):
+        seen["url"] = url
+        return _resp(200, {"value": []})
+
+    PtaxFxProvider(
+        base_url="https://olinda.test/v1/odata", transport=transport
+    ).fetch_period(date(2026, 1, 5), date(2026, 1, 10))
+    assert "/odata/odata/" not in seen["url"]
+    assert "/odata/CotacaoDolarPeriodo" in seen["url"]
+
+
+def test_fetch_accepts_live_rows_without_tipo_boletim():
+    """Live rows carry only cotacao*/dataHoraCotacao — no tipoBoletim."""
+    payload = {
+        "value": [
+            {
+                "cotacaoCompra": 5.4998,
+                "cotacaoVenda": 5.5007,
+                "dataHoraCotacao": "2026-10-26 13:09:51.106105",
+            },
+            {
+                "cotacaoCompra": 5.0371,
+                "cotacaoVenda": 5.0377,
+                "dataHoraCotacao": "2026-10-23 13:07:14.754567",
+            },
+        ]
+    }
+    provider = _provider(lambda url, headers, timeout: _resp(200, payload))
+    rows = provider.fetch_period(date(2026, 10, 20), date(2026, 10, 27))
+    assert [r["reference_date"] for r in rows] == [
+        date(2026, 10, 23),
+        date(2026, 10, 26),
+    ]
+    assert rows[-1]["sell"] == Decimal("5.5007")
+    assert rows[-1]["buy"] == Decimal("5.4998")
+
+
+def test_fetch_follows_next_link_pagination():
+    calls = []
+
+    def transport(url, headers, timeout):
+        calls.append(url)
+        if len(calls) == 1:
+            return _resp(
+                200,
+                {
+                    "value": [
+                        {
+                            "cotacaoCompra": 5.4,
+                            "cotacaoVenda": 5.41,
+                            "dataHoraCotacao": "2026-01-05 13:04:00",
+                        }
+                    ],
+                    "@odata.nextLink": "https://olinda.test/v1/odata/next",
+                },
+            )
+        return _resp(
+            200,
+            {
+                "value": [
+                    {
+                        "cotacaoCompra": 5.42,
+                        "cotacaoVenda": 5.43,
+                        "dataHoraCotacao": "2026-01-06 13:04:00",
+                    }
+                ]
+            },
+        )
+
+    rows = _provider(transport).fetch_period(
+        date(2026, 1, 5), date(2026, 1, 10)
+    )
+    assert len(calls) == 2
+    assert [r["reference_date"] for r in rows] == [
+        date(2026, 1, 5),
+        date(2026, 1, 6),
+    ]
+
+
 def test_to_observations_expands_buy_and_sell():
     rows = [{"reference_date": date(2026, 1, 5), "buy": Decimal("5.41"), "sell": Decimal("5.42")}]
     obs = PtaxFxProvider.to_observations(

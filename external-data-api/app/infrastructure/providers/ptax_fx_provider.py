@@ -1,15 +1,20 @@
 """Banco Central do Brasil — PTAX OData provider (PROC-0076).
 
-Endpoint: ``CotacaoDolarPeriodo`` on the official open-data OData service
-(https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1). The dataset is
-published under ODbL by BCB; attribution is carried in the catalog.
+Endpoint: ``odata/CotacaoDolarPeriodo`` on the official open-data OData
+service (https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1). The
+``/odata/`` path segment is mandatory — the service rejects function
+calls without it with ``403 Access Denied`` (verified against live
+contract, R5.S3). The dataset is published under ODbL by BCB;
+attribution is carried in the catalog.
 
-Semantics homologated for P0: we ingest the *closing bulletin*
-(``tipoBoletim == 'Fechamento'``) — the official daily reference — and
-persist both buy and sell rates under distinct ``rate_kind`` values
-(``ptax_closing_buy`` / ``ptax_closing_sell``). ``reference_date`` is the
-date part of ``dataHoraCotacao`` (America/Sao_Paulo business day), never
-the fetch time. Missing days stay missing — no forward-fill.
+Live contract (verified 2026-10-27): ``CotacaoDolarPeriodo`` returns
+exactly one row per business day — the closing bulletin — with fields
+``cotacaoCompra``, ``cotacaoVenda`` and ``dataHoraCotacao``; it does
+NOT emit ``tipoBoletim``. We persist both buy and sell rates under
+distinct ``rate_kind`` values (``ptax_closing_buy`` /
+``ptax_closing_sell``). ``reference_date`` is the date part of
+``dataHoraCotacao`` (America/Sao_Paulo business day), never the fetch
+time. Missing days stay missing — no forward-fill.
 """
 
 from __future__ import annotations
@@ -40,6 +45,7 @@ logger = logging.getLogger("external-data-api.ptax")
 Transport = Callable[..., Any]
 
 _CLOSING_BULLETIN = "Fechamento"
+_MAX_PAGES = 8
 
 
 def _requests_transport(url: str, *, headers: dict, timeout: float) -> Any:
@@ -88,17 +94,38 @@ class PtaxFxProvider:
         self, date_from: date, date_to: date
     ) -> list[dict[str, Any]]:
         """Return normalized observations: {reference_date, buy, sell}."""
+        path = (
+            "/CotacaoDolarPeriodo"
+            if self._base_url.endswith("/odata")
+            else "/odata/CotacaoDolarPeriodo"
+        )
         url = (
-            f"{self._base_url}/CotacaoDolarPeriodo"
+            f"{self._base_url}{path}"
             f"(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)"
             f"?@dataInicial='{date_from:%m-%d-%Y}'"
             f"&@dataFinalCotacao='{date_to:%m-%d-%Y}'"
-            "&$format=json"
+            "&$format=json&$top=1000"
         )
         headers = {
             "Accept": "application/json",
             "User-Agent": Settings.EXTERNAL_DATA_USER_AGENT,
         }
+        rows: list[dict[str, Any]] = []
+        for _ in range(_MAX_PAGES):
+            payload = self._request(url, headers=headers)
+            if not isinstance(payload, dict) or not isinstance(
+                payload.get("value"), list
+            ):
+                raise InvalidResponseError("ptax payload missing 'value' list")
+            rows.extend(payload["value"])
+            url = payload.get("@odata.nextLink")
+            if not url:
+                break
+        else:
+            raise ProviderUnavailableError("ptax pagination bound exceeded")
+        return self._normalize_rows(rows)
+
+    def _request(self, url: str, *, headers: dict) -> Any:
         try:
             response = self._transport(url, headers=headers, timeout=self._timeout)
         except requests.Timeout as exc:
@@ -125,25 +152,25 @@ class PtaxFxProvider:
             raise ProviderUnavailableError(f"ptax unexpected status {status}")
 
         try:
-            payload = response.json()
+            return response.json()
         except ValueError as exc:
             raise InvalidResponseError("ptax non-JSON response") from exc
-        return self._normalize(payload)
 
-    def _normalize(self, payload: Any) -> list[dict[str, Any]]:
-        if not isinstance(payload, dict) or not isinstance(
-            payload.get("value"), list
-        ):
+    def _normalize_rows(self, rows: list[Any]) -> list[dict[str, Any]]:
+        if not isinstance(rows, list):
             raise InvalidResponseError("ptax payload missing 'value' list")
 
         by_date: dict[date, dict[str, Any]] = {}
         invalid_rows = 0
-        for row in payload["value"]:
+        for row in rows:
             if not isinstance(row, dict):
                 invalid_rows += 1
                 continue
-            # Only the closing bulletin is the official daily reference.
-            if str(row.get("tipoBoletim") or "").strip() != _CLOSING_BULLETIN:
+            # The endpoint emits only closing bulletins; when the legacy
+            # ``tipoBoletim`` field is present we still enforce it, and
+            # its absence means the row already is the closing bulletin.
+            boletim = row.get("tipoBoletim")
+            if boletim is not None and str(boletim).strip() != _CLOSING_BULLETIN:
                 continue
             try:
                 stamp = _parse_datetime(row.get("dataHoraCotacao"))
@@ -159,7 +186,7 @@ class PtaxFxProvider:
                 "sell": sell,
             }
 
-        if not by_date and payload["value"]:
+        if not by_date and rows:
             raise InvalidResponseError(
                 "ptax payload had rows but none parsed as closing bulletin"
             )

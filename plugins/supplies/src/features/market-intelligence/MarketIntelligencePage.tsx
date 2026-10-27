@@ -48,7 +48,11 @@ import { MarketInstrumentCard } from "./MarketInstrumentCard";
 import { MarketIntelligencePanel } from "./MarketIntelligencePanel";
 import { MarketMetalsPanel } from "./MarketMetalsPanel";
 import { formatMarketUnit } from "./marketUnits";
-import { formatMarketDecimal, marketCoverageLabel } from "./marketLabels";
+import {
+  formatMarketDate,
+  formatMarketDecimal,
+  marketCoverageLabel,
+} from "./marketLabels";
 import type {
   MarketIndicatorKind,
   MarketPerspective,
@@ -563,7 +567,6 @@ export function MarketIntelligencePage({
           sectionIcon={
             <Factory size={18} strokeWidth={1.75} aria-hidden="true" />
           }
-          selectionLabel={selectedIppEntry?.label}
           granularityLabel={
             GRANULARITY_LABELS[filters.state.granularity]
           }
@@ -613,7 +616,7 @@ export function MarketIntelligencePage({
               key: "period",
               header:
                 MARKET_INTELLIGENCE_CONTENT.modules.ippPeriodColumn,
-              render: (row) => row.period,
+              render: (row) => formatMarketDate(row.period),
             },
             {
               key: "value",
@@ -652,11 +655,6 @@ export function MarketIntelligencePage({
           hint={SP_HELP.marketIntelligenceImports}
           sectionIcon={
             <Ship size={18} strokeWidth={1.75} aria-hidden="true" />
-          }
-          selectionLabel={
-            selectableNcms.find(
-              (entry) => entry.ncm_code === selectedNcm,
-            )?.description ?? selectedNcm
           }
           granularityLabel={
             GRANULARITY_LABELS[filters.state.granularity]
@@ -725,7 +723,7 @@ export function MarketIntelligencePage({
               key: "period",
               header:
                 MARKET_INTELLIGENCE_CONTENT.modules.importsPeriodColumn,
-              render: (row) => row.period,
+              render: (row) => formatMarketDate(row.period),
             },
             {
               key: "fob",
@@ -782,11 +780,6 @@ export function MarketIntelligencePage({
               aria-hidden="true"
             />
           }
-          selectionLabel={
-            FX_KIND_OPTIONS.find(
-              (option) => option.value === filters.state.fxKind,
-            )?.label
-          }
           granularityLabel={
             GRANULARITY_LABELS[filters.state.granularity]
           }
@@ -831,7 +824,7 @@ export function MarketIntelligencePage({
               key: "period",
               header:
                 MARKET_INTELLIGENCE_CONTENT.modules.fxPeriodColumn,
-              render: (row) => row.period,
+              render: (row) => formatMarketDate(row.period),
             },
             {
               key: "value",

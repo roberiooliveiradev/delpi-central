@@ -168,6 +168,8 @@ export type MarketSummaryResponse = {
 export type MarketFeedIngestion = {
   feed: string;
   last_run_outcome: string | null;
+  last_run_started_at?: string | null;
+  last_run_finished_at?: string | null;
   last_error_code: string | null;
   source_active: boolean | null;
   last_successful_at: string | null;

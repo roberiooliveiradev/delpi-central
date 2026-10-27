@@ -1092,3 +1092,14 @@ Em setembro/2026, as capturas do PO mostram a consulta operacional `stock-invent
 - Não adicionar quarta aba operacional; não criar permission nova; não remover modal/legado antes de inventário e gate de implementação.
 
 **Próximo checkpoint:** inventário READ-ONLY do fluxo administrativo atual, modal e rotas, catálogo/schema/contracts, permissões efetivas, componentes e páginas equivalentes do plugin-ui; desenhar listagem + formulário de criação/edição para aprovação visual do PO. Só depois preparar implementação page-by-page. A atualização de conhecimento da CLARA deverá refletir esta priorização documental na próxima ingestão autorizada; não declarar o visual como implementado.
+
+### 28.1 Registro de implementação — UX-012 catálogo de documentos (28/10/2026)
+
+**IMPLEMENTADO — menor diff frontend autorizado; zero contrato/persistência nova.** O catálogo mestre «Documentos do fechamento» foi implementado sobre o modelo de checklist versionado existente (CP3 encerrou sem `DECISION_REQUIRED`):
+
+- **Rotas:** `closing/admin/documents` (listagem), `closing/admin/documents/new` e `closing/admin/documents/{itemKey}` (páginas completas — nenhum modal para cadastro/edição), view `documents_admin`, entrada de hub restrita a `manage`.
+- **Listagem derivada (`documentCatalog.ts`):** cada `item_key` vira uma linha com janelas de vigência calculadas da timeline de versões publicadas (`effective_from_period` como fronteira; versão vencedora por intervalo) — vigência inicial/final, situação vigente/futuro/encerrado, exigência e destino. Item presente apenas em DRAFT/REVIEW aparece como «futuro» + pendente.
+- **Gravação por orquestração do contrato atômico:** salvar cria DRAFT clonando a configuração publicada mais recente, aplica o delta do documento (inserção ou edição por `item_key`), submete a revisão e publica com `effective_from_period` escolhido — sempre prospectivo, snapshots congelados. «Exigido até» publica segunda versão de remoção no período seguinte; «Encerrar exigência» publica somente a remoção. `draft_already_open` vira banner honesto com orientação (não sobrescreve trabalho alheio); encerrar o último item do checklist é recusado (backend exige ≥1 item).
+- **Navegação:** filtros da listagem (`q`, `status`, `dest`) serializados na URL pelo mesmo `useReportQuerySync` do RW01; a página de formulário carrega a query da listagem e devolve no retorno — F5/deep link/voltar-avançar restauram contexto.
+- **Segurança:** todas as operações nos endpoints `/admin/checklist-templates*` (MANAGE na BFF); nenhuma permissão nova; 403 → banner seguro.
+- **Não implementado nesta rodada:** página exclusiva de documentos DRE/contabilidade recebidos (gate separado), catálogo de tipo-documento com vigência start/end nativa (não existe contrato — a vigência permanece derivada de versões), depreciação do modal legado (mantido até autorização expressa), e a investigação de fontes reais dos relatórios (§27 — próxima rodada).

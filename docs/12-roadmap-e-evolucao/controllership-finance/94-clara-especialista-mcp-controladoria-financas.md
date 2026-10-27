@@ -450,3 +450,13 @@ A navegação entre a aba e as páginas contextuais ganhou **recuperação integ
 - **Competência sempre do mês da rota:** em Baixas, datas fora do mês selecionado são descartadas (o intervalo volta ao mês); em Estoque, o mês nem aparece nos filtros — trocar de competência no seletor do Fechamento sempre consulta dados novos, nunca reaproveita resultado de outro mês.
 - **Filtros persistidos — Baixas:** pagamentos/recebimentos, data inicial/final, natureza, tipo de movimento, ordenação/direção e página de resultados. **Estoque:** filial, visão de estoque, armazém e página.
 - **Limitações:** filtros de outra família não são restaurados ao trocar de relatório (comportamento intencional); valores inválidos ou malformados na URL caem nos padrões seguros; nenhum token nem valor financeiro viaja na URL — autorização continua no backend.
+
+## Adendo — Catálogo mestre de documentos (CF-PROC0072-DOCUMENT-CATALOG-UX-012, 28/10/2026)
+
+Existe uma administração dedicada para **definir quais documentos são exigidos** no fechamento — a CLARA deve distinguir cadastro mestre de anexação:
+
+- **Cadastro mestre ≠ anexação:** «Documentos do fechamento» (Administração, exige gestão) configura tipos de documento — nome, finalidade, orientações, obrigatoriedade, destino (Contabilidade, Fiscal ou uso interno) e vigência. Enviar o arquivo PDF de um mês continua na aba «Documentos e interações» da competência — cadastrar o tipo nunca exige anexo no mesmo momento.
+- **Páginas completas:** cadastro e edição abrem páginas próprias (`/new`, `/{itemKey}`), nunca modal — com breadcrumb, filtros preservados na URL e retorno que restaura a consulta.
+- **Vigência por competência:** «exigido a partir de» define a primeira competência cobrada (nunca retroativa); «exigido até» torna a exigência temporária — o documento deixa de ser cobrado no período seguinte. A vigência é derivada das versões publicadas do checklist mestre; situação exibida: vigente, futuro ou encerrado.
+- **Histórico preservado:** cada alteração publica uma nova versão — fechamentos abertos/encerrados guardam snapshot próprio e nunca mudam retroativamente. «Encerrar exigência» é prospectivo e não exclui o documento.
+- **Limites atuais:** não é pré-requisito cadastrar documentos para abrir um fechamento; se houver rascunho/revisão aberta no checklist mestre, o salvamento é recusado até ser concluído; documento excepcional de uma competência específica segue fluxo próprio (não é o catálogo); a página exclusiva para documentos recebidos da Contabilidade/DRE é fase posterior separada.

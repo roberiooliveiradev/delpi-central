@@ -55,6 +55,7 @@ import {
   MARKET_INTELLIGENCE_CONTENT,
 } from "./content";
 import {
+  formatMarketDate,
   formatMarketDecimal,
   formatMarketPercent,
   marketCoverageLabel,
@@ -94,7 +95,9 @@ function buildSeriesRows(
   }
   const sorted = [...periods].sort();
   return sorted.map((period) => {
-    const row: Record<string, string | number | null> = { period };
+    const row: Record<string, string | number | null> = {
+      period: formatMarketDate(period),
+    };
     for (const entry of entries) {
       const point = entry.points.find((p) => p.period === period);
       row[entry.instrument.code] = point
@@ -338,7 +341,9 @@ export function MarketMetalsPanel({
   const compareChartRows = useMemo(() => {
     if (!comparePayload || !comparable) return [];
     return comparePayload.periods.map((period, index) => {
-      const row: Record<string, string | number | null> = { period };
+      const row: Record<string, string | number | null> = {
+        period: formatMarketDate(period),
+      };
       for (const entry of compareSeries) {
         const raw = entry.values?.[index] ?? null;
         row[entry.instrument.code] =
@@ -456,7 +461,7 @@ export function MarketMetalsPanel({
       {
         key: "period",
         header: MARKET_INTELLIGENCE_CONTENT.metals.periodColumn,
-        render: (row) => row.period,
+        render: (row) => formatMarketDate(row.period),
       },
       ...authorized.map(
         (entry): DataTableColumn<MetalsPanelRow> => ({
