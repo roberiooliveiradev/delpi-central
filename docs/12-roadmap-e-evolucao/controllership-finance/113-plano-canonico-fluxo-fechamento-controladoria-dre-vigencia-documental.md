@@ -684,3 +684,43 @@ fora — §20).
   no item exigido) · suíte closing 176/176 · plugin 249/249 ·
   `tsc -b` PASS · ESLint escopo limpo · build federado PASS
   (`App-D0zGdiAL.js`).
+
+
+## 23. Refinamento do detalhe documental V0.5 — conversa, linha do tempo e avatar (PO, 26/10/2026)
+
+**Decisão do PO (PRODUCT_APPROVED):** melhorar a coluna de conversa com **altura mínima visual padrão**, inclusive com zero ou uma mensagem; usar componente compartilhado de **linha do tempo** para eventos materiais; exibir **avatar verdadeiro/autorizado** do usuário nas mensagens e eventos (com fallback acessível quando não houver foto). Não inventar foto, URL ou perfil. **DESIGN_TARGET / GATE_DE_IMPLEMENTAÇÃO_PENDENTE**: nenhum runtime é alterado por esta entrada.
+
+### Evidência visual e inventário GitHub
+- Na captura do detalhe de `Recebidos.pdf`, conversa com uma mensagem fica muito baixa enquanto visualizador PDF ocupa grande altura; histórico aparece como cartão vazio e sem composição de eventos; o cabeçalho da página ocupa espaço grande.
+- No HEAD consultado, `DocumentConversationPanel.tsx` usa `CfMessageThread` e `CfMentionComposer`, mas `.cf-document-conversation` em `index.css` declara `min-height: 0` e limita a thread a `max-height: 420px`. **Não há altura mínima** que preserve a bancada de conversa vazia ou pouco movimentada.
+- `DocumentDetailPanel.tsx` renderiza histórico em `<ul className="cf-document-detail__history">` com `actor_subject` UUID cru, não timeline compartilhada. Filtra downloads e mensagens comuns, que devem permanecer fora da linha do tempo operacional.
+- `@delpi/plugin-ui/index` exporta `UnifiedAvatar` e `createDashboardEventsSection`; **este EventsSection é baseado em AlertQueue, não comprova equivalência com timeline cronológica**. Antes de selecionar a timeline, inventariar componente realmente utilizado em outros Portais e seus exports/factories/demos; reusar o compartilhado ou submeter evolução do kit ao owner.
+- `UnifiedAvatar` admite `kind="person"`, `imageUrl` de contrato de foto publicado pelo owner e fallback; comentário do kit proíbe derivar nome/foto confiáveis diretamente de claims JWT. **Identidade e foto do autor de eventos/mensagens dependem de contrato de perfil autorizado**. Não interpolar UUID, não montar URL de foto por convenção e não usar a foto do usuário logado para mensagens de outros autores.
+
+### 23.1 Conversa — comportamento e layout
+1. Coluna da conversa com **altura mínima consistente** no desktop, aproximadamente alinhada à área de prévia útil do PDF, com crescimento e limite por viewport; altura fixa apenas se responsiva e testada. Referência de design: `min-height` na faixa **480–560px** no desktop, a ajustar pelo padrão real do kit; não tratar medida ilustrativa como token congelado.
+2. Header da conversa; área de mensagens preenchendo o espaço entre header e composer; conversa **rolável internamente** e composer **ancorado no rodapé** da coluna, sempre disponível quando usuário autorizado, mesmo com 0/1 mensagem.
+3. Estado vazio proporcional, texto amigável e ação de iniciar conversa; uma mensagem não reduz a coluna nem desloca o composer para cima.
+4. Mobile: altura adaptativa, componentes empilhados e scroll sem aprisionar o usuário; foco, teclado, Enter/Tab/Escape, temas claro/escuro e leitores de tela.
+5. Preservar U9, idempotência, mensagem interna e todas as regras de AuthZ; não transformar mensagem em validação/aceite.
+
+### 23.2 Linha do tempo de eventos
+1. Utilizar timeline **cronológica real** do kit/Portal (com conectores, marcos, título e texto curto), não uma lista simples nem `EventsSection` de alertas por substituição visual automática.
+2. Eventos materiais: anexo, nova versão, cancelamento lógico, solicitações de ajuste e validações comprovadas; identificar tipo, data e autor autorizados, referência da versão e ação contextual quando houver. Mensagens comuns ficam na thread; downloads rotineiros ficam fora da timeline.
+3. Quando nenhum evento material é retornado, apresentar empty state compacto honesto; **não inventar evento** para preencher o visual. Verificar se U8 já produz eventos do tipo necessário e mapear enum/evento real.
+4. Sem UUID cru, sem dados de pessoa inferidos e sem N+1 inseguro para resolver perfis; exigir leitura autorizada do Core ou projeção BFF do owner.
+
+### 23.3 Avatar do participante
+1. Reusar `UnifiedAvatar` (export confirmado), `kind="person"`; se a factory de `MessageThread` já suporta avatar, utilizar seu mecanismo nativo em vez de duplicar avatar dentro da bolha. Para timeline, usar slot/componente compartilhado quando disponível.
+2. Resolver **displayName e imageUrl** de contrato de identidade/perfil owner-published e autorização aplicável. Foto ausente/falha → iniciais ou ícone neutro com nome autorizado; não exibir UUID; não vazar dados pessoais entre audiências.
+3. Mensagens U9 atualmente guardam `author_subject` + `author_name` snapshot de claim; esse valor não prova foto nem nome publicado por owner. **CONTRACT_TO_INVENTORY:** mapeamento/consulta BFF-Core de perfil, cache, autorização e comportamento de autor histórico/inativo. Se novo contrato for necessário, emitir `DECISION_REQUIRED` antes de alterar serviço/migration.
+4. Não mudar permission codes `controllership-finance.access/manage`.
+
+### 23.4 Critérios de aceite e sequência
+- Desktop: conversa com 0/1/muitas mensagens mantém área utilizável e composer ao fundo, sem altura minúscula; PDF permanece visível. Mobile claro/escuro/foco/teclado testados.
+- Timeline reutiliza componente compartilhado verificado e ordena eventos reais, distingue marcos e datas e não exibe downloads/mensagens comuns duplicados.
+- Avatares corretos por autor quando foto contratual existir; fallback confiável sem inventar identidade; testes com dois autores, autor sem foto e dados restritos.
+- Não alterar U9, P2/P5, versões, autorizações ou documentação de runtime por aparência; atualizar Ajuda e CLARA no gate de implementação comprovada.
+- **Execução seguinte:** inventário da timeline real dos Portais e perfil/avatars Core → contrato/gate se necessário → diff mínimo frontend → testes → deploy local/produção autorizados → smoke PO → documentos/CLARA com evidências.
+
+**Pendente:** escolha técnica exata do componente cronológico e fonte confiável de avatar. A regra visual/experiência já está aprovada pelo PO.
