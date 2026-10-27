@@ -1709,3 +1709,8 @@ Nenhuma migration, endpoint, permission ou mudança de produtor de auditoria. Ev
 
 ### 41.4 Evidência
 Vitest: painéis 28 testes (inclui regressão de fetch único, retry, versão anterior, U7/U5, menu); página/rotas 50 testes — suíte fechamento 171/171, plugin 244/244; `tsc`, ESLint do escopo, estruturais e build federado PASS. Homologação visual do PO: `PENDING`.
+
+
+## 42. Decisão PO — interação documental iniciada pela Controladoria (26/10/2026)
+
+Após evidências visuais da V0.3, o PO decidiu que **não se deve aguardar mensagem ou solicitação da DRE para permitir a interação**. A Controladoria autorizada precisa iniciar uma conversa persistida no contexto de qualquer documento acessível, ainda que não exista solicitação anterior. PDF/versões à esquerda, conversa real e composer à direita, histórico material abaixo. Isso não implica liberar documento para DRE nem validar P2/P5. Detalhamento visual/funcional e gates de contratos: [Plano 113 §21](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). `PRODUCT_APPROVED` para o comportamento; `TO_INVENTORY` para contratos/backend e `PENDING` para runtime. Não confundir estado vazio honesto da V0.3 com a experiência final desejada.
