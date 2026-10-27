@@ -444,12 +444,30 @@ export function MarketIntelligencePanel<R extends PanelRow>({
       title={title}
       hint={hint}
       actions={
-        meta?.source_id ? (
-          <SuppliesStatusBadge
-            label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${meta.source_id}`}
-            variant={dataStatusBadgeVariant(meta.data_status)}
+        <div className="sp-panel-actions">
+          <SuppliesSegmentToggle
+            ariaLabel={
+              MARKET_INTELLIGENCE_CONTENT.panel.viewSwitcherAriaLabel
+            }
+            idPrefix={`${storageKey}-mode`}
+            size="sm"
+            widthMode="content"
+            value={mode}
+            options={modeOptions}
+            onChange={(value) => onModeChange(value as MarketViewMode)}
           />
-        ) : undefined
+          <SuppliesTabularExportButtons
+            compact
+            disabled={rows.length === 0 || loading || !configured}
+            onExport={handleExport}
+          />
+          {meta?.source_id ? (
+            <SuppliesStatusBadge
+              label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${meta.source_id}`}
+              variant={dataStatusBadgeVariant(meta.data_status)}
+            />
+          ) : null}
+        </div>
       }
     >
       {!configured ? (
@@ -505,20 +523,6 @@ export function MarketIntelligencePanel<R extends PanelRow>({
               ))}
             </SuppliesDataCardsGrid>
           ) : null}
-
-          <div className="sp-module-filters">
-            <SuppliesSegmentToggle
-              ariaLabel={
-                MARKET_INTELLIGENCE_CONTENT.panel.viewSwitcherAriaLabel
-              }
-              idPrefix={`${storageKey}-mode`}
-              size="sm"
-              widthMode="content"
-              value={mode}
-              options={modeOptions}
-              onChange={(value) => onModeChange(value as MarketViewMode)}
-            />
-          </div>
 
           {!hasData && !unavailableReason && mode === "chart" ? (
             <SuppliesEmptyState
@@ -590,13 +594,6 @@ export function MarketIntelligencePanel<R extends PanelRow>({
                   }
                 />
               }
-              exportActions={
-                <SuppliesTabularExportButtons
-                  compact
-                  disabled={!hasData || loading}
-                  onExport={handleExport}
-                />
-              }
             >
               <MultiTypeSeriesChart
                 data={chartPoints}
@@ -611,15 +608,8 @@ export function MarketIntelligencePanel<R extends PanelRow>({
             </ChartViewShell>
           ) : null}
 
-          {mode === "table" && rows.length > 0 ? (
+          {mode === "table" && rows.length > 0 && !unavailableReason ? (
             <>
-              <div className="sp-module-filters">
-                <SuppliesTabularExportButtons
-                  compact
-                  disabled={rows.length === 0 || loading}
-                  onExport={handleExport}
-                />
-              </div>
               <div
                 className="sp-list-table-region"
                 role="region"
@@ -637,7 +627,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
             </>
           ) : null}
 
-          {missingPeriods.length > 0 ? (
+          {missingPeriods.length > 0 && !unavailableReason ? (
             <p className="delpi-ui-section-hint-label">
               {MARKET_INTELLIGENCE_CONTENT.panel.missingPeriodsNote(
                 missingPeriods,

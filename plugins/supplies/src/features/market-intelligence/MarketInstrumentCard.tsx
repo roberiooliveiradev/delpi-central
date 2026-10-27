@@ -14,8 +14,6 @@
 
 import { Check } from "lucide-react";
 
-import { SuppliesStatusBadge } from "../../app/suppliesUi";
-
 export type MarketInstrumentCardProps = {
   code: string;
   label: string;
@@ -80,7 +78,9 @@ export function MarketInstrumentCard({
           <span className="sp-market-instrument-card__unit">{unit}</span>
         ) : null}
         {!dataAccessAllowed ? (
-          <SuppliesStatusBadge label={pendingLabel} variant="neutral" />
+          <span className="sp-market-instrument-card__pending">
+            {pendingLabel}
+          </span>
         ) : selected ? (
           <span className="sp-market-instrument-card__selected-text">
             {selectedLabel}

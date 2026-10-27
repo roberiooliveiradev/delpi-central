@@ -15,7 +15,7 @@
 ### 1.2 Cards de metais (seleção múltipla)
 
 - Toggle por click/toque/Enter/Espaço; estado `selected` persistido na URL (`metals=cu,al,…`).
-- Card de metal sem fonte homologada: **permanece selecionável** com badge `Fonte pendente` (D-04 — `selectable_in_ui` ≠ `data_access_allowed`); entra na URL como seleção visual e o fetch retorna `availability` sem pontos — nunca valores.
+- Card de metal sem fonte homologada: **permanece selecionável** com nota secundária `Fonte pendente` (R4.1; D-04 — `selectable_in_ui` ≠ `data_access_allowed`); entra na URL como seleção visual e o fetch retorna `availability` sem pontos — nunca valores.
 - Mudança de seleção refaz KPIs + painel; Comparação reabilita quando ≥2 séries compatíveis.
 - Nenhum metal selecionado → painel orientador, sem chamada à API.
 
@@ -48,7 +48,7 @@
 | `partial` | janela com lacunas | "Dados parciais: X de Y competências. Períodos sem dado: …" | — | `SuppliesStateBanner` default + gráfico com lacunas (sem ligar pontos) |
 | `source_unavailable` | feed OFF/falha de provedor (ex.: PTAX 403 egress) | "Integração temporariamente indisponível — não é erro de filtro." | Recarregar | Painel compacto + `unavailable_reason` do BFF |
 | `source_not_configured` | Comex sem NCM homologada | "NCMs de referência não homologadas para este Portal." | Entenda o indicador | Estado de configuração, sem gráfico vazio |
-| `source_rights_pending` | metal sem `display_allowed` (quarentena LME) | "Aguardando observações de fonte homologada." | Sobre a fonte | Card **selecionável** (D-04) com badge `Fonte pendente`; painel explica sem inventar preço |
+| `source_rights_pending` | metal sem `display_allowed` (quarentena LME) | "Aguardando observações de fonte homologada." | Sobre a fonte | Card **selecionável** (D-04) com nota secundária `Fonte pendente` (R4.1); painel explica sem inventar preço |
 | `source_delayed` | `freshness.status` atrasado vs cadência | "Publicação oficial atrasada — última competência: …" | — | Banner warning + dados até a última competência real |
 | `error` | falha HTTP/inesperada | "Não foi possível carregar a fonte." | Tentar novamente | `SuppliesStateBanner` variant `error` |
 | `unauthorized` (401/403 Core) | sessão/permissão | "Sem autorização para usar Inteligência de Mercado." | — | Estado de acesso; nenhum dado |

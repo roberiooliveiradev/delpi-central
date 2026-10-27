@@ -2295,13 +2295,29 @@
   gap: var(--sp-grid-gap);
 }
 
+/* R4.1 — cluster de controles no cabeçalho do painel de análise
+   (modo Gráfico/Tabela/Comparação + exportações + badge de fonte). */
+.dashboard-supplies-portal .sp-panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-space-2, 8px);
+  flex-wrap: wrap;
+}
+
+/* R4.1 — o tile decorativo do KPI é redundante nesta feature:
+   valor, unidade e competência carregam a hierarquia. */
+.dashboard-supplies-portal .sp-market-intelligence .delpi-ui-kpi-icon {
+  display: none;
+}
+
 .dashboard-supplies-portal .sp-market-instrument-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-height: 44px;
-  padding: 12px 14px;
-  border: 1.5px solid var(--sp-border);
+  padding: 10px 14px;
+  border: 1px solid var(--sp-border);
   border-radius: 12px;
   background: var(--sp-surface);
   color: var(--sp-text);
@@ -2323,8 +2339,8 @@
 
 .dashboard-supplies-portal .sp-market-instrument-card--selected {
   border-color: var(--sp-accent);
+  border-width: 1.5px;
   background: var(--sp-surface-soft);
-  box-shadow: 0 0 0 1px var(--sp-accent) inset;
 }
 
 /* Selecionado sem fonte homologada: borda tracejada + badge — a seleção
@@ -2380,6 +2396,14 @@
 .dashboard-supplies-portal .sp-market-instrument-card__unit {
   font-size: 0.78rem;
   color: var(--sp-text-muted);
+}
+
+/* "Fonte pendente" é informação secundária do card (D-04) — texto
+   discreto, sem badge; o estado de direitos não compete com a seleção. */
+.dashboard-supplies-portal .sp-market-instrument-card__pending {
+  font-size: 0.78rem;
+  color: var(--sp-text-muted);
+  font-style: italic;
 }
 
 .dashboard-supplies-portal .sp-market-instrument-card__selected-text {

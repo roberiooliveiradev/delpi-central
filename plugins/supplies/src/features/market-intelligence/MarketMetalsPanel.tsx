@@ -487,12 +487,30 @@ export function MarketMetalsPanel({
       title={title}
       hint={hint}
       actions={
-        meta?.feed_ingestion?.feed ? (
-          <SuppliesStatusBadge
-            label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${meta.feed_ingestion.feed}`}
-            variant={dataStatusBadgeVariant(meta.data_status)}
+        <div className="sp-panel-actions">
+          <SuppliesSegmentToggle
+            ariaLabel={
+              MARKET_INTELLIGENCE_CONTENT.panel.viewSwitcherAriaLabel
+            }
+            idPrefix={`${storageKey}-mode`}
+            size="sm"
+            widthMode="content"
+            value={mode}
+            options={modeOptions}
+            onChange={(value) => onModeChange(value as MarketViewMode)}
           />
-        ) : undefined
+          <SuppliesTabularExportButtons
+            compact
+            disabled={tableRows.length === 0 || loading || !configured}
+            onExport={handleExport}
+          />
+          {meta?.feed_ingestion?.feed ? (
+            <SuppliesStatusBadge
+              label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${meta.feed_ingestion.feed}`}
+              variant={dataStatusBadgeVariant(meta.data_status)}
+            />
+          ) : null}
+        </div>
       }
     >
       {!configured ? (
@@ -555,20 +573,6 @@ export function MarketMetalsPanel({
               ))}
             </SuppliesDataCardsGrid>
           ) : null}
-
-          <div className="sp-module-filters">
-            <SuppliesSegmentToggle
-              ariaLabel={
-                MARKET_INTELLIGENCE_CONTENT.panel.viewSwitcherAriaLabel
-              }
-              idPrefix={`${storageKey}-mode`}
-              size="sm"
-              widthMode="content"
-              value={mode}
-              options={modeOptions}
-              onChange={(value) => onModeChange(value as MarketViewMode)}
-            />
-          </div>
 
           {!allPending && !hasData && mode === "chart" ? (
             <SuppliesEmptyState
@@ -640,13 +644,6 @@ export function MarketMetalsPanel({
                   }
                 />
               }
-              exportActions={
-                <SuppliesTabularExportButtons
-                  compact
-                  disabled={!hasData || loading}
-                  onExport={handleExport}
-                />
-              }
             >
               <MultiTypeSeriesChart
                 data={chartRows}
@@ -663,13 +660,6 @@ export function MarketMetalsPanel({
 
           {mode === "table" && tableRows.length > 0 ? (
             <>
-              <div className="sp-module-filters">
-                <SuppliesTabularExportButtons
-                  compact
-                  disabled={tableRows.length === 0 || loading}
-                  onExport={handleExport}
-                />
-              </div>
               <div
                 className="sp-list-table-region"
                 role="region"

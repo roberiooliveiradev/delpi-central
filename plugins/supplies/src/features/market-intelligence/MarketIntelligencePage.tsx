@@ -19,7 +19,6 @@ import {
   SuppliesSegmentToggle,
   SuppliesSelectField,
   SuppliesStateBanner,
-  SuppliesStatusBadge,
   SuppliesTitleWithHelp,
   spFiltersKit,
 } from "../../app/suppliesUi";
@@ -373,18 +372,10 @@ export function MarketIntelligencePage({
           />
         }
         description={MARKET_INTELLIGENCE_CONTENT.description}
-        badge={
-          activeSourceId ? (
-            <SuppliesStatusBadge
-              label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${activeSourceId}`}
-              variant="info"
-            />
-          ) : undefined
-        }
         actions={
           <SuppliesActionButton
             type="button"
-            variant="default"
+            variant="ghost"
             onClick={() => setReloadKey((value) => value + 1)}
           >
             <RefreshCw size={16} strokeWidth={1.75} aria-hidden="true" />{" "}
@@ -392,88 +383,16 @@ export function MarketIntelligencePage({
           </SuppliesActionButton>
         }
       >
-        <FiltersRow variant="extended">
-          <SuppliesSegmentToggle
-            ariaLabel={
-              MARKET_INTELLIGENCE_CONTENT.perspectives.switcherAriaLabel
-            }
-            idPrefix="market-intelligence-view"
-            size="sm"
-            value={view}
-            options={PERSPECTIVE_OPTIONS}
-            onChange={(value) => filters.setView(value as MarketPerspective)}
-          />
-          {view === "indicators" ? (
-            <SuppliesSegmentToggle
-              ariaLabel={
-                MARKET_INTELLIGENCE_CONTENT.filters.indicatorLabel
-              }
-              idPrefix="market-intelligence-indicator"
-              size="sm"
-              widthMode="content"
-              value={indicator}
-              options={INDICATOR_OPTIONS}
-              onChange={(value) =>
-                filters.setIndicator(value as MarketIndicatorKind)
-              }
-            />
-          ) : null}
-          {view === "indicators" && indicator === "ipp" ? (
-            <SuppliesSelectField
-              label={MARKET_INTELLIGENCE_CONTENT.filters.seriesLabel}
-              hint={SP_HELP.marketIntelligenceIpp}
-              value={selectedIpp}
-              options={ippOptions}
-              onChange={filters.setIppSeries}
-            />
-          ) : null}
-          {view === "indicators" &&
-          indicator === "comex" &&
-          ncmOptions.length > 0 ? (
-            <SuppliesSelectField
-              label={MARKET_INTELLIGENCE_CONTENT.filters.ncmLabel}
-              hint={
-                MARKET_INTELLIGENCE_CONTENT.modules.importsNcmHint
-              }
-              value={selectedNcm}
-              options={ncmOptions}
-              onChange={filters.setNcm}
-            />
-          ) : null}
-          {view === "fx" ? (
-            <SuppliesSelectField
-              label={MARKET_INTELLIGENCE_CONTENT.filters.fxKindLabel}
-              hint={SP_HELP.marketIntelligenceFxKind}
-              value={filters.state.fxKind}
-              options={FX_KIND_OPTIONS}
-              onChange={(value) =>
-                filters.setFxKind(value as MarketFxKind)
-              }
-            />
-          ) : null}
-          <SuppliesSegmentToggle
-            ariaLabel={MARKET_INTELLIGENCE_CONTENT.filters.granularityLabel}
-            idPrefix="market-intelligence-granularity"
-            size="sm"
-            value={filters.state.granularity}
-            options={granularityOptions}
-            onChange={(value) =>
-              filters.setGranularity(value as MarketGranularity)
-            }
-          />
-          <SuppliesDateField
-            label={MARKET_INTELLIGENCE_CONTENT.filters.fromLabel}
-            hint={SP_HELP.marketIntelligencePeriod}
-            value={filters.state.from}
-            onChange={filters.setFrom}
-          />
-          <SuppliesDateField
-            label={MARKET_INTELLIGENCE_CONTENT.filters.toLabel}
-            hint={SP_HELP.marketIntelligencePeriod}
-            value={filters.state.to}
-            onChange={filters.setTo}
-          />
-        </FiltersRow>
+        <SuppliesSegmentToggle
+          ariaLabel={
+            MARKET_INTELLIGENCE_CONTENT.perspectives.switcherAriaLabel
+          }
+          idPrefix="market-intelligence-view"
+          size="sm"
+          value={view}
+          options={PERSPECTIVE_OPTIONS}
+          onChange={(value) => filters.setView(value as MarketPerspective)}
+        />
       </SuppliesPageHero>
 
       {catalogError ? (
@@ -491,67 +410,140 @@ export function MarketIntelligencePage({
       ) : null}
 
       {view === "metals" ? (
-        <>
-          <section
-            className="sp-market-instruments"
+        <section
+          className="sp-market-instruments"
+          aria-label={MARKET_INTELLIGENCE_CONTENT.metals.cardsLabel}
+        >
+          <div
+            className="sp-market-instruments-grid"
+            role="group"
             aria-label={MARKET_INTELLIGENCE_CONTENT.metals.cardsLabel}
           >
-            <div
-              className="sp-market-instruments-grid"
-              role="group"
-              aria-label={MARKET_INTELLIGENCE_CONTENT.metals.cardsLabel}
-            >
-              {metalCards.map((entry) => (
-                <MarketInstrumentCard
-                  key={entry.code}
-                  code={entry.code}
-                  label={entry.label}
-                  unit={entry.unit}
-                  selected={selectedMetals.includes(entry.code)}
-                  selectable={entry.selectable_in_ui === true}
-                  dataAccessAllowed={
-                    entry.data_access_allowed === true
-                  }
-                  pendingLabel={
-                    MARKET_INTELLIGENCE_CONTENT.metals.pendingLabel
-                  }
-                  selectedLabel={
-                    MARKET_INTELLIGENCE_CONTENT.metals.selectedLabel
-                  }
-                  onToggle={filters.toggleMetal}
-                />
-              ))}
-            </div>
-          </section>
+            {metalCards.map((entry) => (
+              <MarketInstrumentCard
+                key={entry.code}
+                code={entry.code}
+                label={entry.label}
+                unit={entry.unit}
+                selected={selectedMetals.includes(entry.code)}
+                selectable={entry.selectable_in_ui === true}
+                dataAccessAllowed={
+                  entry.data_access_allowed === true
+                }
+                pendingLabel={
+                  MARKET_INTELLIGENCE_CONTENT.metals.pendingLabel
+                }
+                selectedLabel={
+                  MARKET_INTELLIGENCE_CONTENT.metals.selectedLabel
+                }
+                onToggle={filters.toggleMetal}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
-          <MarketMetalsPanel
-            title={MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle}
-            hint={MARKET_INTELLIGENCE_CONTENT.metals.sectionHint}
-            enabled={!catalogError && !catalogLoading}
-            configured={metalCards.length > 0}
-            configState={{
-              title:
-                MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
-              message:
-                MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable,
-            }}
-            selection={selectedMetals}
-            from={filters.state.from}
-            to={filters.state.to}
-            granularity={filters.state.granularity}
-            mode={filters.state.mode}
-            onModeChange={filters.setMode}
-            tableAriaLabel={
-              MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle
+      <FiltersRow variant="extended">
+        {view === "indicators" ? (
+          <SuppliesSegmentToggle
+            ariaLabel={
+              MARKET_INTELLIGENCE_CONTENT.filters.indicatorLabel
             }
-            storageKey="supplies:market-intelligence:metals"
-            exportTitle={
-              MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle
+            idPrefix="market-intelligence-indicator"
+            size="sm"
+            widthMode="content"
+            value={indicator}
+            options={INDICATOR_OPTIONS}
+            onChange={(value) =>
+              filters.setIndicator(value as MarketIndicatorKind)
             }
-            attribution={attribution}
-            reloadKey={reloadKey}
           />
-        </>
+        ) : null}
+        {view === "indicators" && indicator === "ipp" ? (
+          <SuppliesSelectField
+            label={MARKET_INTELLIGENCE_CONTENT.filters.seriesLabel}
+            hint={SP_HELP.marketIntelligenceIpp}
+            value={selectedIpp}
+            options={ippOptions}
+            onChange={filters.setIppSeries}
+          />
+        ) : null}
+        {view === "indicators" &&
+        indicator === "comex" &&
+        ncmOptions.length > 0 ? (
+          <SuppliesSelectField
+            label={MARKET_INTELLIGENCE_CONTENT.filters.ncmLabel}
+            hint={
+              MARKET_INTELLIGENCE_CONTENT.modules.importsNcmHint
+            }
+            value={selectedNcm}
+            options={ncmOptions}
+            onChange={filters.setNcm}
+          />
+        ) : null}
+        {view === "fx" ? (
+          <SuppliesSelectField
+            label={MARKET_INTELLIGENCE_CONTENT.filters.fxKindLabel}
+            hint={SP_HELP.marketIntelligenceFxKind}
+            value={filters.state.fxKind}
+            options={FX_KIND_OPTIONS}
+            onChange={(value) =>
+              filters.setFxKind(value as MarketFxKind)
+            }
+          />
+        ) : null}
+        <SuppliesSegmentToggle
+          ariaLabel={MARKET_INTELLIGENCE_CONTENT.filters.granularityLabel}
+          idPrefix="market-intelligence-granularity"
+          size="sm"
+          value={filters.state.granularity}
+          options={granularityOptions}
+          onChange={(value) =>
+            filters.setGranularity(value as MarketGranularity)
+          }
+        />
+        <SuppliesDateField
+          label={MARKET_INTELLIGENCE_CONTENT.filters.fromLabel}
+          hint={SP_HELP.marketIntelligencePeriod}
+          value={filters.state.from}
+          onChange={filters.setFrom}
+        />
+        <SuppliesDateField
+          label={MARKET_INTELLIGENCE_CONTENT.filters.toLabel}
+          hint={SP_HELP.marketIntelligencePeriod}
+          value={filters.state.to}
+          onChange={filters.setTo}
+        />
+      </FiltersRow>
+
+      {view === "metals" ? (
+        <MarketMetalsPanel
+          title={MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle}
+          hint={MARKET_INTELLIGENCE_CONTENT.metals.sectionHint}
+          enabled={!catalogError && !catalogLoading}
+          configured={metalCards.length > 0}
+          configState={{
+            title:
+              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
+            message:
+              MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable,
+          }}
+          selection={selectedMetals}
+          from={filters.state.from}
+          to={filters.state.to}
+          granularity={filters.state.granularity}
+          mode={filters.state.mode}
+          onModeChange={filters.setMode}
+          tableAriaLabel={
+            MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle
+          }
+          storageKey="supplies:market-intelligence:metals"
+          exportTitle={
+            MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle
+          }
+          attribution={attribution}
+          reloadKey={reloadKey}
+        />
       ) : null}
 
       {view === "indicators" && indicator === "ipp" ? (
