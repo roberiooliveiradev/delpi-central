@@ -148,7 +148,18 @@ Escopo: evolução visual/funcional do dashboard R4.1 — sem dados sintéticos,
 - **CSS**: `__icon`, `__heading`, `__context`, `sp-section-icon`, `sp-market-chart-group` — apenas tokens `sp-*` existentes.
 - **Ajuda**: manual do usuário e glossário atualizados (unidades US$/t e US$/lb, estados de contexto, prévia Comex).
 
-### 10.3 Semântica preservada
+### 10.3 Evidência em produção (smoke autenticado, `6218484d4a`)
+
+- `filters`: metais emitem `unit` amigável + `unit_code` de máquina — alumínio/zinco/níquel/chumbo `US$/t`, cobre `US$/lb`, estanho `US$/t` com `data_access_allowed:false`; FX `usd-brl` → `R$/US$`.
+- `quotes/series?granularity=day`: 19 pontos reais por metal autorizado (cobre 6.55287 em 2026-10-27); estanho → `granularity_not_supported` sem pontos fabricados.
+- `fx/series`: `unit: R$/US$` (correção pós-deploy: BFF emitia literal `BRL per USD`) com cobertura honesta `no_data`.
+- `producer-prices/series`: `ipp-metalurgia-index`/`ipp-metalurgia-mom`, unidade `número-índice`, 200 preservado.
+- Comex: `import_ncms` vazio no catálogo — estado pendente de configuração exibido com contexto, sem dados.
+- Negativos: 401 sem token, 403 sem permissão, 404 instrumento desconhecido, 422 granularidade inválida.
+- MFE: `App-D6ikkn8M.js` servido contendo `US$/lb`, `US$/t`, `R$/US$`, `granularityNotSupported` e classes `market-chart-group`/`sp-section-icon`.
+- Deploy: `09cc5ea115` (external-data-api + supplies-api + supplies) e `6218484d4a` (supplies-api) via `up-prod-sequential.sh --build`, containers healthy.
+
+### 10.4 Semântica preservada
 
 - Nenhum valor sintético/placeholder: previews usam `—` explícito; cartões de contexto exibem apenas evidência real do `meta`.
 - Tin permanece selecionável mas não autorizado — agora nomeado no banner com motivo.
