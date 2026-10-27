@@ -1821,3 +1821,8 @@ As quatro decisões congeladas do PO foram implementadas no runtime (Plano 113 �
 4. **PDF = inline:** contêiner contextual no fim dos resultados com indisponibilidade honesta — sem produtor de PDF homologado no HEAD.
 
 Indicadores clicáveis levam o foco às seções da aba; valores `—` quando a fonte não sustenta número; nenhum cálculo financeiro no navegador; competência e contexto preservados em refresh/back-forward. Rotas legadas `closing/financial-settlements` e `closing/stock-inventory` mantidas para compatibilidade. Wireframe V0.2 passa a `IMPLEMENTED`; homologação visual do PO permanece `PENDING`.
+
+
+## 46. Revisão visual PO — relatórios V0.3 (27/10/2026)
+
+As capturas da UX-010 mostram navegação funcional e dados de Baixas Financeiras, mas também **linhas empilhadas sem colunas distinguíveis**, concatenação visual de natureza/tipo (`VENDA DE PRODUTOS INDUSTR.Baixa de título`), densidade alta, cartões verbosos e matriz técnica R01–R15 extensa. O PO decidiu substituir o detalhamento integral `inline` aprovado na V0.2 por **página contextual própria de cada relatório**, reaproveitando frontend existente do P7 e relatórios legados; a terceira aba permanece hub e **não surgirá quarta aba**. O retorno restaura competência e contexto. A análise de fonte/relatório/correção baseada no vídeo de Estoques e Custos de 30/09/2026 e documentos dos Ciclos 1/2 será feita por discovery e evidência, não inferida do wireframe. Ver [Plano 113 §26](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). `PRODUCT_APPROVED / DESIGN_TARGET`, implementação ainda não autorizada.
