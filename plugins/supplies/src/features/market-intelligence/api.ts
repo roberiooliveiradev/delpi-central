@@ -72,7 +72,11 @@ export type MarketImportNcmFilter = {
   granularities: MarketGranularity[];
   source_id: string;
   latest_observation_date: string | null;
+  /** Source-rights display grant (MDIC usable). */
   selectable?: boolean;
+  /** NCM active in the operational allowlist — the homologation gate. */
+  selectable_in_ui?: boolean;
+  data_access_allowed?: boolean;
 };
 
 /** IBGE SIDRA producer-price series (IPP Metalurgia). */

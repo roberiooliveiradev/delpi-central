@@ -182,7 +182,7 @@ export function MarketIntelligencePage({
   // Same default-deny posture as legacy instruments — absent/null is
   // never a permission.
   const selectableNcms = useMemo(
-    () => importNcms.filter((entry) => entry.selectable === true),
+    () => importNcms.filter((entry) => entry.selectable_in_ui === true),
     [importNcms],
   );
   const selectableIpp = useMemo(
