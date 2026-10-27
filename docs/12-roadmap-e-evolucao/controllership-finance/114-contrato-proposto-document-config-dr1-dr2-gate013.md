@@ -468,3 +468,27 @@ Rotas administrativas atuais: list/get/create-draft/update-draft/publish (REVIEW
 **Alternativa sem evolução:** o PO usa o próprio rascunho como ponto de partida (editar os 53 itens e publicar prospectivamente) — porém mantém o seed como base, o que contraria a decisão de cadastro manual integral.
 
 Nenhuma exclusão ou código foi executada neste gate — somente inventário e proposta.
+
+### 12.4 Execução — mecanismo implementado e descarte realizado (PROVEN)
+
+Decisão do PO: implementar o mecanismo oficial de descarte — commit
+`df43536acd`, deploy canônico (`up-prod-sequential --build
+controllership-finance-api controllership-finance`).
+
+- `DELETE /admin/checklist-templates/{id}/versions/{v}?expected_revision=N`
+  (`discard_checklist_template_version`): DRAFT-only (`version_not_draft`
+  para REVIEW/PUBLISHED/INACTIVE), OCC `stale_revision`, lock `FOR UPDATE`
+  no template, guarda defensiva `version_referenced` contra vínculo com
+  competência, remoção transacional itens+versão, `VERSION_DISCARDED`
+  auditado. MFE: ação «Descartar» com confirmação danger.
+- Testes: **704 passed** backend (+12: 6 PG, 6 rotas — happy path,
+  desbloqueio do fluxo documental base_version=0, PUBLISHED/REVIEW
+  rejeitadas, stale, 404, 401/403) · 337 vitest · eslint ✓ · build ✓.
+- Descarte em produção (ator `devin-smoke-g16`, role canônica temporária
+  revogada após a operação): `200 DISCARDED` — evento
+  `VERSION_DISCARDED` registrado; pós-estado: `versions=[]`,
+  `draft_version=null`, `published_version=null`, competência 2026-09
+  OPEN/NULL intacta, zero itens remanescentes.
+- Cadastro manual **desbloqueado**: sem DRAFT/REVIEW aberto, o comando
+  documental opera com `base_version=0` (timeline vazia) — provado em
+  PG (`test_discard_unblocks_document_operation`).

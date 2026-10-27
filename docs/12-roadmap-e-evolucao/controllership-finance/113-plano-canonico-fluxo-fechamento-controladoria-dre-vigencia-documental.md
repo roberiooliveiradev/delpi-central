@@ -1236,3 +1236,11 @@ verificado localmente; produção não deployada** (gate separado pendente).
   proposta `DELETE …/versions/{version}` (DRAFT-only, OCC, audit
   VERSION_DISCARDED) registrada no doc 114 §12.3. Execução aguarda
   decisão do PO.
+
+### 28.8 GATE-017 — encerramento executado (28/10/2026)
+
+- PO autorizou a evolução: `DELETE …/versions/{v}` DRAFT-only
+  (`df43536acd`; backend 704 testes, MFE com «Descartar»).
+- Descarte prod realizado via endpoint: `VERSION_DISCARDED` auditado;
+  catálogo vazio (0 versões); competência 2026-09 intacta.
+- Fluxo documental desbloqueado — primeiro cadastro real pelo PO.

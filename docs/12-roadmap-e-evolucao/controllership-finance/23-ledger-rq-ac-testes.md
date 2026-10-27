@@ -604,6 +604,6 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | G17-INV-01 | identidade do rascunho | PROVEN | v1 DRAFT rev1, template monthly-closing-checklist, seed 2026-10-24 |
 | G17-INV-02 | proveniência | PROVEN | migration V002 seed (não cadastro administrativo); 0 eventos audit |
 | G17-INV-03 | dependências | PROVEN | 0 snapshots, 0 refs competence, único FK = itens próprios |
-| G17-MECH-01 | mecanismo oficial de descarte | FAIL | nenhum endpoint/método descarta DRAFT/REVIEW |
+| G17-MECH-01 | mecanismo oficial de descarte | PASS | DELETE …/versions/{v} implementado (df43536acd) |
 | G17-GATE | elegibilidade p/ descarte | DECISION_REQUIRED | todos os critérios PROVEN exceto mecanismo oficial |
-| G17-EXEC | encerramento governado | TEST_NOT_RUN | aguarda decisão contratual (doc 114 §12.3) |
+| G17-EXEC | encerramento governado | PASS | descarte 200 DISCARDED + VERSION_DISCARDED auditado (doc 114 §12.4) |
