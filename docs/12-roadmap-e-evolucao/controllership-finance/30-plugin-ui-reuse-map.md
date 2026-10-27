@@ -834,3 +834,20 @@ import de domain/API de outro contexto.
 `EventsSection` inventariado e **não usado** — é fila de alertas
 (AlertQueue), não timeline cronológica. Nenhuma lista/avatar/timeline
 paralela criada.
+
+## Registro de execução — Rework de segurança de participantes (CF-PROC0072-DOCUMENT-DETAIL-UX-009-RW01, 26/10/2026)
+
+Correção de autorização — **nenhum componente novo foi criado**: a
+composição visual aprovada da UX-009 permanece idêntica
+(`CfTimeline`, `CfUnifiedAvatar`, `MessageThread` com `authorSrc`,
+composer no rodapé, altura 520px). O diff é só de contrato e estado:
+
+| Superfície | Antes (UX-009) | Depois (RW01) |
+|---|---|---|
+| Lookup de participantes | `POST /closing/participants/lookup` — ids livres | `POST /closing/competences/{period}/documents/{document_id}/participants/lookup` — somente ids com vínculo canônico |
+| Avatar | `GET /closing/participants/{user_id}/avatar` | `GET …/documents/{document_id}/participants/{user_id}/avatar` — participante sem vínculo = 404 |
+| Prova de participação | nenhuma (frontend mandava ids) | repository: autor U9 + ator U8 + uploader, dentro de `_document_in_scope` |
+| Isolamento do hook | chave = ids | chave = `period + documentId + ids`; perfil de outro contexto nunca é exibido |
+
+Rotas antigas removidas — sem endpoint residual de consulta livre.
+Nenhuma nova lista/avatar/timeline paralela criada.

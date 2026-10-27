@@ -210,7 +210,7 @@ export const CF_HELP = {
     detailInteractions:
       "Solicitações e decisões reais registradas neste documento (ajuste solicitado, conferido, revertido) com autor e data. São atos formais de validação — diferentes das mensagens da conversa.",
     detailConversation:
-      "Conversa livre sobre este documento, iniciada pela Controladoria quando necessário — não é preciso esperar solicitação da Contabilidade. Cada mensagem é gravada com autor e data e permanece disponível ao recarregar a página. A foto e o nome exibidos vêm do perfil oficial do participante; quando não há foto, aparecem as iniciais. Uma mensagem não valida o documento, não encerra solicitações de ajuste e não libera o arquivo para a Contabilidade.",
+      "Conversa livre sobre este documento, iniciada pela Controladoria quando necessário — não é preciso esperar solicitação da Contabilidade. Cada mensagem é gravada com autor e data e permanece disponível ao recarregar a página. A foto e o nome exibidos vêm do perfil oficial do participante e só são consultados dentro deste documento autorizado; quando não há foto, aparecem as iniciais. Uma mensagem não valida o documento, não encerra solicitações de ajuste e não libera o arquivo para a Contabilidade.",
     detailHistory:
       "Linha do tempo operacional do documento: anexação, novas versões, remoção e decisões de conferência — sempre com responsável, foto do perfil oficial (ou iniciais) e data. Downloads e mensagens da conversa ficam fora daqui; a trilha de auditoria técnica permanece completa. Versões anteriores permanecem disponíveis.",
   },

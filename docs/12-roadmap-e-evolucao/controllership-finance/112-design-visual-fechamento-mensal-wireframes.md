@@ -1771,3 +1771,36 @@ Implementado conforme Plano 113 §23.5:
   person-profile S2S); nome oficial via diretório Core com bearer do
   usuário. Sem foto → iniciais; sem perfil → «Participante». UUID
   nunca visível.
+
+
+### 44.2 Rework de segurança UX-009-RW01 — autorização contextual de participantes (26/10/2026)
+
+A revisão arquitetural do contrato de participantes do §44.1
+(`POST /closing/participants/lookup`, `GET /closing/participants/
+{user_id}/avatar`) aprovou o visual e apontou **risco de isolamento**:
+as rotas aceitavam ids arbitrários com apenas `access` — sem provar
+que o participante pertencia a um documento/competência autorizados
+para o caller (enumeração de nomes/fotos pela superfície documental).
+
+Correção implementada preservando 100% do visual aprovado:
+
+- **Contrato contextual:** `POST|GET
+  /closing/competences/{period}/documents/{document_id}/participants*`
+  — competência e documento no path, `branch_scope` opcional igual às
+  rotas U3–U9. Rotas antigas removidas (sem bypass).
+- **Gates BFF antes do Core:** `access` efetivo → `_document_in_scope`
+  (competência do path + resource scope; cross = 404 neutro) →
+  vínculo canônico do participante (autor U9, ator U8 ou uploader,
+  via `list_document_participant_ids`). Id sem vínculo é omitido do
+  lookup e recebe 404 no avatar — existência de pessoa nunca vaza.
+- **Frontend:** hook passa `{period, documentId}`; estado resolvido é
+  etiquetado com a chave completa — trocar documento/competência
+  nunca exibe nome ou foto resolvidos no contexto anterior.
+- **Visual intacto:** conversa 520px + composer no rodapé, `CfTimeline`
+  compartilhada, `UnifiedAvatar`/`authorSrc` com fallback de iniciais,
+  histórico e versões preservados. UUID continua nunca visível.
+- **Testes:** 19 casos de rota (positivos + negativos: sem token 401,
+  sem access 403, documento inexistente/outra competência 404,
+  participante fora do documento omitido/404 sem consultar Core,
+  >50 ids 422, Core fora 503) + 6 do hook (isolamento por
+  documento/competência, abort, sem perfil stale).

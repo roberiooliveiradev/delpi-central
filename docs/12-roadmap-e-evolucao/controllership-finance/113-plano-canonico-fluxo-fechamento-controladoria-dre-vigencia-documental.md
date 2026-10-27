@@ -801,3 +801,60 @@ com iniciais (comportamento aprovado); homologação visual do PO no
 navegador = PENDING. Audiência DRE para conversa/eventos permanece
 `TARGET` — o endpoint de participantes **não** abre identidade para
 fora do `access` da Controladoria.
+
+### 23.6 Rework de segurança UX-009-RW01 — isolamento por documento e competência (REWORK, 26/10/2026)
+
+Revisão arquitetural identificou que o contrato §23.5
+(`POST /closing/participants/lookup` + `GET /closing/participants/
+{user_id}/avatar`) exigia apenas `controllership-finance.access` e
+aceitava ids arbitrários: um usuário do Portal poderia tentar resolver
+nome/foto de pessoas sem demonstrar relação com documento autorizado —
+superfície de enumeração de perfis. Correção cirúrgica, sem
+redesenhar a UX e sem novas permissions.
+
+**Contrato corrigido (contextual, fail-closed).** As rotas livres
+foram substituídas por caminhos vinculados ao documento da competência
+do path, no padrão U3/U4/U9:
+
+- `POST /closing/competences/{period}/documents/{document_id}/
+  participants/lookup` — `{ids: [...]}` (máx. 50) → devolve somente
+  ids com vínculo canônico; demais são **omitidos** (ausência não
+  confirma nem nega existência — sem enumeração).
+- `GET /closing/competences/{period}/documents/{document_id}/
+  participants/{user_id}/avatar` — participante sem vínculo recebe o
+  mesmo 404 de recurso inexistente; `branch_scope` opcional segue o
+  parâmetro das rotas documentais.
+- operation_ids: `lookup_document_participants`,
+  `get_document_participant_avatar`. Rotas antigas removidas — não há
+  bypass.
+
+**Cadeia de autorização (BFF, antes de qualquer chamada ao Core):**
+`capability` (`access` efetivo via Keycloak/RBAC) **AND**
+`resource_scope` (`ClosingDocumentService._document_in_scope` —
+competência resolvida do `period` + `branch_scope`; cross-competence
+e cross-scope = `DocumentNotFound` 404, existência nunca vaza)
+**AND** `business_rule` (vínculo canônico do participante: autor de
+mensagem U9, ator de evento U8 `entity_type=closing_document` ou
+uploader do documento — `list_document_participant_ids` no
+repository; `document_id` é PK global, a competência já foi validada
+na resolução do documento).
+
+**Vínculo como prova, não parâmetro.** O id do participante vindo do
+frontend nunca prova participação — é apenas filtro sobre o conjunto
+canônico derivado do banco. Participante válido no Core mas fora do
+documento não é resolvido; foto fora do documento não é proxied.
+
+**Frontend.** `participantsApi.ts`/`useParticipantProfiles` recebem
+`{period, documentId}`; a chave do efeito inclui contexto + ids e o
+estado resolvido é etiquetado com essa chave — perfis do contexto
+anterior **nunca** aparecem após troca de documento ou competência
+(sem nome/foto stale); `AbortController` + revogação de object URLs
+preservados. Cache não usa `user_id` isolado como chave.
+
+**Core permanece owner.** Diretório de nomes (bearer do caller) e
+person-profile S2S (fotos) inalterados — sem storage local, sem
+duplicação de cadastro, sem URL de avatar por convenção, sem token
+S2S no navegador.
+
+**Audiência.** Conversa/perfil permanecem `INTERNAL` — audiência DRE
+segue `TARGET`. Nenhuma regra de negócio do fechamento foi alterada.

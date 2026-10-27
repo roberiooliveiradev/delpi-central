@@ -659,6 +659,29 @@ class ClosingDocumentService:
             request_hash=_message_request_hash(body=text),
         )
 
+    def document_participant_ids(
+        self,
+        *,
+        period: str,
+        document_id: str,
+        branch_scope: str | None,
+    ) -> set[str]:
+        """RW01 — participantes com vínculo canônico ao documento
+        autorizado. A autorização documental (competência do path +
+        resource scope) precede qualquer consulta ao Core: participante
+        fora do documento recebe o mesmo 404 do documento inexistente —
+        existência de pessoa/documento nunca vaza."""
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        return set(
+            self._repository.list_document_participant_ids(
+                str(document["document_id"])
+            )
+        )
+
     # -- internals ----------------------------------------------------------------
 
     def _document_in_scope(

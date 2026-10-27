@@ -954,6 +954,36 @@ class ClosingDocumentRepository:
             )
         return winner, False
 
+    def list_document_participant_ids(
+        self, document_id: str
+    ) -> list[str]:
+        """Participantes vinculados ao documento (RW01 — Plano 113
+        §23.6): autores de mensagens U9 + atores de eventos U8 +
+        uploader do documento. É a única prova de vínculo aceita —
+        identificador vindo só do frontend nunca basta."""
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT DISTINCT actor AS participant_id FROM (
+                    SELECT author_subject AS actor
+                      FROM {_q('document_message')}
+                     WHERE document_id = %s
+                    UNION
+                    SELECT actor_subject AS actor
+                      FROM {_q('closing_audit_event')}
+                     WHERE entity_type = 'closing_document'
+                       AND entity_id = %s
+                    UNION
+                    SELECT uploaded_by AS actor
+                      FROM {_q('closing_document')}
+                     WHERE document_id = %s
+                ) bound
+                WHERE actor IS NOT NULL
+                """,
+                (document_id, document_id, document_id),
+            )
+            return [str(row["participant_id"]) for row in cur.fetchall()]
+
     # -- internals --------------------------------------------------------------
 
     def _lock_document_for_update(

@@ -192,6 +192,11 @@ Para a Página do usuário:
 - não persistir cópia local de identidade/foto;
 - não criar proxy de write, editor de cargo/contatos nem upload de foto dentro do Portal Controladoria & Finanças.
 
+Leitura de terceiros pela superfície documental (UX-009-RW01):
+- nomes/fotos de **participantes de um documento** só são resolvidos pela BFF dentro do contexto autorizado daquele documento+competência (`_document_in_scope` + vínculo canônico: autor U9, ator U8 ou uploader) — não existe lookup livre de diretório nem de avatar pelo Portal;
+- a prova de participação vem dos dados documentais persistidos, nunca de um id enviado pelo frontend;
+- Core continua owner de nome/foto (diretório com bearer do caller + person-profile S2S); a BFF só decide autorização documental antes de delegar.
+
 Fonte: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 
 ## Regra de conflito

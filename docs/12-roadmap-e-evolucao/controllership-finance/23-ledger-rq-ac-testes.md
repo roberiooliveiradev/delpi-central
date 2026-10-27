@@ -465,3 +465,29 @@ Decisão PO ([Plano 113 §23](./113-plano-canonico-fluxo-fechamento-controladori
 | RQ-UX-10 | U9 preservada | mensagens/idempotência/auditoria/escopo inalterados; regressão detalhe 23/23, plugin 254/254 | PASS |
 | RQ-UX-11 | Falhas honestas de perfil | Core fora → lookup `{}`→fallback; avatar 404→iniciais; gateway 503; UUID inválido 422; lote>50 rejeitado | PASS |
 | RQ-UX-12 | Testes + docs + CLARA | rotas 10/10 · gateway 10/10 · detalhe 23/23 · plugin 254/254 · tsc/ESLint/estruturais PASS · help atualizado | PASS / homologação visual PO PENDING |
+
+
+## Rework UX-009-RW01 — isolamento de participantes (CF-PROC0072-DOCUMENT-DETAIL-UX-009-RW01, 26/10/2026)
+
+REWORK do GPT Arquiteto sobre o contrato de participantes da UX-009:
+lookup/avatar exigiam só `access` e aceitavam ids arbitrários — risco
+de enumeração/exposição de perfis fora do escopo documental. Correção:
+contrato contextual por documento+competência; visual aprovado
+inalterado. Plano 113 §23.6 / doc-112 §44.2.
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-RW01-01 | Lookup exige contexto documental autorizado | `POST /closing/competences/{period}/documents/{id}/participants/lookup`; `_document_in_scope` precede Core | PASS |
+| RQ-RW01-02 | Avatar exige o mesmo contexto | `GET …/participants/{user_id}/avatar`; `branch_scope` opcional igual às rotas U3–U9 | PASS |
+| RQ-RW01-03 | Vínculo canônico é a prova | `list_document_participant_ids`: autor U9 + ator U8 + uploader; id do frontend só filtra | PASS |
+| RQ-RW01-04 | Cross-documento fail-closed | id sem vínculo omitido do lookup; avatar 404 sem consultar Core | PASS |
+| RQ-RW01-05 | Cross-competência fail-closed | competência do path resolve o documento; divergente → `DocumentNotFound` 404 | PASS |
+| RQ-RW01-06 | Resource scope preservado | `branch_scope` MATRIX/BRANCH/BOTH no mesmo `_document_in_scope` de U3/U4/U9 | PASS |
+| RQ-RW01-07 | Sem enumeração | resposta omite ids fora do vínculo; ausência não confirma nem nega existência | PASS |
+| RQ-RW01-08 | Rotas antigas removidas | `/closing/participants/lookup` + `/{user_id}/avatar` fora do router; busca residual: zero consumidores CF | PASS |
+| RQ-RW01-09 | Core segue owner do perfil | diretório (bearer do caller) + person-profile S2S inalterados; sem storage/duplicação local | PASS |
+| RQ-RW01-10 | Sem permission nova | `controllership-finance.access` apenas; sem token 401, sem access 403 | PASS |
+| RQ-RW01-11 | Isolamento de perfis no frontend | hook recebe `{period, documentId}`; estado etiquetado por chave completa; troca de contexto nunca exibe perfil stale | PASS |
+| RQ-RW01-12 | UX aprovada preservada | conversa 520px + composer rodapé, `CfTimeline`, `UnifiedAvatar`/`authorSrc`, fallback de iniciais, histórico/versões intactos | PASS |
+| RQ-RW01-13 | Testes negativos executados | rotas 19/19 (cross-doc, cross-competence, não-participante, sem access, sem token, UUID inválido, >50, Core fora); hook 6/6; detalhe 23/23; plugin; gateway 10/10 | PASS |
+| RQ-RW01-14 | Fallback honesto | sem foto → iniciais; sem perfil → «Participante»; UUID nunca visível | PASS |

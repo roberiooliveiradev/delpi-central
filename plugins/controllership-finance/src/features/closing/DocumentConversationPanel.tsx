@@ -195,6 +195,7 @@ export function DocumentConversationPanel({
   );
 
   const profiles = useParticipantProfiles(
+    { period, documentId },
     useMemo(
       () => (loaded ?? []).map((msg) => msg.author_subject),
       [loaded],

@@ -75,6 +75,38 @@ Regras:
 - o Portal não cria permission nova, tabela de perfil ou storage de foto;
 - resolução de permission indisponível → fail-closed.
 
+## Participantes de documento (UX-009-RW01)
+
+Decisão congelada:
+
+```text
+D3 = nome/foto de participante documental só é resolvido dentro
+     de um documento+competência autorizados ao caller.
+     controllership-finance.access sozinho NÃO basta.
+```
+
+AuthZ server-side (BFF, antes de qualquer chamada ao Core):
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND _document_in_scope(period, document_id, branch_scope)
+AND participant_id ∈ vínculo canônico do documento
+    (autor de mensagem U9 + ator de evento U8 + uploader)
+```
+
+Regras:
+
+- participante fora do documento/competência → mesmo 404 de recurso
+  inexistente; existência de pessoa, documento ou competência nunca vaza;
+- id fornecido pelo frontend nunca prova participação — só filtra o
+  conjunto canônico derivado do banco;
+- não existe lookup livre de diretório/avatar pela superfície
+  documental; rotas livres da UX-009 foram removidas (sem bypass);
+- Core continua owner do perfil — sem storage nem duplicação local;
+- sem foto → iniciais; sem perfil → «Participante»; UUID nunca visível;
+- audiência da conversa/perfil permanece `INTERNAL` (DRE = TARGET).
+
 ## Minhas tarefas
 
 Contrato detalhado: [27-minhas-tarefas.md](./27-minhas-tarefas.md).

@@ -298,6 +298,10 @@ export function DocumentDetailPanel({
     (event) => !TIMELINE_HIDDEN_EVENTS.has(event.event_type),
   );
   const eventProfiles = useParticipantProfiles(
+    {
+      period,
+      documentId: selectedDoc?.document_id ?? "",
+    },
     timelineEvents.map((event) => event.actor_subject),
   );
   const timelineItems = timelineEvents.map((event) =>

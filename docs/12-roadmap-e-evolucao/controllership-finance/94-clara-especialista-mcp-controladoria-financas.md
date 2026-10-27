@@ -399,3 +399,16 @@ O detalhe do documento foi refinado — a CLARA deve descrever em português sim
 - **Foto e nome dos participantes:** mensagens e eventos exibem a foto oficial do perfil do autor (cadastro de pessoas do Portal). Quando a pessoa não tem foto, aparecem as iniciais do nome; quando o perfil não está disponível, aparece «Participante» — nunca um código técnico (UUID) como nome.
 - **Mensagem ≠ evento:** a conversa é discussão livre (não gera marco na linha do tempo nem validação); a linha do tempo registra alterações materiais do documento. Finalidades diferentes, as duas preservadas.
 - **Escopo da CLARA:** a CLARA não lê mensagens, não lê a linha do tempo e não vê fotos — descreve o funcionamento, sem tool MCP nova.
+
+
+## Adendo — Isolamento de participantes por documento (CF-PROC0072-DOCUMENT-DETAIL-UX-009-RW01, 27/10/2026)
+
+Correção de segurança no serviço de nomes/fotos de participantes — a CLARA deve descrever a regra vigente em português simples:
+
+- **Consulta somente dentro do documento autorizado:** nomes e fotos de participantes só podem ser consultados no contexto de um documento e de uma competência aos quais o usuário tem acesso legítimo. Ter acesso ao Portal não basta — é preciso que a pessoa consultada participe daquele documento (autor de mensagem, responsável por evento ou quem anexou o arquivo).
+- **Core continua sendo a fonte oficial:** nomes e fotos continuam vindo do cadastro de pessoas do Portal (Core). A BFF da Controladoria apenas verifica o vínculo documental antes de pedir os dados ao Core — não existe cópia local de perfis nem de fotos.
+- **Não existe consulta livre de avatares:** o Portal não oferece busca livre de pessoas nem de fotos pela tela de documentos. Consultar participante de outro documento ou de outra competência retorna «não encontrado», sem revelar se a pessoa ou o documento existem.
+- **Fallback preservado:** quem não tem foto publicada aparece com as iniciais do nome; perfil indisponível aparece como «Participante» — nunca um código técnico (UUID) como nome.
+- **Nada mudou na conversa nem no histórico:** a conversa por documento, a linha do tempo, a altura da coluna e o campo de escrita no rodapé continuam funcionando como antes — a correção foi somente na autorização.
+- **Sem efeitos colaterais novos:** mensagens continuam não validando documento, não liberando arquivo para a Contabilidade e não gerando notificações; a audiência da DRE/Contabilidade na conversa continua sendo um gate futuro que não existe.
+- **Escopo da CLARA:** a CLARA não consulta perfis, não resolve nomes e não acessa fotos — descreve a regra, sem tool MCP nova.

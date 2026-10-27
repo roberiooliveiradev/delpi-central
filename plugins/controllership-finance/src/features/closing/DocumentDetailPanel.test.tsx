@@ -833,6 +833,7 @@ describe("DocumentDetailPanel — linha do tempo e avatares (UX-009)", () => {
       expect(screen.getByText("Ana Souza")).toBeTruthy(),
     );
     expect(lookupParticipantsMock).toHaveBeenCalledWith(
+      { period: "2026-05", documentId: "d-1" },
       [EVENT.actor_subject],
       expect.anything(),
     );
@@ -927,6 +928,7 @@ describe("DocumentDetailPanel — linha do tempo e avatares (UX-009)", () => {
 
       await waitFor(() =>
         expect(downloadAvatarMock).toHaveBeenCalledWith(
+          { period: "2026-05", documentId: "d-1" },
           author,
           expect.anything(),
         ),
