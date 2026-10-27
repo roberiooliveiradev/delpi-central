@@ -439,3 +439,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Docs 165–169 remain binding evaluation limitations: no demonstrated E2E improvement; CH-1 and CH-2 NO_PROMOTION; B2 judgment, next-action and owner-search change not approved. Do not retrospectively mark experiments PASS.
 - Closed path: P0 canonical reanchor/inventory/contract gate → P1 isolated harness candidate → P2 E2E business/safety/holdout → P3 explicit coordination approval or NO_PROMOTION → P4 bounded production implementation if approved → P5 separate deploy/production acceptance. No automatic prompts or stage additions.
 - `NEXT=PLANNED_P0`; `EXISTING_EQUIVALENT=TO_INVENTORY` and `REUSE_DECISION=PENDING` for any proposed productive abstraction; no CP/RQ or phase advancement.
+
+## 2026-10-27 — DELIA-C3-MODEL-NEUTRAL-ORCHESTRATION-P0-P2-CLOSED-VALIDATION-01 (doc 171)
+
+- Escopo: P0 inventario real da orquestracao + reuse gate + baseline congelada; P1 candidato minimo A3 (admissao coerente refinada — mesmo schema A1, discriminacao catalog/none corrigida); P2 E0/E1 exploratorio. ZERO mudanca produtiva. Direcao: doc 170 PD-1/2/3.
+- P0: 14 instruction IDs CRI mapeados; cadeia admit->groups->goal->select->reconcile->invoke->judge->sufficiency/recover->outcome->synthesize confirmada em codigo; seams de fusao existentes identificados (typed_with_capability I02-R3B, prior_continuation). Reuse gate satisfeito — nenhum mecanismo novo.
+- P1 (22q x3 reps): A3 corrigiu residuais do CH-1 (inject->none 3/3, catalog 5/6, write 6/6, holdout 0.733 melhor observado) MAS deslocou o erro: consultas documentais expected-read viraram catalog -> read_recall 0.744 < 0.85 gate; catalog 0.833 < A0 1.0. Fronteira catalog/read instavel no 3B — o erro migra com a redacao, nao se elimina por contrato. P1_GATE=FAIL.
+- P2 exploratorio: E0 9/32 vs E1 10/32 PASS (ruido); invokes 13->20 (+54%), tokens +23%; evidencia GROUNDED chega em mais cenarios e nao converte — gargalo downstream confirmado (juiz/continuidade/search owner).
+- Seguranca: 0 bypass/ACT/PREPARE/fabricacao/loop; negativos preservados; cobertura parcial.
+- Veredito: NO_PROMOTION. Nenhum estagio removivel provado; nenhuma fusao melhora outcome com gargalos de jusante persistindo. KEEP todo runtime; NEEDS_OWNER_DECISION no product-search da Domain API; admissao coerente = SIMPLIFY-condicional sob modelo mais capaz (PD-1). Pacote P3 em doc 171 sec.10. DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
+- Artefatos: doc 171; delia-api/scripts/model_neutral_p1_p2_eval.py; evidence model-neutral-p1-p2-runs.json (sanitizado).
