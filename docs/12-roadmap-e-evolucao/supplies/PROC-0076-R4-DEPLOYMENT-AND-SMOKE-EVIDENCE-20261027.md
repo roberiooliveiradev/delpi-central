@@ -66,3 +66,40 @@ external_data.schema_migrations  = V001…V006。V006 ：metal_quote_observation
 - Comex NCM  ——  feed ，。
 - plugins_hub collation （ 2.41 vs  2.36），，。
 -  bundle >500KB chunk （），。
+
+## 7. R4.1 — refinamento visual (2026-10-27)
+
+EXECUTION ID: PROC-0076.R4.1 — VISUAL CLEAN REFINEMENT
+DEPLOY SOURCE SHA: 4d89e85079 (origin/main)
+
+### Escopo
+
+Somente `plugins/supplies` (composição/estilos da feature) + reconciliação documental dos docs R4. Sem alteração em BFF, external-data-api, migrations, permissões ou cálculos — sem EXECUTION_DRIFT.
+
+### Mudanças aplicadas
+
+- Hero sem o badge de fonte redundante; apenas o alternador de perspectivas no corpo.
+- Filtros contextuais em `FiltersRow` própria abaixo do hero/cards (indicador/série/NCM/câmbio + Dia/Semana/Mês/Ano + De/Até).
+- `MarketInstrumentCard`: `Fonte pendente` como nota secundária (não badge); grade 3×2 e seleção múltipla preservadas; `aria-pressed`, teclado e foco mantidos; destaque accent apenas nos selecionados.
+- Painéis `MarketIntelligencePanel`/`MarketMetalsPanel`: modo Gráfico/Tabela/Comparação e exportações nos `actions` do `SectionCard`; tabela nula suprimida quando a fonte está indisponível (estado honesto).
+- CSS `.dashboard-supplies-portal`: cluster `sp-panel-actions`, ícone decorativo do KPI oculto nesta feature, borda de card mais leve, classe `__pending` como texto secundário — apenas tokens `--sp-*`/`--delpi-ui-*`.
+- Docs R4 (wireframe aprovado + contrato UX) anotam o refinamento R4.1 (badge → nota secundária).
+
+### Verificação
+
+- `tsc --noEmit`: exit 0.
+- Vitest feature: 25 passed (2 files). Suite completa: 503 passed (51 files).
+- `npm run build`: OK (`App-DhoBazo_.js`, `style-CFWUoALP.css`).
+- eslint `src/features/market-intelligence`: 0 erros, 4 warnings pré-existentes (set-state-in-effect/exhaustive-deps — baseline idêntico com as alterações em stash; erros do plugin inteiro = 5, todos pré-existentes fora da feature).
+- Evidência desktop/mobile, claro/escuro e teclado: INCONCLUSIVE (sem captura de navegador autenticado nesta execução; estados preservados por tokens e `aria-*` conforme kit oficial).
+
+### Deploy e smoke
+
+- `git pull --ff-only` + `up-prod-sequential.sh --build supplies` em srv-api — OK.
+- Bundle novo em `delpi-supplies`: `App-DhoBazo_.js` + `style-CFWUoALP.css` (Oct 26 23:15); remoteEntry.js regenerado apontando `__federation_expose_App-Dt-vXRp4.js` (presente); CSS contém `sp-panel-actions` e `__pending`.
+- Smoke `/tmp/r4_smoke.py` reexecutado: 401/403/200 idênticos; 6 metais selectable/pending; quotes/series 3 séries 0 pontos `source_use_pending`; 404/422 inválidos; compare `insufficient_authorized_series`; fx week 5 períodos `provider_unavailable`; IPP 13 pontos/11 observados, último 2026-08=186.3691; comex 404 allowlist vazia; shell 200.
+
+### Residuais R4.1
+
+- Evidência visual em navegador (screenshots antes/depois, mobile, temas) pendente de sessão autenticada — não há drift funcional; layout aprovado preservado.
+- `R4_1_CLEAN_UX_FUNCTIONAL_IN_PRODUCTION`: estrutura publicada e smoke verde; postcondição visual completa aguarda confirmação visual autenticada.
