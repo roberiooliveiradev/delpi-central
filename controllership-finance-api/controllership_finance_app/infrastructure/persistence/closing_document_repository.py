@@ -762,7 +762,7 @@ class ClosingDocumentRepository:
             "entity_type = 'closing_document'",
             "entity_id = %s",
             "competence_id = %s",
-            "event_type IN (%s, %s, %s, %s, %s, %s)",
+            "event_type IN (%s, %s, %s, %s, %s, %s, %s)",
         ]
         params: list[Any] = [
             document_id,
@@ -773,6 +773,7 @@ class ClosingDocumentRepository:
             "DOCUMENT_CANCELLED",
             "EVIDENCE_ACCEPTED",
             "EVIDENCE_REJECTED",
+            "DOCUMENT_MESSAGE_POSTED",
         ]
         where = " AND ".join(clauses)
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
@@ -798,6 +799,160 @@ class ClosingDocumentRepository:
             )
             items = cur.fetchall()
         return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+    # -- U9 — conversa documental (SLICE-3) ---------------------------------------
+
+    def list_document_messages(
+        self,
+        competence_id: str,
+        document_id: str,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """Mensagens do documento da competência — ordem cronológica
+        ASC (conversa) com `created_at`/`message_id` como desempate
+        estável. Escopo duplo (documento+competência) impede leitura
+        cruzada mesmo que o caller falhe em validar a associação."""
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT count(*) AS total
+                  FROM {_q('document_message')}
+                 WHERE document_id = %s AND competence_id = %s
+                """,
+                (document_id, competence_id),
+            )
+            total = cur.fetchone()["total"]
+            cur.execute(
+                f"""
+                SELECT message_id, document_id, competence_id,
+                       version_no, audience, body, author_subject,
+                       author_name, created_at
+                  FROM {_q('document_message')}
+                 WHERE document_id = %s AND competence_id = %s
+                 ORDER BY created_at ASC, message_id ASC
+                 LIMIT %s OFFSET %s
+                """,
+                (document_id, competence_id, limit, offset),
+            )
+            items = cur.fetchall()
+        return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+    def find_message_by_idempotency(
+        self, document_id: str, idempotency_key: str
+    ) -> dict[str, Any] | None:
+        """Registro de idempotência da mensagem (D-U9=A — key nunca é
+        reutilizada entre documentos: o unique é por documento)."""
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT message_id, document_id, competence_id,
+                       version_no, audience, body, author_subject,
+                       author_name, created_at, request_hash
+                  FROM {_q('document_message')}
+                 WHERE document_id = %s AND idempotency_key = %s
+                """,
+                (document_id, idempotency_key),
+            )
+            return cur.fetchone()
+
+    def create_document_message(
+        self,
+        *,
+        competence_id: str,
+        document_id: str,
+        version_no: int | None,
+        audience: str,
+        body: str,
+        author_subject: str,
+        author_name: str | None,
+        idempotency_key: str,
+        request_hash: str,
+    ) -> tuple[dict[str, Any], bool]:
+        """document_message + `DOCUMENT_MESSAGE_POSTED` numa transação
+        — mensagem e auditoria são inseparáveis.
+
+        `ON CONFLICT (document_id, idempotency_key) DO NOTHING`:
+        corrida perdida aborta a transação — o vencedor é re-lido fora
+        e comparado pelo `request_hash` (replay ⇒ existente;
+        divergente ⇒ `idempotency_conflict`). Retorna
+        ``(mensagem, created)``."""
+        inserted = None
+        with self._conn() as conn:
+            try:
+                with conn.transaction():
+                    with conn.cursor(row_factory=dict_row) as cur:
+                        cur.execute(
+                            f"""
+                            INSERT INTO {_q('document_message')}
+                                (document_id, competence_id, version_no,
+                                 audience, body, author_subject,
+                                 author_name, idempotency_key,
+                                 request_hash)
+                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                            ON CONFLICT (document_id, idempotency_key)
+                                DO NOTHING
+                            RETURNING message_id
+                            """,
+                            (
+                                document_id,
+                                competence_id,
+                                version_no,
+                                audience,
+                                body,
+                                author_subject,
+                                author_name,
+                                idempotency_key,
+                                request_hash,
+                            ),
+                        )
+                        inserted = cur.fetchone()
+                        if inserted is None:
+                            raise _IdempotencyRaceLost()
+                        message_id = str(inserted["message_id"])
+                        self._audit(
+                            cur,
+                            entity_type="closing_document",
+                            entity_id=document_id,
+                            competence_id=competence_id,
+                            event_type="DOCUMENT_MESSAGE_POSTED",
+                            actor=author_subject,
+                            detail={
+                                "message_id": message_id,
+                                "version_no": version_no,
+                            },
+                        )
+            except _IdempotencyRaceLost:
+                pass
+        if inserted is not None:
+            with self._conn() as conn, conn.cursor(
+                row_factory=dict_row
+            ) as cur:
+                cur.execute(
+                    f"""
+                    SELECT message_id, document_id, competence_id,
+                           version_no, audience, body, author_subject,
+                           author_name, created_at
+                      FROM {_q('document_message')}
+                     WHERE message_id = %s
+                    """,
+                    (message_id,),
+                )
+                return cur.fetchone(), True
+        winner = self.find_message_by_idempotency(
+            document_id, idempotency_key
+        )
+        if winner is None:
+            raise PersistenceUnavailable(
+                "Falha ao recuperar mensagem idempotente."
+            )
+        if winner["request_hash"] != request_hash:
+            raise IdempotencyConflict(
+                "Chave de idempotência já utilizada com payload "
+                "divergente."
+            )
+        return winner, False
 
     # -- internals --------------------------------------------------------------
 

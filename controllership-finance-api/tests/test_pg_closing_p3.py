@@ -118,8 +118,7 @@ def _configure_db():
 @pytest.fixture(scope="module")
 def setup(_configure_db):
     applied = mr.run_migrations()
-    assert applied[-9:] == [
-        "V006__p4_pendencies.sql",
+    assert applied[-10:] == [
         "V007__p3_cutoff_reconciliation.sql",
         "V008__p5_packages_review.sql",
         "V009__p3_official_provenance.sql",
@@ -128,6 +127,8 @@ def setup(_configure_db):
         "V012__clara_batch_orchestration.sql",
         "V013__clara_step_up_consent.sql",
         "V014__clara_consent_challenge.sql",
+        "V015__monthly_competence_optional_template.sql",
+        "V016__document_messages.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])

@@ -23,6 +23,7 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     FileMissing,
     Forbidden,
     IdempotencyConflict,
+    InvalidMessage,
     InvalidUpload,
     ItemLockedBySubmittedPackage,
     ItemNotFound,
@@ -67,6 +68,21 @@ def _request_hash(
             "attachment_role": attachment_role,
             "checksum_sha256": checksum_sha256,
         },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+MESSAGE_MAX_CHARS = 4000
+MESSAGE_AUDIENCE_INTERNAL = "INTERNAL"
+
+
+def _message_request_hash(*, body: str) -> str:
+    """Hash canônico do request U9 (D-U9=A): o payload da mensagem é o
+    texto já normalizado — replay idêntico deduplica, divergente 409."""
+    canonical = json.dumps(
+        {"body": body},
         sort_keys=True,
         separators=(",", ":"),
     )
@@ -562,6 +578,85 @@ class ClosingDocumentService:
             str(document["document_id"]),
             limit=limit,
             offset=offset,
+        )
+
+    # -- U9 — conversa documental (SLICE-3) ----------------------------------------
+
+    def list_document_messages(
+        self,
+        *,
+        period: str,
+        document_id: str,
+        actor: str,
+        branch_scope: str | None,
+        limit: int,
+        offset: int,
+    ) -> dict:
+        """Mensagens cronológicas do documento — mesmo escopo de U3:
+        documento inexistente/fora do contexto é 404 (existência nunca
+        vaza). `mine` é derivado do ator autenticado — nunca do client."""
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        result = self._repository.list_document_messages(
+            str(document["competence_id"]),
+            str(document["document_id"]),
+            limit=limit,
+            offset=offset,
+        )
+        for item in result["items"]:
+            item["mine"] = str(item["author_subject"]) == actor
+        return result
+
+    def post_document_message(
+        self,
+        *,
+        period: str,
+        document_id: str,
+        actor: str,
+        author_name: str | None,
+        body: str,
+        idempotency_key: str,
+        branch_scope: str | None = None,
+    ) -> tuple[dict, bool]:
+        """Publica mensagem da conversa (retorna ``(mensagem, created)``).
+
+        D-U9: a Controladoria autorizada (`access` + escopo, exigido na
+        rota) inicia a conversa sem solicitação prévia da DRE — a
+        audiência é sempre `INTERNAL` neste slice. Mensagem NÃO é
+        mutação documental: permitida em `ATTACHED` e `CANCELLED` (a
+        conversa documenta o contexto, inclusive de uma remoção) e não
+        toca estado do documento, validação do item, pacote ou
+        fechamento. `version_no` carimbado = versão corrente no envio.
+        Autoria/data vêm exclusivamente do servidor."""
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        text = (body or "").strip()
+        if not 1 <= len(text) <= MESSAGE_MAX_CHARS:
+            raise InvalidMessage(
+                "A mensagem deve ter entre 1 e 4000 caracteres."
+            )
+        key = (idempotency_key or "").strip()
+        if not 1 <= len(key) <= 128:
+            raise InvalidMessage(
+                "idempotency_key deve ter entre 1 e 128 caracteres."
+            )
+        name = (author_name or "").strip()[:255] or None
+        return self._repository.create_document_message(
+            competence_id=str(document["competence_id"]),
+            document_id=str(document["document_id"]),
+            version_no=document["current_version_no"],
+            audience=MESSAGE_AUDIENCE_INTERNAL,
+            body=text,
+            author_subject=actor,
+            author_name=name,
+            idempotency_key=key,
+            request_hash=_message_request_hash(body=text),
         )
 
     # -- internals ----------------------------------------------------------------

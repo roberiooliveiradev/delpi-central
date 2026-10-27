@@ -590,3 +590,97 @@ Vitest focado: `MonthlyDocumentsPanel` 15/15 (menu, ações, U5, U7, confirmaç�
 9. Deploy local e produção apenas com gates técnicos/operacionais, smoke autenticado e evidência.
 
 **Situação:** PO aprovou a capacidade de **iniciar conversa proativamente**; visual detalhado é `TARGET` e os contratos de colaboração estão `TO_INVENTORY`. Próximo passo: inventário pelo Devin → reconciliação de owners/segurança → implementação incremental autorizada → homologação PO. Não afirmar funcionalidade já entregue.
+
+## 22. RUNTIME UPDATE — Conversa documental implementada (CF-PROC0072-DOCUMENT-INTERACTIONS-008, 27/10/2026)
+
+### 22.1 Contrato U9 implementado (IMPLEMENTED)
+
+**Owner:** `controllership-finance-api`, aggregate `closing_document`
+(`ClosingDocumentService`/`ClosingDocumentRepository` — mesma fonte de
+U1–U8; nenhuma API paralela criada).
+
+- `GET /closing/competences/{period}/documents/{document_id}/messages`
+  — lista cronológica ASC, `limit<=100`/`offset`, `branch_scope`
+  declarado; `mine` derivado do ator autenticado pelo backend.
+- `POST /closing/competences/{period}/documents/{document_id}/messages`
+  — corpo JSON `{body, idempotency_key}`; 201 na criação; replay
+  idêntico retorna a mensagem original com `deduplicated` (200); mesma
+  chave com texto divergente ⇒ 409 `idempotency_conflict`.
+
+**Persistência V016 — `controllership_finance.document_message`:**
+`message_id` PK · `document_id`+`competence_id` (FK, RESTRICT — a chave
+de vínculo nunca é o nome do arquivo) · `version_no` (carimbo contextual
+da versão corrente no envio — a conversa pertence ao documento, não a
+uma versão) · `audience` CHECK fechado em `'INTERNAL'` (somente
+Controladoria; audiência compartilhada com DRE = gate transversal
+futuro) · `body` CHECK 1–4000 chars úteis · `author_subject` UUID +
+`author_name` VARCHAR(255) NULL (snapshot do claim `name`; ausência
+fica NULL e a UI mostra identificação neutra — UUID nunca é nome)
+· `idempotency_key`+`request_hash` com `UNIQUE(document_id,
+idempotency_key)` · `created_at` do servidor. Append-only.
+
+**Segurança (mesmo padrão U3/U4):** `access` efetivo + documento da
+competência do path + filial-contexto declarado — cross-competence e
+cross-scope são 404 (existência nunca vaza). Envio exige `access` +
+escopo + regra de negócio; service principal e ausência de permissão
+falham fechado (403/401).
+
+**Regras de negócio:** a mensagem NÃO é mutação documental — permitida
+em `ATTACHED` e `CANCELLED` (a conversa documenta o contexto,
+inclusive de uma remoção); não altera estado do documento, validação
+do item, pacote nem fechamento; não libera documento à DRE; não exige
+solicitação prévia. Item em pacote submetido não bloqueia a conversa
+(congelamento vale para a evidência, não para o fio).
+
+**Auditoria:** `DOCUMENT_MESSAGE_POSTED` em `closing_audit_event`
+(entidade `closing_document`) na mesma transação da mensagem; detail =
+`message_id`+`version_no`, nunca o corpo. O evento passa a constar do
+filtro de tipos de U8 (trilha completa) e é excluído da linha do tempo
+operacional da UI (mensagens vivem na conversa; downloads continuam
+fora — §20).
+
+### 22.2 Frontend (IMPLEMENTED)
+
+- Coluna direita do detalhe: `Conversa sobre o documento` com
+  `CfMessageThread` + `CfMentionComposer` (factories
+  `createDashboardMessageThread`/`createDashboardMentionComposer` do
+  `@delpi/plugin-ui`, prefixo `cf` — mesmo padrão de Minhas
+  Solicitações, sem import de código de outro contexto).
+- Composer visível já na thread vazia para usuário com `access`;
+  `submitOnEnter={false}` (Enter não envia multiline; Ctrl+Enter e o
+  botão «Enviar mensagem» enviam); rascunho preservado na falha;
+  retry do mesmo texto reutiliza a `idempotencyKey` — sem duplicidade.
+- A mensagem só aparece após confirmação do backend; F5/navegação
+  recarrega a conversa persistida (`key={document_id}` — nenhum estado
+  vaza entre documentos/competências).
+- Item exigido mantém `ItemValidationPanel` em cartão próprio
+  («Validação do documento») — validação P2 e conversa livre são
+  conceitos separados e visíveis como tais.
+- UUID removido também da linha de metadados do documento
+  (`uploaded_by` não é mais exibido como identificação visual).
+
+### 22.3 Fora de escopo entregue / pendente
+
+- Anexos de mensagem, edição/exclusão, menções funcionais, resposta
+  aninhada, contador de não-lidas, notificações e WebSocket: TARGET —
+  exigem contrato/owner próprios (não inventados).
+- Acesso da DRE/Contabilidade à conversa: TARGET — depende do gate de
+  audiência/liberação (audience `INTERNAL` fecha o escopo hoje).
+- Resumo «precisam de atenção» na aba: mantido honesto (solicitações
+  reais); não foi criado contador de mensagens sem contrato de leitura.
+- Homologação visual do composer (temas, mobile): verificada nos
+  contratos do kit; a homologação visual PO permanece o próximo passo.
+
+### 22.4 Evidências (VERIFIED)
+
+- Migration V016 aplicada em banco efêmero via runner canônico;
+  `applied[-1] == V016__document_messages.sql` em todas as suítes PG.
+- Backend: rotas+service 110/110 · PG documental 30/30 (idempotência,
+  deduplicação, conflito 409, cronologia, escopo, FK RESTRICT, CHECK de
+  corpo, auditoria na mesma transação) · demais suítes PG 175/175 ·
+  suíte não-PG 420.
+- Frontend: detalhe 18/18 (envio proativo, confirmação antes de
+  renderizar, retry idempotente, texto preservado na falha, conversa
+  no item exigido) · suíte closing 176/176 · plugin 249/249 ·
+  `tsc -b` PASS · ESLint escopo limpo · build federado PASS
+  (`App-D0zGdiAL.js`).

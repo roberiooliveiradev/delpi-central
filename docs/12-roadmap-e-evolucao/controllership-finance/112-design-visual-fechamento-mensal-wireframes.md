@@ -1714,3 +1714,30 @@ Vitest: painéis 28 testes (inclui regressão de fetch único, retry, versão an
 ## 42. Decisão PO — interação documental iniciada pela Controladoria (26/10/2026)
 
 Após evidências visuais da V0.3, o PO decidiu que **não se deve aguardar mensagem ou solicitação da DRE para permitir a interação**. A Controladoria autorizada precisa iniciar uma conversa persistida no contexto de qualquer documento acessível, ainda que não exista solicitação anterior. PDF/versões à esquerda, conversa real e composer à direita, histórico material abaixo. Isso não implica liberar documento para DRE nem validar P2/P5. Detalhamento visual/funcional e gates de contratos: [Plano 113 §21](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). `PRODUCT_APPROVED` para o comportamento; `TO_INVENTORY` para contratos/backend e `PENDING` para runtime. Não confundir estado vazio honesto da V0.3 com a experiência final desejada.
+
+
+## 43. Execução da conversa documental — registro de implementação (CF-PROC0072-DOCUMENT-INTERACTIONS-008, 27/10/2026)
+
+Resposta ao §42/Plano 113 §21: contrato U9 e frontend entregues.
+
+### 43.1 Backend (BFF `controllership-finance-api`)
+
+- `GET|POST /closing/competences/{period}/documents/{id}/messages` — owner `closing_document` (service/repository U1–U8); `access` + escopo de filial + documento da competência (cross = 404).
+- Migration `V016__document_messages.sql`: tabela `document_message` (append-only; vínculo por `document_id`+`competence_id`; `audience='INTERNAL'` fechada — DRE fora deste slice; `version_no` contextual; `author_name` snapshot do claim `name`, NULL → identificação neutra; `UNIQUE(document_id,idempotency_key)`+`request_hash`).
+- Auditoria `DOCUMENT_MESSAGE_POSTED` na mesma transação (detail sem o corpo); evento incluso no contrato U8 e excluído da timeline operacional.
+- Mensagem permitida em `ATTACHED`/`CANCELLED`; nunca valida, conclui, envia pacote nem libera à DRE.
+
+### 43.2 Detalhe (deep route)
+
+- Coluna direita: `Conversa sobre o documento` — `CfMessageThread` + `CfMentionComposer` do `@delpi/plugin-ui` (adapter `controllershipFinanceUi`, prefixo `cf`), thread com autor/data e `mine`, estado vazio honesto com composer ativo, `submitOnEnter={false}`.
+- Envio confirmado pelo backend antes de renderizar; rascunho preservado na falha; retry reutiliza `idempotency_key`; mensagens carregadas por `document_id` (sem vazamento entre docs/competências).
+- `ItemValidationPanel` permanece em cartão próprio («Validação do documento») — validação e conversa não se confundem.
+- `uploaded_by` (UUID) removido da linha de metadados — identificação visual nunca técnica.
+
+### 43.3 Gates respeitados
+
+Sem nova permission (apenas `access`/`manage` congeladas); sem WebSocket/notificação; sem anexos na mensagem; sem edição/exclusão; sem contador de não-lidas; sem tool MCP ACT. Acesso DRE à conversa permanece `TARGET` aguardando gate de audiência.
+
+### 43.4 Evidência
+
+Backend: 110/110 rotas+service · PG 30/30 (incl. deduplicação, conflito, FK, CHECK, cronologia, auditoria) · outras PG 175/175 · não-PG 420. Frontend: detalhe 18/18 · closing 176/176 · plugin 249/249 · `tsc`/ESLint/build PASS (`App-D0zGdiAL.js`). Migration V016 provada via runner em banco efêmero. Homologação visual PO: `PENDING`.

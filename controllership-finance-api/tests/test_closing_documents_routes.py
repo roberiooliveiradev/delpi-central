@@ -715,3 +715,168 @@ def test_list_events_outside_scope_is_404(service):
     )
     assert response.status_code == 404
     assert response.json()["data"]["error"]["code"] == "document_not_found"
+
+
+# -- U9: conversa documental (SLICE-3) -------------------------------------------
+
+
+def _message(**overrides):
+    row = {
+        "message_id": uuid.uuid4(),
+        "document_id": uuid.uuid4(),
+        "competence_id": uuid.uuid4(),
+        "version_no": 2,
+        "audience": "INTERNAL",
+        "body": "Documento recebido para conferência.",
+        "author_subject": uuid.uuid4(),
+        "author_name": "Ana Souza",
+        "created_at": NOW,
+    }
+    row.update(overrides)
+    return row
+
+
+def _post_message(client: TestClient, doc_id: str, **kwargs):
+    return client.post(
+        f"/closing/competences/2026-05/documents/{doc_id}/messages",
+        json={
+            "body": kwargs.pop("body", "Mensagem de teste"),
+            "idempotency_key": kwargs.pop("idempotency_key", "msg-key-1"),
+            **kwargs,
+        },
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+
+
+def test_list_messages_returns_chronological(service):
+    doc_id = str(uuid.uuid4())
+    service.list_document_messages.return_value = {
+        "items": [
+            _message(mine=True),
+            _message(author_name=None, mine=False),
+        ],
+        "total": 2,
+        "limit": 100,
+        "offset": 0,
+    }
+    response = _client().get(
+        f"/closing/competences/2026-05/documents/{doc_id}/messages",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["total"] == 2
+    assert data["messages"][0]["mine"] is True
+    assert data["messages"][1]["author_name"] is None
+    assert "request_hash" not in data["messages"][0]
+    assert "idempotency_key" not in data["messages"][0]
+
+
+def test_list_messages_forwards_scope_and_pagination(service):
+    service.list_document_messages.return_value = {
+        "items": [], "total": 0, "limit": 10, "offset": 5,
+    }
+    response = _client().get(
+        f"/closing/competences/2026-05/documents/{uuid.uuid4()}"
+        "/messages?branch_scope=MATRIX&limit=10&offset=5",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 200
+    call = service.list_document_messages.call_args.kwargs
+    assert call["branch_scope"] == "MATRIX"
+    assert call["limit"] == 10 and call["offset"] == 5
+
+
+def test_list_messages_outside_scope_is_404(service):
+    service.list_document_messages.side_effect = de.DocumentNotFound("não")
+    response = _client().get(
+        f"/closing/competences/2026-05/documents/{uuid.uuid4()}/messages",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 404
+    assert response.json()["data"]["error"]["code"] == "document_not_found"
+
+
+def test_post_message_returns_201_with_server_fields(service):
+    doc_id = str(uuid.uuid4())
+    service.post_document_message.return_value = (_message(), True)
+    response = _post_message(_client(), doc_id)
+    assert response.status_code == 201
+    data = response.json()["data"]
+    assert data["audience"] == "INTERNAL"
+    assert data["mine"] is True
+    assert data["author_name"] == "Ana Souza"
+    assert "request_hash" not in data
+    call = service.post_document_message.call_args.kwargs
+    assert call["body"] == "Mensagem de teste"
+    assert call["idempotency_key"] == "msg-key-1"
+    # Autoria e nome vêm da identidade autenticada — nunca do payload.
+    assert call["actor"] == "33333333-3333-4333-8333-333333333333"
+    assert call["author_name"] == "Ana Souza"
+
+
+def test_post_message_deduplicated_returns_200(service):
+    service.post_document_message.return_value = (_message(), False)
+    response = _post_message(_client(), str(uuid.uuid4()))
+    assert response.status_code == 200
+    assert response.json()["data"]["deduplicated"] is True
+
+
+def test_post_message_idempotency_conflict_is_409(service):
+    service.post_document_message.side_effect = de.IdempotencyConflict(
+        "divergente"
+    )
+    response = _post_message(_client(), str(uuid.uuid4()))
+    assert response.status_code == 409
+    assert (
+        response.json()["data"]["error"]["code"]
+        == "idempotency_conflict"
+    )
+
+
+def test_post_message_typed_errors(service):
+    service.post_document_message.side_effect = de.DocumentNotFound("não")
+    response = _post_message(_client(), str(uuid.uuid4()))
+    assert response.status_code == 404
+    service.post_document_message.side_effect = de.InvalidMessage(
+        "vazia"
+    )
+    response = _post_message(_client(), str(uuid.uuid4()))
+    assert response.status_code == 422
+    assert (
+        response.json()["data"]["error"]["code"] == "invalid_message"
+    )
+
+
+def test_post_message_requires_body(service):
+    response = _client().post(
+        f"/closing/competences/2026-05/documents/{uuid.uuid4()}/messages",
+        json={"idempotency_key": "k"},
+        headers={"Authorization": f"Bearer {TOKEN}"},
+    )
+    assert response.status_code == 422
+    service.post_document_message.assert_not_called()
+
+
+def test_post_message_without_access_is_403(_auth_pipeline, service):
+    _auth_pipeline["rbac"] = _rbac(permissions=[])
+    response = _post_message(_client(), str(uuid.uuid4()))
+    assert response.status_code == 403
+    service.post_document_message.assert_not_called()
+
+
+def test_post_message_actor_without_claims_name(
+    _auth_pipeline, service, monkeypatch
+):
+    """Claim `name` ausente ⇒ author_name NULL — nunca e-mail/UUID."""
+    monkeypatch.setattr(
+        fa, "validate_token", lambda token: _claims(name=None)
+    )
+    _auth_pipeline["rbac"] = _rbac(name=None)
+    service.post_document_message.return_value = (
+        _message(author_name=None), True,
+    )
+    response = _post_message(_client(), str(uuid.uuid4()))
+    assert response.status_code == 201
+    call = service.post_document_message.call_args.kwargs
+    assert call["author_name"] is None

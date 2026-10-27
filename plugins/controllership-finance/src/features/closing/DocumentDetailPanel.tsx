@@ -11,10 +11,10 @@
  * - `new` — anexação contextual de documento adicional (U1 sem
  *   `snapshot_item_id`): não cria exigência geral nem item fictício.
  *
- * Não existe contrato de conversa livre por documento — a coluna
- * «Interações» mostra decisões/correções reais ou estado vazio honesto;
- * nunca mensagens simuladas. `ATTACHED != VALIDATED`; uma resposta não
- * encerra solicitação automaticamente.
+ * A conversa livre do documento (U9) é persistida no backend — a
+ * Controladoria inicia o fio sem solicitação prévia da DRE (Plano 113
+ * §21). `ATTACHED != VALIDATED`: uma mensagem não valida o documento
+ * nem encerra solicitação automaticamente.
  */
 import {
   useCallback,
@@ -70,6 +70,7 @@ import {
 } from "../../app/controllershipFinanceUi";
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/formatters";
+import { DocumentConversationPanel } from "./DocumentConversationPanel";
 import { ItemValidationPanel } from "./ItemValidationPanel";
 
 type PanelError = { status: number; code: string | null; message: string };
@@ -111,6 +112,14 @@ const EVENT_LABELS: Record<string, string> = {
   DOCUMENT_CANCELLED: "Documento cancelado",
   DOCUMENT_DOWNLOADED: "Download",
 };
+
+/** Eventos auditados que NÃO aparecem na linha do tempo operacional:
+ * downloads são consultas de rotina e mensagens já vivem na conversa —
+ * a trilha de auditoria U8 continua registrando ambos. */
+const TIMELINE_HIDDEN_EVENTS = new Set([
+  "DOCUMENT_DOWNLOADED",
+  "DOCUMENT_MESSAGE_POSTED",
+]);
 
 const ITEM_STATE_LABELS: Record<string, string> = {
   EXPECTED: "Aguardando documento",
@@ -624,9 +633,6 @@ export function DocumentDetailPanel({
                     {effectiveVersionNo !== selectedDoc.current_version_no
                       ? " (versão anterior)"
                       : ""}
-                    {selectedDoc.uploaded_by
-                      ? ` · ${selectedDoc.uploaded_by}`
-                      : ""}
                   </p>
                   {versionList && versionList.length > 0 ? (
                     <ul className="cf-document-detail__versions">
@@ -714,27 +720,38 @@ export function DocumentDetailPanel({
               )}
             </CfSectionCard>
 
-            <CfSectionCard
-              title="Interações"
-              hint={CF_HELP.monthlyClosing.detailInteractions}
-            >
+            <div className="cf-document-detail__side">
               {data.kind === "item" ? (
-                <ItemValidationPanel
-                  period={period}
-                  item={data.item}
-                  onChanged={refresh}
-                />
-              ) : (
-                <CfEmptyState
-                  classNames={cfEmptyStateClassNames}
-                  defaultMessage="Nenhuma solicitação registrada neste documento."
-                />
-              )}
-              <p className="cf-document-detail__meta">
-                A conversa livre por documento ainda não está disponível —
-                as solicitações e decisões registradas aparecem acima.
-              </p>
-            </CfSectionCard>
+                <CfSectionCard
+                  title="Validação do documento"
+                  hint={CF_HELP.monthlyClosing.detailInteractions}
+                >
+                  <ItemValidationPanel
+                    period={period}
+                    item={data.item}
+                    onChanged={refresh}
+                  />
+                </CfSectionCard>
+              ) : null}
+
+              <CfSectionCard
+                title="Conversa sobre o documento"
+                hint={CF_HELP.monthlyClosing.detailConversation}
+              >
+                {selectedDoc ? (
+                  <DocumentConversationPanel
+                    key={selectedDoc.document_id}
+                    period={period}
+                    documentId={selectedDoc.document_id}
+                  />
+                ) : (
+                  <CfEmptyState
+                    classNames={cfEmptyStateClassNames}
+                    defaultMessage="Anexe um documento para conversar sobre ele."
+                  />
+                )}
+              </CfSectionCard>
+            </div>
           </div>
 
           <CfSectionCard
@@ -744,14 +761,14 @@ export function DocumentDetailPanel({
             {selectedDoc &&
             eventList &&
             eventList.filter(
-              (e) => e.event_type !== "DOCUMENT_DOWNLOADED",
+              (e) => !TIMELINE_HIDDEN_EVENTS.has(e.event_type),
             ).length > 0 ? (
               <ul
                 className="cf-document-detail__history"
                 aria-label="Histórico do documento"
               >
                 {eventList
-                  .filter((e) => e.event_type !== "DOCUMENT_DOWNLOADED")
+                  .filter((e) => !TIMELINE_HIDDEN_EVENTS.has(e.event_type))
                   .map((event) => (
                   <li key={event.event_id}>
                     <strong>
@@ -776,8 +793,9 @@ export function DocumentDetailPanel({
             )}
             {selectedDoc ? (
               <p className="cf-document-detail__meta">
-                Downloads ficam registrados na trilha de auditoria, não
-                nesta linha do tempo.
+                Downloads e mensagens da conversa ficam fora desta linha
+                do tempo — a trilha de auditoria completa permanece
+                registrada.
               </p>
             ) : null}
           </CfSectionCard>

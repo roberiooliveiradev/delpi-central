@@ -208,8 +208,10 @@ export const CF_HELP = {
     detailFile:
       "Prévia, download e versões do arquivo. «Enviar nova versão» cria uma versão nova — a anterior fica preservada no histórico e pode ser selecionada na lista de versões. Se a prévia falhar, «Tentar novamente» recarrega e o download continua disponível. «Remover documento» retira o arquivo da lista sem apagar versões e histórico — a exigência continua valendo.",
     detailInteractions:
-      "Solicitações e decisões reais registradas neste documento (ajuste solicitado, conferido, revertido) com autor e data. A conversa livre por documento ainda não está disponível.",
+      "Solicitações e decisões reais registradas neste documento (ajuste solicitado, conferido, revertido) com autor e data. São atos formais de validação — diferentes das mensagens da conversa.",
+    detailConversation:
+      "Conversa livre sobre este documento, iniciada pela Controladoria quando necessário — não é preciso esperar solicitação da Contabilidade. Cada mensagem é gravada com autor e data e permanece disponível ao recarregar a página. Uma mensagem não valida o documento, não encerra solicitações de ajuste e não libera o arquivo para a Contabilidade.",
     detailHistory:
-      "Linha do tempo operacional do documento: anexação, novas versões e remoção — sempre com autor e data. Downloads ficam na trilha de auditoria técnica e não aparecem aqui. Versões anteriores permanecem disponíveis.",
+      "Linha do tempo operacional do documento: anexação, novas versões e remoção — sempre com autor e data. Downloads e mensagens da conversa ficam fora daqui; a trilha de auditoria técnica permanece completa. Versões anteriores permanecem disponíveis.",
   },
 } as const;

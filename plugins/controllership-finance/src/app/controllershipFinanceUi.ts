@@ -9,6 +9,8 @@ import {
   createDashboardEventsSection,
   createDashboardInteractiveDataCard,
   createDashboardLoadingActivityCard,
+  createDashboardMentionComposer,
+  createDashboardMessageThread,
   createDashboardMetricStrip,
   createMetricKpiCard,
   createDashboardPageHero,
@@ -131,6 +133,8 @@ export const CfTitleWithHelp = createDashboardTitleWithHelp({
   },
 });
 export const CfSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
+export const CfMessageThread = createDashboardMessageThread(UI_PREFIX);
+export const CfMentionComposer = createDashboardMentionComposer(UI_PREFIX);
 export const cfConfirmModalClassNames = confirmModalBemClasses(UI_PREFIX);
 export const CfDialog = createHostContainedModalShell({
   prefix: UI_PREFIX,

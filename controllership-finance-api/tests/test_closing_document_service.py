@@ -892,3 +892,177 @@ def test_list_events_outside_scope_is_404(tmp_path):
             offset=0,
         )
     repo.list_document_events.assert_not_called()
+
+
+# -- U9 — conversa documental ----------------------------------------------------
+
+
+def _message_kwargs(**overrides):
+    kw = {
+        "period": "2026-05",
+        "document_id": str(uuid.uuid4()),
+        "actor": str(uuid.uuid4()),
+        "author_name": "Ana Souza",
+        "body": "Documento recebido. Favor conferir.",
+        "idempotency_key": "msg-key-1",
+    }
+    kw.update(overrides)
+    return kw
+
+
+def test_post_message_stamps_version_audience_and_author(tmp_path):
+    repo = _repo()
+    actor = str(uuid.uuid4())
+    repo.get_document_by_id.return_value = _attached_doc(
+        current_version_no=3
+    )
+    repo.create_document_message.return_value = ({}, True)
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    message, created = service.post_document_message(
+        **_message_kwargs(actor=actor)
+    )
+    assert created is True
+    call = repo.create_document_message.call_args.kwargs
+    assert call["version_no"] == 3
+    assert call["audience"] == "INTERNAL"
+    assert call["author_subject"] == actor
+    assert call["author_name"] == "Ana Souza"
+    assert call["body"] == "Documento recebido. Favor conferir."
+    assert call["request_hash"]
+
+
+def test_post_message_on_cancelled_document_allowed(tmp_path):
+    """Conversa não é mutação do documento — CANCELLED mantém contexto."""
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        state="CANCELLED"
+    )
+    repo.create_document_message.return_value = ({}, True)
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    _message, created = service.post_document_message(**_message_kwargs())
+    assert created is True
+
+
+def test_post_message_trims_and_validates_body(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    repo.create_document_message.return_value = ({}, True)
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.post_document_message(
+        **_message_kwargs(body="  texto com margem  ")
+    )
+    assert (
+        repo.create_document_message.call_args.kwargs["body"]
+        == "texto com margem"
+    )
+    with pytest.raises(de.InvalidMessage):
+        service.post_document_message(**_message_kwargs(body="   "))
+    with pytest.raises(de.InvalidMessage):
+        service.post_document_message(
+            **_message_kwargs(body="x" * 4001)
+        )
+    repo.create_document_message.assert_called_once()
+
+
+def test_post_message_validates_idempotency_key(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.InvalidMessage):
+        service.post_document_message(
+            **_message_kwargs(idempotency_key="")
+        )
+    repo.create_document_message.assert_not_called()
+
+
+def test_post_message_long_name_truncated_to_column(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    repo.create_document_message.return_value = ({}, True)
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.post_document_message(
+        **_message_kwargs(author_name="n" * 400)
+    )
+    call = repo.create_document_message.call_args.kwargs
+    assert len(call["author_name"]) == 255
+
+
+def test_post_message_blank_name_becomes_none(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    repo.create_document_message.return_value = ({}, True)
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    service.post_document_message(**_message_kwargs(author_name="  "))
+    assert (
+        repo.create_document_message.call_args.kwargs["author_name"]
+        is None
+    )
+
+
+def test_post_message_outside_scope_is_404(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        branch_scope="MATRIX"
+    )
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentNotFound):
+        service.post_document_message(
+            **_message_kwargs(branch_scope="BRANCH")
+        )
+    repo.create_document_message.assert_not_called()
+
+
+def test_post_message_deduplicated_replay(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc()
+    original = {"message_id": uuid.uuid4()}
+    repo.create_document_message.return_value = (original, False)
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    message, created = service.post_document_message(**_message_kwargs())
+    assert created is False
+    assert message is original
+
+
+def test_list_messages_marks_mine_from_actor(tmp_path):
+    repo = _repo()
+    actor = str(uuid.uuid4())
+    other = str(uuid.uuid4())
+    repo.get_document_by_id.return_value = _attached_doc()
+    repo.list_document_messages.return_value = {
+        "items": [
+            {"author_subject": uuid.UUID(actor), "body": "a"},
+            {"author_subject": uuid.UUID(other), "body": "b"},
+        ],
+        "total": 2,
+        "limit": 100,
+        "offset": 0,
+    }
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    result = service.list_document_messages(
+        period="2026-05",
+        document_id="doc-1",
+        actor=actor,
+        branch_scope=None,
+        limit=100,
+        offset=0,
+    )
+    assert result["items"][0]["mine"] is True
+    assert result["items"][1]["mine"] is False
+
+
+def test_list_messages_outside_scope_is_404(tmp_path):
+    repo = _repo()
+    repo.get_document_by_id.return_value = _attached_doc(
+        branch_scope="MATRIX"
+    )
+    service = ClosingDocumentService(repo, _storage(tmp_path))
+    with pytest.raises(de.DocumentNotFound):
+        service.list_document_messages(
+            period="2026-05",
+            document_id="doc-1",
+            actor=str(uuid.uuid4()),
+            branch_scope="BRANCH",
+            limit=100,
+            offset=0,
+        )
+    repo.list_document_messages.assert_not_called()

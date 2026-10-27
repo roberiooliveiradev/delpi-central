@@ -369,7 +369,21 @@ A segunda aba do Fechamento mensal está implementada — a CLARA deve descrevê
 - **Pesquisa e filtro:** pesquisar por nome e filtrar por situação (aguardando documento, com ajuste solicitado, com arquivo enviado, conferido) ficam na URL — a troca de mês e o retorno do detalhe preservam o contexto.
 - **Documento adicional:** arquivo anexado somente àquele fechamento. Não vira exigência geral, não se torna obrigatório nos meses seguintes e não altera fechamentos concluídos.
 - **Detalhe do documento:** aberto pelo cartão ou por deep link `…/documents/{ref}`. Mostra prévia do arquivo, versões (a anterior fica preservada ao enviar nova versão), download autorizado, solicitações/decisões reais e histórico auditável (anexação, versão, download, cancelamento).
-- **Solicitações de ajuste:** são decisões reais registradas pelos revisores, com motivo e comentário. «Abrir conversa» leva ao detalhe. **Não existe conversa livre por documento ainda** — a CLARA não deve afirmar que há chat/mensagens; o que existe são decisões e histórico.
+- **Solicitações de ajuste:** são decisões reais registradas pelos revisores, com motivo e comentário. «Abrir conversa» leva ao detalhe do documento, onde também existe a conversa livre (ver adendo U9 abaixo).
 - **Anexo ≠ validação ≠ liberação:** arquivo enviado (`ATTACHED`) não significa conferido nem liberado para a Contabilidade/DRE. Uma resposta não encerra a solicitação automaticamente.
 - Estado vazio («Nenhum documento exigido para este fechamento») é normal, não erro.
 
+
+## Adendo — Conversa documental U9 (CF-PROC0072-DOCUMENT-INTERACTIONS-008, 27/10/2026)
+
+A conversa livre por documento está **implementada** — a CLARA deve descrevê-la em português simples:
+
+- **Início proativo:** a Controladoria autorizada pode iniciar a conversa de qualquer documento acessível do Fechamento mensal, mesmo sem nenhuma mensagem ou solicitação anterior da Contabilidade/DRE. Não é preciso «esperar a DRE perguntar».
+- **Onde fica:** no detalhe do documento (deep route `…/documents/{ref}`), na coluna direita «Conversa sobre o documento» — PDF e versões à esquerda, conversa à direita, histórico abaixo.
+- **Persistência real:** cada mensagem é gravada no backend com autor e data do servidor e permanece disponível ao recarregar a página, trocar de aba ou voltar depois. Não existem mensagens fictícias em estado de tela.
+- **Sem efeito colateral:** uma mensagem **não** valida o documento, **não** encerra solicitação de ajuste, **não** envia pacote e **não** libera arquivo para a Contabilidade. Responder não é um ato formal — os atos formais continuam sendo a validação do item (P2) e a revisão do pacote (P5).
+- **Audiência interna:** neste momento a conversa é somente da Controladoria. A Contabilidade/DRE **não** visualiza mensagens nem arquivos não liberados — o acesso dela ao fio depende de um gate futuro de audiência/liberação que ainda não existe. A CLARA não deve afirmar que a DRE lê a conversa.
+- **Documento cancelado:** a conversa continua acessível e pode receber mensagens — a remoção lógica do arquivo não apaga o contexto da discussão.
+- **Confiabilidade do envio:** se o envio falhar, o texto é preservado para nova tentativa; tentativas repetidas não criam mensagens duplicadas (deduplicação por chave idempotente do servidor).
+- **Sem tempo real:** as mensagens aparecem na tela após a confirmação do envio; não há notificação, contador de não-lidas nem atualização ao vivo (WebSocket) — a CLARA não deve prometer esses recursos.
+- **Escopo da CLARA:** não existe tool MCP para ler ou escrever mensagens — a CLARA conhece o funcionamento, mas não participa da conversa.

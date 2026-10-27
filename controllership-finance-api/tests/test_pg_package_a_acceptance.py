@@ -131,6 +131,8 @@ def env(_configure_db):
         "V012__clara_batch_orchestration.sql",
         "V013__clara_step_up_consent.sql",
         "V014__clara_consent_challenge.sql",
+        "V015__monthly_competence_optional_template.sql",
+        "V016__document_messages.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])

@@ -23,6 +23,8 @@ const listDocsMock = vi.fn();
 const getDocMock = vi.fn();
 const listVersionsMock = vi.fn();
 const listEventsMock = vi.fn();
+const listMessagesMock = vi.fn();
+const postMessageMock = vi.fn();
 const downloadMock = vi.fn();
 const saveBlobMock = vi.fn();
 const uploadMock = vi.fn();
@@ -63,6 +65,8 @@ vi.mock("../../api/documentsApi", () => ({
   uploadClosingDocument: (...args: unknown[]) => uploadMock(...args),
   replaceClosingDocument: (...args: unknown[]) => replaceMock(...args),
   cancelClosingDocument: (...args: unknown[]) => cancelDocMock(...args),
+  listDocumentMessages: (...args: unknown[]) => listMessagesMock(...args),
+  postDocumentMessage: (...args: unknown[]) => postMessageMock(...args),
 }));
 
 import { ApiError } from "../../api/httpClient";
@@ -142,6 +146,12 @@ beforeEach(() => {
     events: [],
     total: 0,
     limit: 50,
+    offset: 0,
+  });
+  listMessagesMock.mockResolvedValue({
+    messages: [],
+    total: 0,
+    limit: 100,
     offset: 0,
   });
   downloadMock.mockResolvedValue(new Blob(["pdf"]));
@@ -335,11 +345,13 @@ describe("DocumentDetailPanel — documento adicional", () => {
     );
     await waitFor(() =>
       expect(
-        screen.getByText(/Nenhuma solicitação registrada/),
+        screen.getByText(
+          /Nenhuma mensagem ainda\. Você pode iniciar a conversa/,
+        ),
       ).toBeTruthy(),
     );
     expect(
-      screen.getByText(/conversa livre por documento ainda não está disponível/),
+      screen.getByRole("button", { name: "Enviar mensagem" }),
     ).toBeTruthy();
   });
 });
@@ -576,6 +588,194 @@ describe("DocumentDetailPanel — prévia e ciclo de vida", () => {
     expect(screen.queryByText("Download", { exact: true })).toBeNull();
     expect(
       screen.getByText(/trilha de auditoria/),
+    ).toBeTruthy();
+  });
+});
+
+describe("DocumentDetailPanel — conversa do documento (U9)", () => {
+  const MESSAGE = {
+    message_id: "m-1",
+    document_id: "d-1",
+    competence_id: "c-1",
+    version_no: 1,
+    audience: "INTERNAL",
+    body: "Documento recebido para conferência.",
+    author_subject: "u-9",
+    author_name: "Ana Souza",
+    created_at: "2026-05-12T10:00:00Z",
+    mine: false,
+  };
+
+  function renderDocument() {
+    getDocMock.mockResolvedValue({ ...DOC });
+    renderDetail("d-1");
+  }
+
+  it("carrega a conversa persistida com autor e texto", async () => {
+    listMessagesMock.mockResolvedValue({
+      messages: [MESSAGE],
+      total: 1,
+      limit: 100,
+      offset: 0,
+    });
+
+    renderDocument();
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Documento recebido para conferência\./),
+      ).toBeTruthy(),
+    );
+    expect(screen.getByText(/Ana Souza/)).toBeTruthy();
+    expect(listMessagesMock).toHaveBeenCalledWith(
+      "2026-05",
+      "d-1",
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(
+      screen.getByRole("button", { name: "Enviar mensagem" }),
+    ).toBeTruthy();
+  });
+
+  it("envia a primeira mensagem e exibe somente após confirmação", async () => {
+    postMessageMock.mockResolvedValue({ ...MESSAGE, mine: true });
+
+    renderDocument();
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Nenhuma mensagem ainda/),
+      ).toBeTruthy(),
+    );
+    fireEvent.change(
+      screen.getByLabelText(
+        "Escreva uma mensagem sobre este documento…",
+      ),
+      { target: { value: "Favor conferir os valores de setembro." } },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Enviar mensagem" }),
+    );
+
+    await waitFor(() =>
+      expect(postMessageMock).toHaveBeenCalledWith(
+        "2026-05",
+        "d-1",
+        {
+          body: "Favor conferir os valores de setembro.",
+          idempotencyKey: expect.any(String),
+        },
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Documento recebido para conferência\./),
+      ).toBeTruthy(),
+    );
+    expect(
+      (screen.getByLabelText(
+        "Escreva uma mensagem sobre este documento…",
+      ) as HTMLTextAreaElement).value,
+    ).toBe("");
+  });
+
+  it("falha no envio preserva o texto e mostra erro", async () => {
+    postMessageMock.mockRejectedValue(
+      new Error("boom"),
+    );
+
+    renderDocument();
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Nenhuma mensagem ainda/),
+      ).toBeTruthy(),
+    );
+    fireEvent.change(
+      screen.getByLabelText(
+        "Escreva uma mensagem sobre este documento…",
+      ),
+      { target: { value: "Texto que deve sobreviver." } },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Enviar mensagem" }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Falha ao enviar a mensagem/),
+      ).toBeTruthy(),
+    );
+    expect(
+      (screen.getByLabelText(
+        "Escreva uma mensagem sobre este documento…",
+      ) as HTMLTextAreaElement).value,
+    ).toBe("Texto que deve sobreviver.");
+  });
+
+  it("retry do mesmo texto reutiliza a idempotency_key", async () => {
+    postMessageMock
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockResolvedValueOnce({ ...MESSAGE, mine: true });
+
+    renderDocument();
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Nenhuma mensagem ainda/),
+      ).toBeTruthy(),
+    );
+    fireEvent.change(
+      screen.getByLabelText(
+        "Escreva uma mensagem sobre este documento…",
+      ),
+      { target: { value: "Mesma tentativa" } },
+    );
+    const send = () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Enviar mensagem" }),
+      );
+    send();
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Falha ao enviar a mensagem/),
+      ).toBeTruthy(),
+    );
+    send();
+    await waitFor(() =>
+      expect(postMessageMock).toHaveBeenCalledTimes(2),
+    );
+    const first = postMessageMock.mock.calls[0][2] as {
+      idempotencyKey: string;
+    };
+    const second = postMessageMock.mock.calls[1][2] as {
+      idempotencyKey: string;
+    };
+    expect(second.idempotencyKey).toBe(first.idempotencyKey);
+  });
+
+  it("item exigido também tem conversa no documento selecionado", async () => {
+    getItemMock.mockResolvedValue(ITEM);
+    listDocsMock.mockResolvedValue({
+      documents: [DOC],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+
+    renderDetail("item:CK-E-01");
+
+    await waitFor(() =>
+      expect(listMessagesMock).toHaveBeenCalledWith(
+        "2026-05",
+        "d-1",
+        expect.anything(),
+        expect.anything(),
+      ),
+    );
+    expect(
+      screen.getByRole("button", { name: "Enviar mensagem" }),
     ).toBeTruthy();
   });
 });

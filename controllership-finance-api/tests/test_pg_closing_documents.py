@@ -126,6 +126,8 @@ def setup(_configure_db):
         "V012__clara_batch_orchestration.sql",
         "V013__clara_step_up_consent.sql",
         "V014__clara_consent_challenge.sql",
+        "V015__monthly_competence_optional_template.sql",
+        "V016__document_messages.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])
@@ -850,3 +852,135 @@ def test_list_document_events_scoped_and_filtered(setup):
     assert [e["event_type"] for e in other_events["items"]] == [
         "DOCUMENT_UPLOADED"
     ]
+
+
+# -- U9 — conversa documental (V016) ---------------------------------------------
+
+
+def _message_kwargs(doc, **over):
+    kw = {
+        "competence_id": str(doc["competence_id"]),
+        "document_id": str(doc["document_id"]),
+        "version_no": doc["current_version_no"],
+        "audience": "INTERNAL",
+        "body": "Documento disponibilizado para conferência.",
+        "author_subject": VIEWER,
+        "author_name": "Ana Souza",
+        "idempotency_key": f"msg-{uuid.uuid4().hex[:12]}",
+        "request_hash": uuid.uuid4().hex * 2,
+    }
+    kw.update(over)
+    return kw
+
+
+def test_create_document_message_persists_and_audits(setup):
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-msg-1"))
+    message, created = docs.create_document_message(
+        **_message_kwargs(doc)
+    )
+    assert created is True
+    assert message["audience"] == "INTERNAL"
+    assert message["author_name"] == "Ana Souza"
+    assert message["version_no"] == doc["current_version_no"]
+    assert message["body"] == "Documento disponibilizado para conferência."
+    assert str(message["document_id"]) == str(doc["document_id"])
+    assert str(message["competence_id"]) == setup["competence_id"]
+
+    # Auditoria na mesma transação — sem corpo da mensagem no detail.
+    events = docs.list_document_events(
+        setup["competence_id"], str(doc["document_id"])
+    )
+    kinds = [e["event_type"] for e in events["items"]]
+    assert "DOCUMENT_MESSAGE_POSTED" in kinds
+    posted = next(
+        e
+        for e in events["items"]
+        if e["event_type"] == "DOCUMENT_MESSAGE_POSTED"
+    )
+    assert posted["detail"]["message_id"] == str(message["message_id"])
+    assert "body" not in posted["detail"]
+
+
+def test_document_message_idempotent_replay(setup):
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-msg-2"))
+    kw = _message_kwargs(doc, idempotency_key="msg-dedup")
+    first, created_first = docs.create_document_message(**kw)
+    second, created_second = docs.create_document_message(**kw)
+    assert created_first is True
+    assert created_second is False
+    assert str(second["message_id"]) == str(first["message_id"])
+
+
+def test_document_message_divergent_key_conflicts(setup):
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-msg-3"))
+    docs.create_document_message(
+        **_message_kwargs(doc, idempotency_key="msg-conflict")
+    )
+    with pytest.raises(de.IdempotencyConflict):
+        docs.create_document_message(
+            **_message_kwargs(
+                doc,
+                idempotency_key="msg-conflict",
+                request_hash="f" * 64,
+            )
+        )
+
+
+def test_document_message_empty_body_rejected_by_check(setup):
+    docs = setup["docs"]
+    doc, _ = docs.create_document(**_doc_kwargs(setup, "k-msg-4"))
+    with pytest.raises(psycopg.errors.CheckViolation):
+        docs.create_document_message(
+            **_message_kwargs(doc, body="   ")
+        )
+
+
+def test_list_document_messages_chronological_and_scoped(setup):
+    docs = setup["docs"]
+    first_doc, _ = docs.create_document(**_doc_kwargs(setup, "k-msg-5a"))
+    other_doc, _ = docs.create_document(**_doc_kwargs(setup, "k-msg-5b"))
+    docs.create_document_message(
+        **_message_kwargs(first_doc, body="primeira")
+    )
+    docs.create_document_message(
+        **_message_kwargs(first_doc, body="segunda")
+    )
+    docs.create_document_message(
+        **_message_kwargs(other_doc, body="outro documento")
+    )
+    result = docs.list_document_messages(
+        setup["competence_id"], str(first_doc["document_id"])
+    )
+    assert result["total"] == 2
+    assert [m["body"] for m in result["items"]] == [
+        "primeira",
+        "segunda",
+    ]
+    page = docs.list_document_messages(
+        setup["competence_id"],
+        str(first_doc["document_id"]),
+        limit=1,
+        offset=1,
+    )
+    assert page["total"] == 2
+    assert page["items"][0]["body"] == "segunda"
+
+
+def test_document_message_fk_restricts_orphans(setup):
+    docs = setup["docs"]
+    # document_id inexistente ⇒ FK RESTRICT — mensagem nunca fica órfã.
+    with pytest.raises(psycopg.errors.ForeignKeyViolation):
+        docs.create_document_message(
+            competence_id=setup["competence_id"],
+            document_id=str(uuid.uuid4()),
+            version_no=1,
+            audience="INTERNAL",
+            body="órfã",
+            author_subject=VIEWER,
+            author_name=None,
+            idempotency_key="msg-orphan",
+            request_hash=uuid.uuid4().hex * 2,
+        )

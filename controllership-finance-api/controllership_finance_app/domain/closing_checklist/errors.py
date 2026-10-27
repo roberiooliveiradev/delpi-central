@@ -339,3 +339,11 @@ class ReviewerNotEligible(ChecklistDomainError):
 class ItemLockedBySubmittedPackage(ChecklistDomainError):
     code = "item_locked_by_submitted_package"
     status = 409
+
+
+class InvalidMessage(ChecklistDomainError):
+    """Corpo/chave de mensagem fora do contrato U9 (1–4000 chars úteis,
+    idempotency_key 1–128)."""
+
+    code = "invalid_message"
+    status = 422

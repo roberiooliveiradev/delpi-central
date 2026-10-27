@@ -923,3 +923,69 @@ export function FilePreviewView(props: {
       : (props.title ?? state?.kind ?? "");
   return el("div", { "data-testid": "file-preview" }, content);
 }
+
+// -- Colaboração (U9) — render simples e controlado --------------------------
+
+export type MockMessageThreadItem = {
+  id: string;
+  bodyText: string;
+  createdAtLabel?: string;
+  authorName?: string | null;
+  mine?: boolean;
+};
+
+export function createDashboardMessageThread() {
+  return function MessageThread(props: {
+    messages?: readonly MockMessageThreadItem[];
+    emptyLabel?: string;
+    listAriaLabel?: string;
+  }) {
+    const items = props.messages ?? [];
+    return el(
+      "ul",
+      { "aria-label": props.listAriaLabel },
+      items.length === 0 ? el("li", null, props.emptyLabel) : null,
+      items.map((item) =>
+        el(
+          "li",
+          { key: item.id, "data-mine": item.mine ? "true" : "false" },
+          `${item.authorName ?? ""} ${item.createdAtLabel ?? ""} ${item.bodyText}`,
+        ),
+      ),
+    );
+  };
+}
+
+export function createDashboardMentionComposer() {
+  return function MentionComposer(props: {
+    value?: string;
+    onChange?: (value: string) => void;
+    onSubmit?: (markdown: string) => void;
+    disabled?: boolean;
+    submitting?: boolean;
+    labels?: { placeholder?: string; sendAriaLabel?: string };
+  }) {
+    return el(
+      "div",
+      null,
+      el("textarea", {
+        "aria-label": props.labels?.placeholder,
+        value: props.value ?? "",
+        disabled: props.disabled,
+        onChange: (event: { target: { value: string } }) =>
+          props.onChange?.(event.target.value),
+      }),
+      el(
+        "button",
+        {
+          type: "button",
+          "aria-label": props.labels?.sendAriaLabel,
+          disabled: props.disabled,
+          onClick: () => props.onSubmit?.(props.value ?? ""),
+        },
+        props.submitting ? "Enviando…" : "Enviar mensagem",
+      ),
+    );
+  };
+}
+

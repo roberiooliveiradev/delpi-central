@@ -475,3 +475,132 @@ def list_document_audit(
         },
         operation_id="list_document_audit",
     )
+
+
+# -- SLICE-3: U9 conversa documental ---------------------------------------------
+
+
+def _message_view(row: dict, *, mine: bool | None = None) -> dict:
+    """Contrato público da mensagem — sem `idempotency_key`/`request_hash`
+    (mecanismo interno) e sem dados de autenticação. `author_name` é o
+    snapshot resolvido no envio; NULL → a UI mostra identificação neutra
+    (nunca o UUID como nome)."""
+    view = {
+        "message_id": str(row["message_id"]),
+        "document_id": str(row["document_id"]),
+        "competence_id": str(row["competence_id"]),
+        "version_no": row["version_no"],
+        "audience": row["audience"],
+        "body": row["body"],
+        "author_subject": str(row["author_subject"]),
+        "author_name": row.get("author_name"),
+        "created_at": row["created_at"].isoformat()
+        if row["created_at"]
+        else None,
+    }
+    if mine is not None:
+        view["mine"] = mine
+    return view
+
+
+def _author_name(user) -> str | None:
+    """Nome de exibição do ator autenticado (claim `name` do middleware).
+    Sem fallback para e-mail/UUID — ausência fica NULL e a UI resolve a
+    identificação neutra, sem inventar identidade."""
+    name = (getattr(user, "name", None) or "").strip()
+    return name if name and "@" not in name else None
+
+
+class PostMessageRequest(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+
+
+@router.get(
+    "/{period}/documents/{document_id}/messages",
+    operation_id="list_document_messages",
+)
+def list_document_messages(
+    request: Request,
+    period: str = Path(pattern=PERIOD_PATTERN),
+    document_id: uuid.UUID = Path(),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
+    limit: int = Query(default=100, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    """U9 — conversa do documento: cronológica, delimitada à competência
+    do path e ao filial-contexto declarado (cross = 404). `mine` é
+    derivado do ator autenticado pelo backend."""
+    user = authorized_user(request)
+    try:
+        result = _service().list_document_messages(
+            period=period,
+            document_id=str(document_id),
+            actor=actor_subject(user),
+            branch_scope=branch_scope,
+            limit=limit,
+            offset=offset,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "list_document_messages")
+    return ok(
+        {
+            "messages": [
+                _message_view(r, mine=r.get("mine"))
+                for r in result["items"]
+            ],
+            "total": result["total"],
+            "limit": result["limit"],
+            "offset": result["offset"],
+        },
+        operation_id="list_document_messages",
+    )
+
+
+@router.post(
+    "/{period}/documents/{document_id}/messages",
+    operation_id="post_document_message",
+    status_code=201,
+)
+def post_document_message(
+    request: Request,
+    body: PostMessageRequest,
+    period: str = Path(pattern=PERIOD_PATTERN),
+    document_id: uuid.UUID = Path(),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
+):
+    """U9 — início/resposta de conversa pela Controladoria autorizada
+    (`access` + escopo + documento da competência): não exige solicitação
+    DRE prévia, não valida documento, não libera para Contabilidade e
+    não altera pacote/fechamento. Autoria/data são do servidor; replay
+    idempotente retorna a original (`deduplicated`), divergente 409."""
+    user = authorized_user(request)
+    try:
+        message, created = _service().post_document_message(
+            period=period,
+            document_id=str(document_id),
+            actor=actor_subject(user),
+            author_name=_author_name(user),
+            body=body.body,
+            idempotency_key=body.idempotency_key,
+            branch_scope=branch_scope,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "post_document_message")
+    data = _message_view(message, mine=True)
+    if not created:
+        data["deduplicated"] = True
+    return ok(
+        data,
+        message=(
+            "Mensagem enviada."
+            if created
+            else "Mensagem já registrada para esta chave de idempotência."
+        ),
+        status_code=201 if created else 200,
+        operation_id="post_document_message",
+    )

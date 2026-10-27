@@ -301,3 +301,77 @@ export async function listDocumentEvents(
     envelope?.data ?? { events: [], total: 0, limit: 50, offset: 0 }
   );
 }
+
+/** U9 — mensagem da conversa documental (Plano 113 §21). */
+export type DocumentMessage = {
+  message_id: string;
+  document_id: string;
+  competence_id: string;
+  version_no: number | null;
+  audience: string;
+  body: string;
+  author_subject: string;
+  author_name: string | null;
+  created_at: string | null;
+  mine?: boolean;
+  deduplicated?: boolean;
+};
+
+export type DocumentMessageListResult = {
+  messages: DocumentMessage[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+/** U9 — conversa do documento: cronológica, delimitada à competência. */
+export async function listDocumentMessages(
+  period: string,
+  documentId: string,
+  query: {
+    branchScope?: "MATRIX" | "BRANCH" | "BOTH";
+    limit?: number;
+    offset?: number;
+  } = {},
+  options?: { signal?: AbortSignal },
+): Promise<DocumentMessageListResult> {
+  const qs = buildQuery({
+    branch_scope: query.branchScope,
+    limit: query.limit !== undefined ? String(query.limit) : undefined,
+    offset: query.offset !== undefined ? String(query.offset) : undefined,
+  });
+  const envelope = await httpGet<Envelope<DocumentMessageListResult>>(
+    cfApiUrl(
+      `/closing/competences/${period}/documents/${documentId}/messages` +
+        `${qs ? `?${qs}` : ""}`,
+    ),
+    options,
+  );
+  return (
+    envelope?.data ?? { messages: [], total: 0, limit: 100, offset: 0 }
+  );
+}
+
+/** U9 — envio: o servidor define autor, data e contexto da versão. A
+ * `idempotencyKey` identifica a tentativa — retry com a mesma chave e o
+ * mesmo texto nunca duplica a mensagem. */
+export async function postDocumentMessage(
+  period: string,
+  documentId: string,
+  input: { body: string; idempotencyKey: string },
+  options?: { signal?: AbortSignal; branchScope?: "MATRIX" | "BRANCH" | "BOTH" },
+): Promise<DocumentMessage> {
+  const qs = buildQuery({ branch_scope: options?.branchScope });
+  const envelope = await httpPost<Envelope<DocumentMessage>>(
+    cfApiUrl(
+      `/closing/competences/${period}/documents/${documentId}/messages` +
+        `${qs ? `?${qs}` : ""}`,
+    ),
+    { body: input.body, idempotency_key: input.idempotencyKey },
+    { signal: options?.signal },
+  );
+  if (!envelope?.data) {
+    throw new Error("Resposta vazia ao enviar a mensagem.");
+  }
+  return envelope.data;
+}

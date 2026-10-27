@@ -1035,3 +1035,43 @@
   outline: 2px solid var(--cf-focus, currentColor);
   outline-offset: 1px;
 }
+
+.dashboard-controllership-finance .cf-document-conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.dashboard-controllership-finance .cf-document-conversation .cf-message-thread {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.dashboard-controllership-finance .cf-link-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: var(--accent, inherit);
+  text-decoration: underline;
+}
+
+.dashboard-controllership-finance .cf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dashboard-controllership-finance .cf-document-detail__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-grid-gap, 16px);
+  min-width: 0;
+}

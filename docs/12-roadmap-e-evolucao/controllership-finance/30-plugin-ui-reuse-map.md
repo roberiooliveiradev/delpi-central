@@ -806,3 +806,17 @@ Refinamento de copy sobre a composição V0.2 — **nenhum componente adicionado
 | Validação P2 no detalhe | `ItemValidationPanel` (componente do plugin, já existente) | embed direto, `onChanged` → refresh |
 
 Nenhum componente de menu/contexto ou confirmação paralelo criado; nenhum chrome copiado.
+
+
+## Registro de execução — Conversa documental (CF-PROC0072-DOCUMENT-INTERACTIONS-008, 27/10/2026)
+
+| Superfície | Componente do kit | Bound local |
+|---|---|---|
+| Thread de mensagens | createDashboardMessageThread(prefix) | CfMessageThread em controllershipFinanceUi.ts — itens com autor/data/mine, bodyMode markdown, emptyLabel honesto |
+| Composer multiline | createDashboardMentionComposer(prefix) | CfMentionComposer — showAttach=false, submitOnEnter=false, labels PT completas, submitting/disabled |
+| Cartões do detalhe | createDashboardSectionCard | CfSectionCard («Validação do documento», «Conversa sobre o documento», «Histórico») |
+| Erro de envio/carga | CfFeedbackMessage (adapter existente) | reuse direto |
+
+Mesmo padrão de Minhas Solicitações (CommentsPanel) — somente factories
+do kit + adapter do MFE; nenhum componente de chat copiado, nenhum
+import de domain/API de outro contexto.

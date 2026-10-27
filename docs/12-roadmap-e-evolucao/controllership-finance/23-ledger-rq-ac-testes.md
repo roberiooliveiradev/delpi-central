@@ -426,3 +426,22 @@ Causa raiz comprovada: `source` do `useFilePreviewLoader` com identidade nova a 
 | RQ-DOC-RW-04 | Timeline sem downloads repetidos; trilha backend preservada | filtro `DOCUMENT_DOWNLOADED` na UI + nota de auditoria; nenhum evento apagado; emissão na origem `PLANNED` (gate auditoria) | PASS (UI) / PLANNED (producer) |
 | RQ-DOC-RW-05 | Sem navegação obrigatória ao checklist legado | `ItemValidationPanel` embutido no detalhe; bloco removido da aba; rota legada intacta | PASS |
 | RQ-DOC-RW-06 | Testes, Ajuda, CLARA, deploy | plugin 244/244, tsc/eslint/estruturais/build PASS; Ajuda atualizada; CLARA reindexada | PASS / smoke autenticado PO PENDING |
+
+## Conversa documental U9 — resultado (CF-PROC0072-DOCUMENT-INTERACTIONS-008, 27/10/2026)
+
+Decisão PO ([Plano 113 §21](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md), doc-112 §42): a Controladoria inicia conversa persistida por documento sem solicitação DRE prévia. Owner: `controllership-finance-api` (aggregate `closing_document`, migration V016).
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-MSG-01 | Início proativo sem mensagem/solicitação prévia | composer ativo na thread vazia; `POST …/messages` 201 sem dependência de correção/validação | PASS |
+| RQ-MSG-02 | Persistência backend, sobrevive a refresh/contexto | `document_message` V016 + `GET …/messages`; testes PG de persistência e cronologia | PASS |
+| RQ-MSG-03 | Autor/data do servidor; sem UUID visual | `author_subject` UUID + `author_name` snapshot do claim; NULL → «Participante»; `uploaded_by` UUID removido da UI | PASS |
+| RQ-MSG-04 | Sem duplicidade em retry | `UNIQUE(document_id,idempotency_key)`+`request_hash`; replay → `deduplicated`; divergente → 409; frontend reutiliza a chave no retry do mesmo texto | PASS |
+| RQ-MSG-05 | Falha preserva rascunho; erro acessível | teste «falha no envio preserva o texto»; `CfFeedbackMessage` | PASS |
+| RQ-MSG-06 | Escopo: competência/documento/filial | cross-competence/scope = 404 (positivo+sibling+negativo em rotas e PG) | PASS |
+| RQ-MSG-07 | Mensagem não valida/conclui/libera/envia | nenhum efeito colateral no service; U5/U7/P2/P5 intactos (regressão 175 PG) | PASS |
+| RQ-MSG-08 | Audiência governada | `audience='INTERNAL'` CHECK; documento não liberado nunca expõe fio à DRE | PASS / DRE TARGET (gate futuro) |
+| RQ-MSG-09 | Documento cancelado: regra de negócio | conversa permitida em CANCELLED (não é mutação); registrado no Plano 113 §22.1 | PASS |
+| RQ-MSG-10 | Auditoria obrigatória | `DOCUMENT_MESSAGE_POSTED` na mesma transação; incluso em U8; fora da timeline operacional | PASS |
+| RQ-MSG-11 | Sem anexos/tempo real/notificação inventados | fora de escopo declarado; nenhum código criado | PASS (ausente por contrato) |
+| RQ-MSG-12 | Testes, Ajuda, CLARA, deploy | backend 110/110+30/30+175/175 · frontend detalhe 18/18, closing 176/176, plugin 249/249 · tsc/eslint/build PASS · help+docs atualizados | PASS / homologação visual PO PENDING |
