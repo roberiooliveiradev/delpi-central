@@ -16,6 +16,17 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076.R4.S0 — UX Contract Freeze & Plugin-UI Component Inventory (2026-10-26)
+
+O PO aprovou a nova direção visual da Inteligência de Mercado: **uma página, alternador Metais | Câmbio | Indicadores, grade 3×2 de cards de metais multi-seleção, frequência Dia | Semana | Mês | Ano, KPIs contextuais e um único painel Gráfico | Tabela | Comparação**. Execução somente documental — nenhum código/contrato/runtime alterado; quarentena LME mantida; não autoriza uso de dados LME nem cotação diária antes de provedor homologado.
+
+- [Wireframes aprovados — desktop/tablet/mobile, perspectivas e estados](./PROC-0076-R4-WIREFRAMES-APPROVED.md)
+- [Mapeamento de componentes `@delpi/plugin-ui` — exports reais, props e classificação de reuso](./PROC-0076-R4-PLUGIN-UI-COMPONENT-MAPPING.md)
+- [Contrato de comportamento UX — interações, estados, URL/F5, a11y e tokens](./PROC-0076-R4-UX-BEHAVIOR-CONTRACT.md)
+- [Implementation readiness — decisões congeladas, gaps, RQ/AC e sequência](./PROC-0076-R4-IMPLEMENTATION-READINESS.md)
+
+---
+
 ## PROC-0076.R3 — UX compacta e auditoria de valores (2026-10-26)
 
 O PO solicitou evolução **UX-first**: **perspectivas IBGE/Comex/PTAX no hero, filtros e KPIs por métrica, um único painel alternável Gráfico | Tabela | Comparação válida, estados vazios específicos e menos rolagem**. Especificação em [wireframes desktop/mobile, C01–C18, estados, RQ/AC](./PROC-0076-R3-WIREFRAMES-UX-DATA-VALIDATION-20261026.md). **R3 implementada e em produção** (`feeea8e1b9` + evidências no ledger): auditoria SIDRA→BFF limpa, summaries contextuais no BFF, smoke autenticado 401/403/200 e bundle publicado.
