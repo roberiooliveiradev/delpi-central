@@ -1841,3 +1841,12 @@ A revisão arquitetural retornou `REWORK`: a preservação integral dos filtros 
 - **Retorno/reabertura:** `backToReports` agrega os filtros da família na URL do hub (`?tab=reports&report={família}&{filtros}`); `openReport` só repassa quando `report=` bate com a família aberta — zero vazamento entre relatórios.
 - **Competência:** sempre da rota — par de datas fora do mês é descartado inteiro; Estoque nunca serializa `period`. Sem `localStorage`/`sessionStorage`, sem dados financeiros na URL.
 - **Evidência:** +20 casos de teste (helper, restauração por F5/deep link, back/forward, validação de inválidos, isolamento entre famílias e competências).
+
+
+## 47. PO — refinamento da aba Relatórios e fontes reais (27/10/2026)
+
+**DESIGN_TARGET; NÃO IMPLEMENTADO nesta decisão.** Capturas de setembro/2026 mostram `stock-inventory` com posição histórica SB9 consultável, mas conciliação P3 com fontes `Entradas/Saídas`, `P7` e `H02` em `Indisponível`. Isso não comprova falha global do TOTVS: fonte operacional e evidência homologada de P3 são conceitos distintos; investigar a causa concreta.
+
+Refinar a apresentação: reduzir cards repetitivos de fonte indisponível, uma CTA contextual por situação, cabeçalho contextual único/compacto, identificação clara de qualidade de vínculo e de estados diferentes (consulta operacional, fonte P3 registrada, paridade oficial, divergência comprovada), tabelas do plugin-ui e orientações de correção humana quando comprovadas. Preservar três abas, página contextual de cada relatório, deep links, filtros, PDF sem falso produtor, e legado até gate de depreciação.
+
+**Próxima fase**: descobrir e conectar fontes reais com rastreabilidade de Ciclos 1/2, doc 83, TÉO e vídeo de Estoques/Custos, sem assumir que SB9 é o P7 oficial nem que relatório anexado representa producer. Diagnóstico e matriz de fontes em [Plano 113 §27](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md).
