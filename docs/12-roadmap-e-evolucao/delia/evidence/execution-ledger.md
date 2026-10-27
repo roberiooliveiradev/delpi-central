@@ -429,3 +429,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Seguranca: 0 bypass/ACT/PREPARE/fabricacao; WRITE/PREPARE corretos em A1; cobertura parcial (sem denied-READ real).
 - Veredito: CH1_IMPLEMENTATION_READY=NO (REWORK — residual: discriminacao catalog/none no contrato); CH2_IMPLEMENTATION_READY=NO (REWORK — mecanismo de instrucao-minima insuficiente; exige few-shot ou estagio dedicado). Nenhuma promocao; proximos passos bounded documentados em doc 169. DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
 - Artefatos: doc 169; delia-api/scripts/ch1_ch2_verification.py; evidence ch1-ch2-verification-runs.json (sanitizado).
+
+
+## 2026-10-27 — DÉLIA product direction approved / gated closed plan (doc 170)
+
+- `STATE=PRODUCT_DIRECTION_APPROVED`; `IMPLEMENTATION_AUTHORIZED=NO`; `DEPLOY_AUTHORIZED=NO`; `PHASE_NOT_ADVANCED`; no production runtime/instructions/provider changes.
+- User explicitly approved: (PD-1) model/provider-neutral architecture, local 3B only development/comparison baseline; (PD-2) grounded answers, governed further research, explicit partial/uncertain outputs; (PD-3) simplify redundant semantic LLM stages strictly through reuse/contract/security/evaluation gates.
+- `SOURCE=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/170-model-neutral-grounded-intelligence-and-orchestration-simplification-product-decision.md`; subordinate to canonical authorities, requiring full HEAD `.cursor` + authority + spec reanchor in P0.
+- Docs 165–169 remain binding evaluation limitations: no demonstrated E2E improvement; CH-1 and CH-2 NO_PROMOTION; B2 judgment, next-action and owner-search change not approved. Do not retrospectively mark experiments PASS.
+- Closed path: P0 canonical reanchor/inventory/contract gate → P1 isolated harness candidate → P2 E2E business/safety/holdout → P3 explicit coordination approval or NO_PROMOTION → P4 bounded production implementation if approved → P5 separate deploy/production acceptance. No automatic prompts or stage additions.
+- `NEXT=PLANNED_P0`; `EXISTING_EQUIVALENT=TO_INVENTORY` and `REUSE_DECISION=PENDING` for any proposed productive abstraction; no CP/RQ or phase advancement.
