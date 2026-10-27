@@ -83,7 +83,8 @@ def _catalog_item(product: dict[str, Any]) -> dict[str, Any]:
 def search_supplies_products(
     code: Optional[str] = Query(None, description="Prefixo do código."),
     description: Optional[str] = Query(
-        None, description="Termos da descrição (acento-insensível)."
+        None,
+        description="Termos contidos na descrição (acento-insensível).",
     ),
     product_type: Optional[str] = Query(
         None,

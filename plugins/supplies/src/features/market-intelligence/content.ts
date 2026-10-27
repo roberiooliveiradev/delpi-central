@@ -320,6 +320,7 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     approve: "Homologar",
     reject: "Rejeitar",
     deactivate: "Inativar",
+    resubmit: "Reenviar p/ revisão",
     actionPending: "Processando…",
     actionError:
       "A ação não foi concluída — tente novamente. Nenhum estado foi " +

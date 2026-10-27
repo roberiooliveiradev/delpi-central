@@ -290,6 +290,25 @@ def test_import_series_unknown_ncm_404(mock_resolve, mock_validate):
 
 @patch(_JWT)
 @patch(_AUTH_MIDDLEWARE)
+def test_import_series_malformed_ncm_422(mock_resolve, mock_validate):
+    """Malformed input is a validation error, never an unknown series."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user()
+    gateway = _gateway()
+    client, ctx = _client(gateway)
+    with ctx:
+        for bad in ("123", "abcd", "74040010,xyz"):
+            response = client.get(
+                "/market-intelligence/imports/series"
+                f"?ncm={bad}&date_from=2026-08-01&date_to=2026-09-30",
+                headers={"Authorization": "Bearer tok"},
+            )
+            assert response.status_code == 422, bad
+    gateway.comex_imports.assert_not_called()
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
 def test_import_series_invalid_granularity_422(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user()

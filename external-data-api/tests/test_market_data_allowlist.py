@@ -76,18 +76,27 @@ def test_invalid_ncm_code_rejected():
         )
 
 
-def test_create_requires_description_and_version(storage_on, monkeypatch):
+def test_create_requires_description(storage_on, monkeypatch):
     repo = _FakeRepo(existing=None)
     _wire(monkeypatch, repo)
     with pytest.raises(InvalidQueryError):
         mda.upsert_ncm_allowlist(
             ncm_code="74081190", body={"ncm_version": "NCM 2022"}, actor="s"
         )
-    with pytest.raises(InvalidQueryError):
-        mda.upsert_ncm_allowlist(
-            ncm_code="74081190", body={"description": "Fios de cobre"}, actor="s"
-        )
     assert repo.upserts == []
+
+
+def test_create_defaults_ncm_version_to_current_revision(
+    storage_on, monkeypatch
+):
+    repo = _FakeRepo(existing=None)
+    _wire(monkeypatch, repo)
+    payload = mda.upsert_ncm_allowlist(
+        ncm_code="74081190", body={"description": "Fios de cobre"}, actor="s"
+    )
+    assert payload["created"] is True
+    assert repo.upserts[0]["ncm_version"] == "2022"
+    assert payload["allowlist_entry"]["ncm_version"] == "2022"
 
 
 def test_create_persists_and_commits(storage_on, monkeypatch):

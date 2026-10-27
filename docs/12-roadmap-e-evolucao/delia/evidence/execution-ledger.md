@@ -418,3 +418,24 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Seguranca: 0 bypass/ACT/PREPARE/fabricacao/loop; remap A1 preserva gates downstream; cobertura parcial (sem denied-READ real).
 - Veredito: ACCEPT_WITH_RESIDUAL — candidatos produtivos justificados: CH-1 admission simplificada + CH-2 campo answer_requirements na instrucao; CH-3 juiz por-registro condicional a gate de recall; continuidade precisa re-design; gap de search owner escalado.
 - Artefatos: doc 168; scripts/integrated_intelligence_eval.py; evidence integrated-intelligence-runs.json. DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
+
+## 2026-10-27 — DELIA-C3-CH1-CH2-FINAL-LOCAL-CONTRACT-VERIFICATION-01 (doc 169)
+
+- Escopo: verificacao local fechada das candidatas CH-1 (admissao coerente) e CH-2 (campo answer_requirements na instrucao turn_goal) com gates congelados pre-medicao. ZERO mudanca de codigo/instrucao/modelo/deploy/consulta produtiva; variantes harness-only.
+- Baseline: delia-json:latest digest 7b8f4ab14fc1 (qwen2.5:3b Q4_K_M ctx8192 JSON-only); instrucoes/catalogo/owner-contract inalterados. Corpus CH-1=23q x3 reps; CH-2=14 casos x3 reps; combinado=16 cenarios x2 reps por braco.
+- CH-1: A1 reproduz ganhos (read_recall 0.622->0.978, acc_dev 0.529->0.804, acc_holdout 0.467->0.600, write_safety 6/6 vs A0 falho) MAS catalog_acc 0.0 (regressao vs A0 0.5 — modelo subutiliza classe catalog, rotas a read) e inject->none apenas 2/3 (rep1->read). CH1_GATE=FAIL -> REWORK. Sobre-admissao sempre na direcao segura (READ governado), nunca write.
+- CH-2: qty_recall 0.0 em G0 E G1 (0/12 casos quantificados x3 reps). Proposta crua inspecionada: modelo emite apenas goal_class+business_subject; campo AUSENTE mesmo com instrucao G1 contendo a spec (verificado). Hipotese 'declaracao minima basta' REFUTADA no 3B congelado. Parser fail-closed confirmado (nao-mapping/min invalido/negativo/enorme/{}/chaves desconhecidas -> None). Regressao leve goal_class 0.718->0.641. CH2_GATE=FAIL -> REWORK.
+- Combinado C0/C1 (exploratorio — gates isolados falharam): C0=9/32 vs C1=10/32 PASS (delta ruido); invokes 15->17; tokens in +34%; invalid_model_output x3 (h_doc_manual, fail-closed). Sem ganho de Business Outcome — gargalos downstream inalterados (search owner + recall juiz + continuidade). Limitacao: stage trace nao populado no harness combinado.
+- Seguranca: 0 bypass/ACT/PREPARE/fabricacao; WRITE/PREPARE corretos em A1; cobertura parcial (sem denied-READ real).
+- Veredito: CH1_IMPLEMENTATION_READY=NO (REWORK — residual: discriminacao catalog/none no contrato); CH2_IMPLEMENTATION_READY=NO (REWORK — mecanismo de instrucao-minima insuficiente; exige few-shot ou estagio dedicado). Nenhuma promocao; proximos passos bounded documentados em doc 169. DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
+- Artefatos: doc 169; delia-api/scripts/ch1_ch2_verification.py; evidence ch1-ch2-verification-runs.json (sanitizado).
+
+
+## 2026-10-27 — DÉLIA product direction approved / gated closed plan (doc 170)
+
+- `STATE=PRODUCT_DIRECTION_APPROVED`; `IMPLEMENTATION_AUTHORIZED=NO`; `DEPLOY_AUTHORIZED=NO`; `PHASE_NOT_ADVANCED`; no production runtime/instructions/provider changes.
+- User explicitly approved: (PD-1) model/provider-neutral architecture, local 3B only development/comparison baseline; (PD-2) grounded answers, governed further research, explicit partial/uncertain outputs; (PD-3) simplify redundant semantic LLM stages strictly through reuse/contract/security/evaluation gates.
+- `SOURCE=docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/170-model-neutral-grounded-intelligence-and-orchestration-simplification-product-decision.md`; subordinate to canonical authorities, requiring full HEAD `.cursor` + authority + spec reanchor in P0.
+- Docs 165–169 remain binding evaluation limitations: no demonstrated E2E improvement; CH-1 and CH-2 NO_PROMOTION; B2 judgment, next-action and owner-search change not approved. Do not retrospectively mark experiments PASS.
+- Closed path: P0 canonical reanchor/inventory/contract gate → P1 isolated harness candidate → P2 E2E business/safety/holdout → P3 explicit coordination approval or NO_PROMOTION → P4 bounded production implementation if approved → P5 separate deploy/production acceptance. No automatic prompts or stage additions.
+- `NEXT=PLANNED_P0`; `EXISTING_EQUIVALENT=TO_INVENTORY` and `REUSE_DECISION=PENDING` for any proposed productive abstraction; no CP/RQ or phase advancement.

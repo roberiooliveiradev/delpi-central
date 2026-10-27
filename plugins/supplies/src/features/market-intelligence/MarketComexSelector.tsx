@@ -547,6 +547,22 @@ export function MarketComexSelector({
                         {C2.deactivate}
                       </SuppliesActionButton>
                     ) : null}
+                    {/* Re-review path: rejected → pending is open to any
+                        supplies.access user; inactive → pending stays a
+                        manage decision (lifecycle contract). */}
+                    {((status === "rejected" && gov) ||
+                      (status === "inactive" && gov && canManage)) && gov ? (
+                      <SuppliesActionButton
+                        type="button"
+                        variant="ghost"
+                        disabled={busy}
+                        onClick={() =>
+                          void decideNcm(gov, "pending_fiscal_review")
+                        }
+                      >
+                        {C2.resubmit}
+                      </SuppliesActionButton>
+                    ) : null}
                   </li>
                 );
               })}

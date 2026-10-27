@@ -223,6 +223,8 @@ export const USER_MANUAL_CONTENT = {
         "Metais — cartões de Cobre, Alumínio, Zinco, Níquel, Chumbo e Estanho, cada um com ícone, unidade e base da cotação (fechamento COMEX/LME, spot ou média mensal). A seleção é múltipla e prepara o histórico e a comparação, mas nunca libera cotações: um metal sem fonte homologada mostra «Fonte pendente» e nenhum valor — e, quando selecionado, é nomeado em um aviso com o motivo.",
         "Unidades — cada card, tabela e legenda mostra a unidade nativa legível (US$/t, US$/lb, R$/US$, Índice ou %); séries com unidades diferentes nunca são somadas nem comparadas — o gráfico de metais agrupa as séries por unidade.",
         "Indicadores — IPP do IBGE para Metalurgia (número-índice dez/2018=100 ou variação mensal — índice, não cotação) e importações Comex Stat por NCM homologada (valor FOB, peso e valor médio em US$/t — referência de custo, não cotação internacional). Sem NCM homologada, a perspectiva mostra a configuração pendente, os próximos passos e a prévia dos indicadores que serão exibidos.",
+        "Comex configurável — dentro de Indicadores, a aba Comex permite pesquisar produtos reais do cadastro (matéria-prima, intermediário ou acabado), selecionar vários itens e ver a NCM fiscal de cada um com seu estado de homologação. Somente NCMs aprovadas entram na análise; pendentes podem ser solicitadas na própria tela e aguardam decisão de quem governa a classificação fiscal. Selecionar vários produtos que usam a mesma NCM nunca duplica o valor de importação.",
+        "Visualizações salvas — é possível salvar a análise Comex como uma visualização pessoal (produtos, NCMs, período, granularidade e modo) e reabri-la depois; cada usuário vê, edita e exclui apenas as suas.",
         "Câmbio — PTAX de fechamento (venda ou compra). Dias úteis sem boletim permanecem ausentes; se a fonte estiver indisponível, um aviso explica a falha e cartões compactos mostram a última tentativa de coleta, a última observação persistida e a cobertura do período — sem inventar taxas.",
         "Frequência — Dia, Semana, Mês e Ano ficam visíveis; opções sem suporte da série ativa aparecem desabilitadas com o motivo (ex.: IPP é mensal).",
         "Indicadores do período — a faixa de KPIs mostra somente métricas válidas para a seleção ativa: última referência, média do período, menor e maior valor (ou menor e maior variação nas séries de percentual), variação e cobertura; valores ausentes aparecem como «—» com motivo.",
@@ -296,6 +298,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "De onde vêm as cotações da Inteligência de mercado?",
           a: "De fontes externas autorizadas com licença aberta: metais do World Bank Pink Sheet (média mensal em USD/t) e câmbio do Banco Central (PTAX, boletim diário). Fonte, licença e última ingestão ficam visíveis na página. A página nunca consulta a internet — os dados vêm do serviço interno de dados de mercado.",
+        },
+        {
+          q: "Por que não consigo analisar a NCM de um produto no Comex?",
+          a: "A NCM exibida vem do cadastro do ERP e só entra na análise depois de homologada no fluxo de governança (revisão fiscal → aprovação). Produto sem NCM, com NCM inválida ou ainda candidata aparece sinalizado; use «Solicitar homologação» na aba Comex e acompanhe o estado. Ninguém aprova a própria solicitação sem o perfil de gestão.",
         },
         {
           q: "Por que um mês aparece vazio ou «Sem câmbio»?",

@@ -23,6 +23,11 @@ from app.infrastructure.persistence.plugins_db import get_connection
 _NCM_RE = re.compile(r"^[0-9]{8}$")
 _MAX_TEXT = 200
 
+# NCM revision in force for Comex Stat publications — callers may
+# override with an explicit ``ncm_version``; the governance layer
+# does not track nomenclature revisions.
+_CURRENT_NCM_VERSION = "2022"
+
 
 def _clean_text(value: Any, field: str, *, max_len: int = _MAX_TEXT) -> str | None:
     if value is None:
@@ -43,8 +48,10 @@ def upsert_ncm_allowlist(
 
     ``actor`` is the authenticated S2S client id — recorded in the event
     metadata the caller's governance layer already audits. Creation
-    requires ``description`` and ``ncm_version``; updates may toggle
-    ``active`` alone (deactivation never renames or re-describes).
+    requires ``description``; ``ncm_version`` defaults to the NCM
+    revision currently in force when the caller does not track
+    nomenclature versions. Updates may toggle ``active`` alone
+    (deactivation never renames or re-describes).
     """
     code = (ncm_code or "").strip()
     if not _NCM_RE.match(code):
@@ -64,14 +71,15 @@ def upsert_ncm_allowlist(
         check_market_contract_ready(conn)
         repo = _repo(conn)
         existing = repo.get_ncm_allowlist(code)
-        if existing is None:
-            if not description:
-                raise InvalidQueryError("description is required on create")
-            if not ncm_version:
-                raise InvalidQueryError("ncm_version is required on create")
+        if existing is None and not description:
+            raise InvalidQueryError("description is required on create")
         row = repo.upsert_ncm_allowlist(
             ncm_code=code,
-            ncm_version=ncm_version or (existing or {}).get("ncm_version"),
+            ncm_version=(
+                ncm_version
+                or (existing or {}).get("ncm_version")
+                or _CURRENT_NCM_VERSION
+            ),
             description=description or (existing or {}).get("description"),
             family_code=(
                 family_code

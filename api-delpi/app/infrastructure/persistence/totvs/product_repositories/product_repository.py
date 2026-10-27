@@ -96,7 +96,7 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
                 desc_where.append(
                     "SB1.B1_DESC COLLATE Latin1_General_CI_AI LIKE ?"
                 )
-                where_params.append(f"{t}%")
+                where_params.append(f"%{t}%")
 
             where_clauses.append("(" + " OR ".join(desc_where) + ")")
 
