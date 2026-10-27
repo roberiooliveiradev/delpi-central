@@ -308,3 +308,16 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Drift documentado: 2 restarts em massa da stack (api-delpi zombie → openapi_document_unavailable → delpi ausente da superfície; mcp:davi down), JWT TTL vs spy success-only (batches 1–2 parcialmente invalidados, rerun em superfície saudável), senha dev-portal resetada pelo reimport do realm (restaurada), WSL blips.
 - Próximo bounded: revisão de contrato native_assessment/foreign_selection (por que foreign_evidence_required dispara em record asks diretos) + comparação de capacidade de modelo na matriz congelada — autorização separada; nenhum patch de ordem/instrução justificado.
 - DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
+
+## 2026-10-26 — DELIA-C3-NATIVE-ASSESSMENT-FOREIGN-SELECTION-CAUSAL-DIAGNOSTIC-01 (doc 159)
+
+- Escopo: diagnóstico causal read-only do desvio native_assessment→foreign_selection — captura do payload EXATAMENTE despachado (spy em InvokeModel.execute), oráculos de contrato por grupo-alvo, 18 cenários ×5 reps ×3 braços = 270 runs, variants WP8 em memória.
+- Resultado: assessment alcançado 171× — foreign_evidence_required 85%, sufficient 2/171; matriz oráculo TP73/FP59/TN18/FN8 (76% FP quando alvo era suficiente); foreign_selection abstenção ~60% (invalid_foreign_selection dead-end); payload íntegro (171/171 e 136/136 JSON válidos, todos os campos do contrato despachados).
+- Braços: B=TEST_NOT_RUN (bloco já carrega todo o contrato); C engaged 22 → 17 PASS (caminho nativo funciona sem o desvio); D engaged 21 → 19 invokes delpi corretos mas 20 FAIL (enriquecimento estrangeiro não resgata target errado — continuação estruturalmente perdida).
+- WP8 variants (12 superfícies FP ×3×3): V1 replay 35/36 fer, V2 minimal 32/36, V3 goal-first 34/36 — FP invariante à apresentação → causa = semântica da instrução + interpretação do modelo, não contexto.
+- Veredito: cláusula de exceção mandatória da instrução native_assessment embute premissa semântica de owner não verificável (designação informal + owner 'literal-only' → foreign obrigatório) — DELPI resolve sujeitos descritivos (oráculos 13–50 registros); modelo extrapola a cláusula (doc asks, código explícito: biz_code 9/9 fer). H1+H3+H6 SUPPORTED, H2 REFUTED, H7 parcial.
+- Segurança: 0 bypass AuthZ, 0 ACT/WRITE; neg_write alcançou PREPARE invoke governado (owner fail-closed 'Operação não suportada' — residual de write-intent não cortado na admissão); artefatos sem JWT/segredos.
+- Artefatos: doc 159; scripts assessment_foreign_diag_eval.py + _aggregate.py + assessment_variants_eval.py; evidence assessment-foreign-runs.{json,jsonl} + assessment-variants.json (sanitizados).
+- Drift documentado: 1 outage de transporte WSL (stack restart; eval checkpointed, 270/270 íntegros); model_calls=1435+108, in≈2.59M, out≈46.5k, latência med 6.4s.
+- Próximo bounded: revisão de contrato/instrução native_assessment (remover desvio mandatório ou condicioná-lo a capability de vocabulário verificada) + comparação de capacidade de modelo + diagnóstico de goal_evidence_relevance vazio — autorizações separadas.
+- DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
