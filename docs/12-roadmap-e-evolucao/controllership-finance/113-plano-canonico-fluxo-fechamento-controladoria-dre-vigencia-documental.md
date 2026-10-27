@@ -989,3 +989,32 @@ Implementação V0.2 **executada** no HEAD do repositório, sobre os contratos c
 - **PDF:** slot contextual sempre presente — «A prévia do PDF ainda não está disponível para este relatório.» Nenhum produtor/contrato binário de PDF de relatório existe no HEAD (`TO_INVENTORY`); nenhum PDF fictício é gerado e nenhuma evidência anexada é exibida como relatório oficial.
 - **Mês de referência sem abertura:** consultas period-keyed (baixas, estoque) funcionam sem competência aberta; P3/matriz 404 viram «Conferência não realizada», nunca erro genérico.
 - **Não implementado / pendente:** PDF por relatório (sem produtor), famílias além das duas com contrato, drilldown por armazém dentro dos grupos de estoque (contrato suporta `warehouse`, registrado para incremento), correção TOTVS permanece manual (sem write-back). Paridade FINR190/MATR460 permanece `TEST_NOT_RUN` — consultas operacionais não são relatórios oficiais homologados. DRE não recebe relatórios operacionais.
+
+
+## 26. Revisão PO — Relatórios e divergências V0.3: tabela e detalhe por relatório (27/10/2026)
+
+**PRODUCT_APPROVED / DESIGN_TARGET / NO_IMPLEMENTATION_GO.** O PO homologou parcialmente a estrutura V0.2 com capturas reais, mas rejeitou a apresentação dos agrupamentos financeiros em linhas/cartões empilhados com títulos aglutinados e alterou a decisão anterior `details=inline`: **o detalhamento completo passa a abrir uma rota contextual própria do relatório**, com retorno preservando a análise e competência, não nova aba principal. Esta decisão específica **SUPERSEDES** o item 3 de §25 (detalhe integral inline); prioridade `attention`, catálogo `cards` e PDF contextual `inline` permanecem aprovados, sujeito a adequação do painel PDF na página do relatório.
+
+### 26.1 Arquitetura de navegação
+A terceira aba continua sendo o hub `?tab=reports`: indicadores, atenção real, cartões de famílias e resumo do relatório selecionado. A ação **Ver relatório / Ver detalhes** abre página contextual específica do relatório, preferindo **reutilizar as telas existentes de P7/Estoque e Baixas Financeiras** como base, após inventário de router, contracts, permissões, visual kit e links. Não transformar páginas técnicas legadas em nova quarta aba, não duplicar toda a implementação em outra página e não apagar legado antes de gate de depreciação.
+- Exemplo conceitual: `/closing/monthly-closing/{YYYY-MM}/reports/{reportKey}` — rota precisa ser verificada e reconciliada com padrão efetivo; não congelar o path sem inventário.
+- Breadcrumb `Início > Fechamento mensal > Relatórios e divergências > {Relatório}`.
+- **Voltar para análises** restaura competência, aba, filtros, seleção e contexto anterior; URL/F5/back-forward e foco devem funcionar.
+
+### 26.2 Tabela organizada no relatório
+Ao selecionar categoria/grupo, apresentar **tabela de verdade**, com colunas explícitas, alinhamento consistente e cabeçalhos responsivos, usando o DataTable/DataTableSection real do `@delpi/plugin-ui`. Colunas por contrato: data, natureza, tipo de movimento, documento/título, filial, valor, situação, ação de detalhar; omitir colunas não disponíveis em vez de inventar. Totais financeiros à direita, PT-BR/BRL, milhares, limites de precisão e correspondência a valores do backend. Separar natureza/tipo por coluna — não concatenar textos como `VENDA DE PRODUTOS INDUSTR.Baixa de título`. Paginador/filtros server-side onde houver contrato; tabela acessível, mobile com estratégia adequada.
+
+### 26.3 Revisão de densidade e componentes
+Corrigir cartões de relatório que hoje exibem labels repetidas em caixa alta `RELATÓRIO / DESCRIÇÃO / SITUAÇÃO`, excesso de espaços e seções técnicas extensas; usar título, descrição compacta, estado real e CTA. Área `O que precisa de atenção` preserva fatos reais, mas prioriza legibilidade, agrupamento e expansão sob demanda. Matriz R01–R15 deve sair do fluxo visual principal ou ficar como detalhe técnico opcional/disclosure; não perder rastreabilidade contratual. Manter indicadores honestos (`0` só com verificação completa, ausência/error ≠ zero).
+
+### 26.4 Fontes e análise dos ciclos 1/2 e vídeo
+**TASK_DE_DISCOVERY obrigatória ANTES da expansão de relatórios**: recuperar de fontes canônicas dos Ciclos 1 e 2, do TÉO/Transformômetro (AS-IS) e da gravação de acompanhamento de Estoques e Custos (30/09/2026) a sequência real de análise, os arquivos oficiais, chaves, agrupamentos, divergências, causas comprovadas, correção TOTVS e responsáveis. As planilhas/PDFs do projeto são amostras/evidência de formato e confronto, **não fontes automáticas de contrato de produção**. Produzir matriz `relatório → necessidade da analista → fonte canônica → owner → consulta/SQL/API → cálculo validado → divergência → evidência → status → PDF`. Diferenciar `PROVEN/TO_INVENTORY/PLANNED/TARGET`; não alegar que vídeo e Ciclos 1/2 foram analisados nesta decisão, nem marcar paridade oficial sem teste.
+
+### 26.5 Sequência obrigatória
+1. Inventário READ-ONLY de rotas legadas P7/Baixas, componentes kit, contratos BFF, documentação Ciclos 1/2, AS-IS TÉO, vídeo e exemplos PDF; HEAD/status e owner/RQ/AC.
+2. Wireframe detalhado da página do relatório e tabelas (colunas específicas por família) para aprovação PO, com mapa plugin-ui e navegação contextual.
+3. Implementação do menor diff front-end e reuso de rotas/components autorizados, com testes de formato, tabela, filtros, drilldown, período, escopo, temas, mobile, keyboard, F5, retornos.
+4. Integrar fontes reais e análises somente via contratos autorizados dos owners; qualquer contrato/migration/produção de PDF novo exige gate.
+5. Depois de evidências: docs, Ajuda, CLARA, commit/SHA, deploy canônico local/prod, smoke autenticado e revisão GPT.
+
+**Não confundir** mudança aprovada de UX com autorização implícita de migração, nova API ou write-back TOTVS. Página DRE continua por último.
