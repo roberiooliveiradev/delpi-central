@@ -55,7 +55,7 @@ def _catalog() -> dict:
                 "pair": "USD/BRL",
                 "rate_kinds": ["ptax_closing_sell", "ptax_closing_buy"],
                 "currency": "BRL",
-                "unit": "BRL per USD",
+                "unit": "R$/US$",
                 "granularity": "day",
                 "source_id": "bcb-ptax",
                 "latest_observation_date": "2026-10-24",
@@ -433,7 +433,7 @@ def test_fx_series_buy_sell_distinct(mock_resolve, mock_validate):
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["series"]["rate_kind"] == "ptax_closing_sell"
-    assert payload["series"]["unit"] == "BRL per USD"
+    assert payload["series"]["unit"] == "R$/US$"
     assert len(payload["points"]) == 2
     assert payload["points"][0]["value"] == "5.4"
     # R3 contextual summary — latest rate + period average + change.

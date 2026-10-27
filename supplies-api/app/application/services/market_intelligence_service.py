@@ -1830,7 +1830,7 @@ class MarketIntelligenceService:
                 "label": instrument["label"],
                 "pair": FX_PAIR,
                 "rate_kind": fx_kind,
-                "unit": "BRL per USD",
+                "unit": instrument.get("unit") or "R$/US$",
             },
             "granularity": granularity,
             "points": points,

@@ -52,7 +52,7 @@ def _catalog(*, metal_latest="2026-09-01", fx_latest="2026-10-23") -> dict:
                 "pair": "USD/BRL",
                 "rate_kinds": ["ptax_closing_sell"],
                 "currency": "BRL",
-                "unit": "BRL per USD",
+                "unit": "R$/US$",
                 "granularity": "day",
                 "source_id": "bcb-ptax",
                 "latest_observation_date": fx_latest,

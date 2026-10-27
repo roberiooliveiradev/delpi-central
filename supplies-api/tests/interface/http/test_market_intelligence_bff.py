@@ -74,7 +74,7 @@ def _catalog() -> dict:
                 "pair": "USD/BRL",
                 "rate_kinds": ["ptax_closing_sell", "ptax_closing_buy"],
                 "currency": "BRL",
-                "unit": "BRL per USD",
+                "unit": "R$/US$",
                 "granularity": "day",
                 "source_id": "bcb-ptax",
                 "latest_observation_date": "2026-10-24",
