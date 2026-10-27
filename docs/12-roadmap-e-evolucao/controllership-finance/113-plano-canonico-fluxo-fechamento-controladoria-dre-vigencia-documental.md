@@ -1224,3 +1224,15 @@ verificado localmente; produção não deployada** (gate separado pendente).
   bloqueia o comando documental via `catalog_draft_conflict` até publicação
   prospectiva (`effective_from ≥ 2026-10`; `2026-09` aberta rejeita por D3).
   Resolução pela UI pelo PO. Detalhe no doc 114 §11.
+
+### 28.7 GATE-017 — inventário do rascunho v1 (28/10/2026)
+
+- Rascunho v1 (53 itens CK-E/F) = **seed V002** de inicialização — PROVEN
+  por migration + zero eventos de auditoria + nunca modificado.
+- Zero dependências operacionais (0 snapshots, 0 refs de competência,
+  única versão do catálogo). Elegível para descarte **exceto** por não
+  existir mecanismo oficial.
+- `DECISION_REQUIRED — descarte governado de versão não publicada`:
+  proposta `DELETE …/versions/{version}` (DRAFT-only, OCC, audit
+  VERSION_DISCARDED) registrada no doc 114 §12.3. Execução aguarda
+  decisão do PO.

@@ -596,3 +596,14 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | AC-16 | Cadastro manual preparado para o PO | PENDING | draft v1 (53 itens) bloqueia via catalog_draft_conflict até publicação prospectiva — ver doc 114 §11.4 |
 | AC-17 | Documentação atualizada | PASS | doc 114 §11, plano 113 §28.6, ledger 23 |
 | AC-18 | Nenhuma regressão material | PASS | backend 692 + frontend 337 verde; sem overlapping remote diffs |
+
+### GATE-017 — inventário e gate de descarte do rascunho v1 (28/10/2026)
+
+| ID | Critério | Status | Evidência |
+|----|----------|--------|-----------|
+| G17-INV-01 | identidade do rascunho | PROVEN | v1 DRAFT rev1, template monthly-closing-checklist, seed 2026-10-24 |
+| G17-INV-02 | proveniência | PROVEN | migration V002 seed (não cadastro administrativo); 0 eventos audit |
+| G17-INV-03 | dependências | PROVEN | 0 snapshots, 0 refs competence, único FK = itens próprios |
+| G17-MECH-01 | mecanismo oficial de descarte | FAIL | nenhum endpoint/método descarta DRAFT/REVIEW |
+| G17-GATE | elegibilidade p/ descarte | DECISION_REQUIRED | todos os critérios PROVEN exceto mecanismo oficial |
+| G17-EXEC | encerramento governado | TEST_NOT_RUN | aguarda decisão contratual (doc 114 §12.3) |

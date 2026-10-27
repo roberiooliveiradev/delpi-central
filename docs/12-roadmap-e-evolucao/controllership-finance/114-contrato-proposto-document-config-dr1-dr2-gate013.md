@@ -437,3 +437,34 @@ Os writers legados `publish_version` e `inactivate_version` aceitavam janelas co
 ### 11.5 Homologação pendente (PENDING)
 
 Cadastro/edição/encerramento reais, histórico e navegação em produção — reservados ao primeiro uso do PO pela interface administrativa.
+
+---
+
+## 12. GATE-017 — inventário do rascunho v1 e gate de descarte (DECISION_REQUIRED)
+
+`CF-PROC0072-DOCUMENT-CATALOG-DRAFT-RELEASE-017` — objetivo: liberar o cadastro manual do PO encerrando o rascunho v1.
+
+### 12.1 Inventário read-only (PROVEN — evidência em produção)
+
+- `template_id` `a0e24014-…`, `version_id` `f72222d0-…`, `version=1`, `status=DRAFT`, `revision=1`, `created_at=updated_at=2026-10-24 19:31:38` (nunca alterado), `published_at/published_by=NULL`.
+- **Proveniência: PROVEN — migration `V002__seed_monthly_closing_checklist_v1.sql`** (seed de inicialização do projeto). Os 53 itens (`CK-E-01..30` ELETRONICO + `CK-F-01..23` FISICO) batem 1:1 com o seed; **zero** eventos de auditoria na versão/template — nenhuma interação administrativa humana ocorreu.
+- **Dependências: PROVEN — nenhuma.** `monthly_competence.template_version_id` refs = 0 (2026-09 OPEN tem NULL); `competence_checklist_item` = 0 linhas; único FK para a versão é dos próprios 53 itens; `document_requirement_operation` referencia template (não versão); é a ÚNICA versão do catálogo (nenhuma PUBLISHED/INACTIVE).
+- Elegibilidade: todos os critérios de descarte PROVEN **exceto** "mecanismo oficial disponível".
+
+### 12.2 Mecanismo oficial (PROVEN — inexistente)
+
+Rotas administrativas atuais: list/get/create-draft/update-draft/publish (REVIEW→PUBLISHED)/submit-for-review/return-to-draft (REVIEW→DRAFT)/inactivate (PUBLISHED→INACTIVE)/upsert_document_requirement. **Nenhuma operação descarta DRAFT/REVIEW**; o MFE tampouco expõe ação de descarte. O gate proíbe SQL DELETE direto e migration improvisada.
+
+### 12.3 Decisão necessária (DECISION_REQUIRED)
+
+`DECISION_REQUIRED — descarte governado de versão não publicada`. Proposta de menor evolução contratual:
+
+- `DELETE /admin/checklist-templates/{template_id}/versions/{version}` (op. `discard_checklist_template_version`), owner `controllership-finance-api`, MANAGE via `authorized_admin`.
+- Permitido apenas `status=DRAFT` (REVIEW → devolver a rascunho pela rota existente); `expected_revision` para OCC; lock `FOR UPDATE` no template; guarda defensiva contra referência em `monthly_competence`.
+- Efeito transacional: remove itens + linha da versão; evento `VERSION_DISCARDED` em `closing_audit_event` (entity_id=version; append-only preservado — hoje a versão tem 0 eventos).
+- PUBLISHED/INACTIVE → 422 (histórico imutável não é descartável). Pós-condição: template sem versões → `base_version=0` desbloqueia o fluxo documental.
+- MFE: ação «Descartar rascunho» com confirmação na `ChecklistAdminPage`; testes PG/rotas positivos+negativos (status incompatível, OCC stale, 401/403, concorrência).
+
+**Alternativa sem evolução:** o PO usa o próprio rascunho como ponto de partida (editar os 53 itens e publicar prospectivamente) — porém mantém o seed como base, o que contraria a decisão de cadastro manual integral.
+
+Nenhuma exclusão ou código foi executada neste gate — somente inventário e proposta.
