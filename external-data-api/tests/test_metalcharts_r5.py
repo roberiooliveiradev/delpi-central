@@ -158,6 +158,83 @@ class TestProviderContract:
         with pytest.raises(InvalidResponseError):
             provider.fetch_history("HG", date(2026, 10, 1), date(2026, 10, 2))
 
+    def test_history_real_openapi_shape(self):
+        """S1 homologation (2026-10-27): real /v1/history bars carry an
+        ISO ``timestamp`` (not ``date``) plus price/open/high/low/close/
+        volume — sanitized values from a verified response."""
+        real_shape = {
+            "success": True,
+            "data": [
+                {
+                    "timestamp": "2026-10-26T00:00:00.000Z",
+                    "price": 6.55287,
+                    "open": 6.51,
+                    "high": 6.60,
+                    "low": 6.49,
+                    "close": 6.55287,
+                    "volume": 0,
+                },
+                {
+                    "timestamp": "2026-10-27T00:00:00.000Z",
+                    "price": 6.51776,
+                    "open": 6.53,
+                    "high": 6.58,
+                    "low": 6.50,
+                    "close": 6.51776,
+                    "volume": 0,
+                },
+            ],
+            "symbol": "HG",
+            "count": 2,
+        }
+        provider, _ = _provider(body=real_shape)
+        bars = provider.fetch_history(
+            "HG", date(2026, 10, 26), date(2026, 10, 27)
+        )
+        assert [b["observation_date"] for b in bars] == [
+            date(2026, 10, 26),
+            date(2026, 10, 27),
+        ]
+        assert bars[-1]["close"] == Decimal("6.51776")
+
+    def test_spot_real_openapi_shape(self):
+        """S1: real /v1/prices/ entries carry currency + unit — the
+        fields that make USD/lb vs USD/mt explicit."""
+        real_shape = {
+            "success": True,
+            "data": {
+                "HG": {
+                    "symbol": "HG",
+                    "price": 6.51776,
+                    "bid": 6.51,
+                    "ask": 6.53,
+                    "timestamp": "2026-10-27T07:28:03.124Z",
+                    "exchange": "COMEX",
+                    "marketType": "futures",
+                    "stale": False,
+                    "currency": "USD",
+                    "unit": "lb",
+                },
+                "ALI": {
+                    "symbol": "ALI",
+                    "price": 3041.63478,
+                    "exchange": "LME",
+                    "marketType": "spot",
+                    "timestamp": "2026-10-27T07:28:03.124Z",
+                    "stale": False,
+                    "currency": "USD",
+                    "unit": "mt",
+                },
+            },
+            "count": 2,
+        }
+        provider, _ = _provider(body=real_shape)
+        out = provider.fetch_spot()
+        assert out["HG"]["unit"] == "lb"
+        assert out["HG"]["currency"] == "USD"
+        assert out["ALI"]["unit"] == "mt"
+        assert out["ALI"]["exchange"] == "LME"
+
     def test_envelope_not_success_rejected(self):
         provider, _ = _provider(
             body={"success": False, "error": "bad symbol"}

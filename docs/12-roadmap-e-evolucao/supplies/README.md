@@ -18,7 +18,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ## PROC-0076.R5 — MetalCharts Free API: adapter readiness (2026-10-27)
 
-Integração da MetalCharts como segunda fonte de metais na `external-data-api` — **feed OFF por padrão, sem dados reais até a homologação S1 com chave válida**. V007 semeia fonte inativa (`store_cache_only`, `ttl_cache`), bindings por instrumento (só cobre `HG` verificado, USD/lb), cache operacional com TTL estrutural e ledger de franquia (160/8 weight sob 200/10 do Free). Queries resolvem binding efetivo; fallback preserva Pink Sheet e `source_use_pending` (quarentena LME intacta). BFF/frontend inalterados — contratos R4 reutilizados.
+Integração da MetalCharts como segunda fonte de metais na `external-data-api`. **S1 homologada em 2026-10-27 com chave real**: `/v1/prices/` + `/v1/history` retornam **cinco metais verificados** — cobre `HG` (USD/lb, COMEX), alumínio `ALI`, níquel `NI` (USD/mt, LME), zinco `ZN` e chumbo `PB` (USD/mt, SPOT), 22 barras diárias na janela Free de 30 dias; **estanho não é coberto** (`SN` → 400) e permanece inativo. V007 semeia infraestrutura (fonte `store_cache_only`, cache TTL, ledger de franquia); V008 ativa fonte e bindings verificados. Feed `metals-daily` coleta sob demanda com budget 160/8 weight sob 200/10 do Free; queries resolvem binding efetivo com fallback Pink Sheet/`source_use_pending` (quarentena LME intacta).
 
 - [Implementação, runbook de ativação e evidência de testes](../shared-integrations/PROC-0076-R5-METALCHARTS-IMPLEMENTATION-AND-EVIDENCE-20261027.md)
 - [Direitos de uso — matriz MetalCharts e classificação de retenção](../shared-integrations/PROC-0076-SOURCE-RIGHTS-EVIDENCE-20261027.md)

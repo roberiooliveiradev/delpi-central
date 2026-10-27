@@ -91,8 +91,25 @@ Integração externa real (chave válida, cobertura Free dos 6 metais, 401/403/4
 | R5-17 testes/documentação | PASS |
 | R5-18 deploy/smoke | deploy técnico com feed OFF — smoke revalida estados honestos |
 
-## 8. Pendências
+## 8. S1 — Homologação real (2026-10-27)
 
-1. Chave `METALCHARTS_API_KEY` e homologação S1 real (símbolos, unidades, cobertura Free, 401/403/429).
-2. Revisão institucional da licença (`license_reviewed_at`, ativação da fonte).
-3. Decisão sobre exibição pública/redistribuição (crédito visível; restrições upstream COMEX/LME).
+Executada com a chave provisionada pelo PO (`METAL_CHARTS_KEY` → `METALCHARTS_API_KEY` via interpolação Compose — sem duplicar a credencial nem criar aliases no código).
+
+| Prova | Resultado |
+|---|---|
+| `/v1/instruments` | **200** — 1.137 instrumentos (metal/commodity/crypto/etf) |
+| `/v1/prices/` | **200** — 13 símbolos; **HG USD/lb COMEX, ALI USD/mt LME, NI USD/mt LME, ZN USD/mt SPOT, PB USD/mt SPOT**; estanho ausente |
+| `/v1/history/{HG,ALI,NI,ZN,PB}` | **200** — 22 barras diárias cada (28/09–27/10/2026, janela Free 30d) |
+| `/v1/history/SN` | **400** `Invalid symbol` — **estanho não coberto** |
+| Chave inválida | **401** tipado |
+| Janela por minuto | **429** confirmado com `Retry-After` |
+| OpenAPI `/docs/json` | Contrato real: barras `timestamp/OHLC/volume`; símbolos HG, ALI, NI, ZN, PB, SN(documentado mas inválido) |
+
+Correções de contrato aplicadas ao adapter: `/v1/prices/` com barra final (sem ela → 401) e pacing por minuto no job (5 bindings × 2 weight > headroom de 8/min).
+
+## 9. Pendências
+
+1. ~~Chave e homologação S1~~ → **concluído** (V008 ativa fonte + 5 bindings verificados; estanho permanece inativo).
+2. Revisão institucional da licença (`license_reviewed_at`) — pendente por decisão; ativação registra permissões comprovadas.
+3. Estanho: sem cobertura Free nesta API — binding inativo até fonte alternativa homologada ou inclusão upstream.
+4. Decisão sobre exibição pública/redistribuição (crédito visível; ALI/NI têm lastro LME upstream).

@@ -10,6 +10,7 @@ the source is missing, inactive or unlicensed.
 from __future__ import annotations
 
 import logging
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -17,6 +18,7 @@ from typing import Any
 
 from app.application.contracts import (
     ExternalDataError,
+    RateLimitedError,
     SourceNotLicensedError,
     StorageUnavailableError,
 )
@@ -367,9 +369,8 @@ class MarketDataIngestionService:
         fetched = inserted = updated = skipped = 0
         for binding in bindings:
             weight = WEIGHT_HISTORY
-            budget.acquire(weight=weight)
-            bars = self._metalcharts_provider.fetch_history(
-                binding.source_series_key, date_from, date_to
+            bars = self._fetch_history_paced(
+                budget, weight, binding, date_from, date_to
             )
             budget.record(
                 endpoint="history",
@@ -414,6 +415,39 @@ class MarketDataIngestionService:
                     skipped += 1
         self._repo.purge_expired_cache()
         return fetched, inserted, updated, skipped
+
+    def _fetch_history_paced(
+        self,
+        budget: Any,
+        weight: int,
+        binding: Any,
+        date_from: date,
+        date_to: date,
+    ) -> list[dict[str, Any]]:
+        """Acquire budget then fetch, pacing the job to the per-minute
+        window instead of failing.
+
+        A scheduled job can afford to wait for the next minute bucket —
+        five verified bindings need 10 weight, above the deliberate
+        8/min headroom budget — and an upstream 429 is retried once
+        after ``Retry-After``. The monthly budget and repeated 429s
+        still fail fast."""
+        for attempt in range(3):
+            try:
+                budget.acquire(weight=weight)
+                return self._metalcharts_provider.fetch_history(
+                    binding.source_series_key, date_from, date_to
+                )
+            except RateLimitedError as exc:
+                if "monthly" in str(exc) or attempt == 2:
+                    raise
+                wait = min(exc.retry_after or 60, 65)
+                logger.info(
+                    "ingestion_minute_pacing feed=metals-daily wait_s=%s",
+                    wait,
+                )
+                time.sleep(wait)
+        raise RateLimitedError("metalcharts pacing exhausted")
 
     def _ingest_fx(self, date_from: date, date_to: date):
         source_id = PROVIDER_BCB_PTAX

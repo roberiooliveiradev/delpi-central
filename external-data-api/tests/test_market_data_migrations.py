@@ -157,3 +157,24 @@ def test_v007_metalcharts_readiness_is_additive_and_fail_closed():
     )
     for forbidden in ("DROP TABLE", "DROP SCHEMA", "TRUNCATE", "DELETE FROM"):
         assert forbidden not in body
+
+
+def test_v008_activates_only_verified_metalcharts_bindings():
+    """R5.S1: source activation requires the unchanged cache-only
+    scope; verified symbols/units/bases are recorded for the five
+    covered metals and tin stays inactive (SN invalid upstream)."""
+    sql = Path(_files()["V008"].path).read_text(encoding="utf-8")
+    body = "\n".join(
+        line for line in sql.splitlines() if not line.strip().startswith("--")
+    )
+    assert "SET active = true" in body
+    assert "store_cache_only" in body
+    for series_key in ("'HG'", "'ALI'", "'NI'", "'ZN'", "'PB'"):
+        assert series_key in body
+    # Tin is not covered by the API — no SN binding may be activated.
+    assert "'SN'" not in body
+    assert "usd_per_pound" in body and "usd_per_metric_ton" in body
+    assert "comex_daily_close" in body and "lme_daily_close" in body
+    assert "spot_daily_close" in body
+    for forbidden in ("DROP TABLE", "DROP SCHEMA", "TRUNCATE", "DELETE FROM"):
+        assert forbidden not in body

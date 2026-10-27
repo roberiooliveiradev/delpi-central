@@ -123,18 +123,18 @@ Inalterado desde §1: direitos aprovados, **egress bloqueado por HTTP 403 (WAF)*
 
 Escopo persistido (V007): `collect;derive;internal_display;store_cache_only;no_redistribute`, `observation_retention='ttl_cache'`, `active=false`, `license_reviewed_at=NULL` — a fonte nasce **inativa** até a homologação S1 com chave real.
 
-### 5.3 Cobertura dos seis metais (S1)
+### 5.3 Cobertura dos seis metais (S1 homologado em 2026-10-27)
 
-| Metal | Símbolo | Free disponível | Unidade | Histórico 30d | Status |
-|---|---|---|---|---|---|
-| Cobre | `HG` (COMEX futures) | TEST_NOT_RUN | USD/lb (verificado) | TEST_NOT_RUN | binding inativo |
-| Alumínio | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
-| Zinco | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
-| Níquel | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
-| Chumbo | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
-| Estanho | — não verificado | TEST_NOT_RUN | — | TEST_NOT_RUN | `source_series_key=NULL` |
+| Metal | Símbolo | Free disponível | Unidade | Histórico | Exchange | Status |
+|---|---|---|---|---|---|---|
+| Cobre | `HG` | **PASS** | USD/lb | 22 barras 28/09–27/10 | COMEX | **ativo (V008)** |
+| Alumínio | `ALI` | **PASS** | USD/mt | 22 barras | LME | **ativo (V008)** |
+| Zinco | `ZN` | **PASS** | USD/mt | 22 barras | SPOT | **ativo (V008)** |
+| Níquel | `NI` | **PASS** | USD/mt | 22 barras | LME | **ativo (V008)** |
+| Chumbo | `PB` | **PASS** | USD/mt | 22 barras | SPOT | **ativo (V008)** |
+| Estanho | — (`SN` inválido: 400) | **FAIL** | — | — | — | **inativo — não coberto** |
 
-Sem chave `METALCHARTS_API_KEY` provisionada, a homologação real está classificada **TEST_NOT_RUN**. Nenhum símbolo foi adivinhado: bindings inativos com `source_series_key=NULL` falham fechado (`NoApprovedSeriesError`).
+Provas (sanitizadas): `/v1/instruments` 200 (1.137 instrumentos), `/v1/prices/` 200 (13 símbolos; estanho ausente), `/v1/history/{HG,ALI,NI,ZN,PB}` 200 ×22 barras diárias na janela Free de 30 dias, `/v1/history/SN` → 400 `Invalid symbol`, chave inválida → 401, janela por minuto confirmada via 429. Correção de contrato aplicada: `/v1/prices/` exige barra final (sem ela → 401). `HG` = futuros COMEX — distinto de preço físico LME; ALI/NI reportam exchange LME upstream (restrições de terceiros permanecem sob observação).
 
 ### 5.4 Franquia (Free plan)
 

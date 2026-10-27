@@ -114,7 +114,7 @@ class MetalChartsProvider:
         Returns ``{symbol: {"price", "bid", "ask", "timestamp",
         "exchange", "market_type", "stale", "currency", "unit"}}`` —
         native fields preserved verbatim, no unit conversion."""
-        body = self._get("/v1/prices")
+        body = self._get("/v1/prices/")
         data = body.get("data")
         if not isinstance(data, dict):
             raise InvalidResponseError("metalcharts prices payload malformed")
