@@ -264,3 +264,60 @@ describe("Delpi MES App — downtimes area", () => {
     expect(screen.queryByRole("heading", { name: "Acesso não disponível" })).toBeNull();
   });
 });
+
+describe("navegação entre áreas (host-driven)", () => {
+  const PERMS = [
+    "delpi-mes.access",
+    "delpi-mes.monitoring.view",
+    "delpi-mes.downtimes.view",
+    "delpi-mes.view.filial-01",
+  ];
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) =>
+        Promise.resolve(
+          envelope(
+            url.includes("/downtimes/analytics")
+              ? EMPTY_ANALYTICS
+              : url.includes("/downtimes/insights")
+                ? EMPTY_INSIGHTS
+                : { items: [], total: 0, page: 1, pageSize: 50 },
+          ),
+        ),
+      ),
+    );
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("não desfaz a navegação do usuário enquanto o host entrega o novo pathname", async () => {
+    // Modo real do portal: a rota vem de  prop; o click interno
+    // move o history e o host entrega o novo pathname no ciclo seguinte.
+    // A canonicalização da rota antiga não pode navegar de volta.
+    window.history.pushState({}, "", "/apps/delpi-mes/downtimes?branch=01");
+    render(
+      <App
+        pathname="/apps/delpi-mes/downtimes"
+        permissions={PERMS}
+        getAccessToken={() => "token"}
+      />,
+    );
+    await screen.findByRole("heading", { name: "Paradas" });
+
+    fireEvent.click(screen.getAllByText("Monitoramento")[0]);
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/apps/delpi-mes/monitoring");
+    });
+    // dá um ciclo extra para o efeito de canonicalização rodar — a URL
+    // precisa PERMANECER em monitoring (sem bounce-back para downtimes)
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/apps/delpi-mes/monitoring");
+    });
+    expect(window.location.search).toContain("branch=01");
+  });
+});

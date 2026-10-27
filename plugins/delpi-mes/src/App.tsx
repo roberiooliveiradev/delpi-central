@@ -23,6 +23,7 @@ import {
   buildDelpiMesHref,
   buildDowntimesHref,
   buildRegistrationHref,
+  parseDelpiMesRoute,
   useDelpiMesRoute,
 } from "./hooks/useDelpiMesRoute";
 import { DowntimeReasonsPage } from "./pages/DowntimeReasonsPage";
@@ -84,6 +85,15 @@ export default function App({
   useEffect(() => {
     if (!activeArea || registrationsDenied || areaDenied) return;
     if (!window.location.pathname.startsWith(BASE_PATH)) return;
+    // O click interno já moveu o history — neste modo host-driven o
+    // `pathname` prop chega um ciclo depois (portal → updateRoute). Se a
+    // URL viva já aponta para OUTRA área, não canonizar a rota antiga:
+    // navegar de volta apagaria a navegação do usuário (bounce-back).
+    const live = parseDelpiMesRoute(
+      window.location.pathname,
+      window.location.search,
+    );
+    if (live.area !== route.area) return;
     const canonical = areaIsGlobal
       ? route.registrationPage
         ? buildRegistrationHref(route.registrationPage)
@@ -96,7 +106,7 @@ export default function App({
     if (canonical && `${window.location.pathname}${window.location.search}` !== canonical) {
       navigate(canonical);
     }
-  }, [activeArea, activeBranch, areaIsGlobal, registrationsDenied, areaDenied, route.registrationPage, route.downtimes, navigate]);
+  }, [activeArea, activeBranch, areaIsGlobal, registrationsDenied, areaDenied, route.registrationPage, route.area, route.downtimes, navigate]);
 
   const navigateTo = (area: DelpiMesArea, branch: BranchCode, workCenter?: string) => {
     navigate(buildDelpiMesHref(area, branch, workCenter));
