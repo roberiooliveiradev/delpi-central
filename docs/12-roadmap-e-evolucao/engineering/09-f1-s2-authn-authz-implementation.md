@@ -173,3 +173,74 @@ Smoke real: `uvicorn engineering_app.main:app` com envs → `/health` 200, `/rea
 ## 10. Próximo bounded step
 
 F1.S3 — observabilidade de request estruturada (correlation id, logs, métricas) — somente mediante autorização da Coordenação.
+
+---
+
+## 11. F1.S2R1 — Security Rework / Strict Public Path Matching
+
+> **SHA da correção:** registrado neste documento após push (ver §11.8).
+> **Veredicto que originou o rework:** REWORK — bypass potencial na allowlist pública.
+
+### 11.1. Problema original e causa-raiz
+
+A classificação de caminho público usava matching por sufixo:
+
+```python
+return normalized.endswith(_PUBLIC_SUFFIXES)
+# _PUBLIC_SUFFIXES = ("/engineering-api/health", "/engineering-api/ready")
+```
+
+`endswith` aceita qualquer prefixo arbitrário — `/qualquer-prefixo/engineering-api/health` era classificado como público e dispensava JWT. O mesmo risco se aplicaria a qualquer rota futura que terminasse com os sufixos. Causa-raiz: matching aproximado onde o contrato exige comparação exata.
+
+### 11.2. Risco de bypass
+
+- Caminhos fora do contrato classificados como públicos → ausência de autenticação.
+- Rotas futuras criadas sob prefixos arbitrários com sufixo coincidente herdariam o bypass silenciosamente.
+
+### 11.3. Contrato de caminhos públicos
+
+```text
+/health
+/ready
+/apps/engineering-api/health
+/apps/engineering-api/ready
+/docs, /redoc, /openapi.json   (política canônica de docs, paths exatos)
+```
+
+Somente comparação exata após `normalize_path` (strip de query + trailing slash).
+
+### 11.4. Correção aplicada
+
+`engineering_app/middleware/auth_middleware.py`:
+
+- `_PUBLIC_SUFFIXES`/`endswith` removidos → `_PUBLIC_PATHS` (frozenset) + `normalize_path(path) in _PUBLIC_PATHS`.
+- **`is_public_path` compartilhada é mais ampla que o contrato** — aceita `*/docs`, `*/redoc`, `*/openapi.json` de qualquer prefixo, `/apps/<qualquer-svc>/health` e `*/api-delpi/health`. Como o middleware base re-executa essa checagem internamente, delegar diretamente reintroduziria o bypass para esses caminhos. Solução: paths que a lib considera públicos mas que não estão na allowlist da Engenharia passam pelo fluxo completo de autenticação do base — o `scope["path"]` é mascarado apenas durante a avaliação do middleware compartilhado e restaurado antes de `call_next` (roteamento vê o path real). Nenhuma linha de JWT foi reimplementada; `shared/delpi_auth` não foi modificada (a política ampla é a decisão canônica para as demais APIs — engenharia apenas a restringe para o próprio contexto, conforme diretriz do rework).
+
+### 11.5. Testes negativos adicionados (32 novos → 81 total)
+
+`test_auth_middleware.py`:
+
+- Prefixos arbitrários → 401: `/qualquer-prefixo/...`, `/fake/apps/...`, `/v1/home`, `/v1/health`, `/engineering-api/health` (sem `/apps`), `/health/extra` e variantes, `/xapps/...`, `/appsx/...`, `/apps/engineering-apix/health`.
+- Caminhos que a lib compartilhada aceitaria → 401: `/foo/docs`, `/x/redoc`, `/x/openapi.json`, `/apps/commercial-api/health`, `/x/api-delpi/health`.
+- Dupla barra `//health`, `/apps//engineering-api/health` → 401.
+- Trailing slash `/health/`, `/ready/`, `/apps/engineering-api/health/` → público e 404 (redirect_slashes=False).
+- Encoding `/he%61lth` → resolve para `/health` (200) — é a rota canônica.
+- Segmentos `/./health`, `/x/../health` → normalizados pelo transporte para `/health` (200) — não é bypass.
+- Query string `/health?foo=bar` → 200; `/v1/anything?x=/health` → 401.
+- Rota desconhecida `/nonexistent-route` → 401.
+- Unit: `_is_engineering_public_path` — conjunto exato positivo/negativo.
+
+Para cada caso negativo a prova é `401` (middleware exigiu Bearer antes do roteamento), não `404`.
+
+### 11.6. Regressão
+
+Suíte completa: **49 anteriores + 32 novos = 81 passed** (SHA da correção, Python 3.12, pins + `shared[fastapi]`). Autorização Core, JWT, stale/force_refresh, startup fail-fast, health/readiness e OpenAPI intactos.
+
+### 11.7. Residuais
+
+- O mascaramento de `scope["path"]` existe apenas para forçar o fluxo de auth da lib sobre paths que a política compartilhada ampla aceitaria — contido, documentado e coberto por testes; desaparece se a lib expuser uma API de classificação por contexto.
+- A política ampla da lib permanece inalterada (owner: `shared/delpi_auth` + demais consumidores).
+
+### 11.8. Resultado
+
+Correção publicada em `main` — commit e SHA finais no EVA EXECUTION REPORT da F1.S2R1.

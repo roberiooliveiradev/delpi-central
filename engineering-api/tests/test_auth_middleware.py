@@ -152,7 +152,11 @@ def test_public_paths_do_not_require_token(client, path):
     ],
 )
 def test_root_path_public_variants(client, path):
-    """O gateway strip o prefixo, mas variantes com root_path não podem 401."""
+    """Variantes canônicas de root_path dispensam JWT (rota → 404, não 401).
+
+    O gateway faz strip do prefixo; acesso direto ao path prefixado é 404,
+    mas o middleware não pode exigir Bearer — contrato aprovado F1.S2.
+    """
     response = client.get(path)
     assert response.status_code != 401
 
@@ -160,6 +164,119 @@ def test_root_path_public_variants(client, path):
 def test_non_public_path_requires_token(client):
     response = client.get("/v1/anything")
     assert response.status_code == 401
+
+
+# --- F1.S2R1 — allowlist estrita: nenhum prefixo arbitrário dispensa JWT ---
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/qualquer-prefixo/engineering-api/health",
+        "/qualquer-prefixo/engineering-api/ready",
+        "/fake/apps/engineering-api/health",
+        "/fake/apps/engineering-api/ready",
+        "/v1/home",
+        "/v1/health",
+        "/v1/ready",
+        "/engineering-api/health",           # sem o prefixo /apps canônico
+        "/engineering-api/ready",
+        "/engineering-api/health/extra",
+        "/apps/engineering-api/health/extra",
+        "/apps/engineering-api/ready/extra",
+        "/xapps/engineering-api/health",     # prefixo parecido
+        "/appsx/engineering-api/health",
+        "/apps/engineering-apix/health",
+        "//health",                          # dupla barra
+        "/apps//engineering-api/health",
+        "/nonexistent-route",
+        # política pública da lib é mais ampla que o contrato da
+        # Engenharia — estes paths NÃO podem dispensar JWT:
+        "/foo/docs",
+        "/x/redoc",
+        "/x/openapi.json",
+        "/apps/commercial-api/health",       # health de outro serviço
+        "/x/api-delpi/health",
+    ],
+)
+def test_arbitrary_prefixes_require_auth(client, path):
+    response = client.get(path)
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/health/",
+        "/ready/",
+        "/apps/engineering-api/health/",
+    ],
+)
+def test_trailing_slash_public_but_not_found(client, path):
+    """Trailing slash normaliza para a rota pública (redirect_slashes=False
+    → 404, nunca 401)."""
+    response = client.get(path)
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/./health",
+        "/x/../health",
+        "/x/./../health",
+    ],
+)
+def test_dot_segments_resolve_to_canonical_route(client, path):
+    """O client/transporte normaliza segmentos . e .. ANTES do middleware —
+    a requisição chega como /health (rota pública legítima, não bypass)."""
+    response = client.get(path)
+    assert response.status_code == 200
+    assert response.json()["status"] == "online"
+
+
+def test_encoded_path_matches_exact_route(client):
+    """%61 decodifica para 'a' — /he%61lth é o próprio /health."""
+    response = client.get("/he%61lth")
+    assert response.status_code != 401
+
+
+def test_query_string_does_not_affect_matching(client):
+    assert client.get("/health?foo=bar").status_code == 200
+    response = client.get("/v1/anything?x=/health")
+    assert response.status_code == 401
+
+
+def test_allowlist_matches_only_exact_paths():
+    """Unit check da classificação — normalize_path + comparação exata."""
+    from engineering_app.middleware.auth_middleware import (
+        _is_engineering_public_path,
+    )
+
+    public = {
+        "/health",
+        "/ready",
+        "/apps/engineering-api/health",
+        "/apps/engineering-api/ready",
+        "/openapi.json",
+        "/docs",
+        "/redoc",
+    }
+    for path in public:
+        assert _is_engineering_public_path(path), path
+
+    forbidden = [
+        "/x/engineering-api/health",
+        "/engineering-api/health",
+        "/apps/engineering-api/health/extra",
+        "/v1/health",
+        "/foo/openapi.json",
+        "/x/docs",
+        "",
+        "/",
+    ]
+    for path in forbidden:
+        assert not _is_engineering_public_path(path), path
 
 
 def test_probe_route_not_in_production_openapi(client):
