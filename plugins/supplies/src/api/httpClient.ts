@@ -192,3 +192,24 @@ export async function httpPatch<T>(
 
   return response.json() as Promise<T>;
 }
+
+export async function httpDelete<T>(
+  url: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: buildHeaders(false),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
+}

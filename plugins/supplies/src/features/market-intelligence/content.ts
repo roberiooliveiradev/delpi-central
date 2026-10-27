@@ -281,6 +281,79 @@ export const MARKET_INTELLIGENCE_CONTENT = {
       `Instrumentos selecionados: ${labels.join(", ")}`,
   },
 
+  comex: {
+    selectionTitle: "Seleção de produtos e NCMs",
+    selectionHint:
+      "Pesquise produtos reais da DELPI (SB1010), selecione um ou mais " +
+      "itens e acompanhe a NCM de cada um. Somente NCMs homologadas " +
+      "alimentam o gráfico — pendentes ficam visíveis com seu estado.",
+    productTypeAll: "Todos",
+    productTypeMp: "MP",
+    productTypePi: "PI",
+    productTypePa: "PA",
+    searchLabel: "Buscar produto",
+    searchPlaceholder: "Código ou descrição — ex.: fio de cobre",
+    searchButton: "Buscar",
+    resultsEmptyTitle: "Nenhum produto encontrado",
+    resultsEmptyMessage:
+      "Ajuste a busca ou o tipo de produto. O catálogo consulta o " +
+      "cadastro real do TOTVS (SB1010).",
+    resultsLoading: "Buscando produtos…",
+    resultsCode: "Código",
+    resultsDescription: "Descrição",
+    resultsType: "Tipo",
+    resultsUnit: "UM",
+    resultsNcm: "NCM",
+    addProduct: "Adicionar",
+    selectedProductsLabel: "Produtos selecionados",
+    removeProduct: (code: string) => `Remover ${code}`,
+    ncmColumnTitle: "NCMs da seleção",
+    ncmStatusApproved: "Homologada",
+    ncmStatusPending: "Em homologação",
+    ncmStatusCandidate: "Candidata",
+    ncmStatusRejected: "Rejeitada",
+    ncmStatusInactive: "Inativa",
+    ncmStatusNotRequested: "Não solicitada",
+    ncmStatusMissing: "Sem NCM",
+    ncmStatusMalformed: "NCM inválida",
+    requestApproval: "Solicitar homologação",
+    approve: "Homologar",
+    reject: "Rejeitar",
+    deactivate: "Inativar",
+    actionPending: "Processando…",
+    actionError:
+      "A ação não foi concluída — tente novamente. Nenhum estado foi " +
+      "alterado sem confirmação.",
+    requestSuccess: "Homologação solicitada — aguardando análise.",
+    approvedNcmsLabel: "NCMs na análise",
+    approvedNcmsHint:
+      "NCMs homologadas que alimentam o gráfico — a mesma NCM conta " +
+      "uma única vez mesmo vinda de vários produtos.",
+    noApprovedNcm:
+      "Nenhuma NCM homologada na seleção — o gráfico só exibe dados " +
+      "quando ao menos uma NCM estiver aprovada e com dados coletados.",
+    viewsLabel: "Visualizações salvas",
+    viewsPlaceholder: "Nova análise",
+    saveView: "Salvar visão",
+    updateView: "Atualizar",
+    deleteView: "Excluir",
+    viewNamePlaceholder: "Nome da visão — ex.: Cobre importado",
+    viewSaved: "Visão salva.",
+    viewDeleted: "Visão excluída.",
+    viewApplyError:
+      "Não foi possível aplicar a visão salva — ela pode ter sido " +
+      "excluída por outra sessão.",
+    aggregateNote:
+      "NCMs distintas somam valores FOB e peso no mesmo período — " +
+      "o valor médio é recalculado como US$/t do agregado, nunca " +
+      "média simples de preços.",
+    unresolvedWarning: (codes: string[]) =>
+      `NCMs sem homologação ou fora da lista ativa: ${codes.join(", ")}`,
+    manageHint:
+      "A decisão de homologação exige permissão de gestão de " +
+      "Suprimentos e fica registrada em auditoria.",
+  },
+
   states: {
     loading: "Carregando inteligência de mercado…",
     moduleUnavailable:

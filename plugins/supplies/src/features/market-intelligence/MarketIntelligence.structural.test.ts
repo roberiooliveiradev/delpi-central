@@ -40,6 +40,7 @@ const BASE_STATE = {
   metals: [] as string[],
   indicator: "ipp" as const,
   ncm: "",
+  comexProducts: [] as string[],
   ippSeries: "",
   from: "2025-01-01",
   to: "2025-12-31",
@@ -96,6 +97,43 @@ describe("market intelligence page (PROC-0076 R4)", () => {
       expect(state.indicator).toBe("comex");
       expect(state.ncm).toBe("74040010");
     });
+  });
+
+  it("parses a multi-NCM CSV and the comex product selection (S4)", () => {
+    withWindow(
+      "?view=indicators&indicator=comex&ncm=74040010,85444900&products=MP0001,MP0002",
+      () => {
+        const state = readMarketIntelligenceFromUrl();
+        expect(state.ncm).toBe("74040010,85444900");
+        expect(state.comexProducts).toEqual(["MP0001", "MP0002"]);
+      },
+    );
+  });
+
+  it("drops malformed NCM codes and product codes from the URL", () => {
+    withWindow("?ncm=74040010,abc,123&products=OK-1,<script>", () => {
+      const state = readMarketIntelligenceFromUrl();
+      expect(state.ncm).toBe("74040010");
+      expect(state.comexProducts).toEqual(["OK-1"]);
+    });
+  });
+
+  it("round-trips the comex selection to the URL", () => {
+    let written = "";
+    withWindow("", (stub) => {
+      stub.history.replaceState = (_s, _t, url) => {
+        written = url;
+      };
+      writeMarketIntelligenceToUrl({
+        ...BASE_STATE,
+        indicator: "comex",
+        ncm: "74040010,85444900",
+        comexProducts: ["MP0001"],
+      });
+    });
+    expect(written).toContain("indicator=comex");
+    expect(written).toContain("ncm=74040010%2C85444900");
+    expect(written).toContain("products=MP0001");
   });
 
   it("maps a legacy R2 link (instrument=usd-brl) to the fx view", () => {
