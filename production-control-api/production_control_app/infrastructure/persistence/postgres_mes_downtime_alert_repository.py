@@ -82,7 +82,23 @@ class PostgresMesDowntimeAlertRepository:
             )
             return [dict(row) for row in cur.fetchall()]
 
-    def claim_if_signature_changed(
+    def list_observer_states(self, *, branch: str) -> list[dict[str, Any]]:
+        """Estado de telemetria Pulse por CT — a regra de parada
+        prolongada não alerta quando a ausência de sinal é
+        indistinguível da parada real (RQ-6.8)."""
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT work_center, device_online, degraded_reason,
+                       last_seen_at
+                  FROM {PC_SCHEMA_NAME}.work_center_pulse_observers
+                 WHERE branch = %s
+                """,
+                [branch],
+            )
+            return [dict(row) for row in cur.fetchall()]
+
+    def claim_pending(
         self,
         *,
         alert_key: str,
@@ -91,31 +107,84 @@ class PostgresMesDowntimeAlertRepository:
         subject_key: str,
         signature: str,
         now: datetime,
+        lease_expiry: datetime,
     ) -> bool:
-        """Dedup atômico: retorna True (pode despachar) somente quando a
-        assinatura difere da última notificada para a mesma chave —
-        primeira ocorrência insere; recorrência atualiza apenas se o
-        estado relevante mudou (RQ-6.7)."""
+        """Reserva atômica do alerta para dispatch.
+
+        Retorna True somente quando a assinatura difere da última
+        ENTREGUE e nenhum claim vigente segura a chave (lease não
+        expirado) — dois avaliadores concorrentes não despacham o
+        mesmo alerta, e um avaliador que falha/cai libera a chave
+        para retry após o lease.
+        """
         with get_connection() as conn, conn.cursor() as cur:
             cur.execute(
                 f"""
                 INSERT INTO {_DISPATCHES} (
                     alert_key, branch, rule, subject_key, signature,
+                    pending_signature, claimed_at,
                     first_seen_at, last_dispatched_at, dispatch_count
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, 1)
+                ) VALUES (%s, %s, %s, %s, NULL, %s, %s, %s, NULL, 0)
                 ON CONFLICT (alert_key) DO UPDATE SET
-                    signature = EXCLUDED.signature,
-                    last_dispatched_at = EXCLUDED.last_dispatched_at,
-                    dispatch_count =
-                        {PC_SCHEMA_NAME}.mes_downtime_alert_dispatches.dispatch_count + 1,
+                    pending_signature = EXCLUDED.pending_signature,
+                    claimed_at = EXCLUDED.claimed_at,
                     updated_at = now()
                 WHERE
                     {PC_SCHEMA_NAME}.mes_downtime_alert_dispatches.signature
-                    <> EXCLUDED.signature
+                        IS DISTINCT FROM EXCLUDED.pending_signature
+                    AND (
+                        {PC_SCHEMA_NAME}.mes_downtime_alert_dispatches.claimed_at
+                            IS NULL
+                        OR {PC_SCHEMA_NAME}.mes_downtime_alert_dispatches.claimed_at
+                            < %s
+                    )
                 RETURNING alert_key
                 """,
-                [alert_key, branch, rule, subject_key, signature, now, now],
+                [
+                    alert_key, branch, rule, subject_key, signature,
+                    now, now, lease_expiry,
+                ],
             )
             claimed = cur.fetchone() is not None
             conn.commit()
             return claimed
+
+    def confirm_dispatch(
+        self, *, alert_key: str, signature: str, now: datetime
+    ) -> None:
+        """Marca a assinatura como entregue — somente após dispatch
+        bem-sucedido e apenas se ainda somos o dono do claim
+        (pending_signature casa)."""
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE {_DISPATCHES} SET
+                    signature = pending_signature,
+                    pending_signature = NULL,
+                    claimed_at = NULL,
+                    last_dispatched_at = %s,
+                    dispatch_count = dispatch_count + 1,
+                    updated_at = now()
+                WHERE alert_key = %s
+                  AND pending_signature = %s
+                """,
+                [now, alert_key, signature],
+            )
+            conn.commit()
+
+    def release_claim(self, *, alert_key: str, signature: str) -> None:
+        """Libera a reserva após falha de dispatch — o próximo tick
+        retenta (a assinatura entregue não mudou)."""
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE {_DISPATCHES} SET
+                    pending_signature = NULL,
+                    claimed_at = NULL,
+                    updated_at = now()
+                WHERE alert_key = %s
+                  AND pending_signature = %s
+                """,
+                [alert_key, signature],
+            )
+            conn.commit()

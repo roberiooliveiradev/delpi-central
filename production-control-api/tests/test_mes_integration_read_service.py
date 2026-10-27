@@ -50,6 +50,10 @@ class FakeRepository:
         self.last_downtime_args = kwargs
         return self.downtime_rows, len(self.downtime_rows)
 
+    def list_downtime_analytics_facts(self, **kwargs):
+        self.last_analytics_args = kwargs
+        return {"facts": list(self.export_rows), "capped": False}
+
     def list_downtime_export(self, **kwargs):
         self.export_calls = getattr(self, "export_calls", 0) + 1
         self.last_export_args = kwargs
@@ -420,3 +424,84 @@ def test_downtime_export_requires_valid_branch():
     with pytest.raises(Exception):
         make_service(FakeRepository()).export_downtimes(branch="99")
 
+
+
+def _export_row(id_, started, ended=None, work_center="CT-35", **kw):
+    row = {
+        "id": id_, "work_center": work_center, "run_id": "r-1",
+        "started_at": started, "ended_at": ended, "source": "system",
+        "reason_code": "setup", "reason_label": "Setup",
+        "category": "setup", "confirmed": True, "note": None,
+    }
+    row.update(kw)
+    return row
+
+
+def test_export_period_seconds_clips_occurrence_to_window():
+    """Ocorrência atravessando o limite do período: a duração integral
+    difere do tempo atribuído — o export distingue as duas métricas."""
+    repo = FakeRepository()
+    repo.export_rows = [
+        # começa 2h antes do from, termina dentro -> 1h atribuída
+        _export_row(
+            "cross-in",
+            NOW - timedelta(hours=4),
+            NOW - timedelta(hours=2, minutes=30),
+        ),
+        # aberta: fim = referenceAt do owner
+        _export_row("open", NOW - timedelta(minutes=30), None),
+        # totalmente dentro
+        _export_row(
+            "inside",
+            NOW - timedelta(hours=2),
+            NOW - timedelta(hours=1),
+        ),
+    ]
+    start = NOW - timedelta(hours=3)
+    data = make_service(repo).export_downtimes(
+        branch="01", period_from=start, period_to=NOW
+    )
+    items = {i["id"]: i for i in data["items"]}
+    # -3h .. -2h30 dentro da janela de -3h .. now -> 30 min atribuídos
+    assert items["cross-in"]["periodSeconds"] == 1800
+    assert items["open"]["periodSeconds"] == 1800      # referenceAt ancora
+    assert items["inside"]["periodSeconds"] == 3600
+
+
+def test_export_universe_matches_analytics_occurrences_count():
+    """Equivalência painel × exportação: mesmo universo de fatos e
+    mesmos filtros geram o mesmo número de ocorrências (RQ-5.8)."""
+    repo = FakeRepository()
+    repo.export_rows = [
+        _export_row("a", NOW - timedelta(hours=2), NOW - timedelta(hours=1)),
+        _export_row("b", NOW - timedelta(hours=3), None),
+        _export_row("c", NOW - timedelta(minutes=30), None),
+    ]
+    start = NOW - timedelta(hours=4)
+    svc = make_service(repo)
+    export = svc.export_downtimes(
+        branch="01", period_from=start, period_to=NOW
+    )
+    analytics = svc.get_downtime_analytics(
+        branch="01", period_from=start, period_to=NOW
+    )
+    assert export["total"] == 3
+    assert export["total"] == analytics["summary"]["occurrencesCount"]
+    # mesmos filtros encaminhados às duas leituras (predicado único)
+    assert (
+        repo.last_export_args["work_center"]
+        == repo.last_analytics_args["work_center"]
+    )
+
+
+def test_export_open_stop_is_bounded_by_reference_at():
+    """Parada aberta nunca extrapola o referenceAt — mesmo limite do
+    agregador do painel (parada em aberto conta até 'agora')."""
+    repo = FakeRepository()
+    repo.export_rows = [
+        _export_row("open", NOW - timedelta(hours=2), None),
+    ]
+    data = make_service(repo).export_downtimes(branch="01")
+    item = data["items"][0]
+    assert item["endedAt"] is None
+    assert item["periodSeconds"] == 7200

@@ -433,7 +433,15 @@ class MesIntegrationReadService:
             },
             "total": result["total"],
             "capped": result["capped"],
-            "items": [self._downtime_export_item(row) for row in result["items"]],
+            "items": [
+                self._downtime_export_item(
+                    row,
+                    period_from=period_from,
+                    effective_to=effective_to,
+                    reference_at=reference_at,
+                )
+                for row in result["items"]
+            ],
         }
 
     def get_downtime_insights(
@@ -773,10 +781,29 @@ class MesIntegrationReadService:
         }
 
     @classmethod
-    def _downtime_export_item(cls, row: dict[str, Any]) -> dict[str, Any]:
+    def _downtime_export_item(
+        cls,
+        row: dict[str, Any],
+        *,
+        period_from: datetime | None = None,
+        effective_to: datetime | None = None,
+        reference_at: datetime | None = None,
+    ) -> dict[str, Any]:
         item = cls._downtime_item(row)
         item["treatmentStatus"] = row.get("treatment_status")
         item["treatmentRequestId"] = row.get("treatment_request_id")
         item["treatmentRequestType"] = row.get("treatment_request_type")
         item["treatmentConcludedAt"] = _iso(row.get("treatment_concluded_at"))
+        # Tempo atribuído à janela: a ocorrência pode atravessar os
+        # limites do período — o export distingue a duração integral da
+        # fatia que incide no filtro, preservando a equivalência com os
+        # agregados do painel (mesmo clipping do agregador canônico).
+        start = row.get("started_at")
+        end = row.get("ended_at") or reference_at
+        if start is not None and end is not None:
+            lo = start if period_from is None or start > period_from else period_from
+            hi = end if effective_to is None or end < effective_to else effective_to
+            item["periodSeconds"] = max(0, int((hi - lo).total_seconds()))
+        else:
+            item["periodSeconds"] = None
         return item

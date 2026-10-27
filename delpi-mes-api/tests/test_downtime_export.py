@@ -183,3 +183,113 @@ def test_executive_pdf_requires_period_and_branch_authz():
             branch="01",
             period_from=datetime(2026, 9, 1, tzinfo=timezone.utc),
         )
+
+
+def _payload_with(**item_overrides):
+    payload = _export_payload()
+    payload["items"][0].update(item_overrides)
+    return payload
+
+
+def test_csv_neutralizes_formula_prefixes_in_textual_fields():
+    payload = _payload_with(
+        note="=SUM(A1:A2)",
+        reasonLabel="+cmd|'/c calc'!A1",
+        workCenter="-40",
+        confirmedByRef="@hacker",
+    )
+    payload["appliedFilters"]["workCenter"] = "=CT-41"
+    service = MesDowntimeExportService(
+        gateway=type("GW", (), {
+            "export_downtimes": lambda self, **kw: payload,
+        })()
+    )
+    result = service.export_occurrences(
+        user(*EXPORT_PERMS), branch="01", export_format="csv",
+    )
+    text = result["content"].decode("utf-8-sig")
+    assert "'=SUM(A1:A2)" in text
+    assert "'+cmd" in text
+    assert "'-40" in text
+    assert "'@hacker" in text
+    # valor de filtro dentro de linha "# ..." não é célula de
+    # fórmula (o risco é só no caractere inicial da célula)
+    # célula sem prefixo segue intacta
+    assert "dt-1" in text
+
+
+def test_xlsx_neutralizes_formula_cells():
+    import io
+    from openpyxl import load_workbook
+
+    payload = _payload_with(note="=HYPERLINK(\"http://evil\")")
+    service = MesDowntimeExportService(
+        gateway=type("GW", (), {
+            "export_downtimes": lambda self, **kw: payload,
+        })()
+    )
+    result = service.export_occurrences(
+        user(*EXPORT_PERMS), branch="01", export_format="xlsx",
+    )
+    wb = load_workbook(io.BytesIO(result["content"]))
+    sheet = wb["Paradas"]
+    values = [cell.value for row in sheet.iter_rows() for cell in row]
+    assert "'=HYPERLINK(\"http://evil\")" in values
+    assert not any(
+        isinstance(v, str) and v.startswith("=") for v in values
+    )
+
+
+def test_export_includes_period_seconds_column():
+    payload = _payload_with(periodSeconds=1800)
+    service = MesDowntimeExportService(
+        gateway=type("GW", (), {
+            "export_downtimes": lambda self, **kw: payload,
+        })()
+    )
+    result = service.export_occurrences(
+        user(*EXPORT_PERMS), branch="01", export_format="csv",
+    )
+    text = result["content"].decode("utf-8-sig")
+    assert "Tempo no período (min)" in text
+    assert "Duração integral (min)" in text
+    assert "30.0" in text  # 1800s -> 30 min
+
+
+def test_executive_pdf_handles_many_reasons_and_long_labels():
+    gateway = FakeGateway()
+    original = gateway.get_downtime_analytics
+
+    def rich(**kwargs):
+        data = original(**kwargs)
+        data["byReason"] = [
+            {
+                "reasonCode": f"r{i}",
+                "label": f"Motivo de parada com descrição extensa número {i} "
+                         "que ultrapassa o limite de truncamento",
+                "seconds": 3600 * (10 - i),
+                "occurrencesCount": 10 - i,
+                "percentOfAttributed": 30.0 - i,
+                "cumulativePercent": min(90.0 + i, 100.0),
+            }
+            for i in range(10)
+        ]
+        data["byWorkCenter"] = [
+            {
+                "workCenter": f"CT-{i:02d}-NOME-MUITO-LONGO-DO-CENTRO",
+                "seconds": 5400 - i * 100,
+                "occurrencesCount": 3,
+                "percentOfTotal": 25.0 - i,
+            }
+            for i in range(10)
+        ]
+        return data
+
+    gateway.get_downtime_analytics = rich
+    from datetime import datetime, timezone
+    result = MesDowntimeExportService(gateway=gateway).export_executive_report(
+        user(*EXPORT_PERMS), branch="01",
+        period_from=datetime(2026, 9, 1, tzinfo=timezone.utc),
+    )
+    assert result["content"].startswith(b"%PDF")
+    assert len(result["content"]) > 1000

@@ -211,10 +211,16 @@ padrão até os parâmetros industriais serem aprovados. Regras: parada
 aberta prolongada, backlog sem classificação
 (`PC_MES_DOWNTIME_UNCLASSIFIED_ALERT_THRESHOLD`) e tratamento vencido
 (`PC_MES_DOWNTIME_OVERDUE_ACTION_DAYS`). O dedup é persistido em
-`mes_downtime_alert_dispatches` (migration V023): INSERT/UPDATE
-condicional por assinatura do estado relevante — a mesma condição não
-redispara sem mudança relevante e avaliadores concorrentes não
-duplicam. Dispatch via `CoreApiNotificationGateway` (categoria
+`mes_downtime_alert_dispatches` (V023 + claim com lease em V024):
+INSERT/UPDATE atômico reserva `pending_signature` + `claimed_at`, e a
+assinatura só vira "entregue" após dispatch confirmado — falha
+transitória libera o claim para retry no próximo tick e crash do
+avaliador expira o lease (120s), sem duplicar entrega entre
+avaliadores. A parada prolongada só alerta com telemetria confiável:
+observador Pulse degradado/stale suprime o alerta e ocorrência de
+origem telemétrica sem observador também (ausência de sinal não prova
+máquina parada — RQ-6.8); paradas manuais seguem alertáveis. Dispatch
+via `CoreApiNotificationGateway` (categoria
 `production_control_mes_downtime_alerts`), destinatários =
 `delpi-mes.downtimes.treat` AND `view.filial-NN`; tudo best-effort —
 falha nunca afeta o poller nem os fatos.

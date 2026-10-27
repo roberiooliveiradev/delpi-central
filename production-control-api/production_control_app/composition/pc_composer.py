@@ -892,6 +892,9 @@ def build_mes_downtime_alert_service() -> Any:
             settings.PC_MES_DOWNTIME_UNCLASSIFIED_ALERT_THRESHOLD
         ),
         overdue_action_days=settings.PC_MES_DOWNTIME_OVERDUE_ACTION_DAYS,
+        telemetry_stale_minutes=(
+            settings.PC_MES_DOWNTIME_TELEMETRY_STALE_MINUTES
+        ),
     )
 
 
