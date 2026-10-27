@@ -1383,22 +1383,63 @@
 }
 .delpi-mes-analytics__grid {
   display: grid; gap: 0.9rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+.delpi-mes-analytics__card--wide { grid-column: 1 / -1; }
+@media (max-width: 1100px) {
+  .delpi-mes-analytics__grid { grid-template-columns: minmax(0, 1fr); }
+}
+.delpi-mes-analytics__more {
+  margin-top: 0.55rem; min-height: 2rem; padding: 0 0.75rem;
+  border: 1px solid #dde5ef; border-radius: 0.6rem;
+  background: #f4f7fb; color: #1d4ed8; font: inherit; font-size: 0.78rem;
+  font-weight: 700; cursor: pointer;
+}
+.delpi-mes-analytics__more:hover { background: #e8eef7; }
+.delpi-mes-analytics__more:focus-visible {
+  outline: 2px solid #0b6bcb; outline-offset: 2px;
+}
+.delpi-mes-analytics__trend {
+  --delpi-ui-series-chart-plot-height: 17rem;
+}
+@media (max-width: 720px) {
+  .delpi-mes-analytics__trend {
+    --delpi-ui-series-chart-plot-height: 13.5rem;
+  }
+}
+.delpi-mes-analytics__trend-tooltip {
+  display: flex; flex-direction: column; gap: 0.15rem;
+  padding: 0.45rem 0.7rem; border-radius: 0.55rem;
+  border: 1px solid #d3dcea;
+  background: #ffffff; color: #22344e;
+  box-shadow: 0 8px 22px rgb(15 35 65 / 0.14);
+  font-size: 0.78rem; line-height: 1.3; pointer-events: none;
+}
+.delpi-mes-analytics__trend-tooltip strong { font-size: 0.8rem; }
+.delpi-mes-analytics__day-select {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  margin-top: 0.65rem; color: #5c6b80; font-size: 0.75rem; font-weight: 700;
+}
+.delpi-mes-analytics__day-select select {
+  font: inherit; font-weight: 500; padding: 0.3rem 0.55rem;
+  border: 1px solid #dde5ef; border-radius: 0.5rem;
+  background: #fff; color: #22344e; min-height: 1.9rem;
+}
+.delpi-mes-analytics__day-select select:focus-visible {
+  outline: 2px solid #0b6bcb; outline-offset: 1px;
 }
 .delpi-mes-analytics__error {
   border: 1px solid #f3c1c1; border-radius: 0.75rem; background: #fdf4f4;
   padding: 0.9rem 1rem; color: #8f2b2b;
 }
 .delpi-mes-analytics__error p { margin: 0 0 0.55rem; }
-.delpi-mes-analytics__error button,
-.delpi-mes-analytics__day-chips button {
+.delpi-mes-analytics__error button {
   min-height: 2rem; padding: 0 0.75rem;
   border: 1px solid #dde5ef; border-radius: 0.6rem;
   background: #f4f7fb; color: #1d4ed8; font: inherit; font-size: 0.78rem;
   font-weight: 700; cursor: pointer;
 }
-.delpi-mes-analytics__error button:hover,
-.delpi-mes-analytics__day-chips button:hover { background: #e8eef7; }
+.delpi-mes-analytics__error button:hover { background: #e8eef7; }
 .delpi-mes-analytics__warning {
   margin: 0; padding: 0.65rem 0.85rem; border-radius: 0.65rem;
   border: 1px solid #f2d3a2; background: #fdf8ef; color: #7a4b12; font-size: 0.82rem;
@@ -1408,40 +1449,47 @@
   border: 1px solid #d9e2f0; background: #f5f8fc; color: #47566d; font-size: 0.82rem;
 }
 .delpi-mes-analytics__hint { margin: 0; color: #66788f; font-size: 0.85rem; }
-.delpi-mes-analytics__metric {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  color: #5c6b80; font-size: 0.75rem; font-weight: 700;
-}
-.delpi-mes-analytics__metric select {
-  font: inherit; padding: 0.25rem 0.5rem; border: 1px solid #dde5ef;
-  border-radius: 0.5rem; background: #fff; color: #22344e;
-}
-.delpi-mes-analytics__day-chips {
-  display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.6rem;
-}
-.delpi-mes-analytics__day-chips button { min-height: 1.8rem; padding: 0 0.6rem; }
 
 /* Mapa de calor dia-da-semana × hora — matriz semântica do domínio,
  * sem componente compartilhado especulativo. */
-.delpi-mes-heatmap { overflow-x: auto; }
-.delpi-mes-heatmap table { border-collapse: collapse; width: 100%; min-width: 34rem; }
+.delpi-mes-heatmap { overflow-x: auto; padding-bottom: 0.15rem; }
+.delpi-mes-heatmap table {
+  border-collapse: separate; border-spacing: 2px;
+  width: 100%; min-width: 40rem; table-layout: fixed;
+}
 .delpi-mes-heatmap th {
   font-size: 0.68rem; font-weight: 700; color: #5c6b80;
-  padding: 0.15rem 0.2rem; text-align: center; white-space: nowrap;
+  padding: 0.15rem 0.1rem; text-align: center; white-space: nowrap;
 }
-.delpi-mes-heatmap th[scope="row"] { text-align: right; padding-right: 0.5rem; }
+.delpi-mes-heatmap th[scope="row"] {
+  text-align: right; padding-right: 0.5rem; width: 2.6rem;
+}
 .delpi-mes-heatmap__cell {
-  width: 1.05rem; height: 1.05rem; padding: 0;
+  height: 1.4rem; padding: 0;
   background: var(--delpi-mes-heat-0, #eef2f7);
-  border: 1px solid #fff; border-radius: 0.2rem;
+  border-radius: 0.25rem; cursor: default;
+}
+.delpi-mes-heatmap__cell:hover,
+.delpi-mes-heatmap__cell:focus-visible {
+  outline: 2px solid #0b6bcb; outline-offset: 1px;
 }
 .delpi-mes-heatmap__cell[data-level="1"] { background: var(--delpi-mes-heat-1, #cfe0f5); }
 .delpi-mes-heatmap__cell[data-level="2"] { background: var(--delpi-mes-heat-2, #93b9e8); }
 .delpi-mes-heatmap__cell[data-level="3"] { background: var(--delpi-mes-heat-3, #4f85d4); }
 .delpi-mes-heatmap__cell[data-level="4"] { background: var(--delpi-mes-heat-4, #1e63c4); }
 .delpi-mes-heatmap__legend {
-  margin: 0.5rem 0 0; font-size: 0.72rem; color: #66788f;
+  margin: 0.6rem 0 0; font-size: 0.72rem; color: #66788f;
+  display: flex; align-items: center; gap: 0.5rem;
 }
+.delpi-mes-heatmap__legend-scale { display: inline-flex; gap: 2px; }
+.delpi-mes-heatmap__legend-scale i {
+  width: 0.9rem; height: 0.6rem; border-radius: 0.15rem; display: block;
+  background: var(--delpi-mes-heat-0, #eef2f7);
+}
+.delpi-mes-heatmap__legend-scale i[data-level="1"] { background: var(--delpi-mes-heat-1, #cfe0f5); }
+.delpi-mes-heatmap__legend-scale i[data-level="2"] { background: var(--delpi-mes-heat-2, #93b9e8); }
+.delpi-mes-heatmap__legend-scale i[data-level="3"] { background: var(--delpi-mes-heat-3, #4f85d4); }
+.delpi-mes-heatmap__legend-scale i[data-level="4"] { background: var(--delpi-mes-heat-4, #1e63c4); }
 .delpi-mes-sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
@@ -1565,12 +1613,34 @@
 
 :root[data-theme="dark"] .delpi-mes-analytics__head h3,
 .theme-dark .delpi-mes-analytics__head h3 { color: #dce6f2; }
-:root[data-theme="dark"] .delpi-mes-heatmap__cell,
-.theme-dark .delpi-mes-heatmap__cell {
+:root[data-theme="dark"] .delpi-mes-heatmap,
+.theme-dark .delpi-mes-heatmap {
   --delpi-mes-heat-0: #223047; --delpi-mes-heat-1: #2e4a72;
   --delpi-mes-heat-2: #3d68a5; --delpi-mes-heat-3: #4f85d4;
   --delpi-mes-heat-4: #6ba3ea;
-  border-color: #1a2436;
+}
+:root[data-theme="dark"] .delpi-mes-heatmap__cell:hover,
+:root[data-theme="dark"] .delpi-mes-heatmap__cell:focus-visible,
+.theme-dark .delpi-mes-heatmap__cell:hover,
+.theme-dark .delpi-mes-heatmap__cell:focus-visible {
+  outline-color: #7fb8ee;
+}
+:root[data-theme="dark"] .delpi-mes-analytics__more,
+.theme-dark .delpi-mes-analytics__more {
+  background: #1c2940; border-color: #33455f; color: #8fc2f5;
+}
+:root[data-theme="dark"] .delpi-mes-analytics__more:hover,
+.theme-dark .delpi-mes-analytics__more:hover { background: #24344f; }
+:root[data-theme="dark"] .delpi-mes-analytics__day-select,
+.theme-dark .delpi-mes-analytics__day-select { color: #93a5bd; }
+:root[data-theme="dark"] .delpi-mes-analytics__day-select select,
+.theme-dark .delpi-mes-analytics__day-select select {
+  background: #1c2940; border-color: #33455f; color: #dce6f2;
+}
+:root[data-theme="dark"] .delpi-mes-analytics__trend-tooltip,
+.theme-dark .delpi-mes-analytics__trend-tooltip {
+  background: #16233a; border-color: #33455f; color: #dce6f2;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 0.45);
 }
 
 /* ---------- Downtime management (classification / triage / history) ---------- */

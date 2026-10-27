@@ -652,11 +652,13 @@ describe("DowntimesPage", () => {
     });
   });
 
-  it("drills a day chip into a custom single-day period filter", async () => {
+  it("drills a day into a custom single-day period filter via the day selector", async () => {
     renderPage();
     await screen.findByText("Indicadores do período");
-    const chip = await within(analyticsSection()).findByTitle(/de 10\/02/);
-    fireEvent.click(chip);
+    const daySelect = await within(analyticsSection()).findByLabelText(
+      /filtrar a lista por dia/i,
+    );
+    fireEvent.change(daySelect, { target: { value: "2026-02-10" } });
     await waitFor(() => {
       const calls = fetchMock.mock.calls.map(([url]) => url as string);
       expect(
@@ -668,6 +670,64 @@ describe("DowntimesPage", () => {
         ),
       ).toBe(true);
     });
+  });
+
+  it("drills a day into a custom single-day period filter via the trend point", async () => {
+    renderPage();
+    await screen.findByText("Indicadores do período");
+    const marker = await waitFor(() => {
+      const found = document.querySelector('[data-chart-part="marker:0:1"]');
+      expect(found).toBeTruthy();
+      return found as Element;
+    });
+    fireEvent.pointerDown(marker);
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls.map(([url]) => url as string);
+      expect(
+        calls.some(
+          (url) =>
+            url.includes("/downtimes?") &&
+            url.includes("from=2026-02-10") &&
+            url.includes("to=2026-02-11"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("keeps long Pareto rankings behind an expand control", async () => {
+    const manyReasons = {
+      ...ANALYTICS,
+      byReason: Array.from({ length: 10 }, (_, index) => ({
+        key: `R-${index}`,
+        reasonCode: `R-${index}`,
+        label: `Motivo estendido ${index}`,
+        seconds: 10000 - index * 100,
+        occurrencesCount: index + 1,
+        pendingCount: 0,
+        percentOfAttributed: 10,
+        cumulativePercent: (index + 1) * 10,
+      })),
+    };
+    const base = fetchRouter();
+    fetchMock = vi
+      .fn()
+      .mockImplementation((url: string, init?: RequestInit) =>
+        (url as string).includes("/downtimes/analytics")
+          ? Promise.resolve(envelope(manyReasons))
+          : base(url, init),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    renderPage();
+    await screen.findByText("Indicadores do período");
+    const scope = within(analyticsSection());
+    await scope.findByText("Ver todos os 10 motivos");
+    expect(scope.queryByText("R-9 — Motivo estendido 9")).toBeNull();
+    fireEvent.click(scope.getByText("Ver todos os 10 motivos"));
+    await scope.findByText("R-9 — Motivo estendido 9");
+    fireEvent.click(scope.getByText("Mostrar menos"));
+    await waitFor(() =>
+      expect(scope.queryByText("R-9 — Motivo estendido 9")).toBeNull(),
+    );
   });
 
   it("keeps the list working when the analytics request fails", async () => {

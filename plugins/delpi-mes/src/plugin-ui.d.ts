@@ -219,14 +219,37 @@ declare module "@delpi/plugin-ui/index" {
     prefix?: string;
     "aria-label"?: string;
     leading?: ReactNode;
+    layout?: "columns" | "stacked";
   }): ReactNode;
   export function horizontalValueBarsBemClasses(prefix: string): unknown;
+  export type SeriesChartPoint = {
+    label?: string; value?: number | null; size?: number | null;
+    sourceIndex?: number; displayValue?: string;
+  };
+  export type SeriesChartPartRef = {
+    kind: string;
+    seriesIndex?: number;
+    pointIndex?: number;
+  };
+  export type SeriesChartInteraction = {
+    selectedPart?: SeriesChartPartRef | null;
+    onPartPointerDown?: (ref: SeriesChartPartRef, event: unknown) => void;
+  };
   export function BarSeriesChart(props: {
-    points: Array<{ label?: string; value?: number | null; size?: number | null; sourceIndex?: number; displayValue?: string }>;
+    points: SeriesChartPoint[];
     seriesList?: unknown[];
     options?: unknown;
     chartParts?: unknown;
     interaction?: unknown;
+    emptyMessage?: string;
+    className?: string;
+  }): ReactNode;
+  export function AreaSeriesChart(props: {
+    points: SeriesChartPoint[];
+    seriesList?: unknown[];
+    options?: unknown;
+    chartParts?: unknown;
+    interaction?: SeriesChartInteraction;
     emptyMessage?: string;
     className?: string;
   }): ReactNode;

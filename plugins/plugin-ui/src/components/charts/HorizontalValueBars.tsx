@@ -36,6 +36,12 @@ export type HorizontalValueBarsProps = {
   prefix?: string;
   "aria-label"?: string;
   leading?: ReactNode;
+  /**
+   * `columns` (padrão — rótulo | barra | valor na mesma linha) ou
+   * `stacked` (rótulo + valor no topo, barra em largura plena abaixo),
+   * indicado para rótulos longos em rankings gerenciais.
+   */
+  layout?: "columns" | "stacked";
 };
 
 export function horizontalValueBarsBemClasses(prefix: string): HorizontalValueBarsClassNames {
@@ -69,6 +75,7 @@ export function HorizontalValueBars({
   classNames: classNamesOverride,
   prefix = "ds",
   "aria-label": ariaLabel,
+  layout = "columns",
 }: HorizontalValueBarsProps) {
   const base = useMemo(() => horizontalValueBarsBemClasses(prefix), [prefix]);
   const classNames = { ...base, ...classNamesOverride };
@@ -85,12 +92,19 @@ export function HorizontalValueBars({
 
   return (
     <div
-      className={[classNames.root, className].filter(Boolean).join(" ")}
+      className={[
+        classNames.root,
+        layout === "stacked" ? `${classNames.root}--stacked` : "",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-layout={layout}
       role="list"
       aria-label={ariaLabel}
     >
       <ul className={classNames.list}>
-        {items.map((item) => {
+        {items.map((item, index) => {
           const widthPct = Math.min(100, Math.max(0, (item.value / denom) * 100));
           const body = (
             <>
@@ -108,7 +122,12 @@ export function HorizontalValueBars({
           );
           if (onItemClick) {
             return (
-              <li key={item.id} className={classNames.row} role="listitem">
+              <li
+                key={item.id}
+                className={classNames.row}
+                role="listitem"
+                data-rank={index + 1}
+              >
                 <button
                   type="button"
                   className={classNames.rowButton}
@@ -120,7 +139,12 @@ export function HorizontalValueBars({
             );
           }
           return (
-            <li key={item.id} className={classNames.row} role="listitem">
+            <li
+              key={item.id}
+              className={classNames.row}
+              role="listitem"
+              data-rank={index + 1}
+            >
               {body}
             </li>
           );

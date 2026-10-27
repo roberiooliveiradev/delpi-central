@@ -1,14 +1,17 @@
 import {
-  BarSeriesChart,
+  AnchoredPanelPortal,
+  AreaSeriesChart,
   ChartCard,
   HelpTooltip,
   HorizontalValueBars,
   LoadingState,
   MetricKpiCard,
+  SegmentToggle,
   chartCardBemClasses,
   horizontalValueBarsBemClasses,
   loadingStatePanelBemClasses,
   metricKpiCardBemClasses,
+  type SeriesChartPartRef,
 } from "@delpi/plugin-ui/index";
 import {
   ChevronDown,
@@ -19,7 +22,7 @@ import {
   Tag,
   Timer,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 import { DELPI_MES_COPY } from "../../content/copy";
 import type { useDowntimeAnalytics } from "../../hooks/useDowntimeAnalytics";
@@ -31,6 +34,9 @@ import {
   daySeriesPoints,
   type AnalyticsMetric,
 } from "../../utils/downtimeAnalyticsPresentation";
+import { usePortalColorScheme } from "../../utils/portalColorScheme";
+
+const RANKING_VISIBLE_COUNT = 8;
 
 const loadingClasses = loadingStatePanelBemClasses("delpi-mes");
 const kpiClasses = metricKpiCardBemClasses("delpi-mes");
@@ -49,19 +55,53 @@ export function DowntimeAnalyticsSection({
   onSelectReasonGroup,
   onSelectWorkCenter,
   onSelectDay,
+  selectedDayKey,
 }: {
   analytics: ReturnType<typeof useDowntimeAnalytics>;
   onSelectReasonGroup: (group: DowntimeAnalyticsReasonGroup) => void;
   onSelectWorkCenter: (workCenter: string) => void;
   onSelectDay: (dayKey: string) => void;
+  selectedDayKey?: string | null;
 }) {
   const [open, setOpen] = useState(true);
   const [metric, setMetric] = useState<AnalyticsMetric>("seconds");
+  const [expandedReasons, setExpandedReasons] = useState(false);
+  const [expandedCenters, setExpandedCenters] = useState(false);
+  const [hoveredDayIndex, setHoveredDayIndex] = useState<number | null>(null);
+  const trendAnchorRef = useRef<HTMLElement | null>(null);
+  const trendTooltipRef = useRef<HTMLDivElement | null>(null);
+  const colorScheme = usePortalColorScheme();
   const data = analytics.data;
   const heatmap = useMemo(
     () => buildHeatmapRows(data?.byWeekdayHour ?? []),
     [data],
   );
+  const selectedDayIndex = useMemo(
+    () =>
+      selectedDayKey
+        ? (data?.byDay.findIndex((day) => day.date === selectedDayKey) ?? -1)
+        : -1,
+    [data, selectedDayKey],
+  );
+
+  const handleTrendPointerOver = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const part = (event.target as HTMLElement).closest?.("[data-chart-part]");
+    const match = /^marker:\d+:(\d+)$/.exec(
+      part?.getAttribute("data-chart-part") ?? "",
+    );
+    if (!part || !match) {
+      setHoveredDayIndex(null);
+      return;
+    }
+    trendAnchorRef.current = part as HTMLElement;
+    setHoveredDayIndex(Number(match[1]));
+  };
+
+  const handleTrendPartPointerDown = (ref: SeriesChartPartRef) => {
+    if (ref.kind !== "marker" || ref.pointIndex == null) return;
+    const day = data?.byDay[ref.pointIndex];
+    if (day) onSelectDay(day.date);
+  };
 
   return (
     <section
@@ -182,14 +222,19 @@ export function DowntimeAnalyticsSection({
               title="Pareto de motivos"
               titleHint={DELPI_MES_COPY.help.downtimesAnalyticsPareto}
               classNames={cardClasses}
+              className="delpi-mes-analytics__card--pareto"
             >
               <HorizontalValueBars
                 prefix="delpi-mes"
                 classNames={barsClasses}
+                layout="stacked"
                 aria-label="Motivos ordenados por tempo de parada"
                 emptyMessage="Nenhuma parada no período."
                 formatValue={formatHoursMinutes}
-                items={data.byReason.map((group) => ({
+                items={(expandedReasons
+                  ? data.byReason
+                  : data.byReason.slice(0, RANKING_VISIBLE_COUNT)
+                ).map((group) => ({
                   id: group.key,
                   label: describeReason(group),
                   value: group.seconds,
@@ -206,20 +251,39 @@ export function DowntimeAnalyticsSection({
                   if (group) onSelectReasonGroup(group);
                 }}
               />
+              {data.byReason.length > RANKING_VISIBLE_COUNT ? (
+                <button
+                  type="button"
+                  className="delpi-mes-analytics__more"
+                  aria-expanded={expandedReasons}
+                  onClick={() => setExpandedReasons((value) => !value)}
+                >
+                  {expandedReasons
+                    ? "Mostrar menos"
+                    : "Ver todos os " +
+                      data.byReason.length.toLocaleString("pt-BR") +
+                      " motivos"}
+                </button>
+              ) : null}
             </ChartCard>
 
             <ChartCard
               title="Centros de trabalho"
               titleHint={DELPI_MES_COPY.help.downtimesAnalyticsCenters}
               classNames={cardClasses}
+              className="delpi-mes-analytics__card--centers"
             >
               <HorizontalValueBars
                 prefix="delpi-mes"
                 classNames={barsClasses}
+                layout="stacked"
                 aria-label="Centros de trabalho ordenados por tempo de parada"
                 emptyMessage="Nenhuma parada no período."
                 formatValue={formatHoursMinutes}
-                items={data.byWorkCenter.map((entry) => ({
+                items={(expandedCenters
+                  ? data.byWorkCenter
+                  : data.byWorkCenter.slice(0, RANKING_VISIBLE_COUNT)
+                ).map((entry) => ({
                   id: entry.workCenter,
                   label: entry.workCenter,
                   value: entry.seconds,
@@ -233,62 +297,121 @@ export function DowntimeAnalyticsSection({
                 }))}
                 onItemClick={(item) => onSelectWorkCenter(item.id)}
               />
+              {data.byWorkCenter.length > RANKING_VISIBLE_COUNT ? (
+                <button
+                  type="button"
+                  className="delpi-mes-analytics__more"
+                  aria-expanded={expandedCenters}
+                  onClick={() => setExpandedCenters((value) => !value)}
+                >
+                  {expandedCenters
+                    ? "Mostrar menos"
+                    : "Ver todos os " +
+                      data.byWorkCenter.length.toLocaleString("pt-BR") +
+                      " centros"}
+                </button>
+              ) : null}
             </ChartCard>
 
             <ChartCard
               title="Evolução diária"
               titleHint={DELPI_MES_COPY.help.downtimesAnalyticsDaily}
               classNames={cardClasses}
+              className="delpi-mes-analytics__card--wide"
               headerActions={
-                <label className="delpi-mes-analytics__metric">
-                  Métrica
-                  <select
-                    value={metric}
-                    onChange={(event) =>
-                      setMetric(event.target.value as AnalyticsMetric)
-                    }
-                  >
-                    <option value="seconds">Tempo parado</option>
-                    <option value="occurrences">Ocorrências</option>
-                  </select>
-                </label>
+                <SegmentToggle
+                  ariaLabel="Métrica da evolução diária"
+                  size="sm"
+                  widthMode="content"
+                  value={metric}
+                  onChange={(value) => setMetric(value)}
+                  options={[
+                    { value: "seconds", label: "Tempo parado" },
+                    { value: "occurrences", label: "Ocorrências" },
+                  ]}
+                />
               }
             >
-              <BarSeriesChart
-                points={daySeriesPoints(data.byDay, metric)}
-                emptyMessage="Nenhuma parada no período."
-                className="delpi-mes-analytics__daily-chart"
-              />
-              {data.byDay.some((day) => day.occurrencesCount > 0) ? (
-                <div
-                  className="delpi-mes-analytics__day-chips"
-                  aria-label="Filtrar a lista por dia"
+              <div
+                className="delpi-mes-analytics__trend"
+                onPointerOver={handleTrendPointerOver}
+                onPointerLeave={() => setHoveredDayIndex(null)}
+              >
+                <AreaSeriesChart
+                  points={daySeriesPoints(data.byDay, metric)}
+                  emptyMessage="Nenhuma parada no período."
+                  options={{
+                    theme: colorScheme,
+                    backgroundColor: "transparent",
+                    seriesColor:
+                      colorScheme === "dark" ? "#4fc3f7" : "#00a6de",
+                    smoothLines: true,
+                    areaFillGradient: true,
+                    markerMode: "all",
+                    decimalPlaces: 0,
+                  }}
+                  interaction={{
+                    selectedPart:
+                      selectedDayIndex >= 0
+                        ? {
+                            kind: "marker",
+                            seriesIndex: 0,
+                            pointIndex: selectedDayIndex,
+                          }
+                        : null,
+                    onPartPointerDown: handleTrendPartPointerDown,
+                  }}
+                />
+                {hoveredDayIndex != null && data.byDay[hoveredDayIndex] ? (
+                  <AnchoredPanelPortal
+                    open
+                    anchorRef={trendAnchorRef}
+                    panelRef={trendTooltipRef}
+                    variant="bare"
+                    role="tooltip"
+                    className="delpi-mes-analytics__trend-tooltip"
+                    preferredPlacement="top"
+                  >
+                    <strong>{dayKeyLabel(data.byDay[hoveredDayIndex].date)}</strong>
+                    <span>
+                      {formatHoursMinutes(data.byDay[hoveredDayIndex].seconds)}
+                      {" · "}
+                      {data.byDay[hoveredDayIndex].occurrencesCount.toLocaleString(
+                        "pt-BR",
+                      )}{" "}
+                      ocorr.
+                    </span>
+                  </AnchoredPanelPortal>
+                ) : null}
+              </div>
+              <label className="delpi-mes-analytics__day-select">
+                Filtrar a lista por dia
+                <select
+                  value={selectedDayKey ?? ""}
+                  onChange={(event) => {
+                    if (event.target.value) onSelectDay(event.target.value);
+                  }}
                 >
+                  <option value="">Escolher dia…</option>
                   {data.byDay
                     .filter((day) => day.occurrencesCount > 0)
                     .map((day) => (
-                      <button
-                        key={day.date}
-                        type="button"
-                        onClick={() => onSelectDay(day.date)}
-                        title={
-                          "Ver " +
+                      <option key={day.date} value={day.date}>
+                        {dayKeyLabel(day.date) +
+                          " · " +
                           day.occurrencesCount.toLocaleString("pt-BR") +
-                          " ocorrência(s) de " +
-                          dayKeyLabel(day.date)
-                        }
-                      >
-                        {dayKeyLabel(day.date)}
-                      </button>
+                          " ocorr."}
+                      </option>
                     ))}
-                </div>
-              ) : null}
+                </select>
+              </label>
             </ChartCard>
 
             <ChartCard
               title="Concentração por dia da semana e hora"
               titleHint={DELPI_MES_COPY.help.downtimesAnalyticsHeatmap}
               classNames={cardClasses}
+              className="delpi-mes-analytics__card--wide"
             >
               <div className="delpi-mes-heatmap" role="region" aria-label="Mapa de calor de paradas">
                 <table>
@@ -308,10 +431,23 @@ export function DowntimeAnalyticsSection({
                           <td
                             key={cell.hour}
                             className="delpi-mes-heatmap__cell"
+                            tabIndex={0}
                             data-level={
                               cell.seconds === 0 || heatmap.maxSeconds === 0
                                 ? 0
                                 : Math.min(4, 1 + Math.floor((cell.seconds / heatmap.maxSeconds) * 4))
+                            }
+                            aria-label={
+                              row.weekdayLabel +
+                              " " +
+                              String(cell.hour).padStart(2, "0") +
+                              "h–" +
+                              String((cell.hour + 1) % 24).padStart(2, "0") +
+                              "h · " +
+                              formatHoursMinutes(cell.seconds) +
+                              " · " +
+                              cell.occurrencesCount.toLocaleString("pt-BR") +
+                              " ocorr."
                             }
                             title={
                               row.weekdayLabel +
@@ -336,6 +472,11 @@ export function DowntimeAnalyticsSection({
                   </tbody>
                 </table>
                 <p className="delpi-mes-heatmap__legend">
+                  <span className="delpi-mes-heatmap__legend-scale" aria-hidden="true">
+                    {[0, 1, 2, 3, 4].map((level) => (
+                      <i key={level} data-level={level} />
+                    ))}
+                  </span>
                   Intensidade = tempo parado na célula (0 a{" "}
                   {formatHoursMinutes(heatmap.maxSeconds)})
                 </p>

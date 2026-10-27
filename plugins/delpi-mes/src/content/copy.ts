@@ -58,7 +58,7 @@ export const DELPI_MES_COPY = {
     downtimesAnalytics:
       "Indicadores calculados pelo Production Control sobre todas as paradas elegíveis do período — nunca apenas sobre a página exibida. Tempo total usa a união temporal por centro de trabalho: sobreposições de registros não contam o mesmo segundo duas vezes. A soma atribuída às ocorrências pode superar esse total quando o histórico contém paradas sobrepostas.",
     downtimesAnalyticsDaily:
-      "Cada dia civil (America/Sao_Paulo) mostra o tempo parado ou a quantidade de ocorrências que intersectam o dia. Uma parada que atravessa a meia-noite pode contar em dois dias — no indicador global ela conta apenas uma vez.",
+      "Cada dia civil (America/Sao_Paulo) mostra o tempo parado ou a quantidade de ocorrências que intersectam o dia. Clique em um ponto do gráfico para filtrar a lista por aquele dia. Uma parada que atravessa a meia-noite pode contar em dois dias — no indicador global ela conta apenas uma vez.",
     downtimesAnalyticsHeatmap:
       "Concentração por dia da semana e hora (America/Sao_Paulo). A duração de cada parada é distribuída pelos horários efetivamente atravessados. O mapa é descritivo — não filtra a lista.",
     downtimesAnalyticsPareto:

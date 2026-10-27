@@ -442,6 +442,11 @@ export function DowntimesPage({
         onSelectDay={(dayKey) =>
           apply({ period: "custom", from: dayKey, to: dayKey })
         }
+        selectedDayKey={
+          params.period === "custom" && params.from === params.to
+            ? params.from
+            : null
+        }
       />
 
       <DowntimeInsightsSection
