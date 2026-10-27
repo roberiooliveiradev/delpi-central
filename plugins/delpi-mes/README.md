@@ -78,6 +78,17 @@ A área **Paradas** (`/downtimes`) consulta os eventos reais de parada do MES vi
 
 Histórico gerencial completo e as etapas seguintes de Paradas (evidências, ações corretivas, exportações e indicadores OEE) continuam nas fases seguintes.
 
+## Paradas — organização visual do cockpit
+
+A página Paradas foi reorganizada em cockpit gerencial, sem alterar contratos nem cálculos — todo número continua vindo do BFF/Production Control:
+
+- **Cabeçalho interno compacto**: título com ajuda contextual (encerramento e classificação são estados independentes), referência da última consulta (`referenceAt`), «Atualizar» e menu «Exportar» agrupado (overlay via `AnchoredPanelPortal` — Escape e clique fora fecham; nunca cortado pelos containers do MFE).
+- **Filtros em níveis** (`FilterBarShell`): período rápido em `SegmentToggle` com os presets existentes (Hoje, 7 dias, 30 dias, personalizado), centro de trabalho e estado na linha principal; motivo, origem, situação, ordenação e datas personalizadas no painel «Avançados», que exibe o contador de filtros aplicados mesmo recolhido e abre automaticamente quando um filtro avançado ou período personalizado está ativo na URL.
+- **Indicadores executivos** (`MetricKpiCard`): tempo total parado em card em destaque (span 2), ocorrências, duração média, pendentes (tom atenção) e em aberto (tom perigo quando > 0) — mesmos valores e semântica do `MetricStrip` anterior.
+- **Histórico**: seção com contagem total e instrução discreta de interação; tabela, paginação backend, drawer e gestão permanecem inalterados.
+
+A ordem da página segue: cabeçalho → filtros → indicadores → análise (Pareto, CTs, evolução, mapa de calor) → análise avançada → ocorrências. Tema claro/escuro e responsivo cobertos pelos estilos do MFE.
+
 ## Paradas — Etapa 5 (exportações e relatórios)
 
 A aba Paradas oferece exportações geradas no backend (permissão `delpi-mes.downtimes.export`), sempre sobre o universo autorizado completo que atende aos filtros vigentes — nunca sobre a página exibida:

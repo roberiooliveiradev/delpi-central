@@ -1064,6 +1064,7 @@
 }
 
 /* Paradas — Gestão de paradas (Etapa 1) */
+/* ---------- Gestão de Paradas — cockpit ---------- */
 .delpi-mes-downtimes { display: grid; gap: 1.1rem; }
 .delpi-mes-downtimes__head {
   display: flex;
@@ -1072,21 +1073,93 @@
   gap: 1rem;
   flex-wrap: wrap;
 }
-.delpi-mes-downtimes__head h2 { margin: 0; font-size: clamp(1.35rem, 2vw, 1.75rem); }
-.delpi-mes-downtimes__head > div:first-child { max-width: 46rem; }
-.delpi-mes-downtimes__head p { color: #5c6b80; line-height: 1.6; margin: 0.35rem 0 0; }
+.delpi-mes-downtimes__head-title { max-width: 46rem; }
+.delpi-mes-downtimes__head h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #14263f;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.delpi-mes-downtimes__head p { color: #5c6b80; line-height: 1.5; margin: 0.3rem 0 0; font-size: 0.92rem; }
+.delpi-mes-downtimes__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.delpi-mes-downtimes__ref {
+  font-size: 0.76rem;
+  color: #8296ad;
+  white-space: nowrap;
+}
 .delpi-mes-downtimes__refresh { display: flex; align-items: center; gap: 0.6rem; }
-.delpi-mes-downtimes__filters {
+.delpi-mes-downtimes__export { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.delpi-mes-downtimes__export > .delpi-mes-refresh-btn svg { width: 0.95rem; height: 0.95rem; }
+.delpi-mes-downtimes__export-caret { transition: transform 0.15s ease; }
+.delpi-mes-downtimes__export-caret[data-open="true"] { transform: rotate(180deg); }
+.delpi-mes-downtimes__export-menu {
+  display: grid;
+  min-width: 13rem;
+  padding: 0.35rem;
+  border: 1px solid #dfe7f2;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 12px 32px rgb(10 37 71 / 0.16);
+}
+.delpi-mes-downtimes__export-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.4rem;
+  padding: 0 0.7rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #22344e;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.delpi-mes-downtimes__export-menu button:hover:not(:disabled),
+.delpi-mes-downtimes__export-menu button:focus-visible {
+  background: #eef4fb;
+  color: #0b4fa8;
+  outline: none;
+}
+.delpi-mes-downtimes__export-menu button:disabled { opacity: 0.55; cursor: default; }
+.delpi-mes-downtimes__export-menu button svg { width: 1rem; height: 1rem; color: #0b6bcb; flex: none; }
+
+/* Filtros em níveis — moldura do FilterBarShell (delpi-ui-card). */
+.delpi-mes-downtimes__filters { display: grid; gap: 0.8rem; }
+.delpi-mes-downtimes__filters-main {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) repeat(2, minmax(9.5rem, 1fr)) minmax(0, max-content);
+  gap: 0.75rem;
+  align-items: end;
+}
+.delpi-mes-downtimes__filters-advanced {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
   gap: 0.75rem;
   align-items: end;
-  padding: 0.9rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.9rem;
-  background: #fff;
+  padding-top: 0.8rem;
+  border-top: 1px dashed #dfe7f2;
 }
-.delpi-mes-downtimes__filters label { display: grid; gap: 0.35rem; color: #5c6b80; font-size: 0.76rem; font-weight: 700; }
+.delpi-mes-downtimes__period { display: grid; gap: 0.35rem; }
+.delpi-mes-downtimes__field-label {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  color: #5c6b80; font-size: 0.76rem; font-weight: 700;
+}
+.delpi-mes-downtimes__filters label {
+  display: grid; gap: 0.35rem; color: #5c6b80; font-size: 0.76rem; font-weight: 700;
+}
 .delpi-mes-downtimes__filters input,
 .delpi-mes-downtimes__filters select {
   min-height: 2.4rem;
@@ -1094,13 +1167,58 @@
   border: 1px solid #dde5ef;
   border-radius: 0.6rem;
   background: #fff;
-  color: inherit;
   font: inherit;
+  font-weight: 500;
+  color: #22344e;
 }
 .delpi-mes-downtimes__filters input:focus-visible,
 .delpi-mes-downtimes__filters select:focus-visible {
-  outline: 3px solid rgb(30 99 196 / 40%);
+  outline: 2px solid #00a6de;
   outline-offset: 1px;
+  border-color: #0b6bcb;
+}
+.delpi-mes-downtimes__filters-tail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.delpi-mes-downtimes__filters-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+  padding: 0 0.8rem;
+  border: 1px solid #dde5ef;
+  border-radius: 0.6rem;
+  background: #f4f7fb;
+  color: #1d4ed8;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.delpi-mes-downtimes__filters-more:hover { background: #e8eef7; }
+.delpi-mes-downtimes__filters-more:focus-visible {
+  outline: 2px solid #00a6de;
+  outline-offset: 1px;
+}
+.delpi-mes-downtimes__filters-more svg { width: 0.95rem; height: 0.95rem; transition: transform 0.15s ease; }
+.delpi-mes-downtimes__filters-more svg[data-open="true"] { transform: rotate(180deg); }
+.delpi-mes-downtimes__filters-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #0b6bcb;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
 }
 .delpi-mes-downtimes__label-with-help { display: flex; gap: 0.4rem; align-items: center; }
 .delpi-mes-downtimes__label-with-help select { flex: 1; min-width: 0; }
@@ -1183,12 +1301,52 @@
 .delpi-mes-downtimes__timeline li span { color: #5c6b80; font-size: 0.8rem; }
 .delpi-mes-downtimes__hint { color: #66788f; font-size: 0.82rem; margin: 0.8rem 0 0; }
 
+/* Histórico de ocorrências — superfície discreta alinhada ao kit. */
+.delpi-mes-downtimes__history {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.9rem;
+  background: #fff;
+}
+.delpi-mes-downtimes__history-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.delpi-mes-downtimes__history-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #22344e;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.delpi-mes-downtimes__history-count {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #0b6bcb;
+  background: #e3f0ff;
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+}
+.delpi-mes-downtimes__history-head p { margin: 0; font-size: 0.78rem; color: #8296ad; }
+
+@media (max-width: 1100px) {
+  .delpi-mes-downtimes__filters-main { grid-template-columns: 1fr 1fr; }
+  .delpi-mes-downtimes__period { grid-column: 1 / -1; }
+}
 @media (max-width: 720px) {
-  .delpi-mes-downtimes__filters { grid-template-columns: 1fr 1fr; }
+  .delpi-mes-downtimes__filters-main { grid-template-columns: 1fr 1fr; }
+  .delpi-mes-downtimes__filters-tail { grid-column: 1 / -1; justify-content: flex-start; }
 }
 @media (max-width: 480px) {
-  .delpi-mes-downtimes__filters { grid-template-columns: 1fr; }
+  .delpi-mes-downtimes__filters-main { grid-template-columns: 1fr; }
   .delpi-mes-downtimes__detail dl > div { grid-template-columns: 1fr; gap: 0.15rem; }
+  .delpi-mes-downtimes__actions { justify-content: flex-start; }
 }
 
 /* Etapa 2 — análise gerencial de paradas */
@@ -1210,6 +1368,19 @@
 .delpi-mes-analytics__toggle:hover { background: #e8eef7; }
 .delpi-mes-analytics__toggle svg { width: 0.95rem; height: 0.95rem; }
 .delpi-mes-analytics__body { display: grid; gap: 0.9rem; }
+.delpi-mes-analytics__kpis {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+.delpi-mes-analytics__kpi--featured {
+  grid-column: span 2;
+  border-color: #9cc5ea;
+  box-shadow: 0 6px 18px rgb(11 107 203 / 0.10);
+}
+@media (max-width: 480px) {
+  .delpi-mes-analytics__kpi--featured { grid-column: auto; }
+}
 .delpi-mes-analytics__grid {
   display: grid; gap: 0.9rem;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
@@ -1327,6 +1498,68 @@
   color: #33455e; font-size: 0.85rem;
 }
 
+:root[data-theme="dark"] .delpi-mes-downtimes__head h2,
+.theme-dark .delpi-mes-downtimes__head h2 { color: #dce6f2; }
+:root[data-theme="dark"] .delpi-mes-downtimes__head p,
+.theme-dark .delpi-mes-downtimes__head p { color: #93a5bd; }
+:root[data-theme="dark"] .delpi-mes-downtimes__ref,
+.theme-dark .delpi-mes-downtimes__ref { color: #7d90a9; }
+:root[data-theme="dark"] .delpi-mes-downtimes__filters label,
+.theme-dark .delpi-mes-downtimes__filters label,
+:root[data-theme="dark"] .delpi-mes-downtimes__field-label,
+.theme-dark .delpi-mes-downtimes__field-label { color: #93a5bd; }
+:root[data-theme="dark"] .delpi-mes-downtimes__filters input,
+.theme-dark .delpi-mes-downtimes__filters input,
+:root[data-theme="dark"] .delpi-mes-downtimes__filters select,
+.theme-dark .delpi-mes-downtimes__filters select {
+  background: #182338;
+  border-color: #2c3d5a;
+  color: #dce6f2;
+}
+:root[data-theme="dark"] .delpi-mes-downtimes__filters-advanced,
+.theme-dark .delpi-mes-downtimes__filters-advanced { border-top-color: #2c3d5a; }
+:root[data-theme="dark"] .delpi-mes-downtimes__filters-more,
+.theme-dark .delpi-mes-downtimes__filters-more {
+  background: #1c2a44;
+  border-color: #2c3d5a;
+  color: #6ba3ea;
+}
+:root[data-theme="dark"] .delpi-mes-downtimes__filters-more:hover,
+.theme-dark .delpi-mes-downtimes__filters-more:hover { background: #243750; }
+:root[data-theme="dark"] .delpi-mes-downtimes__export-menu,
+.theme-dark .delpi-mes-downtimes__export-menu {
+  background: #16203a;
+  border-color: #2c3d5a;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+}
+:root[data-theme="dark"] .delpi-mes-downtimes__export-menu button,
+.theme-dark .delpi-mes-downtimes__export-menu button { color: #dce6f2; }
+:root[data-theme="dark"] .delpi-mes-downtimes__export-menu button:hover:not(:disabled),
+.theme-dark .delpi-mes-downtimes__export-menu button:hover:not(:disabled),
+:root[data-theme="dark"] .delpi-mes-downtimes__export-menu button:focus-visible,
+.theme-dark .delpi-mes-downtimes__export-menu button:focus-visible {
+  background: #223c63;
+  color: #8fbdf3;
+}
+:root[data-theme="dark"] .delpi-mes-downtimes__history,
+.theme-dark .delpi-mes-downtimes__history {
+  background: #16203a;
+  border-color: #2c3d5a;
+}
+:root[data-theme="dark"] .delpi-mes-downtimes__history-head h3,
+.theme-dark .delpi-mes-downtimes__history-head h3 { color: #dce6f2; }
+:root[data-theme="dark"] .delpi-mes-downtimes__history-head p,
+.theme-dark .delpi-mes-downtimes__history-head p { color: #7d90a9; }
+:root[data-theme="dark"] .delpi-mes-downtimes__history-count,
+.theme-dark .delpi-mes-downtimes__history-count {
+  background: #223c63;
+  color: #8fbdf3;
+}
+:root[data-theme="dark"] .delpi-mes-analytics__kpi--featured,
+.theme-dark .delpi-mes-analytics__kpi--featured {
+  border-color: #2e5a8f;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+}
 :root[data-theme="dark"] .delpi-mes-insights__head h3,
 .theme-dark .delpi-mes-insights__head h3 { color: #dce6f2; }
 

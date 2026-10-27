@@ -4,13 +4,21 @@ import {
   HelpTooltip,
   HorizontalValueBars,
   LoadingState,
-  MetricStrip,
+  MetricKpiCard,
   chartCardBemClasses,
   horizontalValueBarsBemClasses,
   loadingStatePanelBemClasses,
-  metricStripBemClasses,
+  metricKpiCardBemClasses,
 } from "@delpi/plugin-ui/index";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  ClipboardList,
+  Hourglass,
+  OctagonAlert,
+  Tag,
+  Timer,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { DELPI_MES_COPY } from "../../content/copy";
@@ -25,7 +33,7 @@ import {
 } from "../../utils/downtimeAnalyticsPresentation";
 
 const loadingClasses = loadingStatePanelBemClasses("delpi-mes");
-const metricClasses = metricStripBemClasses("delpi-mes");
+const kpiClasses = metricKpiCardBemClasses("delpi-mes");
 const cardClasses = chartCardBemClasses("delpi-mes", { headerLayout: "titleRow" });
 const barsClasses = horizontalValueBarsBemClasses("delpi-mes");
 
@@ -124,45 +132,50 @@ export function DowntimeAnalyticsSection({
             </p>
           ) : null}
 
-          <MetricStrip
-            classNames={metricClasses}
-            density="compact"
+          <div
+            className="delpi-mes-analytics__kpis"
+            role="group"
             aria-label="Indicadores de paradas do período"
-            items={[
-              {
-                id: "total",
-                label: "Tempo total parado",
-                value: formatHoursMinutes(data.summary.totalStoppedSeconds),
-                description: "União temporal deduplicada por centro de trabalho",
-              },
-              {
-                id: "occurrences",
-                label: "Ocorrências",
-                value: data.summary.occurrencesCount.toLocaleString("pt-BR"),
-                description: "Eventos de parada com tempo dentro do período",
-              },
-              {
-                id: "average",
-                label: "Duração média",
-                value: formatHoursMinutes(data.summary.averageOccurrenceSeconds),
-                description: "Tempo atribuído dividido pelas ocorrências",
-              },
-              {
-                id: "pending",
-                label: "Pendentes de classificação",
-                value: data.summary.pendingCount.toLocaleString("pt-BR"),
-                description: "Ocorrências sem motivo confirmado",
-                tone: data.summary.pendingCount > 0 ? "warning" : "neutral",
-              },
-              {
-                id: "open",
-                label: "Em aberto agora",
-                value: data.summary.openCount.toLocaleString("pt-BR"),
-                description: "Paradas ainda abertas no instante da consulta",
-                tone: data.summary.openCount > 0 ? "danger" : "neutral",
-              },
-            ]}
-          />
+          >
+            <MetricKpiCard
+              classNames={kpiClasses}
+              className="delpi-mes-analytics__kpi--featured"
+              label="Tempo total parado"
+              value={formatHoursMinutes(data.summary.totalStoppedSeconds)}
+              hint="União temporal deduplicada por centro de trabalho"
+              icon={<Timer aria-hidden="true" />}
+            />
+            <MetricKpiCard
+              classNames={kpiClasses}
+              label="Ocorrências"
+              value={data.summary.occurrencesCount.toLocaleString("pt-BR")}
+              hint="Eventos de parada com tempo dentro do período"
+              icon={<ClipboardList aria-hidden="true" />}
+            />
+            <MetricKpiCard
+              classNames={kpiClasses}
+              label="Duração média"
+              value={formatHoursMinutes(data.summary.averageOccurrenceSeconds)}
+              hint="Tempo atribuído dividido pelas ocorrências"
+              icon={<Hourglass aria-hidden="true" />}
+            />
+            <MetricKpiCard
+              classNames={kpiClasses}
+              label="Pendentes de classificação"
+              value={data.summary.pendingCount.toLocaleString("pt-BR")}
+              hint="Ocorrências sem motivo confirmado"
+              icon={<Tag aria-hidden="true" />}
+              tone={data.summary.pendingCount > 0 ? "warning" : "default"}
+            />
+            <MetricKpiCard
+              classNames={kpiClasses}
+              label="Em aberto agora"
+              value={data.summary.openCount.toLocaleString("pt-BR")}
+              hint="Paradas ainda abertas no instante da consulta"
+              icon={<OctagonAlert aria-hidden="true" />}
+              tone={data.summary.openCount > 0 ? "negative" : "default"}
+            />
+          </div>
 
           <div className="delpi-mes-analytics__grid">
             <ChartCard

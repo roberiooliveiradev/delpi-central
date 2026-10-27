@@ -3,17 +3,20 @@ import {
   DataTable,
   DrawerShell,
   EmptyState,
+  FilterBarShell,
   HelpTooltip,
   LoadingState,
+  SegmentToggle,
   StatusBadge,
   createCompactPagination,
   dataTableBemClasses,
   drawerShellBemClasses,
   emptyStatePanelBemClasses,
+  filterBarShellBemClasses,
   loadingStatePanelBemClasses,
   statusBadgeBemClasses,
 } from "@delpi/plugin-ui/index";
-import { RefreshCw } from "lucide-react";
+import { ChevronDown, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { DowntimeAnalyticsSection } from "../components/downtimes/DowntimeAnalyticsSection";
@@ -53,6 +56,7 @@ import {
 import { formatDuration } from "../utils/duration";
 
 const loadingClasses = loadingStatePanelBemClasses("delpi-mes");
+const filterBarClasses = filterBarShellBemClasses("delpi-mes");
 const emptyClasses = emptyStatePanelBemClasses("delpi-mes");
 const tableClasses = dataTableBemClasses("delpi-mes");
 const drawerClasses = drawerShellBemClasses("delpi-mes");
@@ -111,6 +115,16 @@ export function DowntimesPage({
   const selected = useSelectedDowntime(branch, params.downtimeId);
   const nowMs = useServerClock(downtimes.data?.referenceAt);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(
+    () =>
+      Boolean(
+        params.reasonCode ||
+          params.source ||
+          params.classification ||
+          params.sort === "oldest" ||
+          params.period === "custom",
+      ),
+  );
 
   const detailDayKey = selected.item?.startedAt ? businessDayKey(new Date(selected.item.startedAt)) : null;
   const timeline = useWorkCenterTimeline(
@@ -168,6 +182,12 @@ export function DowntimesPage({
 
   const items = downtimes.data?.items ?? [];
   const filteredEmpty = items.length === 0 && hasActiveDowntimeFilters(params);
+  const advancedFiltersCount = [
+    params.reasonCode,
+    params.source,
+    params.classification,
+    params.sort === "oldest" ? "oldest" : null,
+  ].filter(Boolean).length;
 
   if (downtimes.loading && !downtimes.data) {
     return (
@@ -192,25 +212,39 @@ export function DowntimesPage({
   return (
     <section className="delpi-mes-downtimes" aria-labelledby="downtimes-title">
       <header className="delpi-mes-downtimes__head">
-        <div>
+        <div className="delpi-mes-downtimes__head-title">
           <p className="delpi-mes-eyebrow">Gestão de paradas</p>
-          <h2 id="downtimes-title">Paradas</h2>
+          <h2 id="downtimes-title">
+            Paradas
+            <HelpTooltip
+              content={DELPI_MES_COPY.help.downtimesStatesIndependence}
+              ariaLabel="Ajuda: encerramento e classificação são estados independentes"
+            />
+          </h2>
           <p>
             Eventos reais de parada do MES na filial {branch === "01" ? "SC" : "ES"}.
-            Parada encerrada e motivo classificado são condições independentes:
-            uma parada pode estar encerrada e ainda aguardar classificação.
           </p>
         </div>
-        <div className="delpi-mes-downtimes__refresh" aria-live="polite">
-          <button
-            type="button"
-            className="delpi-mes-refresh-btn"
-            onClick={() => void downtimes.refresh()}
-            disabled={downtimes.refreshing}
-          >
-            <RefreshCw aria-hidden="true" />
-            {downtimes.refreshing ? "Atualizando…" : "Atualizar"}
-          </button>
+        <div className="delpi-mes-downtimes__actions">
+          {downtimes.data?.referenceAt ? (
+            <span className="delpi-mes-downtimes__ref" aria-live="polite">
+              Última consulta {formatDateTime(downtimes.data.referenceAt)}
+            </span>
+          ) : null}
+          <div className="delpi-mes-downtimes__refresh" aria-live="polite">
+            <button
+              type="button"
+              className="delpi-mes-refresh-btn"
+              onClick={() => void downtimes.refresh()}
+              disabled={downtimes.refreshing}
+            >
+              <RefreshCw aria-hidden="true" />
+              {downtimes.refreshing ? "Atualizando…" : "Atualizar"}
+            </button>
+          </div>
+          {analyticsQuery ? (
+            <DowntimeExportActions query={analyticsQuery} canExport={canExport} />
+          ) : null}
         </div>
       </header>
 
@@ -220,143 +254,179 @@ export function DowntimesPage({
         </p>
       ) : null}
 
-      <div className="delpi-mes-downtimes__filters" aria-label="Filtros de paradas">
-        <label>
-          Período
-          <span className="delpi-mes-downtimes__label-with-help">
-            <select
+      <FilterBarShell
+        classNames={filterBarClasses}
+        ariaLabel="Filtros de paradas"
+        className="delpi-mes-downtimes__filters"
+      >
+        <div className="delpi-mes-downtimes__filters-main">
+          <div className="delpi-mes-downtimes__period">
+            <span className="delpi-mes-downtimes__field-label">
+              Período
+              <HelpTooltip
+                content={DELPI_MES_COPY.help.downtimesPeriod}
+                ariaLabel="Ajuda: período"
+              />
+            </span>
+            <SegmentToggle
+              options={DOWNTIME_PERIOD_PRESETS.map((preset) => ({
+                value: preset.id,
+                label: preset.label,
+              }))}
               value={params.period}
-              onChange={(event) => {
-                const period = event.target.value as DowntimesRouteParams["period"];
-                apply(period === "custom" ? { period } : { period, from: null, to: null });
-              }}
-            >
-              {DOWNTIME_PERIOD_PRESETS.map((preset) => (
-                <option key={preset.id} value={preset.id}>{preset.label}</option>
-              ))}
-            </select>
-            <HelpTooltip
-              content={DELPI_MES_COPY.help.downtimesPeriod}
-              ariaLabel="Ajuda: período"
+              onChange={(period) =>
+                apply(
+                  period === "custom"
+                    ? { period }
+                    : { period, from: null, to: null },
+                )
+              }
+              ariaLabel="Período"
+              idPrefix="downtimes-period"
+              prefix="delpi-mes"
+              size="sm"
+              widthMode="content"
             />
-          </span>
-        </label>
-        {params.period === "custom" ? (
-          <>
-            <label>
-              De
-              <input
-                type="date"
-                value={params.from ?? ""}
-                onChange={(event) => apply({ from: event.target.value || null })}
+          </div>
+          <label>
+            Centro de trabalho
+            <input
+              type="search"
+              value={params.workCenter ?? ""}
+              placeholder="Ex.: CT-35"
+              onChange={(event) => apply({ workCenter: event.target.value || null })}
+            />
+          </label>
+          <label>
+            Estado
+            <span className="delpi-mes-downtimes__label-with-help">
+              <select
+                value={params.status ?? ""}
+                onChange={(event) =>
+                  apply({
+                    status: (event.target.value || null) as DowntimesRouteParams["status"],
+                  })
+                }
+              >
+                <option value="">Todos</option>
+                <option value="open">Abertas</option>
+                <option value="closed">Encerradas</option>
+              </select>
+              <HelpTooltip
+                content={DELPI_MES_COPY.help.downtimesStatus}
+                ariaLabel="Ajuda: estado da parada"
               />
+            </span>
+          </label>
+          <div className="delpi-mes-downtimes__filters-tail">
+            <button
+              type="button"
+              className="delpi-mes-downtimes__filters-more"
+              aria-expanded={advancedOpen || params.period === "custom"}
+              aria-controls="downtimes-advanced-filters"
+              onClick={() => setAdvancedOpen((value) => !value)}
+            >
+              <SlidersHorizontal aria-hidden="true" />
+              Avançados
+              {advancedFiltersCount > 0 ? (
+                <span className="delpi-mes-downtimes__filters-count">
+                  {advancedFiltersCount}
+                </span>
+              ) : null}
+              <ChevronDown aria-hidden="true" data-open={advancedOpen || params.period === "custom"} />
+            </button>
+            {hasActiveDowntimeFilters(params) ? (
+              <ClearFiltersButton onClick={clearFilters} />
+            ) : null}
+          </div>
+        </div>
+        {advancedOpen || params.period === "custom" ? (
+          <div
+            id="downtimes-advanced-filters"
+            className="delpi-mes-downtimes__filters-advanced"
+          >
+            {params.period === "custom" ? (
+              <>
+                <label>
+                  De
+                  <input
+                    type="date"
+                    value={params.from ?? ""}
+                    onChange={(event) => apply({ from: event.target.value || null })}
+                  />
+                </label>
+                <label>
+                  Até
+                  <input
+                    type="date"
+                    value={params.to ?? ""}
+                    onChange={(event) => apply({ to: event.target.value || null })}
+                  />
+                </label>
+              </>
+            ) : null}
+            <label>
+              Motivo
+              <select
+                value={params.reasonCode ?? ""}
+                onChange={(event) => apply({ reasonCode: event.target.value || null })}
+                disabled={options.loading}
+              >
+                <option value="">Todos</option>
+                {(options.data?.reasons ?? []).map((reason) => (
+                  <option key={reason.code} value={reason.code}>
+                    {reason.label}{reason.active ? "" : " (inativo)"}
+                  </option>
+                ))}
+              </select>
             </label>
             <label>
-              Até
-              <input
-                type="date"
-                value={params.to ?? ""}
-                onChange={(event) => apply({ to: event.target.value || null })}
-              />
+              Origem
+              <select
+                value={params.source ?? ""}
+                onChange={(event) => apply({ source: event.target.value || null })}
+                disabled={options.loading}
+              >
+                <option value="">Todas</option>
+                {(options.data?.sources ?? []).map((source) => (
+                  <option key={source.code} value={source.code}>{downtimeSourceLabel(source.code)}</option>
+                ))}
+              </select>
             </label>
-          </>
+            <label>
+              Situação
+              <span className="delpi-mes-downtimes__label-with-help">
+                <select
+                  value={params.classification ?? ""}
+                  onChange={(event) =>
+                    apply({
+                      classification: (event.target.value || null) as DowntimesRouteParams["classification"],
+                    })
+                  }
+                >
+                  <option value="">Todas</option>
+                  <option value="pending">Pendente de classificação</option>
+                  <option value="confirmed">Confirmada</option>
+                </select>
+                <HelpTooltip
+                  content={DELPI_MES_COPY.help.downtimesClassification}
+                  ariaLabel="Ajuda: situação da classificação"
+                />
+              </span>
+            </label>
+            <label>
+              Ordenação
+              <select
+                value={params.sort}
+                onChange={(event) => apply({ sort: event.target.value === "oldest" ? "oldest" : "recent" })}
+              >
+                <option value="recent">Mais recentes</option>
+                <option value="oldest">Mais antigas</option>
+              </select>
+            </label>
+          </div>
         ) : null}
-        <label>
-          Centro de trabalho
-          <input
-            type="search"
-            value={params.workCenter ?? ""}
-            placeholder="Ex.: CT-35"
-            onChange={(event) => apply({ workCenter: event.target.value || null })}
-          />
-        </label>
-        <label>
-          Motivo
-          <select
-            value={params.reasonCode ?? ""}
-            onChange={(event) => apply({ reasonCode: event.target.value || null })}
-            disabled={options.loading}
-          >
-            <option value="">Todos</option>
-            {(options.data?.reasons ?? []).map((reason) => (
-              <option key={reason.code} value={reason.code}>
-                {reason.label}{reason.active ? "" : " (inativo)"}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Origem
-          <select
-            value={params.source ?? ""}
-            onChange={(event) => apply({ source: event.target.value || null })}
-            disabled={options.loading}
-          >
-            <option value="">Todas</option>
-            {(options.data?.sources ?? []).map((source) => (
-              <option key={source.code} value={source.code}>{downtimeSourceLabel(source.code)}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Situação
-          <span className="delpi-mes-downtimes__label-with-help">
-            <select
-              value={params.classification ?? ""}
-              onChange={(event) =>
-                apply({
-                  classification: (event.target.value || null) as DowntimesRouteParams["classification"],
-                })
-              }
-            >
-              <option value="">Todas</option>
-              <option value="pending">Pendente de classificação</option>
-              <option value="confirmed">Confirmada</option>
-            </select>
-            <HelpTooltip
-              content={DELPI_MES_COPY.help.downtimesClassification}
-              ariaLabel="Ajuda: situação da classificação"
-            />
-          </span>
-        </label>
-        <label>
-          Estado
-          <span className="delpi-mes-downtimes__label-with-help">
-            <select
-              value={params.status ?? ""}
-              onChange={(event) =>
-                apply({
-                  status: (event.target.value || null) as DowntimesRouteParams["status"],
-                })
-              }
-            >
-              <option value="">Todos</option>
-              <option value="open">Abertas</option>
-              <option value="closed">Encerradas</option>
-            </select>
-            <HelpTooltip
-              content={DELPI_MES_COPY.help.downtimesStatus}
-              ariaLabel="Ajuda: estado da parada"
-            />
-          </span>
-        </label>
-        <label>
-          Ordenação
-          <select
-            value={params.sort}
-            onChange={(event) => apply({ sort: event.target.value === "oldest" ? "oldest" : "recent" })}
-          >
-            <option value="recent">Mais recentes</option>
-            <option value="oldest">Mais antigas</option>
-          </select>
-        </label>
-        {hasActiveDowntimeFilters(params) ? (
-          <ClearFiltersButton onClick={clearFilters} />
-        ) : null}
-      </div>
-      {analyticsQuery ? (
-        <DowntimeExportActions query={analyticsQuery} canExport={canExport} />
-      ) : null}
+      </FilterBarShell>
 
       {options.error ? (
         <p className="delpi-mes-downtimes__options-warning" role="status">
@@ -379,7 +449,20 @@ export function DowntimesPage({
         onSelectGroup={selectInsightGroup}
       />
 
-      {items.length === 0 ? (
+      <section
+        className="delpi-mes-downtimes__history"
+        aria-labelledby="downtimes-history-title"
+      >
+        <div className="delpi-mes-downtimes__history-head">
+          <h3 id="downtimes-history-title">
+            Ocorrências
+            <span className="delpi-mes-downtimes__history-count">
+              {(downtimes.data?.total ?? 0).toLocaleString("pt-BR")}
+            </span>
+          </h3>
+          <p>Selecione uma linha para abrir o detalhe, classificar e tratar.</p>
+        </div>
+        {items.length === 0 ? (
         <EmptyState
           title={filteredEmpty ? "Nenhuma parada corresponde aos filtros" : "Nenhuma parada registrada no período"}
           defaultMessage={
@@ -479,7 +562,8 @@ export function DowntimesPage({
             onPageSizeChange={(pageSize) => onParamsChange({ ...params, pageSize, page: 1 })}
           />
         </>
-      )}
+        )}
+      </section>
 
       <DrawerShell
         open={Boolean(params.downtimeId)}

@@ -46,6 +46,10 @@ export const DELPI_MES_COPY = {
     downtimesClassification: "Confirmada: motivo classificado e confirmado. Pendente: parada sem motivo confirmado, incluindo registros históricos incompletos.",
     downtimesStatus:
       "Aberta: parada ainda em andamento contada até agora. Encerrada: parada com fim registrado. O estado é derivado dos fatos MES pelo Production Control.",
+    downtimesStatesIndependence:
+      "Encerramento e classificação são condições independentes: uma parada pode estar encerrada e ainda aguardar a confirmação do motivo.",
+    downtimesAdvancedFilters:
+      "Filtros adicionais para refinar o universo consultado. O contador mostra quantos estão aplicados, mesmo com o painel recolhido.",
     downtimesExport:
       "Arquivos gerados pelo backend com todas as paradas do universo autorizado que atendem aos filtros — nunca apenas a página exibida. Cada arquivo identifica a filial, os filtros e a referência temporal do cálculo.",
     downtimesManagement:

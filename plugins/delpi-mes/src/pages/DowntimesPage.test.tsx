@@ -436,6 +436,7 @@ describe("DowntimesPage", () => {
   it("applies a filter by resetting to the first page and re-querying the backend", async () => {
     renderPage({ page: 3 });
     await screen.findByText("OP-100 / 010");
+    fireEvent.click(screen.getByRole("button", { name: /Avançados/ }));
     const selects = screen.getAllByRole("combobox");
     const classification = selects.find((el) =>
       Array.from((el as HTMLSelectElement).options).some((o) => o.value === "pending"),
@@ -693,6 +694,41 @@ describe("DowntimesPage", () => {
     await screen.findByText(/Não foi possível calcular os indicadores/);
   });
 
+  it("keeps secondary filters collapsed and expands them on demand", async () => {
+    renderPage();
+    await screen.findByText("OP-100 / 010");
+    expect(screen.queryByLabelText("Motivo")).toBeNull();
+    expect(screen.queryByLabelText("Ordenação")).toBeNull();
+    const toggle = screen.getByRole("button", { name: /Avançados/ });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByLabelText("Motivo")).toBeTruthy();
+    expect(screen.getByLabelText("Ordenação")).toBeTruthy();
+  });
+
+  it("shows the count of applied secondary filters even when collapsed", async () => {
+    renderPage({ reasonCode: "SETUP", sort: "oldest" });
+    await screen.findByText("OP-100 / 010");
+    // filtros aplicados abrem o painel — ao recolher, o contador permanece
+    fireEvent.click(screen.getByRole("button", { name: /Avançados/ }));
+    expect(screen.queryByLabelText("Motivo")).toBeNull();
+    const toggle = screen.getByRole("button", { name: /Avançados/ });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle.textContent).toContain("2");
+  });
+
+  it("reveals the custom date range inside the advanced panel", async () => {
+    renderPage();
+    await screen.findByText("OP-100 / 010");
+    expect(screen.queryByLabelText("De")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Período personalizado" }));
+    await waitFor(() => {
+      expect(screen.getByLabelText("De")).toBeTruthy();
+      expect(screen.getByLabelText("Até")).toBeTruthy();
+    });
+  });
+
   it("forwards the status filter to list and analytics queries", async () => {
     renderPage();
     await screen.findByText("OP-100 / 010");
@@ -822,7 +858,8 @@ describe("DowntimesPage", () => {
       revokeObjectURL: revokeUrl,
     }));
     renderPage({ workCenter: "CT-35", status: "open" });
-    const csvButton = await screen.findByRole("button", { name: "CSV" });
+    fireEvent.click(await screen.findByRole("button", { name: "Exportar" }));
+    const csvButton = await screen.findByRole("menuitem", { name: "CSV" });
     fireEvent.click(csvButton);
     await waitFor(() => expect(createUrl).toHaveBeenCalled());
     const call = fetchMock.mock.calls.find(([url]) =>
@@ -846,7 +883,8 @@ describe("DowntimesPage", () => {
       revokeObjectURL: vi.fn(),
     }));
     renderPage();
-    const button = await screen.findByRole("button", { name: "Relatório de pendências" });
+    fireEvent.click(await screen.findByRole("button", { name: "Exportar" }));
+    const button = await screen.findByRole("menuitem", { name: "Relatório de pendências" });
     fireEvent.click(button);
     await waitFor(() => expect(createUrl).toHaveBeenCalled());
     expect(
@@ -864,7 +902,8 @@ describe("DowntimesPage", () => {
       revokeObjectURL: vi.fn(),
     }));
     renderPage();
-    const button = await screen.findByRole("button", { name: "PDF executivo" });
+    fireEvent.click(await screen.findByRole("button", { name: "Exportar" }));
+    const button = await screen.findByRole("menuitem", { name: "PDF executivo" });
     fireEvent.click(button);
     await waitFor(() => {
       expect(
@@ -878,8 +917,9 @@ describe("DowntimesPage", () => {
   it("hides export actions without the export permission", async () => {
     renderPage({}, { history: true, monitoring: true, export: false });
     await screen.findByText("Paradas");
-    expect(screen.queryByRole("button", { name: "CSV" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "PDF executivo" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Exportar" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "CSV" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "PDF executivo" })).toBeNull();
   });
 
   it("renders the advanced analysis panel with backend data only", async () => {

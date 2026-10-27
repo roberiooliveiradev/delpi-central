@@ -134,6 +134,44 @@ declare module "@delpi/plugin-ui/index" {
     onPageSizeChange?: (pageSize: number) => void;
     disabled?: boolean;
   }) => ReactNode;
+  export type MetricKpiCardTone = "default" | "positive" | "negative" | "warning";
+  export function MetricKpiCard(props: {
+    label?: string;
+    titleHint?: string;
+    value: string;
+    hint?: ReactNode;
+    icon?: ReactNode;
+    tone?: MetricKpiCardTone;
+    classNames: unknown;
+    className?: string;
+    fitValue?: boolean;
+  }): ReactNode;
+  export function metricKpiCardBemClasses(prefix: string, block?: string): unknown;
+  export function FilterBarShell(props: {
+    children?: ReactNode;
+    leading?: ReactNode;
+    onSubmit?: (event: { preventDefault(): void }) => void;
+    embedded?: boolean;
+    layout?: "inline" | "grid";
+    className?: string;
+    ariaLabel?: string;
+    classNames: unknown;
+  }): ReactNode;
+  export function filterBarShellBemClasses(prefix: string, options?: { withGrid?: boolean; block?: string }): unknown;
+  export function SegmentToggle<T extends string = string>(props: {
+    options: readonly { value: T; label: ReactNode; ariaLabel?: string; disabled?: boolean }[];
+    value: T;
+    onChange: (value: T) => void;
+    ariaLabel: string;
+    idPrefix?: string;
+    prefix?: string;
+    size?: "sm" | "md";
+    widthMode?: "fill" | "content";
+    direction?: "row" | "column";
+    disabled?: boolean;
+    className?: string;
+    classNames?: unknown;
+  }): ReactNode;
   export function AnchoredPanelPortal(props: {
     open: boolean;
     anchorRef: { current: HTMLElement | null };
