@@ -1,4 +1,6 @@
 export const DELPI_MES_DOWNTIME_REASONS_MANAGE = "delpi-mes.downtime-reasons.manage";
+export const DELPI_MES_DOWNTIMES_CLASSIFY = "delpi-mes.downtimes.classify";
+export const DELPI_MES_DOWNTIMES_TREAT = "delpi-mes.downtimes.treat";
 
 export function canUseDelpiMes(
   permissions: ReadonlySet<string>,

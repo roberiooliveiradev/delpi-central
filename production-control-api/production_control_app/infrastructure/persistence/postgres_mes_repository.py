@@ -22,6 +22,8 @@ from psycopg.errors import ForeignKeyViolation, UniqueViolation
 from production_control_app.domain.errors import (
     DowntimeConflict,
     DowntimeNotFound,
+    DowntimeTreatmentConflict,
+    DowntimeTreatmentNotFound,
     DowntimeReasonConflict,
     InvalidMesEvent,
     MesStateConflict,
@@ -347,6 +349,7 @@ class PostgresDowntimeEventRepository:
         confirmed_by_type: str | None = None,
         confirmed_by_ref: str | None = None,
         confirmed: bool = True,
+        expected_updated_at: datetime | None = None,
         conn: Any | None = None,
     ) -> dict[str, Any]:
         def _run(conn_: Any) -> dict[str, Any]:
@@ -365,6 +368,7 @@ class PostgresDowntimeEventRepository:
                                confirmed_by_ref = %s,
                                updated_at = NOW()
                          WHERE id = %s::uuid
+                           AND (%s::timestamptz IS NULL OR updated_at = %s)
                         RETURNING {_DOWNTIME_COLUMNS}
                         """,
                         (
@@ -377,6 +381,8 @@ class PostgresDowntimeEventRepository:
                             confirmed_by_type,
                             confirmed_by_ref,
                             downtime_id,
+                            expected_updated_at,
+                            expected_updated_at,
                         ),
                     )
                     row = cur.fetchone()
@@ -387,6 +393,17 @@ class PostgresDowntimeEventRepository:
             except psycopg.errors.CheckViolation as exc:
                 raise InvalidMesEvent(str(exc)) from exc
             if row is None:
+                if expected_updated_at is not None:
+                    with conn_.cursor() as cur_:
+                        cur_.execute(
+                            f"SELECT 1 FROM {_DOWNTIMES} WHERE id = %s::uuid",
+                            (downtime_id,),
+                        )
+                        if cur_.fetchone() is not None:
+                            raise DowntimeConflict(
+                                "A parada foi alterada por outra escrita; "
+                                "recarregue antes de confirmar a classificação."
+                            )
                 raise DowntimeNotFound("Parada não encontrada.")
             return dict(row)
 
@@ -734,6 +751,263 @@ class PostgresMesAuditRepository:
                     (run_id,),
                 )
                 return [dict(row) for row in cur.fetchall()]
+
+    def list_for_downtime(self, downtime_id: str) -> list[dict[str, Any]]:
+        """Eventos de auditoria da parada — details->>'downtimeId'."""
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT id, branch, work_center, run_id::text AS run_id,
+                           action, actor_type, actor_ref, occurred_at, details,
+                           created_at
+                    FROM {_AUDIT}
+                    WHERE details->>'downtimeId' = %s
+                    ORDER BY occurred_at, created_at
+                    """,
+                    (downtime_id,),
+                )
+                return [dict(row) for row in cur.fetchall()]
+
+
+_TREATMENTS = f"{PC_SCHEMA_NAME}.mes_downtime_treatments"
+_TREATMENT_COLUMNS = """
+    downtime_id::text AS downtime_id, branch, work_center, analysis,
+    cause_kind, cause_note, action_needed, justification, status,
+    request_id::text AS request_id, request_type_code, linked_at,
+    linked_by_ref, linked_by_name, conclusion_reason, concluded_at,
+    concluded_by_ref, concluded_by_name, created_by_ref, created_by_name,
+    updated_by_ref, updated_by_name, created_at, updated_at
+"""
+
+
+class PostgresMesDowntimeTreatmentRepository:
+    """Triagem gerencial 1:1 da parada — concorrência otimista por updated_at.
+
+    expected_updated_at=None no upsert significa "o registro ainda não
+    existe": o INSERT é protegido pelo PK; um valor presente exige que a linha
+    esteja exatamente no estado lido pelo cliente.
+    """
+
+    def get(
+        self, downtime_id: str, *, conn: Any | None = None
+    ) -> dict[str, Any] | None:
+        def _read(c: Any) -> dict[str, Any] | None:
+            with c.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_TREATMENT_COLUMNS}
+                    FROM {_TREATMENTS}
+                    WHERE downtime_id = %s::uuid
+                    """,
+                    (downtime_id,),
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None
+
+        if conn is not None:
+            return _read(conn)
+        with get_connection() as own:
+            return _read(own)
+
+    def upsert(
+        self,
+        downtime_id: str,
+        *,
+        branch: str,
+        work_center: str,
+        analysis: str,
+        cause_kind: str,
+        cause_note: str | None,
+        action_needed: bool,
+        justification: str,
+        expected_updated_at: datetime | None,
+        actor_ref: str,
+        actor_name: str,
+        conn: Any | None = None,
+    ) -> dict[str, Any]:
+        def _run(conn_: Any) -> dict[str, Any]:
+            if expected_updated_at is None:
+                try:
+                    with conn_.cursor() as cur:
+                        cur.execute(
+                            f"""
+                            INSERT INTO {_TREATMENTS} (
+                                downtime_id, branch, work_center, analysis,
+                                cause_kind, cause_note, action_needed,
+                                justification, created_by_ref, created_by_name,
+                                updated_by_ref, updated_by_name
+                            )
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (downtime_id) DO NOTHING
+                            RETURNING {_TREATMENT_COLUMNS}
+                            """,
+                            (
+                                downtime_id, branch, work_center, analysis,
+                                cause_kind, cause_note, bool(action_needed),
+                                justification, actor_ref, actor_name,
+                                actor_ref, actor_name,
+                            ),
+                        )
+                        row = cur.fetchone()
+                except ForeignKeyViolation as exc:
+                    raise DowntimeNotFound("Parada não encontrada.") from exc
+                if row is not None:
+                    return dict(row)
+                raise DowntimeTreatmentConflict(
+                    "A parada já possui triagem registrada; recarregue antes de "
+                    "atualizar."
+                )
+            with conn_.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE {_TREATMENTS}
+                       SET analysis = %s,
+                           cause_kind = %s,
+                           cause_note = %s,
+                           action_needed = %s,
+                           justification = %s,
+                           updated_by_ref = %s,
+                           updated_by_name = %s,
+                           updated_at = NOW()
+                     WHERE downtime_id = %s::uuid
+                       AND updated_at = %s
+                    RETURNING {_TREATMENT_COLUMNS}
+                    """,
+                    (
+                        analysis, cause_kind, cause_note, bool(action_needed),
+                        justification, actor_ref, actor_name, downtime_id,
+                        expected_updated_at,
+                    ),
+                )
+                row = cur.fetchone()
+            if row is not None:
+                return dict(row)
+            existing = self.get(downtime_id, conn=conn_)
+            if existing is None:
+                raise DowntimeTreatmentNotFound(
+                    "Triagem não encontrada para esta parada."
+                )
+            raise DowntimeTreatmentConflict(
+                "A triagem foi alterada por outra escrita; recarregue antes de "
+                "atualizar."
+            )
+
+        if conn is not None:
+            return _run(conn)
+        with get_connection() as own:
+            try:
+                row_ = _run(own)
+            except Exception:
+                own.rollback()
+                raise
+            own.commit()
+            return row_
+
+    def link_request(
+        self,
+        downtime_id: str,
+        *,
+        request_id: str,
+        request_type_code: str,
+        actor_ref: str,
+        actor_name: str,
+        conn: Any | None = None,
+    ) -> dict[str, Any]:
+        """Vincula a solicitação — idempotente para o mesmo request_id."""
+        def _run(conn_: Any) -> dict[str, Any]:
+            with conn_.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE {_TREATMENTS}
+                       SET request_id = %s::uuid,
+                           request_type_code = %s,
+                           status = 'referred',
+                           linked_at = NOW(),
+                           linked_by_ref = %s,
+                           linked_by_name = %s,
+                           updated_at = NOW()
+                     WHERE downtime_id = %s::uuid
+                       AND status <> 'concluded'
+                       AND (request_id IS NULL OR request_id = %s::uuid)
+                    RETURNING {_TREATMENT_COLUMNS}
+                    """,
+                    (
+                        request_id, request_type_code, actor_ref, actor_name,
+                        downtime_id, request_id,
+                    ),
+                )
+                row = cur.fetchone()
+            if row is not None:
+                return dict(row)
+            existing = self.get(downtime_id, conn=conn_)
+            if existing is None:
+                raise DowntimeTreatmentNotFound(
+                    "Registre a triagem antes de encaminhar a solicitação."
+                )
+            raise DowntimeTreatmentConflict(
+                "A parada já está vinculada a outra solicitação ou encerrada."
+            )
+
+        if conn is not None:
+            return _run(conn)
+        with get_connection() as own:
+            try:
+                row_ = _run(own)
+            except Exception:
+                own.rollback()
+                raise
+            own.commit()
+            return row_
+
+    def conclude(
+        self,
+        downtime_id: str,
+        *,
+        reason: str,
+        actor_ref: str,
+        actor_name: str,
+        conn: Any | None = None,
+    ) -> dict[str, Any]:
+        def _run(conn_: Any) -> dict[str, Any]:
+            with conn_.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE {_TREATMENTS}
+                       SET status = 'concluded',
+                           conclusion_reason = %s,
+                           concluded_at = NOW(),
+                           concluded_by_ref = %s,
+                           concluded_by_name = %s,
+                           updated_at = NOW()
+                     WHERE downtime_id = %s::uuid
+                       AND status <> 'concluded'
+                    RETURNING {_TREATMENT_COLUMNS}
+                    """,
+                    (reason, actor_ref, actor_name, downtime_id),
+                )
+                row = cur.fetchone()
+            if row is not None:
+                return dict(row)
+            existing = self.get(downtime_id, conn=conn_)
+            if existing is None:
+                raise DowntimeTreatmentNotFound(
+                    "Triagem não encontrada para esta parada."
+                )
+            raise DowntimeTreatmentConflict(
+                "O tratamento desta parada já foi concluído."
+            )
+
+        if conn is not None:
+            return _run(conn)
+        with get_connection() as own:
+            try:
+                row_ = _run(own)
+            except Exception:
+                own.rollback()
+                raise
+            own.commit()
+            return row_
 
 
 _OBSERVERS = f"{PC_SCHEMA_NAME}.work_center_pulse_observers"

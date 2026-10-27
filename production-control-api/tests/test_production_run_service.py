@@ -362,11 +362,19 @@ class FakeDowntimeRepo:
 
     def classify(self, downtime_id, *, reason_code, planned, counts_as_availability_loss,
                  note=None, confirmed_by_type=None, confirmed_by_ref=None, confirmed=True,
-                 conn=None):
-        from production_control_app.domain.errors import DowntimeNotFound
+                 expected_updated_at=None, conn=None):
+        from production_control_app.domain.errors import (
+            DowntimeConflict,
+            DowntimeNotFound,
+        )
 
         for e in self.events:
             if e["id"] == downtime_id:
+                if (
+                    expected_updated_at is not None
+                    and e.get("updated_at") != expected_updated_at
+                ):
+                    raise DowntimeConflict("Parada alterada por outra escrita.")
                 e["reason_code"] = reason_code
                 e["planned"] = planned
                 e["counts_as_availability_loss"] = counts_as_availability_loss

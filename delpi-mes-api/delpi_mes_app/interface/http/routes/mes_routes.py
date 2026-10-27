@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
 from delpi_mes_app.composition.composer import (
+    build_mes_downtime_management_service,
     build_mes_downtime_reason_admin_service,
     build_mes_read_service,
 )
@@ -150,6 +151,7 @@ def get_downtime_analytics(
     reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
     source: str | None = Query(default=None, max_length=40),
     classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
 ):
     try:
         data = build_mes_read_service().get_downtime_analytics(
@@ -161,6 +163,7 @@ def get_downtime_analytics(
             reason_code=reason_code,
             source=source,
             classification=classification,
+            status=status,
             permission=MES_DOWNTIMES_VIEW,
         )
     except Exception as exc:
@@ -183,6 +186,7 @@ def get_downtimes(
     reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
     source: str | None = Query(default=None, max_length=40),
     classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
     sort: str | None = Query(default=None, max_length=10),
     downtime_id: str | None = Query(default=None, alias="downtimeId", max_length=40),
     page: int = Query(default=1, ge=1),
@@ -198,6 +202,7 @@ def get_downtimes(
             reason_code=reason_code,
             source=source,
             classification=classification,
+            status=status,
             sort=sort,
             downtime_id=downtime_id,
             page=page,
@@ -289,4 +294,180 @@ def set_downtime_reason_active(
         "delpi_mes_downtime_reason_active_changed code=%s active=%s",
         data["code"], data["active"],
     )
+    return ok(data)
+
+
+class DowntimeClassifyBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    reason_code: str = Field(..., alias="reasonCode", min_length=1, max_length=40)
+    note: str | None = Field(default=None, max_length=500)
+    expected_updated_at: str = Field(..., alias="expectedUpdatedAt", min_length=1)
+
+
+class DowntimeTreatmentUpsertBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    analysis: str = Field(..., min_length=1, max_length=2000)
+    cause_kind: str = Field(..., alias="causeKind", min_length=1, max_length=20)
+    cause_note: str | None = Field(default=None, alias="causeNote", max_length=500)
+    action_needed: bool = Field(..., alias="actionNeeded")
+    justification: str = Field(..., min_length=1, max_length=2000)
+    expected_updated_at: str | None = Field(
+        default=None, alias="expectedUpdatedAt"
+    )
+
+
+class DowntimeReferralBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    issue_code: str = Field(..., alias="issueCode", min_length=1, max_length=60)
+    note: str | None = Field(default=None, max_length=500)
+    idempotency_key: str | None = Field(
+        default=None, alias="idempotencyKey", max_length=120
+    )
+
+
+class DowntimeConclusionBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    branch: str = Field(..., min_length=2, max_length=2)
+    reason: str = Field(..., min_length=1, max_length=2000)
+
+
+@router.post(
+    "/downtimes/{downtime_id}/classification",
+    operation_id="classify_delpi_mes_downtime",
+)
+def classify_downtime(
+    request: Request, downtime_id: str, body: DowntimeClassifyBody
+):
+    try:
+        data = build_mes_downtime_management_service().classify_downtime(
+            request.state.user,
+            downtime_id,
+            branch=body.branch,
+            reason_code=body.reason_code,
+            note=body.note,
+            expected_updated_at=body.expected_updated_at,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_classified downtime=%s reason=%s",
+        downtime_id,
+        data.get("reasonCode"),
+    )
+    return ok(data)
+
+
+@router.get(
+    "/downtimes/{downtime_id}/treatment",
+    operation_id="get_delpi_mes_downtime_treatment",
+)
+def get_downtime_treatment(
+    request: Request,
+    downtime_id: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+):
+    try:
+        data = build_mes_downtime_management_service().get_treatment(
+            request.state.user, downtime_id, branch=branch
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    return ok(data)
+
+
+@router.put(
+    "/downtimes/{downtime_id}/treatment",
+    operation_id="upsert_delpi_mes_downtime_treatment",
+)
+def upsert_downtime_treatment(
+    request: Request, downtime_id: str, body: DowntimeTreatmentUpsertBody
+):
+    try:
+        data = build_mes_downtime_management_service().upsert_treatment(
+            request.state.user,
+            downtime_id,
+            branch=body.branch,
+            analysis=body.analysis,
+            cause_kind=body.cause_kind,
+            cause_note=body.cause_note,
+            action_needed=body.action_needed,
+            justification=body.justification,
+            expected_updated_at=body.expected_updated_at,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_treatment_saved downtime=%s", downtime_id
+    )
+    return ok(data)
+
+
+@router.post(
+    "/downtimes/{downtime_id}/treatment/referrals",
+    operation_id="refer_delpi_mes_downtime",
+)
+def refer_downtime(
+    request: Request, downtime_id: str, body: DowntimeReferralBody
+):
+    try:
+        data = build_mes_downtime_management_service().refer_request(
+            request.state.user,
+            downtime_id,
+            branch=body.branch,
+            issue_code=body.issue_code,
+            note=body.note,
+            idempotency_key=body.idempotency_key,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_referred downtime=%s", downtime_id
+    )
+    return ok(data)
+
+
+@router.post(
+    "/downtimes/{downtime_id}/treatment/conclusion",
+    operation_id="conclude_delpi_mes_downtime_treatment",
+)
+def conclude_downtime_treatment(
+    request: Request, downtime_id: str, body: DowntimeConclusionBody
+):
+    try:
+        data = build_mes_downtime_management_service().conclude_treatment(
+            request.state.user,
+            downtime_id,
+            branch=body.branch,
+            reason=body.reason,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_treatment_concluded downtime=%s", downtime_id
+    )
+    return ok(data)
+
+
+@router.get(
+    "/downtimes/{downtime_id}/history",
+    operation_id="get_delpi_mes_downtime_history",
+)
+def get_downtime_history(
+    request: Request,
+    downtime_id: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+):
+    try:
+        data = build_mes_downtime_management_service().get_history(
+            request.state.user, downtime_id, branch=branch
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
     return ok(data)

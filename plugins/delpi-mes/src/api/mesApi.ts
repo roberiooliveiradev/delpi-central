@@ -1,6 +1,18 @@
-import { httpGet } from "./httpClient";
+import { httpGet, httpPost, httpPut } from "./httpClient";
 import type { BranchCode } from "../constants/routes";
-import type { DowntimeAnalyticsQuery, DowntimeAnalyticsResponse, DowntimeFilterOptionsResponse, DowntimesQuery, DowntimesResponse, MonitoringResponse, RunPerformanceResponse, WorkCenterTimelineResponse } from "../types/mes";
+import type {
+  DowntimeAnalyticsQuery,
+  DowntimeAnalyticsResponse,
+  DowntimeClassificationResult,
+  DowntimeFilterOptionsResponse,
+  DowntimeHistoryResponse,
+  DowntimeTreatmentResponse,
+  DowntimesQuery,
+  DowntimesResponse,
+  MonitoringResponse,
+  RunPerformanceResponse,
+  WorkCenterTimelineResponse,
+} from "../types/mes";
 
 export function getMonitoring(branch: "01" | "02", signal?: AbortSignal) {
   return httpGet<MonitoringResponse>(`/monitoring?branch=${branch}`, { signal });
@@ -26,6 +38,7 @@ export function getDowntimes(query: DowntimesQuery, signal?: AbortSignal) {
   if (query.reasonCode) params.set("reasonCode", query.reasonCode);
   if (query.source) params.set("source", query.source);
   if (query.classification) params.set("classification", query.classification);
+  if (query.status) params.set("status", query.status);
   if (query.sort) params.set("sort", query.sort);
   if (query.downtimeId) params.set("downtimeId", query.downtimeId);
   return httpGet<DowntimesResponse>("/downtimes?" + params.toString(), { signal });
@@ -38,9 +51,76 @@ export function getDowntimeAnalytics(query: DowntimeAnalyticsQuery, signal?: Abo
   if (query.reasonCode) params.set("reasonCode", query.reasonCode);
   if (query.source) params.set("source", query.source);
   if (query.classification) params.set("classification", query.classification);
+  if (query.status) params.set("status", query.status);
   return httpGet<DowntimeAnalyticsResponse>("/downtimes/analytics?" + params.toString(), { signal });
 }
 
 export function getDowntimeFilterOptions(branch: BranchCode, signal?: AbortSignal) {
   return httpGet<DowntimeFilterOptionsResponse>("/downtimes/filter-options?branch=" + branch, { signal });
+}
+
+/* ---- Gestão gerencial da parada (Etapa 3) ---- */
+
+export function classifyDowntime(
+  downtimeId: string,
+  body: { branch: string; reasonCode: string; note: string | null; expectedUpdatedAt: string },
+) {
+  return httpPost<DowntimeClassificationResult>(
+    "/downtimes/" + encodeURIComponent(downtimeId) + "/classification",
+    body,
+  );
+}
+
+export function getDowntimeTreatment(downtimeId: string, branch: string, signal?: AbortSignal) {
+  const params = new URLSearchParams({ branch });
+  return httpGet<DowntimeTreatmentResponse>(
+    "/downtimes/" + encodeURIComponent(downtimeId) + "/treatment?" + params.toString(),
+    { signal },
+  );
+}
+
+export function upsertDowntimeTreatment(
+  downtimeId: string,
+  body: {
+    branch: string;
+    analysis: string;
+    causeKind: string;
+    causeNote: string | null;
+    actionNeeded: boolean;
+    justification: string;
+    expectedUpdatedAt: string | null;
+  },
+) {
+  return httpPut<{ treatment: import("../types/mes").DowntimeTreatment }>(
+    "/downtimes/" + encodeURIComponent(downtimeId) + "/treatment",
+    body,
+  );
+}
+
+export function referDowntimeTreatment(
+  downtimeId: string,
+  body: { branch: string; issueCode: string; note: string | null; idempotencyKey?: string | null },
+) {
+  return httpPost<{ treatment: import("../types/mes").DowntimeTreatment }>(
+    "/downtimes/" + encodeURIComponent(downtimeId) + "/treatment/referrals",
+    body,
+  );
+}
+
+export function concludeDowntimeTreatment(
+  downtimeId: string,
+  body: { branch: string; reason: string },
+) {
+  return httpPost<{ treatment: import("../types/mes").DowntimeTreatment }>(
+    "/downtimes/" + encodeURIComponent(downtimeId) + "/treatment/conclusion",
+    body,
+  );
+}
+
+export function getDowntimeHistory(downtimeId: string, branch: string, signal?: AbortSignal) {
+  const params = new URLSearchParams({ branch });
+  return httpGet<DowntimeHistoryResponse>(
+    "/downtimes/" + encodeURIComponent(downtimeId) + "/history?" + params.toString(),
+    { signal },
+  );
 }

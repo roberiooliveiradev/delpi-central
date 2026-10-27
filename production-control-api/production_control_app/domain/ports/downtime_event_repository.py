@@ -45,8 +45,15 @@ class DowntimeEventRepositoryPort(ABC):
         confirmed_by_type: str | None = None,
         confirmed_by_ref: str | None = None,
         confirmed: bool = True,
+        expected_updated_at: datetime | None = None,
+        conn: Any | None = None,
     ) -> dict[str, Any]:
-        """Aplica motivo + snapshot da classificação; ``DowntimeNotFound``."""
+        """Aplica motivo + snapshot da classificacao; DowntimeNotFound.
+
+        Precondicao otimista: expected_updated_at permite a escrita apenas
+        se a linha ainda estiver no instante lido pelo cliente; divergencia
+        vira DowntimeConflict.
+        """
 
     @abstractmethod
     def close_open(

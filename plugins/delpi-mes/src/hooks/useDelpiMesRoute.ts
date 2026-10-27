@@ -14,6 +14,8 @@ export type DowntimesRouteParams = {
   reasonCode: string | null;
   source: string | null;
   classification: "pending" | "confirmed" | null;
+  /** Estado temporal da parada: em andamento (open) ou encerrada (closed). */
+  status: "open" | "closed" | null;
   sort: "recent" | "oldest";
   /** Seleção/detalhe — não filtra a lista. */
   downtimeId: string | null;
@@ -43,6 +45,7 @@ const DEFAULT_DOWNTIMES: DowntimesRouteParams = {
   reasonCode: null,
   source: null,
   classification: null,
+  status: null,
   sort: "recent",
   downtimeId: null,
   page: 1,
@@ -53,6 +56,7 @@ const AREA_SEGMENTS: ReadonlySet<string> = new Set(["monitoring", "downtimes", "
 const REGISTRATION_PAGES: ReadonlySet<string> = new Set(["downtime-reasons"]);
 const PERIODS: ReadonlySet<string> = new Set(["today", "7d", "30d", "custom"]);
 const CLASSIFICATIONS: ReadonlySet<string> = new Set(["pending", "confirmed"]);
+const STATUSES: ReadonlySet<string> = new Set(["open", "closed"]);
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 function positiveInt(value: string | null, fallback: number, max = 100): number {
@@ -63,6 +67,7 @@ function positiveInt(value: string | null, fallback: number, max = 100): number 
 function parseDowntimesParams(params: URLSearchParams): DowntimesRouteParams {
   const period = params.get("period");
   const classification = params.get("classification");
+  const status = params.get("status");
   const from = params.get("from");
   const to = params.get("to");
   return {
@@ -75,6 +80,10 @@ function parseDowntimesParams(params: URLSearchParams): DowntimesRouteParams {
     classification:
       classification && CLASSIFICATIONS.has(classification)
         ? (classification as DowntimesRouteParams["classification"])
+        : null,
+    status:
+      status && STATUSES.has(status)
+        ? (status as DowntimesRouteParams["status"])
         : null,
     sort: params.get("sort") === "oldest" ? "oldest" : "recent",
     downtimeId: params.get("downtimeId")?.trim() || null,
@@ -117,6 +126,7 @@ export function buildDowntimesHref(branch: BranchCode, params: DowntimesRoutePar
   if (params.reasonCode) search.set("reasonCode", params.reasonCode);
   if (params.source) search.set("source", params.source);
   if (params.classification) search.set("classification", params.classification);
+  if (params.status) search.set("status", params.status);
   if (params.sort === "oldest") search.set("sort", "oldest");
   if (params.downtimeId) search.set("downtimeId", params.downtimeId);
   if (params.page > 1) search.set("page", String(params.page));

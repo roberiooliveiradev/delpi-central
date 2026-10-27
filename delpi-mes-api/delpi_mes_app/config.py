@@ -15,6 +15,10 @@ class Settings:
     PRODUCTION_CONTROL_API_TIMEOUT = float(
         os.getenv("PRODUCTION_CONTROL_API_TIMEOUT", "5")
     )
+    REQUESTS_API_URL = os.getenv(
+        "REQUESTS_API_URL", "http://requests-api:8000"
+    ).rstrip("/")
+    REQUESTS_API_TIMEOUT = float(os.getenv("REQUESTS_API_TIMEOUT", "5"))
 
 
 settings = Settings()

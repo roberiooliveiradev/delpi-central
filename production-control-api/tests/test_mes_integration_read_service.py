@@ -292,7 +292,7 @@ def test_downtime_filters_are_forwarded_with_pagination():
         "branch": "01", "work_center": "CT-35", "period_from": start,
         "period_to": NOW, "reason_code": None, "source": None,
         "classification": None, "sort": "recent", "downtime_id": None,
-        "page": 2, "page_size": 25,
+        "status": None, "page": 2, "page_size": 25,
     }
 
 

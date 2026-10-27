@@ -770,6 +770,24 @@ def build_mes_downtime_classification_service(
     )
 
 
+def build_mes_downtime_treatment_service() -> Any:
+    """Triagem/tratamento gerencial de paradas (Etapa 03) — owner PC."""
+    from production_control_app.application.services.mes_downtime_treatment_service import (  # noqa: E501
+        MesDowntimeTreatmentService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_repository import (  # noqa: E501
+        PostgresDowntimeEventRepository,
+        PostgresMesAuditRepository,
+        PostgresMesDowntimeTreatmentRepository,
+    )
+
+    return MesDowntimeTreatmentService(
+        downtimes=PostgresDowntimeEventRepository(),
+        treatments=PostgresMesDowntimeTreatmentRepository(),
+        audit=PostgresMesAuditRepository(),
+    )
+
+
 def build_mes_downtime_reason_admin_service() -> Any:
     from production_control_app.application.services.mes_downtime_reason_admin_service import (  # noqa: E501
         MesDowntimeReasonAdminService,

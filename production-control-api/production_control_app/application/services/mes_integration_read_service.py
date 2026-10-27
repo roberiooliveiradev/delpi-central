@@ -23,6 +23,7 @@ from production_control_app.domain.services.mes_performance import (
 
 # Filtros gerenciais da consulta de paradas (Etapa 1 — Gestão de Paradas).
 _DOWNTIME_CLASSIFICATIONS = frozenset({"pending", "confirmed"})
+_DOWNTIME_STATUSES = frozenset({"open", "closed"})
 _DOWNTIME_SORTS = frozenset({"recent", "oldest"})
 
 # Limites da agregação gerencial (Etapa 2): janela máxima de 92 dias e
@@ -187,6 +188,7 @@ class MesIntegrationReadService:
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         sort: str | None = None,
         downtime_id: str | None = None,
         page: int = 1,
@@ -205,6 +207,9 @@ class MesIntegrationReadService:
         normalized_classification = (classification or "").strip().lower() or None
         if normalized_classification is not None and normalized_classification not in _DOWNTIME_CLASSIFICATIONS:
             raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        normalized_status = (status or "").strip().lower() or None
+        if normalized_status is not None and normalized_status not in _DOWNTIME_STATUSES:
+            raise ValueError("status deve ser 'open' ou 'closed'.")
         normalized_source = (source or "").strip().lower() or None
         if normalized_source is not None and normalized_source not in DOWNTIME_SOURCES:
             raise ValueError("source inválida para parada MES.")
@@ -224,6 +229,7 @@ class MesIntegrationReadService:
             reason_code=normalized_reason,
             source=normalized_source,
             classification=normalized_classification,
+            status=normalized_status,
             sort=normalized_sort,
             downtime_id=normalized_downtime_id,
             page=page,
@@ -248,6 +254,7 @@ class MesIntegrationReadService:
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
     ) -> dict[str, Any]:
         """Agregações gerenciais de paradas (Etapa 2 — Gestão de Paradas).
 
@@ -279,6 +286,9 @@ class MesIntegrationReadService:
         normalized_source = (source or "").strip().lower() or None
         if normalized_source is not None and normalized_source not in DOWNTIME_SOURCES:
             raise ValueError("source inválida para parada MES.")
+        normalized_status = (status or "").strip().lower() or None
+        if normalized_status is not None and normalized_status not in _DOWNTIME_STATUSES:
+            raise ValueError("status deve ser 'open' ou 'closed'.")
         normalized_reason = (reason_code or "").strip().lower() or None
         normalized_center = (work_center or "").strip() or None
 
@@ -290,6 +300,7 @@ class MesIntegrationReadService:
             reason_code=normalized_reason,
             source=normalized_source,
             classification=normalized_classification,
+            status=normalized_status,
             max_facts=_DOWNTIME_ANALYTICS_MAX_FACTS,
         )
         aggregates = aggregate_downtime_analytics(
@@ -310,6 +321,7 @@ class MesIntegrationReadService:
                 "reasonCode": normalized_reason,
                 "source": normalized_source,
                 "classification": normalized_classification,
+                **({"status": normalized_status} if normalized_status is not None else {}),
             },
             **aggregates,
         }
@@ -453,5 +465,9 @@ class MesIntegrationReadService:
             "reasonLabel": row.get("reason_label"),
             "category": row.get("category"),
             "confirmed": bool(row.get("confirmed")),
+            "confirmedAt": _iso(row.get("confirmed_at")),
+            "confirmedByType": row.get("confirmed_by_type"),
+            "confirmedByRef": row.get("confirmed_by_ref"),
             "note": row.get("note"),
+            "updatedAt": _iso(row.get("updated_at")),
         }

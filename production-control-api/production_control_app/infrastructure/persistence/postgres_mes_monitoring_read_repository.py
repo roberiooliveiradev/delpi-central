@@ -221,6 +221,7 @@ class PostgresMesMonitoringReadRepository:
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         sort: str | None = None,
         downtime_id: str | None = None,
         page: int,
@@ -234,6 +235,7 @@ class PostgresMesMonitoringReadRepository:
             reason_code=reason_code,
             source=source,
             classification=classification,
+            status=status,
             downtime_id=downtime_id,
         )
         # Ordenação por whitelist — valores do contrato nunca viram SQL livre.
@@ -251,7 +253,8 @@ class PostgresMesMonitoringReadRepository:
                        d.work_center, d.production_order, d.operation_code,
                        d.started_at, d.ended_at, d.source, d.reason_code,
                        reason.label AS reason_label, reason.category,
-                       d.confirmed, d.note
+                       d.confirmed, d.confirmed_at, d.confirmed_by_type,
+                       d.confirmed_by_ref, d.note, d.updated_at
                   FROM {_DOWNTIMES} d
              LEFT JOIN {_REASONS} reason ON reason.code = d.reason_code
                  WHERE {where}
@@ -273,6 +276,7 @@ class PostgresMesMonitoringReadRepository:
         reason_code: str | None,
         source: str | None,
         classification: str | None,
+        status: str | None = None,
         downtime_id: str | None = None,
     ) -> tuple[str, list[Any]]:
         # Seleção temporal e de filtros compartilhada entre listagem e
@@ -298,6 +302,10 @@ class PostgresMesMonitoringReadRepository:
             clauses.append("d.confirmed IS TRUE")
         elif classification == "pending":
             clauses.append("d.confirmed IS NOT TRUE")
+        if status == "open":
+            clauses.append("d.ended_at IS NULL")
+        elif status == "closed":
+            clauses.append("d.ended_at IS NOT NULL")
         if downtime_id:
             clauses.append("d.id = %s")
             params.append(downtime_id)
@@ -313,6 +321,7 @@ class PostgresMesMonitoringReadRepository:
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         max_facts: int = 20000,
     ) -> dict[str, Any]:
         # Fatos completos da janela para agregação gerencial: mesmo WHERE
@@ -327,6 +336,7 @@ class PostgresMesMonitoringReadRepository:
             reason_code=reason_code,
             source=source,
             classification=classification,
+            status=status,
         )
         with get_connection() as conn, conn.cursor() as cur:
             cur.execute(

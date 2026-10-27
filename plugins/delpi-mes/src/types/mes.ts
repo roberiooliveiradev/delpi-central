@@ -12,6 +12,7 @@ export type RunPerformanceResponse = { runId: string; branch: string; workCenter
 
 export type DowntimeSort = "recent" | "oldest";
 export type DowntimeClassification = "pending" | "confirmed";
+export type DowntimeStatusFilter = "open" | "closed";
 export type DowntimeItem = {
   id: string;
   runId: string | null;
@@ -26,6 +27,12 @@ export type DowntimeItem = {
   category: string | null;
   confirmed: boolean;
   note: string | null;
+  /** Token de concorrência otimista — devolvido como expectedUpdatedAt nas
+   * escritas de classificação. */
+  updatedAt: string | null;
+  confirmedAt: string | null;
+  confirmedByType: string | null;
+  confirmedByRef: string | null;
 };
 export type DowntimesResponse = {
   branch: string;
@@ -46,6 +53,8 @@ export type DowntimesQuery = {
   reasonCode?: string;
   source?: string;
   classification?: DowntimeClassification;
+  /** open = parada em andamento; closed = parada encerrada. */
+  status?: DowntimeStatusFilter;
   sort?: DowntimeSort;
   downtimeId?: string;
   page: number;
@@ -107,6 +116,7 @@ export type DowntimeAnalyticsResponse = {
     reasonCode: string | null;
     source: string | null;
     classification: string | null;
+    status?: string | null;
   };
   summary: DowntimeAnalyticsSummary;
   byReason: DowntimeAnalyticsReasonGroup[];
@@ -123,4 +133,69 @@ export type DowntimeAnalyticsQuery = {
   reasonCode?: string;
   source?: string;
   classification?: DowntimeClassification;
+  status?: DowntimeStatusFilter;
 };
+
+export type DowntimeClassificationResult = {
+  id: string;
+  runId: string | null;
+  reasonCode: string | null;
+  reasonLabel: string | null;
+  category: string | null;
+  note: string | null;
+  confirmed: boolean;
+  confirmedAt: string | null;
+  confirmedByType: string | null;
+  confirmedByRef: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  updatedAt: string | null;
+};
+
+export type DowntimeTreatmentStatus = "pending" | "referred" | "concluded";
+export type DowntimeCauseKind = "confirmed" | "hypothesis";
+
+export type DowntimeLinkedRequest = {
+  requestId: string;
+  requestNumber: string | null;
+  typeCode: string | null;
+  status: string | null;
+  statusAlias: string | null;
+};
+
+export type DowntimeTreatment = {
+  downtimeId: string;
+  status: DowntimeTreatmentStatus;
+  analysis: string | null;
+  causeKind: DowntimeCauseKind | null;
+  causeNote: string | null;
+  actionNeeded: boolean | null;
+  justification: string | null;
+  requestRef: { requestId: string; typeCode: string | null } | null;
+  /** Visão viva da solicitação — null quando indisponível ou ausente. */
+  request: DowntimeLinkedRequest | null;
+  requestStatusAvailable: boolean;
+  linkedAt: string | null;
+  linkedBy: string | null;
+  conclusionReason: string | null;
+  concludedAt: string | null;
+  concludedBy: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: string | null;
+  /** Token de concorrência do tratamento (expectedUpdatedAt no PUT). */
+  updatedAt: string | null;
+};
+
+export type DowntimeTreatmentResponse = { treatment: DowntimeTreatment | null };
+
+export type DowntimeHistoryItem = {
+  id: string;
+  action: string;
+  actorType: string | null;
+  actorRef: string | null;
+  occurredAt: string;
+  details: Record<string, unknown> | null;
+};
+
+export type DowntimeHistoryResponse = { items: DowntimeHistoryItem[] };

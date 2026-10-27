@@ -22,6 +22,7 @@ const DEFAULT_PARAMS: DowntimesRouteParams = {
   reasonCode: null,
   source: null,
   classification: null,
+  status: null,
   sort: "recent",
   downtimeId: null,
   page: 1,
@@ -42,6 +43,10 @@ const downtime = (overrides: Partial<DowntimeItem> = {}): DowntimeItem => ({
   category: "setup",
   confirmed: true,
   note: null,
+  updatedAt: "2026-02-10T11:00:00.000Z",
+  confirmedAt: "2026-02-10T11:00:00.000Z",
+  confirmedByType: "manager",
+  confirmedByRef: "gestor.1",
   ...overrides,
 });
 
@@ -126,8 +131,119 @@ const envelope = (data: unknown, status = 200) =>
     headers: { "content-type": "application/json" },
   });
 
-function fetchRouter() {
-  return vi.fn().mockImplementation((url: string) => {
+const TREATMENT = {
+  downtimeId: "2",
+  status: "pending",
+  analysis: "Parada recorrente no turno",
+  causeKind: "hypothesis",
+  causeNote: "Suspeita de sensor",
+  actionNeeded: true,
+  justification: "Confirmar com manutenção",
+  requestRef: null,
+  request: null,
+  requestStatusAvailable: false,
+  linkedAt: null,
+  linkedBy: null,
+  conclusionReason: null,
+  concludedAt: null,
+  concludedBy: null,
+  createdBy: "gestor.1",
+  updatedBy: "gestor.1",
+  createdAt: "2026-02-10T10:30:00.000Z",
+  updatedAt: "2026-02-10T10:30:00.000Z",
+};
+
+const HISTORY = {
+  items: [
+    {
+      id: "a-1",
+      action: "downtime_reason_confirmed",
+      actorType: "operator",
+      actorRef: "OP-77",
+      occurredAt: "2026-02-10T08:20:00.000Z",
+      details: { reasonCode: "SETUP" },
+    },
+    {
+      id: "a-2",
+      action: "downtime_triage_created",
+      actorType: "manager",
+      actorRef: "gestor.1",
+      occurredAt: "2026-02-10T10:30:00.000Z",
+      details: { downtimeId: "2" },
+    },
+  ],
+};
+
+const CLASSIFIED = {
+  ...LIST.items[1],
+  reasonCode: "SETUP",
+  reasonLabel: "Preparação de máquina",
+  confirmed: true,
+  confirmedAt: "2026-02-10T12:00:00.000Z",
+};
+
+type FetchHandler = (url: string, init?: RequestInit) => Promise<Response>;
+
+function managementSection(name: string): Promise<HTMLElement> {
+  return screen.findByRole("region", { name });
+}
+
+function fetchRouter(management: Partial<Record<"treatment" | "history" | "classify", FetchHandler>> = {}) {
+  const treatmentHandler: FetchHandler =
+    management.treatment ?? (() => Promise.resolve(envelope({ treatment: TREATMENT })));
+  const historyHandler: FetchHandler =
+    management.history ?? (() => Promise.resolve(envelope(HISTORY)));
+  let referred = false;
+  const referredTreatment = {
+    ...TREATMENT,
+    status: "referred",
+    requestRef: { requestId: "req-9", typeCode: "process-issue" },
+    request: {
+      requestId: "req-9",
+      requestNumber: "2026-0042",
+      typeCode: "process-issue",
+      status: "submitted",
+      statusAlias: null,
+    },
+    requestStatusAvailable: true,
+    linkedAt: "2026-02-10T12:05:00.000Z",
+    linkedBy: "gestor.1",
+  };
+  const classifyHandler: FetchHandler =
+    management.classify ?? (() => Promise.resolve(envelope(CLASSIFIED)));
+  return vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+    const method = init?.method ?? "GET";
+    if (method === "POST" && url.includes("/classification")) {
+      return classifyHandler(url, init);
+    }
+    if (url.includes("/treatment/referrals")) {
+      referred = true;
+      return Promise.resolve(envelope({ treatment: referredTreatment }));
+    }
+    if (url.includes("/treatment/conclusion")) {
+      return Promise.resolve(
+        envelope({
+          treatment: {
+            ...TREATMENT,
+            status: "concluded",
+            conclusionReason: "Resolvido",
+            concludedAt: "2026-02-10T12:10:00.000Z",
+            concludedBy: "gestor.1",
+          },
+        }),
+      );
+    }
+    if (method === "PUT" && url.includes("/treatment")) {
+      return Promise.resolve(envelope({ treatment: TREATMENT }));
+    }
+    if (url.includes("/treatment?")) {
+      return referred
+        ? Promise.resolve(envelope({ treatment: referredTreatment }))
+        : treatmentHandler(url, init);
+    }
+    if (url.includes("/history?")) {
+      return historyHandler(url, init);
+    }
     if (url.includes("/downtimes/analytics")) {
       return Promise.resolve(envelope(ANALYTICS));
     }
@@ -149,7 +265,18 @@ function fetchRouter() {
   });
 }
 
-function renderPage(initial: Partial<DowntimesRouteParams> = {}, permissions = { history: true, monitoring: true }) {
+type PagePermissions = {
+  history: boolean;
+  monitoring: boolean;
+  classify?: boolean;
+  treat?: boolean;
+  refer?: boolean;
+};
+
+function renderPage(
+  initial: Partial<DowntimesRouteParams> = {},
+  permissions: PagePermissions = { history: true, monitoring: true },
+) {
   const onOpenMonitoring = vi.fn();
   function Wrapper() {
     const [params, setParams] = useState<DowntimesRouteParams>({ ...DEFAULT_PARAMS, ...initial });
@@ -160,6 +287,9 @@ function renderPage(initial: Partial<DowntimesRouteParams> = {}, permissions = {
         onParamsChange={setParams}
         canViewHistory={permissions.history}
         canViewMonitoring={permissions.monitoring}
+        canClassify={permissions.classify ?? true}
+        canTreat={permissions.treat ?? true}
+        canCreateProcessIssue={permissions.refer ?? true}
         onOpenMonitoring={onOpenMonitoring}
       />
     );
@@ -170,9 +300,12 @@ function renderPage(initial: Partial<DowntimesRouteParams> = {}, permissions = {
 
 describe("DowntimesPage", () => {
   let fetchMock: ReturnType<typeof fetchRouter>;
-  beforeEach(() => {
-    fetchMock = fetchRouter();
+  const stubFetch = (router = fetchRouter()) => {
+    fetchMock = router;
     vi.stubGlobal("fetch", fetchMock);
+  };
+  beforeEach(() => {
+    stubFetch();
   });
   afterEach(() => {
     cleanup();
@@ -457,5 +590,124 @@ describe("DowntimesPage", () => {
     await screen.findByText("OP-100 / 010");
     await screen.findByText(/Não foi possível calcular os indicadores/);
   });
-});
 
+  it("forwards the status filter to list and analytics queries", async () => {
+    renderPage();
+    await screen.findByText("OP-100 / 010");
+    fireEvent.change(screen.getByLabelText("Estado"), {
+      target: { value: "open" },
+    });
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map((call) => call[0] as string);
+      expect(urls.some((url) => url.includes("/downtimes?") && url.includes("status=open"))).toBe(true);
+      expect(urls.some((url) => url.includes("/downtimes/analytics") && url.includes("status=open"))).toBe(true);
+    });
+  });
+
+  it("classifies a downtime through the drawer and re-queries the list", async () => {
+    renderPage({ downtimeId: "2" });
+    const classify = await managementSection("Classificação");
+    const reasonSelect = await within(classify).findByLabelText("Motivo");
+    fireEvent.change(reasonSelect, { target: { value: "SETUP" } });
+    fireEvent.click(within(classify).getByRole("button", { name: "Confirmar classificação" }));
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          (url as string).includes("/classification") &&
+          (init as RequestInit | undefined)?.method === "POST",
+      );
+      expect(call).toBeTruthy();
+      const body = JSON.parse((call?.[1] as RequestInit).body as string);
+      expect(body).toEqual({
+        branch: "01",
+        reasonCode: "SETUP",
+        note: null,
+        expectedUpdatedAt: "2026-02-10T11:00:00.000Z",
+      });
+    });
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map((call) => call[0] as string);
+      expect(urls.filter((url) => url.includes("/downtimes?")).length).toBeGreaterThan(1);
+    });
+  });
+
+  it("surfaces a classification conflict with a refresh affordance", async () => {
+    stubFetch(
+      fetchRouter({
+        classify: () =>
+          Promise.resolve(
+            new Response(
+              JSON.stringify({
+                success: false,
+                message: "A parada foi alterada por outro usuário.",
+                data: null,
+              }),
+              { status: 409, headers: { "content-type": "application/json" } },
+            ),
+          ),
+      }),
+    );
+    renderPage({ downtimeId: "2" });
+    const classify = await managementSection("Classificação");
+    const reasonSelect = await within(classify).findByLabelText("Motivo");
+    fireEvent.change(reasonSelect, { target: { value: "SETUP" } });
+    fireEvent.click(within(classify).getByRole("button", { name: "Confirmar classificação" }));
+    await screen.findByText("A parada foi alterada por outro usuário.");
+    expect(screen.getByRole("button", { name: "Atualizar dados" })).toBeTruthy();
+  });
+
+  it("hides write controls for profiles without classify/treat permissions", async () => {
+    renderPage(
+      { downtimeId: "2" },
+      { history: true, monitoring: true, classify: false, treat: false, refer: false },
+    );
+    await screen.findByText("Seu perfil permite consultar a parada, mas não alterar a classificação.");
+    expect(screen.queryByRole("button", { name: "Confirmar classificação" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Registrar triagem" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Atualizar triagem" })).toBeNull();
+  });
+
+  it("registers triage and forwards the downtime to Processos", async () => {
+    renderPage({ downtimeId: "2" });
+    // A seção é remontada (key) quando a triagem chega e o nome acessível da
+    // região muda com o status — consultar no documento, sem reter elemento.
+    const analysis = await screen.findByLabelText("Análise");
+    const justification = await screen.findByLabelText("Justificativa");
+    fireEvent.change(analysis, { target: { value: "Parada recorrente no turno" } });
+    fireEvent.change(justification, { target: { value: "Impacto na entrega" } });
+    fireEvent.click(screen.getByRole("button", { name: "Atualizar triagem" }));
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          (url as string).includes("/treatment") &&
+          (init as RequestInit | undefined)?.method === "PUT",
+      );
+      expect(call).toBeTruthy();
+      const body = JSON.parse((call?.[1] as RequestInit).body as string);
+      expect(body.branch).toBe("01");
+      expect(body.analysis).toBe("Parada recorrente no turno");
+      expect(body.justification).toBe("Impacto na entrega");
+      expect(body.expectedUpdatedAt).toBe("2026-02-10T10:30:00.000Z");
+    });
+
+    const issueSelect = await screen.findByLabelText("Tipo de problema");
+    fireEvent.change(issueSelect, { target: { value: "machine_limitation" } });
+    fireEvent.click(screen.getByRole("button", { name: "Encaminhar solicitação" }));
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(([url]) =>
+        (url as string).includes("/treatment/referrals"),
+      );
+      expect(call).toBeTruthy();
+      const body = JSON.parse((call?.[1] as RequestInit).body as string);
+      expect(body.issueCode).toBe("machine_limitation");
+    });
+    await screen.findByText(/2026-0042/);
+  });
+
+  it("renders the canonical management history of the downtime", async () => {
+    renderPage({ downtimeId: "2" });
+    await screen.findByText("Triagem registrada");
+    expect(screen.getByText("Classificação confirmada")).toBeTruthy();
+    expect(screen.getByText(/Gestor gestor.1/)).toBeTruthy();
+  });
+});

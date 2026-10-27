@@ -438,3 +438,68 @@ def test_operator_cockpit_still_rejects_requester_only():
     payload["requester"] = {"name": "Analista"}
     with pytest.raises(ApplicationError):
         ProcessIssuePayloadValidator().validate(payload)
+
+
+def _delpi_mes_payload(**overrides):
+    payload = {
+        "source": "delpi_mes",
+        "reportedAt": "2026-09-29T13:00:00+00:00",
+        "issue": {"code": "tool_not_linked", "note": "parada recorrente"},
+        "requester": {"name": "Gestora de Produção"},
+        "mesDowntime": {
+            "downtimeId": "9f2a1b3c-1234-4abc-9def-000000000001",
+            "branch": "01",
+            "workCenter": "CT-41",
+        },
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_validator_accepts_delpi_mes_without_operation():
+    """Parada sem OP vinculada: mesDowntime ancora o problema."""
+    validator = ProcessIssuePayloadValidator()
+    payload = _delpi_mes_payload()
+    assert validator.validate(payload) is payload
+
+
+def test_validator_accepts_delpi_mes_with_operation():
+    validator = ProcessIssuePayloadValidator()
+    payload = _delpi_mes_payload(
+        operation={
+            "productionOrder": "100123",
+            "operationCode": "10",
+            "reportedWorkCenter": "CT-41",
+        }
+    )
+    assert validator.validate(payload) is payload
+
+
+def test_validator_requires_mes_downtime_for_delpi_mes():
+    validator = ProcessIssuePayloadValidator()
+    for bad in (
+        _delpi_mes_payload(mesDowntime=None),
+        _delpi_mes_payload(mesDowntime={"downtimeId": "x"}),
+        _delpi_mes_payload(
+            mesDowntime={
+                "downtimeId": "x", "branch": "01", "workCenter": "",
+            }
+        ),
+    ):
+        with pytest.raises(ApplicationError) as exc:
+            validator.validate(bad)
+        assert exc.value.code == "payload_invalid"
+
+
+def test_validator_requires_requester_for_delpi_mes():
+    validator = ProcessIssuePayloadValidator()
+    with pytest.raises(ApplicationError):
+        validator.validate(_delpi_mes_payload(requester=None))
+
+
+def test_validator_delpi_mes_operation_incomplete_rejected():
+    validator = ProcessIssuePayloadValidator()
+    with pytest.raises(ApplicationError):
+        validator.validate(
+            _delpi_mes_payload(operation={"productionOrder": "100123"})
+        )

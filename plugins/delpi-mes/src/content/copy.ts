@@ -27,11 +27,27 @@ export const DELPI_MES_COPY = {
       action: "Gerenciar",
     },
   },
+  downtimesManagement: {
+    classifyHint: "O motivo vem do catálogo canônico de paradas. Alterar o motivo registra a reclassificação no histórico.",
+    classifyDenied: "Seu perfil permite consultar a parada, mas não alterar a classificação.",
+    notePlaceholder: "Detalhe a causa, se necessário",
+    treatDenied: "Seu perfil permite consultar a triagem, mas não registrá-la.",
+    treatmentEmpty: "Nenhuma triagem registrada para esta parada.",
+    analysisPlaceholder: "O que foi observado durante a parada?",
+    justificationPlaceholder: "Por que esta decisão de tratamento?",
+    referralDisclaimer: "A solicitação será enviada ao departamento de Processos com o contexto desta parada.",
+    referralDenied: "Seu perfil não permite abrir solicitações de problema de processo.",
+    concludeBlocked: "A solicitação vinculada precisa estar concluída para encerrar o tratamento.",
+  },
   help: {
     branch: "A filial faz parte da URL para manter navegação, recarga e compartilhamento no mesmo contexto.",
     permissions: "As áreas visíveis refletem suas permissões; o backend valida novamente cada consulta.",
     downtimesPeriod: "Os períodos seguem o dia civil do fuso operacional do MES (America/Sao_Paulo), independente do fuso do navegador. Em período personalizado, a data final cobre o dia inteiro.",
     downtimesClassification: "Confirmada: motivo classificado e confirmado. Pendente: parada sem motivo confirmado, incluindo registros históricos incompletos.",
+    downtimesStatus:
+      "Aberta: parada ainda em andamento contada até agora. Encerrada: parada com fim registrado. O estado é derivado dos fatos MES pelo Production Control.",
+    downtimesManagement:
+      "Classificar atribui o motivo canônico da parada; a triagem registra análise e causa; o encaminhamento abre uma solicitação para o departamento de Processos. Todas as ações ficam no histórico auditável da parada.",
     downtimesDuration: "Paradas encerradas usam fim menos início; paradas abertas contam até o relógio do servidor.",
     downtimesAnalytics:
       "Indicadores calculados pelo Production Control sobre todas as paradas elegíveis do período — nunca apenas sobre a página exibida. Tempo total usa a união temporal por centro de trabalho: sobreposições de registros não contam o mesmo segundo duas vezes. A soma atribuída às ocorrências pode superar esse total quando o histórico contém paradas sobrepostas.",

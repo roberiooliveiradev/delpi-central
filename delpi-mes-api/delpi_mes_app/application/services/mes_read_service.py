@@ -45,12 +45,14 @@ _DOWNTIME_FIELDS = (
 )
 _DOWNTIME_ITEM_FIELDS = (
     "id", "runId", "workCenter", "productionOrder", "operationCode", "startedAt",
-    "endedAt", "source", "reasonCode", "reasonLabel", "category", "confirmed", "note",
+    "endedAt", "source", "reasonCode", "reasonLabel", "category", "confirmed",
+    "confirmedAt", "confirmedByType", "confirmedByRef", "note", "updatedAt",
 )
 
 # Opções de filtro da consulta gerencial — enumerações do contrato BFF; a
 # origem da parada continua sendo validada no owner dos fatos.
 _DOWNTIME_CLASSIFICATIONS = frozenset({"pending", "confirmed"})
+_DOWNTIME_STATUSES = frozenset({"open", "closed"})
 _DOWNTIME_SORTS = frozenset({"recent", "oldest"})
 _FILTER_REASON_FIELDS = ("code", "label", "category", "active")
 _FILTER_SOURCE_FIELDS = ("code",)
@@ -62,7 +64,7 @@ _DOWNTIME_ANALYTICS_FIELDS = (
     "summary", "byReason", "byWorkCenter", "byDay", "byWeekdayHour", "quality",
 )
 _DOWNTIME_ANALYTICS_FILTERS_FIELDS = (
-    "workCenter", "reasonCode", "source", "classification",
+    "workCenter", "reasonCode", "source", "classification", "status",
 )
 _DOWNTIME_ANALYTICS_SUMMARY_FIELDS = (
     "totalStoppedSeconds", "attributedSeconds", "occurrencesCount",
@@ -166,6 +168,7 @@ class MesReadService:
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         sort: str | None = None,
         downtime_id: str | None = None,
         page: int,
@@ -180,6 +183,8 @@ class MesReadService:
             raise ValueError("sort deve ser 'recent' ou 'oldest'.")
         if classification is not None and classification not in _DOWNTIME_CLASSIFICATIONS:
             raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        if status is not None and status not in _DOWNTIME_STATUSES:
+            raise ValueError("status deve ser 'open' ou 'closed'.")
         data = self._gateway.get_downtimes(
             branch=code,
             work_center=work_center,
@@ -188,6 +193,7 @@ class MesReadService:
             reason_code=reason_code,
             source=source,
             classification=classification,
+            status=status,
             sort=sort,
             downtime_id=downtime_id,
             page=page,
@@ -213,6 +219,7 @@ class MesReadService:
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         permission: str,
     ) -> dict[str, Any]:
         """Agregações gerenciais de paradas — mesma autorização e filtros
@@ -224,6 +231,8 @@ class MesReadService:
         self._validate_period(period_from, period_to)
         if classification is not None and classification not in _DOWNTIME_CLASSIFICATIONS:
             raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        if status is not None and status not in _DOWNTIME_STATUSES:
+            raise ValueError("status deve ser 'open' ou 'closed'.")
         data = self._gateway.get_downtime_analytics(
             branch=code,
             period_from=period_from,
@@ -232,6 +241,7 @@ class MesReadService:
             reason_code=reason_code,
             source=source,
             classification=classification,
+            status=status,
         )
         return {
             "branch": data.get("branch"),

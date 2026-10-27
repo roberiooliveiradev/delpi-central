@@ -234,7 +234,8 @@ def test_downtime_filters_and_pagination_are_forwarded():
     assert gateway.args == {
         "branch": "01", "work_center": "CT", "period_from": start,
         "period_to": end, "reason_code": None, "source": None,
-        "classification": None, "sort": None, "downtime_id": None,
+        "classification": None, "status": None, "sort": None,
+        "downtime_id": None,
         "page": 2, "page_size": 25,
     }
 
@@ -289,7 +290,7 @@ def test_downtime_analytics_forwards_filters():
     assert gateway.args == {
         "branch": "01", "period_from": start, "period_to": end,
         "work_center": "CT-35", "reason_code": "setup",
-        "source": "system", "classification": "pending",
+        "source": "system", "classification": "pending", "status": None,
     }
     # projeção estrita do contrato gerencial — nada vaza do owner
     assert set(data) == {
@@ -298,7 +299,7 @@ def test_downtime_analytics_forwards_filters():
         "quality",
     }
     assert set(data["appliedFilters"]) == {
-        "workCenter", "reasonCode", "source", "classification",
+        "workCenter", "reasonCode", "source", "classification", "status",
     }
     assert set(data["summary"]) == {
         "totalStoppedSeconds", "attributedSeconds", "occurrencesCount",

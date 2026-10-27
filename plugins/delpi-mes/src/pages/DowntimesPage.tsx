@@ -17,6 +17,7 @@ import { RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { DowntimeAnalyticsSection } from "../components/downtimes/DowntimeAnalyticsSection";
+import { DowntimeManagementSections } from "../components/downtimes/DowntimeManagementSections";
 import type { BranchCode } from "../constants/routes";
 import { DELPI_MES_COPY } from "../content/copy";
 import type { DowntimesRouteParams } from "../hooks/useDelpiMesRoute";
@@ -76,6 +77,9 @@ export function DowntimesPage({
   onParamsChange,
   canViewHistory,
   canViewMonitoring,
+  canClassify,
+  canTreat,
+  canCreateProcessIssue,
   onOpenMonitoring,
 }: {
   branch: BranchCode;
@@ -83,6 +87,9 @@ export function DowntimesPage({
   onParamsChange: (next: DowntimesRouteParams) => void;
   canViewHistory: boolean;
   canViewMonitoring: boolean;
+  canClassify: boolean;
+  canTreat: boolean;
+  canCreateProcessIssue: boolean;
   onOpenMonitoring: (workCenter: string) => void;
 }) {
   const query = useMemo(() => buildDowntimesQuery(branch, params), [branch, params]);
@@ -122,6 +129,7 @@ export function DowntimesPage({
       reasonCode: null,
       source: null,
       classification: null,
+      status: null,
       sort: "recent",
       downtimeId: null,
       page: 1,
@@ -299,6 +307,27 @@ export function DowntimesPage({
           </span>
         </label>
         <label>
+          Estado
+          <span className="delpi-mes-downtimes__label-with-help">
+            <select
+              value={params.status ?? ""}
+              onChange={(event) =>
+                apply({
+                  status: (event.target.value || null) as DowntimesRouteParams["status"],
+                })
+              }
+            >
+              <option value="">Todos</option>
+              <option value="open">Abertas</option>
+              <option value="closed">Encerradas</option>
+            </select>
+            <HelpTooltip
+              content={DELPI_MES_COPY.help.downtimesStatus}
+              ariaLabel="Ajuda: estado da parada"
+            />
+          </span>
+        </label>
+        <label>
           Ordenação
           <select
             value={params.sort}
@@ -445,9 +474,19 @@ export function DowntimesPage({
         ) : selected.item ? (
           <DowntimeDetail
             item={selected.item}
+            branch={branch}
             nowMs={nowMs}
             canViewHistory={canViewHistory}
             canViewMonitoring={canViewMonitoring}
+            canClassify={canClassify}
+            canTreat={canTreat}
+            canCreateProcessIssue={canCreateProcessIssue}
+            reasons={options.data?.reasons ?? []}
+            reasonsLoading={options.loading}
+            onManagementChanged={() => {
+              void downtimes.refresh();
+              selected.reload();
+            }}
             timelineOpen={timelineOpen}
             onToggleTimeline={() => setTimelineOpen((open) => !open)}
             timeline={timeline}
@@ -463,18 +502,32 @@ export function DowntimesPage({
 
 function DowntimeDetail({
   item,
+  branch,
   nowMs,
   canViewHistory,
   canViewMonitoring,
+  canClassify,
+  canTreat,
+  canCreateProcessIssue,
+  reasons,
+  reasonsLoading,
+  onManagementChanged,
   timelineOpen,
   onToggleTimeline,
   timeline,
   onOpenMonitoring,
 }: {
   item: DowntimeItem;
+  branch: BranchCode;
   nowMs: number;
   canViewHistory: boolean;
   canViewMonitoring: boolean;
+  canClassify: boolean;
+  canTreat: boolean;
+  canCreateProcessIssue: boolean;
+  reasons: import("../types/mes").DowntimeReasonOption[];
+  reasonsLoading: boolean;
+  onManagementChanged: () => void;
   timelineOpen: boolean;
   onToggleTimeline: () => void;
   timeline: ReturnType<typeof useWorkCenterTimeline>;
@@ -503,6 +556,16 @@ function DowntimeDetail({
         </div>
         <div><dt>Observação</dt><dd>{item.note ?? "—"}</dd></div>
       </dl>
+      <DowntimeManagementSections
+        branch={branch}
+        item={item}
+        reasons={reasons}
+        reasonsLoading={reasonsLoading}
+        canClassify={canClassify}
+        canTreat={canTreat}
+        canCreateProcessIssue={canCreateProcessIssue}
+        onChanged={onManagementChanged}
+      />
       <div className="delpi-mes-downtimes__detail-actions">
         {canViewHistory ? (
           <button type="button" onClick={onToggleTimeline}>

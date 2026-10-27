@@ -137,12 +137,14 @@ class MesDowntimeClassificationService:
         action = (
             "downtime_reason_changed" if previous_reason else "downtime_classified"
         )
-        details: dict[str, Any] = {}
+        details: dict[str, Any] = {"downtimeId": dt["id"]}
         if previous_reason:
-            details = {
-                "previousReasonCode": previous_reason,
-                "newReasonCode": reason["code"],
-            }
+            details.update(
+                {
+                    "previousReasonCode": previous_reason,
+                    "newReasonCode": reason["code"],
+                }
+            )
 
         def _persist(conn: Any | None) -> dict[str, Any]:
             row_ = self._downtimes.classify(
@@ -230,12 +232,14 @@ class MesDowntimeClassificationService:
         action = (
             "downtime_reason_changed" if previous_reason else "downtime_classified"
         )
-        details: dict[str, Any] = {}
+        details: dict[str, Any] = {"downtimeId": dt["id"]}
         if previous_reason:
-            details = {
-                "previousReasonCode": previous_reason,
-                "newReasonCode": reason["code"],
-            }
+            details.update(
+                {
+                    "previousReasonCode": previous_reason,
+                    "newReasonCode": reason["code"],
+                }
+            )
 
         def _persist(conn: Any | None) -> dict[str, Any]:
             row_ = self._downtimes.classify(
@@ -289,6 +293,124 @@ class MesDowntimeClassificationService:
             payload,
         )
         return payload
+
+    def classify_managed(
+        self,
+        downtime_id: str,
+        *,
+        branch: str,
+        reason_code: str,
+        note: str | None,
+        expected_updated_at: Any,
+        actor_ref: str,
+        actor_name: str | None = None,
+    ) -> dict[str, Any]:
+        """Classificação gerencial (Etapa 03) — gestor autenticado via BFF.
+
+        Sem sessão de bancada: a autorização humana aconteceu no BFF e a
+        filial é conferida contra a parada (mismatch vira 404, sem vazar
+        existência). expected_updated_at é a precondição otimista —
+        divergência vira DowntimeConflict (409). Reclassificação de
+        motivo confirmado é permitida e auditada (downtime_reason_changed).
+        """
+        dt = self._downtimes.get(str(downtime_id))
+        if dt is None or dt.get("branch") != branch:
+            raise DowntimeNotFound("Parada não encontrada.")
+
+        reason = self._reasons.get(normalize_reason_code(reason_code))
+        if reason is None or not reason.get("active"):
+            raise InvalidMesEvent("Motivo de parada inválido ou inativo.")
+        clean_note = str(note or "").strip() or None
+        if reason.get("requires_note") and not clean_note:
+            raise InvalidMesEvent("Este motivo exige uma observação.")
+
+        # Idempotência: reaplicar o mesmo motivo/observação não cria evento
+        # nem altera o registro — retorna o estado vigente.
+        if (
+            dt.get("reason_code") == reason["code"]
+            and (dt.get("note") or None) == clean_note
+            and dt.get("confirmed")
+        ):
+            return self._managed_view(dt, reason=reason)
+
+        previous_reason = dt.get("reason_code")
+        action = (
+            "downtime_reason_changed" if previous_reason else "downtime_classified"
+        )
+        details: dict[str, Any] = {"downtimeId": dt["id"]}
+        if previous_reason:
+            details.update(
+                {
+                    "previousReasonCode": previous_reason,
+                    "newReasonCode": reason["code"],
+                }
+            )
+
+        def _persist(conn: Any | None) -> dict[str, Any]:
+            row_ = self._downtimes.classify(
+                dt["id"],
+                reason_code=reason["code"],
+                planned=reason.get("default_planned"),
+                counts_as_availability_loss=reason.get(
+                    "default_counts_as_availability_loss"
+                ),
+                note=clean_note,
+                confirmed_by_type="manager",
+                confirmed_by_ref=str(actor_ref),
+                expected_updated_at=expected_updated_at,
+                conn=conn,
+            )
+            if self._audit is not None:
+                self._audit.append(
+                    branch=dt["branch"],
+                    work_center=dt["work_center"],
+                    run_id=dt.get("run_id"),
+                    action=action,
+                    actor_type="manager",
+                    actor_ref=str(actor_ref),
+                    details=details,
+                    conn=conn,
+                )
+            return row_
+
+        transaction = getattr(self._run_service, "transaction", None)
+        row = _persist(None) if transaction is None else self._with_tx(transaction, _persist)
+        payload = self._managed_view(row, reason=reason)
+        self._notify(
+            {
+                "branch": dt["branch"],
+                "work_center": dt["work_center"],
+                "id": dt.get("run_id"),
+            },
+            payload,
+        )
+        return payload
+
+    @staticmethod
+    def _managed_view(row: dict[str, Any], *, reason: dict[str, Any]) -> dict[str, Any]:
+        started = row.get("started_at")
+        ended = row.get("ended_at")
+        return {
+            "id": row["id"],
+            "runId": row.get("run_id"),
+            "reasonCode": row["reason_code"],
+            "reasonLabel": reason["label"],
+            "category": reason["category"],
+            "note": row.get("note"),
+            "confirmed": bool(row.get("confirmed")),
+            "confirmedAt": row["confirmed_at"].isoformat()
+            if hasattr(row.get("confirmed_at"), "isoformat")
+            else row.get("confirmed_at"),
+            "confirmedByType": row.get("confirmed_by_type"),
+            "confirmedByRef": row.get("confirmed_by_ref"),
+            "startedAt": started.isoformat()
+            if hasattr(started, "isoformat")
+            else started,
+            "endedAt": ended.isoformat() if hasattr(ended, "isoformat") else ended,
+            "updatedAt": row["updated_at"].isoformat()
+            if hasattr(row.get("updated_at"), "isoformat")
+            else row.get("updated_at"),
+        }
 
     @staticmethod
     def _with_tx(transaction: Any, persist: Any) -> dict[str, Any]:

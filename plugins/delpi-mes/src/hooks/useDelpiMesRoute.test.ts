@@ -16,6 +16,7 @@ const DEFAULT_DOWNTIMES: DowntimesRouteParams = {
   reasonCode: null,
   source: null,
   classification: null,
+  status: null,
   sort: "recent",
   downtimeId: null,
   page: 1,
@@ -109,7 +110,7 @@ describe("Delpi MES routing — downtimes area", () => {
     const parsed = parseDelpiMesRoute(
       "/apps/delpi-mes/downtimes",
       "?branch=02&period=30d&workCenter=CT-35&reasonCode=SETUP&source=system" +
-        "&classification=confirmed&sort=oldest&page=3&pageSize=100&downtimeId=42",
+        "&classification=confirmed&status=open&sort=oldest&page=3&pageSize=100&downtimeId=42",
     );
     expect(parsed.area).toBe("downtimes");
     expect(parsed.branch).toBe("02");
@@ -121,6 +122,7 @@ describe("Delpi MES routing — downtimes area", () => {
       reasonCode: "SETUP",
       source: "system",
       classification: "confirmed",
+      status: "open",
       sort: "oldest",
       downtimeId: "42",
       page: 3,

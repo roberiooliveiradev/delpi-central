@@ -26,6 +26,10 @@ const itemOf = (id: string) => ({
   category: null,
   confirmed: false,
   note: null,
+  updatedAt: null,
+  confirmedAt: null,
+  confirmedByType: null,
+  confirmedByRef: null,
 });
 
 const pageOf = (id: string, branch = "01"): DowntimesResponse => ({
