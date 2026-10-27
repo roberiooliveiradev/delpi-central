@@ -16,6 +16,12 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076.R4 — Implementação e produção (2026-10-27)
+
+R4 **implementada e em produção** (`3369a1327f`, origin/main): três perspectivas Metais | Câmbio | Indicadores, seis cards de metais multi-selecionáveis (`selectable_in_ui` ≠ `data_access_allowed`, D-04), granularidade Dia | Semana | Mês | Ano (week derivada por ISO week), `quotes/series` multi-instrumento e `quotes/compare` no BFF, V006 aplicada em produção, IBGE IPP preservado com dados reais. Metais seguem em `METALS_REAL_DATA_PENDING_SOURCE_APPROVAL` — `source_use_pending`, sem preços retornados.
+
+- [Evidência de deploy e smoke autenticado — migration, endpoints, negativos e positivos](./PROC-0076-R4-DEPLOYMENT-AND-SMOKE-EVIDENCE-20261027.md)
+
 ## PROC-0076.R4.S0 — UX Contract Freeze & Plugin-UI Component Inventory (2026-10-26)
 
 O PO aprovou a nova direção visual da Inteligência de Mercado: **uma página, alternador Metais | Câmbio | Indicadores, grade 3×2 de cards de metais multi-seleção, frequência Dia | Semana | Mês | Ano, KPIs contextuais e um único painel Gráfico | Tabela | Comparação**. Execução somente documental — nenhum código/contrato/runtime alterado; quarentena LME mantida; não autoriza uso de dados LME nem cotação diária antes de provedor homologado.
@@ -128,7 +134,7 @@ selecionar página em foco
 | 18 | Indicadores | `/indicators` | fila |
 | 19 | Minhas Atividades | `/my-tasks` | fila |
 | 20 | Administração | `/administration` | fila |
-| — | Inteligência de mercado | `/market-intelligence` | **DEPLOYED (PROC-0076.R1) + quarentena R1.2 no PR #113** — fora da fila WF (entrega PROC dedicada); deep-linkável, **sem link no hub/palette**; `GATE-FEATURE = INCONCLUSIVE` (E11 não reconciliado + smoke federado autenticado pendente; feed PTAX bloqueado por 403 no egress). Séries LME-backed em quarentena: direito de exibição pendente → `selectable:false` no produtor/BFF, sem preços retornados; desbloqueio exige decisão institucional + migration aditiva |
+| — | Inteligência de mercado | `/market-intelligence` | **DEPLOYED (PROC-0076.R4, `3369a1327f`)** — fora da fila WF (entrega PROC dedicada); deep-linkável, **sem link no hub/palette**; três perspectivas Metais \| Câmbio \| Indicadores com multi-seleção e compare em produção; smoke autenticado 401/403/200 executado ([evidência](./PROC-0076-R4-DEPLOYMENT-AND-SMOKE-EVIDENCE-20261027.md)). Metais em `METALS_REAL_DATA_PENDING_SOURCE_APPROVAL`: `selectable_in_ui:true` + `data_access_allowed:false` → sem preços retornados; desbloqueio exige fonte homologada + `display_allowed`; LME permanece quarentenado |
 
 **Regra:** a tabela acima é uma fila de produto, não autorização para o Cursor implementar várias páginas em paralelo. O próximo plano executável contém somente a página promovida e seus satélites inevitáveis (Ajuda, contrato, testes, docs).
 
