@@ -321,3 +321,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Drift documentado: 1 outage de transporte WSL (stack restart; eval checkpointed, 270/270 íntegros); model_calls=1435+108, in≈2.59M, out≈46.5k, latência med 6.4s.
 - Próximo bounded: revisão de contrato/instrução native_assessment (remover desvio mandatório ou condicioná-lo a capability de vocabulário verificada) + comparação de capacidade de modelo + diagnóstico de goal_evidence_relevance vazio — autorizações separadas.
 - DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
+
+## 2026-10-27 — DELIA-C3-NATIVE-ASSESSMENT-INSTRUCTION-CONTRACT-AB-EVAL-01 (doc 160)
+
+- Escopo: avaliação A/B evaluation-only da instrução native_assessment — A=v23 verbatim (sha fcdbd185527595b9), B=fixture mínimo que remove a exceção mandatória e adiciona restrição epistêmica (sha c083e71332b67a0a); injeção só em memória no estágio, nada em produção; mesmo modelo delia-json, catálogo, oráculos e AuthZ.
+- Stage-local: 120 superfícies únicas despachadas ×5 reps ×2 instruções = 1190 chamadas — B corta foreign_required 93.9%→69.9% e FP 91.4%→61.0%, accuracy 53.6%→59.2%, MAS sufficient só 13/595 e FN sobe 3.6%→21.6% (hedge para inconclusive).
+- E2E: 180 turns (18 cenários ×5 reps ×2 braços intercalados) — assessment alcançado A49/B48; B 0/48 sufficient, FN 26.1%; outcome A 30P/60F vs B 31P/59F (sem degradação, sem ganho); holdout congelado reproduz o mesmo padrão.
+- Segurança: 0 bypass AuthZ, 0 ACT/WRITE, 0 registro fabricado; residual PREPARE reproduz sob ambos os braços (A vista.suggest_change COMPLETED ×2; B vista.prepare_change → ERROR protocol, owner fail-closed) — write-intent não cortado na admissão, SECURITY_REVIEW_REQUIRED mantido.
+- Veredito: B_REJECTED para implementação — a exceção mandatória contribui ~24pp do desvio mas não é a causa dominante; sob delia-json o modelo não recupera sufficient nem com mandato removido (H1 parcial, H2/H5/H6 SUPPORTED, H3 REFUTED, H4 confirmado por evidência anterior). Próximo bounded: comparação de capacidade de modelo na matriz congelada + higiene da cláusula como task de contrato separada + diagnóstico goal_evidence_relevance.
+- Artefatos: doc 160; scripts assessment_ab_stagelocal_eval.py + instruction_ab_eval.py + instruction_ab_aggregate.py; evidence assessment-ab-stagelocal.json + instruction-ab-runs.{json,jsonl} + native-assessment-instruction-b.txt (sanitizados).
+- DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
