@@ -30,6 +30,16 @@ class FakeService:
     def list_downtime_sources(self):
         return {"items": [{"code": "system"}, {"code": "operator_pause"}]}
 
+    def export_downtimes(self, **kwargs):
+        self.last_export_kwargs = kwargs
+        return {
+            "branch": kwargs["branch"],
+            "referenceAt": "2026-09-29T13:00:00+00:00",
+            "timezone": "America/Sao_Paulo",
+            "appliedFilters": {},
+            "total": 0, "capped": False, "items": [],
+        }
+
     def get_downtime_analytics(self, **kwargs):
         self.last_analytics_kwargs = kwargs
         return {
@@ -137,6 +147,34 @@ def test_downtime_management_filters_reach_the_service(monkeypatch):
     assert kwargs["classification"] == "pending"
     assert kwargs["sort"] == "oldest"
     assert kwargs["downtime_id"] == "9f2a1b3c-1234-4abc-9def-000000000001"
+
+
+def test_downtime_export_requires_service_token(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "internal-secret")
+    api = client(monkeypatch)
+    assert api.get("/integrations/mes/downtimes/export?branch=01").status_code == 401
+
+
+def test_downtime_export_filters_reach_the_service(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "internal-secret")
+    service = FakeService()
+    app = FastAPI()
+    app.include_router(integration_mes_routes.router)
+    monkeypatch.setattr(integration_mes_routes, "build_mes_integration_read_service", lambda: service)
+    api = TestClient(app)
+    response = api.get(
+        "/integrations/mes/downtimes/export?branch=01&workCenter=CT-35"
+        "&status=open&pendency=true",
+        headers={"X-Delpi-Service-Token": "internal-secret"},
+    )
+    assert response.status_code == 200
+    kwargs = service.last_export_kwargs
+    assert kwargs["branch"] == "01"
+    assert kwargs["work_center"] == "CT-35"
+    assert kwargs["status"] == "open"
+    assert kwargs["pendency"] is True
+    body = response.json()
+    assert body["data"]["total"] == 0
 
 
 def test_downtime_sources_requires_service_token_and_returns_items(monkeypatch):

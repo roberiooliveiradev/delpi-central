@@ -78,6 +78,16 @@ A área **Paradas** (`/downtimes`) consulta os eventos reais de parada do MES vi
 
 Histórico gerencial completo e as etapas seguintes de Paradas (evidências, ações corretivas, exportações e indicadores OEE) continuam nas fases seguintes.
 
+## Paradas — Etapa 5 (exportações e relatórios)
+
+A aba Paradas oferece exportações geradas no backend (permissão `delpi-mes.downtimes.export`), sempre sobre o universo autorizado completo que atende aos filtros vigentes — nunca sobre a página exibida:
+
+- **CSV / Excel** (`GET /downtimes/export`): todas as ocorrências elegíveis com situação de tratamento e vínculo de solicitação; o arquivo identifica filial, filtros, instante de extração, fuso e referência temporal do cálculo.
+- **Relatório de pendências** (`GET /downtimes/reports/pendencies`): ocorrências sem classificação confirmada ou com tratamento em aberto — universo definido pelo owner.
+- **PDF executivo** (`GET /downtimes/reports/executive`): indicadores, Pareto de causas e centros de trabalho afetados — mesmos agregados do painel, calculados pelo Production Control.
+- Volume acima do teto de exportação gera arquivo parcial sinalizado na interface; dados de filiais não autorizadas nunca entram no arquivo.
+
+
 ## Paradas — Etapa 3 (classificação e tratamento gerencial)
 
 O detalhe da parada no drawer passa a oferecer gestão em seções, sempre render-only — nenhuma regra de negócio, validação de catálogo ou semântica temporal mora no MFE:

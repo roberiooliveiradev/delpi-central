@@ -272,6 +272,49 @@ def get_downtime_analytics(
     return ok(data)
 
 
+@router.get("/downtimes/export", operation_id="export_mes_integration_downtimes")
+def export_downtimes(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+    work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
+    period_from: datetime | None = Query(default=None, alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+    reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
+    source: str | None = Query(default=None, max_length=40),
+    classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
+    pendency: bool = Query(default=False),
+):
+    # Exportação gerencial (Etapa 5): fatos completos do mesmo universo
+    # elegível da listagem — paginação/sort/downtimeId não se aplicam.
+    # pendency=true restringe ao relatório de pendências.
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_integration_read_service().export_downtimes(
+            branch=branch,
+            work_center=work_center,
+            period_from=_aware(period_from, "from"),
+            period_to=_aware(period_to, "to"),
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            status=status,
+            pendency=pendency,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_downtime_export branch=%s total=%s items=%s capped=%s",
+        branch,
+        data["total"],
+        len(data["items"]),
+        data["capped"],
+    )
+    return ok(data)
+
+
 @router.get("/downtime-sources", operation_id="list_mes_integration_downtime_sources")
 def list_downtime_sources(request: Request):
     denied = _deny_unless_internal(request)

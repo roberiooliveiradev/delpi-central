@@ -38,6 +38,9 @@ O `delpi-mes-api` não é o owner dos fatos MES. Runs, estados, paradas, contage
 | POST | `/downtimes/{downtimeId}/treatment/referrals` | `delpi-mes.downtimes.treat` + `my-requests.process-issue.create` |
 | POST | `/downtimes/{downtimeId}/treatment/conclusion` | `delpi-mes.downtimes.treat` |
 | GET | `/downtimes/{downtimeId}/history?branch=` | `delpi-mes.downtimes.view` |
+| GET | `/downtimes/export?branch=&format=csv|xlsx&from=&to=&workCenter=&reasonCode=&source=&classification=&status=` | `delpi-mes.downtimes.export` |
+| GET | `/downtimes/reports/pendencies?branch=&format=csv|xlsx&from=&to=&workCenter=&source=` | `delpi-mes.downtimes.export` |
+| GET | `/downtimes/reports/executive?branch=&from=&to=&workCenter=&reasonCode=&source=&classification=&status=` | `delpi-mes.downtimes.export` |
 
 Toda rota gerencial também exige `delpi-mes.access` e principal humano; as rotas de leitura exigem ainda `delpi-mes.view.filial-01|02` para a filial consultada. As rotas `/registrations/downtime-reasons*` administram um **catálogo global** — não recebem nem exigem `branch`/permissão de filial. O provisionamento dessas permissões e o manifesto pertencem à Fase 2.
 

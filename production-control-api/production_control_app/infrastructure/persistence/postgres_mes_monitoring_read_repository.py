@@ -12,6 +12,7 @@ _RUNS = f"{PC_SCHEMA_NAME}.production_runs"
 _STATES = f"{PC_SCHEMA_NAME}.work_center_state_events"
 _DOWNTIMES = f"{PC_SCHEMA_NAME}.downtime_events"
 _REASONS = f"{PC_SCHEMA_NAME}.downtime_reason_catalog"
+_TREATMENTS = f"{PC_SCHEMA_NAME}.mes_downtime_treatments"
 
 
 class PostgresMesMonitoringReadRepository:
@@ -356,3 +357,74 @@ class PostgresMesMonitoringReadRepository:
             rows = [dict(row) for row in cur.fetchall()]
         capped = len(rows) > max_facts
         return {"facts": rows[:max_facts], "capped": capped}
+
+    def list_downtime_export(
+        self,
+        *,
+        branch: str,
+        work_center: str | None,
+        period_from: datetime | None,
+        period_to: datetime | None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        status: str | None = None,
+        pendency: bool = False,
+        max_facts: int,
+    ) -> dict[str, Any]:
+        """Universo completo da exportação (Etapa 5): mesmo WHERE da
+        listagem/analytics — nunca a página atual da tela. O LEFT JOIN com
+        o tratamento gerencial projeta status/vínculo sem duplicar o fato;
+        pendency restringe ao relatório de pendências (sem classificação
+        confirmada OU tratamento aberto). Cap de fatos sinaliza capped
+        para o consumidor marcar o arquivo como parcial."""
+        where, params = self._downtime_filter_clauses(
+            branch=branch,
+            work_center=work_center,
+            period_from=period_from,
+            period_to=period_to,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            status=status,
+        )
+        if pendency:
+            where += (
+                " AND (d.confirmed IS NOT TRUE"
+                " OR t.status IN ('pending', 'referred'))"
+            )
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT COUNT(*) AS total
+                  FROM {_DOWNTIMES} d
+             LEFT JOIN {_TREATMENTS} t ON t.downtime_id = d.id
+                 WHERE {where}
+                """,
+                params,
+            )
+            total = int(cur.fetchone()["total"])
+            cur.execute(
+                f"""
+                SELECT d.id::text AS id, d.run_id::text AS run_id,
+                       d.work_center, d.production_order, d.operation_code,
+                       d.started_at, d.ended_at, d.source, d.reason_code,
+                       reason.label AS reason_label, reason.category,
+                       d.confirmed, d.confirmed_at, d.confirmed_by_type,
+                       d.confirmed_by_ref, d.note, d.updated_at,
+                       t.status AS treatment_status,
+                       t.request_id::text AS treatment_request_id,
+                       t.request_type_code AS treatment_request_type,
+                       t.concluded_at AS treatment_concluded_at
+                  FROM {_DOWNTIMES} d
+             LEFT JOIN {_REASONS} reason ON reason.code = d.reason_code
+             LEFT JOIN {_TREATMENTS} t ON t.downtime_id = d.id
+                 WHERE {where}
+              ORDER BY d.started_at ASC, d.id ASC
+                 LIMIT %s
+                """,
+                [*params, max_facts + 1],
+            )
+            rows = [dict(row) for row in cur.fetchall()]
+        capped = len(rows) > max_facts
+        return {"items": rows[:max_facts], "total": total, "capped": capped}

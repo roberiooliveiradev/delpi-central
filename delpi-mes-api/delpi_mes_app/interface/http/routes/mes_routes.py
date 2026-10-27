@@ -3,10 +3,11 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, Field
 
 from delpi_mes_app.composition.composer import (
+    build_mes_downtime_export_service,
     build_mes_downtime_management_service,
     build_mes_downtime_reason_admin_service,
     build_mes_read_service,
@@ -216,6 +217,130 @@ def get_downtimes(
         branch, page, page_size, len(data["items"]),
     )
     return ok(data)
+
+
+def _file_response(result: dict) -> Response:
+    return Response(
+        content=result["content"],
+        media_type=result["contentType"],
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{result["filename"]}"'
+            ),
+            "Cache-Control": "no-store",
+            "X-Export-Capped": "true" if result.get("capped") else "false",
+        },
+    )
+
+
+@router.get("/downtimes/export", operation_id="export_delpi_mes_downtimes")
+def export_downtimes(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+    format: str = Query(default="csv", max_length=10),
+    work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
+    period_from: datetime | None = Query(default=None, alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+    reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
+    source: str | None = Query(default=None, max_length=40),
+    classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
+):
+    """Exportação de ocorrências (Etapa 5): todos os registros do universo
+    autorizado que atendem aos filtros — nunca a página da tela."""
+    try:
+        result = build_mes_downtime_export_service().export_occurrences(
+            request.state.user,
+            branch=branch,
+            export_format=format,
+            work_center=work_center,
+            period_from=period_from,
+            period_to=period_to,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            status=status,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_export branch=%s format=%s total=%s capped=%s",
+        branch, format, result.get("total"), result.get("capped"),
+    )
+    return _file_response(result)
+
+
+@router.get(
+    "/downtimes/reports/pendencies",
+    operation_id="export_delpi_mes_downtime_pendencies",
+)
+def export_downtime_pendencies(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+    format: str = Query(default="xlsx", max_length=10),
+    work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
+    period_from: datetime | None = Query(default=None, alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+    source: str | None = Query(default=None, max_length=40),
+):
+    """Relatório de pendências (Etapa 5): ocorrências sem classificação
+    confirmada OU com tratamento em aberto — universo definido no owner."""
+    try:
+        result = build_mes_downtime_export_service().export_occurrences(
+            request.state.user,
+            branch=branch,
+            export_format=format,
+            pendency=True,
+            work_center=work_center,
+            period_from=period_from,
+            period_to=period_to,
+            source=source,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_pendencies_export branch=%s format=%s total=%s",
+        branch, format, result.get("total"),
+    )
+    return _file_response(result)
+
+
+@router.get(
+    "/downtimes/reports/executive",
+    operation_id="export_delpi_mes_downtime_executive_report",
+)
+def export_downtime_executive_report(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+    period_from: datetime = Query(..., alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+    work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
+    reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
+    source: str | None = Query(default=None, max_length=40),
+    classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
+):
+    """PDF executivo (Etapa 5): indicadores, Pareto de causas e centros
+    de trabalho — mesmos agregados do painel, calculados no owner."""
+    try:
+        result = build_mes_downtime_export_service().export_executive_report(
+            request.state.user,
+            branch=branch,
+            period_from=period_from,
+            period_to=period_to,
+            work_center=work_center,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            status=status,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_executive_report branch=%s capped=%s",
+        branch, result.get("capped"),
+    )
+    return _file_response(result)
 
 
 @router.get(

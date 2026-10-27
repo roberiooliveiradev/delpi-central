@@ -1,5 +1,8 @@
 from functools import lru_cache
 
+from delpi_mes_app.application.services.mes_downtime_export_service import (
+    MesDowntimeExportService,
+)
 from delpi_mes_app.application.services.mes_downtime_management_service import (
     MesDowntimeManagementService,
 )
@@ -51,3 +54,7 @@ def build_mes_downtime_management_service() -> MesDowntimeManagementService:
         mes_gateway=build_gateway(),
         requests_gateway=build_requests_gateway(),
     )
+
+
+def build_mes_downtime_export_service() -> MesDowntimeExportService:
+    return MesDowntimeExportService(gateway=build_gateway())

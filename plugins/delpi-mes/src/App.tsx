@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { configureHttpClient } from "./api/httpClient";
 import {
   DELPI_MES_DOWNTIMES_CLASSIFY,
+  DELPI_MES_DOWNTIMES_EXPORT,
   DELPI_MES_DOWNTIMES_TREAT,
   DELPI_MES_DOWNTIME_REASONS_MANAGE,
   canUseDelpiMes,
@@ -215,6 +216,7 @@ export default function App({
                 canClassify={can(DELPI_MES_DOWNTIMES_CLASSIFY)}
                 canTreat={can(DELPI_MES_DOWNTIMES_TREAT)}
                 canCreateProcessIssue={can("my-requests.process-issue.create")}
+                canExport={can(DELPI_MES_DOWNTIMES_EXPORT)}
                 onOpenMonitoring={(workCenter) => navigateTo("monitoring", activeBranch, workCenter)}
               />
             ) : activeArea === "registrations" ? (

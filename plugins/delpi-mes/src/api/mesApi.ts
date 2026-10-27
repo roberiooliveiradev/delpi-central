@@ -1,4 +1,4 @@
-import { httpGet, httpPost, httpPut } from "./httpClient";
+import { httpDownload, httpGet, httpPost, httpPut } from "./httpClient";
 import type { BranchCode } from "../constants/routes";
 import type {
   DowntimeAnalyticsQuery,
@@ -53,6 +53,37 @@ export function getDowntimeAnalytics(query: DowntimeAnalyticsQuery, signal?: Abo
   if (query.classification) params.set("classification", query.classification);
   if (query.status) params.set("status", query.status);
   return httpGet<DowntimeAnalyticsResponse>("/downtimes/analytics?" + params.toString(), { signal });
+}
+
+function downtimeFilterParams(query: DowntimeAnalyticsQuery): URLSearchParams {
+  const params = new URLSearchParams({ branch: query.branch });
+  if (query.to) params.set("to", query.to);
+  if (query.workCenter) params.set("workCenter", query.workCenter);
+  if (query.reasonCode) params.set("reasonCode", query.reasonCode);
+  if (query.source) params.set("source", query.source);
+  if (query.classification) params.set("classification", query.classification);
+  if (query.status) params.set("status", query.status);
+  return params;
+}
+
+export function exportDowntimes(query: DowntimeAnalyticsQuery, format: "csv" | "xlsx", signal?: AbortSignal) {
+  const params = downtimeFilterParams(query);
+  params.set("format", format);
+  params.set("from", query.from);
+  return httpDownload("/downtimes/export?" + params.toString(), { signal });
+}
+
+export function exportDowntimePendencies(query: DowntimeAnalyticsQuery, format: "csv" | "xlsx", signal?: AbortSignal) {
+  const params = downtimeFilterParams(query);
+  params.set("format", format);
+  params.set("from", query.from);
+  return httpDownload("/downtimes/reports/pendencies?" + params.toString(), { signal });
+}
+
+export function exportDowntimeExecutiveReport(query: DowntimeAnalyticsQuery, signal?: AbortSignal) {
+  const params = downtimeFilterParams(query);
+  params.set("from", query.from);
+  return httpDownload("/downtimes/reports/executive?" + params.toString(), { signal });
 }
 
 export function getDowntimeFilterOptions(branch: BranchCode, signal?: AbortSignal) {

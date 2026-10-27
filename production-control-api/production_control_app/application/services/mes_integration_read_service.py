@@ -31,6 +31,9 @@ _DOWNTIME_SORTS = frozenset({"recent", "oldest"})
 # cálculo dos indicadores (RQ-E2-01/RQ-E2-06).
 _DOWNTIME_ANALYTICS_MAX_DAYS = 92
 _DOWNTIME_ANALYTICS_MAX_FACTS = 20000
+# Teto de linhas por arquivo exportado (Etapa 5): protege recursos sem
+# impedir relatórios gerenciais — excedente marca o arquivo como parcial.
+_DOWNTIME_EXPORT_MAX_FACTS = 50000
 
 # Bloco de Performance no monitoramento live — sem idealProductionSeconds
 # (reservado ao detalhamento do run) para manter o payload enxuto.
@@ -326,6 +329,77 @@ class MesIntegrationReadService:
             **aggregates,
         }
 
+    def export_downtimes(
+        self,
+        *,
+        branch: str,
+        work_center: str | None = None,
+        period_from: datetime | None = None,
+        period_to: datetime | None = None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        status: str | None = None,
+        pendency: bool = False,
+    ) -> dict[str, Any]:
+        """Fatos completos para exportação gerencial (Etapa 5).
+
+        Mesmo universo elegível da listagem e da agregação (WHERE
+        compartilhado no repositório) — nunca a página atual da tela, o
+        que preserva a equivalência entre totais do painel e do arquivo
+        (RQ-5.1/RQ-5.8). referenceAt único ancora paradas abertas;
+        pendency restringe ao relatório de pendências (sem classificação
+        confirmada OU tratamento em aberto). O cap de fatos marca o
+        resultado como parcial via capped (RQ-5.7).
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        if period_from and period_to and period_from >= period_to:
+            raise ValueError("O início do período deve ser anterior ao fim.")
+        normalized_classification = (classification or "").strip().lower() or None
+        if normalized_classification is not None and normalized_classification not in _DOWNTIME_CLASSIFICATIONS:
+            raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        normalized_status = (status or "").strip().lower() or None
+        if normalized_status is not None and normalized_status not in _DOWNTIME_STATUSES:
+            raise ValueError("status deve ser 'open' ou 'closed'.")
+        normalized_source = (source or "").strip().lower() or None
+        if normalized_source is not None and normalized_source not in DOWNTIME_SOURCES:
+            raise ValueError("source inválida para parada MES.")
+        normalized_reason = (reason_code or "").strip().lower() or None
+        normalized_center = (work_center or "").strip() or None
+        reference_at = self._clock()
+        effective_to = period_to if period_to is None or period_to <= reference_at else reference_at
+        result = self._repository.list_downtime_export(
+            branch=code,
+            work_center=normalized_center,
+            period_from=period_from,
+            period_to=effective_to,
+            reason_code=normalized_reason,
+            source=normalized_source,
+            classification=normalized_classification,
+            status=normalized_status,
+            pendency=pendency,
+            max_facts=_DOWNTIME_EXPORT_MAX_FACTS,
+        )
+        return {
+            "branch": code,
+            "referenceAt": reference_at.isoformat(),
+            "timezone": FACTORY_TIMEZONE,
+            "appliedFilters": {
+                "workCenter": normalized_center,
+                "from": period_from.isoformat() if period_from else None,
+                "to": effective_to.isoformat() if effective_to else None,
+                "reasonCode": normalized_reason,
+                "source": normalized_source,
+                "classification": normalized_classification,
+                "status": normalized_status,
+                **({"pendency": True} if pendency else {}),
+            },
+            "total": result["total"],
+            "capped": result["capped"],
+            "items": [self._downtime_export_item(row) for row in result["items"]],
+        }
+
+
     def list_downtime_sources(self) -> dict[str, Any]:
         """Origens válidas de parada — projeção somente leitura do enum de
         domínio, sem duplicar a lista em consumidores S2S."""
@@ -471,3 +545,12 @@ class MesIntegrationReadService:
             "note": row.get("note"),
             "updatedAt": _iso(row.get("updated_at")),
         }
+
+    @classmethod
+    def _downtime_export_item(cls, row: dict[str, Any]) -> dict[str, Any]:
+        item = cls._downtime_item(row)
+        item["treatmentStatus"] = row.get("treatment_status")
+        item["treatmentRequestId"] = row.get("treatment_request_id")
+        item["treatmentRequestType"] = row.get("treatment_request_type")
+        item["treatmentConcludedAt"] = _iso(row.get("treatment_concluded_at"))
+        return item

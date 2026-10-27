@@ -51,6 +51,8 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/integrations/mes/work-centers/live?branch=01\|02` | S2S interno — snapshot gerencial consolidado dos runs MES ativos |
 | GET | `/integrations/mes/runs/{runId}/timeline` | S2S interno — timeline MES sem sessão de bancada |
 | GET | `/integrations/mes/downtimes?branch=&workCenter=&from=&to=&page=&pageSize=` | S2S interno — paradas MES paginadas por sobreposição temporal |
+| GET | `/integrations/mes/downtimes/analytics?branch=&from=&to=` | S2S interno — agregações gerenciais de paradas (mesmo WHERE da listagem) |
+| GET | `/integrations/mes/downtimes/export?branch=&from=&to=&pendency=` | S2S interno — universo completo de paradas para exportação (mesmo WHERE; join de tratamento; `pendency=true` restringe a pendências; teto de fatos sinalizado em `capped`) |
 | GET | `/integrations/mes/work-centers/{workCenter}/timeline?branch=&from=&to=` | S2S interno — timeline do CT no período, cobrindo múltiplos runs |
 | GET | `/integrations/mes/downtime-reasons` | S2S interno — administração: motivos de parada ativos e inativos |
 | POST | `/integrations/mes/downtime-reasons` | S2S interno — administração: cria motivo (201; duplicado → 409) |

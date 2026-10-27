@@ -65,6 +65,47 @@ export function httpPatch<T>(path: string, body: unknown, options: RequestOption
   return httpRequest<T>("PATCH", path, { ...options, body });
 }
 
+export type DownloadedFile = {
+  blob: Blob;
+  filename: string;
+  capped: boolean;
+};
+
+function filenameFromDisposition(disposition: string | null): string {
+  if (!disposition) return "delpi-mes-export";
+  const match = /filename\*?=(?:UTF-8''|")?([^";]+)"?/i.exec(disposition);
+  return match ? decodeURIComponent(match[1].trim()) : "delpi-mes-export";
+}
+
+export async function httpDownload(path: string, options: RequestOptions = {}): Promise<DownloadedFile> {
+  const headers: Record<string, string> = {
+    "X-Delpi-Caller-App": CALLER_APP,
+  };
+  const token = accessTokenGetter?.();
+  if (token) headers.Authorization = "Bearer " + token;
+
+  const response = await fetch(DELPI_MES_API_BASE + path, {
+    method: "GET",
+    headers,
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    let message = friendlyStatusMessage(response.status);
+    try {
+      const body = (await response.json()) as Partial<ApiEnvelope<unknown>>;
+      if (typeof body.message === "string" && body.message) message = body.message;
+    } catch {
+      // resposta sem envelope — mantém a mensagem amigável do status
+    }
+    throw new DelpiMesRequestError(message, response.status);
+  }
+  return {
+    blob: await response.blob(),
+    filename: filenameFromDisposition(response.headers.get("Content-Disposition")),
+    capped: response.headers.get("X-Export-Capped") === "true",
+  };
+}
+
 async function parseEnvelope<T>(response: Response): Promise<ApiEnvelope<T>> {
   try {
     const body = (await response.json()) as Partial<ApiEnvelope<T>>;

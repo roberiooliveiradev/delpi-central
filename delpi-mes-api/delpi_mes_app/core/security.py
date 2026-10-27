@@ -11,6 +11,7 @@ MES_HISTORY_VIEW = "delpi-mes.history.view"
 MES_DOWNTIME_REASONS_MANAGE = "delpi-mes.downtime-reasons.manage"
 MES_DOWNTIMES_CLASSIFY = "delpi-mes.downtimes.classify"
 MES_DOWNTIMES_TREAT = "delpi-mes.downtimes.treat"
+MES_DOWNTIMES_EXPORT = "delpi-mes.downtimes.export"
 BRANCH_VIEW_PERMISSIONS = {
     "01": "delpi-mes.view.filial-01",
     "02": "delpi-mes.view.filial-02",

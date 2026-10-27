@@ -43,6 +43,7 @@ class MesMonitoringReadRepositoryPort(Protocol):
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         sort: str | None = None,
         downtime_id: str | None = None,
         page: int,
@@ -59,5 +60,21 @@ class MesMonitoringReadRepositoryPort(Protocol):
         reason_code: str | None = None,
         source: str | None = None,
         classification: str | None = None,
+        status: str | None = None,
         max_facts: int = 20000,
+    ) -> dict[str, Any]: ...
+
+    def list_downtime_export(
+        self,
+        *,
+        branch: str,
+        work_center: str | None,
+        period_from: datetime | None,
+        period_to: datetime | None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        status: str | None = None,
+        pendency: bool = False,
+        max_facts: int,
     ) -> dict[str, Any]: ...

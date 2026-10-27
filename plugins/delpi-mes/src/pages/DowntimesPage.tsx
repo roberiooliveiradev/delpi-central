@@ -17,6 +17,7 @@ import { RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { DowntimeAnalyticsSection } from "../components/downtimes/DowntimeAnalyticsSection";
+import { DowntimeExportActions } from "../components/downtimes/DowntimeExportActions";
 import { DowntimeManagementSections } from "../components/downtimes/DowntimeManagementSections";
 import type { BranchCode } from "../constants/routes";
 import { DELPI_MES_COPY } from "../content/copy";
@@ -80,6 +81,7 @@ export function DowntimesPage({
   canClassify,
   canTreat,
   canCreateProcessIssue,
+  canExport,
   onOpenMonitoring,
 }: {
   branch: BranchCode;
@@ -90,6 +92,7 @@ export function DowntimesPage({
   canClassify: boolean;
   canTreat: boolean;
   canCreateProcessIssue: boolean;
+  canExport: boolean;
   onOpenMonitoring: (workCenter: string) => void;
 }) {
   const query = useMemo(() => buildDowntimesQuery(branch, params), [branch, params]);
@@ -341,6 +344,10 @@ export function DowntimesPage({
           <ClearFiltersButton onClick={clearFilters} />
         ) : null}
       </div>
+      {analyticsQuery ? (
+        <DowntimeExportActions query={analyticsQuery} canExport={canExport} />
+      ) : null}
+
       {options.error ? (
         <p className="delpi-mes-downtimes__options-warning" role="status">
           Não foi possível carregar as opções de motivo e origem.

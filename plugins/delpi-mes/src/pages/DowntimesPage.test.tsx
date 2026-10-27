@@ -247,6 +247,39 @@ function fetchRouter(management: Partial<Record<"treatment" | "history" | "class
     if (url.includes("/downtimes/analytics")) {
       return Promise.resolve(envelope(ANALYTICS));
     }
+    if (url.includes("/downtimes/reports/executive")) {
+      return Promise.resolve(
+        new Response("%PDF-fake", {
+          status: 200,
+          headers: {
+            "content-disposition": 'attachment; filename="delpi-mes-executivo.pdf"',
+            "x-export-capped": "false",
+          },
+        }),
+      );
+    }
+    if (url.includes("/downtimes/reports/pendencies")) {
+      return Promise.resolve(
+        new Response("xlsx-fake", {
+          status: 200,
+          headers: {
+            "content-disposition": 'attachment; filename="delpi-mes-pendencias.xlsx"',
+            "x-export-capped": "true",
+          },
+        }),
+      );
+    }
+    if (url.includes("/downtimes/export")) {
+      return Promise.resolve(
+        new Response("csv-fake-content", {
+          status: 200,
+          headers: {
+            "content-disposition": 'attachment; filename="delpi-mes-paradas.csv"',
+            "x-export-capped": "false",
+          },
+        }),
+      );
+    }
     if (url.includes("/downtimes/filter-options")) {
       return Promise.resolve(envelope(OPTIONS));
     }
@@ -271,6 +304,7 @@ type PagePermissions = {
   classify?: boolean;
   treat?: boolean;
   refer?: boolean;
+  export?: boolean;
 };
 
 function renderPage(
@@ -290,6 +324,7 @@ function renderPage(
         canClassify={permissions.classify ?? true}
         canTreat={permissions.treat ?? true}
         canCreateProcessIssue={permissions.refer ?? true}
+        canExport={permissions.export ?? true}
         onOpenMonitoring={onOpenMonitoring}
       />
     );
@@ -709,5 +744,74 @@ describe("DowntimesPage", () => {
     await screen.findByText("Triagem registrada");
     expect(screen.getByText("Classificação confirmada")).toBeTruthy();
     expect(screen.getByText(/Gestor gestor.1/)).toBeTruthy();
+  });
+
+  it("exports the filtered occurrence set through the backend file endpoint", async () => {
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const createUrl = vi.fn(() => "blob:fake");
+    const revokeUrl = vi.fn();
+    vi.stubGlobal("URL", Object.assign(URL, {
+      createObjectURL: createUrl,
+      revokeObjectURL: revokeUrl,
+    }));
+    renderPage({ workCenter: "CT-35", status: "open" });
+    const csvButton = await screen.findByRole("button", { name: "CSV" });
+    fireEvent.click(csvButton);
+    await waitFor(() => expect(createUrl).toHaveBeenCalled());
+    const call = fetchMock.mock.calls.find(([url]) =>
+      (url as string).includes("/downtimes/export"),
+    );
+    expect(call).toBeTruthy();
+    const requested = call?.[0] as string;
+    expect(requested).toContain("format=csv");
+    expect(requested).toContain("workCenter=CT-35");
+    expect(requested).toContain("status=open");
+    expect(requested).toContain("branch=01");
+    expect(requested).not.toContain("page=");
+    expect(revokeUrl).toHaveBeenCalledWith("blob:fake");
+  });
+
+  it("requests the pendencies report and surfaces the capped notice", async () => {
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const createUrl = vi.fn(() => "blob:fake");
+    vi.stubGlobal("URL", Object.assign(URL, {
+      createObjectURL: createUrl,
+      revokeObjectURL: vi.fn(),
+    }));
+    renderPage();
+    const button = await screen.findByRole("button", { name: "Relatório de pendências" });
+    fireEvent.click(button);
+    await waitFor(() => expect(createUrl).toHaveBeenCalled());
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        (url as string).includes("/downtimes/reports/pendencies"),
+      ),
+    ).toBe(true);
+    await screen.findByText(/gerado parcialmente/);
+  });
+
+  it("requests the executive PDF report", async () => {
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    vi.stubGlobal("URL", Object.assign(URL, {
+      createObjectURL: vi.fn(() => "blob:fake"),
+      revokeObjectURL: vi.fn(),
+    }));
+    renderPage();
+    const button = await screen.findByRole("button", { name: "PDF executivo" });
+    fireEvent.click(button);
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(([url]) =>
+          (url as string).includes("/downtimes/reports/executive"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("hides export actions without the export permission", async () => {
+    renderPage({}, { history: true, monitoring: true, export: false });
+    await screen.findByText("Paradas");
+    expect(screen.queryByRole("button", { name: "CSV" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "PDF executivo" })).toBeNull();
   });
 });

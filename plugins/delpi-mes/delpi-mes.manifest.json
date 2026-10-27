@@ -18,7 +18,8 @@
     { "code": "delpi-mes.view.filial-02", "name": "Delpi MES — filial 02 (ES)", "description": "Consultar dados MES da filial 02 (ES).", "module": "delpi-mes" },
     { "code": "delpi-mes.downtime-reasons.manage", "name": "Gerenciar motivos de parada", "description": "Criar, editar, ativar e desativar motivos de parada do Delpi MES.", "module": "delpi-mes" },
     { "code": "delpi-mes.downtimes.classify", "name": "Classificar paradas", "description": "Atribuir ou corrigir o motivo de paradas MES.", "module": "delpi-mes" },
-    { "code": "delpi-mes.downtimes.treat", "name": "Tratar paradas", "description": "Registrar triagem, encaminhar solicitações e concluir o tratamento de paradas MES.", "module": "delpi-mes" }
+    { "code": "delpi-mes.downtimes.treat", "name": "Tratar paradas", "description": "Registrar triagem, encaminhar solicitações e concluir o tratamento de paradas MES.", "module": "delpi-mes" },
+    { "code": "delpi-mes.downtimes.export", "name": "Exportar paradas", "description": "Gerar arquivos e relatórios de paradas MES.", "module": "delpi-mes" }
   ],
   "routes": [
     { "path": "/apps/delpi-mes", "label": "Delpi MES", "permission": "delpi-mes.access", "icon": "factory", "order": 54, "showInMenu": true, "menuGroup": "Produção" },

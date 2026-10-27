@@ -44,6 +44,8 @@ As rotas exigem `API_DELPI_INTERNAL_SERVICE_TOKEN`, aceito em `X-Delpi-Service-T
 | GET | `/integrations/mes/runs/{runId}/performance` | Performance derivada do run (motor interno Fase 2.4; nulos/dataQuality preservados, >100% permitido) |
 | GET | `/integrations/mes/downtimes?branch=01&workCenter=&from=&to=&reasonCode=&source=&classification=&status=&sort=&downtimeId=&page=1&pageSize=50` | Histórico paginado de paradas MES (`status=open|closed` filtra o estado temporal) |
 | GET | `/integrations/mes/downtimes/analytics?branch=01&from=&to=&workCenter=&reasonCode=&source=&classification=` | Agregações gerenciais de paradas sobre todos os fatos elegíveis (sem paginação; janela máx. 92 dias, teto de fatos sinalizado em `quality`) |
+| GET | `/integrations/mes/downtimes/export?branch=01&from=&to=&workCenter=&reasonCode=&source=&classification=&status=&pendency=` | Universo completo de paradas para exportação (Etapa 5): mesmo WHERE da listagem/analytics, projeção com situação de tratamento e vínculo de solicitação; `pendency=true` restringe a sem classificação confirmada OU tratamento em aberto; `capped` sinaliza teto de fatos |
+
 | GET | `/integrations/mes/downtime-sources` | Origens válidas de parada — projeção do enum de domínio do owner |
 | GET | `/integrations/mes/work-centers/{workCenter}/timeline?branch=01&from=&to=` | Timeline do CT no período, unindo múltiplos runs/OPs com sobreposição temporal |
 | GET | `/integrations/mes/downtime-reasons` | Administração: lista motivos de parada **ativos e inativos** |

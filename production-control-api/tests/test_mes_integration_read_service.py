@@ -50,6 +50,17 @@ class FakeRepository:
         self.last_downtime_args = kwargs
         return self.downtime_rows, len(self.downtime_rows)
 
+    def list_downtime_export(self, **kwargs):
+        self.export_calls = getattr(self, "export_calls", 0) + 1
+        self.last_export_args = kwargs
+        return {
+            "items": list(self.export_rows),
+            "total": len(self.export_rows),
+            "capped": False,
+        }
+
+    export_rows = []
+
 
 def make_service(repo, *, sensorized_provider=None):
     return MesIntegrationReadService(
@@ -334,3 +345,78 @@ def test_downtime_sources_expose_domain_enum_sorted():
     codes = [item["code"] for item in data["items"]]
     assert codes == sorted(DOWNTIME_SOURCES)
     assert set(data["items"][0]) == {"code"}
+
+def test_downtime_export_forwards_filters_without_pagination():
+    repo = FakeRepository()
+    repo.export_rows = [{"id": "dt-1", "work_center": "CT-35"}]
+    start = NOW - timedelta(hours=2)
+    data = make_service(repo).export_downtimes(
+        branch="01", work_center="CT-35", period_from=start,
+        reason_code=" Setup ", status="Open",
+    )
+    assert repo.export_calls == 1
+    args = repo.last_export_args
+    assert args["branch"] == "01"
+    assert args["work_center"] == "CT-35"
+    assert args["period_from"] == start
+    assert args["period_to"] is None  # janela aberta — sem to informado
+    assert args["reason_code"] == "setup"
+    assert args["status"] == "open"
+    assert args["pendency"] is False
+    assert args["max_facts"] > 0
+    assert data["total"] == 1
+    assert data["capped"] is False
+    assert data["referenceAt"] == NOW.isoformat()
+    assert data["appliedFilters"]["status"] == "open"
+    assert "pendency" not in data["appliedFilters"]
+
+
+def test_downtime_export_clamps_future_period_to_reference():
+    repo = FakeRepository()
+    future = NOW + timedelta(hours=1)
+    make_service(repo).export_downtimes(branch="01", period_to=future)
+    assert repo.last_export_args["period_to"] == NOW
+
+
+def test_downtime_export_pendency_flag_is_forwarded():
+    repo = FakeRepository()
+    data = make_service(repo).export_downtimes(branch="01", pendency=True)
+    assert repo.last_export_args["pendency"] is True
+    assert data["appliedFilters"]["pendency"] is True
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"classification": "closed"},
+        {"status": "weird"},
+        {"source": "totvs"},
+    ],
+)
+def test_downtime_export_validates_filters(kwargs):
+    with pytest.raises(ValueError):
+        make_service(FakeRepository()).export_downtimes(branch="01", **kwargs)
+
+
+def test_downtime_export_item_includes_treatment_projection():
+    repo = FakeRepository()
+    repo.export_rows = [
+        {
+            "id": "dt-1", "work_center": "CT-35", "run_id": "r-1",
+            "treatment_status": "referred",
+            "treatment_request_id": "req-9",
+            "treatment_request_type": "process-issue",
+        }
+    ]
+    data = make_service(repo).export_downtimes(branch="01")
+    item = data["items"][0]
+    assert item["treatmentStatus"] == "referred"
+    assert item["treatmentRequestId"] == "req-9"
+    assert item["treatmentRequestType"] == "process-issue"
+    assert item["workCenter"] == "CT-35"
+
+
+def test_downtime_export_requires_valid_branch():
+    with pytest.raises(Exception):
+        make_service(FakeRepository()).export_downtimes(branch="99")
+
