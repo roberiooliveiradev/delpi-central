@@ -1,0 +1,745 @@
+/** Multi-instrument metals panel (PROC-0076 R4).
+ *
+ * One panel = contextual KPIs + one view mode (chart / table /
+ * compare, never more than one rendered) + exports + source footer.
+ * Rendering-only: every metric, availability flag and comparability
+ * verdict comes from the supplies-api BFF — the MFE never recomputes
+ * summaries and never turns a visual selection into a data grant
+ * (D-04).
+ */
+
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  BarChart3,
+  GitCompareArrows,
+  LineChart,
+  Table2,
+} from "lucide-react";
+import {
+  ChartSeriesColorsPopover,
+  ChartTypeSegmentToggle,
+  ChartViewShell,
+  MultiTypeSeriesChart,
+  TIME_MULTI_SERIES_TYPES,
+  applySeriesFillPreferences,
+  runTabularExport,
+  usePersistedChartPreferences,
+  type MultiTypeSeriesSpec,
+} from "@delpi/plugin-ui/index";
+
+import { SuppliesKpiCard } from "../../app/suppliesKpiCard";
+import {
+  SuppliesDataCardsGrid,
+  SuppliesDataTable,
+  SuppliesEmptyState,
+  SuppliesLoadingCard,
+  SuppliesSectionCard,
+  SuppliesSegmentToggle,
+  SuppliesStateBanner,
+  SuppliesStatusBadge,
+  SuppliesTabularExportButtons,
+  SP_PORTAL_SCOPE,
+  type DataTableColumn,
+} from "../../app/suppliesUi";
+import { SP_CHART_SERIES_HINTS } from "../../content/helpTooltips";
+import {
+  getMarketQuoteCompare,
+  getMarketQuoteSeries,
+  type MarketGranularity,
+  type MarketQuoteCompareResponse,
+  type MarketQuoteSeriesResponse,
+} from "./api";
+import {
+  mapMarketIntelligenceError,
+  MARKET_INTELLIGENCE_CONTENT,
+} from "./content";
+import type { MarketViewMode } from "./marketIntelligenceUrl";
+
+const CHART_HEIGHT = 300;
+
+/** Canonical series-token chain — hexes live only in the scoped
+ * token layer (``index.css``), never inline in the component. */
+const SERIES_FILL_TOKENS = [
+  "var(--sp-chart-series-1)",
+  "var(--sp-chart-series-2)",
+  "var(--sp-chart-series-3)",
+  "var(--sp-chart-series-4)",
+  "var(--sp-chart-series-5)",
+  "var(--sp-chart-series-6)",
+];
+
+export type MetalsPanelRow = {
+  period: string;
+  [instrument: string]: string | null;
+};
+
+export type MarketMetalsPanelProps = {
+  title: string;
+  hint?: string;
+  enabled: boolean;
+  /** Selected instrument codes (already catalog-validated). */
+  selection: string[];
+  /** Total instruments in the catalog — zero renders the compact
+   * configuration state, not a blank module. */
+  configured: boolean;
+  configState?: { title: string; message: string };
+  from: string;
+  to: string;
+  granularity: MarketGranularity;
+  mode: MarketViewMode;
+  onModeChange: (mode: MarketViewMode) => void;
+  tableAriaLabel: string;
+  storageKey: string;
+  exportTitle: string;
+  attribution: string | null;
+  reloadKey: number;
+};
+
+function parsePointValue(raw: string | null): number | null {
+  if (raw === null || raw === undefined) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatDecimal(raw: string | null | undefined): string {
+  if (raw === null || raw === undefined) return "—";
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return "—";
+  return parsed.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
+}
+
+function formatPercent(raw: string | null | undefined): string {
+  if (raw === null || raw === undefined) return "—";
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return "—";
+  const sign = parsed > 0 ? "+" : "";
+  return `${sign}${parsed.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}%`;
+}
+
+function dataStatusBadgeVariant(
+  status: string | undefined,
+): "success" | "warning" | "danger" | "info" | "neutral" {
+  if (status === "ok") return "success";
+  if (status === "partial") return "warning";
+  if (status === "no_data") return "neutral";
+  return "info";
+}
+
+const KPI_ICONS = {
+  chart: <LineChart size={22} strokeWidth={1.75} aria-hidden="true" />,
+  bar: <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />,
+  table: <Table2 size={22} strokeWidth={1.75} aria-hidden="true" />,
+  compare: (
+    <GitCompareArrows size={22} strokeWidth={1.75} aria-hidden="true" />
+  ),
+};
+
+export function MarketMetalsPanel({
+  title,
+  hint,
+  enabled,
+  configured,
+  configState,
+  selection,
+  from,
+  to,
+  granularity,
+  mode,
+  onModeChange,
+  tableAriaLabel,
+  storageKey,
+  exportTitle,
+  attribution,
+  reloadKey,
+}: MarketMetalsPanelProps) {
+  const { preferences, setPreferences, setChartType } =
+    usePersistedChartPreferences({
+      storageKey,
+      defaults: { chartType: "line" },
+      allowedChartTypes: TIME_MULTI_SERIES_TYPES,
+    });
+  const chartType = preferences.chartType ?? "line";
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [payload, setPayload] = useState<MarketQuoteSeriesResponse | null>(
+    null,
+  );
+  const [comparePayload, setComparePayload] =
+    useState<MarketQuoteCompareResponse | null>(null);
+
+  const selectionKey = selection.join(",");
+
+  useEffect(() => {
+    if (!enabled || !configured || selection.length === 0) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    // Never render the previous query's data while a new fetch runs —
+    // a denied/blocked response must not resurrect stale values.
+    setPayload(null);
+    setComparePayload(null);
+    const params = {
+      instruments: selectionKey,
+      granularity,
+      currency: "USD" as const,
+      date_from: from,
+      date_to: to,
+    };
+    const request =
+      mode === "compare"
+        ? getMarketQuoteCompare(params, controller.signal).then(
+            (result) => ({ compare: result }),
+          )
+        : getMarketQuoteSeries(params, controller.signal).then(
+            (result) => ({ series: result }),
+          );
+    request
+      .then((result) => {
+        if ("compare" in result) setComparePayload(result.compare);
+        else setPayload(result.series);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setError(mapMarketIntelligenceError(err));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [
+    enabled,
+    configured,
+    selectionKey,
+    selection.length,
+    granularity,
+    from,
+    to,
+    mode,
+    reloadKey,
+  ]);
+
+  /** Authorized series — availability comes from the BFF, never
+   * inferred client-side. */
+  const authorized = useMemo(
+    () =>
+      (payload?.series ?? []).filter(
+        (entry) => entry.availability.data_access_allowed === true,
+      ),
+    [payload],
+  );
+  const withData = useMemo(
+    () =>
+      authorized.filter(
+        (entry) => (entry.summary?.observed ?? 0) > 0,
+      ),
+    [authorized],
+  );
+  const allPending =
+    payload !== null &&
+    payload.series.length > 0 &&
+    authorized.length === 0;
+
+  /** Union of periods across authorized series — gaps stay null,
+   * never interpolated. */
+  const chartRows = useMemo(() => {
+    const periods = new Set<string>();
+    for (const entry of authorized) {
+      for (const point of entry.points) periods.add(point.period);
+    }
+    const sorted = [...periods].sort();
+    return sorted.map((period) => {
+      const row: Record<string, string | number | null> = { period };
+      for (const entry of authorized) {
+        const point = entry.points.find((p) => p.period === period);
+        row[entry.instrument.code] = point
+          ? parsePointValue(point.value)
+          : null;
+      }
+      return row;
+    });
+  }, [authorized]);
+
+  const tableRows = useMemo<MetalsPanelRow[]>(
+    () =>
+      chartRows.map((row) => {
+        const out: MetalsPanelRow = { period: String(row.period) };
+        for (const entry of authorized) {
+          const raw = row[entry.instrument.code];
+          out[entry.instrument.code] =
+            raw === null || raw === undefined ? null : String(raw);
+        }
+        return out;
+      }),
+    [chartRows, authorized],
+  );
+
+  const baseSeries = useMemo<MultiTypeSeriesSpec[]>(
+    () =>
+      authorized.map((entry, index) => ({
+        dataKey: entry.instrument.code,
+        name: entry.instrument.label,
+        fill: SERIES_FILL_TOKENS[index % SERIES_FILL_TOKENS.length],
+      })),
+    [authorized],
+  );
+
+  const series = useMemo(
+    () => applySeriesFillPreferences(baseSeries, preferences.seriesFills),
+    [baseSeries, preferences.seriesFills],
+  );
+
+  const formatValue = (value: number) =>
+    value.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    });
+
+  const unit = authorized[0]?.unit ?? null;
+  const hasData = chartRows.some((row) =>
+    authorized.some(
+      (entry) => row[entry.instrument.code] !== null,
+    ),
+  );
+  const meta = payload?.meta ?? comparePayload?.meta ?? null;
+  const showPartialNote =
+    !loading && !error && meta?.data_status === "partial";
+
+  const compareSeries = useMemo(
+    () => comparePayload?.series ?? [],
+    [comparePayload],
+  );
+  const comparable = comparePayload?.comparison.comparable === true;
+  const compareChartRows = useMemo(() => {
+    if (!comparePayload || !comparable) return [];
+    return comparePayload.periods.map((period, index) => {
+      const row: Record<string, string | number | null> = { period };
+      for (const entry of compareSeries) {
+        const raw = entry.values?.[index] ?? null;
+        row[entry.instrument.code] =
+          raw === null ? null : Number(raw);
+      }
+      return row;
+    });
+  }, [comparePayload, compareSeries, comparable]);
+
+  const compareSeriesSpecs = useMemo<MultiTypeSeriesSpec[]>(
+    () =>
+      compareSeries.map((entry, index) => ({
+        dataKey: entry.instrument.code,
+        name: entry.instrument.label,
+        fill: SERIES_FILL_TOKENS[index % SERIES_FILL_TOKENS.length],
+      })),
+    [compareSeries],
+  );
+
+  /** Contextual KPIs — single selection renders the classic trio;
+   * multi-selection renders one "latest reference" card per
+   * authorized series (each labelled with its instrument). */
+  const kpis = useMemo(() => {
+    const content = MARKET_INTELLIGENCE_CONTENT.kpis;
+    const items: {
+      title: string;
+      hint: string;
+      value: string;
+      context: string;
+      icon: ReactNode;
+    }[] = [];
+    if (withData.length === 1) {
+      const entry = withData[0];
+      const summary = entry.summary;
+      if (!summary) return items;
+      const unitLabel = entry.unit ?? "";
+      items.push(
+        {
+          title: content.latestValueTitle,
+          hint: content.latestValueHint,
+          value: `${formatDecimal(summary.latest?.value)} ${unitLabel}`,
+          context: summary.latest
+            ? `${entry.instrument.label} · ${summary.latest.period}`
+            : entry.instrument.label,
+          icon: KPI_ICONS.chart,
+        },
+        {
+          title: content.averageTitle,
+          hint: content.averageHint,
+          value: `${formatDecimal(summary.period_average)} ${unitLabel}`,
+          context: `${summary.observed} ${MARKET_INTELLIGENCE_CONTENT.summary.validObservations}`,
+          icon: KPI_ICONS.bar,
+        },
+        {
+          title: content.variationTitle,
+          hint: content.variationHint,
+          value: formatPercent(summary.period_change_pct),
+          context: `${from} → ${to}`,
+          icon: KPI_ICONS.chart,
+        },
+        {
+          title: content.coverageTitle,
+          hint: content.coverageHint,
+          value: `${summary.observed}/${summary.expected}`,
+          context:
+            MARKET_INTELLIGENCE_CONTENT.table.coverageLabels[
+              summary.coverage
+            ] ?? summary.coverage,
+          icon: KPI_ICONS.table,
+        },
+      );
+    } else {
+      for (const entry of withData) {
+        const summary = entry.summary;
+        items.push({
+          title: `${content.latestReferenceTitle} — ${entry.instrument.label}`,
+          hint: content.latestReferenceHint,
+          value: `${formatDecimal(summary?.latest?.value)} ${entry.unit ?? ""}`,
+          context: [
+            summary?.latest?.period ?? "",
+            `${MARKET_INTELLIGENCE_CONTENT.kpis.variationTitle}: ${formatPercent(summary?.period_change_pct)}`,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          icon: KPI_ICONS.chart,
+        });
+      }
+    }
+    return items;
+  }, [withData, from, to]);
+
+  const compareEligible = authorized.length >= 2;
+  const compareDisabledHint = !compareEligible
+    ? MARKET_INTELLIGENCE_CONTENT.panel.compareNeedTwoSeries
+    : undefined;
+
+  const modeOptions = [
+    {
+      value: "chart" as MarketViewMode,
+      label: MARKET_INTELLIGENCE_CONTENT.panel.chartMode,
+    },
+    {
+      value: "table" as MarketViewMode,
+      label: MARKET_INTELLIGENCE_CONTENT.panel.tableMode,
+    },
+    {
+      value: "compare" as MarketViewMode,
+      label: MARKET_INTELLIGENCE_CONTENT.panel.compareMode,
+      disabled: !compareEligible,
+      ariaLabel:
+        compareDisabledHint ??
+        MARKET_INTELLIGENCE_CONTENT.panel.compareMode,
+    },
+  ];
+
+  const tableColumns = useMemo<DataTableColumn<MetalsPanelRow>[]>(
+    () => [
+      {
+        key: "period",
+        header: MARKET_INTELLIGENCE_CONTENT.metals.periodColumn,
+        render: (row) => row.period,
+      },
+      ...authorized.map(
+        (entry): DataTableColumn<MetalsPanelRow> => ({
+          key: entry.instrument.code,
+          header: `${entry.instrument.label} (${entry.unit ?? "—"})`,
+          render: (row) => formatDecimal(row[entry.instrument.code]),
+          align: "right",
+        }),
+      ),
+    ],
+    [authorized],
+  );
+
+  const handleExport = (format: string) => {
+    runTabularExport({
+      kind: "table",
+      format,
+      payload: {
+        title: exportTitle,
+        columns: tableColumns.map((col) => ({
+          key: col.key,
+          label:
+            typeof col.header === "string" ? col.header : String(col.key),
+        })),
+        rows: tableRows.map((row) =>
+          Object.fromEntries(
+            tableColumns.map((col) => {
+              const cell = col.render(row);
+              return [
+                col.key,
+                typeof cell === "string" || typeof cell === "number"
+                  ? cell
+                  : String(cell ?? "—"),
+              ];
+            }),
+          ),
+        ),
+      },
+    });
+  };
+
+  return (
+    <SuppliesSectionCard
+      title={title}
+      hint={hint}
+      actions={
+        meta?.feed_ingestion?.feed ? (
+          <SuppliesStatusBadge
+            label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${meta.feed_ingestion.feed}`}
+            variant={dataStatusBadgeVariant(meta.data_status)}
+          />
+        ) : undefined
+      }
+    >
+      {!configured ? (
+        <SuppliesStateBanner>
+          <strong>{configState?.title ?? ""}</strong>{" "}
+          {configState?.message ??
+            MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable}
+        </SuppliesStateBanner>
+      ) : null}
+      {configured && selection.length === 0 ? (
+        <SuppliesEmptyState
+          title={MARKET_INTELLIGENCE_CONTENT.metals.emptySelectionTitle}
+          message={
+            MARKET_INTELLIGENCE_CONTENT.metals.emptySelectionMessage
+          }
+        />
+      ) : null}
+      {loading ? (
+        <SuppliesLoadingCard
+          title={MARKET_INTELLIGENCE_CONTENT.panel.loading}
+          variant="panel"
+        />
+      ) : null}
+      {error ? (
+        <SuppliesStateBanner variant="error">{error}</SuppliesStateBanner>
+      ) : null}
+
+      {configured && !loading && !error && selection.length > 0 ? (
+        <>
+          {allPending ? (
+            <SuppliesStateBanner>
+              {MARKET_INTELLIGENCE_CONTENT.metals.pendingSource}
+            </SuppliesStateBanner>
+          ) : null}
+          {showPartialNote ? (
+            <SuppliesStateBanner>
+              {MARKET_INTELLIGENCE_CONTENT.states.partialNote}
+            </SuppliesStateBanner>
+          ) : null}
+          {mode === "compare" && comparePayload && !comparable ? (
+            <SuppliesStateBanner>
+              {comparePayload.comparison.reason === "incompatible_units"
+                ? MARKET_INTELLIGENCE_CONTENT.panel.compareDisabledHint
+                : MARKET_INTELLIGENCE_CONTENT.panel
+                    .compareNeedTwoSeries}
+            </SuppliesStateBanner>
+          ) : null}
+
+          {kpis.length > 0 ? (
+            <SuppliesDataCardsGrid>
+              {kpis.map((kpi) => (
+                <SuppliesKpiCard
+                  key={kpi.title}
+                  title={kpi.title}
+                  titleHint={kpi.hint}
+                  value={kpi.value}
+                  contextLabel={kpi.context}
+                  icon={kpi.icon}
+                />
+              ))}
+            </SuppliesDataCardsGrid>
+          ) : null}
+
+          <div className="sp-module-filters">
+            <SuppliesSegmentToggle
+              ariaLabel={
+                MARKET_INTELLIGENCE_CONTENT.panel.viewSwitcherAriaLabel
+              }
+              idPrefix={`${storageKey}-mode`}
+              size="sm"
+              widthMode="content"
+              value={mode}
+              options={modeOptions}
+              onChange={(value) => onModeChange(value as MarketViewMode)}
+            />
+          </div>
+
+          {!allPending && !hasData && mode === "chart" ? (
+            <SuppliesEmptyState
+              title={MARKET_INTELLIGENCE_CONTENT.panel.emptyTitle}
+              message={MARKET_INTELLIGENCE_CONTENT.panel.emptyMessage}
+            />
+          ) : null}
+          {!allPending &&
+          tableRows.length === 0 &&
+          mode === "table" ? (
+            <SuppliesEmptyState
+              title={MARKET_INTELLIGENCE_CONTENT.panel.emptyTitle}
+              message={MARKET_INTELLIGENCE_CONTENT.panel.emptyMessage}
+            />
+          ) : null}
+
+          {hasData && mode === "chart" ? (
+            <ChartViewShell
+              prefix="sp"
+              typeToggleLabel={
+                MARKET_INTELLIGENCE_CONTENT.panel.typeLabel
+              }
+              seriesColorsLabel={
+                MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsLabel
+              }
+              typeToggle={
+                <ChartTypeSegmentToggle
+                  family="time_multi_series"
+                  value={chartType}
+                  onChange={setChartType}
+                  idPrefix={`${storageKey}-type`}
+                  prefix="sp"
+                  portalScopeClassName={SP_PORTAL_SCOPE}
+                />
+              }
+              seriesColors={
+                <ChartSeriesColorsPopover
+                  idPrefix={`${storageKey}-colors`}
+                  portalScopeClassName={SP_PORTAL_SCOPE}
+                  series={series}
+                  values={preferences.seriesFills}
+                  summaryLabel={
+                    MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsEmpty
+                  }
+                  panelTitle={
+                    MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsPanelTitle
+                  }
+                  triggerAriaLabel={
+                    MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsTriggerAria
+                  }
+                  resetLabel={
+                    MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsReset
+                  }
+                  hints={SP_CHART_SERIES_HINTS}
+                  onChange={(dataKey: string, color: string) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      seriesFills: {
+                        ...(prev.seriesFills ?? {}),
+                        [dataKey]: color,
+                      },
+                    }))
+                  }
+                  onReset={() =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      seriesFills: undefined,
+                    }))
+                  }
+                />
+              }
+              exportActions={
+                <SuppliesTabularExportButtons
+                  compact
+                  disabled={!hasData || loading}
+                  onExport={handleExport}
+                />
+              }
+            >
+              <MultiTypeSeriesChart
+                data={chartRows}
+                categoryKey="period"
+                series={series}
+                chartType={chartType}
+                height={CHART_HEIGHT}
+                formatY={formatValue}
+                formatTooltipValue={formatValue}
+                showLegend
+              />
+            </ChartViewShell>
+          ) : null}
+
+          {mode === "table" && tableRows.length > 0 ? (
+            <>
+              <div className="sp-module-filters">
+                <SuppliesTabularExportButtons
+                  compact
+                  disabled={tableRows.length === 0 || loading}
+                  onExport={handleExport}
+                />
+              </div>
+              <div
+                className="sp-list-table-region"
+                role="region"
+                aria-label={tableAriaLabel}
+                tabIndex={0}
+              >
+                <SuppliesDataTable
+                  layout="section"
+                  columns={tableColumns}
+                  rows={tableRows}
+                  rowKey={(row) => row.period}
+                  loading={false}
+                />
+              </div>
+            </>
+          ) : null}
+
+          {mode === "compare" && comparable ? (
+            <ChartViewShell
+              prefix="sp"
+              typeToggleLabel={
+                MARKET_INTELLIGENCE_CONTENT.panel.typeLabel
+              }
+              seriesColorsLabel={
+                MARKET_INTELLIGENCE_CONTENT.panel.seriesColorsLabel
+              }
+              typeToggle={
+                <ChartTypeSegmentToggle
+                  family="time_multi_series"
+                  value={chartType}
+                  onChange={setChartType}
+                  idPrefix={`${storageKey}-compare-type`}
+                  prefix="sp"
+                  portalScopeClassName={SP_PORTAL_SCOPE}
+                />
+              }
+            >
+              <MultiTypeSeriesChart
+                data={compareChartRows}
+                categoryKey="period"
+                series={compareSeriesSpecs}
+                chartType={chartType}
+                height={CHART_HEIGHT}
+                formatY={formatValue}
+                formatTooltipValue={formatValue}
+                showLegend
+              />
+              <p className="delpi-ui-section-hint-label">
+                {MARKET_INTELLIGENCE_CONTENT.states.methodLabel}:{" "}
+                {comparePayload?.comparison.method ?? "—"}
+                {comparePayload?.comparison.unit
+                  ? ` · ${comparePayload.comparison.unit}`
+                  : ""}
+              </p>
+            </ChartViewShell>
+          ) : null}
+
+          {unit ? (
+            <p className="delpi-ui-section-hint-label">
+              {MARKET_INTELLIGENCE_CONTENT.metals.unitNote(unit)}
+            </p>
+          ) : null}
+          {attribution ? (
+            <p className="delpi-ui-section-hint-label">
+              {MARKET_INTELLIGENCE_CONTENT.states.attributionLabel}:{" "}
+              {attribution}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+    </SuppliesSectionCard>
+  );
+}

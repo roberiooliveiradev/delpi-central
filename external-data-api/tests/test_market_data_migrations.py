@@ -118,3 +118,20 @@ def test_v004_marks_internal_display_pending_lme_review():
     )
     for forbidden in ("DROP TABLE", "DROP SCHEMA", "TRUNCATE", "DELETE FROM"):
         assert forbidden not in body
+
+
+def test_v006_prepares_daily_and_intraday_metal_instruments():
+    """R4: metal instruments may register daily/weekly native
+    granularity (the CHECK is widened, existing month rows untouched)
+    and observations gain an optional effective observation_timestamp
+    for future intraday series — additive only."""
+    sql = Path(_files()["V006"].path).read_text(encoding="utf-8")
+    assert "metal_instruments_granularity_check" in sql
+    assert "day" in sql and "week" in sql
+    assert "observation_timestamp" in sql
+    assert "IS NOT NULL" in sql
+    body = "\n".join(
+        line for line in sql.splitlines() if not line.strip().startswith("--")
+    )
+    for forbidden in ("DROP TABLE", "DROP SCHEMA", "TRUNCATE", "DELETE FROM"):
+        assert forbidden not in body

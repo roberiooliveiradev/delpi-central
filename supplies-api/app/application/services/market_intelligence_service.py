@@ -37,9 +37,12 @@ KIND_IMPORT = "comex_import"
 KIND_IPP = "producer_price"
 
 METAL_GRANULARITIES = ("month", "year")
-FX_GRANULARITIES = ("day", "month", "year")
+# ``week`` is a derived ISO-week bucket of *daily* series only — a
+# monthly series can never produce weekly/daily observations.
+FX_GRANULARITIES = ("day", "week", "month", "year")
 IMPORT_GRANULARITIES = ("month", "year")
 IPP_GRANULARITIES = ("month", "year")
+ALL_GRANULARITIES = ("day", "week", "month", "year")
 
 # R2 feeds — must mirror ``app.domain.market_data`` on the producer.
 COMEX_FEED = "comex-import-monthly"
@@ -49,12 +52,15 @@ IPP_FEED = "ipp-monthly"
 IMPORT_UNIT_VALUE_METHOD = "sum_fob_usd_x_1000_div_sum_net_weight_kg/v1"
 IMPORT_TOTALS_METHOD = "sum_of_valid_monthly_buckets/v1"
 MIN_MAX_METHOD = "extremes_of_valid_observations/v1"
+WEEK_BUCKET_METHOD = "mean_of_valid_daily_observations_per_iso_week/v1"
+COMPARE_ALIGNMENT_METHOD = "period_outer_join_same_unit/v1"
 # Maximum missing periods reported in a summary — informative, capped.
 MAX_MISSING_PERIODS = 24
 
 MAX_RANGE_DAYS = 3660
 DEFAULT_PAGE_SIZE = 24
 MAX_PAGE_SIZE = 120
+MAX_QUOTE_INSTRUMENTS = 8
 
 # Freshness policy — measured against the provider's real publication
 # cadence on the *latest available* observation, never on the queried
@@ -114,6 +120,23 @@ def _month_range(start: date, end: date) -> list[date]:
 
 def _month_key(d: date) -> str:
     return f"{d.year:04d}-{d.month:02d}"
+
+
+def _week_key(d: date) -> str:
+    iso = d.isocalendar()
+    return f"{iso.year:04d}-W{iso.week:02d}"
+
+
+def _week_range(start: date, end: date) -> list[str]:
+    """Distinct ISO weeks touched by the range (Monday-anchored)."""
+    seen: list[str] = []
+    current = start
+    while current <= end:
+        key = _week_key(current)
+        if not seen or seen[-1] != key:
+            seen.append(key)
+        current = date.fromordinal(current.toordinal() + 7)
+    return seen
 
 
 def _weekday_count(start: date, end: date) -> int:
@@ -669,17 +692,30 @@ class MarketIntelligenceService:
                     "unit_code": inst["unit_code"],
                     "currency": inst["currency"],
                     "quote_basis": inst["quote_basis"],
-                    "granularities": list(METAL_GRANULARITIES),
+                    "granularities": inst.get(
+                        "supported_granularities"
+                    )
+                    or list(METAL_GRANULARITIES),
                     "currencies": list(CURRENCIES),
                     "latest_observation_date": inst.get(
                         "latest_observation_date"
                     ),
                     "source_id": inst["source_id"],
                     # Default-deny: only an explicit display_allowed=true
-                    # from the producer is selectable — absent/null/invalid
-                    # means the producer version predates the rights
-                    # contract, which is never a permission.
+                    # from the producer grants data access — absent/
+                    # null/invalid is never a permission.
                     "selectable": inst.get("display_allowed") is True,
+                    # R4 D-04: catalog presence keeps the card
+                    # selectable in the UI; data access stays the
+                    # rights gate. The pair is emitted explicitly so no
+                    # consumer conflates selection with authorization.
+                    "selectable_in_ui": inst.get("selectable_in_ui")
+                    is not False,
+                    "data_access_allowed": inst.get(
+                        "data_access_allowed",
+                        inst.get("display_allowed") is True,
+                    )
+                    is True,
                 }
             )
         for fx in catalog.get("fx_series") or []:
@@ -692,13 +728,21 @@ class MarketIntelligenceService:
                     "unit_code": "brl_per_usd",
                     "currency": "BRL",
                     "quote_basis": FX_DEFAULT_KIND,
-                    "granularities": list(FX_GRANULARITIES),
+                    "granularities": fx.get("supported_granularities")
+                    or list(FX_GRANULARITIES),
                     "currencies": ["BRL"],
                     "latest_observation_date": fx.get(
                         "latest_observation_date"
                     ),
                     "source_id": fx["source_id"],
                     "selectable": fx.get("display_allowed") is True,
+                    "selectable_in_ui": fx.get("selectable_in_ui")
+                    is not False,
+                    "data_access_allowed": fx.get(
+                        "data_access_allowed",
+                        fx.get("display_allowed") is True,
+                    )
+                    is True,
                 }
             )
         import_ncms = [
@@ -709,13 +753,20 @@ class MarketIntelligenceService:
                 "family_code": n.get("family_code"),
                 "ncm_version": n.get("ncm_version"),
                 "unit": "USD/metric ton",
-                "granularities": list(IMPORT_GRANULARITIES),
+                "granularities": n.get("supported_granularities")
+                or list(IMPORT_GRANULARITIES),
                 "source_id": n.get("source_id"),
                 "latest_observation_date": n.get(
                     "latest_observation_date"
                 ),
                 # Default-deny — identical posture to instruments.
                 "selectable": n.get("display_allowed") is True,
+                "selectable_in_ui": n.get("selectable_in_ui") is not False,
+                "data_access_allowed": n.get(
+                    "data_access_allowed",
+                    n.get("display_allowed") is True,
+                )
+                is True,
             }
             for n in catalog.get("import_ncms") or []
         ]
@@ -732,12 +783,19 @@ class MarketIntelligenceService:
                 "metric_kind": s["metric_kind"],
                 "unit": s["unit"],
                 "base_reference": s["base_reference"],
-                "granularities": list(IPP_GRANULARITIES),
+                "granularities": s.get("supported_granularities")
+                or list(IPP_GRANULARITIES),
                 "source_id": s.get("source_id"),
                 "latest_observation_date": s.get(
                     "latest_observation_date"
                 ),
                 "selectable": s.get("display_allowed") is True,
+                "selectable_in_ui": s.get("selectable_in_ui") is not False,
+                "data_access_allowed": s.get(
+                    "data_access_allowed",
+                    s.get("display_allowed") is True,
+                )
+                is True,
             }
             for s in catalog.get("producer_price_series") or []
         ]
@@ -763,7 +821,7 @@ class MarketIntelligenceService:
             "import_ncms": import_ncms,
             "producer_price_series": producer_price_series,
             "currencies": list(CURRENCIES),
-            "granularities": ["day", "month", "year"],
+            "granularities": list(ALL_GRANULARITIES),
             "fx_kinds": list(FX_KINDS),
             "default_fx_kind": FX_DEFAULT_KIND,
             "default_instrument": (
@@ -1042,6 +1100,211 @@ class MarketIntelligenceService:
                 "schema_version": SCHEMA_VERSION,
                 **meta,
             },
+        }
+
+    # --- R4 multi-instrument quotes (Metais perspective) ---------------------
+
+    def list_quotes_series(
+        self,
+        *,
+        instruments: str | None,
+        granularity: str | None,
+        currency: str | None,
+        fx_kind: str | None,
+        date_from: str | None,
+        date_to: str | None,
+    ) -> dict[str, Any]:
+        """operationId: listMarketIntelligenceQuoteSeriesV1.
+
+        Multi-instrument metal series for the Metais perspective. Each
+        requested instrument yields one entry: authorized instruments
+        carry real points + summary; quarantined/unapproved instruments
+        carry only catalog identity + ``availability`` — selection in
+        the UI never bypasses ``display_allowed`` (R4 D-04).
+        """
+        catalog = self._catalog()
+        codes = [
+            c.strip() for c in (instruments or "").split(",") if c.strip()
+        ]
+        if not codes:
+            raise ValueError("instruments is required")
+        if len(codes) > MAX_QUOTE_INSTRUMENTS:
+            raise ValueError(
+                f"at most {MAX_QUOTE_INSTRUMENTS} instruments per request"
+            )
+        currency = self._validate_currency(currency, KIND_METAL)
+        fx_kind = self._validate_fx_kind(fx_kind)
+        granularity = self._validate_granularity(granularity, KIND_METAL)
+        start, end = self._parse_range(date_from, date_to)
+        expected = self._expected_buckets(
+            METAL_GRANULARITIES, granularity, start, end
+        )
+
+        series = []
+        for code in codes:
+            instrument = self._resolve_instrument(catalog, code)
+            if instrument.get("kind", KIND_METAL) != KIND_METAL:
+                raise ValueError(
+                    f"instrument is not a metal series: {code}"
+                )
+            display = instrument.get("display_allowed") is True
+            availability = {
+                "selectable_in_ui": instrument.get("selectable_in_ui")
+                is not False,
+                "data_access_allowed": display,
+                "observations_available": bool(
+                    instrument.get("latest_observation_date")
+                ),
+                "source_id": instrument.get("source_id"),
+                "unavailable_reason": (
+                    None if display else "source_use_pending"
+                ),
+            }
+            instrument_meta = {
+                "code": instrument["instrument_code"],
+                "kind": KIND_METAL,
+                "label": instrument["label"],
+                "unit": instrument.get("unit"),
+                "quote_basis": instrument.get("quote_basis"),
+            }
+            if not display:
+                series.append(
+                    {
+                        "instrument": instrument_meta,
+                        "unit": instrument.get("unit"),
+                        "availability": availability,
+                        "points": [],
+                        "summary": None,
+                    }
+                )
+                continue
+            payload = self.list_series(
+                instrument_code=code,
+                currency=currency,
+                granularity=granularity,
+                fx_kind=fx_kind,
+                date_from=date_from,
+                date_to=date_to,
+            )
+            summary = self._perspective_summary(
+                points=payload["points"],
+                value_key="value",
+                granularity=granularity,
+                expected=expected,
+                feed_ingestion=(payload.get("meta") or {}).get(
+                    "feed_ingestion"
+                ),
+                include_change=True,
+                include_average=True,
+            )
+            series.append(
+                {
+                    "instrument": instrument_meta,
+                    "unit": payload.get("unit"),
+                    "currency": payload.get("currency"),
+                    "availability": availability,
+                    "points": payload["points"],
+                    "summary": summary,
+                    "meta": payload.get("meta"),
+                }
+            )
+        return {
+            "granularity": granularity,
+            "currency": currency,
+            "series": series,
+            "meta": {
+                "data_status": (
+                    "ok"
+                    if any(
+                        (s.get("summary") or {}).get("observed", 0) > 0
+                        for s in series
+                    )
+                    else "no_data"
+                ),
+                "schema_version": SCHEMA_VERSION,
+                **self._ingestion_meta(_FEED_BY_KIND[KIND_METAL]),
+            },
+        }
+
+    def list_quotes_compare(
+        self,
+        *,
+        instruments: str | None,
+        granularity: str | None,
+        currency: str | None,
+        fx_kind: str | None,
+        date_from: str | None,
+        date_to: str | None,
+    ) -> dict[str, Any]:
+        """operationId: listMarketIntelligenceQuoteCompareV1.
+
+        Period-aligned comparison over authorized series only —
+        comparability requires >=2 data-access-allowed instruments with
+        the same display unit and granularity. Unauthorized instruments
+        keep their identity and reason but never values.
+        """
+        payload = self.list_quotes_series(
+            instruments=instruments,
+            granularity=granularity,
+            currency=currency,
+            fx_kind=fx_kind,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        authorized = [
+            s
+            for s in payload["series"]
+            if s["availability"]["data_access_allowed"]
+        ]
+        units = {s.get("unit") for s in authorized}
+        comparable = len(authorized) >= 2 and len(units) == 1
+        reason = None
+        if len(authorized) < 2:
+            reason = "insufficient_authorized_series"
+        elif len(units) != 1:
+            reason = "incompatible_units"
+
+        periods = sorted(
+            {
+                p["period"]
+                for s in authorized
+                for p in s["points"]
+            }
+        )
+        aligned_series = []
+        for s in payload["series"]:
+            if not s["availability"]["data_access_allowed"]:
+                aligned_series.append(
+                    {
+                        "instrument": s["instrument"],
+                        "unit": s.get("unit"),
+                        "availability": s["availability"],
+                        "values": None,
+                    }
+                )
+                continue
+            by_period = {p["period"]: p["value"] for p in s["points"]}
+            aligned_series.append(
+                {
+                    "instrument": s["instrument"],
+                    "unit": s.get("unit"),
+                    "availability": s["availability"],
+                    "summary": s.get("summary"),
+                    "values": [by_period.get(period) for period in periods],
+                }
+            )
+        return {
+            "comparison": {
+                "comparable": comparable,
+                "reason": reason,
+                "unit": next(iter(units)) if len(units) == 1 else None,
+                "granularity": payload["granularity"],
+                "currency": payload["currency"],
+                "method": COMPARE_ALIGNMENT_METHOD,
+            },
+            "periods": periods,
+            "series": aligned_series,
+            "meta": payload["meta"],
         }
 
     def list_monthly_averages(
@@ -1605,6 +1868,29 @@ class MarketIntelligenceService:
                 }
                 for p in raw
             ]
+        if granularity == "week":
+            # ISO-week buckets — mean of valid daily bulletins inside
+            # each week; weeks without publications stay absent
+            # (no forward-fill), weeks crossed by the window are
+            # reported with their real coverage.
+            by_week: dict[str, list[Decimal]] = {}
+            for p in raw:
+                by_week.setdefault(_week_key(p.period), []).append(
+                    p.value
+                )
+            points = []
+            for key in _week_range(start, end):
+                values = by_week.get(key) or []
+                points.append(
+                    {
+                        "period": key,
+                        "period_date": start,
+                        "value": _fmt(_mean(values)) if values else None,
+                        "observation_count": len(values),
+                        "coverage": "ok" if values else "no_data",
+                    }
+                )
+            return points
         by_month: dict[str, list[Decimal]] = {}
         for p in raw:
             by_month.setdefault(_month_key(p.period), []).append(p.value)
@@ -1710,6 +1996,8 @@ class MarketIntelligenceService:
         return rows
 
     def _expected_buckets(self, allowed, granularity, start, end) -> int:
+        if granularity == "week":
+            return len(_week_range(start, end))
         if granularity == "month":
             return len(_month_range(start, end))
         if granularity == "year":

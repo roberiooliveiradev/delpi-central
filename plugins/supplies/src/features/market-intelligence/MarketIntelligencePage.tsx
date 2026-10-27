@@ -1,9 +1,9 @@
-/** Market intelligence page — three exclusive source perspectives
- * (PROC-0076 R3).
+/** Market intelligence page — three exclusive perspectives
+ * (PROC-0076 R4).
  *
  * Composition only: perspective switcher → contextual filters → one
- * analysis panel. All metrics, conversions, coverage and availability
- * semantics come from the supplies-api BFF.
+ * analysis panel. All metrics, conversions, coverage, availability
+ * and comparability semantics come from the supplies-api BFF.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -39,8 +39,13 @@ import {
   mapMarketIntelligenceError,
   MARKET_INTELLIGENCE_CONTENT,
 } from "./content";
+import { MarketInstrumentCard } from "./MarketInstrumentCard";
 import { MarketIntelligencePanel } from "./MarketIntelligencePanel";
-import type { MarketPerspective } from "./marketIntelligenceUrl";
+import { MarketMetalsPanel } from "./MarketMetalsPanel";
+import type {
+  MarketIndicatorKind,
+  MarketPerspective,
+} from "./marketIntelligenceUrl";
 import { useMarketIntelligenceFilters } from "./useMarketIntelligenceFilters";
 
 type MarketIntelligencePageProps = {
@@ -49,9 +54,17 @@ type MarketIntelligencePageProps = {
 
 const GRANULARITY_LABELS: Record<MarketGranularity, string> = {
   day: MARKET_INTELLIGENCE_CONTENT.filters.granularityDay,
+  week: MARKET_INTELLIGENCE_CONTENT.filters.granularityWeek,
   month: MARKET_INTELLIGENCE_CONTENT.filters.granularityMonth,
   year: MARKET_INTELLIGENCE_CONTENT.filters.granularityYear,
 };
+
+const ALL_GRANULARITIES: MarketGranularity[] = [
+  "day",
+  "week",
+  "month",
+  "year",
+];
 
 const FX_KIND_OPTIONS = [
   {
@@ -66,16 +79,27 @@ const FX_KIND_OPTIONS = [
 
 const PERSPECTIVE_OPTIONS: { value: MarketPerspective; label: string }[] = [
   {
-    value: "ipp",
-    label: MARKET_INTELLIGENCE_CONTENT.perspectives.ipp,
-  },
-  {
-    value: "comex",
-    label: MARKET_INTELLIGENCE_CONTENT.perspectives.comex,
+    value: "metals",
+    label: MARKET_INTELLIGENCE_CONTENT.perspectives.metals,
   },
   {
     value: "fx",
     label: MARKET_INTELLIGENCE_CONTENT.perspectives.fx,
+  },
+  {
+    value: "indicators",
+    label: MARKET_INTELLIGENCE_CONTENT.perspectives.indicators,
+  },
+];
+
+const INDICATOR_OPTIONS: { value: MarketIndicatorKind; label: string }[] = [
+  {
+    value: "ipp",
+    label: MARKET_INTELLIGENCE_CONTENT.filters.indicatorIpp,
+  },
+  {
+    value: "comex",
+    label: MARKET_INTELLIGENCE_CONTENT.filters.indicatorComex,
   },
 ];
 
@@ -144,6 +168,18 @@ export function MarketIntelligencePage({
     return () => controller.abort();
   }, [reloadKey]);
 
+  /** Metal instruments stay UI-selectable while source rights are
+   * pending (D-04) — ``selectable_in_ui`` is catalog presence, never
+   * a display grant. */
+  const metalCards = useMemo(
+    () =>
+      instruments.filter(
+        (entry) =>
+          entry.kind === "metal" && entry.selectable_in_ui === true,
+      ),
+    [instruments],
+  );
+
   // Same default-deny posture as legacy instruments — absent/null is
   // never a permission.
   const selectableNcms = useMemo(
@@ -162,10 +198,10 @@ export function MarketIntelligencePage({
     [instruments],
   );
 
-  /** Default perspective is data-driven — the first source with
-   * selectable, actually-observed data wins (never a hardcoded
-   * assumption that IBGE is always up). */
+  /** Default perspective is data-driven — metals first (R4 landing),
+   * otherwise the first perspective with usable observations. */
   const defaultView = useMemo<MarketPerspective>(() => {
+    if (metalCards.length > 0) return "metals";
     const hasObservations = (
       list?: { selectable?: boolean; latest_observation_date: string | null }[],
     ) =>
@@ -173,15 +209,24 @@ export function MarketIntelligencePage({
         (entry) =>
           entry.selectable === true && entry.latest_observation_date,
       );
-    if (hasObservations(ippSeriesOptions)) return "ipp";
-    if (hasObservations(importNcms)) return "comex";
+    if (hasObservations(ippSeriesOptions)) return "indicators";
     if (fxInstrument?.latest_observation_date) return "fx";
-    return "ipp";
-  }, [ippSeriesOptions, importNcms, fxInstrument]);
+    return "indicators";
+  }, [metalCards, ippSeriesOptions, fxInstrument]);
 
   const filters = useMarketIntelligenceFilters(defaultView);
   const view = filters.state.view;
+  const indicator = filters.state.indicator;
 
+  /** URL selection is catalog-validated — unknown codes never reach
+   * the BFF. Order follows the catalog, not the query string. */
+  const selectedMetals = useMemo(
+    () =>
+      metalCards
+        .map((entry) => entry.code)
+        .filter((code) => filters.state.metals.includes(code)),
+    [metalCards, filters.state.metals],
+  );
   const ncmOptions = useMemo(
     () =>
       selectableNcms.map((entry) => ({
@@ -210,36 +255,97 @@ export function MarketIntelligencePage({
     ) ?? selectableIpp[0];
   const selectedIpp = selectedIppEntry?.series_id ?? "";
 
-  const granularityOptions = useMemo(() => {
-    const allowed: MarketGranularity[] =
-      view === "fx" ? ["day", "month", "year"] : ["month", "year"];
-    return allowed.map((value) => ({
-      value,
-      label: GRANULARITY_LABELS[value],
-    }));
-  }, [view]);
+  /** The four frequencies stay visible as product capability —
+   * unsupported ones are disabled per the real catalog contract
+   * (never silently dropped). */
+  const supportedGranularities = useMemo(() => {
+    const supported = new Set<MarketGranularity>();
+    if (view === "fx") {
+      for (const value of fxInstrument?.granularities ?? []) {
+        supported.add(value);
+      }
+      // PTAX is a daily series — weekly aggregation is a BFF
+      // contract capability on top of daily observations.
+      supported.add("week");
+      if (supported.size === 0) ALL_GRANULARITIES.forEach((g) => supported.add(g));
+    } else if (view === "metals") {
+      const selected = selectedMetals.length
+        ? metalCards.filter((entry) =>
+            selectedMetals.includes(entry.code),
+          )
+        : metalCards;
+      for (const entry of selected) {
+        for (const value of entry.granularities ?? []) {
+          supported.add(value);
+        }
+      }
+    } else {
+      const entries =
+        indicator === "comex" ? selectableNcms : selectableIpp;
+      for (const entry of entries) {
+        for (const value of entry.granularities ?? []) {
+          supported.add(value);
+        }
+      }
+    }
+    if (supported.size === 0) {
+      supported.add("month");
+      supported.add("year");
+    }
+    return supported;
+  }, [
+    view,
+    indicator,
+    fxInstrument,
+    metalCards,
+    selectedMetals,
+    selectableNcms,
+    selectableIpp,
+  ]);
+
+  const granularityOptions = useMemo(
+    () =>
+      ALL_GRANULARITIES.map((value) => ({
+        value,
+        label: GRANULARITY_LABELS[value],
+        disabled: !supportedGranularities.has(value),
+        ariaLabel: supportedGranularities.has(value)
+          ? GRANULARITY_LABELS[value]
+          : `${GRANULARITY_LABELS[value]} — ${MARKET_INTELLIGENCE_CONTENT.metals.frequencyUnsupported}`,
+      })),
+    [supportedGranularities],
+  );
 
   /** Attribution/license of the active perspective's source. */
+  const activeSourceId = useMemo(() => {
+    if (view === "metals") {
+      const first = metalCards.find((entry) =>
+        selectedMetals.includes(entry.code),
+      );
+      return first?.source_id ?? metalCards[0]?.source_id;
+    }
+    if (view === "fx") return "bcb-ptax";
+    if (indicator === "ipp") return selectedIppEntry?.source_id;
+    return (
+      selectableNcms.find((n) => n.ncm_code === selectedNcm)
+        ?.source_id ?? "mdic-comex-stat"
+    );
+  }, [
+    view,
+    indicator,
+    metalCards,
+    selectedMetals,
+    selectedIppEntry,
+    selectableNcms,
+    selectedNcm,
+  ]);
+
   const attribution = useMemo(() => {
-    const sourceId =
-      view === "ipp"
-        ? selectedIppEntry?.source_id
-        : view === "comex"
-          ? selectableNcms.find((n) => n.ncm_code === selectedNcm)
-              ?.source_id ?? "mdic-comex-stat"
-          : "bcb-ptax";
-    const source = sources.find((s) => s.source_id === sourceId);
+    const source = sources.find((s) => s.source_id === activeSourceId);
     return source
       ? `${source.attribution} · ${source.license_reference}`
       : null;
-  }, [view, sources, selectedIppEntry, selectableNcms, selectedNcm]);
-
-  const activeSourceId =
-    view === "ipp"
-      ? selectedIppEntry?.source_id
-      : view === "comex"
-        ? "mdic-comex-stat"
-        : "bcb-ptax";
+  }, [sources, activeSourceId]);
 
   const homeHref = buildPluginPath("home", basePath);
 
@@ -297,7 +403,22 @@ export function MarketIntelligencePage({
             options={PERSPECTIVE_OPTIONS}
             onChange={(value) => filters.setView(value as MarketPerspective)}
           />
-          {view === "ipp" ? (
+          {view === "indicators" ? (
+            <SuppliesSegmentToggle
+              ariaLabel={
+                MARKET_INTELLIGENCE_CONTENT.filters.indicatorLabel
+              }
+              idPrefix="market-intelligence-indicator"
+              size="sm"
+              widthMode="content"
+              value={indicator}
+              options={INDICATOR_OPTIONS}
+              onChange={(value) =>
+                filters.setIndicator(value as MarketIndicatorKind)
+              }
+            />
+          ) : null}
+          {view === "indicators" && indicator === "ipp" ? (
             <SuppliesSelectField
               label={MARKET_INTELLIGENCE_CONTENT.filters.seriesLabel}
               hint={SP_HELP.marketIntelligenceIpp}
@@ -306,7 +427,9 @@ export function MarketIntelligencePage({
               onChange={filters.setIppSeries}
             />
           ) : null}
-          {view === "comex" && ncmOptions.length > 0 ? (
+          {view === "indicators" &&
+          indicator === "comex" &&
+          ncmOptions.length > 0 ? (
             <SuppliesSelectField
               label={MARKET_INTELLIGENCE_CONTENT.filters.ncmLabel}
               hint={
@@ -358,6 +481,7 @@ export function MarketIntelligencePage({
       ) : null}
       {!catalogLoading &&
       !catalogError &&
+      metalCards.length === 0 &&
       selectableIpp.length === 0 &&
       selectableNcms.length === 0 &&
       !fxInstrument ? (
@@ -366,7 +490,71 @@ export function MarketIntelligencePage({
         </SuppliesStateBanner>
       ) : null}
 
-      {view === "ipp" ? (
+      {view === "metals" ? (
+        <>
+          <section
+            className="sp-market-instruments"
+            aria-label={MARKET_INTELLIGENCE_CONTENT.metals.cardsLabel}
+          >
+            <div
+              className="sp-market-instruments-grid"
+              role="group"
+              aria-label={MARKET_INTELLIGENCE_CONTENT.metals.cardsLabel}
+            >
+              {metalCards.map((entry) => (
+                <MarketInstrumentCard
+                  key={entry.code}
+                  code={entry.code}
+                  label={entry.label}
+                  unit={entry.unit}
+                  selected={selectedMetals.includes(entry.code)}
+                  selectable={entry.selectable_in_ui === true}
+                  dataAccessAllowed={
+                    entry.data_access_allowed === true
+                  }
+                  pendingLabel={
+                    MARKET_INTELLIGENCE_CONTENT.metals.pendingLabel
+                  }
+                  selectedLabel={
+                    MARKET_INTELLIGENCE_CONTENT.metals.selectedLabel
+                  }
+                  onToggle={filters.toggleMetal}
+                />
+              ))}
+            </div>
+          </section>
+
+          <MarketMetalsPanel
+            title={MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle}
+            hint={MARKET_INTELLIGENCE_CONTENT.metals.sectionHint}
+            enabled={!catalogError && !catalogLoading}
+            configured={metalCards.length > 0}
+            configState={{
+              title:
+                MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
+              message:
+                MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable,
+            }}
+            selection={selectedMetals}
+            from={filters.state.from}
+            to={filters.state.to}
+            granularity={filters.state.granularity}
+            mode={filters.state.mode}
+            onModeChange={filters.setMode}
+            tableAriaLabel={
+              MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle
+            }
+            storageKey="supplies:market-intelligence:metals"
+            exportTitle={
+              MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle
+            }
+            attribution={attribution}
+            reloadKey={reloadKey}
+          />
+        </>
+      ) : null}
+
+      {view === "indicators" && indicator === "ipp" ? (
         <MarketIntelligencePanel<MarketProducerPricePoint>
           title={MARKET_INTELLIGENCE_CONTENT.modules.ippTitle}
           hint={SP_HELP.marketIntelligenceIpp}
@@ -442,7 +630,7 @@ export function MarketIntelligencePage({
         />
       ) : null}
 
-      {view === "comex" ? (
+      {view === "indicators" && indicator === "comex" ? (
         <MarketIntelligencePanel<
           MarketImportPoint & { value: string | null }
         >

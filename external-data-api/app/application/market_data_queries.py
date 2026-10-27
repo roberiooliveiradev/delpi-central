@@ -123,8 +123,27 @@ def _require_display(source, *, what: str) -> None:
         )
 
 
+# Display granularities a series can be aggregated to from its native
+# granularity — derived only, never upward-fabricated: a monthly series
+# cannot produce daily/weekly observations. ``week`` is a derived
+# bucket of daily series (ISO week), never a stored granularity.
+_SUPPORTED_GRANULARITIES_BY_NATIVE = {
+    "day": ("day", "week", "month", "year"),
+    "week": ("week", "month", "year"),
+    "month": ("month", "year"),
+    "year": ("year",),
+}
+
+
+def _supported_granularities(native: str | None) -> list[str]:
+    return list(
+        _SUPPORTED_GRANULARITIES_BY_NATIVE.get(native or "month", ())
+    )
+
+
 def _instrument_dto(inst, sources: dict[str, Any]) -> dict[str, Any]:
     source = sources.get(inst.source_id)
+    display_allowed = _display_allowed(source)
     return {
         "instrument_code": inst.instrument_code,
         "kind": KIND_METAL,
@@ -136,9 +155,17 @@ def _instrument_dto(inst, sources: dict[str, Any]) -> dict[str, Any]:
         "unit_code": inst.unit_code,
         "unit": inst.unit_label,
         "granularity": inst.granularity,
+        "supported_granularities": _supported_granularities(
+            inst.granularity
+        ),
         "source_id": inst.source_id,
         "active": inst.active,
-        "display_allowed": _display_allowed(source),
+        "display_allowed": display_allowed,
+        # R4 D-04: catalog presence is a UI fact; data access is the
+        # rights gate. A quarantined instrument stays selectable in the
+        # UI (the card exists) while never yielding protected values.
+        "selectable_in_ui": bool(inst.active),
+        "data_access_allowed": display_allowed,
     }
 
 
@@ -171,8 +198,15 @@ def get_catalog() -> dict[str, Any]:
                 "currency": "BRL",
                 "unit": "BRL per USD",
                 "granularity": "day",
+                "supported_granularities": _supported_granularities(
+                    "day"
+                ),
                 "source_id": "bcb-ptax",
                 "display_allowed": _display_allowed(sources.get("bcb-ptax")),
+                "selectable_in_ui": True,
+                "data_access_allowed": _display_allowed(
+                    sources.get("bcb-ptax")
+                ),
                 "latest_observation_date": _iso(
                     latest.get(f"{PAIR_USD_BRL}|ptax_closing_sell")
                 ),
@@ -187,9 +221,16 @@ def get_catalog() -> dict[str, Any]:
                 "ncm_version": n["ncm_version"],
                 "unit": "USD/metric ton",
                 "granularity": "month",
+                "supported_granularities": _supported_granularities(
+                    "month"
+                ),
                 "source_id": PROVIDER_MDIC_COMEX,
                 "active": n["active"],
                 "display_allowed": _display_allowed(
+                    sources.get(PROVIDER_MDIC_COMEX)
+                ),
+                "selectable_in_ui": bool(n["active"]),
+                "data_access_allowed": _display_allowed(
                     sources.get(PROVIDER_MDIC_COMEX)
                 ),
                 "latest_observation_date": _iso(
@@ -212,9 +253,16 @@ def get_catalog() -> dict[str, Any]:
                 "unit": s["unit_label"],
                 "base_reference": s["base_reference"],
                 "granularity": "month",
+                "supported_granularities": _supported_granularities(
+                    "month"
+                ),
                 "source_id": s["source_id"],
                 "active": s["active"],
                 "display_allowed": _display_allowed(
+                    sources.get(s["source_id"])
+                ),
+                "selectable_in_ui": bool(s["active"]),
+                "data_access_allowed": _display_allowed(
                     sources.get(s["source_id"])
                 ),
                 "latest_observation_date": _iso(

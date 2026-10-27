@@ -108,10 +108,10 @@ Anatomia de cada card:
 - **Nome do metal** (rótulo principal).
 - **Unidade real da fonte homologada** (ex.: `US$/t`) — nunca unidade inventada.
 - **Estado de seleção** — indicador visual (check/marca) + `aria-pressed`; operável por mouse, toque e teclado.
-- **Estado de disponibilidade** — disponível / sem observações / fonte não homologada (badge discreto, card não selecionável quando sem fonte).
+- **Estado de disponibilidade** — disponível / sem observações / fonte pendente (badge discreto `Fonte pendente`; o card **permanece selecionável** — D-04).
 - **Fonte** quando comprovada (tooltip/rodapé do card).
 
-**Gate de direitos (imutável):** cards só listam instrumentos com `display_allowed === true` no catálogo da external-data-api. Metais LME permanecem em quarentena — se nenhum metal tiver fonte homologada, a grade exibe os cards em estado `source_rights_pending`/não selecionável e o painel mostra o estado honesto correspondente. **Este documento não aprova LME.**
+**Gate de direitos (imutável, refinado por D-04):** o catálogo separa `selectable_in_ui` (presença do instrumento) de `data_access_allowed` (`display_allowed` da fonte). Cards listam todos os instrumentos do catálogo e **permanecem selecionáveis** mesmo sem fonte homologada — a seleção prepara a visualização e persiste na URL, mas nunca autoriza leitura de valores: o BFF responde `availability.unavailable_reason = "source_use_pending"` e nenhum ponto é retornado. Metais LME permanecem em quarentena — sem fonte homologada, a grade exibe os cards selecionáveis com badge `Fonte pendente` e o painel mostra «Aguardando observações de fonte homologada». **Este documento não aprova LME.**
 
 Comportamento por cardinalidade da seleção:
 
@@ -124,7 +124,7 @@ Comportamento por cardinalidade da seleção:
 | 6 metais | Idem; sem limite artificial além do catálogo |
 | Metal sem dados | Permanece selecionável se fonte homologada; série contribui lacunas `null` e KPI indica `no_data` com motivo |
 | Metal com série parcial | Gráfico mostra pontos reais + lacunas explícitas; cobertura indicada |
-| Metal sem fonte homologada | Card não selecionável (`disabled` + motivo); nunca entra em fetch nem URL |
+| Metal sem fonte homologada | Card **selecionável** com badge `Fonte pendente` (D-04); entra na URL como seleção visual; o fetch retorna `availability` sem pontos — nunca valores |
 
 ## 3. Perspectiva Câmbio
 

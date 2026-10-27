@@ -9,7 +9,7 @@ import { httpGet, suppliesApiUrl } from "../../api/httpClient";
 
 export type MarketInstrumentKind = "metal" | "fx";
 export type MarketCurrency = "USD" | "BRL";
-export type MarketGranularity = "day" | "month" | "year";
+export type MarketGranularity = "day" | "week" | "month" | "year";
 export type MarketFxKind = "ptax_closing_sell" | "ptax_closing_buy";
 // Window-completeness only (R1.1): feed delay is a separate
 // dimension reported by MarketFreshness.status === "delayed" —
@@ -44,6 +44,11 @@ export type MarketInstrumentFilter = {
   /** False when the source's recorded rights don't cover display —
   non-selectable in the UI (R1.2 quarantine). */
   selectable?: boolean;
+  /** R4 D-04: catalog presence keeps the card selectable in the UI —
+  visual selection is never data authorization. */
+  selectable_in_ui?: boolean;
+  /** R4 D-04: only an explicit display grant allows reading values. */
+  data_access_allowed?: boolean;
 };
 
 export type MarketSourceMeta = {
@@ -331,6 +336,66 @@ export type MarketQueryParams = {
   date_to: string;
 };
 
+/** R4 D-04 availability — catalog facts separate from data rights. */
+export type MarketQuoteAvailability = {
+  selectable_in_ui: boolean;
+  data_access_allowed: boolean;
+  observations_available: boolean;
+  source_id: string | null;
+  unavailable_reason:
+    | "source_use_pending"
+    | MarketUnavailableReason
+    | null;
+};
+
+export type MarketQuoteSeriesEntry = {
+  instrument: {
+    code: string;
+    kind: MarketInstrumentKind;
+    label: string;
+    unit: string | null;
+    quote_basis: string | null;
+  };
+  unit: string | null;
+  currency?: MarketCurrency;
+  availability: MarketQuoteAvailability;
+  points: MarketSeriesPoint[];
+  summary: MarketSeriesSummary | null;
+  meta?: MarketSeriesResponse["meta"];
+};
+
+export type MarketQuoteSeriesResponse = {
+  granularity: MarketGranularity;
+  currency: MarketCurrency;
+  series: MarketQuoteSeriesEntry[];
+  meta: {
+    data_status: MarketDataStatus;
+    schema_version: string;
+    feed_ingestion?: MarketFeedIngestion | null;
+    last_successful_ingestion_at: string | null;
+  };
+};
+
+export type MarketQuoteCompareResponse = {
+  comparison: {
+    comparable: boolean;
+    reason: "insufficient_authorized_series" | "incompatible_units" | null;
+    unit: string | null;
+    granularity: MarketGranularity;
+    currency: MarketCurrency;
+    method: string;
+  };
+  periods: string[];
+  series: {
+    instrument: MarketQuoteSeriesEntry["instrument"];
+    unit: string | null;
+    availability: MarketQuoteAvailability;
+    summary?: MarketSeriesSummary | null;
+    values: (string | null)[] | null;
+  }[];
+  meta: MarketQuoteSeriesResponse["meta"];
+};
+
 function toQuery(params: Record<string, string | number | undefined>): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -406,6 +471,42 @@ export function getMarketProducerPriceSeries(
   return httpGet(
     suppliesApiUrl(
       `/market-intelligence/producer-prices/series${toQuery(params)}`,
+    ),
+    { signal },
+  );
+}
+
+export function getMarketQuoteSeries(
+  params: {
+    instruments: string;
+    granularity: MarketGranularity;
+    currency?: MarketCurrency;
+    fx_kind?: MarketFxKind;
+    date_from: string;
+    date_to: string;
+  },
+  signal?: AbortSignal,
+): Promise<MarketQuoteSeriesResponse> {
+  return httpGet(
+    suppliesApiUrl(`/market-intelligence/quotes/series${toQuery(params)}`),
+    { signal },
+  );
+}
+
+export function getMarketQuoteCompare(
+  params: {
+    instruments: string;
+    granularity: MarketGranularity;
+    currency?: MarketCurrency;
+    fx_kind?: MarketFxKind;
+    date_from: string;
+    date_to: string;
+  },
+  signal?: AbortSignal,
+): Promise<MarketQuoteCompareResponse> {
+  return httpGet(
+    suppliesApiUrl(
+      `/market-intelligence/quotes/compare${toQuery(params)}`,
     ),
     { signal },
   );

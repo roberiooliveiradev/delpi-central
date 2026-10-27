@@ -204,6 +204,50 @@ def list_market_intelligence_fx_series():
     return jsonify(payload), 200
 
 
+@market_intelligence_bp.get("/market-intelligence/quotes/series")
+@require_policy(can_use_market_intelligence)
+def list_market_intelligence_quote_series():
+    """operationId: listMarketIntelligenceQuoteSeriesV1."""
+    try:
+        payload = _service().list_quotes_series(
+            instruments=request.args.get("instruments"),
+            granularity=request.args.get("granularity"),
+            currency=request.args.get("currency"),
+            fx_kind=request.args.get("fx_kind"),
+            date_from=request.args.get("date_from"),
+            date_to=request.args.get("date_to"),
+        )
+    except MarketDataNotFoundError as exc:
+        return jsonify({"detail": str(exc), "code": "not_found"}), 404
+    except ValueError as exc:
+        return jsonify({"detail": str(exc), "code": "unprocessable"}), 422
+    except MarketDataGatewayError as exc:
+        return _gateway_error_response(exc)
+    return jsonify(payload), 200
+
+
+@market_intelligence_bp.get("/market-intelligence/quotes/compare")
+@require_policy(can_use_market_intelligence)
+def list_market_intelligence_quote_compare():
+    """operationId: listMarketIntelligenceQuoteCompareV1."""
+    try:
+        payload = _service().list_quotes_compare(
+            instruments=request.args.get("instruments"),
+            granularity=request.args.get("granularity"),
+            currency=request.args.get("currency"),
+            fx_kind=request.args.get("fx_kind"),
+            date_from=request.args.get("date_from"),
+            date_to=request.args.get("date_to"),
+        )
+    except MarketDataNotFoundError as exc:
+        return jsonify({"detail": str(exc), "code": "not_found"}), 404
+    except ValueError as exc:
+        return jsonify({"detail": str(exc), "code": "unprocessable"}), 422
+    except MarketDataGatewayError as exc:
+        return _gateway_error_response(exc)
+    return jsonify(payload), 200
+
+
 @market_intelligence_bp.get("/market-intelligence/monthly-averages")
 @require_policy(can_use_market_intelligence)
 def list_market_intelligence_monthly_averages():

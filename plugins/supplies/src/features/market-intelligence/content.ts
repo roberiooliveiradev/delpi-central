@@ -1,27 +1,28 @@
-/** PT-BR copy for the market intelligence page (PROC-0076 R3). */
+/** PT-BR copy for the market intelligence page (PROC-0076 R4). */
 
 export const MARKET_INTELLIGENCE_CONTENT = {
   title: "Inteligência de Mercado",
   eyebrow: "Portal Suprimentos",
   description:
     "Indicadores históricos de mercado de fontes autorizadas — " +
-    "preços industriais (IBGE), importações (Comex Stat) e câmbio " +
-    "oficial (PTAX). Cada perspectiva mostra somente seus próprios " +
-    "indicadores, unidades e metodologia.",
+    "metais, câmbio oficial (PTAX) e indicadores industriais " +
+    "(IBGE/Comex). Cada perspectiva mostra somente seus próprios " +
+    "instrumentos, unidades e metodologia.",
   backToHome: "Início",
   reloadLabel: "Atualizar",
 
   perspectives: {
     switcherAriaLabel: "Perspectiva de dados",
-    ipp: "Preços industriais",
-    comex: "Importações",
+    metals: "Metais",
     fx: "Câmbio",
-    ippHint:
-      "Índice de Preços ao Produtor (IPP) do IBGE — Metalurgia. " +
-      "Índice/variação, não cotação de metal.",
-    comexHint:
-      "Importações oficiais por NCM homologada — valor FOB médio " +
-      "em US$/t. Não é cotação internacional de metal.",
+    indicators: "Indicadores",
+    metalsHint:
+      "Cotações históricas dos seis metais industriais do catálogo, " +
+      "em unidade nativa (US$/t). Somente fontes com direitos de " +
+      "exibição homologados exibem valores.",
+    indicatorsHint:
+      "IPP do IBGE (Metalurgia) e importações Comex Stat por NCM " +
+      "homologada — índices e valores médios, nunca cotação de metal.",
     fxHint: "Cotação PTAX de fechamento divulgada pelo Banco Central.",
   },
 
@@ -34,9 +35,13 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     toLabel: "Até",
     fxKindSell: "Venda (fechamento)",
     fxKindBuy: "Compra (fechamento)",
-    granularityDay: "Diário",
-    granularityMonth: "Mensal",
-    granularityYear: "Anual",
+    granularityDay: "Dia",
+    granularityWeek: "Semana",
+    granularityMonth: "Mês",
+    granularityYear: "Ano",
+    indicatorLabel: "Indicador",
+    indicatorIpp: "IPP (IBGE)",
+    indicatorComex: "Comex (NCM)",
     seriesLabel: "Série",
     ncmLabel: "NCM",
   },
@@ -46,6 +51,10 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     latestValueHint:
       "Observação mais recente dentro do período filtrado, na unidade " +
       "nativa da série.",
+    latestReferenceTitle: "Última referência",
+    latestReferenceHint:
+      "Observação mais recente do instrumento no período filtrado, " +
+      "na unidade nativa da série.",
     latestRateTitle: "Última PTAX",
     latestRateHint:
       "Boletim de fechamento mais recente no período, divulgado pelo " +
@@ -88,6 +97,9 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     compareDisabledHint:
       "Comparação indisponível: as séries disponíveis têm unidades ou " +
       "granularidades incompatíveis (índice, %, US$/t, R$/US$).",
+    compareNeedTwoSeries:
+      "Comparação indisponível: selecione pelo menos dois instrumentos " +
+      "com dados autorizados e unidade compatível.",
     loading: "Carregando série…",
     emptyTitle: "Sem dados no período",
     emptyMessage:
@@ -194,6 +206,33 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     fxKindSelectorLabel: "Tipo de boletim",
     fxPeriodColumn: "Período",
     fxValueColumn: "PTAX (R$/US$)",
+  },
+
+  metals: {
+    sectionTitle: "Histórico de metais",
+    sectionHint:
+      "Instrumentos industriais do catálogo homologado. Selecione um " +
+      "ou mais metais — a seleção prepara a visualização e a " +
+      "comparação, mas nunca concede acesso a cotações protegidas.",
+    cardsLabel: "Instrumentos",
+    pendingLabel: "Fonte pendente",
+    selectedLabel: "Selecionado",
+    pendingSource:
+      "Aguardando observações de fonte homologada — os instrumentos " +
+      "selecionados existem no catálogo, mas a fonte ainda não tem " +
+      "direitos de exibição aprovados. Nenhum valor é exibido.",
+    emptySelectionTitle: "Selecione um ou mais metais",
+    emptySelectionMessage:
+      "Marque os instrumentos acima para montar o histórico. A " +
+      "seleção persiste na URL — o link restaura a mesma visão.",
+    periodColumn: "Período",
+    frequencyUnsupported:
+      "frequência ainda não suportada pela série selecionada",
+    unitNote: (unit: string) =>
+      `Valores em unidade nativa (${unit}) — nunca convertidos ` +
+      "implicitamente nem misturados com índices ou câmbio.",
+    subtitle: (labels: string[]) =>
+      `Instrumentos selecionados: ${labels.join(", ")}`,
   },
 
   states: {

@@ -99,7 +99,9 @@ export const SP_HELP = {
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas / Atrasos (recebimentos MP no período selecionado).",
   marketIntelligencePage:
-    "Indicadores históricos de mercado em três perspectivas exclusivas: Preços industriais (IPP do IBGE — Metalurgia), Importações (Comex Stat / MDIC por NCM homologada) e Câmbio (PTAX do Banco Central). A alternância acontece no topo, sem recarregar; cada perspectiva mostra somente seus filtros, KPIs, unidade e metodologia. Fonte e licença aparecem no rodapé do painel.",
+    "Indicadores históricos de mercado em três perspectivas exclusivas: Metais (seis instrumentos do catálogo, seleção múltipla, comparação entre séries compatíveis), Câmbio (PTAX do Banco Central) e Indicadores (IPP do IBGE — Metalurgia — e importações Comex Stat por NCM homologada). A alternância acontece no topo, sem recarregar; cada perspectiva mostra somente seus filtros, KPIs, unidade e metodologia. Fonte e licença aparecem no rodapé do painel.",
+  marketIntelligenceMetals:
+    "Cartões dos seis metais do catálogo homologado. A seleção é múltipla e prepara gráfico, tabela e comparação — mas nunca libera cotações: um metal sem fonte com direitos aprovados mostra «Fonte pendente» e nenhum valor. A comparação exige ao menos dois instrumentos com dados autorizados na mesma unidade.",
   marketIntelligenceInstrument:
     "Instrumento do catálogo licenciado: metais industriais (média mensal World Bank Pink Sheet, em USD por tonelada métrica) ou a série diária USD/BRL (PTAX). Metais e câmbio nunca são misturados na mesma série.",
   marketIntelligenceCurrency:

@@ -35,7 +35,7 @@
 | Granularidade `week` no contrato BFF | Kit tipa `"week"` (`types/chartGranularity.ts`); `MarketGranularity` no MFE = `"day"\|"month"\|"year"` (`api.ts`) | `TO_INVENTORY` — owner `supplies-api`/`external-data-api`; decisão de produto antes de implementar |
 | Tipo de boletim PTAX além de fechamento | Contrato atual: `ptax_closing_sell`/`ptax_closing_buy` | `TO_INVENTORY` — depende do producer BCB |
 | Comparação cross-perspectiva | Sem contrato de comparação homologado entre fontes | `TO_INVENTORY` — permanece desabilitado até metodologia |
-| Catálogo de metais selecionáveis | Produção: nenhum metal com `display_allowed` (LME quarentenado) | `TO_INVENTORY` — gate de direitos, não UI |
+| Catálogo de metais selecionáveis | Produção: nenhum metal com `display_allowed` (LME quarentenado); D-04 separa `selectable_in_ui` de `data_access_allowed` — cards selecionáveis sem valores | `IMPLEMENTADO` (R4) — gate de direitos preservado no BFF |
 
 ## 3. Tokens e tokens-adjacentes usados pelos componentes mapeados
 

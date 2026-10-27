@@ -1,10 +1,13 @@
-/** Filter state for the market intelligence page (PROC-0076 R3).
+/** Filter state for the market intelligence page (PROC-0076 R4).
 
-One active perspective at a time: ``view`` selects the source
-(IBGE IPP / Comex / PTAX), ``mode`` selects the analysis panel
-(chart/table). URL state is merged with catalog constraints —
-``day`` granularity only exists for FX, invalid combinations are
-normalized locally so the BFF never receives a guaranteed-422 request.
+One active perspective at a time: ``view`` selects the perspective
+(Metals / FX / Indicators), ``mode`` selects the analysis panel
+(chart/table/compare). URL state is merged with catalog constraints —
+``day|week`` only exist where a daily source exists (FX; metals once
+a homologated daily source ships), and ``compare`` only applies to
+the multi-instrument metals perspective. Invalid combinations are
+normalized locally so the BFF never receives a guaranteed-422
+request.
 */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -24,14 +27,34 @@ import {
 const DEFAULT_FX_KIND: MarketFxKind = "ptax_closing_sell";
 const DEFAULT_GRANULARITY: MarketGranularity = "month";
 const DEFAULT_MODE: MarketViewMode = "chart";
+const DEFAULT_INDICATOR: MarketIntelligenceUrlState["indicator"] = "ipp";
 
-/** Only FX has a daily series — IPP/Comex are monthly sources. */
+/** Only monthly sources reject ``day|week`` — IPP/Comex are monthly;
+ * the metals contract already accepts daily/weekly granularity
+ * (V006) and the FX series is daily. The UI still disables
+ * frequencies the catalog doesn't advertise, so an out-of-contract
+ * URL value reaches an honest BFF validation, not a silent rewrite. */
 function normalizeGranularity(
   view: MarketPerspective | "",
   granularity: MarketGranularity,
 ): MarketGranularity {
-  if (view !== "fx" && granularity === "day") return "month";
+  if (
+    view === "indicators" &&
+    (granularity === "day" || granularity === "week")
+  ) {
+    return "month";
+  }
   return granularity;
+}
+
+/** ``compare`` requires ≥2 compatible series — exclusive to the
+ * metals multi-instrument perspective. */
+function normalizeMode(
+  view: MarketPerspective | "",
+  mode: MarketViewMode,
+): MarketViewMode {
+  if (view !== "metals" && mode === "compare") return "chart";
+  return mode;
 }
 
 function isoDate(d: Date): string {
@@ -45,38 +68,41 @@ function defaultRange(): { from: string; to: string } {
   return { from: isoDate(from), to: isoDate(to) };
 }
 
+type FiltersState = Omit<MarketIntelligenceUrlState, "view"> & {
+  view: MarketPerspective | "";
+};
+
+function normalizeState(state: FiltersState): FiltersState {
+  return {
+    ...state,
+    mode: normalizeMode(state.view, state.mode),
+    granularity: normalizeGranularity(state.view, state.granularity),
+  };
+}
+
 export function useMarketIntelligenceFilters(
   defaultView: MarketPerspective,
 ) {
-  const initial = useMemo(() => {
+  const initial = useMemo<FiltersState>(() => {
     const fromUrl = readMarketIntelligenceFromUrl();
     const range = defaultRange();
-    const view = fromUrl.view ?? "";
-    const granularity = normalizeGranularity(
-      view,
-      fromUrl.granularity ?? DEFAULT_GRANULARITY,
-    );
-    return {
-      view,
+    return normalizeState({
+      view: fromUrl.view ?? "",
       mode: fromUrl.mode ?? DEFAULT_MODE,
-      granularity,
+      granularity: fromUrl.granularity ?? DEFAULT_GRANULARITY,
       fxKind: fromUrl.fxKind ?? DEFAULT_FX_KIND,
+      metals: fromUrl.metals ?? [],
+      indicator: fromUrl.indicator ?? DEFAULT_INDICATOR,
       ncm: fromUrl.ncm ?? "",
       ippSeries: fromUrl.ippSeries ?? "",
       from: fromUrl.from ?? range.from,
       to: fromUrl.to ?? range.to,
-    } satisfies Omit<MarketIntelligenceUrlState, "view"> & {
-      view: MarketPerspective | "";
-    };
+    });
   }, []);
 
-  const [state, setState] =
-    useState<Omit<MarketIntelligenceUrlState, "view"> & {
-      view: MarketPerspective | "";
-    }>(initial);
+  const [state, setState] = useState<FiltersState>(initial);
 
-  /** URL selection wins; otherwise the catalog-driven default view
-  (first perspective with usable observations). */
+  /** URL selection wins; otherwise the catalog-driven default view. */
   const effectiveState = useMemo<MarketIntelligenceUrlState>(
     () => ({
       ...state,
@@ -85,29 +111,20 @@ export function useMarketIntelligenceFilters(
         state.view || defaultView,
         state.granularity,
       ),
+      mode: normalizeMode(state.view || defaultView, state.mode),
     }),
     [state, defaultView],
   );
 
-  const patch = useCallback(
-    (
-      update: Partial<
-        Omit<MarketIntelligenceUrlState, "view"> & {
-          view: MarketPerspective | "";
-        }
-      >,
-    ) => {
-      setState((prev) => {
-        const next = { ...prev, ...update };
-        next.granularity = normalizeGranularity(
-          next.view || prev.view || "fx",
-          next.granularity,
-        );
-        return next;
+  const patch = useCallback((update: Partial<FiltersState>) => {
+    setState((prev) => {
+      const merged = { ...prev, ...update };
+      return normalizeState({
+        ...merged,
+        view: merged.view || prev.view,
       });
-    },
-    [],
-  );
+    });
+  }, []);
 
   // URL persistence (F5 + shareable links).
   useEffect(() => {
@@ -119,24 +136,37 @@ export function useMarketIntelligenceFilters(
     if (typeof window === "undefined") return;
     const onPopState = () => {
       const fromUrl = readMarketIntelligenceFromUrl();
-      setState((prev) => ({
-        ...prev,
-        view: fromUrl.view ?? prev.view,
-        mode: fromUrl.mode ?? prev.mode,
-        granularity: normalizeGranularity(
-          fromUrl.view ?? prev.view ?? "fx",
-          fromUrl.granularity ?? prev.granularity,
-        ),
-        fxKind: fromUrl.fxKind ?? prev.fxKind,
-        ncm: fromUrl.ncm ?? prev.ncm,
-        ippSeries: fromUrl.ippSeries ?? prev.ippSeries,
-        from: fromUrl.from ?? prev.from,
-        to: fromUrl.to ?? prev.to,
-      }));
+      setState((prev) =>
+        normalizeState({
+          ...prev,
+          view: fromUrl.view ?? prev.view,
+          mode: fromUrl.mode ?? prev.mode,
+          granularity: fromUrl.granularity ?? prev.granularity,
+          fxKind: fromUrl.fxKind ?? prev.fxKind,
+          metals: fromUrl.metals ?? prev.metals,
+          indicator: fromUrl.indicator ?? prev.indicator,
+          ncm: fromUrl.ncm ?? prev.ncm,
+          ippSeries: fromUrl.ippSeries ?? prev.ippSeries,
+          from: fromUrl.from ?? prev.from,
+          to: fromUrl.to ?? prev.to,
+        }),
+      );
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  const toggleMetal = useCallback(
+    (code: string) => {
+      setState((prev) => ({
+        ...prev,
+        metals: prev.metals.includes(code)
+          ? prev.metals.filter((entry) => entry !== code)
+          : [...prev.metals, code],
+      }));
+    },
+    [],
+  );
 
   return {
     state: effectiveState,
@@ -145,8 +175,12 @@ export function useMarketIntelligenceFilters(
     setGranularity: (granularity: MarketGranularity) =>
       patch({ granularity }),
     setFxKind: (fxKind: MarketFxKind) => patch({ fxKind }),
+    setIndicator: (
+      indicator: MarketIntelligenceUrlState["indicator"],
+    ) => patch({ indicator }),
     setNcm: (ncm: string) => patch({ ncm }),
     setIppSeries: (ippSeries: string) => patch({ ippSeries }),
+    toggleMetal,
     setFrom: (from: string) => patch({ from }),
     setTo: (to: string) => patch({ to }),
   };
