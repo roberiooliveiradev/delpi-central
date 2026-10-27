@@ -306,6 +306,41 @@ def return_checklist_version_to_draft(
     )
 
 
+@router.delete(
+    "/{template_id}/versions/{version}",
+    operation_id="discard_checklist_template_version",
+)
+def discard_checklist_template_version(
+    request: Request,
+    template_id: str,
+    version: int,
+    expected_revision: int = Query(ge=0),
+):
+    """Descarte governado de versão DRAFT (GATE-017).
+
+    Remove versão + itens em transação única; exige OCC
+    `expected_revision`. Somente DRAFT é descartável — PUBLISHED/
+    INACTIVE/REVIEW são rejeitadas (`version_not_draft`).
+    """
+    user = authorized_admin(request)
+    try:
+        discarded = _repository().discard_draft_version(
+            template_id,
+            version,
+            expected_revision=expected_revision,
+            actor=actor_subject(user),
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(
+            exc, "discard_checklist_template_version"
+        )
+    return ok(
+        discarded,
+        message="Versão rascunho descartada.",
+        operation_id="discard_checklist_template_version",
+    )
+
+
 @router.put(
     "/{template_id}/documents/{item_key}/requirement",
     operation_id="upsert_document_requirement",

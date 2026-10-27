@@ -37,6 +37,7 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     VersionNotFound,
     VersionNotInReview,
     VersionNotPublished,
+    VersionReferenced,
     WindowCoversOpenCompetence,
 )
 from controllership_finance_app.infrastructure.persistence.plugins_db import (
@@ -464,6 +465,100 @@ class ClosingChecklistRepository:
                         },
                     )
         return row
+
+    def discard_draft_version(
+        self,
+        template_id: str,
+        version: int,
+        *,
+        expected_revision: int,
+        actor: str,
+    ) -> dict[str, Any]:
+        """Descarte governado de DRAFT (GATE-017): remove a versão e seus
+        itens dentro de uma transação, com lock no template, OCC
+        `expected_revision` e evento `VERSION_DISCARDED`.
+
+        Somente `DRAFT` é descartável — PUBLISHED/INACTIVE são histórico
+        imutável; REVIEW deve voltar a DRAFT pela rota existente.
+        """
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT 1 FROM {_q('checklist_template')}
+                         WHERE template_id = %s FOR UPDATE
+                        """,
+                        (template_id,),
+                    )
+                    if cur.fetchone() is None:
+                        raise TemplateNotFound(
+                            "Template de checklist não encontrado."
+                        )
+                    current = self._version_status(cur, template_id, version)
+                    if current is None:
+                        raise VersionNotFound(
+                            "Versão de checklist não encontrada."
+                        )
+                    if current["status"] != "DRAFT":
+                        raise VersionNotDraft(
+                            "Somente versões DRAFT podem ser descartadas."
+                        )
+                    version_id = current["version_id"]
+                    cur.execute(
+                        f"""
+                        SELECT 1 FROM {_q('monthly_competence')}
+                         WHERE template_version_id = %s LIMIT 1
+                        """,
+                        (version_id,),
+                    )
+                    if cur.fetchone() is not None:
+                        raise VersionReferenced(
+                            "Versão vinculada a competência não pode ser "
+                            "descartada."
+                        )
+                    cur.execute(
+                        f"DELETE FROM {_q('checklist_template_item')}"
+                        " WHERE version_id = %s",
+                        (version_id,),
+                    )
+                    cur.execute(
+                        f"""
+                        DELETE FROM {_q('checklist_template_version')}
+                         WHERE template_id = %s AND version = %s
+                           AND status = 'DRAFT' AND revision = %s
+                        """,
+                        (template_id, version, expected_revision),
+                    )
+                    if cur.rowcount == 0:
+                        current = self._version_status(
+                            cur, template_id, version
+                        )
+                        if current is not None and current["status"] != "DRAFT":
+                            raise VersionNotDraft(
+                                "Somente versões DRAFT podem ser "
+                                "descartadas."
+                            )
+                        raise StaleRevision(
+                            "Revisão desatualizada — recarregue a versão."
+                        )
+                    self._audit(
+                        cur,
+                        entity_type="checklist_template_version",
+                        entity_id=version_id,
+                        event_type="VERSION_DISCARDED",
+                        actor=actor,
+                        detail={
+                            "template_id": template_id,
+                            "version": version,
+                            "revision": expected_revision,
+                        },
+                    )
+        return {
+            "version_id": str(version_id),
+            "version": version,
+            "status": "DISCARDED",
+        }
 
     def publish_version(
         self,

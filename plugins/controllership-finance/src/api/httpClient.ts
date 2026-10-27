@@ -159,6 +159,23 @@ export async function httpPut<T>(
   return response.json() as Promise<T>;
 }
 
+export async function httpDelete<T>(
+  url: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: buildHeaders(),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 
 /** POST multipart — o browser define o boundary do Content-Type. */
 export async function httpPostFormData<T>(

@@ -41,6 +41,11 @@ class VersionNotPublished(ChecklistDomainError):
     status = 409
 
 
+class VersionReferenced(ChecklistDomainError):
+    code = "version_referenced"
+    status = 409
+
+
 class StaleRevision(ChecklistDomainError):
     code = "stale_revision"
     status = 409

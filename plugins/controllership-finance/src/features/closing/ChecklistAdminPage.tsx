@@ -25,6 +25,7 @@ import { ApiError } from "../../api/httpClient";
 import { CatalogSaveError } from "./documentCatalog";
 import {
   createTemplateDraft,
+  discardTemplateVersion,
   getTemplateVersion,
   inactivateTemplateVersion,
   listChecklistTemplates,
@@ -242,6 +243,8 @@ export function ChecklistAdminPage() {
   const [returnTarget, setReturnTarget] =
     useState<ChecklistTemplateVersion | null>(null);
   const [returnReason, setReturnReason] = useState("");
+  const [discardTarget, setDiscardTarget] =
+    useState<ChecklistTemplateVersion | null>(null);
   const [eventsTemplate, setEventsTemplate] =
     useState<ChecklistTemplate | null>(null);
   const [events, setEvents] = useState<TemplateAuditEvent[] | null>(null);
@@ -427,6 +430,23 @@ export function ChecklistAdminPage() {
     );
   }, [template, inactivateTarget, run]);
 
+  const confirmDiscard = useCallback(() => {
+    if (!template || !discardTarget) return;
+    run(
+      () =>
+        discardTemplateVersion(
+          template.template_id,
+          discardTarget.version,
+          discardTarget.revision,
+        ),
+      () => {
+        setDiscardTarget(null);
+        setDetail(null);
+        setEditing(null);
+      },
+    );
+  }, [template, discardTarget, run]);
+
   const versionColumns = useMemo<
     DataTableColumn<ChecklistTemplateVersion>[]
   >(
@@ -488,13 +508,22 @@ export function ChecklistAdminPage() {
               Itens
             </ActionButton>
             {row.status === "DRAFT" ? (
-              <ActionButton
-                variant="ghost"
-                disabled={busy}
-                onClick={() => confirmSubmitReview(row)}
-              >
-                Enviar para revisão
-              </ActionButton>
+              <>
+                <ActionButton
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => confirmSubmitReview(row)}
+                >
+                  Enviar para revisão
+                </ActionButton>
+                <ActionButton
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => setDiscardTarget(row)}
+                >
+                  Descartar
+                </ActionButton>
+              </>
             ) : null}
             {row.status === "REVIEW" ? (
               <>
@@ -903,6 +932,35 @@ export function ChecklistAdminPage() {
             confirmBusyLabel="Inativando…"
             onConfirm={confirmInactivate}
             onCancel={() => setInactivateTarget(null)}
+            classNames={cfConfirmModalClassNames}
+          />
+        </CfDialog>
+      ) : null}
+
+      {discardTarget ? (
+        <CfDialog
+          open
+          title={`Descartar v${discardTarget.version}`}
+          onClose={() => !busy && setDiscardTarget(null)}
+          closeAriaLabel="Fechar descarte"
+        >
+          <ConfirmModalPanel
+            message={
+              <>
+                Descartar a versão rascunho v{discardTarget.version} e
+                seus {discardTarget.item_count} itens? A ação remove o
+                rascunho de forma definitiva e registra o descarte no
+                histórico de auditoria. Versões publicadas não podem ser
+                descartadas.
+              </>
+            }
+            confirmLabel="Descartar rascunho"
+            cancelLabel="Voltar"
+            variant="danger"
+            confirmBusy={busy}
+            confirmBusyLabel="Descartando…"
+            onConfirm={confirmDiscard}
+            onCancel={() => setDiscardTarget(null)}
             classNames={cfConfirmModalClassNames}
           />
         </CfDialog>

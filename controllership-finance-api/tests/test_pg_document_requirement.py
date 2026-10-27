@@ -564,3 +564,108 @@ class TestLegacyWritersD3:
         repo.open_competence(open_p, actor=VIEWER)
         with pytest.raises(de.WindowCoversOpenCompetence):
             repo.inactivate_version(tid, 1, actor=ADMIN)
+
+
+class TestDiscardDraftVersion:
+    """GATE-017 — descarte governado de DRAFT (sem mecanismo anterior)."""
+
+    def _draft(self, repo, tid, items=None):
+        draft = repo.create_draft_version(tid, actor=ADMIN)
+        if items is not None:
+            repo.update_draft_items(
+                tid,
+                draft["version"],
+                expected_revision=draft["revision"],
+                items=items,
+                actor=ADMIN,
+            )
+            draft["revision"] += 1
+        return draft
+
+    def test_discard_removes_version_items_and_audits(
+        self, migrated, repo
+    ):
+        tid = _new_template()
+        draft = self._draft(repo, tid, items=[_item("DOCX")])
+        result = repo.discard_draft_version(
+            tid, draft["version"], expected_revision=2, actor=ADMIN
+        )
+        assert result["status"] == "DISCARDED"
+        versions = repo.list_versions(tid)
+        assert versions == []
+        with plugins_db.plugins_db_connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                "SELECT count(*) FROM"
+                " controllership_finance.checklist_template_item i"
+                " JOIN controllership_finance.checklist_template_version v"
+                "   ON v.version_id = i.version_id"
+                " WHERE v.template_id = %s",
+                (tid,),
+            )
+            assert cur.fetchone()[0] == 0
+            cur.execute(
+                "SELECT event_type FROM"
+                " controllership_finance.closing_audit_event"
+                " WHERE entity_id = %s ORDER BY created_at",
+                (result["version_id"],),
+            )
+            types = [r[0] for r in cur.fetchall()]
+        assert "VERSION_DISCARDED" in types
+
+    def test_discard_unblocks_document_operation(
+        self, migrated, repo
+    ):
+        """Após o descarte, o comando documental opera com
+        base_version=0 — fluxo do PO desbloqueado."""
+        tid = _new_template()
+        draft = self._draft(repo, tid)
+        repo.discard_draft_version(
+            tid, draft["version"], expected_revision=1, actor=ADMIN
+        )
+        result = _apply(
+            repo, tid, "DOCX", period=_period(80), item=_item("DOCX")
+        )
+        assert result["replayed"] is False
+        assert [v["version"]
+                for v in result["published_versions"]] == [1]
+
+    def test_discard_published_rejected(self, migrated, repo):
+        tid = _new_template()
+        _apply(
+            repo, tid, "DOCX", period=_period(81), item=_item("DOCX")
+        )
+        with pytest.raises(de.VersionNotDraft):
+            repo.discard_draft_version(
+                tid, 1, expected_revision=1, actor=ADMIN
+            )
+        assert len(repo.list_versions(tid)) == 1
+
+    def test_discard_review_rejected(self, migrated, repo):
+        tid = _new_template()
+        draft = self._draft(repo, tid, items=[_item("DOCX")])
+        repo.submit_version_for_review(
+            tid, draft["version"], actor=ADMIN
+        )
+        with pytest.raises(de.VersionNotDraft):
+            repo.discard_draft_version(
+                tid, draft["version"], expected_revision=2, actor=ADMIN
+            )
+
+    def test_discard_stale_revision(self, migrated, repo):
+        tid = _new_template()
+        draft = self._draft(repo, tid, items=[_item("DOCX")])
+        with pytest.raises(de.StaleRevision):
+            repo.discard_draft_version(
+                tid,
+                draft["version"],
+                expected_revision=99,
+                actor=ADMIN,
+            )
+        assert len(repo.list_versions(tid)) == 1
+
+    def test_discard_missing_version(self, migrated, repo):
+        tid = _new_template()
+        with pytest.raises(de.VersionNotFound):
+            repo.discard_draft_version(
+                tid, 9, expected_revision=1, actor=ADMIN
+            )

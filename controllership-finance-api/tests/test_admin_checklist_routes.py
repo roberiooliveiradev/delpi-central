@@ -462,3 +462,66 @@ def test_requirement_domain_error_mapped(_auth_pipeline, repo):
         response.json()["data"]["error"]["code"]
         == "window_covers_open_competence"
     )
+
+
+# --- discard draft (GATE-017) ------------------------------------------------
+
+DISCARD_URL = (
+    f"/admin/checklist-templates/{TEMPLATE_ID}/versions/1"
+    "?expected_revision=1"
+)
+
+
+def test_discard_draft_happy_path(_auth_pipeline, repo):
+    repo.discard_draft_version.return_value = {
+        "version_id": "v",
+        "version": 1,
+        "status": "DISCARDED",
+    }
+    response = _client().delete(DISCARD_URL, headers=_headers())
+    assert response.status_code == 200
+    assert response.json()["data"]["status"] == "DISCARDED"
+    kwargs = repo.discard_draft_version.call_args
+    assert kwargs.kwargs["expected_revision"] == 1
+
+
+def test_discard_requires_expected_revision(_auth_pipeline, repo):
+    response = _client().delete(
+        f"/admin/checklist-templates/{TEMPLATE_ID}/versions/1",
+        headers=_headers(),
+    )
+    assert response.status_code == 422
+    repo.discard_draft_version.assert_not_called()
+
+
+def test_discard_access_only_forbidden(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    response = _client().delete(DISCARD_URL, headers=_headers())
+    assert response.status_code == 403
+    repo.discard_draft_version.assert_not_called()
+
+
+def test_discard_no_token_unauthorized(repo):
+    response = _client().delete(DISCARD_URL)
+    assert response.status_code == 401
+    repo.discard_draft_version.assert_not_called()
+
+
+def test_discard_published_rejected(_auth_pipeline, repo):
+    repo.discard_draft_version.side_effect = de.VersionNotDraft(
+        "Somente versões DRAFT podem ser descartadas."
+    )
+    response = _client().delete(DISCARD_URL, headers=_headers())
+    assert response.status_code == 409
+    assert (
+        response.json()["data"]["error"]["code"] == "version_not_draft"
+    )
+
+
+def test_discard_stale_revision_conflict(_auth_pipeline, repo):
+    repo.discard_draft_version.side_effect = de.StaleRevision("stale")
+    response = _client().delete(DISCARD_URL, headers=_headers())
+    assert response.status_code == 409
+    assert (
+        response.json()["data"]["error"]["code"] == "stale_revision"
+    )

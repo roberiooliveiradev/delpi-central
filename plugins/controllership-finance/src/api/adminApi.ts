@@ -1,5 +1,11 @@
 /** Cliente da BFF — administração P6 do checklist mestre (MANAGE). */
-import { cfApiUrl, httpGet, httpPost, httpPut } from "./httpClient";
+import {
+  cfApiUrl,
+  httpDelete,
+  httpGet,
+  httpPost,
+  httpPut,
+} from "./httpClient";
 import type {
   CompetenceItemBranchScope,
   CompetenceItemOrigin,
@@ -183,6 +189,29 @@ export function publishTemplateVersion(
   return httpPost<Envelope<ChecklistTemplateVersion>>(
     cfApiUrl(`${BASE}/${templateId}/versions/${version}/publish`),
     payload,
+  ).then((envelope) => {
+    if (!envelope?.data) throw new Error("Resposta vazia da operação.");
+    return envelope.data;
+  });
+}
+
+export type DiscardedVersion = {
+  version_id: string;
+  version: number;
+  status: "DISCARDED";
+};
+
+/** Descarte governado de versão DRAFT — OCC via `expected_revision`. */
+export function discardTemplateVersion(
+  templateId: string,
+  version: number,
+  expectedRevision: number,
+): Promise<DiscardedVersion> {
+  return httpDelete<Envelope<DiscardedVersion>>(
+    cfApiUrl(
+      `${BASE}/${templateId}/versions/${version}` +
+        `?expected_revision=${expectedRevision}`,
+    ),
   ).then((envelope) => {
     if (!envelope?.data) throw new Error("Resposta vazia da operação.");
     return envelope.data;
