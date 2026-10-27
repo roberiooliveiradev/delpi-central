@@ -195,3 +195,14 @@ correto — os contratos como especificados é que não passam.
 `DEPLOY=NO` `INDEPENDENT_REVIEW=PENDING` `PRODUCTION_CODE_MODIFIED=NO`
 `PRODUCTION_INSTRUCTIONS_MODIFIED=NO` `MODEL_CHANGED=NO`
 `PRODUCTION_QUERIES=0`
+
+
+## 12. Independent coordination review — 2026-10-27
+
+**INDEPENDENT VERDICT=REWORK for CH-1 and CH-2 production candidacy; EXPERIMENT=ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_AUTHORIZATION=NO.** GitHub static review at HEAD `b8800d1e02a75b6add779f1cc1069e076d33cef7`; neither local 3B model experiment nor true denied-READ permission independently re-executed. Frozen gates control: CH-1 A1 improved READ recall 0.622→0.978 and write/prepare intent 6/6, but catalog accuracy 0.5→0.0 and injection→none 2/3, therefore **FAIL**, not implementation ready. A2 schema remap validity does not establish semantic backward compatibility for all existing class consumers. Important: an injected request being routed to governed READ rather than WRITE does not automatically prove safety; it is an unjustified owner reach and untrusted input must remain data.
+
+**CH-2** field was present in experiment G1 instruction but absent in all 36 quantity outputs, with G1 goal-class accuracy 0.641 vs G0 0.718. This disproves the tested *minimal field declaration* on frozen local model/config/corpus only; it does not establish that a new dedicated LLM stage, few-shot examples or model replacement is necessary. The existing `parse_answer_requirements` validation is an available equivalent; any future solution must pass reuse and abstraction gates and demonstrate added model calls provide net business benefit.
+
+**Combined:** C1 was run despite failed isolated gates and explicitly labeled exploratory; C0 9/32 vs C1 10/32 is not a meaningful Business Outcome gain, with input tokens +34% and incomplete per-stage trace. `SECURITY_TEST_COVERAGE=PARTIAL`; no real denied-READ, no material PREPARE/ACT exercised. Never infer productive authorization from unchanged downstream gates in a patched harness. The report's `EXECUTION_DRIFT` should read `DISCLOSED_NON_GATE_ELIGIBLE_COMPOSITION` (rather than implying full gate conformance). No production code or active instruction updates authorized.
+
+**Coordination decision:** close the current bounded CH-1/CH-2 verification as **NO_PROMOTION** and stop serial prompt-tuning loops. Do not automatically launch CH-1-R/CH-2-R or add new stages. Keep two documented residual candidates, plus independently owned product-search vocabulary gap; prioritize an explicit architecture/product decision on acceptable local-model quality, routing semantics, and tradeoff with model capability. If future verification is authorized, require a single pre-registered, capped decision experiment with independent negative/catalog/identity holdout, cost and genuine Outcome metrics. In the meantime preserve baseline and ledger phase.
