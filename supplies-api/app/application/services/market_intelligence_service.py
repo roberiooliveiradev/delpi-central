@@ -10,6 +10,7 @@ shell — every rule lives here.
 from __future__ import annotations
 
 import calendar
+import re
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
@@ -59,6 +60,7 @@ MAX_MISSING_PERIODS = 24
 
 MAX_RANGE_DAYS = 3660
 MAX_IMPORT_NCMS = 20
+_IMPORT_NCM_RE = re.compile(r"^[0-9]{8}$")
 DEFAULT_PAGE_SIZE = 24
 MAX_PAGE_SIZE = 120
 MAX_QUOTE_INSTRUMENTS = 8
@@ -238,6 +240,12 @@ class MarketIntelligenceService:
         if len(codes) > MAX_IMPORT_NCMS:
             raise ValueError(
                 f"ncm selection exceeds the {MAX_IMPORT_NCMS}-NCM limit"
+            )
+        malformed = [c for c in codes if not _IMPORT_NCM_RE.match(c)]
+        if malformed:
+            raise ValueError(
+                "ncm codes must be 8-digit values — malformed: "
+                + ", ".join(malformed)
             )
         resolved: list[dict[str, Any]] = []
         unresolved: list[str] = []
