@@ -40,6 +40,12 @@ def _requests_transport(url: str, *, headers: dict, timeout: float, params=None)
     return requests.get(url, headers=headers, timeout=timeout, params=params)
 
 
+def _requests_put_transport(
+    url: str, *, headers: dict, timeout: float, json_body=None
+) -> Any:
+    return requests.put(url, headers=headers, timeout=timeout, json=json_body)
+
+
 class MarketDataGatewayError(RuntimeError):
     def __init__(
         self,
@@ -76,6 +82,7 @@ class MarketDataGateway:
         base_url: str | None = None,
         timeout_seconds: float | None = None,
         transport: Transport | None = None,
+        put_transport: Any | None = None,
         token_provider: Any | None = None,
     ) -> None:
         self._base_url = (
@@ -89,6 +96,7 @@ class MarketDataGateway:
             )
         )
         self._transport = transport or _requests_transport
+        self._put_transport = put_transport or _requests_put_transport
         self._token_provider = token_provider
 
     # --- public surface ------------------------------------------------------
@@ -173,6 +181,12 @@ class MarketDataGateway:
             },
         )
 
+    def put_ncm_allowlist(
+        self, ncm_code: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Governance-synced allowlist write — single attempt, no retry."""
+        return self._put(f"/v1/market-data/comex/ncm-allowlist/{ncm_code}", body)
+
     # --- internals -----------------------------------------------------------
 
     def _paged(self, path: str, params: dict[str, Any]) -> list[dict[str, Any]]:
@@ -239,6 +253,48 @@ class MarketDataGateway:
                 code="upstream_unavailable",
             ) from exc
 
+        return self._checked_payload(response)
+
+    def _put(self, path: str, body: dict[str, Any]) -> Any:
+        url = urljoin(self._base_url + "/", path.lstrip("/"))
+        headers = {
+            "Accept": "application/json",
+            SERVICE_AUTHORIZATION_HEADER: build_service_authorization(
+                self._service_token()
+            ),
+        }
+        try:
+            from flask import g, has_request_context
+
+            if has_request_context():
+                request_id = getattr(g, "request_id", None)
+                if request_id:
+                    headers["X-Correlation-Id"] = str(request_id)
+        except ImportError:
+            pass
+
+        try:
+            response = self._put_transport(
+                url, headers=headers, timeout=self._timeout, json_body=body
+            )
+        except requests.Timeout as exc:
+            logger.warning("market_data_timeout path=%s", path)
+            raise MarketDataGatewayError(
+                "external-data-api timeout",
+                status_code=504,
+                code="upstream_timeout",
+            ) from exc
+        except requests.RequestException as exc:
+            logger.warning("market_data_unreachable path=%s", path)
+            raise MarketDataGatewayError(
+                "external-data-api unreachable",
+                status_code=503,
+                code="upstream_unavailable",
+            ) from exc
+
+        return self._checked_payload(response)
+
+    def _checked_payload(self, response) -> Any:
         status = response.status_code
         if status == 429:
             retry_after = None

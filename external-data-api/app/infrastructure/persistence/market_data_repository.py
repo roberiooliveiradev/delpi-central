@@ -262,6 +262,46 @@ class MarketDataRepository:
             )
             return cur.fetchone()
 
+    def upsert_ncm_allowlist(
+        self,
+        *,
+        ncm_code: str,
+        ncm_version: str | None,
+        description: str | None,
+        family_code: str | None,
+        approved_by: str | None,
+        approved_at,
+        active: bool,
+    ) -> dict[str, Any]:
+        """Idempotent upsert — the only write path into the allowlist."""
+        with self._conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {self._t('comex_ncm_allowlist')} (
+                    ncm_code, ncm_version, description, family_code,
+                    approved_by, approved_at, active
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (ncm_code) DO UPDATE SET
+                    ncm_version = EXCLUDED.ncm_version,
+                    description = EXCLUDED.description,
+                    family_code = EXCLUDED.family_code,
+                    approved_by = EXCLUDED.approved_by,
+                    approved_at = EXCLUDED.approved_at,
+                    active = EXCLUDED.active
+                RETURNING *
+                """,
+                (
+                    ncm_code,
+                    ncm_version,
+                    description,
+                    family_code,
+                    approved_by,
+                    approved_at,
+                    active,
+                ),
+            )
+            return cur.fetchone()
+
     def list_comex_observations(
         self,
         *,

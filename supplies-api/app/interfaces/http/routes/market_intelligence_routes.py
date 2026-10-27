@@ -7,15 +7,24 @@ technical failures and never surface as a user-facing 403.
 
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 
 from app.application.security.supplies_permissions import (
     can_use_market_intelligence,
+)
+from app.application.services.comex_analysis_service import (
+    ComexAnalysisService,
+    ComexConflictError,
+    ComexForbiddenError,
+    ComexNotFoundError,
+    ComexValidationError,
 )
 from app.application.services.market_intelligence_service import (
     MarketDataNotFoundError,
     MarketIntelligenceService,
 )
+from app.domain.comex_analysis.lifecycle import GovernanceTransitionError
+from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGatewayError
 from app.infrastructure.gateways.market_data_gateway import (
     MarketDataGatewayError,
 )
@@ -269,3 +278,230 @@ def list_market_intelligence_monthly_averages():
     except MarketDataGatewayError as exc:
         return _gateway_error_response(exc)
     return jsonify(payload), 200
+
+
+# ---------------------------------------------------------------------------
+# PROC-0076.COMEX.S2/S3 — configurable Comex analysis
+# ---------------------------------------------------------------------------
+
+
+def _comex_error_response(exc):
+    if isinstance(exc, ComexValidationError):
+        return jsonify({"detail": str(exc), "code": exc.code}), 422
+    if isinstance(exc, ComexNotFoundError):
+        return jsonify({"detail": str(exc), "code": "not_found"}), 404
+    if isinstance(exc, ComexForbiddenError):
+        return jsonify({"detail": str(exc), "code": "forbidden"}), 403
+    if isinstance(exc, (ComexConflictError, GovernanceTransitionError)):
+        code = getattr(exc, "code", "conflict")
+        return jsonify({"detail": str(exc), "code": code}), 409
+    return None
+
+
+def _delpi_error_response(exc: DelpiApiGatewayError):
+    status = exc.status_code or 502
+    # Upstream 401/403/5xx are technical faults — never a user permission
+    # fault; only upstream 4xx business rejections surface to the caller.
+    if status in (401, 403) or status >= 500:
+        return (
+            jsonify(
+                {
+                    "detail": "Product catalog unavailable",
+                    "code": "catalog_unavailable",
+                }
+            ),
+            503,
+        )
+    if status == 429:
+        return (
+            jsonify({"detail": "Product catalog rate limited", "code": "rate_limited"}),
+            429,
+        )
+    return (
+        jsonify({"detail": "Product catalog request rejected", "code": "bad_request"}),
+        400,
+    )
+
+
+@market_intelligence_bp.get("/market-intelligence/comex/products/search")
+@require_policy(can_use_market_intelligence)
+def search_comex_products():
+    """operationId: searchComexProductsV1."""
+    try:
+        payload = _comex_service().search_products(
+            user=g.current_user, args=request.args
+        )
+    except DelpiApiGatewayError as exc:
+        return _delpi_error_response(exc)
+    return jsonify(payload), 200
+
+
+@market_intelligence_bp.get("/market-intelligence/comex/ncm-governance")
+@require_policy(can_use_market_intelligence)
+def list_comex_ncm_governance():
+    """operationId: listComexNcmGovernanceV1."""
+    try:
+        items = _comex_service().list_governance(
+            status=request.args.get("status")
+        )
+    except (ComexValidationError,) as exc:
+        return jsonify({"detail": str(exc), "code": exc.code}), 422
+    return jsonify({"items": items}), 200
+
+
+@market_intelligence_bp.get(
+    "/market-intelligence/comex/ncm-governance/<governance_id>"
+)
+@require_policy(can_use_market_intelligence)
+def get_comex_ncm_governance(governance_id):
+    """operationId: getComexNcmGovernanceV1."""
+    try:
+        payload = _comex_service().get_governance(governance_id)
+    except (
+        ComexValidationError,
+        ComexNotFoundError,
+        ComexForbiddenError,
+        ComexConflictError,
+        GovernanceTransitionError,
+    ) as exc:
+        return _comex_error_response(exc)
+    return jsonify(payload), 200
+
+
+@market_intelligence_bp.post("/market-intelligence/comex/ncm-governance")
+@require_policy(can_use_market_intelligence)
+def create_comex_ncm_governance():
+    """operationId: createComexNcmGovernanceV1."""
+    body = request.get_json(silent=True) or {}
+    try:
+        payload = _comex_service().request_ncm(
+            user=g.current_user,
+            ncm_code=body.get("ncm_code"),
+            description=body.get("description"),
+            ncm_version=body.get("ncm_version"),
+            family_code=body.get("family_code"),
+            product_codes=body.get("product_codes"),
+            notes=body.get("notes"),
+            initial_status=body.get("initial_status"),
+        )
+    except (
+        ComexValidationError,
+        ComexNotFoundError,
+        ComexForbiddenError,
+        ComexConflictError,
+        GovernanceTransitionError,
+    ) as exc:
+        return _comex_error_response(exc)
+    return jsonify(payload), 201
+
+
+@market_intelligence_bp.post(
+    "/market-intelligence/comex/ncm-governance/<governance_id>/transition"
+)
+@require_policy(can_use_market_intelligence)
+def transition_comex_ncm_governance(governance_id):
+    """operationId: transitionComexNcmGovernanceV1."""
+    body = request.get_json(silent=True) or {}
+    try:
+        payload = _comex_service().transition(
+            user=g.current_user,
+            governance_id=governance_id,
+            to_status=body.get("to_status"),
+            notes=body.get("notes"),
+            expected_revision=body.get("expected_revision"),
+        )
+    except (
+        ComexValidationError,
+        ComexNotFoundError,
+        ComexForbiddenError,
+        ComexConflictError,
+        GovernanceTransitionError,
+    ) as exc:
+        return _comex_error_response(exc)
+    return jsonify(payload), 200
+
+
+@market_intelligence_bp.get("/market-intelligence/comex/views")
+@require_policy(can_use_market_intelligence)
+def list_comex_views():
+    """operationId: listComexMarketViewsV1."""
+    items = _comex_service().list_views(user=g.current_user)
+    return jsonify({"items": items}), 200
+
+
+@market_intelligence_bp.post("/market-intelligence/comex/views")
+@require_policy(can_use_market_intelligence)
+def create_comex_view():
+    """operationId: createComexMarketViewV1."""
+    try:
+        payload = _comex_service().create_view(
+            user=g.current_user, body=request.get_json(silent=True) or {}
+        )
+    except (
+        ComexValidationError,
+        ComexNotFoundError,
+        ComexForbiddenError,
+        ComexConflictError,
+        GovernanceTransitionError,
+    ) as exc:
+        return _comex_error_response(exc)
+    return jsonify(payload), 201
+
+
+@market_intelligence_bp.get("/market-intelligence/comex/views/<view_id>")
+@require_policy(can_use_market_intelligence)
+def get_comex_view(view_id):
+    """operationId: getComexMarketViewV1."""
+    try:
+        payload = _comex_service().get_view(view_id, user=g.current_user)
+    except (
+        ComexValidationError,
+        ComexNotFoundError,
+        ComexForbiddenError,
+        ComexConflictError,
+        GovernanceTransitionError,
+    ) as exc:
+        return _comex_error_response(exc)
+    return jsonify(payload), 200
+
+
+@market_intelligence_bp.put("/market-intelligence/comex/views/<view_id>")
+@require_policy(can_use_market_intelligence)
+def update_comex_view(view_id):
+    """operationId: updateComexMarketViewV1."""
+    try:
+        payload = _comex_service().update_view(
+            view_id,
+            user=g.current_user,
+            body=request.get_json(silent=True) or {},
+        )
+    except (
+        ComexValidationError,
+        ComexNotFoundError,
+        ComexForbiddenError,
+        ComexConflictError,
+        GovernanceTransitionError,
+    ) as exc:
+        return _comex_error_response(exc)
+    return jsonify(payload), 200
+
+
+@market_intelligence_bp.delete("/market-intelligence/comex/views/<view_id>")
+@require_policy(can_use_market_intelligence)
+def delete_comex_view(view_id):
+    """operationId: deleteComexMarketViewV1."""
+    try:
+        _comex_service().delete_view(view_id, user=g.current_user)
+    except (
+        ComexValidationError,
+        ComexNotFoundError,
+        ComexForbiddenError,
+        ComexConflictError,
+        GovernanceTransitionError,
+    ) as exc:
+        return _comex_error_response(exc)
+    return "", 204
+
+
+def _comex_service() -> ComexAnalysisService:
+    return ComexAnalysisService()
