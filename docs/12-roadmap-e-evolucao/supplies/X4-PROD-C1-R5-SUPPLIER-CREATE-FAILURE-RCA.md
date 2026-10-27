@@ -200,3 +200,14 @@ iteração de contrato" — essa evolução ficou pendente.
 | 404 | TO_INVENTORY — sem associação comprovada |
 | Escritas na investigação | ZERO |
 | Mudanças produtivas | ZERO |
+
+
+## 13. Revisão GPT / decisão de execução (2026-10-27)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para o RCA read-only.** A origem do HTTP 400 e o evento `SENDING→REJECTED` estão fundamentados pelo tracking relatado e pela resposta sanitizada do Protheus. A identidade individual dos seis campos requeridos é sustentada também pelo ensaio E2, não pela mensagem genérica da tentativa produtiva isoladamente; validar o contrato exato no HEAD antes do diff. A autenticação funcionou **nessa tentativa**, não implicando que todos os cenários de GET/status estejam saudáveis.
+
+**Ressalva de persistência:** a recusa anterior ao insert é forte indicativo de não gravação, mas **não declarar `PROVEN` para ausência de linha SA2 na operação produtiva sem read-back independente**. Manter `TO_INVENTORY` quanto à reconciliação deste operation ID; nenhum retry automático nem nova tentativa antes de conferir eventual existência pela chave/documento autorizado.
+
+**Diretriz para correção bounded:** (1) validar os seis campos no backend **antes de obter token ou iniciar tracking de envio**, respeitando semântica de POST versus PUT e sem ativar required indevidamente em atualização parcial; (2) alinhar obrigatoriedade visual e validação de submit no MFE, com catálogos e mensagens PT-BR; (3) revisar propagação de erro sanitizado por allowlist no BFF, sem expor detalhes brutos do upstream, stack traces, CPF/CNPJ, SQL ou secrets; (4) sincronizar schema/OpenAPI e Help no owner devido; (5) testes positive/sibling/negative, sem escrita ERP na verificação automatizada; deploy dos serviços realmente afetados.
+
+**Execução da correção:** ainda requer autorização específica do PO. O registro deste parecer não autoriza novo POST produtivo. Próximo gate: implementação e teste da validação, seguida de uma tentativa real controlada com autorização operacional, tracking e leitura de confirmação.
