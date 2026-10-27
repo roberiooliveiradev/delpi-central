@@ -1076,3 +1076,19 @@ Em setembro/2026, as capturas do PO mostram a consulta operacional `stock-invent
 **CP6 DOCS/CLARA** atualizar docs 23/30/94/112/113/README, Ajuda; republicar corpus CLARA apenas com afirmações de runtime comprovadas e testar retrieval.
 
 **Ação imediata:** iniciar CP1 read-only; não publicar alterações de serviço ou mexer em registros financeiros antes do diagnóstico e gate. Não excluir legado; página DRE segue última fase.
+
+
+## 28. Priorização PO — pausa de integração dos relatórios e próxima frente de UX documental (27/10/2026)
+
+**DECISÃO DE SEQUENCIAMENTO — PRODUCT_APPROVED / PLANNED.** A investigação e conexão das fontes reais dos relatórios, conciliadores P3, P7 oficial e H02, documentada em §27, **fica expressamente para uma próxima rodada**. Não disparar CP1 nem alteração de BFF/API/ERP neste momento; preservar a documentação e os critérios de evidência existentes. Isto não cancela §27.
+
+**Frente atual: DEFINIR O VISUAL DA PÁGINA DE CADASTRO/CONFIGURAÇÃO DE DOCUMENTOS.** Retomar o requisito aprovado no início deste plano: gerir o catálogo mestre dos tipos de documentos/PDFs exigidos para encaminhamento à Contabilidade/DRE em **página administrativa dedicada**, substituindo o modal de criação/edição; não confundir com o upload de arquivo na aba operacional Documentos e interações. Acessível somente a `controllership-finance.manage` ou autoridade efetiva equivalente do Super Admin, com AuthZ final na BFF.
+
+**Invariantes já aprovados para a proposta visual:**
+- Listagem de documentos configurados; adicionar e editar em páginas completas, com breadcrumb e retorno à lista preservando filtros e foco.
+- Nome/descrição/finalidade, exigência ou destino DRE, vigência inicial e final, casos excepcionais, status e histórico/proveniência conforme contratos efetivos. Não inventar campos como se já estivessem persistidos.
+- Nova exigência vale a partir da referência definida; exclusão/retirada prospectiva não altera snapshot histórico do fechamento encerrado; não exigir cadastro mestre para abrir o mês.
+- UX PT-BR simples, desktop/mobile, claro/escuro, teclado/foco, Ajuda sincronizada, `@delpi/plugin-ui` first e reutilização do padrão de Administração de outros Portais.
+- Não adicionar quarta aba operacional; não criar permission nova; não remover modal/legado antes de inventário e gate de implementação.
+
+**Próximo checkpoint:** inventário READ-ONLY do fluxo administrativo atual, modal e rotas, catálogo/schema/contracts, permissões efetivas, componentes e páginas equivalentes do plugin-ui; desenhar listagem + formulário de criação/edição para aprovação visual do PO. Só depois preparar implementação page-by-page. A atualização de conhecimento da CLARA deverá refletir esta priorização documental na próxima ingestão autorizada; não declarar o visual como implementado.
