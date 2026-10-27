@@ -214,3 +214,14 @@ demonstra melhoria de Business Outcome no estado atual.
 `DEPLOY=NO` `INDEPENDENT_REVIEW=PENDING` `PRODUCTION_CODE_MODIFIED=NO`
 `PRODUCTION_INSTRUCTIONS_MODIFIED=NO` `MODEL_CHANGED=NO`
 `PRODUCTION_QUERIES=0` `PHASE_ADVANCED=NO`
+
+
+## 12. Revisão independente da coordenação — 2026-10-27
+
+**PARECER: ACCEPT_WITH_RESIDUAL para execução documental/experimental P0–P2; P3 DECISION=NO_PROMOTION; IMPLEMENTATION_AUTHORIZED=NO.** Revisão estática do Documento 171 na main `0d65aac21a6680d12bf78cc8612471966bc9fe6d`. Não houve reexecução independente de modelo local, autorização Core/Domain nem deploy. A baseline e o produto permanecem inalterados.
+
+**Gates e Outcome:** P1 A3 falhou nos critérios congelados: READ recall 0.744 < 0.85 e catálogo 0.833 < A0 1.0. O E1 da P2 foi exploratório por P1=FAIL: E0 9/32, E1 10/32, sem demonstração de melhora de Business Outcome, com +23% tokens de entrada. Portanto não há candidato elegível ao P3. Manter `P2_GATE=NOT_APPLICABLE` e `NO_PROMOTION`, sem transferir ganhos de estágio para autorização produtiva.
+
+**Limites das inferências:** a frase 'orquestração não é mais o gargalo' NÃO está provada. Admission ainda reduz READ reach nos casos documentais, o julgador rejeita relevantes e o loop de continuação tem decisões de stop/answer inadequadas: estes são mecanismos internos da orquestração e continuam gargalos observados, ao lado da busca do Domain owner. O exemplo `terminal bala` sem resultados pertinentes para aquele contrato de consulta não prova que a Domain API seja *o principal limitante de todas as famílias* nem que só um modelo maior resolva os erros de classificação. A afirmação de 'limitação de capacidade do 3B, não de contrato' é hipótese plausível, mas não isolada por comparação controlada entre modelos nem por contratos equivalentes. O `goal-via-selection` oferece seam de reuso, mas a suposta economia de uma chamada é TARGET, não medição.
+
+**Pesquisa encerrada:** este plano fechado termina em `NO_PROMOTION`; não iniciar ciclos de prompts A4/CH-1-R/CH-2-R ou reescrita de judges automaticamente. Preservar a direção aprovada no Documento 170 (model-neutral, investigação grounded/parciais, simplificação por reuse). Próxima ação de coordenação deve ser **decisão de roadmap/produto**, com ownership separado para Domain API e, se autorizado, comparação de capacidade/modelo com métricas de segurança/custo; não vender isso como etapa produtiva já aprovada. `SECURITY_TEST_COVERAGE=PARTIAL`: denied READ e material PREPARE/ACT não exercidos. Documento 171 não altera fase, CP/RQ, contratos ou deploy.
