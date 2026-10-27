@@ -406,3 +406,15 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Veredito: R16A_ACCEPT_WITH_RESIDUAL — melhoria real e reproduzivel apenas na forma 1-registro-por-chamada; precisao 0.697 abaixo do gate ~0.70, FPR 21% exige hardening antes de candidatura produtiva. Menor contrato candidato documentado em doc 167 secao 9. Nenhuma autorizacao de mudanca produtiva.
 - Proximo bounded: R1.6-B — experimento separado de taxonomia de admissao (nao combinar com juiz). DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
 - Artefatos: doc 167; delia-api/scripts/per_record_judgment_eval.py; evidence per-record-judgment-r16a-runs.json (sanitizado).
+
+## 2026-10-27 — DELIA-C3-LLM-NATIVE-OPERATIONAL-INTELLIGENCE-INTEGRATED-VALIDATION-01 (doc 168)
+
+- Escopo: validacao integrada stage-local/E2E das cinco frentes (admission, julgamento, continuidade, contratos, E2E) no modelo congelado delia-json digest 7b8f4ab14fc1. ZERO mudanca de codigo/instrucao/modelo/deploy/consulta produtiva. ~900 model calls; B0/B1 reutilizados do artefato R1.6-A.
+- WS-A: contrato coerente owner_access (read/write/catalog/none) elevou reach 0.667->0.976 e acc_dev 0.549->0.824; inject->none; reconciliacao deterministica do flag (A2)=sem ganho. Taxonomia de classes e a causa provada do misrouting. Gate A=PASS.
+- WS-B: B2c (por-registro+declared_requirements+identidade tipada) precision 0.943/FPR 0.014/identity-FP=0 mas recall 0.256; B3 lote(4) reproduz o colapso de enumeracao (192/285 sem label) — batches inviaveis a qualquer tamanho. Gate B=FAIL (nenhuma variante atende recall>=0.50 & precision>=0.80).
+- WS-C: modelo segue has_more (next_page correto) mas nunca escolhe answer/stop; 11/21 decisoes validas; seguranca bounded via dedup+cap. Gate C=FAIL.
+- WS-D: causa raiz answer_requirements localizada — instrucao turn_goal NUNCA pede o campo (parser+consumidores existem); gap de contrato. OWNER_CONTRACT_GAP provado: search do owner nao resolve terminal bala->TERM.BALA (0/77 pertinentes por oraculo) — NEEDS_OWNER_DECISION.
+- WS-E: E0=9/32 PASS vs E1=8/32 PASS (delta~0). Composicao alcança owner mais, mas outcome nao converte: recall conservador do juiz + gap de vocabulario do search + continuidade fraca. Passa somente negativos + code_lookup esporadico. Gate E=FAIL.
+- Seguranca: 0 bypass/ACT/PREPARE/fabricacao/loop; remap A1 preserva gates downstream; cobertura parcial (sem denied-READ real).
+- Veredito: ACCEPT_WITH_RESIDUAL — candidatos produtivos justificados: CH-1 admission simplificada + CH-2 campo answer_requirements na instrucao; CH-3 juiz por-registro condicional a gate de recall; continuidade precisa re-design; gap de search owner escalado.
+- Artefatos: doc 168; scripts/integrated_intelligence_eval.py; evidence integrated-intelligence-runs.json. DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
