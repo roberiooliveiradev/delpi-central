@@ -864,6 +864,37 @@ def build_operator_feedback_notification_service() -> Any:
     return OperatorFeedbackNotificationService(gateway=gateway)
 
 
+def build_mes_downtime_alert_service() -> Any:
+    """Avaliador de alertas gerenciais de paradas (Etapa 6).
+
+    Sem token da Core API o gateway vira None e o tick é no-op — fatos
+    e poller nunca dependem do canal de notificação.
+    """
+    from production_control_app.application.services.mes_downtime_alert_service import (  # noqa: E501
+        MesDowntimeAlertService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_downtime_alert_repository import (  # noqa: E501
+        PostgresMesDowntimeAlertRepository,
+    )
+
+    gateway = None
+    if (settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip():
+        from production_control_app.infrastructure.gateways.core_api_notification_gateway import (  # noqa: E501
+            CoreApiNotificationGateway,
+        )
+
+        gateway = CoreApiNotificationGateway()
+    return MesDowntimeAlertService(
+        repository=PostgresMesDowntimeAlertRepository(),
+        notification_gateway=gateway,
+        critical_open_seconds=settings.PC_MES_DOWNTIME_CRITICAL_OPEN_SECONDS,
+        unclassified_threshold=(
+            settings.PC_MES_DOWNTIME_UNCLASSIFIED_ALERT_THRESHOLD
+        ),
+        overdue_action_days=settings.PC_MES_DOWNTIME_OVERDUE_ACTION_DAYS,
+    )
+
+
 def build_pcp_operator_feedback_service() -> Any:
     """Inbox e tratativa do Operator Feedback no Portal PCP (C4).
 

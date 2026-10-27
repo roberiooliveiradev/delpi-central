@@ -78,3 +78,35 @@ class MesMonitoringReadRepositoryPort(Protocol):
         pendency: bool = False,
         max_facts: int,
     ) -> dict[str, Any]: ...
+
+    def list_concluded_downtime_treatments(
+        self,
+        *,
+        branch: str,
+        period_from: datetime,
+        period_to: datetime,
+        max_items: int = 200,
+    ) -> list[dict[str, Any]]: ...
+
+    def count_downtime_occurrences(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        reason_code: str,
+        period_from: datetime,
+        period_to: datetime,
+    ) -> dict[str, int]: ...
+
+    def count_open_downtime_treatments(
+        self,
+        *,
+        branch: str,
+        work_center: str | None,
+        period_from: datetime,
+        period_to: datetime,
+    ) -> int: ...
+
+    def list_work_center_observer_states(
+        self, *, branch: str
+    ) -> list[dict[str, Any]]: ...

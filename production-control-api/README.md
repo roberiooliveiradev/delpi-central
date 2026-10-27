@@ -53,6 +53,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/integrations/mes/downtimes?branch=&workCenter=&from=&to=&page=&pageSize=` | S2S interno — paradas MES paginadas por sobreposição temporal |
 | GET | `/integrations/mes/downtimes/analytics?branch=&from=&to=` | S2S interno — agregações gerenciais de paradas (mesmo WHERE da listagem) |
 | GET | `/integrations/mes/downtimes/export?branch=&from=&to=&pendency=` | S2S interno — universo completo de paradas para exportação (mesmo WHERE; join de tratamento; `pendency=true` restringe a pendências; teto de fatos sinalizado em `capped`) |
+| GET | `/integrations/mes/downtimes/insights?branch=&from=&to=` | S2S interno — análise avançada de paradas (reincidência real por CT+motivo, comparação com período anterior equivalente, criticidade parametrizada, eficácia de ações, pendências e lacunas de telemetria) |
 | GET | `/integrations/mes/work-centers/{workCenter}/timeline?branch=&from=&to=` | S2S interno — timeline do CT no período, cobrindo múltiplos runs |
 | GET | `/integrations/mes/downtime-reasons` | S2S interno — administração: motivos de parada ativos e inativos |
 | POST | `/integrations/mes/downtime-reasons` | S2S interno — administração: cria motivo (201; duplicado → 409) |
@@ -188,6 +189,35 @@ Resiliência: cache em memória de ~120 s por `branch+work_center+days` (padrão
 Sem apontamento no turno, a eficiência volta `null`, não `0` — o posto parado não é um posto com 0% de eficiência.
 
 `WS /public/machine-load/{token}/ws?branch=` entra na sala da filial (`MachineLoadRealtimeHub`). Após `PATCH /machine-load/sequence` e `POST /machine-load/refresh`, o serviço publica `{"type": "machine_load_updated", "reason": "sequence|refresh"}` e o cockpit refaz a leitura HTTP — o socket carrega só o aviso, mantendo uma fonte de verdade única. A notificação é best-effort: falha no hub não derruba a escrita já persistida. O gateway precisa dos headers `Upgrade`/`Connection` na location `/apps/production-control-api/` (já configurado em `gateway/nginx.conf` e `nginx.dev.conf`).
+
+### Gestão de Paradas MES — insights e alertas gerenciais (Etapa 6)
+
+`GET /integrations/mes/downtimes/insights` (S2S) agrega sobre o mesmo
+universo elegível da listagem/analytics: reincidência real por CT+motivo
+(ids deduplicados), comparação com a janela anterior imediatamente
+equivalente, criticidade por regras parametrizadas por env
+(`PC_MES_DOWNTIME_CRITICAL_OPEN_SECONDS`,
+`PC_MES_DOWNTIME_CRITICAL_RECURRENCE_OCCURRENCES` — ausente = regra
+inativa, nunca limite inventado), eficácia de ações com evidência
+antes/depois não-causal (`PC_MES_DOWNTIME_EFFECTIVENESS_WINDOW_DAYS`),
+pendências e lacunas de telemetria
+(`PC_MES_DOWNTIME_TELEMETRY_STALE_MINUTES` sobre
+`work_center_pulse_observers`).
+
+O avaliador de alertas gerenciais roda dentro do production-run poller
+em cadência própria (`PC_MES_DOWNTIME_ALERT_INTERVAL_SECONDS`, piso
+30 s) quando `PC_MES_DOWNTIME_ALERTS_ENABLED=true` — desligado por
+padrão até os parâmetros industriais serem aprovados. Regras: parada
+aberta prolongada, backlog sem classificação
+(`PC_MES_DOWNTIME_UNCLASSIFIED_ALERT_THRESHOLD`) e tratamento vencido
+(`PC_MES_DOWNTIME_OVERDUE_ACTION_DAYS`). O dedup é persistido em
+`mes_downtime_alert_dispatches` (migration V023): INSERT/UPDATE
+condicional por assinatura do estado relevante — a mesma condição não
+redispara sem mudança relevante e avaliadores concorrentes não
+duplicam. Dispatch via `CoreApiNotificationGateway` (categoria
+`production_control_mes_downtime_alerts`), destinatários =
+`delpi-mes.downtimes.treat` AND `view.filial-NN`; tudo best-effort —
+falha nunca afeta o poller nem os fatos.
 
 ### Operator Feedback — impedimentos do chão de fábrica
 

@@ -117,6 +117,64 @@ const ANALYTICS = {
   quality: { overlapDetected: false, overlapSeconds: 0, partial: false, factsCapped: false },
 };
 
+const INSIGHTS = {
+  branch: "01",
+  from: "2026-02-04T03:00:00.000Z",
+  to: "2026-02-10T12:00:00.000Z",
+  referenceAt: "2026-02-10T12:00:00.000Z",
+  timezone: "America/Sao_Paulo",
+  appliedFilters: {
+    workCenter: null, reasonCode: null, source: null, classification: null,
+  },
+  comparison: {
+    criteria: "equal_duration_immediately_preceding",
+    current: { from: "2026-02-04T03:00:00.000Z", to: "2026-02-10T12:00:00.000Z", durationSeconds: 522000, summary: { occurrencesCount: 3 } },
+    previous: { from: "2026-01-28T03:00:00.000Z", to: "2026-02-04T03:00:00.000Z", durationSeconds: 522000, summary: { occurrencesCount: 2 } },
+    deltas: {
+      totalStoppedSeconds: { current: 10800, previous: 5400, absolute: 5400, percent: 100.0 },
+      occurrencesCount: { current: 3, previous: 2, absolute: 1, percent: 50.0 },
+      averageOccurrenceSeconds: { current: 3600, previous: 2700, absolute: 900, percent: 33.3 },
+      pendingCount: { current: 1, previous: 0, absolute: 1, percent: null },
+    },
+  },
+  recurrence: [
+    {
+      workCenter: "CT-35", reasonCode: "SETUP", reasonLabel: "Preparação de máquina",
+      occurrencesCount: 2, seconds: 7200,
+      lastOccurrenceAt: "2026-02-10T10:00:00.000Z",
+      downtimeIds: ["d1", "d2"],
+    },
+  ],
+  critical: {
+    rules: {
+      openStopLongDuration: { configured: true, parameters: { elapsedSeconds: 7200 } },
+      recurrenceBurst: { configured: false, parameters: null },
+    },
+    items: [
+      {
+        rule: "openStopLongDuration", downtimeId: "d9",
+        workCenter: "CT-41", reasonCode: "MANUT", reasonLabel: "Manutenção",
+        startedAt: "2026-02-10T04:00:00.000Z", elapsedSeconds: 28800,
+      },
+    ],
+  },
+  pendencies: { unclassifiedCount: 2, openTreatmentsCount: 1, openStopsCount: 1 },
+  actionEffectiveness: [
+    {
+      downtimeId: "d5", workCenter: "CT-35", reasonCode: "SETUP",
+      reasonLabel: "Preparação de máquina",
+      concludedAt: "2026-02-05T12:00:00.000Z", requestId: "req-1",
+      windowDays: 30,
+      before: { occurrences: 4, seconds: 9000 },
+      after: { occurrences: 1, seconds: 1800 },
+    },
+  ],
+  quality: {
+    overlapDetected: false, overlapSeconds: 0, partial: false, factsCapped: false,
+    telemetryGaps: [],
+  },
+};
+
 const OPTIONS = {
   reasons: [
     { code: "SETUP", label: "Preparação de máquina", category: "setup", active: true },
@@ -243,6 +301,9 @@ function fetchRouter(management: Partial<Record<"treatment" | "history" | "class
     }
     if (url.includes("/history?")) {
       return historyHandler(url, init);
+    }
+    if (url.includes("/downtimes/insights")) {
+      return Promise.resolve(envelope(INSIGHTS));
     }
     if (url.includes("/downtimes/analytics")) {
       return Promise.resolve(envelope(ANALYTICS));
@@ -464,6 +525,9 @@ describe("DowntimesPage", () => {
       if ((url as string).includes("/downtimes/analytics")) {
         return Promise.resolve(envelope(ANALYTICS));
       }
+      if ((url as string).includes("/downtimes/insights")) {
+        return Promise.resolve(envelope(INSIGHTS));
+      }
       return Promise.resolve(envelope({ ...LIST, items: [], total: 0 }));
     });
     renderPage();
@@ -477,6 +541,9 @@ describe("DowntimesPage", () => {
       }
       if ((url as string).includes("/downtimes/analytics")) {
         return Promise.resolve(envelope(ANALYTICS));
+      }
+      if ((url as string).includes("/downtimes/insights")) {
+        return Promise.resolve(envelope(INSIGHTS));
       }
       return Promise.resolve(envelope({ ...LIST, items: [], total: 0 }));
     });
@@ -813,5 +880,66 @@ describe("DowntimesPage", () => {
     await screen.findByText("Paradas");
     expect(screen.queryByRole("button", { name: "CSV" })).toBeNull();
     expect(screen.queryByRole("button", { name: "PDF executivo" })).toBeNull();
+  });
+
+  it("renders the advanced analysis panel with backend data only", async () => {
+    renderPage();
+    const section = await screen.findByRole("region", {
+      name: /Análise avançada/,
+    });
+    // comparação com período anterior equivalente
+    await within(section).findByText(/\+100% vs\. período anterior/);
+    // reincidência (CT + motivo vindos do owner)
+    await within(section).findByText(/CT-35 · Preparação de máquina/);
+    // ocorrência crítica (parada prolongada)
+    await within(section).findByText(/parada aberta há/);
+    // pendências gerenciais
+    expect(within(section).getByText("Sem classificação")).toBeTruthy();
+    // eficácia: evidência antes/depois sem causalidade
+    await within(section).findByText(/4 → 1 ocorrências/);
+    expect(
+      within(section).getByText(/Evidência observacional antes\/depois/),
+    ).toBeTruthy();
+  });
+
+  it("forwards the current filters to the insights endpoint", async () => {
+    renderPage({ workCenter: "CT-35", status: "open" });
+    await screen.findByRole("region", { name: /Análise avançada/ });
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(([url]) => {
+          const target = url as string;
+          return (
+            target.includes("/downtimes/insights") &&
+            target.includes("workCenter=CT-35") &&
+            target.includes("status=open") &&
+            target.includes("branch=01")
+          );
+        }),
+      ).toBe(true);
+    });
+  });
+
+  it("drills down from a recurrence group into the list filters", async () => {
+    renderPage();
+    const section = await screen.findByRole("region", {
+      name: /Análise avançada/,
+    });
+    const bar = await within(section).findByRole("button", {
+      name: /CT-35 · Preparação de máquina/,
+    });
+    fireEvent.click(bar);
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(([url]) => {
+          const target = url as string;
+          return (
+            target.includes("/downtimes?") &&
+            target.includes("workCenter=CT-35") &&
+            target.includes("reasonCode=SETUP")
+          );
+        }),
+      ).toBe(true);
+    });
   });
 });

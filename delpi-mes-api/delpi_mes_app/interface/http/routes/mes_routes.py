@@ -177,6 +177,45 @@ def get_downtime_analytics(
     return ok(data)
 
 
+@router.get(
+    "/downtimes/insights",
+    operation_id="get_delpi_mes_downtime_insights",
+)
+def get_downtime_insights(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+    period_from: datetime = Query(..., alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+    work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
+    reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
+    source: str | None = Query(default=None, max_length=40),
+    classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
+):
+    try:
+        data = build_mes_read_service().get_downtime_insights(
+            request.state.user,
+            branch=branch,
+            period_from=period_from,
+            period_to=period_to,
+            work_center=work_center,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            status=status,
+            permission=MES_DOWNTIMES_VIEW,
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info(
+        "delpi_mes_downtime_insights_read branch=%s recurrence=%s critical=%s",
+        branch,
+        len(data.get("recurrence") or []),
+        len((data.get("critical") or {}).get("items") or []),
+    )
+    return ok(data)
+
+
 @router.get("/downtimes", operation_id="list_delpi_mes_downtimes")
 def get_downtimes(
     request: Request,

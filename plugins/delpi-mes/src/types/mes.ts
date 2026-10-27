@@ -125,6 +125,93 @@ export type DowntimeAnalyticsResponse = {
   byWeekdayHour: DowntimeAnalyticsHourCell[];
   quality: DowntimeAnalyticsQuality;
 };
+export type DowntimeInsightsDelta = {
+  current: number;
+  previous: number;
+  absolute: number;
+  percent: number | null;
+};
+export type DowntimeInsightsComparison = {
+  criteria: string;
+  current: {
+    from: string;
+    to: string;
+    durationSeconds: number;
+    summary: DowntimeAnalyticsSummary;
+  };
+  previous: {
+    from: string;
+    to: string;
+    durationSeconds: number;
+    summary: DowntimeAnalyticsSummary;
+  };
+  deltas: Record<string, DowntimeInsightsDelta>;
+};
+export type DowntimeInsightsRecurrenceGroup = {
+  workCenter: string;
+  reasonCode: string | null;
+  reasonLabel: string | null;
+  occurrencesCount: number;
+  seconds: number;
+  lastOccurrenceAt: string | null;
+  downtimeIds: string[];
+};
+export type DowntimeInsightsCriticalRule = {
+  configured: boolean;
+  parameters: Record<string, number> | null;
+};
+export type DowntimeInsightsCriticalItem = {
+  rule: string;
+  downtimeId: string | null;
+  workCenter: string;
+  reasonCode: string | null;
+  reasonLabel: string | null;
+  startedAt?: string | null;
+  elapsedSeconds?: number | null;
+  occurrencesCount?: number | null;
+  seconds?: number | null;
+  downtimeIds?: string[] | null;
+};
+export type DowntimeInsightsPendencies = {
+  unclassifiedCount: number;
+  openTreatmentsCount: number;
+  openStopsCount: number;
+};
+export type DowntimeInsightsEffectivenessWindow = {
+  occurrences: number;
+  seconds: number;
+};
+export type DowntimeInsightsEffectivenessRecord = {
+  downtimeId: string;
+  workCenter: string;
+  reasonCode: string | null;
+  reasonLabel: string | null;
+  concludedAt: string;
+  requestId: string | null;
+  windowDays: number;
+  before: DowntimeInsightsEffectivenessWindow;
+  after: DowntimeInsightsEffectivenessWindow;
+};
+export type DowntimeInsightsResponse = {
+  branch: string;
+  from: string;
+  to: string;
+  referenceAt: string;
+  timezone: string;
+  appliedFilters: DowntimeAnalyticsResponse["appliedFilters"];
+  comparison: DowntimeInsightsComparison;
+  recurrence: DowntimeInsightsRecurrenceGroup[];
+  critical: {
+    rules: Record<string, DowntimeInsightsCriticalRule>;
+    items: DowntimeInsightsCriticalItem[];
+  };
+  pendencies: DowntimeInsightsPendencies;
+  actionEffectiveness: DowntimeInsightsEffectivenessRecord[];
+  quality: DowntimeAnalyticsQuality & {
+    telemetryGaps?: { workCenter: string }[];
+  };
+};
+
 export type DowntimeAnalyticsQuery = {
   branch: BranchCode;
   from: string;

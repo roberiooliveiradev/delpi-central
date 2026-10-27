@@ -85,6 +85,32 @@ _DOWNTIME_ANALYTICS_QUALITY_FIELDS = (
     "overlapDetected", "overlapSeconds", "partial", "factsCapped",
 )
 
+_DOWNTIME_INSIGHTS_SUMMARY_FIELDS = (
+    "from", "to", "durationSeconds", "summary",
+)
+_DOWNTIME_INSIGHTS_RECURRENCE_FIELDS = (
+    "workCenter", "reasonCode", "reasonLabel", "occurrencesCount",
+    "seconds", "lastOccurrenceAt", "downtimeIds",
+)
+_DOWNTIME_INSIGHTS_CRITICAL_RULE_FIELDS = (
+    "configured", "parameters",
+)
+_DOWNTIME_INSIGHTS_CRITICAL_ITEM_FIELDS = (
+    "rule", "downtimeId", "workCenter", "reasonCode", "reasonLabel",
+    "startedAt", "elapsedSeconds", "occurrencesCount", "seconds",
+    "downtimeIds",
+)
+_DOWNTIME_INSIGHTS_PENDENCIES_FIELDS = (
+    "unclassifiedCount", "openTreatmentsCount", "openStopsCount",
+)
+_DOWNTIME_INSIGHTS_EFFECTIVENESS_FIELDS = (
+    "downtimeId", "workCenter", "reasonCode", "reasonLabel",
+    "concludedAt", "requestId", "windowDays", "before", "after",
+)
+_DOWNTIME_INSIGHTS_QUALITY_FIELDS = (
+    *_DOWNTIME_ANALYTICS_QUALITY_FIELDS, "telemetryGaps",
+)
+
 
 class MesReadService:
     def __init__(self, gateway: ProductionControlMesGatewayPort) -> None:
@@ -273,6 +299,95 @@ class MesReadService:
             ],
             "quality": self._pick(
                 data.get("quality") or {}, _DOWNTIME_ANALYTICS_QUALITY_FIELDS
+            ),
+        }
+
+    def get_downtime_insights(
+        self,
+        user: Any,
+        *,
+        branch: str,
+        period_from: datetime | None,
+        period_to: datetime | None,
+        work_center: str | None = None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        status: str | None = None,
+        permission: str,
+    ) -> dict[str, Any]:
+        """Análise avançada de paradas (reincidência, comparação de
+        períodos, criticidade parametrizada, eficácia de ações e
+        pendências) — mesma autorização e mesmo universo de filtros da
+        listagem/analytics; todo o cálculo vive no owner dos fatos MES."""
+        code = self._authorize(user, branch=branch, permission=permission)
+        if period_from is None:
+            raise ValueError("from é obrigatório para a consulta analítica.")
+        self._validate_period(period_from, period_to)
+        if classification is not None and classification not in _DOWNTIME_CLASSIFICATIONS:
+            raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        if status is not None and status not in _DOWNTIME_STATUSES:
+            raise ValueError("status deve ser 'open' ou 'closed'.")
+        data = self._gateway.get_downtime_insights(
+            branch=code,
+            period_from=period_from,
+            period_to=period_to,
+            work_center=work_center,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            status=status,
+        )
+        comparison = data.get("comparison") or {}
+        critical = data.get("critical") or {}
+        rules = critical.get("rules") or {}
+        return {
+            "branch": data.get("branch"),
+            "from": data.get("from"),
+            "to": data.get("to"),
+            "referenceAt": data.get("referenceAt"),
+            "timezone": data.get("timezone"),
+            "appliedFilters": self._pick(
+                data.get("appliedFilters") or {}, _DOWNTIME_ANALYTICS_FILTERS_FIELDS
+            ),
+            "comparison": {
+                "criteria": comparison.get("criteria"),
+                "current": self._pick(
+                    comparison.get("current") or {},
+                    _DOWNTIME_INSIGHTS_SUMMARY_FIELDS,
+                ),
+                "previous": self._pick(
+                    comparison.get("previous") or {},
+                    _DOWNTIME_INSIGHTS_SUMMARY_FIELDS,
+                ),
+                "deltas": comparison.get("deltas") or {},
+            },
+            "recurrence": [
+                self._pick(item, _DOWNTIME_INSIGHTS_RECURRENCE_FIELDS)
+                for item in data.get("recurrence", [])
+            ],
+            "critical": {
+                "rules": {
+                    name: self._pick(
+                        rule or {}, _DOWNTIME_INSIGHTS_CRITICAL_RULE_FIELDS
+                    )
+                    for name, rule in rules.items()
+                },
+                "items": [
+                    self._pick(item, _DOWNTIME_INSIGHTS_CRITICAL_ITEM_FIELDS)
+                    for item in critical.get("items", [])
+                ],
+            },
+            "pendencies": self._pick(
+                data.get("pendencies") or {},
+                _DOWNTIME_INSIGHTS_PENDENCIES_FIELDS,
+            ),
+            "actionEffectiveness": [
+                self._pick(item, _DOWNTIME_INSIGHTS_EFFECTIVENESS_FIELDS)
+                for item in data.get("actionEffectiveness", [])
+            ],
+            "quality": self._pick(
+                data.get("quality") or {}, _DOWNTIME_INSIGHTS_QUALITY_FIELDS
             ),
         }
 

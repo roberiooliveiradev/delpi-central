@@ -109,6 +109,17 @@ Acima da listagem, a aba Paradas exibe uma área analítica recolhível alimenta
 - **Mapa de calor** dia-da-semana × hora (matriz semântica local — o kit não possui heatmap dedicado): descritivo, com legenda e tooltip; não oferece filtro por hora porque a listagem não suporta esse recorte.
 - Os agregados respeitam os mesmos filtros da listagem e ignoram paginação, ordenação e `downtimeId`; mudança de filial/filtros isola o estado por identidade de consulta — dados da consulta anterior nunca piscam. Erro na análise é localizado e recuperável, sem quebrar a listagem.
 
+## Paradas — Etapa 6 (análise avançada)
+
+Abaixo dos indicadores, o painel **Análise avançada** consome `GET /downtimes/insights` com os mesmos filtros vigentes — todo o cálculo e os parâmetros vêm do Production Control; o MFE permanece render-only:
+
+- **Comparação de períodos:** deltas absolutos e percentuais contra a janela anterior imediatamente equivalente (critério explícito no contrato).
+- **Reincidência** por centro de trabalho e motivo com ocorrências reais deduplicadas; clicar num grupo aplica `workCenter` + `reasonCode` (ou `classification=pending`) na lista.
+- **Ocorrências críticas:** paradas abertas prolongadas e rajadas de reincidência conforme regras parametrizadas no owner — quando nenhuma regra está configurada a tela diz isso explicitamente, sem inventar limites.
+- **Pendências gerenciais:** sem classificação, tratamentos em aberto e paradas abertas.
+- **Eficácia das ações:** evidência antes/depois por tratamento concluído, rotulada como observacional — nunca como prova de causalidade.
+- **Lacunas de telemetria:** centros sensorizados sem dados confiáveis recentes são sinalizados; a análise não inventa paradas nesses períodos.
+
 ## Cadastros — Etapa 3
 
 A área **Cadastros** (`/registrations`) é global: não exige filial, oculta o seletor de filial e exibe a indicação «Cadastro global — as alterações são válidas para todas as filiais». Hoje contém um único cadastro, **Motivos de parada**, que administra o catálogo global via `delpi-mes-api`:

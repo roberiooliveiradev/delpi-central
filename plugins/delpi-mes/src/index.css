@@ -1276,6 +1276,60 @@
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
 
+/* Análise avançada de paradas (Etapa 6) — mesmo padrão visual da
+ * seção analítica; blocos específicos mínimos. */
+.delpi-mes-insights { display: grid; gap: 0.9rem; }
+.delpi-mes-insights__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+}
+.delpi-mes-insights__head h3 {
+  margin: 0; font-size: 1.05rem; color: #22344e;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+}
+.delpi-mes-insights__toggle {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  min-height: 2rem; padding: 0 0.75rem;
+  border: 1px solid #dde5ef; border-radius: 0.6rem;
+  background: #f4f7fb; color: #1d4ed8; font: inherit; font-size: 0.78rem;
+  font-weight: 700; cursor: pointer;
+}
+.delpi-mes-insights__toggle:hover { background: #e8eef7; }
+.delpi-mes-insights__toggle svg { width: 0.95rem; height: 0.95rem; }
+.delpi-mes-insights__body { display: grid; gap: 0.9rem; }
+.delpi-mes-insights__grid {
+  display: grid; gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+}
+.delpi-mes-insights__error {
+  border: 1px solid #f3c1c1; border-radius: 0.75rem; background: #fdf4f4;
+  padding: 0.9rem 1rem; color: #8f2b2b;
+}
+.delpi-mes-insights__error p { margin: 0 0 0.55rem; }
+.delpi-mes-insights__error button {
+  min-height: 2rem; padding: 0 0.75rem;
+  border: 1px solid #dde5ef; border-radius: 0.6rem;
+  background: #f4f7fb; color: #1d4ed8; font: inherit; font-size: 0.78rem;
+  font-weight: 700; cursor: pointer;
+}
+.delpi-mes-insights__error button:hover { background: #e8eef7; }
+.delpi-mes-insights__warning {
+  margin: 0; padding: 0.65rem 0.85rem; border-radius: 0.65rem;
+  border: 1px solid #f2d3a2; background: #fdf8ef; color: #7a4b12; font-size: 0.82rem;
+}
+.delpi-mes-insights__note {
+  margin: 0.6rem 0 0; padding: 0.65rem 0.85rem; border-radius: 0.65rem;
+  border: 1px solid #d9e2f0; background: #f5f8fc; color: #47566d; font-size: 0.82rem;
+}
+.delpi-mes-insights__hint { margin: 0; color: #66788f; font-size: 0.85rem; }
+.delpi-mes-insights__critical-list,
+.delpi-mes-insights__effectiveness-list {
+  margin: 0; padding-left: 1.1rem; display: grid; gap: 0.45rem;
+  color: #33455e; font-size: 0.85rem;
+}
+
+:root[data-theme="dark"] .delpi-mes-insights__head h3,
+.theme-dark .delpi-mes-insights__head h3 { color: #dce6f2; }
+
 :root[data-theme="dark"] .delpi-mes-analytics__head h3,
 .theme-dark .delpi-mes-analytics__head h3 { color: #dce6f2; }
 :root[data-theme="dark"] .delpi-mes-heatmap__cell,

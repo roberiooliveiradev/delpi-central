@@ -63,5 +63,17 @@ export const DELPI_MES_COPY = {
       "Centros de trabalho ordenados pelo tempo parado no período, incluindo paradas autônomas sem ordem de produção. Clique em um centro para filtrar a lista.",
     downtimesAnalyticsPartial:
       "O período excedeu o limite de fatos processados de uma vez; os valores exibidos são parciais. Reduza o período ou refine os filtros para ver o total completo.",
+    downtimesInsights:
+      "Análise avançada calculada pelo Production Control sobre o mesmo universo de paradas dos indicadores: comparação com o período anterior imediatamente equivalente, reincidência real por centro de trabalho e motivo, ocorrências críticas segundo parâmetros do processo industrial e evidências das ações concluídas.",
+    downtimesInsightsRecurrence:
+      "Agrupa ocorrências reais (registros distintos, sem duplicar paradas) por centro de trabalho e motivo confirmado no período. Clique em um grupo para filtrar a lista por aquele centro e motivo.",
+    downtimesInsightsCritical:
+      "Paradas abertas além do limite parametrizado e rajadas de reincidência acima do mínimo configurado. Os limites são governados pelo processo industrial no Production Control — nunca definidos nesta tela. Sem parâmetro aprovado, a regra fica inativa.",
+    downtimesInsightsEffectiveness:
+      "Para cada tratamento concluído, compara as ocorrências do mesmo motivo no mesmo centro de trabalho em janelas iguais antes e depois da conclusão.",
+    downtimesInsightsEvidenceNote:
+      "Evidência observacional antes/depois — uma queda não prova que a ação causou a melhora.",
+    downtimesInsightsTelemetryGaps:
+      "Há centros de trabalho sensorizados sem telemetria confiável recente: a análise não inventa paradas para esses períodos e os resultados podem estar subestimados.",
   },
 } as const;

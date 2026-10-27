@@ -72,6 +72,7 @@ def test_management_route_without_or_with_invalid_jwt_is_401():
     client = TestClient(production_app)
     assert client.get("/monitoring?branch=01").status_code == 401
     assert client.get("/monitoring?branch=01", headers={"Authorization": "Bearer invalid"}).status_code == 401
+    assert client.get("/downtimes/insights?branch=01&from=2026-09-01T00:00:00Z").status_code == 401
 
 
 def test_service_principal_cannot_use_human_route(monkeypatch):

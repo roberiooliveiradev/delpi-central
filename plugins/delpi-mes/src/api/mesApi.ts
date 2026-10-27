@@ -3,6 +3,7 @@ import type { BranchCode } from "../constants/routes";
 import type {
   DowntimeAnalyticsQuery,
   DowntimeAnalyticsResponse,
+  DowntimeInsightsResponse,
   DowntimeClassificationResult,
   DowntimeFilterOptionsResponse,
   DowntimeHistoryResponse,
@@ -53,6 +54,17 @@ export function getDowntimeAnalytics(query: DowntimeAnalyticsQuery, signal?: Abo
   if (query.classification) params.set("classification", query.classification);
   if (query.status) params.set("status", query.status);
   return httpGet<DowntimeAnalyticsResponse>("/downtimes/analytics?" + params.toString(), { signal });
+}
+
+export function getDowntimeInsights(query: DowntimeAnalyticsQuery, signal?: AbortSignal) {
+  const params = new URLSearchParams({ branch: query.branch, from: query.from });
+  if (query.to) params.set("to", query.to);
+  if (query.workCenter) params.set("workCenter", query.workCenter);
+  if (query.reasonCode) params.set("reasonCode", query.reasonCode);
+  if (query.source) params.set("source", query.source);
+  if (query.classification) params.set("classification", query.classification);
+  if (query.status) params.set("status", query.status);
+  return httpGet<DowntimeInsightsResponse>("/downtimes/insights?" + params.toString(), { signal });
 }
 
 function downtimeFilterParams(query: DowntimeAnalyticsQuery): URLSearchParams {

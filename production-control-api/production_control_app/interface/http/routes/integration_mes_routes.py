@@ -315,6 +315,47 @@ def export_downtimes(
     return ok(data)
 
 
+@router.get("/downtimes/insights", operation_id="get_mes_integration_downtime_insights")
+def get_downtime_insights(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+    period_from: datetime = Query(..., alias="from"),
+    period_to: datetime | None = Query(default=None, alias="to"),
+    work_center: str | None = Query(default=None, alias="workCenter", max_length=40),
+    reason_code: str | None = Query(default=None, alias="reasonCode", max_length=40),
+    source: str | None = Query(default=None, max_length=40),
+    classification: str | None = Query(default=None, max_length=20),
+    status: str | None = Query(default=None, max_length=10),
+):
+    # Análise avançada (Etapa 6): reincidência, comparação de períodos,
+    # criticidade parametrizada, eficácia de ações e pendências sobre o
+    # mesmo universo elegível da listagem/analytics.
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_integration_read_service().get_downtime_insights(
+            branch=branch,
+            work_center=work_center,
+            period_from=_aware(period_from, "from"),
+            period_to=_aware(period_to, "to"),
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            status=status,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info(
+        "mes_integration_downtime_insights branch=%s critical_items=%s "
+        "telemetry_gaps=%s",
+        branch,
+        len(data["critical"]["items"]),
+        len(data["quality"]["telemetryGaps"]),
+    )
+    return ok(data)
+
+
 @router.get("/downtime-sources", operation_id="list_mes_integration_downtime_sources")
 def list_downtime_sources(request: Request):
     denied = _deny_unless_internal(request)

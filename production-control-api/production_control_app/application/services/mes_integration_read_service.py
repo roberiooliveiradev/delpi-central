@@ -7,10 +7,18 @@ from typing import Any, Callable
 from production_control_app.application.services.downtime_analytics import (
     aggregate_downtime_analytics,
 )
+from production_control_app.application.services.downtime_insights import (
+    comparison_deltas,
+    critical_items,
+    effectiveness_records,
+    recurrence_groups,
+    telemetry_gaps,
+)
 from production_control_app.application.services.mes_timeline_builder import MesTimelineBuilder
 from production_control_app.application.services.public_mes_work_center_today_service import (
     FACTORY_TIMEZONE,
 )
+from production_control_app.config import settings
 from production_control_app.domain.errors import ProductionRunNotFound
 from production_control_app.domain.ports.mes_monitoring_read_repository import (
     MesMonitoringReadRepositoryPort,
@@ -329,6 +337,35 @@ class MesIntegrationReadService:
             **aggregates,
         }
 
+    @staticmethod
+    def _normalized_downtime_filters(
+        *,
+        work_center: str | None,
+        reason_code: str | None,
+        source: str | None,
+        classification: str | None,
+        status: str | None,
+    ) -> dict[str, Any]:
+        """Normalização/validação única dos filtros de paradas — mesma
+        semântica compartilhada por listagem, analytics, exportação e
+        insights (uma fonte, sem divergência de predicado)."""
+        normalized_classification = (classification or "").strip().lower() or None
+        if normalized_classification is not None and normalized_classification not in _DOWNTIME_CLASSIFICATIONS:
+            raise ValueError("classification deve ser 'pending' ou 'confirmed'.")
+        normalized_status = (status or "").strip().lower() or None
+        if normalized_status is not None and normalized_status not in _DOWNTIME_STATUSES:
+            raise ValueError("status deve ser 'open' ou 'closed'.")
+        normalized_source = (source or "").strip().lower() or None
+        if normalized_source is not None and normalized_source not in DOWNTIME_SOURCES:
+            raise ValueError("source inválida para parada MES.")
+        return {
+            "work_center": (work_center or "").strip() or None,
+            "reason_code": (reason_code or "").strip().lower() or None,
+            "source": normalized_source,
+            "classification": normalized_classification,
+            "status": normalized_status,
+        }
+
     def export_downtimes(
         self,
         *,
@@ -397,6 +434,195 @@ class MesIntegrationReadService:
             "total": result["total"],
             "capped": result["capped"],
             "items": [self._downtime_export_item(row) for row in result["items"]],
+        }
+
+    def get_downtime_insights(
+        self,
+        *,
+        branch: str,
+        work_center: str | None = None,
+        period_from: datetime | None = None,
+        period_to: datetime | None = None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        status: str | None = None,
+    ) -> dict[str, Any]:
+        """Análise avançada de paradas (Etapa 6): reincidência, comparação
+        de períodos equivalentes, criticidade parametrizada, eficácia de
+        ações e pendências — tudo sobre o mesmo universo elegível da
+        listagem/analytics, com referenceAt único.
+
+        Comparação: janela anterior equivalente = mesma duração
+        imediatamente anterior ao from, agregada pela função canônica —
+        resultados reproduzíveis e critérios explícitos no contrato.
+        Criticidade: só regras com parâmetro industrial configurado no
+        owner (env); regra sem parâmetro reporta configured=false — o
+        consumidor nunca inventa limite. Eficácia: evidência antes/depois
+        de ocorrências do mesmo (CT, motivo) em janela simétrica ao redor
+        da conclusão do tratamento — observacional, sem causalidade.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        if period_from is None:
+            raise ValueError("from é obrigatório para a análise avançada.")
+        reference_at = self._clock()
+        effective_to = period_to or reference_at
+        if effective_to > reference_at:
+            effective_to = reference_at
+        if period_from >= effective_to:
+            raise ValueError("O início do período deve ser anterior ao fim.")
+        if (effective_to - period_from).total_seconds() > (
+            _DOWNTIME_ANALYTICS_MAX_DAYS * 86400
+        ):
+            raise ValueError(
+                f"O período da análise deve ser de no máximo "
+                f"{_DOWNTIME_ANALYTICS_MAX_DAYS} dias."
+            )
+        filters = self._normalized_downtime_filters(
+            work_center=work_center,
+            reason_code=reason_code,
+            source=source,
+            classification=classification,
+            status=status,
+        )
+        duration = effective_to - period_from
+        previous_from = period_from - duration
+        previous_to = period_from
+
+        facts = self._repository.list_downtime_analytics_facts(
+            branch=code,
+            period_from=period_from,
+            period_to=effective_to,
+            max_facts=_DOWNTIME_ANALYTICS_MAX_FACTS,
+            **filters,
+        )
+        previous_facts = self._repository.list_downtime_analytics_facts(
+            branch=code,
+            period_from=previous_from,
+            period_to=previous_to,
+            max_facts=_DOWNTIME_ANALYTICS_MAX_FACTS,
+            **filters,
+        )
+        current = aggregate_downtime_analytics(
+            facts["facts"],
+            window_from=period_from,
+            window_to=effective_to,
+            timezone_name=FACTORY_TIMEZONE,
+            facts_capped=facts["capped"],
+        )
+        previous = aggregate_downtime_analytics(
+            previous_facts["facts"],
+            window_from=previous_from,
+            window_to=previous_to,
+            timezone_name=FACTORY_TIMEZONE,
+            facts_capped=previous_facts["capped"],
+        )
+        concluded = self._repository.list_concluded_downtime_treatments(
+            branch=code,
+            period_from=period_from,
+            period_to=effective_to,
+        )
+        observers = self._repository.list_work_center_observer_states(
+            branch=code
+        )
+        count_occurrences = (
+            lambda *, work_center, reason_code, period_from, period_to: (
+                self._repository.count_downtime_occurrences(
+                    branch=code,
+                    work_center=work_center,
+                    reason_code=reason_code,
+                    period_from=period_from,
+                    period_to=period_to,
+                )
+            )
+        )
+        critical = critical_items(
+            facts["facts"],
+            reference_at=reference_at,
+            critical_open_seconds=settings.PC_MES_DOWNTIME_CRITICAL_OPEN_SECONDS,
+            critical_recurrence_occurrences=(
+                settings.PC_MES_DOWNTIME_CRITICAL_RECURRENCE_OCCURRENCES
+            ),
+            window_from=period_from,
+            window_to=effective_to,
+        )
+        open_treatments = self._repository.count_open_downtime_treatments(
+            branch=code,
+            work_center=filters["work_center"],
+            period_from=period_from,
+            period_to=effective_to,
+        )
+        unclassified = sum(
+            1 for row in facts["facts"] if not row.get("confirmed")
+        )
+        open_stops = sum(
+            1 for row in facts["facts"] if not row.get("ended_at")
+        )
+        return {
+            "branch": code,
+            "from": period_from.isoformat(),
+            "to": effective_to.isoformat(),
+            "referenceAt": reference_at.isoformat(),
+            "timezone": FACTORY_TIMEZONE,
+            "appliedFilters": {
+                "workCenter": filters["work_center"],
+                "reasonCode": filters["reason_code"],
+                "source": filters["source"],
+                "classification": filters["classification"],
+                **(
+                    {"status": filters["status"]}
+                    if filters["status"] is not None
+                    else {}
+                ),
+            },
+            "comparison": {
+                "criteria": (
+                    "immediately-preceding equal-duration window"
+                ),
+                "current": {
+                    "from": period_from.isoformat(),
+                    "to": effective_to.isoformat(),
+                    "durationSeconds": int(duration.total_seconds()),
+                    "summary": current["summary"],
+                },
+                "previous": {
+                    "from": previous_from.isoformat(),
+                    "to": previous_to.isoformat(),
+                    "durationSeconds": int(duration.total_seconds()),
+                    "summary": previous["summary"],
+                },
+                "deltas": comparison_deltas(
+                    current["summary"], previous["summary"]
+                ),
+            },
+            "recurrence": recurrence_groups(
+                facts["facts"],
+                window_from=period_from,
+                window_to=effective_to,
+            ),
+            "critical": critical,
+            "pendencies": {
+                "unclassifiedCount": unclassified,
+                "openTreatmentsCount": open_treatments,
+                "openStopsCount": open_stops,
+            },
+            "actionEffectiveness": effectiveness_records(
+                concluded,
+                count_occurrences=count_occurrences,
+                window_days=settings.PC_MES_DOWNTIME_EFFECTIVENESS_WINDOW_DAYS,
+                reference_at=reference_at,
+            ),
+            "quality": {
+                **current.get("quality", {}),
+                "telemetryGaps": telemetry_gaps(
+                    facts["facts"],
+                    observer_states=observers,
+                    stale_minutes=(
+                        settings.PC_MES_DOWNTIME_TELEMETRY_STALE_MINUTES
+                    ),
+                    reference_at=reference_at,
+                ),
+            },
         }
 
 

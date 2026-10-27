@@ -40,6 +40,23 @@ class FakeService:
             "total": 0, "capped": False, "items": [],
         }
 
+    def get_downtime_insights(self, **kwargs):
+        self.last_insights_kwargs = kwargs
+        return {
+            "branch": kwargs["branch"],
+            "from": kwargs["period_from"].isoformat(),
+            "to": "2026-09-29T13:00:00+00:00",
+            "referenceAt": "2026-09-29T13:00:00+00:00",
+            "timezone": "America/Sao_Paulo",
+            "appliedFilters": {},
+            "comparison": {"criteria": "immediately-preceding equal-duration window"},
+            "recurrence": [], "critical": {"rules": {}, "items": []},
+            "pendencies": {"unclassifiedCount": 0,
+                           "openTreatmentsCount": 0, "openStopsCount": 0},
+            "actionEffectiveness": [],
+            "quality": {"telemetryGaps": []},
+        }
+
     def get_downtime_analytics(self, **kwargs):
         self.last_analytics_kwargs = kwargs
         return {
@@ -175,6 +192,39 @@ def test_downtime_export_filters_reach_the_service(monkeypatch):
     assert kwargs["pendency"] is True
     body = response.json()
     assert body["data"]["total"] == 0
+
+
+def test_downtime_insights_requires_service_token(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "internal-secret")
+    api = client(monkeypatch)
+    assert (
+        api.get(
+            "/integrations/mes/downtimes/insights?branch=01"
+            "&from=2026-09-22T00:00:00Z"
+        ).status_code
+        == 401
+    )
+
+
+def test_downtime_insights_filters_reach_the_service(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "internal-secret")
+    service = FakeService()
+    app = FastAPI()
+    app.include_router(integration_mes_routes.router)
+    monkeypatch.setattr(integration_mes_routes, "build_mes_integration_read_service", lambda: service)
+    api = TestClient(app)
+    response = api.get(
+        "/integrations/mes/downtimes/insights?branch=01"
+        "&from=2026-09-22T00:00:00Z&workCenter=CT-35&status=open",
+        headers={"X-Delpi-Service-Token": "internal-secret"},
+    )
+    assert response.status_code == 200
+    body = response.json()["data"]
+    assert body["comparison"]["criteria"] == (
+        "immediately-preceding equal-duration window"
+    )
+    assert service.last_insights_kwargs["work_center"] == "CT-35"
+    assert service.last_insights_kwargs["status"] == "open"
 
 
 def test_downtime_sources_requires_service_token_and_returns_items(monkeypatch):

@@ -140,6 +140,26 @@ const EMPTY_ANALYTICS = {
   quality: { overlapDetected: false, overlapSeconds: 0, partial: false, factsCapped: false },
 };
 
+const EMPTY_INSIGHTS = {
+  branch: "01",
+  from: "2026-02-01T03:00:00.000Z",
+  to: "2026-02-10T12:00:00.000Z",
+  referenceAt: "2026-02-10T12:00:00.000Z",
+  timezone: "America/Sao_Paulo",
+  appliedFilters: {},
+  comparison: {
+    criteria: "equal_duration_immediately_preceding",
+    current: { from: "f", to: "t", durationSeconds: 0, summary: {} },
+    previous: { from: "pf", to: "pt", durationSeconds: 0, summary: {} },
+    deltas: {},
+  },
+  recurrence: [],
+  critical: { rules: {}, items: [] },
+  pendencies: { unclassifiedCount: 0, openTreatmentsCount: 0, openStopsCount: 0 },
+  actionEffectiveness: [],
+  quality: { overlapDetected: false, overlapSeconds: 0, partial: false, factsCapped: false, telemetryGaps: [] },
+};
+
 describe("Delpi MES App — downtimes area", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
   beforeEach(() => {
@@ -148,7 +168,9 @@ describe("Delpi MES App — downtimes area", () => {
         envelope(
           url.includes("/downtimes/analytics")
             ? EMPTY_ANALYTICS
-            : { items: [], total: 0, page: 1, pageSize: 50 },
+            : url.includes("/downtimes/insights")
+              ? EMPTY_INSIGHTS
+              : { items: [], total: 0, page: 1, pageSize: 50 },
         ),
       ),
     );

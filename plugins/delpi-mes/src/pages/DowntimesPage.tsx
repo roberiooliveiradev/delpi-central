@@ -17,12 +17,14 @@ import { RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { DowntimeAnalyticsSection } from "../components/downtimes/DowntimeAnalyticsSection";
+import { DowntimeInsightsSection } from "../components/downtimes/DowntimeInsightsSection";
 import { DowntimeExportActions } from "../components/downtimes/DowntimeExportActions";
 import { DowntimeManagementSections } from "../components/downtimes/DowntimeManagementSections";
 import type { BranchCode } from "../constants/routes";
 import { DELPI_MES_COPY } from "../content/copy";
 import type { DowntimesRouteParams } from "../hooks/useDelpiMesRoute";
 import { useDowntimeAnalytics } from "../hooks/useDowntimeAnalytics";
+import { useDowntimeInsights } from "../hooks/useDowntimeInsights";
 import { useDowntimeFilterOptions } from "../hooks/useDowntimeFilterOptions";
 import { useDowntimesData } from "../hooks/useDowntimesData";
 import { useSelectedDowntime } from "../hooks/useSelectedDowntime";
@@ -104,6 +106,7 @@ export function DowntimesPage({
     [branch, params],
   );
   const analytics = useDowntimeAnalytics(analyticsQuery);
+  const insights = useDowntimeInsights(analyticsQuery);
   const options = useDowntimeFilterOptions(branch);
   const selected = useSelectedDowntime(branch, params.downtimeId);
   const nowMs = useServerClock(downtimes.data?.referenceAt);
@@ -154,6 +157,13 @@ export function DowntimesPage({
     }
     // "Motivo não informado" (confirmada sem código) não possui filtro
     // equivalente — sem ação de drill-down.
+  };
+  const selectInsightGroup = (workCenter: string, reasonCode: string | null) => {
+    apply(
+      reasonCode
+        ? { workCenter, reasonCode, classification: null }
+        : { workCenter, classification: "pending" },
+    );
   };
 
   const items = downtimes.data?.items ?? [];
@@ -362,6 +372,11 @@ export function DowntimesPage({
         onSelectDay={(dayKey) =>
           apply({ period: "custom", from: dayKey, to: dayKey })
         }
+      />
+
+      <DowntimeInsightsSection
+        insights={insights}
+        onSelectGroup={selectInsightGroup}
       />
 
       {items.length === 0 ? (

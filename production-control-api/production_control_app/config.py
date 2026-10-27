@@ -128,6 +128,51 @@ class Settings:
         _get_env("PC_MES_CT_AUTONOMOUS_WORK_CENTERS", default="") or ""
     )
 
+    # MES-DOWNTIME-INSIGHTS (Etapa 6) — análise avançada de paradas.
+    # Janela simétrica (dias) da evidência antes/depois de eficácia —
+    # parâmetro de análise documentado, não regra industrial.
+    PC_MES_DOWNTIME_EFFECTIVENESS_WINDOW_DAYS: int = int(
+        _get_env("PC_MES_DOWNTIME_EFFECTIVENESS_WINDOW_DAYS", default="30")
+        or "30"
+    )
+    # Regras de criticidade — parâmetros industriais aprovados via env.
+    # None = regra inativa (configured=false); nenhum limite é inventado.
+    _crit_open = _get_env("PC_MES_DOWNTIME_CRITICAL_OPEN_SECONDS")
+    PC_MES_DOWNTIME_CRITICAL_OPEN_SECONDS: int | None = (
+        int(_crit_open) if _crit_open else None
+    )
+    _crit_rec = _get_env("PC_MES_DOWNTIME_CRITICAL_RECURRENCE_OCCURRENCES")
+    PC_MES_DOWNTIME_CRITICAL_RECURRENCE_OCCURRENCES: int | None = (
+        int(_crit_rec) if _crit_rec else None
+    )
+    # Minutos sem sinal Pulse para marcar telemetria degradada em quality.
+    PC_MES_DOWNTIME_TELEMETRY_STALE_MINUTES: int = int(
+        _get_env("PC_MES_DOWNTIME_TELEMETRY_STALE_MINUTES", default="30")
+        or "30"
+    )
+
+    # Alertas MES (Etapa 6) — avaliador no poller com dedup persistido.
+    # Default OFF: notificações automáticas só com parâmetros aprovados.
+    PC_MES_DOWNTIME_ALERTS_ENABLED: bool = (
+        str(
+            _get_env("PC_MES_DOWNTIME_ALERTS_ENABLED", default="false")
+            or "false"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    PC_MES_DOWNTIME_ALERT_INTERVAL_SECONDS: int = int(
+        _get_env("PC_MES_DOWNTIME_ALERT_INTERVAL_SECONDS", default="300")
+        or "300"
+    )
+    _unclassified = _get_env("PC_MES_DOWNTIME_UNCLASSIFIED_ALERT_THRESHOLD")
+    PC_MES_DOWNTIME_UNCLASSIFIED_ALERT_THRESHOLD: int | None = (
+        int(_unclassified) if _unclassified else None
+    )
+    _overdue = _get_env("PC_MES_DOWNTIME_OVERDUE_ACTION_DAYS")
+    PC_MES_DOWNTIME_OVERDUE_ACTION_DAYS: int | None = (
+        int(_overdue) if _overdue else None
+    )
+
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")
     PLUGINS_DB_NAME: str | None = _get_env("PLUGINS_DB_NAME")

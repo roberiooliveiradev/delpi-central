@@ -68,6 +68,30 @@ def test_downtime_analytics_targets_s2s_route_and_maps_params(monkeypatch):
     assert params["classification"] == "pending"
     assert params["from"].startswith("2026-09-22")
     # paginação/sort/downtimeId nunca são determinantes de métrica
+
+def test_downtime_insights_targets_s2s_route_and_maps_params(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "secret")
+    seen = {}
+    def handler(request):
+        seen["request"] = request
+        return httpx.Response(200, json={"success": True, "message": "OK", "data": {}})
+    subject, _ = gateway(handler)
+    subject.get_downtime_insights(
+        branch="02",
+        period_from=datetime(2026, 9, 22, 3, tzinfo=timezone.utc),
+        period_to=None,
+        work_center="CT-41", status="open",
+    )
+    request = seen["request"]
+    assert request.url.path == "/integrations/mes/downtimes/insights"
+    assert request.headers["X-Delpi-Service-Token"] == "secret"
+    params = dict(request.url.params)
+    assert params["branch"] == "02"
+    assert params["workCenter"] == "CT-41"
+    assert params["status"] == "open"
+    assert params["from"].startswith("2026-09-22")
+    assert "to" not in params
+
     assert "page" not in params and "sort" not in params and "downtimeId" not in params
 
 

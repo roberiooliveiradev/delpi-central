@@ -37,6 +37,19 @@ class ProductionRunPollerService:
         from production_control_app.composition.pc_composer import build_production_run_service
 
         loop = asyncio.get_running_loop()
+        # Serviço de alertas construído uma vez — o gateway de
+        # notificações carrega um httpx.Client que não deve ser
+        # recriado a cada avaliação.
+        alert_service = None
+        if settings.PC_MES_DOWNTIME_ALERTS_ENABLED:
+            try:
+                from production_control_app.composition.pc_composer import (  # noqa: E501
+                    build_mes_downtime_alert_service,
+                )
+
+                alert_service = build_mes_downtime_alert_service()
+            except Exception:  # noqa: BLE001
+                logger.exception("mes_downtime_alert_service_build_failed")
         while not self._stopped.is_set():
             cycle_started_at = loop.time()
             interval_ms = max(250, int(settings.PC_PRODUCTION_RUN_POLL_MS or 500))
@@ -58,6 +71,24 @@ class ProductionRunPollerService:
                     await asyncio.to_thread(monitor.tick_all)
                 except Exception:  # noqa: BLE001
                     logger.exception("mes_autonomous_tick_failed")
+            # Avaliador de alertas gerenciais de paradas (Etapa 6) —
+            # cadência própria (intervalo configurável) dentro do mesmo
+            # poller; dedup persistido impede notificação repetitiva.
+            if alert_service is not None:
+                try:
+                    from production_control_app.application.services.mes_downtime_alert_service import (  # noqa: E501
+                        evaluation_due,
+                    )
+
+                    if evaluation_due(
+                        loop.time(),
+                        interval_seconds=(
+                            settings.PC_MES_DOWNTIME_ALERT_INTERVAL_SECONDS
+                        ),
+                    ):
+                        await asyncio.to_thread(alert_service.tick)
+                except Exception:  # noqa: BLE001
+                    logger.exception("mes_downtime_alert_tick_failed")
             delay = remaining_cycle_delay(interval_ms, loop.time() - cycle_started_at)
             if delay <= 0:
                 continue

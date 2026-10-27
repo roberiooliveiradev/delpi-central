@@ -428,3 +428,125 @@ class PostgresMesMonitoringReadRepository:
             rows = [dict(row) for row in cur.fetchall()]
         capped = len(rows) > max_facts
         return {"items": rows[:max_facts], "total": total, "capped": capped}
+
+    def list_concluded_downtime_treatments(
+        self,
+        *,
+        branch: str,
+        period_from: datetime,
+        period_to: datetime,
+        max_items: int = 200,
+    ) -> list[dict[str, Any]]:
+        """Tratamentos concluídos na janela (Etapa 6 — eficácia de ações):
+        vínculo request_id + motivo/CT do fato, sem duplicar o evento."""
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT t.downtime_id::text AS downtime_id,
+                       t.request_id::text AS request_id,
+                       t.concluded_at,
+                       d.work_center, d.reason_code,
+                       reason.label AS reason_label
+                  FROM {_TREATMENTS} t
+                  JOIN {_DOWNTIMES} d ON d.id = t.downtime_id
+             LEFT JOIN {_REASONS} reason ON reason.code = d.reason_code
+                 WHERE t.branch = %s
+                   AND t.status = 'concluded'
+                   AND t.concluded_at >= %s
+                   AND t.concluded_at < %s
+              ORDER BY t.concluded_at ASC
+                 LIMIT %s
+                """,
+                [branch, period_from, period_to, max_items],
+            )
+            return [dict(row) for row in cur.fetchall()]
+
+    def count_downtime_occurrences(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        reason_code: str,
+        period_from: datetime,
+        period_to: datetime,
+    ) -> dict[str, int]:
+        """Contagem/segundos de ocorrências (CT, motivo) em janela fechada —
+        evidência antes/depois da eficácia de ações."""
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT COUNT(*) AS occurrences,
+                       COALESCE(SUM(
+                           GREATEST(0, EXTRACT(EPOCH FROM (
+                               LEAST(COALESCE(d.ended_at, %s), %s)
+                               - GREATEST(d.started_at, %s)
+                           )))
+                       ), 0)::bigint AS seconds
+                  FROM {_DOWNTIMES} d
+                 WHERE d.branch = %s
+                   AND d.work_center = %s
+                   AND d.reason_code = %s
+                   AND d.confirmed IS TRUE
+                   AND d.started_at < %s
+                   AND COALESCE(d.ended_at, %s) > %s
+                """,
+                [
+                    period_to, period_to, period_from,
+                    branch, work_center, reason_code,
+                    period_to, period_to, period_from,
+                ],
+            )
+            row = cur.fetchone()
+        return {
+            "occurrencesCount": int(row["occurrences"]),
+            "seconds": int(row["seconds"]),
+        }
+
+    def count_open_downtime_treatments(
+        self,
+        *,
+        branch: str,
+        work_center: str | None,
+        period_from: datetime,
+        period_to: datetime,
+    ) -> int:
+        """Tratamentos em aberto (pending|referred) de paradas da janela —
+        pendência gerencial da Etapa 6, sem carregar os fatos."""
+        clauses = [
+            "t.branch = %s",
+            "t.status IN ('pending', 'referred')",
+            "d.started_at < %s",
+            "COALESCE(d.ended_at, %s) > %s",
+        ]
+        params: list[Any] = [branch, period_to, period_to, period_from]
+        if work_center:
+            clauses.append("d.work_center = %s")
+            params.append(work_center)
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT COUNT(*) AS total
+                  FROM {_TREATMENTS} t
+                  JOIN {_DOWNTIMES} d ON d.id = t.downtime_id
+                 WHERE {" AND ".join(clauses)}
+                """,
+                params,
+            )
+            return int(cur.fetchone()["total"])
+
+    def list_work_center_observer_states(
+        self, *, branch: str
+    ) -> list[dict[str, Any]]:
+        """Estado de observação Pulse por CT (Etapa 6 — lacunas de
+        telemetria descritas em quality, fatos nunca suprimidos)."""
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT work_center, device_online, degraded_reason,
+                       last_seen_at
+                  FROM {PC_SCHEMA_NAME}.work_center_pulse_observers
+                 WHERE branch = %s
+                """,
+                [branch],
+            )
+            return [dict(row) for row in cur.fetchall()]

@@ -162,6 +162,33 @@ class ProductionControlMesGateway:
             params["status"] = status
         return self._get("/integrations/mes/downtimes/analytics", params=params)
 
+    def get_downtime_insights(
+        self,
+        *,
+        branch: str,
+        period_from: datetime,
+        period_to: datetime | None,
+        work_center: str | None = None,
+        reason_code: str | None = None,
+        source: str | None = None,
+        classification: str | None = None,
+        status: str | None = None,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {"branch": branch, "from": period_from.isoformat()}
+        if period_to:
+            params["to"] = period_to.isoformat()
+        if work_center:
+            params["workCenter"] = work_center
+        if reason_code:
+            params["reasonCode"] = reason_code
+        if source:
+            params["source"] = source
+        if classification:
+            params["classification"] = classification
+        if status:
+            params["status"] = status
+        return self._get("/integrations/mes/downtimes/insights", params=params)
+
     def list_downtime_reasons(self) -> dict[str, Any]:
         return self._request("GET", "/integrations/mes/downtime-reasons")
 

@@ -280,6 +280,17 @@
       ],
       "pluginId": "production-control"
     },
+    "production_control_mes_downtime_alerts": {
+      "label": "Delpi MES — Gestão de Paradas",
+      "notificationLabel": "Alertas gerenciais de paradas",
+      "icon": "triangle-alert",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": [
+        "production-control"
+      ],
+      "pluginId": "delpi-mes"
+    },
     "production_control_line_feeder_urgent": {
       "label": "Alimentador de Linha",
       "notificationLabel": "Solicitações urgentes das bancadas",
