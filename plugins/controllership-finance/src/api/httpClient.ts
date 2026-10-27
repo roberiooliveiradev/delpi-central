@@ -5,6 +5,7 @@ import {
 
 type RequestOptions = {
   signal?: AbortSignal;
+  headers?: Record<string, string>;
 };
 
 /** Única origem de dados do MFE: a BFF do produto. */
@@ -119,7 +120,11 @@ export async function httpPost<T>(
 ): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
-    headers: { ...buildHeaders(), "Content-Type": "application/json" },
+    headers: {
+      ...buildHeaders(),
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
     body: JSON.stringify(body),
     signal: options.signal,
   });
@@ -138,7 +143,11 @@ export async function httpPut<T>(
 ): Promise<T> {
   const response = await fetch(url, {
     method: "PUT",
-    headers: { ...buildHeaders(), "Content-Type": "application/json" },
+    headers: {
+      ...buildHeaders(),
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
     body: JSON.stringify(body),
     signal: options.signal,
   });

@@ -29,6 +29,7 @@ const submitReviewMock = vi.fn();
 const returnDraftMock = vi.fn();
 const inactivateMock = vi.fn();
 const listEventsMock = vi.fn();
+const saveRequirementMock = vi.fn();
 
 vi.mock("../../api/adminApi", () => ({
   listChecklistTemplates: (...args: unknown[]) =>
@@ -46,6 +47,8 @@ vi.mock("../../api/adminApi", () => ({
   inactivateTemplateVersion: (...args: unknown[]) =>
     inactivateMock(...args),
   listTemplateEvents: (...args: unknown[]) => listEventsMock(...args),
+  saveDocumentRequirement: (...args: unknown[]) =>
+    saveRequirementMock(...args),
 }));
 
 import { DocumentsAdminPage } from "./DocumentsAdminPage";
@@ -227,16 +230,7 @@ describe("DocumentConfigFormPage — cadastro", () => {
   function setupForm(versions = [VERSION_1, VERSION_2]) {
     setupList(versions);
     listEventsMock.mockResolvedValue([]);
-    createDraftMock.mockResolvedValue({
-      version_id: "v-9",
-      version: 9,
-      status: "DRAFT",
-      revision: 1,
-      effective_from_period: null,
-    });
-    updateDraftMock.mockResolvedValue({});
-    submitReviewMock.mockResolvedValue({});
-    publishMock.mockResolvedValue({});
+    saveRequirementMock.mockResolvedValue({ published_versions: [] });
   }
 
   it("valida campos obrigatórios antes de chamar o backend", async () => {
@@ -248,10 +242,10 @@ describe("DocumentConfigFormPage — cadastro", () => {
       screen.getByRole("button", { name: "Salvar documento" }),
     );
     expect(await screen.findByText(/Informe o nome/)).toBeTruthy();
-    expect(createDraftMock).not.toHaveBeenCalled();
+    expect(saveRequirementMock).not.toHaveBeenCalled();
   });
 
-  it("cria documento com vigência e publica versão prospectiva", async () => {
+  it("cria documento com vigência via comando transacional da BFF", async () => {
     setupForm();
     window.history.pushState(null, "", `${LIST_URL}/new`);
     render(<DocumentsAdminPage basePath={BASE} itemKey="new" />);
@@ -263,16 +257,26 @@ describe("DocumentConfigFormPage — cadastro", () => {
       screen.getByRole("button", { name: "Salvar documento" }),
     );
     await waitFor(() =>
-      expect(publishMock).toHaveBeenCalledWith("t-1", 9, {
-        effective_from_period: expect.any(String),
-      }),
+      expect(saveRequirementMock).toHaveBeenCalledWith(
+        "t-1",
+        "BALANCO-PATRIMONIAL",
+        expect.objectContaining({
+          effective_from: expect.any(String),
+          effective_until: null,
+          base_version: 2,
+          allow_empty: false,
+          item: expect.objectContaining({
+            item_key: "BALANCO-PATRIMONIAL",
+            name: "Balanço Patrimonial",
+          }),
+        }),
+        expect.any(String),
+      ),
     );
-    const payload = updateDraftMock.mock.calls[0][2];
-    const keys = payload.items.map(
-      (i: { item_key: string }) => i.item_key,
-    );
-    expect(keys).toContain("DOC-A");
-    expect(keys).toContain("BALANCO-PATRIMONIAL");
+    // UMA chamada — nenhuma orquestração de versões no MFE.
+    expect(saveRequirementMock).toHaveBeenCalledTimes(1);
+    expect(createDraftMock).not.toHaveBeenCalled();
+    expect(publishMock).not.toHaveBeenCalled();
     await waitFor(() =>
       expect(window.location.pathname).toBe(LIST_URL),
     );
@@ -281,7 +285,7 @@ describe("DocumentConfigFormPage — cadastro", () => {
     );
   });
 
-  it("vigência final agenda versão de remoção", async () => {
+  it("vigência final envia effective_until no mesmo comando", async () => {
     setupForm();
     window.history.pushState(null, "", `${LIST_URL}/new`);
     render(<DocumentsAdminPage basePath={BASE} itemKey="new" />);
@@ -295,10 +299,15 @@ describe("DocumentConfigFormPage — cadastro", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Salvar documento" }),
     );
-    await waitFor(() => expect(publishMock).toHaveBeenCalledTimes(2));
-    expect(publishMock).toHaveBeenNthCalledWith(2, "t-1", 9, {
-      effective_from_period: "2100-01",
-    });
+    await waitFor(() =>
+      expect(saveRequirementMock).toHaveBeenCalledWith(
+        "t-1",
+        "DOC-TEMPORARIO",
+        expect.objectContaining({ effective_until: "2099-12" }),
+        expect.any(String),
+      ),
+    );
+    expect(saveRequirementMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -323,16 +332,7 @@ describe("DocumentConfigFormPage — edição", () => {
         version: 1,
       },
     ]);
-    createDraftMock.mockResolvedValue({
-      version_id: "v-9",
-      version: 9,
-      status: "DRAFT",
-      revision: 1,
-      effective_from_period: null,
-    });
-    updateDraftMock.mockResolvedValue({});
-    submitReviewMock.mockResolvedValue({});
-    publishMock.mockResolvedValue({});
+    saveRequirementMock.mockResolvedValue({ published_versions: [] });
   }
 
   it("carrega configuração atual, situação e histórico", async () => {
@@ -352,7 +352,7 @@ describe("DocumentConfigFormPage — edição", () => {
     ).toBeTruthy();
   });
 
-  it("salvar alterações publica nova versão sem duplicar o item", async () => {
+  it("salvar alterações envia o item editado numa única chamada", async () => {
     setupEdit();
     window.history.pushState(null, "", `${LIST_URL}/DOC-A`);
     render(<DocumentsAdminPage basePath={BASE} itemKey="DOC-A" />);
@@ -363,10 +363,20 @@ describe("DocumentConfigFormPage — edição", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Salvar alterações" }),
     );
-    await waitFor(() => expect(publishMock).toHaveBeenCalled());
-    const payload = updateDraftMock.mock.calls[0][2];
-    expect(payload.items).toHaveLength(1);
-    expect(payload.items[0].name).toBe("Balancete revisado");
+    await waitFor(() =>
+      expect(saveRequirementMock).toHaveBeenCalledWith(
+        "t-1",
+        "DOC-A",
+        expect.objectContaining({
+          item: expect.objectContaining({
+            item_key: "DOC-A",
+            name: "Balancete revisado",
+          }),
+        }),
+        expect.any(String),
+      ),
+    );
+    expect(saveRequirementMock).toHaveBeenCalledTimes(1);
   });
 
   it("«Encerrar exigência» confirma e publica versão de remoção", async () => {

@@ -11,6 +11,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -22,6 +23,7 @@ import {
   listChecklistTemplates,
   listTemplateEvents,
   listTemplateVersions,
+  type ChecklistTemplateVersion,
   type TemplateAuditEvent,
 } from "../../api/adminApi";
 import {
@@ -50,7 +52,8 @@ import {
   deriveDocumentCatalog,
   formatPeriod,
   nextPeriod,
-  publishRemovalVersion,
+  catalogBaseVersion,
+  endDocumentRequirement,
   saveDocumentConfig,
   slugifyItemKey,
   type VersionWithItems,
@@ -138,6 +141,9 @@ export function DocumentConfigFormPage({
 }) {
   const isCreate = itemKey === "new";
   const [templateId, setTemplateId] = useState<string | null>(null);
+  const [versionList, setVersionList] = useState<
+    ChecklistTemplateVersion[] | null
+  >(null);
   const [versions, setVersions] =
     useState<VersionWithItems[] | null>(null);
   const [events, setEvents] =
@@ -153,6 +159,9 @@ export function DocumentConfigFormPage({
   const [busy, setBusy] = useState(false);
   const [nonce, setNonce] = useState(0);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [confirmEmpty, setConfirmEmpty] = useState(false);
+  const pendingEmptyRef = useRef<"save" | "end" | null>(null);
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   const backToList = useCallback(
     (saved?: string) => {
@@ -199,6 +208,7 @@ export function DocumentConfigFormPage({
             });
         if (controller.signal.aborted) return;
         setTemplateId(first.template_id);
+        setVersionList(versionList);
         setVersions(details);
         setEvents(eventList);
         if (!isCreate) {
@@ -324,62 +334,138 @@ export function DocumentConfigFormPage({
     return problems;
   }, [form, isCreate]);
 
+  const runSave = useCallback(
+    (allowEmpty: boolean) => {
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = crypto.randomUUID();
+      }
+      const key = isCreate ? slugifyItemKey(form.name) : form.itemKey;
+      saveDocumentConfig(
+        templateId!,
+        {
+          itemKey: key,
+          name: form.name.trim(),
+          purpose: form.purpose.trim() || null,
+          originKind: form.originKind as never,
+          recipientArea: (form.recipientArea || null) as never,
+          applicability: form.applicability as never,
+          sheet: form.sheet as never,
+          branchScope: form.branchScope as never,
+          totvsReportRef: form.totvsReportRef.trim() || null,
+          requirementNotes: form.requirementNotes.trim() || null,
+          validationScope: form.validationScope as never,
+        },
+        form.effectiveFrom,
+        form.effectiveUntil || null,
+        {
+          baseVersion: catalogBaseVersion(versionList ?? []),
+          idempotencyKey: idempotencyKeyRef.current,
+          allowEmpty,
+        },
+      )
+        .then(() => {
+          idempotencyKeyRef.current = null;
+          backToList(key);
+        })
+        .catch((err: unknown) => {
+          if (
+            !allowEmpty &&
+            err instanceof ApiError &&
+            err.code === "empty_resulting_checklist"
+          ) {
+            // DR-2 — esvaziar o checklist exige confirmação explícita.
+            // A intenção muda o payload: retry usa NOVA chave (a anterior
+            // divergiria em idempotency_conflict).
+            pendingEmptyRef.current = "save";
+            idempotencyKeyRef.current = null;
+            setConfirmEmpty(true);
+            setBusy(false);
+            return;
+          }
+          setActionError(
+            toQueryError(
+              err,
+              "Não foi possível salvar a configuração do documento.",
+            ),
+          );
+          setBusy(false);
+        });
+    },
+    [isCreate, form, templateId, versionList, backToList],
+  );
+
   const submit = useCallback(() => {
     const problems = validate();
     setFieldErrors(problems);
     if (problems.length > 0 || !templateId || busy) return;
     setBusy(true);
     setActionError(null);
-    const key = isCreate ? slugifyItemKey(form.name) : form.itemKey;
-    saveDocumentConfig(
-      templateId,
-      {
-        itemKey: key,
-        name: form.name.trim(),
-        purpose: form.purpose.trim() || null,
-        originKind: form.originKind as never,
-        recipientArea: (form.recipientArea || null) as never,
-        applicability: form.applicability as never,
-        sheet: form.sheet as never,
-        branchScope: form.branchScope as never,
-        totvsReportRef: form.totvsReportRef.trim() || null,
-        requirementNotes: form.requirementNotes.trim() || null,
-        validationScope: form.validationScope as never,
-      },
-      form.effectiveFrom,
-      form.effectiveUntil || null,
-    )
-      .then(() => backToList(key))
-      .catch((err: unknown) => {
-        setActionError(
-          toQueryError(
-            err,
-            "Não foi possível salvar a configuração do documento.",
-          ),
-        );
-        setBusy(false);
-      });
-  }, [validate, templateId, busy, isCreate, form, backToList]);
+    runSave(false);
+  }, [validate, templateId, busy, runSave]);
+
+  const runEndRequirement = useCallback(
+    (allowEmpty: boolean) => {
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = crypto.randomUUID();
+      }
+      endDocumentRequirement(
+        templateId!,
+        itemKey,
+        nextPeriod(currentPeriod()),
+        {
+          baseVersion: catalogBaseVersion(versionList ?? []),
+          idempotencyKey: idempotencyKeyRef.current,
+          allowEmpty,
+        },
+      )
+        .then(() => {
+          idempotencyKeyRef.current = null;
+          setConfirmEnd(false);
+          backToList(itemKey);
+        })
+        .catch((err: unknown) => {
+          if (
+            !allowEmpty &&
+            err instanceof ApiError &&
+            err.code === "empty_resulting_checklist"
+          ) {
+            pendingEmptyRef.current = "end";
+            idempotencyKeyRef.current = null;
+            setConfirmEnd(false);
+            setConfirmEmpty(true);
+            setBusy(false);
+            return;
+          }
+          setActionError(
+            toQueryError(
+              err,
+              "Não foi possível encerrar a exigência do documento.",
+            ),
+          );
+          setBusy(false);
+        });
+    },
+    [templateId, itemKey, versionList, backToList],
+  );
 
   const confirmEndRequirement = useCallback(() => {
     if (!templateId || busy) return;
     setBusy(true);
     setActionError(null);
-    publishRemovalVersion(templateId, itemKey, currentPeriod())
-      .then(() => {
-        setConfirmEnd(false);
-        backToList(itemKey);
-      })
-      .catch((err: unknown) => {
-        setActionError(
-          toQueryError(
-            err,
-            "Não foi possível encerrar a exigência do documento.",
-          ),
-        );
-        setBusy(false);
-      });
-  }, [templateId, busy, itemKey, backToList]);
+    runEndRequirement(false);
+  }, [templateId, busy, runEndRequirement]);
+
+  const confirmEmptyChecklist = useCallback(() => {
+    const kind = pendingEmptyRef.current;
+    pendingEmptyRef.current = null;
+    setConfirmEmpty(false);
+    if (kind) {
+      setBusy(true);
+      setActionError(null);
+      if (kind === "save") runSave(true);
+      else runEndRequirement(true);
+    }
+  }, [runSave, runEndRequirement]);
 
   return (
     <section
@@ -438,6 +524,21 @@ export function DocumentConfigFormPage({
         {actionError ? (
           <CfFeedbackMessage intent="error" title="Ação não concluída">
             {actionError.message}
+            {actionError.code === "stale_revision" ? (
+              <>
+                {" "}
+                <button
+                  type="button"
+                  className="cf-link-button"
+                  onClick={() => {
+                    setActionError(null);
+                    reload();
+                  }}
+                >
+                  Recarregar configuração
+                </button>
+              </>
+            ) : null}
           </CfFeedbackMessage>
         ) : null}
 
@@ -711,8 +812,10 @@ export function DocumentConfigFormPage({
               <div className="cf-validation-panel__form">
                 <p className="cf-validation-panel__doc-detail">
                   A vigência é prospectiva: a exigência passa a valer para
-                  competências abertas a partir da competência inicial —
-                  fechamentos já abertos ou encerrados não são alterados.
+                  competências abertas a partir da competência inicial.
+                  Fechamentos já abertos ou encerrados não são alterados —
+                  se a janela alcançar uma competência aberta, a publicação
+                  é recusada.
                 </p>
                 <label>
                   Exigido a partir de (AAAA-MM) *
@@ -864,6 +967,34 @@ export function DocumentConfigFormPage({
             confirmBusyLabel="Encerrando…"
             onConfirm={confirmEndRequirement}
             onCancel={() => setConfirmEnd(false)}
+            classNames={cfConfirmModalClassNames}
+          />
+        </CfDialog>
+      ) : null}
+
+      {confirmEmpty ? (
+        <CfDialog
+          open
+          title="Checklist sem documentos"
+          onClose={() => !busy && setConfirmEmpty(false)}
+          closeAriaLabel="Fechar confirmação"
+        >
+          <ConfirmModalPanel
+            message={
+              <>
+                Esta alteração deixará o checklist de fechamento sem
+                nenhum documento exigido nas competências futuras.
+                Fechamentos já abertos não são alterados. Confirmar a
+                publicação do checklist vazio?
+              </>
+            }
+            confirmLabel="Publicar checklist vazio"
+            cancelLabel="Voltar"
+            variant="danger"
+            confirmBusy={busy}
+            confirmBusyLabel="Publicando…"
+            onConfirm={confirmEmptyChecklist}
+            onCancel={() => setConfirmEmpty(false)}
             classNames={cfConfirmModalClassNames}
           />
         </CfDialog>

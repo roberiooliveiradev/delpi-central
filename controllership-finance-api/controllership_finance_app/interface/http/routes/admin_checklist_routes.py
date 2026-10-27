@@ -9,12 +9,14 @@ efetivo (Core é a única autoridade). Consumida pela página
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Header, Query, Request
 from pydantic import BaseModel, Field
 
 from controllership_finance_app.core.responses import fail, ok
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
+    EmptyResultingChecklist,
+    ItemKeyMismatch,
 )
 from controllership_finance_app.infrastructure.persistence.closing_checklist_repository import (
     ClosingChecklistRepository,
@@ -58,11 +60,31 @@ class ChecklistItemInput(BaseModel):
 
 class UpdateDraftRequest(BaseModel):
     revision: int = Field(ge=1)
-    items: list[ChecklistItemInput] = Field(min_length=1)
+    items: list[ChecklistItemInput]
+    allow_empty: bool = False
 
 
 class PublishVersionRequest(BaseModel):
     effective_from_period: str = Field(pattern=PERIOD_PATTERN)
+    allow_empty: bool = False
+
+
+class DocumentRequirementRequest(BaseModel):
+    """DR-1 — configuração documental transacional (doc 114 §8.6).
+
+    `item` presente → upsert da exigência na janela; `item` omitido →
+    encerramento a partir de `effective_from`. `base_version` é OCC
+    obrigatório (PO D5): a revisão do catálogo muda em qualquer
+    publicação, inclusive pelos endpoints legados.
+    """
+
+    item: ChecklistItemInput | None = None
+    effective_from: str = Field(pattern=PERIOD_PATTERN)
+    effective_until: str | None = Field(
+        default=None, pattern=PERIOD_PATTERN
+    )
+    base_version: int = Field(ge=0)
+    allow_empty: bool = False
 
 
 class ReturnToDraftRequest(BaseModel):
@@ -180,6 +202,13 @@ def update_checklist_template_draft(
     body: UpdateDraftRequest,
 ):
     user = authorized_admin(request)
+    if not body.items and not body.allow_empty:
+        return _domain_fail(
+            EmptyResultingChecklist(
+                "Rascunho sem itens exige allow_empty explícito."
+            ),
+            "update_checklist_template_draft",
+        )
     try:
         updated = _repository().update_draft_items(
             template_id,
@@ -214,6 +243,7 @@ def publish_checklist_template_version(
             version,
             effective_from_period=body.effective_from_period,
             actor=actor_subject(user),
+            allow_empty=body.allow_empty,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "publish_checklist_template_version")
@@ -274,6 +304,53 @@ def return_checklist_version_to_draft(
         message="Versão devolvida a rascunho.",
         operation_id="return_checklist_version_to_draft",
     )
+
+
+@router.put(
+    "/{template_id}/documents/{item_key}/requirement",
+    operation_id="upsert_document_requirement",
+)
+def upsert_document_requirement(
+    request: Request,
+    template_id: str,
+    item_key: str,
+    body: DocumentRequirementRequest,
+    idempotency_key: str = Header(
+        alias="Idempotency-Key", min_length=1, max_length=128
+    ),
+):
+    """DR-1 — configuração documental transacional e idempotente.
+
+    Uma única transação aplica toda a alteração (inclusão, edição,
+    término, reativação, encerramento) ou nenhuma parte dela. A
+    `Idempotency-Key` é obrigatória e escopada ao template; o
+    `base_version` é o OCC obrigatório da revisão do catálogo.
+    """
+    user = authorized_admin(request)
+    if body.item is not None and body.item.item_key != item_key:
+        return _domain_fail(
+            ItemKeyMismatch(
+                "item_key do corpo diverge do recurso da rota."
+            ),
+            "upsert_document_requirement",
+        )
+    try:
+        result = _repository().apply_document_requirement(
+            template_id,
+            item_key=item_key,
+            item=(
+                body.item.model_dump() if body.item is not None else None
+            ),
+            effective_from=body.effective_from,
+            effective_until=body.effective_until,
+            base_version=body.base_version,
+            allow_empty=body.allow_empty,
+            idempotency_key=idempotency_key,
+            actor=actor_subject(user),
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "upsert_document_requirement")
+    return ok(result, operation_id="upsert_document_requirement")
 
 
 @router.post(

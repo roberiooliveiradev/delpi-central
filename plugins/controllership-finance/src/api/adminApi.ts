@@ -202,6 +202,47 @@ export function inactivateTemplateVersion(
   });
 }
 
+export type DocumentRequirementResult = {
+  item_key: string;
+  published_versions: {
+    version_id: string;
+    version: number;
+    effective_from_period: string;
+    item_count: number;
+  }[];
+  no_changes: boolean;
+  replayed: boolean;
+  audit_event_ids: string[];
+};
+
+export type DocumentRequirementPayload = {
+  /** Presente = upsert da exigência; omitido = encerramento a partir de
+   * `effective_from`. */
+  item?: DraftItemInput;
+  effective_from: string;
+  effective_until?: string | null;
+  /** OCC obrigatório — MAX(version) visto pelo cliente (PO D5). */
+  base_version: number;
+  allow_empty?: boolean;
+};
+
+/** DR-1 — configuração documental transacional e idempotente da BFF. */
+export function saveDocumentRequirement(
+  templateId: string,
+  itemKey: string,
+  payload: DocumentRequirementPayload,
+  idempotencyKey: string,
+): Promise<DocumentRequirementResult> {
+  return httpPut<Envelope<DocumentRequirementResult>>(
+    cfApiUrl(`${BASE}/${templateId}/documents/${itemKey}/requirement`),
+    payload,
+    { headers: { "Idempotency-Key": idempotencyKey } },
+  ).then((envelope) => {
+    if (!envelope?.data) throw new Error("Resposta vazia da operação.");
+    return envelope.data;
+  });
+}
+
 export async function listTemplateEvents(
   templateId: string,
   version?: number,

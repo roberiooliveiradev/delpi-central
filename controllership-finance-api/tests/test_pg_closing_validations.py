@@ -131,6 +131,7 @@ def setup(_configure_db):
         "V014__clara_consent_challenge.sql",
         "V015__monthly_competence_optional_template.sql",
         "V016__document_messages.sql",
+        "V017__document_requirement_operations.sql",
     ]
     checklist = ClosingChecklistRepository()
     template_id = str(checklist.list_templates()[0]["template_id"])

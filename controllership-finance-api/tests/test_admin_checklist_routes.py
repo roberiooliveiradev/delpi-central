@@ -354,3 +354,111 @@ def test_list_template_events_access_only_forbidden(
     )
     assert response.status_code == 403
     repo.list_template_events.assert_not_called()
+
+
+# --- DR-1 document requirement ----------------------------------------------
+
+REQUIREMENT_URL = (
+    f"/admin/checklist-templates/{TEMPLATE_ID}/documents/DOCX/requirement"
+)
+REQUIREMENT_BODY = {
+    "item": {
+        "item_key": "DOCX",
+        "sheet": "ELETRONICO",
+        "name": "Documento X",
+        "origin_kind": "EXTERNAL",
+        "recipient_area": "CONTABIL",
+        "applicability": "REQUIRED",
+        "branch_scope": "BOTH",
+        "validation_scope": "PER_ATTACHMENT",
+    },
+    "effective_from": "2027-05",
+    "effective_until": None,
+    "base_version": 3,
+    "allow_empty": False,
+}
+
+
+def test_requirement_requires_bearer(repo):
+    response = _client().put(REQUIREMENT_URL, json=REQUIREMENT_BODY)
+    assert response.status_code == 401
+    repo.apply_document_requirement.assert_not_called()
+
+
+def test_requirement_access_only_forbidden(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    response = _client().put(
+        REQUIREMENT_URL,
+        headers={**_headers(), "Idempotency-Key": "key-1"},
+        json=REQUIREMENT_BODY,
+    )
+    assert response.status_code == 403
+    repo.apply_document_requirement.assert_not_called()
+
+
+def test_requirement_requires_idempotency_key(_auth_pipeline, repo):
+    response = _client().put(
+        REQUIREMENT_URL, headers=_headers(), json=REQUIREMENT_BODY
+    )
+    assert response.status_code == 422
+    repo.apply_document_requirement.assert_not_called()
+
+
+def test_requirement_item_key_mismatch(_auth_pipeline, repo):
+    body = dict(REQUIREMENT_BODY)
+    body["item"] = dict(REQUIREMENT_BODY["item"], item_key="OTHER")
+    response = _client().put(
+        REQUIREMENT_URL,
+        headers={**_headers(), "Idempotency-Key": "key-1"},
+        json=body,
+    )
+    assert response.status_code == 422
+    assert (
+        response.json()["data"]["error"]["code"] == "item_key_mismatch"
+    )
+    repo.apply_document_requirement.assert_not_called()
+
+
+def test_requirement_happy_path(_auth_pipeline, repo):
+    repo.apply_document_requirement.return_value = {
+        "item_key": "DOCX",
+        "published_versions": [
+            {
+                "version_id": "v",
+                "version": 4,
+                "effective_from_period": "2027-05",
+                "item_count": 54,
+            }
+        ],
+        "no_changes": False,
+        "replayed": False,
+        "audit_event_ids": ["e1", "e2"],
+    }
+    response = _client().put(
+        REQUIREMENT_URL,
+        headers={**_headers(), "Idempotency-Key": "key-1"},
+        json=REQUIREMENT_BODY,
+    )
+    assert response.status_code == 200
+    repo.apply_document_requirement.assert_called_once()
+    _, kwargs = repo.apply_document_requirement.call_args
+    assert kwargs["base_version"] == 3
+    assert kwargs["idempotency_key"] == "key-1"
+    assert kwargs["effective_until"] is None
+    assert response.json()["data"]["item_key"] == "DOCX"
+
+
+def test_requirement_domain_error_mapped(_auth_pipeline, repo):
+    repo.apply_document_requirement.side_effect = (
+        de.WindowCoversOpenCompetence("janela cobre 2027-05")
+    )
+    response = _client().put(
+        REQUIREMENT_URL,
+        headers={**_headers(), "Idempotency-Key": "key-1"},
+        json=REQUIREMENT_BODY,
+    )
+    assert response.status_code == 422
+    assert (
+        response.json()["data"]["error"]["code"]
+        == "window_covers_open_competence"
+    )
