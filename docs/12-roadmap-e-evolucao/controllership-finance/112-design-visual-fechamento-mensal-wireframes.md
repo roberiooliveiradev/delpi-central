@@ -1809,3 +1809,15 @@ Correção implementada preservando 100% do visual aprovado:
 ## 45. Decisões PO — Relatórios e divergências V0.2 (27/10/2026)
 
 O PO aprovou **prioridade de divergências/ações**, **catálogo por cartões de famílias**, **resultado e detalhamento dentro da própria aba** e **prévia PDF inline**, preservando exatamente três abas. Detalhamento de layout, casos vazios, origem, seleção, cálculos homologados, correção manual TOTVS e gates no [Plano 113 §25](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). As quatro escolhas são `PRODUCT_DESIGN_APPROVED`; wireframe detalhado permanece `TARGET / PENDING_FINAL_PO_VISUAL_APPROVAL`. Sem implementação por esta decisão.
+
+
+### 45.1 Evidências de implementação — UX-010 (27/10/2026)
+
+As quatro decisões congeladas do PO foram implementadas no runtime (Plano 113 §25.5):
+
+1. **Prioridade = attention:** «O que precisa de atenção» é a primeira seção operacional, antes do catálogo — divergência comprovada, fonte indisponível e conferência não realizada separadas visualmente (borda + badge por categoria, nunca enum novo).
+2. **Catálogo = cards:** `InteractiveDataCard` por família («Baixas financeiras», «Estoque e conciliação») com situação real da consulta, origem, data de atualização e estado visual de seleção — a matriz R01–R15 virou rastreabilidade abaixo.
+3. **Detalhes = inline:** seleção abre «Resultados» na mesma aba — total → grupos → linhas sob demanda; relatório selecionado preservado na URL (`&report=`).
+4. **PDF = inline:** contêiner contextual no fim dos resultados com indisponibilidade honesta — sem produtor de PDF homologado no HEAD.
+
+Indicadores clicáveis levam o foco às seções da aba; valores `—` quando a fonte não sustenta número; nenhum cálculo financeiro no navegador; competência e contexto preservados em refresh/back-forward. Rotas legadas `closing/financial-settlements` e `closing/stock-inventory` mantidas para compatibilidade. Wireframe V0.2 passa a `IMPLEMENTED`; homologação visual do PO permanece `PENDING`.

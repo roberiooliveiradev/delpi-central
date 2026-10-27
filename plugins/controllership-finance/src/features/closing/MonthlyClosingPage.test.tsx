@@ -50,8 +50,8 @@ vi.mock("./DocumentDetailPanel", () => ({
   }) => <div data-testid="document-detail">detail:{documentRef}</div>,
 }));
 
-vi.mock("./ReportsMatrixPanel", () => ({
-  ReportsMatrixPanel: ({ period }: { period: string }) => (
+vi.mock("./MonthlyReportsPanel", () => ({
+  MonthlyReportsPanel: ({ period }: { period: string }) => (
     <div data-testid="reports-panel">reports:{period}</div>
   ),
 }));
@@ -230,14 +230,16 @@ describe("mês sem competência aberta — consulta possível, estados honestos"
     ).toBeTruthy();
   });
 
-  it("relatórios explicam a dependência sem fingir dado", async () => {
+  it("relatórios são consultáveis por período mesmo sem competência aberta", async () => {
     setLocation(`${BASE}/closing/monthly-closing/2026-09?tab=reports`);
     listCompetencesMock.mockResolvedValue(COMPETENCES);
     mockClosedMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-09" />);
 
-    await screen.findByText(/ainda não foi aberto/);
-    expect(screen.queryByTestId("reports-panel")).toBeNull();
+    await screen.findByTestId("reports-panel");
+    expect(screen.getByTestId("reports-panel").textContent).toBe(
+      "reports:2026-09",
+    );
   });
 
   it("abrir competência chama o contrato real e recarrega o mês", async () => {

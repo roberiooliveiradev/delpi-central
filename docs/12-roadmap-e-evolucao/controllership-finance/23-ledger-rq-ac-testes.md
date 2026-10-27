@@ -491,3 +491,26 @@ inalterado. Plano 113 §23.6 / doc-112 §44.2.
 | RQ-RW01-12 | UX aprovada preservada | conversa 520px + composer rodapé, `CfTimeline`, `UnifiedAvatar`/`authorSrc`, fallback de iniciais, histórico/versões intactos | PASS |
 | RQ-RW01-13 | Testes negativos executados | rotas 19/19 (cross-doc, cross-competence, não-participante, sem access, sem token, UUID inválido, >50, Core fora); hook 6/6; detalhe 23/23; plugin; gateway 10/10 | PASS |
 | RQ-RW01-14 | Fallback honesto | sem foto → iniciais; sem perfil → «Participante»; UUID nunca visível | PASS |
+
+
+## Relatórios e divergências V0.2 — resultado (CF-PROC0072-REPORTS-UX-010, 27/10/2026)
+
+Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md), doc-112 §45): atenção antes do catálogo, cartões por família, resultados inline, PDF inline. Implementação sobre contratos canônicos existentes — sem endpoint novo, sem permission nova, sem cálculo no navegador.
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-REP-01 | Atenção antes do catálogo | `MonthlyReportsPanel`: «O que precisa de atenção» é a primeira seção operacional | PASS |
+| RQ-REP-02 | Três categorias de apresentação | `divergence` / `source_unavailable` / `check_pending` derivadas dos contratos (P3, quality flags, status estoque, matriz) — nenhum enum persistido | PASS |
+| RQ-REP-03 | Sem falso zero | erro de fonte → indicador `—`; `source_missing`/`UNAVAILABLE` nunca viram «0 divergências»; teste «erro de consulta não é ausência» | PASS |
+| RQ-REP-04 | Valor/origem/data/ação nos itens | cada item mostra diferença formatada, origem, `fetched_at` real e próxima ação; expansão com fatos | PASS |
+| RQ-REP-05 | Causa honesta | «A causa ainda não foi identificada» nas divergências; sem instrução TOTVS inventada, sem escrita ERP | PASS |
+| RQ-REP-06 | Cartões por família | `CfInteractiveDataCard` ×2 (Baixas financeiras, Estoque e conciliação) com situação real + seleção visual; matriz subordinada | PASS |
+| RQ-REP-07 | Resultados inline + progressivo | `?tab=reports&report=…`; total → grupos → linhas sob demanda (`nature_code`/`movement_type`, itens do snapshot paginados) | PASS |
+| RQ-REP-08 | Divergência canônica | P3 `reported − expected` do backend; nenhum cálculo financeiro no MFE; `R$ 0,00` exato = sem divergência | PASS |
+| RQ-REP-09 | Competência não aberta honesta | P3/matriz 404 → «Conferência não realizada» + cobertura não gerada; baixas/estoque period-keyed seguem consultáveis | PASS |
+| RQ-REP-10 | URL/F5/back-forward | `report` na query; painel recebe `selectedReport` da página; teste de troca de período refaz as 4 consultas | PASS |
+| RQ-REP-11 | Isolamento de período | resultados keyed `period:nonce`; AbortController + request-id; nunca dado de outro mês | PASS |
+| RQ-REP-12 | PDF contextual honesto | slot sempre presente; «ainda não está disponível para este relatório» sem produtor; nenhum PDF fictício/evidência reutilizada | PASS |
+| RQ-REP-13 | Plugin-ui real, sem duplicatas | inventário Doc 30: `CfInteractiveDataCard`, `CfSectionCard`, `CfStatusBadge`, `CfMetricStrip`, `DataTableSection`, `CfEmptyState`, `CfFeedbackMessage`, `CfActionButton` | PASS |
+| RQ-REP-14 | Rotas legadas compatíveis | `closing/financial-settlements` e `closing/stock-inventory` intactas; nenhum consumer removido | PASS |
+| RQ-REP-15 | Testes e gates | painel 15/15 + página 32/32 + plugin 275/275 + estruturais 8/8 · tsc · ESLint escopo · build federado `App-C7-aX4Lo.js` | PASS / homologação visual PO PENDING |

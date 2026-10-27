@@ -25,20 +25,20 @@ import { CF_HELP } from "../../content/helpTooltips";
 
 type PanelError = { status: number; code: string | null; message: string };
 
-const SOURCE_LABELS: Record<ReportSourceKind, string> = {
+export const SOURCE_LABELS: Record<ReportSourceKind, string> = {
   OPERATIONAL_VIEW: "Consulta operacional",
   MANUAL_EVIDENCE: "Evidência manual",
   EXTERNAL: "Fonte externa",
   PENDING_CONTRACT: "Contrato pendente",
 };
 
-const COVERAGE_LABELS = {
+export const COVERAGE_LABELS = {
   validated: "Coberto",
   partial: "Parcial",
   pending: "Pendente",
 } as const;
 
-const COVERAGE_VARIANTS = {
+export const COVERAGE_VARIANTS = {
   validated: "success",
   partial: "info",
   pending: "warning",

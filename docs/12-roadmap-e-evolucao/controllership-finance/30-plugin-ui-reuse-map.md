@@ -851,3 +851,20 @@ composer no rodapé, altura 520px). O diff é só de contrato e estado:
 
 Rotas antigas removidas — sem endpoint residual de consulta livre.
 Nenhuma nova lista/avatar/timeline paralela criada.
+
+## Registro de execução — Relatórios e divergências V0.2 (CF-PROC0072-REPORTS-UX-010, 27/10/2026)
+
+Aba `?tab=reports` do Fechamento mensal composta inteiramente sobre exports/factories reais do kit — nenhum componente paralelo criado:
+
+| Superfície | Export/factory `@delpi/plugin-ui` | Consumo |
+|---|---|---|
+| Indicadores clicáveis e cartões de família | `InteractiveDataCard` via `CfInteractiveDataCard` (`createDashboardInteractiveDataCard`) | 3 indicadores com `openHint` + `onActivate` (foco na seção); 2 cartões de família com `ariaLabel`, fields e seleção visual (classe `cf-report-card--selected`, sem novo componente) |
+| Seções da aba | `SectionCard` via `CfSectionCard` (`createDashboardSectionCard`) | título + `subtitle` visível + `hint` de ajuda contextual |
+| Situação de fonte/cobertura | `StatusBadge` via `CfStatusBadge` | badges de atenção (danger/warning/info por categoria), `source_state` P3 e cobertura R01–R15 (labels/variantes reexportadas de `ReportsMatrixPanel`) |
+| Totais e agrupamentos | `MetricStrip` via `CfMetricStrip` (`createDashboardMetricStrip`, itens `PageHeroHighlight`) | total histórico de estoque, resumo por tipo e por armazém |
+| Linhas sob demanda | `DataTableSection` (`createDashboardDataTableSection`) | registros do agrupamento de baixas e itens do snapshot — paginação server-side nativa, `hideSearch`, colunas `key/header/render` |
+| Estados vazios e erros | `EmptyState` (`CfEmptyState` + `cfEmptyStateClassNames`), `FeedbackMessage`/`QueryErrorBanner` (`cfFeedbackUi`) | «Selecione um relatório…», «Nenhuma divergência…», fonte indisponível/erro de consulta com «Tentar novamente» |
+| Ações | `ActionButton` via `CfActionButton` | «Atualizar dados», «Ver detalhes» (expansão com `aria-expanded`/`aria-controls`), «Ver itens do snapshot» |
+| Ajuda | `helpTooltips.ts` (`CF_HELP.monthlyClosing.reports*`) + hint do `SectionCard` | textos de indicadores, atenção, catálogo, resultados e PDF |
+
+`FilePreviewView`/`useFilePreviewLoader` **não usados** — não existe produtor/contrato binário de PDF de relatório no HEAD; o slot permanece com estado honesto até o contrato existir. Nenhuma tabela/matriz paralela nova: a cobertura R01–R15 reutiliza labels e variantes exportadas de `ReportsMatrixPanel`.

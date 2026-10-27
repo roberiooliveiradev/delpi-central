@@ -412,3 +412,19 @@ Correção de segurança no serviço de nomes/fotos de participantes — a CLARA
 - **Nada mudou na conversa nem no histórico:** a conversa por documento, a linha do tempo, a altura da coluna e o campo de escrita no rodapé continuam funcionando como antes — a correção foi somente na autorização.
 - **Sem efeitos colaterais novos:** mensagens continuam não validando documento, não liberando arquivo para a Contabilidade e não gerando notificações; a audiência da DRE/Contabilidade na conversa continua sendo um gate futuro que não existe.
 - **Escopo da CLARA:** a CLARA não consulta perfis, não resolve nomes e não acessa fotos — descreve a regra, sem tool MCP nova.
+
+
+## Adendo — Relatórios e divergências na aba de relatórios (CF-PROC0072-REPORTS-UX-010, 27/10/2026)
+
+A terceira aba «Relatórios e divergências» do Fechamento mensal virou uma bancada de análise — a CLARA deve descrevê-la em português simples:
+
+- **Ordem da página:** primeiro os indicadores do mês, depois «O que precisa de atenção», os cartões de relatório por família, os resultados detalhados, a cobertura da matriz R01–R15 e o espaço da prévia de PDF.
+- **Três tipos de situação, nunca misturados:** divergência comprovada (diferença calculada pelo sistema), fonte indisponível (a consulta não respondeu ou está parcial) e conferência não realizada (a atividade ainda não foi executada — por exemplo, a conciliação P3 exige competência aberta). A CLARA não deve tratar fonte indisponível como «sem divergência» nem como zero.
+- **Famílias com consulta real hoje:** Baixas financeiras (pagamentos e recebimentos SE5) e Estoque e conciliação (posição P7 + conferência Entradas/Saídas − P7 − H02). Os resultados abrem na própria aba: primeiro o total, depois os agrupamentos e, só quando a pessoa pede («Ver detalhes»), as linhas e registros.
+- **Divergência de estoque:** a diferença exibida vem da conciliação P3 calculada pelo backend (reportado − esperado, somente quando a fonte está disponível e comparável). A conciliação só é concluída com diferença de exatamente R$ 0,00 — não existe tolerância. Se P7 ou H02 estiverem indisponíveis, o estado aparece como fonte indisponível, nunca como resultado inventado.
+- **Causa e correção:** quando a causa ainda não foi comprovada pelo sistema, a tela diz «A causa ainda não foi identificada». A correção é manual no TOTVS — o Portal não escreve no ERP e não executa ajuste automático; após corrigir, a pessoa revalida a conciliação no checklist P3.
+- **Matriz R01–R15 não são quinze relatórios calculados:** é a lista de entregáveis do fechamento e sua cobertura de conferência — vários R-IDs são evidência manual, fonte externa ou contrato pendente, não relatórios prontos. A CLARA não deve afirmar que R01–R15 estão calculados.
+- **Prévia de PDF:** o espaço existe vinculado ao relatório selecionado, mas nenhum relatório tem PDF gerado hoje — a tela informa «A prévia do PDF ainda não está disponível para este relatório». A CLARA não deve prometer PDF nem tratar PDF anexado como evidência se fosse relatório oficial.
+- **Competência como mês de referência:** a aba funciona por mês selecionado; consultas de baixas e estoque não exigem fechamento aberto, mas a conciliação P3 e a cobertura da matriz exigem — nesse caso aparece «Conferência não realizada».
+- **Contabilidade/DRE:** relatórios operacionais desta aba **não** são enviados à DRE — a CLARA não deve afirmar o contrário.
+- **Escopo da CLARA:** não existe tool MCP para consultar divergências ou gerar PDF — a CLARA conhece o funcionamento e orienta o usuário, sem executar a análise.

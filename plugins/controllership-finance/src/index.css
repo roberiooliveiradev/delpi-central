@@ -1101,3 +1101,167 @@
   gap: var(--cf-grid-gap, 16px);
   min-width: 0;
 }
+
+/* Relatórios e divergências V0.2 — atenção, cartões de família e
+   detalhamento progressivo (doc 112 §45, UX-010). */
+.dashboard-controllership-finance .cf-attention-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-controllership-finance .cf-attention-item {
+  border: 1px solid var(--cf-border);
+  border-radius: var(--radius, 12px);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--cf-surface);
+}
+
+.dashboard-controllership-finance .cf-attention-item[data-kind="divergence"] {
+  border-left: 4px solid var(--cf-danger, #c0392b);
+}
+
+.dashboard-controllership-finance .cf-attention-item[data-kind="source_unavailable"] {
+  border-left: 4px solid var(--cf-warning, #b7791f);
+}
+
+.dashboard-controllership-finance .cf-attention-item[data-kind="check_pending"] {
+  border-left: 4px solid var(--cf-info, #2b6cb0);
+}
+
+.dashboard-controllership-finance .cf-attention-item__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-attention-item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.dashboard-controllership-finance .cf-attention-item__desc {
+  font-size: 0.875rem;
+}
+
+.dashboard-controllership-finance .cf-attention-item__meta,
+.dashboard-controllership-finance .cf-attention-item__action,
+.dashboard-controllership-finance .cf-attention-item__totvs {
+  color: var(--cf-text-muted);
+  font-size: 0.8125rem;
+}
+
+.dashboard-controllership-finance .cf-attention-item__side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-attention-item__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-controllership-finance .cf-attention-item__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-attention-item__detail {
+  border-top: 1px solid var(--cf-border);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-attention-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-attention-facts__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-controllership-finance .cf-attention-facts__row dt {
+  color: var(--cf-text-muted);
+  font-size: 0.75rem;
+}
+
+.dashboard-controllership-finance .cf-attention-facts__row dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.dashboard-controllership-finance .cf-report-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-report-card--selected {
+  outline: 2px solid var(--cf-focus, currentColor);
+  outline-offset: 2px;
+}
+
+.dashboard-controllership-finance .cf-report-groups {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-controllership-finance .cf-report-group {
+  border: 1px solid var(--cf-border);
+  border-radius: var(--radius, 12px);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-report-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-report-group__side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-report-group__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-controllership-finance #cf-reports-attention:focus-visible,
+.dashboard-controllership-finance #cf-reports-catalog:focus-visible {
+  outline: 2px solid var(--cf-focus, currentColor);
+  outline-offset: 2px;
+  border-radius: var(--radius, 12px);
+}

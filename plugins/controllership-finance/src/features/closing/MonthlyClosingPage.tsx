@@ -66,7 +66,10 @@ import { CF_HELP } from "../../content/helpTooltips";
 import { DocumentDetailPanel } from "./DocumentDetailPanel";
 import { MonthlyDocumentsPanel } from "./MonthlyDocumentsPanel";
 import { MonthlyOverviewPanel } from "./MonthlyOverviewPanel";
-import { ReportsMatrixPanel } from "./ReportsMatrixPanel";
+import {
+  MonthlyReportsPanel,
+  type ReportFamily,
+} from "./MonthlyReportsPanel";
 
 type PanelError = { status: number; code: string | null; message: string };
 
@@ -254,6 +257,29 @@ export function MonthlyClosingPage({
     typeof window !== "undefined"
       ? parseTab(window.location.search)
       : "overview";
+
+  // Relatório selecionado vive na URL (`?tab=reports&report=…`) — deep
+  // link, F5 e voltar/avançar preservam a família em análise.
+  const reportParam =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("report")
+      : null;
+  const selectedReport: ReportFamily | null =
+    reportParam === "settlements" || reportParam === "stock"
+      ? reportParam
+      : null;
+
+  const selectReport = useCallback(
+    (family: ReportFamily | null) => {
+      const params = new URLSearchParams();
+      params.set("tab", "reports");
+      if (family) params.set("report", family);
+      navigatePluginPath(
+        `${base}/closing/monthly-closing/${period}?${params}`,
+      );
+    },
+    [base, period],
+  );
 
   // Filtros da aba Documentos vivem na query — deep link, F5 e o retorno
   // do detalhe preservam pesquisa e situação.
@@ -657,51 +683,11 @@ export function MonthlyClosingPage({
             ) : null}
 
             {tab === "reports" ? (
-              <>
-                {renderProbeGate(<ReportsMatrixPanel period={period} />)}
-                <CfSectionCard title="Consultas operacionais">
-                  <ul className="cf-monthly-report-links">
-                    <li>
-                      <CfActionButton
-                        variant="ghost"
-                        onClick={() =>
-                          navigatePluginPath(
-                            `${base}/closing/financial-settlements`,
-                          )
-                        }
-                      >
-                        Baixas financeiras
-                      </CfActionButton>
-                    </li>
-                    <li>
-                      <CfActionButton
-                        variant="ghost"
-                        onClick={() =>
-                          navigatePluginPath(
-                            `${base}/closing/stock-inventory`,
-                          )
-                        }
-                      >
-                        Estoque histórico — P7
-                      </CfActionButton>
-                    </li>
-                  </ul>
-                </CfSectionCard>
-                <CfSectionCard
-                  title="Prévia do PDF"
-                  hint={CF_HELP.monthlyClosing.pdfPreview}
-                >
-                  <div
-                    className="cf-pdf-preview-slot"
-                    aria-label="Prévia do PDF indisponível"
-                  >
-                    <p>
-                      A prévia dos relatórios em PDF será exibida aqui em uma
-                      versão futura.
-                    </p>
-                  </div>
-                </CfSectionCard>
-              </>
+              <MonthlyReportsPanel
+                period={period}
+                selectedReport={selectedReport}
+                onSelectReport={selectReport}
+              />
             ) : null}
           </div>
         </>
