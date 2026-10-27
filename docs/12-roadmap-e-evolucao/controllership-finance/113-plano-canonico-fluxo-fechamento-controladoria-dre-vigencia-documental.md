@@ -902,3 +902,76 @@ D. Preservar a distinção visual entre `divergência comprovada` e `não foi po
 E. Manter PDF como prévia do relatório selecionado, quando houver geração homologada; caso contrário container com estado claro.
 
 **Próximo passo:** o PO revisa e modifica/aprova a composição; após aprovação inventariar producers/consumers e RQ/AC, documentar V0.2 detalhada, só então preparar prompt incremental de implementação e CLARA/Help.
+
+
+## 25. Relatórios e divergências — wireframe detalhado V0.2 (PO, 27/10/2026)
+
+**Decisões PO aprovadas e congeladas na UX:** `prioridade=attention` (divergências/ações antes do catálogo); `catálogo=cards` (cartões por família); `detalhes=inline` (resultados e drilldown na própria aba); `PDF=inline` (prévia contextual no próprio workspace). As alternativas da seção 24 ficam SUPERSEDED apenas nesses quatro pontos. **Estado:** `PRODUCT_DESIGN_APPROVED` para as quatro escolhas; `DETAILED_WIREFRAME_TARGET / PENDING_FINAL_PO_VISUAL_APPROVAL`; `NO_RUNTIME_GO`. Não interpretar design como prova de produtores, contratos ou cálculos.
+
+### 25.1 Wireframe da terceira aba (sem navegação para páginas técnicas)
+```text
+Início > Fechamento mensal > Relatórios e divergências
+[Fechamento mensal | competência YYYY-MM | Atualizar consulta]
+[Visão geral] [Documentos e interações] [Relatórios e divergências]
+
+RELATÓRIOS E DIVERGÊNCIAS
+[Indicadores: Divergências comprovadas | Relatórios disponíveis | Fontes não verificadas]
+  (valores reais do produtor; não disponível = —, jamais zero presumido)
+
+O QUE PRECISA DE ATENÇÃO                     [Atualizar dados]
+  [Divergência real por relatório/fonte — valor e impacto]
+      [Ver detalhes] abre grupos/linhas AQUI, com filtros e evidência
+      [Como corrigir no TOTVS] expande procedimento comprovado, manual
+  [Fonte indisponível] aviso separado, SEM inventar divergência
+  [Sem divergências] só quando fontes/critério estiverem comprovadamente completos
+
+RELATÓRIOS PARA ANÁLISE
+  [CARD Baixas financeiras] [CARD Estoque e conciliação]
+  [Demais cards somente com owner/produtor/contrato inventariado]
+  Cada card: nome humano; descrição curta; status da consulta; atualização;
+             origem/proveniência; ação "Consultar resultados"
+
+RESULTADOS DO RELATÓRIO SELECIONADO
+  [Título do relatório | período | fonte | atualização | filtros aplicáveis]
+  [Totais calculados no backend | agrupamentos | divergências]
+  [Grupos expansíveis → linhas/itens sob demanda | explicação comprovada]
+  [Reconsultar dados] SEM write-back ERP
+
+PRÉVIA DO PDF DO RELATÓRIO SELECIONADO
+  [PDF inline se arquivo gerado e autorizado; otherwise empty state]
+  [Baixar PDF se contrato existente; geração governada é gate futuro]
+```
+
+### 25.2 Comportamento por superfície
+**Indicadores:** exibir apenas métricas com contrato semântico, escopo e denominador comprovados. `—` com ajuda quando não houver disponibilidade. Clique leva ao grupo dentro da aba, preservando referência, foco, filtro e URL. Não repetir três dashboards técnicos.
+
+**Atenção:** separar visualmente `DIVERGENCE_CONFIRMED` de `SOURCE_UNAVAILABLE` e `CHECK_NOT_PERFORMED` como estados de apresentação, **não novos enums persistentes**. Exibir divergência e valor somente após cálculo/critério homologados; origem, período, data de extração e próxima ação. A causa só pode ser descrita como comprovada quando o owner fornece evidência; caso contrário dizer “A causa ainda não foi identificada”. Não marcar fonte indisponível como zero divergências.
+
+**Catálogo cards:** famílias iniciais candidatas `Baixas financeiras` e `Estoque e conciliação`, pois há consultas operacionais period-keyed. Não apresentar R01–R15 como quinze relatórios prontos; cada fonte sem produtor homologado fica classificada como TO_INVENTORY e não é apresentada como cálculo oficial. Card selecionado recebe estado visual e revela os resultados **abaixo, sem rota separada**.
+
+**Drilldown:** começar pelo total, depois grupos, depois linhas sob demanda; sempre no contexto da aba, sem conferência linha a linha como fluxo padrão. Ação “Como corrigir” oferece orientação de consulta/correção **manual** no TOTVS, sem alterar dados ERP pelo Portal. Reconsulta executa somente leitura autorizada.
+
+**PDF inline:** manter contêiner no fim dos resultados; se PDF existir, prévia autenticada e download permitidos; se não houver produtor/arquivo, apresentar “A prévia do PDF ainda não está disponível para este relatório”. Não usar PDF documental anexado como se fosse relatório oficial gerado, nem enviar relatórios operacionais à DRE.
+
+**Navegação/história:** competência pode ser apenas selecionada, sem fechamento aberto; leituras period-keyed existentes continuam acessíveis. Filtros, card selecionado e grupo expandido devem ser preservados conforme router/URL, refresh e navegação. A conclusão e envio do pacote continuam fora da aba de relatórios e não devem ser automatizados.
+
+### 25.3 Componentes — mapa proposto, condicionado a inventário do export real
+- PagePath / PageHero / SegmentToggle compartilhados: caminho e cabeçalho comum.
+- `InteractiveDataCard` ou `MetricKpiCard` somente se métricas legítimas; `StatusBadge` para fonte/resultado; `SectionCard` para seções; `DataRecordCard` ou card correspondente para família.
+- Controles de busca/filtro e Accordion/Disclosure compartilhados **após confirmar catálogo**; tabela de linhas apenas no detalhe expandido; `EmptyState` para fontes/relatório sem dados.
+- Prévia PDF com `FilePreviewView`/`useFilePreviewLoader` somente mediante fonte binária/autorização real, evitando efeito de fetch repetitivo já corrigido na U4.
+- Documentar o export, factory, consumidor e fallback escolhido no Doc 30 antes de implementação; mesmo padrão claro/escuro/mobile/foco/teclado/a11y.
+
+### 25.4 AC de design e gates
+1. Atenção vem antes do catálogo; divergência ≠ fonte indisponível.
+2. Cards por família, sem tabela R01–R15 como navegação principal.
+3. Resultados/totais/grupos/linhas acessíveis na mesma aba.
+4. PDF inline com indisponibilidade honesta.
+5. Competência/seleções/filtros preservados e sem quarta aba.
+6. Resultados por BFF/owner canônico, sem cálculos financeiros em frontend.
+7. Sem escrita ERP; correção manual com evidência/proveniência.
+8. Não expor relatório TOTVS à audiência DRE.
+9. Testes de casos completos/incompletos/erro, URL/F5, responsividade, temas, foco e Ajuda.
+10. Atualizar CLARA **após** provas de runtime, distinguindo design aprovado de implementado.
+
+**Dependências para execução:** inventário de producers/consumers dos endpoints period-keyed, homologação das famílias e valores, contrato/owner dos diagnósticos, associação PDF por relatório e estratégia de preview; security gates e RQ/AC antes de runtime. Próximo passo: PO valida wireframe V0.2; então prompt de inventário/implementação incremental.
