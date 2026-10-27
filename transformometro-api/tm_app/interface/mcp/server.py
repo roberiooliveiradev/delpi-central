@@ -189,13 +189,16 @@ def create_mcp_server() -> MCPServer:
         title="Get catalog",
         description=(
             "Discovery catalog: entities, workflows, analysis, registration_guide, "
-            "diagram_catalog, capability_surface. Use before writes."
+            "diagram_catalog, capability_surface. Use before writes. "
+            "Optional entity (e.g. decomposition_tree) returns only that "
+            "entity's write schema, concept and contract rules — the official "
+            "fallback when the full catalog is budget-trimmed."
         ),
         annotations=_annotations("get_catalog", "Get catalog"),
         meta=meta,
     )
-    def get_catalog() -> CallToolResult:
-        return bridge.tool_get_catalog()
+    def get_catalog(entity: str | None = None) -> CallToolResult:
+        return bridge.tool_get_catalog(entity=entity)
 
     @mcp.tool(
         name="get_methodology_guide",

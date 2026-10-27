@@ -11,6 +11,10 @@ from typing import Any
 from tm_app.application.gpt_actions.improvement_package_contract import (
     build_package_hints,
 )
+from tm_app.domain.decomposition.decomposition_tree_v1 import (
+    HIGHLIGHTS,
+    NODE_LEVELS,
+)
 from tm_app.core.catalogs import (
     BENEFICIO_CALCULO_CATEGORIA,
     BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
@@ -590,7 +594,10 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
             "decomposition_tree": {
                 "required": ["processo_id", "conteudo"],
                 "optional": [],
-                "enums": {},
+                "enums": {
+                    "conteudo.format": ["decomposition_tree_v1"],
+                    "conteudo.nodes[].level": sorted(NODE_LEVELS),
+                },
                 "defaults": {},
                 "notes": [
                     "Upsert via gpt_prepare_record_change (create|update; id=processo_id) "
@@ -622,7 +629,10 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
             "revision_decomposition_overlay": {
                 "required": ["revisao_id", "conteudo"],
                 "optional": [],
-                "enums": {},
+                "enums": {
+                    "conteudo.format": ["decomposition_overlay_v1"],
+                    "conteudo.node_overrides[].highlight": sorted(HIGHLIGHTS),
+                },
                 "defaults": {},
                 "notes": [
                     "Canonical name for 'mapeamento por revisão'. Upsert; id=revisao_id.",

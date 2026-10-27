@@ -556,11 +556,11 @@ def _attachment_result(data: dict[str, Any]) -> CallToolResult:
     )
 
 
-def tool_get_catalog() -> CallToolResult:
+def tool_get_catalog(entity: str | None = None) -> CallToolResult:
     try:
         request = build_mcp_request()
         return _ok_result(
-            _dispatch.get_catalog(request, transport="mcp"),
+            _dispatch.get_catalog(request, transport="mcp", entity=entity),
             "Catálogo do Transformômetro.",
         )
     except Exception as exc:
