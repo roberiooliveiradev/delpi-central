@@ -127,6 +127,8 @@ Execução da homologação PUT exige tarefa separada autorizada pelo PO contra 
 
 Descoberta E2 incorporada ao contrato: upstream exige `rohs_indicator`, `accounting_account`, `bacen_country_code`, `payment_method_code`, `financial_nature_code`, `payment_condition_code` — **não** declarados `required` isoladamente: a rejeição veio de payload incompleto, e a obrigatoriedade formal por perfil de fornecedor permanece `TO_INVENTORY` (handoff Gabriel).
 
+> **Atualização R6:** os seis campos (+ `supplier_store`) foram promovidos a `required` no contrato de criação com validação agregada 422 — ver `X4-PROD-C1-R6-SUPPLIER-VALIDATION-FIX.md`. Obrigatoriedades adicionais por perfil seguem `TO_INVENTORY`.
+
 ## 8. Segurança e conformidade
 
 - AuthZ server-side inalterada (`supplies.access`); **zero permission nova**; escopo unidade/recurso preservado.

@@ -1438,6 +1438,32 @@
   padding-left: 0.5rem;
 }
 
+/* X4.PROD-C1.R6 — campo com erro de validação (cor + texto dedicado). */
+.dashboard-supplies-portal .sp-supplier-field--invalid {
+  border-left: 2px solid var(--sp-danger);
+  padding-left: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-field__error {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--sp-danger);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__required-legend {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__validation-list {
+  margin: 0.4rem 0 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
 /* Barra de ações: contador à esquerda, botões à direita. */
 .dashboard-supplies-portal .sp-supplier-actions {
   display: flex;

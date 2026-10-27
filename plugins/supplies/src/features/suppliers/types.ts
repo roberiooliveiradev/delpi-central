@@ -61,6 +61,13 @@ export type SupplierWriteResponse = {
   code?: string;
 };
 
+/** Erro de validação por campo — contrato 422 da integração via BFF. */
+export type SupplierFieldError = {
+  field: SupplierFieldKey;
+  message: string;
+  code?: string;
+};
+
 /**
  * Campos criáveis (POST homologado em E2) SEM evidência de alteração de
  * valor via PUT — permanecem fora de qualquer derivação de editável.
@@ -186,6 +193,8 @@ export type SupplierFieldSpec = {
   post: boolean;
   /** POST: obrigatório no Portal; demais obrigatoriedades ficam no ERP. */
   required?: boolean;
+  /** Mensagem PT-BR exibida quando o campo obrigatório está ausente. */
+  requiredMessage?: string;
   /**
    * PUT: "editable" = liberado pela decisão funcional (gate upstream ainda
    * protege a escrita real); "protected" = documento/identidade, nunca
@@ -308,6 +317,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 2,
     digitsOnly: true,
     required: true,
+    requiredMessage: "Informe a loja com exatamente 2 dígitos.",
     post: true,
     put: "protected",
     get: "identity",
@@ -456,6 +466,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   E({
     key: "rohs_indicator",
     label: "Indicador ROHS",
+    required: true,
+    requiredMessage: "Selecione o indicador ROHS.",
     section: "fiscal",
     maxLength: 1,
     span: 4,
@@ -468,6 +480,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   E({
     key: "bacen_country_code",
     label: "País (BACEN)",
+    required: true,
+    requiredMessage: "Selecione o país conforme a tabela BACEN.",
     section: "fiscal",
     maxLength: 5,
     digitsOnly: true,
@@ -479,6 +493,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   E({
     key: "payment_condition_code",
     label: "Condição de pagamento",
+    required: true,
+    requiredMessage: "Selecione a condição de pagamento.",
     section: "purchasing",
     maxLength: 3,
     span: 4,
@@ -488,6 +504,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   E({
     key: "payment_method_code",
     label: "Forma de pagamento",
+    required: true,
+    requiredMessage: "Selecione a forma de pagamento.",
     section: "purchasing",
     maxLength: 2,
     span: 4,
@@ -497,6 +515,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   E({
     key: "accounting_account",
     label: "Conta contábil",
+    required: true,
+    requiredMessage: "Selecione uma conta contábil.",
     section: "purchasing",
     maxLength: 20,
     span: 6,
@@ -506,6 +526,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   E({
     key: "financial_nature_code",
     label: "Natureza financeira",
+    required: true,
+    requiredMessage: "Selecione a natureza financeira.",
     section: "purchasing",
     maxLength: 10,
     span: 6,

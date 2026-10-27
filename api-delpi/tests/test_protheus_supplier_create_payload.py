@@ -12,19 +12,26 @@ from app.application.services.integrations.protheus_supplier_create_payload impo
 )
 from app.domain.integrations.protheus_rest import ProtheusRestError
 
+# X4.PROD-C1.R6 — unconditional required set proven by the R5 productive
+# failure + E2 homologation (upstream "Campos Obrigatorios Não Preenchidos").
+REQUIRED_CREATE = {
+    "supplier_store": "01",
+    "rohs_indicator": "N",
+    "accounting_account": "00000000",
+    "bacen_country_code": "01058",
+    "payment_method_code": "01",
+    "financial_nature_code": "0000",
+    "payment_condition_code": "010",
+}
+
 
 def test_normalize_preserves_leading_zeros() -> None:
     out = normalize_supplier_fields(
         {
-            "supplier_store": "01",
+            **REQUIRED_CREATE,
             "tax_id": "00000000000191",
             "postal_code": "88000000",
             "city_code": "00001",
-            "bacen_country_code": "01058",
-            "accounting_account": "00000000",
-            "financial_nature_code": "0000",
-            "payment_method_code": "01",
-            "payment_condition_code": "010",
         }
     )
     assert out["supplier_store"] == "01"
@@ -35,7 +42,7 @@ def test_normalize_preserves_leading_zeros() -> None:
 
 def test_rejects_numeric_tax_id_that_would_drop_zeros() -> None:
     with pytest.raises(ProtheusRestError) as exc:
-        normalize_supplier_fields({"supplier_store": "01", "tax_id": 191})
+        normalize_supplier_fields({**REQUIRED_CREATE, "tax_id": 191})
     assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
 
 
@@ -52,17 +59,62 @@ def test_rejects_unknown_field() -> None:
 
 
 def test_person_type_enum() -> None:
-    assert normalize_supplier_fields({"supplier_store": "01", "person_type": "J"})[
-        "person_type"
-    ] == "J"
+    assert normalize_supplier_fields(
+        {**REQUIRED_CREATE, "person_type": "J"}
+    )["person_type"] == "J"
     with pytest.raises(ProtheusRestError):
-        normalize_supplier_fields({"supplier_store": "01", "person_type": "Z"})
+        normalize_supplier_fields({**REQUIRED_CREATE, "person_type": "Z"})
 
 
 def test_requires_supplier_store() -> None:
     with pytest.raises(ProtheusRestError) as exc:
-        normalize_supplier_fields({"supplier_name": "ACME"})
+        normalize_supplier_fields(
+            {k: v for k, v in REQUIRED_CREATE.items() if k != "supplier_store"}
+        )
+    assert exc.value.code == "SUPPLIER_REQUIRED_FIELDS_MISSING"
+    assert [e["field"] for e in exc.value.fields] == ["supplier_store"]
+
+
+def test_missing_six_r5_fields_aggregates_all() -> None:
+    """R6 — a single 422 names every missing required field."""
+    with pytest.raises(ProtheusRestError) as exc:
+        normalize_supplier_fields({"supplier_store": "01"})
+    assert exc.value.code == "SUPPLIER_REQUIRED_FIELDS_MISSING"
+    assert exc.value.status_code == 422
+    assert {e["field"] for e in exc.value.fields} == {
+        "payment_condition_code",
+        "bacen_country_code",
+        "accounting_account",
+        "financial_nature_code",
+        "rohs_indicator",
+        "payment_method_code",
+    }
+    assert all(e["code"] == "missing_required" for e in exc.value.fields)
+
+
+def test_whitespace_only_required_counts_as_missing() -> None:
+    with pytest.raises(ProtheusRestError) as exc:
+        normalize_supplier_fields(
+            {**REQUIRED_CREATE, "accounting_account": "   "}
+        )
+    assert exc.value.code == "SUPPLIER_REQUIRED_FIELDS_MISSING"
+    assert [e["field"] for e in exc.value.fields] == ["accounting_account"]
+
+
+def test_mixed_missing_and_invalid_aggregates() -> None:
+    with pytest.raises(ProtheusRestError) as exc:
+        normalize_supplier_fields(
+            {
+                "supplier_store": "01",
+                "person_type": "Z",  # invalid enum
+                # six R5 fields absent
+            }
+        )
     assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
+    assert len(exc.value.fields) == 7
+    assert {
+        e["field"] for e in exc.value.fields if e["code"] == "invalid_value"
+    } == {"person_type"}
 
 
 def test_build_upstream_body_object_not_array() -> None:
@@ -130,35 +182,37 @@ UNPROVEN_E3_FIELDS = (
 @pytest.mark.parametrize("field", sorted(PROMOTED_E3_FIELDS))
 def test_promoted_e3_field_accepted(field: str) -> None:
     raw, expected = PROMOTED_E3_FIELDS[field]
-    out = normalize_supplier_fields({"supplier_store": "01", field: raw})
+    payload = {**REQUIRED_CREATE, "person_type": "J", field: raw}
+    out = normalize_supplier_fields(payload)
     assert out[field] == expected
 
 
 @pytest.mark.parametrize("field", UNPROVEN_E3_FIELDS)
 def test_unproven_e3_field_still_rejected(field: str) -> None:
     with pytest.raises(ProtheusRestError) as exc:
-        normalize_supplier_fields({"supplier_store": "01", field: "1"})
+        normalize_supplier_fields({**REQUIRED_CREATE, field: "1"})
     assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
 
 
 def test_promoted_field_invalid_values_rejected() -> None:
     with pytest.raises(ProtheusRestError):
-        normalize_supplier_fields({"supplier_store": "01", "irf_calculation": "9"})
+        normalize_supplier_fields({**REQUIRED_CREATE, "irf_calculation": "9"})
     with pytest.raises(ProtheusRestError):
-        normalize_supplier_fields({"supplier_store": "01", "po_box": "123456"})
+        normalize_supplier_fields({**REQUIRED_CREATE, "po_box": "123456"})
     with pytest.raises(ProtheusRestError):
-        normalize_supplier_fields({"supplier_store": "01", "fax": "FAX"})
+        normalize_supplier_fields({**REQUIRED_CREATE, "fax": "FAX"})
 
 
 def test_cnae_conditional_rule_published() -> None:
     with pytest.raises(ProtheusRestError) as exc:
         normalize_supplier_fields(
-            {"supplier_store": "01", "person_type": "F", "cnae_code": "4711301"}
+            {**REQUIRED_CREATE, "person_type": "F", "cnae_code": "4711301"}
         )
     assert exc.value.code == "PROTHEUS_SUPPLIER_FIELD_CONDITIONAL"
+    assert [e["field"] for e in exc.value.fields] == ["cnae_code"]
     for person in ("J", "X"):
         out = normalize_supplier_fields(
-            {"supplier_store": "01", "person_type": person, "cnae_code": "4711301"}
+            {**REQUIRED_CREATE, "person_type": person, "cnae_code": "4711301"}
         )
         assert out["cnae_code"] == "4711301"
 

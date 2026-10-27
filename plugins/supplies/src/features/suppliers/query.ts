@@ -3,6 +3,7 @@ import type {
   SupplierDetail,
   SupplierEditDraft,
   SupplierEditableFieldKey,
+  SupplierFieldError,
   SupplierFieldSpec,
   SupplierWriteResponse,
   SuppliersQuery,
@@ -173,13 +174,14 @@ export function personTypeLabel(value: string | null | undefined): string {
 /** Classe utilitária do item de grid: span declarado no spec + estado visual. */
 export function supplierFieldItemClass(
   spec: SupplierFieldSpec,
-  options?: { changed?: boolean },
+  options?: { changed?: boolean; invalid?: boolean },
 ): string {
   const span = Math.min(Math.max(spec.span, 1), 12);
   return [
     "sp-supplier-field",
     `sp-supplier-field--span-${span}`,
     options?.changed ? "sp-supplier-field--changed" : "",
+    options?.invalid ? "sp-supplier-field--invalid" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -253,4 +255,69 @@ export function classifyWriteOutcome(
   if (response?.persistence_proven) return "persistence_confirmed";
   if (response?.acknowledged) return "acknowledged";
   return "indeterminate";
+}
+
+/* ------------------------------------------------------------------ */
+/* X4.PROD-C1.R6 — validação local pré-submit do cadastro              */
+/* ------------------------------------------------------------------ */
+
+/** Mensagem PT-BR por campo obrigatório ausente (seleção × preenchimento). */
+export function supplierRequiredFieldMessage(spec: SupplierFieldSpec): string {
+  if (spec.requiredMessage) return spec.requiredMessage;
+  if (spec.catalog || spec.options) {
+    return `Selecione ${spec.label.toLowerCase()}.`;
+  }
+  return `Informe ${spec.label.toLowerCase()}.`;
+}
+
+/**
+ * Agrega TODOS os erros de preenchimento do draft antes do envio — o
+ * backend permanece autoritativo; aqui é só a verificação antecipada de UX.
+ * Retorna a lista na ordem canônica do registry (vazia quando válido).
+ */
+export function validateCreateDraft(
+  draft: SupplierCreateDraft,
+): SupplierFieldError[] {
+  const errors: SupplierFieldError[] = [];
+  for (const spec of SUPPLIER_FIELD_REGISTRY) {
+    if (!spec.post || !spec.required) continue;
+    const value = (
+      draft[spec.key as keyof SupplierCreateDraft] ?? ""
+    ).trim();
+    if (!value) {
+      errors.push({
+        field: spec.key,
+        message: supplierRequiredFieldMessage(spec),
+        code: "missing_required",
+      });
+    }
+  }
+  const store = draft.supplier_store.trim();
+  if (store && !/^\d{2}$/.test(store)) {
+    const spec = SUPPLIER_FIELD_REGISTRY.find(
+      (entry) => entry.key === "supplier_store",
+    );
+    errors.push({
+      field: "supplier_store",
+      message: spec?.requiredMessage ?? "Informe a loja com 2 dígitos.",
+      code: "invalid_format",
+    });
+  }
+  return errors;
+}
+
+/**
+ * Códigos de erro do backend que indicam falha de autenticação na
+ * integração — o usuário não deve tratá-los como erro de preenchimento.
+ */
+const INTEGRATION_AUTH_ERROR_CODES = new Set([
+  "PROTHEUS_TOKEN_INVALID",
+  "PROTHEUS_AUTH_FAILED",
+  "PROTHEUS_IDENTITY_UNMAPPED",
+  "PROTHEUS_IDENTITY_AMBIGUOUS",
+  "PROTHEUS_IDENTITY_NOT_VERIFIED",
+]);
+
+export function isIntegrationAuthErrorCode(code?: string): boolean {
+  return Boolean(code) && INTEGRATION_AUTH_ERROR_CODES.has(code!);
 }

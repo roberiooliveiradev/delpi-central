@@ -211,3 +211,7 @@ iteração de contrato" — essa evolução ficou pendente.
 **Diretriz para correção bounded:** (1) validar os seis campos no backend **antes de obter token ou iniciar tracking de envio**, respeitando semântica de POST versus PUT e sem ativar required indevidamente em atualização parcial; (2) alinhar obrigatoriedade visual e validação de submit no MFE, com catálogos e mensagens PT-BR; (3) revisar propagação de erro sanitizado por allowlist no BFF, sem expor detalhes brutos do upstream, stack traces, CPF/CNPJ, SQL ou secrets; (4) sincronizar schema/OpenAPI e Help no owner devido; (5) testes positive/sibling/negative, sem escrita ERP na verificação automatizada; deploy dos serviços realmente afetados.
 
 **Execução da correção:** ainda requer autorização específica do PO. O registro deste parecer não autoriza novo POST produtivo. Próximo gate: implementação e teste da validação, seguida de uma tentativa real controlada com autorização operacional, tracking e leitura de confirmação.
+
+## 14. Resolução (R6)
+
+Correção implementada em `X4-PROD-C1-R6-SUPPLIER-VALIDATION-FIX.md` (mesma pasta): os seis campos upstream + `supplier_store` viraram `required` no normalizador canônico com validação agregada 422 estruturada antes de token/tracking; o BFF republica `detail`/`fields` sanitizados por allowlist; o MFE ganha obrigatórios visuais, validação agregada pré-submit, resumo e erros por campo com rascunho preservado. PUT parcial inalterado. Nenhum cadastro real executado na correção — reteste controlado segue pendente de autorização operacional.

@@ -12,17 +12,28 @@ from app.infrastructure.config.settings import Settings
 logger = logging.getLogger("supplies-api.delpi_api")
 
 
-def _error_code(response) -> str | None:
-    """Extract the typed upstream error code when the body exposes one."""
+def _extract_error(response) -> tuple[str | None, str | None, list | None]:
+    """Extract (code, message, fields) from the api-delpi error envelope.
+
+    The route layer decides what is safe to project — this helper only reads
+    the published envelope shape ({success, message, error:{code, fields}})
+    and the generic {detail, code} form.
+    """
     try:
         payload = response.json()
     except ValueError:
-        return None
-    if isinstance(payload, dict):
-        code = payload.get("code") or (payload.get("error") or {}).get("code")
-        if isinstance(code, str) and code:
-            return code
-    return None
+        return None, None, None
+    if not isinstance(payload, dict):
+        return None, None, None
+    error = payload.get("error") if isinstance(payload.get("error"), dict) else {}
+    code = payload.get("code") or error.get("code")
+    message = payload.get("message") or payload.get("detail")
+    fields = error.get("fields") or payload.get("fields")
+    return (
+        code if isinstance(code, str) and code else None,
+        message if isinstance(message, str) and message else None,
+        fields if isinstance(fields, list) else None,
+    )
 
 
 class DelpiApiGatewayError(RuntimeError):
@@ -32,9 +43,15 @@ class DelpiApiGatewayError(RuntimeError):
         *,
         status_code: int | None = None,
         code: str | None = None,
+        upstream_message: str | None = None,
+        fields: list | None = None,
     ):
         self.status_code = status_code
         self.code = code
+        # Sanitized upstream text/field list — the route layer republishes
+        # only for allowlisted codes; never trust it for unknown codes.
+        self.upstream_message = upstream_message
+        self.fields = fields
         super().__init__(message)
 
 
@@ -134,18 +151,16 @@ class DelpiApiGateway:
             logger.exception("delpi_api_request_failed path=%s", path)
             raise DelpiApiGatewayError("api-delpi request failed") from exc
 
-        if response.status_code >= 500:
-            raise DelpiApiGatewayError(
-                "api-delpi server error",
-                status_code=response.status_code,
-                code=_error_code(response),
-            )
-
         if response.status_code >= 400:
+            code, upstream_message, fields = _extract_error(response)
             raise DelpiApiGatewayError(
-                "api-delpi client error",
+                "api-delpi server error"
+                if response.status_code >= 500
+                else "api-delpi client error",
                 status_code=response.status_code,
-                code=_error_code(response),
+                code=code,
+                upstream_message=upstream_message,
+                fields=fields,
             )
 
         if response.status_code == 204 or not response.content:

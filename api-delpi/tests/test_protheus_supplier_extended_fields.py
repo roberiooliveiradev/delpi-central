@@ -34,6 +34,11 @@ BASE_PAYLOAD = {
     "phone": "99999999",
     "financial_nature_code": "0001",
     "bacen_country_code": "01058",
+    # X4.PROD-C1.R6 — required set proven upstream (R5 RCA + E2).
+    "rohs_indicator": "N",
+    "accounting_account": "00000000",
+    "payment_method_code": "01",
+    "payment_condition_code": "010",
 }
 
 # field -> (input, expected_normalized) — only the 7 unproven candidates

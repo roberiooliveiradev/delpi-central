@@ -42,9 +42,12 @@ def error_response(
     *,
     code: str | None = None,
     recoverable: bool = True,
+    fields: list[dict[str, Any]] | None = None,
     meta: dict[str, Any] | None = None,
 ):
     error = {"code": code, "recoverable": recoverable} if code else None
+    if error is not None and fields:
+        error["fields"] = fields
     return JSONResponse(
         status_code=status_code,
         content=_envelope(

@@ -10,7 +10,7 @@ from app.domain.integrations.protheus_rest import ProtheusRestError
 # Max lengths from SA2 SX3 (§44.3) for REST field names in the POST contract example.
 # Shared canonical source — PUT validation reuses these specs per field.
 SUPPLIER_FIELD_SPECS: dict[str, dict[str, Any]] = {
-    "supplier_store": {"max": 2, "digits": True, "required": True},
+    "supplier_store": {"max": 2, "digits": True, "required": True, "label": "Loja"},
     "person_type": {"max": 1, "enum": frozenset({"F", "J", "X"})},
     "tax_id": {"max": 14, "digits": True},
     "supplier_name": {"max": 50},
@@ -27,13 +27,39 @@ SUPPLIER_FIELD_SPECS: dict[str, dict[str, Any]] = {
     "municipal_registration": {"max": 18},
     "contact_name": {"max": 15},
     "email": {"max": 50, "email": True},
-    "payment_condition_code": {"max": 3},
+    "payment_condition_code": {
+        "max": 3,
+        "required": True,
+        "label": "Condição de pagamento",
+    },
     "country_code": {"max": 3},
-    "bacen_country_code": {"max": 5, "digits": True},
-    "accounting_account": {"max": 20},
-    "financial_nature_code": {"max": 10},
-    "rohs_indicator": {"max": 1, "enum": frozenset({"S", "N", ""})},
-    "payment_method_code": {"max": 2},
+    "bacen_country_code": {
+        "max": 5,
+        "digits": True,
+        "required": True,
+        "label": "País (BACEN)",
+    },
+    "accounting_account": {
+        "max": 20,
+        "required": True,
+        "label": "Conta contábil",
+    },
+    "financial_nature_code": {
+        "max": 10,
+        "required": True,
+        "label": "Natureza financeira",
+    },
+    "rohs_indicator": {
+        "max": 1,
+        "enum": frozenset({"S", "N", ""}),
+        "required": True,
+        "label": "Indicador ROHS",
+    },
+    "payment_method_code": {
+        "max": 2,
+        "required": True,
+        "label": "Forma de pagamento",
+    },
     # --- X4.FIELDS.E3 — campos promovidos ao contrato público -------------
     # Persistência comprovada em homologação DELPI_TST01 (E2, 2026-10-23,
     # doc X4-FIELDS-E2-*). Specs SX3 idênticas ao protótipo E1 — fonte
@@ -127,28 +153,33 @@ def normalize_supplier_fields(raw: Mapping[str, Any] | None) -> dict[str, str]:
             recoverable=False,
         )
 
+    # Aggregate validation (X4.PROD-C1.R6): collect every missing/invalid
+    # field before failing so callers receive the complete correction list —
+    # validation never reaches token, tracking or the upstream POST.
+    field_errors: list[dict[str, str]] = []
     out: dict[str, str] = {}
     for field, spec in SUPPLIER_FIELD_SPECS.items():
-        if field not in raw:
-            if spec.get("required"):
-                raise ProtheusRestError(
-                    f"Campo obrigatório ausente: {field}.",
-                    code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                    status_code=422,
-                    recoverable=False,
-                )
+        value = raw.get(field)
+        present = value is not None and str(value).strip() != ""
+        if spec.get("required") and not present:
+            field_errors.append(
+                {
+                    "field": field,
+                    "code": "missing_required",
+                    "message": (
+                        f"Campo obrigatório ausente: {_field_label(spec, field)}."
+                    ),
+                }
+            )
             continue
-        value = raw[field]
         if value is None:
-            if spec.get("required"):
-                raise ProtheusRestError(
-                    f"Campo obrigatório ausente: {field}.",
-                    code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                    status_code=422,
-                    recoverable=False,
-                )
             continue
-        out[field] = normalize_supplier_field_value(field, value)
+        try:
+            out[field] = normalize_supplier_field_value(field, value)
+        except ProtheusRestError as exc:
+            field_errors.append(
+                {"field": field, "code": "invalid_value", "message": exc.message}
+            )
 
     # Conditional rules (SX3 WHEN): cnae_code only applies to person_type
     # J or X — same rule the experimental normalizer proved in E1/E2.
@@ -159,13 +190,41 @@ def normalize_supplier_fields(raw: Mapping[str, Any] | None) -> dict[str, str]:
             and value
             and out.get("person_type") == "F"
         ):
-            raise ProtheusRestError(
-                f"Campo {field} não se aplica a pessoa física (person_type=F).",
-                code="PROTHEUS_SUPPLIER_FIELD_CONDITIONAL",
-                status_code=422,
-                recoverable=False,
+            field_errors.append(
+                {
+                    "field": field,
+                    "code": "conditional",
+                    "message": (
+                        f"Campo {field} não se aplica a pessoa física "
+                        "(person_type=F)."
+                    ),
+                }
             )
+
+    if field_errors:
+        codes = {entry["code"] for entry in field_errors}
+        if codes == {"missing_required"}:
+            top_code = "SUPPLIER_REQUIRED_FIELDS_MISSING"
+        elif codes == {"conditional"}:
+            top_code = "PROTHEUS_SUPPLIER_FIELD_CONDITIONAL"
+        else:
+            top_code = "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
+        raise ProtheusRestError(
+            "Preencha os campos obrigatórios do fornecedor para continuar."
+            if top_code == "SUPPLIER_REQUIRED_FIELDS_MISSING"
+            else "O cadastro do fornecedor contém campos obrigatórios "
+            "ausentes ou valores inválidos.",
+            code=top_code,
+            status_code=422,
+            recoverable=False,
+            fields=field_errors,
+        )
     return out
+
+
+def _field_label(spec: Mapping[str, Any], field: str) -> str:
+    label = spec.get("label")
+    return str(label) if label else field
 
 
 def normalize_supplier_field_value(

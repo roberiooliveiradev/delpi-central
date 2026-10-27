@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   navigatePluginPath,
@@ -24,7 +24,11 @@ import { SUPPLIERS_CONTENT as C, supplierSectionDescriptions } from "./content";
 import { CreationAssistedFlow } from "./creation/CreationAssistedFlow";
 import { applyDraftPatchToEntries } from "./creation/stateMachine";
 import type { SuggestionEntryMap } from "./creation/types";
-import { classifyWriteOutcome } from "./query";
+import {
+  classifyWriteOutcome,
+  isIntegrationAuthErrorCode,
+  validateCreateDraft,
+} from "./query";
 import {
   SupplierCatalogField,
   SupplierFieldInput,
@@ -42,6 +46,8 @@ import {
   SUPPLIER_CREATE_SECTIONS,
   SUPPLIER_FIELD_REGISTRY,
   type SupplierCreateDraft,
+  type SupplierFieldError,
+  type SupplierFieldKey,
   type SupplierWriteOutcome,
 } from "./types";
 
@@ -128,6 +134,14 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
     code: string;
     store: string;
   } | null>(null);
+  // X4.PROD-C1.R6 — erros agregados por campo + resumo (local e 422 do backend).
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<SupplierFieldKey, string>>
+  >({});
+  const [validationErrors, setValidationErrors] = useState<
+    SupplierFieldError[] | null
+  >(null);
+  const validationSummaryRef = useRef<HTMLDivElement | null>(null);
 
   const dirty = useMemo(
     () => Object.values(draft).some((value) => value.trim()),
@@ -166,13 +180,27 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
       .filter((group) => group.rows.length > 0);
   }, [filledEntries]);
 
-  const storeValid = /^\d{2}$/.test(draft.supplier_store);
-
   const listHref = buildPluginPath("suppliers", basePath);
   const goBack = (event?: { preventDefault: () => void }) => {
     event?.preventDefault();
     if (dirty && !window.confirm(C.unsavedChangesWarning)) return;
     navigatePluginView("suppliers", { basePath });
+  };
+
+  useEffect(() => {
+    if (validationErrors?.length) {
+      validationSummaryRef.current?.focus();
+    }
+  }, [validationErrors]);
+
+  const fieldLabel = (key: SupplierFieldKey): string =>
+    SUPPLIER_FIELD_REGISTRY.find((spec) => spec.key === key)?.label ?? key;
+
+  const applyFieldErrors = (errors: SupplierFieldError[]) => {
+    setValidationErrors(errors);
+    const next: Partial<Record<SupplierFieldKey, string>> = {};
+    for (const error of errors) next[error.field] = error.message;
+    setFieldErrors(next);
   };
 
   const patchDraft = (patch: Partial<SupplierCreateDraft>) => {
@@ -181,6 +209,31 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
     setSuggestionEntries((current) =>
       applyDraftPatchToEntries(current, patch as Record<string, string>),
     );
+    // Campo corrigido limpa o próprio erro; o resumo sai quando não sobrar erro.
+    setFieldErrors((current) => {
+      const next = { ...current };
+      for (const key of Object.keys(patch)) {
+        delete next[key as SupplierFieldKey];
+      }
+      return next;
+    });
+    setValidationErrors((current) =>
+      current
+        ? current.filter(
+            (error) => !(error.field in patch),
+          )
+        : current,
+    );
+  };
+
+  /** Validação agregada pré-submit — bloqueia abertura da revisão e o POST. */
+  const handleReview = () => {
+    const errors = validateCreateDraft(draft);
+    if (errors.length) {
+      applyFieldErrors(errors);
+      return;
+    }
+    setReviewing(true);
   };
 
   const confirmSubmit = () => {
@@ -206,7 +259,22 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
               err.status,
             ),
           );
-          setWriteMessage(err.message);
+          // 422 estruturado: associa cada erro ao campo e resume a lista.
+          if (err.fields?.length) {
+            applyFieldErrors(
+              err.fields.map((item) => ({
+                field: item.field as SupplierFieldKey,
+                message: item.message,
+                code: item.code,
+              })),
+            );
+          }
+          if (isIntegrationAuthErrorCode(err.code)) {
+            setWriteMessage(C.validationAuthMessage);
+          } else {
+            // detail sanitizado da BFF — nunca texto bruto do ERP.
+            setWriteMessage(err.detail || err.message);
+          }
         } else {
           setWriteOutcome("indeterminate");
         }
@@ -236,6 +304,32 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
         }
         description={C.createDescription}
       />
+
+      <p className="sp-supplier-create__required-legend">
+        {C.requiredFieldsLegend}
+      </p>
+
+      {validationErrors?.length ? (
+        <SuppliesStateBanner variant="error">
+          <div
+            ref={validationSummaryRef}
+            tabIndex={-1}
+            role="alert"
+          >
+            <strong>{C.validationSummaryTitle}</strong>{" "}
+            {validationErrors.every(
+              (error) => error.code === "missing_required",
+            )
+              ? C.validationSummaryLead
+              : C.validationSummaryLeadMixed}
+            <ul className="sp-supplier-create__validation-list">
+              {validationErrors.map((error) => (
+                <li key={error.field}>{fieldLabel(error.field)}</li>
+              ))}
+            </ul>
+          </div>
+        </SuppliesStateBanner>
+      ) : null}
 
       {writeOutcome === "write_disabled" ? (
         <SuppliesStateBanner variant="default">
@@ -308,10 +402,13 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
               const derivedActive =
                 field.catalogDerivedFrom === "city" &&
                 Boolean((draft.state ?? "").trim());
+              const fieldError = fieldErrors[field.key];
               return (
                 <div
                   key={field.key}
-                  className={supplierFieldItemClass(field)}
+                  className={supplierFieldItemClass(field, {
+                    invalid: Boolean(fieldError),
+                  })}
                 >
                   {field.catalog ? (
                     <SupplierCatalogField
@@ -389,6 +486,9 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
                       personType={draft.person_type}
                     />
                   )}
+                  {fieldError ? (
+                    <p className="sp-supplier-field__error">{fieldError}</p>
+                  ) : null}
                 </div>
               );
             })}
@@ -408,8 +508,8 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
         <SuppliesActionButton
           type="button"
           variant="primary"
-          onClick={() => setReviewing(true)}
-          disabled={!storeValid || !filledEntries.length || submitting}
+          onClick={handleReview}
+          disabled={!filledEntries.length || submitting}
         >
           {C.createSubmit}
         </SuppliesActionButton>

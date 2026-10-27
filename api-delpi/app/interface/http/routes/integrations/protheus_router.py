@@ -220,6 +220,7 @@ def create_protheus_rest_supplier_route(
             status_code=exc.status_code,
             code=exc.code,
             recoverable=exc.recoverable,
+            fields=exc.fields,
         )
     except Exception as exc:
         log_error(f"Erro inesperado na criação Protheus: {type(exc).__name__}")
@@ -303,6 +304,7 @@ def update_protheus_rest_supplier_route(
             status_code=exc.status_code,
             code=exc.code,
             recoverable=exc.recoverable,
+            fields=exc.fields,
         )
     except Exception as exc:
         log_error(f"Erro inesperado na alteração Protheus: {type(exc).__name__}")

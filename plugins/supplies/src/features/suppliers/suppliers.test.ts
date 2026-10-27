@@ -33,6 +33,7 @@ import {
   isSupplierFieldAvailable,
   parseQueryFromSearch,
   personTypeLabel,
+  validateCreateDraft,
 } from "./query";
 import {
   SUPPLIER_CREATE_SECTIONS,
@@ -241,11 +242,107 @@ describe("supplier create payload", () => {
     );
   });
 
-  it("marks only supplier_store as required", () => {
+  it("marks the proven required set (X4.PROD-C1.R6)", () => {
     const required = SUPPLIER_CREATE_SECTIONS.flatMap((s) => s.fields).filter(
       (f) => f.required,
     );
-    expect(required.map((f) => f.key)).toEqual(["supplier_store"]);
+    expect(new Set(required.map((f) => f.key))).toEqual(
+      new Set([
+        "supplier_store",
+        "rohs_indicator",
+        "bacen_country_code",
+        "payment_condition_code",
+        "payment_method_code",
+        "accounting_account",
+        "financial_nature_code",
+      ]),
+    );
+    // Catalogs back the code-valued required fields — no hardcoded lists.
+    const catalogBacked = new Set(
+      required.filter((f) => f.catalog).map((f) => f.key),
+    );
+    expect(catalogBacked).toEqual(
+      new Set([
+        "bacen_country_code",
+        "payment_condition_code",
+        "payment_method_code",
+        "accounting_account",
+        "financial_nature_code",
+      ]),
+    );
+  });
+});
+
+describe("create draft validation (X4.PROD-C1.R6)", () => {
+  const REQUIRED_DRAFT: Pick<
+    SupplierCreateDraft,
+    | "supplier_store"
+    | "rohs_indicator"
+    | "bacen_country_code"
+    | "payment_condition_code"
+    | "payment_method_code"
+    | "accounting_account"
+    | "financial_nature_code"
+  > = {
+    supplier_store: "01",
+    rohs_indicator: "N",
+    bacen_country_code: "01058",
+    payment_condition_code: "010",
+    payment_method_code: "01",
+    accounting_account: "00000000",
+    financial_nature_code: "0000",
+  };
+  const draft = (
+    overrides: Partial<SupplierCreateDraft> = {},
+  ): SupplierCreateDraft => ({ ...EMPTY_E3_DRAFT, ...REQUIRED_DRAFT, ...overrides } as SupplierCreateDraft);
+
+  it("aggregates every missing required field, in registry order", () => {
+    const blanked = Object.fromEntries(
+      Object.keys(REQUIRED_DRAFT).map((key) => [key, ""]),
+    );
+    const errors = validateCreateDraft(draft(blanked));
+    expect(errors.map((e) => e.field)).toEqual([
+      "supplier_store",
+      "rohs_indicator",
+      "bacen_country_code",
+      "payment_condition_code",
+      "payment_method_code",
+      "accounting_account",
+      "financial_nature_code",
+    ]);
+    expect(errors.every((e) => e.code === "missing_required")).toBe(true);
+    expect(errors.every((e) => e.message.trim().length > 0)).toBe(true);
+  });
+
+  it("names one missing field only", () => {
+    const errors = validateCreateDraft(draft({ accounting_account: "" }));
+    expect(errors.map((e) => e.field)).toEqual(["accounting_account"]);
+    expect(errors[0].message).toContain("conta contábil");
+  });
+
+  it("treats whitespace-only as missing", () => {
+    const errors = validateCreateDraft(draft({ rohs_indicator: "   " }));
+    expect(errors.map((e) => e.field)).toEqual(["rohs_indicator"]);
+  });
+
+  it("flags malformed store separately from missing", () => {
+    const errors = validateCreateDraft(draft({ supplier_store: "1" }));
+    expect(errors).toEqual([
+      {
+        field: "supplier_store",
+        code: "invalid_format",
+        message: "Informe a loja com exatamente 2 dígitos.",
+      },
+    ]);
+  });
+
+  it("returns empty when all required fields are filled", () => {
+    expect(validateCreateDraft(draft())).toEqual([]);
+  });
+
+  it("does not require optional fields", () => {
+    const errors = validateCreateDraft(draft({ supplier_name: "" }));
+    expect(errors).toEqual([]);
   });
 });
 

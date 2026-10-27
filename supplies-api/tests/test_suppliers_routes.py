@@ -390,6 +390,156 @@ class TestWrite:
         assert resp.status_code == 503
         assert resp.get_json()["outcome"] == "write_disabled"
 
+    # --- X4.PROD-C1.R6 — structured error projection -----------------------
+
+    def test_post_422_projects_required_field_errors(self, client):
+        """Local api-delpi validation: 422 keeps code, detail and field list."""
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.post.side_effect = DelpiApiGatewayError(
+                "api-delpi client error",
+                status_code=422,
+                code="SUPPLIER_REQUIRED_FIELDS_MISSING",
+                upstream_message=(
+                    "Preencha os campos obrigatórios do fornecedor para continuar."
+                ),
+                fields=[
+                    {
+                        "field": "rohs_indicator",
+                        "code": "missing_required",
+                        "message": "Campo obrigatório ausente: Indicador ROHS.",
+                    },
+                    {
+                        "field": "accounting_account",
+                        "code": "missing_required",
+                        "message": "Campo obrigatório ausente: Conta contábil.",
+                    },
+                ],
+            )
+            resp = client.post(
+                "/suppliers",
+                json={"fornecedor": {"supplier_name": "X"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert resp.status_code == 422
+        assert body["code"] == "SUPPLIER_REQUIRED_FIELDS_MISSING"
+        assert body["detail"].startswith("Preencha os campos obrigatórios")
+        assert body["outcome"] == "rejected"
+        assert [f["field"] for f in body["fields"]] == [
+            "rohs_indicator",
+            "accounting_account",
+        ]
+        assert all(f["code"] == "missing_required" for f in body["fields"])
+
+    def test_post_400_business_reject_projects_sanitized_detail(self, client):
+        """Upstream business refusal keeps code + sanitized api-delpi detail."""
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.post.side_effect = DelpiApiGatewayError(
+                "api-delpi client error",
+                status_code=400,
+                code="PROTHEUS_SUPPLIER_WRITE_REJECTED",
+                upstream_message=(
+                    "Escrita rejeitada pelo Protheus. "
+                    "Detalhe: Campos Obrigatorios Nao Preenchidos"
+                ),
+            )
+            resp = client.post(
+                "/suppliers",
+                json={"fornecedor": {"supplier_name": "X"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert resp.status_code == 400
+        assert body["code"] == "PROTHEUS_SUPPLIER_WRITE_REJECTED"
+        assert "Campos Obrigatorios" in body["detail"]
+        assert body["outcome"] == "rejected"
+        assert "fields" not in body
+
+    def test_post_unknown_code_keeps_generic_detail_and_drops_fields(
+        self, client
+    ):
+        """Unlisted codes never leak upstream text or field payloads."""
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.post.side_effect = DelpiApiGatewayError(
+                "api-delpi client error",
+                status_code=400,
+                code="UPSTREAM_RAW_LEAK",
+                upstream_message="http://192.168.1.231:8061 secret detail",
+                fields=[{"field": "x", "message": "leak"}],
+            )
+            resp = client.post(
+                "/suppliers",
+                json={"fornecedor": {"supplier_name": "X"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert resp.status_code == 400
+        assert body["detail"] == "api-delpi client error"
+        assert "192.168" not in body["detail"]
+
+    def test_post_field_errors_sanitized(self, client):
+        """Malformed entries are dropped; safe entries keep field/message/code."""
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.post.side_effect = DelpiApiGatewayError(
+                "api-delpi client error",
+                status_code=422,
+                code="SUPPLIER_REQUIRED_FIELDS_MISSING",
+                upstream_message="Campos ausentes.",
+                fields=[
+                    {"field": "rohs_indicator", "message": "Ausente.", "code": "missing_required"},
+                    {"field": "INVALID KEY!!", "message": "bad key"},
+                    {"field": "x", "message": ""},
+                    "not-a-dict",
+                    {"field": "payment_method_code", "message": "Ausente.", "code": "BAD CODE"},
+                ],
+            )
+            resp = client.post(
+                "/suppliers",
+                json={"fornecedor": {"supplier_name": "X"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        fields = resp.get_json()["fields"]
+        assert [f["field"] for f in fields] == [
+            "rohs_indicator",
+            "payment_method_code",
+        ]
+        assert "code" not in fields[1]
+
+    def test_post_token_invalid_maps_indeterminate_with_code(self, client):
+        """Integration auth failure is indeterminate, never a form error."""
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.post.side_effect = DelpiApiGatewayError(
+                "api-delpi server error",
+                status_code=502,
+                code="PROTHEUS_TOKEN_INVALID",
+                upstream_message="token rejected",
+            )
+            resp = client.post(
+                "/suppliers",
+                json={"fornecedor": {"supplier_name": "X"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert resp.status_code == 502
+        assert body["code"] == "PROTHEUS_TOKEN_INVALID"
+        assert body["outcome"] == "indeterminate"
+        assert body["detail"] == "api-delpi unavailable"
+
     def test_put_timeout_indeterminate(self, client):
         v, r = _auth()
         with v, r, patch(

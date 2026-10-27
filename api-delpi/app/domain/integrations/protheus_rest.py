@@ -109,6 +109,7 @@ class ProtheusRestError(Exception):
         status_code: int = 502,
         recoverable: bool = True,
         upstream_status: int | None = None,
+        fields: list[dict[str, str]] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
@@ -116,3 +117,6 @@ class ProtheusRestError(Exception):
         self.status_code = status_code
         self.recoverable = recoverable
         self.upstream_status = upstream_status
+        # Structured per-field validation entries ({field, code, message}) —
+        # populated by aggregate payload validation, never by transport errors.
+        self.fields = fields

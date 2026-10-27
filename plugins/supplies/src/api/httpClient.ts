@@ -31,11 +31,21 @@ function buildHeaders(withJsonBody: boolean): Record<string, string> {
   return headers;
 }
 
+export type ApiFieldError = {
+  field: string;
+  message: string;
+  code?: string;
+};
+
 export class ApiRequestError extends Error {
   readonly status: number;
   readonly code?: string;
   readonly outcome?: string;
   readonly retryAfter?: number;
+  /** `detail` sanitizado da BFF — já seguro para exibição. */
+  readonly detail?: string;
+  /** Lista de erros por campo (validação 422 estruturada). */
+  readonly fields?: ApiFieldError[];
 
   constructor(
     message: string,
@@ -44,6 +54,8 @@ export class ApiRequestError extends Error {
       code?: string;
       outcome?: string;
       retryAfter?: number;
+      detail?: string;
+      fields?: ApiFieldError[];
     },
   ) {
     super(message);
@@ -52,7 +64,30 @@ export class ApiRequestError extends Error {
     this.code = options.code;
     this.outcome = options.outcome;
     this.retryAfter = options.retryAfter;
+    this.detail = options.detail;
+    this.fields = options.fields;
   }
+}
+
+function parseFieldErrors(value: unknown): ApiFieldError[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out: ApiFieldError[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") continue;
+    const item = entry as Record<string, unknown>;
+    if (
+      typeof item.field === "string" &&
+      typeof item.message === "string" &&
+      item.message.trim()
+    ) {
+      out.push({
+        field: item.field,
+        message: item.message,
+        code: typeof item.code === "string" ? item.code : undefined,
+      });
+    }
+  }
+  return out.length ? out : undefined;
 }
 
 async function parseError(response: Response): Promise<ApiRequestError> {
@@ -60,6 +95,8 @@ async function parseError(response: Response): Promise<ApiRequestError> {
   let rawFromBody: string | null = null;
   let code: string | undefined;
   let outcome: string | undefined;
+  let detail: string | undefined;
+  let fields: ApiFieldError[] | undefined;
   try {
     const text = await response.text();
     if (text.trim()) {
@@ -70,6 +107,10 @@ async function parseError(response: Response): Promise<ApiRequestError> {
           const body = errorBody as Record<string, unknown>;
           if (typeof body.code === "string") code = body.code;
           if (typeof body.outcome === "string") outcome = body.outcome;
+          if (typeof body.detail === "string" && body.detail.trim()) {
+            detail = body.detail;
+          }
+          fields = parseFieldErrors(body.fields);
         }
       } catch {
         rawFromBody = text;
@@ -88,6 +129,8 @@ async function parseError(response: Response): Promise<ApiRequestError> {
     code,
     outcome,
     retryAfter,
+    detail,
+    fields,
   });
 }
 

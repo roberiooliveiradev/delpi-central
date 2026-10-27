@@ -89,6 +89,48 @@ def _access_token() -> str:
     return g.current_user.access_token or ""
 
 
+# X4.PROD-C1.R6 — only error families whose api-delpi messages are already
+# sanitized for clients may be republished (validation + business rejects).
+# Anything else keeps the generic transport detail so raw upstream text,
+# hosts, SQL or internals never reach the browser.
+_SAFE_UPSTREAM_DETAIL_PREFIXES = (
+    "PROTHEUS_SUPPLIER_",
+    "PROTHEUS_IDENTITY_",
+    "SUPPLIER_REQUIRED_FIELDS_",
+    "PROVENANCE_",
+)
+_FIELD_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
+_MAX_FIELD_ERRORS = 25
+
+
+def _sanitize_field_errors(fields: list | None) -> list[dict[str, str]]:
+    """Project the api-delpi field-error list, dropping malformed entries."""
+    if not fields:
+        return []
+    out: list[dict[str, str]] = []
+    for entry in fields[:_MAX_FIELD_ERRORS]:
+        if not isinstance(entry, dict):
+            continue
+        field = entry.get("field")
+        message = entry.get("message")
+        if not (
+            isinstance(field, str)
+            and _FIELD_KEY_RE.fullmatch(field)
+            and isinstance(message, str)
+            and message.strip()
+        ):
+            continue
+        item: dict[str, str] = {
+            "field": field,
+            "message": message.strip()[:200],
+        }
+        code = entry.get("code")
+        if isinstance(code, str) and re.fullmatch(r"[a-z_]{2,40}", code):
+            item["code"] = code
+        out.append(item)
+    return out
+
+
 def _gateway_error_response(exc: DelpiApiGatewayError, *, write: bool = False):
     upstream_code = exc.code
     if write and upstream_code and upstream_code.endswith("_DISABLED"):
@@ -129,10 +171,24 @@ def _gateway_error_response(exc: DelpiApiGatewayError, *, write: bool = False):
     if status == 404:
         return jsonify({"detail": "Not Found", "code": "not_found"}), 404
     if status < 500:
+        # Allowlisted codes carry an already-sanitized api-delpi message
+        # (validation + deterministic business rejects) — republish it so the
+        # UI can act on the real cause instead of "api-delpi client error".
+        detail = str(exc)
+        safe_code = bool(
+            upstream_code
+            and upstream_code.startswith(_SAFE_UPSTREAM_DETAIL_PREFIXES)
+        )
+        if safe_code and exc.upstream_message:
+            detail = exc.upstream_message[:300]
         payload = {
-            "detail": str(exc),
+            "detail": detail,
             "code": upstream_code or "upstream_client_error",
         }
+        if safe_code:
+            field_errors = _sanitize_field_errors(exc.fields)
+            if field_errors:
+                payload["fields"] = field_errors
         if write:
             payload["outcome"] = "rejected"
         return jsonify(payload), status

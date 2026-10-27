@@ -99,6 +99,12 @@ export const SUPPLIERS_CONTENT = {
   createTitle: "Novo fornecedor",
   createDescription:
     "Preencha as informações cadastrais do fornecedor. Você pode consultar dados públicos pelo CNPJ ou informar os dados manualmente. Confira as informações e revise o cadastro antes de concluir. O envio ao Protheus estará disponível quando autorizado.",
+  requiredFieldsLegend: "* Campos obrigatórios",
+  validationSummaryTitle: "Não foi possível concluir o cadastro.",
+  validationSummaryLead: "Preencha os campos obrigatórios:",
+  validationSummaryLeadMixed: "Corrija os campos indicados:",
+  validationAuthMessage:
+    "Não foi possível autenticar na integração com o Protheus.",
   createSubmit: "Revisar dados",
   createReviewTitle: "Revisar dados do fornecedor",
   createReviewDescription:

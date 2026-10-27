@@ -13,6 +13,18 @@ from app.application.use_cases.integrations.create_protheus_rest_supplier_use_ca
 from app.domain.integrations.protheus_rest import ProtheusRestConfig, ProtheusRestError
 
 ACTOR = UUID("401b25fa-ccd1-4800-8a12-a767909956b4")
+
+# X4.PROD-C1.R6 — required set proven upstream (R5 RCA + E2 homologation).
+REQUIRED_CREATE = {
+    "supplier_store": "01",
+    "rohs_indicator": "N",
+    "accounting_account": "00000000",
+    "bacen_country_code": "01058",
+    "payment_method_code": "01",
+    "financial_nature_code": "0000",
+    "payment_condition_code": "010",
+}
+
 _CONFIG = ProtheusRestConfig(
     username="u",
     password="p",
@@ -65,7 +77,7 @@ def test_feature_gate_blocks_before_core_and_upstream(monkeypatch) -> None:
     )
 
     with pytest.raises(ProtheusRestError) as exc:
-        uc.execute(actor_user_id=ACTOR, fornecedor={"supplier_store": "01"})
+        uc.execute(actor_user_id=ACTOR, fornecedor=dict(REQUIRED_CREATE))
     assert exc.value.code == "PROTHEUS_SUPPLIER_CREATE_DISABLED"
     identity.get_identity_for_user.assert_not_called()
     params.load_raw_params.assert_not_called()
@@ -82,7 +94,38 @@ def test_invalid_payload_precedes_feature_gate(monkeypatch) -> None:
         _uc(identity_gateway=identity).execute(
             actor_user_id=ACTOR, fornecedor={"supplier_name": "SEM LOJA"}
         )
-    assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
+    assert exc.value.code == "SUPPLIER_REQUIRED_FIELDS_MISSING"
+    identity.get_identity_for_user.assert_not_called()
+
+
+def test_local_validation_precedes_token_tracking_and_upstream() -> None:
+    """R6 — missing required fields fail before token, tracking and POST."""
+    token = MagicMock()
+    gateway = MagicMock()
+    tracker = MagicMock()
+    identity = MagicMock()
+    identity.get_identity_for_user.side_effect = AssertionError(
+        "core must not be called before validation"
+    )
+    params = MagicMock()
+    params.load_raw_params.side_effect = AssertionError(
+        "params must not be read before validation"
+    )
+    uc = _uc(
+        identity_gateway=identity,
+        gateway=gateway,
+        tracker=tracker,
+        params_repository=params,
+        token_service=token,
+    )
+    with pytest.raises(ProtheusRestError) as exc:
+        uc.execute(actor_user_id=ACTOR, fornecedor={"supplier_store": "01"})
+    assert exc.value.code == "SUPPLIER_REQUIRED_FIELDS_MISSING"
+    assert exc.value.status_code == 422
+    assert len(exc.value.fields) == 6
+    token.get_valid_token.assert_not_called()
+    gateway.create_supplier.assert_not_called()
+    params.load_raw_params.assert_not_called()
     identity.get_identity_for_user.assert_not_called()
 
 
@@ -108,7 +151,7 @@ def test_mapped_verified_calls_gateway_when_enabled(monkeypatch) -> None:
     uc = _uc(identity_gateway=identity, gateway=gateway)
     result = uc.execute(
         actor_user_id=ACTOR,
-        fornecedor={"supplier_store": "01", "supplier_name": "ACME"},
+        fornecedor={**REQUIRED_CREATE, "supplier_name": "ACME"},
     )
     assert result["codusr"] == "000161"
     gateway.create_supplier.assert_called_once()
@@ -127,7 +170,7 @@ def test_unmapped_blocked(monkeypatch) -> None:
     identity.get_identity_for_user.return_value = _mapped(status="unmapped", usr=None)
     with pytest.raises(ProtheusRestError) as exc:
         _uc(identity_gateway=identity).execute(
-            actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
+            actor_user_id=ACTOR, fornecedor=dict(REQUIRED_CREATE)
         )
     assert exc.value.code == "PROTHEUS_IDENTITY_UNMAPPED"
 
@@ -141,7 +184,7 @@ def test_ambiguous_blocked(monkeypatch) -> None:
     identity.get_identity_for_user.return_value = _mapped(status="ambiguous")
     with pytest.raises(ProtheusRestError) as exc:
         _uc(identity_gateway=identity).execute(
-            actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
+            actor_user_id=ACTOR, fornecedor=dict(REQUIRED_CREATE)
         )
     assert exc.value.code == "PROTHEUS_IDENTITY_AMBIGUOUS"
 
@@ -155,7 +198,7 @@ def test_not_verified_blocked(monkeypatch) -> None:
     identity.get_identity_for_user.return_value = _mapped(verified=False)
     with pytest.raises(ProtheusRestError) as exc:
         _uc(identity_gateway=identity).execute(
-            actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
+            actor_user_id=ACTOR, fornecedor=dict(REQUIRED_CREATE)
         )
     assert exc.value.code == "PROTHEUS_IDENTITY_NOT_VERIFIED"
 
@@ -169,7 +212,7 @@ def test_invalid_usr_id_format_blocked(monkeypatch) -> None:
     identity.get_identity_for_user.return_value = _mapped(usr="161")
     with pytest.raises(ProtheusRestError) as exc:
         _uc(identity_gateway=identity).execute(
-            actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
+            actor_user_id=ACTOR, fornecedor=dict(REQUIRED_CREATE)
         )
     assert exc.value.code == "PROTHEUS_IDENTITY_INVALID"
 
@@ -186,7 +229,7 @@ def test_core_unavailable_propagates_only_when_gate_open(monkeypatch) -> None:
     )
     with pytest.raises(ProtheusRestError) as closed:
         _uc(identity_gateway=identity).execute(
-            actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
+            actor_user_id=ACTOR, fornecedor=dict(REQUIRED_CREATE)
         )
     assert closed.value.code == "PROTHEUS_SUPPLIER_CREATE_DISABLED"
     identity.get_identity_for_user.assert_not_called()
@@ -195,7 +238,7 @@ def test_core_unavailable_propagates_only_when_gate_open(monkeypatch) -> None:
     monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     with pytest.raises(ProtheusRestError) as opened:
         _uc(identity_gateway=identity).execute(
-            actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
+            actor_user_id=ACTOR, fornecedor=dict(REQUIRED_CREATE)
         )
     assert opened.value.code == "PROTHEUS_IDENTITY_CORE_UNAVAILABLE"
 
@@ -219,7 +262,7 @@ def test_token_invalid_does_not_retry_write(monkeypatch) -> None:
     token.get_valid_token.return_value = "tok"
     uc = _uc(identity_gateway=identity, gateway=gateway, token_service=token)
     with pytest.raises(ProtheusRestError) as exc:
-        uc.execute(actor_user_id=ACTOR, fornecedor={"supplier_store": "01"})
+        uc.execute(actor_user_id=ACTOR, fornecedor=dict(REQUIRED_CREATE))
     assert exc.value.code == "PROTHEUS_TOKEN_INVALID"
     assert gateway.create_supplier.call_count == 1
     token.invalidate.assert_called_once()
@@ -252,7 +295,7 @@ def test_injected_field_normalizer_widens_allowlist(monkeypatch) -> None:
     )
     uc.execute(
         actor_user_id=ACTOR,
-        fornecedor={"supplier_store": "01", "website": "www.example.test"},
+        fornecedor={**REQUIRED_CREATE, "website": "www.example.test"},
     )
     sent = gateway.create_supplier.call_args.kwargs["body"]["fornecedor"]
     assert sent["website"] == "www.example.test"
