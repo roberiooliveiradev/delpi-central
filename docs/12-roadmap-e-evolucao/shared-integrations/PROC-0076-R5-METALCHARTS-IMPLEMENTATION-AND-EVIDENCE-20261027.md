@@ -65,8 +65,11 @@
 | `tests/test_contract_readiness_pg.py` | **PASS** |
 | `tests/test_market_r2_pg.py` | **PASS** |
 | Suíte unitária completa (`-k "not pg"`) | **PASS** (0 falhas) |
+| `supplies-api tests/interface/http/test_market_intelligence_r5s1_bff.py` (7 casos: day/week/média mensal/misto/422/compare) | **PASS** |
+| Suíte `supplies-api` completa | **PASS** (0 falhas) |
+| Smoke autenticado produção (gateway → BFF → cache TTL real) | **PASS** — ver §9 |
 
-Integração externa real (chave válida, cobertura Free dos 6 metais, 401/403/429 ao vivo): **TEST_NOT_RUN** — `METALCHARTS_API_KEY` não provisionada nesta execução.
+Integração externa real (chave válida, cobertura Free dos 6 metais, 401/403/429 ao vivo): **PASS em homologação local + ingestão real contra o banco de produção via túnel SSH** (egresso prod bloqueado pelo Sophos — ver §9).
 
 ## 7. Classificação dos critérios R5
 
@@ -83,8 +86,8 @@ Integração externa real (chave válida, cobertura Free dos 6 metais, 401/403/4
 | R5-09 external-data-api | PASS |
 | R5-10 supplies-api | PASS (contratos R4 inalterados — leitura via binding efetivo) |
 | R5-11 dashboard R4.1 | PASS (sem alteração de frontend) |
-| R5-12 séries com dados reais | PENDING (aguarda S1 + direitos) |
-| R5-13 comparação compatível | PENDING (idem) |
+| R5-12 séries com dados reais | **PASS** — smoke autenticado: 21–22 pontos diários/instrumento, média/variação, freshness `business_daily` |
+| R5-13 comparação compatível | **PASS** — zinc×lead `comparable`, cobre×alumínio `incompatible_units` (USD/lb ≠ USD/t) |
 | R5-14 Core AuthZ/S2S | PASS (inalterado) |
 | R5-15 quarentena LME | PASS (bindings separados, fallback preserva `source_use_pending`) |
 | R5-16 regressão IBGE/Comex/PTAX | PASS (suíte completa + PG verdes) |
