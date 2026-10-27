@@ -1741,3 +1741,8 @@ Sem nova permission (apenas `access`/`manage` congeladas); sem WebSocket/notific
 ### 43.4 Evidência
 
 Backend: 110/110 rotas+service · PG 30/30 (incl. deduplicação, conflito, FK, CHECK, cronologia, auditoria) · outras PG 175/175 · não-PG 420. Frontend: detalhe 18/18 · closing 176/176 · plugin 249/249 · `tsc`/ESLint/build PASS (`App-D0zGdiAL.js`). Migration V016 provada via runner em banco efêmero. Homologação visual PO: `PENDING`.
+
+
+## 44. Refinamento documental V0.5 — conversa com altura padrão, timeline e avatar (PO, 26/10/2026)
+
+O PO aprovou dar altura mínima consistente à conversa, mantendo o campo de escrita no rodapé mesmo sem mensagens, substituir a lista de histórico por linha do tempo compartilhada e exibir avatar autorizado dos autores nas mensagens e eventos. Capturas da U9 mostram thread curta diante de PDF alto e histórico vazio. Evidências/inventário e especificação no [Plano 113 §23](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). `PRODUCT_APPROVED / TARGET`; não inferir avatar do JWT ou usar foto do usuário logado para terceiros; timeline real e perfil Core exigem inventário.
