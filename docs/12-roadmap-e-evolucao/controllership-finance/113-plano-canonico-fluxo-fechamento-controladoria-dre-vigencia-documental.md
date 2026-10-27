@@ -549,3 +549,44 @@ O fluxo `DocumentDetailPanel → downloadClosingDocument → httpGetBlob → BFF
 
 ### 20.4 Evidência
 Vitest focado: `MonthlyDocumentsPanel` 15/15 (menu, ações, U5, U7, confirmação/cancelamento), `DocumentDetailPanel` 13/13 (regressão de fetch único U4, retry, versão anterior, remoção, histórico sem downloads), `MonthlyClosingPage` 32/32 (sem bloco legado), `pluginRoutes` 18/18. Suíte fechamento 171/171; plugin 244/244. `tsc -b` PASS; ESLint dos arquivos do escopo limpo; estruturais (manifest, boundary MFE→BFF, cobertura de ajuda) PASS; build federado PASS (`App-C81K9e6S.js`). Smoke autenticado Devin: `TEST_NOT_RUN`; homologação visual PO: `PENDING`.
+
+
+## 21. Interações proativas por documento — decisão PO e evolução V0.4 (26/10/2026)
+
+**Decisão expressa do PO — PRODUCT_APPROVED:** a **Controladoria pode iniciar a conversa no documento a qualquer momento autorizado**, inclusive antes de a Contabilidade/DRE enviar sua primeira mensagem, solicitar ajuste ou receber o documento. **Não há dependência de mensagem prévia da DRE.** A conversa pertence ao contexto de `competência + documento + versão quando pertinente`, não ao usuário que iniciou ou a uma solicitação de ajuste preexistente. Comentário comum, pedido de ajuste, resposta, confirmação de atendimento e aceite formal P2/P5 são eventos diferentes; enviar mensagem não valida, não encerra pedido e não libera documento automaticamente.
+
+**Evidência visual:** nas capturas após V0.3 o PDF abre e pode ser consultado; a coluna `Interações` mostra somente “Nenhuma solicitação registrada” e que “a conversa livre por documento ainda não está disponível”. Há lacuna funcional real entre wireframe aprovado e runtime, não apenas texto ou estilo. Os cartões permanecem compactos com menu de três pontos; manter lista em cards e abrir detalhes em deep route. Linha de histórico vazia pode ser legítima após filtrar downloads; **não sintetizar eventos**.
+
+### 21.1 Layout detalhado do documento — proposta visual a operacionalizar
+- Cabeçalho compacto com nome, mês, situação, voltar; evitar repetir hero completo com grande seletor se a página já herdou contexto.
+- Desktop: PDF e versões à esquerda; **conversa real à direita**, com área rolável, mensagens cronológicas, autor, data/hora e indicação de destinatários/audiência quando autorizada. **Composer fixo ao final da coluna**, campo multiline e botão `Enviar mensagem` com loading/erro/retry sem duplicação. A Controladoria vê ação de escrever mesmo se a thread estiver vazia (quando autorizada). Estado inicial: “Nenhuma mensagem ainda. Você pode iniciar a conversa sobre este documento.”
+- Ações distintas no contexto de uma mensagem ou documento: comentário; solicitar ajuste; responder a pedido; marcar atendimento/conferir com autorização. Não inventar as quatro operações se o contrato ainda não existir.
+- Iniciar conversa não altera estado de validação, não envia pacote, não cria obrigação documental e não expõe o documento à DRE antes de liberação. Destinatários/visibilidade seguem escopo e audience governados; mensagem pré-liberação pode ser interna à Controladoria, **não presumir que a DRE tenha acesso**.
+- Histórico abaixo mostra eventos materiais (nova versão, pedido, resposta, validação, cancelamento); mensagens aparecem na thread para evitar duplicação. Downloads permanecem fora do histórico operacional. UUID técnico não aparece como nome do autor na UI; resolver identidade autorizada ou exibir identificação neutra sem inventar.
+- Mobile: PDF, thread e histórico empilhados; composer alcançável por teclado; foco, rolagem, temas, acessibilidade e deep links preservados.
+
+### 21.2 Necessidades de contrato e gate de colaboração (TARGET; não runtime)
+- Inventariar padrões técnicos de **Minhas Solicitações** e `@delpi/plugin-ui` para visual, thread, composer, badges e eventos, **sem importar domain/application/API do outro contexto**.
+- Definir owner da thread e mensagens do **controllership-finance-api**, identificadores, vínculo com competência/documento/versão, audiência/participantes e regras de visibilidade antes/depois da liberação DRE, leitura, escrita, idempotência, paginação, ordenação, anexos de mensagem se houver, auditoria e retenção.
+- Contratos distintos para mensagem livre, solicitação de ajuste, resposta e confirmação/encerramento do pedido. **Não exigir uma solicitação DRE para criar thread**.
+- Backend: effective permissions Core + resource scope/ownership + business rule, fail-closed; sem nova permission por página. Notificações e WebSocket somente com contracts e owners autorizados; começar com mensagens persistidas e atualização manual/poll governado se preciso, sem alegar tempo real fictício.
+- Proteger histórico de competências finalizadas e imutabilidade de pacote enviado; definir se comentário pós-conclusão é permitido e em qual audiência antes de implementação.
+- Se mudanças de BFF, schema, lifecycle, boundaries ou security ainda não têm gate, entregar **DECISION_REQUIRED** com alternativas e impactos no subescopo, mas não bloquear o redesign visual independente.
+
+### 21.3 UX da aba Documentos e interações
+- Manter cartões e filtro; resumo “Conversas e solicitações que precisam de atenção” deve cobrir **mensagens/pedidos reais do contexto autorizado**, diferenciando pendências de ajuste de novas mensagens. Não exibir contador inventado. Ao clicar, navegar para o detalhe e focar a thread.
+- **Adicionar documento** e menu três pontos permanecem; remover é cancelamento lógico U7 com confirmação. Nenhuma ação adicional é executada por iniciativa do assistente.
+- Refinamento de densidade: na página de detalhe dar mais largura/altura útil ao leitor PDF e composer; compactar hero e metadados, reduzir barras vazias. Seguir padrões do kit.
+
+### 21.4 Critérios de aceite da colaboração
+1. `access` autorizado inicia mensagem em documento sem nenhuma mensagem anterior da DRE.
+2. Mensagem persiste e aparece ao recarregar / trocar contexto; não só frontend state.
+3. Documento não liberado não é exposto à DRE.
+4. Autoria/data confiáveis; sem mensagens duplicadas em retry.
+5. Mensagem não dispara validação, conclusão, envio nem encerramento de pedido.
+6. Solicitação de ajuste e confirmação possuem atos separados se implementados.
+7. Segurança negativa/sibling, histórico, troca de competência, temas, mobile, teclado/foco e deep link testados.
+8. Ajuda e CLARA atualizadas somente conforme runtime comprovado; documentação distingue `TARGET` de `PROVEN`.
+9. Deploy local e produção apenas com gates técnicos/operacionais, smoke autenticado e evidência.
+
+**Situação:** PO aprovou a capacidade de **iniciar conversa proativamente**; visual detalhado é `TARGET` e os contratos de colaboração estão `TO_INVENTORY`. Próximo passo: inventário pelo Devin → reconciliação de owners/segurança → implementação incremental autorizada → homologação PO. Não afirmar funcionalidade já entregue.
