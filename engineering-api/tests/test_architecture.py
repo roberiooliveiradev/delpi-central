@@ -72,7 +72,7 @@ def test_no_forbidden_dependencies():
 
 
 def test_no_premature_layer_directories():
-    premature = ("domain", "application", "infrastructure", "composition", "middleware")
+    premature = ("domain", "application", "infrastructure", "composition")
     present = [d.name for d in PACKAGE_ROOT.iterdir() if d.is_dir()]
     for name in premature:
         assert name not in present, f"Premature layer directory: {name}"

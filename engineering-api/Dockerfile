@@ -5,6 +5,9 @@ WORKDIR /app
 COPY engineering-api/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
+COPY shared /shared
+RUN pip install --no-cache-dir -e "/shared[fastapi]"
+
 COPY engineering-api /app
 
 ENV PYTHONPATH=/app
