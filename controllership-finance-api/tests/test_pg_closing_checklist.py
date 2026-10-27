@@ -217,11 +217,12 @@ def test_publish_open_snapshot(migrated, repo):
     repo.submit_version_for_review(
         template_id, 1, actor=ADMIN
     )
+    # D3: 2026-09 já está aberta — a vigência inicial não pode cobri-la.
     published = repo.publish_version(
-        template_id, 1, effective_from_period="2026-01", actor=ADMIN
+        template_id, 1, effective_from_period="2026-10", actor=ADMIN
     )
     assert published["status"] == "PUBLISHED"
-    assert published["effective_from_period"] == "2026-01"
+    assert published["effective_from_period"] == "2026-10"
 
     competence, created = repo.open_competence("2026-10", actor=VIEWER)
     assert created is True

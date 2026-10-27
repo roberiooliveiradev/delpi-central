@@ -531,6 +531,41 @@ class ClosingChecklistRepository:
                             "Versão sem itens exige allow_empty "
                             "explícito para publicar."
                         )
+                    # D3 (GATE-016 CP1.1): a versão vence em
+                    # [effective_from, próximo boundary). Competência
+                    # aberta nessa janela ficaria com snapshot congelado
+                    # divergente do catálogo — mesma regra do comando
+                    # documental transacional.
+                    cur.execute(
+                        f"""
+                        SELECT min(effective_from_period) AS next_boundary
+                          FROM {_q('checklist_template_version')}
+                         WHERE template_id = %s AND status = 'PUBLISHED'
+                           AND effective_from_period > %s
+                        """,
+                        (template_id, effective_from_period),
+                    )
+                    window_end = (
+                        cur.fetchone()["next_boundary"] or "9999-12"
+                    )
+                    cur.execute(
+                        f"""
+                        SELECT period FROM {_q('monthly_competence')}
+                         WHERE period >= %s AND period < %s
+                         ORDER BY period
+                        """,
+                        (effective_from_period, window_end),
+                    )
+                    covered = [
+                        row["period"] for row in cur.fetchall()
+                    ]
+                    if covered:
+                        raise WindowCoversOpenCompetence(
+                            "A vigência intersecta competências já "
+                            f"abertas ({', '.join(covered)}) — "
+                            "snapshots congelados não podem "
+                            "divergir do catálogo."
+                        )
                     self._audit(
                         cur,
                         entity_type="checklist_template_version",
@@ -573,7 +608,8 @@ class ClosingChecklistRepository:
                                updated_at = now()
                          WHERE template_id = %s AND version = %s
                            AND status = 'PUBLISHED'
-                        RETURNING version_id, status, inactivated_at
+                        RETURNING version_id, status, inactivated_at,
+                                  effective_from_period
                         """,
                         (actor, template_id, version),
                     )
@@ -586,6 +622,40 @@ class ClosingChecklistRepository:
                             )
                         raise VersionNotPublished(
                             "Somente versões PUBLISHED podem ser inativadas."
+                        )
+                    # D3 (GATE-016 CP1.1): inativar a versão muda o
+                    # vencedor de [effective_from, próximo boundary) —
+                    # competência aberta na janela divergiria do
+                    # snapshot congelado.
+                    cur.execute(
+                        f"""
+                        SELECT min(effective_from_period) AS next_boundary
+                          FROM {_q('checklist_template_version')}
+                         WHERE template_id = %s AND status = 'PUBLISHED'
+                           AND effective_from_period > %s
+                        """,
+                        (template_id, row["effective_from_period"]),
+                    )
+                    window_end = (
+                        cur.fetchone()["next_boundary"] or "9999-12"
+                    )
+                    cur.execute(
+                        f"""
+                        SELECT period FROM {_q('monthly_competence')}
+                         WHERE period >= %s AND period < %s
+                         ORDER BY period
+                        """,
+                        (row["effective_from_period"], window_end),
+                    )
+                    covered = [
+                        entry["period"] for entry in cur.fetchall()
+                    ]
+                    if covered:
+                        raise WindowCoversOpenCompetence(
+                            "A inativação intersecta competências já "
+                            f"abertas ({', '.join(covered)}) — "
+                            "snapshots congelados não podem "
+                            "divergir do catálogo."
                         )
                     self._audit(
                         cur,

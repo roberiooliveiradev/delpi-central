@@ -496,3 +496,71 @@ class TestApplyDocumentRequirement:
             )
             keys = {r[0] for r in c.fetchall()}
         assert {"DOCA", "DOCB"} <= keys
+
+
+class TestLegacyWritersD3:
+    """CP1.1 GATE-016 — writers legados respeitam a mesma regra D3:
+    nenhuma publicação/inativação cobre competência já aberta."""
+
+    def test_legacy_publish_rejects_window_over_open_competence(
+        self, migrated, repo
+    ):
+        tid = _new_template()
+        open_p = _period(70)
+        repo.open_competence(open_p, actor=VIEWER)
+        draft = repo.create_draft_version(tid, actor=ADMIN)
+        repo.update_draft_items(
+            tid,
+            draft["version"],
+            expected_revision=draft["revision"],
+            items=[_item("DOCX")],
+            actor=ADMIN,
+        )
+        repo.submit_version_for_review(
+            tid, draft["version"], actor=ADMIN
+        )
+        with pytest.raises(de.WindowCoversOpenCompetence):
+            repo.publish_version(
+                tid,
+                draft["version"],
+                effective_from_period=_period(69),
+                actor=ADMIN,
+            )
+
+    def test_legacy_publish_after_open_competence_allowed(
+        self, migrated, repo
+    ):
+        """Irmão: vigência posterior à última competência aberta segue
+        permitida — a guarda não é um bloqueio cego de retroatividade."""
+        tid = _new_template()
+        repo.open_competence(_period(71), actor=VIEWER)
+        draft = repo.create_draft_version(tid, actor=ADMIN)
+        repo.update_draft_items(
+            tid,
+            draft["version"],
+            expected_revision=draft["revision"],
+            items=[_item("DOCX")],
+            actor=ADMIN,
+        )
+        repo.submit_version_for_review(
+            tid, draft["version"], actor=ADMIN
+        )
+        published = repo.publish_version(
+            tid,
+            draft["version"],
+            effective_from_period=_period(72),
+            actor=ADMIN,
+        )
+        assert published["status"] == "PUBLISHED"
+
+    def test_legacy_inactivate_rejects_window_over_open_competence(
+        self, migrated, repo
+    ):
+        tid = _new_template()
+        open_p = _period(73)
+        _apply(
+            repo, tid, "DOCX", period=open_p, item=_item("DOCX")
+        )
+        repo.open_competence(open_p, actor=VIEWER)
+        with pytest.raises(de.WindowCoversOpenCompetence):
+            repo.inactivate_version(tid, 1, actor=ADMIN)
