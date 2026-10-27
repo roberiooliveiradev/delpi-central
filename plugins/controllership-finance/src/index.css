@@ -1221,42 +1221,48 @@
   outline-offset: 2px;
 }
 
-.dashboard-controllership-finance .cf-report-groups {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.dashboard-controllership-finance .cf-report-group {
-  border: 1px solid var(--cf-border);
-  border-radius: var(--radius, 12px);
-  padding: 12px 16px;
+.dashboard-controllership-finance .cf-report-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.dashboard-controllership-finance .cf-report-group__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.dashboard-controllership-finance .cf-report-group__side {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.dashboard-controllership-finance .cf-report-group__value {
+.dashboard-controllership-finance .cf-report-card__name {
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+}
+
+.dashboard-controllership-finance .cf-report-card__desc,
+.dashboard-controllership-finance .cf-report-card__meta {
+  color: var(--cf-muted, currentColor);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-controllership-finance .cf-disclosure {
+  border: 1px solid var(--cf-border);
+  border-radius: var(--radius, 12px);
+  padding: 0;
+}
+
+.dashboard-controllership-finance .cf-disclosure__summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 500;
+  list-style-position: inside;
+}
+
+.dashboard-controllership-finance .cf-disclosure__summary:focus-visible {
+  outline: 2px solid var(--cf-focus, currentColor);
+  outline-offset: -2px;
+  border-radius: var(--radius, 12px);
+}
+
+.dashboard-controllership-finance .cf-disclosure__body {
+  padding: 0 16px 16px;
 }
 
 .dashboard-controllership-finance #cf-reports-attention:focus-visible,

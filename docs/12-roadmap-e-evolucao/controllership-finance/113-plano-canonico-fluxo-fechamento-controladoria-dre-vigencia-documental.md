@@ -1018,3 +1018,17 @@ Corrigir cartões de relatório que hoje exibem labels repetidas em caixa alta `
 5. Depois de evidências: docs, Ajuda, CLARA, commit/SHA, deploy canônico local/prod, smoke autenticado e revisão GPT.
 
 **Não confundir** mudança aprovada de UX com autorização implícita de migração, nova API ou write-back TOTVS. Página DRE continua por último.
+
+### 26.6 Registro de implementação — UX-011 entregue (27/10/2026)
+
+**IMPLEMENTED** na Central de Fechamento, supersede executado sobre §26.1–§26.3:
+
+- **Rota contextual real:** `closing/monthly-closing/{YYYY-MM}/reports/{reportKey}` resolvida em `resolvePluginRoute` (`pluginRoutes.ts`), ao lado do deep link de documento — mesma view `monthly_closing`, sem quarta aba. `reportKey` ∈ `financial-settlements` | `stock-inventory`; chave desconhecida rende estado honesto, nunca página fabricada.
+- **Hub V0.3 (`?tab=reports`):** indicadores honestos, «O que precisa de atenção» primeiro, cartões compactos por família via `CfInteractiveDataCard` (slot `children` do kit — sem rótulos RELATÓRIO/DESCRIÇÃO repetidos) e matriz R01–R15 em `<details>` técnico fora do fluxo principal. Resultados inline da V0.2 e o slot de PDF do hub foram removidos.
+- **Reuso legado (D5):** `FinancialSettlementsPage` e `StockInventoryPage` ganharam prop `reportContext` — mesma máquina de filtros, tabela e paginação server-side; a competência vem travada da rota. Nenhuma duplicação de implementação.
+- **Tabelas por colunas (D4):** agrupamentos de baixas em `DataTableSection` com colunas Natureza / Tipo de movimento / Baixas / Valor / Moeda / Ação — sem concatenação; estoque mantém Resumo por tipo e por armazém em tabelas do kit; «Ver registros» aplica `nature_code`/`movement_type` do grupo na tabela real.
+- **Contexto preservado (D6):** retorno navega para `?tab=reports&report={família}` — competência, aba e última família analisada restaurados; F5/back-forward funcionam porque tudo vive na URL.
+- **PDF (D7):** `ReportPdfSlot` compartilhado com estado honesto «ainda não está disponível para este relatório» em ambas as páginas — nenhum produtor/contrato binário homologado; evidências anexadas não são relatórios oficiais.
+- **Fontes (D8/CP4):** nenhum endpoint, permission, migration ou cálculo financeiro novo — somente os contratos já homologados (`financial-settlements/summary`, `financial-settlements`, `stock-inventory`, `competences/{p}/p3`, `competences/{p}/reports`). Conciliação `ENTRADAS_SAIDAS − P7 − H02` renderiza somente `divergence` do backend.
+
+Pendentes: paridade oficial FINR190/MATR460 segue `TEST_NOT_RUN`; produtor de PDF `TO_INVENTORY`; demais famílias R04–R15 `TO_INVENTORY/PLANNED` conforme matriz §24/doc 83; homologação visual PO da V0.3 `PENDING`.

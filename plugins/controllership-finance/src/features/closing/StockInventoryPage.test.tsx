@@ -11,9 +11,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiMock"));
 
 const getMock = vi.fn();
+const p3Mock = vi.fn();
 
 vi.mock("../../api/stockInventoryApi", () => ({
   getStockInventory: (...args: unknown[]) => getMock(...args),
+}));
+
+vi.mock("../../api/p3Api", () => ({
+  getP3State: (...args: unknown[]) => p3Mock(...args),
 }));
 
 import { ApiError } from "../../api/httpClient";
@@ -455,5 +460,71 @@ describe("StockInventoryPage — estados", () => {
 
     resolveGet?.(payload());
     expect(await screen.findByText("Produto Exemplo")).toBeTruthy();
+  });
+});
+
+
+describe("StockInventoryPage — modo contextual do relatório (UX-011)", () => {
+  it("competência vem da rota e a conciliação P3 abre a página", async () => {
+    getMock.mockResolvedValue(payload());
+    p3Mock.mockResolvedValue({
+      period: "2026-09",
+      state: "WAITING_FOR_CUTOFF",
+      reconciliations: [
+        {
+          domain: "P7",
+          source_state: "AVAILABLE",
+          expected_amount: "100.00",
+          reported_amount: "100.00",
+          divergence: "0.00",
+          fetched_at: "2026-09-30T10:00:00Z",
+        },
+      ],
+      blockers: [],
+    });
+    render(<StockInventoryPage reportContext={{ period: "2026-09" }} />);
+
+    await waitFor(() => expect(getMock).toHaveBeenCalledWith(
+      expect.objectContaining({ period: "2026-09" }),
+      expect.anything(),
+    ));
+    // Competência é contexto, não filtro editável.
+    expect(
+      screen.queryByLabelText("Competência"),
+    ).toBeNull();
+    await screen.findByText("Conciliação Entradas/Saídas − P7 − H02");
+    expect(p3Mock).toHaveBeenCalledWith("2026-09", expect.anything());
+    // Agrupamentos em tabelas organizadas por colunas.
+    expect(screen.getByText("Resumo por tipo de produto")).toBeTruthy();
+    expect(screen.getByText("Resumo por armazém")).toBeTruthy();
+    // Slot de PDF honesto.
+    expect(
+      screen.getByText(
+        "A prévia do PDF ainda não está disponível para este relatório.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("P3 indisponível é estado honesto, nunca divergência zero", async () => {
+    getMock.mockResolvedValue(payload());
+    p3Mock.mockResolvedValue({
+      period: "2026-09",
+      state: "WAITING_FOR_CUTOFF",
+      reconciliations: [
+        {
+          domain: "P7",
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: null,
+        },
+      ],
+      blockers: ["fonte p7 indisponível"],
+    });
+    render(<StockInventoryPage reportContext={{ period: "2026-09" }} />);
+
+    await screen.findByText("Indisponível");
+    expect(screen.getByText(/Bloqueios registrados: 1/)).toBeTruthy();
   });
 });

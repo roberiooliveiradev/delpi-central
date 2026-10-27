@@ -83,6 +83,7 @@ function AppRoutes({
             basePath={basePath}
             period={resolved.checklistPeriod}
             documentRef={resolved.documentRef}
+            reportKey={resolved.reportKey}
           />
         ) : (
           <NotFoundPage basePath={basePath} />

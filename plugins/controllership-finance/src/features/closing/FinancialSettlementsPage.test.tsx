@@ -465,3 +465,56 @@ describe("FinancialSettlementsPage — estados", () => {
     await act(async () => {});
   });
 });
+
+
+describe("FinancialSettlementsPage — modo contextual do relatório (UX-011)", () => {
+  it("competência da rota inicia os filtros e exibe agrupamentos em colunas", async () => {
+    mockOk();
+    render(<FinancialSettlementsPage reportContext={{ period: "2026-10" }} />);
+
+    await waitInitialFetch();
+    expect(listMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startDate: "2026-10-01",
+        endDate: "2026-10-31",
+      }),
+      expect.anything(),
+    );
+
+    // Tabela de agrupamentos: natureza e tipo de movimento em colunas
+    // separadas — nunca concatenados (doc 112 §46).
+    await screen.findByText("Agrupamentos — Pagamentos");
+    expect(
+      screen.getAllByText("Fornecedores").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Baixa de titulo").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/5\.000,00/).length).toBeGreaterThan(0);
+
+    // Slot de PDF honesto — sem produtor homologado.
+    expect(
+      screen.getByText(
+        "A prévia do PDF ainda não está disponível para este relatório.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("«Ver registros» aplica natureza/movimento do grupo à tabela", async () => {
+    mockOk();
+    render(<FinancialSettlementsPage reportContext={{ period: "2026-10" }} />);
+
+    await screen.findByText("Agrupamentos — Pagamentos");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver registros" }),
+    );
+
+    await waitFor(() =>
+      expect(listMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          natureCode: "100",
+          movementType: "BA",
+        }),
+        expect.anything(),
+      ),
+    );
+  });
+});

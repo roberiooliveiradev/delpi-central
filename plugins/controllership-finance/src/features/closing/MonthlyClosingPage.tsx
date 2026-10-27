@@ -70,6 +70,13 @@ import {
   MonthlyReportsPanel,
   type ReportFamily,
 } from "./MonthlyReportsPanel";
+import {
+  FAMILY_TO_REPORT_KEY,
+  isReportKey,
+  MonthlyReportPage,
+  REPORT_KEY_LABELS,
+  REPORT_KEY_TO_FAMILY,
+} from "./MonthlyReportPage";
 
 type PanelError = { status: number; code: string | null; message: string };
 
@@ -215,11 +222,14 @@ export function MonthlyClosingPage({
   basePath,
   period: routePeriod,
   documentRef,
+  reportKey,
 }: {
   basePath: string;
   period?: string;
   /** Referência da rota de detalhe (`{uuid}`, `item:{key}` ou `new`). */
   documentRef?: string;
+  /** Chave do relatório na rota contextual (UX-011). */
+  reportKey?: string;
 }) {
   // Período e aba derivam da URL — refresh, back/forward e deep links
   // preservam o contexto. Mês de referência livre, sem default (decisão PO).
@@ -269,17 +279,28 @@ export function MonthlyClosingPage({
       ? reportParam
       : null;
 
-  const selectReport = useCallback(
-    (family: ReportFamily | null) => {
-      const params = new URLSearchParams();
-      params.set("tab", "reports");
-      if (family) params.set("report", family);
+  // UX-011: a seleção abre a página contextual do relatório — o parâmetro
+  // `report` na aba marca a última família analisada para o retorno.
+  const openReport = useCallback(
+    (family: ReportFamily) => {
       navigatePluginPath(
-        `${base}/closing/monthly-closing/${period}?${params}`,
+        `${base}/closing/monthly-closing/${period}/reports/${FAMILY_TO_REPORT_KEY[family]}`,
       );
     },
     [base, period],
   );
+
+  const backToReports = useCallback(() => {
+    const family = isReportKey(reportKey)
+      ? REPORT_KEY_TO_FAMILY[reportKey]
+      : null;
+    const params = new URLSearchParams();
+    params.set("tab", "reports");
+    if (family) params.set("report", family);
+    navigatePluginPath(
+      `${base}/closing/monthly-closing/${period}?${params}`,
+    );
+  }, [base, period, reportKey]);
 
   // Filtros da aba Documentos vivem na query — deep link, F5 e o retorno
   // do detalhe preservam pesquisa e situação.
@@ -522,11 +543,37 @@ export function MonthlyClosingPage({
   };
 
   const detailMode = Boolean(documentRef && period);
+  const reportMode = Boolean(reportKey && period);
   const tabLabel = detailMode
     ? "Documento"
-    : (TAB_OPTIONS.find((option) => option.value === tab)?.label ??
-      "Visão geral");
-  const pathItems = detailMode
+    : reportMode
+      ? isReportKey(reportKey)
+        ? REPORT_KEY_LABELS[reportKey]
+        : "Relatório"
+      : (TAB_OPTIONS.find((option) => option.value === tab)?.label ??
+        "Visão geral");
+  const pathItems = reportMode
+    ? [
+        {
+          id: "monthly-closing",
+          label: "Fechamento mensal",
+          href: monthlyPath(base, period, "overview"),
+          onNavigate: (event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            navigatePluginPath(monthlyPath(base, period, "overview"));
+          },
+        },
+        {
+          id: "reports",
+          label: "Relatórios e divergências",
+          href: monthlyPath(base, period, "reports"),
+          onNavigate: (event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            backToReports();
+          },
+        },
+      ]
+    : detailMode
     ? [
         {
           id: "monthly-closing",
@@ -603,7 +650,15 @@ export function MonthlyClosingPage({
         />
       ) : null}
 
-      {period && detailMode ? (
+      {period && reportMode ? (
+        <div className="cf-page-stack">
+          <MonthlyReportPage
+            period={period}
+            reportKey={reportKey ?? ""}
+            onBack={backToReports}
+          />
+        </div>
+      ) : period && detailMode ? (
         <div className="cf-page-stack">
           {renderProbeGate(
             <DocumentDetailPanel
@@ -686,7 +741,7 @@ export function MonthlyClosingPage({
               <MonthlyReportsPanel
                 period={period}
                 selectedReport={selectedReport}
-                onSelectReport={selectReport}
+                onOpenReport={openReport}
               />
             ) : null}
           </div>

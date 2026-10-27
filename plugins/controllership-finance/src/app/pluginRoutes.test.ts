@@ -140,6 +140,31 @@ describe("pluginRoutes", () => {
     }
   });
 
+  it("deep link de relatório preserva competência e chave", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/monthly-closing/2026-10/reports/financial-settlements",
+    );
+    expect(resolved.view).toBe("monthly_closing");
+    expect(resolved.checklistPeriod).toBe("2026-10");
+    expect(resolved.reportKey).toBe("financial-settlements");
+
+    expect(
+      resolvePluginRoute(
+        "/apps/controllership-finance/closing/monthly-closing/2026-10/reports/stock-inventory",
+      ).reportKey,
+    ).toBe("stock-inventory");
+  });
+
+  it("rota de relatório com período ou chave inválidos cai em not_found", () => {
+    for (const path of [
+      "/apps/controllership-finance/closing/monthly-closing/2026-13/reports/stock-inventory",
+      "/apps/controllership-finance/closing/monthly-closing/2026-10/reports",
+      "/apps/controllership-finance/closing/monthly-closing/2026-10/reports/a_b",
+    ]) {
+      expect(resolvePluginRoute(path).view).toBe("not_found");
+    }
+  });
+
   it("resolve a rota do checklist da competência", () => {
     const resolved = resolvePluginRoute(
       "/apps/controllership-finance/closing/checklist",

@@ -868,3 +868,21 @@ Aba `?tab=reports` do Fechamento mensal composta inteiramente sobre exports/fact
 | Ajuda | `helpTooltips.ts` (`CF_HELP.monthlyClosing.reports*`) + hint do `SectionCard` | textos de indicadores, atenção, catálogo, resultados e PDF |
 
 `FilePreviewView`/`useFilePreviewLoader` **não usados** — não existe produtor/contrato binário de PDF de relatório no HEAD; o slot permanece com estado honesto até o contrato existir. Nenhuma tabela/matriz paralela nova: a cobertura R01–R15 reutiliza labels e variantes exportadas de `ReportsMatrixPanel`.
+
+
+## Registro de execução — Relatórios e divergências V0.3 (CF-PROC0072-REPORTS-DETAIL-UX-011, 27/10/2026)
+
+Páginas contextuais de relatório e hub compacto, ainda 100% sobre exports reais do kit:
+
+| Superfície | Export/factory `@delpi/plugin-ui` | Consumo |
+|---|---|---|
+| Cartões compactos do hub | `InteractiveDataCard` via `CfInteractiveDataCard` — slot `children` | nome + descrição curta + badge de situação real + `openHint`/`onActivate` abrindo a rota contextual; sem fields duplicados nem labels caixa-alta |
+| Tabela de agrupamentos de baixas | `DataTableSection` (`createDashboardDataTableSection`) | colunas Natureza/Tipo de movimento/Baixas/Valor/Moeda/Ação — separação exigida pelo §46; `hideSearch`, `columnPreferencesKey` |
+| Tabelas de resumo de estoque | `DataTableSection` | Resumo por tipo de produto e por armazém na página contextual (reuso da página legada em modo `reportContext`) |
+| Linhas/registros | `DataTableSection` legada | mesma tabela paginada server-side das páginas próprias — zero duplicação |
+| Conciliação P3 | `SectionCard` + `StatusBadge` + tabela `cf-p3-table` | `ReportSharedSections.P3ReconciliationSection` — somente `divergence` do backend |
+| PDF contextual | `SectionCard` (`CfSectionCard`) | `ReportSharedSections.ReportPdfSlot` — estado honesto; `FilePreviewView` segue não usado (sem produtor homologado) |
+| Navegação contextual | `ActionButton` ghost + `CfPagePath` da página | «← Voltar para Relatórios e divergências» + breadcrumb `… > Relatórios e divergências > {Relatório}` |
+| Disclosure técnico | `<details>` nativo + tabela `cf-p3-table` | matriz R01–R15 fora do fluxo visual principal, rastreabilidade preservada |
+
+Nenhum componente paralelo de tabela/cartão criado; `selected` do cartão é classe CSS sobre o componente do kit.

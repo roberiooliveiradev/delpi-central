@@ -13,10 +13,12 @@ import {
   getFinancialSettlementsSummary,
   type SettlementItem,
   type SettlementSide,
+  type SettlementSummaryGroup,
   type SettlementsListPayload,
   type SettlementsSummaryPayload,
 } from "../../api/financialSettlementsApi";
 import {
+  CfActionButton,
   CfEmptyState,
   CfSegmentToggle,
   CfStatusBadge,
@@ -42,6 +44,7 @@ import { FilterInputField, FilterSelectField, FiltersRow } from "../../app/cfFil
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatAmount, formatCivilDate } from "../../utils/formatters";
 import { useDebouncedValue } from "../../utils/useDebouncedValue";
+import { ReportPdfSlot } from "./ReportSharedSections";
 
 const PAGE_SIZE = 50;
 const DEBOUNCE_MS = 400;
@@ -77,6 +80,24 @@ function isoMonthStart(): string {
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
 }
 
+/** Limites da competência `YYYY-MM` — defaults do modo contextual (UX-011). */
+function periodDateRange(period: string): {
+  startDate: string;
+  endDate: string;
+} {
+  const [year, month] = period.split("-").map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    startDate: `${period}-01`,
+    endDate: `${period}-${String(lastDay).padStart(2, "0")}`,
+  };
+}
+
+function formatPeriod(period: string): string {
+  const [year, month] = period.split("-");
+  return `${month}/${year}`;
+}
+
 type AppliedFilters = {
   side: SettlementSide;
   startDate: string;
@@ -93,10 +114,29 @@ type FetchState =
 
 type FetchResult = { key: string } & FetchState;
 
-export function FinancialSettlementsPage() {
+/**
+ * Contexto do relatório dentro do Fechamento Mensal (UX-011): a
+ * competência vem da rota contextual e inicia os filtros de data; o
+ * modo exibe a tabela de agrupamentos por colunas e o slot de PDF.
+ */
+export type FinancialSettlementsReportContext = { period: string };
+
+export function FinancialSettlementsPage({
+  reportContext,
+}: {
+  reportContext?: FinancialSettlementsReportContext;
+}) {
+  const contextRange = useMemo(
+    () => (reportContext ? periodDateRange(reportContext.period) : null),
+    [reportContext],
+  );
   const [side, setSide] = useState<SettlementSide>("payable");
-  const [startDate, setStartDate] = useState(isoMonthStart);
-  const [endDate, setEndDate] = useState(isoToday);
+  const [startDate, setStartDate] = useState(
+    () => contextRange?.startDate ?? isoMonthStart(),
+  );
+  const [endDate, setEndDate] = useState(
+    () => contextRange?.endDate ?? isoToday(),
+  );
   const [natureCode, setNatureCode] = useState("");
   const [movementType, setMovementType] = useState("");
   const [sortBy, setSortBy] = useState("settlement_date");
@@ -159,13 +199,13 @@ export function FinancialSettlementsPage() {
   }
 
   const clearFilters = useCallback(() => {
-    setStartDate(isoMonthStart());
-    setEndDate(isoToday());
+    setStartDate(contextRange?.startDate ?? isoMonthStart());
+    setEndDate(contextRange?.endDate ?? isoToday());
     setNatureCode("");
     setMovementType("");
     setSortBy("settlement_date");
     setSortDir("desc");
-  }, []);
+  }, [contextRange]);
 
   const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
 
@@ -467,6 +507,105 @@ export function FinancialSettlementsPage() {
     [applied?.side],
   );
 
+  /** Ação «Ver registros» de um agrupamento: aplica os filtros reais do
+   *  contrato (natureza/movimento) e foca a tabela de baixas. */
+  const showGroupLines = useCallback(
+    (group: SettlementSummaryGroup) => {
+      setNatureCode(group.natureCode ?? "");
+      setMovementType(group.movementType ?? "");
+      const node = document.getElementById("cf-settle-detail");
+      if (node) {
+        node.scrollIntoView?.({ block: "start" });
+        node.focus({ preventScroll: true });
+      }
+    },
+    [],
+  );
+
+  const groupColumns = useMemo<DataTableColumn<SettlementSummaryGroup>[]>(
+    () => [
+      {
+        key: "nature",
+        header: "Natureza",
+        className: "cf-table__col--wrap",
+        render: (group) =>
+          group.natureCode || group.natureDescription ? (
+            <>
+              <span className="cf-cell-primary">
+                {group.natureCode ?? "—"}
+              </span>
+              {group.natureDescription ? (
+                <span className="cf-cell-secondary">
+                  {group.natureDescription}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "movement",
+        header: "Tipo de movimento",
+        mobileLabel: "Tipo de movimento",
+        className: "cf-table__col--wrap",
+        render: (group) =>
+          group.movementType || group.movementDescription ? (
+            <>
+              <span className="cf-cell-primary">
+                {group.movementType ?? "—"}
+              </span>
+              {group.movementDescription ? (
+                <span className="cf-cell-secondary">
+                  {group.movementDescription}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "events",
+        header: "Baixas",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) => String(group.eventCount),
+      },
+      {
+        key: "total",
+        header: "Valor",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) => (
+          <span className="cf-cell-amount">
+            {formatAmount(group.totalAmount)}
+          </span>
+        ),
+      },
+      {
+        key: "currency",
+        header: "Moeda",
+        className: "cf-table__col--compact",
+        render: (group) => group.currencyCode ?? "—",
+      },
+      {
+        key: "action",
+        header: "Ação",
+        className: "cf-table__col--compact",
+        render: (group) => (
+          <CfActionButton
+            variant="ghost"
+            onClick={() => showGroupLines(group)}
+          >
+            Ver registros
+          </CfActionButton>
+        ),
+      },
+    ],
+    [showGroupLines],
+  );
+
   const renderError = () => {
     if (current?.kind !== "error") return null;
     return (
@@ -490,7 +629,13 @@ export function FinancialSettlementsPage() {
             hint={CF_HELP.closing.page}
           />
         }
-        subtitle="Eventos de baixa a pagar e a receber para conferência do fechamento."
+        subtitle={
+          reportContext
+            ? `Eventos de baixa da competência ${formatPeriod(
+                reportContext.period,
+              )} · Origem: TOTVS/SE5 — consulta operacional.`
+            : "Eventos de baixa a pagar e a receber para conferência do fechamento."
+        }
         updatedAt={lastUpdated}
         onRefresh={retry}
         refreshing={loading}
@@ -593,7 +738,31 @@ export function FinancialSettlementsPage() {
         </CfFeedbackMessage>
       ) : null}
 
+      {/* UX-011: tabela de agrupamentos organizada por colunas — natureza
+          e tipo de movimento nunca concatenados; «Ver registros» aplica
+          os filtros reais do contrato à tabela de baixas abaixo. */}
+      {reportContext && list && (summaryForSide ?? []).length > 0 ? (
+        <DataTableSection<SettlementSummaryGroup>
+          title={`Agrupamentos — ${
+            applied?.side === "receivable" ? "Recebimentos" : "Pagamentos"
+          }`}
+          titleHint={CF_HELP.monthlyClosing.reportsResults}
+          columns={groupColumns}
+          rows={summaryForSide ?? []}
+          rowKey={(group) =>
+            `${group.side}-${group.natureCode ?? "x"}-${
+              group.movementType ?? "x"
+            }-${group.currencyCode ?? "x"}`
+          }
+          loading={loading}
+          hideSearch
+          emptyMessage="Nenhum agrupamento no período para os filtros aplicados."
+          columnPreferencesKey="cf:closing:settlement-groups:v1"
+        />
+      ) : null}
+
       {list || loading ? (
+        <div id="cf-settle-detail" tabIndex={-1}>
         <DataTableSection<SettlementItem>
           title={
             applied?.side === "receivable"
@@ -621,8 +790,13 @@ export function FinancialSettlementsPage() {
           fontSizePreferencesKey="cf:closing:financial-settlements:font:v1"
           resizableColumns
         />
+        </div>
       ) : null}
       </div>
+
+      {reportContext ? (
+        <ReportPdfSlot reportName="Baixas financeiras" />
+      ) : null}
     </section>
   );
 }

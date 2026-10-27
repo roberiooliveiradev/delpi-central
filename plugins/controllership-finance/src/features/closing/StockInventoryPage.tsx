@@ -9,12 +9,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError } from "../../api/httpClient";
+import { getP3State, type P3Status } from "../../api/p3Api";
 import {
   getStockInventory,
   type StockInventoryBranch,
   type StockInventoryItem,
   type StockInventoryPayload,
   type StockInventoryScope,
+  type StockInventoryTypeSummary,
+  type StockInventoryWarehouseSummary,
 } from "../../api/stockInventoryApi";
 import {
   CfEmptyState,
@@ -54,6 +57,10 @@ import {
   formatSharePercent,
 } from "../../utils/formatters";
 import { useDebouncedValue } from "../../utils/useDebouncedValue";
+import {
+  P3ReconciliationSection,
+  ReportPdfSlot,
+} from "./ReportSharedSections";
 
 const PAGE_SIZE = 50;
 const DEBOUNCE_MS = 400;
@@ -94,8 +101,21 @@ type FetchState =
 
 type FetchResult = { key: string } & FetchState;
 
-export function StockInventoryPage() {
-  const [period, setPeriod] = useState(currentCompetence);
+/**
+ * Contexto do relatório dentro do Fechamento Mensal (UX-011): a
+ * competência vem da rota contextual e não é filtro editável; o modo
+ * exibe a conciliação P3 canônica, agrupamentos em tabela e o slot PDF.
+ */
+export type StockInventoryReportContext = { period: string };
+
+export function StockInventoryPage({
+  reportContext,
+}: {
+  reportContext?: StockInventoryReportContext;
+}) {
+  const [period, setPeriod] = useState(
+    () => reportContext?.period ?? currentCompetence(),
+  );
   const [branch, setBranch] = useState<StockInventoryBranch>("all");
   const [reportScope, setReportScope] =
     useState<StockInventoryScope>("all_products");
@@ -108,8 +128,15 @@ export function StockInventoryPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const requestId = useRef(0);
+  const [p3Result, setP3Result] = useState<{
+    key: string;
+    data: P3Status | null;
+  } | null>(null);
+  const p3RequestId = useRef(0);
 
-  const filtersValid = /^\d{4}-(0[1-9]|1[0-2])$/.test(period);
+  // Competência travada no modo contextual — não é filtro editável.
+  const effectivePeriod = reportContext?.period ?? period;
+  const filtersValid = /^\d{4}-(0[1-9]|1[0-2])$/.test(effectivePeriod);
 
   // Filtros vigentes: derivados diretamente dos campos (sem botão Consultar).
   // Armazém (digitável) entra com debounce; competência/filial/visão são
@@ -117,9 +144,14 @@ export function StockInventoryPage() {
   const applied: AppliedFilters | null = useMemo(
     () =>
       filtersValid
-        ? { period, branch, reportScope, warehouse: debouncedWarehouse }
+        ? {
+            period: effectivePeriod,
+            branch,
+            reportScope,
+            warehouse: debouncedWarehouse,
+          }
         : null,
-    [filtersValid, period, branch, reportScope, debouncedWarehouse],
+    [filtersValid, effectivePeriod, branch, reportScope, debouncedWarehouse],
   );
 
   // Volta para a página 1 quando o universo de filtros muda — ajuste em
@@ -134,11 +166,11 @@ export function StockInventoryPage() {
   }
 
   const clearFilters = useCallback(() => {
-    setPeriod(currentCompetence());
+    setPeriod(reportContext?.period ?? currentCompetence());
     setBranch("all");
     setReportScope("all_products");
     setWarehouse("");
-  }, []);
+  }, [reportContext]);
 
   const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
 
@@ -190,6 +222,28 @@ export function StockInventoryPage() {
 
     return () => controller.abort();
   }, [applied, page, queryKey]);
+
+  // Conciliação P3 da competência — somente no modo contextual; o estado
+  // honesto (`null`/erro) é renderizado pela seção, nunca como zero.
+  const p3Key = `p3:${reportContext?.period ?? ""}:${retryNonce}`;
+  const p3 = p3Result?.key === p3Key ? p3Result.data : null;
+  const p3Loading = Boolean(reportContext) && p3Result?.key !== p3Key;
+
+  useEffect(() => {
+    if (!reportContext) return;
+    const id = ++p3RequestId.current;
+    const controller = new AbortController();
+    getP3State(reportContext.period, controller.signal)
+      .then((data) => {
+        if (controller.signal.aborted || p3RequestId.current !== id) return;
+        setP3Result({ key: p3Key, data: data ?? null });
+      })
+      .catch(() => {
+        if (controller.signal.aborted || p3RequestId.current !== id) return;
+        setP3Result({ key: p3Key, data: null });
+      });
+    return () => controller.abort();
+  }, [reportContext, p3Key]);
 
   const columns = useMemo<DataTableColumn<StockInventoryItem>[]>(
     () => [
@@ -361,6 +415,118 @@ export function StockInventoryPage() {
     ];
   }, [payload, loading]);
 
+  // Tabelas de agrupamento do modo contextual (UX-011 §10) — mesmas
+  // coleções do contrato, agora com colunas explícitas em vez de strip.
+  const typeColumns = useMemo<DataTableColumn<StockInventoryTypeSummary>[]>(
+    () => [
+      {
+        key: "productType",
+        header: "Tipo",
+        className: "cf-table__col--status",
+        render: (group) =>
+          group.productType ? (
+            <CfStatusBadge label={group.productType} variant="neutral" />
+          ) : (
+            "Sem tipo"
+          ),
+      },
+      {
+        key: "itemCount",
+        header: "Itens",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) => formatQuantity(String(group.itemCount)),
+      },
+      {
+        key: "totalQuantity",
+        header: "Quantidade",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) => formatQuantity(group.totalQuantity),
+      },
+      {
+        key: "totalStockValue",
+        header: "Valor",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) => (
+          <span className="cf-cell-amount">
+            {formatAmount(group.totalStockValue)}
+          </span>
+        ),
+      },
+      {
+        key: "share",
+        header: "% do total",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) =>
+          formatSharePercent(
+            group.totalStockValue,
+            payload?.historicalTotal ?? null,
+          ) ?? "—",
+      },
+    ],
+    [payload?.historicalTotal],
+  );
+
+  const warehouseColumns = useMemo<
+    DataTableColumn<StockInventoryWarehouseSummary>[]
+  >(
+    () => [
+      {
+        key: "warehouse",
+        header: "Armazém",
+        className: "cf-table__col--compact",
+        render: (group) => group.warehouse ?? "—",
+      },
+      {
+        key: "branchCode",
+        header: "Filial",
+        className: "cf-table__col--compact",
+        render: (group) =>
+          group.branchCode ? `Filial ${group.branchCode}` : "—",
+      },
+      {
+        key: "itemCount",
+        header: "Itens",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) => formatQuantity(String(group.itemCount)),
+      },
+      {
+        key: "totalQuantity",
+        header: "Quantidade",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) => formatQuantity(group.totalQuantity),
+      },
+      {
+        key: "totalStockValue",
+        header: "Valor",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) => (
+          <span className="cf-cell-amount">
+            {formatAmount(group.totalStockValue)}
+          </span>
+        ),
+      },
+      {
+        key: "share",
+        header: "% do total",
+        align: "right",
+        className: "cf-table__col--numeric",
+        render: (group) =>
+          formatSharePercent(
+            group.totalStockValue,
+            payload?.historicalTotal ?? null,
+          ) ?? "—",
+      },
+    ],
+    [payload?.historicalTotal],
+  );
+
   const renderStatusBanner = () => {
     if (!payload || payload.status === "available") return null;
     if (payload.status === "source_missing") {
@@ -416,7 +582,11 @@ export function StockInventoryPage() {
             hint={CF_HELP.stockInventory.page}
           />
         }
-        subtitle="Consulta operacional dos saldos históricos por competência, filial e classificação de produto."
+        subtitle={
+          reportContext
+            ? `Posição de estoque da competência ${reportContext.period} · Origem: TOTVS/SB9 + conciliação P3.`
+            : "Consulta operacional dos saldos históricos por competência, filial e classificação de produto."
+        }
         updatedAt={lastUpdated}
         onRefresh={retry}
         refreshing={loading}
@@ -439,13 +609,15 @@ export function StockInventoryPage() {
               size="sm"
             />
             <FiltersRow>
-              <FilterInputField
-                id="cf-stock-period"
-                label="Competência"
-                type="month"
-                value={period}
-                onChange={setPeriod}
-              />
+              {reportContext ? null : (
+                <FilterInputField
+                  id="cf-stock-period"
+                  label="Competência"
+                  type="month"
+                  value={period}
+                  onChange={setPeriod}
+                />
+              )}
               <FilterSelectField
                 label="Filial"
                 value={branch}
@@ -481,6 +653,13 @@ export function StockInventoryPage() {
       ) : null}
       {renderStatusBanner()}
 
+      {/* UX-011: conciliação canônica ENTRADAS_SAIDAS − P7 − H02 vem
+          primeiro na página do relatório — valores calculados pelo
+          backend, nunca derivados no navegador. */}
+      {reportContext ? (
+        <P3ReconciliationSection p3={p3} loading={p3Loading} />
+      ) : null}
+
       {!applied ? (
         <CfEmptyState
           classNames={cfEmptyStateClassNames}
@@ -488,8 +667,46 @@ export function StockInventoryPage() {
         />
       ) : null}
 
+      {reportContext &&
+      showData &&
+      payload &&
+      payload.status !== "source_missing" &&
+      payload.summariesByType.length > 0 ? (
+        <DataTableSection<StockInventoryTypeSummary>
+          title="Resumo por tipo de produto"
+          titleHint={CF_HELP.stockInventory.summaryType}
+          columns={typeColumns}
+          rows={payload.summariesByType}
+          rowKey={(group) => group.productType ?? "sem-tipo"}
+          loading={loading}
+          hideSearch
+          emptyMessage="Nenhum agrupamento por tipo para os filtros aplicados."
+          columnPreferencesKey="cf:closing:stock-type-summary:v1"
+        />
+      ) : null}
+      {reportContext &&
+      showData &&
+      payload &&
+      payload.status !== "source_missing" &&
+      payload.summariesByWarehouse.length > 0 ? (
+        <DataTableSection<StockInventoryWarehouseSummary>
+          title="Resumo por armazém"
+          titleHint={CF_HELP.stockInventory.summaryWarehouse}
+          columns={warehouseColumns}
+          rows={payload.summariesByWarehouse}
+          rowKey={(group) =>
+            `${group.branchCode ?? ""}-${group.warehouse ?? "sem-armazem"}`
+          }
+          loading={loading}
+          hideSearch
+          emptyMessage="Nenhum agrupamento por armazém para os filtros aplicados."
+          columnPreferencesKey="cf:closing:stock-warehouse-summary:v1"
+        />
+      ) : null}
+
       {showData &&
       payload &&
+      !reportContext &&
       (payload.summariesByType.length > 0 ||
         payload.summariesByWarehouse.length > 0) ? (
         <div className="cf-summary-panels">
@@ -576,6 +793,10 @@ export function StockInventoryPage() {
         />
       ) : null}
       </div>
+
+      {reportContext ? (
+        <ReportPdfSlot reportName="Estoque e conciliação" />
+      ) : null}
     </section>
   );
 }

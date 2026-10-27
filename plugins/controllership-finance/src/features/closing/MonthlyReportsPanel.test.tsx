@@ -19,7 +19,6 @@ vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiM
 const p3Mock = vi.fn();
 const matrixMock = vi.fn();
 const summaryMock = vi.fn();
-const settlementsMock = vi.fn();
 const stockMock = vi.fn();
 
 vi.mock("../../api/p3Api", () => ({
@@ -33,8 +32,6 @@ vi.mock("../../api/reportsApi", () => ({
 vi.mock("../../api/financialSettlementsApi", () => ({
   getFinancialSettlementsSummary: (...args: unknown[]) =>
     summaryMock(...args),
-  getFinancialSettlements: (...args: unknown[]) =>
-    settlementsMock(...args),
 }));
 
 vi.mock("../../api/stockInventoryApi", () => ({
@@ -159,36 +156,9 @@ function stock(overrides: Record<string, unknown> = {}) {
       has_next: false,
       has_previous: false,
     },
-    items: [
-      {
-        productCode: "PROD-1",
-        description: "Produto um",
-        productType: "MP",
-        productGroup: null,
-        unit: "UN",
-        warehouse: "01",
-        branchCode: "01",
-        historicalQuantity: "10",
-        historicalStockValue: "100.00",
-      },
-    ],
-    summariesByType: [
-      {
-        productType: "MP",
-        itemCount: 2,
-        totalQuantity: "20",
-        totalStockValue: "200.00",
-      },
-    ],
-    summariesByWarehouse: [
-      {
-        branchCode: "01",
-        warehouse: "01",
-        itemCount: 2,
-        totalQuantity: "20",
-        totalStockValue: "200.00",
-      },
-    ],
+    items: [],
+    summariesByType: [],
+    summariesByWarehouse: [],
     ...overrides,
   };
 }
@@ -197,17 +167,6 @@ function mockAllReady() {
   p3Mock.mockResolvedValue(p3State());
   matrixMock.mockResolvedValue(matrix());
   summaryMock.mockResolvedValue(summary());
-  settlementsMock.mockResolvedValue({
-    items: [],
-    pagination: {
-      page: 1,
-      page_size: 25,
-      total_items: 0,
-      total_pages: 1,
-      has_next: false,
-      has_previous: false,
-    },
-  });
   stockMock.mockResolvedValue(stock());
 }
 
@@ -216,7 +175,7 @@ function renderPanel(props: Partial<Parameters<typeof MonthlyReportsPanel>[0]> =
     <MonthlyReportsPanel
       period={PERIOD}
       selectedReport={null}
-      onSelectReport={vi.fn()}
+      onOpenReport={vi.fn()}
       {...props}
     />,
   );
@@ -298,6 +257,10 @@ describe("indicadores e área de atenção", () => {
     expect(
       screen.getByText("Conciliação de estoque (P3)"),
     ).toBeTruthy();
+    // A matriz permanece acessível como rastreabilidade técnica.
+    fireEvent.click(
+      screen.getByText(/Cobertura da matriz R01–R15/),
+    );
     expect(
       screen.getByText(/a cobertura dos relatórios R01–R15 não foi gerada/),
     ).toBeTruthy();
@@ -368,124 +331,73 @@ describe("indicadores e área de atenção", () => {
   });
 });
 
-describe("catálogo em cartões e resultados inline", () => {
-  it("cartão selecionado aciona o callback e abre resultados inline", async () => {
-    const onSelect = vi.fn();
-    renderPanel({ selectedReport: "settlements", onSelectReport: onSelect });
+describe("catálogo em cartões — navegação contextual", () => {
+  it("item de atenção vinculado a família oferece a página contextual", async () => {
+    const onOpen = vi.fn();
+    p3Mock.mockResolvedValue(
+      p3State([
+        recon("P7", {
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: null,
+        }),
+      ]),
+    );
+    renderPanel({ onOpenReport: onOpen });
+
+    await screen.findByText("Fonte indisponível");
+    const buttons = screen.getAllByRole("button", {
+      name: "Abrir relatório",
+    });
+    fireEvent.click(buttons[0]);
+    expect(onOpen).toHaveBeenCalledWith("stock");
+  });
+
+  it("cartão abre a página do relatório via callback", async () => {
+    const onOpen = vi.fn();
+    renderPanel({ onOpenReport: onOpen });
 
     await screen.findByText("Relatórios para análise");
     fireEvent.click(
       screen.getByRole("button", { name: /Baixas financeiras/ }),
     );
-    expect(onSelect).toHaveBeenCalledWith(null); // deseleção — já estava selecionado
+    expect(onOpen).toHaveBeenCalledWith("settlements");
 
-    await screen.findByText(/Resultados — Baixas financeiras/);
-    expect(screen.getAllByText(/4\.500,00/).length).toBeGreaterThan(0);
-    expect(screen.getByText("Aluguel")).toBeTruthy();
-    expect(screen.getByText("Recebimentos — 8.000,00")).toBeTruthy();
-  });
-
-  it("cartão não selecionado pede seleção", async () => {
-    const onSelect = vi.fn();
-    renderPanel({ onSelectReport: onSelect });
-
-    await screen.findByText("Relatórios para análise");
     fireEvent.click(
       screen.getByRole("button", { name: /Estoque e conciliação/ }),
     );
-    expect(onSelect).toHaveBeenCalledWith("stock");
+    expect(onOpen).toHaveBeenCalledWith("stock");
   });
 
-  it("grupo expande e carrega linhas sob demanda com filtro do contrato", async () => {
-    settlementsMock.mockResolvedValue({
-      items: [
-        {
-          settlementId: "s1",
-          settlementDate: "2026-10-05",
-          settlementAmount: "1500.00",
-          currencyCode: "BRL",
-          natureCode: "ALUG",
-          natureDescription: "Aluguel",
-          documentNumber: "DOC-1",
-          prefix: null,
-          installment: null,
-          documentType: null,
-          partyCode: null,
-          partyStore: null,
-          partyName: "Fornecedor X",
-          issueDate: null,
-          dueDate: null,
-          history: null,
-          movementType: "PAG",
-          movementDescription: null,
-          paymentDirection: null,
-          branchCode: "01",
-          branchResolution: "resolved",
-          linkStatus: "linked",
-        },
-      ],
-      pagination: {
-        page: 1,
-        page_size: 25,
-        total_items: 1,
-        total_pages: 1,
-        has_next: false,
-        has_previous: false,
-      },
-    });
-    renderPanel({ selectedReport: "settlements" });
+  it("cartões compactos não repetem rótulos de campos", async () => {
+    renderPanel();
 
-    await screen.findByText(/Resultados — Baixas financeiras/);
-    const groupButtons = screen.getAllByText("Ver detalhes");
-    fireEvent.click(groupButtons[0]);
+    await screen.findByText("Relatórios para análise");
+    expect(screen.queryByText("RELATÓRIO")).toBeNull();
+    expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
+    expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Abrir relatório").length).toBe(2);
+  });
 
-    await screen.findByText("DOC-1");
-    expect(settlementsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        side: "payable",
-        startDate: `${PERIOD}-01`,
-        endDate: `${PERIOD}-31`,
-        natureCode: "ALUG",
-        movementType: "PAG",
-      }),
-      expect.anything(),
+  it("matriz R01–R15 fica em rastreabilidade técnica expansível", async () => {
+    renderPanel();
+
+    const summary = await screen.findByText(/Cobertura da matriz R01–R15/);
+    const details = summary.closest("details");
+    expect(details).toBeTruthy();
+    // Fechada por padrão — fora do fluxo principal visual.
+    expect(details?.hasAttribute("open")).toBe(false);
+    // O conteúdo permanece acessível no DOM, colapsado.
+    expect(screen.getByText(/Baixas a pagar/)).toBeTruthy();
+  });
+
+  it("sem período selecionado pede o mês de referência", async () => {
+    renderPanel({ period: "" });
+    await screen.findByText(
+      "Selecione um mês de referência para consultar os relatórios.",
     );
-    expect(screen.getByText("Fornecedor X")).toBeTruthy();
-  });
-
-  it("estoque mostra conciliação P3, totais e agrupamentos", async () => {
-    renderPanel({ selectedReport: "stock" });
-
-    await screen.findByText("Conciliação Entradas/Saídas − P7 − H02");
-    expect(screen.getByText(/123\.456,78/)).toBeTruthy();
-    expect(screen.getByText("Resumo por tipo de produto")).toBeTruthy();
-    expect(screen.getByText("Resumo por armazém")).toBeTruthy();
-
-    fireEvent.click(screen.getByText("Ver itens do snapshot"));
-    await screen.findByText("PROD-1");
-    // Duas chamadas: a do resumo do painel + a dos itens paginados.
-    expect(stockMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("snapshot inexistente é estado honesto, nunca saldo zero", async () => {
-    stockMock.mockResolvedValue(
-      stock({
-        status: "source_missing",
-        items: [],
-        historicalTotal: null,
-        summariesByType: [],
-        summariesByWarehouse: [],
-        branchesAvailable: [],
-        branchesMissing: ["01", "02"],
-      }),
-    );
-    renderPanel({ selectedReport: "stock" });
-
-    await screen.findByText(/Snapshot não encontrado/);
-    expect(screen.getByText(/não é um saldo zero/)).toBeTruthy();
-    expect(
-      screen.getAllByText("Fonte indisponível").length,
-    ).toBeGreaterThan(0);
   });
 
   it("troca de período refaz as consultas com a nova competência", async () => {
@@ -496,7 +408,7 @@ describe("catálogo em cartões e resultados inline", () => {
       <MonthlyReportsPanel
         period="2026-11"
         selectedReport={null}
-        onSelectReport={vi.fn()}
+        onOpenReport={vi.fn()}
       />,
     );
 
@@ -514,22 +426,6 @@ describe("catálogo em cartões e resultados inline", () => {
         endDate: "2026-11-30",
       }),
       expect.anything(),
-    );
-  });
-});
-
-describe("prévia do PDF", () => {
-  it("sem relatório selecionado orienta a seleção", async () => {
-    renderPanel();
-    await screen.findByText(
-      "Selecione um relatório para verificar a disponibilidade da prévia em PDF.",
-    );
-  });
-
-  it("com relatório selecionado mostra indisponibilidade honesta", async () => {
-    renderPanel({ selectedReport: "settlements" });
-    await screen.findByText(
-      "A prévia do PDF ainda não está disponível para este relatório.",
     );
   });
 });

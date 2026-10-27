@@ -1,32 +1,27 @@
 /**
- * Relatórios e divergências — terceira aba do Fechamento mensal
- * (UX-010, Plano 113 §§24–25, doc 112 §45).
+ * Relatórios e divergências — terceira aba do Fechamento mensal,
+ * versão V0.3 (UX-011, Plano 113 §26, doc 112 §46).
  *
  * Decisões PO congeladas: prioridade=attention (divergências/ações
- * antes do catálogo), catálogo=cards por família, detalhes=inline na
- * própria aba, PDF=inline contextual. Sem quarta aba, sem rota
- * separada para a análise principal.
+ * antes do catálogo), catálogo=cards compactos por família, detalhe
+ * completo em PÁGINA CONTEXTUAL do relatório (supersede o `inline`
+ * da V0.2 — rota `closing/monthly-closing/{period}/reports/{key}`),
+ * PDF contextual na página do relatório. Sem quarta aba.
  *
  * Contratos canônicos consumidos (todos via BFF `controllership-
  * finance-api`; nenhum cálculo financeiro no navegador):
  * - `GET /closing/financial-settlements/summary` — grupos R01/R02
  *   (SE5) com totais calculados + quality flags reais;
- * - `GET /closing/financial-settlements` — linhas paginadas por
- *   natureza/movimento (drilldown progressivo);
  * - `GET /closing/stock-inventory` — posição P7 (R03/SB9) com
- *   `status`, `summariesByType/Warehouse` e totais;
+ *   `status`, totais e agrupamentos;
  * - `GET /closing/competences/{period}/p3` — conciliação canônica
- *   `divergence = reported - expected` por domínio
- *   (ENTRADAS_SAIDAS, P7, H02) + `source_state`;
- * - `GET /closing/competences/{period}/reports` — cobertura R01–R15
- *   (itens conferidos/pendentes do checklist).
+ *   `divergence = reported - expected` por domínio;
+ * - `GET /closing/competences/{period}/reports` — cobertura R01–R15.
  *
  * Regras honestas: fonte indisponível/erro não é «zero divergências»;
  * `—` quando não há informação confiável; competência não aberta vira
  * «conferência não realizada» (P3/matriz 404); resultados são keyed
- * por período — dados de um mês nunca aparecem sob outro. PDF real só
- * aparece quando existir produtor homologado — hoje container com
- * estado honesto.
+ * por período — dados de um mês nunca aparecem sob outro.
  */
 import {
   useCallback,
@@ -38,15 +33,11 @@ import {
 
 import { ApiError } from "../../api/httpClient";
 import {
-  getFinancialSettlements,
   getFinancialSettlementsSummary,
-  type SettlementItem,
-  type SettlementSide,
   type SettlementsSummaryPayload,
 } from "../../api/financialSettlementsApi";
 import {
   getStockInventory,
-  type StockInventoryItem,
   type StockInventoryPayload,
 } from "../../api/stockInventoryApi";
 import {
@@ -72,22 +63,22 @@ import {
   CfActionButton,
   CfEmptyState,
   CfInteractiveDataCard,
-  CfMetricStrip,
   CfSectionCard,
   CfStatusBadge,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
-import {
-  DataTableSection,
-  type DataTableColumn,
-} from "../../app/cfDataTableUi";
 import { CF_HELP } from "../../content/helpTooltips";
 import {
   formatAmount,
-  formatCivilDate,
   formatDateTime,
-  formatQuantity,
 } from "../../utils/formatters";
+import {
+  FAMILY_TO_REPORT_KEY,
+  type ReportFamily,
+  type ReportKey,
+} from "./MonthlyReportPage";
+
+export type { ReportFamily };
 
 type PanelError = { status: number; code: string | null; message: string };
 
@@ -134,9 +125,6 @@ type Source<T> =
   | { kind: "error"; error: PanelError };
 
 type Keyed<T> = { key: string; result: Source<T> };
-
-/** Famílias iniciais com produtor canônico (Plano 113 §25.2). */
-export type ReportFamily = "settlements" | "stock";
 
 const FAMILY_META: Record<
   ReportFamily,
@@ -219,6 +207,8 @@ type AttentionItem = {
   facts: [string, string][];
   /** Procedimento homologado de correção manual, quando comprovado. */
   totvsGuide: string | null;
+  /** Página contextual relacionada, quando o item pertence a uma família. */
+  reportKey?: ReportKey;
 };
 
 const KIND_BADGE: Record<
@@ -273,6 +263,7 @@ function buildAttentionItems(args: {
             ],
           ],
           totvsGuide: null,
+          reportKey: "stock-inventory",
         });
       } else if (
         recon.divergence !== null &&
@@ -324,6 +315,7 @@ function buildAttentionItems(args: {
             label +
             ") e, após o ajuste manual, revalide a conciliação no " +
             "painel P3 do checklist.",
+          reportKey: "stock-inventory",
         });
       }
     }
@@ -404,6 +396,7 @@ function buildAttentionItems(args: {
         totvsGuide:
           "A causa ainda não foi identificada. Confira o cadastro do " +
           "documento/natureza/filial no ERP e reconsulte os dados.",
+        reportKey: "financial-settlements",
       });
     }
   } else if (settlements?.kind === "error") {
@@ -420,6 +413,7 @@ function buildAttentionItems(args: {
       nextAction: "Atualize a consulta e tente novamente.",
       facts: [["Erro", settlements.error.message]],
       totvsGuide: null,
+      reportKey: "financial-settlements",
     });
   }
 
@@ -459,6 +453,7 @@ function buildAttentionItems(args: {
           ],
         ],
         totvsGuide: null,
+        reportKey: "stock-inventory",
       });
     }
   } else if (stock?.kind === "error") {
@@ -475,6 +470,7 @@ function buildAttentionItems(args: {
       nextAction: "Atualize a consulta e tente novamente.",
       facts: [["Erro", stock.error.message]],
       totvsGuide: null,
+      reportKey: "stock-inventory",
     });
   }
 
@@ -533,10 +529,12 @@ function AttentionRow({
   item,
   expanded,
   onToggle,
+  onOpenReport,
 }: {
   item: AttentionItem;
   expanded: boolean;
   onToggle: () => void;
+  onOpenReport: (key: ReportKey) => void;
 }) {
   const badge = KIND_BADGE[item.kind];
   const detailId = `cf-attn-detail-${item.id}`;
@@ -576,6 +574,14 @@ function AttentionRow({
         >
           {expanded ? "Ocultar detalhes" : "Ver detalhes"}
         </CfActionButton>
+        {item.reportKey ? (
+          <CfActionButton
+            variant="ghost"
+            onClick={() => onOpenReport(item.reportKey as ReportKey)}
+          >
+            Abrir relatório
+          </CfActionButton>
+        ) : null}
       </div>
       {expanded ? (
         <div className="cf-attention-item__detail" id={detailId}>
@@ -601,543 +607,17 @@ function AttentionRow({
   );
 }
 
-const SETTLEMENT_COLUMNS: DataTableColumn<SettlementItem>[] = [
-  {
-    key: "settlement_date",
-    header: "Data",
-    render: (row) => formatCivilDate(row.settlementDate),
-  },
-  {
-    key: "document",
-    header: "Documento",
-    render: (row) =>
-      row.documentNumber ?? "—",
-  },
-  {
-    key: "party",
-    header: "Cliente/Fornecedor",
-    render: (row) => row.partyName ?? "—",
-  },
-  {
-    key: "nature",
-    header: "Natureza",
-    render: (row) => row.natureDescription ?? row.natureCode ?? "—",
-  },
-  {
-    key: "amount",
-    header: "Valor",
-    align: "right",
-    render: (row) => formatAmount(row.settlementAmount),
-  },
-];
-
-const STOCK_COLUMNS: DataTableColumn<StockInventoryItem>[] = [
-  { key: "product", header: "Produto", render: (row) => row.productCode },
-  {
-    key: "description",
-    header: "Descrição",
-    render: (row) => row.description ?? "—",
-  },
-  {
-    key: "type",
-    header: "Tipo",
-    render: (row) => row.productType ?? "—",
-  },
-  {
-    key: "warehouse",
-    header: "Armazém",
-    render: (row) => row.warehouse ?? "—",
-  },
-  {
-    key: "qty",
-    header: "Quantidade",
-    align: "right",
-    render: (row) => formatQuantity(row.historicalQuantity),
-  },
-  {
-    key: "value",
-    header: "Valor",
-    align: "right",
-    render: (row) => formatAmount(row.historicalStockValue),
-  },
-];
-
-const SIDE_LABELS: Record<SettlementSide, string> = {
-  payable: "Pagamentos",
-  receivable: "Recebimentos",
-};
-
-/** Linhas de um agrupamento de resumo — carregadas sob demanda
- * (expansão progressiva total → grupo → registros). */
-function SettlementGroupLines({
-  period,
-  side,
-  natureCode,
-  movementType,
-}: {
-  period: string;
-  side: SettlementSide;
-  natureCode: string | null;
-  movementType: string | null;
-}) {
-  const { startDate, endDate } = useMemo(
-    () => periodRange(period),
-    [period],
-  );
-  const paramsKey = `${period}|${side}|${natureCode ?? ""}|${
-    movementType ?? ""
-  }`;
-  const [resolved, setResolved] = useState<{
-    key: string;
-    rows: SettlementItem[];
-  } | null>(null);
-  const [failed, setFailed] = useState<{
-    key: string;
-    error: PanelError;
-  } | null>(null);
-  const [nonce, setNonce] = useState(0);
-  const fetchKey = `${paramsKey}|${nonce}`;
-  const loading =
-    resolved?.key !== fetchKey && failed?.key !== fetchKey;
-  const rows = resolved?.key === fetchKey ? resolved.rows : [];
-  const error = failed?.key === fetchKey ? failed.error : null;
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getFinancialSettlements(
-      {
-        side,
-        startDate,
-        endDate,
-        natureCode: natureCode ?? undefined,
-        movementType: movementType ?? undefined,
-        page: 1,
-        pageSize: 25,
-      },
-      { signal: controller.signal },
-    )
-      .then((payload) => {
-        if (!controller.signal.aborted) {
-          setResolved({ key: fetchKey, rows: payload.items });
-        }
-      })
-      .catch((err) => {
-        if (!controller.signal.aborted) {
-          setFailed({ key: fetchKey, error: mapError(err) });
-        }
-      });
-    return () => controller.abort();
-  }, [side, startDate, endDate, natureCode, movementType, fetchKey]);
-
-  if (error) {
-    return (
-      <CfQueryErrorBanner
-        error={error}
-        dataset="as linhas do agrupamento"
-        onRetry={() => setNonce((n) => n + 1)}
-      />
-    );
-  }
-  return (
-    <DataTableSection<SettlementItem>
-      title="Registros do agrupamento"
-      columns={SETTLEMENT_COLUMNS}
-      rows={rows ?? []}
-      rowKey={(row) => row.settlementId}
-      loading={loading}
-      hideSearch
-      emptyMessage="Nenhuma baixa encontrada neste agrupamento."
-    />
-  );
-}
-
-/** Agrupamento de resumo expansível — total → grupo → registros. */
-function SettlementGroup({
-  period,
-  side,
-  group,
-}: {
-  period: string;
-  side: SettlementSide;
-  group: SettlementsSummaryPayload["groups"][number];
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const label =
-    group.natureDescription ??
-    group.natureCode ??
-    group.movementDescription ??
-    "Sem agrupamento";
-  const detailId = `cf-set-group-${side}-${group.natureCode ?? "x"}-${
-    group.movementType ?? "x"
-  }`;
-  return (
-    <li className="cf-report-group">
-      <div className="cf-report-group__head">
-        <div>
-          <strong>{label}</strong>
-          {group.movementDescription &&
-          group.movementDescription !== label ? (
-            <span className="cf-attention-item__meta">
-              {group.movementDescription}
-            </span>
-          ) : null}
-        </div>
-        <div className="cf-report-group__side">
-          <span className="cf-report-group__value">
-            {formatAmount(group.totalAmount)}
-          </span>
-          <span className="cf-attention-item__meta">
-            {group.eventCount}{" "}
-            {group.eventCount === 1 ? "baixa" : "baixas"}
-          </span>
-          <CfActionButton
-            variant="ghost"
-            aria-expanded={expanded}
-            aria-controls={detailId}
-            onClick={() => setExpanded((v) => !v)}
-          >
-            {expanded ? "Ocultar" : "Ver detalhes"}
-          </CfActionButton>
-        </div>
-      </div>
-      {expanded ? (
-        <div id={detailId}>
-          <SettlementGroupLines
-            period={period}
-            side={side}
-            natureCode={group.natureCode}
-            movementType={group.movementType}
-          />
-        </div>
-      ) : null}
-    </li>
-  );
-}
-
-function SettlementsResults({
-  period,
-  summary,
-}: {
-  period: string;
-  summary: SettlementsSummaryPayload;
-}) {
-  const bySide = useMemo(() => {
-    const map = new Map<SettlementSide, typeof summary.groups>();
-    for (const group of summary.groups) {
-      const side: SettlementSide =
-        group.side === "receivable" ? "receivable" : "payable";
-      map.set(side, [...(map.get(side) ?? []), group]);
-    }
-    return map;
-  }, [summary]);
-
-  if (!summary.groups.length) {
-    return (
-      <CfEmptyState
-        classNames={cfEmptyStateClassNames}
-        defaultMessage="Nenhuma baixa financeira encontrada para este período."
-      />
-    );
-  }
-
-  return (
-    <div className="cf-page-stack">
-      {(["payable", "receivable"] as const).map((side) => {
-        const groups = bySide.get(side) ?? [];
-        if (!groups.length) return null;
-        const total = groups.reduce(
-          (acc, group) => acc + Number(group.totalAmount || 0),
-          0,
-        );
-        return (
-          <CfSectionCard
-            key={side}
-            title={`${SIDE_LABELS[side]} — ${formatAmount(
-              String(total.toFixed(2)),
-            )}`}
-            hint={`Agrupado por natureza/tipo de movimento · ${
-              groups.length
-            } ${groups.length === 1 ? "grupo" : "grupos"}`}
-          >
-            <ul className="cf-report-groups">
-              {groups.map((group, index) => (
-                <SettlementGroup
-                  key={`${side}-${group.natureCode}-${group.movementType}-${index}`}
-                  period={period}
-                  side={side}
-                  group={group}
-                />
-              ))}
-            </ul>
-          </CfSectionCard>
-        );
-      })}
-      <CfFeedbackMessage intent="info" title="Qualidade dos vínculos">
-        {summary.quality.missingDocumentCount} sem documento ·{" "}
-        {summary.quality.missingNatureCount} sem natureza ·{" "}
-        {summary.quality.unresolvedBranchCount} sem filial identificada.
-      </CfFeedbackMessage>
-    </div>
-  );
-}
-
-function StockItemsTable({ period }: { period: string }) {
-  const [page, setPage] = useState(1);
-  const [nonce, setNonce] = useState(0);
-  const fetchKey = `${period}|${page}|${nonce}`;
-  const [resolved, setResolved] = useState<{
-    key: string;
-    payload: StockInventoryPayload;
-  } | null>(null);
-  const [failed, setFailed] = useState<{
-    key: string;
-    error: PanelError;
-  } | null>(null);
-  const requestId = useRef(0);
-  const loading =
-    resolved?.key !== fetchKey && failed?.key !== fetchKey;
-  const payload = resolved?.key === fetchKey ? resolved.payload : null;
-  const error = failed?.key === fetchKey ? failed.error : null;
-
-  useEffect(() => {
-    const id = ++requestId.current;
-    const controller = new AbortController();
-    getStockInventory(
-      { period, page, pageSize: 25 },
-      { signal: controller.signal },
-    )
-      .then((data) => {
-        if (!controller.signal.aborted && requestId.current === id) {
-          setResolved({ key: fetchKey, payload: data });
-        }
-      })
-      .catch((err) => {
-        if (!controller.signal.aborted && requestId.current === id) {
-          setFailed({ key: fetchKey, error: mapError(err) });
-        }
-      });
-    return () => controller.abort();
-  }, [period, page, fetchKey]);
-
-  if (error) {
-    return (
-      <CfQueryErrorBanner
-        error={error}
-        dataset="os itens do snapshot"
-        onRetry={() => {
-          setPage(1);
-          setNonce((n) => n + 1);
-        }}
-      />
-    );
-  }
-  return (
-    <DataTableSection<StockInventoryItem>
-      title="Itens do snapshot"
-      columns={STOCK_COLUMNS}
-      rows={payload?.items ?? []}
-      rowKey={(row) =>
-        `${row.productCode}-${row.warehouse ?? ""}-${row.branchCode ?? ""}`
-      }
-      loading={loading}
-      hideSearch
-      serverPagination={
-        payload
-          ? {
-              page: payload.pagination.page,
-              pageSize: payload.pagination.page_size,
-              total: payload.pagination.total_items,
-              onPageChange: setPage,
-            }
-          : undefined
-      }
-      emptyMessage="Nenhum item de estoque para esta competência."
-    />
-  );
-}
-
-function StockResults({
-  period,
-  stock,
-  p3,
-}: {
-  period: string;
-  stock: StockInventoryPayload | null;
-  p3: Source<P3Status> | null;
-}) {
-  const [itemsOpen, setItemsOpen] = useState(false);
-  const reconReady = p3?.kind === "ready" ? p3.data : null;
-
-  return (
-    <div className="cf-page-stack">
-      {reconReady ? (
-        <CfSectionCard
-          title="Conciliação Entradas/Saídas − P7 − H02"
-          hint={CF_HELP.p3.panel}
-        >
-          <table
-            className="cf-p3-table"
-            aria-label="Conciliação de estoque"
-          >
-            <thead>
-              <tr>
-                <th>Domínio</th>
-                <th>Esperado</th>
-                <th>Reportado</th>
-                <th>Diferença</th>
-                <th>Fonte</th>
-                <th>Consulta</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reconReady.reconciliations.map((recon) => (
-                <tr key={recon.domain}>
-                  <td>{DOMAIN_LABELS[recon.domain]}</td>
-                  <td>
-                    {recon.expected_amount
-                      ? formatAmount(recon.expected_amount)
-                      : "—"}
-                  </td>
-                  <td>
-                    {recon.reported_amount
-                      ? formatAmount(recon.reported_amount)
-                      : "—"}
-                  </td>
-                  <td>
-                    {recon.divergence !== null
-                      ? formatAmount(recon.divergence)
-                      : "—"}
-                  </td>
-                  <td>
-                    <CfStatusBadge
-                      label={SOURCE_STATE_LABELS[recon.source_state]}
-                      variant={
-                        recon.source_state === "AVAILABLE"
-                          ? "success"
-                          : "warning"
-                      }
-                    />
-                  </td>
-                  <td>
-                    {recon.fetched_at
-                      ? formatDateTime(recon.fetched_at)
-                      : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {reconReady.blockers.length ? (
-            <p className="cf-attention-item__meta">
-              Bloqueios registrados: {reconReady.blockers.length} — a
-              conciliação só é concluída quando todas as fontes estão
-              disponíveis e a diferença é exatamente R$ 0,00.
-            </p>
-          ) : null}
-        </CfSectionCard>
-      ) : p3?.kind === "not_opened" ? (
-        <CfFeedbackMessage intent="info" title="Conciliação P3">
-          A competência ainda não foi aberta — a conciliação de estoque
-          não foi executada.
-        </CfFeedbackMessage>
-      ) : null}
-
-      {stock ? (
-        <>
-          {stock.status === "source_missing" ? (
-            <CfFeedbackMessage
-              intent="warning"
-              title="Snapshot não encontrado"
-            >
-              O ERP não possui fechamento de estoque registrado para{" "}
-              {stock.period} — a ausência não é um saldo zero.
-            </CfFeedbackMessage>
-          ) : null}
-          {stock.status === "incomplete" ? (
-            <CfFeedbackMessage
-              intent="warning"
-              title="Dados parcialmente disponíveis"
-            >
-              O snapshot cobre somente{" "}
-              {stock.branchesAvailable.join(", ") || "—"}.
-            </CfFeedbackMessage>
-          ) : null}
-          {stock.historicalTotal !== null ? (
-            <CfSectionCard title="Total da posição de estoque">
-              <CfMetricStrip
-                aria-label="Total de estoque"
-                items={[
-                  {
-                    id: "total",
-                    label: "Valor total histórico",
-                    value: formatAmount(stock.historicalTotal),
-                    description: `${stock.pagination.total_items} itens`,
-                  },
-                ]}
-              />
-            </CfSectionCard>
-          ) : null}
-          {stock.summariesByType.length ? (
-            <CfSectionCard title="Resumo por tipo de produto">
-              <CfMetricStrip
-                aria-label="Resumo por tipo de produto"
-                items={stock.summariesByType.map((group) => ({
-                  id: group.productType ?? "sem-tipo",
-                  label: group.productType ?? "Sem tipo",
-                  value: formatAmount(group.totalStockValue),
-                  description: `${group.itemCount} itens`,
-                }))}
-              />
-            </CfSectionCard>
-          ) : null}
-          {stock.summariesByWarehouse.length ? (
-            <CfSectionCard title="Resumo por armazém">
-              <CfMetricStrip
-                aria-label="Resumo por armazém"
-                items={stock.summariesByWarehouse.map((group) => ({
-                  id: `${group.branchCode ?? ""}-${group.warehouse ?? ""}`,
-                  label: `Armazém ${group.warehouse ?? "—"} · Filial ${
-                    group.branchCode ?? "—"
-                  }`,
-                  value: formatAmount(group.totalStockValue),
-                  description: `${group.itemCount} itens`,
-                }))}
-              />
-            </CfSectionCard>
-          ) : null}
-          <div className="cf-settlements-actions">
-            <CfActionButton
-              variant="ghost"
-              aria-expanded={itemsOpen}
-              aria-controls="cf-stock-items"
-              onClick={() => setItemsOpen((v) => !v)}
-            >
-              {itemsOpen
-                ? "Ocultar itens do snapshot"
-                : "Ver itens do snapshot"}
-            </CfActionButton>
-          </div>
-          {itemsOpen ? (
-            <div id="cf-stock-items">
-              <StockItemsTable period={period} />
-            </div>
-          ) : null}
-        </>
-      ) : null}
-    </div>
-  );
-}
-
 // -- painel principal ---------------------------------------------------------
 
 export function MonthlyReportsPanel({
   period,
   selectedReport,
-  onSelectReport,
+  onOpenReport,
 }: {
   period: string;
   selectedReport: ReportFamily | null;
-  onSelectReport: (family: ReportFamily | null) => void;
+  /** Abre a página contextual do relatório (UX-011 D3). */
+  onOpenReport: (family: ReportFamily) => void;
 }) {
   const [nonce, setNonce] = useState(0);
   const reload = useCallback(() => setNonce((n) => n + 1), []);
@@ -1317,7 +797,7 @@ export function MonthlyReportsPanel({
   const scrollTo = (id: string) => {
     const node = document.getElementById(id);
     if (node) {
-      node.scrollIntoView({ block: "start" });
+      node.scrollIntoView?.({ block: "start" });
       node.focus({ preventScroll: true });
     }
   };
@@ -1325,6 +805,13 @@ export function MonthlyReportsPanel({
   const [expandedAttention, setExpandedAttention] = useState<
     string | null
   >(null);
+
+  const openReportKey = (key: ReportKey) => {
+    const family = (
+      Object.keys(FAMILY_TO_REPORT_KEY) as ReportFamily[]
+    ).find((f) => FAMILY_TO_REPORT_KEY[f] === key);
+    if (family) onOpenReport(family);
+  };
 
   if (!period) {
     return (
@@ -1334,10 +821,6 @@ export function MonthlyReportsPanel({
       />
     );
   }
-
-  const selectedMeta = selectedReport
-    ? FAMILY_META[selectedReport]
-    : null;
 
   return (
     <div className="cf-page-stack" aria-label="Relatórios e divergências">
@@ -1437,6 +920,7 @@ export function MonthlyReportsPanel({
                       current === item.id ? null : item.id,
                     )
                   }
+                  onOpenReport={openReportKey}
                 />
               ))}
             </ul>
@@ -1444,9 +928,11 @@ export function MonthlyReportsPanel({
         </section>
       </CfSectionCard>
 
+      {/* Catálogo compacto — cada cartão abre a página contextual do
+          relatório dentro do Fechamento Mensal (sem rótulos repetidos). */}
       <CfSectionCard
         title="Relatórios para análise"
-        subtitle="Selecione uma família para abrir os resultados abaixo."
+        subtitle="Abra a página do relatório para ver totais, agrupamentos e registros."
         hint={CF_HELP.monthlyClosing.reportsCatalog}
       >
         <div
@@ -1486,169 +972,101 @@ export function MonthlyReportsPanel({
                   selected ? "cf-report-card--selected" : undefined
                 }
                 ariaLabel={`${meta.name}${
-                  selected ? " — selecionado" : ""
+                  selected ? " — último relatório aberto" : ""
                 }`}
-                fields={[
-                  {
-                    id: "name",
-                    label: "Relatório",
-                    value: meta.name,
-                    valueTone: "title",
-                    present: true,
-                  },
-                  {
-                    id: "desc",
-                    label: "Descrição",
-                    value: meta.description,
-                    valueTone: "meta",
-                    present: true,
-                  },
-                  {
-                    id: "status",
-                    label: "Situação",
-                    value: status ?? "—",
-                    valueTone: "value",
-                    present: true,
-                    hint: updated
-                      ? `atualizado em ${formatDateTime(
+                openHint="Abrir relatório"
+                onActivate={() => onOpenReport(family)}
+              >
+                <div className="cf-report-card">
+                  <strong className="cf-report-card__name">
+                    {meta.name}
+                  </strong>
+                  <span className="cf-report-card__desc">
+                    {meta.description}
+                  </span>
+                  <span className="cf-report-card__meta">
+                    <CfStatusBadge
+                      label={status ?? "—"}
+                      variant={
+                        status === "Disponível"
+                          ? "success"
+                          : status === "Indisponível" ||
+                              status === "Fonte indisponível"
+                            ? "warning"
+                            : "info"
+                      }
+                    />
+                    {updated
+                      ? `Atualizado em ${formatDateTime(
                           updated.toISOString(),
                         )}`
-                      : meta.origin,
-                  },
-                ]}
-                openHint="Consultar resultados"
-                onActivate={() =>
-                  onSelectReport(selected ? null : family)
-                }
-              />
+                      : meta.origin}
+                  </span>
+                </div>
+              </CfInteractiveDataCard>
             );
           })}
         </div>
       </CfSectionCard>
 
-      {selectedReport ? (
-        <CfSectionCard
-          title={`Resultados — ${selectedMeta?.name ?? ""}`}
-          subtitle={`Competência ${formatPeriod(period)} · Origem: ${
-            selectedMeta?.origin ?? ""
-          }`}
-          hint={CF_HELP.monthlyClosing.reportsResults}
-        >
-          <div className="cf-settlements-actions">
-            <CfActionButton variant="ghost" onClick={reload}>
-              Reconsultar dados
-            </CfActionButton>
-          </div>
-          {selectedReport === "settlements" ? (
-            settlements?.kind === "ready" ? (
-              <SettlementsResults
-                period={period}
-                summary={settlements.data}
-              />
-            ) : settlements?.kind === "error" ? (
-              <CfQueryErrorBanner
-                error={settlements.error}
-                dataset="as baixas financeiras"
-                onRetry={reload}
-              />
-            ) : (
-              <p aria-live="polite">Consultando baixas financeiras…</p>
-            )
-          ) : null}
-          {selectedReport === "stock" ? (
-            <StockResults
-              period={period}
-              stock={
-                stock?.kind === "ready" ? stock.data : null
-              }
-              p3={p3}
-            />
-          ) : null}
-          {selectedReport === "stock" && stock?.kind === "error" ? (
+      {/* Matriz R01–R15 — rastreabilidade técnica preservada fora do
+          fluxo visual principal (§26.3). */}
+      <details className="cf-disclosure">
+        <summary className="cf-disclosure__summary">
+          Cobertura da matriz R01–R15 — rastreabilidade técnica
+        </summary>
+        <div className="cf-disclosure__body">
+          {matrix?.kind === "ready" ? (
+            <table
+              className="cf-p3-table"
+              aria-label="Cobertura dos relatórios R01 a R15"
+            >
+              <thead>
+                <tr>
+                  <th>Relatório</th>
+                  <th>Fonte</th>
+                  <th>Itens</th>
+                  <th>Cobertura</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matrix.data.reports.map((entry) => (
+                  <tr key={entry.report_id}>
+                    <td>
+                      {entry.report_id} — {entry.label}
+                    </td>
+                    <td>{SOURCE_LABELS[entry.source_kind]}</td>
+                    <td>
+                      {entry.checklist_items > 0
+                        ? `${entry.items_validated}/${entry.checklist_items}`
+                        : "—"}
+                    </td>
+                    <td>
+                      <CfStatusBadge
+                        label={COVERAGE_LABELS[entry.coverage]}
+                        variant={COVERAGE_VARIANTS[entry.coverage]}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : matrix?.kind === "not_opened" ? (
+            <CfFeedbackMessage intent="info" title="Matriz de entregáveis">
+              A competência ainda não foi aberta — a cobertura dos
+              relatórios R01–R15 não foi gerada para este período.
+            </CfFeedbackMessage>
+          ) : matrix?.kind === "error" ? (
             <CfQueryErrorBanner
-              error={stock.error}
-              dataset="a posição de estoque"
+              error={matrix.error}
+              dataset="a matriz de relatórios"
               onRetry={reload}
             />
-          ) : null}
-        </CfSectionCard>
-      ) : (
-        <CfEmptyState
-          classNames={cfEmptyStateClassNames}
-          defaultMessage="Selecione um relatório acima para ver totais, agrupamentos e registros."
-        />
-      )}
-
-      <CfSectionCard
-        title="Cobertura da matriz R01–R15"
-        hint={CF_HELP.reports.panel}
-      >
-        {matrix?.kind === "ready" ? (
-          <table
-            className="cf-p3-table"
-            aria-label="Cobertura dos relatórios R01 a R15"
-          >
-            <thead>
-              <tr>
-                <th>Relatório</th>
-                <th>Fonte</th>
-                <th>Itens</th>
-                <th>Cobertura</th>
-              </tr>
-            </thead>
-            <tbody>
-              {matrix.data.reports.map((entry) => (
-                <tr key={entry.report_id}>
-                  <td>
-                    {entry.report_id} — {entry.label}
-                  </td>
-                  <td>{SOURCE_LABELS[entry.source_kind]}</td>
-                  <td>
-                    {entry.checklist_items > 0
-                      ? `${entry.items_validated}/${entry.checklist_items}`
-                      : "—"}
-                  </td>
-                  <td>
-                    <CfStatusBadge
-                      label={COVERAGE_LABELS[entry.coverage]}
-                      variant={COVERAGE_VARIANTS[entry.coverage]}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : matrix?.kind === "not_opened" ? (
-          <CfFeedbackMessage intent="info" title="Matriz de entregáveis">
-            A competência ainda não foi aberta — a cobertura dos
-            relatórios R01–R15 não foi gerada para este período.
-          </CfFeedbackMessage>
-        ) : matrix?.kind === "error" ? (
-          <CfQueryErrorBanner
-            error={matrix.error}
-            dataset="a matriz de relatórios"
-            onRetry={reload}
-          />
-        ) : (
-          <p aria-live="polite">Consultando a matriz de relatórios…</p>
-        )}
-      </CfSectionCard>
-
-      <CfSectionCard
-        title="Prévia do PDF"
-        hint={CF_HELP.monthlyClosing.pdfPreview}
-      >
-        <div
-          className="cf-pdf-preview-slot"
-          aria-label="Prévia do PDF indisponível"
-        >
-          <p>
-            {selectedReport
-              ? "A prévia do PDF ainda não está disponível para este relatório."
-              : "Selecione um relatório para verificar a disponibilidade da prévia em PDF."}
-          </p>
+          ) : (
+            <p aria-live="polite">Consultando a matriz de relatórios…</p>
+          )}
         </div>
-      </CfSectionCard>
+      </details>
     </div>
   );
 }

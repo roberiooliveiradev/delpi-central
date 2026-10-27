@@ -27,6 +27,17 @@ tipados `available` / `incomplete` / `source_missing` /
 `no_matching_items`; snapshot ausente exibe apenas banner — nunca tabela
 vazia (ausência não é saldo zero).
 
+Central de Fechamento — Relatórios e divergências (aba `?tab=reports`):
+hub de análise com indicadores honestos, atenção primeiro e cartões por
+família; cada cartão abre página contextual
+`closing/monthly-closing/{YYYY-MM}/reports/{reportKey}`
+(`financial-settlements` | `stock-inventory`) dentro do próprio
+Fechamento mensal — as páginas legadas são reutilizadas em modo
+`reportContext` com competência travada, agrupamentos em tabelas por
+colunas e slot de PDF honesto enquanto não houver produtor homologado.
+O retorno restaura competência, aba e família analisada; a matriz
+R01–R15 permanece como rastreabilidade técnica recolhida.
+
 Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
 `cfDataTableUi` — banda única com ícone + título + pill de contagem do
 universo filtrado à esquerda e controles nativos (itens/página + Fonte +

@@ -514,3 +514,16 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | RQ-REP-13 | Plugin-ui real, sem duplicatas | inventário Doc 30: `CfInteractiveDataCard`, `CfSectionCard`, `CfStatusBadge`, `CfMetricStrip`, `DataTableSection`, `CfEmptyState`, `CfFeedbackMessage`, `CfActionButton` | PASS |
 | RQ-REP-14 | Rotas legadas compatíveis | `closing/financial-settlements` e `closing/stock-inventory` intactas; nenhum consumer removido | PASS |
 | RQ-REP-15 | Testes e gates | painel 15/15 + página 32/32 + plugin 275/275 + estruturais 8/8 · tsc · ESLint escopo · build federado `App-C7-aX4Lo.js` | PASS / homologação visual PO PENDING |
+
+
+### Relatórios e divergências V0.3 — páginas contextuais (UX-011, 27/10/2026)
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-REP-16 | Rota contextual por relatório | `closing/monthly-closing/{p}/reports/{key}` em `resolvePluginRoute`; `financial-settlements`/`stock-inventory`; chave desconhecida → estado honesto; testes de rota 149+ | PASS |
+| RQ-REP-17 | Reuso das páginas legadas | `reportContext` em `FinancialSettlementsPage`/`StockInventoryPage` — competência travada da rota, filtros/tabela/paginação intactos; rotas legadas preservadas | PASS |
+| RQ-REP-18 | Tabelas organizadas por colunas | agrupamentos SE5 em `DataTableSection` (Natureza/Tipo/Baixas/Valor/Moeda/Ação, sem concatenação); estoque mantém Resumo por tipo/armazém em tabelas do kit | PASS |
+| RQ-REP-19 | Contexto preservado no retorno | «Voltar» → `?tab=reports&report={família}`; navegação, deep link e F5 testados na página (4 casos) | PASS |
+| RQ-REP-20 | Hub compacto sem detalhe inline | cartões com slot `children`; matriz R01–R15 em `<details>` técnico; sem «RELATÓRIO/DESCRIÇÃO» repetidos; PDF saiu do hub | PASS |
+| RQ-REP-21 | PDF contextual honesto | `ReportPdfSlot` nas duas páginas; «ainda não está disponível» sem produtor; zero PDF fictício | PASS |
+| RQ-REP-22 | Sem fonte/cálculo inventado | nenhum endpoint/permission/migration novo; divergência P3 vem do backend; «Ver registros» aplica filtros reais do contrato | PASS |

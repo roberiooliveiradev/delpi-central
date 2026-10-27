@@ -92,6 +92,10 @@ const DEEP_ROUTE_VIEWS: Record<string, PluginView> = {
 const DOCUMENT_DETAIL_PATTERN =
   /^closing\/monthly-closing\/(\d{4}-(0[1-9]|1[0-2]))\/documents\/([A-Za-z0-9_.:%~-]+)$/;
 
+/** Página contextual de relatório da aba Relatórios (UX-011) — deep route. */
+const REPORT_DETAIL_PATTERN =
+  /^closing\/monthly-closing\/(\d{4}-(0[1-9]|1[0-2]))\/reports\/([A-Za-z0-9-]+)$/;
+
 export type ResolvedPluginRoute = {
   view: PluginView;
   pathname: string;
@@ -100,6 +104,8 @@ export type ResolvedPluginRoute = {
   checklistPeriod?: string;
   /** Referência do documento na rota de detalhe (UUID, `item:{key}` ou `new`). */
   documentRef?: string;
+  /** Chave do relatório na rota contextual (`financial-settlements`, `stock-inventory`). */
+  reportKey?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -137,6 +143,16 @@ export function resolvePluginRoute(
       relativePath,
       checklistPeriod: documentMatch[1],
       documentRef: decodeURIComponent(documentMatch[3] ?? ""),
+    };
+  }
+  const reportMatch = REPORT_DETAIL_PATTERN.exec(relativePath);
+  if (reportMatch) {
+    return {
+      view: "monthly_closing",
+      pathname: path,
+      relativePath,
+      checklistPeriod: reportMatch[1],
+      reportKey: reportMatch[3],
     };
   }
   const periodMatch = PERIOD_DEEP_ROUTE_PATTERN.exec(relativePath);

@@ -178,11 +178,11 @@ export const CF_HELP = {
   },
   monthlyClosing: {
     page:
-      "Fechamento mensal: bancada de trabalho por mês de referência em três abas — Visão geral (situação, atenções e próximos passos do fechamento), Documentos e interações (evidências P2) e Relatórios e divergências (atenções, relatórios em cartões, resultados inline e cobertura R01–R15). Selecione o mês para consultar; escolher um mês não abre competência — meses sem abertura formal mostram explicação e a ação autorizada.",
+      "Fechamento mensal: bancada de trabalho por mês de referência em três abas — Visão geral (situação, atenções e próximos passos do fechamento), Documentos e interações (evidências P2) e Relatórios e divergências (atenções, cartões por família que abrem páginas contextuais de relatório e cobertura R01–R15). Selecione o mês para consultar; escolher um mês não abre competência — meses sem abertura formal mostram explicação e a ação autorizada.",
     indicators:
       "Indicadores deste fechamento: O que falta resolver (situações que impedem a conclusão — clique para localizar na lista), Divergências (diferenças encontradas nas conferências — clique para abrir Relatórios) e Documentos a tratar (contagem ainda indisponível — «—» até existir a métrica). «—» significa dado indisponível — nunca zero confirmado.",
     tabs:
-      "Três visões do mesmo mês: Visão geral consolida o estado do fechamento; Documentos e interações abre as evidências e anexos P2 (exige competência aberta); Relatórios e divergências mostra divergências comprovadas, fontes indisponíveis, relatórios em cartões por família e resultados detalhados na mesma aba — sem sair para páginas técnicas.",
+      "Três visões do mesmo mês: Visão geral consolida o estado do fechamento; Documentos e interações abre as evidências e anexos P2 (exige competência aberta); Relatórios e divergências mostra divergências comprovadas, fontes indisponíveis e o catálogo em cartões — «Abrir relatório» leva à página contextual do relatório dentro do próprio Fechamento Mensal, sem nova aba.",
     pdfPreview:
       "Prévia do PDF do relatório selecionado: exibida quando existir um PDF homologado com produtor e contrato autorizado. Enquanto não existir, a seção informa a indisponibilidade — o Portal não gera PDF fictício nem reutiliza evidência anexada como relatório oficial.",
     reportsIndicators:
@@ -190,9 +190,9 @@ export const CF_HELP = {
     reportsAttention:
       "O que precisa de atenção: divergência comprovada (diferença calculada pelo owner), fonte indisponível (a consulta não respondeu ou está parcial) e conferência não realizada (atividade ainda não executada). Cada item mostra origem, data da consulta e próxima ação; «Ver detalhes» expande valores, fatos e orientação de correção manual no TOTVS quando comprovada — sem escrever no ERP.",
     reportsCatalog:
-      "Relatórios organizados em cartões por família: Baixas financeiras (pagamentos e recebimentos SE5) e Estoque e conciliação (posição P7 + conferência Entradas/Saídas − P7 − H02). «Consultar resultados» abre os resultados na mesma aba — a situação do cartão reflete a consulta real, não a homologação do relatório.",
+      "Relatórios organizados em cartões por família: Baixas financeiras (pagamentos e recebimentos SE5) e Estoque e conciliação (posição P7 + conferência Entradas/Saídas − P7 − H02). «Abrir relatório» abre a página contextual do relatório — a situação do cartão reflete a consulta real, não a homologação do relatório oficial.",
     reportsResults:
-      "Resultados do relatório selecionado: totais calculados pelo backend primeiro, agrupamentos em seguida e linhas ou registros somente quando solicitados («Ver detalhes»). Origem, competência e data da consulta acompanham a seção; dados de um mês nunca aparecem sob outro.",
+      "Página contextual do relatório: totais calculados pelo backend, agrupamentos em tabelas por colunas e registros com filtros e paginação reais do contrato. A competência vem da rota e o retorno restaura a aba Relatórios e divergências com a seleção anterior.",
     attention:
       "Situações reais que precisam ser resolvidas neste fechamento: relatórios que não puderam ser consultados, divergências, documentos pendentes e pendências em aberto. Cada ação leva ao local onde a situação é tratada. Se houver mais situações, use «Mostrar todas» para expandir a lista aqui mesmo.",
     stockAxis:

@@ -428,3 +428,14 @@ A terceira aba «Relatórios e divergências» do Fechamento mensal virou uma ba
 - **Competência como mês de referência:** a aba funciona por mês selecionado; consultas de baixas e estoque não exigem fechamento aberto, mas a conciliação P3 e a cobertura da matriz exigem — nesse caso aparece «Conferência não realizada».
 - **Contabilidade/DRE:** relatórios operacionais desta aba **não** são enviados à DRE — a CLARA não deve afirmar o contrário.
 - **Escopo da CLARA:** não existe tool MCP para consultar divergências ou gerar PDF — a CLARA conhece o funcionamento e orienta o usuário, sem executar a análise.
+
+
+## Adendo — Páginas contextuais de relatório V0.3 (CF-PROC0072-REPORTS-DETAIL-UX-011, 27/10/2026)
+
+A aba «Relatórios e divergências» continua sendo a central de análise, mas o detalhe completo de cada relatório agora abre uma **página contextual própria dentro do Fechamento Mensal** — a CLARA deve explicar a diferença:
+
+- **Aba vs página:** a aba mostra indicadores, «O que precisa de atenção» e os cartões das famílias; o cartão «Abrir relatório» leva à página do relatório (`…/closing/monthly-closing/{mês}/reports/{relatório}`). Não é uma quarta aba — o caminho «Fechamento mensal > Relatórios e divergências > {Relatório}» aparece no topo e o botão «Voltar para Relatórios e divergências» restaura o mês e a família analisada.
+- **Relatórios com página hoje:** Baixas financeiras (mesma tela de Baixas, competência travada no mês, agrupamentos por natureza/tipo em tabela de colunas e «Ver registros» aplicando os filtros do grupo) e Estoque e conciliação (mesma tela do P7, com a conciliação Entradas/Saídas − P7 − H02, resumos por tipo e por armazém). As rotas antigas `closing/financial-settlements` e `closing/stock-inventory` continuam existindo.
+- **PDF:** cada página tem o espaço da prévia, mas nenhum relatório possui PDF gerado — a mensagem é «A prévia do PDF ainda não está disponível para este relatório». A CLARA não deve prometer PDF nem tratar anexos de evidência como relatório oficial.
+- **Divergências:** seguem vindo somente da conciliação calculada pelo backend; fonte indisponível e conferência não realizada nunca são «zero». A matriz R01–R15 continua na aba, agora recolhida como rastreabilidade técnica — não são quinze relatórios calculados.
+- **Sem escrita no ERP:** correções continuam manuais no TOTVS; o Portal não ajusta dados.

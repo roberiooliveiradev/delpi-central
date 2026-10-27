@@ -51,9 +51,52 @@ vi.mock("./DocumentDetailPanel", () => ({
 }));
 
 vi.mock("./MonthlyReportsPanel", () => ({
-  MonthlyReportsPanel: ({ period }: { period: string }) => (
-    <div data-testid="reports-panel">reports:{period}</div>
+  MonthlyReportsPanel: ({
+    period,
+    onOpenReport,
+  }: {
+    period: string;
+    onOpenReport?: (family: string) => void;
+  }) => (
+    <div data-testid="reports-panel">
+      reports:{period}
+      <button onClick={() => onOpenReport?.("settlements")}>
+        open-report
+      </button>
+      <button onClick={() => onOpenReport?.("stock")}>open-stock</button>
+    </div>
   ),
+}));
+
+vi.mock("./MonthlyReportPage", () => ({
+  MonthlyReportPage: ({
+    period,
+    reportKey,
+    onBack,
+  }: {
+    period: string;
+    reportKey: string;
+    onBack: () => void;
+  }) => (
+    <div data-testid="report-page">
+      report:{reportKey}:{period}
+      <button onClick={onBack}>report-back</button>
+    </div>
+  ),
+  FAMILY_TO_REPORT_KEY: {
+    settlements: "financial-settlements",
+    stock: "stock-inventory",
+  },
+  REPORT_KEY_TO_FAMILY: {
+    "financial-settlements": "settlements",
+    "stock-inventory": "stock",
+  },
+  REPORT_KEY_LABELS: {
+    "financial-settlements": "Baixas financeiras",
+    "stock-inventory": "Estoque e conciliação",
+  },
+  isReportKey: (value: string | undefined) =>
+    value === "financial-settlements" || value === "stock-inventory",
 }));
 
 import { ApiError } from "../../api/httpClient";
@@ -237,7 +280,7 @@ describe("mês sem competência aberta — consulta possível, estados honestos"
     render(<MonthlyClosingPage basePath={BASE} period="2026-09" />);
 
     await screen.findByTestId("reports-panel");
-    expect(screen.getByTestId("reports-panel").textContent).toBe(
+expect(screen.getByTestId("reports-panel").textContent).toContain(
       "reports:2026-09",
     );
   });
@@ -392,7 +435,7 @@ describe("período e aba preservados na URL", () => {
     mockOpenMonth();
     render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
     await waitFor(() =>
-      expect(screen.getByTestId("reports-panel").textContent).toBe(
+      expect(screen.getByTestId("reports-panel").textContent).toContain(
         "reports:2026-10",
       ),
     );
@@ -469,6 +512,125 @@ describe("indicadores honestos e gate documental", () => {
     // Três abas ficam ocultas no detalhe; caminho mostra o contexto.
     expect(screen.queryByRole("button", { name: "Relatórios e divergências" })).toBeNull();
     expect(screen.getByText("Documentos e interações")).toBeTruthy();
+  });
+});
+
+describe("Relatórios V0.3 — páginas contextuais de relatório (UX-011)", () => {
+  it("cartão do hub navega para a página contextual do relatório", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10?tab=reports`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    const view = render(
+      <MonthlyClosingPage basePath={BASE} period="2026-10" />,
+    );
+
+    await screen.findByTestId("reports-panel");
+    fireEvent.click(screen.getByText("open-report"));
+
+    // O pushState atualiza a URL; o App resolve a rota e injeta reportKey.
+    await waitFor(() =>
+      expect(window.location.pathname).toBe(
+        `${BASE}/closing/monthly-closing/2026-10/reports/financial-settlements`,
+      ),
+    );
+    view.rerender(
+      <MonthlyClosingPage
+        basePath={BASE}
+        period="2026-10"
+        reportKey="financial-settlements"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("report-page").textContent).toContain(
+        "report:financial-settlements:2026-10",
+      ),
+    );
+  });
+
+  it("voltar restaura aba reports e seleção anterior", async () => {
+    setLocation(
+      `${BASE}/closing/monthly-closing/2026-10/reports/stock-inventory`,
+    );
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    const view = render(
+      <MonthlyClosingPage
+        basePath={BASE}
+        period="2026-10"
+        reportKey="stock-inventory"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("report-page").textContent,
+      ).toContain("report:stock-inventory:2026-10"),
+    );
+
+    fireEvent.click(screen.getByText("report-back"));
+
+    await waitFor(() =>
+      expect(window.location.search).toContain("report=stock"),
+    );
+    expect(window.location.search).toContain("tab=reports");
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/monthly-closing/2026-10`,
+    );
+
+    // App resolve o hub de novo — painel de relatórios volta ao foco.
+    view.rerender(
+      <MonthlyClosingPage basePath={BASE} period="2026-10" />,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("reports-panel")).toBeTruthy(),
+    );
+  });
+
+  it("deep link de relatório abre a página contextual preservando o período", async () => {
+    setLocation(
+      `${BASE}/closing/monthly-closing/2026-10/reports/financial-settlements`,
+    );
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(
+      <MonthlyClosingPage
+        basePath={BASE}
+        period="2026-10"
+        reportKey="financial-settlements"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("report-page").textContent).toContain(
+        "report:financial-settlements:2026-10",
+      ),
+    );
+    // Abas primárias ocultas; breadcrumb contextual mostra o caminho.
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(screen.getAllByText("Relatórios e divergências").length)
+      .toBeGreaterThan(0);
+    expect(screen.getByText("Baixas financeiras")).toBeTruthy();
+  });
+
+  it("chave de relatório desconhecida cai no estado honesto da página", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10/reports/outra`);
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(
+      <MonthlyClosingPage
+        basePath={BASE}
+        period="2026-10"
+        reportKey="outra"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("report-page")).toBeTruthy(),
+    );
+    expect(
+      screen.getByTestId("report-page").textContent,
+    ).toContain("report:outra:2026-10");
   });
 });
 
