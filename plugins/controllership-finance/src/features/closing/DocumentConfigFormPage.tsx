@@ -22,7 +22,6 @@ import {
   listChecklistTemplates,
   listTemplateEvents,
   listTemplateVersions,
-  type ChecklistTemplateItem,
   type TemplateAuditEvent,
 } from "../../api/adminApi";
 import {
@@ -54,7 +53,6 @@ import {
   publishRemovalVersion,
   saveDocumentConfig,
   slugifyItemKey,
-  toDraftItems,
   type VersionWithItems,
 } from "./documentCatalog";
 import { EVENT_LABELS } from "./ChecklistAdminPage";
@@ -273,13 +271,6 @@ export function DocumentConfigFormPage({
   const notFound =
     !isCreate && versions !== null && catalogRow === undefined;
 
-  const baseItems = useMemo<ChecklistTemplateItem[]>(() => {
-    const published = (versions ?? [])
-      .filter((v) => v.status === "PUBLISHED")
-      .sort((a, b) => b.version - a.version);
-    return published[0]?.items ?? [];
-  }, [versions]);
-
   const documentEvents = useMemo(() => {
     if (isCreate || !events) return [];
     const containingVersions = new Set(
@@ -342,7 +333,6 @@ export function DocumentConfigFormPage({
     const key = isCreate ? slugifyItemKey(form.name) : form.itemKey;
     saveDocumentConfig(
       templateId,
-      baseItems,
       {
         itemKey: key,
         name: form.name.trim(),
@@ -369,19 +359,13 @@ export function DocumentConfigFormPage({
         );
         setBusy(false);
       });
-  }, [validate, templateId, busy, isCreate, form, baseItems, backToList]);
+  }, [validate, templateId, busy, isCreate, form, backToList]);
 
   const confirmEndRequirement = useCallback(() => {
     if (!templateId || busy) return;
     setBusy(true);
     setActionError(null);
-    publishRemovalVersion(
-      templateId,
-      toDraftItems(
-        baseItems.filter((item) => item.item_key !== itemKey),
-      ),
-      currentPeriod(),
-    )
+    publishRemovalVersion(templateId, itemKey, currentPeriod())
       .then(() => {
         setConfirmEnd(false);
         backToList(itemKey);
@@ -395,7 +379,7 @@ export function DocumentConfigFormPage({
         );
         setBusy(false);
       });
-  }, [templateId, busy, baseItems, itemKey, backToList]);
+  }, [templateId, busy, itemKey, backToList]);
 
   return (
     <section

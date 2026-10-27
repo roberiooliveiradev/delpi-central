@@ -1,19 +1,35 @@
 /**
- * Catálogo mestre de documentos do fechamento — UX-012.
+ * Catálogo mestre de documentos do fechamento — UX-012 / RW01.
  *
  * O contrato da BFF é versionado e atômico (`/admin/checklist-templates*`):
- * cada versão publicada define o conjunto completo de exigências a partir
- * de `effective_from_period`, e a vigência de cada tipo de documento é
- * DERIVADA da timeline de versões — um item é exigido nos períodos em que
- * a versão vencedora o contém.
+ * cada versão publicada define o conjunto COMPLETO de exigências a partir
+ * de `effective_from_period`, e a versão vencedora de uma competência é
+ * `PUBLISHED` com `effective_from <= competência`, desempatando por
+ * `version DESC` (resolve_published_version).
  *
- * A experiência por documento (listar/criar/editar) orquestra o ciclo
- * DRAFT → REVIEW → PUBLISHED do contrato existente: nenhuma persistência
- * paralela, nenhum endpoint novo. Fechamentos encerrados nunca mudam —
- * o snapshot da competência é cópia congelada.
+ * RW01 — invariantes corrigidos:
+ * - A base de cada publicação é a versão VENCEDORA no boundary, nunca a
+ *   versão de maior número (que pode ser futura, de remoção ou INACTIVE).
+ * - Inserir/editar exigência no meio da timeline PROPAGA o item aos
+ *   boundaries futuros (até `until`), porque versões são conjuntos
+ *   absolutos — sem propagação a exigência morreria no boundary seguinte.
+ * - Cada passo de publicação é idempotente: se a configuração vigente no
+ *   boundary já é o alvo, o passo é pulado — retry nunca duplica versão.
+ * - Resume sem identidade: versão DRAFT/REVIEW com itens IGUAIS ao alvo é
+ *   reutilizada (igualdade de conteúdo ⇒ publicar é equivalente); versão
+ *   aberta com conteúdo diferente vira conflito honesto — nunca pisamos
+ *   trabalho de outro administrador.
+ * - Falha intermediária nunca informa sucesso: o erro sobe e o retry
+ *   converge pelo plano idempotente. Atomicidade multi-versão verdadeira
+ *   não existe no contrato — registrado em DECISION_REQUIRED.
+ *
+ * Snapshots de competências abertas/encerradas são cópia congelada —
+ * nada aqui os reescreve.
  */
 import {
   createTemplateDraft,
+  getTemplateVersion,
+  listTemplateVersions,
   publishTemplateVersion,
   submitVersionForReview,
   updateTemplateDraft,
@@ -83,13 +99,6 @@ export const SITUATION_LABELS: Record<DocumentSituation, string> = {
   encerrado: "Encerrado",
 };
 
-/** Competência «AAAA-MM» → «MM/AAAA» para exibição. */
-export function formatPeriod(period: string | null): string {
-  if (!period) return "—";
-  const [year, month] = period.split("-");
-  return `${month}/${year}`;
-}
-
 export function currentPeriod(now = new Date()): string {
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 }
@@ -108,6 +117,13 @@ export function previousPeriod(period: string): string {
     : `${year}-${String(month - 1).padStart(2, "0")}`;
 }
 
+/** Competência «AAAA-MM» → «MM/AAAA» para exibição. */
+export function formatPeriod(period: string | null): string {
+  if (!period) return "—";
+  const [year, month] = period.split("-");
+  return `${month}/${year}`;
+}
+
 /** Identificador técnico estável a partir do nome (identidade, ≤32). */
 export function slugifyItemKey(name: string): string {
   const slug = name
@@ -121,6 +137,115 @@ export function slugifyItemKey(name: string): string {
   return slug || "DOCUMENTO";
 }
 
+export function toDraftItems(
+  items: ChecklistTemplateItem[],
+): DraftItemInput[] {
+  return items.map((item) => ({
+    item_key: item.item_key,
+    sort_order: item.sort_order,
+    sheet: item.sheet,
+    name: item.name,
+    purpose: item.purpose,
+    origin_kind: item.origin_kind,
+    recipient_area: item.recipient_area,
+    applicability: item.applicability,
+    branch_scope: item.branch_scope,
+    totvs_report_ref: item.totvs_report_ref,
+    requirement_notes: item.requirement_notes,
+    validation_scope: item.validation_scope,
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/* Timeline canônica — mesma regra de `resolve_published_version`.       */
+/* ------------------------------------------------------------------ */
+
+/** Versões PUBLISHED ordenadas como o backend resolve (eff, version). */
+export function sortPublished(
+  versions: VersionWithItems[],
+): VersionWithItems[] {
+  return versions
+    .filter(
+      (v) => v.status === "PUBLISHED" && v.effective_from_period !== null,
+    )
+    .sort(
+      (a, b) =>
+        (a.effective_from_period ?? "").localeCompare(
+          b.effective_from_period ?? "",
+        ) || a.version - b.version,
+    );
+}
+
+/** Versão vencedora de `period`: PUBLISHED, eff ≤ period, (eff, version) máx. */
+export function winnerAt(
+  published: VersionWithItems[],
+  period: string,
+): VersionWithItems | null {
+  let winner: VersionWithItems | null = null;
+  for (const version of published) {
+    if ((version.effective_from_period ?? "") <= period) {
+      winner = version;
+    }
+  }
+  return winner;
+}
+
+/** Boundaries distintos da timeline publicada, em ordem crescente. */
+export function timelineBoundaries(
+  published: VersionWithItems[],
+): string[] {
+  return [
+    ...new Set(
+      published
+        .map((v) => v.effective_from_period)
+        .filter((p): p is string => p !== null),
+    ),
+  ].sort();
+}
+
+/* ------------------------------------------------------------------ */
+/* Comparação de conteúdo — skip idempotente e resume por igualdade.     */
+/* ------------------------------------------------------------------ */
+
+type ItemFingerprint = string;
+
+function itemFingerprint(item: DraftItemInput): ItemFingerprint {
+  return JSON.stringify([
+    item.item_key,
+    item.name,
+    item.purpose ?? null,
+    item.origin_kind,
+    item.recipient_area ?? null,
+    item.applicability ?? "REQUIRED",
+    item.branch_scope ?? "BOTH",
+    item.sheet,
+    item.totvs_report_ref ?? null,
+    item.requirement_notes ?? null,
+    item.validation_scope ?? "PER_ATTACHMENT",
+  ]);
+}
+
+/** Conjunto de itens normalizado (ordem/sort_order não são semântica). */
+function itemsFingerprintSet(
+  items: readonly (DraftItemInput | ChecklistTemplateItem)[],
+): Set<ItemFingerprint> {
+  return new Set(items.map(itemFingerprint));
+}
+
+/** Igualdade estrutural de dois conjuntos de itens. */
+export function itemsEqual(
+  a: readonly (DraftItemInput | ChecklistTemplateItem)[],
+  b: readonly (DraftItemInput | ChecklistTemplateItem)[],
+): boolean {
+  const fa = itemsFingerprintSet(a);
+  if (fa.size !== b.length) return false;
+  return b.every((item) => fa.has(itemFingerprint(item)));
+}
+
+/* ------------------------------------------------------------------ */
+/* Derivação do catálogo — janelas de exigência por item_key.            */
+/* ------------------------------------------------------------------ */
+
 /**
  * Janelas de exigência de um item: a versão vencedora em cada fronteira
  * da timeline decide se o item é exigido naquele intervalo.
@@ -129,29 +254,12 @@ function requirementWindows(
   published: VersionWithItems[],
   itemKey: string,
 ): RequirementWindow[] {
-  const sorted = [...published]
-    .filter((v) => v.effective_from_period !== null)
-    .sort((a, b) =>
-      (a.effective_from_period ?? "").localeCompare(
-        b.effective_from_period ?? "",
-      ),
-    );
-  if (sorted.length === 0) return [];
-  const boundaries = [
-    ...new Set(
-      sorted.map((v) => v.effective_from_period).filter(
-        (p): p is string => p !== null,
-      ),
-    ),
-  ].sort();
+  const boundaries = timelineBoundaries(published);
+  if (boundaries.length === 0) return [];
   const windows: RequirementWindow[] = [];
   let openFrom: string | null = null;
   boundaries.forEach((boundary, index) => {
-    const winner = [...sorted]
-      .reverse()
-      .find(
-        (v) => (v.effective_from_period ?? "") <= boundary,
-      );
+    const winner = winnerAt(published, boundary);
     const required = Boolean(
       winner?.items.some((item) => item.item_key === itemKey),
     );
@@ -181,7 +289,7 @@ export function deriveDocumentCatalog(
   versions: VersionWithItems[],
   referencePeriod = currentPeriod(),
 ): DocumentCatalogRow[] {
-  const published = versions.filter((v) => v.status === "PUBLISHED");
+  const published = sortPublished(versions);
   const pending = versions.filter(
     (v) => v.status === "DRAFT" || v.status === "REVIEW",
   );
@@ -255,6 +363,10 @@ export function deriveDocumentCatalog(
   return [...rows.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
+/* ------------------------------------------------------------------ */
+/* Plano de publicação — passos idempotentes por boundary.               */
+/* ------------------------------------------------------------------ */
+
 export type DocumentFormPayload = {
   itemKey: string;
   name: string;
@@ -269,110 +381,237 @@ export type DocumentFormPayload = {
   validationScope: DraftItemInput["validation_scope"];
 };
 
-export function toDraftItems(
-  items: ChecklistTemplateItem[],
-): DraftItemInput[] {
-  return items.map((item) => ({
-    item_key: item.item_key,
-    sort_order: item.sort_order,
-    sheet: item.sheet,
-    name: item.name,
-    purpose: item.purpose,
-    origin_kind: item.origin_kind,
-    recipient_area: item.recipient_area,
-    applicability: item.applicability,
-    branch_scope: item.branch_scope,
-    totvs_report_ref: item.totvs_report_ref,
-    requirement_notes: item.requirement_notes,
-    validation_scope: item.validation_scope,
-  }));
+export type PublishStep = {
+  /** Competência `effective_from_period` da versão a publicar. */
+  effectiveFrom: string;
+  /** Conjunto COMPLETO de itens da versão alvo. */
+  items: DraftItemInput[];
+};
+
+function documentItem(
+  payload: DocumentFormPayload,
+  sortOrder: number | null,
+): DraftItemInput {
+  return {
+    item_key: payload.itemKey,
+    sort_order: sortOrder,
+    sheet: payload.sheet,
+    name: payload.name,
+    purpose: payload.purpose,
+    origin_kind: payload.originKind,
+    recipient_area: payload.recipientArea,
+    applicability: payload.applicability,
+    branch_scope: payload.branchScope,
+    totvs_report_ref: payload.totvsReportRef,
+    requirement_notes: payload.requirementNotes,
+    validation_scope: payload.validationScope,
+  };
 }
 
-async function publishItemsVersion(
-  templateId: string,
-  items: DraftItemInput[],
-  effectiveFrom: string,
-): Promise<ChecklistTemplateVersionDetail> {
-  const draft = await createTemplateDraft(templateId);
-  const updated = await updateTemplateDraft(
-    templateId,
-    draft.version,
-    { revision: draft.revision, items },
+/** `base + item` (substitui mesma chave; preserva sort_order existente). */
+function mergeItem(
+  base: ChecklistTemplateItem[],
+  payload: DocumentFormPayload,
+): DraftItemInput[] {
+  const items = toDraftItems(base);
+  const index = items.findIndex(
+    (entry) => entry.item_key === payload.itemKey,
   );
+  const sortOrder =
+    index >= 0
+      ? (items[index].sort_order ?? null)
+      : Math.max(0, ...items.map((i) => i.sort_order ?? 0)) + 10;
+  const next = documentItem(payload, sortOrder);
+  if (index >= 0) items[index] = next;
+  else items.push(next);
+  return items;
+}
+
+/**
+ * Plano completo de publicação para a exigência de `item` na janela
+ * [`effectiveFrom`, `effectiveUntil`] (sem término quando `until` = null):
+ *
+ * - Para cada boundary `b` com `from <= b <= until (ou ∞)`: publicar
+ *   `winner@b + item` — propagação necessária porque versões são
+ *   conjuntos absolutos (sem isso, a exigência morreria no próximo
+ *   boundary já publicado).
+ * - Com `until`: publicar em `nextPeriod(until)` o conteúdo
+ *   `winner@(until+1) − item` calculado sobre a timeline ORIGINAL.
+ * - Passos cujo alvo já é a configuração vigente no boundary são
+ *   omitidos — o plano é naturalmente idempotente (retry converge).
+ *
+ * O cálculo é PURO sobre a lista fresca de versões — determinístico e
+ * testável sem backend.
+ */
+export function planDocumentSave(
+  versions: VersionWithItems[],
+  document: DocumentFormPayload,
+  effectiveFrom: string,
+  effectiveUntil: string | null,
+): PublishStep[] {
+  const published = sortPublished(versions);
+  const steps: PublishStep[] = [];
+  const boundaries = timelineBoundaries(published).filter(
+    (b) => b >= effectiveFrom,
+  );
+  const limit = effectiveUntil ?? "9999-12";
+  const targets = new Set(
+    [effectiveFrom, ...boundaries].filter((b) => b <= limit),
+  );
+  for (const boundary of [...targets].sort()) {
+    const winner = winnerAt(published, boundary);
+    const target = mergeItem(winner?.items ?? [], document);
+    if (!itemsEqual(target, winner?.items ?? [])) {
+      steps.push({ effectiveFrom: boundary, items: target });
+    }
+  }
+  if (effectiveUntil) {
+    const at = nextPeriod(effectiveUntil);
+    const winner = winnerAt(published, at);
+    const target = toDraftItems(winner?.items ?? []).filter(
+      (item) => item.item_key !== document.itemKey,
+    );
+    // Estado efetivo em `at` APÓS as inserções do plano: a última versão
+    // inserida com eff ≤ at passa a vencer — é ela que a remoção precisa
+    // superar (senão a exigência propagada viveria indefinidamente).
+    const lastInsert = steps[steps.length - 1];
+    const currentEffective = lastInsert
+      ? lastInsert.items
+      : (winner?.items ?? []);
+    if (!itemsEqual(target, currentEffective)) {
+      steps.push({ effectiveFrom: at, items: target });
+    }
+  }
+  return steps;
+}
+
+/* ------------------------------------------------------------------ */
+/* Execução do plano — uma versão por vez, com resume por conteúdo.      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Garante uma versão PUBLISHED com `eff` e `items` exatos:
+ * 1. boundary já coberto por versão PUBLISHED igual → no-op;
+ * 2. DRAFT/REVIEW aberto com itens iguais → retoma o ciclo (resume);
+ * 3. caso contrário → ciclo completo DRAFT→update→REVIEW→PUBLISHED.
+ *
+ * `openVersions` = versões DRAFT/REVIEW com detalhe já carregado.
+ */
+async function ensurePublishedVersion(
+  templateId: string,
+  effectiveFrom: string,
+  items: DraftItemInput[],
+  openVersions: ChecklistTemplateVersionDetail[],
+): Promise<void> {
+  const reusable = openVersions.find(
+    (version) => itemsEqual(version.items, items),
+  );
+  if (reusable) {
+    if (reusable.status === "DRAFT") {
+      await submitVersionForReview(templateId, reusable.version);
+    }
+    await publishTemplateVersion(templateId, reusable.version, {
+      effective_from_period: effectiveFrom,
+    });
+    return;
+  }
+  if (openVersions.length > 0) {
+    // Rascunho/revisão aberto com conteúdo diferente — nunca pisamos
+    // trabalho de outro administrador nem de um rascunho divergente.
+    throw new CatalogSaveError(
+      "catalog_draft_conflict",
+      "Existe uma versão em rascunho ou revisão com outro conteúdo — conclua-a ou descarte-a na Administração do checklist antes de salvar.",
+    );
+  }
+  const draft = await createTemplateDraft(templateId);
+  await updateTemplateDraft(templateId, draft.version, {
+    revision: draft.revision,
+    items,
+  });
   await submitVersionForReview(templateId, draft.version);
   await publishTemplateVersion(templateId, draft.version, {
     effective_from_period: effectiveFrom,
   });
-  return updated;
+}
+
+async function fetchVersionsWithItems(
+  templateId: string,
+): Promise<VersionWithItems[]> {
+  const versionList = await listTemplateVersions(templateId);
+  return Promise.all(
+    versionList.map((version) =>
+      getTemplateVersion(templateId, version.version),
+    ),
+  );
 }
 
 /**
- * Persiste a configuração de um documento: nova versão publicada a partir
- * de `effectiveFrom` com a configuração informada (inserção ou edição por
- * `item_key`), mais versão de remoção em `effectiveUntil + 1` quando houver
- * término. Fechamentos já abertos/encerrados não são reescritos — a
- * vigência é sempre prospectiva e atômica por versão.
+ * Persiste a configuração de um documento com integridade de vigência:
+ * o item é propagado a todos os boundaries cobertos pela janela e a
+ * remoção é publicada em `until+1` quando houver término. Cada passo é
+ * uma versão atômica do contrato; a sequência é idempotente — retry
+ * após falha converge sem duplicar versões.
  */
 export async function saveDocumentConfig(
   templateId: string,
-  baseItems: ChecklistTemplateItem[],
   document: DocumentFormPayload,
   effectiveFrom: string,
   effectiveUntil: string | null,
 ): Promise<void> {
-  const items = toDraftItems(baseItems);
-  const index = items.findIndex(
-    (item) => item.item_key === document.itemKey,
+  const versions = await fetchVersionsWithItems(templateId);
+  const steps = planDocumentSave(
+    versions,
+    document,
+    effectiveFrom,
+    effectiveUntil,
   );
-  const next: DraftItemInput = {
-    item_key: document.itemKey,
-    sort_order:
-      index >= 0
-        ? items[index].sort_order
-        : (Math.max(0, ...items.map((i) => i.sort_order ?? 0)) + 10),
-    sheet: document.sheet,
-    name: document.name,
-    purpose: document.purpose,
-    origin_kind: document.originKind,
-    recipient_area: document.recipientArea,
-    applicability: document.applicability,
-    branch_scope: document.branchScope,
-    totvs_report_ref: document.totvsReportRef,
-    requirement_notes: document.requirementNotes,
-    validation_scope: document.validationScope,
-  };
-  if (index >= 0) items[index] = next;
-  else items.push(next);
-  await publishItemsVersion(templateId, items, effectiveFrom);
-  if (effectiveUntil) {
-    await publishRemovalVersion(
+  if (steps.length === 0) return;
+  const open = versions.filter(
+    (v) => v.status === "DRAFT" || v.status === "REVIEW",
+  );
+  for (const step of steps) {
+    await ensurePublishedVersion(
       templateId,
-      items.filter((item) => item.item_key !== document.itemKey),
-      effectiveUntil,
+      step.effectiveFrom,
+      step.items,
+      open,
     );
+    // O passo consumiu ou criou uma versão — recalcular o estado aberto
+    // exigiria nova consulta; como o plano é sequencial e um rascunho
+    // usado vira PUBLISHED, limpamos a lista após o primeiro reuso.
+    open.length = 0;
   }
 }
 
 /**
- * Publica somente a remoção do item a partir de `nextPeriod(untilPeriod)` —
- * usado por «Encerrar exigência» quando a configuração não muda.
+ * Publica somente a remoção do item a partir de `nextPeriod(untilPeriod)`
+ * — usado por «Encerrar exigência» quando a configuração não muda.
+ * A remoção é calculada sobre o vencedor real de `until+1` e propagada
+ * — igualmente idempotente (boundary já sem o item → no-op).
  */
 export async function publishRemovalVersion(
   templateId: string,
-  remainingItems: DraftItemInput[],
+  itemKey: string,
   untilPeriod: string,
 ): Promise<void> {
-  // O backend exige ≥1 item por versão — encerrar o único documento
-  // do checklist não é representável sem contrato novo.
-  if (remainingItems.length === 0) {
+  const versions = await fetchVersionsWithItems(templateId);
+  const published = sortPublished(versions);
+  const at = nextPeriod(untilPeriod);
+  const winner = winnerAt(published, at);
+  const target = toDraftItems(winner?.items ?? []).filter(
+    (item) => item.item_key !== itemKey,
+  );
+  // O backend exige ≥1 item por versão — encerrar o único documento do
+  // checklist não é representável sem contrato novo (DECISION_REQUIRED).
+  if ((winner?.items.length ?? 0) > 0 && target.length === 0) {
     throw new CatalogSaveError(
       "catalog_last_item_end",
       "Não é possível encerrar o único documento do checklist.",
     );
   }
-  await publishItemsVersion(
-    templateId,
-    remainingItems,
-    nextPeriod(untilPeriod),
+  if (itemsEqual(target, winner?.items ?? [])) return;
+  const open = versions.filter(
+    (v) => v.status === "DRAFT" || v.status === "REVIEW",
   );
+  await ensurePublishedVersion(templateId, at, target, open);
 }

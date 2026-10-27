@@ -22,6 +22,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { ApiError } from "../../api/httpClient";
+import { CatalogSaveError } from "./documentCatalog";
 import {
   createTemplateDraft,
   getTemplateVersion,
@@ -79,6 +80,10 @@ export const ERROR_MESSAGES: Record<string, string> = {
     "A vigência deve ser uma competência futura no formato AAAA-MM.",
   not_latest_published:
     "Somente a versão publicada mais recente pode ser inativada.",
+  catalog_last_item_end:
+    "O checklist publicado precisa manter ao menos um documento — encerrar a última exigência exige evolução do contrato.",
+  catalog_draft_conflict:
+    "Existe uma versão em rascunho ou revisão com outro conteúdo — conclua-a ou descarte-a na Administração do checklist.",
 };
 
 function toQueryError(error: unknown, fallback: string): QueryError {
@@ -88,6 +93,13 @@ function toQueryError(error: unknown, fallback: string): QueryError {
       code: error.code,
       message:
         (error.code && ERROR_MESSAGES[error.code]) || error.message,
+    };
+  }
+  if (error instanceof CatalogSaveError) {
+    return {
+      status: 0,
+      code: error.code,
+      message: ERROR_MESSAGES[error.code] ?? error.message,
     };
   }
   return { status: 0, code: null, message: fallback };
