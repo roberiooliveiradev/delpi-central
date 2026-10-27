@@ -310,3 +310,33 @@ Ordem canônica respeitada: api-delpi → external-data-api → supplies-api →
 - **S0–S4 GATES:** PASS. **S5 GATE:** PASS parcial — infraestrutura, composição, ciclo de governança e smoke provados; dados MDIC `PENDING` (feed desabilitado, 0 NCMs homologadas em produção).
 - **AC-01..20:** AC-01/02/03/04/05/06/07/09/10/12/13/14/15/18/19 PASS; AC-08/11 PENDING (fonte sem observações); AC-16 INCONCLUSIVE (exportação herdada do painel); AC-17 INCONCLUSIVE (responsivo/a11y via kit, sem captura); AC-20 PASS parcial (deploy + smoke autenticado; visual não capturado).
 - **POSTCONDITION:** `PROC_0076_COMEX_CONFIGURABLE_ANALYSIS_FUNCTIONAL` = **PENDING** — catálogo, governança, BFF e UX configurável funcionais e verificados em produção; a pós-condição de dados reais aguarda homologação de NCMs pelas autoridades de negócio e ativação do feed `comex-monthly`, conforme seção 18 do brief (sem dados fictícios).
+
+## 16. Comex S6 — UX refinement + entrada direta de NCM (2026-10-27)
+
+Commit `82cbb13f03` — diff 100% no `plugins/supplies`; **zero mudança de backend** (a consulta direta resolve na lista de governança já carregada pelo seletor + catálogo `import_ncms` da allowlist; `request_ncm` cobre a criação/resubmissão e o BFF continua a única autoridade).
+
+### 16.1 Implementado
+
+- **Alternador de origem** (`comex-origin`): «Produtos DELPI» | «Consultar NCM» — a seleção e os chips são compartilhados entre as origens.
+- **Entrada direta**: campo aceita um ou mais códigos com espaços/pontos/vírgulas; cada token é normalizado (`\D` strip) e exige exatamente 8 dígitos — tokens inválidos são rejeitados com aviso nominando-os; dedup contra as três origens; união limitada a 20 NCMs (contrato BFF multi-NCM). Formato válido **nunca** implica vigência fiscal.
+- **Promoção**: NCM direta ativa na allowlist (`selectable_in_ui`) entra na análise na hora — mesma regra da origem produto.
+- **Remoção**: chip de remoção nas NCMs diretas; ao remover, a contribuição na análise cai junto se nenhum produto selecionado usar a mesma NCM.
+- **Persistência**: novo param `direct_ncm` (CSV 8 dígitos validado) — F5, link compartilhado e voltar/avançar restauram; views salvas carregam a seleção direta em `selected_materials` (slot genérico do contrato existente).
+- **Empty state**: removidos os cards `—` de prévia; mensagem + próximos passos curtos e orientados à ação (selecionar/solicitar homologação).
+- **Layout**: rodapé análise+views em grid 2 colunas (empilha no mobile); conteúdo/help/manual sincronizados.
+
+### 16.2 Smoke autenticado em produção
+
+| Caso | Resultado |
+|---|---|
+| `POST ncm-governance {ncm_code: "8544.42.00"}` | **422 `invalid_ncm`** |
+| `POST {ncm_code: "99999999", initial_status: pending_fiscal_review}` | **201** `pending_fiscal_review` (sem vínculo de produto) |
+| `POST` em NCM inativa existente | **409 `ncm_already_registered`** (contrato — UI usa resubmit) |
+| Cleanup `pending → rejected` (manage) | 200 |
+| `GET ncm-governance` sem token | 401 |
+
+### 16.3 Verificações
+
+Vitest 51 arquivos / **511 testes** verdes (2 novos: parse + round-trip `direct_ncm`); `tsc -b` limpo; build Vite ok; ESLint 5 warnings pré-existentes, 0 erros. Bundle produção `App-EXWSSnSw.js` contém `direct_ncm`/`comex-origin`.
+
+**Residuais:** AC visual (desktop/mobile/temas) `INCONCLUSIVE` sem captura de browser; o registro de teste `99999999` permanece como `rejected` na trilha de auditoria (rows de governança não são deletáveis por desenho).
