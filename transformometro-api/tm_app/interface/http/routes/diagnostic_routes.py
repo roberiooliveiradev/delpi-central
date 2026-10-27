@@ -66,6 +66,7 @@ from tm_app.application.use_cases.diagnostic_read import (
 from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.responses import fail, ok
 from tm_app.infrastructure.bpmn_migration_composition import (
+    build_bpmn_document_stack,
     build_migration_write_stack,
 )
 from tm_app.infrastructure.diagnostic_composition import (
@@ -92,6 +93,7 @@ _orchestrator = GovernedWriteOrchestrator(
     GuidedImprovementPackageService(_dispatch),
     diagnostic_stack=_diagnostic_stack,
     migration_stack=build_migration_write_stack(),
+    bpmn_document_stack=build_bpmn_document_stack(),
 )
 _governed = GovernedActionsFacade(_orchestrator, _dispatch)
 

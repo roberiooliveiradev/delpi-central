@@ -685,7 +685,13 @@ def create_mcp_server() -> MCPServer:
             "migrate_legacy_diagram_to_native_bpmn (processo_id + optional "
             "resolutions/candidate_xml_override — converts the legacy "
             "flowchart_v1 mapping into the canonical native BPMN document — "
-            "confirm_before_act). Then "
+            "confirm_before_act), create_bpmn_document (processo_id + "
+            "optional BPMN 2.0 xml; blank when omitted — "
+            "confirm_before_act), save_bpmn_working_copy (processo_id + "
+            "xml + expected_version matching If-Match semantics — "
+            "auto_act), create_bpmn_revision (processo_id + "
+            "expected_version + optional name/description — auto_act). "
+            "Then "
             "commit_proposal per proposal.execution_policy; AuthZ is "
             "revalidated at ACT with authoritative read-back."
         ),
@@ -714,6 +720,10 @@ def create_mcp_server() -> MCPServer:
         display_name: str | None = None,
         resolutions: dict | None = None,
         candidate_xml_override: str | None = None,
+        xml: str | None = None,
+        expected_version: int | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_governed_operation(
             action=action,
@@ -735,6 +745,10 @@ def create_mcp_server() -> MCPServer:
             display_name=display_name,
             resolutions=resolutions,
             candidate_xml_override=candidate_xml_override,
+            xml=xml,
+            expected_version=expected_version,
+            name=name,
+            description=description,
         )
 
     @mcp.tool(

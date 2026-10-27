@@ -336,6 +336,73 @@ def _canonical_catalog() -> dict[str, Any]:
             "read_back_policy": "authoritative",
         },
         {
+            "id": "create_bpmn_document",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Create the native BPMN 2.0 document for a process — "
+                "blank artifact or caller-supplied BPMN XML. PREPARE runs "
+                "the same intake+validation pipeline as the Portal "
+                "editor; ACT calls the canonical document use case "
+                "(XOR with external reference enforced, 409 on "
+                "dual-mode). The legacy flowchart_v1 is never touched. "
+                "After commit the diagram opens in the Portal BPMN "
+                "editor."
+            ),
+            "read_write": "WRITE",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "create_bpmn_document",
+            "commit_via": "commit_proposal",
+            "confirmation_requirement": True,
+            "confirmation_policy": confirmation_kind_for_workflow(
+                "create_bpmn_document"
+            ),
+            "read_back_policy": "authoritative",
+        },
+        {
+            "id": "save_bpmn_working_copy",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Governed autosave of the native BPMN working copy — "
+                "same SaveMachine semantics as the Portal editor "
+                "(expected_version = If-Match). PREPARE validates the "
+                "candidate XML and seals it; ACT performs the optimistic "
+                "update via the canonical use case and bumps version. "
+                "Conflicts surface as typed 409 — re-read and re-PREPARE."
+            ),
+            "read_write": "WRITE",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "save_bpmn_working_copy",
+            "commit_via": "commit_proposal",
+            "confirmation_requirement": False,
+            "confirmation_policy": confirmation_kind_for_workflow(
+                "save_bpmn_working_copy"
+            ),
+            "read_back_policy": "authoritative",
+        },
+        {
+            "id": "create_bpmn_revision",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Create an immutable BPMN revision (explicit checkpoint "
+                "of the current working copy — autosave never creates "
+                "revisions, ADR-006). expected_version guards against "
+                "concurrent edits; the checkpoint seals the current "
+                "working-copy XML + checksum."
+            ),
+            "read_write": "WRITE",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "create_bpmn_revision",
+            "commit_via": "commit_proposal",
+            "confirmation_requirement": False,
+            "confirmation_policy": confirmation_kind_for_workflow(
+                "create_bpmn_revision"
+            ),
+            "read_back_policy": "authoritative",
+        },
+        {
             "id": "meeting_minute_manage",
             "kind": "workflow",
             "owner": "transformometro-api",

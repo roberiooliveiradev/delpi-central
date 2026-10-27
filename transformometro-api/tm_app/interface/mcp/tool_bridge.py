@@ -65,6 +65,7 @@ from tm_app.application.gpt_actions.user_context_service import (
     UserContextService,
 )
 from tm_app.infrastructure.bpmn_migration_composition import (
+    build_bpmn_document_stack,
     build_migration_write_stack,
 )
 from tm_app.infrastructure.diagnostic_composition import (
@@ -115,6 +116,7 @@ _orchestrator = GovernedWriteOrchestrator(
     diagnostic_stack=_diagnostic_stack,
     helpdesk_stack=build_helpdesk_write_stack(),
     migration_stack=build_migration_write_stack(),
+    bpmn_document_stack=build_bpmn_document_stack(),
 )
 _governed = GovernedActionsFacade(orchestrator=_orchestrator, dispatch=_dispatch)
 _process_context = ProcessContextService()
@@ -892,6 +894,10 @@ _GOVERNED_OPERATION_REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     # G8 — legacy → native BPMN migration. Resolutions/candidate
     # override are optional re-PREPARE inputs, not required fields.
     "migrate_legacy_diagram_to_native_bpmn": ("processo_id",),
+    # Native BPMN 2.0 authoring — canonical document use case writes.
+    "create_bpmn_document": ("processo_id",),
+    "save_bpmn_working_copy": ("processo_id", "xml", "expected_version"),
+    "create_bpmn_revision": ("processo_id", "expected_version"),
 }
 
 
@@ -915,6 +921,10 @@ def tool_prepare_governed_operation(
     display_name: str | None = None,
     resolutions: dict | None = None,
     candidate_xml_override: str | None = None,
+    xml: str | None = None,
+    expected_version: int | None = None,
+    name: str | None = None,
+    description: str | None = None,
 ) -> CallToolResult:
     """PREPARE only — one of the closed special governed operations."""
     action_norm = str(action or "").strip()
@@ -945,6 +955,10 @@ def tool_prepare_governed_operation(
         "display_name": display_name,
         "resolutions": resolutions,
         "candidate_xml_override": candidate_xml_override,
+        "xml": xml,
+        "expected_version": expected_version,
+        "name": name,
+        "description": description,
     }
     missing = [
         field

@@ -1829,6 +1829,40 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "migrate_legacy_diagram_to_native_bpmn."
                             ),
                         },
+                        "xml": {
+                            "type": "string",
+                            "description": (
+                                "BPMN 2.0 XML — required for "
+                                "save_bpmn_working_copy; optional for "
+                                "create_bpmn_document (blank artifact when "
+                                "omitted). BPMNDI layout metadata is "
+                                "preserved for the Portal editor."
+                            ),
+                        },
+                        "expected_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": (
+                                "Current document version (If-Match "
+                                "semantics) — required for "
+                                "save_bpmn_working_copy and "
+                                "create_bpmn_revision."
+                            ),
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": (
+                                "Optional revision name for "
+                                "create_bpmn_revision."
+                            ),
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": (
+                                "Optional revision description for "
+                                "create_bpmn_revision."
+                            ),
+                        },
                         "commit_now": {"type": "boolean", "default": False},
                         "confirmation": {"type": "boolean", "default": False},
                         "idempotency_key": {"type": "string"},

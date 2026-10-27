@@ -1,8 +1,7 @@
 """Registration guide for Custom GPT specialists (catalog payload).
 
 Single source of field/enum guidance for guided process + improvement signup.
-Enums come from tm_app.core.catalogs — do not duplicate literals here.
-"""
+Enums come from tm_app.core.catalogs — do not duplicate literals here."""
 
 from __future__ import annotations
 
@@ -679,6 +678,40 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "LEGACY READ ONLY — writes are blocked (LEGACY_DIAGRAM_READ_ONLY).",
                     "conteudo.format=flowchart_overlay_v1; per-revision delta; "
                     "migration source only.",
+                ],
+            },
+            "process_bpmn_document": {
+                "required": [],
+                "optional": [],
+                "enums": {},
+                "defaults": {},
+                "notes": [
+                    "NATIVE BPMN 2.0 document — the canonical diagram of "
+                    "record (entity=process_bpmn_document, id=processo_id). "
+                    "Read via record_read: returns document metadata, "
+                    "working_copy_xml, revisions and latest migration.",
+                    "Writes are GOVERNED ONLY via "
+                    "prepare_governed_operation (never "
+                    "prepare_record_change): "
+                    "create_bpmn_document (processo_id + optional xml; "
+                    "blank artifact when omitted), "
+                    "save_bpmn_working_copy (processo_id + xml + "
+                    "expected_version), "
+                    "create_bpmn_revision (processo_id + expected_version + "
+                    "optional name/description).",
+                    "Payload: BPMN 2.0 XML (same contract as the Portal "
+                    "editor — include BPMNDI shape/edge bounds so the "
+                    "editor renders positions). intake_bytes → "
+                    "LxmlBpmnValidator enforce safety/schema/semantics; "
+                    "max 10 MiB.",
+                    "Concurrency: expected_version is the canonical "
+                    "If-Match — read first (version field), then seal it "
+                    "into PREPARE; stale versions fail 409.",
+                    "XOR: a process has EITHER a native document OR an "
+                    "external BPMN reference — never both (409 "
+                    "dual_mode_forbidden).",
+                    "flowchart_v1 entities stay READ ONLY — this entity is "
+                    "the only authoring surface for new diagrams.",
                 ],
             },
             "impact_effort_matrix": {

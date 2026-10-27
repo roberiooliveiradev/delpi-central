@@ -257,6 +257,30 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         "migrate_legacy_diagram_to_native_bpmn",
         workflow_id="migrate_legacy_diagram_to_native_bpmn",
     ),
+    # --- Native BPMN 2.0 authoring (canonical document use case) -----------
+    # First native artifact becomes the mapping of record — consequential
+    # authority transition, same class as the migration.
+    WritePolicyRecord(
+        "bpmn_document.create",
+        CONFIRM_BEFORE_ACT,
+        "create_bpmn_document",
+        workflow_id="create_bpmn_document",
+    ),
+    # Working-copy autosave replaces the sealed candidate — update-class
+    # write, same canonical SaveMachine semantics as the Portal editor.
+    WritePolicyRecord(
+        "bpmn_document.save_working_copy",
+        AUTO_ACT,
+        "save_bpmn_working_copy",
+        workflow_id="save_bpmn_working_copy",
+    ),
+    # Immutable checkpoint of the current working copy — append-only.
+    WritePolicyRecord(
+        "bpmn_document.create_revision",
+        AUTO_ACT,
+        "create_bpmn_revision",
+        workflow_id="create_bpmn_revision",
+    ),
     # --- Helpdesk governed writes (BFF-owned; same-user Bearer) --------------
     # Additive ticket creation — the user's request is the intent.
     WritePolicyRecord(

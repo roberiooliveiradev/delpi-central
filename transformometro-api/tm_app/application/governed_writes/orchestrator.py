@@ -38,6 +38,14 @@ from tm_app.application.governed_writes.bpmn_migration_capability import (
     execute as _mig_execute,
     verify as _mig_verify,
 )
+from tm_app.application.governed_writes.bpmn_document_capability import (
+    BPMN_DOCUMENT_CAPABILITIES as _BPMN_DOC_CAPS,
+    BpmnDocumentWriteStack,
+    execute as _bpmn_doc_execute,
+    prepare as _bpmn_doc_prepare,
+    recompute_fingerprint as _bpmn_doc_recompute_fingerprint,
+    verify as _bpmn_doc_verify,
+)
 from tm_app.application.governed_writes.confirmation_policy import (
     CONFIRM_BEFORE_ACT,
     execution_policy_for_capability,
@@ -117,6 +125,9 @@ WRITE_CAPABILITIES = frozenset(
         "update_signature_profile",
         # G8 — legacy flowchart_v1 → Transformômetro-native BPMN migration.
         _MIG_CAP,
+        # Governed native BPMN 2.0 authoring — official application
+        # service writes only; legacy diagram entities stay read-only.
+        *_BPMN_DOC_CAPS,
     }
     # R4 Governed Helpdesk Writes — one capability per BFF write
     # operation; policy stays per-capability.
@@ -249,6 +260,11 @@ GOVERNED_OPERATION_ACTION_TO_CAPABILITY = {
     "adjust_shared_resource_cost": "adjust_shared_resource_cost",
     "update_signature_profile": "update_signature_profile",
     "migrate_legacy_diagram_to_native_bpmn": _MIG_CAP,
+    # Governed native BPMN 2.0 authoring (working copy + explicit
+    # revisions) — canonical ProcessBpmnDocumentUseCases only.
+    "create_bpmn_document": "create_bpmn_document",
+    "save_bpmn_working_copy": "save_bpmn_working_copy",
+    "create_bpmn_revision": "create_bpmn_revision",
 }
 
 # Semantic family: meeting minutes — workflow transitions and minute
@@ -348,6 +364,7 @@ class GovernedWriteOrchestrator:
         diagnostic_stack: DiagnosticWriteStack | None = None,
         helpdesk_stack: HelpdeskWriteStack | None = None,
         migration_stack: MigrationWriteStack | None = None,
+        bpmn_document_stack: BpmnDocumentWriteStack | None = None,
     ) -> None:
         self._dispatch = dispatch or GptActionsDispatchService()
         self._packages = packages or GuidedImprovementPackageService(self._dispatch)
@@ -358,6 +375,8 @@ class GovernedWriteOrchestrator:
         self._helpdesk_stack = helpdesk_stack
         # G8 migration write path — composed at the interface layer.
         self._migration_stack = migration_stack
+        # Native BPMN authoring write path — same composition style.
+        self._bpmn_document_stack = bpmn_document_stack
 
     # ------------------------------------------------------------------ prepare
 
@@ -446,6 +465,13 @@ class GovernedWriteOrchestrator:
             return _mig_prepare(
                 self._require_migration_stack(), request, args
             )
+        if capability in _BPMN_DOC_CAPS:
+            return _bpmn_doc_prepare(
+                self._require_bpmn_doc_stack(),
+                request,
+                args,
+                capability=capability,
+            )
         if capability == "meeting_minute_manage":
             return self._prep_minute_manage(request, args)
         if capability in (_DIAG_CREATE, _DIAG_MANAGE):
@@ -499,6 +525,15 @@ class GovernedWriteOrchestrator:
                 status_code=500,
             )
         return self._migration_stack
+
+    def _require_bpmn_doc_stack(self) -> BpmnDocumentWriteStack:
+        if self._bpmn_document_stack is None:
+            raise GovernedWriteError(
+                "BPMN document write stack not configured.",
+                code=INTERNAL,
+                status_code=500,
+            )
+        return self._bpmn_document_stack
 
     @staticmethod
     def _bearer(request: Request) -> str:
@@ -1299,6 +1334,10 @@ class GovernedWriteOrchestrator:
             return _mig_recompute_fingerprint(
                 self._require_migration_stack(), change
             )
+        if cap in _BPMN_DOC_CAPS:
+            return _bpmn_doc_recompute_fingerprint(
+                self._require_bpmn_doc_stack(), change
+            )
         if cap == "meeting_minute_manage":
             mid = change.get("minute_id")
             if mid:
@@ -1454,6 +1493,10 @@ class GovernedWriteOrchestrator:
         if cap == _MIG_CAP:
             return _mig_execute(
                 self._require_migration_stack(), request, change
+            )
+        if cap in _BPMN_DOC_CAPS:
+            return _bpmn_doc_execute(
+                self._require_bpmn_doc_stack(), request, change
             )
         if cap in TASK_CAPABILITIES:
             return self._dispatch.task_write(
@@ -1617,6 +1660,10 @@ class GovernedWriteOrchestrator:
         if cap == _MIG_CAP:
             return _mig_verify(
                 self._require_migration_stack(), change, write_result
+            )
+        if cap in _BPMN_DOC_CAPS:
+            return _bpmn_doc_verify(
+                self._require_bpmn_doc_stack(), change, write_result
             )
 
         if cap in TASK_CAPABILITIES:

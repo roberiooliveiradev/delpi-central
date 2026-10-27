@@ -10,6 +10,9 @@ from __future__ import annotations
 from tm_app.application.governed_writes.bpmn_migration_capability import (
     MigrationWriteStack,
 )
+from tm_app.application.governed_writes.bpmn_document_capability import (
+    BpmnDocumentWriteStack,
+)
 from tm_app.application.use_cases.manage_process_bpmn_document import (
     ProcessBpmnDocumentUseCases,
 )
@@ -41,4 +44,16 @@ def build_migration_write_stack() -> MigrationWriteStack:
         docs=docs,
         refs=refs,
         migrations=migrations,
+    )
+
+
+def build_bpmn_document_stack() -> BpmnDocumentWriteStack:
+    """Native BPMN 2.0 authoring path — the same canonical
+    ProcessBpmnDocumentUseCases the Portal editor calls."""
+    docs = ProcessBpmnDocumentRepository()
+    refs = ProcessBpmnReferenceRepository()
+    return BpmnDocumentWriteStack(
+        use_case=ProcessBpmnDocumentUseCases(docs, refs),
+        docs=docs,
+        refs=refs,
     )
