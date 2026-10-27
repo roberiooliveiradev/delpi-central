@@ -1389,6 +1389,16 @@
 @media (max-width: 1100px) {
   .delpi-mes-analytics__grid { grid-template-columns: minmax(0, 1fr); }
 }
+/* Mapeamento de tokens do kit HorizontalValueBars para a superfície
+ * clara do MFE (fallbacks do kit são voltados a fundos escuros). */
+.delpi-mes-horizontal-value-bars {
+  --delpi-ui-title: #1c2b3d;
+  --delpi-ui-text: #22344e;
+  --delpi-ui-muted: #66788f;
+  --delpi-ui-border: #dde5ef;
+  --delpi-ui-accent: #0b6bcb;
+}
+
 .delpi-mes-analytics__more {
   margin-top: 0.55rem; min-height: 2rem; padding: 0 0.75rem;
   border: 1px solid #dde5ef; border-radius: 0.6rem;
@@ -1625,6 +1635,15 @@
 .theme-dark .delpi-mes-heatmap__cell:focus-visible {
   outline-color: #7fb8ee;
 }
+:root[data-theme="dark"] .delpi-mes-horizontal-value-bars,
+.theme-dark .delpi-mes-horizontal-value-bars {
+  --delpi-ui-title: #dce6f2;
+  --delpi-ui-text: #dce6f2;
+  --delpi-ui-muted: #93a5bd;
+  --delpi-ui-border: #33455f;
+  --delpi-ui-accent: #7fb8ee;
+}
+
 :root[data-theme="dark"] .delpi-mes-analytics__more,
 .theme-dark .delpi-mes-analytics__more {
   background: #1c2940; border-color: #33455f; color: #8fc2f5;
