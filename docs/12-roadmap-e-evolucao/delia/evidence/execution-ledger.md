@@ -449,3 +449,17 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Seguranca: 0 bypass/ACT/PREPARE/fabricacao/loop; negativos preservados; cobertura parcial.
 - Veredito: NO_PROMOTION. Nenhum estagio removivel provado; nenhuma fusao melhora outcome com gargalos de jusante persistindo. KEEP todo runtime; NEEDS_OWNER_DECISION no product-search da Domain API; admissao coerente = SIMPLIFY-condicional sob modelo mais capaz (PD-1). Pacote P3 em doc 171 sec.10. DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
 - Artefatos: doc 171; delia-api/scripts/model_neutral_p1_p2_eval.py; evidence model-neutral-p1-p2-runs.json (sanitizado).
+
+
+## 2026-10-27 — DELIA-C3-LLM-NATIVE-ORCHESTRATION-IMPLEMENTATION-PRODUCTION-VALIDATION-01 (doc 172)
+
+- Escopo: implementacao do menor diff elegivel + deploy governado + validacao real em producao. Autorizado pelo usuario condicionado a gates; respeitada a revisao P3 (NO_PROMOTION p/ variantes reprovadas — nenhuma copiada).
+- Descoberta: modelo produtivo = moonshotai/kimi-k3 via OpenRouter (nao o 3B local). Baseline v23 em producao (7 consultas READ congeladas, identidade devin-smoke-r4): BUSINESS_PASS=3/7; q_discovery roteado a operational->insuficiente (bug real); q_desc_bala fail por ranking lexical do owner; q_doc fail-closed correto (transformometro.access ausente).
+- Stage-checks no modelo produtivo (so chamadas de modelo, dentro do container): kimi emite answer_requirements 3/3 corretamente (CH-2 era limite do 3B); clausula surface_inquiry 8/8 + adversariais 4/4; taxonomia A3 8/10 no kimi (nao promovida); coverage no feedback nao faz o modelo paginar (nao implementado).
+- Implementacao: instruction resource v24 apenas (turn_goal += spec answer_requirements; admission += clausula coverage->surface_inquiry) + _ORCH_VERSIONS += 24 + testes governados. Zero mudanca de logica produtiva. IMPLEMENTATION_SHA=2a6acc0f3a (rebase ff sobre origin que avancou).
+- Testes: 56 verdes (instruction resource + governed knowledge + projection omission); regressao 3B sem classe nova de degradacao.
+- Deploy canonico: git pull ff + up-prod-sequential.sh --build delia-api; container healthy; version:24 verificada in-image; DEPLOYED_SHA=2a6acc0f3a. Rollback pronto (git revert + redeploy), nao acionado.
+- Validacao produtiva pos-deploy (mesmo corpus/modelo/identidade): BUSINESS_PASS 3/7 -> 4/7 — q_discovery convertido para listing deterministico da superficie live (2.2s vs ~21s); q_partial PASS em reexecucao (variancia de juiz/provider, nao regressao); q_desc_bala permanece FAIL por ranking do owner.
+- Seguranca: 0 bypass/ACT/PREPARE/fabricacao/loop; negações fail-closed; resets de senha via admin-API na identidade dedicada (disclosed).
+- Veredito: ACCEPT_WITH_RESIDUAL. Residuais: ranking lexical do owner (NEEDS_OWNER_DECISION, Domain API), variancia do juiz, product_type arg rejeitado pelo owner em recovery. INDEPENDENT_REVIEW=PENDING; fase nao avancada.
+- Artefatos: doc 172; commit 2a6acc0f; evidencia /tmp/v24_eval.jsonl (transitoria no host; resumo sanitizado no doc).
