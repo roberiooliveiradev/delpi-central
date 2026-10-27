@@ -110,6 +110,20 @@ export const CF_HELP = {
     editDraft:
       "Edição do rascunho: altere, adicione ou remova itens e salve de uma vez — a gravação é atômica. Se outra sessão publicou ou alterou a versão, o salvamento é recusado («revisão desatualizada») para nunca sobrescrever trabalho alheio: recarregue e reaplique.",
   },
+  documentsAdmin: {
+    page:
+      "Documentos do fechamento — catálogo mestre dos tipos de documento exigidos em cada competência (exige permissão de gestão). Cada documento tem vigência derivada das versões publicadas do checklist: vigente, futuro ou encerrado. Cadastro e edição abrem páginas completas — nunca modal. Filtros ficam na URL: F5, link direto e voltar/avançar restauram a consulta. Cadastrar documentos não é pré-requisito para abrir um fechamento.",
+    list:
+      "Tipos de documento do fechamento: exigência (obrigatório/condicional/opcional), destino (Contabilidade, Fiscal ou uso interno), vigência inicial e final derivadas da timeline de versões, e situação atual. Editar abre a página completa de configuração. Desativar não apaga o histórico — a exigência apenas deixa de valer para competências futuras.",
+    formNew:
+      "Novo documento do fechamento: informe nome, finalidade, orientações de preparação, obrigatoriedade, destino e a competência a partir da qual será exigido. A vigência é prospectiva — a exigência só vale para competências abertas a partir dela. O identificador técnico é gerado do nome e fica imutável depois. Cadastrar o tipo não exige anexar nenhum arquivo: anexação acontece na competência, na aba Documentos e interações.",
+    formEdit:
+      "Editar documento: alterações de configuração e de exigência viram uma nova versão publicada com vigência prospectiva — o histórico anterior e os fechamentos encerrados nunca são reescritos. «Encerrar exigência» deixa de exigir o documento a partir da próxima competência, sem excluí-lo. Se existir rascunho ou revisão aberta no checklist mestre, o salvamento é recusado até ela ser concluída.",
+    validity:
+      "Vigência por competência: «exigido a partir de» define a primeira competência em que o documento é cobrado (nunca retroativa); «exigido até» é opcional e torna a exigência temporária — o documento deixa de ser cobrado no período seguinte. Competências já abertas guardam snapshot próprio e não mudam.",
+    history:
+      "Histórico de alterações do documento: eventos de auditoria das versões que contêm este tipo — autor, data, versão e tipo de evento (rascunho criado/atualizado, revisão, publicação).",
+  },
   p3: {
     panel:
       "Cutoff e conciliação (P3): o fechamento exige confirmação humana do cutoff — nunca é inferido de dados aparentemente estáveis. Depois do cutoff, as fontes oficiais aplicáveis (Entradas/Saídas, Inventário P7 e posição H02) são revalidadas e conciliadas. A prontidão só é alcançada com divergência monetária de exatamente R$ 0,00 em todas as fontes — R$ 0,01 ou −R$ 0,01 bloqueiam. Fonte indisponível permanece explícita: nunca é convertida em zero nem libera a prontidão. Mudar qualquer input depois da revalidação exige nova revalidação. «Estoque fechado» reflete somente o estado canônico do ERP (T03) — o Portal não fecha estoque por conta própria nem escreve no TOTVS.",

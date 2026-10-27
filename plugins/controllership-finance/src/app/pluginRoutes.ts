@@ -13,6 +13,8 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  * - `my_tasks` — projeção self-only de pendências/revisões (P4/P5).
  * - `profile` — dados corporativos do próprio usuário (Core).
  * - `catalogs_admin` — catálogos governados P6 (MANAGE).
+ * - `documents_admin` — catálogo mestre de documentos do fechamento
+ *   (UX-012, MANAGE): listagem + cadastro/edição em páginas completas.
  * Rotas futuras (Visão geral dedicada, Sala de interação, Ajuda)
  * entram aqui apenas quando implementadas.
  */
@@ -23,6 +25,7 @@ export type PluginView =
   | "checklist"
   | "checklist_admin"
   | "catalogs_admin"
+  | "documents_admin"
   | "pendencies"
   | "packages"
   | "cockpit"
@@ -41,6 +44,7 @@ export type PluginNavigationTarget =
   | "checklist"
   | "checklist_admin"
   | "catalogs_admin"
+  | "documents_admin"
   | "pendencies"
   | "packages"
   | "cockpit"
@@ -60,6 +64,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/monthly-closing": "monthly_closing",
   "closing/my-tasks": "my_tasks",
   "closing/admin/catalogs": "catalogs_admin",
+  "closing/admin/documents": "documents_admin",
   "closing/clara-consent": "clara_consent",
   "profile": "profile",
 };
@@ -75,6 +80,7 @@ const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> 
   monthly_closing: "closing/monthly-closing",
   my_tasks: "closing/my-tasks",
   catalogs_admin: "closing/admin/catalogs",
+  documents_admin: "closing/admin/documents",
   profile: "profile",
 };
 
@@ -96,6 +102,10 @@ const DOCUMENT_DETAIL_PATTERN =
 const REPORT_DETAIL_PATTERN =
   /^closing\/monthly-closing\/(\d{4}-(0[1-9]|1[0-2]))\/reports\/([A-Za-z0-9-]+)$/;
 
+/** Cadastro/edição de documento do catálogo mestre (UX-012) — deep route. */
+const DOCUMENT_ADMIN_DETAIL_PATTERN =
+  /^closing\/admin\/documents\/([A-Za-z0-9_-]{1,32})$/;
+
 export type ResolvedPluginRoute = {
   view: PluginView;
   pathname: string;
@@ -106,6 +116,8 @@ export type ResolvedPluginRoute = {
   documentRef?: string;
   /** Chave do relatório na rota contextual (`financial-settlements`, `stock-inventory`). */
   reportKey?: string;
+  /** Chave do documento na rota admin (`new` ou `item_key` do catálogo). */
+  documentItemKey?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -153,6 +165,16 @@ export function resolvePluginRoute(
       relativePath,
       checklistPeriod: reportMatch[1],
       reportKey: reportMatch[3],
+    };
+  }
+  const documentAdminMatch =
+    DOCUMENT_ADMIN_DETAIL_PATTERN.exec(relativePath);
+  if (documentAdminMatch) {
+    return {
+      view: "documents_admin",
+      pathname: path,
+      relativePath,
+      documentItemKey: documentAdminMatch[1],
     };
   }
   const periodMatch = PERIOD_DEEP_ROUTE_PATTERN.exec(relativePath);

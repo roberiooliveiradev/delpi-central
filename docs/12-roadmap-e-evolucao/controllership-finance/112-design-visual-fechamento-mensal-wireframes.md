@@ -1850,3 +1850,11 @@ A revisão arquitetural retornou `REWORK`: a preservação integral dos filtros 
 Refinar a apresentação: reduzir cards repetitivos de fonte indisponível, uma CTA contextual por situação, cabeçalho contextual único/compacto, identificação clara de qualidade de vínculo e de estados diferentes (consulta operacional, fonte P3 registrada, paridade oficial, divergência comprovada), tabelas do plugin-ui e orientações de correção humana quando comprovadas. Preservar três abas, página contextual de cada relatório, deep links, filtros, PDF sem falso produtor, e legado até gate de depreciação.
 
 **Próxima fase**: descobrir e conectar fontes reais com rastreabilidade de Ciclos 1/2, doc 83, TÉO e vídeo de Estoques/Custos, sem assumir que SB9 é o P7 oficial nem que relatório anexado representa producer. Diagnóstico e matriz de fontes em [Plano 113 §27](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md).
+
+## 48. Wireframe — Documentos do fechamento (UX-012, 28/10/2026)
+
+**IMPLEMENTADO.** Administração do catálogo mestre em páginas completas:
+
+- **Listagem** `closing/admin/documents`: `CfPagePath` (Início > Administração > Documentos do fechamento), título + descrição, CTA «Adicionar documento» e «Versões e auditoria»; `FiltersRow` (pesquisa por nome, Situação, Destino) serializado em `?q&status&dest`; `DataTableSection` com Documento (nome+finalidade), Exigência, Destino, Vigência inicial/final (MM/AAAA ou «Sem término»), Situação (`CfStatusBadge`) e ação «Editar».
+- **Cadastro/edição** `closing/admin/documents/{new|itemKey}`: seções `CfSectionCard` Identificação (nome*, descrição, orientações, identificador técnico auto-gerado/imutável após criar), Exigência (obrigatoriedade, destino, origem, via, escopo de filial, validação, R-ID) e Vigência (a partir de*, até opcional — `input type="month"`); edição exibe situação atual com janelas, histórico de eventos das versões que contêm o item e «Encerrar exigência» com `ConfirmModalPanel`. Retorno preserva a query da listagem.
+- Padrões reutilizados: filtros na URL (RW01), formulário nativo `cf-validation-panel__form`, tabela `DataTableSection`, badges `CfStatusBadge` — zero componente paralelo.

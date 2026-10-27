@@ -20,6 +20,7 @@ describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => 
       "monthly-closing-documents",
       "monthly-closing-reports",
       "closing-admin",
+      "documents-admin",
       "catalogs-admin",
     ]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
@@ -29,6 +30,7 @@ describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => 
         "profile",
         "monthly_closing",
         "checklist_admin",
+        "documents_admin",
         "catalogs_admin",
       ]),
     );

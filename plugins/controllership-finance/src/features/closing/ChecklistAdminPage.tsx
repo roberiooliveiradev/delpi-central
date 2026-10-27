@@ -55,12 +55,13 @@ import {
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
 import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
+import { navigatePluginView } from "../../app/pluginNavigation";
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/formatters";
 
 type QueryError = { status: number; code: string | null; message: string };
 
-const ERROR_MESSAGES: Record<string, string> = {
+export const ERROR_MESSAGES: Record<string, string> = {
   forbidden:
     "Você não tem autorização administrativa (controllership-finance.manage).",
   unauthorized: "Sessão expirada — autentique-se novamente.",
@@ -109,7 +110,7 @@ const STATUS_VARIANTS: Record<
   INACTIVE: "neutral",
 };
 
-const EVENT_LABELS: Record<string, string> = {
+export const EVENT_LABELS: Record<string, string> = {
   DRAFT_CREATED: "Rascunho criado",
   DRAFT_UPDATED: "Rascunho atualizado",
   VERSION_SUBMITTED_FOR_REVIEW: "Enviada a revisão",
@@ -686,6 +687,15 @@ export function ChecklistAdminPage() {
                   onClick={() => openEvents(template)}
                 >
                   Eventos de auditoria
+                </CfActionButton>
+                <CfActionButton
+                  type="button"
+                  variant="ghost"
+                  onClick={() =>
+                    navigatePluginView("documents_admin")
+                  }
+                >
+                  Documentos do fechamento
                 </CfActionButton>
               </div>
 

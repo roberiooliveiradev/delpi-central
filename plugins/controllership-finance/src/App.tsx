@@ -12,6 +12,7 @@ import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CatalogsAdminPage } from "./features/closing/CatalogsAdminPage";
 import { ClaraConsentPage } from "./features/closing/ClaraConsentPage";
 import { ChecklistAdminPage } from "./features/closing/ChecklistAdminPage";
+import { DocumentsAdminPage } from "./features/closing/DocumentsAdminPage";
 import { ClosingChecklistPage } from "./features/closing/ClosingChecklistPage";
 import { CockpitPage } from "./features/closing/CockpitPage";
 import { FinancialSettlementsPage } from "./features/closing/FinancialSettlementsPage";
@@ -66,6 +67,11 @@ function AppRoutes({
           <ChecklistAdminPage />
         ) : resolved.view === "catalogs_admin" ? (
           <CatalogsAdminPage />
+        ) : resolved.view === "documents_admin" ? (
+          <DocumentsAdminPage
+            basePath={basePath}
+            itemKey={resolved.documentItemKey}
+          />
         ) : resolved.view === "my_tasks" ? (
           <MyTasksPage />
         ) : resolved.view === "profile" ? (
