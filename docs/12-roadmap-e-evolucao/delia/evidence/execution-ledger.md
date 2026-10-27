@@ -331,3 +331,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Veredito: B_REJECTED para implementação — a exceção mandatória contribui ~24pp do desvio mas não é a causa dominante; sob delia-json o modelo não recupera sufficient nem com mandato removido (H1 parcial, H2/H5/H6 SUPPORTED, H3 REFUTED, H4 confirmado por evidência anterior). Próximo bounded: comparação de capacidade de modelo na matriz congelada + higiene da cláusula como task de contrato separada + diagnóstico goal_evidence_relevance.
 - Artefatos: doc 160; scripts assessment_ab_stagelocal_eval.py + instruction_ab_eval.py + instruction_ab_aggregate.py; evidence assessment-ab-stagelocal.json + instruction-ab-runs.{json,jsonl} + native-assessment-instruction-b.txt (sanitizados).
 - DEPLOY=BLOCKED; INDEPENDENT_REVIEW=PENDING.
+
+## 2026-10-27 — DELIA-C3-PRODUCTION-DEPLOY-SINGLE-BUSINESS-QUERY-SMOKE-01 (doc 161)
+
+- Escopo: smoke de produção autorizado — deploy verificado (delia-api/ sem diff produtivo desde 00a79c26 → DEPLOY_REQUIRED=NO, apenas git pull de docs em srv-api), gates de baseline confirmados no runtime (instrução v23 sha fcdbd185527595b9 ativa; orchestration.py idêntico ao HEAD; sem eval overrides; modelo prod = moonshotai/kimi-k3 OpenRouter), UMA consulta real read-only via /apps/delia-api/interaction/turns com identidade devin-smoke-r4 provisionada (Delia Acesso + API DELPI Acesso via use case canônico; 2 restarts core-api para cache RBAC).
+- Turno único (delia-smoke-2cfac0c60deb, HTTP 200, 16.8s, 5 model calls, ~7.3k/985 tokens): admission owner_surface → grupo openapi:delpi → capability delpi.search_products READ → args description,page_size → provider_invoke 403 mcp_authorization_denied (subject sem permissão de domínio ENGINEERING_LMP naquele momento) → síntese NON_GROUNDED honesta, zero fabricação.
+- Observação arquitetural: native_assessment/foreign_selection NÃO exercitados — a meta entrou no plano direto OPERATIONAL (self_index), que não atravessa o estágio avaliado nos docs 159/160.
+- Verificação de cobertura (read autorizado direto ao owner): search_products("terminal bala") → 77 candidatos, 65 registros TERM*/TERMINAL incluindo 10080092 e 10081004 — fonte cobre o objetivo; a negação foi AuthZ de domínio correta da identidade pré-grant.
+- Resultado: BUSINESS_OUTCOME=FAIL (first divergent = OWNER_INVOCATION, domain AuthZ da identidade); cadeia semântica íntegra e fail-closed; 0 bypass, 0 ACT/WRITE/PREPARE, 0 fabricação.
+- Artefatos: doc 161; nenhum código/instrução/modelo alterado; identidade de smoke retém roles para futuros smokes.
+- DEPLOY=EXECUTED-SKIP; INDEPENDENT_REVIEW=PENDING.
