@@ -468,3 +468,10 @@ Existe uma administração dedicada para **definir quais documentos são exigido
 - **Vencedora por competência:** a versão aplicável é a publicada com «a partir de» mais recente que não passa da competência (desempate: versão de número maior). Publicar fora de ordem cronológica é permitido e determinístico.
 - **Falha intermediária:** a gravação executa várias publicações atômicas; se uma falhar, o usuário vê erro — nunca «salvo parcialmente». Repetir a operação é seguro: passos já concluídos são detectados e pulados.
 - **Última exigência:** o contrato exige ao menos um item por versão — encerrar o único documento do checklist ainda não é possível (decisão de contrato pendente); um fechamento SEM nenhuma versão publicada já abre legitimamente sem documentos.
+
+### Adendo ao catálogo — GATE-015/016 (28/10/2026)
+
+- **Última exigência:** SUPERSEDED — DR-2 alternativa A aprovada pelo PO: encerrar o único documento é permitido via confirmação explícita (`allow_empty`), publicando versão real com zero itens (distinto de competência sem template aplicável).
+- **Escrita transacional:** cadastro/edição/encerramento é UMA operação na BFF (`PUT …/documents/{item_key}/requirement`) com `base_version` (OCC) e `Idempotency-Key`; retry é seguro e replay retorna o mesmo resultado.
+- **Rascunho aberto:** a operação é recusada com `catalog_draft_conflict` enquanto houver DRAFT/REVIEW — o administrador deve concluir/descartar o rascunho pela UI antes de alterar o catálogo.
+- **Produção:** endpoint ativo, V017 aplicada, RBAC fail-closed verificado; primeiro cadastro real será feito pelo PO (draft v1 com 53 itens reais aguarda publicação prospectiva — `effective_from` nunca cobre competência já aberta).

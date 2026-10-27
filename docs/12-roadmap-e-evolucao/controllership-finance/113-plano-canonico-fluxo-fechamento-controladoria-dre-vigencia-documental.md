@@ -1208,3 +1208,19 @@ verificado localmente; produção não deployada** (gate separado pendente).
   autenticado local com ciclo completo + auditoria conferida. Detalhe no
   doc 114 §10; ACs no ledger 23.
 - **Não realizado:** deploy produtivo (requer gate CP10 próprio).
+
+### 28.6 Registro de deploy — GATE-016 produção (28/10/2026)
+
+- **Correção:** guarda D3 (`window_covers_open_competence`) estendida aos
+  writers legados `publish_version`/`inactivate_version` — commit
+  `bc335e7f7f` (backend 692 testes verde).
+- **Deploy canônico:** pull ff-only em `srv-api` + `up-prod-sequential.sh
+  --build controllership-finance-api controllership-finance`; V017 aplicada
+  na subida; API healthy; MFE bundle novo confirmado.
+- **Smoke prod autenticado não destrutivo:** 401 sem token, 403 sem
+  permissão CF, 200 com MANAGE (`admin/checklist-templates`, versions).
+  Escrita prod: TEST_NOT_RUN — reservada ao PO.
+- **Pendência material:** draft v1 (53 itens reais) aberto em produção
+  bloqueia o comando documental via `catalog_draft_conflict` até publicação
+  prospectiva (`effective_from ≥ 2026-10`; `2026-09` aberta rejeita por D3).
+  Resolução pela UI pelo PO. Detalhe no doc 114 §11.

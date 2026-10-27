@@ -573,3 +573,26 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | RQ-ADM-06 | Filtros persistentes | `q`, `status`, `dest` na URL via `useReportQuerySync`; deep link/F5 restauram; retorno do formulário devolve a query | PASS |
 | RQ-ADM-07 | Isolamento de escrita | orquestração draft→update→review→publish nos endpoints existentes; `draft_already_open` → banner honesto; nenhum endpoint/permissão/migration novo; 403 seguro | PASS |
 | RQ-ADM-08 | Sem premissas inventadas | destino `CONTABIL`/`FISCAL`/uso-interno conforme contrato; excepcional-por-competência não exposto aqui (conceito distinto); página DRE fora de escopo | PASS |
+
+### GATE-016 — deploy produtivo e homologação (28/10/2026)
+
+| ID | Critério | Status | Evidência |
+|----|----------|--------|-----------|
+| RQ-ADM-DR1-12 | writers legados respeitam D3 (janela cobrindo competência aberta → 422) | PASS | PG: publish/inactivate bloqueados + publish prospectivo permitido; suíte 692 |
+| AC-01 | BFF em produção com endpoint documental | PASS | PUT …/requirement → 401 sem token (rota registrada); health 200 |
+| AC-02 | V017 aplicada | PASS | startup log migration_applied V017; tabela existe (0 linhas) |
+| AC-03 | Frontend atualizado e integrado | PASS | bundle prod contém Idempotency-Key/empty_resulting_checklist |
+| AC-04 | Catálogo administrativo abre | PASS | GET admin/checklist-templates 200 MANAGE (template real retornado) |
+| AC-05/06 | Cadastro/edição página completa | PENDING | homologação do PO (primeiro cadastro real) |
+| AC-07 | Filtros e navegação preservados | PASS | UX-012 inalterado neste gate (escopo backend) |
+| AC-08 | Backend protege MANAGE | PASS | 403 autenticado sem permissão CF; 401 sem token |
+| AC-09 | Operação transacional validada localmente | PASS | GATE-015 smoke + PG (13 casos) |
+| AC-10 | Checklist vazio intencional | PASS | allow_empty smoke local + empty guard 422 |
+| AC-11 | Auditoria funcional | PASS | trilha conferida no banco local; audit prod 4.511 eventos intactos |
+| AC-12 | Publicação legada compatível | PASS | D3 guard + suíte legada verde |
+| AC-13 | Snapshots preservados | PASS | competência 2026-09 OPEN template_version_id=NULL intacta |
+| AC-14 | Health/readiness produção | PASS | containers healthy pós-deploy |
+| AC-15 | Smoke autenticado prod não destrutivo | PASS | GET templates/versions 200; zero escrita |
+| AC-16 | Cadastro manual preparado para o PO | PENDING | draft v1 (53 itens) bloqueia via catalog_draft_conflict até publicação prospectiva — ver doc 114 §11.4 |
+| AC-17 | Documentação atualizada | PASS | doc 114 §11, plano 113 §28.6, ledger 23 |
+| AC-18 | Nenhuma regressão material | PASS | backend 692 + frontend 337 verde; sem overlapping remote diffs |

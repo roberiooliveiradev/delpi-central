@@ -401,3 +401,39 @@ O MFE não orquestra mais versões: `saveDocumentConfig`/`endDocumentRequirement
 - Writers legados mantidos compatíveis; novos comandos documentais devem preferir este endpoint.
 
 **Classificação:** contrato §8.6 implementado = PROVEN; D1–D5 aplicadas = PROVEN; produção = PENDING gate próprio.
+
+---
+
+## 11. GATE-016 — correções finais e deploy produtivo (PROVEN / PENDING homologação PO)
+
+`CF-PROC0072-DOCUMENT-CATALOG-PRODUCTION-GATE-016` — `bc335e7f7f` em `origin/main`.
+
+### 11.1 Correção residual (PROVEN)
+
+Os writers legados `publish_version` e `inactivate_version` aceitavam janelas cobrindo competências já abertas — divergência catálogo×snapshot que D3 proíbe. Ambos passaram a rejeitar com `window_covers_open_competence` (mesma regra do comando documental). Publicação/inativação com vigência posterior à última competência aberta segue permitida. Suíte backend: **692 passed** (inclui 3 casos novos: publish bloqueado, publish permitido, inactivate bloqueado).
+
+### 11.2 Deploy produtivo (PROVEN)
+
+- Fluxo canônico: commit `bc335e7f7f` → `srv-api: ~/projetos/delpi-central git pull --ff-only` → `./infra/scripts/up-prod-sequential.sh --build controllership-finance-api controllership-finance`.
+- `delpi-controllership-finance-api` healthy; startup log `migration_applied name=V017__document_requirement_operations.sql`.
+- `document_requirement_operation` existe em produção (0 linhas — nenhum registro artificial).
+- Bundle MFE reconstruído contém `Idempotency-Key`/`empty_resulting_checklist`/`requirement` — frontend GATE-015 em produção.
+
+### 11.3 Smoke produtivo não destrutivo (PROVEN)
+
+- `GET /health` → 200; `PUT …/documents/{key}/requirement` sem token → **401** (rota registrada, auth fail-closed).
+- Identidade de smoke dedicada (`devin-smoke-g16`, criada no Keycloak prod + seed mínimo em `delpi_core.users` + role canônica "Acesso ao Portal Controladoria e Finanças - Manage") — técnica usada porque o cache de permissões do core-api é in-memory e `devin-smoke-r4` já estava cacheado sem permissão CF. **Grant revogado e usuário KC desabilitado** após o smoke (estado RBAC restaurado).
+- Sem permissão CF → **403** (`admin/checklist-templates` e `closing/competences`).
+- Com MANAGE → `GET /admin/checklist-templates` → **200**; `GET …/versions` → **200**.
+- Escrita em produção: **TEST_NOT_RUN** — primeiro cadastro real pelo PO via UI (sem fixture descartável autorizado).
+
+### 11.4 Estado do catálogo em produção (inventário)
+
+- Template `monthly-closing-checklist`: `draft_version=1` (53 itens reais CK-E-*, criado 2026-10-24), `published_version=null`.
+- `monthly_competence`: `2026-09` OPEN com `template_version_id=NULL` (sem checklist aplicável — semântica V015, histórico preservado).
+- **Bloqueio material para o PO:** enquanto o draft v1 existir, o comando documental responde `catalog_draft_conflict` (governança anti-sobrescrita). Resolução: publicar o draft pela UI com `effective_from` **prospectivo** (`2026-10` ou posterior — `2026-09` já está aberto e a guarda D3 rejeitaria retroatividade). Após publicar, o catálogo fica operável pelo fluxo documental.
+- Resíduos descartáveis no schema `controllership_finance`: nenhum encontrado (catálogo é o draft real; auditoria 4.511 eventos = histórico necessário).
+
+### 11.5 Homologação pendente (PENDING)
+
+Cadastro/edição/encerramento reais, histórico e navegação em produção — reservados ao primeiro uso do PO pela interface administrativa.
