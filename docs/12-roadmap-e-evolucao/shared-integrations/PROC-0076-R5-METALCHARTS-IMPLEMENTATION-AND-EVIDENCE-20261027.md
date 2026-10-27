@@ -218,3 +218,42 @@ Escopo: evolução visual/funcional do dashboard R4.1 — sem dados sintéticos,
 3. Revisão institucional da licença (`license_reviewed_at`) — pendente por decisão; ativação registra permissões comprovadas.
 4. Estanho: sem cobertura Free nesta API — binding inativo até fonte alternativa homologada ou inclusão upstream.
 5. Decisão sobre exibição pública/redistribuição (crédito visível; ALI/NI têm lastro LME upstream).
+
+## 13. Comex configurável — S0 inventário + contract freeze (2026-10-27)
+
+Baseline: `486831a025`. Planos de referência em branches de PR (ainda não mergeados): `docs/proc-0076-comex-configurable-analysis-plan-20261027` (#120) e `docs/proc-0076-perspectives-comex-validation-20261027` (#119) — lidos sem merge.
+
+### 13.1 Inventário SB1010 (leitura autorizada via owner `delpi-api-delpi`)
+
+| Métrica | Valor real |
+|---|---|
+| Total `SB1010` ativa (`D_E_L_E_T_ = ''`) | 55.347 |
+| `B1_TIPO = MP` | 11.708 (11.697 com `B1_POSIPI`, **11.694 válidas** 8 dígitos) |
+| `B1_TIPO = PI` | 14.077 (14.077 com NCM, 14.076 válidas) |
+| `B1_TIPO = PA` | 22.553 (22.553 com NCM, 22.448 válidas) |
+| Outros tipos | II 3.610, MC 1.389, AI 897, MS 247, MX 189, GG 158, MO 145, EM 138, MH 137, OI 45, MR 37, SV 6, ME 4, PC 2, GN 1, PR 1 |
+| NCMs malformadas | 109 produtos / 6 valores (`8544.49.00`, `8544.42.00` pontuados; `V`; `8544420085`; `85444200 8`) |
+| NCMs distintas entre MPs | **211** |
+| NCM mais compartilhada (MP) | `85444900` → 3.834 produtos; `85369090` → 2.473 |
+| MPs de metais com NCM válida | COBRE 74, ALUMÍNIO 62, NÍQUEL 37, ESTANHO 14, ZINCO 5, CHUMBO 1 |
+| `B1_EX_NCM` | 0 usos |
+| Atenção | `B1_POSIPI` é `char(10)` com padding; `00000000` ocorre e **não** é NCM válida (tratar como ausente) |
+
+### 13.2 Contratos vigentes inspecionados
+
+- `GET /apps/api-delpi/products/search` existe, paginada, projeta `Product` completo — `ncm_ipi_position` já vem no DTO — mas **não tem filtro `product_type`** e exige `ENGINEERING_LMP_ACCESS` → **403 para usuário de Suprimentos** (provado em produção).
+- Superfície canônica Suprimentos: `api-delpi /supplies/*` com `require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)` (user-parity `dashboard-supplies.view` ou S2S confiável `caller=supplies-api`).
+- `external_data.comex_ncm_allowlist` (V005) já é o registro operacional de homologação; `comex_import_monthly_observations` persiste FOB/kg/US$/t por NCM×país×UF; feed `comex-monthly` recusa execução com allowlist vazia; normalizador exige allowlist explícita.
+- BFF: `GET /market-intelligence/imports/series?ncm=` existe (404 honesto hoje); filtros expõem `selectable`/`selectable_in_ui`.
+- Permissões disponíveis: `supplies.access` (leitura) e `supplies.manage` (gestão). Sem código por operação.
+
+### 13.3 Contract freeze (menor diff por owner)
+
+| Serviço | Mudança |
+|---|---|
+| `api-delpi` | `search_products` ganha filtros aditivos `product_type` (lista) e `subgroup`; nova rota `GET /supplies/products/search` (mesma use case, projeção reduzida + `ncm_status` derivado: `missing`/`malformed`/`present`) |
+| `external-data-api` | V009: `comex_ncm_allowlist` + `status` (`candidate`/`pending_fiscal_review`/`approved`/`rejected`/`inactive`), `reviewed_*`, `updated_at` + auditoria; rotas S2S de governança; consultas e ingestão só com `status=approved AND active` |
+| `supplies-api` | V004 `supplies.market_saved_views` (owner_user_id + unit_scope); BFF `comex/products/search` (api-delpi + estado de homologação), `comex/ncms` GET/POST + `/{code}/review` (manage-only), `saved-views` CRUD por ownership, `imports/series` multi-NCM com dedup |
+| `plugins/supplies` | Perspectiva Comex: tipo, busca paginada, multiselect chips, badges NCM, saved views, KPIs FOB/kg/US$/t ponderado |
+
+**Decisão de governança:** com apenas `supplies.access`/`supplies.manage`, todas as transições de estado da NCM exigem `supplies.manage`; a trilha de auditoria (ator+nota+timestamp) registra a responsabilidade de negócio — distinção Compras/Fiscal/Suprimentos como permissões dedicadas ficaria `PENDING` de decisão Core (não criar permission por operação).
