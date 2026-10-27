@@ -1804,3 +1804,8 @@ Correção implementada preservando 100% do visual aprovado:
   participante fora do documento omitido/404 sem consultar Core,
   >50 ids 422, Core fora 503) + 6 do hook (isolamento por
   documento/competência, abort, sem perfil stale).
+
+
+## 45. Decisões PO — Relatórios e divergências V0.2 (27/10/2026)
+
+O PO aprovou **prioridade de divergências/ações**, **catálogo por cartões de famílias**, **resultado e detalhamento dentro da própria aba** e **prévia PDF inline**, preservando exatamente três abas. Detalhamento de layout, casos vazios, origem, seleção, cálculos homologados, correção manual TOTVS e gates no [Plano 113 §25](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md). As quatro escolhas são `PRODUCT_DESIGN_APPROVED`; wireframe detalhado permanece `TARGET / PENDING_FINAL_PO_VISUAL_APPROVAL`. Sem implementação por esta decisão.
