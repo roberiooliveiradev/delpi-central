@@ -739,6 +739,9 @@ def test_catalog_effective_metalcharts_binding(monkeypatch):
     }
     assert inst["data_access_allowed"] is True
     assert inst["unit_code"] == "usd_per_pound"
+    # R5.S2: ``unit`` is the display label — the code stays machine-
+    # readable in ``unit_code``.
+    assert inst["unit"] == "US$/lb"
 
 
 def test_observations_read_from_cache_for_ttl_source(monkeypatch):
@@ -780,7 +783,7 @@ def test_observations_read_from_cache_for_ttl_source(monkeypatch):
     assert not any(c[0] == "permanent" for c in repo.calls)
     assert out["meta"]["source_ids"] == [PROVIDER_METALCHARTS]
     assert out["items"][0]["price"] == "6.69"
-    assert out["items"][0]["unit"] == "usd_per_pound"
+    assert out["items"][0]["unit"] == "US$/lb"
 
 
 def test_observations_pending_source_still_denied(monkeypatch):

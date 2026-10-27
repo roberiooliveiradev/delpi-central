@@ -770,7 +770,7 @@ class MarketIntelligenceService:
                 "description": n["description"],
                 "family_code": n.get("family_code"),
                 "ncm_version": n.get("ncm_version"),
-                "unit": "USD/metric ton",
+                "unit": n.get("unit") or "US$/t",
                 "granularities": n.get("supported_granularities")
                 or list(IMPORT_GRANULARITIES),
                 "source_id": n.get("source_id"),

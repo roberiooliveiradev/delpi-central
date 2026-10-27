@@ -125,7 +125,36 @@ Correções de contrato aplicadas ao adapter: `/v1/prices/` com barra final (sem
 
 Repetir o preenchimento de recuperação antes do TTL expirar (48h) — ou solicitar à TI a exceção de categoria para `api.metalcharts.org` no Sophos e então reavaliar a ativação do feed recorrente.
 
-## 10. Pendências
+## 10. R5.S2 — Refinamento de UX: cards, ícones, unidades e completude (2026-10-27)
+
+Escopo: evolução visual/funcional do dashboard R4.1 — sem dados sintéticos, sem conversão implícita de unidade, sem quebra de contrato.
+
+### 10.1 Contrato — unidade amigável passa a ser emitida pelo owner (external-data-api)
+
+- **Correção na fonte canônica:** `market_data_queries.py` emitia o `unit_code` cru (`usd_per_metric_ton`, `usd_per_pound`, `brl_per_usd`) no campo de exibição `unit` quando o instrumento tinha binding efetivo — a label de apresentação agora vem do mapa `_UNIT_DISPLAY_LABELS` (owner: producer), com fallback para `unit_label` do catálogo e depois para o código.
+- Mapeamento vigente: `usd_per_metric_ton`/`metric_ton` → `US$/t`, `usd_per_pound` → `US$/lb`, `brl_per_usd` → `R$/US$`, `index`/`number_index` → `Índice`, `percent` → `%`. IPP já usava `unit_label` amigável (`número-índice`, `%`) — inalterado.
+- Aplicado a: catálogo (instrumentos, `fx_series`, `import_ncms`), séries e observações (`metals`, `fx`, `comex`).
+- `unit_code` continua emitido como identidade de máquina — contrato aditivo: `unit` muda de valor bruto para label amigável; nenhum campo removido.
+- **supplies-api:** `import_ncms` passa a encaminhar `n.get("unit")` (antes hardcoded `"USD/metric ton"`); compare continua por igualdade de unidade de exibição (`US$/lb` ≠ `US$/t` ⇒ `incompatible_units` preservado); conversão BRL: `US$/t` → `BRL/t` pelo `_display_unit` vigente.
+
+### 10.2 Frontend (plugins/supplies)
+
+- **`marketUnits.ts`** (novo): `formatMarketUnit` — camada defensiva de labels para códigos brutos; valores desconhecidos passam verbatim.
+- **`marketLabels.ts`** (novo): helpers de exibição compartilhados pelos dois painéis (decimal/percent/cobertura/status/reason) — remove duplicação panel↔panel; `source_use_pending` mapeado para label honesto.
+- **Cards de instrumento** (`MarketInstrumentCard`): ícone semântico (`Boxes`), unidade formatada, linha de contexto com base da cotação (Fechamento COMEX/LME, spot, média mensal) + última referência (`Ref.: AAAA-MM-DD`); estados pending/selected preservados (D-04).
+- **Painel genérico** (`MarketIntelligencePanel`): cartões de contexto reais quando `observed === 0` (status da fonte, última coleta, última observação, período consultado, série selecionada — todos vindos de `meta.feed_ingestion`/`meta`, nunca métrica fabricada); `configState` ganha `preview` (labels+hints, valor `—`) e `nextSteps`; layout `index` passa a exibir último + média + mín/máx + cobertura; ícone de seção no header.
+- **Painel de metais** (`MarketMetalsPanel`): unidades amigáveis em KPIs/tabela/legenda/nota; **gráfico agrupado por unidade** (US$/lb e US$/t nunca no mesmo eixo); banner nomeando instrumentos selecionados sem direito de exibição com o motivo do BFF (`source_use_pending`, `granularity_not_supported`, …); ícone `Boxes` nos KPIs por instrumento e na seção.
+- **Página**: `sectionIcon` semântico por perspectiva (Boxes/ArrowLeftRight/Factory/Ship), `selectionLabel`, `granularityLabel`, `unitDetail` (base IPP `dez/2018=100`), preview Comex (valor médio, FOB, peso) + próximos passos.
+- **CSS**: `__icon`, `__heading`, `__context`, `sp-section-icon`, `sp-market-chart-group` — apenas tokens `sp-*` existentes.
+- **Ajuda**: manual do usuário e glossário atualizados (unidades US$/t e US$/lb, estados de contexto, prévia Comex).
+
+### 10.3 Semântica preservada
+
+- Nenhum valor sintético/placeholder: previews usam `—` explícito; cartões de contexto exibem apenas evidência real do `meta`.
+- Tin permanece selecionável mas não autorizado — agora nomeado no banner com motivo.
+- Comparação continua por igualdade estrita de unidade de exibição; granularidades dirigidas pelo catálogo.
+
+## 11. Pendências
 
 1. ~~Chave e homologação S1~~ → **concluído** (V008 ativa fonte + 5 bindings verificados; estanho permanece inativo).
 2. **Egresso de produção:** exceção para `api.metalcharts.org` no Sophos (bloqueio webcat cat=21) — depende de TI; até lá a ingestão é manual via túnel dentro do orçamento de franquia.

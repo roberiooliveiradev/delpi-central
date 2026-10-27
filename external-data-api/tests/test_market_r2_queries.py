@@ -171,7 +171,7 @@ def test_comex_imports_positive(repo):
     assert payload["meta"]["data_status"] == "ok"
     item = payload["items"][0]
     assert item["unit_value_usd_per_t"] == "3500"
-    assert item["unit"] == "USD/metric ton"
+    assert item["unit"] == "US$/t"
     assert item["dimensions"] == {"country_code": "160", "state_code": "SC"}
     assert repo.last_comex_query["ncm_code"] == "12345678"
 

@@ -74,6 +74,10 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     minHint: "Menor variação mensal observada no período.",
     maxTitle: "Maior variação",
     maxHint: "Maior variação mensal observada no período.",
+    minValueTitle: "Menor valor",
+    minValueHint: "Menor observação válida da série no período.",
+    maxValueTitle: "Maior valor",
+    maxValueHint: "Maior observação válida da série no período.",
     fobTotalTitle: "FOB total",
     fobTotalHint: "Soma do valor FOB (US$) dos meses com observação.",
     weightTotalTitle: "Peso líquido total",
@@ -117,7 +121,40 @@ export const MARKET_INTELLIGENCE_CONTENT = {
       "Ausência legítima: competência ainda não divulgada pela fonte ou " +
       "fora do histórico coletado — nunca exibida como zero.",
     methodologyLabel: "Metodologia",
+    configPreviewLabel: "Estrutura prevista",
+    nextStepsLabel: "Próximos passos",
   },
+
+  /** Context cards shown when a perspective has no observations — real
+   * feed/meta evidence, never placeholder data (R5.S2). */
+  statusCards: {
+    sourceStatusTitle: "Status da fonte",
+    sourceStatusHint:
+      "Estado reportado pelo serviço de dados de mercado para a série " +
+      "consultada.",
+    lastCollectionTitle: "Última coleta",
+    lastCollectionHint:
+      "Data/hora da última ingestão bem-sucedida registrada para esta " +
+      "fonte.",
+    latestObservationTitle: "Última observação",
+    latestObservationHint:
+      "Data da observação mais recente persistida desta fonte.",
+    periodTitle: "Período consultado",
+    periodHint: "Recorte de datas e frequência selecionados nos filtros.",
+    seriesTitle: "Série",
+    seriesHint: "Instrumento ou série selecionado nesta consulta.",
+    emptyValue: "—",
+  },
+
+  /** Quote-basis labels emitted by the catalog — shown as context on
+   * instrument cards and KPI lines (R5.S2). */
+  quoteBasis: {
+    comex_daily_close: "Fechamento COMEX",
+    lme_daily_close: "Fechamento LME",
+    spot_daily_close: "Fechamento spot",
+    daily_close: "Fechamento diário",
+    monthly_average: "Média mensal da fonte",
+  } as Record<string, string>,
 
   summary: {
     sectionTitle: "Resumo do período",
@@ -225,6 +262,9 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     emptySelectionMessage:
       "Marque os instrumentos acima para montar o histórico. A " +
       "seleção persiste na URL — o link restaura a mesma visão.",
+    unavailableSelectionLabel:
+      "Selecionados sem exibição autorizada no momento",
+    latestRefLabel: (date: string) => `Ref.: ${date}`,
     periodColumn: "Período",
     frequencyUnsupported:
       "frequência ainda não suportada pela série selecionada",
@@ -240,11 +280,16 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     moduleUnavailable:
       "Este indicador está indisponível no momento — a fonte não foi " +
       "ativada ou os direitos de exibição estão em revisão.",
-    comexConfigPendingTitle: "Configuração pendente",
+    comexConfigPendingTitle: "Comex — configuração pendente",
     comexConfigPending:
       "Nenhuma NCM homologada por Compras está disponível para consulta. " +
       "Quando a homologação for concluída e a fonte MDIC estiver ativa, " +
       "as importações aparecem aqui.",
+    comexNextSteps:
+      "Próximo passo: homologar a lista de NCMs de interesse com " +
+      "Compras e confirmar a fonte MDIC Comex Stat ativa. A estrutura " +
+      "abaixo mostra os indicadores que serão preenchidos — nenhum " +
+      "valor é simulado.",
     providerUnavailable:
       "Fonte temporariamente indisponível: a última coleta falhou no " +
       "provedor oficial. O serviço tenta novamente no próximo ciclo — " +
@@ -264,6 +309,8 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     granularityNotSupported:
       "Este instrumento não possui observações na frequência " +
       "selecionada — a fonte dele publica em outra periodicidade.",
+    sourceUsePending:
+      "Fonte ainda não homologada para exibição deste instrumento.",
     partialNote:
       "Dados parciais: parte do período não possui observações ou " +
       "câmbio correspondente.",

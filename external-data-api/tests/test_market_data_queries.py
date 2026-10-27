@@ -445,7 +445,7 @@ def test_fx_observations_positive(storage_on, monkeypatch):
     item = payload["items"][0]
     assert item["value"] == "5.4321"
     assert item["rate_kind"] == "ptax_closing_sell"
-    assert payload["series"]["unit"] == "BRL per USD"
+    assert payload["series"]["unit"] == "R$/US$"
 
 
 def test_fx_unknown_pair_404(storage_on, monkeypatch):

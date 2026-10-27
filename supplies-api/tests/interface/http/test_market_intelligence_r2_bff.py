@@ -550,6 +550,8 @@ def test_filters_include_r2_sections(mock_resolve, mock_validate):
     payload = response.get_json()
     assert payload["import_ncms"][0]["ncm_code"] == "74040010"
     assert payload["import_ncms"][0]["selectable"] is True
+    # R5.S2: the producer-owned unit label passes through verbatim.
+    assert payload["import_ncms"][0]["unit"] == "USD/metric ton"
     assert len(payload["producer_price_series"]) == 2
     assert (
         payload["producer_price_series"][0]["series_id"]

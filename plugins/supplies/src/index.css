@@ -2361,6 +2361,52 @@
   gap: 8px;
 }
 
+.dashboard-supplies-portal .sp-market-instrument-card__heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-market-instrument-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: var(--sp-surface-soft);
+  color: var(--sp-accent);
+  border: 1px solid var(--sp-border);
+}
+
+.dashboard-supplies-portal .sp-market-instrument-card__context {
+  font-size: 0.72rem;
+  color: var(--sp-text-muted);
+}
+
+/* Ícone semântico do painel de mercado — reutiliza os tokens do
+   cartão para não introduzir paleta própria (R5.S2). */
+.dashboard-supplies-portal .sp-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  background: var(--sp-surface-soft);
+  color: var(--sp-accent);
+  border: 1px solid var(--sp-border);
+}
+
+.dashboard-supplies-portal .sp-market-chart-group + .sp-market-chart-group {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sp-border);
+}
+
 .dashboard-supplies-portal .sp-market-instrument-card__label {
   font-weight: 600;
   font-size: 0.95rem;

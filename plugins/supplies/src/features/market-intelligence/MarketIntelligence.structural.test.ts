@@ -186,6 +186,66 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     expect(card).toContain("selectable");
     expect(card).toContain("dataAccessAllowed");
     expect(card).toContain("pendingLabel");
+    // R5.S2: semantic icon + quote-basis/reference context line.
+    expect(card).toContain("__icon");
+    expect(card).toContain("formatMarketUnit");
+    expect(card).toContain("context");
+  });
+
+  it("formats technical unit codes into friendly labels (R5.S2)", () => {
+    const units = readFileSync(join(here, "marketUnits.ts"), "utf8");
+    expect(units).toContain("usd_per_metric_ton");
+    expect(units).toContain("usd_per_pound");
+    expect(units).toContain("brl_per_usd");
+    expect(units).toContain('"US$/t"');
+    expect(units).toContain('"US$/lb"');
+    expect(units).toContain('"R$/US$"');
+    // Unknown units pass through verbatim — never silently dropped.
+    expect(units).toContain("?? unit");
+  });
+
+  it("renders honest context cards on zero-observation states (R5.S2)", () => {
+    const panel = readFileSync(
+      join(here, "MarketIntelligencePanel.tsx"),
+      "utf8",
+    );
+    const content = readFileSync(join(here, "content.ts"), "utf8");
+    // Status cards use real feed/meta evidence — never fake metrics.
+    expect(panel).toContain("statusKpis");
+    expect(panel).toContain("last_successful_at");
+    expect(panel).toContain("latest_observation_date");
+    expect(content).toContain("sourceStatusTitle");
+    expect(content).toContain("lastCollectionTitle");
+    expect(content).toContain("latestObservationTitle");
+    expect(content).toContain("periodTitle");
+    expect(content).toContain("seriesTitle");
+    // Config-pending preview is labels/hints only (value stays "—").
+    expect(panel).toContain("configState?.preview");
+    expect(panel).toContain("configState?.nextSteps");
+    expect(content).toContain("comexNextSteps");
+    expect(content).toContain("configPreviewLabel");
+    expect(content).toContain("nextStepsLabel");
+    // Section icons are semantic, rendered via header actions.
+    expect(panel).toContain("sectionIcon");
+    expect(panel).toContain("sp-section-icon");
+  });
+
+  it("names denied instruments and splits charts by unit (R5.S2)", () => {
+    const metalsPanel = readFileSync(
+      join(here, "MarketMetalsPanel.tsx"),
+      "utf8",
+    );
+    const content = readFileSync(join(here, "content.ts"), "utf8");
+    // Selected-but-denied instruments are listed with their BFF reason.
+    expect(metalsPanel).toContain("denied");
+    expect(metalsPanel).toContain("unavailable_reason");
+    expect(content).toContain("unavailableSelectionLabel");
+    expect(content).toContain("sourceUsePending");
+    // Charts never mix incompatible units on one axis.
+    expect(metalsPanel).toContain("chartGroups");
+    expect(metalsPanel).toContain("sp-market-chart-group");
+    // Series legends and table headers carry the friendly unit.
+    expect(metalsPanel).toContain("formatMarketUnit");
   });
 
   it("enables the compare mode only for ≥2 authorized series (R4-07)", () => {

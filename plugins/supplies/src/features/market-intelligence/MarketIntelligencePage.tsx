@@ -7,7 +7,13 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Boxes,
+  Factory,
+  RefreshCw,
+  Ship,
+} from "lucide-react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
@@ -41,6 +47,8 @@ import {
 import { MarketInstrumentCard } from "./MarketInstrumentCard";
 import { MarketIntelligencePanel } from "./MarketIntelligencePanel";
 import { MarketMetalsPanel } from "./MarketMetalsPanel";
+import { formatMarketUnit } from "./marketUnits";
+import { formatMarketDecimal, marketCoverageLabel } from "./marketLabels";
 import type {
   MarketIndicatorKind,
   MarketPerspective,
@@ -102,21 +110,6 @@ const INDICATOR_OPTIONS: { value: MarketIndicatorKind; label: string }[] = [
   },
 ];
 
-function formatDecimal(raw: string | null | undefined): string {
-  if (raw === null || raw === undefined) return "—";
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return "—";
-  return parsed.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  });
-}
-
-function coverageLabel(coverage: string): string {
-  return (
-    MARKET_INTELLIGENCE_CONTENT.table.coverageLabels[coverage] ?? coverage
-  );
-}
 
 export function MarketIntelligencePage({
   basePath,
@@ -425,6 +418,20 @@ export function MarketIntelligencePage({
                 code={entry.code}
                 label={entry.label}
                 unit={entry.unit}
+                context={
+                  [
+                    MARKET_INTELLIGENCE_CONTENT.quoteBasis[
+                      entry.quote_basis ?? ""
+                    ] ?? entry.quote_basis,
+                    entry.latest_observation_date
+                      ? MARKET_INTELLIGENCE_CONTENT.metals.latestRefLabel(
+                          entry.latest_observation_date,
+                        )
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || null
+                }
                 selected={selectedMetals.includes(entry.code)}
                 selectable={entry.selectable_in_ui === true}
                 dataAccessAllowed={
@@ -520,6 +527,9 @@ export function MarketIntelligencePage({
         <MarketMetalsPanel
           title={MARKET_INTELLIGENCE_CONTENT.metals.sectionTitle}
           hint={MARKET_INTELLIGENCE_CONTENT.metals.sectionHint}
+          sectionIcon={
+            <Boxes size={18} strokeWidth={1.75} aria-hidden="true" />
+          }
           enabled={!catalogError && !catalogLoading}
           configured={metalCards.length > 0}
           configState={{
@@ -550,6 +560,18 @@ export function MarketIntelligencePage({
         <MarketIntelligencePanel<MarketProducerPricePoint>
           title={MARKET_INTELLIGENCE_CONTENT.modules.ippTitle}
           hint={SP_HELP.marketIntelligenceIpp}
+          sectionIcon={
+            <Factory size={18} strokeWidth={1.75} aria-hidden="true" />
+          }
+          selectionLabel={selectedIppEntry?.label}
+          granularityLabel={
+            GRANULARITY_LABELS[filters.state.granularity]
+          }
+          unitDetail={
+            selectedIppEntry?.base_reference
+              ? `base ${selectedIppEntry.base_reference}`
+              : undefined
+          }
           enabled={!catalogError && !catalogLoading}
           configured={selectableIpp.length > 0}
           configState={{
@@ -596,13 +618,13 @@ export function MarketIntelligencePage({
             {
               key: "value",
               header: MARKET_INTELLIGENCE_CONTENT.modules.ippValueColumn,
-              render: (row) => formatDecimal(row.value),
+              render: (row) => formatMarketDecimal(row.value),
               align: "right",
             },
             {
               key: "coverage",
               header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
-              render: (row) => coverageLabel(row.coverage),
+              render: (row) => marketCoverageLabel(row.coverage),
             },
           ]}
           kpiLayout={
@@ -610,7 +632,7 @@ export function MarketIntelligencePage({
               ? "index"
               : "percent"
           }
-          unitLabel={selectedIppEntry?.unit ?? ""}
+          unitLabel={formatMarketUnit(selectedIppEntry?.unit ?? "")}
           valueLegend={selectedIppEntry?.label ?? "IPP"}
           tableAriaLabel={
             MARKET_INTELLIGENCE_CONTENT.modules.ippTitle
@@ -628,6 +650,17 @@ export function MarketIntelligencePage({
         >
           title={MARKET_INTELLIGENCE_CONTENT.modules.importsTitle}
           hint={SP_HELP.marketIntelligenceImports}
+          sectionIcon={
+            <Ship size={18} strokeWidth={1.75} aria-hidden="true" />
+          }
+          selectionLabel={
+            selectableNcms.find(
+              (entry) => entry.ncm_code === selectedNcm,
+            )?.description ?? selectedNcm
+          }
+          granularityLabel={
+            GRANULARITY_LABELS[filters.state.granularity]
+          }
           enabled={!catalogError && !catalogLoading}
           configured={selectableNcms.length > 0}
           configState={{
@@ -635,6 +668,26 @@ export function MarketIntelligencePage({
               MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
             message:
               MARKET_INTELLIGENCE_CONTENT.states.comexConfigPending,
+            nextSteps:
+              MARKET_INTELLIGENCE_CONTENT.states.comexNextSteps,
+            preview: [
+              {
+                title:
+                  MARKET_INTELLIGENCE_CONTENT.kpis.latestUnitValueTitle,
+                hint: MARKET_INTELLIGENCE_CONTENT.kpis
+                  .latestUnitValueHint,
+              },
+              {
+                title: MARKET_INTELLIGENCE_CONTENT.kpis.fobTotalTitle,
+                hint: MARKET_INTELLIGENCE_CONTENT.kpis.fobTotalHint,
+              },
+              {
+                title:
+                  MARKET_INTELLIGENCE_CONTENT.kpis.weightTotalTitle,
+                hint: MARKET_INTELLIGENCE_CONTENT.kpis
+                  .weightTotalHint,
+              },
+            ],
           }}
           selection={selectedNcm}
           from={filters.state.from}
@@ -677,30 +730,34 @@ export function MarketIntelligencePage({
             {
               key: "fob",
               header: MARKET_INTELLIGENCE_CONTENT.modules.importsFobColumn,
-              render: (row) => formatDecimal(row.fob_usd_total),
+              render: (row) => formatMarketDecimal(row.fob_usd_total),
               align: "right",
             },
             {
               key: "weight",
               header:
                 MARKET_INTELLIGENCE_CONTENT.modules.importsWeightColumn,
-              render: (row) => formatDecimal(row.net_weight_t),
+              render: (row) => formatMarketDecimal(row.net_weight_t),
               align: "right",
             },
             {
               key: "unit",
               header: MARKET_INTELLIGENCE_CONTENT.modules.importsUnitColumn,
-              render: (row) => formatDecimal(row.unit_value_usd_per_t),
+              render: (row) => formatMarketDecimal(row.unit_value_usd_per_t),
               align: "right",
             },
             {
               key: "coverage",
               header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
-              render: (row) => coverageLabel(row.coverage),
+              render: (row) => marketCoverageLabel(row.coverage),
             },
           ]}
           kpiLayout="import"
-          unitLabel="US$/t"
+          unitLabel={formatMarketUnit(
+            selectableNcms.find(
+              (entry) => entry.ncm_code === selectedNcm,
+            )?.unit ?? "US$/t",
+          )}
           valueLegend={
             MARKET_INTELLIGENCE_CONTENT.modules.importsUnitColumn
           }
@@ -718,6 +775,21 @@ export function MarketIntelligencePage({
         <MarketIntelligencePanel<MarketSeriesPoint>
           title={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
           hint={SP_HELP.marketIntelligenceFx}
+          sectionIcon={
+            <ArrowLeftRight
+              size={18}
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
+          }
+          selectionLabel={
+            FX_KIND_OPTIONS.find(
+              (option) => option.value === filters.state.fxKind,
+            )?.label
+          }
+          granularityLabel={
+            GRANULARITY_LABELS[filters.state.granularity]
+          }
           enabled={!catalogError && !catalogLoading}
           configured={Boolean(fxInstrument)}
           configState={{
@@ -764,17 +836,17 @@ export function MarketIntelligencePage({
             {
               key: "value",
               header: MARKET_INTELLIGENCE_CONTENT.modules.fxValueColumn,
-              render: (row) => formatDecimal(row.value),
+              render: (row) => formatMarketDecimal(row.value),
               align: "right",
             },
             {
               key: "coverage",
               header: MARKET_INTELLIGENCE_CONTENT.table.coverageColumn,
-              render: (row) => coverageLabel(row.coverage),
+              render: (row) => marketCoverageLabel(row.coverage),
             },
           ]}
           kpiLayout="fx"
-          unitLabel="R$/US$"
+          unitLabel={formatMarketUnit(fxInstrument?.unit ?? "R$/US$")}
           valueLegend={MARKET_INTELLIGENCE_CONTENT.modules.fxValueColumn}
           tableAriaLabel={MARKET_INTELLIGENCE_CONTENT.modules.fxTitle}
           storageKey="supplies:market-intelligence:fx"

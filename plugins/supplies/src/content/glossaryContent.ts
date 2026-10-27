@@ -95,6 +95,11 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
       "Na Inteligência de mercado, indica se o período tem todas as observações esperadas: Completa (todos os pontos), Parcial (faltam pontos), Sem câmbio (falta PTAX para converter) ou Sem dados.",
   },
   {
+    term: "US$/t e US$/lb",
+    meaning:
+      "Unidades nativas das cotações de metais na Inteligência de mercado: dólar por tonelada métrica (LME/spot/Pink Sheet) e dólar por libra (cobre COMEX). Séries com unidades diferentes nunca são somadas nem comparadas — gráficos e comparações respeitam a unidade de cada instrumento.",
+  },
+  {
     term: "Indisponível por licença",
     meaning:
       "Na Inteligência de mercado, instrumento cuja fonte ainda não tem direito de exibição comprovado. O Portal bloqueia a consulta no serviço de dados, não oferece a série como selecionável e nunca mostra valores antigos — até que a revisão institucional aprove a exibição.",

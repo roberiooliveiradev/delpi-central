@@ -12,14 +12,18 @@
  * the view, never authorizes reading protected quotes.
  */
 
-import { Check } from "lucide-react";
+import { Boxes, Check } from "lucide-react";
+
+import { formatMarketUnit } from "./marketUnits";
 
 export type MarketInstrumentCardProps = {
   code: string;
   label: string;
-  /** Native quotation unit (e.g. ``US$/t``) — rendered verbatim,
-   * never normalized into another unit. */
+  /** Native quotation unit (code or label — always rendered through
+   * ``formatMarketUnit``, never normalized into another unit). */
   unit: string | null;
+  /** Short context line (quote basis, latest reference date). */
+  context?: string | null;
   selected: boolean;
   /** Catalog UI selectability (instrument exists for selection). */
   selectable: boolean;
@@ -36,6 +40,7 @@ export function MarketInstrumentCard({
   code,
   label,
   unit,
+  context,
   selected,
   selectable,
   dataAccessAllowed,
@@ -53,6 +58,8 @@ export function MarketInstrumentCard({
     .filter(Boolean)
     .join(" ");
 
+  const unitLabel = formatMarketUnit(unit);
+
   return (
     <button
       type="button"
@@ -63,7 +70,17 @@ export function MarketInstrumentCard({
       onClick={() => onToggle(code)}
     >
       <span className="sp-market-instrument-card__top">
-        <span className="sp-market-instrument-card__label">{label}</span>
+        <span className="sp-market-instrument-card__heading">
+          <span
+            className="sp-market-instrument-card__icon"
+            aria-hidden="true"
+          >
+            <Boxes size={16} strokeWidth={1.75} />
+          </span>
+          <span className="sp-market-instrument-card__label">
+            {label}
+          </span>
+        </span>
         <span
           className="sp-market-instrument-card__check"
           aria-hidden="true"
@@ -74,8 +91,15 @@ export function MarketInstrumentCard({
         </span>
       </span>
       <span className="sp-market-instrument-card__meta">
-        {unit ? (
-          <span className="sp-market-instrument-card__unit">{unit}</span>
+        {unitLabel ? (
+          <span className="sp-market-instrument-card__unit">
+            {unitLabel}
+          </span>
+        ) : null}
+        {context ? (
+          <span className="sp-market-instrument-card__context">
+            {context}
+          </span>
         ) : null}
         {!dataAccessAllowed ? (
           <span className="sp-market-instrument-card__pending">

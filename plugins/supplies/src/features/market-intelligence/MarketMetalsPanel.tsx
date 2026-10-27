@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3,
+  Boxes,
   GitCompareArrows,
   LineChart,
   Table2,
@@ -53,6 +54,15 @@ import {
   mapMarketIntelligenceError,
   MARKET_INTELLIGENCE_CONTENT,
 } from "./content";
+import {
+  formatMarketDecimal,
+  formatMarketPercent,
+  marketCoverageLabel,
+  marketDataStatusBadgeVariant,
+  marketUnavailableReasonLabel,
+  parsePointValue,
+} from "./marketLabels";
+import { formatMarketUnit } from "./marketUnits";
 import type { MarketViewMode } from "./marketIntelligenceUrl";
 
 const CHART_HEIGHT = 300;
@@ -73,6 +83,28 @@ export type MetalsPanelRow = {
   [instrument: string]: string | null;
 };
 
+/** Union-of-periods rows for a set of quote series — gaps stay null,
+ * never interpolated. */
+function buildSeriesRows(
+  entries: MarketQuoteSeriesResponse["series"],
+): Record<string, string | number | null>[] {
+  const periods = new Set<string>();
+  for (const entry of entries) {
+    for (const point of entry.points) periods.add(point.period);
+  }
+  const sorted = [...periods].sort();
+  return sorted.map((period) => {
+    const row: Record<string, string | number | null> = { period };
+    for (const entry of entries) {
+      const point = entry.points.find((p) => p.period === period);
+      row[entry.instrument.code] = point
+        ? parsePointValue(point.value)
+        : null;
+    }
+    return row;
+  });
+}
+
 export type MarketMetalsPanelProps = {
   title: string;
   hint?: string;
@@ -83,6 +115,8 @@ export type MarketMetalsPanelProps = {
    * configuration state, not a blank module. */
   configured: boolean;
   configState?: { title: string; message: string };
+  /** Semantic section icon rendered in the header actions (R5.S2). */
+  sectionIcon?: ReactNode;
   from: string;
   to: string;
   granularity: MarketGranularity;
@@ -95,46 +129,11 @@ export type MarketMetalsPanelProps = {
   reloadKey: number;
 };
 
-function parsePointValue(raw: string | null): number | null {
-  if (raw === null || raw === undefined) return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function formatDecimal(raw: string | null | undefined): string {
-  if (raw === null || raw === undefined) return "—";
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return "—";
-  return parsed.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  });
-}
-
-function formatPercent(raw: string | null | undefined): string {
-  if (raw === null || raw === undefined) return "—";
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return "—";
-  const sign = parsed > 0 ? "+" : "";
-  return `${sign}${parsed.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}%`;
-}
-
-function dataStatusBadgeVariant(
-  status: string | undefined,
-): "success" | "warning" | "danger" | "info" | "neutral" {
-  if (status === "ok") return "success";
-  if (status === "partial") return "warning";
-  if (status === "no_data") return "neutral";
-  return "info";
-}
-
 const KPI_ICONS = {
   chart: <LineChart size={22} strokeWidth={1.75} aria-hidden="true" />,
   bar: <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />,
   table: <Table2 size={22} strokeWidth={1.75} aria-hidden="true" />,
+  metal: <Boxes size={22} strokeWidth={1.75} aria-hidden="true" />,
   compare: (
     <GitCompareArrows size={22} strokeWidth={1.75} aria-hidden="true" />
   ),
@@ -146,6 +145,7 @@ export function MarketMetalsPanel({
   enabled,
   configured,
   configState,
+  sectionIcon,
   selection,
   from,
   to,
@@ -234,6 +234,16 @@ export function MarketMetalsPanel({
       ),
     [payload],
   );
+  /** Selected-but-denied instruments stay explicit (R5.S2) — their
+   * unavailability is named with the BFF reason, never dropped
+   * silently from the view. */
+  const denied = useMemo(
+    () =>
+      (payload?.series ?? []).filter(
+        (entry) => entry.availability.data_access_allowed !== true,
+      ),
+    [payload],
+  );
   const withData = useMemo(
     () =>
       authorized.filter(
@@ -248,22 +258,23 @@ export function MarketMetalsPanel({
 
   /** Union of periods across authorized series — gaps stay null,
    * never interpolated. */
-  const chartRows = useMemo(() => {
-    const periods = new Set<string>();
+  const chartRows = useMemo(() => buildSeriesRows(authorized), [authorized]);
+
+  /** One chart per display unit (R5.S2) — series with incompatible
+   * units (e.g. US$/lb vs US$/t) are never drawn on the same axis. */
+  const chartGroups = useMemo(() => {
+    const groups = new Map<string, typeof authorized>();
     for (const entry of authorized) {
-      for (const point of entry.points) periods.add(point.period);
+      const key = entry.unit ?? "";
+      const bucket = groups.get(key);
+      if (bucket) bucket.push(entry);
+      else groups.set(key, [entry]);
     }
-    const sorted = [...periods].sort();
-    return sorted.map((period) => {
-      const row: Record<string, string | number | null> = { period };
-      for (const entry of authorized) {
-        const point = entry.points.find((p) => p.period === period);
-        row[entry.instrument.code] = point
-          ? parsePointValue(point.value)
-          : null;
-      }
-      return row;
-    });
+    return [...groups.entries()].map(([unit, entries]) => ({
+      unit,
+      entries,
+      rows: buildSeriesRows(entries),
+    }));
   }, [authorized]);
 
   const tableRows = useMemo<MetalsPanelRow[]>(
@@ -284,7 +295,7 @@ export function MarketMetalsPanel({
     () =>
       authorized.map((entry, index) => ({
         dataKey: entry.instrument.code,
-        name: entry.instrument.label,
+        name: `${entry.instrument.label} (${formatMarketUnit(entry.unit) || "—"})`,
         fill: SERIES_FILL_TOKENS[index % SERIES_FILL_TOKENS.length],
       })),
     [authorized],
@@ -301,7 +312,15 @@ export function MarketMetalsPanel({
       maximumFractionDigits: 4,
     });
 
-  const unit = authorized[0]?.unit ?? null;
+  /** Distinct display units across authorized series — the note names
+   * every native unit present, never just the first (R5.S2). */
+  const distinctUnits = useMemo(() => {
+    const set = new Set<string>();
+    for (const entry of authorized) {
+      set.add(formatMarketUnit(entry.unit) || "—");
+    }
+    return [...set].join(" · ");
+  }, [authorized]);
   const hasData = chartRows.some((row) =>
     authorized.some(
       (entry) => row[entry.instrument.code] !== null,
@@ -355,28 +374,28 @@ export function MarketMetalsPanel({
       const entry = withData[0];
       const summary = entry.summary;
       if (!summary) return items;
-      const unitLabel = entry.unit ?? "";
+      const unitLabel = formatMarketUnit(entry.unit);
       items.push(
         {
           title: content.latestValueTitle,
           hint: content.latestValueHint,
-          value: `${formatDecimal(summary.latest?.value)} ${unitLabel}`,
+          value: `${formatMarketDecimal(summary.latest?.value)} ${unitLabel}`,
           context: summary.latest
             ? `${entry.instrument.label} · ${summary.latest.period}`
             : entry.instrument.label,
-          icon: KPI_ICONS.chart,
+          icon: KPI_ICONS.metal,
         },
         {
           title: content.averageTitle,
           hint: content.averageHint,
-          value: `${formatDecimal(summary.period_average)} ${unitLabel}`,
+          value: `${formatMarketDecimal(summary.period_average)} ${unitLabel}`,
           context: `${summary.observed} ${MARKET_INTELLIGENCE_CONTENT.summary.validObservations}`,
           icon: KPI_ICONS.bar,
         },
         {
           title: content.variationTitle,
           hint: content.variationHint,
-          value: formatPercent(summary.period_change_pct),
+          value: formatMarketPercent(summary.period_change_pct),
           context: `${from} → ${to}`,
           icon: KPI_ICONS.chart,
         },
@@ -384,10 +403,7 @@ export function MarketMetalsPanel({
           title: content.coverageTitle,
           hint: content.coverageHint,
           value: `${summary.observed}/${summary.expected}`,
-          context:
-            MARKET_INTELLIGENCE_CONTENT.table.coverageLabels[
-              summary.coverage
-            ] ?? summary.coverage,
+          context: marketCoverageLabel(summary.coverage),
           icon: KPI_ICONS.table,
         },
       );
@@ -397,14 +413,14 @@ export function MarketMetalsPanel({
         items.push({
           title: `${content.latestReferenceTitle} — ${entry.instrument.label}`,
           hint: content.latestReferenceHint,
-          value: `${formatDecimal(summary?.latest?.value)} ${entry.unit ?? ""}`,
+          value: `${formatMarketDecimal(summary?.latest?.value)} ${formatMarketUnit(entry.unit)}`,
           context: [
             summary?.latest?.period ?? "",
-            `${MARKET_INTELLIGENCE_CONTENT.kpis.variationTitle}: ${formatPercent(summary?.period_change_pct)}`,
+            `${MARKET_INTELLIGENCE_CONTENT.kpis.variationTitle}: ${formatMarketPercent(summary?.period_change_pct)}`,
           ]
             .filter(Boolean)
             .join(" · "),
-          icon: KPI_ICONS.chart,
+          icon: KPI_ICONS.metal,
         });
       }
     }
@@ -445,8 +461,8 @@ export function MarketMetalsPanel({
       ...authorized.map(
         (entry): DataTableColumn<MetalsPanelRow> => ({
           key: entry.instrument.code,
-          header: `${entry.instrument.label} (${entry.unit ?? "—"})`,
-          render: (row) => formatDecimal(row[entry.instrument.code]),
+          header: `${entry.instrument.label} (${formatMarketUnit(entry.unit) || "—"})`,
+          render: (row) => formatMarketDecimal(row[entry.instrument.code]),
           align: "right",
         }),
       ),
@@ -488,6 +504,11 @@ export function MarketMetalsPanel({
       hint={hint}
       actions={
         <div className="sp-panel-actions">
+          {sectionIcon ? (
+            <span className="sp-section-icon" aria-hidden="true">
+              {sectionIcon}
+            </span>
+          ) : null}
           <SuppliesSegmentToggle
             ariaLabel={
               MARKET_INTELLIGENCE_CONTENT.panel.viewSwitcherAriaLabel
@@ -507,7 +528,7 @@ export function MarketMetalsPanel({
           {meta?.feed_ingestion?.feed ? (
             <SuppliesStatusBadge
               label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${meta.feed_ingestion.feed}`}
-              variant={dataStatusBadgeVariant(meta.data_status)}
+              variant={marketDataStatusBadgeVariant(meta.data_status)}
             />
           ) : null}
         </div>
@@ -543,6 +564,23 @@ export function MarketMetalsPanel({
           {allPending ? (
             <SuppliesStateBanner>
               {MARKET_INTELLIGENCE_CONTENT.metals.pendingSource}
+            </SuppliesStateBanner>
+          ) : null}
+          {denied.length > 0 ? (
+            <SuppliesStateBanner>
+              <strong>
+                {
+                  MARKET_INTELLIGENCE_CONTENT.metals
+                    .unavailableSelectionLabel
+                }
+                :
+              </strong>{" "}
+              {denied
+                .map(
+                  (entry) =>
+                    `${entry.instrument.label} (${marketUnavailableReasonLabel(entry.availability.unavailable_reason)})`,
+                )
+                .join("; ")}
             </SuppliesStateBanner>
           ) : null}
           {showPartialNote ? (
@@ -645,16 +683,40 @@ export function MarketMetalsPanel({
                 />
               }
             >
-              <MultiTypeSeriesChart
-                data={chartRows}
-                categoryKey="period"
-                series={series}
-                chartType={chartType}
-                height={CHART_HEIGHT}
-                formatY={formatValue}
-                formatTooltipValue={formatValue}
-                showLegend
-              />
+              {chartGroups.map((group) => {
+                const groupCodes = new Set(
+                  group.entries.map((e) => e.instrument.code),
+                );
+                const groupSeries = series.filter((spec) =>
+                  groupCodes.has(spec.dataKey),
+                );
+                const groupHasData = group.rows.some((row) =>
+                  group.entries.some(
+                    (e) => row[e.instrument.code] !== null,
+                  ),
+                );
+                if (!groupHasData) return null;
+                return (
+                  <div
+                    key={group.unit || "unknown-unit"}
+                    className="sp-market-chart-group"
+                  >
+                    <p className="delpi-ui-section-hint-label">
+                      {formatMarketUnit(group.unit) || "—"}
+                    </p>
+                    <MultiTypeSeriesChart
+                      data={group.rows}
+                      categoryKey="period"
+                      series={groupSeries}
+                      chartType={chartType}
+                      height={CHART_HEIGHT}
+                      formatY={formatValue}
+                      formatTooltipValue={formatValue}
+                      showLegend
+                    />
+                  </div>
+                );
+              })}
             </ChartViewShell>
           ) : null}
 
@@ -711,15 +773,15 @@ export function MarketMetalsPanel({
                 {MARKET_INTELLIGENCE_CONTENT.states.methodLabel}:{" "}
                 {comparePayload?.comparison.method ?? "—"}
                 {comparePayload?.comparison.unit
-                  ? ` · ${comparePayload.comparison.unit}`
+                  ? ` · ${formatMarketUnit(comparePayload.comparison.unit)}`
                   : ""}
               </p>
             </ChartViewShell>
           ) : null}
 
-          {unit ? (
+          {distinctUnits ? (
             <p className="delpi-ui-section-hint-label">
-              {MARKET_INTELLIGENCE_CONTENT.metals.unitNote(unit)}
+              {MARKET_INTELLIGENCE_CONTENT.metals.unitNote(distinctUnits)}
             </p>
           ) : null}
           {attribution ? (

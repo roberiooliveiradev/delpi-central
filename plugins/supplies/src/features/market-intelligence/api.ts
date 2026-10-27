@@ -35,6 +35,9 @@ export type MarketInstrumentFilter = {
   kind: MarketInstrumentKind;
   label: string;
   unit: string | null;
+  /** Machine-readable unit identity (e.g. ``usd_per_metric_ton``) —
+   * ``unit`` is the display label owned by the producer. */
+  unit_code?: string | null;
   currency: MarketCurrency;
   quote_basis: string | null;
   granularities: MarketGranularity[];

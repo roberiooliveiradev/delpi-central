@@ -143,6 +143,29 @@ def _supported_granularities(native: str | None) -> list[str]:
     )
 
 
+# Display labels keyed by unit_code — ``unit_code`` stays the
+# machine-readable identity, ``unit`` is the user-facing label the
+# producer owns (never re-formatted downstream). Unknown codes fall
+# back to the catalog ``unit_label`` column, then to the code itself.
+_UNIT_DISPLAY_LABELS = {
+    "usd_per_metric_ton": "US$/t",
+    "usd_per_pound": "US$/lb",
+    "metric_ton": "US$/t",
+    "brl_per_usd": "R$/US$",
+    "index": "Índice",
+    "number_index": "Índice",
+    "percent": "%",
+}
+
+
+def _unit_display_label(
+    unit_code: str | None, fallback_label: str | None
+) -> str | None:
+    if unit_code:
+        return _UNIT_DISPLAY_LABELS.get(unit_code) or fallback_label or unit_code
+    return fallback_label
+
+
 def _effective_binding(inst, bindings, sources):
     """Lowest-priority active binding whose source is active and
     displayable — the reader's effective provider for this instrument.
@@ -173,14 +196,18 @@ def _instrument_dto(
         quote_basis = binding.quotation_basis
         currency = binding.native_currency
         unit_code = binding.unit_code
-        unit_label = binding.unit_code or inst.unit_label
+        unit_label = _unit_display_label(
+            binding.unit_code, inst.unit_label
+        )
     else:
         source_id = inst.source_id
         granularity = inst.granularity
         quote_basis = inst.quotation_basis
         currency = inst.native_currency
         unit_code = inst.unit_code
-        unit_label = inst.unit_label
+        unit_label = _unit_display_label(
+            inst.unit_code, inst.unit_label
+        )
     source = sources.get(source_id)
     display_allowed = _display_allowed(source)
     return {
@@ -249,7 +276,7 @@ def get_catalog() -> dict[str, Any]:
                 "pair": PAIR_USD_BRL,
                 "rate_kinds": list(SUPPORTED_RATE_KINDS),
                 "currency": "BRL",
-                "unit": "BRL per USD",
+                "unit": _unit_display_label("brl_per_usd", "BRL per USD"),
                 "granularity": "day",
                 "supported_granularities": _supported_granularities(
                     "day"
@@ -272,7 +299,9 @@ def get_catalog() -> dict[str, Any]:
                 "description": n["description"],
                 "family_code": n["family_code"],
                 "ncm_version": n["ncm_version"],
-                "unit": "USD/metric ton",
+                "unit": _unit_display_label(
+                    "usd_per_metric_ton", "USD/metric ton"
+                ),
                 "granularity": "month",
                 "supported_granularities": _supported_granularities(
                     "month"
@@ -464,7 +493,7 @@ def list_fx_observations(
             "pair": pair_code,
             "rate_kind": kind,
             "currency": "BRL",
-            "unit": "BRL per USD",
+            "unit": _unit_display_label("brl_per_usd", "BRL per USD"),
             "granularity": "day",
         },
         "items": [_fx_observation_dto(r, source) for r in items],
@@ -577,7 +606,9 @@ def list_comex_imports(
             "ncm_version": ncm["ncm_version"],
             "description": ncm["description"],
             "metric_kind": "comex_import",
-            "unit": "USD/metric ton",
+            "unit": _unit_display_label(
+                "usd_per_metric_ton", "USD/metric ton"
+            ),
             "granularity": "month",
         },
         "items": [_comex_observation_dto(r, source) for r in items],
@@ -673,7 +704,9 @@ def _comex_observation_dto(row, source) -> dict[str, Any]:
             if row["unit_value_usd_per_t"] is not None
             else None
         ),
-        "unit": "USD/metric ton",
+        "unit": _unit_display_label(
+            "usd_per_metric_ton", "USD/metric ton"
+        ),
         "contributing_rows": row["contributing_rows"],
         "quality": row["quality_status"],
         "dataset_year": row["dataset_year"],
@@ -720,7 +753,9 @@ def _metal_observation_dto(row, instrument, source) -> dict[str, Any]:
         # The row's own unit_code is authoritative — a binding may
         # serve a different native unit than the instrument default
         # (e.g. USD/lb COMEX vs USD/metric ton Pink Sheet).
-        "unit": row.get("unit_code") or instrument.unit_label,
+        "unit": _unit_display_label(
+            row.get("unit_code"), instrument.unit_label
+        ),
         "quote_basis": row["quote_basis"],
         "quality": row["quality_status"],
         "source": {

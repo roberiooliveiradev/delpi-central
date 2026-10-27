@@ -74,7 +74,7 @@ def _catalog() -> dict:
                 "Cobre",
                 granularities=["day", "week", "month", "year"],
                 unit_code="usd_per_pound",
-                unit="USD/lb",
+                unit="US$/lb",
                 source_id="metalcharts",
             ),
             _metal(
@@ -82,7 +82,7 @@ def _catalog() -> dict:
                 "Zinco",
                 granularities=["day", "week", "month", "year"],
                 unit_code="usd_per_metric_ton",
-                unit="USD/metric ton",
+                unit="US$/t",
                 source_id="metalcharts",
             ),
             _metal(
@@ -90,7 +90,7 @@ def _catalog() -> dict:
                 "Chumbo",
                 granularities=["day", "week", "month", "year"],
                 unit_code="usd_per_metric_ton",
-                unit="USD/metric ton",
+                unit="US$/t",
                 source_id="metalcharts",
             ),
             _metal(
@@ -98,7 +98,7 @@ def _catalog() -> dict:
                 "Estanho",
                 granularities=["month", "year"],
                 unit_code="metric_ton",
-                unit="USD/metric ton",
+                unit="US$/t",
                 source_id="world-bank-pink-sheet",
             ),
         ],
@@ -116,7 +116,7 @@ def _obs(code, day, price):
         "observation_date": day,
         "price": price,
         "currency": "USD",
-        "unit": "USD/metric ton",
+        "unit": "US$/t",
         "quote_basis": "daily_close",
         "quality": "validated",
         "source": {"source_id": "metalcharts"},
@@ -310,7 +310,7 @@ def test_compare_same_unit_daily_metals(mock_resolve, mock_validate):
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["comparison"]["comparable"] is True
-    assert payload["comparison"]["unit"] == "USD/metric ton"
+    assert payload["comparison"]["unit"] == "US$/t"
     assert "2026-10-19" in payload["periods"]
 
 

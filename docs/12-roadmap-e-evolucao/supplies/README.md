@@ -16,6 +16,10 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076.R5.S2 — Refinamento de UX: cards, ícones, unidades e completude (2026-10-27)
+
+Evolução visual/funcional do dashboard: a label de unidade amigável (`US$/t`, `US$/lb`, `R$/US$`, `Índice`, `%`) passa a ser emitida pelo producer (`unit` amigável + `unit_code` de máquina); cards de instrumento ganham ícone, base da cotação e última referência; o gráfico de metais é **agrupado por unidade** (USD/lb e USD/t nunca compartilham eixo); instrumentos selecionados sem direito de exibição são nomeados com motivo; câmbio e IPP exibem cartões de contexto reais quando não há observações; Comex pendente mostra próximos passos e prévia dos indicadores — sem valores sintéticos. Detalhes: §10 do documento de evidência R5.
+
 ## PROC-0076.R5 — MetalCharts Free API: adapter readiness (2026-10-27)
 
 Integração da MetalCharts como segunda fonte de metais na `external-data-api`. **S1 homologada em 2026-10-27 com chave real**: `/v1/prices/` + `/v1/history` retornam **cinco metais verificados** — cobre `HG` (USD/lb, COMEX), alumínio `ALI`, níquel `NI` (USD/mt, LME), zinco `ZN` e chumbo `PB` (USD/mt, SPOT), 22 barras diárias na janela Free de 30 dias; **estanho não é coberto** (`SN` → 400) e permanece inativo. V007 semeia infraestrutura (fonte `store_cache_only`, cache TTL, ledger de franquia); V008 ativa fonte e bindings verificados. Feed `metals-daily` coleta sob demanda com budget 160/8 weight sob 200/10 do Free; queries resolvem binding efetivo com fallback Pink Sheet/`source_use_pending` (quarentena LME intacta). **S1 produção (2026-10-28):** cache TTL populado com dados reais (110 barras) via recuperação autorizada — o egresso de produção é bloqueado pelo firewall Sophos para `api.metalcharts.org` (webcat cat=21), pendente de exceção de TI; BFF passa a servir granularidades por instrumento (`day`/`week`/`month`/`year` nos bindings diários, `granularity_not_supported` quando a fonte não atende a frequência).

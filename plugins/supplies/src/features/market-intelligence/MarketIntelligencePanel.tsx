@@ -8,7 +8,16 @@
  */
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { BarChart3, LineChart, Table2 } from "lucide-react";
+import {
+  AlertTriangle,
+  BarChart3,
+  CalendarDays,
+  Database,
+  History,
+  Layers,
+  LineChart,
+  Table2,
+} from "lucide-react";
 import {
   ChartSeriesColorsPopover,
   ChartTypeSegmentToggle,
@@ -46,6 +55,15 @@ import {
   mapMarketIntelligenceError,
   MARKET_INTELLIGENCE_CONTENT,
 } from "./content";
+import {
+  formatMarketDecimal,
+  formatMarketPercent,
+  marketCoverageLabel,
+  marketDataStatusBadgeVariant,
+  marketUnavailableReasonLabel,
+  parsePointValue,
+} from "./marketLabels";
+import { formatMarketUnit } from "./marketUnits";
 import type { MarketViewMode } from "./marketIntelligenceUrl";
 
 const CHART_HEIGHT = 300;
@@ -88,7 +106,22 @@ type MarketIntelligencePanelProps<R extends PanelRow> = {
    * allowlist renders the compact configuration state, not a blank
    * module (R3-07). */
   configured: boolean;
-  configState?: { title: string; message: string };
+  configState?: {
+    title: string;
+    message: string;
+    /** Honest preview of the metrics the perspective will render once
+     * configured — labels/hints only, values stay ``—`` (R5.S2). */
+    preview?: { title: string; hint: string }[];
+    nextSteps?: string;
+  };
+  /** Semantic section icon rendered in the header actions (R5.S2). */
+  sectionIcon?: ReactNode;
+  /** Human description of the active selection (fx kind, NCM, series). */
+  selectionLabel?: string;
+  /** Friendly label of the active granularity (context cards). */
+  granularityLabel?: string;
+  /** Extra unit context (e.g. IPP base reference). */
+  unitDetail?: string;
   selection: string;
   from: string;
   to: string;
@@ -107,73 +140,19 @@ type MarketIntelligencePanelProps<R extends PanelRow> = {
   reloadKey: number;
 };
 
-function parsePointValue(raw: string | null): number | null {
-  if (raw === null || raw === undefined) return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function formatDecimal(raw: string | null | undefined): string {
-  if (raw === null || raw === undefined) return "—";
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return "—";
-  return parsed.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  });
-}
-
-function formatPercent(raw: string | null | undefined): string {
-  if (raw === null || raw === undefined) return "—";
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return "—";
-  const sign = parsed > 0 ? "+" : "";
-  return `${sign}${parsed.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}%`;
-}
-
-function coverageLabel(coverage: string | undefined): string {
-  if (!coverage) return "—";
-  return (
-    MARKET_INTELLIGENCE_CONTENT.table.coverageLabels[coverage] ?? coverage
-  );
-}
-
-function dataStatusBadgeVariant(
-  status: string | undefined,
-): "success" | "warning" | "danger" | "info" | "neutral" {
-  if (status === "ok") return "success";
-  if (status === "partial") return "warning";
-  if (status === "no_data") return "neutral";
-  return "info";
-}
-
-function unavailableReasonLabel(reason: string | null | undefined): string {
-  const states = MARKET_INTELLIGENCE_CONTENT.states;
-  switch (reason) {
-    case "provider_unavailable":
-      return states.providerUnavailable;
-    case "feed_failed":
-      return states.feedFailed;
-    case "feed_disabled":
-      return states.feedDisabled;
-    case "feed_not_collected":
-      return states.feedNotCollected;
-    case "window_empty":
-      return states.windowEmpty;
-    case "granularity_not_supported":
-      return states.granularityNotSupported;
-    default:
-      return states.moduleUnavailable;
-  }
-}
-
 const KPI_ICONS = {
   chart: <LineChart size={22} strokeWidth={1.75} aria-hidden="true" />,
   bar: <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />,
   table: <Table2 size={22} strokeWidth={1.75} aria-hidden="true" />,
+  alert: (
+    <AlertTriangle size={22} strokeWidth={1.75} aria-hidden="true" />
+  ),
+  history: <History size={22} strokeWidth={1.75} aria-hidden="true" />,
+  database: <Database size={22} strokeWidth={1.75} aria-hidden="true" />,
+  calendar: (
+    <CalendarDays size={22} strokeWidth={1.75} aria-hidden="true" />
+  ),
+  series: <Layers size={22} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 export function MarketIntelligencePanel<R extends PanelRow>({
@@ -182,6 +161,10 @@ export function MarketIntelligencePanel<R extends PanelRow>({
   enabled,
   configured,
   configState,
+  sectionIcon,
+  selectionLabel,
+  granularityLabel,
+  unitDetail,
   selection,
   from,
   to,
@@ -318,6 +301,8 @@ export function MarketIntelligencePanel<R extends PanelRow>({
     });
   };
 
+  const friendlyUnit = formatMarketUnit(unitLabel);
+
   const kpis = useMemo(() => {
     if (!summary || summary.observed === 0) return [];
     const content = MARKET_INTELLIGENCE_CONTENT.kpis;
@@ -328,28 +313,32 @@ export function MarketIntelligencePanel<R extends PanelRow>({
       context: string;
       icon: ReactNode;
     }[] = [];
+    const latestContext = [
+      summary.latest ? `Competência ${summary.latest.period}` : "",
+      unitDetail ?? "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
     if (kpiLayout === "import") {
       items.push(
         {
           title: content.latestUnitValueTitle,
           hint: content.latestUnitValueHint,
-          value: `${formatDecimal(summary.latest?.value)} ${unitLabel}`,
-          context: summary.latest
-            ? `Competência ${summary.latest.period}`
-            : "",
+          value: `${formatMarketDecimal(summary.latest?.value)} ${friendlyUnit}`,
+          context: latestContext,
           icon: KPI_ICONS.chart,
         },
         {
           title: content.fobTotalTitle,
           hint: content.fobTotalHint,
-          value: `US$ ${formatDecimal(summary.totals?.fob_usd_total)}`,
+          value: `US$ ${formatMarketDecimal(summary.totals?.fob_usd_total)}`,
           context: `${summary.observed}/${summary.expected} competências`,
           icon: KPI_ICONS.bar,
         },
         {
           title: content.weightTotalTitle,
           hint: content.weightTotalHint,
-          value: `${formatDecimal(summary.totals?.net_weight_t)} t`,
+          value: `${formatMarketDecimal(summary.totals?.net_weight_t)} t`,
           context: `${from} → ${to}`,
           icon: KPI_ICONS.bar,
         },
@@ -359,17 +348,13 @@ export function MarketIntelligencePanel<R extends PanelRow>({
         title:
           kpiLayout === "fx"
             ? content.latestRateTitle
-            : kpiLayout === "percent"
-              ? content.latestValueTitle
-              : content.latestValueTitle,
+            : content.latestValueTitle,
         hint:
           kpiLayout === "fx"
             ? content.latestRateHint
             : content.latestValueHint,
-        value: `${formatDecimal(summary.latest?.value)} ${unitLabel}`,
-        context: summary.latest
-          ? `Competência ${summary.latest.period}`
-          : "",
+        value: `${formatMarketDecimal(summary.latest?.value)} ${friendlyUnit}`,
+        context: latestContext,
         icon: KPI_ICONS.chart,
       });
       if (kpiLayout === "percent") {
@@ -377,7 +362,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
           {
             title: content.minTitle,
             hint: content.minHint,
-            value: `${formatPercent(summary.period_min?.value)}`,
+            value: `${formatMarketPercent(summary.period_min?.value)}`,
             context: summary.period_min
               ? `Competência ${summary.period_min.period}`
               : "",
@@ -386,7 +371,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
           {
             title: content.maxTitle,
             hint: content.maxHint,
-            value: `${formatPercent(summary.period_max?.value)}`,
+            value: `${formatMarketPercent(summary.period_max?.value)}`,
             context: summary.period_max
               ? `Competência ${summary.period_max.period}`
               : "",
@@ -394,33 +379,118 @@ export function MarketIntelligencePanel<R extends PanelRow>({
           },
         );
       } else {
-        if (kpiLayout === "fx") {
+        if (kpiLayout === "fx" || kpiLayout === "index") {
           items.push({
             title: content.averageTitle,
             hint: content.averageHint,
-            value: `${formatDecimal(summary.period_average)} ${unitLabel}`,
+            value: `${formatMarketDecimal(summary.period_average)} ${friendlyUnit}`,
             context: `${summary.observed} ${MARKET_INTELLIGENCE_CONTENT.summary.validObservations}`,
             icon: KPI_ICONS.bar,
           });
         }
-        items.push({
-          title: content.variationTitle,
-          hint: content.variationHint,
-          value: formatPercent(summary.period_change_pct),
-          context: `${from} → ${to}`,
-          icon: KPI_ICONS.chart,
-        });
+        if (kpiLayout === "index") {
+          items.push(
+            {
+              title: content.minValueTitle,
+              hint: content.minValueHint,
+              value: `${formatMarketDecimal(summary.period_min?.value)} ${friendlyUnit}`,
+              context: summary.period_min
+                ? `Competência ${summary.period_min.period}`
+                : "",
+              icon: KPI_ICONS.bar,
+            },
+            {
+              title: content.maxValueTitle,
+              hint: content.maxValueHint,
+              value: `${formatMarketDecimal(summary.period_max?.value)} ${friendlyUnit}`,
+              context: summary.period_max
+                ? `Competência ${summary.period_max.period}`
+                : "",
+              icon: KPI_ICONS.bar,
+            },
+          );
+        } else {
+          items.push({
+            title: content.variationTitle,
+            hint: content.variationHint,
+            value: formatMarketPercent(summary.period_change_pct),
+            context: `${from} → ${to}`,
+            icon: KPI_ICONS.chart,
+          });
+        }
       }
     }
     items.push({
       title: content.coverageTitle,
       hint: content.coverageHint,
       value: `${summary.observed}/${summary.expected}`,
-      context: coverageLabel(summary.coverage),
+      context: marketCoverageLabel(summary.coverage),
       icon: KPI_ICONS.table,
     });
     return items;
-  }, [summary, kpiLayout, unitLabel, from, to]);
+  }, [summary, kpiLayout, friendlyUnit, unitDetail, from, to]);
+
+  /** Honest context cards for zero-observation states (R5.S2) — real
+   * feed/meta evidence only; no metric placeholders are fabricated. */
+  const statusKpis = useMemo(() => {
+    if (!summary || summary.observed > 0) return [];
+    const sc = MARKET_INTELLIGENCE_CONTENT.statusCards;
+    const feed = meta?.feed_ingestion;
+    const items: {
+      title: string;
+      hint: string;
+      value: string;
+      context: string;
+      icon: ReactNode;
+    }[] = [
+      {
+        title: sc.sourceStatusTitle,
+        hint: sc.sourceStatusHint,
+        value: summary.unavailable_reason
+          ? marketUnavailableReasonLabel(summary.unavailable_reason)
+          : MARKET_INTELLIGENCE_CONTENT.panel.emptyTitle,
+        context: feed?.feed ?? meta?.source_id ?? "",
+        icon: KPI_ICONS.alert,
+      },
+      {
+        title: sc.lastCollectionTitle,
+        hint: sc.lastCollectionHint,
+        value:
+          feed?.last_successful_at ??
+          meta?.last_successful_ingestion_at ??
+          sc.emptyValue,
+        context: feed?.last_run_outcome ?? "",
+        icon: KPI_ICONS.history,
+      },
+      {
+        title: sc.latestObservationTitle,
+        hint: sc.latestObservationHint,
+        value:
+          feed?.latest_observation_date ??
+          meta?.freshness?.latest_observation_date ??
+          sc.emptyValue,
+        context: "",
+        icon: KPI_ICONS.database,
+      },
+      {
+        title: sc.periodTitle,
+        hint: sc.periodHint,
+        value: `${from} → ${to}`,
+        context: granularityLabel ?? "",
+        icon: KPI_ICONS.calendar,
+      },
+    ];
+    if (selectionLabel) {
+      items.push({
+        title: sc.seriesTitle,
+        hint: sc.seriesHint,
+        value: selectionLabel,
+        context: "",
+        icon: KPI_ICONS.series,
+      });
+    }
+    return items;
+  }, [summary, meta, from, to, granularityLabel, selectionLabel]);
 
   const modeOptions = [
     {
@@ -447,6 +517,11 @@ export function MarketIntelligencePanel<R extends PanelRow>({
       hint={hint}
       actions={
         <div className="sp-panel-actions">
+          {sectionIcon ? (
+            <span className="sp-section-icon" aria-hidden="true">
+              {sectionIcon}
+            </span>
+          ) : null}
           <SuppliesSegmentToggle
             ariaLabel={
               MARKET_INTELLIGENCE_CONTENT.panel.viewSwitcherAriaLabel
@@ -466,18 +541,49 @@ export function MarketIntelligencePanel<R extends PanelRow>({
           {meta?.source_id ? (
             <SuppliesStatusBadge
               label={`${MARKET_INTELLIGENCE_CONTENT.states.sourceLabel}: ${meta.source_id}`}
-              variant={dataStatusBadgeVariant(meta.data_status)}
+              variant={marketDataStatusBadgeVariant(meta.data_status)}
             />
           ) : null}
         </div>
       }
     >
       {!configured ? (
-        <SuppliesStateBanner>
-          <strong>{configState?.title ?? ""}</strong>{" "}
-          {configState?.message ??
-            MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable}
-        </SuppliesStateBanner>
+        <>
+          <SuppliesStateBanner>
+            <strong>{configState?.title ?? ""}</strong>{" "}
+            {configState?.message ??
+              MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable}
+          </SuppliesStateBanner>
+          {configState?.nextSteps ? (
+            <p className="delpi-ui-section-hint-label">
+              <strong>
+                {MARKET_INTELLIGENCE_CONTENT.panel.nextStepsLabel}:
+              </strong>{" "}
+              {configState.nextSteps}
+            </p>
+          ) : null}
+          {configState?.preview?.length ? (
+            <>
+              <p className="delpi-ui-section-hint-label">
+                {MARKET_INTELLIGENCE_CONTENT.panel.configPreviewLabel}
+              </p>
+              <SuppliesDataCardsGrid>
+                {configState.preview.map((card) => (
+                  <SuppliesKpiCard
+                    key={card.title}
+                    title={card.title}
+                    titleHint={card.hint}
+                    value={
+                      MARKET_INTELLIGENCE_CONTENT.statusCards.emptyValue
+                    }
+                    contextLabel=""
+                    icon={KPI_ICONS.table}
+                  />
+                ))}
+              </SuppliesDataCardsGrid>
+            </>
+          ) : null}
+        </>
       ) : null}
       {loading && configured ? (
         <SuppliesLoadingCard
@@ -493,7 +599,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
         <>
           {unavailableReason ? (
             <SuppliesStateBanner>
-              {unavailableReasonLabel(unavailableReason)}
+              {marketUnavailableReasonLabel(unavailableReason)}
             </SuppliesStateBanner>
           ) : null}
           {showStaleNote ? (
@@ -511,9 +617,9 @@ export function MarketIntelligencePanel<R extends PanelRow>({
             </SuppliesStateBanner>
           ) : null}
 
-          {summary && summary.observed > 0 ? (
+          {summary ? (
             <SuppliesDataCardsGrid>
-              {kpis.map((kpi) => (
+              {(summary.observed > 0 ? kpis : statusKpis).map((kpi) => (
                 <SuppliesKpiCard
                   key={kpi.title}
                   title={kpi.title}
