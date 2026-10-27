@@ -20,8 +20,8 @@ native-continuation failure, or model capacity.
 ```
 BASE_SHA=5c1fea2d0eae98f24d3fa2842f0b50c4183aa0d9
 EVALUATED_SHA=5c1fea2d (application tree, frozen)
-FINAL_HEAD=<this commit>
-ORIGIN_MAIN=5c1fea2d at eval start
+FINAL_HEAD=d9cfdceda41b9895ecdd2dd4f1e1e9c7a1b58b8a
+ORIGIN_MAIN=5c1fea2d at eval start (2 concurrent commits rebased over)
 AUTHORITIES_READ=review b74c5380e9; docs 151–158; ledger; .cursor rules;
   AGENTS.md; orchestration.py (HEAD)
 CURRENT_PHASE=Context Intelligence — semantic-path contract diagnostic
@@ -248,8 +248,8 @@ No prompt/instruction/code change is implemented here.
 ```
 TASK_ID=DELIA-C3-NATIVE-ASSESSMENT-FOREIGN-SELECTION-CAUSAL-DIAGNOSTIC-01
 BASE_SHA=5c1fea2d0eae98f24d3fa2842f0b50c4183aa0d9
-EVALUATED_SHA=5c1fea2d  FINAL_HEAD=<this commit>
-ORIGIN_MAIN=5c1fea2d  PUSH_VERIFIED=<yes>
+EVALUATED_SHA=5c1fea2d  FINAL_HEAD=<post-rebase commit>
+ORIGIN_MAIN=d9cfdced  PUSH_VERIFIED=YES
 AUTHORITIES_READ=review b74c5380e9, docs 151–158, ledger, rules
 CURRENT_PHASE=context intelligence  CP_RQ=native_assessment/foreign_selection
 WORKTREE_STATUS=clean (concurrent work preserved)
