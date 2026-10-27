@@ -33,6 +33,50 @@ export function formatMarketPercent(raw: string | null | undefined): string {
   })}%`;
 }
 
+/** pt-BR date — full ISO dates/datetimes become `27/10/2026`; month
+ * competences (`2026-10`) become `10/2026`; anything else is passed
+ * through verbatim (e.g. ISO week `2026-W43`). Never slices an ISO
+ * string blindly: parsing failures fall back to the raw value. */
+export function formatMarketDate(raw: string | null | undefined): string {
+  if (!raw) return "—";
+  const text = String(raw).trim();
+  const dayMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (dayMatch) return `${dayMatch[3]}/${dayMatch[2]}/${dayMatch[1]}`;
+  const monthMatch = /^(\d{4})-(\d{2})$/.exec(text);
+  if (monthMatch) return `${monthMatch[2]}/${monthMatch[1]}`;
+  const stamp = new Date(text);
+  if (!Number.isNaN(stamp.getTime())) {
+    return stamp.toLocaleDateString("pt-BR");
+  }
+  return text;
+}
+
+/** pt-BR datetime — `27/10/2026 às 04:48`. The instant is parsed by
+ * `Date` (never string-sliced) and rendered in the platform display
+ * locale. */
+export function formatMarketDateTime(
+  raw: string | null | undefined,
+): string {
+  if (!raw) return "—";
+  const stamp = new Date(String(raw));
+  if (Number.isNaN(stamp.getTime())) return formatMarketDate(raw);
+  return `${stamp.toLocaleDateString("pt-BR")} às ${stamp.toLocaleTimeString(
+    "pt-BR",
+    { hour: "2-digit", minute: "2-digit" },
+  )}`;
+}
+
+/** Ingestion run outcome codes → pt-BR labels — internal statuses are
+ * never shown raw (R5.S3). */
+export function marketRunOutcomeLabel(
+  outcome: string | null | undefined,
+): string {
+  if (!outcome) return "—";
+  return (
+    MARKET_INTELLIGENCE_CONTENT.statusCards.runOutcome[outcome] ?? outcome
+  );
+}
+
 export function marketCoverageLabel(coverage: string | undefined): string {
   if (!coverage) return "—";
   return (

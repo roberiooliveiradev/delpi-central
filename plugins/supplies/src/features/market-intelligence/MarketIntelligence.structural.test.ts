@@ -211,14 +211,20 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     );
     const content = readFileSync(join(here, "content.ts"), "utf8");
     // Status cards use real feed/meta evidence — never fake metrics.
+    // R5.S3: at most three compact items — last attempt, latest
+    // observation, coverage; long messages live in the banner, and
+    // internal codes/ISO strings are formatted for display.
     expect(panel).toContain("statusKpis");
-    expect(panel).toContain("last_successful_at");
+    expect(panel).toContain("last_run_started_at");
     expect(panel).toContain("latest_observation_date");
-    expect(content).toContain("sourceStatusTitle");
-    expect(content).toContain("lastCollectionTitle");
+    expect(panel).toContain("formatMarketDateTime");
+    expect(panel).toContain("formatMarketDate");
+    expect(panel).toContain("marketRunOutcomeLabel");
+    expect(content).toContain("lastAttemptTitle");
     expect(content).toContain("latestObservationTitle");
-    expect(content).toContain("periodTitle");
-    expect(content).toContain("seriesTitle");
+    expect(content).toContain("coverageTitle");
+    expect(content).toContain("runOutcome");
+    expect(content).not.toContain("seriesTitle");
     // Config-pending preview is labels/hints only (value stays "—").
     expect(panel).toContain("configState?.preview");
     expect(panel).toContain("configState?.nextSteps");

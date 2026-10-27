@@ -56,10 +56,13 @@ import {
   MARKET_INTELLIGENCE_CONTENT,
 } from "./content";
 import {
+  formatMarketDate,
+  formatMarketDateTime,
   formatMarketDecimal,
   formatMarketPercent,
   marketCoverageLabel,
   marketDataStatusBadgeVariant,
+  marketRunOutcomeLabel,
   marketUnavailableReasonLabel,
   parsePointValue,
 } from "./marketLabels";
@@ -116,8 +119,6 @@ type MarketIntelligencePanelProps<R extends PanelRow> = {
   };
   /** Semantic section icon rendered in the header actions (R5.S2). */
   sectionIcon?: ReactNode;
-  /** Human description of the active selection (fx kind, NCM, series). */
-  selectionLabel?: string;
   /** Friendly label of the active granularity (context cards). */
   granularityLabel?: string;
   /** Extra unit context (e.g. IPP base reference). */
@@ -162,7 +163,6 @@ export function MarketIntelligencePanel<R extends PanelRow>({
   configured,
   configState,
   sectionIcon,
-  selectionLabel,
   granularityLabel,
   unitDetail,
   selection,
@@ -234,7 +234,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
   const chartPoints = useMemo(
     () =>
       rows.map((row) => ({
-        period: row.period,
+        period: formatMarketDate(row.period),
         value: parsePointValue(row.value),
       })),
     [rows],
@@ -339,7 +339,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
           title: content.weightTotalTitle,
           hint: content.weightTotalHint,
           value: `${formatMarketDecimal(summary.totals?.net_weight_t)} t`,
-          context: `${from} → ${to}`,
+          context: `${formatMarketDate(from)} → ${formatMarketDate(to)}`,
           icon: KPI_ICONS.bar,
         },
       );
@@ -414,7 +414,7 @@ export function MarketIntelligencePanel<R extends PanelRow>({
             title: content.variationTitle,
             hint: content.variationHint,
             value: formatMarketPercent(summary.period_change_pct),
-            context: `${from} → ${to}`,
+            context: `${formatMarketDate(from)} → ${formatMarketDate(to)}`,
             icon: KPI_ICONS.chart,
           });
         }
@@ -430,67 +430,49 @@ export function MarketIntelligencePanel<R extends PanelRow>({
     return items;
   }, [summary, kpiLayout, friendlyUnit, unitDetail, from, to]);
 
-  /** Honest context cards for zero-observation states (R5.S2) — real
-   * feed/meta evidence only; no metric placeholders are fabricated. */
+  /** Compact context for zero-observation states (R5.S3): at most
+   * three scannable items — last collection attempt, latest persisted
+   * observation, period coverage. Long messages belong to the state
+   * banner above, never to a KPI value slot; the selected series and
+   * the raw filter range are already visible in the filters row. */
   const statusKpis = useMemo(() => {
     if (!summary || summary.observed > 0) return [];
     const sc = MARKET_INTELLIGENCE_CONTENT.statusCards;
     const feed = meta?.feed_ingestion;
-    const items: {
-      title: string;
-      hint: string;
-      value: string;
-      context: string;
-      icon: ReactNode;
-    }[] = [
+    return [
       {
-        title: sc.sourceStatusTitle,
-        hint: sc.sourceStatusHint,
-        value: summary.unavailable_reason
-          ? marketUnavailableReasonLabel(summary.unavailable_reason)
-          : MARKET_INTELLIGENCE_CONTENT.panel.emptyTitle,
-        context: feed?.feed ?? meta?.source_id ?? "",
-        icon: KPI_ICONS.alert,
-      },
-      {
-        title: sc.lastCollectionTitle,
-        hint: sc.lastCollectionHint,
-        value:
-          feed?.last_successful_at ??
-          meta?.last_successful_ingestion_at ??
-          sc.emptyValue,
-        context: feed?.last_run_outcome ?? "",
+        title: sc.lastAttemptTitle,
+        hint: sc.lastAttemptHint,
+        value: formatMarketDateTime(
+          feed?.last_run_started_at ?? feed?.last_successful_at,
+        ),
+        context: marketRunOutcomeLabel(feed?.last_run_outcome),
         icon: KPI_ICONS.history,
       },
       {
         title: sc.latestObservationTitle,
         hint: sc.latestObservationHint,
-        value:
+        value: formatMarketDate(
           feed?.latest_observation_date ??
-          meta?.freshness?.latest_observation_date ??
-          sc.emptyValue,
+            meta?.freshness?.latest_observation_date,
+        ),
         context: "",
         icon: KPI_ICONS.database,
       },
       {
-        title: sc.periodTitle,
-        hint: sc.periodHint,
-        value: `${from} → ${to}`,
-        context: granularityLabel ?? "",
-        icon: KPI_ICONS.calendar,
+        title: sc.coverageTitle,
+        hint: sc.coverageHint,
+        value: `${summary.observed}/${summary.expected}`,
+        context: [
+          marketCoverageLabel(summary.coverage),
+          granularityLabel ?? "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        icon: KPI_ICONS.table,
       },
     ];
-    if (selectionLabel) {
-      items.push({
-        title: sc.seriesTitle,
-        hint: sc.seriesHint,
-        value: selectionLabel,
-        context: "",
-        icon: KPI_ICONS.series,
-      });
-    }
-    return items;
-  }, [summary, meta, from, to, granularityLabel, selectionLabel]);
+  }, [summary, meta, granularityLabel]);
 
   const modeOptions = [
     {

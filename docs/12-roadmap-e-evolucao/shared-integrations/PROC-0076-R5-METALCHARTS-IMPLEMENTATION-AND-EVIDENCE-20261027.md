@@ -165,7 +165,29 @@ Escopo: evolução visual/funcional do dashboard R4.1 — sem dados sintéticos,
 - Tin permanece selecionável mas não autorizado — agora nomeado no banner com motivo.
 - Comparação continua por igualdade estrita de unidade de exibição; granularidades dirigidas pelo catálogo.
 
-## 11. Pendências
+## 11. R5.S3 — PTAX: causa-raiz, correção e UX de Câmbio (2026-10-27)
+
+### 11.1 Diagnóstico
+
+- Runtime: `fx_rate_observations` vazia; 3 runs `fx-daily` falhas (26/10) com `EXTERNAL_DATA_PROVIDER_UNAVAILABLE` em ~2 ms; feed `fx-daily` desabilitado por env flag (`EXTERNAL_DATA_FEED_FX_DAILY_ENABLED=false`).
+- Conectividade do container de produção até `olinda.bcb.gov.br`: **DNS ok, TCP 443 ok, TLS ok (DigiCert/Thawte, `*.bcb.gov.br`) — sem interceptação Sophos** para este host.
+- **Causa-raiz 1 (bloqueio 403):** o adapter chamava `/v1/CotacaoDolarPeriodo` sem o segmento `/odata/` → BCB responde `403 Access Denied`. Com `/v1/odata/CotacaoDolarPeriodo` → 200.
+- **Causa-raiz 2 (contrato):** a resposta real traz apenas `cotacaoCompra`, `cotacaoVenda`, `dataHoraCotacao` — sem `tipoBoletim` — e exatamente 1 linha por dia útil (o boletim de fechamento, timestamp ~13:0x). O filtro `tipoBoletim == 'Fechamento'` descartaria todas as linhas mesmo com o endpoint correto.
+- Paginação: endpoint aceita `$top`; 1 ano = 250 linhas em ~0,1 s; janela de fim de semana → 0 linhas (ausência honesta).
+
+### 11.2 Correção (external-data-api)
+
+- URL do `CotacaoDolarPeriodo` passa a incluir `/odata/` (idempotente se `PTAX_BASE_URL` já terminar em `/odata`); `$top=1000` + seguimento de `@odata.nextLink` com bound de 8 páginas.
+- `_normalize` passa a aceitar linhas sem `tipoBoletim` (semântica do endpoint = fechamento); quando o campo existe, o filtro `Fechamento` permanece.
+- Feed `fx-daily` habilitado em produção (`infra/.env`, fonte `bcb-ptax` ativa/ODbL — direitos já comprovados).
+
+### 11.3 BFF/Frontend (R5.S3)
+
+- `feed_ingestion` passa a encaminhar `last_run_started_at`/`last_run_finished_at` (evidência real da última tentativa).
+- Cards de estado zerado: no máximo 3 itens compactos (última tentativa, última observação, cobertura) — motivo longo permanece no banner contextual, nunca como valor de KPI; outcome `failed`→"Falhou" etc.; datas/timestamps em pt-BR (`27/10/2026`, `27/10/2026 às 04:48`); card redundante de série removido.
+- `partialNote` corrigida: cita apenas observações da própria série (IPP não depende de câmbio).
+
+## 12. Pendências
 
 1. ~~Chave e homologação S1~~ → **concluído** (V008 ativa fonte + 5 bindings verificados; estanho permanece inativo).
 2. **Egresso de produção:** exceção para `api.metalcharts.org` no Sophos (bloqueio webcat cat=21) — depende de TI; até lá a ingestão é manual via túnel dentro do orçamento de franquia.

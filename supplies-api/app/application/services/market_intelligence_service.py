@@ -446,6 +446,10 @@ class MarketIntelligenceService:
                     "feed": entry.get("feed"),
                     "last_run_outcome": entry.get("last_outcome")
                     or entry.get("outcome"),
+                    "last_run_started_at": entry.get("last_run_started_at"),
+                    "last_run_finished_at": entry.get(
+                        "last_run_finished_at"
+                    ),
                     "last_error_code": entry.get("last_error_code"),
                     "source_active": entry.get("source_active"),
                     "last_successful_at": entry.get("last_successful_at"),

@@ -126,24 +126,30 @@ export const MARKET_INTELLIGENCE_CONTENT = {
   },
 
   /** Context cards shown when a perspective has no observations — real
-   * feed/meta evidence, never placeholder data (R5.S2). */
+   * feed/meta evidence, never placeholder data (R5.S2). R5.S3: only
+   * compact, scannable items — long messages belong to the state
+   * banner, never to a KPI value slot. */
   statusCards: {
-    sourceStatusTitle: "Status da fonte",
-    sourceStatusHint:
-      "Estado reportado pelo serviço de dados de mercado para a série " +
-      "consultada.",
-    lastCollectionTitle: "Última coleta",
-    lastCollectionHint:
-      "Data/hora da última ingestão bem-sucedida registrada para esta " +
-      "fonte.",
+    lastAttemptTitle: "Última tentativa de coleta",
+    lastAttemptHint:
+      "Data/hora da execução mais recente do coletor desta fonte, com " +
+      "o resultado registrado.",
     latestObservationTitle: "Última observação",
     latestObservationHint:
       "Data da observação mais recente persistida desta fonte.",
-    periodTitle: "Período consultado",
-    periodHint: "Recorte de datas e frequência selecionados nos filtros.",
-    seriesTitle: "Série",
-    seriesHint: "Instrumento ou série selecionado nesta consulta.",
+    coverageTitle: "Cobertura do período",
+    coverageHint:
+      "Observações encontradas em relação ao total esperado para o " +
+      "recorte filtrado.",
     emptyValue: "—",
+    /** Ingestion run outcome codes → pt-BR labels. */
+    runOutcome: {
+      success: "Concluída",
+      partial: "Parcial",
+      failed: "Falhou",
+      running: "Em andamento",
+      pending: "Pendente",
+    } as Record<string, string>,
   },
 
   /** Quote-basis labels emitted by the catalog — shown as context on
@@ -291,9 +297,9 @@ export const MARKET_INTELLIGENCE_CONTENT = {
       "abaixo mostra os indicadores que serão preenchidos — nenhum " +
       "valor é simulado.",
     providerUnavailable:
-      "Fonte temporariamente indisponível: a última coleta falhou no " +
-      "provedor oficial. O serviço tenta novamente no próximo ciclo — " +
-      "nenhum valor sintético é exibido.",
+      "Temporariamente indisponível: a última coleta não foi " +
+      "concluída. Os dados serão exibidos quando a conexão com a fonte " +
+      "oficial for restabelecida — nenhum valor sintético é exibido.",
     feedFailed:
       "A última coleta desta fonte falhou. Os dados históricos " +
       "persistidos, quando existirem, seguem disponíveis.",
@@ -312,8 +318,8 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     sourceUsePending:
       "Fonte ainda não homologada para exibição deste instrumento.",
     partialNote:
-      "Dados parciais: parte do período não possui observações ou " +
-      "câmbio correspondente.",
+      "Dados parciais: parte do período não possui observações da " +
+      "própria série.",
     staleNote:
       "Dados possivelmente desatualizados: a fonte está atrasada em " +
       "relação ao seu ciclo de publicação.",
