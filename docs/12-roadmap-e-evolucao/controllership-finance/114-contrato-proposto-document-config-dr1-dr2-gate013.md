@@ -358,3 +358,46 @@ Rollback: endpoint novo é aditivo — desativar rota/devolver orquestração MF
 - **RQ-ADM-DR1-11:** etapa REVIEW audita transições na mesma transação, rollback elimina também eventos de auditoria em falha.
 
 **Classificação:** D1-D5 = PRODUCT_APPROVED com condições; contrato atualizado = TARGET; implementation/tests/deploy = NOT_STARTED/TEST_NOT_RUN. Sem autorização genérica para criar mudanças de runtime sem gates.
+
+## 10. Registro de implementação — IMPLEMENTATION-GATE-015 (PROVEN, 28/10/2026)
+
+Implementação do contrato consolidado (§8.6) sob decisões PO D1–D5 (§9). Menor diff possível: nenhuma persistência paralela de catálogo foi criada — a operação reusa o modelo versionado existente.
+
+### 10.1 Contrato implementado (PROVEN em runtime local)
+
+`PUT /admin/checklist-templates/{template_id}/documents/{item_key}/requirement` (`operationId: upsert_document_requirement`, MANAGE-only, fail-closed):
+- Request: `item` (DraftItemInput) **ou** ausente = encerramento; `effective_from` `YYYY-MM`; `effective_until` opcional; `base_version` obrigatório (`ge=0` — 0 designa timeline vazia, coerente com `COALESCE(MAX(version),0)` do OCC); `allow_empty` (default `false`); header `Idempotency-Key` 1–128.
+- Resposta 200: `item_key`, `published_versions[]` (`version`, `version_id`, `effective_from_period`, `item_count`), `no_changes`, `replayed`, `audit_event_ids`.
+- Erros comprovados em smoke autenticado local (gateway + Keycloak dev): `401` sem token; `403` com `access` sem `manage`; `409 idempotency_conflict`; `409 stale_revision`; `409 catalog_draft_conflict` (rascunho/revisão aberto divergente); `422 empty_resulting_checklist` sem `allow_empty`; `422 window_covers_open_competence` (provado em suíte PG).
+
+### 10.2 Persistência — migration V017 (PROVEN)
+
+`V017__document_requirement_operations.sql` cria `document_requirement_operation` (template_id + idempotency_key UNIQUE, request_hash SHA-256, actor, result JSONB, created_at) — gravada na **mesma transação** das versões e eventos. Aplicada na subida local: `migration_applied name=V017__document_requirement_operations.sql`.
+
+### 10.3 Semântica transacional (PROVEN em testes PG + smoke)
+
+- Lock `FOR UPDATE` na linha do template (ordem canônica template → versão → itens); mesmo lock adquirido por `publish_version`, `inactivate_version`, `create_draft_version` e `open_competence` (este trava todos os templates ordenados antes de resolver a versão — publicação e abertura serializam).
+- Replay idempotente avaliado **antes** do OCC: mesma chave + mesmo hash retorna o resultado persistido (`replayed: true`) sem nova versão/evento; chave igual + hash divergente → `409 idempotency_conflict`.
+- `base_version` ≠ `MAX(version)` → `409 stale_revision`; nenhuma configuração alheia é sobrescrita.
+- Trilha REVIEW auditada dentro da transação por versão: `DRAFT_CREATED → DRAFT_UPDATED → VERSION_SUBMITTED_FOR_REVIEW → VERSION_PUBLISHED` + `DOCUMENT_CONFIG_APPLIED` (resumo com item_key, operação, janela, allow_empty, idempotency_key, versões publicadas). Verificado no banco: sem duplicatas após replay.
+- DR-2 A: versão PUBLISHED com `item_count: 0` somente com `allow_empty: true`; `template_version_id` preenchido + snapshot de zero itens permanece distinto de `NULL` (sem template aplicável).
+- Falha em qualquer etapa faz rollback integral de versões, auditoria e registro idempotente (Teste A da suíte PG).
+
+### 10.4 Frontend (PROVEN)
+
+O MFE não orquestra mais versões: `saveDocumentConfig`/`endDocumentRequirement` emitem **uma** chamada `saveDocumentRequirement` com `base_version` (`MAX(version)` visto), `Idempotency-Key` por intenção (nova chave quando `allow_empty` muda o payload) e confirmação explícita para checklist vazio. `stale_revision` oferece recarregar estado; `window_covers_open_competence`, `empty_resulting_checklist`, `busy`, `catalog_draft_conflict` têm copy própria. Interfaces UX-012 preservadas (páginas, filtros na URL, histórico, breadcrumb, light/dark).
+
+### 10.5 Evidência executada
+
+- Backend: `689 passed` (suíte completa pytest c/ PostgreSQL efêmero isolado); planner unit 15, PG document-requirement 13, rotas 30.
+- Frontend: `337 passed` (vitest); `tsc --noEmit` e `eslint` limpos nos arquivos do escopo; build MFE ok.
+- Smoke local autenticado (Keycloak dev, usuários `cf-e2e-peer` MANAGE / `cf-e2e-access` ACCESS): ciclo completo cadastro → replay → conflitos → encerramento do último item com checklist vazio publicado; auditoria conferida na tabela.
+- Pendente registrado: `DocumentDetailPanel` avatar test é flake pré-existente fora do escopo (intermitente em `main`, sem alteração neste gate).
+
+### 10.6 Limitações remanescentes
+
+- `effective_from` em competência já aberta → 422 (D3); correção excepcional segue contrato próprio por competência.
+- Deploy produtivo **não realizado** — requer gate separado (CP10); V017 é aditiva e retrocompatível.
+- Writers legados mantidos compatíveis; novos comandos documentais devem preferir este endpoint.
+
+**Classificação:** contrato §8.6 implementado = PROVEN; D1–D5 aplicadas = PROVEN; produção = PENDING gate próprio.

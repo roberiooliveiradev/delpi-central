@@ -8,25 +8,36 @@ Idempotência e concorrência resolvem no banco (UNIQUE + índice parcial +
 
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
 
+from controllership_finance_app.domain.closing_checklist import (
+    document_requirement as planner,
+)
 from controllership_finance_app.domain.closing_checklist.errors import (
+    CatalogDraftConflict,
     ChecklistDomainError,
     CompetenceNotOpened,
     DraftAlreadyOpen,
     DuplicateItemKey,
+    EmptyResultingChecklist,
+    IdempotencyConflict,
+    InvalidRequirementWindow,
     ItemNotFound,
+    OperationBusy,
     PersistenceUnavailable,
+    RetroactiveEffectivePeriod,
     StaleRevision,
     TemplateNotFound,
     VersionNotDraft,
     VersionNotFound,
     VersionNotInReview,
     VersionNotPublished,
+    WindowCoversOpenCompetence,
 )
 from controllership_finance_app.infrastructure.persistence.plugins_db import (
     SCHEMA_NAME,
@@ -193,7 +204,7 @@ class ClosingChecklistRepository:
                         cur.execute(
                             f"""
                             SELECT template_id FROM {_q('checklist_template')}
-                             WHERE template_id = %s
+                             WHERE template_id = %s FOR UPDATE
                             """,
                             (template_id,),
                         )
@@ -460,12 +471,30 @@ class ClosingChecklistRepository:
         version: int,
         effective_from_period: str,
         actor: str,
+        *,
+        allow_empty: bool = False,
     ) -> dict[str, Any]:
         """REVIEW → PUBLISHED atômico (lifecycle DRAFT→REVIEW→PUBLISH);
-        recusa edição retroativa/corrida."""
+        recusa edição retroativa/corrida.
+
+        DR-2: versão com zero itens só é aceita com `allow_empty`
+        explícito — o guard padrão continua recusando esvaziamento
+        acidental.
+        """
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT template_id FROM {_q('checklist_template')}
+                         WHERE template_id = %s FOR UPDATE
+                        """,
+                        (template_id,),
+                    )
+                    if cur.fetchone() is None:
+                        raise TemplateNotFound(
+                            "Template de checklist não encontrado."
+                        )
                     cur.execute(
                         f"""
                         UPDATE {_q('checklist_template_version')}
@@ -497,9 +526,10 @@ class ClosingChecklistRepository:
                         (row["version_id"],),
                     )
                     item_count = cur.fetchone()["count"]
-                    if item_count == 0:
-                        raise VersionNotDraft(
-                            "Versão sem itens não pode ser publicada."
+                    if item_count == 0 and not allow_empty:
+                        raise EmptyResultingChecklist(
+                            "Versão sem itens exige allow_empty "
+                            "explícito para publicar."
                         )
                     self._audit(
                         cur,
@@ -523,6 +553,17 @@ class ClosingChecklistRepository:
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT template_id FROM {_q('checklist_template')}
+                         WHERE template_id = %s FOR UPDATE
+                        """,
+                        (template_id,),
+                    )
+                    if cur.fetchone() is None:
+                        raise TemplateNotFound(
+                            "Template de checklist não encontrado."
+                        )
                     cur.execute(
                         f"""
                         UPDATE {_q('checklist_template_version')}
@@ -592,14 +633,36 @@ class ClosingChecklistRepository:
         `ON CONFLICT DO NOTHING` torna retry/replay seguro; quando a
         competência já existe retorna a existente (created=False) sem
         duplicar snapshot nem evento.
+
+        Serialização (DR-1, doc 114 §8.1): a resolução da versão vigente
+        acontece DENTRO da transação, após lock `FOR UPDATE` ordenado de
+        todas as linhas de template — publicação documental concorrente
+        espera ou precede a abertura, nunca produz snapshot de uma
+        timeline intermediária (Teste D do gate).
         """
-        published = self.resolve_published_version(period)
-        # Plano 113 §10 / doc 112 DR-C1: template PUBLISHED não é mais
-        # pré-requisito — sem versão vigente a competência abre com
-        # snapshot legitimamente vazio (template_version_id NULL).
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT template_id FROM {_q('checklist_template')}
+                         ORDER BY template_id FOR UPDATE
+                        """
+                    )
+                    cur.execute(
+                        f"""
+                        SELECT version_id, template_id, version,
+                               effective_from_period
+                          FROM {_q('checklist_template_version')}
+                         WHERE status = 'PUBLISHED'
+                           AND effective_from_period <= %s
+                         ORDER BY effective_from_period DESC,
+                                  version DESC
+                         LIMIT 1
+                        """,
+                        (period,),
+                    )
+                    published = cur.fetchone()
                     cur.execute(
                         f"""
                         INSERT INTO {_q('monthly_competence')}
@@ -804,13 +867,14 @@ class ClosingChecklistRepository:
         actor: str,
         detail: dict[str, Any],
         competence_id: Any = None,
-    ) -> None:
+    ) -> Any:
         cur.execute(
             f"""
             INSERT INTO {_q('closing_audit_event')}
                 (entity_type, entity_id, competence_id, event_type,
                  actor_subject, detail)
             VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+            RETURNING event_id
             """,
             (
                 entity_type,
@@ -821,3 +885,454 @@ class ClosingChecklistRepository:
                 json.dumps(detail),
             ),
         )
+        return cur.fetchone()["event_id"]
+
+    # -- DR-1: configuração documental transacional (doc 114 §8) ----------
+
+    def _versions_with_items_locked(
+        self, cur, template_id: str
+    ) -> list[dict[str, Any]]:
+        """Timeline completa do template com itens — chamada SOMENTE
+        dentro da transação que já detém o lock do template."""
+        cur.execute(
+            f"""
+            SELECT version_id, version, status, effective_from_period
+              FROM {_q('checklist_template_version')}
+             WHERE template_id = %s
+             ORDER BY version
+            """,
+            (template_id,),
+        )
+        versions = cur.fetchall()
+        for version in versions:
+            cur.execute(
+                f"""
+                SELECT item_key, sort_order, sheet, name, purpose,
+                       origin_kind, recipient_area, applicability,
+                       branch_scope, totvs_report_ref, requirement_notes,
+                       validation_scope
+                  FROM {_q('checklist_template_item')}
+                 WHERE version_id = %s
+                 ORDER BY sort_order
+                """,
+                (version["version_id"],),
+            )
+            version["items"] = cur.fetchall()
+        return versions
+
+    @staticmethod
+    def _requirement_request_hash(
+        item_key: str,
+        item: dict[str, Any] | None,
+        effective_from: str,
+        effective_until: str | None,
+        allow_empty: bool,
+    ) -> str:
+        """SHA-256 do payload normalizado — `base_version` fica fora
+        (é OCC, não identidade da operação; precedente V004)."""
+        canonical = json.dumps(
+            {
+                "item_key": item_key,
+                "item": item,
+                "effective_from": effective_from,
+                "effective_until": effective_until,
+                "allow_empty": allow_empty,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def apply_document_requirement(
+        self,
+        template_id: str,
+        item_key: str,
+        item: dict[str, Any] | None,
+        effective_from: str,
+        effective_until: str | None,
+        base_version: int,
+        allow_empty: bool,
+        idempotency_key: str,
+        actor: str,
+    ) -> dict[str, Any]:
+        """Configura a exigência documental em UMA transação (DR-1).
+
+        Ordem canônica (doc 114 §8.3): lock FOR UPDATE do template →
+        replay idempotente (antes do OCC, retry legítimo nunca vira
+        stale) → base_version → conflito de rascunho → regras de janela
+        → competências abertas → plano de boundaries → versões com
+        trilha DRAFT→REVIEW→PUBLISHED → evento resumo → registro da
+        operação → commit único. Qualquer falha = rollback integral.
+        """
+        request_hash = self._requirement_request_hash(
+            item_key, item, effective_from, effective_until, allow_empty
+        )
+        with self._conn() as conn:
+            try:
+                with conn.transaction():
+                    with conn.cursor(row_factory=dict_row) as cur:
+                        cur.execute("SET LOCAL lock_timeout = '5s'")
+                        cur.execute(
+                            f"""
+                            SELECT template_id
+                              FROM {_q('checklist_template')}
+                             WHERE template_id = %s FOR UPDATE
+                            """,
+                            (template_id,),
+                        )
+                        if cur.fetchone() is None:
+                            raise TemplateNotFound(
+                                "Template de checklist não encontrado."
+                            )
+
+                        cur.execute(
+                            f"""
+                            SELECT request_hash, result
+                              FROM {_q('document_requirement_operation')}
+                             WHERE template_id = %s
+                               AND idempotency_key = %s
+                            """,
+                            (template_id, idempotency_key),
+                        )
+                        replay = cur.fetchone()
+                        if replay is not None:
+                            if replay["request_hash"] != request_hash:
+                                raise IdempotencyConflict(
+                                    "Idempotency-Key reutilizada com "
+                                    "payload diferente."
+                                )
+                            result = dict(replay["result"])
+                            result["replayed"] = True
+                            return result
+
+                        cur.execute(
+                            f"""
+                            SELECT max(version) AS max_version
+                              FROM {_q('checklist_template_version')}
+                             WHERE template_id = %s
+                            """,
+                            (template_id,),
+                        )
+                        if (cur.fetchone()["max_version"] or 0) != (
+                            base_version
+                        ):
+                            raise StaleRevision(
+                                "A configuração do checklist mudou — "
+                                "recarregue antes de salvar."
+                            )
+
+                        cur.execute(
+                            f"""
+                            SELECT version FROM {_q('checklist_template_version')}
+                             WHERE template_id = %s
+                               AND status IN ('DRAFT', 'REVIEW')
+                            """,
+                            (template_id,),
+                        )
+                        if cur.fetchone() is not None:
+                            raise CatalogDraftConflict(
+                                "Existe uma versão em rascunho ou "
+                                "revisão — conclua-a ou descarte-a na "
+                                "Administração do checklist."
+                            )
+
+                        cur.execute(
+                            "SELECT to_char(now(), 'YYYY-MM') AS current"
+                        )
+                        if effective_from < cur.fetchone()["current"]:
+                            raise RetroactiveEffectivePeriod(
+                                "A vigência inicial não pode ser uma "
+                                "competência passada."
+                            )
+                        if (
+                            effective_until is not None
+                            and effective_until < effective_from
+                        ):
+                            raise InvalidRequirementWindow(
+                                "A competência final não pode ser "
+                                "anterior à inicial."
+                            )
+
+                        # D3: a janela de efeito cobre [from, until] e a
+                        # remoção publicada em until+1; sem item (fim de
+                        # exigência) cobre [from, ∞).
+                        if item is None or effective_until is None:
+                            window_end = "9999-12"
+                        else:
+                            window_end = planner.next_period(
+                                effective_until
+                            )
+                        cur.execute(
+                            f"""
+                            SELECT period FROM {_q('monthly_competence')}
+                             WHERE period >= %s AND period <= %s
+                             ORDER BY period
+                            """,
+                            (effective_from, window_end),
+                        )
+                        covered = [
+                            row["period"] for row in cur.fetchall()
+                        ]
+                        if covered:
+                            raise WindowCoversOpenCompetence(
+                                "A janela intersecta competências já "
+                                f"abertas ({', '.join(covered)}) — "
+                                "snapshots congelados não podem "
+                                "divergir do catálogo."
+                            )
+
+                        versions = self._versions_with_items_locked(
+                            cur, template_id
+                        )
+                        if item is None:
+                            steps = planner.plan_document_removal(
+                                versions, item_key, effective_from
+                            )
+                        else:
+                            steps = planner.plan_document_upsert(
+                                versions,
+                                item,
+                                effective_from,
+                                effective_until,
+                            )
+                        if not allow_empty and any(
+                            not step["items"] for step in steps
+                        ):
+                            raise EmptyResultingChecklist(
+                                "A operação deixaria o checklist sem "
+                                "nenhuma exigência — confirme a "
+                                "intenção de publicar checklist vazio."
+                            )
+
+                        cur.execute(
+                            f"""
+                            SELECT max(version) AS max_version
+                              FROM {_q('checklist_template_version')}
+                             WHERE template_id = %s
+                            """,
+                            (template_id,),
+                        )
+                        next_version = (
+                            cur.fetchone()["max_version"] or 0
+                        ) + 1
+                        published_versions: list[dict[str, Any]] = []
+                        audit_event_ids: list[str] = []
+                        try:
+                            for step in steps:
+                                version_row = self._insert_governed_version(
+                                    cur,
+                                    template_id,
+                                    next_version,
+                                    step,
+                                    actor,
+                                    audit_event_ids,
+                                )
+                                published_versions.append(version_row)
+                                next_version += 1
+                        except psycopg.errors.UniqueViolation as exc:
+                            raise CatalogDraftConflict(
+                                "Uma versão em rascunho ou revisão foi "
+                                "aberta em concorrência — repita a "
+                                "operação."
+                            ) from exc
+
+                        operation_id = self._audit(
+                            cur,
+                            entity_type="checklist_template",
+                            entity_id=template_id,
+                            event_type="DOCUMENT_CONFIG_APPLIED",
+                            actor=actor,
+                            detail={
+                                "template_id": template_id,
+                                "item_key": item_key,
+                                "operation": (
+                                    "upsert" if item is not None
+                                    else "removal"
+                                ),
+                                "effective_from": effective_from,
+                                "effective_until": effective_until,
+                                "allow_empty": allow_empty,
+                                "idempotency_key": idempotency_key,
+                                "published_versions": [
+                                    {
+                                        "version": v["version"],
+                                        "effective_from_period": v[
+                                            "effective_from_period"
+                                        ],
+                                        "item_count": v["item_count"],
+                                    }
+                                    for v in published_versions
+                                ],
+                            },
+                        )
+                        audit_event_ids.append(str(operation_id))
+
+                        result = {
+                            "item_key": item_key,
+                            "published_versions": published_versions,
+                            "no_changes": len(published_versions) == 0,
+                            "replayed": False,
+                            "audit_event_ids": audit_event_ids,
+                        }
+                        cur.execute(
+                            f"""
+                            INSERT INTO {_q('document_requirement_operation')}
+                                (template_id, item_key, idempotency_key,
+                                 request_hash, actor_subject, result)
+                            VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+                            """,
+                            (
+                                template_id,
+                                item_key,
+                                idempotency_key,
+                                request_hash,
+                                actor,
+                                json.dumps(result),
+                            ),
+                        )
+                        return result
+            except psycopg.errors.LockNotAvailable as exc:
+                raise OperationBusy(
+                    "Outra operação administrativa está em curso neste "
+                    "checklist — tente novamente em instantes."
+                ) from exc
+
+    def _insert_governed_version(
+        self,
+        cur,
+        template_id: str,
+        version: int,
+        step: dict[str, Any],
+        actor: str,
+        audit_event_ids: list[str],
+    ) -> dict[str, Any]:
+        """Insere uma versão já com a trilha governada auditada
+        (D4): DRAFT_CREATED → VERSION_SUBMITTED_FOR_REVIEW →
+        VERSION_PUBLISHED — equivalente ao ciclo manual, dentro da
+        mesma transação."""
+        cur.execute(
+            f"""
+            INSERT INTO {_q('checklist_template_version')}
+                (template_id, version, status, created_by)
+            VALUES (%s, %s, 'DRAFT', %s)
+            RETURNING version_id
+            """,
+            (template_id, version, actor),
+        )
+        version_id = cur.fetchone()["version_id"]
+        audit_event_ids.append(
+            str(
+                self._audit(
+                    cur,
+                    entity_type="checklist_template_version",
+                    entity_id=version_id,
+                    event_type="DRAFT_CREATED",
+                    actor=actor,
+                    detail={
+                        "template_id": template_id,
+                        "version": version,
+                        "source": "document_requirement",
+                    },
+                )
+            )
+        )
+        for position, item in enumerate(step["items"], start=1):
+            cur.execute(
+                f"""
+                INSERT INTO {_q('checklist_template_item')}
+                    (version_id, item_key, sort_order, sheet, name,
+                     purpose, origin_kind, recipient_area, applicability,
+                     branch_scope, totvs_report_ref, requirement_notes,
+                     validation_scope)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    version_id,
+                    item["item_key"],
+                    item.get("sort_order") or position,
+                    item["sheet"],
+                    item["name"],
+                    item.get("purpose"),
+                    item["origin_kind"],
+                    item.get("recipient_area"),
+                    item.get("applicability") or "REQUIRED",
+                    item.get("branch_scope") or "BOTH",
+                    item.get("totvs_report_ref"),
+                    item.get("requirement_notes"),
+                    item.get("validation_scope") or "PER_ATTACHMENT",
+                ),
+            )
+        audit_event_ids.append(
+            str(
+                self._audit(
+                    cur,
+                    entity_type="checklist_template_version",
+                    entity_id=version_id,
+                    event_type="DRAFT_UPDATED",
+                    actor=actor,
+                    detail={
+                        "template_id": template_id,
+                        "version": version,
+                        "item_count": len(step["items"]),
+                    },
+                )
+            )
+        )
+        cur.execute(
+            f"""
+            UPDATE {_q('checklist_template_version')}
+               SET status = 'REVIEW', updated_at = now()
+             WHERE version_id = %s
+            """,
+            (version_id,),
+        )
+        audit_event_ids.append(
+            str(
+                self._audit(
+                    cur,
+                    entity_type="checklist_template_version",
+                    entity_id=version_id,
+                    event_type="VERSION_SUBMITTED_FOR_REVIEW",
+                    actor=actor,
+                    detail={
+                        "template_id": template_id,
+                        "version": version,
+                    },
+                )
+            )
+        )
+        cur.execute(
+            f"""
+            UPDATE {_q('checklist_template_version')}
+               SET status = 'PUBLISHED',
+                   effective_from_period = %s,
+                   published_by = %s, published_at = now(),
+                   updated_at = now()
+             WHERE version_id = %s
+            """,
+            (step["effective_from"], actor, version_id),
+        )
+        audit_event_ids.append(
+            str(
+                self._audit(
+                    cur,
+                    entity_type="checklist_template_version",
+                    entity_id=version_id,
+                    event_type="VERSION_PUBLISHED",
+                    actor=actor,
+                    detail={
+                        "template_id": template_id,
+                        "version": version,
+                        "effective_from_period": step["effective_from"],
+                        "item_count": len(step["items"]),
+                        "source": "document_requirement",
+                    },
+                )
+            )
+        )
+        return {
+            "version_id": str(version_id),
+            "version": version,
+            "effective_from_period": step["effective_from"],
+            "item_count": len(step["items"]),
+        }

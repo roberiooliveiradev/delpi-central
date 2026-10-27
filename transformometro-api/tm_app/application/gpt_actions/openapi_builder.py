@@ -493,10 +493,24 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "description": (
                     "Returns units, departments, enums, access scope, and "
                     "registration_guide (concepts, flow, entity_schemas) for guided signup. "
-                    "Call this before creating processes or instances."
+                    "Optional entity returns only that entity's write schema "
+                    "and contract rules — the fallback for trimmed catalogs."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "entity",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Entity name (e.g. decomposition_tree). When set, the "
+                            "response carries only entity_schema + concept + "
+                            "write_contract_rules — never budget-trimmed."
+                        ),
+                    }
+                ],
                 "responses": {
                     "200": _ok_response("Catalog payload"),
                     **_error_responses(),

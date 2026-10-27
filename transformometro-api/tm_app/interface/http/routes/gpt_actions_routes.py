@@ -432,9 +432,18 @@ def gpt_get_workspace_context(request: Request):
     operation_id="gpt_get_catalog",
     summary="Catalog options for Transformômetro forms",
 )
-def gpt_get_catalog(request: Request):
+def gpt_get_catalog(
+    request: Request,
+    entity: str | None = Query(
+        default=None,
+        description="Optional entity — returns only its write schema, concept and contract rules",
+    ),
+):
     try:
-        return ok(_dispatch.get_catalog(request), "Catálogo do Transformômetro.")
+        return ok(
+            _dispatch.get_catalog(request, entity=entity),
+            "Catálogo do Transformômetro.",
+        )
     except Exception as exc:
         return _handle(exc)
 

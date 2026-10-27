@@ -406,9 +406,30 @@ class GptActionsDispatchService:
     # --- catalog / analysis ----------------------------------------------
 
     def get_catalog(
-        self, request: Request, *, transport: str = "gpt_actions"
+        self,
+        request: Request,
+        *,
+        transport: str = "gpt_actions",
+        entity: str | None = None,
     ) -> dict[str, Any]:
         self._raise_http_err(require_transformometro_view_access(request))
+        if entity is not None:
+            key = str(entity).strip()
+            guide = build_registration_guide(transport=transport)
+            schemas = guide.get("entity_schemas") or {}
+            schema = schemas.get(key)
+            if schema is None:
+                raise GptActionsError(
+                    f"Entity '{key}' has no registered write schema.",
+                    400,
+                    {"valid_entities": sorted(schemas)},
+                )
+            return {
+                "entity": key,
+                "entity_schema": schema,
+                "concept": (guide.get("concepts") or {}).get(key),
+                "write_contract_rules": guide.get("write_contract_rules"),
+            }
         try:
             filiais = FilialRepository().list_for_options() or []
         except Exception:

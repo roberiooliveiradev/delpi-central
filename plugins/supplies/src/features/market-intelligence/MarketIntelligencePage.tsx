@@ -673,6 +673,8 @@ export function MarketIntelligencePage({
           <MarketComexSelector
             selectedProducts={filters.state.comexProducts}
             onProductsChange={filters.setComexProducts}
+            directNcms={filters.state.comexDirectNcms}
+            onDirectNcmsChange={filters.setComexDirectNcms}
             approvedNcms={selectableNcms.map((entry) => ({
               ncm_code: entry.ncm_code,
               description: entry.description,
@@ -684,6 +686,9 @@ export function MarketIntelligencePage({
             canManage={session.capabilities.manage}
             buildViewPayload={() => ({
               selected_product_codes: filters.state.comexProducts,
+              // Direct-entry NCMs ride the generic materials slot —
+              // an NCM is the material family the user picked.
+              selected_materials: filters.state.comexDirectNcms,
               approved_ncm_references: analysisNcmCodes,
               selected_metrics: ["fob", "weight", "unit_value"],
               date_range: {
@@ -697,6 +702,11 @@ export function MarketIntelligencePage({
             })}
             onApplyView={(savedView: ComexSavedView) => {
               filters.setComexProducts(savedView.selected_product_codes);
+              filters.setComexDirectNcms(
+                (savedView.selected_materials ?? []).filter((code) =>
+                  /^[0-9]{8}$/.test(code),
+                ),
+              );
               filters.setNcm(
                 savedView.approved_ncm_references.join(","),
               );
@@ -731,24 +741,6 @@ export function MarketIntelligencePage({
               MARKET_INTELLIGENCE_CONTENT.states.comexConfigPending,
             nextSteps:
               MARKET_INTELLIGENCE_CONTENT.states.comexNextSteps,
-            preview: [
-              {
-                title:
-                  MARKET_INTELLIGENCE_CONTENT.kpis.latestUnitValueTitle,
-                hint: MARKET_INTELLIGENCE_CONTENT.kpis
-                  .latestUnitValueHint,
-              },
-              {
-                title: MARKET_INTELLIGENCE_CONTENT.kpis.fobTotalTitle,
-                hint: MARKET_INTELLIGENCE_CONTENT.kpis.fobTotalHint,
-              },
-              {
-                title:
-                  MARKET_INTELLIGENCE_CONTENT.kpis.weightTotalTitle,
-                hint: MARKET_INTELLIGENCE_CONTENT.kpis
-                  .weightTotalHint,
-              },
-            ],
           }}
             selection={comexSelection}
             from={filters.state.from}

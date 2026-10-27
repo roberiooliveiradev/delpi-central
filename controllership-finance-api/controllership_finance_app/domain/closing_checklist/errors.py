@@ -347,3 +347,57 @@ class InvalidMessage(ChecklistDomainError):
 
     code = "invalid_message"
     status = 422
+
+
+class RetroactiveEffectivePeriod(ChecklistDomainError):
+    """Vigência inicial retroativa — configuração documental é
+    estritamente prospectiva (doc 114 §8.6)."""
+
+    code = "retroactive_effective_period"
+    status = 422
+
+
+class InvalidRequirementWindow(ChecklistDomainError):
+    """Janela inválida — effective_until anterior a effective_from."""
+
+    code = "invalid_window"
+    status = 422
+
+
+class WindowCoversOpenCompetence(ChecklistDomainError):
+    """A janela de alteração intersecta competência já aberta — o
+    snapshot congelado não pode divergir do catálogo declarado (PO D3)."""
+
+    code = "window_covers_open_competence"
+    status = 422
+
+
+class EmptyResultingChecklist(ChecklistDomainError):
+    """A operação produziria versão publicada com zero itens sem a
+    intenção explícita `allow_empty` (DR-2 alternativa A, doc 114 §8.5)."""
+
+    code = "empty_resulting_checklist"
+    status = 422
+
+
+class CatalogDraftConflict(ChecklistDomainError):
+    """Existe versão DRAFT/REVIEW aberta — a configuração documental
+    nunca sobrescreve trabalho de outro administrador."""
+
+    code = "catalog_draft_conflict"
+    status = 409
+
+
+class OperationBusy(ChecklistDomainError):
+    """Lock do template não adquirido dentro do lock_timeout — outra
+    operação administrativa está em curso; retry é seguro."""
+
+    code = "busy"
+    status = 409
+
+
+class ItemKeyMismatch(ChecklistDomainError):
+    """item_key do corpo diverge do recurso endereçado na rota."""
+
+    code = "item_key_mismatch"
+    status = 422

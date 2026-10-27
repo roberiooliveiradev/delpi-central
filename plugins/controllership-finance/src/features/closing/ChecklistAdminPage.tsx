@@ -80,10 +80,22 @@ export const ERROR_MESSAGES: Record<string, string> = {
     "A vigência deve ser uma competência futura no formato AAAA-MM.",
   not_latest_published:
     "Somente a versão publicada mais recente pode ser inativada.",
-  catalog_last_item_end:
-    "O checklist publicado precisa manter ao menos um documento — encerrar a última exigência exige evolução do contrato.",
   catalog_draft_conflict:
     "Existe uma versão em rascunho ou revisão com outro conteúdo — conclua-a ou descarte-a na Administração do checklist.",
+  window_covers_open_competence:
+    "A vigência escolhida alcança uma competência já aberta — ajuste o período ou use item excepcional na competência.",
+  empty_resulting_checklist:
+    "A operação deixaria o checklist sem nenhum documento exigido — confirme a intenção antes de prosseguir.",
+  idempotency_conflict:
+    "A operação já foi enviada com outro conteúdo — recarregue a página e confira o estado atual.",
+  retroactive_effective_period:
+    "A vigência inicial não pode ser uma competência passada.",
+  invalid_window:
+    "A competência final não pode ser anterior à inicial.",
+  item_key_mismatch:
+    "O identificador do documento diverge da rota — recarregue a página.",
+  busy:
+    "Outra operação administrativa está em curso neste checklist — tente novamente em instantes.",
 };
 
 function toQueryError(error: unknown, fallback: string): QueryError {

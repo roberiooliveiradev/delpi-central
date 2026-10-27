@@ -1,9 +1,10 @@
 /** URL persistence for market intelligence filters (PROC-0076 R4).
  *
  * Query contract: ``view``, ``metals``, ``mode``, ``granularity``,
- * ``indicator``, ``fx_kind``, ``ncm``, ``ipp_series``, ``from``,
- * ``to``. Values are allowlist-validated on read — anything outside
- * the contract is ignored, never forwarded upstream.
+ * ``indicator``, ``fx_kind``, ``ncm``, ``products``, ``direct_ncm``,
+ * ``ipp_series``, ``from``, ``to``. Values are allowlist-validated
+ * on read — anything outside the contract is ignored, never
+ * forwarded upstream.
  *
  * Compatibility:
  * - R3 links ``view=ipp`` / ``view=comex`` resolve to
@@ -36,6 +37,9 @@ export type MarketIntelligenceUrlState = {
   ncm: string;
   /** Comma-separated selected SB1010 product codes (Comex picker). */
   comexProducts: string[];
+  /** Comma-separated NCMs entered directly by code — the other half
+   * of the Comex selection, independent of product association. */
+  comexDirectNcms: string[];
   ippSeries: string;
 };
 
@@ -86,6 +90,10 @@ export function readMarketIntelligenceFromUrl(): Partial<MarketIntelligenceUrlSt
     .split(",")
     .map((code) => code.trim())
     .filter((code) => /^[A-Za-z0-9_.\-/]{1,64}$/.test(code));
+  const comexDirectNcms = (params.get("direct_ncm") ?? "")
+    .split(",")
+    .map((code) => code.trim())
+    .filter((code) => /^[0-9]{8}$/.test(code));
   const ippSeries = (params.get("ipp_series") ?? "").trim();
   const from = (params.get("from") ?? "").trim();
   const to = (params.get("to") ?? "").trim();
@@ -128,6 +136,9 @@ export function readMarketIntelligenceFromUrl(): Partial<MarketIntelligenceUrlSt
     metals: metals.length ? metals : undefined,
     ncm: ncm || undefined,
     comexProducts: comexProducts.length ? comexProducts : undefined,
+    comexDirectNcms: comexDirectNcms.length
+      ? comexDirectNcms
+      : undefined,
     ippSeries: INSTRUMENT_CODE.test(ippSeries) ? ippSeries : undefined,
     from: ISO_DATE.test(from) ? from : undefined,
     to: ISO_DATE.test(to) ? to : undefined,
@@ -159,6 +170,9 @@ export function writeMarketIntelligenceToUrl(
   if (state.comexProducts.length)
     params.set("products", state.comexProducts.join(","));
   else params.delete("products");
+  if (state.comexDirectNcms.length)
+    params.set("direct_ncm", state.comexDirectNcms.join(","));
+  else params.delete("direct_ncm");
   if (state.ippSeries) params.set("ipp_series", state.ippSeries);
   else params.delete("ipp_series");
   if (state.from) params.set("from", state.from);

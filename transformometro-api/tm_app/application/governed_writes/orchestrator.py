@@ -294,6 +294,36 @@ def _actor(request: Request) -> tuple[str, str | None]:
     return str(user_id), str(email) if email else None
 
 
+_DOCUMENT_CONTENT_VALIDATORS = {
+    "decomposition_tree": "tree",
+    "revision_decomposition_overlay": "overlay",
+}
+
+
+def _document_content_validation(entity: str, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Early structural validation for document entities at PREPARE — the
+    same domain validators COMMIT re-runs. An invalid proposal is marked
+    ready=false so it is never advertised as executable; COMMIT remains
+    the authoritative revalidation."""
+    kind = _DOCUMENT_CONTENT_VALIDATORS.get(entity)
+    if kind is None or "conteudo" not in data:
+        return None
+    from tm_app.domain.decomposition.decomposition_tree_v1 import (
+        DecompositionValidationError,
+        validate_decomposition_overlay_v1,
+        validate_decomposition_tree_v1,
+    )
+
+    try:
+        if kind == "tree":
+            validate_decomposition_tree_v1(data["conteudo"])
+        else:
+            validate_decomposition_overlay_v1(data["conteudo"])
+    except DecompositionValidationError as exc:
+        return {"ready": False, "errors": [str(exc)]}
+    return {"ready": True, "checks": ["document_contract"]}
+
+
 def _raise_gpt(exc: GptActionsError) -> None:
     code = VALIDATION
     if exc.status_code == 403:
@@ -730,12 +760,19 @@ class GovernedWriteOrchestrator:
         # Capability matrix (support) — AuthZ still revalidated on ACT.
         self._dispatch._require_capability(parsed, "create")
         exact = {"entity": entity, "data": data}
+        validation: dict[str, Any] = {
+            "ready": True,
+            "checks": ["entity_known", "authz_probe"],
+        }
+        doc_validation = _document_content_validation(entity, data)
+        if doc_validation is not None:
+            validation = doc_validation
         return {
             "resource_type": entity,
             "resource_id": None,
             "current_state_fingerprint": fingerprint({"entity": entity, "exists": False}),
             "exact_change": exact,
-            "validation_result": {"ready": True, "checks": ["entity_known", "authz_probe"]},
+            "validation_result": validation,
             "consequential_impact": {"persists": True, "operation": "create"},
             "confirmation_requirement": {},
             "expected_postcondition": {
@@ -756,6 +793,9 @@ class GovernedWriteOrchestrator:
         ):
             conf["confirm_vigencia_change_may_be_required"] = True
         validation: dict[str, Any] = {"ready": True}
+        doc_validation = _document_content_validation(entity, data)
+        if doc_validation is not None:
+            validation = doc_validation
         if entity == "instance" and "contexto" in data:
             from tm_app.domain.decomposition.decomposition_tree_v1 import (
                 DecompositionValidationError,

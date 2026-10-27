@@ -1180,3 +1180,31 @@ Em setembro/2026, as capturas do PO mostram a consulta operacional `stock-invent
   vazio idêntico); proteção `allow_empty` explícito; distinção
   sem-template (NULL) vs checklist-vazio preservada na auditoria.
 - **Decisões pendentes D1–D5** no doc 114 §8.8.
+
+### 28.5 Registro de implementação — GATE-015 comando transacional DR-1/DR-2 (28/10/2026, PROVEN)
+
+Contrato §8.6 do doc 114 implementado sob D1–D5 (§9). **Runtime alterado e
+verificado localmente; produção não deployada** (gate separado pendente).
+
+- **Endpoint:** `PUT /admin/checklist-templates/{id}/documents/{key}/requirement`
+  — um comando aplica cadastro, edição prospectiva, término, encerramento do
+  último documento (`allow_empty`), reativação e publicação de checklist
+  vazio, ou nada. O MFE deixou de orquestrar DRAFT→REVIEW→PUBLISHED por
+  boundary (RW01) e passou a emitir chamada única com `base_version` +
+  `Idempotency-Key`.
+- **Migration V017** (`document_requirement_operation`): idempotência por
+  chave + request_hash, resultado persistido na mesma transação das versões.
+- **Serialização:** lock FOR UPDATE no template compartilhado pelo comando
+  novo e pelos writers legados (`publish_version`, `inactivate_version`,
+  `create_draft_version`, `open_competence` — este resolve a versão dentro
+  da transação após travar os templates; corrida publicação×abertura coberta
+  por D3).
+- **Governança:** REVIEW auditado por versão
+  (`DRAFT_CREATED→SUBMITTED→PUBLISHED`) + `DOCUMENT_CONFIG_APPLIED`;
+  autorização MANAGE backend fail-closed; `stale_revision`/`idempotency_conflict`/
+  `busy` → 409; `window_covers_open_competence`/`empty_resulting_checklist`/
+  `retroactive_effective_period` → 422.
+- **Evidências:** backend 689 testes PG verde; MFE 337 testes; smoke
+  autenticado local com ciclo completo + auditoria conferida. Detalhe no
+  doc 114 §10; ACs no ledger 23.
+- **Não realizado:** deploy produtivo (requer gate CP10 próprio).
