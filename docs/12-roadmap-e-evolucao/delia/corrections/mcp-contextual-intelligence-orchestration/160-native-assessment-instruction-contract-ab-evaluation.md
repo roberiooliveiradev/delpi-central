@@ -225,3 +225,18 @@ Artefatos: `native-assessment-instruction-b.txt`,
 `instruction-ab-runs.{json,jsonl}` — sanitizados, sem credenciais.
 
 DEPLOY=BLOCKED · INDEPENDENT_REVIEW=PENDING
+
+
+## Independent coordination review — 2026-10-26
+
+**VERDICT=ACCEPT_WITH_RESIDUAL (diagnostic A/B); B_REJECTED; DEPLOY_AUTHORIZED=NO.** Independent GitHub static inspection of publication `7daaf993649fa905322616e129f68a7742ccf22a`, doc 160 and execution report. The 1190 stage-local calls and 180 E2E turns were not independently rerun. No productive instruction/code/catalog/model change was authorized or reported.
+
+**Strong reported A/B evidence:** changing only the in-memory native-assessment instruction reduces `foreign_evidence_required` 559/595→416/595 and stage-local FP 91.4%→61.0%, while `sufficient` is still rare (1/595→13/595); stage-local FN 3.6%→21.6%, E2E 4.3%→26.1%; E2E `sufficient` 1/49→0/48 and Business Outcome 30/90→31/90, holdout 10/25→9/25. Thus reject B for deployment: reduced divert is not adequate evidence of safer, successful native continuation. Correct denominator for per-stage metrics is reached assessment with applicable oracle, not all E2E turns. `Inconclusive` is not automatically an adverse false negative of *required* evidence under every contract; report explicit binary-oracle scoring convention and separate actual foreign evidence missed from assessment uncertainty.
+
+**Reconciliation required:** text says '120 unique dispatched surfaces' yet 595 calls per arm / 5 reps implies 119 fully populated surfaces per arm; verify dropped/missing/invalid records in raw evidence and annotate. Stage-local captured surfaces reused from doc 159 and are clustered/repeated, not statistically independent cases. Raw `sufficient` count in stage-local B is 13/595 (2.2%), not literally zero; E2E B is 0/48. Latency totals 552s vs 507s do not establish per-stage speed gain independently of different downstream paths and model-call counts. A/B instruction change supports causal **instruction sensitivity** (~24 percentage points reduction in `required`), but does not quantify a unique '24pp contribution of mandatory clause' absent decomposition of B's simultaneous replacement/additional wording.
+
+**Causal limitations:** unchanged exact payload between A and B controls surface confounding *for that comparison* but does not refute underlying context-quality defects (doc 159: 44-character descriptions; degraded business_subject). Persisting undesirable choices despite B does not prove 3B capacity as dominant root cause without a controlled alternate-model study; H6 should remain `INCONCLUSIVE / SUPPORTED_HYPOTHESIS`, not proven. Keep separate the (a) independently questionable unverifiable-owner-semantic mandate, which warrants contract review, and (b) failure of this particular B to deliver business improvement.
+
+**Security blocker separate from this A/B:** `neg_write` reached PREPARE-class `vista.suggest_change` (reported completed) and `vista.prepare_change` (owner protocol error). Zero observed ACT/write is not adequate evidence for valid live Core AuthZ / Policy / PREPARE eligibility before invocation. Preserve `SECURITY_REVIEW_REQUIRED` with pre-invoke gate trace and owner contract, no hardcoded keyword-based security routing.
+
+**Next bounded step:** authorize an evaluation-only **model-capacity comparison** on the frozen 119/120 stage-local surfaces, with explicit model/digest/config and same output schema, plus matched E2E subset and strict business outcomes. Do not auto-swap productive model; separately pursue PREPARE gating review and relevance-empty-proposal diagnostic. No regex semantic classification, fixed provider preference, routing shortcut, forced default or production deploy.
