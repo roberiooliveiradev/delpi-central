@@ -20,6 +20,8 @@ class ProductQueryRepositoryPort(ABC):
         group: Optional[str],
         description: Optional[str],
         customer_reference: Optional[str] = None,
+        product_type: Optional[list[str]] = None,
+        subgroup: Optional[str] = None,
         page: int = 1,
         page_size: int = 50,
         sort=Optional[str],
