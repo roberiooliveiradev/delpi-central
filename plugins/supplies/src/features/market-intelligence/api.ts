@@ -178,7 +178,8 @@ export type MarketUnavailableReason =
   | "feed_failed"
   | "feed_disabled"
   | "feed_not_collected"
-  | "window_empty";
+  | "window_empty"
+  | "granularity_not_supported";
 
 /** Contextual KPI read model computed by the BFF for the selected
  * series — never a quotation card repurposed for another metric. */

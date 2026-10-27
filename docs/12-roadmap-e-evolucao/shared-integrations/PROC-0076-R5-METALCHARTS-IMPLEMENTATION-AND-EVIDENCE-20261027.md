@@ -107,9 +107,25 @@ Executada com a chave provisionada pelo PO (`METAL_CHARTS_KEY` → `METALCHARTS_
 
 Correções de contrato aplicadas ao adapter: `/v1/prices/` com barra final (sem ela → 401) e pacing por minuto no job (5 bindings × 2 weight > headroom de 8/min).
 
-## 9. Pendências
+## 9. S1 — Produção (2026-10-28)
+
+- **Segredo:** `METAL_CHARTS_KEY` (local) → `METALCHARTS_API_KEY` no container via interpolação Compose; transferido a produção como variável única no `infra/.env` do srv-api (nunca o arquivo inteiro, nunca em logs/argv).
+- **V008 aplicada:** fonte `metalcharts` ativa (`ttl_cache`, escopo `collect;derive;internal_display;store_cache_only;no_redistribute`); bindings ativos ALI/HG/NI/ZN/PB; estanho inativo.
+- **Bloqueio de egresso (descoberta S1):** a rede de produção intercepta `api.metalcharts.org` — o firewall Sophos (gateway `192.168.1.253`) responde `307 → /ips/block/webcat?cat=21` e apresenta certificado re-assinado pela CA `Sophos SSL CA_*`, ausente do trust store do container. **Não é só confiança de CA — é bloqueio de política de categoria**: mesmo com a CA instalada o conteúdo não fluiria. Remediação correta = exceção de categoria/allowlist no appliance (TI/rede), fora do escopo deste repositório. Nenhum bypass de TLS foi implementado.
+- **Preenchimento de recuperação (autorizado):** o feed `metals-daily` foi executado uma vez a partir do runtime local — mesmo código canônico, advisory lock, budget ledger, gates de direitos — escrevendo no banco de produção via túnel SSH (`15432 → postgres-plugins:5432`). Resultado: **110 barras (5 instrumentos × 22 dias, 28/09–27/10/2026), `expires_at` ≤ 48h, ledger = 5 chamadas `history` × weight 2** — dedup sem gasto duplo; pacing por minuto exercido (`ingestion_minute_pacing wait_s=60`).
+- **Correção de contrato real:** a janela default de 35 dias do feed é recusada pelo plano Free (403 "history exceeds plan") — o default do feed `metals-daily` foi fixado em **29 dias** (`app/jobs/ingest_market_data.py`).
+- **BFF:** `quotes/series`/`compare` passaram a validar granularidade **por instrumento** (`supported_granularities` do catálogo): metais com binding diário servem `day`/`week`/`month`/`year`; mês = média dos fechamentos diários (antes: último close do mês para fonte diária); `week` = média por semana ISO. Instrumento sem suporte à granularidade pedida recebe `unavailable_reason="granularity_not_supported"` (sem fabricar pontos); 422 quando nenhum instrumento suporta.
+- **Frontend:** label para `granularity_not_supported` adicionada; opções de frequência continuam dirigidas pelo catálogo.
+- **Freshness:** `_freshness` agora mede fonte diária contra dias úteis (`business_daily`), não mais contra cadência mensal do Pink Sheet.
+
+### Recarga operacional enquanto o egresso estiver bloqueado
+
+Repetir o preenchimento de recuperação antes do TTL expirar (48h) — ou solicitar à TI a exceção de categoria para `api.metalcharts.org` no Sophos e então reavaliar a ativação do feed recorrente.
+
+## 10. Pendências
 
 1. ~~Chave e homologação S1~~ → **concluído** (V008 ativa fonte + 5 bindings verificados; estanho permanece inativo).
-2. Revisão institucional da licença (`license_reviewed_at`) — pendente por decisão; ativação registra permissões comprovadas.
-3. Estanho: sem cobertura Free nesta API — binding inativo até fonte alternativa homologada ou inclusão upstream.
-4. Decisão sobre exibição pública/redistribuição (crédito visível; ALI/NI têm lastro LME upstream).
+2. **Egresso de produção:** exceção para `api.metalcharts.org` no Sophos (bloqueio webcat cat=21) — depende de TI; até lá a ingestão é manual via túnel dentro do orçamento de franquia.
+3. Revisão institucional da licença (`license_reviewed_at`) — pendente por decisão; ativação registra permissões comprovadas.
+4. Estanho: sem cobertura Free nesta API — binding inativo até fonte alternativa homologada ou inclusão upstream.
+5. Decisão sobre exibição pública/redistribuição (crédito visível; ALI/NI têm lastro LME upstream).

@@ -261,6 +261,9 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     windowEmpty:
       "Sem observações dentro do período filtrado — amplie o recorte " +
       "ou aguarde a próxima publicação da fonte.",
+    granularityNotSupported:
+      "Este instrumento não possui observações na frequência " +
+      "selecionada — a fonte dele publica em outra periodicidade.",
     partialNote:
       "Dados parciais: parte do período não possui observações ou " +
       "câmbio correspondente.",

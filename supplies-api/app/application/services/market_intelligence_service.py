@@ -269,10 +269,24 @@ class MarketIntelligenceService:
         return value
 
     def _validate_granularity(
-        self, granularity: str | None, kind: str
+        self,
+        granularity: str | None,
+        kind: str,
+        supported: list[str] | tuple[str, ...] | None = None,
     ) -> str:
         value = (granularity or "month").strip().lower()
-        allowed = FX_GRANULARITIES if kind == KIND_FX else METAL_GRANULARITIES
+        if kind == KIND_FX:
+            allowed: tuple[str, ...] = FX_GRANULARITIES
+        elif supported:
+            # Per-instrument contract from the producer catalog: a
+            # daily-native source (MetalCharts) serves day/week/month/
+            # year; a monthly-native one (Pink Sheet) stays month/year.
+            declared = set(supported)
+            allowed = tuple(
+                g for g in ALL_GRANULARITIES if g in declared
+            ) or METAL_GRANULARITIES
+        else:
+            allowed = METAL_GRANULARITIES
         if value not in allowed:
             raise ValueError(
                 f"granularity {value} is not supported for this series"
@@ -469,12 +483,16 @@ class MarketIntelligenceService:
         latest_available: date | None,
         feed_ingestion: dict[str, Any] | None,
         today: date | None = None,
+        cadence: str = "monthly",
     ) -> dict[str, Any]:
         """Feed freshness by provider cadence — evaluated on the
         instrument's latest available observation, independent of the
-        queried window."""
+        queried window. ``cadence`` is the instrument's real
+        publication rhythm: day-native sources (PTAX, MetalCharts) are
+        measured against business days, monthly sources against the
+        provider's publication day."""
         today = today or date.today()
-        if kind != KIND_FX:
+        if kind != KIND_FX and cadence != "business_daily":
             expected = self._expected_monthly_period(
                 today, _PUBLICATION_DAY_BY_KIND.get(kind, 5)
             )
@@ -874,6 +892,7 @@ class MarketIntelligenceService:
         expected = (
             _weekday_count(start, end)
             if kind == KIND_FX
+            or instrument.get("granularity") == "day"
             else len(_month_range(start, end))
         )
 
@@ -942,6 +961,11 @@ class MarketIntelligenceService:
             kind=kind,
             latest_available=self._instrument_latest(instrument),
             feed_ingestion=meta["feed_ingestion"],
+            cadence=(
+                "business_daily"
+                if instrument.get("granularity") == "day"
+                else "monthly"
+            ),
         )
         data_status = self._data_status(
             observed=len(valid),
@@ -996,7 +1020,13 @@ class MarketIntelligenceService:
         kind = instrument.get("kind", KIND_METAL)
         currency = self._validate_currency(currency, kind)
         fx_kind = self._validate_fx_kind(fx_kind)
-        granularity = self._validate_granularity(granularity, kind)
+        granularity = self._validate_granularity(
+            granularity,
+            kind,
+            instrument.get("supported_granularities")
+            if kind == KIND_METAL
+            else None,
+        )
         start, end = self._parse_range(date_from, date_to)
 
         partial_reason = None
@@ -1020,36 +1050,25 @@ class MarketIntelligenceService:
                     partial_reason = (
                         f"fx_missing_months:{','.join(missing)}"
                     )
-                native_by_month = {
-                    _month_key(p.period): p for p in raw
-                }
-                converted_by_month = {
-                    _month_key(c.period): c
-                    for c in converted
-                    if c is not None
-                }
                 points = self._metal_series(
                     granularity,
                     start,
                     end,
-                    native_by_month,
-                    converted_by_month,
+                    raw,
+                    converted,
                     currency,
                 )
             else:
-                native_by_month = {
-                    _month_key(p.period): p for p in raw
-                }
                 points = self._metal_series(
                     granularity,
                     start,
                     end,
-                    native_by_month,
-                    native_by_month,
+                    raw,
+                    list(raw),
                     currency,
                 )
             expected = self._expected_buckets(
-                METAL_GRANULARITIES, granularity, start, end
+                ALL_GRANULARITIES, granularity, start, end
             )
             observed = sum(1 for p in points if p["value"] is not None)
 
@@ -1061,6 +1080,11 @@ class MarketIntelligenceService:
             kind=kind,
             latest_available=self._instrument_latest(instrument),
             feed_ingestion=meta["feed_ingestion"],
+            cadence=(
+                "business_daily"
+                if instrument.get("granularity") == "day"
+                else "monthly"
+            ),
         )
         data_status = self._data_status(
             observed=observed,
@@ -1134,30 +1158,58 @@ class MarketIntelligenceService:
             )
         currency = self._validate_currency(currency, KIND_METAL)
         fx_kind = self._validate_fx_kind(fx_kind)
-        granularity = self._validate_granularity(granularity, KIND_METAL)
+        granularity = (granularity or "month").strip().lower()
+        if granularity not in ALL_GRANULARITIES:
+            raise ValueError(
+                f"granularity {granularity} is not supported for this series"
+            )
         start, end = self._parse_range(date_from, date_to)
         expected = self._expected_buckets(
-            METAL_GRANULARITIES, granularity, start, end
+            ALL_GRANULARITIES, granularity, start, end
         )
 
-        series = []
+        resolved = []
         for code in codes:
             instrument = self._resolve_instrument(catalog, code)
             if instrument.get("kind", KIND_METAL) != KIND_METAL:
                 raise ValueError(
                     f"instrument is not a metal series: {code}"
                 )
+            resolved.append(instrument)
+
+        def _supports(instrument: dict[str, Any]) -> bool:
+            declared = instrument.get("supported_granularities") or list(
+                METAL_GRANULARITIES
+            )
+            return granularity in declared
+
+        if not any(_supports(inst) for inst in resolved):
+            # A granularity no requested instrument can serve is a
+            # client error for the whole request (never fabricated).
+            raise ValueError(
+                f"granularity {granularity} is not supported "
+                "for this series"
+            )
+
+        series = []
+        for instrument in resolved:
             display = instrument.get("display_allowed") is True
+            supported = _supports(instrument)
             availability = {
                 "selectable_in_ui": instrument.get("selectable_in_ui")
                 is not False,
-                "data_access_allowed": display,
+                # For this request the instrument only yields data when
+                # both rights AND granularity capability hold — a
+                # monthly-native source cannot answer a daily query.
+                "data_access_allowed": display and supported,
                 "observations_available": bool(
                     instrument.get("latest_observation_date")
                 ),
                 "source_id": instrument.get("source_id"),
                 "unavailable_reason": (
-                    None if display else "source_use_pending"
+                    "granularity_not_supported"
+                    if not supported
+                    else (None if display else "source_use_pending")
                 ),
             }
             instrument_meta = {
@@ -1167,7 +1219,7 @@ class MarketIntelligenceService:
                 "unit": instrument.get("unit"),
                 "quote_basis": instrument.get("quote_basis"),
             }
-            if not display:
+            if not (display and supported):
                 series.append(
                     {
                         "instrument": instrument_meta,
@@ -1179,7 +1231,7 @@ class MarketIntelligenceService:
                 )
                 continue
             payload = self.list_series(
-                instrument_code=code,
+                instrument_code=instrument["instrument_code"],
                 currency=currency,
                 granularity=granularity,
                 fx_kind=fx_kind,
@@ -1363,6 +1415,12 @@ class MarketIntelligenceService:
             kind=kind,
             latest_available=self._instrument_latest(instrument),
             feed_ingestion=meta["feed_ingestion"],
+            cadence=(
+                "business_daily"
+                if kind == KIND_METAL
+                and instrument.get("granularity") == "day"
+                else "monthly"
+            ),
         )
         observed = sum(1 for r in rows if r["average"] is not None)
         data_status = self._data_status(
@@ -1798,54 +1856,110 @@ class MarketIntelligenceService:
         granularity: str,
         start: date,
         end: date,
-        native_by_month: dict[str, Observation],
-        value_by_month: dict[str, Observation],
+        native: list[Observation],
+        values: list[Observation | None],
         currency: str,
     ) -> list[dict[str, Any]]:
-        points = []
-        if granularity == "month":
-            for month in _month_range(start, end):
-                key = _month_key(month)
-                point = value_by_month.get(key)
-                has_native = key in native_by_month
-                coverage = (
-                    "ok"
-                    if point is not None
-                    else ("fx_missing" if has_native else "no_data")
-                )
-                points.append(
-                    {
-                        "period": key,
-                        "period_date": month,
-                        "value": _fmt(point.value)
-                        if point is not None
-                        else None,
-                        "observation_count": 1 if has_native else 0,
-                        "coverage": coverage,
-                    }
-                )
-            return points
-        # year — mean of valid months within each calendar year.
+        """Bucket the raw observations into the requested granularity.
+
+        ``values`` is positionally aligned with ``native`` — for BRL it
+        is the converted series (``None`` where FX is missing); for USD
+        it is the same list. Buckets are derived only, never upward-
+        fabricated: a month is the mean of its valid daily closes (a
+        monthly-native source contributes its single observation), a
+        week is the mean per ISO week, a day is the observation itself.
+        """
+        pairs = list(zip(native, values))
+        if granularity == "day":
+            # Only observed days — weekends/holidays are legitimate
+            # non-publication days, not null buckets.
+            return [
+                {
+                    "period": nat.period.isoformat(),
+                    "period_date": nat.period,
+                    "value": _fmt(conv.value) if conv is not None else None,
+                    "observation_count": 1,
+                    "coverage": "ok" if conv is not None else "fx_missing",
+                }
+                for nat, conv in pairs
+            ]
+        native_by: dict[str, int] = {}
+        value_by: dict[str, list[Decimal]] = {}
+        if granularity in ("week", "month"):
+            key_fn = _week_key if granularity == "week" else _month_key
+            for nat, conv in pairs:
+                key = key_fn(nat.period)
+                native_by[key] = native_by.get(key, 0) + 1
+                if conv is not None:
+                    value_by.setdefault(key, []).append(conv.value)
+            if granularity == "week":
+                keys = _week_range(start, end)
+                bucket_starts = {key: start for key in keys}
+            else:
+                months = _month_range(start, end)
+                keys = [_month_key(m) for m in months]
+                bucket_starts = {
+                    _month_key(m): m for m in months
+                }
+            return [
+                {
+                    "period": key,
+                    "period_date": bucket_starts.get(key, start),
+                    "value": _fmt(_mean(value_by.get(key) or []))
+                    if value_by.get(key)
+                    else None,
+                    "observation_count": len(value_by.get(key) or []),
+                    "native_observation_count": native_by.get(key, 0),
+                    "coverage": (
+                        "ok"
+                        if value_by.get(key)
+                        else (
+                            "fx_missing"
+                            if key in native_by
+                            else "no_data"
+                        )
+                    ),
+                }
+                for key in keys
+            ]
+        # year — mean of monthly means over months with values.
+        month_means: dict[str, Decimal] = {}
+        months_with_native: dict[str, int] = {}
+        by_month_values: dict[str, list[Decimal]] = {}
+        for nat, conv in pairs:
+            key = _month_key(nat.period)
+            months_with_native[key] = months_with_native.get(key, 0) + 1
+            if conv is not None:
+                by_month_values.setdefault(key, []).append(conv.value)
+        for key, month_values in by_month_values.items():
+            mean = _mean(month_values)
+            if mean is not None:
+                month_means[key] = mean
         years = sorted({m.year for m in _month_range(start, end)})
+        points = []
         for year in years:
             months = [
                 m for m in _month_range(start, end) if m.year == year
             ]
-            values = [
-                value_by_month[_month_key(m)].value
+            year_values = [
+                month_means[_month_key(m)]
                 for m in months
-                if _month_key(m) in value_by_month
+                if _month_key(m) in month_means
             ]
             native_count = sum(
-                1 for m in months if _month_key(m) in native_by_month
+                1
+                for m in months
+                if _month_key(m) in months_with_native
             )
             points.append(
                 {
                     "period": str(year),
                     "period_date": date(year, 1, 1),
-                    "value": _fmt(_mean(values)) if values else None,
-                    "observation_count": len(values),
-                    "coverage": _coverage(len(values), len(months)),
+                    "value": _fmt(_mean(year_values))
+                    if year_values
+                    else None,
+                    "observation_count": len(year_values),
+                    "coverage": _coverage(len(year_values), len(months)),
                     "native_observation_count": native_count,
                 }
             )

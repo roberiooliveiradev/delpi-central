@@ -163,6 +163,8 @@ function unavailableReasonLabel(reason: string | null | undefined): string {
       return states.feedNotCollected;
     case "window_empty":
       return states.windowEmpty;
+    case "granularity_not_supported":
+      return states.granularityNotSupported;
     default:
       return states.moduleUnavailable;
   }

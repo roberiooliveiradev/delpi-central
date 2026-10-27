@@ -60,9 +60,10 @@ logger = logging.getLogger("external-data-api.jobs.ingest_market_data")
 _DEFAULT_WINDOW_DAYS = {
     FEED_FX_DAILY: 35,
     FEED_METALS_MONTHLY: 400,
-    # MetalCharts Free exposes 30 days of daily bars; 35 covers the
-    # window with a small buffer without paying for deeper history.
-    FEED_METALS_DAILY: 35,
+    # MetalCharts Free hard-stops history beyond 30 days (verified
+    # S1: a 35-day window is refused upstream with 403); 29 days keeps
+    # every request inside the plan's daily-bars window with margin.
+    FEED_METALS_DAILY: 29,
     FEED_COMEX_MONTHLY: 400,
     FEED_IPP_MONTHLY: 400,
 }
