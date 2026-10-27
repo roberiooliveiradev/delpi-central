@@ -291,8 +291,14 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-ADM-13 | base de publicação é o vencedor do boundary | versão de maior número não pode ser base; desempate eff/version igual ao backend | positive + out-of-order negative | resolve_published_version | PROVEN (UX-012-RW01 — winnerAt + planDocumentSave) |
 | RQ-ADM-14 | alteração de exigência propaga a boundaries futuros | item inserido/editado no meio da timeline não morre no boundary seguinte | positive + overlap sibling | planDocumentSave | PROVEN (UX-012-RW01 — teste multi-boundary) |
 | RQ-ADM-15 | publicação multi-passo é idempotente e honesta | retry não duplica; falha intermediária nunca informa sucesso; rascunho igual retomado, divergente é conflito | retry + failure negative | ensurePublishedVersion | PROVEN (UX-012-RW01 — testes de resume/conflito/no-op) |
-| RQ-ADM-16 | encerrar última exigência tem semântica explícita | sem versão vazia fictícia nem documento sentinela; conflito com TARGET registrado | negative + decision | DECISION_REQUIRED-2 | PENDING (gate de contrato — Plano 113 §28.2) |
-| RQ-ADM-17 | configuração documental início+fim é atômica | uma transação para janela completa | atomicity | DECISION_REQUIRED-1 | PENDING (gate de contrato — Plano 113 §28.2) |
+| RQ-ADM-16 | encerrar última exigência tem semântica explícita | sem versão vazia fictícia nem documento sentinela; conflito com TARGET registrado | negative + decision | doc 114 (DR-2) | DECISION_REQUIRED (comparativo A vs B no doc 114 — recomendação A, aguarda PO) |
+| RQ-ADM-17 | configuração documental início+fim é atômica | uma transação para janela completa | atomicity | doc 114 (DR-1) | TARGET (contrato proposto `PUT …/documents/{key}/requirement` — aguarda autorização de implementação) |
+| RQ-ADM-DR1-01 | configuração documental em transação única | falha em qualquer passo → rollback integral; zero versão parcial | atomicity + failure injection | doc 114 §2.2 | TARGET |
+| RQ-ADM-DR1-02 | propagação server-side a boundaries | winner@b + item em cada boundary; remoção em until+1 | positive + overlap | doc 114 §2.2 | TARGET |
+| RQ-ADM-DR1-03 | concorrência serializada + idempotência | FOR UPDATE; base_version OCC; retry → no_changes sem duplicar | concurrency + retry | doc 114 §2.2/§2.5 | TARGET |
+| RQ-ADM-DR1-04 | autorização e auditoria completas | MANAGE; evento por versão + DOCUMENT_CONFIG_APPLIED; retro ativo 422 | permission negative + audit | doc 114 §2.2/§2.4 | TARGET |
+| RQ-ADM-DR2-01 | ausência de exigências sem documento fictício | sem-template ≠ checklist vazio; distinção auditável | decision + negative | doc 114 §3 | DECISION_REQUIRED (recomendado A) |
+| RQ-ADM-DR2-02 | consumers de snapshot inalterados | abertura, P2/P5, validações, pacotes, CLARA, histórico | compat suite | doc 114 §3.2 | TARGET |
 | RQ-HELP-01 | Ajuda usa manual canônico | `createDashboardUserManual` + PageHero/Path/SectionCard; zero chrome local | component + structural | plugin-ui + 29 | TARGET |
 | RQ-HELP-02 | Ajuda é rota de topbar com ACCESS | `/help` funciona em F5; sem ACCESS = 403 | navigation + permission negative | router/manifest/Core | TARGET |
 | RQ-HELP-03 | manual publica somente runtime real | feature/route futura não aparece nem vira link | route-disabled negative | feature catalog | TARGET |

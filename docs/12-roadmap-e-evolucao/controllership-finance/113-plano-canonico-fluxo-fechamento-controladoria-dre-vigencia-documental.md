@@ -1131,3 +1131,26 @@ Em setembro/2026, as capturas do PO mostram a consulta operacional `stock-invent
 **DECISION_REQUIRED-2 — checklist vazio / última exigência.** Problema: PO aprovou fechamento sem documentos, e abertura sem qualquer versão publicada já produz snapshot vazio (PROVEN); porém ENCERRAR a última exigência de um template já publicado não é representável — `publish` exige ≥1 item e `inactivate` não zera (versões anteriores continuam vencendo). Hoje a UI recusa com `catalog_last_item_end`. Conflito com o TARGET aprovado. Alternativas: (a) permitir publicação de versão com 0 itens + `resolve_published_version` retornando checklist vazio — simples, mas semântica "sem exigências" precisa distinguir "sem template" de "template vazio"; (b) flag `requirements_disabled` no template publicável prospectivamente — recomendado (preserva distinção sem checklist/ checklist vazio); (c) documento-sentinela — descartado (dado fictício). Owner: contrato/persistência do checklist BFF; possível migration (coluna ou valor de status). Gate de aprovação pendente — não implementado.
 
 **Concorrência entre administradores:** serialização parcial pelo índice único de DRAFT (segundo admin recebe `draft_already_open`); OCC `revision` protege edição do rascunho; o plano rebusca versões frescas no início de cada save — a janela residual de corrida (publicação alheia entre fetch e publish) resulta apenas em versão adicional na timeline, nunca em exigência reescrita, pois versões publicadas são imutáveis.
+
+### 28.3 Gate documental DR-1/DR-2 — GATE-013 (28/10/2026, READ-ONLY)
+
+**PROPOSTA — nenhum runtime alterado.** O gate produziu o documento 114
+(`114-contrato-proposto-document-config-dr1-dr2-gate013.md`) com:
+
+- **Inventário de consumers:** `resolve_published_version` é consumido
+  APENAS por `open_competence`; todo runtime (P2/P5/validações/pacotes/
+  CLARA) lê o snapshot `competence_checklist_item` — mudanças de template
+  nunca reescrevem competência aberta.
+- **DR-1 (aprovado conceitualmente):** `PUT /admin/checklist-templates/
+  {id}/documents/{item_key}/requirement` — uma transação com `FOR UPDATE`
+  que publica todas as versões do plano de vigência (propagação a
+  boundaries + remoção em until+1), idempotente (`no_changes`), com OCC
+  `base_version`, auditoria por versão + evento resumo e `422
+  retroactive_effective_period`.
+- **DR-2 (sem decisão PO):** comparativo A (versão publicada com 0 itens —
+  zero migration, distinção preservada por `template_version_id` NOT NULL)
+  vs B (flag `requirements_disabled` — invasiva). Recomendação técnica:
+  **Alternativa A**, com `allow_empty` explícito para evitar publicação
+  vazia acidental.
+- **Próximo gate:** revisão arquitetural + decisão PO de DR-2 →
+  autorização de implementação.

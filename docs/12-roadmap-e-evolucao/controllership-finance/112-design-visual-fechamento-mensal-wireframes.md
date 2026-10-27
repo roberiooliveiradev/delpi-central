@@ -1860,3 +1860,5 @@ Refinar a apresentação: reduzir cards repetitivos de fonte indisponível, uma 
 - Padrões reutilizados: filtros na URL (RW01), formulário nativo `cf-validation-panel__form`, tabela `DataTableSection`, badges `CfStatusBadge` — zero componente paralelo.
 
 **RW01 (28/10/2026) — integridade de vigência, sem mudança visual.** A orquestração de publicação passou a derivar a base do VENCEDOR de cada boundary (`eff DESC, version DESC` — regra de `resolve_published_version`), propagar o item a todas as versões futuras cobertas pela janela e publicar a remoção em `until+1` contra o estado pós-inserção. Falha intermediária exibe erro honesto e o retry converge por idempotência (versão aberta com conteúdo idêntico é retomada; divergente → conflito). Último item do checklist segue recusado — `DECISION_REQUIRED` pendente (Plano 113 §28.2).
+
+**GATE-013 (28/10/2026):** contrato DR-1 proposto e comparativo DR-2 documentados no doc 114 (TARGET — aguardando revisão arquitetural e decisão do PO; nenhuma mudança visual implementada).
