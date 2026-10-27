@@ -253,7 +253,60 @@ Baseline: `486831a025`. Planos de referência em branches de PR (ainda não merg
 |---|---|
 | `api-delpi` | `search_products` ganha filtros aditivos `product_type` (lista) e `subgroup`; nova rota `GET /supplies/products/search` (mesma use case, projeção reduzida + `ncm_status` derivado: `missing`/`malformed`/`present`) |
 | `external-data-api` | V009: `comex_ncm_allowlist` + `status` (`candidate`/`pending_fiscal_review`/`approved`/`rejected`/`inactive`), `reviewed_*`, `updated_at` + auditoria; rotas S2S de governança; consultas e ingestão só com `status=approved AND active` |
-| `supplies-api` | V004 `supplies.market_saved_views` (owner_user_id + unit_scope); BFF `comex/products/search` (api-delpi + estado de homologação), `comex/ncms` GET/POST + `/{code}/review` (manage-only), `saved-views` CRUD por ownership, `imports/series` multi-NCM com dedup |
+| `supplies-api` | V004 `supplies.market_saved_views` (owner_user_id + unit_scope); BFF `comex/products/search` (api-delpi + estado de homologação), `comex/ncm-governance` GET/POST + `/{id}/transition` (manage-only), `comex/views` CRUD por ownership, `imports/series` multi-NCM com dedup |
 | `plugins/supplies` | Perspectiva Comex: tipo, busca paginada, multiselect chips, badges NCM, saved views, KPIs FOB/kg/US$/t ponderado |
 
 **Decisão de governança:** com apenas `supplies.access`/`supplies.manage`, todas as transições de estado da NCM exigem `supplies.manage`; a trilha de auditoria (ator+nota+timestamp) registra a responsabilidade de negócio — distinção Compras/Fiscal/Suprimentos como permissões dedicadas ficaria `PENDING` de decisão Core (não criar permission por operação).
+
+
+## 14. Comex configurável — S1–S5 implementação e evidência (2026-10-27)
+
+### 14.1 S1 — catálogo de produtos (api-delpi, commit 484f39441a)
+
+- `search_products` ganhou filtros aditivos `product_type` (lista) e `subgroup`; nova rota `GET /supplies/products/search` na superfície Suprimentos (`dashboard-supplies.view` user-parity ou S2S `caller=supplies-api`), projeção reduzida e `ncm_status` derivado (`missing`/`malformed`/`present`) — NCM nunca é inferida, apenas formatada.
+- Busca por `description` evoluiu de prefixo para substring (scoring mantém bônus de prefixo) — provado: `cobre` retorna 74 MPs reais.
+- 10 testes novos + 40 regressões da api-delpi verdes.
+
+### 14.2 S2 — governança NCM (external-data + supplies, commits 5bd8ca1e3a, 0aafd520e1)
+
+- external-data-api: use case `upsert_ncm_allowlist` (S2S, preserva `active` quando omitido; `ncm_version` recebe default `2022` quando omitido no create). 9 testes verdes.
+- supplies-api: migration V004 `supplies.comex_ncm_governance` + `supplies.market_saved_views`; máquina de estados `candidate → pending_fiscal_review → approved|rejected`, `approved → inactive`, `inactive|rejected → pending_fiscal_review`, protegida por `revision` (optimistic concurrency); aprovação/desativação sincronizam a allowlist (`sync: synced`); `inactive → approved` rejeitado com 409 (re-revisão obrigatória, contrato legítimo).
+
+### 14.3 S3 — BFF (commit ee304e6589, fix 1f39358359)
+
+- Rotas: `comex/products/search`, `comex/ncm-governance` GET/POST, `comex/ncm-governance/{id}/transition`, `comex/views` CRUD por ownership, `imports/series` multi-NCM (dedup CSV ≤20, agregação FOB/peso, `US$/t = ΣFOB/(Σkg/1000)` — nunca média simples de preços médios).
+- NCM malformada (≠8 dígitos) → **422** antes da resolução de catálogo; desconhecida/não aprovada/inativa → **404**; `granularity=day` → 422.
+
+### 14.4 S4 — frontend (commits 9b0b6c936d, 81212c75cb)
+
+- `MarketComexSelector`: busca paginada MP/PI/PA, multiselect de produtos, união deduplicada de NCMs dos produtos selecionados + seleção manual de NCMs aprovadas, ações de governança por permissão (`supplies.access` solicita; `supplies.manage` aprova/rejeita/desativa/ressubmete), saved views CRUD.
+- Selecionabilidade por `selectable_in_ui` (allowlist ativa), não `selectable` (direitos de exibição da fonte).
+- URL: `ncm` CSV + `products` persistem F5/compartilhamento/voltar-avançar.
+- Sem NCM ativa: estado neutro de configuração pendente + prévia de KPIs. Vitest 51 arquivos/509 testes; `tsc` limpo; build Vite ok.
+
+### 14.5 S5 — deploy e smoke autenticado (SHAs 1f39358359 / 81212c75cb)
+
+Ordem canônica respeitada: api-delpi → external-data-api → supplies-api → supplies. Evidência em produção:
+
+| Caso | Resultado |
+|---|---|
+| `product_type=MP` + `description=cobre` | 200, 74 resultados reais |
+| Ciclo `pending_fiscal_review → approved` | `sync: synced`, `selectable_in_ui: true`, série 200 (`data_status: no_data` honesto) |
+| `inactive → approved` | 409 (re-revisão obrigatória) → `inactive → pending → approved` OK |
+| Desativação | `sync: synced`, NCM sai da seleção |
+| `ncm=123` / CSV com valor não-numérico | **422** (após fix) |
+| `ncm=99999999` | 404 |
+| `granularity=day` | 422 |
+| Views CRUD | ownership fail-closed (403 cross-owner, 401 sem token) |
+| 401/403 | íntegros |
+
+**Pendência material:** feed `comex-monthly` segue desabilitado — sem observações reais MDIC a série retorna `data_status: no_data` (honesto). Ativação exige NCMs homologadas pelas autoridades de negócio + habilitação do feed/scheduler.
+
+**Rollback:** SHA anterior + rebuild dos serviços afetados; migration V004 já aplicada (imutável, forward-only); allowlist/governança revertíveis via transições.
+
+## 15. EXECUTION REPORT — PROC-0076.COMEX-CONFIGURABLE-ANALYSIS
+
+- **FINAL HEAD:** rebase fast-forward sobre `origin/main`; commits 484f39441a, 5bd8ca1e3a, ee304e6589, 9b0b6c936d, 0aafd520e1, 1f39358359, 81212c75cb + docs.
+- **S0–S4 GATES:** PASS. **S5 GATE:** PASS parcial — infraestrutura, composição, ciclo de governança e smoke provados; dados MDIC `PENDING` (feed desabilitado, 0 NCMs homologadas em produção).
+- **AC-01..20:** AC-01/02/03/04/05/06/07/09/10/12/13/14/15/18/19 PASS; AC-08/11 PENDING (fonte sem observações); AC-16 INCONCLUSIVE (exportação herdada do painel); AC-17 INCONCLUSIVE (responsivo/a11y via kit, sem captura); AC-20 PASS parcial (deploy + smoke autenticado; visual não capturado).
+- **POSTCONDITION:** `PROC_0076_COMEX_CONFIGURABLE_ANALYSIS_FUNCTIONAL` = **PENDING** — catálogo, governança, BFF e UX configurável funcionais e verificados em produção; a pós-condição de dados reais aguarda homologação de NCMs pelas autoridades de negócio e ativação do feed `comex-monthly`, conforme seção 18 do brief (sem dados fictícios).
