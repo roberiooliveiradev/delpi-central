@@ -392,3 +392,17 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Custo: 327 model calls; tokens/latencia nao capturados pos-resume (limitacao divulgada).
 - Artefatos: doc 166; delia-api/scripts/semantic_judgment_reach_eval.py; evidence semantic-judgment-r15-runs.json (sanitizado).
 - DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
+
+## 2026-10-27 — DELIA-C3-R16A-PER-RECORD-SEMANTIC-EVIDENCE-JUDGMENT-EVAL-01 (doc 167)
+
+- Escopo: A/B causal stage-local autorizado pela revisao independente R1.5 (ddddf09f34) — A=julgador agregado produtivo intacto; B=contrato harness-only de correspondencia por registro em lista; B2=variante de controle um-registro-por-chamada apos colapso de B; suficiencia deterministica (dedup+min) sobre labels do LLM. ZERO mudanca de codigo/instrucao/modelo/deploy/consulta produtiva.
+- Baseline congelada: delia-json:latest digest 7b8f4ab14fc1 (qwen2.5:3b Q4_K_M, ctx 8192, JSON-only); instrucao goal_evidence_relevance inalterada; corpus = 15 pares congelados R1.5 + 3 conjuntos construidos pre-medicao (DUP/NOQ/SEC fixture) = 18 conjuntos, 95 registros validos, x3 reps = 405 chamadas totais.
+- Oracles por registro com scrutinio de material/subtipo (exigencia da revisao): P_ilhos reclassificado (1 metalico pertinente, 7 borracha irrelevantes); BORNE FUSIVEL=partial; code-goal por identidade de codigo. Regras set-level declaradas pre-medicao; reconciliacao de labels doc 166 divulgada.
+- Resultado B (lista): colapso estrutural — o modelo emite exatamente 1 entrada por chamada (sempre r1/r2), cobertura 1/N; 237/285 registros sem label; set acc 0.487 < A 0.667; 6 FPs. Contrato de lista inexequível no modelo congelado.
+- Resultado B2 (1-registro-por-chamada): record precision 0.697 / recall 0.594 / FPR 0.214 (A~1.0/0.17/0); set acc 0.846 dev / 0.75 holdout — melhor de todos os bracos; todas familias positivas corretas; dedup e sem-quantidade corretos; decisoes estaveis entre reps.
+- Residuos B2: FP 33 (21.4%) incluindo erro de identidade X_code_wrong (TERM.BALA julgado pertinente ignorando codigo pedido — 3 FPs); partial mal discriminado (2/18); custo 5.5x chamadas / 3.2x tokens in / 2.6x latencia (295,635 in-tok, 236.7s).
+- Hipoteses: H1 SUPPORTED-com-refinamento (ganho veio de eliminar julgamento multi-item+enumeracao), H2 SUPPORTED-em-B2/REFUTED-em-B, H3 SUPPORTED (suficiencia deterministica correta), H4 SUPPORTED (FP real introduzido), H5 REFUTED-parcial (capacidade semantica existe com superficie minima; enumeracao nao), H6 REFUTED (holdout consistente).
+- Seguranca: validator rejeita refs inexistentes/dup/classe invalida; injecao em registro fixture julgada pelo conteudo, sem corromper outros labels; 0 bypass/ACT/PREPARE/fabricacao.
+- Veredito: R16A_ACCEPT_WITH_RESIDUAL — melhoria real e reproduzivel apenas na forma 1-registro-por-chamada; precisao 0.697 abaixo do gate ~0.70, FPR 21% exige hardening antes de candidatura produtiva. Menor contrato candidato documentado em doc 167 secao 9. Nenhuma autorizacao de mudanca produtiva.
+- Proximo bounded: R1.6-B — experimento separado de taxonomia de admissao (nao combinar com juiz). DEPLOY=NO; INDEPENDENT_REVIEW=PENDING.
+- Artefatos: doc 167; delia-api/scripts/per_record_judgment_eval.py; evidence per-record-judgment-r16a-runs.json (sanitizado).
