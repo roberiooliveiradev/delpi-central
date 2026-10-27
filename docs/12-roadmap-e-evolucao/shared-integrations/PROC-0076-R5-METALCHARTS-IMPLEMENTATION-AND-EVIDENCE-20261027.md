@@ -181,7 +181,16 @@ Escopo: evolução visual/funcional do dashboard R4.1 — sem dados sintéticos,
 - `_normalize` passa a aceitar linhas sem `tipoBoletim` (semântica do endpoint = fechamento); quando o campo existe, o filtro `Fechamento` permanece.
 - Feed `fx-daily` habilitado em produção (`infra/.env`, fonte `bcb-ptax` ativa/ODbL — direitos já comprovados).
 
-### 11.3 BFF/Frontend (R5.S3)
+### 11.3 Evidência em produção (smoke autenticado, `fffdb6cff5`)
+
+- **Backfill real:** job canônico `fx-daily` executado no container de produção → `fetched=250 inserted=500` (250 dias úteis × compra+venda), janela 27/10/2025–27/10/2026, `outcome=success`.
+- **Persistência:** `fx_rate_observations` = 250 linhas por `rate_kind`, `min=2025-10-27`, `max=2026-10-26`; último fechamento `compra 5.4998 / venda 5.5007` (26/10) — confere com a resposta viva da API.
+- **BFF `fx/series`:** `unit: R$/US$`; `day` 250 obs (`latest 5.5007`, média 5.189, `+2,35 %`, cobertura 250/262 → `partial` honesto — feriados indisponíveis na estimativa de dias úteis); `week` 53/53 ISO; `month` 13/13 (mês = média das diárias); `year` 2/2; compra e venda como séries distintas.
+- **`feed_ingestion`:** `last_run_outcome=success`, `last_run_started_at=2026-10-27T08:09:23-03:00` encaminhado ao MFE.
+- **Efeito colateral positivo:** metais em BRL agora convertem — zinco `2026-09 → 19.809,28 BRL/t`, `2026-10 → 18.977,26 BRL/t` (PTAX disponível nos meses); meses sem observação de metal seguem `no_data`.
+- **Regressão:** metais diários intactos (cobre `US$/lb`, zinco `US$/t`), IPP preservado (8 competências, última `2026-08`), negativos 401/403/422 íntegros.
+
+### 11.4 BFF/Frontend (R5.S3)
 
 - `feed_ingestion` passa a encaminhar `last_run_started_at`/`last_run_finished_at` (evidência real da última tentativa).
 - Cards de estado zerado: no máximo 3 itens compactos (última tentativa, última observação, cobertura) — motivo longo permanece no banner contextual, nunca como valor de KPI; outcome `failed`→"Falhou" etc.; datas/timestamps em pt-BR (`27/10/2026`, `27/10/2026 às 04:48`); card redundante de série removido.
