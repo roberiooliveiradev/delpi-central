@@ -962,7 +962,7 @@ def test_v22_instruction_declares_omission_semantics():
             / "orchestration_instructions.delpi.json"
         ).read_text()
     )
-    assert raw["version"] == "23"
+    assert raw["version"] == "24"
     res = load_test_orchestration_instructions()
     checks = {
         "delia.capability_orchestration.grounded_synthesis": "records_omitted",
