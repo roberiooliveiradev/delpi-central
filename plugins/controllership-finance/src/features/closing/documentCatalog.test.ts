@@ -1,6 +1,7 @@
 /**
  * documentCatalog — derivação do catálogo por item_key a partir da
- * timeline de versões publicadas + orquestração DRAFT→REVIEW→PUBLISHED.
+ * timeline de versões publicadas + plano de publicação idempotente e
+ * orquestração DRAFT→REVIEW→PUBLISHED (RW01).
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -8,6 +9,8 @@ const createDraftMock = vi.fn();
 const updateDraftMock = vi.fn();
 const submitReviewMock = vi.fn();
 const publishMock = vi.fn();
+const listVersionsMock = vi.fn();
+const getVersionMock = vi.fn();
 
 vi.mock("../../api/adminApi", () => ({
   createTemplateDraft: (...args: unknown[]) => createDraftMock(...args),
@@ -15,6 +18,8 @@ vi.mock("../../api/adminApi", () => ({
   submitVersionForReview: (...args: unknown[]) =>
     submitReviewMock(...args),
   publishTemplateVersion: (...args: unknown[]) => publishMock(...args),
+  listTemplateVersions: (...args: unknown[]) => listVersionsMock(...args),
+  getTemplateVersion: (...args: unknown[]) => getVersionMock(...args),
 }));
 
 import {
@@ -22,11 +27,15 @@ import {
   deriveDocumentCatalog,
   formatPeriod,
   nextPeriod,
+  planDocumentSave,
   previousPeriod,
   publishRemovalVersion,
   saveDocumentConfig,
   slugifyItemKey,
+  sortPublished,
   toDraftItems,
+  winnerAt,
+  type DocumentFormPayload,
   type VersionWithItems,
 } from "./documentCatalog";
 
@@ -69,7 +78,7 @@ function version(
   n: number,
   status: string,
   effective: string | null,
-  items: typeof ITEM_A[],
+  items: (typeof ITEM_A)[],
 ): VersionWithItems {
   return {
     version_id: `v-${n}`,
@@ -85,6 +94,61 @@ function version(
     item_count: items.length,
     items,
   };
+}
+
+/** Payload com configuração idêntica a ITEM_C (igualdade de conteúdo). */
+const DOC_C_MATCH: DocumentFormPayload = {
+  itemKey: "DOC-C",
+  name: "Documento futuro",
+  purpose: "Fechamento contábil",
+  originKind: "TOTVS",
+  recipientArea: "CONTABIL",
+  applicability: "REQUIRED",
+  sheet: "ELETRONICO",
+  branchScope: "BOTH",
+  totvsReportRef: "MATR460",
+  requirementNotes: null,
+  validationScope: "PER_ATTACHMENT",
+};
+
+const DOC_C: DocumentFormPayload = {
+  itemKey: "DOC-C",
+  name: "Documento futuro",
+  purpose: "Teste",
+  originKind: "TOTVS",
+  recipientArea: "CONTABIL",
+  applicability: "REQUIRED",
+  sheet: "ELETRONICO",
+  branchScope: "BOTH",
+  totvsReportRef: null,
+  requirementNotes: null,
+  validationScope: "PER_ATTACHMENT",
+};
+
+/** Stub de listTemplateVersions+getTemplateVersion para a orquestração. */
+function stubVersionFetch(versions: VersionWithItems[]) {
+  listVersionsMock.mockResolvedValue(
+    versions.map((v) => ({ ...v, items: undefined })),
+  );
+  getVersionMock.mockImplementation((_t: string, n: number) =>
+    Promise.resolve(versions.find((v) => v.version === n)),
+  );
+}
+
+function setupDraft() {
+  let next = 90;
+  createDraftMock.mockImplementation(() =>
+    Promise.resolve({
+      version_id: `v-${next}`,
+      version: next++,
+      status: "DRAFT",
+      revision: 1,
+      effective_from_period: null,
+    }),
+  );
+  updateDraftMock.mockResolvedValue({});
+  submitReviewMock.mockResolvedValue({});
+  publishMock.mockResolvedValue({});
 }
 
 describe("documentCatalog — helpers", () => {
@@ -120,6 +184,26 @@ describe("documentCatalog — helpers", () => {
       validation_scope: "PER_ATTACHMENT",
     });
     expect("item_id" in draft!).toBe(false);
+  });
+});
+
+describe("timeline — winnerAt espelha resolve_published_version", () => {
+  it("mesmo effective_from: a versão MAIOR vence (version DESC)", () => {
+    const published = sortPublished([
+      version(1, "PUBLISHED", "2026-01", [ITEM_A]),
+      version(2, "PUBLISHED", "2026-01", [ITEM_A, ITEM_B]),
+    ]);
+    expect(winnerAt(published, "2026-03")?.version).toBe(2);
+    expect(winnerAt(published, "2025-12")).toBeNull();
+  });
+
+  it("versão de maior NÚMERO com eff posterior não vence período anterior", () => {
+    const published = sortPublished([
+      version(1, "PUBLISHED", "2026-01", [ITEM_A]),
+      version(5, "PUBLISHED", "2027-01", [ITEM_A, ITEM_B]),
+    ]);
+    expect(winnerAt(published, "2026-06")?.version).toBe(1);
+    expect(winnerAt(published, "2027-02")?.version).toBe(5);
   });
 });
 
@@ -169,7 +253,7 @@ describe("deriveDocumentCatalog", () => {
     expect(a.situation).toBe("vigente");
   });
 
-  it("janelas descontínuas (exigido → removido → exigido) são separadas", () => {
+  it("janelas descontínuas (exigido → removido → reativado) são separadas", () => {
     const rows = deriveDocumentCatalog(
       [
         version(1, "PUBLISHED", "2026-01", [ITEM_A, ITEM_B]),
@@ -187,78 +271,144 @@ describe("deriveDocumentCatalog", () => {
   });
 });
 
-describe("saveDocumentConfig — orquestração", () => {
-  afterEach(() => vi.clearAllMocks());
+describe("planDocumentSave — propagação por boundary (RW01-B)", () => {
+  it("inclui o item em TODOS os boundaries futuros cobertos", () => {
+    // v1: A desde 2026-11; v2: A+C desde 2027-01 — salvar B em 2026-12
+    // precisa propagar B para o boundary 2027-01 também.
+    const steps = planDocumentSave(
+      [
+        version(1, "PUBLISHED", "2026-11", [ITEM_A]),
+        version(2, "PUBLISHED", "2027-01", [ITEM_A, ITEM_C]),
+      ],
+      { ...DOC_C, itemKey: "DOC-B", name: "Extrato" },
+      "2026-12",
+      null,
+    );
+    expect(steps.map((s) => s.effectiveFrom)).toEqual([
+      "2026-12",
+      "2027-01",
+    ]);
+    expect(
+      steps[0].items.map((i) => i.item_key).sort(),
+    ).toEqual(["DOC-A", "DOC-B"]);
+    expect(
+      steps[1].items.map((i) => i.item_key).sort(),
+    ).toEqual(["DOC-A", "DOC-B", "DOC-C"]);
+  });
 
-  function setupDraft(version = 5) {
-    createDraftMock.mockResolvedValue({
-      version_id: `v-${version}`,
-      version,
-      status: "DRAFT",
-      revision: 1,
-      effective_from_period: null,
-    });
-    updateDraftMock.mockResolvedValue({});
-    submitReviewMock.mockResolvedValue({});
-    publishMock.mockResolvedValue({});
-  }
+  it("com término, não propaga além do until e publica remoção em until+1", () => {
+    const steps = planDocumentSave(
+      [
+        version(1, "PUBLISHED", "2026-11", [ITEM_A]),
+        version(2, "PUBLISHED", "2027-01", [ITEM_A, ITEM_C]),
+      ],
+      { ...DOC_C, itemKey: "DOC-B", name: "Temporário" },
+      "2026-12",
+      "2027-02",
+    );
+    const effs = steps.map((s) => s.effectiveFrom);
+    // 2026-12 (inclusão), 2027-01 (propagação), 2027-03 (remoção).
+    expect(effs).toEqual(["2026-12", "2027-01", "2027-03"]);
+    const removal = steps[2];
+    expect(removal.items.map((i) => i.item_key).sort()).toEqual([
+      "DOC-A",
+      "DOC-C",
+    ]);
+  });
 
-  it("cria documento: draft → update com base+delta → review → publish", async () => {
-    setupDraft();
-    await saveDocumentConfig(
-      "t-1",
-      [ITEM_A],
+  it("omite passos cuja configuração já é a vigente (idempotência)", () => {
+    // B já exigido nos dois boundaries → nada a publicar.
+    const steps = planDocumentSave(
+      [
+        version(1, "PUBLISHED", "2026-11", [ITEM_A, ITEM_B]),
+        version(2, "PUBLISHED", "2027-01", [ITEM_A, ITEM_B, ITEM_C]),
+      ],
       {
-        itemKey: "DOC-C",
-        name: "Documento futuro",
-        purpose: "Teste",
+        itemKey: "DOC-B",
+        name: "Extrato bancário",
+        purpose: null,
         originKind: "TOTVS",
-        recipientArea: "CONTABIL",
-        applicability: "REQUIRED",
+        recipientArea: null,
+        applicability: "OPTIONAL",
         sheet: "ELETRONICO",
         branchScope: "BOTH",
-        totvsReportRef: null,
+        totvsReportRef: "MATR460",
         requirementNotes: null,
         validationScope: "PER_ATTACHMENT",
       },
-      "2026-08",
+      "2026-11",
       null,
     );
+    expect(steps).toEqual([]);
+  });
+
+  it("edição substitui a configuração futura do item nos boundaries", () => {
+    const edited: DocumentFormPayload = {
+      itemKey: "DOC-A",
+      name: "Balancete revisado",
+      purpose: "Novo",
+      originKind: "TOTVS",
+      recipientArea: "FISCAL",
+      applicability: "CONDITIONAL",
+      sheet: "ELETRONICO",
+      branchScope: "BOTH",
+      totvsReportRef: "MATR460",
+      requirementNotes: "Nota",
+      validationScope: "PER_ATTACHMENT",
+    };
+    const steps = planDocumentSave(
+      [
+        version(1, "PUBLISHED", "2026-01", [ITEM_A, ITEM_B]),
+        version(2, "PUBLISHED", "2026-05", [ITEM_A, ITEM_B, ITEM_C]),
+      ],
+      edited,
+      "2026-03",
+      null,
+    );
+    expect(steps.map((s) => s.effectiveFrom)).toEqual([
+      "2026-03",
+      "2026-05",
+    ]);
+    for (const step of steps) {
+      const a = step.items.find((i) => i.item_key === "DOC-A")!;
+      expect(a.name).toBe("Balancete revisado");
+      expect(a.recipient_area).toBe("FISCAL");
+      expect(a.sort_order).toBe(10);
+    }
+    expect(steps[1].items.map((i) => i.item_key)).toContain("DOC-C");
+  });
+});
+
+describe("saveDocumentConfig — orquestração", () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it("cria documento: draft → update com base do vencedor → review → publish", async () => {
+    stubVersionFetch([version(1, "PUBLISHED", "2026-01", [ITEM_A])]);
+    setupDraft();
+    await saveDocumentConfig("t-1", DOC_C, "2026-08", null);
     expect(createDraftMock).toHaveBeenCalledWith("t-1");
     const [, vNum, payload] = updateDraftMock.mock.calls[0];
-    expect(vNum).toBe(5);
+    expect(vNum).toBe(90);
     expect(payload.revision).toBe(1);
     expect(payload.items.map((i: { item_key: string }) => i.item_key))
       .toEqual(["DOC-A", "DOC-C"]);
-    expect(submitReviewMock).toHaveBeenCalledWith("t-1", 5);
-    expect(publishMock).toHaveBeenCalledWith("t-1", 5, {
+    expect(submitReviewMock).toHaveBeenCalledWith("t-1", 90);
+    expect(publishMock).toHaveBeenCalledWith("t-1", 90, {
       effective_from_period: "2026-08",
     });
   });
 
-  it("vigência final publica versão de remoção no período seguinte", async () => {
+  it("vigência final publica remoção em until+1 com base do vencedor", async () => {
+    stubVersionFetch([version(1, "PUBLISHED", "2026-01", [ITEM_A])]);
     setupDraft();
     await saveDocumentConfig(
       "t-1",
-      [ITEM_A],
-      {
-        itemKey: "DOC-C",
-        name: "Documento temporário",
-        purpose: null,
-        originKind: "EXTERNAL",
-        recipientArea: null,
-        applicability: "OPTIONAL",
-        sheet: "FISICO",
-        branchScope: "MATRIX",
-        totvsReportRef: null,
-        requirementNotes: null,
-        validationScope: "WHOLE_SET",
-      },
+      { ...DOC_C, name: "Temporário" },
       "2026-08",
       "2026-10",
     );
     expect(createDraftMock).toHaveBeenCalledTimes(2);
-    expect(publishMock).toHaveBeenNthCalledWith(1, "t-1", 5, {
+    expect(publishMock).toHaveBeenNthCalledWith(1, "t-1", 90, {
       effective_from_period: "2026-08",
     });
     const removalPayload = updateDraftMock.mock.calls[1][2];
@@ -267,40 +417,80 @@ describe("saveDocumentConfig — orquestração", () => {
         (i: { item_key: string }) => i.item_key,
       ),
     ).toEqual(["DOC-A"]);
-    expect(publishMock).toHaveBeenNthCalledWith(2, "t-1", 5, {
+    expect(publishMock).toHaveBeenNthCalledWith(2, "t-1", 91, {
       effective_from_period: "2026-11",
     });
   });
 
-  it("edição substitui o item de mesma chave sem duplicar", async () => {
+  it("base é o vencedor do boundary — não a versão de maior número", async () => {
+    // v2 é de REMOÇÃO futura (sem A): salvar doc em 2026-06 não pode
+    // encurtar a exigência de A que vale até 2026-11.
+    stubVersionFetch([
+      version(1, "PUBLISHED", "2026-01", [ITEM_A]),
+      version(2, "PUBLISHED", "2026-12", []),
+    ]);
     setupDraft();
-    await saveDocumentConfig(
-      "t-1",
-      [ITEM_A, ITEM_B],
-      {
-        itemKey: "DOC-A",
-        name: "Balancete revisado",
-        purpose: "Novo",
-        originKind: "TOTVS",
-        recipientArea: "FISCAL",
-        applicability: "CONDITIONAL",
-        sheet: "ELETRONICO",
-        branchScope: "BOTH",
-        totvsReportRef: "MATR460",
-        requirementNotes: "Nota",
-        validationScope: "PER_ATTACHMENT",
-      },
-      "2026-08",
-      null,
-    );
-    const payload = updateDraftMock.mock.calls[0][2];
-    expect(payload.items).toHaveLength(2);
-    const edited = payload.items.find(
-      (i: { item_key: string }) => i.item_key === "DOC-A",
-    );
-    expect(edited.name).toBe("Balancete revisado");
-    expect(edited.recipient_area).toBe("FISCAL");
-    expect(edited.sort_order).toBe(10);
+    await saveDocumentConfig("t-1", DOC_C, "2026-06", "2026-08");
+    const firstPayload = updateDraftMock.mock.calls[0][2];
+    expect(
+      firstPayload.items.map((i: { item_key: string }) => i.item_key),
+    ).toEqual(["DOC-A", "DOC-C"]);
+    // Remoção em 2026-09: vencedor é v1 (A) → alvo A sem C.
+    const removalPayload = updateDraftMock.mock.calls[1][2];
+    expect(
+      removalPayload.items.map((i: { item_key: string }) => i.item_key),
+    ).toEqual(["DOC-A"]);
+  });
+
+  it("retry após falha: passo já publicado é pulado (sem duplicar)", async () => {
+    // Simula estado pós-falha: versão de inclusão já publicada.
+    stubVersionFetch([
+      version(1, "PUBLISHED", "2026-01", [ITEM_A]),
+      version(2, "PUBLISHED", "2026-08", [ITEM_A, ITEM_C]),
+    ]);
+    setupDraft();
+    await saveDocumentConfig("t-1", DOC_C_MATCH, "2026-08", "2026-10");
+    // Só o passo de remoção é necessário.
+    expect(createDraftMock).toHaveBeenCalledTimes(1);
+    expect(publishMock).toHaveBeenCalledTimes(1);
+    expect(publishMock).toHaveBeenCalledWith("t-1", 90, {
+      effective_from_period: "2026-11",
+    });
+  });
+
+  it("retoma versão REVIEW com itens iguais ao alvo (resume)", async () => {
+    stubVersionFetch([
+      version(1, "PUBLISHED", "2026-01", [ITEM_A]),
+      version(2, "REVIEW", null, [ITEM_A, ITEM_C]),
+    ]);
+    await saveDocumentConfig("t-1", DOC_C_MATCH, "2026-08", null);
+    // Sem draft novo: a versão REVIEW 2 é publicada diretamente.
+    expect(createDraftMock).not.toHaveBeenCalled();
+    expect(publishMock).toHaveBeenCalledWith("t-1", 2, {
+      effective_from_period: "2026-08",
+    });
+  });
+
+  it("rascunho aberto com conteúdo divergente vira conflito honesto", async () => {
+    stubVersionFetch([
+      version(1, "PUBLISHED", "2026-01", [ITEM_A]),
+      version(2, "DRAFT", null, [ITEM_A, ITEM_B]),
+    ]);
+    await expect(
+      saveDocumentConfig("t-1", DOC_C, "2026-08", null),
+    ).rejects.toMatchObject({ code: "catalog_draft_conflict" });
+    expect(publishMock).not.toHaveBeenCalled();
+  });
+
+  it("falha intermediária propaga o erro — nunca sucesso parcial", async () => {
+    stubVersionFetch([version(1, "PUBLISHED", "2026-01", [ITEM_A])]);
+    setupDraft();
+    publishMock
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error("publish failed"));
+    await expect(
+      saveDocumentConfig("t-1", DOC_C, "2026-08", "2026-10"),
+    ).rejects.toThrow("publish failed");
   });
 });
 
@@ -308,27 +498,31 @@ describe("publishRemovalVersion", () => {
   afterEach(() => vi.clearAllMocks());
 
   it("publica remoção no período seguinte ao término", async () => {
-    createDraftMock.mockResolvedValue({
-      version: 7,
-      status: "DRAFT",
-      revision: 2,
-    });
-    updateDraftMock.mockResolvedValue({});
-    submitReviewMock.mockResolvedValue({});
-    publishMock.mockResolvedValue({});
-    await publishRemovalVersion("t-1", toDraftItems([ITEM_B]), "2026-06");
+    stubVersionFetch([
+      version(1, "PUBLISHED", "2026-01", [ITEM_A, ITEM_B]),
+    ]);
+    setupDraft();
+    await publishRemovalVersion("t-1", "DOC-A", "2026-06");
     const payload = updateDraftMock.mock.calls[0][2];
     expect(
       payload.items.map((i: { item_key: string }) => i.item_key),
     ).toEqual(["DOC-B"]);
-    expect(publishMock).toHaveBeenCalledWith("t-1", 7, {
+    expect(publishMock).toHaveBeenCalledWith("t-1", 90, {
       effective_from_period: "2026-07",
     });
   });
 
+  it("remoção já vigente é no-op", async () => {
+    stubVersionFetch([version(1, "PUBLISHED", "2026-01", [ITEM_A])]);
+    await publishRemovalVersion("t-1", "DOC-B", "2026-06");
+    expect(createDraftMock).not.toHaveBeenCalled();
+    expect(publishMock).not.toHaveBeenCalled();
+  });
+
   it("recusa encerrar o único documento do checklist", async () => {
+    stubVersionFetch([version(1, "PUBLISHED", "2026-01", [ITEM_A])]);
     await expect(
-      publishRemovalVersion("t-1", [], "2026-06"),
+      publishRemovalVersion("t-1", "DOC-A", "2026-06"),
     ).rejects.toBeInstanceOf(CatalogSaveError);
     expect(createDraftMock).not.toHaveBeenCalled();
   });

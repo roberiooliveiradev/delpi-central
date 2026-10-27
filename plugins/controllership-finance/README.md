@@ -52,12 +52,21 @@ publicadas do checklist mestre — janelas de vigência, situação
 (vigente/futuro/encerrado), exigência e destino — sem persistência
 paralela. Cadastro (`/new`) e edição (`/{itemKey}`) abrem páginas
 completas, nunca modal, e gravam orquestrando o contrato versionado
-existente (DRAFT → REVIEW → PUBLISHED com `effective_from_period`;
-vigência final publica versão de remoção no período seguinte) — sempre
-prospectivo, snapshots de competências abertas/encerradas preservados.
+existente (DRAFT → REVIEW → PUBLISHED com `effective_from_period`) —
+sempre prospectivo, snapshots de competências abertas/encerradas
+preservados. RW01: a base de cada publicação é a versão vencedora no
+boundary (`effective_from DESC, version DESC` — regra de
+`resolve_published_version`); como versões são conjuntos absolutos, o
+item é propagado a todos os boundaries cobertos pela janela e a remoção
+é publicada em `until+1` (`planDocumentSave`). Cada passo é
+idempotente: configuração já vigente é pulada, versão DRAFT/REVIEW com
+itens idênticos é retomada, conteúdo divergente vira conflito honesto —
+falha intermediária nunca informa sucesso e retry converge. Limites
+pendentes de gate (Plano 113 §28.2): atomicidade multi-versão real
+(DECISION_REQUIRED-1) e encerramento da última exigência do checklist
+(DECISION_REQUIRED-2 — o contrato exige ≥1 item por versão publicada).
 Filtros da listagem (`q`, `status`, `dest`) ficam na URL; o retorno do
-formulário preserva a consulta. Rascunho/revisão aberta bloqueia o
-salvamento com estado honesto (`draft_already_open`).
+formulário preserva a consulta.
 
 Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
 `cfDataTableUi` — banda única com ícone + título + pill de contagem do

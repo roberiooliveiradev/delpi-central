@@ -288,6 +288,11 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-ADM-10 | histórico administrativo é auditável/read-only | actor/time/entity/action/before-after/reason/effective/version | positive + immutable negative | audit store | PROVEN (A3 — `GET …/events` append-only) |
 | RQ-ADM-11 | Administração é plugin-ui first | primitives públicos; zero design-system local; mobile/dark/a11y | component + visual/a11y | plugin-ui | PROVEN (A3 — página usa kit/compartilhados `cf*`) |
 | RQ-ADM-12 | Help acompanha P6 | lifecycle/snapshot/inativação/catálogos ensinados somente quando implementados | help sync | feature-help-sync | PROVEN (A3) |
+| RQ-ADM-13 | base de publicação é o vencedor do boundary | versão de maior número não pode ser base; desempate eff/version igual ao backend | positive + out-of-order negative | resolve_published_version | PROVEN (UX-012-RW01 — winnerAt + planDocumentSave) |
+| RQ-ADM-14 | alteração de exigência propaga a boundaries futuros | item inserido/editado no meio da timeline não morre no boundary seguinte | positive + overlap sibling | planDocumentSave | PROVEN (UX-012-RW01 — teste multi-boundary) |
+| RQ-ADM-15 | publicação multi-passo é idempotente e honesta | retry não duplica; falha intermediária nunca informa sucesso; rascunho igual retomado, divergente é conflito | retry + failure negative | ensurePublishedVersion | PROVEN (UX-012-RW01 — testes de resume/conflito/no-op) |
+| RQ-ADM-16 | encerrar última exigência tem semântica explícita | sem versão vazia fictícia nem documento sentinela; conflito com TARGET registrado | negative + decision | DECISION_REQUIRED-2 | PENDING (gate de contrato — Plano 113 §28.2) |
+| RQ-ADM-17 | configuração documental início+fim é atômica | uma transação para janela completa | atomicity | DECISION_REQUIRED-1 | PENDING (gate de contrato — Plano 113 §28.2) |
 | RQ-HELP-01 | Ajuda usa manual canônico | `createDashboardUserManual` + PageHero/Path/SectionCard; zero chrome local | component + structural | plugin-ui + 29 | TARGET |
 | RQ-HELP-02 | Ajuda é rota de topbar com ACCESS | `/help` funciona em F5; sem ACCESS = 403 | navigation + permission negative | router/manifest/Core | TARGET |
 | RQ-HELP-03 | manual publica somente runtime real | feature/route futura não aparece nem vira link | route-disabled negative | feature catalog | TARGET |

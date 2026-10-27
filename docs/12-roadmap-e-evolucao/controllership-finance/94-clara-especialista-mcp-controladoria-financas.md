@@ -460,3 +460,11 @@ Existe uma administração dedicada para **definir quais documentos são exigido
 - **Vigência por competência:** «exigido a partir de» define a primeira competência cobrada (nunca retroativa); «exigido até» torna a exigência temporária — o documento deixa de ser cobrado no período seguinte. A vigência é derivada das versões publicadas do checklist mestre; situação exibida: vigente, futuro ou encerrado.
 - **Histórico preservado:** cada alteração publica uma nova versão — fechamentos abertos/encerrados guardam snapshot próprio e nunca mudam retroativamente. «Encerrar exigência» é prospectivo e não exclui o documento.
 - **Limites atuais:** não é pré-requisito cadastrar documentos para abrir um fechamento; se houver rascunho/revisão aberta no checklist mestre, o salvamento é recusado até ser concluído; documento excepcional de uma competência específica segue fluxo próprio (não é o catálogo); a página exclusiva para documentos recebidos da Contabilidade/DRE é fase posterior separada.
+
+
+**RW01 (28/10/2026) — como as vigências realmente funcionam:**
+
+- **Versões são conjuntos absolutos:** cada versão publicada do checklist define TODAS as exigências a partir da competência inicial. Por isso, cadastrar ou editar um documento propaga a alteração às versões futuras já publicadas — sem isso a exigência desapareceria no boundary seguinte.
+- **Vencedora por competência:** a versão aplicável é a publicada com «a partir de» mais recente que não passa da competência (desempate: versão de número maior). Publicar fora de ordem cronológica é permitido e determinístico.
+- **Falha intermediária:** a gravação executa várias publicações atômicas; se uma falhar, o usuário vê erro — nunca «salvo parcialmente». Repetir a operação é seguro: passos já concluídos são detectados e pulados.
+- **Última exigência:** o contrato exige ao menos um item por versão — encerrar o único documento do checklist ainda não é possível (decisão de contrato pendente); um fechamento SEM nenhuma versão publicada já abre legitimamente sem documentos.
