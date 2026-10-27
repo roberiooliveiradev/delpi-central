@@ -103,7 +103,7 @@ engineering-api/
 
 Responsabilidades:
 
-- **domain:** regras próprias da Sala/documentos, sem Flask;
+- **domain:** regras próprias da Sala/documentos, sem dependência de framework HTTP;
 - **application:** casos de uso e ports;
 - **interface:** validação HTTP, mapeamento status/envelope, sem regra de negócio;
 - **infrastructure:** PostgreSQL, Core, api-delpi, SI, requests, Transformômetro, FILESERVER/storage;
@@ -216,7 +216,7 @@ Requisitos:
 - eventos tipados/versionáveis;
 - fallback/polling somente se explicitamente documentado como degradação.
 
-A tecnologia realtime deve ser compatível com Flask e infraestrutura vigente; não trocar framework do serviço apenas por conveniência.
+A `engineering-api` usa FastAPI + Uvicorn (decisão ADR-REQ-05, ver `05-f1-g0-architecture-decisions.md`). A tecnologia realtime da Sala deve ser compatível com esse stack e a infraestrutura vigente — WebSocket nativo FastAPI já tem precedente no monorepo (`commercial-api` realtime hub) — mas a escolha definitiva permanece aberta e não está implementada; não trocar framework do serviço apenas por conveniência.
 
 ## 10. Integrações
 
