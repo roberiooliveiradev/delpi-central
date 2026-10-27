@@ -77,6 +77,11 @@ import {
   REPORT_KEY_LABELS,
   REPORT_KEY_TO_FAMILY,
 } from "./MonthlyReportPage";
+import {
+  pickFamilyParams,
+  SETTLEMENT_PARAMS,
+  STOCK_PARAMS,
+} from "./reportQueryParams";
 
 type PanelError = { status: number; code: string | null; message: string };
 
@@ -279,12 +284,23 @@ export function MonthlyClosingPage({
       ? reportParam
       : null;
 
-  // UX-011: a seleção abre a página contextual do relatório — o parâmetro
-  // `report` na aba marca a última família analisada para o retorno.
+  // UX-011/RW01: a seleção abre a página contextual do relatório. A URL
+  // do hub pode carregar os filtros da última família analisada — eles
+  // só são repassados quando `report` corresponde à família aberta, o
+  // que evita vazamento de contexto entre relatórios (ex.: `page`).
   const openReport = useCallback(
     (family: ReportFamily) => {
+      const current = new URLSearchParams(window.location.search);
+      let query = "";
+      if (current.get("report") === family) {
+        const familyParams = pickFamilyParams(
+          current,
+          family === "settlements" ? SETTLEMENT_PARAMS : STOCK_PARAMS,
+        ).toString();
+        if (familyParams) query = `?${familyParams}`;
+      }
       navigatePluginPath(
-        `${base}/closing/monthly-closing/${period}/reports/${FAMILY_TO_REPORT_KEY[family]}`,
+        `${base}/closing/monthly-closing/${period}/reports/${FAMILY_TO_REPORT_KEY[family]}${query}`,
       );
     },
     [base, period],
@@ -297,6 +313,16 @@ export function MonthlyClosingPage({
     const params = new URLSearchParams();
     params.set("tab", "reports");
     if (family) params.set("report", family);
+    // RW01: os filtros da página contextual pertencem à família aberta —
+    // eles viajam na URL do hub para que a reabertura restaure o
+    // contexto exato da análise (F5/deep link inclusos).
+    if (family) {
+      const familyParams = pickFamilyParams(
+        new URLSearchParams(window.location.search),
+        family === "settlements" ? SETTLEMENT_PARAMS : STOCK_PARAMS,
+      );
+      familyParams.forEach((value, name) => params.set(name, value));
+    }
     navigatePluginPath(
       `${base}/closing/monthly-closing/${period}?${params}`,
     );

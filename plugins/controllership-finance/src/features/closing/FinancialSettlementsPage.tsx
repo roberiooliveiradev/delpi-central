@@ -44,6 +44,12 @@ import { FilterInputField, FilterSelectField, FiltersRow } from "../../app/cfFil
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatAmount, formatCivilDate } from "../../utils/formatters";
 import { useDebouncedValue } from "../../utils/useDebouncedValue";
+import {
+  parseSettlementsQuery,
+  readReportSearchParams,
+  serializeSettlementsQuery,
+  useReportQuerySync,
+} from "./reportQueryParams";
 import { ReportPdfSlot } from "./ReportSharedSections";
 
 const PAGE_SIZE = 50;
@@ -130,17 +136,37 @@ export function FinancialSettlementsPage({
     () => (reportContext ? periodDateRange(reportContext.period) : null),
     [reportContext],
   );
-  const [side, setSide] = useState<SettlementSide>("payable");
+  // RW01: no modo contextual os filtros iniciais vêm da query da rota —
+  // F5, deep link e voltar/avançar restauram o contexto da análise.
+  const [urlInit] = useState(() =>
+    reportContext && contextRange
+      ? parseSettlementsQuery(readReportSearchParams(), contextRange)
+      : null,
+  );
+  const [side, setSide] = useState<SettlementSide>(
+    () => urlInit?.side ?? "payable",
+  );
   const [startDate, setStartDate] = useState(
-    () => contextRange?.startDate ?? isoMonthStart(),
+    () =>
+      urlInit?.startDate ??
+      contextRange?.startDate ??
+      isoMonthStart(),
   );
   const [endDate, setEndDate] = useState(
-    () => contextRange?.endDate ?? isoToday(),
+    () => urlInit?.endDate ?? contextRange?.endDate ?? isoToday(),
   );
-  const [natureCode, setNatureCode] = useState("");
-  const [movementType, setMovementType] = useState("");
-  const [sortBy, setSortBy] = useState("settlement_date");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [natureCode, setNatureCode] = useState(
+    () => urlInit?.natureCode ?? "",
+  );
+  const [movementType, setMovementType] = useState(
+    () => urlInit?.movementType ?? "",
+  );
+  const [sortBy, setSortBy] = useState(
+    () => urlInit?.sortBy ?? "settlement_date",
+  );
+  const [sortDir, setSortDir] = useState<"asc" | "desc">(
+    () => urlInit?.sortDir ?? "desc",
+  );
 
   const debouncedNatureCode = useDebouncedValue(natureCode.trim(), DEBOUNCE_MS);
   const debouncedMovementType = useDebouncedValue(
@@ -148,7 +174,7 @@ export function FinancialSettlementsPage({
     DEBOUNCE_MS,
   );
 
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => urlInit?.page ?? 1);
   const [result, setResult] = useState<FetchResult | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
@@ -208,6 +234,57 @@ export function FinancialSettlementsPage({
   }, [contextRange]);
 
   const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
+
+  // RW01: a query da rota contextual espelha os campos brutos (não o
+  // valor debounced) — reidratar pelo popstate nunca corrige a URL com
+  // um valor ainda em debounce. Serialização é determinística e o efeito
+  // só navega quando a query realmente difere.
+  const hydrateFromUrl = useCallback(
+    (params: URLSearchParams) => {
+      if (!contextRange) return;
+      const parsed = parseSettlementsQuery(params, contextRange);
+      setSide(parsed.side);
+      setStartDate(parsed.startDate);
+      setEndDate(parsed.endDate);
+      setNatureCode(parsed.natureCode);
+      setMovementType(parsed.movementType);
+      setSortBy(parsed.sortBy);
+      setSortDir(parsed.sortDir);
+      // O fingerprint esperado impede o reset de página quando o debounce
+      // dos campos digitáveis alcançar o valor restaurado — a página da
+      // URL deve prevalecer sobre o "volta para página 1" do ciclo local.
+      setAppliedFingerprintSeen(
+        JSON.stringify({
+          side: parsed.side,
+          startDate: parsed.startDate,
+          endDate: parsed.endDate,
+          natureCode: parsed.natureCode.trim(),
+          movementType: parsed.movementType.trim(),
+          sortBy: parsed.sortBy,
+          sortDir: parsed.sortDir,
+        }),
+      );
+      setPage(parsed.page);
+    },
+    [contextRange],
+  );
+  useReportQuerySync({
+    enabled: Boolean(reportContext),
+    serialize: () => {
+      const query = serializeSettlementsQuery({
+        side,
+        startDate,
+        endDate,
+        natureCode: natureCode.trim(),
+        movementType: movementType.trim(),
+        sortBy,
+        sortDir,
+        page,
+      });
+      return query ? `?${query}` : "";
+    },
+    hydrate: hydrateFromUrl,
+  });
 
   const queryKey = applied
     ? JSON.stringify({ ...applied, page, retryNonce })

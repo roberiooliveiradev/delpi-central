@@ -632,6 +632,82 @@ describe("Relatórios V0.3 — páginas contextuais de relatório (UX-011)", () 
       screen.getByTestId("report-page").textContent,
     ).toContain("report:outra:2026-10");
   });
+
+  it("voltar preserva os filtros da família na URL do hub (RW01)", async () => {
+    setLocation(
+      `${BASE}/closing/monthly-closing/2026-10/reports/financial-settlements` +
+        "?side=receivable&nature=100&page=3",
+    );
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(
+      <MonthlyClosingPage
+        basePath={BASE}
+        period="2026-10"
+        reportKey="financial-settlements"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("report-page")).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByText("report-back"));
+
+    await waitFor(() =>
+      expect(window.location.search).toContain("report=settlements"),
+    );
+    expect(window.location.search).toContain("tab=reports");
+    expect(window.location.search).toContain("side=receivable");
+    expect(window.location.search).toContain("nature=100");
+    expect(window.location.search).toContain("page=3");
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/monthly-closing/2026-10`,
+    );
+  });
+
+  it("reabrir a última família repassa os filtros preservados (RW01)", async () => {
+    setLocation(
+      `${BASE}/closing/monthly-closing/2026-10` +
+        "?tab=reports&report=stock&branch=01&warehouse=04&page=2",
+    );
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByTestId("reports-panel");
+    fireEvent.click(screen.getByText("open-stock"));
+
+    await waitFor(() =>
+      expect(window.location.pathname).toBe(
+        `${BASE}/closing/monthly-closing/2026-10/reports/stock-inventory`,
+      ),
+    );
+    expect(window.location.search).toContain("branch=01");
+    expect(window.location.search).toContain("warehouse=04");
+    expect(window.location.search).toContain("page=2");
+  });
+
+  it("abrir família diferente não carrega filtros da anterior (RW01)", async () => {
+    setLocation(
+      `${BASE}/closing/monthly-closing/2026-10` +
+        "?tab=reports&report=settlements&nature=100&page=3",
+    );
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    mockOpenMonth();
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+
+    await screen.findByTestId("reports-panel");
+    fireEvent.click(screen.getByText("open-stock"));
+
+    await waitFor(() =>
+      expect(window.location.pathname).toBe(
+        `${BASE}/closing/monthly-closing/2026-10/reports/stock-inventory`,
+      ),
+    );
+    // Os parâmetros pertencem à família de Baixas — Estoque abre limpo.
+    expect(window.location.search).not.toContain("nature");
+    expect(window.location.search).not.toContain("page");
+  });
 });
 
 describe("Visão geral V0.2 — atenção traduzida, eixos e conclusão/envio", () => {

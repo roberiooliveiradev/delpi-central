@@ -886,3 +886,18 @@ Páginas contextuais de relatório e hub compacto, ainda 100% sobre exports reai
 | Disclosure técnico | `<details>` nativo + tabela `cf-p3-table` | matriz R01–R15 fora do fluxo visual principal, rastreabilidade preservada |
 
 Nenhum componente paralelo de tabela/cartão criado; `selected` do cartão é classe CSS sobre o componente do kit.
+
+
+## Registro de execução — persistência de filtros dos relatórios (CF-PROC0072-REPORTS-DETAIL-UX-011-RW01, 28/10/2026)
+
+Rework de navegação — **nenhum componente visual novo**: o diff é de estado/URL, reutilizando o padrão canônico já existente na plataforma:
+
+| Superfície | Owner/reuso | Consumo |
+|---|---|---|
+| Leitura da query | padrão canônico `window.location.search` + `popstate` (mesmo mecanismo de `plugins/api-delpi-console/src/lib/useConsoleSearchParams.ts` e da página de Documentos) | `reportQueryParams.readReportSearchParams` |
+| Navegação | `navigatePluginPath` com `replace: true` (`app/pluginNavigation.ts`) — já emite `popstate` | serialização sem nova entrada de histórico |
+| Serialização/validação | `features/closing/reportQueryParams.ts` (owner local — escopo do plugin, sem regra de negócio, consumido por 3 módulos) | `SETTLEMENT_PARAMS`, `STOCK_PARAMS`, `parse*`/`serialize*`, `pickFamilyParams`, `useReportQuerySync` |
+| Filtros/tabelas | componentes de filtro e `DataTableSection` legados inalterados | mesma máquina de consulta; `applied`/debounce intactos |
+| Retorno ao hub | `backToReports`/`openReport` da `MonthlyClosingPage` | agregam/repassam somente os params da família (`pickFamilyParams`) |
+
+Sem helper paralelo por página: um único owner de params/parse/serialize e um único hook de sincronização; modo legado (`reportContext` ausente) não ativa o sync. `localStorage`/`sessionStorage` não usados — a URL é a fonte recuperável autorizada.

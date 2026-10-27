@@ -192,7 +192,7 @@ export const CF_HELP = {
     reportsCatalog:
       "Relatórios organizados em cartões por família: Baixas financeiras (pagamentos e recebimentos SE5) e Estoque e conciliação (posição P7 + conferência Entradas/Saídas − P7 − H02). «Abrir relatório» abre a página contextual do relatório — a situação do cartão reflete a consulta real, não a homologação do relatório oficial.",
     reportsResults:
-      "Página contextual do relatório: totais calculados pelo backend, agrupamentos em tabelas por colunas e registros com filtros e paginação reais do contrato. A competência vem da rota e o retorno restaura a aba Relatórios e divergências com a seleção anterior.",
+      "Página contextual do relatório: totais calculados pelo backend, agrupamentos em tabelas por colunas e registros com filtros e paginação reais do contrato. A competência vem da rota e os filtros vigentes ficam na própria URL — atualizar a página (F5), abrir um link direto ou navegar com voltar/avançar restaura o contexto da análise, e o retorno à aba Relatórios e divergências preserva a família e a seleção anterior.",
     attention:
       "Situações reais que precisam ser resolvidas neste fechamento: relatórios que não puderam ser consultados, divergências, documentos pendentes e pendências em aberto. Cada ação leva ao local onde a situação é tratada. Se houver mais situações, use «Mostrar todas» para expandir a lista aqui mesmo.",
     stockAxis:

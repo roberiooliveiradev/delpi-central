@@ -37,6 +37,13 @@ Fechamento mensal — as páginas legadas são reutilizadas em modo
 colunas e slot de PDF honesto enquanto não houver produtor homologado.
 O retorno restaura competência, aba e família analisada; a matriz
 R01–R15 permanece como rastreabilidade técnica recolhida.
+RW01: os filtros vigentes das páginas contextuais são serializados na
+própria URL da rota (`reportQueryParams.ts` — `side`, datas, natureza,
+movimento, ordenação e página para Baixas; `branch`, `scope`, `warehouse`
+e página para Estoque) — F5, deep link e voltar/avançar restauram o
+contexto, datas fora da competência da rota são descartadas e filtros
+da última família só retornam na reabertura dela (sem vazamento entre
+relatórios).
 
 Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
 `cfDataTableUi` — banda única com ícone + título + pill de contagem do

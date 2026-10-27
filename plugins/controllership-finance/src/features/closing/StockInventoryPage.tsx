@@ -61,6 +61,12 @@ import {
   P3ReconciliationSection,
   ReportPdfSlot,
 } from "./ReportSharedSections";
+import {
+  parseStockQuery,
+  readReportSearchParams,
+  serializeStockQuery,
+  useReportQuerySync,
+} from "./reportQueryParams";
 
 const PAGE_SIZE = 50;
 const DEBOUNCE_MS = 400;
@@ -116,14 +122,24 @@ export function StockInventoryPage({
   const [period, setPeriod] = useState(
     () => reportContext?.period ?? currentCompetence(),
   );
-  const [branch, setBranch] = useState<StockInventoryBranch>("all");
-  const [reportScope, setReportScope] =
-    useState<StockInventoryScope>("all_products");
-  const [warehouse, setWarehouse] = useState("");
+  // RW01: no modo contextual os filtros iniciais vêm da query da rota —
+  // a competência continua travada pela rota (nunca serializada).
+  const [urlInit] = useState(() =>
+    reportContext ? parseStockQuery(readReportSearchParams()) : null,
+  );
+  const [branch, setBranch] = useState<StockInventoryBranch>(
+    () => urlInit?.branch ?? "all",
+  );
+  const [reportScope, setReportScope] = useState<StockInventoryScope>(
+    () => urlInit?.scope ?? "all_products",
+  );
+  const [warehouse, setWarehouse] = useState(
+    () => urlInit?.warehouse ?? "",
+  );
 
   const debouncedWarehouse = useDebouncedValue(warehouse.trim(), DEBOUNCE_MS);
 
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => urlInit?.page ?? 1);
   const [result, setResult] = useState<FetchResult | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
@@ -173,6 +189,37 @@ export function StockInventoryPage({
   }, [reportContext]);
 
   const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
+
+  // RW01: query da rota espelha os campos brutos — reidratação por
+  // popstate nunca regrava valor ainda em debounce na URL.
+  const hydrateFromUrl = useCallback((params: URLSearchParams) => {
+    const parsed = parseStockQuery(params);
+    setBranch(parsed.branch);
+    setReportScope(parsed.scope);
+    setWarehouse(parsed.warehouse);
+    setAppliedFingerprintSeen(
+      JSON.stringify({
+        period: effectivePeriod,
+        branch: parsed.branch,
+        reportScope: parsed.scope,
+        warehouse: parsed.warehouse.trim(),
+      }),
+    );
+    setPage(parsed.page);
+  }, [effectivePeriod]);
+  useReportQuerySync({
+    enabled: Boolean(reportContext),
+    serialize: () => {
+      const query = serializeStockQuery({
+        branch,
+        scope: reportScope,
+        warehouse: warehouse.trim(),
+        page,
+      });
+      return query ? `?${query}` : "";
+    },
+    hydrate: hydrateFromUrl,
+  });
 
   const queryKey = applied
     ? JSON.stringify({ ...applied, page, retryNonce })

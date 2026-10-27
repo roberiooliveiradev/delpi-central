@@ -528,3 +528,101 @@ describe("StockInventoryPage — modo contextual do relatório (UX-011)", () => 
     expect(screen.getByText(/Bloqueios registrados: 1/)).toBeTruthy();
   });
 });
+
+describe("StockInventoryPage — persistência de filtros na URL (RW01)", () => {
+  const REPORT_URL =
+    "/apps/controllership-finance/closing/monthly-closing/2026-09" +
+    "/reports/stock-inventory";
+  const setReportLocation = (query = "") =>
+    window.history.pushState(null, "", `${REPORT_URL}${query}`);
+  const p3Empty = () =>
+    p3Mock.mockResolvedValue({
+      period: "2026-09",
+      state: "RECONCILED",
+      reconciliations: [],
+      blockers: [],
+    });
+
+  afterEach(() => setReportLocation());
+
+  it("F5/deep link: filial, visão, armazém e página restaurados", async () => {
+    getMock.mockResolvedValue(payload());
+    p3Empty();
+    setReportLocation("?branch=01&scope=mp_pi_pa&warehouse=04&page=2");
+    render(<StockInventoryPage reportContext={{ period: "2026-09" }} />);
+
+    await waitInitialFetch();
+    expect(getMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        period: "2026-09",
+        branch: "01",
+        reportScope: "mp_pi_pa",
+        warehouse: "04",
+        page: 2,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("filtro inválido na URL cai no default seguro", async () => {
+    getMock.mockResolvedValue(payload());
+    p3Empty();
+    setReportLocation("?branch=99&scope=tudo&page=-1");
+    render(<StockInventoryPage reportContext={{ period: "2026-09" }} />);
+
+    await waitInitialFetch();
+    expect(getMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        branch: "all",
+        reportScope: "all_products",
+        page: 1,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("mudança de filtro serializa na URL; competência nunca vai para a query", async () => {
+    getMock.mockResolvedValue(payload());
+    p3Empty();
+    setReportLocation();
+    render(<StockInventoryPage reportContext={{ period: "2026-09" }} />);
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Filial"), {
+      target: { value: "02" },
+    });
+    await waitFor(() =>
+      expect(window.location.search).toContain("branch=02"),
+    );
+    expect(window.location.search).not.toContain("period=");
+    expect(window.location.pathname).toBe(REPORT_URL);
+  });
+
+  it("voltar/avançar do navegador reidrata o estado da entrada", async () => {
+    getMock.mockResolvedValue(payload());
+    p3Empty();
+    setReportLocation("?branch=all");
+    render(<StockInventoryPage reportContext={{ period: "2026-09" }} />);
+    await waitInitialFetch();
+
+    window.history.pushState(
+      null,
+      "",
+      `${REPORT_URL}?branch=02&scope=mp_pi_pa&page=3`,
+    );
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    await waitFor(() =>
+      expect(getMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          branch: "02",
+          reportScope: "mp_pi_pa",
+          page: 3,
+        }),
+        expect.anything(),
+      ),
+    );
+  });
+});

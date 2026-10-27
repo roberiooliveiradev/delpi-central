@@ -1831,3 +1831,13 @@ As capturas da UX-010 mostram navegação funcional e dados de Baixas Financeira
 ### 46.1 Implementação V0.3 entregue (UX-011, 27/10/2026)
 
 As correções observadas na homologação visual foram implementadas: (1) linhas empilhadas `natureza.tipo` substituídas por `DataTableSection` com colunas explícitas Natureza/Tipo/Baixas/Valor/Moeda/Ação; (2) cartões do hub compactados via slot `children` do `CfInteractiveDataCard` — sem rótulos caixa-alta repetidos; (3) detalhe integral migrou da aba para página contextual `…/reports/{reportKey}` com breadcrumb `Fechamento mensal > Relatórios e divergências > {Relatório}` e retorno que restaura competência+seleção; (4) matriz R01–R15 virou `<details>` técnico fora do fluxo principal; (5) PDF permanece slot honesto na página do relatório (sem produtor homologado). As páginas legadas `closing/financial-settlements` e `closing/stock-inventory` foram reutilizadas via prop `reportContext` e permanecem acessíveis nas rotas próprias — sem duplicação e sem depreciação. Homologação visual desta revisão: `PENDING` (screenshots aguardando PO).
+
+### 46.2 Rework de navegação/filtros — UX-011-RW01 (28/10/2026)
+
+A revisão arquitetural retornou `REWORK`: a preservação integral dos filtros não estava comprovada — viviam só em `useState` e o retorno ao hub levava apenas `tab`+`report`. Correção implementada **sem tocar o visual V0.3 aprovado**:
+
+- **Causa raiz:** `FinancialSettlementsPage`/`StockInventoryPage` mantêm filtros em estado local; F5/remount/deep link perdiam o contexto e o `backToReports` descartava os filtros da família.
+- **Correção:** URL como fonte recuperável (padrão canônico `location.search` + `popstate` do portal). `reportQueryParams.ts` é o owner dos parâmetros estáveis por família — `side|start|end|nature|movement|sort|dir|page` (Baixas) e `branch|scope|warehouse|page` (Estoque) — com parse validado por allowlist e serialização `replace: true` na própria rota contextual.
+- **Retorno/reabertura:** `backToReports` agrega os filtros da família na URL do hub (`?tab=reports&report={família}&{filtros}`); `openReport` só repassa quando `report=` bate com a família aberta — zero vazamento entre relatórios.
+- **Competência:** sempre da rota — par de datas fora do mês é descartado inteiro; Estoque nunca serializa `period`. Sem `localStorage`/`sessionStorage`, sem dados financeiros na URL.
+- **Evidência:** +20 casos de teste (helper, restauração por F5/deep link, back/forward, validação de inválidos, isolamento entre famílias e competências).

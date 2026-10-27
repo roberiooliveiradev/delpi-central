@@ -527,3 +527,16 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | RQ-REP-20 | Hub compacto sem detalhe inline | cartões com slot `children`; matriz R01–R15 em `<details>` técnico; sem «RELATÓRIO/DESCRIÇÃO» repetidos; PDF saiu do hub | PASS |
 | RQ-REP-21 | PDF contextual honesto | `ReportPdfSlot` nas duas páginas; «ainda não está disponível» sem produtor; zero PDF fictício | PASS |
 | RQ-REP-22 | Sem fonte/cálculo inventado | nenhum endpoint/permission/migration novo; divergência P3 vem do backend; «Ver registros» aplica filtros reais do contrato | PASS |
+
+
+### Persistência de filtros nas páginas contextuais (UX-011-RW01, 28/10/2026)
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-REP-23 | URL é a fonte recuperável | `reportQueryParams.ts` serializa filtros na query da rota (`replace: true`); parse na montagem + `popstate`; mesmo padrão `location.search`/`popstate` do portal (`useConsoleSearchParams`) | PASS |
+| RQ-REP-24 | Baixas — filtros completos | `side|start|end|nature|movement|sort|dir|page` restaurados de F5/deep link e reconsultados; datas fora da competência descartadas como par | PASS |
+| RQ-REP-25 | Estoque — filtros completos | `branch|scope|warehouse|page` restaurados e reconsultados; `period` nunca serializado — competência travada na rota | PASS |
+| RQ-REP-26 | Back/forward do navegador | `popstate` reidrata o estado da entrada e refaz a consulta com os valores dela (casos de página 3 e filtros alterados) | PASS |
+| RQ-REP-27 | Retorno e reabertura | `backToReports` → `?tab=reports&report={família}&{filtros}`; `openReport` repassa somente quando `report=` é a família aberta — família diferente abre limpa | PASS |
+| RQ-REP-28 | Validação e isolamento | allowlists de enums, `page` ≥ 1, datas `YYYY-MM-DD`/`start ≤ end`/dentro do mês; `pickFamilyParams` prova ausência de vazamento entre famílias; sem `localStorage`/dados financeiros na URL | PASS |
+| RQ-REP-29 | UX V0.3 preservada | zero mudança visual; modo legado (`reportContext` ausente) não sincroniza — comportamento idêntico; sem novo endpoint/permissão/cálculo | PASS |

@@ -439,3 +439,14 @@ A aba «Relatórios e divergências» continua sendo a central de análise, mas 
 - **PDF:** cada página tem o espaço da prévia, mas nenhum relatório possui PDF gerado — a mensagem é «A prévia do PDF ainda não está disponível para este relatório». A CLARA não deve prometer PDF nem tratar anexos de evidência como relatório oficial.
 - **Divergências:** seguem vindo somente da conciliação calculada pelo backend; fonte indisponível e conferência não realizada nunca são «zero». A matriz R01–R15 continua na aba, agora recolhida como rastreabilidade técnica — não são quinze relatórios calculados.
 - **Sem escrita no ERP:** correções continuam manuais no TOTVS; o Portal não ajusta dados.
+
+
+## Adendo — Filtros persistentes nas páginas de relatório (CF-PROC0072-REPORTS-DETAIL-UX-011-RW01, 28/10/2026)
+
+A navegação entre a aba e as páginas contextuais ganhou **recuperação integral de contexto** — a CLARA deve orientar o usuário sobre o que é restaurado:
+
+- **Filtros sobrevivem a F5, link direto e voltar/avançar:** os filtros vigentes ficam na própria URL da página do relatório (visíveis na barra de endereço). Atualizar a página, colar o link em outra aba ou usar os botões voltar/avançar do navegador restaura exatamente os mesmos filtros e a mesma página de resultados — a consulta é refeita no backend com esses valores.
+- **Voltar à aba preserva a análise:** «Voltar para Relatórios e divergências» retorna ao mês correto, marca a família analisada e guarda seus filtros — reabrir o mesmo relatório restaura o contexto anterior. Abrir a outra família começa limpa: filtros nunca vazam de um relatório para outro.
+- **Competência sempre do mês da rota:** em Baixas, datas fora do mês selecionado são descartadas (o intervalo volta ao mês); em Estoque, o mês nem aparece nos filtros — trocar de competência no seletor do Fechamento sempre consulta dados novos, nunca reaproveita resultado de outro mês.
+- **Filtros persistidos — Baixas:** pagamentos/recebimentos, data inicial/final, natureza, tipo de movimento, ordenação/direção e página de resultados. **Estoque:** filial, visão de estoque, armazém e página.
+- **Limitações:** filtros de outra família não são restaurados ao trocar de relatório (comportamento intencional); valores inválidos ou malformados na URL caem nos padrões seguros; nenhum token nem valor financeiro viaja na URL — autorização continua no backend.

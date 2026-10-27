@@ -518,3 +518,103 @@ describe("FinancialSettlementsPage — modo contextual do relatório (UX-011)", 
     );
   });
 });
+
+describe("FinancialSettlementsPage — persistência de filtros na URL (RW01)", () => {
+  const REPORT_URL =
+    "/apps/controllership-finance/closing/monthly-closing/2026-10" +
+    "/reports/financial-settlements";
+  const setReportLocation = (query = "") =>
+    window.history.pushState(null, "", `${REPORT_URL}${query}`);
+
+  afterEach(() => setReportLocation());
+
+  it("F5/deep link: filtros da URL restauram estado e a consulta", async () => {
+    mockOk();
+    setReportLocation(
+      "?side=receivable&start=2026-10-05&end=2026-10-20" +
+        "&nature=100&movement=BA&sort=nature&dir=asc&page=2",
+    );
+    render(
+      <FinancialSettlementsPage reportContext={{ period: "2026-10" }} />,
+    );
+
+    await waitInitialFetch();
+    expect(listMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        side: "receivable",
+        startDate: "2026-10-05",
+        endDate: "2026-10-20",
+        natureCode: "100",
+        movementType: "BA",
+        sortBy: "nature",
+        sortDir: "asc",
+        page: 2,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("datas de outra competência são descartadas — consulta fica na rota", async () => {
+    mockOk();
+    setReportLocation("?start=2026-05-01&end=2026-05-31&nature=100");
+    render(
+      <FinancialSettlementsPage reportContext={{ period: "2026-10" }} />,
+    );
+
+    await waitInitialFetch();
+    expect(listMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startDate: "2026-10-01",
+        endDate: "2026-10-31",
+      }),
+      expect.anything(),
+    );
+    // A URL é normalizada para o intervalo válido da competência.
+    await waitFor(() =>
+      expect(window.location.search).toContain("start=2026-10-01"),
+    );
+  });
+
+  it("mudança de filtro serializa na URL sem perder o contexto", async () => {
+    mockOk();
+    setReportLocation();
+    render(
+      <FinancialSettlementsPage reportContext={{ period: "2026-10" }} />,
+    );
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Natureza financeira"), {
+      target: { value: "100" },
+    });
+    await waitFor(() =>
+      expect(window.location.search).toContain("nature=100"),
+    );
+    expect(window.location.pathname).toBe(REPORT_URL);
+  });
+
+  it("voltar/avançar do navegador reidrata o estado da entrada", async () => {
+    mockOk();
+    setReportLocation("?side=payable");
+    render(
+      <FinancialSettlementsPage reportContext={{ period: "2026-10" }} />,
+    );
+    await waitInitialFetch();
+
+    // Navegador restaura uma entrada anterior do histórico.
+    window.history.pushState(
+      null,
+      "",
+      `${REPORT_URL}?side=receivable&page=3`,
+    );
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    await waitFor(() =>
+      expect(listMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ side: "receivable", page: 3 }),
+        expect.anything(),
+      ),
+    );
+  });
+});
