@@ -1,4 +1,4 @@
-/** Configurable Comex selector (PROC-0076.COMEX.S4/S6/S7/S8).
+/** Configurable Comex selector (PROC-0076.COMEX.S4/S6/S7/S8/S9).
 
 Two selection origins feeding one analysis: real SB1010 products via
 the BFF proxy, or direct NCM codes (8 digits) with no product link.
@@ -10,10 +10,14 @@ S8: two-column layout — left "find materials" (search, direct NCM,
 shared catalog), right "my analysis" (selection summary, statuses,
 clear-all, personal saved views). Results panel stays full-width
 below, outside this component.
+S9: one search field per mode and one action per row — «Adicionar à
+análise» selects a cataloged NCM or registers the new code as a
+candidate (idempotent) and selects it. Saved views collapse into a
+secondary area; governance stays in the manage-only admin section.
 */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Save, Trash2, X } from "lucide-react";
+import { Save, Trash2, X } from "lucide-react";
 
 import {
   SuppliesActionButton,
@@ -136,8 +140,7 @@ export function MarketComexSelector({
 }: MarketComexSelectorProps) {
   const C2 = C;
   const [origin, setOrigin] = useState<SelectorOrigin>("products");
-  const [directInput, setDirectInput] = useState("");
-  const [catalogQuery, setCatalogQuery] = useState("");
+  const [ncmQuery, setNcmQuery] = useState("");
   const [productType, setProductType] = useState<ComexProductType | "">(
     "",
   );
@@ -302,98 +305,6 @@ export function MarketComexSelector({
     [selectedProducts, onProductsChange],
   );
 
-  /** Direct NCM entry (S7 one-action flow): normalize
-   * spacing/punctuation, require exactly 8 digits per token, dedupe
-   * against every selection origin and cap the union at the BFF
-   * multi-NCM contract limit. Codes not yet in the shared catalog are
-   * registered as candidates — format validation never implies fiscal
-   * validity. */
-  const addDirectNcms = useCallback(async () => {
-    setNotice(null);
-    const tokens = directInput
-      .split(/[\s,;]+/)
-      .map((token) => token.trim())
-      .filter(Boolean);
-    if (!tokens.length) return;
-    const normalized: string[] = [];
-    const invalid: string[] = [];
-    for (const token of tokens) {
-      const digits = token.replace(/\D/g, "");
-      if (/^[0-9]{8}$/.test(digits)) normalized.push(digits);
-      else invalid.push(token);
-    }
-    const existing = new Set([
-      ...productNcms,
-      ...directNcms,
-      ...analysisNcms,
-    ]);
-    const fresh = [...new Set(normalized)].filter(
-      (code) => !existing.has(code),
-    );
-    const room = Math.max(0, MAX_ANALYSIS_NCMS - existing.size);
-    const accepted = fresh.slice(0, room);
-
-    const toRegister = accepted.filter(
-      (code) => !governanceByNcm.has(code),
-    );
-    if (toRegister.length) {
-      setBusy(true);
-      const failed: string[] = [];
-      try {
-        for (const code of toRegister) {
-          try {
-            await createComexNcmRequest({
-              ncm_code: code,
-              initial_status: "candidate",
-            });
-          } catch {
-            failed.push(code);
-          }
-        }
-        await reloadGovernance();
-      } finally {
-        setBusy(false);
-      }
-      if (failed.length) {
-        setNotice({ kind: "error", text: C2.actionError });
-        return;
-      }
-    }
-
-    if (accepted.length) {
-      onDirectNcmsChange([...directNcms, ...accepted]);
-      // Allowlisted codes feed the analysis immediately — same rule
-      // as the product origin.
-      const promotable = accepted.filter(
-        (code) => approvedSet.has(code) && !analysisNcms.includes(code),
-      );
-      if (promotable.length) {
-        onAnalysisNcmsChange([...analysisNcms, ...promotable]);
-      }
-      setDirectInput("");
-    }
-    if (invalid.length) {
-      setNotice({ kind: "error", text: C2.directNcmInvalid(invalid) });
-    } else if (fresh.length > accepted.length) {
-      setNotice({ kind: "error", text: C2.directNcmLimit });
-    } else if (!accepted.length && normalized.length) {
-      setNotice({ kind: "error", text: C2.directNcmDuplicated });
-    } else if (toRegister.length) {
-      setNotice({ kind: "success", text: C2.catalogAdded });
-    }
-  }, [
-    directInput,
-    productNcms,
-    directNcms,
-    analysisNcms,
-    approvedSet,
-    governanceByNcm,
-    reloadGovernance,
-    onDirectNcmsChange,
-    onAnalysisNcmsChange,
-    C2,
-  ]);
-
   /** Removing a direct NCM also drops its analysis contribution when
    * no selected product still maps to the same code. */
 
@@ -496,6 +407,20 @@ export function MarketComexSelector({
     ],
   );
 
+  /** S9 one-action add (D-02): an 8-digit code with no catalog match
+   * gets a single «Adicionar à análise» action — the BFF registers it
+   * as a shared-catalog candidate (idempotent; an existing row beyond
+   * the loaded page returns already_registered) and the code is
+   * selected. Registration never implies fiscal approval, feed
+   * enablement or allowlist sync. */
+  const addNewNcmToAnalysis = useCallback(
+    async (ncm: string) => {
+      const ok = await addToCatalog(ncm);
+      if (ok) selectNcm(ncm);
+    },
+    [addToCatalog, selectNcm],
+  );
+
   const clearSelection = useCallback(() => {
     onDirectNcmsChange([]);
     onAnalysisNcmsChange([]);
@@ -585,10 +510,12 @@ export function MarketComexSelector({
 
   const directSet = useMemo(() => new Set(directNcms), [directNcms]);
 
-  /** Shared catalog (S7): every governance record is one catalog row.
-   * Free-text filter matches the code digits or the description. */
+  /** Shared catalog (S7/S9): every governance record is one catalog
+   * row. The single search field filters loaded rows by code digits
+   * or description — client-side only, since the BFF exposes no
+   * textual-search contract for governance. */
   const catalogEntries = useMemo(() => {
-    const needle = catalogQuery.trim().toLowerCase();
+    const needle = ncmQuery.trim().toLowerCase();
     const digits = needle.replace(/\D/g, "");
     if (!needle) return governance;
     return governance.filter(
@@ -596,7 +523,35 @@ export function MarketComexSelector({
         (digits && entry.ncm_code.includes(digits)) ||
         (entry.description ?? "").toLowerCase().includes(needle),
     );
-  }, [governance, catalogQuery]);
+  }, [governance, ncmQuery]);
+
+  /** S9: tokens in the search field that normalize to an 8-digit code
+   * absent from the loaded catalog become «add» rows — the idempotent
+   * POST resolves server-side even if the record exists beyond the
+   * loaded page, so the UI never declares "not found" from a partial
+   * list. Digit-only tokens that are not 8 digits are reported as
+   * malformed input. */
+  const { unmatchedCodes, invalidTokens } = useMemo(() => {
+    const tokens = ncmQuery
+      .split(/[\s,;]+/)
+      .map((token) => token.trim())
+      .filter(Boolean);
+    const unmatched: string[] = [];
+    const invalid: string[] = [];
+    for (const token of tokens) {
+      if (/[a-zA-ZÀ-ÿ]/.test(token)) continue;
+      const digits = token.replace(/\D/g, "");
+      if (!digits) continue;
+      if (/^[0-9]{8}$/.test(digits)) {
+        if (!governanceByNcm.has(digits) && !unmatched.includes(digits)) {
+          unmatched.push(digits);
+        }
+      } else {
+        invalid.push(token);
+      }
+    }
+    return { unmatchedCodes: unmatched, invalidTokens: invalid };
+  }, [ncmQuery, governanceByNcm]);
 
   const ncmChips = useMemo(() => {
     // União: NCMs de produtos + entrada direta + análise manual.
@@ -670,89 +625,112 @@ export function MarketComexSelector({
                     className="sp-comex-selector__results"
                     aria-label={C2.searchLabel}
                   >
-                    {results.map((item) => (
-                      <li
-                        key={item.code}
-                        className="sp-comex-selector__result"
-                      >
-                        <div className="sp-comex-selector__result-main">
-                          <strong>{item.code}</strong>
-                          <span>{item.description}</span>
-                          <span className="sp-comex-selector__result-meta">
-                            {item.type} · {item.unit}
-                            {item.ncm_code
-                              ? ` · NCM ${item.ncm_code}`
-                              : ` · ${C2.ncmStatusMissing}`}
-                          </span>
-                        </div>
-                        {item.ncm_status === "malformed" ? (
-                          <span className="sp-comex-selector__badge sp-comex-selector__badge--warning">
-                            {C2.ncmStatusMalformed}
-                          </span>
-                        ) : null}
-                        <SuppliesActionButton
-                          type="button"
-                          variant="ghost"
-                          disabled={selectedProducts.includes(item.code)}
-                          onClick={() => addProduct(item)}
-                          aria-label={`${C2.addProduct} ${item.code}`}
+                    {results.map((item) => {
+                      const added = selectedProducts.includes(
+                        item.code,
+                      );
+                      return (
+                        <li
+                          key={item.code}
+                          className="sp-comex-selector__result"
                         >
-                          <Plus size={14} aria-hidden="true" />
-                          {C2.addProduct}
-                        </SuppliesActionButton>
-                      </li>
-                    ))}
+                          <div className="sp-comex-selector__result-main">
+                            <strong>{item.code}</strong>
+                            <span>{item.description}</span>
+                            <span className="sp-comex-selector__result-meta">
+                              {item.type} · {item.unit}
+                              {item.ncm_code
+                                ? ` · NCM ${item.ncm_code}`
+                                : ` · ${C2.ncmStatusMissing}`}
+                            </span>
+                          </div>
+                          {item.ncm_status === "malformed" ? (
+                            <span className="sp-comex-selector__badge sp-comex-selector__badge--warning">
+                              {C2.ncmStatusMalformed}
+                            </span>
+                          ) : null}
+                          <SuppliesActionButton
+                            type="button"
+                            variant={added ? "ghost" : "primary"}
+                            disabled={busy}
+                            aria-pressed={added}
+                            onClick={() =>
+                              added
+                                ? removeProduct(item.code)
+                                : addProduct(item)
+                            }
+                            aria-label={`${added ? C2.removeFromAnalysis : C2.addToAnalysis} ${item.code}`}
+                          >
+                            {added
+                              ? C2.removeFromAnalysis
+                              : C2.addToAnalysis}
+                          </SuppliesActionButton>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : null}
               </>
             ) : (
               <>
-                <form
-                  className="sp-comex-selector__search"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void addDirectNcms();
-                  }}
-                >
+                <div className="sp-comex-selector__search">
                   <SuppliesTextField
-                    label={C2.directNcmLabel}
-                    hint={C2.directNcmHint}
-                    value={directInput}
-                    placeholder={C2.directNcmPlaceholder}
-                    onChange={setDirectInput}
+                    label={C2.ncmSearchLabel}
+                    hint={C2.ncmSearchHint}
+                    value={ncmQuery}
+                    placeholder={C2.ncmSearchPlaceholder}
+                    onChange={setNcmQuery}
                   />
-                  <SuppliesActionButton type="submit" disabled={busy}>
-                    <Plus size={14} aria-hidden="true" />
-                    {C2.directNcmAdd}
-                  </SuppliesActionButton>
-                </form>
+                </div>
+                {invalidTokens.length > 0 ? (
+                  <p className="sp-comex-selector__note" role="alert">
+                    {C2.directNcmInvalid(invalidTokens)}
+                  </p>
+                ) : null}
 
                 <div className="sp-comex-selector__catalog">
-                  <SuppliesTextField
-                    label={C2.catalogTitle}
-                    value={catalogQuery}
-                    placeholder={C2.catalogSearchPlaceholder}
-                    onChange={setCatalogQuery}
-                  />
-                  {governance.length === 0 ? (
+                  {governance.length === 0 &&
+                  unmatchedCodes.length === 0 ? (
                     <p
                       className="sp-comex-selector__empty"
                       role="status"
                     >
                       {C2.catalogEmpty}
                     </p>
-                  ) : catalogEntries.length === 0 ? (
+                  ) : catalogEntries.length === 0 &&
+                    unmatchedCodes.length === 0 ? (
                     <p
                       className="sp-comex-selector__empty"
                       role="status"
                     >
-                      {C2.catalogNoMatch}
+                      {C2.ncmSearchEmpty}
                     </p>
                   ) : (
                     <ul
                       className="sp-comex-selector__ncm-list"
                       aria-label={C2.catalogTitle}
                     >
+                      {unmatchedCodes.map((code) => (
+                        <li
+                          key={`new-${code}`}
+                          className="sp-comex-selector__ncm"
+                        >
+                          <code>{code}</code>
+                          <span className="sp-comex-selector__badge sp-comex-selector__badge--neutral">
+                            {C2.ncmStatusNotCataloged}
+                          </span>
+                          <SuppliesActionButton
+                            type="button"
+                            variant="primary"
+                            disabled={busy}
+                            onClick={() =>
+                              void addNewNcmToAnalysis(code)
+                            }
+                          >
+                            {C2.addToAnalysis}
+                          </SuppliesActionButton>
+                        </li>
+                      ))}
                       {catalogEntries.map((entry) => {
                         const status = displayStatus(entry.ncm_code);
                         const selected = isCatalogSelected(
@@ -785,23 +763,10 @@ export function MarketComexSelector({
                                   : selectNcm(entry.ncm_code)
                               }
                             >
-                              {selected ? C2.deselectNcm : C2.selectNcm}
+                              {selected
+                                ? C2.removeFromAnalysis
+                                : C2.addToAnalysis}
                             </SuppliesActionButton>
-                            {entry.status === "rejected" ? (
-                              <SuppliesActionButton
-                                type="button"
-                                variant="ghost"
-                                disabled={busy}
-                                onClick={() =>
-                                  void decideNcm(
-                                    entry,
-                                    "pending_fiscal_review",
-                                  )
-                                }
-                              >
-                                {C2.resubmit}
-                              </SuppliesActionButton>
-                            ) : null}
                           </li>
                         );
                       })}
@@ -815,7 +780,7 @@ export function MarketComexSelector({
 
           <div className="sp-comex-selector__analysis">
             <h3 className="sp-comex-selector__heading">
-              {C2.analysisTitle}
+              {C2.mySelectionTitle}
             </h3>
             {selectedProducts.length > 0 ? (
               <div className="sp-comex-selector__selection">
@@ -853,7 +818,6 @@ export function MarketComexSelector({
                 <ul className="sp-comex-selector__ncm-list">
                   {ncmChips.map((ncm) => {
                     const status = displayStatus(ncm);
-                    const gov = governanceByNcm.get(ncm);
                     return (
                       <li key={ncm} className="sp-comex-selector__ncm">
                         <code>{ncm}</code>
@@ -872,21 +836,8 @@ export function MarketComexSelector({
                             {C2.addToCatalog}
                           </SuppliesActionButton>
                         ) : null}
-                        {/* Re-review path: rejected → pending is open to any
-                            supplies.access user; other lifecycle actions
-                            live in the admin section (manage only). */}
-                        {gov?.status === "rejected" ? (
-                          <SuppliesActionButton
-                            type="button"
-                            variant="ghost"
-                            disabled={busy}
-                            onClick={() =>
-                              void decideNcm(gov, "pending_fiscal_review")
-                            }
-                          >
-                            {C2.resubmit}
-                          </SuppliesActionButton>
-                        ) : null}
+                        {/* S9 D-06: lifecycle actions (incl. resubmit)
+                            live only in the manage-only admin area. */}
                         {directSet.has(ncm) ? (
                           <button
                             type="button"
@@ -927,46 +878,51 @@ export function MarketComexSelector({
               </SuppliesActionButton>
             ) : null}
 
-            <div className="sp-comex-selector__views">
-              <SuppliesSelectField
-                label={C2.viewsLabel}
-                value={appliedView}
-                options={[
-                  { value: "", label: C2.viewsPlaceholder },
-                  ...views.map((view) => ({
-                    value: view.view_id,
-                    label: view.name,
-                  })),
-                ]}
-                onChange={applyView}
-              />
-              <SuppliesTextField
-                label={C2.viewNamePlaceholder}
-                value={viewName}
-                placeholder={C2.viewNamePlaceholder}
-                onChange={setViewName}
-              />
-              <SuppliesActionButton
-                type="button"
-                variant="ghost"
-                disabled={busy || !viewName.trim()}
-                onClick={() => void saveView()}
-              >
-                <Save size={14} aria-hidden="true" />
-                {appliedView ? C2.updateView : C2.saveView}
-              </SuppliesActionButton>
-              {appliedView ? (
+            {/* S9 D-05: saved views are a secondary, collapsed area —
+                never a permanent form competing with the analysis. */}
+            <details className="sp-comex-selector__views">
+              <summary>{C2.viewsToggle}</summary>
+              <div className="sp-comex-selector__views-body">
+                <SuppliesSelectField
+                  label={C2.viewsLabel}
+                  value={appliedView}
+                  options={[
+                    { value: "", label: C2.viewsPlaceholder },
+                    ...views.map((view) => ({
+                      value: view.view_id,
+                      label: view.name,
+                    })),
+                  ]}
+                  onChange={applyView}
+                />
+                <SuppliesTextField
+                  label={C2.viewNamePlaceholder}
+                  value={viewName}
+                  placeholder={C2.viewNamePlaceholder}
+                  onChange={setViewName}
+                />
                 <SuppliesActionButton
                   type="button"
                   variant="ghost"
-                  disabled={busy}
-                  onClick={() => void removeView()}
+                  disabled={busy || !viewName.trim()}
+                  onClick={() => void saveView()}
                 >
-                  <Trash2 size={14} aria-hidden="true" />
-                  {C2.deleteView}
+                  <Save size={14} aria-hidden="true" />
+                  {appliedView ? C2.updateView : C2.saveView}
                 </SuppliesActionButton>
-              ) : null}
-            </div>
+                {appliedView ? (
+                  <SuppliesActionButton
+                    type="button"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => void removeView()}
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                    {C2.deleteView}
+                  </SuppliesActionButton>
+                ) : null}
+              </div>
+            </details>
           </div>
         </div>
 

@@ -280,44 +280,41 @@ export const MARKET_INTELLIGENCE_CONTENT = {
   comex: {
     selectionTitle: "Seleção de produtos e NCMs",
     selectionHint:
-      "Busque um produto DELPI ou informe a NCM — adicione ao " +
-      "catálogo e selecione para a análise.",
+      "Pesquise uma NCM ou um produto DELPI e adicione à sua análise.",
     findTitle: "Encontrar materiais",
-    analysisTitle: "Minha análise",
+    mySelectionTitle: "Minha seleção",
     selectedCount: (count: number) =>
       `${count} NCM${count === 1 ? "" : "s"} na seleção`,
     originProducts: "Produtos DELPI",
-    originNcm: "Consultar NCM",
-    directNcmLabel: "NCM (8 dígitos)",
-    directNcmPlaceholder: "Ex.: 85444200 ou 8544.42.00",
-    directNcmHint:
-      "Cole um ou mais códigos — espaços, pontos e vírgulas são " +
-      "ignorados. A validação confere apenas o formato.",
-    directNcmAdd: "Adicionar",
+    originNcm: "Buscar NCM",
+    ncmSearchLabel: "Pesquisar NCM",
+    ncmSearchPlaceholder:
+      "Código ou descrição — ex.: 8544.42.00 ou cobre",
+    ncmSearchHint:
+      "Digite o código ou uma descrição do catálogo compartilhado — " +
+      "um código de 8 dígitos ainda não cadastrado pode ser adicionado " +
+      "à análise.",
+    ncmSearchEmpty:
+      "Nenhum item do catálogo corresponde à pesquisa.",
+    addToAnalysis: "Adicionar à análise",
+    removeFromAnalysis: "Remover",
     directNcmInvalid: (entries: string[]) =>
       `Códigos ignorados — a NCM exige exatamente 8 dígitos: ${entries.join(", ")}`,
     directNcmLimit:
       "Limite de 20 NCMs por análise atingido — remova itens da " +
       "seleção antes de adicionar novos.",
-    directNcmDuplicated:
-      "Todos os códigos informados já estão na seleção.",
     catalogAdded: "NCM adicionada ao catálogo.",
     alreadyInCatalog: "Esta NCM já está no catálogo.",
     removeNcm: (code: string) => `Remover NCM ${code}`,
-    catalogTitle: "Catálogo de NCMs",
-    catalogSearchPlaceholder: "Filtrar por código ou descrição",
+    catalogTitle: "Catálogo compartilhado",
     catalogEmpty:
-      "O catálogo está vazio — adicione a primeira NCM pelo campo " +
-      "acima ou a partir de um produto.",
-    selectNcm: "Selecionar",
-    deselectNcm: "Selecionada",
-    catalogNoMatch: "Nenhuma NCM encontrada no catálogo.",
+      "O catálogo ainda está vazio — informe uma NCM acima ou " +
+      "adicione a partir de um produto.",
     adminTitle: "Administração do catálogo",
     submitReview: "Enviar p/ revisão",
     clearSelection: "Limpar seleção",
     emptySelection:
-      "Selecione uma NCM do catálogo ou adicione uma nova para " +
-      "começar.",
+      "Busque um produto ou uma NCM para começar sua análise.",
     productTypeAll: "Todos",
     productTypeMp: "MP",
     productTypePi: "PI",
@@ -335,7 +332,6 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     resultsType: "Tipo",
     resultsUnit: "UM",
     resultsNcm: "NCM",
-    addProduct: "Adicionar",
     selectedProductsLabel: "Produtos selecionados",
     removeProduct: (code: string) => `Remover ${code}`,
     ncmColumnTitle: "NCMs da seleção",
@@ -355,7 +351,8 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     actionError:
       "A ação não foi concluída — tente novamente. Nenhum estado foi " +
       "alterado sem confirmação.",
-    viewsLabel: "Visualizações salvas",
+    viewsToggle: "Visualizações salvas",
+    viewsLabel: "Abrir visualização",
     viewsPlaceholder: "Nova análise",
     saveView: "Salvar visão",
     updateView: "Atualizar",
@@ -385,16 +382,16 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     configPendingTitle: "Configuração pendente",
     comexEmptySelectionTitle: "Comex — sem seleção",
     comexEmptySelection:
-      "Selecione produtos ou NCMs para iniciar a análise.",
+      "Busque um produto ou uma NCM para começar sua análise.",
     comexEmptySelectionNext:
-      "Busque um produto DELPI ou informe uma NCM na seção acima — " +
-      "o catálogo compartilhado já lista os códigos cadastrados.",
-    comexSelectedPendingTitle: "Comex — aguardando habilitação",
+      "Pesquise na seção acima e use «Adicionar à análise» — o " +
+      "catálogo compartilhado já lista os códigos cadastrados.",
+    comexSelectedPendingTitle: "Comex — aguardando disponibilidade",
     comexSelectedPending:
-      "As NCMs selecionadas estão no catálogo, mas ainda não estão " +
-      "habilitadas para consultar dados de importação.",
+      "As NCMs selecionadas estão cadastradas, mas ainda não estão " +
+      "disponíveis para consultar dados de importação.",
     comexSelectedPendingNext:
-      "Quando uma NCM selecionada estiver habilitada para a fonte " +
+      "Quando uma NCM selecionada estiver disponível na fonte " +
       "MDIC, as importações aparecem aqui.",
     providerUnavailable:
       "Temporariamente indisponível: a última coleta não foi " +

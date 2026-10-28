@@ -2792,16 +2792,28 @@
   color: var(--sp-text-muted);
 }
 
+/* S9: saved views are a secondary, collapsed area. */
 .dashboard-supplies-portal .sp-comex-selector__views {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--sp-space-3, 12px);
   border-top: 1px solid var(--sp-border-subtle, rgba(0, 0, 0, 0.08));
   padding-top: var(--sp-space-3, 12px);
 }
 
-.dashboard-supplies-portal .sp-comex-selector__views
+.dashboard-supplies-portal .sp-comex-selector__views summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sp-text-muted, inherit);
+}
+
+.dashboard-supplies-portal .sp-comex-selector__views-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-space-3, 12px);
+  margin-top: var(--sp-space-3, 12px);
+}
+
+.dashboard-supplies-portal .sp-comex-selector__views-body
   .delpi-ui-field {
   flex: 1 1 160px;
   min-width: 0;

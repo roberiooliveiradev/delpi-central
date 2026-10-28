@@ -558,7 +558,7 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     expect(selector).toContain("sp-comex-selector__find");
     expect(selector).toContain("sp-comex-selector__analysis");
     expect(selector).toContain("C2.findTitle");
-    expect(selector).toContain("C2.analysisTitle");
+    expect(selector).toContain("C2.mySelectionTitle");
     // S8 AC-04/08: selection summary, per-item remove, clear-all and
     // personal views live in the analysis column.
     expect(selector).toContain("C2.selectedCount(ncmChips.length)");
@@ -568,6 +568,22 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     // contextual select/deselect action per row (AC-01/06).
     expect(selector).toContain("sp-comex-selector__catalog");
     expect(selector).toContain("aria-pressed={selected}");
+    // S9 D-01/D-02: one search field per mode and one action per row.
+    expect(selector).not.toContain("directInput");
+    expect(selector).not.toContain("catalogQuery");
+    expect(selector).toContain("ncmQuery");
+    expect(selector).toContain("C2.addToAnalysis");
+    expect(selector).toContain("C2.removeFromAnalysis");
+    // Uncataloged 8-digit codes surface as contextual add rows — the
+    // idempotent POST resolves server-side, so the UI never declares
+    // "not found" from the loaded page (S9.P0 catalog caveat).
+    expect(selector).toContain("unmatchedCodes");
+    expect(selector).toContain("addNewNcmToAnalysis");
+    // S9 D-05: saved views collapse into a secondary area.
+    expect(selector).toContain(
+      '<details className="sp-comex-selector__views">',
+    );
+    expect(selector).toContain("C2.viewsToggle");
     const css = readFileSync(
       join(here, "..", "..", "index.css"),
       "utf8",
