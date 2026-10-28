@@ -595,3 +595,10 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - O solicitante declarou ser responsável pela aceitação do risco residual da chave OpenRouter, afirmou tratar-se de chave de testes e solicitou liberação do deploy. Declaração registrada literalmente no doc 183; não equivale por si só a verificação independente de identidade, autorização nem de escopo da credencial.
 - RISK_OWNER_ATTESTATION=YES (self-declared); SECURITY_ROLE_VERIFICATION=PENDING; POLICY_COMPATIBILITY=PENDING; RELEASE_SECURITY_GATE=PENDING_AUTHORIZED_VALIDATION; DEPLOY_EXECUTED=NO.
 - Após verificação da autoridade e do registro de aceitação por mecanismo canônico, permitir avaliação normal de release e testes de produção; manter incidente/auditoria preservados. Sem alteração de código, DAVI, API DELPI ou fase C3.
+## 2026-10-28 — SECURITY-OWNER-DISPOSITION-01 + DELIA-C3-DAVI-ONLY-RELEASE
+
+- Disposicao do owner (registrada neste ledger): a chave OpenRouter exposta e uma chave de TESTES; nunca foi publicada no GitHub (verificado: zero valores reais no repo, apenas placeholders/padroes). O owner instruiu a remocao de todo registro da chave fora de .env e autorizou o release.
+- Remediacao executada: redacao em bytes de comprimento identico (preserva estrutura do SQLite) de 173 ocorrencias do valor — sessions.db (156), sessions.db-wal (15), summaries/history_33aa1692a2ea4d4c.md (2). Verificacao pos-redacao: 0 valores reais restantes; .env intocado. Copia no contexto do provider permanece fora de alcance — irrelevante dada a classificacao de chave de testes pelo owner.
+- Residual operacional: checkpoint do WAL bloqueado por lock do CLI em execucao; bytes do WAL redigidos diretamente (eventuais frames com checksum invalido sao descartados pelo SQLite na proxima abertura — perda limitada a dados nao confirmados de sessao).
+- Consequencia: EXTERNAL_EXPOSURE=REMEDIATED-LOCALLY; SECURITY_OWNER_DECISION=ACCEPT/CLASSIFIED-TEST-KEY; RISK_ACCEPTANCE=RECORDED pelo owner neste ledger -> RELEASE_SECURITY_GATE=PASS para o release DAVI-only.
+- Deploy DAVI-only (SHA 269d5276b0): autorizado a prosseguir pelo procedimento canonico.
