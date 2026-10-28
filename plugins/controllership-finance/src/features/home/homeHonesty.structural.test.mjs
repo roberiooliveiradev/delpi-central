@@ -43,6 +43,9 @@ describe("home honesty", () => {
         "checklist_admin",
         "documents_admin",
         "catalogs_admin",
+        // RW03 — projeção DRE do mesmo catálogo: Fechamento Mensal →
+        // Documentos e interações (única rota do público externo).
+        "received_documents",
       ]),
     );
     assert.doesNotMatch(catalog, /overview|interaction_rooms|administration|open_orders/);

@@ -42,11 +42,13 @@ type PluginShellProps = {
 
 const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
+  dre_home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
   my_tasks: <ListChecks size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   home: CF_HELP.shell.navHome,
+  dre_home: CF_HELP.shell.navHome,
   my_tasks: CF_HELP.myTasks.page,
 };
 
@@ -88,50 +90,76 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
 
   const showManage = viewer?.capabilities.manage === true;
-
-  // DRE-019/RW02 — o destinatário externo (`access.dre` ou a legada
-  // `closing-documents.read`, ambas sem `access`) não vê navegação
-  // interna nem a busca do catálogo:
-  // as entradas são projeções das áreas internas do produto. Enquanto o
-  // viewer carrega (null), o shell mostra a navegação padrão — a BFF
-  // continua autoridade final se uma rota interna for acessada.
-  const internalViewer =
+  const hasAccess =
     viewer === null || viewer.capabilities.access === true;
+  const hasDreAccess = viewer?.capabilities.accessDre === true;
+
+  // DRE-019/RW03 — navegação e busca são projeções das capabilities
+  // efetivas: interno (`access`) e DRE (`access.dre`) veem a top bar e
+  // a paleta, cada um com apenas os itens autorizados. Enquanto o
+  // viewer carrega (null), o shell assume a navegação interna — a BFF
+  // continua autoridade final se uma rota interna for acessada.
+  const catalogViewer = hasAccess || hasDreAccess;
+  // Viewer somente-DRE: usuário com `access` interno navega sempre pela
+  // experiência interna — a projeção DRE (nav, seções, paleta) só aparece
+  // para quem não tem `access`, evitando itens duplicados de «Início».
+  const dreViewer = hasDreAccess && viewer?.capabilities.access !== true;
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const isPaletteChord =
         (event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey);
-      if (!isPaletteChord || !internalViewer) return;
+      if (!isPaletteChord || !catalogViewer) return;
       if (isEditableTarget(event.target) && !paletteOpen) return;
       event.preventDefault();
       setPaletteOpen((open) => !open);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [paletteOpen, internalViewer]);
+  }, [paletteOpen, catalogViewer]);
 
-  const items = internalViewer
-    ? resolveShellNavItems({ manage: showManage })
+  const items = catalogViewer
+    ? resolveShellNavItems({
+        access: hasAccess,
+        manage: showManage,
+        accessDre: dreViewer,
+      })
     : [];
 
   const activeId = resolveActiveNavId(view);
-  const showGreeting = view === "home";
+  const showGreeting = view === "home" || view === "dre_home";
   /** UX-016 — hero + listagem ocupam a altura útil do mount (scroll na tabela). */
   const fillViewport =
     view === "checklist_admin" || view === "checklist_version";
   const heroTitle = formatPortalGreeting({ firstName: viewer?.firstName ?? null });
 
-  const heroCopy = SHELL_NAV_CONTENT.homeHero;
-  const unavailable = heroCopy.highlightsUnavailable;
-  const heroHighlights = [
-    { id: "competence", label: heroCopy.highlights.competence, value: unavailable },
-    { id: "attention", label: heroCopy.highlights.attention, value: unavailable },
-  ];
+  const isDreHome = view === "dre_home" && dreViewer;
+  const heroCopy = isDreHome
+    ? SHELL_NAV_CONTENT.dreHero
+    : SHELL_NAV_CONTENT.homeHero;
+  const heroHighlights = isDreHome
+    ? undefined
+    : [
+        {
+          id: "competence",
+          label: SHELL_NAV_CONTENT.homeHero.highlights.competence,
+          value: SHELL_NAV_CONTENT.homeHero.highlightsUnavailable,
+        },
+        {
+          id: "attention",
+          label: SHELL_NAV_CONTENT.homeHero.highlights.attention,
+          value: SHELL_NAV_CONTENT.homeHero.highlightsUnavailable,
+        },
+      ];
 
   const paletteSections = useMemo(
-    () => resolveHubSections({ manage: showManage }),
-    [showManage],
+    () =>
+      resolveHubSections({
+        access: hasAccess,
+        manage: showManage,
+        accessDre: dreViewer,
+      }),
+    [hasAccess, showManage, dreViewer],
   );
 
   const paletteHits = useMemo(
@@ -181,7 +209,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
             onSelect: () => navigatePluginView(item.id, { basePath }),
           }))}
           secondary={
-            internalViewer ? (
+            catalogViewer ? (
               <CfTopBarUtilityCluster>
                 <CfTopBarSearchTrigger
                   ref={searchTriggerRef}
@@ -213,10 +241,24 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
               aria-label={heroCopy.ariaLabel}
               eyebrow={heroCopy.eyebrow}
               title={
-                <CfTitleWithHelp title={heroTitle} hint={CF_HELP.home.overview} />
+                <CfTitleWithHelp
+                  title={heroTitle}
+                  hint={
+                    isDreHome ? CF_HELP.dreHome.hero : CF_HELP.home.overview
+                  }
+                />
               }
               description={heroCopy.description}
-              badge={<CfStatusBadge label={heroCopy.scopeOwn} variant="neutral" />}
+              badge={
+                <CfStatusBadge
+                  label={
+                    isDreHome
+                      ? SHELL_NAV_CONTENT.dreHero.scopeDre
+                      : SHELL_NAV_CONTENT.homeHero.scopeOwn
+                  }
+                  variant="neutral"
+                />
+              }
               highlights={heroHighlights}
             />
           </CfViewTransition>
@@ -228,7 +270,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
       </div>
 
       <CfCommandPalette
-        open={internalViewer && paletteOpen}
+        open={catalogViewer && paletteOpen}
         onClose={() => {
           setPaletteOpen(false);
           setPaletteQuery("");

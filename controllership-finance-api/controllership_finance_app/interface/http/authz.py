@@ -20,12 +20,9 @@ from delpi_auth.authz_core import has_permission
 
 ACCESS_PERMISSION = "controllership-finance.access"
 MANAGE_PERMISSION = "controllership-finance.manage"
-READ_DOCUMENTS_PERMISSION = (
-    "controllership-finance.closing-documents.read"
-)
-# DRE-019-RW02 — capability oficial da experiência DRE. A legada
-# `closing-documents.read` permanece aceita SOMENTE nas superfícies DRE
-# durante a migração governada (doc 115 §10); removê-la exige gate.
+# DRE-019-RW03 — `access.dre` é a única capability da experiência DRE;
+# a legada `closing-documents.read` foi descontinuada após a migração
+# comprovada do papel DRE no Core (doc 115 §11).
 DRE_ACCESS_PERMISSION = "controllership-finance.access.dre"
 
 
@@ -49,19 +46,15 @@ def authorized_user(request: Request):
 
 
 def authorized_documents_reader(request: Request):
-    """Usuário humano com capability DRE efetiva (DRE-019/RW02).
+    """Usuário humano com capability DRE efetiva (DRE-019/RW03).
 
-    `access.dre` é a permission oficial; `closing-documents.read` é a
-    legada em compatibilidade transitória — nenhuma implica `access`
-    nem `manage` e nenhuma libera rotas internas. O vínculo de entrega
+    `access.dre` é a permission oficial — não implica `access` nem
+    `manage` e não libera rotas internas. O vínculo de entrega
     (RECIPIENT assignment + pacote SUBMITTED) é verificado na camada
     de serviço; a permission sozinha não libera documento algum.
     """
     user = _human_user(request)
-    if not (
-        has_permission(user, DRE_ACCESS_PERMISSION)
-        or has_permission(user, READ_DOCUMENTS_PERMISSION)
-    ):
+    if not has_permission(user, DRE_ACCESS_PERMISSION):
         raise Exception("Forbidden")
     return user
 

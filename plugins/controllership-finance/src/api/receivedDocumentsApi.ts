@@ -1,8 +1,8 @@
 /** Cliente da BFF — projeção documental do destinatário externo (DRE-019).
  *
  * Contrato: `GET|POST /closing/received-documents*` — superfície restrita
- * da capability `controllership-finance.access.dre` (oficial; a legada
- * `closing-documents.read` permanece aceita na transição — RW02). O MFE
+ * da capability `controllership-finance.access.dre` (RW03 — única; a
+ * legada `closing-documents.read` foi descontinuada). O MFE
  * nunca consulta Core nem rotas internas nesta experiência: a BFF
  * revalida capability + vínculo RECIPIENT + pacote SUBMITTED + membership
  * do recurso por request (existência fora do conjunto liberado é 404).

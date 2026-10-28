@@ -782,3 +782,21 @@ Inventário read-only + desenho + gate de arquitetura (Plano 113 §29, wireframe
 | AC-RW02-11 | Documentos filtrados por RECIPIENT+SUBMITTED+snapshot; download/mensagens/ajustes protegidos | PASS (proteção inalterada; PG suite DRE-019) |
 | AC-RW02-12 | Smoke autenticado end-to-end (Home DRE → docs → bloqueios) | TEST_NOT_RUN — requer import do manifesto + grant `access.dre` pelo PO |
 | AC-RW02-13 | Remoção da legada `closing-documents.read` | PENDING — gate posterior após homologação do papel |
+
+### DRE-ACCESS-019-RW03 — Home compartilhada + top bar + remoção da legada (2026-10-28)
+
+Evidência de migração no Core prod (PROVEN): `access.dre` importada na v0.1.3, papel «Acesso ao Portal Controladoria e Finanças — DRE» com a permission, 1 usuário provisionado, legada com zero grants.
+
+| AC | Critério | Resultado |
+|---|---|---|
+| AC-RW03-01 | Home DRE usa o padrão da Home interna (hero, top bar, caminhos, busca, recents) — composição compartilhada, não duplicada | PASS (`HomePage` + `HUB_SECTIONS` por capability; `DreHomePage` removida) |
+| AC-RW03-02 | Top bar DRE com «Início»; itens futuros só com rota+capability | PASS (shellNav por capability; teste DRE-only) |
+| AC-RW03-03 | «Caminhos e funcionalidades» exibe «Central de Fechamento» → «Fechamento Mensal» → Documentos e interações | PASS (seção `closing_dre`; teste HomePage) |
+| AC-RW03-04 | Interno não vê seção DRE; dual-cap sem Início duplicado | PASS (supressão `dreViewer`; testes) |
+| AC-RW03-05 | Manifesto com exatamente `access`/`manage`/`access.dre` — 3 permissions/12 rotas | PASS (manifestContract) |
+| AC-RW03-06 | Legada removida de BFF/MFE/rotas; `received-documents` → `not_found`; só-legado → 403/404 | PASS (test_dre_authz, viewer-context, pluginRoutes) |
+| AC-RW03-07 | `access.dre` ≠ `access`/`manage`; endpoints internos inalterados | PASS (test_dre_authz) |
+| AC-RW03-08 | Proteção documental inalterada (RECIPIENT+SUBMITTED+snapshot, 404, download auditado) | PASS (backend 491; PG suite DRE-019) |
+| AC-RW03-09 | Descontinuação no Core via mecanismo oficial (sync do register v0.1.4), sem SQL direto | PENDING — registro produtivo pelo PO |
+| AC-RW03-10 | Smoke autenticado DRE + interno (local/prod) | TEST_NOT_RUN — pós-import da v0.1.4 |
+

@@ -24,10 +24,11 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  *   uma versão em página completa (UX-015, substitui o modal).
  * - `received_documents` — «Documentos e interações» do destinatário
  *   externo (DRE-019): projeção restrita `closing/documents` sob a
- *   capability `access.dre` (legada `closing-documents.read` segue na
- *   rota compat `received-documents`), sem as três abas internas.
- * - `dre_home` — página inicial do público DRE (RW02): saudação +
- *   funcionalidade «Fechamento Mensal» → Documentos e interações.
+ *   capability `access.dre`, sem as três abas internas.
+ * - `dre_home` — página inicial do público DRE (RW02/RW03): mesma
+ *   Home compartilhada do Portal com catálogo por capability —
+ *   «Central de Fechamento» → «Fechamento Mensal» → Documentos e
+ *   interações.
  * Rotas futuras (Visão geral dedicada, Sala de interação, Ajuda)
  * entram aqui apenas quando implementadas.
  */
@@ -53,7 +54,7 @@ export type PluginView =
   | "clara_consent"
   | "not_found";
 
-export type PluginNavId = "home" | "my_tasks";
+export type PluginNavId = "home" | "dre_home" | "my_tasks";
 
 export type PluginNavigationTarget =
   | "home"
@@ -84,10 +85,6 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/cockpit": "cockpit",
   "closing/monthly-closing": "monthly_closing",
   "closing/documents": "received_documents",
-  // Compatibilidade transitória da capability legada (RW02): a rota
-  // `received-documents` serve a mesma experiência para quem ainda tem
-  // somente `closing-documents.read`; remover junto com a permission.
-  "received-documents": "received_documents",
   "closing/my-tasks": "my_tasks",
   "closing/admin/catalogs": "catalogs_admin",
   "closing/admin/documents": "documents_admin",
@@ -147,20 +144,13 @@ const ADMIN_VERSION_DETAIL_PATTERN =
 const ADMIN_VERSION_DOCUMENT_PATTERN =
   /^closing\/admin\/versions\/(\d+)\/documents\/([^/]{1,64})$/;
 
-/** Entrega da competência ao destinatário externo (DRE-019 + compat RW02). */
+/** Entrega da competência ao destinatário externo (DRE-019). */
 const RECEIVED_DELIVERY_PATTERN =
-  /^(?:closing\/documents|received-documents)\/(\d{4}-(0[1-9]|1[0-2]))$/;
+  /^closing\/documents\/(\d{4}-(0[1-9]|1[0-2]))$/;
 
-/** Detalhe do documento recebido (DRE-019 + compat RW02) — deep route. */
+/** Detalhe do documento recebido (DRE-019) — deep route. */
 const RECEIVED_DOCUMENT_PATTERN =
-  /^(?:closing\/documents|received-documents)\/(\d{4}-(0[1-9]|1[0-2]))\/documents\/([A-Za-z0-9_.:%~-]+)$/;
-
-/** Base relativa da experiência do destinatário conforme a rota usada. */
-export function receivedDocumentsBase(relativePath: string): string {
-  return relativePath.startsWith("received-documents")
-    ? "received-documents"
-    : "closing/documents";
-}
+  /^closing\/documents\/(\d{4}-(0[1-9]|1[0-2]))\/documents\/([A-Za-z0-9_.:%~-]+)$/;
 
 export type ResolvedPluginRoute = {
   view: PluginView;
@@ -353,6 +343,7 @@ export function checklistAdminEventsPath(
 
 export function resolveActiveNavId(view: PluginView): PluginNavId | null {
   if (view === "home") return "home";
+  if (view === "dre_home") return "dre_home";
   if (view === "my_tasks") return "my_tasks";
   return null;
 }

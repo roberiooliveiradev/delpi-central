@@ -105,14 +105,13 @@ const REQUEST_STATE_VARIANTS: Record<
   CONFIRMED: "success",
 };
 
-/** Caminho da experiência do destinatário sob o mesmo entrypoint autorizado. */
+/** Caminho canônico da experiência do destinatário. */
 function receivedPath(
   base: string,
-  receivedBase: string,
   period?: string,
   documentId?: string,
 ): string {
-  let path = `${base}/${receivedBase}`;
+  let path = `${base}/closing/documents`;
   if (period) path += `/${period}`;
   if (period && documentId)
     path += `/documents/${encodeURIComponent(documentId)}`;
@@ -121,13 +120,10 @@ function receivedPath(
 
 export function ReceivedDocumentsPage({
   basePath,
-  receivedBase,
   period: routePeriod,
   documentRef,
 }: {
   basePath: string;
-  /** Entrypoint autorizado — canônico (`closing/documents`) ou legado (`received-documents`). */
-  receivedBase: string;
   period?: string;
   /** UUID do documento na deep route de detalhe. */
   documentRef?: string;
@@ -217,25 +213,25 @@ export function ReceivedDocumentsPage({
 
   const openDelivery = useCallback(
     (deliveryPeriod: string) => {
-      navigatePluginPath(receivedPath(base, receivedBase, deliveryPeriod));
+      navigatePluginPath(receivedPath(base, deliveryPeriod));
     },
-    [base, receivedBase],
+    [base],
   );
 
   const openDocument = useCallback(
     (documentId: string) => {
-      navigatePluginPath(receivedPath(base, receivedBase, period, documentId));
+      navigatePluginPath(receivedPath(base, period, documentId));
     },
-    [base, receivedBase, period],
+    [base, period],
   );
 
   const backToDelivery = useCallback(() => {
-    navigatePluginPath(receivedPath(base, receivedBase, period));
-  }, [base, receivedBase, period]);
+    navigatePluginPath(receivedPath(base, period));
+  }, [base, period]);
 
   const backToList = useCallback(() => {
-    navigatePluginPath(receivedPath(base, receivedBase));
-  }, [base, receivedBase]);
+    navigatePluginPath(receivedPath(base));
+  }, [base]);
 
   const detailMode = Boolean(documentRef && period);
 
@@ -244,7 +240,7 @@ export function ReceivedDocumentsPage({
         {
           id: "received",
           label: "Documentos e interações",
-          href: receivedPath(base, receivedBase),
+          href: receivedPath(base),
           onNavigate: (event: { preventDefault: () => void }) => {
             event.preventDefault();
             backToList();
@@ -253,7 +249,7 @@ export function ReceivedDocumentsPage({
         {
           id: "delivery",
           label: `Fechamento de ${formatPeriod(period)}`,
-          href: receivedPath(base, receivedBase, period),
+          href: receivedPath(base, period),
           onNavigate: (event: { preventDefault: () => void }) => {
             event.preventDefault();
             backToDelivery();
@@ -265,7 +261,7 @@ export function ReceivedDocumentsPage({
           {
             id: "received",
             label: "Documentos e interações",
-            href: receivedPath(base, receivedBase),
+            href: receivedPath(base),
             onNavigate: (event: { preventDefault: () => void }) => {
               event.preventDefault();
               backToList();
@@ -290,7 +286,7 @@ export function ReceivedDocumentsPage({
         size="sm"
         back={{
           label: "Documentos e interações",
-          href: receivedPath(base, receivedBase),
+          href: receivedPath(base),
           onNavigate: (event) => {
             event.preventDefault();
             backToList();

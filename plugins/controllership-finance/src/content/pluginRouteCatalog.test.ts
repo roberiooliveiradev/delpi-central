@@ -22,6 +22,7 @@ describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => 
       "closing-admin",
       "documents-admin",
       "catalogs-admin",
+      "dre-monthly-closing",
     ]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
     expect(new Set(viewIds)).toEqual(
@@ -32,6 +33,7 @@ describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => 
         "checklist_admin",
         "documents_admin",
         "catalogs_admin",
+        "received_documents",
       ]),
     );
   });
@@ -67,11 +69,43 @@ describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => 
     expect(reports?.search).toBe("tab=reports");
   });
 
-  it("resolveHubSections mantém seções com rotas always sem capabilities", () => {
-    const sections = resolveHubSections({ manage: false });
-    expect(sections.length).toBe(2);
-    expect(sections[0].routes[0].id).toBe("home");
-    expect(sections[1].routes[0].id).toBe("monthly-closing");
+  it("resolveHubSections projeta as seções por capability (RW03)", () => {
+    const internal = resolveHubSections({
+      access: true,
+      manage: false,
+      accessDre: false,
+    });
+    expect(internal.length).toBe(2);
+    expect(internal[0].routes[0].id).toBe("home");
+    expect(internal[1].routes[0].id).toBe("monthly-closing");
+
+    // Somente-DRE: uma única seção autorizada — a projeção externa.
+    const dre = resolveHubSections({
+      access: false,
+      manage: false,
+      accessDre: true,
+    });
+    expect(dre.length).toBe(1);
+    expect(dre[0].id).toBe("closing_dre");
+    expect(dre[0].routes.map((r) => r.id)).toEqual([
+      "dre-monthly-closing",
+    ]);
+    expect(dre[0].routes[0].viewId).toBe("received_documents");
+
+    // Sem nenhuma capability efetiva, o catálogo não oferece caminho.
+    expect(
+      resolveHubSections({ access: false, manage: false, accessDre: false }),
+    ).toEqual([]);
+
+    // `manage` sozinho libera apenas as rotas administrativas.
+    const manageOnly = resolveHubSections({
+      access: false,
+      manage: true,
+      accessDre: false,
+    });
+    expect(
+      manageOnly.flatMap((s) => s.routes.map((r) => r.id)),
+    ).toEqual(["closing-admin", "documents-admin", "catalogs-admin"]);
   });
 });
 
@@ -93,7 +127,7 @@ describe("busca do catálogo", () => {
     // «ini» casa «Início» e «admINIs tração» (label da rota admin).
     expect(filterRouteCatalog(HUB_SECTIONS, "ini").length).toBe(2);
     expect(filterRouteCatalog(HUB_SECTIONS, "xyz-inexistente").length).toBe(0);
-    expect(filterRouteCatalog(HUB_SECTIONS, "").length).toBe(2);
+    expect(filterRouteCatalog(HUB_SECTIONS, "").length).toBe(3);
     expect(filterRouteCatalog(HUB_SECTIONS, "baixas").length).toBe(1);
   });
 

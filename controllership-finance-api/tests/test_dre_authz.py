@@ -1,5 +1,6 @@
-"""RW02 — boundary DRE: `access.dre` ou a legada `closing-documents.read`
-liberam o reader documental, e nenhuma das duas implica `access`/`manage`
+"""RW03 — boundary DRE: somente `access.dre` libera o reader documental;
+a legada `closing-documents.read` foi descontinuada após a migração
+comprovada do papel DRE no Core. `access.dre` não implica `access`/`manage`
 internos. O vínculo de entrega (RECIPIENT/SUBMITTED/snapshot) é verificado
 na camada de serviço — a permission sozinha não libera documento algum.
 """
@@ -34,22 +35,23 @@ def _request(permissions, **overrides):
     return SimpleNamespace(state=SimpleNamespace(user=user))
 
 
-@pytest.mark.parametrize("permissions", [[ACCESS_DRE], [READ_DOCS], [ACCESS_DRE, READ_DOCS]])
-def test_documents_reader_accepts_dre_and_legacy(permissions):
-    user = authorized_documents_reader(_request(permissions))
-    assert user.permissions == permissions
+def test_documents_reader_accepts_access_dre():
+    user = authorized_documents_reader(_request([ACCESS_DRE]))
+    assert user.permissions == [ACCESS_DRE]
 
 
-@pytest.mark.parametrize("permissions", [[ACCESS], [MANAGE], []])
-def test_documents_reader_denies_internal_and_empty(permissions):
+@pytest.mark.parametrize(
+    "permissions", [[ACCESS], [MANAGE], [READ_DOCS], []]
+)
+def test_documents_reader_denies_internal_legacy_and_empty(permissions):
     """`.access`/`.manage` sozinhos NÃO liberam a projeção do destinatário —
-    a capability DRE é exigida além do vínculo."""
+    e a legada `closing-documents.read` não é mais aceita (RW03)."""
     with pytest.raises(Exception, match="Forbidden"):
         authorized_documents_reader(_request(permissions))
 
 
 def test_access_dre_is_not_internal_access():
-    """Regra crítica RW02: `access.dre` não pode abrir rotas internas."""
+    """Regra crítica RW03: `access.dre` não pode abrir rotas internas."""
     with pytest.raises(Exception, match="Forbidden"):
         authorized_user(_request([ACCESS_DRE]))
 

@@ -4,7 +4,7 @@
   "name": "Portal Controladoria & Finanças",
   "description": "Portal de controladoria e finanças — Início, navegação e contexto operacional.",
   "icon": "landmark",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "type": "microfrontend",
   "basePath": "/apps/controllership-finance",
   "entry": "/apps/controllership-finance/assets/remoteEntry.js",
@@ -19,12 +19,6 @@
       "code": "controllership-finance.manage",
       "name": "Administrar Portal Controladoria & Finanças",
       "description": "Administração do produto (áreas de gestão conforme liberadas). Não implica acesso às demais rotas.",
-      "module": "controllership-finance"
-    },
-    {
-      "code": "controllership-finance.closing-documents.read",
-      "name": "Consultar documentos recebidos do fechamento (legada — em migração)",
-      "description": "DEPRECATED — transição governada para controllership-finance.access.dre (doc 115 §10). Mantida temporariamente para não revogar acesso de destinatários já provisionados; remover após homologação do papel DRE.",
       "module": "controllership-finance"
     },
     {
@@ -130,14 +124,6 @@
       "icon": "landmark",
       "order": 41,
       "showInMenu": true
-    },
-    {
-      "path": "/apps/controllership-finance/received-documents",
-      "label": "Documentos recebidos (rota legada)",
-      "permission": "controllership-finance.closing-documents.read",
-      "icon": "file-text",
-      "order": 42,
-      "showInMenu": false
     }
   ],
   "ui": {

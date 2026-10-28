@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Contrato do manifesto — schemaVersion 1.0.0, id congelado,
- * permissions access/manage + capability de destinatário (DRE-019)
- * e somente as rotas implementadas.
+ * permissions access/manage/access.dre (DRE-019-RW03 — legada
+ * `closing-documents.read` descontinuada após migração comprovada
+ * no Core) e somente as rotas implementadas.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -28,29 +29,29 @@ describe("controllership-finance manifest", () => {
     assert.equal(manifest.ui.renderMode, "federated");
   });
 
-  it("permissions congeladas: access/manage + access.dre + legada em migração", () => {
+  it("permissions congeladas: access/manage/access.dre — sem legada (RW03)", () => {
     const codes = manifest.permissions.map((p) => p.code).sort();
     assert.deepEqual(codes, [
       "controllership-finance.access",
       "controllership-finance.access.dre",
-      "controllership-finance.closing-documents.read",
       "controllership-finance.manage",
     ]);
-    assert.equal(manifest.permissions.length, 4);
+    assert.equal(manifest.permissions.length, 3);
     for (const p of manifest.permissions) {
       assert.equal(p.module, "controllership-finance");
     }
-    // RW02 — a legada permanece declarada (marcada DEPRECATED) até a
-    // homologação do papel DRE; removê-la aqui quebraria destinatários
-    // provisionados antes da remoção governada.
-    const legacy = manifest.permissions.find(
-      (p) => p.code === "controllership-finance.closing-documents.read",
+    // RW03 — a capability legada foi removida após evidência de migração
+    // no Core (papel DRE com `access.dre`, legada com zero grants). O
+    // sync oficial do register_plugin remove registros ausentes — a
+    // permission não pode voltar sem novo manifesto governado.
+    assert.ok(
+      !codes.includes("controllership-finance.closing-documents.read"),
+      "capability legada reapresentada",
     );
-    assert.match(legacy.description, /DEPRECATED/);
   });
 
   it("somente rotas implementadas publicadas, cada uma com sua permission", () => {
-    assert.equal(manifest.routes.length, 13);
+    assert.equal(manifest.routes.length, 12);
     const [
       home,
       settlements,
@@ -64,7 +65,6 @@ describe("controllership-finance manifest", () => {
       claraConsent,
       documents,
       dreHome,
-      receivedDocuments,
     ] = manifest.routes;
     assert.equal(home.path, "/apps/controllership-finance");
     assert.equal(home.permission, "controllership-finance.access");
@@ -135,17 +135,8 @@ describe("controllership-finance manifest", () => {
     assert.equal(dreHome.path, "/apps/controllership-finance/home");
     assert.equal(dreHome.permission, "controllership-finance.access.dre");
     assert.equal(dreHome.showInMenu, true);
-    // Compat transitória: mesma experiência para a capability legada até
-    // a migração governada do papel DRE (remover junto com a permission).
-    assert.equal(
-      receivedDocuments.path,
-      "/apps/controllership-finance/received-documents",
-    );
-    assert.equal(
-      receivedDocuments.permission,
-      "controllership-finance.closing-documents.read",
-    );
-    assert.equal(receivedDocuments.showInMenu, false);
+    // RW03 — a rota legada `/received-documents` foi descontinuada junto
+    // com a capability antiga; o canônico é `/closing/documents`.
     for (const route of manifest.routes) {
       if (route.path.endsWith("/admin")) {
         assert.equal(route.permission, "controllership-finance.manage");
@@ -154,11 +145,6 @@ describe("controllership-finance manifest", () => {
         route.path.endsWith("/home")
       ) {
         assert.equal(route.permission, "controllership-finance.access.dre");
-      } else if (route.path.endsWith("/received-documents")) {
-        assert.equal(
-          route.permission,
-          "controllership-finance.closing-documents.read",
-        );
       } else {
         assert.equal(route.permission, "controllership-finance.access");
       }
@@ -174,6 +160,7 @@ describe("controllership-finance manifest", () => {
       "administration",
       "help",
       "closing-center",
+      "received-documents",
     ]) {
       assert.ok(
         !paths.some((p) => p.includes(forbidden)),

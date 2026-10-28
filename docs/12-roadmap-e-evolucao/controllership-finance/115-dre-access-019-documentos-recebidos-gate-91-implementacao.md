@@ -142,3 +142,37 @@ Revisão arquitetural externa: não autodeclarada — aguarda GATE.
 **Risco residual:** link antigo `/closing/documents` salvo por usuário *somente-legado* nega após a importação (rota passa a exigir `access.dre`) — mitigado pela entrada do app, que redireciona à rota autorizada `received-documents`; janela fecha quando o papel recebe `access.dre`.
 
 **Pendente:** importação do manifesto + grant `access.dre` pelo PO; smoke autenticado end-to-end — **TEST_NOT_RUN** até a identidade/grant existir.
+
+## 11. RW03 — Home compartilhada, top bar DRE e remoção definitiva da legada (2026-10-28)
+
+**Decisão do PO:** a Home DRE passa a usar o **mesmo padrão da Home interna** (hero, top bar, «Caminhos e funcionalidades», busca, últimos acessos) e a capability `closing-documents.read` é **descontinuada** — removida do manifesto, do BFF, do MFE e dos aliases.
+
+**Evidência de migração no Core (PROVEN, consulta produtiva antes da remoção):**
+
+- `controllership-finance.access.dre` **importada** — registrada na versão 0.1.3 do app (13 rotas, incluindo `/home` e `/closing/documents` sob `access.dre`);
+- papel «Acesso ao Portal Controladoria e Finanças — DRE» existente com a permission;
+- 1 usuário real provisionado (`contabilidade@teste.com.br`);
+- `closing-documents.read` com **zero grants** (roles, grants diretos e grupos).
+
+A descontinuação usa o mecanismo oficial: `PluginPermissionSyncService.sync_module` remove permissions ausentes do manifesto no próximo registro de versão (0.1.4) — sem SQL direto, sem apagar auditoria.
+
+| Camada | Antes (RW02) | Depois (RW03) |
+|---|---|---|
+| Manifesto | 4 permissions/13 rotas (legada DEPRECATED + alias `received-documents`) | **3 permissions/12 rotas** — `access`, `manage`, `access.dre` |
+| Home DRE | `DreHomePage` dedicada | **`HomePage` compartilhada** (`homeView="dre_home"`) — catálogo único `HUB_SECTIONS` projetado por capability |
+| Top bar | somente interna | dinâmica por capability: «Início» → `home` (`access`) ou `dre_home` (`access.dre`) |
+| Paleta/busca | restrita a `access` | projetada por capability — DRE busca apenas suas rotas |
+| BFF reader | `access.dre` OR legada | **somente `access.dre`** |
+| `/viewer-context` | capabilities `{access, manage, accessDre, closingDocumentsRead}` | `{access, manage, accessDre}` |
+| Rota `received-documents` | alias compat | **descontinuada → `not_found`** |
+| Usuário só-legado | experiência preservada | **negado** (403/404) — migração comprovada |
+
+**Arquitetura da Home compartilhada:** o catálogo `pluginRouteCatalog.ts` tipa `HubCapability = "access" | "manage" | "accessDre"`; a seção `closing_dre` («Central de Fechamento» → «Fechamento Mensal» → `received_documents`) só aparece para `access.dre`. Usuário com `access` + `access.dre` navega sempre pela experiência interna (supressão `dreViewer` no shell e na Home — sem Início/seções duplicados). `DreHomePage.tsx` removido — não há duplicação estrutural.
+
+**Testes:** manifestContract 3 permissions/12 rotas + legada proibida; `pluginRoutes` — `received-documents` → `not_found`; `pluginRouteCatalog` — projeção access/manage/access.dre/vazio; `HomePage`/`PluginShell` — DRE-only vê só «Fechamento Mensal», dual-cap sem duplicata; `test_dre_authz` — legada agora negada no reader; `test_viewer_context` — legada-only → 403. Vitest 382/382 (2 flakes de timing pré-existentes passam isolados); backend 491 passed; structural 15/15; Portal `manifestRoutePermission` 9/9.
+
+**Ordem de rollout:** (1) deploy BFF+MFE neste commit; (2) **PO registra a versão 0.1.4** do manifesto no Core — o sync remove `closing-documents.read` e a rota `received-documents`; (3) homologar com identidade somente `access.dre`.
+
+**Rollback:** BFF/MFE revertem pelo commit; a permission legada só volta por novo manifesto governado (o sync é destrutivo por design) — mitigado pela evidência de zero grants.
+
+**Pendente:** registro produtivo da v0.1.4 pelo PO + smoke autenticado pós-import — **TEST_NOT_RUN** até a execução do PO.

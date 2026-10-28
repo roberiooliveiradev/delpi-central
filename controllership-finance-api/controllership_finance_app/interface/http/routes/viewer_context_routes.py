@@ -7,11 +7,11 @@ Contrato congelado IMP-MFE-HOME (doc 45 §14.1; decisões D1=A e D2=A):
 - Core é a authority de effective permissions (populadas pelo middleware
   compartilhado a partir de ``/me`` — nunca do JWT);
 - exige ``controllership-finance.access`` OU
-  ``controllership-finance.access.dre`` (RW02 — capability oficial da
-  experiência DRE) OU a legada ``closing-documents.read`` em
-  compatibilidade transitória (o destinatário externo também é viewer
-  do produto; o payload limita a UI, a autorização efetiva continua
-  em cada rota);
+  ``controllership-finance.access.dre`` (RW03 — única capability DRE;
+  a legada ``closing-documents.read`` foi descontinuada após a
+  migração comprovada do papel — o destinatário externo também é
+  viewer do produto; o payload limita a UI, a autorização efetiva
+  continua em cada rota);
 - ``manage`` não implica ``access``; capabilities DRE não implicam
   ``access``;
 - ``rbac_unavailable`` (Core indisponível sem snapshot válido) falha fechado
@@ -32,9 +32,6 @@ from controllership_finance_app.core.responses import ok
 
 ACCESS_PERMISSION = "controllership-finance.access"
 MANAGE_PERMISSION = "controllership-finance.manage"
-READ_DOCUMENTS_PERMISSION = (
-    "controllership-finance.closing-documents.read"
-)
 DRE_ACCESS_PERMISSION = "controllership-finance.access.dre"
 
 router = APIRouter(tags=["Viewer"])
@@ -73,7 +70,6 @@ def get_viewer_context(request: Request):
     if not (
         has_permission(user, ACCESS_PERMISSION)
         or has_permission(user, DRE_ACCESS_PERMISSION)
-        or has_permission(user, READ_DOCUMENTS_PERMISSION)
     ):
         raise Exception("Forbidden")
 
@@ -87,9 +83,6 @@ def get_viewer_context(request: Request):
             "capabilities": {
                 "access": has_permission(user, ACCESS_PERMISSION),
                 "manage": is_superadmin or MANAGE_PERMISSION in permissions,
-                "closingDocumentsRead": has_permission(
-                    user, READ_DOCUMENTS_PERMISSION
-                ),
                 "accessDre": has_permission(user, DRE_ACCESS_PERMISSION),
             },
         },

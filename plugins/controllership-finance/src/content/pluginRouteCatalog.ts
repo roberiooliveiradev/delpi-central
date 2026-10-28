@@ -10,7 +10,7 @@
  */
 import type { PluginNavigationTarget } from "../app/pluginRoutes";
 
-export type HubCapability = "manage" | "always";
+export type HubCapability = "access" | "manage" | "accessDre";
 
 export type HubRouteKind = "navigate" | "create";
 
@@ -24,7 +24,7 @@ export type HubRouteDef = {
   kind?: HubRouteKind;
 };
 
-export type HubSectionId = "portal" | "closing";
+export type HubSectionId = "portal" | "closing" | "closing_dre";
 
 export type HubSectionDef = {
   id: HubSectionId;
@@ -34,7 +34,7 @@ export type HubSectionDef = {
   routes: readonly HubRouteDef[];
 };
 
-export type HubCapabilities = Record<Exclude<HubCapability, "always">, boolean>;
+export type HubCapabilities = Record<HubCapability, boolean>;
 
 export const HUB_SECTIONS: readonly HubSectionDef[] = [
   {
@@ -47,7 +47,7 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         id: "home",
         label: "Início",
         viewId: "home",
-        requiredCap: "always",
+        requiredCap: "access",
         keywords: [
           "inicio",
           "início",
@@ -63,7 +63,7 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         id: "profile",
         label: "Meu perfil",
         viewId: "profile",
-        requiredCap: "always",
+        requiredCap: "access",
         keywords: [
           "perfil",
           "usuario",
@@ -89,7 +89,7 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         id: "monthly-closing",
         label: "Fechamento mensal",
         viewId: "monthly_closing",
-        requiredCap: "always",
+        requiredCap: "access",
         keywords: [
           "fechamento",
           "mensal",
@@ -117,7 +117,7 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         label: "Documentos e interações",
         viewId: "monthly_closing",
         search: "tab=documents",
-        requiredCap: "always",
+        requiredCap: "access",
         keywords: [
           "documentos",
           "interacoes",
@@ -137,7 +137,7 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         label: "Relatórios e divergências",
         viewId: "monthly_closing",
         search: "tab=reports",
-        requiredCap: "always",
+        requiredCap: "access",
         keywords: [
           "relatorios",
           "relatórios",
@@ -221,6 +221,39 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
       },
     ],
   },
+  // RW03 — seção do público externo DRE: mesmo catálogo, mesma Home,
+  // mesma estrutura de cards; a audiência é resolvida por capability
+  // (`access.dre`), nunca por composição paralela. Funcionalidades DRE
+  // futuras entram aqui sob `accessDre` — sem novas permissions por
+  // página.
+  {
+    id: "closing_dre",
+    title: "Central de Fechamento",
+    description:
+      "Consulte os documentos disponibilizados pela Controladoria e acompanhe as interações relacionadas ao fechamento.",
+    iconKey: "closing",
+    routes: [
+      {
+        id: "dre-monthly-closing",
+        label: "Fechamento Mensal",
+        viewId: "received_documents",
+        requiredCap: "accessDre",
+        keywords: [
+          "fechamento",
+          "mensal",
+          "documentos",
+          "recebidos",
+          "interacoes",
+          "interações",
+          "entrega",
+          "competencia",
+          "competência",
+          "dre",
+          "contabilidade",
+        ],
+      },
+    ],
+  },
 ] as const;
 
 export const HUB_CONTENT = {
@@ -283,7 +316,7 @@ export function resolveHubSections(
     .map((section) => ({
       ...section,
       routes: section.routes.filter(
-        (route) => route.requiredCap === "always" || capabilities[route.requiredCap],
+        (route) => capabilities[route.requiredCap],
       ),
     }))
     .filter((section) => section.routes.length > 0);

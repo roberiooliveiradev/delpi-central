@@ -10,7 +10,7 @@ const CATALOG = [
   { app: "cf", path: "/apps/controllership-finance", permission: "controllership-finance.access", showInMenu: true },
   { app: "cf", path: "/apps/controllership-finance/closing/admin", permission: "controllership-finance.manage", showInMenu: false },
   { app: "cf", path: "/apps/controllership-finance/closing/monthly-closing", permission: "controllership-finance.access", showInMenu: false },
-  { app: "cf", path: "/apps/controllership-finance/closing/documents", permission: "controllership-finance.closing-documents.read", showInMenu: false },
+  { app: "cf", path: "/apps/controllership-finance/closing/documents", permission: "controllership-finance.access.dre", showInMenu: false },
 ];
 
 describe("resolveManifestRoutePermission", () => {
@@ -27,7 +27,7 @@ describe("resolveManifestRoutePermission", () => {
         CATALOG as never,
         "/apps/controllership-finance/closing/documents",
       ),
-      "controllership-finance.closing-documents.read",
+      "controllership-finance.access.dre",
     );
   });
 

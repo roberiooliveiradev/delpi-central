@@ -451,7 +451,7 @@ export const CF_HELP = {
       "Solicitação de ajuste ou revisão: descreva o motivo e envie — o pedido fica registrado com autor, data e a versão do documento em vigor no momento. A Controladoria responde na mesma tela; a resposta não conclui o pedido automaticamente — quando estiver de acordo, use «Confirmar» para encerrar.",
   },
   dreHome: {
-    features:
-      "Funcionalidades disponíveis para a sua conta: somente o que a Controladoria disponibilizou ao seu destinatário. «Fechamento Mensal» abre Documentos e interações — os fechamentos, arquivos, conversas e solicitações de ajuste enviados à sua área. Nada interno (relatórios, administração, dashboards) aparece aqui porque a sua permissão é a de acesso externo DRE.",
+    hero:
+      "Página inicial do Portal Controladoria & Finanças para a sua conta DRE: somente as funcionalidades que a Controladoria liberou ao seu destinatário aparecem aqui — nada interno (relatórios, administração, dashboards) é oferecido. «Fechamento Mensal» em Caminhos e funcionalidades abre Documentos e interações — os fechamentos, arquivos, conversas e solicitações de ajuste enviados à sua área.",
   },
 } as const;

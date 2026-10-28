@@ -112,7 +112,6 @@ def test_viewer_context_human_with_access_returns_200(_auth_pipeline):
         "capabilities": {
             "access": True,
             "manage": False,
-            "closingDocumentsRead": False,
             "accessDre": False,
         },
     }
@@ -125,48 +124,39 @@ def test_viewer_context_access_plus_manage(_auth_pipeline):
     assert response.json()["data"]["capabilities"] == {
         "access": True,
         "manage": True,
-        "closingDocumentsRead": False,
         "accessDre": False,
     }
 
 
-def test_viewer_context_recipient_capability_only(_auth_pipeline):
-    """DRE-019: destinatário externo entra como viewer sem `access` —
-    o payload restringe a UI, sem conceder autorização interna."""
+def test_viewer_context_legacy_capability_only_is_forbidden(_auth_pipeline):
+    """RW03: a legada `closing-documents.read` descontinuada não entra mais
+    como viewer — somente `access` ou `access.dre` abrem o Portal."""
     _auth_pipeline["rbac"] = _rbac(permissions=[READ_DOCS])
-    response = _get(_client())
-    assert response.status_code == 200
-    assert response.json()["data"]["capabilities"] == {
-        "access": False,
-        "manage": False,
-        "closingDocumentsRead": True,
-        "accessDre": False,
-    }
+    assert _get(_client()).status_code == 403
 
 
 def test_viewer_context_dre_capability_only(_auth_pipeline):
-    """RW02: `access.dre` oficial também entra como viewer sem `access` —
-    capability distinta da legada, igualmente restrita à experiência DRE."""
+    """DRE-019/RW03: destinatário externo entra como viewer sem `access` —
+    o payload restringe a UI, sem conceder autorização interna."""
     _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS_DRE])
     response = _get(_client())
     assert response.status_code == 200
     assert response.json()["data"]["capabilities"] == {
         "access": False,
         "manage": False,
-        "closingDocumentsRead": False,
         "accessDre": True,
     }
 
 
-def test_viewer_context_dre_and_legacy_capabilities_together(_auth_pipeline):
-    """Usuário com as duas capabilities durante a migração: ambas reportadas."""
+def test_viewer_context_dre_plus_legacy_stale_grant(_auth_pipeline):
+    """Grant legado residual no token não aparece no payload nem libera
+    nada — somente `access.dre` é reportada (RW03)."""
     _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS_DRE, READ_DOCS])
     response = _get(_client())
     assert response.status_code == 200
     assert response.json()["data"]["capabilities"] == {
         "access": False,
         "manage": False,
-        "closingDocumentsRead": True,
         "accessDre": True,
     }
 
@@ -312,7 +302,6 @@ def test_viewer_context_human_superadmin_gets_manage_capability(_auth_pipeline):
     assert response.json()["data"]["capabilities"] == {
         "access": True,
         "manage": True,
-        "closingDocumentsRead": True,
         "accessDre": True,
     }
 

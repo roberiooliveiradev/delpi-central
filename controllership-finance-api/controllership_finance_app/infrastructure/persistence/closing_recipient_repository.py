@@ -1,8 +1,8 @@
 """Adapter PostgreSQL da entrega documental a destinatários externos
 (DRE-019 — doc 91 Opção B, Plano 113 §29, doc 112 §54).
 
-Read-model restrito do destinatário (`access.dre`; legada
-`closing-documents.read` em compatibilidade transitória — RW02):
+Read-model restrito do destinatário (`access.dre` — única capability
+DRE desde RW03):
 
 - o vínculo é `closing_review_assignment` role='RECIPIENT' ativo,
   resolvido a `closing_package` (competência + recipient_area);

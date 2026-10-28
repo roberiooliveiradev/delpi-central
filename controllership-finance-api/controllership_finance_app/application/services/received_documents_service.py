@@ -3,10 +3,9 @@
 Cadeia de autorização por request (capability AND vínculo AND release —
 fail-closed em qualquer elo):
 
-1. rota exige `controllership-finance.access.dre` efetivo (RW02 —
-   oficial) ou a legada `controllership-finance.closing-documents.read`
-   em compatibilidade transitória (Core = authority;
-   rbac_unavailable = 503 — ver `authz`);
+1. rota exige `controllership-finance.access.dre` efetivo (RW03 —
+   única capability DRE; Core = authority; rbac_unavailable = 503 —
+   ver `authz`);
 2. vínculo: `closing_review_assignment` role='RECIPIENT' ativo do ator
    no pacote da competência+área destinataria;
 3. liberação: versão SUBMITTED mais alta do pacote — o snapshot

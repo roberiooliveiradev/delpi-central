@@ -36,6 +36,8 @@ import { readHomeSearchQuery, writeHomeSearchQuery } from "./homeSearchQuery";
 
 type HomePageProps = {
   basePath: string;
+  /** View de entrada do público — interna (`home`) ou DRE (`dre_home`). */
+  homeView?: "home" | "dre_home";
 };
 
 const EVENTS = HUB_CONTENT.events;
@@ -44,11 +46,14 @@ const FEATURES = HUB_CONTENT.features;
 const SECTION_ICONS: Record<HubSectionId, ReactNode> = {
   portal: <Landmark size={20} strokeWidth={1.75} aria-hidden="true" />,
   closing: <CalendarCheck2 size={20} strokeWidth={1.75} aria-hidden="true" />,
+  closing_dre: (
+    <CalendarCheck2 size={20} strokeWidth={1.75} aria-hidden="true" />
+  ),
 };
 
 const FORBIDDEN_STATUS = 403;
 
-export function HomePage({ basePath }: HomePageProps) {
+export function HomePage({ basePath, homeView = "home" }: HomePageProps) {
   const { viewer, loading, errorStatus, reload } = useViewerContext();
   const [searchQuery, setSearchQuery] = useState(() =>
     typeof window !== "undefined" ? readHomeSearchQuery() : "",
@@ -58,7 +63,19 @@ export function HomePage({ basePath }: HomePageProps) {
   );
 
   const capabilities = useMemo(
-    () => ({ manage: viewer?.capabilities.manage === true }),
+    () => ({
+      // Viewer ainda não resolvido (ex.: BFF fora): mantém o launcher
+      // interno utilizável — o banner honesto já cobre a degradação e
+      // a BFF continua autoridade se uma rota interna for acessada.
+      access: viewer === null || viewer.capabilities.access === true,
+      manage: viewer?.capabilities.manage === true,
+      // RW03 — usuário interno navega pela experiência interna mesmo que
+      // também detenha `access.dre`: a projeção DRE só aparece para quem
+      // não tem `access` (evita seção/cartão duplicados na Home).
+      accessDre:
+        viewer?.capabilities.accessDre === true &&
+        viewer?.capabilities.access !== true,
+    }),
     [viewer],
   );
 
@@ -71,11 +88,11 @@ export function HomePage({ basePath }: HomePageProps) {
   useEffect(() => {
     setRecents(
       pushRecentView({
-        viewId: "home",
+        viewId: homeView,
         label: "Início",
       }),
     );
-  }, []);
+  }, [homeView]);
 
   const recordVisit = useCallback(
     (

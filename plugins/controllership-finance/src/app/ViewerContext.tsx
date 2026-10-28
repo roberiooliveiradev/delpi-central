@@ -29,7 +29,6 @@ const CAPABILITIES_FALLBACK: ViewerCapabilities = {
   access: false,
   manage: false,
   accessDre: false,
-  closingDocumentsRead: false,
 };
 
 export function ViewerContextProvider({ children }: { children: ReactNode }) {

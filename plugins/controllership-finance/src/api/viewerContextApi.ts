@@ -3,12 +3,9 @@ import { cfApiUrl, httpGet } from "./httpClient";
 export type ViewerCapabilities = {
   access: boolean;
   manage: boolean;
-  /** DRE-019-RW02 — capability oficial da experiência DRE (Home DRE +
+  /** DRE-019-RW03 — única capability da experiência DRE (Home DRE +
    * Documentos e interações); não implica `access`. */
   accessDre: boolean;
-  /** DRE-019 — capability legada em compatibilidade transitória; não
-   * implica `access` (a capability não libera áreas internas). */
-  closingDocumentsRead: boolean;
 };
 
 export type ViewerContext = {
@@ -42,9 +39,6 @@ export async function getViewerContext(options?: {
       access: Boolean(data?.capabilities?.access),
       manage: Boolean(data?.capabilities?.manage),
       accessDre: Boolean(data?.capabilities?.accessDre),
-      closingDocumentsRead: Boolean(
-        data?.capabilities?.closingDocumentsRead,
-      ),
     },
   };
 }

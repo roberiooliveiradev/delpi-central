@@ -70,7 +70,7 @@ export function filterRecentsByCaps(
     for (const section of HUB_SECTIONS) {
       for (const route of section.routes) {
         if (route.viewId !== item.viewId) continue;
-        return route.requiredCap === "always" || capabilities[route.requiredCap];
+        return capabilities[route.requiredCap];
       }
     }
     return false;

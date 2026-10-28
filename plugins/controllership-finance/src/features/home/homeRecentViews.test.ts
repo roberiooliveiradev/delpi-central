@@ -71,6 +71,20 @@ describe("homeRecentViews", () => {
 
   it("filterRecentsByCaps filtra por capacidade do catálogo", () => {
     const items = pushRecentView({ viewId: "home", label: "Início" });
-    expect(filterRecentsByCaps(items, { manage: false }).length).toBe(1);
+    // `home` exige `access` — interno vê, somente-DRE não.
+    expect(
+      filterRecentsByCaps(items, {
+        access: true,
+        manage: false,
+        accessDre: false,
+      }).length,
+    ).toBe(1);
+    expect(
+      filterRecentsByCaps(items, {
+        access: false,
+        manage: false,
+        accessDre: true,
+      }).length,
+    ).toBe(0);
   });
 });
