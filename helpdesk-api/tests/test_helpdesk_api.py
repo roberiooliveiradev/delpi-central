@@ -734,6 +734,28 @@ def test_update_description_fails_when_readback_diverges():
     assert response.status_code == 422
 
 
+def test_update_description_fails_when_glpi_drops_image():
+    """GLPI preserves every word but drops the <img> — the structural
+    read-back must fail the outcome, never return success."""
+    from dataclasses import replace
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(glpi.detail, requester_mine=True)
+    glpi.description_strip_images = True
+    response = client.patch(
+        "/tickets/7/description",
+        json={
+            "content": (
+                '<p>antes</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/2" '
+                'alt="logo" /></p><p>depois</p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "desc-imgdrop"},
+    )
+    assert response.status_code == 422
+
+
 def test_attachment_upload_reports_author_state():
     client, glpi = build_client()
     link(client)

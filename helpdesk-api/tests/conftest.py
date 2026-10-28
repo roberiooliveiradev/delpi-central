@@ -86,6 +86,8 @@ class FakeGlpi:
         self.classification_applies = True
         self.description_writes: list[tuple] = []
         self.description_applies = True
+        # When True, GLPI "loses" <img> tags on persist — text survives.
+        self.description_strip_images = False
         self.solutions: list[tuple[int, str]] = []
         self.tasks: list[tuple[int, str]] = []
         self.created_validations: list[tuple[int, str, int, str]] = []
@@ -480,10 +482,17 @@ class FakeGlpi:
             raise GlpiNotFound("ausente")
         self.description_writes.append((ticket_id, content))
         if self.description_applies and self.detail.id == ticket_id:
+            import re as _re
+
+            stored = (
+                _re.sub(r"<img[^>]*>", "", content)
+                if self.description_strip_images
+                else content
+            )
             self.detail = replace(
                 self.detail,
-                description=message_html_to_plain_text(content),
-                description_html=content,
+                description=message_html_to_plain_text(stored),
+                description_html=stored,
             )
 
     def update_ticket_classification(

@@ -1305,18 +1305,35 @@ class HttpxGlpiClient:
             )
             # Verify/restore end-user authorship on both persisted rows —
             # declared users_id may be overridden by the session identity.
-            author_state = self._legacy_restore_row_author(
+            # GLPI's timeline shows the Document_Item author (proven on
+            # #1454: Document.users_id was restored to the user but the
+            # link row kept minha-delpi-upload), so composite authorship
+            # requires EVERY relevant row proven — never just the Document.
+            document_state = self._legacy_restore_row_author(
                 session_token=session_token,
                 itemtype="Document",
                 row_id=document_id,
                 users_id=owner_user_id,
             )
-            if link_row_id:
+            link_state = (
                 self._legacy_restore_row_author(
                     session_token=session_token,
                     itemtype="Document_Item",
                     row_id=link_row_id,
                     users_id=owner_user_id,
+                )
+                if link_row_id
+                else "unverified"
+            )
+            author_state = self._combine_author_states(document_state, link_state)
+            if author_state not in ("verified", "restored"):
+                logger.info(
+                    "glpi_document_upload_author_partial document_id=%s "
+                    "document_state=%s link_row_id=%s link_state=%s",
+                    document_id,
+                    document_state,
+                    link_row_id,
+                    link_state,
                 )
         finally:
             self._legacy_kill_session(session_token)
@@ -1511,6 +1528,18 @@ class HttpxGlpiClient:
             users_id=owner_user_id,
             author_state=author_state,
         )
+
+    @staticmethod
+    def _combine_author_states(*states: str) -> str:
+        """Composite authorship across the rows a write persisted.
+
+        `verified` requires every row stamped correctly at creation;
+        `restored` when all rows ended correct but at least one needed the
+        corrective PUT; `mismatch`/`unverified` surface the worst state so
+        a partially wrong audit trail can never read as success.
+        """
+        order = {"mismatch": 0, "unverified": 1, "restored": 2, "verified": 3}
+        return min(states, key=lambda s: order.get(s, 1))
 
     def _legacy_restore_row_author(
         self,

@@ -9,6 +9,7 @@ import base64
 import html as html_lib
 import re
 from collections.abc import Collection
+from html.parser import HTMLParser
 
 import bleach
 
@@ -238,6 +239,66 @@ def extract_bff_attachment_refs(html: str | None) -> list[tuple[int, int]]:
         seen.add(ref)
         found.append(ref)
     return found
+
+
+_INLINE_IMG_DOC_RE = re.compile(
+    r"""(?ix)
+    document\.send\.php\?[^"'&\s>]*\bdocid=(\d+)
+    |
+    /apps/helpdesk-api/tickets/\d+/attachments/(\d+)
+    """
+)
+
+
+def inline_content_signature(raw_html: str | None) -> tuple:
+    """Ordered text/image token signature of a message body.
+
+    Authoritative read-back companion for inline content: proves the
+    persisted HTML carries the same attachment images (`docid`), in the
+    same count and order, at the same position relative to the text —
+    something a plain-text comparison cannot show. Images that reference
+    neither a canonical ``document.send.php?docid=`` nor a BFF attachment
+    path are ignored (the allowlist strips them anyway).
+    """
+    tokens: list[tuple[str, object]] = []
+    buf: list[str] = []
+
+    def _flush() -> None:
+        chunk = " ".join(
+            html_lib.unescape("".join(buf)).replace("\xa0", " ").split()
+        )
+        buf.clear()
+        if chunk:
+            tokens.append(("text", chunk))
+
+    class _Parser(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            if tag != "img":
+                return
+            src = dict(attrs).get("src") or ""
+            match = _INLINE_IMG_DOC_RE.search(src)
+            if not match:
+                return
+            _flush()
+            tokens.append(("img", int(match.group(1) or match.group(2))))
+
+        def handle_data(self, data):
+            buf.append(data)
+
+        def handle_entityref(self, name):
+            buf.append(f"&{name};")
+
+        def handle_charref(self, name):
+            buf.append(f"&#{name};")
+
+    parser = _Parser()
+    try:
+        parser.feed(str(raw_html or ""))
+        parser.close()
+    except Exception:
+        pass
+    _flush()
+    return tuple(tokens)
 
 
 def prepare_outbound_message_html(

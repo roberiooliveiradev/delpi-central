@@ -2160,3 +2160,118 @@ def test_ticket_requester_returns_none_when_absent():
 
     client = _requester_client(handler)
     assert client.ticket_requester("oauth-access", 42) is None
+
+
+def _upload_handler_composite(
+    *,
+    link_users_id,
+    link_put_status=200,
+    link_missing=False,
+    link_read_fails=False,
+):
+    """Shared mock: Document verified with users_id=68; the Document_Item
+    row is the variable under test."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[])
+        if path.endswith("/apirest.php/Document_Item/9"):
+            if request.method == "PUT":
+                body = {"error": "denied"} if link_put_status >= 400 else [{"9": True}]
+                return httpx.Response(link_put_status, json=body)
+            if link_read_fails:
+                return httpx.Response(404, json={"error": "missing"})
+            return httpx.Response(200, json={"id": 9, "users_id": link_users_id})
+        if path.endswith("/apirest.php/Document/55"):
+            if request.method == "PUT":
+                return httpx.Response(200, json=[{"55": True}])
+            return httpx.Response(200, json={"id": 55, "users_id": 68})
+        if path.endswith("/apirest.php/Document_Item") and request.method == "POST":
+            return httpx.Response(201, json={} if link_missing else {"id": 9})
+        if path.endswith("/apirest.php/Document") and request.method == "POST":
+            return httpx.Response(201, json={"id": 55})
+        if path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    return handler
+
+
+def _upload_client(handler) -> "HttpxGlpiClient":
+    return HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+
+
+def test_upload_mismatch_when_document_item_author_wrong_and_put_denied():
+    """Document is fine but the link row keeps the technical author and the
+    corrective PUT is denied → composite mismatch, never verified."""
+    client = _upload_client(
+        _upload_handler_composite(link_users_id=9, link_put_status=403)
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+    )
+    assert uploaded.author_state == "mismatch"
+
+
+def test_upload_restored_when_document_item_put_recovers_author():
+    """Document verified at POST; link row stamped technical but the
+    corrective PUT + read-back restores the end-user → restored."""
+    calls = {"link_read": 0}
+    base_handler = _upload_handler_composite(link_users_id=9)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/apirest.php/Document_Item/9") and request.method == "GET":
+            calls["link_read"] += 1
+            uid = 9 if calls["link_read"] == 1 else 68
+            return httpx.Response(200, json={"id": 9, "users_id": uid})
+        return base_handler(request)
+
+    client = _upload_client(handler)
+    uploaded = client.upload_ticket_document(
+        "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+    )
+    assert uploaded.author_state == "restored"
+
+
+def test_upload_unverified_when_link_row_id_cannot_be_resolved():
+    """Document_Item POST accepted but returns no id and the follow-up
+    lookup finds no link row → link authorship unprovable → unverified,
+    never a false verified."""
+    client = _upload_client(
+        _upload_handler_composite(link_users_id=9, link_missing=True)
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+    )
+    assert uploaded.author_state == "unverified"
+
+
+def test_upload_unverified_when_link_readback_fails():
+    """Document fine, but the link row can never be read back (GET fails
+    every time) → unverified composite, explicitly not success."""
+    client = _upload_client(
+        _upload_handler_composite(link_users_id=9, link_read_fails=True)
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+    )
+    assert uploaded.author_state == "unverified"
+
+

@@ -7,6 +7,7 @@ from helpdesk_app.application.ports import GlpiGateway, IdempotencyStore
 from helpdesk_app.application.services.message_html_sanitizer import (
     MAX_MESSAGE_HTML_CHARS,
     extract_bff_attachment_refs,
+    inline_content_signature,
     message_html_to_plain_text,
     prepare_outbound_message_html,
 )
@@ -438,13 +439,14 @@ class TicketService:
         )
         self._glpi.update_ticket_content(token, ticket_id, content_html)
         refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        expected_text = " ".join(
-            message_html_to_plain_text(content_html).split()
-        )
-        actual_text = " ".join(
-            message_html_to_plain_text(refreshed.description_html or "").split()
-        )
-        if actual_text != expected_text:
+        # Authoritative read-back must prove the whole inline structure —
+        # same text AND same images, same count/order, same position —
+        # not just matching plain text (GLPI could silently drop <img>
+        # tags while keeping every word).
+        expected_sig = inline_content_signature(content_html)
+        actual_sig = inline_content_signature(refreshed.description_html or "")
+        read_back_refs = {doc_id for kind, doc_id in actual_sig if kind == "img"}
+        if actual_sig != expected_sig or not read_back_refs <= allowed:
             raise GlpiValidation(
                 "A descrição não foi confirmada no chamado."
             )
