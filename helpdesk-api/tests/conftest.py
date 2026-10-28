@@ -121,6 +121,9 @@ class FakeGlpi:
         self.cycle_outcome = None
         # document_id → ticket_id for Document_Item membership (may lag Timeline).
         self.document_links: dict[int, int] = {2: 7, 4: 7}
+        # document_id → [(itemtype, items_id)] item-scoped links (native GLPI
+        # inline images live on ITILFollowup/ITILSolution/TicketTask rows).
+        self.document_item_links: dict[int, list[tuple[str, int]]] = {}
         # Tickets moved to GLPI trash (is_deleted) — get_ticket then fails.
         self.deleted_tickets: set[int] = set()
         self.delete_calls = 0
@@ -708,6 +711,21 @@ class FakeGlpi:
         self.calls += 1
         assert access_token
         return self.document_links.get(int(document_id)) == int(ticket_id)
+
+    def document_linked_to_items(
+        self, access_token: str, document_id: int, item_ids: dict
+    ) -> bool:
+        self.calls += 1
+        assert access_token
+        wanted = {
+            (itemtype, int(items_id))
+            for itemtype, ids in item_ids.items()
+            for items_id in ids
+        }
+        return any(
+            link in wanted
+            for link in self.document_item_links.get(int(document_id), ())
+        )
 
     def upload_ticket_document(
         self,

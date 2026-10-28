@@ -46,6 +46,7 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     ticket_allows_technician_ops,
     timeline_has_entry,
     timeline_has_solution,
+    timeline_item_scope,
 )
 
 logger = logging.getLogger("helpdesk.tickets")
@@ -347,13 +348,53 @@ class TicketService:
         ticket = self._glpi.get_ticket(token, ticket_id, viewer_email="")
         match = next((item for item in ticket.attachments if item.document_id == document_id), None)
         if match is None:
-            # H12: Timeline HLAPI pode omitir Document_Item recém-criado via upload legado.
-            if not self._glpi.ticket_owns_document(token, ticket_id, document_id):
+            # H12: Document_Item may link the doc to the Ticket or to one of
+            # its items (ITILFollowup/ITILSolution/TicketTask — native GLPI
+            # inline images) instead of appearing in the actor's Timeline.
+            if not self._glpi.ticket_owns_document(token, ticket_id, document_id) and not (
+                self._glpi.document_linked_to_items(
+                    token, document_id, timeline_item_scope(ticket)
+                )
+            ):
                 raise GlpiNotFound("Anexo não encontrado.")
             content, mime = self._glpi.download_attachment(token, document_id)
             return content, mime, "anexo"
         content, mime = self._glpi.download_attachment(token, document_id)
         return content, mime, match.filename
+
+    def _document_allowlist(
+        self,
+        token: str,
+        ticket: TicketDetail,
+        content: str,
+        *,
+        viewer_email: str = "",
+    ) -> set[int]:
+        """Documents this ticket may reference inline: its attachments plus
+        docs linked to the ticket (legacy check — Document_Item can lag the
+        HLAPI Timeline) or to one of its own timeline items (native GLPI
+        inline images live on ITILFollowup/ITILSolution/TicketTask)."""
+        ticket_id = int(ticket.id)
+        allowed = {item.document_id for item in ticket.attachments}
+        html_refs = {
+            doc_id
+            for ref_ticket, doc_id in extract_bff_attachment_refs(content)
+            if ref_ticket == ticket_id
+        }
+        if html_refs - allowed:
+            # H12: after upload, re-read once if HTML refs are not yet in attachments.
+            ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            allowed = {item.document_id for item in ticket.attachments}
+        missing = html_refs - allowed
+        if not missing:
+            return allowed
+        scope = timeline_item_scope(ticket)
+        for doc_id in missing:
+            if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
+                allowed.add(doc_id)
+            elif self._glpi.document_linked_to_items(token, doc_id, scope):
+                allowed.add(doc_id)
+        return allowed
 
     def upload_attachment(
         self,
@@ -471,18 +512,9 @@ class TicketService:
                 raise GlpiForbidden(
                     "Só o solicitante pode editar a descrição do chamado."
                 )
-            allowed = {item.document_id for item in ticket.attachments}
-            html_refs = {
-                doc_id
-                for ref_ticket, doc_id in extract_bff_attachment_refs(content)
-                if ref_ticket == ticket_id
-            }
-            if html_refs - allowed:
-                ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-                allowed = {item.document_id for item in ticket.attachments}
-            for doc_id in html_refs - allowed:
-                if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
-                    allowed.add(doc_id)
+            allowed = self._document_allowlist(
+                token, ticket, content, viewer_email=viewer_email
+            )
             content_html = _prepare_message_html(
                 content,
                 "content",
@@ -652,19 +684,7 @@ class TicketService:
         # H12: Document_Item via legacy upload may still be absent from Timeline.
         token = self._token(subject)
         ticket = self._glpi.get_ticket(token, ticket_id, viewer_email="")
-        allowed = {item.document_id for item in ticket.attachments}
-        # H12: after upload, re-read once if HTML refs are not yet in attachments.
-        html_refs = {
-            doc_id
-            for ref_ticket, doc_id in extract_bff_attachment_refs(content)
-            if ref_ticket == ticket_id
-        }
-        if html_refs - allowed:
-            ticket = self._glpi.get_ticket(token, ticket_id, viewer_email="")
-            allowed = {item.document_id for item in ticket.attachments}
-        for doc_id in html_refs - allowed:
-            if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
-                allowed.add(doc_id)
+        allowed = self._document_allowlist(token, ticket, content, viewer_email="")
         content_html = _prepare_message_html(
             content,
             "content",
@@ -780,18 +800,9 @@ class TicketService:
             )
             if entry is None:
                 raise GlpiNotFound("Acompanhamento não encontrado neste chamado.")
-            allowed = {item.document_id for item in ticket.attachments}
-            html_refs = {
-                doc_id
-                for ref_ticket, doc_id in extract_bff_attachment_refs(content)
-                if ref_ticket == ticket_id
-            }
-            if html_refs - allowed:
-                ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-                allowed = {item.document_id for item in ticket.attachments}
-            for doc_id in html_refs - allowed:
-                if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
-                    allowed.add(doc_id)
+            allowed = self._document_allowlist(
+                token, ticket, content, viewer_email=viewer_email
+            )
             content_html = _prepare_message_html(
                 content,
                 "content",

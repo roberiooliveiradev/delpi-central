@@ -435,6 +435,139 @@ def test_mapping_publishes_sanitized_html_and_rewrites_owned_documents():
     assert detail.status == "Solucionado"
 
 
+def test_get_ticket_merges_legacy_document_scope_when_timeline_hides_items():
+    """Requester profiles have no `document` right — HLAPI Timeline omits
+    Document_Item rows (live-proven), so attachments and the inline-image
+    allowlist must come from Document_Item truth via the bounded reader
+    session, including docs linked to the ticket's own items."""
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7/Timeline/Validation"):
+            return httpx.Response(200, json={"results": []})
+        if request.url.path.endswith("/Assistance/Ticket/7/Timeline"):
+            # No Document rows — exactly what a `document`-rightless
+            # requester's Timeline returns.
+            return httpx.Response(
+                200,
+                json={
+                    "results": [
+                        {
+                            "type": "Followup",
+                            "item": {
+                                "id": 12,
+                                "content": (
+                                    '<p>antes <img src="/front/document.send.php?docid=55" /> '
+                                    'meio <img src="/front/document.send.php?docid=56" /> '
+                                    '<img src="/front/document.send.php?docid=999" /> depois</p>'
+                                ),
+                                "date_creation": "2026-10-28T10:00:00Z",
+                                "user": {"name": "Ana"},
+                            },
+                        }
+                    ]
+                },
+            )
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(
+                200,
+                json={
+                    "id": 7,
+                    "name": "Rede",
+                    "content": "Sem internet",
+                    "status": {"name": "Novo"},
+                    "urgency": 2,
+                },
+            )
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/Ticket/7/Document_Item"):
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": 1,
+                        "documents_id": 55,
+                        "itemtype": "Ticket",
+                        "items_id": 7,
+                    }
+                ],
+            )
+        if request.url.path.endswith("/apirest.php/Document/55"):
+            return httpx.Response(
+                200,
+                json={"id": 55, "name": "e2e.png", "filename": "e2e.png", "mime": "image/png"},
+            )
+        if request.url.path.endswith("/apirest.php/Document/56/Document_Item"):
+            # docid linked to the followup itself (native GLPI inline image)
+            return httpx.Response(
+                200, json=[{"id": 1, "itemtype": "ITILFollowup", "items_id": 12}]
+            )
+        if request.url.path.endswith("/apirest.php/Document/999/Document_Item"):
+            # docid linked to a *different* ticket — must stay stripped
+            return httpx.Response(
+                200, json=[{"id": 2, "itemtype": "Ticket", "items_id": 888}]
+            )
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        user_token_store=_token_store(),
+        transport=httpx.MockTransport(handler),
+    )
+    detail = client.get_ticket("oauth-access", 7, viewer_email="ana@delpi.com.br")
+    # Ticket-linked doc becomes a visible attachment with its real filename.
+    assert [item.document_id for item in detail.attachments] == [55]
+    assert detail.attachments[0].filename == "e2e.png"
+    assert detail.attachments[0].itemtype == "Ticket"
+    html = detail.timeline[0].content_html
+    assert 'src="/apps/helpdesk-api/tickets/7/attachments/55"' in html
+    # Followup-linked doc survives inline but is not a separate attachment.
+    assert 'src="/apps/helpdesk-api/tickets/7/attachments/56"' in html
+    assert all(item.document_id != 56 for item in detail.attachments)
+    # Foreign-ticket docid stays stripped; order/position preserved.
+    assert "docid=999" not in html and "attachments/999" not in html
+    assert html.find("antes") < html.find("attachments/55") < html.find("meio")
+    assert any("/apirest.php/Ticket/7/Document_Item" in item for item in calls)
+
+
+def test_mapping_extra_document_ids_keep_docid_images():
+    detail = parse_ticket_detail(
+        {
+            "id": 7,
+            "name": "Rede",
+            "content": '<p>ver <img src="/front/document.send.php?docid=55" /></p>',
+            "status": {"name": "Novo"},
+            "urgency": 2,
+        },
+        {"results": []},
+        extra_document_ids={55},
+    )
+    assert 'src="/apps/helpdesk-api/tickets/7/attachments/55"' in detail.description_html
+    stripped = parse_ticket_detail(
+        {
+            "id": 7,
+            "name": "Rede",
+            "content": '<p>ver <img src="/front/document.send.php?docid=55" /></p>',
+            "status": {"name": "Novo"},
+            "urgency": 2,
+        },
+        {"results": []},
+    )
+    assert "attachments/55" not in stripped.description_html
+
+
 def test_mapping_leaves_unrepairable_marker_unchanged():
     detail = parse_ticket_detail(
         {

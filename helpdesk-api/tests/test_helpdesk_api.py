@@ -562,6 +562,38 @@ def test_attachment_download_allows_linked_doc_missing_from_timeline():
     assert alien.status_code == 404
 
 
+def test_attachment_download_allows_doc_linked_to_ticket_item():
+    """Native GLPI inline images hang off the item (ITILFollowup/
+    ITILSolution/TicketTask), not the Ticket — download must accept the
+    same scope the read allowlist uses."""
+    client, glpi = build_client()
+    link(client)
+    glpi.files[55] = (b"fu-img", "image/png")
+    glpi.document_item_links[55] = [("ITILFollowup", 1)]
+    downloaded = client.get("/tickets/7/attachments/55", headers=auth_headers())
+    assert downloaded.status_code == 200
+    assert downloaded.content == b"fu-img"
+    glpi.files[56] = (b"alien", "image/png")
+    glpi.document_item_links[56] = [("ITILFollowup", 999)]
+    alien = client.get("/tickets/7/attachments/56", headers=auth_headers())
+    assert alien.status_code == 404
+
+
+def test_update_followup_accepts_doc_linked_to_ticket_item():
+    client, glpi = build_client()
+    link(client)
+    glpi.document_item_links[55] = [("ITILFollowup", 1)]
+    updated = client.put(
+        "/tickets/7/followups/1",
+        json={
+            "content": '<p>ok <img src="/apps/helpdesk-api/tickets/7/attachments/55" /></p>'
+        },
+        headers={**auth_headers(), "Idempotency-Key": "fu-item-scoped"},
+    )
+    assert updated.status_code == 200
+    assert "docid=55" in glpi.updated_followups[0][2]
+
+
 def test_attachment_upload_forwards_optional_title():
     client, glpi = build_client()
     link(client)

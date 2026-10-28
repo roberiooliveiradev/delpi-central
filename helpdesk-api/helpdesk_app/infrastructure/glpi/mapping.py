@@ -12,7 +12,10 @@ import re
 import unicodedata
 from dataclasses import replace
 
-from helpdesk_app.application.services.message_html_sanitizer import sanitize_message_html
+from helpdesk_app.application.services.message_html_sanitizer import (
+    extract_inline_image_docrefs,
+    sanitize_message_html,
+)
 from helpdesk_app.domain.errors import GlpiNotFound, GlpiValidation
 from helpdesk_app.domain.models import (
     Attachment,
@@ -371,13 +374,23 @@ def _hlapi_sort_token(client_sort: str) -> str:
     return ",".join(levels) if levels else "updated_at:desc"
 
 
-def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketDetail:
+def parse_ticket_detail(
+    payload: dict,
+    timeline_payload: dict | list,
+    *,
+    extra_document_ids=(),
+) -> TicketDetail:
     if _is_deleted(payload):
         raise GlpiNotFound("Chamado não encontrado.")
     summary = _summary(payload)
     rows = [row for row in _results(timeline_payload) if isinstance(row, dict)]
     attachments = tuple(item for item in (_attachment(row) for row in rows) if item is not None)
     allowed_docs = {item.document_id for item in attachments}
+    # HLAPI Timeline omits Document_Item rows for profiles without the
+    # `document` right (every requester profile), so the allowlist is merged
+    # with Document_Item truth fetched by the bounded legacy reader session
+    # — otherwise every inline image would be stripped on read-back.
+    allowed_docs |= {int(item) for item in (extra_document_ids or ())}
     description_html = sanitize_message_html(
         _repair_cp850_mojibake(str(payload.get("content") or "")),
         ticket_id=summary.id,
@@ -916,6 +929,72 @@ def _attachment(row: dict) -> Attachment | None:
         itemtype=str(payload.get("itemtype") or ""),
         items_id=items_id,
     )
+
+
+_SCOPE_ITEMTYPE_BY_KIND = {
+    "followup": "ITILFollowup",
+    "solution": "ITILSolution",
+    "task": "TicketTask",
+}
+
+
+def timeline_item_scope(ticket: TicketDetail) -> dict[str, set[int]]:
+    """GLPI itemtype → items_id universe that can own this ticket's inline
+    documents: the ticket's own followups/solutions/tasks (Document_Item
+    rows link inline images to the *item*, not only to the Ticket)."""
+    scope: dict[str, set[int]] = {
+        "ITILFollowup": set(),
+        "ITILSolution": set(),
+        "TicketTask": set(),
+    }
+    for entry in ticket.timeline:
+        itemtype = _SCOPE_ITEMTYPE_BY_KIND.get(entry.kind)
+        if itemtype:
+            scope[itemtype].add(int(entry.id))
+    return scope
+
+
+def raw_timeline_item_scope(timeline_payload: dict | list) -> dict[str, set[int]]:
+    """Same scope as ``timeline_item_scope`` but from raw HLAPI Timeline rows
+    (used before parsing, to build the sanitizer allowlist)."""
+    scope: dict[str, set[int]] = {
+        "ITILFollowup": set(),
+        "ITILSolution": set(),
+        "TicketTask": set(),
+    }
+    for row in _results(timeline_payload):
+        if not isinstance(row, dict):
+            continue
+        kind, payload = _timeline_payload(row)
+        itemtype = _SCOPE_ITEMTYPE_BY_KIND.get(_timeline_kind(kind) or "")
+        if not itemtype:
+            continue
+        try:
+            scope[itemtype].add(int(payload.get("id")))
+        except (TypeError, ValueError):
+            continue
+    return scope
+
+
+def ticket_document_candidates(
+    ticket_payload: dict, timeline_payload: dict | list, ticket_id: int
+) -> set[int]:
+    """Document ids *intended* as inline images anywhere in the ticket body:
+    ``data-attachment-id``, same-ticket BFF attachment paths and
+    ``document.send.php?docid=`` refs. Foreign-ticket BFF refs are excluded
+    (they stay rejected); docids carry no ticket context — the Document_Item
+    scope check decides."""
+    candidates: set[int] = set()
+    texts: list[str] = [str(ticket_payload.get("content") or "")]
+    for row in _results(timeline_payload):
+        if not isinstance(row, dict):
+            continue
+        _, payload = _timeline_payload(row)
+        texts.append(str(payload.get("content") or ""))
+    for text in texts:
+        intended, _foreign = extract_inline_image_docrefs(text, ticket_id)
+        candidates |= intended
+    return candidates
 
 
 def _timeline_payload(row: dict) -> tuple[str, dict]:

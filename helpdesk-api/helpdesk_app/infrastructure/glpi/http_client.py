@@ -56,6 +56,8 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_token_set,
     parse_viewer_identity,
     parse_ticket_requester_user_id,
+    raw_timeline_item_scope,
+    ticket_document_candidates,
     team_member_assigned_body,
     team_member_observer_body,
     team_member_requester_body,
@@ -484,15 +486,42 @@ class HttpxGlpiClient:
             logger.info("glpi_ticket_validations_unavailable ticket_id=%s", ticket_id)
             validations_payload = []
         viewer = self._viewer_identity(access_token, viewer_email)
+        # HLAPI Timeline omits Document_Item rows for profiles without the
+        # `document` right (every requester profile — live-proven: uploads
+        # stay invisible even though Document_Item exists). The inbound
+        # allowlist and the attachments list must therefore come from
+        # Document_Item truth, read on the bounded legacy session.
+        extra_allowed, ticket_docs = self._legacy_ticket_document_scope(
+            ticket_id, ticket, timeline
+        )
         detail = apply_viewer_identity(
-            parse_ticket_detail(ticket, timeline),
+            parse_ticket_detail(
+                ticket, timeline, extra_document_ids=extra_allowed
+            ),
             viewer,
         )
         validations = apply_validation_viewer(
             parse_ticket_validations(validations_payload),
             viewer,
         )
-        named = tuple(self._named_attachment(access_token, item) for item in detail.attachments)
+        known = {item.document_id for item in detail.attachments}
+        extra_attachments = tuple(
+            Attachment(
+                document_id=doc_id,
+                filename=attachment_filename(
+                    display_text(row.get("filename") or row.get("name"))
+                ),
+                mime=str(row.get("mime") or ""),
+                itemtype="Ticket",
+                items_id=int(ticket_id),
+            )
+            for doc_id, row in sorted(ticket_docs.items())
+            if doc_id not in known
+        )
+        named = tuple(
+            self._named_attachment(access_token, item)
+            for item in (*detail.attachments, *extra_attachments)
+        )
         return replace(
             detail,
             attachments=named,
@@ -2351,14 +2380,107 @@ class HttpxGlpiClient:
             is not None
         )
 
-    def _legacy_document_item_row(
-        self,
-        *,
-        session_token: str,
-        document_id: int,
-        ticket_id: int,
-    ) -> dict | None:
-        """Return the Document_Item row linking document_id to this ticket."""
+    def _legacy_ticket_document_scope(
+        self, ticket_id: int, ticket_payload: dict, timeline_payload: dict | list
+    ) -> tuple[set[int], dict[int, dict]]:
+        """(allowed document ids, ticket Document rows) from Document_Item
+        truth on the bounded reader session.
+
+        GLPI hides Document_Item rows from HLAPI Timeline for profiles
+        without the `document` right (every requester profile), so the
+        attachments list and the inbound image allowlist cannot rely on the
+        actor's timeline. Documents linked to the ticket's *items*
+        (ITILFollowup/ITILSolution/TicketTask) are accepted too when the
+        body actually references them — that is how native GLPI inline
+        images are stored."""
+        if not self._legacy_ready():
+            return set(), {}
+        allowed: set[int] = set()
+        ticket_docs: dict[int, dict] = {}
+        try:
+            session_token = self._legacy_init_session()
+        except HelpdeskError as exc:
+            # Degraded read: never break the ticket view when the bounded
+            # reader channel is down — attachments/inline images simply fall
+            # back to the actor's Timeline view.
+            logger.info(
+                "glpi_ticket_document_scope_unavailable ticket_id=%s err=%s",
+                ticket_id,
+                type(exc).__name__,
+            )
+            return set(), {}
+        try:
+            try:
+                # /Ticket/{id}/Document only lists directly-owned docs;
+                # Document_Item is the authoritative link table.
+                rows = self._legacy_get_json(
+                    session_token, f"/apirest.php/Ticket/{int(ticket_id)}/Document_Item"
+                )
+            except HelpdeskError as exc:
+                logger.info(
+                    "glpi_ticket_document_scope_unavailable ticket_id=%s err=%s",
+                    ticket_id,
+                    type(exc).__name__,
+                )
+                rows = []
+            if isinstance(rows, list):
+                for row in rows:
+                    if not isinstance(row, dict):
+                        continue
+                    try:
+                        doc_id = int(row.get("documents_id"))
+                    except (TypeError, ValueError):
+                        continue
+                    allowed.add(doc_id)
+                    ticket_docs[doc_id] = row
+                # Names/mime are not on the link row — hydrate each Document
+                # (bounded by the ticket's attachment count).
+                for doc_id in list(ticket_docs):
+                    try:
+                        doc = self._legacy_get_json(
+                            session_token, f"/apirest.php/Document/{doc_id}"
+                        )
+                    except HelpdeskError:
+                        continue
+                    if isinstance(doc, dict):
+                        ticket_docs[doc_id] = {**ticket_docs[doc_id], **doc}
+            scope = raw_timeline_item_scope(timeline_payload)
+            candidates = ticket_document_candidates(
+                ticket_payload, timeline_payload, int(ticket_id)
+            )
+            for doc_id in candidates - allowed:
+                try:
+                    links = self._legacy_document_item_rows(
+                        session_token=session_token, document_id=doc_id
+                    )
+                except HelpdeskError:
+                    continue
+                for row in links:
+                    itemtype = str(row.get("itemtype") or "")
+                    linked = self._linked_items_id(row)
+                    if (itemtype == "Ticket" and linked == int(ticket_id)) or (
+                        linked in scope.get(itemtype, ())
+                    ):
+                        allowed.add(doc_id)
+                        break
+        finally:
+            self._legacy_kill_session(session_token)
+        return allowed, ticket_docs
+
+    @staticmethod
+    def _linked_items_id(row: dict) -> int | None:
+        items_id = row.get("items_id")
+        if isinstance(items_id, dict):
+            items_id = items_id.get("id")
+        try:
+            return int(items_id)
+        except (TypeError, ValueError):
+            return None
+
+    def _legacy_document_item_rows(
+        self, *, session_token: str, document_id: int
+    ) -> list[dict]:
+        """All Document_Item rows for a document (any itemtype/items_id)."""
         try:
             response = self._http.request(
                 "GET",
@@ -2369,35 +2491,63 @@ class HttpxGlpiClient:
                     "Session-Token": session_token,
                 },
             )
-        except httpx.TimeoutException:
-            return None
         except httpx.HTTPError:
-            return None
+            return []
         if response.status_code != 200 or not response.content:
-            return None
+            return []
         try:
             data = response.json()
         except ValueError:
-            return None
+            return []
         rows = data if isinstance(data, list) else data.get("data") if isinstance(data, dict) else None
         if not isinstance(rows, list):
-            # Single object form
-            if isinstance(data, dict) and data.get("itemtype"):
-                rows = [data]
-            else:
-                return None
+            rows = [data] if isinstance(data, dict) and data.get("itemtype") else []
+        return [row for row in rows if isinstance(row, dict)]
+
+    def document_linked_to_items(
+        self,
+        access_token: str,
+        document_id: int,
+        item_ids: dict[str, set[int]],
+    ) -> bool:
+        """True when a Document_Item links the document to one of the given
+        GLPI items ({itemtype: {items_id}}) — e.g. an ITILFollowup of the
+        ticket. Companion to ``ticket_owns_document`` for item-scoped inline
+        images."""
+        document_id = int(document_id)
+        wanted = {
+            (str(itemtype), int(items_id))
+            for itemtype, ids in (item_ids or {}).items()
+            for items_id in ids
+        }
+        if document_id <= 0 or not wanted or not self._legacy_ready():
+            return False
+        session_token = self._legacy_init_session()
+        try:
+            rows = self._legacy_document_item_rows(
+                session_token=session_token, document_id=document_id
+            )
+        finally:
+            self._legacy_kill_session(session_token)
         for row in rows:
-            if not isinstance(row, dict):
-                continue
-            itemtype = str(row.get("itemtype") or "")
-            items_id = row.get("items_id")
-            if isinstance(items_id, dict):
-                items_id = items_id.get("id")
-            try:
-                linked = int(items_id)
-            except (TypeError, ValueError):
-                continue
-            if itemtype == "Ticket" and linked == int(ticket_id):
+            if (str(row.get("itemtype") or ""), self._linked_items_id(row)) in wanted:
+                return True
+        return False
+
+    def _legacy_document_item_row(
+        self,
+        *,
+        session_token: str,
+        document_id: int,
+        ticket_id: int,
+    ) -> dict | None:
+        """Return the Document_Item row linking document_id to this ticket."""
+        for row in self._legacy_document_item_rows(
+            session_token=session_token, document_id=document_id
+        ):
+            if str(row.get("itemtype") or "") == "Ticket" and (
+                self._linked_items_id(row) == int(ticket_id)
+            ):
                 return row
         return None
 

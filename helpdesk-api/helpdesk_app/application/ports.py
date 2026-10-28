@@ -167,6 +167,13 @@ class GlpiGateway(Protocol):
 
     def ticket_owns_document(self, access_token: str, ticket_id: int, document_id: int) -> bool: ...
 
+    def document_linked_to_items(
+        self,
+        access_token: str,
+        document_id: int,
+        item_ids: dict[str, set[int]],
+    ) -> bool: ...
+
     def upload_ticket_document(
         self,
         access_token: str,
