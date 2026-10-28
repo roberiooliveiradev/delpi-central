@@ -365,10 +365,11 @@ export function SupplierDetailPage({
                     return (
                       <div
                         key={spec.key}
-                        className={supplierFieldItemClass(spec, { changed })}
+                        className={supplierFieldItemClass(spec, { changed, highlightRequired: true })}
                       >
                         {spec.catalog ? (
                           <SupplierCatalogField
+                            showRequiredMark
                             spec={spec}
                             value={
                               spec.key === "city"
@@ -455,6 +456,7 @@ export function SupplierDetailPage({
                           />
                         ) : (
                           <SupplierFieldInput
+                            showRequiredMark
                             spec={spec}
                             value={draft[key] ?? ""}
                             onChange={(value) =>
