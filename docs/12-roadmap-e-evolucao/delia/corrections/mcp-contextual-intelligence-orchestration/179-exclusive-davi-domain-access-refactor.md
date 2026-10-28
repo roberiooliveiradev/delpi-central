@@ -98,3 +98,20 @@ Mesmas propostas stage-conditioned por família, mesma rejeição inicial, mesma
 ## 11. Veredito
 
 **LOCAL_PASS_WITH_RESIDUAL / PARTIAL_MIGRATION** — o caminho DAVI substitui funcionalmente o direto para 2 de 4 capabilities com paridade contratual comprovada (incluindo recuperação READ governada, AuthZ fail-closed e descoberta live); as 2 restantes permanecem sob bloqueio legítimo de owner, documentadas — capacidade produtiva não foi removida sem substituto. `INDEPENDENT_REVIEW=PENDING`. Deploy não executado por escopo de autorização.
+
+
+## 12. Revisão independente da coordenação — 2026-10-28
+
+**REVIEW=ACCEPT_WITH_RESIDUAL for bounded implementation evidence; FINAL_ARCHITECTURE=REWORK / PARTIAL_MIGRATION; DEPLOY_AUTHORIZED=NO.** Reviewed reported commit `ac6c29b09104ad188f986c90cb259686458df2b7` on GitHub and doc 179 (GitHub HEAD at review start `1627f869e21d3bd437e2439380851a694f62ae27`). No independent live DAVI, production or full-suite reexecution performed.
+
+**Positive:** removed two direct OpenAPI declarations (`search_products`, `get_product_stock`) and reused existing DAVI MCP discover→execute seam; synthetic paired harness reports functional behavior for tested success/fail-closed scenarios, and no new planner or adapter. Preserving uncovered operations rather than silently dropping functionality is the correct *temporary safety measure*, not completion of the user-approved exclusive-DAVI architecture.
+
+**P0 ownership/capability gap:** `get_product_summary` and `search_customers` still bind direct OpenAPI. Require owner-approved DAVI coverage (or demonstrably equivalent contract) and then removal of remaining declarations, DELPI direct provider source/wiring and envs **only if no other legitimate consumer**. Until then classify `EXCLUSIVE_DAVI=NOT_ACHIEVED`, not 'DAVI-only'. Document API DELPI is the Domain authority, DAVI is interoperability, not new AuthZ authority.
+
+**Contract parity gap:** DAVI product-search input allowlist reportedly omits prior `product_type`, `sort`, `direction`, `customer_reference`. `customer_reference` was already restricted per executor, but other prior valid filters may represent lost capabilities or change behavior. Prove owner-approved compatibility for authorized queries before declaring complete migration; do not assume 6 synthetic scenarios cover user-facing query families, pagination/ranking, quantified sufficiency, or latency. DAVI discover→execute doubles wire steps in harness; measure real latency/cost and re-discovery budget.
+
+**P1 fail-closed blocker:** `SpecialistInterop._normalize_outcome` classifies **any** MCP `structuredContent.code=VALIDATION_ERROR` without explicit `recoverable:false` as `OWNER_ARGUMENT_REJECTED`. Doc 179 itself states DAVI also uses that code for non-argument cases (ineligible action, catalog action execution failure). This reintroduces the broad-code ambiguity that doc 177 corrected in the OpenAPI path. Require explicit owner-typed argument-repairability (`recoverable:true` and specific code/scope) or an owner-confirmed narrow code; missing metadata must fail closed. No recovery by generic `VALIDATION_ERROR` alone, message regex or special product cases.
+
+**AuthZ nuance:** MCP transport 401/403 mappings are described as preserved, but DAVI *tool-result* Forbidden currently maps `mcp_protocol_error`, not a typed authorization denial. It remains terminal in the tested path, so no proven bypass, but fix classification contract with owner rather than treating the generic protocol error as proper AuthZ semantics.
+
+**Next bounded action:** owner-approved DAVI capability completeness, error-contract narrowing, and a paired E2E/contract matrix for all four operations and affected filters. Then independent review before any production deploy. Preserve current production baseline, C3 phase and security residual doc 174. No silent broadening of DAVI allowlist or Domain API ownership changes.
