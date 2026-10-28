@@ -35,6 +35,7 @@ import {
   personTypeLabel,
   supplierCreateFieldSection,
   supplierFieldAnchorId,
+  supplierFieldItemClass,
   validateCreateDraft,
 } from "./query";
 import {
@@ -1251,6 +1252,23 @@ describe('S10 — hierarquia de ajuda hero/seção/campo', () => {
     for (const t of allTexts) {
       expect(t).not.toContain('contrato de integração');
       expect(t).not.toMatch(/\bDTO\b|\bBFF\b|serializer/i);
+    }
+  });
+});
+
+
+describe("required supplier field visual treatment", () => {
+  it("marks only registry-required fields in create and edit highlight mode", () => {
+    const required = SUPPLIER_FIELD_REGISTRY.filter((field) => field.required);
+    const optional = SUPPLIER_FIELD_REGISTRY.filter((field) => !field.required);
+    expect(required.length).toBeGreaterThan(0);
+    expect(optional.length).toBeGreaterThan(0);
+    for (const spec of required) {
+      expect(supplierFieldItemClass(spec, { highlightRequired: true })).toContain("sp-supplier-field--required");
+      expect(supplierFieldItemClass(spec)).not.toContain("sp-supplier-field--required");
+    }
+    for (const spec of optional) {
+      expect(supplierFieldItemClass(spec, { highlightRequired: true })).not.toContain("sp-supplier-field--required");
     }
   });
 });
