@@ -132,3 +132,16 @@ Harness `delia-api/scripts/governed_read_contract_eval.py`: `FakeProposalModel` 
 ## 11. Veredito
 
 **REWORK_CORRECTED / DEPLOY_BLOCKED** — a correção contratual exigida pela revisão está implementada, provada RED→GREEN e validada em comparação pareada idêntica; a promoção a produção fica bloqueada por (a) `OWNER_DECISION_REQUIRED` na anotação de recuperabilidade da Domain API e (b) `RELEASE_SECURITY_GATE` pendente de remediação/ratificação do security owner. Classificação final da task: **INCONCLUSIVE para produção / ACCEPT_WITH_RESIDUAL para o rework local** — ver relatório executor para o veredito consolidado.
+
+
+## 12. Revisão independente da coordenação — 2026-10-28
+
+**INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (bounded local contract rework); PRODUCTION_DEPLOY=BLOCKED; PRODUCTION_OUTCOME=TEST_NOT_RUN / INCONCLUSIVE.** Reviewed `main` at `9c1d1acbe9b4f5865ab0ae2bf3f1732bc628968c`, commit file list and patches in `http_invoker.py` and `orchestration.py`, plus doc 177. No independent runtime, suite or provider call was executed.
+
+**Accepted evidence:** classifier now requires a mapping `error` with explicit `recoverable:true`, or a non-negated typed code in `_OWNER_ARG_VALIDATION_CODES`; unannotated 400/422 fail closed. `returned_count` correctly becomes unknown when no EvidenceFacts. B0/B1 matched deterministic evaluation supports elimination of unauthorized implicit retries, preserving declared recoveries and denying 403. This is a meaningful contract/safety correction, **not proof of production Business Outcome improvement**. Full suite remains one baseline CRI failure, and real-model E2E/generalization for this latest diff were not re-run.
+
+**Important typed-code qualification:** the owner-published string `VALIDATION_ERROR` is a generic validation category; its presence in unrelated owner routes does not alone prove that every such 400/422 is specifically *READ argument-repairable*. Owner must affirm typed code scope, domain effect and `recoverable` semantics before expanding eligibility; if `VALIDATION_ERROR` might include terminal validation failures, require explicit `error.recoverable:true` or a more specific owner-issued error code, preserving fail-closed. Do not hardcode status/message heuristics or business regex.
+
+**Blockers:** actual `search_products` rejection still emits `error:null`; therefore the improvement for product_type remains inactive for that owner and needs Domain API owner decision. Security report doc 174 has residual OpenRouter key exposure in external provider context and local session database; formal security-owner risk acceptance or remediation not recorded. Neither general user deploy intent nor cleanup of local summaries supersedes these gates. No deployment, production queries or model change authorized by this review. The old CRI duplicate `answer_requirements` remains instruction-owner residual, not silently reconciled.
+
+**Coordination:** status `ACCEPT_WITH_RESIDUAL_LOCAL / DEPLOY_BLOCKED`. Next bounded work is owner-owned explicit error contract (separate from model/orchestration), security-owner disposition, and CRI owner baseline repair; after those gates, reuse the existing paired harness and conduct a release decision, without another broad orchestration redesign. Preserve C3 and ledger authority.
