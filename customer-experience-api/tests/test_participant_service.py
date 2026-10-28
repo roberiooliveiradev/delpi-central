@@ -177,3 +177,100 @@ def test_delete_unknown_raises_not_found():
     service, _, _, _ = _service()
     with pytest.raises(ParticipantNotFoundError):
         service.delete("nope")
+
+
+def test_update_clears_optional_fields_with_empty_value():
+    service, repo, _, _ = _service(_existing_row())
+    repo.rows["p1"]["participant_info"] = "Engenharia"
+    repo.rows["p1"]["thank_you_message"] = "Obrigado!"
+    view = service.update(
+        "p1",
+        ParticipantUpdate(participant_info="", thank_you_message="  "),
+    )
+    assert view["participantInfo"] is None
+    assert view["thankYouMessage"] is None
+    # campos omitidos permanecem
+    assert view["fullName"] == "Ana Souza"
+
+
+def test_update_remove_photo_deletes_file_and_nulls_fields():
+    service, repo, photo, _ = _service(_existing_row())
+    view = service.update("p1", ParticipantUpdate(), remove_photo=True)
+    assert view["photoUrl"] is None
+    stored = repo.rows["p1"]
+    assert stored["photo_filename"] is None
+    assert stored["photo_mime"] is None
+    assert "old-photo.jpg" in photo.deleted
+
+
+def test_update_remove_photo_keeps_other_fields():
+    service, repo, _, _ = _service(_existing_row())
+    service.update(
+        "p1",
+        ParticipantUpdate(full_name="Ana Paula"),
+        remove_photo=True,
+    )
+    stored = repo.rows["p1"]
+    assert stored["full_name"] == "Ana Paula"
+    assert stored["photo_filename"] is None
+
+
+def test_update_replaces_photo_and_versions_photo_url():
+    service, repo, photo, _ = _service(_existing_row())
+    before = service.get_admin("p1")["photoUrl"]
+    view = service.update(
+        "p1", ParticipantUpdate(), photo_bytes=b"new", photo_mime="image/png"
+    )
+    after = view["photoUrl"]
+    assert before != after
+    assert "old-photo.jpg" in photo.deleted
+    # nova URL carrega o nome do novo arquivo — cache antigo não colide
+    stored = repo.rows["p1"]
+    assert stored["photo_filename"] in after
+
+
+def test_update_never_changes_public_token_or_qr():
+    service, repo, _, _ = _service(_existing_row())
+    token_before = repo.rows["p1"]["public_token"]
+    qr_before = repo.rows["p1"]["qr_filename"]
+    view = service.update(
+        "p1",
+        ParticipantUpdate(
+            full_name="Novo Nome",
+            company_name="Outra Empresa",
+            visit_date=date(2026, 8, 15),
+            participant_info="Nova info",
+            thank_you_message="Nova msg",
+        ),
+        photo_bytes=b"img",
+        photo_mime="image/jpeg",
+    )
+    assert view["publicToken"] == token_before
+    assert repo.rows["p1"]["qr_filename"] == qr_before
+
+
+def test_public_view_photo_url_none_without_photo():
+    service, repo, _, _ = _service(_existing_row())
+    repo.rows["p1"]["photo_filename"] = None
+
+    class _Repo(repo.__class__):
+        def get_by_token(self, token):
+            return dict(self.rows["p1"])
+
+        def increment_view_count(self, token):
+            pass
+
+    service2 = ParticipantService(
+        repository=_Repo(repo.rows), photo_storage=service.photo_storage,
+        qr_service=service.qr_service,
+    )
+    public = service2.get_public("tok")
+    assert public["photoUrl"] is None
+
+
+def test_remove_photo_flag_without_existing_photo_is_noop():
+    service, repo, photo, _ = _service(_existing_row())
+    repo.rows["p1"]["photo_filename"] = None
+    view = service.update("p1", ParticipantUpdate(), remove_photo=True)
+    assert view["photoUrl"] is None
+    assert photo.deleted == []

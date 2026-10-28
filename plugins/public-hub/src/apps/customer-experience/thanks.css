@@ -90,6 +90,17 @@
   background: #dfe6ee;
 }
 
+.cxp-photo--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 220px;
+  font-size: 72px;
+  font-weight: 700;
+  color: #8a97a8;
+}
+
 .cxp-badge {
   position: absolute;
   bottom: -14px;

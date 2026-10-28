@@ -19,7 +19,13 @@ export function ThanksView({ participant }: { participant: PublicParticipant }) 
       <span className="cxp-eyebrow">Programa Experiência do Cliente · DELPI</span>
 
       <div className="cxp-photo-frame">
-        <img className="cxp-photo" src={photoUrl(p)} alt={p.fullName} />
+        {photoUrl(p) ? (
+          <img className="cxp-photo" src={photoUrl(p) ?? ""} alt={p.fullName} />
+        ) : (
+          <span className="cxp-photo cxp-photo--empty" aria-hidden="true">
+            {firstName.charAt(0).toUpperCase()}
+          </span>
+        )}
         <span className="cxp-badge">Feito por você na DELPI</span>
       </div>
 

@@ -59,6 +59,7 @@ export function ParticipantsPanel() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingPhotoUrl, setEditingPhotoUrl] = useState<string | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const [formCollapsed, setFormCollapsed] = useState(false);
   const formCardRef = useRef<HTMLElement>(null);
 
@@ -88,14 +89,20 @@ export function ParticipantsPanel() {
 
   const handleSelectPhoto = (file: File) => {
     setPhoto(file);
+    setRemovePhoto(false);
     setPhotoPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return URL.createObjectURL(file);
     });
   };
 
-  const clearPhoto = () => {
+  const clearPhoto = (markRemoval = true) => {
     setPhoto(null);
+    // Em edição com foto existente, "Remover" marca a exclusão que será
+    // persistida no salvar — o preview sai de tela até confirmar/cancelar.
+    if (markRemoval && editingId && editingPhotoUrl && !photoPreview) {
+      setRemovePhoto(true);
+    }
     setPhotoPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
@@ -104,9 +111,10 @@ export function ParticipantsPanel() {
 
   const resetForm = () => {
     setForm({ ...EMPTY_FORM, visitDate: new Date().toISOString().slice(0, 10) });
-    clearPhoto();
     setEditingId(null);
     setEditingPhotoUrl(null);
+    setRemovePhoto(false);
+    clearPhoto(false);
   };
 
   const openNewForm = () => {
@@ -119,6 +127,7 @@ export function ParticipantsPanel() {
   const startEdit = (participant: Participant) => {
     setEditingId(participant.id);
     setEditingPhotoUrl(participant.photoUrl);
+    setRemovePhoto(false);
     setFormCollapsed(false);
     setError(null);
     setForm({
@@ -128,7 +137,7 @@ export function ParticipantsPanel() {
       participantInfo: participant.participantInfo ?? "",
       thankYouMessage: participant.thankYouMessage ?? "",
     });
-    clearPhoto();
+    clearPhoto(false);
     formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -146,9 +155,11 @@ export function ParticipantsPanel() {
           fullName: form.fullName,
           companyName: form.companyName,
           visitDate: form.visitDate,
-          participantInfo: form.participantInfo || undefined,
-          thankYouMessage: form.thankYouMessage || undefined,
+          // "" enviado = limpar campo no backend; omitido = manter
+          participantInfo: form.participantInfo,
+          thankYouMessage: form.thankYouMessage,
           photo: photo ?? undefined,
+          removePhoto: removePhoto && !photo,
         });
         setFeedback("Participante atualizado.");
       } else {
@@ -386,9 +397,9 @@ export function ParticipantsPanel() {
                 {editingId && " (opcional — deixe vazio para manter a atual)"}
               </span>
               <PhotoDropzone
-                previewUrl={photoPreview ?? editingPhotoUrl}
+                previewUrl={photoPreview ?? (removePhoto ? null : editingPhotoUrl)}
                 fileName={photo?.name ?? null}
-                isExisting={!photoPreview && !!editingPhotoUrl}
+                isExisting={!photoPreview && !removePhoto && !!editingPhotoUrl}
                 onSelect={handleSelectPhoto}
                 onClear={clearPhoto}
               />
@@ -495,12 +506,21 @@ export function ParticipantsPanel() {
               {filtered.map((participant) => (
                 <li key={participant.id} className="cx-participant">
                   <div className="cx-participant__main">
-                    <img
-                      className="cx-participant__photo"
-                      src={participant.photoUrl}
-                      alt={participant.fullName}
-                      loading="lazy"
-                    />
+                    {participant.photoUrl ? (
+                      <img
+                        className="cx-participant__photo"
+                        src={participant.photoUrl}
+                        alt={participant.fullName}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span
+                        className="cx-participant__photo cx-participant__photo--empty"
+                        aria-hidden="true"
+                      >
+                        {participant.fullName.trim().charAt(0).toUpperCase() || "?"}
+                      </span>
+                    )}
                     <div className="cx-participant__info">
                       <strong>{participant.fullName}</strong>
                       <span>{participant.companyName}</span>

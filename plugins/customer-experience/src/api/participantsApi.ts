@@ -59,6 +59,7 @@ export async function updateParticipant(
   if (input.participantInfo != null) formData.append("participant_info", input.participantInfo);
   if (input.thankYouMessage != null) formData.append("thank_you_message", input.thankYouMessage);
   if (input.photo) formData.append("photo", input.photo);
+  if (input.removePhoto) formData.append("remove_photo", "true");
 
   const response = await httpPatchForm<ApiEnvelope<Participant>>(
     `${PARTICIPANTS}/${id}`,

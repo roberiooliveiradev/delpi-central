@@ -6,7 +6,7 @@ export type Participant = {
   visitDate: string;
   participantInfo: string | null;
   thankYouMessage: string | null;
-  photoUrl: string;
+  photoUrl: string | null;
   qrUrl: string;
   publicUrl: string | null;
   viewCount: number;
@@ -39,6 +39,8 @@ export type UpdateParticipantInput = {
   participantInfo?: string;
   thankYouMessage?: string;
   photo?: File;
+  /** Remover a foto existente (não combinar com `photo`). */
+  removePhoto?: boolean;
 };
 
 // ----- Clientes TOTVS (api-delpi / SA1) ------------------------------------

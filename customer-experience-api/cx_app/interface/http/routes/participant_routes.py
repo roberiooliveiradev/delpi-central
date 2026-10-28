@@ -137,12 +137,21 @@ async def update_participant(
     participant_info: str | None = Form(None),
     thank_you_message: str | None = Form(None),
     photo: UploadFile | None = File(None),
+    remove_photo: bool = Form(False),
 ):
     user = resolve_user(request)
     try:
         assert_permission(user, CX_PARTICIPANTS_WRITE)
     except PermissionError as exc:
         return fail(str(exc), 403)
+
+    # O binding Form coage "" para None, então o form cru decide a semântica:
+    # chave presente = campo enviado (validar/atualizar); ausente = manter.
+    raw_form = await request.form()
+    if "full_name" in raw_form and not _clean(str(raw_form["full_name"])):
+        return fail("Nome do participante não pode ser vazio.", 422)
+    if "company_name" in raw_form and not _clean(str(raw_form["company_name"])):
+        return fail("Empresa do participante não pode ser vazia.", 422)
 
     parsed_date: date | None = None
     if visit_date:
@@ -152,19 +161,39 @@ async def update_participant(
             return fail(str(exc), 422)
 
     photo_bytes = await photo.read() if photo is not None else None
+    if remove_photo and photo_bytes is not None:
+        return fail("Não é possível enviar nova foto e remover a foto na mesma requisição.", 422)
+
+    sent_info = raw_form.get("participant_info") if "participant_info" in raw_form else None
+    sent_message = (
+        raw_form.get("thank_you_message") if "thank_you_message" in raw_form else None
+    )
 
     try:
         data = build_participant_service().update(
             participant_id,
             ParticipantUpdate(
-                full_name=_clean(full_name),
-                company_name=_clean(company_name),
+                full_name=(
+                    str(raw_form["full_name"]).strip()
+                    if "full_name" in raw_form
+                    else None
+                ),
+                company_name=(
+                    str(raw_form["company_name"]).strip()
+                    if "company_name" in raw_form
+                    else None
+                ),
                 visit_date=parsed_date,
-                participant_info=_clean(participant_info),
-                thank_you_message=_clean(thank_you_message),
+                participant_info=(
+                    str(sent_info) if "participant_info" in raw_form else None
+                ),
+                thank_you_message=(
+                    str(sent_message) if "thank_you_message" in raw_form else None
+                ),
             ),
             photo_bytes=photo_bytes,
             photo_mime=photo.content_type if photo is not None else None,
+            remove_photo=remove_photo,
         )
     except ParticipantNotFoundError:
         return fail("Participante não encontrado.", 404)

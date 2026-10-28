@@ -69,6 +69,7 @@ class ParticipantService:
         *,
         photo_bytes: bytes | None = None,
         photo_mime: str | None = None,
+        remove_photo: bool = False,
     ) -> dict[str, Any]:
         existing = self.repository.get_by_id(participant_id)
         if not existing:
@@ -81,24 +82,31 @@ class ParticipantService:
             fields["company_name"] = data.company_name
         if data.visit_date is not None:
             fields["visit_date"] = data.visit_date
+        # Campo enviado (inclusive vazio) = atualizar; omitido = manter.
         if data.participant_info is not None:
-            fields["participant_info"] = data.participant_info
+            fields["participant_info"] = data.participant_info.strip() or None
         if data.thank_you_message is not None:
-            fields["thank_you_message"] = data.thank_you_message
+            fields["thank_you_message"] = data.thank_you_message.strip() or None
 
+        new_photo: str | None = None
         if photo_bytes is not None:
             new_photo, normalized_mime = self.photo_storage.save(
                 content=photo_bytes, mime_type=photo_mime
             )
             fields["photo_filename"] = new_photo
             fields["photo_mime"] = normalized_mime
+        elif remove_photo:
+            fields["photo_filename"] = None
+            fields["photo_mime"] = None
 
         updated = self.repository.update(participant_id, fields)
         if not updated:
+            if new_photo:
+                self.photo_storage.delete(new_photo)
             raise ParticipantNotFoundError(participant_id)
 
-        # Remove a foto antiga só depois de persistir a nova.
-        if photo_bytes is not None and existing.get("photo_filename"):
+        # Remove o arquivo antigo só depois de persistir a alteração.
+        if (photo_bytes is not None or remove_photo) and existing.get("photo_filename"):
             self.photo_storage.delete(existing["photo_filename"])
 
         return self.to_admin_view(updated)
@@ -173,6 +181,19 @@ class ParticipantService:
 
     # ----- apresentação ----------------------------------------------------
 
+    def _photo_url(self, row: dict[str, Any]) -> str | None:
+        """URL pública da foto, versionada pelo nome do arquivo.
+
+        O nome do arquivo muda a cada upload — versionar a URL evita que a
+        foto anterior continue aparecendo por cache de navegador/gateway
+        após substituição. ``None`` quando o participante não tem foto.
+        """
+        token = row.get("public_token")
+        filename = row.get("photo_filename")
+        if not token or not filename:
+            return None
+        return f"{_API_BASE}/public/participants/{token}/photo?v={filename}"
+
     def to_admin_view(self, row: dict[str, Any]) -> dict[str, Any]:
         token = row.get("public_token")
         return {
@@ -183,7 +204,7 @@ class ParticipantService:
             "visitDate": row.get("visit_date"),
             "participantInfo": row.get("participant_info"),
             "thankYouMessage": row.get("thank_you_message"),
-            "photoUrl": f"{_API_BASE}/public/participants/{token}/photo",
+            "photoUrl": self._photo_url(row),
             "qrUrl": f"{_API_BASE}/participants/{row.get('id')}/qr",
             "publicUrl": build_public_url(token) if token else None,
             "viewCount": row.get("view_count"),
@@ -194,12 +215,11 @@ class ParticipantService:
         }
 
     def to_public_view(self, row: dict[str, Any]) -> dict[str, Any]:
-        token = row.get("public_token")
         return {
             "fullName": row.get("full_name"),
             "companyName": row.get("company_name"),
             "visitDate": row.get("visit_date"),
             "participantInfo": row.get("participant_info"),
             "thankYouMessage": row.get("thank_you_message"),
-            "photoUrl": f"{_API_BASE}/public/participants/{token}/photo",
+            "photoUrl": self._photo_url(row),
         }

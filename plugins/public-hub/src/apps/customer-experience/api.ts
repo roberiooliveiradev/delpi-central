@@ -6,7 +6,7 @@ export type PublicParticipant = {
   visitDate: string;
   participantInfo: string | null;
   thankYouMessage: string | null;
-  photoUrl: string;
+  photoUrl: string | null;
 };
 
 type ApiEnvelope<T> = {
@@ -32,7 +32,7 @@ export async function fetchPublicParticipant(token: string): Promise<PublicParti
   return envelope.data;
 }
 
-export function photoUrl(participant: PublicParticipant): string {
+export function photoUrl(participant: PublicParticipant): string | null {
   // A API já devolve o path relativo (/apps/customer-experience-api/public/...).
   return participant.photoUrl;
 }
