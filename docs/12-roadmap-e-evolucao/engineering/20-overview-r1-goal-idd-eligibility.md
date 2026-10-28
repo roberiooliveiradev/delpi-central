@@ -107,11 +107,25 @@ cobertura na suíte existente (nenhuma alteração).
 
 ## 9. Deploy e smoke
 
-- Push para `main` (ff-only) com SHA registrado abaixo.
+- Push para `main` (ff-only): SHA `f9e0264089` (após rebase sobre
+  `0869a218f8`, avanço concorrente de origin/main).
 - Deploy canônico em `srv-api`: `git pull --ff-only` +
-  `./infra/scripts/up-prod-sequential.sh --build engineering-api engineering`.
-- Smoke público pós-deploy: rotas 200, remoteEntry novo, `/v1/overview` 401
-  sem JWT — registrado na seção de evidência do relatório de execução.
+  `./infra/scripts/up-prod-sequential.sh --build engineering-api engineering` →
+  `delpi-engineering-api` e `delpi-engineering` Up/healthy.
+- Smoke público pós-deploy (edge canônica `http://192.168.1.237` → gateway):
+  `200` `/apps/engineering`, `/apps/engineering/overview`,
+  `/apps/engineering/help`, `/apps/engineering-api/health`,
+  remoteEntry `200`; `401` `/apps/engineering-api/v1/overview` sem JWT
+  (fail-closed preservado).
+- Bundle verificado no edge: `remoteEntry.js` →
+  `__federation_expose_App-oZm440aI.js` → `App-B9P1jPDx.js` contém a nova
+  copy do Help ("dois indicadores estratégicos") e o código da Visão geral.
+- Observação operacional: `https://192.168.1.237` (sem porta) cai no server
+  padrão :443 do host (`api-totvs` → :3000), não na stack do portal — falso
+  401 "GPT_API_TOKEN" durante o smoke. A edge da plataforma é
+  `http://192.168.1.237` (gateway :80) / `:8443` (delpi.local). Um restart de
+  `delpi-gateway` foi feito por precaução (IPs de upstream re-resolvidos);
+  nenhuma alteração de configuração.
 - Smoke autenticado (metas ausentes em soluções/ROI com dados reais):
   `PENDING_GRANT_APPROVAL` — requer sessão com `engineering.access`.
 
@@ -123,4 +137,4 @@ cobertura na suíte existente (nenhuma alteração).
 
 ## 11. SHA final
 
-Registrado no relatório de execução (ver `git log`).
+`f9e026408915501941a602befa5afec7941f9c2b` — código + documentação.
