@@ -1,8 +1,10 @@
 from datetime import date
 
 from app.domain.production.production_fabril_appointment_scope import (
+    EXCLUDED_PRODUCT_CODE_PREFIXES,
     EXCLUDED_WORK_CENTERS,
     STATUS_REGISTRO_OK,
+    is_excluded_sample_product_code,
 )
 from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_settings import (
     EficienciaFabrilQuerySettings,
@@ -41,10 +43,33 @@ def test_build_fabril_view_filters_requires_ok_and_excludes_work_centers() -> No
     assert STATUS_REGISTRO_OK in params
     for excluded in EXCLUDED_WORK_CENTERS:
         assert excluded in params
+    for prefix in EXCLUDED_PRODUCT_CODE_PREFIXES:
+        assert f"{prefix}%" in params
+    assert "PRODUTO" in where
+    assert "NOT LIKE ?" in where
+
+
+def test_build_fabril_view_filters_excludes_sample_products_by_default() -> None:
+    """Amostras (produto 8*) não entram no KPI; produtos 9* continuam no escopo."""
+    where, params = build_fabril_view_filters(
+        date_start=date(2026, 5, 1),
+        date_end=date(2026, 5, 31),
+        branch="01",
+        status_ok_only=True,
+        column_prefix="EF",
+    )
+
+    assert "EF.PRODUTO" in where
+    assert "8%" in params
+    assert is_excluded_sample_product_code("80123456")
+    assert is_excluded_sample_product_code("8")
+    assert not is_excluded_sample_product_code("90123456")
+    assert not is_excluded_sample_product_code("50123456")
+    assert not is_excluded_sample_product_code("")
 
 
 def test_build_fabril_view_filters_can_include_excluded_work_centers() -> None:
-    """Saldo de OP (cockpit) precisa de CT-00; KPI de eficiência não."""
+    """Saldo de OP (cockpit) precisa de CT-00 e amostras; KPI de eficiência não."""
     where, params = build_fabril_view_filters(
         date_start=date(2026, 5, 1),
         date_end=date(2026, 5, 31),
@@ -56,6 +81,21 @@ def test_build_fabril_view_filters_can_include_excluded_work_centers() -> None:
     for excluded in EXCLUDED_WORK_CENTERS:
         assert excluded not in params
     assert "CENTRO_TRABALHO" not in where or "<> ?" not in where
+    assert "8%" not in params
+
+
+def test_build_fabril_view_filters_can_force_exclude_samples_with_full_ct_scope() -> None:
+    where, params = build_fabril_view_filters(
+        date_start=date(2026, 5, 1),
+        date_end=date(2026, 5, 31),
+        branch="01",
+        status_ok_only=True,
+        include_excluded_work_centers=True,
+        include_sample_products=False,
+    )
+
+    assert "8%" in params
+    assert "NOT LIKE ?" in where
 
 
 def test_build_fabril_view_filters_caps_efficiency_for_kpi() -> None:

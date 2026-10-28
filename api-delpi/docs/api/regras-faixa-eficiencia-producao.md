@@ -30,6 +30,7 @@ A faixa **não** vem de documentação formal do Protheus — é convenção ope
 | Jun/2026 | Faixa unificada em **0–199%** para OEE e Eficiência Fabril; constante compartilhada na API. |
 | Jun/2026 | Eficiência passa a ser **só por tempos** (fim de `H6_ZEFICI`); fórmulas legíveis em `time_analysis`; auto-refresh 5 min nos dashboards — ver [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md). |
 | Ago/2026 | KPI/listagem/série OEE e SI alinhados ao % canônico `HY_TEMPAD` (mesma expressão da eficiência fabril); SQL centralizado em `production_fabril_efficiency_sql.py` + `production_fabril_standard_time_sql.py`. |
+| Out/2026 | Produtos amostra (`PRODUTO` iniciando com `8`) excluídos do escopo de KPI (eficiência fabril e OEE) via `build_fabril_view_filters`. |
 ## Constantes (fonte de verdade)
 
 ### API (`api-delpi`)
@@ -46,8 +47,8 @@ Consumidores:
 
 | Módulo | Uso |
 |--------|-----|
-| `production_fabril_appointment_scope.py` | View, CTs excluídos, `STATUS_REGISTRO_OK` |
-| `production_fabril_appointment_filters.py` | `build_fabril_view_filters()` — usado por eficiência fabril **e** OEE |
+| `production_fabril_appointment_scope.py` | View, CTs excluídos, prefixos de produto amostra (`8*`), `STATUS_REGISTRO_OK` |
+| `production_fabril_appointment_filters.py` | `build_fabril_view_filters()` — usado por eficiência fabril **e** OEE; exclui amostras por padrão |
 | `production_fabril_efficiency_sql.py` | %/previsto/meta canônicos (`HY_TEMPAD`) + `status` valid/outlier |
 | `production_fabril_standard_time_sql.py` | CTEs/joins SHY+SG2 compartilhados |
 | `production_fabril_oee_sql.py` | Listagem OEE (view + `appointment_id` via SH6010 + % canônico) |
@@ -80,7 +81,7 @@ Consumidores:
 
 ### OEE — `GET /production/oee`
 
-- **Mesmo escopo** da eficiência fabril: view `vw_Apontamentos_Eficiencia`, `STATUS_REGISTRO = OK`, CTs excluídos.
+- **Mesmo escopo** da eficiência fabril: view `vw_Apontamentos_Eficiencia`, `STATUS_REGISTRO = OK`, CTs excluídos e produtos amostra (`PRODUTO` iniciando com `8`) excluídos do KPI.
 - **Métrica do painel:** % canônico (`setup + HY_TEMPAD × qtd` ÷ tempo real) — mesma expressão da eficiência fabril; média simples na faixa 0–199%.
 - Detalhe: `GET /production/oee/appointments/{id}` — SH6010 com roteiro, tempos e eficiência calculada pelos mesmos critérios.
 - Campos `time_analysis.formula_*`: textos em linguagem operacional (sem códigos Protheus) — ver changelog jun/2026.

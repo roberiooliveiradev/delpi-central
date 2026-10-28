@@ -9,6 +9,7 @@ from app.domain.production.production_efficiency_valid_range import (
 )
 from app.domain.production.production_fabril_appointment_scope import (
     DEFAULT_PRODUCTION_BRANCHES,
+    EXCLUDED_PRODUCT_CODE_PREFIXES,
     EXCLUDED_WORK_CENTERS,
     STATUS_REGISTRO_OK,
 )
@@ -76,19 +77,24 @@ def build_fabril_view_filters(
     status_ok_only: bool = True,
     efficiency_cap_pct: int | None = None,
     include_excluded_work_centers: bool = False,
+    include_sample_products: bool | None = None,
     column_prefix: str | None = None,
 ) -> Tuple[str, tuple]:
     """Filtros da view `vw_Apontamentos_Eficiencia` (eficiência fabril e OEE).
 
-    Por padrão exclui CTs irregulares (``CT-00``, inspeção, etc.). Passe
+    Por padrão exclui CTs irregulares (``CT-00``, inspeção, etc.) e produtos
+    amostra (código iniciando com ``8``). Passe
     ``include_excluded_work_centers=True`` quando o consumidor precisa do saldo
-    completo da OP (ex.: histórico do cockpit), não do KPI de eficiência.
+    completo da OP (ex.: histórico do cockpit), não do KPI de eficiência —
+    nesse modo as amostras também entram, salvo ``include_sample_products``
+    explícito.
     """
     qb = QueryBuilder()
 
     filial_col = _column("FILIAL", prefix=column_prefix)
     data_col = _column("DATA_PRODUCAO", prefix=column_prefix)
     op_col = _column("OP", prefix=column_prefix)
+    produto_col = _column("PRODUTO", prefix=column_prefix)
     ct_col = _column("CENTRO_TRABALHO", prefix=column_prefix)
     operador_col = _column("NOME_OPERADOR", prefix=column_prefix)
     cod_operador_col = _column("COD_OPERADOR", prefix=column_prefix)
@@ -128,6 +134,16 @@ def build_fabril_view_filters(
         for excluded in EXCLUDED_WORK_CENTERS:
             qb.raw(f"LTRIM(RTRIM({ct_col})) <> ?")
             qb._params.append(excluded)
+
+    allow_sample_products = (
+        include_excluded_work_centers
+        if include_sample_products is None
+        else include_sample_products
+    )
+    if not allow_sample_products:
+        for prefix in EXCLUDED_PRODUCT_CODE_PREFIXES:
+            qb.raw(f"LTRIM(RTRIM(ISNULL({produto_col}, ''))) NOT LIKE ?")
+            qb._params.append(f"{prefix}%")
 
     if operator_code:
         _apply_exact_multi_filter(qb, cod_operador_col, operator_code)

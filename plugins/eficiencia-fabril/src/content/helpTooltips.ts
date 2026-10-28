@@ -1,7 +1,7 @@
 export const EF_HELP_TOOLTIPS = {
   tabs: {
     efficiency:
-      "Indicadores de eficiência operacional e resultado MOD dos apontamentos produtivos no período.",
+      "Indicadores de eficiência operacional e resultado MOD dos apontamentos produtivos no período. Produtos amostra (código iniciando com 8) ficam fora do cálculo e da listagem.",
     unproductiveHours:
       "Paradas de produção apontadas pelos operadores (horas improdutivas PCP) — todos os motivos, não só retrabalho.",
   },
