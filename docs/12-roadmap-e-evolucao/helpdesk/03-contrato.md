@@ -211,6 +211,12 @@ Identidade GLPI do ator não resolúvel (`GET /session` sem `user_id`) → 502 *
 `outcome` ∈ `verified` | `author_mismatch` | `author_unverified` | `status_unverified`.
 A escrita legada roda sob **sessão do próprio ator** (`POST /apirest.php/ITILFollowup` com `add_close`/`add_reopen` na sessão mintada do `api_token` do usuário — mesmo mecanismo da UI GLPI); nenhum `users_id` é enviado no payload. O read-back do `ITILFollowup` e do estado do chamado roda no canal técnico bounded (perfil requester não lê essas linhas via apirest). `author_verified=false` ou `status_verified=false` significam **executado sem confirmação integral** — o consumidor não deve tratar como sucesso pleno nem incentivar retry automático (a transição de estado no GLPI já ocorreu; repetir a intenção retorna 422). A resposta governada é a que fica gravada na idempotência: retry com a mesma chave devolve o mesmo `outcome`.
 
+**Contrato canônico de resultado para consumidores** (MFE, gateway TÉO, integrações futuras) — três classes distintas, nunca conflacionadas:
+
+1. **Falha de transporte** — timeout/conexão/`5xx` do BFF: a escrita pode não ter ocorrido; retry com a mesma `Idempotency-Key` é seguro (o BFF dedup por chave).
+2. **Operação rejeitada** — `4xx` com `{ "error": code }`: nada foi persistido; corrigir a intenção.
+3. **Escrita executada com postcondition não confirmada** — `207` + `outcome` tipado: o registro **existe** (`document_id`/`followup_id`/`status_id` persistidos no corpo). O consumidor recebe o resultado parcial tipado, preserva os identificadores para reconciliação e **não** apresenta sucesso integral nem dispara retry automático. O BFF permanece o único dono da auditoria de autoria — consumidor não reimplementa verificação de ator. Um `207` sem `outcome` é violação de contrato: falha fechada, preservando o corpo para reconciliação manual.
+
 ### Operações de técnico (Solution / Task / pedido de aprovação)
 
 HLAPI Timeline. Exigem `Idempotency-Key`. AuthZ: mesmo gate de `can_create_*` (sessão técnico + chamado não fechado). Conteúdo HTML re-sanitizado. Solution e Task são gravadas **públicas** (`is_private=0`) para aparecerem na conversa.

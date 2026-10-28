@@ -795,6 +795,24 @@ def verify(
     capability = proposal.capability
     result = dict(write_result or {})
 
+    # Canonical partial-result contract (BFF → TÉO): when the BFF reports
+    # a typed ``outcome`` other than ``verified``, the write executed but
+    # a postcondition was not confirmed upstream (e.g. author identity
+    # read-back). The BFF owns that audit — TÉO must not re-audit or
+    # claim integral success. Surface the canonical "executed but
+    # unconfirmed" error and keep every persisted identifier
+    # (``document_id``, ``followup_id``, ``status_id``) in the payload so
+    # the operation can be reconciled instead of retried blindly.
+    bff_outcome = result.get("outcome")
+    if bff_outcome is not None and bff_outcome != "verified":
+        raise _verification_failed(
+            "Helpdesk BFF reported a partial write result "
+            f"(outcome={bff_outcome!r}). The write was persisted; "
+            "reconcile the returned identifiers before retrying.",
+            outcome=bff_outcome,
+            write_result=result,
+        )
+
     if capability == "helpdesk_unlink_glpi_session":
         session = stack.read.session(authorization)
         if bool(session.get("linked")):

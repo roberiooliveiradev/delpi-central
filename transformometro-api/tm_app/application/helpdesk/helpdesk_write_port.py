@@ -21,6 +21,22 @@ class HelpdeskWritePort(Protocol):
     proposal retried reaches the BFF under the same key, so the BFF replay
     store prevents duplicate side effects. All responses carry the stable
     identifiers needed for authoritative read-back.
+
+    Canonical result classes (never conflated):
+
+    - transport failure → ``GptActionsError`` ``upstream_unavailable``;
+    - rejected operation → ``GptActionsError`` typed by the BFF error
+      (validation/forbidden/conflict/...), no side effect reported;
+    - executed write → returned body. When the BFF verified every
+      postcondition the body carries ``outcome="verified"`` (or no
+      ``outcome`` for legacy write shapes). When the BFF persisted the
+      write but could not confirm a postcondition it returns a governed
+      partial result — body carries ``outcome`` (``verification_failed``,
+      ``author_mismatch``, ``author_unverified``, ``status_unverified``)
+      plus the persisted identifiers (``document_id``, ``followup_id``,
+      ``status_id``). A partial result is NOT integral success and is
+      surfaced to the governed-write layer verbatim; consumers must
+      reconcile the identifiers instead of retrying blindly.
     """
 
     def create_ticket(
@@ -122,7 +138,14 @@ class HelpdeskWritePort(Protocol):
         content: str,
         idempotency_key: str,
     ) -> dict[str, Any]:
-        """POST /tickets/{id}/solution/{accept|reject} → ``{"id","status_id"}``."""
+        """POST /tickets/{id}/solution/{accept|reject}.
+
+        Verified: ``{"id", "status_id", "followup_id", "outcome":
+        "verified", ...}``. Partial: ``outcome`` ∈
+        ``author_mismatch`` | ``author_unverified`` |
+        ``status_unverified`` with the persisted ``followup_id``/
+        ``status_id`` still present for reconciliation.
+        """
         ...
 
     def submit_satisfaction(
@@ -189,12 +212,19 @@ class HelpdeskWritePort(Protocol):
         title: str | None,
         idempotency_key: str,
     ) -> dict[str, Any]:
-        """POST /tickets/{id}/attachments (multipart) → ``{"document_id",
-        "filename","mime"}``.
+        """POST /tickets/{id}/attachments (multipart).
+
+        Verified: ``{"document_id", "filename", "mime", "outcome":
+        "verified", "author_state": "verified", "author_verified":
+        true}``. Partial: same persisted ``document_id`` with
+        ``outcome="verification_failed"`` — the document exists and the
+        identifier must be preserved for reconciliation; it is not a
+        signal to retry.
 
         The BFF owns GLPI Document creation, belongs-to-ticket validation,
-        upload limits and idempotency replay; TÉO forwards bytes fetched
-        from a platform-authorized file source — never an arbitrary URL.
+        upload limits, author-attribution audit and idempotency replay;
+        TÉO forwards bytes fetched from a platform-authorized file
+        source — never an arbitrary URL.
         """
         ...
 

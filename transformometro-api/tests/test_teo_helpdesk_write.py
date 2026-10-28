@@ -21,6 +21,7 @@ from tm_app.application.governed_writes.confirmation_policy import (
 from tm_app.application.governed_writes.errors import (
     NOT_FOUND,
     OUTCOME_VERIFICATION_FAILED,
+    PROPOSAL_NOT_FOUND,
     PROPOSAL_STALE,
     VALIDATION,
     GovernedWriteError,
@@ -127,6 +128,11 @@ class _FakeHelpdeskPorts:
         # keeps the old body — simulates a 2xx that never persisted.
         self.update_followup_applies = True
         self.classification_applies = True
+        # Extra fields merged into the write body — simulates the BFF
+        # governed-result contract fields (``outcome`` etc.) so a 207
+        # partial response can be exercised without HTTP.
+        self.decide_solution_result_extra: dict[str, Any] | None = None
+        self.upload_result_extra: dict[str, Any] | None = None
         self.file_source = _FakeFileSource()
 
     # read port
@@ -274,7 +280,14 @@ class _FakeHelpdeskPorts:
         self._key(kw)
         state = self._state(ticket_id)
         state["status_id"] = 6 if kw["decision"] == "accept" else 2
-        return {"id": ticket_id, "status_id": state["status_id"]}
+        result: dict[str, Any] = {
+            "id": ticket_id,
+            "status_id": state["status_id"],
+            "followup_id": 812,
+        }
+        if self.decide_solution_result_extra:
+            result.update(self.decide_solution_result_extra)
+        return result
 
     def submit_satisfaction(self, authorization, ticket_id, **kw):
         self.write_calls.append(("submit_satisfaction", ticket_id, kw["satisfaction"]))
@@ -345,11 +358,14 @@ class _FakeHelpdeskPorts:
                     "mime": kw.get("mime"),
                 },
             ]
-        return {
+        result: dict[str, Any] = {
             "document_id": document_id,
             "filename": kw.get("filename"),
             "mime": kw.get("mime"),
         }
+        if self.upload_result_extra:
+            result.update(self.upload_result_extra)
+        return result
 
 
 def _stack() -> tuple[HelpdeskWriteStack, _FakeHelpdeskPorts]:
@@ -1354,3 +1370,105 @@ def test_action_enum_covers_update_ticket_classification():
     assert HELPDESK_ACTION_TO_CAPABILITY["update_ticket_classification"] == (
         "helpdesk_update_ticket_classification"
     )
+
+
+# --------------------------------------------------------------------------
+# BFF partial-result contract (HTTP 207 → outcome != "verified")
+#
+# The BFF owns write verification/author audit. When it persists a write
+# but cannot confirm a postcondition it returns a governed partial body.
+# TÉO must surface that as OUTCOME_VERIFICATION_FAILED — never as
+# integral success — while keeping every persisted identifier reachable
+# for reconciliation.
+# --------------------------------------------------------------------------
+
+
+def test_partial_upload_surfaces_verification_failed_with_document_id():
+    facade, ports = _facade()
+    ports.upload_result_extra = {
+        "outcome": "verification_failed",
+        "author_state": "unverified",
+        "author_verified": False,
+    }
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=False)
+    err = exc.value
+    assert err.code == OUTCOME_VERIFICATION_FAILED
+    assert err.status_code == 409
+    assert err.data["outcome"] == "verification_failed"
+    # Persisted identifier survives for reconciliation.
+    assert err.data["write_result"]["document_id"] in ports.attachments
+
+
+def test_partial_solution_decision_surfaces_outcome_and_followup_id():
+    facade, ports = _facade()
+    ports.ticket_state.update(status_id=5, can_accept_solution=True)
+    ports.decide_solution_result_extra = {
+        "outcome": "author_mismatch",
+        "author_verified": False,
+        "status_verified": True,
+    }
+    out = _prepare(facade, "accept_solution", ticket_id=500)
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=True)
+    err = exc.value
+    assert err.code == OUTCOME_VERIFICATION_FAILED
+    assert err.data["outcome"] == "author_mismatch"
+    assert err.data["write_result"]["followup_id"] == 812
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    ["author_unverified", "status_unverified"],
+)
+def test_partial_decision_outcomes_all_surface_typed(outcome):
+    facade, ports = _facade()
+    ports.ticket_state.update(status_id=5, can_accept_solution=True)
+    ports.decide_solution_result_extra = {"outcome": outcome}
+    out = _prepare(facade, "accept_solution", ticket_id=500)
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=True)
+    assert exc.value.code == OUTCOME_VERIFICATION_FAILED
+    assert exc.value.data["outcome"] == outcome
+
+
+def test_verified_outcome_is_integral_success():
+    """Sibling positive — outcome=verified does not trip the guard."""
+    facade, ports = _facade()
+    ports.ticket_state.update(status_id=5, can_accept_solution=True)
+    ports.decide_solution_result_extra = {
+        "outcome": "verified",
+        "author_verified": True,
+        "status_verified": True,
+    }
+    out = _prepare(facade, "accept_solution", ticket_id=500)
+    data = _commit(facade, out, confirmation=True)
+    assert data["persisted"] is True
+    assert data["data"]["write_result"]["outcome"] == "verified"
+
+
+def test_partial_result_consumes_proposal_no_duplicate_write():
+    """A partial result is terminal: the same proposal cannot re-execute,
+    so a consumed handle cannot duplicate the already-persisted write."""
+    facade, ports = _facade()
+    ports.upload_result_extra = {
+        "outcome": "verification_failed",
+        "author_state": "unverified",
+        "author_verified": False,
+    }
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    handle = _handle_of(out)
+    with pytest.raises(GovernedWriteError):
+        _commit(facade, out, confirmation=False)
+    writes_before = len(ports.write_calls)
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(
+            _request(), proposal_handle=handle, confirmation=False
+        )
+    assert exc.value.code == PROPOSAL_NOT_FOUND
+    assert len(ports.write_calls) == writes_before  # no second write

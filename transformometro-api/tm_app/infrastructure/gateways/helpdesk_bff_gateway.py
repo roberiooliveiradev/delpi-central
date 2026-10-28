@@ -152,7 +152,43 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
                 502,
                 {"error_kind": "upstream_unavailable"},
             ) from exc
-        return self._expect_json(response, ok_statuses=(200, 201))
+        return self._governed_write_result(response)
+
+    def _governed_write_result(self, response: httpx.Response) -> Any:
+        """Canonical write-result contract for the Helpdesk BFF.
+
+        Three distinct result classes (never conflated):
+
+        - transport failure → ``httpx.RequestError`` mapped to
+          ``upstream_unavailable`` by the caller;
+        - rejected operation → non-2xx/207 status handled by
+          ``_expect_json`` (validation/conflict/etc.);
+        - executed write → 200/201 fully verified, or **207** when the
+          write persisted but a postcondition was not confirmed by the
+          BFF. The 207 body is a governed partial result — it carries
+          ``outcome`` plus persisted identifiers (``document_id``,
+          ``followup_id``, ``status_id``) for reconciliation. It is NOT
+          integral success and must not be flattened into one.
+
+        A 207 without a typed ``outcome`` violates the contract; we fail
+        closed but keep the raw body in the error data so nothing needed
+        for reconciliation is lost.
+        """
+        body = self._expect_json(response, ok_statuses=(200, 201, 207))
+        if response.status_code == 207 and not (
+            isinstance(body, dict) and body.get("outcome")
+        ):
+            raise GptActionsError(
+                "Helpdesk BFF returned a partial write result without a "
+                "typed outcome.",
+                502,
+                {
+                    "error_kind": "contract_violation",
+                    "status": response.status_code,
+                    "persisted_result": body,
+                },
+            )
+        return body
 
     def _expect_json(
         self, response: httpx.Response, *, ok_statuses: tuple[int, ...]
@@ -603,4 +639,4 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
                 502,
                 {"error_kind": "upstream_unavailable"},
             ) from exc
-        return self._expect_json(response, ok_statuses=(200, 201))
+        return self._governed_write_result(response)
