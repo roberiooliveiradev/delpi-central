@@ -50,6 +50,22 @@ class Settings:
         "DELPI_AUTH_RBAC_STALE_TTL_SECONDS", default="900"
     )
 
+    # Fontes oficiais consumidas pela Home (delegação com JWT do usuário).
+    DELPI_API_URL: str = _get_env("DELPI_API_URL", default="http://delpi-api-delpi:8000")
+    REQUESTS_API_URL: str = _get_env("REQUESTS_API_URL", default="http://requests-api:8000")
+
+    # Limites de composição da Home — timeout por fonte, itens por seção e
+    # fan-out são limitados por contrato (F2a.S3).
+    HOME_SOURCE_TIMEOUT_SECONDS: float = float(
+        _get_env("ENGINEERING_HOME_SOURCE_TIMEOUT_SECONDS", default="5.0")
+    )
+    HOME_MAX_SECTION_ITEMS: int = int(
+        _get_env("ENGINEERING_HOME_MAX_SECTION_ITEMS", default="10")
+    )
+    HOME_MAX_CONCURRENT_SOURCES: int = int(
+        _get_env("ENGINEERING_HOME_MAX_CONCURRENT_SOURCES", default="3")
+    )
+
     def resolved_log_level(self) -> int:
         import logging
 
