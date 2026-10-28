@@ -8,6 +8,8 @@ from helpdesk_app.application.ports import GlpiGateway, IdempotencyStore
 from helpdesk_app.application.services.message_html_sanitizer import (
     MAX_MESSAGE_HTML_CHARS,
     extract_bff_attachment_refs,
+    extract_inline_image_docrefs,
+    has_pending_inline_refs,
     inline_content_signature,
     message_html_to_plain_text,
     prepare_outbound_message_html,
@@ -21,6 +23,8 @@ from helpdesk_app.domain.errors import (
     GlpiValidation,
     HelpdeskError,
     IdempotencyInFlight,
+    InlineImagePending,
+    InlineImageUnresolved,
     LinkRequired,
     MissingIdempotencyKey,
 )
@@ -680,6 +684,50 @@ class TicketService:
                 content_html,
                 request_type_id=request_type_id,
             )
+            expected_sig = inline_content_signature(content_html)
+            has_inline_images = any(kind == "img" for kind, _ in expected_sig)
+            verified = not has_inline_images
+            if has_inline_images:
+                # Authoritative read-back: the write only earns a 201 when
+                # the persisted body carries the same inline structure —
+                # same images, same order, same position (GLPI can silently
+                # drop <img> tags while keeping the text).
+                try:
+                    refreshed = self._glpi.get_ticket(
+                        self._token(subject), ticket_id, viewer_email=""
+                    )
+                    entry = next(
+                        (
+                            item
+                            for item in refreshed.timeline
+                            if item.kind == "followup"
+                            and int(item.id) == int(followup_id)
+                        ),
+                        None,
+                    )
+                    actual_sig = inline_content_signature(
+                        (entry.content_html or entry.content or "")
+                        if entry
+                        else ""
+                    )
+                    verified = entry is not None and actual_sig == expected_sig
+                except HelpdeskError:
+                    verified = False
+            if not verified:
+                # The followup persisted but its postcondition could not be
+                # proven — governed partial, replayable under the same key;
+                # the followup_id survives for reconciliation.
+                stored = StoredResponse(
+                    status_code=207,
+                    body={
+                        "id": followup_id,
+                        "followup_id": followup_id,
+                        "outcome": "verification_failed",
+                        "content_verified": False,
+                    },
+                )
+                self._idempotency.save(subject, operation, key, stored)
+                return stored
             stored = StoredResponse(status_code=201, body={"id": followup_id})
             self._idempotency.save(subject, operation, key, stored)
             return stored
@@ -765,15 +813,14 @@ class TicketService:
                 ),
                 None,
             )
-            expected_text = " ".join(
-                message_html_to_plain_text(content_html).split()
-            )
-            actual_text = " ".join(
-                message_html_to_plain_text(
-                    updated.content_html or updated.content or ""
-                ).split()
-            ) if updated else ""
-            if updated is None or actual_text != expected_text:
+            # Same postcondition as update_description: the persisted body
+            # must keep text AND inline images (count/order/position) —
+            # text-only comparison could miss a dropped <img>.
+            expected_sig = inline_content_signature(content_html)
+            actual_sig = inline_content_signature(
+                updated.content_html or updated.content or ""
+            ) if updated else ()
+            if updated is None or actual_sig != expected_sig:
                 raise GlpiValidation(
                     "O acompanhamento não foi confirmado no chamado."
                 )
@@ -1594,6 +1641,11 @@ class TicketService:
 # partial persistence, where releasing would enable a duplicate.
 _PRE_WRITE_ONLY_ERRORS = (
     GlpiFeatureDisabled,
+    # Inline-image typed rejections are raised by _prepare_message_html
+    # BEFORE any GLPI write — provable pre-side-effect, so the claim is
+    # safe to release for a corrected retry.
+    InlineImagePending,
+    InlineImageUnresolved,
     LinkRequired,
     MissingIdempotencyKey,
 )
@@ -1621,6 +1673,12 @@ def _prepare_message_html(
         raise GlpiValidation(f"{field} é obrigatório.")
     if len(value) > MAX_MESSAGE_HTML_CHARS:
         raise GlpiValidation(f"{field} excede o tamanho máximo permitido.")
+    # A pending upload token must never reach a write — the image would be
+    # stripped by the allowlist and the message stored without it.
+    if has_pending_inline_refs(value):
+        raise InlineImagePending(
+            "A imagem ainda está sendo anexada; aguarde o envio antes de publicar."
+        )
     cleaned = prepare_outbound_message_html(
         value,
         ticket_id=ticket_id,
@@ -1628,6 +1686,24 @@ def _prepare_message_html(
     )
     if not cleaned:
         raise GlpiValidation(f"{field} é obrigatório.")
+    # Intended document references must survive intact — never let a
+    # dropped <img> become an integral success.
+    if int(ticket_id or 0) > 0:
+        intended, foreign = extract_inline_image_docrefs(value, ticket_id)
+        allowed = {int(item) for item in (allowed_document_ids or ())}
+        surviving = {
+            doc_id
+            for kind, doc_id in inline_content_signature(cleaned)
+            if kind == "img"
+        }
+        if (
+            foreign > 0
+            or not intended <= allowed
+            or not intended <= surviving
+        ):
+            raise InlineImageUnresolved(
+                "Uma imagem da mensagem não pôde ser vinculada a este chamado."
+            )
     return cleaned
 
 

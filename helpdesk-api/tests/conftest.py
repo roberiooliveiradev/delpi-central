@@ -88,6 +88,8 @@ class FakeGlpi:
         self.description_applies = True
         # When True, GLPI "loses" <img> tags on persist — text survives.
         self.description_strip_images = False
+        # Same degradation for follow-up writes (read-back must catch it).
+        self.followup_strip_images = False
         self.solutions: list[tuple[int, str]] = []
         self.tasks: list[tuple[int, str]] = []
         self.created_validations: list[tuple[int, str, int, str]] = []
@@ -439,6 +441,27 @@ class FakeGlpi:
         if ticket_id == 99:
             raise GlpiNotFound("ausente")
         self.followups.append((ticket_id, content, request_type_id))
+        if self.detail.id == ticket_id:
+            import re as _re
+            from dataclasses import replace as _replace
+
+            stored = (
+                _re.sub(r"<img[^>]*>", "", content)
+                if self.followup_strip_images
+                else content
+            )
+            entry = TimelineEntry(
+                8,
+                "followup",
+                content,
+                "2026-09-24T12:00:00Z",
+                "Ana",
+                content_html=stored,
+            )
+            self.detail = _replace(
+                self.detail,
+                timeline=self.detail.timeline + (entry,),
+            )
         return 8
 
     def update_followup(

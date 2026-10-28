@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { HelpdeskApiError } from "../api/helpdeskApi";
-import { attachmentPublicUrl, listPendingInlineIds } from "./inlineUpload";
+import { attachmentPublicUrl, listPendingInlineIds, stripInlineEditorChrome } from "./inlineUpload";
 import { listHelpdeskAttachmentIdsInHtml, stampHelpdeskAttachmentIds } from "./ticketView";
 
 export type FetchTicketAttachmentBlob = (
@@ -29,7 +29,9 @@ export function persistHelpdeskAttachmentHtml(
   html: string,
   ticketId?: string | number | null,
 ): string {
-  let next = stampHelpdeskAttachmentIds(html || "");
+  // Editor chrome (remove button "×", __inline-image wrapper, ZWSP carets)
+  // is visual-only — it must never reach drafts or the BFF payload.
+  let next = stampHelpdeskAttachmentIds(stripInlineEditorChrome(html || ""));
   const ticket = ticketId != null ? String(ticketId).trim() : "";
   if (ticket) {
     next = next.replace(

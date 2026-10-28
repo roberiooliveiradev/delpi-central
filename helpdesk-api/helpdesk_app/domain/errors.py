@@ -74,6 +74,25 @@ class GlpiValidation(HelpdeskError):
     status_code = 422
 
 
+class InlineImagePending(HelpdeskError):
+    """An inline image reference is still `attachment:pending:` — the upload
+    never reached a persisted document. Failing closed here is the only
+    way to keep a half-attached message from being stored as integral."""
+
+    code = "inline_image_pending"
+    status_code = 422
+
+
+class InlineImageUnresolved(HelpdeskError):
+    """An intended inline document reference cannot resolve to an
+    attachment owned by this ticket (cross-ticket ref, missing
+    Document_Item, or a reference the allowlist stripped). The write is
+    rejected instead of silently dropping the image."""
+
+    code = "inline_image_unresolved"
+    status_code = 422
+
+
 class GlpiFeatureDisabled(HelpdeskError):
     code = "glpi_feature_disabled"
     status_code = 503

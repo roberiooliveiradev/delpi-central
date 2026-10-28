@@ -146,7 +146,12 @@ Cabeçalho `Idempotency-Key` obrigatório, gerado na intenção de envio e reuti
 }
 ```
 
-`description` e `content` do follow-up aceitam **texto puro ou HTML**. O BFF re-sanitiza com a mesma allowlist da leitura ([`12`](./12-conteudo-da-mensagem.md) §7) antes de gravar no GLPI: remove `script`/`on*`/`javascript:`, imagens estrangeiras e `document.send.php` sem `docid` permitido. Payload com mais de **50 000** caracteres (M-29) ou sem texto visível após a limpeza: `422 validation_error`. Título continua texto puro.
+`description` e `content` do follow-up aceitam **texto puro ou HTML**. O BFF re-sanitiza com a mesma allowlist da leitura ([`12`](./12-conteudo-da-mensagem.md) §7) antes de gravar no GLPI: remove `script`/`on*`/`javascript:`, controles de editor (`<button>…</button>` inteiro — nunca sobra `×` residual), imagens estrangeiras e `document.send.php` sem `docid` permitido. Payload com mais de **50 000** caracteres (M-29) ou sem texto visível após a limpeza: `422 validation_error`. Título continua texto puro.
+
+**Referências inline tipadas** (write de `description`/`content` em chamado existente, `ticket_id > 0`):
+
+- `422 inline_image_pending` — o corpo ainda traz `data-attachment-pending`/`attachment:pending:` (upload não concluído; nunca é gravado sem o documento real).
+- `422 inline_image_unresolved` — referência de documento pretendida (`data-attachment-id`, path BFF ou `docid=`) que não pertence ao chamado, não consta da allowlist ou não sobrevive à sanitização. Imagem de outro chamado cai aqui (sem vazar existência). Referências não-documento (URL externa) continuam removidas silenciosamente, como antes.
 
 `observer_ids` (aditivo, opcional) é a lista de ids de usuário do GLPI. Depois de criar o chamado, o BFF chama `POST …/TeamMember` só com `{type: User, role: observer, id}` — **sem** `requester` nem `entity` (HD-011). Lista vazia ou ausente = nenhum observador. Máximo 10 ids.
 
@@ -183,7 +188,7 @@ Resposta `200`: `{ "user_id": 15, "assigned_display_name": "Ana Silva" }`. Se j�
 { "content": "string | HTML" }
 ```
 
-Também exige `Idempotency-Key`. Resposta `201` com `{ "id": 1 }`.
+Também exige `Idempotency-Key`. Resposta `201` com `{ "id": 1 }`. Quando o corpo traz imagens inline, o `201` só sai após **read-back estrutural** (assinatura texto+`docid` do acompanhamento persistido — mesma régua do `PATCH /description`); write persistido sem postcondition confirmada devolve **`207`** `{ "id", "followup_id", "outcome": "verification_failed", "content_verified": false }` — resultado parcial governado, replayável sob a mesma chave, nunca reexecutado às cegas.
 
 `PATCH /tickets/{id}/description` — reescreve a descrição de abertura (campo `content` do Ticket no GLPI) via `PATCH /api.php/v2.2/Assistance/Ticket/{id}` sob o token OAuth do ator — `Ticket::canUpdate` no GLPI é a autoridade, e o BFF exige `requester_mine` (a descrição é atribuída ao solicitante).
 

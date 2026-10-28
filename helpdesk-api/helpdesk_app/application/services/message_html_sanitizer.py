@@ -84,12 +84,15 @@ _STYLE_ATTR_RE = re.compile(
 )
 _DSTY_ATTR_RE = re.compile(r'\sdata-dsty\s*=\s*"([A-Za-z0-9+/=]*)"')
 _DANGEROUS_BLOCK_RE = re.compile(
-    r"<(script|style|iframe|object|embed|form|textarea)\b[^>]*>[\s\S]*?</\1\s*>",
+    r"<(script|style|iframe|object|embed|form|textarea|button)\b[^>]*>[\s\S]*?</\1\s*>",
     re.IGNORECASE,
 )
 _DANGEROUS_SELF_CLOSING_RE = re.compile(
     r"<(script|style|iframe|object|embed|form|textarea|link|meta|base|svg|math|video|audio|input|button)\b[^>]*/?>",
     re.IGNORECASE,
+)
+_EDITOR_INLINE_WRAPPER_RE = re.compile(
+    r"""(?is)<span\b[^>]*\bclass\s*=\s*["'][^"']*__inline-image[^"']*["'][^>]*>(.*?)</span\s*>"""
 )
 _EMPTY_IMG_RE = re.compile(
     r"""(?is)<img\b(?=[^>]*\bsrc\s*=\s*(?:""|''))[^>]*/?>"""
@@ -148,6 +151,13 @@ def sanitize_message_html(
     allowed = {int(item) for item in allowed_document_ids}
     text = _DANGEROUS_BLOCK_RE.sub("", text)
     text = _DANGEROUS_SELF_CLOSING_RE.sub("", text)
+    # Editor chrome is visual-only: unwrap `__inline-image` spans so the
+    # persisted body keeps just the <img> at its position (never editor
+    # markup — class/control wrappers are not message content).
+    text = _EDITOR_INLINE_WRAPPER_RE.sub(r"\1", text)
+    # ZWSP carets inserted by the rich editor around inline images are
+    # artifacts, not content — the stored body must not carry them.
+    text = text.replace("\u200b", "")
     text = _rewrite_document_urls(text, ticket_id=ticket_id, allowed_document_ids=allowed)
     text = _FOREIGN_DOC_ANCHOR_RE.sub(r"\1", text)
     text = _FOREIGN_IMG_RE.sub("", text)
@@ -239,6 +249,47 @@ def extract_bff_attachment_refs(html: str | None) -> list[tuple[int, int]]:
         seen.add(ref)
         found.append(ref)
     return found
+
+
+_PENDING_INLINE_RE = re.compile(
+    r"(?:\bdata-attachment-pending\s*=|\battachment:pending:)",
+    re.IGNORECASE,
+)
+_DATA_ATTACHMENT_ID_RE = re.compile(
+    r"""(?is)<img\b[^>]*\bdata-attachment-id\s*=\s*["'](\d+)["'][^>]*/?>"""
+)
+
+
+def has_pending_inline_refs(html: str | None) -> bool:
+    """True when the body still carries a client-side pending upload token —
+    the image never reached a persisted document."""
+    return bool(_PENDING_INLINE_RE.search(str(html or "")))
+
+
+def extract_inline_image_docrefs(
+    html: str | None, ticket_id: int
+) -> tuple[set[int], int]:
+    """(intended docids for this ticket, foreign ref count).
+
+    Intended = `<img data-attachment-id>` + BFF path scoped to this ticket
+    + `document.send.php?docid=` (docid carries no ticket context — the
+    allowlist decides). Foreign = BFF attachment URL scoped to *another*
+    ticket. External/non-document img srcs are not counted — the allowlist
+    still strips them silently, as before.
+    """
+    text = str(html or "")
+    intended: set[int] = {
+        int(raw) for raw in _DATA_ATTACHMENT_ID_RE.findall(text)
+    }
+    foreign = 0
+    for ref_ticket, doc_id in extract_bff_attachment_refs(text):
+        if int(ticket_id) > 0 and ref_ticket == int(ticket_id):
+            intended.add(doc_id)
+        else:
+            foreign += 1
+    for match in _DOC_SEND_RE.finditer(text):
+        intended.add(int(match.group(1)))
+    return intended, foreign
 
 
 _INLINE_IMG_DOC_RE = re.compile(

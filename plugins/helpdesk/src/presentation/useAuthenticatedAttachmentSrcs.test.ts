@@ -44,6 +44,23 @@ describe("persistHelpdeskAttachmentHtml", () => {
     expect(persisted).toContain('data-attachment-pending="abc-1"');
     expect(persisted).not.toContain("blob:");
   });
+
+  it("chrome do editor (wrapper + × + ZWSP) nunca persiste — só o <img>", () => {
+    const html =
+      '<p>antes\u200b<span class="delpi-ui-rich-text__inline-image" contenteditable="false">' +
+      '<img src="blob:http://localhost/x" alt="placa" data-attachment-id="1177" />' +
+      '<button data-inline-image-remove="1" contenteditable="false">×</button>' +
+      '</span>\u200bdepois</p>';
+    const persisted = persistHelpdeskAttachmentHtml(html, 1122);
+    expect(persisted).not.toContain("×");
+    expect(persisted).not.toContain("<button");
+    expect(persisted).not.toContain("__inline-image");
+    expect(persisted).not.toContain("\u200b");
+    expect(persisted).not.toContain("blob:");
+    expect(persisted).toContain("/apps/helpdesk-api/tickets/1122/attachments/1177");
+    expect(persisted.indexOf("antes")).toBeLessThan(persisted.indexOf("<img"));
+    expect(persisted.indexOf("<img")).toBeLessThan(persisted.indexOf("depois"));
+  });
 });
 
 describe("transferPendingSrcMaps + resolve alias", () => {

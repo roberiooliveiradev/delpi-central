@@ -204,6 +204,8 @@ const MESSAGES: Record<string, string> = {
   validation_error: "Revise os campos e envie de novo.",
   idempotency_key_required: "Não foi possível confirmar o envio. Atualize a página e tente outra vez.",
   idempotency_in_flight: "Uma tentativa anterior pode ter sido concluída. Verifique o chamado antes de enviar de novo.",
+  inline_image_pending: "Não foi possível enviar: uma imagem ainda está sendo anexada. Aguarde e envie de novo.",
+  inline_image_unresolved: "Não foi possível enviar: uma imagem da mensagem não pôde ser vinculada a este chamado. Remova-a e anexe de novo.",
   catalog_unavailable: "Não foi possível carregar as categorias do helpdesk.",
 };
 
@@ -997,18 +999,24 @@ function CreateTicketPage() {
                 for (const pendingId of pendingIds) {
                   const file = pendingFilesRef.current.get(pendingId);
                   if (!file) continue;
-                  const uploaded = await uploadTicketAttachment(
-                    ticketId,
-                    file,
-                    `${idempotencyKey}:file:${pendingId}`,
-                  );
-                  if (attachmentAuthorDegraded(uploaded)) {
-                    stageAttachmentAuthorNotice();
+                  try {
+                    const uploaded = await uploadTicketAttachment(
+                      ticketId,
+                      file,
+                      `${idempotencyKey}:file:${pendingId}`,
+                    );
+                    if (attachmentAuthorDegraded(uploaded)) {
+                      stageAttachmentAuthorNotice();
+                    }
+                    if (file.type.startsWith("image/")) {
+                      mapping[pendingId] = { documentId: uploaded.document_id, ticketId };
+                    }
+                    pendingFilesRef.current.delete(pendingId);
+                  } catch (error) {
+                    // One failed file must not orphan the others — the pending
+                    // ref stays in the map and is stripped from the HTML below.
+                    setErrorText(messageFor(error).text);
                   }
-                  if (file.type.startsWith("image/")) {
-                    mapping[pendingId] = { documentId: uploaded.document_id, ticketId };
-                  }
-                  pendingFilesRef.current.delete(pendingId);
                 }
                 // Inline images keep their original position: rewrite the
                 // pending placeholders to stable document refs and persist
@@ -1018,7 +1026,13 @@ function CreateTicketPage() {
                   Object.keys(mapping).length > 0 &&
                   listPendingInlineIds(description).length > 0
                 ) {
-                  const rewritten = rewritePendingInlineImages(description, mapping);
+                  // Failed uploads keep `attachment:pending:` refs — strip them
+                  // so they cannot poison the whole description update (the BFF
+                  // rejects unresolved refs; the create itself already went
+                  // through without them).
+                  const rewritten = stripPendingInlineImages(
+                    rewritePendingInlineImages(description, mapping),
+                  );
                   if (rewritten.trim()) {
                     await updateTicketDescription(
                       ticketId,
@@ -1192,6 +1206,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  /** In-flight uploads keyed by pendingId — submit awaits these, never re-uploads. */
+  const inlineUploadsRef = useRef<Map<string, Promise<number | null>>>(new Map());
   const replyComposerRef = useRef<HelpdeskRichTextFieldHandle>(null);
   /** Non-image files staged in the reply composer — removable chips below the editor. */
   const [pendingAttachments, setPendingAttachments] = useState<HelpdeskPendingAttachmentItem[]>([]);
@@ -1234,6 +1250,71 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       pendingFilesMapToDraftRows(pendingFilesRef.current),
     );
   }, [ticketId]);
+
+  /**
+   * One upload per pendingId — the stable key makes F5/retry the same
+   * intent at the BFF instead of a new blind write. Resolves the
+   * document_id (or null on failure); the promise is memoized so the
+   * submit path can await it without duplicating the request.
+   */
+  const startInlineUpload = useCallback(
+    (pendingId: string, file: File): Promise<number | null> => {
+      const existing = inlineUploadsRef.current.get(pendingId);
+      if (existing) return existing;
+      const promise = uploadTicketAttachment(ticketId, file, `file:${pendingId}`)
+        .then((uploaded) => {
+          if (attachmentAuthorDegraded(uploaded)) {
+            setNoticeText(ATTACHMENT_AUTHOR_NOTICE_TEXT);
+          }
+          attachmentPreview.transferPendingSeed(pendingId, uploaded.document_id);
+          rekeyDraftFileToDocument(
+            pendingFilesRef.current,
+            pendingId,
+            uploaded.document_id,
+          );
+          void persistReplyPendingFiles();
+          return uploaded.document_id;
+        })
+        .catch((error) => {
+          setErrorText(messageFor(error).text);
+          return null;
+        });
+      inlineUploadsRef.current.set(pendingId, promise);
+      return promise;
+    },
+    [
+      ticketId,
+      attachmentPreview.transferPendingSeed,
+      persistReplyPendingFiles,
+    ],
+  );
+
+  /** Resolve every pending inline ref: await in-flight uploads, start the ones
+   * restored from draft. Returns the rewritten HTML or null when an image is
+   * still unresolved (caller must block the send — never strip silently). */
+  const resolveInlineUploadsForSubmit = useCallback(
+    async (html: string): Promise<string | null> => {
+      const pendingIds = listPendingInlineIds(html);
+      if (pendingIds.length === 0) return html;
+      const mapping: Record<string, { documentId: number; ticketId: string }> = {};
+      for (const pendingId of pendingIds) {
+        let promise = inlineUploadsRef.current.get(pendingId);
+        if (!promise) {
+          const file = pendingFilesRef.current.get(pendingId);
+          if (file) promise = startInlineUpload(pendingId, file);
+        }
+        const documentId = promise ? await promise : null;
+        if (documentId != null) {
+          mapping[pendingId] = { documentId, ticketId };
+        }
+      }
+      const rewritten = attachmentPreview.persistHtml(
+        rewritePendingInlineImages(html, mapping),
+      );
+      return listPendingInlineIds(rewritten).length === 0 ? rewritten : null;
+    },
+    [ticketId, startInlineUpload, attachmentPreview.persistHtml],
+  );
 
   const removePendingAttachment = useCallback(
     (pendingId: string) => {
@@ -1438,12 +1519,18 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       setFollowupEditError("Escreva o novo texto do acompanhamento antes de salvar.");
       return;
     }
+    if (listPendingInlineIds(followupEditContent).length > 0) {
+      setFollowupEditError(
+        "Não foi possível salvar: a imagem ainda não foi anexada. Remova-a ou aguarde o envio.",
+      );
+      return;
+    }
     setFollowupEditSaving(true);
     setFollowupEditError(null);
     void updateFollowup(
       ticketId,
       followupEditingId,
-      { content: followupEditContent.trim() },
+      { content: attachmentPreview.persistHtml(followupEditContent.trim()) },
       followupEditKey,
     )
       .then(() => {
@@ -1914,6 +2001,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               required
                               disabled={followupEditSaving}
                               resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
+                              persistAttachmentImageSrc={
+                                attachmentPreview.persistAttachmentImageSrc
+                              }
                             />
                             {followupEditError ? (
                               <p className="helpdesk-followup-edit__error" role="alert">
@@ -2067,7 +2157,6 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 if (saving || !hasVisibleRichText(content)) return;
                                 setSaving(true);
                                 setErrorText(null);
-                                const payload = attachmentPreview.persistHtml(content.trim());
                                 void (async () => {
                                   for (const item of pendingAttachments) {
                                     const file = pendingFilesRef.current.get(item.id);
@@ -2082,7 +2171,19 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     }
                                     pendingFilesRef.current.delete(item.id);
                                   }
-                                  await createFollowup(
+                                  // Inline images must resolve to persisted
+                                  // document refs before the write — sending
+                                  // `attachment:pending:` would lose the image.
+                                  const resolvedHtml = await resolveInlineUploadsForSubmit(
+                                    content.trim(),
+                                  );
+                                  if (resolvedHtml === null) {
+                                    throw new Error(
+                                      "Não foi possível anexar todas as imagens da mensagem. Aguarde o envio ou remova a imagem e tente de novo.",
+                                    );
+                                  }
+                                  const payload = attachmentPreview.persistHtml(resolvedHtml);
+                                  return await createFollowup(
                                     ticketId,
                                     {
                                       content: payload,
@@ -2093,7 +2194,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     idempotencyKey,
                                   );
                                 })()
-                                  .then(() => {
+                                  .then((result) => {
+                                    if (result?.outcome === "verification_failed") {
+                                      // Persisted but postcondition unconfirmed —
+                                      // the draft can go (a retry would only
+                                      // duplicate), the warning cannot.
+                                      setNoticeText(
+                                        "A mensagem foi registrada, mas uma imagem não pôde ser confirmada no chamado. Verifique o acompanhamento antes de enviar de novo.",
+                                      );
+                                    }
                                     setContent("");
                                     setReplyMeta(EMPTY_TICKET_REPLY_META);
                                     clearReplyDraft(ticketId);
@@ -2175,47 +2284,30 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                         string,
                                         { documentId: number; ticketId: string }
                                       > = {};
-                                      try {
-                                        for (const item of pendingUploads) {
-                                          const uploaded = await uploadTicketAttachment(
-                                            ticketId,
-                                            item.file,
-                                            newIdempotencyKey(),
-                                          );
-                                          if (attachmentAuthorDegraded(uploaded)) {
-                                            setNoticeText(ATTACHMENT_AUTHOR_NOTICE_TEXT);
-                                          }
-                                          attachmentPreview.transferPendingSeed(
-                                            item.pendingId,
-                                            uploaded.document_id,
-                                          );
+                                      for (const item of pendingUploads) {
+                                        const documentId = await startInlineUpload(
+                                          item.pendingId,
+                                          item.file,
+                                        );
+                                        if (documentId != null) {
                                           mapping[item.pendingId] = {
-                                            documentId: uploaded.document_id,
+                                            documentId,
                                             ticketId,
                                           };
-                                          rekeyDraftFileToDocument(
-                                            pendingFilesRef.current,
-                                            item.pendingId,
-                                            uploaded.document_id,
-                                          );
                                         }
-                                        await persistReplyPendingFiles();
-                                        if (Object.keys(mapping).length > 0) {
-                                          const scope = replyDraftPendingScope(ticketId);
-                                          const rows = await readHelpdeskDraftPendingFiles(scope);
-                                          setContent((current) => {
-                                            const rewritten = attachmentPreview.persistHtml(
-                                              rewritePendingInlineImages(current, mapping),
-                                            );
-                                            if (!canRewritePendingDraftHtml(rewritten, rows)) {
-                                              return current;
-                                            }
-                                            return rewritten;
-                                          });
-                                        }
-                                      } catch (error) {
-                                        setErrorText(messageFor(error).text);
                                       }
+                                      if (Object.keys(mapping).length === 0) return;
+                                      const scope = replyDraftPendingScope(ticketId);
+                                      const rows = await readHelpdeskDraftPendingFiles(scope);
+                                      setContent((current) => {
+                                        const rewritten = attachmentPreview.persistHtml(
+                                          rewritePendingInlineImages(current, mapping),
+                                        );
+                                        if (!canRewritePendingDraftHtml(rewritten, rows)) {
+                                          return current;
+                                        }
+                                        return rewritten;
+                                      });
                                     })();
                                   }
                                   return results;

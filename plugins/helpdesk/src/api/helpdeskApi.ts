@@ -314,7 +314,12 @@ export function createFollowup(
   body: { content: string; request_type_id?: number },
   idempotencyKey: string,
 ) {
-  return request<{ id: number }>(`/tickets/${ticketId}/followups`, {
+  return request<{
+    id: number;
+    followup_id?: number;
+    outcome?: string;
+    content_verified?: boolean;
+  }>(`/tickets/${ticketId}/followups`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -600,6 +600,96 @@ def test_followup_keeps_inline_image_when_doc_only_on_document_item():
     assert f"docid={document_id}" in glpi.followups[0][1]
 
 
+def test_followup_rejects_pending_inline_image():
+    """`attachment:pending:` must never reach a write — the upload never
+    produced a document, so the image would be dropped silently."""
+    client, glpi = build_client()
+    link(client)
+    response = client.post(
+        "/tickets/7/followups",
+        json={
+            "content": (
+                '<p>foto</p><p><img src="attachment:pending:abc-123" '
+                'data-attachment-pending="abc-123" alt="placa" /></p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "follow-pending"},
+    )
+    assert response.status_code == 422
+    assert response.json()["error"] == "inline_image_pending"
+    assert len(glpi.followups) == 0
+
+
+def test_followup_strips_editor_chrome_not_image():
+    """The real failure (GLPI #1464): editor wrapper + remove button +
+    ZWSP must be cleaned while the <img> and its position survive."""
+    client, glpi = build_client()
+    link(client)
+    content = (
+        '<p>antes\u200b<span class="delpi-ui-mention-composer__inline-image '
+        'delpi-ui-rich-text__inline-image" contenteditable="false">'
+        '<img src="/apps/helpdesk-api/tickets/7/attachments/2" alt="placa" '
+        'data-attachment-id="2" />'
+        '<button type="button" class="delpi-ui-rich-text__inline-image-remove" '
+        'data-inline-image-remove="1" contenteditable="false" tabindex="-1" '
+        'aria-label="Remove placa">×</button></span>\u200bdepois</p>'
+    )
+    response = client.post(
+        "/tickets/7/followups",
+        json={"content": content},
+        headers={**auth_headers(), "Idempotency-Key": "follow-chrome"},
+    )
+    assert response.status_code == 201
+    stored = glpi.followups[0][1]
+    assert f"docid=2" in stored or "docid=2" in stored
+    assert "×" not in stored
+    assert "<button" not in stored.lower()
+    assert "inline-image" not in stored
+    assert stored.index("antes") < stored.index("docid=2") < stored.index("depois")
+
+
+def test_followup_partial_when_readback_drops_image():
+    """GLPI persists the follow-up but drops the <img> — the write exists,
+    the postcondition fails: governed 207 with followup_id, replayable."""
+    client, glpi = build_client()
+    link(client)
+    glpi.followup_strip_images = True
+    headers = {**auth_headers(), "Idempotency-Key": "follow-imgdrop"}
+    content = (
+        '<p>antes</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/2" '
+        'alt="logo" /></p><p>depois</p>'
+    )
+    response = client.post("/tickets/7/followups", json={"content": content}, headers=headers)
+    assert response.status_code == 207
+    body = response.json()
+    assert body["outcome"] == "verification_failed"
+    assert body["followup_id"] == 8
+    assert body["content_verified"] is False
+    # Replay under the same key returns the governed partial — never a
+    # blind second write.
+    replay = client.post("/tickets/7/followups", json={"content": content}, headers=headers)
+    assert replay.status_code == 207
+    assert replay.json() == body
+    assert len(glpi.followups) == 1
+
+
+def test_update_followup_preserves_inline_image():
+    client, glpi = build_client()
+    link(client)
+    response = client.put(
+        "/tickets/7/followups/1",
+        json={
+            "content": (
+                '<p>reiniciei</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/2" '
+                'alt="print" /></p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "edit-follow-img"},
+    )
+    assert response.status_code == 200
+    assert "docid=2" in glpi.updated_followups[0][2]
+
+
 def test_attachment_upload_via_legacy_path():
     client, glpi = build_client()
     link(client)
@@ -636,6 +726,8 @@ def test_attachment_upload_via_legacy_path():
     # Outbound stores the GLPI-native doc.send URL — renders inline in GLPI
     # and is rewritten back to the authenticated BFF path on read.
     assert "document.send.php?docid=100" in glpi.followups[0][1]
+    # Cross-ticket document refs are an unresolved intent — typed 422,
+    # never a silently dropped image persisted as integral success.
     foreign_img = client.post(
         "/tickets/7/followups",
         json={
@@ -645,9 +737,9 @@ def test_attachment_upload_via_legacy_path():
         },
         headers={**auth_headers(), "Idempotency-Key": "up-foreign"},
     )
-    assert foreign_img.status_code == 201
-    assert "attachments/100" not in glpi.followups[1][1]
-    assert "img" not in glpi.followups[1][1].lower()
+    assert foreign_img.status_code == 422
+    assert foreign_img.json()["error"] == "inline_image_unresolved"
+    assert len(glpi.followups) == 1
 
 
 def test_update_description_preserves_inline_images():
@@ -689,7 +781,9 @@ def test_update_description_preserves_inline_images():
     assert len(glpi.description_writes) == 1
 
 
-def test_update_description_strips_unowned_document_reference():
+def test_update_description_rejects_unowned_document_reference():
+    """An intended document ref that does not belong to the ticket is an
+    unresolved image — typed 422, never silently stripped to a false 200."""
     from dataclasses import replace
 
     client, glpi = build_client()
@@ -705,10 +799,9 @@ def test_update_description_strips_unowned_document_reference():
         },
         headers={**auth_headers(), "Idempotency-Key": "desc-alien"},
     )
-    assert response.status_code == 200
-    assert "docid=77" not in glpi.description_writes[0][1]
-    assert "attachments/77" not in glpi.description_writes[0][1]
-    assert "ok" in glpi.description_writes[0][1]
+    assert response.status_code == 422
+    assert response.json()["error"] == "inline_image_unresolved"
+    assert len(glpi.description_writes) == 0
 
 
 def test_update_description_forbidden_for_non_requester():

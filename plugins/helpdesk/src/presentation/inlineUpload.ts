@@ -194,3 +194,25 @@ function escapeAttr(value: string): string {
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+const INLINE_IMAGE_WRAPPER_RE =
+  /<(?:span|figure)\b[^>]*class="[^"]*__inline-image[^"]*"[^>]*>([\s\S]*?)<\/(?:span|figure)>/gi;
+const INLINE_IMAGE_REMOVE_BTN_RE = /<button\b[^>]*>[\s\S]*?<\/button>/gi;
+const UNCLOSED_BUTTON_RE = /<button\b[^>]*\/?>/gi;
+const CARET_ZWSP_RE = /\u200b/g;
+
+/**
+ * Editor-only chrome never persists as content: the contentEditable wraps
+ * inline images in a `__inline-image` span with a remove `<button>×</button>`
+ * and pads the caret with ZWSP. Persisted HTML keeps only the `<img>` (with
+ * its data-attachment-* refs) at the same position. Idempotent.
+ */
+export function stripInlineEditorChrome(html: string): string {
+  let next = String(html || "");
+  if (!next) return next;
+  next = next.replace(INLINE_IMAGE_REMOVE_BTN_RE, "");
+  next = next.replace(UNCLOSED_BUTTON_RE, "");
+  next = next.replace(INLINE_IMAGE_WRAPPER_RE, "$1");
+  next = next.replace(CARET_ZWSP_RE, "");
+  return next;
+}
