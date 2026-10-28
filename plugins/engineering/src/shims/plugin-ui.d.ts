@@ -7,9 +7,12 @@ declare module "@delpi/plugin-ui/index" {
   import type {
     ComponentType,
     ErrorInfo,
+    ForwardRefExoticComponent,
     InputHTMLAttributes,
     ReactElement,
     ReactNode,
+    RefAttributes,
+    RefObject,
   } from "react";
 
   export type StatusBadgeVariant = "neutral" | "info" | "success" | "warning" | "danger";
@@ -894,6 +897,334 @@ declare module "@delpi/plugin-ui/index" {
   export function TaskItemsTable(
     props: TaskItemsTableProps,
   ): ReactElement;
+
+  /* ---- portal home kit (F3.R1) ---- */
+
+  export type FormatPortalGreetingInput = {
+    displayName?: string | null;
+    firstName?: string | null;
+    now?: Date;
+    fallback?: string | null;
+  };
+
+  export function formatPortalGreeting(
+    input?: FormatPortalGreetingInput,
+  ): string;
+
+  export type PageHeroHighlightTone = "neutral" | "warning" | "danger";
+
+  export type PageHeroHighlight = {
+    id: string;
+    label: ReactNode;
+    value: ReactNode;
+    description?: ReactNode;
+    tone?: PageHeroHighlightTone;
+    loading?: boolean;
+    onSelect?: () => void;
+    active?: boolean;
+    ariaLabel?: string;
+  };
+
+  export type DashboardPageHeroProps = {
+    eyebrow?: ReactNode;
+    title: ReactNode;
+    description?: ReactNode;
+    badge?: ReactNode;
+    actions?: ReactNode;
+    highlights?: PageHeroHighlight[];
+    children?: ReactNode;
+    density?: "comfortable" | "compact";
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardPageHero(config: {
+    prefix: string;
+  }): ComponentType<DashboardPageHeroProps>;
+
+  export type DashboardMetricStripProps = {
+    items: PageHeroHighlight[];
+    density?: "comfortable" | "compact";
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardMetricStrip(config: {
+    prefix: string;
+  }): ComponentType<DashboardMetricStripProps>;
+
+  export type AlertQueueItem = {
+    id: string;
+    title: ReactNode;
+    description?: ReactNode;
+    tone?: "neutral" | "info" | "warning" | "danger" | "success";
+    leadingIcon?: ReactNode;
+    actionLabel?: string;
+    onAction?: () => void;
+  };
+
+  export type DashboardEventsSectionProps = {
+    title: string;
+    subtitle?: string;
+    hint?: string;
+    actions?: ReactNode;
+    items: AlertQueueItem[];
+    children?: ReactNode;
+    omitWhenEmpty?: boolean;
+    emptyMessage?: string;
+    listAriaLabel?: string;
+    className?: string;
+  };
+
+  export function createDashboardEventsSection(config: {
+    prefix: string;
+    labels: { titleHelpAriaLabel: (title: string) => string };
+    sectionClassNames?: Record<string, string>;
+  }): ComponentType<DashboardEventsSectionProps>;
+
+  export type CatalogSearchHit = {
+    id: string;
+    label: string;
+    groupLabel?: string;
+  };
+
+  export type DashboardCatalogSearchBarProps = {
+    value: string;
+    onChange: (value: string) => void;
+    onSelectHit?: (id: string) => void;
+    hits?: readonly CatalogSearchHit[];
+    placeholder?: string;
+    clearLabel?: string;
+    emptyHitsLabel?: string;
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardCatalogSearchBar(config: {
+    classNames: Record<string, string>;
+  }): ComponentType<DashboardCatalogSearchBarProps>;
+
+  export function catalogSearchBarBemClasses(
+    prefix: string,
+  ): Record<string, string>;
+
+  export type RecentAccessItem = {
+    id: string;
+    label: string;
+    icon?: ReactNode;
+  };
+
+  export type DashboardRecentAccessStripProps = {
+    items: RecentAccessItem[];
+    onSelect: (id: string) => void;
+    label?: ReactNode;
+    maxVisible?: number;
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardRecentAccessStrip(config: {
+    prefix: string;
+  }): ComponentType<DashboardRecentAccessStripProps>;
+
+  export type SectionRouteItem = {
+    id: string;
+    label: string;
+    onClick: () => void;
+    badge?: string | number;
+    disabled?: boolean;
+    pinned?: boolean;
+    onPinClick?: () => void;
+    pinLabel?: string;
+    unpinLabel?: string;
+    kind?: "navigate" | "create";
+  };
+
+  export type DashboardSectionRouteCardProps = {
+    title: string;
+    icon?: ReactNode;
+    badge?: string | number;
+    description?: string;
+    hint?: string;
+    routes: readonly SectionRouteItem[];
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardSectionRouteCard(config: {
+    classNames: Record<string, string>;
+  }): ComponentType<DashboardSectionRouteCardProps>;
+
+  export function sectionRouteCardBemClasses(
+    prefix: string,
+  ): Record<string, string>;
+
+  export type TopBarFavoritesItem = {
+    id: string;
+    label: string;
+  };
+
+  export type DashboardTopBarFavoritesStripProps = {
+    items: readonly TopBarFavoritesItem[];
+    onSelect: (id: string) => void;
+    onRemove: (id: string) => void;
+    title: string;
+    emptyLabel: string;
+    errorLabel?: string | null;
+    openAriaLabel: string;
+    closeAriaLabel: string;
+    removeLabel: (label: string) => string;
+    portalScopeClassName?: string;
+    className?: string;
+  };
+
+  export function createDashboardTopBarFavoritesStrip(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardTopBarFavoritesStripProps>;
+
+  export type DashboardTopBarSearchTriggerProps = {
+    onOpen: () => void;
+    label: string;
+    shortcutLabel: string;
+    "aria-label": string;
+    title?: string;
+    expanded?: boolean;
+    className?: string;
+  };
+
+  export function createDashboardTopBarSearchTrigger(config: {
+    prefix: string;
+  }): ForwardRefExoticComponent<
+    DashboardTopBarSearchTriggerProps & RefAttributes<HTMLButtonElement>
+  >;
+
+  export type TopBarUserIdentityMenuItem = {
+    id: string;
+    label: string;
+    onSelect: () => void;
+    disabled?: boolean;
+  };
+
+  export type DashboardTopBarUserIdentityProps = {
+    displayName: string | null;
+    fallbackLabel?: string;
+    avatarUrl?: string | null;
+    loading?: boolean;
+    className?: string;
+    portalScopeClassName?: string;
+    href?: string;
+    title?: string;
+    ariaLabel?: string;
+    avatarHref?: string;
+    avatarTitle?: string;
+    menuItems?: TopBarUserIdentityMenuItem[];
+    menuAriaLabel?: string;
+  };
+
+  export function createDashboardTopBarUserIdentity(config: {
+    prefix: string;
+  }): ComponentType<DashboardTopBarUserIdentityProps>;
+
+  export type DashboardCommandPaletteProps = {
+    open: boolean;
+    onClose: () => void;
+    title: string;
+    anchorRef: RefObject<HTMLElement | null>;
+    value: string;
+    onChange: (value: string) => void;
+    hits?: readonly CatalogSearchHit[];
+    onSelectHit: (id: string) => void;
+    placeholder?: string;
+    emptyHitsLabel?: string;
+    clearLabel?: string;
+    portalScopeClassName?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardCommandPalette(config: {
+    prefix: string;
+    portalScopeClassName: string;
+  }): ComponentType<DashboardCommandPaletteProps>;
+
+  export type PagePathLink = {
+    label: string;
+    href: string;
+    onNavigate?: (event: {
+      preventDefault: () => void;
+    }) => void;
+  };
+
+  export type PagePathItem = {
+    label: string;
+    href?: string;
+    onNavigate?: (event: {
+      preventDefault: () => void;
+    }) => void;
+  };
+
+  export type DashboardPagePathProps = {
+    back: PagePathLink;
+    items?: PagePathItem[];
+    current: string;
+    maxVisibleItems?: number;
+    size?: "sm" | "md";
+    ariaLabel?: string;
+    className?: string;
+  };
+
+  export function createDashboardPagePath(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardPagePathProps>;
+
+  export type DashboardViewTransitionProps = {
+    transitionKey: string;
+    children: ReactNode;
+    tone?: "page" | "panel";
+    className?: string;
+    "aria-live"?: "off" | "polite" | "assertive";
+  };
+
+  export function createDashboardViewTransition(config: {
+    prefix: string;
+  }): ComponentType<DashboardViewTransitionProps>;
+
+  export type UserManualTocItem = {
+    id: string;
+    label: string;
+    onSelect: () => void;
+  };
+
+  export type EngineeringUserManualKit = {
+    classNames: Record<string, string>;
+    Frame: ComponentType<{ children: ReactNode; className?: string }>;
+    Eyebrow: ComponentType<{ children: ReactNode }>;
+    Scope: ComponentType<{ children: ReactNode }>;
+    Section: ComponentType<{ id?: string; children: ReactNode }>;
+    Layout: ComponentType<{
+      title: string;
+      items: readonly UserManualTocItem[];
+      children: ReactNode;
+      "aria-label"?: string;
+    }>;
+    Concepts: ComponentType<{
+      items: readonly { term: string; meaning: ReactNode }[];
+    }>;
+    GuideTable: ComponentType<{
+      rows: readonly { want: ReactNode; where: ReactNode; how: ReactNode }[];
+    }>;
+    Faq: ComponentType<{
+      items: readonly { q: ReactNode; a: ReactNode }[];
+    }>;
+    Glossary: ComponentType<{
+      items: readonly { term: ReactNode; meaning: ReactNode }[];
+    }>;
+  };
+
+  export function createDashboardUserManual(config: {
+    prefix: string;
+  }): EngineeringUserManualKit;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

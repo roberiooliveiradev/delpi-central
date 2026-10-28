@@ -1,0 +1,222 @@
+import { BookOpen } from "lucide-react";
+
+import {
+  buildEngineeringPath,
+  navigateEngineeringView,
+} from "../../app/engineeringRoutes";
+import {
+  EngineeringActionButton,
+  EngineeringPageHero,
+  EngineeringPagePath,
+  EngineeringSectionCard,
+  EngineeringUserManual,
+} from "../../ui/engineeringUi";
+
+type HelpPageProps = {
+  basePath: string;
+};
+
+function scrollToSection(id: string) {
+  const el = document.getElementById(`manual-${id}`);
+  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/** Ajuda — manual de uso do Portal Engenharia no componente oficial
+ * `UserManual` do plugin-ui. Documenta somente o que está implementado:
+ * EVA e colaboração aparecem como limitações/capacidades futuras. */
+export function HelpPage({ basePath }: HelpPageProps) {
+  const Manual = EngineeringUserManual;
+  const homeHref = buildEngineeringPath("home", basePath);
+
+  const sections = [
+    { id: "start", title: "Página Início" },
+    { id: "paths", title: "Caminhos e funcionalidades" },
+    { id: "search", title: "Busca e favoritos" },
+    { id: "states", title: "Estados das informações" },
+    { id: "permissions", title: "Permissões" },
+    { id: "limits", title: "Limitações atuais" },
+  ];
+
+  return (
+    <Manual.Frame className="engineering-manual">
+      <EngineeringPagePath
+        back={{
+          label: "Início",
+          href: homeHref,
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigateEngineeringView("home", { basePath });
+          },
+        }}
+        items={[]}
+        current="Ajuda"
+      />
+
+      <EngineeringPageHero
+        eyebrow={
+          <Manual.Eyebrow>
+            <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />
+            Ajuda
+          </Manual.Eyebrow>
+        }
+        title="Ajuda do Portal Engenharia"
+        description="Como usar a sua área de trabalho, os caminhos, a busca e os favoritos."
+        actions={
+          <EngineeringActionButton
+            variant="ghost"
+            onClick={() => navigateEngineeringView("home", { basePath })}
+          >
+            Voltar ao Início
+          </EngineeringActionButton>
+        }
+      />
+
+      <Manual.Scope>
+        O Portal Engenharia reúne sua área de trabalho na Minha DELPI.
+        Ele mostra somente informações que você tem permissão de ver —
+        as permissões são controladas pela plataforma, não pelo portal.
+      </Manual.Scope>
+
+      <Manual.Layout
+        title="Nesta página"
+        aria-label="Sumário da ajuda"
+        items={sections.map((section) => ({
+          id: section.id,
+          label: section.title,
+          onSelect: () => scrollToSection(section.id),
+        }))}
+      >
+        <Manual.Section id="manual-start">
+          <EngineeringSectionCard title="Página Início">
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Saudação",
+                  meaning:
+                    "No topo, o portal apresenta uma saudação com seu nome e um resumo das suas fontes autorizadas: tarefas, solicitações e LMPs.",
+                },
+                {
+                  term: "Eventos e interações",
+                  meaning:
+                    "Lista os itens que pedem sua atenção — tarefas atribuídas e solicitações abertas — com atalho para abrir cada um no aplicativo oficial.",
+                },
+                {
+                  term: "Caminhos e funcionalidades",
+                  meaning:
+                    "Catálogo dos acessos oficiais de Engenharia, organizados por categoria: Trabalho, Análises e Suporte.",
+                },
+              ]}
+            />
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-paths">
+          <EngineeringSectionCard title="Caminhos e funcionalidades">
+            <p>
+              Cada cartão agrupa funcionalidades de uma categoria. Itens
+              marcados como "Em breve" representam capacidades previstas e
+              ainda não executáveis — eles não abrem nenhuma página.
+            </p>
+            <p>
+              Os destinos externos (como Minhas solicitações ou LMPs) abrem
+              os aplicativos oficiais correspondentes. Se você não tiver a
+              permissão exigida por um aplicativo, o atalho não aparece.
+            </p>
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-search">
+          <EngineeringSectionCard title="Busca e favoritos">
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Busca",
+                  meaning:
+                    "Use o campo na barra superior (ou Ctrl+K) para pesquisar funcionalidades por nome, descrição ou palavra-chave.",
+                },
+                {
+                  term: "Favoritos",
+                  meaning:
+                    "Toque na estrela de um caminho para fixá-lo na barra superior. Favoritos ficam salvos neste navegador, na sua conta — eles não são compartilhados entre dispositivos.",
+                },
+                {
+                  term: "Últimos acessos",
+                  meaning:
+                    "Os caminhos abertos recentemente aparecem em destaque para retomada rápida.",
+                },
+              ]}
+            />
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-states">
+          <EngineeringSectionCard title="Estados das informações">
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Disponível",
+                  meaning: "A fonte oficial respondeu e há itens para mostrar.",
+                },
+                {
+                  term: "Sem itens",
+                  meaning:
+                    "A fonte respondeu e, no momento, não há pendências — não é um erro.",
+                },
+                {
+                  term: "Indisponível",
+                  meaning:
+                    "A fonte oficial falhou ou está fora do ar. Tente atualizar; as demais partes da página continuam funcionando.",
+                },
+                {
+                  term: "Acesso negado",
+                  meaning:
+                    "Você não tem permissão para ver essa informação. Se precisar, solicite a permissão ao administrador.",
+                },
+                {
+                  term: "Capacidade futura",
+                  meaning:
+                    "Funcionalidade prevista no portal que ainda não foi liberada.",
+                },
+              ]}
+            />
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-permissions">
+          <EngineeringSectionCard title="Permissões">
+            <p>
+              As permissões são definidas e concedidas pela plataforma Minha
+              DELPI (Core). O Portal Engenharia apenas apresenta o que o seu
+              acesso autoriza — não existe permissão especial criada pelo
+              portal.
+            </p>
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-limits">
+          <EngineeringSectionCard title="Limitações atuais">
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Assistente EVA",
+                  meaning:
+                    "Capacidade de inteligência assistiva prevista para uma próxima etapa — ainda não está operacional.",
+                },
+                {
+                  term: "Colaboração",
+                  meaning:
+                    "Espaços de trabalho compartilhados ainda não possuem fonte oficial neste portal.",
+                },
+                {
+                  term: "Favoritos e últimos acessos",
+                  meaning:
+                    "Ficam salvos localmente neste navegador e não são sincronizados entre dispositivos.",
+                },
+              ]}
+            />
+          </EngineeringSectionCard>
+        </Manual.Section>
+      </Manual.Layout>
+    </Manual.Frame>
+  );
+}

@@ -1,74 +1,45 @@
-.portal-engineering,
-.portal-engineering * {
-  box-sizing: border-box;
-}
+/* Layout do Portal Engenharia — composição apenas; cores/tokens vêm do
+ * kit `.delpi-ui-*` do plugin-ui (escopo `.portal-engineering`). */
 
-/* Tokens do plugin + mapeamento para o kit (--delpi-ui-*). Sem CSS de componente. */
 .portal-engineering {
-  --engineering-page-padding: 24px;
-  --engineering-section-gap: 20px;
-  --engineering-accent: var(--primary, #089bdb);
-  --engineering-title: var(--secundary, #003866);
-  --engineering-text: var(--text, #111111);
-  --engineering-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
-  --engineering-surface: var(--surface, #ffffff);
-  --engineering-border: var(--border, #e6e6e6);
-  --engineering-danger: var(--danger, #b42318);
-
-  --delpi-ui-accent: var(--engineering-accent);
-  --delpi-ui-title: var(--engineering-title);
-  --delpi-ui-surface: var(--engineering-surface);
-  --delpi-ui-text: var(--engineering-text);
-  --delpi-ui-text-muted: var(--engineering-text-muted);
-  --delpi-ui-muted: var(--engineering-text-muted);
-  --delpi-ui-border: var(--engineering-border);
-  --delpi-ui-danger: var(--engineering-danger);
-  --delpi-ui-section-gap: var(--engineering-section-gap);
-}
-
-:root[data-theme="dark"] .portal-engineering {
-  --engineering-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
-  --engineering-text: rgba(255, 255, 255, 0.88);
-  --engineering-text-muted: rgba(255, 255, 255, 0.64);
-  --engineering-surface: color-mix(in srgb, var(--surface, #1e293b) 92%, black);
-  --engineering-border: rgba(255, 255, 255, 0.12);
-}
-
-/* Layout de página apenas */
-.portal-engineering.engineering-page {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--engineering-section-gap);
-  min-height: 100%;
-  width: 100%;
-  max-width: 100%;
-  padding: var(--engineering-page-padding);
-  color: var(--engineering-text);
-  overflow-x: clip;
 }
 
-.portal-engineering .engineering-sections-grid {
+.engineering-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--delpi-space-4, 1rem);
+  padding: 0 0 var(--delpi-space-6, 1.5rem);
+}
+
+.engineering-home-paths {
+  display: flex;
+  flex-direction: column;
+  gap: var(--delpi-space-3, 0.75rem);
+}
+
+.engineering-home-sections-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
-  gap: var(--engineering-section-gap);
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--delpi-space-3, 0.75rem);
 }
 
-.portal-engineering .engineering-section-notice {
-  padding: 14px 16px;
-  border-radius: 10px;
-  border: 1px dashed var(--engineering-border);
-  color: var(--engineering-text-muted);
-  font-size: 0.92rem;
-  line-height: 1.45;
+.engineering-home-inline-note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--delpi-color-text-muted, #64748b);
 }
 
-.portal-engineering .engineering-section-notice--muted {
-  opacity: 0.75;
+.engineering-manual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--delpi-space-4, 1rem);
 }
 
-.portal-engineering .engineering-section-total {
-  margin: 8px 0 0;
-  color: var(--engineering-text-muted);
-  font-size: 0.8rem;
+@media (max-width: 768px) {
+  .engineering-home-sections-grid {
+    grid-template-columns: 1fr;
+  }
 }

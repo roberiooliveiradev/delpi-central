@@ -13,6 +13,10 @@ import type { AppProps } from "./App";
 import type { Root } from "react-dom/client";
 const { default: App } = await import("./App");
 
+import { resetHttpClient } from "./api/httpClient";
+import { resetFavoritesStore } from "./app/favoritesStore";
+import { resetRecentsStore } from "./app/recentViews";
+
 const roots = new WeakMap<HTMLElement, Root>();
 
 function renderApp(el: HTMLElement, props: AppProps = {}) {
@@ -43,4 +47,10 @@ export function unmount(el?: HTMLElement) {
 
   root.unmount();
   roots.delete(el);
+
+  // Hardening de sessão: nenhum getter de token, cache de favoritos ou
+  // escopo de identidade da sessão encerrada sobrevive à remontagem.
+  resetHttpClient();
+  resetFavoritesStore();
+  resetRecentsStore();
 }

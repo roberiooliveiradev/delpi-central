@@ -4,7 +4,7 @@
   "name": "Portal Engenharia",
   "description": "Área de trabalho da Engenharia — demandas, solicitações e LMPs autorizadas agregadas pela engineering-api.",
   "icon": "drafting-compass",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "microfrontend",
   "basePath": "/apps/engineering",
   "entry": "/apps/engineering/assets/remoteEntry.js",
@@ -24,6 +24,22 @@
       "icon": "drafting-compass",
       "order": 26,
       "showInMenu": true
+    },
+    {
+      "path": "/apps/engineering/overview",
+      "label": "Visão geral",
+      "permission": "engineering.access",
+      "icon": "bar-chart-2",
+      "order": 27,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/engineering/help",
+      "label": "Ajuda",
+      "permission": "engineering.access",
+      "icon": "book-open",
+      "order": 28,
+      "showInMenu": false
     }
   ],
   "ui": {

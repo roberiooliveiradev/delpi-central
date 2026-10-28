@@ -12,6 +12,13 @@ export function configureHttpClient(getAccessToken: () => string | undefined) {
   accessTokenGetter = getAccessToken;
 }
 
+/** Limpeza de sessão — chamada no unmount do MFE. Sem ela, o getter da
+ * sessão anterior ficaria acessível para uma remontagem com outro
+ * usuário antes do novo configure. */
+export function resetHttpClient(): void {
+  accessTokenGetter = null;
+}
+
 export type HomeApiErrorKind =
   | "unauthorized"
   | "forbidden"

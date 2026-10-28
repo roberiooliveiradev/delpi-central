@@ -1,7 +1,11 @@
-import type { TaskItemPresentation } from "@delpi/plugin-ui/index";
+import type {
+  AlertQueueItem,
+  PageHeroHighlight,
+} from "@delpi/plugin-ui/index";
 
 import type {
   HomeItem,
+  HomeResponse,
   HomeSection,
   HomeSectionKey,
   HomeStatus,
@@ -22,7 +26,7 @@ export type SectionViewKind =
 
 export type SectionView = {
   kind: SectionViewKind;
-  items: TaskItemPresentation[];
+  items: HomeItem[];
   message: string;
   totalLabel?: string;
 };
@@ -45,25 +49,12 @@ export function sourceLabel(system: string | undefined): string {
   return SOURCE_LABELS[system] ?? system;
 }
 
-function toPresentation(item: HomeItem): TaskItemPresentation {
-  const hasRoute = typeof item.href === "string" && item.href.startsWith("/apps/");
-  return {
-    id: item.id,
-    title: item.title,
-    sourceLabel: sourceLabel(item.source),
-    statusLabel: item.status_label || item.status || "—",
-    dueDateLabel: item.date || undefined,
-    route: hasRoute ? item.href : null,
-    actions: { canOpen: hasRoute },
-  };
-}
-
 export function buildSectionView(section: HomeSection): SectionView {
   switch (section.status) {
     case "available":
       return {
         kind: "items",
-        items: section.items.map(toPresentation),
+        items: section.items,
         message: "",
         totalLabel:
           typeof section.total === "number" && section.total > section.items.length
@@ -154,3 +145,140 @@ export const CONTINUITY_SECTIONS: readonly HomeSectionSpec[] = [
     subtitle: "Espaços de trabalho compartilhados",
   },
 ];
+
+/* ---- F3.R1 — composição de portal (hero / eventos) --------------- */
+
+function isGovernedHref(href: string | null | undefined): href is string {
+  return typeof href === "string" && href.startsWith("/apps/");
+}
+
+function itemDescription(item: HomeItem): string {
+  return [item.status_label || item.status, item.date]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/** Itens acionáveis do card Eventos — tarefas e solicitações do
+ * contrato F2a (links só quando o backend devolve href oficial). */
+export function buildEventItems(
+  sections: Pick<HomeResponse["sections"], "attention" | "tasks" | "requests">,
+  openLabel: string,
+  onOpen: (item: HomeItem) => void,
+): AlertQueueItem[] {
+  const items: AlertQueueItem[] = [];
+  for (const key of ["attention", "tasks", "requests"] as const) {
+    const section = sections[key];
+    if (section.status !== "available") continue;
+    for (const item of section.items) {
+      const href = isGovernedHref(item.href) ? item.href : undefined;
+      items.push({
+        id: item.id,
+        title: item.title,
+        description: itemDescription(item) || undefined,
+        tone: key === "attention" ? "warning" : "neutral",
+        actionLabel: href ? openLabel : undefined,
+        onAction: href ? () => onOpen(item) : undefined,
+      });
+    }
+  }
+  return items;
+}
+
+/** Se as fontes de evento falharam ou foram negadas — aviso discreto,
+ * nunca tabela de erros. */
+export function eventsSourcesDegraded(
+  sections: Pick<HomeResponse["sections"], "attention" | "tasks" | "requests">,
+): boolean {
+  return (["attention", "tasks", "requests"] as const).some(
+    (key) =>
+      sections[key].status === "unavailable" ||
+      sections[key].status === "forbidden",
+  );
+}
+
+const HIGHLIGHT_SPECS: readonly {
+  key: HomeSectionKey;
+  label: string;
+}[] = [
+  { key: "tasks", label: "Minhas tarefas" },
+  { key: "requests", label: "Minhas solicitações" },
+  { key: "lmps", label: "LMPs em acompanhamento" },
+];
+
+/** Tiles do Hero — somente fontes autorizadas disponíveis. Fonte
+ * indisponível/negada NUNCA renderiza 0. */
+export function buildHeroHighlights(
+  sections: HomeResponse["sections"],
+  loading: boolean,
+): PageHeroHighlight[] {
+  const highlights: PageHeroHighlight[] = [];
+  for (const spec of HIGHLIGHT_SPECS) {
+    const section = sections[spec.key];
+    if (loading && section.status === "unavailable") {
+      highlights.push({
+        id: spec.key,
+        label: spec.label,
+        value: "…",
+        loading: true,
+      });
+      continue;
+    }
+    if (section.status !== "available" && section.status !== "empty") {
+      continue;
+    }
+    const total =
+      typeof section.total === "number"
+        ? section.total
+        : section.items.length;
+    highlights.push({
+      id: spec.key,
+      label: spec.label,
+      value: String(total),
+      description: section.status === "empty" ? "Nada pendente" : undefined,
+    });
+  }
+  return highlights;
+}
+
+/** Resumo por seção para a página Visão geral — espelha o estado
+ * oficial sem recomputar autorização. */
+export type OverviewSourceRow = {
+  key: HomeSectionKey;
+  title: string;
+  statusLabel: string;
+  detail: string;
+  count: number | null;
+};
+
+export function buildOverviewRows(
+  home: HomeResponse,
+): OverviewSourceRow[] {
+  const specs = [...WORK_SECTIONS, ...CONTINUITY_SECTIONS];
+  return specs.map((spec) => {
+    const section = home.sections[spec.key];
+    const view = buildSectionView(section);
+    const statusLabel =
+      section.status === "available"
+        ? "Disponível"
+        : section.status === "empty"
+          ? "Sem itens"
+          : section.status === "forbidden"
+            ? "Acesso negado"
+            : section.status === "not_implemented"
+              ? "Capacidade futura"
+              : "Indisponível";
+    const count =
+      section.status === "available" || section.status === "empty"
+        ? typeof section.total === "number"
+          ? section.total
+          : section.items.length
+        : null;
+    return {
+      key: spec.key,
+      title: spec.title,
+      statusLabel,
+      detail: view.kind === "items" ? "" : view.message,
+      count,
+    };
+  });
+}
