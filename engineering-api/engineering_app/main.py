@@ -11,6 +11,10 @@ from engineering_app.interface.http.routes.health_routes import (
     router as health_router,
 )
 from engineering_app.middleware.auth_middleware import jwt_middleware
+from engineering_app.middleware.request_observability_middleware import (
+    get_request_id,
+    request_observability_middleware,
+)
 
 logging.basicConfig(
     level=settings.resolved_log_level(),
@@ -64,11 +68,16 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(_request: Request, exc: Exception):
-    logging.getLogger(__name__).exception("unhandled_exception")
+    logging.getLogger(__name__).exception(
+        "unhandled_exception request_id=%s", get_request_id()
+    )
     return fail("Erro interno do servidor.", 500)
 
 
+# Ordem: o último middleware registrado roda primeiro (convenção api-delpi).
+# Observability envolve o JWT para instrumentar também 401/403/503 de auth.
 app.middleware("http")(jwt_middleware)
+app.middleware("http")(request_observability_middleware)
 
 
 app.include_router(health_router)

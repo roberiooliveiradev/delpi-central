@@ -15,6 +15,9 @@ from delpi_auth.context_resolver import resolve_user_context
 
 from engineering_app.main import app
 from engineering_app.middleware.auth_middleware import jwt_middleware
+from engineering_app.middleware.request_observability_middleware import (
+    request_observability_middleware,
+)
 
 TEST_ISSUER = "https://keycloak.test/realms/delpi"
 TEST_AUDIENCE = "delpi-central"
@@ -163,7 +166,9 @@ def _reset_rbac_state():
 @pytest.fixture
 def probe_client():
     probe_app = FastAPI()
+    # Mesma ordem do app produtivo: observability envolve o JWT.
     probe_app.middleware("http")(jwt_middleware)
+    probe_app.middleware("http")(request_observability_middleware)
 
     @probe_app.get("/probe", operation_id="test_engineering_access_probe")
     @require_any_permission([ENGINEERING_ACCESS])
