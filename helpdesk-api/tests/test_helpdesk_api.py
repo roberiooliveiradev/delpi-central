@@ -551,7 +551,8 @@ def test_attachment_download_allows_linked_doc_missing_from_timeline():
         files={"file": ("print.png", b"img", "image/png")},
         headers={**auth_headers(), "Idempotency-Key": "up-lag"},
     )
-    assert uploaded.status_code == 201
+    # author_state=unverified (fake sem sessão de usuário) → parcial tipado
+    assert uploaded.status_code == 207
     document_id = uploaded.json()["document_id"]
     assert document_id not in {item.document_id for item in glpi.detail.attachments}
     downloaded = client.get(f"/tickets/7/attachments/{document_id}", headers=auth_headers())
@@ -564,6 +565,7 @@ def test_attachment_download_allows_linked_doc_missing_from_timeline():
 def test_attachment_upload_forwards_optional_title():
     client, glpi = build_client()
     link(client)
+    glpi.session_uid = 68  # upload roda sob sessão do próprio usuário → verified
     uploaded = client.post(
         "/tickets/7/attachments",
         files={"file": ("print.png", b"img", "image/png")},
@@ -601,6 +603,7 @@ def test_followup_keeps_inline_image_when_doc_only_on_document_item():
 def test_attachment_upload_via_legacy_path():
     client, glpi = build_client()
     link(client)
+    glpi.session_uid = 68  # upload roda sob sessão do próprio usuário → verified
     first = client.post(
         "/tickets/7/attachments",
         files={"file": ("placa.png", b"png-new", "image/png")},
@@ -784,7 +787,7 @@ def test_attachment_upload_surfaces_unverified_author_state():
         files={"file": ("laudo.pdf", b"pdf", "application/pdf")},
         headers={**auth_headers(), "Idempotency-Key": "up-unverified"},
     )
-    assert uploaded.status_code == 201
+    assert uploaded.status_code == 207  # partial — never a 201 full success
     body = uploaded.json()
     assert body["document_id"] == 100  # document preserved
     assert body["author_state"] == "unverified"
@@ -1502,7 +1505,7 @@ def test_cycle_write_governed_outcome_author_mismatch():
     resp = client.post(
         "/tickets/7/solution/accept", json={"content": "ok"}, headers=headers
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 207  # typed partial — not integral success
     body = resp.json()
     assert body["outcome"] == "author_mismatch"
     assert body["author_verified"] is False
@@ -1537,7 +1540,7 @@ def test_cycle_write_governed_outcome_author_unverified():
         json={"content": "reabrir"},
         headers={**auth_headers(), "Idempotency-Key": "rej-unverified"},
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 207  # typed partial — not integral success
     body = resp.json()
     assert body["outcome"] == "author_unverified"
     assert body["author_verified"] is False
@@ -1593,6 +1596,7 @@ def test_cycle_write_stored_response_status_unverified():
         CycleWriteOutcome(followup_id=77, users_id=68, author_state="verified"),
         expected_status_ids={6},
     )
+    assert stored.status_code == 207
     assert stored.body["outcome"] == "status_unverified"
     assert stored.body["author_verified"] is True
     assert stored.body["status_verified"] is False

@@ -542,7 +542,16 @@ def download_attachment(request: Request, ticket_id: int, document_id: int):
     )
 
 
-@router.post("/tickets/{ticket_id}/attachments")
+@router.post(
+    "/tickets/{ticket_id}/attachments",
+    # Governed outcome contract: 201 only when authorship read-back is
+    # verified; 207 = typed partial result (outcome=verification_failed)
+    # with document_id preserved for reconciliation.
+    responses={
+        201: {"description": "Attachment created and authorship verified"},
+        207: {"description": "Attachment persisted; authorship unverified (partial result)"},
+    },
+)
 async def upload_attachment(
     request: Request,
     ticket_id: int,
@@ -776,7 +785,15 @@ def request_ticket_approval(
     return JSONResponse(status_code=stored.status_code, content=stored.body)
 
 
-@router.post("/tickets/{ticket_id}/solution/accept")
+@router.post(
+    "/tickets/{ticket_id}/solution/accept",
+    # 200 only on fully verified outcome; 207 = typed partial
+    # (author_mismatch | author_unverified | status_unverified).
+    responses={
+        200: {"description": "Decision applied and authorship/status verified"},
+        207: {"description": "Decision persisted; authorship/status unverified (partial result)"},
+    },
+)
 def accept_solution(
     request: Request,
     ticket_id: int,
@@ -797,7 +814,15 @@ def accept_solution(
     return JSONResponse(status_code=stored.status_code, content=stored.body)
 
 
-@router.post("/tickets/{ticket_id}/solution/reject")
+@router.post(
+    "/tickets/{ticket_id}/solution/reject",
+    # 200 only on fully verified outcome; 207 = typed partial
+    # (author_mismatch | author_unverified | status_unverified).
+    responses={
+        200: {"description": "Decision applied and authorship/status verified"},
+        207: {"description": "Decision persisted; authorship/status unverified (partial result)"},
+    },
+)
 def reject_solution(
     request: Request,
     ticket_id: int,

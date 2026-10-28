@@ -2288,6 +2288,8 @@ def test_user_write_blocked_when_provisioning_fails():
             return httpx.Response(200, json={"session": {"glpiID": 999}})
         if request.url.path.endswith("/apirest.php/initSession"):
             return httpx.Response(200, json={"session_token": "sess-prov"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "GET":
+            return httpx.Response(200, json={"id": 68, "name": "u68", "api_token_date": None})
         if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
             return httpx.Response(403, json=["ERROR_RIGHT_PARAMETER", "denied"])
         if request.url.path.endswith("/apirest.php/killSession"):
@@ -2370,6 +2372,8 @@ def test_token_provisioning_success_path():
             return httpx.Response(200, json={"session": {"glpiID": 68}})
         if request.url.path.endswith("/apirest.php/initSession"):
             return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "GET":
+            return httpx.Response(200, json={"id": 68, "name": "u68", "api_token_date": None})
         if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
             body = json.loads(request.content.decode())
             seen_tokens.append(body["input"]["api_token"])
@@ -2490,6 +2494,105 @@ def test_provisioning_blocked_on_preexisting_foreign_api_token():
         )
     assert put_calls == []
     assert store.has_record(68) is False
+
+
+@pytest.mark.parametrize(
+    "status_code,payload,case",
+    [
+        (404, {"error": "missing"}, "user_not_found_404"),
+        (200, {}, "empty_body"),
+        (200, [], "non_dict_body"),
+        (200, {"name": "u68"}, "missing_id"),
+        (200, {"id": 99, "name": "u99"}, "divergent_id"),
+        (200, {"id": "sess-68", "name": "u68"}, "invalid_id"),
+        (200, {"id": 68, "api_token": "abc123"}, "detectable_api_token"),
+    ],
+)
+def test_preflight_fail_closed_on_insufficient_evidence(
+    status_code, payload, case
+):
+    """Fail-closed: any preflight that cannot produce a coherent User row for
+    the EXACT target id blocks provisioning — no PUT, no store write."""
+    put_calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-prov"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "GET":
+            return httpx.Response(status_code, json=payload)
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_calls.append(case)
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({})
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    with pytest.raises(GlpiUnavailable):
+        client.upload_ticket_document(
+            "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+        )
+    assert put_calls == []
+    assert store.has_record(68) is False
+
+
+def test_preflight_accepts_clean_record_without_key_marker():
+    """Positive sibling: a coherent User row for the target id without
+    api_token_date/api_token is the only case authorized to provision."""
+    put_bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/getFullSession"):
+            return httpx.Response(200, json={"session": {"glpiID": 68}})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "GET":
+            return httpx.Response(200, json={"id": 68, "name": "u68"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[{"id": 9, "itemtype": "Ticket", "items_id": 7}])
+        if request.url.path.endswith("/apirest.php/Document_Item/9"):
+            return httpx.Response(200, json={"id": 9, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document/55"):
+            return httpx.Response(200, json={"id": 55, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document") and request.method == "POST":
+            return httpx.Response(201, json={"id": 55})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({})
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+    )
+    assert uploaded.author_state == "verified"
+    assert len(put_bodies) == 1
 
 
 def test_adopted_identity_rotates_in_governed_token():

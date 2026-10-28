@@ -374,7 +374,12 @@ class TicketService:
         )
         author_verified = uploaded.author_state == "verified"
         stored = StoredResponse(
-            status_code=201,
+            # 207 when authorship could not be verified — a typed partial
+            # result, never a 201-style integral success. The document stays
+            # for reconciliation (document_id) and the same stored outcome is
+            # replayed under the same Idempotency-Key; a blind retry with a
+            # new key would duplicate the attachment.
+            status_code=201 if author_verified else 207,
             body={
                 "document_id": uploaded.document_id,
                 "filename": uploaded.filename,
@@ -385,9 +390,7 @@ class TicketService:
                 "author_state": uploaded.author_state,
                 "author_verified": author_verified,
                 # Typed business outcome — ``verification_failed`` is never a
-                # complete success: the document stays for reconciliation
-                # (document_id) and a retry MUST NOT be issued blindly
-                # (a new upload would duplicate the attachment).
+                # complete success.
                 "outcome": "verified" if author_verified else "verification_failed",
             },
         )
@@ -1455,7 +1458,9 @@ def _cycle_write_stored_response(
         result,
     )
     return StoredResponse(
-        status_code=200,
+        # 207 for every non-verified outcome — a typed partial, never a
+        # bare-2xx integral success (same invariant as the upload path).
+        status_code=200 if result == "verified" else 207,
         body={
             "id": refreshed.id,
             "status_id": refreshed.status_id,

@@ -1973,6 +1973,8 @@ class HttpxGlpiClient:
         - A ``revoked`` store row blocks (re)provisioning until an operator
           clears it — revocation is a hold, not a hint.
         """
+        if int(glpi_user_id) <= 0:
+            raise GlpiValidation("glpi_user_id inválido.")
         self._require_token_provisioner()
         store = self._user_token_store
         lock = (
@@ -2000,6 +2002,19 @@ class HttpxGlpiClient:
             try:
                 if not managed:
                     self._assert_api_token_unclaimed(session_token, glpi_user_id)
+                else:
+                    # Tamper visibility: a managed identity whose key was
+                    # regenerated GLPI-side rotates silently by design — log
+                    # the foreign marker so the heal is auditable.
+                    marker = self._probe_foreign_token_marker(
+                        session_token, glpi_user_id
+                    )
+                    if marker:
+                        logger.warning(
+                            "glpi_user_token_foreign_on_managed user_id=%s marker=%s",
+                            glpi_user_id,
+                            marker,
+                        )
                 api_token = secrets.token_urlsafe(30)
                 try:
                     response = self._http.request(
@@ -2044,6 +2059,33 @@ class HttpxGlpiClient:
             finally:
                 self._legacy_kill_session(session_token)
 
+    def _probe_foreign_token_marker(
+        self, provisioner_session: str, glpi_user_id: int
+    ) -> str | None:
+        """Best-effort read-only probe for a GLPI-side key marker.
+
+        Returns the ``api_token_date``/``api_token`` evidence when a coherent
+        User row shows one; ``None`` on any failure — never raises, so it can
+        be used for audit logging on the managed-rotation path.
+        """
+        try:
+            row = self._legacy_get_json(
+                provisioner_session,
+                f"/apirest.php/User/{int(glpi_user_id)}",
+                app_token=self._token_provisioner_app_token,
+            )
+        except Exception:
+            return None
+        if not isinstance(row, dict):
+            return None
+        try:
+            if int(row.get("id") or 0) != int(glpi_user_id):
+                return None
+        except (TypeError, ValueError):
+            return None
+        marker = row.get("api_token_date") or row.get("api_token")
+        return str(marker) if marker else None
+
     def _assert_api_token_unclaimed(
         self, provisioner_session: str, glpi_user_id: int
     ) -> None:
@@ -2052,11 +2094,16 @@ class HttpxGlpiClient:
         GLPI never exposes ``api_token`` on read; the observable proxy is
         ``api_token_date``, stamped when a key is generated through the GLPI
         UI ``_regenerate_api_token`` action — the realistic third-party case.
-        When the marker is present on an unmanaged identity, provisioning
-        stops BEFORE any write and the identity goes to manual review:
-        the operator verifies key ownership, then either revokes it GLPI-side
-        or records an authorized ``adopted`` marker (``UserTokenStore.adopt``)
-        so the next write rotates in a governed key.
+        Provisioning is only allowed when the preflight produces a coherent
+        User record for the EXACT target id without that marker — every
+        other outcome (404 → ``[]``, empty/invalid body, divergent id,
+        detectable key) fails closed BEFORE any write and the identity goes
+        to manual review: the operator verifies key ownership, then either
+        revokes it GLPI-side or records an authorized ``adopted`` marker
+        (``UserTokenStore.adopt``) so the next write rotates in a governed
+        key. Absence of ``api_token_date`` is not universal proof of
+        absence — it is the best evidence the API offers for the UI-issued
+        third-party case, never a blanket waiver.
         """
         try:
             row = self._legacy_get_json(
@@ -2072,7 +2119,35 @@ class HttpxGlpiClient:
                 "Não foi possível verificar a chave de API existente do usuário "
                 "no GLPI. Nenhuma escrita foi realizada."
             )
-        if isinstance(row, dict) and row.get("api_token_date"):
+        if not isinstance(row, dict) or not row:
+            # 404 → [] ; malformed/empty body — no evidence of credential
+            # state, so there is no authorized basis to write.
+            logger.warning(
+                "glpi_user_token_preflight_no_evidence user_id=%s row_type=%s",
+                glpi_user_id,
+                type(row).__name__,
+            )
+            raise GlpiUnavailable(
+                "Não foi possível confirmar a situação da chave de API do "
+                "usuário no GLPI. Provisionamento bloqueado até revisão "
+                "autorizada. Nenhuma escrita foi realizada."
+            )
+        try:
+            row_user_id = int(row.get("id") or 0)
+        except (TypeError, ValueError):
+            row_user_id = 0
+        if row_user_id != int(glpi_user_id):
+            logger.warning(
+                "glpi_user_token_preflight_id_mismatch user_id=%s row_id=%s",
+                glpi_user_id,
+                row.get("id"),
+            )
+            raise GlpiUnavailable(
+                "A resposta de verificação não corresponde ao usuário alvo. "
+                "Provisionamento bloqueado até revisão autorizada. "
+                "Nenhuma escrita foi realizada."
+            )
+        if row.get("api_token_date") or row.get("api_token"):
             logger.warning(
                 "glpi_user_token_foreign user_id=%s api_token_date=%s",
                 glpi_user_id,
@@ -2088,6 +2163,8 @@ class HttpxGlpiClient:
         """Governed revocation: clear the GLPI Remote access key and mark the
         store row revoked — subsequent writes block until an operator clears
         the hold (``delete``) or re-adopts the identity."""
+        if int(glpi_user_id) <= 0:
+            raise GlpiValidation("glpi_user_id inválido.")
         self._require_token_provisioner()
         store = self._user_token_store
         lock = (
