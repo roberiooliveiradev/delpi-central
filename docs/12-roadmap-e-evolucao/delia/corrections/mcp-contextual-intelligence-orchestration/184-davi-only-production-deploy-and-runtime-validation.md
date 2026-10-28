@@ -67,3 +67,16 @@ No authorized identity token is available. Prior runs minted a bearer via a Keyc
 ## 8. Verdict
 
 `LOCAL+RUNTIME_PASS_WITH_RESIDUAL` — DAVI-only boundary verified in the running production container (provider/capabilities/fallback all structurally 0; DAVI surface live and authz-enforced). Business Outcome inconclusive pending a legitimately authorized identity. **Next C3 step:** resume intelligence track (semantic selection, contextual recovery, LLM efficiency, evidence quality) — no DAVI/API-DELPI scope expansion.
+
+
+## 9. Revisão independente da coordenação — 2026-10-28
+
+**REVIEW=ACCEPT_WITH_RESIDUAL for production runtime boundary evidence; FUNCTIONAL_OUTCOME=INCONCLUSIVE.** GitHub doc 184 and release commit `c790f49221` reviewed; all server checks and test totals are executor-reported (no independent shell access to runtime, token, log stream or security artifacts). Current main at review start `da8cfa9ee7ec938d5d59a741d2566a97399d91c4`.
+
+**Accepted:** implementation commit `269d5276b0` present in deployed code SHA `48afe2ba86`; reported image digest `sha256:9947eac96f471f55b9ea4de5c67675b962261ded9d07c047e8f4e02de3fad1c8`; healthy container/health 200; no direct DELPI OpenAPI provider, declarations or env vars in running image; DAVI config present. No new capability, allowlist, owner API, RBAC or model change. Boundary-structure release is complete; this review does not infer DAVI authenticated business execution from unauthenticated 401.
+
+**Security qualification:** gate approval reflects owner self-classification as test key, not independent credential provenance verification. Evidence of secret removal from git and local artifacts is reported; classification, authority to accept residual provider-context exposure, and actual irrelevance of the old credential are not independently proven in this review. Direct equal-length redaction of SQLite session DB/WAL, particularly with locked WAL and no checkpoint, creates possible integrity/recovery risk. The executor must verify DB integrity and the active Devin CLI's ability to open its sessions through a platform-supported method without printing credentials; otherwise mark `EXTERNAL_ARTIFACT_INTEGRITY=INCONCLUSIVE`, not PASS. Preserve records of decision and avoid retroactive claims that all exposure was removed.
+
+**Outcome limitation:** no legitimately authenticated DAVI discovery, execute, grounding or business queries occurred. `DAVI_AUTHENTICATED_FLOW=TEST_NOT_RUN`, `BUSINESS_OUTCOME=INCONCLUSIVE`, not PASS; token must come from authorized existing identity and must not be obtained by resetting password. Distinguish source availability/auth challenge from functional outcome. Existing CRI suite residual remains separately tracked.
+
+**Disposition:** `ACCEPT_WITH_RESIDUAL_RUNTIME_BOUNDARY`; no demand to reopen DAVI/API-DELPI capability scope. Next coordination step: resume C3 semantic intelligence path per current HEAD/ledger, while separately arranging authorized READ validation and checking session DB/WAL integrity. Do not re-deploy solely for documentation.
