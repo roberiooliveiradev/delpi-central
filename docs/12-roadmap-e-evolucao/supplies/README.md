@@ -16,6 +16,10 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076 — Guia funcional, homologação visual e validação Comex (2026-10-27)
+
+- [Explicação de Metais, Câmbio, IPP e Comex; registro de screenshots desktop/escuro e gate Compras/Fiscal para NCMs](./PROC-0076-GUIA-PERSPECTIVAS-E-VALIDACAO-COMEX-20261027.md). **Estado:** `ACCEPT_WITH_RESIDUAL` visual; NCMs `PENDING` (nenhuma homologada); cadastro e ativação não autorizados por esta nota.
+
 ## PROC-0076.R5.S2 — Refinamento de UX: cards, ícones, unidades e completude (2026-10-27)
 
 Evolução visual/funcional do dashboard: a label de unidade amigável (`US$/t`, `US$/lb`, `R$/US$`, `Índice`, `%`) passa a ser emitida pelo producer (`unit` amigável + `unit_code` de máquina); cards de instrumento ganham ícone, base da cotação e última referência; o gráfico de metais é **agrupado por unidade** (USD/lb e USD/t nunca compartilham eixo); instrumentos selecionados sem direito de exibição são nomeados com motivo; câmbio e IPP exibem cartões de contexto reais quando não há observações; Comex pendente mostra próximos passos e prévia dos indicadores — sem valores sintéticos. Detalhes: §10 do documento de evidência R5.
