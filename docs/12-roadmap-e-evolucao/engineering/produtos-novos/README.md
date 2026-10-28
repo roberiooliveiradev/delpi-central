@@ -38,3 +38,10 @@ Este pacote é uma **funcionalidade/ferramenta do Portal Engenharia**, não um n
 | Solicitar acompanhamento | [13-WF-SOLICITAR-ACOMPANHAMENTO.md](./13-WF-SOLICITAR-ACOMPANHAMENTO.md) |
 
 São wireframes **textuais e funcionais candidatos**, não layouts visuais finais nem contratos/API provados; não houve alteração de código produtivo.
+
+## Protótipo visual navegável
+
+- [Abrir arquivos do protótipo](./prototipo/README.md) — instruções, escopo e limites.
+- [HTML interativo (standalone)](./prototipo/index.html) — demonstração navegável das oito telas com dados fictícios; não integra API nem salva dados.
+
+**Estado:** UX DEMO / PROPOSED. O HTML do GitHub deve ser baixado/aberto em navegador local para executar a navegação. Este protótipo não substitui o design system do Portal nem autoriza implementação.
