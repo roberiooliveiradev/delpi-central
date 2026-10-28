@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPluginPath,
+  checklistAdminEventsPath,
+  checklistAdminVersionDocumentPath,
+  checklistAdminVersionPath,
   CONTROLLERSHIP_FINANCE_BASE_PATH,
   normalizeBasePath,
   normalizePathname,
@@ -224,6 +227,61 @@ describe("pluginRoutes", () => {
     );
     expect(buildPluginPath("home", "/apps/controllership-finance")).toBe(
       "/apps/controllership-finance",
+    );
+  });
+
+  it("resolve a navegação em cascata do checklist admin (UX-015)", () => {
+    const version = resolvePluginRoute(
+      "/apps/controllership-finance/closing/admin/versions/3",
+    );
+    expect(version.view).toBe("checklist_version");
+    expect(version.adminVersion).toBe("3");
+
+    const doc = resolvePluginRoute(
+      "/apps/controllership-finance/closing/admin/versions/3/documents/CK-E-01",
+    );
+    expect(doc.view).toBe("checklist_version_document");
+    expect(doc.adminVersion).toBe("3");
+    expect(doc.documentItemKey).toBe("CK-E-01");
+
+    const events = resolvePluginRoute(
+      "/apps/controllership-finance/closing/admin/events",
+    );
+    expect(events.view).toBe("checklist_admin_events");
+    expect(events.adminVersion).toBeUndefined();
+
+    const versionEvents = resolvePluginRoute(
+      "/apps/controllership-finance/closing/admin/versions/3/events",
+    );
+    expect(versionEvents.view).toBe("checklist_admin_events");
+    expect(versionEvents.adminVersion).toBe("3");
+  });
+
+  it("deep links admin malformados caem em not_found", () => {
+    for (const path of [
+      "/apps/controllership-finance/closing/admin/versions",
+      "/apps/controllership-finance/closing/admin/versions/abc",
+      "/apps/controllership-finance/closing/admin/versions/3/documents",
+      "/apps/controllership-finance/closing/admin/versions/3/extra",
+    ]) {
+      expect(resolvePluginRoute(path).view).toBe("not_found");
+    }
+  });
+
+  it("path builders da cascata admin geram paths canônicos", () => {
+    expect(checklistAdminVersionPath(3)).toBe(
+      "/apps/controllership-finance/closing/admin/versions/3",
+    );
+    expect(
+      checklistAdminVersionDocumentPath(3, "CK-E-01"),
+    ).toBe(
+      "/apps/controllership-finance/closing/admin/versions/3/documents/CK-E-01",
+    );
+    expect(checklistAdminEventsPath()).toBe(
+      "/apps/controllership-finance/closing/admin/events",
+    );
+    expect(checklistAdminEventsPath(3)).toBe(
+      "/apps/controllership-finance/closing/admin/versions/3/events",
     );
   });
 

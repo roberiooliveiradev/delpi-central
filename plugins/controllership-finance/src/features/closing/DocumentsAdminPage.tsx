@@ -63,7 +63,7 @@ import {
 } from "./documentCatalog";
 import { useReportQuerySync } from "./reportQueryParams";
 import { DocumentConfigFormPage } from "./DocumentConfigFormPage";
-import { ERROR_MESSAGES } from "./ChecklistAdminPage";
+import { ERROR_MESSAGES } from "./checklistAdminShared";
 
 const LIST_PATH = "closing/admin/documents";
 

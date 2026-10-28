@@ -1928,3 +1928,15 @@ Evidência: tsc/eslint/build verde, 337 testes (1 flake pré-existente de
 foto de avatar não relacionado), screenshots claro/escuro/mobile/
 tablet/zoom 200% com `overflowX=0`. Deploy local verificado; produção
 pendente de autorização.
+
+
+## 50. UX-015 — navegação administrativa em cascata (versões/documentos/histórico)
+
+**Layout por nível (todos `cf-page-stack cf-closing-layout` + `CfPagePath` + `cf-checklist-page__content` + `cf-lead-stack`/`cf-card-stack` do UX-013-RW01):**
+
+- **Nível 1 — Administração:** `CfTitleWithHelp` + card do template com ações (Criar versão rascunho, Eventos de auditoria→página, Documentos do fechamento) e `DataTableSection` de versões; cada linha abre a página da versão. A expansão inferior de itens foi removida.
+- **Nível 2 — Versão:** breadcrumb `Início / Administração / Versão vN`; card «Dados da versão» com `cf-detail-list` (estado `CfStatusBadge`, documentos, vigência, publicação, autoria, criação, revisão) + ações por estado (`VersionStatusActions` compartilhado) + «Histórico da versão»; card «Documentos da versão» com a tabela de itens do snapshot — «Abrir» por linha; em DRAFT, modo «Editar itens» com Salvar/Adicionar/Descartar edição e diálogo de item (`ChecklistItemFormDialog`).
+- **Nível 3 — Documento na versão:** breadcrumb `… / Versão vN / {itemKey}`; cards read-only `cf-detail-list` — Identificação (chave, nome, finalidade, orientações, ordem), Exigência (obrigatoriedade, origem, destino, via, escopo, validação, ref. TOTVS) e Contexto da versão (número, estado, vigência, publicação); ações: «Editar exigência futura» (catálogo governado) e, em DRAFT, «Editar item no rascunho».
+- **Nível 4 — Histórico:** página com `CfTimeline` (mesmos rótulos/tons do antigo modal), escopo template (`closing/admin/events`) ou versão (`versions/{n}/events`, `?version=` da BFF); detalhe `v{n} · actor_subject · chaves do detail` — fallback honesto até UX-014.
+
+Reuso: zero componente novo de kit; `cf-detail-list` (padrão read-only já usado em `ClosingChecklistPage`), `DataTableSection`, `CfSectionCard`, `CfPagePath`, `CfTimeline`, `CfStatusBadge`, `CfEmptyState`, `CfFeedbackMessage`, `CfQueryErrorBanner`, `ConfirmModalPanel`+`CfDialog` (diálogos de ação governada compartilhados via `useChecklistVersionActions`).

@@ -12,6 +12,9 @@ import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { CatalogsAdminPage } from "./features/closing/CatalogsAdminPage";
 import { ClaraConsentPage } from "./features/closing/ClaraConsentPage";
 import { ChecklistAdminPage } from "./features/closing/ChecklistAdminPage";
+import { ChecklistAdminEventsPage } from "./features/closing/ChecklistAdminEventsPage";
+import { ChecklistVersionPage } from "./features/closing/ChecklistVersionPage";
+import { ChecklistVersionDocumentPage } from "./features/closing/ChecklistVersionDocumentPage";
 import { DocumentsAdminPage } from "./features/closing/DocumentsAdminPage";
 import { ClosingChecklistPage } from "./features/closing/ClosingChecklistPage";
 import { CockpitPage } from "./features/closing/CockpitPage";
@@ -64,7 +67,27 @@ function AppRoutes({
         ) : resolved.view === "checklist" ? (
           <ClosingChecklistPage period={resolved.checklistPeriod} />
         ) : resolved.view === "checklist_admin" ? (
-          <ChecklistAdminPage />
+          <ChecklistAdminPage basePath={basePath} />
+        ) : resolved.view === "checklist_version" ? (
+          <ChecklistVersionPage
+            basePath={basePath}
+            version={Number(resolved.adminVersion)}
+          />
+        ) : resolved.view === "checklist_version_document" ? (
+          <ChecklistVersionDocumentPage
+            basePath={basePath}
+            version={Number(resolved.adminVersion)}
+            itemKey={resolved.documentItemKey ?? ""}
+          />
+        ) : resolved.view === "checklist_admin_events" ? (
+          <ChecklistAdminEventsPage
+            basePath={basePath}
+            version={
+              resolved.adminVersion !== undefined
+                ? Number(resolved.adminVersion)
+                : null
+            }
+          />
         ) : resolved.view === "catalogs_admin" ? (
           <CatalogsAdminPage />
         ) : resolved.view === "documents_admin" ? (

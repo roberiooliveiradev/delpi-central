@@ -63,7 +63,7 @@ import {
   slugifyItemKey,
   type VersionWithItems,
 } from "./documentCatalog";
-import { EVENT_LABELS, EVENT_TONES } from "./ChecklistAdminPage";
+import { EVENT_LABELS, EVENT_TONES } from "./checklistAdminShared";
 import {
   documentsAdminListPath,
   toQueryError,

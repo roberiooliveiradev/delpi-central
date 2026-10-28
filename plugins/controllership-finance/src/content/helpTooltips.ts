@@ -110,6 +110,26 @@ export const CF_HELP = {
     editDraft:
       "Edição do rascunho: altere, adicione ou remova itens e salve de uma vez — a gravação é atômica. Se outra sessão publicou ou alterou a versão, o salvamento é recusado («revisão desatualizada») para nunca sobrescrever trabalho alheio: recarregue e reaplique.",
   },
+  adminVersion: {
+    page:
+      "Versão do checklist mestre — página contextual de uma versão específica (aberta a partir da listagem da Administração). Mostra o estado do ciclo, a competência de vigência, a publicação e os documentos que compõem exatamente aquele snapshot. Publicada e inativada são somente leitura; alterar a exigência de um documento para competências futuras acontece no catálogo de documentos, nunca na versão histórica.",
+    meta:
+      "Metadados da versão: estado do ciclo (rascunho → revisão → publicada → inativada), quantidade de documentos, competência a partir da qual vale, data de publicação e revisão de controle de concorrência. As ações disponíveis dependem do estado: rascunho pode ser editado, enviado à revisão ou descartado; em revisão pode ser publicada com vigência prospectiva ou devolvida com motivo; publicada pode ser inativada — nada reescreve competências já abertas.",
+    items:
+      "Documentos pertencentes a esta versão do checklist — o conteúdo exato daquele snapshot, não a configuração vigente hoje. «Abrir» mostra o documento naquela versão. Em rascunho, «Editar itens» habilita a edição atômica governada.",
+  },
+  adminVersionDocument: {
+    page:
+      "Documento na versão — representação histórica do item dentro do snapshot daquela versão do checklist, sempre em leitura. Não confundir com o cadastro do catálogo documental: aqui você vê como o documento era exigido naquela versão; para mudar a exigência dali em diante, use «Editar exigência futura», que abre o fluxo governado do catálogo sem tocar o histórico.",
+    identification:
+      "Identificação do documento na versão: chave, nome, finalidade e orientações de preparação registradas no snapshot.",
+    requirement:
+      "Exigência do documento naquela versão: obrigatoriedade, origem, destino, via (eletrônico/físico), escopo de filial, regra de validação e referência TOTVS quando houver.",
+  },
+  adminEvents: {
+    page:
+      "Histórico de auditoria do checklist mestre — trilha de eventos do template ou de uma versão específica, em página completa: tipo do evento, data, hora, ator, versão afetada e detalhes registrados. O ator aparece pelo identificador técnico da auditoria; a exibição de nome e foto depende de contrato de identidade em decisão (UX-014). O histórico é imutável — nada aqui pode ser editado.",
+  },
   documentsAdmin: {
     page:
       "Documentos do fechamento — catálogo mestre dos tipos de documento exigidos em cada competência (exige permissão de gestão). Cada documento tem vigência derivada das versões publicadas do checklist: vigente, futuro ou encerrado. Cadastro e edição abrem páginas completas — nunca modal. Filtros ficam na URL: F5, link direto e voltar/avançar restauram a consulta. Cadastrar documentos não é pré-requisito para abrir um fechamento.",

@@ -15,6 +15,13 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  * - `catalogs_admin` — catálogos governados P6 (MANAGE).
  * - `documents_admin` — catálogo mestre de documentos do fechamento
  *   (UX-012, MANAGE): listagem + cadastro/edição em páginas completas.
+ * - `checklist_version` — detalhe contextual de uma versão do
+ *   checklist mestre (UX-015): metadados, itens e ações por estado.
+ * - `checklist_version_document` — documento dentro de uma versão
+ *   histórica (UX-015): leitura contextual, edição prospectiva via
+ *   catálogo mestre.
+ * - `checklist_admin_events` — histórico/auditoria do template ou de
+ *   uma versão em página completa (UX-015, substitui o modal).
  * Rotas futuras (Visão geral dedicada, Sala de interação, Ajuda)
  * entram aqui apenas quando implementadas.
  */
@@ -24,6 +31,9 @@ export type PluginView =
   | "stock_inventory"
   | "checklist"
   | "checklist_admin"
+  | "checklist_version"
+  | "checklist_version_document"
+  | "checklist_admin_events"
   | "catalogs_admin"
   | "documents_admin"
   | "pendencies"
@@ -106,6 +116,19 @@ const REPORT_DETAIL_PATTERN =
 const DOCUMENT_ADMIN_DETAIL_PATTERN =
   /^closing\/admin\/documents\/([A-Za-z0-9_-]{1,32})$/;
 
+/** Histórico/auditoria do template ou de uma versão (UX-015). */
+const ADMIN_EVENTS_PATTERN = /^closing\/admin\/events$/;
+const ADMIN_VERSION_EVENTS_PATTERN =
+  /^closing\/admin\/versions\/(\d+)\/events$/;
+
+/** Detalhe contextual de uma versão do checklist mestre (UX-015). */
+const ADMIN_VERSION_DETAIL_PATTERN =
+  /^closing\/admin\/versions\/(\d+)$/;
+
+/** Documento dentro de uma versão histórica (UX-015). */
+const ADMIN_VERSION_DOCUMENT_PATTERN =
+  /^closing\/admin\/versions\/(\d+)\/documents\/([^/]{1,64})$/;
+
 export type ResolvedPluginRoute = {
   view: PluginView;
   pathname: string;
@@ -118,6 +141,8 @@ export type ResolvedPluginRoute = {
   reportKey?: string;
   /** Chave do documento na rota admin (`new` ou `item_key` do catálogo). */
   documentItemKey?: string;
+  /** Número da versão na rota admin em cascata (`versions/{n}`). */
+  adminVersion?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -167,6 +192,43 @@ export function resolvePluginRoute(
       reportKey: reportMatch[3],
     };
   }
+  const versionDocumentMatch =
+    ADMIN_VERSION_DOCUMENT_PATTERN.exec(relativePath);
+  if (versionDocumentMatch) {
+    return {
+      view: "checklist_version_document",
+      pathname: path,
+      relativePath,
+      adminVersion: versionDocumentMatch[1],
+      documentItemKey: decodeURIComponent(versionDocumentMatch[2] ?? ""),
+    };
+  }
+  const versionEventsMatch =
+    ADMIN_VERSION_EVENTS_PATTERN.exec(relativePath);
+  if (versionEventsMatch) {
+    return {
+      view: "checklist_admin_events",
+      pathname: path,
+      relativePath,
+      adminVersion: versionEventsMatch[1],
+    };
+  }
+  const versionMatch = ADMIN_VERSION_DETAIL_PATTERN.exec(relativePath);
+  if (versionMatch) {
+    return {
+      view: "checklist_version",
+      pathname: path,
+      relativePath,
+      adminVersion: versionMatch[1],
+    };
+  }
+  if (ADMIN_EVENTS_PATTERN.test(relativePath)) {
+    return {
+      view: "checklist_admin_events",
+      pathname: path,
+      relativePath,
+    };
+  }
   const documentAdminMatch =
     DOCUMENT_ADMIN_DETAIL_PATTERN.exec(relativePath);
   if (documentAdminMatch) {
@@ -204,6 +266,35 @@ export function buildPluginPath(
       ? `?${search}`
       : "";
   return `${base}${suffix}${normalizedSearch}`;
+}
+
+/** Path da página contextual de uma versão do checklist (UX-015). */
+export function checklistAdminVersionPath(
+  version: number | string,
+  basePath?: string,
+): string {
+  const base = normalizeBasePath(basePath);
+  return `${base}/closing/admin/versions/${version}`;
+}
+
+/** Path do documento dentro de uma versão histórica (UX-015). */
+export function checklistAdminVersionDocumentPath(
+  version: number | string,
+  itemKey: string,
+  basePath?: string,
+): string {
+  return `${checklistAdminVersionPath(version, basePath)}/documents/${encodeURIComponent(itemKey)}`;
+}
+
+/** Path do histórico/auditoria — template inteiro ou versão (UX-015). */
+export function checklistAdminEventsPath(
+  version?: number | string,
+  basePath?: string,
+): string {
+  const base = normalizeBasePath(basePath);
+  return version === undefined
+    ? `${base}/closing/admin/events`
+    : `${base}/closing/admin/versions/${version}/events`;
 }
 
 export function resolveActiveNavId(view: PluginView): PluginNavId | null {

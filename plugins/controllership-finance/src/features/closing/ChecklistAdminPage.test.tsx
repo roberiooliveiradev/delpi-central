@@ -23,6 +23,7 @@ const publishMock = vi.fn();
 const submitReviewMock = vi.fn();
 const returnDraftMock = vi.fn();
 const inactivateMock = vi.fn();
+const discardMock = vi.fn();
 const listEventsMock = vi.fn();
 
 vi.mock("../../api/adminApi", () => ({
@@ -40,10 +41,13 @@ vi.mock("../../api/adminApi", () => ({
     returnDraftMock(...args),
   inactivateTemplateVersion: (...args: unknown[]) =>
     inactivateMock(...args),
+  discardTemplateVersion: (...args: unknown[]) => discardMock(...args),
   listTemplateEvents: (...args: unknown[]) => listEventsMock(...args),
 }));
 
 import { ChecklistAdminPage } from "./ChecklistAdminPage";
+
+const BASE = "/apps/controllership-finance";
 
 const TEMPLATE = {
   template_id: "t-1",
@@ -78,27 +82,6 @@ const VERSION_REVIEW = {
   status: "REVIEW",
 };
 
-const DRAFT_DETAIL = {
-  ...VERSION_DRAFT,
-  items: [
-    {
-      item_id: "i-1",
-      item_key: "1.1",
-      sort_order: 1,
-      sheet: "ELETRONICO",
-      name: "Balancete",
-      purpose: null,
-      origin_kind: "TOTVS",
-      recipient_area: "CONTABIL",
-      applicability: "REQUIRED",
-      branch_scope: "BOTH",
-      totvs_report_ref: "MATR460",
-      requirement_notes: null,
-      validation_scope: "PER_ATTACHMENT",
-    },
-  ],
-};
-
 function setupHappy() {
   listTemplatesMock.mockResolvedValue([TEMPLATE]);
   listVersionsMock.mockResolvedValue([
@@ -113,9 +96,9 @@ describe("ChecklistAdminPage", () => {
     vi.clearAllMocks();
   });
 
-  it("renders template and version table", async () => {
+  it("renders template and version table without items expansion", async () => {
     setupHappy();
-    render(<ChecklistAdminPage />);
+    render(<ChecklistAdminPage basePath={BASE} />);
     await waitFor(() =>
       expect(
         screen.getByText("Checklist mensal (monthly-closing-checklist)"),
@@ -125,11 +108,41 @@ describe("ChecklistAdminPage", () => {
     expect(screen.getByText("v2")).toBeTruthy();
     expect(screen.getByText("Publicada")).toBeTruthy();
     expect(screen.getByText("Rascunho")).toBeTruthy();
+    // UX-015: a página não expande a tabela de itens — nem consulta o
+    // detalhe de versão.
+    expect(screen.queryByText("Itens do checklist")).toBeNull();
+    expect(getVersionMock).not.toHaveBeenCalled();
+  });
+
+  it("navigates to the dedicated version page", async () => {
+    setupHappy();
+    render(<ChecklistAdminPage basePath={BASE} />);
+    const openButtons = await screen.findAllByRole("button", {
+      name: "Abrir versão",
+    });
+    fireEvent.click(openButtons[0]); // v1
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/admin/versions/1`,
+    );
+  });
+
+  it("navigates to the template history page", async () => {
+    setupHappy();
+    render(<ChecklistAdminPage basePath={BASE} />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Eventos de auditoria",
+      }),
+    );
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/admin/events`,
+    );
+    expect(listEventsMock).not.toHaveBeenCalled();
   });
 
   it("disables draft creation while a draft is open", async () => {
     setupHappy();
-    render(<ChecklistAdminPage />);
+    render(<ChecklistAdminPage basePath={BASE} />);
     await screen.findByText("v2");
     const button = await screen.findByRole("button", {
       name: "Criar versão rascunho",
@@ -141,7 +154,7 @@ describe("ChecklistAdminPage", () => {
     listTemplatesMock.mockRejectedValue(
       new ApiError(403, "Forbidden", "forbidden"),
     );
-    render(<ChecklistAdminPage />);
+    render(<ChecklistAdminPage basePath={BASE} />);
     await waitFor(() =>
       expect(screen.getByText(/Acesso restrito/)).toBeTruthy(),
     );
@@ -149,58 +162,11 @@ describe("ChecklistAdminPage", () => {
 
   it("shows empty state when no template exists", async () => {
     listTemplatesMock.mockResolvedValue([]);
-    render(<ChecklistAdminPage />);
+    render(<ChecklistAdminPage basePath={BASE} />);
     await waitFor(() =>
       expect(
         screen.getByText("Nenhum template de checklist registrado."),
       ).toBeTruthy(),
-    );
-  });
-
-  it("opens draft items in editable mode and saves with revision", async () => {
-    setupHappy();
-    getVersionMock.mockResolvedValue(DRAFT_DETAIL);
-    updateDraftMock.mockResolvedValue({
-      ...DRAFT_DETAIL,
-      revision: 2,
-    });
-    render(<ChecklistAdminPage />);
-    const itemButtons = await screen.findAllByRole("button", {
-      name: "Itens",
-    });
-    fireEvent.click(itemButtons[1]); // v2 DRAFT
-    await waitFor(() => expect(getVersionMock).toHaveBeenCalled());
-    const save = await screen.findByRole("button", {
-      name: "Salvar rascunho",
-    });
-    fireEvent.click(save);
-    await waitFor(() => expect(updateDraftMock).toHaveBeenCalled());
-    const [templateId, version, body] = updateDraftMock.mock.calls[0];
-    expect(templateId).toBe("t-1");
-    expect(version).toBe(2);
-    expect(body.revision).toBe(1);
-    expect(body.items).toHaveLength(1);
-    expect(body.items[0].item_key).toBe("1.1");
-  });
-
-  it("maps stale_revision conflict to a reload message", async () => {
-    setupHappy();
-    getVersionMock.mockResolvedValue(DRAFT_DETAIL);
-    updateDraftMock.mockRejectedValue(
-      new ApiError(409, "Stale", "stale_revision"),
-    );
-    render(<ChecklistAdminPage />);
-    const itemButtons = await screen.findAllByRole("button", {
-      name: "Itens",
-    });
-    fireEvent.click(itemButtons[1]);
-    const save = await screen.findByRole("button", {
-      name: "Salvar rascunho",
-    });
-    fireEvent.click(save);
-    await waitFor(() =>
-      expect(screen.getByText(/revisão desatualizada|recarregue/i))
-        .toBeTruthy(),
     );
   });
 
@@ -211,7 +177,7 @@ describe("ChecklistAdminPage", () => {
       VERSION_REVIEW,
     ]);
     publishMock.mockResolvedValue(VERSION_REVIEW);
-    render(<ChecklistAdminPage />);
+    render(<ChecklistAdminPage basePath={BASE} />);
     const publishBtn = await screen.findByRole("button", {
       name: "Publicar",
     });
@@ -232,7 +198,7 @@ describe("ChecklistAdminPage", () => {
   it("inactivates the published version after confirmation", async () => {
     setupHappy();
     inactivateMock.mockResolvedValue(VERSION_PUBLISHED);
-    render(<ChecklistAdminPage />);
+    render(<ChecklistAdminPage basePath={BASE} />);
     const btn = await screen.findByRole("button", { name: "Inativar" });
     fireEvent.click(btn);
     fireEvent.click(
@@ -242,37 +208,13 @@ describe("ChecklistAdminPage", () => {
     expect(inactivateMock.mock.calls[0]).toEqual(["t-1", 1]);
   });
 
-  it("lists template audit events", async () => {
-    setupHappy();
-    listEventsMock.mockResolvedValue([
-      {
-        event_id: "e-1",
-        event_type: "VERSION_PUBLISHED",
-        actor_subject: "u-1",
-        detail: {},
-        created_at: "2026-04-15T10:00:00Z",
-        version: 1,
-      },
-    ]);
-    render(<ChecklistAdminPage />);
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: "Eventos de auditoria",
-      }),
-    );
-    await waitFor(() =>
-      expect(screen.getByText(/Versão publicada/)).toBeTruthy(),
-    );
-    expect(listEventsMock).toHaveBeenCalledWith("t-1");
-  });
-
   it("submits a draft version for review", async () => {
     setupHappy();
     submitReviewMock.mockResolvedValue({
       ...VERSION_DRAFT,
       status: "REVIEW",
     });
-    render(<ChecklistAdminPage />);
+    render(<ChecklistAdminPage basePath={BASE} />);
     const btn = await screen.findByRole("button", {
       name: "Enviar para revisão",
     });
@@ -288,7 +230,7 @@ describe("ChecklistAdminPage", () => {
       VERSION_REVIEW,
     ]);
     returnDraftMock.mockResolvedValue(VERSION_DRAFT);
-    render(<ChecklistAdminPage />);
+    render(<ChecklistAdminPage basePath={BASE} />);
     const btn = await screen.findByRole("button", { name: "Devolver" });
     fireEvent.click(btn);
     const reason = await screen.findByRole("textbox");

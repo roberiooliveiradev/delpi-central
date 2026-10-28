@@ -68,6 +68,23 @@ pendentes de gate (Plano 113 §28.2): atomicidade multi-versão real
 Filtros da listagem (`q`, `status`, `dest`) ficam na URL; o retorno do
 formulário preserva a consulta.
 
+Central de Fechamento — Administração do checklist em cascata (UX-015):
+a página `closing/admin` lista apenas as versões do template mestre;
+cada versão abre página contextual própria em
+`closing/admin/versions/{n}` (metadados + documentos daquele snapshot
+histórico — nunca a configuração vigente — e ações por estado, com
+edição de itens DRAFT atômica via OCC `revision`); cada documento abre
+em `versions/{n}/documents/{itemKey}` sempre em leitura, com «Editar
+exigência futura» encaminhando ao fluxo governado do catálogo; o
+histórico de auditoria saiu do modal para páginas `closing/admin/events`
+(template) e `versions/{n}/events` (recorte por `?version=` da BFF).
+Breadcrumbs `CfPagePath` preservam o retorno por nível; deep links, F5
+e voltar/avançar funcionam por `popstate`. Núcleo compartilhado:
+`features/closing/checklistAdminShared.tsx` (constantes, ações de
+versão + diálogos, editor de item) consumido pela lista e pelo detalhe.
+O ator dos eventos permanece `actor_subject` até o contrato de
+identidade do UX-014.
+
 Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
 `cfDataTableUi` — banda única com ícone + título + pill de contagem do
 universo filtrado à esquerda e controles nativos (itens/página + Fonte +

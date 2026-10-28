@@ -953,3 +953,19 @@ Sem helper paralelo por página: um único owner de params/parse/serialize e um 
 | Navegação | PagePath e navegação do host | Sem nova árvore/chrome |
 
 Revisão de implementação obrigatória: mapa final campo→export/import exato, CSS residual justificado, regressões visual e funcional, light/dark, teclado/mobile. Plano 113 §28.9; wireframe 112 §49.
+
+
+### UX-015 — navegação em cascata do checklist admin (28/10/2026)
+
+| Necessidade | Componente/fábrica real | Consumo |
+|---|---|---|
+| Breadcrumb contextual | `CfPagePath` (`createDashboardPagePath`) | todos os níveis: back→pai imediato, items→ancestrais |
+| Metadados read-only | `cf-detail-list` (dl/dt/dd — padrão de `ClosingChecklistPage`) | «Dados da versão», «Identificação», «Exigência», «Contexto da versão» |
+| Tabelas | `DataTableSection` (`cfDataTableUi`) | versões (nível 1), itens do snapshot (nível 2) |
+| Cards | `CfSectionCard` | dados da versão, documentos, identificação, exigência, contexto, eventos |
+| Timeline de auditoria | `CfTimeline` + `EVENT_LABELS`/`EVENT_TONES` | nível 4 — substitui o modal removido |
+| Estados/badges | `CfStatusBadge`, `CfEmptyState`, `CfFeedbackMessage`, `CfQueryErrorBanner` | estado da versão, vazio legítimo, 403/404 honestos |
+| Ações governadas | `ActionButton`/`CfActionButton`, `VersionStatusActions`, `useChecklistVersionActions`, `ChecklistItemFormDialog` (`checklistAdminShared.tsx` — owner local compartilhado das duas páginas admin) | ações por estado, diálogos publish/return/inactivate/discard, editor de item DRAFT |
+| Navegação | `navigatePluginPath`/`navigatePluginView` + builders `checklistAdminVersionPath`/`checklistAdminVersionDocumentPath`/`checklistAdminEventsPath` (`pluginRoutes.ts`) | cascata sem nova aba; deep link/F5/back-forward nativos |
+
+Zero componente novo de kit: a separação em páginas reutilizou o padrão read-only (`cf-detail-list`) e os wrappers de ritmo do UX-013-RW01 (`cf-lead-stack`/`cf-card-stack`). `checklistAdminShared.tsx` é o owner único do ciclo de ações de versão — elimina a duplicação que existiria entre lista e detalhe.

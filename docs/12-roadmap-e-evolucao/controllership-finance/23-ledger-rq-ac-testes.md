@@ -621,3 +621,28 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | RQ-UX013-07 | DoD claro/escuro/teclado/320px/zoom | PASS | screenshots 01–07 (claro, escuro, mobile); campos do kit com label/hint/focus |
 | AC-UX013-PROD | deploy produção | PASS | MFE `App-B5Ynp8Kk.js` @ SHA 1b59fdc895; smoke g16: S-01..S-06 PASS (select mouse/teclado/Escape, timeline 4 eventos, edição preenchida); RBAC restaurado |
 | AC-UX013-RW01 | espaçamento/hierarquia admin | PASS | causa PROVEN (__content sem regra CSS); escala 8/16/24px via tokens `--cf-*`; tsc+eslint+build ✓; 337 testes (1 flake pré-existente avatar); shots claro/escuro/tablet/390/320/zoom200 overflowX=0; deploy local ✓; prod pendente |
+
+
+### UX-015 — navegação administrativa em cascata do checklist (28/10/2026)
+
+| ID | Critério | Status | Evidência |
+|----|----------|--------|-----------|
+| AC-01 | admin sem expansão inferior de itens | PASS | `getVersionMock` nunca chamado; «Itens do checklist» ausente (teste admin); smoke S-01 |
+| AC-02 | versão em página própria | PASS | rota `closing/admin/versions/{n}` → `checklist_version`; teste navegação + smoke S-02 |
+| AC-03 | documentos da versão selecionada | PASS | `getTemplateVersion(tpl,n)` — snapshot real, não catálogo; 53 itens v1 no smoke |
+| AC-04 | documento em página própria | PASS | `versions/{n}/documents/{itemKey}`; smoke S-03 |
+| AC-05 | PUBLISHED/INACTIVE read-only | PASS | sem «Editar itens»/inputs (teste + smoke S-03-ro 0 inputs editáveis) |
+| AC-06 | edição prospectiva governada | PASS | «Editar exigência futura» → `admin/documents/{key}` (catálogo DR-1); DRAFT edita via OCC `revision` |
+| AC-07 | histórico em página contextual | PASS | `checklist_admin_events` + `?version=`; zero `[role=dialog]` no smoke S-04 |
+| AC-08 | breadcrumb/retorno com contexto | PASS | `CfPagePath` por nível; back→versão, items→ancestrais |
+| AC-09 | deep link e F5 | PASS | goto direto `/versions/2/documents/CK-E-01` renderiza (S-05); rotas testadas |
+| AC-10 | kit reutilizado | PASS | `cf-detail-list`, `CfPagePath`, `DataTableSection`, `CfTimeline`, `ConfirmModalPanel` — zero componente novo |
+| AC-11 | responsivo/espaçado | PASS | mobile 390 `overflowX=0` (S-10); stacks `--cf-*` UX-013-RW01 |
+| AC-12 | teclado/foco/a11y | PASS | navegação por botões/links nativos; breadcrumb com `ariaLabel`; diálogos mantêm close/focus do kit |
+| AC-13 | sem alteração de contrato/dados | PASS | diff 100% MFE; BFF/migrations/permissões intactos; zero escrita no smoke |
+| AC-14 | testes frontend | PASS | 360 testes / 35 arquivos; tsc + eslint + `vite build` (`App-Cq3zaL3w.js`) |
+| AC-15 | deploy produção canônico | PENDING | autorizado pelo PO — executar após commit/push |
+| AC-16 | smoke prod autenticado | PENDING | não destrutivo, somente leitura |
+| AC-17 | docs + Ajuda sincronizados | PASS | §28.12, doc 112 §50, ledger, doc 30, `helpTooltips` (`adminVersion*`/`adminEvents`) |
+| AC-18 | evidências p/ homologação PO | PASS local | screenshots `Temp\ux015-shots` (01–09); produção pendente |
+| UX-015 DEP | ator enriquecido | DECISION_REQUIRED | `actor_subject` cru mantido — depende de UX-014 |
