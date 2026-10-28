@@ -74,15 +74,39 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
   const [exporting, setExporting] = useState(false);
 
   const period = useMemo(() => resolveYearMonthRange(year, month), [year, month]);
+  const competenceFromPeriod =
+    month === "all" ? "" : `${year}-${String(month).padStart(2, "0")}`;
 
+  // Espelha ano/mês nos filtros compartilhados em um único replace (sem setStart+setEnd).
   useEffect(() => {
-    if (filters.dateStart !== period.start || filters.dateEnd !== period.end) {
-      filters.setDateStart(period.start);
-      filters.setDateEnd(period.end);
+    if (
+      filters.dateStart === period.start &&
+      filters.dateEnd === period.end &&
+      filters.competence === competenceFromPeriod
+    ) {
+      return;
     }
-    // Sync only when year/month chips change — avoid loop with filter URL writer.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period.start, period.end]);
+    filters.replaceDateFilters({
+      dateStart: period.start,
+      dateEnd: period.end,
+      competence: competenceFromPeriod,
+    });
+  }, [
+    period.start,
+    period.end,
+    competenceFromPeriod,
+    filters.dateStart,
+    filters.dateEnd,
+    filters.competence,
+    filters.replaceDateFilters,
+  ]);
+
+  // Deps primitivas (padrão OTD/dashboard) — nunca `filters.apiParams` por identidade.
+  const branch = filters.apiParams.branch;
+  const customerSegment = filters.apiParams.customer_segment;
+  const sellerId = filters.apiParams.seller_id;
+  const customerCodes = filters.apiParams.customer_codes;
+  const customerCenters = filters.apiParams.customer_centers;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -92,9 +116,13 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
 
     void getBillingByCustomerMonth(
       {
-        ...filters.apiParams,
         start_date: period.start,
         end_date: period.end,
+        branch,
+        customer_segment: customerSegment,
+        seller_id: sellerId,
+        customer_codes: customerCodes,
+        customer_centers: customerCenters,
         nature: billingNature,
         limit: 5000,
       },
@@ -121,7 +149,17 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
       cancelled = true;
       controller.abort();
     };
-  }, [filters.apiParams, period.start, period.end, billingNature, reloadKey]);
+  }, [
+    branch,
+    customerSegment,
+    sellerId,
+    customerCodes,
+    customerCenters,
+    period.start,
+    period.end,
+    billingNature,
+    reloadKey,
+  ]);
 
   const months = data?.months ?? [];
   const rows = useMemo((): Row[] => {

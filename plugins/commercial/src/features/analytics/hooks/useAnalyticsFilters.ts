@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { usePortfolioScope } from "../../../app/PortfolioScopeContext";
 import { usePortfolioSellerAccess } from "../../../app/usePortfolioSellerAccess";
@@ -239,15 +239,32 @@ export function useAnalyticsFilters() {
     });
   }, [replaceAll, sellerAccess]);
 
-  const apiParams: AnalyticsFilterParams = {
-    start_date: dateStart || undefined,
-    end_date: dateEnd || undefined,
-    branch: resolveAnalyticsApiBranch(branches),
-    customer_segment: customerSegment || undefined,
-    seller_id: serializeSellerIdsForApi(effectiveSellerIds),
-    customer_codes: serializeCustomerCodesForApi(customerCodes),
-    customer_centers: serializeCustomerCentersForApi(customerCenters),
-  };
+  const branchApi = resolveAnalyticsApiBranch(branches);
+  const sellerIdApi = serializeSellerIdsForApi(effectiveSellerIds);
+  const customerCodesApi = serializeCustomerCodesForApi(customerCodes);
+  const customerCentersApi = serializeCustomerCentersForApi(customerCenters);
+
+  /** Referência estável — deps primitivas (arrays sanitizados mudam de identidade a cada render). */
+  const apiParams: AnalyticsFilterParams = useMemo(
+    () => ({
+      start_date: dateStart || undefined,
+      end_date: dateEnd || undefined,
+      branch: branchApi,
+      customer_segment: customerSegment || undefined,
+      seller_id: sellerIdApi,
+      customer_codes: customerCodesApi,
+      customer_centers: customerCentersApi,
+    }),
+    [
+      dateStart,
+      dateEnd,
+      branchApi,
+      customerSegment,
+      sellerIdApi,
+      customerCodesApi,
+      customerCentersApi,
+    ],
+  );
 
   const filterState: AnalyticsFilterUrlState = {
     dateStart,
