@@ -580,3 +580,11 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Dependencia exata: remediacao comprovada (rotacao + artefatos externos) OU aceitacao formal de risco pelo security owner no ledger, seguida de task separada de deploy governado com SHA/digest/rollback/READs T1-T6.
 - Veredito: DEPLOY_BLOCKED_SECURITY_GATE; implementacao pronta e verificada em codigo; trilha C3 de inteligencia pode prosseguir sobre codigo vigente. DEPLOY_EXECUTED=NO; PRODUCTION_QUERIES=0; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
 - Artefatos: doc 182.
+
+
+## 2026-10-28 — DELIA-C3-DAVI-ONLY-GOVERNED-PRODUCTION-RELEASE-02
+
+- Escopo: segunda tentativa de release do boundary DAVI-only (SHA 269d5276b0). Reancorado em c89a32298e; commits posteriores nao tocam delia-api/api-delpi/shared/compose.
+- Autorizacao consultada: nenhuma rotacao de credencial, nenhuma aceitacao formal de risco e nenhuma disposicao do security owner registradas; revisao independente mais recente (2178a2762c) reafirma RELEASE_SECURITY_GATE=BLOCKED e disposicao do owner como pre-requisito.
+- Consequencia: RELEASE_AUTHORIZATION=BLOCKED -> DEPLOY_NOT_EXECUTED; runtime v24 preservado; zero queries produtivas; sem contorno de gate.
+- Veredito: DEPLOY_BLOCKED_SECURITY_GATE (inalterado em relacao ao doc 182). DEPLOY_EXECUTED=NO; PRODUCTION_QUERIES=0; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
