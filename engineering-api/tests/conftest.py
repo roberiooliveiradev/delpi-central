@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import time
 
@@ -16,6 +17,7 @@ from delpi_auth.context_resolver import resolve_user_context
 from engineering_app.main import app
 from engineering_app.middleware.auth_middleware import jwt_middleware
 from engineering_app.middleware.request_observability_middleware import (
+    get_request_id,
     request_observability_middleware,
 )
 
@@ -185,4 +187,56 @@ def probe_client():
             "principal_type": user.principal_type,
         }
 
+    @probe_app.get("/probe/items/{item_id}", operation_id="test_engineering_item")
+    @require_any_permission([ENGINEERING_ACCESS])
+    def _item(item_id: str):
+        return {"item_id": item_id}
+
+    @probe_app.get("/probe/context", operation_id="test_engineering_context")
+    @require_any_permission([ENGINEERING_ACCESS])
+    async def _context():
+        # Interleaving real: suspende o coroutine para sobrepor requests.
+        await asyncio.sleep(0.01)
+        user = resolve_user_context()
+        return {
+            "request_id": get_request_id(),
+            "email": user.email,
+            "principal_type": user.principal_type,
+        }
+
+    @probe_app.get("/probe/boom", operation_id="test_engineering_boom")
+    @require_any_permission([ENGINEERING_ACCESS])
+    def _boom():
+        raise RuntimeError("sensitive-boom-internal")
+
+    # Rota pública (allowlist) que falha — prova a instrumentação de 500
+    # fora do boundary de auth do delpi_auth.
+    @probe_app.get("/health", operation_id="test_public_boom")
+    def _public_boom():
+        raise RuntimeError("public-boom-internal")
+
     return TestClient(probe_app)
+
+
+@pytest.fixture
+def probe_asgi_app():
+    """Probe app como ASGI puro — testes de concorrência via AsyncClient."""
+    from delpi_auth.authorization import require_any_permission
+    from delpi_auth.context_resolver import resolve_user_context
+
+    probe_app = FastAPI()
+    probe_app.middleware("http")(jwt_middleware)
+    probe_app.middleware("http")(request_observability_middleware)
+
+    @probe_app.get("/probe/context", operation_id="test_engineering_context")
+    @require_any_permission([ENGINEERING_ACCESS])
+    async def _context():
+        await asyncio.sleep(0.01)
+        user = resolve_user_context()
+        return {
+            "request_id": get_request_id(),
+            "email": user.email,
+            "principal_type": user.principal_type,
+        }
+
+    return probe_app

@@ -173,12 +173,14 @@ def test_query_string_not_in_logged_path(client, caplog):
     assert "path=/health" in record.getMessage()
 
 
-def test_log_path_sanitized_against_control_chars(client, caplog):
+def test_unmatched_path_never_reaches_logs(client, caplog):
+    """Paths arbitrários nunca aparecem em logs — nem sanitizados."""
     with caplog.at_level(logging.INFO, logger=_REQUEST_LOGGER):
         client.get("/v1/%0aforged_log_line")
     record = next(r for r in caplog.records if "engineering_api_request" in r.message)
     msg = record.getMessage()
-    assert "forged_log_line" in msg or "?" in msg
+    assert "path=unmatched_route" in msg
+    assert "forged" not in msg
     assert "\n" not in msg
 
 
@@ -189,13 +191,15 @@ def test_observability_does_not_weaken_auth(client):
     assert client.get("/v1/anything").status_code == 401
 
 
-def test_observability_sees_real_path_not_masked(client, caplog):
-    """Gate F1.S2R1: path mascarado pelo auth nunca aparece no log."""
+def test_broad_shared_policy_path_requires_auth(client, caplog):
+    """Path que a política ampla do shared aceitaria exige JWT aqui e é
+    logado com categoria genérica (sem path arbitrário em logs)."""
     with caplog.at_level(logging.INFO, logger=_REQUEST_LOGGER):
         response = client.get("/x/api-delpi/health")
     assert response.status_code == 401
     record = next(r for r in caplog.records if "engineering_api_request" in r.message)
-    assert "path=/x/api-delpi/health" in record.getMessage()
+    assert "path=unmatched_route" in record.getMessage()
+    assert "api-delpi" not in record.getMessage()
 
 
 def test_protected_flow_headers_on_authorized_probe(

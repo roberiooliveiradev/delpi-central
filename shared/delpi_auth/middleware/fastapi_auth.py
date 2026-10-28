@@ -4,6 +4,7 @@ import hashlib
 import logging
 import os
 import time
+from collections.abc import Callable
 from types import SimpleNamespace
 
 import httpx
@@ -181,12 +182,27 @@ def map_authz_exception(exc: BaseException) -> JSONResponse | None:
     return None
 
 
-async def jwt_middleware(request: Request, call_next):
+async def jwt_middleware(
+    request: Request,
+    call_next,
+    public_path_checker: Callable[[str], bool] | None = None,
+):
+    """Middleware canônico de autenticação JWT.
+
+    ``public_path_checker``: predicado opcional ``(path) -> bool`` que
+    substitui a política pública default ``is_public_path`` apenas para
+    esta chamada — permite que consumidores declarem uma allowlist
+    estrita explícita sem mutar o request. ``None`` preserva o default
+    canônico para todos os consumidores existentes.
+    """
     clear_current_user()
     clear_request_authorization()
 
     path = request.url.path
-    if is_public_path(path):
+    is_public = (
+        public_path_checker if public_path_checker is not None else is_public_path
+    )
+    if is_public(path):
         return await call_next(request)
 
     if request_has_valid_internal_service_token(request):

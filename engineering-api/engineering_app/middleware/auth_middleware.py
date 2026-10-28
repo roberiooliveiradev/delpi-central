@@ -1,5 +1,4 @@
 from delpi_auth.middleware.fastapi_auth import (
-    is_public_path,
     jwt_middleware as _base_jwt_middleware,
     normalize_path,
 )
@@ -27,31 +26,13 @@ def _is_engineering_public_path(path: str) -> bool:
 
 
 async def jwt_middleware(request, call_next):
-    path = request.url.path
-    if _is_engineering_public_path(path):
-        return await call_next(request)
+    """AuthN oficial delpi_auth com allowlist estrita da Engenharia.
 
-    if is_public_path(path):
-        # A lib compartilhada aceita uma política pública mais ampla que o
-        # contrato da Engenharia (sufixo /docs|/redoc|/openapi.json de
-        # qualquer prefixo, /apps/<outro-svc>/health, */api-delpi/health).
-        # Esses paths não podem dispensar JWT aqui: mascaramos o path só
-        # durante a avaliação do middleware base — que executa todo o fluxo
-        # de autenticação oficial — e restauramos antes do call_next para
-        # que o roteamento veja o path real.
-        real_path = request.scope["path"]
-        request.scope["path"] = "/"
-        request.__dict__.pop("_url", None)  # Starlette cacheia url por request
-
-        async def _restoring_call_next(req):
-            req.scope["path"] = real_path
-            req.__dict__.pop("_url", None)
-            return await call_next(req)
-
-        try:
-            return await _base_jwt_middleware(request, _restoring_call_next)
-        finally:
-            request.scope["path"] = real_path
-            request.__dict__.pop("_url", None)
-
-    return await _base_jwt_middleware(request, call_next)
+    O predicado é declarado via ``public_path_checker`` — a política
+    pública da lib (mais ampla: sufixo docs/openapi de qualquer prefixo,
+    /apps/<outro-svc>/health) não se aplica aqui, e o request path nunca
+    é mutado.
+    """
+    return await _base_jwt_middleware(
+        request, call_next, public_path_checker=_is_engineering_public_path
+    )
