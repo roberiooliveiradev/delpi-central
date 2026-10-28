@@ -76,6 +76,14 @@ _SORT_COLUMNS = {
 }
 
 
+_TIE_BREAKERS = (
+    "ADY.ADY_DATA DESC",
+    "ADY.ADY_PROPOS DESC",
+    "ADY.ADY_PREVIS DESC",
+    "ADY.R_E_C_N_O_ DESC",
+)
+
+
 def resolve_list_order(sort_by: str | None = None, sort_dir: str | None = None) -> str:
     """Build a validated ORDER BY for the complete result set before paging."""
     if sort_by is None:
@@ -86,11 +94,10 @@ def resolve_list_order(sort_by: str | None = None, sort_dir: str | None = None) 
     if column is None or sort_dir not in (None, "asc", "desc"):
         raise ValueError("Invalid proposal sort parameters")
     direction = (sort_dir or "asc").upper()
-    return (
-        f"ORDER BY {column} {direction}, "
-        "ADY.ADY_DATA DESC, ADY.ADY_PROPOS DESC, "
-        "ADY.ADY_PREVIS DESC, ADY.R_E_C_N_O_ DESC"
-    )
+    # SQL Server rejects repeated columns in ORDER BY (error 169); drop the
+    # tie-breaker that duplicates the sorted column.
+    tie_breakers = [t for t in _TIE_BREAKERS if not t.startswith(f"{column} ")]
+    return f"ORDER BY {column} {direction}, {', '.join(tie_breakers)}"
 
 
 LIST_ACTIVE_SQL = f"""

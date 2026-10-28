@@ -1289,6 +1289,31 @@ def test_proposal_sort_whitelist_and_stable_order() -> None:
             resolve_list_order(sort_by, sort_dir)
 
 
+def test_proposal_sort_never_duplicates_order_by_columns() -> None:
+    """Regressão: sort_by=data/proposta/versão duplicava o tie-breaker e o SQL
+    Server rejeitava com erro 169 (proposta indisponível em produção)."""
+    from app.infrastructure.totvs.propostas_comerciais.queries import (
+        _SORT_COLUMNS,
+        resolve_list_order,
+    )
+
+    for key in _SORT_COLUMNS:
+        for direction in ("asc", "desc"):
+            order = resolve_list_order(key, direction)
+            expressions = [
+                part.strip().rsplit(" ", 1)[0]
+                for part in order.split("ORDER BY", 1)[1].split(",")
+            ]
+            assert len(expressions) == len(set(expressions)), (key, direction, order)
+            # Determinismo: R_E_C_N_O_ sempre permanece como desempate final.
+            assert order.rstrip().endswith("ADY.R_E_C_N_O_ DESC"), order
+
+    order_data = resolve_list_order("data", "desc")
+    assert order_data.count("ADY.ADY_DATA") == 1
+    assert "ADY.ADY_PROPOS DESC" in order_data
+    assert "ADY.ADY_PREVIS DESC" in order_data
+
+
 def test_proposal_sort_before_offset_fetch() -> None:
     from app.infrastructure.totvs.propostas_comerciais.proposta_comercial_repository import (
         PropostaComercialRepository,
