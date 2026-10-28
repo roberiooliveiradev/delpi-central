@@ -694,3 +694,17 @@ Nenhum teste ou deploy desta rodada foi executado ao escrever esta especificaç�
 | UX015-RW02-10 | responsividade/temas/zoom | PASS | shots 10–15: dark/tablet820/320/390 `overflowX=0`; mobile default vira cards no kit |
 | UX015-RW02-11 | regressão/navegação/estados | PASS | 365 testes; smoke RW02 13/13 (deep link, F5, back/forward, 404, DRAFT/REVIEW/PUBLISHED) |
 | UX015-RW02-12 | deploy governado | PASS | `bed4993c05` → origin/main; srv-api pull + `up-prod-sequential.sh --build controllership-finance`; remoteEntry 200 servindo `__federation_expose_App-0ucqmrGp.js`/`App-D376ypA0.js`; BFF healthy; smoke prod autenticado TEST_NOT_RUN (sem identidade autorizada) |
+
+
+### UX-016 — Hero contextual e listagem flexível nas páginas Admin/Versão (TARGET)
+| AC | Evidência esperada | Estado |
+|---|---|---|
+| UX016-01 | Admin e Versão com mesmo padrão HERO→LISTAGEM em duas superfícies irmãs | TARGET |
+| UX016-02 | Hero reúne métricas, ações, busca, Tabela/Cards, Colunas sem toolbar duplicada | TARGET |
+| UX016-03 | Administração sem coluna Ações/Inativar; versão abre por clique na linha/card | TARGET |
+| UX016-04 | Inativar exclusivamente na versão, ícone danger + confirmação BFF existente | TARGET |
+| UX016-05 | Tabela ocupa altura útil flexível; paginação no fim; 0/1/50/100 linhas sem artificiais | TARGET |
+| UX016-06 | Ordenação real + paridade tabela/cards + filtros/colunas preservados | TARGET |
+| UX016-07 | PT-BR e kit-first, light/dark, 320/390/768/desktop/zoom200, keyboard/focus | TARGET |
+| UX016-08 | Snapshot, OCC, read-only PUBLISHED, back/F5/deep link, RBAC, erros, Help intactos | TARGET |
+| UX016-09 | Testes, screenshots, bundle, deploy/smoke por gate com status honesto | PLANNED |
