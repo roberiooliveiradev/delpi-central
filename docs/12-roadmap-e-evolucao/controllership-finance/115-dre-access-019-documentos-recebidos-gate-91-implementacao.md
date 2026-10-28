@@ -93,3 +93,17 @@ Revisão arquitetural externa: não autodeclarada — aguarda GATE.
 - Bundle MFE: `remoteEntry.js` HTTP 200.
 - Smoke de superfície não autenticado: `GET /closing/received-documents` → **401** (fail-closed).
 - Smoke autenticado interno + DRE: **TEST_NOT_RUN** — requer grant Core `closing-documents.read` e identidade de teste autorizada (provisionamento é responsabilidade do Core/administração; não improvisado em produção).
+
+## 9. RW01 — correção da entrada multi-público (2026-10-28)
+
+**Sintoma (evidência PO/produção):** usuário com apenas `closing-documents.read` recebia `/unauthorized` ao abrir `/apps/controllership-finance`.
+
+**Causa raiz:** a rota raiz do manifesto exige `controllership-finance.access`. O guard do Portal (`FederatedAppRouteGuard` → `resolveManifestRoutePermission` → `ProtectedRoute`) resolve uma única permission por rota — o catálogo `authorizationRoutes` não tem semântica OR. A BFF `/viewer-context` já aceitava a capability documental, mas o usuário era bloqueado **antes** de o MFE montar. O contrato de rotas do Core (`RouteDTO.permission_code: str | None`) não suporta permissões alternativas — evolução material não necessária.
+
+**Solução implementada (Portal somente — `ccc8f3a235`):** convenção de entrada já estabelecida na plataforma (launcher: `visibleRoutes[0] ?? routes[0]`; `federatedAppHosts.mainRoute`) aplicada no guard: no **basePath exato**, se a permission resolvida é ausente mas o usuário possui rotas autorizadas (`app.routes` do `/me/apps`), redireciona à entrada autorizada. Rotas internas negadas continuam `/unauthorized` — a negação permanece evidência; sem rotas autorizadas o app nem aparece no catálogo. `resolveAuthorizedEntryPath` (puro) + testes `node:test` (9 casos: DRE, visibilidade, loop, negação interna, prefixos).
+
+**Sem mudança:** Core, manifesto, BFF, MFE — contratos intactos; a proteção documental (capability → RECIPIENT → SUBMITTED → snapshot) é inalterada. Beneficia todos os apps multi-audiência (precedente latente idêntico em `production-pulse.operator`, `helpdesk.console`).
+
+**Deploy:** `srv-api` `pull --ff-only` + `up-prod-sequential.sh --build portal`; `delpi-portal` saudável em `ccc8f3a235`.
+
+**Pendente:** smoke autenticado end-to-end com identidade DRE provisionada (grant `closing-documents.read` no Core) — **TEST_NOT_RUN** até o grant existir; validar: entrada sem `/unauthorized`, `closing/documents` renderizado, rotas internas bloqueadas.
