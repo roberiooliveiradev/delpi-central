@@ -85,3 +85,16 @@ Inalterado: `McpCapabilityProvider` → `SpecialistInterop` → `davi` (`discove
 `LOCAL_PASS_WITH_RESIDUAL` — boundary direto eliminado e provado por residual search + RED/GREEN + regressão. Deploy `BLOCKED` pelo gate de segurança (não por falha técnica). A arquitetura DÉLIA→DAVI-only está completa no código: DELPI domain data só chega via `mcp-api-delpi`; ausência de capability = indisponibilidade legítima.
 
 `DEPLOY_EXECUTED=NO` · `PRODUCTION_QUERIES=0` · `MODEL_CHANGED=NO` · `KEYCLOAK_MODIFIED=NO` · `API_DELPI_CODE_UNCHANGED=YES` · `DAVI_CAPABILITIES_UNCHANGED=YES` · `INDEPENDENT_REVIEW=PENDING` · fase não avançada.
+
+
+## 13. Revisão independente da coordenação — 2026-10-28
+
+**VERDICT=ACCEPT_WITH_RESIDUAL (code boundary); RELEASE_GATE=BLOCKED; RUNTIME_OUTCOME=INCONCLUSIVE.** Reviewed commit `269d5276b092d7f6e3fb7ce0a69350c5710b066f`, changed-file patches and doc 181 in GitHub main. Review is static; RED/GREEN, full regression, architecture audit, E2E and residual search are executor-reported, not independently re-run.
+
+**Accepted:** direct source `delpi` wiring removed in root composer; last two declarations removed with `openapi_declarations.delpi.json`; DELIA_OPENAPI_DELPI settings/env removed in prod/dev compose and env example. The shared OpenAPI provider/invoker remain for other legitimate consumers. No DAVI allowlist, API DELPI business logic, Keycloak, model or runtime changes. Given this scoped static evidence, `DIRECT_DELPI_BOUNDARY=REMOVED_IN_CODE`, while `DAVI_MCP_RUNTIME=TO_VERIFY`.
+
+**Contractual effect is intentional:** `get_product_summary` and `search_customers` become unavailable in DÉLIA until DAVI owner independently permits capabilities; no fallback. This chat will not request or implement DAVI operation/route/allowlist expansion. The previously identified product-search filter parity is an owner-boundary residual, not reason to recreate a direct provider.
+
+**Evidence limits:** local paired E2E uses simulated wire and is not a production DAVI task-outcome proof. The full suite reportedly still has pre-existing CRI `answer_requirements` drift; needs separate owner classification. Release security gate remains blocked under doc 174 pending security-owner decision/remediation of exposed provider key, including external artifacts; removing local logs alone did not contain key. Production baseline unchanged; `DEPLOY_EXECUTED=NO`. No runtime sha/image verification or live DAVI read was conducted.
+
+**Next step:** security owner resolves release gate; then separately authorized governed deployment with SHA/digest/rollback/live READ outcome. Independently, coordination may resume C3 intelligence quality work on current code (semantic selection, evidence sufficiency, bounded recovery, model-call efficiency, Business Outcome) without mixing in DAVI capability evolution or claiming production validation. Phase stays C3; ledger NEXT authoritative.
