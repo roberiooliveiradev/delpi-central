@@ -1019,10 +1019,11 @@ Gap honesto registrado: o kit não expõe barra de ordenação no modo Cards —
 Identidade (UX-014): `DataRecordCard.leading` aceita avatar quando houver contrato Core→BFF autorizado para atores administrativos — hoje o único lookup BFF é document-scoped (`participants/lookup`), insuficiente para `published_by`/audit actors.
 
 
-### UX-016 — integração hero + DataTableSection (TARGET)
-- Hero: usar `CfPagePath`, `CfTitleWithHelp`, `CfMetricStrip`, `CfActionButton`, `CfStatusBadge` e containers/tokens reais do kit conforme exports no HEAD; evitar widget de métrica paralelo.
-- Listagem: `DataTableSection` com table/cards, sortable/sortValue, rowClick, column selection, search/pageSize/footer. **Verificar API real para externalizar/posicionar toolbar no hero sem clonar state ou controles.** Se não for suportado, escalar lacuna de kit/contract gate; não usar CSS ocultando uma toolbar e reproduzindo outra sem sincronização comprovada.
-- Superfícies: hero e lista são irmãs, sem CfSectionCard intermediário e sem pilha de cards internos.
+### UX-016 — integração hero + DataTableSection (PROVEN)
+- Hero: `CfPageHero` (factory `createDashboardPageHero`, compact) — `eyebrow`, `title`, `description`, `badge` (`CfStatusBadge`), `actions` (`CfActionButton` + lucide), `highlights` (métricas reais do DTO) e `children` recebendo o host `cf-hero-toolbar` da toolbar portada. Nenhum widget paralelo.
+- Listagem: `DataTableSection` com table/cards, `sortable`/`sortValue`, `onRowClick`, seleção de colunas (`columnPreferencesKey`), busca/itens por página/paginação nativas. Toolbar no hero via **`toolbarPortalTarget`** (portal da mesma instância — zero duplicação); altura flexível via **`tableLayout="scroll"`** (`delpi-ui-table-wrap--scroll`, flex+overflow do kit).
+- Lacuna de kit resolvida como evolução mínima retrocompatível (2 props novas, defaults preservam comportamento); sem CSS que esconda toolbar ou controle clonado. Cobertura: `DataTableSection.toolbarPortal.test.tsx` (3/3).
+- Superfícies: hero e lista irmãos sob `.cf-hero-page__content` (filhos `flex:0 0 auto`; `.cf-flex-listing` único `flex:1`), cadeia `dashboard-page--fill` aplicada pelo `PluginShell` às views `checklist_admin`/`checklist_version`. Reset local do `flex:1 1 100%` do UX-013 evita paginação flutuante.
 - Linha/card: navegação acessível; sem coluna Ações na Administração; Inativar somente na Versão e fora do alvo clicável; ação destructive com confirmação.
-- Altura disponível: dimensionamento flex/viewport host-aware, scroll interno apenas quando acessível e sem quebrar tabelas largas/mobile.
-- UX014 identidade: não resolver via frontend direto no Core, não improvisar nome/uuid; dependência isolada.
+- UX014 identidade: não resolvida — fallback «Identidade não disponível» sem UUID cru; dependência isolada até contrato Core→BFF autorizado.
+- Gap residual do kit: sem controle homologado de ordenação visível no modo Cards (herda a ordenação aplicada na tabela; sem barra própria) — registrado, sem UI inventada.

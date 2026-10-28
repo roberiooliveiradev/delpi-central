@@ -1420,3 +1420,132 @@
   color: var(--cf-text-muted);
   font-size: 0.85rem;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   UX-016 — Hero contextual + listagem flexível (112 §53, wireframe PO).
+   Mesma cadeia `dashboard-page--fill` homologada do Commercial:
+   altura vem do mount do Portal — nunca 100vh cego (o chrome já consome
+   viewport). O scroll fica no wrap `table-wrap--scroll` da tabela.
+   ═══════════════════════════════════════════════════════════════════════ */
+#root:has(> .dashboard-controllership-finance.dashboard-page--fill) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.dashboard-controllership-finance.dashboard-page--fill {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-controllership-finance.dashboard-page--fill > .cf-page-stack {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-controllership-finance.dashboard-page--fill
+  .cf-view-transition--page {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Cadeia flex até a listagem: página → content → região flexível. */
+.dashboard-controllership-finance .cf-hero-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.dashboard-controllership-finance .cf-hero-page > .cf-page-path {
+  margin: 0;
+}
+
+.dashboard-controllership-finance .cf-hero-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-section-gap);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Hero, banners e feedbacks são intrínsecos — só a listagem flexível
+   encolhe (o hero tem overflow:hidden; encolher recortaria o conteúdo). */
+.dashboard-controllership-finance .cf-hero-page__content > * {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+/* Superfície irmã do hero — ocupa o restante, paginação ancorada ao fim.
+   flex-shrink explicitamente 1 com min-height:0: é a única região que
+   cede espaço quando o conteúdo excede o viewport. */
+.dashboard-controllership-finance .cf-flex-listing {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* A regra UX-013 (flex-wrap em linha única) cede à coluna flexível quando
+   a listagem está sob `cf-flex-listing`; header da seção segue no topo. */
+.dashboard-controllership-finance
+  .cf-flex-listing
+  > .cf-table-section {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 0;
+  gap: 0;
+}
+
+/* UX-013 dá `flex: 1 1 100%` a cada filho — na coluna flexível isso
+   faria a paginação crescer e flutuar no meio do painel. Só o corpo da
+   tabela/cards cresce; header, filtros e paginação ficam intrínsecos. */
+.dashboard-controllership-finance
+  .cf-flex-listing
+  > .cf-table-section
+  > * {
+  flex: 0 0 auto;
+}
+
+/* O corpo da tabela cresce para ocupar a área flexível — a paginação
+   permanece ancorada ao fim da superfície, nunca flutuando no meio. */
+.dashboard-controllership-finance
+  .cf-flex-listing
+  > .cf-table-section
+  > .delpi-ui-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Modo Cards também ocupa a área flexível e rola internamente. */
+.dashboard-controllership-finance
+  .cf-flex-listing
+  .delpi-ui-data-cards-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Faixa do hero que recebe a toolbar real da tabela via portal
+   (`toolbarPortalTarget` do kit) — mesma instância/estado, zero duplicação. */
+.dashboard-controllership-finance .cf-hero-toolbar {
+  display: flex;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-hero-toolbar > .cf-table-toolbar {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}

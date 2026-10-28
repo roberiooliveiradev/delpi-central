@@ -1,6 +1,8 @@
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal as createPortalNamed } from "react-dom";
+import * as ReactDOM from "react-dom";
 
 import { ExcelExportButton } from "../../export/ExportButtons";
 import { usePersistedViewLayout } from "../../hooks/usePersistedViewLayout";
@@ -8,6 +10,7 @@ import { useTableColumnVisibility } from "../../hooks/useTableColumnVisibility";
 import { useTableFontSize } from "../../hooks/useTableFontSize";
 import { buildDataTableSearchText } from "../../utils/dataTableSearch";
 import { delpiUiClass } from "../../utils/delpiUiClass";
+import { tryResolveCreatePortal } from "../../utils/resolveCreatePortal";
 import { useClientPagination } from "../../utils/useClientPagination";
 import { HelpTooltip } from "../help/HelpTooltip";
 import { SegmentToggle } from "../forms/SegmentToggle";
@@ -166,6 +169,19 @@ export type DataTableSectionProps<T> = {
   toolbarExtra?: ReactNode;
   /** Conteúdo à esquerda da toolbar (além do toggle Tabela/Cards nativo). */
   toolbarLeading?: ReactNode;
+  /**
+   * Host externo para a toolbar (ex.: faixa do hero da página). Quando
+   * informado, a MESMA toolbar — busca, Tabela/Cards, colunas, extras —
+   * é renderizada via portal no elemento, mantendo estado e controles
+   * únicos desta seção (sem duplicar UI). Opt-in e retrocompatível.
+   */
+  toolbarPortalTarget?: HTMLElement | null;
+  /**
+   * Layout do wrap da tabela interna — `"scroll"` transforma a área da
+   * tabela em região flexível com header fixo (parent flex column com
+   * `min-height: 0`), para listagens que ocupam a altura útil restante.
+   */
+  tableLayout?: "section" | "scroll";
   /** Filtros/formulários em linha própria, largura total (FilterBar embedded). */
   toolbarFilters?: ReactNode;
   /**
@@ -345,6 +361,8 @@ export function DataTableSection<T>({
   serverSearch,
   toolbarExtra,
   toolbarLeading,
+  toolbarPortalTarget,
+  tableLayout,
   toolbarFilters,
   columnPreferencesKey,
   defaultColumnVisibility,
@@ -633,6 +651,63 @@ export function DataTableSection<T>({
     columnVisibilityEnabled ||
     Boolean(toolbarExtra);
 
+  const toolbarNode = showToolbar ? (
+    <div className={sectionClassNames.toolbar}>
+      {viewToggle || toolbarLeading ? (
+        <div className={sectionClassNames.searchGroup}>
+          {viewToggle}
+          {toolbarLeading}
+        </div>
+      ) : null}
+
+      {!hidePageSizeSelect ? (
+        <TablePageSizeSelect
+          pageSize={paginationSize}
+          pageSizeOptions={pageSizeOptions}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      ) : null}
+
+      {!hideSearch ? (
+        <div className={sectionClassNames.searchGroup}>
+          <div className={sectionClassNames.search} role="search">
+            <Search size={16} aria-hidden="true" className={sectionClassNames.searchIcon} />
+            <input
+              type="search"
+              className={sectionClassNames.searchInput}
+              value={search}
+              placeholder={searchPlaceholder ?? labels.searchPlaceholder}
+              onChange={(event) => handleSearchChange(event.target.value)}
+              aria-label={labels.searchAriaLabel}
+            />
+          </div>
+          {searchHint ? (
+            <HelpTooltip
+              content={searchHint}
+              ariaLabel={labels.searchHelpAriaLabel}
+              className={sectionClassNames.searchHelp}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
+      {hasToolbarExtra ? (
+        <div className={sectionClassNames.toolbarExtra}>{nativeToolbarExtra}</div>
+      ) : null}
+    </div>
+  ) : null;
+
+  const renderToolbar = () => {
+    if (!toolbarNode) return null;
+    if (toolbarPortalTarget) {
+      return (tryResolveCreatePortal(ReactDOM) ?? createPortalNamed)(
+        toolbarNode,
+        toolbarPortalTarget,
+      );
+    }
+    return toolbarNode;
+  };
+
   return (
     <section
       className={sectionClass || sectionClassNames.section}
@@ -700,51 +775,7 @@ export function DataTableSection<T>({
         />
       ) : (
         <>
-          {showToolbar ? (
-            <div className={sectionClassNames.toolbar}>
-              {viewToggle || toolbarLeading ? (
-                <div className={sectionClassNames.searchGroup}>
-                  {viewToggle}
-                  {toolbarLeading}
-                </div>
-              ) : null}
-
-              {!hidePageSizeSelect ? (
-                <TablePageSizeSelect
-                  pageSize={paginationSize}
-                  pageSizeOptions={pageSizeOptions}
-                  onPageSizeChange={handlePageSizeChange}
-                />
-              ) : null}
-
-              {!hideSearch ? (
-              <div className={sectionClassNames.searchGroup}>
-                <div className={sectionClassNames.search} role="search">
-                  <Search size={16} aria-hidden="true" className={sectionClassNames.searchIcon} />
-                  <input
-                    type="search"
-                    className={sectionClassNames.searchInput}
-                    value={search}
-                    placeholder={searchPlaceholder ?? labels.searchPlaceholder}
-                    onChange={(event) => handleSearchChange(event.target.value)}
-                    aria-label={labels.searchAriaLabel}
-                  />
-                </div>
-                {searchHint ? (
-                  <HelpTooltip
-                    content={searchHint}
-                    ariaLabel={labels.searchHelpAriaLabel}
-                    className={sectionClassNames.searchHelp}
-                  />
-                ) : null}
-              </div>
-            ) : null}
-
-            {hasToolbarExtra ? (
-              <div className={sectionClassNames.toolbarExtra}>{nativeToolbarExtra}</div>
-            ) : null}
-            </div>
-          ) : null}
+          {renderToolbar()}
 
           {toolbarFilters ? (
             <div className={sectionClassNames.toolbarFilters}>{toolbarFilters}</div>
@@ -778,7 +809,7 @@ export function DataTableSection<T>({
               onSortChange={
                 serverSort?.onSortChange ?? (serverPagination ? undefined : handleSortChange)
               }
-              layout="section"
+              layout={tableLayout ?? "section"}
               enableColumnReorder={columnVisibilityEnabled}
               onColumnOrderChange={
                 columnVisibilityEnabled ? applyVisibleOrder : undefined

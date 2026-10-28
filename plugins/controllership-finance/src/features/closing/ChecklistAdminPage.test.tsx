@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -90,31 +91,96 @@ function setupHappy() {
   ]);
 }
 
+/** Escopo da listagem — o hero exibe a última versão (`v2`), então
+ * consultas de célula precisam mirar a superfície `cf-flex-listing`. */
+function listing() {
+  return within(
+    document.querySelector(".cf-flex-listing") as HTMLElement,
+  );
+}
+
 describe("ChecklistAdminPage", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
   });
 
-  it("renders template and version table without items expansion", async () => {
+  it("renders hero and version table without items expansion", async () => {
     setupHappy();
     render(<ChecklistAdminPage basePath={BASE} />);
-    // UX-015-RW02: título da superfície traz o nome do template, sem o
+    // UX-016: hero contextual com o nome do template — nunca o
     // identificador técnico `monthly-closing-checklist`.
     await waitFor(() =>
-      expect(
-        screen.getByText("Versões · Checklist mensal"),
-      ).toBeTruthy(),
+      expect(screen.getByText("Checklist mensal")).toBeTruthy(),
     );
     expect(screen.queryByText(/monthly-closing-checklist/)).toBeNull();
-    expect(await screen.findByText("v1")).toBeTruthy();
-    expect(screen.getByText("v2")).toBeTruthy();
-    expect(screen.getByText("Publicada")).toBeTruthy();
-    expect(screen.getByText("Rascunho")).toBeTruthy();
+    // Hero: ações administrativas reais.
+    expect(
+      screen.getByRole("button", { name: "Nova versão" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Auditoria" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Documentos" }),
+    ).toBeTruthy();
+    // Listagem única abaixo do hero.
+    expect(
+      screen.getByRole("heading", { name: "Versões" }),
+    ).toBeTruthy();
+    expect(await listing().findByText("v1")).toBeTruthy();
+    expect(listing().getByText("v2")).toBeTruthy();
+    expect(listing().getByText("Publicada")).toBeTruthy();
+    expect(listing().getByText("Rascunho")).toBeTruthy();
     // UX-015: a página não expande a tabela de itens — nem consulta o
     // detalhe de versão.
     expect(screen.queryByText("Itens do checklist")).toBeNull();
     expect(getVersionMock).not.toHaveBeenCalled();
+  });
+
+  it("shows no actions column nor destructive controls in the listing", async () => {
+    setupHappy();
+    render(<ChecklistAdminPage basePath={BASE} />);
+    await screen.findByText("v1");
+    // UX016-03: inativação e demais ações de estado vivem só no
+    // detalhe da versão — a listagem não tem coluna Ações.
+    expect(screen.queryByText("Ações")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Inativar" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Descartar" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Abrir versão" }),
+    ).toBeNull();
+  });
+
+  it("renders the listing toolbar inside the hero and filters rows", async () => {
+    setupHappy();
+    render(<ChecklistAdminPage basePath={BASE} />);
+    await screen.findByText("v1");
+    // UX016-02: pesquisa/toggle/colunas vivem no hero (portal real,
+    // mesma instância) — nunca duplicadas na seção.
+    const host = document.querySelector(
+      "[data-testid='admin-listing-toolbar']",
+    ) as HTMLElement;
+    expect(host).toBeTruthy();
+    const search = host.querySelector(
+      "input[type='search']",
+    ) as HTMLInputElement;
+    expect(search).toBeTruthy();
+    expect(host.querySelector("button")).toBeTruthy();
+    const section = document.querySelector(
+      ".cf-flex-listing section",
+    ) as HTMLElement;
+    expect(section?.querySelector("input[type='search']")).toBeNull();
+    // T05: a busca no hero filtra as linhas reais da tabela.
+    fireEvent.change(search, { target: { value: "Rascunho" } });
+    await waitFor(() =>
+      expect(listing().queryByText("v1")).toBeNull(),
+    );
+    expect(listing().getByText("v2")).toBeTruthy();
   });
 
   it("navigates to the dedicated version page by row click", async () => {
@@ -131,22 +197,17 @@ describe("ChecklistAdminPage", () => {
     ).toBeNull();
   });
 
-  it("does not navigate when clicking a destructive row action", async () => {
+  it("keeps destructive controls out of the listing (detail only)", async () => {
     setupHappy();
     render(<ChecklistAdminPage basePath={BASE} />);
-    const inactivate = await screen.findByRole("button", {
-      name: "Inativar",
-    });
-    // O jsdom preserva `location` entre testes — a asserção é que o
-    // clique na ação destrutiva não altera a URL atual.
-    const before = window.location.pathname;
-    fireEvent.click(inactivate);
-    // Ação destrutiva fica isolada da navegação da linha e exige
-    // confirmação própria.
-    expect(window.location.pathname).toBe(before);
-    expect(
-      await screen.findByRole("button", { name: "Inativar versão" }),
-    ).toBeTruthy();
+    await screen.findByText("v1");
+    // UX016-03/UX016-04: nenhum controle destrutivo na página da lista —
+    // clicar na linha só navega para o detalhe.
+    const cell = screen.getByText("v1");
+    fireEvent.click(cell.closest("tr") as HTMLElement);
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/admin/versions/1`,
+    );
   });
 
   it("sorts versions by column", async () => {
@@ -161,10 +222,14 @@ describe("ChecklistAdminPage", () => {
       name: "Ordenar por Versão",
     });
     fireEvent.click(sortable);
-    let labels = screen.getAllByText(/^v\d$/).map((n) => n.textContent);
+    let labels = listing()
+      .getAllByText(/^v\d$/)
+      .map((n) => n.textContent);
     expect(labels).toEqual(["v1", "v2"]);
     fireEvent.click(sortable);
-    labels = screen.getAllByText(/^v\d$/).map((n) => n.textContent);
+    labels = listing()
+      .getAllByText(/^v\d$/)
+      .map((n) => n.textContent);
     expect(labels).toEqual(["v2", "v1"]);
   });
 
@@ -188,7 +253,7 @@ describe("ChecklistAdminPage", () => {
     render(<ChecklistAdminPage basePath={BASE} />);
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Eventos de auditoria",
+        name: "Auditoria",
       }),
     );
     expect(window.location.pathname).toBe(
@@ -200,9 +265,10 @@ describe("ChecklistAdminPage", () => {
   it("disables draft creation while a draft is open", async () => {
     setupHappy();
     render(<ChecklistAdminPage basePath={BASE} />);
-    await screen.findByText("v2");
+    await screen.findByText("v1");
+    expect(listing().getByText("v2")).toBeTruthy();
     const button = await screen.findByRole("button", {
-      name: "Criar versão rascunho",
+      name: "Nova versão",
     });
     expect(button).toHaveProperty("disabled", true);
   });
@@ -227,81 +293,7 @@ describe("ChecklistAdminPage", () => {
     );
   });
 
-  it("publishes a version with effective period", async () => {
-    listTemplatesMock.mockResolvedValue([TEMPLATE]);
-    listVersionsMock.mockResolvedValue([
-      VERSION_PUBLISHED,
-      VERSION_REVIEW,
-    ]);
-    publishMock.mockResolvedValue(VERSION_REVIEW);
-    render(<ChecklistAdminPage basePath={BASE} />);
-    const publishBtn = await screen.findByRole("button", {
-      name: "Publicar",
-    });
-    fireEvent.click(publishBtn);
-    const input = await screen.findByLabelText(
-      "Vigente a partir de (AAAA-MM)",
-    );
-    fireEvent.change(input, { target: { value: "2026-07" } });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Publicar versão" }),
-    );
-    await waitFor(() => expect(publishMock).toHaveBeenCalled());
-    expect(publishMock.mock.calls[0][2]).toEqual({
-      effective_from_period: "2026-07",
-    });
-  });
-
-  it("inactivates the published version after confirmation", async () => {
-    setupHappy();
-    inactivateMock.mockResolvedValue(VERSION_PUBLISHED);
-    render(<ChecklistAdminPage basePath={BASE} />);
-    const btn = await screen.findByRole("button", { name: "Inativar" });
-    fireEvent.click(btn);
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Inativar versão" }),
-    );
-    await waitFor(() => expect(inactivateMock).toHaveBeenCalled());
-    expect(inactivateMock.mock.calls[0]).toEqual(["t-1", 1]);
-  });
-
-  it("submits a draft version for review", async () => {
-    setupHappy();
-    submitReviewMock.mockResolvedValue({
-      ...VERSION_DRAFT,
-      status: "REVIEW",
-    });
-    render(<ChecklistAdminPage basePath={BASE} />);
-    const btn = await screen.findByRole("button", {
-      name: "Enviar para revisão",
-    });
-    fireEvent.click(btn);
-    await waitFor(() => expect(submitReviewMock).toHaveBeenCalled());
-    expect(submitReviewMock.mock.calls[0]).toEqual(["t-1", 2]);
-  });
-
-  it("returns a review version to draft with a reason", async () => {
-    listTemplatesMock.mockResolvedValue([TEMPLATE]);
-    listVersionsMock.mockResolvedValue([
-      VERSION_PUBLISHED,
-      VERSION_REVIEW,
-    ]);
-    returnDraftMock.mockResolvedValue(VERSION_DRAFT);
-    render(<ChecklistAdminPage basePath={BASE} />);
-    const btn = await screen.findByRole("button", { name: "Devolver" });
-    fireEvent.click(btn);
-    const reason = await screen.findByRole("textbox");
-    fireEvent.change(reason, {
-      target: { value: "Ajustar item 2.3" },
-    });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Devolver a rascunho" }),
-    );
-    await waitFor(() => expect(returnDraftMock).toHaveBeenCalled());
-    expect(returnDraftMock.mock.calls[0]).toEqual([
-      "t-1",
-      3,
-      { reason: "Ajustar item 2.3" },
-    ]);
-  });
+  // As ações de ciclo de vida (publicar, revisar, devolver, inativar,
+  // descartar) vivem exclusivamente no detalhe da versão — a cobertura
+  // correspondente está em ChecklistVersionPage.test.tsx.
 });

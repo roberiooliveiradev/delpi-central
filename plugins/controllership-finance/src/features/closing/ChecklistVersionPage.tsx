@@ -36,7 +36,7 @@ import {
   CfActionButton,
   CfDataRecordCard,
   CfEmptyState,
-  CfMetricStrip,
+  CfPageHero,
   CfPagePath,
   CfStatusBadge,
   CfTitleWithHelp,
@@ -458,9 +458,14 @@ export function ChecklistVersionPage({
     [editing, actions.busy, version, basePath],
   );
 
+  // Host da toolbar da listagem — renderizada no hero via portal do
+  // DataTableSection (mesma instância/estado; `toolbarPortalTarget`).
+  const [toolbarHost, setToolbarHost] =
+    useState<HTMLElement | null>(null);
+
   return (
     <section
-      className="cf-page-stack cf-closing-layout"
+      className="cf-page-stack cf-closing-layout cf-hero-page"
       aria-label={`Versão v${version} do checklist`}
     >
       <CfPagePath
@@ -488,53 +493,111 @@ export function ChecklistVersionPage({
         current={`Versão v${version}`}
       />
 
-      <div className="cf-checklist-page__content">
-        <div className="cf-lead-row">
-          <div className="cf-lead-stack">
-            <div className="cf-lead-badges">
-              <CfTitleWithHelp
-                title={`Versão v${version}`}
-                hint={CF_HELP.adminVersion.page}
-              />
-              {detailData ? (
-                <CfStatusBadge
-                  label={
-                    STATUS_LABELS[detailData.status] ??
-                    detailData.status
-                  }
-                  variant={
-                    STATUS_VARIANTS[detailData.status] ?? "neutral"
-                  }
-                />
-              ) : null}
-            </div>
-            {detailData ? (
-              <p className="cf-validation-panel__doc-detail">
-                {template?.name}
-              </p>
-            ) : null}
-          </div>
-          {detailData ? (
-            <div className="cf-validation-panel__item-actions">
-              <CfActionButton
-                type="button"
-                variant="ghost"
-                onClick={() =>
-                  navigatePluginPath(
-                    checklistAdminEventsPath(version, basePath),
-                  )
+      <div className="cf-hero-page__content">
+        <CfPageHero
+          aria-label={`Versão v${version} do checklist`}
+          eyebrow="Administração"
+          title={
+            <CfTitleWithHelp
+              title={`Versão v${version}`}
+              hint={CF_HELP.adminVersion.page}
+            />
+          }
+          badge={
+            detailData ? (
+              <CfStatusBadge
+                label={
+                  STATUS_LABELS[detailData.status] ??
+                  detailData.status
                 }
-              >
-                <History
-                  size={15}
-                  strokeWidth={1.9}
-                  aria-hidden="true"
+                variant={
+                  STATUS_VARIANTS[detailData.status] ?? "neutral"
+                }
+              />
+            ) : null
+          }
+          description={template?.name ?? "Checklist de Fechamento Mensal"}
+          highlights={
+            detailData
+              ? [
+                  {
+                    id: "items",
+                    label: "Documentos",
+                    value: String(detailData.items.length),
+                  },
+                  {
+                    id: "effective",
+                    label: "Vigente desde",
+                    value: detailData.effective_from_period ?? "—",
+                  },
+                  {
+                    id: "published",
+                    label: "Publicada em",
+                    value: detailData.published_at
+                      ? formatDateTime(detailData.published_at)
+                      : "—",
+                  },
+                  {
+                    id: "publishedBy",
+                    label: "Publicada por",
+                    // UX-014: contrato Core→BFF para atores
+                    // administrativos ainda pendente — fallback neutro,
+                    // nunca o subject cru como nome nem no hero.
+                    value: detailData.published_by
+                      ? "Identidade não disponível"
+                      : "—",
+                  },
+                  {
+                    id: "revision",
+                    label: "Revisão",
+                    value: String(detailData.revision),
+                  },
+                ]
+              : undefined
+          }
+          actions={
+            detailData ? (
+              <div className="cf-validation-panel__item-actions">
+                <CfActionButton
+                  type="button"
+                  variant="ghost"
+                  onClick={() =>
+                    navigatePluginPath(
+                      checklistAdminEventsPath(version, basePath),
+                    )
+                  }
+                >
+                  <History
+                    size={15}
+                    strokeWidth={1.9}
+                    aria-hidden="true"
+                  />
+                  Histórico da versão
+                </CfActionButton>
+                {detailData.status === "DRAFT" && !editing ? (
+                  <CfActionButton
+                    type="button"
+                    disabled={actions.busy}
+                    onClick={startEditing}
+                  >
+                    Editar itens
+                  </CfActionButton>
+                ) : null}
+                <VersionStatusActions
+                  version={detailData}
+                  busy={actions.busy}
+                  actions={actions}
                 />
-                Histórico da versão
-              </CfActionButton>
-            </div>
-          ) : null}
-        </div>
+              </div>
+            ) : undefined
+          }
+        >
+          <div
+            ref={setToolbarHost}
+            className="cf-hero-toolbar"
+            data-testid="version-listing-toolbar"
+          />
+        </CfPageHero>
 
         {error ? (
           <CfQueryErrorBanner
@@ -575,79 +638,7 @@ export function ChecklistVersionPage({
           />
         ) : detailData ? (
           <>
-            <div className="cf-card-stack">
-              <CfMetricStrip
-                aria-label="Resumo da versão"
-                items={[
-                  {
-                    id: "items",
-                    label: "Documentos",
-                    value: String(detailData.items.length),
-                  },
-                  {
-                    id: "effective",
-                    label: "Vigente desde",
-                    value: detailData.effective_from_period ?? "—",
-                  },
-                  {
-                    id: "published",
-                    label: "Publicação",
-                    value: detailData.published_at
-                      ? formatDateTime(detailData.published_at)
-                      : "—",
-                  },
-                ]}
-              />
-              <dl className="cf-detail-list">
-                <div>
-                  <dt>Publicada por</dt>
-                  {/*
-                    Identidade humana depende do contrato UX-014
-                    (Core→BFF), ainda não autorizado para atores
-                    administrativos. Nunca exibir o subject cru como
-                    nome — o identificador técnico permanece apenas na
-                    trilha de auditoria (histórico de eventos) e no
-                    `title` para diagnóstico de suporte.
-                  */}
-                  <dd
-                    className="cf-cell-muted"
-                    title={
-                      detailData.published_by
-                        ? `Identificador do autor: ${detailData.published_by}`
-                        : undefined
-                    }
-                  >
-                    {detailData.published_by
-                      ? "Identidade não disponível"
-                      : "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Criada em</dt>
-                  <dd>{formatDateTime(detailData.created_at)}</dd>
-                </div>
-                <div>
-                  <dt>Revisão</dt>
-                  <dd>{detailData.revision}</dd>
-                </div>
-              </dl>
-              <div className="cf-validation-panel__item-actions">
-                {detailData.status === "DRAFT" && !editing ? (
-                  <CfActionButton
-                    type="button"
-                    disabled={actions.busy}
-                    onClick={startEditing}
-                  >
-                    Editar itens
-                  </CfActionButton>
-                ) : null}
-                <VersionStatusActions
-                  version={detailData}
-                  busy={actions.busy}
-                  actions={actions}
-                />
-              </div>
-
+            <div className="cf-flex-listing">
               <DataTableSection<EditableItem>
                 title="Documentos da versão"
                 titleHint={
@@ -671,6 +662,8 @@ export function ChecklistVersionPage({
                 getSearchText={(row) =>
                   `${row.item_key} ${row.name} ${row.sheet} ${row.origin_kind} ${row.recipient_area ?? ""}`
                 }
+                toolbarPortalTarget={toolbarHost}
+                tableLayout="scroll"
                 headerActions={
                   editing ? (
                     <div className="cf-validation-panel__item-actions">

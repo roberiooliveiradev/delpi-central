@@ -88,6 +88,13 @@ const PUBLISHED_DETAIL = {
   published_at: "2026-04-15T10:00:00Z",
 };
 
+const REVIEW_DETAIL = {
+  ...DRAFT_DETAIL,
+  version_id: "v-3",
+  version: 3,
+  status: "REVIEW",
+};
+
 function setupHappy() {
   listTemplatesMock.mockResolvedValue([TEMPLATE]);
 }
@@ -186,6 +193,93 @@ describe("ChecklistVersionPage", () => {
     expect(
       screen.getByRole("button", { name: "Inativar" }),
     ).toBeTruthy();
+  });
+
+  it("inactivates the published version after confirmation, without navigating", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue(PUBLISHED_DETAIL);
+    inactivateMock.mockResolvedValue(PUBLISHED_DETAIL);
+    render(<ChecklistVersionPage basePath={BASE} version={1} />);
+    await screen.findByText("CK-E-01");
+    const before = window.location.pathname;
+    // T03/T04: Inativar no hero do detalhe, com confirmação própria.
+    fireEvent.click(screen.getByRole("button", { name: "Inativar" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Inativar versão",
+      }),
+    );
+    await waitFor(() => expect(inactivateMock).toHaveBeenCalled());
+    expect(inactivateMock.mock.calls[0]).toEqual(["t-1", 1]);
+    expect(window.location.pathname).toBe(before);
+  });
+
+  it("publishes a review version with effective period", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue(REVIEW_DETAIL);
+    publishMock.mockResolvedValue({
+      ...REVIEW_DETAIL,
+      status: "PUBLISHED",
+    });
+    render(<ChecklistVersionPage basePath={BASE} version={3} />);
+    await screen.findByText("CK-E-01");
+    fireEvent.click(screen.getByRole("button", { name: "Publicar" }));
+    const input = await screen.findByLabelText(
+      "Vigente a partir de (AAAA-MM)",
+    );
+    fireEvent.change(input, { target: { value: "2026-07" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Publicar versão" }),
+    );
+    await waitFor(() => expect(publishMock).toHaveBeenCalled());
+    expect(publishMock.mock.calls[0][2]).toEqual({
+      effective_from_period: "2026-07",
+    });
+  });
+
+  it("returns a review version to draft with a reason", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue(REVIEW_DETAIL);
+    returnDraftMock.mockResolvedValue(DRAFT_DETAIL);
+    render(<ChecklistVersionPage basePath={BASE} version={3} />);
+    await screen.findByText("CK-E-01");
+    fireEvent.click(screen.getByRole("button", { name: "Devolver" }));
+    const reason = await screen.findByRole("textbox");
+    fireEvent.change(reason, {
+      target: { value: "Ajustar item 2.3" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Devolver a rascunho" }),
+    );
+    await waitFor(() => expect(returnDraftMock).toHaveBeenCalled());
+    expect(returnDraftMock.mock.calls[0]).toEqual([
+      "t-1",
+      3,
+      { reason: "Ajustar item 2.3" },
+    ]);
+  });
+
+  it("renders the documents toolbar inside the hero and filters rows", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue(DRAFT_DETAIL);
+    render(<ChecklistVersionPage basePath={BASE} version={2} />);
+    await screen.findByText("CK-E-01");
+    const host = document.querySelector(
+      "[data-testid='version-listing-toolbar']",
+    ) as HTMLElement;
+    expect(host).toBeTruthy();
+    const search = host.querySelector(
+      "input[type='search']",
+    ) as HTMLInputElement;
+    expect(search).toBeTruthy();
+    const section = document.querySelector(
+      ".cf-flex-listing section",
+    ) as HTMLElement;
+    expect(section?.querySelector("input[type='search']")).toBeNull();
+    fireEvent.change(search, { target: { value: "ZZZ" } });
+    await waitFor(() =>
+      expect(screen.queryByText("CK-E-01")).toBeNull(),
+    );
   });
 
   it("edits draft items and saves atomically with revision", async () => {

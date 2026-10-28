@@ -15,6 +15,13 @@ import {
   ActionButton,
   ConfirmModalPanel,
 } from "@delpi/plugin-ui/index";
+import {
+  Archive,
+  Send,
+  Trash2,
+  Undo2,
+  Upload,
+} from "lucide-react";
 
 import { ApiError } from "../../api/httpClient";
 import { CatalogSaveError } from "./documentCatalog";
@@ -529,7 +536,14 @@ export function useChecklistVersionActions(args: {
   };
 }
 
-/** Botões de estado permitidos para uma versão (reuso lista/detalhe). */
+/** Ícones semânticos das ações de ciclo de vida (UX-016, hero). */
+const VERSION_ACTION_ICON_PROPS = {
+  size: 15,
+  strokeWidth: 1.9,
+  "aria-hidden": true,
+} as const;
+
+/** Botões de estado permitidos para uma versão (detalhe da versão). */
 export function VersionStatusActions(props: {
   version: ChecklistTemplateVersion;
   busy: boolean;
@@ -545,6 +559,7 @@ export function VersionStatusActions(props: {
             disabled={busy}
             onClick={() => actions.askSubmitReview(version)}
           >
+            <Send {...VERSION_ACTION_ICON_PROPS} />
             Enviar para revisão
           </ActionButton>
           <ActionButton
@@ -553,6 +568,7 @@ export function VersionStatusActions(props: {
             disabled={busy}
             onClick={() => actions.askDiscard(version)}
           >
+            <Trash2 {...VERSION_ACTION_ICON_PROPS} />
             Descartar
           </ActionButton>
         </>
@@ -564,6 +580,7 @@ export function VersionStatusActions(props: {
             disabled={busy}
             onClick={() => actions.askPublish(version)}
           >
+            <Upload {...VERSION_ACTION_ICON_PROPS} />
             Publicar
           </ActionButton>
           <ActionButton
@@ -571,6 +588,7 @@ export function VersionStatusActions(props: {
             disabled={busy}
             onClick={() => actions.askReturn(version)}
           >
+            <Undo2 {...VERSION_ACTION_ICON_PROPS} />
             Devolver
           </ActionButton>
         </>
@@ -582,6 +600,7 @@ export function VersionStatusActions(props: {
           disabled={busy}
           onClick={() => actions.askInactivate(version)}
         >
+          <Archive {...VERSION_ACTION_ICON_PROPS} />
           Inativar
         </ActionButton>
       ) : null}

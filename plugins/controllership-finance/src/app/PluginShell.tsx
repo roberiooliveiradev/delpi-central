@@ -106,6 +106,9 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
 
   const activeId = resolveActiveNavId(view);
   const showGreeting = view === "home";
+  /** UX-016 — hero + listagem ocupam a altura útil do mount (scroll na tabela). */
+  const fillViewport =
+    view === "checklist_admin" || view === "checklist_version";
   const heroTitle = formatPortalGreeting({ firstName: viewer?.firstName ?? null });
 
   const heroCopy = SHELL_NAV_CONTENT.homeHero;
@@ -137,7 +140,15 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   );
 
   return (
-    <div className={`${CF_PORTAL_SCOPE} dashboard-page`}>
+    <div
+      className={[
+        CF_PORTAL_SCOPE,
+        "dashboard-page",
+        fillViewport ? "dashboard-page--fill" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className="cf-page-stack">
         <CfTopBar
           aria-label={SHELL_NAV_CONTENT.ariaLabel}

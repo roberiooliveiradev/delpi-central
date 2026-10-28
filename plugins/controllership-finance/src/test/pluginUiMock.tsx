@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 
 type AnyProps = Record<string, unknown>;
 
@@ -522,6 +523,10 @@ export function createDashboardDataTableKit() {
     viewLayoutPreferencesKey?: string;
     columnPreferencesKey?: string;
     getSearchText?: (row: T) => string;
+    hideSearch?: boolean;
+    searchPlaceholder?: string;
+    toolbarPortalTarget?: HTMLElement | null;
+    tableLayout?: "section" | "scroll";
     serverPagination?: {
       page: number;
       pageSize: number;
@@ -536,16 +541,26 @@ export function createDashboardDataTableKit() {
     const [sortKey, setSortKey] = useState<string | null>(null);
     const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
     const [cardsOn, setCardsOn] = useState(false);
+    const [search, setSearch] = useState("");
     const canToggleCards = Boolean(
       props.viewLayoutPreferencesKey && props.renderCard,
     );
 
+    const filteredRows = (() => {
+      const query = search.trim().toLowerCase();
+      if (!query) return rows;
+      const searchText = props.getSearchText ?? (() => "");
+      return rows.filter((row) =>
+        searchText(row).toLowerCase().includes(query),
+      );
+    })();
+
     const sortedRows = (() => {
-      if (!sortKey) return rows;
+      if (!sortKey) return filteredRows;
       const column = columns.find((c) => c.key === sortKey);
-      if (!column?.sortValue) return rows;
+      if (!column?.sortValue) return filteredRows;
       const factor = sortDir === "asc" ? 1 : -1;
-      return [...rows].sort((a, b) => {
+      return [...filteredRows].sort((a, b) => {
         const va = column.sortValue?.(a);
         const vb = column.sortValue?.(b);
         if (va == null && vb == null) return 0;
@@ -556,6 +571,41 @@ export function createDashboardDataTableKit() {
         return String(va).localeCompare(String(vb), "pt-BR") * factor;
       });
     })();
+
+    const toolbarNode = el(
+      "div",
+      { className: "cf-table-toolbar" },
+      canToggleCards
+        ? el(
+            "button",
+            {
+              type: "button",
+              "aria-pressed": cardsOn,
+              onClick: () => setCardsOn((v) => !v),
+            },
+            cardsOn ? "Tabela" : "Cards",
+          )
+        : null,
+      props.columnPreferencesKey
+        ? el(
+            "button",
+            { type: "button", "aria-label": "Colunas" },
+            "Colunas",
+          )
+        : null,
+      props.hideSearch
+        ? null
+        : el("input", {
+            type: "search",
+            role: "search",
+            value: search,
+            placeholder:
+              props.searchPlaceholder ?? "Buscar…",
+            "aria-label": "Buscar",
+            onChange: (event: { target: { value: string } }) =>
+              setSearch(event.target.value),
+          }),
+    );
 
     const body = cardsOn ? null : (
       sortedRows.length > 0
@@ -637,17 +687,9 @@ export function createDashboardDataTableKit() {
       null,
       el("h2", null, props.title),
       props.headerActions ?? null,
-      canToggleCards
-        ? el(
-            "button",
-            {
-              type: "button",
-              "aria-pressed": cardsOn,
-              onClick: () => setCardsOn((v) => !v),
-            },
-            cardsOn ? "Tabela" : "Cards",
-          )
-        : null,
+      props.toolbarPortalTarget
+        ? createPortal(toolbarNode, props.toolbarPortalTarget)
+        : toolbarNode,
       pager
         ? el(
             "span",

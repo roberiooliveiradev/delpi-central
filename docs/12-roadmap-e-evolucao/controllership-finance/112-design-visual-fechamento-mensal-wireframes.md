@@ -2042,7 +2042,7 @@ PO rejeitou o acabamento RW01 — o problema era estrutural, não cosmético. Re
 
 ## 53. UX-016 — Hero contextual + listagem flexível nas duas páginas (wireframe aprovado PO, 28/10/2026)
 
-**DECISÃO DE UX APROVADA / TARGET, NÃO IMPLEMENTADO.** O PO validou expressamente os dois wireframes apresentados em chat: Administração e Versão compartilham **hero contextual acima de uma única superfície de tabela flexível**. Evidência: screenshots em dark do UX-015-RW02, com toolbar desarticulada na listagem e métricas/ações dispersas no detalhe. Não reabrir o padrão de cards aninhados. Esta seção prevalece para o novo layout sobre as propostas visuais anteriores onde conflitarem; contratos e boundaries canônicos permanecem.
+**DECISÃO DE UX APROVADA — IMPLEMENTADO (ver §53.5).** O PO validou expressamente os dois wireframes apresentados em chat: Administração e Versão compartilham **hero contextual acima de uma única superfície de tabela flexível**. Evidência: screenshots em dark do UX-015-RW02, com toolbar desarticulada na listagem e métricas/ações dispersas no detalhe. Não reabrir o padrão de cards aninhados. Esta seção prevalece para o novo layout sobre as propostas visuais anteriores onde conflitarem; contratos e boundaries canônicos permanecem.
 
 ### 53.1 Composição única e responsiva
 ```text
@@ -2110,3 +2110,23 @@ Ações variam conforme DRAFT/REVIEW/PUBLISHED/INACTIVE e capabilities efetivas.
 - UX PT-BR para rótulos; identificadores técnicos ficam nos contratos/diagnósticos autorizados.
 - QA: 0/1/50/100 linhas, Tabela/Cards, ordenação, mobile 320/390/tablet/desktop, zoom 200%, dark/light, teclado, focus, scroll, viewport/resizing; pesquisa/filtros/colunas/deep links/F5/back; nenhuma perda de auditoria/OCC.
 - Não alterar BFF, migrations, dados do PO, ou permissions. Implementação depende de inspeção das APIs reais de layout/DataTableSection; sem bypass por CSS frágil.
+
+
+### 53.5 Execução UX-016 — IMPLEMENTADO (evidência em doc 23)
+
+**Componentes reais utilizados.** `CfPageHero` (factory `createDashboardPageHero`, density compact) como superfície do hero; `CfPagePath` (breadcrumb), `CfStatusBadge`, `CfActionButton` com ícones lucide semânticos, `DataTableSection` como superfície única de listagem. Nenhum hero/toolbar paralelo foi criado.
+
+**Evolução mínima do kit (`@delpi/plugin-ui`).** `DataTableSection` ganhou duas props retrocompatíveis:
+- `toolbarPortalTarget?: HTMLElement | null` — a toolbar nativa (busca, itens/página, Tabela/Cards, Colunas, extras) é renderizada via `createPortal` **na mesma instância e estado** dentro do host do hero; sem a prop permanece na seção como antes.
+- `tableLayout?: "section" | "scroll"` — encaminha ao `DataTable`; `"scroll"` ativa `delpi-ui-table-wrap--scroll` (flex + overflow do kit), o modo homologado de rolagem interna.
+Cobertura: `DataTableSection.toolbarPortal.test.tsx` (3/3).
+
+**Administração (`/closing/admin`).** Hero com eyebrow «Administração», título «Checklist de Fechamento Mensal», descrição, métricas reais (total de versões, última versão + estado, vigência) e ações «Nova versão»/«Auditoria»/«Documentos» com ícones. A toolbar portada entra em `cf-hero-toolbar` (`data-testid=admin-listing-toolbar`). Listagem «Versões»: sem coluna Ações, sem Inativar, sem «Abrir» — linha/card inteiro navega à versão.
+
+**Versão (`/closing/admin/versions/{n}`).** Mesmo padrão: título «Versão vN» + `CfStatusBadge`, descrição «Checklist de Fechamento Mensal», métricas (Documentos, Vigente desde, Publicada em, Publicada por — fallback «Identidade não disponível» sem UUID cru, Revisão), ações por estado (`VersionStatusActions`: histórico, Editar itens em DRAFT, Enviar para revisão, Publicar/Devolver em REVIEW, Inativar danger em PUBLISHED, Descartar em DRAFT) e toolbar documental no hero (`data-testid=version-listing-toolbar`). Edição DRAFT/OCC, snapshots read-only e «Editar exigência futura» preservados.
+
+**Altura flexível.** `PluginShell` aplica `dashboard-page--fill` apenas às views `checklist_admin`/`checklist_version` (mesma cadeia homologada do Commercial — altura vem do mount do Portal, nunca `100vh`). Em `.cf-hero-page__content`, hero/banners são intrínsecos (`flex:0 0 auto`) e `.cf-flex-listing` é a única região que cede/cresce (`flex:1 1 auto; min-height:0`); o reset do `flex:1 1 100%` do UX-013 é aplicado à coluna para que a paginação fique ancorada ao fim da superfície e a `table-wrap--scroll` concentre o scroll. Regressão encontrada e corrigida em QA: sem `flex-shrink:0` explícito no hero, o flex encolhia o hero (overflow:hidden recortava métricas/toolbar).
+
+**Sem duplicação de controles.** A mesma instância da toolbar vive no hero via portal — a seção não renderiza busca/toggle/colunas próprias (verificado em smoke e DOM).
+
+**Evidências.** tsc ✓; eslint do escopo limpo (1 erro preexistente fora do escopo: `ClaraConsentPage.tsx`; warnings baseline); vitest MFE 367/367; plugin-ui `src/components/data` 167/167; smoke autenticado local 19/19; screenshots desktop 1440 light/dark, tablet 768, mobile 390/320 e zoom 200% — `overflowX=0` em todos.

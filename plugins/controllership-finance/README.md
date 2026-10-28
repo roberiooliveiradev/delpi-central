@@ -95,6 +95,17 @@ detalhe (sem botão «Abrir» redundante) e a coluna «Ações» usa
 `rowClick:"stop"` para não disparar navegação nas ações destrutivas;
 títulos/subtítulos não exibem códigos técnicos do template.
 
+UX-016 (hero contextual + listagem flexível): Administração e Versão
+compartilham `CfPageHero` (título, métricas reais, ações com ícone e a
+toolbar de listagem) acima de uma única superfície `.cf-flex-listing`
+irmã. A toolbar nativa da `DataTableSection` é portada para o hero via
+`toolbarPortalTarget` (mesma instância — sem controles duplicados) e a
+tabela ocupa a altura útil via `tableLayout="scroll"` +
+`dashboard-page--fill` aplicado às duas views no `PluginShell`;
+paginação ancorada ao fim. A Administração não tem coluna «Ações» nem
+Inativar — o ciclo de vida da versão (incluindo Inativar danger)
+existe apenas na página do detalhe.
+
 RW01 (design): `cf-detail-list` — padrão read-only usado nas páginas de
 detalhe — passou a ser o grid semântico do portal (auto-fit ~200px,
 label muted + valor forte, `__full` para textos extensos); a versão

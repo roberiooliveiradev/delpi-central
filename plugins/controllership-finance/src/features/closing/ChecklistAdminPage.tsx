@@ -18,7 +18,11 @@ import {
   useState,
 } from "react";
 
-import { FilePlus2, FileText, History } from "lucide-react";
+import {
+  FilePlus2,
+  FileText,
+  History,
+} from "lucide-react";
 
 import {
   createTemplateDraft,
@@ -35,6 +39,7 @@ import {
   CfActionButton,
   CfDataRecordCard,
   CfEmptyState,
+  CfPageHero,
   CfStatusBadge,
   CfTitleWithHelp,
   cfEmptyStateClassNames,
@@ -54,7 +59,6 @@ import {
   STATUS_VARIANTS,
   toQueryError,
   useChecklistVersionActions,
-  VersionStatusActions,
   type QueryError,
 } from "./checklistAdminShared";
 import { CF_HELP } from "../../content/helpTooltips";
@@ -197,23 +201,8 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
             <span className="cf-cell-muted">—</span>
           ),
       },
-      {
-        key: "actions",
-        header: "Ações",
-        className: "cf-table__col--status",
-        rowClick: "stop",
-        render: (row) => (
-          <div className="cf-validation-panel__doc-actions">
-            <VersionStatusActions
-              version={row}
-              busy={actions.busy}
-              actions={actions}
-            />
-          </div>
-        ),
-      },
     ],
-    [actions],
+    [],
   );
 
   const renderVersionCard = useCallback(
@@ -235,53 +224,138 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
         },
       ];
       return (
-        <div className="cf-version-card">
-          <CfDataRecordCard
-            href={href}
-            onNavigate={(event) => {
-              event.preventDefault();
-              navigatePluginPath(href);
-            }}
-            title={`Versão ${row.version}`}
-            subtitle={
-              STATUS_LABELS[row.status] ?? row.status
-            }
-            status={
-              <CfStatusBadge
-                label={STATUS_LABELS[row.status] ?? row.status}
-                variant={STATUS_VARIANTS[row.status] ?? "neutral"}
-              />
-            }
-            fields={fields}
-            ariaLabel={`Abrir versão ${row.version}`}
-          />
-          <div className="cf-version-card__actions">
-            <VersionStatusActions
-              version={row}
-              busy={actions.busy}
-              actions={actions}
+        <CfDataRecordCard
+          href={href}
+          onNavigate={(event) => {
+            event.preventDefault();
+            navigatePluginPath(href);
+          }}
+          title={`Versão ${row.version}`}
+          subtitle={STATUS_LABELS[row.status] ?? row.status}
+          status={
+            <CfStatusBadge
+              label={STATUS_LABELS[row.status] ?? row.status}
+              variant={STATUS_VARIANTS[row.status] ?? "neutral"}
             />
-          </div>
-        </div>
+          }
+          fields={fields}
+          ariaLabel={`Abrir versão ${row.version}`}
+        />
       );
     },
-    [actions, basePath],
+    [basePath],
   );
 
   const draftOpen = (currentVersions ?? []).some(
     (v) => v.status === "DRAFT" || v.status === "REVIEW",
   );
 
+  const latestVersion = useMemo(() => {
+    if (!currentVersions?.length) return null;
+    return currentVersions.reduce((latest, row) =>
+      row.version > latest.version ? row : latest,
+    );
+  }, [currentVersions]);
+
+  // Host da toolbar da listagem — renderizada no hero via portal do
+  // DataTableSection (mesma instância/estado; `toolbarPortalTarget`).
+  const [toolbarHost, setToolbarHost] =
+    useState<HTMLElement | null>(null);
+
   return (
     <section
-      className="cf-checklist-page"
+      className="cf-checklist-page cf-hero-page"
       aria-label="Administração do checklist"
     >
-      <div className="cf-checklist-page__content">
-        <CfTitleWithHelp
-          title="Administração do checklist mestre"
-          hint={CF_HELP.admin.page}
-        />
+      <div className="cf-hero-page__content">
+        <CfPageHero
+          aria-label="Administração do checklist"
+          eyebrow="Administração"
+          title={
+            <CfTitleWithHelp
+              title={
+                template?.name ?? "Checklist de Fechamento Mensal"
+              }
+              hint={CF_HELP.admin.page}
+            />
+          }
+          description="Gerencie as versões e configurações documentais do fechamento."
+          highlights={[
+            {
+              id: "versions",
+              label: "Versões",
+              value: String(currentVersions?.length ?? 0),
+              loading: loading || (template !== null && currentVersions === null),
+            },
+            {
+              id: "latest",
+              label: "Última versão",
+              value: latestVersion
+                ? `v${latestVersion.version}`
+                : "—",
+              description: latestVersion
+                ? (STATUS_LABELS[latestVersion.status] ??
+                  latestVersion.status)
+                : undefined,
+            },
+            {
+              id: "effective",
+              label: "Vigente desde",
+              value: latestVersion?.effective_from_period ?? "—",
+            },
+          ]}
+          actions={
+            <div className="cf-validation-panel__item-actions">
+              <CfActionButton
+                type="button"
+                variant="primary"
+                disabled={
+                  actions.busy || !template || draftOpen
+                }
+                title={
+                  draftOpen
+                    ? "Já existe um rascunho aberto — edite-o ou publique-o antes."
+                    : undefined
+                }
+                onClick={() => {
+                  if (!template) return;
+                  actions.run(() =>
+                    createTemplateDraft(template.template_id),
+                  );
+                }}
+              >
+                <FilePlus2 {...ICON_PROPS} />
+                Nova versão
+              </CfActionButton>
+              <CfActionButton
+                type="button"
+                variant="ghost"
+                onClick={() =>
+                  navigatePluginPath(
+                    checklistAdminEventsPath(undefined, basePath),
+                  )
+                }
+              >
+                <History {...ICON_PROPS} />
+                Auditoria
+              </CfActionButton>
+              <CfActionButton
+                type="button"
+                variant="ghost"
+                onClick={() => navigatePluginView("documents_admin")}
+              >
+                <FileText {...ICON_PROPS} />
+                Documentos
+              </CfActionButton>
+            </div>
+          }
+        >
+          <div
+            ref={setToolbarHost}
+            className="cf-hero-toolbar"
+            data-testid="admin-listing-toolbar"
+          />
+        </CfPageHero>
 
         {error ? (
           <CfQueryErrorBanner
@@ -307,64 +381,26 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
             defaultMessage="Nenhum template de checklist registrado."
           />
         ) : template ? (
-          <DataTableSection<ChecklistTemplateVersion>
-            title={`Versões · ${template.name}`}
-            titleHint={CF_HELP.admin.versions}
-            columns={versionColumns}
-            rows={currentVersions ?? []}
-            rowKey={(row) => String(row.version)}
-            loading={currentVersions === null}
-            emptyMessage="Nenhuma versão registrada para este checklist."
-            columnPreferencesKey={COLUMN_PREFS_KEY}
-            viewLayoutPreferencesKey={VIEW_LAYOUT_KEY}
-            renderCard={renderVersionCard}
-            onRowClick={(row) => openVersion(row.version)}
-            getSearchText={(row) =>
-              `v${row.version} ${STATUS_LABELS[row.status] ?? row.status} ${row.effective_from_period ?? ""}`
-            }
-            headerActions={
-              <div className="cf-validation-panel__item-actions">
-                <CfActionButton
-                  type="button"
-                  variant="primary"
-                  disabled={actions.busy || draftOpen}
-                  title={
-                    draftOpen
-                      ? "Já existe um rascunho aberto — edite-o ou publique-o antes."
-                      : undefined
-                  }
-                  onClick={() =>
-                    actions.run(() =>
-                      createTemplateDraft(template.template_id),
-                    )
-                  }
-                >
-                  <FilePlus2 {...ICON_PROPS} />
-                  Criar versão rascunho
-                </CfActionButton>
-                <CfActionButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() =>
-                    navigatePluginPath(
-                      checklistAdminEventsPath(undefined, basePath),
-                    )
-                  }
-                >
-                  <History {...ICON_PROPS} />
-                  Eventos de auditoria
-                </CfActionButton>
-                <CfActionButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() => navigatePluginView("documents_admin")}
-                >
-                  <FileText {...ICON_PROPS} />
-                  Documentos do fechamento
-                </CfActionButton>
-              </div>
-            }
-          />
+          <div className="cf-flex-listing">
+            <DataTableSection<ChecklistTemplateVersion>
+              title="Versões"
+              titleHint={CF_HELP.admin.versions}
+              columns={versionColumns}
+              rows={currentVersions ?? []}
+              rowKey={(row) => String(row.version)}
+              loading={currentVersions === null}
+              emptyMessage="Nenhuma versão registrada para este checklist."
+              columnPreferencesKey={COLUMN_PREFS_KEY}
+              viewLayoutPreferencesKey={VIEW_LAYOUT_KEY}
+              renderCard={renderVersionCard}
+              onRowClick={(row) => openVersion(row.version)}
+              getSearchText={(row) =>
+                `v${row.version} ${STATUS_LABELS[row.status] ?? row.status} ${row.effective_from_period ?? ""}`
+              }
+              toolbarPortalTarget={toolbarHost}
+              tableLayout="scroll"
+            />
+          </div>
         ) : null}
       </div>
 

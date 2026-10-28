@@ -104,7 +104,7 @@ export const CF_HELP = {
     page:
       "Administração do checklist mestre — exige permissão de gestão (controllership-finance.manage). Todo ciclo é versionado: criar rascunho, editar itens, publicar com vigência prospectiva e inativar. Competências já abertas nunca mudam — elas guardam um snapshot próprio. Usuários e permissões não são administrados aqui: pertencem ao Core.",
     versions:
-      "Versões do template: «Rascunho» editável até a publicação, «Publicada» vigente a partir da competência informada, «Inativada» preservada no histórico. Só existe um rascunho por vez por template. Clique na linha para abrir a versão — a listagem pode ser alternada entre Tabela e Cards e as colunas são ordenáveis.",
+      "Versões do template: «Rascunho» editável até a publicação, «Publicada» vigente a partir da competência informada, «Inativada» preservada no histórico. Só existe um rascunho por vez por template. Clique na linha para abrir a versão — a listagem pode ser alternada entre Tabela e Cards e as colunas são ordenáveis. Busca, modo de visualização e colunas ficam no painel do topo; ações de ciclo de vida (publicar, inativar, descartar) existem apenas dentro da página de cada versão.",
     items:
       "Itens da versão em modo de leitura — chave, entregável, origem, destinatário, obrigatoriedade, escopo de filial e regra de validação. Clique na linha para abrir o documento; alterne entre Tabela e Cards e ordene pelas colunas.",
     editDraft:
@@ -112,11 +112,11 @@ export const CF_HELP = {
   },
   adminVersion: {
     page:
-      "Versão do checklist mestre — página contextual de uma versão específica (aberta a partir da listagem da Administração). Mostra o estado do ciclo, a competência de vigência, a publicação e os documentos que compõem exatamente aquele snapshot. Publicada e inativada são somente leitura; alterar a exigência de um documento para competências futuras acontece no catálogo de documentos, nunca na versão histórica.",
+      "Versão do checklist mestre — página contextual de uma versão específica (aberta a partir da listagem da Administração). O painel do topo concentra o estado do ciclo, os indicadores do snapshot, as ações da versão (histórico, edição, publicação, inativação conforme o estado) e os controles da listagem — busca, modo Tabela/Cards e colunas. Publicada e inativada são somente leitura; alterar a exigência de um documento para competências futuras acontece no catálogo de documentos, nunca na versão histórica.",
     meta:
       "Metadados da versão: estado do ciclo (rascunho → revisão → publicada → inativada), quantidade de documentos, competência a partir da qual vale, data de publicação e revisão de controle de concorrência. As ações disponíveis dependem do estado: rascunho pode ser editado, enviado à revisão ou descartado; em revisão pode ser publicada com vigência prospectiva ou devolvida com motivo; publicada pode ser inativada — nada reescreve competências já abertas.",
     items:
-      "Documentos pertencentes a esta versão do checklist — o conteúdo exato daquele snapshot, não a configuração vigente hoje. «Abrir» mostra o documento naquela versão. Em rascunho, «Editar itens» habilita a edição atômica governada.",
+      "Documentos pertencentes a esta versão do checklist — o conteúdo exato daquele snapshot, não a configuração vigente hoje. Clique na linha ou no card para abrir o documento naquela versão. Em rascunho, «Editar itens» habilita a edição atômica governada.",
   },
   adminVersionDocument: {
     page:

@@ -696,15 +696,15 @@ Nenhum teste ou deploy desta rodada foi executado ao escrever esta especificaç�
 | UX015-RW02-12 | deploy governado | PASS | `bed4993c05` → origin/main; srv-api pull + `up-prod-sequential.sh --build controllership-finance`; remoteEntry 200 servindo `__federation_expose_App-0ucqmrGp.js`/`App-D376ypA0.js`; BFF healthy; smoke prod autenticado TEST_NOT_RUN (sem identidade autorizada) |
 
 
-### UX-016 — Hero contextual e listagem flexível nas páginas Admin/Versão (TARGET)
+### UX-016 — Hero contextual e listagem flexível nas páginas Admin/Versão (IMPLEMENTADO)
 | AC | Evidência esperada | Estado |
 |---|---|---|
-| UX016-01 | Admin e Versão com mesmo padrão HERO→LISTAGEM em duas superfícies irmãs | TARGET |
-| UX016-02 | Hero reúne métricas, ações, busca, Tabela/Cards, Colunas sem toolbar duplicada | TARGET |
-| UX016-03 | Administração sem coluna Ações/Inativar; versão abre por clique na linha/card | TARGET |
-| UX016-04 | Inativar exclusivamente na versão, ícone danger + confirmação BFF existente | TARGET |
-| UX016-05 | Tabela ocupa altura útil flexível; paginação no fim; 0/1/50/100 linhas sem artificiais | TARGET |
-| UX016-06 | Ordenação real + paridade tabela/cards + filtros/colunas preservados | TARGET |
-| UX016-07 | PT-BR e kit-first, light/dark, 320/390/768/desktop/zoom200, keyboard/focus | TARGET |
-| UX016-08 | Snapshot, OCC, read-only PUBLISHED, back/F5/deep link, RBAC, erros, Help intactos | TARGET |
-| UX016-09 | Testes, screenshots, bundle, deploy/smoke por gate com status honesto | PLANNED |
+| UX016-01 | Admin e Versão com mesmo padrão HERO→LISTAGEM em duas superfícies irmãs | PASS | `CfPageHero` + `.cf-flex-listing` nas duas páginas; smoke UX016-01/01b; shots 01/03 desktop, dark, 768, 390, 320 |
+| UX016-02 | Hero reúne métricas, ações, busca, Tabela/Cards, Colunas sem toolbar duplicada | PASS | `toolbarPortalTarget` porta a toolbar nativa (mesma instância) para `cf-hero-toolbar`; smoke UX016-02 dup=0; RTL «renders the listing toolbar inside the hero» |
+| UX016-03 | Administração sem coluna Ações/Inativar; versão abre por clique na linha/card | PASS | coluna Ações removida; RTL «no actions column nor destructive controls»; smoke UX016-03 Ações=0/Inativar=0/Abrir=0 |
+| UX016-04 | Inativar exclusivamente na versão, ícone danger + confirmação BFF existente | PASS | `VersionStatusActions` no hero do detalhe (`Archive` + `--danger`); RTL «inactivates the published version after confirmation, without navigating»; chamada `inactivateTemplateVersion` preservada |
+| UX016-05 | Tabela ocupa altura útil flexível; paginação no fim; 0/1/50/100 linhas sem artificiais | PASS | `dashboard-page--fill` + `flex:0 0 auto` no hero + `cf-flex-listing` flex:1 + `delpi-ui-table-wrap--scroll`; smoke UX016-05/05b (bottom=876/vh=900 = padding 24; paginação ancorada); RTL empty state |
+| UX016-06 | Ordenação real + paridade tabela/cards + filtros/colunas preservados | PASS | `sortable`/`sortValue` + `viewLayoutPreferencesKey` + `renderCard`; smoke UX016-06-sort asc/desc, -search 3→1→3, -cards=48, -nav; RTL sort/cards/search |
+| UX016-07 | PT-BR e kit-first, light/dark, 320/390/768/desktop/zoom200, keyboard/focus | PASS | shots light+dark/768/390/320/zoom200 `overflowX=0`; hero empilha no mobile; navegação por linha mantém foco/Enter/Espaço do kit |
+| UX016-08 | Snapshot, OCC, read-only PUBLISHED, back/F5/deep link, RBAC, erros, Help intactos | PASS | RTL DRAFT edit/OCC stale_revision, PUBLISHED read-only, 403/404/empty; smoke deep link v2 + histórico + F5; Help atualizado (hero/toolbar, ações só no detalhe) |
+| UX016-09 | Testes, screenshots, bundle, deploy/smoke por gate com status honesto | PASS | MFE 367/367 + plugin-ui 167/167 + smoke local 19/19 + 8 capturas; bundle `App-*.js`/`__federation_expose_Index-*.js` registrados no relatório; deploy governado e smoke prod classificados no relatório final (TEST_NOT_RUN se sem identidade autorizada) |
