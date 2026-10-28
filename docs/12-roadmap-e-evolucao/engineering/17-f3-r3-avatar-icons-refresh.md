@@ -72,8 +72,15 @@ grant `engineering.access` pendentes); não declarada visualmente validada.
 
 ## Deploy
 
-Ordem canônica com kit alterado: `up-prod-sequential.sh --build
-plugin-ui engineering`. Ver relatório EVA para smoke e SHA.
+- SHA final: `ba5a4377883a107eb065f5369353f65fcbc5dad7`.
+- Ordem canônica com kit alterado: `git pull --ff-only` +
+  `up-prod-sequential.sh --build plugin-ui engineering` —
+  `delpi-plugin-ui` e `delpi-engineering` rebuildados; backend intocado.
+- Smoke público: remoteEntry plugin-ui/engineering 200; rotas
+  engineering 200; `engineering-api/health` 200; `v1/home` 401 sem JWT.
+- Bundle novo verificado no edge: `App-VbYHu_zt.js` contém
+  `person-profile` + `refreshingLabel`; `style-Bqjrb9yo.css` contém
+  `route-icon`/`route-label-text`.
 
 ## Residuais
 
