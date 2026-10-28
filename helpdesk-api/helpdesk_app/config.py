@@ -83,6 +83,8 @@ class Settings:
     # the provisioning session's rights to strictly cover the target profile,
     # so this pair must point at a dedicated provisioner identity; when
     # unset, user-session writes fail closed before the first write.
+    # No implicit fallback to GLPI_LEGACY_* — the provisioner must be
+    # explicitly configured.
     GLPI_TOKEN_PROVISIONER_APP_TOKEN: str = (
         _get_env("GLPI_TOKEN_PROVISIONER_APP_TOKEN", default="") or ""
     )

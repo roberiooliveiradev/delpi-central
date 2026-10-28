@@ -769,12 +769,13 @@ def test_attachment_upload_reports_author_state():
     body = uploaded.json()
     assert body["author_state"] == "verified"
     assert body["author_verified"] is True
+    assert body["outcome"] == "verified"
 
 
 def test_attachment_upload_surfaces_unverified_author_state():
     """Degraded authorship must reach the consumer — the document is
-    preserved (201) but author_verified=false must be explicit, never
-    presented as integral success."""
+    preserved (201) but the typed outcome is never presented as integral
+    success and remains reconcilable via document_id."""
     client, glpi = build_client()
     link(client)
     glpi.session_uid = None  # fake reports author_state=unverified
@@ -788,6 +789,7 @@ def test_attachment_upload_surfaces_unverified_author_state():
     assert body["document_id"] == 100  # document preserved
     assert body["author_state"] == "unverified"
     assert body["author_verified"] is False
+    assert body["outcome"] == "verification_failed"
     replay = client.post(
         "/tickets/7/attachments",
         files={"file": ("laudo.pdf", b"pdf", "application/pdf")},

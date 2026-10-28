@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -201,6 +202,8 @@ class PostgresUserTokenStore:
                     SELECT api_token_ciphertext
                     FROM "{SCHEMA}".glpi_user_tokens
                     WHERE glpi_user_id = %s
+                      AND revoked_at IS NULL
+                      AND api_token_ciphertext <> ''
                     """,
                     (int(glpi_user_id),),
                 )
@@ -209,19 +212,89 @@ class PostgresUserTokenStore:
             return None
         return self._cipher.decrypt(row["api_token_ciphertext"])
 
-    def save(self, glpi_user_id: int, api_token: str) -> None:
+    def save(self, glpi_user_id: int, api_token: str, *, source: str = "provisioned") -> None:
         with connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     f"""
                     INSERT INTO "{SCHEMA}".glpi_user_tokens
-                        (glpi_user_id, api_token_ciphertext, updated_at)
-                    VALUES (%s, %s, NOW())
+                        (glpi_user_id, api_token_ciphertext, source, revoked_at, updated_at)
+                    VALUES (%s, %s, %s, NULL, NOW())
                     ON CONFLICT (glpi_user_id) DO UPDATE SET
                         api_token_ciphertext = EXCLUDED.api_token_ciphertext,
+                        source = EXCLUDED.source,
+                        revoked_at = NULL,
                         updated_at = NOW()
                     """,
-                    (int(glpi_user_id), self._cipher.encrypt(api_token)),
+                    (int(glpi_user_id), self._cipher.encrypt(api_token), source),
+                )
+            conn.commit()
+
+    def has_record(self, glpi_user_id: int) -> bool:
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT 1
+                    FROM "{SCHEMA}".glpi_user_tokens
+                    WHERE glpi_user_id = %s
+                    """,
+                    (int(glpi_user_id),),
+                )
+                return cur.fetchone() is not None
+
+    def is_revoked(self, glpi_user_id: int) -> bool:
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT 1
+                    FROM "{SCHEMA}".glpi_user_tokens
+                    WHERE glpi_user_id = %s AND revoked_at IS NOT NULL
+                    """,
+                    (int(glpi_user_id),),
+                )
+                return cur.fetchone() is not None
+
+    def adopt(self, glpi_user_id: int) -> None:
+        """Authorized-takeover marker: row exists (managed), no usable token.
+
+        Written only by the operator runbook after ownership of a
+        pre-existing GLPI Remote access key is established. The next write
+        treats the identity as managed and rotates in a governed key.
+        """
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    INSERT INTO "{SCHEMA}".glpi_user_tokens
+                        (glpi_user_id, api_token_ciphertext, source, revoked_at, updated_at)
+                    VALUES (%s, '', 'adopted', NULL, NOW())
+                    ON CONFLICT (glpi_user_id) DO UPDATE SET
+                        api_token_ciphertext = '',
+                        source = 'adopted',
+                        revoked_at = NULL,
+                        updated_at = NOW()
+                    """,
+                    (int(glpi_user_id),),
+                )
+            conn.commit()
+
+    def revoke(self, glpi_user_id: int) -> None:
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    INSERT INTO "{SCHEMA}".glpi_user_tokens
+                        (glpi_user_id, api_token_ciphertext, source, revoked_at, updated_at)
+                    VALUES (%s, '', 'revoked', NOW(), NOW())
+                    ON CONFLICT (glpi_user_id) DO UPDATE SET
+                        api_token_ciphertext = '',
+                        source = 'revoked',
+                        revoked_at = NOW(),
+                        updated_at = NOW()
+                    """,
+                    (int(glpi_user_id),),
                 )
             conn.commit()
 
@@ -233,6 +306,33 @@ class PostgresUserTokenStore:
                     (int(glpi_user_id),),
                 )
             conn.commit()
+
+    @contextmanager
+    def provision_lock(self, glpi_user_id: int):
+        """Serialize api_token provisioning per user across all instances.
+
+        Postgres advisory lock keyed on this store — two concurrent writes
+        for the same user cannot mint competing tokens; the loser re-reads
+        the row the winner just saved.
+        """
+        conn = connect()
+        key = f"{SCHEMA}.glpi_user_tokens"
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT pg_advisory_lock(hashtextextended(%s, %s))",
+                    (key, int(glpi_user_id)),
+                )
+            yield
+        finally:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT pg_advisory_unlock(hashtextextended(%s, %s))",
+                        (key, int(glpi_user_id)),
+                    )
+            finally:
+                conn.close()
 
 
 class PostgresIdempotencyStore:

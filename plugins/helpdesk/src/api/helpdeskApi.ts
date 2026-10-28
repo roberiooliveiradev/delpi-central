@@ -197,6 +197,8 @@ export type TicketAttachment = {
   author_state?: "verified" | "mismatch" | "unverified";
   /** False = persisted but end-user authorship could not be proven. */
   author_verified?: boolean;
+  /** Typed business outcome — `verification_failed` is never full success. */
+  outcome?: "verified" | "verification_failed";
 };
 
 export function listTickets(query: TicketListQuery = {}, signal?: AbortSignal) {
@@ -653,6 +655,7 @@ export async function uploadTicketAttachment(
     mime: string;
     author_state?: TicketAttachment["author_state"];
     author_verified?: boolean;
+    outcome?: TicketAttachment["outcome"];
   };
   return {
     document_id: body.document_id,
@@ -660,6 +663,7 @@ export async function uploadTicketAttachment(
     mime: body.mime,
     author_state: body.author_state,
     author_verified: body.author_verified,
+    outcome: body.outcome,
   };
 }
 

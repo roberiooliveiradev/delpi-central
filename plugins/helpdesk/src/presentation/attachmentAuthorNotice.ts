@@ -16,8 +16,9 @@ export const ATTACHMENT_AUTHOR_NOTICE_TEXT =
 const STAGED_NOTICE_KEY = "helpdesk:attachment-author-notice";
 
 export function attachmentAuthorDegraded(
-  attachment: Pick<TicketAttachment, "author_verified"> | null | undefined,
+  attachment: Pick<TicketAttachment, "author_verified" | "outcome"> | null | undefined,
 ): boolean {
+  if (attachment?.outcome) return attachment.outcome !== "verified";
   return attachment?.author_verified === false;
 }
 

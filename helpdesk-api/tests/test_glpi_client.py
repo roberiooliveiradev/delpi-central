@@ -2408,3 +2408,338 @@ def test_token_provisioning_success_path():
     assert seen_tokens and seen_tokens[0]
     # token persisted encrypted → subsequent write reuses it without re-provisioning
     assert store.get(68) is not None
+
+def _base_client_kwargs(store, **overrides):
+    kwargs = {
+        "base_url": "https://glpi.example",
+        "client_id": "id",
+        "client_secret": "super-secret",
+        "redirect_uri": "https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        "legacy_upload_enabled": True,
+        "legacy_app_token": "app-token-x",
+        "legacy_user_token": "user-token-x",
+        "user_token_store": store,
+    }
+    kwargs.update(overrides)
+    return kwargs
+
+
+def test_provisioning_requires_explicit_provisioner_credentials():
+    """No fallback: legacy pair present but provisioner pair absent → the
+    write blocks BEFORE any legacy session is opened for provisioning."""
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(_token_store({})),
+    )
+    with pytest.raises(GlpiUnavailable):
+        client.upload_ticket_document(
+            "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+        )
+    # never borrowed the legacy credential pair to provision
+    assert not any("initSession" in item for item in calls)
+    assert not any("PUT /apirest.php/User" in item for item in calls)
+    assert not any("POST /apirest.php/Document" in item for item in calls)
+
+
+def test_provisioning_blocked_on_preexisting_foreign_api_token():
+    """api_token_date present on an unmanaged identity → a third-party Remote
+    access key is never overwritten; no PUT happens."""
+    put_calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-prov"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "GET":
+            return httpx.Response(
+                200,
+                json={"id": 68, "name": "u68", "api_token_date": "2026-01-01 10:00:00"},
+            )
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_calls.append("PUT")
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({})
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    with pytest.raises(GlpiUnavailable):
+        client.upload_ticket_document(
+            "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+        )
+    assert put_calls == []
+    assert store.has_record(68) is False
+
+
+def test_adopted_identity_rotates_in_governed_token():
+    """Authorized takeover: an 'adopted' marker authorizes rotation even when
+    GLPI still shows a foreign api_token_date."""
+    put_bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/getFullSession"):
+            return httpx.Response(200, json={"session": {"glpiID": 68}})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[{"id": 9, "itemtype": "Ticket", "items_id": 7}])
+        if request.url.path.endswith("/apirest.php/Document_Item/9"):
+            return httpx.Response(200, json={"id": 9, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document/55"):
+            return httpx.Response(200, json={"id": 55, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document") and request.method == "POST":
+            return httpx.Response(201, json={"id": 55})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({})
+    store.adopt(68)
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+    )
+    assert uploaded.author_state == "verified"
+    assert len(put_bodies) == 1
+    assert store.get(68) == put_bodies[0]["input"]["api_token"]
+
+
+def test_rejected_stored_token_rotates_once_on_managed_identity():
+    """Stored token refused by GLPI (external rotation) → single governed
+    re-provision, no foreign check (identity is managed)."""
+    init_auth: list[str] = []
+    put_bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            auth = request.headers.get("Authorization", "")
+            init_auth.append(auth)
+            if auth == "user_token stale-token":
+                return httpx.Response(401, json=["ERROR_GLPI_LOGIN_USER_TOKEN"])
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/getFullSession"):
+            return httpx.Response(200, json={"session": {"glpiID": 68}})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "GET":
+            # even a foreign-looking marker must NOT block rotation of a
+            # managed identity
+            return httpx.Response(
+                200, json={"id": 68, "api_token_date": "2026-01-01 10:00:00"}
+            )
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[{"id": 9, "itemtype": "Ticket", "items_id": 7}])
+        if request.url.path.endswith("/apirest.php/Document_Item/9"):
+            return httpx.Response(200, json={"id": 9, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document/55"):
+            return httpx.Response(200, json={"id": 55, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document") and request.method == "POST":
+            return httpx.Response(201, json={"id": 55})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({68: "stale-token"})
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+    )
+    assert uploaded.author_state == "verified"
+    assert len(put_bodies) == 1
+    rotated = put_bodies[0]["input"]["api_token"]
+    assert store.get(68) == rotated
+    assert f"user_token {rotated}" in init_auth
+
+
+def test_second_provision_call_reuses_winner_token():
+    """Lock re-read: a second provision for the same user returns the token
+    already stored instead of minting a competing one."""
+    put_bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-prov"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "GET":
+            return httpx.Response(200, json={"id": 68, "api_token_date": None})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({})
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    first = client._provision_user_api_token(68)
+    second = client._provision_user_api_token(68)
+    assert first == second
+    assert len(put_bodies) == 1
+
+
+def test_known_bad_race_returns_concurrent_rotation_result():
+    """If another request already rotated the token while we waited on the
+    lock, the loser reuses the fresh store value — no second PUT."""
+    put_bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-prov"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({68: "fresh-token"})
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    result = client._provision_user_api_token(68, known_bad="stale-token")
+    assert result == "fresh-token"
+    assert put_bodies == []
+
+
+def test_revoked_identity_blocks_provisioning_and_write():
+    """A revoked store row is a hold: provisioning and user writes stop until
+    an operator clears the revocation."""
+    put_bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-prov"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({})
+    store.revoke(68)
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    with pytest.raises(GlpiUnavailable):
+        client.upload_ticket_document(
+            "oauth-access", ticket_id=7, filename="a.png", content=b"x", mime="image/png"
+        )
+    assert put_bodies == []
+
+
+def test_revoke_user_api_token_clears_remote_key():
+    """Governed revocation sends api_token='' to GLPI and marks the store row
+    revoked — the identity stops resolving a usable token."""
+    put_bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-prov"})
+        if request.url.path.endswith("/apirest.php/User/68") and request.method == "PUT":
+            put_bodies.append(json.loads(request.content.decode()))
+            return httpx.Response(200, json=[{"68": True}])
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    store = _token_store({68: "live-token"})
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(
+            store,
+            token_provisioner_app_token="prov-app",
+            token_provisioner_user_token="prov-user",
+        ),
+    )
+    client.revoke_user_api_token(68)
+    assert put_bodies and put_bodies[0]["input"]["api_token"] == ""
+    assert store.is_revoked(68) is True
+    assert store.get(68) is None
+    # still managed — a blocked hold, not an unmanaged identity
+    assert store.has_record(68) is True
+
+
+def test_revoke_requires_explicit_provisioner():
+    """Revocation is a provisioner operation — unconfigured pair fails
+    before opening any session."""
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        transport=httpx.MockTransport(handler),
+        **_base_client_kwargs(_token_store({68: "live-token"})),
+    )
+    with pytest.raises(GlpiUnavailable):
+        client.revoke_user_api_token(68)
+    assert calls == []

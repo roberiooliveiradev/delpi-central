@@ -372,6 +372,7 @@ class TicketService:
             mime=mime,
             title=title,
         )
+        author_verified = uploaded.author_state == "verified"
         stored = StoredResponse(
             status_code=201,
             body={
@@ -382,7 +383,12 @@ class TicketService:
                 # (verified | mismatch | unverified) — additive, so consumers
                 # can flag degraded auditability.
                 "author_state": uploaded.author_state,
-                "author_verified": uploaded.author_state == "verified",
+                "author_verified": author_verified,
+                # Typed business outcome — ``verification_failed`` is never a
+                # complete success: the document stays for reconciliation
+                # (document_id) and a retry MUST NOT be issued blindly
+                # (a new upload would duplicate the attachment).
+                "outcome": "verified" if author_verified else "verification_failed",
             },
         )
         self._idempotency.save(subject, operation, key, stored)

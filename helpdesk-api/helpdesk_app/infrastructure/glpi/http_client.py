@@ -3,6 +3,7 @@ import logging
 import re
 import secrets
 import unicodedata
+from contextlib import nullcontext
 from dataclasses import replace
 from urllib.parse import quote
 
@@ -123,12 +124,11 @@ class HttpxGlpiClient:
         # a dedicated provisioner identity (e.g. minha-delpi-provisioning).
         # It never performs user-initiated writes — those run on the user's
         # own legacy session minted from their api_token.
-        self._token_provisioner_app_token = (
-            token_provisioner_app_token or self._legacy_app_token
-        ).strip()
-        self._token_provisioner_user_token = (
-            token_provisioner_user_token or self._legacy_user_token
-        ).strip()
+        # No fallback to the legacy pair: an unconfigured provisioner must
+        # surface as an explicit failure BEFORE any provisioning attempt,
+        # never silently borrow a credential with a different blast radius.
+        self._token_provisioner_app_token = (token_provisioner_app_token or "").strip()
+        self._token_provisioner_user_token = (token_provisioner_user_token or "").strip()
         self._user_token_store = user_token_store
         if assignee_profile_ids is None:
             from helpdesk_app.config import parse_assignee_profile_ids
@@ -1863,9 +1863,12 @@ class HttpxGlpiClient:
             glpi_user_id=glpi_user_id, api_token=api_token
         )
         if session_token is None:
-            # Stored/provisioned token rejected (rotated externally, for
-            # instance): re-provision once, then fail closed.
-            api_token = self._provision_user_api_token(glpi_user_id)
+            # Stored token rejected (rotated externally, for instance):
+            # rotate once — safe because a store row marks the identity as
+            # BFF-managed — then fail closed.
+            api_token = self._provision_user_api_token(
+                glpi_user_id, known_bad=api_token
+            )
             session_token = self._open_user_session(
                 glpi_user_id=glpi_user_id, api_token=api_token
             )
@@ -1939,25 +1942,164 @@ class HttpxGlpiClient:
                 return token
         return self._provision_user_api_token(glpi_user_id)
 
-    def _provision_user_api_token(self, glpi_user_id: int) -> str:
-        """REST ``PUT /User/{id} {api_token}`` under the provisioner session.
-
-        GLPI encrypts the token server-side and only allows a session whose
-        profile rights strictly cover the target's to write it. When the
-        provisioner is not configured/authorized the operation blocks BEFORE
-        any user write — the alternative is never a technical-session write.
-        """
+    def _require_token_provisioner(self) -> None:
+        """Fail BEFORE any provisioning path when the dedicated provisioner
+        identity is not explicitly configured — never silently substitute
+        another credential pair."""
         if not self._token_provisioner_app_token or not self._token_provisioner_user_token:
             raise GlpiUnavailable(
                 "Provisionamento de identidade GLPI não configurado. "
                 "Nenhuma escrita foi realizada."
             )
-        session_token = self._legacy_init_session(
-            app_token=self._token_provisioner_app_token,
-            user_token=self._token_provisioner_user_token,
+
+    def _provision_user_api_token(
+        self, glpi_user_id: int, *, known_bad: str | None = None
+    ) -> str:
+        """Governed ``PUT /User/{id} {api_token}`` under the provisioner session.
+
+        GLPI encrypts the token server-side and only allows a session whose
+        profile rights strictly cover the target's to write it.
+
+        Lifecycle rules:
+        - ``known_bad=None`` (first provisioning): only allowed when the
+          identity is NOT managed (no store row) AND no pre-existing GLPI
+          ``api_token`` is detectable — a third-party Remote access key is
+          never overwritten silently; it requires the authorized adoption
+          procedure (operator verifies ownership, records an ``adopted``
+          marker via ``UserTokenStore.adopt``) or explicit revocation.
+        - ``known_bad=<rejected token>`` (rotation): only managed identities
+          rotate; the lock re-read resolves races so a token another request
+          already rotated in is reused instead of re-minted.
+        - A ``revoked`` store row blocks (re)provisioning until an operator
+          clears it — revocation is a hold, not a hint.
+        """
+        self._require_token_provisioner()
+        store = self._user_token_store
+        lock = (
+            store.provision_lock(glpi_user_id)
+            if store is not None
+            else nullcontext()
         )
+        with lock:
+            if store is not None:
+                existing = store.get(glpi_user_id)
+                if existing and existing != known_bad:
+                    # Another request provisioned/rotated while we waited.
+                    return existing
+            managed = store.has_record(glpi_user_id) if store is not None else False
+            if managed and store.is_revoked(glpi_user_id):
+                logger.info("glpi_user_token_revoked_block user_id=%s", glpi_user_id)
+                raise GlpiUnavailable(
+                    "Identidade GLPI revogada pelo operador. "
+                    "Nenhuma escrita foi realizada."
+                )
+            session_token = self._legacy_init_session(
+                app_token=self._token_provisioner_app_token,
+                user_token=self._token_provisioner_user_token,
+            )
+            try:
+                if not managed:
+                    self._assert_api_token_unclaimed(session_token, glpi_user_id)
+                api_token = secrets.token_urlsafe(30)
+                try:
+                    response = self._http.request(
+                        "PUT",
+                        f"{self._base}/apirest.php/User/{int(glpi_user_id)}",
+                        headers={
+                            "Accept": "application/json",
+                            "Content-Type": "application/json",
+                            "App-Token": self._token_provisioner_app_token,
+                            "Session-Token": session_token,
+                        },
+                        json={
+                            "input": {"id": int(glpi_user_id), "api_token": api_token}
+                        },
+                    )
+                except httpx.TimeoutException as exc:
+                    raise GlpiUnavailable("GLPI indisponível.") from exc
+                if response.status_code not in {200, 201}:
+                    body = (response.text or "")[:240]
+                    logger.info(
+                        "glpi_user_token_provision_denied user_id=%s status=%s body=%s",
+                        glpi_user_id,
+                        response.status_code,
+                        body,
+                    )
+                    raise GlpiUnavailable(
+                        "Não foi possível provisionar a identidade do usuário no "
+                        "GLPI. Nenhuma escrita foi realizada."
+                    )
+                if store is not None:
+                    store.save(
+                        glpi_user_id,
+                        api_token,
+                        source="rotated" if managed else "provisioned",
+                    )
+                logger.info(
+                    "glpi_user_token_%s user_id=%s",
+                    "rotated" if managed else "provisioned",
+                    glpi_user_id,
+                )
+                return api_token
+            finally:
+                self._legacy_kill_session(session_token)
+
+    def _assert_api_token_unclaimed(
+        self, provisioner_session: str, glpi_user_id: int
+    ) -> None:
+        """Refuse to overwrite a Remote access key the BFF did not issue.
+
+        GLPI never exposes ``api_token`` on read; the observable proxy is
+        ``api_token_date``, stamped when a key is generated through the GLPI
+        UI ``_regenerate_api_token`` action — the realistic third-party case.
+        When the marker is present on an unmanaged identity, provisioning
+        stops BEFORE any write and the identity goes to manual review:
+        the operator verifies key ownership, then either revokes it GLPI-side
+        or records an authorized ``adopted`` marker (``UserTokenStore.adopt``)
+        so the next write rotates in a governed key.
+        """
         try:
-            api_token = secrets.token_urlsafe(30)
+            row = self._legacy_get_json(
+                provisioner_session,
+                f"/apirest.php/User/{int(glpi_user_id)}",
+                app_token=self._token_provisioner_app_token,
+            )
+        except Exception:
+            logger.info(
+                "glpi_user_token_preflight_failed user_id=%s", glpi_user_id
+            )
+            raise GlpiUnavailable(
+                "Não foi possível verificar a chave de API existente do usuário "
+                "no GLPI. Nenhuma escrita foi realizada."
+            )
+        if isinstance(row, dict) and row.get("api_token_date"):
+            logger.warning(
+                "glpi_user_token_foreign user_id=%s api_token_date=%s",
+                glpi_user_id,
+                row.get("api_token_date"),
+            )
+            raise GlpiUnavailable(
+                "O usuário já possui uma chave de API gerada fora da Minha "
+                "DELPI. Provisionamento bloqueado até revisão autorizada. "
+                "Nenhuma escrita foi realizada."
+            )
+
+    def revoke_user_api_token(self, glpi_user_id: int) -> None:
+        """Governed revocation: clear the GLPI Remote access key and mark the
+        store row revoked — subsequent writes block until an operator clears
+        the hold (``delete``) or re-adopts the identity."""
+        self._require_token_provisioner()
+        store = self._user_token_store
+        lock = (
+            store.provision_lock(glpi_user_id)
+            if store is not None
+            else nullcontext()
+        )
+        with lock:
+            session_token = self._legacy_init_session(
+                app_token=self._token_provisioner_app_token,
+                user_token=self._token_provisioner_user_token,
+            )
             try:
                 response = self._http.request(
                     "PUT",
@@ -1968,28 +2110,24 @@ class HttpxGlpiClient:
                         "App-Token": self._token_provisioner_app_token,
                         "Session-Token": session_token,
                     },
-                    json={"input": {"id": int(glpi_user_id), "api_token": api_token}},
+                    json={"input": {"id": int(glpi_user_id), "api_token": ""}},
                 )
-            except httpx.TimeoutException as exc:
-                raise GlpiUnavailable("GLPI indisponível.") from exc
-            if response.status_code not in {200, 201}:
-                body = (response.text or "")[:240]
-                logger.info(
-                    "glpi_user_token_provision_denied user_id=%s status=%s body=%s",
-                    glpi_user_id,
-                    response.status_code,
-                    body,
-                )
-                raise GlpiUnavailable(
-                    "Não foi possível provisionar a identidade do usuário no "
-                    "GLPI. Nenhuma escrita foi realizada."
-                )
-            if self._user_token_store is not None:
-                self._user_token_store.save(glpi_user_id, api_token)
-            logger.info("glpi_user_token_provisioned user_id=%s", glpi_user_id)
-            return api_token
-        finally:
-            self._legacy_kill_session(session_token)
+                if response.status_code not in {200, 201}:
+                    body = (response.text or "")[:240]
+                    logger.info(
+                        "glpi_user_token_revoke_denied user_id=%s status=%s body=%s",
+                        glpi_user_id,
+                        response.status_code,
+                        body,
+                    )
+                    raise GlpiUnavailable(
+                        "Não foi possível revogar a identidade do usuário no GLPI."
+                    )
+                if store is not None:
+                    store.revoke(glpi_user_id)
+                logger.info("glpi_user_token_revoked user_id=%s", glpi_user_id)
+            finally:
+                self._legacy_kill_session(session_token)
 
     def _legacy_check_row_author(
         self,

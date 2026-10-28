@@ -1,3 +1,4 @@
+from contextlib import AbstractContextManager
 from typing import Protocol
 
 from helpdesk_app.domain.models import (
@@ -244,6 +245,33 @@ class SessionStore(Protocol):
     def save(self, session: OAuthSession) -> None: ...
 
     def delete(self, subject: str) -> None: ...
+
+
+class UserTokenStore(Protocol):
+    """Governed per-user GLPI ``api_token`` lifecycle store.
+
+    Row presence marks the identity as BFF-managed: first-time
+    provisioning is only allowed on unmanaged identities, rotation only
+    on managed ones. ``adopted`` rows carry no usable token and exist so
+    an authorized takeover can be rotated in; ``revoked`` rows block
+    further provisioning until an operator clears them.
+    """
+
+    def get(self, glpi_user_id: int) -> str | None: ...
+
+    def save(self, glpi_user_id: int, api_token: str, *, source: str = "provisioned") -> None: ...
+
+    def has_record(self, glpi_user_id: int) -> bool: ...
+
+    def is_revoked(self, glpi_user_id: int) -> bool: ...
+
+    def adopt(self, glpi_user_id: int) -> None: ...
+
+    def revoke(self, glpi_user_id: int) -> None: ...
+
+    def delete(self, glpi_user_id: int) -> None: ...
+
+    def provision_lock(self, glpi_user_id: int) -> AbstractContextManager[None]: ...
 
 
 class IdempotencyStore(Protocol):
