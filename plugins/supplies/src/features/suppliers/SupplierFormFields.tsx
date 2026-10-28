@@ -871,7 +871,7 @@ export function SupplierFieldShell({
       ref={rootRef}
       id={anchorId}
       data-supplier-field={spec.key}
-      className={supplierFieldItemClass(spec, { changed, invalid })}
+      className={supplierFieldItemClass(spec, { changed, invalid, highlightRequired: requiredMark })}
     >
       {children}
       {error ? (
