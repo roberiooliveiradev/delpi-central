@@ -637,3 +637,10 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - BUSINESS_OUTCOME=PARTIAL; metricas: 7-19 model calls, 10.5k-32.3k input tokens, 45-193s por turno.
 - Veredito: PRODUCTION_CHAIN_HEALTHY; proximo bounded step = probe owner search_products(description) via execute autorizado para separar H-A/H-B; sem mudancas de codigo/DAVI/deploy; fase nao avancada.
 - Artefatos: doc 186.
+
+## 2026-10-28 — D187 WP0+WP1 causal diagnostic (doc 188) — LOCAL ONLY
+- Task DELIA-C3-D187-WP0-WP1-CAUSAL-DIAGNOSTIC-01. SHA 3060ab0741. No code/prompt/DAVI/API-DELPI changes; no deploy; no production calls.
+- WP0: 15 orchestration stages inventoried with per-block contracts. Proven gaps: select_candidate block lacks business_subject/answer_requirements (H6 PROVEN — wrong-candidate class in prod T1/T2); recovery re-runs native_assessment with identical inputs (H5 PROVEN). H2/H3/H4 REFUTED — recovery carries mismatch_hint+coverage+record previews+dedup; fit ladders truthful; no wasteful discovery repeat.
+- WP1: per-call telemetry from ModelCallLedger — T3 16 calls/~23.7k in/113s; T4.2 19 calls/~32.3k in/193s. Recovery round ≈9 calls/~15k in. invalid_structured_output retries = 16-36s latency cost. OpenRouter gen-ID correlation INCONCLUSIVE (not carried).
+- Local: governed_read_recovery_eval (Ollama delia-json + fake owner) — 5/5 stopped at admission surface_inquiry (local model limit, doc-185 consistent). Deterministic recovery+continuity tests 21/21 PASS.
+- NEXT: doc-187 WP3 decision — candidate #1 (project goal into select_candidate) + #2 (skip native_assessment in recovery round); both reuse/extend existing contracts.
