@@ -1,0 +1,25 @@
+# Produtos Novos — Portal de Engenharia
+
+**Estado:** TARGET / PROPOSED — documentação de produto e UX, sem implementação ou autorização de publicação.  
+**Processo:** PROC-0073 — Acompanhamento de Produtos Novos na Produção.  
+**Origem de negócio:** Transforma+ / GLPI #1153; AS-IS documental v0.3; TO-BE candidato v0.2.  
+**Nomenclatura escolhida pelo solicitante:** **Produtos Novos**.  
+**Subtítulo proposto:** Planejamento e Acompanhamento da Produção.
+
+Este pacote é uma **funcionalidade/ferramenta do Portal Engenharia**, não um novo produto, MFE, bounded context ou fonte canônica de OPs, desenhos, BOM e roteiros. Segue a documentação mestra [Portal Engenharia](../README.md), especialmente as decisões de TopBar, `@delpi/plugin-ui`, `engineering-api`, Core RBAC e integrações autorizadas.
+
+## Documentos
+- [01-VISAO-E-ESCOPO.md](./01-VISAO-E-ESCOPO.md) — objetivo, atores, escopo, regras e limites.
+- [02-UX-PAGINA-INICIAL.md](./02-UX-PAGINA-INICIAL.md) — navegação, wireframe textual, estados e componentes.
+- [03-FLUXO-TO-BE.md](./03-FLUXO-TO-BE.md) — fluxo híbrido, desvios, responsabilidades e estados.
+- [04-REQUISITOS-CONTRATOS-ACEITE.md](./04-REQUISITOS-CONTRATOS-ACEITE.md) — RQ, AC e contratos a inventariar.
+- [05-DECISOES-ROADMAP.md](./05-DECISOES-ROADMAP.md) — evidência, riscos, decisões e evolução.
+
+## Regras de autoridade
+- Keycloak: identidade/SSO; Core: app/rota/RBAC; Portal Engenharia: experiência; `engineering-api`: BFF alvo; Domain APIs/sistemas Engenharia/Produção: dados e regras oficiais; Transformômetro: processo de melhoria; Engenharia: aprovação técnica e publicação de desenho.
+- Não acessar banco alheio ou importar internals de outro bounded context; contrato e autorização ao vivo antes de qualquer write.
+- Previsão de OP não comprova produção iniciada. TO-BE não é AS-IS nem runtime.
+- Não sobrescrever o BPMN AS-IS nativo do PROC-0073.
+- Antes de implementar: verificar HEAD, código e contratos, aplicar Abstraction Gate, RQ/AC, menor diff, testes no SHA e documentação de outcome.
+
+**Status dos requisitos:** PROPOSED salvo onde houver indicação de evidência ou decisão explícita. A disponibilidade de APIs Carga Máquina/OP não foi provada.
