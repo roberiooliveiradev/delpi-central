@@ -350,3 +350,105 @@ def test_user_context_does_not_leak_between_requests(jwks_env, core_rbac, probe_
     resp_b = probe_client.get("/probe/whoami", headers=_auth(token_b))
     assert resp_b.status_code == 200
     assert resp_b.json()["email"] == "b@delpi.test"
+
+
+# --- EVA.MCP.V1.R1 — metadata OAuth: allowlist exata (sem substring) ---
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        # rotas oficiais registradas (MCP_RESOURCE_CONFIG.metadata_paths)
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+        # variantes prefixadas (root_path/gateway)
+        "/apps/engineering-api/.well-known/oauth-protected-resource",
+        "/apps/engineering-api/.well-known/oauth-protected-resource/mcp",
+    ],
+)
+def test_oauth_metadata_exact_paths_are_public(client, path):
+    """Metadata RFC 9728 dispensa JWT nos caminhos exatos registrados."""
+    response = client.get(path)
+    assert response.status_code != 401
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        # prefixos arbitrários
+        "/fake/.well-known/oauth-protected-resource",
+        "/v1/.well-known/oauth-protected-resource",
+        "/x/apps/engineering-api/.well-known/oauth-protected-resource",
+        "/apps/fake/.well-known/oauth-protected-resource",
+        "/fake/.well-known/oauth-protected-resource/mcp",
+        "/x/apps/engineering-api/.well-known/oauth-protected-resource/mcp",
+        # sufixos arbitrários
+        "/.well-known/oauth-protected-resource/extra",
+        "/.well-known/oauth-protected-resource-fake",
+        "/.well-known/oauth-protected-resourceXYZ",
+        "/apps/engineering-api/.well-known/oauth-protected-resource/extra",
+        "/apps/engineering-api/.well-known/oauth-protected-resource-fake",
+        "/.well-known/oauth-protected-resource/mcp/extra",
+        "/.well-known/oauth-protected-resource/mcpX",
+        # substring em outros segmentos
+        "/foo/.well-known/oauth-protected-resource/bar",
+        "/api/.well-known/oauth-protected-resource/debug",
+        "/v1/test/.well-known/oauth-protected-resource",
+        # segmentos pais do bem-known não são wildcard
+        "/.well-known",
+        "/.well-known/other",
+        "/.well-known/openid-configuration",
+    ],
+)
+def test_oauth_metadata_arbitrary_paths_require_auth(client, path):
+    """Qualquer path que apenas contenha a substring de metadata exige JWT —
+    401 antes do roteamento, nunca 404."""
+    response = client.get(path)
+    assert response.status_code == 401
+
+
+def test_oauth_metadata_allowlist_exact_matching():
+    """Unit check — o predicado não usa substring nem prefixo."""
+    from engineering_app.middleware.auth_middleware import (
+        _is_engineering_public_path,
+        _PUBLIC_OAUTH_METADATA_PATHS,
+    )
+
+    public = {
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+        "/apps/engineering-api/.well-known/oauth-protected-resource",
+        "/apps/engineering-api/.well-known/oauth-protected-resource/mcp",
+        # trailing slash normaliza para o caminho canônico
+        "/.well-known/oauth-protected-resource/",
+        "/apps/engineering-api/.well-known/oauth-protected-resource/",
+        # query string é ignorada pela normalização
+        "/.well-known/oauth-protected-resource?x=1",
+    }
+    for path in public:
+        assert _is_engineering_public_path(path), path
+
+    forbidden = [
+        "/fake/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/extra",
+        "/.well-known/oauth-protected-resource-fake",
+        "/.well-known/oauth-protected-resourceXYZ",
+        "/apps/engineering-api/.well-known/oauth-protected-resource/extra",
+        "/foo/.well-known/oauth-protected-resource/bar",
+        "/v1/.well-known/oauth-protected-resource",
+        "/x/apps/engineering-api/.well-known/oauth-protected-resource",
+        "/apps/fake/.well-known/oauth-protected-resource",
+        "/.well-known",
+        "//.well-known/oauth-protected-resource",  # dupla barra ≠ canonical
+        "/.well-known//oauth-protected-resource",
+    ]
+    for path in forbidden:
+        assert not _is_engineering_public_path(path), path
+
+    # a allowlist é derivada das rotas registradas — nada além delas
+    assert _PUBLIC_OAUTH_METADATA_PATHS == {
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+        "/apps/engineering-api/.well-known/oauth-protected-resource",
+        "/apps/engineering-api/.well-known/oauth-protected-resource/mcp",
+    }

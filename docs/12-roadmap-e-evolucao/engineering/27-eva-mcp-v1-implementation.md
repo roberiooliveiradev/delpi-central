@@ -56,6 +56,8 @@ Modificados:
 - `engineering_app/middleware/auth_middleware.py` — gate de transporte MCP
   (`mcp_transport_auth` + `McpTransportAuthPolicy` + `service_token_gate`),
   metadata RFC 9728 como path público.
+  *(R1: allowlist de metadata passou de substring a comparação exata —
+  ver doc 30.)*
 - `engineering_app/main.py` — `app.mount("/mcp")`, metadata router, lifespan
   combinado, mount-path middleware.
 - `engineering-api/requirements.txt` — `mcp==2.2.0`; `pydantic>=2.12,<3`

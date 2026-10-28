@@ -10,10 +10,14 @@ from delpi_mcp.auth import (
     mcp_transport_auth,
 )
 
+from engineering_app.interface.mcp.constants import MCP_GATEWAY_ROOT
 from engineering_app.interface.mcp.oauth_contract import (
     MCP_OAUTH_SCOPES,
     build_www_authenticate_challenge,
     resolve_required_mcp_resource_audience,
+)
+from engineering_app.interface.mcp.resource_metadata import (
+    MCP_RESOURCE_CONFIG,
 )
 
 __all__ = ["jwt_middleware"]
@@ -40,13 +44,26 @@ _PUBLIC_PATHS = frozenset(
 )
 
 
+# RFC 9728 metadata é discovery pública — derivada das rotas efetivamente
+# registradas (MCP_RESOURCE_CONFIG.metadata_paths) e de sua variante
+# prefixada: sob root_path/gateway o url.path chega como
+# /apps/engineering-api/…. Comparação exata após normalize_path — nunca
+# substring (EVA.MCP.V1.R1).
+_PUBLIC_OAUTH_METADATA_PATHS = frozenset(
+    set(MCP_RESOURCE_CONFIG.metadata_paths)
+    | {
+        f"{MCP_GATEWAY_ROOT}{path}"
+        for path in MCP_RESOURCE_CONFIG.metadata_paths
+    }
+)
+
+
 def _is_engineering_public_path(path: str) -> bool:
     normalized = normalize_path(path)
-    if normalized in _PUBLIC_PATHS:
-        return True
-    # RFC 9728 metadata é discovery pública — idêntico aos demais MCPs.
-    # Com root_path o url.path chega prefixado (/apps/engineering-api/…).
-    return "/.well-known/oauth-protected-resource" in normalized
+    return (
+        normalized in _PUBLIC_PATHS
+        or normalized in _PUBLIC_OAUTH_METADATA_PATHS
+    )
 
 
 def _strip_root_path(request) -> str:
