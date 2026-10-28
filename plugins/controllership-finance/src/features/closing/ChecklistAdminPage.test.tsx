@@ -99,11 +99,14 @@ describe("ChecklistAdminPage", () => {
   it("renders template and version table without items expansion", async () => {
     setupHappy();
     render(<ChecklistAdminPage basePath={BASE} />);
+    // UX-015-RW02: título da superfície traz o nome do template, sem o
+    // identificador técnico `monthly-closing-checklist`.
     await waitFor(() =>
       expect(
-        screen.getByText("Checklist mensal (monthly-closing-checklist)"),
+        screen.getByText("Versões · Checklist mensal"),
       ).toBeTruthy(),
     );
+    expect(screen.queryByText(/monthly-closing-checklist/)).toBeNull();
     expect(await screen.findByText("v1")).toBeTruthy();
     expect(screen.getByText("v2")).toBeTruthy();
     expect(screen.getByText("Publicada")).toBeTruthy();
@@ -114,13 +117,67 @@ describe("ChecklistAdminPage", () => {
     expect(getVersionMock).not.toHaveBeenCalled();
   });
 
-  it("navigates to the dedicated version page", async () => {
+  it("navigates to the dedicated version page by row click", async () => {
     setupHappy();
     render(<ChecklistAdminPage basePath={BASE} />);
-    const openButtons = await screen.findAllByRole("button", {
-      name: "Abrir versão",
+    const cell = await screen.findByText("v1");
+    fireEvent.click(cell.closest("tr") as HTMLElement);
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/admin/versions/1`,
+    );
+    // Sem botão redundante "Abrir versão" — a linha é a superfície.
+    expect(
+      screen.queryByRole("button", { name: "Abrir versão" }),
+    ).toBeNull();
+  });
+
+  it("does not navigate when clicking a destructive row action", async () => {
+    setupHappy();
+    render(<ChecklistAdminPage basePath={BASE} />);
+    const inactivate = await screen.findByRole("button", {
+      name: "Inativar",
     });
-    fireEvent.click(openButtons[0]); // v1
+    // O jsdom preserva `location` entre testes — a asserção é que o
+    // clique na ação destrutiva não altera a URL atual.
+    const before = window.location.pathname;
+    fireEvent.click(inactivate);
+    // Ação destrutiva fica isolada da navegação da linha e exige
+    // confirmação própria.
+    expect(window.location.pathname).toBe(before);
+    expect(
+      await screen.findByRole("button", { name: "Inativar versão" }),
+    ).toBeTruthy();
+  });
+
+  it("sorts versions by column", async () => {
+    listTemplatesMock.mockResolvedValue([TEMPLATE]);
+    listVersionsMock.mockResolvedValue([
+      VERSION_DRAFT,
+      VERSION_PUBLISHED,
+    ]);
+    render(<ChecklistAdminPage basePath={BASE} />);
+    await screen.findByText("v1");
+    const sortable = screen.getByRole("button", {
+      name: "Ordenar por Versão",
+    });
+    fireEvent.click(sortable);
+    let labels = screen.getAllByText(/^v\d$/).map((n) => n.textContent);
+    expect(labels).toEqual(["v1", "v2"]);
+    fireEvent.click(sortable);
+    labels = screen.getAllByText(/^v\d$/).map((n) => n.textContent);
+    expect(labels).toEqual(["v2", "v1"]);
+  });
+
+  it("switches to card view and keeps row navigation", async () => {
+    setupHappy();
+    render(<ChecklistAdminPage basePath={BASE} />);
+    await screen.findByText("v1");
+    fireEvent.click(screen.getByRole("button", { name: "Cards" }));
+    const card = await screen.findByRole("link", {
+      name: "Abrir versão 1",
+    });
+    expect(card).toBeTruthy();
+    fireEvent.click(card);
     expect(window.location.pathname).toBe(
       `${BASE}/closing/admin/versions/1`,
     );

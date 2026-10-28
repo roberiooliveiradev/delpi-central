@@ -117,12 +117,45 @@ describe("ChecklistVersionPage", () => {
     expect(screen.getByText("Documentos da versão")).toBeTruthy();
   });
 
-  it("navigates to the document-in-version page", async () => {
+  it("navigates to the document-in-version page by row click", async () => {
     setupHappy();
     getVersionMock.mockResolvedValue(DRAFT_DETAIL);
     render(<ChecklistVersionPage basePath={BASE} version={2} />);
-    const open = await screen.findByRole("button", { name: "Abrir" });
-    fireEvent.click(open);
+    const cell = await screen.findByText("CK-E-01");
+    fireEvent.click(cell.closest("tr") as HTMLElement);
+    expect(window.location.pathname).toBe(
+      `${BASE}/closing/admin/versions/2/documents/CK-E-01`,
+    );
+    // Sem botão redundante "Abrir" — a linha inteira é a superfície.
+    expect(screen.queryByRole("button", { name: "Abrir" })).toBeNull();
+  });
+
+  it("shows an honest identity fallback instead of the raw subject", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue({
+      ...PUBLISHED_DETAIL,
+      published_by: "dc99fc6d-0000-4000-8000-0000000000ab",
+    });
+    render(<ChecklistVersionPage basePath={BASE} version={1} />);
+    await screen.findByText("CK-E-01");
+    // UX-014/RW02: sem contrato de identidade o subject técnico nunca
+    // é apresentado como nome — permanece apenas na trilha (title).
+    expect(
+      screen.queryByText(/dc99fc6d-0000-4000-8000-0000000000ab/),
+    ).toBeNull();
+    expect(screen.getByText("Identidade não disponível")).toBeTruthy();
+  });
+
+  it("switches the documents list to card view and keeps navigation", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue(DRAFT_DETAIL);
+    render(<ChecklistVersionPage basePath={BASE} version={2} />);
+    await screen.findByText("CK-E-01");
+    fireEvent.click(screen.getByRole("button", { name: "Cards" }));
+    const card = await screen.findByRole("link", {
+      name: "Abrir documento Balancete",
+    });
+    fireEvent.click(card);
     expect(window.location.pathname).toBe(
       `${BASE}/closing/admin/versions/2/documents/CK-E-01`,
     );

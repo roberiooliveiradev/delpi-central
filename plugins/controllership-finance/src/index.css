@@ -1393,6 +1393,24 @@
   min-width: 0;
 }
 
+/* UX-015-RW02 — card composto do modo Cards: o `DataRecordCard` do kit
+   é a superfície navegável; as ações governadas ficam em faixa própria
+   abaixo (nunca dentro do anchor, para não aninhar interativos). */
+.dashboard-controllership-finance .cf-version-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-version-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 4px;
+}
+
 /* Resumo linear do contexto da versão (substitui o card gigante). */
 .dashboard-controllership-finance .cf-version-context {
   display: flex;

@@ -104,9 +104,9 @@ export const CF_HELP = {
     page:
       "Administração do checklist mestre — exige permissão de gestão (controllership-finance.manage). Todo ciclo é versionado: criar rascunho, editar itens, publicar com vigência prospectiva e inativar. Competências já abertas nunca mudam — elas guardam um snapshot próprio. Usuários e permissões não são administrados aqui: pertencem ao Core.",
     versions:
-      "Versões do template: «Rascunho» editável até a publicação, «Publicada» vigente a partir da competência informada, «Inativada» preservada no histórico. Só existe um rascunho por vez por template.",
+      "Versões do template: «Rascunho» editável até a publicação, «Publicada» vigente a partir da competência informada, «Inativada» preservada no histórico. Só existe um rascunho por vez por template. Clique na linha para abrir a versão — a listagem pode ser alternada entre Tabela e Cards e as colunas são ordenáveis.",
     items:
-      "Itens da versão em modo de leitura — chave, entregável, origem, destinatário, obrigatoriedade, escopo de filial e regra de validação.",
+      "Itens da versão em modo de leitura — chave, entregável, origem, destinatário, obrigatoriedade, escopo de filial e regra de validação. Clique na linha para abrir o documento; alterne entre Tabela e Cards e ordene pelas colunas.",
     editDraft:
       "Edição do rascunho: altere, adicione ou remova itens e salve de uma vez — a gravação é atômica. Se outra sessão publicou ou alterou a versão, o salvamento é recusado («revisão desatualizada») para nunca sobrescrever trabalho alheio: recarregue e reaplique.",
   },

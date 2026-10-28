@@ -82,8 +82,18 @@ Breadcrumbs `CfPagePath` preservam o retorno por nível; deep links, F5
 e voltar/avançar funcionam por `popstate`. Núcleo compartilhado:
 `features/closing/checklistAdminShared.tsx` (constantes, ações de
 versão + diálogos, editor de item) consumido pela lista e pelo detalhe.
-O ator dos eventos permanece `actor_subject` até o contrato de
-identidade do UX-014.
+O ator dos eventos permanece `actor_subject` (rótulo «Ator (id):»)
+até o contrato de identidade do UX-014 — DECISION_REQUIRED registrado
+no Plano 113 §28.14 (falta rota BFF de lookup administrativo de usuários).
+
+RW02 (estrutural): superfície única por página — removido o card
+intermediário da Administração; ações governadas com ícones no
+`headerActions` da `DataTableSection`; colunas `sortable` + alternância
+Tabela/Cards (`viewLayoutPreferencesKey` + `renderCard` com
+`CfDataRecordCard` navegável); clique/Enter/Espaço na linha abre o
+detalhe (sem botão «Abrir» redundante) e a coluna «Ações» usa
+`rowClick:"stop"` para não disparar navegação nas ações destrutivas;
+títulos/subtítulos não exibem códigos técnicos do template.
 
 RW01 (design): `cf-detail-list` — padrão read-only usado nas páginas de
 detalhe — passou a ser o grid semântico do portal (auto-fit ~200px,

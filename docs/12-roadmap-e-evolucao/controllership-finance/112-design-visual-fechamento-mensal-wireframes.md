@@ -2027,3 +2027,14 @@ Página de timeline cronológica, título contextual, período/versão quando di
 - **C — Documento na versão:** título = nome do documento + badges (obrigatoriedade, via, estado); aviso de snapshot histórico; ações no topo («Voltar à versão», «Editar item no rascunho» em DRAFT, «Editar exigência futura»); Identificação em grid 2 colunas (finalidade/orientações full-width); Exigência em grid (TOTVS full-width); «Contexto da versão» virou linha compacta `cf-version-context` (vN · badge · vigência · publicação).
 - **D — Histórico:** subtítulo passou a indicar o escopo (versão específica vs todas as versões).
 - **A — Administração:** já conforme o wireframe — sem alteração.
+
+
+### 51.8 Rework estrutural RW02 (28/10/2026, PROVEN local)
+
+PO rejeitou o acabamento RW01 — o problema era estrutural, não cosmético. Recomposição com capacidades reais do kit:
+
+- **A — Administração:** `CfSectionCard` intermediário removido — uma única superfície `DataTableSection` («Versões · {nome}» sem código técnico). Ações com ícones no `headerActions` (`FilePlus2` criar rascunho, `History` auditoria, `FileText` documentos; destrutivas em `danger`). Colunas `sortable`, toggle Tabela/Cards (`viewLayoutPreferencesKey`), busca, menu «Colunas», linha clicável → versão; «Abrir versão» removido; ações por estado com `rowClick:"stop"`.
+- **B — Versão:** subtítulo sem `monthly-closing-checklist`; «Publicada por» com fallback honesto «Identidade não disponível» (subject apenas em `title` — UX-014 DECISION_REQUIRED). Documentos em banda única com sort/toggle/clique → documento; toolbar de edição DRAFT no `headerActions`; «Abrir» removido.
+- **Cards:** `CfDataRecordCard` (kit `createDashboardDataRecordCard`) como anchor navegável + faixa `cf-version-card__actions` para ações governadas — sem interativo aninhado.
+- **D — Histórico:** ator rotulado «Ator (id):» — identificador técnico explícito da trilha, nunca nome.
+- Evidência: smoke 13/13, 365 testes, capturas dark/820/390/320 `overflowX=0`, contagem de containers aninhados caiu (admin: página→tabela direta; versão: stack único).

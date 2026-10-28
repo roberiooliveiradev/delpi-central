@@ -457,6 +457,49 @@ export function createDashboardPaginationKit() {
   return { Pagination, TablePageSizeSelect };
 }
 
+export function createDashboardDataRecordCard() {
+  return function DataRecordCard(props: {
+    title?: ReactNode;
+    subtitle?: ReactNode;
+    status?: ReactNode;
+    fields?: Array<{ id: string; label?: ReactNode; value?: ReactNode }>;
+    context?: ReactNode;
+    href?: string;
+    onNavigate?: (event: { preventDefault: () => void }) => void;
+    "aria-label"?: string;
+    ariaLabel?: string;
+  }) {
+    const content = el(
+      "div",
+      null,
+      el("span", null, props.title),
+      props.subtitle ? el("span", null, props.subtitle) : null,
+      props.status ? el("span", null, props.status) : null,
+      (props.fields ?? []).map((field) =>
+        el(
+          "span",
+          { key: field.id },
+          el("span", null, field.label),
+          el("span", null, field.value),
+        ),
+      ),
+      props.context ?? null,
+    );
+    if (props.href != null) {
+      return el(
+        "a",
+        {
+          href: props.href,
+          onClick: props.onNavigate,
+          "aria-label": props.ariaLabel,
+        },
+        content,
+      );
+    }
+    return el("article", { "aria-label": props.ariaLabel }, content);
+  };
+}
+
 export function createDashboardDataTableKit() {
   function DataTableSection<T>(props: {
     title?: ReactNode;
@@ -465,11 +508,20 @@ export function createDashboardDataTableKit() {
       key: string;
       header: ReactNode;
       render?: (row: T) => ReactNode;
+      sortable?: boolean;
+      sortValue?: (row: T) => string | number | null | undefined;
+      rowClick?: "stop" | "propagate";
     }>;
     rows?: T[];
     rowKey?: (row: T) => string;
     loading?: boolean;
     emptyMessage?: string;
+    headerActions?: ReactNode;
+    onRowClick?: (row: T) => void;
+    renderCard?: (row: T) => ReactNode;
+    viewLayoutPreferencesKey?: string;
+    columnPreferencesKey?: string;
+    getSearchText?: (row: T) => string;
     serverPagination?: {
       page: number;
       pageSize: number;
@@ -481,22 +533,32 @@ export function createDashboardDataTableKit() {
     const rows = props.rows ?? [];
     const pager = props.serverPagination;
     const totalPages = pager ? Math.max(1, Math.ceil(pager.total / pager.pageSize)) : 1;
-    return el(
-      "section",
-      null,
-      el("h2", null, props.title),
-      pager
-        ? el(
-            "span",
-            { className: "cf-table-section__meta delpi-ui-table-section__meta" },
-            `${pager.total.toLocaleString("pt-BR")} ${pager.total === 1 ? "registro" : "registros"}`,
-          )
-        : null,
-      props.loading ? el("p", { role: "status" }, "Carregando…") : null,
-      !props.loading && rows.length === 0
-        ? el("p", null, props.emptyMessage)
-        : null,
-      rows.length > 0
+    const [sortKey, setSortKey] = useState<string | null>(null);
+    const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+    const [cardsOn, setCardsOn] = useState(false);
+    const canToggleCards = Boolean(
+      props.viewLayoutPreferencesKey && props.renderCard,
+    );
+
+    const sortedRows = (() => {
+      if (!sortKey) return rows;
+      const column = columns.find((c) => c.key === sortKey);
+      if (!column?.sortValue) return rows;
+      const factor = sortDir === "asc" ? 1 : -1;
+      return [...rows].sort((a, b) => {
+        const va = column.sortValue?.(a);
+        const vb = column.sortValue?.(b);
+        if (va == null && vb == null) return 0;
+        if (va == null) return factor;
+        if (vb == null) return -factor;
+        if (typeof va === "number" && typeof vb === "number")
+          return (va - vb) * factor;
+        return String(va).localeCompare(String(vb), "pt-BR") * factor;
+      });
+    })();
+
+    const body = cardsOn ? null : (
+      sortedRows.length > 0
         ? el(
             "table",
             null,
@@ -506,20 +568,58 @@ export function createDashboardDataTableKit() {
               el(
                 "tr",
                 null,
-                columns.map((c) => el("th", { key: c.key }, c.header)),
+                columns.map((c) =>
+                  c.sortable
+                    ? el(
+                        "th",
+                        { key: c.key },
+                        el(
+                          "button",
+                          {
+                            type: "button",
+                            "aria-label": `Ordenar por ${typeof c.header === "string" ? c.header : c.key}`,
+                            onClick: () => {
+                              if (sortKey === c.key) {
+                                setSortDir((d) =>
+                                  d === "asc" ? "desc" : "asc",
+                                );
+                              } else {
+                                setSortKey(c.key);
+                                setSortDir("asc");
+                              }
+                            },
+                          },
+                          c.header,
+                        ),
+                      )
+                    : el("th", { key: c.key }, c.header),
+                ),
               ),
             ),
             el(
               "tbody",
               null,
-              rows.map((row, index) =>
+              sortedRows.map((row, index) =>
                 el(
                   "tr",
-                  { key: props.rowKey?.(row) ?? String(index) },
+                  {
+                    key: props.rowKey?.(row) ?? String(index),
+                    onClick: props.onRowClick
+                      ? () => props.onRowClick?.(row)
+                      : undefined,
+                    tabIndex: props.onRowClick ? 0 : undefined,
+                  },
                   columns.map((c) =>
                     el(
                       "td",
-                      { key: c.key },
+                      {
+                        key: c.key,
+                        onClick:
+                          c.rowClick === "stop"
+                            ? (event: { stopPropagation: () => void }) =>
+                                event.stopPropagation()
+                            : undefined,
+                      },
                       c.render
                         ? c.render(row)
                         : String((row as Record<string, unknown>)[c.key] ?? ""),
@@ -529,7 +629,50 @@ export function createDashboardDataTableKit() {
               ),
             ),
           )
+        : null
+    );
+
+    return el(
+      "section",
+      null,
+      el("h2", null, props.title),
+      props.headerActions ?? null,
+      canToggleCards
+        ? el(
+            "button",
+            {
+              type: "button",
+              "aria-pressed": cardsOn,
+              onClick: () => setCardsOn((v) => !v),
+            },
+            cardsOn ? "Tabela" : "Cards",
+          )
         : null,
+      pager
+        ? el(
+            "span",
+            { className: "cf-table-section__meta delpi-ui-table-section__meta" },
+            `${pager.total.toLocaleString("pt-BR")} ${pager.total === 1 ? "registro" : "registros"}`,
+          )
+        : null,
+      props.loading ? el("p", { role: "status" }, "Carregando…") : null,
+      !props.loading && sortedRows.length === 0
+        ? el("p", null, props.emptyMessage)
+        : null,
+      cardsOn
+        ? el(
+            "div",
+            { "data-view": "cards" },
+            sortedRows.map((row, index) =>
+              el(
+                "div",
+                { key: props.rowKey?.(row) ?? String(index) },
+                props.renderCard?.(row),
+              ),
+            ),
+          )
+        : null,
+      body,
       pager
         ? el(
             "nav",

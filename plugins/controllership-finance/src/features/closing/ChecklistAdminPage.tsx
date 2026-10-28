@@ -18,7 +18,7 @@ import {
   useState,
 } from "react";
 
-import { ActionButton } from "@delpi/plugin-ui/index";
+import { FilePlus2, FileText, History } from "lucide-react";
 
 import {
   createTemplateDraft,
@@ -33,11 +33,12 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
+  CfDataRecordCard,
   CfEmptyState,
-  CfSectionCard,
   CfStatusBadge,
   CfTitleWithHelp,
   cfEmptyStateClassNames,
+  type DataRecordCardField,
 } from "../../app/controllershipFinanceUi";
 import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
 import {
@@ -58,6 +59,17 @@ import {
 } from "./checklistAdminShared";
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/formatters";
+
+const ICON_PROPS = { size: 15, strokeWidth: 1.9, "aria-hidden": true } as const;
+
+const VIEW_LAYOUT_KEY = "cf-checklist-admin-versions";
+const COLUMN_PREFS_KEY = "cf-checklist-admin-versions-columns";
+
+function versionSortLabel(
+  row: ChecklistTemplateVersion,
+): string | number {
+  return STATUS_LABELS[row.status] ?? row.status;
+}
 
 export function ChecklistAdminPage({ basePath }: { basePath: string }) {
   const [nonce, setNonce] = useState(0);
@@ -135,12 +147,16 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
         key: "version",
         header: "Versão",
         className: "cf-table__col--compact",
+        sortable: true,
+        sortValue: (row) => row.version,
         render: (row) => `v${row.version}`,
       },
       {
         key: "status",
         header: "Estado",
         className: "cf-table__col--status",
+        sortable: true,
+        sortValue: versionSortLabel,
         render: (row) => (
           <CfStatusBadge
             label={STATUS_LABELS[row.status] ?? row.status}
@@ -152,12 +168,17 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
         key: "items",
         header: "Itens",
         className: "cf-table__col--compact",
+        align: "right",
+        sortable: true,
+        sortValue: (row) => row.item_count,
         render: (row) => row.item_count,
       },
       {
         key: "effective",
         header: "Vigente desde",
         className: "cf-table__col--compact",
+        sortable: true,
+        sortValue: (row) => row.effective_from_period ?? "",
         render: (row) =>
           row.effective_from_period ?? (
             <span className="cf-cell-muted">—</span>
@@ -167,6 +188,8 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
         key: "published",
         header: "Publicação",
         className: "cf-table__col--wrap",
+        sortable: true,
+        sortValue: (row) => row.published_at ?? "",
         render: (row) =>
           row.published_at ? (
             `${formatDateTime(row.published_at)}`
@@ -178,15 +201,9 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
         key: "actions",
         header: "Ações",
         className: "cf-table__col--status",
+        rowClick: "stop",
         render: (row) => (
           <div className="cf-validation-panel__doc-actions">
-            <ActionButton
-              variant="ghost"
-              disabled={actions.busy}
-              onClick={() => openVersion(row.version)}
-            >
-              Abrir versão
-            </ActionButton>
             <VersionStatusActions
               version={row}
               busy={actions.busy}
@@ -196,7 +213,59 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
         ),
       },
     ],
-    [actions, openVersion],
+    [actions],
+  );
+
+  const renderVersionCard = useCallback(
+    (row: ChecklistTemplateVersion) => {
+      const href = checklistAdminVersionPath(row.version, basePath);
+      const fields: DataRecordCardField[] = [
+        { id: "items", label: "Itens", value: String(row.item_count) },
+        {
+          id: "effective",
+          label: "Vigente desde",
+          value: row.effective_from_period ?? "—",
+        },
+        {
+          id: "published",
+          label: "Publicação",
+          value: row.published_at
+            ? formatDateTime(row.published_at)
+            : "—",
+        },
+      ];
+      return (
+        <div className="cf-version-card">
+          <CfDataRecordCard
+            href={href}
+            onNavigate={(event) => {
+              event.preventDefault();
+              navigatePluginPath(href);
+            }}
+            title={`Versão ${row.version}`}
+            subtitle={
+              STATUS_LABELS[row.status] ?? row.status
+            }
+            status={
+              <CfStatusBadge
+                label={STATUS_LABELS[row.status] ?? row.status}
+                variant={STATUS_VARIANTS[row.status] ?? "neutral"}
+              />
+            }
+            fields={fields}
+            ariaLabel={`Abrir versão ${row.version}`}
+          />
+          <div className="cf-version-card__actions">
+            <VersionStatusActions
+              version={row}
+              busy={actions.busy}
+              actions={actions}
+            />
+          </div>
+        </div>
+      );
+    },
+    [actions, basePath],
   );
 
   const draftOpen = (currentVersions ?? []).some(
@@ -238,11 +307,22 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
             defaultMessage="Nenhum template de checklist registrado."
           />
         ) : template ? (
-          <CfSectionCard
-            title={`${template.name} (${template.code})`}
-            hint={CF_HELP.admin.versions}
-          >
-            <div className="cf-card-stack">
+          <DataTableSection<ChecklistTemplateVersion>
+            title={`Versões · ${template.name}`}
+            titleHint={CF_HELP.admin.versions}
+            columns={versionColumns}
+            rows={currentVersions ?? []}
+            rowKey={(row) => String(row.version)}
+            loading={currentVersions === null}
+            emptyMessage="Nenhuma versão registrada para este checklist."
+            columnPreferencesKey={COLUMN_PREFS_KEY}
+            viewLayoutPreferencesKey={VIEW_LAYOUT_KEY}
+            renderCard={renderVersionCard}
+            onRowClick={(row) => openVersion(row.version)}
+            getSearchText={(row) =>
+              `v${row.version} ${STATUS_LABELS[row.status] ?? row.status} ${row.effective_from_period ?? ""}`
+            }
+            headerActions={
               <div className="cf-validation-panel__item-actions">
                 <CfActionButton
                   type="button"
@@ -259,6 +339,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
                     )
                   }
                 >
+                  <FilePlus2 {...ICON_PROPS} />
                   Criar versão rascunho
                 </CfActionButton>
                 <CfActionButton
@@ -270,6 +351,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
                     )
                   }
                 >
+                  <History {...ICON_PROPS} />
                   Eventos de auditoria
                 </CfActionButton>
                 <CfActionButton
@@ -277,21 +359,12 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
                   variant="ghost"
                   onClick={() => navigatePluginView("documents_admin")}
                 >
+                  <FileText {...ICON_PROPS} />
                   Documentos do fechamento
                 </CfActionButton>
               </div>
-              <DataTableSection<ChecklistTemplateVersion>
-                title="Versões"
-                titleHint={CF_HELP.admin.versions}
-                columns={versionColumns}
-                rows={currentVersions ?? []}
-                rowKey={(row) => row.version_id}
-                loading={currentVersions === null}
-                hideSearch
-                emptyMessage="Nenhuma versão registrada."
-              />
-            </div>
-          </CfSectionCard>
+            }
+          />
         ) : null}
       </div>
 

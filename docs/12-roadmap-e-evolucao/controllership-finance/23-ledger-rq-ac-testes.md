@@ -676,3 +676,21 @@ Nenhum teste ou deploy desta rodada foi executado ao escrever esta especificaç�
 | UX015-RW01-07 | design system + responsividade | PASS | tokens `--cf-*`; 20 capturas claro/escuro/tablet/390/320/zoom200 `overflowX=0` |
 | UX015-RW01-08 | navegação/regras preservadas | PASS | smoke 12/12: deep link, F5, back/forward, 404, DRAFT governado, read-only |
 | UX015-RW01-09 | testes/evidências/deploy | PASS local | 360 testes, build `App-GXSC05Nq.js`, deploy canônico; smoke prod TEST_NOT_RUN se identidade smoke não autorizada |
+
+
+### UX-015-RW02 — rework estrutural da Administração (28/10/2026)
+
+| ID | Critério | Status | Evidência |
+|----|----------|--------|-----------|
+| UX015-RW02-01 | superfície única de listagem (fim card-em-card) | PASS | `CfSectionCard` intermediário removido; `DataTableSection` direta com ações no `headerActions` — smoke RW02-01, shot 01 |
+| UX015-RW02-02 | título PT-BR sem `monthly-closing-checklist` | PASS | título «Versões · Checklist de Fechamento Mensal»; subtítulos da versão/eventos sem o código (shots 01/02/12) |
+| UX015-RW02-03 | ações no topo com ícones e cores semânticas | PASS | `FilePlus2`/`History`/`FileText` no `headerActions`; Inativar/Descartar em `--danger` (shots 01/06) |
+| UX015-RW02-04 | ordenação real por coluna | PASS | `sortable`+`sortValue` nas colunas de versões e itens; smoke RW02-02 asc/desc; teste RTL "sorts versions by column" |
+| UX015-RW02-05 | alternância Tabela/Cards funcional | PASS | `viewLayoutPreferencesKey` + `renderCard` (`CfDataRecordCard` do kit); smoke RW02-07/RW02-09; RTL cards |
+| UX015-RW02-06 | linha navega ao detalhe; sem «Abrir» redundante | PASS | `onRowClick` (clique/Enter/Espaço/foco do kit); coluna de ações removida em leitura; RTL + smoke RW02-04/RW02-06 |
+| UX015-RW02-07 | destrutivas isoladas com confirmação | PASS | `rowClick:"stop"` na coluna de ações + faixa própria nos cards (anchor não aninha interativos); smoke RW02-03; RTL |
+| UX015-RW02-08 | versão sem UUID como identidade | PASS | «Publicada por» → «Identidade não disponível» + subject só em `title`; trilha preserva «Ator (id):» — RTL fallback |
+| UX015-RW02-09 | identidade humana via contrato autorizado | DECISION_REQUIRED | BFF só tem lookup document-scoped (`participants/lookup`); atores administrativos exigem novo contrato Core→BFF — ver UX-014 |
+| UX015-RW02-10 | responsividade/temas/zoom | PASS | shots 10–15: dark/tablet820/320/390 `overflowX=0`; mobile default vira cards no kit |
+| UX015-RW02-11 | regressão/navegação/estados | PASS | 365 testes; smoke RW02 13/13 (deep link, F5, back/forward, 404, DRAFT/REVIEW/PUBLISHED) |
+| UX015-RW02-12 | deploy governado | PASS | commit/push main + `up-prod-sequential.sh --build controllership-finance`; smoke prod autenticado TEST_NOT_RUN |

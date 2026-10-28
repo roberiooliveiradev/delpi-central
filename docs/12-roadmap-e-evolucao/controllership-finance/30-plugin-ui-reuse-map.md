@@ -999,3 +999,21 @@ Registrar no relatório final os imports reais e qualquer CSS residual; criar co
 | Timeline | `CfTimeline` + subtítulo de escopo | inalterado, só contexto textual |
 
 Zero componente novo: o fix foi CSS scoped no padrão existente + recomposição JSX com exports já consumidos (`CfMetricStrip`, `CfStatusBadge`, `CfActionButton`, `CfPagePath`, `DataTableSection`).
+
+
+### UX-015-RW02 — rework estrutural tabela/cards (28/10/2026)
+
+| Necessidade | Componente/capacidade real do kit | Consumo |
+|---|---|---|
+| Ordenação por coluna | `DataTableColumn.sortable` + `sortValue` (sort client-side nativo de `sortRowsClientSide`) | todas as colunas aplicáveis de versões e itens |
+| Alternância Tabela/Cards | `viewLayoutPreferencesKey` + `renderCard` (persistido em localStorage; default cards ≤768px) | `cf-checklist-admin-versions`, `cf-checklist-version-items` |
+| Card navegável | `createDashboardDataRecordCard({prefix:"cf"})` → `CfDataRecordCard` com `href`/`onNavigate` (anchor nativo, foco/Enter) | cards de versão e de documento |
+| Clique de linha acessível | `onRowClick` do `DataTable` (tabIndex=0, Enter/Espaço) | versão → detalhe; item → documento |
+| Isolamento destrutivo | `rowClick:"stop"` por coluna | coluna Ações não propaga para a linha |
+| Ações em card | wrapper `cf-version-card` = card-anchor + faixa própria `__actions` | ações fora do anchor — sem interativo aninhado |
+| Visibilidade de colunas | `columnPreferencesKey` (menu «Colunas» nativo) | idem chaves acima |
+| Ações do cabeçalho | `headerActions` da `DataTableSection` | botões governados junto à superfície |
+
+Gap honesto registrado: o kit não expõe barra de ordenação no modo Cards — a ordem é escolhida na tabela e o estado se aplica também aos cards (`sortedRows` compartilhado). Evolução central possível (`DataCardsSortBar` já existe no kit para composição futura), sem clone local.
+
+Identidade (UX-014): `DataRecordCard.leading` aceita avatar quando houver contrato Core→BFF autorizado para atores administrativos — hoje o único lookup BFF é document-scoped (`participants/lookup`), insuficiente para `published_by`/audit actors.

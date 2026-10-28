@@ -19,6 +19,8 @@ import {
 
 import { ActionButton } from "@delpi/plugin-ui/index";
 
+import { History } from "lucide-react";
+
 import {
   getTemplateVersion,
   listChecklistTemplates,
@@ -32,12 +34,14 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
+  CfDataRecordCard,
   CfEmptyState,
   CfMetricStrip,
   CfPagePath,
   CfStatusBadge,
   CfTitleWithHelp,
   cfEmptyStateClassNames,
+  type DataRecordCardField,
 } from "../../app/controllershipFinanceUi";
 import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
 import {
@@ -224,12 +228,14 @@ export function ChecklistVersionPage({
     [version, basePath],
   );
 
-  const itemColumns = useMemo<DataTableColumn<EditableItem>[]>(
-    () => [
+  const itemColumns = useMemo<DataTableColumn<EditableItem>[]>(() => {
+    const columns: DataTableColumn<EditableItem>[] = [
       {
         key: "item_key",
         header: "Item",
         className: "cf-table__col--compact",
+        sortable: true,
+        sortValue: (row) => row.item_key,
         render: (row) => (
           <span className="cf-cell-primary">{row.item_key}</span>
         ),
@@ -238,12 +244,17 @@ export function ChecklistVersionPage({
         key: "name",
         header: "Entregável",
         className: "cf-table__col--wrap",
+        sortable: true,
+        sortValue: (row) => row.name,
         render: (row) => row.name,
       },
       {
         key: "sheet",
         header: "Folha",
         className: "cf-table__col--compact",
+        sortable: true,
+        sortValue: (row) =>
+          row.sheet === "FISICO" ? "Físico" : "Eletrônico",
         render: (row) =>
           row.sheet === "FISICO" ? "Físico" : "Eletrônico",
       },
@@ -251,6 +262,10 @@ export function ChecklistVersionPage({
         key: "origin",
         header: "Origem",
         className: "cf-table__col--compact",
+        sortable: true,
+        sortValue: (row) =>
+          ORIGIN_OPTIONS.find((o) => o.value === row.origin_kind)
+            ?.label ?? row.origin_kind,
         render: (row) =>
           ORIGIN_OPTIONS.find((o) => o.value === row.origin_kind)
             ?.label ?? row.origin_kind,
@@ -259,6 +274,13 @@ export function ChecklistVersionPage({
         key: "recipient",
         header: "Destinatário",
         className: "cf-table__col--compact",
+        sortable: true,
+        sortValue: (row) =>
+          (row.recipient_area &&
+            (RECIPIENT_OPTIONS.find(
+              (o) => o.value === row.recipient_area,
+            )?.label ?? row.recipient_area)) ??
+          "",
         render: (row) =>
           row.recipient_area ? (
             (RECIPIENT_OPTIONS.find(
@@ -272,6 +294,11 @@ export function ChecklistVersionPage({
         key: "applicability",
         header: "Obrigatório",
         className: "cf-table__col--compact",
+        sortable: true,
+        sortValue: (row) =>
+          APPLICABILITY_OPTIONS.find(
+            (o) => o.value === row.applicability,
+          )?.label ?? row.applicability,
         render: (row) =>
           APPLICABILITY_OPTIONS.find(
             (o) => o.value === row.applicability,
@@ -281,60 +308,154 @@ export function ChecklistVersionPage({
         key: "scope",
         header: "Validação",
         className: "cf-table__col--compact",
+        sortable: true,
+        sortValue: (row) =>
+          SCOPE_OPTIONS.find((o) => o.value === row.validation_scope)
+            ?.label ?? row.validation_scope,
         render: (row) =>
           SCOPE_OPTIONS.find((o) => o.value === row.validation_scope)
             ?.label ?? row.validation_scope,
       },
+    ];
+    if (!editing) return columns;
+    return [
+      ...columns,
       {
         key: "actions",
         header: "Ações",
         className: "cf-table__col--status",
-        render: (row) => {
-          if (editing) {
-            const index = editing.items.indexOf(row);
-            return (
-              <div className="cf-validation-panel__doc-actions">
-                <ActionButton
-                  variant="ghost"
-                  disabled={actions.busy}
-                  onClick={() => {
-                    setItemForm({ ...row });
-                    setItemFormIndex(index);
-                  }}
-                >
-                  Editar
-                </ActionButton>
-                <ActionButton
-                  variant="ghost"
-                  disabled={actions.busy}
-                  onClick={() =>
-                    setEditing({
-                      ...editing,
-                      items: editing.items.filter(
-                        (_, i) => i !== index,
-                      ),
-                    })
-                  }
-                >
-                  Remover
-                </ActionButton>
-              </div>
-            );
-          }
+        rowClick: "stop" as const,
+        render: (row: EditableItem) => {
+          const index = editing.items.indexOf(row);
           return (
             <div className="cf-validation-panel__doc-actions">
               <ActionButton
                 variant="ghost"
-                onClick={() => openItem(row.item_key)}
+                disabled={actions.busy}
+                onClick={() => {
+                  setItemForm({ ...row });
+                  setItemFormIndex(index);
+                }}
               >
-                Abrir
+                Editar
+              </ActionButton>
+              <ActionButton
+                variant="ghost"
+                disabled={actions.busy}
+                onClick={() =>
+                  setEditing({
+                    ...editing,
+                    items: editing.items.filter(
+                      (_, i) => i !== index,
+                    ),
+                  })
+                }
+              >
+                Remover
               </ActionButton>
             </div>
           );
         },
       },
-    ],
-    [editing, actions.busy, openItem],
+    ];
+  }, [editing, actions.busy]);
+
+  const renderItemCard = useCallback(
+    (row: EditableItem) => {
+      const fields: DataRecordCardField[] = [
+        {
+          id: "sheet",
+          label: "Folha",
+          value: row.sheet === "FISICO" ? "Físico" : "Eletrônico",
+        },
+        {
+          id: "origin",
+          label: "Origem",
+          value:
+            ORIGIN_OPTIONS.find((o) => o.value === row.origin_kind)
+              ?.label ?? row.origin_kind,
+        },
+        {
+          id: "recipient",
+          label: "Destinatário",
+          value: row.recipient_area
+            ? (RECIPIENT_OPTIONS.find(
+                (o) => o.value === row.recipient_area,
+              )?.label ?? row.recipient_area)
+            : "A definir",
+        },
+        {
+          id: "scope",
+          label: "Validação",
+          value:
+            SCOPE_OPTIONS.find(
+              (o) => o.value === row.validation_scope,
+            )?.label ?? row.validation_scope,
+        },
+      ];
+      const applicabilityLabel =
+        APPLICABILITY_OPTIONS.find(
+          (o) => o.value === row.applicability,
+        )?.label ?? row.applicability;
+      if (!editing) {
+        const href = checklistAdminVersionDocumentPath(
+          version,
+          row.item_key,
+          basePath,
+        );
+        return (
+          <CfDataRecordCard
+            href={href}
+            onNavigate={(event) => {
+              event.preventDefault();
+              navigatePluginPath(href);
+            }}
+            title={row.name}
+            subtitle={row.item_key}
+            status={applicabilityLabel}
+            fields={fields}
+            ariaLabel={`Abrir documento ${row.name}`}
+          />
+        );
+      }
+      const index = editing.items.indexOf(row);
+      return (
+        <div className="cf-version-card">
+          <CfDataRecordCard
+            title={row.name}
+            subtitle={row.item_key}
+            status={applicabilityLabel}
+            fields={fields}
+            ariaLabel={`Item ${row.name}`}
+          />
+          <div className="cf-version-card__actions">
+            <ActionButton
+              variant="ghost"
+              disabled={actions.busy}
+              onClick={() => {
+                setItemForm({ ...row });
+                setItemFormIndex(index);
+              }}
+            >
+              Editar
+            </ActionButton>
+            <ActionButton
+              variant="ghost"
+              disabled={actions.busy}
+              onClick={() =>
+                setEditing({
+                  ...editing,
+                  items: editing.items.filter((_, i) => i !== index),
+                })
+              }
+            >
+              Remover
+            </ActionButton>
+          </div>
+        </div>
+      );
+    },
+    [editing, actions.busy, version, basePath],
   );
 
   return (
@@ -389,9 +510,7 @@ export function ChecklistVersionPage({
             </div>
             {detailData ? (
               <p className="cf-validation-panel__doc-detail">
-                {template
-                  ? `${template.name} (${template.code})`
-                  : null}
+                {template?.name}
               </p>
             ) : null}
           </div>
@@ -406,6 +525,11 @@ export function ChecklistVersionPage({
                   )
                 }
               >
+                <History
+                  size={15}
+                  strokeWidth={1.9}
+                  aria-hidden="true"
+                />
                 Histórico da versão
               </CfActionButton>
             </div>
@@ -477,7 +601,26 @@ export function ChecklistVersionPage({
               <dl className="cf-detail-list">
                 <div>
                   <dt>Publicada por</dt>
-                  <dd>{detailData.published_by ?? "—"}</dd>
+                  {/*
+                    Identidade humana depende do contrato UX-014
+                    (Core→BFF), ainda não autorizado para atores
+                    administrativos. Nunca exibir o subject cru como
+                    nome — o identificador técnico permanece apenas na
+                    trilha de auditoria (histórico de eventos) e no
+                    `title` para diagnóstico de suporte.
+                  */}
+                  <dd
+                    className="cf-cell-muted"
+                    title={
+                      detailData.published_by
+                        ? `Identificador do autor: ${detailData.published_by}`
+                        : undefined
+                    }
+                  >
+                    {detailData.published_by
+                      ? "Identidade não disponível"
+                      : "—"}
+                  </dd>
                 </div>
                 <div>
                   <dt>Criada em</dt>
@@ -504,41 +647,7 @@ export function ChecklistVersionPage({
                   actions={actions}
                 />
               </div>
-            </div>
 
-            <div className="cf-card-stack">
-              {editing ? (
-                <div className="cf-validation-panel__item-actions">
-                  <CfActionButton
-                    type="button"
-                    disabled={
-                      actions.busy || editing.items.length === 0
-                    }
-                    onClick={saveDraft}
-                  >
-                    {actions.busy ? "Salvando…" : "Salvar rascunho"}
-                  </CfActionButton>
-                  <CfActionButton
-                    type="button"
-                    variant="ghost"
-                    disabled={actions.busy}
-                    onClick={() => {
-                      setItemForm({ ...EMPTY_ITEM });
-                      setItemFormIndex(null);
-                    }}
-                  >
-                    Adicionar item
-                  </CfActionButton>
-                  <CfActionButton
-                    type="button"
-                    variant="ghost"
-                    disabled={actions.busy}
-                    onClick={() => setEditing(null)}
-                  >
-                    Descartar edição
-                  </CfActionButton>
-                </div>
-              ) : null}
               <DataTableSection<EditableItem>
                 title="Documentos da versão"
                 titleHint={
@@ -551,6 +660,53 @@ export function ChecklistVersionPage({
                 rowKey={(row) => row.item_key}
                 loading={false}
                 emptyMessage="Nenhum item nesta versão."
+                columnPreferencesKey="cf-checklist-version-items-columns"
+                viewLayoutPreferencesKey="cf-checklist-version-items"
+                renderCard={renderItemCard}
+                onRowClick={
+                  editing
+                    ? undefined
+                    : (row) => openItem(row.item_key)
+                }
+                getSearchText={(row) =>
+                  `${row.item_key} ${row.name} ${row.sheet} ${row.origin_kind} ${row.recipient_area ?? ""}`
+                }
+                headerActions={
+                  editing ? (
+                    <div className="cf-validation-panel__item-actions">
+                      <CfActionButton
+                        type="button"
+                        disabled={
+                          actions.busy || editing.items.length === 0
+                        }
+                        onClick={saveDraft}
+                      >
+                        {actions.busy
+                          ? "Salvando…"
+                          : "Salvar rascunho"}
+                      </CfActionButton>
+                      <CfActionButton
+                        type="button"
+                        variant="ghost"
+                        disabled={actions.busy}
+                        onClick={() => {
+                          setItemForm({ ...EMPTY_ITEM });
+                          setItemFormIndex(null);
+                        }}
+                      >
+                        Adicionar item
+                      </CfActionButton>
+                      <CfActionButton
+                        type="button"
+                        variant="ghost"
+                        disabled={actions.busy}
+                        onClick={() => setEditing(null)}
+                      >
+                        Descartar edição
+                      </CfActionButton>
+                    </div>
+                  ) : undefined
+                }
               />
             </div>
           </>

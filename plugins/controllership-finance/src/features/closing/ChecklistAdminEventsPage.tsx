@@ -42,7 +42,13 @@ import { CF_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/formatters";
 
 function eventDetail(event: TemplateAuditEvent): string {
-  const parts = [`v${event.version}`, event.actor_subject];
+  // `actor_subject` é o identificador técnico da trilha de auditoria
+  // (UX-014 pendente de contrato de identidade) — rotulado como tal,
+  // nunca apresentado como nome de usuário.
+  const parts = [
+    `v${event.version}`,
+    `Ator (id): ${event.actor_subject}`,
+  ];
   const extras = Object.entries(event.detail ?? {});
   for (const [key, value] of extras) {
     parts.push(
@@ -203,7 +209,7 @@ export function ChecklistAdminEventsPage({
           />
           {template ? (
             <p className="cf-validation-panel__doc-detail">
-              {`${template.name} (${template.code}) — ${
+              {`${template.name} — ${
                 scoped
                   ? `eventos registrados na versão v${version}.`
                   : "eventos de todas as versões, em ordem cronológica."

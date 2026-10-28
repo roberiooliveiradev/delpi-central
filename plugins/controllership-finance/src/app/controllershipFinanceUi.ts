@@ -10,6 +10,7 @@ import {
   createDashboardEventsSection,
   createDashboardInteractiveDataCard,
   createDashboardLoadingActivityCard,
+  createDashboardDataRecordCard,
   createDashboardMentionComposer,
   createDashboardMessageThread,
   createDashboardMetricStrip,
@@ -132,6 +133,10 @@ export const CfStateBanner = createDashboardStateBanner({
 export const CfMetricStrip = createDashboardMetricStrip({
   prefix: UI_PREFIX,
 });
+export const CfDataRecordCard = createDashboardDataRecordCard({
+  prefix: UI_PREFIX,
+});
+export type { DataRecordCardField } from "@delpi/plugin-ui/index";
 export const CfMetricKpiCard = createMetricKpiCard(UI_PREFIX);
 export const CfInteractiveDataCard = createDashboardInteractiveDataCard({
   prefix: UI_PREFIX,
