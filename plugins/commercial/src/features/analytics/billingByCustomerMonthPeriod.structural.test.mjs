@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Período canônico = Ano/Mês. AnalyticsFilters não deve expor range/preset
- * (evita UI dupla e sync que “trava” a troca de período).
+ * Período canônico = dateStart/dateEnd do AnalyticsFilters.
+ * Ano/Mês são atalhos one-way (não há sync que sobrescreva o range livre).
  */
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -12,31 +12,29 @@ import path from "node:path";
 const dir = path.dirname(fileURLToPath(import.meta.url));
 
 describe("BillingByCustomerMonth period ownership", () => {
-  it("esconde controles de período do AnalyticsFilters", async () => {
+  it("consulta usa dateStart/dateEnd e expõe controles de período", async () => {
     const page = await readFile(
       path.join(dir, "BillingByCustomerMonthPage.tsx"),
       "utf8",
     );
-    assert.match(page, /showPeriodControls=\{false\}/);
+    assert.match(page, /start_date:\s*dateStart/);
+    assert.match(page, /end_date:\s*dateEnd/);
+    assert.match(page, /showPeriodControls/);
+    assert.match(page, /onPeriodPreset=\{filters\.setPeriodPreset\}/);
+    assert.match(page, /applyYearMonthShortcut/);
     assert.equal(
-      /onPeriodPreset=\{filters\.setPeriodPreset\}/.test(page),
+      /replaceDateFilters\(\{[\s\S]*filters\.dateStart === period\.start/.test(page),
       false,
-      "não deve ligar preset de período nesta página",
-    );
-    assert.equal(
-      /replaceDateFilters/.test(page),
-      false,
-      "não deve espelhar ano/mês de volta nos filtros de data",
+      "não deve haver sync bidirecional que trave o período",
     );
   });
 
-  it("AnalyticsFilters respeita showPeriodControls", async () => {
+  it("AnalyticsFilters permite ocultar período quando necessário", async () => {
     const source = await readFile(
       path.join(dir, "components/AnalyticsFilters.tsx"),
       "utf8",
     );
     assert.match(source, /showPeriodControls\s*=\s*true/);
     assert.match(source, /showPeriodControls && onPeriodPreset/);
-    assert.match(source, /\{showPeriodControls \? \(/);
   });
 });

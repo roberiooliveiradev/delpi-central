@@ -190,7 +190,7 @@ export const USER_MANUAL_CONTENT = {
         "Sala de interação — conversas internas.",
         "Administração — carteiras (vínculo com centro conferido), equipe, grupos e SLAs (gestores).",
         "OTD, Oportunidades, Faturamento por Cliente e Propostas — pelo Início (Gestão à vista) ou drills; não ficam no menu de cima. Em Oportunidades, use Visão (colaborador | oportunidade) como na Minha Carteira.",
-        "Faturamento por Cliente — histórico mensal por código+loja, natureza Bruto/ROL e exportação Excel completa do filtro.",
+        "Faturamento por Cliente — histórico mensal por código+loja no período (atalho ano/mês ou intervalo), filtro de cliente, natureza Bruto/ROL e Excel completo.",
       ],
     },
     {
@@ -263,7 +263,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Onde vejo o faturamento mensal de todos os clientes?",
-          a: "Início → Gestão à vista → Faturamento por Cliente. Escolha ano e mês (ou todos os meses), filtre filial/cliente/carteira, alterne Bruto ou ROL e use Exportar Excel para baixar o recorte completo.",
+          a: "Início → Gestão à vista → Faturamento por Cliente. Defina o período (atalho ano/mês ou preset/datas), filtre o cliente desejado (e filial/carteira), alterne Bruto ou ROL e use Exportar Excel para o recorte completo — a tabela mostra uma coluna por mês do intervalo.",
         },
         {
           q: "Os filtros mudam ao trocar Faturamento, ABC, Ranking e Clientes?",

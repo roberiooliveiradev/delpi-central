@@ -55,7 +55,7 @@ Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — *
 | `/apps/commercial/analytics/team` | Equipe — redireciona Administração | `commercial.manage` |
 | `/apps/commercial/analytics/opportunities` | Oportunidades OV | `commercial.access` |
 | `/apps/commercial/analytics/opportunities/:proposalNumber` | Ficha nativa da OV | `commercial.access` |
-| `/apps/commercial/analytics/billing-by-customer` | Faturamento por Cliente (mês/ano, Bruto/ROL, Excel) | `commercial.access` |
+| `/apps/commercial/analytics/billing-by-customer` | Faturamento por Cliente (período/cliente, Bruto/ROL, Excel) | `commercial.access` |
 | `/apps/commercial/administration` | Administração — Painel | `commercial.manage` |
 | `/apps/commercial/administration/seller-portfolios` | Administração — Carteiras | `commercial.manage` |
 | `/apps/commercial/administration/seller-portfolios/:id` | Detalhe de carteira | `commercial.manage` |

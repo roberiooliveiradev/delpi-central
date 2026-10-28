@@ -737,10 +737,11 @@ export const CM_HELP = {
   },
   billingByCustomerMonth: {
     page:
-      "Relatório de faturamento por cliente (código + loja) com colunas mensais, total do período e exportação Excel completa do recorte filtrado.",
-    filterYear: "Ano civil do relatório. Combina com o mês (ou todos os meses) para montar o período.",
+      "Relatório de faturamento por cliente (código + loja) com colunas mensais no período, filtro de cliente para evolução individual, total e exportação Excel completa.",
+    filterYear:
+      "Atalho: aplica o ano civil no intervalo de datas abaixo (combina com o mês ou «Todos os meses»).",
     filterMonth:
-      "Mês específico ou «Todos os meses» do ano. Em todos os meses, a tabela mostra uma coluna por mês.",
+      "Atalho de mês civil ou ano inteiro. Para período livre (ex.: últimos 12 meses ou um cliente ao longo do ano), use o preset/datas abaixo — a tabela cria uma coluna por mês do intervalo.",
     billingNature:
       "Bruto = valor de nota fiscal (F2_VALBRUT). Líquido = ROL (mesma fórmula da Visão geral). Padrão: Bruto.",
     grandTotal: "Soma do faturamento de todos os clientes retornados no período e natureza selecionados.",

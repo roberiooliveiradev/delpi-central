@@ -27,6 +27,7 @@ import {
 } from "../../content/billingNature";
 import {
   BILLING_BY_CUSTOMER_MONTH_CONTENT,
+  inferYearMonthFromRange,
   monthLabelPt,
   monthOptionLabel,
   resolveYearMonthRange,
@@ -59,11 +60,16 @@ function formatMonthHeader(monthKey: string): string {
   return monthLabelPt(monthKey);
 }
 
+function periodFileSuffix(start: string, end: string): string {
+  const compact = (value: string) => value.replaceAll("-", "");
+  if (!start && !end) return "periodo";
+  if (start && end) return `${compact(start)}_${compact(end)}`;
+  return compact(start || end);
+}
+
 export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthPageProps) {
   const filters = useAnalyticsFilters();
   const { FiltersRow } = cmFiltersKit;
-  const [year, setYear] = useState(CURRENT_YEAR);
-  const [month, setMonth] = useState<number | "all">(new Date().getMonth() + 1);
   const [billingNature, setBillingNature] = useState<PortfolioBillingAmountNature>(
     DEFAULT_PORTFOLIO_BILLING_NATURE,
   );
@@ -73,10 +79,37 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
   const [reloadKey, setReloadKey] = useState(0);
   const [exporting, setExporting] = useState(false);
 
-  const period = useMemo(() => resolveYearMonthRange(year, month), [year, month]);
+  // Período canônico = intervalo do AnalyticsFilters (preset/datas).
+  // Ano/Mês são atalhos one-way que escrevem nesse intervalo.
+  const dateStart = filters.dateStart;
+  const dateEnd = filters.dateEnd;
+  const inferredShortcut = useMemo(
+    () => inferYearMonthFromRange(dateStart, dateEnd),
+    [dateStart, dateEnd],
+  );
+  const yearSelectValue = String(
+    inferredShortcut?.year ??
+      (Number(dateStart.slice(0, 4)) || CURRENT_YEAR),
+  );
+  const monthSelectValue = inferredShortcut
+    ? inferredShortcut.month === "all"
+      ? "all"
+      : String(inferredShortcut.month)
+    : "custom";
 
-  // Deps primitivas (padrão OTD/dashboard) — nunca `filters.apiParams` por identidade.
-  // Período canônico desta página = Ano/Mês (não o range do AnalyticsFilters).
+  const applyYearMonthShortcut = useCallback(
+    (year: number, month: number | "all") => {
+      const range = resolveYearMonthRange(year, month);
+      filters.replaceDateFilters({
+        dateStart: range.start,
+        dateEnd: range.end,
+        competence: month === "all" ? "" : `${year}-${String(month).padStart(2, "0")}`,
+      });
+      filters.setPeriodPreset("custom");
+    },
+    [filters.replaceDateFilters, filters.setPeriodPreset],
+  );
+
   const branch = filters.apiParams.branch;
   const customerSegment = filters.apiParams.customer_segment;
   const sellerId = filters.apiParams.seller_id;
@@ -91,8 +124,8 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
 
     void getBillingByCustomerMonth(
       {
-        start_date: period.start,
-        end_date: period.end,
+        start_date: dateStart || undefined,
+        end_date: dateEnd || undefined,
         branch,
         customer_segment: customerSegment,
         seller_id: sellerId,
@@ -130,8 +163,8 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
     sellerId,
     customerCodes,
     customerCenters,
-    period.start,
-    period.end,
+    dateStart,
+    dateEnd,
     billingNature,
     reloadKey,
   ]);
@@ -238,9 +271,10 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
         kind: "table",
         format: "xlsx",
         payload: {
-          title: `${BILLING_BY_CUSTOMER_MONTH_CONTENT.export.filenamePrefix}-${year}${
-            month === "all" ? "" : `-${String(month).padStart(2, "0")}`
-          }-${billingNature}`,
+          title: `${BILLING_BY_CUSTOMER_MONTH_CONTENT.export.filenamePrefix}-${periodFileSuffix(
+            dateStart,
+            dateEnd,
+          )}-${billingNature}`,
           columns,
           rows: exportRows,
         },
@@ -248,7 +282,7 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
     } finally {
       setExporting(false);
     }
-  }, [rows, months, data, year, month, billingNature]);
+  }, [rows, months, data, dateStart, dateEnd, billingNature]);
 
   const grandTotal = data?.summary?.grand_total ?? 0;
   const customersCount = data?.summary?.customers_count ?? rows.length;
@@ -280,8 +314,17 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
         <FiltersRow variant="extended">
           <CommercialSelectField
             label={BILLING_BY_CUSTOMER_MONTH_CONTENT.filters.year}
-            value={String(year)}
-            onChange={(value) => setYear(Number(value) || CURRENT_YEAR)}
+            value={yearSelectValue}
+            onChange={(value) => {
+              const year = Number(value) || CURRENT_YEAR;
+              const month =
+                monthSelectValue === "all"
+                  ? "all"
+                  : monthSelectValue === "custom"
+                    ? "all"
+                    : Number(monthSelectValue) || "all";
+              applyYearMonthShortcut(year, month === "all" ? "all" : Number(month));
+            }}
             options={YEAR_OPTIONS.map((option) => ({
               value: String(option),
               label: String(option),
@@ -290,16 +333,23 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
           />
           <CommercialSelectField
             label={BILLING_BY_CUSTOMER_MONTH_CONTENT.filters.month}
-            value={month === "all" ? "all" : String(month)}
+            value={monthSelectValue}
             onChange={(value) => {
+              if (value === "custom") return;
+              const year = Number(yearSelectValue) || CURRENT_YEAR;
               if (value === "all") {
-                setMonth("all");
+                applyYearMonthShortcut(year, "all");
                 return;
               }
               const parsed = Number(value);
-              setMonth(Number.isFinite(parsed) ? parsed : "all");
+              if (!Number.isFinite(parsed)) return;
+              applyYearMonthShortcut(year, parsed);
             }}
             options={[
+              {
+                value: "custom",
+                label: BILLING_BY_CUSTOMER_MONTH_CONTENT.filters.monthCustom,
+              },
               {
                 value: "all",
                 label: BILLING_BY_CUSTOMER_MONTH_CONTENT.filters.monthAll,
@@ -343,7 +393,8 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
           dateStart={filters.dateStart}
           dateEnd={filters.dateEnd}
           competence={filters.competence}
-          showPeriodControls={false}
+          periodPreset={filters.periodPreset}
+          showPeriodControls
           branches={filters.branches}
           customerSegment={filters.customerSegment}
           sellerIds={filters.sellerIds}
@@ -353,6 +404,7 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
           onDateStart={filters.setDateStart}
           onDateEnd={filters.setDateEnd}
           onCompetence={filters.setCompetence}
+          onPeriodPreset={filters.setPeriodPreset}
           onBranches={filters.setBranches}
           onCustomerSegment={filters.setCustomerSegment}
           customerCodes={filters.customerCodes}

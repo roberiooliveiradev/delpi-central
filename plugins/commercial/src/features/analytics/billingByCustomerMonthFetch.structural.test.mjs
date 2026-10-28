@@ -24,8 +24,8 @@ describe("BillingByCustomerMonthPage fetch deps", () => {
     );
     assert.match(
       source,
-      /period\.start,\s*\n\s*period\.end,\s*\n\s*billingNature,\s*\n\s*reloadKey/,
-      "deps devem incluir período/natureza/reload como primitivos",
+      /dateStart,\s*\n\s*dateEnd,\s*\n\s*billingNature,\s*\n\s*reloadKey/,
+      "deps devem incluir dateStart/dateEnd/natureza/reload como primitivos",
     );
   });
 });
