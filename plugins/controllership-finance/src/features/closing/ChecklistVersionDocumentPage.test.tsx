@@ -90,19 +90,25 @@ describe("ChecklistVersionDocumentPage", () => {
     );
     await waitFor(() =>
       expect(
-        screen.getByText("CK-E-01 — Balancete"),
-      ).toBeTruthy(),
+        screen.getAllByText("Balancete").length,
+      ).toBeGreaterThanOrEqual(1),
     );
     expect(screen.getByText("Fechamento contábil")).toBeTruthy();
     expect(screen.getByText("Gerar PDF")).toBeTruthy();
     expect(screen.getByText("ERP TOTVS")).toBeTruthy();
     expect(screen.getByText("Contábil")).toBeTruthy();
-    expect(screen.getByText("Obrigatório")).toBeTruthy();
+    expect(
+      screen.getAllByText("Obrigatório").length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Matriz e filiais")).toBeTruthy();
     expect(screen.getByText("Por anexo")).toBeTruthy();
     expect(screen.getByText("MATR460")).toBeTruthy();
-    expect(screen.getByText("v1")).toBeTruthy();
-    expect(screen.getByText("Publicada")).toBeTruthy();
+    expect(
+      screen.getAllByText("Versão v1").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Publicada").length,
+    ).toBeGreaterThanOrEqual(1);
     // Read-only: nenhum controle de formulário editável.
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.queryByText("Salvar rascunho")).toBeNull();

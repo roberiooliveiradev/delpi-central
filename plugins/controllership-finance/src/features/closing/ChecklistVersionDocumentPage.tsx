@@ -170,19 +170,73 @@ export function ChecklistVersionDocumentPage({
       />
 
       <div className="cf-checklist-page__content">
-        <div className="cf-lead-stack">
-          <CfTitleWithHelp
-            title={
-              item ? `${item.item_key} — ${item.name}` : itemKey
-            }
-            hint={CF_HELP.adminVersionDocument.page}
-          />
-          {detailData ? (
-            <p className="cf-validation-panel__doc-detail">
-              {`Snapshot da versão v${detailData.version} — ${
-                STATUS_LABELS[detailData.status] ?? detailData.status
-              }. Representação histórica, somente leitura.`}
-            </p>
+        <div className="cf-lead-row">
+          <div className="cf-lead-stack">
+            <div className="cf-lead-badges">
+              <CfTitleWithHelp
+                title={item ? item.name : itemKey}
+                hint={CF_HELP.adminVersionDocument.page}
+              />
+              {item ? (
+                <>
+                  <CfStatusBadge
+                    label={optionLabel(
+                      APPLICABILITY_OPTIONS,
+                      item.applicability,
+                    )}
+                    variant="neutral"
+                  />
+                  <CfStatusBadge
+                    label={
+                      item.sheet === "FISICO" ? "Físico" : "Eletrônico"
+                    }
+                    variant="neutral"
+                  />
+                </>
+              ) : null}
+              {detailData ? (
+                <CfStatusBadge
+                  label={
+                    STATUS_LABELS[detailData.status] ??
+                    detailData.status
+                  }
+                  variant={
+                    STATUS_VARIANTS[detailData.status] ?? "neutral"
+                  }
+                />
+              ) : null}
+            </div>
+            {detailData ? (
+              <p className="cf-validation-panel__doc-detail">
+                {`Snapshot histórico da versão v${detailData.version} — somente leitura. Alterações de exigência são sempre prospectivas.`}
+              </p>
+            ) : null}
+          </div>
+          {detailData && item ? (
+            <div className="cf-validation-panel__item-actions">
+              <CfActionButton
+                type="button"
+                variant="ghost"
+                onClick={backToVersion}
+              >
+                Voltar à versão
+              </CfActionButton>
+              {detailData.status === "DRAFT" ? (
+                <CfActionButton
+                  type="button"
+                  variant="ghost"
+                  onClick={backToVersion}
+                >
+                  Editar item no rascunho
+                </CfActionButton>
+              ) : null}
+              <CfActionButton
+                type="button"
+                onClick={openProspectiveEdit}
+              >
+                Editar exigência futura
+              </CfActionButton>
+            </div>
           ) : null}
         </div>
 
@@ -218,20 +272,20 @@ export function ChecklistVersionDocumentPage({
             >
               <dl className="cf-detail-list">
                 <div>
-                  <dt>Identificação</dt>
-                  <dd>{item.item_key}</dd>
-                </div>
-                <div>
                   <dt>Nome</dt>
                   <dd>{item.name}</dd>
                 </div>
                 <div>
-                  <dt>Finalidade</dt>
-                  <dd>{item.purpose ?? "—"}</dd>
+                  <dt>Identificador</dt>
+                  <dd>{item.item_key}</dd>
                 </div>
-                <div>
+                <div className="cf-detail-list__full">
+                  <dt>Finalidade</dt>
+                  <dd>{item.purpose ?? "Não informada"}</dd>
+                </div>
+                <div className="cf-detail-list__full">
                   <dt>Orientações</dt>
-                  <dd>{item.requirement_notes ?? "—"}</dd>
+                  <dd>{item.requirement_notes ?? "Não informadas"}</dd>
                 </div>
                 {item.sort_order !== null ? (
                   <div>
@@ -289,67 +343,28 @@ export function ChecklistVersionDocumentPage({
                     {optionLabel(SCOPE_OPTIONS, item.validation_scope)}
                   </dd>
                 </div>
-                <div>
+                <div className="cf-detail-list__full">
                   <dt>Referência TOTVS</dt>
-                  <dd>{item.totvs_report_ref ?? "—"}</dd>
+                  <dd>{item.totvs_report_ref ?? "Não informada"}</dd>
                 </div>
               </dl>
             </CfSectionCard>
 
-            <CfSectionCard title="Contexto da versão">
-              <div className="cf-card-stack">
-                <dl className="cf-detail-list">
-                  <div>
-                    <dt>Versão</dt>
-                    <dd>{`v${detailData.version}`}</dd>
-                  </div>
-                  <div>
-                    <dt>Estado</dt>
-                    <dd>
-                      <CfStatusBadge
-                        label={
-                          STATUS_LABELS[detailData.status] ??
-                          detailData.status
-                        }
-                        variant={
-                          STATUS_VARIANTS[detailData.status] ??
-                          "neutral"
-                        }
-                      />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Vigente desde</dt>
-                    <dd>{detailData.effective_from_period ?? "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Publicação</dt>
-                    <dd>
-                      {detailData.published_at
-                        ? formatDateTime(detailData.published_at)
-                        : "—"}
-                    </dd>
-                  </div>
-                </dl>
-                <div className="cf-validation-panel__item-actions">
-                  {detailData.status === "DRAFT" ? (
-                    <CfActionButton
-                      type="button"
-                      variant="ghost"
-                      onClick={backToVersion}
-                    >
-                      Editar item no rascunho
-                    </CfActionButton>
-                  ) : null}
-                  <CfActionButton
-                    type="button"
-                    onClick={openProspectiveEdit}
-                  >
-                    Editar exigência futura
-                  </CfActionButton>
-                </div>
-              </div>
-            </CfSectionCard>
+            <p className="cf-version-context">
+              <span>{`Versão v${detailData.version}`}</span>
+              <CfStatusBadge
+                label={
+                  STATUS_LABELS[detailData.status] ?? detailData.status
+                }
+                variant={
+                  STATUS_VARIANTS[detailData.status] ?? "neutral"
+                }
+              />
+              <span>{`Vigente desde ${detailData.effective_from_period ?? "—"}`}</span>
+              {detailData.published_at ? (
+                <span>{`Publicada em ${formatDateTime(detailData.published_at)}`}</span>
+              ) : null}
+            </p>
           </>
         ) : null}
       </div>

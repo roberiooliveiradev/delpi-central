@@ -113,7 +113,8 @@ describe("ChecklistVersionPage", () => {
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Balancete")).toBeTruthy();
     expect(screen.getByText("Rascunho")).toBeTruthy();
-    expect(screen.getByText("Dados da versão")).toBeTruthy();
+    expect(screen.getByText("Vigente desde")).toBeTruthy();
+    expect(screen.getByText("Documentos da versão")).toBeTruthy();
   });
 
   it("navigates to the document-in-version page", async () => {

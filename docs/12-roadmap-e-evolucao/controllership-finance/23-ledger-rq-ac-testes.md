@@ -661,3 +661,18 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | UX015-RW01-08 | Regressão zero de versão histórica, DRAFT OCC, authz, F5, breadcrumbs | TARGET |
 | UX015-RW01-09 | Capturas antes/depois, testes, deploy e smoke autenticado governado | PLANNED |
 Nenhum teste ou deploy desta rodada foi executado ao escrever esta especificação.
+
+
+### UX-015-RW01 — redesign visual da cascata administrativa (28/10/2026)
+
+| ID | Critério | Status | Evidência |
+|----|----------|--------|-----------|
+| UX015-RW01-01 | cabeçalho + ações contextuais | PASS | badge no título; «Histórico da versão»/«Voltar»/«Editar exigência futura» no topo (smoke S-02/S-03, shots) |
+| UX015-RW01-02 | resumo compacto da versão | PASS | `CfMetricStrip` 3 tiles do DTO + fatos secundários em grid (shot 02) |
+| UX015-RW01-03 | documentos logo após resumo | PASS | `DataTableSection` banda única após tiles, sem card gigante (shot 02) |
+| UX015-RW01-04 | detalhe em grid semântico | PASS | `cf-detail-list` = grid auto-fit 200px; Identificação 2 col, Exigência ~4 col (shot d-dark-document) |
+| UX015-RW01-05 | contexto compacto + edição prospectiva | PASS | linha `cf-version-context`; «Editar exigência futura» no header → catálogo (S-03) |
+| UX015-RW01-06 | timeline contextual acessível | PASS | página dedicada + subtítulo de escopo; `CfTimeline`, sem dialog (S-04/S-09) |
+| UX015-RW01-07 | design system + responsividade | PASS | tokens `--cf-*`; 20 capturas claro/escuro/tablet/390/320/zoom200 `overflowX=0` |
+| UX015-RW01-08 | navegação/regras preservadas | PASS | smoke 12/12: deep link, F5, back/forward, 404, DRAFT governado, read-only |
+| UX015-RW01-09 | testes/evidências/deploy | PASS local | 360 testes, build `App-GXSC05Nq.js`, deploy canônico; smoke prod TEST_NOT_RUN se identidade smoke não autorizada |

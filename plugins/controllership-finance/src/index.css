@@ -1332,3 +1332,73 @@
   outline-offset: 2px;
   border-radius: var(--radius, 12px);
 }
+
+/* UX-015-RW01 — redesign da cascata administrativa (doc 112 §51).
+   `cf-detail-list` existia no JSX sem regra: renderizava lista vertical
+   estreita de pares label/valor com imensa área vazia. Agora é o
+   grid semântico read-only do portal — mesma hierarquia visual de
+   `cf-attention-facts__row` (dt muted .75rem, dd 500). */
+.dashboard-controllership-finance .cf-detail-list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(200px, 100%), 1fr)
+  );
+  gap: 12px var(--cf-grid-gap, 16px);
+  margin: 0;
+}
+
+.dashboard-controllership-finance .cf-detail-list > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-detail-list dt {
+  color: var(--cf-text-muted);
+  font-size: 0.75rem;
+}
+
+.dashboard-controllership-finance .cf-detail-list dd {
+  margin: 0;
+  font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Campo extenso (finalidade, orientações, referência) ocupa a linha. */
+.dashboard-controllership-finance
+  .cf-detail-list
+  .cf-detail-list__full {
+  grid-column: 1 / -1;
+}
+
+/* Cabeçalho da página com bloco de ações à direita; mobile empilha. */
+.dashboard-controllership-finance .cf-lead-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cf-grid-gap, 16px);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* Título + badges de contexto na mesma linha de leitura. */
+.dashboard-controllership-finance .cf-lead-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Resumo linear do contexto da versão (substitui o card gigante). */
+.dashboard-controllership-finance .cf-version-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--cf-text-muted);
+  font-size: 0.85rem;
+}

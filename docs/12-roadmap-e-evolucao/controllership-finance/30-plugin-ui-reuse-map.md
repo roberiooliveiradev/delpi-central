@@ -985,3 +985,17 @@ Zero componente novo de kit: a separação em páginas reutilizou o padrão read
 | Iconografia/spacing | tokens e ícones homologados plugin-ui | Dark/light, foco/mobile |
 
 Registrar no relatório final os imports reais e qualquer CSS residual; criar componentes paralelos somente após gate. Wireframe detalhado doc 112 §51.
+
+
+### UX-015-RW01 — redesign visual da cascata (28/10/2026)
+
+| Necessidade | Componente/padrão real | Consumo |
+|---|---|---|
+| Resumo compacto da versão | `CfMetricStrip` (`PageHeroHighlight` items) | 3 tiles reais do DTO — zero KPI inventado |
+| Grid read-only | `cf-detail-list` (agora estilizada — era markup sem regra) | todos os metadados; reutiliza hierarquia de `cf-attention-facts__row` |
+| Header com ações | `cf-lead-row` + `cf-lead-badges` + `cf-validation-panel__item-actions` | título+badges à esquerda, ações à direita, wrap no mobile |
+| Contexto de versão | `cf-version-context` + `CfStatusBadge` | linha compacta, substitui card gigante |
+| Banda de documentos | `DataTableSection` direta | removeu card aninhado com título duplicado |
+| Timeline | `CfTimeline` + subtítulo de escopo | inalterado, só contexto textual |
+
+Zero componente novo: o fix foi CSS scoped no padrão existente + recomposição JSX com exports já consumidos (`CfMetricStrip`, `CfStatusBadge`, `CfActionButton`, `CfPagePath`, `DataTableSection`).

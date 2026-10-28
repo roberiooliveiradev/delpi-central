@@ -85,6 +85,13 @@ versão + diálogos, editor de item) consumido pela lista e pelo detalhe.
 O ator dos eventos permanece `actor_subject` até o contrato de
 identidade do UX-014.
 
+RW01 (design): `cf-detail-list` — padrão read-only usado nas páginas de
+detalhe — passou a ser o grid semântico do portal (auto-fit ~200px,
+label muted + valor forte, `__full` para textos extensos); a versão
+mostra `CfMetricStrip` com tiles reais do DTO e ações junto ao resumo;
+o documento da versão traz badges e ações no cabeçalho com o contexto
+da versão reduzido a uma linha compacta.
+
 Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
 `cfDataTableUi` — banda única com ícone + título + pill de contagem do
 universo filtrado à esquerda e controles nativos (itens/página + Fonte +

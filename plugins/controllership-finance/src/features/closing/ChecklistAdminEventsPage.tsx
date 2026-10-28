@@ -203,7 +203,11 @@ export function ChecklistAdminEventsPage({
           />
           {template ? (
             <p className="cf-validation-panel__doc-detail">
-              {`${template.name} (${template.code})`}
+              {`${template.name} (${template.code}) — ${
+                scoped
+                  ? `eventos registrados na versão v${version}.`
+                  : "eventos de todas as versões, em ordem cronológica."
+              }`}
             </p>
           ) : null}
         </div>

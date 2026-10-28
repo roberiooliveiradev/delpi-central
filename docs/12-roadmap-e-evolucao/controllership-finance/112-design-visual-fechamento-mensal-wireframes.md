@@ -2016,3 +2016,14 @@ Página de timeline cronológica, título contextual, período/versão quando di
 - Dados publicados imutáveis, dados DRAFT com OCC, sem alterações de BFF/migrations/permissions/snapshots; dados reais do PO não usados para smoke destrutivo.
 - Responsividade testada em 320/390/768/desktop, claro/escuro, zoom 200%, tab/Enter/Escape e leitor de tela; nenhum overflow horizontal; screenshot antes/depois para cada rota.
 - AC: UX015-RW01-01 cabeçalho/ações; -02 resumo compacto da versão; -03 tabela imediatamente depois; -04 grid de detalhe sem lista estreita; -05 contexto compacto/ação futura no topo; -06 timeline acessível; -07 kit-first, temas/responsividade; -08 regressão de navegação/estado/autorização; -09 evidência local, deploy produtivo condicionado e smoke.
+
+
+### 51.7 Execução do redesign (28/10/2026, PROVEN local)
+
+**Causa raiz do problema visual:** `cf-detail-list` existia no JSX de 5 superfícies sem nenhuma regra CSS — browser renderizava `dl/dt/dd` como lista vertical estreita. Estilizada agora como grid semântico read-only do portal (`auto-fit minmax(200px)`, dt muted `.75rem`, dd `500` — hierarquia idêntica a `cf-attention-facts__row`), com `cf-detail-list__full` para textos extensos. Benefício transversal: o detalhe da `ClosingChecklistPage` ganha o mesmo grid sem diff JSX.
+
+**Implementado por página:**
+- **B — Versão:** header `cf-lead-row` (título + badge de estado / «Histórico da versão» à direita); `CfMetricStrip` com 3 tiles reais do DTO (Documentos, Vigente desde, Publicação); fatos secundários (Publicada por, Criada em, Revisão) em `cf-detail-list`; ações governadas junto ao resumo; `DataTableSection` passou a ser a banda única «Documentos da versão» (fim do card aninhado com título duplo).
+- **C — Documento na versão:** título = nome do documento + badges (obrigatoriedade, via, estado); aviso de snapshot histórico; ações no topo («Voltar à versão», «Editar item no rascunho» em DRAFT, «Editar exigência futura»); Identificação em grid 2 colunas (finalidade/orientações full-width); Exigência em grid (TOTVS full-width); «Contexto da versão» virou linha compacta `cf-version-context` (vN · badge · vigência · publicação).
+- **D — Histórico:** subtítulo passou a indicar o escopo (versão específica vs todas as versões).
+- **A — Administração:** já conforme o wireframe — sem alteração.

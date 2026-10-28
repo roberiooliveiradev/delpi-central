@@ -33,8 +33,8 @@ import {
 import {
   CfActionButton,
   CfEmptyState,
+  CfMetricStrip,
   CfPagePath,
-  CfSectionCard,
   CfStatusBadge,
   CfTitleWithHelp,
   cfEmptyStateClassNames,
@@ -368,17 +368,47 @@ export function ChecklistVersionPage({
       />
 
       <div className="cf-checklist-page__content">
-        <div className="cf-lead-stack">
-          <CfTitleWithHelp
-            title={`Versão v${version}`}
-            hint={CF_HELP.adminVersion.page}
-          />
+        <div className="cf-lead-row">
+          <div className="cf-lead-stack">
+            <div className="cf-lead-badges">
+              <CfTitleWithHelp
+                title={`Versão v${version}`}
+                hint={CF_HELP.adminVersion.page}
+              />
+              {detailData ? (
+                <CfStatusBadge
+                  label={
+                    STATUS_LABELS[detailData.status] ??
+                    detailData.status
+                  }
+                  variant={
+                    STATUS_VARIANTS[detailData.status] ?? "neutral"
+                  }
+                />
+              ) : null}
+            </div>
+            {detailData ? (
+              <p className="cf-validation-panel__doc-detail">
+                {template
+                  ? `${template.name} (${template.code})`
+                  : null}
+              </p>
+            ) : null}
+          </div>
           {detailData ? (
-            <p className="cf-validation-panel__doc-detail">
-              {template
-                ? `${template.name} (${template.code})`
-                : null}
-            </p>
+            <div className="cf-validation-panel__item-actions">
+              <CfActionButton
+                type="button"
+                variant="ghost"
+                onClick={() =>
+                  navigatePluginPath(
+                    checklistAdminEventsPath(version, basePath),
+                  )
+                }
+              >
+                Histórico da versão
+              </CfActionButton>
+            </div>
           ) : null}
         </div>
 
@@ -421,144 +451,108 @@ export function ChecklistVersionPage({
           />
         ) : detailData ? (
           <>
-            <CfSectionCard
-              title="Dados da versão"
-              hint={CF_HELP.adminVersion.meta}
-            >
-              <div className="cf-card-stack">
-                <dl className="cf-detail-list">
-                  <div>
-                    <dt>Estado</dt>
-                    <dd>
-                      <CfStatusBadge
-                        label={
-                          STATUS_LABELS[detailData.status] ??
-                          detailData.status
-                        }
-                        variant={
-                          STATUS_VARIANTS[detailData.status] ??
-                          "neutral"
-                        }
-                      />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Documentos</dt>
-                    <dd>{detailData.items.length}</dd>
-                  </div>
-                  <div>
-                    <dt>Vigente desde</dt>
-                    <dd>
-                      {detailData.effective_from_period ?? "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Publicação</dt>
-                    <dd>
-                      {detailData.published_at
-                        ? formatDateTime(detailData.published_at)
-                        : "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Publicada por</dt>
-                    <dd>{detailData.published_by ?? "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Criada em</dt>
-                    <dd>{formatDateTime(detailData.created_at)}</dd>
-                  </div>
-                  <div>
-                    <dt>Revisão</dt>
-                    <dd>{detailData.revision}</dd>
-                  </div>
-                </dl>
+            <div className="cf-card-stack">
+              <CfMetricStrip
+                aria-label="Resumo da versão"
+                items={[
+                  {
+                    id: "items",
+                    label: "Documentos",
+                    value: String(detailData.items.length),
+                  },
+                  {
+                    id: "effective",
+                    label: "Vigente desde",
+                    value: detailData.effective_from_period ?? "—",
+                  },
+                  {
+                    id: "published",
+                    label: "Publicação",
+                    value: detailData.published_at
+                      ? formatDateTime(detailData.published_at)
+                      : "—",
+                  },
+                ]}
+              />
+              <dl className="cf-detail-list">
+                <div>
+                  <dt>Publicada por</dt>
+                  <dd>{detailData.published_by ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt>Criada em</dt>
+                  <dd>{formatDateTime(detailData.created_at)}</dd>
+                </div>
+                <div>
+                  <dt>Revisão</dt>
+                  <dd>{detailData.revision}</dd>
+                </div>
+              </dl>
+              <div className="cf-validation-panel__item-actions">
+                {detailData.status === "DRAFT" && !editing ? (
+                  <CfActionButton
+                    type="button"
+                    disabled={actions.busy}
+                    onClick={startEditing}
+                  >
+                    Editar itens
+                  </CfActionButton>
+                ) : null}
+                <VersionStatusActions
+                  version={detailData}
+                  busy={actions.busy}
+                  actions={actions}
+                />
+              </div>
+            </div>
+
+            <div className="cf-card-stack">
+              {editing ? (
                 <div className="cf-validation-panel__item-actions">
                   <CfActionButton
                     type="button"
-                    variant="ghost"
-                    onClick={() =>
-                      navigatePluginPath(
-                        checklistAdminEventsPath(version, basePath),
-                      )
+                    disabled={
+                      actions.busy || editing.items.length === 0
                     }
+                    onClick={saveDraft}
                   >
-                    Histórico da versão
+                    {actions.busy ? "Salvando…" : "Salvar rascunho"}
                   </CfActionButton>
-                  {detailData.status === "DRAFT" && !editing ? (
-                    <CfActionButton
-                      type="button"
-                      disabled={actions.busy}
-                      onClick={startEditing}
-                    >
-                      Editar itens
-                    </CfActionButton>
-                  ) : null}
-                  <VersionStatusActions
-                    version={detailData}
-                    busy={actions.busy}
-                    actions={actions}
-                  />
+                  <CfActionButton
+                    type="button"
+                    variant="ghost"
+                    disabled={actions.busy}
+                    onClick={() => {
+                      setItemForm({ ...EMPTY_ITEM });
+                      setItemFormIndex(null);
+                    }}
+                  >
+                    Adicionar item
+                  </CfActionButton>
+                  <CfActionButton
+                    type="button"
+                    variant="ghost"
+                    disabled={actions.busy}
+                    onClick={() => setEditing(null)}
+                  >
+                    Descartar edição
+                  </CfActionButton>
                 </div>
-              </div>
-            </CfSectionCard>
-
-            <CfSectionCard
-              title="Documentos da versão"
-              hint={
-                editing
-                  ? CF_HELP.admin.editDraft
-                  : CF_HELP.adminVersion.items
-              }
-            >
-              <div className="cf-card-stack">
-                {editing ? (
-                  <div className="cf-validation-panel__item-actions">
-                    <CfActionButton
-                      type="button"
-                      disabled={
-                        actions.busy || editing.items.length === 0
-                      }
-                      onClick={saveDraft}
-                    >
-                      {actions.busy ? "Salvando…" : "Salvar rascunho"}
-                    </CfActionButton>
-                    <CfActionButton
-                      type="button"
-                      variant="ghost"
-                      disabled={actions.busy}
-                      onClick={() => {
-                        setItemForm({ ...EMPTY_ITEM });
-                        setItemFormIndex(null);
-                      }}
-                    >
-                      Adicionar item
-                    </CfActionButton>
-                    <CfActionButton
-                      type="button"
-                      variant="ghost"
-                      disabled={actions.busy}
-                      onClick={() => setEditing(null)}
-                    >
-                      Descartar edição
-                    </CfActionButton>
-                  </div>
-                ) : null}
-                <DataTableSection<EditableItem>
-                  title="Itens do checklist"
-                  titleHint={
-                    editing
-                      ? CF_HELP.admin.editDraft
-                      : CF_HELP.admin.items
-                  }
-                  columns={itemColumns}
-                  rows={editing ? editing.items : detailData.items}
-                  rowKey={(row) => row.item_key}
-                  loading={false}
-                  emptyMessage="Nenhum item nesta versão."
-                />
-              </div>
-            </CfSectionCard>
+              ) : null}
+              <DataTableSection<EditableItem>
+                title="Documentos da versão"
+                titleHint={
+                  editing
+                    ? CF_HELP.admin.editDraft
+                    : CF_HELP.adminVersion.items
+                }
+                columns={itemColumns}
+                rows={editing ? editing.items : detailData.items}
+                rowKey={(row) => row.item_key}
+                loading={false}
+                emptyMessage="Nenhum item nesta versão."
+              />
+            </div>
           </>
         ) : null}
       </div>
