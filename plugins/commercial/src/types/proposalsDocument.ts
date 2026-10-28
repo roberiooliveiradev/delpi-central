@@ -12,6 +12,8 @@ export type ProposalDocumentListItem = {
 export type ProposalDocumentListData = {
   items: ProposalDocumentListItem[];
   total: number;
+  page?: number;
+  page_size?: number;
 };
 
 export type ProposalDocumentHeader = {

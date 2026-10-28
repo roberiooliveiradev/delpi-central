@@ -86,7 +86,10 @@ export async function resolveProposalDocumentForOpportunity(
 ): Promise<ResolveProposalDocumentResult> {
   const key = normalizeOpportunityKey(opportunityNumber);
   if (!key) return { status: "none" };
-  const data = await listProposalsDocuments(options?.limit ?? 200, options?.signal);
+  const data = await listProposalsDocuments(
+    { search: key, pageSize: options?.limit ?? 200 },
+    options?.signal,
+  );
   const matches = (data.items ?? []).filter(
     (item) => scoreProposalDocumentForOpportunity(item, key) > 0,
   );

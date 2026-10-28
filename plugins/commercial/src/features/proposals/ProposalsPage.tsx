@@ -1,5 +1,5 @@
 import { RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { listProposalsDocuments } from "../../api/commercialProposalsApi";
 import {
@@ -15,29 +15,12 @@ import {
 } from "../../app/commercialUi";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
-import type {
-  ProposalDocumentListData,
-  ProposalDocumentListItem,
-} from "../../types/proposalsDocument";
+import type { ProposalDocumentListData } from "../../types/proposalsDocument";
 import { AnalyticsDeepPagePath } from "../analytics/components/AnalyticsDeepPagePath";
 import { ProposalsDocumentsTable } from "./ProposalsDocumentsTable";
 
 const PAGE_SIZE = 20;
-
-function filterProposalDocuments(
-  items: ProposalDocumentListItem[],
-  search: string,
-): ProposalDocumentListItem[] {
-  const query = search.trim().toLowerCase();
-  if (!query) return items;
-  const withoutOv = query.replace(/^ov\s*/i, "").trim();
-  return items.filter((item) => {
-    const haystack = [item.proposta_interna, item.numero_ov, item.oportunidade, item.cliente]
-      .join(" ")
-      .toLowerCase();
-    return haystack.includes(query) || (withoutOv !== query && haystack.includes(withoutOv));
-  });
-}
+const SEARCH_DEBOUNCE_MS = 350;
 
 type ProposalsPageProps = {
   basePath: string;
@@ -46,16 +29,32 @@ type ProposalsPageProps = {
 export function ProposalsPage({ basePath }: ProposalsPageProps) {
   const [data, setData] = useState<ProposalDocumentListData | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    const timer = window.setTimeout(
+      () => setDebouncedSearch(search.trim()),
+      SEARCH_DEBOUNCE_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    void listProposalsDocuments(100, controller.signal)
+    void listProposalsDocuments(
+      { search: debouncedSearch, page, pageSize: PAGE_SIZE },
+      controller.signal,
+    )
       .then((result) => {
         if (!controller.signal.aborted) setData(result);
       })
@@ -68,21 +67,10 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [reloadKey]);
+  }, [debouncedSearch, page, reloadKey]);
 
-  const filtered = useMemo(
-    () => filterProposalDocuments(data?.items ?? [], search),
-    [data?.items, search],
-  );
-
-  useEffect(() => {
-    setPage(1);
-  }, [search]);
-
-  const paged = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
 
   return (
     <section className="cm-page-stack">
@@ -119,27 +107,29 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
       />
 
       <CommercialSectionCard
-        title={`Propostas (${filtered.length.toLocaleString("pt-BR")})`}
+        title={`Propostas (${total.toLocaleString("pt-BR")})`}
         hint={CM_HELP.proposals.list}
       >
         {loading ? <CommercialLoadingCard title="Carregando propostas…" variant="panel" /> : null}
         {error ? <CommercialEmptyState message={error} role="alert" /> : null}
-        {!loading && !error && filtered.length === 0 ? (
+        {!loading && !error && items.length === 0 ? (
           <CommercialEmptyState
             title={PROPOSALS_CONTENT.list.empty}
             message={
-              search ? PROPOSALS_CONTENT.list.emptySearch : PROPOSALS_CONTENT.list.empty
+              debouncedSearch
+                ? PROPOSALS_CONTENT.list.emptySearch
+                : PROPOSALS_CONTENT.list.empty
             }
           />
         ) : null}
-        {!loading && !error && filtered.length > 0 ? (
+        {!loading && !error && items.length > 0 ? (
           <>
-            <ProposalsDocumentsTable rows={paged} basePath={basePath} loading={loading} />
-            {filtered.length > PAGE_SIZE ? (
+            <ProposalsDocumentsTable rows={items} basePath={basePath} loading={loading} />
+            {total > PAGE_SIZE ? (
               <CommercialPagination
                 page={page}
                 pageSize={PAGE_SIZE}
-                total={filtered.length}
+                total={total}
                 onPageChange={setPage}
               />
             ) : null}

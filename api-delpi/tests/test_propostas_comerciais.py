@@ -307,14 +307,117 @@ def test_list_propostas_comerciais_use_case_formats_items() -> None:
             "quantidade_itens": 5,
         }
     ]
+    repository.count_active.return_value = 1
 
     use_case = ListPropostasComerciaisUseCase(repository)
     result = use_case.execute(limit=10)
 
-    repository.list_active_recent.assert_called_once_with(limit=10)
+    repository.list_active_recent.assert_called_once_with(limit=10, offset=0, search=None)
+    repository.count_active.assert_called_once_with(search=None)
     assert result["total"] == 1
+    assert result["page"] == 1
+    assert result["page_size"] == 10
     assert result["items"][0]["numero_ov"] == "OV003581"
     assert result["items"][0]["data"] == "2026-06-12"
+
+
+def test_list_propostas_comerciais_use_case_forwards_search_and_pagination() -> None:
+    repository = MagicMock()
+    repository.list_active_recent.return_value = []
+    repository.count_active.return_value = 183
+
+    use_case = ListPropostasComerciaisUseCase(repository)
+    result = use_case.execute(search="OV000116", page=4, page_size=50)
+
+    repository.list_active_recent.assert_called_once_with(
+        limit=50, offset=150, search="OV000116"
+    )
+    repository.count_active.assert_called_once_with(search="OV000116")
+    assert result["total"] == 183
+    assert result["page"] == 4
+    assert result["page_size"] == 50
+
+
+def test_proposal_document_search_service_normalizes_ov_prefix() -> None:
+    from app.domain.propostas_comerciais.services.proposal_document_search_service import (
+        ProposalDocumentSearchService,
+    )
+
+    clause, params = ProposalDocumentSearchService.clause("OV000116")
+
+    assert "ADY.ADY_PROPOS LIKE ?" in clause
+    assert "ADY.ADY_CLIENT LIKE ?" in clause
+    assert "A1.A1_NOME" in clause
+    assert "SUS.US_NOME" in clause
+    assert clause.count("ADY.ADY_OPORTU LIKE ?") == 2
+    assert params[-1] == "%000116%"
+    assert params.count("%OV000116%") == 6
+
+
+def test_proposal_document_search_service_rejects_empty_and_long_terms() -> None:
+    from app.domain.propostas_comerciais.services.proposal_document_search_service import (
+        ProposalDocumentSearchService,
+    )
+
+    assert ProposalDocumentSearchService.clause(None) == ("", [])
+    assert ProposalDocumentSearchService.clause("   ") == ("", [])
+    assert ProposalDocumentSearchService.clause("x" * 81) == ("", [])
+
+
+def test_proposta_repository_applies_search_before_pagination() -> None:
+    from app.infrastructure.totvs.propostas_comerciais.proposta_comercial_repository import (
+        PropostaComercialRepository,
+    )
+
+    repository = PropostaComercialRepository()
+    captured: dict[str, object] = {}
+
+    def _execute_query(sql: str, params: tuple) -> list:
+        captured["sql"] = sql
+        captured["params"] = params
+        return []
+
+    with patch.object(PropostaComercialRepository, "__enter__", return_value=repository):
+        with patch.object(PropostaComercialRepository, "__exit__", return_value=False):
+            with patch.object(repository, "execute_query", side_effect=_execute_query):
+                repository.list_active_recent(limit=20, offset=40, search="OV000116")
+
+    sql = str(captured["sql"])
+    params = captured["params"]
+    assert "D_E_L_E_T_ <> '*'" in sql
+    assert "ADY.ADY_STATUS = 'A'" in sql
+    assert "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY" in sql
+    assert "ORDER BY ADY.ADY_DATA DESC" in sql
+    assert sql.index("AND (") < sql.index("OFFSET")
+    assert params[-2:] == (40, 20)
+    assert "%OV000116%" in params
+    assert "%000116%" in params
+
+
+def test_proposta_repository_count_active_filters_same_criteria() -> None:
+    from app.infrastructure.totvs.propostas_comerciais.proposta_comercial_repository import (
+        PropostaComercialRepository,
+    )
+
+    repository = PropostaComercialRepository()
+    captured: dict[str, object] = {}
+
+    def _execute_one(sql: str, params: tuple) -> dict:
+        captured["sql"] = sql
+        captured["params"] = params
+        return {"total": 183}
+
+    with patch.object(PropostaComercialRepository, "__enter__", return_value=repository):
+        with patch.object(PropostaComercialRepository, "__exit__", return_value=False):
+            with patch.object(repository, "execute_one", side_effect=_execute_one):
+                total = repository.count_active(search="OV000116")
+
+    sql = str(captured["sql"])
+    assert "COUNT(1)" in sql
+    assert "D_E_L_E_T_ <> '*'" in sql
+    assert "ADY.ADY_STATUS = 'A'" in sql
+    assert "%000116%" in captured["params"]
+    assert total == 183
 
 
 def test_get_proposta_comercial_use_case_raises_when_missing() -> None:

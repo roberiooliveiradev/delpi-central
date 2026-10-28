@@ -9,11 +9,23 @@ import { commercialApiUrl, httpGet, httpGetBlobWithMeta, httpPostBlob } from "./
 /** BFF commercial-api → api-delpi commercial-proposals (ADY). */
 export const COMMERCIAL_PROPOSALS_API_BASE = commercialApiUrl("/proposal-documents");
 
+export type ListProposalsDocumentsParams = {
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  limit?: number;
+};
+
 export async function listProposalsDocuments(
-  limit = 100,
+  params: ListProposalsDocumentsParams = {},
   signal?: AbortSignal,
 ): Promise<ProposalDocumentListData> {
-  const query = new URLSearchParams({ limit: String(limit) });
+  const query = new URLSearchParams();
+  const term = params.search?.trim();
+  if (term) query.set("search", term);
+  if (params.page != null) query.set("page", String(params.page));
+  if (params.pageSize != null) query.set("page_size", String(params.pageSize));
+  else if (params.limit != null) query.set("limit", String(params.limit));
   const response = await httpGet<ApiSuccessResponse<ProposalDocumentListData>>(
     `${COMMERCIAL_PROPOSALS_API_BASE}/?${query.toString()}`,
     { signal },

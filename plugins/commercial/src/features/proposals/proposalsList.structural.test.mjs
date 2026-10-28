@@ -35,5 +35,19 @@ describe("Proposals list DataTable pattern (E5.S1)", () => {
     assert.match(table, /CommercialTableFontSizeControls/);
     assert.match(table, /usePersistedViewLayout/);
     assert.match(table, /navigateProposalDetail/);
+    assert.doesNotMatch(table, /\.filter\(/);
+  });
+
+  it("busca é executada exclusivamente no backend (sem filtro local)", () => {
+    const page = readFileSync(join(src, "features/proposals/ProposalsPage.tsx"), "utf8");
+    assert.doesNotMatch(page, /filterProposalDocuments/);
+    assert.doesNotMatch(page, /\.filter\(/);
+    assert.doesNotMatch(page, /\.slice\(/);
+    assert.match(page, /search:\s*debouncedSearch/);
+
+    const api = readFileSync(join(src, "api/commercialProposalsApi.ts"), "utf8");
+    assert.match(api, /query\.set\("search"/);
+    assert.match(api, /query\.set\("page"/);
+    assert.match(api, /query\.set\("page_size"/);
   });
 });

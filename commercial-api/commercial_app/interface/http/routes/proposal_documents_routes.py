@@ -26,11 +26,19 @@ router = APIRouter(prefix="/proposal-documents", tags=["Proposal documents BFF"]
 def list_proposal_documents(
     _request: Request,
     limit: int = Query(default=100, ge=1, le=500),
+    search: str | None = Query(default=None, max_length=80),
+    page: int = Query(default=1, ge=1),
+    page_size: int | None = Query(default=None, ge=1, le=200),
 ):
+    params: dict[str, int | str] = {"limit": limit, "page": page}
+    if search and search.strip():
+        params["search"] = search.strip()
+    if page_size is not None:
+        params["page_size"] = page_size
     try:
         payload = build_delpi_commercial_gateway().get_commercial_proposal_document(
             "",
-            params={"limit": limit},
+            params=params,
         )
         return ok(
             unwrap_gateway_data(payload),

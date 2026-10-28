@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Query
 from app.interface.http.pagination_query import (
     LIMIT_QUERY,
 )
@@ -43,11 +43,18 @@ router = APIRouter(tags=["Propostas Comerciais"])
 )
 @require_any_permission(PROPOSTAS_COMERCIAIS_ACCESS)
 def list_propostas_comerciais_route(
-    limit: int = LIMIT_QUERY("limit_100_200", description="Quantidade máxima de propostas recentes"),
+    limit: int = LIMIT_QUERY("limit_100_200", description="Quantidade máxima de propostas por página"),
+    search: Annotated[str | None, Query(max_length=80, description="Busca por OV, proposta ou cliente")] = None,
+    page: Annotated[int, Query(ge=1, description="Página de resultados (1-based)")] = 1,
+    page_size: Annotated[
+        int | None, Query(ge=1, le=200, description="Registros por página (substitui limit)")
+    ] = None,
 ):
     try:
         use_case = build_list_propostas_comerciais_use_case()
-        result = use_case.execute(limit=limit)
+        result = use_case.execute(
+            limit=limit, search=search, page=page, page_size=page_size
+        )
         return api_delpi_success(
             result,
             operation_id="list_propostas_comerciais",
