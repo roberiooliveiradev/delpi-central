@@ -463,3 +463,16 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Seguranca: 0 bypass/ACT/PREPARE/fabricacao/loop; negações fail-closed; resets de senha via admin-API na identidade dedicada (disclosed).
 - Veredito: ACCEPT_WITH_RESIDUAL. Residuais: ranking lexical do owner (NEEDS_OWNER_DECISION, Domain API), variancia do juiz, product_type arg rejeitado pelo owner em recovery. INDEPENDENT_REVIEW=PENDING; fase nao avancada.
 - Artefatos: doc 172; commit 2a6acc0f; evidencia /tmp/v24_eval.jsonl (transitoria no host; resumo sanitizado no doc).
+
+
+## 2026-10-28 — DELIA-C3-V24-PRODUCTION-SECURITY-AND-STABILITY-CLOSURE-01 (doc 173)
+
+- Escopo: regularizacao de seguranca (identidade devin-smoke-r4, resets de senha, exposicao de chave) + verificacao de estabilidade v24. READ-only; zero resets/deploy/RBAC/modelo.
+- Identidade: devin-smoke-r4 existe/enabled, roles realm apenas default (sem permissoes de dominio via Keycloak), 0 client roles delpi-central, 0 grupos, SESSOES=0. Password credential createdDate=2026-10-27T17:29:47Z (ultimo reset; valor gerado in-script, desconhecido ao executor). Realm eventsEnabled=false — sem trilha de auditoria server-side. PASSWORD_RESET_AUTHORIZATION=UNVERIFIED_AUTHORIZATION (precedente doc 162 nao e autoridade; requer ratificacao do owner de identidade).
+- Exposicao de chave: DELIA_LLM_API_KEY (OpenRouter) apareceu em env dump e persiste em 18 arquivos de historico local (%APPDATA%/devin/cli/summaries) + contexto de sessao ao provider. ACCESS_SCOPE=workstation do usuario + pipeline do provider; sem evidencia de acesso nao autorizado observavel; repositorio limpo. REMEDIATION_REQUIRED=YES (rotacao preparada, aguardando owner).
+- Runtime: DEPLOYED_SHA=2a6acc0f3a (diff zero vs HEAD em delia-api/), image sha256:1455192b, healthy 19h, instruction v24, modelo moonshotai/kimi-k3 via OpenRouter. Zero trafego organico em 19h (9 turns, todos da avaliacao).
+- q_partial: FIRST_DIVERGENT=goal_evidence_relevance (juiz variou irrelevant/corresponds no mesmo conjunto) + divergencia secundaria em argument construction (recovery emitiu product_type com valor que viola contrato owner — '2 caracteres, ex. MP,PI,PA' -> HTTP 400 correto do owner). Invoke-error e terminal na recovery (residual real, nao aleatoriedade).
+- IMPL-1: answer_requirements verificado em codigo end-to-end (parser->_TurnGoal->declared_requirements no judge block + compose_cri_response). Propagacao em turno produtivo quantificado PENDING (sem bearer autorizado). IMPL-2: surface_inquiry verificado em traco (1 turno, 0 invokes, 2.2s).
+- Outcome honesto: first-pass 3/7 (v23) -> 3/7 (v24, composicao alterada); best-of 4/7. Sem regressao material; 0 fabricacao; 0 bypass.
+- Gates: SECURITY_GATE=PASS_WITH_RESIDUAL (remediacao pendente de owner); V24_STABILITY_GATE=STABLE_WITH_RESIDUAL; V24_CAN_REMAIN_DEPLOYED=YES condicionado a ratificacao de seguranca; ROLLBACK nao requerido.
+- Artefatos: doc 173. DEPLOY=NO; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
