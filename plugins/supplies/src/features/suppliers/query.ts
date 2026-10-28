@@ -176,7 +176,7 @@ export function personTypeLabel(value: string | null | undefined): string {
 /** Classe utilitária do item de grid: span declarado no spec + estado visual. */
 export function supplierFieldItemClass(
   spec: SupplierFieldSpec,
-  options?: { changed?: boolean; invalid?: boolean },
+  options?: { changed?: boolean; invalid?: boolean; highlightRequired?: boolean },
 ): string {
   const span = Math.min(Math.max(spec.span, 1), 12);
   return [
@@ -184,6 +184,7 @@ export function supplierFieldItemClass(
     `sp-supplier-field--span-${span}`,
     options?.changed ? "sp-supplier-field--changed" : "",
     options?.invalid ? "sp-supplier-field--invalid" : "",
+    options?.highlightRequired && spec.required ? "sp-supplier-field--required" : "",
   ]
     .filter(Boolean)
     .join(" ");
