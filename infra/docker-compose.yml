@@ -2443,6 +2443,10 @@ services:
       GLPI_LEGACY_APP_TOKEN: ${GLPI_LEGACY_APP_TOKEN:-}
       GLPI_LEGACY_USER_TOKEN: ${GLPI_LEGACY_USER_TOKEN:-}
       GLPI_LEGACY_MAX_UPLOAD_BYTES: ${GLPI_LEGACY_MAX_UPLOAD_BYTES:-20971520}
+      # Provisionador dedicado de api_token por usuário (bootstrap; escritas
+      # humanas rodam na sessão do próprio usuário — autoria por construção).
+      GLPI_TOKEN_PROVISIONER_APP_TOKEN: ${GLPI_TOKEN_PROVISIONER_APP_TOKEN:-}
+      GLPI_TOKEN_PROVISIONER_USER_TOKEN: ${GLPI_TOKEN_PROVISIONER_USER_TOKEN:-}
       # IDENTITY-002A — profile-sync dedicated technical credential
       # (kill switch OFF; principal/apiclient NOT yet created — see ADR 15).
       GLPI_PROFILE_SYNC_ENABLED: ${GLPI_PROFILE_SYNC_ENABLED:-false}

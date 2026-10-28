@@ -180,6 +180,61 @@ class PostgresSessionStore:
             conn.commit()
 
 
+class PostgresUserTokenStore:
+    """Per-user GLPI legacy API tokens (``glpi_users.api_token``), Fernet-encrypted.
+
+    The BFF provisions each user's Remote access key once (REST ``PUT
+    /apirest.php/User/{id}`` under the bounded provisioner session) and keeps
+    the plaintext here — GLPI stores only the GLPIKey-encrypted copy and never
+    returns it on read. This store is what lets later requests open the
+    user's own legacy session for writes that must be authored by them.
+    """
+
+    def __init__(self, cipher: TokenCipher):
+        self._cipher = cipher
+
+    def get(self, glpi_user_id: int) -> str | None:
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT api_token_ciphertext
+                    FROM "{SCHEMA}".glpi_user_tokens
+                    WHERE glpi_user_id = %s
+                    """,
+                    (int(glpi_user_id),),
+                )
+                row = cur.fetchone()
+        if row is None:
+            return None
+        return self._cipher.decrypt(row["api_token_ciphertext"])
+
+    def save(self, glpi_user_id: int, api_token: str) -> None:
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    INSERT INTO "{SCHEMA}".glpi_user_tokens
+                        (glpi_user_id, api_token_ciphertext, updated_at)
+                    VALUES (%s, %s, NOW())
+                    ON CONFLICT (glpi_user_id) DO UPDATE SET
+                        api_token_ciphertext = EXCLUDED.api_token_ciphertext,
+                        updated_at = NOW()
+                    """,
+                    (int(glpi_user_id), self._cipher.encrypt(api_token)),
+                )
+            conn.commit()
+
+    def delete(self, glpi_user_id: int) -> None:
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f'DELETE FROM "{SCHEMA}".glpi_user_tokens WHERE glpi_user_id = %s',
+                    (int(glpi_user_id),),
+                )
+            conn.commit()
+
+
 class PostgresIdempotencyStore:
     def get(self, subject: str, operation: str, key: str) -> StoredResponse | None:
         with connect() as conn:

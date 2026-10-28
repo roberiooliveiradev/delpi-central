@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import secrets
 import unicodedata
 from dataclasses import replace
 from urllib.parse import quote
@@ -91,6 +92,9 @@ class HttpxGlpiClient:
         legacy_app_token: str = "",
         legacy_user_token: str = "",
         legacy_max_upload_bytes: int = _MAX_ATTACHMENT_BYTES,
+        token_provisioner_app_token: str = "",
+        token_provisioner_user_token: str = "",
+        user_token_store=None,
         profile_sync_enabled: bool = False,
         profile_sync_app_token: str = "",
         profile_sync_user_token: str = "",
@@ -112,6 +116,20 @@ class HttpxGlpiClient:
         self._profile_sync_enabled = bool(profile_sync_enabled)
         self._profile_sync_app_token = (profile_sync_app_token or "").strip()
         self._profile_sync_user_token = (profile_sync_user_token or "").strip()
+        # AUTH-BY-CONSTRUCTION — the provisioner is a bounded bootstrap
+        # principal whose only job is writing each GLPI user's own
+        # ``api_token`` (Remote access key). GLPI requires a session whose
+        # rights strictly cover the target profile, so ops points this pair at
+        # a dedicated provisioner identity (e.g. minha-delpi-provisioning).
+        # It never performs user-initiated writes — those run on the user's
+        # own legacy session minted from their api_token.
+        self._token_provisioner_app_token = (
+            token_provisioner_app_token or self._legacy_app_token
+        ).strip()
+        self._token_provisioner_user_token = (
+            token_provisioner_user_token or self._legacy_user_token
+        ).strip()
+        self._user_token_store = user_token_store
         if assignee_profile_ids is None:
             from helpdesk_app.config import parse_assignee_profile_ids
 
@@ -709,40 +727,28 @@ class HttpxGlpiClient:
         return rows
 
     def add_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int) -> None:
+        """Assign a technician via HLAPI under the actor's OAuth token.
+
+        ``Ticket::ASSIGN`` on the actor's profile is the authorization of
+        record — a profile without it gets 403, fail closed. There is NO
+        technical-session fallback: a human write never runs under another
+        identity (authorship-by-construction rule).
+        """
         body = team_member_assigned_body(user_id)
-        try:
-            self._json(
-                "POST",
-                f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
-                token=access_token,
-                json_body=body,
-            )
-            return
-        except (GlpiForbidden, GlpiUnauthorized):
-            # Requester profiles lack Ticket::ASSIGN — the BFF already bounded
-            # the target to technician ids, so the write runs on the technical
-            # legacy session (same pattern as document upload).
-            if not self._legacy_ready():
-                raise
-        self._legacy_set_ticket_assignee(
-            ticket_id=int(ticket_id), user_id=int(user_id), present=True
+        self._json(
+            "POST",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
+            token=access_token,
+            json_body=body,
         )
 
     def remove_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int) -> None:
         body = team_member_assigned_body(user_id)
-        try:
-            self._json(
-                "DELETE",
-                f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
-                token=access_token,
-                json_body=body,
-            )
-            return
-        except (GlpiForbidden, GlpiUnauthorized):
-            if not self._legacy_ready():
-                raise
-        self._legacy_set_ticket_assignee(
-            ticket_id=int(ticket_id), user_id=int(user_id), present=False
+        self._json(
+            "DELETE",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
+            token=access_token,
+            json_body=body,
         )
 
     def assignable_users(
@@ -826,47 +832,6 @@ class HttpxGlpiClient:
                         continue
                 users.append(user)
             return users[:limit]
-        finally:
-            self._legacy_kill_session(session_token)
-
-    def _legacy_set_ticket_assignee(
-        self, *, ticket_id: int, user_id: int, present: bool
-    ) -> None:
-        """Bounded assignee write via technical session (Ticket_User type=2)."""
-        session_token = self._legacy_init_session()
-        try:
-            rows = self._legacy_get_json(
-                session_token,
-                f"/apirest.php/Ticket/{int(ticket_id)}/Ticket_User?range=0-999",
-            )
-            link_id: int | None = None
-            for row in rows if isinstance(rows, list) else []:
-                if (
-                    int(row.get("users_id") or 0) == int(user_id)
-                    and int(row.get("type") or 0) == 2
-                ):
-                    link_id = int(row.get("id") or 0) or None
-                    break
-            if present:
-                if link_id is not None:
-                    return
-                self._legacy_post_json(
-                    session_token,
-                    "/apirest.php/Ticket_User",
-                    {
-                        "input": {
-                            "tickets_id": int(ticket_id),
-                            "users_id": int(user_id),
-                            "type": 2,
-                        }
-                    },
-                )
-                return
-            if link_id is None:
-                return
-            self._legacy_delete_json(
-                session_token, f"/apirest.php/Ticket_User/{link_id}"
-            )
         finally:
             self._legacy_kill_session(session_token)
 
@@ -1259,7 +1224,14 @@ class HttpxGlpiClient:
         mime: str,
         title: str | None = None,
     ) -> Attachment:
-        """Upload via legacy apirest Document (HLAPI has no multipart). Product-authorized H12."""
+        """Upload via legacy apirest Document under the ACTOR'S OWN session.
+
+        HLAPI v2.2 has no binary upload, so this write runs on a legacy
+        session minted from the user's own ``api_token`` — GLPI stamps
+        ``users_id`` on ``Document`` and ``Document_Item`` at creation
+        (authorship by construction). Read-back remains as complementary
+        evidence; a divergence is reported, never repaired.
+        """
         self._legacy_require_ready()
         if not content:
             raise GlpiValidation("Arquivo vazio.")
@@ -1273,17 +1245,18 @@ class HttpxGlpiClient:
             raise GlpiValidation("ticket_id inválido.")
         # Ensure the ticket is visible to this OAuth subject before legacy write.
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
-        # The legacy write runs as a technical account — GLPI stamps it as
-        # creator on Document and Document_Item. The business actor must be
-        # resolvable BEFORE the write: uploading a user-initiated document
-        # under pure technical authorship misrepresents the action in GLPI
-        # history (same fail-closed posture as _legacy_cycle_write).
+        # The actor's GLPI identity must resolve BEFORE the first write.
         owner_user_id = self.session_user_id(access_token)
         if owner_user_id is None:
             raise GlpiUnavailable(
                 "A operação exige autoria de usuário final indisponível no GLPI."
             )
-        session_token = self._legacy_init_session()
+        session_token = self._user_legacy_session(glpi_user_id=owner_user_id)
+        # Bounded READ channel: the requester profile cannot read
+        # Document/Document_Item via apirest (403, live-proven), so every
+        # read-back runs on the technical session. Writes stay on the
+        # actor's session only.
+        reader_token = self._legacy_init_session()
         author_state = "unverified"
         try:
             document_id = self._legacy_post_document(
@@ -1294,30 +1267,25 @@ class HttpxGlpiClient:
                 mime=(mime or "application/octet-stream").split(";")[0].strip()
                 or "application/octet-stream",
                 title=display_title,
-                users_id=owner_user_id,
             )
-            # UploadManifest items_id is not always enough for Timeline visibility.
             link_row_id = self._legacy_ensure_document_item(
-                session_token=session_token,
+                write_session_token=session_token,
+                read_session_token=reader_token,
                 document_id=document_id,
                 ticket_id=ticket_id,
-                users_id=owner_user_id,
             )
-            # Verify/restore end-user authorship on both persisted rows —
-            # declared users_id may be overridden by the session identity.
-            # GLPI's timeline shows the Document_Item author (proven on
-            # #1454: Document.users_id was restored to the user but the
-            # link row kept minha-delpi-upload), so composite authorship
-            # requires EVERY relevant row proven — never just the Document.
-            document_state = self._legacy_restore_row_author(
-                session_token=session_token,
+            # Composite read-back proof: GLPI's timeline shows the
+            # Document_Item author (proven on #1454), so every relevant row
+            # must be proven — never just the Document.
+            document_state = self._legacy_check_row_author(
+                session_token=reader_token,
                 itemtype="Document",
                 row_id=document_id,
                 users_id=owner_user_id,
             )
             link_state = (
-                self._legacy_restore_row_author(
-                    session_token=session_token,
+                self._legacy_check_row_author(
+                    session_token=reader_token,
                     itemtype="Document_Item",
                     row_id=link_row_id,
                     users_id=owner_user_id,
@@ -1326,7 +1294,7 @@ class HttpxGlpiClient:
                 else "unverified"
             )
             author_state = self._combine_author_states(document_state, link_state)
-            if author_state not in ("verified", "restored"):
+            if author_state != "verified":
                 logger.info(
                     "glpi_document_upload_author_partial document_id=%s "
                     "document_state=%s link_row_id=%s link_state=%s",
@@ -1337,6 +1305,7 @@ class HttpxGlpiClient:
                 )
         finally:
             self._legacy_kill_session(session_token)
+            self._legacy_kill_session(reader_token)
         return Attachment(
             document_id=document_id,
             filename=safe_name,
@@ -1435,7 +1404,17 @@ class HttpxGlpiClient:
             raise GlpiValidation("satisfaction inválida.")
         self._legacy_require_ready()
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
-        session_token = self._legacy_init_session()
+        # Satisfaction is a human evaluation — it must persist under the
+        # actor's own identity. Resolve + open their session first; block
+        # before the first write when that is impossible.
+        owner_user_id = self.session_user_id(access_token)
+        if owner_user_id is None:
+            raise GlpiUnavailable(
+                "Não foi possível confirmar sua identidade no helpdesk. "
+                "Nenhuma ação foi registrada — tente novamente."
+            )
+        session_token = self._user_legacy_session(glpi_user_id=owner_user_id)
+        reader_token = self._legacy_init_session()
         try:
             self._legacy_post_json(
                 session_token,
@@ -1448,9 +1427,10 @@ class HttpxGlpiClient:
                     }
                 },
             )
-            # Authoritative read-back: HTTP 201 alone is not proof of persistence.
+            # Authoritative read-back on the bounded READ channel (the
+            # requester profile may not read this row via apirest).
             rows = self._legacy_get_json(
-                session_token, f"/apirest.php/Ticket/{ticket_id}/TicketSatisfaction"
+                reader_token, f"/apirest.php/Ticket/{ticket_id}/TicketSatisfaction"
             )
             persisted = any(
                 isinstance(row, dict) and int(row.get("satisfaction") or 0) == int(satisfaction)
@@ -1467,6 +1447,7 @@ class HttpxGlpiClient:
                 )
         finally:
             self._legacy_kill_session(session_token)
+            self._legacy_kill_session(reader_token)
 
     def legacy_cycle_enabled(self) -> bool:
         return self._legacy_ready()
@@ -1485,36 +1466,34 @@ class HttpxGlpiClient:
             raise GlpiValidation("ticket_id inválido.")
         self._legacy_require_ready()
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
-        # The legacy write runs as a technical account, so ITILFollowup.users_id
-        # is stamped with the uploader. Resolve the actor's GLPI id to restore
-        # end-user attribution right after the followup exists (H12 pattern).
-        # Fail closed: without a resolvable GLPI identity we cannot guarantee
-        # authorship, so no new record is created under the technical identity.
+        # The actor's GLPI identity must resolve BEFORE the first write.
         owner_user_id = self.session_user_id(access_token)
         if owner_user_id is None:
             raise GlpiUnavailable(
                 "Não foi possível confirmar sua identidade no helpdesk. "
                 "Nenhuma ação foi registrada — tente novamente."
             )
+        # No ``users_id`` in input: GLPI stamps the followup with the session
+        # user, so authorship is by construction and cannot be steered by
+        # caller-supplied identity fields.
         input_body: dict = {
             "itemtype": "Ticket",
             "items_id": ticket_id,
             "content": content,
-            "users_id": owner_user_id,
         }
         body: dict = {"input": input_body}
         if add_close:
             body["input"]["add_close"] = 1
         if add_reopen:
             body["input"]["add_reopen"] = 1
-        session_token = self._legacy_init_session()
+        session_token = self._user_legacy_session(glpi_user_id=owner_user_id)
         followup_id = 0
         author_state = "unverified"
         try:
             created = self._legacy_post_json(session_token, "/apirest.php/ITILFollowup", body)
             followup_id = int(created.get("id") or 0)
             if followup_id > 0:
-                author_state = self._legacy_restore_row_author(
+                author_state = self._legacy_check_row_author(
                     session_token=session_token,
                     itemtype="ITILFollowup",
                     row_id=followup_id,
@@ -1534,67 +1513,11 @@ class HttpxGlpiClient:
         """Composite authorship across the rows a write persisted.
 
         `verified` requires every row stamped correctly at creation;
-        `restored` when all rows ended correct but at least one needed the
-        corrective PUT; `mismatch`/`unverified` surface the worst state so
-        a partially wrong audit trail can never read as success.
+        `mismatch`/`unverified` surface the worst state so a partially
+        wrong audit trail can never read as success.
         """
-        order = {"mismatch": 0, "unverified": 1, "restored": 2, "verified": 3}
+        order = {"mismatch": 0, "unverified": 1, "verified": 3}
         return min(states, key=lambda s: order.get(s, 1))
-
-    def _legacy_restore_row_author(
-        self,
-        *,
-        session_token: str,
-        itemtype: str,
-        row_id: int,
-        users_id: int,
-        log_tag: str | None = None,
-    ) -> str:
-        """Verify/restore end-user authorship on a row written by the technical
-        session (ITILFollowup, Document, Document_Item).
-        Returns verified | restored | mismatch | unverified."""
-        tag = log_tag or itemtype.lower()
-        path = f"/apirest.php/{itemtype}/{int(row_id)}"
-        try:
-            row = self._legacy_get_json(session_token, path)
-        except Exception:
-            logger.info("glpi_%s_author_read_failed %s_id=%s", tag, tag, row_id)
-            row = {}
-        known_author = (
-            int(row["users_id"] or 0)
-            if isinstance(row, dict) and "users_id" in row
-            else None
-        )
-        if known_author == int(users_id):
-            logger.info(
-                "glpi_%s_author verified %s_id=%s users_id=%s",
-                tag, tag, row_id, users_id,
-            )
-            return "verified"
-        try:
-            self._legacy_put_json(
-                session_token,
-                path,
-                {"input": {"id": int(row_id), "users_id": int(users_id)}},
-            )
-        except Exception:
-            logger.info("glpi_%s_author_restore_failed %s_id=%s", tag, tag, row_id)
-            # PUT denied: a known wrong author stays wrong; an unknown one is
-            # simply unverifiable.
-            return "mismatch" if known_author is not None else "unverified"
-        try:
-            check = self._legacy_get_json(session_token, path)
-        except Exception:
-            logger.info("glpi_%s_author_unverified %s_id=%s", tag, tag, row_id)
-            return "unverified"
-        confirmed = isinstance(check, dict) and "users_id" in check
-        restored = confirmed and int(check.get("users_id") or 0) == int(users_id)
-        state = "restored" if restored else ("mismatch" if confirmed else "unverified")
-        logger.info(
-            "glpi_%s_author %s %s_id=%s users_id=%s",
-            tag, state, tag, row_id, users_id,
-        )
-        return state
 
     def _legacy_ready(self) -> bool:
         return bool(
@@ -1681,24 +1604,6 @@ class HttpxGlpiClient:
             return data if isinstance(data, dict) else {"results": data}
         _raise_for_status(response, "PUT", path)
         return {}
-
-    def _legacy_delete_json(self, session_token: str, path: str, *, app_token: str = "") -> None:
-        try:
-            response = self._http.request(
-                "DELETE",
-                f"{self._base}{path}",
-                headers={
-                    "Accept": "application/json",
-                    "App-Token": app_token or self._legacy_app_token,
-                    "Session-Token": session_token,
-                },
-            )
-        except httpx.TimeoutException as exc:
-            raise GlpiUnavailable("GLPI indisponível.") from exc
-        logger.info("glpi_legacy_delete path=%s status=%s", path, response.status_code)
-        if response.status_code in {200, 204}:
-            return
-        _raise_for_status(response, "DELETE", path)
 
     def _legacy_sla_ttr_exceeded(
         self,
@@ -1937,34 +1842,218 @@ class HttpxGlpiClient:
         except httpx.HTTPError:
             logger.info("glpi_legacy_kill_failed")
 
-    def _legacy_ensure_document_item(
+    def _user_legacy_session(self, *, glpi_user_id: int) -> str:
+        """Legacy apirest session AS THE ACTOR — the user's own ``api_token``.
+
+        Every human write that the HLAPI cannot express (binary uploads,
+        followup-driven lifecycle, satisfaction) MUST run on this session so
+        GLPI stamps the actor's own identity on each record at creation —
+        authorship by construction, never technical write + retroactive
+        ``users_id`` repair.
+
+        Fails closed BEFORE the first write when the effective identity
+        cannot be established: missing ``api_token`` and a denied provision,
+        or a minted session whose user does not match the resolved actor.
+        """
+        glpi_user_id = int(glpi_user_id)
+        if glpi_user_id <= 0:
+            raise GlpiValidation("Identidade GLPI inválida.")
+        api_token = self._user_api_token(glpi_user_id)
+        session_token = self._open_user_session(
+            glpi_user_id=glpi_user_id, api_token=api_token
+        )
+        if session_token is None:
+            # Stored/provisioned token rejected (rotated externally, for
+            # instance): re-provision once, then fail closed.
+            api_token = self._provision_user_api_token(glpi_user_id)
+            session_token = self._open_user_session(
+                glpi_user_id=glpi_user_id, api_token=api_token
+            )
+            if session_token is None:
+                raise GlpiUnavailable(
+                    "Não foi possível abrir a sessão do usuário no GLPI. "
+                    "Nenhuma escrita foi realizada."
+                )
+        return session_token
+
+    def _open_user_session(self, *, glpi_user_id: int, api_token: str) -> str | None:
+        """initSession with the user's api_token; verify the session user."""
+        try:
+            session_token = self._legacy_init_session(
+                app_token=self._legacy_app_token, user_token=api_token
+            )
+        except GlpiUnavailable:
+            return None
+        try:
+            session_user = self._legacy_session_user_id(session_token)
+        except Exception:
+            self._legacy_kill_session(session_token)
+            raise
+        if session_user != int(glpi_user_id):
+            self._legacy_kill_session(session_token)
+            logger.warning(
+                "glpi_user_session_identity_mismatch expected=%s got=%s",
+                glpi_user_id,
+                session_user,
+            )
+            raise GlpiUnavailable(
+                "A sessão aberta não corresponde ao usuário autenticado. "
+                "Nenhuma escrita foi realizada."
+            )
+        return session_token
+
+    def _legacy_session_user_id(self, session_token: str) -> int | None:
+        """getFullSession → the GLPI user id this session belongs to."""
+        response = self._http.request(
+            "GET",
+            f"{self._base}/apirest.php/getFullSession",
+            headers={
+                "Accept": "application/json",
+                "App-Token": self._legacy_app_token,
+                "Session-Token": session_token,
+            },
+        )
+        if response.status_code != 200 or not response.content:
+            return None
+        try:
+            data = response.json()
+        except ValueError:
+            return None
+        session = data.get("session") if isinstance(data, dict) else None
+        raw = session.get("glpiID") if isinstance(session, dict) else None
+        try:
+            return int(raw) if raw is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    def _user_api_token(self, glpi_user_id: int) -> str:
+        """The actor's own GLPI Remote access key, provisioned on demand.
+
+        Provisioning is a bounded bootstrap operation (system identity writes
+        ``glpi_users.api_token`` once per user); the human write itself always
+        runs on the session minted from this token.
+        """
+        if self._user_token_store is not None:
+            token = self._user_token_store.get(glpi_user_id)
+            if token:
+                return token
+        return self._provision_user_api_token(glpi_user_id)
+
+    def _provision_user_api_token(self, glpi_user_id: int) -> str:
+        """REST ``PUT /User/{id} {api_token}`` under the provisioner session.
+
+        GLPI encrypts the token server-side and only allows a session whose
+        profile rights strictly cover the target's to write it. When the
+        provisioner is not configured/authorized the operation blocks BEFORE
+        any user write — the alternative is never a technical-session write.
+        """
+        if not self._token_provisioner_app_token or not self._token_provisioner_user_token:
+            raise GlpiUnavailable(
+                "Provisionamento de identidade GLPI não configurado. "
+                "Nenhuma escrita foi realizada."
+            )
+        session_token = self._legacy_init_session(
+            app_token=self._token_provisioner_app_token,
+            user_token=self._token_provisioner_user_token,
+        )
+        try:
+            api_token = secrets.token_urlsafe(30)
+            try:
+                response = self._http.request(
+                    "PUT",
+                    f"{self._base}/apirest.php/User/{int(glpi_user_id)}",
+                    headers={
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        "App-Token": self._token_provisioner_app_token,
+                        "Session-Token": session_token,
+                    },
+                    json={"input": {"id": int(glpi_user_id), "api_token": api_token}},
+                )
+            except httpx.TimeoutException as exc:
+                raise GlpiUnavailable("GLPI indisponível.") from exc
+            if response.status_code not in {200, 201}:
+                body = (response.text or "")[:240]
+                logger.info(
+                    "glpi_user_token_provision_denied user_id=%s status=%s body=%s",
+                    glpi_user_id,
+                    response.status_code,
+                    body,
+                )
+                raise GlpiUnavailable(
+                    "Não foi possível provisionar a identidade do usuário no "
+                    "GLPI. Nenhuma escrita foi realizada."
+                )
+            if self._user_token_store is not None:
+                self._user_token_store.save(glpi_user_id, api_token)
+            logger.info("glpi_user_token_provisioned user_id=%s", glpi_user_id)
+            return api_token
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def _legacy_check_row_author(
         self,
         *,
         session_token: str,
+        itemtype: str,
+        row_id: int,
+        users_id: int,
+        log_tag: str | None = None,
+    ) -> str:
+        """Read-back authorship proof for a row the USER session just wrote.
+
+        Complementary evidence only — authorship is guaranteed by construction
+        (the write ran under the actor's own session). Returns ``verified``
+        when the persisted ``users_id`` matches, ``mismatch`` when it provably
+        does not, ``unverified`` when read-back is unavailable. Never repairs.
+        """
+        tag = log_tag or itemtype.lower()
+        path = f"/apirest.php/{itemtype}/{int(row_id)}"
+        try:
+            row = self._legacy_get_json(session_token, path)
+        except Exception:
+            logger.info("glpi_%s_author_read_failed %s_id=%s", tag, tag, row_id)
+            return "unverified"
+        if not isinstance(row, dict) or "users_id" not in row:
+            return "unverified"
+        known_author = int(row["users_id"] or 0)
+        state = "verified" if known_author == int(users_id) else "mismatch"
+        logger.info(
+            "glpi_%s_author %s %s_id=%s users_id=%s expected=%s",
+            tag,
+            state,
+            tag,
+            row_id,
+            known_author,
+            int(users_id),
+        )
+        return state
+
+    def _legacy_ensure_document_item(
+        self,
+        *,
+        write_session_token: str,
+        read_session_token: str,
         document_id: int,
         ticket_id: int,
-        users_id: int | None = None,
     ) -> int:
-        """POST Document_Item so Timeline/membership can see the upload (H12).
+        """Ensure the Document_Item link exists for Timeline visibility.
 
-        Returns the link row id (needed to verify/restore its users_id), or
-        the pre-existing link's id when the document was already linked.
+        The manifest's ``itemtype``/``items_id`` normally auto-links at
+        Document creation; when it does not, a bounded ``POST
+        /Document_Item`` runs on the ACTOR's session (no ``users_id`` —
+        GLPI stamps the session user). All row lookups run on
+        ``read_session_token`` (bounded read channel) because the
+        requester profile cannot read Document_Item via apirest.
         """
         existing = self._legacy_document_item_row(
-            session_token=session_token,
+            session_token=read_session_token,
             document_id=document_id,
             ticket_id=ticket_id,
         )
         if existing is not None:
             return int(existing.get("id") or 0)
         self.post_calls += 1
-        link_input: dict = {
-            "documents_id": int(document_id),
-            "itemtype": "Ticket",
-            "items_id": int(ticket_id),
-        }
-        if users_id is not None:
-            link_input["users_id"] = int(users_id)
         try:
             response = self._http.post(
                 f"{self._base}/apirest.php/Document_Item",
@@ -1972,9 +2061,15 @@ class HttpxGlpiClient:
                     "Accept": "application/json",
                     "Content-Type": "application/json",
                     "App-Token": self._legacy_app_token,
-                    "Session-Token": session_token,
+                    "Session-Token": write_session_token,
                 },
-                json={"input": link_input},
+                json={
+                    "input": {
+                        "documents_id": int(document_id),
+                        "itemtype": "Ticket",
+                        "items_id": int(ticket_id),
+                    }
+                },
             )
         except httpx.TimeoutException as exc:
             raise GlpiUnavailable("GLPI indisponível.") from exc
@@ -1989,18 +2084,20 @@ class HttpxGlpiClient:
             link_id = data.get("id") if isinstance(data, dict) else None
             if link_id is None:
                 row = self._legacy_document_item_row(
-                    session_token=session_token,
+                    session_token=read_session_token,
                     document_id=document_id,
                     ticket_id=ticket_id,
                 )
                 link_id = row.get("id") if row else None
             return int(link_id or 0)
-        # Already linked / duplicate — treat as success for membership.
-        if response.status_code in {400, 422}:
+        # Already linked / duplicate / profile lacks direct-link rights —
+        # re-check for the row (manifest itemtype/items_id auto-links at
+        # Document creation); only a truly absent link is an error.
+        if response.status_code in {400, 403, 422}:
             body = (response.text or "")[:240]
             logger.info("glpi_legacy_document_item_dup_or_reject body=%s", body)
             row = self._legacy_document_item_row(
-                session_token=session_token,
+                session_token=read_session_token,
                 document_id=document_id,
                 ticket_id=ticket_id,
             )
@@ -2009,8 +2106,6 @@ class HttpxGlpiClient:
             raise GlpiValidation("O GLPI não ligou o documento ao chamado.")
         if response.status_code == 401:
             raise GlpiUnauthorized("Sessão do GLPI recusada.")
-        if response.status_code == 403:
-            raise GlpiForbidden("O perfil no GLPI não permite esta ação.")
         raise GlpiUnavailable("GLPI indisponível.")
 
     def _legacy_document_linked_to_ticket(
@@ -2088,7 +2183,6 @@ class HttpxGlpiClient:
         content: bytes,
         mime: str,
         title: str | None = None,
-        users_id: int | None = None,
     ) -> int:
         document_name = (title or "").strip() or filename
         manifest = {
@@ -2099,8 +2193,6 @@ class HttpxGlpiClient:
                 "items_id": ticket_id,
             }
         }
-        if users_id is not None:
-            manifest["input"]["users_id"] = int(users_id)
         self.post_calls += 1
         try:
             response = self._http.post(

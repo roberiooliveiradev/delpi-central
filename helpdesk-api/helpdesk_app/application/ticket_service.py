@@ -378,11 +378,11 @@ class TicketService:
                 "document_id": uploaded.document_id,
                 "filename": uploaded.filename,
                 "mime": uploaded.mime,
-                # Authorship verification outcome on the technical-session
-                # write (verified | restored | mismatch | unverified) —
-                # additive, so consumers can flag degraded auditability.
+                # Authorship read-back on the actor's own-session write
+                # (verified | mismatch | unverified) — additive, so consumers
+                # can flag degraded auditability.
                 "author_state": uploaded.author_state,
-                "author_verified": uploaded.author_state in ("verified", "restored"),
+                "author_verified": uploaded.author_state == "verified",
             },
         )
         self._idempotency.save(subject, operation, key, stored)
@@ -1423,7 +1423,7 @@ def _cycle_write_stored_response(
     consumer never reads a bare 2xx as fully-verified success, and the
     stored idempotent response replays the same governed outcome.
     """
-    author_verified = outcome.author_state in {"verified", "restored"}
+    author_verified = outcome.author_state == "verified"
     status_verified = (
         refreshed.status_id is not None and refreshed.status_id in expected_status_ids
     )

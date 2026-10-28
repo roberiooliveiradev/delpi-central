@@ -194,7 +194,7 @@ export type TicketAttachment = {
   /** Owning item id (timeline entry id or ticket id); null/empty = unassociated. */
   items_id?: number | null;
   /** Composite authorship outcome on upload (Document + Document_Item rows). */
-  author_state?: "verified" | "restored" | "mismatch" | "unverified";
+  author_state?: "verified" | "mismatch" | "unverified";
   /** False = persisted but end-user authorship could not be proven. */
   author_verified?: boolean;
 };

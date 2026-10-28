@@ -20,6 +20,7 @@ from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
 from helpdesk_app.infrastructure.persistence.postgres import (
     PostgresIdempotencyStore,
     PostgresSessionStore,
+    PostgresUserTokenStore,
     PostgresStateStore,
 )
 from helpdesk_app.interface.http.auth_routes import router as auth_router
@@ -57,6 +58,9 @@ def build_runtime():
         profile_sync_enabled=settings.GLPI_PROFILE_SYNC_ENABLED,
         profile_sync_app_token=settings.GLPI_PROFILE_SYNC_APP_TOKEN,
         profile_sync_user_token=settings.GLPI_PROFILE_SYNC_USER_TOKEN,
+        token_provisioner_app_token=settings.GLPI_TOKEN_PROVISIONER_APP_TOKEN,
+        token_provisioner_user_token=settings.GLPI_TOKEN_PROVISIONER_USER_TOKEN,
+        user_token_store=PostgresUserTokenStore(cipher),
     )
     states = PostgresStateStore(cipher)
     sessions = PostgresSessionStore(cipher)

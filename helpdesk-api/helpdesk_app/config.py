@@ -77,6 +77,18 @@ class Settings:
         _get_env("GLPI_LEGACY_MAX_UPLOAD_BYTES", default=str(20 * 1024 * 1024))
         or str(20 * 1024 * 1024)
     )
+    # AUTH-BY-CONSTRUCTION — bounded provisioner for per-user GLPI api_token.
+    # The provisioner only writes ``glpi_users.api_token`` (bootstrap); user
+    # writes then run on the session minted from that token. GLPI requires
+    # the provisioning session's rights to strictly cover the target profile,
+    # so this pair must point at a dedicated provisioner identity; when
+    # unset, user-session writes fail closed before the first write.
+    GLPI_TOKEN_PROVISIONER_APP_TOKEN: str = (
+        _get_env("GLPI_TOKEN_PROVISIONER_APP_TOKEN", default="") or ""
+    )
+    GLPI_TOKEN_PROVISIONER_USER_TOKEN: str = (
+        _get_env("GLPI_TOKEN_PROVISIONER_USER_TOKEN", default="") or ""
+    )
     # IDENTITY-002A — dedicated profile-sync technical principal (kill switch
     # OFF by default; credential pair is backend-only, distinct from H12).
     GLPI_PROFILE_SYNC_ENABLED: bool = (

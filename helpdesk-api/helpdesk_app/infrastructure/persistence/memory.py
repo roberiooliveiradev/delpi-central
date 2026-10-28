@@ -42,6 +42,20 @@ class MemorySessionStore:
         self._rows.pop(subject, None)
 
 
+class MemoryUserTokenStore:
+    def __init__(self):
+        self._rows: dict[int, str] = {}
+
+    def get(self, glpi_user_id: int) -> str | None:
+        return self._rows.get(int(glpi_user_id))
+
+    def save(self, glpi_user_id: int, api_token: str) -> None:
+        self._rows[int(glpi_user_id)] = api_token
+
+    def delete(self, glpi_user_id: int) -> None:
+        self._rows.pop(int(glpi_user_id), None)
+
+
 class MemoryIdempotencyStore:
     def __init__(self):
         self._rows: dict[tuple[str, str, str], StoredResponse] = {}

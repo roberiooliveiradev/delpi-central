@@ -160,21 +160,22 @@ class Attachment:
     # + its items_id. Empty = association unknown (consolidated area).
     itemtype: str = ""
     items_id: int | None = None
-    # Upload authorship verification (legacy write runs on the technical
-    # session): verified | restored | mismatch | unverified. Empty on reads.
+    # Upload authorship read-back (legacy write runs on the actor's OWN
+    # session): verified | mismatch | unverified. Empty on reads.
     author_state: str = ""
 
 
 @dataclass(frozen=True)
 class CycleWriteOutcome:
-    """Result of the legacy accept/reject cycle write (H10 Branch B).
+    """Result of the accept/reject cycle write.
 
-    The write itself runs on the bounded technical session, so GLPI stamps
-    ITILFollowup.users_id with the uploader. `author_state` reports whether
-    the persisted author was verified against the OAuth-resolved actor:
-    `verified` (POST carried users_id or read-back matched), `restored`
-    (bounded PUT corrected it), `mismatch` (read-back shows another user)
-    or `unverified` (read-back unavailable/ambiguous).
+    The write runs on the actor's OWN legacy session (minted from their
+    api_token), so GLPI stamps ITILFollowup.users_id with the actor at
+    creation — authorship by construction. `author_state` is the
+    complementary read-back proof: `verified` (persisted users_id matches
+    the OAuth-resolved actor), `mismatch` (provably another user) or
+    `unverified` (read-back unavailable/ambiguous). Nothing is repaired
+    retroactively.
     """
 
     followup_id: int | None
