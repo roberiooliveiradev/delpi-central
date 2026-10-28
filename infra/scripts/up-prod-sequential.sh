@@ -143,6 +143,7 @@ FASE_MFE=(
   my-requests
   helpdesk
   cultura-delpi
+  engineering
   delia
   codigo-etica
   guias-procedimentos
