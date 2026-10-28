@@ -3,8 +3,10 @@
 `GET/POST /closing/received-documents*` — projeção restrita do mesmo
 domínio (doc 91 Opção B, Plano 113 §29, doc 112 §54):
 
-- capability `controllership-finance.closing-documents.read` efetiva —
-  NÃO implica `access`/`manage` e não alcança nenhuma rota interna;
+- capability `controllership-finance.access.dre` efetiva (RW02 —
+  oficial) ou a legada `controllership-finance.closing-documents.read`
+  em compatibilidade transitória — NENHUMA implica `access`/`manage`
+  e nenhuma alcança rota interna;
 - vínculo RECIPIENT + pacote SUBMITTED + membership no conjunto
   liberado são reavaliados por request no serviço — a permission
   sozinha não revela recurso algum (fail-closed);

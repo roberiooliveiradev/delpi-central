@@ -7,10 +7,13 @@ Contrato congelado IMP-MFE-HOME (doc 45 §14.1; decisões D1=A e D2=A):
 - Core é a authority de effective permissions (populadas pelo middleware
   compartilhado a partir de ``/me`` — nunca do JWT);
 - exige ``controllership-finance.access`` OU
-  ``controllership-finance.closing-documents.read`` (DRE-019 — o
-  destinatário externo também é viewer do produto; o payload limita a
-  UI, a autorização efetiva continua em cada rota);
-- ``manage`` não implica ``access``; ``read`` não implica ``access``;
+  ``controllership-finance.access.dre`` (RW02 — capability oficial da
+  experiência DRE) OU a legada ``closing-documents.read`` em
+  compatibilidade transitória (o destinatário externo também é viewer
+  do produto; o payload limita a UI, a autorização efetiva continua
+  em cada rota);
+- ``manage`` não implica ``access``; capabilities DRE não implicam
+  ``access``;
 - ``rbac_unavailable`` (Core indisponível sem snapshot válido) falha fechado
   com 503 — nunca converte indisponibilidade em autorização local;
 - leitura adere à política D1: o middleware já aplica stale ≤900s para
@@ -32,6 +35,7 @@ MANAGE_PERMISSION = "controllership-finance.manage"
 READ_DOCUMENTS_PERMISSION = (
     "controllership-finance.closing-documents.read"
 )
+DRE_ACCESS_PERMISSION = "controllership-finance.access.dre"
 
 router = APIRouter(tags=["Viewer"])
 
@@ -68,6 +72,7 @@ def get_viewer_context(request: Request):
         raise Exception("Service Unavailable")
     if not (
         has_permission(user, ACCESS_PERMISSION)
+        or has_permission(user, DRE_ACCESS_PERMISSION)
         or has_permission(user, READ_DOCUMENTS_PERMISSION)
     ):
         raise Exception("Forbidden")
@@ -85,6 +90,7 @@ def get_viewer_context(request: Request):
                 "closingDocumentsRead": has_permission(
                     user, READ_DOCUMENTS_PERMISSION
                 ),
+                "accessDre": has_permission(user, DRE_ACCESS_PERMISSION),
             },
         },
         operation_id="get_viewer_context",

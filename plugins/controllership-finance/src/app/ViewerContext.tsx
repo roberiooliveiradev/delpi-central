@@ -28,6 +28,7 @@ const ViewerContextContext = createContext<ViewerContextValue | null>(null);
 const CAPABILITIES_FALLBACK: ViewerCapabilities = {
   access: false,
   manage: false,
+  accessDre: false,
   closingDocumentsRead: false,
 };
 

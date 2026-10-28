@@ -89,8 +89,9 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
 
   const showManage = viewer?.capabilities.manage === true;
 
-  // DRE-019 — o destinatário externo (somente `closing-documents.read`,
-  // sem `access`) não vê navegação interna nem a busca do catálogo:
+  // DRE-019/RW02 — o destinatário externo (`access.dre` ou a legada
+  // `closing-documents.read`, ambas sem `access`) não vê navegação
+  // interna nem a busca do catálogo:
   // as entradas são projeções das áreas internas do produto. Enquanto o
   // viewer carrega (null), o shell mostra a navegação padrão — a BFF
   // continua autoridade final se uma rota interna for acessada.

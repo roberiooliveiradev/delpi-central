@@ -28,21 +28,29 @@ describe("controllership-finance manifest", () => {
     assert.equal(manifest.ui.renderMode, "federated");
   });
 
-  it("permissions congeladas: access/manage + capability do destinatário", () => {
+  it("permissions congeladas: access/manage + access.dre + legada em migração", () => {
     const codes = manifest.permissions.map((p) => p.code).sort();
     assert.deepEqual(codes, [
       "controllership-finance.access",
+      "controllership-finance.access.dre",
       "controllership-finance.closing-documents.read",
       "controllership-finance.manage",
     ]);
-    assert.equal(manifest.permissions.length, 3);
+    assert.equal(manifest.permissions.length, 4);
     for (const p of manifest.permissions) {
       assert.equal(p.module, "controllership-finance");
     }
+    // RW02 — a legada permanece declarada (marcada DEPRECATED) até a
+    // homologação do papel DRE; removê-la aqui quebraria destinatários
+    // provisionados antes da remoção governada.
+    const legacy = manifest.permissions.find(
+      (p) => p.code === "controllership-finance.closing-documents.read",
+    );
+    assert.match(legacy.description, /DEPRECATED/);
   });
 
   it("somente rotas implementadas publicadas, cada uma com sua permission", () => {
-    assert.equal(manifest.routes.length, 11);
+    assert.equal(manifest.routes.length, 13);
     const [
       home,
       settlements,
@@ -54,6 +62,8 @@ describe("controllership-finance manifest", () => {
       cockpit,
       monthlyClosing,
       claraConsent,
+      documents,
+      dreHome,
       receivedDocuments,
     ] = manifest.routes;
     assert.equal(home.path, "/apps/controllership-finance");
@@ -110,11 +120,26 @@ describe("controllership-finance manifest", () => {
     );
     assert.equal(claraConsent.permission, "controllership-finance.access");
     assert.equal(claraConsent.showInMenu, false);
-    // DRE-019 — rota dedicada do destinatário externo sob a capability
-    // de consulta documental; não herda .access nem entra no menu interno.
+    // DRE-019-RW02 — Documentos e interações canônico sob access.dre.
+    assert.equal(
+      documents.path,
+      "/apps/controllership-finance/closing/documents",
+    );
+    assert.equal(
+      documents.permission,
+      "controllership-finance.access.dre",
+    );
+    assert.equal(documents.showInMenu, false);
+    // Home DRE — ponto de entrada visível do público externo; a correção
+    // RW01 do Portal a escolhe como primeira rota visível autorizada.
+    assert.equal(dreHome.path, "/apps/controllership-finance/home");
+    assert.equal(dreHome.permission, "controllership-finance.access.dre");
+    assert.equal(dreHome.showInMenu, true);
+    // Compat transitória: mesma experiência para a capability legada até
+    // a migração governada do papel DRE (remover junto com a permission).
     assert.equal(
       receivedDocuments.path,
-      "/apps/controllership-finance/closing/documents",
+      "/apps/controllership-finance/received-documents",
     );
     assert.equal(
       receivedDocuments.permission,
@@ -124,7 +149,12 @@ describe("controllership-finance manifest", () => {
     for (const route of manifest.routes) {
       if (route.path.endsWith("/admin")) {
         assert.equal(route.permission, "controllership-finance.manage");
-      } else if (route.path.endsWith("/closing/documents")) {
+      } else if (
+        route.path.endsWith("/closing/documents") ||
+        route.path.endsWith("/home")
+      ) {
+        assert.equal(route.permission, "controllership-finance.access.dre");
+      } else if (route.path.endsWith("/received-documents")) {
         assert.equal(
           route.permission,
           "controllership-finance.closing-documents.read",

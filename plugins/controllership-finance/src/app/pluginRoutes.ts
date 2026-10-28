@@ -24,12 +24,16 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  *   uma versão em página completa (UX-015, substitui o modal).
  * - `received_documents` — «Documentos e interações» do destinatário
  *   externo (DRE-019): projeção restrita `closing/documents` sob a
- *   capability `closing-documents.read`, sem as três abas internas.
+ *   capability `access.dre` (legada `closing-documents.read` segue na
+ *   rota compat `received-documents`), sem as três abas internas.
+ * - `dre_home` — página inicial do público DRE (RW02): saudação +
+ *   funcionalidade «Fechamento Mensal» → Documentos e interações.
  * Rotas futuras (Visão geral dedicada, Sala de interação, Ajuda)
  * entram aqui apenas quando implementadas.
  */
 export type PluginView =
   | "home"
+  | "dre_home"
   | "financial_settlements"
   | "stock_inventory"
   | "checklist"
@@ -64,11 +68,13 @@ export type PluginNavigationTarget =
   | "cockpit"
   | "monthly_closing"
   | "received_documents"
+  | "dre_home"
   | "my_tasks"
   | "profile";
 
 /** Mapa rota relativa → view (paths técnicos em inglês, kebab-case). */
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
+  "home": "dre_home",
   "closing/financial-settlements": "financial_settlements",
   "closing/stock-inventory": "stock_inventory",
   "closing/checklist": "checklist",
@@ -78,6 +84,10 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/cockpit": "cockpit",
   "closing/monthly-closing": "monthly_closing",
   "closing/documents": "received_documents",
+  // Compatibilidade transitória da capability legada (RW02): a rota
+  // `received-documents` serve a mesma experiência para quem ainda tem
+  // somente `closing-documents.read`; remover junto com a permission.
+  "received-documents": "received_documents",
   "closing/my-tasks": "my_tasks",
   "closing/admin/catalogs": "catalogs_admin",
   "closing/admin/documents": "documents_admin",
@@ -95,6 +105,7 @@ const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> 
   cockpit: "closing/cockpit",
   monthly_closing: "closing/monthly-closing",
   received_documents: "closing/documents",
+  dre_home: "home",
   my_tasks: "closing/my-tasks",
   catalogs_admin: "closing/admin/catalogs",
   documents_admin: "closing/admin/documents",
@@ -136,13 +147,20 @@ const ADMIN_VERSION_DETAIL_PATTERN =
 const ADMIN_VERSION_DOCUMENT_PATTERN =
   /^closing\/admin\/versions\/(\d+)\/documents\/([^/]{1,64})$/;
 
-/** Entrega da competência ao destinatário externo (DRE-019). */
+/** Entrega da competência ao destinatário externo (DRE-019 + compat RW02). */
 const RECEIVED_DELIVERY_PATTERN =
-  /^closing\/documents\/(\d{4}-(0[1-9]|1[0-2]))$/;
+  /^(?:closing\/documents|received-documents)\/(\d{4}-(0[1-9]|1[0-2]))$/;
 
-/** Detalhe do documento recebido (DRE-019) — deep route contextual. */
+/** Detalhe do documento recebido (DRE-019 + compat RW02) — deep route. */
 const RECEIVED_DOCUMENT_PATTERN =
-  /^closing\/documents\/(\d{4}-(0[1-9]|1[0-2]))\/documents\/([A-Za-z0-9_.:%~-]+)$/;
+  /^(?:closing\/documents|received-documents)\/(\d{4}-(0[1-9]|1[0-2]))\/documents\/([A-Za-z0-9_.:%~-]+)$/;
+
+/** Base relativa da experiência do destinatário conforme a rota usada. */
+export function receivedDocumentsBase(relativePath: string): string {
+  return relativePath.startsWith("received-documents")
+    ? "received-documents"
+    : "closing/documents";
+}
 
 export type ResolvedPluginRoute = {
   view: PluginView;

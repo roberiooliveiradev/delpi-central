@@ -20,6 +20,7 @@ from controllership_finance_app.main import app
 ACCESS = "controllership-finance.access"
 MANAGE = "controllership-finance.manage"
 READ_DOCS = "controllership-finance.closing-documents.read"
+ACCESS_DRE = "controllership-finance.access.dre"
 
 TOKEN = "viewer-test-token"
 
@@ -112,6 +113,7 @@ def test_viewer_context_human_with_access_returns_200(_auth_pipeline):
             "access": True,
             "manage": False,
             "closingDocumentsRead": False,
+            "accessDre": False,
         },
     }
 
@@ -124,6 +126,7 @@ def test_viewer_context_access_plus_manage(_auth_pipeline):
         "access": True,
         "manage": True,
         "closingDocumentsRead": False,
+        "accessDre": False,
     }
 
 
@@ -137,6 +140,34 @@ def test_viewer_context_recipient_capability_only(_auth_pipeline):
         "access": False,
         "manage": False,
         "closingDocumentsRead": True,
+        "accessDre": False,
+    }
+
+
+def test_viewer_context_dre_capability_only(_auth_pipeline):
+    """RW02: `access.dre` oficial também entra como viewer sem `access` —
+    capability distinta da legada, igualmente restrita à experiência DRE."""
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS_DRE])
+    response = _get(_client())
+    assert response.status_code == 200
+    assert response.json()["data"]["capabilities"] == {
+        "access": False,
+        "manage": False,
+        "closingDocumentsRead": False,
+        "accessDre": True,
+    }
+
+
+def test_viewer_context_dre_and_legacy_capabilities_together(_auth_pipeline):
+    """Usuário com as duas capabilities durante a migração: ambas reportadas."""
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS_DRE, READ_DOCS])
+    response = _get(_client())
+    assert response.status_code == 200
+    assert response.json()["data"]["capabilities"] == {
+        "access": False,
+        "manage": False,
+        "closingDocumentsRead": True,
+        "accessDre": True,
     }
 
 
@@ -282,6 +313,7 @@ def test_viewer_context_human_superadmin_gets_manage_capability(_auth_pipeline):
         "access": True,
         "manage": True,
         "closingDocumentsRead": True,
+        "accessDre": True,
     }
 
 

@@ -9,6 +9,7 @@ import {
   normalizeBasePath,
   normalizePathname,
   resolveActiveNavId,
+  receivedDocumentsBase,
   resolvePluginRoute,
 } from "./pluginRoutes";
 
@@ -210,6 +211,53 @@ describe("pluginRoutes", () => {
     ]) {
       expect(resolvePluginRoute(path).view).toBe("not_found");
     }
+  });
+
+  it("resolve a Home DRE (RW02) e monta o path de entrada", () => {
+    const resolved = resolvePluginRoute("/apps/controllership-finance/home");
+    expect(resolved.view).toBe("dre_home");
+    expect(resolved.relativePath).toBe("home");
+    expect(buildPluginPath("dre_home")).toBe(
+      "/apps/controllership-finance/home",
+    );
+  });
+
+  it("rota legada received-documents serve a mesma experiência (compat RW02)", () => {
+    const list = resolvePluginRoute(
+      "/apps/controllership-finance/received-documents",
+    );
+    expect(list.view).toBe("received_documents");
+    expect(receivedDocumentsBase(list.relativePath)).toBe(
+      "received-documents",
+    );
+
+    const delivery = resolvePluginRoute(
+      "/apps/controllership-finance/received-documents/2026-10",
+    );
+    expect(delivery.view).toBe("received_documents");
+    expect(delivery.checklistPeriod).toBe("2026-10");
+
+    const doc = resolvePluginRoute(
+      "/apps/controllership-finance/received-documents/2026-10/documents/abc-123",
+    );
+    expect(doc.view).toBe("received_documents");
+    expect(doc.checklistPeriod).toBe("2026-10");
+    expect(doc.documentRef).toBe("abc-123");
+  });
+
+  it("receivedDocumentsBase acompanha o entrypoint autorizado", () => {
+    expect(receivedDocumentsBase("closing/documents")).toBe(
+      "closing/documents",
+    );
+    expect(receivedDocumentsBase("closing/documents/2026-10")).toBe(
+      "closing/documents",
+    );
+    expect(receivedDocumentsBase("received-documents")).toBe(
+      "received-documents",
+    );
+    expect(receivedDocumentsBase("received-documents/2026-10/documents/x")).toBe(
+      "received-documents",
+    );
   });
 
   it("resolve a rota do checklist da competência", () => {

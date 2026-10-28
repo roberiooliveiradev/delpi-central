@@ -3,7 +3,10 @@ import { cfApiUrl, httpGet } from "./httpClient";
 export type ViewerCapabilities = {
   access: boolean;
   manage: boolean;
-  /** DRE-019 — consulta documental do destinatário externo; não
+  /** DRE-019-RW02 — capability oficial da experiência DRE (Home DRE +
+   * Documentos e interações); não implica `access`. */
+  accessDre: boolean;
+  /** DRE-019 — capability legada em compatibilidade transitória; não
    * implica `access` (a capability não libera áreas internas). */
   closingDocumentsRead: boolean;
 };
@@ -38,6 +41,7 @@ export async function getViewerContext(options?: {
     capabilities: {
       access: Boolean(data?.capabilities?.access),
       manage: Boolean(data?.capabilities?.manage),
+      accessDre: Boolean(data?.capabilities?.accessDre),
       closingDocumentsRead: Boolean(
         data?.capabilities?.closingDocumentsRead,
       ),

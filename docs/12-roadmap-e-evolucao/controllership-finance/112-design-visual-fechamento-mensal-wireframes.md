@@ -2271,3 +2271,7 @@ Controladoria & Finanças › Fechamento mensal
 ### 54.7 Dependências de gate antes de runtime
 
 Estes wireframes só viram implementação após o gate de arquitetura `DRE-ACCESS-018` (Plano 113 §29): identidade/entitlement do destinatário, estado de liberação do documento, projeção BFF restrita, contrato de comentário/solicitação com audiência, entrada/permission (decisão Opção B do Doc 91) e matriz RQ/AC do ledger 23. `IMPLEMENTATION_AUTHORIZED=NO` nesta seção.
+
+### 54.8 RW02 — entrada pela Home DRE (implementado 2026-10-28)
+
+Com a capability `controllership-finance.access.dre`, o fluxo ganha um nível de entrada: **Portal raiz → Home DRE → «Fechamento Mensal» → N1–N3** desta seção. A Home DRE reutiliza os primitivos da Home interna (`CfSectionCard` + `CfSectionRouteCard`): saudação honesta e um único card «Fechamento Mensal» que abre Documentos e interações — sem Visão geral, Relatórios e divergências, Administração, dashboards ou placeholders de métricas internas. As quatro telas N1–N4 permanecem inalteradas; a barra de três abas internas não existe nesta experiência (o destinatário tem uma única área). Compat transitória: a legada `closing-documents.read` alcança a mesma experiência via rota alias `received-documents` até a migração do papel.

@@ -109,3 +109,4 @@ Gate resolvido pela execução governada `CF-PROC0072-DRE-ACCESS-019`, autorizad
 - Rota implementada: `/apps/controllership-finance/closing/documents` (substitui o candidato `closing/accounting-documents` — alinhada ao nome da área «Documentos e interações»).
 - Liberação: assignment `RECIPIENT` + pacote `SUBMITTED`; destinatário sem aceite P5 na V1, conforme §1.
 - Contrato, projeção, testes e rollback: [doc 115](./115-dre-access-019-documentos-recebidos-gate-91-implementacao.md).
+- RW02 (2026-10-28): permission de entrada substituída por `controllership-finance.access.dre` (mesma Opção B, agora como capability de acesso ao Portal, não de recurso documental); `closing-documents.read` permanece em compatibilidade transitória até homologação do papel DRE — detalhes no doc 115 §10.

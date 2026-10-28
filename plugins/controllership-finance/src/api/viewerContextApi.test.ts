@@ -26,6 +26,7 @@ describe("viewerContextApi", () => {
         capabilities: {
           access: true,
           manage: false,
+          accessDre: false,
           closingDocumentsRead: false,
         },
       }),
@@ -37,6 +38,7 @@ describe("viewerContextApi", () => {
       capabilities: {
         access: true,
         manage: false,
+        accessDre: false,
         closingDocumentsRead: false,
       },
     });
@@ -55,18 +57,20 @@ describe("viewerContextApi", () => {
       capabilities: {
         access: false,
         manage: false,
+        accessDre: false,
         closingDocumentsRead: false,
       },
     });
   });
 
-  it("destinatário externo: closingDocumentsRead sem access", async () => {
+  it("destinatário externo: closingDocumentsRead sem access (legada)", async () => {
     fetchMock.mockResolvedValueOnce(
       okEnvelope({
         firstName: "Bruno",
         capabilities: {
           access: false,
           manage: false,
+          accessDre: false,
           closingDocumentsRead: true,
         },
       }),
@@ -75,7 +79,29 @@ describe("viewerContextApi", () => {
     expect(ctx.capabilities).toEqual({
       access: false,
       manage: false,
+      accessDre: false,
       closingDocumentsRead: true,
+    });
+  });
+
+  it("destinatário externo: accessDre sem access (RW02)", async () => {
+    fetchMock.mockResolvedValueOnce(
+      okEnvelope({
+        firstName: "Carla",
+        capabilities: {
+          access: false,
+          manage: false,
+          accessDre: true,
+          closingDocumentsRead: false,
+        },
+      }),
+    );
+    const ctx = await getViewerContext();
+    expect(ctx.capabilities).toEqual({
+      access: false,
+      manage: false,
+      accessDre: true,
+      closingDocumentsRead: false,
     });
   });
 

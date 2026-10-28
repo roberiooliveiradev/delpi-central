@@ -1053,6 +1053,7 @@ Mapeamento dos quatro níveis do doc 112 §54 para componentes homologados. **Ne
 | Histórico auditável | `createTimeline` → `CfTimeline` | entrega/versões/solicitações |
 | Estados honestos | `EmptyGuidance`/`EmptyState`/`LoadingState`/`CfFeedbackMessage`/`StateBanner` | zero docs, sem entrega, erro, read-only |
 | Help contextual | `headerHint`/`searchHint`/`hintedLabel`/`HelpTooltip` + `CF_HELP.*` | todas as superfícies |
+| Home DRE (RW02) | `CfSectionCard` + `CfSectionRouteCard` (mesmos da Home interna) | saudação + card «Fechamento Mensal» → Documentos e interações |
 
 **Reuso de componentes CF existentes:** `DocumentDetailPanel` e `DocumentConversationPanel` já implementam preview+download+versões+conversa — reutilização possível **somente** sobre o novo contrato de projeção DRE (DTO distinto, actions política restrita); não plugar direto nos endpoints internos. `PackagesPage`/`MonthlyDocumentsPanel` servem de referência visual, não de consumo de dados.
 

@@ -23,6 +23,10 @@ MANAGE_PERMISSION = "controllership-finance.manage"
 READ_DOCUMENTS_PERMISSION = (
     "controllership-finance.closing-documents.read"
 )
+# DRE-019-RW02 — capability oficial da experiência DRE. A legada
+# `closing-documents.read` permanece aceita SOMENTE nas superfícies DRE
+# durante a migração governada (doc 115 §10); removê-la exige gate.
+DRE_ACCESS_PERMISSION = "controllership-finance.access.dre"
 
 
 def _human_user(request: Request):
@@ -45,15 +49,19 @@ def authorized_user(request: Request):
 
 
 def authorized_documents_reader(request: Request):
-    """Usuário humano com `closing-documents.read` efetivo (DRE-019).
+    """Usuário humano com capability DRE efetiva (DRE-019/RW02).
 
-    Capability documental restrita do destinatário externo — NÃO implica
-    `access` nem `manage` e nunca libera rotas internas. O vínculo de
-    entrega (RECIPIENT assignment + pacote SUBMITTED) é verificado na
-    camada de serviço; a permission sozinha não libera documento algum.
+    `access.dre` é a permission oficial; `closing-documents.read` é a
+    legada em compatibilidade transitória — nenhuma implica `access`
+    nem `manage` e nenhuma libera rotas internas. O vínculo de entrega
+    (RECIPIENT assignment + pacote SUBMITTED) é verificado na camada
+    de serviço; a permission sozinha não libera documento algum.
     """
     user = _human_user(request)
-    if not has_permission(user, READ_DOCUMENTS_PERMISSION):
+    if not (
+        has_permission(user, DRE_ACCESS_PERMISSION)
+        or has_permission(user, READ_DOCUMENTS_PERMISSION)
+    ):
         raise Exception("Forbidden")
     return user
 

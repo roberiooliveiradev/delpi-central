@@ -107,3 +107,38 @@ Revisão arquitetural externa: não autodeclarada — aguarda GATE.
 **Deploy:** `srv-api` `pull --ff-only` + `up-prod-sequential.sh --build portal`; `delpi-portal` saudável em `ccc8f3a235`.
 
 **Pendente:** smoke autenticado end-to-end com identidade DRE provisionada (grant `closing-documents.read` no Core) — **TEST_NOT_RUN** até o grant existir; validar: entrada sem `/unauthorized`, `closing/documents` renderizado, rotas internas bloqueadas.
+
+## 10. RW02 — `access.dre`, Home DRE e migração governada da capability (2026-10-28)
+
+**Decisão do PO:** a entrada documental `closing-documents.read` é substituída por uma permission de acesso ao Portal específica da DRE — `controllership-finance.access.dre` — separando acesso interno DELPI, gestão e acesso externo DRE. O usuário DRE passa a entrar pela raiz do Portal, ver uma **Home DRE** restrita, abrir «Fechamento Mensal» e chegar à mesma experiência de Documentos e interações. Nenhum segundo Portal/MFE/BFF criado.
+
+**Contrato de migração (compat transitória, sem big bang):**
+
+| Camada | Antes (RW01) | Depois (RW02) |
+|---|---|---|
+| Manifesto | 3 permissions, 11 rotas | 4 permissions, 13 rotas |
+| `closing/documents` | `closing-documents.read` | `access.dre` (canônico) |
+| `received-documents` | — | `closing-documents.read` (alias compat, fora do menu) |
+| `home` | — | `access.dre`, `showInMenu` (Home DRE — entrada do público) |
+| BFF `authorized_documents_reader` | read apenas | `access.dre` OR read |
+| `/viewer-context` | access OR read | access OR `access.dre` OR read; capabilities `+accessDre` |
+| MFE | recipient-only → `closing/documents` | `access.dre` → `dre_home`+`received_documents`; legada read → `received_documents` via alias |
+
+**Mecânica de entrada:** a correção RW01 do Portal (`resolveAuthorizedEntryPath`, convenção do launcher `visibleRoutes[0] ?? routes[0]`) resolve o resto sem evolução de contrato do Core: `/home` é a única rota DRE visível no menu, então no basePath o usuário `access.dre` é redirecionado à Home DRE e o usuário legado à rota `received-documents`. Rotas internas negadas seguem `/unauthorized`. `DECISION_REQUIRED` não acionado — o modelo de rotas existente comporta os três públicos.
+
+**Implementação:**
+
+- `authz.py`: `DRE_ACCESS_PERMISSION` adicionada; `authorized_documents_reader` aceita `access.dre` OR legada — somente no boundary DRE; `authorized_user`/`authorized_admin` inalterados (testado: `access.dre` não abre rota interna).
+- `viewer-context`: gate `access OR access.dre OR read`; capabilities `{access, manage, accessDre, closingDocumentsRead}` distintas.
+- MFE: view `dre_home` (`/home`) + `DreHomePage` (mesmos primitivos da Home interna — `CfSectionCard`/`CfSectionRouteCard` — saudação honesta + card «Fechamento Mensal» → Documentos e interações; nenhuma rota interna, relatório ou métrica). `resolvePluginRoute` aceita `received-documents` (+ deep routes) como alias da mesma view; `receivedDocumentsBase()` mantém deep links dentro do entrypoint autorizado. Redirect de segurança por capability: `access.dre` sem `access` → apenas `dre_home`/`received_documents`; legada sem `access`/`access.dre` → `received_documents`.
+- Proteção documental inalterada: capability → `RECIPIENT` → `SUBMITTED` → snapshot, 404 anti-vazamento, download auditado, mensagens `SHARED`, OPEN→ANSWERED→CONFIRMED.
+
+**Testes:** `manifestContract` (4 permissions/13 rotas, DEPRECATED marcado na legada), `pluginRoutes` (dre_home, alias, deep links, `receivedDocumentsBase`), `viewerContextApi` (+`accessDre`, legada e nova isoladas), `test_viewer_context` (`access.dre` only, read only, ambas — 28 casos), `test_dre_authz` novo (boundary: aceita dre/legada, nega access/manage/vazio, `access.dre` ≠ access/manage, fail-closed 503, service principal, bypass superadmin). Vitest 379/380 (1 flake de timing pré-existente, passa isolado); backend 492 passed.
+
+**Ordem de rollout (governada):** (1) deploy BFF+MFE — compat já ativa, nada muda para usuários existentes; (2) **PO importa o manifesto** no Core (`plugins/controllership-finance/controllership-finance.manifest.json`); (3) PO atribui `access.dre` ao papel DRE; (4) homologar com identidade somente `access.dre`: entrada → Home DRE → Fechamento Mensal → Documentos e interações, áreas internas bloqueadas; (5) grants legados `closing-documents.read` **permanecem** até homologação explícita; remoção da compat = gate posterior próprio.
+
+**Rollback:** manifesto anterior no Core cobre legado; revert do commit restaura BFF/MFE. A remoção da permission legada do manifesto exige nova execução — não fazer inline.
+
+**Risco residual:** link antigo `/closing/documents` salvo por usuário *somente-legado* nega após a importação (rota passa a exigir `access.dre`) — mitigado pela entrada do app, que redireciona à rota autorizada `received-documents`; janela fecha quando o papel recebe `access.dre`.
+
+**Pendente:** importação do manifesto + grant `access.dre` pelo PO; smoke autenticado end-to-end — **TEST_NOT_RUN** até a identidade/grant existir.

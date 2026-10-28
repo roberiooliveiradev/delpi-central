@@ -23,8 +23,14 @@
     },
     {
       "code": "controllership-finance.closing-documents.read",
-      "name": "Consultar documentos recebidos do fechamento",
-      "description": "Consulta documental do destinatário externo (DRE): fechamentos efetivamente disponibilizados, visualização/download de PDFs, mensagens e solicitações de revisão. Não concede acesso às áreas internas do produto.",
+      "name": "Consultar documentos recebidos do fechamento (legada — em migração)",
+      "description": "DEPRECATED — transição governada para controllership-finance.access.dre (doc 115 §10). Mantida temporariamente para não revogar acesso de destinatários já provisionados; remover após homologação do papel DRE.",
+      "module": "controllership-finance"
+    },
+    {
+      "code": "controllership-finance.access.dre",
+      "name": "Acessar Portal Controladoria & Finanças — DRE",
+      "description": "Acesso à experiência da Contabilidade/DRE no Portal Controladoria & Finanças, incluindo página inicial, fechamentos recebidos, documentos disponibilizados, downloads autorizados e interações. Não concede acesso às funcionalidades internas de gestão e relatórios.",
       "module": "controllership-finance"
     }
   ],
@@ -112,9 +118,25 @@
     {
       "path": "/apps/controllership-finance/closing/documents",
       "label": "Documentos recebidos",
-      "permission": "controllership-finance.closing-documents.read",
+      "permission": "controllership-finance.access.dre",
       "icon": "file-text",
       "order": 40,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/home",
+      "label": "Início — DRE",
+      "permission": "controllership-finance.access.dre",
+      "icon": "landmark",
+      "order": 41,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/controllership-finance/received-documents",
+      "label": "Documentos recebidos (rota legada)",
+      "permission": "controllership-finance.closing-documents.read",
+      "icon": "file-text",
+      "order": 42,
       "showInMenu": false
     }
   ],

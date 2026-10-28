@@ -764,3 +764,21 @@ Inventário read-only + desenho + gate de arquitetura (Plano 113 §29, wireframe
 | AC-DRE-14 | Sem superfícies proibidas: relatórios TOTVS, divergências, estoque, admin, upload, validação P2, aceite/revisão P5 | TEST_NOT_RUN |
 
 **Veredito do gate (não autodeclarado):** contratos existentes **insuficientes** — faltam representações de destinatário, liberação e audiência de conversa. `DECISION_REQUIRED` ×4 (ACCESS/RELEASE/PROJECTION/COLLAB) consolidado no Plano 113 §29.5 com alternativas, impactos e recomendação.
+
+### DRE-ACCESS-019-RW02 — migração `closing-documents.read` → `access.dre` + Home DRE (2026-10-28)
+
+| AC | Critério de aceite | Status |
+|---|---|---|
+| AC-RW02-01 | Manifesto declara `access`, `manage`, `access.dre` + legada DEPRECATED | PASS (contract test 4 permissions/13 rotas) |
+| AC-RW02-02 | `access.dre` apenas → viewer-context 200, `accessDre: true`, `access: false` | PASS (backend test) |
+| AC-RW02-03 | `access.dre` apenas → `/closing/documents` liberado no boundary documental | PASS (test_dre_authz) |
+| AC-RW02-04 | `access.dre` apenas → rotas internas/admin negadas (≠ `.access`, ≠ `.manage`) | PASS (test_dre_authz) |
+| AC-RW02-05 | Legada `closing-documents.read` apenas → mesma experiência via alias `received-documents` | PASS (rota+view testadas; deep links sob o entrypoint) |
+| AC-RW02-06 | Sem permissions → viewer-context 403 / `/unauthorized` | PASS (backend + guard RW01) |
+| AC-RW02-07 | Core indisponível → fail-closed (503) | PASS |
+| AC-RW02-08 | Home DRE renderiza saudação + card «Fechamento Mensal» → Documentos e interações | PASS (route+component; smoke visual TEST_NOT_RUN) |
+| AC-RW02-09 | Entrada no basePath redireciona à primeira rota visível autorizada (`/home` para DRE) | PASS (resolveAuthorizedEntryPath, convenção do launcher) |
+| AC-RW02-10 | Usuário interno `.access` → Home interna e 3 áreas preservadas | PASS (redirect por capability só atua sem `access`) |
+| AC-RW02-11 | Documentos filtrados por RECIPIENT+SUBMITTED+snapshot; download/mensagens/ajustes protegidos | PASS (proteção inalterada; PG suite DRE-019) |
+| AC-RW02-12 | Smoke autenticado end-to-end (Home DRE → docs → bloqueios) | TEST_NOT_RUN — requer import do manifesto + grant `access.dre` pelo PO |
+| AC-RW02-13 | Remoção da legada `closing-documents.read` | PENDING — gate posterior após homologação do papel |
