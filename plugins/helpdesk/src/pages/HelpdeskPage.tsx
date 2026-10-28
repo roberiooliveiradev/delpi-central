@@ -203,6 +203,7 @@ const MESSAGES: Record<string, string> = {
   not_found: "Este chamado não está disponível para você.",
   validation_error: "Revise os campos e envie de novo.",
   idempotency_key_required: "Não foi possível confirmar o envio. Atualize a página e tente outra vez.",
+  idempotency_in_flight: "Uma tentativa anterior pode ter sido concluída. Verifique o chamado antes de enviar de novo.",
   catalog_unavailable: "Não foi possível carregar as categorias do helpdesk.",
 };
 
