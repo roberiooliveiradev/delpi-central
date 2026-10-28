@@ -7,10 +7,17 @@ import {
 } from "react";
 import { formatPortalGreeting } from "@delpi/plugin-ui/index";
 import {
+  BookOpen,
   Briefcase,
+  ChartColumn,
+  ChartNoAxesCombined,
+  ClipboardCheck,
   ClipboardList,
   Compass,
+  House,
   LifeBuoy,
+  RefreshCw,
+  Sparkles,
 } from "lucide-react";
 
 import { getDisplayNameFromAccessToken } from "../../app/authDisplayName";
@@ -53,6 +60,16 @@ const SECTION_ICONS: Record<string, ReactNode> = {
   work: <Briefcase size={20} aria-hidden="true" />,
   insights: <Compass size={20} aria-hidden="true" />,
   support: <LifeBuoy size={20} aria-hidden="true" />,
+};
+
+const ROUTE_ICONS: Record<string, ReactNode> = {
+  my_requests: <ClipboardList size={16} aria-hidden="true" />,
+  lmps: <ClipboardCheck size={16} aria-hidden="true" />,
+  overview: <ChartColumn size={16} aria-hidden="true" />,
+  dashboard: <ChartNoAxesCombined size={16} aria-hidden="true" />,
+  home: <House size={16} aria-hidden="true" />,
+  help: <BookOpen size={16} aria-hidden="true" />,
+  eva: <Sparkles size={16} aria-hidden="true" />,
 };
 
 function openItem(item: HomeItem): void {
@@ -163,7 +180,13 @@ export function HomePage({
             variant="ghost"
             onClick={reload}
             disabled={refreshing}
+            aria-label={
+              refreshing
+                ? copy.hero.refreshingLabel
+                : copy.hero.refreshLabel
+            }
           >
+            <RefreshCw size={16} aria-hidden="true" />
             {refreshing
               ? copy.hero.refreshingLabel
               : copy.hero.refreshLabel}
@@ -188,8 +211,20 @@ export function HomePage({
             emptyMessage={copy.events.emptyLabel}
             items={eventItems}
             actions={
-              <EngineeringActionButton variant="ghost" onClick={reload}>
-                {copy.events.refreshLabel}
+              <EngineeringActionButton
+                variant="ghost"
+                onClick={reload}
+                disabled={refreshing}
+                aria-label={
+                  refreshing
+                    ? copy.hero.refreshingLabel
+                    : copy.events.refreshLabel
+                }
+              >
+                <RefreshCw size={16} aria-hidden="true" />
+                {refreshing
+                  ? copy.hero.refreshingLabel
+                  : copy.events.refreshLabel}
               </EngineeringActionButton>
             }
           >
@@ -265,6 +300,7 @@ export function HomePage({
                       routes={section.routes.map((route) => ({
                         id: route.id,
                         label: route.label,
+                        icon: ROUTE_ICONS[route.id],
                         disabled: route.comingSoon,
                         badge: route.comingSoon
                           ? copy.features.comingSoonBadge

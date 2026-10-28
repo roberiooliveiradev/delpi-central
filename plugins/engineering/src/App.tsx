@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
 import { EngineeringPluginShell } from "./app/EngineeringPluginShell";
@@ -35,12 +35,12 @@ export default function App({
   permissions,
   isSuperadmin,
 }: AppProps) {
-  useEffect(() => {
-    // Getter sempre vem do host — sem fallback local. A limpeza no
-    // unmount (bootstrap → resetHttpClient) garante que nenhum callback
-    // de sessão anterior fique disponível após a remontagem.
-    if (getAccessToken) configureHttpClient(getAccessToken);
-  }, [getAccessToken]);
+  // Getter sempre vem do host — sem fallback local. Configurado no
+  // render (mesmo padrão do Comercial): effects de filhos rodam antes
+  // dos do pai, então uma configuração em useEffect deixaria o primeiro
+  // fetch sem Bearer. A limpeza no unmount (bootstrap → resetHttpClient)
+  // garante que nenhum callback de sessão anterior sobrevive à remontagem.
+  if (getAccessToken) configureHttpClient(getAccessToken);
 
   const basePath = ENGINEERING_BASE_PATH;
   const resolved = resolveEngineeringRoute(pathname, basePath);

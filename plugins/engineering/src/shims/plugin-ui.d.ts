@@ -1031,6 +1031,7 @@ declare module "@delpi/plugin-ui/index" {
     id: string;
     label: string;
     onClick: () => void;
+    icon?: ReactNode;
     badge?: string | number;
     disabled?: boolean;
     pinned?: boolean;

@@ -133,6 +133,18 @@
   cursor: not-allowed;
 }
 
+.delpi-ui-section-route-card__route-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+}
+
+.delpi-ui-section-route-card__route-label-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .delpi-ui-section-route-card__route-badge {
   flex-shrink: 0;
   min-width: 1.25rem;

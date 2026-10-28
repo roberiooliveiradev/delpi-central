@@ -147,4 +147,35 @@ describe("SectionRouteCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Favoritar" }));
     expect(onPinClick).toHaveBeenCalledTimes(1);
   });
+
+  it("renderiza ícone decorativo opcional antes do label da rota", () => {
+    const { container } = render(
+      <SectionRouteCard
+        classNames={sectionRouteCardBemClasses("cm")}
+        title="Operação"
+        routes={[
+          {
+            id: "with_icon",
+            label: "Minhas solicitações",
+            icon: <span data-testid="route-icon" />,
+            onClick: () => undefined,
+          },
+          {
+            id: "without_icon",
+            label: "Sem ícone",
+            onClick: () => undefined,
+          },
+        ]}
+      />,
+    );
+    const iconSlot = container.querySelector(
+      ".delpi-ui-section-route-card__route-icon",
+    );
+    expect(iconSlot).toBeTruthy();
+    expect(iconSlot?.getAttribute("aria-hidden")).toBe("true");
+    const buttons = container.querySelectorAll(
+      ".delpi-ui-section-route-card__route-label",
+    );
+    expect(buttons).toHaveLength(2);
+  });
 });

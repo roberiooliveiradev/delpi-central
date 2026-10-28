@@ -8,6 +8,8 @@ export type SectionRouteItem = {
   id: string;
   label: string;
   onClick: () => void;
+  /** Ícone decorativo à esquerda do label (aria-hidden). */
+  icon?: ReactNode;
   badge?: string | number;
   disabled?: boolean;
   pinned?: boolean;
@@ -28,7 +30,9 @@ export type SectionRouteCardClassNames = {
   badge: string;
   routes: string;
   route: string;
+  routeIcon: string;
   routeLabel: string;
+  routeLabelText: string;
   routeBadge: string;
   routePin: string;
   routePinPressed: string;
@@ -62,7 +66,12 @@ export function sectionRouteCardBemClasses(prefix: string): SectionRouteCardClas
     badge: pair(`${base}__badge`, `${ui}__badge`),
     routes: pair(`${base}__routes`, `${ui}__routes`),
     route: pair(`${base}__route`, `${ui}__route`),
+    routeIcon: pair(`${base}__route-icon`, `${ui}__route-icon`),
     routeLabel: pair(`${base}__route-label`, `${ui}__route-label`),
+    routeLabelText: pair(
+      `${base}__route-label-text`,
+      `${ui}__route-label-text`,
+    ),
     routeBadge: pair(`${base}__route-badge`, `${ui}__route-badge`),
     routePin: pair(`${base}__route-pin`, `${ui}__route-pin`),
     routePinPressed: pair(
@@ -137,7 +146,12 @@ export function SectionRouteCard({
                   onClick={route.onClick}
                   aria-label={routeAria}
                 >
-                  <span>{route.label}</span>
+                  {route.icon ? (
+                    <span className={classNames.routeIcon} aria-hidden={true}>
+                      {route.icon}
+                    </span>
+                  ) : null}
+                  <span className={classNames.routeLabelText}>{route.label}</span>
                   {route.badge != null && route.badge !== "" && route.badge !== 0 ? (
                     <span className={classNames.routeBadge} aria-hidden={true}>
                       {route.badge}
