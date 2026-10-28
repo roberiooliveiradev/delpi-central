@@ -1345,6 +1345,29 @@ services:
     networks:
       - delpi-network
 
+  engineering:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: engineering/Dockerfile
+      target: production
+
+    container_name: delpi-engineering
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   api-delpi-console:
     build:
       context: ../plugins

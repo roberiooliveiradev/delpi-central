@@ -1292,6 +1292,21 @@ services:
     networks:
       - delpi-network
 
+  engineering:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: engineering/Dockerfile
+
+    container_name: delpi-engineering
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   api-delpi-console:
     <<: *plugin-profile
     build:
