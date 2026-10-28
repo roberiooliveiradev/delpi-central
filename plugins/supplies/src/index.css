@@ -1440,19 +1440,19 @@
 
 /* X4.PROD-C1.R6-UX.R1 — obrigatório visível antes de validar, na criação e edição. */
 .dashboard-supplies-portal .sp-supplier-field--required {
-  border: 2px solid var(--sp-danger, #c62828);
+  border: 1px solid color-mix(in srgb, var(--sp-danger) 35%, var(--sp-border));
   border-radius: var(--sp-radius, 0.5rem);
   padding: 0.5rem;
 }
 
 .dashboard-supplies-portal .sp-supplier-field--required:focus-within {
-  outline: 2px solid var(--sp-danger, #c62828);
+  outline: 2px solid color-mix(in srgb, var(--sp-danger) 60%, var(--sp-border));
   outline-offset: 2px;
 }
 
 /* Erro de validação continua distinto da indicação permanente de obrigatório. */
 .dashboard-supplies-portal .sp-supplier-field--required.sp-supplier-field--invalid {
-  border-width: 2px;
+  border: 2px solid var(--sp-danger);
 }
 
 /* X4.PROD-C1.R6 — campo com erro de validação (cor + texto dedicado). */
