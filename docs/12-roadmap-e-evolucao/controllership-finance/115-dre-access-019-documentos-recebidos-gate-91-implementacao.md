@@ -84,3 +84,12 @@ Bugs reais encontrados e corrigidos pela cobertura PG: join obrigatório em `doc
 
 `EXECUTION` = **PASS** nas fases implementação/testes; `DEPLOY_PROD` = **PENDING** (governado).
 Revisão arquitetural externa: não autodeclarada — aguarda GATE.
+
+## 8. Evidência de deploy — 2026-10-27
+
+- `PROD_SHA`: `0695a1e68c` em `origin/main` (push fast-forward).
+- Deploy canônico `srv-api`: `git pull --ff-only` + `up-prod-sequential.sh --build controllership-finance-api controllership-finance`.
+- Migration `V018__recipient_document_delivery.sql` aplicada no startup (`migrations_startup_applied count=1`); API `healthy`.
+- Bundle MFE: `remoteEntry.js` HTTP 200.
+- Smoke de superfície não autenticado: `GET /closing/received-documents` → **401** (fail-closed).
+- Smoke autenticado interno + DRE: **TEST_NOT_RUN** — requer grant Core `closing-documents.read` e identidade de teste autorizada (provisionamento é responsabilidade do Core/administração; não improvisado em produção).
