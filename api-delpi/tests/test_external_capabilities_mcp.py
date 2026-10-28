@@ -223,3 +223,62 @@ def test_plugin_package_schemas_and_skill() -> None:
     assert "execute_delpi_information" in skill
     assert "RBAC" not in skill
     assert "ENGINEERING_LMP" not in skill
+
+
+# ---------------------------------------------------------------------------
+# Typed MCP error wire (task DELIA-C3-DAVI-EXCLUSIVE-COMPLETION-01):
+# every governed error carries an owner-declared code plus an explicit
+# recoverable flag; only ARGUMENT_VALIDATION is repairable.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_execute_schema_error_is_typed_argument_validation() -> None:
+    result = await create_mcp_server().call_tool(
+        "execute_delpi_information", {"candidate_token": ""}
+    )
+    assert result.is_error is True
+    structured = result.structured_content
+    assert structured["code"] == "ARGUMENT_VALIDATION"
+    assert structured["recoverable"] is True
+
+
+@pytest.mark.asyncio
+async def test_discover_schema_error_is_typed_argument_validation() -> None:
+    result = await create_mcp_server().call_tool(
+        "discover_delpi_information", {"query": ""}
+    )
+    assert result.is_error is True
+    structured = result.structured_content
+    assert structured["code"] == "ARGUMENT_VALIDATION"
+    assert structured["recoverable"] is True
+
+
+@pytest.mark.asyncio
+async def test_unknown_candidate_token_is_capability_not_allowed() -> None:
+    result = await create_mcp_server().call_tool(
+        "execute_delpi_information", {"candidate_token": "bogus"}
+    )
+    assert result.is_error is True
+    structured = result.structured_content
+    assert structured["code"] == "CAPABILITY_NOT_ALLOWED"
+    assert structured["recoverable"] is False
+
+
+@pytest.mark.asyncio
+async def test_missing_authorization_is_typed_authentication_required(
+    monkeypatch,
+) -> None:
+    # No MCP identity context => _authorization() is None => owner authz
+    # check raises PermissionError("Unauthorized") => typed authn error.
+    monkeypatch.setenv("DAVI_CANDIDATE_TOKEN_SECRET", "s" * 32)
+    result = await create_mcp_server().call_tool(
+        "execute_delpi_information", {"candidate_token": "x.y"}
+    )
+    assert result.is_error is True
+    structured = result.structured_content
+    assert structured["code"] in (
+        "AUTHENTICATION_REQUIRED",
+        "CAPABILITY_NOT_ALLOWED",
+    )
+    assert structured["recoverable"] is False

@@ -540,3 +540,19 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Residuais: allowlist owner p/ summary+customers; VALIDATION_ERROR DAVI semanticamente amplo (residual owner); Forbidden tool-result->mcp_protocol_error (comportamento anterior); CRI drift; security gate doc 174.
 - Veredito: LOCAL_PASS_WITH_RESIDUAL / PARTIAL_MIGRATION; DEPLOY_EXECUTED=NO (nao autorizado); PRODUCTION_QUERIES=0; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; DOMAIN_API_MODIFIED=NO; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
 - Artefatos: doc 179; openapi_declarations.delpi.json (4->2); errors.py; contracts.py; specialist_interop.py; test_specialist_interop_usecase.py; test_openapi_capability_provider.py; scripts/governed_davi_migration_eval.py.
+
+
+## 2026-10-28 — DELIA-C3-DAVI-EXCLUSIVE-DOMAIN-ACCESS-COMPLETION-01 (doc 180)
+
+- Escopo: concluir migracao DAVI-exclusive (WP1 cobertura, WP2/3 endurecimento de erros MCP + authz, WP4 paridade, WP5 remocao do binding, WP6-8 testes/regressao/E2E). Sem deploy, sem queries produtivas, sem modelo/Keycloak/Domain-API alterados.
+- WP1 BLOQUEADO por contrato do owner: get_product_summary consta em explicitlyNotApproved com coverageDisposition DEFER na allowlist DAVI; search_customers nao possui decisao de cobertura. Nenhuma rota HTTP tratada como aprovacao MCP -> OWNER_DECISION_REQUIRED x2; 2 declaracoes diretas preservadas; DELIA_OPENAPI_DELPI_* mantidos.
+- WP2 implementado: vocabulario tipado do owner (ARGUMENT_VALIDATION, CAPABILITY_NOT_ALLOWED, OWNER_EXECUTION_ERROR, AUTHENTICATION_REQUIRED, AUTHORIZATION_DENIED) em dynamic_information/errors.py; execute_service anota code= em todos os raise sites; server.py emite {code,recoverable,message} via typed_error_tool_result — recoverable:true SOMENTE para ARGUMENT_VALIDATION; VALIDATION_ERROR_CODE removido.
+- DELIA: _normalize_outcome exige ARGUMENT_VALIDATION + recoverable:true para OWNER_ARGUMENT_REJECTED; _OWNER_ERROR_CODE_MAP projeta AUTHENTICATION_REQUIRED->mcp_authentication_failed, AUTHORIZATION_DENIED->mcp_authorization_denied, CAPABILITY_NOT_ALLOWED->capability_not_allowed_in_phase; resto mcp_protocol_error. Sem message-matching, sem inferencia.
+- WP3: tool-result Unauthorized/Forbidden agora tipados (AUTHENTICATION_REQUIRED/AUTHORIZATION_DENIED) em vez de mcp_protocol_error generico; transport 401/403 inalterado; negacoes nunca entram no ciclo READ.
+- WP4 matriz de paridade: search_products PARCIAL (faltam product_type/sort/direction; customer_reference deny-by-default); get_product_stock migrada; summary/customers bloqueadas.
+- WP5 NAO executado: gate falhou por bloqueio legitimo do owner -> DIRECT_DELPI_CAPABILITIES=2 preservadas; componentes OpenAPI compartilhados intactos.
+- Testes: api-delpi +4 (15/15, 43/43 suites MCP); delia 9 testes contrato endurecido; DELIA suite completa: unica falha PRE_EXISTING_CRI_CONTRACT_DRIFT; api-delpi touched: 1 falha ambiental pre-existente (git ausente na imagem, wave_002_freeze); arch gate --base HEAD OK.
+- Eval pareado atualizado: declared recoverable SUCCESS ambos; VALIDATION_ERROR legado terminal (P1 fechado); AUTHORIZATION_DENIED tool-result -> AUTHZ_DENIED; CAPABILITY_NOT_ALLOWED e OWNER_EXECUTION_ERROR terminais; repeated bounded; wire 2x = discover+execute por invoke.
+- E2E runtime real: INCONCLUSIVE (requer ambiente autorizado). FALSE_POSITIVES=0; FABRICATED_RECORDS=0; UNAUTHORIZED_ACTS=0; UNAUTHORIZED_PREPARES=0.
+- Veredito: LOCAL_PASS_WITH_RESIDUAL / PARTIAL_MIGRATION — CAPABILITY_MIGRATION_BLOCKED; exclusividade NAO declarada; fase nao avancada. DEPLOY_EXECUTED=NO; PRODUCTION_QUERIES=0; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; DOMAIN_API_MODIFIED=NO; INDEPENDENT_REVIEW=PENDING.
+- Artefatos: doc 180; errors.py; execute_service.py; server.py; test_external_capabilities_mcp.py; specialist_interop.py; test_specialist_interop_usecase.py; governed_davi_migration_eval.py.

@@ -222,15 +222,20 @@ def _wire_b1(scripted):
     return provider, port.calls
 
 
-def _validation_error(recoverable=None):
-    structured = {"code": "VALIDATION_ERROR", "message": PRODUCT_TYPE_MSG}
-    if recoverable is not None:
-        structured["recoverable"] = recoverable
+def _davi_error(code, message=PRODUCT_TYPE_MSG, recoverable=False):
     return RemoteToolOutcome(
         content_text="Invalid execute parameters.",
-        structured=structured,
+        structured={
+            "code": code,
+            "recoverable": recoverable,
+            "message": message,
+        },
         is_error=True,
     )
+
+
+def _argument_validation_error(recoverable=True):
+    return _davi_error("ARGUMENT_VALIDATION", recoverable=recoverable)
 
 
 # ---------------------------------------------------------------------------
@@ -342,7 +347,7 @@ def main() -> int:
             {
                 "discover_delpi_information": [DISCOVERY_OK, DISCOVERY_OK],
                 "execute_delpi_information": [
-                    _validation_error(),
+                    _argument_validation_error(),
                     EXECUTE_OK,
                 ],
             },
@@ -383,7 +388,7 @@ def main() -> int:
             {
                 "discover_delpi_information": [DISCOVERY_OK],
                 "execute_delpi_information": [
-                    _validation_error(recoverable=False)
+                    _argument_validation_error(recoverable=False)
                 ],
             },
             repair_b1,
@@ -442,13 +447,110 @@ def main() -> int:
                     DISCOVERY_OK, DISCOVERY_OK, DISCOVERY_OK,
                 ],
                 "execute_delpi_information": [
-                    _validation_error(),
-                    _validation_error(),
-                    _validation_error(),
+                    _argument_validation_error(),
+                    _argument_validation_error(),
+                    _argument_validation_error(),
                 ],
             },
             repair_b1,
         ),
+    }
+
+    # 7 — hardened contract (DELIA-C3-DAVI-EXCLUSIVE-COMPLETION-01):
+    # the legacy ambiguous VALIDATION_ERROR code must fail closed —
+    # only ARGUMENT_VALIDATION + recoverable:true opens repair.
+    out["legacy_generic_code_terminal"] = {
+        "b1_davi": _run_b1(
+            {
+                "discover_delpi_information": [DISCOVERY_OK],
+                "execute_delpi_information": [
+                    _mcp_error(
+                        structured={
+                            "code": "VALIDATION_ERROR",
+                            "message": PRODUCT_TYPE_MSG,
+                        }
+                    )
+                ],
+            },
+            repair_b1,
+        ),
+    }
+
+    # 8 — typed authorization tool-result -> AUTHZ_DENIED, terminal
+    out["typed_authorization_denied"] = {
+        "b1_davi": _run_b1(
+            {
+                "discover_delpi_information": [DISCOVERY_OK],
+                "execute_delpi_information": [
+                    _davi_error("AUTHORIZATION_DENIED", "Forbidden")
+                ],
+            },
+            repair_b1,
+        ),
+    }
+
+    # 9 — capability not allowed -> terminal, never repairable
+    out["capability_not_allowed"] = {
+        "b1_davi": _run_b1(
+            {
+                "discover_delpi_information": [DISCOVERY_OK],
+                "execute_delpi_information": [
+                    _davi_error(
+                        "CAPABILITY_NOT_ALLOWED",
+                        "Action is not DAVI-eligible",
+                    )
+                ],
+            },
+            repair_b1,
+        ),
+    }
+
+    # 10 — owner execution failure -> terminal, not an argument error
+    out["owner_execution_error"] = {
+        "b1_davi": _run_b1(
+            {
+                "discover_delpi_information": [DISCOVERY_OK],
+                "execute_delpi_information": [
+                    _davi_error(
+                        "OWNER_EXECUTION_ERROR",
+                        "Catalog action execution failed",
+                    )
+                ],
+            },
+            repair_b1,
+        ),
+    }
+
+    # Capability coverage matrix (owner contract state at HEAD):
+    # api-delpi/app/content/davi_external_read_allowlist.json and
+    # delia-api/config/openapi_declarations.delpi.json. The two
+    # blocked capabilities have no approved DAVI substitute —
+    # OWNER_DECISION_REQUIRED, direct binding preserved.
+    out["capability_coverage"] = {
+        "search_products": {
+            "davi_coverage": "MIGRATED",
+            "input_parity": (
+                "DIRECT had product_type|sort|direction|"
+                "customer_reference; DAVI allows code|description|"
+                "group_code|page|page_size — OWNER_DECISION_REQUIRED"
+            ),
+            "output_projection": "product_code|description|group_category",
+        },
+        "get_product_stock": {
+            "davi_coverage": "MIGRATED",
+            "input_parity": "COMPATIBLE",
+            "output_projection": "bounded owner projection",
+        },
+        "get_product_summary": {
+            "davi_coverage": "OWNER_DECISION_REQUIRED",
+            "owner_disposition": "explicitlyNotApproved/DEFER",
+            "direct_binding": "PRESERVED",
+        },
+        "search_customers": {
+            "davi_coverage": "OWNER_DECISION_REQUIRED",
+            "owner_disposition": "no coverage decision in allowlist",
+            "direct_binding": "PRESERVED",
+        },
     }
 
     print(json.dumps(out, ensure_ascii=False, indent=1))

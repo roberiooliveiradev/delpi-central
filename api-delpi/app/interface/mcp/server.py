@@ -33,6 +33,11 @@ from app.application.external_capabilities.dynamic_information.discover_service 
     discover_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.errors import (
+    ARGUMENT_VALIDATION_CODE,
+    AUTHENTICATION_REQUIRED_CODE,
+    AUTHORIZATION_DENIED_CODE,
+    CAPABILITY_NOT_ALLOWED_CODE,
+    OWNER_EXECUTION_ERROR_CODE,
     GovernedExecutionError,
 )
 from app.composition.davi_dynamic_read_composer import execute_delpi_information_wired
@@ -58,27 +63,45 @@ from app.utils.logger import log_error
 
 __all__ = [
     "ApiDelpiMCPServer",
-    "VALIDATION_ERROR_CODE",
+    "ARGUMENT_VALIDATION_CODE",
     "VALIDATION_ERROR_MESSAGE",
     "create_mcp_server",
+    "typed_error_tool_result",
     "validation_error_tool_result",
 ]
 
 logger = logging.getLogger(__name__)
 
-VALIDATION_ERROR_CODE = "VALIDATION_ERROR"
 VALIDATION_ERROR_MESSAGE = "Invalid search parameters."
 
 
-def validation_error_tool_result(message: str = VALIDATION_ERROR_MESSAGE) -> CallToolResult:
-    """Stable external validation failure — no Pydantic/framework details."""
+def typed_error_tool_result(
+    code: str,
+    message: str,
+    *,
+    recoverable: bool = False,
+) -> CallToolResult:
+    """Stable typed external failure — no Pydantic/framework details.
+
+    The owner-declared ``code`` and explicit ``recoverable`` flag are
+    the contract consumers classify by; the message is owner
+    vocabulary, never classification evidence.
+    """
     return mcp_tool_result(
         {
-            "code": VALIDATION_ERROR_CODE,
+            "code": code,
+            "recoverable": recoverable,
             "message": message,
         },
         is_error=True,
         text=message,
+    )
+
+
+def validation_error_tool_result(message: str = VALIDATION_ERROR_MESSAGE) -> CallToolResult:
+    """Argument-validation failure — declared repairable by contract."""
+    return typed_error_tool_result(
+        ARGUMENT_VALIDATION_CODE, message, recoverable=True
     )
 
 
@@ -105,6 +128,11 @@ def _authz_error_result(exc: PermissionError) -> CallToolResult:
     message = str(exc) or "Forbidden"
     if message == "Unauthorized":
         return mcp_tool_result(
+            {
+                "code": AUTHENTICATION_REQUIRED_CODE,
+                "recoverable": False,
+                "message": "Authentication required",
+            },
             is_error=True,
             text="Authentication required.",
             meta=mcp_www_authenticate_meta(
@@ -112,7 +140,15 @@ def _authz_error_result(exc: PermissionError) -> CallToolResult:
                 error_description="Authentication required",
             ),
         )
-    return mcp_tool_result(is_error=True, text="Forbidden")
+    return mcp_tool_result(
+        {
+            "code": AUTHORIZATION_DENIED_CODE,
+            "recoverable": False,
+            "message": "Forbidden",
+        },
+        is_error=True,
+        text="Forbidden",
+    )
 
 
 class _DaviWireTool(MCPTool):
@@ -278,9 +314,16 @@ def create_mcp_server() -> MCPServer:
         except PermissionError as exc:
             return _authz_error_result(exc)
         except CandidateTokenError as exc:
-            return validation_error_tool_result(str(exc) or "Invalid candidate token.")
+            return typed_error_tool_result(
+                CAPABILITY_NOT_ALLOWED_CODE,
+                str(exc) or "Invalid candidate token.",
+            )
         except GovernedExecutionError as exc:
-            return validation_error_tool_result(str(exc) or "Execution rejected.")
+            return typed_error_tool_result(
+                exc.code or OWNER_EXECUTION_ERROR_CODE,
+                str(exc) or "Execution rejected.",
+                recoverable=exc.code == ARGUMENT_VALIDATION_CODE,
+            )
         except Exception as exc:
             log_error(f"mcp execute_delpi_information failed: {exc}")
             raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc

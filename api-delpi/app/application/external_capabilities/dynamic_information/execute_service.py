@@ -20,6 +20,9 @@ from app.application.external_capabilities.dynamic_information.content_loader im
     load_dynamic_read_budgets,
 )
 from app.application.external_capabilities.dynamic_information.errors import (
+    ARGUMENT_VALIDATION_CODE,
+    CAPABILITY_NOT_ALLOWED_CODE,
+    OWNER_EXECUTION_ERROR_CODE,
     GovernedExecutionError,
 )
 from app.application.external_capabilities.dynamic_information.execution_plan import (
@@ -63,16 +66,24 @@ def execute_delpi_information(
     action_id = str(payload["action_id"])
     action = get_action_by_id(action_id)
     if action is None or not action.executable:
-        raise GovernedExecutionError("Action is not DAVI-eligible")
+        raise GovernedExecutionError(
+            "Action is not DAVI-eligible",
+            code=CAPABILITY_NOT_ALLOWED_CODE,
+        )
 
     try:
         plan = build_execution_plan(action, arguments)
     except ArgumentValidationError as exc:
-        raise GovernedExecutionError(str(exc)) from exc
+        raise GovernedExecutionError(
+            str(exc), code=ARGUMENT_VALIDATION_CODE
+        ) from exc
 
     if isinstance(plan, ApprovedCapabilityPlan):
         if search_products_runner is None:
-            raise GovernedExecutionError("Approved capability runner is not configured")
+            raise GovernedExecutionError(
+                "Approved capability runner is not configured",
+                code=OWNER_EXECUTION_ERROR_CODE,
+            )
         args = plan.arguments
         body = search_products_runner(
             code=args.get("code"),
@@ -91,7 +102,10 @@ def execute_delpi_information(
         )
     elif isinstance(plan, CatalogActionPlan):
         if catalog_action_executor is None:
-            raise GovernedExecutionError("Catalog action executor is not configured")
+            raise GovernedExecutionError(
+                "Catalog action executor is not configured",
+                code=OWNER_EXECUTION_ERROR_CODE,
+            )
         result = catalog_action_executor.execute(
             action_id=plan.action_id,
             validated_arguments=plan.validated_arguments,
@@ -102,7 +116,8 @@ def execute_delpi_information(
             raise PermissionError("Forbidden")
         if result.outcome != "ok":
             raise GovernedExecutionError(
-                result.error_message or "Catalog action execution failed"
+                result.error_message or "Catalog action execution failed",
+                code=OWNER_EXECUTION_ERROR_CODE,
             )
         if (
             action.response_contract
@@ -124,7 +139,10 @@ def execute_delpi_information(
                 response_bindings=action.response_bindings,
             )
     else:
-        raise GovernedExecutionError("Unsupported execution plan")
+        raise GovernedExecutionError(
+            "Unsupported execution plan",
+            code=OWNER_EXECUTION_ERROR_CODE,
+        )
 
     bounded = bound_response_payload(
         body,

@@ -43,6 +43,8 @@ from app.application.specialist_interop.contracts import (
 )
 from app.application.specialist_interop.errors import (
     CAPABILITY_NOT_ALLOWED_IN_PHASE,
+    MCP_AUTHENTICATION_FAILED,
+    MCP_AUTHORIZATION_DENIED,
     MCP_INVALID_RESPONSE,
     MCP_PROTOCOL_ERROR,
     MCP_TIMEOUT,
@@ -67,13 +69,19 @@ from app.domain.specialist_interop.rules import (
 )
 
 
-# Owner-declared argument-validation codes on the MCP error wire
-# (delpi_mcp ``structuredContent.code`` contract — DAVI emits
-# ``VALIDATION_ERROR`` for rejected tool/candidate arguments). Same
-# fail-closed rule as the OpenAPI adapter: only these owner-published
-# codes, and never when ``recoverable`` is explicitly false, project
-# to OWNER_ARGUMENT_REJECTED; every other error stays terminal.
-_OWNER_ARG_VALIDATION_CODES = frozenset({"VALIDATION_ERROR"})
+# Owner-declared typed error vocabulary on the MCP error wire
+# (delpi_mcp ``structuredContent.code`` contract — api-delpi
+# dynamic_information/errors.py). DELIA-C3-DAVI-EXCLUSIVE-COMPLETION-01:
+# the legacy generic ``VALIDATION_ERROR`` covered non-argument cases,
+# so repairability now requires BOTH the owner-typed argument code AND
+# an explicit ``recoverable: true`` — missing metadata fails closed,
+# same rule as the OpenAPI adapter.
+_OWNER_ARG_VALIDATION_CODES = frozenset({"ARGUMENT_VALIDATION"})
+_OWNER_ERROR_CODE_MAP = {
+    "AUTHENTICATION_REQUIRED": MCP_AUTHENTICATION_FAILED,
+    "AUTHORIZATION_DENIED": MCP_AUTHORIZATION_DENIED,
+    "CAPABILITY_NOT_ALLOWED": CAPABILITY_NOT_ALLOWED_IN_PHASE,
+}
 
 
 def _now_utc() -> str:
@@ -287,14 +295,15 @@ class SpecialistInterop:
                 ch if ch.isprintable() else " "
                 for ch in outcome.content_text[:240]
             ).strip()
-            # DAVI-exclusive DELPI access (task DELIA-C3-DAVI-EXCLUSIVE-01):
-            # the owner declares typed errors in the result
-            # ``structuredContent`` (delpi_mcp contract). An owner-typed
-            # argument-validation code — not explicitly negated by
-            # ``recoverable:false`` — projects to the canonical
-            # owner-argument rejection so the governed READ recovery
-            # applies uniformly across providers. Undeclared, untyped
-            # and explicitly non-recoverable results stay terminal.
+            # DAVI-exclusive DELPI access (task
+            # DELIA-C3-DAVI-EXCLUSIVE-COMPLETION-01): the owner declares
+            # typed errors in ``structuredContent`` (delpi_mcp
+            # contract). Repairability requires BOTH the owner-typed
+            # argument code AND explicit ``recoverable: true`` —
+            # undeclared, untyped and non-recoverable results stay
+            # terminal. Typed authorization/eligibility codes project
+            # to their canonical semantic codes, never to protocol
+            # noise — and never into the recovery loop.
             structured = outcome.structured
             error_code = (
                 structured.get("code")
@@ -304,10 +313,8 @@ class SpecialistInterop:
             if (
                 isinstance(error_code, str)
                 and error_code in _OWNER_ARG_VALIDATION_CODES
-                and not (
-                    isinstance(structured, Mapping)
-                    and structured.get("recoverable") is False
-                )
+                and isinstance(structured, Mapping)
+                and structured.get("recoverable") is True
             ):
                 raw_hint = structured.get("message")
                 if not isinstance(raw_hint, str):
@@ -323,6 +330,15 @@ class SpecialistInterop:
                     "owner declared the proposed arguments invalid"
                     + (f": {detail}" if detail else ""),
                     owner_hint=hint,
+                )
+            mapped = _OWNER_ERROR_CODE_MAP.get(error_code)
+            if mapped is not None:
+                raise SpecialistInteropError(
+                    mapped,
+                    "specialist reported an owner-declared "
+                    "capability error"
+                    + (f": {detail}" if detail else ""),
+                    owner_hint=_owner_error_hint(outcome.content_text),
                 )
             raise SpecialistInteropError(
                 MCP_PROTOCOL_ERROR,

@@ -530,11 +530,13 @@ def test_remote_error_is_truthful_failure():
 
 
 # ---------------------------------------------------------------------------
-# DAVI-exclusive DELPI access (task DELIA-C3-DAVI-EXCLUSIVE-01): the MCP
-# boundary translates owner-DECLARED argument-validation codes into the
-# canonical provider error so governed READ recovery applies uniformly —
-# same fail-closed rule as the OpenAPI adapter: undeclared, untyped or
-# explicitly non-recoverable error results stay terminal.
+# DAVI-exclusive DELPI access (task DELIA-C3-DAVI-EXCLUSIVE-COMPLETION-01):
+# the MCP boundary projects only owner-DECLARED typed error codes. An
+# owner argument-validation code requires an explicit recoverable:true —
+# the legacy generic VALIDATION_ERROR (ambiguous: args, eligibility and
+# execution failures) and any missing metadata fail closed. Typed
+# authorization/eligibility codes project to their canonical semantics
+# and never enter the READ recovery loop.
 # ---------------------------------------------------------------------------
 
 _DAVI_READ_TOOL = (
@@ -559,7 +561,26 @@ def _davi_invoke(outcome: RemoteToolOutcome) -> SpecialistInteropError:
     return exc.value
 
 
-def test_remote_error_typed_validation_code_is_argument_rejected():
+def test_typed_argument_validation_recoverable_is_argument_rejected():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Invalid execute parameters.",
+            structured={
+                "code": "ARGUMENT_VALIDATION",
+                "recoverable": True,
+                "message": "product_type inválido",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "owner_argument_rejected"
+    assert exc.owner_hint == "product_type inválido"
+
+
+def test_generic_validation_error_code_stays_terminal():
+    # Review P1: the legacy ambiguous code must NOT open recovery even
+    # with a plausible message — repairability needs the typed code +
+    # explicit recoverable:true from the owner contract.
     exc = _davi_invoke(
         RemoteToolOutcome(
             content_text="Invalid execute parameters.",
@@ -570,36 +591,98 @@ def test_remote_error_typed_validation_code_is_argument_rejected():
             is_error=True,
         )
     )
-    assert exc.code == "owner_argument_rejected"
-    assert exc.owner_hint == "product_type inválido"
+    assert exc.code == "mcp_protocol_error"
 
 
-def test_remote_error_untyped_code_stays_terminal():
+def test_argument_code_without_recoverable_stays_terminal():
     exc = _davi_invoke(
         RemoteToolOutcome(
-            content_text="business failure",
-            structured={"code": "BUSINESS_RULE", "message": "nope"},
+            content_text="Invalid execute parameters.",
+            structured={
+                "code": "ARGUMENT_VALIDATION",
+                "message": "missing flag",
+            },
             is_error=True,
         )
     )
     assert exc.code == "mcp_protocol_error"
 
 
-def test_remote_error_without_code_stays_terminal():
+def test_argument_code_recoverable_false_stays_terminal():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Invalid execute parameters.",
+            structured={
+                "code": "ARGUMENT_VALIDATION",
+                "recoverable": False,
+                "message": "permanent rejection",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_protocol_error"
+
+
+def test_untyped_error_stays_terminal():
     exc = _davi_invoke(
         RemoteToolOutcome(content_text="denied", is_error=True)
     )
     assert exc.code == "mcp_protocol_error"
 
 
-def test_remote_error_explicit_non_recoverable_stays_terminal():
+def test_typed_authorization_denied_maps_authz_not_repairable():
     exc = _davi_invoke(
         RemoteToolOutcome(
-            content_text="Invalid execute parameters.",
+            content_text="Forbidden",
             structured={
-                "code": "VALIDATION_ERROR",
-                "message": "permanent rejection",
+                "code": "AUTHORIZATION_DENIED",
                 "recoverable": False,
+                "message": "Forbidden",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_authorization_denied"
+
+
+def test_typed_authentication_required_maps_authn():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Authentication required.",
+            structured={
+                "code": "AUTHENTICATION_REQUIRED",
+                "recoverable": False,
+                "message": "Authentication required",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_authentication_failed"
+
+
+def test_typed_capability_not_allowed_is_terminal_not_recoverable():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Invalid candidate token.",
+            structured={
+                "code": "CAPABILITY_NOT_ALLOWED",
+                "recoverable": False,
+                "message": "Action is not DAVI-eligible",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "capability_not_allowed_in_phase"
+
+
+def test_typed_owner_execution_error_is_terminal():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Execution rejected.",
+            structured={
+                "code": "OWNER_EXECUTION_ERROR",
+                "recoverable": False,
+                "message": "Catalog action execution failed",
             },
             is_error=True,
         )
