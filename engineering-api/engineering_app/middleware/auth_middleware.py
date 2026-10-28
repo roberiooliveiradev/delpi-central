@@ -17,6 +17,12 @@ _PUBLIC_PATHS = frozenset(
         "/docs",
         "/redoc",
         "/openapi.json",
+        # Variantes prefixadas: sob uvicorn --root-path, request.url.path
+        # inclui o root_path — as formas prefixadas das rotas técnicas
+        # públicas precisam estar na allowlist exata.
+        "/apps/engineering-api/docs",
+        "/apps/engineering-api/redoc",
+        "/apps/engineering-api/openapi.json",
     }
 )
 

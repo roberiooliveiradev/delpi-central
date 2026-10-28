@@ -261,6 +261,9 @@ def test_allowlist_matches_only_exact_paths():
         "/openapi.json",
         "/docs",
         "/redoc",
+        "/apps/engineering-api/openapi.json",
+        "/apps/engineering-api/docs",
+        "/apps/engineering-api/redoc",
     }
     for path in public:
         assert _is_engineering_public_path(path), path
@@ -283,7 +286,7 @@ def test_probe_route_not_in_production_openapi(client):
     spec = client.get("/openapi.json").json()
     assert "/probe" not in spec["paths"]
     assert "/probe/whoami" not in spec["paths"]
-    assert set(spec["paths"].keys()) == {"/health", "/ready"}
+    assert set(spec["paths"].keys()) == {"/health", "/ready", "/v1/home"}
 
 
 def test_service_token_headers_do_not_bypass(jwks_env, core_rbac, probe_client, monkeypatch):

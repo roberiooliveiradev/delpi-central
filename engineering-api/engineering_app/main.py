@@ -10,6 +10,9 @@ from engineering_app.core.responses import fail
 from engineering_app.interface.http.routes.health_routes import (
     router as health_router,
 )
+from engineering_app.interface.http.routes.home_routes import (
+    router as home_router,
+)
 from engineering_app.middleware.auth_middleware import jwt_middleware
 from engineering_app.middleware.request_observability_middleware import (
     get_request_id,
@@ -81,3 +84,4 @@ app.middleware("http")(request_observability_middleware)
 
 
 app.include_router(health_router)
+app.include_router(home_router)

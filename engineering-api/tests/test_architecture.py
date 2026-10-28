@@ -71,8 +71,11 @@ def test_no_forbidden_dependencies():
     assert not violations, "Forbidden dependencies found:\n" + "\n".join(violations)
 
 
-def test_no_premature_layer_directories():
-    premature = ("domain", "application", "infrastructure", "composition")
+def test_no_domain_layer_for_bff():
+    """engineering-api é BFF — camadas application/infrastructure/composition
+    existem a partir da F2a (contratos, ports, gateways, composer), mas
+    `domain` é proibido: regras de domínio pertencem aos owners oficiais."""
     present = [d.name for d in PACKAGE_ROOT.iterdir() if d.is_dir()]
-    for name in premature:
-        assert name not in present, f"Premature layer directory: {name}"
+    assert "domain" not in present, (
+        "engineering-api não deve criar camada de domínio — BFF apenas compõe"
+    )
