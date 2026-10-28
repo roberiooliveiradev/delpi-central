@@ -265,6 +265,11 @@ Infra alvo deve incluir:
 - startup sequencial conforme scripts vigentes;
 - envs documentadas sem segredo em repo.
 
+**Status F1 (ver `11-f1-foundation-completion.md`):** `engineering-api` implementado —
+serviço `delpi-engineering-api` nos composes prod/dev, location `/apps/engineering-api/`
+nos gateways prod/dev e registrado em `FASE_API`. A rota `/apps/engineering/` do MFE e
+Upgrade/Connection permanecem pendentes (fase do frontend).
+
 ## 14. Erros e degradação
 
 Composições de leitura podem retornar estado parcial quando semanticamente seguro.

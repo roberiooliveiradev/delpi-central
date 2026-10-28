@@ -95,6 +95,14 @@ Convenção api-delpi: último `app.middleware("http")` registrado executa prime
 - `X-Request-Id: smoke-99` → eco preservado.
 - Log `engineering_api.request` com todos os campos.
 
+## 9.1. Evolução F1.S4 (supersede parcial §5 e §10)
+
+Na F1.S4 (`11-f1-foundation-completion.md`):
+
+- `path` no log passou a carregar o **template da rota resolvida** (ex.: `/v1/products/{product_id}`); paths sem rota → `unmatched_route`. Paths reais/arbitrários nunca aparecem em logs — cardinalidade zero e sem exposição de identificadores.
+- Exceções não tratadas agora são convertidas pelo próprio middleware em 500 instrumentado (envelope `fail()` + headers) — antes eram convertidas fora do middleware, sem headers.
+- O residual §10 (mascaramento de `scope["path"]`) foi **resolvido definitivamente** via `public_path_checker` em `delpi_auth`.
+
 ## 10. Residual F1.S2R1 — gate verificado
 
 O mascaramento temporário de `scope["path"]` no auth middleware (restrição à política pública ampla do `delpi_auth`) **não** afeta a observabilidade: a mutação ocorre dentro do JWT e é restaurada antes de `call_next`/resposta — o log sempre vê o path real (prova: `test_observability_sees_real_path_not_masked` em `/x/api-delpi/health` → 401, log com path real). Nenhum comportamento inseguro revelado — residual permanece registrado, sem workaround adicional.

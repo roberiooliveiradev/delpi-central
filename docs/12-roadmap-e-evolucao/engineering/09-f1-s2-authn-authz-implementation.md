@@ -238,8 +238,8 @@ Suíte completa: **49 anteriores + 32 novos = 81 passed** (SHA da correção, Py
 
 ### 11.7. Residuais
 
-- O mascaramento de `scope["path"]` existe apenas para forçar o fluxo de auth da lib sobre paths que a política compartilhada ampla aceitaria — contido, documentado e coberto por testes; desaparece se a lib expuser uma API de classificação por contexto.
-- A política ampla da lib permanece inalterada (owner: `shared/delpi_auth` + demais consumidores).
+- ~~O mascaramento de `scope["path"]` existe apenas para forçar o fluxo de auth da lib sobre paths que a política compartilhada ampla aceitaria~~ — **RESOLVIDO na F1.S4** (`11-f1-foundation-completion.md` §2.1): `shared/delpi_auth` passou a aceitar `public_path_checker` opcional por chamada (backward-compatible, default intacto) e o wrapper da Engenharia delega o predicado estrito sem tocar o request. Nenhuma mutação de `scope["path"]` permanece.
+- A política ampla da lib permanece inalterada (owner: `shared/delpi_auth` + demais consumidores) — a restrição segue sendo uma decisão do consumidor, agora via contrato explícito.
 
 ### 11.8. Resultado
 
