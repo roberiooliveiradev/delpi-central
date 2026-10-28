@@ -1,4 +1,4 @@
-/** Configurable Comex selector (PROC-0076.COMEX.S4/S6/S7).
+/** Configurable Comex selector (PROC-0076.COMEX.S4/S6/S7/S8).
 
 Two selection origins feeding one analysis: real SB1010 products via
 the BFF proxy, or direct NCM codes (8 digits) with no product link.
@@ -6,6 +6,10 @@ S7: the NCM branch also exposes the shared catalog — any authorized
 user can add a code (registered as candidate, idempotent) and select
 NCMs added by others. Only allowlisted NCMs feed the chart; lifecycle
 administration lives in a separate manage-only area.
+S8: two-column layout — left "find materials" (search, direct NCM,
+shared catalog), right "my analysis" (selection summary, statuses,
+clear-all, personal saved views). Results panel stays full-width
+below, outside this component.
 */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -610,293 +614,303 @@ export function MarketComexSelector({
       subtitle={C2.selectionHint}
     >
       <div className="sp-comex-selector">
-        <SuppliesSegmentToggle
-          ariaLabel={C2.selectionTitle}
-          idPrefix="comex-origin"
-          size="sm"
-          widthMode="content"
-          value={origin}
-          options={[
-            { value: "products", label: C2.originProducts },
-            { value: "ncm", label: C2.originNcm },
-          ]}
-          onChange={(value) => setOrigin(value as SelectorOrigin)}
-        />
+        <div className="sp-comex-selector__columns">
+          <div className="sp-comex-selector__find">
+            <h3 className="sp-comex-selector__heading">{C2.findTitle}</h3>
+            <SuppliesSegmentToggle
+              ariaLabel={C2.selectionTitle}
+              idPrefix="comex-origin"
+              size="sm"
+              widthMode="content"
+              value={origin}
+              options={[
+                { value: "products", label: C2.originProducts },
+                { value: "ncm", label: C2.originNcm },
+              ]}
+              onChange={(value) => setOrigin(value as SelectorOrigin)}
+            />
 
-        {origin === "products" ? (
-          <>
-            <div className="sp-comex-selector__search">
-              <SuppliesSegmentToggle
-                ariaLabel={C2.productTypeAll}
-                idPrefix="comex-product-type"
-                size="sm"
-                widthMode="content"
-                value={productType}
-                options={TYPE_OPTIONS}
-                onChange={(value) =>
-                  setProductType(value as ComexProductType | "")
-                }
-              />
-              <SuppliesTextField
-                label={C2.searchLabel}
-                value={query}
-                placeholder={C2.searchPlaceholder}
-                onChange={setQuery}
-              />
-              <SuppliesActionButton
-                type="button"
-                disabled={searching}
-                onClick={() => void runSearch()}
-              >
-                {searching ? C2.resultsLoading : C2.searchButton}
-              </SuppliesActionButton>
-            </div>
-
-            {searched && !searching && results.length === 0 ? (
-              <p className="sp-comex-selector__empty" role="status">
-                {C2.resultsEmptyMessage}
-              </p>
-            ) : null}
-
-            {results.length > 0 ? (
-              <ul
-                className="sp-comex-selector__results"
-                aria-label={C2.searchLabel}
-              >
-                {results.map((item) => (
-                  <li
-                    key={item.code}
-                    className="sp-comex-selector__result"
+            {origin === "products" ? (
+              <>
+                <div className="sp-comex-selector__search">
+                  <SuppliesSegmentToggle
+                    ariaLabel={C2.productTypeAll}
+                    idPrefix="comex-product-type"
+                    size="sm"
+                    widthMode="content"
+                    value={productType}
+                    options={TYPE_OPTIONS}
+                    onChange={(value) =>
+                      setProductType(value as ComexProductType | "")
+                    }
+                  />
+                  <SuppliesTextField
+                    label={C2.searchLabel}
+                    value={query}
+                    placeholder={C2.searchPlaceholder}
+                    onChange={setQuery}
+                  />
+                  <SuppliesActionButton
+                    type="button"
+                    disabled={searching}
+                    onClick={() => void runSearch()}
                   >
-                    <div className="sp-comex-selector__result-main">
-                      <strong>{item.code}</strong>
-                      <span>{item.description}</span>
-                      <span className="sp-comex-selector__result-meta">
-                        {item.type} · {item.unit}
-                        {item.ncm_code
-                          ? ` · NCM ${item.ncm_code}`
-                          : ` · ${C2.ncmStatusMissing}`}
-                      </span>
-                    </div>
-                    {item.ncm_status === "malformed" ? (
-                      <span className="sp-comex-selector__badge sp-comex-selector__badge--warning">
-                        {C2.ncmStatusMalformed}
-                      </span>
-                    ) : null}
-                    <SuppliesActionButton
-                      type="button"
-                      variant="ghost"
-                      disabled={selectedProducts.includes(item.code)}
-                      onClick={() => addProduct(item)}
-                      aria-label={`${C2.addProduct} ${item.code}`}
-                    >
-                      <Plus size={14} aria-hidden="true" />
-                      {C2.addProduct}
-                    </SuppliesActionButton>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <form
-              className="sp-comex-selector__search"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void addDirectNcms();
-              }}
-            >
-              <SuppliesTextField
-                label={C2.directNcmLabel}
-                hint={C2.directNcmHint}
-                value={directInput}
-                placeholder={C2.directNcmPlaceholder}
-                onChange={setDirectInput}
-              />
-              <SuppliesActionButton type="submit" disabled={busy}>
-                <Plus size={14} aria-hidden="true" />
-                {C2.directNcmAdd}
-              </SuppliesActionButton>
-            </form>
+                    {searching ? C2.resultsLoading : C2.searchButton}
+                  </SuppliesActionButton>
+                </div>
 
-            <div className="sp-comex-selector__catalog">
-              <SuppliesTextField
-                label={C2.catalogTitle}
-                value={catalogQuery}
-                placeholder={C2.catalogSearchPlaceholder}
-                onChange={setCatalogQuery}
-              />
-              {governance.length === 0 ? (
-                <p
-                  className="sp-comex-selector__empty"
-                  role="status"
-                >
-                  {C2.catalogEmpty}
-                </p>
-              ) : catalogEntries.length === 0 ? (
-                <p
-                  className="sp-comex-selector__empty"
-                  role="status"
-                >
-                  {C2.catalogNoMatch}
-                </p>
-              ) : (
-                <ul
-                  className="sp-comex-selector__ncm-list"
-                  aria-label={C2.catalogTitle}
-                >
-                  {catalogEntries.map((entry) => {
-                    const status = displayStatus(entry.ncm_code);
-                    const selected = isCatalogSelected(
-                      entry.ncm_code,
-                    );
-                    return (
+                {searched && !searching && results.length === 0 ? (
+                  <p className="sp-comex-selector__empty" role="status">
+                    {C2.resultsEmptyMessage}
+                  </p>
+                ) : null}
+
+                {results.length > 0 ? (
+                  <ul
+                    className="sp-comex-selector__results"
+                    aria-label={C2.searchLabel}
+                  >
+                    {results.map((item) => (
                       <li
-                        key={entry.governance_id}
-                        className="sp-comex-selector__ncm"
+                        key={item.code}
+                        className="sp-comex-selector__result"
                       >
-                        <code>{entry.ncm_code}</code>
-                        {entry.description ? (
-                          <span className="sp-comex-selector__ncm-desc">
-                            {entry.description}
+                        <div className="sp-comex-selector__result-main">
+                          <strong>{item.code}</strong>
+                          <span>{item.description}</span>
+                          <span className="sp-comex-selector__result-meta">
+                            {item.type} · {item.unit}
+                            {item.ncm_code
+                              ? ` · NCM ${item.ncm_code}`
+                              : ` · ${C2.ncmStatusMissing}`}
+                          </span>
+                        </div>
+                        {item.ncm_status === "malformed" ? (
+                          <span className="sp-comex-selector__badge sp-comex-selector__badge--warning">
+                            {C2.ncmStatusMalformed}
                           </span>
                         ) : null}
+                        <SuppliesActionButton
+                          type="button"
+                          variant="ghost"
+                          disabled={selectedProducts.includes(item.code)}
+                          onClick={() => addProduct(item)}
+                          aria-label={`${C2.addProduct} ${item.code}`}
+                        >
+                          <Plus size={14} aria-hidden="true" />
+                          {C2.addProduct}
+                        </SuppliesActionButton>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <form
+                  className="sp-comex-selector__search"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void addDirectNcms();
+                  }}
+                >
+                  <SuppliesTextField
+                    label={C2.directNcmLabel}
+                    hint={C2.directNcmHint}
+                    value={directInput}
+                    placeholder={C2.directNcmPlaceholder}
+                    onChange={setDirectInput}
+                  />
+                  <SuppliesActionButton type="submit" disabled={busy}>
+                    <Plus size={14} aria-hidden="true" />
+                    {C2.directNcmAdd}
+                  </SuppliesActionButton>
+                </form>
+
+                <div className="sp-comex-selector__catalog">
+                  <SuppliesTextField
+                    label={C2.catalogTitle}
+                    value={catalogQuery}
+                    placeholder={C2.catalogSearchPlaceholder}
+                    onChange={setCatalogQuery}
+                  />
+                  {governance.length === 0 ? (
+                    <p
+                      className="sp-comex-selector__empty"
+                      role="status"
+                    >
+                      {C2.catalogEmpty}
+                    </p>
+                  ) : catalogEntries.length === 0 ? (
+                    <p
+                      className="sp-comex-selector__empty"
+                      role="status"
+                    >
+                      {C2.catalogNoMatch}
+                    </p>
+                  ) : (
+                    <ul
+                      className="sp-comex-selector__ncm-list"
+                      aria-label={C2.catalogTitle}
+                    >
+                      {catalogEntries.map((entry) => {
+                        const status = displayStatus(entry.ncm_code);
+                        const selected = isCatalogSelected(
+                          entry.ncm_code,
+                        );
+                        return (
+                          <li
+                            key={entry.governance_id}
+                            className="sp-comex-selector__ncm"
+                          >
+                            <code>{entry.ncm_code}</code>
+                            {entry.description ? (
+                              <span className="sp-comex-selector__ncm-desc">
+                                {entry.description}
+                              </span>
+                            ) : null}
+                            <span
+                              className={`sp-comex-selector__badge sp-comex-selector__badge--${ncmBadgeKind(status)}`}
+                            >
+                              {ncmStatusLabel(status)}
+                            </span>
+                            <SuppliesActionButton
+                              type="button"
+                              variant={selected ? "ghost" : "primary"}
+                              disabled={busy}
+                              aria-pressed={selected}
+                              onClick={() =>
+                                selected
+                                  ? deselectNcm(entry.ncm_code)
+                                  : selectNcm(entry.ncm_code)
+                              }
+                            >
+                              {selected ? C2.deselectNcm : C2.selectNcm}
+                            </SuppliesActionButton>
+                            {entry.status === "rejected" ? (
+                              <SuppliesActionButton
+                                type="button"
+                                variant="ghost"
+                                disabled={busy}
+                                onClick={() =>
+                                  void decideNcm(
+                                    entry,
+                                    "pending_fiscal_review",
+                                  )
+                                }
+                              >
+                                {C2.resubmit}
+                              </SuppliesActionButton>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </>
+            )}
+
+          </div>
+
+          <div className="sp-comex-selector__analysis">
+            <h3 className="sp-comex-selector__heading">
+              {C2.analysisTitle}
+            </h3>
+            {selectedProducts.length > 0 ? (
+              <div className="sp-comex-selector__selection">
+                <span className="sp-comex-selector__selection-label">
+                  {C2.selectedProductsLabel}
+                </span>
+                <ul className="sp-comex-selector__chips">
+                  {selectedProducts.map((code) => (
+                    <li key={code} className="sp-comex-selector__chip">
+                      <span>
+                        {code}
+                        {details[code]?.description
+                          ? ` — ${details[code].description}`
+                          : ""}
+                      </span>
+                      <button
+                        type="button"
+                        className="sp-comex-selector__chip-remove"
+                        aria-label={C2.removeProduct(code)}
+                        onClick={() => removeProduct(code)}
+                      >
+                        <X size={12} aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {ncmChips.length > 0 ? (
+              <div className="sp-comex-selector__ncms">
+                <span className="sp-comex-selector__selection-label">
+                  {C2.ncmColumnTitle}
+                </span>
+                <ul className="sp-comex-selector__ncm-list">
+                  {ncmChips.map((ncm) => {
+                    const status = displayStatus(ncm);
+                    const gov = governanceByNcm.get(ncm);
+                    return (
+                      <li key={ncm} className="sp-comex-selector__ncm">
+                        <code>{ncm}</code>
                         <span
                           className={`sp-comex-selector__badge sp-comex-selector__badge--${ncmBadgeKind(status)}`}
                         >
                           {ncmStatusLabel(status)}
                         </span>
-                        <SuppliesActionButton
-                          type="button"
-                          variant={selected ? "ghost" : "primary"}
-                          disabled={busy}
-                          aria-pressed={selected}
-                          onClick={() =>
-                            selected
-                              ? deselectNcm(entry.ncm_code)
-                              : selectNcm(entry.ncm_code)
-                          }
-                        >
-                          {selected ? C2.deselectNcm : C2.selectNcm}
-                        </SuppliesActionButton>
-                        {entry.status === "rejected" ? (
+                        {status === "not_cataloged" ? (
+                          <SuppliesActionButton
+                            type="button"
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() => void addToCatalog(ncm)}
+                          >
+                            {C2.addToCatalog}
+                          </SuppliesActionButton>
+                        ) : null}
+                        {/* Re-review path: rejected → pending is open to any
+                            supplies.access user; other lifecycle actions
+                            live in the admin section (manage only). */}
+                        {gov?.status === "rejected" ? (
                           <SuppliesActionButton
                             type="button"
                             variant="ghost"
                             disabled={busy}
                             onClick={() =>
-                              void decideNcm(
-                                entry,
-                                "pending_fiscal_review",
-                              )
+                              void decideNcm(gov, "pending_fiscal_review")
                             }
                           >
                             {C2.resubmit}
                           </SuppliesActionButton>
                         ) : null}
+                        {directSet.has(ncm) ? (
+                          <button
+                            type="button"
+                            className="sp-comex-selector__chip-remove"
+                            aria-label={C2.removeNcm(ncm)}
+                            onClick={() => deselectNcm(ncm)}
+                          >
+                            <X size={12} aria-hidden="true" />
+                          </button>
+                        ) : null}
                       </li>
                     );
                   })}
                 </ul>
-              )}
-            </div>
-          </>
-        )}
+              </div>
+            ) : (
+              <p className="sp-comex-selector__empty" role="status">
+                {C2.emptySelection}
+              </p>
+            )}
 
-        {selectedProducts.length > 0 ? (
-          <div className="sp-comex-selector__selection">
             <span className="sp-comex-selector__selection-label">
-              {C2.selectedProductsLabel}
+              {C2.selectedCount(ncmChips.length)}
             </span>
-            <ul className="sp-comex-selector__chips">
-              {selectedProducts.map((code) => (
-                <li key={code} className="sp-comex-selector__chip">
-                  <span>
-                    {code}
-                    {details[code]?.description
-                      ? ` — ${details[code].description}`
-                      : ""}
-                  </span>
-                  <button
-                    type="button"
-                    className="sp-comex-selector__chip-remove"
-                    aria-label={C2.removeProduct(code)}
-                    onClick={() => removeProduct(code)}
-                  >
-                    <X size={12} aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {ncmChips.length > 0 ? (
-          <div className="sp-comex-selector__ncms">
-            <span className="sp-comex-selector__selection-label">
-              {C2.ncmColumnTitle}
-            </span>
-            <ul className="sp-comex-selector__ncm-list">
-              {ncmChips.map((ncm) => {
-                const status = displayStatus(ncm);
-                const gov = governanceByNcm.get(ncm);
-                return (
-                  <li key={ncm} className="sp-comex-selector__ncm">
-                    <code>{ncm}</code>
-                    <span
-                      className={`sp-comex-selector__badge sp-comex-selector__badge--${ncmBadgeKind(status)}`}
-                    >
-                      {ncmStatusLabel(status)}
-                    </span>
-                    {status === "not_cataloged" ? (
-                      <SuppliesActionButton
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => void addToCatalog(ncm)}
-                      >
-                        {C2.addToCatalog}
-                      </SuppliesActionButton>
-                    ) : null}
-                    {/* Re-review path: rejected → pending is open to any
-                        supplies.access user; other lifecycle actions
-                        live in the admin section (manage only). */}
-                    {gov?.status === "rejected" ? (
-                      <SuppliesActionButton
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() =>
-                          void decideNcm(gov, "pending_fiscal_review")
-                        }
-                      >
-                        {C2.resubmit}
-                      </SuppliesActionButton>
-                    ) : null}
-                    {directSet.has(ncm) ? (
-                      <button
-                        type="button"
-                        className="sp-comex-selector__chip-remove"
-                        aria-label={C2.removeNcm(ncm)}
-                        onClick={() => deselectNcm(ncm)}
-                      >
-                        <X size={12} aria-hidden="true" />
-                      </button>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ) : (
-          <p className="sp-comex-selector__empty" role="status">
-            {C2.emptySelection}
-          </p>
-        )}
-
-        <div className="sp-comex-selector__footer">
-          <div className="sp-comex-selector__analysis">
             {analysisNcms.length > 0 ? (
               <p className="sp-comex-selector__note">
                 {C2.aggregateNote}
@@ -912,47 +926,47 @@ export function MarketComexSelector({
                 {C2.clearSelection}
               </SuppliesActionButton>
             ) : null}
-          </div>
 
-          <div className="sp-comex-selector__views">
-          <SuppliesSelectField
-            label={C2.viewsLabel}
-            value={appliedView}
-            options={[
-              { value: "", label: C2.viewsPlaceholder },
-              ...views.map((view) => ({
-                value: view.view_id,
-                label: view.name,
-              })),
-            ]}
-            onChange={applyView}
-          />
-          <SuppliesTextField
-            label={C2.viewNamePlaceholder}
-            value={viewName}
-            placeholder={C2.viewNamePlaceholder}
-            onChange={setViewName}
-          />
-          <SuppliesActionButton
-            type="button"
-            variant="ghost"
-            disabled={busy || !viewName.trim()}
-            onClick={() => void saveView()}
-          >
-            <Save size={14} aria-hidden="true" />
-            {appliedView ? C2.updateView : C2.saveView}
-          </SuppliesActionButton>
-          {appliedView ? (
-            <SuppliesActionButton
-              type="button"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => void removeView()}
-            >
-              <Trash2 size={14} aria-hidden="true" />
-              {C2.deleteView}
-            </SuppliesActionButton>
-          ) : null}
+            <div className="sp-comex-selector__views">
+              <SuppliesSelectField
+                label={C2.viewsLabel}
+                value={appliedView}
+                options={[
+                  { value: "", label: C2.viewsPlaceholder },
+                  ...views.map((view) => ({
+                    value: view.view_id,
+                    label: view.name,
+                  })),
+                ]}
+                onChange={applyView}
+              />
+              <SuppliesTextField
+                label={C2.viewNamePlaceholder}
+                value={viewName}
+                placeholder={C2.viewNamePlaceholder}
+                onChange={setViewName}
+              />
+              <SuppliesActionButton
+                type="button"
+                variant="ghost"
+                disabled={busy || !viewName.trim()}
+                onClick={() => void saveView()}
+              >
+                <Save size={14} aria-hidden="true" />
+                {appliedView ? C2.updateView : C2.saveView}
+              </SuppliesActionButton>
+              {appliedView ? (
+                <SuppliesActionButton
+                  type="button"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void removeView()}
+                >
+                  <Trash2 size={14} aria-hidden="true" />
+                  {C2.deleteView}
+                </SuppliesActionButton>
+              ) : null}
+            </div>
           </div>
         </div>
 

@@ -227,14 +227,6 @@ export function MarketIntelligencePage({
         .filter((code) => filters.state.metals.includes(code)),
     [metalCards, filters.state.metals],
   );
-  const ncmOptions = useMemo(
-    () =>
-      selectableNcms.map((entry) => ({
-        value: entry.ncm_code,
-        label: `${entry.ncm_code} — ${entry.description}`,
-      })),
-    [selectableNcms],
-  );
   const ippOptions = useMemo(
     () =>
       selectableIpp.map((entry) => ({
@@ -244,15 +236,10 @@ export function MarketIntelligencePage({
     [selectableIpp],
   );
 
-  const selectedNcm =
-    selectableNcms.find((entry) => entry.ncm_code === filters.state.ncm)
-      ?.ncm_code ??
-    selectableNcms[0]?.ncm_code ??
-    "";
-
   /** Multi-NCM analysis (PROC-0076.COMEX.S4): the ``ncm`` URL param is
    * CSV — every code is catalog-validated before reaching the BFF, in
-   * the order the URL/user declared. */
+   * the order the URL/user declared. S8: no implicit first-NCM
+   * fallback — an empty selection stays empty (AC-11). */
   const analysisNcmCodes = useMemo(() => {
     const allowed = new Set(
       selectableNcms.map((entry) => entry.ncm_code),
@@ -263,9 +250,13 @@ export function MarketIntelligencePage({
       .filter((code) => allowed.has(code));
     return [...new Set(codes)];
   }, [filters.state.ncm, selectableNcms]);
-  const comexSelection = analysisNcmCodes.length
-    ? analysisNcmCodes.join(",")
-    : selectedNcm;
+  const comexSelection = analysisNcmCodes.join(",");
+  /** S8 AC-11/12: the Comex panel distinguishes "nothing selected"
+   * from "selected but not yet enabled for MDIC data". */
+  const comexHasSelection =
+    filters.state.comexProducts.length > 0 ||
+    filters.state.comexDirectNcms.length > 0 ||
+    filters.state.ncm.trim().length > 0;
   const selectedIppEntry =
     selectableIpp.find(
       (entry) => entry.series_id === filters.state.ippSeries,
@@ -344,8 +335,9 @@ export function MarketIntelligencePage({
     if (view === "fx") return "bcb-ptax";
     if (indicator === "ipp") return selectedIppEntry?.source_id;
     return (
-      selectableNcms.find((n) => n.ncm_code === selectedNcm)
-        ?.source_id ?? "mdic-comex-stat"
+      selectableNcms.find(
+        (n) => n.ncm_code === analysisNcmCodes[0],
+      )?.source_id ?? "mdic-comex-stat"
     );
   }, [
     view,
@@ -354,7 +346,7 @@ export function MarketIntelligencePage({
     selectedMetals,
     selectedIppEntry,
     selectableNcms,
-    selectedNcm,
+    analysisNcmCodes,
   ]);
 
   const attribution = useMemo(() => {
@@ -500,19 +492,6 @@ export function MarketIntelligencePage({
             onChange={filters.setIppSeries}
           />
         ) : null}
-        {view === "indicators" &&
-        indicator === "comex" &&
-        ncmOptions.length > 0 ? (
-          <SuppliesSelectField
-            label={MARKET_INTELLIGENCE_CONTENT.filters.ncmLabel}
-            hint={
-              MARKET_INTELLIGENCE_CONTENT.modules.importsNcmHint
-            }
-            value={selectedNcm}
-            options={ncmOptions}
-            onChange={filters.setNcm}
-          />
-        ) : null}
         {view === "fx" ? (
           <SuppliesSelectField
             label={MARKET_INTELLIGENCE_CONTENT.filters.fxKindLabel}
@@ -559,7 +538,7 @@ export function MarketIntelligencePage({
           configured={metalCards.length > 0}
           configState={{
             title:
-              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
+              MARKET_INTELLIGENCE_CONTENT.states.configPendingTitle,
             message:
               MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable,
           }}
@@ -600,7 +579,7 @@ export function MarketIntelligencePage({
           configured={selectableIpp.length > 0}
           configState={{
             title:
-              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
+              MARKET_INTELLIGENCE_CONTENT.states.configPendingTitle,
             message:
               MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable,
           }}
@@ -733,15 +712,34 @@ export function MarketIntelligencePage({
             GRANULARITY_LABELS[filters.state.granularity]
           }
           enabled={!catalogError && !catalogLoading}
-          configured={selectableNcms.length > 0}
-          configState={{
-            title:
-              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
-            message:
-              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPending,
-            nextSteps:
-              MARKET_INTELLIGENCE_CONTENT.states.comexNextSteps,
-          }}
+          configured={
+            comexHasSelection && analysisNcmCodes.length > 0
+          }
+          configState={
+            !comexHasSelection
+              ? {
+                  title:
+                    MARKET_INTELLIGENCE_CONTENT.states
+                      .comexEmptySelectionTitle,
+                  message:
+                    MARKET_INTELLIGENCE_CONTENT.states
+                      .comexEmptySelection,
+                  nextSteps:
+                    MARKET_INTELLIGENCE_CONTENT.states
+                      .comexEmptySelectionNext,
+                }
+              : {
+                  title:
+                    MARKET_INTELLIGENCE_CONTENT.states
+                      .comexSelectedPendingTitle,
+                  message:
+                    MARKET_INTELLIGENCE_CONTENT.states
+                      .comexSelectedPending,
+                  nextSteps:
+                    MARKET_INTELLIGENCE_CONTENT.states
+                      .comexSelectedPendingNext,
+                }
+          }
             selection={comexSelection}
             from={filters.state.from}
             to={filters.state.to}
@@ -844,7 +842,7 @@ export function MarketIntelligencePage({
           configured={Boolean(fxInstrument)}
           configState={{
             title:
-              MARKET_INTELLIGENCE_CONTENT.states.comexConfigPendingTitle,
+              MARKET_INTELLIGENCE_CONTENT.states.configPendingTitle,
             message:
               MARKET_INTELLIGENCE_CONTENT.states.moduleUnavailable,
           }}

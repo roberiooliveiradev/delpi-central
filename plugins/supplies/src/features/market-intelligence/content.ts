@@ -43,7 +43,6 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     indicatorIpp: "IPP (IBGE)",
     indicatorComex: "Comex (NCM)",
     seriesLabel: "Série",
-    ncmLabel: "NCM",
   },
 
   kpis: {
@@ -227,9 +226,6 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     importsHint:
       "Valor FOB, peso líquido e valor médio de importação em US$/t " +
       "por NCM homologada. Não é cotação internacional de metal.",
-    importsNcmLabel: "NCM",
-    importsNcmHint:
-      "Somente NCMs homologadas por Compras aparecem para consulta.",
     importsPeriodColumn: "Período",
     importsFobColumn: "Valor FOB (US$)",
     importsWeightColumn: "Peso líquido (t)",
@@ -286,6 +282,10 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     selectionHint:
       "Busque um produto DELPI ou informe a NCM — adicione ao " +
       "catálogo e selecione para a análise.",
+    findTitle: "Encontrar materiais",
+    analysisTitle: "Minha análise",
+    selectedCount: (count: number) =>
+      `${count} NCM${count === 1 ? "" : "s"} na seleção`,
     originProducts: "Produtos DELPI",
     originNcm: "Consultar NCM",
     directNcmLabel: "NCM (8 dígitos)",
@@ -382,12 +382,20 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     moduleUnavailable:
       "Este indicador está indisponível no momento — a fonte não foi " +
       "ativada ou os direitos de exibição estão em revisão.",
-    comexConfigPendingTitle: "Comex — seleção pendente",
-    comexConfigPending:
-      "Nenhuma NCM do catálogo está habilitada para dados ainda.",
-    comexNextSteps:
-      "Adicione uma NCM acima e aguarde a validação — quando a fonte " +
-      "MDIC estiver liberada para ela, as importações aparecem aqui.",
+    configPendingTitle: "Configuração pendente",
+    comexEmptySelectionTitle: "Comex — sem seleção",
+    comexEmptySelection:
+      "Selecione produtos ou NCMs para iniciar a análise.",
+    comexEmptySelectionNext:
+      "Busque um produto DELPI ou informe uma NCM na seção acima — " +
+      "o catálogo compartilhado já lista os códigos cadastrados.",
+    comexSelectedPendingTitle: "Comex — aguardando habilitação",
+    comexSelectedPending:
+      "As NCMs selecionadas estão no catálogo, mas ainda não estão " +
+      "habilitadas para consultar dados de importação.",
+    comexSelectedPendingNext:
+      "Quando uma NCM selecionada estiver habilitada para a fonte " +
+      "MDIC, as importações aparecem aqui.",
     providerUnavailable:
       "Temporariamente indisponível: a última coleta não foi " +
       "concluída. Os dados serão exibidos quando a conexão com a fonte " +

@@ -297,7 +297,8 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     // Config-pending preview is labels/hints only (value stays "—").
     expect(panel).toContain("configState?.preview");
     expect(panel).toContain("configState?.nextSteps");
-    expect(content).toContain("comexNextSteps");
+    expect(content).toContain("comexEmptySelectionNext");
+    expect(content).toContain("comexSelectedPendingNext");
     expect(content).toContain("configPreviewLabel");
     expect(content).toContain("nextStepsLabel");
     // Section icons are semantic, rendered via header actions.
@@ -372,7 +373,8 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     expect(content).toContain("attributionLabel");
     expect(content).toContain("rateLimited");
     expect(content).toContain("unavailable");
-    expect(content).toContain("comexConfigPending");
+    expect(content).toContain("comexEmptySelection");
+    expect(content).toContain("comexSelectedPending");
     expect(content).toContain("providerUnavailable");
     expect(content).toContain("feedNotCollected");
     expect(content).toContain("windowEmpty");
@@ -544,5 +546,50 @@ describe("market intelligence page (PROC-0076 R4)", () => {
     expect(content).toContain("emptySelection");
     expect(content).toContain("catalogEmpty");
     expect(content).toContain("alreadyInCatalog");
+  });
+
+  it("implements the S8 two-column layout and contextual states", () => {
+    const selector = readFileSync(
+      join(here, "MarketComexSelector.tsx"),
+      "utf8",
+    );
+    // S8.1: left "find" column + right "my analysis" column.
+    expect(selector).toContain("sp-comex-selector__columns");
+    expect(selector).toContain("sp-comex-selector__find");
+    expect(selector).toContain("sp-comex-selector__analysis");
+    expect(selector).toContain("C2.findTitle");
+    expect(selector).toContain("C2.analysisTitle");
+    // S8 AC-04/08: selection summary, per-item remove, clear-all and
+    // personal views live in the analysis column.
+    expect(selector).toContain("C2.selectedCount(ncmChips.length)");
+    expect(selector).toContain("C2.clearSelection");
+    expect(selector).toContain("sp-comex-selector__views");
+    // The shared catalog is a filterable vertical list with a single
+    // contextual select/deselect action per row (AC-01/06).
+    expect(selector).toContain("sp-comex-selector__catalog");
+    expect(selector).toContain("aria-pressed={selected}");
+    const css = readFileSync(
+      join(here, "..", "..", "index.css"),
+      "utf8",
+    );
+    expect(css).toContain(".sp-comex-selector__columns");
+    expect(css).toContain("grid-template-columns");
+    // Responsive stacking for tablet/mobile (AC-02).
+    expect(css).toContain("@media (max-width: 980px)");
+    const page = readFileSync(
+      join(here, "MarketIntelligencePage.tsx"),
+      "utf8",
+    );
+    // S8 AC-11/12: empty selection vs selected-but-not-enabled are
+    // distinct config states — no implicit first-NCM fallback.
+    expect(page).toContain("comexHasSelection");
+    expect(page).toContain("comexEmptySelection");
+    expect(page).toContain("comexSelectedPending");
+    expect(page).not.toContain("selectableNcms[0]?.ncm_code");
+    // The duplicated NCM dropdown was removed from the filter row.
+    expect(page).not.toContain("ncmOptions");
+    const content = readFileSync(join(here, "content.ts"), "utf8");
+    expect(content).toContain("comexEmptySelectionTitle");
+    expect(content).toContain("comexSelectedPendingTitle");
   });
 });
