@@ -46,6 +46,7 @@ from app.application.specialist_interop.errors import (
     MCP_INVALID_RESPONSE,
     MCP_PROTOCOL_ERROR,
     MCP_TIMEOUT,
+    OWNER_ARGUMENT_REJECTED,
     UNKNOWN_CAPABILITY,
     UNKNOWN_SPECIALIST,
     SpecialistInteropError,
@@ -64,6 +65,15 @@ from app.domain.specialist_interop.rules import (
     operation_class_from_owner,
     specialist_ref_or_none,
 )
+
+
+# Owner-declared argument-validation codes on the MCP error wire
+# (delpi_mcp ``structuredContent.code`` contract — DAVI emits
+# ``VALIDATION_ERROR`` for rejected tool/candidate arguments). Same
+# fail-closed rule as the OpenAPI adapter: only these owner-published
+# codes, and never when ``recoverable`` is explicitly false, project
+# to OWNER_ARGUMENT_REJECTED; every other error stays terminal.
+_OWNER_ARG_VALIDATION_CODES = frozenset({"VALIDATION_ERROR"})
 
 
 def _now_utc() -> str:
@@ -277,6 +287,43 @@ class SpecialistInterop:
                 ch if ch.isprintable() else " "
                 for ch in outcome.content_text[:240]
             ).strip()
+            # DAVI-exclusive DELPI access (task DELIA-C3-DAVI-EXCLUSIVE-01):
+            # the owner declares typed errors in the result
+            # ``structuredContent`` (delpi_mcp contract). An owner-typed
+            # argument-validation code — not explicitly negated by
+            # ``recoverable:false`` — projects to the canonical
+            # owner-argument rejection so the governed READ recovery
+            # applies uniformly across providers. Undeclared, untyped
+            # and explicitly non-recoverable results stay terminal.
+            structured = outcome.structured
+            error_code = (
+                structured.get("code")
+                if isinstance(structured, Mapping)
+                else None
+            )
+            if (
+                isinstance(error_code, str)
+                and error_code in _OWNER_ARG_VALIDATION_CODES
+                and not (
+                    isinstance(structured, Mapping)
+                    and structured.get("recoverable") is False
+                )
+            ):
+                raw_hint = structured.get("message")
+                if not isinstance(raw_hint, str):
+                    raw_hint = ""
+                hint = "".join(
+                    ch if ch.isprintable() and ch not in "\r\n\t" else " "
+                    for ch in raw_hint
+                ).strip()[:160]
+                if not hint or "://" in hint:
+                    hint = None
+                raise SpecialistInteropError(
+                    OWNER_ARGUMENT_REJECTED,
+                    "owner declared the proposed arguments invalid"
+                    + (f": {detail}" if detail else ""),
+                    owner_hint=hint,
+                )
             raise SpecialistInteropError(
                 MCP_PROTOCOL_ERROR,
                 "specialist reported a remote capability error"

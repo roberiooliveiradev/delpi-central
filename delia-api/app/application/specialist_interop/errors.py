@@ -20,6 +20,13 @@ MCP_AUTHENTICATION_FAILED = "mcp_authentication_failed"
 MCP_AUTHORIZATION_DENIED = "mcp_authorization_denied"
 CAPABILITY_NOT_ALLOWED_IN_PHASE = "capability_not_allowed_in_phase"
 
+# Canonical provider code (shared with capability_provision.contracts):
+# the owner explicitly declared the proposed arguments invalid through
+# its typed error contract — eligible for the bounded governed READ
+# recovery round. Undeclared/untyped/non-recoverable error results
+# stay terminal protocol failures.
+OWNER_ARGUMENT_REJECTED = "owner_argument_rejected"
+
 
 class SpecialistInteropError(Exception):
     """Bounded semantic error; never carries secrets or raw wire internals.

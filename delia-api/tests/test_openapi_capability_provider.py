@@ -10,6 +10,7 @@ discoverable-but-UNKNOWN (never invocable).
 from __future__ import annotations
 
 import pytest
+from pathlib import Path
 
 from app.application.capability_provision.contracts import (
     CapabilityProviderError,
@@ -870,3 +871,37 @@ def test_r2_openapi_explicit_nonpositive_fail_fast():
         provider.invoke(cap, {}, correlation_id="c", timeout_seconds=0.0)
     assert exc.value.code == "openapi_invocation_failed"
     assert calls == []
+
+
+# ---------------------------------------------------------------------------
+# DAVI-exclusive DELPI access (task DELIA-C3-DAVI-EXCLUSIVE-01): the
+# governed declarations file is the direct DÉLIA→API-DELPI binding.
+# Capabilities legitimately covered by DAVI (mcp-api-delpi external read
+# allowlist) MUST NOT be offered twice — no duplicate equivalent surface;
+# capabilities without a DAVI substitute stay until the owner exposes
+# them (CAPABILITY_MIGRATION_BLOCKED, doc 179).
+# ---------------------------------------------------------------------------
+
+_DELPI_DECLARATIONS_FILE = (
+    Path(__file__).resolve().parent.parent
+    / "config"
+    / "openapi_declarations.delpi.json"
+)
+
+
+def test_governed_delpi_declarations_exclude_davi_covered_capabilities():
+    from app.infrastructure.openapi.source_loader import load_declarations
+
+    declarations, owner, contract_id, _display = load_declarations(
+        str(_DELPI_DECLARATIONS_FILE)
+    )
+    ids = {d.capability_id for d in declarations}
+    # Migrated to DAVI (davi_external_read_allowlist.json): must not be
+    # offered through the direct OpenAPI binding anymore.
+    assert "delpi.search_products" not in ids
+    assert "delpi.get_product_stock" not in ids
+    # Preserved temporarily under CAPABILITY_MIGRATION_BLOCKED — DAVI
+    # allowlist does not expose substitutes yet (owner decision pending).
+    assert ids == {"delpi.get_product_summary", "delpi.search_customers"}
+    assert owner == "DELPI"
+    assert contract_id == "api-delpi"

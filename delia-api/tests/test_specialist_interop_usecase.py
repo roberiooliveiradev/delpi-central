@@ -527,3 +527,81 @@ def test_remote_error_is_truthful_failure():
                 arguments={"query": "x"},
             )
         )
+
+
+# ---------------------------------------------------------------------------
+# DAVI-exclusive DELPI access (task DELIA-C3-DAVI-EXCLUSIVE-01): the MCP
+# boundary translates owner-DECLARED argument-validation codes into the
+# canonical provider error so governed READ recovery applies uniformly —
+# same fail-closed rule as the OpenAPI adapter: undeclared, untyped or
+# explicitly non-recoverable error results stay terminal.
+# ---------------------------------------------------------------------------
+
+_DAVI_READ_TOOL = (
+    RemoteToolDescriptor(
+        remote_name="execute_delpi_information",
+        operation_class="READ",
+    ),
+)
+
+
+def _davi_invoke(outcome: RemoteToolOutcome) -> SpecialistInteropError:
+    interop = _interop(tools=_DAVI_READ_TOOL, outcome=outcome)
+    with pytest.raises(SpecialistInteropError) as exc:
+        interop.invoke(
+            SpecialistInvocationRequest(
+                specialist_id="davi",
+                remote_capability="execute_delpi_information",
+                correlation_id="c",
+                arguments={"candidate_token": "tok", "arguments": {}},
+            )
+        )
+    return exc.value
+
+
+def test_remote_error_typed_validation_code_is_argument_rejected():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Invalid execute parameters.",
+            structured={
+                "code": "VALIDATION_ERROR",
+                "message": "product_type inválido",
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "owner_argument_rejected"
+    assert exc.owner_hint == "product_type inválido"
+
+
+def test_remote_error_untyped_code_stays_terminal():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="business failure",
+            structured={"code": "BUSINESS_RULE", "message": "nope"},
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_protocol_error"
+
+
+def test_remote_error_without_code_stays_terminal():
+    exc = _davi_invoke(
+        RemoteToolOutcome(content_text="denied", is_error=True)
+    )
+    assert exc.code == "mcp_protocol_error"
+
+
+def test_remote_error_explicit_non_recoverable_stays_terminal():
+    exc = _davi_invoke(
+        RemoteToolOutcome(
+            content_text="Invalid execute parameters.",
+            structured={
+                "code": "VALIDATION_ERROR",
+                "message": "permanent rejection",
+                "recoverable": False,
+            },
+            is_error=True,
+        )
+    )
+    assert exc.code == "mcp_protocol_error"

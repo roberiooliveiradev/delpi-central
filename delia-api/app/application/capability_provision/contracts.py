@@ -21,6 +21,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from app.application.specialist_interop.errors import (
+    OWNER_ARGUMENT_REJECTED,
+)
 from app.domain.evidence.model import SourceRef
 from app.domain.specialist_interop.model import (
     SpecialistOperationClass,
@@ -42,14 +45,18 @@ ProviderOutcome = SpecialistOutcome
 # A bare 404 without that envelope stays a transport failure.
 OWNER_RECORD_NOT_FOUND = "owner_record_not_found"
 
-# Owner HTTP 400/422 whose shared error envelope EXPLICITLY declares
-# recoverability (``error.recoverable is True`` or an owner-published
-# argument-validation code) — a contract/admissibility rejection of
-# the proposed READ arguments that may be reformulated once under
-# the bounded recovery round. Undeclared and non-recoverable
-# envelopes and bare error statuses stay ordinary invocation
-# failures.
-OWNER_ARGUMENT_REJECTED = "owner_argument_rejected"
+# Owner error surface that EXPLICITLY declares an argument-validation
+# rejection through the provider's typed error contract — OpenAPI:
+# ``error.recoverable is True`` or an owner-published validation code
+# on a 400/422 shared envelope; MCP: ``structuredContent.code`` from
+# the owner-declared argument-validation vocabulary. A
+# contract/admissibility rejection of the proposed READ arguments
+# that may be reformulated once under the bounded recovery round.
+# Undeclared, untyped and non-recoverable envelopes stay ordinary
+# invocation failures. Canonical value lives in
+# ``specialist_interop.errors`` — the shared error vocabulary leaf —
+# so every provider family maps the same code without importing this
+# package. (Re-exported — see the import block above.)
 
 
 class CapabilityProviderError(Exception):
