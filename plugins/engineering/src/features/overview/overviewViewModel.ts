@@ -42,6 +42,15 @@ export type OverviewKpiCardVm = {
   stateMessage?: string | null;
 };
 
+/** Elegibilidade de meta/IDD/badges por indicador canônico (doc 18 +
+ * KPI-FICHAS + contrato OVERVIEW.R1): somente os dois indicadores
+ * estratégicos apresentam metas/scores — operacionais do mesmo grupo
+ * nunca recebem apresentação de meta, mesmo se o contrato vazar. */
+const GOAL_ELIGIBLE_IDS = new Set([
+  "lmp_on_time",
+  "transforma_gross_savings",
+]);
+
 const TITLE_HINTS: Record<string, string> = {
   lmp_on_time:
     "Percentual de LMPs concluídas dentro do prazo no período — fonte oficial api-delpi.",
@@ -150,20 +159,22 @@ export function buildOverviewCards(
       };
     }
 
-    const goals = goalFieldsOf(ind);
     const contextLabel = `${scopeLabelOf(ind)} · ${periodLabelOf(ind)}`;
-    const presentation = buildKpiGoalPresentation(
-      CONTEXT_FALLBACK[ind.id] ?? contextLabel,
-      goals,
-      (value) => formatDashboardMetricValue(value, goals),
-      {
-        realizedValue: ind.value,
-        dateStart: ind.start_date,
-        dateEnd: ind.end_date,
-        iddScoreLabel: resolveIndicatorIddScoreLabelFromSi(ind.idd),
-        showGoal: ind.has_goal === true || ind.goal_value != null,
-      },
-    );
+    const eligible = GOAL_ELIGIBLE_IDS.has(ind.id);
+    const presentation = eligible
+      ? buildKpiGoalPresentation(
+          CONTEXT_FALLBACK[ind.id] ?? contextLabel,
+          goalFieldsOf(ind),
+          (value) => formatDashboardMetricValue(value, goalFieldsOf(ind)),
+          {
+            realizedValue: ind.value,
+            dateStart: ind.start_date,
+            dateEnd: ind.end_date,
+            iddScoreLabel: resolveIndicatorIddScoreLabelFromSi(ind.idd),
+            showGoal: ind.has_goal === true || ind.goal_value != null,
+          },
+        )
+      : { contextLabel: CONTEXT_FALLBACK[ind.id] ?? contextLabel };
 
     return {
       id: ind.id,

@@ -47,6 +47,14 @@ SI_IDD_BY_INDICATOR = {
     "transforma_gross_savings": "engineering-transforma-plus",
 }
 
+# Elegibilidade de meta/IDD por indicador canônico (doc 18 + KPI-FICHAS):
+# os campos goal_* enriquecidos no resumo da família pertencem ao
+# indicador estratégico correspondente — nunca aos operacionais do
+# mesmo grupo (lead time, total de propostas, soluções, ROI).
+GOAL_ELIGIBLE_INDICATORS = frozenset(
+    {"lmp_on_time", "transforma_gross_savings"}
+)
+
 _GOAL_FIELD_KEYS = (
     "has_goal",
     "goal_label",
@@ -114,6 +122,11 @@ def _indicator(
     payload: dict[str, Any],
     query: OverviewQuery,
 ) -> OverviewIndicator:
+    goal_fields = (
+        _goal_fields(payload)
+        if indicator_id in GOAL_ELIGIBLE_INDICATORS
+        else {}
+    )
     return OverviewIndicator(
         id=indicator_id,
         label=label,
@@ -126,7 +139,7 @@ def _indicator(
         end_date=query.end_date,
         source=_SYSTEM,
         source_endpoint=endpoint,
-        **_goal_fields(payload),
+        **goal_fields,
     )
 
 

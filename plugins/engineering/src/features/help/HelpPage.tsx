@@ -118,7 +118,7 @@ export function HelpPage({ basePath }: HelpPageProps) {
                 {
                   term: "Indicadores",
                   meaning:
-                    "Seis indicadores oficiais da Engenharia: % LMP dentro do prazo, lead time médio e total de propostas (LMP); ganhos brutos, soluções implementadas e ROI médio (TRANSFORMA+). Metas e Nota IDD aparecem quando os sistemas oficiais as fornecem.",
+                    "Seis indicadores oficiais da Engenharia: % LMP dentro do prazo, lead time médio e total de propostas (LMP); ganhos brutos, soluções implementadas e ROI médio (TRANSFORMA+). Metas e Nota IDD aparecem somente nos dois indicadores estratégicos (% LMP dentro do prazo e ganhos brutos), quando os sistemas oficiais as fornecem — os demais cards exibem apenas valor, período e escopo.",
                 },
                 {
                   term: "Filtros",

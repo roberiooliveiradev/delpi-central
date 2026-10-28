@@ -33,8 +33,7 @@ function overviewPayload(overrides: Record<string, unknown> = {}) {
 
 function stubFetch(body: unknown, status = 200) {
   const spy = vi.fn(
-    async (_input: unknown, _init?: unknown) =>
-      new Response(JSON.stringify(body), { status }),
+    async () => new Response(JSON.stringify(body), { status }),
   );
   vi.stubGlobal("fetch", spy);
   return spy;

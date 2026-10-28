@@ -140,6 +140,60 @@ describe("buildOverviewCards — paridade com Dashboard Engenharia", () => {
     expect(card.goalLabel).toBe("90,0%");
   });
 
+  it("operacionais nunca apresentam meta/IDD/badges (OVERVIEW.R1)", () => {
+    // Mesmo que o contrato vaze metadados estratégicos do grupo para
+    // soluções/ROI, o view model ignora — elegibilidade é por
+    // indicador canônico, não por família.
+    const operational = [
+      "lmp_lead_time",
+      "lmp_total_proposals",
+      "transforma_solutions",
+      "transforma_roi",
+    ];
+    const cards = buildOverviewCards(
+      overview(
+        operational.map((id) =>
+          indicator({
+            id,
+            family: id.startsWith("lmp") ? "lmp" : "transforma",
+            has_goal: true,
+            goal_value: 10000,
+            goal_label: "Vazado",
+            comparable_goal: 10000,
+            reference_goal: 9000,
+            goal_scope_label: "Consolidado",
+            performance_direction: "higher_is_better",
+            idd: 99,
+            idd_label: "vazado",
+          }),
+        ),
+      ),
+    );
+    for (const card of cards) {
+      expect(card.goalLabel).toBeUndefined();
+      expect(card.goalPrefix).toBeUndefined();
+      expect(card.monthlyGoalLabel).toBeUndefined();
+      expect(card.goalScopeBadge).toBeUndefined();
+      expect(card.goalPerformanceBadge).toBeUndefined();
+      expect(card.iddScoreLabel).toBeUndefined();
+      expect(card.availability).toBe("available");
+    }
+    // Mas os elegíveis continuam apresentando meta/IDD.
+    const [strategic] = buildOverviewCards(
+      overview([
+        indicator({
+          id: "transforma_gross_savings",
+          family: "transforma",
+          has_goal: true,
+          goal_value: 10000,
+          idd: 81,
+        }),
+      ]),
+    );
+    expect(strategic.goalLabel).toBeDefined();
+    expect(strategic.iddScoreLabel).toBe("81,00");
+  });
+
   it("escopo por unidade rotula a unidade, não 'Consolidado'", () => {
     const [card] = buildOverviewCards(
       overview([indicator({ scope: "01" })]),

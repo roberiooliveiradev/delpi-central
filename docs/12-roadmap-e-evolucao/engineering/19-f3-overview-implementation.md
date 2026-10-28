@@ -32,6 +32,13 @@ migração do módulo LMPs, refatoração de outros portais.
 IDs canônicos SI preservados: `engineering-projects-on-time` →
 `lmp_on_time`; `engineering-transforma-plus` → `transforma_gross_savings`.
 
+> **Errata OVERVIEW.R1 (doc 20):** na versão inicial, os campos `goal_*`
+> do resumo da família eram repassados a todos os indicadores do grupo,
+> fazendo soluções/ROI (e potencialmente lead time/total) exibirem metas
+> do indicador estratégico. Corrigido: elegibilidade de meta/IDD é por
+> indicador canônico — apenas `lmp_on_time` e `transforma_gross_savings`
+> carregam esses campos.
+
 Referência funcional: `plugins/dashboard-engineering` (mesma semântica
 de mapeamento, formatação pt-BR, metas/IDD via
 `buildKpiGoalPresentation` do kit). Nenhum código importado entre MFEs.

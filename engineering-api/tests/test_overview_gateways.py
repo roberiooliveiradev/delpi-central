@@ -106,6 +106,40 @@ async def test_lmp_summary_maps_three_indicators_and_serializes_dates(
     assert "x-delpi-service-token" not in request.headers
 
 
+async def test_lmp_goal_fields_only_on_strategic_indicator():
+    # OVERVIEW.R1: metas enriquecidas no resumo LMP pertencem a
+    # engineering-projects-on-time (lmp_on_time) — nunca vazam para
+    # lead time nem total de propostas.
+    payload = {
+        "total_lmps": 41,
+        "percent_dentro_prazo": 92.5,
+        "avg_lead_time": 7.3,
+        "has_goal": True,
+        "goal_value": 90.0,
+        "goal_label": "Meta oficial",
+        "reference_goal": 88.0,
+        "value_suffix": "%",
+        "goal_scope_label": "Consolidado",
+    }
+    _, handler = _capture(
+        lambda req: httpx.Response(200, json=_envelope(payload))
+    )
+    source = ApiDelpiLmpOverviewSource(_client(handler))
+    result = await source.fetch(CTX, query=QUERY)
+
+    by_id = {ind.id: ind for ind in result.indicators}
+    assert by_id["lmp_on_time"].has_goal is True
+    assert by_id["lmp_on_time"].goal_value == 90.0
+    for ind_id in ("lmp_lead_time", "lmp_total_proposals"):
+        ind = by_id[ind_id]
+        assert ind.has_goal is None
+        assert ind.goal_value is None
+        assert ind.goal_label is None
+        assert ind.reference_goal is None
+        assert ind.value_suffix is None
+        assert ind.goal_scope_label is None
+
+
 async def test_lmp_prefers_total_items_when_owner_provides():
     payload = {"total_lmps": 41, "total_items": 57,
                "percent_dentro_prazo": 92.5, "avg_lead_time": 7.3}
@@ -195,6 +229,41 @@ async def test_transforma_summary_maps_and_serializes_filial():
     assert request.url.params["filial_id"] == "01"
     assert request.url.params["start_date"] == "2026-10-01"
     assert request.url.params["end_date"] == "2026-10-31"
+
+
+async def test_transforma_goal_fields_only_on_gross_savings():
+    # OVERVIEW.R1: metas do grupo TRANSFORMA+ pertencem a
+    # engineering-transforma-plus (ganhos brutos) — soluções e ROI não
+    # herdam meta, IDD, badges nem metadados de apresentação.
+    payload = {
+        "implemented_solutions_count": 8,
+        "total_gross_savings_in_period": 12500.0,
+        "average_roi": 3.4,
+        "has_goal": True,
+        "goal_value": 10000.0,
+        "goal_label": "Meta TRANSFORMA+",
+        "value_prefix": "R$ ",
+        "value_unit": "BRL",
+        "performance_direction": "higher_is_better",
+    }
+    _, handler = _capture(
+        lambda req: httpx.Response(200, json=_envelope(payload))
+    )
+    source = ApiDelpiTransformaOverviewSource(_client(handler))
+    result = await source.fetch(CTX, query=QUERY)
+
+    by_id = {ind.id: ind for ind in result.indicators}
+    savings = by_id["transforma_gross_savings"]
+    assert savings.has_goal is True
+    assert savings.goal_value == 10000.0
+    for ind_id in ("transforma_solutions", "transforma_roi"):
+        ind = by_id[ind_id]
+        assert ind.has_goal is None
+        assert ind.goal_value is None
+        assert ind.goal_label is None
+        assert ind.value_prefix is None
+        assert ind.value_unit is None
+        assert ind.performance_direction is None
 
 
 async def test_transforma_401_is_forbidden():
