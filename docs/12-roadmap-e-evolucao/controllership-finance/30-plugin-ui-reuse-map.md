@@ -915,3 +915,20 @@ Sem helper paralelo por página: um único owner de params/parse/serialize e um 
 | Ações | `ActionButton`/`CfActionButton` | adicionar, salvar, cancelar, editar, encerrar |
 | Confirmação destrutiva | `ConfirmModalPanel` + `CfDialog` | «Encerrar exigência» |
 | Estados | `EmptyState`/`CfEmptyState`, `CfQueryErrorBanner`, `CfFeedbackMessage` | vazio, 403/erro, rascunho aberto, validação |
+
+
+### UX-013 — inventário obrigatório de reuse para refinamento do catálogo (PLANNED)
+
+**Não assumir que o nome visual “Blueprint UI” autoriza novos imports:** verificar os exports e factories reais vigentes de `@delpi/plugin-ui` e as implementações dos demais Portais. Em UX-012 foram usados SectionCard, ActionButton, FiltersKit, DataTableSection, StatusBadge, ConfirmModalPanel e PagePath, mas o formulário ainda usa controles nativos/local CSS e a auditoria usa lista simples.
+
+| Superfície | Reuso a investigar | Regra |
+|---|---|---|
+| Text input, textarea, select, month | Form/Input/Select/TextArea/Date ou equivalentes reais do kit | Só mapear componente comprovado; sem duplicar wrappers |
+| Botões e ícones | ActionButton, IconButton, Icon/Tooltip/variants reais | CTA primário + ações secundárias/danger |
+| Cards/layout | SectionCard e layout utilities/tokens | Card gap, padding, grid responsivo via tokens |
+| Timeline/eventos | componente Media / MediaObject / Activity / Timeline, se exportado | Não inventar; registrar gap ou centralizar extensão no kit com gate |
+| Tabela/filtros | DataTableSection, FiltersKit | Preservar URL/F5, ações e estados |
+| Estados/badges/ajuda | EmptyState, StatusBadge, FeedbackMessage, TitleWithHelp | estados honestos e acessíveis |
+| Navegação | PagePath e navegação do host | Sem nova árvore/chrome |
+
+Revisão de implementação obrigatória: mapa final campo→export/import exato, CSS residual justificado, regressões visual e funcional, light/dark, teclado/mobile. Plano 113 §28.9; wireframe 112 §49.
