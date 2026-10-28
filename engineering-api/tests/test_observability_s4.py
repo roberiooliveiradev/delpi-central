@@ -177,7 +177,7 @@ async def test_concurrent_requests_isolate_request_id_and_user(
 
     transport = httpx.ASGITransport(app=probe_asgi_app)
     async with httpx.AsyncClient(
-        transport=transport, base_url="http://test"
+        transport=transport, base_url="http://test", timeout=10.0
     ) as client:
         responses = await asyncio.gather(
             *[
@@ -222,7 +222,7 @@ async def test_concurrent_failure_does_not_poison_siblings(
 
     transport = httpx.ASGITransport(app=probe_asgi_app)
     async with httpx.AsyncClient(
-        transport=transport, base_url="http://test"
+        transport=transport, base_url="http://test", timeout=10.0
     ) as client:
         ok, denied = await asyncio.gather(
             client.get(
