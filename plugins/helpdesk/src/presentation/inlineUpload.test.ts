@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   appendInlineImageHtml,
+  hasUnresolvedInlineImageRefs,
   hydrateInlineAttachmentSrcs,
   listPendingInlineIds,
   normalizeInlineAttachmentSrcs,
@@ -76,6 +77,53 @@ describe("inlineUpload", () => {
     expect(hydrated).not.toContain("/apps/helpdesk-api/tickets/1122/attachments/1177");
     expect(objectUrls).toHaveLength(1);
     objectUrls.forEach((url) => URL.revokeObjectURL(url));
+  });
+
+  it("regressão GLPI #1464 — rewrite limpa data-attachment-href pendente", () => {
+    // Shape real emitido pelo editor: pending attr + href token + blob src.
+    const html =
+      '<p>antes <img src="attachment:pending:p1" data-attachment-pending="p1" ' +
+      'data-attachment-href="attachment:pending:p1" alt="x" /> depois</p>';
+    expect(hasUnresolvedInlineImageRefs(html)).toBe(true);
+    const rewritten = rewritePendingInlineImages(html, {
+      p1: { documentId: 55, ticketId: 9 },
+    });
+    // O token pendente não pode sobreviver em nenhum atributo — o BFF rejeita
+    // `attachment:pending:` em qualquer posição (inline_image_pending).
+    expect(rewritten).not.toContain("attachment:pending:");
+    expect(rewritten).not.toContain("data-attachment-pending");
+    expect(rewritten).toContain('data-attachment-href="attachment:55"');
+    expect(rewritten).toContain('data-attachment-id="55"');
+    expect(rewritten).toContain("/apps/helpdesk-api/tickets/9/attachments/55");
+    expect(rewritten.indexOf("antes")).toBeLessThan(rewritten.indexOf("<img"));
+    expect(rewritten.indexOf("<img")).toBeLessThan(rewritten.indexOf("depois"));
+    expect(hasUnresolvedInlineImageRefs(rewritten)).toBe(false);
+  });
+
+  it("hasUnresolvedInlineImageRefs — pending attr, href órfão e src efêmero", () => {
+    expect(
+      hasUnresolvedInlineImageRefs('<p><img data-attachment-pending="a" src="blob:x" /></p>'),
+    ).toBe(true);
+    // href órfão sem attr pendente — o estado que produzia o falso 422.
+    expect(
+      hasUnresolvedInlineImageRefs(
+        '<p><img src="/apps/helpdesk-api/tickets/1/attachments/9" ' +
+          'data-attachment-id="9" data-attachment-href="attachment:pending:a" /></p>',
+      ),
+    ).toBe(true);
+    // src efêmero sem referência persistível — o sanitizer removeria em silêncio.
+    expect(hasUnresolvedInlineImageRefs('<p><img src="blob:http://x/y" /></p>')).toBe(true);
+    expect(hasUnresolvedInlineImageRefs('<p><img src="data:image/png;base64,AAA" /></p>')).toBe(
+      true,
+    );
+    // Imagem resolvida com token canônico — submit liberado.
+    expect(
+      hasUnresolvedInlineImageRefs(
+        '<p><img src="/apps/helpdesk-api/tickets/1/attachments/9" ' +
+          'data-attachment-id="9" data-attachment-href="attachment:9" /></p>',
+      ),
+    ).toBe(false);
+    expect(hasUnresolvedInlineImageRefs("<p>texto</p>")).toBe(false);
   });
 
   it("hidrata: negativo — falha de fetch mantém URL pública", async () => {

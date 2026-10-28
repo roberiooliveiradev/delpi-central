@@ -67,6 +67,15 @@ export function rewritePendingInlineImages(
       let cleaned = String(attrs)
         .replace(new RegExp(`\\s${PENDING_ATTR}=["'][^"']*["']`, "i"), "")
         .replace(/\ssrc=["'][^"']*["']/i, ` src="${escapeAttr(src)}"`);
+      const resolvedHref = `attachment:${target.documentId}`;
+      if (/\sdata-attachment-href=/i.test(cleaned)) {
+        cleaned = cleaned.replace(
+          /\sdata-attachment-href=["'][^"']*["']/i,
+          ` data-attachment-href="${resolvedHref}"`,
+        );
+      } else {
+        cleaned += ` data-attachment-href="${resolvedHref}"`;
+      }
       if (!/\sdata-attachment-id=/i.test(cleaned)) {
         cleaned += ` data-attachment-id="${target.documentId}"`;
       }
@@ -181,6 +190,21 @@ export function stripPendingInlineImages(html: string): string {
     new RegExp(`<img\\b[^>]*\\b${PENDING_ATTR}=["'][^"']*["'][^>]*/?>`, "gi"),
     "",
   );
+}
+
+const PENDING_INLINE_TOKEN_RE = /\bdata-attachment-pending\s*=|\battachment:pending:/i;
+const EPHEMERAL_IMG_SRC_RE = /<img\b[^>]*\bsrc=["'](?:blob:|data:)[^"']*["'][^>]*\/?>/i;
+
+/**
+ * Submit-readiness for GLPI-bound content — mirrors the BFF contract: no
+ * pending token in any attribute (`data-attachment-pending`,
+ * `data-attachment-href`, src) and no ephemeral src (`blob:`/`data:`) that the
+ * sanitizer would strip silently. Everything the BFF rejects as
+ * `inline_image_pending`/foreign must be caught here first, before the write.
+ */
+export function hasUnresolvedInlineImageRefs(html: string): boolean {
+  const source = String(html || "");
+  return PENDING_INLINE_TOKEN_RE.test(source) || EPHEMERAL_IMG_SRC_RE.test(source);
 }
 
 function escapeAttr(value: string): string {

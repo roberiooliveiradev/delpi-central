@@ -63,6 +63,7 @@ import {
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import {
+  hasUnresolvedInlineImageRefs,
   listPendingInlineIds,
   normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
@@ -978,10 +979,21 @@ function CreateTicketPage() {
             if (saving || !title.trim() || !hasVisibleRichText(description)) return;
             setSaving(true);
             setErrorText(null);
-            const pendingIds = [
-              ...new Set([...listPendingInlineIds(description), ...pendingFilesRef.current.keys()]),
-            ];
-            const openingHtml = stripPendingInlineImages(description).trim() || "<p>Anexo(s)</p>";
+            void (async () => {
+              // Read the live editor DOM — a pasted image can still be in
+              // flight between materialize/insert and React state.
+              const liveDescription =
+                (await createComposerRef.current?.prepareForSubmit()) || description;
+              const pendingIds = [
+                ...new Set([
+                  ...listPendingInlineIds(liveDescription),
+                  ...pendingFilesRef.current.keys(),
+                ]),
+              ];
+              const openingHtml =
+                persistHelpdeskAttachmentHtml(
+                  stripPendingInlineImages(liveDescription),
+                ).trim() || "<p>Anexo(s)</p>";
             void createTicket(
               {
                 title: title.trim(),
@@ -1024,16 +1036,19 @@ function CreateTicketPage() {
                 // image-only followup).
                 if (
                   Object.keys(mapping).length > 0 &&
-                  listPendingInlineIds(description).length > 0
+                  hasUnresolvedInlineImageRefs(liveDescription)
                 ) {
                   // Failed uploads keep `attachment:pending:` refs — strip them
                   // so they cannot poison the whole description update (the BFF
                   // rejects unresolved refs; the create itself already went
                   // through without them).
-                  const rewritten = stripPendingInlineImages(
-                    rewritePendingInlineImages(description, mapping),
+                  const rewritten = persistHelpdeskAttachmentHtml(
+                    stripPendingInlineImages(
+                      rewritePendingInlineImages(liveDescription, mapping),
+                    ),
+                    ticketId,
                   );
-                  if (rewritten.trim()) {
+                  if (rewritten.trim() && !hasUnresolvedInlineImageRefs(rewritten)) {
                     await updateTicketDescription(
                       ticketId,
                       { content: rewritten },
@@ -1051,6 +1066,7 @@ function CreateTicketPage() {
                 setErrorText(messageFor(error).text);
                 setSaving(false);
               });
+            })();
           }}
         >
           <div className="helpdesk-create-layout">
@@ -1290,13 +1306,24 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   );
 
   /** Resolve every pending inline ref: await in-flight uploads, start the ones
-   * restored from draft. Returns the rewritten HTML or null when an image is
-   * still unresolved (caller must block the send — never strip silently). */
+   * restored from draft. Returns the rewritten HTML or a typed failure so the
+   * caller can distinguish an upload that failed from a reference that has no
+   * file backing it — the send is blocked either way, never stripped. */
   const resolveInlineUploadsForSubmit = useCallback(
-    async (html: string): Promise<string | null> => {
+    async (
+      html: string,
+    ): Promise<
+      { ok: true; html: string } | { ok: false; reason: "upload_failed" | "unresolved" }
+    > => {
       const pendingIds = listPendingInlineIds(html);
-      if (pendingIds.length === 0) return html;
+      if (pendingIds.length === 0) {
+        const normalized = attachmentPreview.persistHtml(html);
+        return hasUnresolvedInlineImageRefs(normalized)
+          ? { ok: false, reason: "unresolved" }
+          : { ok: true, html: normalized };
+      }
       const mapping: Record<string, { documentId: number; ticketId: string }> = {};
+      let failed = false;
       for (const pendingId of pendingIds) {
         let promise = inlineUploadsRef.current.get(pendingId);
         if (!promise) {
@@ -1306,12 +1333,17 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         const documentId = promise ? await promise : null;
         if (documentId != null) {
           mapping[pendingId] = { documentId, ticketId };
+        } else {
+          failed = true;
         }
       }
       const rewritten = attachmentPreview.persistHtml(
         rewritePendingInlineImages(html, mapping),
       );
-      return listPendingInlineIds(rewritten).length === 0 ? rewritten : null;
+      if (hasUnresolvedInlineImageRefs(rewritten)) {
+        return { ok: false, reason: failed ? "upload_failed" : "unresolved" };
+      }
+      return { ok: true, html: rewritten };
     },
     [ticketId, startInlineUpload, attachmentPreview.persistHtml],
   );
@@ -1519,7 +1551,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       setFollowupEditError("Escreva o novo texto do acompanhamento antes de salvar.");
       return;
     }
-    if (listPendingInlineIds(followupEditContent).length > 0) {
+    if (hasUnresolvedInlineImageRefs(attachmentPreview.persistHtml(followupEditContent))) {
       setFollowupEditError(
         "Não foi possível salvar: a imagem ainda não foi anexada. Remova-a ou aguarde o envio.",
       );
@@ -2174,15 +2206,22 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   // Inline images must resolve to persisted
                                   // document refs before the write — sending
                                   // `attachment:pending:` would lose the image.
-                                  const resolvedHtml = await resolveInlineUploadsForSubmit(
-                                    content.trim(),
+                                  // Read the live editor DOM (paste → insert
+                                  // → React state can lag one frame behind).
+                                  const liveHtml =
+                                    (await replyComposerRef.current?.prepareForSubmit()) ||
+                                    content;
+                                  const resolved = await resolveInlineUploadsForSubmit(
+                                    liveHtml.trim(),
                                   );
-                                  if (resolvedHtml === null) {
+                                  if (!resolved.ok) {
                                     throw new Error(
-                                      "Não foi possível anexar todas as imagens da mensagem. Aguarde o envio ou remova a imagem e tente de novo.",
+                                      resolved.reason === "upload_failed"
+                                        ? "Não foi possível anexar uma imagem da mensagem: o envio do arquivo falhou. Remova a imagem ou tente de novo."
+                                        : "Não foi possível resolver uma imagem da mensagem. Remova-a e anexe de novo.",
                                     );
                                   }
-                                  const payload = attachmentPreview.persistHtml(resolvedHtml);
+                                  const payload = attachmentPreview.persistHtml(resolved.html);
                                   return await createFollowup(
                                     ticketId,
                                     {

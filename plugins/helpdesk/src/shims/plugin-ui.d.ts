@@ -466,6 +466,7 @@ declare module "@delpi/plugin-ui/index" {
 
   export type RichTextEditorHandle = {
     insertInlineImages: (items: readonly RichTextInlineImageInsert[]) => void;
+    readHtml: () => string;
   };
 
   export type MentionMenuHit = {

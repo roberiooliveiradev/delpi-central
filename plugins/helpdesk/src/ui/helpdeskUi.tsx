@@ -206,6 +206,10 @@ export type HelpdeskPendingAttachmentItem = {
 
 export type HelpdeskRichTextFieldHandle = {
   openAttachPicker: () => void;
+  /** Awaits any in-flight paste/attach materialization, then returns the live
+   * editor html — the submit path must read this instead of React state,
+   * which can lag one frame behind a just-inserted image. */
+  prepareForSubmit: () => Promise<string>;
 };
 
 export type HelpdeskRichTextFieldProps = {
@@ -310,6 +314,7 @@ export const HelpdeskRichTextField = forwardRef<
   const fileRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<RichTextEditorHandle>(null);
   const uploadingRef = useRef(false);
+  const materializeInFlightRef = useRef<Promise<unknown> | null>(null);
   const mentionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mentionAbortRef = useRef<AbortController | null>(null);
   const [mentionHits, setMentionHits] = useState<MentionMenuHit[]>([]);
@@ -319,6 +324,20 @@ export const HelpdeskRichTextField = forwardRef<
     () => ({
       openAttachPicker: () => {
         fileRef.current?.click();
+      },
+      prepareForSubmit: async () => {
+        // Paste/attach → materialize → insert is async; the editor's insert
+        // continuation is registered before this await, so once the tracked
+        // materialize resolves the DOM already carries the <img>.
+        while (materializeInFlightRef.current) {
+          try {
+            await materializeInFlightRef.current;
+          } catch {
+            // Upload errors surface via onUploadError — submit still proceeds
+            // to evaluate whatever html exists.
+          }
+        }
+        return editorRef.current?.readHtml() ?? "";
       },
     }),
     [],
@@ -373,8 +392,10 @@ export const HelpdeskRichTextField = forwardRef<
       return [];
     }
     uploadingRef.current = true;
+    const task = onUploadFiles(files);
+    materializeInFlightRef.current = task;
     try {
-      const results = await onUploadFiles(files);
+      const results = await task;
       return results.map((item): RichTextInlineImageInsert => {
         if (item.kind === "uploaded") {
           return {
@@ -393,6 +414,9 @@ export const HelpdeskRichTextField = forwardRef<
       throw error;
     } finally {
       uploadingRef.current = false;
+      if (materializeInFlightRef.current === task) {
+        materializeInFlightRef.current = null;
+      }
     }
   };
 

@@ -76,6 +76,9 @@ export type RichTextPasteImagesHandler = (
 
 export type RichTextEditorHandle = {
   insertInlineImages: (items: readonly RichTextInlineImageInsert[]) => void;
+  /** Live DOM html — the authoritative content while focused (`value` sync is
+   * deferred to blur, so React state can lag behind a just-inserted image). */
+  readHtml: () => string;
 };
 
 export type RichTextMentionLabels = {
@@ -346,6 +349,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     handleRef,
     () => ({
       insertInlineImages,
+      readHtml: currentEditorHtml,
     }),
     [insertInlineImages],
   );
