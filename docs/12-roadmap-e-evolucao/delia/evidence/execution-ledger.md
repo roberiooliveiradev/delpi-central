@@ -569,3 +569,14 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Gates deploy: removal+integration verificados localmente; SECURITY_OWNER_RELEASE_DECISION=PENDING (credencial doc 174 sem ratificacao) -> RELEASE_GATE=BLOCKED -> DEPLOY_NOT_EXECUTED; zero queries produtivas; runtime intocado.
 - Veredito: LOCAL_PASS_WITH_RESIDUAL — boundary direto eliminado; DELPI so via DAVI/MCP; DEPLOY_BLOCKED por gate de seguranca. DEPLOY_EXECUTED=NO; PRODUCTION_QUERIES=0; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; API_DELPI_CODE_UNCHANGED=YES; DAVI_CAPABILITIES_UNCHANGED=YES; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
 - Artefatos: doc 181; root_composer.py; settings.py; env.example; docker-compose.yml/.dev.yml; openapi_declarations.delpi.json (removido); test_openapi_capability_provider.py; test_config.py; governed_davi_migration_eval.py.
+
+
+## 2026-10-28 — DELIA-C3-DAVI-ONLY-BOUNDARY-PRODUCTION-DEPLOY-01 (doc 182)
+
+- Escopo: deploy governado do boundary DAVI-only (implementation SHA 269d5276b0) + validacao produtiva. Task de release, sem novas capacidades.
+- Reancoragem: origin 8b173db467; commits posteriores ao candidato nao tocam delia-api/api-delpi/shared/compose; revisao independente doc 181 (6b5cb396dd) confirma boundary aceita em codigo e mantem release gate bloqueado.
+- Gate de seguranca consultado: LOCAL_CLEANUP=DONE; EXTERNAL_EXPOSURE=UNRESOLVED (artefatos externos ainda contem credencial); OPENROUTER_KEY=NOT_ROTATED; SECURITY_OWNER_DECISION=PENDING; RISK_ACCEPTANCE=NONE -> RELEASE_SECURITY_GATE=BLOCKED.
+- Consequencia: DEPLOY NAO EXECUTADO; testes produtivos TEST_NOT_RUN por gate, nao por falha tecnica; runtime v24 preservado; zero queries produtivas; sem rotacao/Keycloak/RBAC/senha.
+- Dependencia exata: remediacao comprovada (rotacao + artefatos externos) OU aceitacao formal de risco pelo security owner no ledger, seguida de task separada de deploy governado com SHA/digest/rollback/READs T1-T6.
+- Veredito: DEPLOY_BLOCKED_SECURITY_GATE; implementacao pronta e verificada em codigo; trilha C3 de inteligencia pode prosseguir sobre codigo vigente. DEPLOY_EXECUTED=NO; PRODUCTION_QUERIES=0; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
+- Artefatos: doc 182.
