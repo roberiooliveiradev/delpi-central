@@ -106,11 +106,9 @@ describe("HomePage", () => {
     );
   });
 
-  it("usuário somente-DRE vê somente Fechamento Mensal (RW03)", async () => {
+  it("usuário somente-DRE vê a MESMA Home com somente Fechamento Mensal (RW04)", async () => {
     setViewer("Bruno", { access: false, manage: false, accessDre: true });
-    render(
-      <HomePage basePath="/apps/controllership-finance" homeView="dre_home" />,
-    );
+    render(<HomePage basePath="/apps/controllership-finance" />);
     expect(screen.getByText("Caminhos e funcionalidades")).toBeTruthy();
     // Único módulo autorizado: Central de Fechamento → Fechamento Mensal.
     expect(screen.getByText("Central de Fechamento")).toBeTruthy();

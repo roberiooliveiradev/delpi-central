@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  resolveAuthorizedEntryPath,
+  hasAuthorizedAppEntry,
   resolveManifestRoutePermission,
 } from "./manifestRoutePermission.ts";
 
@@ -14,7 +14,7 @@ const CATALOG = [
 ];
 
 describe("resolveManifestRoutePermission", () => {
-  it("rota raiz exige access — audiência DRE não entra pela raiz", () => {
+  it("rota raiz exige access — DRE entra pelo mount no basePath, não pela permission", () => {
     assert.equal(
       resolveManifestRoutePermission(CATALOG as never, "/apps/controllership-finance"),
       "controllership-finance.access",
@@ -42,78 +42,86 @@ describe("resolveManifestRoutePermission", () => {
   });
 });
 
-describe("resolveAuthorizedEntryPath", () => {
-  it("DRE read-only no basePath entra pela única rota autorizada", () => {
+describe("hasAuthorizedAppEntry", () => {
+  it("DRE read-only no basePath monta o app — a Home única decide", () => {
     const dre = [CATALOG[3]];
     assert.equal(
-      resolveAuthorizedEntryPath(
+      hasAuthorizedAppEntry(
         dre as never,
         "/apps/controllership-finance",
         "/apps/controllership-finance",
       ),
-      "/apps/controllership-finance/closing/documents",
+      true,
     );
   });
 
-  it("prefere a primeira rota visível no menu, como o launcher", () => {
+  it("qualquer rota autorizada habilita a entrada — visível ou oculta", () => {
     const user = [
       { app: "cf", path: "/apps/controllership-finance/closing/other", showInMenu: false },
       { app: "cf", path: "/apps/controllership-finance/closing/documents", showInMenu: true },
     ];
     assert.equal(
-      resolveAuthorizedEntryPath(
+      hasAuthorizedAppEntry(
         user as never,
         "/apps/controllership-finance",
         "/apps/controllership-finance",
       ),
-      "/apps/controllership-finance/closing/documents",
+      true,
+    );
+    assert.equal(
+      hasAuthorizedAppEntry(
+        [user[0]] as never,
+        "/apps/controllership-finance",
+        "/apps/controllership-finance",
+      ),
+      true,
     );
   });
 
   it("basePath com barra final resolve igual", () => {
     const dre = [CATALOG[3]];
     assert.equal(
-      resolveAuthorizedEntryPath(
+      hasAuthorizedAppEntry(
         dre as never,
         "/apps/controllership-finance/",
         "/apps/controllership-finance",
       ),
-      "/apps/controllership-finance/closing/documents",
+      true,
     );
   });
 
-  it("rota interna negada NÃO redireciona — /unauthorized é a negação", () => {
+  it("rota interna negada NÃO monta — /unauthorized é a negação", () => {
     const dre = [CATALOG[3]];
     assert.equal(
-      resolveAuthorizedEntryPath(
+      hasAuthorizedAppEntry(
         dre as never,
         "/apps/controllership-finance/closing/monthly-closing",
         "/apps/controllership-finance",
       ),
-      undefined,
+      false,
     );
   });
 
-  it("sem rota autorizada ou fora do basePath retorna undefined", () => {
+  it("sem rota autorizada ou fora do basePath retorna false", () => {
     assert.equal(
-      resolveAuthorizedEntryPath([], "/apps/controllership-finance", "/apps/controllership-finance"),
-      undefined,
+      hasAuthorizedAppEntry([], "/apps/controllership-finance", "/apps/controllership-finance"),
+      false,
     );
     assert.equal(
-      resolveAuthorizedEntryPath([CATALOG[3]] as never, "/apps/controllership-finance/x", "/apps/controllership-finance"),
-      undefined,
+      hasAuthorizedAppEntry([CATALOG[3]] as never, "/apps/controllership-finance/x", "/apps/controllership-finance"),
+      false,
     );
     assert.equal(
-      resolveAuthorizedEntryPath([CATALOG[3]] as never, "/apps/other", "/apps/controllership-finance"),
-      undefined,
+      hasAuthorizedAppEntry([CATALOG[3]] as never, "/apps/other", "/apps/controllership-finance"),
+      false,
     );
   });
 
-  it("entrada igual ao path atual retorna undefined — sem loop", () => {
-    const only = [{ app: "x", path: "/apps/x", permission: "x.read", showInMenu: true }];
+  it("rotas sem path não habilitam a entrada", () => {
+    const broken = [{ app: "x", permission: "x.read", showInMenu: true }];
     assert.equal(
-      resolveAuthorizedEntryPath(only as never, "/apps/x", "/apps/x"),
-      undefined,
+      hasAuthorizedAppEntry(broken as never, "/apps/x", "/apps/x"),
+      false,
     );
   });
 });

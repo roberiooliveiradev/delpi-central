@@ -212,13 +212,14 @@ describe("pluginRoutes", () => {
     }
   });
 
-  it("resolve a Home DRE (RW02) e monta o path de entrada", () => {
+  it("/home é a entrada autorizada DRE e canonicaliza no basePath (RW04)", () => {
     const resolved = resolvePluginRoute("/apps/controllership-finance/home");
-    expect(resolved.view).toBe("dre_home");
+    // Mesma view `home` — o shell redireciona para o basePath; nunca
+    // renderiza uma segunda Home.
+    expect(resolved.view).toBe("home");
     expect(resolved.relativePath).toBe("home");
-    expect(buildPluginPath("dre_home")).toBe(
-      "/apps/controllership-finance/home",
-    );
+    // O path canônico da Home é sempre o basePath.
+    expect(buildPluginPath("home")).toBe("/apps/controllership-finance");
   });
 
   it("rota legada received-documents foi descontinuada (RW03)", () => {
@@ -348,8 +349,9 @@ describe("pluginRoutes", () => {
     );
   });
 
-  it("resolveActiveNavId marca somente home", () => {
+  it("resolveActiveNavId marca somente home e my_tasks", () => {
     expect(resolveActiveNavId("home")).toBe("home");
+    expect(resolveActiveNavId("my_tasks")).toBe("my_tasks");
     expect(resolveActiveNavId("not_found")).toBeNull();
   });
 });

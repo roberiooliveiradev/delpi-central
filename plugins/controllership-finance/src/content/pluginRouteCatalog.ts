@@ -221,7 +221,7 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
       },
     ],
   },
-  // RW03 — seção do público externo DRE: mesmo catálogo, mesma Home,
+  // RW04 — seção do público externo DRE no catálogo ÚNICO: mesma Home,
   // mesma estrutura de cards; a audiência é resolvida por capability
   // (`access.dre`), nunca por composição paralela. Funcionalidades DRE
   // futuras entram aqui sob `accessDre` — sem novas permissions por

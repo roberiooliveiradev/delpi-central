@@ -30,30 +30,25 @@ export function resolveManifestRoutePermission(
 }
 
 /**
- * Resolve a rota de entrada autorizada do app quando o usuário chega ao
- * basePath exato sem a permission da rota raiz — mesma convenção do
- * launcher (`visibleRoutes[0]` ?? `routes[0]`): primeira rota visível no
- * menu, senão a primeira autorizada.
+ * Entrada multi-público: no basePath exato, o usuário que detém pelo
+ * menos uma rota autorizada no app pode montar o MFE — a view de
+ * entrada é resolvida pelo próprio app conforme as capabilities do
+ * viewer (Home única). A permission da rota raiz não precisa ser
+ * compartilhada por todos os públicos: `access` e `access.dre` entram
+ * pelo mesmo basePath.
  *
  * Só aplica ao basePath exato: rotas internas negadas continuam indo
  * para /unauthorized (a negação é evidência, não se esconde). Retorna
- * `undefined` fora do basePath, sem rotas autorizadas, ou quando a
- * entrada já é o path atual (evita loop de redirect).
+ * `false` fora do basePath ou sem rotas autorizadas.
  */
-export function resolveAuthorizedEntryPath(
+export function hasAuthorizedAppEntry(
   authorizedRoutes: RouteItem[] | undefined,
   pathname: string,
   basePath: string | undefined,
-): string | undefined {
+): boolean {
   const current = normalizePath(pathname);
   const base = normalizePath(basePath ?? "");
-  if (!base || base === "/" || current !== base) return undefined;
+  if (!base || base === "/" || current !== base) return false;
 
-  const routes = (authorizedRoutes ?? []).filter((route) => route.path);
-  const entry =
-    routes.find((route) => route.showInMenu !== false) ?? routes[0];
-  if (!entry) return undefined;
-
-  const target = normalizePath(entry.path);
-  return target !== current ? target : undefined;
+  return (authorizedRoutes ?? []).some((route) => route.path);
 }

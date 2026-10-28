@@ -42,13 +42,11 @@ type PluginShellProps = {
 
 const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
-  dre_home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
   my_tasks: <ListChecks size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 const NAV_HELP: Partial<Record<PluginNavId, string>> = {
   home: CF_HELP.shell.navHome,
-  dre_home: CF_HELP.shell.navHome,
   my_tasks: CF_HELP.myTasks.page,
 };
 
@@ -94,15 +92,15 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
     viewer === null || viewer.capabilities.access === true;
   const hasDreAccess = viewer?.capabilities.accessDre === true;
 
-  // DRE-019/RW03 — navegação e busca são projeções das capabilities
-  // efetivas: interno (`access`) e DRE (`access.dre`) veem a top bar e
-  // a paleta, cada um com apenas os itens autorizados. Enquanto o
-  // viewer carrega (null), o shell assume a navegação interna — a BFF
-  // continua autoridade final se uma rota interna for acessada.
+  // DRE-019/RW04 — UMA top bar compartilhada: navegação e busca são
+  // projeções das capabilities efetivas — interno (`access`) e DRE
+  // (`access.dre`) veem a mesma barra, cada um com apenas os itens
+  // autorizados. Enquanto o viewer carrega (null), o shell assume a
+  // navegação interna — a BFF continua autoridade final.
   const catalogViewer = hasAccess || hasDreAccess;
-  // Viewer somente-DRE: usuário com `access` interno navega sempre pela
-  // experiência interna — a projeção DRE (nav, seções, paleta) só aparece
-  // para quem não tem `access`, evitando itens duplicados de «Início».
+  // Audiência somente-DRE: usuário com `access` interno navega sempre
+  // pela experiência interna — a projeção DRE (seções, hero) só aparece
+  // para quem não tem `access`.
   const dreViewer = hasDreAccess && viewer?.capabilities.access !== true;
 
   useEffect(() => {
@@ -127,17 +125,16 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
     : [];
 
   const activeId = resolveActiveNavId(view);
-  const showGreeting = view === "home" || view === "dre_home";
+  const showGreeting = view === "home";
   /** UX-016 — hero + listagem ocupam a altura útil do mount (scroll na tabela). */
   const fillViewport =
     view === "checklist_admin" || view === "checklist_version";
   const heroTitle = formatPortalGreeting({ firstName: viewer?.firstName ?? null });
 
-  const isDreHome = view === "dre_home" && dreViewer;
-  const heroCopy = isDreHome
+  const heroCopy = dreViewer
     ? SHELL_NAV_CONTENT.dreHero
     : SHELL_NAV_CONTENT.homeHero;
-  const heroHighlights = isDreHome
+  const heroHighlights = dreViewer
     ? undefined
     : [
         {
@@ -243,16 +240,14 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
               title={
                 <CfTitleWithHelp
                   title={heroTitle}
-                  hint={
-                    isDreHome ? CF_HELP.dreHome.hero : CF_HELP.home.overview
-                  }
+                  hint={dreViewer ? CF_HELP.dreHome.hero : CF_HELP.home.overview}
                 />
               }
               description={heroCopy.description}
               badge={
                 <CfStatusBadge
                   label={
-                    isDreHome
+                    dreViewer
                       ? SHELL_NAV_CONTENT.dreHero.scopeDre
                       : SHELL_NAV_CONTENT.homeHero.scopeOwn
                   }

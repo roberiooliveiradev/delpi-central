@@ -64,7 +64,7 @@ describe("controllership-finance manifest", () => {
       monthlyClosing,
       claraConsent,
       documents,
-      dreHome,
+      dreEntry,
     ] = manifest.routes;
     assert.equal(home.path, "/apps/controllership-finance");
     assert.equal(home.permission, "controllership-finance.access");
@@ -130,11 +130,12 @@ describe("controllership-finance manifest", () => {
       "controllership-finance.access.dre",
     );
     assert.equal(documents.showInMenu, false);
-    // Home DRE — ponto de entrada visível do público externo; a correção
-    // RW01 do Portal a escolhe como primeira rota visível autorizada.
-    assert.equal(dreHome.path, "/apps/controllership-finance/home");
-    assert.equal(dreHome.permission, "controllership-finance.access.dre");
-    assert.equal(dreHome.showInMenu, true);
+    // RW04 — `/home` é a entrada visível autorizada do público DRE no
+    // launcher (única rota showInMenu que ele detém); o MFE canonicaliza
+    // para o basePath — não existe página «Home DRE» separada.
+    assert.equal(dreEntry.path, "/apps/controllership-finance/home");
+    assert.equal(dreEntry.permission, "controllership-finance.access.dre");
+    assert.equal(dreEntry.showInMenu, true);
     // RW03 — a rota legada `/received-documents` foi descontinuada junto
     // com a capability antiga; o canônico é `/closing/documents`.
     for (const route of manifest.routes) {

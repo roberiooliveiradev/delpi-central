@@ -42,7 +42,7 @@ export type AppProps = {
   search?: string;
 };
 
-const DRE_SURFACES = new Set(["dre_home", "received_documents"]);
+const DRE_SURFACES = new Set(["home", "received_documents", "not_found"]);
 
 function AppRoutes({
   basePath,
@@ -55,18 +55,27 @@ function AppRoutes({
   const resolved = resolvePluginRoute(pathname, basePath);
   const { viewer } = useViewerContext();
 
-  // DRE-019/RW03 — rede de segurança do destinatário externo: usuário
-  // sem `access` mas com `access.dre` que chegue a uma rota interna
-  // (deep link, F5, URL copiada) retorna à sua experiência autorizada.
-  // A BFF continua sendo a autoridade — isto é somente o retorno
-  // seguro da UI.
+  // RW04 — UMA Home: interno e DRE compartilham o basePath. A rota
+  // `/home` existe apenas como entrada autorizada do launcher DRE e
+  // canonicaliza no basePath — nunca renderiza uma página paralela.
+  useEffect(() => {
+    if (resolved.view === "home" && resolved.relativePath === "home") {
+      navigatePluginView("home", { basePath, replace: true });
+    }
+  }, [resolved.view, resolved.relativePath, basePath]);
+
+  // DRE-019 — rede de segurança do destinatário externo: usuário sem
+  // `access` mas com `access.dre` que chegue a uma view interna (deep
+  // link legado, mount com contexto obsoleto) retorna à Home. O guard
+  // do Portal já nega essas rotas antes do mount e a BFF continua
+  // autoridade — isto é somente o retorno seguro da UI.
   const dreViewer =
     viewer !== null &&
     viewer.capabilities.access !== true &&
     viewer.capabilities.accessDre === true;
   useEffect(() => {
     if (dreViewer && !DRE_SURFACES.has(resolved.view)) {
-      navigatePluginView("dre_home", { basePath, replace: true });
+      navigatePluginView("home", { basePath, replace: true });
     }
   }, [dreViewer, resolved.view, basePath]);
 
@@ -84,9 +93,7 @@ function AppRoutes({
         }
       >
         {resolved.view === "home" ? (
-          <HomePage basePath={basePath} homeView="home" />
-        ) : resolved.view === "dre_home" ? (
-          <HomePage basePath={basePath} homeView="dre_home" />
+          <HomePage basePath={basePath} />
         ) : resolved.view === "financial_settlements" ? (
           <FinancialSettlementsPage />
         ) : resolved.view === "stock_inventory" ? (

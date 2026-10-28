@@ -800,3 +800,23 @@ Evidência de migração no Core prod (PROVEN): `access.dre` importada na v0.1.3
 | AC-RW03-09 | Descontinuação no Core via mecanismo oficial (sync do register v0.1.4), sem SQL direto | PENDING — registro produtivo pelo PO |
 | AC-RW03-10 | Smoke autenticado DRE + interno (local/prod) | TEST_NOT_RUN — pós-import da v0.1.4 |
 
+### DRE-ACCESS-019-RW04 — Home única no basePath (REWORK da RW03, 2026-10-28)
+
+Decisão PO: UMA HomePage/UM basePath/UMA top bar/UM catálogo — audiência só muda o conteúdo autorizado.
+
+| AC | Critério | Resultado |
+|---|---|---|
+| RW04-01 | Uma única HomePage compartilhada (sem `homeView`/`dre_home`) | PASS (`HomePage` sem modo; `dre_home` removido de view/nav/targets) |
+| RW04-02 | Entrada canônica pelo basePath para ACCESS e ACCESS.DRE | PASS (`hasAuthorizedAppEntry`: mount no basePath com ≥1 rota autorizada; `/home` → redirect canônico) |
+| RW04-03 | Top bar compartilhada | PASS (um «Início» `requiredCaps[access,accessDre]`; teste somente-DRE na mesma view `home`) |
+| RW04-04/05 | Hero e Eventos no padrão único | PASS (mesma árvore; cópia DRE projetada por capability) |
+| RW04-06/07/08 | Catálogo único filtrado; «Fechamento Mensal» → Documentos e interações | PASS (seção `closing_dre`; teste HomePage) |
+| RW04-09/10 | Visão geral, relatórios, administração e endpoints internos negados à DRE | PASS (rotas guard `/unauthorized` fora do basePath; BFF inalterada — test_dre_authz) |
+| RW04-11 | Downloads/mensagens com autorização documental intacta | PASS (sem mudança BFF; PG suite DRE-019) |
+| RW04-12/13 | Sem novo MFE/BFF/permission; código de Home paralela removido | PASS (3 permissions; `dre_home`, `homeView`, redirects DRE→dre_home eliminados; sweep residual limpo) |
+| RW04-14 | Deep links/F5/back-forward | PASS (rotas inalteradas; `/home` canonicaliza) |
+| RW04-16 | Testes executados com evidência | PASS (vitest 382 c/ 1 flake isolado pré-existente; portal 9/9; estruturais; tsc; builds) |
+| RW04-15/09 | QA visual claro/escuro, 320/390, zoom 200% | TEST_NOT_RUN — requer identidade autenticada |
+| RW04-17 | Deploy governado e verificável | PENDING — portal + MFE rebuild via deploy canônico |
+| RW04-18 | Documentação sincronizada | PASS (docs 91/112/113/115/23/30 + README) |
+| RW04-smoke | Smoke autenticado interno + DRE | TEST_NOT_RUN — requer identidade autorizada (v0.1.5 pendente de registro pelo PO) |

@@ -25,16 +25,14 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  * - `received_documents` — «Documentos e interações» do destinatário
  *   externo (DRE-019): projeção restrita `closing/documents` sob a
  *   capability `access.dre`, sem as três abas internas.
- * - `dre_home` — página inicial do público DRE (RW02/RW03): mesma
- *   Home compartilhada do Portal com catálogo por capability —
- *   «Central de Fechamento» → «Fechamento Mensal» → Documentos e
- *   interações.
+ * - `home` — UMA Home compartilhada (RW04): interno e DRE entram pelo
+ *   basePath; a rota `/home` existe só como entrada autorizada do
+ *   launcher DRE e canonicaliza no basePath (redirect — nunca render).
  * Rotas futuras (Visão geral dedicada, Sala de interação, Ajuda)
  * entram aqui apenas quando implementadas.
  */
 export type PluginView =
   | "home"
-  | "dre_home"
   | "financial_settlements"
   | "stock_inventory"
   | "checklist"
@@ -54,7 +52,7 @@ export type PluginView =
   | "clara_consent"
   | "not_found";
 
-export type PluginNavId = "home" | "dre_home" | "my_tasks";
+export type PluginNavId = "home" | "my_tasks";
 
 export type PluginNavigationTarget =
   | "home"
@@ -69,13 +67,15 @@ export type PluginNavigationTarget =
   | "cockpit"
   | "monthly_closing"
   | "received_documents"
-  | "dre_home"
   | "my_tasks"
   | "profile";
 
 /** Mapa rota relativa → view (paths técnicos em inglês, kebab-case). */
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
-  "home": "dre_home",
+  // RW04 — `/home` é a entrada autorizada do público DRE no launcher;
+  // o shell canonicaliza para o basePath (redirect), nunca renderiza
+  // uma segunda Home.
+  "home": "home",
   "closing/financial-settlements": "financial_settlements",
   "closing/stock-inventory": "stock_inventory",
   "closing/checklist": "checklist",
@@ -102,7 +102,6 @@ const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> 
   cockpit: "closing/cockpit",
   monthly_closing: "closing/monthly-closing",
   received_documents: "closing/documents",
-  dre_home: "home",
   my_tasks: "closing/my-tasks",
   catalogs_admin: "closing/admin/catalogs",
   documents_admin: "closing/admin/documents",
@@ -343,7 +342,6 @@ export function checklistAdminEventsPath(
 
 export function resolveActiveNavId(view: PluginView): PluginNavId | null {
   if (view === "home") return "home";
-  if (view === "dre_home") return "dre_home";
   if (view === "my_tasks") return "my_tasks";
   return null;
 }

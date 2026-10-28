@@ -16,15 +16,16 @@ export type ShellNavCapability = "access" | "manage" | "accessDre";
 export type ShellNavItem = {
   id: PluginNavId;
   label: string;
-  requiredCap: ShellNavCapability;
+  /** Item visível quando o viewer detém QUALQUER capability listada. */
+  requiredCaps: readonly ShellNavCapability[];
 };
 
 export const SHELL_NAV_ITEMS: readonly ShellNavItem[] = [
-  { id: "home", label: "Início", requiredCap: "access" },
-  // RW03 — a DRE também tem top bar: «Início» aponta para a Home DRE.
-  // Itens futuros (Visão geral DRE, Minhas tarefas…) entram aqui sob
-  // a capability correspondente quando a rota existir em runtime.
-  { id: "dre_home", label: "Início", requiredCap: "accessDre" },
+  // RW04 — UMA top bar, UM «Início»: interno e DRE navegam para a
+  // mesma Home no basePath. Itens futuros (Visão geral, Minhas
+  // tarefas, áreas DRE…) entram aqui sob as capabilities
+  // correspondentes quando a rota existir em runtime.
+  { id: "home", label: "Início", requiredCaps: ["access", "accessDre"] },
 ] as const;
 
 export type ShellNavCapabilities = Record<ShellNavCapability, boolean>;
@@ -33,7 +34,9 @@ export function resolveShellNavItems(
   capabilities: ShellNavCapabilities,
   items: readonly ShellNavItem[] = SHELL_NAV_ITEMS,
 ): ShellNavItem[] {
-  return items.filter((item) => capabilities[item.requiredCap]);
+  return items.filter((item) =>
+    item.requiredCaps.some((cap) => capabilities[cap]),
+  );
 }
 
 export const SHELL_NAV_CONTENT = {

@@ -1500,3 +1500,14 @@ Migração governada da capability de entrada (decisão PO): `closing-documents.
 ### 29.11 Status de execução — DRE-ACCESS-019-RW03 (2026-10-28)
 
 Home DRE padronizada no padrão da Home interna e **remoção definitiva** da legada `closing-documents.read`, após evidência de migração no Core produtivo (`access.dre` importada na v0.1.3, papel DRE provisionado com 1 usuário real, legada com zero grants — doc 115 §11). Manifesto v0.1.4: **3 permissions/12 rotas**. `DreHomePage` removida — a `HomePage` compartilhada projeta `HUB_SECTIONS` por capability (`access`/`manage`/`accessDre`); a seção `closing_dre` («Central de Fechamento» → «Fechamento Mensal» → Documentos e interações) só aparece para `access.dre`. Top bar dinâmica por capability («Início» para ambos os públicos) e paleta restrita às rotas autorizadas. BFF aceita **somente** `access.dre` no boundary documental; `/viewer-context` reporta `{access, manage, accessDre}`; alias `received-documents` descontinuado (`not_found`); usuário somente-legado passa a ser negado. Descontinuação produtiva ocorre no registro da v0.1.4 pelo PO — o `PluginPermissionSyncService.sync_module` remove permissions/rotas ausentes (mecanismo oficial, sem SQL direto, sem perda de auditoria).
+
+### 29.12 Status de execução — DRE-ACCESS-019-RW04 (2026-10-28, REWORK da RW03)
+
+Correção arquitetural por decisão do PO: **UMA HomePage, UM basePath, UMA top bar, UM catálogo** — a diferença entre públicos é somente o conteúdo autorizado. A separação `home`/`dre_home` da RW03 foi removida na origem:
+
+- **Portal:** `resolveAuthorizedEntryPath` → **`hasAuthorizedAppEntry`** — no basePath exato, quem detém ≥1 rota autorizada monta o MFE (não há mais redirect para sub-rota). Contrato de uma permission por rota e `ProtectedRoute` inalterados; sem ampliação — o MFE já era montado de qualquer forma e a BFF segue autoridade.
+- **MFE:** view `dre_home` eliminada (tipo, mapa de rotas, nav, branches); `/home` virou compat de entrada do launcher DRE que canonicaliza no basePath; `HomePage` perdeu o prop `homeView`; top bar passou a um único «Início» com `requiredCaps: [access, accessDre]`; hero por audiência continua projetado por capability (não por view).
+- **Manifesto v0.1.5:** 3 permissions/12 rotas — `/home` segue `access.dre`+`showInMenu` como entrada autorizada do launcher (redirect, não página).
+- **Rede de segurança** do viewer somente-DRE agora retorna a `home` (não mais a `dre_home`).
+
+Deploy rebuilda `portal` + `controllership-finance`; BFF sem mudança.

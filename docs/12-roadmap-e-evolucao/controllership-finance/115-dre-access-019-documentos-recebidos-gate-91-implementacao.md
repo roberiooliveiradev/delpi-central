@@ -176,3 +176,36 @@ A descontinuação usa o mecanismo oficial: `PluginPermissionSyncService.sync_mo
 **Rollback:** BFF/MFE revertem pelo commit; a permission legada só volta por novo manifesto governado (o sync é destrutivo por design) — mitigado pela evidência de zero grants.
 
 **Pendente:** registro produtivo da v0.1.4 pelo PO + smoke autenticado pós-import — **TEST_NOT_RUN** até a execução do PO.
+
+## 12. RW04 — Home única no basePath e entrada canônica compartilhada (2026-10-28, REWORK da RW03)
+
+**Decisão do PO:** não existe «Home DRE» como produto — existe **UMA HomePage** no Portal Controladoria & Finanças, no **mesmo basePath** `/apps/controllership-finance`, com conteúdo projetado por capability. A RW03 foi classificada como REWORK porque manteve uma entrada paralela (`dre_home` em `/home` com render próprio da Home).
+
+**Causa raiz da divergência:** a RW02/RW03 resolveu a entrada multi-público no nível de ROTA — uma rota `/home` exclusiva DRE renderizava a Home — em vez de resolver a entrada no nível do APP (basePath único, capability decide o conteúdo). A top bar também diferenciava «Início» por audiência (dois itens, dois ids).
+
+**Contrato de entrada final (Portal, sem mudança de Core/manifesto):**
+
+- O mecanismo governado da RW01 evoluiu: `resolveAuthorizedEntryPath` (redirect à primeira rota autorizada) → **`hasAuthorizedAppEntry`** — no basePath exato, quem detém **≥1 rota autorizada** no app monta o MFE e a Home única resolve a view por capability.
+- **Não é bypass genérico:** o predicado é o mesmo do launcher (o usuário já detinha uma rota autorizada e o MFE já era montado de qualquer forma — só mudava a URL). Rotas internas negadas continuam `/unauthorized`; a BFF permanece autoridade final; `ProtectedRoute` continua avaliando cada rota por permission.
+- Manifesto continua com **uma permission por rota** — nenhum contrato material alterado: `DECISION_REQUIRED` não acionado.
+- `/home` permanece no manifesto (`access.dre`, `showInMenu`) **somente** porque o launcher exige uma rota visível autorizada para compor a entrada do público DRE — o MFE **canonicaliza `/home` → `/`** (redirect replace, nunca renderiza página). Não há segunda Home em nenhum código.
+
+| Camada | Antes (RW03) | Depois (RW04) |
+|---|---|---|
+| Entrada DRE | `/home` → view `dre_home` (render de Home em URL paralela) | `/home` → **redirect canônico** → `/` → view `home` |
+| Home | `HomePage` com `homeView` branch | `HomePage` única, sem modo — catálogo por capability |
+| Top bar | dois itens «Início» (`home`/`dre_home`) | **um** item «Início» (`requiredCaps: [access, accessDre]`) → basePath |
+| Portal guard | redirect à primeira rota autorizada | **mount no basePath** (`hasAuthorizedAppEntry`) — mesma entrada, URL canônica |
+| Redirect interno→DRE | para `dre_home` | para `home` (rede de segurança mantida para mounts obsoletos) |
+| View `dre_home` | existia | **removida** (tipo, rotas, nav, hero-branch por view) |
+| BFF/manifesto permissions | inalterado | inalterado — `access`/`manage`/`access.dre` |
+
+**Matriz de autorização (inalterada):** `access.dre` autoriza Home compartilhada + `closing/documents` (projeção recipient); rotas internas (`monthly-closing`, relatórios, administração) seguem negadas no guard e na BFF; usuário sem nenhuma rota autorizada segue `/unauthorized`.
+
+**Testes:** portal `manifestRoutePermission` reescrito para `hasAuthorizedAppEntry` (mount no basePath, sem rotas → false, rota interna → false); `pluginRoutes` — `/home` → view `home` (canonicaliza); `PluginShell` — somente-DRE na MESMA top bar, um «Início», hero «Acesso DRE»; `HomePage` — DRE vê apenas «Central de Fechamento» → «Fechamento Mensal»; dual-cap sem duplicata; vitest 382 (1 flake timing pré-existente, passa isolado); estruturais verdes; `tsc -b` plugin e portal limpos; builds ok.
+
+**Ordem de rollout:** (1) commit/push; (2) deploy `portal` + `controllership-finance` (BFF inalterada); (3) PO pode registrar a v0.1.5 (substitui a pendente v0.1.4 — rotas iguais, só o label de `/home` mudou); (4) homologação: interno no basePath (inalterado), DRE no launcher → `/home` → `/` → mesma Home com só «Fechamento Mensal»; deep link `/home` canonicaliza; rotas internas → `/unauthorized`.
+
+**Rollback:** revert do commit restaura guard + MFE; a permission/rota `/home` não mudam semanticamente — rollback seguro.
+
+**Pendente:** registro da v0.1.5 no Core pelo PO + smoke autenticado interno/DRE — **TEST_NOT_RUN** até identidade autorizada.

@@ -4,7 +4,7 @@
   "name": "Portal Controladoria & Finanças",
   "description": "Portal de controladoria e finanças — Início, navegação e contexto operacional.",
   "icon": "landmark",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "microfrontend",
   "basePath": "/apps/controllership-finance",
   "entry": "/apps/controllership-finance/assets/remoteEntry.js",
@@ -119,7 +119,7 @@
     },
     {
       "path": "/apps/controllership-finance/home",
-      "label": "Início — DRE",
+      "label": "Início",
       "permission": "controllership-finance.access.dre",
       "icon": "landmark",
       "order": 41,

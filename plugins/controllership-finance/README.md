@@ -138,17 +138,20 @@ de coluna/fonte persistidas pelo kit. Código cru de auditoria (ex.:
 caractere solto na célula. Resumos P7 exibem participação percentual
 derivada do total histórico do contrato.
 
-Central de Fechamento — experiência DRE (DRE-ACCESS-019/RW03):
+Central de Fechamento — experiência DRE (DRE-ACCESS-019/RW04):
 entrada exclusiva pela capability `controllership-finance.access.dre`
 (a legada `closing-documents.read` foi descontinuada após a migração
-comprovada do papel — doc 115 §11). O usuário DRE entra pela raiz do
-Portal e vê a **Home compartilhada** (`/home`, `HomePage` com
-`homeView="dre_home"`) — mesmo hero, top bar dinâmica («Início»),
-«Caminhos e funcionalidades» e busca projetados por capability — com
-a seção «Central de Fechamento» → «Fechamento Mensal», que abre
-Documentos e interações em `closing/documents`. O viewer sem
-`access` não vê nav/busca internas e rotas internas redirecionam com
-segurança para a área autorizada. A listagem N1–N3 (`ReceivedDocumentsPage`,
+comprovada do papel — doc 115 §11). O usuário DRE entra pelo **mesmo
+basePath** `/apps/controllership-finance` — o guard do Portal monta o
+app quando ele detém ≥1 rota autorizada (`hasAuthorizedAppEntry`) e a
+rota `/home` (entrada do launcher) canonicaliza em `/`. É a **mesma
+`HomePage`** — mesmo hero, top bar única («Início» para os dois
+públicos), «Eventos e interações», «Caminhos e funcionalidades» e
+busca projetados por capability — com a seção «Central de
+Fechamento» → «Fechamento Mensal», que abre Documentos e interações
+em `closing/documents`. O viewer sem `access` não vê nav/busca
+internas e rotas internas redirecionam com segurança para a Home.
+A listagem N1–N3 (`ReceivedDocumentsPage`,
 `ReceivedDocumentDetailPanel`, `ReceivedConversationPanel`) consome
 somente a projeção BFF `GET/POST /closing/received-documents/*`:
 deliveries por competência, documentos efetivamente liberados

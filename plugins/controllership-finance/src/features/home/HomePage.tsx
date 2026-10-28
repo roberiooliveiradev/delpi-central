@@ -36,8 +36,6 @@ import { readHomeSearchQuery, writeHomeSearchQuery } from "./homeSearchQuery";
 
 type HomePageProps = {
   basePath: string;
-  /** View de entrada do público — interna (`home`) ou DRE (`dre_home`). */
-  homeView?: "home" | "dre_home";
 };
 
 const EVENTS = HUB_CONTENT.events;
@@ -53,7 +51,7 @@ const SECTION_ICONS: Record<HubSectionId, ReactNode> = {
 
 const FORBIDDEN_STATUS = 403;
 
-export function HomePage({ basePath, homeView = "home" }: HomePageProps) {
+export function HomePage({ basePath }: HomePageProps) {
   const { viewer, loading, errorStatus, reload } = useViewerContext();
   const [searchQuery, setSearchQuery] = useState(() =>
     typeof window !== "undefined" ? readHomeSearchQuery() : "",
@@ -69,7 +67,7 @@ export function HomePage({ basePath, homeView = "home" }: HomePageProps) {
       // a BFF continua autoridade se uma rota interna for acessada.
       access: viewer === null || viewer.capabilities.access === true,
       manage: viewer?.capabilities.manage === true,
-      // RW03 — usuário interno navega pela experiência interna mesmo que
+      // RW04 — usuário interno navega pela experiência interna mesmo que
       // também detenha `access.dre`: a projeção DRE só aparece para quem
       // não tem `access` (evita seção/cartão duplicados na Home).
       accessDre:
@@ -88,11 +86,11 @@ export function HomePage({ basePath, homeView = "home" }: HomePageProps) {
   useEffect(() => {
     setRecents(
       pushRecentView({
-        viewId: homeView,
+        viewId: "home",
         label: "Início",
       }),
     );
-  }, [homeView]);
+  }, []);
 
   const recordVisit = useCallback(
     (

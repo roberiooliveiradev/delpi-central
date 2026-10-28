@@ -29,7 +29,7 @@ afterEach(() => {
   window.history.replaceState(null, "", BASE);
 });
 
-function renderShell(view: "home" | "dre_home" = "home") {
+function renderShell(view: "home" | "received_documents" = "home") {
   return render(
     <PluginShell view={view} basePath={BASE}>
       <div>conteúdo</div>
@@ -98,13 +98,13 @@ describe("PluginShell", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
-  it("viewer somente-DRE tem top bar com um único Início (RW03)", () => {
+  it("viewer somente-DRE vê a MESMA top bar com «Início» (RW04)", () => {
     viewerState.viewer = {
       firstName: "Bruno",
       capabilities: { access: false, manage: false, accessDre: true },
     };
-    renderShell("dre_home");
-    // Exatamente um item «Início» — o da experiência DRE.
+    renderShell("home");
+    // Exatamente um item «Início» — o mesmo da experiência interna.
     expect(screen.getAllByText("Início")).toHaveLength(1);
     expect(screen.getByText("Acesso DRE")).toBeTruthy();
     // Busca restrita continua disponível para o público DRE.
