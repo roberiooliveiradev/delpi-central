@@ -425,3 +425,46 @@ Registros em `supplies.comex_ncm_governance` (todos fixtures de homologação S6
 | 84798990 | candidate | smoke S7 — fluxo catálogo | 2026-10-28 |
 
 Proposta: tratamento via workflow de governança (inativar/rejeitar) ou limpeza autorizada pelo PO — nenhuma linha/auditoria foi removida automaticamente.
+
+## 19. Comex S9 — simplificação definitiva da jornada (2026-10-28)
+
+Commit `8924f931f2` (frontend only — zero backend/contrato/migration). Deploy `supplies`; bundle `App-CuzEHsM0.js`. S8 classificada `REWORK` de UX pelo PO; backend, catálogo e governança preservados.
+
+### 19.1 S9.P0 — contract freeze
+
+- `GET /ncm-governance` aceita apenas `status` e o repositório aplica `LIMIT 200` sem `q`/paginação — comprovado que a UI não pode declarar «NCM inexistente» a partir de lista parcial. Decisão: código de 8 dígitos sem match na página carregada vira linha contextual «Adicionar à análise»; o POST idempotente resolve server-side mesmo para registros além da página (`already_registered`), sem afirmar inexistência.
+- Busca textual por descrição **não possui contrato** no BFF → permanece filtro client-side honesto sobre os itens carregados («pesquisa no catálogo compartilhado»), sem fetch por tecla e sem fonte externa.
+- Kit `@delpi/plugin-ui` sem autocomplete/combobox genérico para texto (só `ComboboxNumberControl`) → `SuppliesTextField` mantido; nenhum componente reutilizável novo criado.
+
+### 19.2 S9.S1 — busca única (D-01)
+
+- Aba «Buscar NCM»: os dois campos («NCM 8 dígitos» + «Filtrar catálogo») foram fundidos em um único `SuppliesTextField` (`ncmQuery`). O mesmo campo filtra o catálogo por dígitos do código ou descrição; tokens que normalizam para 8 dígitos sem match viram linhas de inclusão (`unmatchedCodes`); tokens só-numéricos fora de 8 dígitos geram feedback de malformação (`invalidTokens`, `role="alert"`); campo vazio lista o catálogo carregado.
+- Aba «Produtos DELPI»: campo único por código/descrição + filtro Todos/MP/PI/PA preservados; resultado imediatamente abaixo da busca.
+
+### 19.3 S9.S2 — uma ação por resultado (D-02)
+
+- Toda linha de resultado tem uma única ação: **«Adicionar à análise»**. NCM catalogada → seleciona; código novo → `addNewNcmToAnalysis` registra `candidate` idempotente e seleciona em um passo; item já na análise → ação vira «Remover» (ghost + `aria-pressed`). Produtos seguem o mesmo padrão.
+- «Reenviar p/ revisão» saiu das linhas do catálogo e dos chips da seleção — decisões de ciclo de vida ficam exclusivamente no `<details>` administrativo manage-only (D-06); o contrato API de transição não foi alterado.
+- Produto sem NCM continua exibindo «Sem NCM» sem inferir classificação; NCM inativa/rejeitada pode ser selecionada (badge «Inativa» deixa claro que não haverá dados) sem reativar nem homologar.
+
+### 19.4 S9.S3/S4 — seleção compacta e views secundárias
+
+- Coluna direita renomeada «Minha seleção» com contagem «X NCMs na seleção», chips removíveis por item e «Limpar seleção» — sem área vazia permanente.
+- Visualizações salvas movidas para `<details>` recolhível ao final da seleção (abrir/nomear/salvar/atualizar/excluir preservados, ownership intacta).
+- Painel de resultados permanece em largura total logo abaixo do seletor.
+
+### 19.5 S9.S5 — empty states
+
+- AC-14: «Busque um produto ou uma NCM para começar sua análise.»
+- AC-15: «As NCMs selecionadas estão cadastradas, mas ainda não estão disponíveis para consultar dados de importação.»
+- AC-16/17: «Sem observações na janela» e indisponibilidade de fonte mantidos do contrato vigente.
+
+### 19.6 Testes e evidências
+
+- Vitest **51 arquivos / 525 testes** verdes (asserções estruturais S9: ausência de `directInput`/`catalogQuery`, `ncmQuery`, `addNewNcmToAnalysis`, `unmatchedCodes`, views em `<details>`, `C2.addToAnalysis`/`removeFromAnalysis`).
+- `tsc -b --force` limpo; ESLint 0 erros (5 warnings pré-existentes `set-state-in-effect`); build Vite ok.
+- Ajuda contextual e manual reescritos para «buscar → escolher → analisar».
+- Smoke federado: `remoteEntry` 200, `supplies-api` health 200, bundle de produção contém «Adicionar à análise», «Minha seleção», `unmatchedCodes`, `viewsToggle`.
+- Aceite visual em navegador autenticado (1440/1920/768/390, claro/escuro, teclado): **INCONCLUSIVE** — sem captura disponível.
+
+**Nota de capacidade:** o resubmit `rejected → pending` deixou de ter atalho na UI para usuários `supplies.access` (permanece disponível a `supplies.manage` na área administrativa e intacto no contrato API) — simplificação deliberada do D-06, registrada como decisão de produto.
