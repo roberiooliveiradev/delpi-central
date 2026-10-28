@@ -619,4 +619,4 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | RQ-UX013-05 | listagem/home estados e navegação | PASS | filtros URL/F5 preservados; CTA com ícone; deep links intactos (337 testes) |
 | RQ-UX013-06 | regressão de contrato/regras | PASS | nenhum diff BFF/contrato/dados; typecheck+lint+build verde |
 | RQ-UX013-07 | DoD claro/escuro/teclado/320px/zoom | PASS | screenshots 01–07 (claro, escuro, mobile); campos do kit com label/hint/focus |
-| AC-UX013-PROD | deploy produção | PENDING | aguardando autorização específica (gate CP6) |
+| AC-UX013-PROD | deploy produção | PASS | MFE `App-B5Ynp8Kk.js` @ SHA 1b59fdc895; smoke g16: S-01..S-06 PASS (select mouse/teclado/Escape, timeline 4 eventos, edição preenchida); RBAC restaurado |

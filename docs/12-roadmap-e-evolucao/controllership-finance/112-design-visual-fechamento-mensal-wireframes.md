@@ -1901,5 +1901,8 @@ nenhum componente paralelo criado e nenhuma extensão central necessária:
   `DISCARDED` adicionados aos mapas compartilhados.
 - **Evidência:** 337 testes, tsc, eslint e build verde; screenshots
   autenticados locais claro/escuro/mobile (overflow 0 @390px).
-- **Sem mudança de contrato/BFF/dados/permissões.** Produção pendente
-  de autorização específica (113 §28.9 CP6).
+- **Sem mudança de contrato/BFF/dados/permissões.** ~~Produção pendente
+  de autorização específica~~ **Deploy produção 28/10/2026**: bundle
+  `App-B5Ynp8Kk.js` (SHA `1b59fdc895`), smoke autenticado
+  `devin-smoke-g16` não destrutivo — listagem/novo/edição/timeline
+  renderizam com componentes do kit; grant temporário revogado.
