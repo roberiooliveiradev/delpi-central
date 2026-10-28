@@ -139,6 +139,7 @@ def migrated(_configure_db):
         "V015__monthly_competence_optional_template.sql",
         "V016__document_messages.sql",
         "V017__document_requirement_operations.sql",
+        "V018__recipient_document_delivery.sql",
     ]
     return True
 

@@ -168,6 +168,50 @@ describe("pluginRoutes", () => {
     }
   });
 
+  it("resolve a rota dedicada do destinatário externo (DRE-019)", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/documents",
+    );
+    expect(resolved.view).toBe("received_documents");
+    expect(resolved.relativePath).toBe("closing/documents");
+    expect(resolved.checklistPeriod).toBeUndefined();
+    expect(buildPluginPath("received_documents")).toBe(
+      "/apps/controllership-finance/closing/documents",
+    );
+  });
+
+  it("deep link de entrega recebida preserva a competência", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/documents/2026-10",
+    );
+    expect(resolved.view).toBe("received_documents");
+    expect(resolved.checklistPeriod).toBe("2026-10");
+    expect(
+      resolvePluginRoute(
+        "/apps/controllership-finance/closing/documents/2026-13",
+      ).view,
+    ).toBe("not_found");
+  });
+
+  it("deep link de documento recebido preserva competência e referência", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/documents/2026-10/documents/abc-123",
+    );
+    expect(resolved.view).toBe("received_documents");
+    expect(resolved.checklistPeriod).toBe("2026-10");
+    expect(resolved.documentRef).toBe("abc-123");
+  });
+
+  it("rota do destinatário malformada cai em not_found", () => {
+    for (const path of [
+      "/apps/controllership-finance/closing/documents/2026-10/documents",
+      "/apps/controllership-finance/closing/documents/2026-10/extra",
+      "/apps/controllership-finance/closing/documents/10-2026",
+    ]) {
+      expect(resolvePluginRoute(path).view).toBe("not_found");
+    }
+  });
+
   it("resolve a rota do checklist da competência", () => {
     const resolved = resolvePluginRoute(
       "/apps/controllership-finance/closing/checklist",

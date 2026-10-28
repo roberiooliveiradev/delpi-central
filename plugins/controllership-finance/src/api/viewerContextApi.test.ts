@@ -23,14 +23,22 @@ describe("viewerContextApi", () => {
     fetchMock.mockResolvedValueOnce(
       okEnvelope({
         firstName: "Ana",
-        capabilities: { access: true, manage: false },
+        capabilities: {
+          access: true,
+          manage: false,
+          closingDocumentsRead: false,
+        },
       }),
     );
     const ctx = await getViewerContext();
     expect(ctx).toEqual({
       firstName: "Ana",
       displayName: null,
-      capabilities: { access: true, manage: false },
+      capabilities: {
+        access: true,
+        manage: false,
+        closingDocumentsRead: false,
+      },
     });
     const url = fetchMock.mock.calls[0][0] as string;
     expect(url).toBe(`${CONTROLLERSHIP_FINANCE_API_BASE}/viewer-context`);
@@ -44,7 +52,30 @@ describe("viewerContextApi", () => {
     expect(ctx).toEqual({
       firstName: null,
       displayName: null,
-      capabilities: { access: false, manage: false },
+      capabilities: {
+        access: false,
+        manage: false,
+        closingDocumentsRead: false,
+      },
+    });
+  });
+
+  it("destinatário externo: closingDocumentsRead sem access", async () => {
+    fetchMock.mockResolvedValueOnce(
+      okEnvelope({
+        firstName: "Bruno",
+        capabilities: {
+          access: false,
+          manage: false,
+          closingDocumentsRead: true,
+        },
+      }),
+    );
+    const ctx = await getViewerContext();
+    expect(ctx.capabilities).toEqual({
+      access: false,
+      manage: false,
+      closingDocumentsRead: true,
     });
   });
 

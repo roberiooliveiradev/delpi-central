@@ -1488,3 +1488,7 @@ Rotas BFF (mock+PG): listagem só de entregas autorizadas; competência sem paco
 ### 29.8 Deploy e rollback
 
 **Deploy:** somente após gate + autorização PO. Ordem: migration(s) → BFF → grants Core/capability → manifesto/MFE. A área permanece inacessível sem grant — rollout por grant Core, não por flag de código. **Rollback:** revogar grant/capability no Core → revert manifesto/MFE → revert BFF; migrations aditivas permanecem (imutáveis); rollback lógico = revogação de grants, nunca delete destrutivo.
+
+### 29.9 Status de execução — DRE-ACCESS-019 (2026-10-27)
+
+Sequência §29.6 executada: capability `closing-documents.read`, projeção BFF `/closing/received-documents` (deliveries/documentos/download auditado/mensagens `SHARED`/solicitações de ajuste), audiência `SHARED` + `document_adjustment_request` (V018) e modo destinatário no MFE com rota `closing/documents`. Implementação, desvios de contrato e evidências: [doc 115](./115-dre-access-019-documentos-recebidos-gate-91-implementacao.md). Itens 7–8 de §2 e checkpoint 6 passam de TARGET a IMPLEMENTED nos limites descritos no doc 115.

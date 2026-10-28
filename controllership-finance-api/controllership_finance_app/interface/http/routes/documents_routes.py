@@ -514,6 +514,12 @@ def _author_name(user) -> str | None:
 class PostMessageRequest(BaseModel):
     body: str = Field(min_length=1, max_length=4000)
     idempotency_key: str = Field(min_length=1, max_length=128)
+    # DRE-019: INTERNAL (default, conversa da Controladoria) ou SHARED
+    # (deliberadamente visível ao destinatário com liberação). Valor
+    # fora do catálogo é 422 `invalid_message` no serviço.
+    audience: str | None = Field(
+        default=None, pattern="^(INTERNAL|SHARED)$"
+    )
 
 
 @router.get(
@@ -588,6 +594,7 @@ def post_document_message(
             body=body.body,
             idempotency_key=body.idempotency_key,
             branch_scope=branch_scope,
+            audience=body.audience or "INTERNAL",
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "post_document_message")
@@ -603,4 +610,103 @@ def post_document_message(
         ),
         status_code=201 if created else 200,
         operation_id="post_document_message",
+    )
+
+
+# -- DRE-019: solicitações de ajuste do destinatário (lado interno) ------
+
+
+def _request_view(row: dict) -> dict:
+    """Contrato público da solicitação — autoria/data do servidor,
+    ciclo OPEN → ANSWERED → CONFIRMED (resposta não encerra)."""
+    return {
+        "request_id": str(row["request_id"]),
+        "document_id": str(row["document_id"]),
+        "version_no": row.get("version_no"),
+        "state": row["state"],
+        "body": row["body"],
+        "requester_subject": str(row["requester_subject"]),
+        "requester_name": row.get("requester_name"),
+        "answer_body": row.get("answer_body"),
+        "answered_name": row.get("answered_name"),
+        "answered_at": row["answered_at"].isoformat()
+        if row.get("answered_at")
+        else None,
+        "confirmed_at": row["confirmed_at"].isoformat()
+        if row.get("confirmed_at")
+        else None,
+        "created_at": row["created_at"].isoformat()
+        if row.get("created_at")
+        else None,
+    }
+
+
+@router.get(
+    "/{period}/documents/{document_id}/adjustment-requests",
+    operation_id="list_document_adjustment_requests",
+)
+def list_document_adjustment_requests(
+    request: Request,
+    period: str = Path(pattern=PERIOD_PATTERN),
+    document_id: uuid.UUID = Path(),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
+):
+    """Fila de solicitações do documento — visão interna de todos os
+    requerentes (mesmo escopo da conversa U9)."""
+    authorized_user(request)
+    try:
+        rows = _service().list_adjustment_requests(
+            period=period,
+            document_id=str(document_id),
+            branch_scope=branch_scope,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "list_document_adjustment_requests")
+    return ok(
+        {"requests": [_request_view(r) for r in rows]},
+        operation_id="list_document_adjustment_requests",
+    )
+
+
+class AnswerAdjustmentRequestBody(BaseModel):
+    answer_body: str = Field(min_length=1, max_length=4000)
+
+
+@router.post(
+    "/{period}/documents/{document_id}/adjustment-requests/"
+    "{request_id}/answer",
+    operation_id="answer_document_adjustment_request",
+)
+def answer_document_adjustment_request(
+    request: Request,
+    body: AnswerAdjustmentRequestBody,
+    period: str = Path(pattern=PERIOD_PATTERN),
+    document_id: uuid.UUID = Path(),
+    request_id: uuid.UUID = Path(),
+    branch_scope: str | None = Query(
+        default=None, pattern="^(MATRIX|BRANCH|BOTH)$"
+    ),
+):
+    """Resposta da Controladoria — OPEN → ANSWERED (uma única
+    resposta; UPDATE condicional — re-resposta é 409, nunca
+    sobrescreve). Responder NÃO encerra a solicitação."""
+    user = authorized_user(request)
+    try:
+        answered = _service().answer_adjustment_request(
+            period=period,
+            document_id=str(document_id),
+            request_id=str(request_id),
+            actor=actor_subject(user),
+            answer_name=_author_name(user),
+            answer_body=body.answer_body,
+            branch_scope=branch_scope,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "answer_document_adjustment_request")
+    return ok(
+        _request_view(answered),
+        message="Resposta registrada.",
+        operation_id="answer_document_adjustment_request",
     )

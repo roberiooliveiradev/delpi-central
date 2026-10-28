@@ -70,7 +70,10 @@ from controllership_finance_app.infrastructure.persistence.plugins_db import (
 _SCHEMA = SCHEMA_NAME
 
 RECIPIENT_AREAS = ("CONTABIL", "FISCAL")
-PACKAGE_ROLES = frozenset({"REVIEWER", "COORDINATOR"})
+# DRE-019: RECIPIENT é vínculo de consulta documental do destinatário
+# externo — NUNCA concede visibilidade nem voto na superfície P5
+# interna (_visible_areas/_require_reviewer filtram por role explícito).
+PACKAGE_ROLES = frozenset({"REVIEWER", "COORDINATOR", "RECIPIENT"})
 REVIEW_OUTCOMES = frozenset(
     {"ACCEPTED", "CHANGES_REQUESTED", "REJECTED"}
 )
@@ -511,7 +514,9 @@ class ClosingPackageRepository:
         is_manage: bool,
     ) -> list[str]:
         """Manage vê todos; demais veem apenas pacotes com assignment
-        ativo — reviewer nunca enxerga pacote de sibling (P5 §10)."""
+        REVIEWER ativo — reviewer nunca enxerga pacote de sibling
+        (P5 §10). RECIPIENT (DRE-019) é vínculo de consulta externa:
+        NÃO concede visibilidade nesta superfície interna."""
         if is_manage:
             return areas
         mine = {
@@ -519,7 +524,7 @@ class ClosingPackageRepository:
             for a in self._assignments(
                 cur, competence_id, subject=viewer
             )
-            if a["package_id"] is not None
+            if a["package_id"] is not None and a["role"] == "REVIEWER"
         }
         return [
             area
@@ -1180,12 +1185,21 @@ class ClosingPackageRepository:
                 raise ChecklistDomainError(
                     "REVIEWER exige recipient_area."
                 )
+        if role == "RECIPIENT":
+            # DRE-019: vínculo de consulta documental — é por pacote
+            # (competência + área destinataria); `area` replica a
+            # recipient_area do pacote para a forma composta do CHECK.
+            if not recipient_area:
+                raise ChecklistDomainError(
+                    "RECIPIENT exige recipient_area."
+                )
+            area = (recipient_area or "").strip().upper()
         with self._conn() as conn:
             with conn.transaction():
                 with conn.cursor(row_factory=dict_row) as cur:
                     competence_id = self._competence_id(cur, period)
                     package_id = None
-                    if role == "REVIEWER":
+                    if role in ("REVIEWER", "RECIPIENT"):
                         package = self._ensure_package(
                             cur,
                             competence_id,

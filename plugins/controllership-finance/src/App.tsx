@@ -1,9 +1,15 @@
+import { useEffect } from "react";
+
 import { PluginErrorBoundary } from "@delpi/plugin-ui/index";
 
 import { configureHttpClient } from "./api/httpClient";
 import { NotFoundPage } from "./app/NotFoundPage";
 import { PluginShell } from "./app/PluginShell";
-import { ViewerContextProvider } from "./app/ViewerContext";
+import { navigatePluginView } from "./app/pluginNavigation";
+import {
+  ViewerContextProvider,
+  useViewerContext,
+} from "./app/ViewerContext";
 import {
   normalizeBasePath,
   resolvePluginRoute,
@@ -20,6 +26,7 @@ import { ClosingChecklistPage } from "./features/closing/ClosingChecklistPage";
 import { CockpitPage } from "./features/closing/CockpitPage";
 import { FinancialSettlementsPage } from "./features/closing/FinancialSettlementsPage";
 import { MonthlyClosingPage } from "./features/closing/MonthlyClosingPage";
+import { ReceivedDocumentsPage } from "./features/closing/ReceivedDocumentsPage";
 import { PackagesPage } from "./features/closing/PackagesPage";
 import { PendenciesPage } from "./features/closing/PendenciesPage";
 import { StockInventoryPage } from "./features/closing/StockInventoryPage";
@@ -44,6 +51,21 @@ function AppRoutes({
 }) {
   const pathname = usePluginRouterPath(pathnameFromHost, basePath);
   const resolved = resolvePluginRoute(pathname, basePath);
+  const { viewer } = useViewerContext();
+
+  // DRE-019 — rede de segurança do destinatário externo: usuário com
+  // apenas `closing-documents.read` que chegue a uma rota interna
+  // (deep link, F5, URL copiada) retorna à projeção documental. A BFF
+  // continua sendo a autoridade — isto é somente o retorno seguro da UI.
+  const recipientOnly =
+    viewer !== null &&
+    viewer.capabilities.access !== true &&
+    viewer.capabilities.closingDocumentsRead === true;
+
+  useEffect(() => {
+    if (!recipientOnly || resolved.view === "received_documents") return;
+    navigatePluginView("received_documents", { basePath, replace: true });
+  }, [recipientOnly, resolved.view, basePath]);
 
   return (
     <PluginShell view={resolved.view} basePath={basePath}>
@@ -113,6 +135,12 @@ function AppRoutes({
             period={resolved.checklistPeriod}
             documentRef={resolved.documentRef}
             reportKey={resolved.reportKey}
+          />
+        ) : resolved.view === "received_documents" ? (
+          <ReceivedDocumentsPage
+            basePath={basePath}
+            period={resolved.checklistPeriod}
+            documentRef={resolved.documentRef}
           />
         ) : (
           <NotFoundPage basePath={basePath} />

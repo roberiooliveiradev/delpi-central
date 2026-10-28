@@ -100,3 +100,12 @@ O PO reafirmou que as decisões deste documento devem **ficar registradas agora 
 **Nesta fase fica expressamente vedado:** modificar o manifesto/Core/grants/guards/rotas para adicionar a nova permission, criar a página de histórico ou endpoint de download, alterar versão de plugin para esta demanda, executar migration ou deploy. O Core continuará como authority efetiva de acesso quando o contrato for implementado. O futuro leitor da Contabilidade seguirá sem aceitar/rejeitar/homologar na V1.
 
 O preparo da implementação do processo prossegue por outro gate, **P2 — Checklist/Documentos/Validação**. Referência: [doc 92](./92-ciclo3-consolidacao-e-handoff-continuacao-p2.md). A entrega P2 não poderá incluir permissões ou página de Contabilidade por acoplamento oportunista. **IMPLEMENTATION_AUTHORIZED=NO para esta alteração.**
+
+## 9. Resolução do gate — DRE-ACCESS-019 (2026-10-27)
+
+Gate resolvido pela execução governada `CF-PROC0072-DRE-ACCESS-019`, autorizada pelo PO com a sequência DOCUMENTAÇÃO → CORE/RBAC → CONTRATOS → BFF → FRONTEND → TESTES → DEPLOY GOVERNADO. Estado anterior `IMPLEMENTATION_AUTHORIZED=NO` está **superado** para esta implementação.
+
+- Permission implementada: `controllership-finance.closing-documents.read` (Opção B; manifesto passa a três permissions).
+- Rota implementada: `/apps/controllership-finance/closing/documents` (substitui o candidato `closing/accounting-documents` — alinhada ao nome da área «Documentos e interações»).
+- Liberação: assignment `RECIPIENT` + pacote `SUBMITTED`; destinatário sem aceite P5 na V1, conforme §1.
+- Contrato, projeção, testes e rollback: [doc 115](./115-dre-access-019-documentos-recebidos-gate-91-implementacao.md).

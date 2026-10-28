@@ -354,6 +354,21 @@ class InvalidMessage(ChecklistDomainError):
     status = 422
 
 
+class AdjustmentRequestNotFound(ChecklistDomainError):
+    """Solicitação de ajuste inexistente ou fora do vínculo do ator."""
+
+    code = "adjustment_request_not_found"
+    status = 404
+
+
+class InvalidAdjustmentRequestState(ChecklistDomainError):
+    """Transição fora do ciclo OPEN → ANSWERED → CONFIRMED (responder
+    não encerra; confirmar exige resposta registrada)."""
+
+    code = "invalid_adjustment_request_state"
+    status = 409
+
+
 class RetroactiveEffectivePeriod(ChecklistDomainError):
     """Vigência inicial retroativa — configuração documental é
     estritamente prospectiva (doc 114 §8.6)."""

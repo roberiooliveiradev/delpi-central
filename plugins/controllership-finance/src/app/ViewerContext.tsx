@@ -25,7 +25,11 @@ type ViewerContextValue = {
 
 const ViewerContextContext = createContext<ViewerContextValue | null>(null);
 
-const CAPABILITIES_FALLBACK: ViewerCapabilities = { access: false, manage: false };
+const CAPABILITIES_FALLBACK: ViewerCapabilities = {
+  access: false,
+  manage: false,
+  closingDocumentsRead: false,
+};
 
 export function ViewerContextProvider({ children }: { children: ReactNode }) {
   const [viewer, setViewer] = useState<ViewerContext | null>(null);

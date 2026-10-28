@@ -19,6 +19,7 @@ from controllership_finance_app.main import app
 
 ACCESS = "controllership-finance.access"
 MANAGE = "controllership-finance.manage"
+READ_DOCS = "controllership-finance.closing-documents.read"
 
 TOKEN = "viewer-test-token"
 
@@ -107,7 +108,11 @@ def test_viewer_context_human_with_access_returns_200(_auth_pipeline):
     assert body["data"] == {
         "firstName": "Ana",
         "displayName": "Ana Souza",
-        "capabilities": {"access": True, "manage": False},
+        "capabilities": {
+            "access": True,
+            "manage": False,
+            "closingDocumentsRead": False,
+        },
     }
 
 
@@ -118,6 +123,20 @@ def test_viewer_context_access_plus_manage(_auth_pipeline):
     assert response.json()["data"]["capabilities"] == {
         "access": True,
         "manage": True,
+        "closingDocumentsRead": False,
+    }
+
+
+def test_viewer_context_recipient_capability_only(_auth_pipeline):
+    """DRE-019: destinatário externo entra como viewer sem `access` —
+    o payload restringe a UI, sem conceder autorização interna."""
+    _auth_pipeline["rbac"] = _rbac(permissions=[READ_DOCS])
+    response = _get(_client())
+    assert response.status_code == 200
+    assert response.json()["data"]["capabilities"] == {
+        "access": False,
+        "manage": False,
+        "closingDocumentsRead": True,
     }
 
 
@@ -262,6 +281,7 @@ def test_viewer_context_human_superadmin_gets_manage_capability(_auth_pipeline):
     assert response.json()["data"]["capabilities"] == {
         "access": True,
         "manage": True,
+        "closingDocumentsRead": True,
     }
 
 

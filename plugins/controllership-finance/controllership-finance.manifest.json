@@ -20,6 +20,12 @@
       "name": "Administrar Portal Controladoria & Finanças",
       "description": "Administração do produto (áreas de gestão conforme liberadas). Não implica acesso às demais rotas.",
       "module": "controllership-finance"
+    },
+    {
+      "code": "controllership-finance.closing-documents.read",
+      "name": "Consultar documentos recebidos do fechamento",
+      "description": "Consulta documental do destinatário externo (DRE): fechamentos efetivamente disponibilizados, visualização/download de PDFs, mensagens e solicitações de revisão. Não concede acesso às áreas internas do produto.",
+      "module": "controllership-finance"
     }
   ],
   "routes": [
@@ -101,6 +107,14 @@
       "permission": "controllership-finance.access",
       "icon": "shield-check",
       "order": 39,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/closing/documents",
+      "label": "Documentos recebidos",
+      "permission": "controllership-finance.closing-documents.read",
+      "icon": "file-text",
+      "order": 40,
       "showInMenu": false
     }
   ],

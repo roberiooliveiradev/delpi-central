@@ -5,7 +5,9 @@ Microfrontend do Portal Controladoria & Finanças — Minha DELPI.
 - **Plugin id:** `controllership-finance`
 - **Base path:** `/apps/controllership-finance`
 - **BFF:** `controllership-finance-api` (`/apps/controllership-finance-api`)
-- **Permissions:** `controllership-finance.access`, `controllership-finance.manage`
+- **Permissions:** `controllership-finance.access`,
+  `controllership-finance.manage`,
+  `controllership-finance.closing-documents.read`
 
 Escopo entregue (IMP-MFE-HOME + IMP-CF-R01-R02-D3-UI-01): bootstrap
 federado, manifesto, shell de navegação, Home com saudação/estados
@@ -133,6 +135,21 @@ de coluna/fonte persistidas pelo kit. Código cru de auditoria (ex.:
 `paymentDirection`) fica em tooltip/`cf-visually-hidden`, nunca como
 caractere solto na célula. Resumos P7 exibem participação percentual
 derivada do total histórico do contrato.
+
+Central de Fechamento — Documentos recebidos DRE (DRE-ACCESS-019):
+rota dedicada `closing/documents` protegida pela capability
+`closing-documents.read` (destinatário externo, doc 91/115). Mesmo
+Portal e mesma identidade visual — o viewer sem `access` não vê a nav
+interna nem a paleta, e rotas internas redirecionam com segurança para
+a área documental. A listagem N1–N3 (`ReceivedDocumentsPage`,
+`ReceivedDocumentDetailPanel`, `ReceivedConversationPanel`) consome
+somente a projeção BFF `GET/POST /closing/received-documents/*`:
+deliveries por competência, documentos efetivamente liberados
+(assignment `RECIPIENT` + pacote `SUBMITTED`), versões liberadas,
+download auditado, mensagens `SHARED` e solicitações de ajuste
+`OPEN → ANSWERED → CONFIRMED` (responder não encerra; só o requerente
+confirma). Estados de loading/erro/vazio honestos; Help contextual no
+grupo `receivedDocuments`.
 
 ## Runtime
 

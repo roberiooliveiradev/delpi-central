@@ -41,6 +41,7 @@ describe("home honesty", () => {
         "profile",
         "monthly_closing",
         "checklist_admin",
+        "documents_admin",
         "catalogs_admin",
       ]),
     );

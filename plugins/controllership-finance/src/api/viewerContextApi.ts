@@ -3,6 +3,9 @@ import { cfApiUrl, httpGet } from "./httpClient";
 export type ViewerCapabilities = {
   access: boolean;
   manage: boolean;
+  /** DRE-019 — consulta documental do destinatário externo; não
+   * implica `access` (a capability não libera áreas internas). */
+  closingDocumentsRead: boolean;
 };
 
 export type ViewerContext = {
@@ -35,6 +38,9 @@ export async function getViewerContext(options?: {
     capabilities: {
       access: Boolean(data?.capabilities?.access),
       manage: Boolean(data?.capabilities?.manage),
+      closingDocumentsRead: Boolean(
+        data?.capabilities?.closingDocumentsRead,
+      ),
     },
   };
 }

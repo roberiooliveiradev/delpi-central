@@ -89,20 +89,30 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
 
   const showManage = viewer?.capabilities.manage === true;
 
+  // DRE-019 — o destinatário externo (somente `closing-documents.read`,
+  // sem `access`) não vê navegação interna nem a busca do catálogo:
+  // as entradas são projeções das áreas internas do produto. Enquanto o
+  // viewer carrega (null), o shell mostra a navegação padrão — a BFF
+  // continua autoridade final se uma rota interna for acessada.
+  const internalViewer =
+    viewer === null || viewer.capabilities.access === true;
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const isPaletteChord =
         (event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey);
-      if (!isPaletteChord) return;
+      if (!isPaletteChord || !internalViewer) return;
       if (isEditableTarget(event.target) && !paletteOpen) return;
       event.preventDefault();
       setPaletteOpen((open) => !open);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [paletteOpen]);
+  }, [paletteOpen, internalViewer]);
 
-  const items = resolveShellNavItems({ manage: showManage });
+  const items = internalViewer
+    ? resolveShellNavItems({ manage: showManage })
+    : [];
 
   const activeId = resolveActiveNavId(view);
   const showGreeting = view === "home";
@@ -170,17 +180,19 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
             onSelect: () => navigatePluginView(item.id, { basePath }),
           }))}
           secondary={
-            <CfTopBarUtilityCluster>
-              <CfTopBarSearchTrigger
-                ref={searchTriggerRef}
-                onOpen={() => setPaletteOpen(true)}
-                expanded={paletteOpen}
-                label={SHELL_NAV_CONTENT.searchLabel}
-                shortcutLabel={SHELL_NAV_CONTENT.searchShortcutLabel}
-                aria-label={SHELL_NAV_CONTENT.searchAriaLabel}
-                title={SHELL_NAV_CONTENT.searchTitle}
-              />
-            </CfTopBarUtilityCluster>
+            internalViewer ? (
+              <CfTopBarUtilityCluster>
+                <CfTopBarSearchTrigger
+                  ref={searchTriggerRef}
+                  onOpen={() => setPaletteOpen(true)}
+                  expanded={paletteOpen}
+                  label={SHELL_NAV_CONTENT.searchLabel}
+                  shortcutLabel={SHELL_NAV_CONTENT.searchShortcutLabel}
+                  aria-label={SHELL_NAV_CONTENT.searchAriaLabel}
+                  title={SHELL_NAV_CONTENT.searchTitle}
+                />
+              </CfTopBarUtilityCluster>
+            ) : undefined
           }
           actions={
             <CfTopBarUserIdentity
@@ -215,7 +227,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
       </div>
 
       <CfCommandPalette
-        open={paletteOpen}
+        open={internalViewer && paletteOpen}
         onClose={() => {
           setPaletteOpen(false);
           setPaletteQuery("");

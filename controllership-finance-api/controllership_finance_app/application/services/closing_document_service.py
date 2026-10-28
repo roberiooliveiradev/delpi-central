@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Iterable
 
 from controllership_finance_app.domain.closing_checklist.errors import (
+    AdjustmentRequestNotFound,
     DocumentCancelled,
     DocumentNotAttached,
     DocumentNotFound,
@@ -76,6 +77,10 @@ def _request_hash(
 
 MESSAGE_MAX_CHARS = 4000
 MESSAGE_AUDIENCE_INTERNAL = "INTERNAL"
+MESSAGE_AUDIENCE_SHARED = "SHARED"
+MESSAGE_AUDIENCES = frozenset(
+    {MESSAGE_AUDIENCE_INTERNAL, MESSAGE_AUDIENCE_SHARED}
+)
 
 
 def _message_request_hash(*, body: str) -> str:
@@ -620,12 +625,16 @@ class ClosingDocumentService:
         body: str,
         idempotency_key: str,
         branch_scope: str | None = None,
+        audience: str = MESSAGE_AUDIENCE_INTERNAL,
     ) -> tuple[dict, bool]:
         """Publica mensagem da conversa (retorna ``(mensagem, created)``).
 
         D-U9: a Controladoria autorizada (`access` + escopo, exigido na
-        rota) inicia a conversa sem solicitação prévia da DRE — a
-        audiência é sempre `INTERNAL` neste slice. Mensagem NÃO é
+        rota) inicia a conversa sem solicitação prévia da DRE. A
+        audiência default é `INTERNAL`; DRE-019 admite `SHARED`
+        explícita (mensagem deliberadamente visível ao destinatário
+        externo com vínculo de liberação) — o valor é contrato do
+        request, nunca inferido de flag arbitrária. Mensagem NÃO é
         mutação documental: permitida em `ATTACHED` e `CANCELLED` (a
         conversa documenta o contexto, inclusive de uma remoção) e não
         toca estado do documento, validação do item, pacote ou
@@ -646,17 +655,84 @@ class ClosingDocumentService:
             raise InvalidMessage(
                 "idempotency_key deve ter entre 1 e 128 caracteres."
             )
+        if audience not in MESSAGE_AUDIENCES:
+            raise InvalidMessage(
+                "audience deve ser INTERNAL ou SHARED."
+            )
         name = (author_name or "").strip()[:255] or None
         return self._repository.create_document_message(
             competence_id=str(document["competence_id"]),
             document_id=str(document["document_id"]),
             version_no=document["current_version_no"],
-            audience=MESSAGE_AUDIENCE_INTERNAL,
+            audience=audience,
             body=text,
             author_subject=actor,
             author_name=name,
             idempotency_key=key,
             request_hash=_message_request_hash(body=text),
+        )
+
+    # -- DRE-019 — solicitações de ajuste (lado interno) -------------------
+
+    def list_adjustment_requests(
+        self,
+        *,
+        period: str,
+        document_id: str,
+        branch_scope: str | None,
+    ) -> list[dict]:
+        """Todas as solicitações do documento — visão interna da fila
+        (qualquer requerente); escopo idêntico ao da conversa U9."""
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        return self._repository.list_adjustment_requests(
+            str(document["competence_id"]),
+            document_id=str(document["document_id"]),
+        )
+
+    def answer_adjustment_request(
+        self,
+        *,
+        period: str,
+        document_id: str,
+        request_id: str,
+        actor: str,
+        answer_name: str | None,
+        answer_body: str,
+        branch_scope: str | None = None,
+    ) -> dict:
+        """Resposta da Controladoria — OPEN → ANSWERED (condicional,
+        uma única resposta). Responder NÃO encerra a solicitação:
+        a conclusão é exclusiva do requerente (CONFIRMED)."""
+        document = self._document_in_scope(
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        text = (answer_body or "").strip()
+        if not 1 <= len(text) <= MESSAGE_MAX_CHARS:
+            raise InvalidMessage(
+                "A resposta deve ter entre 1 e 4000 caracteres."
+            )
+        request = self._repository.get_adjustment_request(
+            str(document["competence_id"]), request_id
+        )
+        if request is None or str(request["document_id"]) != str(
+            document["document_id"]
+        ):
+            raise AdjustmentRequestNotFound(
+                "Solicitação não encontrada."
+            )
+        name = (answer_name or "").strip()[:255] or None
+        return self._repository.answer_adjustment_request(
+            str(document["competence_id"]),
+            request_id,
+            answer_body=text,
+            answered_by=actor,
+            answered_name=name,
         )
 
     def document_participant_ids(

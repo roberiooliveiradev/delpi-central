@@ -22,6 +22,9 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  *   catálogo mestre.
  * - `checklist_admin_events` — histórico/auditoria do template ou de
  *   uma versão em página completa (UX-015, substitui o modal).
+ * - `received_documents` — «Documentos e interações» do destinatário
+ *   externo (DRE-019): projeção restrita `closing/documents` sob a
+ *   capability `closing-documents.read`, sem as três abas internas.
  * Rotas futuras (Visão geral dedicada, Sala de interação, Ajuda)
  * entram aqui apenas quando implementadas.
  */
@@ -40,6 +43,7 @@ export type PluginView =
   | "packages"
   | "cockpit"
   | "monthly_closing"
+  | "received_documents"
   | "my_tasks"
   | "profile"
   | "clara_consent"
@@ -59,6 +63,7 @@ export type PluginNavigationTarget =
   | "packages"
   | "cockpit"
   | "monthly_closing"
+  | "received_documents"
   | "my_tasks"
   | "profile";
 
@@ -72,6 +77,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/packages": "packages",
   "closing/cockpit": "cockpit",
   "closing/monthly-closing": "monthly_closing",
+  "closing/documents": "received_documents",
   "closing/my-tasks": "my_tasks",
   "closing/admin/catalogs": "catalogs_admin",
   "closing/admin/documents": "documents_admin",
@@ -88,6 +94,7 @@ const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> 
   packages: "closing/packages",
   cockpit: "closing/cockpit",
   monthly_closing: "closing/monthly-closing",
+  received_documents: "closing/documents",
   my_tasks: "closing/my-tasks",
   catalogs_admin: "closing/admin/catalogs",
   documents_admin: "closing/admin/documents",
@@ -128,6 +135,14 @@ const ADMIN_VERSION_DETAIL_PATTERN =
 /** Documento dentro de uma versão histórica (UX-015). */
 const ADMIN_VERSION_DOCUMENT_PATTERN =
   /^closing\/admin\/versions\/(\d+)\/documents\/([^/]{1,64})$/;
+
+/** Entrega da competência ao destinatário externo (DRE-019). */
+const RECEIVED_DELIVERY_PATTERN =
+  /^closing\/documents\/(\d{4}-(0[1-9]|1[0-2]))$/;
+
+/** Detalhe do documento recebido (DRE-019) — deep route contextual. */
+const RECEIVED_DOCUMENT_PATTERN =
+  /^closing\/documents\/(\d{4}-(0[1-9]|1[0-2]))\/documents\/([A-Za-z0-9_.:%~-]+)$/;
 
 export type ResolvedPluginRoute = {
   view: PluginView;
@@ -172,6 +187,27 @@ export function resolvePluginRoute(
   const relativePath = path.startsWith(`${base}/`)
     ? path.slice(base.length + 1)
     : path.slice(base.length);
+  const receivedDocumentMatch =
+    RECEIVED_DOCUMENT_PATTERN.exec(relativePath);
+  if (receivedDocumentMatch) {
+    return {
+      view: "received_documents",
+      pathname: path,
+      relativePath,
+      checklistPeriod: receivedDocumentMatch[1],
+      documentRef: decodeURIComponent(receivedDocumentMatch[3] ?? ""),
+    };
+  }
+  const receivedDeliveryMatch =
+    RECEIVED_DELIVERY_PATTERN.exec(relativePath);
+  if (receivedDeliveryMatch) {
+    return {
+      view: "received_documents",
+      pathname: path,
+      relativePath,
+      checklistPeriod: receivedDeliveryMatch[1],
+    };
+  }
   const documentMatch = DOCUMENT_DETAIL_PATTERN.exec(relativePath);
   if (documentMatch) {
     return {

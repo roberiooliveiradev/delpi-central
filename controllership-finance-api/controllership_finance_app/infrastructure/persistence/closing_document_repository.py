@@ -17,11 +17,13 @@ import psycopg
 from psycopg.rows import dict_row
 
 from controllership_finance_app.domain.closing_checklist.errors import (
+    AdjustmentRequestNotFound,
     CompetenceNotOpened,
     DocumentCancelled,
     DocumentNotAttached,
     DocumentNotFound,
     IdempotencyConflict,
+    InvalidAdjustmentRequestState,
     ItemLockedBySubmittedPackage,
     ItemNotFound,
     PersistenceUnavailable,
@@ -807,21 +809,30 @@ class ClosingDocumentRepository:
         competence_id: str,
         document_id: str,
         *,
+        audience: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> dict[str, Any]:
         """Mensagens do documento da competência — ordem cronológica
         ASC (conversa) com `created_at`/`message_id` como desempate
         estável. Escopo duplo (documento+competência) impede leitura
-        cruzada mesmo que o caller falhe em validar a associação."""
+        cruzada mesmo que o caller falhe em validar a associação.
+        `audience` restringe a visibilidade (DRE-019: destinatário
+        externo lê somente `SHARED` — INTERNAL nunca sai nesta via)."""
+        clauses = ["document_id = %s", "competence_id = %s"]
+        params: list[Any] = [document_id, competence_id]
+        if audience is not None:
+            clauses.append("audience = %s")
+            params.append(audience)
+        where = " AND ".join(clauses)
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 f"""
                 SELECT count(*) AS total
                   FROM {_q('document_message')}
-                 WHERE document_id = %s AND competence_id = %s
+                 WHERE {where}
                 """,
-                (document_id, competence_id),
+                params,
             )
             total = cur.fetchone()["total"]
             cur.execute(
@@ -830,11 +841,11 @@ class ClosingDocumentRepository:
                        version_no, audience, body, author_subject,
                        author_name, created_at
                   FROM {_q('document_message')}
-                 WHERE document_id = %s AND competence_id = %s
+                 WHERE {where}
                  ORDER BY created_at ASC, message_id ASC
                  LIMIT %s OFFSET %s
                 """,
-                (document_id, competence_id, limit, offset),
+                (*params, limit, offset),
             )
             items = cur.fetchall()
         return {"items": items, "total": total, "limit": limit, "offset": offset}
@@ -983,6 +994,278 @@ class ClosingDocumentRepository:
                 (document_id, document_id, document_id),
             )
             return [str(row["participant_id"]) for row in cur.fetchall()]
+
+    # -- DRE-019 — solicitações de ajuste do destinatário ------------------
+
+    _REQUEST_COLUMNS = """
+        request_id, document_id, competence_id, version_no, state,
+        body, requester_subject, requester_name, answer_body,
+        answered_by, answered_name, answered_at,
+        confirmed_by, confirmed_at, created_at
+    """
+
+    def list_adjustment_requests(
+        self,
+        competence_id: str,
+        *,
+        document_id: str | None = None,
+        requester_subject: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Solicitações da competência — cronológica por documento.
+
+        `requester_subject` restringe ao autor (visão do destinatário:
+        ele nunca lê pedido de outro destinatário); `document_id`
+        delimita ao documento. Escopo de competência sempre aplicado."""
+        clauses = ["competence_id = %s"]
+        params: list[Any] = [competence_id]
+        if document_id is not None:
+            clauses.append("document_id = %s")
+            params.append(document_id)
+        if requester_subject is not None:
+            clauses.append("requester_subject = %s")
+            params.append(requester_subject)
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT {self._REQUEST_COLUMNS}
+                  FROM {_q('document_adjustment_request')}
+                 WHERE {' AND '.join(clauses)}
+                 ORDER BY created_at ASC, request_id ASC
+                """,
+                params,
+            )
+            return cur.fetchall()
+
+    def get_adjustment_request(
+        self, competence_id: str, request_id: str
+    ) -> dict[str, Any] | None:
+        """Linha da solicitação delimitada à competência — `None` fora
+        do escopo (o serviço decide 404; existência nunca vaza)."""
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT {self._REQUEST_COLUMNS}
+                  FROM {_q('document_adjustment_request')}
+                 WHERE request_id = %s AND competence_id = %s
+                """,
+                (request_id, competence_id),
+            )
+            return cur.fetchone()
+
+    def find_adjustment_request_by_idempotency(
+        self, document_id: str, idempotency_key: str
+    ) -> dict[str, Any] | None:
+        """Registro de idempotência da solicitação — key nunca é
+        reutilizada entre documentos (unique por documento)."""
+        with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT {self._REQUEST_COLUMNS}, request_hash
+                  FROM {_q('document_adjustment_request')}
+                 WHERE document_id = %s AND idempotency_key = %s
+                """,
+                (document_id, idempotency_key),
+            )
+            return cur.fetchone()
+
+    def create_adjustment_request(
+        self,
+        *,
+        competence_id: str,
+        document_id: str,
+        version_no: int | None,
+        body: str,
+        requester_subject: str,
+        requester_name: str | None,
+        idempotency_key: str,
+        request_hash: str,
+    ) -> tuple[dict[str, Any], bool]:
+        """document_adjustment_request + `DOCUMENT_ADJUSTMENT_REQUESTED`
+        numa transação — solicitação e auditoria são inseparáveis.
+        Mesmo padrão idempotente de `create_document_message`."""
+        inserted = None
+        with self._conn() as conn:
+            try:
+                with conn.transaction():
+                    with conn.cursor(row_factory=dict_row) as cur:
+                        cur.execute(
+                            f"""
+                            INSERT INTO {_q('document_adjustment_request')}
+                                (document_id, competence_id, version_no,
+                                 body, requester_subject, requester_name,
+                                 idempotency_key, request_hash)
+                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                            ON CONFLICT (document_id, idempotency_key)
+                                DO NOTHING
+                            RETURNING request_id
+                            """,
+                            (
+                                document_id,
+                                competence_id,
+                                version_no,
+                                body,
+                                requester_subject,
+                                requester_name,
+                                idempotency_key,
+                                request_hash,
+                            ),
+                        )
+                        inserted = cur.fetchone()
+                        if inserted is None:
+                            raise _IdempotencyRaceLost()
+                        request_id = str(inserted["request_id"])
+                        self._audit(
+                            cur,
+                            entity_type="closing_document",
+                            entity_id=document_id,
+                            competence_id=competence_id,
+                            event_type="DOCUMENT_ADJUSTMENT_REQUESTED",
+                            actor=requester_subject,
+                            detail={
+                                "request_id": request_id,
+                                "version_no": version_no,
+                            },
+                        )
+            except _IdempotencyRaceLost:
+                pass
+        if inserted is not None:
+            row = self.get_adjustment_request(competence_id, request_id)
+            if row is not None:
+                return row, True
+        winner = self.find_adjustment_request_by_idempotency(
+            document_id, idempotency_key
+        )
+        if winner is None:
+            raise PersistenceUnavailable(
+                "Falha ao recuperar solicitação idempotente."
+            )
+        if winner["request_hash"] != request_hash:
+            raise IdempotencyConflict(
+                "Chave de idempotência já utilizada com payload "
+                "divergente."
+            )
+        return winner, False
+
+    def answer_adjustment_request(
+        self,
+        competence_id: str,
+        request_id: str,
+        *,
+        answer_body: str,
+        answered_by: str,
+        answered_name: str | None,
+    ) -> dict[str, Any]:
+        """Resposta da Controladoria: OPEN → ANSWERED — UPDATE
+        condicional (uma única resposta por solicitação; re-resposta
+        é 409 `invalid_adjustment_request_state`, nunca sobrescreve).
+        Responder NÃO encerra — a conclusão é do requerente."""
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('document_adjustment_request')}
+                           SET state = 'ANSWERED',
+                               answer_body = %s,
+                               answered_by = %s,
+                               answered_name = %s,
+                               answered_at = now()
+                         WHERE request_id = %s
+                           AND competence_id = %s
+                           AND state = 'OPEN'
+                        RETURNING {self._REQUEST_COLUMNS}
+                        """,
+                        (
+                            answer_body,
+                            answered_by,
+                            answered_name,
+                            request_id,
+                            competence_id,
+                        ),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        current = self.get_adjustment_request(
+                            competence_id, request_id
+                        )
+                        if current is None:
+                            raise AdjustmentRequestNotFound(
+                                "Solicitação não encontrada."
+                            )
+                        raise InvalidAdjustmentRequestState(
+                            "A solicitação já foi respondida ou "
+                            "concluída."
+                        )
+                    self._audit(
+                        cur,
+                        entity_type="closing_document",
+                        entity_id=row["document_id"],
+                        competence_id=competence_id,
+                        event_type="DOCUMENT_ADJUSTMENT_ANSWERED",
+                        actor=answered_by,
+                        detail={"request_id": request_id},
+                    )
+                    return row
+
+    def confirm_adjustment_request(
+        self,
+        competence_id: str,
+        request_id: str,
+        *,
+        confirmed_by: str,
+    ) -> dict[str, Any]:
+        """Conclusão pelo requerente: ANSWERED → CONFIRMED — somente o
+        autor da solicitação confirma (UPDATE condicional por subject);
+        estado inválido nunca é reescrito."""
+        with self._conn() as conn:
+            with conn.transaction():
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        f"""
+                        UPDATE {_q('document_adjustment_request')}
+                           SET state = 'CONFIRMED',
+                               confirmed_by = %s,
+                               confirmed_at = now()
+                         WHERE request_id = %s
+                           AND competence_id = %s
+                           AND requester_subject = %s
+                           AND state = 'ANSWERED'
+                        RETURNING {self._REQUEST_COLUMNS}
+                        """,
+                        (
+                            confirmed_by,
+                            request_id,
+                            competence_id,
+                            confirmed_by,
+                        ),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        current = self.get_adjustment_request(
+                            competence_id, request_id
+                        )
+                        if (
+                            current is None
+                            or str(current["requester_subject"])
+                            != confirmed_by
+                        ):
+                            raise AdjustmentRequestNotFound(
+                                "Solicitação não encontrada."
+                            )
+                        raise InvalidAdjustmentRequestState(
+                            "A solicitação ainda não foi respondida "
+                            "ou já foi concluída."
+                        )
+                    self._audit(
+                        cur,
+                        entity_type="closing_document",
+                        entity_id=row["document_id"],
+                        competence_id=competence_id,
+                        event_type="DOCUMENT_ADJUSTMENT_CONFIRMED",
+                        actor=confirmed_by,
+                        detail={"request_id": request_id},
+                    )
+                    return row
 
     # -- internals --------------------------------------------------------------
 

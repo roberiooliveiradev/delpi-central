@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Contrato do manifesto IMP-MFE-HOME — schemaVersion 1.0.0, id congelado,
- * somente as duas permissions e somente a rota Home implementada.
+ * Contrato do manifesto — schemaVersion 1.0.0, id congelado,
+ * permissions access/manage + capability de destinatário (DRE-019)
+ * e somente as rotas implementadas.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -27,20 +28,21 @@ describe("controllership-finance manifest", () => {
     assert.equal(manifest.ui.renderMode, "federated");
   });
 
-  it("exatamente as duas permissions congeladas — nenhuma extra", () => {
+  it("permissions congeladas: access/manage + capability do destinatário", () => {
     const codes = manifest.permissions.map((p) => p.code).sort();
     assert.deepEqual(codes, [
       "controllership-finance.access",
+      "controllership-finance.closing-documents.read",
       "controllership-finance.manage",
     ]);
-    assert.equal(manifest.permissions.length, 2);
+    assert.equal(manifest.permissions.length, 3);
     for (const p of manifest.permissions) {
       assert.equal(p.module, "controllership-finance");
     }
   });
 
-  it("somente rotas implementadas publicadas, protegidas por .access", () => {
-    assert.equal(manifest.routes.length, 10);
+  it("somente rotas implementadas publicadas, cada uma com sua permission", () => {
+    assert.equal(manifest.routes.length, 11);
     const [
       home,
       settlements,
@@ -52,6 +54,7 @@ describe("controllership-finance manifest", () => {
       cockpit,
       monthlyClosing,
       claraConsent,
+      receivedDocuments,
     ] = manifest.routes;
     assert.equal(home.path, "/apps/controllership-finance");
     assert.equal(home.permission, "controllership-finance.access");
@@ -107,9 +110,25 @@ describe("controllership-finance manifest", () => {
     );
     assert.equal(claraConsent.permission, "controllership-finance.access");
     assert.equal(claraConsent.showInMenu, false);
+    // DRE-019 — rota dedicada do destinatário externo sob a capability
+    // de consulta documental; não herda .access nem entra no menu interno.
+    assert.equal(
+      receivedDocuments.path,
+      "/apps/controllership-finance/closing/documents",
+    );
+    assert.equal(
+      receivedDocuments.permission,
+      "controllership-finance.closing-documents.read",
+    );
+    assert.equal(receivedDocuments.showInMenu, false);
     for (const route of manifest.routes) {
       if (route.path.endsWith("/admin")) {
         assert.equal(route.permission, "controllership-finance.manage");
+      } else if (route.path.endsWith("/closing/documents")) {
+        assert.equal(
+          route.permission,
+          "controllership-finance.closing-documents.read",
+        );
       } else {
         assert.equal(route.permission, "controllership-finance.access");
       }

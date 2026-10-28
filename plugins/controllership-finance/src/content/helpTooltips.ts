@@ -434,4 +434,20 @@ export const CF_HELP = {
     detailHistory:
       "Linha do tempo operacional do documento: anexação, novas versões, remoção e decisões de conferência — sempre com responsável, foto do perfil oficial (ou iniciais) e data. Downloads e mensagens da conversa ficam fora daqui; a trilha de auditoria técnica permanece completa. Versões anteriores permanecem disponíveis.",
   },
+  receivedDocuments: {
+    page:
+      "Fechamentos recebidos: as competências que a Controladoria disponibilizou para a sua área. Somente os documentos efetivamente enviados a você aparecem aqui — a lista é a projeção autorizada do fechamento, não o acervo interno. Selecione a competência para ver a entrega.",
+    deliveries:
+      "Entregas por competência: cada cartão mostra o mês de referência, a data da disponibilização e a quantidade de documentos liberados para a sua área. Se a Controladoria enviar uma revisão do conjunto, a competência mostra a entrega mais recente.",
+    documents:
+      "Documentos liberados nesta competência: exatamente o conjunto que a Controladoria enviou à sua área — nada além dele é listado, mesmo que existam outros arquivos no fechamento. «Abrir» mostra a prévia, as versões autorizadas, a conversa e as solicitações de ajuste do documento.",
+    requestsSummary:
+      "Suas solicitações de ajuste nesta competência: cada pedido guarda autor, data, motivo e a versão do documento em que foi feito. A resposta da Controladoria não encerra a solicitação — ela só é concluída quando você confirma.",
+    detailFile:
+      "Prévia, download e versões autorizadas do arquivo: você vê somente as versões que a Controladoria disponibilizou — versões internas não liberadas não aparecem na lista. O download é o documento oficial enviado e fica registrado na trilha de auditoria.",
+    detailConversation:
+      "Conversa compartilhada sobre este documento entre a sua área e a Controladoria. Tudo o que você escreve aqui é visível às duas partes; mensagens internas da Controladoria nunca aparecem nesta conversa. A foto e o nome exibidos vêm do perfil oficial do participante — quando não há foto, aparecem as iniciais.",
+    requests:
+      "Solicitação de ajuste ou revisão: descreva o motivo e envie — o pedido fica registrado com autor, data e a versão do documento em vigor no momento. A Controladoria responde na mesma tela; a resposta não conclui o pedido automaticamente — quando estiver de acordo, use «Confirmar» para encerrar.",
+  },
 } as const;

@@ -20,6 +20,9 @@ from delpi_auth.authz_core import has_permission
 
 ACCESS_PERMISSION = "controllership-finance.access"
 MANAGE_PERMISSION = "controllership-finance.manage"
+READ_DOCUMENTS_PERMISSION = (
+    "controllership-finance.closing-documents.read"
+)
 
 
 def _human_user(request: Request):
@@ -37,6 +40,20 @@ def authorized_user(request: Request):
     """Usuário humano com `controllership-finance.access` efetivo."""
     user = _human_user(request)
     if not has_permission(user, ACCESS_PERMISSION):
+        raise Exception("Forbidden")
+    return user
+
+
+def authorized_documents_reader(request: Request):
+    """Usuário humano com `closing-documents.read` efetivo (DRE-019).
+
+    Capability documental restrita do destinatário externo — NÃO implica
+    `access` nem `manage` e nunca libera rotas internas. O vínculo de
+    entrega (RECIPIENT assignment + pacote SUBMITTED) é verificado na
+    camada de serviço; a permission sozinha não libera documento algum.
+    """
+    user = _human_user(request)
+    if not has_permission(user, READ_DOCUMENTS_PERMISSION):
         raise Exception("Forbidden")
     return user
 

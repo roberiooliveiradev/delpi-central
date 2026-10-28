@@ -44,6 +44,9 @@ from controllership_finance_app.interface.http.routes.packages_routes import (
 from controllership_finance_app.interface.http.routes.p3_routes import (
     router as p3_router,
 )
+from controllership_finance_app.interface.http.routes.received_documents_routes import (  # noqa: E501
+    router as received_documents_router,
+)
 from controllership_finance_app.interface.http.routes.pendencies_routes import (
     router as pendencies_router,
 )
@@ -157,6 +160,7 @@ app.include_router(validations_router)
 app.include_router(pendencies_router)
 app.include_router(p3_router)
 app.include_router(packages_router)
+app.include_router(received_documents_router)
 app.include_router(reports_router)
 app.include_router(me_router)
 app.include_router(admin_checklist_router)

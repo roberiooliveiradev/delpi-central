@@ -6,7 +6,11 @@ Contrato congelado IMP-MFE-HOME (doc 45 §14.1; decisões D1=A e D2=A):
   bypass de superadmin — service tokens são minted como superadmin;
 - Core é a authority de effective permissions (populadas pelo middleware
   compartilhado a partir de ``/me`` — nunca do JWT);
-- exige ``controllership-finance.access``; ``manage`` não implica ``access``;
+- exige ``controllership-finance.access`` OU
+  ``controllership-finance.closing-documents.read`` (DRE-019 — o
+  destinatário externo também é viewer do produto; o payload limita a
+  UI, a autorização efetiva continua em cada rota);
+- ``manage`` não implica ``access``; ``read`` não implica ``access``;
 - ``rbac_unavailable`` (Core indisponível sem snapshot válido) falha fechado
   com 503 — nunca converte indisponibilidade em autorização local;
 - leitura adere à política D1: o middleware já aplica stale ≤900s para
@@ -25,6 +29,9 @@ from controllership_finance_app.core.responses import ok
 
 ACCESS_PERMISSION = "controllership-finance.access"
 MANAGE_PERMISSION = "controllership-finance.manage"
+READ_DOCUMENTS_PERMISSION = (
+    "controllership-finance.closing-documents.read"
+)
 
 router = APIRouter(tags=["Viewer"])
 
@@ -59,7 +66,10 @@ def get_viewer_context(request: Request):
         raise Exception("Forbidden")
     if getattr(user, "rbac_unavailable", False):
         raise Exception("Service Unavailable")
-    if not has_permission(user, ACCESS_PERMISSION):
+    if not (
+        has_permission(user, ACCESS_PERMISSION)
+        or has_permission(user, READ_DOCUMENTS_PERMISSION)
+    ):
         raise Exception("Forbidden")
 
     permissions = getattr(user, "permissions", None) or []
@@ -70,8 +80,11 @@ def get_viewer_context(request: Request):
             "firstName": _resolve_first_name(user),
             "displayName": _display_name(user),
             "capabilities": {
-                "access": True,
+                "access": has_permission(user, ACCESS_PERMISSION),
                 "manage": is_superadmin or MANAGE_PERMISSION in permissions,
+                "closingDocumentsRead": has_permission(
+                    user, READ_DOCUMENTS_PERMISSION
+                ),
             },
         },
         operation_id="get_viewer_context",
