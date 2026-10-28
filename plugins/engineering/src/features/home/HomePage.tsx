@@ -155,7 +155,7 @@ export function HomePage({
       <EngineeringPageHero
         aria-label={copy.hero.eyebrow}
         eyebrow={copy.hero.eyebrow}
-        title={`${greeting}${copy.hero.greetingTail}`}
+        title={greeting}
         description={copy.hero.description}
         highlights={highlights}
         actions={

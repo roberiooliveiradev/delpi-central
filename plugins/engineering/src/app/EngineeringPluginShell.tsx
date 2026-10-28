@@ -36,6 +36,10 @@ import {
   type CatalogSection,
 } from "../content/engineeringRouteCatalog";
 import {
+  getMyPersonProfile,
+  getMyPersonProfilePhoto,
+} from "../api/personProfileApi";
+import {
   ENG_PORTAL_SCOPE,
   EngineeringCommandPalette,
   EngineeringTopBar,
@@ -122,14 +126,52 @@ function useFavoritesStrip(
  * apenas; autorização permanece na Core). */
 function useDisplayName(
   getAccessToken?: () => string | undefined,
-): string | null {
-  const [name] = useState<string | null>(() =>
-    getDisplayNameFromAccessToken(getAccessToken?.()),
+): { name: string | null; subject: string | null } {
+  const [identity] = useState<{ name: string | null; subject: string | null }>(
+    () => {
+      const token = getAccessToken?.();
+      return {
+        name: getDisplayNameFromAccessToken(token),
+        subject: getSubjectFromAccessToken(token),
+      };
+    },
   );
   useEffect(() => {
-    setFavoritesIdentity(getSubjectFromAccessToken(getAccessToken?.()));
-  }, [getAccessToken]);
-  return name;
+    setFavoritesIdentity(identity.subject);
+  }, [identity.subject]);
+  return identity;
+}
+
+/** Foto oficial do perfil (Core `/me/person-profile`) como objectURL —
+ * mesmo contrato que o Comercial consome via commercial-api. Falha em
+ * qualquer etapa degrada para iniciais; revogação e abort isolam a
+ * identidade entre sessões/remontagens. */
+function useAvatarPhoto(subject: string | null): string | null {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!subject) return undefined;
+    let revoked: string | null = null;
+    const controller = new AbortController();
+    void getMyPersonProfile(controller.signal)
+      .then(async (profile) => {
+        if (controller.signal.aborted || !profile?.has_photo) return;
+        const blob = await getMyPersonProfilePhoto(controller.signal);
+        if (controller.signal.aborted) return;
+        revoked = URL.createObjectURL(blob);
+        setObjectUrl(revoked);
+      })
+      .catch(() => {
+        /* Foto é melhoria progressiva — falha mantém iniciais. */
+      });
+    return () => {
+      controller.abort();
+      setObjectUrl(null);
+      if (revoked) URL.revokeObjectURL(revoked);
+    };
+  }, [subject]);
+
+  return objectUrl;
 }
 
 export function EngineeringPluginShell({
@@ -144,7 +186,8 @@ export function EngineeringPluginShell({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
-  const displayName = useDisplayName(getAccessToken);
+  const { name: displayName, subject } = useDisplayName(getAccessToken);
+  const avatarUrl = useAvatarPhoto(subject);
   const favoritesStrip = useFavoritesStrip(sections, onOpenRoute);
 
   useEffect(() => {
@@ -221,6 +264,9 @@ export function EngineeringPluginShell({
               displayName={displayName}
               fallbackLabel={copy.identityFallback}
               href={buildEngineeringPath("home", basePath)}
+              avatarUrl={avatarUrl}
+              avatarHref="/profile"
+              avatarTitle={displayName ?? undefined}
             />
           }
         />

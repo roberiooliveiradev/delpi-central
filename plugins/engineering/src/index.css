@@ -1,44 +1,106 @@
-/* Layout do Portal Engenharia — composição apenas; cores/tokens vêm do
- * kit `.delpi-ui-*` do plugin-ui (escopo `.portal-engineering`). */
+/* Layout do Portal Engenharia — mesma geometria neutra dos portais
+ * Minha DELPI: o MFE é dono do padding/gap da página e mapeia os tokens
+ * globais do Portal (:root + :root[data-theme="dark"]) para o contrato
+ * `--delpi-ui-*` consumido pelos componentes do plugin-ui. */
 
 .portal-engineering {
-  min-height: 100%;
+  --en-page-padding: 24px;
+  --en-section-gap: 24px;
+  --en-grid-gap: 16px;
+  --en-accent: var(--primary, #089bdb);
+  --en-text: var(--text, #111111);
+  --en-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
+  --en-surface: var(--surface, #ffffff);
+  --en-surface-muted: var(--surface-muted, #f6f8fa);
+  --en-border: var(--border, #e6e6e6);
+  --en-danger: #b91c1c;
+  --en-success: #15803d;
+  --delpi-ui-accent: var(--en-accent);
+  --delpi-ui-surface: var(--en-surface);
+  --delpi-ui-surface-muted: var(--en-surface-muted);
+  --delpi-ui-text: var(--en-text);
+  --delpi-ui-title: var(--secundary, #003866);
+  --delpi-ui-text-muted: var(--en-text-muted);
+  --delpi-ui-border: var(--en-border);
+  --delpi-ui-muted: var(--en-text-muted);
+  --delpi-ui-section-gap: var(--en-section-gap);
+  --delpi-ui-grid-gap: var(--en-grid-gap);
+  --delpi-ui-page-padding: var(--en-page-padding);
+}
+
+:root[data-theme="dark"] .portal-engineering {
+  --en-text: rgba(255, 255, 255, 0.94);
+  --en-text-muted: rgba(255, 255, 255, 0.78);
+  --en-surface: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --en-surface-muted: color-mix(in srgb, var(--surface-2, #1b2030) 70%, #0b0e14);
+  --en-border: rgba(255, 255, 255, 0.14);
+  --en-danger: #f87171;
+  --en-success: #4ade80;
+  --delpi-ui-title: var(--en-text);
+}
+
+.portal-engineering.dashboard-page {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  max-width: none;
+  padding: var(--en-page-padding);
+  gap: var(--en-section-gap);
+  background-color: var(--app-canvas, var(--bg));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 5%, var(--app-canvas, var(--bg))),
+    var(--app-canvas, var(--bg)) 280px
+  );
 }
 
 .engineering-page-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--delpi-space-4, 1rem);
-  padding: 0 0 var(--delpi-space-6, 1.5rem);
+  gap: var(--en-section-gap);
 }
 
 .engineering-home-paths {
   display: flex;
   flex-direction: column;
-  gap: var(--delpi-space-3, 0.75rem);
+  gap: var(--en-grid-gap);
 }
 
 .engineering-home-sections-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--delpi-space-3, 0.75rem);
+  gap: var(--en-grid-gap);
 }
 
 .engineering-home-inline-note {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--delpi-color-text-muted, #64748b);
+  color: var(--en-text-muted);
 }
 
 .engineering-manual {
   display: flex;
   flex-direction: column;
-  gap: var(--delpi-space-4, 1rem);
+  gap: var(--en-section-gap);
 }
 
 @media (max-width: 768px) {
+  .portal-engineering {
+    --en-page-padding: 12px;
+    --en-section-gap: 12px;
+    --en-grid-gap: 10px;
+    --delpi-ui-card-padding-mobile: 12px;
+    --delpi-ui-section-header-gap-mobile: 10px;
+    --delpi-ui-field-stack-gap-mobile: 6px;
+  }
+
+  .portal-engineering.dashboard-page {
+    padding: var(--en-page-padding);
+    gap: var(--en-section-gap);
+  }
+
   .engineering-home-sections-grid {
     grid-template-columns: 1fr;
   }

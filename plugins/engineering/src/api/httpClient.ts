@@ -79,7 +79,7 @@ function errorForStatus(status: number): HomeApiError {
   );
 }
 
-export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function getResponse(path: string, signal?: AbortSignal): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   const onAbort = () => controller.abort();
@@ -100,12 +100,12 @@ export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T>
       }
       throw new HomeApiError(
         "timeout",
-        "A resposta da Engineering API demorou demais. Tente novamente.",
+        "A resposta demorou demais. Tente novamente.",
       );
     }
     throw new HomeApiError(
       "network_error",
-      "Falha de comunicação com a Engineering API. Verifique sua conexão.",
+      "Falha de comunicação. Verifique sua conexão.",
     );
   } finally {
     clearTimeout(timeout);
@@ -115,6 +115,15 @@ export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T>
   if (!response.ok) {
     throw errorForStatus(response.status);
   }
+  return response;
+}
 
+export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const response = await getResponse(path, signal);
   return (await response.json()) as T;
+}
+
+export async function getBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  const response = await getResponse(path, signal);
+  return response.blob();
 }

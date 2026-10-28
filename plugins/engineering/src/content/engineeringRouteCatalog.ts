@@ -229,10 +229,8 @@ export const HOME_COPY = {
   hero: {
     eyebrow: "Portal Engenharia",
     fallbackGreeting: "Olá!",
-    greetingTail:
-      " Acompanhe suas demandas e continue seu trabalho de Engenharia.",
     description:
-      "Sua área de trabalho — demandas, solicitações e LMPs autorizadas.",
+      "Acompanhe suas demandas e continue seu trabalho de Engenharia.",
     scopeBadge: "Minha área de trabalho",
     refreshLabel: "Atualizar",
     refreshingLabel: "Atualizando…",
