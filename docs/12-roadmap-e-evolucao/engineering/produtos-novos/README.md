@@ -23,3 +23,18 @@ Este pacote é uma **funcionalidade/ferramenta do Portal Engenharia**, não um n
 - Antes de implementar: verificar HEAD, código e contratos, aplicar Abstraction Gate, RQ/AC, menor diff, testes no SHA e documentação de outcome.
 
 **Status dos requisitos:** PROPOSED salvo onde houver indicação de evidência ou decisão explícita. A disponibilidade de APIs Carga Máquina/OP não foi provada.
+
+## Wireframes por página — detalhamento v0.1
+
+| Tela | Especificação |
+|---|---|
+| Visão geral | [06-WF-VISAO-GERAL.md](./06-WF-VISAO-GERAL.md) |
+| Programação de OPs | [07-WF-PROGRAMACAO-OPS.md](./07-WF-PROGRAMACAO-OPS.md) |
+| Acompanhamentos | [08-WF-ACOMPANHAMENTOS.md](./08-WF-ACOMPANHAMENTOS.md) |
+| Pendências e divergências | [09-WF-PENDENCIAS.md](./09-WF-PENDENCIAS.md) |
+| Histórico e indicadores | [10-WF-HISTORICO.md](./10-WF-HISTORICO.md) |
+| Detalhes da OP | [11-WF-DETALHES-OP.md](./11-WF-DETALHES-OP.md) |
+| Checklist por operação | [12-WF-CHECKLIST.md](./12-WF-CHECKLIST.md) |
+| Solicitar acompanhamento | [13-WF-SOLICITAR-ACOMPANHAMENTO.md](./13-WF-SOLICITAR-ACOMPANHAMENTO.md) |
+
+São wireframes **textuais e funcionais candidatos**, não layouts visuais finais nem contratos/API provados; não houve alteração de código produtivo.
