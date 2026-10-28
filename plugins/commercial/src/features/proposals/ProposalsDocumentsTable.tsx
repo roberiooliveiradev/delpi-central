@@ -34,6 +34,9 @@ type ProposalsDocumentsTableProps = {
   rows: ProposalDocumentListItem[];
   basePath: string;
   loading?: boolean;
+  sortKey: string;
+  sortDirection: "asc" | "desc";
+  onSortChange: (columnKey: string) => void;
 };
 
 function buildColumns(
@@ -42,7 +45,7 @@ function buildColumns(
 ): DataTableColumn<ProposalDocumentListItem>[] {
   return [
     {
-      key: "ov",
+      key: "ov", sortable: true,
       header: "Nº OV",
       interactive: true,
       rowClick: "stop",
@@ -62,21 +65,21 @@ function buildColumns(
         );
       },
     },
-    { key: "interna", header: "Proposta", render: (row) => row.proposta_interna },
-    { key: "cliente", header: "Cliente", render: (row) => row.cliente || "—" },
+    { key: "interna", sortable: true, header: "Proposta", render: (row) => row.proposta_interna },
+    { key: "cliente", sortable: true, header: "Cliente", render: (row) => row.cliente || "—" },
     {
-      key: "oportunidade",
+      key: "oportunidade", sortable: true,
       header: "Oportunidade",
       render: (row) => row.oportunidade || "—",
     },
-    { key: "versao", header: "Versão", render: (row) => row.versao || "—" },
+    { key: "versao", sortable: true, header: "Versão", render: (row) => row.versao || "—" },
     {
-      key: "data",
+      key: "data", sortable: true,
       header: "Data",
       render: (row) => formatDisplayDate(row.data),
     },
     {
-      key: "itens",
+      key: "itens", sortable: true,
       header: "Itens",
       align: "right",
       render: (row) => row.quantidade_itens.toLocaleString("pt-BR"),
@@ -88,6 +91,9 @@ export function ProposalsDocumentsTable({
   rows,
   basePath,
   loading = false,
+  sortKey,
+  sortDirection,
+  onSortChange,
 }: ProposalsDocumentsTableProps) {
   const { layout, setLayout } = usePersistedViewLayout({
     storageKey: LAYOUT_STORAGE_KEY,
@@ -179,6 +185,9 @@ export function ProposalsDocumentsTable({
           <CommercialDataTable
             rows={rows}
             columns={columns}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={onSortChange}
             rowKey={(row) => row.proposta_interna}
             layout="section"
             loading={loading}

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Body, Query
 from app.interface.http.pagination_query import (
@@ -49,11 +49,20 @@ def list_propostas_comerciais_route(
     page_size: Annotated[
         int | None, Query(ge=1, le=200, description="Registros por página (substitui limit)")
     ] = None,
+    sort_by: Annotated[
+        Literal["ov", "interna", "cliente", "oportunidade", "versao", "data", "itens"] | None,
+        Query(description="Coluna de ordenação da listagem"),
+    ] = None,
+    sort_dir: Annotated[
+        Literal["asc", "desc"] | None,
+        Query(description="Direção da ordenação"),
+    ] = None,
 ):
     try:
         use_case = build_list_propostas_comerciais_use_case()
         result = use_case.execute(
-            limit=limit, search=search, page=page, page_size=page_size
+            limit=limit, search=search, page=page, page_size=page_size,
+            sort_by=sort_by, sort_dir=sort_dir
         )
         return api_delpi_success(
             result,

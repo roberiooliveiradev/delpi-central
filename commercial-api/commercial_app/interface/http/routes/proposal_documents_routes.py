@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Literal
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import Response
@@ -29,12 +30,18 @@ def list_proposal_documents(
     search: str | None = Query(default=None, max_length=80),
     page: int = Query(default=1, ge=1),
     page_size: int | None = Query(default=None, ge=1, le=200),
+    sort_by: Literal["ov", "interna", "cliente", "oportunidade", "versao", "data", "itens"] | None = Query(default=None),
+    sort_dir: Literal["asc", "desc"] | None = Query(default=None),
 ):
     params: dict[str, int | str] = {"limit": limit, "page": page}
     if search and search.strip():
         params["search"] = search.strip()
     if page_size is not None:
         params["page_size"] = page_size
+    if isinstance(sort_by, str):
+        params["sort_by"] = sort_by
+    if isinstance(sort_dir, str):
+        params["sort_dir"] = sort_dir
     try:
         payload = build_delpi_commercial_gateway().get_commercial_proposal_document(
             "",

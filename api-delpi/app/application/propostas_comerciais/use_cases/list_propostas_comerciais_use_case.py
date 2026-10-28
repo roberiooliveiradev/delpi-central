@@ -19,12 +19,15 @@ class ListPropostasComerciaisUseCase:
         search: str | None = None,
         page: int = 1,
         page_size: int | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
     ) -> dict:
         resolved_size = page_size or limit
         resolved_page = max(page or 1, 1)
         offset = (resolved_page - 1) * resolved_size
         rows = self._repository.list_active_recent(
-            limit=resolved_size, offset=offset, search=search
+            limit=resolved_size, offset=offset, search=search,
+            sort_by=sort_by, sort_dir=sort_dir
         )
         total = self._repository.count_active(search=search)
         items = [PropostaComercialFormatter.format_list_item(row) for row in rows]

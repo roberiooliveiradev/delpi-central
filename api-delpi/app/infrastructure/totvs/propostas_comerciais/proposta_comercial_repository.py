@@ -12,6 +12,7 @@ from app.infrastructure.totvs.propostas_comerciais.queries import (
     DETAIL_HEADER_SQL,
     DETAIL_ITEMS_SQL,
     LIST_ACTIVE_SQL,
+    resolve_list_order,
 )
 
 
@@ -20,12 +21,16 @@ class PropostaComercialRepository(BaseRepository, PropostaComercialRepositoryPor
     _DEFAULT_LIST_LIMIT = 100
 
     def list_active_recent(
-        self, *, limit: int = 100, offset: int = 0, search: str | None = None
+        self, *, limit: int = 100, offset: int = 0, search: str | None = None,
+        sort_by: str | None = None, sort_dir: str | None = None
     ) -> list[dict]:
         resolved_limit = min(max(limit or self._DEFAULT_LIST_LIMIT, 1), self._MAX_LIST_LIMIT)
         resolved_offset = max(offset or 0, 0)
         search_clause, search_params = ProposalDocumentSearchService.clause(search)
-        sql = LIST_ACTIVE_SQL.format(search_clause=search_clause)
+        sql = LIST_ACTIVE_SQL.format(
+            search_clause=search_clause,
+            order_clause=resolve_list_order(sort_by, sort_dir),
+        )
         with self:
             return self.execute_query(
                 sql, (*search_params, resolved_offset, resolved_limit)

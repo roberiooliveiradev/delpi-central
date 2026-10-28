@@ -312,7 +312,9 @@ def test_list_propostas_comerciais_use_case_formats_items() -> None:
     use_case = ListPropostasComerciaisUseCase(repository)
     result = use_case.execute(limit=10)
 
-    repository.list_active_recent.assert_called_once_with(limit=10, offset=0, search=None)
+    repository.list_active_recent.assert_called_once_with(
+        limit=10, offset=0, search=None, sort_by=None, sort_dir=None
+    )
     repository.count_active.assert_called_once_with(search=None)
     assert result["total"] == 1
     assert result["page"] == 1
@@ -330,7 +332,7 @@ def test_list_propostas_comerciais_use_case_forwards_search_and_pagination() -> 
     result = use_case.execute(search="OV000116", page=4, page_size=50)
 
     repository.list_active_recent.assert_called_once_with(
-        limit=50, offset=150, search="OV000116"
+        limit=50, offset=150, search="OV000116", sort_by=None, sort_dir=None
     )
     repository.count_active.assert_called_once_with(search="OV000116")
     assert result["total"] == 183
@@ -1271,3 +1273,35 @@ def test_chunk_text_splits_on_boundaries() -> None:
     solid = _chunk_text("x" * 5000, 1000)
     assert len(solid) == 5
     assert "".join(solid) == "x" * 5000
+
+
+def test_proposal_sort_whitelist_and_stable_order() -> None:
+    from app.infrastructure.totvs.propostas_comerciais.queries import resolve_list_order
+
+    assert "ORDER BY ADY.ADY_DATA DESC" in resolve_list_order()
+    assert "ORDER BY ADY.ADY_OPORTU ASC" in resolve_list_order("ov", "asc")
+    assert "ORDER BY ADY.ADY_PROPOS DESC" in resolve_list_order("interna", "desc")
+    assert "ORDER BY cliente_nome ASC" in resolve_list_order("cliente", "asc")
+    assert "ORDER BY quantidade_itens DESC" in resolve_list_order("itens", "desc")
+    assert "ADY.R_E_C_N_O_ DESC" in resolve_list_order("itens", "desc")
+    for sort_by, sort_dir in (("ADY_DATA; DROP TABLE ADY010", "asc"), ("data", "x"), (None, "desc")):
+        with pytest.raises(ValueError):
+            resolve_list_order(sort_by, sort_dir)
+
+
+def test_proposal_sort_before_offset_fetch() -> None:
+    from app.infrastructure.totvs.propostas_comerciais.proposta_comercial_repository import (
+        PropostaComercialRepository,
+    )
+
+    repository = PropostaComercialRepository()
+    captured = {}
+    with patch.object(PropostaComercialRepository, "__enter__", return_value=repository):
+        with patch.object(PropostaComercialRepository, "__exit__", return_value=False):
+            with patch.object(repository, "execute_query", side_effect=lambda sql, params: captured.update(sql=sql, params=params) or []):
+                repository.list_active_recent(
+                    limit=20, offset=40, search="OV000116", sort_by="itens", sort_dir="desc"
+                )
+    assert "ORDER BY quantidade_itens DESC" in captured["sql"]
+    assert captured["sql"].index("ORDER BY") < captured["sql"].index("OFFSET ?")
+    assert captured["params"][-2:] == (40, 20)
