@@ -3,7 +3,12 @@ import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from helpdesk_app.domain.models import OAuthSession, PendingAuthorization, StoredResponse
+from helpdesk_app.domain.models import (
+    IdempotencyClaim,
+    OAuthSession,
+    PendingAuthorization,
+    StoredResponse,
+)
 
 
 def _hash_state(state: str) -> str:
@@ -110,10 +115,56 @@ class MemoryUserTokenStore:
 
 class MemoryIdempotencyStore:
     def __init__(self):
-        self._rows: dict[tuple[str, str, str], StoredResponse] = {}
+        self._rows: dict[tuple[str, str, str], dict] = {}
+        self._lock = threading.Lock()
 
     def get(self, subject: str, operation: str, key: str) -> StoredResponse | None:
-        return self._rows.get((subject, operation, key))
+        row = self._rows.get((subject, operation, key))
+        if row is None or row["state"] != "completed":
+            return None
+        return row["response"]
+
+    def claim(
+        self,
+        subject: str,
+        operation: str,
+        key: str,
+        intent: dict,
+    ) -> StoredResponse | IdempotencyClaim | None:
+        with self._lock:
+            row = self._rows.get((subject, operation, key))
+            if row is None:
+                self._rows[(subject, operation, key)] = {
+                    "state": "in_flight",
+                    "intent": dict(intent),
+                    "claimed_at": datetime.now(timezone.utc),
+                    "response": None,
+                }
+                return None
+            if row["intent"] != dict(intent):
+                # Key reused with a different intent — never replay the
+                # stored response (it belongs to another write) and
+                # never execute; block for operator review.
+                return IdempotencyClaim(
+                    claimed_at=row["claimed_at"], intent=row["intent"]
+                )
+            if row["state"] == "completed":
+                return row["response"]
+            return IdempotencyClaim(
+                claimed_at=row["claimed_at"], intent=row["intent"]
+            )
 
     def save(self, subject: str, operation: str, key: str, response: StoredResponse) -> None:
-        self._rows[(subject, operation, key)] = response
+        with self._lock:
+            row = self._rows.setdefault(
+                (subject, operation, key),
+                {"state": "in_flight", "intent": None, "claimed_at": None},
+            )
+            row["state"] = "completed"
+            row["response"] = response
+
+    def release(self, subject: str, operation: str, key: str) -> None:
+        with self._lock:
+            row = self._rows.get((subject, operation, key))
+            if row is not None and row["state"] == "in_flight":
+                del self._rows[(subject, operation, key)]

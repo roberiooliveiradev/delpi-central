@@ -1,4 +1,5 @@
 from dataclasses import replace
+import hashlib
 import logging
 import unicodedata
 
@@ -18,6 +19,8 @@ from helpdesk_app.domain.errors import (
     GlpiUnauthorized,
     GlpiUnavailable,
     GlpiValidation,
+    HelpdeskError,
+    IdempotencyInFlight,
     LinkRequired,
     MissingIdempotencyKey,
 )
@@ -361,42 +364,75 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"upload_attachment:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "filename": filename, "mime": mime, "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()}
+        )
         if existing is not None:
             return existing
-        uploaded = self._glpi.upload_ticket_document(
-            self._token(subject),
-            ticket_id=ticket_id,
-            filename=filename,
-            content=content,
-            mime=mime,
-            title=title,
-        )
-        author_verified = uploaded.author_state == "verified"
-        stored = StoredResponse(
-            # 207 when authorship could not be verified — a typed partial
-            # result, never a 201-style integral success. The document stays
-            # for reconciliation (document_id) and the same stored outcome is
-            # replayed under the same Idempotency-Key; a blind retry with a
-            # new key would duplicate the attachment.
-            status_code=201 if author_verified else 207,
-            body={
-                "document_id": uploaded.document_id,
-                "filename": uploaded.filename,
-                "mime": uploaded.mime,
-                # Authorship read-back on the actor's own-session write
-                # (verified | mismatch | unverified) — additive, so consumers
-                # can flag degraded auditability.
-                "author_state": uploaded.author_state,
-                "author_verified": author_verified,
-                # Typed business outcome — ``verification_failed`` is never a
-                # complete success.
-                "outcome": "verified" if author_verified else "verification_failed",
-            },
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        return stored
+        try:
+            uploaded = self._glpi.upload_ticket_document(
+                self._token(subject),
+                ticket_id=ticket_id,
+                filename=filename,
+                content=content,
+                mime=mime,
+                title=title,
+            )
+            author_verified = uploaded.author_state == "verified"
+            stored = StoredResponse(
+                # 207 when authorship could not be verified — a typed partial
+                # result, never a 201-style integral success. The document stays
+                # for reconciliation (document_id) and the same stored outcome is
+                # replayed under the same Idempotency-Key; a blind retry with a
+                # new key would duplicate the attachment.
+                status_code=201 if author_verified else 207,
+                body={
+                    "document_id": uploaded.document_id,
+                    "filename": uploaded.filename,
+                    "mime": uploaded.mime,
+                    # Authorship read-back on the actor's own-session write
+                    # (verified | mismatch | unverified) — additive, so consumers
+                    # can flag degraded auditability.
+                    "author_state": uploaded.author_state,
+                    "author_verified": author_verified,
+                    # Typed business outcome — ``verification_failed`` is never a
+                    # complete success.
+                    "outcome": "verified" if author_verified else "verification_failed",
+                },
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
+        except HelpdeskError as exc:
+            # The client tags post-Document failures with the persisted
+            # identifier — govern a typed partial (replayable under this
+            # key) instead of dropping the evidence into a 5xx. Errors
+            # without persisted evidence stay in-flight and are blocked
+            # for reconciliation, never re-executed blindly.
+            document_id = (getattr(exc, "details", None) or {}).get("document_id")
+            if not document_id:
+                raise
+            stored = StoredResponse(
+                status_code=207,
+                body={
+                    "document_id": document_id,
+                    "filename": filename,
+                    "mime": mime,
+                    "author_state": "unverified",
+                    "author_verified": False,
+                    "outcome": "verification_failed",
+                },
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
     def update_description(
         self,
         subject: str,
@@ -419,60 +455,69 @@ class TicketService:
         """
         key = _require_key(idempotency_key)
         operation = f"update_description:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest()}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        if not ticket.requester_mine:
-            raise GlpiForbidden(
-                "Só o solicitante pode editar a descrição do chamado."
-            )
-        allowed = {item.document_id for item in ticket.attachments}
-        html_refs = {
-            doc_id
-            for ref_ticket, doc_id in extract_bff_attachment_refs(content)
-            if ref_ticket == ticket_id
-        }
-        if html_refs - allowed:
+        try:
+            token = self._token(subject)
             ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            if not ticket.requester_mine:
+                raise GlpiForbidden(
+                    "Só o solicitante pode editar a descrição do chamado."
+                )
             allowed = {item.document_id for item in ticket.attachments}
-        for doc_id in html_refs - allowed:
-            if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
-                allowed.add(doc_id)
-        content_html = _prepare_message_html(
-            content,
-            "content",
-            ticket_id=ticket_id,
-            allowed_document_ids=allowed,
-        )
-        self._glpi.update_ticket_content(token, ticket_id, content_html)
-        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        # Authoritative read-back must prove the whole inline structure —
-        # same text AND same images, same count/order, same position —
-        # not just matching plain text (GLPI could silently drop <img>
-        # tags while keeping every word).
-        expected_sig = inline_content_signature(content_html)
-        actual_sig = inline_content_signature(refreshed.description_html or "")
-        read_back_refs = {doc_id for kind, doc_id in actual_sig if kind == "img"}
-        if actual_sig != expected_sig or not read_back_refs <= allowed:
-            raise GlpiValidation(
-                "A descrição não foi confirmada no chamado."
+            html_refs = {
+                doc_id
+                for ref_ticket, doc_id in extract_bff_attachment_refs(content)
+                if ref_ticket == ticket_id
+            }
+            if html_refs - allowed:
+                ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+                allowed = {item.document_id for item in ticket.attachments}
+            for doc_id in html_refs - allowed:
+                if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
+                    allowed.add(doc_id)
+            content_html = _prepare_message_html(
+                content,
+                "content",
+                ticket_id=ticket_id,
+                allowed_document_ids=allowed,
             )
-        stored = StoredResponse(
-            status_code=200,
-            body={
-                "id": int(ticket_id),
-                "description_html": refreshed.description_html,
-            },
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        logger.info(
-            "helpdesk_update_description ticket_id=%s",
-            ticket_id,
-        )
-        return stored
+            self._glpi.update_ticket_content(token, ticket_id, content_html)
+            refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            # Authoritative read-back must prove the whole inline structure —
+            # same text AND same images, same count/order, same position —
+            # not just matching plain text (GLPI could silently drop <img>
+            # tags while keeping every word).
+            expected_sig = inline_content_signature(content_html)
+            actual_sig = inline_content_signature(refreshed.description_html or "")
+            read_back_refs = {doc_id for kind, doc_id in actual_sig if kind == "img"}
+            if actual_sig != expected_sig or not read_back_refs <= allowed:
+                raise GlpiValidation(
+                    "A descrição não foi confirmada no chamado."
+                )
+            stored = StoredResponse(
+                status_code=200,
+                body={
+                    "id": int(ticket_id),
+                    "description_html": refreshed.description_html,
+                },
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            logger.info(
+                "helpdesk_update_description ticket_id=%s",
+                ticket_id,
+            )
+            return stored
 
+        except HelpdeskError:
+            # Naturally-idempotent write: re-executing the same
+            # intent converges to the same state, so any typed
+            # rejection can release the claim — no duplicate risk.
+            self._idempotency.release(subject, operation, key)
+            raise
     def create(
         self,
         subject: str,
@@ -492,43 +537,54 @@ class TicketService:
         observers = normalize_observer_ids(observer_ids)
         assignee = normalize_assignee_id(assignee_id)
         operation = "create_ticket"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"title": title.strip(), "category_id": category_id, "urgency_id": urgency_id, "sha256": hashlib.sha256(description_html.encode("utf-8")).hexdigest(), "assignee_id": assignee, "observer_ids": list(observers)}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        # Requester = the authenticated GLPI OAuth session user — resolved
-        # server-side BEFORE any side effect; never supplied by the caller.
-        requester_user_id = self._glpi.session_user_id(token)
-        if requester_user_id is None:
-            raise LinkRequired(
-                "Não foi possível identificar o usuário GLPI da sessão."
-            )
-        ticket_id = self._glpi.create_ticket(
-            token,
-            title=title.strip(),
-            description=description_html,
-            category_id=category_id,
-            urgency_id=urgency_id,
-        )
         try:
-            self._glpi.add_ticket_requester(token, ticket_id, requester_user_id)
-            actual = self._glpi.ticket_requester(token, ticket_id)
-            if actual != requester_user_id:
-                raise GlpiUnavailable(
-                    "Falha na verificação do requerente do chamado."
+            token = self._token(subject)
+            # Requester = the authenticated GLPI OAuth session user — resolved
+            # server-side BEFORE any side effect; never supplied by the caller.
+            requester_user_id = self._glpi.session_user_id(token)
+            if requester_user_id is None:
+                raise LinkRequired(
+                    "Não foi possível identificar o usuário GLPI da sessão."
                 )
-        except Exception:
-            self._trash_orphan_ticket(token, ticket_id)
-            raise
-        for user_id in observers:
-            self._glpi.add_ticket_observer(token, ticket_id, user_id)
-        if assignee is not None:
-            self._require_technician(token, assignee)
-            self._glpi.add_ticket_assignee(token, ticket_id, assignee)
-        stored = StoredResponse(status_code=201, body={"id": ticket_id})
-        self._idempotency.save(subject, operation, key, stored)
-        return stored
+            ticket_id = self._glpi.create_ticket(
+                token,
+                title=title.strip(),
+                description=description_html,
+                category_id=category_id,
+                urgency_id=urgency_id,
+            )
+            try:
+                self._glpi.add_ticket_requester(token, ticket_id, requester_user_id)
+                actual = self._glpi.ticket_requester(token, ticket_id)
+                if actual != requester_user_id:
+                    raise GlpiUnavailable(
+                        "Falha na verificação do requerente do chamado."
+                    )
+            except Exception:
+                self._trash_orphan_ticket(token, ticket_id)
+                raise
+            for user_id in observers:
+                self._glpi.add_ticket_observer(token, ticket_id, user_id)
+            if assignee is not None:
+                self._require_technician(token, assignee)
+                self._glpi.add_ticket_assignee(token, ticket_id, assignee)
+            stored = StoredResponse(status_code=201, body={"id": ticket_id})
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
     def set_assignee(
         self,
         subject: str,
@@ -542,34 +598,43 @@ class TicketService:
         if assignee is None:
             raise GlpiValidation("assignee_id inválido.")
         operation = f"set_assignee:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "user_id": user_id}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email="")
-        current = detail.assigned_user_id
-        if current == assignee:
+        try:
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email="")
+            current = detail.assigned_user_id
+            if current == assignee:
+                stored = StoredResponse(
+                    status_code=200,
+                    body={"user_id": assignee, "assigned_display_name": detail.assigned_display_name},
+                )
+                self._idempotency.save(subject, operation, key, stored)
+                return stored
+            if current is not None and current != assignee:
+                self._glpi.remove_ticket_assignee(token, ticket_id, current)
+            self._require_technician(token, assignee)
+            self._glpi.add_ticket_assignee(token, ticket_id, assignee)
+            refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email="")
             stored = StoredResponse(
                 status_code=200,
-                body={"user_id": assignee, "assigned_display_name": detail.assigned_display_name},
+                body={
+                    "user_id": refreshed.assigned_user_id or assignee,
+                    "assigned_display_name": refreshed.assigned_display_name,
+                },
             )
             self._idempotency.save(subject, operation, key, stored)
             return stored
-        if current is not None and current != assignee:
-            self._glpi.remove_ticket_assignee(token, ticket_id, current)
-        self._require_technician(token, assignee)
-        self._glpi.add_ticket_assignee(token, ticket_id, assignee)
-        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email="")
-        stored = StoredResponse(
-            status_code=200,
-            body={
-                "user_id": refreshed.assigned_user_id or assignee,
-                "assigned_display_name": refreshed.assigned_display_name,
-            },
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        return stored
 
+        except HelpdeskError:
+            # Naturally-idempotent write: re-executing the same
+            # intent converges to the same state, so any typed
+            # rejection can release the claim — no duplicate risk.
+            self._idempotency.release(subject, operation, key)
+            raise
     def followup(
         self,
         subject: str,
@@ -603,19 +668,30 @@ class TicketService:
             allowed_document_ids=allowed,
         )
         operation = f"followup:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "sha256": hashlib.sha256(content_html.encode("utf-8")).hexdigest()}
+        )
         if existing is not None:
             return existing
-        followup_id = self._glpi.add_followup(
-            self._token(subject),
-            ticket_id,
-            content_html,
-            request_type_id=request_type_id,
-        )
-        stored = StoredResponse(status_code=201, body={"id": followup_id})
-        self._idempotency.save(subject, operation, key, stored)
-        return stored
+        try:
+            followup_id = self._glpi.add_followup(
+                self._token(subject),
+                ticket_id,
+                content_html,
+                request_type_id=request_type_id,
+            )
+            stored = StoredResponse(status_code=201, body={"id": followup_id})
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
     def update_followup(
         self,
         subject: str,
@@ -638,83 +714,92 @@ class TicketService:
         """
         key = _require_key(idempotency_key)
         operation = f"update_followup:{ticket_id}:{followup_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "followup_id": followup_id, "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest()}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        entry = next(
-            (
-                item
-                for item in ticket.timeline
-                if item.kind == "followup" and int(item.id) == int(followup_id)
-            ),
-            None,
-        )
-        if entry is None:
-            raise GlpiNotFound("Acompanhamento não encontrado neste chamado.")
-        allowed = {item.document_id for item in ticket.attachments}
-        html_refs = {
-            doc_id
-            for ref_ticket, doc_id in extract_bff_attachment_refs(content)
-            if ref_ticket == ticket_id
-        }
-        if html_refs - allowed:
+        try:
+            token = self._token(subject)
             ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-            allowed = {item.document_id for item in ticket.attachments}
-        for doc_id in html_refs - allowed:
-            if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
-                allowed.add(doc_id)
-        content_html = _prepare_message_html(
-            content,
-            "content",
-            ticket_id=ticket_id,
-            allowed_document_ids=allowed,
-        )
-        self._glpi.update_followup(
-            token,
-            ticket_id,
-            int(followup_id),
-            content_html,
-        )
-        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        updated = next(
-            (
-                item
-                for item in refreshed.timeline
-                if item.kind == "followup" and int(item.id) == int(followup_id)
-            ),
-            None,
-        )
-        expected_text = " ".join(
-            message_html_to_plain_text(content_html).split()
-        )
-        actual_text = " ".join(
-            message_html_to_plain_text(
-                updated.content_html or updated.content or ""
-            ).split()
-        ) if updated else ""
-        if updated is None or actual_text != expected_text:
-            raise GlpiValidation(
-                "O acompanhamento não foi confirmado no chamado."
+            entry = next(
+                (
+                    item
+                    for item in ticket.timeline
+                    if item.kind == "followup" and int(item.id) == int(followup_id)
+                ),
+                None,
             )
-        stored = StoredResponse(
-            status_code=200,
-            body={
-                "id": int(followup_id),
-                "content": updated.content,
-                "content_html": updated.content_html,
-            },
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        logger.info(
-            "helpdesk_update_followup ticket_id=%s followup_id=%s",
-            ticket_id,
-            followup_id,
-        )
-        return stored
+            if entry is None:
+                raise GlpiNotFound("Acompanhamento não encontrado neste chamado.")
+            allowed = {item.document_id for item in ticket.attachments}
+            html_refs = {
+                doc_id
+                for ref_ticket, doc_id in extract_bff_attachment_refs(content)
+                if ref_ticket == ticket_id
+            }
+            if html_refs - allowed:
+                ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+                allowed = {item.document_id for item in ticket.attachments}
+            for doc_id in html_refs - allowed:
+                if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
+                    allowed.add(doc_id)
+            content_html = _prepare_message_html(
+                content,
+                "content",
+                ticket_id=ticket_id,
+                allowed_document_ids=allowed,
+            )
+            self._glpi.update_followup(
+                token,
+                ticket_id,
+                int(followup_id),
+                content_html,
+            )
+            refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            updated = next(
+                (
+                    item
+                    for item in refreshed.timeline
+                    if item.kind == "followup" and int(item.id) == int(followup_id)
+                ),
+                None,
+            )
+            expected_text = " ".join(
+                message_html_to_plain_text(content_html).split()
+            )
+            actual_text = " ".join(
+                message_html_to_plain_text(
+                    updated.content_html or updated.content or ""
+                ).split()
+            ) if updated else ""
+            if updated is None or actual_text != expected_text:
+                raise GlpiValidation(
+                    "O acompanhamento não foi confirmado no chamado."
+                )
+            stored = StoredResponse(
+                status_code=200,
+                body={
+                    "id": int(followup_id),
+                    "content": updated.content,
+                    "content_html": updated.content_html,
+                },
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            logger.info(
+                "helpdesk_update_followup ticket_id=%s followup_id=%s",
+                ticket_id,
+                followup_id,
+            )
+            return stored
 
 
+        except HelpdeskError:
+            # Naturally-idempotent write: re-executing the same
+            # intent converges to the same state, so any typed
+            # rejection can release the claim — no duplicate risk.
+            self._idempotency.release(subject, operation, key)
+            raise
     def update_classification(
         self,
         subject: str,
@@ -744,107 +829,116 @@ class TicketService:
         """
         key = _require_key(idempotency_key)
         operation = f"update_classification:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "urgency_id": urgency_id, "impact_id": impact_id, "category_id": category_id, "type_id": type_id, "priority_id": priority_id, "request_type_id": request_type_id}
+        )
         if existing is not None:
             return existing
-        provided = {
-            field: value
-            for field, value in {
-                "urgency_id": urgency_id,
-                "impact_id": impact_id,
-                "category_id": category_id,
-                "type_id": type_id,
-                "priority_id": priority_id,
-                "request_type_id": request_type_id,
-            }.items()
-            if value is not None
-        }
-        if not provided:
-            raise GlpiValidation(
-                "Informe ao menos um campo de classificação."
-            )
-        field_names = classification_field_names()
-        for field, value in provided.items():
-            if int(value) <= 0:
-                raise GlpiValidation(f"{field} inválido.")
-            names = field_names.get(field)
-            if names is not None and int(value) not in names:
-                raise GlpiValidation(f"{field} inválido.")
-        token = self._token(subject)
-        if "category_id" in provided:
-            valid_categories = {
-                int(item.id) for item in self._glpi.list_categories(token)
+        try:
+            provided = {
+                field: value
+                for field, value in {
+                    "urgency_id": urgency_id,
+                    "impact_id": impact_id,
+                    "category_id": category_id,
+                    "type_id": type_id,
+                    "priority_id": priority_id,
+                    "request_type_id": request_type_id,
+                }.items()
+                if value is not None
             }
-            if int(provided["category_id"]) not in valid_categories:
-                raise GlpiValidation("category_id inválido.")
-        if "request_type_id" in provided:
-            valid_request_types = {
-                int(item.id) for item in self._glpi.list_request_types(token)
-            }
-            if int(provided["request_type_id"]) not in valid_request_types:
-                raise GlpiValidation("request_type_id inválido.")
-        # Read first — enforces the same OAuth ACL/entity scope as the UI.
-        self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        self._glpi.update_ticket_classification(
-            token,
-            ticket_id,
-            urgency_id=provided.get("urgency_id"),
-            impact_id=provided.get("impact_id"),
-            category_id=provided.get("category_id"),
-            type_id=provided.get("type_id"),
-            priority_id=provided.get("priority_id"),
-            request_type_id=provided.get("request_type_id"),
-        )
-        refreshed = self._glpi.get_ticket(
-            token, ticket_id, viewer_email=viewer_email
-        )
-        actual = {
-            "urgency_id": refreshed.urgency_id,
-            "impact_id": refreshed.impact_id,
-            "category_id": refreshed.category_id,
-            "type_id": refreshed.type_id,
-            "priority_id": refreshed.priority_id,
-            "request_type_id": refreshed.request_type_id,
-        }
-        diverged = [
-            field
-            for field, value in provided.items()
-            if actual.get(field) != int(value)
-        ]
-        if diverged:
-            detail = ", ".join(
-                f"{field} ficou {actual.get(field)!r} (esperado {int(provided[field])!r})"
-                for field in diverged
+            if not provided:
+                raise GlpiValidation(
+                    "Informe ao menos um campo de classificação."
+                )
+            field_names = classification_field_names()
+            for field, value in provided.items():
+                if int(value) <= 0:
+                    raise GlpiValidation(f"{field} inválido.")
+                names = field_names.get(field)
+                if names is not None and int(value) not in names:
+                    raise GlpiValidation(f"{field} inválido.")
+            token = self._token(subject)
+            if "category_id" in provided:
+                valid_categories = {
+                    int(item.id) for item in self._glpi.list_categories(token)
+                }
+                if int(provided["category_id"]) not in valid_categories:
+                    raise GlpiValidation("category_id inválido.")
+            if "request_type_id" in provided:
+                valid_request_types = {
+                    int(item.id) for item in self._glpi.list_request_types(token)
+                }
+                if int(provided["request_type_id"]) not in valid_request_types:
+                    raise GlpiValidation("request_type_id inválido.")
+            # Read first — enforces the same OAuth ACL/entity scope as the UI.
+            self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            self._glpi.update_ticket_classification(
+                token,
+                ticket_id,
+                urgency_id=provided.get("urgency_id"),
+                impact_id=provided.get("impact_id"),
+                category_id=provided.get("category_id"),
+                type_id=provided.get("type_id"),
+                priority_id=provided.get("priority_id"),
+                request_type_id=provided.get("request_type_id"),
             )
-            raise GlpiValidation(
-                "O GLPI não persistiu a alteração solicitada: " + detail + "."
+            refreshed = self._glpi.get_ticket(
+                token, ticket_id, viewer_email=viewer_email
             )
-        stored = StoredResponse(
-            status_code=200,
-            body={
-                "id": int(ticket_id),
+            actual = {
                 "urgency_id": refreshed.urgency_id,
-                "urgency": refreshed.urgency,
                 "impact_id": refreshed.impact_id,
-                "impact": refreshed.impact,
                 "category_id": refreshed.category_id,
-                "category": refreshed.category,
                 "type_id": refreshed.type_id,
-                "type_name": refreshed.type_name,
-                "request_type_id": refreshed.request_type_id,
                 "priority_id": refreshed.priority_id,
-                "priority": refreshed.priority,
-                "updated_fields": sorted(provided),
-            },
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        logger.info(
-            "helpdesk_update_classification ticket_id=%s fields=%s",
-            ticket_id,
-            ",".join(sorted(provided)),
-        )
-        return stored
+                "request_type_id": refreshed.request_type_id,
+            }
+            diverged = [
+                field
+                for field, value in provided.items()
+                if actual.get(field) != int(value)
+            ]
+            if diverged:
+                detail = ", ".join(
+                    f"{field} ficou {actual.get(field)!r} (esperado {int(provided[field])!r})"
+                    for field in diverged
+                )
+                raise GlpiValidation(
+                    "O GLPI não persistiu a alteração solicitada: " + detail + "."
+                )
+            stored = StoredResponse(
+                status_code=200,
+                body={
+                    "id": int(ticket_id),
+                    "urgency_id": refreshed.urgency_id,
+                    "urgency": refreshed.urgency,
+                    "impact_id": refreshed.impact_id,
+                    "impact": refreshed.impact,
+                    "category_id": refreshed.category_id,
+                    "category": refreshed.category,
+                    "type_id": refreshed.type_id,
+                    "type_name": refreshed.type_name,
+                    "request_type_id": refreshed.request_type_id,
+                    "priority_id": refreshed.priority_id,
+                    "priority": refreshed.priority,
+                    "updated_fields": sorted(provided),
+                },
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            logger.info(
+                "helpdesk_update_classification ticket_id=%s fields=%s",
+                ticket_id,
+                ",".join(sorted(provided)),
+            )
+            return stored
 
+        except HelpdeskError:
+            # Naturally-idempotent write: re-executing the same
+            # intent converges to the same state, so any typed
+            # rejection can release the claim — no duplicate risk.
+            self._idempotency.release(subject, operation, key)
+            raise
     def create_solution(
         self,
         subject: str,
@@ -857,38 +951,49 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"create_solution:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "solution_type_id": solution_type_id, "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest()}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        self._require_technician_ops(token, detail, viewer_email=viewer_email, action="solução")
-        content_html = _prepare_message_html(content, "content", ticket_id=ticket_id)
-        solution_id = self._glpi.add_ticket_solution(
-            token,
-            ticket_id,
-            content_html,
-            solution_type_id=solution_type_id,
-        )
-        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        if not (
-            timeline_has_entry(refreshed.timeline, kind="solution", entry_id=solution_id)
-            or timeline_has_solution(refreshed.timeline)
-        ):
-            raise GlpiValidation("A solução não foi confirmada no chamado.")
-        stored = StoredResponse(
-            status_code=201,
-            body={"id": solution_id, "status_id": refreshed.status_id},
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        logger.info(
-            "helpdesk_create_solution ticket_id=%s solution_id=%s status_id=%s",
-            ticket_id,
-            solution_id,
-            refreshed.status_id,
-        )
-        return stored
+        try:
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            self._require_technician_ops(token, detail, viewer_email=viewer_email, action="solução")
+            content_html = _prepare_message_html(content, "content", ticket_id=ticket_id)
+            solution_id = self._glpi.add_ticket_solution(
+                token,
+                ticket_id,
+                content_html,
+                solution_type_id=solution_type_id,
+            )
+            refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            if not (
+                timeline_has_entry(refreshed.timeline, kind="solution", entry_id=solution_id)
+                or timeline_has_solution(refreshed.timeline)
+            ):
+                raise GlpiValidation("A solução não foi confirmada no chamado.")
+            stored = StoredResponse(
+                status_code=201,
+                body={"id": solution_id, "status_id": refreshed.status_id},
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            logger.info(
+                "helpdesk_create_solution ticket_id=%s solution_id=%s status_id=%s",
+                ticket_id,
+                solution_id,
+                refreshed.status_id,
+            )
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
     def create_task(
         self,
         subject: str,
@@ -907,50 +1012,61 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"create_task:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(), "state": state, "duration_seconds": duration_seconds, "category_id": category_id, "user_tech_id": user_tech_id, "group_tech_id": group_tech_id, "planned_begin": planned_begin, "planned_end": planned_end}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        self._require_technician_ops(token, detail, viewer_email=viewer_email, action="tarefa")
-        content_html = _prepare_message_html(content, "content", ticket_id=ticket_id)
-        task_id = self._glpi.add_ticket_task(
-            token,
-            ticket_id,
-            content_html,
-            state=state,
-            duration_seconds=duration_seconds,
-            category_id=category_id,
-            user_tech_id=user_tech_id,
-            group_tech_id=group_tech_id,
-            planned_begin=planned_begin,
-            planned_end=planned_end,
-        )
-        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        if not timeline_has_entry(refreshed.timeline, kind="task", entry_id=task_id):
-            raise GlpiValidation("A tarefa não foi confirmada no chamado.")
-        entry = next(
-            (item for item in refreshed.timeline if item.kind == "task" and item.id == task_id),
-            None,
-        )
-        body: dict = {"id": task_id}
-        if entry is not None:
-            body.update(
-                {
-                    "state": entry.state,
-                    "duration_seconds": entry.duration_seconds,
-                    "category_name": entry.category_name,
-                    "user_tech_display_name": entry.user_tech_display_name,
-                    "group_tech_display_name": entry.group_tech_display_name,
-                    "planned_begin": entry.planned_begin,
-                    "planned_end": entry.planned_end,
-                }
+        try:
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            self._require_technician_ops(token, detail, viewer_email=viewer_email, action="tarefa")
+            content_html = _prepare_message_html(content, "content", ticket_id=ticket_id)
+            task_id = self._glpi.add_ticket_task(
+                token,
+                ticket_id,
+                content_html,
+                state=state,
+                duration_seconds=duration_seconds,
+                category_id=category_id,
+                user_tech_id=user_tech_id,
+                group_tech_id=group_tech_id,
+                planned_begin=planned_begin,
+                planned_end=planned_end,
             )
-        stored = StoredResponse(status_code=201, body=body)
-        self._idempotency.save(subject, operation, key, stored)
-        logger.info("helpdesk_create_task ticket_id=%s task_id=%s", ticket_id, task_id)
-        return stored
+            refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            if not timeline_has_entry(refreshed.timeline, kind="task", entry_id=task_id):
+                raise GlpiValidation("A tarefa não foi confirmada no chamado.")
+            entry = next(
+                (item for item in refreshed.timeline if item.kind == "task" and item.id == task_id),
+                None,
+            )
+            body: dict = {"id": task_id}
+            if entry is not None:
+                body.update(
+                    {
+                        "state": entry.state,
+                        "duration_seconds": entry.duration_seconds,
+                        "category_name": entry.category_name,
+                        "user_tech_display_name": entry.user_tech_display_name,
+                        "group_tech_display_name": entry.group_tech_display_name,
+                        "planned_begin": entry.planned_begin,
+                        "planned_end": entry.planned_end,
+                    }
+                )
+            stored = StoredResponse(status_code=201, body=body)
+            self._idempotency.save(subject, operation, key, stored)
+            logger.info("helpdesk_create_task ticket_id=%s task_id=%s", ticket_id, task_id)
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
     def request_approval(
         self,
         subject: str,
@@ -965,60 +1081,71 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"request_approval:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "approver_user_id": approver_user_id, "approver_id": approver_id, "approver_type": approver_type, "sha256": hashlib.sha256((content or "").encode("utf-8")).hexdigest()}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        self._require_technician_ops(token, detail, viewer_email=viewer_email, action="aprovação")
-        target_type = "Group" if str(approver_type).lower() == "group" else "User"
-        raw_id = approver_id if approver_id is not None else approver_user_id
         try:
-            target_id = int(raw_id) if raw_id is not None else 0
-        except (TypeError, ValueError) as exc:
-            raise GlpiValidation("approver_id inválido.") from exc
-        if target_id <= 0:
-            raise GlpiValidation("approver_id inválido.")
-        if target_type == "User":
-            catalog = self._glpi.list_users(token, q=str(target_id), limit=20)
-            if not any(int(getattr(user, "id", 0) or 0) == target_id for user in catalog):
-                raise GlpiValidation("Aprovador inválido ou inacessível.")
-        else:
-            groups = self._glpi.list_groups(token)
-            if not any(int(getattr(group, "id", 0) or 0) == target_id for group in groups):
-                raise GlpiValidation("Grupo aprovador inválido ou inacessível.")
-        # comment_submission é TEXT no GLPI — enviar HTML gravaria tags literais.
-        comment = _prepare_plain_comment_text(content, "content")
-        validation_id = self._glpi.create_ticket_validation(
-            token,
-            ticket_id,
-            approver_type=target_type,
-            approver_id=target_id,
-            comment=comment,
-        )
-        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        match = next((item for item in refreshed.validations if item.id == validation_id), None)
-        if match is None:
-            raise GlpiValidation("A solicitação de aprovação não foi confirmada.")
-        stored = StoredResponse(
-            status_code=201,
-            body={
-                "id": validation_id,
-                "status": match.status,
-                "requested_approver_id": match.requested_approver_id,
-                "requested_approver_type": match.requested_approver_type,
-            },
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        logger.info(
-            "helpdesk_request_approval ticket_id=%s validation_id=%s approver_type=%s approver=%s",
-            ticket_id,
-            validation_id,
-            target_type,
-            target_id,
-        )
-        return stored
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            self._require_technician_ops(token, detail, viewer_email=viewer_email, action="aprovação")
+            target_type = "Group" if str(approver_type).lower() == "group" else "User"
+            raw_id = approver_id if approver_id is not None else approver_user_id
+            try:
+                target_id = int(raw_id) if raw_id is not None else 0
+            except (TypeError, ValueError) as exc:
+                raise GlpiValidation("approver_id inválido.") from exc
+            if target_id <= 0:
+                raise GlpiValidation("approver_id inválido.")
+            if target_type == "User":
+                catalog = self._glpi.list_users(token, q=str(target_id), limit=20)
+                if not any(int(getattr(user, "id", 0) or 0) == target_id for user in catalog):
+                    raise GlpiValidation("Aprovador inválido ou inacessível.")
+            else:
+                groups = self._glpi.list_groups(token)
+                if not any(int(getattr(group, "id", 0) or 0) == target_id for group in groups):
+                    raise GlpiValidation("Grupo aprovador inválido ou inacessível.")
+            # comment_submission é TEXT no GLPI — enviar HTML gravaria tags literais.
+            comment = _prepare_plain_comment_text(content, "content")
+            validation_id = self._glpi.create_ticket_validation(
+                token,
+                ticket_id,
+                approver_type=target_type,
+                approver_id=target_id,
+                comment=comment,
+            )
+            refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            match = next((item for item in refreshed.validations if item.id == validation_id), None)
+            if match is None:
+                raise GlpiValidation("A solicitação de aprovação não foi confirmada.")
+            stored = StoredResponse(
+                status_code=201,
+                body={
+                    "id": validation_id,
+                    "status": match.status,
+                    "requested_approver_id": match.requested_approver_id,
+                    "requested_approver_type": match.requested_approver_type,
+                },
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            logger.info(
+                "helpdesk_request_approval ticket_id=%s validation_id=%s approver_type=%s approver=%s",
+                ticket_id,
+                validation_id,
+                target_type,
+                target_id,
+            )
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
     def accept_solution(
         self,
         subject: str,
@@ -1030,26 +1157,37 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"accept_solution:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "sha256": hashlib.sha256((content or "").encode("utf-8")).hexdigest()}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        if not detail.requester_mine:
-            raise GlpiForbidden("Só o solicitante pode aceitar a solução.")
-        if detail.status_id != 5:
-            raise GlpiValidation("Só é possível aceitar solução em chamado solucionado.")
-        message = _prepare_cycle_comment_html(content, "content", ticket_id=ticket_id) or "Solução aceita."
-        outcome = self._glpi.accept_ticket_solution(token, ticket_id, message)
-        refreshed = self._with_cycle_flags(
-            token, self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        )
-        stored = _cycle_write_stored_response(
-            refreshed, outcome, expected_status_ids={6}
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        return stored
+        try:
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            if not detail.requester_mine:
+                raise GlpiForbidden("Só o solicitante pode aceitar a solução.")
+            if detail.status_id != 5:
+                raise GlpiValidation("Só é possível aceitar solução em chamado solucionado.")
+            message = _prepare_cycle_comment_html(content, "content", ticket_id=ticket_id) or "Solução aceita."
+            outcome = self._glpi.accept_ticket_solution(token, ticket_id, message)
+            refreshed = self._with_cycle_flags(
+                token, self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            )
+            stored = _cycle_write_stored_response(
+                refreshed, outcome, expected_status_ids={6}
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
     def reject_solution(
         self,
         subject: str,
@@ -1061,26 +1199,37 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"reject_solution:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "sha256": hashlib.sha256((content or "").encode("utf-8")).hexdigest()}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        if not detail.requester_mine:
-            raise GlpiForbidden("Só o solicitante pode recusar a solução.")
-        if detail.status_id not in {5, 6}:
-            raise GlpiValidation("Só é possível recusar/reabrir em solucionado ou fechado.")
-        message = _prepare_cycle_comment_html(content, "content", ticket_id=ticket_id) or "Solução recusada."
-        outcome = self._glpi.reject_ticket_solution(token, ticket_id, message)
-        refreshed = self._with_cycle_flags(
-            token, self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        )
-        stored = _cycle_write_stored_response(
-            refreshed, outcome, expected_status_ids={1, 2, 3, 4}
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        return stored
+        try:
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            if not detail.requester_mine:
+                raise GlpiForbidden("Só o solicitante pode recusar a solução.")
+            if detail.status_id not in {5, 6}:
+                raise GlpiValidation("Só é possível recusar/reabrir em solucionado ou fechado.")
+            message = _prepare_cycle_comment_html(content, "content", ticket_id=ticket_id) or "Solução recusada."
+            outcome = self._glpi.reject_ticket_solution(token, ticket_id, message)
+            refreshed = self._with_cycle_flags(
+                token, self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            )
+            stored = _cycle_write_stored_response(
+                refreshed, outcome, expected_status_ids={1, 2, 3, 4}
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
     def satisfaction(self, subject: str, ticket_id: int, viewer_email: str = "") -> dict:
         token = self._token(subject)
         detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
@@ -1104,34 +1253,43 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"submit_satisfaction:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "satisfaction": satisfaction}
+        )
         if existing is not None:
             return existing
-        if satisfaction not in {1, 2, 3, 4, 5}:
-            raise GlpiValidation("satisfaction inválida.")
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        if not detail.requester_mine:
-            raise GlpiForbidden("Só o solicitante pode responder a pesquisa.")
-        if detail.status_id != 6:
-            raise GlpiValidation("Pesquisa só é disponível em chamado fechado.")
-        existing_sat = self._glpi.get_ticket_satisfaction(token, ticket_id)
-        if existing_sat is not None:
-            raise GlpiValidation("Pesquisa de satisfação já registrada.")
-        comment_text = _prepare_cycle_comment_text(comment, "comment")
-        self._glpi.submit_ticket_satisfaction(
-            token,
-            ticket_id,
-            satisfaction=satisfaction,
-            comment=comment_text,
-        )
-        stored = StoredResponse(
-            status_code=201,
-            body={"satisfaction": satisfaction, "comment": comment_text},
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        return stored
+        try:
+            if satisfaction not in {1, 2, 3, 4, 5}:
+                raise GlpiValidation("satisfaction inválida.")
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            if not detail.requester_mine:
+                raise GlpiForbidden("Só o solicitante pode responder a pesquisa.")
+            if detail.status_id != 6:
+                raise GlpiValidation("Pesquisa só é disponível em chamado fechado.")
+            existing_sat = self._glpi.get_ticket_satisfaction(token, ticket_id)
+            if existing_sat is not None:
+                raise GlpiValidation("Pesquisa de satisfação já registrada.")
+            comment_text = _prepare_cycle_comment_text(comment, "comment")
+            self._glpi.submit_ticket_satisfaction(
+                token,
+                ticket_id,
+                satisfaction=satisfaction,
+                comment=comment_text,
+            )
+            stored = StoredResponse(
+                status_code=201,
+                body={"satisfaction": satisfaction, "comment": comment_text},
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
 
+        except HelpdeskError:
+            # Naturally-idempotent write: re-executing the same
+            # intent converges to the same state, so any typed
+            # rejection can release the claim — no duplicate risk.
+            self._idempotency.release(subject, operation, key)
+            raise
     def decide_validation(
         self,
         subject: str,
@@ -1146,35 +1304,46 @@ class TicketService:
         key = _require_key(idempotency_key)
         action = "accept" if accept else "reject"
         operation = f"validation_{action}:{ticket_id}:{validation_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id, "validation_id": validation_id, "accept": accept}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        match = next((item for item in detail.validations if item.id == validation_id), None)
-        if match is None:
-            raise GlpiNotFound("Aprovação não encontrada.")
-        if not match.mine_to_decide:
-            raise GlpiForbidden("Só o aprovador designado pode decidir esta validação.")
-        self._glpi.decide_ticket_validation(
-            token,
-            ticket_id,
-            validation_id,
-            accept=accept,
-            comment=_prepare_cycle_comment_text(comment, "content"),
-        )
-        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
-        stored = StoredResponse(
-            status_code=200,
-            body={
-                "id": validation_id,
-                "status": 3 if accept else 4,
-                "can_decide_validation": refreshed.can_decide_validation,
-            },
-        )
-        self._idempotency.save(subject, operation, key, stored)
-        return stored
+        try:
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            match = next((item for item in detail.validations if item.id == validation_id), None)
+            if match is None:
+                raise GlpiNotFound("Aprovação não encontrada.")
+            if not match.mine_to_decide:
+                raise GlpiForbidden("Só o aprovador designado pode decidir esta validação.")
+            self._glpi.decide_ticket_validation(
+                token,
+                ticket_id,
+                validation_id,
+                accept=accept,
+                comment=_prepare_cycle_comment_text(comment, "content"),
+            )
+            refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            stored = StoredResponse(
+                status_code=200,
+                body={
+                    "id": validation_id,
+                    "status": 3 if accept else 4,
+                    "can_decide_validation": refreshed.can_decide_validation,
+                },
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
 
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: the write may have
+            # persisted and a blind retry could duplicate it.
+            self._idempotency.release(subject, operation, key)
+            raise
     def delete(
         self,
         subject: str,
@@ -1192,33 +1361,42 @@ class TicketService:
         """
         key = _require_key(idempotency_key)
         operation = f"delete_ticket:{ticket_id}"
-        existing = self._idempotency.get(subject, operation, key)
+        existing = self._claim_or_replay(
+            subject, operation, key, intent={"ticket_id": ticket_id}
+        )
         if existing is not None:
             return existing
-        token = self._token(subject)
-        detail = self._glpi.get_ticket(token, ticket_id, viewer_email="")
-        self._glpi.delete_ticket(token, ticket_id)
-        # Authoritative read-back inside the owner: 2xx alone is not proof.
-        # The ticket must now be absent from the same-user view — either
-        # GLPI 404 or an ``is_deleted`` payload both surface GlpiNotFound.
         try:
-            self._glpi.get_ticket(token, ticket_id, viewer_email="")
-        except GlpiNotFound:
-            stored = StoredResponse(
-                status_code=200,
-                body={
-                    "id": detail.id,
-                    "title": detail.title,
-                    "deleted": True,
-                    # GLPI trash semantics — the ticket remains restorable
-                    # inside GLPI; permanent purge is never issued here.
-                    "delete_semantics": "trash",
-                },
-            )
-            self._idempotency.save(subject, operation, key, stored)
-            return stored
-        raise GlpiUnavailable("O GLPI não confirmou a exclusão do chamado.")
+            token = self._token(subject)
+            detail = self._glpi.get_ticket(token, ticket_id, viewer_email="")
+            self._glpi.delete_ticket(token, ticket_id)
+            # Authoritative read-back inside the owner: 2xx alone is not proof.
+            # The ticket must now be absent from the same-user view — either
+            # GLPI 404 or an ``is_deleted`` payload both surface GlpiNotFound.
+            try:
+                self._glpi.get_ticket(token, ticket_id, viewer_email="")
+            except GlpiNotFound:
+                stored = StoredResponse(
+                    status_code=200,
+                    body={
+                        "id": detail.id,
+                        "title": detail.title,
+                        "deleted": True,
+                        # GLPI trash semantics — the ticket remains restorable
+                        # inside GLPI; permanent purge is never issued here.
+                        "delete_semantics": "trash",
+                    },
+                )
+                self._idempotency.save(subject, operation, key, stored)
+                return stored
+            raise GlpiUnavailable("O GLPI não confirmou a exclusão do chamado.")
 
+        except HelpdeskError:
+            # Naturally-idempotent write: re-executing the same
+            # intent converges to the same state, so any typed
+            # rejection can release the claim — no duplicate risk.
+            self._idempotency.release(subject, operation, key)
+            raise
     def _viewer_is_technician(self, token: str, viewer_email: str) -> bool:
         """True when GLPI session (or email catalog) maps to a technician-profile user.
 
@@ -1356,11 +1534,48 @@ class TicketService:
                 "requester_orphan_cleanup_failed ticket_id=%s", ticket_id
             )
 
+    def _claim_or_replay(
+        self, subject: str, operation: str, key: str, intent: dict
+    ) -> StoredResponse | None:
+        """Atomically claim the key or replay its completed result.
+
+        Returns ``None`` when this call claimed the key and must execute
+        the write (then ``save`` the governed result). Raises
+        ``IdempotencyInFlight`` when a prior execution may already have
+        persisted — the key stays blocked so the write is never
+        re-executed blindly; reconcile by authoritative read first.
+        """
+        claimed = self._idempotency.claim(subject, operation, key, intent)
+        if claimed is None:
+            return None
+        if isinstance(claimed, StoredResponse):
+            return claimed
+        raise IdempotencyInFlight(
+            "Uma execução anterior com esta chave pode ter persistido a "
+            "escrita. Reconcilie por leitura autoritativa antes de "
+            "tentar novamente.",
+            claimed_at=claimed.claimed_at,
+            intent=claimed.intent,
+        )
+
     def _token(self, subject: str) -> str:
         try:
             return self._oauth.access_token_for(subject)
         except GlpiUnauthorized as exc:
             raise LinkRequired("A sessão do GLPI expirou. Autorize de novo.") from exc
+
+
+# Errors that can only be raised before the external side effect —
+# OAuth session resolution and feature gates. A claim blocked by one of
+# these is released so a corrected retry under the same intent is not
+# permanently stuck. GLPI-domain errors (validation/forbidden/not_found)
+# are NOT in this set: inside multi-step writes they can surface after a
+# partial persistence, where releasing would enable a duplicate.
+_PRE_WRITE_ONLY_ERRORS = (
+    GlpiFeatureDisabled,
+    LinkRequired,
+    MissingIdempotencyKey,
+)
 
 
 def _require_key(value: str | None) -> str:

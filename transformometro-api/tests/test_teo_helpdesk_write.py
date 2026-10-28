@@ -1472,3 +1472,34 @@ def test_partial_result_consumes_proposal_no_duplicate_write():
         )
     assert exc.value.code == PROPOSAL_NOT_FOUND
     assert len(ports.write_calls) == writes_before  # no second write
+
+
+def test_untyped_partial_consumes_proposal_preserves_document_id():
+    """A malformed BFF partial (207 without outcome, normalized to
+    ``untyped_partial`` by the gateway) still means a write may have
+    persisted. The proposal is consumed — it can never be replayed as if
+    nothing happened — and the persisted document_id reaches the caller
+    for reconciliation."""
+    facade, ports = _facade()
+    ports.upload_result_extra = {
+        "outcome": "untyped_partial",
+        "contract_violation": True,
+    }
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    handle = _handle_of(out)
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=False)
+    err = exc.value
+    assert err.code == OUTCOME_VERIFICATION_FAILED
+    assert err.data["outcome"] == "untyped_partial"
+    assert err.data["write_result"]["document_id"] in ports.attachments
+    # Terminal for this proposal — no reusable handle after a possible
+    # persistence.
+    with pytest.raises(GovernedWriteError) as second:
+        facade.commit_proposal(
+            _request(), proposal_handle=handle, confirmation=False
+        )
+    assert second.value.code == PROPOSAL_NOT_FOUND
+    assert len(ports.write_calls) == 1

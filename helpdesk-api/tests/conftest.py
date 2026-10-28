@@ -818,6 +818,7 @@ def build_client(
     directory=None,
     person_profiles=None,
     sync_writer=None,
+    idempotency=None,
 ) -> tuple[TestClient, FakeGlpi]:
     glpi = glpi or FakeGlpi()
     app = FastAPI()
@@ -827,6 +828,9 @@ def build_client(
         body = {"error": exc.code}
         if exc.code == "glpi_link_required":
             body["authorize_url"] = "/apps/helpdesk-api/auth/glpi/start"
+        details = getattr(exc, "details", None)
+        if details:
+            body.update(details)
         return JSONResponse(status_code=exc.status_code, content=body)
 
     now = lambda: datetime(2026, 9, 21, tzinfo=timezone.utc)
@@ -838,7 +842,7 @@ def build_client(
     app.state.tickets = TicketService(
         glpi,
         oauth,
-        MemoryIdempotencyStore(),
+        idempotency or MemoryIdempotencyStore(),
         directory=directory,
         person_profiles=person_profiles,
     )

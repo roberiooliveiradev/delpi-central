@@ -32,11 +32,18 @@ class HelpdeskWritePort(Protocol):
       ``outcome`` for legacy write shapes). When the BFF persisted the
       write but could not confirm a postcondition it returns a governed
       partial result — body carries ``outcome`` (``verification_failed``,
-      ``author_mismatch``, ``author_unverified``, ``status_unverified``)
-      plus the persisted identifiers (``document_id``, ``followup_id``,
-      ``status_id``). A partial result is NOT integral success and is
-      surfaced to the governed-write layer verbatim; consumers must
-      reconcile the identifiers instead of retrying blindly.
+      ``author_mismatch``, ``author_unverified``, ``status_unverified``,
+      or ``untyped_partial`` when a malformed 207 was normalized at the
+      gateway) plus the persisted identifiers (``document_id``,
+      ``followup_id``, ``status_id``). A partial result is NOT integral
+      success and is surfaced to the governed-write layer verbatim;
+      consumers must reconcile the identifiers instead of retrying
+      blindly.
+    - uncertain result → ``GptActionsError`` ``idempotency_in_flight``
+      (409): a prior execution under the same key may have persisted
+      (crash/timeout between side effect and result save, or key reuse
+      with a divergent intent). The BFF blocks blind re-execution until
+      an authoritative read reconciles the write.
     """
 
     def create_ticket(

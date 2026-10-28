@@ -170,24 +170,26 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
           ``followup_id``, ``status_id``) for reconciliation. It is NOT
           integral success and must not be flattened into one.
 
-        A 207 without a typed ``outcome`` violates the contract; we fail
-        closed but keep the raw body in the error data so nothing needed
-        for reconciliation is lost.
+        A 207 without a typed ``outcome`` violates the contract, but the
+        status itself still declares "executed, not fully verified" — a
+        write may have persisted. It is normalized to
+        ``outcome="untyped_partial"`` so the governed layer consumes the
+        proposal and surfaces a partial result with the persisted
+        identifiers, instead of leaving a reusable proposal behind after
+        a possible side effect.
         """
         body = self._expect_json(response, ok_statuses=(200, 201, 207))
         if response.status_code == 207 and not (
             isinstance(body, dict) and body.get("outcome")
         ):
-            raise GptActionsError(
-                "Helpdesk BFF returned a partial write result without a "
-                "typed outcome.",
-                502,
-                {
-                    "error_kind": "contract_violation",
-                    "status": response.status_code,
-                    "persisted_result": body,
-                },
+            logger.warning(
+                "helpdesk_bff_untyped_partial status=%s body=%r",
+                response.status_code,
+                body,
             )
+            body = dict(body) if isinstance(body, dict) else {"raw": body}
+            body["outcome"] = "untyped_partial"
+            body["contract_violation"] = True
         return body
 
     def _expect_json(
@@ -211,6 +213,13 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
         # route, no OAuth state/verifier/token material. Safe to surface.
         if code == "glpi_link_required" and body.get("authorize_url"):
             data["authorize_url"] = body["authorize_url"]
+        # Uncertain-result evidence: a prior execution under this key
+        # may have persisted. Forward the stored intent/claim metadata
+        # so the caller can reconcile by authoritative read instead of
+        # retrying blindly.
+        if code == "idempotency_in_flight":
+            data["claimed_at"] = body.get("claimed_at")
+            data["intent"] = body.get("intent")
         raise GptActionsError(
             f"Helpdesk BFF error: {code or response.status_code}.",
             response.status_code,

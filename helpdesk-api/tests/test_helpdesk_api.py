@@ -679,7 +679,8 @@ def test_update_description_preserves_inline_images():
         "/tickets/7/description",
         json={
             "content": (
-                '<p>antes</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/2" /></p><p>depois</p>'
+                '<p>antes</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/2" '
+                'alt="logo" /></p><p>depois</p>'
             )
         },
         headers={**auth_headers(), "Idempotency-Key": "desc-1"},

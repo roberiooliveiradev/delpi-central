@@ -12,7 +12,12 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
-from helpdesk_app.domain.models import OAuthSession, PendingAuthorization, StoredResponse
+from helpdesk_app.domain.models import (
+    IdempotencyClaim,
+    OAuthSession,
+    PendingAuthorization,
+    StoredResponse,
+)
 from helpdesk_app.infrastructure.crypto import TokenCipher
 
 SCHEMA = "helpdesk"
@@ -344,6 +349,7 @@ class PostgresIdempotencyStore:
                     SELECT response_status, response_body
                     FROM "{SCHEMA}".idempotency_keys
                     WHERE subject = %s AND operation = %s AND idempotency_key = %s
+                      AND state = 'completed'
                     """,
                     (subject, operation, key),
                 )
@@ -355,16 +361,98 @@ class PostgresIdempotencyStore:
             body = json.loads(body)
         return StoredResponse(status_code=row["response_status"], body=body)
 
+    def claim(
+        self,
+        subject: str,
+        operation: str,
+        key: str,
+        intent: dict,
+    ) -> StoredResponse | IdempotencyClaim | None:
+        """Atomically reserve the key BEFORE the external side effect.
+
+        ``INSERT ... ON CONFLICT DO NOTHING`` blocks a concurrent loser
+        on the unique index until the winner commits, so exactly one
+        caller ever observes the claim. A pre-existing ``in_flight``
+        row means a prior execution may have persisted — returned as an
+        :class:`IdempotencyClaim` so the caller can fail closed.
+        """
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    INSERT INTO "{SCHEMA}".idempotency_keys
+                        (subject, operation, idempotency_key, state, intent, claimed_at)
+                    VALUES (%s, %s, %s, 'in_flight', %s, NOW())
+                    ON CONFLICT (subject, operation, idempotency_key) DO NOTHING
+                    """,
+                    (subject, operation, key, Json(intent)),
+                )
+                if cur.rowcount == 1:
+                    conn.commit()
+                    return None
+                cur.execute(
+                    f"""
+                    SELECT state, response_status, response_body, intent, claimed_at
+                    FROM "{SCHEMA}".idempotency_keys
+                    WHERE subject = %s AND operation = %s AND idempotency_key = %s
+                    """,
+                    (subject, operation, key),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        if row is None:
+            # Lost the insert race but nothing readable — fail closed as
+            # uncertain rather than risk a duplicate side effect.
+            return IdempotencyClaim(claimed_at=None, intent=None)
+        stored_intent = row["intent"] if isinstance(row["intent"], dict) else None
+        if stored_intent != intent:
+            # Key reused with a different intent — never replay the
+            # stored response (it belongs to another write) and never
+            # execute; block for operator review.
+            return IdempotencyClaim(
+                claimed_at=row["claimed_at"], intent=stored_intent
+            )
+        if row["state"] == "completed" and row["response_status"] is not None:
+            body = row["response_body"]
+            if isinstance(body, str):
+                body = json.loads(body)
+            return StoredResponse(status_code=row["response_status"], body=body)
+        return IdempotencyClaim(
+            claimed_at=row["claimed_at"],
+            intent=row["intent"] if isinstance(row["intent"], dict) else None,
+        )
+
     def save(self, subject: str, operation: str, key: str, response: StoredResponse) -> None:
         with connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     f"""
                     INSERT INTO "{SCHEMA}".idempotency_keys
-                        (subject, operation, idempotency_key, response_status, response_body)
-                    VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (subject, operation, idempotency_key) DO NOTHING
+                        (subject, operation, idempotency_key, state,
+                         response_status, response_body, claimed_at, completed_at)
+                    VALUES (%s, %s, %s, 'completed', %s, %s, NOW(), NOW())
+                    ON CONFLICT (subject, operation, idempotency_key) DO UPDATE SET
+                        state = 'completed',
+                        response_status = EXCLUDED.response_status,
+                        response_body = EXCLUDED.response_body,
+                        completed_at = NOW()
                     """,
                     (subject, operation, key, response.status_code, Json(response.body)),
+                )
+            conn.commit()
+
+    def release(self, subject: str, operation: str, key: str) -> None:
+        """Drop an ``in_flight`` claim — only after a typed rejection
+        proves no side effect happened. A completed governed response
+        is never released."""
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    DELETE FROM "{SCHEMA}".idempotency_keys
+                    WHERE subject = %s AND operation = %s AND idempotency_key = %s
+                      AND state = 'in_flight'
+                    """,
+                    (subject, operation, key),
                 )
             conn.commit()

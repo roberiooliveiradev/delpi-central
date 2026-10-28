@@ -116,6 +116,9 @@ async def helpdesk_error_handler(_request: Request, exc: HelpdeskError):
     body = {"error": exc.code}
     if exc.code == "glpi_link_required":
         body["authorize_url"] = "/apps/helpdesk-api/auth/glpi/start"
+    details = getattr(exc, "details", None)
+    if details:
+        body.update(details)
     return JSONResponse(status_code=exc.status_code, content=body)
 
 

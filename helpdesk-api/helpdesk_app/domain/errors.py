@@ -1,6 +1,7 @@
 class HelpdeskError(Exception):
     code = "helpdesk_error"
     status_code = 400
+    details: dict = {}
 
 
 class PortalForbidden(HelpdeskError):
@@ -21,6 +22,31 @@ class InvalidOAuthState(HelpdeskError):
 class MissingIdempotencyKey(HelpdeskError):
     code = "idempotency_key_required"
     status_code = 400
+
+
+class IdempotencyInFlight(HelpdeskError):
+    """A prior execution under this key may have persisted its write.
+
+    Fail closed: never re-execute blindly. The caller must reconcile
+    through an authoritative read before retrying (a new key means a
+    new intent — reusing it would risk duplication either way).
+    """
+
+    code = "idempotency_in_flight"
+    status_code = 409
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        claimed_at=None,
+        intent: dict | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.details = {
+            "claimed_at": claimed_at.isoformat() if claimed_at else None,
+            "intent": intent,
+        }
 
 
 class GlpiUnauthorized(HelpdeskError):

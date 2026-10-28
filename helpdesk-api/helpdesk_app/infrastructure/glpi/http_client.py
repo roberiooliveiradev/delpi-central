@@ -16,6 +16,7 @@ from helpdesk_app.domain.errors import (
     GlpiUnavailable,
     GlpiValidation,
     GlpiFeatureDisabled,
+    HelpdeskError,
 )
 from helpdesk_app.domain.models import (
     Attachment,
@@ -1268,41 +1269,52 @@ class HttpxGlpiClient:
                 or "application/octet-stream",
                 title=display_title,
             )
-            link_row_id = self._legacy_ensure_document_item(
-                write_session_token=session_token,
-                read_session_token=reader_token,
-                document_id=document_id,
-                ticket_id=ticket_id,
-            )
-            # Composite read-back proof: GLPI's timeline shows the
-            # Document_Item author (proven on #1454), so every relevant row
-            # must be proven — never just the Document.
-            document_state = self._legacy_check_row_author(
-                session_token=reader_token,
-                itemtype="Document",
-                row_id=document_id,
-                users_id=owner_user_id,
-            )
-            link_state = (
-                self._legacy_check_row_author(
+            try:
+                link_row_id = self._legacy_ensure_document_item(
+                    write_session_token=session_token,
+                    read_session_token=reader_token,
+                    document_id=document_id,
+                    ticket_id=ticket_id,
+                )
+                # Composite read-back proof: GLPI's timeline shows the
+                # Document_Item author (proven on #1454), so every relevant row
+                # must be proven — never just the Document.
+                document_state = self._legacy_check_row_author(
                     session_token=reader_token,
-                    itemtype="Document_Item",
-                    row_id=link_row_id,
+                    itemtype="Document",
+                    row_id=document_id,
                     users_id=owner_user_id,
                 )
-                if link_row_id
-                else "unverified"
-            )
-            author_state = self._combine_author_states(document_state, link_state)
-            if author_state != "verified":
-                logger.info(
-                    "glpi_document_upload_author_partial document_id=%s "
-                    "document_state=%s link_row_id=%s link_state=%s",
-                    document_id,
-                    document_state,
-                    link_row_id,
-                    link_state,
+                link_state = (
+                    self._legacy_check_row_author(
+                        session_token=reader_token,
+                        itemtype="Document_Item",
+                        row_id=link_row_id,
+                        users_id=owner_user_id,
+                    )
+                    if link_row_id
+                    else "unverified"
                 )
+                author_state = self._combine_author_states(document_state, link_state)
+                if author_state != "verified":
+                    logger.info(
+                        "glpi_document_upload_author_partial document_id=%s "
+                        "document_state=%s link_row_id=%s link_state=%s",
+                        document_id,
+                        document_state,
+                        link_row_id,
+                        link_state,
+                    )
+            except HelpdeskError as exc:
+                # The Document row is already persisted — the failure is
+                # strictly post-side-effect. Carry the identifier so the
+                # caller can govern a typed partial result instead of
+                # losing the write evidence entirely.
+                exc.details = {
+                    **(getattr(exc, "details", None) or {}),
+                    "document_id": document_id,
+                }
+                raise
         finally:
             self._legacy_kill_session(session_token)
             self._legacy_kill_session(reader_token)

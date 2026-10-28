@@ -8,8 +8,10 @@ Covers the canonical result classes at the HTTP boundary:
   into success nor dropped into a generic error;
 - rejected operation (4xx) → typed ``GptActionsError``;
 - transport failure/timeout → ``upstream_unavailable``;
-- contract violation (207 without typed ``outcome``) → fails closed
-  while preserving the persisted body for reconciliation;
+- contract violation (207 without typed ``outcome``) → normalized to
+  ``outcome="untyped_partial"`` with ``contract_violation=True`` — the
+  governed layer consumes the proposal and preserves persisted ids for
+  reconciliation rather than leaving a replayable proposal behind;
 - idempotent replay — same proposal-bound key forwarded, same governed
   result returned by the BFF replay store.
 
@@ -226,23 +228,25 @@ def test_decide_solution_207_partial_returns_body_with_followup_id(gw, http):
         assert out["followup_id"] == 813
 
 
-def test_207_without_typed_outcome_fails_closed_preserving_body(gw, http):
-    """A 207 missing ``outcome`` violates the contract — fail closed but
-    keep the raw body so persisted identifiers are not lost."""
+def test_207_without_typed_outcome_normalized_to_untyped_partial(gw, http):
+    """A 207 missing ``outcome`` violates the contract, but the status
+    still means "executed, not fully verified" — a write may have
+    persisted. It is normalized to ``untyped_partial`` so the governed
+    layer consumes the proposal and surfaces the persisted identifiers
+    for reconciliation instead of leaving a reusable proposal behind."""
     http.queue(_Resp(207, {"document_id": 1462}))
-    with pytest.raises(GptActionsError) as exc:
-        gw.upload_attachment(
-            _AUTH,
-            500,
-            filename="e2e.png",
-            content=b"\x89PNG",
-            mime="image/png",
-            title=None,
-            idempotency_key=_KEY,
-        )
-    assert exc.value.status_code == 502
-    assert exc.value.data["error_kind"] == "contract_violation"
-    assert exc.value.data["persisted_result"]["document_id"] == 1462
+    out = gw.upload_attachment(
+        _AUTH,
+        500,
+        filename="e2e.png",
+        content=b"\x89PNG",
+        mime="image/png",
+        title=None,
+        idempotency_key=_KEY,
+    )
+    assert out["outcome"] == "untyped_partial"
+    assert out["contract_violation"] is True
+    assert out["document_id"] == 1462
 
 
 # --------------------------------------------------------------------------
@@ -264,6 +268,36 @@ def test_rejected_operation_maps_typed_error(gw, http, status, error_kind):
         )
     assert exc.value.status_code == status
     assert exc.value.data["error_kind"] == error_kind
+
+
+def test_idempotency_in_flight_forwards_reconciliation_metadata(gw, http):
+    """BFF 409 idempotency_in_flight = a prior execution under this key
+    may have persisted. The typed code plus claim metadata must reach
+    the caller — retry is blocked until authoritative reconciliation."""
+    http.queue(
+        _Resp(
+            409,
+            {
+                "error": "idempotency_in_flight",
+                "claimed_at": "2026-10-28T12:00:00+00:00",
+                "intent": {"ticket_id": 500, "filename": "e2e.png"},
+            },
+        )
+    )
+    with pytest.raises(GptActionsError) as exc:
+        gw.upload_attachment(
+            _AUTH,
+            500,
+            filename="e2e.png",
+            content=b"\x89PNG",
+            mime="image/png",
+            title=None,
+            idempotency_key=_KEY,
+        )
+    assert exc.value.status_code == 409
+    assert exc.value.data["error_code"] == "idempotency_in_flight"
+    assert exc.value.data["intent"]["filename"] == "e2e.png"
+    assert exc.value.data["claimed_at"] is not None
 
 
 def test_transport_failure_maps_upstream_unavailable(gw, http):

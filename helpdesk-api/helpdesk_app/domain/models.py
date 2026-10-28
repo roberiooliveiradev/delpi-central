@@ -275,3 +275,18 @@ class PendingAuthorization:
 class StoredResponse:
     status_code: int
     body: dict
+
+
+@dataclass(frozen=True)
+class IdempotencyClaim:
+    """A key already claimed but never completed.
+
+    A prior request either is still executing or crashed between the
+    external side effect and the result save — the write may already be
+    persisted. Re-executing under the same key could duplicate the
+    record, so the only safe responses are: replay the stored result
+    (not available yet) or block and reconcile by authoritative read.
+    """
+
+    claimed_at: datetime | None
+    intent: dict | None

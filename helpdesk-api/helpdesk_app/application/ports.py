@@ -6,6 +6,7 @@ from helpdesk_app.domain.models import (
     Category,
     CycleWriteOutcome,
     GlpiUserProfile,
+    IdempotencyClaim,
     OAuthSession,
     PendingAuthorization,
     StoredResponse,
@@ -275,7 +276,38 @@ class UserTokenStore(Protocol):
 
 
 class IdempotencyStore(Protocol):
+    """Idempotency claim protocol.
+
+    ``claim`` runs BEFORE the external side effect and atomically
+    reserves the key:
+
+    - returns ``StoredResponse`` → replay of a completed execution;
+    - returns ``IdempotencyClaim`` → a prior execution may have
+      persisted its write (in-flight or crashed) — the caller must
+      fail closed, never re-execute blindly;
+    - returns ``None`` → the caller claimed the key and must execute
+      the write, then ``save`` the governed result.
+
+    ``save`` completes the claim. If it fails, the claim stays
+    ``in_flight`` and every subsequent same-key call is blocked until
+    reconciliation — exactly-once cannot be guaranteed over GLPI, so
+    we guarantee "at most one uncontrolled execution" instead.
+
+    ``release`` drops an ``in_flight`` claim — used only when a typed
+    rejection proves the external write never happened (validation,
+    authorization, not-found, disabled feature). It never removes a
+    completed response.
+    """
+
     def get(self, subject: str, operation: str, key: str) -> StoredResponse | None: ...
+
+    def claim(
+        self,
+        subject: str,
+        operation: str,
+        key: str,
+        intent: dict,
+    ) -> StoredResponse | IdempotencyClaim | None: ...
 
     def save(
         self,
@@ -284,3 +316,5 @@ class IdempotencyStore(Protocol):
         key: str,
         response: StoredResponse,
     ) -> None: ...
+
+    def release(self, subject: str, operation: str, key: str) -> None: ...
