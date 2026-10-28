@@ -48,6 +48,23 @@ describe("Helpdesk pending attachments structural", () => {
     expect(branchBody).not.toContain("uploadTicketAttachment(");
   });
 
+  it("degraded upload authorship surfaces a notice — never silent full success", () => {
+    const page = read("HelpdeskPage.tsx");
+    // Every upload call site must check author_verified before continuing
+    const checks = page.split("attachmentAuthorDegraded(uploaded)").length - 1;
+    expect(checks).toBeGreaterThanOrEqual(4);
+    // create flow stages the notice across the navigation boundary…
+    expect(page).toContain("stageAttachmentAuthorNotice()");
+    // …and the ticket detail consumes + renders it as a banner
+    expect(page).toContain("consumeAttachmentAuthorNotice()");
+    expect(page).toContain("noticeText");
+    expect(page).toContain("{noticeText ? <HelpdeskStateBanner>{noticeText}</HelpdeskStateBanner> : null}");
+    // the notice must describe partial outcome, not claim success
+    const notice = read("../presentation/attachmentAuthorNotice.ts");
+    expect(notice).toContain("autoria do envio não pôde ser confirmada");
+    expect(notice).toContain("documento está preservado");
+  });
+
   it("fill layout cannot overflow the card — card shrinks and body scrolls", () => {
     const css = read("../index.css");
     // trailing utility siblings (FilePreviewModal hidden anchor) take :last-child,

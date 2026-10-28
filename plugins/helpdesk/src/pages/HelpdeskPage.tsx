@@ -68,6 +68,12 @@ import {
   rewritePendingInlineImages,
   stripPendingInlineImages,
 } from "../presentation/inlineUpload";
+import {
+  ATTACHMENT_AUTHOR_NOTICE_TEXT,
+  attachmentAuthorDegraded,
+  consumeAttachmentAuthorNotice,
+  stageAttachmentAuthorNotice,
+} from "../presentation/attachmentAuthorNotice";
 import type {
   HelpdeskInlineUploadResult,
   HelpdeskPendingAttachmentItem,
@@ -995,6 +1001,9 @@ function CreateTicketPage() {
                     file,
                     `${idempotencyKey}:file:${pendingId}`,
                   );
+                  if (attachmentAuthorDegraded(uploaded)) {
+                    stageAttachmentAuthorNotice();
+                  }
                   if (file.type.startsWith("image/")) {
                     mapping[pendingId] = { documentId: uploaded.document_id, ticketId };
                   }
@@ -1140,6 +1149,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [noticeText, setNoticeText] = useState<string | null>(
+    () => consumeAttachmentAuthorNotice(),
+  );
   const [content, setContent] = useState(() =>
     persistHelpdeskAttachmentHtml(
       normalizeInlineAttachmentSrcs(stampHelpdeskAttachmentIds(readReplyDraft(ticketId)), ticketId),
@@ -1649,6 +1661,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
           />
         ) : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
+        {noticeText ? <HelpdeskStateBanner>{noticeText}</HelpdeskStateBanner> : null}
         {ticket ? (
           <>
             <section className="helpdesk-detail__summary" aria-label="Resumo do chamado">
@@ -2058,11 +2071,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   for (const item of pendingAttachments) {
                                     const file = pendingFilesRef.current.get(item.id);
                                     if (!file) continue;
-                                    await uploadTicketAttachment(
+                                    const uploaded = await uploadTicketAttachment(
                                       ticketId,
                                       file,
                                       newIdempotencyKey(),
                                     );
+                                    if (attachmentAuthorDegraded(uploaded)) {
+                                      setNoticeText(ATTACHMENT_AUTHOR_NOTICE_TEXT);
+                                    }
                                     pendingFilesRef.current.delete(item.id);
                                   }
                                   await createFollowup(
@@ -2165,6 +2181,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                             item.file,
                                             newIdempotencyKey(),
                                           );
+                                          if (attachmentAuthorDegraded(uploaded)) {
+                                            setNoticeText(ATTACHMENT_AUTHOR_NOTICE_TEXT);
+                                          }
                                           attachmentPreview.transferPendingSeed(
                                             item.pendingId,
                                             uploaded.document_id,
@@ -2774,12 +2793,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                       void (async () => {
                                         try {
                                           for (const file of documentFiles) {
-                                            await uploadTicketAttachment(
+                                            const uploaded = await uploadTicketAttachment(
                                               ticketId,
                                               file,
                                               newIdempotencyKey(),
                                               title ? { title } : undefined,
                                             );
+                                            if (attachmentAuthorDegraded(uploaded)) {
+                                              setNoticeText(ATTACHMENT_AUTHOR_NOTICE_TEXT);
+                                            }
                                           }
                                           setDocumentFiles([]);
                                           setDocumentTitle("");

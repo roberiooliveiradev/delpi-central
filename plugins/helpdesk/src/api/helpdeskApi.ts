@@ -193,6 +193,10 @@ export type TicketAttachment = {
   itemtype?: string;
   /** Owning item id (timeline entry id or ticket id); null/empty = unassociated. */
   items_id?: number | null;
+  /** Composite authorship outcome on upload (Document + Document_Item rows). */
+  author_state?: "verified" | "restored" | "mismatch" | "unverified";
+  /** False = persisted but end-user authorship could not be proven. */
+  author_verified?: boolean;
 };
 
 export function listTickets(query: TicketListQuery = {}, signal?: AbortSignal) {
@@ -647,11 +651,15 @@ export async function uploadTicketAttachment(
     document_id: number;
     filename: string;
     mime: string;
+    author_state?: TicketAttachment["author_state"];
+    author_verified?: boolean;
   };
   return {
     document_id: body.document_id,
     filename: body.filename,
     mime: body.mime,
+    author_state: body.author_state,
+    author_verified: body.author_verified,
   };
 }
 
