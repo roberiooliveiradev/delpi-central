@@ -1,39 +1,88 @@
-import { useMemo } from "react";
-import { ClipboardList } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import {
+  BarChart3,
+  CircleGauge,
+  Clock,
+  Coins,
+  Lightbulb,
+  RefreshCw,
+  TrendingUp,
+} from "lucide-react";
 
 import { buildEngineeringPath, navigateEngineeringView } from "../../app/engineeringRoutes";
 import { HOME_COPY } from "../../content/engineeringRouteCatalog";
 import {
   EngineeringActionButton,
+  EngineeringDateField,
   EngineeringEmptyState,
+  EngineeringKpiCard,
   EngineeringLoadingState,
-  EngineeringMetricStrip,
+  EngineeringMultiSelectField,
   EngineeringPageHero,
   EngineeringPagePath,
+  EngineeringQuickPeriodSelector,
   EngineeringSectionCard,
-  EngineeringSectionRouteCard,
   EngineeringStateBanner,
 } from "../../ui/engineeringUi";
-import { buildHeroHighlights, buildOverviewRows } from "../home/homeViewModel";
-import { useHomeData } from "../home/useHomeData";
+import { OPERATIONAL_UNIT_OPTIONS } from "@delpi/plugin-ui/index";
+import { buildOverviewCards } from "./overviewViewModel";
+import { useOverviewData } from "./useOverviewData";
+
+/** Permissão Core do Portal TRANSFORMA+ — o atalho só aparece quando o
+ * host comprova acesso efetivo (nunca derivado de claims do JWT). */
+const TRANSFORMA_ACCESS_PERMISSION = "transformometro.access";
+const TRANSFORMA_HREF = "/apps/transformometro";
+
+const KPI_ICONS: Record<string, ReactNode> = {
+  lmp_on_time: <CircleGauge size={22} aria-hidden="true" />,
+  lmp_lead_time: <Clock size={22} aria-hidden="true" />,
+  lmp_total_proposals: <BarChart3 size={22} aria-hidden="true" />,
+  transforma_gross_savings: <Coins size={22} aria-hidden="true" />,
+  transforma_solutions: <Lightbulb size={22} aria-hidden="true" />,
+  transforma_roi: <TrendingUp size={22} aria-hidden="true" />,
+};
 
 type OverviewPageProps = {
   basePath: string;
+  /** Permissões efetivas resolvidas pelo host/Core — só governam a
+   * exibição do atalho TRANSFORMA+, nunca a autorização dos dados. */
+  permissions?: readonly string[];
 };
 
-/** Visão geral — somente dados autorizados da engineering-api. Nenhuma
- * métrica é inventada: seção indisponível/negada aparece com seu estado
- * oficial, sem número. */
-export function OverviewPage({ basePath }: OverviewPageProps) {
+/** Visão geral — seis indicadores oficiais (3 LMP + 3 TRANSFORMA+) via
+ * `GET /apps/engineering-api/v1/overview`. Estados por indicador:
+ * available/empty/unavailable/forbidden — nunca zero silencioso. */
+export function OverviewPage({ basePath, permissions }: OverviewPageProps) {
   const copy = HOME_COPY.overview;
-  const { state, refreshing, reload } = useHomeData();
-  const home = state.phase === "ready" ? state.home : null;
+  const {
+    state,
+    filters,
+    refreshing,
+    setPreset,
+    setCompetence,
+    setDateStart,
+    setDateEnd,
+    setBranch,
+    reload,
+  } = useOverviewData();
 
-  const metrics = useMemo(
-    () => (home ? buildHeroHighlights(home.sections, false) : []),
-    [home],
+  const overview = state.phase === "ready" ? state.overview : null;
+  const cards = useMemo(
+    () => (overview ? buildOverviewCards(overview) : []),
+    [overview],
   );
-  const rows = useMemo(() => (home ? buildOverviewRows(home) : []), [home]);
+  const lmpCards = cards.filter((card) => card.family === "lmp");
+  const transformaCards = cards.filter(
+    (card) => card.family === "transforma",
+  );
+  const hasPartial = overview?.status === "partial";
+
+  // Atalho TRANSFORMA+ apenas com permissão efetiva comprovada pela
+  // Core/host — sem CTA desabilitado insinuando acesso (doc 18, G5.2).
+  const hasTransformaAccess = useMemo(
+    () => new Set(permissions ?? []).has(TRANSFORMA_ACCESS_PERMISSION),
+    [permissions],
+  );
 
   return (
     <>
@@ -59,11 +108,51 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
             variant="ghost"
             onClick={reload}
             disabled={refreshing}
+            aria-label={copy.refreshAriaLabel}
           >
-            {HOME_COPY.hero.refreshLabel}
+            <RefreshCw size={16} aria-hidden="true" />{" "}
+            {refreshing ? copy.refreshingLabel : copy.refreshLabel}
           </EngineeringActionButton>
         }
-      />
+      >
+        <div
+          className="engineering-overview-filters"
+          role="group"
+          aria-label={copy.filtersAriaLabel}
+        >
+          <EngineeringQuickPeriodSelector
+            label={copy.quickPeriodLabel}
+            value={filters.preset}
+            onChange={setPreset}
+            idPrefix="overview-period"
+          />
+          <div className="engineering-overview-filters__fields">
+            <EngineeringDateField
+              label={copy.dateStartLabel}
+              value={filters.dateStart}
+              onChange={setDateStart}
+            />
+            <EngineeringDateField
+              label={copy.dateEndLabel}
+              value={filters.dateEnd}
+              onChange={setDateEnd}
+            />
+            <EngineeringDateField
+              label={copy.competenceLabel}
+              type="month"
+              value={filters.competence}
+              onChange={setCompetence}
+            />
+            <EngineeringMultiSelectField
+              label={copy.branchLabel}
+              options={[...OPERATIONAL_UNIT_OPTIONS]}
+              selectedValues={filters.branch ? [filters.branch] : []}
+              onChange={(values) => setBranch(values[0] ?? "")}
+              maxSelected={1}
+            />
+          </div>
+        </div>
+      </EngineeringPageHero>
 
       {state.phase === "loading" ? (
         <EngineeringLoadingState message={copy.loading} />
@@ -75,31 +164,103 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         </EngineeringStateBanner>
       ) : null}
 
-      {home ? (
+      {overview ? (
         <>
-          <EngineeringMetricStrip
-            items={metrics}
-            aria-label={copy.metricsAriaLabel}
-          />
+          {hasPartial ? (
+            <EngineeringStateBanner variant="default">
+              {copy.partialNotice}
+            </EngineeringStateBanner>
+          ) : null}
+
+          <div
+            className="engineering-overview-kpi-grid"
+            role="list"
+            aria-label={copy.kpiGridAriaLabel}
+          >
+            {lmpCards.map((card) => (
+              <EngineeringKpiCard
+                key={card.id}
+                title={card.title}
+                titleHint={card.titleHint}
+                value={card.availability === "available" ? card.value : "—"}
+                contextLabel={card.contextLabel}
+                goalLabel={card.goalLabel}
+                goalPrefix={card.goalPrefix}
+                goalHint={card.goalHint}
+                monthlyGoalLabel={card.monthlyGoalLabel}
+                monthlyGoalPrefix={card.monthlyGoalPrefix}
+                monthlyGoalHint={card.monthlyGoalHint}
+                goalScopeBadge={card.goalScopeBadge}
+                goalScopeHint={card.goalScopeHint}
+                goalPerformanceBadge={card.goalPerformanceBadge}
+                iddScoreLabel={card.iddScoreLabel}
+                icon={KPI_ICONS[card.id]}
+                loading={refreshing && card.availability === "available"}
+                footer={
+                  card.stateMessage ? (
+                    <span className="engineering-overview-kpi-state">
+                      {card.stateMessage}
+                    </span>
+                  ) : undefined
+                }
+              />
+            ))}
+            {transformaCards.map((card) => (
+              <EngineeringKpiCard
+                key={card.id}
+                title={card.title}
+                titleHint={card.titleHint}
+                value={card.availability === "available" ? card.value : "—"}
+                contextLabel={card.contextLabel}
+                goalLabel={card.goalLabel}
+                goalPrefix={card.goalPrefix}
+                goalHint={card.goalHint}
+                monthlyGoalLabel={card.monthlyGoalLabel}
+                monthlyGoalPrefix={card.monthlyGoalPrefix}
+                monthlyGoalHint={card.monthlyGoalHint}
+                goalScopeBadge={card.goalScopeBadge}
+                goalScopeHint={card.goalScopeHint}
+                goalPerformanceBadge={card.goalPerformanceBadge}
+                iddScoreLabel={card.iddScoreLabel}
+                icon={KPI_ICONS[card.id]}
+                loading={refreshing && card.availability === "available"}
+                footer={
+                  card.stateMessage ? (
+                    <span className="engineering-overview-kpi-state">
+                      {card.stateMessage}
+                    </span>
+                  ) : undefined
+                }
+              />
+            ))}
+          </div>
+          {cards.length === 0 ? <EngineeringEmptyState /> : null}
 
           <EngineeringSectionCard
-            title={copy.sourcesTitle}
-            subtitle={copy.sourcesSubtitle}
+            title={copy.lmpDeepeningTitle}
+            subtitle={copy.lmpDeepeningBody}
           >
-            <div className="engineering-home-sections-grid">
-              {rows.map((row) => (
-                <EngineeringSectionRouteCard
-                  key={row.key}
-                  title={row.title}
-                  description={row.detail || row.statusLabel}
-                  icon={<ClipboardList size={20} aria-hidden="true" />}
-                  badge={row.statusLabel}
-                  routes={[]}
-                />
-              ))}
-            </div>
-            {rows.length === 0 ? <EngineeringEmptyState /> : null}
+            <p className="engineering-overview-deepening-note">
+              {copy.lmpDeepeningBadge} — acompanhamento detalhado será um
+              módulo interno do Portal Engenharia, sem redirecionamento
+              para o dashboard legado.
+            </p>
           </EngineeringSectionCard>
+
+          {hasTransformaAccess ? (
+            <EngineeringSectionCard
+              title={copy.transformaDeepeningTitle}
+              subtitle={copy.transformaDeepeningBody}
+            >
+              <EngineeringActionButton
+                variant="primary"
+                href={TRANSFORMA_HREF}
+                title={copy.transformaDeepeningCta}
+              >
+                {copy.transformaDeepeningCta}
+              </EngineeringActionButton>
+            </EngineeringSectionCard>
+          ) : null}
         </>
       ) : null}
     </>

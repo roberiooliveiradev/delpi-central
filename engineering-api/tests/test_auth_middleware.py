@@ -286,7 +286,9 @@ def test_probe_route_not_in_production_openapi(client):
     spec = client.get("/openapi.json").json()
     assert "/probe" not in spec["paths"]
     assert "/probe/whoami" not in spec["paths"]
-    assert set(spec["paths"].keys()) == {"/health", "/ready", "/v1/home"}
+    assert set(spec["paths"].keys()) == {
+        "/health", "/ready", "/v1/home", "/v1/overview"
+    }
 
 
 def test_service_token_headers_do_not_bypass(jwks_env, core_rbac, probe_client, monkeypatch):

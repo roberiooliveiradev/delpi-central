@@ -92,7 +92,7 @@ export default function App({
         />
       ) : null}
       {resolved.view === "overview" ? (
-        <OverviewPage basePath={basePath} />
+        <OverviewPage basePath={basePath} permissions={permissions} />
       ) : null}
       {resolved.view === "help" ? <HelpPage basePath={basePath} /> : null}
     </EngineeringPluginShell>

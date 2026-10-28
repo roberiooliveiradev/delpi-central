@@ -1226,6 +1226,272 @@ declare module "@delpi/plugin-ui/index" {
   export function createDashboardUserManual(config: {
     prefix: string;
   }): EngineeringUserManualKit;
+
+  // --- KPI card (mesmo componente do Dashboard Engenharia) ---
+
+  export type KpiPerformanceBadge = {
+    label: string;
+    tone?: "positive" | "negative" | "warning" | "neutral" | "info";
+  };
+
+  export type KpiScopeBadge = {
+    label: string;
+    tone?: "scope" | "info" | "neutral";
+  };
+
+  export type KpiComparisonTone = "positive" | "negative" | "warning";
+
+  export type KpiCardLabels = {
+    goalPrefix: string;
+    iddScorePrefix: string;
+    badgesStatus: string;
+  };
+
+  export type DashboardKpiCardProps = {
+    title: string;
+    titleHint?: string;
+    value: string;
+    valueVariant?: "default" | "per-unit";
+    comparisonTone?: KpiComparisonTone | null;
+    contextLabel?: string;
+    goalLabel?: string | null;
+    goalPrefix?: string | null;
+    goalHint?: string | null;
+    monthlyGoalLabel?: string | null;
+    monthlyGoalPrefix?: string | null;
+    monthlyGoalHint?: string | null;
+    periodKindBadge?: string | null;
+    goalScopeBadge?: KpiScopeBadge | null;
+    goalScopeHint?: string | null;
+    goalPerformanceBadge?: KpiPerformanceBadge | null;
+    goalPerformanceBadges?: KpiPerformanceBadge[];
+    iddScoreLabel?: string | null;
+    goalVariant?: "default" | "per-unit";
+    subtitle?: string;
+    icon?: ReactNode;
+    footer?: ReactNode;
+    loading?: boolean;
+    refreshing?: boolean;
+    className?: string;
+    onClick?: () => void;
+  };
+
+  export function createDashboardKpiCard(config: {
+    prefix: string;
+    labels: KpiCardLabels;
+    cardModifier?: string;
+  }): ComponentType<DashboardKpiCardProps>;
+
+  // --- Filtros: período rápido, datas, unidade ---
+
+  export type PeriodPresetId =
+    | "today"
+    | "this_week"
+    | "this_month"
+    | "last_month"
+    | "this_quarter"
+    | "this_year"
+    | "last_12_months"
+    | "custom";
+
+  export type PeriodPresetRange = {
+    dateStart: string;
+    dateEnd: string;
+    competence: string;
+  };
+
+  export const PERIOD_PRESET_OPTIONS: readonly {
+    value: PeriodPresetId;
+    label: string;
+  }[];
+
+  export function resolvePeriodPreset(
+    preset: PeriodPresetId,
+    now?: Date,
+    timeZone?: string,
+  ): PeriodPresetRange | null;
+
+  export function detectPeriodPreset(
+    dateStart: string,
+    dateEnd: string,
+    now?: Date,
+    timeZone?: string,
+  ): PeriodPresetId;
+
+  export function resolveEffectivePeriodPreset(
+    dateStart: string,
+    dateEnd: string,
+    stored?: PeriodPresetId | null,
+    now?: Date,
+    timeZone?: string,
+  ): PeriodPresetId;
+
+  export function parsePeriodPresetId(
+    value: string | null | undefined,
+  ): PeriodPresetId | null;
+
+  export function todayIsoInTimeZone(now?: Date, timeZone?: string): string;
+
+  export type QuickPeriodSelectorProps = {
+    value: PeriodPresetId;
+    onChange: (value: PeriodPresetId) => void;
+    prefix?: string;
+    label?: string;
+    hint?: string;
+    ariaLabel?: string;
+    idPrefix?: string;
+  };
+
+  export function createDashboardQuickPeriodSelector(
+    prefix: string,
+  ): ComponentType<Omit<QuickPeriodSelectorProps, "prefix">>;
+
+  export type DateFieldInputType = "date" | "month";
+
+  export type DateFieldClassNames = Record<string, string>;
+
+  export type DashboardDateFieldProps = {
+    id?: string;
+    label: string;
+    hint?: string;
+    type?: DateFieldInputType;
+    value: string;
+    onChange: (value: string) => void;
+    required?: boolean;
+    disabled?: boolean;
+    wide?: boolean;
+    className?: string;
+  };
+
+  export function createDashboardDateField(config: {
+    classNames: DateFieldClassNames;
+  }): ComponentType<DashboardDateFieldProps>;
+
+  export function dateFieldBemClasses(prefix: string): DateFieldClassNames;
+
+  export type MultiSelectOption = { value: string; label: string };
+
+  export type MultiSelectFieldLabels = {
+    emptyLabel: string;
+    searchPlaceholder: string;
+    selectVisible: string;
+    clear: string;
+    emptyOptions: string;
+    multipleSelected: (count: number) => string;
+    createOption?: (query: string) => string;
+    searchAriaLabel?: (label: string) => string;
+    selectedCountLabel?: (count: number) => string;
+    emptyOptionsCreatable?: string;
+    removeTagAriaLabel?: (value: string) => string;
+  };
+
+  export type DashboardMultiSelectFieldProps = {
+    label: string;
+    labelHint?: string;
+    id?: string;
+    options: MultiSelectOption[];
+    selectedValues: string[];
+    onChange: (values: string[]) => void;
+    emptyLabel?: string;
+    searchable?: boolean;
+    disabled?: boolean;
+    className?: string;
+    creatable?: boolean;
+    maxCreateLength?: number;
+    maxSelected?: number;
+    onCreateOption?: (value: string) => void;
+    showSelectedTags?: boolean;
+    includeSelectedInOptions?: boolean;
+    showBulkActions?: boolean;
+    hint?: string;
+    placeholder?: string;
+  };
+
+  export function createDashboardMultiSelectField(config: {
+    prefix?: string;
+    classNames?: Record<string, string>;
+    labels: MultiSelectFieldLabels;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardMultiSelectFieldProps>;
+
+  // --- Unidades operacionais e apresentação de metas/IDD ---
+
+  export const OPERATIONAL_UNIT_OPTIONS: MultiSelectOption[];
+
+  export function formatOperationalUnitCode(
+    code: string | null | undefined,
+    fallback?: string,
+  ): string;
+
+  export function formatFilterViewScopeLabel(
+    viewMode: "consolidated" | "branch",
+    branch: string,
+  ): string;
+
+  export function normalizeOperationalUnitCode(
+    value: string | null | undefined,
+  ): string;
+
+  export type DashboardGoalFields = {
+    goal_label?: string | null;
+    goal_value?: number | null;
+    comparable_goal?: number | null;
+    reference_goal?: number | null;
+    target?: number | null;
+    has_goal?: boolean;
+    goal_aggregation?: string | null;
+    goal_mode?: string | null;
+    goal_period_kind?: string | null;
+    goal_period_partial?: boolean | null;
+    goal_scope_branch?: string | null;
+    goal_scope_label?: string | null;
+    goal_scope_hint?: string | null;
+    scope_type?: string | null;
+    performance_direction?: string | null;
+    value_unit?: string | null;
+    value_prefix?: string | null;
+    value_suffix?: string | null;
+    value_decimals?: number | null;
+    start_date?: string | null;
+    end_date?: string | null;
+  };
+
+  export type KpiGoalPresentation = {
+    goalLabel: string | null;
+    goalPrefix: string | null;
+    goalHint: string | null;
+    monthlyGoalLabel: string | null;
+    monthlyGoalPrefix: string | null;
+    monthlyGoalHint: string | null;
+    goalScopeBadge: KpiScopeBadge | null;
+    goalScopeHint: string | null;
+    goalPerformanceBadge: KpiPerformanceBadge | null;
+    iddScoreLabel: string | null;
+    contextLabel: string;
+  };
+
+  export function buildKpiGoalPresentation(
+    contextLabel: string,
+    goal?: DashboardGoalFields | null,
+    formatComparable?: (value: number) => string,
+    options?: {
+      showGoal?: boolean;
+      realizedValue?: number | null;
+      dateStart?: string | null;
+      dateEnd?: string | null;
+      iddScoreLabel?: string | null;
+    },
+  ): KpiGoalPresentation;
+
+  export function formatDashboardMetricValue(
+    value: number | null | undefined,
+    fields?: DashboardGoalFields | null,
+    options?: { fallback?: string },
+  ): string;
+
+  export function resolveIndicatorIddScoreLabelFromSi(
+    score: number | null | undefined,
+  ): string | null;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

@@ -30,6 +30,7 @@ export function HelpPage({ basePath }: HelpPageProps) {
 
   const sections = [
     { id: "start", title: "Página Início" },
+    { id: "overview", title: "Visão geral" },
     { id: "paths", title: "Caminhos e funcionalidades" },
     { id: "search", title: "Busca e favoritos" },
     { id: "states", title: "Estados das informações" },
@@ -104,6 +105,40 @@ export function HelpPage({ basePath }: HelpPageProps) {
                   term: "Caminhos e funcionalidades",
                   meaning:
                     "Catálogo dos acessos oficiais de Engenharia, organizados por categoria: Trabalho, Análises e Suporte.",
+                },
+              ]}
+            />
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-overview">
+          <EngineeringSectionCard title="Visão geral">
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Indicadores",
+                  meaning:
+                    "Seis indicadores oficiais da Engenharia: % LMP dentro do prazo, lead time médio e total de propostas (LMP); ganhos brutos, soluções implementadas e ROI médio (TRANSFORMA+). Metas e Nota IDD aparecem quando os sistemas oficiais as fornecem.",
+                },
+                {
+                  term: "Filtros",
+                  meaning:
+                    "Período rápido, datas inicial e final, competência e unidade. Mudar a competência ajusta as datas do mês; datas que cruzam meses limpam a competência. Os filtros ficam refletidos no endereço da página.",
+                },
+                {
+                  term: "Unidade e escopo",
+                  meaning:
+                    "Selecionar uma unidade filtra os indicadores operacionais que suportam esse recorte. Indicadores estratégicos consolidados continuam consolidados — o escopo de cada cartão aparece abaixo do valor.",
+                },
+                {
+                  term: "Estados",
+                  meaning:
+                    "Quando uma fonte falha ou não é autorizada, o cartão informa o estado real — os demais indicadores continuam exibidos. Nenhum valor é substituído por zero.",
+                },
+                {
+                  term: "Aprofundamento",
+                  meaning:
+                    "O atalho para o Portal TRANSFORMA+ aparece somente quando você tem permissão. O detalhamento de LMPs será um módulo interno futuro — ainda não há página dedicada.",
                 },
               ]}
             />

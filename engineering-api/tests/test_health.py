@@ -25,10 +25,11 @@ def test_openapi_exposes_stable_operation_ids(client):
 
 
 def test_only_authorized_business_routes_exposed(client):
-    """Superfície autorizada: health/ready + Home (F2a). Qualquer rota de
-    negócio nova exige revisão deste contrato."""
+    """Superfície autorizada: health/ready + Home (F2a) + Overview
+    (F3.OVERVIEW). Qualquer rota de negócio nova exige revisão deste
+    contrato."""
     spec = client.get("/openapi.json").json()
-    allowed = {"/health", "/ready", "/v1/home"}
+    allowed = {"/health", "/ready", "/v1/home", "/v1/overview"}
     assert set(spec["paths"].keys()) == allowed
 
 

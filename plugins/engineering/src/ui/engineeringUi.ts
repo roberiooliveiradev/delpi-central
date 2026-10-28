@@ -5,8 +5,13 @@ import {
   createDashboardCommandPalette,
   createDashboardEmptyState,
   createDashboardEventsSection,
+  createDashboardKpiCard,
   createDashboardLoadingState,
   createDashboardMetricStrip,
+  createDashboardMultiSelectField,
+  createDashboardDateField,
+  createDashboardQuickPeriodSelector,
+  dateFieldBemClasses,
   createDashboardPageHero,
   createDashboardPagePath,
   createDashboardRecentAccessStrip,
@@ -55,6 +60,38 @@ export const EngineeringPageHero = createDashboardPageHero({
 
 export const EngineeringMetricStrip = createDashboardMetricStrip({
   prefix: ENG_UI_PREFIX,
+});
+
+export const EngineeringKpiCard = createDashboardKpiCard({
+  prefix: ENG_UI_PREFIX,
+  labels: {
+    goalPrefix: "Meta",
+    iddScorePrefix: "Nota IDD",
+    badgesStatus: "Escopo e desempenho em relação à meta",
+  },
+});
+
+export const EngineeringQuickPeriodSelector =
+  createDashboardQuickPeriodSelector(ENG_UI_PREFIX);
+
+export const EngineeringDateField = createDashboardDateField({
+  classNames: dateFieldBemClasses(ENG_UI_PREFIX),
+});
+
+export const EngineeringMultiSelectField = createDashboardMultiSelectField({
+  prefix: ENG_UI_PREFIX,
+  portalScopeClassName: ENG_PORTAL_SCOPE,
+  labels: {
+    emptyLabel: "Todas",
+    searchPlaceholder: "Buscar…",
+    selectVisible: "Selecionar visíveis",
+    clear: "Limpar",
+    emptyOptions: "Nenhuma opção disponível.",
+    multipleSelected: (count) => `${count} selecionadas`,
+    searchAriaLabel: (label) => `Buscar em ${label}`,
+    selectedCountLabel: (count) => `${count} unidades selecionadas`,
+    removeTagAriaLabel: (value) => `Remover ${value}`,
+  },
 });
 
 export const EngineeringEventsSection = createDashboardEventsSection({
