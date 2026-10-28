@@ -42,11 +42,13 @@ ProviderOutcome = SpecialistOutcome
 # A bare 404 without that envelope stays a transport failure.
 OWNER_RECORD_NOT_FOUND = "owner_record_not_found"
 
-# Owner HTTP 400/422 whose shared error envelope does NOT declare
-# recoverable=false — a contract/admissibility rejection of the
-# proposed READ arguments that may be reformulated once under the
-# bounded recovery round. Explicit non-recoverable envelopes and
-# bare error statuses stay ordinary invocation failures.
+# Owner HTTP 400/422 whose shared error envelope EXPLICITLY declares
+# recoverability (``error.recoverable is True`` or an owner-published
+# argument-validation code) — a contract/admissibility rejection of
+# the proposed READ arguments that may be reformulated once under
+# the bounded recovery round. Undeclared and non-recoverable
+# envelopes and bare error statuses stay ordinary invocation
+# failures.
 OWNER_ARGUMENT_REJECTED = "owner_argument_rejected"
 
 

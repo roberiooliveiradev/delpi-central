@@ -9625,8 +9625,11 @@ class OperationalCapabilityOrchestrator:
             # coverage/totals; absent owner data stays null, never
             # fabricated.
             "coverage": {
+                # Unknown when no governed outcome produced facts —
+                # never projected as a literal 0, which would be
+                # indistinguishable from an authoritative empty page.
                 "returned_count": (
-                    len(facts.records) if facts is not None else 0
+                    len(facts.records) if facts is not None else None
                 ),
                 "total_count": (
                     facts.total_count if facts is not None else None

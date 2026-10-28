@@ -2499,3 +2499,68 @@ def test_recovery_feedback_carries_authoritative_coverage(
     assert coverage["total_count"] == 77
     assert coverage["coverage_complete"] is False
     assert coverage["explicit_empty"] is False
+
+
+def test_recovery_feedback_unknown_coverage_when_no_facts(
+    capture_mode_logs,
+):
+    """WP3: a first-invoke rejection enters recovery WITHOUT any
+    governed outcome — coverage must project null (unknown), never
+    a fabricated returned_count=0 that would masquerade as an
+    authoritative empty page."""
+    relevant = _outcome(
+        "ok", structured={"items": [{"name": "TERMINAL BALA M6"}]}
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"product_type": "bala"}},
+            relevance=None,
+        ),
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"}
+            }
+        },
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            }
+        },
+    ]
+    provider, orch = _orchestrator(
+        [_search_cap()],
+        {
+            ("alpha", "search_items"): [
+                _arg_rejection("product_type inválido"),
+                relevant,
+            ]
+        },
+        proposal,
+    )
+    attempt = orch.attempt("terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    model = orch._invoke_model._port
+    arg_requests = [
+        r
+        for r in model.requests
+        if r.task_purpose_id == ARGUMENTS_INSTRUCTION_ID
+    ]
+    assert len(arg_requests) >= 2
+    schema_block = arg_requests[-1].input_text.split(
+        "<schema>", 1
+    )[1].split("</schema>", 1)[0]
+    block = json.loads(schema_block)
+    feedback = block.get("relevance_feedback")
+    parsed = (
+        json.loads(feedback) if isinstance(feedback, str) else feedback
+    )
+    coverage = parsed["coverage"]
+    assert coverage["returned_count"] is None
+    assert coverage["total_count"] is None
+    assert coverage["coverage_complete"] is None
+    assert coverage["explicit_empty"] is None
+    assert parsed["owner_error"]["owner_hint"] == (
+        "product_type inválido"
+    )

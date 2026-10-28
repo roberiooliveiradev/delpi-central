@@ -371,21 +371,9 @@ def test_not_found_envelope_on_500_stays_invocation_failure():
     assert exc.value.code == "openapi_invocation_failed"
 
 
-def test_recoverable_400_is_owner_argument_rejection():
-    """HTTP 400 with the shared error envelope and no explicit
-    recoverable=false is an owner argument rejection — the bounded
-    message becomes a sanitized hint for contract repair."""
-
+def _invoke_for_status(status, body):
     def http_get(url, headers=None, timeout=None, stream=None):
-        return FakeResponse(
-            400,
-            {
-                "success": False,
-                "message": "product_type inválido: use códigos de 2 caracteres (ex.: MP,PI,PA).",
-                "data": None,
-                "error": None,
-            },
-        )
+        return FakeResponse(status, body)
 
     invoker = HttpOpenApiInvoker(
         "http://h",
@@ -400,64 +388,134 @@ def test_recoverable_400_is_owner_argument_rejection():
             {"product_id": "x"},
             correlation_id="c",
         )
-    assert exc.value.code == "owner_argument_rejected"
-    assert exc.value.owner_hint is not None
-    assert "2 caracteres" in exc.value.owner_hint
+    return exc.value
+
+
+def test_declared_recoverable_400_is_owner_argument_rejection():
+    """HTTP 400 whose shared envelope explicitly declares
+    ``error.recoverable: true`` is an owner argument rejection —
+    the bounded message becomes a sanitized hint for repair."""
+    err = _invoke_for_status(
+        400,
+        {
+            "success": False,
+            "message": "product_type inválido: use códigos de 2 caracteres (ex.: MP,PI,PA).",
+            "data": None,
+            "error": {"code": "VALIDATION_ERROR", "recoverable": True},
+        },
+    )
+    assert err.code == "owner_argument_rejected"
+    assert err.owner_hint is not None
+    assert "2 caracteres" in err.owner_hint
+
+
+def test_typed_validation_code_400_is_owner_argument_rejection():
+    """An owner-published argument-validation code authorizes
+    repair even without an explicit recoverable flag (typed
+    classification, never message matching)."""
+    err = _invoke_for_status(
+        400,
+        {
+            "success": False,
+            "message": "invalid field combination",
+            "error": {"code": "VALIDATION_ERROR"},
+        },
+    )
+    assert err.code == "owner_argument_rejected"
+    assert err.owner_hint == "invalid field combination"
+
+
+def test_typed_validation_code_422_is_owner_argument_rejection():
+    """The typed argument-validation contract applies to 422."""
+    err = _invoke_for_status(
+        422,
+        {
+            "success": False,
+            "message": "unprocessable arguments",
+            "error": {"code": "VALIDATION_ERROR", "recoverable": True},
+        },
+    )
+    assert err.code == "owner_argument_rejected"
+
+
+def test_undeclared_400_envelope_stays_invocation_failure():
+    """REWORK contract: a 400 shared envelope WITHOUT any
+    recoverability declaration is NOT repairable — absence of
+    ``recoverable:false`` never implies ``recoverable:true``."""
+    err = _invoke_for_status(
+        400,
+        {
+            "success": False,
+            "message": "product_type inválido: use códigos de 2 caracteres (ex.: MP,PI,PA).",
+            "data": None,
+            "error": None,
+        },
+    )
+    assert err.code == "openapi_invocation_failed"
+    assert err.owner_hint is None
+
+
+def test_untyped_error_block_400_stays_invocation_failure():
+    """An error block with a non-validation code and no
+    recoverable flag stays terminal."""
+    err = _invoke_for_status(
+        400,
+        {
+            "success": False,
+            "message": "business rule violated",
+            "error": {"code": "BUSINESS_RULE"},
+        },
+    )
+    assert err.code == "openapi_invocation_failed"
+    assert err.owner_hint is None
 
 
 def test_explicit_non_recoverable_400_stays_invocation_failure():
     """An owner-declared non-recoverable rejection is terminal —
     it never reaches the contract-repair path."""
-
-    def http_get(url, headers=None, timeout=None, stream=None):
-        return FakeResponse(
-            400,
-            {
-                "success": False,
-                "message": "rejected permanently",
-                "error": {"code": "BUSINESS", "recoverable": False},
-            },
-        )
-
-    invoker = HttpOpenApiInvoker(
-        "http://h",
-        source_id="delpi",
-        subject_bearer_getter=lambda: "t",
-        http_get=http_get,
+    err = _invoke_for_status(
+        400,
+        {
+            "success": False,
+            "message": "rejected permanently",
+            "error": {"code": "BUSINESS", "recoverable": False},
+        },
     )
-    provider = OpenApiCapabilityProvider([_source(invoker)])
-    with pytest.raises(CapabilityProviderError) as exc:
-        provider.invoke(
-            _product_capability(provider),
-            {"product_id": "x"},
-            correlation_id="c",
-        )
-    assert exc.value.code == "openapi_invocation_failed"
-    assert exc.value.owner_hint is None
+    assert err.code == "openapi_invocation_failed"
+    assert err.owner_hint is None
+
+
+def test_non_recoverable_flag_overrides_validation_code():
+    """``recoverable:false`` wins over a typed validation code —
+    the owner's negation is authoritative."""
+    err = _invoke_for_status(
+        400,
+        {
+            "success": False,
+            "message": "denied",
+            "error": {"code": "VALIDATION_ERROR", "recoverable": False},
+        },
+    )
+    assert err.code == "openapi_invocation_failed"
+    assert err.owner_hint is None
+
+
+def test_bare_422_without_contract_stays_invocation_failure():
+    """A 422 without the shared envelope classification fails
+    closed."""
+    err = _invoke_for_status(
+        422,
+        {"success": False, "message": "unprocessable", "error": None},
+    )
+    assert err.code == "openapi_invocation_failed"
 
 
 def test_bare_400_without_envelope_stays_invocation_failure():
     """A 400 without the shared envelope is not an owner
     argument rejection — transport-shaped failure stays plain."""
-
-    def http_get(url, headers=None, timeout=None, stream=None):
-        return FakeResponse(400, {"detail": "Bad Request"})
-
-    invoker = HttpOpenApiInvoker(
-        "http://h",
-        source_id="delpi",
-        subject_bearer_getter=lambda: "t",
-        http_get=http_get,
-    )
-    provider = OpenApiCapabilityProvider([_source(invoker)])
-    with pytest.raises(CapabilityProviderError) as exc:
-        provider.invoke(
-            _product_capability(provider),
-            {"product_id": "x"},
-            correlation_id="c",
-        )
-    assert exc.value.code == "openapi_invocation_failed"
-    assert exc.value.owner_hint is None
+    err = _invoke_for_status(400, {"detail": "Bad Request"})
+    assert err.code == "openapi_invocation_failed"
+    assert err.owner_hint is None
 
 
 def test_invoker_drops_undeclared_arguments():

@@ -84,16 +84,29 @@ def _owner_not_found_hint(response: Any) -> str | None:
     return cleaned[:240]
 
 
+# Owner-published argument-validation error codes whose contract
+# semantics authorize a reformulated READ (typed classification owned
+# by the API — never inferred from message text). Only codes the
+# owner actually emits may be listed here.
+_OWNER_ARG_VALIDATION_CODES = frozenset({"VALIDATION_ERROR"})
+
+
 def _owner_recoverable_rejection_hint(response: Any) -> str | None:
     """Owner argument rejection declared by the shared error envelope.
 
-    ``error_response`` answers HTTP 400/422 with ``success=false``
-    and a bounded message; ``error.recoverable=false`` marks a
-    terminal rejection — anything else (recoverable declared or the
-    envelope's recoverable-by-default shape with no error block) is
-    a candidate for the single bounded contract-repair round. The
-    returned value is a sanitized message excerpt — untrusted owner
-    data, never an instruction.
+    Recoverable ONLY under explicit contractual evidence:
+
+    - ``error.recoverable is True`` — the owner's ``error_response``
+      declares the rejection repairable; or
+    - ``error.code`` is an owner-published argument-validation code
+      and ``recoverable`` is not negated — typed classification
+      authorizing one reformulated READ.
+
+    Absence of ``recoverable:false`` is NOT a declaration: a bare
+    400/422, an envelope without an ``error`` block, a malformed
+    body, or any non-declared shape fails closed as an ordinary
+    invocation failure. The returned value is a sanitized message
+    excerpt — untrusted owner data, never an instruction.
     """
     if getattr(response, "status_code", 0) not in (400, 422):
         return None
@@ -106,8 +119,17 @@ def _owner_recoverable_rejection_hint(response: Any) -> str | None:
     if parsed.get("success") is not False:
         return None
     error = parsed.get("error")
-    if isinstance(error, Mapping) and error.get("recoverable") is False:
+    if not isinstance(error, Mapping):
         return None
+    recoverable = error.get("recoverable")
+    if recoverable is not True:
+        code = error.get("code")
+        if not (
+            recoverable is None
+            and isinstance(code, str)
+            and code in _OWNER_ARG_VALIDATION_CODES
+        ):
+            return None
     message = parsed.get("message")
     if not isinstance(message, str):
         return None
