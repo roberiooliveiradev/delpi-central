@@ -602,3 +602,15 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Residual operacional: checkpoint do WAL bloqueado por lock do CLI em execucao; bytes do WAL redigidos diretamente (eventuais frames com checksum invalido sao descartados pelo SQLite na proxima abertura — perda limitada a dados nao confirmados de sessao).
 - Consequencia: EXTERNAL_EXPOSURE=REMEDIATED-LOCALLY; SECURITY_OWNER_DECISION=ACCEPT/CLASSIFIED-TEST-KEY; RISK_ACCEPTANCE=RECORDED pelo owner neste ledger -> RELEASE_SECURITY_GATE=PASS para o release DAVI-only.
 - Deploy DAVI-only (SHA 269d5276b0): autorizado a prosseguir pelo procedimento canonico.
+
+
+## 2026-10-28 — DELIA-C3-DAVI-ONLY-GOVERNED-PRODUCTION-RELEASE-02 — DEPLOY EXECUTED (doc 184)
+
+- Deploy canonico em srv-api: git pull --ff-only -> 48afe2ba86; ./infra/scripts/up-prod-sequential.sh --build delia-api. Somente delia-api reconstruido/reiniciado.
+- DEPLOYED_CODE_SHA=48afe2ba86 (contem implementation 269d5276b0); DEPLOYED_IMAGE_DIGEST=sha256:9947eac96f471f55b9ea4de5c67675b962261ded9d07c047e8f4e02de3fad1c8; delpi-delia-api Up (healthy); GET /health=200.
+- Limpeza de config residual: infra/.env em srv-api continha 4 vars mortas DELIA_OPENAPI_* (3 DELPI + timeout) injetadas via env_file; removidas com backup (.env.bak-delpi-openapi) e recreate do container; verificado 0 vars DELIA_OPENAPI no runtime.
+- Verificacao runtime no container: openapi_declarations.delpi.json ausente de /app/config; settings openapi_delpi_* + openapi_timeout_seconds todos ausentes (False x4); composer sem _wire_openapi_provider/source_id=delpi (0 matches); DIRECT_DELPI_PROVIDER=0, CAPABILITIES=0, FALLBACK=0.
+- DAVI/MCP intacto: DELIA_MCP_DAVI_* presentes; endpoint apps/api-delpi/mcp responde 401 (superficie montada, AuthZ enforced); interaction nao autenticada -> 401 (fail-closed).
+- READ tests T1-T6=TEST_NOT_RUN: sem identidade autorizada disponivel; reset de senha para mint de bearer proibido (doc 173 + task). AUTHZ=PASS estrutural (ingresso fail-closed). BUSINESS_OUTCOME=INCONCLUSIVE — nao reivindicado.
+- Veredito: RUNTIME_BOUNDARY_VERIFIED com residual de outcome; fase C3 nao avancada; proximo passo = trilha de inteligencia; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; DAVI/API_DELPI_UNCHANGED=YES; INDEPENDENT_REVIEW=PENDING.
+- Artefatos: doc 184.
