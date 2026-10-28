@@ -17,7 +17,7 @@ import {
   House,
   LifeBuoy,
   RefreshCw,
-  Sparkles,
+
 } from "lucide-react";
 
 import { getDisplayNameFromAccessToken } from "../../app/authDisplayName";
@@ -69,7 +69,7 @@ const ROUTE_ICONS: Record<string, ReactNode> = {
   dashboard: <ChartNoAxesCombined size={16} aria-hidden="true" />,
   home: <House size={16} aria-hidden="true" />,
   help: <BookOpen size={16} aria-hidden="true" />,
-  eva: <Sparkles size={16} aria-hidden="true" />,
+
 };
 
 function openItem(item: HomeItem): void {
@@ -215,23 +215,6 @@ export function HomePage({
             listAriaLabel={copy.events.listAriaLabel}
             emptyMessage={copy.events.emptyLabel}
             items={eventItems}
-            actions={
-              <EngineeringActionButton
-                variant="ghost"
-                onClick={reload}
-                disabled={refreshing}
-                aria-label={
-                  refreshing
-                    ? copy.hero.refreshingLabel
-                    : copy.events.refreshLabel
-                }
-              >
-                <RefreshCw size={16} aria-hidden="true" />
-                {refreshing
-                  ? copy.hero.refreshingLabel
-                  : copy.events.refreshLabel}
-              </EngineeringActionButton>
-            }
           >
             {degraded ? (
               <p className="engineering-home-inline-note" role="status">

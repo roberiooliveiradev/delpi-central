@@ -94,14 +94,9 @@ export const ENGINEERING_CATALOG: readonly CatalogSection[] = [
         target: { kind: "internal", view: "help" },
         keywords: ["ajuda", "manual", "suporte", "documentacao"],
       },
-      {
-        id: "eva",
-        label: "Assistente EVA",
-        description: "Inteligência assistiva da Engenharia",
-        target: { kind: "internal", view: "home" },
-        comingSoon: true,
-        keywords: ["eva", "assistente", "ia", "inteligencia"],
-      },
+      // EVA é especialista de Engenharia (interoperabilidade via MCP
+      // quando houver contrato), não aplicativo/rota navegável — sem
+      // entrada no catálogo (HOME.R2).
     ],
   },
 ];
@@ -243,7 +238,6 @@ export const HOME_COPY = {
     title: "Eventos e interações",
     subtitle: "Tarefas e solicitações que pedem sua atenção",
     listAriaLabel: "Lista de eventos e interações",
-    refreshLabel: "Atualizar",
     queueOkTitle: "Tudo em dia — nenhuma pendência no momento.",
     sourcesNotice:
       "Algumas fontes não responderam ou exigem permissão adicional — exibindo apenas o que está autorizado e disponível.",

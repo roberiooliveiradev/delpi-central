@@ -34,7 +34,7 @@ describe("visibleSections", () => {
     const sections = visibleSections(new Set(), true);
     const ids = sections.flatMap((s) => s.routes.map((r) => r.id));
     expect(ids).toContain("dashboard");
-    expect(ids).toContain("eva"); // futuro — visível mas desabilitado
+    expect(ids).not.toContain("eva"); // especialista, não app navegável
   });
 });
 
@@ -46,9 +46,12 @@ describe("searchCatalog", () => {
     expect(hits.map((h) => h.id)).toContain("overview");
   });
 
-  it("busca por keyword cadastrada", () => {
+  it("EVA não é funcionalidade navegável — ausente da busca", () => {
     const hits = searchCatalog("inteligencia", sections);
-    expect(hits.map((h) => h.id)).toContain("eva");
+    expect(hits.map((h) => h.id)).not.toContain("eva");
+    expect(searchCatalog("eva", sections).map((h) => h.id)).not.toContain(
+      "eva",
+    );
   });
 
   it("sem resultado → lista vazia honesta", () => {
@@ -94,9 +97,8 @@ describe("catalog integrity", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("destino futuro não tem link operacional", () => {
-    const eva = findCatalogRoute("eva");
-    expect(eva?.comingSoon).toBe(true);
+  it("EVA não resolve como rota — especialista, não app navegável", () => {
+    expect(findCatalogRoute("eva")).toBeNull();
   });
 
   it("destinos externos apontam para /apps/ governados", () => {
