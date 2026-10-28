@@ -614,3 +614,15 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - READ tests T1-T6=TEST_NOT_RUN: sem identidade autorizada disponivel; reset de senha para mint de bearer proibido (doc 173 + task). AUTHZ=PASS estrutural (ingresso fail-closed). BUSINESS_OUTCOME=INCONCLUSIVE — nao reivindicado.
 - Veredito: RUNTIME_BOUNDARY_VERIFIED com residual de outcome; fase C3 nao avancada; proximo passo = trilha de inteligencia; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; DAVI/API_DELPI_UNCHANGED=YES; INDEPENDENT_REVIEW=PENDING.
 - Artefatos: doc 184.
+
+
+## 2026-10-28 — DELIA-C3-REAL-ORCHESTRATION-CONTEXTUAL-RECOVERY-DIAGNOSTIC-01 (doc 185)
+
+- Diagnostico real T1-T4 em stack dev local (delia-api rebuild f55e966f8a, Ollama delia-json:latest via policy local-LLM, DAVI/MCP local healthy, auth real dev portal). Nenhuma mudanca de codigo/prompt/DAVI/deploy.
+- Resultado: 4/4 cenarios NON_GROUNDED com limitacoes honestas, zero fabricacao, zero atos nao autorizados. Falhas variaveis: capability_surface_listing, owner_path_unbound, delpi_source_unverified.
+- Causas-raiz por estagio (logs orchestration stage=*): RC1 target_selection deterministicamente vincula mcp:vista.search_data_routes a consultas de produto DELPI; RC2 foreign_selection invalid intermitente; RC3 admission misclassifica como surface_inquiry; RC4 candidate_arguments para execute falha apos discover ok; RC5 foreign_selection escolhe teo.get_product_guide -> mcp_protocol_error.
+- NAO causas: transporte DAVI/MCP, api-delpi, AuthN/AuthZ, projecao/sintese, boundary (DIRECT_DELPI_*=0 no runtime).
+- Ressalva de modelo: evidencia = delia-json local; modelo produtivo kimi-k3 nao avaliado (egress bloqueado por policy) — etapas e mecanica provadas, equivalencia produtiva nao reivindicada.
+- Correcao minima recomendada (nao executada): A/B identico T1-T4 contra configuracao do modelo produtivo em ambiente autorizado para isolar capacidade de modelo vs contrato de projecao de capabilities.
+- Veredito: FAILURES_REPRODUCED root-stage-evidenced; BUSINESS_OUTCOME=FAIL em ambiente local; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
+- Artefatos: doc 185.
