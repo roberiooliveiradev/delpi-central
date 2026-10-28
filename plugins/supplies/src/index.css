@@ -2672,6 +2672,56 @@
   color: var(--sp-danger, #b42318);
 }
 
+.dashboard-supplies-portal .sp-comex-selector__badge--neutral {
+  background: var(--sp-surface-muted, rgba(0, 0, 0, 0.06));
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-comex-selector__catalog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-space-2, 8px);
+}
+
+.dashboard-supplies-portal .sp-comex-selector__catalog
+  .sp-comex-selector__ncm-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dashboard-supplies-portal .sp-comex-selector__ncm-desc {
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 32ch;
+}
+
+.dashboard-supplies-portal .sp-comex-selector__admin {
+  border-top: 1px dashed var(--sp-border-subtle, rgba(0, 0, 0, 0.12));
+  padding-top: var(--sp-space-3, 12px);
+}
+
+.dashboard-supplies-portal .sp-comex-selector__admin > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-comex-selector__admin > summary:focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 2px;
+  border-radius: var(--sp-radius-sm, 6px);
+}
+
+.dashboard-supplies-portal .sp-comex-selector__admin
+  .sp-comex-selector__ncm-list {
+  margin-top: var(--sp-space-2, 8px);
+  margin-bottom: var(--sp-space-2, 8px);
+}
+
 .dashboard-supplies-portal .sp-comex-selector__note {
   margin: 0;
   font-size: 0.8rem;

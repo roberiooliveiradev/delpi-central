@@ -284,18 +284,16 @@ export const MARKET_INTELLIGENCE_CONTENT = {
   comex: {
     selectionTitle: "Seleção de produtos e NCMs",
     selectionHint:
-      "Selecione produtos reais da DELPI (SB1010) ou consulte uma " +
-      "NCM diretamente — ambos alimentam a mesma análise. Somente " +
-      "NCMs homologadas entram no gráfico.",
+      "Busque um produto DELPI ou informe a NCM — adicione ao " +
+      "catálogo e selecione para a análise.",
     originProducts: "Produtos DELPI",
     originNcm: "Consultar NCM",
     directNcmLabel: "NCM (8 dígitos)",
     directNcmPlaceholder: "Ex.: 85444200 ou 8544.42.00",
     directNcmHint:
       "Cole um ou mais códigos — espaços, pontos e vírgulas são " +
-      "ignorados. A validação confere apenas o formato; a vigência " +
-      "fiscal segue o fluxo de homologação.",
-    directNcmAdd: "Adicionar NCM",
+      "ignorados. A validação confere apenas o formato.",
+    directNcmAdd: "Adicionar",
     directNcmInvalid: (entries: string[]) =>
       `Códigos ignorados — a NCM exige exatamente 8 dígitos: ${entries.join(", ")}`,
     directNcmLimit:
@@ -303,7 +301,23 @@ export const MARKET_INTELLIGENCE_CONTENT = {
       "seleção antes de adicionar novos.",
     directNcmDuplicated:
       "Todos os códigos informados já estão na seleção.",
+    catalogAdded: "NCM adicionada ao catálogo.",
+    alreadyInCatalog: "Esta NCM já está no catálogo.",
     removeNcm: (code: string) => `Remover NCM ${code}`,
+    catalogTitle: "Catálogo de NCMs",
+    catalogSearchPlaceholder: "Filtrar por código ou descrição",
+    catalogEmpty:
+      "O catálogo está vazio — adicione a primeira NCM pelo campo " +
+      "acima ou a partir de um produto.",
+    selectNcm: "Selecionar",
+    deselectNcm: "Selecionada",
+    catalogNoMatch: "Nenhuma NCM encontrada no catálogo.",
+    adminTitle: "Administração do catálogo",
+    submitReview: "Enviar p/ revisão",
+    clearSelection: "Limpar seleção",
+    emptySelection:
+      "Selecione uma NCM do catálogo ou adicione uma nova para " +
+      "começar.",
     productTypeAll: "Todos",
     productTypeMp: "MP",
     productTypePi: "PI",
@@ -325,16 +339,15 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     selectedProductsLabel: "Produtos selecionados",
     removeProduct: (code: string) => `Remover ${code}`,
     ncmColumnTitle: "NCMs da seleção",
-    ncmStatusApproved: "Homologada",
-    ncmStatusPending: "Em homologação",
-    ncmStatusCandidate: "Candidata",
-    ncmStatusRejected: "Rejeitada",
+    ncmStatusAvailable: "Disponível",
+    ncmStatusRegistered: "Cadastrada",
+    ncmStatusReview: "Em revisão",
     ncmStatusInactive: "Inativa",
-    ncmStatusNotRequested: "Não solicitada",
+    ncmStatusNotCataloged: "Não cadastrada",
     ncmStatusMissing: "Sem NCM",
     ncmStatusMalformed: "NCM inválida",
-    requestApproval: "Solicitar homologação",
-    approve: "Homologar",
+    addToCatalog: "Adicionar ao catálogo",
+    approve: "Aprovar",
     reject: "Rejeitar",
     deactivate: "Inativar",
     resubmit: "Reenviar p/ revisão",
@@ -342,14 +355,6 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     actionError:
       "A ação não foi concluída — tente novamente. Nenhum estado foi " +
       "alterado sem confirmação.",
-    requestSuccess: "Homologação solicitada — aguardando análise.",
-    approvedNcmsLabel: "NCMs na análise",
-    approvedNcmsHint:
-      "NCMs homologadas que alimentam o gráfico — a mesma NCM conta " +
-      "uma única vez mesmo vinda de vários produtos.",
-    noApprovedNcm:
-      "Nenhuma NCM homologada na seleção — o gráfico só exibe dados " +
-      "quando ao menos uma NCM estiver aprovada e com dados coletados.",
     viewsLabel: "Visualizações salvas",
     viewsPlaceholder: "Nova análise",
     saveView: "Salvar visão",
@@ -366,7 +371,7 @@ export const MARKET_INTELLIGENCE_CONTENT = {
       "o valor médio é recalculado como US$/t do agregado, nunca " +
       "média simples de preços.",
     unresolvedWarning: (codes: string[]) =>
-      `NCMs sem homologação ou fora da lista ativa: ${codes.join(", ")}`,
+      `NCMs fora da lista ativa: ${codes.join(", ")}`,
     manageHint:
       "A decisão de homologação exige permissão de gestão de " +
       "Suprimentos e fica registrada em auditoria.",
@@ -377,14 +382,12 @@ export const MARKET_INTELLIGENCE_CONTENT = {
     moduleUnavailable:
       "Este indicador está indisponível no momento — a fonte não foi " +
       "ativada ou os direitos de exibição estão em revisão.",
-    comexConfigPendingTitle: "Comex — configuração pendente",
+    comexConfigPendingTitle: "Comex — seleção pendente",
     comexConfigPending:
-      "Nenhuma NCM homologada está disponível para consulta — ou " +
-      "nenhuma foi selecionada na análise.",
+      "Nenhuma NCM do catálogo está habilitada para dados ainda.",
     comexNextSteps:
-      "Use a seleção acima: escolha produtos DELPI ou informe a NCM " +
-      "de 8 dígitos e solicite a homologação. Quando uma NCM estiver " +
-      "aprovada e a fonte MDIC ativa, as importações aparecem aqui.",
+      "Adicione uma NCM acima e aguarde a validação — quando a fonte " +
+      "MDIC estiver liberada para ela, as importações aparecem aqui.",
     providerUnavailable:
       "Temporariamente indisponível: a última coleta não foi " +
       "concluída. Os dados serão exibidos quando a conexão com a fonte " +

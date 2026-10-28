@@ -59,6 +59,10 @@ export type ComexNcmGovernance = {
   decision_notes: string | null;
   revision: number;
   allowlist_sync?: "synced" | "failed" | "not_applicable";
+  /** Present on create when the NCM was already in the shared
+   * catalog — the returned record is the existing row (S7
+   * idempotent add). */
+  already_registered?: boolean;
   events?: ComexNcmGovernanceEvent[];
 };
 

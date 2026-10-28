@@ -515,4 +515,34 @@ describe("market intelligence page (PROC-0076 R4)", () => {
       },
     );
   });
+
+  it("implements the S7 shared catalog with a single add action", () => {
+    const selector = readFileSync(
+      join(here, "MarketComexSelector.tsx"),
+      "utf8",
+    );
+    // Catalog adds register a candidate — never an implicit approval.
+    expect(selector).toContain('initial_status: "candidate"');
+    expect(selector).not.toContain(
+      'initial_status: "pending_fiscal_review"',
+    );
+    // The shared catalog list and its select toggle exist.
+    expect(selector).toContain("catalogEntries");
+    expect(selector).toContain("selectNcm(entry.ncm_code)");
+    expect(selector).toContain("deselectNcm(entry.ncm_code)");
+    // Functional states hide internal workflow jargon (AC-05).
+    expect(selector).toContain('"registered"');
+    expect(selector).toContain('"not_cataloged"');
+    // Administration is a separate manage-only area (AC-07).
+    expect(selector).toContain("sp-comex-selector__admin");
+    expect(selector).toContain("canManage ? (\n          <details");
+    // The redundant analysis multiselect is gone — catalog toggles
+    // and chips drive the selection.
+    expect(selector).not.toContain("SuppliesMultiSelectField");
+    // Empty-selection guidance instead of placeholder cards (AC-08).
+    const content = readFileSync(join(here, "content.ts"), "utf8");
+    expect(content).toContain("emptySelection");
+    expect(content).toContain("catalogEmpty");
+    expect(content).toContain("alreadyInCatalog");
+  });
 });
