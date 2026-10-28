@@ -646,3 +646,18 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | AC-17 | docs + Ajuda sincronizados | PASS | §28.12, doc 112 §50, ledger, doc 30, `helpTooltips` (`adminVersion*`/`adminEvents`) |
 | AC-18 | evidências p/ homologação PO | PASS local | screenshots `Temp\ux015-shots` (01–09); produção pendente |
 | UX-015 DEP | ator enriquecido | DECISION_REQUIRED | `actor_subject` cru mantido — depende de UX-014 |
+
+
+### UX-015-RW01 — redesign visual cascata (TARGET, 28/10/2026)
+| RQ/AC | Prova exigida | Status |
+|---|---|---|
+| UX015-RW01-01 | Cabeçalho contextual e ações no topo de versão/documento | TARGET |
+| UX015-RW01-02 | Resumo compacto versão com dados reais | TARGET |
+| UX015-RW01-03 | Lista documental logo após resumo e sem expansão na administração | TARGET |
+| UX015-RW01-04 | Detalhe read-only em grid semântico 2–3 colunas desktop e uma mobile | TARGET |
+| UX015-RW01-05 | Contexto da versão compacto + edição futura direcionada ao fluxo mestre | TARGET |
+| UX015-RW01-06 | Timeline contextual em página, eventos reais e fallback ator honesto | TARGET |
+| UX015-RW01-07 | Kit-first, tokens, claro/escuro, mobile, zoom200, foco/teclado | TARGET |
+| UX015-RW01-08 | Regressão zero de versão histórica, DRAFT OCC, authz, F5, breadcrumbs | TARGET |
+| UX015-RW01-09 | Capturas antes/depois, testes, deploy e smoke autenticado governado | PLANNED |
+Nenhum teste ou deploy desta rodada foi executado ao escrever esta especificação.
