@@ -1940,3 +1940,79 @@ pendente de autorização.
 - **Nível 4 — Histórico:** página com `CfTimeline` (mesmos rótulos/tons do antigo modal), escopo template (`closing/admin/events`) ou versão (`versions/{n}/events`, `?version=` da BFF); detalhe `v{n} · actor_subject · chaves do detail` — fallback honesto até UX-014.
 
 Reuso: zero componente novo de kit; `cf-detail-list` (padrão read-only já usado em `ClosingChecklistPage`), `DataTableSection`, `CfSectionCard`, `CfPagePath`, `CfTimeline`, `CfStatusBadge`, `CfEmptyState`, `CfFeedbackMessage`, `CfQueryErrorBanner`, `ConfirmModalPanel`+`CfDialog` (diálogos de ação governada compartilhados via `useChecklistVersionActions`).
+
+
+## 51. UX-015-RW01 — wireframes detalhados para versão, documento e histórico (TARGET; PO 28/10/2026)
+
+**Autoridade visual:** capturas de produção do PO após UX-015. **Diagnóstico observado:** páginas funcionalmente encadeadas, porém metadados concentrados em uma coluna estreita à esquerda com imensa área vazia; páginas extensas e ações relegadas ao rodapé; labels/valores como lista sem grid; cards Identificação/Exigência/Contexto superdimensionados; UUID cru em "Publicada por" (dependência UX-014). Não confundir o layout proposto com funcionalidade já implementada. **Fluxo/rotas existentes permanecem:** Admin → Versão → Documento da versão → Editar exigência futura (fluxo mestre separado); eventos em página contextual, nunca reabrir modal.
+
+### 51.1 Sistema visual comum
+- Cabeçalho contextual com `CfPagePath` (cadeia completa), título hierárquico forte, subtítulo curto, badge de estado e barra de ações à direita (mobile empilha); preservar chrome da Minha DELPI.
+- Conteúdo em max-width legível que aproveita a tela sem gerar cards de largura total com uma única coluna estreita; containers responsivos, CSS escopado e tokens de espaçamento reais do `@delpi/plugin-ui`. Cards distintos com gap vertical visível; cabeçalho→resumo→tabela/histórico no ritmo de espaçamento.
+- Hierarquia de ações: primária apenas quando executável e relevante; secundária navegar/histórico; `danger` para inativar/descartar (com confirmação existente). Não adicionar botão sem ação.
+- Campos somente leitura: grid semântico de propriedades, labels pequenos e valores legíveis; ausência como "Não informado" ou "A definir" conforme semântica real, nunca dado inventado. Códigos técnicos com affordance de cópia somente se kit/contrato suportar.
+- Tokens visuais: `CfSectionCard`, `CfStatusBadge`, `CfActionButton`, `CfPagePath`, `DataTableSection`, `CfTimeline`, layout e ícones reais do kit; investigar `CfUnifiedAvatar` e Core/BFF UX-014 antes de mostrar nome/email/avatar. Contraste, dark/light, foco e teclado são DoD.
+- Não usar cores hardcoded, tabelas customizadas redundantes, widgets de métrica inventados ou componentes paralelos; mapeamento de reuso deve citar exports reais.
+
+### 51.2 Wireframe A — Administração /closing/admin
+**Desktop:**
+```text
+[Início > Administração]                 [Ajuda contextual]
+Administração do checklist
+Checklist de Fechamento Mensal           [Criar versão rascunho] [Histórico] [Documentos]
+┌ Versões (N) ───────────────────────────────────────────────────────────┐
+│ Versão | Situação | Documentos | Vigente desde | Publicada em | Ações  │
+│ v1     | Publicada| 1          | Nov/2026     | 28/10       | Abrir  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+Manter tabela de versões como centro de atenção, sem expansão de itens. Separar título, ações e tabela com gap adequado; em mobile, ações quebram linhas e tabela usa comportamento responsivo do kit sem overflow da página. Não duplicar quantidade/estado sem fonte.
+
+### 51.3 Wireframe B — /closing/admin/versions/{n}
+**Desktop:**
+```text
+[Administração > Versão v1]                         [Histórico da versão]
+Versão v1    [Publicada]
+Checklist de Fechamento Mensal
+┌ Documentos ┐  ┌ Vigente desde ┐  ┌ Publicação ┐
+│      1     │  │   Nov/2026   │  │ 28/10/2026│
+└────────────┘  └───────────────┘  └────────────┘
+[Publicada por: identidade disponível/autorizada]   [Inativar - danger]
+┌ Documentos desta versão (1) ──────────────────────────────────────────┐
+│ Documento                  | Obrigatoriedade | Via    | Origem | Abrir│
+│ Relatório P7 bloco H       | Obrigatório     | Eletr. | Externa|  >  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+Resumo de métricas usa somente valores realmente disponíveis do DTO (não inventar KPI nem ownership). Blocos pequenos e próximos à lista, sem painel gigante vazio. Para DRAFT: ações governadas `Editar itens`, `Enviar para revisão`, `Descartar` conforme estado/revision; REVIEW e INACTIVE respeitam contrato. Timeline versionada é página, não modal. Publicada/INACTIVE não permite edição in-place.
+
+### 51.4 Wireframe C — /closing/admin/versions/{n}/documents/{itemKey}
+**Desktop:**
+```text
+[Administração > Versão v1 > Documento]     [Voltar à versão] [Editar exigência futura]
+Relatório P7 bloco H     [Obrigatório] [Eletrônico] [Publicado]
+Snapshot histórico da versão v1 — somente leitura
+┌ Identificação ─────────────────────────┐
+│ Nome                     | Item key    │
+│ Relatório P7 bloco H     | RELATORIO…  │
+│ Finalidade               | Ordem       │
+│ Não informada            | 10          │
+│ Orientações: não informadas            │
+└────────────────────────────────────────┘
+┌ Configuração da exigência ─────────────┐
+│ Origem         | Destino      | Escopo  │
+│ Fonte externa  | A definir    | Matriz… │
+│ Obrigatoriedade| Via          | Validação│
+│ Obrigatório    | Eletrônico   | Por anexo│
+│ Referência TOTVS: não informada        │
+└────────────────────────────────────────┘
+[Contexto resumido: v1 | Publicada | desde Nov/2026]
+```
+Usar grid semântico 2 colunas em desktop para identificação e 2–3 em exigência; 1 em mobile, sem truncar significado. Se finalidade/orientações extensas, ocupar linha completa com quebra; não omitir campos. Se item não existir na versão, 404 contextual. A ação "Editar exigência futura" navega ao cadastro mestre existente; explica que criará nova versão e nunca altera snapshot histórico. Somente DRAFT poderá seguir edição de itens/OCC aprovada; não habilitar edição histórica em PUBLISHED/INACTIVE. Ações acessíveis perto do cabeçalho, não escondidas depois de rolagem longa.
+
+### 51.5 Wireframe D — /closing/admin/events e /versions/{n}/events
+Página de timeline cronológica, título contextual, período/versão quando disponível, `CfTimeline` com marker semântico, labels de eventos, data, hora, detalhes e ator. Layout em largura legível e gaps consistentes; filtro por versão preserva o contrato existente; sem modal. **Identidade humana UX-014:** somente após resolução autorizada Core→BFF: avatar/nome/email. Enquanto não existir, fallback honesto e sinalizar pendência; NÃO inventar identidade nem remover `actor_subject` da trilha.
+
+### 51.6 Estados e QA visuais
+- Loading/empty/403/404/error em todas as rotas; deep link/F5/back-forward e breadcrumb completo; retorno à lista preservando filtros, scroll e foco se suportado pelo contrato do kit.
+- Dados publicados imutáveis, dados DRAFT com OCC, sem alterações de BFF/migrations/permissions/snapshots; dados reais do PO não usados para smoke destrutivo.
+- Responsividade testada em 320/390/768/desktop, claro/escuro, zoom 200%, tab/Enter/Escape e leitor de tela; nenhum overflow horizontal; screenshot antes/depois para cada rota.
+- AC: UX015-RW01-01 cabeçalho/ações; -02 resumo compacto da versão; -03 tabela imediatamente depois; -04 grid de detalhe sem lista estreita; -05 contexto compacto/ação futura no topo; -06 timeline acessível; -07 kit-first, temas/responsividade; -08 regressão de navegação/estado/autorização; -09 evidência local, deploy produtivo condicionado e smoke.
