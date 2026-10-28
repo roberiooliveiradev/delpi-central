@@ -83,13 +83,14 @@
 .engineering-overview-filters {
   display: flex;
   flex-direction: column;
-  gap: var(--en-grid-gap);
+  /* dentro do hero compacto: mesma densidade dos filtros do kit (8px) */
+  gap: 8px;
 }
 
 .engineering-overview-filters__fields {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--en-grid-gap);
+  gap: 8px;
   align-items: end;
 }
 

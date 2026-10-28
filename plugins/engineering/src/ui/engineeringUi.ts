@@ -31,6 +31,7 @@ import {
   sectionRouteCardBemClasses,
   stateBannerBemClasses,
 } from "@delpi/plugin-ui/index";
+import { createElement, type ComponentProps } from "react";
 
 /** Prefixo BEM dual-class do MFE (pares com `.delpi-ui-*` no remote). */
 export const ENG_UI_PREFIX = "engineering";
@@ -54,9 +55,19 @@ export const EngineeringCommandPalette = createDashboardCommandPalette({
   portalScopeClassName: ENG_PORTAL_SCOPE,
 });
 
-export const EngineeringPageHero = createDashboardPageHero({
+export const EngineeringPageHeroBase = createDashboardPageHero({
   prefix: ENG_UI_PREFIX,
 });
+/** Default `density="compact"` — mesmo padrão do Portal Comercial:
+ *  libera viewport nas páginas sem trocar tokens/tipografia. */
+export function EngineeringPageHero(
+  props: ComponentProps<typeof EngineeringPageHeroBase>,
+) {
+  return createElement(EngineeringPageHeroBase, {
+    density: "compact",
+    ...props,
+  });
+}
 
 export const EngineeringMetricStrip = createDashboardMetricStrip({
   prefix: ENG_UI_PREFIX,
