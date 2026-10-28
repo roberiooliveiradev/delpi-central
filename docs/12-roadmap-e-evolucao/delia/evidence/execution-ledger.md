@@ -488,3 +488,12 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Testes: 22/22 OK (unittest local). Sem modificacao de codigo/config produtivo.
 - Veredito: LOCAL_CLEANUP=DONE_AND_VERIFIED; PREVENTION=DONE; RISK_ACCEPTANCE_PENDING_SECURITY_OWNER (rotacao permanece pendente do owner de seguranca); FINAL_VERDICT=STABLE_WITH_RESIDUAL; INDEPENDENT_REVIEW=PENDING.
 - Artefatos: doc 174; .cursor/rules/secret-handling-diagnostics-safety.mdc; responsibility-map.json; inventario-regras-cursor.md; audit_architecture_phase3.py + testes.
+
+
+## 2026-10-28 — Governed READ recovery implementation plan (doc 175)
+
+- `TASK_ID=DELIA-C3-GOVERNED-READ-RECOVERY-IMPLEMENTATION-PLAN-01`; `STATE=PLANNED`; `IMPLEMENTATION=NOT_EXECUTED`; `DEPLOY_AUTHORIZED=NO`; `PHASE_NOT_ADVANCED`. Doc: `docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/175-governed-read-recovery-implementation-plan.md`.
+- Scope: existing argument validation and recoverable typed READ errors, bounded `_recover_relevance` feedback, authoritative page/coverage metadata, E2E safety/Business Outcome evaluation, separate Domain API owner decision on ranking. No new engine/planner/regex business routing; no implicit Keycloak/Core/Domain changes.
+- Reuse preliminary: existing orchestration, EvidenceFacts, CRI, Domain API adapters and harnesses (`EXISTING_EQUIVALENT=YES` per documented capabilities; code/location/consumer contract `TO_INVENTORY` on execution HEAD); `REUSE_DECISION=REUSE/EXTEND` conditional.
+- Gates: WP0 canonical HEAD reanchor/ownership/schema and frozen corpus; WP1 typed validation and recoverable error; WP2 coverage/page/continuation; WP3 owner contract decision; WP4 tests/local E2E/safety/outcome; WP5 independent review and separately-authorized release. `NEXT=DELIA-C3-GOVERNED-READ-RECOVERY-IMPLEMENTATION-01`, pending executive authorization/reanchor.
+- Security residual doc 174 remains `RISK_ACCEPTANCE_PENDING_SECURITY_OWNER`; this planning artifact does not approve production queries, model swap, key rotation or deploy.
