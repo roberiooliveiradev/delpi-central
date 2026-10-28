@@ -74,34 +74,9 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
   const [exporting, setExporting] = useState(false);
 
   const period = useMemo(() => resolveYearMonthRange(year, month), [year, month]);
-  const competenceFromPeriod =
-    month === "all" ? "" : `${year}-${String(month).padStart(2, "0")}`;
-
-  // Espelha ano/mês nos filtros compartilhados em um único replace (sem setStart+setEnd).
-  useEffect(() => {
-    if (
-      filters.dateStart === period.start &&
-      filters.dateEnd === period.end &&
-      filters.competence === competenceFromPeriod
-    ) {
-      return;
-    }
-    filters.replaceDateFilters({
-      dateStart: period.start,
-      dateEnd: period.end,
-      competence: competenceFromPeriod,
-    });
-  }, [
-    period.start,
-    period.end,
-    competenceFromPeriod,
-    filters.dateStart,
-    filters.dateEnd,
-    filters.competence,
-    filters.replaceDateFilters,
-  ]);
 
   // Deps primitivas (padrão OTD/dashboard) — nunca `filters.apiParams` por identidade.
+  // Período canônico desta página = Ano/Mês (não o range do AnalyticsFilters).
   const branch = filters.apiParams.branch;
   const customerSegment = filters.apiParams.customer_segment;
   const sellerId = filters.apiParams.seller_id;
@@ -368,7 +343,7 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
           dateStart={filters.dateStart}
           dateEnd={filters.dateEnd}
           competence={filters.competence}
-          periodPreset={filters.periodPreset}
+          showPeriodControls={false}
           branches={filters.branches}
           customerSegment={filters.customerSegment}
           sellerIds={filters.sellerIds}
@@ -378,7 +353,6 @@ export function BillingByCustomerMonthPage({ basePath }: BillingByCustomerMonthP
           onDateStart={filters.setDateStart}
           onDateEnd={filters.setDateEnd}
           onCompetence={filters.setCompetence}
-          onPeriodPreset={filters.setPeriodPreset}
           onBranches={filters.setBranches}
           onCustomerSegment={filters.setCustomerSegment}
           customerCodes={filters.customerCodes}

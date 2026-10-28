@@ -20,6 +20,8 @@ type AnalyticsFiltersProps = {
   dateEnd: string;
   competence: string;
   periodPreset?: PeriodPresetId;
+  /** Quando false, omite preset/datas/competência (página dona do período por outro controle). */
+  showPeriodControls?: boolean;
   branches: string[];
   customerSegment: AnalyticsFilterUrlState["customerSegment"];
   sellerIds?: string[];
@@ -44,6 +46,7 @@ export function AnalyticsFilters({
   dateEnd,
   competence,
   periodPreset = "custom",
+  showPeriodControls = true,
   branches,
   customerSegment,
   sellerIds = [],
@@ -68,7 +71,7 @@ export function AnalyticsFilters({
 
   return (
     <>
-      {onPeriodPreset ? (
+      {showPeriodControls && onPeriodPreset ? (
         <CommercialQuickPeriodSelector
           value={periodPreset}
           onChange={onPeriodPreset}
@@ -79,25 +82,29 @@ export function AnalyticsFilters({
         />
       ) : null}
       <FiltersRow variant="extended">
-        <CommercialDateField
-          label={ANALYTICS_CONTENT.filters.start}
-          value={dateStart}
-          onChange={onDateStart}
-          hint={CM_HELP.analytics.filterDateStart}
-        />
-        <CommercialDateField
-          label={ANALYTICS_CONTENT.filters.end}
-          value={dateEnd}
-          onChange={onDateEnd}
-          hint={CM_HELP.analytics.filterDateEnd}
-        />
-        <CommercialDateField
-          type="month"
-          label={ANALYTICS_CONTENT.filters.competence}
-          value={competence}
-          onChange={onCompetence}
-          hint={CM_HELP.analytics.filterCompetence}
-        />
+        {showPeriodControls ? (
+          <>
+            <CommercialDateField
+              label={ANALYTICS_CONTENT.filters.start}
+              value={dateStart}
+              onChange={onDateStart}
+              hint={CM_HELP.analytics.filterDateStart}
+            />
+            <CommercialDateField
+              label={ANALYTICS_CONTENT.filters.end}
+              value={dateEnd}
+              onChange={onDateEnd}
+              hint={CM_HELP.analytics.filterDateEnd}
+            />
+            <CommercialDateField
+              type="month"
+              label={ANALYTICS_CONTENT.filters.competence}
+              value={competence}
+              onChange={onCompetence}
+              hint={CM_HELP.analytics.filterCompetence}
+            />
+          </>
+        ) : null}
         <CommercialMultiSelectField
           className="cm-analytics-unit-filter"
           label={ANALYTICS_CONTENT.filters.branch}
