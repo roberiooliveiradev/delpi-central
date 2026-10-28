@@ -659,3 +659,12 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Two adapter-scoped reuse candidates only: POC-1 official MCP Python SDK under specialist_interop transport (score 3.6/5); POC-2 Instructor/structured-output repair under model_invocation for F4 invalid-outputs (score 3.4/5). Both boundary-respecting component swaps; framework output stays untrusted data.
 - F1-F6 mapped: F1 fixed by H6; F4 = only framework-addressable residual (bounded, needs real-model evidence); F6 = owner retrieval adequacy, unaffected by frameworks — owner probe remains the higher business priority.
 - NEXT: coordination decision on POC-1/POC-2; H5 and owner search_products probe remain independent tasks.
+
+## 2026-10-28 — Pluggable orchestration boundary discovery (doc 192) — READ-ONLY
+- Task DELIA-C3-PLUGGABLE-ORCHESTRATION-BOUNDARY-DISCOVERY-01 on fc30ea947c. No code/deps/production changes; H6 merged confirmed.
+- EXISTING_EQUIVALENT=YES: SupportsGovernedCapabilityAttempt Protocol (interaction/capability_attempt.py:222) + DI at root_composer.py:368 + single caller handle_interactive_turn.py:426. Replaceable unit = attempt() use-case boundary (option A); no new port needed.
+- Drift found: Protocol signature missing cancel_check (impl L4071 + call site use it) — queued Step I fix.
+- Real constraint: governed gates are instance methods inside 11.5k-line orchestrator. Plan: extract shared GovernedStageRuntime (Step II, move-refactor, suite must pass unchanged); Engine B = LangGraph graph over SAME primitives — sequencing only, never framework tool-calling/AuthZ (doc-191 verdict preserved, conflict resolved explicitly).
+- Engine selection: env DELIA_ORCHESTRATION_ENGINE {delia default, langgraph}, fail-closed, never request/model controlled; rollback = env revert, no data migration.
+- LangGraph feasibility: FEASIBLE as internal sequencer (sync invoke, no checkpointer needed, delegates to stage runtime); MODERATE-HIGH effort; MIT; new dep tree needs approval.
+- Proposed ADR embedded: PROPOSED — PENDING_COORDINATION_APPROVAL. NEXT: Steps I+II combined task (protocol parity + GovernedStageRuntime extraction, zero behavior change).
