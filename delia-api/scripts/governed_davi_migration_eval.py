@@ -521,11 +521,12 @@ def main() -> int:
         ),
     }
 
-    # Capability coverage matrix (owner contract state at HEAD):
-    # api-delpi/app/content/davi_external_read_allowlist.json and
-    # delia-api/config/openapi_declarations.delpi.json. The two
-    # blocked capabilities have no approved DAVI substitute —
-    # OWNER_DECISION_REQUIRED, direct binding preserved.
+    # Capability coverage matrix after
+    # DELIA-C3-REMOVE-DIRECT-DELPI-BOUNDARY-AND-DEPLOY-01: the direct
+    # OpenAPI binding is gone entirely. Capabilities DAVI does not
+    # expose are legitimately UNAVAILABLE to DÉLIA — no fallback, no
+    # direct path. Owner-side exposure decisions remain
+    # OWNER_DECISION_REQUIRED on the DAVI owner.
     out["capability_coverage"] = {
         "search_products": {
             "davi_coverage": "MIGRATED",
@@ -544,12 +545,12 @@ def main() -> int:
         "get_product_summary": {
             "davi_coverage": "OWNER_DECISION_REQUIRED",
             "owner_disposition": "explicitlyNotApproved/DEFER",
-            "direct_binding": "PRESERVED",
+            "delia_availability": "UNAVAILABLE — direct binding removed",
         },
         "search_customers": {
             "davi_coverage": "OWNER_DECISION_REQUIRED",
             "owner_disposition": "no coverage decision in allowlist",
-            "direct_binding": "PRESERVED",
+            "delia_availability": "UNAVAILABLE — direct binding removed",
         },
     }
 

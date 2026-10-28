@@ -75,3 +75,18 @@ def test_llm_call_max_attempts_invalid_values_fail_closed(monkeypatch):
         settings = Settings()
         assert settings.llm_call_max_attempts == 1
         assert settings.llm_call_max_attempts_config_invalid is True
+
+
+def test_no_direct_delpi_openapi_settings(monkeypatch):
+    """Task DELIA-C3-REMOVE-DIRECT-DELPI-BOUNDARY-AND-DEPLOY-01: the
+    direct DELPI OpenAPI source is removed — its exclusive env surface
+    must not exist on Settings."""
+    monkeypatch.setenv("DELIA_OPENAPI_DELPI_ENABLED", "true")
+    monkeypatch.setenv("DELIA_OPENAPI_DELPI_BASE_URL", "http://x:1")
+    monkeypatch.setenv(
+        "DELIA_OPENAPI_DELPI_DECLARATIONS_PATH", "/tmp/x.json"
+    )
+    settings = Settings()
+    assert not hasattr(settings, "openapi_delpi_enabled")
+    assert not hasattr(settings, "openapi_delpi_base_url")
+    assert not hasattr(settings, "openapi_delpi_declarations_path")

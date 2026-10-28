@@ -556,3 +556,16 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - E2E runtime real: INCONCLUSIVE (requer ambiente autorizado). FALSE_POSITIVES=0; FABRICATED_RECORDS=0; UNAUTHORIZED_ACTS=0; UNAUTHORIZED_PREPARES=0.
 - Veredito: LOCAL_PASS_WITH_RESIDUAL / PARTIAL_MIGRATION — CAPABILITY_MIGRATION_BLOCKED; exclusividade NAO declarada; fase nao avancada. DEPLOY_EXECUTED=NO; PRODUCTION_QUERIES=0; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; DOMAIN_API_MODIFIED=NO; INDEPENDENT_REVIEW=PENDING.
 - Artefatos: doc 180; errors.py; execute_service.py; server.py; test_external_capabilities_mcp.py; specialist_interop.py; test_specialist_interop_usecase.py; governed_davi_migration_eval.py.
+
+
+## 2026-10-28 — DELIA-C3-REMOVE-DIRECT-DELPI-BOUNDARY-AND-DEPLOY-01 (doc 181)
+
+- Escopo: eliminar definitivamente o acesso direto DELIA->API DELPI; DAVI/MCP como unico caminho; deploy condicional aos gates. Decisao de produto: capabilities fora do DAVI = indisponibilidade legitima, sem fallback.
+- WP0 inventario: _wire_openapi_provider + source_id delpi + OpenApiCapabilityProvider; openapi_declarations.delpi.json (2 caps); settings openapi_delpi_* + openapi_timeout_seconds; DELIA_OPENAPI_DELPI_* em docker-compose yml/dev + env.example; zero fallbacks.
+- WP1 RED: 5 testes falhando no estado pre-remocao (declarations file, ids delpi.*, composer wiring, infra env, settings attrs).
+- WP2 remocao: arquivo de declaracoes deletado; _wire_openapi_provider + call site + import removidos; 4 settings removidas; 4 envs removidas dos 2 composes (yaml ok) + env.example; eval coverage atualizada (UNAVAILABLE). Preservados HttpOpenApiInvoker/OpenApiCapabilityProvider/source_loader/catalog adapter (shared), McpCapabilityProvider, SpecialistInterop, Evidence/Outcome/CRI/recovery.
+- WP5 residual: DIRECT_DELPI_PROVIDER=0, CAPABILITIES=0, REGISTRATIONS=0, ENV_SETTINGS=0, FALLBACKS=0; refs api-delpi remanescentes = resource mcp-api-delpi + owner metadata + docs historicas (legitimas).
+- GREEN/regressao: 69 testes tocados; suite completa unica falha PRE_EXISTING_CRI_CONTRACT_DRIFT; arch gate OK; eval pareado mantem paridade (legacy VALIDATION_ERROR terminal, AUTHORIZATION_DENIED->AUTHZ_DENIED, bounded).
+- Gates deploy: removal+integration verificados localmente; SECURITY_OWNER_RELEASE_DECISION=PENDING (credencial doc 174 sem ratificacao) -> RELEASE_GATE=BLOCKED -> DEPLOY_NOT_EXECUTED; zero queries produtivas; runtime intocado.
+- Veredito: LOCAL_PASS_WITH_RESIDUAL — boundary direto eliminado; DELPI so via DAVI/MCP; DEPLOY_BLOCKED por gate de seguranca. DEPLOY_EXECUTED=NO; PRODUCTION_QUERIES=0; MODEL_CHANGED=NO; KEYCLOAK_MODIFIED=NO; API_DELPI_CODE_UNCHANGED=YES; DAVI_CAPABILITIES_UNCHANGED=YES; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
+- Artefatos: doc 181; root_composer.py; settings.py; env.example; docker-compose.yml/.dev.yml; openapi_declarations.delpi.json (removido); test_openapi_capability_provider.py; test_config.py; governed_davi_migration_eval.py.

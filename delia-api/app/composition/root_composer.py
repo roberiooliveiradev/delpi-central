@@ -12,9 +12,6 @@ from app.application.capability_provision.orchestration import (
     OperationalCapabilityOrchestrator,
     ORCHESTRATION_INSTRUCTION_KEYS,
 )
-from app.application.capability_provision.openapi_provider import (
-    OpenApiCapabilityProvider,
-)
 from app.application.interaction.handle_interactive_turn import (
     DEFAULT_MODEL_REF as DEFAULT_INTERACTION_MODEL_REF,
     HandleInteractiveConversationTurn,
@@ -225,36 +222,6 @@ def create_application(
     return app
 
 
-def _wire_openapi_provider(settings: Settings):
-    """Compose the OpenAPI provider family — absent unless configured.
-
-    ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130): the
-    DELPI OpenAPI source activates only with base URL + governed
-    declarations file; anything missing fails closed to no source.
-    """
-    if not (
-        settings.openapi_delpi_enabled
-        and settings.openapi_delpi_base_url
-        and settings.openapi_delpi_declarations_path
-    ):
-        return None
-    from app.infrastructure.openapi.source_loader import (
-        build_openapi_source,
-    )
-
-    source = build_openapi_source(
-        source_id="delpi",
-        base_url=settings.openapi_delpi_base_url,
-        declarations_path=settings.openapi_delpi_declarations_path,
-        http_get=deadline_http_get,
-        subject_bearer_getter=current_subject_bearer,
-        timeout_seconds=settings.openapi_timeout_seconds,
-    )
-    if source is None:
-        return None
-    return OpenApiCapabilityProvider([source])
-
-
 def _wire_delegated_credential_provider(settings: Settings, connections):
     """Wire the single-requester token exchange only from complete config.
 
@@ -306,13 +273,16 @@ def _compose_turn_handler(
     """
     # ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130):
     # DÉLIA is the OPERATIONAL_CAPABILITY_ORCHESTRATOR over
-    # provider-neutral capability groups. MCP is one provider family —
-    # the approved specialist connections project through
-    # McpCapabilityProvider; OpenAPI sources project through
-    # OpenApiCapabilityProvider when configured. Live provider surfaces
-    # are the capability authority; no per-capability flag or static
-    # binding exists. Write-class selections route through the generic
-    # governed-write chain with bounded in-memory pending state.
+    # provider-neutral capability groups. MCP is the wired provider
+    # family — the approved specialist connections project through
+    # McpCapabilityProvider. DELIA-C3-REMOVE-DIRECT-DELPI-BOUNDARY-01:
+    # the direct DELPI OpenAPI source is removed — DELPI domain data
+    # reaches DÉLIA exclusively through DAVI/MCP; capabilities DAVI
+    # does not expose are legitimately unavailable, never served by a
+    # direct binding. Live provider surfaces are the capability
+    # authority; no per-capability flag or static binding exists.
+    # Write-class selections route through the generic governed-write
+    # chain with bounded in-memory pending state.
     enabled_specialists = tuple(
         specialist_id
         for specialist_id, profile in connections.items()
@@ -323,9 +293,6 @@ def _compose_turn_handler(
         providers.append(
             McpCapabilityProvider(interop, enabled_specialists)
         )
-    openapi_provider = _wire_openapi_provider(settings)
-    if openapi_provider is not None:
-        providers.append(openapi_provider)
     # CRI E2-R3/E3-G1: the declarative resources are loaded and
     # validated only when the mode is REQUESTED. The *effective* mode
     # is the single resolved truth propagated to both the handler

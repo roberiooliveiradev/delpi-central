@@ -874,14 +874,14 @@ def test_r2_openapi_explicit_nonpositive_fail_fast():
 
 
 # ---------------------------------------------------------------------------
-# DAVI-exclusive DELPI access (task DELIA-C3-DAVI-EXCLUSIVE-01): the
-# governed declarations file is the direct DÉLIA→API-DELPI binding.
-# Capabilities legitimately covered by DAVI (mcp-api-delpi external read
-# allowlist) MUST NOT be offered twice — no duplicate equivalent surface;
-# capabilities without a DAVI substitute stay until the owner exposes
-# them (CAPABILITY_MIGRATION_BLOCKED, doc 179).
+# Direct DELPI boundary removal (task
+# DELIA-C3-REMOVE-DIRECT-DELPI-BOUNDARY-AND-DEPLOY-01): the DELPI OpenAPI
+# source binding is eliminated entirely. Product decision: capabilities
+# without a DAVI substitute are legitimately unavailable — never served
+# through a direct DELIA -> API DELPI path.
 # ---------------------------------------------------------------------------
 
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _DELPI_DECLARATIONS_FILE = (
     Path(__file__).resolve().parent.parent
     / "config"
@@ -889,19 +889,45 @@ _DELPI_DECLARATIONS_FILE = (
 )
 
 
-def test_governed_delpi_declarations_exclude_davi_covered_capabilities():
-    from app.infrastructure.openapi.source_loader import load_declarations
+def test_no_direct_delpi_declarations_file():
+    assert not _DELPI_DECLARATIONS_FILE.exists()
 
-    declarations, owner, contract_id, _display = load_declarations(
-        str(_DELPI_DECLARATIONS_FILE)
-    )
-    ids = {d.capability_id for d in declarations}
-    # Migrated to DAVI (davi_external_read_allowlist.json): must not be
-    # offered through the direct OpenAPI binding anymore.
-    assert "delpi.search_products" not in ids
-    assert "delpi.get_product_stock" not in ids
-    # Preserved temporarily under CAPABILITY_MIGRATION_BLOCKED — DAVI
-    # allowlist does not expose substitutes yet (owner decision pending).
-    assert ids == {"delpi.get_product_summary", "delpi.search_customers"}
-    assert owner == "DELPI"
-    assert contract_id == "api-delpi"
+
+def test_no_governed_declarations_expose_direct_delpi_capabilities():
+    import json
+
+    config_dir = Path(__file__).resolve().parent.parent / "config"
+    direct_ids = set()
+    for f in config_dir.glob("openapi_declarations*.json"):
+        payload = json.loads(f.read_text(encoding="utf-8"))
+        for d in payload.get("declarations", []):
+            cid = str(d.get("capability_id", ""))
+            if cid.startswith("delpi."):
+                direct_ids.add(cid)
+    assert direct_ids == set()
+
+
+def test_composer_has_no_direct_delpi_source():
+    composer = (
+        Path(__file__).resolve().parent.parent
+        / "app"
+        / "composition"
+        / "root_composer.py"
+    ).read_text(encoding="utf-8")
+    assert 'source_id="delpi"' not in composer
+    assert "_wire_openapi_provider" not in composer
+    assert "openapi_delpi_" not in composer
+
+
+def test_infra_and_env_carry_no_direct_delpi_wiring():
+    files = [
+        _REPO_ROOT / "infra" / "docker-compose.yml",
+        _REPO_ROOT / "infra" / "docker-compose.dev.yml",
+        _REPO_ROOT / "delia-api" / "env.example",
+    ]
+    offenders = [
+        str(f)
+        for f in files
+        if f.exists() and "DELIA_OPENAPI_DELPI" in f.read_text(encoding="utf-8")
+    ]
+    assert offenders == []

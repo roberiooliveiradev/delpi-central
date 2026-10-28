@@ -191,13 +191,10 @@ class Settings:
             ),
             300.0,
         )
-        # ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130):
-        # OpenAPI is one provider family. A source activates only with
-        # complete config: base URL + a governed declarations file.
-        # Missing pieces fail closed — no implicit surface.
-        self.openapi_delpi_enabled = _env_flag(
-            "DELIA_OPENAPI_DELPI_ENABLED"
-        )
+        # DELIA-C3-REMOVE-DIRECT-DELPI-BOUNDARY-01: the direct DELPI
+        # OpenAPI source binding (env-enabled provider + governed
+        # declarations file) is removed entirely — DELPI domain data
+        # reaches DÉLIA exclusively through DAVI/MCP.
         # CRI E1 (doc 73 §7 / spec 75 §4.1): single central switch for
         # the conversational response-intelligence front. Absent and
         # invalid values fail closed to baseline; this is a behavior
@@ -221,15 +218,8 @@ class Settings:
         self.runtime_sha = (
             os.getenv("DELIA_RUNTIME_SHA") or ""
         ).strip() or "unknown"
-        self.openapi_delpi_base_url = (
-            os.getenv("DELIA_OPENAPI_DELPI_BASE_URL") or ""
-        ).strip()
-        self.openapi_delpi_declarations_path = (
-            os.getenv("DELIA_OPENAPI_DELPI_DECLARATIONS_PATH") or ""
-        ).strip()
-        self.openapi_timeout_seconds = float(
-            os.getenv("DELIA_OPENAPI_TIMEOUT_SECONDS") or "15.0"
-        )
+        # DELIA_OPENAPI_TIMEOUT_SECONDS removed with the direct source
+        # wiring — no OpenAPI source is composed from settings anymore.
         # LOOP-03R2A / Stage 05 / doc 103: wall-clock budget for one
         # interaction turn, shared by every governed stage. Under the
         # approved 60s-per-LLM-call policy the turn deadline equals the
