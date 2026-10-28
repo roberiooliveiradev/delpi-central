@@ -74,11 +74,13 @@ mesma variante que o Comercial já usa em produção.
 
 ## 6. Deploy e smoke
 
-- Push `main` (ff-only); SHA registrado abaixo.
+- Push `main` (ff-only): SHA `e8234020c5`.
 - Deploy canônico: `up-prod-sequential.sh --build engineering` →
   `delpi-engineering` Up. Somente o MFE.
-- Smoke público: `200` `/apps/engineering/overview`, remoteEntry novo,
-  `401` `/v1/overview` sem JWT.
+- Smoke público (edge `http://192.168.1.237`): `200`
+  `/apps/engineering/overview`, `200` `/apps/engineering-api/health`;
+  remoteEntry → `__federation_expose_App-DYBnHoT6.js` →
+  `App-BH3bhLeE.js` contém a densidade `compact`.
 - Smoke autenticado / QA visual: `PENDING_GRANT_APPROVAL`.
 
 ## 7. Residuais
@@ -89,4 +91,4 @@ mesma variante que o Comercial já usa em produção.
 
 ## 8. SHA final
 
-Registrado no relatório de execução (ver `git log`).
+`e8234020c5f66d460c76cfe37d9264b9ce26ebbb` — código + documentação.
