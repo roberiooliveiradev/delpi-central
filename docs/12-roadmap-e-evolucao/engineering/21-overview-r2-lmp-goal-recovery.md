@@ -97,11 +97,13 @@ permanece honesta — nenhum valor é fabricado.
 
 ## 8. Deploy e smoke
 
-- Push `main` (ff-only); SHA registrado abaixo.
+- Push `main` (ff-only): SHA `da8cfa9ee7`.
 - Deploy canônico: rebuild de `api-delpi` apenas
-  (`up-prod-sequential.sh --build api-delpi`). Engineering-api e MFE
-  inalterados — sem rebuild.
-- Smoke público: rotas 200, `/v1/overview` 401 sem JWT.
+  (`up-prod-sequential.sh --build api-delpi`) → `delpi-api-delpi`
+  Up/healthy. Engineering-api e MFE inalterados — sem rebuild.
+- Smoke público (edge `http://192.168.1.237`): `200`
+  `/apps/engineering/overview`, `200` `/apps/api-delpi/health`,
+  `401` `/apps/engineering-api/v1/overview` sem JWT.
 - Smoke autenticado (meta LMP visível com usuário autorizado):
   `PENDING_GRANT_APPROVAL`.
 
@@ -113,4 +115,4 @@ permanece honesta — nenhum valor é fabricado.
 
 ## 10. SHA final
 
-Registrado no relatório de execução (ver `git log`).
+`da8cfa9ee7ec938d5d59a741d2566a97399d91c4` — código + documentação.
