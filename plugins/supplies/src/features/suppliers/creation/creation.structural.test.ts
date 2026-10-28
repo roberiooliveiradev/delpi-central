@@ -49,6 +49,33 @@ describe("Creation preview (X4.UX-R1.S2) — boundaries", () => {
     expect(flow).not.toMatch(/external-search|companies\/search/);
   });
 
+  it("R6-FE — resumo de erros navega até cada campo inválido", () => {
+    const page = readFileSync(
+      join(dir, "../SupplierCreatePage.tsx"),
+      "utf8",
+    );
+    expect(page).toContain("supplierFieldAnchorId");
+    expect(page).toContain("focusSupplierField");
+    expect(page).toContain("scrollIntoView");
+    expect(page).toContain("sp-supplier-create__validation-link");
+    // seção com erro é expandida e sinalizada
+    expect(page).toContain("collapsible");
+    expect(page).toContain("validationSectionErrorMany");
+  });
+
+  it("R6-FE — shell do campo associa erro com aria-* (kit não encaminha)", () => {
+    const fields = readFileSync(
+      join(dir, "../SupplierFormFields.tsx"),
+      "utf8",
+    );
+    expect(fields).toContain("SupplierFieldShell");
+    expect(fields).toContain("aria-invalid");
+    expect(fields).toContain("aria-describedby");
+    expect(fields).toContain("aria-required");
+    // catálogos obrigatórios ganham "*" também (gap R6 corrigido)
+    expect(fields).toContain("showRequiredMark && spec.required");
+  });
+
   it("respostas obsoletas são protegidas por abort + sequência", () => {
     const flow = read("CreationAssistedFlow.tsx");
     expect(flow).toContain("AbortController");

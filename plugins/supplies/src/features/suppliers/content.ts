@@ -105,6 +105,9 @@ export const SUPPLIERS_CONTENT = {
   validationSummaryLeadMixed: "Corrija os campos indicados:",
   validationAuthMessage:
     "Não foi possível autenticar na integração com o Protheus.",
+  validationGoToField: "Ir para o campo",
+  validationSectionErrorOne: "1 pendência",
+  validationSectionErrorMany: "{count} pendências",
   createSubmit: "Revisar dados",
   createReviewTitle: "Revisar dados do fornecedor",
   createReviewDescription:

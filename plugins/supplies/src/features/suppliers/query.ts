@@ -4,6 +4,7 @@ import type {
   SupplierEditDraft,
   SupplierEditableFieldKey,
   SupplierFieldError,
+  SupplierFieldKey,
   SupplierFieldSpec,
   SupplierWriteResponse,
   SuppliersQuery,
@@ -13,6 +14,7 @@ import {
   catalogLabelOf,
 } from "./supplierCatalogs";
 import {
+  SUPPLIER_CREATE_SECTIONS,
   SUPPLIER_FIELD_REGISTRY,
   SUPPLIER_PERSON_TYPE_LABELS,
   SUPPLIERS_PAGE_SIZE_OPTIONS,
@@ -268,6 +270,23 @@ export function supplierRequiredFieldMessage(spec: SupplierFieldSpec): string {
     return `Selecione ${spec.label.toLowerCase()}.`;
   }
   return `Informe ${spec.label.toLowerCase()}.`;
+}
+
+/** Âncora DOM estável de um campo do formulário de fornecedor —
+ * alvo de navegação do resumo de erros (R6-FE). */
+export function supplierFieldAnchorId(key: SupplierFieldKey | string): string {
+  return `sp-supplier-field-anchor-${key}`;
+}
+
+/** Seção do formulário de criação que contém o campo — usada para
+ * expandir/identificar o grupo com erro (R6-FE). */
+export function supplierCreateFieldSection(
+  key: SupplierFieldKey | string,
+): SupplierDetailSectionKey | null {
+  const section = SUPPLIER_CREATE_SECTIONS.find((entry) =>
+    entry.fields.some((field) => field.key === key),
+  );
+  return section?.id ?? null;
 }
 
 /**

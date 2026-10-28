@@ -426,6 +426,12 @@ declare module "@delpi/plugin-ui/index" {
     hint?: string;
     children: ReactNode;
     actions?: ReactNode;
+    className?: string;
+    fill?: boolean;
+    collapsible?: boolean;
+    defaultOpen?: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
   }>;
 
   export function createDashboardSectionRouteCard(config: {

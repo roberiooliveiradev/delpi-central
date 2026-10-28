@@ -27,21 +27,21 @@ import type { SuggestionEntryMap } from "./creation/types";
 import {
   classifyWriteOutcome,
   isIntegrationAuthErrorCode,
+  supplierCreateFieldSection,
+  supplierFieldAnchorId,
   validateCreateDraft,
 } from "./query";
 import {
   SupplierCatalogField,
   SupplierFieldInput,
+  SupplierFieldShell,
   SupplierPostalCodeAssistant,
   SupplierFieldGrid,
   SupplierFormActions,
   SupplierProtectedField,
   SupplierReviewTable,
 } from "./SupplierFormFields";
-import {
-  supplierCatalogValueText,
-  supplierFieldItemClass,
-} from "./query";
+import { supplierCatalogValueText } from "./query";
 import {
   SUPPLIER_CREATE_SECTIONS,
   SUPPLIER_FIELD_REGISTRY,
@@ -142,6 +142,10 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
     SupplierFieldError[] | null
   >(null);
   const validationSummaryRef = useRef<HTMLDivElement | null>(null);
+  // R6-FE — seções colapsáveis: abertas por padrão; erros expandem a seção.
+  const [openSections, setOpenSections] = useState<
+    Partial<Record<string, boolean>>
+  >({});
 
   const dirty = useMemo(
     () => Object.values(draft).some((value) => value.trim()),
@@ -201,6 +205,33 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
     const next: Partial<Record<SupplierFieldKey, string>> = {};
     for (const error of errors) next[error.field] = error.message;
     setFieldErrors(next);
+    // Seções com pendências ficam visíveis — nunca recolhidas sob o erro.
+    setOpenSections((current) => {
+      const open = { ...current };
+      for (const error of errors) {
+        const section = supplierCreateFieldSection(error.field);
+        if (section) open[section] = true;
+      }
+      return open;
+    });
+  };
+
+  /** Navegação do resumo: expande a seção, rola e foca o controle do campo. */
+  const focusSupplierField = (key: SupplierFieldKey) => {
+    const section = supplierCreateFieldSection(key);
+    if (section) {
+      setOpenSections((current) => ({ ...current, [section]: true }));
+    }
+    requestAnimationFrame(() => {
+      const anchor = document.getElementById(supplierFieldAnchorId(key));
+      if (!anchor) return;
+      anchor.scrollIntoView({ behavior: "smooth", block: "center" });
+      anchor
+        .querySelector<HTMLElement>(
+          "input, select, textarea, button, [tabindex]:not([tabindex=-1])",
+        )
+        ?.focus({ preventScroll: true });
+    });
   };
 
   const patchDraft = (patch: Partial<SupplierCreateDraft>) => {
@@ -324,7 +355,16 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
               : C.validationSummaryLeadMixed}
             <ul className="sp-supplier-create__validation-list">
               {validationErrors.map((error) => (
-                <li key={error.field}>{fieldLabel(error.field)}</li>
+                <li key={error.field}>
+                  <button
+                    type="button"
+                    className="sp-supplier-create__validation-link"
+                    onClick={() => focusSupplierField(error.field)}
+                    aria-label={`${C.validationGoToField}: ${fieldLabel(error.field)}`}
+                  >
+                    {fieldLabel(error.field)}
+                  </button>
+                </li>
               ))}
             </ul>
           </div>
@@ -391,11 +431,35 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
         onApplyPatch={patchDraft}
       />
 
-      {SUPPLIER_CREATE_SECTIONS.map((section) => (
+      {SUPPLIER_CREATE_SECTIONS.map((section) => {
+        const sectionErrors = section.fields.filter(
+          (field) => fieldErrors[field.key],
+        ).length;
+        return (
         <SuppliesSectionCard
           key={section.id}
           title={CREATE_SECTION_TITLES[section.id]}
           subtitle={supplierSectionDescriptions[section.id]}
+          collapsible
+          open={openSections[section.id] ?? true}
+          onOpenChange={(open) =>
+            setOpenSections((current) => ({
+              ...current,
+              [section.id]: open,
+            }))
+          }
+          actions={
+            sectionErrors ? (
+              <span className="sp-supplier-section__error-badge">
+                {sectionErrors === 1
+                  ? C.validationSectionErrorOne
+                  : C.validationSectionErrorMany.replace(
+                      "{count}",
+                      String(sectionErrors),
+                    )}
+              </span>
+            ) : undefined
+          }
         >
           <SupplierFieldGrid>
             {section.fields.map((field) => {
@@ -404,14 +468,15 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
                 Boolean((draft.state ?? "").trim());
               const fieldError = fieldErrors[field.key];
               return (
-                <div
+                <SupplierFieldShell
                   key={field.key}
-                  className={supplierFieldItemClass(field, {
-                    invalid: Boolean(fieldError),
-                  })}
+                  spec={field}
+                  error={fieldError}
+                  requiredMark
                 >
                   {field.catalog ? (
                     <SupplierCatalogField
+                      showRequiredMark
                       spec={field}
                       value={
                         field.key === "city"
@@ -486,15 +551,13 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
                       personType={draft.person_type}
                     />
                   )}
-                  {fieldError ? (
-                    <p className="sp-supplier-field__error">{fieldError}</p>
-                  ) : null}
-                </div>
+                </SupplierFieldShell>
               );
             })}
           </SupplierFieldGrid>
         </SuppliesSectionCard>
-      ))}
+        );
+      })}
 
       <SupplierFormActions>
         <SuppliesActionButton

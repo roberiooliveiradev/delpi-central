@@ -33,6 +33,8 @@ import {
   isSupplierFieldAvailable,
   parseQueryFromSearch,
   personTypeLabel,
+  supplierCreateFieldSection,
+  supplierFieldAnchorId,
   validateCreateDraft,
 } from "./query";
 import {
@@ -343,6 +345,41 @@ describe("create draft validation (X4.PROD-C1.R6)", () => {
   it("does not require optional fields", () => {
     const errors = validateCreateDraft(draft({ supplier_name: "" }));
     expect(errors).toEqual([]);
+  });
+});
+
+describe("R6-FE — navegação e identificação de campos", () => {
+  it("anchor id é estável e único por campo", () => {
+    const ids = new Set(
+      SUPPLIER_FIELD_REGISTRY.map((f) => supplierFieldAnchorId(f.key)),
+    );
+    expect(ids.size).toBe(SUPPLIER_FIELD_REGISTRY.length);
+    expect(supplierFieldAnchorId("supplier_store")).toBe(
+      "sp-supplier-field-anchor-supplier_store",
+    );
+  });
+
+  it("todo obrigatório de criação tem seção identificável", () => {
+    const required = SUPPLIER_FIELD_REGISTRY.filter(
+      (f) => f.post && f.required,
+    ).map((f) => f.key);
+    expect(required.sort()).toEqual([
+      "accounting_account",
+      "bacen_country_code",
+      "financial_nature_code",
+      "payment_condition_code",
+      "payment_method_code",
+      "rohs_indicator",
+      "supplier_store",
+    ]);
+    for (const key of required) {
+      expect(supplierCreateFieldSection(key)).not.toBeNull();
+    }
+  });
+
+  it("campos fora do formulário de criação não têm seção", () => {
+    expect(supplierCreateFieldSection("supplier_code")).toBeNull();
+    expect(supplierCreateFieldSection("__unknown__")).toBeNull();
   });
 });
 

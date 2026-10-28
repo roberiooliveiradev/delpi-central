@@ -30,6 +30,10 @@ import {
   type PostalAddressSuggestion,
 } from "./postalAddress";
 import {
+  supplierFieldAnchorId,
+  supplierFieldItemClass,
+} from "./query";
+import {
   catalogDisplayText,
   catalogLabelOf,
   isPreloadCatalog,
@@ -191,6 +195,8 @@ export function SupplierFieldInput({
 
 type SupplierCatalogFieldProps = {
   spec: SupplierFieldSpec;
+  /** Marca "*" no label quando a inclusão exige o campo (R6-FE). */
+  showRequiredMark?: boolean;
   /** Código atualmente selecionado (valor do draft). */
   value: string;
   /** Rótulo do valor atual quando ainda não resolvido pelo catálogo. */
@@ -227,6 +233,7 @@ export function SupplierCatalogField({
   codeFilter,
   disabled,
   hint,
+  showRequiredMark,
 }: SupplierCatalogFieldProps) {
   const kind = spec.catalog;
   if (!kind) return null;
@@ -241,6 +248,7 @@ export function SupplierCatalogField({
         onPick={onPick}
         disabled={disabled}
         hint={hint}
+        showRequiredMark={showRequiredMark}
       />
     );
   }
@@ -255,6 +263,7 @@ export function SupplierCatalogField({
       codeFilter={codeFilter}
       disabled={disabled}
       hint={hint}
+      showRequiredMark={showRequiredMark}
     />
   );
 }
@@ -267,6 +276,7 @@ function SupplierCatalogPreloadSelect({
   onPick,
   disabled,
   hint,
+  showRequiredMark,
 }: SupplierCatalogFieldProps & { kind: NonNullable<SupplierFieldSpec["catalog"]> }) {
   const { options, loading, error } = useCatalogOptions(kind);
   const merged = [...options];
@@ -281,7 +291,9 @@ function SupplierCatalogPreloadSelect({
   }
   return (
     <SuppliesSelectField
-      label={spec.label}
+      label={
+        showRequiredMark && spec.required ? `${spec.label} *` : spec.label
+      }
       hint={error ? C.catalogError : (hint ?? spec.help)}
       searchable
       value={trimmed}
@@ -334,6 +346,7 @@ function SupplierCatalogSearchCombo({
   codeFilter,
   disabled,
   hint,
+  showRequiredMark,
 }: SupplierCatalogFieldProps & { kind: NonNullable<SupplierFieldSpec["catalog"]> }) {
   const requiresDependency = Boolean(spec.catalogDependsOn);
   const dependencyReady = !requiresDependency || Boolean(dependsOnValue?.trim());
@@ -409,9 +422,15 @@ function SupplierCatalogSearchCombo({
       <span className="sp-supplier-combo__label">
         {hint ?? spec.help ? (
           <SuppliesSectionHintLabel
-            label={spec.label}
+            label={
+              showRequiredMark && spec.required
+                ? `${spec.label} *`
+                : spec.label
+            }
             hint={hint ?? spec.help ?? ""}
           />
+        ) : showRequiredMark && spec.required ? (
+          `${spec.label} *`
         ) : (
           spec.label
         )}
@@ -796,6 +815,74 @@ export function SupplierCatalogViewValue({
  * Grade lógica de 12 colunas compartilhada entre consulta, criação e edição.
  * Tablet colapsa para 2 colunas e mobile para 1 (CSS em index.css).
  */
+const SUPPLIER_FIELD_CONTROL_SELECTOR =
+  "input, select, textarea, button, [tabindex]:not([tabindex=\"-1\"])";
+
+type SupplierFieldShellProps = {
+  spec: SupplierFieldSpec;
+  /** Erro vigente do campo (validação local ou 422 do backend) — R6-FE. */
+  error?: string;
+  /** Marca a11y de obrigatoriedade — mesmo critério do "*" do label. */
+  requiredMark?: boolean;
+  /** Destaque de campo alterado (edição). */
+  changed?: boolean;
+  children: ReactNode;
+};
+
+/**
+ * Invólucro de campo do formulário de fornecedor: âncora estável para o
+ * resumo de erros, classe de inválido, mensagem associada e wiring ARIA
+ * imperativo sobre o primeiro controle focável — o kit federado não
+ * encaminha `aria-*` aos controles nativos (X4.PROD-C1.R6-FE).
+ */
+export function SupplierFieldShell({
+  spec,
+  error,
+  requiredMark = false,
+  changed = false,
+  children,
+}: SupplierFieldShellProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const anchorId = supplierFieldAnchorId(spec.key);
+  const errorId = `${anchorId}-error`;
+  const invalid = Boolean(error);
+  const required = requiredMark && Boolean(spec.required);
+
+  useEffect(() => {
+    const control = rootRef.current?.querySelector<HTMLElement>(
+      SUPPLIER_FIELD_CONTROL_SELECTOR,
+    );
+    if (!control) return;
+    if (required) control.setAttribute("aria-required", "true");
+    else control.removeAttribute("aria-required");
+    if (invalid) {
+      control.setAttribute("aria-invalid", "true");
+      control.setAttribute("aria-describedby", errorId);
+    } else {
+      control.removeAttribute("aria-invalid");
+      if (control.getAttribute("aria-describedby") === errorId) {
+        control.removeAttribute("aria-describedby");
+      }
+    }
+  });
+
+  return (
+    <div
+      ref={rootRef}
+      id={anchorId}
+      data-supplier-field={spec.key}
+      className={supplierFieldItemClass(spec, { changed, invalid })}
+    >
+      {children}
+      {error ? (
+        <p id={errorId} className="sp-supplier-field__error">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function SupplierFieldGrid({ children }: { children: ReactNode }) {
   return <div className="sp-supplier-fields">{children}</div>;
 }
