@@ -38,9 +38,9 @@ def list_proposal_documents(
         params["search"] = search.strip()
     if page_size is not None:
         params["page_size"] = page_size
-    if sort_by is not None:
+    if isinstance(sort_by, str):
         params["sort_by"] = sort_by
-    if sort_dir is not None:
+    if isinstance(sort_dir, str):
         params["sort_dir"] = sort_dir
     try:
         payload = build_delpi_commercial_gateway().get_commercial_proposal_document(
