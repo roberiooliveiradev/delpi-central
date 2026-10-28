@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+from datetime import datetime, timezone
+
 from psycopg.errors import UniqueViolation
 
 from app.infrastructure.persistence.comex_analysis_repository import (
@@ -17,6 +19,9 @@ from app.infrastructure.persistence.comex_analysis_repository import (
 )
 
 _REPO = "app.infrastructure.persistence.comex_analysis_repository"
+
+
+_TS = datetime(2026, 10, 28, tzinfo=timezone.utc)
 
 
 def _row(**over):
@@ -30,13 +35,13 @@ def _row(**over):
         "status": "candidate",
         "notes": None,
         "requested_by": "22222222-2222-2222-2222-222222222222",
-        "requested_at": "2026-10-28T00:00:00+00:00",
+        "requested_at": _TS,
         "decided_by": None,
         "decided_at": None,
         "decision_notes": None,
         "revision": 1,
-        "created_at": "2026-10-28T00:00:00+00:00",
-        "updated_at": "2026-10-28T00:00:00+00:00",
+        "created_at": _TS,
+        "updated_at": _TS,
     }
     base.update(over)
     return base
