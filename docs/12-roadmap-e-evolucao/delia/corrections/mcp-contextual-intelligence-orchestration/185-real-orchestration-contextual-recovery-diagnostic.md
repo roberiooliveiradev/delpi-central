@@ -49,3 +49,14 @@ Bounded A/B: run the identical T1–T4 suite against the production-model config
 ## 6. Compliance
 
 CODE_CHANGED=NO; PROMPTS_CHANGED=NO; DAVI_CHANGED=NO; API_DELPI_CHANGED=NO; DEPLOY_EXECUTED=NO; no secrets/tokens/CoT persisted; phase C3 not advanced.
+
+
+## 7. Revisão independente da coordenação — 2026-10-28
+
+**REVIEW=ACCEPT_WITH_RESIDUAL_DIAGNOSTIC; ROOT_CAUSE=NOT_YET_ISOLATED; PROD_MODEL_OUTCOME=TEST_NOT_RUN.** Reviewed doc 185 and commit `1a2c7f307c` against GitHub main. Diagnostic is executor-reported; reviewer did not re-run local Docker/LLM or access production.
+
+**Established:** four question families failed through real local DÉLIA interaction with `delia-json:latest` and the DAVI-only boundary; failures are confined to admission, surface/foreign selection, and candidate argument generation **in the observed traces**. NON_GROUNDED terminal status, no fabricated products, and no unauthorized action are positive safety outcomes. DAVI discovery success in some traces establishes partial traversal; it does not prove DAVI execute, evidence projection or synthesis end-to-end with a real model. Wrong-owner `mcp:vista.search_data_routes` selection for product queries was consistent in observed owner-surface admissions, but attribution to prompt/catalog projection rather than local model capacity is still unproven.
+
+**Qualification:** The heading 'root causes' in §3 is interpreted as *failure-stage evidence / root-cause hypotheses*, not isolated causal mechanisms; 'not root causes' for downstream evidence/synthesis means **not reached/NOT_EVALUATED** rather than proven correct. Since production model `moonshotai/kimi-k3` was not run, do not generalize `delia-json` quality findings to it or alter orchestration on this evidence alone. Also note local observed E2E used a real LLM but no successful owner business outcome, so `BUSINESS_OUTCOME=FAIL` for test cases, `REAL_DAVI_READ_OUTCOME=INCONCLUSIVE`.
+
+**Next bounded step:** small identical T1–T4 A/B under authorized runtime/model, capture semantic-stage admission, selected owner, stage schemas/parse validity, candidate binding, calls/tokens/latency and grounded record outcome; use existing observability with no credentials or chain-of-thought. When comparing local vs production models distinguish environment/config/catalog version and schema constraints; fix the smallest **proven** cause only. No DAVI capability/allowlist work, no direct DELPI fallback. Phase C3 remains unchanged.
