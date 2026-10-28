@@ -186,6 +186,22 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         requiredCap: "analytics",
         keywords: ["oportunidades", "ov", "funil", "ciclo", "colaborador", "visão"],
       },
+      {
+        id: "analytics_billing_by_customer",
+        label: "Faturamento por Cliente",
+        viewId: "analytics_billing_by_customer",
+        requiredCap: "analytics",
+        keywords: [
+          "faturamento",
+          "cliente",
+          "rol",
+          "bruto",
+          "relatório",
+          "excel",
+          "mês",
+          "ano",
+        ],
+      },
     ],
   },
   {

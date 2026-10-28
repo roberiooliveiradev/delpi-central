@@ -735,6 +735,19 @@ export const CM_HELP = {
       openValue: "Soma do valor em aberto dos pedidos da carteira.",
     },
   },
+  billingByCustomerMonth: {
+    page:
+      "Relatório de faturamento por cliente (código + loja) com colunas mensais, total do período e exportação Excel completa do recorte filtrado.",
+    filterYear: "Ano civil do relatório. Combina com o mês (ou todos os meses) para montar o período.",
+    filterMonth:
+      "Mês específico ou «Todos os meses» do ano. Em todos os meses, a tabela mostra uma coluna por mês.",
+    billingNature:
+      "Bruto = valor de nota fiscal (F2_VALBRUT). Líquido = ROL (mesma fórmula da Visão geral). Padrão: Bruto.",
+    grandTotal: "Soma do faturamento de todos os clientes retornados no período e natureza selecionados.",
+    customersCount: "Quantidade de clientes (código + loja) com faturamento no período filtrado.",
+    export:
+      "Gera planilha Excel com todos os clientes retornados pela consulta (não só a página visível da tabela).",
+  },
   overview: {
     page:
       "Dashboard do período: filtros, indicadores (≤8), evolução ROL (com YoY opcional), série de conversão e funil. Sem lista de OVs nem faixa Aprofundar.",

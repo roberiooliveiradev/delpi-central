@@ -19,6 +19,7 @@ export type PluginView =
   | "analytics_team"
   | "analytics_opportunities"
   | "analytics_opportunity_detail"
+  | "analytics_billing_by_customer"
   | "administration"
   | "administration_portfolios"
   | "administration_team"
@@ -355,6 +356,13 @@ export function resolvePluginRoute(
     return { view: "analytics_otd", pathname: path, relativePath };
   }
 
+  if (
+    relativePath === "analytics/billing-by-customer" ||
+    relativePath === "gestao/faturamento-por-cliente"
+  ) {
+    return { view: "analytics_billing_by_customer", pathname: path, relativePath };
+  }
+
   const otdLine = /^analytics\/otd\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(relativePath);
   if (otdLine) {
     const orderBranch = safeDecodeSegment(otdLine[1] ?? "");
@@ -512,6 +520,7 @@ const PLUGIN_VIEW_RELATIVE_PATHS: Record<BuildablePluginView, string> = {
   analytics_otd: "analytics/otd",
   analytics_team: "analytics/team",
   analytics_opportunities: "analytics/opportunities",
+  analytics_billing_by_customer: "analytics/billing-by-customer",
   administration: "administration",
   administration_portfolios: "administration/seller-portfolios",
   administration_team: "administration/team",
@@ -708,7 +717,8 @@ export function isAnalyticsDeepView(view: PluginView): boolean {
     view === "analytics_otd_line" ||
     view === "analytics_team" ||
     view === "analytics_opportunities" ||
-    view === "analytics_opportunity_detail"
+    view === "analytics_opportunity_detail" ||
+    view === "analytics_billing_by_customer"
   );
 }
 

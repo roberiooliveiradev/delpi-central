@@ -53,6 +53,9 @@ from app.application.dto.commercial.commercial_rol_series_request import (
 from app.application.dto.commercial.get_rol_by_customer_request import (
     GetRolByCustomerRequest,
 )
+from app.application.dto.commercial.get_billing_by_customer_month_request import (
+    GetBillingByCustomerMonthRequest,
+)
 from app.application.dto.commercial.get_rol_by_product_request import (
     GetRolByProductRequest,
 )
@@ -105,6 +108,7 @@ from app.composition.commercial_composer import (
     build_get_commercial_rol_series_use_case,
     build_get_commercial_rol_summary_use_case,
     build_get_commercial_rol_by_customer_use_case,
+    build_get_billing_by_customer_month_use_case,
     build_get_commercial_rol_by_product_use_case,
     build_get_commercial_rol_by_customer_center_use_case,
     build_get_commercial_rol_by_branch_use_case,
@@ -541,6 +545,71 @@ def get_commercial_rol_by_customer(
         log_error(f"Error while fetching ROL by customer: {exc}")
         return error_response(
             "Internal error while fetching ROL by customer.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/billing/by-customer-month",
+    operation_id="get_commercial_billing_by_customer_month",
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_billing_by_customer_month(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV of TOTVS customer codes (portfolio filter)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match)."
+    ),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match)."
+    ),
+    nature: str = Query(
+        default="gross",
+        pattern="^(gross|net)$",
+        description="Billing nature: gross (NF F2_VALBRUT) or net (ROL).",
+    ),
+    limit: int = LIMIT_QUERY("limit_500_5000"),
+):
+    """Customer × month billing matrix for commercial reports (gross NF or net ROL)."""
+    try:
+        request = GetBillingByCustomerMonthRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            customer_centers=parse_customer_centers(customer_centers),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+            nature=nature,
+            limit=limit,
+        )
+        result = build_get_billing_by_customer_month_use_case().execute(request)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_commercial_billing_by_customer_month",
+            message="Commercial billing by customer/month fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching billing by customer/month: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching billing by customer/month: {exc}")
+        return error_response(
+            "Internal error while fetching billing by customer/month.",
             status_code=500,
         )
 

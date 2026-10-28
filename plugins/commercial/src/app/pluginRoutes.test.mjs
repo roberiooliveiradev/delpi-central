@@ -29,6 +29,28 @@ describe("rotas nativas do pedido comercial", () => {
     assert.equal(resolveActiveNavId("help"), "help");
   });
 
+  it("resolve faturamento por cliente (EN + alias gestao)", () => {
+    const path = buildPluginPath("analytics_billing_by_customer", "/apps/commercial");
+    assert.equal(path, "/apps/commercial/analytics/billing-by-customer");
+    assert.deepEqual(resolvePluginRoute(path, "/apps/commercial"), {
+      view: "analytics_billing_by_customer",
+      pathname: path,
+      relativePath: "analytics/billing-by-customer",
+    });
+    assert.deepEqual(
+      resolvePluginRoute(
+        "/apps/commercial/gestao/faturamento-por-cliente",
+        "/apps/commercial",
+      ),
+      {
+        view: "analytics_billing_by_customer",
+        pathname: "/apps/commercial/gestao/faturamento-por-cliente",
+        relativePath: "gestao/faturamento-por-cliente",
+      },
+    );
+    assert.equal(resolveActiveNavId("analytics_billing_by_customer"), null);
+  });
+
   it("resolve interaction-rooms (inbox e detalhe) em EN", () => {
     assert.equal(INTERACTION_ROOMS_PATH_RE.test("interaction-rooms"), true);
     assert.equal(INTERACTION_ROOM_DETAIL_PATH_RE.test("interaction-rooms/abc"), true);

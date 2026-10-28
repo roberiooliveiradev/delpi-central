@@ -12,6 +12,7 @@ export type ManualToolTarget = {
 
 export const MANUAL_TOOL_TARGETS: readonly ManualToolTarget[] = [
   { label: "Pontualidade (OTD)", viewId: "analytics_otd" },
+  { label: "Faturamento por Cliente", viewId: "analytics_billing_by_customer" },
   { label: "Sala de interação", viewId: "interaction_rooms" },
   { label: "Manual do usuário", viewId: "help" },
   { label: "Minha Carteira → Faturamento", viewId: "customers", search: "?panel=billing" },

@@ -177,6 +177,33 @@ export type CommercialRolByCustomerData = {
   };
 };
 
+/** Relatório Gestão à vista — faturamento por cliente × mês. */
+export type BillingByCustomerMonthItem = {
+  customer_code: string;
+  customer_store: string;
+  customer_name: string;
+  monthly_values: Record<string, number>;
+  total: number;
+};
+
+export type BillingByCustomerMonthData = {
+  branch?: string;
+  start_date?: string;
+  end_date?: string;
+  nature?: "gross" | "net";
+  billingNature?: "gross" | "net";
+  supportedNatures?: ("gross" | "net")[];
+  months: string[];
+  items: BillingByCustomerMonthItem[];
+  summary?: {
+    grand_total?: number;
+    customers_count?: number;
+    items_count?: number;
+    monthly_totals?: Record<string, number>;
+    truncated?: boolean;
+  };
+};
+
 export type OpenPortfolioHorizonBucketId =
   | "overdue"
   | "current_month"

@@ -5,6 +5,7 @@ import type {
   CommercialProposalDetail,
   CommercialProposalHistoryEventsData,
   CommercialProposalsPage,
+  BillingByCustomerMonthData,
   CommercialRolByCustomerData,
   CommercialRolByProductData,
   CommercialRolSeriesData,
@@ -261,6 +262,39 @@ export function getCommercialRolByProduct(
   signal?: AbortSignal,
 ) {
   return fetchAnalyticsData<CommercialRolByProductData>("/rol/by-product", params, signal);
+}
+
+export function getBillingByCustomerMonth(
+  params: AnalyticsFilterParams & {
+    limit?: number;
+  },
+  signal?: AbortSignal,
+) {
+  const searchParams = new URLSearchParams();
+  if (params.start_date) searchParams.set("start_date", params.start_date);
+  if (params.end_date) searchParams.set("end_date", params.end_date);
+  if (params.branch) searchParams.set("branch", params.branch);
+  if (params.customer_segment) {
+    searchParams.set("customer_segment", params.customer_segment);
+  }
+  if (params.seller_id?.trim()) searchParams.set("seller_id", params.seller_id.trim());
+  if (params.customer_codes?.trim()) {
+    searchParams.set("customer_codes", params.customer_codes.trim());
+  }
+  if (params.customer_centers?.trim()) {
+    searchParams.set("customer_centers", params.customer_centers.trim());
+  }
+  if (params.nature === "gross" || params.nature === "net") {
+    searchParams.set("nature", params.nature);
+  }
+  searchParams.set("limit", String(params.limit ?? 5000));
+  const query = searchParams.toString();
+  return httpGet<ApiSuccessResponse<BillingByCustomerMonthData>>(
+    `${commercialApiUrl(`${ANALYTICS_PATH}/billing/by-customer-month`)}${
+      query ? `?${query}` : ""
+    }`,
+    { signal },
+  ).then((response) => unwrapEnvelope(response, "Erro na API comercial"));
 }
 
 export function getCommercialRolByCustomer(

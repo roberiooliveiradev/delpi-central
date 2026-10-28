@@ -26,6 +26,7 @@ import { AnalyticsOpportunityDetailPage } from "./features/analytics/AnalyticsOp
 import { AnalyticsOpportunitiesPage } from "./features/analytics/AnalyticsOpportunitiesPage";
 import { AnalyticsOtdLineDetailPage } from "./features/analytics/AnalyticsOtdLineDetailPage";
 import { AnalyticsOtdPage } from "./features/analytics/AnalyticsOtdPage";
+import { BillingByCustomerMonthPage } from "./features/analytics/BillingByCustomerMonthPage";
 import { OverviewPage } from "./features/overview/OverviewPage";
 import { HomePage } from "./features/home/HomePage";
 import { MyDayPage } from "./features/my-day/MyDayPage";
@@ -249,6 +250,13 @@ function AppRoutes({
       {view === "analytics_opportunities" ? (
         canViewAnalytics ? (
           <AnalyticsOpportunitiesPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "analytics_billing_by_customer" ? (
+        canViewAnalytics ? (
+          <BillingByCustomerMonthPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )

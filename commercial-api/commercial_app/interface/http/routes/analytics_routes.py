@@ -798,6 +798,48 @@ def bff_rol_by_customer(
     )
 
 
+@router.get(
+    "/billing/by-customer-month",
+    operation_id="bff_get_commercial_billing_by_customer_month",
+)
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_billing_by_customer_month(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    nature: str | None = Query(default="gross", pattern="^(gross|net)$"),
+    limit: int | None = Query(default=5000, ge=1, le=5000),
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
+):
+    """Relatório de faturamento por cliente × mês (bruto NF ou ROL líquido)."""
+    params: dict[str, Any] = _with_customer_centers(
+        {
+            **_common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+            ),
+            "nature": nature or "gross",
+            "limit": limit,
+        },
+        customer_centers,
+    )
+    return _proxy(
+        request,
+        operation_id="bff_get_commercial_billing_by_customer_month",
+        path="/billing/by-customer-month",
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+        params=params,
+        message="Faturamento por cliente/mês carregado.",
+    )
+
+
 @router.get("/proposals", operation_id="bff_list_commercial_proposals")
 @require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
 def bff_list_proposals(

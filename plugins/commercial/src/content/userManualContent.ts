@@ -135,6 +135,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Período, unidade SC/ES, KPIs e gráficos. No Início, a busca de caminhos também acha Visão geral com «indicadores», «dashboard» ou «meta».",
         },
         {
+          want: "Relatório de faturamento por cliente",
+          where: "Faturamento por Cliente",
+          how: "Ano e mês (ou todos os meses), filial, cliente e carteira; alterne Bruto/ROL; exporte Excel com todos os clientes do recorte",
+        },
+        {
           want: "Pontualidade (OTD)",
           where: "Início → Pontualidade (OTD)",
           how: "Ou drill a partir da Visão geral",
@@ -184,7 +189,8 @@ export const USER_MANUAL_CONTENT = {
         "Minhas tarefas — fila de follow-ups.",
         "Sala de interação — conversas internas.",
         "Administração — carteiras (vínculo com centro conferido), equipe, grupos e SLAs (gestores).",
-        "OTD, Oportunidades e Propostas — pelo Início ou drills; não ficam no menu de cima. Em Oportunidades, use Visão (colaborador | oportunidade) como na Minha Carteira.",
+        "OTD, Oportunidades, Faturamento por Cliente e Propostas — pelo Início (Gestão à vista) ou drills; não ficam no menu de cima. Em Oportunidades, use Visão (colaborador | oportunidade) como na Minha Carteira.",
+        "Faturamento por Cliente — histórico mensal por código+loja, natureza Bruto/ROL e exportação Excel completa do filtro.",
       ],
     },
     {
@@ -254,6 +260,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Como exporto o ABC de clientes?",
           a: "Minha Carteira → ABC. Mesmos filtros do Faturamento no hero; use Excel na tabela do painel.",
+        },
+        {
+          q: "Onde vejo o faturamento mensal de todos os clientes?",
+          a: "Início → Gestão à vista → Faturamento por Cliente. Escolha ano e mês (ou todos os meses), filtre filial/cliente/carteira, alterne Bruto ou ROL e use Exportar Excel para baixar o recorte completo.",
         },
         {
           q: "Os filtros mudam ao trocar Faturamento, ABC, Ranking e Clientes?",

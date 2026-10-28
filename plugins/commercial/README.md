@@ -55,6 +55,7 @@ Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — *
 | `/apps/commercial/analytics/team` | Equipe — redireciona Administração | `commercial.manage` |
 | `/apps/commercial/analytics/opportunities` | Oportunidades OV | `commercial.access` |
 | `/apps/commercial/analytics/opportunities/:proposalNumber` | Ficha nativa da OV | `commercial.access` |
+| `/apps/commercial/analytics/billing-by-customer` | Faturamento por Cliente (mês/ano, Bruto/ROL, Excel) | `commercial.access` |
 | `/apps/commercial/administration` | Administração — Painel | `commercial.manage` |
 | `/apps/commercial/administration/seller-portfolios` | Administração — Carteiras | `commercial.manage` |
 | `/apps/commercial/administration/seller-portfolios/:id` | Detalhe de carteira | `commercial.manage` |
@@ -65,8 +66,9 @@ Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — *
 | `/apps/commercial/interaction-rooms/:roomId` | Thread da sala (SPA; não declarado no manifesto) | `commercial.access` |
 
 Nav de topo: `Início → Visão geral† → Sala → Minhas tarefas‡ → Meus pedidos → Minha Carteira → Administração° → Ajuda`
-(†‡ `commercial.access` · ° `commercial.manage` · Ajuda sempre visível). Propostas, OTD, Oportunidades
-e Equipe analytics saem do topo: chega-se a elas pelo launcher do Início ou pelos drills da Visão geral.
+(†‡ `commercial.access` · ° `commercial.manage` · Ajuda sempre visível). Propostas, OTD, Oportunidades,
+Faturamento por Cliente e Equipe analytics saem do topo: chega-se a elas pelo launcher do Início
+(Gestão à vista) ou pelos drills da Visão geral.
 Alias `/administration/members` → Equipe; detalhe legado `/seller-portfolios/:id` permanece válido.
 
 ## Pedidos em aberto

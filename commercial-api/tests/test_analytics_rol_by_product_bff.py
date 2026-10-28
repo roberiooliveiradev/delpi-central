@@ -354,3 +354,67 @@ def test_bff_customer_centers_unrestricted_omits_codes() -> None:
 
     params = gateway.get_commercial_analytics.call_args.kwargs["params"]
     assert "customer_codes" not in params
+
+
+def test_bff_billing_by_customer_month_passes_nature_and_membership() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_analytics.return_value = {
+        "data": {
+            "months": ["2026-01"],
+            "items": [
+                {
+                    "customer_code": "000001",
+                    "customer_store": "01",
+                    "customer_name": "ACME",
+                    "monthly_values": {"2026-01": 10.0},
+                    "total": 10.0,
+                }
+            ],
+            "summary": {"grand_total": 10.0, "customers_count": 1},
+            "billingNature": "net",
+        }
+    }
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("000001", "01")}),
+    )
+    request = _request(
+        "/analytics/billing/by-customer-month",
+        query=b"customer_codes=000001",
+    )
+    request.state.user = _User(["commercial.access"])
+
+    with (
+        patch.object(
+            analytics_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            analytics_routes,
+            "resolve_analytics_portfolio_scope",
+            return_value=scope,
+        ),
+    ):
+        response = analytics_routes.bff_billing_by_customer_month(
+            request,
+            start_date="2026-01-01",
+            end_date="2026-01-31",
+            branch="01",
+            customer_segment=None,
+            nature="net",
+            limit=5000,
+            seller_id=None,
+            portfolio_id=None,
+            customer_centers=None,
+        )
+
+    assert response.status_code == 200
+    body = json.loads(response.body)
+    assert body["meta"]["operationId"] == "bff_get_commercial_billing_by_customer_month"
+    path, kwargs = gateway.get_commercial_analytics.call_args
+    assert path[0] == "/billing/by-customer-month"
+    assert kwargs["params"]["nature"] == "net"
+    assert kwargs["params"]["limit"] == 5000
+    assert kwargs["params"]["customer_codes"] == "000001"
+    assert kwargs["params"]["branch"] == "01"
