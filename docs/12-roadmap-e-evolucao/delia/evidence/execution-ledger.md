@@ -476,3 +476,15 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Outcome honesto: first-pass 3/7 (v23) -> 3/7 (v24, composicao alterada); best-of 4/7. Sem regressao material; 0 fabricacao; 0 bypass.
 - Gates: SECURITY_GATE=PASS_WITH_RESIDUAL (remediacao pendente de owner); V24_STABILITY_GATE=STABLE_WITH_RESIDUAL; V24_CAN_REMAIN_DEPLOYED=YES condicionado a ratificacao de seguranca; ROLLBACK nao requerido.
 - Artefatos: doc 173. DEPLOY=NO; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
+
+
+## 2026-10-28 — DELIA-C3-SECRET-EXPOSURE-CLEANUP-AND-PREVENTION-01 (doc 174)
+
+- Escopo: eliminar copias locais desnecessarias da DELIA_LLM_API_KEY exposta + prevenção permanente contra exposicao em saidas/historicos/logs/prompts/artefatos. Sem rotacao/Keycloak/RBAC/deploy/modelo (nao autorizado).
+- Inventario (presenca/contagem apenas, nunca valores): chave OpenRouter presente em 29 arquivos history_*.md (%APPDATA%/devin/cli/summaries) + sessions.db (120 matches) + sessions.db-wal (7). Zero em: cache de overflow (74.679 arquivos), logs do CLI, PSReadLine, WSL /tmp/home, 3 worktrees, historico git (apenas placeholders de 13 chars), srv-api host/tmp e container delpi-delia-api.
+- Sanitizacao: 29/29 arquivos de historico tratados in-place com [REDACTED_SECRET] (conteudo nao sensivel preservado); verificacao residual -> 0 matches do valor completo.
+- Residual externo: sessions.db+WAL (plataforma Devin, byte-edit corromperia) e contexto no provider OpenRouter = EXTERNAL_ARTIFACT_REMEDIATION_REQUIRED; ZERO_EXPOSURE universal nao declarado.
+- Prevencao (REUSE_DECISION=EXTEND): nova regra .cursor/rules/secret-handling-diagnostics-safety.mdc (filha de platform-security-identity-authorization) + responsibility-map.json + inventario + audit_cursor_rules.py OK; gate CI audit_architecture_phase3 estendido com PROVIDER_CREDENTIAL_RE (sk-*/gsk_/xox*/gh[pousr]_/AKIA/JWT; generalizado, nao especifico do incidente); 3 testes novos com credenciais sinteticas.
+- Testes: 22/22 OK (unittest local). Sem modificacao de codigo/config produtivo.
+- Veredito: LOCAL_CLEANUP=DONE_AND_VERIFIED; PREVENTION=DONE; RISK_ACCEPTANCE_PENDING_SECURITY_OWNER (rotacao permanece pendente do owner de seguranca); FINAL_VERDICT=STABLE_WITH_RESIDUAL; INDEPENDENT_REVIEW=PENDING.
+- Artefatos: doc 174; .cursor/rules/secret-handling-diagnostics-safety.mdc; responsibility-map.json; inventario-regras-cursor.md; audit_architecture_phase3.py + testes.

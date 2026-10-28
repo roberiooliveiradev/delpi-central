@@ -76,6 +76,32 @@ class ArchitecturePhase3GateTests(unittest.TestCase):
         self.assertEqual([item.rule for item in bad], ["SECRET_LITERAL"])
         self.assertEqual(good, [])
 
+    def test_provider_credential_literal_detected(self) -> None:
+        tail = "a" * 32
+        cases = {
+            "openrouter-shape": 'LLM_KEY = "sk-or-v1-' + tail + '"',
+            "groq-shape": 'LLM_KEY = "gsk_' + tail + '"',
+            "github-shape": 'TOKEN = "ghp_' + tail + '"',
+            "aws-shape": 'KEY = "AKIA' + "D" * 16 + '"',
+            "jwt-shape": 'TOKEN = "eyJ' + tail + '.eyJ' + tail + '.eyJ' + tail + '"',
+            "bare-env-line": "LLM_API_KEY=sk-or-v1-" + tail,
+        }
+        for name, line in cases.items():
+            findings = phase3.scan_secret_lines("service/.env", {1: line})
+            self.assertEqual([item.rule for item in findings], ["SECRET_LITERAL"], name)
+
+    def test_provider_credential_short_placeholder_not_flagged(self) -> None:
+        findings = phase3.scan_secret_lines(
+            "service/.env.example", {1: "LLM_API_KEY=sk-or-v1-your-key-example"}
+        )
+        self.assertEqual(findings, [])
+
+    def test_provider_credential_safe_text_not_flagged(self) -> None:
+        findings = phase3.scan_secret_lines(
+            "service/config.py", {1: "task_id = 'sk-short-id'  # session tag"}
+        )
+        self.assertEqual(findings, [])
+
     def test_violation_fingerprint_is_stable(self) -> None:
         a = phase3.Violation("RULE", "x.py", 10, "hello   world")
         b = phase3.Violation("RULE", "x.py", 99, "hello world")

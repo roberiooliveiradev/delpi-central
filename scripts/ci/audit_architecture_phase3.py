@@ -71,6 +71,14 @@ SECRET_ASSIGN_RE = re.compile(
 )
 EMBEDDED_CREDENTIAL_URL_RE = re.compile(r"https?://[^\s/:@]+:[^\s/@]+@", re.IGNORECASE)
 PRIVATE_KEY_RE = re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")
+PROVIDER_CREDENTIAL_RE = re.compile(
+    r"\b(?:sk-[A-Za-z0-9_-]{20,}"
+    r"|gsk_[A-Za-z0-9_-]{20,}"
+    r"|xox[baprs]-[A-Za-z0-9-]{10,}"
+    r"|gh[pousr]_[A-Za-z0-9]{20,}"
+    r"|AKIA[0-9A-Z]{16}"
+    r"|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})"
+)
 JS_LOG_SECRET_RE = re.compile(
     r"console\.(?:log|info|warn|error)\([^\n]*(?:token|api[_-]?key|password|secret|authorization|cookie)",
     re.IGNORECASE,
@@ -453,6 +461,13 @@ def scan_secret_lines(path: str, lines: dict[int, str]) -> list[Violation]:
             findings.append(Violation("SECRET_LITERAL", path, line_no, "URL contém credencial embutida"))
         if PRIVATE_KEY_RE.search(line):
             findings.append(Violation("SECRET_LITERAL", path, line_no, "chave privada literal adicionada"))
+        if PROVIDER_CREDENTIAL_RE.search(line) and not any(
+            marker in stripped.lower() for marker in PLACEHOLDER_TOKENS
+        ):
+            findings.append(Violation(
+                "SECRET_LITERAL", path, line_no,
+                "formato reconhecível de credencial de provider/JWT literal",
+            ))
         match = SECRET_ASSIGN_RE.search(line)
         if match:
             value = match.group(2).lower()

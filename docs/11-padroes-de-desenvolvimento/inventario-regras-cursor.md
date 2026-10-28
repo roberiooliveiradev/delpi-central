@@ -44,6 +44,7 @@ Racional: ownership, fonte de verdade, direção de dependências e divisão de 
 Owner: `platform-security-identity-authorization.mdc`
 
 - `ai-external-tools-security.mdc`
+- `secret-handling-diagnostics-safety.mdc`
 
 ### Gates implementados
 
