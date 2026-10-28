@@ -1017,3 +1017,12 @@ Zero componente novo: o fix foi CSS scoped no padrão existente + recomposição
 Gap honesto registrado: o kit não expõe barra de ordenação no modo Cards — a ordem é escolhida na tabela e o estado se aplica também aos cards (`sortedRows` compartilhado). Evolução central possível (`DataCardsSortBar` já existe no kit para composição futura), sem clone local.
 
 Identidade (UX-014): `DataRecordCard.leading` aceita avatar quando houver contrato Core→BFF autorizado para atores administrativos — hoje o único lookup BFF é document-scoped (`participants/lookup`), insuficiente para `published_by`/audit actors.
+
+
+### UX-016 — integração hero + DataTableSection (TARGET)
+- Hero: usar `CfPagePath`, `CfTitleWithHelp`, `CfMetricStrip`, `CfActionButton`, `CfStatusBadge` e containers/tokens reais do kit conforme exports no HEAD; evitar widget de métrica paralelo.
+- Listagem: `DataTableSection` com table/cards, sortable/sortValue, rowClick, column selection, search/pageSize/footer. **Verificar API real para externalizar/posicionar toolbar no hero sem clonar state ou controles.** Se não for suportado, escalar lacuna de kit/contract gate; não usar CSS ocultando uma toolbar e reproduzindo outra sem sincronização comprovada.
+- Superfícies: hero e lista são irmãs, sem CfSectionCard intermediário e sem pilha de cards internos.
+- Linha/card: navegação acessível; sem coluna Ações na Administração; Inativar somente na Versão e fora do alvo clicável; ação destructive com confirmação.
+- Altura disponível: dimensionamento flex/viewport host-aware, scroll interno apenas quando acessível e sem quebrar tabelas largas/mobile.
+- UX014 identidade: não resolver via frontend direto no Core, não improvisar nome/uuid; dependência isolada.
