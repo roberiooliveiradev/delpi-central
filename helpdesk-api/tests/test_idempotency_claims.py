@@ -256,3 +256,162 @@ def test_key_reuse_with_different_intent_is_blocked():
     assert second.status_code == 409
     assert second.json()["error"] == "idempotency_in_flight"
     assert len(glpi.uploads) == 1
+
+
+# ---------------------------------------------------------------------------
+# Intent completeness — same key + one divergent functional field → blocked
+# ---------------------------------------------------------------------------
+
+
+def test_upload_same_key_different_title_is_blocked():
+    glpi = FakeGlpi()
+    client, _ = build_client(glpi=glpi)
+    link(client)
+    glpi.session_uid = 68
+    first = client.post(
+        "/tickets/7/attachments",
+        files={"file": ("e.png", b"img", "image/png")},
+        data={"title": "Evidência A"},
+        headers={**auth_headers(), "Idempotency-Key": "up-title-1"},
+    )
+    assert first.status_code == 201
+    second = client.post(
+        "/tickets/7/attachments",
+        files={"file": ("e.png", b"img", "image/png")},
+        data={"title": "Evidência B"},
+        headers={**auth_headers(), "Idempotency-Key": "up-title-1"},
+    )
+    assert second.status_code == 409
+    assert second.json()["error"] == "idempotency_in_flight"
+    assert len(glpi.uploads) == 1
+
+
+def test_followup_same_key_different_request_type_is_blocked():
+    glpi = FakeGlpi()
+    client, _ = build_client(glpi=glpi)
+    link(client)
+    first = client.post(
+        "/tickets/7/followups",
+        json={"content": "Testei o cabo", "request_type_id": 1},
+        headers={**auth_headers(), "Idempotency-Key": "fu-rt-1"},
+    )
+    assert first.status_code == 201
+    second = client.post(
+        "/tickets/7/followups",
+        json={"content": "Testei o cabo", "request_type_id": 2},
+        headers={**auth_headers(), "Idempotency-Key": "fu-rt-1"},
+    )
+    assert second.status_code == 409
+    assert second.json()["error"] == "idempotency_in_flight"
+
+
+def test_satisfaction_same_key_different_comment_is_blocked():
+    from dataclasses import replace
+
+    glpi = FakeGlpi()
+    client, _ = build_client(glpi=glpi)
+    link(client)
+    glpi.detail = replace(
+        glpi.detail, status_id=6, status="Fechado",
+        requester_mine=True, can_followup=False,
+    )
+    first = client.put(
+        "/tickets/7/satisfaction",
+        json={"satisfaction": 5, "comment": "ótimo"},
+        headers={**auth_headers(), "Idempotency-Key": "sat-c-1"},
+    )
+    assert first.status_code == 201
+    second = client.put(
+        "/tickets/7/satisfaction",
+        json={"satisfaction": 5, "comment": "regular"},
+        headers={**auth_headers(), "Idempotency-Key": "sat-c-1"},
+    )
+    assert second.status_code == 409
+    assert second.json()["error"] == "idempotency_in_flight"
+    assert len(glpi.satisfactions) == 1
+
+
+def test_decide_validation_same_key_different_comment_is_blocked():
+    from dataclasses import replace
+
+    from helpdesk_app.domain.models import TicketValidation
+
+    glpi = FakeGlpi()
+    client, _ = build_client(glpi=glpi)
+    link(client)
+    glpi.detail = replace(
+        glpi.detail,
+        validations=(
+            TicketValidation(
+                id=9, status=2, submission_comment="pode?",
+                requested_approver_id=1, mine_to_decide=True,
+            ),
+        ),
+        can_decide_validation=True,
+    )
+    first = client.post(
+        "/tickets/7/validations/9/accept",
+        json={"content": "sim"},
+        headers={**auth_headers(), "Idempotency-Key": "val-c-1"},
+    )
+    assert first.status_code == 200
+    second = client.post(
+        "/tickets/7/validations/9/accept",
+        json={"content": "com ressalvas"},
+        headers={**auth_headers(), "Idempotency-Key": "val-c-1"},
+    )
+    assert second.status_code == 409
+    assert second.json()["error"] == "idempotency_in_flight"
+    assert len(glpi.validation_decisions) == 1
+
+
+# ---------------------------------------------------------------------------
+# Satisfaction — POST is create-type: post-write uncertainty stays in_flight
+# ---------------------------------------------------------------------------
+
+
+class _SatisfactionLostAfterWriteGlpi(FakeGlpi):
+    """GLPI persists the TicketSatisfaction, then the read-back fails.
+    The list of submissions counts real POSTs — a duplicate would be
+    observable."""
+
+    def __init__(self):
+        super().__init__()
+        self.submission_calls: list[tuple[int, int, str]] = []
+
+    def get_ticket_satisfaction(self, access_token, ticket_id):
+        self.calls += 1
+        return None  # unreliable read — recorded row not visible yet
+
+    def submit_ticket_satisfaction(self, access_token, ticket_id, *, satisfaction, comment=""):
+        self.calls += 1
+        self.submission_calls.append((int(ticket_id), int(satisfaction), str(comment or "")))
+        raise GlpiUnavailable("read-back failed after TicketSatisfaction POST")
+
+
+def test_satisfaction_post_write_failure_blocks_retry_no_second_post():
+    from dataclasses import replace
+
+    glpi = _SatisfactionLostAfterWriteGlpi()
+    client, _ = build_client(glpi=glpi)
+    link(client)
+    glpi.detail = replace(
+        glpi.detail, status_id=6, status="Fechado",
+        requester_mine=True, can_followup=False,
+    )
+    first = client.put(
+        "/tickets/7/satisfaction",
+        json={"satisfaction": 5, "comment": "ótimo"},
+        headers={**auth_headers(), "Idempotency-Key": "sat-post-1"},
+    )
+    assert first.status_code == 502
+    assert len(glpi.submission_calls) == 1  # persisted, response lost
+
+    retry = client.put(
+        "/tickets/7/satisfaction",
+        json={"satisfaction": 5, "comment": "ótimo"},
+        headers={**auth_headers(), "Idempotency-Key": "sat-post-1"},
+    )
+    assert retry.status_code == 409
+    assert retry.json()["error"] == "idempotency_in_flight"
+    assert len(glpi.submission_calls) == 1  # no second POST — blocked

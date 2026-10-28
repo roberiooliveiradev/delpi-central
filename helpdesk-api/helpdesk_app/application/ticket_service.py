@@ -365,7 +365,7 @@ class TicketService:
         key = _require_key(idempotency_key)
         operation = f"upload_attachment:{ticket_id}"
         existing = self._claim_or_replay(
-            subject, operation, key, intent={"ticket_id": ticket_id, "filename": filename, "mime": mime, "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()}
+            subject, operation, key, intent={"ticket_id": ticket_id, "filename": filename, "mime": mime, "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest(), "title_sha256": hashlib.sha256((title or "").strip().encode("utf-8")).hexdigest()}
         )
         if existing is not None:
             return existing
@@ -669,7 +669,7 @@ class TicketService:
         )
         operation = f"followup:{ticket_id}"
         existing = self._claim_or_replay(
-            subject, operation, key, intent={"ticket_id": ticket_id, "sha256": hashlib.sha256(content_html.encode("utf-8")).hexdigest()}
+            subject, operation, key, intent={"ticket_id": ticket_id, "request_type_id": request_type_id, "sha256": hashlib.sha256(content_html.encode("utf-8")).hexdigest()}
         )
         if existing is not None:
             return existing
@@ -1253,8 +1253,18 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         operation = f"submit_satisfaction:{ticket_id}"
+        # Normalized before the claim: the fingerprint must match the
+        # canonical text actually written, never raw user input.
+        comment_text = _prepare_cycle_comment_text(comment, "comment")
         existing = self._claim_or_replay(
-            subject, operation, key, intent={"ticket_id": ticket_id, "satisfaction": satisfaction}
+            subject,
+            operation,
+            key,
+            intent={
+                "ticket_id": ticket_id,
+                "satisfaction": satisfaction,
+                "comment_sha256": hashlib.sha256(comment_text.encode("utf-8")).hexdigest(),
+            },
         )
         if existing is not None:
             return existing
@@ -1270,7 +1280,6 @@ class TicketService:
             existing_sat = self._glpi.get_ticket_satisfaction(token, ticket_id)
             if existing_sat is not None:
                 raise GlpiValidation("Pesquisa de satisfação já registrada.")
-            comment_text = _prepare_cycle_comment_text(comment, "comment")
             self._glpi.submit_ticket_satisfaction(
                 token,
                 ticket_id,
@@ -1284,10 +1293,13 @@ class TicketService:
             self._idempotency.save(subject, operation, key, stored)
             return stored
 
-        except HelpdeskError:
-            # Naturally-idempotent write: re-executing the same
-            # intent converges to the same state, so any typed
-            # rejection can release the claim — no duplicate risk.
+        except _PRE_WRITE_ONLY_ERRORS:
+            # Provable pre-side-effect rejection (OAuth session
+            # expired, feature gate) — release the claim so a
+            # corrected intent is not blocked forever. Everything
+            # else keeps the claim in-flight: POST /TicketSatisfaction
+            # is a create — the write may have persisted and a blind
+            # retry could duplicate it.
             self._idempotency.release(subject, operation, key)
             raise
     def decide_validation(
@@ -1304,8 +1316,17 @@ class TicketService:
         key = _require_key(idempotency_key)
         action = "accept" if accept else "reject"
         operation = f"validation_{action}:{ticket_id}:{validation_id}"
+        comment_text = _prepare_cycle_comment_text(comment, "content")
         existing = self._claim_or_replay(
-            subject, operation, key, intent={"ticket_id": ticket_id, "validation_id": validation_id, "accept": accept}
+            subject,
+            operation,
+            key,
+            intent={
+                "ticket_id": ticket_id,
+                "validation_id": validation_id,
+                "accept": accept,
+                "comment_sha256": hashlib.sha256(comment_text.encode("utf-8")).hexdigest(),
+            },
         )
         if existing is not None:
             return existing
@@ -1322,7 +1343,7 @@ class TicketService:
                 ticket_id,
                 validation_id,
                 accept=accept,
-                comment=_prepare_cycle_comment_text(comment, "content"),
+                comment=comment_text,
             )
             refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
             stored = StoredResponse(
