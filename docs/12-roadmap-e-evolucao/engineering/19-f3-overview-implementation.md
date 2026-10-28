@@ -138,3 +138,17 @@ Serialização por owner preservada: LMP recebe datas `YYYYMMDD` +
   têm achados pré-existentes em outros MFEs; zero introduzidos pelo
   escopo (audits `backend_boundaries`, `platform_guardrails`,
   `architecture_phase3`, `fastapi_authz`: 0 findings).
+
+## 8. Deploy e smoke (2026-10-28)
+
+- SHA: `3108d81910` (commit `19ccc3147f` rebased sobre `origin/main`).
+- Deploy canônico: `git pull --ff-only` em `srv-api` +
+  `up-prod-sequential.sh --build engineering-api engineering` —
+  `delpi-engineering-api` e `delpi-engineering` recriados e `Up`.
+- Smoke público: `200` em `/apps/engineering`, `/overview`, `/help`,
+  `remoteEntry.js` e `/apps/engineering-api/health`; `401` em
+  `/v1/overview` sem JWT (fail-closed).
+- Evidência de bundle: `remoteEntry` → `App-Dvlq6Wf3.js` contém
+  `v1/overview`, `lmp_on_time`, `transformometro`, `Período rápido`.
+- Smoke autenticado: pendente de grant `engineering.access`.
+- Rollback: `git revert 3108d81910` + redeploy dos dois serviços.
