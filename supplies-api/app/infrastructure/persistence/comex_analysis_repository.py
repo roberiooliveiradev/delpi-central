@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from psycopg.errors import IntegrityError
+
 from app.infrastructure.persistence.migrations_runner import get_connection
 
 
@@ -40,28 +42,45 @@ class ComexAnalysisRepository:
                 )
                 existing = cur.fetchone()
                 if existing is not None:
-                    existing["_existing"] = True
                     return _governance_dto(existing) | {"_existing": True}
 
-                cur.execute(
-                    """
-                    INSERT INTO supplies.comex_ncm_governance (
-                        ncm_code, ncm_version, description, family_code,
-                        product_codes, status, notes, requested_by
-                    ) VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s)
-                    RETURNING *
-                    """,
-                    (
-                        record["ncm_code"],
-                        record.get("ncm_version"),
-                        record.get("description"),
-                        record.get("family_code"),
-                        json.dumps(record.get("product_codes") or []),
-                        record["status"],
-                        record.get("notes"),
-                        record["requested_by"],
-                    ),
-                )
+                try:
+                    cur.execute(
+                        """
+                        INSERT INTO supplies.comex_ncm_governance (
+                            ncm_code, ncm_version, description, family_code,
+                            product_codes, status, notes, requested_by
+                        ) VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s)
+                        RETURNING *
+                        """,
+                        (
+                            record["ncm_code"],
+                            record.get("ncm_version"),
+                            record.get("description"),
+                            record.get("family_code"),
+                            json.dumps(record.get("product_codes") or []),
+                            record["status"],
+                            record.get("notes"),
+                            record["requested_by"],
+                        ),
+                    )
+                except IntegrityError:
+                    # Concurrent insert won the race — the shared catalog
+                    # is single-row per NCM, so return the winner's record.
+                    conn.rollback()
+                    cur.execute(
+                        """
+                        SELECT * FROM supplies.comex_ncm_governance
+                        WHERE ncm_code = %s
+                        """,
+                        (record["ncm_code"],),
+                    )
+                    existing = cur.fetchone()
+                    if existing is not None:
+                        return _governance_dto(existing) | {
+                            "_existing": True
+                        }
+                    raise
                 row = cur.fetchone()
                 self._insert_event(
                     cur,

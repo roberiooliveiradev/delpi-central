@@ -94,6 +94,44 @@ def test_request_conflict_when_already_pending():
         svc.request_ncm(user=_user(), ncm_code="74081190")
 
 
+def test_request_candidate_add_creates_catalog_row():
+    svc, repo, _ = _service()
+    repo.create_governance.return_value = _gov(status="candidate")
+    out = svc.request_ncm(
+        user=_user(), ncm_code="74081190", initial_status="candidate"
+    )
+    record = repo.create_governance.call_args.kwargs["record"]
+    assert record["status"] == "candidate"
+    assert out["status"] == "candidate"
+    assert "already_registered" not in out
+
+
+def test_request_candidate_add_is_idempotent_on_existing():
+    svc, repo, _ = _service()
+    repo.create_governance.return_value = _gov(
+        status="approved", _existing=True
+    )
+    out = svc.request_ncm(
+        user=_user(), ncm_code="74081190", initial_status="candidate"
+    )
+    assert out["already_registered"] is True
+    assert out["status"] == "approved"
+    repo.transition_governance.assert_not_called()
+
+
+def test_request_candidate_add_does_not_reactivate_inactive():
+    svc, repo, _ = _service()
+    repo.create_governance.return_value = _gov(
+        status="inactive", _existing=True
+    )
+    out = svc.request_ncm(
+        user=_user(), ncm_code="74081190", initial_status="candidate"
+    )
+    assert out["already_registered"] is True
+    assert out["status"] == "inactive"
+    repo.transition_governance.assert_not_called()
+
+
 def test_request_resubmits_rejected():
     svc, repo, market = _service()
     repo.create_governance.return_value = _gov(

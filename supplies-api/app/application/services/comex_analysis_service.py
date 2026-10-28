@@ -228,6 +228,11 @@ class ComexAnalysisService:
             }
         )
         if record.pop("_existing", False):
+            # S7 shared-catalog add (``candidate``) is idempotent — the
+            # existing row is returned untouched, whatever its status.
+            if status == "candidate":
+                record["already_registered"] = True
+                return record
             # Resubmit path — only from candidate/rejected.
             if record["status"] not in ("candidate", "rejected"):
                 raise ComexConflictError(
