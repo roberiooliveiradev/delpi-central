@@ -588,3 +588,10 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Autorizacao consultada: nenhuma rotacao de credencial, nenhuma aceitacao formal de risco e nenhuma disposicao do security owner registradas; revisao independente mais recente (2178a2762c) reafirma RELEASE_SECURITY_GATE=BLOCKED e disposicao do owner como pre-requisito.
 - Consequencia: RELEASE_AUTHORIZATION=BLOCKED -> DEPLOY_NOT_EXECUTED; runtime v24 preservado; zero queries produtivas; sem contorno de gate.
 - Veredito: DEPLOY_BLOCKED_SECURITY_GATE (inalterado em relacao ao doc 182). DEPLOY_EXECUTED=NO; PRODUCTION_QUERIES=0; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
+
+
+## 2026-10-28 — DELIA-C3-DAVI-ONLY-OWNER-RISK-ATTESTATION (doc 183)
+
+- O solicitante declarou ser responsável pela aceitação do risco residual da chave OpenRouter, afirmou tratar-se de chave de testes e solicitou liberação do deploy. Declaração registrada literalmente no doc 183; não equivale por si só a verificação independente de identidade, autorização nem de escopo da credencial.
+- RISK_OWNER_ATTESTATION=YES (self-declared); SECURITY_ROLE_VERIFICATION=PENDING; POLICY_COMPATIBILITY=PENDING; RELEASE_SECURITY_GATE=PENDING_AUTHORIZED_VALIDATION; DEPLOY_EXECUTED=NO.
+- Após verificação da autoridade e do registro de aceitação por mecanismo canônico, permitir avaliação normal de release e testes de produção; manter incidente/auditoria preservados. Sem alteração de código, DAVI, API DELPI ou fase C3.
