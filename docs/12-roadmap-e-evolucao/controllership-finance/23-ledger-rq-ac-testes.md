@@ -723,3 +723,44 @@ Nenhum teste ou deploy desta rodada foi executado ao escrever esta especificaç�
 | UX016-07 | PT-BR e kit-first, light/dark, 320/390/768/desktop/zoom200, keyboard/focus | PASS | shots light+dark/768/390/320/zoom200 `overflowX=0`; hero empilha no mobile; navegação por linha mantém foco/Enter/Espaço do kit |
 | UX016-08 | Snapshot, OCC, read-only PUBLISHED, back/F5/deep link, RBAC, erros, Help intactos | PASS | RTL DRAFT edit/OCC stale_revision, PUBLISHED read-only, 403/404/empty; smoke deep link v2 + histórico + F5; Help atualizado (hero/toolbar, ações só no detalhe) |
 | UX016-09 | Testes, screenshots, bundle, deploy/smoke por gate com status honesto | PASS | MFE 367/367 + plugin-ui 167/167 + smoke local 19/19 + 8 capturas; commit `8389500d71` → origin/main; srv-api pull + `up-prod-sequential.sh --build plugin-ui controllership-finance`; remoteEntry 200 — cf `App-B3v-K-FL.js`/`__federation_expose_App-jOmJd2RR.js` (contém `admin-listing-toolbar`/`cf-flex-listing`), kit `__federation_expose_Index-C8jie95s.js` (contém `toolbarPortalTarget`); BFF health/ready 200, container healthy; smoke prod autenticado TEST_NOT_RUN (sem identidade autorizada) |
+
+
+## Área DRE — recebimento documental (CF-PROC0072-DRE-ACCESS-018, 29/10/2026)
+
+Inventário read-only + desenho + gate de arquitetura (Plano 113 §29, wireframes doc 112 §54). `IMPLEMENTATION_AUTHORIZED=NO` — nenhum endpoint/migration/página/deploy nesta execução. Status respeita: `PROVEN | TO_INVENTORY | PLANNED | TARGET` para capacidades; `TEST_NOT_RUN` para aceites de runtime ainda não implementáveis.
+
+| ID | Requisito | Evidência | Status |
+|---|---|---|---|
+| RQ-DRE-INV-01 | Pacotes por área destinatária com snapshot imutável | `closing_package` UNIQUE(competence,recipient_area) + `closing_package_version` DRAFT→FINALIZED→SUBMITTED com `content.items[]`{document_version_id} (V008) | PROVEN |
+| RQ-DRE-INV-02 | Documentos versionados + download auditado | `closing_document`/`document_version` + `resolve_download` (scope filial + `DOCUMENT_DOWNLOADED` autorizado/negado) | PROVEN |
+| RQ-DRE-INV-03 | Visibilidade por assignment fail-closed | `_visible_areas`: manage→tudo, demais→só assignments ativos, sibling=404 | PROVEN |
+| RQ-DRE-INV-04 | Effective permissions fail-closed | `.access`/`.manage` via middleware Core; Core down → 503; manage≠access | PROVEN |
+| RQ-DRE-INV-05 | Kit UI para as 4 telas | exports verificados: `createDashboardMessageThread`/`MentionComposer`/`RoomConversationShell`/`AttachmentPreviewStrip`, `ResizableColumns`, `useFilePreviewLoader`/`FilePreview`, `DataTableSection`(+portalTarget/tableLayout/hidePaginationWhenSinglePage/headerHint), `CfTimeline`, `HelpTooltip` | PROVEN |
+| RQ-DRE-INV-06 | Superfícies MFE reutilizáveis | `DocumentDetailPanel`, `DocumentConversationPanel`, `PackagesPage` existem — semântica Controladoria | PROVEN componente / TARGET contrato |
+| RQ-DRE-INV-07 | Ato de liberação de documento ao destinatário | leitura de documentos (`list`/`get`/`resolve_download`) não consulta pacote/snapshot; sem campo `released` | **DECISION_REQUIRED** (D-DRE-RELEASE-01) |
+| RQ-DRE-INV-08 | Vínculo «destinatário de consulta» (quem da DRE pode ver) | assignments são REVIEWER/COORDINATOR; `recipient_area` é atributo do pacote, não entitlement de pessoa | **DECISION_REQUIRED** (D-DRE-ACCESS-01) |
+| RQ-DRE-INV-09 | Conversa visível ao destinatário | `document_message.audience` CHECK `('INTERNAL')` (V016) | **DECISION_REQUIRED** (D-DRE-COLLAB-01) |
+| RQ-DRE-INV-10 | Solicitação de ajuste com ciclo próprio | `closing_clarification` é P5 pacote/revisor — não cobre pedido→resposta→confirmação por documento | **DECISION_REQUIRED** (D-DRE-COLLAB-01) |
+| RQ-DRE-INV-11 | Permissão capability do destinatário | manifesto+teste estrutural pinam 2 permissions; Opção B do doc 91 aprovada e **deferida** | **DECISION_REQUIRED** (D-DRE-ACCESS-01 / manifest gate) |
+| RQ-DRE-INV-12 | Projeção read-model restrita | `get_package`/`list_packages` expõem `content` com resumos P3/P4 internos | **DECISION_REQUIRED** (D-DRE-PROJECTION-01) |
+| RQ-DRE-INV-13 | Wireframes dos 4 níveis | doc 112 §54 — listagem, detalhe da entrega, documento, solicitações | TARGET |
+| RQ-DRE-INV-14 | Design V0.8 anterior + conversa inline | doc 112 §17 (PO aprovado), §18 (factories do kit), §19–§20 (complemento/notificação/realtime) | TARGET/PO_APPROVED |
+
+| AC | Critério de aceite (futuro, pós-gate) | Status |
+|---|---|---|
+| AC-DRE-01 | Listagem exibe somente entregas autorizadas ao destinatário do usuário | TEST_NOT_RUN (gate pendente) |
+| AC-DRE-02 | Competência sem pacote recebido → ausente da lista; pacote com 0 docs → empty state honesto | TEST_NOT_RUN |
+| AC-DRE-03 | Pacote multi-PDF lista todos os documentos liberados | TEST_NOT_RUN |
+| AC-DRE-04 | Somente versões liberadas acessíveis; versão não liberada = 404 | TEST_NOT_RUN |
+| AC-DRE-05 | Consulta e download auditados; preview via viewer homologado autenticado | TEST_NOT_RUN |
+| AC-DRE-06 | Solicitação de ajuste registra autor humano, texto, documento/versão; resposta não encerra | TEST_NOT_RUN |
+| AC-DRE-07 | Encerramento só por ação de validação do destinatário; histórico imutável | TEST_NOT_RUN |
+| AC-DRE-08 | 401 sem token; 403 sem capability/sem vínculo; 404 cross-recipient/IDOR period/package/document | TEST_NOT_RUN |
+| AC-DRE-09 | Core indisponível → fail-closed | TEST_NOT_RUN |
+| AC-DRE-10 | Desktop/tablet/mobile 320/390/768, claro/escuro, zoom 200%, teclado/leitor de tela | TEST_NOT_RUN |
+| AC-DRE-11 | Filtros na URL, F5, back/forward, sort, cards, paginação inteligente | TEST_NOT_RUN |
+| AC-DRE-12 | Help contextual em todas as superfícies (`feature-help-sync`) | TEST_NOT_RUN |
+| AC-DRE-13 | Testes de contrato: projeção sem campos internos (p3/p4, audit internals, dados de outro destinatário) | TEST_NOT_RUN |
+| AC-DRE-14 | Sem superfícies proibidas: relatórios TOTVS, divergências, estoque, admin, upload, validação P2, aceite/revisão P5 | TEST_NOT_RUN |
+
+**Veredito do gate (não autodeclarado):** contratos existentes **insuficientes** — faltam representações de destinatário, liberação e audiência de conversa. `DECISION_REQUIRED` ×4 (ACCESS/RELEASE/PROJECTION/COLLAB) consolidado no Plano 113 §29.5 com alternativas, impactos e recomendação.

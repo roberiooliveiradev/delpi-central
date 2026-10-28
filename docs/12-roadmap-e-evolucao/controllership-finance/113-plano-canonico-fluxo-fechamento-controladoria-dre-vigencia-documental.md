@@ -1399,3 +1399,92 @@ Contratos existentes (verificados na fonte):
 **Execução (UX-016):** IMPLEMENTADO. Evolução mínima do kit: `DataTableSection.toolbarPortalTarget` (portal da toolbar nativa para o hero, mesma instância/estado) + `tableLayout="scroll"` (wrap `--scroll` flexível do kit). `ChecklistAdminPage` e `ChecklistVersionPage` usam `CfPageHero` + `cf-flex-listing` irmão com a cadeia `dashboard-page--fill` aplicada às duas views no `PluginShell`. Admin sem coluna Ações/Inativar; Inativar danger+ícone só no detalhe; hero intrínseco (`flex:0 0 auto`), listagem única que cresce e rola internamente com paginação ancorada. Testes: MFE 367/367, plugin-ui data 167/167 (inclui `toolbarPortal` 3/3); smoke local autenticado 19/19; QA visual light/dark/768/390/320/zoom200 sem overflow. Registro de AC: doc 23 UX016-01..09. UX-014 segue `DECISION_REQUIRED` (sem contrato Core→BFF de identidade administrativa).
 
 **Execução (UX-016-RW01):** IMPLEMENTADO. Help contextual transversal com recursos já homologados do kit — `headerHint` por coluna, `searchHint` na toolbar e `hintedLabel` (HelpTooltip) em métricas/campos somente leitura — com textos no catálogo `helpTooltips.ts`; cobertura em 10 superfícies (Admin, Versão, Documento, Documentos, Catálogos, Checklist da competência, Estoque, Baixas, Minhas tarefas, formulário de configuração). Paginação inteligente na fonte compartilhada: `DataTableSection.hidePaginationWhenSinglePage` (opt-in retrocompatível) ativada por padrão no wrapper `cfDataTableUi` — rodapé só aparece com >1 página efetiva; seletor de page size preservado. Zero mudança em BFF/contratos/dados.
+
+
+## 29. DRE-ACCESS-018 — Área de Fechamentos Recebidos e Revisão Documental da DRE (inventário READ-ONLY + gate de arquitetura)
+
+**Data:** 29/10/2026. **Origem:** brief `CF-PROC0072-DRE-ACCESS-018` (PO). **Modalidade:** inventário read-only + desenho funcional + gate de contratos. `IMPLEMENTATION_AUTHORIZED=NO` — nenhum endpoint, migration, página runtime ou deploy antes do gate. Wireframes dos quatro níveis: doc 112 §54. Matriz RQ/AC: ledger 23 «Área DRE».
+
+### 29.1 Owner, boundary, producers, consumers
+
+| Papel | Valor |
+|---|---|
+| Owner funcional | Controladoria (produtor das entregas) + PO PROC-0072 |
+| Owner técnico do contrato | `controllership-finance-api` (BFF) + Core (effective permissions/grants) |
+| Boundary | Área restrita de **consulta** dentro da Central de Fechamento — sem upload, sem validação P2, sem aceite/revisão P5, sem relatórios TOTVS/divergências/estoque/admin (doc 91 §1, doc 112 §16.1) |
+| Producers | `closing_package`/`closing_package_version` (snapshot de composição), `closing_document`/`document_version` (arquivos), `document_message`, `audit_event`, `closing_notification_event`, `closing_review_assignment` |
+| Consumers | MFE `controllership-finance` (quatro páginas doc 112 §54), Core (permissions, identidade, notificações), CLARA (sem superfície DRE nesta fase) |
+
+### 29.2 Inventário de contratos existentes (CP1 — evidência de código)
+
+| Capacidade | Evidência | Estado |
+|---|---|---|
+| Pacotes por área destinatária | `closing_package` UNIQUE(competence_id, recipient_area), CHECK CONTABIL\|FISCAL (V008) | PROVEN |
+| Versão de pacote imutável com composição | `closing_package_version` DRAFT→FINALIZED→SUBMITTED, `content` JSONB com `items[]`{item_key,state,document_version_id} + resumos P3/P4 (V008; `_composition_snapshot`) | PROVEN |
+| Visibilidade de pacote por assignment | `_visible_areas`: manage vê tudo; demais veem só pacotes com `closing_review_assignment` ativo (REVIEWER/COORDINATOR) — sibling nunca vaza (404) | PROVEN |
+| Elegibilidade por grupo Core | `REVIEW_ELIGIBILITY` (catálogo P6) + verificação de grupo Core, fail-closed | PROVEN |
+| Decisões/esclarecimentos append-only | `closing_review_decision` por área/versão; `closing_clarification` OPEN→RESOLVED; rejeição terminal | PROVEN |
+| Documentos versionados | `closing_document` ATTACHED/CANCELLED + `document_version` + `document_version_id` no snapshot | PROVEN |
+| Download auditado | `resolve_download`: scope de filial + storage + `DOCUMENT_DOWNLOADED` auditado (autorizado/negado/falha) | PROVEN |
+| Mensagens documentais | `document_message` V016 — **CHECK `audience='INTERNAL'` somente** | PROVEN com limite material |
+| Effective permissions | `controllership-finance.access` + `.manage` apenas; `principal_type='user'`; Core indisponível → 503 fail-closed; manifesto/teste estrutural pinam exatamente duas permissions | PROVEN |
+| Competências/itens por área | `GET /closing/competences`, `/items?recipient_area=` | PROVEN |
+| Notificações | `closing_notification_event` outbox → Core notifications para assignments | PROVEN (somente assignments P5) |
+| Kit UI | `DataTableSection`(+toolbarPortalTarget/tableLayout/hidePaginationWhenSinglePage/headerHint/searchHint), `CfPageHero`, `ResizableColumns`, `createDashboardMessageThread`, `createDashboardMentionComposer`, `createDashboardRoomConversationShell`, `createDashboardAttachmentPreviewStrip`, `useFilePreviewLoader`/`FilePreview`, `CfTimeline`, `HelpTooltip` | PROVEN (exports no HEAD) |
+| Superfícies MFE reutilizáveis | `DocumentDetailPanel` (metadados+versões+preview+download+timeline+conversa), `DocumentConversationPanel`, `PackagesPage`, `MonthlyDocumentsPanel` — orientadas à Controladoria | PROVEN componentes; contrato DRE pendente |
+
+### 29.3 Gaps materiais encontrados (CP1→CP3)
+
+1. **Sem ato de liberação ao destinatário.** `list_documents`/`get_document`/`resolve_download` autorizam por competência + `branch_scope` apenas; **não verificam** que o documento/versão consta do snapshot de uma `closing_package_version` liberada à área do solicitante. Hoje qualquer usuário `.access` baixa qualquer documento da competência — correto para a Controladoria, **insuficiente para destinatário restrito**. Não há campo/tabela `released`/`delivery` para consulta DRE.
+2. **Sem vínculo «destinatário de consulta».** `closing_review_assignment` modela REVIEWER/COORDINATOR (revisão P5), não «quem da Contabilidade/DRE pode consultar». `recipient_area` é atributo do pacote, não entitlement de pessoa.
+3. **Audiência de mensagens fechada em INTERNAL.** `document_message.audience CHECK ('INTERNAL')` impede conversa visível ao destinatário sem evolução de contrato+migration.
+4. **Sem máquina de estados de solicitação de ajuste.** `closing_clarification` é P5 (versão de pacote, áreas revisoras) — não cobre «pedido de correção do destinatário → resposta → confirmação de atendimento» por documento.
+5. **Permissões congeladas.** Opção B do doc 91 (`controllership-finance.closing-documents.read`) é direção aprovada mas **deferida** (`DEFERRED_IMPLEMENTATION_BY_PO`); manifesto/teste estrutural pinam duas permissions; entrada restrita no launcher exige decisão transversal.
+6. **Projeção restrita ausente.** `get_package`/`list_packages` expõem `content` com resumos internos P3/P4 — incompatível com o boundary DRE; precisa de read-model próprio.
+
+### 29.4 Respostas às perguntas de segurança (CP3)
+
+| Pergunta | Resposta com evidência |
+|---|---|
+| Como o Core distingue destinatários DRE? | **Hoje: não distingue.** Somente `.access`/`.manage`. Sem vínculo destinatário → `DECISION_REQUIRED` |
+| Como a BFF resolve effective permissions? | Middleware Core → `authorized_user`; indisponibilidade = 503; `manage ≠ access` | PROVEN |
+| Como o pacote registra o público autorizado? | `recipient_area` + assignments de **revisão**; não há registro de audiência de **consulta** | GAP |
+| Impedir acesso a anexos não liberados | Inexistente — leitura de documento não consulta pacote/snapshot | GAP crítico |
+| IDOR por competência/package_id/document_id | Competência+filial fail-closed (404). Troca de `document_id` por `.access` é permitida hoje — para DRE seria vazamento | GAP para novo público |
+| Previews/downloads protegidos | Download: stream autenticado + auditoria PROVEN; falta vínculo liberação→download | PROVEN + GAP |
+| Auditoria de ações de revisão | `audit_event` append-only + `closing_review_decision` | PROVEN |
+| Separação envio/revisão/aceite | Distinta em P5 (submitter manage, reviewer assigned, decisões por área); falta papel «destinatário de consulta» | GAP |
+
+### 29.5 Contrato de acesso proposto (candidato — gate)
+
+**`D-DRE-ACCESS-01 — DECISION_REQUIRED.`**
+
+| Alt. | Desenho | Impacto | Recomendação |
+|---|---|---|---|
+| A | Terceira capability `controllership-finance.closing-documents.read` (Opção B, doc 91) + papel `RECIPIENT` em `closing_review_assignment` (CHECK novo) | Exceção ao freeze: manifesto, Core grants/launcher, teste estrutural, entrada restrita; migration de CHECK | **Recomendada** — direção de produto já aprovada (doc 91 §1, não reabrir); role reutiliza mecânica de visibilidade/auditoria provada sem RBAC paralelo |
+| B | Reusar `.access` + regra «assignment RECIPIENT» | `.access` guarda todas as rotas → precisaria negar o restante por scope; risco de liberação indevida; doc 91 §3 proíbe ampliar `.access` por conveniência | Rejeitada (viola boundary) |
+| C | Grupo Core sem permission nova, rotas sob `.access` | Mesmo problema de B | Rejeitada |
+
+**`D-DRE-RELEASE-01 — DECISION_REQUIRED.`** Estado que libera o documento ao destinatário: (A) liberação = `closing_package_version.status='SUBMITTED'` (snapshot congelado; read-model deriva `document_version_id` de `content.items`); (B) ato dedicado `release_to_recipient` por item/pacote. **Recomendação:** A na V1 — snapshot SUBMITTED já é imutável, auditado e representa «pacote enviado»; B como evolução se o PO quiser liberação granular. A projeção deve expor `items[].document_version_id` e **não** `p3_reconciliation`/`p4_pendency_counts`.
+
+**`D-DRE-PROJECTION-01 — DECISION_REQUIRED.`** Endpoints de leitura restrita (read-model): `GET /closing/received-closings` (N1), `GET /closing/received-closings/{period}/{package_id}` (N2), `GET .../documents/{document_id}` + `.../download` (N3). Mínimo: reusar `_document_in_scope` + verificação «document_version_id ∈ content.items da versão SUBMITTED do pacote visível ao ator» + auditoria `DOCUMENT_DOWNLOADED` com contexto recipient.
+
+**`D-DRE-COLLAB-01 — DECISION_REQUIRED.`** Ajuste/comentário DRE: (A) `document_message.audience += 'RECIPIENT'` + tabela `document_adjustment_request` (OPEN→ANSWERED→CONFIRMED, imutável); (B) adaptar `closing_clarification` a documento. **Recomendação:** A — clarification é de pacote/área revisor; reuso criaria semântica ambígua. Resposta NÃO encerra a solicitação (regra no service; encerramento = ação de validação do destinatário).
+
+**Pendentes herdados:** D-DRE-MANIFEST-01 (=ACCESS-01), D-DRE-NOTIFY-01, D-DRE-HISTORY-01, D-DRE-ENTRY-01, D-DRE-COMPOSER-01 (texto-only), UX-014 (identidade humana).
+
+### 29.6 Sequência objetiva de implementação (pós-gate)
+
+1. Gate transversal: ratificar capability Opção B + papel RECIPIENT + entrada restrita (Core/manifest/launcher/guards).
+2. BFF: projeção read-model N1–N3 + verificação de liberação + download auditado + testes positive/sibling/negative (IDOR, 401/403/404, Core-down).
+3. BFF: `document_adjustment_request` + audiência RECIPIENT em `document_message` + resposta/encerramento + notificações.
+4. MFE: quatro páginas do doc 112 §54 com kit homologado + Help + testes RTL.
+5. Deploy local → smoke autenticado → produção somente com autorização PO e smoke governado.
+
+### 29.7 Plano de testes
+
+Rotas BFF (mock+PG): listagem só de entregas autorizadas; competência sem pacote → `[]`; pacote multi-PDF; pacote zero docs liberados; versões de PDF (só liberada); download autorizado/negado/inexistente; solicitação criada/respondida/não-encerrada/encerrada; IDOR (trocar period/package/document); 401 sem token; 403 sem capability; 404 cross-recipient; Core indisponível → fail-closed. MFE: quatro páginas 0/1/N registros, filtros/URL/F5/back, sort, cards, paginação inteligente, help, mobile 320/390/768, claro/escuro, zoom 200%. Contrato: DTOs de projeção sem campos internos (p3/p4, internals de auditoria).
+
+### 29.8 Deploy e rollback
+
+**Deploy:** somente após gate + autorização PO. Ordem: migration(s) → BFF → grants Core/capability → manifesto/MFE. A área permanece inacessível sem grant — rollout por grant Core, não por flag de código. **Rollback:** revogar grant/capability no Core → revert manifesto/MFE → revert BFF; migrations aditivas permanecem (imutáveis); rollback lógico = revogação de grants, nunca delete destrutivo.

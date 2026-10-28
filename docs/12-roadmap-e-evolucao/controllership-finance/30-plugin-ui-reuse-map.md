@@ -1035,3 +1035,25 @@ Identidade (UX-014): `DataRecordCard.leading` aceita avatar quando houver contra
 - Paginação inteligente: `DataTableSection.hidePaginationWhenSinglePage` (opt-in, retrocompatível) — rodapé só renderiza quando o conjunto exibido excede uma página; `total` autoritativo no server-side. Wrapper `cfDataTableUi.tsx` ativa por padrão para todas as tabelas CF; opt-out via prop.
 - Cobertura: ~70 `headerHint`, 12 `hint` de formulário, hints em métricas dos dois heroes e 12 `<dt>` da página de documento — textos em `CF_HELP.<página>.columns|metrics|fields`.
 - Cobertura de teste: `DataTableSection.toolbarPortal.test.tsx` (10/10 — inclui 7 cenários de paginação: 0, 1, página cheia, multi, recálculo pós-busca, server-side, retrocompatibilidade).
+
+
+### UX-018 — Área DRE, quatro níveis (TARGET — pré-gate CF-PROC0072-DRE-ACCESS-018)
+
+Mapeamento dos quatro níveis do doc 112 §54 para componentes homologados. **Nenhum componente precisa ser criado; nenhum consumo autorizado antes do gate** (`IMPLEMENTATION_AUTHORIZED=NO`).
+
+| Necessidade | Componente/capacidade real do kit | Consumo proposto |
+|---|---|---|
+| Hero restrito das 4 páginas | `CfPageHero` (createDashboardPageHero, compact) + `CfPagePath` | métricas reais do DTO de projeção DRE |
+| Listagem N1/N2/N4 | `DataTableSection` (`toolbarPortalTarget`, `tableLayout="scroll"`, `hidePaginationWhenSinglePage` via `cfDataTableUi`, `sortable`/`sortValue`, `onRowClick`, `viewLayoutPreferencesKey`) | linhas de entregas/documentos/solicitações |
+| Cards de registro | `createDashboardDataRecordCard` → `CfDataRecordCard` | cards navegáveis em ≤768px |
+| Master-detail alternativo | `ResizableColumns` / `createDashboardResizableColumns` | se o PO preferir lista+detalhe na mesma página (alternativa aos níveis) |
+| Preview PDF autenticado | `useFilePreviewLoader` + `FilePreview`/`FilePreviewModal` | mesmo contrato de preview do `DocumentDetailPanel` |
+| Conversa do documento | `createDashboardMessageThread` + `createDashboardMentionComposer` + `createDashboardRoomConversationShell` | thread/composer texto; **DTO novo pendente** (D-DRE-COLLAB-01) |
+| Strip de versões/anexos | `createDashboardAttachmentPreviewStrip` | versões liberadas do documento |
+| Histórico auditável | `createTimeline` → `CfTimeline` | entrega/versões/solicitações |
+| Estados honestos | `EmptyGuidance`/`EmptyState`/`LoadingState`/`CfFeedbackMessage`/`StateBanner` | zero docs, sem entrega, erro, read-only |
+| Help contextual | `headerHint`/`searchHint`/`hintedLabel`/`HelpTooltip` + `CF_HELP.*` | todas as superfícies |
+
+**Reuso de componentes CF existentes:** `DocumentDetailPanel` e `DocumentConversationPanel` já implementam preview+download+versões+conversa — reutilização possível **somente** sobre o novo contrato de projeção DRE (DTO distinto, actions política restrita); não plugar direto nos endpoints internos. `PackagesPage`/`MonthlyDocumentsPanel` servem de referência visual, não de consumo de dados.
+
+**Gap honesto:** a camada de dados (read-model BFF) não existe — reutilizar componentes de apresentação sem projeção autorizada violaria o boundary DRE (exporia `content` P3/P4 interno). **Não usar** `createDashboardMentionComposer` com capabilities de anexo/menção até decisão `D-DRE-COMPOSER-01` (texto-only).

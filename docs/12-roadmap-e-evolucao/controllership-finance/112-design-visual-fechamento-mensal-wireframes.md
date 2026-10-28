@@ -2138,3 +2138,136 @@ Cobertura: `DataTableSection.toolbarPortal.test.tsx` (3/3).
 **Paginação inteligente.** Nova prop opt-in do kit `DataTableSection.hidePaginationWhenSinglePage`: o rodapé de paginação só é renderizado quando o conjunto efetivamente exibido (após filtros; `total` autoritativo no server-side) excede uma página. O seletor «Itens por página» da toolbar não é afetado. O wrapper `cfDataTableUi.tsx` ativa a regra por padrão para **todas** as tabelas do portal — correção na fonte compartilhada, não em cada página. Evidência local: Admin (3 versões) oculta a barra; Versão (53 itens) exibe e mantém ancoragem.
 
 **Evidências.** tsc ✓; eslint do escopo limpo (1 erro preexistente fora do escopo: `ClaraConsentPage.tsx`; warnings baseline); vitest MFE 367/367; plugin-ui `src/components/data` 167/167; smoke autenticado local 19/19; screenshots desktop 1440 light/dark, tablet 768, mobile 390/320 e zoom 200% — `overflowX=0` em todos.
+
+
+## 54. UX-018 — Área de Fechamentos Recebidos da DRE, quatro níveis de navegação (wireframes TARGET — pré-gate)
+
+**Data:** 29/10/2026. **Origem:** brief `CF-PROC0072-DRE-ACCESS-018` (PO) — área exclusiva de recebimento documental da Contabilidade/DRE dentro da Central de Fechamento. **Estado:** `TARGET / CONTRACT_GATE_PENDING`. **Não é aprovação de runtime:** nenhuma rota, permission, endpoint ou migration é autorizada por esta seção. Os wireframes abaixo **detalham os quatro níveis de navegação** pedidos pelo PO sobre o design V0.8 já aprovado em §17 (página exclusiva) e §18–§20 (conversa inline e solicitação de complemento). Hierarquia de decisões prévias preservada: Doc 91 (Opção B, capability dedicada, `DEFERRED_IMPLEMENTATION_BY_PO`), §15 (separação Controladoria↔DRE), §16 («DRE não acessa relatórios»), §17.7 `DECISION_REQUIRED` D-DRE-MANIFEST-01 / D-DRE-COLLAB-01 / D-DRE-NOTIFY-01 / D-DRE-LIBERATION-01 / D-DRE-HISTORY-01 / D-DRE-ENTRY-01.
+
+**Composição visual:** reutiliza o padrão homologado `HERO → LISTAGEM` do §53 (UX-016) para os níveis 1–2 e o padrão de detalhe documental com conversa inline do §18 para o nível 3. Nenhum componente paralelo: `CfPagePath`, `CfPageHero` (compact), `CfStatusBadge`, `CfActionButton`, `DataTableSection` (com `toolbarPortalTarget`, `tableLayout="scroll"`, `hidePaginationWhenSinglePage`, `headerHint`, `searchHint`), `CfDataRecordCard`, `ResizableColumns`, `useFilePreviewLoader`/`FilePreview`, `createDashboardMessageThread`, `createDashboardMentionComposer`, `createTimeline`, `CfTimeline`, `EmptyGuidance`/`EmptyState`, `CfFeedbackMessage`, `HelpTooltip`/`hintedLabel` — todos já exportados por `@delpi/plugin-ui` ou já consumidos pelo wrapper `cfUi`.
+
+### 54.1 Modelo de navegação — quatro níveis, uma entrada restrita
+
+```text
+Launcher Minha DELPI (rota autorizada pelo Core — gate D-DRE-ENTRY-01)
+  │
+  N1  Fechamentos recebidos                 /closing/received-closings{?period}
+  │      └─ clique na linha/card ──►
+  N2  Detalhe do fechamento recebido        /closing/received-closings/{period}/{package_id}
+  │      └─ clique no documento ──►
+  N3  Documento recebido                    /closing/received-closings/{period}/{package_id}/documents/{document_id}
+  │      └─ «Solicitar ajuste» / «Ver solicitações» ──►
+  N4  Solicitações de ajuste               /closing/received-closings/{period}/adjustments
+                                          (ou âncora por documento ?document={id})
+```
+
+Os paths acima são **candidatos** (kebab-case, inglês — `english-code-identifiers`); `/closing/accounting-documents` do Doc 91 segue alternativa registrada. Nenhum path é rota vigente: `pluginRoutes.ts` e o manifesto declaram somente as rotas atuais sob `.access`/`.manage`. Deep link e F5 preservam competência/pacote/documento na URL; voltar respeita a cadeia N4→N3→N2→N1.
+
+### 54.2 N1 — «Fechamentos recebidos» (listagem de entregas autorizadas)
+
+```text
+Controladoria & Finanças › Fechamento mensal
+┌ HERO: Fechamentos recebidos ─────────────────────────────────────┐
+│ Documentos liberados pela Controladoria para a sua área.         │
+│ [Entregas: N] [Última entrega: MM/AAAA] [Solicitações abertas: N]│
+│ [Pesquisar________] [Competência ▼] [Situação ▼] [Tabela|Cards]  │
+│                                              [Colunas] [Ajuda ⓘ] │
+└──────────────────────────────────────────────────────────────────┘
+┌ Fechamentos recebidos (N) ───────────────────────────────────────┐
+│ Competência ↕ | Destinatário | Entregue em ↕ | Documentos | Situação│
+│ Out/2026      | Contabilidade| 28/10 14:32   | 7          | Recebido│
+│  linha/card clicável → N2                                        │
+│              [área flexível sem linhas inventadas]               │
+│ [Exibindo X de N]                        [Paginação >1 página]   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+- **Fonte de dados (proposta de contrato — ver §29 do Plano 113):** uma linha por *entrega efetivamente liberada* ao destinatário do usuário (competência × pacote destinatário). Apenas dados reais do DTO: período, `recipient_area`, instante de disponibilização, contagem de documentos liberados e situação da entrega. Indicadores do hero derivam exclusivamente da resposta; sem entregas → empty state «Nenhum fechamento foi disponibilizado para a sua área até o momento.»
+- **Filtros:** competência (somente as autorizadas ao usuário), situação, busca textual. Persistência na URL (`?period`, `?state`, `?q`) conforme padrão `useConsoleSearchParams`; F5/back-forward restauram.
+- **Ausência não vaza existência:** competência sem pacote liberado para a área do usuário não aparece na listagem nem no seletor — regra BFF, não filtro de UI.
+- **Help:** `headerHint` em todas as colunas; `searchHint`; `hintedLabel` nas métricas. Textos no catálogo `CF_HELP.receivedClosings`.
+- **Responsivo/a11y:** cards ≤768px por `viewLayoutPreferencesKey`; paginação inteligente nativa; navegação por linha com foco/Enter; claro/escuro por tokens.
+
+### 54.3 N2 — «Detalhe do fechamento recebido» (documentos liberados da entrega)
+
+```text
+… › Fechamentos recebidos › Competência 10/2026
+┌ HERO: Fechamento de Outubro/2026 ────────────────────────────────┐
+│ Entregue em 28/10/2026 às 14:32 · Pacote Contabilidade v2        │
+│ [Documentos liberados: 7] [Solicitações: 1 aberta]               │
+│ [Ver solicitações de ajuste]                    [Ajuda ⓘ]        │
+│ [Pesquisar documentos_______] [Tabela|Cards] [Colunas]           │
+└──────────────────────────────────────────────────────────────────┘
+┌ Documentos liberados (7) ────────────────────────────────────────┐
+│ Documento ↕ | Origem | Via | Liberado em ↕ | Versão | Interações │
+│ Balancete … | TOTVS  | PDF | 28/10 14:32   | v3     | 2          │
+│  linha/card clicável → N3                                        │
+└──────────────────────────────────────────────────────────────────┘
+┌ Histórico da entrega ────────────────────────────────────────────┐
+│ Timeline: disponibilização, versões do pacote, solicitações      │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+- **Conteúdo:** metadados da entrega (competência, instante, destinatário, versão do pacote), listagem **somente dos documentos efetivamente liberados** e histórico da entrega. Não exibe itens `EXPECTED` sem anexo, nem conteúdo interno do snapshot (`p3_reconciliation`, `p4_pendency_counts` — dados internos, nunca na projeção do destinatário).
+- **Pacote com zero documentos liberados:** seção documental vira empty state honesto «Esta entrega não possui documentos disponíveis para consulta.» — a linha N1 só existe se a entrega existir; contagem zero é fato, não erro.
+- **Sem dados inventados:** se o contrato não expuser «interações», a coluna sai; se «liberado em» não for disponibilizado, exibe a data da disponibilização da versão.
+- **Help:** hints em todas as métricas e colunas; `searchHint`.
+
+### 54.4 N3 — «Documento recebido» (visualizador + versões + interações)
+
+```text
+… › Fechamento 10/2026 › Balancete Out/2026
+┌ HERO: Balancete — Outubro/2026 ──────────────────────────────────┐
+│ Origem TOTVS · via PDF · Liberado em 28/10 · Versão vigente v3   │
+│ [Baixar PDF ⬇] [Solicitar ajuste]                 [Ajuda ⓘ]      │
+└──────────────────────────────────────────────────────────────────┘
+┌ Pré-visualização ────────────────┬ Detalhes ─────────────────────┐
+│ FilePreview (PDF autenticado)    │ Nome, origem, via, competência│
+│  ou estado de erro + retry       │ Liberado em/por* · Versão v3  │
+│                                  │ Histórico de versões (v1–v3)  │
+├──────────────────────────────────┴───────────────────────────────┤
+│ Conversa sobre o documento (createDashboardMessageThread)         │
+│ mensagens com ator/instante/tipo · composer texto (MentionComposer)│
+│ INTERAÇÕES · HISTÓRICO AUDITÁVEL (CfTimeline)                     │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+- **Viewer homologado:** `FilePreview`/`useFilePreviewLoader` (o mesmo contrato de preview do detalhe interno `DocumentDetailPanel` — fetch autenticado, erro+retry, sem URL pública); download por endpoint autorizado com auditoria. **Acesso somente a documento/versão liberada** — versão não liberada retorna o mesmo 404 do inexistente.
+- **Interações vinculadas ao documento:** conversa inline aprovada em §18 (thread + composer texto, sem anexo na V1 — `D-DRE-COMPOSER-01`); histórico sistêmico separado por `CfTimeline`. Somente mensagens da audiência do usuário (contrato pendente `D-DRE-COLLAB-01`).
+- **Sem ações proibidas:** sem upload, sem «remover», sem validação P2, sem aceite/rejeição P5, sem acesso a anexos não liberados — nem por URL direta (IDOR por `document_id`/`version`/`period` é bloqueio de contrato, não de UI).
+
+### 54.5 N4 — «Solicitações de ajuste» (fila do destinatário, histórico imutável)
+
+```text
+… › Fechamentos recebidos › Solicitações de ajuste
+┌ HERO: Solicitações de ajuste ────────────────────────────────────┐
+│ Pedidos de correção/complemento registrados pela sua área.       │
+│ [Abertas: N] [Respondidas: N] [Encerradas: N]                    │
+│ [Pesquisar_______] [Situação ▼] [Competência ▼] [Tabela|Cards]   │
+└──────────────────────────────────────────────────────────────────┘
+┌ Solicitações (N) ────────────────────────────────────────────────┐
+│ Documento ↕ | Competência | Aberta em ↕ | Situação | Resposta    │
+│ Balancete … | Out/2026    | 29/10 09:14 | Aberta   | —           │
+│  linha clicável → detalhe da solicitação (N3 ou subrota)         │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+- **Ciclo honesto (TARGET — máquina de estados a contratar):** `Aberta` → `Respondida` → `Encerrada`. **Resposta da Controladoria NÃO encerra automaticamente** — o encerramento exige ação de validação do destinatário («Confirmar atendimento») ou regra explicitamente homologada; sem auto-close por resposta.
+- **Detalhe da solicitação:** pedido (texto, autor humano identificado por nome — nunca UUID), instante, documento/versão vinculada, respostas em ordem cronológica e ação de encerramento quando autorizada. Histórico **imutável** (sem editar/apagar).
+- **Identidade humana:** nomes via contrato de identidade autorizado (mesma dependência de UX-014 — `participants/lookup` é document-scoped hoje); fallback «Identidade não disponível» sem UUID cru.
+- **Empty states:** «Nenhuma solicitação registrada.» / filtros sem resultado; loading com skeleton; erro com retry — mesma disciplina das demais listagens.
+
+### 54.6 Regras transversais das quatro telas
+
+1. **PT-BR integral** na UI; identificadores técnicos só em contratos/URLs.
+2. **Backend-first:** toda visibilidade e ação é projeção de resposta autorizada; UI nunca decide escopo. `401/403/404` honestos sem vazar existência de pacote/documento alheio.
+3. **Paginação inteligente + toolbar no hero** conforme §53; `hidePaginationWhenSinglePage` ativo por padrão.
+4. **Claro/escuro, teclado, leitor de tela, touch, zoom 200%, 320/390/768/desktop** — mesma árvore, tokens do kit.
+5. **Help contextual** em todos os campos/colunas/métricas (`CF_HELP.*` no catálogo); `feature-help-sync` obrigatória quando implementado.
+6. **Sem dados fabricados:** métricas, contagens e colunas existem apenas se o DTO as suportar; ausência vira empty state, nunca zero falsificado.
+7. **Auditoria consultável:** downloads e ações de ajuste aparecem no histórico quando o contrato de eventos do destinatário for autorizado.
+8. **Bloqueios de escopo (V1):** sem relatórios TOTVS, divergências operacionais, estoque, administração, upload, validação P2, aceite/revisão P5 — incluindo agregados e previews (§16.1).
+
+### 54.7 Dependências de gate antes de runtime
+
+Estes wireframes só viram implementação após o gate de arquitetura `DRE-ACCESS-018` (Plano 113 §29): identidade/entitlement do destinatário, estado de liberação do documento, projeção BFF restrita, contrato de comentário/solicitação com audiência, entrada/permission (decisão Opção B do Doc 91) e matriz RQ/AC do ledger 23. `IMPLEMENTATION_AUTHORIZED=NO` nesta seção.
