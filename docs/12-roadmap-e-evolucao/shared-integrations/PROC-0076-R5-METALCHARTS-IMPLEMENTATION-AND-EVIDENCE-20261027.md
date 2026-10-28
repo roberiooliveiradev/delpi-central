@@ -385,3 +385,43 @@ Inventário concluiu que `supplies.comex_ncm_governance` **já é o catálogo co
 Estado final honesto: `84798990` permanece `candidate` no catálogo compartilhado (registro auditável); conta de fumaça `devin-smoke-g16` foi habilitada e recebeu a role «Portal Suprimentos - Acesso» via Core RBAC admin para a prova de reutilização por outro usuário.
 
 **Residuais:** dados MDIC reais seguem `PENDING` (feed `comex-monthly` desabilitado); evidência visual em browser `INCONCLUSIVE` sem captura.
+
+## 18. Comex S8 — refinamento UX e organização do frontend (2026-10-28)
+
+Commit `ba9d19b074` (frontend only — zero backend/contrato/migration). Deploy `supplies`; bundle `App-pFwxCZOo.js`. Plano autorizado em `docs/12-roadmap-e-evolucao/supplies/PROC-0076-COMEX-S8-UX-REFINEMENT-PLAN-20261028.md` (PR #121, branch de docs não mergeada — conteúdo lido na origem).
+
+### 18.1 S8.1 — layout e hierarquia
+
+- Grade de duas colunas (`sp-comex-selector__columns`, 3fr/2fr): «Encontrar materiais» à esquerda (alternador Produtos/NCM, pesquisa ampla, filtro MP/PI/PA, resultados, entrada direta de NCM e catálogo compartilhado) e «Minha análise» à direita (contagem, chips de produtos e NCMs com estado funcional, remover por item, «Limpar seleção» e visualizações salvas com nomear/salvar/atualizar/excluir).
+- Painel de resultados «Importações — Comex Stat (MDIC)» permanece em largura total abaixo do seletor, sem duplicar filtros de período/granularidade da página.
+- Catálogo como lista vertical estruturada (código, descrição multi-linha, badge de estado, ação contextual única Selecionar/Selecionada) com rolagem interna — substitui a leitura de sequência dispersa.
+- Responsivo: colunas empilham abaixo de 980px; regras mobile 720px existentes preservadas; sem rolagem horizontal de página.
+- Administração continua em `<details>` secundário, exclusivo de `supplies.manage` efetiva — fora das colunas de seleção.
+
+### 18.2 S8.2 — interações e estados
+
+- Dropdown NCM duplicado removido do `FiltersRow` da página — a seleção acontece exclusivamente no seletor (catálogo/produtos/NCM direta); `ncmOptions`/`selectedNcm` e o fallback implícito «primeira NCM disponível» foram removidos.
+- `configured` do painel agora exige seleção real: seleção vazia → estado «Comex — sem seleção» (AC-11, «Selecione produtos ou NCMs para iniciar a análise»); seleção presente mas nenhuma NCM habilitada → «Comex — aguardando habilitação» (AC-12) — inclusive quando a NCM selecionada é `candidate`/`pending`/`inactive`, coberto por `filters.state.ncm` bruto.
+- Seleção sobrevive à alternância Produtos/NCM, URL/F5 e links compartilhados (contrato `ncm` CSV/`direct_ncm`/`comex_products` intacto); deduplicação e limite de 20 preservados.
+- `configPendingTitle` generalizado — o título «Comex — seleção pendente» era reusado incorretamente pelos painéis Metais/IPP/Câmbio.
+
+### 18.3 Testes e evidências
+
+- Vitest **51 arquivos / 525 testes** verdes (+1 estrutural S8: colunas, títulos, resumo de seleção, lista do catálogo, `aria-pressed`, CSS grid + breakpoint 980px, `comexHasSelection`, ausência de `ncmOptions` e do fallback `selectableNcms[0]`).
+- `tsc -b --force` limpo; ESLint 0 erros (warnings pré-existentes de `set-state-in-effect`); build Vite ok.
+- Ajuda contextual e manual sincronizados ao fluxo «encontrar → selecionar → configurar → analisar» e às duas colunas.
+- Smoke federado: `remoteEntry` 200, `supplies-api` health 200, bundle de produção contém `sp-comex-selector__columns`/`comexEmptySelection`/`Encontrar`.
+- Aceite visual em navegador autenticado (1440/1920/768/390, claro/escuro): **INCONCLUSIVE** — sem captura disponível; CSS/estrutura não substituem evidência visual.
+
+### 18.4 Inventário de dados de teste (§12 do plano)
+
+Registros em `supplies.comex_ncm_governance` (todos fixtures de homologação S6/S7, auditáveis — **não alterados** nesta execução):
+
+| NCM | Status | Descrição | Criado |
+|---|---|---|---|
+| 85444200 | inactive | SMOKE cobre | 2026-10-27 |
+| 99999999 | rejected | (vazio) | 2026-10-27 |
+| 85369090 | approved | (vazio) | 2026-10-27 |
+| 84798990 | candidate | smoke S7 — fluxo catálogo | 2026-10-28 |
+
+Proposta: tratamento via workflow de governança (inativar/rejeitar) ou limpeza autorizada pelo PO — nenhuma linha/auditoria foi removida automaticamente.
