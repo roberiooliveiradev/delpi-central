@@ -35,6 +35,10 @@ describe("Proposals list DataTable pattern (E5.S1)", () => {
     assert.match(table, /CommercialTableFontSizeControls/);
     assert.match(table, /usePersistedViewLayout/);
     assert.match(table, /navigateProposalDetail/);
+    assert.match(table, /sortKey=\{sortKey\}/);
+    assert.match(table, /sortDirection=\{sortDirection\}/);
+    assert.match(table, /onSortChange=\{onSortChange\}/);
+    assert.equal((table.match(/sortable: true/g) ?? []).length, 7);
     assert.doesNotMatch(table, /\.filter\(/);
   });
 
@@ -44,10 +48,14 @@ describe("Proposals list DataTable pattern (E5.S1)", () => {
     assert.doesNotMatch(page, /\.filter\(/);
     assert.doesNotMatch(page, /\.slice\(/);
     assert.match(page, /search:\s*debouncedSearch/);
+    assert.match(page, /sortBy:\s*sortKey/);
+    assert.match(page, /sortDir:\s*sortDirection/);
 
     const api = readFileSync(join(src, "api/commercialProposalsApi.ts"), "utf8");
     assert.match(api, /query\.set\("search"/);
     assert.match(api, /query\.set\("page"/);
     assert.match(api, /query\.set\("page_size"/);
+    assert.match(api, /query\.set\("sort_by"/);
+    assert.match(api, /query\.set\("sort_dir"/);
   });
 });

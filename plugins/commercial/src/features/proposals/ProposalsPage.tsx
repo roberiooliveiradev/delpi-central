@@ -15,7 +15,11 @@ import {
 } from "../../app/commercialUi";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
-import type { ProposalDocumentListData } from "../../types/proposalsDocument";
+import type {
+  ProposalDocumentListData,
+  ProposalDocumentSortDirection,
+  ProposalDocumentSortKey,
+} from "../../types/proposalsDocument";
 import { AnalyticsDeepPagePath } from "../analytics/components/AnalyticsDeepPagePath";
 import { ProposalsDocumentsTable } from "./ProposalsDocumentsTable";
 
@@ -31,6 +35,8 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<ProposalDocumentSortKey>("data");
+  const [sortDirection, setSortDirection] = useState<ProposalDocumentSortDirection>("desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -52,7 +58,7 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
     setLoading(true);
     setError(null);
     void listProposalsDocuments(
-      { search: debouncedSearch, page, pageSize: PAGE_SIZE },
+      { search: debouncedSearch, page, pageSize: PAGE_SIZE, sortBy: sortKey, sortDir: sortDirection },
       controller.signal,
     )
       .then((result) => {
@@ -67,7 +73,14 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [debouncedSearch, page, reloadKey]);
+  }, [debouncedSearch, page, sortKey, sortDirection, reloadKey]);
+
+  const handleSortChange = (columnKey: string) => {
+    const key = columnKey as ProposalDocumentSortKey;
+    setSortDirection((current) => key === sortKey ? (current === "asc" ? "desc" : "asc") : "asc");
+    setSortKey(key);
+    setPage(1);
+  };
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -124,7 +137,14 @@ export function ProposalsPage({ basePath }: ProposalsPageProps) {
         ) : null}
         {!loading && !error && items.length > 0 ? (
           <>
-            <ProposalsDocumentsTable rows={items} basePath={basePath} loading={loading} />
+            <ProposalsDocumentsTable
+              rows={items}
+              basePath={basePath}
+              loading={loading}
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSortChange={handleSortChange}
+            />
             {total > PAGE_SIZE ? (
               <CommercialPagination
                 page={page}

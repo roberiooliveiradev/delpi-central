@@ -64,12 +64,41 @@ _LIST_ORDER = """
 ORDER BY ADY.ADY_DATA DESC, ADY.ADY_PROPOS DESC, ADY.ADY_PREVIS DESC
 """
 
+# Allowed sort fields are fixed SQL expressions. Never interpolate request input.
+_SORT_COLUMNS = {
+    "ov": "ADY.ADY_OPORTU",
+    "interna": "ADY.ADY_PROPOS",
+    "cliente": "cliente_nome",
+    "oportunidade": "ADY.ADY_OPORTU",
+    "versao": "ADY.ADY_PREVIS",
+    "data": "ADY.ADY_DATA",
+    "itens": "quantidade_itens",
+}
+
+
+def resolve_list_order(sort_by: str | None = None, sort_dir: str | None = None) -> str:
+    """Build a validated ORDER BY for the complete result set before paging."""
+    if sort_by is None:
+        if sort_dir is not None:
+            raise ValueError("sort_dir requires sort_by")
+        return _LIST_ORDER
+    column = _SORT_COLUMNS.get(sort_by)
+    if column is None or sort_dir not in (None, "asc", "desc"):
+        raise ValueError("Invalid proposal sort parameters")
+    direction = (sort_dir or "asc").upper()
+    return (
+        f"ORDER BY {column} {direction}, "
+        "ADY.ADY_DATA DESC, ADY.ADY_PROPOS DESC, "
+        "ADY.ADY_PREVIS DESC, ADY.R_E_C_N_O_ DESC"
+    )
+
+
 LIST_ACTIVE_SQL = f"""
 SELECT{_LIST_COLUMNS}
 {_COMMON_JOINS}
 {_LIST_WHERE}
 {{search_clause}}
-{_LIST_ORDER}
+{{order_clause}}
 OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
 """
 

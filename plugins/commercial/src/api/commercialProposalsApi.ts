@@ -3,6 +3,8 @@ import type {
   ProposalDocumentDetail,
   ProposalDocumentListData,
   ProposalDocumentPdfExportOverrides,
+  ProposalDocumentSortKey,
+  ProposalDocumentSortDirection,
 } from "../types/proposalsDocument";
 import { commercialApiUrl, httpGet, httpGetBlobWithMeta, httpPostBlob } from "./httpClient";
 
@@ -14,6 +16,8 @@ export type ListProposalsDocumentsParams = {
   page?: number;
   pageSize?: number;
   limit?: number;
+  sortBy?: ProposalDocumentSortKey;
+  sortDir?: ProposalDocumentSortDirection;
 };
 
 export async function listProposalsDocuments(
@@ -23,6 +27,8 @@ export async function listProposalsDocuments(
   const query = new URLSearchParams();
   const term = params.search?.trim();
   if (term) query.set("search", term);
+  if (params.sortBy) query.set("sort_by", params.sortBy);
+  if (params.sortDir) query.set("sort_dir", params.sortDir);
   if (params.page != null) query.set("page", String(params.page));
   if (params.pageSize != null) query.set("page_size", String(params.pageSize));
   else if (params.limit != null) query.set("limit", String(params.limit));

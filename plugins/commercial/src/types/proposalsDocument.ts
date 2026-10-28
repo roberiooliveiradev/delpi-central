@@ -1,3 +1,6 @@
+export type ProposalDocumentSortKey = "ov" | "interna" | "cliente" | "oportunidade" | "versao" | "data" | "itens";
+export type ProposalDocumentSortDirection = "asc" | "desc";
+
 export type ProposalDocumentListItem = {
   proposta_interna: string;
   numero_ov: string;

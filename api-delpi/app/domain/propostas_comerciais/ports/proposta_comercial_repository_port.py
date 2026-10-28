@@ -5,7 +5,8 @@ from typing import Protocol
 
 class PropostaComercialRepositoryPort(Protocol):
     def list_active_recent(
-        self, *, limit: int = 100, offset: int = 0, search: str | None = None
+        self, *, limit: int = 100, offset: int = 0, search: str | None = None,
+        sort_by: str | None = None, sort_dir: str | None = None
     ) -> list[dict]:
         """Lista propostas ativas ordenadas da mais recente (linhas brutas do SQL)."""
 

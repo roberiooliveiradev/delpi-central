@@ -55,3 +55,28 @@ def test_list_proposal_documents_omits_empty_search_and_page_size() -> None:
     gateway.get_commercial_proposal_document.assert_called_once_with(
         "", params={"limit": 100, "page": 1}
     )
+
+
+def test_list_proposal_documents_forwards_server_sort() -> None:
+    gateway = MagicMock()
+    gateway.get_commercial_proposal_document.return_value = {
+        "success": True,
+        "data": {"items": [], "total": 10},
+    }
+    with patch.object(routes, "build_delpi_commercial_gateway", return_value=gateway):
+        routes.list_proposal_documents(
+            _authorized_request(),
+            limit=100,
+            search="OV000116",
+            page=2,
+            page_size=20,
+            sort_by="itens",
+            sort_dir="desc",
+        )
+    gateway.get_commercial_proposal_document.assert_called_once_with(
+        "",
+        params={
+            "limit": 100, "page": 2, "search": "OV000116", "page_size": 20,
+            "sort_by": "itens", "sort_dir": "desc",
+        },
+    )
