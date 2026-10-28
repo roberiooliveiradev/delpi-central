@@ -16,7 +16,7 @@ import {
   EngineeringDateField,
   EngineeringEmptyState,
   EngineeringKpiCard,
-  EngineeringLoadingState,
+  EngineeringLoadingActivityCard,
   EngineeringMultiSelectField,
   EngineeringPageHero,
   EngineeringPagePath,
@@ -155,7 +155,10 @@ export function OverviewPage({ basePath, permissions }: OverviewPageProps) {
       </EngineeringPageHero>
 
       {state.phase === "loading" ? (
-        <EngineeringLoadingState message={copy.loading} />
+        <EngineeringLoadingActivityCard
+          title={copy.loadingTitle}
+          description={copy.loadingDescription}
+        />
       ) : null}
 
       {state.phase === "error" ? (

@@ -238,6 +238,37 @@ declare module "@delpi/plugin-ui/index" {
 
   export function loadingStateCardBemClasses(prefix: string): Record<string, string>;
 
+  export type LoadingActivityCardVariant = "compact" | "panel";
+
+  export type LoadingActivityCardTone = "neutral" | "info";
+
+  export type LoadingActivityCardLabels = {
+    progressRemaining: (remainingPercent: number) => string;
+    progressStarting?: string;
+    progressRemainingOnlyAfterStart?: boolean;
+    progressAriaDeterminate: (remainingPercent: number) => string;
+    progressAriaStarting?: string;
+    progressAriaIndeterminate: string;
+  };
+
+  export type DashboardLoadingActivityCardProps = {
+    title: string;
+    description?: string;
+    variant?: LoadingActivityCardVariant;
+    tone?: LoadingActivityCardTone;
+    sticky?: boolean;
+    progressPercent?: number;
+    className?: string;
+  };
+
+  export function createDashboardLoadingActivityCard(config: {
+    prefix: string;
+    labels: LoadingActivityCardLabels;
+    withCopyWrapper?: boolean;
+    block?: string;
+    defaultTone?: LoadingActivityCardTone;
+  }): ComponentType<DashboardLoadingActivityCardProps>;
+
   export type TimelineItemModel = {
     id: string;
     title: ReactNode;

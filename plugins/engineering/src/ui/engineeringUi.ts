@@ -6,7 +6,7 @@ import {
   createDashboardEmptyState,
   createDashboardEventsSection,
   createDashboardKpiCard,
-  createDashboardLoadingState,
+  createDashboardLoadingActivityCard,
   createDashboardMetricStrip,
   createDashboardMultiSelectField,
   createDashboardDateField,
@@ -26,7 +26,6 @@ import {
   createDashboardUserManual,
   createDashboardViewTransition,
   emptyStateCardBemClasses,
-  loadingStateCardBemClasses,
   sectionCardPacBemClasses,
   sectionRouteCardBemClasses,
   stateBannerBemClasses,
@@ -159,9 +158,19 @@ export const EngineeringEmptyState = createDashboardEmptyState({
   defaultMessage: "Nenhum item no momento.",
 });
 
-export const EngineeringLoadingState = createDashboardLoadingState({
-  classNames: loadingStateCardBemClasses(ENG_UI_PREFIX),
-  defaultMessage: "Carregando…",
-});
+/** Loading canônico dos portais (mesmo componente do TRANSFORMA+):
+ *  `progressPercent` ausente → modo indeterminado oficial; nunca
+ *  exibir percentual sem medição real vinda da Engineering API. */
+export const EngineeringLoadingActivityCard =
+  createDashboardLoadingActivityCard({
+    prefix: ENG_UI_PREFIX,
+    labels: {
+      progressRemaining: (percent) => `Faltam ${percent}%`,
+      progressAriaDeterminate: (percent) =>
+        `Carregamento: faltam ${percent} por cento`,
+      progressAriaIndeterminate: "Carregamento em andamento",
+    },
+    withCopyWrapper: true,
+  });
 
 

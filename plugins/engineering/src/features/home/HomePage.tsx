@@ -42,7 +42,7 @@ import {
   EngineeringCatalogSearchBar,
   EngineeringEmptyState,
   EngineeringEventsSection,
-  EngineeringLoadingState,
+  EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringRecentAccessStrip,
   EngineeringSectionCard,
@@ -194,7 +194,12 @@ export function HomePage({
         }
       />
 
-      {loading ? <EngineeringLoadingState /> : null}
+      {loading ? (
+        <EngineeringLoadingActivityCard
+          title={copy.loading.title}
+          description={copy.loading.description}
+        />
+      ) : null}
 
       {state.phase === "error" ? (
         <EngineeringStateBanner variant="error">

@@ -226,6 +226,10 @@ export const HOME_COPY = {
     expandLabel: "Expandir menu",
     menuLabel: "Abrir menu de navegação",
   },
+  loading: {
+    title: "Preparando sua área de trabalho",
+    description: "Consultando tarefas, solicitações e LMPs autorizadas.",
+  },
   hero: {
     eyebrow: "Portal Engenharia",
     fallbackGreeting: "Olá!",
@@ -269,7 +273,9 @@ export const HOME_COPY = {
     metricsAriaLabel: "Resumo das fontes disponíveis",
     sourcesTitle: "Fontes da área de trabalho",
     sourcesSubtitle: "Estado de cada informação segundo o owner oficial",
-    loading: "Carregando indicadores…",
+    loadingTitle: "Carregando indicadores de Engenharia",
+    loadingDescription:
+      "Consultando as fontes oficiais de LMPs e TRANSFORMA+.",
     errorFallback: "Não foi possível carregar a visão geral.",
     generatedAt: (value: string) => `Atualizado em ${value}`,
     refreshLabel: "Atualizar",
