@@ -160,6 +160,9 @@ class Attachment:
     # + its items_id. Empty = association unknown (consolidated area).
     itemtype: str = ""
     items_id: int | None = None
+    # Upload authorship verification (legacy write runs on the technical
+    # session): verified | restored | mismatch | unverified. Empty on reads.
+    author_state: str = ""
 
 
 @dataclass(frozen=True)

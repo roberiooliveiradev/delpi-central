@@ -119,6 +119,13 @@ class GlpiGateway(Protocol):
         request_type_id: int | None = None,
     ) -> None: ...
 
+    def update_ticket_content(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+    ) -> None: ...
+
     def add_ticket_solution(
         self,
         access_token: str,

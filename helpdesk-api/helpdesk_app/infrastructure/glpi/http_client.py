@@ -1106,6 +1106,29 @@ class HttpxGlpiClient:
             json_body=body,
         )
 
+    def update_ticket_content(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+    ) -> None:
+        """Replace the ticket opening description (``content``) via HLAPI PATCH.
+
+        Runs under the actor's own OAuth token — ``Ticket::canUpdate`` on
+        that profile is the authorization of record. The service verifies
+        persistence by authoritative read-back; GLPI rejecting the field
+        surfaces as a verification failure, never a silent false success.
+        """
+        ticket_id = int(ticket_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        self._json(
+            "PATCH",
+            f"/api.php/v2.2/Assistance/Ticket/{ticket_id}",
+            token=access_token,
+            json_body={"content": content},
+        )
+
     def add_ticket_solution(
         self,
         access_token: str,
@@ -1250,11 +1273,18 @@ class HttpxGlpiClient:
             raise GlpiValidation("ticket_id inválido.")
         # Ensure the ticket is visible to this OAuth subject before legacy write.
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
-        # The legacy write runs as a technical account, so Document.users_id is
-        # stamped with the uploader. Resolve the actor's GLPI id to restore
-        # end-user attribution right after the document exists.
+        # The legacy write runs as a technical account — GLPI stamps it as
+        # creator on Document and Document_Item. The business actor must be
+        # resolvable BEFORE the write: uploading a user-initiated document
+        # under pure technical authorship misrepresents the action in GLPI
+        # history (same fail-closed posture as _legacy_cycle_write).
         owner_user_id = self.session_user_id(access_token)
+        if owner_user_id is None:
+            raise GlpiUnavailable(
+                "A operação exige autoria de usuário final indisponível no GLPI."
+            )
         session_token = self._legacy_init_session()
+        author_state = "unverified"
         try:
             document_id = self._legacy_post_document(
                 session_token=session_token,
@@ -1264,52 +1294,37 @@ class HttpxGlpiClient:
                 mime=(mime or "application/octet-stream").split(";")[0].strip()
                 or "application/octet-stream",
                 title=display_title,
+                users_id=owner_user_id,
             )
             # UploadManifest items_id is not always enough for Timeline visibility.
-            self._legacy_ensure_document_item(
+            link_row_id = self._legacy_ensure_document_item(
                 session_token=session_token,
                 document_id=document_id,
                 ticket_id=ticket_id,
+                users_id=owner_user_id,
             )
-            if owner_user_id is not None:
-                self._legacy_update_document_owner(
+            # Verify/restore end-user authorship on both persisted rows —
+            # declared users_id may be overridden by the session identity.
+            author_state = self._legacy_restore_row_author(
+                session_token=session_token,
+                itemtype="Document",
+                row_id=document_id,
+                users_id=owner_user_id,
+            )
+            if link_row_id:
+                self._legacy_restore_row_author(
                     session_token=session_token,
-                    document_id=document_id,
+                    itemtype="Document_Item",
+                    row_id=link_row_id,
                     users_id=owner_user_id,
                 )
         finally:
             self._legacy_kill_session(session_token)
-        return Attachment(document_id=document_id, filename=safe_name, mime=mime or "")
-
-    def _legacy_update_document_owner(
-        self,
-        *,
-        session_token: str,
-        document_id: int,
-        users_id: int,
-    ) -> None:
-        """Restore end-user authorship on a document uploaded by the technical session."""
-        try:
-            response = self._http.put(
-                f"{self._base}/apirest.php/Document/{int(document_id)}",
-                headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "App-Token": self._legacy_app_token,
-                    "Session-Token": session_token,
-                },
-                json={"input": {"id": int(document_id), "users_id": int(users_id)}},
-            )
-        except httpx.HTTPError:
-            logger.info(
-                "glpi_document_owner_update_failed document_id=%s", document_id
-            )
-            return
-        logger.info(
-            "glpi_document_owner_update status=%s document_id=%s users_id=%s",
-            response.status_code,
-            document_id,
-            users_id,
+        return Attachment(
+            document_id=document_id,
+            filename=safe_name,
+            mime=mime or "",
+            author_state=author_state,
         )
 
     def ticket_owns_document(self, access_token: str, ticket_id: int, document_id: int) -> bool:
@@ -1482,10 +1497,12 @@ class HttpxGlpiClient:
             created = self._legacy_post_json(session_token, "/apirest.php/ITILFollowup", body)
             followup_id = int(created.get("id") or 0)
             if followup_id > 0:
-                author_state = self._legacy_restore_followup_author(
+                author_state = self._legacy_restore_row_author(
                     session_token=session_token,
-                    followup_id=followup_id,
+                    itemtype="ITILFollowup",
+                    row_id=followup_id,
                     users_id=owner_user_id,
+                    log_tag="followup",
                 )
         finally:
             self._legacy_kill_session(session_token)
@@ -1495,23 +1512,24 @@ class HttpxGlpiClient:
             author_state=author_state,
         )
 
-    def _legacy_restore_followup_author(
+    def _legacy_restore_row_author(
         self,
         *,
         session_token: str,
-        followup_id: int,
+        itemtype: str,
+        row_id: int,
         users_id: int,
+        log_tag: str | None = None,
     ) -> str:
-        """Verify/restore end-user authorship on a followup written by the
-        technical session. Returns verified | restored | mismatch | unverified."""
+        """Verify/restore end-user authorship on a row written by the technical
+        session (ITILFollowup, Document, Document_Item).
+        Returns verified | restored | mismatch | unverified."""
+        tag = log_tag or itemtype.lower()
+        path = f"/apirest.php/{itemtype}/{int(row_id)}"
         try:
-            row = self._legacy_get_json(
-                session_token, f"/apirest.php/ITILFollowup/{int(followup_id)}"
-            )
+            row = self._legacy_get_json(session_token, path)
         except Exception:
-            logger.info(
-                "glpi_followup_author_read_failed followup_id=%s", followup_id
-            )
+            logger.info("glpi_%s_author_read_failed %s_id=%s", tag, tag, row_id)
             row = {}
         known_author = (
             int(row["users_id"] or 0)
@@ -1520,41 +1538,32 @@ class HttpxGlpiClient:
         )
         if known_author == int(users_id):
             logger.info(
-                "glpi_followup_author verified followup_id=%s users_id=%s",
-                followup_id,
-                users_id,
+                "glpi_%s_author verified %s_id=%s users_id=%s",
+                tag, tag, row_id, users_id,
             )
             return "verified"
         try:
             self._legacy_put_json(
                 session_token,
-                f"/apirest.php/ITILFollowup/{int(followup_id)}",
-                {"input": {"id": int(followup_id), "users_id": int(users_id)}},
+                path,
+                {"input": {"id": int(row_id), "users_id": int(users_id)}},
             )
         except Exception:
-            logger.info(
-                "glpi_followup_author_restore_failed followup_id=%s", followup_id
-            )
+            logger.info("glpi_%s_author_restore_failed %s_id=%s", tag, tag, row_id)
             # PUT denied: a known wrong author stays wrong; an unknown one is
             # simply unverifiable.
             return "mismatch" if known_author is not None else "unverified"
         try:
-            check = self._legacy_get_json(
-                session_token, f"/apirest.php/ITILFollowup/{int(followup_id)}"
-            )
+            check = self._legacy_get_json(session_token, path)
         except Exception:
-            logger.info(
-                "glpi_followup_author_unverified followup_id=%s", followup_id
-            )
+            logger.info("glpi_%s_author_unverified %s_id=%s", tag, tag, row_id)
             return "unverified"
         confirmed = isinstance(check, dict) and "users_id" in check
         restored = confirmed and int(check.get("users_id") or 0) == int(users_id)
         state = "restored" if restored else ("mismatch" if confirmed else "unverified")
         logger.info(
-            "glpi_followup_author %s followup_id=%s users_id=%s",
-            state,
-            followup_id,
-            users_id,
+            "glpi_%s_author %s %s_id=%s users_id=%s",
+            tag, state, tag, row_id, users_id,
         )
         return state
 
@@ -1905,15 +1914,28 @@ class HttpxGlpiClient:
         session_token: str,
         document_id: int,
         ticket_id: int,
-    ) -> None:
-        """POST Document_Item so Timeline/membership can see the upload (H12)."""
-        if self._legacy_document_linked_to_ticket(
+        users_id: int | None = None,
+    ) -> int:
+        """POST Document_Item so Timeline/membership can see the upload (H12).
+
+        Returns the link row id (needed to verify/restore its users_id), or
+        the pre-existing link's id when the document was already linked.
+        """
+        existing = self._legacy_document_item_row(
             session_token=session_token,
             document_id=document_id,
             ticket_id=ticket_id,
-        ):
-            return
+        )
+        if existing is not None:
+            return int(existing.get("id") or 0)
         self.post_calls += 1
+        link_input: dict = {
+            "documents_id": int(document_id),
+            "itemtype": "Ticket",
+            "items_id": int(ticket_id),
+        }
+        if users_id is not None:
+            link_input["users_id"] = int(users_id)
         try:
             response = self._http.post(
                 f"{self._base}/apirest.php/Document_Item",
@@ -1923,13 +1945,7 @@ class HttpxGlpiClient:
                     "App-Token": self._legacy_app_token,
                     "Session-Token": session_token,
                 },
-                json={
-                    "input": {
-                        "documents_id": int(document_id),
-                        "itemtype": "Ticket",
-                        "items_id": int(ticket_id),
-                    }
-                },
+                json={"input": link_input},
             )
         except httpx.TimeoutException as exc:
             raise GlpiUnavailable("GLPI indisponível.") from exc
@@ -1940,17 +1956,27 @@ class HttpxGlpiClient:
             ticket_id,
         )
         if response.status_code in {200, 201}:
-            return
+            data = response.json() if response.content else {}
+            link_id = data.get("id") if isinstance(data, dict) else None
+            if link_id is None:
+                row = self._legacy_document_item_row(
+                    session_token=session_token,
+                    document_id=document_id,
+                    ticket_id=ticket_id,
+                )
+                link_id = row.get("id") if row else None
+            return int(link_id or 0)
         # Already linked / duplicate — treat as success for membership.
         if response.status_code in {400, 422}:
             body = (response.text or "")[:240]
             logger.info("glpi_legacy_document_item_dup_or_reject body=%s", body)
-            if self._legacy_document_linked_to_ticket(
+            row = self._legacy_document_item_row(
                 session_token=session_token,
                 document_id=document_id,
                 ticket_id=ticket_id,
-            ):
-                return
+            )
+            if row is not None:
+                return int(row.get("id") or 0)
             raise GlpiValidation("O GLPI não ligou o documento ao chamado.")
         if response.status_code == 401:
             raise GlpiUnauthorized("Sessão do GLPI recusada.")
@@ -1965,6 +1991,23 @@ class HttpxGlpiClient:
         document_id: int,
         ticket_id: int,
     ) -> bool:
+        return (
+            self._legacy_document_item_row(
+                session_token=session_token,
+                document_id=document_id,
+                ticket_id=ticket_id,
+            )
+            is not None
+        )
+
+    def _legacy_document_item_row(
+        self,
+        *,
+        session_token: str,
+        document_id: int,
+        ticket_id: int,
+    ) -> dict | None:
+        """Return the Document_Item row linking document_id to this ticket."""
         try:
             response = self._http.request(
                 "GET",
@@ -1976,22 +2019,22 @@ class HttpxGlpiClient:
                 },
             )
         except httpx.TimeoutException:
-            return False
+            return None
         except httpx.HTTPError:
-            return False
+            return None
         if response.status_code != 200 or not response.content:
-            return False
+            return None
         try:
             data = response.json()
         except ValueError:
-            return False
+            return None
         rows = data if isinstance(data, list) else data.get("data") if isinstance(data, dict) else None
         if not isinstance(rows, list):
             # Single object form
             if isinstance(data, dict) and data.get("itemtype"):
                 rows = [data]
             else:
-                return False
+                return None
         for row in rows:
             if not isinstance(row, dict):
                 continue
@@ -2004,8 +2047,8 @@ class HttpxGlpiClient:
             except (TypeError, ValueError):
                 continue
             if itemtype == "Ticket" and linked == int(ticket_id):
-                return True
-        return False
+                return row
+        return None
 
     def _legacy_post_document(
         self,
@@ -2016,6 +2059,7 @@ class HttpxGlpiClient:
         content: bytes,
         mime: str,
         title: str | None = None,
+        users_id: int | None = None,
     ) -> int:
         document_name = (title or "").strip() or filename
         manifest = {
@@ -2026,6 +2070,8 @@ class HttpxGlpiClient:
                 "items_id": ticket_id,
             }
         }
+        if users_id is not None:
+            manifest["input"]["users_id"] = int(users_id)
         self.post_calls += 1
         try:
             response = self._http.post(

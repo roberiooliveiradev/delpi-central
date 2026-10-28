@@ -337,6 +337,24 @@ export function updateFollowup(
   );
 }
 
+export function updateTicketDescription(
+  ticketId: string,
+  body: { content: string },
+  idempotencyKey: string,
+) {
+  return request<{ id: number; description_html?: string }>(
+    `/tickets/${ticketId}/description`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify(body),
+    },
+  );
+}
+
 export function updateTicketClassification(
   ticketId: string,
   body: ClassificationPatch,

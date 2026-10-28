@@ -84,6 +84,8 @@ class FakeGlpi:
         self.update_followup_applies = True
         self.classification_writes: list[tuple] = []
         self.classification_applies = True
+        self.description_writes: list[tuple] = []
+        self.description_applies = True
         self.solutions: list[tuple[int, str]] = []
         self.tasks: list[tuple[int, str]] = []
         self.created_validations: list[tuple[int, str, int, str]] = []
@@ -460,6 +462,30 @@ class FakeGlpi:
         )
         self.detail = _replace(self.detail, timeline=timeline)
 
+    def update_ticket_content(
+        self,
+        access_token: str,
+        ticket_id: int,
+        content: str,
+    ):
+        from dataclasses import replace
+
+        from helpdesk_app.application.services.message_html_sanitizer import (
+            message_html_to_plain_text,
+        )
+
+        self.calls += 1
+        assert access_token
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        self.description_writes.append((ticket_id, content))
+        if self.description_applies and self.detail.id == ticket_id:
+            self.detail = replace(
+                self.detail,
+                description=message_html_to_plain_text(content),
+                description_html=content,
+            )
+
     def update_ticket_classification(
         self,
         access_token: str,
@@ -670,7 +696,12 @@ class FakeGlpi:
         if not content:
             raise GlpiValidation("Arquivo vazio.")
         document_id = 100 + len(self.uploads)
-        attachment = Attachment(document_id, filename, mime or "application/octet-stream")
+        attachment = Attachment(
+            document_id,
+            filename,
+            mime or "application/octet-stream",
+            author_state="verified" if self.session_uid else "unverified",
+        )
         self.uploads.append((ticket_id, filename, content, mime, title))
         self.files[document_id] = (content, mime or "application/octet-stream")
         self.document_links[document_id] = ticket_id

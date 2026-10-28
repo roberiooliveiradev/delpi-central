@@ -121,9 +121,11 @@ A lista (`GET /tickets`) também publica `sla_ttr` / `sla_tto` e `requester_disp
 
 `GET /tickets/{id}/attachments/{document_id}` devolve o arquivo com o token da pessoa (Bearer). O `document_id` precisa estar em `attachments` daquele chamado; caso contrário a resposta é 404, sem o corpo. O arquivo não é gravado na Minha DELPI: o BFF só repassa o download do GLPI. Por isso o compositor **não** usa essa URL como `src` de `<img>` sem resolver blob autenticado.
 
-`POST /tickets/{id}/attachments` (multipart, H12) grava um Documento no GLPI via API legada (`apirest.php/Document` + App-Token + User-Token técnico), liga ao Ticket e devolve `{ document_id, filename, mime }`. Cabeçalho `Idempotency-Key` obrigatório. Feature flag `GLPI_LEGACY_UPLOAD_ENABLED`; sem flag/token → `503` / feature disabled. A mesma sessão legada cobre o ciclo H10 (aceite/recusa/satisfação) — ver §4.
+`POST /tickets/{id}/attachments` (multipart, H12) grava um Documento no GLPI via API legada (`apirest.php/Document` + App-Token + User-Token técnico), liga ao Ticket e devolve `{ document_id, filename, mime, author_state, author_verified }` (dois últimos aditivos). Cabeçalho `Idempotency-Key` obrigatório. Feature flag `GLPI_LEGACY_UPLOAD_ENABLED`; sem flag/token → `503` / feature disabled. A mesma sessão legada cobre o ciclo H10 (aceite/recusa/satisfação) — ver §4.
 
-Imagens no HTML de follow-up/descrição: `src` só no path `/apps/helpdesk-api/tickets/{id}/attachments/{document_id}`; `width`/`height` numéricos (≤4096) passam na allowlist. CSS `width`/`height` em `style` **não** entram na allowlist de estilo — o resize do editor persiste pelos atributos HTML.
+**Autoria do upload**: como a escrita roda sob sessão técnica, o GLPI carimbaria `minha-delpi-upload` como criador de `Document` e `Document_Item`. O BFF resolve o `user_id` do ator via `GET /session` (OAuth) **antes** do write — sem identidade resolúvel → `502` pré-write, nada é criado sob autoria técnica pura (fail-closed, mesma postura do ciclo H10). O `users_id` do ator vai declarado no `uploadManifest` e no `Document_Item`; depois o BFF lê cada linha de volta e restaura via PUT bounded se o GLPI carimbou a conta técnica. `author_state` ∈ `verified` | `restored` | `mismatch` | `unverified` espelha o `users_id` do `Document`; `author_verified=false` significa **upload persistido com autoria não confirmada** — visível no contrato e no log (`glpi_document_author`, `glpi_document_item_author`), nunca silenciado.
+
+Imagens no HTML de follow-up/descrição: `src` só no path `/apps/helpdesk-api/tickets/{id}/attachments/{document_id}`; `width`/`height` numéricos (≤4096) passam na allowlist. CSS `width`/`height` em `style` **não** entram na allowlist de estilo — o resize do editor persiste pelos atributos HTML. Ao persistir no GLPI, o BFF traduz o `src` BFF verificado para o formato canônico do GLPI `/front/document.send.php?docid={id}` — assim a imagem renderiza inline também na UI nativa do GLPI; na leitura, o sanitizador de entrada converte de volta para o path autenticado quando o `docid` pertence ao chamado.
 
 ## 4. Escrita
 
@@ -180,6 +182,14 @@ Resposta `200`: `{ "user_id": 15, "assigned_display_name": "Ana Silva" }`. Se j�
 ```
 
 Também exige `Idempotency-Key`. Resposta `201` com `{ "id": 1 }`.
+
+`PATCH /tickets/{id}/description` — reescreve a descrição de abertura (campo `content` do Ticket no GLPI) via `PATCH /api.php/v2.2/Assistance/Ticket/{id}` sob o token OAuth do ator — `Ticket::canUpdate` no GLPI é a autoridade, e o BFF exige `requester_mine` (a descrição é atribuída ao solicitante).
+
+```json
+{ "content": "string | HTML" }
+```
+
+`Idempotency-Key` obrigatório. Resposta `200`: `{ "id", "description_html" }`. Referências inline seguem a mesma regra do follow-up (só `docid` pertencente ao chamado; outros são removidos pelo sanitizador). É o caminho que preserva a posição original de imagens inline na abertura: o compositor cria o chamado com placeholders removidos, sobe os anexos e depois grava a descrição completa já reescrita com os `document_id` reais. Read-back autoritativo: divergência → `422 validation_error` (nunca falso 200).
 
 ### Ciclo do solicitante (H10 Branch B — legado)
 

@@ -35,6 +35,7 @@ import {
   submitTicketSatisfaction,
   updateFollowup,
   updateTicketClassification,
+  updateTicketDescription,
   uploadTicketAttachment,
   type ClassificationPatch,
   type TicketAttachment,
@@ -999,14 +1000,20 @@ function CreateTicketPage() {
                   }
                   pendingFilesRef.current.delete(pendingId);
                 }
-                if (Object.keys(mapping).length > 0) {
+                // Inline images keep their original position: rewrite the
+                // pending placeholders to stable document refs and persist
+                // the whole description on the ticket itself (no separate
+                // image-only followup).
+                if (
+                  Object.keys(mapping).length > 0 &&
+                  listPendingInlineIds(description).length > 0
+                ) {
                   const rewritten = rewritePendingInlineImages(description, mapping);
-                  const imageBlocks = rewritten.match(/<p>\s*<img\b[\s\S]*?<\/p>/gi) || [];
-                  if (imageBlocks.length > 0) {
-                    await createFollowup(
+                  if (rewritten.trim()) {
+                    await updateTicketDescription(
                       ticketId,
-                      { content: imageBlocks.join("") },
-                      `${idempotencyKey}:images`,
+                      { content: rewritten },
+                      `${idempotencyKey}:description`,
                     );
                   }
                 }

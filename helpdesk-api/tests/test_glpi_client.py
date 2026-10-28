@@ -1097,6 +1097,8 @@ def test_legacy_document_upload_uses_apirest_with_app_token():
         calls.append(f"{request.method} {request.url.path}")
         if request.url.path.endswith("/Assistance/Ticket/7"):
             return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
         if request.url.path.endswith("/apirest.php/initSession"):
             assert request.headers.get("App-Token") == "app-token-x"
             assert request.headers.get("Authorization", "").startswith("user_token ")
@@ -1209,27 +1211,177 @@ def test_legacy_document_upload_restores_actor_as_document_owner():
     assert "GET /api.php/v2.2/session" in calls
 
 
-def test_legacy_document_upload_keeps_upload_when_owner_unresolved():
-    """If the session identity cannot be resolved the upload still succeeds
-    (document keeps the technical owner instead of failing the request)."""
-    owner_puts: list[dict] = []
+def test_legacy_document_upload_verified_when_post_honors_users_id():
+    """When GLPI stamps the declared users_id on Document creation, the
+    read-back reports verified and no corrective PUT is needed."""
+    puts: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/Assistance/Ticket/7"):
             return httpx.Response(200, json={"id": 7, "name": "t"})
         if request.url.path.endswith("/api.php/v2.2/session"):
-            return httpx.Response(403, json={"error": "denied"})
+            return httpx.Response(200, json={"user_id": 68})
         if request.url.path.endswith("/apirest.php/initSession"):
             return httpx.Response(200, json={"session_token": "sess-1"})
-        if request.url.path.endswith("/apirest.php/Document/55") and request.method == "PUT":
-            owner_puts.append(json.loads(request.content.decode())["input"])
-            return httpx.Response(200, json=[{"55": True}])
+        if request.method == "PUT":
+            puts.append(request.url.path)
+            return httpx.Response(200, json=[{"ok": True}])
+        if request.url.path.endswith("/apirest.php/Document/55") and request.method == "GET":
+            return httpx.Response(200, json={"id": 55, "users_id": 68})
         if request.url.path.endswith("/apirest.php/Document"):
+            body = request.content.decode("utf-8", "replace")
+            assert '"users_id": 68' in body  # declared in the upload manifest
             return httpx.Response(201, json={"id": 55})
         if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
             return httpx.Response(200, json=[])
+        if request.url.path.endswith("/apirest.php/Document_Item/9") and request.method == "GET":
+            return httpx.Response(200, json={"id": 9, "users_id": 68})
         if request.url.path.endswith("/apirest.php/Document_Item"):
-            return httpx.Response(201, json={"id": 1})
+            body = json.loads(request.content.decode())
+            assert body["input"]["users_id"] == 68
+            return httpx.Response(201, json={"id": 9})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access",
+        ticket_id=7,
+        filename="placa.png",
+        content=b"png-bytes",
+        mime="image/png",
+    )
+    assert uploaded.document_id == 55
+    assert uploaded.author_state == "verified"
+    assert puts == []  # no corrective PUT needed — POST honored users_id
+
+
+def test_legacy_document_upload_restores_document_item_author():
+    """Document_Item stamped by the technical session is restored to the
+    end-user via bounded PUT + read-back, like Document."""
+    restored: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/Document/55") and request.method == "GET":
+            return httpx.Response(200, json={"id": 55, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document_Item/9"):
+            if request.method == "PUT":
+                restored.append(request.url.path)
+                return httpx.Response(200, json=[{"9": True}])
+            # First read shows technical author; the post-PUT re-read is
+            # simplified — the PUT assertion is the point under test.
+            return httpx.Response(200, json={"id": 9, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[])
+        if request.url.path.endswith("/apirest.php/Document_Item"):
+            return httpx.Response(201, json={"id": 9})
+        if request.url.path.endswith("/apirest.php/Document"):
+            return httpx.Response(201, json={"id": 55})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    uploaded = client.upload_ticket_document(
+        "oauth-access",
+        ticket_id=7,
+        filename="placa.png",
+        content=b"png-bytes",
+        mime="image/png",
+    )
+    assert uploaded.document_id == 55
+    assert uploaded.author_state == "verified"
+
+
+def test_legacy_document_upload_blocks_when_owner_unresolved():
+    """Fail-closed: an upload whose OAuth subject cannot be resolved to a
+    GLPI user must NOT be written under pure technical authorship."""
+    from helpdesk_app.domain.errors import GlpiUnavailable
+
+    posts: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 0})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.method == "POST":
+            posts.append(request.url.path)
+            return httpx.Response(201, json={"id": 55})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    with pytest.raises(GlpiUnavailable):
+        client.upload_ticket_document(
+            "oauth-access",
+            ticket_id=7,
+            filename="laudo.pdf",
+            content=b"pdf-bytes",
+            mime="application/pdf",
+        )
+    assert posts == []  # nothing written under technical identity
+
+
+def test_legacy_document_upload_reports_mismatch_when_restore_denied():
+    """PUT denied with a known wrong author → author_state=mismatch —
+    the upload is kept but the degraded audit trail is surfaced."""
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-1"})
+        if request.url.path.endswith("/apirest.php/Document/55") and request.method == "GET":
+            return httpx.Response(200, json={"id": 55, "users_id": 9})
+        if request.url.path.endswith("/apirest.php/Document/55") and request.method == "PUT":
+            return httpx.Response(403, json={"error": "denied"})
+        if request.url.path.endswith("/apirest.php/Document_Item/9"):
+            if request.method == "PUT":
+                return httpx.Response(200, json=[{"9": True}])
+            return httpx.Response(200, json={"id": 9, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/Document/55/Document_Item"):
+            return httpx.Response(200, json=[])
+        if request.url.path.endswith("/apirest.php/Document_Item"):
+            return httpx.Response(201, json={"id": 9})
+        if request.url.path.endswith("/apirest.php/Document"):
+            return httpx.Response(201, json={"id": 55})
         if request.url.path.endswith("/apirest.php/killSession"):
             return httpx.Response(200, json={})
         return httpx.Response(404, json={"error": "missing"})
@@ -1252,7 +1404,7 @@ def test_legacy_document_upload_keeps_upload_when_owner_unresolved():
         mime="application/pdf",
     )
     assert uploaded.document_id == 55
-    assert owner_puts == []
+    assert uploaded.author_state == "mismatch"
 
 
 def test_assignable_users_falls_back_to_legacy_when_user_catalog_denied():

@@ -377,9 +377,89 @@ class TicketService:
                 "document_id": uploaded.document_id,
                 "filename": uploaded.filename,
                 "mime": uploaded.mime,
+                # Authorship verification outcome on the technical-session
+                # write (verified | restored | mismatch | unverified) —
+                # additive, so consumers can flag degraded auditability.
+                "author_state": uploaded.author_state,
+                "author_verified": uploaded.author_state in ("verified", "restored"),
             },
         )
         self._idempotency.save(subject, operation, key, stored)
+        return stored
+
+    def update_description(
+        self,
+        subject: str,
+        ticket_id: int,
+        *,
+        content: str,
+        viewer_email: str = "",
+        idempotency_key: str | None = None,
+    ) -> StoredResponse:
+        """Replace the ticket opening description (``content`` field).
+
+        Only the requester of record can rewrite the opening text — the
+        description is attributed to them in GLPI and Minha DELPI. The
+        write runs under the actor's own OAuth token (``Ticket::canUpdate``
+        stays the authority of record; a 403 fails closed). Inline image
+        references are validated exactly like followups: only documents
+        owned by this ticket may be linked, others are stripped by the
+        sanitizer. Read-back is authoritative — a PATCH GLPI did not
+        persist raises instead of a false 200.
+        """
+        key = _require_key(idempotency_key)
+        operation = f"update_description:{ticket_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        token = self._token(subject)
+        ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        if not ticket.requester_mine:
+            raise GlpiForbidden(
+                "Só o solicitante pode editar a descrição do chamado."
+            )
+        allowed = {item.document_id for item in ticket.attachments}
+        html_refs = {
+            doc_id
+            for ref_ticket, doc_id in extract_bff_attachment_refs(content)
+            if ref_ticket == ticket_id
+        }
+        if html_refs - allowed:
+            ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            allowed = {item.document_id for item in ticket.attachments}
+        for doc_id in html_refs - allowed:
+            if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
+                allowed.add(doc_id)
+        content_html = _prepare_message_html(
+            content,
+            "content",
+            ticket_id=ticket_id,
+            allowed_document_ids=allowed,
+        )
+        self._glpi.update_ticket_content(token, ticket_id, content_html)
+        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        expected_text = " ".join(
+            message_html_to_plain_text(content_html).split()
+        )
+        actual_text = " ".join(
+            message_html_to_plain_text(refreshed.description_html or "").split()
+        )
+        if actual_text != expected_text:
+            raise GlpiValidation(
+                "A descrição não foi confirmada no chamado."
+            )
+        stored = StoredResponse(
+            status_code=200,
+            body={
+                "id": int(ticket_id),
+                "description_html": refreshed.description_html,
+            },
+        )
+        self._idempotency.save(subject, operation, key, stored)
+        logger.info(
+            "helpdesk_update_description ticket_id=%s",
+            ticket_id,
+        )
         return stored
 
     def create(

@@ -263,7 +263,30 @@ def prepare_outbound_message_html(
     )
     if not message_html_has_visible_text(cleaned):
         return ""
-    return cleaned
+    return _to_glpi_document_srcs(cleaned)
+
+
+def _to_glpi_document_srcs(html: str) -> str:
+    """Rewrite verified BFF attachment img srcs to the GLPI-native
+    ``/front/document.send.php?docid=N`` form before persisting.
+
+    Storing the canonical GLPI URL means the image renders inline in the
+    GLPI UI itself and in Minha DELPI (the inbound sanitizer maps
+    docid→BFF path for tickets that own the document). Only BFF-path srcs
+    that already survived the allowlist are rewritten.
+    """
+
+    def _repl(match: re.Match[str]) -> str:
+        tag = match.group(0)
+        doc_id = match.group(3)
+        return re.sub(
+            r'src\s*=\s*["\'][^"\']*["\']',
+            f'src="/front/document.send.php?docid={doc_id}"',
+            tag,
+            count=1,
+        )
+
+    return _BFF_IMG_RE.sub(_repl, html)
 
 
 def _rewrite_document_urls(

@@ -70,6 +70,12 @@ class FollowupUpdateBody(BaseModel):
     content: str = Field(min_length=1)
 
 
+class DescriptionUpdateBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    content: str = Field(min_length=1)
+
+
 class ClassificationUpdateBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -641,6 +647,27 @@ def update_followup(
             actor.subject,
             ticket_id,
             followup_id,
+            content=body.content,
+            viewer_email=actor.email,
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
+@router.patch("/tickets/{ticket_id}/description")
+def update_ticket_description(
+    request: Request,
+    ticket_id: int,
+    body: DescriptionUpdateBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).update_description(
+            actor.subject,
+            ticket_id,
             content=body.content,
             viewer_email=actor.email,
             idempotency_key=idempotency_key,

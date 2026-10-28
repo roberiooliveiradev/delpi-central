@@ -595,7 +595,7 @@ def test_followup_keeps_inline_image_when_doc_only_on_document_item():
         headers={**auth_headers(), "Idempotency-Key": "follow-lag"},
     )
     assert follow.status_code == 201
-    assert f"attachments/{document_id}" in glpi.followups[0][1]
+    assert f"docid={document_id}" in glpi.followups[0][1]
 
 
 def test_attachment_upload_via_legacy_path():
@@ -630,7 +630,9 @@ def test_attachment_upload_via_legacy_path():
         headers={**auth_headers(), "Idempotency-Key": "up-follow"},
     )
     assert follow.status_code == 201
-    assert "attachments/100" in glpi.followups[0][1]
+    # Outbound stores the GLPI-native doc.send URL — renders inline in GLPI
+    # and is rewritten back to the authenticated BFF path on read.
+    assert "document.send.php?docid=100" in glpi.followups[0][1]
     foreign_img = client.post(
         "/tickets/7/followups",
         json={
@@ -643,6 +645,108 @@ def test_attachment_upload_via_legacy_path():
     assert foreign_img.status_code == 201
     assert "attachments/100" not in glpi.followups[1][1]
     assert "img" not in glpi.followups[1][1].lower()
+
+
+def test_update_description_preserves_inline_images():
+    """Opening description PATCH keeps inline images in position — stored
+    in GLPI as the canonical document.send.php reference (docid-verified)."""
+    from dataclasses import replace
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(glpi.detail, requester_mine=True)
+    response = client.patch(
+        "/tickets/7/description",
+        json={
+            "content": (
+                '<p>antes</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/2" '
+                'alt="logo" /></p><p>depois</p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "desc-1"},
+    )
+    assert response.status_code == 200
+    ticket_id, stored_html = glpi.description_writes[0]
+    assert ticket_id == 7
+    assert "document.send.php?docid=2" in stored_html
+    assert "antes" in stored_html and "depois" in stored_html
+    # image stays between the paragraphs — not moved to a separate entry
+    assert stored_html.index("antes") < stored_html.index("docid=2") < stored_html.index("depois")
+    replay = client.patch(
+        "/tickets/7/description",
+        json={
+            "content": (
+                '<p>antes</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/2" /></p><p>depois</p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "desc-1"},
+    )
+    assert replay.status_code == 200
+    assert len(glpi.description_writes) == 1
+
+
+def test_update_description_strips_unowned_document_reference():
+    from dataclasses import replace
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(glpi.detail, requester_mine=True)
+    response = client.patch(
+        "/tickets/7/description",
+        json={
+            "content": (
+                '<p>ok</p><p><img src="/apps/helpdesk-api/tickets/7/attachments/77" '
+                'alt="alien" /></p>'
+            )
+        },
+        headers={**auth_headers(), "Idempotency-Key": "desc-alien"},
+    )
+    assert response.status_code == 200
+    assert "docid=77" not in glpi.description_writes[0][1]
+    assert "attachments/77" not in glpi.description_writes[0][1]
+    assert "ok" in glpi.description_writes[0][1]
+
+
+def test_update_description_forbidden_for_non_requester():
+    client, _glpi = build_client()
+    link(client)
+    # default detail is not requester_mine
+    response = client.patch(
+        "/tickets/7/description",
+        json={"content": "<p>edit</p>"},
+        headers={**auth_headers(), "Idempotency-Key": "desc-denied"},
+    )
+    assert response.status_code == 403
+
+
+def test_update_description_fails_when_readback_diverges():
+    from dataclasses import replace
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(glpi.detail, requester_mine=True)
+    glpi.description_applies = False
+    response = client.patch(
+        "/tickets/7/description",
+        json={"content": "<p>edit</p>"},
+        headers={**auth_headers(), "Idempotency-Key": "desc-stale"},
+    )
+    assert response.status_code == 422
+
+
+def test_attachment_upload_reports_author_state():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 15
+    uploaded = client.post(
+        "/tickets/7/attachments",
+        files={"file": ("placa.png", b"png-new", "image/png")},
+        headers={**auth_headers(), "Idempotency-Key": "up-auth"},
+    )
+    assert uploaded.status_code == 201
+    body = uploaded.json()
+    assert body["author_state"] == "verified"
+    assert body["author_verified"] is True
 
 
 def test_categories_come_from_glpi():
