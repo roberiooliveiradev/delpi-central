@@ -696,6 +696,95 @@ export function createHostContainedModalShell() {
 }
 
 export const confirmModalBemClasses = passthroughClasses;
+export const textFieldBemClasses = passthroughClasses;
+export const textAreaFieldBemClasses = passthroughClasses;
+export const dateFieldBemClasses = passthroughClasses;
+export const selectFieldPacClasses = () => ({
+  field: passthroughClasses(),
+  control: passthroughClasses(),
+});
+
+type MockFieldProps = {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  required?: boolean;
+  placeholder?: string;
+};
+
+export function createDashboardTextField() {
+  return function MockTextField(
+    props: MockFieldProps & { type?: string; fullWidth?: boolean },
+  ) {
+    return el("input", {
+      type: props.type ?? "text",
+      "aria-label": props.label,
+      value: props.value,
+      disabled: props.disabled,
+      placeholder: props.placeholder,
+      onChange: (event: { target: { value: string } }) =>
+        props.onChange(event.target.value),
+    });
+  };
+}
+
+export function createDashboardTextAreaField() {
+  return function MockTextAreaField(
+    props: MockFieldProps & { rows?: number; fullWidth?: boolean },
+  ) {
+    return el("textarea", {
+      "aria-label": props.label,
+      rows: props.rows,
+      value: props.value,
+      disabled: props.disabled,
+      onChange: (event: { target: { value: string } }) =>
+        props.onChange(event.target.value),
+    });
+  };
+}
+
+export function createDashboardDateField() {
+  return function MockDateField(
+    props: MockFieldProps & { type?: string; wide?: boolean },
+  ) {
+    return el("input", {
+      type: props.type ?? "text",
+      "aria-label": props.label,
+      value: props.value,
+      disabled: props.disabled,
+      onChange: (event: { target: { value: string } }) =>
+        props.onChange(event.target.value),
+    });
+  };
+}
+
+export function createDashboardSelectField() {
+  return function MockSelectField(
+    props: MockFieldProps & {
+      options?: Array<{ value: string; label: string }>;
+    },
+  ) {
+    return el(
+      "select",
+      {
+        "aria-label": props.label,
+        value: props.value,
+        disabled: props.disabled,
+        onChange: (event: { target: { value: string } }) =>
+          props.onChange(event.target.value),
+      },
+      (props.options ?? []).map((option) =>
+        el(
+          "option",
+          { key: option.value, value: option.value },
+          option.label,
+        ),
+      ),
+    );
+  };
+}
 
 export function ContextMenu(props: {
   open?: boolean;

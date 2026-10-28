@@ -48,10 +48,15 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
+  CfDateField,
   CfDialog,
   CfEmptyState,
   CfSectionCard,
+  CfSelectField,
   CfStatusBadge,
+  CfTextAreaField,
+  CfTextField,
+  CfTimeline,
   CfTitleWithHelp,
   cfConfirmModalClassNames,
   cfEmptyStateClassNames,
@@ -133,6 +138,7 @@ const STATUS_VARIANTS: Record<
   REVIEW: "warning",
   PUBLISHED: "success",
   INACTIVE: "neutral",
+  DISCARDED: "neutral",
 };
 
 export const EVENT_LABELS: Record<string, string> = {
@@ -142,6 +148,21 @@ export const EVENT_LABELS: Record<string, string> = {
   VERSION_RETURNED_TO_DRAFT: "Devolvida a rascunho",
   VERSION_PUBLISHED: "Versão publicada",
   VERSION_INACTIVATED: "Versão inativada",
+  VERSION_DISCARDED: "Versão descartada",
+};
+
+/** Tom semântico do marker da timeline por tipo de evento de auditoria. */
+export const EVENT_TONES: Record<
+  string,
+  "default" | "info" | "warning" | "success" | "danger"
+> = {
+  DRAFT_CREATED: "info",
+  DRAFT_UPDATED: "default",
+  VERSION_SUBMITTED_FOR_REVIEW: "warning",
+  VERSION_RETURNED_TO_DRAFT: "warning",
+  VERSION_PUBLISHED: "success",
+  VERSION_INACTIVATED: "default",
+  VERSION_DISCARDED: "danger",
 };
 
 const SHEET_OPTIONS = [
@@ -518,6 +539,7 @@ export function ChecklistAdminPage() {
                 </ActionButton>
                 <ActionButton
                   variant="ghost"
+                  className="cf-action-btn--danger"
                   disabled={busy}
                   onClick={() => setDiscardTarget(row)}
                 >
@@ -552,6 +574,7 @@ export function ChecklistAdminPage() {
             {row.status === "PUBLISHED" ? (
               <ActionButton
                 variant="ghost"
+                className="cf-action-btn--danger"
                 disabled={busy}
                 onClick={() => setInactivateTarget(row)}
               >
@@ -722,6 +745,7 @@ export function ChecklistAdminPage() {
               <div className="cf-validation-panel__item-actions">
                 <CfActionButton
                   type="button"
+                  variant="primary"
                   disabled={busy || draftOpen}
                   title={
                     draftOpen
@@ -835,15 +859,14 @@ export function ChecklistAdminPage() {
               A publicação é prospectiva: a versão passa a valer a partir
               da competência informada e não altera competências já abertas.
             </p>
-            <label>
-              Vigente a partir de (AAAA-MM)
-              <input
-                value={publishPeriod}
-                disabled={busy}
-                placeholder="2026-06"
-                onChange={(event) => setPublishPeriod(event.target.value)}
-              />
-            </label>
+            <CfDateField
+              label="Vigente a partir de (AAAA-MM)"
+              type="month"
+              required
+              value={publishPeriod}
+              disabled={busy}
+              onChange={setPublishPeriod}
+            />
             <div className="cf-validation-panel__form-actions">
               <ActionButton
                 variant="primary"
@@ -879,17 +902,15 @@ export function ChecklistAdminPage() {
               A devolução reabre a versão para edição — o motivo fica
               registrado no histórico de auditoria da versão.
             </p>
-            <label>
-              Motivo da devolução
-              <textarea
-                rows={3}
-                value={returnReason}
-                disabled={busy}
-                onChange={(event) =>
-                  setReturnReason(event.target.value)
-                }
-              />
-            </label>
+            <CfTextAreaField
+              label="Motivo da devolução"
+              rows={3}
+              required
+              fullWidth
+              value={returnReason}
+              disabled={busy}
+              onChange={setReturnReason}
+            />
             <div className="cf-validation-panel__form-actions">
               <ActionButton
                 variant="primary"
@@ -991,26 +1012,19 @@ export function ChecklistAdminPage() {
               defaultMessage="Nenhum evento registrado."
             />
           ) : (
-            <ul className="cf-validation-panel__docs">
-              {events.map((event) => (
-                <li
-                  key={event.event_id}
-                  className="cf-validation-panel__doc"
-                >
-                  <div>
-                    <p className="cf-validation-panel__doc-name">
-                      {EVENT_LABELS[event.event_type] ?? event.event_type}
-                      {" · "}
-                      v{event.version}
-                    </p>
-                    <p className="cf-validation-panel__doc-detail">
-                      {event.actor_subject} ·{" "}
-                      {formatDateTime(event.created_at)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <CfTimeline
+              items={events.map((event) => ({
+                id: event.event_id,
+                title:
+                  EVENT_LABELS[event.event_type] ?? event.event_type,
+                occurredAt: event.created_at,
+                timeLabel: formatDateTime(event.created_at),
+                detail: `v${event.version} · ${event.actor_subject}`,
+                tone: EVENT_TONES[event.event_type] ?? "default",
+              }))}
+              emptyMessage="Nenhum evento registrado."
+              aria-label={`Eventos de ${eventsTemplate.code}`}
+            />
           )}
         </CfDialog>
       ) : null}
@@ -1026,194 +1040,137 @@ export function ChecklistAdminPage() {
           onClose={() => setItemForm(null)}
           closeAriaLabel="Fechar item"
         >
-          <div className="cf-validation-panel__form">
-            <label>
-              Chave do item
-              <input
-                value={itemForm.item_key}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    item_key: event.target.value,
-                  })
-                }
-              />
-            </label>
-            <label>
-              Entregável
-              <input
-                value={itemForm.name}
-                onChange={(event) =>
-                  setItemForm({ ...itemForm, name: event.target.value })
-                }
-              />
-            </label>
-            <label>
-              Ordem
-              <input
-                value={itemForm.sort_order ?? ""}
-                type="number"
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    sort_order: event.target.value
-                      ? Number(event.target.value)
+          <div className="cf-validation-panel__form cf-form-grid">
+            <CfTextField
+              label="Chave do item"
+              required
+              value={itemForm.item_key}
+              onChange={(value) =>
+                setItemForm({ ...itemForm, item_key: value })
+              }
+            />
+            <CfTextField
+              label="Entregável"
+              required
+              value={itemForm.name}
+              onChange={(value) =>
+                setItemForm({ ...itemForm, name: value })
+              }
+            />
+            <CfTextField
+              label="Ordem"
+              value={itemForm.sort_order?.toString() ?? ""}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  sort_order:
+                    value.trim() && !Number.isNaN(Number(value))
+                      ? Number(value)
                       : null,
-                  })
-                }
-              />
-            </label>
-            <label>
-              Folha
-              <select
-                value={itemForm.sheet}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    sheet: event.target.value as EditableItem["sheet"],
-                  })
-                }
-              >
-                {SHEET_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Origem
-              <select
-                value={itemForm.origin_kind}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    origin_kind:
-                      event.target.value as EditableItem["origin_kind"],
-                  })
-                }
-              >
-                {ORIGIN_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Destinatário
-              <select
-                value={itemForm.recipient_area ?? ""}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    recipient_area: (event.target.value ||
-                      null) as EditableItem["recipient_area"],
-                  })
-                }
-              >
-                {RECIPIENT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Obrigatoriedade
-              <select
-                value={itemForm.applicability}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    applicability:
-                      event.target.value as EditableItem["applicability"],
-                  })
-                }
-              >
-                {APPLICABILITY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Escopo de filial
-              <select
-                value={itemForm.branch_scope}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    branch_scope:
-                      event.target.value as EditableItem["branch_scope"],
-                  })
-                }
-              >
-                {BRANCH_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Regra de validação
-              <select
-                value={itemForm.validation_scope}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    validation_scope:
-                      event.target.value as EditableItem["validation_scope"],
-                  })
-                }
-              >
-                {SCOPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Relatório TOTVS (referência)
-              <input
-                value={itemForm.totvs_report_ref ?? ""}
-                maxLength={8}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    totvs_report_ref: event.target.value || null,
-                  })
-                }
-              />
-            </label>
-            <label>
-              Finalidade
-              <input
-                value={itemForm.purpose ?? ""}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    purpose: event.target.value || null,
-                  })
-                }
-              />
-            </label>
-            <label>
-              Requisitos e notas
-              <textarea
-                value={itemForm.requirement_notes ?? ""}
-                rows={3}
-                onChange={(event) =>
-                  setItemForm({
-                    ...itemForm,
-                    requirement_notes: event.target.value || null,
-                  })
-                }
-              />
-            </label>
+                })
+              }
+            />
+            <CfSelectField
+              label="Folha"
+              options={SHEET_OPTIONS}
+              value={itemForm.sheet}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  sheet: value as EditableItem["sheet"],
+                })
+              }
+            />
+            <CfSelectField
+              label="Origem"
+              options={ORIGIN_OPTIONS}
+              value={itemForm.origin_kind}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  origin_kind: value as EditableItem["origin_kind"],
+                })
+              }
+            />
+            <CfSelectField
+              label="Destinatário"
+              options={RECIPIENT_OPTIONS}
+              value={itemForm.recipient_area ?? ""}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  recipient_area: (value ||
+                    null) as EditableItem["recipient_area"],
+                })
+              }
+            />
+            <CfSelectField
+              label="Obrigatoriedade"
+              options={APPLICABILITY_OPTIONS}
+              value={itemForm.applicability ?? ""}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  applicability:
+                    value as EditableItem["applicability"],
+                })
+              }
+            />
+            <CfSelectField
+              label="Escopo de filial"
+              options={BRANCH_OPTIONS}
+              value={itemForm.branch_scope ?? ""}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  branch_scope: value as EditableItem["branch_scope"],
+                })
+              }
+            />
+            <CfSelectField
+              label="Regra de validação"
+              options={SCOPE_OPTIONS}
+              value={itemForm.validation_scope ?? ""}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  validation_scope:
+                    value as EditableItem["validation_scope"],
+                })
+              }
+            />
+            <CfTextField
+              label="Relatório TOTVS (referência)"
+              value={itemForm.totvs_report_ref ?? ""}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  totvs_report_ref: value.slice(0, 8) || null,
+                })
+              }
+            />
+            <CfTextField
+              label="Finalidade"
+              value={itemForm.purpose ?? ""}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  purpose: value || null,
+                })
+              }
+            />
+            <CfTextAreaField
+              label="Requisitos e notas"
+              rows={3}
+              fullWidth
+              value={itemForm.requirement_notes ?? ""}
+              onChange={(value) =>
+                setItemForm({
+                  ...itemForm,
+                  requirement_notes: value || null,
+                })
+              }
+            />
             <div className="cf-validation-panel__form-actions">
               <ActionButton
                 variant="primary"

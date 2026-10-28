@@ -607,3 +607,16 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | G17-MECH-01 | mecanismo oficial de descarte | PASS | DELETE …/versions/{v} implementado (df43536acd) |
 | G17-GATE | elegibilidade p/ descarte | DECISION_REQUIRED | todos os critérios PROVEN exceto mecanismo oficial |
 | G17-EXEC | encerramento governado | PASS | descarte 200 DISCARDED + VERSION_DISCARDED auditado (doc 114 §12.4) |
+
+### UX-013 — refinamento visual do catálogo administrativo (28/10/2026)
+
+| ID | Critério | Status | Evidência |
+|----|----------|--------|-----------|
+| RQ-UX013-01 | kit-first: controles de entrada como export real | PASS | `CfTextField`/`CfTextAreaField`/`CfSelectField`/`CfDateField`/`CfTimeline` boundados; zero componente paralelo (doc 30 §UX-013) |
+| RQ-UX013-02 | spacing/grid responsivo, mobile sem overflow | PASS | `cf-form-grid` auto-fit 220px; overflow horizontal 0px @390px |
+| RQ-UX013-03 | CTA primário + danger governado | PASS | Salvar/Adicionar/Criar versão `primary`; Descartar/Inativar/Encerrar `cf-action-btn--danger` |
+| RQ-UX013-04 | eventos como timeline com tons semânticos | PASS | `CfTimeline` no modal e no histórico; `VERSION_DISCARDED` label + `DISCARDED` badge; screenshot 05 |
+| RQ-UX013-05 | listagem/home estados e navegação | PASS | filtros URL/F5 preservados; CTA com ícone; deep links intactos (337 testes) |
+| RQ-UX013-06 | regressão de contrato/regras | PASS | nenhum diff BFF/contrato/dados; typecheck+lint+build verde |
+| RQ-UX013-07 | DoD claro/escuro/teclado/320px/zoom | PASS | screenshots 01–07 (claro, escuro, mobile); campos do kit com label/hint/focus |
+| AC-UX013-PROD | deploy produção | PENDING | aguardando autorização específica (gate CP6) |

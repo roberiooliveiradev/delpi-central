@@ -18,6 +18,8 @@ import {
   useState,
 } from "react";
 
+import { FilePlus2 } from "lucide-react";
+
 import { ApiError } from "../../api/httpClient";
 import {
   getTemplateVersion,
@@ -404,8 +406,14 @@ export function DocumentsAdminPage({
             <div className="cf-validation-panel__item-actions">
               <CfActionButton
                 type="button"
+                variant="primary"
                 onClick={() => openDocument("new")}
               >
+                <FilePlus2
+                  size={15}
+                  strokeWidth={1.9}
+                  aria-hidden="true"
+                />
                 Adicionar documento
               </CfActionButton>
               <CfActionButton

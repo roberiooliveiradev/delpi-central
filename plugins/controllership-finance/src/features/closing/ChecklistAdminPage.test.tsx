@@ -216,7 +216,9 @@ describe("ChecklistAdminPage", () => {
       name: "Publicar",
     });
     fireEvent.click(publishBtn);
-    const input = await screen.findByPlaceholderText("2026-06");
+    const input = await screen.findByLabelText(
+      "Vigente a partir de (AAAA-MM)",
+    );
     fireEvent.change(input, { target: { value: "2026-07" } });
     fireEvent.click(
       screen.getByRole("button", { name: "Publicar versão" }),

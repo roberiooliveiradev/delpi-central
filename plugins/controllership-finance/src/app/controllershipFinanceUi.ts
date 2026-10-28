@@ -6,6 +6,7 @@ import {
   ActionButton,
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
+  createDashboardDateField,
   createDashboardEventsSection,
   createDashboardInteractiveDataCard,
   createDashboardLoadingActivityCard,
@@ -19,8 +20,11 @@ import {
   createDashboardSectionCard,
   createDashboardSectionRouteCard,
   createDashboardSegmentToggle,
+  createDashboardSelectField,
   createDashboardStateBanner,
   createDashboardStatusBadge,
+  createDashboardTextAreaField,
+  createDashboardTextField,
   createDashboardTitleWithHelp,
   createDashboardTopBar,
   createDashboardTopBarSearchTrigger,
@@ -33,11 +37,15 @@ import {
   UnifiedAvatar,
   catalogSearchBarBemClasses,
   confirmModalBemClasses,
+  dateFieldBemClasses,
   emptyStateCardBemClasses,
   sectionCardPacBemClasses,
   sectionRouteCardBemClasses,
+  selectFieldPacClasses,
   stateBannerBemClasses,
   statusBadgeBemClasses,
+  textAreaFieldBemClasses,
+  textFieldBemClasses,
   titleWithHelpBemClasses,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
@@ -138,6 +146,31 @@ export const CfSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
 export const CfMessageThread = createDashboardMessageThread(UI_PREFIX);
 export const CfMentionComposer = createDashboardMentionComposer(UI_PREFIX);
 export const CfTimeline = createTimeline({ prefix: UI_PREFIX });
+export const CfTextField = createDashboardTextField({
+  classNames: textFieldBemClasses(UI_PREFIX),
+});
+export const CfTextAreaField = createDashboardTextAreaField({
+  classNames: textAreaFieldBemClasses(UI_PREFIX),
+});
+export const CfDateField = createDashboardDateField({
+  classNames: dateFieldBemClasses(UI_PREFIX),
+});
+const { field: cfSelectFieldClasses, control: cfSelectControlClasses } =
+  selectFieldPacClasses(UI_PREFIX);
+export const CfSelectField = createDashboardSelectField({
+  field: cfSelectFieldClasses,
+  control: cfSelectControlClasses,
+  labels: {
+    placeholder: "Selecione…",
+    emptyLabel: "Todos",
+    control: {
+      searchPlaceholder: "Buscar…",
+      emptyOptions: "Nenhuma opção encontrada.",
+      searchAriaLabel: (label?: string) =>
+        label ? `Buscar em ${label}` : "Buscar opções",
+    },
+  },
+});
 export const CfUnifiedAvatar = UnifiedAvatar;
 export const cfConfirmModalClassNames = confirmModalBemClasses(UI_PREFIX);
 export const CfDialog = createHostContainedModalShell({

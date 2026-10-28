@@ -33,11 +33,16 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   CfActionButton,
+  CfDateField,
   CfDialog,
   CfEmptyState,
   CfPagePath,
   CfSectionCard,
+  CfSelectField,
   CfStatusBadge,
+  CfTextAreaField,
+  CfTextField,
+  CfTimeline,
   CfTitleWithHelp,
   cfConfirmModalClassNames,
   cfEmptyStateClassNames,
@@ -58,7 +63,7 @@ import {
   slugifyItemKey,
   type VersionWithItems,
 } from "./documentCatalog";
-import { EVENT_LABELS } from "./ChecklistAdminPage";
+import { EVENT_LABELS, EVENT_TONES } from "./ChecklistAdminPage";
 import {
   documentsAdminListPath,
   toQueryError,
@@ -612,196 +617,131 @@ export function DocumentConfigFormPage({
 
             <CfSectionCard title="Identificação">
               <div className="cf-validation-panel__form">
-                <label>
-                  Nome do documento *
-                  <input
-                    value={form.name}
+                <CfTextField
+                  label="Nome do documento"
+                  required
+                  fullWidth
+                  value={form.name}
+                  disabled={busy}
+                  onChange={(name) => {
+                    setForm({
+                      ...form,
+                      name,
+                      itemKey: form.itemKeyEdited
+                        ? form.itemKey
+                        : slugifyItemKey(name),
+                    });
+                  }}
+                />
+                <CfTextAreaField
+                  label="Descrição / finalidade"
+                  rows={2}
+                  fullWidth
+                  value={form.purpose}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({ ...form, purpose: value })
+                  }
+                />
+                <CfTextAreaField
+                  label="Orientações de preparação"
+                  rows={2}
+                  fullWidth
+                  value={form.requirementNotes}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({
+                      ...form,
+                      requirementNotes: value,
+                    })
+                  }
+                />
+                {isCreate ? (
+                  <CfTextField
+                    label="Identificador técnico"
+                    hint="Gerado a partir do nome; edite se necessário."
+                    value={form.itemKey}
                     disabled={busy}
-                    onChange={(event) => {
-                      const name = event.target.value;
+                    onChange={(value) =>
                       setForm({
                         ...form,
-                        name,
-                        itemKey: form.itemKeyEdited
-                          ? form.itemKey
-                          : slugifyItemKey(name),
-                      });
-                    }}
-                  />
-                </label>
-                <label>
-                  Descrição / finalidade
-                  <textarea
-                    rows={2}
-                    value={form.purpose}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setForm({ ...form, purpose: event.target.value })
-                    }
-                  />
-                </label>
-                <label>
-                  Orientações de preparação
-                  <textarea
-                    rows={2}
-                    value={form.requirementNotes}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        requirementNotes: event.target.value,
+                        itemKey: value.toUpperCase().slice(0, 32),
+                        itemKeyEdited: true,
                       })
                     }
                   />
-                </label>
-                {isCreate ? (
-                  <label>
-                    Identificador técnico
-                    <input
-                      value={form.itemKey}
-                      disabled={busy}
-                      maxLength={32}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          itemKey: event.target.value.toUpperCase(),
-                          itemKeyEdited: true,
-                        })
-                      }
-                    />
-                  </label>
                 ) : null}
               </div>
             </CfSectionCard>
 
             <CfSectionCard title="Exigência">
-              <div className="cf-validation-panel__form">
-                <label>
-                  Obrigatoriedade
-                  <select
-                    value={form.applicability}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        applicability: event.target.value,
-                      })
-                    }
-                  >
-                    {APPLICABILITY_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Destino
-                  <select
-                    value={form.recipientArea}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        recipientArea: event.target.value,
-                      })
-                    }
-                  >
-                    {RECIPIENT_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Origem
-                  <select
-                    value={form.originKind}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        originKind: event.target.value,
-                      })
-                    }
-                  >
-                    {ORIGIN_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Via
-                  <select
-                    value={form.sheet}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setForm({ ...form, sheet: event.target.value })
-                    }
-                  >
-                    {SHEET_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Escopo de filial
-                  <select
-                    value={form.branchScope}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        branchScope: event.target.value,
-                      })
-                    }
-                  >
-                    {BRANCH_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Regra de validação
-                  <select
-                    value={form.validationScope}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        validationScope: event.target.value,
-                      })
-                    }
-                  >
-                    {SCOPE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Referência do relatório TOTVS (R-ID)
-                  <input
-                    value={form.totvsReportRef}
-                    disabled={busy}
-                    maxLength={8}
-                    placeholder="Ex.: FINR190"
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        totvsReportRef: event.target.value,
-                      })
-                    }
-                  />
-                </label>
+              <div className="cf-validation-panel__form cf-form-grid">
+                <CfSelectField
+                  label="Obrigatoriedade"
+                  options={APPLICABILITY_OPTIONS}
+                  value={form.applicability}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({ ...form, applicability: value })
+                  }
+                />
+                <CfSelectField
+                  label="Destino"
+                  options={RECIPIENT_OPTIONS}
+                  value={form.recipientArea}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({ ...form, recipientArea: value })
+                  }
+                />
+                <CfSelectField
+                  label="Origem"
+                  options={ORIGIN_OPTIONS}
+                  value={form.originKind}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({ ...form, originKind: value })
+                  }
+                />
+                <CfSelectField
+                  label="Via"
+                  options={SHEET_OPTIONS}
+                  value={form.sheet}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({ ...form, sheet: value })
+                  }
+                />
+                <CfSelectField
+                  label="Escopo de filial"
+                  options={BRANCH_OPTIONS}
+                  value={form.branchScope}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({ ...form, branchScope: value })
+                  }
+                />
+                <CfSelectField
+                  label="Regra de validação"
+                  options={SCOPE_OPTIONS}
+                  value={form.validationScope}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({ ...form, validationScope: value })
+                  }
+                />
+                <CfTextField
+                  label="Referência do relatório TOTVS (R-ID)"
+                  placeholder="Ex.: FINR190"
+                  value={form.totvsReportRef}
+                  disabled={busy}
+                  onChange={(value) =>
+                    setForm({
+                      ...form,
+                      totvsReportRef: value.slice(0, 8),
+                    })
+                  }
+                />
               </div>
             </CfSectionCard>
 
@@ -817,36 +757,27 @@ export function DocumentConfigFormPage({
                   se a janela alcançar uma competência aberta, a publicação
                   é recusada.
                 </p>
-                <label>
-                  Exigido a partir de (AAAA-MM) *
-                  <input
+                <div className="cf-form-grid">
+                  <CfDateField
+                    label="Exigido a partir de (AAAA-MM)"
                     type="month"
+                    required
                     value={form.effectiveFrom}
                     disabled={busy}
-                    min={currentPeriod()}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        effectiveFrom: event.target.value,
-                      })
+                    onChange={(value) =>
+                      setForm({ ...form, effectiveFrom: value })
                     }
                   />
-                </label>
-                <label>
-                  Exigido até (AAAA-MM, opcional)
-                  <input
+                  <CfDateField
+                    label="Exigido até (AAAA-MM, opcional)"
                     type="month"
                     value={form.effectiveUntil}
                     disabled={busy}
-                    min={form.effectiveFrom || currentPeriod()}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        effectiveUntil: event.target.value,
-                      })
+                    onChange={(value) =>
+                      setForm({ ...form, effectiveUntil: value })
                     }
                   />
-                </label>
+                </div>
                 {form.effectiveUntil ? (
                   <p className="cf-validation-panel__doc-detail">
                     Exigência temporária: o documento deixa de ser
@@ -869,6 +800,7 @@ export function DocumentConfigFormPage({
             <div className="cf-validation-panel__item-actions">
               <CfActionButton
                 type="button"
+                variant="primary"
                 disabled={busy}
                 onClick={submit}
               >
@@ -892,6 +824,7 @@ export function DocumentConfigFormPage({
                 <CfActionButton
                   type="button"
                   variant="ghost"
+                  className="cf-action-btn--danger"
                   disabled={busy}
                   onClick={() => setConfirmEnd(true)}
                 >
@@ -916,27 +849,19 @@ export function DocumentConfigFormPage({
                     defaultMessage="Nenhum evento registrado para este documento."
                   />
                 ) : (
-                  <ul className="cf-validation-panel__docs">
-                    {documentEvents.map((event) => (
-                      <li
-                        key={event.event_id}
-                        className="cf-validation-panel__doc"
-                      >
-                        <div>
-                          <p className="cf-validation-panel__doc-name">
-                            {EVENT_LABELS[event.event_type] ??
-                              event.event_type}
-                            {" · "}
-                            v{event.version}
-                          </p>
-                          <p className="cf-validation-panel__doc-detail">
-                            {event.actor_subject} ·{" "}
-                            {formatDateTime(event.created_at)}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <CfTimeline
+                    items={documentEvents.map((event) => ({
+                      id: event.event_id,
+                      title:
+                        EVENT_LABELS[event.event_type] ?? event.event_type,
+                      occurredAt: event.created_at,
+                      timeLabel: formatDateTime(event.created_at),
+                      detail: `v${event.version} · ${event.actor_subject}`,
+                      tone: EVENT_TONES[event.event_type] ?? "default",
+                    }))}
+                    emptyMessage="Nenhum evento registrado para este documento."
+                    aria-label="Histórico de alterações do documento"
+                  />
                 )}
               </CfSectionCard>
             ) : null}

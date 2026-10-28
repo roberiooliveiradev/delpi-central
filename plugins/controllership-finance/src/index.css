@@ -495,6 +495,29 @@
   gap: 12px;
 }
 
+/* UX-013 — grid responsivo dos campos do kit (Exigência/Vigência/item);
+   campos `fullWidth` ocupam a linha inteira, demais dividem em até 2 col. */
+.dashboard-controllership-finance .cf-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.dashboard-controllership-finance .cf-form-grid .cf-field--full {
+  grid-column: 1 / -1;
+}
+
+/* UX-013 — gatilhos destrutivos (Descartar/Inativar/Encerrar) mantêm
+   variante ghost mas herdam cor semântica de perigo (padrão do kit). */
+.dashboard-controllership-finance .cf-action-btn--danger {
+  color: var(--cf-danger);
+}
+
+.dashboard-controllership-finance
+  .cf-action-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cf-danger) 12%, transparent);
+}
+
 .dashboard-controllership-finance .cf-validation-panel__form label {
   display: flex;
   flex-direction: column;

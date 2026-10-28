@@ -218,6 +218,27 @@ Contrato visual detalhado:
 
 Desktop usa master-detail com `ResizableColumns`; mobile usa lista → detalhe full-width. Evidências usam o attachment kit público. O Portal continua owner dos contracts, estados, AuthZ e regras de validação.
 
+### Reuso efetivo verificado — UX-013 (28/10/2026)
+
+Campos do catálogo administrativo de documentos **foram migrados de
+controles nativos para exports reais do kit**, boundados no adaptador
+`cf` (`src/app/controllershipFinanceUi.ts`):
+
+| Consumidor `cf` | Export real do kit | Uso |
+|---|---|---|
+| `CfTextField` | `createDashboardTextField` + `textFieldBemClasses` | nome, identificador técnico, R-ID TOTVS, chave/entregável/ordem/finalidade do item |
+| `CfTextAreaField` | `createDashboardTextAreaField` + `textAreaFieldBemClasses` | descrição, orientações, notas, motivo de devolução |
+| `CfSelectField` | `createDashboardSelectField` + `selectFieldPacClasses` | 6 selects de Exigência + selects do diálogo de item (listbox acessível, não-native) |
+| `CfDateField` | `createDashboardDateField` + `dateFieldBemClasses` | competência `type="month"` (vigência, publicação) |
+| `CfTimeline` | `createTimeline` | eventos de auditoria e histórico do documento com tons semânticos por tipo |
+| `CfActionButton` | `ActionButton` | CTA `primary`, secundárias `ghost`, gatilhos destrutivos ghost + `cf-action-btn--danger` |
+| `ConfirmModalPanel`, `CfDialog`, `CfEmptyState`, `CfStatusBadge`, `DataTableSection` | já boundados | preservados |
+
+Sem lacuna de kit identificada: todos os controles necessários existem
+como export real. Campos numéricos simples (ordem do item) usam
+`CfTextField` + parse — `NumberStepperControl` existe mas não foi
+necessário para um campo opcional de ordenação.
+
 ## Central de Fechamento — Estoque e Conciliação
 
 ### Import preferencial

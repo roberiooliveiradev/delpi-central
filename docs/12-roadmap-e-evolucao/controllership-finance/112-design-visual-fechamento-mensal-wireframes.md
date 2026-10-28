@@ -1877,3 +1877,29 @@ Evidência visual: capturas PO em produção em 28/10/2026: home, checklist admi
 - Home e admin: ícones/atalhos/estados consistentes com padrão global e identidade visual de portais, sem duplicar chrome.
 - QA: comparativo antes/depois por página e 320px/tablet/desktop, light/dark, zoom 200%, tab/foco, leitor de tela, F5/voltar, Ajuda; provas separadas de screenshot e funcionalidade.
 - Execução faseada por página após inventário do kit e gate transversal. Ver Plano 113 §28.9 e mapa 30.
+
+### 49.1 Implementação entregue (28/10/2026)
+
+Todos os equivalentes necessários **existem como export real do kit** —
+nenhum componente paralelo criado e nenhuma extensão central necessária:
+
+- **Campos:** `CfTextField`, `CfTextAreaField`, `CfSelectField`
+  (listbox acessível `SelectControl`), `CfDateField type="month"` —
+  novos bindings `cf` em `controllershipFinanceUi.ts`, aplicados em
+  `DocumentConfigFormPage` (Identificação/Exigência/Vigência), diálogo
+  de item, publicação e devolução em `ChecklistAdminPage`.
+- **Layout:** `cf-form-grid` (auto-fit ≥220px) — Exigência em grade
+  responsiva em vez de 1 campo/linha; `fullWidth` (`cf-field--full`)
+  ocupa a linha inteira.
+- **Ações:** `variant="primary"` nos CTAs (Salvar, Adicionar documento,
+  Criar versão rascunho); gatilhos destrutivos ghost +
+  `cf-action-btn--danger` (tokens `--cf-danger`, claro/escuro).
+- **Auditoria:** `CfTimeline` (`createTimeline`, timeline.css do kit)
+  no modal de eventos e no histórico do documento — marker com tom
+  semântico por tipo (`EVENT_TONES`), título, `v{n} · ator`, data/hora.
+- **Correção de rotulagem:** `VERSION_DISCARDED` label e badge
+  `DISCARDED` adicionados aos mapas compartilhados.
+- **Evidência:** 337 testes, tsc, eslint e build verde; screenshots
+  autenticados locais claro/escuro/mobile (overflow 0 @390px).
+- **Sem mudança de contrato/BFF/dados/permissões.** Produção pendente
+  de autorização específica (113 §28.9 CP6).
