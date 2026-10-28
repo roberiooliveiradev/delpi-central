@@ -620,3 +620,4 @@ Decisões PO congeladas ([Plano 113 §25](./113-plano-canonico-fluxo-fechamento-
 | RQ-UX013-06 | regressão de contrato/regras | PASS | nenhum diff BFF/contrato/dados; typecheck+lint+build verde |
 | RQ-UX013-07 | DoD claro/escuro/teclado/320px/zoom | PASS | screenshots 01–07 (claro, escuro, mobile); campos do kit com label/hint/focus |
 | AC-UX013-PROD | deploy produção | PASS | MFE `App-B5Ynp8Kk.js` @ SHA 1b59fdc895; smoke g16: S-01..S-06 PASS (select mouse/teclado/Escape, timeline 4 eventos, edição preenchida); RBAC restaurado |
+| AC-UX013-RW01 | espaçamento/hierarquia admin | PASS | causa PROVEN (__content sem regra CSS); escala 8/16/24px via tokens `--cf-*`; tsc+eslint+build ✓; 337 testes (1 flake pré-existente avatar); shots claro/escuro/tablet/390/320/zoom200 overflowX=0; deploy local ✓; prod pendente |

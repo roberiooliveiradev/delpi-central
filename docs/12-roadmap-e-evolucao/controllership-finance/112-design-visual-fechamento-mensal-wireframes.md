@@ -1906,3 +1906,25 @@ nenhum componente paralelo criado e nenhuma extensão central necessária:
   `App-B5Ynp8Kk.js` (SHA `1b59fdc895`), smoke autenticado
   `devin-smoke-g16` não destrutivo — listagem/novo/edição/timeline
   renderizam com componentes do kit; grant temporário revogado.
+
+### 49.2 Rework de espaçamento — UX-013-RW01 (28/10/2026)
+
+Capturas de produção mostraram filhos colados nas páginas administrativas.
+Causa: `cf-checklist-page`/`__content`/`cf-closing-layout` nunca tiveram
+regra CSS; `__body` do card do kit é `min-width:0` sem gap.
+Correção por layout de página (escala 8px lead → 16px em card → 24px
+entre blocos, tokens `--cf-*` existentes):
+
+- `.cf-checklist-page__content` flex-column `gap: var(--cf-section-gap)`;
+- `.cf-lead-stack` (título+subtítulo, 8px) e `.cf-card-stack` (ações→
+  tabela dentro do card, 16px) — wrappers próprios, sem estilizar
+  internals do kit;
+- `margin-bottom:0` em `.cf-table-section` dentro de `__content` (margem
+  própria somava ao gap do stack);
+- JSX mínimo: 2 wrappers em `ChecklistAdminPage`, 1 em
+  `DocumentsAdminPage`; `DocumentConfigFormPage` sem alteração.
+
+Evidência: tsc/eslint/build verde, 337 testes (1 flake pré-existente de
+foto de avatar não relacionado), screenshots claro/escuro/mobile/
+tablet/zoom 200% com `overflowX=0`. Deploy local verificado; produção
+pendente de autorização.

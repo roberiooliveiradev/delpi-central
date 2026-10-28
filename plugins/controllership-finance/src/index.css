@@ -495,6 +495,44 @@
   gap: 12px;
 }
 
+/* UX-013-RW01 — composição vertical das páginas administrativas.
+   `cf-checklist-page`/`__content` existiam no JSX sem regra alguma:
+   filhos (título, ações, filtros, cards, tabelas) renderizavam colados.
+   Escala: 8px lead (título+subtítulo) → 16px dentro do card →
+   24px entre blocos independentes (tokens já existentes). */
+.dashboard-controllership-finance .cf-checklist-page {
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-checklist-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-section-gap);
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-lead-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-grid-gap);
+  min-width: 0;
+}
+
+/* A margem própria da table-section do kit soma ao gap do stack —
+   dentro destes stacks a separação vem do gap, a margem zera. */
+.dashboard-controllership-finance
+  .cf-checklist-page__content
+  .cf-table-section {
+  margin-bottom: 0;
+}
+
 /* UX-013 — grid responsivo dos campos do kit (Exigência/Vigência/item);
    campos `fullWidth` ocupam a linha inteira, demais dividem em até 2 col. */
 .dashboard-controllership-finance .cf-form-grid {

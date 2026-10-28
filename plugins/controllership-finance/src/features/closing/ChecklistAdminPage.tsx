@@ -742,41 +742,42 @@ export function ChecklistAdminPage() {
               title={`${template.name} (${template.code})`}
               hint={CF_HELP.admin.versions}
             >
-              <div className="cf-validation-panel__item-actions">
-                <CfActionButton
-                  type="button"
-                  variant="primary"
-                  disabled={busy || draftOpen}
-                  title={
-                    draftOpen
-                      ? "Já existe um rascunho aberto — edite-o ou publique-o antes."
-                      : undefined
-                  }
-                  onClick={() =>
-                    run(() => createTemplateDraft(template.template_id))
-                  }
-                >
-                  Criar versão rascunho
-                </CfActionButton>
-                <CfActionButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() => openEvents(template)}
-                >
-                  Eventos de auditoria
-                </CfActionButton>
-                <CfActionButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() =>
-                    navigatePluginView("documents_admin")
-                  }
-                >
-                  Documentos do fechamento
-                </CfActionButton>
-              </div>
+              <div className="cf-card-stack">
+                <div className="cf-validation-panel__item-actions">
+                  <CfActionButton
+                    type="button"
+                    variant="primary"
+                    disabled={busy || draftOpen}
+                    title={
+                      draftOpen
+                        ? "Já existe um rascunho aberto — edite-o ou publique-o antes."
+                        : undefined
+                    }
+                    onClick={() =>
+                      run(() => createTemplateDraft(template.template_id))
+                    }
+                  >
+                    Criar versão rascunho
+                  </CfActionButton>
+                  <CfActionButton
+                    type="button"
+                    variant="ghost"
+                    onClick={() => openEvents(template)}
+                  >
+                    Eventos de auditoria
+                  </CfActionButton>
+                  <CfActionButton
+                    type="button"
+                    variant="ghost"
+                    onClick={() =>
+                      navigatePluginView("documents_admin")
+                    }
+                  >
+                    Documentos do fechamento
+                  </CfActionButton>
+                </div>
 
-              <DataTableSection<ChecklistTemplateVersion>
+                <DataTableSection<ChecklistTemplateVersion>
                 title="Versões"
                 titleHint={CF_HELP.admin.versions}
                 columns={versionColumns}
@@ -786,6 +787,7 @@ export function ChecklistAdminPage() {
                 hideSearch
                 emptyMessage="Nenhuma versão registrada."
               />
+              </div>
             </CfSectionCard>
 
             {detailData ? (
@@ -795,6 +797,7 @@ export function ChecklistAdminPage() {
                   editing ? CF_HELP.admin.editDraft : CF_HELP.admin.items
                 }
               >
+              <div className="cf-card-stack">
                 {editing ? (
                   <div className="cf-validation-panel__item-actions">
                     <CfActionButton
@@ -836,6 +839,7 @@ export function ChecklistAdminPage() {
                   loading={false}
                   emptyMessage="Nenhum item nesta versão."
                 />
+              </div>
               </CfSectionCard>
             ) : null}
           </>

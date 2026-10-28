@@ -371,14 +371,16 @@ export function DocumentsAdminPage({
       />
 
       <div className="cf-checklist-page__content">
-        <CfTitleWithHelp
-          title="Documentos do fechamento"
-          hint={CF_HELP.documentsAdmin.page}
-        />
-        <p className="cf-validation-panel__doc-detail">
-          Configure quais documentos serão exigidos em cada período e
-          quais deverão ser enviados à Contabilidade.
-        </p>
+        <div className="cf-lead-stack">
+          <CfTitleWithHelp
+            title="Documentos do fechamento"
+            hint={CF_HELP.documentsAdmin.page}
+          />
+          <p className="cf-validation-panel__doc-detail">
+            Configure quais documentos serão exigidos em cada período e
+            quais deverão ser enviados à Contabilidade.
+          </p>
+        </div>
 
         {savedKey ? (
           <CfFeedbackMessage
