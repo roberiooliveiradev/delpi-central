@@ -24,6 +24,7 @@ from urllib.parse import urlencode
 
 from app.infrastructure.http.bounded_request import bounded_request
 from app.application.capability_provision.contracts import (
+    OWNER_ARGUMENT_REJECTED,
     OWNER_RECORD_NOT_FOUND,
     CapabilityProviderError,
     ProviderCapability,
@@ -74,6 +75,41 @@ def _owner_not_found_hint(response: Any) -> str | None:
         return None
     message = parsed.get("message")
     if not isinstance(message, str) or not message.strip():
+        return None
+    cleaned = "".join(
+        ch if ch.isprintable() else " " for ch in message
+    ).strip()
+    if not cleaned:
+        return None
+    return cleaned[:240]
+
+
+def _owner_recoverable_rejection_hint(response: Any) -> str | None:
+    """Owner argument rejection declared by the shared error envelope.
+
+    ``error_response`` answers HTTP 400/422 with ``success=false``
+    and a bounded message; ``error.recoverable=false`` marks a
+    terminal rejection — anything else (recoverable declared or the
+    envelope's recoverable-by-default shape with no error block) is
+    a candidate for the single bounded contract-repair round. The
+    returned value is a sanitized message excerpt — untrusted owner
+    data, never an instruction.
+    """
+    if getattr(response, "status_code", 0) not in (400, 422):
+        return None
+    try:
+        parsed = response.json()
+    except Exception:
+        return None
+    if not isinstance(parsed, Mapping):
+        return None
+    if parsed.get("success") is not False:
+        return None
+    error = parsed.get("error")
+    if isinstance(error, Mapping) and error.get("recoverable") is False:
+        return None
+    message = parsed.get("message")
+    if not isinstance(message, str):
         return None
     cleaned = "".join(
         ch if ch.isprintable() else " " for ch in message
@@ -230,6 +266,13 @@ class HttpOpenApiInvoker:
                     OWNER_RECORD_NOT_FOUND,
                     f"status={status}",
                     owner_hint=not_found_hint,
+                )
+            rejection_hint = _owner_recoverable_rejection_hint(response)
+            if rejection_hint is not None:
+                raise CapabilityProviderError(
+                    OWNER_ARGUMENT_REJECTED,
+                    f"status={status}",
+                    owner_hint=rejection_hint,
                 )
             raise CapabilityProviderError(
                 "openapi_invocation_failed", f"status={status}"

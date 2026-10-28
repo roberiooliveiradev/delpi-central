@@ -18,6 +18,7 @@ import pytest
 
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
+    CapabilityProviderError,
     ProviderCapability,
     ProviderSurface,
 )
@@ -172,7 +173,12 @@ class FakeProvider:
         key = (capability.group_id, capability.remote_name)
         queued = self._outcomes[key]
         if isinstance(queued, list):
-            return queued.pop(0)
+            item = queued.pop(0)
+            if isinstance(item, BaseException):
+                raise item
+            return item
+        if isinstance(queued, BaseException):
+            raise queued
         return queued
 
 
@@ -2174,3 +2180,322 @@ def test_recovery_reinvoke_failure_keeps_original_insufficiency(
     assert "relevance_recovery decision=reinvoke_failed" in (
         capture_mode_logs.text
     )
+# ---------------------------------------------------------------------------
+# F — governed READ recovery: owner argument rejection (doc 175 R1/R2/R3)
+# ---------------------------------------------------------------------------
+
+
+def _arg_rejection(hint: str) -> CapabilityProviderError:
+    # The wire code the OpenAPI adapter emits for a recoverable
+    # owner argument rejection (contracts.OWNER_ARGUMENT_REJECTED).
+    return CapabilityProviderError(
+        "owner_argument_rejected", "status=400", owner_hint=hint
+    )
+
+
+_SEARCH_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "query": {"type": "string"},
+        "product_type": {"type": "string"},
+        "page": {"type": "integer", "minimum": 1},
+        "page_size": {"type": "integer", "minimum": 1},
+    },
+}
+
+
+def _search_cap():
+    return _cap(
+        "alpha",
+        "mcp",
+        "search_items",
+        schema=_SEARCH_SCHEMA,
+    )
+
+
+def test_recoverable_rejection_inside_recovery_refed_and_reformulated(
+    capture_mode_logs,
+):
+    """q_partial production shape: invoke -> irrelevant -> recovery
+    re-invocation -> owner 400 (argument contract) -> the SAME bounded
+    round feeds the sanitized hint back and the reformulated call
+    succeeds. Three governed invocations total, never a loop."""
+    irrelevant = _outcome(
+        "ok", structured={"items": [{"name": "BALANCA 1"}]}
+    )
+    relevant = _outcome(
+        "ok",
+        structured={
+            "items": [
+                {"name": "TERMINAL ILHOS TUBULAR 16MM"},
+                {"name": "TERMINAL ILHOS TUBULAR 25MM"},
+            ]
+        },
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "ilhos"}},
+            relevance=None,
+        ),
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "records are not eyelet terminals",
+            }
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {
+                    "query": "terminal ilhos",
+                    "product_type": "terminal tubular",
+                }
+            }
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal ilhos tubular"}
+            }
+        },
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            }
+        },
+    ]
+    provider, orch = _orchestrator(
+        [_search_cap()],
+        {
+            ("alpha", "search_items"): [
+                irrelevant,
+                _arg_rejection(
+                    "product_type inválido: use códigos de 2 "
+                    "caracteres (ex.: MP,PI,PA)."
+                ),
+                relevant,
+            ]
+        },
+        proposal,
+    )
+    attempt = orch.attempt("2 exemplos de terminal ilhos")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert len(provider.calls) == 3
+    assert provider.calls[2] == (
+        "search_items",
+        {"query": "terminal ilhos tubular"},
+    )
+
+
+def test_recoverable_rejection_repeated_invalid_args_stops(
+    capture_mode_logs,
+):
+    """The repaired proposal repeating the rejected arguments ends
+    the round — the same invalid call is never re-executed."""
+    irrelevant = _outcome(
+        "ok", structured={"items": [{"name": "BALANCA 1"}]}
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "ilhos"}},
+            relevance=None,
+        ),
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "wrong records",
+            }
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {
+                    "query": "ilhos",
+                    "product_type": "bala",
+                }
+            }
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {
+                    "query": "ilhos",
+                    "product_type": "bala",
+                }
+            }
+        },
+    ]
+    provider, orch = _orchestrator(
+        [_search_cap()],
+        {
+            ("alpha", "search_items"): [
+                irrelevant,
+                _arg_rejection("argument rejected"),
+            ]
+        },
+        proposal,
+    )
+    attempt = orch.attempt("terminal ilhos")
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert len(provider.calls) == 2
+    assert "identical_arguments" in capture_mode_logs.text
+
+
+def test_first_invoke_recoverable_rejection_enters_recovery(
+    capture_mode_logs,
+):
+    """A recoverable owner argument rejection on the FIRST invocation
+    spends the single governed recovery round instead of erroring the
+    attempt — reformulation under the sanitized hint revalidates and
+    re-invokes once."""
+    relevant = _outcome(
+        "ok", structured={"items": [{"name": "TERMINAL BALA M6"}]}
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={
+                "arguments": {
+                    "query": "terminal bala",
+                    "product_type": "bala",
+                }
+            },
+            relevance=None,
+        ),
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala"}
+            }
+        },
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            }
+        },
+    ]
+    provider, orch = _orchestrator(
+        [_search_cap()],
+        {
+            ("alpha", "search_items"): [
+                _arg_rejection(
+                    "product_type inválido: códigos de 2 caracteres"
+                ),
+                relevant,
+            ]
+        },
+        proposal,
+    )
+    attempt = orch.attempt("terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert len(provider.calls) == 2
+    assert provider.calls[1] == (
+        "search_items",
+        {"query": "terminal bala"},
+    )
+
+
+def test_first_invoke_terminal_error_stays_error(capture_mode_logs):
+    """A non-recoverable provider error never becomes a recovery
+    round — fail-closed error attempt, exactly one invocation."""
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "ilhos"}},
+            relevance=None,
+        ),
+    ]
+    provider, orch = _orchestrator(
+        [_search_cap()],
+        {
+            ("alpha", "search_items"): [
+                CapabilityProviderError(
+                    "openapi_invocation_failed", "status=500"
+                ),
+            ]
+        },
+        proposal,
+    )
+    attempt = orch.attempt("terminal ilhos")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    assert len(provider.calls) == 1
+
+
+def test_recovery_feedback_carries_authoritative_coverage(
+    capture_mode_logs,
+):
+    """WP3: the recovery feedback projects the owner coverage
+    metadata (total_count/has_more -> coverage_complete) so the
+    reformulation can legitimately decide refine vs paginate; absent
+    owner totals stay null, never fabricated."""
+    partial_page = _outcome(
+        "ok",
+        structured={
+            "items": [{"name": "BALANCA 1"}, {"name": "BALANCA 2"}],
+            "page": 1,
+            "page_size": 2,
+            "total": 77,
+            "has_more": True,
+        },
+    )
+    relevant = _outcome(
+        "ok", structured={"items": [{"name": "TERMINAL BALA M6"}]}
+    )
+    proposal = [
+        _select(
+            "mcp:alpha",
+            "search_items",
+            args={"arguments": {"query": "terminal"}},
+            relevance=None,
+        ),
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "first page has no terminals",
+            }
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal", "page": 2}
+            }
+        },
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            }
+        },
+    ]
+    provider, orch = _orchestrator(
+        [_search_cap()],
+        {("alpha", "search_items"): [partial_page, relevant]},
+        proposal,
+    )
+    attempt = orch.attempt("terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert provider.calls[1] == (
+        "search_items",
+        {"query": "terminal", "page": 2},
+    )
+    model = orch._invoke_model._port
+    arg_requests = [
+        r
+        for r in model.requests
+        if r.task_purpose_id == ARGUMENTS_INSTRUCTION_ID
+    ]
+    assert arg_requests
+    schema_block = arg_requests[-1].input_text.split(
+        "<schema>", 1
+    )[1].split("</schema>", 1)[0]
+    block = json.loads(schema_block)
+    feedback = block.get("relevance_feedback")
+    parsed = (
+        json.loads(feedback) if isinstance(feedback, str) else feedback
+    )
+    coverage = parsed["coverage"]
+    assert coverage["returned_count"] == 2
+    assert coverage["total_count"] == 77
+    assert coverage["coverage_complete"] is False
+    assert coverage["explicit_empty"] is False

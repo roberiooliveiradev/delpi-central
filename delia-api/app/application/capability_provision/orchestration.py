@@ -129,6 +129,7 @@ from app.application.model_invocation.governed_retries import (
 )
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.capability_provision.contracts import (
+    OWNER_ARGUMENT_REJECTED,
     CapabilityGroup,
     CapabilityProviderError,
     ProviderCapability,
@@ -5410,6 +5411,44 @@ class OperationalCapabilityOrchestrator:
                     invoked = recovered
                 else:
                     return _error_attempt(correlation, exc)
+            elif (
+                exc.code == OWNER_ARGUMENT_REJECTED
+                and not _RELEVANCE_RECOVERY_USED.get()
+            ):
+                # Recoverable owner argument rejection (C3 governed
+                # READ recovery): the flat schema could not express
+                # the violated constraint, so the SAME single
+                # recovery round reformulates under the sanitized
+                # owner hint — every gate revalidates (dedup,
+                # provenance, budget, live surface).
+                recovered = self._recover_relevance(
+                    input_text,
+                    descriptor,
+                    group_key,
+                    remote_name,
+                    group,
+                    groups,
+                    None,
+                    arguments,
+                    GoalEvidenceJudgment(
+                        correspondence=GOAL_EVIDENCE_IRRELEVANT,
+                        mismatch_hint=(
+                            "owner rejected the proposed arguments: "
+                            f"{exc.owner_hint or 'contract violation'}"
+                        )[:MAX_MISMATCH_HINT_CHARS],
+                    ),
+                    goal,
+                    owner_evidence=owner_evidence,
+                    workspace_context=workspace_context,
+                    prior_turns=prior_turns,
+                    correlation=correlation,
+                    deadline=deadline,
+                    owner_error_hint=exc.owner_hint,
+                )
+                if recovered is not None:
+                    invoked = recovered
+                else:
+                    return _error_attempt(correlation, exc)
             else:
                 _logger.info(
                     "orchestration stage=execute decision=error "
@@ -9534,6 +9573,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...],
         correlation: str,
         deadline: TurnDeadline | None,
+        owner_error_hint: str | None = None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
         """One bounded semantic-recovery round (plan 125 adendum /
         doc 143 Trilha B).
@@ -9572,24 +9612,53 @@ class OperationalCapabilityOrchestrator:
             if facts is not None
             else []
         }
-        feedback = json.dumps(
-            {
-                "prior_correspondence": judgment.correspondence,
-                "mismatch_hint": (judgment.mismatch_hint or "")[
-                    :MAX_MISMATCH_HINT_CHARS
-                ],
-                "business_subject": goal.business_subject,
-                "scope_constraints": dict(goal.scope_constraints),
-                "prior_result_preview": _fit_json_block(
-                    preview_block,
-                    MAX_EVIDENCE_RECORD_CHARS,
-                    lambda: _omit_tail_entries(
-                        preview_block, "records", "records_omitted"
-                    ),
+        feedback_payload: dict[str, Any] = {
+            "prior_correspondence": judgment.correspondence,
+            "mismatch_hint": (judgment.mismatch_hint or "")[
+                :MAX_MISMATCH_HINT_CHARS
+            ],
+            "business_subject": goal.business_subject,
+            "scope_constraints": dict(goal.scope_constraints),
+            # Authoritative coverage facts already extracted from the
+            # governed outcome — the reformulation may legitimately
+            # weigh refine-vs-paginate only when the owner reported
+            # coverage/totals; absent owner data stays null, never
+            # fabricated.
+            "coverage": {
+                "returned_count": (
+                    len(facts.records) if facts is not None else 0
+                ),
+                "total_count": (
+                    facts.total_count if facts is not None else None
+                ),
+                "coverage_complete": (
+                    facts.coverage_complete
+                    if facts is not None
+                    else None
+                ),
+                "explicit_empty": (
+                    facts.explicit_empty
+                    if facts is not None
+                    else None
                 ),
             },
-            ensure_ascii=False,
-        )
+            "prior_result_preview": _fit_json_block(
+                preview_block,
+                MAX_EVIDENCE_RECORD_CHARS,
+                lambda: _omit_tail_entries(
+                    preview_block, "records", "records_omitted"
+                ),
+            ),
+        }
+        if owner_error_hint:
+            # Sanitized owner rejection message — untrusted data
+            # carrying the declared constraint back into the SAME
+            # bounded round, never an instruction.
+            feedback_payload["owner_error"] = {
+                "classification": "recoverable_argument_rejection",
+                "owner_hint": owner_error_hint[:MAX_MISMATCH_HINT_CHARS],
+            }
+        feedback = json.dumps(feedback_payload, ensure_ascii=False)
         _RELEVANCE_RECOVERY_USED.set(True)
         # Governed reselection inside the one allowed round: the
         # planner may reconsider group and capability over the same
@@ -9688,75 +9757,121 @@ class OperationalCapabilityOrchestrator:
                     )
                     if foreign_result.evidence is not None:
                         foreign_evidence = foreign_result.evidence
-        new_args, missing = self._build_arguments(
-            input_text,
-            sel_descriptor,
-            workspace_context,
-            owner_evidence=owner_evidence,
-            foreign_evidence=foreign_evidence,
-            relevance_feedback=feedback,
-            business_subject=goal.business_subject,
-            prior_turns=prior_turns,
-            correlation=correlation,
-            deadline=deadline,
-        )
-        if new_args is None or missing:
-            return None
-        if _unproven_identifier_inputs(
-            new_args,
-            sel_descriptor,
-            input_text,
-            workspace_context,
-            owner_evidence,
-        ):
-            # The informed proposal still invents an identifier —
-            # fail closed on the original insufficiency.
-            return None
+        # Bounded re-invocation inside the SAME governed round. A
+        # recoverable owner argument rejection (OWNER_ARGUMENT_REJECTED)
+        # feeds its sanitized hint back into the feedback once — the
+        # repaired proposal still passes every gate (dedup, identifier
+        # provenance, budget); a repeated invalid proposal or any
+        # non-recoverable error ends the round. The recovery ceiling
+        # is two re-invocations total: reformulation + contract repair.
         same_capability = (
             sel_group_key == group_key
             and sel_descriptor.remote_name == remote_name
         )
-        if same_capability and dict(prior_arguments or {}) == dict(
-            new_args
-        ):
-            _logger.info(
-                "orchestration stage=relevance_recovery "
-                "decision=identical_arguments correlation_id=%s",
-                correlation,
-            )
-            return None
-        _logger.info(
-            "orchestration stage=relevance_recovery "
-            "decision=reinvoke capability=%s correlation_id=%s",
-            sel_descriptor.remote_name,
-            correlation,
-        )
-        try:
-            return self._invoke_selected(
-                sel_group_key,
-                sel_descriptor.remote_name,
-                new_args,
-                sel_group,
+        prior_candidate: dict[str, Any] | None = None
+        for attempt_index in range(2):
+            new_args, missing = self._build_arguments(
                 input_text,
-                correlation,
-                prior_turns,
-                deadline,
+                sel_descriptor,
+                workspace_context,
+                owner_evidence=owner_evidence,
+                foreign_evidence=foreign_evidence,
+                relevance_feedback=feedback,
+                business_subject=goal.business_subject,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
             )
-        except CapabilityProviderError:
-            return None
-        except (_TurnCancelled, _StageDeadlineExceeded):
-            raise
-        except Exception:
-            # The recovery leg is best-effort: any provider-layer
-            # failure inside the single bounded re-invocation leaves
-            # the original insufficiency standing — never an
-            # unhandled error at the turn boundary (plan 148 WP3).
+            if new_args is None or missing:
+                return None
+            if _unproven_identifier_inputs(
+                new_args,
+                sel_descriptor,
+                input_text,
+                workspace_context,
+                owner_evidence,
+            ):
+                # The informed proposal still invents an identifier —
+                # fail closed on the original insufficiency.
+                return None
+            candidate_args = dict(new_args)
+            if (
+                dict(prior_arguments or {}) == candidate_args
+                and same_capability
+            ) or candidate_args == prior_candidate:
+                # Identical arguments on the same capability — or a
+                # verbatim repeat of the just-rejected proposal —
+                # are never re-executed.
+                _logger.info(
+                    "orchestration stage=relevance_recovery "
+                    "decision=identical_arguments correlation_id=%s",
+                    correlation,
+                )
+                return None
             _logger.info(
                 "orchestration stage=relevance_recovery "
-                "decision=reinvoke_failed correlation_id=%s",
+                "decision=reinvoke capability=%s correlation_id=%s",
+                sel_descriptor.remote_name,
                 correlation,
             )
-            return None
+            try:
+                return self._invoke_selected(
+                    sel_group_key,
+                    sel_descriptor.remote_name,
+                    candidate_args,
+                    sel_group,
+                    input_text,
+                    correlation,
+                    prior_turns,
+                    deadline,
+                )
+            except CapabilityProviderError as exc:
+                if exc.code != OWNER_ARGUMENT_REJECTED:
+                    return None
+                if attempt_index == 1 or (
+                    deadline is not None
+                    and not self._budget_allows_resolver(deadline)
+                ):
+                    _logger.info(
+                        "orchestration stage=relevance_recovery "
+                        "decision=reinvoke_rejected_terminal "
+                        "correlation_id=%s",
+                        correlation,
+                    )
+                    return None
+                prior_candidate = candidate_args
+                try:
+                    refreshed = json.loads(feedback)
+                except ValueError:
+                    refreshed = {}
+                if isinstance(refreshed, dict):
+                    refreshed["owner_error"] = {
+                        "classification": (
+                            "recoverable_argument_rejection"
+                        ),
+                        "owner_hint": (exc.owner_hint or "")[
+                            :MAX_MISMATCH_HINT_CHARS
+                        ],
+                    }
+                    feedback = json.dumps(
+                        refreshed, ensure_ascii=False
+                    )
+                continue
+            except (_TurnCancelled, _StageDeadlineExceeded):
+                raise
+            except Exception:
+                # The recovery leg is best-effort: any provider-layer
+                # failure inside the single bounded re-invocation
+                # leaves the original insufficiency standing — never
+                # an unhandled error at the turn boundary
+                # (plan 148 WP3).
+                _logger.info(
+                    "orchestration stage=relevance_recovery "
+                    "decision=reinvoke_failed correlation_id=%s",
+                    correlation,
+                )
+                return None
+        return None
 
     def _apply_semantic_relevance(
         self,

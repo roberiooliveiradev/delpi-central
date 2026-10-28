@@ -371,6 +371,95 @@ def test_not_found_envelope_on_500_stays_invocation_failure():
     assert exc.value.code == "openapi_invocation_failed"
 
 
+def test_recoverable_400_is_owner_argument_rejection():
+    """HTTP 400 with the shared error envelope and no explicit
+    recoverable=false is an owner argument rejection — the bounded
+    message becomes a sanitized hint for contract repair."""
+
+    def http_get(url, headers=None, timeout=None, stream=None):
+        return FakeResponse(
+            400,
+            {
+                "success": False,
+                "message": "product_type inválido: use códigos de 2 caracteres (ex.: MP,PI,PA).",
+                "data": None,
+                "error": None,
+            },
+        )
+
+    invoker = HttpOpenApiInvoker(
+        "http://h",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "t",
+        http_get=http_get,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    with pytest.raises(CapabilityProviderError) as exc:
+        provider.invoke(
+            _product_capability(provider),
+            {"product_id": "x"},
+            correlation_id="c",
+        )
+    assert exc.value.code == "owner_argument_rejected"
+    assert exc.value.owner_hint is not None
+    assert "2 caracteres" in exc.value.owner_hint
+
+
+def test_explicit_non_recoverable_400_stays_invocation_failure():
+    """An owner-declared non-recoverable rejection is terminal —
+    it never reaches the contract-repair path."""
+
+    def http_get(url, headers=None, timeout=None, stream=None):
+        return FakeResponse(
+            400,
+            {
+                "success": False,
+                "message": "rejected permanently",
+                "error": {"code": "BUSINESS", "recoverable": False},
+            },
+        )
+
+    invoker = HttpOpenApiInvoker(
+        "http://h",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "t",
+        http_get=http_get,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    with pytest.raises(CapabilityProviderError) as exc:
+        provider.invoke(
+            _product_capability(provider),
+            {"product_id": "x"},
+            correlation_id="c",
+        )
+    assert exc.value.code == "openapi_invocation_failed"
+    assert exc.value.owner_hint is None
+
+
+def test_bare_400_without_envelope_stays_invocation_failure():
+    """A 400 without the shared envelope is not an owner
+    argument rejection — transport-shaped failure stays plain."""
+
+    def http_get(url, headers=None, timeout=None, stream=None):
+        return FakeResponse(400, {"detail": "Bad Request"})
+
+    invoker = HttpOpenApiInvoker(
+        "http://h",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "t",
+        http_get=http_get,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    with pytest.raises(CapabilityProviderError) as exc:
+        provider.invoke(
+            _product_capability(provider),
+            {"product_id": "x"},
+            correlation_id="c",
+        )
+    assert exc.value.code == "openapi_invocation_failed"
+    assert exc.value.owner_hint is None
+
+
 def test_invoker_drops_undeclared_arguments():
     """Arguments not declared as OpenAPI inputs never reach the wire."""
     calls = []
