@@ -1310,3 +1310,26 @@ verificado localmente; produção não deployada** (gate separado pendente).
 
 **Ordem:** CP1 inventário de todas as superfícies; CP2 contrato Core/BFF e decisão transversal; CP3 kit-first UI; CP4 implementação mínima autorizada; CP5 testes; CP6 deploy local; CP7 produção mediante autorização; docs/CLARA só conforme evidência. Não misturar UX014 com UX013-RW01 de spacing nem com integração de relatórios §27.
 
+
+**CP1 — Inventário executado (28/10/2026, READ-ONLY, PROVEN):**
+
+Superfícies renderizando `actor_subject` cru (UUID):
+
+| Superfície | Linha | Nível | Estado |
+|---|---|---|---|
+| `ChecklistAdminPage` modal Eventos | :1026 | MANAGE | UUID cru |
+| `DocumentConfigFormPage` card Histórico | :859 | MANAGE | UUID cru |
+| `MonthlyOverviewPanel` eventos | :345 | ACCESS | UUID cru |
+| `PendenciesPage` diálogo Histórico | :454 | ACCESS | UUID cru |
+| `DocumentDetailPanel` timeline | :305-308 | ACCESS | RESOLVIDO — `useParticipantProfiles` (contrato document-scoped) |
+| `DocumentConversationPanel` | :197 | ACCESS | RESOLVIDO — mesmo contrato |
+
+`created_by`/`updated_by`/`published_by` existem em tipos de `adminApi`/`catalogsApi`/`packagesApi` mas não são renderizados em nenhuma página.
+
+Contratos existentes (verificados na fonte):
+- Core `POST /me/directory/users/lookup` (`require_auth`, bearer do caller): `id`/`name`/`email` (mascarado por default; `reveal_email=true` expõe SMTP real — usado por perfis de portal/SMTP); **inativos são omitidos** da resposta; `app` opcional devolve `has_app_access`.
+- Core S2S `GET /integrations/person-profiles/{id}/photo` + `POST /integrations/person-profiles/lookup` (`has_photo`) via `CORE_API_INTEGRATIONS_SERVICE_TOKEN`.
+- BFF `POST /closing/competences/{period}/documents/{id}/participants/lookup` + `GET .../participants/{uid}/avatar` — **document-scoped**: só resolve participantes com vínculo canônico ao documento (autor U9, ator U8, uploader), anti-enumeração fail-closed.
+- BFF `/viewer-photo` — somente o próprio viewer.
+
+**Gap contratual (PROVEN):** nenhum contrato autorizado resolve identidades de atores administrativos/de auditoria fora do vínculo documental. Cobrir exige novo contrato (rota BFF de atores ou enriquecimento dos payloads de eventos) e expõe PII (nome/foto/email) a escopo mais amplo → **DECISION_REQUIRED apresentado ao PO; runtime interrompido antes de implementação** (decisão no relatório UX-014).
