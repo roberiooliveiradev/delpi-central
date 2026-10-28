@@ -1,12 +1,20 @@
 """Cliente HTTP oficial para chamadas downstream em nome do usuário.
 
-Convenções canônicas (mesmas de `delpi_api_client`/supplies):
-- `Authorization: Bearer <JWT do usuário>` — delegação oficial; o owner
-  downstream revalida identidade e autorização do recurso.
-- `X-Delpi-Caller-App: engineering-api`.
-- `apply_internal_service_headers` — token interno de serviço quando
-  configurado (complementa, nunca substitui, a autorização do usuário).
+Delegação humana (F2a.R1 — contrato aprovado):
+- `Authorization: Bearer <JWT do usuário>` — única credencial; o owner
+  downstream valida o JWT humano e resolve a autorização efetiva do
+  usuário pela Core, exatamente como nas chamadas do Portal.
+- `X-Delpi-Caller-App: engineering-api` — identificação de consumidor,
+  nunca autorização.
 - `X-Request-Id` propagado para correlação ponta a ponta.
+
+NUNCA injetar `X-Delpi-Service-Token`/`apply_internal_service_headers`
+em chamadas personalizadas: o middleware compartilhado valida o token
+interno ANTES do JWT humano e o aceita como principal de serviço
+privilegiado (`principal_type="service"`, `is_superadmin=True`),
+substituindo a identidade do usuário — bypass de autorização por
+recurso (F2a.R1, gate de segurança). Sem fallback privilegiado: se o
+JWT humano falhar, a seção fica indisponível/forbidden.
 
 Sem retries e com timeout explícito — falhas de fonte viram estados
 honestos de seção, nunca dados silenciosos.
@@ -19,7 +27,6 @@ from typing import Any, Mapping
 import httpx
 
 from delpi_api_client.envelope import format_error_message, parse_envelope
-from delpi_auth.service_token import apply_internal_service_headers
 
 _CALLER_APP = "engineering-api"
 
@@ -62,7 +69,6 @@ class DownstreamClient:
         }
         if request_id:
             headers["X-Request-Id"] = request_id
-        apply_internal_service_headers(headers)
         return headers
 
     async def get(
