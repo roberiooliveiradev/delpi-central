@@ -2038,3 +2038,75 @@ PO rejeitou o acabamento RW01 — o problema era estrutural, não cosmético. Re
 - **Cards:** `CfDataRecordCard` (kit `createDashboardDataRecordCard`) como anchor navegável + faixa `cf-version-card__actions` para ações governadas — sem interativo aninhado.
 - **D — Histórico:** ator rotulado «Ator (id):» — identificador técnico explícito da trilha, nunca nome.
 - Evidência: smoke 13/13, 365 testes, capturas dark/820/390/320 `overflowX=0`, contagem de containers aninhados caiu (admin: página→tabela direta; versão: stack único).
+
+
+## 53. UX-016 — Hero contextual + listagem flexível nas duas páginas (wireframe aprovado PO, 28/10/2026)
+
+**DECISÃO DE UX APROVADA / TARGET, NÃO IMPLEMENTADO.** O PO validou expressamente os dois wireframes apresentados em chat: Administração e Versão compartilham **hero contextual acima de uma única superfície de tabela flexível**. Evidência: screenshots em dark do UX-015-RW02, com toolbar desarticulada na listagem e métricas/ações dispersas no detalhe. Não reabrir o padrão de cards aninhados. Esta seção prevalece para o novo layout sobre as propostas visuais anteriores onde conflitarem; contratos e boundaries canônicos permanecem.
+
+### 53.1 Composição única e responsiva
+```text
+[Chrome Minha DELPI existente, sem duplicação]
+[Breadcrumb / contexto]
+┌ HERO CONTEXTUAL ────────────────────────────────────────────────┐
+│ Título, subtítulo, status e informações essenciais              │
+│ Métricas reais compactas                                        │
+│ Ações principais e secundárias com ícone                        │
+│ Pesquisa | Alternância Tabela/Cards | Configuração de colunas   │
+└─────────────────────────────────────────────────────────────────┘
+  gap semântico
+┌ LISTAGEM FLEXÍVEL ÚNICA ────────────────────────────────────────┐
+│ Título da listagem + contagem                                   │
+│ TABELA ou CARDS — dados reais, ordenação e navegação por linha   │
+│                                                                 │
+│ Espaço de expansão flexível (sem inventar linhas)               │
+│ Paginação ancorada ao fim da área útil                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+Hero e listagem são superfícies irmãs, **não três cards encaixados**. Uma árvore light/dark e tokens homologados. Área de listagem min-height/flex adaptada à altura útil real do viewport/host (sem `100vh` cego ou altura fixa que crie overflow; footer da tabela no fim da área disponível, conteúdo cresce/rola quando necessário). Hero pode empilhar no mobile, sem ocluir conteúdo. Toolbar de DataTableSection deve ser integrada/reconfigurada apenas por API real do kit; **não duplicar pesquisa/toggle/colunas** visíveis no hero e na tabela.
+
+### 53.2 Wireframe Administração — `/closing/admin`
+```text
+Administração / Fechamento mensal
+┌ HERO: Checklist de Fechamento Mensal ──────────────────────────┐
+│ Gerencie as versões e configurações documentais                │
+│ [Versões: N] [Última versão: vN + estado] [Vigente desde: MMM/AA]│
+│ [+ Nova versão] [Histórico/Auditoria] [Documentos]              │
+│ [Pesquisar versões________] [Tabela|Cards] [Colunas]           │
+└────────────────────────────────────────────────────────────────┘
+┌ Versões (N) ───────────────────────────────────────────────────┐
+│ Versão ↕ | Estado ↕ | Documentos ↕ | Vigência ↕ | Publicação ↕  │
+│ v1       | Publicada| 1            | Nov/2026    | 28/10       │
+│  linha clicável: abre Versão v1                                 │
+│                     [área flexível sem linhas inventadas]       │
+│ [Exibindo X de N]                        [Paginação]            │
+└────────────────────────────────────────────────────────────────┘
+```
+**REMOVER coluna Ações e botão Inativar desta listagem.** Inativação pertence **exclusivamente ao detalhe da versão**. Versão/card inteiro clicável com foco, teclado e sem elemento interativo aninhado; ação não destrutiva de linha. Hero usa métricas somente derivadas de dados reais do DTO; caso não existam versões, empty state honesto. Remover `monthly-closing-checklist` da apresentação principal, sem eliminar id técnico do contrato.
+
+### 53.3 Wireframe Versão — `/closing/admin/versions/{n}`
+```text
+Administração > Versão vN
+┌ HERO: Versão vN [Publicada] ────────────────────────────────────┐
+│ Checklist de Fechamento Mensal                                 │
+│ [Documentos: N] [Vigente desde: MMM/AA] [Publicada em: data]    │
+│ [Identidade do autor, quando autorizada] [Revisão: n]           │
+│ [Histórico da versão] [Inativar versão (danger + ícone)]        │
+│ [Pesquisar documentos_______] [Tabela|Cards] [Colunas]         │
+└────────────────────────────────────────────────────────────────┘
+┌ Documentos da versão (N) ──────────────────────────────────────┐
+│ Documento ↕ | Obrigatoriedade ↕ | Origem ↕ | Destino ↕ | Via ↕  │
+│ Relatório P7 bloco H ...       [linha clicável]                │
+│                     [área flexível sem linhas inventadas]       │
+│ [Exibindo X de N]                        [Paginação]            │
+└────────────────────────────────────────────────────────────────┘
+```
+Ações variam conforme DRAFT/REVIEW/PUBLISHED/INACTIVE e capabilities efetivas. **Inativar versão com ícone danger somente aqui**, com confirmação e regra BFF preservadas. Documentos abrem o snapshot daquela versão (PUBLISHED/INACTIVE read-only), edição de exigência futura continua no fluxo mestre; sem mutação histórica. Identidade de quem publicou: utilizar avatar/nome/e-mail **somente após contrato Core→BFF UX-014 autorizado e comprovado**; até lá mostrar fallback neutro sem UUID cru e sem ator fabricado. Proibir browser→Core.
+
+### 53.4 Interações e hierarquia
+- Pesquisa (com URL quando suportada), alternância Tabela/Cards e configuração de colunas residem **visualmente dentro do hero**; sorter ↕ nas colunas permitidas, no modo Cards manter ordenação aplicada ou fornecer controle homologado se houver (gap de kit → inventário/decisão, não inventar UI).
+- Header da tabela abaixo do hero contém apenas título da listagem/contagem e dados; sem duplicar toolbar. Paginação pertence à listagem.
+- Botões com ícones semânticos reais, variantes primary/secondary/danger, tooltip/foco/loading/disabled. Não usar 'Abrir' redundante.
+- UX PT-BR para rótulos; identificadores técnicos ficam nos contratos/diagnósticos autorizados.
+- QA: 0/1/50/100 linhas, Tabela/Cards, ordenação, mobile 320/390/tablet/desktop, zoom 200%, dark/light, teclado, focus, scroll, viewport/resizing; pesquisa/filtros/colunas/deep links/F5/back; nenhuma perda de auditoria/OCC.
+- Não alterar BFF, migrations, dados do PO, ou permissions. Implementação depende de inspeção das APIs reais de layout/DataTableSection; sem bypass por CSS frágil.
