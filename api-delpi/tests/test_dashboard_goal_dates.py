@@ -12,6 +12,19 @@ def test_normalize_si_period_date_keeps_delpi_format() -> None:
     assert normalize_si_period_date("22-05-2026") == "22-05-2026"
 
 
+def test_normalize_si_period_date_from_compact_yyyymmdd() -> None:
+    """OVERVIEW.R2: /lmps/dashboard/summary recebe YYYYMMDD e repassa ao SI;
+    sem conversão o resolve_period falhava e a meta do LMP sumia."""
+    assert normalize_si_period_date("20261001") == "01-10-2026"
+    assert normalize_si_period_date("20261028") == "28-10-2026"
+
+
+def test_normalize_si_period_date_rejects_invalid_compact() -> None:
+    assert normalize_si_period_date("20261301") == "20261301"
+    assert normalize_si_period_date("20261032") == "20261032"
+    assert normalize_si_period_date("abcdefgh") == "abcdefgh"
+
+
 def test_normalize_si_branch_pads_totvs_code() -> None:
     assert normalize_si_branch("2") == "02"
     assert normalize_si_branch("") is None

@@ -232,3 +232,30 @@ def test_enrich_dashboard_metric_tolerates_empty_comparable_goal_string() -> Non
     assert result["goal_value"] is None
     assert result["reference_goal"] is None
     assert "new_business_rol_target_pct" not in result
+
+
+def test_enrich_dashboard_metric_normalizes_compact_lmp_dates_for_si() -> None:
+    """OVERVIEW.R2: resumo LMP chega com start/end em YYYYMMDD; a chamada ao
+    SI deve sair em DD-MM-YYYY ou o resolve_period falha e a meta some."""
+    captured: dict = {}
+
+    class _Client:
+        def list_dashboard_goals(self, **params):
+            captured.update(params)
+            return {"items": []}
+
+    service = DashboardGoalsService(client=_Client())
+    with patch(
+        "app.application.services.strategic_indicators.dashboard_goals_service.get_dashboard_goals_service",
+        return_value=service,
+    ):
+        enrich_dashboard_metric(
+            {"percent_dentro_prazo": 100.0},
+            source_key="lmp",
+            start_date="20261001",
+            end_date="20261028",
+        )
+
+    assert captured["source_keys"] == ["lmp"]
+    assert captured["start_date"] == "01-10-2026"
+    assert captured["end_date"] == "28-10-2026"

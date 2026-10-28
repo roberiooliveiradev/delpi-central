@@ -35,4 +35,12 @@ def normalize_si_period_date(value: str | None) -> str | None:
         if len(year) == 4 and len(month) == 2 and len(day) == 2:
             return f"{day}-{month}-{year}"
 
+    # Compacto TOTVS/legado: YYYYMMDD (ex.: /lmps/dashboard/summary).
+    # Sem esta conversão o valor ia cru à SI, que só aceita DD-MM-YYYY ou
+    # YYYY-MM-DD — resolve_period falhava e as metas sumiam em silêncio.
+    if len(trimmed) == 8 and trimmed.isdigit():
+        year, month, day = trimmed[:4], trimmed[4:6], trimmed[6:8]
+        if "01" <= month <= "12" and "01" <= day <= "31":
+            return f"{day}-{month}-{year}"
+
     return trimmed
