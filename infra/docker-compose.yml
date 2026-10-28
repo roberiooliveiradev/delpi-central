@@ -2603,6 +2603,59 @@ services:
     networks:
       - delpi-network
 
+  engineering-api:
+    build:
+      context: ..
+      dockerfile: engineering-api/Dockerfile
+
+    container_name: delpi-engineering-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      SERVICE_NAME: engineering-api
+      ENGINEERING_API_ROOT_PATH: /apps/engineering-api
+      APP_ENV: production
+
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+      DELPI_AUTH_RBAC_TIMEOUT_SECONDS: ${DELPI_AUTH_RBAC_TIMEOUT_SECONDS:-5}
+      DELPI_AUTH_RBAC_CACHE_TTL_SECONDS: ${DELPI_AUTH_RBAC_CACHE_TTL_SECONDS:-60}
+      DELPI_AUTH_RBAC_STALE_TTL_SECONDS: ${DELPI_AUTH_RBAC_STALE_TTL_SECONDS:-900}
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      core-api:
+        condition: service_started
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   controllership-finance-api:
     build:
       context: ..

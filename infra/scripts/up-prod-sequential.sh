@@ -183,6 +183,7 @@ FASE_API=(
   tv-dashboard-api
   bpmn-modeler-api
   external-data-api
+  engineering-api
 )
 
 FASE_HEAVY=(

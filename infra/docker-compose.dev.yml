@@ -2226,6 +2226,49 @@ services:
     networks:
       - delpi-network
 
+  engineering-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: engineering-api/Dockerfile
+
+    container_name: delpi-engineering-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      SERVICE_NAME: engineering-api
+      ENGINEERING_API_ROOT_PATH: /apps/engineering-api
+      APP_ENV: development
+
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+      DELPI_AUTH_RBAC_TIMEOUT_SECONDS: ${DELPI_AUTH_RBAC_TIMEOUT_SECONDS:-5}
+      DELPI_AUTH_RBAC_CACHE_TTL_SECONDS: ${DELPI_AUTH_RBAC_CACHE_TTL_SECONDS:-60}
+      DELPI_AUTH_RBAC_STALE_TTL_SECONDS: ${DELPI_AUTH_RBAC_STALE_TTL_SECONDS:-900}
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+    volumes:
+      - ../engineering-api:/app
+      - ../shared:/shared
+
+    depends_on:
+      - keycloak
+      - core-api
+
+    networks:
+      - delpi-network
+
   cipa-api:
     <<: *plugin-profile
     build:
