@@ -2129,4 +2129,12 @@ Cobertura: `DataTableSection.toolbarPortal.test.tsx` (3/3).
 
 **Sem duplicação de controles.** A mesma instância da toolbar vive no hero via portal — a seção não renderiza busca/toggle/colunas próprias (verificado em smoke e DOM).
 
+### 53.6 Execução UX-016-RW01 — help contextual + paginação inteligente
+
+**Help contextual homologado.** Sem implementação paralela: `headerHint` das `DataTableColumn` (HelpTooltip acessível já nativo do `DataTable`), `searchHint` da `DataTableSection` (ícone «?» junto à busca) e `hintedLabel` (helper CF que embrulha labels de indicadores/`<dt>` no mesmo `HelpTooltip` do kit — mouse, teclado, toque e leitor de tela). Textos centralizados em `helpTooltips.ts` (`CF_HELP.<página>.columns|metrics|fields`).
+
+**Cobertura.** Administração (5 colunas + 3 métricas + busca), Versão (7 colunas documentais + 5 métricas + busca), Documento da versão (12 campos `<dt>`), Documentos do fechamento (6 colunas + 12 campos do formulário via `hint` dos `FieldLabel`), Catálogos (5 colunas), Checklist da competência (8 colunas), Estoque P7 (12 colunas em 3 tabelas), Baixas financeiras (13 colunas em 2 tabelas), Minhas tarefas (4 colunas). Colunas «Ações» permanecem sem ajuda — o rótulo já é suficientemente claro (exceção justificada).
+
+**Paginação inteligente.** Nova prop opt-in do kit `DataTableSection.hidePaginationWhenSinglePage`: o rodapé de paginação só é renderizado quando o conjunto efetivamente exibido (após filtros; `total` autoritativo no server-side) excede uma página. O seletor «Itens por página» da toolbar não é afetado. O wrapper `cfDataTableUi.tsx` ativa a regra por padrão para **todas** as tabelas do portal — correção na fonte compartilhada, não em cada página. Evidência local: Admin (3 versões) oculta a barra; Versão (53 itens) exibe e mantém ancoragem.
+
 **Evidências.** tsc ✓; eslint do escopo limpo (1 erro preexistente fora do escopo: `ClaraConsentPage.tsx`; warnings baseline); vitest MFE 367/367; plugin-ui `src/components/data` 167/167; smoke autenticado local 19/19; screenshots desktop 1440 light/dark, tablet 768, mobile 390/320 e zoom 200% — `overflowX=0` em todos.

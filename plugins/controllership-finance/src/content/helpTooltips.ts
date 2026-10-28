@@ -57,6 +57,26 @@ export const CF_HELP = {
       jumpInvalid: "Use apenas números.",
       jumpBelowMin: "A página mínima é 1.",
     },
+    columns: {
+      date: "Data do evento de baixa registrado no ERP.",
+      document: "Documento de origem da baixa no ERP.",
+      installment: "Parcela do título baixada.",
+      party:
+        "Fornecedor (baixas a pagar) ou cliente (baixas a receber) do título.",
+      nature:
+        "Natureza financeira do título — código de origem do ERP, ainda sem classificação contábil nesta versão.",
+      movementType: "Tipo de movimento da baixa — código de origem do ERP.",
+      direction: "Direção do lançamento em relação ao saldo do título.",
+      currency:
+        "Moeda do valor — valores nunca são somados entre moedas.",
+      value: "Valor da baixa na moeda do título.",
+      dueDate: "Data de vencimento original do título.",
+      link:
+        "Situação do vínculo com documento/natureza de origem — «não localizado» preserva o evento em vez de escondê-lo.",
+      branch:
+        "Filial do registro — «Filial não identificada» significa que a origem não informa a filial, não é erro.",
+      settlements: "Quantidade de baixas do agrupamento no universo filtrado.",
+    },
   },
   stockInventory: {
     page:
@@ -73,6 +93,22 @@ export const CF_HELP = {
       "Totais por armazém e filial sobre o universo filtrado, com a participação percentual de cada grupo no valor histórico total.",
     table:
       "Detalhamento por produto e armazém no snapshot do mês, com a contagem do universo filtrado junto ao título. Ordenação fixa por filial, armazém e produto. Em «Colunas» você escolhe campos, em «Fonte» ajusta o texto e a borda direita de cada cabeçalho redimensiona a coluna — preferências gravadas no seu usuário. Quando o snapshot não existe para a competência, só o aviso é exibido — a tabela vazia não representaria saldo zero.",
+    columns: {
+      product: "Código do produto no ERP.",
+      description: "Descrição do produto no cadastro do ERP.",
+      type: "Tipo do produto (MP, PI, PA e demais tipos TOTVS).",
+      group: "Grupo do produto no cadastro do ERP.",
+      um: "Unidade de medida do saldo registrado.",
+      warehouse: "Armazém de origem do saldo (código do ERP).",
+      branch:
+        "Filial de origem — «Filial não identificada» significa que a origem não informa a filial do registro, não é erro.",
+      quantity: "Quantidade em estoque no snapshot do fechamento do mês.",
+      historicalValue:
+        "Valor histórico do saldo registrado no fechamento — referência de custo do ERP, não valor atual.",
+      items: "Quantidade de itens (produtos) do agrupamento.",
+      percent:
+        "Participação do grupo no valor histórico total do universo filtrado.",
+    },
   },
   checklist: {
     page:
@@ -99,6 +135,22 @@ export const CF_HELP = {
       "Evidências anexadas à competência como um todo. Arraste ou selecione um arquivo (PDF, imagem, XLS, XLSX ou CSV, até 25 MB) para enviar; cada envio registra autor, data e integridade do arquivo. «Substituir» cria uma versão nova e preserva a anterior em «Versões» — só quem anexou ou um gestor pode substituir. «Cancelar» retira o documento da lista sem apagar arquivos nem histórico, que ficam em «Eventos». «Baixar» entrega o documento original — exige autorização e fica registrado na auditoria. Anexar uma evidência não valida o documento nem entrega o item: o checklist permanece «Esperado».",
     itemDocuments:
       "Evidências vinculadas a este item do checklist — a mesma regra de upload da competência vale aqui (PDF, imagem, XLS, XLSX ou CSV, até 25 MB). Um documento de item só pode ser anexado a um item da competência aberta. «Substituir», «Versões», «Eventos» e «Cancelar» funcionam como nas evidências da competência: a versão substituída fica marcada como «Substituída» e continua baixável, e o cancelamento é lógico — nada é apagado. Erros comuns: arquivo acima de 25 MB, formato não permitido, arquivo vazio ou conteúdo que não corresponde à extensão.",
+    columns: {
+      item: "Chave identificadora do item esperado nesta competência.",
+      name:
+        "Entregável previsto no snapshot do checklist desta competência.",
+      sheet: "Via de entrega prevista: Eletrônico (arquivo) ou Físico.",
+      origin:
+        "De onde o documento costuma vir: ERP TOTVS, fonte externa ou ambos.",
+      recipient:
+        "Área destinataria — «A definir» marca pendência real do checklist, não erro de dados.",
+      scope:
+        "Escopo de filial da exigência: matriz e filial, somente matriz ou somente filial.",
+      report:
+        "Referência ao relatório ERP (R-ID) quando a origem é conhecida — ausência não dispensa a entrega.",
+      state:
+        "Estado do item nesta competência: Esperado, Aceito, Não aplicável ou Cancelado.",
+    },
   },
   admin: {
     page:
@@ -109,6 +161,28 @@ export const CF_HELP = {
       "Itens da versão em modo de leitura — chave, entregável, origem, destinatário, obrigatoriedade, escopo de filial e regra de validação. Clique na linha para abrir o documento; alterne entre Tabela e Cards e ordene pelas colunas.",
     editDraft:
       "Edição do rascunho: altere, adicione ou remova itens e salve de uma vez — a gravação é atômica. Se outra sessão publicou ou alterou a versão, o salvamento é recusado («revisão desatualizada») para nunca sobrescrever trabalho alheio: recarregue e reaplique.",
+    search:
+      "Filtra a listagem por número da versão, estado ou competência de vigência — apenas leitura, sem alterar dados.",
+    metrics: {
+      versions:
+        "Total de versões registradas do checklist mestre, em qualquer estado do ciclo.",
+      latest:
+        "Maior número de versão registrada e seu estado — não é necessariamente a versão vigente: a aplicação a novos fechamentos depende da competência inicial de cada versão.",
+      effective:
+        "Competência inicial da versão de maior número exibida ao lado — a partir da qual ela pode ser aplicada a novos fechamentos. «—» quando a versão ainda não tem vigência definida.",
+    },
+    columns: {
+      version:
+        "Número sequencial da versão do checklist mestre. Cada versão guarda um snapshot completo e imutável dos itens.",
+      status:
+        "Estado do ciclo de vida: Rascunho (editável), Em revisão, Publicada (vigente para novas competências) ou Inativada (histórica, sem novas aplicações).",
+      items:
+        "Quantidade de documentos exigidos configurados nesta versão.",
+      effective:
+        "Competência inicial a partir da qual esta versão pode ser aplicada a novos fechamentos. Competências já abertas preservam o próprio snapshot — nunca são reescritas.",
+      published:
+        "Data e horário da publicação da versão. «—» enquanto a versão é rascunho ou está em revisão.",
+    },
   },
   adminVersion: {
     page:
@@ -117,6 +191,32 @@ export const CF_HELP = {
       "Metadados da versão: estado do ciclo (rascunho → revisão → publicada → inativada), quantidade de documentos, competência a partir da qual vale, data de publicação e revisão de controle de concorrência. As ações disponíveis dependem do estado: rascunho pode ser editado, enviado à revisão ou descartado; em revisão pode ser publicada com vigência prospectiva ou devolvida com motivo; publicada pode ser inativada — nada reescreve competências já abertas.",
     items:
       "Documentos pertencentes a esta versão do checklist — o conteúdo exato daquele snapshot, não a configuração vigente hoje. Clique na linha ou no card para abrir o documento naquela versão. Em rascunho, «Editar itens» habilita a edição atômica governada.",
+    search:
+      "Filtra os documentos da versão por chave, entregável, origem ou destinatário — apenas leitura do snapshot.",
+    metrics: {
+      items: "Quantidade de documentos configurados nesta versão do checklist.",
+      effective:
+        "Competência inicial a partir da qual esta versão pode ser aplicada a novos fechamentos. Competências já abertas preservam o próprio snapshot.",
+      published:
+        "Data e horário da publicação. «—» enquanto a versão é rascunho ou está em revisão.",
+      publishedBy:
+        "Responsável pela publicação. «Identidade não disponível» indica que o contrato de identidade para atores administrativos ainda não foi autorizado (UX-014) — o identificador técnico permanece na trilha de auditoria.",
+      revision:
+        "Revisão de controle de concorrência: cada gravação exige a revisão vigente — se outra sessão alterou a versão, o salvamento é recusado para não sobrescrever trabalho alheio.",
+    },
+    columns: {
+      item: "Chave identificadora do documento dentro do checklist.",
+      name: "Nome do entregável esperado nesta versão.",
+      sheet: "Via de entrega prevista: Eletrônico (arquivo) ou Físico.",
+      origin:
+        "Proveniência esperada do documento: ERP TOTVS, fonte externa ou origem mista.",
+      recipient:
+        "Área que recebe o documento quando conhecida — «A definir» marca pendência real do checklist, não erro de dados.",
+      applicability:
+        "Obrigatoriedade da exigência: Obrigatório, Condicional ou Opcional.",
+      scope:
+        "Regra de validação da evidência: «Por anexo» exige aceite de cada arquivo; «Conjunto completo» aceita o conjunto de uma vez.",
+    },
   },
   adminVersionDocument: {
     page:
@@ -125,6 +225,26 @@ export const CF_HELP = {
       "Identificação do documento na versão: chave, nome, finalidade e orientações de preparação registradas no snapshot.",
     requirement:
       "Exigência do documento naquela versão: obrigatoriedade, origem, destino, via (eletrônico/físico), escopo de filial, regra de validação e referência TOTVS quando houver.",
+    fields: {
+      name: "Nome do entregável registrado no snapshot desta versão.",
+      identifier: "Chave identificadora do documento dentro do checklist.",
+      purpose: "Finalidade do documento no fechamento — o que a entrega comprova.",
+      notes: "Orientações de preparação registradas para quem produz o documento.",
+      order: "Posição do item na ordem de apresentação do checklist.",
+      applicability:
+        "Obrigatoriedade da exigência: Obrigatório, Condicional ou Opcional.",
+      origin:
+        "Proveniência esperada do documento: ERP TOTVS, fonte externa ou origem mista.",
+      recipient:
+        "Área destinataria da exigência — para quem o documento é produzido; não é envio efetivo de anexos.",
+      sheet: "Via de entrega prevista: Eletrônico (arquivo) ou Físico.",
+      scope:
+        "Escopo de filial da exigência: matriz e filial, somente matriz ou somente filial.",
+      validation:
+        "Regra de validação da evidência: «Por anexo» exige aceite de cada arquivo; «Conjunto completo» aceita o conjunto de uma vez.",
+      totvsRef:
+        "Referência do relatório TOTVS (R-ID) quando a origem é conhecida — ausência não dispensa a entrega.",
+    },
   },
   adminEvents: {
     page:
@@ -143,6 +263,46 @@ export const CF_HELP = {
       "Vigência por competência: «exigido a partir de» define a primeira competência em que o documento é cobrado (nunca retroativa); «exigido até» é opcional e torna a exigência temporária — o documento deixa de ser cobrado no período seguinte. Competências já abertas guardam snapshot próprio e não mudam.",
     history:
       "Histórico de alterações do documento: eventos de auditoria das versões que contêm este tipo — autor, data, versão e tipo de evento (rascunho criado/atualizado, revisão, publicação).",
+    columns: {
+      document:
+        "Tipo de documento do fechamento — a exigência cadastrada no catálogo mestre.",
+      requirement:
+        "Nível de exigência: Obrigatório, Condicional ou Opcional.",
+      recipient:
+        "Área destinataria da exigência — Contabilidade, Fiscal ou uso interno. Indica para quem o documento é produzido; não é envio efetivo de anexos.",
+      effectiveFrom:
+        "Primeira competência em que a exigência passa a valer — derivada das versões publicadas do checklist, nunca retroativa.",
+      effectiveUntil:
+        "Última competência de exigência, quando a vigência é temporária. «—» indica exigência sem data de encerramento.",
+      situation:
+        "Situação da exigência derivada da timeline de versões: vigente, futura ou encerrada.",
+    },
+    fields: {
+      name: "Nome do tipo de documento — aparece nas listagens e no checklist.",
+      purpose:
+        "Finalidade do documento no fechamento — o que a entrega comprova.",
+      notes:
+        "Orientações de preparação exibidas a quem produz o documento.",
+      itemKey:
+        "Identificador técnico gerado a partir do nome — imutável após o cadastro.",
+      applicability:
+        "Obrigatório: exigido em todo fechamento. Condicional: exigido conforme a regra e pode receber «Não aplicável» justificado. Opcional: não bloqueia a conclusão.",
+      recipient:
+        "Área destinataria da exigência — para quem o documento é produzido.",
+      origin:
+        "Proveniência esperada do documento: ERP TOTVS, fonte externa ou origem mista.",
+      sheet: "Via de entrega prevista: eletrônica (arquivo) ou física.",
+      branchScope:
+        "Abrangência da exigência: matriz e filial, somente matriz ou somente filial.",
+      validationScope:
+        "Regra de validação: «Por anexo» exige aceite de cada arquivo; «Conjunto completo» aceita o conjunto de uma vez.",
+      totvsReportRef:
+        "Referência do relatório TOTVS (R-ID, ex.: FINR190) quando a origem é conhecida — máximo 8 caracteres.",
+      effectiveFrom:
+        "Primeira competência em que a exigência passa a valer — prospectiva, nunca retroativa.",
+      effectiveUntil:
+        "Última competência de exigência (opcional) — em branco, a exigência permanece vigente.",
+    },
   },
   p3: {
     panel:
@@ -177,6 +337,14 @@ export const CF_HELP = {
       "Trabalho atribuído a você: somente itens que exigem ação sua aparecem aqui — nunca tarefas de outros usuários. A projeção respeita a elegibilidade de revisão configurada: se sua área exige vínculo a grupo corporativo do Core e o vínculo não existe, a revisão não é listada. Abrir leva à página que decide o recurso — a ação real (resolver, aceitar, responder) acontece lá.",
     summary:
       "Resumo por tipo de trabalho pendente: total, revisões de pacote, pendências do fechamento e esclarecimentos abertos aguardando sua resposta.",
+    columns: {
+      type:
+        "Tipo do trabalho: pendência do fechamento, revisão de pacote ou esclarecimento aberto.",
+      task: "Descrição do trabalho que exige sua ação.",
+      state: "Estado atual do item na sua fila.",
+      since:
+        "Data de registro do item — dado factual, não é SLA nem atraso.",
+    },
   },
   profile: {
     identity:
@@ -195,6 +363,16 @@ export const CF_HELP = {
       "Entradas do catálogo selecionado: código (identidade imutável), rótulo, atributos livres em JSON, estado e revisão. Atributos carregam a semântica específica de cada catálogo — ex.: área destino em «áreas obrigatórias», grupos Core exigidos em «elegibilidade de revisão».",
     form:
       "Nova entrada ou edição: o código só é definido na criação — depois vira identidade imutável. Salvar uma edição exige a revisão vigente; se outra sessão alterou a entrada, o salvamento é recusado — recarregue e reaplique. Vigência inicial opcional define a partir de qual competência a entrada vale.",
+    columns: {
+      code:
+        "Código identificador da entrada — identidade imutável após a criação.",
+      label: "Rótulo de exibição da entrada.",
+      attributes:
+        "Atributos livres em JSON com a semântica específica de cada catálogo.",
+      state:
+        "Ativa ou inativa — a desativação é prospectiva e não reescreve registros.",
+      revision: "Revisão de controle de concorrência da entrada.",
+    },
   },
   cockpit: {
     page:

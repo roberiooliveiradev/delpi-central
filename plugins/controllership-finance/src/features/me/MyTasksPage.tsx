@@ -130,6 +130,7 @@ export function MyTasksPage() {
       {
         key: "action",
         header: "Tipo",
+        headerHint: CF_HELP.myTasks.columns.type,
         render: (task) => (
           <CfStatusBadge
             label={ACTION_LABELS[task.actionKind] ?? task.actionKind}
@@ -140,6 +141,7 @@ export function MyTasksPage() {
       {
         key: "title",
         header: "Tarefa",
+        headerHint: CF_HELP.myTasks.columns.task,
         render: (task) => (
           <>
             <div>{task.title}</div>
@@ -152,6 +154,7 @@ export function MyTasksPage() {
       {
         key: "status",
         header: "Estado",
+        headerHint: CF_HELP.myTasks.columns.state,
         render: (task) => (
           <CfStatusBadge label={task.statusLabel} variant="neutral" />
         ),
@@ -159,6 +162,7 @@ export function MyTasksPage() {
       {
         key: "since",
         header: "Pendente desde",
+        headerHint: CF_HELP.myTasks.columns.since,
         render: (task) =>
           task.pendingSince ? formatDateTime(task.pendingSince) : "—",
       },

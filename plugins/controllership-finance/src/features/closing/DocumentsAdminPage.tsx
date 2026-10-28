@@ -266,6 +266,7 @@ export function DocumentsAdminPage({
       {
         key: "document",
         header: "Documento",
+        headerHint: CF_HELP.documentsAdmin.columns.document,
         render: (row) => (
           <div>
             <p className="cf-validation-panel__doc-name">{row.name}</p>
@@ -280,6 +281,7 @@ export function DocumentsAdminPage({
       {
         key: "applicability",
         header: "Exigência",
+        headerHint: CF_HELP.documentsAdmin.columns.requirement,
         className: "cf-table__col--compact",
         render: (row) =>
           APPLICABILITY_LABELS[row.applicability] ?? row.applicability,
@@ -287,6 +289,7 @@ export function DocumentsAdminPage({
       {
         key: "recipient",
         header: "Destino",
+        headerHint: CF_HELP.documentsAdmin.columns.recipient,
         className: "cf-table__col--compact",
         render: (row) =>
           row.recipientArea
@@ -296,12 +299,14 @@ export function DocumentsAdminPage({
       {
         key: "from",
         header: "Vigência inicial",
+        headerHint: CF_HELP.documentsAdmin.columns.effectiveFrom,
         className: "cf-table__col--compact",
         render: (row) => formatPeriod(row.vigenciaInicial),
       },
       {
         key: "to",
         header: "Vigência final",
+        headerHint: CF_HELP.documentsAdmin.columns.effectiveUntil,
         className: "cf-table__col--compact",
         render: (row) =>
           row.vigenciaFinal ? formatPeriod(row.vigenciaFinal) : "Sem término",
@@ -309,6 +314,7 @@ export function DocumentsAdminPage({
       {
         key: "situation",
         header: "Situação",
+        headerHint: CF_HELP.documentsAdmin.columns.situation,
         className: "cf-table__col--status",
         render: (row) => (
           <CfStatusBadge

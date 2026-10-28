@@ -14,6 +14,7 @@ import { useCallback, useMemo, useState } from "react";
 import {
   ActionButton,
   ConfirmModalPanel,
+  HelpTooltip,
 } from "@delpi/plugin-ui/index";
 import {
   Archive,
@@ -49,6 +50,23 @@ export type QueryError = {
   code: string | null;
   message: string;
 };
+
+/**
+ * Rótulo de indicador com ajuda contextual — mesmo padrão do
+ * `headerHint` das colunas (HelpTooltip acessível do kit).
+ */
+export function hintedLabel(label: string, content: string) {
+  return (
+    <HelpTooltip
+      content={content}
+      ariaLabel={`Ajuda: ${label}`}
+      wrap
+      placement="bottom"
+    >
+      <span className="delpi-ui-section-hint-label">{label}</span>
+    </HelpTooltip>
+  );
+}
 
 export const ERROR_MESSAGES: Record<string, string> = {
   forbidden:

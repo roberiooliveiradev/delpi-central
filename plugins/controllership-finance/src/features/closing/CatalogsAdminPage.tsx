@@ -216,11 +216,12 @@ export function CatalogsAdminPage() {
 
   const columns = useMemo<DataTableColumn<CatalogEntry>[]>(
     () => [
-      { key: "code", header: "Código", render: (e) => e.code },
-      { key: "label", header: "Rótulo", render: (e) => e.label },
+      { key: "code", header: "Código", headerHint: CF_HELP.catalogs.columns.code, render: (e) => e.code },
+      { key: "label", header: "Rótulo", headerHint: CF_HELP.catalogs.columns.label, render: (e) => e.label },
       {
         key: "attributes",
         header: "Atributos",
+        headerHint: CF_HELP.catalogs.columns.attributes,
         render: (e) => (
           <code className="cf-cell-secondary">
             {JSON.stringify(e.attributes)}
@@ -230,6 +231,7 @@ export function CatalogsAdminPage() {
       {
         key: "state",
         header: "Estado",
+        headerHint: CF_HELP.catalogs.columns.state,
         render: (e) => (
           <CfStatusBadge
             label={e.active ? "Ativa" : "Inativa"}
@@ -240,6 +242,7 @@ export function CatalogsAdminPage() {
       {
         key: "revision",
         header: "Revisão",
+        headerHint: CF_HELP.catalogs.columns.revision,
         render: (e) => `rev ${e.revision}`,
       },
       {

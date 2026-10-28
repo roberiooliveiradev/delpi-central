@@ -13,8 +13,12 @@ import { createPortal } from "react-dom";
 
 type AnyProps = Record<string, unknown>;
 
-function el(tag: string, props: AnyProps | null, ...children: ReactNode[]) {
-  return createElement(tag, props, ...children);
+function el(
+  tag: string | ((props: never) => ReactNode),
+  props: AnyProps | null,
+  ...children: ReactNode[]
+) {
+  return createElement(tag as Parameters<typeof createElement>[0], props, ...children);
 }
 
 export function ActionButton(props: {
@@ -501,6 +505,27 @@ export function createDashboardDataRecordCard() {
   };
 }
 
+export function HelpTooltip(props: {
+  content: string;
+  ariaLabel?: string;
+  children?: ReactNode;
+}) {
+  return el(
+    "span",
+    { className: "delpi-ui-help-tooltip" },
+    props.children ?? null,
+    el(
+      "button",
+      {
+        type: "button",
+        "aria-label": props.ariaLabel ?? "Ajuda",
+        "data-help-content": props.content,
+      },
+      "?",
+    ),
+  );
+}
+
 export function createDashboardDataTableKit() {
   function DataTableSection<T>(props: {
     title?: ReactNode;
@@ -508,6 +533,7 @@ export function createDashboardDataTableKit() {
     columns?: Array<{
       key: string;
       header: ReactNode;
+      headerHint?: string;
       render?: (row: T) => ReactNode;
       sortable?: boolean;
       sortValue?: (row: T) => string | number | null | undefined;
@@ -525,8 +551,11 @@ export function createDashboardDataTableKit() {
     getSearchText?: (row: T) => string;
     hideSearch?: boolean;
     searchPlaceholder?: string;
+    searchHint?: string;
     toolbarPortalTarget?: HTMLElement | null;
     tableLayout?: "section" | "scroll";
+    hidePaginationWhenSinglePage?: boolean;
+    pageSize?: number;
     serverPagination?: {
       page: number;
       pageSize: number;
@@ -605,6 +634,12 @@ export function createDashboardDataTableKit() {
             onChange: (event: { target: { value: string } }) =>
               setSearch(event.target.value),
           }),
+      props.searchHint
+        ? el(HelpTooltip, {
+            content: props.searchHint,
+            ariaLabel: "Ajuda: busca na tabela",
+          })
+        : null,
     );
 
     const body = cardsOn ? null : (
@@ -641,8 +676,27 @@ export function createDashboardDataTableKit() {
                           },
                           c.header,
                         ),
+                        c.headerHint
+                          ? el(HelpTooltip, {
+                              content: c.headerHint,
+                              ariaLabel: `Ajuda: ${typeof c.header === "string" ? c.header : c.key}`,
+                            })
+                          : null,
                       )
-                    : el("th", { key: c.key }, c.header),
+                    : el(
+                        "th",
+                        { key: c.key },
+                        c.headerHint
+                          ? el(
+                              HelpTooltip,
+                              {
+                                content: c.headerHint,
+                                ariaLabel: `Ajuda: ${typeof c.header === "string" ? c.header : c.key}`,
+                              },
+                              c.header,
+                            )
+                          : c.header,
+                      ),
                 ),
               ),
             ),
@@ -715,7 +769,11 @@ export function createDashboardDataTableKit() {
           )
         : null,
       body,
-      pager
+      pager &&
+        !(
+          props.hidePaginationWhenSinglePage &&
+          pager.total <= pager.pageSize
+        )
         ? el(
             "nav",
             { "aria-label": "Paginação da tabela" },

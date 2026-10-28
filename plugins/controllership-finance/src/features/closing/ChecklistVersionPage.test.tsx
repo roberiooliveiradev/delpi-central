@@ -403,4 +403,37 @@ describe("ChecklistVersionPage", () => {
       ).toBeTruthy(),
     );
   });
+
+  it("renders contextual help on document columns, metrics and search (UX-016-RW01)", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue(PUBLISHED_DETAIL);
+    render(<ChecklistVersionPage basePath={BASE} version={1} />);
+    await screen.findByText("CK-E-01");
+
+    for (const name of [
+      "Ajuda: Item",
+      "Ajuda: Entregável",
+      "Ajuda: Folha",
+      "Ajuda: Origem",
+      "Ajuda: Destinatário",
+      "Ajuda: Obrigatório",
+      "Ajuda: Validação",
+    ]) {
+      expect(
+        screen.getAllByRole("button", { name }).length,
+      ).toBeGreaterThan(0);
+    }
+    expect(
+      screen.getByRole("button", { name: "Ajuda: busca na tabela" }),
+    ).toBeTruthy();
+    for (const name of [
+      "Ajuda: Documentos",
+      "Ajuda: Revisão",
+      "Ajuda: Publicada por",
+    ]) {
+      expect(
+        screen.getAllByRole("button", { name }).length,
+      ).toBeGreaterThan(0);
+    }
+  });
 });

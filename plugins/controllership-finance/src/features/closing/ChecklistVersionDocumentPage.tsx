@@ -38,6 +38,7 @@ import {
 import {
   APPLICABILITY_OPTIONS,
   BRANCH_OPTIONS,
+  hintedLabel,
   optionLabel,
   ORIGIN_OPTIONS,
   RECIPIENT_OPTIONS,
@@ -272,24 +273,24 @@ export function ChecklistVersionDocumentPage({
             >
               <dl className="cf-detail-list">
                 <div>
-                  <dt>Nome</dt>
+                  <dt>{hintedLabel("Nome", CF_HELP.adminVersionDocument.fields.name)}</dt>
                   <dd>{item.name}</dd>
                 </div>
                 <div>
-                  <dt>Identificador</dt>
+                  <dt>{hintedLabel("Identificador", CF_HELP.adminVersionDocument.fields.identifier)}</dt>
                   <dd>{item.item_key}</dd>
                 </div>
                 <div className="cf-detail-list__full">
-                  <dt>Finalidade</dt>
+                  <dt>{hintedLabel("Finalidade", CF_HELP.adminVersionDocument.fields.purpose)}</dt>
                   <dd>{item.purpose ?? "Não informada"}</dd>
                 </div>
                 <div className="cf-detail-list__full">
-                  <dt>Orientações</dt>
+                  <dt>{hintedLabel("Orientações", CF_HELP.adminVersionDocument.fields.notes)}</dt>
                   <dd>{item.requirement_notes ?? "Não informadas"}</dd>
                 </div>
                 {item.sort_order !== null ? (
                   <div>
-                    <dt>Ordem</dt>
+                    <dt>{hintedLabel("Ordem", CF_HELP.adminVersionDocument.fields.order)}</dt>
                     <dd>{item.sort_order}</dd>
                   </div>
                 ) : null}
@@ -302,7 +303,7 @@ export function ChecklistVersionDocumentPage({
             >
               <dl className="cf-detail-list">
                 <div>
-                  <dt>Obrigatoriedade</dt>
+                  <dt>{hintedLabel("Obrigatoriedade", CF_HELP.adminVersionDocument.fields.applicability)}</dt>
                   <dd>
                     {optionLabel(
                       APPLICABILITY_OPTIONS,
@@ -311,13 +312,13 @@ export function ChecklistVersionDocumentPage({
                   </dd>
                 </div>
                 <div>
-                  <dt>Origem</dt>
+                  <dt>{hintedLabel("Origem", CF_HELP.adminVersionDocument.fields.origin)}</dt>
                   <dd>
                     {optionLabel(ORIGIN_OPTIONS, item.origin_kind)}
                   </dd>
                 </div>
                 <div>
-                  <dt>Destino</dt>
+                  <dt>{hintedLabel("Destino", CF_HELP.adminVersionDocument.fields.recipient)}</dt>
                   <dd>
                     {optionLabel(
                       RECIPIENT_OPTIONS,
@@ -326,25 +327,25 @@ export function ChecklistVersionDocumentPage({
                   </dd>
                 </div>
                 <div>
-                  <dt>Via</dt>
+                  <dt>{hintedLabel("Via", CF_HELP.adminVersionDocument.fields.sheet)}</dt>
                   <dd>
                     {item.sheet === "FISICO" ? "Físico" : "Eletrônico"}
                   </dd>
                 </div>
                 <div>
-                  <dt>Escopo</dt>
+                  <dt>{hintedLabel("Escopo", CF_HELP.adminVersionDocument.fields.scope)}</dt>
                   <dd>
                     {optionLabel(BRANCH_OPTIONS, item.branch_scope)}
                   </dd>
                 </div>
                 <div>
-                  <dt>Validação</dt>
+                  <dt>{hintedLabel("Validação", CF_HELP.adminVersionDocument.fields.validation)}</dt>
                   <dd>
                     {optionLabel(SCOPE_OPTIONS, item.validation_scope)}
                   </dd>
                 </div>
                 <div className="cf-detail-list__full">
-                  <dt>Referência TOTVS</dt>
+                  <dt>{hintedLabel("Referência TOTVS", CF_HELP.adminVersionDocument.fields.totvsRef)}</dt>
                   <dd>{item.totvs_report_ref ?? "Não informada"}</dd>
                 </div>
               </dl>

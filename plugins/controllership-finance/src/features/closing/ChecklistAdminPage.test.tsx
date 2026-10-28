@@ -293,6 +293,33 @@ describe("ChecklistAdminPage", () => {
     );
   });
 
+  it("renders contextual help on columns, metrics and search (UX-016-RW01)", async () => {
+    setupHappy();
+    render(<ChecklistAdminPage basePath={BASE} />);
+    await screen.findByText("v1");
+
+    // Ajuda por coluna (headerHint → HelpTooltip acessível).
+    for (const name of [
+      "Ajuda: Versão",
+      "Ajuda: Estado",
+      "Ajuda: Itens",
+      "Ajuda: Vigente desde",
+      "Ajuda: Publicação",
+    ]) {
+      expect(
+        screen.getAllByRole("button", { name }).length,
+      ).toBeGreaterThan(0);
+    }
+    // Ajuda de busca na toolbar do hero.
+    expect(
+      screen.getByRole("button", { name: "Ajuda: busca na tabela" }),
+    ).toBeTruthy();
+    // Ajuda nos indicadores do hero.
+    expect(
+      screen.getByRole("button", { name: "Ajuda: Última versão" }),
+    ).toBeTruthy();
+  });
+
   // As ações de ciclo de vida (publicar, revisar, devolver, inativar,
   // descartar) vivem exclusivamente no detalhe da versão — a cobertura
   // correspondente está em ChecklistVersionPage.test.tsx.

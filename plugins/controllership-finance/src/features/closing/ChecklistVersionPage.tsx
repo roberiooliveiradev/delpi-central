@@ -61,6 +61,7 @@ import {
   SCOPE_OPTIONS,
   STATUS_LABELS,
   STATUS_VARIANTS,
+  hintedLabel,
   toQueryError,
   useChecklistVersionActions,
   VersionStatusActions,
@@ -233,6 +234,7 @@ export function ChecklistVersionPage({
       {
         key: "item_key",
         header: "Item",
+        headerHint: CF_HELP.adminVersion.columns.item,
         className: "cf-table__col--compact",
         sortable: true,
         sortValue: (row) => row.item_key,
@@ -243,6 +245,7 @@ export function ChecklistVersionPage({
       {
         key: "name",
         header: "Entregável",
+        headerHint: CF_HELP.adminVersion.columns.name,
         className: "cf-table__col--wrap",
         sortable: true,
         sortValue: (row) => row.name,
@@ -251,6 +254,7 @@ export function ChecklistVersionPage({
       {
         key: "sheet",
         header: "Folha",
+        headerHint: CF_HELP.adminVersion.columns.sheet,
         className: "cf-table__col--compact",
         sortable: true,
         sortValue: (row) =>
@@ -261,6 +265,7 @@ export function ChecklistVersionPage({
       {
         key: "origin",
         header: "Origem",
+        headerHint: CF_HELP.adminVersion.columns.origin,
         className: "cf-table__col--compact",
         sortable: true,
         sortValue: (row) =>
@@ -273,6 +278,7 @@ export function ChecklistVersionPage({
       {
         key: "recipient",
         header: "Destinatário",
+        headerHint: CF_HELP.adminVersion.columns.recipient,
         className: "cf-table__col--compact",
         sortable: true,
         sortValue: (row) =>
@@ -293,6 +299,7 @@ export function ChecklistVersionPage({
       {
         key: "applicability",
         header: "Obrigatório",
+        headerHint: CF_HELP.adminVersion.columns.applicability,
         className: "cf-table__col--compact",
         sortable: true,
         sortValue: (row) =>
@@ -307,6 +314,7 @@ export function ChecklistVersionPage({
       {
         key: "scope",
         header: "Validação",
+        headerHint: CF_HELP.adminVersion.columns.scope,
         className: "cf-table__col--compact",
         sortable: true,
         sortValue: (row) =>
@@ -522,24 +530,36 @@ export function ChecklistVersionPage({
               ? [
                   {
                     id: "items",
-                    label: "Documentos",
+                    label: hintedLabel(
+                      "Documentos",
+                      CF_HELP.adminVersion.metrics.items,
+                    ),
                     value: String(detailData.items.length),
                   },
                   {
                     id: "effective",
-                    label: "Vigente desde",
+                    label: hintedLabel(
+                      "Vigente desde",
+                      CF_HELP.adminVersion.metrics.effective,
+                    ),
                     value: detailData.effective_from_period ?? "—",
                   },
                   {
                     id: "published",
-                    label: "Publicada em",
+                    label: hintedLabel(
+                      "Publicada em",
+                      CF_HELP.adminVersion.metrics.published,
+                    ),
                     value: detailData.published_at
                       ? formatDateTime(detailData.published_at)
                       : "—",
                   },
                   {
                     id: "publishedBy",
-                    label: "Publicada por",
+                    label: hintedLabel(
+                      "Publicada por",
+                      CF_HELP.adminVersion.metrics.publishedBy,
+                    ),
                     // UX-014: contrato Core→BFF para atores
                     // administrativos ainda pendente — fallback neutro,
                     // nunca o subject cru como nome nem no hero.
@@ -549,7 +569,10 @@ export function ChecklistVersionPage({
                   },
                   {
                     id: "revision",
-                    label: "Revisão",
+                    label: hintedLabel(
+                      "Revisão",
+                      CF_HELP.adminVersion.metrics.revision,
+                    ),
                     value: String(detailData.revision),
                   },
                 ]
@@ -664,6 +687,7 @@ export function ChecklistVersionPage({
                 }
                 toolbarPortalTarget={toolbarHost}
                 tableLayout="scroll"
+                searchHint={CF_HELP.adminVersion.search}
                 headerActions={
                   editing ? (
                     <div className="cf-validation-panel__item-actions">

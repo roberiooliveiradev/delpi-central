@@ -182,6 +182,14 @@ export type DataTableSectionProps<T> = {
    * `min-height: 0`), para listagens que ocupam a altura útil restante.
    */
   tableLayout?: "section" | "scroll";
+  /**
+   * Paginação inteligente — quando `true`, o rodapé de paginação só é
+   * renderizado se houver mais de uma página navegável no conjunto
+   * efetivamente exibido (após filtros/busca; `total` autoritativo no
+   * modo server-side). O seletor «itens por página» na toolbar não é
+   * afetado. Opt-in e retrocompatível.
+   */
+  hidePaginationWhenSinglePage?: boolean;
   /** Filtros/formulários em linha própria, largura total (FilterBar embedded). */
   toolbarFilters?: ReactNode;
   /**
@@ -363,6 +371,7 @@ export function DataTableSection<T>({
   toolbarLeading,
   toolbarPortalTarget,
   tableLayout,
+  hidePaginationWhenSinglePage = false,
   toolbarFilters,
   columnPreferencesKey,
   defaultColumnVisibility,
@@ -819,12 +828,14 @@ export function DataTableSection<T>({
             />
           )}
 
-          <Pagination
-            page={paginationPage}
-            pageSize={paginationSize}
-            total={paginationTotal}
-            onPageChange={handlePageChange}
-          />
+          {hidePaginationWhenSinglePage && paginationTotal <= paginationSize ? null : (
+            <Pagination
+              page={paginationPage}
+              pageSize={paginationSize}
+              total={paginationTotal}
+              onPageChange={handlePageChange}
+            />
+          )}
         </>
       )}
     </section>

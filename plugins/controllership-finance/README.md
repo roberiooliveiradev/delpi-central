@@ -106,6 +106,15 @@ paginação ancorada ao fim. A Administração não tem coluna «Ações» nem
 Inativar — o ciclo de vida da versão (incluindo Inativar danger)
 existe apenas na página do detalhe.
 
+UX-016-RW01 (help contextual + paginação inteligente): todas as colunas
+informativas das tabelas CF usam `headerHint` (HelpTooltip acessível do
+kit), a busca das listagens usa `searchHint` e os indicadores/campos
+somente leitura usam `hintedLabel`/`hint` — textos centralizados em
+`helpTooltips.ts`. A paginação é inteligente por padrão em todo o portal:
+`hidePaginationWhenSinglePage` (prop nova do `DataTableSection`, ativada
+no wrapper `cfDataTableUi`) só renderiza o rodapé quando há mais de uma
+página efetiva — o seletor «Itens por página» permanece na toolbar.
+
 RW01 (design): `cf-detail-list` — padrão read-only usado nas páginas de
 detalhe — passou a ser o grid semântico do portal (auto-fit ~200px,
 label muted + valor forte, `__full` para textos extensos); a versão

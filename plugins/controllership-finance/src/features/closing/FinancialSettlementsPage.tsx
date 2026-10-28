@@ -430,12 +430,14 @@ export function FinancialSettlementsPage({
       {
         key: "settlementDate",
         header: "Data da baixa",
+        headerHint: CF_HELP.closing.columns.date,
         className: "cf-table__col--compact",
         render: (row) => formatCivilDate(row.settlementDate),
       },
       {
         key: "document",
         header: "Documento",
+        headerHint: CF_HELP.closing.columns.document,
         render: (row) => {
           const doc = [row.prefix, row.documentNumber, row.documentType]
             .filter(Boolean)
@@ -446,6 +448,7 @@ export function FinancialSettlementsPage({
       {
         key: "installment",
         header: "Parcela",
+        headerHint: CF_HELP.closing.columns.installment,
         align: "center",
         className: "cf-table__col--compact",
         render: (row) => row.installment ?? "—",
@@ -453,6 +456,7 @@ export function FinancialSettlementsPage({
       {
         key: "party",
         header: applied?.side === "receivable" ? "Cliente" : "Fornecedor",
+        headerHint: CF_HELP.closing.columns.party,
         className: "cf-table__col--wide",
         render: (row) => {
           const code = [row.partyCode, row.partyStore]
@@ -472,6 +476,7 @@ export function FinancialSettlementsPage({
       {
         key: "nature",
         header: "Natureza",
+        headerHint: CF_HELP.closing.columns.nature,
         className: "cf-table__col--wrap",
         render: (row) =>
           row.natureCode ? (
@@ -490,6 +495,7 @@ export function FinancialSettlementsPage({
       {
         key: "movementType",
         header: "Tipo mov.",
+        headerHint: CF_HELP.closing.columns.movementType,
         mobileLabel: "Tipo de movimento",
         className: "cf-table__col--wrap",
         render: (row) =>
@@ -509,6 +515,7 @@ export function FinancialSettlementsPage({
       {
         key: "paymentDirection",
         header: "Direção",
+        headerHint: CF_HELP.closing.columns.direction,
         className: "cf-table__col--status",
         // `side` do contrato é real; o código cru `paymentDirection` (D4)
         // fica em tooltip + texto para leitor de tela — nunca como
@@ -538,12 +545,14 @@ export function FinancialSettlementsPage({
       {
         key: "currencyCode",
         header: "Moeda",
+        headerHint: CF_HELP.closing.columns.currency,
         className: "cf-table__col--compact",
         render: (row) => row.currencyCode ?? "—",
       },
       {
         key: "settlementAmount",
         header: "Valor",
+        headerHint: CF_HELP.closing.columns.value,
         align: "right",
         className: "cf-table__col--numeric",
         render: (row) => (
@@ -555,12 +564,14 @@ export function FinancialSettlementsPage({
       {
         key: "dueDate",
         header: "Vencimento",
+        headerHint: CF_HELP.closing.columns.dueDate,
         className: "cf-table__col--compact",
         render: (row) => formatCivilDate(row.dueDate),
       },
       {
         key: "linkStatus",
         header: "Vínculo",
+        headerHint: CF_HELP.closing.columns.link,
         className: "cf-table__col--status",
         render: (row) => (
           <CfStatusBadge
@@ -572,6 +583,7 @@ export function FinancialSettlementsPage({
       {
         key: "branchCode",
         header: "Filial",
+        headerHint: CF_HELP.closing.columns.branch,
         className: "cf-table__col--compact",
         render: (row) =>
           row.branchCode ? (
@@ -604,6 +616,7 @@ export function FinancialSettlementsPage({
       {
         key: "nature",
         header: "Natureza",
+        headerHint: CF_HELP.closing.columns.nature,
         className: "cf-table__col--wrap",
         render: (group) =>
           group.natureCode || group.natureDescription ? (
@@ -624,6 +637,7 @@ export function FinancialSettlementsPage({
       {
         key: "movement",
         header: "Tipo de movimento",
+        headerHint: CF_HELP.closing.columns.movementType,
         mobileLabel: "Tipo de movimento",
         className: "cf-table__col--wrap",
         render: (group) =>
@@ -645,6 +659,7 @@ export function FinancialSettlementsPage({
       {
         key: "events",
         header: "Baixas",
+        headerHint: CF_HELP.closing.columns.settlements,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) => String(group.eventCount),
@@ -652,6 +667,7 @@ export function FinancialSettlementsPage({
       {
         key: "total",
         header: "Valor",
+        headerHint: CF_HELP.closing.columns.value,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) => (
@@ -663,6 +679,7 @@ export function FinancialSettlementsPage({
       {
         key: "currency",
         header: "Moeda",
+        headerHint: CF_HELP.closing.columns.currency,
         className: "cf-table__col--compact",
         render: (group) => group.currencyCode ?? "—",
       },

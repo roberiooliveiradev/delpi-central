@@ -1027,3 +1027,11 @@ Identidade (UX-014): `DataRecordCard.leading` aceita avatar quando houver contra
 - Linha/card: navegação acessível; sem coluna Ações na Administração; Inativar somente na Versão e fora do alvo clicável; ação destructive com confirmação.
 - UX014 identidade: não resolvida — fallback «Identidade não disponível» sem UUID cru; dependência isolada até contrato Core→BFF autorizado.
 - Gap residual do kit: sem controle homologado de ordenação visível no modo Cards (herda a ordenação aplicada na tabela; sem barra própria) — registrado, sem UI inventada.
+
+### UX-016-RW01 — help contextual + paginação inteligente (PROVEN)
+- Help de coluna: `DataTableColumn.headerHint` (HelpTooltip acessível nativo do `DataTable` — sem implementação paralela).
+- Help de busca: `DataTableSection.searchHint` (ícone «?» junto ao input).
+- Help de indicador/campo read-only: `hintedLabel` (helper CF) — mesmo `HelpTooltip` com `wrap` + `delpi-ui-section-hint-label`; campos de formulário usam `hint` do `FieldLabel` (TextField/SelectField/DateField/TextAreaField).
+- Paginação inteligente: `DataTableSection.hidePaginationWhenSinglePage` (opt-in, retrocompatível) — rodapé só renderiza quando o conjunto exibido excede uma página; `total` autoritativo no server-side. Wrapper `cfDataTableUi.tsx` ativa por padrão para todas as tabelas CF; opt-out via prop.
+- Cobertura: ~70 `headerHint`, 12 `hint` de formulário, hints em métricas dos dois heroes e 12 `<dt>` da página de documento — textos em `CF_HELP.<página>.columns|metrics|fields`.
+- Cobertura de teste: `DataTableSection.toolbarPortal.test.tsx` (10/10 — inclui 7 cenários de paginação: 0, 1, página cheia, multi, recálculo pós-busca, server-side, retrocompatibilidade).

@@ -57,6 +57,7 @@ import {
 import {
   STATUS_LABELS,
   STATUS_VARIANTS,
+  hintedLabel,
   toQueryError,
   useChecklistVersionActions,
   type QueryError,
@@ -150,6 +151,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
       {
         key: "version",
         header: "Versão",
+        headerHint: CF_HELP.admin.columns.version,
         className: "cf-table__col--compact",
         sortable: true,
         sortValue: (row) => row.version,
@@ -158,6 +160,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
       {
         key: "status",
         header: "Estado",
+        headerHint: CF_HELP.admin.columns.status,
         className: "cf-table__col--status",
         sortable: true,
         sortValue: versionSortLabel,
@@ -171,6 +174,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
       {
         key: "items",
         header: "Itens",
+        headerHint: CF_HELP.admin.columns.items,
         className: "cf-table__col--compact",
         align: "right",
         sortable: true,
@@ -180,6 +184,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
       {
         key: "effective",
         header: "Vigente desde",
+        headerHint: CF_HELP.admin.columns.effective,
         className: "cf-table__col--compact",
         sortable: true,
         sortValue: (row) => row.effective_from_period ?? "",
@@ -191,6 +196,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
       {
         key: "published",
         header: "Publicação",
+        headerHint: CF_HELP.admin.columns.published,
         className: "cf-table__col--wrap",
         sortable: true,
         sortValue: (row) => row.published_at ?? "",
@@ -283,13 +289,19 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
           highlights={[
             {
               id: "versions",
-              label: "Versões",
+              label: hintedLabel(
+                "Versões",
+                CF_HELP.admin.metrics.versions,
+              ),
               value: String(currentVersions?.length ?? 0),
               loading: loading || (template !== null && currentVersions === null),
             },
             {
               id: "latest",
-              label: "Última versão",
+              label: hintedLabel(
+                "Última versão",
+                CF_HELP.admin.metrics.latest,
+              ),
               value: latestVersion
                 ? `v${latestVersion.version}`
                 : "—",
@@ -300,7 +312,10 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
             },
             {
               id: "effective",
-              label: "Vigente desde",
+              label: hintedLabel(
+                "Vigente desde",
+                CF_HELP.admin.metrics.effective,
+              ),
               value: latestVersion?.effective_from_period ?? "—",
             },
           ]}
@@ -399,6 +414,7 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
               }
               toolbarPortalTarget={toolbarHost}
               tableLayout="scroll"
+              searchHint={CF_HELP.admin.search}
             />
           </div>
         ) : null}

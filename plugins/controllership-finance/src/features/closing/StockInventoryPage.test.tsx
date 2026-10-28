@@ -626,3 +626,34 @@ describe("StockInventoryPage — persistência de filtros na URL (RW01)", () => 
     );
   });
 });
+
+describe("StockInventoryPage — paginação inteligente (UX-016-RW01)", () => {
+  it("oculta a paginação quando o conjunto cabe em uma página", async () => {
+    getMock.mockResolvedValue(payload());
+    render(<StockInventoryPage />);
+    await screen.findByText("Produto Exemplo");
+    expect(
+      screen.queryByRole("navigation", { name: "Paginação da tabela" }),
+    ).toBeNull();
+  });
+
+  it("exibe a paginação quando há mais de uma página", async () => {
+    getMock.mockResolvedValue(
+      payload({
+        pagination: {
+          page: 1,
+          page_size: 50,
+          total_items: 120,
+          total_pages: 3,
+          has_next: true,
+          has_previous: false,
+        },
+      }),
+    );
+    render(<StockInventoryPage />);
+    await screen.findByText("Produto Exemplo");
+    expect(
+      screen.getByRole("navigation", { name: "Paginação da tabela" }),
+    ).toBeTruthy();
+  });
+});

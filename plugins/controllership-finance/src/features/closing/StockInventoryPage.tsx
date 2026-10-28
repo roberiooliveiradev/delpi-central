@@ -297,6 +297,7 @@ export function StockInventoryPage({
       {
         key: "productCode",
         header: "Produto",
+        headerHint: CF_HELP.stockInventory.columns.product,
         className: "cf-table__col--compact",
         render: (row) =>
           row.productCode ? (
@@ -308,6 +309,7 @@ export function StockInventoryPage({
       {
         key: "description",
         header: "Descrição",
+        headerHint: CF_HELP.stockInventory.columns.description,
         className: "cf-table__col--wrap",
         render: (row) =>
           row.description ? (
@@ -319,6 +321,7 @@ export function StockInventoryPage({
       {
         key: "productType",
         header: "Tipo",
+        headerHint: CF_HELP.stockInventory.columns.type,
         className: "cf-table__col--status",
         render: (row) =>
           row.productType ? (
@@ -330,12 +333,14 @@ export function StockInventoryPage({
       {
         key: "productGroup",
         header: "Grupo",
+        headerHint: CF_HELP.stockInventory.columns.group,
         className: "cf-table__col--compact",
         render: (row) => row.productGroup ?? "—",
       },
       {
         key: "unit",
         header: "UM",
+        headerHint: CF_HELP.stockInventory.columns.um,
         mobileLabel: "Unidade",
         className: "cf-table__col--compact",
         render: (row) => row.unit ?? "—",
@@ -343,12 +348,14 @@ export function StockInventoryPage({
       {
         key: "warehouse",
         header: "Armazém",
+        headerHint: CF_HELP.stockInventory.columns.warehouse,
         className: "cf-table__col--compact",
         render: (row) => row.warehouse ?? "—",
       },
       {
         key: "branchCode",
         header: "Filial",
+        headerHint: CF_HELP.stockInventory.columns.branch,
         className: "cf-table__col--compact",
         render: (row) =>
           row.branchCode ? (
@@ -360,6 +367,7 @@ export function StockInventoryPage({
       {
         key: "historicalQuantity",
         header: "Quantidade",
+        headerHint: CF_HELP.stockInventory.columns.quantity,
         align: "right",
         className: "cf-table__col--numeric",
         render: (row) => formatQuantity(row.historicalQuantity),
@@ -367,6 +375,7 @@ export function StockInventoryPage({
       {
         key: "historicalStockValue",
         header: "Valor histórico",
+        headerHint: CF_HELP.stockInventory.columns.historicalValue,
         align: "right",
         className: "cf-table__col--numeric",
         render: (row) => (
@@ -469,6 +478,7 @@ export function StockInventoryPage({
       {
         key: "productType",
         header: "Tipo",
+        headerHint: CF_HELP.stockInventory.columns.type,
         className: "cf-table__col--status",
         render: (group) =>
           group.productType ? (
@@ -480,6 +490,7 @@ export function StockInventoryPage({
       {
         key: "itemCount",
         header: "Itens",
+        headerHint: CF_HELP.stockInventory.columns.items,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) => formatQuantity(String(group.itemCount)),
@@ -487,6 +498,7 @@ export function StockInventoryPage({
       {
         key: "totalQuantity",
         header: "Quantidade",
+        headerHint: CF_HELP.stockInventory.columns.quantity,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) => formatQuantity(group.totalQuantity),
@@ -494,6 +506,7 @@ export function StockInventoryPage({
       {
         key: "totalStockValue",
         header: "Valor",
+        headerHint: CF_HELP.stockInventory.columns.historicalValue,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) => (
@@ -505,6 +518,7 @@ export function StockInventoryPage({
       {
         key: "share",
         header: "% do total",
+        headerHint: CF_HELP.stockInventory.columns.percent,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) =>
@@ -524,12 +538,14 @@ export function StockInventoryPage({
       {
         key: "warehouse",
         header: "Armazém",
+        headerHint: CF_HELP.stockInventory.columns.warehouse,
         className: "cf-table__col--compact",
         render: (group) => group.warehouse ?? "—",
       },
       {
         key: "branchCode",
         header: "Filial",
+        headerHint: CF_HELP.stockInventory.columns.branch,
         className: "cf-table__col--compact",
         render: (group) =>
           group.branchCode ? `Filial ${group.branchCode}` : "—",
@@ -537,6 +553,7 @@ export function StockInventoryPage({
       {
         key: "itemCount",
         header: "Itens",
+        headerHint: CF_HELP.stockInventory.columns.items,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) => formatQuantity(String(group.itemCount)),
@@ -544,6 +561,7 @@ export function StockInventoryPage({
       {
         key: "totalQuantity",
         header: "Quantidade",
+        headerHint: CF_HELP.stockInventory.columns.quantity,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) => formatQuantity(group.totalQuantity),
@@ -551,6 +569,7 @@ export function StockInventoryPage({
       {
         key: "totalStockValue",
         header: "Valor",
+        headerHint: CF_HELP.stockInventory.columns.historicalValue,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) => (
@@ -562,6 +581,7 @@ export function StockInventoryPage({
       {
         key: "share",
         header: "% do total",
+        headerHint: CF_HELP.stockInventory.columns.percent,
         align: "right",
         className: "cf-table__col--numeric",
         render: (group) =>

@@ -3,6 +3,7 @@ import {
   createDashboardDataTableKit,
   createDashboardPaginationKit,
   TABLE_PAGE_SIZE_OPTIONS,
+  type DashboardDataTableSectionProps,
   type PageJumpValidationReason,
 } from "@delpi/plugin-ui/index";
 
@@ -84,7 +85,19 @@ const kit = createDashboardDataTableKit({
   defaultPageSize: 50,
 });
 
-export const DataTableSection = kit.DataTableSection;
+const KitDataTableSection = kit.DataTableSection;
+
+/**
+ * DataTableSection do portal — paginação inteligente por padrão:
+ * o rodapé de paginação só aparece quando há mais de uma página
+ * navegável no conjunto exibido (client ou server-side). O seletor
+ * «Itens por página» na toolbar permanece sempre disponível.
+ * Opt-out pontual via `hidePaginationWhenSinglePage={false}`.
+ */
+export function DataTableSection<T>(props: DashboardDataTableSectionProps<T>) {
+  return <KitDataTableSection hidePaginationWhenSinglePage {...props} />;
+}
+
 export { TABLE_PAGE_SIZE_OPTIONS };
 
 export type { DataTableColumn } from "@delpi/plugin-ui/index";

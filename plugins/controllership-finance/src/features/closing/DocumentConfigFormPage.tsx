@@ -619,6 +619,7 @@ export function DocumentConfigFormPage({
               <div className="cf-validation-panel__form">
                 <CfTextField
                   label="Nome do documento"
+                  hint={CF_HELP.documentsAdmin.fields.name}
                   required
                   fullWidth
                   value={form.name}
@@ -635,6 +636,7 @@ export function DocumentConfigFormPage({
                 />
                 <CfTextAreaField
                   label="Descrição / finalidade"
+                  hint={CF_HELP.documentsAdmin.fields.purpose}
                   rows={2}
                   fullWidth
                   value={form.purpose}
@@ -645,6 +647,7 @@ export function DocumentConfigFormPage({
                 />
                 <CfTextAreaField
                   label="Orientações de preparação"
+                  hint={CF_HELP.documentsAdmin.fields.notes}
                   rows={2}
                   fullWidth
                   value={form.requirementNotes}
@@ -678,6 +681,7 @@ export function DocumentConfigFormPage({
               <div className="cf-validation-panel__form cf-form-grid">
                 <CfSelectField
                   label="Obrigatoriedade"
+                  hint={CF_HELP.documentsAdmin.fields.applicability}
                   options={APPLICABILITY_OPTIONS}
                   value={form.applicability}
                   disabled={busy}
@@ -687,6 +691,7 @@ export function DocumentConfigFormPage({
                 />
                 <CfSelectField
                   label="Destino"
+                  hint={CF_HELP.documentsAdmin.fields.recipient}
                   options={RECIPIENT_OPTIONS}
                   value={form.recipientArea}
                   disabled={busy}
@@ -696,6 +701,7 @@ export function DocumentConfigFormPage({
                 />
                 <CfSelectField
                   label="Origem"
+                  hint={CF_HELP.documentsAdmin.fields.origin}
                   options={ORIGIN_OPTIONS}
                   value={form.originKind}
                   disabled={busy}
@@ -705,6 +711,7 @@ export function DocumentConfigFormPage({
                 />
                 <CfSelectField
                   label="Via"
+                  hint={CF_HELP.documentsAdmin.fields.sheet}
                   options={SHEET_OPTIONS}
                   value={form.sheet}
                   disabled={busy}
@@ -714,6 +721,7 @@ export function DocumentConfigFormPage({
                 />
                 <CfSelectField
                   label="Escopo de filial"
+                  hint={CF_HELP.documentsAdmin.fields.branchScope}
                   options={BRANCH_OPTIONS}
                   value={form.branchScope}
                   disabled={busy}
@@ -723,6 +731,7 @@ export function DocumentConfigFormPage({
                 />
                 <CfSelectField
                   label="Regra de validação"
+                  hint={CF_HELP.documentsAdmin.fields.validationScope}
                   options={SCOPE_OPTIONS}
                   value={form.validationScope}
                   disabled={busy}
@@ -732,6 +741,7 @@ export function DocumentConfigFormPage({
                 />
                 <CfTextField
                   label="Referência do relatório TOTVS (R-ID)"
+                  hint={CF_HELP.documentsAdmin.fields.totvsReportRef}
                   placeholder="Ex.: FINR190"
                   value={form.totvsReportRef}
                   disabled={busy}
@@ -760,6 +770,7 @@ export function DocumentConfigFormPage({
                 <div className="cf-form-grid">
                   <CfDateField
                     label="Exigido a partir de (AAAA-MM)"
+                  hint={CF_HELP.documentsAdmin.fields.effectiveFrom}
                     type="month"
                     required
                     value={form.effectiveFrom}
@@ -770,6 +781,7 @@ export function DocumentConfigFormPage({
                   />
                   <CfDateField
                     label="Exigido até (AAAA-MM, opcional)"
+                  hint={CF_HELP.documentsAdmin.fields.effectiveUntil}
                     type="month"
                     value={form.effectiveUntil}
                     disabled={busy}

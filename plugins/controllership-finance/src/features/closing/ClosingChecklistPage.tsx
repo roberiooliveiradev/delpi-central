@@ -355,6 +355,7 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
       {
         key: "item_key",
         header: "Item",
+        headerHint: CF_HELP.checklist.columns.item,
         className: "cf-table__col--compact",
         render: (row) => (
           <span className="cf-cell-primary">{row.item_key}</span>
@@ -363,12 +364,14 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
       {
         key: "name",
         header: "Entregável esperado",
+        headerHint: CF_HELP.checklist.columns.name,
         className: "cf-table__col--wrap",
         render: (row) => <span title={row.name}>{row.name}</span>,
       },
       {
         key: "sheet",
         header: "Folha",
+        headerHint: CF_HELP.checklist.columns.sheet,
         className: "cf-table__col--compact",
         render: (row) =>
           row.sheet === "FISICO" ? "Físico" : "Eletrônico",
@@ -376,6 +379,7 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
       {
         key: "origin_kind",
         header: "Origem",
+        headerHint: CF_HELP.checklist.columns.origin,
         className: "cf-table__col--status",
         render: (row) => (
           <CfStatusBadge
@@ -387,6 +391,7 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
       {
         key: "recipient_area",
         header: "Destinatário",
+        headerHint: CF_HELP.checklist.columns.recipient,
         className: "cf-table__col--compact",
         render: (row) =>
           row.recipient_area ? (
@@ -398,12 +403,14 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
       {
         key: "branch_scope",
         header: "Escopo",
+        headerHint: CF_HELP.checklist.columns.scope,
         className: "cf-table__col--compact",
         render: (row) => BRANCH_LABELS[row.branch_scope] ?? row.branch_scope,
       },
       {
         key: "totvs_report_ref",
         header: "Relatório",
+        headerHint: CF_HELP.checklist.columns.report,
         className: "cf-table__col--compact",
         render: (row) =>
           row.totvs_report_ref ? (
@@ -415,6 +422,7 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
       {
         key: "state",
         header: "Estado",
+        headerHint: CF_HELP.checklist.columns.state,
         className: "cf-table__col--status",
         render: (row) => (
           <CfStatusBadge

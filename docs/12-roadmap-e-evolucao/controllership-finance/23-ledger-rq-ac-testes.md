@@ -694,6 +694,21 @@ Nenhum teste ou deploy desta rodada foi executado ao escrever esta especificaç�
 | UX015-RW02-10 | responsividade/temas/zoom | PASS | shots 10–15: dark/tablet820/320/390 `overflowX=0`; mobile default vira cards no kit |
 | UX015-RW02-11 | regressão/navegação/estados | PASS | 365 testes; smoke RW02 13/13 (deep link, F5, back/forward, 404, DRAFT/REVIEW/PUBLISHED) |
 | UX015-RW02-12 | deploy governado | PASS | `bed4993c05` → origin/main; srv-api pull + `up-prod-sequential.sh --build controllership-finance`; remoteEntry 200 servindo `__federation_expose_App-0ucqmrGp.js`/`App-D376ypA0.js`; BFF healthy; smoke prod autenticado TEST_NOT_RUN (sem identidade autorizada) |
+| UX016RW01-01 | Labels informativos inventariados em todas as superfícies do Portal | PASS | Matriz: 10 superfícies — Admin, Versão, Documento, Documentos, Catálogos, Checklist, Estoque, Baixas, Minhas tarefas, formulário; exceções justificadas (colunas Ações) |
+| UX016RW01-02 | Cabeçalhos de tabela com ajuda contextual | PASS | `headerHint` em ~70 colunas; RTL «renders contextual help» nas duas páginas; smoke RW01-help (6 ícones na listagem Admin) |
+| UX016RW01-03 | Ajuda reutiliza componentes homologados | PASS | `HelpTooltip`/`FieldLabel`/`hintedLabel` — zero implementação paralela, zero `title` HTML como solução |
+| UX016RW01-04 | Explicações respeitam os contratos | PASS | textos derivados dos hints governados já existentes em `helpTooltips.ts` + DTOs reais; «Última versão» documenta semântica de maior número (não vigência) |
+| UX016RW01-05 | Acessível por mouse, teclado e toque | PASS | `HelpTooltip` do kit: trigger com foco visível, `aria-label`, portal com clamp de viewport; mesmo componente dos `headerHint`/`hint` nativos |
+| UX016RW01-06 | Zero registros não exibe paginação | PASS | kit `Pagination` retorna null com `total===0` + gate `hidePaginationWhenSinglePage`; RTL kit 3 cenários |
+| UX016RW01-07 | Uma página não exibe paginação | PASS | `hidePaginationWhenSinglePage` no kit + default no wrapper CF; smoke local: Admin 3 versões → «oculta (página única)» |
+| UX016RW01-08 | Múltiplas páginas exibem paginação | PASS | Versão com 53 itens → «Exibindo 1–50 de 53 · Página 1 de 2» ancorada (smoke UX016-05b); RTL Stock 120 itens |
+| UX016RW01-09 | Tabela e Cards seguem a mesma regra | PASS | gate aplicado ao `<Pagination>` único da seção — fora do condicional table/cards |
+| UX016RW01-10 | Filtros recalculam paginação | PASS | regra usa o conjunto pós-filtro (`paginationTotal`); RTL kit «recalcula após busca reduzir a uma página» |
+| UX016RW01-11 | Ordenação e navegação preservadas | PASS | smoke UX016-06-sort/search/cards/nav 20/20; sort por coluna com hint acessível |
+| UX016RW01-12 | Claro/escuro e mobile funcionais | PASS | shots light/dark + 768/390/320 + zoom200 — overflowX=0 (harness UX016) |
+| UX016RW01-13 | Nenhum contrato/dado alterado | PASS | diff restrito a frontend + kit; zero BFF/migrations/permissões |
+| UX016RW01-14 | Testes frontend e build aprovados | PASS | MFE 371 (2 flakes transitórios conhecidos, verdes no rerun) + plugin-ui 2093/2093; build cf `App-Cq6oV9AL.js` / kit `Index-Dt9qqFyC.js` |
+| UX016RW01-15 | Documentação e Ajuda sincronizadas | PASS | 112 §53.6, 113 §28.15, 30 reuse map, README e `helpTooltips.ts` no mesmo commit |
 
 
 ### UX-016 — Hero contextual e listagem flexível nas páginas Admin/Versão (IMPLEMENTADO)

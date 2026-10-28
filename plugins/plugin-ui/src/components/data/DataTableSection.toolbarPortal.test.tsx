@@ -125,3 +125,116 @@ describe("DataTableSection tableLayout", () => {
     expect(document.querySelector(".delpi-ui-table-wrap--section")).toBeNull();
   });
 });
+
+describe("DataTableSection hidePaginationWhenSinglePage", () => {
+  const manyRows = [
+    { codigo: "A1", nome: "Alfa" },
+    { codigo: "B2", nome: "Beta" },
+    { codigo: "C3", nome: "Gama" },
+  ];
+
+  it("oculta a paginação com zero registros", () => {
+    render(
+      <DataTableSection
+        {...baseProps}
+        columns={columns}
+        rows={[]}
+        hidePaginationWhenSinglePage
+        hideSearch
+      />,
+    );
+    expect(screen.queryByTestId("pagination")).toBeNull();
+  });
+
+  it("oculta a paginação quando cabe uma única página", () => {
+    render(
+      <DataTableSection
+        {...baseProps}
+        columns={columns}
+        rows={rows}
+        pageSize={50}
+        hidePaginationWhenSinglePage
+        hideSearch
+      />,
+    );
+    expect(screen.queryByTestId("pagination")).toBeNull();
+  });
+
+  it("oculta a paginação com exatamente uma página cheia", () => {
+    render(
+      <DataTableSection
+        {...baseProps}
+        columns={columns}
+        rows={rows}
+        pageSize={2}
+        hidePaginationWhenSinglePage
+        hideSearch
+      />,
+    );
+    expect(screen.queryByTestId("pagination")).toBeNull();
+  });
+
+  it("exibe a paginação com mais de uma página", () => {
+    render(
+      <DataTableSection
+        {...baseProps}
+        columns={columns}
+        rows={manyRows}
+        pageSize={2}
+        hidePaginationWhenSinglePage
+        hideSearch
+      />,
+    );
+    expect(screen.getByTestId("pagination")).toBeTruthy();
+  });
+
+  it("recalcula após busca reduzir o conjunto a uma página", () => {
+    render(
+      <DataTableSection
+        {...baseProps}
+        columns={columns}
+        rows={manyRows}
+        pageSize={2}
+        hidePaginationWhenSinglePage
+      />,
+    );
+    expect(screen.getByTestId("pagination")).toBeTruthy();
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "Gama" },
+    });
+    expect(screen.queryByTestId("pagination")).toBeNull();
+    expect(screen.getByRole("cell", { name: "Gama" })).toBeTruthy();
+  });
+
+  it("sem a prop mantém a paginação sempre visível (retrocompatível)", () => {
+    render(
+      <DataTableSection
+        {...baseProps}
+        columns={columns}
+        rows={rows}
+        pageSize={50}
+        hideSearch
+      />,
+    );
+    expect(screen.getByTestId("pagination")).toBeTruthy();
+  });
+
+  it("usa o total autoritativo no modo server-side", () => {
+    render(
+      <DataTableSection
+        {...baseProps}
+        columns={columns}
+        rows={rows}
+        serverPagination={{
+          page: 1,
+          pageSize: 50,
+          total: 120,
+          onPageChange: () => {},
+        }}
+        hidePaginationWhenSinglePage
+        hideSearch
+      />,
+    );
+    expect(screen.getByTestId("pagination")).toBeTruthy();
+  });
+});
