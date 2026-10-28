@@ -644,3 +644,10 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - WP1: per-call telemetry from ModelCallLedger — T3 16 calls/~23.7k in/113s; T4.2 19 calls/~32.3k in/193s. Recovery round ≈9 calls/~15k in. invalid_structured_output retries = 16-36s latency cost. OpenRouter gen-ID correlation INCONCLUSIVE (not carried).
 - Local: governed_read_recovery_eval (Ollama delia-json + fake owner) — 5/5 stopped at admission surface_inquiry (local model limit, doc-185 consistent). Deterministic recovery+continuity tests 21/21 PASS.
 - NEXT: doc-187 WP3 decision — candidate #1 (project goal into select_candidate) + #2 (skip native_assessment in recovery round); both reuse/extend existing contracts.
+
+## 2026-10-28 — D187 WP3 goal-aware candidate selection (doc 190) — LOCAL ONLY
+- Task DELIA-C3-D187-WP3-GOAL-AWARE-CANDIDATE-SELECTION-01 on base 778c573250. H6 correction implemented per doc-187 WP3 decision (EXTEND existing _TurnGoal contract; no new mechanism).
+- _select_candidate block now {goal: {business_subject, declared_requirements}?, candidates: [...]} when a validated _TurnGoal exists; _fit_json_block+_omit_tail_entries ladder replaces mid-doc cut. goal threaded via _resolve_candidate/_discover_candidate/_invoke_selected/_repair_once/_recover_owner_contract/_recover_relevance/_maybe_aggregate_paginated_count. Instruction resource v25 (one bounded goal clause in select_candidate). Deterministic gates unchanged; candidate tokens never reach model.
+- RED at base: 8 new tests failed (no goal projection). GREEN: 2415 passed / 2 deselected (pre-existing env/v24-drift only). audit_architecture_phase3 OK.
+- LOCAL: structural transfer PROVEN via fake-model block inspection; semantic/business improvement vs kimi-k3 INCONCLUSIVE locally (delia-json cannot reach stage; no production calls). Call count unchanged; +~40-150 chars per multi-candidate call.
+- NEXT: doc-187 WP4 A/B under authorized model + owner-side search_products probe (stage C vs D split); H5 separate task.

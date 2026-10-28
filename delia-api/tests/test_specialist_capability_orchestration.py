@@ -1145,6 +1145,241 @@ def test_multi_candidate_unresolvable_is_not_applicable():
         ]
 
 
+def _goal_select(specialist_id, remote_name, arguments=None, **goal):
+    """``_select`` routing-map whose capability proposal also carries
+    the typed turn-goal fields (``select_capability#with_goal`` fold —
+    first-turn goal interpretation arrives inside that proposal)."""
+    proposal = _select(specialist_id, remote_name, arguments)
+    proposal[CAPABILITY_SELECTION_INSTRUCTION_ID].update(goal)
+    return proposal
+
+
+def _candidate_selection_payload(model):
+    """(parsed <candidates> payload, raw payload str, input_text) of
+    the bounded candidate-selection stage call."""
+    request = next(
+        r
+        for r in model.requests
+        if r.task_purpose_id == CANDIDATE_SELECTION_INSTRUCTION_ID
+    )
+    open_tag, close_tag = "<candidates>\n", "\n</candidates>"
+    start = request.input_text.index(open_tag) + len(open_tag)
+    end = request.input_text.index(close_tag)
+    raw = request.input_text[start:end]
+    return json.loads(raw), raw, request.input_text
+
+
+def _davi_multi_candidate_attempt(proposal):
+    read, port = _davi_read(
+        proposal,
+        outcomes={"discover_delpi_information": MULTI_CANDIDATE_RESULT},
+    )
+    attempt = read.attempt("busque tubo")
+    return read, port, attempt
+
+
+def test_candidate_selection_receives_goal_projection():
+    """WP3/H6 (T1): the validated ``_TurnGoal`` reaches the candidate
+    selector — ``business_subject`` and declared answer requirements
+    projected bounded so the model can discriminate record-producing
+    candidates from subject-adjacent knowledge reads."""
+    read, port, attempt = _davi_multi_candidate_attempt(
+        [
+            _goal_select(
+                "davi",
+                "discover_delpi_information",
+                {"query": "tubo"},
+                goal_class="read",
+                business_subject="terminais eletricos tipo bala",
+                answer_requirements={"min_items": 2},
+            ),
+            {"applicable": True, "action_id": "search_products"},
+            {"arguments": {"description": "tubo"}},
+        ]
+    )
+    _assert_success(attempt, "davi", "execute_delpi_information")
+    block, _raw, _ = _candidate_selection_payload(read._invoke_model._port)
+    assert block["goal"]["business_subject"] == (
+        "terminais eletricos tipo bala"
+    )
+    assert block["goal"]["declared_requirements"] == {"min_items": 2}
+
+
+def test_candidate_selection_goal_context_follows_turn_goal():
+    """WP3/H6 (T2): the context delivered to the selector tracks the
+    declared goal — a records-with-quantity goal and a knowledge goal
+    project materially different requirement context."""
+    _records_goal = _goal_select(
+        "davi",
+        "discover_delpi_information",
+        {"query": "tubo"},
+        goal_class="read",
+        business_subject="terminais eletricos tipo bala",
+        answer_requirements={"min_items": 2},
+    )
+    _knowledge_goal = _goal_select(
+        "davi",
+        "discover_delpi_information",
+        {"query": "tubo"},
+        goal_class="read",
+        business_subject="regra de designacao de terminais",
+    )
+    blocks = []
+    for selection in (_records_goal, _knowledge_goal):
+        read, _port, _attempt = _davi_multi_candidate_attempt(
+            [
+                selection,
+                {"applicable": True, "action_id": "search_products"},
+                {"arguments": {"description": "tubo"}},
+            ]
+        )
+        blocks.append(
+            _candidate_selection_payload(read._invoke_model._port)[0]
+        )
+    records_block, knowledge_block = blocks
+    assert records_block["goal"] != knowledge_block["goal"]
+    assert records_block["goal"]["declared_requirements"] == {
+        "min_items": 2
+    }
+    assert "declared_requirements" not in knowledge_block["goal"]
+
+
+def test_candidate_selection_without_goal_keeps_contract():
+    """WP3/H6 (T3): when no structured goal exists the stage contract
+    is unchanged — candidates only, same deterministic validation."""
+    read, port, attempt = _davi_multi_candidate_attempt(
+        [
+            _select(
+                "davi",
+                "discover_delpi_information",
+                {"query": "tubo"},
+            ),
+            {"applicable": True, "action_id": "search_products"},
+            {"arguments": {"description": "tubo"}},
+        ]
+    )
+    _assert_success(attempt, "davi", "execute_delpi_information")
+    block, _raw, _ = _candidate_selection_payload(read._invoke_model._port)
+    assert "goal" not in block
+    assert isinstance(block["candidates"], list)
+
+
+def test_candidate_selection_goal_never_leaks_authority():
+    """WP3/H6 (T4): the goal projection carries only business_subject
+    and declared requirements — owner tokens, authority fields and
+    unrelated goal internals never reach the selector."""
+    read, _port, attempt = _davi_multi_candidate_attempt(
+        [
+            _goal_select(
+                "davi",
+                "discover_delpi_information",
+                {"query": "tubo"},
+                goal_class="read",
+                business_subject="terminais eletricos tipo bala",
+                answer_requirements={"min_items": 2},
+                execution_bound="unrestricted",
+                scope_constraints={"quantity": "2"},
+            ),
+            {"applicable": True, "action_id": "search_products"},
+            {"arguments": {"description": "tubo"}},
+        ]
+    )
+    _assert_success(attempt, "davi", "execute_delpi_information")
+    block, _raw, input_text = _candidate_selection_payload(
+        read._invoke_model._port
+    )
+    assert set(block["goal"]) <= {
+        "business_subject",
+        "declared_requirements",
+    }
+    for leaked in (
+        "candidate_token",
+        "tok-search",
+        "tok-parents",
+        "execution_bound",
+        "scope_constraints",
+        "goal_class",
+    ):
+        assert leaked not in input_text
+
+
+def test_candidate_selection_projection_stays_bounded():
+    """WP3/H6 (T5): goal + the full owner candidate envelope stays a
+    single valid-JSON payload inside the surface bound — never a
+    mid-document cut, never a silent field loss."""
+    from app.application.capability_provision.orchestration import (
+        MAX_SURFACE_CHARS,
+    )
+
+    read, _port, attempt = _davi_multi_candidate_attempt(
+        [
+            _goal_select(
+                "davi",
+                "discover_delpi_information",
+                {"query": "tubo"},
+                goal_class="read",
+                business_subject="t" * 240,
+                answer_requirements={"min_items": 2},
+            ),
+            {"applicable": True, "action_id": "search_products"},
+            {"arguments": {"description": "tubo"}},
+        ]
+    )
+    _assert_success(attempt, "davi", "execute_delpi_information")
+    block, raw, _ = _candidate_selection_payload(read._invoke_model._port)
+    # json.loads above already proves no mid-document cut; the bound
+    # holds with all presented candidates plus the goal projection.
+    assert len(raw) <= MAX_SURFACE_CHARS
+    assert len(block["candidates"]) >= 2
+    assert block["goal"]["business_subject"]
+
+
+@pytest.mark.parametrize(
+    ("subject", "requirements", "expected"),
+    [
+        (
+            "terminais eletricos tipo bala",
+            {"min_items": 2},
+            {"min_items": 2},
+        ),
+        (
+            "chamados de suporte abertos",
+            {"ordering": "newest_first"},
+            {"ordering": "newest_first"},
+        ),
+        (
+            "indicadores de producao do mes",
+            {"complete_coverage": True},
+            {"complete_coverage": True},
+        ),
+    ],
+)
+def test_candidate_selection_goal_projection_generalizes(
+    subject, requirements, expected
+):
+    """WP3/H6 (T6): the projection is domain-neutral — identical
+    mechanism carries any validated subject/requirements across
+    products, tickets and indicator goals."""
+    read, _port, attempt = _davi_multi_candidate_attempt(
+        [
+            _goal_select(
+                "davi",
+                "discover_delpi_information",
+                {"query": "tubo"},
+                goal_class="read",
+                business_subject=subject,
+                answer_requirements=requirements,
+            ),
+            {"applicable": True, "action_id": "search_products"},
+            {"arguments": {"description": "tubo"}},
+        ]
+    )
+    _assert_success(attempt, "davi", "execute_delpi_information")
+    block, _raw, _ = _candidate_selection_payload(read._invoke_model._port)
+    assert block["goal"]["business_subject"] == subject
+    assert block["goal"]["declared_requirements"] == expected
+
+
 def test_zero_candidate_discovery_renders_truthfully():
     """A discovery with no candidates is grounded but honest — no
     bare 'Discovery completed.' as if it were the answer."""

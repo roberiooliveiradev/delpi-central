@@ -5382,6 +5382,7 @@ class OperationalCapabilityOrchestrator:
                     prior_turns,
                     deadline,
                     business_subject=goal.business_subject,
+                    goal=goal,
                 )
                 if repaired is not None:
                     invoked = repaired
@@ -5406,6 +5407,7 @@ class OperationalCapabilityOrchestrator:
                     workspace_context,
                     prior_turns,
                     deadline,
+                    goal=goal,
                 )
                 if recovered is not None:
                     invoked = recovered
@@ -5563,6 +5565,7 @@ class OperationalCapabilityOrchestrator:
             correlation,
             prior_turns,
             deadline,
+            goal=goal,
         )
         # CRI E2/E3: one verdict feeds both the insufficiency marker
         # and the grounded conversational composition — same edge,
@@ -8926,6 +8929,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         prior_turns: tuple[ConversationContextTurn, ...],
         deadline: TurnDeadline | None,
+        goal: "_TurnGoal | None" = None,
     ) -> SpecialistOutcome:
         """Bounded same-capability page walk for COUNT intents (R5).
 
@@ -8998,6 +9002,7 @@ class OperationalCapabilityOrchestrator:
                     correlation,
                     prior_turns,
                     deadline,
+                    goal=goal,
                 )
             except CapabilityProviderError:
                 pages.append(None)
@@ -9293,6 +9298,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...],
         deadline: TurnDeadline | None = None,
         business_subject: str | None = None,
+        goal: "_TurnGoal | None" = None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
         """One bounded pre-execution repair round (MAX_REPLAN_ROUNDS=1).
 
@@ -9357,6 +9363,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 prior_turns,
                 deadline,
+                goal=goal,
             )
         except CapabilityProviderError:
             return None
@@ -9372,6 +9379,7 @@ class OperationalCapabilityOrchestrator:
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
         deadline: TurnDeadline | None = None,
+        goal: "_TurnGoal | None" = None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
         """One bounded contextual-recovery round (C3).
 
@@ -9471,6 +9479,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 prior_turns,
                 deadline,
+                goal=goal,
             )
         except CapabilityProviderError:
             return None
@@ -9827,6 +9836,7 @@ class OperationalCapabilityOrchestrator:
                     correlation,
                     prior_turns,
                     deadline,
+                    goal=goal,
                 )
             except CapabilityProviderError as exc:
                 if exc.code != OWNER_ARGUMENT_REJECTED:
@@ -10937,7 +10947,12 @@ class OperationalCapabilityOrchestrator:
 
         if _is_candidate_bound(selected):
             found = self._discover_candidate(
-                group, input_text, correlation, deadline, prior_turns
+                group,
+                input_text,
+                correlation,
+                deadline,
+                prior_turns,
+                goal=goal,
             )
             if found is None:
                 return None
@@ -11017,6 +11032,7 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 correlation=correlation,
                 deadline=deadline,
+                goal=goal,
             )
             if candidate is None and not self._candidates_present(
                 outcome.structured
@@ -11043,6 +11059,7 @@ class OperationalCapabilityOrchestrator:
                         prior_turns,
                         correlation=correlation,
                         deadline=deadline,
+                        goal=goal,
                     )
             executors = [
                 cap
@@ -11154,6 +11171,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         deadline: TurnDeadline | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        goal: "_TurnGoal | None" = None,
     ) -> tuple[Mapping[str, Any] | None, SpecialistOutcome | None] | None:
         """Owner discovery flow: exactly one DISCOVERY capability must
         exist for the candidate-bound READ to be resolvable. On a
@@ -11183,6 +11201,7 @@ class OperationalCapabilityOrchestrator:
             (),
             correlation=correlation,
             deadline=deadline,
+            goal=goal,
         )
         if candidate is not None:
             return candidate, outcome
@@ -11210,6 +11229,7 @@ class OperationalCapabilityOrchestrator:
                 (),
                 correlation=correlation,
                 deadline=deadline,
+                goal=goal,
             ),
             retry,
         )
@@ -11293,6 +11313,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
+        goal: "_TurnGoal | None" = None,
     ) -> Mapping[str, Any] | None:
         """Resolve the owner candidate to chain — or none.
 
@@ -11323,6 +11344,7 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 correlation=correlation,
                 deadline=deadline,
+                goal=goal,
             )
         return None
 
@@ -11333,12 +11355,18 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
+        goal: "_TurnGoal | None" = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model disambiguation of a multi-candidate owner set.
 
         The model sees only action ids and bounded descriptions —
         candidate tokens never reach the model and are never accepted
-        from a proposal.
+        from a proposal. When a validated ``_TurnGoal`` exists, its
+        business subject and declared answer requirements are
+        projected alongside the candidates (same contract shape as
+        the relevance-judgment block) so a candidate that merely
+        relates to the subject can be told apart from one able to
+        satisfy the request.
         """
         entries = []
         by_action: dict[str, list[Mapping[str, Any]]] = {}
@@ -11361,9 +11389,38 @@ class OperationalCapabilityOrchestrator:
             )
         if not entries:
             return None
-        payload = json.dumps(entries, ensure_ascii=False)[
-            :MAX_SURFACE_CHARS
-        ]
+        block: dict[str, Any] = {}
+        if goal is not None:
+            goal_projection: dict[str, Any] = {}
+            if goal.business_subject:
+                goal_projection["business_subject"] = (
+                    goal.business_subject
+                )
+            requirements = goal.answer_requirements
+            if requirements is not None:
+                declared = {
+                    key: value
+                    for key, value in {
+                        "min_items": requirements.min_items,
+                        "ordering": requirements.ordering,
+                        "complete_coverage": (
+                            requirements.complete_coverage
+                        ),
+                    }.items()
+                    if value not in (None, False)
+                }
+                if declared:
+                    goal_projection["declared_requirements"] = declared
+            if goal_projection:
+                block["goal"] = goal_projection
+        block["candidates"] = entries
+        payload = _fit_json_block(
+            block,
+            MAX_SURFACE_CHARS,
+            lambda: _omit_tail_entries(
+                block, "candidates", "candidates_omitted"
+            ),
+        )
         proposal = self._model_stage_proposal(
             input_text,
             block_tag="candidates",
