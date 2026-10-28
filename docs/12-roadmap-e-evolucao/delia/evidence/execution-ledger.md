@@ -651,3 +651,11 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - RED at base: 8 new tests failed (no goal projection). GREEN: 2415 passed / 2 deselected (pre-existing env/v24-drift only). audit_architecture_phase3 OK.
 - LOCAL: structural transfer PROVEN via fake-model block inspection; semantic/business improvement vs kimi-k3 INCONCLUSIVE locally (delia-json cannot reach stage; no production calls). Call count unchanged; +~40-150 chars per multi-candidate call.
 - NEXT: doc-187 WP4 A/B under authorized model + owner-side search_products probe (stage C vs D split); H5 separate task.
+
+## 2026-10-28 — Market framework reuse fit assessment (doc 191) — READ-ONLY
+- Task DELIA-C3-MARKET-REUSE-FRAMEWORK-FIT-ASSESSMENT-01 on c0788d25ff (H6 confirmed merged). No code/deps/production changes.
+- Environment PROVEN: delia-api has NO pydantic/openai/mcp/httpx/langchain deps — Flask+requests+jose+cryptography only; custom streamable-HTTP MCP transport, custom schema validation, custom OpenAI-compatible adapter. Any framework = full new dependency tree.
+- Verdict: no agent framework (Pydantic AI 2.x, LangGraph 1.2.x, mcp-agent, OpenAI Agents SDK, MS Agent Framework 1.0) earns orchestrator replacement — agent loops invert the deterministic governed control plane = parallel planner authority. KEEP custom orchestrator.
+- Two adapter-scoped reuse candidates only: POC-1 official MCP Python SDK under specialist_interop transport (score 3.6/5); POC-2 Instructor/structured-output repair under model_invocation for F4 invalid-outputs (score 3.4/5). Both boundary-respecting component swaps; framework output stays untrusted data.
+- F1-F6 mapped: F1 fixed by H6; F4 = only framework-addressable residual (bounded, needs real-model evidence); F6 = owner retrieval adequacy, unaffected by frameworks — owner probe remains the higher business priority.
+- NEXT: coordination decision on POC-1/POC-2; H5 and owner search_products probe remain independent tasks.
