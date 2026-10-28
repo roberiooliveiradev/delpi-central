@@ -340,3 +340,48 @@ Commit `82cbb13f03` — diff 100% no `plugins/supplies`; **zero mudança de back
 Vitest 51 arquivos / **511 testes** verdes (2 novos: parse + round-trip `direct_ncm`); `tsc -b` limpo; build Vite ok; ESLint 5 warnings pré-existentes, 0 erros. Bundle produção `App-EXWSSnSw.js` contém `direct_ncm`/`comex-origin`.
 
 **Residuais:** AC visual (desktop/mobile/temas) `INCONCLUSIVE` sem captura de browser; o registro de teste `99999999` permanece como `rejected` na trilha de auditoria (rows de governança não são deletáveis por desenho).
+
+## 17. Comex S7 — catálogo compartilhado de NCMs + fluxo simplificado (2026-10-27)
+
+Commits `8cc1d8ab02` (backend), `605d35ebad` (fixture do teste), `3941c44c36` (frontend). Deploy `supplies-api` + `supplies`; bundle `App-BiAXN3iP.js`.
+
+### 17.1 S7.P0 — contract freeze
+
+Inventário concluiu que `supplies.comex_ncm_governance` **já é o catálogo compartilhado**: uma linha global por NCM (`UNIQUE ncm_code`, check de 8 dígitos, auditoria, revisão otimista) — não por usuário. O POST existente exige apenas `supplies.access` (`can_use_market_intelligence`) e `list_governance` retorna todos os registros. Gaps reais: (a) `SELECT`-then-`INSERT` com janela de corrida → `UniqueViolation` não tratada; (b) `initial_status="candidate"` em registro existente seguia o caminho de resubmissão em vez de resposta idempotente. Nenhuma tabela ou endpoint novo foi criado.
+
+### 17.2 S7.S1 — backend (`supplies-api`)
+
+- `create_governance`: tenta o insert, captura `IntegrityError` (violação do UNIQUE concorrente), faz rollback da transação abortada, relê por `ncm_code` e retorna a linha existente com `_existing=True` — o insert e o evento de auditoria seguem atômicos no caminho normal.
+- `request_ncm` (serviço): `initial_status="candidate"` com registro existente retorna a linha intacta + `already_registered=True` — qualquer que seja o status (inclui `inactive`/`rejected`, que **não** são reativados). O caminho explícito `pending_fiscal_review` preserva o resubmit `candidate|rejected → pending` e o 409 para `approved`/`inactive`.
+- Sem aprovação fiscal implícita, sem sincronização de allowlist no cadastro, sem reativação.
+
+### 17.3 S7.S2 — frontend (`plugins/supplies`)
+
+- Fluxo `BUSCAR OU INFORMAR → ADICIONAR → SELECIONAR → ANALISAR`. A aba «Consultar NCM» agora mostra o **catálogo compartilhado** (todos os registros, filtrável por código/descrição) com toggle Selecionar/Selecionada por linha; a entrada direta cadastra e seleciona em uma única ação (`Adicionar`).
+- Estados funcionais (AC-05): `Disponível` (allowlist ativa), `Cadastrada` (candidate), `Em revisão` (pending/approved-ainda-inativo), `Inativa` (rejected/inactive), `Não cadastrada` — sem jargão de workflow na superfície principal.
+- Administração separada (D-05): decisões de ciclo de vida (aprovar/rejeitar/inativar/reenviar) foram movidas para `<details>` exclusivo de `canManage`; a linha de seleção só tem status + selecionar + remover. `rejected → pending` segue visível para `supplies.access` (contrato do ciclo de vida).
+- Removido o multiselect redundante de «NCMs na análise» — a seleção via catálogo/chips é a única origem; `Limpar seleção` limpa a união. NCM malformada/ausente de produto não entra nos chips.
+- Empty states AC-08 implementados nos textos (`emptySelection`, `catalogEmpty`, `catalogNoMatch`, `alreadyInCatalog`, `catalogAdded`); ajuda contextual, manual e FAQ sincronizados.
+
+### 17.4 S7.S4 — testes
+
+- Backend: 48 testes verdes — incluindo o teste de corrida no repositório (insert concorrente → `IntegrityError` → reselect) e serviço (idempotência `candidate`, resubmit de `rejected` preservado).
+- Frontend: Vitest 51 arquivos / **518 testes** (1 novo teste estrutural S7: `initial_status: "candidate"`, catálogo, `<details>` admin, ausência do multiselect, strings de empty-state); `tsc -b` limpo; ESLint 5 warnings pré-existentes; build Vite ok.
+
+### 17.5 Smoke autenticado em produção (NCM `84798990`)
+
+| Caso | Resultado |
+|---|---|
+| `POST {ncm_code, initial_status:"candidate"}` (user `supplies.access`) | **201** `status: candidate` — sem `supplies.manage`, sem aprovação |
+| Re-add mesmo usuário | **201** `already_registered: true`, `candidate` |
+| Listagem pelo segundo usuário autorizado (`devin-smoke-g16` c/ `supplies.access`) | **200** — encontra a mesma linha |
+| Re-add pelo segundo usuário | **201** `already_registered: true`; total **1 linha** (sem duplicidade) |
+| `selectable_in_ui` da nova NCM | **None** — allowlist não contornada |
+| `GET imports/series` da candidate | **404** — nenhum dado MDIC |
+| `POST` NCM malformada | **422** `invalid_ncm` |
+| Sem token / sem permissão | **401 / 403** |
+| Re-add de `85444200` (inativa) | **201** `already_registered`, status permanece `inactive` — **não reativada** |
+
+Estado final honesto: `84798990` permanece `candidate` no catálogo compartilhado (registro auditável); conta de fumaça `devin-smoke-g16` foi habilitada e recebeu a role «Portal Suprimentos - Acesso» via Core RBAC admin para a prova de reutilização por outro usuário.
+
+**Residuais:** dados MDIC reais seguem `PENDING` (feed `comex-monthly` desabilitado); evidência visual em browser `INCONCLUSIVE` sem captura.
