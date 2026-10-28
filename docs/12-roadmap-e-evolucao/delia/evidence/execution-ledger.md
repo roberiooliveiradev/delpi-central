@@ -626,3 +626,14 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Correcao minima recomendada (nao executada): A/B identico T1-T4 contra configuracao do modelo produtivo em ambiente autorizado para isolar capacidade de modelo vs contrato de projecao de capabilities.
 - Veredito: FAILURES_REPRODUCED root-stage-evidenced; BUSINESS_OUTCOME=FAIL em ambiente local; INDEPENDENT_REVIEW=PENDING; fase nao avancada.
 - Artefatos: doc 185.
+
+
+## 2026-10-28 — DELIA-C3-PRODUCTION-KIMI-K3-CONTEXTUAL-RECOVERY-DIAGNOSTIC-01 (doc 186)
+
+- Diagnostico produtivo T1-T4 em srv-api (container saudavel, image sha256:9947eac9, modelo kimi-k3, DELIA_ENV=production). Identidade: usuario 'user' provisionado pelo owner no realm delpi durante a sessao; password grant, sem reset/RBAC/write. 5 turnos READ-only.
+- Resultado: 5/5 GROUNDED, limitacoes honestas, zero fabricacao. Cadeia completa executada: target_selection->mcp:davi discover -> select_candidate -> candidate_arguments -> execute_delpi_information; recuperacao contextual bounded (2o ciclo discover+execute) em T3/T4.
+- Doc-185 RC1-RC5 NAO reproduzidos em producao (selection sempre davi; sem invalid; sem surface_inquiry; sem no_result de args; sem specialist errado). Falhas locais = model-capacity bound.
+- Residual (FAILURE_STAGE_PROVEN): adequacao de retrieval — search_products retornou registros nao pertinentes (T3/T4) e em T1/T2 o candidato executado foi read_governed_technical_knowledge (vazio); exemplares conhecidos 10080092/10081004 nao retornados. Hipoteses abertas H-A (semantica do arg description) vs H-B (cobertura/escopo owner ou paridade de args DAVI).
+- BUSINESS_OUTCOME=PARTIAL; metricas: 7-19 model calls, 10.5k-32.3k input tokens, 45-193s por turno.
+- Veredito: PRODUCTION_CHAIN_HEALTHY; proximo bounded step = probe owner search_products(description) via execute autorizado para separar H-A/H-B; sem mudancas de codigo/DAVI/deploy; fase nao avancada.
+- Artefatos: doc 186.
