@@ -668,3 +668,11 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Engine selection: env DELIA_ORCHESTRATION_ENGINE {delia default, langgraph}, fail-closed, never request/model controlled; rollback = env revert, no data migration.
 - LangGraph feasibility: FEASIBLE as internal sequencer (sync invoke, no checkpointer needed, delegates to stage runtime); MODERATE-HIGH effort; MIT; new dep tree needs approval.
 - Proposed ADR embedded: PROPOSED — PENDING_COORDINATION_APPROVAL. NEXT: Steps I+II combined task (protocol parity + GovernedStageRuntime extraction, zero behavior change).
+
+## 2026-10-29 — Governed-attempt contract foundation (doc 193) — PROVEN
+- Task DELIA-C3-PLUGGABLE-ORCHESTRATION-CONTRACT-FOUNDATION-01 on 5628f9eb60.
+- Step I: SupportsGovernedCapabilityAttempt.attempt now declares the full real signature (added cancel_check; exact prior_turns/activity_sink types+order). Signature-only change — Protocol is structural typing, zero runtime behavior.
+- Step II: tests/test_governed_attempt_contract.py — 14 boundary-only conformance tests over ENGINE_IDS registry (delia). RED (missing=['cancel_check']) → GREEN. Covers read/candidate/token-opacity/arg-bounds/authz/invented/PREPARE-ACT/timeout/cancel/correlation.
+- Boundary learning: constructor turn_budget_seconds=30 != call-time turn_deadline=30s — small budget skips optional self-index probe, empty-arg invokes fail closed (skip_budget_identifier_unavailable). Suite uses default budget + turn_deadline.
+- Step III extraction DECLINED: SECOND_CONSUMER_NEED not proven (no second engine authorized) — GovernedStageRuntime deferred to Engine-B task (doc 192 II). No DELIA_ORCHESTRATION_ENGINE created (speculative config prohibited).
+- Regression: 2431 passed, 2 failed both pre-existing/environmental (CRI variant drift; missing fixture mount). Arch Phase-3 gate PASS. Single attempt() implementer confirmed; no code behavior changed.

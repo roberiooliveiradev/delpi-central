@@ -30,9 +30,11 @@ from typing import Any, Callable, Mapping, Protocol
 from app.application.capability_provision.contracts import (
     CapabilityProviderError,
 )
+from app.application.interaction.activity import ActivityEventSink
 from app.application.interaction.contracts import GovernedCapabilityProvenance
 from app.application.interaction.turn_budget import TurnDeadline
 from app.application.interaction.workspace_context import WorkspaceContext
+from app.application.model_invocation.contracts import ConversationContextTurn
 from app.application.specialist_interop.errors import (
     MCP_AUTHENTICATION_FAILED,
     MCP_AUTHORIZATION_DENIED,
@@ -237,8 +239,9 @@ class SupportsGovernedCapabilityAttempt(Protocol):
         session_id: str | None = None,
         confirmation: Mapping[str, Any] | None = None,
         workspace_context: WorkspaceContext | None = None,
+        prior_turns: tuple[ConversationContextTurn, ...] = (),
         max_execution_stage: str | None = None,
         turn_deadline: TurnDeadline | None = None,
-        prior_turns: tuple = (),
-        activity_sink: Any | None = None,
+        activity_sink: ActivityEventSink | None = None,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> GovernedCapabilityAttempt: ...
