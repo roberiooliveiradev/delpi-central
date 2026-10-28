@@ -1244,3 +1244,32 @@ verificado localmente; produção não deployada** (gate separado pendente).
 - Descarte prod realizado via endpoint: `VERSION_DISCARDED` auditado;
   catálogo vazio (0 versões); competência 2026-09 intacta.
 - Fluxo documental desbloqueado — primeiro cadastro real pelo PO.
+
+
+## 28.9 UX-013 — Refinamento visual transversal do cadastro documental (solicitação PO, 28/10/2026)
+
+**Estado: PLANNED / DESIGN FIRST — nenhuma mudança runtime neste registro.** Evidência: capturas autenticadas do PO em produção nas telas Início, Administração do checklist, cadastro, listagem, edição e modal de eventos/auditoria após primeiro cadastro manual (Relatório P7 bloco H; v1 publicada vigente desde 2026-11). O objetivo é evoluir o acabamento e a consistência visual, **não alterar a publicação, vigência, item_key, snapshot, permissões ou contratos**. O primeiro cadastro manual aparece nas capturas; não confundir screenshot com prova de todos os cenários de backend.
+
+**Problemas vistos nas capturas (OBSERVED, sem inferir API):**
+1. Inputs, textareas, selects e month-picker do formulário parecem controles nativos/estilização local, sem assinatura visual unificada do kit; selects abrem menu nativo. Inspecionar exports reais do **Blueprint UI / @delpi/plugin-ui** (nomenclatura do PO; kit técnico vigente é @delpi/plugin-ui) e utilizar apenas componentes homologados, com labels, help, disabled/error, foco e teclado.
+2. Cards extensos Identificação/Exigência/Vigência e Situação atual apresentam separação vertical insuficiente; o formulário é excessivamente largo e cada field ocupa uma linha em desktop. Melhorar spacing/gap interno e entre cards, grid responsivo de campos de comprimento adequado e largura legível, sem criar layout kit paralelo.
+3. Ações Salvar/Cancelar, Adicionar documento, Versões e auditoria, Criar versão rascunho e ações de tabela têm hierarquia visual fraca. Usar ActionButton/ícones do kit com CTA primário evidente, secundárias/ghost e danger somente para ações destrutivas; estados loading/disabled/focus e feedback.
+4. Auditoria usa diálogo/lista de eventos pouco diferenciados. Inventariar **componente Media / media object, timeline, Activity/Interaction** efetivamente exportado pelo kit antes de escolher. Reutilizar o componente disponível mais apropriado para ícone/autor/data/evento e cronologia. Se não existir, registrar gap no reuse map e DECISION_REQUIRED para criação/expansão do kit — proibido componente paralelo inventado no Portal.
+5. Cards da home Início e blocos administrativos carecem de diferenciação/ícones; verificar PageHero, SectionCard, InteractiveDataCard, EmptyState, IconButton, Tooltip/Help, StatusBadge disponíveis. Refinar somente páginas desta jornada para evitar redesign transversal sem gate.
+6. Breadcrumbs e títulos de criar/editar devem explicitar hierarquia e ser consistentes com o chrome dos outros Portais; evitar header duplicado. Listagem deve melhorar densidade, estados vazios, badge 'Futuro', ações por linha e feedback de edição, sem prometer funcionalidades inexistentes.
+7. Preservar tema claro/escuro usando tokens do kit, contraste WCAG, hover/focus visível, tab-order, screen-reader labels, mobile/tablet/desktop e zoom; sem cores hardcoded ou CSS exclusivo divergente.
+
+**Escopo:** `DocumentsAdminPage.tsx`, `DocumentConfigFormPage.tsx`, `ChecklistAdminPage.tsx`, modal eventos, entradas contextuais na home, CSS local estritamente necessário, `helpTooltips.ts`, testes. Manter as rotas existentes e os três tabs do fechamento; deep routes administrativas não criam aba.
+
+**Gates:** UX-013-CP1 inventariar exports e consumidores de Blueprint UI/@delpi/plugin-ui + plano visual comparativo screenshots; CP2 wireframe/mapa campo→componente real + revisão docs 112/30, selecionar melhorias sem novos contratos; CP3 implementar page-by-page com menor diff após gate transversal de UI; CP4 testes RTL/Vitest, lint, typecheck, build, keyboard/a11y, mobile/dark/light, snapshots comparativos; CP5 deploy local e homologação; CP6 produção somente com autorização específica e smoke autenticado, Help e docs sincronizados. Sem mudanças BFF/schema/migrations/permissões.
+
+**RQ/AC iniciais:**
+- RQ-UX013-01 kit-first: controles de entrada (incl. selects, textarea, mês) e ícones usam export real do @delpi/plugin-ui, sem duplicação; ausência vira inventário, não invenção.
+- RQ-UX013-02 spacing: cards separados visivelmente, grids responsivos legíveis e alinhamento adequado; mobile sem overflow.
+- RQ-UX013-03 ações: CTA primário destacado, variantes corretas, feedback de erro/loading e confirmação danger governada.
+- RQ-UX013-04 histórico/eventos: representação visual cronológica com componente de media/interação/timeline **se comprovadamente existir no kit**; autor, tipo, data e versão acessíveis, sem nova fonte de dados.
+- RQ-UX013-05 listagem/home: estados e ícones consistentes, affordance e navegação preservadas, filtros URL/F5 e auditoria intactos.
+- RQ-UX013-06 regressão: sem alteração de request/response nem da lógica DR1/DR2/D3/D4/D5; MANAGE backend, snapshots, vigências e idempotência preservados.
+- RQ-UX013-07 DoD: claro/escuro, teclado, foco, leitor de tela, 320px→desktop, zoom 200%, Ajuda e comparação visual com as capturas.
+
+**Ordem recomendada:** 1) formulário cadastro/edição; 2) listagem; 3) Administração do checklist + eventos; 4) home/atalhos; revisão visual PO a cada página. Não incorporar integração dos relatórios do §27 nesta rodada.
