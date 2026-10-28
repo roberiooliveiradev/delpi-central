@@ -969,3 +969,19 @@ Revisão de implementação obrigatória: mapa final campo→export/import exato
 | Navegação | `navigatePluginPath`/`navigatePluginView` + builders `checklistAdminVersionPath`/`checklistAdminVersionDocumentPath`/`checklistAdminEventsPath` (`pluginRoutes.ts`) | cascata sem nova aba; deep link/F5/back-forward nativos |
 
 Zero componente novo de kit: a separação em páginas reutilizou o padrão read-only (`cf-detail-list`) e os wrappers de ritmo do UX-013-RW01 (`cf-lead-stack`/`cf-card-stack`). `checklistAdminShared.tsx` é o owner único do ciclo de ações de versão — elimina a duplicação que existiria entre lista e detalhe.
+
+
+### UX-015-RW01 — mapa de reuso para wireframes (PLANNED)
+
+| Elemento | Reuso preferencial (verificar export real HEAD) | Observação |
+|---|---|---|
+| Breadcrumb/header contextual | CfPagePath, CfTitleWithHelp, ActionButton | Preservar chrome |
+| Resumo versão | CfSectionCard, CfStatusBadge, layout/grid do kit | Sem inventar KPI/componente novo |
+| Tabela documentos | DataTableSection, filtros/badges existentes | Preservar dados reais, não expansão |
+| Detalhe de propriedades | cf-detail-list ou read-only factory homologada, CSS grid escopado | Sem pares dt/dd empilhados à esquerda |
+| Contexto resumido | CfSectionCard, badges, actions | Evitar card gigante repetitivo |
+| Histórico | CfTimeline, sem modal | Identidade UX014 depende Core/BFF |
+| Empty/error/loading | CfEmptyState, CfFeedbackMessage, CfQueryErrorBanner | Estados honestos |
+| Iconografia/spacing | tokens e ícones homologados plugin-ui | Dark/light, foco/mobile |
+
+Registrar no relatório final os imports reais e qualquer CSS residual; criar componentes paralelos somente após gate. Wireframe detalhado doc 112 §51.
