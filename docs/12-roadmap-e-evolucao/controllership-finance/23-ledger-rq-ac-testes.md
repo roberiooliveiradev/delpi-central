@@ -693,4 +693,4 @@ Nenhum teste ou deploy desta rodada foi executado ao escrever esta especificaç�
 | UX015-RW02-09 | identidade humana via contrato autorizado | DECISION_REQUIRED | BFF só tem lookup document-scoped (`participants/lookup`); atores administrativos exigem novo contrato Core→BFF — ver UX-014 |
 | UX015-RW02-10 | responsividade/temas/zoom | PASS | shots 10–15: dark/tablet820/320/390 `overflowX=0`; mobile default vira cards no kit |
 | UX015-RW02-11 | regressão/navegação/estados | PASS | 365 testes; smoke RW02 13/13 (deep link, F5, back/forward, 404, DRAFT/REVIEW/PUBLISHED) |
-| UX015-RW02-12 | deploy governado | PASS | commit/push main + `up-prod-sequential.sh --build controllership-finance`; smoke prod autenticado TEST_NOT_RUN |
+| UX015-RW02-12 | deploy governado | PASS | `bed4993c05` → origin/main; srv-api pull + `up-prod-sequential.sh --build controllership-finance`; remoteEntry 200 servindo `__federation_expose_App-0ucqmrGp.js`/`App-D376ypA0.js`; BFF healthy; smoke prod autenticado TEST_NOT_RUN (sem identidade autorizada) |
