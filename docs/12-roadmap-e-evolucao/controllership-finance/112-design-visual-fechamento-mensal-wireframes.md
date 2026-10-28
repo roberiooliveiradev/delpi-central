@@ -1864,3 +1864,16 @@ Refinar a apresentação: reduzir cards repetitivos de fonte indisponível, uma 
 **GATE-013 (28/10/2026):** contrato DR-1 proposto e comparativo DR-2 documentados no doc 114 (TARGET — aguardando revisão arquitetural e decisão do PO; nenhuma mudança visual implementada); GATE-014 consolidou o contrato em doc 114 §8 — REVIEW sem segregação, Idempotency-Key, OCC `base_version`, rejeição de janela sobre competência aberta e `allow_empty` para versão vazia).
 
 **GATE-015 (28/10/2026) — implementação, sem mudança visual.** A orquestração multi-publicação do RW01 saiu do MFE: cadastro, edição, término e encerramento passam por UM comando transacional da BFF (`PUT …/documents/{key}/requirement`). Último item pode ser encerrado com confirmação explícita (`allow_empty` → versão publicada de zero itens, sem documento-sentinela); `stale_revision` oferece recarregar estado; copy de vigência agora informa que janela sobre competência aberta é recusada (422). Páginas, filtros, histórico e acessibilidade do UX-012 preservados — contrato e evidências no doc 114 §10 e Plano 113 §28.5.
+
+
+## 49. UX-013 — refinamento visual kit-first do catálogo documental (TARGET)
+
+Evidência visual: capturas PO em produção em 28/10/2026: home, checklist admin vazio e com v1 publicada, criação/edição de Relatório P7 bloco H, lista de documentos (vigência 11/2026, Futuro), modal de quatro eventos DRAFT/UPDATE/REVIEW/PUBLISHED. **Não é implementação desta seção.**
+
+- Formulários: seções Identificação/Exigência/Vigência/Situação com separação vertical explícita, paddings e layout responsivo de campos; substituir input/select/textarea/month nativos **somente** pelos equivalentes homologados efetivamente exportados pelo Blueprint UI / `@delpi/plugin-ui`. Se o kit não disponibilizar equivalente, não criar componente paralelo: inventariar e propor extensão central.
+- Ações: Salvar como CTA principal, Cancelar secundário, Adicionar principal, Versões/auditoria secundária, Inativar/Descartar com confirmação danger; botões e ícones do kit, loading/focus/tooltip/feedback.
+- Auditoria: investigar componente de mídia, interação, timeline ou media object do kit; renderização hierárquica tipo/autor/data/versão com acessibilidade, sem inventar contrato.
+- Listagem: tabela e filtros do kit, situação em badge, ações claras, estado vazio orientado e pesquisa persistente; não alterar colunas/dados sem contract check.
+- Home e admin: ícones/atalhos/estados consistentes com padrão global e identidade visual de portais, sem duplicar chrome.
+- QA: comparativo antes/depois por página e 320px/tablet/desktop, light/dark, zoom 200%, tab/foco, leitor de tela, F5/voltar, Ajuda; provas separadas de screenshot e funcionalidade.
+- Execução faseada por página após inventário do kit e gate transversal. Ver Plano 113 §28.9 e mapa 30.
