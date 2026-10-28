@@ -16,6 +16,12 @@ from engineering_app.interface.http.routes.overview_routes import (
 from engineering_app.interface.http.routes.home_routes import (
     router as home_router,
 )
+from engineering_app.interface.mcp import (
+    combine_lifespan,
+    mcp_http_app,
+    mcp_metadata_router,
+    mcp_mount_path_middleware,
+)
 from engineering_app.middleware.auth_middleware import jwt_middleware
 from engineering_app.middleware.request_observability_middleware import (
     get_request_id,
@@ -53,7 +59,7 @@ app = FastAPI(
     description="BFF/composição do Portal Engenharia — bootstrap F1.S1.",
     version="0.1.0",
     root_path=settings.ENGINEERING_API_ROOT_PATH,
-    lifespan=lifespan,
+    lifespan=combine_lifespan(lifespan, mcp_http_app),
     docs_url=None,
     redoc_url=None,
     # Evita 307 slash-redirect com Location http:// atrás de TLS termination
@@ -84,8 +90,16 @@ async def unhandled_exception_handler(_request: Request, exc: Exception):
 # Observability envolve o JWT para instrumentar também 401/403/503 de auth.
 app.middleware("http")(jwt_middleware)
 app.middleware("http")(request_observability_middleware)
+# Last registered http middleware runs first: rewrite /mcp → /mcp/
+# antes do 307 do Mount (convenção dos demais MCPs da plataforma).
+app.middleware("http")(mcp_mount_path_middleware)
 
 
 app.include_router(health_router)
+app.include_router(mcp_metadata_router)
 app.include_router(home_router)
 app.include_router(overview_router)
+
+# Streamable HTTP MCP (path público: /apps/engineering-api/mcp) —
+# AuthN/AuthZ via jwt_middleware (transporte OAuth + delpi_auth).
+app.mount("/mcp", mcp_http_app)

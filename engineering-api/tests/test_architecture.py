@@ -37,6 +37,11 @@ FORBIDDEN_DEPENDENCY_PREFIXES = (
 )
 
 
+MCP_ADAPTER_DIR = PACKAGE_ROOT / "interface" / "mcp"
+
+MCP_ONLY_PREFIXES = ("mcp", "delpi_mcp")
+
+
 def _iter_imports():
     for path in sorted(PACKAGE_ROOT.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -67,6 +72,14 @@ def test_no_forbidden_dependencies():
     for path, line, module in _iter_imports():
         top = _top_level(module)
         if top in FORBIDDEN_DEPENDENCY_PREFIXES:
+            # EVA.MCP.V1: o adapter MCP e superficie legitima em
+            # interface/mcp -- fora dele, mcp/delpi_mcp seguem proibidos.
+            if top in MCP_ONLY_PREFIXES and path.is_relative_to(MCP_ADAPTER_DIR):
+                continue
+            # delpi_mcp.auth fornece os gates de transporte MCP compartilhados
+            # (mesmo papel de delpi_auth) — permitido apenas no middleware.
+            if top == "delpi_mcp" and path.is_relative_to(PACKAGE_ROOT / "middleware"):
+                continue
             violations.append(f"{path}:{line} imports {module}")
     assert not violations, "Forbidden dependencies found:\n" + "\n".join(violations)
 
@@ -79,3 +92,26 @@ def test_no_domain_layer_for_bff():
     assert "domain" not in present, (
         "engineering-api não deve criar camada de domínio — BFF apenas compõe"
     )
+
+
+def test_inner_layers_never_import_mcp_adapter():
+    # Camadas internas nao podem depender do adapter MCP.
+    inner_layers = ("application", "infrastructure", "composition")
+    violations = []
+    for layer in inner_layers:
+        layer_dir = PACKAGE_ROOT / layer
+        if not layer_dir.is_dir():
+            continue
+        for path in sorted(layer_dir.rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    modules = [a.name for a in node.names]
+                elif isinstance(node, ast.ImportFrom):
+                    modules = [node.module or ""]
+                else:
+                    continue
+                for mod in modules:
+                    if mod.startswith("engineering_app.interface.mcp"):
+                        violations.append(f"{path} imports {mod}")
+    assert not violations, "Inner layers importing MCP adapter:\n" + "\n".join(violations)

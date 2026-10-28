@@ -2659,6 +2659,9 @@ services:
       ENGINEERING_HOME_SOURCE_TIMEOUT_SECONDS: ${ENGINEERING_HOME_SOURCE_TIMEOUT_SECONDS:-5.0}
       ENGINEERING_HOME_MAX_SECTION_ITEMS: ${ENGINEERING_HOME_MAX_SECTION_ITEMS:-10}
       ENGINEERING_HOME_MAX_CONCURRENT_SOURCES: ${ENGINEERING_HOME_MAX_CONCURRENT_SOURCES:-3}
+      # EVA MCP (RFC 9728) — resource audience exata do endpoint público.
+      MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_ENGINEERING:-https://minhadelpi.com.br/apps/engineering-api/mcp}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
