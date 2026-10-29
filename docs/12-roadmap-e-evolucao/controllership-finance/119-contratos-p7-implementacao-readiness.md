@@ -863,6 +863,28 @@ CSV+PDF autenticados nos 3 relatórios; Help atualizado.
 — homologação contra novas emissões oficiais segue pendente (E2/E8).
 Nenhum PDF se apresenta como emissão oficial TOTVS.
 
+**Commit/push:** `936d0c0f20` → rebase sobre `00b6704d8f` →
+`e80ee23a16` (68 arquivos; concorrentes fora do commit).
+
+**Deploy produtivo** (`srv-api`, `~/projetos/delpi-central`, script
+canônico `up-prod-sequential.sh --pull --build` nos 3 serviços):
+`delpi-api-delpi`, `delpi-controllership-finance-api` e
+`delpi-controllership-finance` Up/healthy; gateway upstreams OK;
+SHA remoto `e80ee23a1`.
+
+**Smoke produtivo:** rotas novas no OpenAPI prod
+(`/financeiro/stock-movements[/export]`,
+`/financeiro/work-in-process[/export]`); 401 anônimo fail-closed em
+`/closing/stock-movements`, `/closing/work-in-process`,
+`/closing/analytics/stock-reconciliation` (BFF) e nas rotas
+api-delpi; bundle `App-cSvIP1mE.js` contém `stock-movements`/
+`work-in-process`. Smoke autenticado de usuário: `TEST_NOT_RUN` —
+sem persona de teste sancionada no realm prod; reservado à
+homologação G2/G3.
+
+**Rollback:** `git revert e80ee23a16` + mesmo script `--build` nos 3
+serviços; rotas aditivas, zero migrations — revert limpo.
+
 ---
 
 *Fim do documento 119.*
