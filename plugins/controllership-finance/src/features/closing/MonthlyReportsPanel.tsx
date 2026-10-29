@@ -184,6 +184,16 @@ const DOMAIN_OPERAND_LABELS: Record<string, string> = {
   h02: "Material em processo (R08)",
 };
 
+/** Domínio P3 → operando da conciliação analítica que o reflete. */
+const DOMAIN_TO_OPERAND: Record<
+  ReconciliationDomain,
+  "entradasSaidas" | "p7" | "h02"
+> = {
+  ENTRADAS_SAIDAS: "entradasSaidas",
+  P7: "p7",
+  H02: "h02",
+};
+
 const SOURCE_STATE_LABELS: Record<SourceState, string> = {
   AVAILABLE: "Disponível",
   STALE: "Desatualizada",
@@ -195,7 +205,7 @@ const SOURCE_STATE_LABELS: Record<SourceState, string> = {
 const STOCK_STATUS_LABELS: Record<string, string> = {
   available: "Disponível",
   incomplete: "Parcialmente disponível",
-  source_missing: "Fonte indisponível",
+  source_missing: "Posição histórica indisponível",
   no_matching_items: "Sem dados para o filtro",
 };
 
@@ -326,6 +336,16 @@ function buildAttentionItems(args: {
             DOMAIN_OPERAND_LABELS[key] ?? key,
         )
         .join(", ");
+      const missingDetail = data.ineligibleOperands
+        .map((key) => {
+          const operand = data.operands[
+            key as keyof typeof data.operands
+          ];
+          const state =
+            OPERAND_STATUS_LABELS[operand?.status ?? ""] ?? "—";
+          return `${DOMAIN_OPERAND_LABELS[key] ?? key}: ${state}`;
+        })
+        .join("; ");
       items.push({
         id: "analytics-ineligible",
         kind: "check_pending",
@@ -339,6 +359,7 @@ function buildAttentionItems(args: {
           "Consulte os relatórios indisponíveis na origem — a conciliação calcula quando os três operandos estão completos.",
         facts: [
           ["Operandos pendentes", missing],
+          ["Detalhe por fonte", missingDetail],
           ["Estado", "Cálculo não realizado"],
         ],
         totvsGuide: null,
@@ -370,56 +391,93 @@ function buildAttentionItems(args: {
         // governado (default sintetizado pela BFF) — distinguir de uma
         // fonte registrada e marcada indisponível.
         const neverRegistered = !recon.fetched_at;
-        // P7: a consulta operacional responde independentemente do
-        // operando P3 — "consulta disponível" ≠ "elegível p/ conciliar".
-        const p7Operational =
-          recon.domain === "P7" &&
-          stock?.kind === "ready" &&
-          stock.data.status !== "source_missing";
+        // Três dimensões independentes (REWORK-011): a consulta
+        // operacional responde por conta própria via operando da
+        // conciliação analítica — "consulta disponível" ≠ "elegível
+        // p/ conciliar" e "snapshot ausente" ≠ "falha técnica".
+        const operandStatus =
+          args.recon?.kind === "ready"
+            ? (args.recon.data.operands[DOMAIN_TO_OPERAND[recon.domain]]
+                .status ?? null)
+            : null;
+        const operational = operandStatus === "AVAILABLE";
+        const snapshotMissing = operandStatus === "SOURCE_MISSING";
+        const technicalFailure = operandStatus === "UNAVAILABLE";
+        const partialData = operandStatus === "INCOMPLETE";
+        const reportKey = DOMAIN_TO_OPERAND[recon.domain] === "entradasSaidas"
+          ? ("stock-movements" as const)
+          : DOMAIN_TO_OPERAND[recon.domain] === "h02"
+            ? ("work-in-process" as const)
+            : ("stock-inventory" as const);
+        // A dimensão operacional rotula apenas o domínio nunca
+        // registrado — a fonte P3 registrada tem estado autoritativo
+        // próprio, com a consulta operacional exibida como fato.
+        const situation = neverRegistered
+          ? operational
+            ? "Consulta disponível — conciliação pendente"
+            : snapshotMissing
+              ? "Posição histórica ainda não disponível"
+              : technicalFailure
+                ? "Falha ao consultar a fonte"
+                : partialData
+                  ? "Dados incompletos — conciliação pendente"
+                  : "Fonte da conciliação não registrada"
+          : SOURCE_STATE_LABELS[recon.source_state];
+        const badgeLabel = neverRegistered
+          ? operational || partialData
+            ? "Conciliação pendente"
+            : snapshotMissing
+              ? "Sem posição histórica"
+              : technicalFailure
+                ? "Falha na fonte"
+                : "Fonte não registrada"
+          : undefined;
+        const description = neverRegistered
+          ? operational
+            ? "O relatório possui dados para análise nesta competência, mas ainda não existe fonte registrada e validada para sua utilização no P3 governado — disponibilidade de consulta não equivale a elegibilidade para conciliar."
+            : snapshotMissing
+              ? "Não há posição histórica de fechamento disponível para o mês selecionado — a consulta operacional não encontra o snapshot SB9 da data de referência. Isso não é saldo zero nem falha técnica; a fonte P3 também ainda não foi registrada."
+              : technicalFailure
+                ? "A consulta operacional falhou por erro técnico na origem — a fonte P3 também não está registrada. Nenhum valor é presumido."
+                : partialData
+                  ? "A consulta operacional responde apenas parcialmente para esta competência — e a fonte P3 ainda não está registrada. Dados incompletos não são apresentados como zero."
+                  : "A fonte desta conferência ainda não foi registrada nem validada — a conciliação permanece bloqueada até que exista uma fonte elegível."
+          : "A fonte desta conferência não pôde ser consultada ou validada.";
+        const nextAction = neverRegistered
+          ? operational || partialData
+            ? "Abra o relatório para consultar os dados; a elegibilidade da fonte para a conciliação é registrada pela gestão no checklist P3."
+            : technicalFailure
+              ? "Atualize a consulta e tente novamente — se a falha persistir, verifique a origem no ERP."
+              : snapshotMissing
+                ? "A posição histórica só existirá após o fechamento de estoque do período no ERP; nenhum dado é presumido."
+                : "A conciliação aguarda a validação de uma fonte elegível — consulte o checklist P3 quando a fonte oficial estiver integrada."
+          : "Verifique a disponibilidade da fonte no ERP e atualize a consulta.";
         items.push({
           id: `p3-src-${recon.domain}`,
           kind: "source_unavailable",
           source: label,
-          description: p7Operational
-            ? "A consulta operacional do P7 retorna dados reais nesta competência, mas a fonte ainda não foi validada como operando da conciliação P3 — disponibilidade de consulta não equivale a elegibilidade para conciliar."
-            : neverRegistered
-              ? "A fonte desta conferência ainda não foi registrada nem validada — a conciliação permanece bloqueada até que exista uma fonte elegível."
-              : "A fonte desta conferência não pôde ser consultada ou validada.",
-          situation: p7Operational
-            ? "Consulta disponível — conciliação pendente"
-            : neverRegistered
-              ? "Fonte da conciliação não registrada"
-              : SOURCE_STATE_LABELS[recon.source_state],
-          badgeLabel: p7Operational
-            ? "Conciliação pendente"
-            : neverRegistered
-              ? "Fonte não registrada"
-              : undefined,
+          description,
+          situation,
+          badgeLabel,
           difference: null,
           origin: "Conciliação P3",
           fetchedAt: recon.fetched_at,
-          nextAction: p7Operational
-            ? "Abra o relatório P7 para consultar os dados; a elegibilidade da fonte para a conciliação é registrada pela gestão no checklist P3."
-            : neverRegistered
-              ? "A conciliação aguarda a validação de uma fonte elegível — consulte o checklist P3 quando a fonte oficial estiver integrada."
-              : "Verifique a disponibilidade da fonte no ERP e atualize a consulta.",
+          nextAction,
           facts: [
             ["Domínio", label],
             [
-              "Situação da fonte",
+              "Consulta operacional",
+              operational
+                ? "Disponível"
+                : (OPERAND_STATUS_LABELS[operandStatus ?? ""] ??
+                  "—"),
+            ],
+            [
+              "Elegibilidade P3",
               neverRegistered
-                ? "Não registrada para a conciliação"
+                ? "Não registrada"
                 : SOURCE_STATE_LABELS[recon.source_state],
             ],
-            ...(p7Operational
-              ? ([
-                  ["Consulta operacional", "Disponível"],
-                  [
-                    "Elegibilidade P3",
-                    "Pendente de validação",
-                  ],
-                ] as [string, string][])
-              : []),
             [
               "Última consulta",
               recon.fetched_at
@@ -428,7 +486,7 @@ function buildAttentionItems(args: {
             ],
           ],
           totvsGuide: null,
-          reportKey: "stock-inventory",
+          reportKey,
         });
       } else if (
         recon.divergence !== null &&
@@ -597,6 +655,10 @@ function buildAttentionItems(args: {
             ? "O ERP não possui fechamento de estoque registrado para esta competência."
             : "O snapshot de estoque está parcialmente disponível para esta competência.",
         situation: STOCK_STATUS_LABELS[stock.data.status],
+        badgeLabel:
+          stock.data.status === "source_missing"
+            ? "Sem posição histórica"
+            : undefined,
         difference: null,
         origin: "TOTVS/SB9",
         fetchedAt: stock.data.dataAsOf,
@@ -984,6 +1046,25 @@ export function MonthlyReportsPanel({
     settlements?.kind === "error" ||
     stock?.kind === "error" ||
     recon?.kind === "error";
+  // «Divergências identificadas» só exibe um número quando a contagem
+  // é comprovada: zero com verificações pendentes seria um falso
+  // negativo — INCONCLUSIVE/pendente nunca vira «0» (REWORK-011).
+  const divergenceValue =
+    divergenceCount > 0
+      ? String(divergenceCount)
+      : divergenceUnknown || unverifiedCount > 0
+        ? "—"
+        : "0";
+  const divergenceHint =
+    divergenceCount > 0
+      ? unverifiedCount > 0
+        ? "diferenças comprovadas — outras verificações pendentes"
+        : "diferenças comprovadas nas conferências"
+      : divergenceUnknown
+        ? "nem todas as fontes responderam"
+        : unverifiedCount > 0
+          ? "não verificadas — conferências pendentes"
+          : "nenhuma diferença comprovada nas conferências";
   const operandStatus = (
     key: "entradasSaidas" | "p7" | "h02",
   ): string | null =>
@@ -1041,21 +1122,15 @@ export function MonthlyReportsPanel({
           aria-label="Indicadores de relatórios"
         >
           <CfInteractiveDataCard
-            ariaLabel={`Divergências identificadas: ${
-              divergenceUnknown ? "—" : divergenceCount
-            }`}
+            ariaLabel={`Divergências identificadas: ${divergenceValue}`}
             fields={[
               {
                 id: "value",
                 label: "Divergências identificadas",
-                value: divergenceUnknown
-                  ? "—"
-                  : String(divergenceCount),
+                value: divergenceValue,
                 valueTone: "value",
                 present: true,
-                hint: divergenceUnknown
-                  ? "nem todas as fontes responderam"
-                  : "diferenças comprovadas nas conferências",
+                hint: divergenceHint,
               },
             ]}
             openHint="Ver na área de atenção"
@@ -1220,8 +1295,9 @@ export function MonthlyReportsPanel({
                       variant={
                         status === "Disponível"
                           ? "success"
-                          : status === "Indisponível" ||
-                              status === "Fonte indisponível"
+                          : status !== null &&
+                              status !== "Parcialmente disponível" &&
+                              status !== "Sem dados para o filtro"
                             ? "warning"
                             : "info"
                       }

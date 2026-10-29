@@ -184,9 +184,11 @@ const OPERAND_LABELS: Record<string, string> = {
 export const OPERAND_STATUS_LABELS: Record<string, string> = {
   AVAILABLE: "Disponível",
   INCOMPLETE: "Parcialmente disponível",
-  SOURCE_MISSING: "Fonte indisponível",
+  // SB9 snapshot ausente na data de referência — causa comprovada,
+  // distinta de falha técnica (UNAVAILABLE).
+  SOURCE_MISSING: "Posição histórica indisponível",
   NO_MATCHING_ITEMS: "Sem dados para o filtro",
-  UNAVAILABLE: "Indisponível",
+  UNAVAILABLE: "Falha ao consultar a fonte",
 };
 
 const PARITY_LABELS: Record<string, string> = {

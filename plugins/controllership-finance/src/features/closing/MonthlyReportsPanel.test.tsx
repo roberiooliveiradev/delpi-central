@@ -305,15 +305,162 @@ describe("indicadores e área de atenção", () => {
         /Consulta disponível — conciliação pendente/,
       ),
     ).toBeTruthy();
-    // Indicador de divergências permanece 0 — todas as fontes responderam.
+    // Com a conciliação P7 pendente de validação, o indicador não
+    // pode declarar zero verificado — mostra «—» (não verificadas).
     expect(
       screen.getByRole("button", {
-        name: /Divergências identificadas: 0/,
+        name: /Divergências identificadas: —/,
       }),
     ).toBeTruthy();
   });
 
-  it("domínio P3 nunca registrado distingue-se de fonte indisponível", async () => {
+  it("R05 com consulta disponível e P3 sem registro mostra conciliação pendente", async () => {
+    p3Mock.mockResolvedValue(
+      p3State([
+        recon("ENTRADAS_SAIDAS", {
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: null,
+        }),
+        recon("P7"),
+        recon("H02"),
+      ]),
+    );
+    renderPanel();
+
+    await screen.findByText("Conciliação pendente");
+    expect(
+      screen.getAllByText("Entradas e saídas (R05)").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(
+        /Consulta disponível — conciliação pendente/,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/ainda não existe fonte registrada e validada/),
+    ).toBeTruthy();
+  });
+
+  it("R08 com consulta disponível e P3 sem registro mostra conciliação pendente", async () => {
+    p3Mock.mockResolvedValue(
+      p3State([
+        recon("ENTRADAS_SAIDAS"),
+        recon("P7"),
+        recon("H02", {
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: null,
+        }),
+      ]),
+    );
+    renderPanel();
+
+    await screen.findByText("Conciliação pendente");
+    expect(
+      screen.getAllByText("Posição H02 (R08)").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(
+        /Consulta disponível — conciliação pendente/,
+      ),
+    ).toBeTruthy();
+  });
+
+  it("snapshot ausente mostra posição histórica indisponível — não falha técnica", async () => {
+    reconMock.mockResolvedValue(
+      reconPayload({
+        eligibility: "INELIGIBLE",
+        ineligibleOperands: ["entradasSaidas"],
+        operands: {
+          entradasSaidas: operand(null),
+          p7: operand("3776994.69"),
+          h02: operand("64591.71"),
+        },
+        divergence: null,
+        divergenceCents: null,
+        parity: "NOT_COMPUTED",
+      }),
+    );
+    p3Mock.mockResolvedValue(
+      p3State([
+        recon("ENTRADAS_SAIDAS", {
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: null,
+        }),
+        recon("P7"),
+        recon("H02"),
+      ]),
+    );
+    renderPanel();
+
+    await screen.findByText("Sem posição histórica");
+    expect(
+      screen.getByText(/Posição histórica ainda não disponível/),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/não é saldo zero nem falha técnica/),
+    ).toBeTruthy();
+  });
+
+  it("falha técnica no operando mostra falha ao consultar a fonte", async () => {
+    reconMock.mockResolvedValue(
+      reconPayload({
+        eligibility: "INELIGIBLE",
+        ineligibleOperands: ["h02"],
+        operands: {
+          entradasSaidas: operand("3890247.18"),
+          p7: operand("3776994.69"),
+          h02: operand(null, { status: "UNAVAILABLE" }),
+        },
+        divergence: null,
+        divergenceCents: null,
+        parity: "NOT_COMPUTED",
+      }),
+    );
+    p3Mock.mockResolvedValue(
+      p3State([
+        recon("ENTRADAS_SAIDAS"),
+        recon("P7"),
+        recon("H02", {
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: null,
+        }),
+      ]),
+    );
+    renderPanel();
+
+    await screen.findByText("Falha na fonte");
+    expect(
+      screen.getAllByText(/Falha ao consultar a fonte/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(/falhou por erro técnico na origem/),
+    ).toBeTruthy();
+  });
+
+  it("domínio P3 nunca registrado sem consulta operacional mantém fonte não registrada", async () => {
+    reconMock.mockResolvedValue(
+      reconPayload({
+        operands: {
+          entradasSaidas: operand(null, {
+            status: "NO_MATCHING_ITEMS",
+          }),
+          p7: operand("3776994.69"),
+          h02: operand("64591.71"),
+        },
+      }),
+    );
     p3Mock.mockResolvedValue(
       p3State([
         recon("ENTRADAS_SAIDAS", {
@@ -487,10 +634,11 @@ describe("conciliação analítica — superfície independente", () => {
     expect(
       screen.getAllByText(/fonte ausente nunca entra como zero/).length,
     ).toBeGreaterThan(0);
-    // Nenhuma divergência analítica é declarada.
+    // Nenhuma divergência analítica é declarada — e a contagem não
+    // pode ser zero verificado enquanto houver operando pendente.
     expect(
       screen.getByRole("button", {
-        name: /Divergências identificadas: 0/,
+        name: /Divergências identificadas: —/,
       }),
     ).toBeTruthy();
   });
