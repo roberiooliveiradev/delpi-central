@@ -1,0 +1,25 @@
+ORACLE_LATEST_PROCESS: None
+ORACLES: {}
+{"s": "b_pino", "r": 0, "out": "FAIL", "first": "EVIDENCE_RELEVANCE", "caps": ["davi.discover_delpi_information"], "ms": 8404}
+{"s": "b_illustrative", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 7579}
+{"s": "c_davi_explicit", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 11905}
+{"s": "c_teo_explicit", "r": 0, "out": "FAIL", "first": "GROUP_SELECTION_ERROR", "caps": ["davi.discover_delpi_information"], "ms": 8458}
+{"s": "c_vista_explicit", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 10574}
+{"s": "a_playlist_ctx", "r": 0, "out": "FAIL", "first": "GOAL_INTERPRETATION", "caps": [], "ms": 14798}
+{"s": "a_playlist_noctx", "r": 0, "out": "FAIL", "first": "FALSE_CAPABILITY_REFUSAL", "caps": [], "ms": 6812}
+{"s": "d_catalog_exec", "r": 0, "out": "FAIL", "first": "DISCOVERY_AS_ANSWER", "caps": [], "ms": 16392}
+{"s": "d_catalog_only", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 1487}
+{"s": "e_proc_followup", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 24384}
+{"s": "e_prod_followup", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 8071}
+{"s": "ord_latest", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 19264}
+{"s": "b_bala_phrase", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 15279}
+{"s": "b_faston", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 9416}
+{"s": "neg_sentimento", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 12557}
+{"s": "neg_planetas", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 9219}
+{"s": "ctrl_oi", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 1343}
+{"s": "ctrl_sipoc", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 8027}
+{"s": "surf_inquiry", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 2364}
+{"s": "c_teo_proc_id", "r": 0, "out": "FAIL", "first": "GROUP_SELECTION_ERROR", "caps": ["davi.discover_delpi_information"], "ms": 30504}
+{"s": "missing_email", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 10535}
+{"s": "ambig_proc", "r": 0, "out": "FAIL", "first": "INCONCLUSIVE", "caps": ["davi.discover_delpi_information"], "ms": 21620}
+SUMMARY: {"executions": 22, "model_calls": 120, "input_tokens": 188628, "output_tokens": 4401, "outcomes": {"FAIL": 14, "PASS": 8}}

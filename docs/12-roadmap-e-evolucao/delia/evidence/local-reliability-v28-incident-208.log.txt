@@ -1,0 +1,25 @@
+ORACLE_LATEST_PROCESS: None
+ORACLES: {}
+{"s": "b_pino", "r": 0, "out": "FAIL", "first": "EVIDENCE_RELEVANCE", "caps": ["davi.discover_delpi_information"], "ms": 11804}
+{"s": "b_illustrative", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 14714}
+{"s": "c_davi_explicit", "r": 0, "out": "PASS", "first": null, "caps": ["davi.discover_delpi_information"], "ms": 21528}
+{"s": "c_teo_explicit", "r": 0, "out": "FAIL", "first": "GROUP_SELECTION_ERROR", "caps": ["davi.discover_delpi_information"], "ms": 8732}
+{"s": "c_vista_explicit", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 16446}
+{"s": "a_playlist_ctx", "r": 0, "out": "FAIL", "first": "GOAL_INTERPRETATION", "caps": [], "ms": 9526}
+{"s": "a_playlist_noctx", "r": 0, "out": "FAIL", "first": "GOAL_INTERPRETATION", "caps": [], "ms": 5766}
+{"s": "d_catalog_exec", "r": 0, "out": "PASS", "first": null, "caps": ["davi.discover_delpi_information"], "ms": 26122}
+{"s": "d_catalog_only", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 1196}
+{"s": "e_proc_followup", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 18150}
+{"s": "e_prod_followup", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 5338}
+{"s": "ord_latest", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 14679}
+{"s": "b_bala_phrase", "r": 0, "out": "FAIL", "first": "ADMISSION_ERROR", "caps": [], "ms": 11400}
+{"s": "b_faston", "r": 0, "out": "FAIL", "first": "EVIDENCE_RELEVANCE", "caps": ["davi.discover_delpi_information"], "ms": 10092}
+{"s": "neg_sentimento", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 4062}
+{"s": "neg_planetas", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 8224}
+{"s": "ctrl_oi", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 1372}
+{"s": "ctrl_sipoc", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 5239}
+{"s": "surf_inquiry", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 972}
+{"s": "c_teo_proc_id", "r": 0, "out": "FAIL", "first": "GROUP_SELECTION_ERROR", "caps": ["davi.discover_delpi_information"], "ms": 13187}
+{"s": "missing_email", "r": 0, "out": "PASS", "first": null, "caps": [], "ms": 6367}
+{"s": "ambig_proc", "r": 0, "out": "FAIL", "first": "INCONCLUSIVE", "caps": ["davi.discover_delpi_information"], "ms": 13299}
+SUMMARY: {"executions": 22, "model_calls": 144, "input_tokens": 231389, "output_tokens": 4842, "outcomes": {"FAIL": 12, "PASS": 10}}

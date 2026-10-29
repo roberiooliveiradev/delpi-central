@@ -1,6 +1,7 @@
 bpmn_validation
 delpi_api_client
 delpi_auth
+delpi_character_profiles
 delpi_mcp
 strategic_indicators_client
 transformometro_client
