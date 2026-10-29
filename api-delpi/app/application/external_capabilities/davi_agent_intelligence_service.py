@@ -26,7 +26,12 @@ CONTENT_PATH = (
 # governed P1→P4 matching strategy (~1.5KiB) — still far below transport bound.
 # Re-baselined 24→26KiB: INTELLIGENCE-001 adds row-record intent routing +
 # refusal taxonomy to ad_hoc_sql_read (~0.7KiB) — still far below 64KiB.
-DAVI_AGENT_DIRECTIVES_MAX_BYTES = 26 * 1024
+# Re-baselined 26→32KiB: INTELLIGENCE-002 adds the governed specialist
+# context (persona echo, data_specialist reasoning, Protheus conventions,
+# T-SQL practices, table_discovery pipeline, proactive rules ~5KiB) —
+# the single canonical source that reaches plugin chats through
+# capability_surface.agent_directives; still well under the 64KiB bound.
+DAVI_AGENT_DIRECTIVES_MAX_BYTES = 32 * 1024
 
 _LIST_CAP_KEYS = frozenset(
     {"examples", "examplePrompts", "anti_patterns", "forbidden", "when", "rules"}
@@ -94,7 +99,13 @@ class DaviAgentIntelligenceService:
             "execution_posture": doc.get("execution_posture") or {},
             "modes": doc.get("modes") or {},
             "language": doc.get("language") or {},
+            "persona": doc.get("persona") or {},
             "persona_bridge": doc.get("persona_bridge") or {},
+            "data_specialist": doc.get("data_specialist") or {},
+            "protheus": doc.get("protheus") or {},
+            "tsql": doc.get("tsql") or {},
+            "table_discovery": doc.get("table_discovery") or {},
+            "proactive": doc.get("proactive") or {},
             "surface_parity": doc.get("surface_parity") or {},
             "anti_patterns": list(doc.get("anti_patterns") or []),
             "auth_errors": doc.get("auth_errors") or {},

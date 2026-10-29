@@ -1,45 +1,45 @@
 {
   "task_id": "DAVI-MCP-DISCOVERY-QUALITY-001",
-  "evaluated_sha": "acb80117fd",
+  "evaluated_sha": "826c73b1c4d09d965856bd0543e5d984bdb1e6a8",
   "catalog_source": "live app.openapi() (same as runtime seed)",
   "catalog_operation_count": 97,
-  "allowlist_version": 29,
+  "allowlist_version": 30,
   "benchmark_version": "1",
   "metrics": {
     "case_counts": {
-      "total": 254,
-      "positive_precise": 104,
-      "positive_paraphrase": 114,
-      "ambiguous": 10,
+      "total": 264,
+      "positive_precise": 112,
+      "positive_paraphrase": 115,
+      "ambiguous": 11,
       "write_negative": 9,
       "generic_sql_negative": 0,
       "unsupported_negative": 8,
       "quarantine_conflict": 9
     },
-    "positive_case_count": 227,
-    "top1_accuracy": 0.9604,
-    "top1_required_accuracy": 0.9907,
-    "top3_recall": 0.9956,
+    "positive_case_count": 236,
+    "top1_accuracy": 0.9619,
+    "top1_required_accuracy": 0.9914,
+    "top3_recall": 0.9958,
     "top5_recall": 1.0,
-    "mrr": 0.9781,
+    "mrr": 0.979,
     "positive_no_candidate_rate": 0.0,
     "hard_negative_zero_candidate_rate": 1.0,
     "unsupported_zero_candidate_rate": 0.875,
-    "ambiguous_top3_coverage": 0.9,
-    "ambiguous_top5_coverage": 0.9,
+    "ambiguous_top3_coverage": 0.9091,
+    "ambiguous_top5_coverage": 0.9091,
     "positive_target_misses": 0,
     "positive_target_rank_gt5": 0,
     "hard_negative_leaks": 0,
     "unrelated_family_top1": 3,
     "family_metrics": {
       "canonical_sql": {
-        "cases": 11,
+        "cases": 13,
         "top1": 1.0,
         "top3": 1.0,
         "top5": 1.0
       },
       "commercial": {
-        "cases": 37,
+        "cases": 39,
         "top1": 1.0,
         "top3": 1.0,
         "top5": 1.0
@@ -57,19 +57,19 @@
         "top5": 1.0
       },
       "production": {
-        "cases": 35,
-        "top1": 0.9429,
-        "top3": 0.9714,
+        "cases": 36,
+        "top1": 0.9444,
+        "top3": 0.9722,
         "top5": 1.0
       },
       "supplies": {
-        "cases": 54,
-        "top1": 0.963,
+        "cases": 57,
+        "top1": 0.9649,
         "top3": 1.0,
         "top5": 1.0
       },
       "system_metadata": {
-        "cases": 13,
+        "cases": 14,
         "top1": 1.0,
         "top3": 1.0,
         "top5": 1.0
@@ -145,7 +145,7 @@
       "family": "product_master",
       "expected": "list_exclusive_raw_materials_catalog",
       "target_rank": 2,
-      "target_score": 0.573,
+      "target_score": 0.5785,
       "higher_ranked": [
         {
           "action_id": "get_product_structure_exclusivity",
@@ -285,7 +285,7 @@
         },
         {
           "action_id": "search_products",
-          "score": 0.6879
+          "score": 0.6855
         }
       ],
       "expected_aliases": [

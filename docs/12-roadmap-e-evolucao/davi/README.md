@@ -221,17 +221,22 @@ SHA `7f2bfab647`; promoted counts recomputed at
 `DAVI-PRODUCT-DETAIL-SIMILARITY-001`; matching V2 at
 `DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001`; web research at
 `DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003`; row-record intent routing at
-`DAVI-INTELLIGENCE-001`):
+`DAVI-INTELLIGENCE-001`; specialist persona/knowledge/context delivery at
+`DAVI-INTELLIGENCE-002`):
 
 ```text
-allowlist              = v29
+allowlist              = v30
 DAVI_ELIGIBLE_READ     = 94 governed ops (baseline; live index 97)
-agent intelligence     = 2026.10.29.1 (similarity_dedup_check V2: P1→P4;
-                         supplier_web_research: código DELPI âncora →
-                         suppliers → PN/fabricante → pesquisa pública
-                         provider-side; ad_hoc_sql_read: intenção de
-                         registros/dados/linhas de tabela roteada à
-                         rota SQL canônica + taxonomia de recusa)
+agent intelligence     = 2026.10.29.2 (persona garoto-especialista ecoada
+                         via agent_directives; data_specialist reasoning;
+                         convenções Protheus SX2/SX3/D_E_L_E_T_; práticas
+                         T-SQL; table_discovery pipeline; regras proativas;
+                         similarity_dedup_check V2; supplier_web_research;
+                         ad_hoc_sql_read com roteamento de intenção de
+                         registros + taxonomia de recusa)
+MCP instructions       = persona + postura especialista estáveis
+                         (initialize instructions; consumo pelo host é
+                         limitação documentada, não garantida)
 MCP tools              = exactly 2 (discover_delpi_information,
                          execute_delpi_information)
 provider live discover = PROVEN (89 eligible; PROVIDER_CHAT_RUNTIME_OBSERVATION

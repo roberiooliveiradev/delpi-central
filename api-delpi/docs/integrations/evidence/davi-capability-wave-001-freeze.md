@@ -3,7 +3,7 @@
 > **Normative for the next implementation task.** Evidence/governance only. Does not change runtime.
 
 - Task: `DAVI-CAPABILITY-EXPANSION-INVENTORY-001`
-- Source HEAD: `acb80117fd237aec7e12ddd6097e8e0960c48412`
+- Source HEAD: `826c73b1c4d09d965856bd0543e5d984bdb1e6a8`
 - Freeze status: `FROZEN_FOR_IMPLEMENTATION`
 - Theme: Operational Product Intelligence (classified factory snapshot + MP exclusivity + shipping)
 - Current eligible: **94**

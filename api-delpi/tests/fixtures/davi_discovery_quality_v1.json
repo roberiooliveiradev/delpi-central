@@ -3054,6 +3054,131 @@
    "expected_action_ids": [],
    "top1_required": false,
    "notes": "write intent must surface nothing"
+  },
+  {
+   "id": "DQ-SUP-045",
+   "query": "quero consultar os movimentos de materiais",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_product_internal_movements",
+    "execute_readonly_sql"
+   ],
+   "top1_required": true,
+   "notes": "material movements intent routes to governed movements capability"
+  },
+  {
+   "id": "DQ-SUP-046",
+   "query": "onde encontro os registros de entrada de materiais",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_product_internal_movements"
+   ],
+   "top1_required": true,
+   "notes": "material-entry records intent"
+  },
+  {
+   "id": "DQ-SUP-047",
+   "query": "liste as baixas de materiais do produto",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_product_internal_movements"
+   ],
+   "top1_required": true,
+   "notes": "material issue/consumption phrasing"
+  },
+  {
+   "id": "DQ-SQL-109",
+   "query": "quais produtos tiveram movimentação este mês",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql",
+    "get_product_internal_movements"
+   ],
+   "top1_required": true,
+   "notes": "aggregate movement scan without naming SQL"
+  },
+  {
+   "id": "DQ-SQL-110",
+   "query": "quais os últimos movimentos registrados",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql",
+    "get_product_internal_movements"
+   ],
+   "top1_required": true,
+   "notes": "latest records intent, mechanism not named"
+  },
+  {
+   "id": "DQ-MET-011",
+   "query": "qual tabela guarda as estruturas",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "system_metadata",
+   "expected_action_ids": [
+    "search_tables_by_description"
+   ],
+   "top1_required": true,
+   "notes": "table discovery by business description"
+  },
+  {
+   "id": "DQ-AMB-011",
+   "query": "encontre a tabela de estruturas dos produtos",
+   "language": "pt-BR",
+   "case_type": "AMBIGUOUS",
+   "family": "system_metadata",
+   "expected_action_ids": [
+    "get_product_structure",
+    "search_tables_by_description"
+   ],
+   "top1_required": false,
+   "notes": "structure table vs structure data — both governed answers acceptable"
+  },
+  {
+   "id": "DQ-COM-037",
+   "query": "onde ficam os pedidos de compra",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "commercial",
+   "expected_action_ids": [
+    "get_product_purchases",
+    "search_tables_by_description"
+   ],
+   "top1_required": true,
+   "notes": "purchase-order location intent without table name"
+  },
+  {
+   "id": "DQ-COM-038",
+   "query": "quero os pedidos de compra ainda em aberto",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "commercial",
+   "expected_action_ids": [
+    "get_product_purchases"
+   ],
+   "top1_required": true,
+   "notes": "open purchase orders intent"
+  },
+  {
+   "id": "DQ-PRD-035",
+   "query": "mostre os componentes de um produto",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "production",
+   "expected_action_ids": [
+    "get_product_structure"
+   ],
+   "top1_required": true,
+   "notes": "BOM components intent without technical terms"
   }
  ]
 }

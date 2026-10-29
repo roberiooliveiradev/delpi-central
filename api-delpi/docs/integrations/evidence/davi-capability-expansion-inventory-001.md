@@ -3,10 +3,10 @@
 > Evidence artifact. **Not** runtime authority. **Not** the operational allowlist.
 
 - Task: `DAVI-CAPABILITY-EXPANSION-INVENTORY-001`
-- Source HEAD: `acb80117fd237aec7e12ddd6097e8e0960c48412`
-- origin/main: `d955f51cfda36e9d5f5af5d04194e1441ae34d36`
+- Source HEAD: `826c73b1c4d09d965856bd0543e5d984bdb1e6a8`
+- origin/main: `9bc5fd0bb44fab97796ceb511c85e2f4b6d6b1b0`
 - OpenAPI/baseline: `3.0.3` / v3
-- Generated at: `2026-10-29T13:23:30.320008+00:00`
+- Generated at: `2026-10-29T14:04:49.625223+00:00`
 
 ## Executive summary
 

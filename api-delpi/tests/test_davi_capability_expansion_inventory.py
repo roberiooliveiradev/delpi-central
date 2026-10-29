@@ -252,5 +252,5 @@ def test_committed_artifacts_are_evidence_not_runtime() -> None:
     assert freeze["artifact_class"] == "EVIDENCE_NOT_RUNTIME_AUTHORITY"
     assert inventory["runtime_invariants"]["eligible_must_remain"] == 7
     assert inventory["runtime_invariants"]["mcp_tools_must_remain"] == 3
-    assert inventory["technical_operation_counts"]["DAVI_ELIGIBLE_READ"] == 88
+    assert inventory["technical_operation_counts"]["DAVI_ELIGIBLE_READ"] == 94
     assert "product.factory.status" in inventory["wave_1_freeze"]["capability_ids"]

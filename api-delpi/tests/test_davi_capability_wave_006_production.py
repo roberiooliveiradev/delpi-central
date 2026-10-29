@@ -322,9 +322,13 @@ def test_wave006_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
     assert allow.get("version") >= 17
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-INTELLIGENCE-001"
+        "DAVI-INTELLIGENCE-002"
     )
     coverage = (allow.get("coverageDecision", {}).get("previousDecision") or {})
+    assert (coverage.get("taskId") or "") == (
+        "DAVI-INTELLIGENCE-001"
+    )
+    coverage = coverage.get("previousDecision") or {}
     assert (coverage.get("taskId") or "") == (
         "DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003"
     )
@@ -896,6 +900,7 @@ def test_wave006_bruto_quarantine_no_false_disable_of_prior_reads(monkeypatch):
 def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
     allow = load_external_read_allowlist()
     coverage = (allow.get("coverageDecision") or {}).get("previousDecision") or {}
+    coverage = coverage.get("previousDecision") or {}
     coverage = coverage.get("previousDecision") or {}
     coverage = coverage.get("previousDecision") or {}
     coverage = coverage.get("previousDecision") or {}

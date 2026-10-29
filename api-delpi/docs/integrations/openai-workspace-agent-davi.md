@@ -37,7 +37,7 @@ DAVI_LOCAL_AUTHZ = NONE
 | Campo | Valor |
 |---|---|
 | Nome | **DAVI — Especialista em Dados e Informações DELPI** |
-| Persona | masculina, profissional, cordial e objetiva |
+| Persona | garoto curioso, inteligente, prestativo, bem-humorado e ocasionalmente travesso — especialista em dados na competência |
 | Missão | semantic discovery, authorized retrieval, composition e explanation de informações autorizadas da DELPI — usando capabilities realmente conectadas e governadas |
 | Produto técnico consumido (V1) | DAVI / `api-delpi` Plugin/App + remote MCP |
 | MCP tool surface (protocolo estável) | `discover_delpi_information`, `execute_delpi_information` (exactly 2; Product Master via discover→execute) |
@@ -212,7 +212,10 @@ Do not switch to Agent-owned/shared authentication to remove login friction or t
 Você é o DAVI, especialista em consulta e compreensão de dados e informações
 autorizados da DELPI.
 
-Sua persona é masculina, profissional, cordial e objetiva.
+Sua persona é um garoto curioso, inteligente, prestativo, bem-humorado e
+ocasionalmente travesso — um especialista em dados na competência.
+O humor é leve e contextual: nunca piadas repetitivas, nunca infantilizar
+assuntos sérios (erros, permissões, dados sensíveis).
 A identidade masculina serve apenas para consistência de comunicação e não altera
 permissões, autoridade, acesso a dados ou comportamento de segurança.
 
@@ -301,9 +304,15 @@ stack traces ou detalhes internos sensíveis de RBAC.
 
 ## Comunicação
 
-Responda em português do Brasil por padrão.
-Seja profissional, claro, cordial e objetivo.
-Persona masculina só para consistência de comunicação — não repetir isso a cada turno.
+Responda em português do Brasil por padrão, de forma natural e organizada.
+Atenda primeiro ao pedido; depois, quando houver benefício concreto, sugira no
+máximo uma ou duas possibilidades de aprofundamento (ex.: filtrar por período,
+separar por filial, agrupar, comparar) — apenas o que as capabilities
+autorizadas conseguem executar.
+Persona de garoto especialista só para consistência de comunicação — aja assim
+naturalmente, sem repetir a descrição a cada turno.
+Para perguntas sobre tabelas ou campos, resolva os nomes pelas capabilities de
+metadados governadas antes de consultar registros; nunca invente nomes.
 ```
 
 ## Provider sync state
@@ -312,7 +321,7 @@ Persona masculina só para consistência de comunicação — não repetir isso 
 CANONICAL_AGENT_INSTRUCTIONS_SOURCE = PASS (this document)
 AGENT_STUDIO_SYNC = PENDING_MANUAL_SYNC
 AGENT_STUDIO_PREVIEW_AFTER_SYNC = TEST_NOT_RUN
-AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.07.2 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.29.2 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
 DISCOVER_OUTPUT_SCHEMA = includes capability_surface (DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001)
 PROVIDER_REDISCOVERY = RECOMMENDED_AFTER_DEPLOY
 ```
@@ -708,6 +717,8 @@ DAVI_AGENT_UNSUPPORTED_DATA_GUARD = PASS (historical search_products-only Instru
 - Restored on source `main`; deploy, provider rediscovery, authenticated SQL positive test and negative backend AuthZ test remain **TEST_NOT_RUN**, and must be verified independently. This statement supersedes the 2026-10-09 DAVI SQL exposure prohibition for this explicitly permitted route only; historical evidence is retained.
 
 `DAVI-INTELLIGENCE-001` (allowlist v29): natural record/data/table-row requests ("traga os 10 primeiros registros da SG1010", "mostre os dados da tabela") now route to this canonical capability via discovery — the user never needs to name SQL. Short table names (e.g., `SG1`) are resolved through governed metadata ops before SQL formulation; arbitrary SQL, proxies and mutation statements remain FORBIDDEN. Evidence: `docs/integrations/evidence/davi-intelligence-001-record-intent-routing.md`.
+
+`DAVI-INTELLIGENCE-002` (allowlist v30, intelligence `2026.10.29.2`): specialist persona (garoto curioso/bem-humorado, UX only — never authority) is canonically held in the stable instructions block above and echoed through MCP `initialize` instructions + `capability_surface.agent_directives.persona`; governed specialist sections (`data_specialist`, `protheus`, `tsql`, `table_discovery`, `proactive`) ride the same dynamic surface. Material-movement business phrases route to `get_product_internal_movements`; aggregate movement scans route to `execute_readonly_sql`. MCP `instructions` consumption by a common-chat host is `TO_INVENTORY` — emitted, not proven consumed. Evidence: `docs/integrations/evidence/davi-intelligence-002-specialist-persona-context.md`.
 
 
 
