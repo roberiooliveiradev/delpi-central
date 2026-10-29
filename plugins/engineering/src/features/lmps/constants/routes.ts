@@ -1,0 +1,27 @@
+import type { LmpsFilterUrlState } from "../utils/filterUrl";
+import { appendFiltersToPath } from "../utils/filterUrl";
+
+export const LMPS_BASE_PATH = "/apps/engineering/lmps";
+
+/** Registro de NC permanece no MFE legado até a migração governada —
+ * link externo oficial, sem bypass de contrato. */
+export const LEGACY_NONCONFORMITIES_HREF =
+  "/apps/dashboard-lmps/nonconformities";
+
+export const LMPS_ROUTES = {
+  home: LMPS_BASE_PATH,
+  nonconformities: `${LMPS_BASE_PATH}/nonconformities`,
+  nonconformityNew: `${LMPS_BASE_PATH}/nonconformities/new`,
+} as const;
+
+export function buildLmpDetailPath(
+  saleNumber: string,
+  filters?: LmpsFilterUrlState
+): string {
+  const encoded = encodeURIComponent(String(saleNumber).trim());
+  return appendFiltersToPath(`${LMPS_BASE_PATH}/ov/${encoded}`, filters);
+}
+
+export function buildNcDetailPath(recordId: string): string {
+  return `${LMPS_ROUTES.nonconformities}/${encodeURIComponent(recordId)}`;
+}

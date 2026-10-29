@@ -243,11 +243,12 @@ export function OverviewPage({ basePath, permissions }: OverviewPageProps) {
             title={copy.lmpDeepeningTitle}
             subtitle={copy.lmpDeepeningBody}
           >
-            <p className="engineering-overview-deepening-note">
-              {copy.lmpDeepeningBadge} — acompanhamento detalhado será um
-              módulo interno do Portal Engenharia, sem redirecionamento
-              para o dashboard legado.
-            </p>
+            <EngineeringActionButton
+              variant="primary"
+              onClick={() => navigateEngineeringView("lmps", { basePath })}
+            >
+              {copy.lmpDeepeningCta}
+            </EngineeringActionButton>
           </EngineeringSectionCard>
 
           {hasTransformaAccess ? (

@@ -30,6 +30,9 @@ from engineering_app.config import settings
 from engineering_app.infrastructure.gateways.api_delpi_facts import (
     ApiDelpiFactsSource,
 )
+from engineering_app.infrastructure.gateways.delegated_auxiliary import (
+    ApiDelpiDelegatedAuxiliary,
+)
 from engineering_app.infrastructure.gateways.downstream_client import (
     DownstreamClient,
 )
@@ -78,3 +81,12 @@ def build_get_lmp_detail_use_case() -> GetLmpDetailUseCase:
 
 def build_get_lmp_history_use_case(*, view: str) -> GetLmpHistoryUseCase:
     return GetLmpHistoryUseCase(_build_facts_source(), view=view)
+
+
+def build_delegated_auxiliary_source() -> ApiDelpiDelegatedAuxiliary:
+    return ApiDelpiDelegatedAuxiliary(
+        DownstreamClient(
+            settings.DELPI_API_URL,
+            timeout_seconds=settings.LMP_FACTS_TIMEOUT_SECONDS,
+        )
+    )

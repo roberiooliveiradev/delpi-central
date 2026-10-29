@@ -25,6 +25,7 @@ from delpi_auth.context_resolver import resolve_user_context
 from engineering_app.application.models.lmp import LmpQuery
 from engineering_app.application.ports.home_sources import HomeSourceContext
 from engineering_app.composition.lmp_composer import (
+    build_delegated_auxiliary_source,
     build_get_lmp_detail_use_case,
     build_get_lmp_history_use_case,
     build_get_lmp_summary_use_case,
@@ -181,6 +182,116 @@ def _lmp_result_to_response(result: dict, operation_id: str, not_found_message: 
     if status == "not_found":
         return fail(not_found_message, 404, operation_id=operation_id)
     return ok(result, message="Consulta realizada com sucesso.", operation_id=operation_id)
+
+
+# --- READs delegados aos owners oficiais (G5) ------------------------------
+# Metas/IDD → Strategic Indicators; streak NC → owner NC; Bearer humano
+# delegado — 401/403 downstream viram estado `forbidden` honesto.
+
+
+@router.get(
+    "/v1/lmps/goal-context",
+    operation_id="get_lmp_goal_context",
+    summary="Contexto de metas (SI) do dashboard LMP — delegação ao owner",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def get_lmp_goal_context(
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    branch: str | None = Query(default=None),
+):
+    user, denied = _require_human_principal("get_lmp_goal_context")
+    if denied is not None:
+        return denied
+
+    error = _validate_period(start_date, end_date)
+    if error:
+        return fail(error, 400, operation_id="get_lmp_goal_context")
+
+    result = await build_delegated_auxiliary_source().fetch_goal_context(
+        _source_context(user),
+        start_date=start_date.strip() if start_date else None,
+        end_date=end_date.strip() if end_date else None,
+        branch=branch.strip() if branch else None,
+    )
+    if result.get("status") == "forbidden":
+        return fail(
+            "Acesso negado pelo owner de metas.",
+            403,
+            operation_id="get_lmp_goal_context",
+        )
+    return ok(
+        result,
+        message="Contexto de metas carregado.",
+        operation_id="get_lmp_goal_context",
+    )
+
+
+@router.get(
+    "/v1/lmps/department-idd",
+    operation_id="get_lmp_department_idd",
+    summary="Nota IDD do departamento engineering (SI) — delegação ao owner",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def get_lmp_department_idd(
+    competence: str | None = Query(default=None),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    branch: str | None = Query(default=None),
+):
+    user, denied = _require_human_principal("get_lmp_department_idd")
+    if denied is not None:
+        return denied
+
+    error = _validate_period(start_date, end_date)
+    if error:
+        return fail(error, 400, operation_id="get_lmp_department_idd")
+
+    result = await build_delegated_auxiliary_source().fetch_department_idd(
+        _source_context(user),
+        competence=competence.strip() if competence else None,
+        start_date=start_date.strip() if start_date else None,
+        end_date=end_date.strip() if end_date else None,
+        branch=branch.strip() if branch else None,
+    )
+    if result.get("status") == "forbidden":
+        return fail(
+            "Acesso negado pelo owner de IDD.",
+            403,
+            operation_id="get_lmp_department_idd",
+        )
+    return ok(
+        result,
+        message="IDD departamental carregado.",
+        operation_id="get_lmp_department_idd",
+    )
+
+
+@router.get(
+    "/v1/lmps/nonconformities/streak",
+    operation_id="get_lmp_nc_streak",
+    summary="Dias sem NC (owner NC) — delegação ao owner, sem escrita",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def get_lmp_nc_streak():
+    user, denied = _require_human_principal("get_lmp_nc_streak")
+    if denied is not None:
+        return denied
+
+    result = await build_delegated_auxiliary_source().fetch_nc_streak(
+        _source_context(user)
+    )
+    if result.get("status") == "forbidden":
+        return fail(
+            "Acesso negado pelo owner de não conformidades.",
+            403,
+            operation_id="get_lmp_nc_streak",
+        )
+    return ok(
+        result,
+        message="Streak de dias sem NC carregado.",
+        operation_id="get_lmp_nc_streak",
+    )
 
 
 @router.get(

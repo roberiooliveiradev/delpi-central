@@ -460,8 +460,11 @@ declare module "@delpi/plugin-ui/index" {
   };
 
   export function createDashboardDetailFieldGrid(config: {
-    prefix: string;
-    labels: { fieldHelpAriaLabel: (label: string) => string };
+    prefix?: string;
+    labels: {
+      emptyMessage?: string;
+      fieldHelpAriaLabel: (label: string) => string;
+    };
     valueFallback?: string;
     wrapLabels?: boolean;
   }): ComponentType<DashboardDetailFieldGridProps>;
@@ -469,27 +472,90 @@ declare module "@delpi/plugin-ui/index" {
   export type DataTableColumn<T> = {
     key: string;
     header: string;
+    headerHint?: string;
     render: (row: T) => ReactNode;
+    className?: string;
+    align?: "left" | "right" | "center";
+    interactive?: boolean;
+    rowClick?: "stop" | "propagate";
+    sortable?: boolean;
+    sortValue?: (row: T) => string | number | null | undefined;
+    mobileLabel?: string;
+    headerPrefix?: ReactNode;
+  };
+
+  export type DataTableClassNames = {
+    wrapSection: string;
+    wrapEmbedded: string;
+    wrap?: string;
+    sentenceHeadersWrap?: string;
+    outerRoot?: string;
+    scrollWrap?: string;
+    table: string;
+    tableClickable?: string;
+    sortableColumn?: string;
+    empty: string;
+    emptyInnerWrapper?: boolean;
+    headerLabel: string;
+    headerText: string;
+    headerHelp: string;
+    sortButton: string;
+    sortButtonActive: string;
+    sortIndicator: string;
+    rowClickable: string;
+    sortableTable?: string;
+    compactTable?: string;
+    colNumeric?: string;
+    colWide?: string;
+    colActions?: string;
+    actions?: string;
+    sub?: string;
+    rowEditing?: string;
+    detailRow?: string;
+    detailCell?: string;
+  };
+
+  export type DataTableLabels = {
+    emptyMessage: string;
+    loadingMessage: string;
+    sortByAriaLabel: (header: string) => string;
+    headerHelpAriaLabel: (header: string) => string;
   };
 
   export type DataTableProps<T> = {
     columns: DataTableColumn<T>[];
     rows: T[];
     rowKey: (row: T, index: number) => string;
+    emptyMessage?: string;
     loading?: boolean;
     onRowClick?: (row: T) => void;
+    getRowClassName?: (row: T, index: number) => string | undefined;
+    sortKey?: string | null;
+    sortDirection?: "asc" | "desc";
+    onSortChange?: (columnKey: string) => void;
     layout?: "section" | "embedded" | "scroll";
-    classNames: Record<string, string>;
-    labels: Record<string, string | ((header: string) => string)>;
+    compact?: boolean;
+    classNames: DataTableClassNames;
+    labels: DataTableLabels;
   };
+
+  export type DashboardDataTableProps<T> = Omit<
+    DataTableProps<T>,
+    "classNames" | "labels"
+  >;
 
   export function DataTable<T>(props: DataTableProps<T>): ReactElement;
 
-  export function dataTableBemClasses(prefix: string): Record<string, string>;
+  export function dataTableBemClasses(prefix: string): DataTableClassNames;
 
   export type FilterInputFieldProps = {
     label: string;
-    type: Extract<InputHTMLAttributes<HTMLInputElement>["type"], "month" | "date" | "text" | "search">;
+    hint?: string;
+    id?: string;
+    type: Extract<
+      InputHTMLAttributes<HTMLInputElement>["type"],
+      "month" | "date" | "datetime-local" | "text" | "search"
+    >;
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
@@ -526,9 +592,17 @@ declare module "@delpi/plugin-ui/index" {
       pageSize: number;
     }) => string;
     pageSizeLabel?: string;
-    previous: string;
-    next: string;
+    previous: ReactNode;
+    next: ReactNode;
+    previousAriaLabel?: string;
+    nextAriaLabel?: string;
     navigationAriaLabel: string;
+  };
+
+  export type CompactPaginationHints = {
+    info?: string;
+    previous?: string;
+    next?: string;
   };
 
   export type DashboardCompactPaginationProps = {
@@ -536,14 +610,20 @@ declare module "@delpi/plugin-ui/index" {
     pageSize: number;
     total: number;
     totalPages?: number;
+    pageSizeOptions?: readonly number[];
     onPageChange: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+    hints?: CompactPaginationHints;
+    hideWhenSinglePage?: boolean;
     disabled?: boolean;
   };
 
   export function createCompactPagination(config: {
     prefix: string;
     labels: CompactPaginationLabels;
+    hints?: CompactPaginationHints;
     layout?: "grouped" | "flat";
+    ghostBtnModifier?: string;
     ghostBtn?: string;
     withHints?: boolean;
   }): ComponentType<DashboardCompactPaginationProps>;
@@ -1261,8 +1341,9 @@ declare module "@delpi/plugin-ui/index" {
   // --- KPI card (mesmo componente do Dashboard Engenharia) ---
 
   export type KpiPerformanceBadge = {
-    label: string;
-    tone?: "positive" | "negative" | "warning" | "neutral" | "info";
+    tone: "success" | "warning";
+    statusLabel: string;
+    directionLabel: string;
   };
 
   export type KpiScopeBadge = {
@@ -1494,9 +1575,9 @@ declare module "@delpi/plugin-ui/index" {
     monthlyGoalLabel: string | null;
     monthlyGoalPrefix: string | null;
     monthlyGoalHint: string | null;
-    goalScopeBadge: KpiScopeBadge | null;
+    goalScopeBadge: GoalScopeBadge | null;
     goalScopeHint: string | null;
-    goalPerformanceBadge: KpiPerformanceBadge | null;
+    goalPerformanceBadge: GoalPerformanceBadge | null;
     iddScoreLabel: string | null;
     contextLabel: string;
   };
@@ -1523,6 +1604,649 @@ declare module "@delpi/plugin-ui/index" {
   export function resolveIndicatorIddScoreLabelFromSi(
     score: number | null | undefined,
   ): string | null;
+}
+
+// --- Superfície consumida pela feature LMP (G5) ------------------------------
+
+declare module "@delpi/plugin-ui/index" {
+  export type ChartGranularity = "day" | "week" | "month" | "year";
+
+  export function useChartGranularitySelection(
+    dateStart?: string,
+    dateEnd?: string,
+    options?: {
+      resolveAutoGranularity?: (
+        suggested: ChartGranularity,
+      ) => ChartGranularity;
+    },
+  ): {
+    granularity: ChartGranularity;
+    setGranularity: (value: ChartGranularity) => void;
+  };
+
+  export function delpiUiClass(prefixClass: string, uiClass: string): string;
+  export function ensureDelpiUiClass(
+    className: string,
+    requiredClass: string,
+  ): string;
+  export function stateBoxPlaceholderBemClasses(prefix: string): string;
+  export function ghostBtnBemClasses(prefix: string): string;
+
+  export const CHART_COLORS_LMPS: readonly string[];
+
+  export type ChartCardClassNames = {
+    section: string;
+    header: string;
+    heading?: string;
+    headerRow?: string;
+    title: string;
+    titleHelp?: string;
+    hint?: string;
+    actions?: string;
+    body: string;
+  };
+
+  export type ChartCardProps = {
+    title: string;
+    titleHint?: string;
+    hint?: string;
+    children: ReactNode;
+    headerActions?: ReactNode;
+    classNames: ChartCardClassNames;
+    className?: string;
+    titleLevel?: 2 | 3;
+  };
+
+  export function chartCardBemClasses(
+    prefix: string,
+    options?: {
+      withHeading?: boolean;
+      withActions?: boolean;
+      cardModifier?: string;
+      headerLayout?: "default" | "titleRow";
+      wide?: boolean;
+    },
+  ): ChartCardClassNames;
+
+  export function ChartCard(props: ChartCardProps): ReactElement;
+
+  export type DetailCardClassNames = {
+    card: string;
+    header: string;
+    icon?: string;
+    heading?: string;
+    title: string;
+    titleHelp?: string;
+    description?: string;
+    hint?: string;
+    actions?: string;
+    body?: string;
+    wrapBody: boolean;
+  };
+
+  export type DetailCardLabels = {
+    titleHelpAriaLabel: (title: string) => string;
+  };
+
+  export type DetailCardProps = {
+    title: string;
+    titleHint?: string;
+    hint?: string;
+    icon?: ReactNode;
+    children: ReactNode;
+    className?: string;
+    headerActions?: ReactNode;
+    role?: string;
+    classNames: DetailCardClassNames;
+    labels: DetailCardLabels;
+  };
+
+  export type DashboardDetailCardProps = Omit<
+    DetailCardProps,
+    "classNames" | "labels"
+  >;
+
+  export function detailCardRichBemClasses(
+    prefix: string,
+  ): DetailCardClassNames;
+
+  export function createDashboardDetailCard(config: {
+    classNames: DetailCardClassNames;
+    labels: DetailCardLabels;
+  }): ComponentType<DashboardDetailCardProps>;
+
+  export type ChartGranularityOption<T extends string = string> = {
+    value: T;
+    label: string;
+  };
+
+  export type ChartGranularityToggleClassNames = Record<string, string>;
+
+  export type ChartGranularityToggleLabels = {
+    groupAriaLabel: string;
+  };
+
+  export type ChartGranularityToggleProps<T extends string = string> = {
+    value: T;
+    onChange: (value: T) => void;
+    options: readonly ChartGranularityOption<T>[];
+    idPrefix?: string;
+    classNames: ChartGranularityToggleClassNames;
+    labels: ChartGranularityToggleLabels;
+    size?: string;
+  };
+
+  export type ChartToolbarClassNames = Record<string, string | undefined>;
+
+  export type ChartToolbarLabels = {
+    exportSeries: string;
+    exportSeriesAriaLabel: string;
+  };
+
+  export type ChartToolbarProps<T extends string = string> = {
+    granularity: T;
+    onGranularityChange: (value: T) => void;
+    options: readonly ChartGranularityOption<T>[];
+    idPrefix?: string;
+    onExportCsv?: () => void;
+    exportDisabled?: boolean;
+    exportActions?: ReactNode;
+    extra?: ReactNode;
+    granularityHelp?: string;
+    exportHelp?: string;
+    granularityField?: { label: string; hint?: string };
+    classNames: ChartToolbarClassNames;
+    labels: ChartToolbarLabels;
+    granularityToggleClassNames: ChartGranularityToggleClassNames;
+    granularityToggleLabels: ChartGranularityToggleLabels;
+  };
+
+  export type DashboardChartToolbarLabels = ChartToolbarLabels &
+    ChartGranularityToggleLabels;
+
+  export type DashboardChartGranularityToggleProps<
+    T extends string = string,
+  > = Omit<
+    ChartGranularityToggleProps<T>,
+    "classNames" | "labels" | "options"
+  > & {
+    modes?: readonly T[];
+    options: readonly ChartGranularityOption<T>[];
+  };
+
+  export type DashboardChartToolbarProps<T extends string = string> = Omit<
+    ChartToolbarProps<T>,
+    | "classNames"
+    | "labels"
+    | "granularityToggleClassNames"
+    | "granularityToggleLabels"
+    | "options"
+  > & {
+    modes?: readonly T[];
+    options: readonly ChartGranularityOption<T>[];
+  };
+
+  export function createDashboardChartToolbarKit(config: {
+    prefix: string;
+    labels: DashboardChartToolbarLabels;
+  }): {
+    ChartGranularityToggle: <T extends string>(
+      props: DashboardChartGranularityToggleProps<T>,
+    ) => ReactElement;
+    ChartToolbar: <T extends string>(
+      props: DashboardChartToolbarProps<T>,
+    ) => ReactElement;
+  };
+
+  export type TableColumnVisibilityItem = { key: string; label: string };
+  export type TableColumnVisibilityMap = Record<string, boolean>;
+
+  export type TableColumnVisibilityMenuLabels = {
+    trigger: string;
+    panelTitle: string;
+    reset: string;
+    hint: string;
+    columnAriaLabel: (columnLabel: string) => string;
+    panelAriaLabel?: string;
+    reorderAriaLabel?: (columnLabel: string) => string;
+  };
+
+  export const DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS: TableColumnVisibilityMenuLabels;
+
+  export type TableColumnVisibilityMenuProps = {
+    columns: readonly TableColumnVisibilityItem[];
+    visibility: Record<string, boolean>;
+    onToggleColumn: (key: string, visible: boolean) => void;
+    onReset: () => void;
+    labels: TableColumnVisibilityMenuLabels;
+    className?: string;
+    keepAtLeastOne?: boolean;
+    enableReorder?: boolean;
+    onReorderColumns?: (fromKey: string, toKey: string) => void;
+  };
+
+  export function TableColumnVisibilityMenu(
+    props: TableColumnVisibilityMenuProps,
+  ): ReactElement;
+
+  export type DataTableSectionClassNames = {
+    section: string;
+    header: string;
+    title: string;
+    titleHelp: string;
+    metaGroup: string;
+    meta: string;
+    actions: string;
+    noPrint: string;
+    toolbar: string;
+    toolbarFilters: string;
+    searchGroup: string;
+    search: string;
+    searchIcon: string;
+    searchInput: string;
+    searchHelp: string;
+    toolbarExtra: string;
+    footer: string;
+    embeddedSection: string;
+    interactiveModifier: string;
+  };
+
+  export function dataTableSectionBemClasses(
+    prefix: string,
+  ): DataTableSectionClassNames;
+
+  export type UseTableColumnVisibilityOptions = {
+    storageKey: string;
+    columns: readonly TableColumnVisibilityItem[];
+    enabled?: boolean;
+    defaultVisibility?: TableColumnVisibilityMap;
+    keepAtLeastOne?: boolean;
+    emptyFallbackKeys?: readonly string[];
+    legacyStorageKeys?: readonly string[];
+    saveDebounceMs?: number;
+  };
+
+  export type UseTableColumnVisibilityResult = {
+    visibility: TableColumnVisibilityMap;
+    order: string[];
+    orderedColumns: TableColumnVisibilityItem[];
+    visibleKeys: string[];
+    visibleColumnCount: number;
+    setColumnVisible: (key: string, visible: boolean) => void;
+    setColumnOrder: (order: string[]) => void;
+    reorderColumns: (fromKey: string, toKey: string) => void;
+    applyVisibleOrder: (visibleKeysInOrder: string[]) => void;
+    reset: () => void;
+    filterColumns: <T extends { key: string }>(columns: readonly T[]) => T[];
+  };
+
+  export function useTableColumnVisibility(
+    options: UseTableColumnVisibilityOptions,
+  ): UseTableColumnVisibilityResult;
+
+  export type NativeTextControlProps = {
+    id?: string;
+    value: string | number;
+    onChange: (value: string) => void;
+    type?:
+      | "text"
+      | "number"
+      | "url"
+      | "date"
+      | "datetime-local"
+      | "search"
+      | "password"
+      | "month"
+      | "time";
+    placeholder?: string;
+    disabled?: boolean;
+    required?: boolean;
+    readOnly?: boolean;
+    min?: number | string;
+    max?: number | string;
+    step?: number | string;
+    maxLength?: number;
+    className?: string;
+    style?: CSSProperties;
+    tabIndex?: number;
+    "aria-label"?: string;
+    "aria-invalid"?: boolean;
+    autoComplete?: string;
+  };
+
+  export const NativeTextControl: ForwardRefExoticComponent<
+    NativeTextControlProps & RefAttributes<HTMLInputElement>
+  >;
+
+  // --- Metas / IDD (Strategic Indicators — apresentação) ---
+
+  export type PerformanceDirection = "higher_is_better" | "lower_is_better";
+  export type GoalPerformanceTone = "success" | "warning";
+  export type GoalScopeBadgeTone = "scope" | "info";
+
+  export type GoalPerformanceBadge = {
+    tone: GoalPerformanceTone;
+    statusLabel: string;
+    directionLabel: string;
+  };
+
+  export type GoalScopeBadge = {
+    tone: GoalScopeBadgeTone;
+    label: string;
+  };
+
+  export type BranchMetricSlice<
+    T extends DashboardGoalFields = DashboardGoalFields,
+  > = {
+    realized: number | null | undefined;
+    goal?: T | null;
+  };
+
+  export type PerBranchMetricSlices<
+    T extends DashboardGoalFields = DashboardGoalFields,
+  > = {
+    filial01: BranchMetricSlice<T> | null;
+    filial02: BranchMetricSlice<T> | null;
+  };
+
+  export function calculateIndicatorIddScore(
+    realized: number | null | undefined,
+    goal?: DashboardGoalFields | null,
+  ): number | null;
+
+  export function formatIndicatorIddScore(
+    score: number | null | undefined,
+    fallback?: string,
+  ): string;
+
+  export function resolveIddScoreLabel(
+    realized: number | null | undefined,
+    goal?: DashboardGoalFields | null,
+  ): string | null;
+
+  export function resolveConsolidatedIddScoreLabel(
+    entries: Array<{
+      realized: number | null | undefined;
+      goal?: DashboardGoalFields | null;
+    }>,
+  ): string | null;
+
+  export function applyConsolidatedBranchIddScore(
+    presentation: KpiGoalPresentation,
+    options: {
+      activeBranch?: string;
+      branches?: PerBranchMetricSlices | null;
+      iddScoreLabel?: string | null;
+    },
+  ): KpiGoalPresentation;
+
+  export function buildKpiGoalPresentationWithBranchIdd<
+    T extends DashboardGoalFields,
+  >(
+    contextLabel: string,
+    consolidatedGoal: T | null | undefined,
+    options: {
+      realizedValue?: number | null;
+      activeBranch?: string;
+      branches?: PerBranchMetricSlices<T> | null;
+      formatComparable?: (value: number) => string;
+      showGoal?: boolean;
+      dateStart?: string | null;
+      dateEnd?: string | null;
+      iddScoreLabel?: string | null;
+    },
+  ): KpiGoalPresentation;
+
+  export function fetchPerBranchMetricSlices<
+    T extends DashboardGoalFields,
+  >(
+    fetchMetric: (
+      branch: "01" | "02",
+      signal?: AbortSignal,
+    ) => Promise<T>,
+    getRealized: (data: T) => number | null | undefined,
+    signal?: AbortSignal,
+    mapGoal?: (data: T) => DashboardGoalFields | null | undefined,
+  ): Promise<PerBranchMetricSlices<T>>;
+
+  export function formatGoalScopeLabel(
+    goalScopeBranch?: string | null,
+    scopeType?: string | null,
+  ): string;
+
+  export function resolveGoalScopeBadge(
+    goal?: DashboardGoalFields | null,
+  ): GoalScopeBadge | null;
+
+  export function formatPerformanceDirectionLabel(
+    direction?: PerformanceDirection | string | null,
+  ): string | null;
+
+  export function isGoalOnTrack(
+    realized: number,
+    comparableGoal: number,
+    direction?: PerformanceDirection | string | null,
+  ): boolean;
+
+  export function resolveOffTrackStatusLabel(
+    direction?: PerformanceDirection | string | null,
+  ): string;
+
+  export function resolveGoalPerformanceBadge(
+    realized: number | null | undefined,
+    goal?: DashboardGoalFields | null,
+  ): GoalPerformanceBadge | null;
+
+  export function resolveGoalLabel(
+    goal?: DashboardGoalFields | null,
+    formatComparable?: (value: number) => string,
+  ): string | null;
+
+  export function formatGoalSubtitle(
+    periodLabel: string,
+    goal?: DashboardGoalFields | null,
+    formatComparable?: (value: number) => string,
+    realizedValue?: number | null,
+  ): string;
+
+  export function formatKpiGoalExportFragments(
+    presentation: Pick<
+      KpiGoalPresentation,
+      "goalLabel" | "goalPrefix" | "monthlyGoalLabel" | "monthlyGoalPrefix"
+    > | null | undefined,
+  ): string[];
+
+  export function joinKpiExportContext(
+    ...parts: Array<string | null | undefined>
+  ): string;
+
+  // --- Unidades operacionais ---
+
+  export const OPERATIONAL_UNIT_COLUMN_LABEL: string;
+  export const OPERATIONAL_UNIT_FIELD_LABEL: string;
+
+  export function buildOperationalUnitOptions(
+    codes: string[],
+  ): MultiSelectOption[];
+
+  export function formatGoalScopeUnitLabel(
+    goalScopeBranch?: string | null,
+    scopeType?: string | null,
+  ): string;
+
+  export function formatOperationalUnitsFilterLabel(
+    branches: string[],
+    options?: { emptyLabel?: string; allSelectedCount?: number },
+  ): string;
+
+  export function formatOperationalUnitsPrintLabel(
+    branches: string[],
+    options?: { allSelectedCount?: number },
+  ): string;
+
+  // --- Motor tabular de exportação (CSV / XLSX / PDF) ---
+
+  export type TabularExportFormat = "csv" | "xlsx" | "pdf";
+
+  export type ExportAction = {
+    format: TabularExportFormat;
+    label: string;
+    title: string;
+  };
+
+  export const TABULAR_EXPORT_ACTIONS: ReadonlyArray<ExportAction>;
+
+  export type ExportColumn = { key: string; label: string };
+
+  export type TableExportPayload = {
+    title: string;
+    columns: ExportColumn[];
+    rows: Record<string, unknown>[];
+  };
+
+  export type ExportAlertFn = (message: string) => void;
+
+  export function configureExportAlert(fn: ExportAlertFn): void;
+  export function exportAlert(message: string): void;
+
+  export function triggerFileDownload(blob: Blob, filename: string): void;
+  export function triggerBlobDownload(blob: Blob, filename: string): void;
+  export function csvCell(value: unknown): string;
+  export function buildUtf8CsvBlob(content: string): Blob;
+  export function sanitizeFilename(name: string, fallback?: string): string;
+  export function sanitizeSheetName(name: string, fallback?: string): string;
+
+  export type ExportXlsxOptions = {
+    emptyMessage?: string;
+    filename?: string;
+  };
+
+  export type ExportPdfOptions = {
+    subtitle?: string;
+  };
+
+  export function exportPayloadToCsv(payload: TableExportPayload): void;
+  export function exportPayloadToXlsx(
+    payload: TableExportPayload,
+    options?: ExportXlsxOptions,
+  ): void;
+  export function exportPayloadToPdf(
+    payload: TableExportPayload,
+    options?: ExportPdfOptions,
+  ): void;
+  export function exportPayloadsToCsv(
+    title: string,
+    payloads: TableExportPayload[],
+  ): void;
+  export function exportPayloadsToXlsx(
+    title: string,
+    payloads: TableExportPayload[],
+  ): void;
+  export function exportPayloadsToPdf(
+    title: string,
+    payloads: TableExportPayload[],
+    options?: ExportPdfOptions,
+  ): void;
+  export function exportTableFormat(
+    payload: TableExportPayload,
+    format: TabularExportFormat,
+    options?: ExportPdfOptions & ExportXlsxOptions,
+  ): void;
+
+  export type TabularExportButtonsProps = {
+    actions?: ReadonlyArray<ExportAction>;
+    disabled?: boolean;
+    exporting?: boolean;
+    className?: string;
+    buttonClassName?: string;
+    showIcon?: boolean;
+    groupAriaLabel?: string;
+    exportingLabel?: string;
+    leading?: ReactNode;
+    onExport: (format: TabularExportFormat) => void | Promise<void>;
+  };
+
+  export function TabularExportButtons(
+    props: TabularExportButtonsProps,
+  ): ReactElement;
+
+  // --- Documento PDF DELPI ---
+
+  export type DelpiDocumentColumn = { key: string; label: string };
+
+  export type DelpiDocumentTable = {
+    title: string;
+    columns: DelpiDocumentColumn[];
+    rows: Record<string, unknown>[];
+    highlightStatusColumn?: boolean;
+  };
+
+  export type DelpiDocumentSummaryLine = {
+    label: string;
+    value: string;
+  };
+
+  export type DelpiDocumentImageSection = {
+    title?: string;
+    dataUrl: string;
+    alt?: string;
+  };
+
+  export type DelpiDocumentTextSection = {
+    title: string;
+    body: string;
+  };
+
+  export type DelpiDocumentBadgeTone = "approved" | "rejected" | "neutral";
+
+  export type DelpiDocumentSpec = {
+    documentTitle: string;
+    subtitle?: string;
+    badge?: string;
+    badgeTone?: DelpiDocumentBadgeTone;
+    runningMeta?: string;
+    summaryLines?: DelpiDocumentSummaryLine[];
+    textSections?: DelpiDocumentTextSection[];
+    tables?: DelpiDocumentTable[];
+    imageSections?: DelpiDocumentImageSection[];
+    footerNote?: string;
+    footerContext?: string;
+  };
+
+  export function escapeDelpiDocumentHtml(value: string): string;
+  export function resolveDelpiLogoUrl(): string | undefined;
+  export function buildDelpiDocumentStyles(): string;
+  export function buildDelpiBrandBarHtml(className: string): string;
+  export function buildDelpiDocumentTableSection(
+    table: DelpiDocumentTable,
+  ): string;
+  export function buildDelpiDocumentHtml(
+    spec: DelpiDocumentSpec,
+    logoUrl?: string,
+  ): string;
+  export function buildDefaultExportSummaryLines(
+    recordCount: number,
+  ): DelpiDocumentSummaryLine[];
+  export function printDelpiDocumentHtml(
+    html: string,
+    options?: { preferPopup?: boolean; iframeTitle?: string },
+  ): boolean;
+  export function printDelpiDocumentSpec(spec: DelpiDocumentSpec): boolean;
+  export function exportTablePayloadToPdf(
+    payload: TableExportPayload,
+    options?: { subtitle?: string },
+  ): void;
+  export function exportTablePayloadsToPdf(
+    title: string,
+    payloads: TableExportPayload[],
+    options?: { subtitle?: string },
+  ): void;
+  export function exportChartPayloadToPdf(
+    title: string,
+    payload: TableExportPayload,
+    chartDataUrl: string | null,
+    options?: { subtitle?: string },
+  ): void;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

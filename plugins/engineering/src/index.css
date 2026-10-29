@@ -1,3 +1,5 @@
+@import "./features/lmps/styles/lmps.css";
+
 /* Layout do Portal Engenharia — mesma geometria neutra dos portais
  * Minha DELPI: o MFE é dono do padding/gap da página e mapeia os tokens
  * globais do Portal (:root + :root[data-theme="dark"]) para o contrato

@@ -138,7 +138,7 @@ export function HelpPage({ basePath }: HelpPageProps) {
                 {
                   term: "Aprofundamento",
                   meaning:
-                    "O atalho para o Portal TRANSFORMA+ aparece somente quando você tem permissão. O detalhamento de LMPs será um módulo interno futuro — ainda não há página dedicada.",
+                    "O atalho para o Portal TRANSFORMA+ aparece somente quando você tem permissão. O acompanhamento detalhado de LMPs está disponível em LMPs — filtros, indicadores, gráficos, tabela e detalhe por proposta.",
                 },
               ]}
             />
@@ -153,9 +153,10 @@ export function HelpPage({ basePath }: HelpPageProps) {
               ainda não executáveis — eles não abrem nenhuma página.
             </p>
             <p>
-              Os destinos externos (como Minhas solicitações ou LMPs) abrem
-              os aplicativos oficiais correspondentes. Se você não tiver a
-              permissão exigida por um aplicativo, o atalho não aparece.
+              Os destinos externos (como Minhas solicitações) abrem os
+              aplicativos oficiais correspondentes. Funcionalidades
+              internas, como LMPs, abrem páginas do próprio Portal. Se
+              você não tiver a permissão exigida, o atalho não aparece.
             </p>
           </EngineeringSectionCard>
         </Manual.Section>

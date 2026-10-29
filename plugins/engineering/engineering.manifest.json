@@ -34,11 +34,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/engineering/lmps",
+      "label": "LMPs",
+      "permission": "engineering.access",
+      "icon": "clipboard-list",
+      "order": 28,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/engineering/help",
       "label": "Ajuda",
       "permission": "engineering.access",
       "icon": "book-open",
-      "order": 28,
+      "order": 29,
       "showInMenu": false
     }
   ],

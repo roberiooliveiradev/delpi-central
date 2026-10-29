@@ -464,6 +464,106 @@ def test_detail_unavailable_source_is_honest(
     assert resp.json()["data"]["status"] == "unavailable"
 
 
+# --- READs delegados aos owners (G5) ---------------------------------------
+
+
+def test_goal_context_requires_auth(client):
+    assert client.get("/v1/lmps/goal-context").status_code == 401
+
+
+def test_department_idd_requires_auth(client):
+    assert client.get("/v1/lmps/department-idd").status_code == 401
+
+
+def test_nc_streak_requires_auth(client):
+    assert client.get("/v1/lmps/nonconformities/streak").status_code == 401
+
+
+def test_product_structure_requires_auth(client):
+    assert client.get("/v1/products/P1/structure").status_code == 401
+
+
+class _AuxStub:
+    def __init__(self, result):
+        self._result = result
+
+    async def fetch_goal_context(self, ctx, **kw):
+        return self._result
+
+    async def fetch_department_idd(self, ctx, **kw):
+        return self._result
+
+    async def fetch_nc_streak(self, ctx):
+        return self._result
+
+    async def fetch_product_structure(self, ctx, **kw):
+        return self._result
+
+
+def test_goal_context_passthrough_and_forbidden(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    stub = _AuxStub(
+        {"status": "available", "data": {"goal_label": "Meta", "has_goal": True}}
+    )
+    monkeypatch.setattr(
+        lmp_routes, "build_delegated_auxiliary_source", lambda: stub
+    )
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/lmps/goal-context", headers=_bearer(token))
+    assert resp.status_code == 200
+    assert resp.json()["data"]["data"]["goal_label"] == "Meta"
+
+    stub._result = {"status": "forbidden", "reason": "owner_denied"}
+    resp = client.get("/v1/lmps/goal-context", headers=_bearer(token))
+    assert resp.status_code == 403
+
+
+def test_nc_streak_delegated(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    stub = _AuxStub(
+        {"status": "available", "data": {"current_days_without_nc": 12}}
+    )
+    monkeypatch.setattr(
+        lmp_routes, "build_delegated_auxiliary_source", lambda: stub
+    )
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/lmps/nonconformities/streak", headers=_bearer(token))
+    assert resp.status_code == 200
+    assert resp.json()["data"]["data"]["current_days_without_nc"] == 12
+
+
+def test_department_idd_denied_without_access(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    stub = _AuxStub({"status": "available", "data": {"item": {}}})
+    monkeypatch.setattr(
+        lmp_routes, "build_delegated_auxiliary_source", lambda: stub
+    )
+    core_rbac["behavior"] = ("data", rbac_payload_local([]))
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/lmps/department-idd", headers=_bearer(token))
+    assert resp.status_code == 403
+
+
+def test_product_structure_delegated(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    import engineering_app.interface.http.routes.product_routes as product_routes
+
+    stub = _AuxStub(
+        {"status": "available", "data": {"code": "P1", "children": []}}
+    )
+    monkeypatch.setattr(
+        product_routes, "build_delegated_auxiliary_source", lambda: stub
+    )
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/products/P1/structure", headers=_bearer(token))
+    assert resp.status_code == 200
+    assert resp.json()["data"]["data"]["code"] == "P1"
+
+
 def test_invalid_listing_type_returns_400(
     client, jwks_env, core_rbac, monkeypatch
 ):

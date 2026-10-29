@@ -47,8 +47,8 @@ export const ENGINEERING_CATALOG: readonly CatalogSection[] = [
         id: "lmps",
         label: "LMPs",
         description: "Licitações e medições em acompanhamento",
-        target: { kind: "external", href: "/apps/dashboard-lmps" },
-        requiredPermission: "dashboard-lmps.view",
+        target: { kind: "internal", view: "lmps" },
+        requiredPermission: "engineering.access",
         keywords: ["lmp", "licitacoes", "medicoes", "dashboard"],
       },
     ],
@@ -290,8 +290,8 @@ export const HOME_COPY = {
       "Alguns indicadores não carregaram. Os demais permanecem disponíveis.",
     lmpDeepeningTitle: "LMPs no prazo",
     lmpDeepeningBody:
-      "O acompanhamento detalhado de LMPs será integrado ao Portal Engenharia em uma fase futura.",
-    lmpDeepeningBadge: "Em breve",
+      "Acompanhe LMPs no Portal Engenharia — indicadores, gráficos, tabela operacional e detalhe por proposta.",
+    lmpDeepeningCta: "Abrir acompanhamento de LMPs",
     transformaDeepeningTitle: "TRANSFORMA+",
     transformaDeepeningBody:
       "Abra o Portal TRANSFORMA+ para detalhar soluções, ganhos e retorno.",

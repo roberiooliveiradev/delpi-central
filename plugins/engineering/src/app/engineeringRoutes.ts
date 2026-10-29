@@ -5,7 +5,7 @@
 
 export const ENGINEERING_BASE_PATH = "/apps/engineering";
 
-export type EngineeringView = "home" | "overview" | "help";
+export type EngineeringView = "home" | "overview" | "lmps" | "help";
 
 export type ResolvedEngineeringRoute = {
   view: EngineeringView | "not_found";
@@ -45,6 +45,9 @@ export function resolveEngineeringRoute(
 
   if (relativePath === "overview") {
     return { view: "overview", pathname: path, relativePath };
+  }
+  if (relativePath === "lmps" || relativePath.startsWith("lmps/")) {
+    return { view: "lmps", pathname: path, relativePath };
   }
   if (relativePath === "help") {
     return { view: "help", pathname: path, relativePath };

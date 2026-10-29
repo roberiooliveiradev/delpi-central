@@ -21,13 +21,20 @@ describe("visibleSections", () => {
 
   it("permissões do host liberam atalhos externos", () => {
     const sections = visibleSections(
-      new Set(["my-requests.access", "dashboard-lmps.view"]),
+      new Set(["my-requests.access", "engineering.access"]),
       false,
     );
     const ids = sections.flatMap((s) => s.routes.map((r) => r.id));
     expect(ids).toContain("my_requests");
     expect(ids).toContain("lmps");
     expect(ids).not.toContain("dashboard");
+  });
+
+  it("permissão legada dashboard-lmps.view não libera a feature no Portal", () => {
+    const ids = visibleSections(new Set(["dashboard-lmps.view"]), false).flatMap(
+      (s) => s.routes.map((r) => r.id),
+    );
+    expect(ids).not.toContain("lmps");
   });
 
   it("superadmin vê todo o catálogo", () => {
