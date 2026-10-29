@@ -221,7 +221,7 @@ describe("indicadores e área de atenção", () => {
     ).toBeTruthy();
   });
 
-  it("fonte P3 indisponível é atenção, nunca divergência nem zero", async () => {
+  it("P7 com consulta disponível e P3 sem registro mostra conciliação pendente", async () => {
     p3Mock.mockResolvedValue(
       p3State([
         recon("ENTRADAS_SAIDAS"),
@@ -237,14 +237,60 @@ describe("indicadores e área de atenção", () => {
     );
     renderPanel();
 
-    await screen.findByText("Fonte indisponível");
+    await screen.findByText("Conciliação pendente");
     expect(screen.getByText("Posição de estoque P7 (R03)")).toBeTruthy();
+    expect(
+      screen.getByText(
+        /Consulta disponível — conciliação pendente/,
+      ),
+    ).toBeTruthy();
     // Indicador de divergências permanece 0 — todas as fontes responderam.
     expect(
       screen.getByRole("button", {
         name: /Divergências identificadas: 0/,
       }),
     ).toBeTruthy();
+  });
+
+  it("domínio P3 nunca registrado distingue-se de fonte indisponível", async () => {
+    p3Mock.mockResolvedValue(
+      p3State([
+        recon("ENTRADAS_SAIDAS", {
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: null,
+        }),
+        recon("P7"),
+        recon("H02"),
+      ]),
+    );
+    renderPanel();
+
+    await screen.findByText("Fonte não registrada");
+    expect(screen.getByText("Entradas e saídas (R05)")).toBeTruthy();
+    expect(
+      screen.getByText(/Fonte da conciliação não registrada/),
+    ).toBeTruthy();
+  });
+
+  it("fonte P3 registrada como indisponível mantém estado de indisponível", async () => {
+    p3Mock.mockResolvedValue(
+      p3State([
+        recon("H02", {
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: "2026-10-31T10:00:00Z",
+        }),
+      ]),
+    );
+    renderPanel();
+
+    await screen.findByText("Fonte indisponível");
+    expect(screen.getByText("Posição H02 (R08)")).toBeTruthy();
   });
 
   it("competência não aberta vira conferência não realizada, não erro", async () => {
@@ -347,7 +393,7 @@ describe("catálogo em cartões — navegação contextual", () => {
     );
     renderPanel({ onOpenReport: onOpen });
 
-    await screen.findByText("Fonte indisponível");
+    await screen.findByText("Conciliação pendente");
     const buttons = screen.getAllByRole("button", {
       name: "Abrir relatório",
     });

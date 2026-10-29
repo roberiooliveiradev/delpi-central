@@ -778,7 +778,13 @@ export function StockInventoryPage({
           primeiro na página do relatório — valores calculados pelo
           backend, nunca derivados no navegador. */}
       {reportContext ? (
-        <P3ReconciliationSection p3={p3} loading={p3Loading} />
+        <P3ReconciliationSection
+          p3={p3}
+          loading={p3Loading}
+          p7OperationalAvailable={
+            !!payload && payload.status !== "source_missing"
+          }
+        />
       ) : null}
 
       {/* Totalizadores oficiais do registro (doc 119 §8): EM ESTOQUE +

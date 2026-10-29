@@ -2286,3 +2286,17 @@ Com a capability `controllership-finance.access.dre`, o fluxo ganha um nível de
 Decisão PO (doc 118 DEC-12): a experiência do P7 na bancada «Relatórios e divergências» e na página contextual exibe seleção explícita entre **«Todos os produtos»** (análise interna; escopo usado na conciliação) e **«MP, PA e PI — DRE»** (recorte do entregável à Contabilidade). Um único controle de seleção; o total exibido corresponde sempre ao escopo selecionado — nunca somar nem comparar totais de escopos diferentes na mesma visualização, e nunca trocar o escopo silenciosamente. Contrato: `report_scope=all_products|mp_pi_pa` (nomes canônicos já usados no exploratório, doc 49 §9). O perfil DRE não recebe acesso a relatórios operacionais: o escopo `mp_pi_pa` alcança a Contabilidade/DRE **via pacote documental submetido**, não como consulta DRE (exigência de ocultação deste documento). `DESIGN` apenas — sem alteração de runtime.
 
 > **Implementado (IMPLEMENTATION-006, 29/10/2026):** a seleção única «Todos os produtos» × «MP, PA e PI — DRE» está em runtime na página contextual, com totalizadores por escopo, selo de paridade `PENDING`/não homologado e export CSV com metadados (doc 119 §11). DRE continua sem acesso à consulta/export — apenas pacote documental.
+
+## REWORK-008 — estados de fonte na área de atenção e na conciliação P3 (29/10/2026)
+
+Semântica implementada que diferencia **disponibilidade operacional** de **elegibilidade para a conciliação** — uma mesma expressão («Fonte indisponível») nunca representa condições distintas:
+
+| Estado exibido | Condição (contrato existente) | Significado |
+|---|---|---|
+| `Disponível` | `source_state = AVAILABLE` | Fonte registrada e respondendo como operando P3 |
+| `Conciliação pendente` (+ «consulta disponível») | domínio P7 sem `AVAILABLE` **e** consulta operacional `/closing/stock-inventory` com dados (`status ≠ source_missing`) | O relatório operacional responde, mas a fonte ainda não é operando validado da conciliação — consulta disponível não equivale a elegibilidade |
+| `Não registrada` | `source_state ≠ AVAILABLE` com `fetched_at = null` | Domínio sem fonte elegível registrada no workflow governado P3 (default sintetizado pela BFF) — nunca lido como divergência zero |
+| `Indisponível` / `Desatualizada` / `Parcial` / `Erro na fonte` | `source_state` correspondente com `fetched_at` preenchido | Fonte registrada que não pôde ser consultada/validada |
+| `Conferência não realizada` | P3/matriz 404 (competência não aberta) | Atividade ainda não executada |
+
+Regras: a autoridade sobre o estado da conciliação é o backend — o MFE apenas apresenta `source_state`, `fetched_at` e o estado operacional já contratados; células monetárias permanecem `—` enquanto não houver operando elegível (nunca divergência zero fabricada). Item P7 pendente oferece «Abrir relatório» para a página contextual. **Implementado** (`MonthlyReportsPanel` + `P3ReconciliationSection`; smoke 14/14 — doc 119 §11.7).

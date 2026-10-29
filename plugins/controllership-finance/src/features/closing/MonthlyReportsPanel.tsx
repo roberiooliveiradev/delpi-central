@@ -240,21 +240,60 @@ function buildAttentionItems(args: {
     for (const recon of p3.data.reconciliations) {
       const label = DOMAIN_LABELS[recon.domain];
       if (recon.source_state !== "AVAILABLE") {
+        // `fetched_at` nulo = domínio nunca registrado no workflow
+        // governado (default sintetizado pela BFF) — distinguir de uma
+        // fonte registrada e marcada indisponível.
+        const neverRegistered = !recon.fetched_at;
+        // P7: a consulta operacional responde independentemente do
+        // operando P3 — "consulta disponível" ≠ "elegível p/ conciliar".
+        const p7Operational =
+          recon.domain === "P7" &&
+          stock?.kind === "ready" &&
+          stock.data.status !== "source_missing";
         items.push({
           id: `p3-src-${recon.domain}`,
           kind: "source_unavailable",
           source: label,
-          description:
-            "A fonte desta conferência não pôde ser consultada ou validada.",
-          situation: SOURCE_STATE_LABELS[recon.source_state],
+          description: p7Operational
+            ? "A consulta operacional do P7 retorna dados reais nesta competência, mas a fonte ainda não foi validada como operando da conciliação P3 — disponibilidade de consulta não equivale a elegibilidade para conciliar."
+            : neverRegistered
+              ? "A fonte desta conferência ainda não foi registrada nem validada — a conciliação permanece bloqueada até que exista uma fonte elegível."
+              : "A fonte desta conferência não pôde ser consultada ou validada.",
+          situation: p7Operational
+            ? "Consulta disponível — conciliação pendente"
+            : neverRegistered
+              ? "Fonte da conciliação não registrada"
+              : SOURCE_STATE_LABELS[recon.source_state],
+          badgeLabel: p7Operational
+            ? "Conciliação pendente"
+            : neverRegistered
+              ? "Fonte não registrada"
+              : undefined,
           difference: null,
           origin: "Conciliação P3",
           fetchedAt: recon.fetched_at,
-          nextAction:
-            "Verifique a disponibilidade da fonte no ERP e atualize a consulta.",
+          nextAction: p7Operational
+            ? "Abra o relatório P7 para consultar os dados; a elegibilidade da fonte para a conciliação é registrada pela gestão no checklist P3."
+            : neverRegistered
+              ? "A conciliação aguarda a validação de uma fonte elegível — consulte o checklist P3 quando a fonte oficial estiver integrada."
+              : "Verifique a disponibilidade da fonte no ERP e atualize a consulta.",
           facts: [
             ["Domínio", label],
-            ["Situação da fonte", SOURCE_STATE_LABELS[recon.source_state]],
+            [
+              "Situação da fonte",
+              neverRegistered
+                ? "Não registrada para a conciliação"
+                : SOURCE_STATE_LABELS[recon.source_state],
+            ],
+            ...(p7Operational
+              ? ([
+                  ["Consulta operacional", "Disponível"],
+                  [
+                    "Elegibilidade P3",
+                    "Pendente de validação",
+                  ],
+                ] as [string, string][])
+              : []),
             [
               "Última consulta",
               recon.fetched_at

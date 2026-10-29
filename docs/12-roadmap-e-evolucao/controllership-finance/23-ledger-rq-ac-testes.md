@@ -883,3 +883,21 @@ Execução `CF-PROC0072-P7-IMPLEMENTATION-006`. Registro completo: [doc 119 §11
 | IMP-18 | Smoke autenticado | PASS local — 12/12 (`cf-e2e-access`, `p7_impl006_smoke.cjs`); prod `TEST_NOT_RUN` — sem persona sancionada, reservado à homologação |
 | IMP-19 | Documentação e Help | PASS (docs 119§11/118/49/85/112/113/23/README; helpTooltips) |
 | IMP-20 | GATE-FINAL revisão | PASS — grandTotal fail-closed (nunca `stock+0` mascarado); CSV formula-injection sanitizado (OWASP); política monetária 6dp documentada+testada; diff 33 arquivos escopo puro |
+
+### REWORK-008 — Integração P7 × conciliação P3 na página Relatórios e divergências (2026-10-29)
+
+Execução `CF-PROC0072-P3-P7-INTEGRATION-REWORK-008`. Registro completo: [doc 119 §11.7](./119-contratos-p7-implementacao-readiness.md). **Causa raiz PROVEN:** o `UNAVAILABLE` por domínio no contrato P3 (`closing_reconciliation`, BFF) significa «sem fonte elegível registrada/validada» — registro governado por `PUT /{period}/p3/reconciliations/{domain}` — e não indisponibilidade da consulta operacional `/closing/stock-inventory`; o MFE colapsava ambos em «Fonte indisponível». Correção de apresentação (sem mudança de contrato): `fetched_at=null` → «Não registrada»; P7 sem `AVAILABLE` + consulta com dados → «Conciliação pendente» + «consulta disponível». Dois totais distintos reconciliados: `historicalTotal` (SB9 c/ loc99) = 14.469.584,01; `grandTotal` = historical + alocado MATR989 = 14.638.712,48.
+
+| RQ/AC | Critério | Estado |
+|---|---|---|
+| RW-01 (AC-01) | Causa raiz R03 identificada em código/contrato | PASS — sintetização `UNAVAILABLE` em `get_p3_state` × consulta operacional independente |
+| RW-02 (AC-02/03/09) | Consulta disponível ≠ elegível P3; estados consistentes nas duas superfícies | PASS — «Conciliação pendente»+«consulta disponível» no painel e na página P7; «Não registrada» para domínio sem registro |
+| RW-03 (AC-04) | Paridade pendente visível | PASS — selo/banner `PENDING` preservado |
+| RW-04 (AC-05/20) | P3 não consome valores inelegíveis; sem falso zero | PASS — células `—`; nenhum caminho alimenta P3 com o total operacional |
+| RW-05 (AC-06) | Diferença dos dois totais investigada | PASS — historical (SB9 incl. loc99) × grandTotal (+alocado): Δ = 169.128,47 = EM PROCESSO alocado |
+| RW-06 (AC-07) | R05/R08 classificados por evidência real | PASS — sem produtor api-delpi (RQ-ANL-02 DESIGN_READY) → «Não registrada» honesto; conciliação bloqueada |
+| RW-07 (AC-08) | Indicadores consistentes | PASS — contagens derivam dos mesmos critérios dos itens |
+| RW-08 (AC-10/11/12) | Sem alteração de motor/permissão; DRE restrito | PASS — zero diff em api-delpi/BFF/authz; 3 permissions intactas |
+| RW-09 (AC-13/14/15) | Testes + smoke local + QA visual | PASS — MFE 49/49 arquivos afetados, suite 390/391 (flake pré-existente não relacionado), tsc/build limpos, smoke autenticado 14/14 (`cf-e2e-access`), screenshots `rework008_*.png` |
+| RW-10 (AC-16) | Documentação e Help sincronizados | PASS — docs 118/119/113/112/23 + `helpTooltips.ts` |
+| RW-11 (AC-17/18/19) | Commit/push/deploy/smoke prod | PENDING — gate de publicação; smoke prod usuário permanece `TEST_NOT_RUN` sem persona sancionada |

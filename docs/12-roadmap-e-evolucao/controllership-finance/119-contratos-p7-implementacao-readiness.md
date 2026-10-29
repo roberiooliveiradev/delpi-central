@@ -687,6 +687,76 @@ G2/G3 com analista real.
 **Rollback:** `git revert fd1d2e02b` + mesmo script `--build` nos 3
 serviços; rotas novas aditivas, zero migrations — revert limpo.
 
+### 11.7 REWORK-008 — integração P7 × conciliação P3 (29/10/2026)
+
+**Sintoma (PO, produção, 2026-09):** a aba «Relatórios e divergências»
+exibia «Fonte indisponível» para R03/R05/R08, enquanto a consulta
+operacional P7 retornava dados reais (7.929 itens, R$ 14.469.584,01).
+
+**Causa raiz (PROVEN no código):** os estados exibidos vêm de
+`GET /closing/competences/{period}/p3` — as três linhas de
+`reconciliations` derivam de `closing_reconciliation` (Postgres da
+BFF), registro **governado** criado apenas por `PUT
+/{period}/p3/reconciliations/{domain}` (`.manage`, com
+`provenance_kind DECLARED|OFFICIAL`). `get_p3_state` sintetiza
+`{domain, source_state: "UNAVAILABLE"}` para domínio **sem linha
+registrada** — ou seja, `UNAVAILABLE` significa «sem operando elegível
+registrado/validado», não «consulta operacional indisponível». A
+consulta operacional (`GET /closing/stock-inventory` → api-delpi)
+é um contrato independente e respondia normalmente. O MFE mapeava
+qualquer `source_state ≠ AVAILABLE` para o rótulo genérico «Fonte
+indisponível», apagando a distinção.
+
+**Correção (apresentação, menor diff — sem mudança de contrato):**
+o MFE passa a distinguir, usando apenas campos já expostos:
+
+- `fetched_at = null` ⟺ domínio **nunca registrado** (registros sempre
+  gravam `fetched_at = now()` no upsert) → «Fonte não registrada» na
+  atenção / «Não registrada» na tabela P3;
+- domínio `P7` sem `AVAILABLE` **e** stock operacional com dados →
+  «Conciliação pendente» + «consulta disponível», com descrição,
+  fatos (Consulta operacional / Elegibilidade P3) e «Abrir relatório»;
+- `source_state ≠ AVAILABLE` com `fetched_at` preenchido → mantém
+  «Indisponível»/estado registrado;
+- células monetárias continuam `—` sem operando elegível — nenhum
+  falso zero; P3 **não** consome o total operacional automaticamente
+  (regra congelada preservada).
+
+**Arquivos:** `MonthlyReportsPanel.tsx` (`buildAttentionItems`),
+`ReportSharedSections.tsx` (`P3ReconciliationSection` + prop
+`p7OperationalAvailable`), `StockInventoryPage.tsx` (wiring),
+`helpTooltips.ts` (`p3.panel`, `monthlyClosing.reportsAttention`).
+
+**Reconciliação dos dois totais (CP4 — PROVEN aritmeticamente):**
+«Valor histórico total» (card) = universo SB9 inteiro incl. loc99 =
+13.767.296,144 + 702.287,869 = **14.469.584,01**; «TOTAL GERAL» =
+historical + EM PROCESSO alocado MATR989 169.128,463 =
+**14.638.712,48**. Duas medidas corretas e distintas — não é defeito.
+
+**Estado de R05/R08 (CP5):** sem produtor em api-delpi
+(`RQ-ANL-02 DESIGN_READY`; MATR320/MATR989 oficiais pendentes E5/E8) —
+«Não registrada» é o estado honesto; a conciliação permanece
+bloqueada até integração/registro de fonte elegível.
+
+**Testes:** MFE 49/49 nos dois arquivos afetados (novos casos:
+conciliação pendente, nunca registrada, registrada-indisponível);
+suite completa 390/391 (única falha = flake pré-existente de fixture
+de foto em `DocumentDetailPanel`, não relacionada); `tsc -b` limpo;
+`vite build` OK; eslint limpo nos arquivos alterados.
+
+**Smoke local autenticado (14/14, `cf-e2e-access`):** competência
+2026-09 aberta localmente via rota governada (`POST
+/closing/competences`, `.access`) reproduziu o cenário de produção —
+atenção exibe «Conciliação pendente» (P7) + «Fonte não registrada»
+(R05/R08); página P7 exibe «Conciliação pendente + consulta
+disponível» e «Não registrada»; screenshots em
+`test-results/rework008_*.png`.
+
+**Classificações:** consulta×elegibilidade diferenciadas `PROVEN`;
+integração operacional→operando P3 permanece `PENDING` (requer
+registro governado com proveniência — possivelmente `OFFICIAL` com
+artefato anexado, decisão do workflow P3, não deste rework).
+
 ---
 
 *Fim do documento 119.*

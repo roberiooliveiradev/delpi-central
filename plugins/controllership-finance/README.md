@@ -45,6 +45,13 @@ Fechamento mensal — as páginas legadas são reutilizadas em modo
 colunas e slot de PDF honesto enquanto não houver produtor homologado.
 O retorno restaura competência, aba e família analisada; a matriz
 R01–R15 permanece como rastreabilidade técnica recolhida.
+REWORK-008: os estados das fontes da conciliação distinguem
+disponibilidade operacional de elegibilidade P3 — `fetched_at` nulo
+(domínio nunca registrado no workflow governado) exibe «Fonte não
+registrada»/«Não registrada»; P7 sem `AVAILABLE` com consulta
+operacional respondendo exibe «Conciliação pendente» + «consulta
+disponível». Consulta disponível não equivale a fonte elegível, e
+domínio sem validação nunca é lido como divergência zero.
 RW01: os filtros vigentes das páginas contextuais são serializados na
 própria URL da rota (`reportQueryParams.ts` — `side`, datas, natureza,
 movimento, ordenação e página para Baixas; `branch`, `scope`, `warehouse`

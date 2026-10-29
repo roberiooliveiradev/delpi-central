@@ -658,7 +658,7 @@ describe("StockInventoryPage — modo contextual do relatório (UX-011)", () => 
     ).toBeTruthy();
   });
 
-  it("P3 indisponível é estado honesto, nunca divergência zero", async () => {
+  it("P3 sem registro e consulta operacional disponível = conciliação pendente", async () => {
     getMock.mockResolvedValue(payload());
     p3Mock.mockResolvedValue({
       period: "2026-09",
@@ -671,6 +671,30 @@ describe("StockInventoryPage — modo contextual do relatório (UX-011)", () => 
           reported_amount: null,
           divergence: null,
           fetched_at: null,
+        },
+      ],
+      blockers: ["fonte p7 indisponível"],
+    });
+    render(<StockInventoryPage reportContext={{ period: "2026-09" }} />);
+
+    await screen.findByText("Conciliação pendente");
+    expect(screen.getByText(/consulta disponível/)).toBeTruthy();
+    expect(screen.getByText(/Bloqueios registrados: 1/)).toBeTruthy();
+  });
+
+  it("P3 indisponível registrada com consulta sem dados segue indisponível", async () => {
+    getMock.mockResolvedValue(payload({ status: "source_missing" }));
+    p3Mock.mockResolvedValue({
+      period: "2026-09",
+      state: "WAITING_FOR_CUTOFF",
+      reconciliations: [
+        {
+          domain: "P7",
+          source_state: "UNAVAILABLE",
+          expected_amount: null,
+          reported_amount: null,
+          divergence: null,
+          fetched_at: "2026-09-30T10:00:00Z",
         },
       ],
       blockers: ["fonte p7 indisponível"],

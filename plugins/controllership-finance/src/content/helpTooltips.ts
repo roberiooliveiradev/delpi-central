@@ -312,7 +312,7 @@ export const CF_HELP = {
   },
   p3: {
     panel:
-      "Cutoff e conciliação (P3): o fechamento exige confirmação humana do cutoff — nunca é inferido de dados aparentemente estáveis. Depois do cutoff, as fontes oficiais aplicáveis (Entradas/Saídas, Inventário P7 e posição H02) são revalidadas e conciliadas. A prontidão só é alcançada com divergência monetária de exatamente R$ 0,00 em todas as fontes — R$ 0,01 ou −R$ 0,01 bloqueiam. Fonte indisponível permanece explícita: nunca é convertida em zero nem libera a prontidão. Mudar qualquer input depois da revalidação exige nova revalidação. «Estoque fechado» reflete somente o estado canônico do ERP (T03) — o Portal não fecha estoque por conta própria nem escreve no TOTVS.",
+      "Cutoff e conciliação (P3): o fechamento exige confirmação humana do cutoff — nunca é inferido de dados aparentemente estáveis. Depois do cutoff, as fontes oficiais aplicáveis (Entradas/Saídas, Inventário P7 e posição H02) são revalidadas e conciliadas. A prontidão só é alcançada com divergência monetária de exatamente R$ 0,00 em todas as fontes — R$ 0,01 ou −R$ 0,01 bloqueiam. Fonte indisponível permanece explícita: nunca é convertida em zero nem libera a prontidão. «Não registrada» indica domínio sem fonte elegível até o momento; «Conciliação pendente» no P7 significa que a consulta operacional responde, mas ainda não é operando validado — disponibilidade de consulta não equivale a elegibilidade para conciliar. Mudar qualquer input depois da revalidação exige nova revalidação. «Estoque fechado» reflete somente o estado canônico do ERP (T03) — o Portal não fecha estoque por conta própria nem escreve no TOTVS.",
   },
   reports: {
     panel:
@@ -406,7 +406,7 @@ export const CF_HELP = {
     reportsIndicators:
       "Indicadores do mês: Divergências identificadas (diferenças comprovadas pelos owners, incluindo inconsistências de vínculo), Relatórios disponíveis (famílias com consulta autorizada respondendo) e Fontes não verificadas (fontes indisponíveis ou conferências pendentes). «—» significa que nem todas as fontes responderam — nunca é zero confirmado.",
     reportsAttention:
-      "O que precisa de atenção: divergência comprovada (diferença calculada pelo owner), fonte indisponível (a consulta não respondeu ou está parcial) e conferência não realizada (atividade ainda não executada). Cada item mostra origem, data da consulta e próxima ação; «Ver detalhes» expande valores, fatos e orientação de correção manual no TOTVS quando comprovada — sem escrever no ERP.",
+      "O que precisa de atenção: divergência comprovada (diferença calculada pelo owner), fonte indisponível (a consulta não respondeu ou está parcial), conciliação pendente (o relatório operacional responde, mas a fonte ainda não foi validada como operando da conciliação P3 — consulta disponível não é elegibilidade para conciliar), fonte não registrada (o domínio ainda não tem fonte elegível registrada) e conferência não realizada (atividade ainda não executada). Cada item mostra origem, data da consulta e próxima ação; «Ver detalhes» expande valores, fatos e orientação de correção manual no TOTVS quando comprovada — sem escrever no ERP.",
     reportsCatalog:
       "Relatórios organizados em cartões por família: Baixas financeiras (pagamentos e recebimentos SE5) e Estoque e conciliação (posição P7 + conferência Entradas/Saídas − P7 − H02). «Abrir relatório» abre a página contextual do relatório — a situação do cartão reflete a consulta real, não a homologação do relatório oficial.",
     reportsResults:

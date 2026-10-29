@@ -208,7 +208,7 @@ Regras homologáveis hoje (evidência `PROVEN`); owner funcional = Controladoria
 | OPS-10 kardex | conferência manual | — | CPV `/supplies/cpv` `REUSE_PARTIAL` | contrato kardex/`as_of` | RQ-ANL-05 |
 | OPS-11/12 EDAPP exports | trabalho manual, classificação manual | — | `despesas-centro-custo` `REUSE_PARTIAL` | seleção R10/R11 + taxonomia E10 | RQ-ANL-06 |
 | OPS-13 Fat×MOD | consolidação manual | — | — | contrato DLP204 (modelo provado, E9) | RQ-ANL-08 |
-| OPS-14 conciliação | cálculo manual em Excel | P3 estrutura pronta (estados) | doc 10/15.1 (TARGET) | motor determinístico + fontes | RQ-ANL-03/04 |
+| OPS-14 conciliação | cálculo manual em Excel | P3 estrutura pronta (estados); REWORK-008: UI distingue consulta operacional × fonte elegível registrada × nunca registrada (doc 119 §11.7) | doc 10/15.1 (TARGET) | motor determinístico + fontes | RQ-ANL-03/04 |
 | OPS-15 divergências | investigação manual | "O que precisa de atenção" (Visão geral/Relatórios) | cockpit/reports read | drill-down por grupo/linha com proveniência | RQ-ANL-04 |
 | OPS-16 pacotes/entrega | envio manual de arquivos | **P5 runtime**: `packages_routes` (15 endpoints: versões, finalizar, submeter, clarifications, complementos, recipients) + `PackagesPage`; **P2 runtime**: `documents_routes` + `validations_routes` + catálogo transacional `PUT /admin/checklist-templates/{id}/documents/{key}/requirement` (DR-1, GATE-015) | TÉO 31.3–31.16, docs 12/37/113/114 | homologação G2/G3 | continuidade sob gates |
 | OPS-17 clarifications | e-mail/reunião | `document_message` (INTERNAL/SHARED) + `document_adjustment_request` (`OPEN→ANSWERED→CONFIRMED`); `received_documents_routes` + `access.dre` | docs 113/115 | resposta não encerra — confirmado; homologação | idem |

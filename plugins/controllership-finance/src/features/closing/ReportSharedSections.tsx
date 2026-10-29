@@ -60,9 +60,13 @@ export function ReportPdfSlot({ reportName }: { reportName: string }) {
 export function P3ReconciliationSection({
   p3,
   loading,
+  p7OperationalAvailable,
 }: {
   p3: P3Status | null;
   loading: boolean;
+  /** Consulta operacional P7 respondeu — distingue "consulta
+   *  disponível" de "fonte elegível para a conciliação". */
+  p7OperationalAvailable?: boolean;
 }) {
   if (loading && !p3) {
     return <p aria-live="polite">Consultando a conciliação P3…</p>;
@@ -92,41 +96,73 @@ export function P3ReconciliationSection({
           </tr>
         </thead>
         <tbody>
-          {p3.reconciliations.map((recon) => (
-            <tr key={recon.domain}>
-              <td>{DOMAIN_LABELS[recon.domain] ?? recon.domain}</td>
-              <td>
-                {recon.expected_amount
-                  ? formatAmount(recon.expected_amount)
-                  : "—"}
-              </td>
-              <td>
-                {recon.reported_amount
-                  ? formatAmount(recon.reported_amount)
-                  : "—"}
-              </td>
-              <td>
-                {recon.divergence !== null
-                  ? formatAmount(recon.divergence)
-                  : "—"}
-              </td>
-              <td>
-                <CfStatusBadge
-                  label={SOURCE_STATE_LABELS[recon.source_state]}
-                  variant={
-                    recon.source_state === "AVAILABLE"
-                      ? "success"
-                      : "warning"
-                  }
-                />
-              </td>
-              <td>
-                {recon.fetched_at ? formatDateTime(recon.fetched_at) : "—"}
-              </td>
-            </tr>
-          ))}
+          {p3.reconciliations.map((recon) => {
+            const neverRegistered = !recon.fetched_at;
+            const p7Pending =
+              recon.domain === "P7" &&
+              recon.source_state !== "AVAILABLE" &&
+              p7OperationalAvailable;
+            const sourceLabel =
+              recon.source_state === "AVAILABLE"
+                ? SOURCE_STATE_LABELS[recon.source_state]
+                : p7Pending
+                  ? "Conciliação pendente"
+                  : neverRegistered
+                    ? "Não registrada"
+                    : SOURCE_STATE_LABELS[recon.source_state];
+            return (
+              <tr key={recon.domain}>
+                <td>{DOMAIN_LABELS[recon.domain] ?? recon.domain}</td>
+                <td>
+                  {recon.expected_amount
+                    ? formatAmount(recon.expected_amount)
+                    : "—"}
+                </td>
+                <td>
+                  {recon.reported_amount
+                    ? formatAmount(recon.reported_amount)
+                    : "—"}
+                </td>
+                <td>
+                  {recon.divergence !== null
+                    ? formatAmount(recon.divergence)
+                    : "—"}
+                </td>
+                <td>
+                  <CfStatusBadge
+                    label={sourceLabel}
+                    variant={
+                      recon.source_state === "AVAILABLE"
+                        ? "success"
+                        : "warning"
+                    }
+                  />
+                  {p7Pending ? (
+                    <span className="cf-attention-item__meta">
+                      {" "}
+                      consulta disponível
+                    </span>
+                  ) : null}
+                </td>
+                <td>
+                  {recon.fetched_at
+                    ? formatDateTime(recon.fetched_at)
+                    : "—"}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      {p3.reconciliations.some(
+        (recon) => recon.source_state !== "AVAILABLE",
+      ) ? (
+        <p className="cf-attention-item__meta">
+          Fontes sem validação não entram no cálculo — «não registrada»
+          indica domínio sem fonte elegível até o momento e nunca é
+          lido como divergência zero.
+        </p>
+      ) : null}
       {p3.blockers.length ? (
         <p className="cf-attention-item__meta">
           Bloqueios registrados: {p3.blockers.length} — a conciliação só é
