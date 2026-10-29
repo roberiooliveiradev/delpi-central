@@ -45,8 +45,15 @@ MATR989 do P7). Ambos exportam CSV/PDF com selo `parityStatus=PENDING`
 (`officialMatr320=false`, `officialMatr989=false`). A aba exibe ainda
 a **conciliação analítica** `closing/analytics/stock-reconciliation`
 — `E/S − P7 − H02` calculada só quando os três operandos estão
-disponíveis (ausente ≠ zero), `governedReconciliation=not_persisted`,
+disponíveis na mesma competência, filial e data-base (ausente ≠ zero;
+referência divergente → `INELIGIBLE`), `governedReconciliation=not_persisted`,
 declarada na UI como «não substitui a conciliação governada (P3)».
+REWORK-010: os operandos são partições do mesmo universo SB9 —
+delta zero reporta `IDENTITY_ONLY` («Composição dos saldos
+consistente», controle de integridade interno) e
+`reconciliationVerdict=INCONCLUSIVE`; nunca `EXACT_PARITY` — a
+paridade entre os relatórios oficiais independentes segue pendente
+de homologação. Delta ≠ zero reporta `DIVERGENCE` real da composição.
 
 Central de Fechamento — Relatórios e divergências (aba `?tab=reports`):
 hub de análise com indicadores honestos, atenção primeiro e cartões por

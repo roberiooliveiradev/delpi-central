@@ -887,4 +887,94 @@ serviços; rotas aditivas, zero migrations — revert limpo.
 
 ---
 
+## 13. Registro de correção — `CF-PROC0072-ANALYTICS-RECONCILIATION-REWORK-010` (29/10/2026)
+
+**Causa raiz (revisão externa):** a IMPLEMENTATION-009 reportava
+`EXACT_PARITY`/`divergência R$ 0,00` ao vivo (2026-09: R05
+14.469.584,013000 − P7 13.767.296,144000 − H02 702.287,869000), mas
+os três operandos são **partições do mesmo universo SB9** —
+`SA total = EM ESTOQUE (ex-99) + H02 físico (loc99)`. A igualdade é
+uma **identidade algébrica de composição** (controle de integridade
+interno do saldo), não prova de paridade entre os relatórios oficiais
+independentes MATR320 × MATR460 × MATR989. Apresentar o zero como
+«paridade exata» conferia selo indevido a uma identidade de saldo.
+
+**Matriz de operandos (confirmada — CP1):** os operandos da equação
+permanecem corretos e canônicos (`E/S.closingBalance` −
+`P7.stockTotal` − `H02.physicalTotal`; `allocatedTotal` segue fora da
+equação — drill-down, contra dupla contagem com o bloco físico). O que
+mudou é a **interpretação**: a fórmula homologada mede a integridade
+da composição do mesmo universo enquanto as fontes não forem
+independentes o suficiente para conciliação.
+
+**Correção aplicada (BFF `closing_routes.py`):**
+
+- `parity`: `EXACT_PARITY` **nunca mais emitido** enquanto os
+  operandos compartilharem a base SB9 — delta zero → `IDENTITY_ONLY`;
+  delta ≠ zero → `DIVERGENCE` (quebra real da composição, investigável);
+  sem cálculo → `NOT_COMPUTED`.
+- `reconciliationVerdict` (novo campo): `INCONCLUSIVE` quando há
+  cálculo — a conciliação entre relatórios independentes permanece
+  pendente de validação/homologação — ou `NOT_COMPUTED`.
+- `independence` (novo): `independentSources=false`,
+  `verdict=shared_universe`, `operandBases` por operando
+  (`sb9_total_universe` / `sb9_ex_process_warehouse` /
+  `sb9_process_warehouse`).
+- `compositionCheck` (novo): `balance_composition`, `consistent`
+  (bool|null) e `deltaCents` — nomeia explicitamente o controle de
+  integridade que o delta zero representa.
+- Elegibilidade reforçada: operandos com **data-base divergente**
+  tornam a composição `INELIGIBLE`/`reference_mismatch` — referências
+  temporais distintas nunca são combinadas nem "averiguadas".
+- Demais invariantes preservadas: Decimal, tolerância `NONE`,
+  `UNAVAILABLE ≠ 0`, `governedReconciliation=not_persisted`,
+  falhas de autorização propagadas.
+
+**MFE:** `PARITY_LABELS` honestos — `IDENTITY_ONLY` → «Composição dos
+saldos consistente», `DIVERGENCE` → «Divergência na composição dos
+saldos», `NOT_COMPUTED` → «Conciliação pendente de validação»;
+parágrafos explicativos por estado (identidade ≠ paridade oficial;
+divergência pede investigação; veredito inconclusivo declarado);
+Help sincronizado. Nenhum rótulo remete a «paridade exata».
+
+**Evidência histórica (CP4):** a divergência documentada do
+fechamento de 09/2026 (`3.890.247,18 − 3.776.994,69 − 64.591,71 =
+48.660,78`, doc 117/TÉO 06.2) refere-se a **emissões oficiais
+datadas** — medidas independentes de relatórios impressos, não ao
+universo SB9 live consultado hoje. Os dados atuais não reproduzem
+uma emissão antiga → `STALE_EVIDENCE` para o caso histórico. A
+capacidade de detecção de divergência é coberta por teste com
+operandos distintos (`test_reconciliation_divergence_*` — incl.
+1 centavo) que agora também provam `compositionCheck.consistent=false`.
+
+**Testes:** BFF — identidade→`IDENTITY_ONLY`/`INCONCLUSIVE` +
+`shared_universe`; divergência real detectável; mismatch temporal →
+`INELIGIBLE`/`NOT_COMPUTED`. MFE — rótulo «Conciliação pendente de
+validação» para inelegível; vitest do painel atualizado.
+Smoke autenticado local **31/31** com o contrato novo (incl. C2b:
+zero = identidade de composição, não paridade oficial).
+Live 2026-09: `ELIGIBLE` / `IDENTITY_ONLY` / `INCONCLUSIVE` /
+`deltaCents 0.00` / `shared_universe` — resposta honesta.
+
+**Commit/push:** `e285dcd2a9` (6 arquivos — rota BFF, testes BFF,
+cliente/tipos MFE, rótulos, Help, testes do painel).
+
+**Deploy produtivo** (`srv-api`, `operador@192.168.1.237`,
+`git pull --ff-only` → `up-prod-sequential.sh` fases `api` e `mfe`
+com `--build` escopado): `delpi-controllership-finance-api` e
+`delpi-controllership-finance` recriados healthy; api-delpi
+inalterado (sem drift). SHA produtivo `e285dcd2a9`.
+Verificação: `IDENTITY_ONLY` presente na rota e no bundle
+`App-JnUmgsgb.js`; 401 anônimo fail-closed nas 3 rotas BFF +
+2 api-delpi; logs sanitizados sem erro novo (404s `/quality/*` =
+tráfego pré-existente de outro plugin). Smoke autenticado:
+`TEST_NOT_RUN` — sem persona sancionada no realm prod.
+
+**Rollback:** `git revert e285dcd2a9` + mesmo script `--build` nos 2
+serviços; mudança aditiva de contrato (campos novos, valores de
+`parity` reclassificados) — consumidores anteriores não dependiam de
+`EXACT_PARITY` para fluxo governado.
+
+---
+
 *Fim do documento 119.*
