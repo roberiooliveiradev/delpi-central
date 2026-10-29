@@ -5,3 +5,19 @@ requests==2.34.2
 urllib3==2.8.0
 python-jose[cryptography]>=3.3.0
 cryptography>=42.0.0
+# Task 07 (DELIA-C3-LANGGRAPH-PRODUCTION-ACTIVATION-01): LangGraph B1
+# promoted to production — graph sequencing runtime only, behind
+# SupportsGovernedCapabilityAttempt. Exact pins reproduce the
+# Task-03..06 validated eval environment; no agents, vector stores,
+# model providers, checkpointer stores or LangGraph Cloud.
+langgraph==1.2.16
+langgraph-checkpoint==4.3.1
+langgraph-prebuilt==1.1.1
+langgraph-sdk==0.4.10
+langchain-core==1.7.1
+langchain-protocol==0.0.20
+langsmith==0.14.14
+pydantic==2.14.1
+pydantic-core==2.50.1
+ormsgpack==1.13.0
+xxhash==4.0.2

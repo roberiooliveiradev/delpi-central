@@ -89,12 +89,32 @@ def test_engine_b_lives_in_infrastructure_layer():
     )
 
 
-def test_production_composition_has_no_engine_b_or_framework():
-    imports = set(_imports_of(COMPOSER_PATH))
-    assert not any(_framework_import(m) for m in imports)
-    assert not any("langgraph" in m for m in imports)
+def test_production_composition_selects_engine_via_lazy_import():
+    """Task 07: B1 is the authorized production default — the composer
+    MAY reference the adapter, but only through a function-local
+    (lazy) import so the `delia` rollback still starts when the
+    framework package is absent. Top-level composer imports must
+    stay framework-free."""
+    tree = ast.parse(
+        COMPOSER_PATH.read_text(encoding="utf-8"),
+        filename=str(COMPOSER_PATH),
+    )
+    top_level = {
+        alias.name
+        for node in tree.body
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    } | {
+        node.module
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module
+    }
+    assert not any(_framework_import(m) for m in top_level), (
+        "framework import must be function-local in the composer"
+    )
     src = COMPOSER_PATH.read_text(encoding="utf-8")
-    assert "LangGraphCapabilityOrchestrator" not in src
+    assert "_resolve_orchestration_attempt" in src
+    assert "DELIA_ORCHESTRATION_ENGINE" in src
 
 
 # --- T3 — independent sequencing (static part; runtime spy lives in

@@ -2087,6 +2087,11 @@ services:
       # above, which stays 1; invalid values fail closed to 1.
       DELIA_LLM_CALL_MAX_ATTEMPTS: ${DELIA_LLM_CALL_MAX_ATTEMPTS:-3}
       DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-300}
+      # Task 07 (PO authorization): production orchestration engine —
+      # langgraph (B1, default) or delia (legacy rollback). Backend
+      # config only; unknown values fail closed at startup. Rollback =
+      # DELIA_ORCHESTRATION_ENGINE=delia + redeploy, never per-request.
+      DELIA_ORCHESTRATION_ENGINE: ${DELIA_ORCHESTRATION_ENGINE:-langgraph}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.
       # Stays unset in prod .env unless rollout is separately authorized.

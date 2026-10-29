@@ -243,6 +243,14 @@ class Settings:
         # (retry OFF), so production can never retry involuntarily.
         # The PO-approved capacity ceiling is LLM_CALL_MAX_ATTEMPTS=3;
         # config can only lower it, never raise past it.
+        # Task 07 (product-owner authorization): production
+        # orchestration-engine selection — backend-controlled config
+        # ONLY; never request/model/provider-sourced. Validated
+        # fail-closed at composition; default `langgraph` (B1),
+        # `delia` = legacy Engine A rollback.
+        self.orchestration_engine = (
+            os.getenv("DELIA_ORCHESTRATION_ENGINE") or "langgraph"
+        ).strip()
         _call_attempts_raw = os.getenv("DELIA_LLM_CALL_MAX_ATTEMPTS")
         self.llm_call_max_attempts_config_source = (
             "environment"

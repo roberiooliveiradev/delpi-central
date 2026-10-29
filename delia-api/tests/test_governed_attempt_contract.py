@@ -617,31 +617,50 @@ def test_engine_b_uses_shared_governed_primitives(langgraph_engine):
         )
 
 
-def test_engine_b_not_wired_in_production_composer():
-    """Engine B is local-evaluation only — the production composer
-    must not reference it, nor an engine selector."""
+def test_engine_selection_is_config_gated_not_request_driven():
+    """Task 07: B1 is the authorized production default selected by
+    backend config only. The composer resolves ONE attempt
+    implementation from DELIA_ORCHESTRATION_ENGINE via the supported
+    set — request input, provider metadata and model output have no
+    selection path."""
     from pathlib import Path
+    import inspect
 
-    src = (
-        Path(__file__).resolve().parent.parent
-        / "app"
-        / "composition"
-        / "root_composer.py"
-    ).read_text()
-    assert "langgraph" not in src.lower()
-    assert "LangGraphCapabilityOrchestrator" not in src
+    from app.composition.root_composer import (
+        _resolve_orchestration_attempt,
+        _SUPPORTED_ORCHESTRATION_ENGINES,
+    )
+
+    assert _SUPPORTED_ORCHESTRATION_ENGINES == frozenset(
+        {"langgraph", "delia"}
+    )
+    assert list(
+        inspect.signature(_resolve_orchestration_attempt).parameters
+    ) == ["engine_name", "gates"]
 
 
-def test_langgraph_not_in_production_requirements():
-    """The eval dependency stays out of the productive requirement
-    set — Engine B is opt-in local test infrastructure."""
+def test_langgraph_production_requirements_pinned_and_scoped():
+    """Task 07: the promoted dependency is pinned exactly and stays
+    scoped to the sequencing runtime — no agents, vector stores,
+    model providers, LangGraph Cloud or checkpointer backends."""
     from pathlib import Path
 
     req = (
         Path(__file__).resolve().parent.parent / "requirements.txt"
     ).read_text().lower()
-    assert "langgraph" not in req
-    assert "langchain" not in req
+    assert "langgraph==1.2.16" in req
+    for forbidden in (
+        "langchain-community",
+        "langchain-openai",
+        "langchain-anthropic",
+        "langgraph-checkpoint-postgres",
+        "langgraph-checkpoint-sqlite",
+        "langgraph-cli",
+        "langserve",
+        "faiss",
+        "chroma",
+    ):
+        assert forbidden not in req, forbidden
 
 
 # --- doc-192 scenario matrix (S2, S3, S4, S6, S7) ---------------------

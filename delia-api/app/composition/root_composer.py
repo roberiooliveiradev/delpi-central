@@ -60,6 +60,36 @@ from app.interfaces.http.request_logging import register_request_logging
 
 _logger = logging.getLogger(__name__)
 
+# Task 07 (product-owner authorization): the production
+# orchestration-engine identifiers selectable through
+# DELIA_ORCHESTRATION_ENGINE — backend config only, never a request,
+# model, provider or metadata input. `langgraph` = B1 (recovery
+# reuse enabled); `delia` = legacy Engine A rollback.
+_SUPPORTED_ORCHESTRATION_ENGINES = frozenset({"langgraph", "delia"})
+
+
+def _resolve_orchestration_attempt(engine_name: str, gates):
+    """Select ONE governed-attempt implementation for the composed
+    application. Unknown identifiers fail closed — a misspelled
+    engine must never silently select another engine. The LangGraph
+    adapter is imported lazily so the `delia` selection runs without
+    the framework installed."""
+    if engine_name not in _SUPPORTED_ORCHESTRATION_ENGINES:
+        raise ValueError(
+            "DELIA_ORCHESTRATION_ENGINE unsupported: "
+            f"{engine_name!r} — expected one of "
+            f"{sorted(_SUPPORTED_ORCHESTRATION_ENGINES)}"
+        )
+    if engine_name == "langgraph":
+        from app.infrastructure.orchestration.langgraph_engine import (
+            LangGraphCapabilityOrchestrator,
+        )
+
+        return LangGraphCapabilityOrchestrator(
+            gates, recovery_reuse_enabled=True
+        )
+    return gates
+
 # CRI E2-R3/E3: governed declarative resources — fixed repo
 # artifacts, never request/env-supplied paths.
 _CRI_INSTRUCTIONS_PATH = (
@@ -365,7 +395,19 @@ def _compose_turn_handler(
         )
         orchestration_instructions = None
     cri_effective = cri_requested and cri_vocabulary is not None
-    orchestration = (
+    # Task 07: engine selection is validated unconditionally — an
+    # invalid DELIA_ORCHESTRATION_ENGINE fails startup even when no
+    # capability surface is configured; nothing is silently selected.
+    if (
+        settings.orchestration_engine
+        not in _SUPPORTED_ORCHESTRATION_ENGINES
+    ):
+        raise ValueError(
+            "DELIA_ORCHESTRATION_ENGINE unsupported: "
+            f"{settings.orchestration_engine!r} — expected one of "
+            f"{sorted(_SUPPORTED_ORCHESTRATION_ENGINES)}"
+        )
+    gates = (
         OperationalCapabilityOrchestrator(
             providers,
             invoke_model=invoke_model,
@@ -386,6 +428,20 @@ def _compose_turn_handler(
         )
         if providers and orchestration_instructions is not None
         else None
+    )
+    orchestration = (
+        _resolve_orchestration_attempt(
+            settings.orchestration_engine, gates
+        )
+        if gates is not None
+        else None
+    )
+    _logger.info(
+        "delia_orchestration_engine selected=%s "
+        "surface=%s runtime_sha=%s",
+        settings.orchestration_engine,
+        "configured" if orchestration is not None else "absent",
+        settings.runtime_sha,
     )
     # CRI E1 (doc 73 §7 / spec 75 §4.1): the single response-intelligence
     # decision is resolved here from trusted runtime config — never from
