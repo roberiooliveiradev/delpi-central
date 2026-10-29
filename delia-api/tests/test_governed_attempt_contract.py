@@ -40,6 +40,7 @@ from app.application.capability_provision.mcp_provider import (
 )
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
+    INTERACTION_ADMISSION_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
 )
 from app.application.specialist_interop.contracts import RemoteToolOutcome
@@ -49,6 +50,7 @@ from app.application.specialist_interop.errors import (
 )
 from app.domain.evidence.model import EpistemicClass
 
+from tests.conftest import load_test_orchestration_instructions
 from tests.test_specialist_capability_orchestration import (
     COMMIT_VERIFIED,
     DAVI_TOOLS,
@@ -72,19 +74,61 @@ from tests.test_governed_stage_resume import _FlakyStageModel
 # --- engine registry (one entry per SupportsGovernedCapabilityAttempt
 # implementation authorized for the boundary) -------------------------
 
-ENGINE_IDS: tuple[str, ...] = ("delia",)
+ENGINE_IDS: tuple[str, ...] = ("delia", "langgraph")
 
 
-def build_engine(
-    engine_id: str,
+def _build_langgraph_engine(
     *,
     port: FakePort,
     specialist_ids: tuple[str, ...],
     proposal=None,
     model=None,
+    providers=None,
     turn_budget_seconds=None,
     max_governed_attempts=1,
     llm_call_max_attempts=1,
+    **gates_kwargs,
+) -> SupportsGovernedCapabilityAttempt:
+    """Engine B — LangGraph sequencing over the same governed
+    primitives. Skipped entirely when the optional eval dependency is
+    absent (never a production requirement)."""
+    pytest.importorskip("langgraph")
+    from app.application.capability_provision.langgraph_engine import (
+        LangGraphCapabilityOrchestrator,
+    )
+
+    if providers is None:
+        providers = [McpCapabilityProvider(_interop(port), specialist_ids)]
+    if model is None and proposal is not None:
+        model = FakeProposalModel(proposal)
+    invoke_model = InvokeModel(model) if model is not None else None
+    kwargs = {}
+    if turn_budget_seconds is not None:
+        kwargs["turn_budget_seconds"] = turn_budget_seconds
+    return LangGraphCapabilityOrchestrator(
+        providers,
+        orchestration_instructions=load_test_orchestration_instructions(),
+        invoke_model=invoke_model,
+        model_ref=TEST_MODEL_REF if invoke_model else None,
+        max_governed_attempts=max_governed_attempts,
+        llm_call_max_attempts=llm_call_max_attempts,
+        **gates_kwargs,
+        **kwargs,
+    )
+
+
+def build_engine(
+    engine_id: str,
+    *,
+    port=None,
+    specialist_ids: tuple[str, ...] = (),
+    proposal=None,
+    model=None,
+    providers=None,
+    turn_budget_seconds=None,
+    max_governed_attempts=1,
+    llm_call_max_attempts=1,
+    **gates_kwargs,
 ) -> SupportsGovernedCapabilityAttempt:
     """Construct the governed-attempt implementation under test.
 
@@ -92,13 +136,30 @@ def build_engine(
     owner surface and its own model-stub scripts onto the same attempt
     boundary. Contract tests below never see engine internals.
 
-    ``turn_budget_seconds`` defaults to the implementation default —
-    a smaller budget legitimately changes behavior (optional probes
-    are skipped for headroom), so tests that need a bounded window
-    pass ``turn_deadline`` on ``attempt()`` instead.
+    ``providers`` overrides the FakePort→McpCapabilityProvider wiring
+    for scenarios that need richer provider-level fixtures (relevance
+    judgments, typed outcomes). ``turn_budget_seconds`` defaults to
+    the implementation default — a smaller budget legitimately
+    changes behavior (optional probes are skipped for headroom), so
+    tests that need a bounded window pass ``turn_deadline`` on
+    ``attempt()`` instead.
     """
+    if engine_id == "langgraph":
+        return _build_langgraph_engine(
+            port=port,
+            specialist_ids=specialist_ids,
+            proposal=proposal,
+            model=model,
+            providers=providers,
+            turn_budget_seconds=turn_budget_seconds,
+            max_governed_attempts=max_governed_attempts,
+            llm_call_max_attempts=llm_call_max_attempts,
+            **gates_kwargs,
+        )
     if engine_id != "delia":
         raise AssertionError(f"unregistered engine {engine_id!r}")
+    if providers is None:
+        providers = [McpCapabilityProvider(_interop(port), specialist_ids)]
     if model is None and proposal is not None:
         model = FakeProposalModel(proposal)
     invoke_model = InvokeModel(model) if model is not None else None
@@ -106,11 +167,13 @@ def build_engine(
     if turn_budget_seconds is not None:
         kwargs["turn_budget_seconds"] = turn_budget_seconds
     return OperationalCapabilityOrchestrator(
-        [McpCapabilityProvider(_interop(port), specialist_ids)],
+        providers,
+        orchestration_instructions=load_test_orchestration_instructions(),
         invoke_model=invoke_model,
         model_ref=TEST_MODEL_REF if invoke_model else None,
         max_governed_attempts=max_governed_attempts,
         llm_call_max_attempts=llm_call_max_attempts,
+        **gates_kwargs,
         **kwargs,
     )
 
@@ -463,3 +526,351 @@ def test_correlation_id_round_trips(engine_id):
     attempt = engine.attempt("analise", correlation_id="corr-1")
     assert attempt.correlation_id == "corr-1"
     assert attempt.provenance.correlation_id == "corr-1"
+
+
+# --- Engine-B-specific: real graph, non-delegation, isolation ----------
+
+
+@pytest.fixture
+def langgraph_engine():
+    pytest.importorskip("langgraph")
+    return _build_langgraph_engine(
+        port=FakePort(tools_by_specialist={"teo": TEO_TOOLS}),
+        specialist_ids=("teo",),
+        proposal=_select("teo", "analyze", {"view": "summary"}),
+    )
+
+
+def test_engine_b_executes_real_graph_nodes(langgraph_engine):
+    """A genuine implementation runs real LangGraph nodes/edges — the
+    engine records the executed node trace per invocation. A wrapper
+    delegating to attempt() produces no node trace."""
+    from langgraph.graph.state import CompiledStateGraph
+
+    assert isinstance(
+        langgraph_engine._compiled_graph, CompiledStateGraph
+    )
+    attempt = langgraph_engine.attempt("resumo dos indicadores")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    trace = langgraph_engine.last_node_trace
+    # Real sequencing: preflight -> admission routing -> owner path.
+    assert trace[0] == "preflight"
+    assert "admission" in trace
+    assert trace[-1] == "owner_path"
+
+
+def test_engine_b_never_delegates_to_engine_a(langgraph_engine):
+    """If OperationalCapabilityOrchestrator._attempt were called, this
+    spy would record it — Engine B must sequence governed primitives
+    itself, never delegate the complete flow."""
+    calls = []
+    original = OperationalCapabilityOrchestrator._attempt
+
+    def _spy(self, *args, **kwargs):
+        calls.append(1)
+        return original(self, *args, **kwargs)
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(
+            OperationalCapabilityOrchestrator, "_attempt", _spy
+        )
+        attempt = langgraph_engine.attempt("resumo dos indicadores")
+    assert calls == [], "Engine B delegated to Engine A _attempt"
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+
+
+def test_engine_b_uses_shared_governed_primitives(langgraph_engine):
+    """Engine B must consume the SAME governed machinery — no
+    duplicated validation, selection, invoke or synthesis logic."""
+    import inspect as _inspect
+    import app.application.capability_provision.langgraph_engine as mod
+
+    src = _inspect.getsource(mod)
+    # The engine module must not re-implement governed gates.
+    for forbidden in (
+        "def _validate_instance",
+        "def _propose(",
+        "def _select_group",
+        "def _select_capability",
+        "def _invoke(",
+        "def _candidate_arguments",
+        "def _judge_goal_evidence",
+        "def _synthesize_content",
+        "def _recover_relevance",
+        "def _attempt_prepare",
+        "def _attempt_confirmation",
+    ):
+        assert forbidden not in src, (
+            f"Engine B duplicates governed gate: {forbidden}"
+        )
+
+
+def test_engine_b_not_wired_in_production_composer():
+    """Engine B is local-evaluation only — the production composer
+    must not reference it, nor an engine selector."""
+    from pathlib import Path
+
+    src = (
+        Path(__file__).resolve().parent.parent
+        / "app"
+        / "composition"
+        / "root_composer.py"
+    ).read_text()
+    assert "langgraph" not in src.lower()
+    assert "LangGraphCapabilityOrchestrator" not in src
+
+
+def test_langgraph_not_in_production_requirements():
+    """The eval dependency stays out of the productive requirement
+    set — Engine B is opt-in local test infrastructure."""
+    from pathlib import Path
+
+    req = (
+        Path(__file__).resolve().parent.parent / "requirements.txt"
+    ).read_text().lower()
+    assert "langgraph" not in req
+    assert "langchain" not in req
+
+
+# --- doc-192 scenario matrix (S2, S3, S4, S6, S7) ---------------------
+# Provider-level fixtures from test_goal_evidence_relevance enable the
+# goal/evidence judgment and recovery stages the FakePort harness
+# cannot express. All boundary-only assertions.
+
+
+from app.application.capability_provision.orchestration import (
+    GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID,
+    GOAL_INSTRUCTION_ID,
+    LIMITATION_INSUFFICIENT_EVIDENCE,
+    SYNTHESIS_INSTRUCTION_ID,
+)
+from app.application.model_invocation.contracts import (
+    ConversationContextTurn,
+)
+from app.application.specialist_interop.errors import SPECIALIST_DISABLED
+from app.domain.interaction.model import TurnKind
+from tests.test_goal_evidence_relevance import (
+    FakeProvider,
+    FakeProposalModel as _RelevanceProposalModel,
+    _cri_clause,
+    _cap,
+    _group,
+    _outcome,
+    _select as _rel_select,
+)
+
+
+_QUERY_SCHEMA = {
+    "type": "object",
+    "properties": {"query": {"type": "string"}},
+}
+
+
+def _items_provider(items_or_queue):
+    cap = _cap("alpha", "mcp", "search_items", schema=_QUERY_SCHEMA)
+    return FakeProvider(
+        "mcp",
+        [_group("mcp", "alpha", [cap])],
+        outcomes={("alpha", "search_items"): items_or_queue},
+    )
+
+
+def test_s2_two_matching_records_with_codes(engine_id):
+    """S2: two correct owner records — both codes surface verbatim."""
+    provider = _items_provider(
+        _outcome(
+            "ok",
+            structured={
+                "data": {
+                    "items": [
+                        {"code": "10080092",
+                         "description": "TERM. BALA 0,50-2,27MM2"},
+                        {"code": "10081004",
+                         "description": "TERM. BALA 1,00-2,50MM2"},
+                    ]
+                }
+            },
+        )
+    )
+    engine = build_engine(
+        engine_id,
+        providers=[provider],
+        proposal=_rel_select(
+            "mcp:alpha", "search_items",
+            args={"arguments": {"query": "terminal bala"}},
+        ),
+    )
+    attempt = engine.attempt("Dois exemplos de terminal bala")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "10080092" in attempt.content
+    assert "10081004" in attempt.content
+    assert provider.calls
+
+
+def test_s3_irrelevant_result_bounded_recovery(engine_id):
+    """S3: first result irrelevant to the goal -> ONE governed
+    recovery round -> reformulated invoke -> truthful SUCCESS."""
+    irrelevant = _outcome(
+        "ok", structured={"items": [{"name": "BALANCA 1"}]}
+    )
+    relevant = _outcome(
+        "ok",
+        structured={
+            "items": [{"name": "TERMINAL ILHOS TUBULAR 16MM"}]
+        },
+    )
+    provider = _items_provider([irrelevant, relevant])
+    proposal = [
+        _rel_select(
+            "mcp:alpha", "search_items",
+            args={"arguments": {"query": "terminal"}},
+            relevance=None,
+        ),
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "records are not terminals",
+            }
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal ilhos tubular"}
+            }
+        },
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "corresponds",
+            }
+        },
+    ]
+    clause = _cri_clause()
+    engine = build_engine(
+        engine_id,
+        providers=[provider],
+        model=_RelevanceProposalModel(proposal),
+        response_intelligence_enabled=True,
+        cri_instruction_clause=clause.text,
+        cri_instruction_version=clause.version,
+    )
+    attempt = engine.attempt("terminal tubular")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    # Bounded: exactly two invokes — initial + one recovery re-invoke.
+    assert len(provider.calls) == 2
+
+
+def test_s4_no_records_never_fabricates(engine_id):
+    """S4: owner returns non-matching records in both rounds —
+    insufficiency is reported truthfully, never inventing codes or
+    record content."""
+    wrong_a = _outcome(
+        "ok", structured={"items": [{"name": "BALANCA 1"}]}
+    )
+    wrong_b = _outcome(
+        "ok", structured={"items": [{"name": "BALANCA 2"}]}
+    )
+    provider = _items_provider([wrong_a, wrong_b])
+    proposal = [
+        _rel_select(
+            "mcp:alpha", "search_items",
+            args={"arguments": {"query": "terminal bala"}},
+            relevance=None,
+        ),
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "scales, not bullet terminals",
+            }
+        },
+        {
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {"query": "terminal bala registro"}
+            }
+        },
+        {
+            GOAL_EVIDENCE_RELEVANCE_INSTRUCTION_ID: {
+                "correspondence": "irrelevant",
+                "mismatch_hint": "still scales",
+            }
+        },
+    ]
+    clause = _cri_clause()
+    engine = build_engine(
+        engine_id,
+        providers=[provider],
+        model=_RelevanceProposalModel(proposal),
+        response_intelligence_enabled=True,
+        cri_instruction_clause=clause.text,
+        cri_instruction_version=clause.version,
+    )
+    attempt = engine.attempt("registros de terminal bala")
+    # Truthful non-success OR success explicitly limited — never an
+    # unqualified records answer.
+    assert (
+        attempt.status is not GovernedCapabilityStatus.SUCCESS
+        or LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    )
+    for fabricated in ("10080092", "10081004"):
+        assert fabricated not in (attempt.content or "")
+
+
+def test_s6_prior_context_continuation_no_reinvoke(engine_id):
+    """S6: a prior OBSERVATION turn + goal declaring prior evidence
+    sufficient continues from context — no new owner invocation."""
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT,
+            content="liste os painéis",
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content="1. Painel A\n2. Painel B",
+            epistemic_class=EpistemicClass.OBSERVATION,
+        ),
+    )
+    proposal = {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": True,
+            "interaction_class": "operational",
+        },
+        GOAL_INSTRUCTION_ID: {
+            "goal_class": "read",
+            "prior_evidence_sufficient": True,
+        },
+        SYNTHESIS_INSTRUCTION_ID: {
+            "items": [{"record_index": 0, "fields": ["excerpt"]}]
+        },
+    }
+    port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
+    engine = build_engine(
+        engine_id,
+        port=port,
+        specialist_ids=("teo",),
+        proposal=proposal,
+    )
+    attempt = engine.attempt("e o terceiro?", prior_turns=prior)
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    # Continuity: no owner capability invoked this turn.
+    assert port.calls == []
+
+
+def test_s7_owner_unavailable_truthful_failure(engine_id):
+    """S7: owner unreachable/disabled -> SOURCE_UNAVAILABLE, no
+    invented evidence."""
+    port = FakePort(
+        tools_by_specialist={"teo": TEO_TOOLS},
+        errors={
+            ("teo", "analyze"): SpecialistInteropError(
+                SPECIALIST_DISABLED, "off"
+            )
+        },
+    )
+    engine = build_engine(
+        engine_id,
+        port=port,
+        specialist_ids=("teo",),
+        proposal=_select("teo", "analyze"),
+    )
+    attempt = engine.attempt("resumo")
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    # Fail-closed truth: the owner call errored, no fabricated data.
+    assert "100" not in (attempt.content or "")

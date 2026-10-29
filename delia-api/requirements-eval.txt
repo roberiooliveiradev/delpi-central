@@ -1,0 +1,12 @@
+# Optional LOCAL-EVALUATION dependencies — never installed into the
+# production image (Dockerfile/requirements.txt untouched).
+#
+# doc 194 — LangGraph Engine B POC: graph sequencing runtime for
+# `LangGraphCapabilityOrchestrator` behind
+# `SupportsGovernedCapabilityAttempt`. Installed only into the dev/test
+# environment via `pip install -r requirements-eval.txt`; the engine
+# module and its tests skip cleanly when it is absent.
+#
+# Pin policy: stable release >= 7 days old at adoption (1.2.16,
+# 2025-10-16); 1.2.17/1.2.18 were < 7 days. MIT license.
+langgraph==1.2.16

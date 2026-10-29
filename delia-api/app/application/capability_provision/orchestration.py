@@ -4092,6 +4092,50 @@ class OperationalCapabilityOrchestrator:
         mutating invoke already started, or the turn is a typed
         confirmation — material work is never re-executed.
         """
+        def attempt_once(
+            correlation: str, deadline: TurnDeadline
+        ) -> GovernedCapabilityAttempt:
+            return self._attempt(
+                input_text,
+                correlation=correlation,
+                actor_user_id=actor_user_id,
+                session_id=session_id,
+                confirmation=confirmation,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                max_execution_stage=max_execution_stage,
+                deadline=deadline,
+            )
+
+        return self._run_governed_attempts(
+            attempt_once,
+            correlation_id=correlation_id,
+            confirmation=confirmation,
+            activity_sink=activity_sink,
+            cancel_check=cancel_check,
+            turn_deadline=turn_deadline,
+        )
+
+    def _run_governed_attempts(
+        self,
+        attempt_once: Callable[
+            [str, TurnDeadline], GovernedCapabilityAttempt
+        ],
+        *,
+        correlation_id: str | None,
+        confirmation: Mapping[str, Any] | None,
+        activity_sink: ActivityEventSink | None,
+        cancel_check: Callable[[], bool] | None,
+        turn_deadline: TurnDeadline | None,
+    ) -> GovernedCapabilityAttempt:
+        """Shared governed attempt runner: binds request-scoped
+        context (activity sink, resume checkpoint, cancellation,
+        relevance flag), anchors the monotonic interaction budget
+        and drives the bounded attempt/resume loop around a caller-
+        supplied single-attempt callable. Engine A passes
+        self._attempt; alternative engines pass one graph
+        invocation — the retry/budget/cancel controls stay shared
+        and never re-implemented per engine (doc 194)."""
         correlation = correlation_id or str(uuid.uuid4())
         first_deadline = turn_deadline or TurnDeadline.start(
             self._turn_budget_seconds
@@ -4131,17 +4175,7 @@ class OperationalCapabilityOrchestrator:
             while True:
                 try:
                     _ATTEMPT_INDEX.set(attempts + 1)
-                    completed = self._attempt(
-                        input_text,
-                        correlation=correlation,
-                        actor_user_id=actor_user_id,
-                        session_id=session_id,
-                        confirmation=confirmation,
-                        workspace_context=workspace_context,
-                        prior_turns=prior_turns,
-                        max_execution_stage=max_execution_stage,
-                        deadline=deadline,
-                    )
+                    completed = attempt_once(correlation, deadline)
                     # Presentation-only accounting: how many governed
                     # attempts this turn actually needed. Never
                     # authority — resume stays deterministic.
@@ -4302,6 +4336,40 @@ class OperationalCapabilityOrchestrator:
                 admission_outcome=EARLY_CONVERSATIONAL_ADMISSION,
             )
 
+        return self._governed_owner_path(
+            input_text,
+            correlation=correlation,
+            actor_user_id=actor_user_id,
+            session_id=session_id,
+            workspace_context=workspace_context,
+            prior_turns=prior_turns,
+            prepare_only=prepare_only,
+            unbound_outcome=unbound_outcome,
+            deadline=deadline,
+        )
+
+    def _governed_owner_path(
+        self,
+        input_text: str,
+        *,
+        correlation: str,
+        actor_user_id: str | None,
+        session_id: str | None,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        prepare_only: bool,
+        unbound_outcome: str | None,
+        deadline: TurnDeadline,
+    ) -> GovernedCapabilityAttempt:
+        """Owner-path tail of _attempt: after typed admission
+        clears the turn, everything from the live surface listing
+        through selection, invoke, judgment, recovery and
+        synthesis. Extracted as the shared governed phase consumed
+        by every SupportsGovernedCapabilityAttempt implementation
+        (doc 192/194) — Engine A calls it from _attempt;
+        alternative engines may sequence to it under their own
+        admission/routing policy. No behavior change: verbatim
+        move of the former tail."""
         groups, failures = self._groups(correlation, deadline)
         surface = _project_surface(groups)
         if not surface:
