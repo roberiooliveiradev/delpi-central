@@ -142,7 +142,11 @@ export function createDashboardViewTransition() {
 
 export function createDashboardTitleWithHelp() {
   return function TitleWithHelp(props: { title?: ReactNode; hint?: string }) {
-    return el("span", null, props.title);
+    return el(
+      "span",
+      { className: "mock-title-with-help", "data-hint": props.hint },
+      props.title,
+    );
   };
 }
 

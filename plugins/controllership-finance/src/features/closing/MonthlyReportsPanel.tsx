@@ -247,6 +247,9 @@ type AttentionItem = {
   nextAction: string;
   /** Fatos do detalhe expansível (rótulo → valor). */
   facts: [string, string][];
+  /** Explicação completa e proveniência — exibida só em «Ver detalhes»
+   *  (REWORK-013: o cartão carrega a mensagem objetiva). */
+  detailNote?: string;
   /** Procedimento homologado de correção manual, quando comprovado. */
   totvsGuide: string | null;
   /** Página contextual relacionada, quando o item pertence a uma família. */
@@ -430,7 +433,20 @@ function buildAttentionItems(args: {
                 ? "Falha na fonte"
                 : "Fonte não registrada"
           : undefined;
+        // REWORK-013: o cartão exibe mensagem objetiva; a explicação
+        // completa (motivo + proveniência) vai ao «Ver detalhes».
         const description = neverRegistered
+          ? operational
+            ? "Consulta disponível. Validação para conciliação formal pendente."
+            : snapshotMissing
+              ? "Posição histórica ainda não disponível para o mês selecionado."
+              : technicalFailure
+                ? "Falha ao consultar a fonte."
+                : partialData
+                  ? "Dados incompletos nesta competência. Conciliação pendente."
+                  : "Fonte da conciliação não registrada."
+          : "A fonte da conciliação não pôde ser consultada ou validada.";
+        const detailNote = neverRegistered
           ? operational
             ? "O relatório possui dados para análise nesta competência, mas ainda não existe fonte registrada e validada para sua utilização no P3 governado — disponibilidade de consulta não equivale a elegibilidade para conciliar."
             : snapshotMissing
@@ -461,6 +477,7 @@ function buildAttentionItems(args: {
           origin: "Conciliação P3",
           fetchedAt: recon.fetched_at,
           nextAction,
+          detailNote,
           facts: [
             ["Domínio", label],
             [
@@ -791,6 +808,14 @@ function AttentionRow({
         </div>
       </div>
       <div className="cf-attention-item__actions">
+        {item.reportKey ? (
+          <CfActionButton
+            variant="primary"
+            onClick={() => onOpenReport(item.reportKey as ReportKey)}
+          >
+            Abrir relatório
+          </CfActionButton>
+        ) : null}
         <CfActionButton
           variant="ghost"
           aria-expanded={expanded}
@@ -799,17 +824,12 @@ function AttentionRow({
         >
           {expanded ? "Ocultar detalhes" : "Ver detalhes"}
         </CfActionButton>
-        {item.reportKey ? (
-          <CfActionButton
-            variant="ghost"
-            onClick={() => onOpenReport(item.reportKey as ReportKey)}
-          >
-            Abrir relatório
-          </CfActionButton>
-        ) : null}
       </div>
       {expanded ? (
         <div className="cf-attention-item__detail" id={detailId}>
+          {item.detailNote ? (
+            <p className="cf-attention-item__note">{item.detailNote}</p>
+          ) : null}
           <dl className="cf-attention-facts">
             {item.facts.map(([label, value]) => (
               <div key={label} className="cf-attention-facts__row">
@@ -1059,9 +1079,9 @@ export function MonthlyReportsPanel({
         ? "diferenças comprovadas — outras verificações pendentes"
         : "diferenças comprovadas nas conferências"
       : divergenceUnknown
-        ? "nem todas as fontes responderam"
+        ? "Não verificadas — nem todas as fontes responderam"
         : unverifiedCount > 0
-          ? "não verificadas — conferências pendentes"
+          ? "Não verificadas — conferências pendentes"
           : "nenhuma diferença comprovada nas conferências";
   const operandStatus = (
     key: "entradasSaidas" | "p7" | "h02",
@@ -1143,7 +1163,7 @@ export function MonthlyReportsPanel({
                 value: anyLoading ? "—" : String(availableReports),
                 valueTone: "value",
                 present: true,
-                hint: "famílias com consulta autorizada",
+                hint: "consultas operacionais implantadas — não é homologação oficial",
               },
             ]}
             openHint="Ver catálogo"
@@ -1158,7 +1178,7 @@ export function MonthlyReportsPanel({
                 value: anyLoading ? "—" : String(unverifiedCount),
                 valueTone: "value",
                 present: true,
-                hint: "fontes indisponíveis ou conferências pendentes",
+                hint: "fontes sem verificação concluída neste período",
               },
             ]}
             openHint="Ver na área de atenção"

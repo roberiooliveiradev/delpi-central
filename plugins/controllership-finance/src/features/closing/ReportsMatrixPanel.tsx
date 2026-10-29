@@ -21,6 +21,7 @@ import {
 import {
   CfSectionCard,
   CfStatusBadge,
+  CfTitleWithHelp,
 } from "../../app/controllershipFinanceUi";
 import { CF_HELP } from "../../content/helpTooltips";
 
@@ -64,11 +65,26 @@ export function ReportsMatrixTable({
           <th>R-ID</th>
           <th>Relatório</th>
           <th>Fonte</th>
-          <th>Consulta</th>
-          <th>Paridade oficial</th>
+          <th>
+            <CfTitleWithHelp
+              title="Consulta"
+              hint={CF_HELP.reports.columns.consulta}
+            />
+          </th>
+          <th>
+            <CfTitleWithHelp
+              title="Paridade oficial"
+              hint={CF_HELP.reports.columns.parity}
+            />
+          </th>
           <th>Itens</th>
           <th>Validados</th>
-          <th>Cobertura</th>
+          <th>
+            <CfTitleWithHelp
+              title="Cobertura"
+              hint={CF_HELP.reports.columns.coverage}
+            />
+          </th>
         </tr>
       </thead>
       <tbody>

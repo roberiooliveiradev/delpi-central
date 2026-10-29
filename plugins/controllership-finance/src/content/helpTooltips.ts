@@ -360,6 +360,14 @@ export const CF_HELP = {
   reports: {
     panel:
       "Matriz R01–R15: cobertura de evidências por relatório do processo de fechamento, derivada do snapshot da competência. «Consulta operacional» (baixas SE5, estoque SB9) é visão auxiliar — não é relatório oficial nem comprovação de paridade. «Contrato pendente» marca fontes sem owner/contrato confirmado — a captura segue fluxo manual governado de evidências. «Coberto» significa todos os itens vinculados ao R-ID validados — não é aceite de negócio do relatório. A coluna «Paridade oficial» mostra o estado da homologação contra a emissão oficial do ERP (pendente até a comparação homologada) — separada da disponibilidade da consulta, que indica apenas que a visão operacional existe.",
+    columns: {
+      consulta:
+        "Consulta: indica se a consulta operacional do relatório está implementada e disponível para o mês selecionado, conforme o contrato da fonte (ex.: baixas SE5, posição de estoque). «Implementada» significa apenas que a visão existe — não é emissão oficial nem comprovação de paridade.",
+      parity:
+        "Paridade oficial: equivalência entre a consulta do Portal e a emissão oficial do relatório no ERP. «Paridade pendente» indica que a comparação homologada ainda não foi concluída — a existência da consulta ou do relatório nunca promove o estado a comprovado.",
+      coverage:
+        "Cobertura: atendimento aos itens e evidências previstos no catálogo para o R-ID nesta competência. «Coberto» indica todos os itens vinculados validados — não é aceite de negócio do relatório.",
+    },
   },
   pendencies: {
     page:

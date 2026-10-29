@@ -1248,6 +1248,11 @@
   gap: 8px;
 }
 
+.dashboard-controllership-finance .cf-attention-item__note {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
 .dashboard-controllership-finance .cf-attention-facts {
   margin: 0;
   display: grid;

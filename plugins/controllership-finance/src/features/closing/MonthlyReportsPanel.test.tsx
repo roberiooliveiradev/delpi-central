@@ -304,7 +304,7 @@ describe("indicadores e área de atenção", () => {
     ).toBeGreaterThan(0);
     expect(
       screen.getByText(
-        /Consulta disponível — conciliação pendente/,
+        /Consulta disponível\. Validação para conciliação formal pendente/,
       ),
     ).toBeTruthy();
     // Com a conciliação P7 pendente de validação, o indicador não
@@ -314,6 +314,7 @@ describe("indicadores e área de atenção", () => {
         name: /Divergências identificadas: —/,
       }),
     ).toBeTruthy();
+    expect(screen.getByText(/Não verificadas/)).toBeTruthy();
   });
 
   it("R05 com consulta disponível e P3 sem registro mostra conciliação pendente", async () => {
@@ -336,13 +337,23 @@ describe("indicadores e área de atenção", () => {
     expect(
       screen.getAllByText("Entradas e saídas (R05)").length,
     ).toBeGreaterThan(0);
+    // Cartão exibe mensagem objetiva; explicação completa e
+    // proveniência ficam em «Ver detalhes».
+    const card = screen
+      .getByText(
+        /Consulta disponível\. Validação para conciliação formal pendente/,
+      )
+      .closest(".cf-attention-item");
+    expect(card).toBeTruthy();
+    fireEvent.click(
+      within(card as HTMLElement).getByRole("button", {
+        name: "Ver detalhes",
+      }),
+    );
     expect(
-      screen.getByText(
-        /Consulta disponível — conciliação pendente/,
+      await within(card as HTMLElement).findByText(
+        /ainda não existe fonte registrada e validada/,
       ),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(/ainda não existe fonte registrada e validada/),
     ).toBeTruthy();
   });
 
@@ -368,7 +379,7 @@ describe("indicadores e área de atenção", () => {
     ).toBeGreaterThan(0);
     expect(
       screen.getByText(
-        /Consulta disponível — conciliação pendente/,
+        /Consulta disponível\. Validação para conciliação formal pendente/,
       ),
     ).toBeTruthy();
   });
@@ -404,11 +415,22 @@ describe("indicadores e área de atenção", () => {
     renderPanel();
 
     await screen.findByText("Sem posição histórica");
+    const snapshotCard = screen
+      .getByText(
+        /Posição histórica ainda não disponível para o mês selecionado/,
+      )
+      .closest(".cf-attention-item");
+    expect(snapshotCard).toBeTruthy();
+    // A distinção «não é zero nem falha» permanece — nos detalhes.
+    fireEvent.click(
+      within(snapshotCard as HTMLElement).getByRole("button", {
+        name: "Ver detalhes",
+      }),
+    );
     expect(
-      screen.getByText(/Posição histórica ainda não disponível/),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(/não é saldo zero nem falha técnica/),
+      await within(snapshotCard as HTMLElement).findByText(
+        /não é saldo zero nem falha técnica/,
+      ),
     ).toBeTruthy();
   });
 
@@ -446,8 +468,19 @@ describe("indicadores e área de atenção", () => {
     expect(
       screen.getAllByText(/Falha ao consultar a fonte/).length,
     ).toBeGreaterThan(0);
+    // «Erro técnico na origem» permanece explicado nos detalhes.
+    const failCard = screen
+      .getAllByText(/Falha ao consultar a fonte/)[0]
+      .closest(".cf-attention-item");
+    fireEvent.click(
+      within(failCard as HTMLElement).getByRole("button", {
+        name: "Ver detalhes",
+      }),
+    );
     expect(
-      screen.getByText(/falhou por erro técnico na origem/),
+      await within(failCard as HTMLElement).findByText(
+        /falhou por erro técnico na origem/,
+      ),
     ).toBeTruthy();
   });
 
@@ -483,8 +516,8 @@ describe("indicadores e área de atenção", () => {
       screen.getAllByText("Entradas e saídas (R05)").length,
     ).toBeGreaterThan(0);
     expect(
-      screen.getByText(/Fonte da conciliação não registrada/),
-    ).toBeTruthy();
+      screen.getAllByText(/Fonte da conciliação não registrada/).length,
+    ).toBeGreaterThan(0);
   });
 
   it("fonte P3 registrada como indisponível mantém estado de indisponível", async () => {
@@ -782,6 +815,24 @@ describe("catálogo em cartões — navegação contextual", () => {
       .getByText("Consumo por OP")
       .closest("tr");
     expect(r04Row?.textContent).toContain("Contrato pendente");
+  });
+
+  it("colunas da matriz explicam consulta, paridade e cobertura", async () => {
+    renderPanel();
+
+    await screen.findByText(/Cobertura da matriz R01–R15/);
+    const table = screen.getByRole("table", {
+      name: "Matriz R01–R15",
+    });
+    const headerHint = (name: string) =>
+      within(table)
+        .getByRole("columnheader", { name })
+        .querySelector("[data-hint]")
+        ?.getAttribute("data-hint");
+
+    expect(headerHint("Consulta")).toContain("consulta operacional");
+    expect(headerHint("Paridade oficial")).toContain("emissão oficial");
+    expect(headerHint("Cobertura")).toContain("catálogo");
   });
 
   it("sem período selecionado pede o mês de referência", async () => {
