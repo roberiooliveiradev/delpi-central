@@ -1504,6 +1504,10 @@ services:
       # (canonical public URL; must match what the issuer mints).
       MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_API_DELPI:-https://minhadelpi.com.br/apps/api-delpi/mcp}
 
+      # Writer único NC (T7): "frozen" recusa mutações legadas — writer
+      # autorizado passa a ser a Engineering API.
+      LMP_NC_WRITE_MODE: ${LMP_NC_WRITE_MODE:-}
+
       # Gates de escrita fornecedor Protheus — default OFF; ligar somente após
       # homologação TOTVS + aceite PO (protheus-rest-supplier-write-handoff.md)
       PROTHEUS_SUPPLIER_CREATE_ENABLED: ${PROTHEUS_SUPPLIER_CREATE_ENABLED:-false}
@@ -2752,6 +2756,19 @@ services:
       # EVA MCP (RFC 9728) — resource audience exata do endpoint público.
       MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_ENGINEERING:-https://minhadelpi.com.br/apps/engineering-api/mcp}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+
+      # Bounded context NC (T7): persistência no postgres oficial com
+      # principal dedicado. Vazio → UnavailableNonconformityRepository
+      # (fail-honest). A guarda em nc_composer rejeita ENG_NC_DB_USER igual
+      # a PLUGINS_DB_USER — exige role dedicada.
+      ENG_NC_REPOSITORY: ${ENG_NC_REPOSITORY:-}
+      ENG_NC_DB_HOST: ${ENG_NC_DB_HOST:-}
+      ENG_NC_DB_PORT: ${ENG_NC_DB_PORT:-5432}
+      ENG_NC_DB_NAME: ${ENG_NC_DB_NAME:-}
+      ENG_NC_DB_USER: ${ENG_NC_DB_USER:-}
+      ENG_NC_DB_PASSWORD: ${ENG_NC_DB_PASSWORD:-}
+      ENG_NC_IMPORT_REPLACE_ENABLED: ${ENG_NC_IMPORT_REPLACE_ENABLED:-}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER:-}
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]

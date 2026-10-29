@@ -432,10 +432,29 @@ def export_lmp_nonconformities():
         )
 
 
+
+def _nc_write_frozen() -> bool:
+    """Writer único NC: quando ``LMP_NC_WRITE_MODE=frozen`` o legado recusa
+    mutações — o writer autorizado passa a ser a Engineering API."""
+    import os
+
+    return os.getenv("LMP_NC_WRITE_MODE", "").strip().lower() == "frozen"
+
+
+def _nc_frozen_response():
+    return error_response(
+        "Escrita de não conformidades congelada neste endpoint — o writer "
+        "autorizado é a Engineering API (/apps/engineering/nonconformities).",
+        status_code=409,
+    )
+
+
 @router.post("/import", **LMP_NONCONFORMITIES_IMPORT)
 @require_any_permission(ENGINEERING_LMP_NC_WRITE)
 def import_lmp_nonconformities(body: ImportLmpNonconformitiesBody = Body(...)):
     """Importa NCs LMP a partir de JSON (substituição total do acervo)."""
+    if _nc_write_frozen():
+        return _nc_frozen_response()
     try:
         if not body.items:
             return error_response(
@@ -528,6 +547,8 @@ def get_lmp_nonconformity(
 @router.post("", **LMP_NONCONFORMITY_CREATE)
 @require_any_permission(ENGINEERING_LMP_NC_WRITE)
 def create_lmp_nonconformity(body: LmpNonconformityBody = Body(...)):
+    if _nc_write_frozen():
+        return _nc_frozen_response()
     try:
         actor = _current_actor()
         data = build_create_lmp_nonconformity_use_case().execute(
@@ -572,6 +593,8 @@ def update_lmp_nonconformity(
     record_id: Annotated[UUID, Path(description="ID da não conformidade")],
     body: LmpNonconformityBody = Body(...),
 ):
+    if _nc_write_frozen():
+        return _nc_frozen_response()
     try:
         actor = _current_actor()
         data = build_update_lmp_nonconformity_use_case().execute(
@@ -618,6 +641,8 @@ def update_lmp_nonconformity(
 def delete_lmp_nonconformity(
     record_id: Annotated[UUID, Path(description="ID da não conformidade")],
 ):
+    if _nc_write_frozen():
+        return _nc_frozen_response()
     try:
         deleted = build_delete_lmp_nonconformity_use_case().execute(str(record_id))
         if not deleted:
