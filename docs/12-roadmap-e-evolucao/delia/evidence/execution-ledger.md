@@ -750,3 +750,14 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Smoke: 2 authenticated READ turns (identity user, PO-provided; NO reset/admin-API/RBAC writes — flagged drift not repeated). S1 GROUNDED real record 10080092 TERM. BALA via DAVI search_products (provenance complete); S2 GROUNDED honest empty-collection via read_governed_technical_knowledge. recovery_opportunity counters live, all zero.
 - ROLLBACK: delia env path + retained image, config-only, no replay.
 - VERDICT: PRODUCTION_DEPLOY_EXECUTED_AND_VERIFIED. NEXT: bounded recovery_opportunity aggregation on real traffic (separate auth).
+
+## 2026-10-30 — PydanticAI structured-decision reliability A/B (doc 201) — EXTEND_BASELINE
+- Task DELIA-C3-PYDANTICAI-STRUCTURED-DECISION-AB-01 on base 8a8ee4ec50 (HEAD 92a5c1c428 at delivery); experimental local harness only — no production deploy/calls/contracts/deps.
+- Baseline inventory: _propose presence-check + allowed_keys projection + downstream semantic gates (orchestration.py); adapter OpenAICompatibleModelInvocationAdapter; Pydantic already in production deps.
+- Candidate: pydantic-ai-slim==2.50.0 (MIT, Py>=3.10, pub 2026-09-24) via direct.model_request_sync + NativeOutput(json_schema) — retries=0, no agent, no tools, provider-reported usage; pinned in requirements-eval.txt only.
+- RED recorded (module absent) → GREEN 20/20 V1–V18 (parity, rejection, fail-closed enum, retry ceiling, no-tool, token accounting, isolation).
+- Deterministic corpus 12 cases x3 arms: 10/12 agreement; 2 deltas = earlier rejection of wrong_field_type + invalid_enum (exposes fail-open unknown-status→sufficient coercion).
+- Live delia-json 78 calls (select_group+native_assessment 30, interaction_admission 48): 0 invalid outputs BOTH arms; input tokens identical 27140=27140; output tokens ~equal (schema adds limitations:[]); latency within noise; TOKEN_SOURCE=PROVIDER_REPORTED.
+- Security: retries=0, provider_requests==1/call, PREPARE/ACT untouched, no SDK in app/ (residual clean).
+- Regression: focused 231 GREEN; Phase-3 audit OK; backend boundaries 0 findings.
+- VERDICT: EXTEND_BASELINE — framework works cleanly but measured zero gain on this model; the only real delta (earlier type/enum rejection) is achievable with already-present Pydantic / baseline contract hardening. Unknown-status coercion documented as future bounded contract decision. NEXT: none (optional baseline contract hardening decision at coordination).

@@ -5,3 +5,11 @@
 # to production requirements.txt under product-owner authorization
 # (DELIA-C3-LANGGRAPH-PRODUCTION-ACTIVATION-01). This file retains
 # the slot for future opt-in evaluation-only dependencies.
+#
+# Task 08 (DELIA-C3-PYDANTICAI-STRUCTURED-DECISION-AB-01):
+# evaluation-only candidate arm — MIT, Python >=3.10, published
+# 2026-09-24. Slim tree only (no agent framework, no extra model
+# providers). Used exclusively by
+# scripts/pydanticai_structured_output_eval.py via direct-request
+# APIs; zero framework retries; never imported by app/.
+pydantic-ai-slim==2.50.0
