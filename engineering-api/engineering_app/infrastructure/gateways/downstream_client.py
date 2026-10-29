@@ -118,3 +118,49 @@ class DownstreamClient:
         if data is None and isinstance(body, dict) and body.get("success") is False:
             raise DownstreamError("contract_error", "Envelope sem payload de dados.")
         return data if data is not None else body
+
+    async def post(
+        self,
+        path: str,
+        *,
+        json_body: Mapping[str, Any],
+        access_token: str,
+        request_id: str | None = None,
+    ) -> Any:
+        """POST e parse do envelope `{"success", "data"}` — retorna `data`.
+
+        Mesma delegação do GET: Bearer humano único + caller_app de
+        telemetria; nunca service headers (F2a.R1).
+        """
+        try:
+            async with httpx.AsyncClient(
+                base_url=self._base_url,
+                timeout=self._timeout,
+                transport=self._transport,
+            ) as client:
+                resp = await client.post(
+                    path,
+                    json=dict(json_body),
+                    headers=self._headers(access_token, request_id),
+                )
+        except httpx.TimeoutException as exc:
+            raise DownstreamError("timeout", str(exc)) from exc
+        except httpx.RequestError as exc:
+            raise DownstreamError("transport_error", str(exc)) from exc
+
+        try:
+            body = resp.json()
+        except Exception:
+            body = None
+
+        if resp.status_code >= 400:
+            raise DownstreamError(
+                "http",
+                format_error_message(body, fallback=resp.text[:200]),
+                status_code=resp.status_code,
+            )
+
+        data, _meta, _error = parse_envelope(body)
+        if data is None and isinstance(body, dict) and body.get("success") is False:
+            raise DownstreamError("contract_error", "Envelope sem payload de dados.")
+        return data if data is not None else body

@@ -84,14 +84,43 @@ def test_no_forbidden_dependencies():
     assert not violations, "Forbidden dependencies found:\n" + "\n".join(violations)
 
 
-def test_no_domain_layer_for_bff():
-    """engineering-api é BFF — camadas application/infrastructure/composition
-    existem a partir da F2a (contratos, ports, gateways, composer), mas
-    `domain` é proibido: regras de domínio pertencem aos owners oficiais."""
-    present = [d.name for d in PACKAGE_ROOT.iterdir() if d.is_dir()]
-    assert "domain" not in present, (
-        "engineering-api não deve criar camada de domínio — BFF apenas compõe"
-    )
+DOMAIN_FORBIDDEN_IMPORT_PREFIXES = (
+    "fastapi",
+    "httpx",
+    "starlette",
+    "uvicorn",
+    "delpi_auth",
+    "delpi_mcp",
+    "delpi_api_client",
+    "mcp",
+    "pydantic",
+)
+
+
+def test_domain_layer_is_pure():
+    """G3: engineering-api é owner das regras LMP — `domain/` existe, mas
+    não pode depender de framework, integração ou camadas externas."""
+    domain_dir = PACKAGE_ROOT / "domain"
+    if not domain_dir.is_dir():
+        return
+    outer_layers = ("application", "infrastructure", "interface", "composition")
+    violations = []
+    for path in sorted(domain_dir.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            modules: list[str] = []
+            if isinstance(node, ast.Import):
+                modules = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                modules = [node.module or ""]
+            for mod in modules:
+                top = _top_level(mod)
+                if top in DOMAIN_FORBIDDEN_IMPORT_PREFIXES:
+                    violations.append(f"{path}:{node.lineno} imports {mod}")
+                for layer in outer_layers:
+                    if mod.startswith(f"engineering_app.{layer}"):
+                        violations.append(f"{path}:{node.lineno} imports {mod}")
+    assert not violations, "Domain purity violations:\n" + "\n".join(violations)
 
 
 def test_inner_layers_never_import_mcp_adapter():

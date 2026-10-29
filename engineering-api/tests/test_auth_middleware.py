@@ -287,7 +287,12 @@ def test_probe_route_not_in_production_openapi(client):
     assert "/probe" not in spec["paths"]
     assert "/probe/whoami" not in spec["paths"]
     assert set(spec["paths"].keys()) == {
-        "/health", "/ready", "/v1/home", "/v1/overview"
+        "/health",
+        "/ready",
+        "/v1/home",
+        "/v1/overview",
+        "/v1/lmps",
+        "/v1/lmps/summary",
     }
 
 
