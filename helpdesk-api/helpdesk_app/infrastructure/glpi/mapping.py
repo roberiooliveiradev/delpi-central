@@ -426,7 +426,9 @@ def parse_ticket_detail(
         priority_id=_int_field(payload.get("priority")),
         type_id=_int_field(payload.get("type")),
         request_type_id=_ref_id(
-            payload.get("requesttypes") or payload.get("requesttypes_id")
+            payload.get("request_type")
+            or payload.get("requesttypes")
+            or payload.get("requesttypes_id")
         ),
         impact=_IMPACT_NAMES.get(_int_field(payload.get("impact")) or -1, ""),
         priority=_PRIORITY_NAMES.get(_int_field(payload.get("priority")) or -1, ""),
