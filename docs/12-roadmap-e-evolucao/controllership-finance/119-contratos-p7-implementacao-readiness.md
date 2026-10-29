@@ -645,6 +645,48 @@ SHA-256, `parity_state=PENDING`, `oficial=false`.
 - Filiais ausentes em competências sem snapshot: estado honesto
   `source_missing`/`incomplete` — sem fallback.
 
+### 11.6 Gate final e deploy produtivo (29/10/2026, GATE-FINAL)
+
+**Revisão de diff + correções do gate:** (a) `grandTotal` fail-closed
+— `None` quando qualquer parcela é desconhecida, nunca `stock + 0`
+mascarado; (b) sanitização OWASP anti-CSV formula injection
+(`'`-prefix em células de texto iniciadas por `= + - @ \t \r`);
+(c) política monetária formalizada e testada.
+
+**Política monetária (CP4):** totalizadores são strings decimais a
+6dp produzidos pelo motor; `grandTotal = stockTotal + processTotal`
+**exato em precisão cheia** (ex.: 13.767.296,144000 +
+871.416,332000 = 14.638.712,476000). Arredondamento a 2 casas é
+apenas apresentação — a soma das parcelas exibidas pode diferir do
+total exibido em ≤ R$ 0,01, o que é arredondamento legítimo, não
+ajuste de cálculo. Coberto por
+`test_p7_totals_monetary_policy_full_precision`.
+
+**Commit/push:** `fd1d2e02b` (33 arquivos, escopo P7 exclusivo;
+concorrente `engineering-api` preservado fora do commit).
+
+**Deploy produtivo** (`srv-api`, `~/projetos/delpi-central`, script
+canônico `up-prod-sequential.sh --pull --build`, ordem api-delpi →
+BFF → MFE): `delpi-api-delpi`, `delpi-controllership-finance-api`,
+`delpi-controllership-finance` Up/healthy; `remoteEntry` 200.
+
+**Pré-condições prod verificadas:** `FINANCEIRO_STOCK_INVENTORY_
+ENABLED=true`, `S2S_ALLOWED_CLIENTS` inclui o BFF, credencial CF_S2S
+presente; checker canônico `keycloak_s2s_controllership_finance_
+scope.py` → 6/6 OK (client+scopes default+audience); issuer fixo via
+`KC_HOSTNAME_STRICT` — `S2S_TOKEN_URL` interno correto em prod.
+
+**Smoke produtivo:** health/rotas/remoteEntry `PASS`; 401 anônimo
+nas duas rotas (fail-closed); token S2S prod emitido com
+`iss=https://minhadelpi.com.br/auth/realms/delpi`, `aud`⊋`api-delpi`,
+`scope`⊋`stock-inventory.read`; `ServiceTokenValidator` aceita
+(`S2S_ACCEPT`). Smoke autenticado de usuário: `TEST_NOT_RUN` — sem
+persona de teste sancionada no realm prod; reservado à homologação
+G2/G3 com analista real.
+
+**Rollback:** `git revert fd1d2e02b` + mesmo script `--build` nos 3
+serviços; rotas novas aditivas, zero migrations — revert limpo.
+
 ---
 
 *Fim do documento 119.*

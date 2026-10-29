@@ -878,6 +878,8 @@ Execução `CF-PROC0072-P7-IMPLEMENTATION-006`. Registro completo: [doc 119 §11
 | IMP-13 | Exportação identificada por escopo | PASS (CSV: metadata+SHA-256+watermark; filename carrega escopo; smoke S10–S12) |
 | IMP-14 | Paridade testada e classificada | PENDING — `all_products` estrutura PROVEN (PA/PI/II bit a bit; MP drift +8.182,43 STALE_EVIDENCE); `mp_pi_pa` PENDING (E2) |
 | IMP-15/16 | Interface existente preservada; testes/build documentados | PASS (43+31+12 api/BFF, 33 MFE, tsc limpo, build MFE servido) |
-| IMP-17 | Deploy governado | PENDING — execução local; produção não autorizada |
-| IMP-18 | Smoke autenticado | PASS — 12/12 (`cf-e2e-access`, `p7_impl006_smoke.cjs`) |
+| IMP-17 | Deploy governado | PASS — `fd1d2e02b` pushado; `srv-api` pull + `up-prod-sequential.sh --build` (api-delpi→BFF→MFE); 3 serviços healthy; `remoteEntry` 200; rollback = revert + rebuild |
+| IMP-17b | Pré-condições S2S prod | PASS — checker canônico 6/6; flag ON; allowlist; token prod iss/aud/scope corretos; `ServiceTokenValidator` S2S_ACCEPT |
+| IMP-18 | Smoke autenticado | PASS local — 12/12 (`cf-e2e-access`, `p7_impl006_smoke.cjs`); prod `TEST_NOT_RUN` — sem persona sancionada, reservado à homologação |
 | IMP-19 | Documentação e Help | PASS (docs 119§11/118/49/85/112/113/23/README; helpTooltips) |
+| IMP-20 | GATE-FINAL revisão | PASS — grandTotal fail-closed (nunca `stock+0` mascarado); CSV formula-injection sanitizado (OWASP); política monetária 6dp documentada+testada; diff 33 arquivos escopo puro |
