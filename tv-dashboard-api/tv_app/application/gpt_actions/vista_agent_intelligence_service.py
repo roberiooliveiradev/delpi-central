@@ -7,10 +7,11 @@ evolves with API deploy without re-pasting Builder Instructions.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from functools import lru_cache
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from delpi_character_profiles import (
@@ -20,7 +21,17 @@ from delpi_character_profiles import (
     project_public_profile,
 )
 
+from tv_app.config import settings
 from tv_app.persona.vista_profile import get_vista_profile
+
+_SERVICE_ROOT = Path(__file__).resolve().parents[3]
+_MIME_BY_SUFFIX = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
+_PUBLIC_ORIGIN_FALLBACK = "https://minhadelpi.com.br"
+
+
+@lru_cache(maxsize=8)
+def _file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 CONTENT_PATH = (
     Path(__file__).resolve().parents[2] / "content" / "vista_agent_intelligence.json"
@@ -268,7 +279,47 @@ class VistaAgentIntelligenceService:
     @classmethod
     def persona_context(cls) -> dict[str, Any]:
         """Compact narrative context from the ficha — MCP/agent echo."""
-        return project_persona_context(cls.character_profile())
+        context = project_persona_context(cls.character_profile())
+        distribution = cls.avatar_distribution()
+        if distribution:
+            context["avatar_distribution"] = distribution
+        return context
+
+    @classmethod
+    def avatar_distribution(cls) -> dict[str, Any] | None:
+        """Public HTTPS discovery metadata for the official avatar.
+
+        DELPI-CHARACTER-AVATARS-002 — owner-local additive key on the
+        persona projection (no shared-contract change). The URL composes
+        ``PUBLIC_BASE_URL`` + service root path + the canonical
+        ``avatar_reference`` filename — never user input. ``sha256`` is
+        computed from the served asset so projection and route cannot
+        drift. ``None`` when the ficha has no approved avatar (safe
+        fail: no URL is published for unapproved or missing assets).
+        """
+        profile = cls.character_profile()
+        appearance = profile.appearance
+        reference = (appearance.avatar_reference or "").strip()
+        if appearance.avatar_status != "OFFICIAL_AVATAR_APPROVED" or not reference:
+            return None
+        path = (_SERVICE_ROOT / reference).resolve()
+        if not path.is_file() or not path.is_relative_to(_SERVICE_ROOT):
+            return None
+        filename = PurePosixPath(reference).name
+        base = (settings.PUBLIC_BASE_URL or _PUBLIC_ORIGIN_FALLBACK).rstrip("/")
+        root = settings.TV_DASHBOARD_API_ROOT_PATH.rstrip("/")
+        return {
+            "kind": "public_https",
+            "url": (
+                f"{base}{root}/public/characters/"
+                f"{profile.identity.character_id}/avatar/{filename}"
+            ),
+            "version": Path(filename).stem,
+            "mime_type": _MIME_BY_SUFFIX.get(
+                path.suffix.lower(), "application/octet-stream"
+            ),
+            "sha256": _file_sha256(path),
+        }
 
     @classmethod
     def public_profile(cls) -> CharacterPublicProfile:

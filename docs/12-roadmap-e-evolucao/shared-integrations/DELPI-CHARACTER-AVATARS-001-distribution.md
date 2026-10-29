@@ -117,3 +117,46 @@ escopo e sem promessa de integração automática.
 | T14–T15 | descoberta/render no ChatGPT | TEST_NOT_RUN |
 | T16 | sem fallback genérico | PASS |
 | T17 | EVA: publicação ratificada (R01) → serve bytes oficiais; allowlist exata; MCP/AuthZ intactos | PASS (200 + sha256; paths não autorizados → 401) |
+
+## Descoberta via MCP — DELPI-CHARACTER-AVATARS-002
+
+Nível 2 implementado: cada owner projeta `avatar_distribution` como chave
+aditiva do contexto de persona (`agent_directives.character` /
+`capability_surface`) via `*AgentIntelligenceService.persona_context()`.
+Contrato compartilhado `delpi_character_profiles` inalterado (zero schema
+bump) — a projeção é owner-local e só existe quando
+`avatar_status == OFFICIAL_AVATAR_APPROVED` e o asset resolve com
+segurança (mesma validação da rota HTTP).
+
+```json
+"avatar_distribution": {
+  "kind": "public_https",
+  "url": "https://minhadelpi.com.br/apps/<servico>/public/characters/<id>/avatar/<filename>",
+  "version": "avatar-vN",
+  "mime_type": "image/...",
+  "sha256": "<digest do asset servido>"
+}
+```
+
+- `url`: composta de `PUBLIC_BASE_URL` (env) + root path do serviço +
+  basename de `avatar_reference` — nunca input do usuário.
+- `sha256`: calculado do arquivo efetivamente servido — projeção e rota
+  não podem divergir.
+- `avatar_reference` permanece a referência interna canônica (não é URL).
+- Safe-fail: avatar não aprovado → chave ausente (nenhuma URL publicada).
+- Fallback de apresentação (regra do consumidor): avatar recuperável →
+  imagem oficial; indisponível → identidade textual; imagem genérica
+  proibida.
+
+| OWNER | Projeção | URL oficial |
+|---|---|---|
+| DAVI | `DaviAgentIntelligenceService` | `…/apps/api-delpi/public/characters/davi/avatar/avatar-v1.png` |
+| CLARA | `ClaraAgentIntelligenceService` | `…/apps/controllership-finance-api/public/characters/clara/avatar/avatar-v1.jpg` |
+| TÉO | `TeoAgentIntelligenceService` | `…/apps/transformometro-api/public/characters/teo/avatar/avatar-v2.png` |
+| VISTA | `VistaAgentIntelligenceService` | `…/apps/tv-dashboard-api/public/characters/vista/avatar/avatar-v2.jpg` |
+| EVA | `EvaAgentIntelligenceService` | `…/apps/engineering-api/public/characters/eva/avatar/avatar-v1.jpg` |
+
+**Pendências:** Nível 3 (renderização no ChatGPT) depende do comportamento
+do host — o consumidor decide se/como exibir a URL; TEST_NOT_RUN até
+validação funcional. Ícone nativo do app fora de escopo. Deploy da
+extensão não autorizado por esta task.

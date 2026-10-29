@@ -69,3 +69,12 @@ possui projeção pública no repositório (handoffs aos owners:
   1024×1024, sha256 `18d9e05f…e6fc`, status `OFFICIAL_AVATAR_APPROVED`.
 - Cache `public, max-age=300`; `X-Content-Type-Options: nosniff`.
 - Revogação: mudar `avatar_status` na ficha → 404 imediato.
+
+## Descoberta MCP — DELPI-CHARACTER-AVATARS-002
+
+`EvaAgentIntelligenceService.persona_context()` projeta
+`avatar_distribution` (kind/url/version/mime_type/sha256) como chave
+aditiva quando `avatar_status == OFFICIAL_AVATAR_APPROVED`. A URL compõe
+`PUBLIC_BASE_URL` + root path + basename de `avatar_reference`; o sha256
+é calculado do asset servido. Chave ausente quando o avatar não está
+aprovado (safe-fail).

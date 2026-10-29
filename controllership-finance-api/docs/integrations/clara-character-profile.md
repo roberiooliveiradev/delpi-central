@@ -80,3 +80,12 @@ ficha e incrementar `PROFILE_VERSION`.
   filename deve ser idêntico ao basename da referência — caso contrário 404.
 - Cache `public, max-age=300`; `X-Content-Type-Options: nosniff`.
 - Revogação: mudar `avatar_status` na ficha → 404 imediato.
+
+## Descoberta MCP — DELPI-CHARACTER-AVATARS-002
+
+`ClaraAgentIntelligenceService.persona_context()` projeta
+`avatar_distribution` (kind/url/version/mime_type/sha256) como chave
+aditiva quando `avatar_status == OFFICIAL_AVATAR_APPROVED`. A URL compõe
+`PUBLIC_BASE_URL` + root path + basename de `avatar_reference`; o sha256
+é calculado do asset servido. Chave ausente quando o avatar não está
+aprovado (safe-fail).
