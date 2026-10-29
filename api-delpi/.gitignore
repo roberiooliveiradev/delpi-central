@@ -53,6 +53,7 @@ tmp/
 *.jpg
 *.jpeg
 !app/infrastructure/pdf/metallographic/assets/*.png
+!app/assets/characters/**/*.png
 
 # ---- ⚙️ Configurações Locais ----
 .env
