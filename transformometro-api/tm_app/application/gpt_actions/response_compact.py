@@ -134,14 +134,15 @@ def project_catalog(payload: Mapping[str, Any]) -> dict[str, Any]:
         directives = surface.get("agent_directives")
         if isinstance(directives, dict):
             # Already compacted by intelligence service; ensure size bound
-            # (catalog envelope ≈73KB of a 100KB budget — 40KB keeps full
-            # directives including the Persona V2 identity section).
-            if ascii_utf8_size(directives) > 40_000:
+            # (catalog envelope ≈78KB of a 100KB budget — 45KB keeps full
+            # directives including Persona V2 identity + character ficha).
+            if ascii_utf8_size(directives) > 45_000:
                 surface = dict(surface)
                 surface["agent_directives"] = {
                     "version": directives.get("version"),
                     "authority": directives.get("authority"),
                     "identity": directives.get("identity"),
+                    "character": directives.get("character"),
                     "write_flow": directives.get("write_flow"),
                     "write_flow_mcp": directives.get("write_flow_mcp"),
                     "execution_posture": directives.get("execution_posture"),

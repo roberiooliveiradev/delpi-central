@@ -64,7 +64,10 @@ def test_voice_defines_humor_boundaries():
 
 def test_self_explanation_forbids_invented_biography_and_diagnosis():
     expl = _identity()["self_explanation"]
-    assert "nunca inventar idade" in expl["age"]
+    # CHARACTER-PROFILE-TEO-001: narrative age 16 is approved fiction —
+    # the rule distinguishes it from a human biography, never invents one.
+    assert "idade narrativa aprovada: 16" in expl["age"]
+    assert "nunca" in expl["age"]
     assert "não afirmar TEA" in expl["clinical"]
     assert "não inventar nomes de criadores" in expl["creators"]
     # Self-knowledge comes from live catalogs, not a static tool list.

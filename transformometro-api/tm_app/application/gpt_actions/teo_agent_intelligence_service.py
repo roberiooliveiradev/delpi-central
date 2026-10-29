@@ -11,6 +11,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from delpi_character_profiles import (
+    CharacterProfile,
+    CharacterPublicProfile,
+    project_persona_context,
+    project_public_profile,
+)
+
 CONTENT_PATH = (
     Path(__file__).resolve().parents[2] / "content" / "teo_agent_intelligence.json"
 )
@@ -28,6 +35,9 @@ def _load() -> dict[str, Any]:
 
 def clear_teo_agent_intelligence_cache() -> None:
     _load.cache_clear()
+    from tm_app.persona.teo_profile import get_teo_profile
+
+    get_teo_profile.cache_clear()
 
 
 def _compact_for_actions(node: Any, *, key: str | None = None) -> Any:
@@ -132,4 +142,28 @@ class TeoAgentIntelligenceService:
             raw = neutralize_for_mcp(raw)
         else:
             raw.pop("write_flow_mcp", None)
-        return _compact_for_actions(raw)
+        out = _compact_for_actions(raw)
+        # CHARACTER-PROFILE-TEO-001 — compact character context projected
+        # from the shared-contract ficha (single narrative source; fiction
+        # only, never AuthZ/capability/tool authority). Appended after the
+        # directive compactor: project_persona_context is already bounded
+        # by contract and the compactor would strip *_summary keys.
+        out["character"] = cls.persona_context()
+        return out
+
+    @classmethod
+    def character_profile(cls) -> CharacterProfile:
+        """Canonical TÉO ficha (shared contract consumer)."""
+        from tm_app.persona.teo_profile import get_teo_profile
+
+        return get_teo_profile()
+
+    @classmethod
+    def persona_context(cls) -> dict[str, Any]:
+        """Compact narrative context from the ficha — MCP/Actions echo."""
+        return project_persona_context(cls.character_profile())
+
+    @classmethod
+    def public_profile(cls) -> CharacterPublicProfile:
+        """Approved public narrative projection for colleague knowledge."""
+        return project_public_profile(cls.character_profile())
