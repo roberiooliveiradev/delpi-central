@@ -101,6 +101,7 @@ class DaviAgentIntelligenceService:
             "language": doc.get("language") or {},
             "persona": doc.get("persona") or {},
             "persona_bridge": doc.get("persona_bridge") or {},
+            "narrative": doc.get("narrative") or {},
             "data_specialist": doc.get("data_specialist") or {},
             "protheus": doc.get("protheus") or {},
             "tsql": doc.get("tsql") or {},

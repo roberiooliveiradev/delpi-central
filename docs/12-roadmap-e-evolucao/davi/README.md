@@ -227,7 +227,10 @@ SHA `7f2bfab647`; promoted counts recomputed at
 ```text
 allowlist              = v30
 DAVI_ELIGIBLE_READ     = 94 governed ops (baseline; live index 97)
-agent intelligence     = 2026.10.29.2 (persona garoto-especialista ecoada
+agent intelligence     = 2026.10.29.3 (narrativa v1: universo fictício
+                         Especialistas DELPI — DAVI × VISTA namorados,
+                         menção ocasional e limitada; persona 002 mantida:
+                         garoto-especialista ecoada
                          via agent_directives; data_specialist reasoning;
                          convenções Protheus SX2/SX3/D_E_L_E_T_; práticas
                          T-SQL; table_discovery pipeline; regras proativas;
