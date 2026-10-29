@@ -13,3 +13,10 @@
 # scripts/pydanticai_structured_output_eval.py via direct-request
 # APIs; zero framework retries; never imported by app/.
 pydantic-ai-slim==2.50.0
+#
+# Task 10 (DELIA-C3-SEMANTIC-INTELLIGENCE-PLUGGABLE-AB-01):
+# evaluation-only candidate arm — MIT, Python >=3.10, published
+# 2026-10-12. Used exclusively by scripts/semantic_decision_eval.py
+# via dspy.Predict + JSONAdapter against the local Ollama eval model;
+# dspy imports stay inside function bodies — never imported by app/.
+dspy==3.4.1
