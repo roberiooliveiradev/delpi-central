@@ -72,6 +72,15 @@ registrada»/«Não registrada»; P7 sem `AVAILABLE` com consulta
 operacional respondendo exibe «Conciliação pendente» + «consulta
 disponível». Consulta disponível não equivale a fonte elegível, e
 domínio sem validação nunca é lido como divergência zero.
+REWORK-011: a distinção consulta-operacional × elegibilidade P3 foi
+estendida de P7 para R05 e R08 usando os operandos da conciliação
+analítica — «Consulta disponível — conciliação pendente»,
+«Posição histórica ainda não disponível» (snapshot SB9 ausente,
+diferente de falha técnica), «Falha ao consultar a fonte» e
+«Dados incompletos»; a fonte P3 registrada permanece autoritativa.
+O indicador «Divergências identificadas» só exibe número comprovado:
+`0` exige todas as conferências concluídas; verificações pendentes
+mostram `—` «não verificadas» — `INCONCLUSIVE` nunca vira zero.
 RW01: os filtros vigentes das páginas contextuais são serializados na
 própria URL da rota (`reportQueryParams.ts` — `side`, datas, natureza,
 movimento, ordenação e página para Baixas; `branch`, `scope`, `warehouse`

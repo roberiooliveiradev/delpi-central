@@ -977,4 +977,80 @@ serviços; mudança aditiva de contrato (campos novos, valores de
 
 ---
 
+## 14. Registro de correção — `CF-PROC0072-ANALYTICS-UX-STATE-REWORK-011` (29/10/2026)
+
+**Problema (evidência do PO em produção):** o painel de atenção
+apresentava «Fonte não registrada» para R05 e R08 mesmo com a
+consulta operacional respondendo dados — a distinção «consulta
+disponível × elegibilidade P3» só existia para o P7. O indicador
+«Divergências identificadas: 0» era exibido sem que nenhuma
+verificação tivesse sido concluída. Em outubro/2026, R05/P7/R08
+apareciam indisponíveis sem causa declarada.
+
+**Diagnóstico outubro/2026 (PROVEN):** os produtores retornam HTTP
+200 com `status=source_missing` e `branchesMissing=["01","02"]` —
+não existe snapshot SB9 na data de referência (`2026-10-31`,
+convenção `month_end`): o fechamento de estoque do período ainda
+não ocorreu no Protheus. Há movimentações, mas não há posição de
+saldo. **Ausência de snapshot comprovada — não falha técnica.**
+(Os 503 observados durante a investigação eram o api-delpi local em
+crash-loop por checksum da migration V014 do plugin
+`lancamento-notas-fiscais` — alterada após aplicação; reparo de
+ledger local apenas, fora do escopo deste rework.)
+
+**Três dimensões independentes por domínio** (`ENTRADAS_SAIDAS`,
+`P7`, `H02`) — matriz implementada no painel:
+
+| operationalStatus | governedP3Status | Estado exibido |
+|---|---|---|
+| `AVAILABLE` | nunca registrado | «Consulta disponível — conciliação pendente» (badge «Conciliação pendente») |
+| `SOURCE_MISSING` | nunca registrado | «Posição histórica ainda não disponível» (badge «Sem posição histórica») |
+| `UNAVAILABLE` | nunca registrado | «Falha ao consultar a fonte» (badge «Falha na fonte») |
+| `INCOMPLETE` | nunca registrado | «Dados incompletos — conciliação pendente» |
+| outro/ausente | nunca registrado | «Fonte da conciliação não registrada» |
+| qualquer | registrado | `SOURCE_STATE_LABELS` autoritativo + operando como fato |
+
+Rótulos de operando corrigidos: `SOURCE_MISSING` → «Posição
+histórica indisponível», `UNAVAILABLE` → «Falha ao consultar a
+fonte» — ausência de snapshot e falha técnica nunca mais dividem
+o mesmo rótulo. A fonte operacional vem dos operandos da conciliação
+analítica (zero requisições novas; contrato inalterado).
+
+**Política do indicador «Divergências identificadas»:**
+
+- divergências comprovadas > 0 → contagem exibida;
+- contagem = 0 **e** verificações pendentes/fontes sem resposta →
+  `—` + «não verificadas» / «nem todas as fontes responderam»;
+- contagem = 0 **e** todas as conferências concluídas → `0`.
+- `INCONCLUSIVE`/pendente nunca se converte em zero.
+
+**Preservado:** motores R05/P7/R08, cálculos, exports CSV/PDF,
+permissões, independência documental, P3 governado intacto —
+mudança exclusivamente de apresentação/estados no MFE.
+
+**Testes:** painel 22/22 (novos cenários: R05/R08 «consulta
+disponível — conciliação pendente», snapshot ausente ≠ falha
+técnica, indicador «—» com pendências, «0» só quando tudo
+verificado); tsc limpo; vitest suite com apenas flakes
+pré-existentes (`DocumentDetailPanel`, `DocumentsAdminPage` sob
+carga paralela — passam isolados); build OK. Smoke autenticado
+**31/31** com a superfície nova. QA visual: 2026-09 exibe
+«Consulta disponível — conciliação pendente» ×3 + «—» nas
+divergências; 2026-10 exibe «Posição histórica indisponível» nos
+operandos/cartões + «—».
+
+**Commit/push:** `e07f566161` (4 arquivos MFE).
+
+**Deploy produtivo** (`srv-api`, `operador@192.168.1.237`,
+`git pull --ff-only` → `up-prod-sequential.sh --fase mfe --build
+controllership-finance`): container recriado; bundle
+`App-CfqRjY7p.js` contém os novos rótulos; SHA produtivo
+`e07f566161`; rotas API 401 anônimo (inalteradas); smoke autenticado
+prod `TEST_NOT_RUN` — sem persona sancionada no realm.
+
+**Rollback:** `git revert e07f566161` + rebuild `--fase mfe` do
+MFE — mudança de apresentação pura, zero contrato/migration.
+
+---
+
 *Fim do documento 119.*
