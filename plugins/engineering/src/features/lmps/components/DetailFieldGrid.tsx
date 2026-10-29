@@ -1,12 +1,6 @@
-import { createDashboardDetailFieldGrid } from "@delpi/plugin-ui/index";
+import { EngineeringDetailFieldGrid } from "../../../ui/engineeringUi";
 
 export type { DetailField } from "@delpi/plugin-ui/index";
 
-export const DetailFieldGrid = createDashboardDetailFieldGrid({
-  prefix: "lmps",
-  labels: {
-    emptyMessage: "Sem dados.",
-    fieldHelpAriaLabel: (label) => `Ajuda: ${label}`,
-  },
-  wrapLabels: true,
-});
+/** Grid de campos canônico do Portal Engenharia. */
+export const DetailFieldGrid = EngineeringDetailFieldGrid;

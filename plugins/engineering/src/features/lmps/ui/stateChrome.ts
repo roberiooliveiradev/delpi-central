@@ -1,13 +1,10 @@
 import {
-  delpiUiClass,
-  stateBoxPlaceholderBemClasses,
-} from "@delpi/plugin-ui/index";
+  ENGINEERING_STATE_BOX_EMPTY,
+  ENGINEERING_STATE_BOX_ERROR,
+} from "../../../ui/engineeringUi";
 
 /** Placeholder de gráfico/lista — dual `state-box--empty`. */
-export const STATE_BOX_EMPTY = stateBoxPlaceholderBemClasses("lmps");
+export const STATE_BOX_EMPTY = ENGINEERING_STATE_BOX_EMPTY;
 
 /** Erro com shell card. */
-export const STATE_BOX_ERROR = delpiUiClass(
-  "lmps-card lmps-state-box lmps-state-box--error",
-  "delpi-ui-card delpi-ui-state-box delpi-ui-state-box--error",
-);
+export const STATE_BOX_ERROR = ENGINEERING_STATE_BOX_ERROR;

@@ -1,24 +1,13 @@
-import {
-  createDashboardLoadingActivityCard,
-  type DashboardLoadingActivityCardProps,
-  type LoadingActivityCardLabels,
-  type LoadingActivityCardTone,
-  type LoadingActivityCardVariant,
+import { EngineeringLoadingActivityCard } from "../../../ui/engineeringUi";
+import type {
+  DashboardLoadingActivityCardProps,
+  LoadingActivityCardTone,
+  LoadingActivityCardVariant,
 } from "@delpi/plugin-ui/index";
-
-const LABELS = {
-  progressRemaining: (remainingPercent: number) => `Faltam ${remainingPercent}%`,
-  progressAriaDeterminate: (remainingPercent: number) =>
-    `Carregamento: faltam ${remainingPercent} por cento`,
-  progressAriaIndeterminate: "Carregamento em andamento",
-} satisfies LoadingActivityCardLabels;
 
 export type { LoadingActivityCardTone, LoadingActivityCardVariant };
 
-export const LoadingActivityCard = createDashboardLoadingActivityCard({
-  prefix: "lmps",
-  labels: LABELS,
-  withCopyWrapper: true,
-});
+/** Loading canônico do Portal Engenharia. */
+export const LoadingActivityCard = EngineeringLoadingActivityCard;
 
 export type LoadingActivityCardProps = DashboardLoadingActivityCardProps;

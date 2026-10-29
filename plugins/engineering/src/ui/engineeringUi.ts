@@ -1,8 +1,13 @@
 import {
   ActionButton,
   catalogSearchBarBemClasses,
+  ChartCard as DelpiChartCard,
+  chartCardBemClasses,
   createDashboardCatalogSearchBar,
+  createDashboardChartToolbarKit,
   createDashboardCommandPalette,
+  createDashboardDetailCard,
+  createDashboardDetailFieldGrid,
   createDashboardEmptyState,
   createDashboardEventsSection,
   createDashboardKpiCard,
@@ -11,7 +16,12 @@ import {
   createDashboardMultiSelectField,
   createDashboardDateField,
   createDashboardQuickPeriodSelector,
+  dataTableBemClasses,
+  dataTableSectionBemClasses,
   dateFieldBemClasses,
+  delpiUiClass,
+  detailCardRichBemClasses,
+  ghostBtnBemClasses,
   createDashboardPageHero,
   createDashboardPagePath,
   createDashboardRecentAccessStrip,
@@ -29,6 +39,8 @@ import {
   sectionCardPacBemClasses,
   sectionRouteCardBemClasses,
   stateBannerBemClasses,
+  stateBoxPlaceholderBemClasses,
+  type ChartCardProps as DelpiChartCardProps,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
 
@@ -172,5 +184,76 @@ export const EngineeringLoadingActivityCard =
     },
     withCopyWrapper: true,
   });
+
+// --- Blocos canônicos compartilhados pelas páginas internas do MFE ---
+// Mesma fonte (`@delpi/plugin-ui`) e mesmo prefixo `engineering` usados
+// por Home/Visão Geral — páginas internas não criam prefixo visual próprio.
+
+export const ENGINEERING_GHOST_BTN = ghostBtnBemClasses(ENG_UI_PREFIX);
+
+/** Placeholder de gráfico/lista vazio — dual `state-box--empty`. */
+export const ENGINEERING_STATE_BOX_EMPTY =
+  stateBoxPlaceholderBemClasses(ENG_UI_PREFIX);
+
+/** Erro com shell card — dual `state-box--error`. */
+export const ENGINEERING_STATE_BOX_ERROR = delpiUiClass(
+  `${ENG_UI_PREFIX}-card ${ENG_UI_PREFIX}-state-box ${ENG_UI_PREFIX}-state-box--error`,
+  "delpi-ui-card delpi-ui-state-box delpi-ui-state-box--error",
+);
+
+const ENGINEERING_CHART_CARD_CLASSES = chartCardBemClasses(ENG_UI_PREFIX);
+
+export type EngineeringChartCardProps = Omit<
+  DelpiChartCardProps,
+  "classNames" | "titleLevel"
+>;
+
+export function EngineeringChartCard(props: EngineeringChartCardProps) {
+  return createElement(DelpiChartCard, {
+    classNames: ENGINEERING_CHART_CARD_CLASSES,
+    titleLevel: 3,
+    ...props,
+  });
+}
+
+export const EngineeringChartToolbarKit = createDashboardChartToolbarKit({
+  prefix: ENG_UI_PREFIX,
+  labels: {
+    groupAriaLabel: "Agrupamento do gráfico",
+    exportSeries: "Exportar série",
+    exportSeriesAriaLabel: "Exportar série do gráfico em CSV",
+  },
+});
+
+export const EngineeringDetailCard = createDashboardDetailCard({
+  classNames: detailCardRichBemClasses(ENG_UI_PREFIX),
+  labels: {
+    titleHelpAriaLabel: (title) => `Ajuda: ${title}`,
+  },
+});
+
+export const EngineeringDetailFieldGrid = createDashboardDetailFieldGrid({
+  prefix: ENG_UI_PREFIX,
+  labels: {
+    emptyMessage: "Sem dados.",
+    fieldHelpAriaLabel: (label) => `Ajuda: ${label}`,
+  },
+  wrapLabels: true,
+});
+
+/** Classes/labels canônicos da DataTable — o componente em si é genérico
+ * (`DataTable<T>`) e é encapsulado pelos wrappers `.tsx` de cada feature. */
+export const ENGINEERING_DATA_TABLE_CLASSES =
+  dataTableBemClasses(ENG_UI_PREFIX);
+
+export const ENGINEERING_DATA_TABLE_LABELS = {
+  emptyMessage: "Nenhum registro encontrado.",
+  loadingMessage: "Carregando…",
+  sortByAriaLabel: (header: string) => `Ordenar por ${header}`,
+  headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
+};
+
+export const ENGINEERING_DATA_TABLE_SECTION_CLASSES =
+  dataTableSectionBemClasses(ENG_UI_PREFIX);
 
 

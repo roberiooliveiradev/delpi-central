@@ -6,9 +6,9 @@ import {
   HelpTooltip,
   NativeTextControl,
   TableColumnVisibilityMenu,
-  dataTableSectionBemClasses,
   useTableColumnVisibility,
 } from "@delpi/plugin-ui/index";
+import { ENGINEERING_DATA_TABLE_SECTION_CLASSES } from "../../../ui/engineeringUi";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   useLoadingProgress,
@@ -20,7 +20,7 @@ import { Pagination } from "./Pagination";
 import { sortTableRows } from "../utils/sortTableRows";
 
 const DEFAULT_PAGE_SIZE = 20;
-const LMPS_SECTION = dataTableSectionBemClasses("lmps");
+const LMPS_SECTION = ENGINEERING_DATA_TABLE_SECTION_CLASSES;
 
 
 export type ServerPaginationConfig = {

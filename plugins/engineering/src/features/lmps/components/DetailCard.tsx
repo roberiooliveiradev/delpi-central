@@ -1,8 +1,4 @@
-import { createDashboardDetailCard, detailCardRichBemClasses } from "@delpi/plugin-ui/index";
+import { EngineeringDetailCard } from "../../../ui/engineeringUi";
 
-export const DetailCard = createDashboardDetailCard({
-  classNames: detailCardRichBemClasses("lmps"),
-  labels: {
-    titleHelpAriaLabel: (title) => `Ajuda: ${title}`,
-  },
-});
+/** Detail card canônico do Portal Engenharia. */
+export const DetailCard = EngineeringDetailCard;

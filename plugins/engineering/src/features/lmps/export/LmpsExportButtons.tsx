@@ -50,8 +50,8 @@ function dispatchRequest(props: LmpsExportButtonsProps, format: TabularExportFor
 export function LmpsExportButtons(props: LmpsExportButtonsProps) {
   const {
     disabled = false,
-    className = "lmps-export-actions",
-    buttonClassName = `${GHOST_BTN} lmps-export-actions__btn`,
+    className = "engineering-lmps-export-actions",
+    buttonClassName = `${GHOST_BTN} engineering-lmps-export-actions__btn`,
     showIcon = true,
   } = props;
 

@@ -1,4 +1,3 @@
-import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import {
   ArrowLeft,
@@ -13,6 +12,12 @@ import {
   Wrench,
 } from "lucide-react";
 
+import {
+  EngineeringActionButton,
+  EngineeringPageHero,
+  EngineeringPagePath,
+  EngineeringStatusBadge,
+} from "../../../ui/engineeringUi";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
@@ -34,7 +39,7 @@ import {
 import type { LmpProduct } from "../types/lmp";
 import { formatLmpApiDate, formatPeriodLabel } from "../utils/dates";
 import { readLmpsFilters, type LmpsFilterUrlState } from "../utils/filterUrl";
-import { navigateLmpsBack } from "../utils/navigation";
+import { appendFiltersToPath, navigateLmpsBack } from "../utils/navigation";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
 import { STATE_BOX_ERROR } from "../ui/stateChrome";
 
@@ -59,20 +64,26 @@ function formatListingKind(kind?: string | null): string {
   return kind ?? "—";
 }
 
+function statusBadgeVariant(
+  status?: string | null,
+): "neutral" | "success" | "warning" | "danger" {
+  const normalized = status?.trim();
+  if (normalized === "Atrasado") return "danger";
+  if (normalized === "Pontual") return "success";
+  if (normalized === "Retornada") return "warning";
+  return "neutral";
+}
+
 function renderStatusBadge(status?: string | null) {
   const normalized = status?.trim();
   if (!normalized) return "—";
 
-  const className =
-    normalized === "Atrasado"
-      ? "lmps-status-badge lmps-status-badge--danger"
-      : normalized === "Pontual"
-        ? "lmps-status-badge lmps-status-badge--success"
-        : normalized === "Retornada"
-          ? "lmps-status-badge lmps-status-badge--warning"
-          : "lmps-status-badge";
-
-  return <span className={className}>{normalized}</span>;
+  return (
+    <EngineeringStatusBadge
+      label={normalized}
+      variant={statusBadgeVariant(normalized)}
+    />
+  );
 }
 
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
@@ -356,55 +367,73 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
     : `${periodLabel} · detalhe da OV`;
 
   return (
-    <main className="dashboard-lmps dashboard-page">
-      <header className="lmps-page-header">
-        <div>
-          <p className="lmps-eyebrow">DELPI • LMPs</p>
-          <h1>{pageTitle}</h1>
-          <span className="lmps-page-subtitle">{pageSubtitle}</span>
-        </div>
+    <main className="engineering-lmps">
+      <EngineeringPagePath
+        back={{
+          label: "LMPs",
+          href: appendFiltersToPath(LMPS_ROUTES.home, backFilters),
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigateLmpsBack(LMPS_ROUTES.home, backFilters);
+          },
+        }}
+        items={[]}
+        current={pageTitle}
+      />
 
-        <div className="lmps-header-actions">
-          <div className="lmps-header-action">
-            <button
-              type="button"
-              className={GHOST_BTN}
-              onClick={detail.reload}
-              disabled={detail.loading}
-            >
-              <RefreshCw size={16} aria-hidden />
-              Atualizar
-            </button>
-            <HelpTooltip
-              content={LMPS_HELP_TOOLTIPS.actions.detailRefresh}
-              ariaLabel="Ajuda: atualizar detalhe"
-              className="lmps-header-action__help"
+      <EngineeringPageHero
+        eyebrow="Portal Engenharia • LMPs"
+        title={pageTitle}
+        description={pageSubtitle}
+        badge={
+          item ? (
+            <EngineeringStatusBadge
+              label={item.status}
+              variant={statusBadgeVariant(item.status)}
             />
-          </div>
-          <div className="lmps-header-action">
-            <button
-              type="button"
-              className={GHOST_BTN}
-              onClick={() => navigateLmpsBack(LMPS_ROUTES.home, backFilters)}
-            >
-              <ArrowLeft size={16} aria-hidden />
-              Voltar
-            </button>
-            <HelpTooltip
-              content={LMPS_HELP_TOOLTIPS.actions.back}
-              ariaLabel="Ajuda: voltar ao dashboard"
-              className="lmps-header-action__help"
-            />
-          </div>
-        </div>
-      </header>
+          ) : undefined
+        }
+        actions={
+          <>
+            <span className="engineering-lmps-action-with-help">
+              <EngineeringActionButton
+                variant="ghost"
+                onClick={detail.reload}
+                disabled={detail.loading}
+                aria-label="Atualizar detalhe da proposta"
+              >
+                <RefreshCw size={16} aria-hidden="true" /> Atualizar
+              </EngineeringActionButton>
+              <HelpTooltip
+                content={LMPS_HELP_TOOLTIPS.actions.detailRefresh}
+                ariaLabel="Ajuda: atualizar detalhe"
+                className="engineering-lmps-action-help"
+              />
+            </span>
+            <span className="engineering-lmps-action-with-help">
+              <EngineeringActionButton
+                variant="ghost"
+                onClick={() => navigateLmpsBack(LMPS_ROUTES.home, backFilters)}
+                aria-label="Voltar ao acompanhamento de LMPs"
+              >
+                <ArrowLeft size={16} aria-hidden="true" /> Voltar
+              </EngineeringActionButton>
+              <HelpTooltip
+                content={LMPS_HELP_TOOLTIPS.actions.back}
+                ariaLabel="Ajuda: voltar ao dashboard"
+                className="engineering-lmps-action-help"
+              />
+            </span>
+          </>
+        }
+      />
 
       {detail.error ? (
         <div className={STATE_BOX_ERROR} role="alert">
           <p>{detail.error}</p>
-          <button type="button" className="lmps-primary-btn" onClick={detail.reload}>
+          <EngineeringActionButton variant="primary" onClick={detail.reload}>
             Tentar novamente
-          </button>
+          </EngineeringActionButton>
         </div>
       ) : null}
 
@@ -418,7 +447,10 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
 
       {item ? (
         <>
-          <section className="lmps-kpi-grid" aria-busy={detail.loading}>
+          <section
+            className="engineering-lmps-kpi-grid engineering-lmps-kpi-grid--detail"
+            aria-busy={detail.loading}
+          >
             <KpiCard
               title="Status"
               titleHint={LMPS_HELP_TOOLTIPS.detail.statusKpi}
@@ -442,7 +474,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
             />
           </section>
 
-          <section className="lmps-detail-layout">
+          <section className="engineering-lmps-detail-layout">
             <DetailCard
               title="Proposta"
               titleHint={LMPS_HELP_TOOLTIPS.detail.proposalSection}
@@ -466,7 +498,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
               titleHint={LMPS_HELP_TOOLTIPS.detail.customerSection}
               hint="Identificação comercial da proposta"
               icon={<UserRound size={20} aria-hidden />}
-              className="lmps-detail-card--full"
+              className="engineering-lmps-detail-card--full"
             >
               <DetailFieldGrid fields={customerFields} />
             </DetailCard>
@@ -476,7 +508,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
               titleHint={LMPS_HELP_TOOLTIPS.detail.productsSection}
               hint={`${item.list_products?.length ?? 0} item(ns) vinculado(s)`}
               icon={<Building2 size={20} aria-hidden />}
-              className="lmps-detail-card--full"
+              className="engineering-lmps-detail-card--full"
             >
               <DataTable
                 columns={productColumns}
@@ -498,7 +530,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
               titleHint={LMPS_HELP_TOOLTIPS.detail.historySection}
               hint="Linha do tempo de eventos no TOTVS (AIJ010), alinhada à revisão do painel LMP"
               icon={<History size={20} aria-hidden />}
-              className="lmps-detail-card--full"
+              className="engineering-lmps-detail-card--full"
             >
               <LmpHistorySection
                 events={item.list_history ?? []}

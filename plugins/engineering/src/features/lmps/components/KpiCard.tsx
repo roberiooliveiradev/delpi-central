@@ -1,17 +1,9 @@
-import {
-  createDashboardKpiCard,
-  type DashboardKpiCardProps,
-  type KpiCardLabels,
-} from "@delpi/plugin-ui/index";
+import { EngineeringKpiCard } from "../../../ui/engineeringUi";
+import type { DashboardKpiCardProps } from "@delpi/plugin-ui/index";
 
 export type { GoalPerformanceBadge, GoalScopeBadge } from "../utils/goalDisplay";
 
-const LABELS = {
-  goalPrefix: "Meta",
-  iddScorePrefix: "Nota IDD",
-  badgesStatus: "Escopo e desempenho em relação à meta",
-} satisfies KpiCardLabels;
-
-export const KpiCard = createDashboardKpiCard({ prefix: "lmps", labels: LABELS });
+/** KPI canônico do Portal Engenharia (mesmo componente da Visão Geral). */
+export const KpiCard = EngineeringKpiCard;
 
 export type KpiCardProps = DashboardKpiCardProps;

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
-import { BarChart3, CircleGauge, Clock3 } from "lucide-react";
+import {
+  HelpTooltip,
+  useChartGranularitySelection,
+} from "@delpi/plugin-ui/index";
+import { BarChart3, CircleGauge, Clock3, RefreshCw } from "lucide-react";
 import {
   ResponsiveContainer,
   PieChart,
@@ -17,18 +20,40 @@ import {
   Legend,
 } from "recharts";
 
+import {
+  EngineeringActionButton,
+  EngineeringDateField,
+  EngineeringMultiSelectField,
+  EngineeringPageHero,
+  EngineeringPagePath,
+} from "../../../ui/engineeringUi";
+import {
+  buildEngineeringPath,
+  navigateEngineeringView,
+} from "../../../app/engineeringRoutes";
+import { DepartmentIddBadge } from "../components/DepartmentIddBadge";
 import { KpiCard } from "../components/KpiCard";
+import { LmpsNav } from "../components/LmpsNav";
 import { NcStreakCard } from "../components/NcStreakCard";
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
-import { FilterBar } from "../components/FilterBar";
 import { DataTableSection } from "../components/DataTableSection";
 import type { DataTableColumn } from "../components/DataTable";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { CHART_COLORS } from "../constants/chartColors";
+import { DASHBOARD_SI_DEPARTMENT_ID } from "../constants/siDepartmentId";
+import {
+  LMPS_BRANCH_OPTIONS,
+  LMPS_LISTING_TYPE_OPTIONS,
+  LMPS_STATUS_OPTIONS,
+} from "../constants/filterOptions";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { buildLmpDetailPath } from "../constants/routes";
-import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { useLmpsChartTheme } from "../hooks/useLmpsChartTheme";
+import {
+  OPERATIONAL_UNIT_FIELD_LABEL,
+  normalizeOperationalUnitCode,
+} from "../utils/operationalUnitLabels";
 import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useClientTableSort } from "../hooks/useClientTableSort";
@@ -71,19 +96,11 @@ import {
 } from "../utils/lmpsClientFilters";
 import { STATE_BOX_EMPTY, STATE_BOX_ERROR } from "../ui/stateChrome";
 
-const PRIMARY_CHART_COLOR = "#089bdb";
-const SECONDARY_CHART_COLOR = "#003866";
-
 const PIE_CHART_HEIGHT = 320;
 const PIE_OUTER_RADIUS = 110;
 const BAR_CHART_HEIGHT = 320;
 const LINE_CHART_HEIGHT = 380;
-const CHART_FONT_SIZE = 14;
 const FILTER_DEBOUNCE_MS = 400;
-
-const AXIS_TICK_PROPS = { fontSize: CHART_FONT_SIZE };
-const TOOLTIP_STYLE = { fontSize: CHART_FONT_SIZE };
-const LEGEND_STYLE = { fontSize: CHART_FONT_SIZE };
 
 function formatDate(value?: string | null): string {
   return formatLmpApiDate(value, "-");
@@ -129,6 +146,7 @@ export function DashboardLmpsPage({
     dateStart,
     dateEnd,
   );
+  const chartTheme = useLmpsChartTheme();
 
   const [branches, setBranches] = useState(initialFilters.branches);
   const [listingTypes, setListingTypes] = useState(initialFilters.listingTypes);
@@ -276,6 +294,36 @@ export function DashboardLmpsPage({
   const hasCharts =
     resolvedCharts.levelData.some((d) => d.value > 0) ||
     resolvedCharts.statusData.some((d) => d.value > 0);
+
+  // Categorias zeradas não viram fatia/legenda — tratamento visual
+  // honesto (vazio explícito) sem falsificar os dados.
+  const levelPieData = useMemo(
+    () => resolvedCharts.levelData.filter((d) => d.value > 0),
+    [resolvedCharts.levelData],
+  );
+  const statusPieData = useMemo(
+    () => resolvedCharts.statusData.filter((d) => d.value > 0),
+    [resolvedCharts.statusData],
+  );
+
+  const chartAxisTick = useMemo(
+    () => ({ fontSize: chartTheme.fontSize, fill: chartTheme.textMuted }),
+    [chartTheme],
+  );
+  const chartTooltipStyle = useMemo(
+    () => ({
+      fontSize: chartTheme.fontSize,
+      backgroundColor: chartTheme.surface,
+      border: `1px solid ${chartTheme.border}`,
+      borderRadius: 12,
+      color: chartTheme.title,
+    }),
+    [chartTheme],
+  );
+  const chartLegendStyle = useMemo(
+    () => ({ fontSize: chartTheme.fontSize, color: chartTheme.textMuted }),
+    [chartTheme],
+  );
 
   useEffect(() => {
     if (!isActive) return;
@@ -518,32 +566,132 @@ export function DashboardLmpsPage({
   );
 
   return (
-    <main className="dashboard-lmps dashboard-page">
-      <FilterBar
-        competence={competence}
-        dateStart={dateStart}
-        dateEnd={dateEnd}
-        branches={branches}
-        listingTypes={listingTypes}
-        statuses={statuses}
-        onCompetenceChange={setCompetence}
-        onDateStartChange={setDateStart}
-        onDateEndChange={setDateEnd}
-        onBranchesChange={setBranches}
-        onListingTypesChange={setListingTypes}
-        onStatusesChange={setStatuses}
-        onRefresh={reload}
-        exportActions={
-          <LmpsExportButtons
-            variant="dashboard"
-            context={dashboardExportContext}
-            disabled={(loading && !hasData) || filteredItems.length === 0}
+    <main className="engineering-lmps">
+      <EngineeringPagePath
+        back={{
+          label: "Início",
+          href: buildEngineeringPath("home"),
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigateEngineeringView("home");
+          },
+        }}
+        items={[]}
+        current="LMPs"
+      />
+
+      <EngineeringPageHero
+        eyebrow="Portal Engenharia"
+        title="Acompanhamento de LMPs"
+        badge={
+          <DepartmentIddBadge
+            departmentId={DASHBOARD_SI_DEPARTMENT_ID}
+            filters={{ competence, dateStart, dateEnd, branches }}
+            classPrefix="engineering"
           />
         }
-        disabled={loading}
-        pathname={pathname}
-        filterState={filterState}
-      />
+        description={
+          <>
+            Indicadores de prazo, nível, status e lead time útil · {periodLabel}
+            <HelpTooltip
+              content={LMPS_HELP_TOOLTIPS.actions.pageSubtitle}
+              ariaLabel="Ajuda: escopo do dashboard"
+              className="engineering-lmps-hero-help"
+            />
+          </>
+        }
+        actions={
+          <>
+            <LmpsExportButtons
+              variant="dashboard"
+              context={dashboardExportContext}
+              disabled={(loading && !hasData) || filteredItems.length === 0}
+            />
+            <span className="engineering-lmps-action-with-help">
+              <EngineeringActionButton
+                variant="ghost"
+                onClick={reload}
+                disabled={loading}
+                aria-label="Atualizar dashboard de LMPs"
+              >
+                <RefreshCw size={16} aria-hidden="true" />{" "}
+                {refreshing ? "Atualizando…" : "Atualizar"}
+              </EngineeringActionButton>
+              <HelpTooltip
+                content={LMPS_HELP_TOOLTIPS.actions.refresh}
+                ariaLabel="Ajuda: atualizar dashboard"
+                className="engineering-lmps-action-help"
+              />
+            </span>
+          </>
+        }
+      >
+        <div
+          className="engineering-lmps-filters"
+          role="group"
+          aria-label="Filtros do dashboard"
+        >
+          <div className="engineering-lmps-filters__fields">
+            <EngineeringDateField
+              id="lmps-competence"
+              label="Competência"
+              hint={LMPS_HELP_TOOLTIPS.filters.competence}
+              type="month"
+              value={competence}
+              disabled={loading}
+              onChange={setCompetence}
+            />
+            <EngineeringDateField
+              label="Data inicial"
+              hint={LMPS_HELP_TOOLTIPS.filters.dateStart}
+              type="date"
+              value={dateStart}
+              disabled={loading}
+              onChange={setDateStart}
+            />
+            <EngineeringDateField
+              label="Data final"
+              hint={LMPS_HELP_TOOLTIPS.filters.dateEnd}
+              type="date"
+              value={dateEnd}
+              disabled={loading}
+              onChange={setDateEnd}
+            />
+            <EngineeringMultiSelectField
+              label={OPERATIONAL_UNIT_FIELD_LABEL}
+              labelHint={LMPS_HELP_TOOLTIPS.filters.branch}
+              emptyLabel="Todas"
+              searchable
+              options={LMPS_BRANCH_OPTIONS}
+              selectedValues={branches}
+              onChange={setBranches}
+              disabled={loading}
+            />
+            <EngineeringMultiSelectField
+              label="Tipo"
+              labelHint={LMPS_HELP_TOOLTIPS.filters.listingType}
+              emptyLabel="Todos"
+              searchable
+              options={LMPS_LISTING_TYPE_OPTIONS}
+              selectedValues={listingTypes}
+              onChange={setListingTypes}
+              disabled={loading}
+            />
+            <EngineeringMultiSelectField
+              label="Status"
+              labelHint={LMPS_HELP_TOOLTIPS.filters.status}
+              emptyLabel="Todos"
+              searchable
+              options={LMPS_STATUS_OPTIONS}
+              selectedValues={statuses}
+              onChange={setStatuses}
+              disabled={loading}
+            />
+          </div>
+        </div>
+      </EngineeringPageHero>
+
+      <LmpsNav currentPath={pathname} filterState={filterState} />
 
       {refreshing && hasData ? (
         <LoadingActivityCard
@@ -555,7 +703,7 @@ export function DashboardLmpsPage({
         />
       ) : null}
 
-      <section className="lmps-kpi-grid" aria-busy={isBusy}>
+      <section className="engineering-lmps-kpi-grid" aria-busy={isBusy}>
         <NcStreakCard
           streak={ncStreak}
           loading={ncStreakLoading}
@@ -609,7 +757,7 @@ export function DashboardLmpsPage({
       ) : null}
 
       {error && !hasData && !loading ? (
-        <section className="lmps-charts-grid">
+        <section className="engineering-lmps-charts-grid">
           <ChartCard title="Erro">
             <div className={STATE_BOX_ERROR}>{error}</div>
           </ChartCard>
@@ -617,7 +765,7 @@ export function DashboardLmpsPage({
       ) : null}
 
       {error && hasData && !loading ? (
-        <section className="lmps-charts-grid">
+        <section className="engineering-lmps-charts-grid">
           <div className={STATE_BOX_ERROR}>
             Não foi possível atualizar os dados. Exibindo última carga válida.{" "}
             {error}
@@ -627,61 +775,73 @@ export function DashboardLmpsPage({
 
       {hasCharts ? (
         <>
-          <section className="lmps-charts-grid lmps-charts-grid-top">
+          <section className="engineering-lmps-charts-grid engineering-lmps-charts-grid--top">
                 <ChartCard
                   title="Contagem por Nível"
                   titleHint={LMPS_HELP_TOOLTIPS.charts.countByLevel}
                 >
-                  <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
-                    <PieChart>
-                      <Pie
-                        data={resolvedCharts.levelData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={PIE_OUTER_RADIUS}
-                        dataKey="value"
-                        nameKey="name"
-                        label={renderPieLabel}
-                      >
-                        {resolvedCharts.levelData.map((entry, index) => (
-                          <Cell
-                            key={entry.name}
-                            fill={CHART_COLORS[index % CHART_COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={TOOLTIP_STYLE} />
-                      <Legend wrapperStyle={LEGEND_STYLE} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {levelPieData.length === 0 ? (
+                    <div className={STATE_BOX_EMPTY}>
+                      Sem dados para o período selecionado.
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
+                      <PieChart>
+                        <Pie
+                          data={levelPieData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={PIE_OUTER_RADIUS}
+                          dataKey="value"
+                          nameKey="name"
+                          label={renderPieLabel}
+                        >
+                          {levelPieData.map((entry, index) => (
+                            <Cell
+                              key={entry.name}
+                              fill={CHART_COLORS[index % CHART_COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={chartTooltipStyle} />
+                        <Legend wrapperStyle={chartLegendStyle} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </ChartCard>
 
                 <ChartCard
                   title="Contagem por Status"
                   titleHint={LMPS_HELP_TOOLTIPS.charts.countByStatus}
                 >
-                  <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
-                    <PieChart>
-                      <Pie
-                        data={resolvedCharts.statusData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={PIE_OUTER_RADIUS}
-                        dataKey="value"
-                        nameKey="name"
-                        label={renderPieLabel}
-                      >
-                        {resolvedCharts.statusData.map((entry, index) => (
-                          <Cell
-                            key={entry.name}
-                            fill={CHART_COLORS[index % CHART_COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={TOOLTIP_STYLE} />
-                      <Legend wrapperStyle={LEGEND_STYLE} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {statusPieData.length === 0 ? (
+                    <div className={STATE_BOX_EMPTY}>
+                      Sem dados para o período selecionado.
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={PIE_CHART_HEIGHT}>
+                      <PieChart>
+                        <Pie
+                          data={statusPieData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={PIE_OUTER_RADIUS}
+                          dataKey="value"
+                          nameKey="name"
+                          label={renderPieLabel}
+                        >
+                          {statusPieData.map((entry, index) => (
+                            <Cell
+                              key={entry.name}
+                              fill={CHART_COLORS[index % CHART_COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={chartTooltipStyle} />
+                        <Legend wrapperStyle={chartLegendStyle} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </ChartCard>
 
                 <ChartCard
@@ -690,21 +850,24 @@ export function DashboardLmpsPage({
                 >
                   <ResponsiveContainer width="100%" height={BAR_CHART_HEIGHT}>
                     <BarChart data={resolvedCharts.leadByLevel}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="nivel" tick={AXIS_TICK_PROPS} />
-                      <YAxis tick={AXIS_TICK_PROPS} />
-                      <Tooltip contentStyle={TOOLTIP_STYLE} />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={chartTheme.border}
+                      />
+                      <XAxis dataKey="nivel" tick={chartAxisTick} />
+                      <YAxis tick={chartAxisTick} />
+                      <Tooltip contentStyle={chartTooltipStyle} />
                       <Bar
                         dataKey="valor"
                         radius={[8, 8, 0, 0]}
-                        fill={PRIMARY_CHART_COLOR}
+                        fill={chartTheme.accent}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartCard>
               </section>
 
-              <section className="lmps-charts-grid">
+              <section className="engineering-lmps-charts-grid">
                 <ChartCard
                   title="Evolução de Lead Time Útil e Quantidade de Propostas"
                   titleHint={LMPS_HELP_TOOLTIPS.charts.evolution}
@@ -721,24 +884,27 @@ export function DashboardLmpsPage({
                   ) : (
                     <ResponsiveContainer width="100%" height={LINE_CHART_HEIGHT}>
                       <LineChart data={evolutionChartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="periodo" tick={AXIS_TICK_PROPS} />
-                        <YAxis yAxisId="left" tick={AXIS_TICK_PROPS} />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke={chartTheme.border}
+                        />
+                        <XAxis dataKey="periodo" tick={chartAxisTick} />
+                        <YAxis yAxisId="left" tick={chartAxisTick} />
                         <YAxis
                           yAxisId="right"
                           orientation="right"
-                          tick={AXIS_TICK_PROPS}
+                          tick={chartAxisTick}
                         />
-                        <Tooltip contentStyle={TOOLTIP_STYLE} />
-                        <Legend wrapperStyle={LEGEND_STYLE} />
+                        <Tooltip contentStyle={chartTooltipStyle} />
+                        <Legend wrapperStyle={chartLegendStyle} />
                         <Line
                           yAxisId="left"
                           type="monotone"
                           dataKey="mediaLead"
                           name="Média Lead Time"
                           strokeWidth={3}
-                          stroke={PRIMARY_CHART_COLOR}
-                          dot={{ r: 4, strokeWidth: 2, fill: "#ffffff" }}
+                          stroke={chartTheme.accent}
+                          dot={{ r: 4, strokeWidth: 2, fill: chartTheme.surface }}
                           activeDot={{ r: 3 }}
                         />
                         <Line
@@ -747,8 +913,8 @@ export function DashboardLmpsPage({
                           dataKey="propostas"
                           name="Nº Propostas"
                           strokeWidth={4}
-                          stroke={SECONDARY_CHART_COLOR}
-                          dot={{ r: 4, strokeWidth: 2, fill: "#ffffff" }}
+                          stroke={chartTheme.title}
+                          dot={{ r: 4, strokeWidth: 2, fill: chartTheme.surface }}
                           activeDot={{ r: 3 }}
                         />
                       </LineChart>

@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
 
+import {
+  EngineeringActionButton,
+  EngineeringPageHero,
+  EngineeringPagePath,
+  EngineeringSectionCard,
+} from "../../ui/engineeringUi";
+import {
+  buildEngineeringPath,
+  navigateEngineeringView,
+} from "../../app/engineeringRoutes";
 import { LEGACY_NONCONFORMITIES_HREF, LMPS_ROUTES } from "./constants/routes";
 import { useLmpsRouterPath } from "./hooks/useLmpsRouterPath";
 import { DashboardLmpsPage } from "./pages/DashboardLmpsPage";
@@ -19,25 +29,45 @@ type LmpsFeatureProps = {
  * MFE legado, que permanece operacional e autorizado. */
 function NcLegacyRedirectNotice() {
   return (
-    <main className="dashboard-lmps dashboard-page">
-      <div className="lmps-card lmps-state-box">
-        <p>
-          O registro de não conformidades continua disponível no aplicativo
-          de acompanhamento de LMPs.
-        </p>
-        <div>
-          <a className="lmps-primary-btn" href={LEGACY_NONCONFORMITIES_HREF}>
+    <main className="engineering-lmps">
+      <EngineeringPagePath
+        back={{
+          label: "Início",
+          href: buildEngineeringPath("home"),
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigateEngineeringView("home");
+          },
+        }}
+        items={[]}
+        current="Não conformidades"
+      />
+      <EngineeringPageHero
+        eyebrow="Portal Engenharia • LMPs"
+        title="Não conformidades"
+        description="O registro de não conformidades continua disponível no aplicativo de acompanhamento de LMPs."
+      />
+      <EngineeringSectionCard
+        title="Funcionalidade no aplicativo legado"
+        subtitle="A migração desta área será tratada em gate próprio; o aplicativo legado permanece operacional e autorizado."
+      >
+        <div className="engineering-lmps-nc-actions">
+          <EngineeringActionButton
+            variant="primary"
+            onClick={() => {
+              window.location.assign(LEGACY_NONCONFORMITIES_HREF);
+            }}
+          >
             Abrir registro de não conformidades
-          </a>{" "}
-          <button
-            type="button"
-            className="lmps-ghost-btn"
+          </EngineeringActionButton>
+          <EngineeringActionButton
+            variant="ghost"
             onClick={() => navigateLmps(LMPS_ROUTES.home)}
           >
             Voltar ao dashboard
-          </button>
+          </EngineeringActionButton>
         </div>
-      </div>
+      </EngineeringSectionCard>
     </main>
   );
 }

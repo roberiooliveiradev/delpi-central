@@ -1,15 +1,9 @@
-import { createDashboardChartToolbarKit } from "@delpi/plugin-ui/index";
+import { EngineeringChartToolbarKit } from "../../../ui/engineeringUi";
 
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { CHART_GRANULARITY_OPTIONS, type ChartGranularity } from "../types/chart";
 
-const LABELS = {
-  groupAriaLabel: "Agrupamento do gráfico",
-  exportSeries: "Exportar série",
-  exportSeriesAriaLabel: "Exportar série do gráfico em CSV",
-};
-
-const kit = createDashboardChartToolbarKit({ prefix: "lmps", labels: LABELS });
+const kit = EngineeringChartToolbarKit;
 
 type ChartGranularityToggleProps = Omit<
   Parameters<typeof kit.ChartGranularityToggle<ChartGranularity>>[0],
