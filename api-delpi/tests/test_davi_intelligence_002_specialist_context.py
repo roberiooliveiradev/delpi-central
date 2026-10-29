@@ -44,9 +44,12 @@ def test_persona_section_is_governed_and_projected() -> None:
     blob = json.dumps(persona, ensure_ascii=False)
     assert "Atender primeiro" in blob
     assert "capabilities autorizadas" in blob
-    # Projected to dynamic surface so plugin chats receive the tone echo.
+    # Projected to dynamic surface via the shared-contract ficha (PERSONA-003
+    # integration): plugin chats receive the compact character echo.
     directives = DaviAgentIntelligenceService.agent_directives()
-    assert directives["persona"]["identity"] == persona["identity"]
+    character = directives["character"]
+    assert persona["identity"] in character["identity"]["short_introduction"]
+    assert character["identity"]["character_id"] == "davi"
 
 
 def test_persona_bridge_declares_stable_surfaces_and_no_authority() -> None:
@@ -54,7 +57,7 @@ def test_persona_bridge_declares_stable_surfaces_and_no_authority() -> None:
     assert "Agent Studio" in bridge["stable_in"]
     assert "MCP server instructions" in bridge["stable_in"]
     assert "não concede permissão" in bridge["authority"]
-    assert "agent_directives.persona" in bridge["runtime_echo"]
+    assert "agent_directives.character" in bridge["runtime_echo"]
 
 
 def test_mcp_instructions_carry_persona_without_mutable_keys() -> None:
@@ -213,7 +216,7 @@ def test_specialist_additions_keep_read_only_authority() -> None:
     authority = directives["authority"]
     assert "NOT AuthZ" in authority
     # New sections carry no permission language that elevates metadata/persona.
-    for key in ("persona", "protheus", "table_discovery"):
+    for key in ("character", "protheus", "table_discovery"):
         assert directives.get(key), key
 
 
@@ -228,50 +231,52 @@ def test_narrative_section_is_versioned_and_projected() -> None:
     assert narrative["narrative_version"] == 1
     assert narrative["type"] == "FICTION_IDENTITY_ONLY"
     assert "Especialistas DELPI" in narrative["universe"]
-    directives = DaviAgentIntelligenceService.agent_directives()
-    assert directives["narrative"]["narrative_version"] == 1
-    assert (
-        directives["narrative"]["narrative_version"]
-        == narrative["narrative_version"]
-    )
+    # Character projection carries the same fiction marking + universe.
+    character = DaviAgentIntelligenceService.agent_directives()["character"]
+    assert character["narrative_classification"] == "FICTION_IDENTITY_ONLY"
+    assert "Especialistas DELPI" in character["universe"]
 
 
 def test_vista_relationship_description_is_consistent() -> None:
-    rel = DaviAgentIntelligenceService.agent_directives()["narrative"][
+    rels = DaviAgentIntelligenceService.agent_directives()["character"][
+        "relationships"
+    ]
+    vista = [r for r in rels if r["target_character_id"] == "vista"]
+    assert len(vista) == 1
+    rel = vista[0]
+    assert rel["relationship_type"] == "romantic_partner"
+    # Approved public reference stays in the canonical narrative doc; the
+    # compact projection carries the complementary-specialties description.
+    assert "complementares" in rel["description"]
+    doc_rel = DaviAgentIntelligenceService.document()["narrative"][
         "relationship"
     ]
-    assert "VISTA" in rel["character"]
-    assert "namorad" in rel["status"].lower()
-    profile = rel["vista_profile"]
+    profile = doc_rel["vista_profile"]
     for trait in ("20 anos", "pele clara", "pretos", "óculos", "proativa"):
         assert trait in profile, trait
-    assert "painéis" in rel["character"] or "painéis" in profile
-    assert "Complementares" in rel["dynamic"] or "complementares" in rel[
-        "dynamic"
-    ]
 
 
 def test_narrative_boundaries_prevent_authority_drift() -> None:
-    narrative = DaviAgentIntelligenceService.agent_directives()["narrative"]
-    blob = json.dumps(narrative, ensure_ascii=False)
+    coexistence = DaviAgentIntelligenceService.agent_directives()["character"][
+        "coexistence"
+    ]
+    blob = json.dumps(coexistence, ensure_ascii=False)
     # Fiction never becomes authorization/integration.
     assert "autorização" in blob or "AuthZ" in blob
-    assert "não alterar" in blob.lower() or "Não alterar" in blob
+    assert "lterar" in blob  # "não alterar" in forbidden_behaviors
     assert "MCPs" in blob
     # Mention rules bound frequency and truth.
-    rules = " ".join(narrative["mention_rules"])
+    rules = " ".join(coexistence["guidelines"])
     assert "ocasionalmente" in rules
-    assert "nunca" in rules.lower()
+    assert "unca" in rules  # "Nunca mencionar/afirmar"
     assert "tool real" in rules
 
 
 def test_appearance_reference_is_not_official_avatar() -> None:
-    persona = DaviAgentIntelligenceService.agent_directives()["persona"]
-    appearance = persona["appearance"]
-    assert appearance["status"] == "REFERENCE_NOT_OFFICIAL_AVATAR"
+    character = DaviAgentIntelligenceService.agent_directives()["character"]
+    assert character["avatar_status"] == "REFERENCE_NOT_OFFICIAL_AVATAR"
     for trait in ("jovem", "escuros", "azul"):
-        assert trait in appearance["description"], trait
-    assert "não se repete" in appearance["rule"]
+        assert trait in character["appearance_summary"], trait
 
 
 def test_mcp_instructions_carry_vista_echo_bounded() -> None:

@@ -14,6 +14,14 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from app.persona.davi_profile import get_davi_profile
+from delpi_character_profiles import (
+    CharacterProfile,
+    CharacterPublicProfile,
+    project_persona_context,
+    project_public_profile,
+)
+
 CONTENT_PATH = (
     Path(__file__).resolve().parents[2] / "content" / "davi_agent_intelligence.json"
 )
@@ -99,9 +107,11 @@ class DaviAgentIntelligenceService:
             "execution_posture": doc.get("execution_posture") or {},
             "modes": doc.get("modes") or {},
             "language": doc.get("language") or {},
-            "persona": doc.get("persona") or {},
             "persona_bridge": doc.get("persona_bridge") or {},
-            "narrative": doc.get("narrative") or {},
+            # Compact character context projected from the shared-contract
+            # ficha (DAVI-PERSONA-003 integration) — single narrative source
+            # replacing the former persona/narrative directive echoes.
+            "character": cls.persona_context(),
             "data_specialist": doc.get("data_specialist") or {},
             "protheus": doc.get("protheus") or {},
             "tsql": doc.get("tsql") or {},
@@ -119,6 +129,21 @@ class DaviAgentIntelligenceService:
         raw.pop("write_flow", None)
         raw.pop("commit_now", None)
         return _compact_for_actions(raw)
+
+    @classmethod
+    def character_profile(cls) -> CharacterProfile:
+        """Canonical DAVI ficha (shared contract consumer)."""
+        return get_davi_profile()
+
+    @classmethod
+    def persona_context(cls) -> dict[str, Any]:
+        """Compact narrative context from the ficha — MCP/agent echo."""
+        return project_persona_context(cls.character_profile())
+
+    @classmethod
+    def public_profile(cls) -> CharacterPublicProfile:
+        """Approved public narrative projection for colleague knowledge."""
+        return project_public_profile(cls.character_profile())
 
     @classmethod
     def capability_surface(cls) -> dict[str, Any]:

@@ -335,7 +335,9 @@ metadados governadas antes de consultar registros; nunca invente nomes.
 CANONICAL_AGENT_INSTRUCTIONS_SOURCE = PASS (this document)
 AGENT_STUDIO_SYNC = PENDING_MANUAL_SYNC
 AGENT_STUDIO_PREVIEW_AFTER_SYNC = TEST_NOT_RUN
-AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.29.3 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.30.1 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+CHARACTER_PROFILE_CONTRACT = delpi_character_profiles schema v1 (shared)
+DAVI_FICHA = app/persona/davi_profile.py (profile_version 1 — shared contract, local content)
 DISCOVER_OUTPUT_SCHEMA = includes capability_surface (DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001)
 PROVIDER_REDISCOVERY = RECOMMENDED_AFTER_DEPLOY
 ```
@@ -734,7 +736,9 @@ DAVI_AGENT_UNSUPPORTED_DATA_GUARD = PASS (historical search_products-only Instru
 
 `DAVI-INTELLIGENCE-002` (allowlist v30, intelligence `2026.10.29.2`): specialist persona (garoto curioso/bem-humorado, UX only — never authority) is canonically held in the stable instructions block above and echoed through MCP `initialize` instructions + `capability_surface.agent_directives.persona`; governed specialist sections (`data_specialist`, `protheus`, `tsql`, `table_discovery`, `proactive`) ride the same dynamic surface. Material-movement business phrases route to `get_product_internal_movements`; aggregate movement scans route to `execute_readonly_sql`. MCP `instructions` consumption by a common-chat host is `TO_INVENTORY` — emitted, not proven consumed. Evidence: `docs/integrations/evidence/davi-intelligence-002-specialist-persona-context.md`.
 
-`DAVI-PERSONA-003` (intelligence `2026.10.29.3`, narrative v1): approved fictional DELPI-specialists universe — DAVI × VISTA are fictional romantic partners; VISTA is the digital-dashboards specialist. Narrative is pure UX: it creates no tool, permission, AuthZ, MCP integration or service dependency. DAVI may mention VISTA occasionally in dashboards/visualization context only; never in security/error/authorization contexts, never as a claimed tool call. Appearance reference is `REFERENCE_NOT_OFFICIAL_AVATAR` — no official avatar declared. Narrative rides `agent_directives.narrative` + a bounded `initialize` instructions echo. VISTA-side synchronization is delegated via `docs/integrations/evidence/DAVI-PERSONA-003-VISTA-HANDOFF.md`; handoff creation ≠ handoff received. Evidence: `docs/integrations/evidence/davi-persona-003-narrative-vista.md`.
+`DAVI-PERSONA-003` (intelligence `2026.10.29.3`, narrative v1): approved fictional DELPI-specialists universe — DAVI × VISTA are fictional romantic partners; VISTA is the digital-dashboards specialist. Narrative is pure UX: it creates no tool, permission, AuthZ, MCP integration or service dependency. DAVI may mention VISTA occasionally in dashboards/visualization context only; never in security/error/authorization contexts, never as a claimed tool call. Appearance reference is `REFERENCE_NOT_OFFICIAL_AVATAR` — no official avatar declared. VISTA-side synchronization is delegated via `docs/integrations/evidence/DAVI-PERSONA-003-VISTA-HANDOFF.md`; handoff creation ≠ handoff received. Evidence: `docs/integrations/evidence/davi-persona-003-narrative-vista.md`.
+
+`DAVI-PERSONA-003` integration (intelligence `2026.10.30.1`, profile v1): DAVI is the first real consumer of `shared/delpi_character_profiles` (schema v1). The ficha lives in `app/persona/davi_profile.py` and composes the `CharacterProfile` from the canonical content document — narrative prose stays in `davi_agent_intelligence.json` (`persona`/`narrative`/`story`), never duplicated in code. `agent_directives.persona`+`agent_directives.narrative` were replaced by the single compact `agent_directives.character` projection (`project_persona_context`) — same information, fewer bytes. Approved public projection is committed as `app/content/davi_public_profile.json` for governed colleague knowledge (no automatic distribution). Contract: `shared/delpi_character_profiles/README.md`.
 
 
 
