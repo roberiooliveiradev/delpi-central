@@ -800,3 +800,12 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Regression: focused 131 GREEN; full delia-api suite ~2687 pass / 2 PRE-EXISTING failures (cri_instruction stale assertion after concurrent answer_requirements commit; env.example DELIA_OPENAPI_DELPI residual). Phase-3 + backend-boundary audits 0 findings.
 - Replaceability: existing injectable record_resolver seam suffices — NO_NEW_PORT_REQUIRED. No new dependency/port/prompt/framework.
 - VERDICT: ROOT_CAUSE_REMEDIATED (proven divergence) + residuals documented; PRODUCTION_CALLS=0 DEPLOY_EXECUTED=NO.
+
+## 2026-10-29 — goal-to-owner causal remediation + PRODUCTION DEPLOY (doc 205)
+- Task DELIA-C3-GOAL-TO-OWNER-CAUSAL-REMEDIATION-AND-PRODUCTION-DEPLOY-01; base ab5048df0c -> implementation 43650dd20e pushed to origin/main.
+- E1 PROVEN: api-delpi _param_schema stripped owner param descriptions -> argument model got types-only schema; fix: bounded description propagation (+12 lines, untrusted metadata-as-data).
+- E2 PROVEN: bounded page walk gated to COUNT-intent + early-return on authoritative total -> declared ordering/complete_coverage/min_items unreachable on multi-page owners; fix: same walk extended to answer_requirements coverage gaps, schema-derived page cursor, all integrity/budget guards preserved (~+160 lines orchestration).
+- RED 5+5 -> GREEN 11/11 (test_c3_goal_to_owner_execution) + 5/5 (test_davi_dynamic_read); focused 199 GREEN; api-delpi DAVI suite 418 GREEN; delia-api ~2700 collected / 2 pre-existing env-mount failures (not this diff); arch+boundary audits 0 findings; engines inherit fix via shared _governed_owner_path.
+- DEPLOY: srv-api operador@192.168.1.237, repo ff 49eee133->43650dd20; api-delpi image 42ad9defd8cb healthy, delia-api dad53fa242f6 healthy; langgraph B1 + Kimi/OpenRouter preserved; rollback tags goal-owner-rollback-d94e443e / -def538a0 retained.
+- SMOKE (identity user, 2 bounded READ turns): S1 terminal bala -> discover+execute, verdict answered, presented=2 real TERM. BALA records, owner total 6, ~78s, ~7 model calls (vs 14-15 FAIL). S2 ultimo processo Transforma+ -> record_read arg_keys=action,entity,page_size,q -> owner total=0 -> truthful empty_result ~27s, 4 model calls; no fabrication; residual = model-owned q formulation (walk not reachable on total=0 envelope).
+- VERDICT: PRODUCTION_DEPLOY_EXECUTED_AND_VERIFIED; E1 AC met end-to-end; E2 contract fix deployed, business outcome = truthful limitation-grade empty (not supported-latest) — reported without fabricated acceptance.
