@@ -8,7 +8,8 @@ COPY transformometro-api/vendor/bpmn-layout/package.json \
      transformometro-api/vendor/bpmn-layout/build.mjs vendor/
 RUN cd vendor && npm ci
 COPY plugins/bpmn-editor/src/layout src_layout
-RUN cd vendor && LAYOUT_SRC=/build/src_layout node build.mjs
+RUN cd vendor && LAYOUT_SRC=/build/src_layout node build.mjs && \
+    rm -rf node_modules && npm ci --omit=dev
 
 FROM node:20-slim AS node_runtime
 
@@ -17,9 +18,13 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Node runtime (glibc) + canonical layout bundle — server-side Organizar.
+# node_modules carries the runtime DOM polyfill (@xmldom/xmldom) the
+# bundle requires; production deps only, no toolchain.
 COPY --from=node_runtime /usr/local/bin/node /usr/local/bin/node
 COPY --from=bpmn_layout_bundle /build/vendor/out/organize.cjs \
     /app/vendor/bpmn-layout/organize.cjs
+COPY --from=bpmn_layout_bundle /build/vendor/node_modules \
+    /app/vendor/bpmn-layout/node_modules
 
 COPY transformometro-api/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
