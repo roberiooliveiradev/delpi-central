@@ -194,6 +194,16 @@ def test_v014_migration_canonicalizes_numeric_series() -> None:
     assert "invoice_posting_linked_invoices" in sql
     assert "invoice_posting_requests" in sql
     assert "DELETE FROM" in sql.upper()
+    assert "uq_lnf_requests_active_fiscal_key" in sql or "status = 'cancelled'" in sql
+    assert "Duplicata por série equivalente" in sql
+    assert "ROW_NUMBER()" in sql
+    # Dedupe/cancel antes do UPDATE (evita unique violation na canonicalização)
+    assert sql.upper().index("DELETE FROM") < sql.upper().index(
+        "UPDATE LANCAMENTO_NOTAS_FISCAIS.INVOICE_POSTING_LINKED_INVOICES"
+    )
+    assert sql.upper().index("STATUS = 'CANCELLED'") < sql.upper().rindex(
+        "UPDATE LANCAMENTO_NOTAS_FISCAIS.INVOICE_POSTING_REQUESTS"
+    )
     assert "DROP TABLE" not in sql.upper()
     assert "DROP SCHEMA" not in sql.upper()
 
