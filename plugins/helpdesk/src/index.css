@@ -389,6 +389,9 @@
   flex-direction: column;
   min-height: 0;
   gap: var(--helpdesk-section-gap);
+  /* Conteúdo maior que a viewport → rola o formulário inteiro, nunca
+     sobrepõe as colunas do grid sobre a área de anexos/envio. */
+  overflow-y: auto;
 }
 
 .dashboard-helpdesk .helpdesk-page-stack .helpdesk-create-form {
@@ -428,7 +431,10 @@
   grid-template-columns: minmax(0, 1fr) minmax(14rem, 17rem);
   gap: var(--helpdesk-section-gap);
   align-items: stretch;
-  min-height: 0;
+  /* Piso = altura intrínseca da coluna mais alta (lateral de classificação).
+     Sem ele, a expansão da seção de itens encolhia o grid e a lateral
+     transbordava sobre a área de arquivos; com ele, o formulário rola. */
+  min-height: min-content;
 }
 
 .dashboard-helpdesk .helpdesk-create-layout__main,
