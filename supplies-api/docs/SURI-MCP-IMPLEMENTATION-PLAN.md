@@ -219,3 +219,22 @@ Modelo de entrega do Cursor: `BASE HEAD, FINAL HEAD, STATUS, FACTS PROVEN, TO_IN
 **STOP_CONDITION:** owner ou permission inválido, Flask migration, SURI → api-delpi direta, alegação de PASS sem runtime.
 
 **Veredito do plano:** `PLAN_READY_FOR_S0_INVENTORY` (somente etapa de investigação); `IMPLEMENTATION_GATE = PENDING` até ARCH-01 + contract freeze. Não avançar S1–S9 automaticamente.
+
+
+## 10. Decisão do Product Owner — paridade CRUD completa (2026-10-29)
+
+**Decisão de produto aprovada:** a SURI é uma **interface operacional de CRUD completo**, isto é, tem como TARGET permitir ao usuário realizar por ChatGPT **todas as ações que esse mesmo usuário pode efetivamente executar no Portal Suprimentos**, usando as capacidades autorizadas da `supplies-api`. Não é um chatbot somente READ. Inclui `CREATE`, `READ`, `UPDATE`, `DELETE` e operações semânticas de workflow (aprovar, rejeitar, cancelar, encaminhar, reconciliar etc.) **quando realmente disponíveis e autorizadas**.
+
+**Paridade é por capacidade efetiva do usuário, não por endpoint genérico ou tabela.** Uma operação só entra em `MCP_PROVEN` quando: (a) contrato BFF e owner existem; (b) UI/Portal expõe a ação para aquele perfil, conforme recorte de paridade; (c) `supplies-api` revalida Core effective permissions + unidade + ownership/recurso + regra de negócio; (d) MCP faz PREPARE/ACT/CONFIRM quando aplicável, com read-back; (e) testes positivos, irmãos, negativos e runtime correspondente foram aprovados. `view-all` não expande unidade. Proibição de nova permissão por tool, botão, rota ou verbo.
+
+**Impacto no planejamento:**
+- S0 deve entregar **matriz integral de CRUD e workflows** de todas as páginas/capacidades implementadas, com `capability_id`, `verb`, `UI action`, `BFF route/use_case`, `owner`, `effective_permission`, `unit/resource scope`, `business_rule`, `gate`, `tool plan`, `tests`. Não reduzir inventário a primeira fatia READ.
+- S1 define catálogo completo de capacidades e política de confirmação por risco, **sem criar tools CRUD mecânicas**. Cada tool/ação representa intenção semântica e reutiliza BFF.
+- S2 preserva plataforma/AuthZ. S3 READ é **incremento inicial técnico**, não limitação de escopo final.
+- **S6 deixa de ser opcional no objetivo final**: implementação de `CREATE/UPDATE/DELETE` e workflows autorizados passa a ser requisito obrigatório de aceite da SURI completa. S6 pode ter vários gates menores por tipo de efeito/owner; **nunca** liberar ação ERP ainda bloqueada ou inventar caso de uso inexistente.
+- S7 e S9 somente declaram **CRUD_PARITY_PASS** se cada capacidade autorizada e implementada no Portal no corte de referência estiver `PASS`/comprovação MCP correspondente, com exceções explícitas para ações intrinsecamente não conversacionais ou sem contrato, validadas pelo PO. Ausência de paridade → `ACCEPT_WITH_RESIDUAL` ou `INCONCLUSIVE`, nunca “CRUD completo entregue”.
+- Conhecimento (S4) e inteligência (S5) permanecem camadas obrigatórias e distintas de execução de operações.
+
+**RQ adicional:** `SURI-RQ-15` — paridade CRUD e workflows ponta a ponta. **AC-15:** matriz de todas as ações atuais do Portal com cobertura por verbo/intenção, permissão efetiva e unit/resource scope; testes de autorização e verificação de efeitos; avaliação quantitativa de cobertura/pendências; nenhuma ferramenta consegue executar algo proibido no Portal ou fora do gate. **Estado:** `ATENDIDO_NO_PLANO` por S0/S1/S6/S7/S9; execução `PLANNED`.
+
+**Invariante de exceção:** o objetivo “tudo que o usuário pode fazer” **não** suspende travas do próprio Portal, APIs, Core, ERP, alçadas, confirmação humana ou escopo material de owners. Sem mutação quando o backend não a suporta ou o usuário não está autorizado. Metadados de ferramenta, prompt, token OAuth e confirmação do ChatGPT não são fontes de permissão.
