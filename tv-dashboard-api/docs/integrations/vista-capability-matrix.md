@@ -2,7 +2,8 @@
 
 **Status:** CURRENT (HEAD-bound inventory + governance) · runtime VISTA/MCP verified 2026-10-16  
 **Owner:** `tv-dashboard-api` (TV Dashboard domain)  
-**Persona:** VISTA = specialist capability for operational displays — **not** a parallel AI to DÉLIA.
+**Persona:** VISTA = specialist capability for operational displays — **not** a parallel AI to DÉLIA.  
+**Ficha narrativa:** `tv_app/persona/vista_profile.py` (`delpi_character_profiles` shared contract) + `vista_agent_intelligence.json` (`persona`/`narrative`/`story`) → `agent_directives.character` **MCP-primary** (Actions envelope ~100 KiB sem margem; persona estável nas Instructions do Builder) · projeção pública `tv_app/content/vista_public_profile.json` — FICTION_IDENTITY_ONLY, zero tools/AuthZ.
 
 This file is the **single canonical matrix** for VISTA surface exposure.  
 Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — link here.

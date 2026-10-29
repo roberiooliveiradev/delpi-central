@@ -13,6 +13,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from delpi_character_profiles import (
+    CharacterProfile,
+    CharacterPublicProfile,
+    project_persona_context,
+    project_public_profile,
+)
+
+from tv_app.persona.vista_profile import get_vista_profile
+
 CONTENT_PATH = (
     Path(__file__).resolve().parents[2] / "content" / "vista_agent_intelligence.json"
 )
@@ -166,6 +175,10 @@ class VistaAgentIntelligenceService:
             # both transports (KIC-V1 PHASE 1); declarative, no runtime engine.
             "knowledge_orchestration": doc.get("knowledge_orchestration") or {},
             "actions_runtime": doc.get("actions_runtime") or {},
+            # Compact character context projected from the shared-contract
+            # ficha (VISTA-PERSONA-001) — single narrative source; fiction
+            # only, never AuthZ/capability/tool authority.
+            "character": cls.persona_context(),
             "continuous_review": doc.get("continuous_review") or {},
             "visual_impact": doc.get("visual_impact") or {},
             "visual_selection": doc.get("visual_selection") or {},
@@ -220,6 +233,12 @@ class VistaAgentIntelligenceService:
             # Expression contract is MCP-primary: the Actions envelope sits at
             # the ~100 KiB OpenAI ceiling with no residual budget.
             raw.pop("param_expressions", None)
+            # Character context is MCP-primary for the same reason — the
+            # ~100 KiB envelope has no residual budget; stable persona
+            # lives in the Builder Instructions paste (specialist-
+            # instructions.md) per the "persona in stable Instructions"
+            # convention.
+            raw.pop("character", None)
             write_flow = raw.get("write_flow")
             if isinstance(write_flow, dict):
                 write_flow.pop("surface", None)
@@ -240,3 +259,18 @@ class VistaAgentIntelligenceService:
                     write_flow.pop(key, None)
             raw = _neutralize_for_mcp(raw)
         return _compact_for_actions(raw)
+
+    @classmethod
+    def character_profile(cls) -> CharacterProfile:
+        """Canonical VISTA ficha (shared contract consumer)."""
+        return get_vista_profile()
+
+    @classmethod
+    def persona_context(cls) -> dict[str, Any]:
+        """Compact narrative context from the ficha — MCP/agent echo."""
+        return project_persona_context(cls.character_profile())
+
+    @classmethod
+    def public_profile(cls) -> CharacterPublicProfile:
+        """Approved public narrative projection for colleague knowledge."""
+        return project_public_profile(cls.character_profile())
