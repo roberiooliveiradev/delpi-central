@@ -23,6 +23,12 @@ from app.application.use_cases.transformometro.get_dashboard_evolucao_use_case i
 from app.application.use_cases.lmp.get_lmp_dashboard_summary_use_case import (
     GetLMPDashboardSummaryUseCase,
 )
+from app.application.use_cases.lmp.lmp_facts_use_cases import (
+    GetLmpFactUseCase,
+    GetLmpFactsHistoryUseCase,
+    GetLmpPiCountsUseCase,
+    ListLmpFactsUseCase,
+)
 from app.infrastructure.gateways.transformometro_dashboard_gateway import (
     TransformometroDashboardGateway,
 )
@@ -94,6 +100,22 @@ def build_engineering_get_transformometro_savings_investment_series_use_case() -
 
 def build_engineering_get_lmp_dashboard_summary_use_case() -> GetLMPDashboardSummaryUseCase:
     return GetLMPDashboardSummaryUseCase(_build_lmp_repository())
+
+
+def build_engineering_list_lmp_facts_use_case() -> ListLmpFactsUseCase:
+    return ListLmpFactsUseCase(_build_lmp_repository())
+
+
+def build_engineering_get_lmp_fact_use_case() -> GetLmpFactUseCase:
+    return GetLmpFactUseCase(_build_lmp_repository())
+
+
+def build_engineering_get_lmp_facts_history_use_case() -> GetLmpFactsHistoryUseCase:
+    return GetLmpFactsHistoryUseCase(_build_lmp_repository())
+
+
+def build_engineering_get_lmp_pi_counts_use_case() -> GetLmpPiCountsUseCase:
+    return GetLmpPiCountsUseCase(_build_lmp_repository())
 
 
 def _build_mini_applicators_repository() -> MiniApplicatorsRepository:

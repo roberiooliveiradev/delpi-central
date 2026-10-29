@@ -3600,6 +3600,95 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             {order_clause}
         """
 
+    def _staged_facts_select(
+        self,
+        *,
+        include_qtd_pi: bool,
+        order_by: bool,
+    ) -> str:
+        """Projeção do contrato facts (F-LMP-01) sobre o mesmo dataset físico.
+
+        Fatos declarados: ``listing_kind_source`` bruto, flags de âncora,
+        minutos de residência/amostra e revisões — insumos das regras de
+        Engenharia (owner: engineering-api, G3). ``listing_kind`` efetivo é
+        devolvido marcado como derivação executada na fonte para paridade;
+        o consumer oficial deve recomputar via regras próprias.
+        """
+        candidates = self._TEMP_CANDIDATES
+        eng_resumo = self._TEMP_ENG_RESUMO
+        pi_count = self._TEMP_PI_COUNT
+        qtd_pi_select = "ISNULL(PI.QTD_PI, 0) AS qtd_pi" if include_qtd_pi else "0 AS qtd_pi"
+        qtd_pi_join = f"""
+            LEFT JOIN {pi_count} PI
+                ON PI.ADJ_FILIAL = C.AD1_FILIAL
+               AND PI.ADJ_NROPOR = C.AD1_NROPOR
+               AND PI.ADJ_REVISA = C.AD1_REVISA
+        """ if include_qtd_pi else ""
+        qtd_pi_group_by = ",\n                PI.QTD_PI" if include_qtd_pi else ""
+        residence_filter = self._engineering_residence_filter_sql()
+        listing_kind_expr = self._effective_listing_kind_expr()
+        order_clause = """
+            ORDER BY
+                C.LMP_START_DATE DESC,
+                C.AD1_NROPOR DESC
+        """ if order_by else ""
+        eng_join_revision = self._staged_eng_resumo_join_revision_sql()
+        cycle_index_expr = self._staged_cycle_index_expr()
+        cycle_index_group_by = self._staged_cycle_index_group_by()
+
+        return f"""
+            SELECT
+                C.AD1_FILIAL AS branch,
+                C.AD1_NROPOR AS sale_number,
+                C.AD1_DESCRI AS sale_description,
+                C.LISTING_KIND AS listing_kind_source,
+                {listing_kind_expr} AS listing_kind,
+                ISNULL(C.HAS_SAMPLE_ANCHOR, 0) AS has_sample_anchor,
+                ISNULL(C.HAS_LMP_FINALIZED, 0) AS has_lmp_finalized,
+                ISNULL(H.TEMPO_MINUTOS_AMOSTRA_ENG, 0) AS sample_eng_minutes,
+                H.TEMPO_TOTAL_MINUTOS_ENG AS residence_minutes,
+                C.LMP_START_DATE AS start_date,
+                C.LMP_END_DATE AS end_date,
+                C.AD1_REVISA AS homolog_revision,
+                H.MEASUREMENT_REVISION AS measurement_revision,
+                C.LMP_START_DATE AS homolog_date,
+                {cycle_index_expr},
+                H.ENGINEERING_STATUS AS engineering_status,
+                H.QTD_PASSAGENS_ENG AS qtd_engineering_entries,
+                H.QTD_PASSAGENS_ENCERRADAS AS qtd_engineering_closed,
+                H.QTD_AVANCOU_ENG AS qtd_advanced_from_engineering,
+                H.QTD_RETORNOU_ENG AS qtd_returned_from_engineering,
+                {qtd_pi_select}
+            FROM {candidates} C
+            LEFT JOIN {eng_resumo} H
+                ON H.AIJ_FILIAL = C.AD1_FILIAL
+               AND H.AIJ_NROPOR = C.AD1_NROPOR
+               {eng_join_revision}
+            {qtd_pi_join}
+            {residence_filter}
+            GROUP BY
+                C.AD1_FILIAL,
+                C.AD1_NROPOR,
+                C.AD1_DESCRI,
+                C.LISTING_KIND,
+                C.HAS_SAMPLE_ANCHOR,
+                C.HAS_LMP_FINALIZED,
+                C.LMP_START_DATE,
+                C.LMP_END_DATE,
+                C.AD1_REVISA,
+                H.MEASUREMENT_REVISION,
+                H.ENGINEERING_STATUS,
+                H.QTD_PASSAGENS_ENG,
+                H.QTD_PASSAGENS_ENCERRADAS,
+                H.QTD_AVANCOU_ENG,
+                H.QTD_RETORNOU_ENG,
+                H.TEMPO_TOTAL_MINUTOS_ENG,
+                H.TEMPO_MINUTOS_AMOSTRA_ENG
+                {cycle_index_group_by}
+                {qtd_pi_group_by}
+            {order_clause}
+        """
+
     def _staged_count_select(self, *, include_qtd_pi: bool) -> str:
         qtd_pi_join = f"""
             LEFT JOIN {self._TEMP_PI_COUNT} PI
@@ -4104,6 +4193,66 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def get_lmp_dashboard_summary_facts(self, request: ListLMPRequest) -> list[dict]:
         """Fatos do summary sem BOM/PI (`#Delpi_PICount` / Recursive_BOM)."""
         return self._fetch_dashboard_summary_rows(request, include_qtd_pi=False)
+
+    @staticmethod
+    def _map_lmp_fact_row(row: dict) -> dict:
+        return {
+            "branch": row.get("branch"),
+            "sale_number": row.get("sale_number"),
+            "sale_description": (row.get("sale_description") or "").strip(),
+            "listing_kind_source": row.get("listing_kind_source"),
+            "listing_kind": row.get("listing_kind"),
+            "has_sample_anchor": bool(int(row.get("has_sample_anchor") or 0)),
+            "has_lmp_finalized": bool(int(row.get("has_lmp_finalized") or 0)),
+            "sample_eng_minutes": int(row.get("sample_eng_minutes") or 0),
+            "residence_minutes": int(row.get("residence_minutes") or 0),
+            "start_date": row.get("start_date"),
+            "end_date": row.get("end_date"),
+            "homolog_revision": row.get("homolog_revision"),
+            "measurement_revision": row.get("measurement_revision"),
+            "homolog_date": row.get("homolog_date"),
+            "cycle_index": int(row.get("cycle_index") or 1),
+            "engineering_status": row.get("engineering_status"),
+            "qtd_engineering_entries": int(row.get("qtd_engineering_entries") or 0),
+            "qtd_engineering_closed": int(row.get("qtd_engineering_closed") or 0),
+            "qtd_advanced_from_engineering": int(row.get("qtd_advanced_from_engineering") or 0),
+            "qtd_returned_from_engineering": int(row.get("qtd_returned_from_engineering") or 0),
+            "qtd_pi": int(row.get("qtd_pi") or 0),
+        }
+
+    def get_lmp_facts(self, request: ListLMPRequest) -> list[dict]:
+        """Contrato facts F-LMP-01 — linhas de fato por OV qualificada.
+
+        Mesmo dataset físico do dashboard (temp tables + filtros de período,
+        residência e listing efetivo documentados como push-down). Sem cache:
+        o consumer é a engineering-api, não o dashboard humano.
+        """
+        include_qtd_pi = self._resolve_include_qtd_pi(request)
+        final_select = self._staged_facts_select(
+            include_qtd_pi=include_qtd_pi,
+            order_by=True,
+        )
+        residence_params = self._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        )
+        final_select, final_params = self._apply_effective_listing_type_filter_to_select(
+            request,
+            final_select,
+            residence_params,
+        )
+        batch_sql, batch_params = self._build_staged_batch(
+            request,
+            include_qtd_pi=include_qtd_pi,
+            eng_resumo_lite=False,
+            final_select=final_select,
+            final_params=final_params,
+        )
+
+        with self as repo:
+            rows = repo.execute_batch_query(batch_sql, batch_params)
+
+        return [self._map_lmp_fact_row(row) for row in rows]
 
     def _normalize_pi_ov_keys(
         self,

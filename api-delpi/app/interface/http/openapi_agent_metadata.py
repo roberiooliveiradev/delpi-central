@@ -529,6 +529,58 @@ LMP_HISTORY_FLOW = agent_route(
     operation_id="get_lmp_history_flow",
 )
 
+LMP_FACT_LIST = agent_route(
+    summary="Fatos de LMPs (contrato facts F-LMP-01)",
+    description=(
+        "Listagem de fatos oficiais de LMPs extraídos das fontes TOTVS para o "
+        "cálculo de regras pela Engineering API. Retorna campos de origem e flags "
+        "derivadas declaradas; não retorna status, nível, prazo nem KPI. "
+        "Contrato técnico (S2S ou Bearer autorizado); não é ferramenta de chat "
+        "para perguntas de negócio — prefira o dashboard legado."
+    ),
+    operation_id="list_lmp_facts",
+)
+
+LMP_PI_COUNTS = agent_route(
+    summary="Contagens de PI em lote por OV (F-LMP-04)",
+    description=(
+        "Contagem de itens PI (BOM) por (filial, OV, revisão) em lote limitado, "
+        "evitando consultas N+1 dos consumers de regras. Entrada máxima de 500 chaves. "
+        "Contrato técnico facts; resposta associa inequivocamente chave → contagem."
+    ),
+    operation_id="get_lmp_pi_counts",
+)
+
+LMP_FACT_HISTORY_EVENTS = agent_route(
+    summary="Fatos de histórico da OV — eventos (F-LMP-03)",
+    description=(
+        "Eventos oficiais do histórico AIJ010 da OV no contrato facts: ordenação "
+        "determinística, timestamps, origem declarada e sem deduplicação "
+        "interpretativa — dedup/semântica pertencem ao consumer de regras."
+    ),
+    operation_id="get_lmp_facts_history_events",
+)
+
+LMP_FACT_HISTORY_FLOW = agent_route(
+    summary="Fatos de histórico da OV — fluxo de engenharia (F-LMP-03)",
+    description=(
+        "Eventos de engenharia da OV com contexto anterior/próximo no contrato "
+        "facts, preservando a informação oficial da fonte para as regras de "
+        "histórico da Engineering API."
+    ),
+    operation_id="get_lmp_facts_history_flow",
+)
+
+LMP_FACT_DETAIL = agent_route(
+    summary="Fato de LMP por OV (F-LMP-02)",
+    description=(
+        "Detalhe de uma LMP no contrato facts: dados de origem autorizados, "
+        "revisões, datas, flags derivadas declaradas e provenance. "
+        "Não calcula classificação final — pertence à Engineering API."
+    ),
+    operation_id="get_lmp_fact",
+)
+
 LMP_NONCONFORMITIES_LIST = agent_route(
     summary="List LMP nonconformities",
     description=(

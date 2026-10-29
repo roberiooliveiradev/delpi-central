@@ -1,0 +1,317 @@
+# =============================================================================
+# LMP SEMANTICS — especificação única de semânticas e constantes (doc 33 §3/§4)
+# -----------------------------------------------------------------------------
+# Versão: 1.0.0 (v1)
+# Owner semântico (alvo): engineering-api (regras de negócio LMP, G3+)
+# Owner de execução (atual): api-delpi (extração + execução declarada próxima
+#   da fonte, conforme ADR-LMP-02 — ownership semântico != local de execução)
+#
+# Esta spec é a fonte de verdade única para as semânticas S03–S08/S12 e as
+# constantes R01–R05. Nenhum SQL ou Python pode manter uma segunda definição
+# independente: divergências devem ser corrigidas contra ESTA spec ou a spec
+# deve ser versionada (v2) com decisão registrada.
+#
+# Status por item: `implemented` (vigente e executado), `documented_only`
+# (vigente apenas como fato declarado; interpretação pertence ao consumer),
+# `to_inventory` (comportamento pendente de confirmação de negócio).
+# =============================================================================
+
+spec:
+  id: lmp-semantics
+  version: "1.0.0"
+  status: active
+  semantic_owner: engineering-api
+  execution_owner: api-delpi
+  introduced_by: "ENGINEERING.LMP.G2 (docs/12-roadmap-e-evolucao/engineering/34)"
+  sources_of_truth:
+    - api-delpi/app/infrastructure/persistence/totvs/lmp_repositories/lmp_query_settings.py
+    - api-delpi/app/infrastructure/persistence/totvs/lmp_repositories/lmp_query_repository.py
+    - api-delpi/app/application/services/lmp_business_rules.py
+    - api-delpi/app/domain/services/lmp_period_inclusion_semantics_service.py
+    - api-delpi/app/domain/services/lmp_listing_kind_semantics_service.py
+    - api-delpi/app/domain/services/lmp_listing_cycle_semantics_service.py
+
+# -----------------------------------------------------------------------------
+# S03 — Elegibilidade por residência em engenharia
+# -----------------------------------------------------------------------------
+semantics:
+  - id: S03
+    name: min_engineering_residence
+    status: implemented
+    semantic_owner: engineering-api
+    execution: push_down_sql_with_declared_fact
+    definition: >
+      Uma (OV, revisão) classificada como LMP só é elegível para a listagem se o
+      tempo total de permanência em estágios de engenharia (residence_minutes)
+      for >= min_engineering_residence_minutes. No modo NÃO estrito
+      (strict_residence_after_homolog=false), uma OV com has_sample_anchor=1
+      permanece elegível mesmo abaixo do mínimo — a âncora de amostra não é
+      rebaixada pelo filtro de residência. No modo estrito, homolog LMP com
+      residência < mínimo é rebaixada para OUTRO.
+    inputs:
+      - { name: residence_minutes, type: integer, unit: minutes, source: "H.TEMPO_TOTAL_MINUTOS_ENG" }
+      - { name: has_sample_anchor, type: boolean, source: "C.HAS_SAMPLE_ANCHOR" }
+      - { name: listing_kind_source, type: string, source: "C.LISTING_KIND (candidata)" }
+    constants:
+      min_engineering_residence_minutes: 30
+    outputs:
+      - { name: eligible, type: boolean, description: "linha incluída no dataset" }
+    edge_cases:
+      - "residência = 29 min e sem âncora de amostra -> não elegível (LMP)"
+      - "residência = 30 min -> elegível (limite inclusivo)"
+      - "residência = 31 min -> elegível"
+      - "residência < 30 com has_sample_anchor=1 e modo não estrito -> elegível"
+      - "modo estrito + homolog < 30 min -> listing_kind efetivo = OUTRO"
+    fixtures:
+      - residence_29_excluded
+      - residence_30_boundary
+      - residence_31_included
+      - sample_anchor_residence_bypass
+    provenance: "lmp_query_settings.min_engineering_residence_minutes; _engineering_residence_filter_sql"
+
+  # ---------------------------------------------------------------------------
+  # S04 — Mapa processo -> estágios (âncoras de classificação)
+  # ---------------------------------------------------------------------------
+  - id: S04
+    name: process_stage_map
+    status: documented_only
+    semantic_owner: engineering-api
+    execution: sql_scope_candidate_ctes
+    definition: >
+      O processo comercial da OV (000002=oportunidade, 000003=engenharia) mapeia
+      os estágios AIJ010 que contam como âncora LMP, follow-up, suporte de
+      engenharia, âncora de amostra e LMP finalizado. A api-delpi expõe os
+      sinalizadores resolvidos por (OV, revisão) como fatos; a reavaliação do
+      mapa pertence à engineering-api sobre stage_path/histórico quando
+      necessário.
+    constants:
+      lmp_anchor_process_stages: { "000002": ["000003", "000012"], "000003": ["000003", "000012"] }
+      lmp_followup_process_stages: { "000002": ["000013"], "000003": ["000013"] }
+      engineering_support_process_stages: { "000002": ["000003", "000008", "000012"], "000003": ["000003", "000012"] }
+      sample_anchor_process_stages: { "000002": ["000008"], "000003": ["000002", "000008"] }
+      lmp_finalized_process_stages: { "000002": ["000012"], "000003": ["000012"] }
+      stage_catalog:
+        "000002": oportunidade
+        "000003": engenharia
+        "000008": amostra_engenharia
+        "000012": lancamento_homologacao
+        "000013": followup
+    outputs:
+      - { name: has_sample_anchor, type: boolean }
+      - { name: has_lmp_finalized, type: boolean }
+      - { name: listing_kind_source, type: string }
+    provenance: "lmp_query_settings.*_process_stages; CTEs de candidata/escopo"
+
+  # ---------------------------------------------------------------------------
+  # S05 — Prioridade de classificação por revisão
+  # ---------------------------------------------------------------------------
+  - id: S05
+    name: listing_kind_priority
+    status: implemented
+    semantic_owner: engineering-api
+    execution: effective_listing_kind_sql (facts devolvem source + flags p/ reexecução)
+    definition: >
+      Quando a mesma revisão possui mais de um marcador, a classe efetiva é
+      decidida por prioridade decrescente: LMP > AMOSTRA > OUTROS.
+    constants:
+      listing_kind_priority: { LMP: 2, AMOSTRA: 1, OUTROS: 0 }
+    inputs:
+      - { name: has_sample_anchor, type: boolean }
+      - { name: has_lmp_finalized, type: boolean }
+      - { name: listing_kind_source, type: string }
+    outputs:
+      - { name: listing_kind, type: string, enum: [LMP, AMOSTRA, OUTROS] }
+    edge_cases:
+      - "revisão com âncora LMP + âncora amostra -> LMP"
+      - "revisão só amostra -> AMOSTRA"
+      - "sem nenhum marcador -> OUTROS"
+    fixtures: [lmp_over_sample_priority]
+    provenance: "lmp_query_settings.listing_kind_priority; _effective_listing_kind_expr"
+
+  # ---------------------------------------------------------------------------
+  # S06 — Política de inclusão no período
+  # ---------------------------------------------------------------------------
+  - id: S06
+    name: period_inclusion_policy
+    status: implemented
+    semantic_owner: engineering-api
+    execution: sql_candidate_qualification (política = input do consumer; anchor declarado)
+    definition: >
+      Define quais (OV, revisão) compõem o universo da listagem para um período.
+      work_month_lmp (default): revisões cujo mês de trabalho LMP intersecta o
+      período. As demais políticas qualificam por âncora/homolog no período.
+      O contrato facts devolve start_date/end_date (âncora efetiva) e
+      policy.period_policy declarado; a engineering-api é dona da escolha.
+    constants:
+      supported_policies: [work_month_lmp, anchor_in_period, anchor_or_first_eng, homolog_in_period, homolog_cycles_in_period]
+      default_policy: work_month_lmp
+    outputs:
+      - { name: period_anchor, type: object, fields: {start_date: date, end_date: date, policy: string} }
+    edge_cases:
+      - "virada de competência: OV conta no período conforme a política, não por qualquer evento"
+      - "política inválida -> erro de validação (fail-closed)"
+    fixtures: [month_boundary_policy]
+    provenance: "lmp_period_inclusion_semantics_service; _sql_candidate_period_where_clause"
+
+  # ---------------------------------------------------------------------------
+  # S07 — Flag de residência estrita pós-homolog
+  # ---------------------------------------------------------------------------
+  - id: S07
+    name: strict_residence_after_homolog
+    status: implemented
+    semantic_owner: engineering-api
+    execution: settings_flag_aplicada_no_filtro_de_residencia
+    definition: >
+      Quando true, homolog LMP com residência < min é rebaixada para OUTRO e a
+      âncora de amostra deixa de salvar a elegibilidade. Default vigente: false.
+    constants:
+      strict_residence_after_homolog: false
+    edge_cases:
+      - "default false -> comportamento não estrito (bypass por âncora de amostra)"
+    provenance: "lmp_query_settings.strict_residence_after_homolog"
+
+  # ---------------------------------------------------------------------------
+  # S08 — Minutos de engenharia por (OV, revisão)
+  # ---------------------------------------------------------------------------
+  - id: S08
+    name: engineering_residence_minutes
+    status: implemented
+    semantic_owner: engineering-api
+    execution: sql_computation_as_declared_derived_fact
+    definition: >
+      Soma dos minutos de permanência nos estágios de suporte de engenharia
+      (S04) por (filial, OV, revisão), medida sobre eventos AIJ010.
+      sample_eng_minutes mede apenas os estágios de amostra.
+    inputs:
+      - { name: aij010_events, type: stream }
+    outputs:
+      - { name: residence_minutes, type: integer, unit: minutes, nullable: true }
+      - { name: sample_eng_minutes, type: integer, unit: minutes }
+    edge_cases:
+      - "OV sem passagem por engenharia -> residence_minutes null (LEFT JOIN)"
+      - "datas nulas em eventos -> contribuem 0 ao somatório"
+    fixtures: [null_dates_zero_minutes]
+    provenance: "CTEs EngenhariaEventos/EngenhariaMinutosPorRevisao; H.TEMPO_TOTAL_MINUTOS_ENG"
+
+  # ---------------------------------------------------------------------------
+  # S12 — Candidatas por revisão/ciclo
+  # ---------------------------------------------------------------------------
+  - id: S12
+    name: revision_cycle_listing
+    status: implemented
+    semantic_owner: engineering-api
+    execution: sql_candidate_rows
+    definition: >
+      Sob políticas por revisão (work_month_lmp, homolog_cycles_in_period), cada
+      revisão da OV pode gerar uma linha candidata própria com cycle_index
+      distinto; OVs multi-revisão aparecem uma vez por ciclo qualificado.
+    outputs:
+      - { name: cycle_index, type: integer, minimum: 1 }
+      - { name: measurement_revision, type: string }
+      - { name: homolog_revision, type: string }
+    edge_cases:
+      - "OV com 2 revisões qualificadas -> 2 linhas de fato, cycle_index 1 e 2"
+      - "revisão dupla com marcadores distintos -> prioridade S05 por revisão"
+    fixtures: [multiple_revisions_cycles]
+    provenance: "_staged_cycle_index_expr; AD1_REVISA / H.MEASUREMENT_REVISION"
+
+# -----------------------------------------------------------------------------
+# Constantes R01–R05 — insumos das regras de dashboard (owner: engineering-api)
+# Facts NÃO executa estas regras; os valores ficam registrados aqui como
+# referência canônica para a migração G3.
+# -----------------------------------------------------------------------------
+business_rule_constants:
+  - id: R01
+    name: sla_days_by_level
+    owner: engineering-api
+    status: reference_only
+    constants:
+      sla_by_level: { "Nível 1": 4, "Nível 2": 8, "Nível 3": 20 }
+    provenance: "lmp_business_rules.SLA_BY_LEVEL"
+
+  - id: R02
+    name: level_by_pi_count
+    owner: engineering-api
+    status: reference_only
+    constants:
+      level_thresholds: { nivel_1_max_pi: 10, nivel_2_max_pi: 20 }
+    definition: "qtd_pi <= 10 -> Nível 1; <= 20 -> Nível 2; senão Nível 3"
+    provenance: "lmp_business_rules.get_nivel"
+
+  - id: R03
+    name: sla_tolerance
+    owner: engineering-api
+    status: reference_only
+    constants:
+      sla_tolerance_days: 1
+      minutes_per_day: 1440
+    provenance: "lmp_business_rules.SLA_TOLERANCE_DAYS / MINUTES_PER_DAY"
+
+  - id: R04
+    name: dashboard_status
+    owner: engineering-api
+    status: reference_only
+    definition: >
+      RETORNADA -> Retornada; não FINALIZADA -> Andamento; FINALIZADA ->
+      Pontual se end_date <= limite+tolerância OU engineering_minutes <=
+      limite_minutos+tolerância; senão Atrasado. ATENÇÃO: o KPI '% no prazo'
+      conta status != Atrasado, logo Andamento e Retornada entram no numerador
+      — semântica sutil vigente, fixture dedicada, decisão de produto pendente.
+    constants:
+      engineering_status: [ABERTA, EM_ANDAMENTO, PARCIAL, FINALIZADA, RETORNADA]
+      dashboard_status: [Pontual, Atrasado, Andamento, Retornada]
+    edge_cases:
+      - "engenharia aberta/parcial nunca é Atrasado"
+      - "OR data x minutos: pontualidade por qualquer um dos dois critérios"
+    fixtures: [status_in_progress_numerator]
+    provenance: "lmp_business_rules (classificação); doc 33 §5 R09"
+
+  - id: R05
+    name: business_days_calendar
+    owner: engineering-api
+    status: reference_only
+    definition: >
+      Dias úteis = seg-sex; feriados NÃO são descontados no comportamento
+      vigente. lead_time_util conta dias úteis inclusive entre start e end.
+    edge_cases:
+      - "feriados: TO_INVENTORY — pendente confirmação de negócio (doc 33 §16)"
+    provenance: "lmp_business_rules.add_business_days/business_days_between"
+
+# -----------------------------------------------------------------------------
+# Limites do contrato facts (F-LMP-01..04)
+# -----------------------------------------------------------------------------
+facts_contract_limits:
+  page_size_default: 50
+  page_size_max: 500
+  pi_counts_batch_max: 500
+  forbidden_outputs:
+    - dashboard_status (Pontual/Atrasado/Andamento/Retornada)
+    - nivel / sla / data_limite
+    - lead_time / percentual_no_prazo
+    - goal_* / idd / score final
+  notes: >
+    Resultados de negócio pertencem à engineering-api (KPIs) e a Strategic
+    Indicators (metas). Facts expõe apenas dados de origem + flags derivadas
+    declaradas em `derived_facts`.
+
+# -----------------------------------------------------------------------------
+# Fatos derivados declarados (ADR-LMP-02)
+# -----------------------------------------------------------------------------
+derived_facts:
+  - { name: has_sample_anchor, type: boolean, source: C.HAS_SAMPLE_ANCHOR, rule: S04, justification: "reclassificação sem re-scan da AIJ010" }
+  - { name: has_lmp_finalized, type: boolean, source: C.HAS_LMP_FINALIZED, rule: S04, justification: "prioridade LMP sobre histórico de amostra" }
+  - { name: residence_minutes, type: integer_nullable, source: H.TEMPO_TOTAL_MINUTOS_ENG, rule: S08, justification: "somatório pesado executado na fonte" }
+  - { name: sample_eng_minutes, type: integer, source: H.TEMPO_MINUTOS_AMOSTRA_ENG, rule: S08, justification: "insumo de reclassificação amostra" }
+  - { name: period_anchor, type: composite, source: "start_date + end_date + policy.period_policy", rule: S06, justification: "âncora declarada da política escolhida" }
+  - { name: stage_path, type: composite, source: "listing_kind_source + has_* + engineering_status + eventos de histórico", rule: S04, justification: "mapa exposto via flags; stage_path explícito por revisão adiado p/ G3 se revalidação exigir" }
+
+# -----------------------------------------------------------------------------
+# Divergências registradas (não corrigidas nesta versão)
+# -----------------------------------------------------------------------------
+known_divergences:
+  - id: DIV-01
+    description: "SQL candidata x lmp_listing_kind_semantics_service reinterpretam listing_kind de formas distintas — doc 32 §17. Resolução: spec única + revalidação na eng-api (G3)."
+  - id: DIV-02
+    description: "R09 conta Andamento/Retornada no numerador '% no prazo' — semântica sutil vigente; fixture dedicada; decisão de produto pendente."
+  - id: DIV-03
+    description: "Feriados não descontados de dias úteis — TO_INVENTORY aguardando confirmação de negócio."

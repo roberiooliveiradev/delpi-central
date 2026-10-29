@@ -73,6 +73,10 @@ class LMPQueryRepositoryPort(ABC):
         """Fatos do summary sem BOM/PI. Default: delega ao summary sem PI."""
         return self.get_lmp_dashboard_summary(request)
 
+    def get_lmp_facts(self, request: ListLMPRequest) -> list[dict]:
+        """Contrato facts F-LMP-01. Default: summary facts para stubs."""
+        return self.get_lmp_dashboard_summary_facts(request)
+
     def get_lmp_pi_counts_by_ovs(
         self,
         *,
