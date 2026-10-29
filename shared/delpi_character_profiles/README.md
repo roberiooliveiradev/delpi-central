@@ -261,3 +261,9 @@ Procedimento obrigatório:
 16. Devolva relatório com: BASE/FINAL HEAD, arquivos, testes, projeção,
     deploy SHA, PROVEN/TO_INVENTORY, EXECUTION_DRIFT, NEXT STEP.
 ```
+
+## 13. Prompt-Mestre Universal — DELPI Character Studio
+
+Para criar ou evoluir **qualquer especialista MCP**, incluindo ficha completa, histórias compartilhadas, inventário de consumidores no GitHub, avatar 3D gerado pelo GPT, aprovação e briefing para Devin, consulte **[PROMPT_MESTRE_UNIVERSAL.md](./PROMPT_MESTRE_UNIVERSAL.md)**.
+
+Este documento complementa o prompt técnico simples da seção 12: o GPT conduz a criação visual/narrativa e o Devin integra apenas conteúdo aprovado no bounded context do MCP, mantendo o `shared` restrito ao contrato.
