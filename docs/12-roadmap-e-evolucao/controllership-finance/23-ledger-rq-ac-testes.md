@@ -916,3 +916,32 @@ Execução `CF-PROC0072-P3-P7-INTEGRATION-REWORK-008`. Registro completo: [doc 1
 | RW-09 (AC-13/14/15) | Testes + smoke local + QA visual | PASS — MFE 49/49 arquivos afetados, suite 390/391 (flake pré-existente não relacionado), tsc/build limpos, smoke autenticado 14/14 (`cf-e2e-access`), screenshots `rework008_*.png` |
 | RW-10 (AC-16) | Documentação e Help sincronizados | PASS — docs 118/119/113/112/23 + `helpTooltips.ts` |
 | RW-11 (AC-17/18/19) | Commit/push/deploy/smoke prod | PASS — `4bc90151df` pushado (12 arq. escopo puro); deploy `srv-api` MFE-only via script oficial; SHA/bundle/remoteEntry/401 verificados; smoke prod usuário `TEST_NOT_RUN` (sem persona sancionada) |
+
+### CONTRACT-GATE-014 — RQ/AC R06 (CPV/Kardex MATR910) + R07 (Inventários) (2026-10-29)
+
+Execução `CF-PROC0072-R06-R07-CONTRACT-GATE-014`. Contratos TARGET e decisões: [doc 122](./122-gate-contratual-r06-r07-matr910-2026-10-29.md). Regras `PROVEN`: doc 85 §6/§7. Estado `TARGET` = contrato proposto aguardando aprovação do gate de implementação; implementação bloqueada (doc 122 §12).
+
+| RQ/AC | Critério | Fonte de evidência | Estado |
+|---|---|---|---|
+| RQ-R06-01 | Consulta kardex: `GET /financeiro/stock-kardex` — UNION SD1(`D1_DTDIGIT`)+SD2(`D2_EMISSAO`)+SD3(`D3_EMISSAO`), `F4_ESTOQUE=S` (SD1/SD2), `D3_ESTORNO<>S`, `D*_ORIGLAN<>LF`, `B1_COD<>MV_PRODIMP`, `D*_LOCAL=warehouse` | `matr910_dlp.prx` L475–524; doc 85 BR-R06-001/002 | TARGET |
+| RQ-R06-02 | Resumo kardex: totais entrada/saída por filial/armazém/`B1_TIPO`; `topProductsByCost` global sobre o conjunto autorizado (nunca sobre a página) | doc 122 §4.1; ranking §12 doc 121 | TARGET |
+| RQ-R06-03 | Detalhe por produto: `…/stock-kardex/products/{code}` — cadeia de saldo linha a linha desde `B9_QINI`/`B9_VINI1` @mês anterior; ausente → `source_missing` | doc 85 BR-R06-007 (1.544/1.544) | TARGET |
+| RQ-R06-04 | Grão = movimento em bloco produto×armazém×período; campos doc, data + `dateField`, TES/TM/CF, REF (`F-|P-|OP|CC`), qtd/valor entrada-saída, `unitCost`, `costAsOfSource`, `runningQty`/`runningValue` | doc 85 BR-R06-004/005/006 | TARGET |
+| RQ-R06-05 | Custo `as_of`: `TTAT_OLD` quando presente, senão corrente; devoluções `TIPONF='D'` na coluna oposta ×−1 | doc 85 BR-R06-006/008 (9.357/9.357; 11/11) | TARGET |
+| RQ-R06-06 | CPV vivo: `GET /financeiro/cpv` (D-O1) — semântica `SUM(D2_CUSTO1)`, `D2_CF∈{5101,5124,6101,6124}`, `D2_EMISSAO`, custo corrente por decisão PO 23/10 (`asOfConvention:"live"`); saídas kardex ≠ CPV registrado em `parityNotes` | doc 85 BR-R06-010; `cpv_query_repository.py` | TARGET |
+| RQ-R07-01 | Consulta inventários: `GET /financeiro/inventory-adjustments` = SD3 `D3_DOC='INVENT'`, TES 999/RE0 saída + 499/DE0 entrada, mesma engine do kardex | doc 85 BR-R07-001/002; DR-10 | TARGET |
+| RQ-R07-02 | Resumo inventários: entradas/saídas/líquido por filial/armazém; armazéns multi (evidência 01+99); `topImpacts` global | doc 85 BR-R07-003 (Σ 2.348,108 / R$185.103; líquido −28.460,098) | TARGET |
+| RQ-R07-03 | Detalhe: produto, doc `INVENT`, `D3_TM`, natureza, qtd/valor, `D3_CUSTO1` `as_of`, data, proveniência (SB7 opcional não-autoridade) | doc 85 BR-R07-002; `inventory_adjustments_repository.py` | TARGET |
+| RQ-X-01 | Filtros: `period` `YYYY-MM` (regex), `branch` `all|01|02`, `warehouse` multi, `product_code`, `nature`, `document_kind` — validação tipada 400 | molde `stock_inventory_router.py` | TARGET |
+| RQ-X-02 | Ordenação: allowlist server-side; default data + `*_NUMSEQ`; nenhuma ordenação fora da lista | doc 85 BR-R06-004 | TARGET |
+| RQ-X-03 | Paginação: tier `page_50_200`, OFFSET/FETCH, `page≥1` | `pagination_query.py` | TARGET |
+| RQ-X-04 | Proveniência: `source`, `provenance{engine:"matr910_contract", officialProducer:"MATR910", snapshotDate, asOfConvention}`, `officialMatr910:false`, `parityStatus:"PENDING"` | molde R03/R05/R08 | TARGET |
+| RQ-X-05 | Erros tipados: 400 validação, 401 sem Bearer, 403 `scope_unavailable`, 409 `not_exportable`, 503 indisponível; `source_missing` fail-closed — sem substituição de mês nem zero fabricado | molde `stock_inventory` + DR-16 | TARGET |
+| RQ-X-06 | Monetário: `CAST(... AS DECIMAL(30,9))` por linha antes do SUM; saída `DECIMAL(28,6)` serializada como string; exibição 2dp half-up sobre soma bruta; tolerância de paridade zero | doc 84 §4.3/§5.2; doc 15.1 | TARGET |
+| RQ-X-07 | Segurança: `controllership-finance.access` efetiva (Core RBAC); S2S `stock-kardex.read` + `allowed_clients=("controllership-finance-api",)`; flag `FINANCEIRO_STOCK_KARDEX_ENABLED`; delegated bearer → api-delpi; sem permission nova | doc 122 §5; `s2s_service_access.py` | TARGET |
+| RQ-X-08 | Export CSV/PDF (se D-O2 aprovado): bloco de identidade, watermark «PARIDADE OFICIAL PENDENTE», SHA-256, `csv_safe_text`, timeout 120s no BFF | `report_export_common.py` | TARGET (pende D-O2) |
+| RQ-X-09 | Tools CLARA READ: `get_stock_kardex`, `get_stock_kardex_summary`, `get_stock_kardex_product`, `get_inventory_adjustments`, `get_inventory_adjustments_summary`, (`get_cpv` se D-O1) — delegam às rotas BFF via `_call_route`; `MCP_TOOL_NAMES` 43→47/48 | doc 122 §4.4 | TARGET |
+| RQ-X-10 | Paridade Portal×CLARA: mesmos parâmetros → mesmos valores, quantidades, classificações, proveniência e `parityStatus`; testes no padrão `test_clara_parity_016.py` | doc 121 §14 | TARGET |
+| RQ-X-11 | Corpus+Help: `doc-122` autorizado no manifest (feito neste pacote); Help `reports.stockKardex`/`reports.inventoryAdjustments` na implementação; ingestão governada com versão/hash comprovados | doc 122 §7 | TARGET (manifest done; ingestão pós-impl) |
+| RQ-X-12 | Não-regressão: R01/R02/R03/R05/R08, conciliação `IDENTITY_ONLY`, P3, matriz R01–R15 e as 43 tools existentes — zero alteração funcional | suites api-delpi/BFF/MFE + `test_clara_mcp_surface.py` | TARGET |
+| RQ-X-13 | Paridade técnica × artefatos (etapa E8): R06 9.357 movimentos / 1.544 cadeias de saldo; R07 45/45 + totais oficiais — comparação do contrato implementado, não da reconstrução | `cpv 09 26 matriz.xlsb`, `Invent.xlsb`, doc 84 §5.1 | TEST_NOT_RUN (implementação futura) |

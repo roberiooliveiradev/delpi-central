@@ -121,7 +121,8 @@ Capabilities ACT vigentes (48): `evidence.decide_version`, `evidence.decide_item
 | R03/P7 | Posição de estoque | TOTVS/SB9 | stock-inventory | `all_products`/`mp_pi_pa`, filial, armazém, totais por tipo/armazém | CSV/PDF | PENDING (MATR460) |
 | R05 | Entradas/saídas | TOTVS/SD1–SD4 | stock-movements | seleção, agrupamentos, saldo (MATR320) | CSV/PDF | PENDING |
 | R08/H02 | Material em processo | TOTVS/SD3–SC2 | work-in-process | físico H02, alocado em OP, totais (MATR989) | CSV/PDF | PENDING; alimenta P3 |
-| R04, R06, R07, R09, R12, R15 | consumo OP, CPV/Kardex, inventários, Fat×MOD, wizard, cutoff | — | PENDING_CONTRACT | — | — | PLANNED (pacotes 014–017) |
+| R04, R09, R12, R15 | consumo OP, Fat×MOD, wizard, cutoff | — | PENDING_CONTRACT | — | — | PLANNED (pacotes 016–017; R04/R13/R14 depois) |
+| R06, R07 | CPV/Kardex (MATR910), inventários | — | PENDING_CONTRACT (gate 014 executado — contratos TARGET no doc 122) | — | — | PLANNED — implementação aguarda `CF-PROC0072-R06-R07-IMPLEMENTATION-015` |
 | R10, R11 | centro de custo, NF a desconsiderar | Controladoria | MANUAL_EVIDENCE | — | — | evidência documental P2 |
 | R13, R14 | extratos/aplicações, importações/câmbio | instituições financeiras | EXTERNAL | — | — | evidência anexada validada |
 
@@ -153,7 +154,7 @@ Consulta operacional, cálculo analítico e exportação **não dependem** de do
 
 | Pacote | Escopo | Estado |
 |---|---|---|
-| 014 | R06 CPV/Kardex + R07 inventários | PLANNED (gate contratual) |
+| 014 | R06 CPV/Kardex + R07 inventários | PLANNED — gate contratual executado (doc 122); implementação aguarda aprovação IMPLEMENTATION-015 |
 | 015 | R10 centro de custo + R11 NF a desconsiderar | PLANNED |
 | 016 | R09 Faturamento × MOD | PLANNED (lacunas E9/G5) |
 | 017 | R12 estado de custos + R15 cutoff | PLANNED (READ-only de estado) |
@@ -183,7 +184,7 @@ A CLARA não oferece consultas de relatórios futuros como publicados; distingue
 - *O que falta para homologação oficial?* Comparação contra emissões oficiais com mesmo período/filial/escopo/`as_of` — frente PENDING. [conhecimento]
 - *Preciso cadastrar documento para consultar relatório?* Não — consulta/análise/exportação independentes (§7). [implementado]
 - *O que um usuário DRE vê?* Somente «Fechamento Mensal → Documentos e interações» do que a Controladoria disponibilizou. [implementado]
-- *O R06 já está implementado?* Não — pacote 014 PLANNED (doc 120). [planejado]
+- *O R06 já está implementado?* Não — pacote 014 com contratos TARGET aprovados em design (doc 122); implementação aguarda gate de execução. [planejado]
 - *Quem valida evidências?* Ações governadas exigem PREPARE + confirmação humana; CLARA propõe, não decide sozinha. [governado]
 
 ## 13. Limites declarados (execução 014 — histórico)

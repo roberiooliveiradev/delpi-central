@@ -45,3 +45,5 @@
 ## 5. Próximo passo autorizado
 
 **Próximo gate proposto:** `CF-PROC0072-R06-R07-CONTRACT-GATE-014` — READ/VERIFY do reuso MATR910 e CPV existente, contratos, grão, `as_of`, autorizações, provas dos XLSB e RQ/AC; entregar gate documental, não scaffold/runtime automático. Em paralelo, encaminhar refresh CLARA ao owner. A homologação humana G6 continua `PENDING` quando não executada.
+
+**ATUALIZAÇÃO — 29/10/2026:** o gate `CF-PROC0072-R06-R07-CONTRACT-GATE-014` foi **executado** — contratos TARGET, RQ/AC (doc 23), matriz de segurança, matriz de paridade e plano conjunto Portal×CLARA registrados em **[doc 122](./122-gate-contratual-r06-r07-matr910-2026-10-29.md)**. Implementação permanece **bloqueada** até o gate de execução transversal `CF-PROC0072-R06-R07-IMPLEMENTATION-015`, com opções materiais D-O1..D-O4 aguardando aprovação (doc 122 §9).
