@@ -20,6 +20,8 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     RECONCILIATION_LOCK_CLASS_ID,
     RECONCILIATION_LOCK_OBJECT_ID,
     resolve_list_status_filter,
+    series_match_key,
+    series_match_key_sql,
 )
 from app.domain.services.lancamento_notas_fiscais.history_serialization import (
     history_changes_json_safe,
@@ -80,12 +82,13 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             supplier_code,
             supplier_store,
             document_match_key,
-            series,
+            series_match_key(series),
         ]
         exclude_sql = ""
         if exclude_id:
             exclude_sql = " AND id <> %s::uuid"
             params.append(exclude_id)
+        series_canon = series_match_key_sql("series")
         row = self.fetch_one(
             f"""
             SELECT {_REQUEST_COLUMNS}
@@ -94,7 +97,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                AND supplier_code = %s
                AND supplier_store = %s
                AND document_match_key = %s
-               AND series = %s
+               AND {series_canon} = %s
                AND status <> 'cancelled'
                {exclude_sql}
              LIMIT 1
@@ -541,7 +544,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             self.list_linked_invoices_for_requests([rid]).get(rid, []) if rid else []
         )
         match_key = str(out.get("document_match_key") or "").strip()
-        series = str(out.get("series") or "").strip().upper()
+        series = series_match_key(out.get("series"))
         out["linked_cte_requests"] = (
             self.list_linked_cte_requests_for_documents([(match_key, series)]).get(
                 (match_key, series),
@@ -562,7 +565,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         doc_keys = [
             (
                 str(item.get("document_match_key") or "").strip(),
-                str(item.get("series") or "").strip().upper(),
+                series_match_key(item.get("series")),
             )
             for item in serialized
         ]
@@ -572,7 +575,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             item["linked_invoices"] = linked_invoices.get(str(item["id"]), [])
             key = (
                 str(item.get("document_match_key") or "").strip(),
-                str(item.get("series") or "").strip().upper(),
+                series_match_key(item.get("series")),
             )
             item["linked_cte_requests"] = linked_ctes.get(key, [])
         return serialized
@@ -943,7 +946,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         seen: set[tuple[str, str]] = set()
         for raw_match, raw_series in document_keys:
             match_key = str(raw_match or "").strip()
-            series = str(raw_series or "").strip().upper()
+            series = series_match_key(raw_series)
             if not match_key:
                 continue
             pair = (match_key, series)
@@ -956,12 +959,13 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
 
         match_keys = [item[0] for item in keys]
         series_keys = [item[1] for item in keys]
+        linked_series_canon = series_match_key_sql("li.series")
         # unnest de arrays — compatível com psycopg3 (evita IN %s de tuplas compostas).
         rows = self.fetch_all(
             f"""
             SELECT
                 li.document_match_key AS match_key,
-                upper(li.series) AS match_series,
+                {linked_series_canon} AS match_series,
                 r.id,
                 r.document_number,
                 r.series,
@@ -975,7 +979,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                 ON r.id = li.request_id
               JOIN unnest(%s::text[], %s::text[]) AS wanted(match_key, series)
                 ON wanted.match_key = li.document_match_key
-               AND wanted.series = upper(li.series)
+               AND wanted.series = {linked_series_canon}
              WHERE r.fiscal_model = 'cte'
              ORDER BY r.created_at DESC, r.id ASC
             """,

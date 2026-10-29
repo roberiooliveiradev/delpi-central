@@ -75,7 +75,7 @@ Contratos em `route_contract_registry.py` (entity `invoice_posting_request` / `i
 | Campo | Regra |
 |-------|--------|
 | Documento | só dígitos; apresentação / match com **9** zeros à esquerda (`document_match_key`) |
-| Série | trim + uppercase; máx. 3; `''` ≠ `'0'` |
+| Série | trim + uppercase; máx. 3; série **só dígitos** perde zeros à esquerda (`001` ≡ `1`; `000` → `0`); `''` ≠ `'0'`. Vale para vínculo CT-e↔NF e conciliação SF1 (`series_match_key`, migration `V014`) |
 | Valor | `amount` ≥ 0; API aceita número ou string com **vírgula** PT-BR |
 | Chave de duplicidade | filial + fornecedor + loja + `document_match_key` + série (valor **não** entra) |
 

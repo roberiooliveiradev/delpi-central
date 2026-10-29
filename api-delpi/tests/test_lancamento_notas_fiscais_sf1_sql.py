@@ -72,3 +72,40 @@ def test_build_sql_normalizes_series_upper() -> None:
         ]
     )
     assert params[-1] == "U"
+
+
+def test_build_sql_canonicalizes_numeric_series_and_matches_sf1_without_padding() -> None:
+    sql, params = build_find_active_by_fiscal_keys_sql(
+        [
+            {
+                "branch_code": "02",
+                "supplier_code": "000006",
+                "supplier_store": "01",
+                "document_match_key": "000186765",
+                "series": "001",
+            }
+        ]
+    )
+    assert params[-1] == "1"
+    assert "CONVERT(INT," in sql
+    assert "F1_SERIE" in sql
+    # 001 e 1 colapsam na mesma chave
+    _, params_b = build_find_active_by_fiscal_keys_sql(
+        [
+            {
+                "branch_code": "02",
+                "supplier_code": "000006",
+                "supplier_store": "01",
+                "document_match_key": "000186765",
+                "series": "1",
+            },
+            {
+                "branch_code": "02",
+                "supplier_code": "000006",
+                "supplier_store": "01",
+                "document_match_key": "000186765",
+                "series": "001",
+            },
+        ]
+    )
+    assert params_b.count("1") == 1

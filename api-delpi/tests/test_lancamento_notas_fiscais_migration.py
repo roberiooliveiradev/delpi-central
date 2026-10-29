@@ -182,6 +182,22 @@ def test_v013_migration_adds_reverse_lookup_index() -> None:
     assert "DROP TABLE" not in sql.upper()
 
 
+def test_v014_migration_canonicalizes_numeric_series() -> None:
+    sql = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "plugins"
+        / "lancamento-notas-fiscais"
+        / "V014__canonical_series_match_key.sql"
+    ).read_text(encoding="utf-8")
+    assert "LTRIM(btrim(series), '0')" in sql
+    assert "invoice_posting_linked_invoices" in sql
+    assert "invoice_posting_requests" in sql
+    assert "DELETE FROM" in sql.upper()
+    assert "DROP TABLE" not in sql.upper()
+    assert "DROP SCHEMA" not in sql.upper()
+
+
 def test_v010_migration_adds_fiscal_attachments_without_touching_danfe() -> None:
     sql = (
         Path(__file__).resolve().parents[1]

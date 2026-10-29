@@ -12,6 +12,8 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     normalize_linked_invoices,
     normalize_series,
     series_is_required,
+    series_match_key,
+    series_match_key_sql,
     should_auto_resume_after_purchase_order_link,
 )
 
@@ -92,6 +94,28 @@ def test_normalize_series() -> None:
     with pytest.raises(FiscalNormalizationError):
         normalize_series("", required=True)
     assert normalize_series("1", required=True) == "1"
+    assert normalize_series("001") == "1"
+    assert normalize_series("000") == "0"
+    assert normalize_series("01") == "1"
+
+
+def test_series_match_key_equates_leading_zeros() -> None:
+    assert series_match_key("001") == series_match_key("1")
+    assert series_match_key("01") == "1"
+    assert series_match_key("000") == "0"
+    assert series_match_key("U") == "U"
+    assert series_match_key("") == ""
+    assert "LTRIM" in series_match_key_sql("li.series")
+    assert "li.series" in series_match_key_sql("li.series")
+
+
+def test_linked_invoice_series_is_canonical() -> None:
+    linked = normalize_linked_invoices(
+        [{"document": "186765", "series": "001"}],
+        fiscal_model="cte",
+    )
+    assert linked[0]["series"] == "1"
+    assert linked[0]["document_match_key"] == "000186765"
 
 
 def test_normalize_branch() -> None:

@@ -131,7 +131,7 @@ def _linked_invoice_signature(raw: object) -> list[tuple[str, str]]:
         document = str(
             item.get("document_match_key") or item.get("document_number") or ""
         ).strip()
-        series = str(item.get("series") or "").strip().upper()
+        series = series_match_key(item.get("series"))
         signature.append((document, series))
     return signature
 
@@ -139,6 +139,33 @@ def _linked_invoice_signature(raw: object) -> list[tuple[str, str]]:
 def series_is_required(fiscal_model: str | None) -> bool:
     """Série é obrigatória na NF-e. Na NFS-e pode ficar vazia."""
     return fiscal_model != "nfse"
+
+
+def series_match_key(raw: str | None) -> str:
+    """Chave canônica de série para match (LNF ↔ vínculo CT-e ↔ SF1).
+
+    Série só dígitos: remove zeros à esquerda (``001`` ≡ ``1``).
+    ``000`` vira ``0``. Série alfanumérica permanece trim+upper.
+    """
+    series = str(raw or "").strip().upper()
+    if not series:
+        return ""
+    if series.isdigit():
+        stripped = series.lstrip("0")
+        return stripped if stripped else "0"
+    return series
+
+
+def series_match_key_sql(column_sql: str) -> str:
+    """Expressão SQL (Postgres) equivalente a :func:`series_match_key`."""
+    col = column_sql.strip()
+    return (
+        "CASE"
+        f" WHEN btrim(COALESCE({col}, '')) ~ '^[0-9]+$'"
+        f" THEN COALESCE(NULLIF(LTRIM(btrim({col}), '0'), ''), '0')"
+        f" ELSE upper(btrim(COALESCE({col}, '')))"
+        " END"
+    )
 
 
 def normalize_series(raw: str | None, *, required: bool = False) -> str:
@@ -149,7 +176,8 @@ def normalize_series(raw: str | None, *, required: bool = False) -> str:
         raise FiscalNormalizationError(
             "Informe a série da nota (como no Protheus)."
         )
-    return series
+    # Persiste já canônica: evita drift 001 vs 1 entre CT-e (chave) e NF / Protheus.
+    return series_match_key(series)
 
 
 def normalize_branch(raw: str | None) -> str:

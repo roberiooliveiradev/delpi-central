@@ -264,8 +264,12 @@ class FakeRequests:
         out["linked_purchase_orders"] = deepcopy(
             self.linked_pos.get(request_id, out.get("linked_purchase_orders") or [])
         )
+        from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
+            series_match_key,
+        )
+
         match_key = str(out.get("document_match_key") or "")
-        series = str(out.get("series") or "").strip().upper()
+        series = series_match_key(out.get("series"))
         linked_ctes: list[dict[str, Any]] = []
         for other in self.rows.values():
             if other.get("fiscal_model") != "cte":
@@ -277,7 +281,7 @@ class FakeRequests:
                         ch for ch in str(link.get("document_number") or "") if ch.isdigit()
                     )
                     link_key = digits.zfill(9) if digits else ""
-                link_series = str(link.get("series") or "").strip().upper()
+                link_series = series_match_key(link.get("series"))
                 if link_key == match_key and link_series == series:
                     linked_ctes.append(
                         {
@@ -639,6 +643,32 @@ def test_create_requires_fiscal_model() -> None:
         uc.execute(_payload(fiscal_model=None), _creator())
     with pytest.raises(InvoicePostingValidationError):
         uc.execute(_payload(fiscal_model="mdfe"), _creator())
+
+
+def test_nf_detail_finds_cte_when_series_padding_differs() -> None:
+    """CT-e grava série 001 (chave); NF grava 1 — lookup reverso deve casar."""
+    repo = FakeRequests()
+    create = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers())
+    get_uc = GetInvoicePostingRequestUseCase(repo)
+    cte = create.execute(
+        _payload(
+            fiscal_model="cte",
+            document="900050",
+            series="001",
+            linked_invoices=[{"document": "186765", "series": "001"}],
+        ),
+        _creator(),
+    )
+    assert cte["series"] == "1"
+    assert cte["linked_invoices"][0]["series"] == "1"
+    nf = create.execute(
+        _payload(document="186765", series="1", fiscal_model="nfe"),
+        _creator(),
+    )
+    assert nf["series"] == "1"
+    linked = get_uc.execute(nf["id"], _creator())["request"]["linked_cte_requests"]
+    assert len(linked) == 1
+    assert linked[0]["id"] == cte["id"]
 
 
 def test_nf_detail_shows_linked_cte_after_freight_is_registered() -> None:

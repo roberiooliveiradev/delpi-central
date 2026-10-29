@@ -8,12 +8,28 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
+from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
+    series_match_key,
+)
+
 
 def _cgc_digits_expr(column_sql: str) -> str:
     """Normaliza CGC/CNPJ para comparação só com dígitos."""
     return (
         "REPLACE(REPLACE(REPLACE(REPLACE("
         f"RTRIM(ISNULL({column_sql}, '')), '.', ''), '/', ''), '-', ''), ' ', '')"
+    )
+
+
+def _series_match_key_sqlserver(column_sql: str) -> str:
+    """Série canônica no SQL Server (``001`` ≡ ``1``), paridade com series_match_key."""
+    col = f"RTRIM(ISNULL({column_sql}, ''))"
+    return (
+        "CASE"
+        f" WHEN {col} <> '' AND PATINDEX('%[^0-9]%', {col}) = 0"
+        f" THEN CONVERT(VARCHAR(3), CONVERT(INT, {col}))"
+        f" ELSE UPPER({col})"
+        " END"
     )
 
 
@@ -32,7 +48,7 @@ def build_find_active_by_fiscal_keys_sql(
         supplier = str(raw.get("supplier_code") or "").strip()
         store = str(raw.get("supplier_store") or "").strip()
         doc_key = str(raw.get("document_match_key") or "").strip()
-        series = str(raw.get("series") or "").strip().upper()
+        series = series_match_key(raw.get("series"))
         if not (branch and supplier and store and doc_key):
             continue
         token = (branch, supplier, store, doc_key, series)
@@ -67,6 +83,7 @@ def build_find_active_by_fiscal_keys_sql(
 
     sa1_cgc = _cgc_digits_expr("SA1.A1_CGC")
     sa2_cgc = _cgc_digits_expr("SA2.A2_CGC")
+    sf1_series_canon = _series_match_key_sqlserver("SF1.F1_SERIE")
 
     sql = f"""
         ;WITH keys AS (
@@ -75,7 +92,7 @@ def build_find_active_by_fiscal_keys_sql(
                 RTRIM(supplier_code) AS supplier_code,
                 RTRIM(supplier_store) AS supplier_store,
                 RTRIM(document_match_key) AS document_match_key,
-                UPPER(RTRIM(series)) AS series
+                RTRIM(series) AS series
             FROM (VALUES {values_sql}) AS v(
                 branch_code,
                 supplier_code,
@@ -99,7 +116,7 @@ def build_find_active_by_fiscal_keys_sql(
         INNER JOIN SF1010 SF1 WITH (NOLOCK)
             ON RTRIM(SF1.F1_FILIAL) = k.branch_code
            AND RIGHT(REPLICATE('0', 9) + RTRIM(SF1.F1_DOC), 9) = k.document_match_key
-           AND UPPER(RTRIM(SF1.F1_SERIE)) = k.series
+           AND {sf1_series_canon} = k.series
            AND SF1.D_E_L_E_T_ = ''
            AND RTRIM(SF1.F1_DOC) NOT LIKE '%[^0-9]%'
            AND RTRIM(SF1.F1_DOC) <> ''

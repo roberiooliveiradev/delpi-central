@@ -12,6 +12,10 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Iterable, Sequence
 
+from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
+    series_match_key,
+)
+
 
 @dataclass(frozen=True, slots=True)
 class FiscalMatchKey:
@@ -28,7 +32,7 @@ def fiscal_match_key_from_mapping(row: dict[str, Any]) -> FiscalMatchKey:
         supplier_code=str(row.get("supplier_code") or "").strip(),
         supplier_store=str(row.get("supplier_store") or "").strip(),
         document_match_key=str(row.get("document_match_key") or "").strip(),
-        series=str(row.get("series") or "").strip().upper(),
+        series=series_match_key(row.get("series")),
     )
 
 
