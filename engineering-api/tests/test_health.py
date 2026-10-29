@@ -43,6 +43,15 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/lmps/{sale_number}/history/events",
         "/v1/lmps/{sale_number}/history/flow",
         "/v1/products/{product_code}/structure",
+        "/public/characters/{character_id}/avatar/{filename}",
+        "/v1/nonconformities",
+        "/v1/nonconformities/{record_id}",
+        "/v1/nonconformities/{record_id}/history",
+        "/v1/nonconformities/{record_id}/context",
+        "/v1/nonconformities/indicators",
+        "/v1/nonconformities/problem-tags",
+        "/v1/nonconformities/export",
+        "/v1/nonconformities/import",
     }
     assert set(spec["paths"].keys()) == allowed
 

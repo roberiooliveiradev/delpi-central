@@ -22,6 +22,9 @@ from engineering_app.interface.http.routes.home_routes import (
 from engineering_app.interface.http.routes.lmp_routes import (
     router as lmp_router,
 )
+from engineering_app.interface.http.routes.nonconformity_routes import (
+    router as nonconformity_router,
+)
 from engineering_app.interface.http.routes.product_routes import (
     router as product_router,
 )
@@ -110,6 +113,7 @@ app.include_router(mcp_metadata_router)
 app.include_router(home_router)
 app.include_router(overview_router)
 app.include_router(lmp_router)
+app.include_router(nonconformity_router)
 app.include_router(product_router)
 
 # Streamable HTTP MCP (path público: /apps/engineering-api/mcp) —

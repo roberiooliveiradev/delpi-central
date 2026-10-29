@@ -301,6 +301,14 @@ def test_probe_route_not_in_production_openapi(client):
         "/v1/lmps/{sale_number}/history/flow",
         "/v1/products/{product_code}/structure",
         "/public/characters/{character_id}/avatar/{filename}",
+        "/v1/nonconformities",
+        "/v1/nonconformities/{record_id}",
+        "/v1/nonconformities/{record_id}/history",
+        "/v1/nonconformities/{record_id}/context",
+        "/v1/nonconformities/indicators",
+        "/v1/nonconformities/problem-tags",
+        "/v1/nonconformities/export",
+        "/v1/nonconformities/import",
     }
 
 

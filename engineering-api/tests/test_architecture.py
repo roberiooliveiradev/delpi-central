@@ -38,8 +38,10 @@ FORBIDDEN_DEPENDENCY_PREFIXES = (
 
 
 MCP_ADAPTER_DIR = PACKAGE_ROOT / "interface" / "mcp"
+PERSISTENCE_ADAPTER_DIR = PACKAGE_ROOT / "infrastructure" / "persistence"
 
 MCP_ONLY_PREFIXES = ("mcp", "delpi_mcp")
+PERSISTENCE_ONLY_PREFIXES = ("psycopg", "sqlalchemy", "asyncpg")
 
 
 def _iter_imports():
@@ -75,6 +77,13 @@ def test_no_forbidden_dependencies():
             # EVA.MCP.V1: o adapter MCP e superficie legitima em
             # interface/mcp -- fora dele, mcp/delpi_mcp seguem proibidos.
             if top in MCP_ONLY_PREFIXES and path.is_relative_to(MCP_ADAPTER_DIR):
+                continue
+            # NC T2 (Plano 48): drivers de banco só são legítimos dentro de
+            # infrastructure/persistence — o adapter autorizado do bounded
+            # context. Fora dele, psycopg/sqlalchemy/asyncpg seguem proibidos.
+            if top in PERSISTENCE_ONLY_PREFIXES and path.is_relative_to(
+                PERSISTENCE_ADAPTER_DIR
+            ):
                 continue
             # delpi_mcp.auth fornece os gates de transporte MCP compartilhados
             # (mesmo papel de delpi_auth) — permitido apenas no middleware.

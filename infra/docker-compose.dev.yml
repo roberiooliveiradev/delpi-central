@@ -2285,6 +2285,19 @@ services:
       S2S_SCOPE: ${ENG_S2S_SCOPE:-}
       S2S_TIMEOUT_SECONDS: ${ENG_S2S_TIMEOUT_SECONDS:-10}
 
+      # Bounded context NC — persistência dedicada (doc 47 ADR-NC-OWNERSHIP).
+      # ENG_NC_REPOSITORY: postgres|memory|ausente=unavailable (fail-honest).
+      # O principal ENG_NC_DB_* é dedicado do contexto; nunca reutilizar
+      # PLUGINS_DB_* (o composer recusa coincidência de usuário).
+      ENG_NC_REPOSITORY: ${ENG_NC_REPOSITORY:-}
+      ENG_NC_DB_DSN: ${ENG_NC_DB_DSN:-}
+      ENG_NC_DB_HOST: ${ENG_NC_DB_HOST:-}
+      ENG_NC_DB_PORT: ${ENG_NC_DB_PORT:-5432}
+      ENG_NC_DB_NAME: ${ENG_NC_DB_NAME:-}
+      ENG_NC_DB_USER: ${ENG_NC_DB_USER:-}
+      ENG_NC_DB_PASSWORD: ${ENG_NC_DB_PASSWORD:-}
+      ENG_NC_IMPORT_REPLACE_ENABLED: ${ENG_NC_IMPORT_REPLACE_ENABLED:-}
+
     volumes:
       - ../engineering-api:/app
       - ../shared:/shared
