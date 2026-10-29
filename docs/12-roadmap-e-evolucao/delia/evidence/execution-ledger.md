@@ -687,3 +687,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Local A/B scripts/engine_ab_eval.py (fake-model corpus S1/S2/S3/S7/S8/S10): OUTCOME_DIVERGENCES=0; identical fake-model call counts per scenario (6/7/9/6/3/4); latency delta = graph overhead only. SEMANTIC_EVAL=INCONCLUSIVE (fakes prove conformance, not semantic parity; no Ollama real-model run).
 - Regression: focused sweep 300 passed; full delia-api 2525 passed + 2 failed (SAME pre-existing env failures as Task-02 baseline) + 3 skipped. Arch Phase-3 gate PASS. Residual search clean — no production wiring, no DELIA_ORCHESTRATION_ENGINE, no deploy, zero production calls.
 - ENGINE_B_SCOPE=LOCAL_TEST_ONLY; Engine A remains sole production-composed implementation. NEXT: coordination review → optional real-model semantic A/B + sequencing-variation experiments; selector config only on acceptance.
+
+## 2026-10-29 — Engine B architectural isolation remediation (doc 195) — PROVEN
+- Task DELIA-C3-PLUGGABLE-ORCHESTRATION-ENGINE-B-ISOLATION-REMEDIATION-01 on a76c9e2a69.
+- F1 FIXED: langgraph_engine.py moved app/application/capability_provision → app/infrastructure/orchestration (AST test enforces zero framework imports in Application/Domain).
+- F2 FIXED via narrow contract: new SupportsGovernedStageGates Protocol (governed_stage_gates.py) declares the 6 consumed primitives; adapter takes injected gates, never imports/constructs OperationalCapabilityOrchestrator (AST-enforced). RESIDUAL documented: gates provider is still Engine A's class — true owner split deferred (would need large coupled-method migration, zero behavior gain).
+- F3 FIXED: doc 194 release-date typo corrected — PyPI upload_time 2026-10-16 (was written 2025-10-16); pin 1.2.16 unchanged; requires_python>=3.10, MIT, no advisories.
+- RED recorded: 5 isolation failures pre-remediation → GREEN: 9/9 isolation tests (T1-T8) + 43/43 conformance on both engines unchanged.
+- A/B rerun post-move: OUTCOME_DIVERGENCES=0, identical model-call counts (6/7/9/6/3/4).
+- Regression: focused 309 passed; full 2534 passed + 2 failed (SAME pre-existing env failures) + 3 skipped. Arch Phase-3 PASS; backend boundaries PASS (0 findings). Residual search clean. No production changes, no deploy.
+- NEXT: coordination acceptance → Task 04 sequencing-variation POC may proceed on the now-explicit gates boundary.

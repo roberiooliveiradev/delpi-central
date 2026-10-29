@@ -93,7 +93,7 @@ def _build_langgraph_engine(
     primitives. Skipped entirely when the optional eval dependency is
     absent (never a production requirement)."""
     pytest.importorskip("langgraph")
-    from app.application.capability_provision.langgraph_engine import (
+    from app.infrastructure.orchestration.langgraph_engine import (
         LangGraphCapabilityOrchestrator,
     )
 
@@ -105,7 +105,11 @@ def _build_langgraph_engine(
     kwargs = {}
     if turn_budget_seconds is not None:
         kwargs["turn_budget_seconds"] = turn_budget_seconds
-    return LangGraphCapabilityOrchestrator(
+    # Composition is a harness concern: the same governed-primitives
+    # provider instance Engine A would run is injected through the
+    # application-owned gates contract — the adapter never constructs
+    # or imports it (doc 195, F2).
+    gates = OperationalCapabilityOrchestrator(
         providers,
         orchestration_instructions=load_test_orchestration_instructions(),
         invoke_model=invoke_model,
@@ -115,6 +119,7 @@ def _build_langgraph_engine(
         **gates_kwargs,
         **kwargs,
     )
+    return LangGraphCapabilityOrchestrator(gates)
 
 
 def build_engine(
@@ -583,7 +588,7 @@ def test_engine_b_uses_shared_governed_primitives(langgraph_engine):
     """Engine B must consume the SAME governed machinery — no
     duplicated validation, selection, invoke or synthesis logic."""
     import inspect as _inspect
-    import app.application.capability_provision.langgraph_engine as mod
+    import app.infrastructure.orchestration.langgraph_engine as mod
 
     src = _inspect.getsource(mod)
     # The engine module must not re-implement governed gates.

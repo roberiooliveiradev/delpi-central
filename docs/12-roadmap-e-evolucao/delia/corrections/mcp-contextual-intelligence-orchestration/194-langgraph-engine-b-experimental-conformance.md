@@ -34,7 +34,7 @@ HEAD `5efaf41092` (fast-forwarded to `892e7b2049` before work began); branch `ma
 | Check | Result |
 |---|---|
 | Python | 3.12.16 (dev container `delpi-delia-api`) |
-| Version | `langgraph==1.2.16` — released 2025-10-16 (13 days at adoption; 1.2.17/1.2.18 < 7 days, rejected) |
+| Version | `langgraph==1.2.16` — PyPI `upload_time 2026-10-16T22:11Z` (13 days at adoption; 1.2.17/1.2.18 < 7 days, rejected). *(corrected in doc 195 — this row originally read "2025-10-16", a year typo)* |
 | License | MIT (`License-Expression: MIT`) |
 | Transitives | `langchain-core 1.7.1`, `langgraph-checkpoint 4.3.1`, `langgraph-prebuilt 1.1.1`, `langgraph-sdk 0.4.10`, `langsmith 0.14.14`, `pydantic 2.14.1`, `httpx 0.28.1`, `tenacity 9.2.1`, `orjson 3.13.0`, `ormsgpack 1.13.0`, `xxhash 4.0.2`, `langchain-protocol 0.0.20` |
 | Conflicts | none observed — full suite 2525 passed post-install |

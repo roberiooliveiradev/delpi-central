@@ -1,9 +1,18 @@
-"""Engine B — LangGraph sequencing over shared governed primitives.
+"""Engine B — LangGraph sequencing adapter over shared governed gates.
 
-DELIA-C3-PLUGGABLE-ORCHESTRATION-LANGGRAPH-ENGINE-B-01 (docs 192/193/194)
-— experimental, LOCAL EVALUATION ONLY. Never wired into the production
-composition root; the dependency is an opt-in test fixture, not a
-runtime requirement.
+DELIA-C3-PLUGGABLE-ORCHESTRATION-LANGGRAPH-ENGINE-B-01 + isolation
+remediation (docs 192/193/194/195) — experimental, LOCAL EVALUATION
+ONLY. Infrastructure adapter: this module is the ONLY place LangGraph
+may be imported. Never wired into the production composition root;
+the dependency is an opt-in eval fixture, not a runtime requirement.
+
+Layer position:
+
+    Application contract   SupportsGovernedCapabilityAttempt
+    Application contract   SupportsGovernedStageGates
+            ^                       ^
+            |                       | (implements, structurally)
+    THIS ADAPTER ──────────── LangGraph SDK (framework, infra-only)
 
 What this engine is:
   a ``SupportsGovernedCapabilityAttempt`` implementation whose stage
@@ -15,12 +24,17 @@ What this engine is NOT:
   - not a wrapper: ``OperationalCapabilityOrchestrator.attempt`` and
     ``._attempt`` are never called; the complete flow is re-sequenced
     by the graph (proven by the non-delegation spy test).
+  - not coupled to Engine A: the adapter never imports or constructs
+    ``OperationalCapabilityOrchestrator`` — it receives the shared
+    governed primitives through the narrow
+    ``SupportsGovernedStageGates`` application contract (injected).
+    Residual: the contract's sole provider today is Engine A itself;
+    ``_emit_activity`` is a shared module-level application helper.
   - not a second authority: every governed gate (admission, selection
     validation, candidate binding, invoke, judgment, write governance,
-    budgets, cancellation, provenance) runs inside the SAME methods
-    Engine A executes, consumed from a shared
-    ``OperationalCapabilityOrchestrator`` instance held as
-    ``self._gates``. The engine supplies ordering only.
+    budgets, cancellation, provenance) executes inside the SAME
+    methods the gates provider runs — the engine supplies ordering
+    only.
   - not a planner/tool-calling agent: no LangGraph tools, agents,
     handoffs, checkpointing or model access are used — the framework
     provides the graph runtime exclusively (FRAMEWORK_ROLE=
@@ -44,8 +58,10 @@ from typing import Any, Callable, Mapping, TypedDict
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from app.application.capability_provision.governed_stage_gates import (
+    SupportsGovernedStageGates,
+)
 from app.application.capability_provision.orchestration import (
-    OperationalCapabilityOrchestrator,
     _emit_activity,
 )
 from app.application.interaction.activity import (
@@ -90,30 +106,20 @@ class _GovernedTurnState(TypedDict, total=False):
 class LangGraphCapabilityOrchestrator:
     """``SupportsGovernedCapabilityAttempt`` via a LangGraph graph.
 
-    Constructor mirrors ``OperationalCapabilityOrchestrator``: the
-    arguments are forwarded verbatim into an internal instance used
-    exclusively as the governed-primitives owner — so both engines
-    share identical providers, model port, budgets, instruction
-    resources, retry limits and write governance.
+    The shared governed primitives arrive injected as the
+    ``SupportsGovernedStageGates`` application contract — the adapter
+    never learns which class provides them. Composition (today: an
+    ``OperationalCapabilityOrchestrator`` instance built with the
+    production-identical providers/model/budgets/instructions) is the
+    caller's concern — the test harness and any future wiring decide
+    which gates provider to hand over.
     """
 
-    def __init__(
-        self,
-        providers,
-        *,
-        invoke_model=None,
-        model_ref=None,
-        **orchestrator_kwargs: Any,
-    ) -> None:
-        # Shared governed primitives — SAME class Engine A runs; the
-        # engine calls its stage-phase methods, never its attempt()
-        # or _attempt() flow entrypoints.
-        self._gates = OperationalCapabilityOrchestrator(
-            providers,
-            invoke_model=invoke_model,
-            model_ref=model_ref,
-            **orchestrator_kwargs,
-        )
+    def __init__(self, gates: SupportsGovernedStageGates) -> None:
+        # Shared governed primitives — the SAME gates Engine A runs;
+        # the engine calls its stage-phase methods, never attempt()
+        # or _attempt() flow entrypoints on any engine.
+        self._gates = gates
         self._compiled_graph: CompiledStateGraph = self._build_graph()
         # Evaluation observability only — the executed node list of
         # the most recent invocation (proves real sequencing in the
