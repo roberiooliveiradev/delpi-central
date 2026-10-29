@@ -730,3 +730,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Value model (measured): ≤1 avoidable call/eligible turn, ~700-900 in-tokens, ~0.4-0.9s local; fixture prevalence 1/7 (constructed); real-model prevalence 0/12 (Task 05); PRODUCTION_FREQUENCY=TO_INSTRUMENT — now per-turn measurable, aggregation is the only missing step (separate auth). HISTORICAL_ELIGIBILITY=INCONCLUSIVE.
 - Regression: focused sweep PASS; full 2595 collected → 2590 passed + 2 failed (SAME pre-existing env failures) + 3 skipped. Phase-3 PASS; backend boundaries 0 findings; residual clean.
 - VERDICT: INSTRUMENTATION_READY_FREQUENCY_UNKNOWN — counters proven correct, safety proven, value unresolved pending frequency aggregation. NEXT: bounded read-only aggregation of recovery_opportunity across real turns (separate authorization) → keep-or-retire B1 decision.
+
+## 2026-10-30 — LangGraph B1 production activation, legacy fallback & bounded validation (doc 199) — PROVEN (LOCAL RUNTIME)
+- Task DELIA-C3-PLUGGABLE-ORCHESTRATION-LANGGRAPH-PRODUCTION-ACTIVATION-01 on 6fc0d7cb98 (product-owner authorized).
+- Engine selection at composition root: DELIA_ORCHESTRATION_ENGINE {langgraph(default)=B1, delia=Engine A}; unknown fails closed at startup; lazy adapter import keeps delia runnable without the framework; backend config only — no request/provider/model path into selection; one engine per turn, no automatic fallback replay.
+- Dependency promotion: langgraph==1.2.16 + exact pinned transitive tree into requirements.txt; requirements-eval.txt slimmed to the eval delta; no agents/vector stores/model providers/LangGraph Cloud.
+- RED recorded (resolver absent) → GREEN 13/13 in test_engine_production_selection.py incl. composed handler→contract→B1 path; 3 pre-activation frozen-decision guards updated to the new invariants (authorized decision change).
+- Conformance 43/43 each A/B0/B1; full regression 2603 passed + 2 failed (SAME pre-existing env failures) + 3 skipped; Phase-3 audit PASS; backend boundaries 0 findings.
+- Deployed locally: image sha256:62519548... on code 6fc0d7cb98, container healthy, in-container resolver verified (langgraph→B1, delia→gates, bogus→ValueError); rollback to delia tested and reversed — no business replay.
+- Bounded comparison (6 authenticated turns, delia-json 3.1B, provider-reported tokens): stage-sequence + contract + per-call cost parity across engines; B1 executed a real MCP owner call with complete provenance (C3); recovery counters 0 everywhere (model never produced a reuse window); C3 grounding divergence is 3.1B stochasticity, disclosed.
+- VERDICT: PRODUCTION_ACTIVATION_EXECUTED (local runtime); engine parity + safety verified; reuse-path value still awaits real-traffic frequency aggregation.
