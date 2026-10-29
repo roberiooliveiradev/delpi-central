@@ -35,7 +35,7 @@ Portal Engenharia (plugins/engineering MFE)
           ├─ InMemoryNonconformityRepository → testes/dev
           └─ UnavailableNonconformityRepository → degradação honesta
       → facts TOTVS via api-delpi (enriquecimento OV/produto/BOM) — sem SoT próprio
-      → Core API → autorização efetiva (engineering.access / engineering.manage)
+      → Core API → autorização efetiva (engineering.access — READ e WRITE funcionais; engineering.manage = admin, não concede acesso operacional)
 EVA MCP (eng-api /mcp)
   → tools READ + PREPARE sobre os mesmos use cases — token humano propagado
 ```
@@ -58,12 +58,12 @@ Decisões implementadas (conforme ADR doc 47, Opção B com escopo sandbox):
 | E-NC-04 indicators | `GET /v1/nonconformities/indicators` (streak) | engineering.access | PASS |
 | E-NC-05 tags | `GET /v1/nonconformities/problem-tags` | engineering.access | PASS |
 | E-NC-06 export | `GET /v1/nonconformities/export` | engineering.access | PASS |
-| E-NC-07 create | `POST /v1/nonconformities` | engineering.manage | PASS (sandbox) |
-| E-NC-08 update | `PUT /v1/nonconformities/{id}` (+ `expected_updated_at` optimistic lock → 409) | engineering.manage | PASS (sandbox) |
-| E-NC-09 delete | `DELETE /v1/nonconformities/{id}` | engineering.manage | PASS (sandbox) |
-| E-NC-10 import | `POST /v1/nonconformities/import` (`dry_run`, `confirm_replace`) | engineering.manage | PASS (sandbox) |
+| E-NC-07 create | `POST /v1/nonconformities` | engineering.access | PASS (sandbox) |
+| E-NC-08 update | `PUT /v1/nonconformities/{id}` (+ `expected_updated_at` optimistic lock → 409) | engineering.access | PASS (sandbox) |
+| E-NC-09 delete | `DELETE /v1/nonconformities/{id}` | engineering.access | PASS (sandbox) |
+| E-NC-10 import | `POST /v1/nonconformities/import` (`dry_run`, `confirm_replace`) | engineering.access | PASS (sandbox) |
 | E-NC-11 context | `GET /v1/nonconformities/{id}/context` (OV/produto/BOM via api-delpi facts) | engineering.access | PASS |
-| PREPARE | `POST /v1/nonconformities/prepare` | engineering.manage | PASS — sem efeitos colaterais |
+| PREPARE | `POST /v1/nonconformities/prepare` | engineering.access | PASS — sem efeitos colaterais |
 
 Mapeamento de erros: 401 unauthenticated · 403 unauthorized · 400 validação · 404 not_found · 409 concorrência · 502/503 dependência indisponível. Rotas registradas nas allowlists canônicas (`test_health`, `test_auth_middleware`).
 
@@ -80,11 +80,11 @@ Mapeamento de erros: 401 unauthenticated · 403 unauthorized · 400 validação 
 
 | API → Contrato | EVA tool | Classe | AuthZ | Teste | Outcome |
 |---|---|---|---|---|---|
-| E-NC-01 | `list_nonconformities` | READ | token humano propagado | vitest MCP + live | PASS |
+| E-NC-01 | `search_nonconformities` | READ | token humano propagado | vitest MCP + live | PASS |
 | E-NC-02 | `get_nonconformity` | READ | idem | idem | PASS |
-| E-NC-03 | (contexto inclui history nos contratos) | READ | idem | idem | PASS |
+| E-NC-03 | `get_nonconformity_history` | READ | idem | idem | PASS |
 | E-NC-04 | `get_nonconformity_indicators` | READ | idem | idem | PASS |
-| E-NC-05 | `list_nonconformity_problem_tags` | READ | idem | idem | PASS |
+| E-NC-05 | `get_nonconformity_tags` | READ | idem | idem | PASS |
 | E-NC-11 | `get_nonconformity_context` | READ | idem | idem | PASS |
 | PREPARE | `prepare_nonconformity_mutation` | PREPARE | `requires_human_confirmation=true`, `side_effects="none"` | contract freeze + live | PASS |
 | ACT (create/update/delete/import) | — | ACT | **ausente por design** | `DESTRUCTIVE_ACT_TOOLS` vazio | PENDING (exige autorização separada — T7/T8) |

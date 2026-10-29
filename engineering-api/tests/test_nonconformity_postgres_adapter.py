@@ -35,6 +35,27 @@ ACTOR = NcActor(
 )
 
 
+_SEED_PATH = os.path.dirname(__file__) + "/../sandbox/nc/02_seed.sql"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def reseed_sandbox():
+    """Dataset determinístico: a suíte inclui replace-all, que muta o
+    acervo. Reseed no início torna execuções repetidas estáveis."""
+    import psycopg
+
+    seed_sql = open(_SEED_PATH, encoding="utf-8").read()
+    with psycopg.connect(os.environ["NC_SANDBOX_DSN"], autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "TRUNCATE engineering.lmp_nonconformity_history, "
+                "engineering.lmp_nonconformity_problem_tags, "
+                "engineering.lmp_nonconformity_products, "
+                "engineering.lmp_nonconformities CASCADE"
+            )
+            cur.execute(seed_sql)
+
+
 @pytest.fixture()
 def dsn():
     return os.environ["NC_SANDBOX_DSN"]

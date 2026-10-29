@@ -9,11 +9,22 @@ import dataclasses
 import hashlib
 from pathlib import Path, PurePosixPath
 
+import pytest
+
 from engineering_app.application.eva.agent_intelligence_service import (
     EvaAgentIntelligenceService as Svc,
 )
 
 _SERVICE_ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(autouse=True)
+def _official_public_origin(monkeypatch: pytest.MonkeyPatch):
+    """O contrato testado é a URL pública oficial — a canonical fallback
+    https do serviço quando ``PUBLIC_BASE_URL`` não é configurada. Sem o
+    pin, o valor ambiental de dev (http://localhost) quebraria a
+    assertiva independente do código sob teste."""
+    monkeypatch.delenv("PUBLIC_BASE_URL", raising=False)
 
 
 def test_avatar_distribution_official_metadata():
