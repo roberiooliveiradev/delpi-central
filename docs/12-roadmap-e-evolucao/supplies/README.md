@@ -16,6 +16,10 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076 — Plano de catálogo SB1 e análises Comex configuráveis (2026-10-27)
+
+- [Plano S0–S5: produtos reais da SB1010 (MP/PI/PA), NCM cadastral, homologação Fiscal/Compras, multiselect de matérias-primas, visualizações salvas e integração MDIC](./PROC-0076-COMEX-CONFIGURABLE-ANALYSIS-IMPLEMENTATION-PLAN-20261027.md). **PLANNED — somente documentação; não autoriza código, ativação de NCM ou deploy.** Iniciar por S0 READ-only e GATE de contrato.
+
 ## PROC-0076.R5.S2 — Refinamento de UX: cards, ícones, unidades e completude (2026-10-27)
 
 Evolução visual/funcional do dashboard: a label de unidade amigável (`US$/t`, `US$/lb`, `R$/US$`, `Índice`, `%`) passa a ser emitida pelo producer (`unit` amigável + `unit_code` de máquina); cards de instrumento ganham ícone, base da cotação e última referência; o gráfico de metais é **agrupado por unidade** (USD/lb e USD/t nunca compartilham eixo); instrumentos selecionados sem direito de exibição são nomeados com motivo; câmbio e IPP exibem cartões de contexto reais quando não há observações; Comex pendente mostra próximos passos e prévia dos indicadores — sem valores sintéticos. Detalhes: §10 do documento de evidência R5.
