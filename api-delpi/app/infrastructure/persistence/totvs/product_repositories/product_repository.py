@@ -5,6 +5,9 @@ from app.domain.entities.product.product import Product
 from app.application.models.page import Page
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.domain.ports.product.product_query_repository_port import ProductQueryRepositoryPort
+from app.infrastructure.persistence.totvs.product_repositories.product_description_matching import (
+    build_description_matching,
+)
 
 
 class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
@@ -87,33 +90,12 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
 
         if description:
 
-            desc_clean = description.strip()
-            terms = [t for t in desc_clean.split() if t]
+            matching = build_description_matching(description)
 
-            desc_where = []
-
-            for t in terms:
-                desc_where.append(
-                    "SB1.B1_DESC COLLATE Latin1_General_CI_AI LIKE ?"
-                )
-                where_params.append(f"%{t}%")
-
-            where_clauses.append("(" + " OR ".join(desc_where) + ")")
-
-            score_parts = []
-
-            score_parts.append(
-                "CASE WHEN SB1.B1_DESC COLLATE Latin1_General_CI_AI LIKE ? THEN 100 ELSE 0 END"
-            )
-            score_params.append(f"{desc_clean}%")
-
-            for t in terms:
-                score_parts.append(
-                    "CASE WHEN SB1.B1_DESC COLLATE Latin1_General_CI_AI LIKE ? THEN 20 ELSE 0 END"
-                )
-                score_params.append(f"{t}%")
-
-            score_sql = " + ".join(score_parts)
+            if matching is not None:
+                desc_clause, desc_params, score_sql, score_params = matching
+                where_clauses.append(desc_clause)
+                where_params.extend(desc_params)
 
         where_clause = " AND ".join(where_clauses)
 
