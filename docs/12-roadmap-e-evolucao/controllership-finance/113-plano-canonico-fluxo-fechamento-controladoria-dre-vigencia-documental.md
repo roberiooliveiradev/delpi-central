@@ -1511,3 +1511,7 @@ Correção arquitetural por decisão do PO: **UMA HomePage, UM basePath, UMA top
 - **Rede de segurança** do viewer somente-DRE agora retorna a `home` (não mais a `dre_home`).
 
 Deploy rebuilda `portal` + `controllership-finance`; BFF sem mudança.
+
+### 29.13 Registro — CONSOLIDATION-002, base canônica do processo (2026-10-29)
+
+Execução documental `CF-PROC0072-ANALYSIS-CONSOLIDATION-002` entregue: [Documento 118 — base canônica do fechamento mensal](./118-base-canonica-processo-fechamento-mensal-proc0072.md) consolida modelo operacional OPS-01..17, evidências com proveniência, regras DR-01..16, resolução das 10 questões do doc 117, contradições reconciliadas, AS-IS × TARGET e prontidão de contratos (§16.B). **Próxima evolução sob este plano:** os Checkpoints 2–5 usam o doc 118 como fonte de verdade do processo; contratos `DESIGN_READY` (RQ-ANL-02/03/04/05/08, ledger 23 revisado) aguardam gate de implementação do doc 93 — nenhum runtime foi autorizado por esta consolidação.

@@ -837,3 +837,24 @@ Entrega documental: `117-analysis-001-inventario-processo-real-joyce.md`. Sem al
 | RQ-ANL-08 | Fat × MOD: contrato + consolidação com intervalo/soma homologados | PROPOSED — depende §17.4 |
 | RQ-ANL-09 | Configuração de bancos/extratos por unidade; sem movimento exige comprovante | PROPOSED — depende E01 doc 34 |
 | RQ-ANL-10 | Base de conhecimento CLARA versionada (glossário, regras, limites; fail-closed) | PROPOSED — gate ANALYSIS-005 |
+
+### CONSOLIDATION-002 — Revisão dos RQ-ANL pela base canônica (2026-10-29)
+
+Entrega documental: [Documento 118 — base canônica do fechamento](./118-base-canonica-processo-fechamento-mensal-proc0072.md). Sem alteração de runtime. As dependências dos RQs foram reavaliadas pela investigação cruzada (doc 118 §9); as classificações abaixo **substituem** os estados `PROPOSED` acima sem reabrir decisões:
+
+| RQ/AC | Estado revisado | Fundamento |
+|---|---|---|
+| RQ-ANL-01 | `PROPOSED → DESIGN_READY_CONDITIONED` | binding de totalização P7 PROVEN (doc 84 §3); condicionado a E2 (params/produtor/RPO); SB9 nunca servido como P7 |
+| RQ-ANL-02 | `PROPOSED → DESIGN_READY` | DR-05/06 (MATR320 130/130) e DR-08 (MATR989) provadas; E5/E8 como pendências de fonte oficial |
+| RQ-ANL-03 | `PROPOSED → DESIGN_READY` | regra homologada (TÉO 06.2, doc 15.1); depende dos contratos de dados RQ-ANL-01/02 |
+| RQ-ANL-04 | `PROPOSED → DESIGN_READY` | decomposição por produto provada (doc 84 §4.3) |
+| RQ-ANL-05 | `PROPOSED → DESIGN_READY` | dependência §17.2 **resolvida**: filtros CF/TES provados por paridade (doc 83 R06/R07) — não depende mais de homologação verbal |
+| RQ-ANL-06 | `PROPOSED → DESIGN_READY_PARTIAL` | seleção R10 provada (DR-11); taxonomia Direto/Ind/Adm exige catálogo-mestre (E10) — não embutir classificação inventada |
+| RQ-ANL-07 | `PROPOSED → IMPLEMENTED_PENDING_PARITY` | rotas api-delpi+BFF existem; residual = validação de paridade contra artefato oficial + fonte `DLP06R01` receber (E1); decisão `_F190C` **resolvida** (produtor pagar = `FINR190_DLP.PRX`) |
+| RQ-ANL-08 | `PROPOSED → DESIGN_READY` | modelo DLP204 provado linha-a-linha (doc 84 §5.3); G5 condicionado a E9 |
+| RQ-ANL-09 | `PROPOSED → DECIDED_SEED_PENDING` | lista configurável decidida (E01); seed inicial pendente (GAP-06) |
+| RQ-ANL-10 | `PROPOSED → REFERENCE_READY` | doc 118 §10 é a referência de conhecimento + doc 94 |
+| RQ-ANL-11 (novo) | `PROPOSED` | contrato transversal `as_of`/versionamento de emissões (DR-16) |
+| RQ-ANL-12 (novo) | `BLOCKED` | consumo por OP — GAP-01 (EVIDENCE_NOT_FOUND) |
+| RQ-ANL-13 (novo) | `PROPOSED` | entregáveis externos R13/R14 via P2 upload com roles configuráveis (E05) |
+| RQ-ANL-14 (novo) | `PROPOSED` | `STOCK_CLOSED` canonical owner state (T03/E5) |

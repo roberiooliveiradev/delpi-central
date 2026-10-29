@@ -302,6 +302,8 @@ Perguntas-alvo (necessidades, não capacidade atual): "Quais relatórios ainda n
 
 ## 17. Perguntas pendentes para Joyce/PO (priorizadas)
 
+> **Atualização — CONSOLIDATION-002 (2026-10-29):** as dez perguntas abaixo foram resolvidas ou classificadas por investigação cruzada em [Documento 118 §4](./118-base-canonica-processo-fechamento-mensal-proc0072.md) — 4 `RESOLVED_BY_EVIDENCE`, 3 `RESOLVED_BY_EXISTING_DECISION`, 2 `PARTIALLY_RESOLVED`, 1 `EVIDENCE_NOT_FOUND` (Q06 → GAP-01). Não reencaminhar estas perguntas; consultar primeiro o §4 e o §12 (lacunas reais) do doc 118.
+
 1. Lista **vigente** de bancos/contas e quais extratos são obrigatórios (drift checklist × procedimento).
 2. Lista homologada de **tipos/CFOPs de expurgo** da análise SD1 e o campo correto (Tipo E vs. Cod. Fiscal).
 3. Taxonomia oficial de CC (adm/ind./dir.), destino de 0407/0413 e quais exceções além de coparticipação.
