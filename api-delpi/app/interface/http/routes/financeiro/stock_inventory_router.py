@@ -10,9 +10,19 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
+from fastapi.responses import StreamingResponse
 
+from app.application.use_cases.financeiro_stock_inventory.export_stock_inventory_use_case import (
+    EXPORT_PAGE_SIZE,
+    StockInventoryExportTruncatedError,
+    StockInventoryNotExportableError,
+)
+from app.application.security.stock_inventory_scope import (
+    StockInventoryScopeUnavailableError,
+)
 from app.composition.financeiro_stock_inventory_composer import (
+    build_export_stock_inventory_use_case,
     build_stock_inventory_use_case,
 )
 from app.core.responses import error_response
@@ -89,4 +99,88 @@ def get_financeiro_stock_inventory_route(
         success_message="Stock inventory snapshot loaded successfully.",
         error_context="carregar estoque histórico",
         user_subject=delegated_user_subject(),
+    )
+
+
+@router.get(
+    "/export",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "export_financeiro_stock_inventory",
+        path="/financeiro/stock-inventory/export",
+    ),
+)
+@_stock_inventory_s2s_guard
+def export_financeiro_stock_inventory_route(
+    period: str = PERIOD_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY(),
+    report_scope: Optional[str] = REPORT_SCOPE_QUERY(),
+    warehouse: Optional[str] = WAREHOUSE_QUERY(),
+    export_format: str = Query(
+        "csv",
+        alias="format",
+        pattern="^csv$",
+        description="Export format — csv only while parity is pending.",
+    ),
+):
+    """CSV document of the SAME P7 engine (doc 119 §8.C): metadata header,
+    SHA-256 content hash and parity watermark — never an official seal."""
+    try:
+        request = build_stock_inventory_request(
+            period=period,
+            branch=branch,
+            report_scope=report_scope,
+            warehouse=warehouse,
+            page=1,
+            page_size=EXPORT_PAGE_SIZE,
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em stock inventory export: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    try:
+        result = build_export_stock_inventory_use_case().execute(
+            request, user_subject=delegated_user_subject()
+        )
+    except StockInventoryScopeUnavailableError as exc:
+        log_error(
+            f"Escopo financeiro não resolvido ao exportar P7: {exc}"
+        )
+        return error_response(
+            "Escopo de dados financeiros não autorizado.",
+            status_code=403,
+            code="scope_unavailable",
+            recoverable=False,
+        )
+    except StockInventoryNotExportableError as exc:
+        return error_response(
+            "Relatório indisponível para exportação no estado atual.",
+            status_code=409,
+            code="not_exportable",
+            recoverable=False,
+        )
+    except StockInventoryExportTruncatedError as exc:
+        log_error(f"Export P7 truncada: {exc}")
+        return error_response(
+            "Exportação incompleta — volume acima do limite suportado.",
+            status_code=503,
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao exportar P7: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao exportar P7: {exc}")
+        return error_response(
+            "Erro interno ao exportar o registro de inventário.",
+            status_code=500,
+        )
+
+    return StreamingResponse(
+        result["stream"],
+        media_type=result["content_type"],
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{result["filename"]}"'
+            ),
+            "X-Exported-Count": str(result["exported_count"]),
+        },
     )

@@ -1,18 +1,32 @@
 """Response DTOs for the R03/P7 stock-inventory snapshot query.
 
-Contract decisions (doc 49 §4):
+Contract decisions (doc 49 §4 / doc 119 §8):
 - amounts are decimal-preserving strings computed in SQL — never summed
   in the frontend and never labelled as an official currency total;
 - ``historicalTotal`` stays ``None`` when no snapshot exists — a missing
   snapshot never renders as a fabricated ``0.00``;
-- ``officialP7`` is always ``False`` and ``parityStatus`` stays
-  ``TEST_NOT_RUN`` until the MATR460 parity evidence exists.
+- the P7 totalizer block (``stockTotal`` / ``processTotal`` /
+  ``grandTotal``) carries the official MATR460 composition computed by
+  the single inventory engine — ``None`` whenever no snapshot exists.
+  Monetary policy: totalizers are decimal strings quantized at 6dp and
+  ``grandTotal`` is always the exact full-precision sum
+  ``stockTotal + processTotal`` (or ``None`` when either parcel is
+  unknown — a missing WIP measure is never masked as zero). Rounding
+  to 2 decimals is presentation-only, so a sum of displayed parcels
+  may differ from the displayed total by ≤ 1 cent — that is rounding,
+  not a calculation adjustment;
+- ``officialP7`` stays ``False`` — this is the engine output, not the
+  literal MATR460 emission; ``parityStatus`` is ``PENDING`` until
+  per-competence parity against a new official emission is certified
+  and ``TEST_NOT_RUN`` when no calculation ran.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+
+from .constantes import PARITY_STATUS_TEST_NOT_RUN
 
 
 @dataclass(slots=True)
@@ -88,6 +102,14 @@ class StockInventoryResponse:
     branchesMissing: list[str]
     historicalTotal: str | None
     pagination: dict[str, Any]
+    stockTotal: str | None = None
+    processPhysicalTotal: str | None = None
+    processAllocatedTotal: str | None = None
+    processTotal: str | None = None
+    grandTotal: str | None = None
+    parityStatus: str = PARITY_STATUS_TEST_NOT_RUN
+    parityNotes: list[str] = field(default_factory=list)
+    provenance: dict[str, Any] = field(default_factory=dict)
     items: list[StockInventoryItem] = field(default_factory=list)
     summariesByType: list[StockInventoryTypeSummary] = field(default_factory=list)
     summariesByWarehouse: list[StockInventoryWarehouseSummary] = field(
@@ -102,13 +124,20 @@ class StockInventoryResponse:
             "dataAsOf": self.dataAsOf,
             "branchCode": self.branchCode,
             "reportScope": self.reportScope,
-            "source": "protheus_sb9_sb1",
+            "source": "protheus_sb9_sb1_sd3_sc2",
             "officialP7": False,
-            "parityStatus": "TEST_NOT_RUN",
+            "parityStatus": self.parityStatus,
+            "parityNotes": self.parityNotes,
+            "provenance": self.provenance,
             "status": self.status,
             "branchesAvailable": self.branchesAvailable,
             "branchesMissing": self.branchesMissing,
             "historicalTotal": self.historicalTotal,
+            "stockTotal": self.stockTotal,
+            "processPhysicalTotal": self.processPhysicalTotal,
+            "processAllocatedTotal": self.processAllocatedTotal,
+            "processTotal": self.processTotal,
+            "grandTotal": self.grandTotal,
             "pagination": self.pagination,
             "items": [item.to_dict() for item in self.items],
             "summariesByType": [group.to_dict() for group in self.summariesByType],

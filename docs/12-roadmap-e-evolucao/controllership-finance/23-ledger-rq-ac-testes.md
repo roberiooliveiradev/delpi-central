@@ -861,3 +861,23 @@ Entrega documental: [Documento 118 — base canônica do fechamento](./118-base-
 | RQ-ANL-12 (novo) | `BLOCKED` | consumo por OP — GAP-01 (EVIDENCE_NOT_FOUND) |
 | RQ-ANL-13 (novo) | `PROPOSED` | entregáveis externos R13/R14 via P2 upload com roles configuráveis (E05) |
 | RQ-ANL-14 (novo) | `PROPOSED` | `STOCK_CLOSED` canonical owner state (T03/E5) |
+
+### IMPLEMENTATION-006 — P7 na página Relatórios e divergências (2026-10-29)
+
+Execução `CF-PROC0072-P7-IMPLEMENTATION-006`. Registro completo: [doc 119 §11](./119-contratos-p7-implementacao-readiness.md). Motor único P7 entregue (`SB9` ex-`MV_LOCPROC` + `MATR989` `as_of`); causa raiz «fonte indisponível» = flag off + provisão S2S incompleta — resolvida (client/scope/audience/token URL pelo gateway).
+
+| RQ/AC | Critério | Estado |
+|---|---|---|
+| RQ-ANL-01 → IMP-01 | P7 integrado à página existente de Relatórios e divergências | PASS (rota contextual `reports/stock-inventory`, smoke S1) |
+| IMP-02 | Causa «fonte indisponível» diagnosticada e corrigida | PASS (S2S cf-api provisionado; cadeia MFE→BFF→api-delpi→TOTVS 200) |
+| IMP-03 | Consulta real ao Protheus via api-delpi | PASS (SB9/SB1/SD3/SC2; 7.929 itens 09/2026) |
+| IMP-04/05 | `all_products` + `mp_pi_pa` por `B1_TIPO` canônico | PASS (mesmo motor; `mp_pi_pa` 6.412 vs 7.929 itens) |
+| IMP-06/07 | Mesma regra de cálculo; sem SQL duplicado | PASS (motor único api-delpi; BFF proxy; MFE render-only) |
+| IMP-08/09/10 | Sem permission nova; `.access` autoriza; `.access.dre` não autoriza | PASS (`cf-e2e-denied`→403 live; BFF fail-closed; 3 permissions intactas) |
+| IMP-11/12 | Valores/proveniência honestos; ausência nunca vira zero | PASS (`source_missing`/`incomplete`/`no_matching_items` tipados; `parityStatus=PENDING`; `officialP7=false`) |
+| IMP-13 | Exportação identificada por escopo | PASS (CSV: metadata+SHA-256+watermark; filename carrega escopo; smoke S10–S12) |
+| IMP-14 | Paridade testada e classificada | PENDING — `all_products` estrutura PROVEN (PA/PI/II bit a bit; MP drift +8.182,43 STALE_EVIDENCE); `mp_pi_pa` PENDING (E2) |
+| IMP-15/16 | Interface existente preservada; testes/build documentados | PASS (43+31+12 api/BFF, 33 MFE, tsc limpo, build MFE servido) |
+| IMP-17 | Deploy governado | PENDING — execução local; produção não autorizada |
+| IMP-18 | Smoke autenticado | PASS — 12/12 (`cf-e2e-access`, `p7_impl006_smoke.cjs`) |
+| IMP-19 | Documentação e Help | PASS (docs 119§11/118/49/85/112/113/23/README; helpTooltips) |

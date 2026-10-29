@@ -97,9 +97,11 @@ class ApiDelpiSettlementsGateway:
                 "api-delpi s2s authentication unavailable"
             ) from exc
 
-    def _build_headers(self, access_token: str) -> dict[str, str]:
+    def _build_headers(
+        self, access_token: str, *, accept: str = "application/json"
+    ) -> dict[str, str]:
         return {
-            "Accept": "application/json",
+            "Accept": accept,
             "Authorization": f"Bearer {access_token}",
             "X-Delpi-Caller-App": self.caller_app,
             SERVICE_AUTHORIZATION_HEADER: build_service_authorization(
@@ -147,6 +149,46 @@ class ApiDelpiSettlementsGateway:
             return response.json()
         except ValueError as exc:
             raise DelpiApiGatewayError("api-delpi invalid JSON") from exc
+
+    def get_bytes(
+        self,
+        path: str,
+        *,
+        access_token: str,
+        params: dict[str, Any] | None = None,
+    ) -> tuple[bytes, str | None]:
+        """Binary passthrough for file-producing routes (exports). Error
+        mapping stays identical to ``get`` — upstream JSON errors are
+        relayed with their typed codes."""
+        url = urljoin(self.base_url, path.lstrip("/"))
+        try:
+            response = requests.get(
+                url,
+                headers=self._build_headers(access_token, accept="*/*"),
+                params=params,
+                timeout=self.timeout,
+            )
+        except requests.Timeout as exc:
+            logger.warning("delpi_api_timeout path=%s", path)
+            raise DelpiApiGatewayError("api-delpi timeout") from exc
+        except requests.RequestException as exc:
+            logger.exception("delpi_api_request_failed path=%s", path)
+            raise DelpiApiGatewayError("api-delpi request failed") from exc
+
+        error_code = _extract_error_code(response)
+        if response.status_code >= 500:
+            raise DelpiApiGatewayError(
+                "api-delpi server error",
+                status_code=response.status_code,
+                error_code=error_code,
+            )
+        if response.status_code >= 400:
+            raise DelpiApiGatewayError(
+                "api-delpi client error",
+                status_code=response.status_code,
+                error_code=error_code,
+            )
+        return response.content, response.headers.get("Content-Disposition")
 
 
 def _extract_error_code(response) -> str | None:

@@ -399,8 +399,11 @@ Paridade parcial: doc 84 §3.
 - **Regra de reúso:** o contrato oficial reusa a classificação
   canônica e adiciona a exclusão poder3
   (`third_party_materials=exclude` — candidato ao parâmetro `02`
-  `Saldo em Poder 3º?` do `MTR460`, `PENDING` E2). O exploratório
-  permanece tipo-only, sem rótulo P7 (`officialP7:false`).
+  `Saldo em Poder 3º?` do `MTR460`, `PENDING` E2). O endpoint
+  evoluiu ao motor P7 (IMPLEMENTATION-006, 29/10): `mp_pi_pa`
+  permanece **tipo-only** com `parity_state` não verificado
+  declarado até E2 — exclusão poder3 oficial não ativada;
+  `officialP7:false` preservado (doc 119 §11).
 
 ---
 

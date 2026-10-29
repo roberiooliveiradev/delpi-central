@@ -1,5 +1,5 @@
 /** Cliente da BFF — Estoque histórico P7 (R03, consulta operacional). */
-import { cfApiUrl, httpGet } from "./httpClient";
+import { cfApiUrl, httpGet, httpGetBlob } from "./httpClient";
 
 export type StockInventoryBranch = "all" | "01" | "02";
 export type StockInventoryScope = "all_products" | "mp_pi_pa";
@@ -46,6 +46,18 @@ export type StockInventoryPagination = {
   has_previous: boolean;
 };
 
+/** Proveniência do motor P7 (evolução aditiva do contrato — doc 119 §8). */
+export type StockInventoryProvenance = {
+  engine?: string;
+  officialProducer?: string;
+  snapshotDate?: string;
+  movementCutoff?: string;
+  opAliveCutoff?: string;
+  processWarehouse?: string;
+  reportScope?: string;
+  openOrdersAllocated?: number;
+};
+
 export type StockInventoryPayload = {
   report: string;
   period: string;
@@ -56,10 +68,22 @@ export type StockInventoryPayload = {
   source: string;
   officialP7: boolean;
   parityStatus: string;
+  parityNotes?: string[];
+  provenance?: StockInventoryProvenance;
   status: StockInventoryStatus;
   branchesAvailable: string[];
   branchesMissing: string[];
   historicalTotal: string | null;
+  /** EM ESTOQUE — SB9 fora do armazém de processo (universo do escopo). */
+  stockTotal?: string | null;
+  /** EM PROCESSO — fatia física do armazém 99 (bloco sem-OP MATR989). */
+  processPhysicalTotal?: string | null;
+  /** EM PROCESSO — fatia alocada a OPs vivas na emissão (MATR989). */
+  processAllocatedTotal?: string | null;
+  /** EM PROCESSO total = física + alocada. */
+  processTotal?: string | null;
+  /** TOTAL GERAL = EM ESTOQUE + EM PROCESSO. */
+  grandTotal?: string | null;
   pagination: StockInventoryPagination;
   items: StockInventoryItem[];
   summariesByType: StockInventoryTypeSummary[];
@@ -107,4 +131,36 @@ export async function getStockInventory(
     throw new Error("Resposta vazia da API de estoque histórico.");
   }
   return envelope.data;
+}
+
+/** Nome do arquivo exportado — mesmo contrato do servidor (doc 119 §8.C). */
+export function stockInventoryExportFilename(
+  query: Pick<StockInventoryQuery, "period" | "branch" | "reportScope">,
+): string {
+  return (
+    `p7-inventory-${query.period}-${query.branch ?? "all"}-` +
+    `${query.reportScope ?? "all_products"}.csv`
+  );
+}
+
+/**
+ * Export CSV do mesmo motor P7 — cabeçalho com competência, filial,
+ * escopo, hash de conteúdo e marca de paridade (documento não oficial
+ * enquanto a homologação MATR460 estiver pendente).
+ */
+export async function exportStockInventoryCsv(
+  query: StockInventoryQuery,
+  options?: { signal?: AbortSignal },
+): Promise<Blob> {
+  const qs = buildQuery({
+    period: query.period,
+    branch: query.branch ?? "all",
+    report_scope: query.reportScope ?? "all_products",
+    warehouse: query.warehouse,
+    format: "csv",
+  });
+  return httpGetBlob(
+    cfApiUrl(`/closing/stock-inventory/export?${qs}`),
+    options,
+  );
 }

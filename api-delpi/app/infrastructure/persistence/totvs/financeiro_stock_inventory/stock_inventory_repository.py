@@ -7,7 +7,7 @@ from app.domain.ports.financeiro_stock_inventory.stock_inventory_repository_port
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 
-from . import stock_inventory_sql
+from . import stock_inventory_sql, work_in_process_sql
 
 
 class StockInventoryRepository(BaseRepository, StockInventoryRepositoryPort):
@@ -94,6 +94,40 @@ class StockInventoryRepository(BaseRepository, StockInventoryRepositoryPort):
             branches=branches,
             product_types=product_types,
             warehouse=warehouse,
+        )
+        with self:
+            return self.execute_query(query, params)
+
+    def p7_totals(
+        self,
+        *,
+        snapshot_date: str,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        process_warehouse: str,
+    ) -> dict:
+        query, params = stock_inventory_sql.build_p7_totals_query(
+            snapshot_date=snapshot_date,
+            branches=branches,
+            product_types=product_types,
+            process_warehouse=process_warehouse,
+        )
+        with self:
+            return self.execute_one(query, params) or {}
+
+    def work_in_process_by_type(
+        self,
+        *,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        movement_cutoff: str,
+        op_alive_cutoff: str,
+    ) -> list[dict]:
+        query, params = work_in_process_sql.build_work_in_process_by_type_query(
+            branches=branches,
+            product_types=product_types,
+            movement_cutoff=movement_cutoff,
+            op_alive_cutoff=op_alive_cutoff,
         )
         with self:
             return self.execute_query(query, params)

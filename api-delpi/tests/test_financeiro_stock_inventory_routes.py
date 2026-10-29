@@ -87,7 +87,7 @@ def test_router_exposes_stock_inventory_route() -> None:
 
     assert router.prefix == ROUTE
     paths = {route.path for route in router.routes if hasattr(route, "path")}
-    assert paths == {f"{ROUTE}", f"{ROUTE}/"} or paths == {ROUTE}
+    assert {ROUTE, f"{ROUTE}/export"} <= paths
     assert any(ROUTE in (route.path or "") for route in router.routes)
 
 
@@ -194,6 +194,12 @@ def test_happy_path_returns_snapshot_envelope(
         branchesMissing=[],
         historicalTotal="10576487.8400",
         pagination={"page": 1, "page_size": 50, "total_items": 1},
+        stockTotal="10576487.8400",
+        processPhysicalTotal="0.000000",
+        processAllocatedTotal="0.000000",
+        processTotal="0.000000",
+        grandTotal="10576487.8400",
+        parityStatus="PENDING",
         items=[
             StockInventoryItem(
                 productCode="P1",
@@ -225,7 +231,10 @@ def test_happy_path_returns_snapshot_envelope(
     data = body["data"]
     assert data["status"] == "available"
     assert data["officialP7"] is False
-    assert data["parityStatus"] == "TEST_NOT_RUN"
+    assert data["parityStatus"] == "PENDING"
+    assert data["stockTotal"] == "10576487.8400"
+    assert data["processTotal"] == "0.000000"
+    assert data["grandTotal"] == "10576487.8400"
     assert data["items"][0]["productCode"] == "P1"
     use_case.execute.assert_called_once()
     assert use_case.execute.call_args.kwargs["user_subject"] == "user-1"

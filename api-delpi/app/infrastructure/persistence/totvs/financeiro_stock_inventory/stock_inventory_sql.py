@@ -87,6 +87,22 @@ SELECT branch_code, warehouse,
  ORDER BY branch_code, warehouse
 """
 
+# Official P7 composition split (doc 49 / doc 80 §41): ``B9_LOCAL <> '99'``
+# is the "EM ESTOQUE" operand; ``B9_LOCAL = '99'`` is the physical WIP slice
+# of "EM PROCESSO" (the allocated slice comes from SD3/SC2 — see
+# work_in_process_sql). The split runs on the same grouped universe, so the
+# totalizers always cover the full scope population.
+_P7_TOTALS_SQL = """
+SELECT COUNT_BIG(1) AS item_count,
+       CAST(COALESCE(SUM(CASE WHEN warehouse <> ? THEN stock_value ELSE 0 END), 0)
+            AS DECIMAL(28,6)) AS stock_value,
+       CAST(COALESCE(SUM(CASE WHEN warehouse = ? THEN stock_value ELSE 0 END), 0)
+            AS DECIMAL(28,6)) AS process_physical_value,
+       CAST(COALESCE(SUM(CASE WHEN warehouse <> ? THEN quantity ELSE 0 END), 0)
+            AS DECIMAL(28,6)) AS stock_quantity
+  FROM ({grouped}) AGG
+"""
+
 
 def _in_clause(column: str, values: tuple[str, ...]) -> tuple[str, list[str]]:
     placeholders = ", ".join("?" for _ in values)
@@ -203,3 +219,30 @@ def build_summary_by_warehouse_query(
         warehouse=warehouse,
     )
     return _SUMMARY_BY_WAREHOUSE_SQL.format(grouped=grouped), params
+
+
+def build_p7_totals_query(
+    *,
+    snapshot_date: str,
+    branches: tuple[str, ...],
+    product_types: tuple[str, ...] | None,
+    process_warehouse: str,
+) -> tuple[str, list[Any]]:
+    """Official P7 split on the grouped universe: EM ESTOQUE (``B9_LOCAL``
+    different from the process warehouse) + physical WIP (``B9_LOCAL`` equal
+    to it). Report-level: the ``warehouse`` item filter does not apply —
+    the totalizers always cover the whole scope population."""
+    grouped, params = _grouped_query(
+        snapshot_date=snapshot_date,
+        branches=branches,
+        product_types=product_types,
+        warehouse=None,
+    )
+    # The CASE placeholders are textual BEFORE the grouped subquery —
+    # their params must come first in the list.
+    return _P7_TOTALS_SQL.format(grouped=grouped), [
+        process_warehouse,
+        process_warehouse,
+        process_warehouse,
+        *params,
+    ]

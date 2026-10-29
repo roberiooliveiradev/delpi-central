@@ -47,6 +47,8 @@ export type ClosingHeroProps = {
   filters: ReactNode;
   /** Restaura os defaults e dispara a consulta automática. */
   onClearFilters: () => void;
+  /** Ações extras da página (ex.: exportar), antes de «Atualizar». */
+  extraActions?: ReactNode;
 };
 
 /**
@@ -64,6 +66,7 @@ export function ClosingHero({
   notice,
   filters,
   onClearFilters,
+  extraActions,
 }: ClosingHeroProps) {
   return (
     <CfPageHero
@@ -103,6 +106,7 @@ export function ClosingHero({
         >
           Limpar filtros
         </CfActionButton>
+        {extraActions}
         <CfActionButton
           variant="primary"
           type="button"

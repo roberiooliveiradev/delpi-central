@@ -13,6 +13,7 @@ from __future__ import annotations
 import calendar
 import re
 from dataclasses import dataclass
+from datetime import date, timedelta
 
 from app.domain.totvs.protheus_branches import (
     BRANCH_SCOPE_ALL,
@@ -93,6 +94,22 @@ class StockInventoryQueryRequest:
     def reference_date_iso(self) -> str:
         ref = self.reference_date()
         return f"{ref[0:4]}-{ref[4:6]}-{ref[6:8]}"
+
+    def op_alive_cutoff(self) -> str:
+        """YYYYMMDD of the emission-day convention: the day after the
+        month-end snapshot. MATR989/MATR460 emit the register on the
+        morning after the close — OPs whose first production posting
+        lands on the emission day itself are excluded from the allocated
+        WIP slice (doc 80 §41.C)."""
+        ref = self.reference_date()
+        day = date(int(ref[0:4]), int(ref[4:6]), int(ref[6:8])) + timedelta(
+            days=1
+        )
+        return day.strftime("%Y%m%d")
+
+    def op_alive_cutoff_iso(self) -> str:
+        cut = self.op_alive_cutoff()
+        return f"{cut[0:4]}-{cut[4:6]}-{cut[6:8]}"
 
     def requested_branches(self) -> tuple[str, ...]:
         """Concrete branch codes the query must cover (data filter only)."""

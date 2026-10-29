@@ -24,12 +24,16 @@ servidor e estado tipado `scope_unavailable` quando o dataset D3 ainda
 não está habilitado no ambiente. Filial sem origem rende
 «Não identificada» — nunca fallback 01/02.
 
-Central de Fechamento — Estoque histórico P7 (R03): rota interna
-`closing/stock-inventory`, consulta operacional por competência/filial
-(`officialP7=false` — não é o relatório oficial MATR460). Estados
-tipados `available` / `incomplete` / `source_missing` /
-`no_matching_items`; snapshot ausente exibe apenas banner — nunca tabela
-vazia (ausência não é saldo zero).
+Central de Fechamento — Estoque P7 (R03): rota interna
+`closing/stock-inventory` com motor único — `EM ESTOQUE` (SB9 ex-
+armazém de processo) + `EM PROCESSO` (MATR989 `as_of`), seleção
+«Todos os produtos» × «MP, PA e PI — DRE» (`report_scope=
+all_products|mp_pi_pa`), export CSV com metadados/hash e marca
+não-oficial (`officialP7=false`, `parityStatus=PENDING` — não é o
+relatório oficial MATR460 homologado). Estados tipados `available` /
+`incomplete` / `source_missing` / `no_matching_items`; snapshot
+ausente exibe apenas banner — nunca tabela vazia (ausência não é
+saldo zero).
 
 Central de Fechamento — Relatórios e divergências (aba `?tab=reports`):
 hub de análise com indicadores honestos, atenção primeiro e cartões por

@@ -53,3 +53,29 @@ class StockInventoryRepositoryPort(Protocol):
         product_types: tuple[str, ...] | None,
         warehouse: str | None,
     ) -> list[dict]: ...
+
+    def p7_totals(
+        self,
+        *,
+        snapshot_date: str,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        process_warehouse: str,
+    ) -> dict:
+        """Official P7 split on the scope universe (no ``warehouse``
+        filter): ``stock_value`` = EM ESTOQUE, ``process_physical_value``
+        = SB9 rows in the process warehouse (MATR989 "sem-OP" block)."""
+        ...
+
+    def work_in_process_by_type(
+        self,
+        *,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        movement_cutoff: str,
+        op_alive_cutoff: str,
+    ) -> list[dict]:
+        """MATR989 allocated WIP (RE* − DE* on OPs alive at emission),
+        grouped by product type so the scope filter applies to the same
+        product population."""
+        ...

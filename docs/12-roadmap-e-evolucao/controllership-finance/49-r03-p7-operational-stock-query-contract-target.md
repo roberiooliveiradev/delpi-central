@@ -62,6 +62,12 @@ MFE consome somente BFF; usar `@delpi/plugin-ui`, UX PT-BR, claro/escuro mesma �
 
 **Próxima ação:** executor retornar inventário de rotas/contratos atuais e teste de fonte, com dúvidas reais destacadas como `DECISION_REQUIRED`, antes de alterar código.
 
+> **Atualização 29/10/2026 (IMPLEMENTATION-006):** o endpoint foi
+> evoluído ao motor P7 — `CURRENT_P7_RUNTIME=IMPLEMENTED_PENDING_PARITY`
+> (SB9 ex-99 + MATR989 `as_of`, dois escopos no mesmo motor,
+> provenance/cutoffs, export CSV); `P7_PARITY=PENDING` (MATR460 E2)
+> e `officialP7=false` preservados. Registro completo: doc 119 §11.
+
 
 ## 8. Decisao de produto: filial e somente filtro (21/10/2026)
 

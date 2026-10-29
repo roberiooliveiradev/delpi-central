@@ -12,9 +12,17 @@ vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiM
 
 const getMock = vi.fn();
 const p3Mock = vi.fn();
+const exportMock = vi.fn();
+const saveMock = vi.fn();
 
 vi.mock("../../api/stockInventoryApi", () => ({
   getStockInventory: (...args: unknown[]) => getMock(...args),
+  exportStockInventoryCsv: (...args: unknown[]) => exportMock(...args),
+  stockInventoryExportFilename: () => "p7-inventory-test.csv",
+}));
+
+vi.mock("../../api/documentsApi", () => ({
+  saveDocumentBlob: (...args: unknown[]) => saveMock(...args),
 }));
 
 vi.mock("../../api/p3Api", () => ({
@@ -44,13 +52,31 @@ function payload(overrides: Record<string, unknown> = {}) {
     dataAsOf: "2026-09-30",
     branchCode: "all",
     reportScope: "all_products",
-    source: "protheus_sb9_sb1",
+    source: "protheus_sb9_sb1_sd3_sc2",
     officialP7: false,
-    parityStatus: "TEST_NOT_RUN",
+    parityStatus: "PENDING",
+    parityNotes: [
+      "Motor P7 com a composição oficial (SB9 + MATR989) comprovada para a competência 09/2026.",
+    ],
+    provenance: {
+      engine: "minha-delpi-p7-inventory-engine",
+      officialProducer: "matr460",
+      snapshotDate: "2026-09-30",
+      movementCutoff: "2026-09-30",
+      opAliveCutoff: "2026-10-01",
+      processWarehouse: "99",
+      reportScope: "all_products",
+      openOrdersAllocated: 444,
+    },
     status: "available",
     branchesAvailable: ["02"],
     branchesMissing: [],
     historicalTotal: "10576487.8400",
+    stockTotal: "10167922.3520",
+    processPhysicalTotal: "513956.0210",
+    processAllocatedTotal: "0.0000",
+    processTotal: "513956.0210",
+    grandTotal: "10681878.3730",
     pagination: {
       page: 1,
       page_size: 50,
@@ -88,6 +114,8 @@ async function waitInitialFetch() {
 afterEach(() => {
   cleanup();
   getMock.mockReset();
+  exportMock.mockReset();
+  saveMock.mockReset();
   vi.useRealTimers();
 });
 
@@ -109,9 +137,7 @@ describe("StockInventoryPage — consulta automática", () => {
     expect(
       screen.getByText("Estoque histórico — P7"),
     ).toBeTruthy();
-    expect(
-      screen.getByText(/não equivalem ao relatório oficial MATR460/i),
-    ).toBeTruthy();
+    expect(screen.getByText("Paridade pendente")).toBeTruthy();
   });
 
   it("mudança de competência atualiza a consulta sem botão", async () => {
@@ -295,6 +321,52 @@ describe("StockInventoryPage — estados", () => {
     expect(screen.getByText("10.576.487,84")).toBeTruthy();
   });
 
+  it("exibe totalizadores oficiais P7 e selo de paridade pendente", async () => {
+    getMock.mockResolvedValue(payload());
+    render(<StockInventoryPage />);
+
+    await screen.findByText("Composição do registro — P7");
+    // EM ESTOQUE + EM PROCESSO = TOTAL GERAL (doc 119 §8)
+    expect(screen.getByText("Em estoque")).toBeTruthy();
+    expect(screen.getByText("Em processo")).toBeTruthy();
+    expect(screen.getByText("Total geral")).toBeTruthy();
+    expect(screen.getByText("10.167.922,35")).toBeTruthy();
+    expect(screen.getByText("513.956,02")).toBeTruthy();
+    expect(screen.getByText("10.681.878,37")).toBeTruthy();
+    // Paridade declarada, nunca selo oficial
+    expect(screen.getByText("Paridade oficial: pendente")).toBeTruthy();
+    expect(screen.getByText(/comprovada para a competência/)).toBeTruthy();
+  });
+
+  it("source_missing não exibe totalizadores P7", async () => {
+    getMock.mockResolvedValue(
+      payload({
+        status: "source_missing",
+        dataAsOf: null,
+        branchesAvailable: [],
+        branchesMissing: ["01"],
+        historicalTotal: null,
+        stockTotal: null,
+        processPhysicalTotal: null,
+        processAllocatedTotal: null,
+        processTotal: null,
+        grandTotal: null,
+        parityStatus: "TEST_NOT_RUN",
+        parityNotes: [],
+        items: [],
+        summariesByType: [],
+        summariesByWarehouse: [],
+      }),
+    );
+    render(<StockInventoryPage />);
+
+    await waitFor(() => screen.getByText("Snapshot não encontrado"));
+    expect(
+      screen.queryByText("Composição do registro — P7"),
+    ).toBeNull();
+    expect(screen.queryByText("Paridade oficial: pendente")).toBeNull();
+  });
+
   it("grid de indicadores e resumos usa o card-strip centralizado", async () => {
     getMock.mockResolvedValue(
       payload({
@@ -460,6 +532,87 @@ describe("StockInventoryPage — estados", () => {
 
     resolveGet?.(payload());
     expect(await screen.findByText("Produto Exemplo")).toBeTruthy();
+  });
+});
+
+describe("StockInventoryPage — exportação CSV (doc 119 §8.C)", () => {
+  it("exporta o mesmo universo consultado e salva com o nome do contrato", async () => {
+    getMock.mockResolvedValue(payload());
+    exportMock.mockResolvedValue(new Blob(["csv"], { type: "text/csv" }));
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+    await screen.findByText("Produto Exemplo");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Exportar CSV/ }),
+    );
+
+    await waitFor(() => expect(exportMock).toHaveBeenCalledTimes(1));
+    const query = exportMock.mock.calls[0][0];
+    expect(query.branch).toBe("all");
+    expect(query.reportScope).toBe("all_products");
+    await waitFor(() =>
+      expect(saveMock).toHaveBeenCalledWith(
+        expect.any(Blob),
+        "p7-inventory-test.csv",
+      ),
+    );
+  });
+
+  it("escopo MP/PI/PA vai junto na exportação", async () => {
+    getMock.mockResolvedValue(payload());
+    exportMock.mockResolvedValue(new Blob(["csv"]));
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+    await screen.findByText("Produto Exemplo");
+
+    fireEvent.click(screen.getByRole("button", { name: "MP / PI / PA" }));
+    await waitFor(() => expect(getMock).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Exportar CSV/ }),
+    );
+    await waitFor(() => expect(exportMock).toHaveBeenCalledTimes(1));
+    expect(exportMock.mock.calls[0][0].reportScope).toBe("mp_pi_pa");
+  });
+
+  it("source_missing desabilita a exportação — ausência não vira arquivo", async () => {
+    getMock.mockResolvedValue(
+      payload({
+        status: "source_missing",
+        items: [],
+        historicalTotal: null,
+        grandTotal: null,
+      }),
+    );
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+    await screen.findByText("Snapshot não encontrado");
+
+    const button = screen.getByRole("button", { name: /Exportar CSV/ });
+    expect(
+      button.getAttribute("aria-disabled") === "true" ||
+        (button as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(exportMock).not.toHaveBeenCalled();
+  });
+
+  it("falha da exportação mostra feedback honesto", async () => {
+    getMock.mockResolvedValue(payload());
+    exportMock.mockRejectedValue(
+      new ApiError(503, "Origem de dados financeiros indisponível."),
+    );
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+    await screen.findByText("Produto Exemplo");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Exportar CSV/ }),
+    );
+
+    expect(
+      await screen.findByText("Exportação não concluída"),
+    ).toBeTruthy();
   });
 });
 

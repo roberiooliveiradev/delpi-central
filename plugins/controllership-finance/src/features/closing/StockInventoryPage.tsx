@@ -1,17 +1,22 @@
 /**
  * Estoque histórico — P7 (R03) — Central de Fechamento.
  *
- * Consome `GET /closing/stock-inventory` da BFF. Consulta operacional do
- * snapshot mensal de estoque — nunca apresentada como relatório oficial
- * MATR460. `source_missing`/`incomplete` são estados próprios — nunca
- * confundidos com total zero nem com erro.
+ * Consome `GET /closing/stock-inventory` da BFF. Motor P7 do Portal —
+ * composição oficial do registro de inventário (EM ESTOQUE + EM
+ * PROCESSO) calculada sobre SB9 + MATR989. Paridade com a emissão
+ * MATR460 declarada como pendente até homologação por competência —
+ * nunca apresentada como selo oficial. `source_missing`/`incomplete`
+ * são estados próprios — nunca confundidos com total zero nem com erro.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError } from "../../api/httpClient";
 import { getP3State, type P3Status } from "../../api/p3Api";
+import { saveDocumentBlob } from "../../api/documentsApi";
 import {
+  exportStockInventoryCsv,
   getStockInventory,
+  stockInventoryExportFilename,
   type StockInventoryBranch,
   type StockInventoryItem,
   type StockInventoryPayload,
@@ -20,6 +25,7 @@ import {
   type StockInventoryWarehouseSummary,
 } from "../../api/stockInventoryApi";
 import {
+  CfActionButton,
   CfEmptyState,
   CfMetricStrip,
   CfSectionCard,
@@ -33,6 +39,7 @@ import {
   Building2,
   CalendarDays,
   CircleDollarSign,
+  Download,
   Package,
 } from "lucide-react";
 import {
@@ -143,6 +150,8 @@ export function StockInventoryPage({
   const [result, setResult] = useState<FetchResult | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const requestId = useRef(0);
   const [p3Result, setP3Result] = useState<{
     key: string;
@@ -189,6 +198,27 @@ export function StockInventoryPage({
   }, [reportContext]);
 
   const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
+
+  // Export CSV do mesmo motor (doc 119 §8.C) — o arquivo carrega a
+  // marca de paridade vigente; nunca promove o recorte a documento
+  // oficial enquanto a homologação MATR460 estiver pendente.
+  const handleExport = useCallback(async () => {
+    if (!applied || exporting) return;
+    setExporting(true);
+    setExportError(null);
+    try {
+      const blob = await exportStockInventoryCsv(applied);
+      saveDocumentBlob(blob, stockInventoryExportFilename(applied));
+    } catch (error) {
+      setExportError(
+        error instanceof ApiError
+          ? error.message
+          : "Não foi possível exportar o relatório agora.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  }, [applied, exporting]);
 
   // RW01: query da rota espelha os campos brutos — reidratação por
   // popstate nunca regrava valor ainda em debounce na URL.
@@ -651,16 +681,19 @@ export function StockInventoryPage({
         }
         subtitle={
           reportContext
-            ? `Posição de estoque da competência ${reportContext.period} · Origem: TOTVS/SB9 + conciliação P3.`
-            : "Consulta operacional dos saldos históricos por competência, filial e classificação de produto."
+            ? `Registro de inventário da competência ${reportContext.period} · Motor P7 (TOTVS/SB9 + MATR989) + conciliação P3.`
+            : "Registro de inventário por competência, filial e classificação de produto — motor P7 (SB9 + MATR989)."
         }
         updatedAt={lastUpdated}
         onRefresh={retry}
         refreshing={loading}
         metrics={heroMetrics}
         notice={
-          <CfFeedbackMessage intent="info" title="Consulta operacional">
-            Os resultados ainda não equivalem ao relatório oficial MATR460.
+          <CfFeedbackMessage intent="info" title="Paridade pendente">
+            Composição oficial do P7 calculada pelo motor do Portal
+            (SB9 + MATR989). A homologação por competência contra nova
+            emissão MATR460 ainda está pendente — os valores não são selo
+            oficial.
           </CfFeedbackMessage>
         }
         filters={
@@ -708,9 +741,30 @@ export function StockInventoryPage({
           </form>
         }
         onClearFilters={clearFilters}
+        extraActions={
+          <CfActionButton
+            variant="ghost"
+            type="button"
+            onClick={handleExport}
+            disabled={
+              exporting ||
+              !payload ||
+              payload.status === "source_missing"
+            }
+            title={CF_HELP.stockInventory.export}
+          >
+            <Download size={16} aria-hidden />{" "}
+            {exporting ? "Exportando…" : "Exportar CSV"}
+          </CfActionButton>
+        }
       />
 
       <div className="cf-page-stack" aria-busy={loading}>
+      {exportError ? (
+        <CfFeedbackMessage intent="error" title="Exportação não concluída">
+          {exportError}
+        </CfFeedbackMessage>
+      ) : null}
       {current?.kind === "error" ? (
         <CfQueryErrorBanner
           error={current}
@@ -725,6 +779,63 @@ export function StockInventoryPage({
           backend, nunca derivados no navegador. */}
       {reportContext ? (
         <P3ReconciliationSection p3={p3} loading={p3Loading} />
+      ) : null}
+
+      {/* Totalizadores oficiais do registro (doc 119 §8): EM ESTOQUE +
+          EM PROCESSO = TOTAL — sempre sobre o universo do escopo, nunca
+          reduzidos pelo filtro de Armazém. */}
+      {showData &&
+      payload &&
+      payload.status !== "source_missing" &&
+      payload.grandTotal != null ? (
+        <CfSectionCard
+          title="Composição do registro — P7"
+          hint={CF_HELP.stockInventory.totals}
+        >
+          <CfMetricStrip
+            aria-label="Totalizadores do registro de inventário"
+            items={[
+              {
+                id: "stock",
+                label: "Em estoque",
+                value: payload.stockTotal
+                  ? formatAmount(payload.stockTotal)
+                  : "—",
+                description: "saldos fora do armazém de processo",
+              },
+              {
+                id: "process",
+                label: "Em processo",
+                value: payload.processTotal
+                  ? formatAmount(payload.processTotal)
+                  : "—",
+                description: `armazém ${payload.provenance?.processWarehouse ?? "99"}: ${payload.processPhysicalTotal ? formatAmount(payload.processPhysicalTotal) : "—"} · alocado em OPs: ${payload.processAllocatedTotal ? formatAmount(payload.processAllocatedTotal) : "—"}`,
+              },
+              {
+                id: "grand",
+                label: "Total geral",
+                value: payload.grandTotal
+                  ? formatAmount(payload.grandTotal)
+                  : "—",
+                description:
+                  payload.reportScope === "mp_pi_pa"
+                    ? "escopo MP / PI / PA"
+                    : "todos os produtos",
+              },
+            ]}
+          />
+          <p className="cf-cell-muted">
+            <CfStatusBadge
+              label={
+                payload.parityStatus === "PENDING"
+                  ? "Paridade oficial: pendente"
+                  : `Paridade: ${payload.parityStatus}`
+              }
+              variant="warning"
+            />{" "}
+            {(payload.parityNotes ?? []).join(" ")}
+          </p>
+        </CfSectionCard>
       ) : null}
 
       {!applied ? (

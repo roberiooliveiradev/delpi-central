@@ -14,6 +14,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Query, Request
+from fastapi.responses import Response
 
 from delpi_auth.authz_core import has_permission
 
@@ -87,6 +88,13 @@ def _map_gateway_error(exc: DelpiApiGatewayError, operation_id: str):
         )
     if exc.status_code == 400:
         return fail("Parâmetros inválidos.", 400, operation_id=operation_id)
+    if exc.status_code == 409:
+        return fail(
+            "Relatório indisponível no estado atual.",
+            409,
+            data=_error_data(exc),
+            operation_id=operation_id,
+        )
     if exc.status_code is None or exc.status_code >= 500:
         return fail(
             "Origem de dados financeiros indisponível.",
@@ -200,6 +208,53 @@ def get_closing_stock_inventory(
         path="/financeiro/stock-inventory",
         params=params,
         operation_id="get_closing_stock_inventory",
+    )
+
+
+@router.get(
+    "/stock-inventory/export",
+    operation_id="export_closing_stock_inventory",
+)
+def export_closing_stock_inventory(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    report_scope: str = Query(
+        "all_products", pattern="^(all_products|mp_pi_pa)$"
+    ),
+    warehouse: str | None = Query(None),
+    export_format: str = Query("csv", alias="format", pattern="^csv$"),
+):
+    """Binary passthrough of the api-delpi P7 export (doc 119 §8.C) — the
+    file (metadata header, SHA-256 hash, parity watermark) is produced by
+    the data owner; the BFF adds the ``access`` gate, never a second
+    serialization. ``access.dre`` never reaches this surface."""
+    operation_id = "export_closing_stock_inventory"
+    _authorized_user(request)
+    access_token = _user_bearer(request)
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "report_scope": report_scope,
+        "format": export_format,
+    }
+    if warehouse:
+        params["warehouse"] = warehouse
+    try:
+        content, content_disposition = ApiDelpiSettlementsGateway().get_bytes(
+            "/financeiro/stock-inventory/export",
+            access_token=access_token,
+            params=params,
+        )
+    except DelpiApiGatewayError as exc:
+        return _map_gateway_error(exc, operation_id)
+    headers = {}
+    if content_disposition:
+        headers["Content-Disposition"] = content_disposition
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers=headers,
     )
 
 

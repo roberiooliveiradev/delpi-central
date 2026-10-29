@@ -3145,7 +3145,9 @@ services:
       # S2S individual (credencial dedicada; env_file carrega S2S_* de supplies).
       # S2S_SCOPE vazio = token carrega TODOS os default scopes do client
       # (settlements.read + stock-inventory.read após provisioning Keycloak).
-      S2S_TOKEN_URL: ${S2S_TOKEN_URL}
+      # CF_S2S_TOKEN_URL: em dev o iss precisa nascer via gateway
+      # (localhost:80) para casar com KEYCLOAK_ISSUER (padrão engineering-api).
+      S2S_TOKEN_URL: ${CF_S2S_TOKEN_URL:-${S2S_TOKEN_URL}}
       S2S_CLIENT_ID: ${CF_S2S_CLIENT_ID:-controllership-finance-api}
       S2S_CLIENT_SECRET: ${CF_S2S_CLIENT_SECRET:-}
       S2S_SCOPE: ${CF_S2S_SCOPE:-}

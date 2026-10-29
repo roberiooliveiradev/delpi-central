@@ -539,4 +539,112 @@ e a medida de processo do resumo não está decomposta ao centavo.
 
 ---
 
+## 11. Registro de implementação — `CF-PROC0072-P7-IMPLEMENTATION-006` (29/10/2026)
+
+O subconjunto `READY` do §10 foi implementado na cadeia existente
+`MFE → controllership-finance-api → api-delpi → Protheus`, sobre o
+endpoint `/closing/stock-inventory` evoluído de forma compatível
+(nenhum contrato novo; nenhuma permission por relatório).
+
+### 11.1 Entregue em runtime
+
+- **Motor único P7 (api-delpi, owner canônico):** `EM ESTOQUE` = SB9
+  snapshot fim-de-competência **excluindo** `MV_LOCPROC='99'`;
+  `EM PROCESSO` = SB9 loc99 sem-OP + material alocado a OP viva
+  (`SD3` RE×DE por produto×OP com `SC2` vivo em `movement_cutoff+1`
+  — fórmula MATR989 `as_of` do doc 80 §41); `TOTAL` = soma. Os dois
+  escopos percorrem o mesmo motor; `mp_pi_pa` = filtro canônico
+  `B1_TIPO IN ('MP','PI','PA')` aplicado na população antes da
+  agregação.
+- **Provenance honesta na payload:** `producer="matr460"`,
+  `engine="minha-delpi-p7-inventory-engine"`,
+  `source="protheus_sb9_sb1_sd3_sc2"`, `processWarehouse=99`,
+  `movementCutoff`/`opAliveCutoff`, `officialP7=false`,
+  `parityStatus=PENDING`. Dados ausentes nunca viram zero —
+  `source_missing`/`incomplete`/`no_matching_items` são estados
+  tipados.
+- **Causa raiz "fonte indisponível" (CP1) resolvida:** flag
+  `FINANCEIRO_STOCK_INVENTORY_ENABLED` + provisão S2S completa —
+  client Keycloak `controllership-finance-api` criado com scopes
+  (`stock-inventory.read` etc.), audience mapper `api-delpi`,
+  allowlist `S2S_ALLOWED_CLIENTS` e `CF_S2S_TOKEN_URL` pelo gateway
+  (issuer `http://localhost/auth/...`, padrão engineering-api).
+  Checker canônico `keycloak_s2s_controllership_finance_scope.py`
+  confirma provisão.
+- **BFF:** `GET /closing/stock-inventory` (já existente) e
+  `GET /closing/stock-inventory/export` — autorização humana
+  `controllership-finance.access` fail-closed, service principal
+  rejeitado, Bearer delegado + S2S; export é **proxy de bytes**
+  (sem serialização/cálculo na BFF); erros upstream tipados
+  (401/403/409 `not_exportable`/5xx/timeout).
+- **Export (api-delpi):** CSV gerado pelo **mesmo** use case do
+  relatório — metadados (competência, filial, escopo+rótulo PT,
+  data de fechamento, produtor, motor, fonte, `parity_state`,
+  `oficial=false`, cutoffs, `gerado_por`, `gerado_em`,
+  `hash_conteudo_sha256`, aviso não-oficial, totalizadores).
+  `source_missing` → 409 `not_exportable` (nunca CSV vazio).
+  XLSX/PDF seguem `TARGET` (não implementados nesta execução).
+- **MFE:** página existente `StockInventoryPage` — seleção única
+  «Todos os produtos» (default) × «MP, PA e PI — DRE», totalizadores
+  `Em estoque`/`Em processo`/`Total geral`, selo de paridade
+  `PENDING`/não homologado, estados honestos, botão **Exportar CSV**
+  (download autenticado via BFF, filename do `Content-Disposition`),
+  Help contextual atualizado.
+
+### 11.2 Evidências (competência 09/2026, live)
+
+| Escopo × filial | EM ESTOQUE | EM PROCESSO | TOTAL | itens |
+|---|---|---|---|---|
+| all_products × all | 13.767.296,14 | 871.416,33 | 14.638.712,48 | 7.929 |
+| mp_pi_pa × all | 12.889.336,56 | 871.368,75 | 13.760.705,31 | 6.412 |
+| all_products × 01 | 3.599.373,79 | 357.460,31 | 3.956.834,10 | 4.812 |
+| mp_pi_pa × 01 | 3.294.907,08 | 357.412,73 | 3.652.319,81 | 3.865 |
+| all_products × 02 | 10.167.922,35 | 513.956,02 | 10.681.878,37 | 3.117 |
+| mp_pi_pa × 02 | 9.594.429,48 | 513.956,02 | 10.108.385,50 | 2.547 |
+
+`01 + 02 = all` reconciliado nas 6 combinações. Export live:
+`p7-inventory-2026-09-01-all_products.csv`, 4.812 linhas, hash
+SHA-256, `parity_state=PENDING`, `oficial=false`.
+
+### 11.3 Testes
+
+- api-delpi stock-inventory (use case + SQL + rotas + export):
+  **43 passed**; BFF closing stock-inventory + export:
+  **31 + 12 passed**; MFE `StockInventoryPage.test.tsx`: **33
+  passed** + `tsc` limpo.
+- Smoke autenticado `p7_impl006_smoke.cjs` (persona
+  `cf-e2e-access`): **12/12 PASS** — página renderizada, sem
+  "fonte indisponível", totalizadores, selo de paridade, tabela
+  real, toggle MP/PI/PA, botão Exportar, download CSV com hash +
+  marca não-oficial.
+- Negativo: `cf-e2e-denied` → **403**; `.access.dre` não autoriza a
+  consulta nem o export (a DRE recebe apenas snapshot via pacote
+  documental submetido — fluxo existente, inalterado).
+
+### 11.4 Classificações
+
+- `all_products`: estrutura `PROVEN`; paridade ao PDF oficial
+  `PENDING` (drift MP +8.182,43 `STALE_EVIDENCE`; PA/PI/II bit a bit).
+- `mp_pi_pa`: `IMPLEMENTED_PENDING_PARITY` — tipo-only canônico;
+  exclusão poder3 oficial `PENDING` (E2); `parity_state=unverified`
+  declarado.
+- Permissões: `PASS` — nenhuma permission nova; `.access` consulta,
+  `.access.dre` negado à consulta/export, `.manage` intacto.
+- Deploy: `TEST_NOT_RUN` — execução local; nenhum deploy produção
+  autorizado.
+
+### 11.5 Lacunas residuais
+
+- E2 (params/produtor/RPO MATR460) continua `PENDING` — selo de
+  paridade oficial e política poder3 plugável não ativados.
+- Formatos XLSX/PDF do export: `TARGET` — CSV é o único formato
+  implementado/testado.
+- Integração documental do export ao pacote DRE (SUBMITTED →
+  recipient `.access.dre`): fluxo existente preservado; anexo
+  automatizado do CSV não implementado nesta execução.
+- Filiais ausentes em competências sem snapshot: estado honesto
+  `source_missing`/`incomplete` — sem fallback.
+
+---
+
 *Fim do documento 119.*

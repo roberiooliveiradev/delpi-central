@@ -80,13 +80,19 @@ export const CF_HELP = {
   },
   stockInventory: {
     page:
-      "Estoque histórico — P7: consulta operacional dos saldos de estoque registrados no fechamento de cada mês no ERP. Os resultados ainda não equivalem ao relatório oficial MATR460 — use-os como consulta de apoio ao fechamento, não como documento oficial.",
+      "Registro de Inventário — P7: relatório do estoque no fechamento de cada mês, calculado pelo motor P7 do Portal sobre o ERP (SB9 + MATR989 — EM ESTOQUE + EM PROCESSO). A paridade por competência contra uma nova emissão oficial MATR460 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",
+    totals:
+      "Composição oficial do registro: EM ESTOQUE = saldos do snapshot fora do armazém de processo; EM PROCESSO = material no armazém 99 (bloco sem-OP) + saldo requisitado líquido (RE − DE) em ordens de produção vivas na data de emissão; TOTAL GERAL = soma das duas medidas. Os totalizadores cobrem todo o universo do escopo — o filtro de Armazém não os reduz.",
+    parity:
+      "Estado de paridade com a emissão oficial MATR460 do ERP. «Pendente» = a regra de cálculo está implementada e comprovada estruturalmente, mas a certificação por competência aguarda comparação contra uma nova emissão oficial. As notas do motor explicam divergências conhecidas — valores nunca são ajustados para fechar com um PDF histórico.",
     filters:
       "Competência é obrigatória e sempre aponta para o último dia do mês. A consulta é automática: ao alterar qualquer filtro válido os resultados se atualizam sem botão — Armazém aguarda uma breve pausa na digitação. Filial é apenas filtro de dados — Matriz (01), Filial 02 ou Todas — sem alterar permissões. Visão restringe os tipos de produto; Armazém usa o código de origem do ERP.",
     indicators:
       "Valor histórico total e quantidade de itens calculados sobre todo o universo do filtro, não apenas a página exibida. Quando o snapshot do mês não existe na origem, o total não é exibido — ausência nunca aparece como zero.",
     status:
       "Disponibilidade da origem: «Disponível» = snapshot encontrado; «Parcial» = alguma filial solicitada não tem snapshot no mês; «Não encontrado» = o ERP não gravou fechamento de estoque para a competência; «Sem itens» = o snapshot existe mas os filtros não retornaram registros. Estados de acesso: «Acesso restrito» = seu usuário não possui a permissão do Portal; «Consulta ainda não habilitada» = a liberação do conjunto de dados está desativada no ambiente; «Integração de dados pendente» = a credencial técnica entre o Portal e a origem ainda aguarda autorização — acione o suporte.",
+    export:
+      "Exporta o relatório completo em CSV com o mesmo motor e escopo da tela — o cabeçalho registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como documento não oficial — ele não substitui a emissão MATR460 do ERP. A entrega à DRE continua pelo fluxo documental de pacotes.",
     summaryType:
       "Totais por tipo de produto (MP, PI, PA e demais) sobre o universo filtrado, com a participação percentual de cada grupo no valor histórico total.",
     summaryWarehouse:

@@ -10,6 +10,9 @@ from app.application.security.stock_inventory_scope import (
     SharedDatasetStockInventoryScopeResolver,
     StockInventoryScopeResolver,
 )
+from app.application.use_cases.financeiro_stock_inventory.export_stock_inventory_use_case import (
+    ExportStockInventoryUseCase,
+)
 from app.application.use_cases.financeiro_stock_inventory.get_stock_inventory_use_case import (
     GetStockInventoryUseCase,
 )
@@ -29,4 +32,11 @@ def build_stock_inventory_use_case() -> GetStockInventoryUseCase:
     return GetStockInventoryUseCase(
         repository=StockInventoryRepository(),
         scope_resolver=get_stock_inventory_scope_resolver(),
+    )
+
+
+def build_export_stock_inventory_use_case() -> ExportStockInventoryUseCase:
+    """Export composes the SAME query use case — one engine, one rule."""
+    return ExportStockInventoryUseCase(
+        get_use_case=build_stock_inventory_use_case()
     )
