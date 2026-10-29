@@ -375,6 +375,16 @@ Paridade parcial: doc 84 §3.
   ou variante custom) → `PENDING` E2.
 - SX6 vigente: `MV_LOCPROC='99'`, `MV_CQ='98'`, `MV_CQREJEI='50'`,
   `MV_ALMTERC` vazio.
+- **Addendum (P7-EVIDENCE-REUSE-003, 2026-10-28):** fonte
+  `04. Estoque/A460UNIT.prw` **localizada no acervo** — ponto de
+  entrada custom do MATR460 que, por produto, executa
+  `UPDATE MP7GDA SET VALOR += <workfile>.TOTAL` (parâmetros: código,
+  `MV_ALMTERC`, data de fechamento, workfile `MP7_*`). Confirma a
+  cadeia `MATR460→MP7_*→MP7GDA→A460UNIT` (doc 80 §35.B) como
+  `CODE_PRESENT`; o hook ajusta valor/custo, **não** implementa o
+  recorte de escopo — o mecanismo MP/PA/PI permanece `PENDING` (E2).
+  Fonte `matr460.prx` continua ausente. Decisão funcional do PO:
+  dois escopos `all_products`/`mp_pi_pa` (doc 118 DEC-12).
 
 ---
 

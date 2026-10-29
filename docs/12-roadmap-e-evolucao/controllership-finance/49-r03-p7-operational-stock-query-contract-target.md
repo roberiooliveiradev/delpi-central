@@ -131,3 +131,10 @@ Sintoma reportado: pagina `/apps/controllership-finance/closing/stock-inventory`
 - Contrato de paginacao confirmado em producao (`page`, `page_size`, `total_items`, `total_pages`, `has_next`, `has_previous`) — o MFE ja consome `total_items`.
 
 `S2S_SCOPE_FIX=EXECUTED`; `S2S_KEYCLOAK_PROVISIONING=DONE`; `FEATURE_FLAG=ON`; `E2E_SMOKE=PASS`.
+
+## 11. Atualização — decisão de escopos e fonte do hook (P7-EVIDENCE-REUSE-003, 28/10/2026)
+
+- **DEC-P7-SCOPE (PO — doc 118 DEC-12):** dois escopos oficiais do Registro de Inventário: `all_products` = completo, análise interna da Controladoria **e operando da conciliação tripla**; `mp_pi_pa` = recorte MP/PA/PI, entrega documental à Contabilidade/DRE. Seleção explícita e separada; totais nunca misturados.
+- Os identificadores `all_products`/`mp_pi_pa` deste contrato exploratório tornam-se **candidatos canônicos** do contrato P7 oficial (RQ-ANL-01, doc 118 §9.1) — mas o recorte oficial **não** se presume equivalente ao filtro exploratório `B1_TIPO IN ('MP','PA','PI')`: a folha 74 diverge do completo em MP (doc 80 §35); mecanismo oficial `PENDING` (E2; SX1 `MTR460` sem parâmetro de tipo).
+- **Fonte do hook localizada:** `docs/13-fontes-totvs-protheus/04. Estoque/A460UNIT.prw` — entry-point por produto que atualiza `MP7GDA.VALOR` a partir do workfile `MP7_*`. Confirma `A460UNIT` como customização de custo do MATR460; **não é o mecanismo de escopo**.
+- Fonte `matr460.prx`/RPO e parâmetros efetivos por emissão seguem `PENDING` (E2); G4/G5 do oficial permanecem PENDING. Nenhuma alteração de runtime nesta execução.

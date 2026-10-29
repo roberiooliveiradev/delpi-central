@@ -827,7 +827,7 @@ Entrega documental: `117-analysis-001-inventario-processo-real-joyce.md`. Sem al
 
 | RQ/AC | Critério | Estado |
 |---|---|---|
-| RQ-ANL-01 | Contrato canônico P7/MATR460 (competência/filial, excl. poder de terceiros, subtotais EM ESTOQUE/EM PROCESSO) — SB9 nunca servido como P7 | PROPOSED — gate ANALYSIS-002 |
+| RQ-ANL-01 | Contrato canônico P7/MATR460 (competência/filial, `report_scope=all_products|mp_pi_pa` — DEC-12, excl. poder de terceiros, subtotais EM ESTOQUE/EM PROCESSO, `as_of`/emissão) — SB9 nunca servido como P7 | DESIGN_READY_CONDITIONED (escopo completo) / PENDING_SOURCE (recorte oficial — E2) |
 | RQ-ANL-02 | Contratos H02/MATR989 e ENTRADAS_SAIDAS/MATR320; `UNAVAILABLE` nunca vira zero | PROPOSED — gate ANALYSIS-002 |
 | RQ-ANL-03 | Motor determinístico da conciliação tripla (E/S − P7 − H02, paridade exata R$0,00, versão de regra, evidências citáveis) | PROPOSED — gate ANALYSIS-003 |
 | RQ-ANL-04 | Drill-down de divergência por grupo de material (reproduzir localização MP da demo) | PROPOSED |
@@ -845,6 +845,7 @@ Entrega documental: [Documento 118 — base canônica do fechamento](./118-base-
 | RQ/AC | Estado revisado | Fundamento |
 |---|---|---|
 | RQ-ANL-01 | `PROPOSED → DESIGN_READY_CONDITIONED` | binding de totalização P7 PROVEN (doc 84 §3); condicionado a E2 (params/produtor/RPO); SB9 nunca servido como P7 |
+| RQ-ANL-01 | `escopo decidido — DEC-12` | PO (28/10): `all_products` = interno/conciliação, `mp_pi_pa` = entrega DRE; nomes canônicos preservados do exploratório (doc 49 §9); `A460UNIT.prw` localizado no acervo; recorte oficial segue `PENDING_SOURCE` (E2) — doc 118 §9.1 |
 | RQ-ANL-02 | `PROPOSED → DESIGN_READY` | DR-05/06 (MATR320 130/130) e DR-08 (MATR989) provadas; E5/E8 como pendências de fonte oficial |
 | RQ-ANL-03 | `PROPOSED → DESIGN_READY` | regra homologada (TÉO 06.2, doc 15.1); depende dos contratos de dados RQ-ANL-01/02 |
 | RQ-ANL-04 | `PROPOSED → DESIGN_READY` | decomposição por produto provada (doc 84 §4.3) |
