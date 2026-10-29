@@ -103,3 +103,20 @@ stale, currency, unit`. Cobertura: bindings ativos HG/ALI/NI/ZN/PB
 - Sophos/TechMaster: liberação de egress para `api.metalcharts.org`
   pendente — feed rodará `failed` até desbloqueio.
 - Horário real de publicação upstream: sem evidência; RUN_AT provisório.
+
+## Deploy e runtime (2026-10-30)
+
+- Commit `9b02b6eda9` em `main` (+ branch `fix/f43-post-put-tracking`).
+- `delpi-external-data-api` e `delpi-external-data-scheduler`
+  rebuildados no srv-api (192.168.1.237) via git pull + compose build.
+- Scheduler ativo: `feeds=metals-daily,metals-prices-daily`,
+  RUN_AT 20:30, intervalo 1 dia para o novo feed.
+- `.env` produção: `EXTERNAL_DATA_FEED_METALS_PRICES_DAILY_ENABLED=true`,
+  `EXTERNAL_DATA_SCHEDULER_FEEDS=metals-daily,metals-prices-daily`,
+  `EXTERNAL_DATA_SCHEDULER_METALS_PRICES_DAILY_INTERVAL_DAYS=1`.
+- Run manual `metals-prices-daily`: `failed`
+  `EXTERNAL_DATA_PROVIDER_UNAVAILABLE` (egress Sophos ainda bloqueado),
+  0 fetched / 0 weight cobrado — run registrado no ledger. Estado
+  correto e honesto até a liberação pela TechMaster.
+- `POSTCONDITION = PENDING` (permanent ingestion blocked by source
+  rights + egress pendente para coleta real).
