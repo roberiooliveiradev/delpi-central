@@ -86,3 +86,9 @@ Não copiar a personalidade de DAVI ou o humor de TÉO: o diferencial da SURI é
 8. Verificar commit/SHA, deploy e ChatGPT separadamente; `TEST_NOT_RUN` ou `INCONCLUSIVE` se não ocorrer.
 
 **Status da ficha hoje:** `PROPOSED_WITH_APPROVED_IDENTITY`. **Avatar aprovado como direção visual de prévia**, ainda não como asset oficial integrado. **MCP SURI:** implementação separada conforme `SURI-MCP-IMPLEMENTATION-PLAN.md`.
+
+## 5. Identificação do PNG de prévia gerado
+
+- **Nome do arquivo entregue nesta conversa:** `SURI-avatar-preview-v1.png`.
+- **SHA-256 dos bytes da imagem:** `c624d36e6c670d7b63455c81529141449e3f95113c37145c3ae5bd736566b3b0`.
+- **Estado de entrega:** arquivo disponível como anexo da conversa; **upload binário ao GitHub ainda PENDING** (o conector empregado nesta execução permite commits de texto, mas não consome diretamente os bytes do arquivo local). Não inferir que o path de asset TARGET já existe no repositório.
