@@ -35,9 +35,10 @@ type Props = {
   requestId: string;
   onBack: () => void;
   onEdit: () => void;
+  onOpenRequest?: (requestId: string) => void;
 };
 
-export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
+export function RequestDetailPage({ requestId, onBack, onEdit, onOpenRequest }: Props) {
   const [detail, setDetail] = useState<InvoicePostingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -426,6 +427,36 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                             .map((item) => formatDocument(item.document_number, item.series))
                             .join(", ")
                         : "Nenhuma"}
+                    </dd>
+                  </div>
+                ) : null}
+                {request.fiscal_model !== "cte" &&
+                (request.linked_cte_requests ?? []).length > 0 ? (
+                  <div className="lnf-dl__span" data-testid="linked-cte-requests">
+                    <dt>Frete (CT-e)</dt>
+                    <dd>
+                      <ul className="lnf-linked-cte-list">
+                        {(request.linked_cte_requests ?? []).map((cte) => (
+                          <li key={cte.id}>
+                            {onOpenRequest ? (
+                              <button
+                                type="button"
+                                className="lnf-link-button"
+                                onClick={() => onOpenRequest(cte.id)}
+                              >
+                                {formatDocument(cte.document_number, cte.series)}
+                              </button>
+                            ) : (
+                              formatDocument(cte.document_number, cte.series)
+                            )}
+                            <span className="lnf-muted lnf-cell-sub">
+                              {" "}
+                              · {statusLabel(cte.status)}
+                              {cte.supplier_name ? ` · ${cte.supplier_name}` : ""}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
                     </dd>
                   </div>
                 ) : null}

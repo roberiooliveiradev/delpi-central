@@ -19,7 +19,6 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     RECONCILIATION_ELIGIBLE_STATUSES,
     RECONCILIATION_LOCK_CLASS_ID,
     RECONCILIATION_LOCK_OBJECT_ID,
-    public_linked_invoices,
     resolve_list_status_filter,
 )
 from app.domain.services.lancamento_notas_fiscais.history_serialization import (
@@ -182,12 +181,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                             auto_commit=False,
                         )
                 self.commit()
-            if linked_purchase_order_rows:
-                return self._serialize_request_with_links(persisted)
-            out = _serialize_request(row)
-            out["linked_purchase_orders"] = []
-            out["linked_invoices"] = public_linked_invoices(linked_invoices)
-            return out
+            return self._serialize_request_with_links(persisted)
         except PluginsRepositoryError as exc:
             if _is_unique_violation(exc):
                 raise DuplicateFiscalKeyError() from exc
@@ -546,6 +540,16 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         out["linked_invoices"] = (
             self.list_linked_invoices_for_requests([rid]).get(rid, []) if rid else []
         )
+        match_key = str(out.get("document_match_key") or "")
+        series = str(out.get("series") or "")
+        out["linked_cte_requests"] = (
+            self.list_linked_cte_requests_for_documents([(match_key, series)]).get(
+                (match_key, series),
+                [],
+            )
+            if match_key
+            else []
+        )
         return out
 
     def _serialize_request_rows(self, rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -555,9 +559,19 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         ids = [str(r["id"]) for r in serialized]
         by_id = self.list_linked_purchase_orders_for_requests(ids)
         linked_invoices = self.list_linked_invoices_for_requests(ids)
+        doc_keys = [
+            (str(item.get("document_match_key") or ""), str(item.get("series") or ""))
+            for item in serialized
+        ]
+        linked_ctes = self.list_linked_cte_requests_for_documents(doc_keys)
         for item in serialized:
             item["linked_purchase_orders"] = by_id.get(str(item["id"]), [])
             item["linked_invoices"] = linked_invoices.get(str(item["id"]), [])
+            key = (
+                str(item.get("document_match_key") or ""),
+                str(item.get("series") or ""),
+            )
+            item["linked_cte_requests"] = linked_ctes.get(key, [])
         return serialized
 
     def list_history(self, request_id: str) -> list[dict[str, Any]]:
@@ -917,6 +931,67 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             )
         return out
 
+    def list_linked_cte_requests_for_documents(
+        self,
+        document_keys: Sequence[tuple[str, str]],
+    ) -> dict[tuple[str, str], list[dict[str, Any]]]:
+        """Lookup reverso: NF (match_key, series) → CT-e(s) que a vinculam."""
+        keys: list[tuple[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for raw_match, raw_series in document_keys:
+            match_key = str(raw_match or "").strip()
+            series = str(raw_series or "").strip().upper()
+            if not match_key:
+                continue
+            pair = (match_key, series)
+            if pair in seen:
+                continue
+            seen.add(pair)
+            keys.append(pair)
+        if not keys:
+            return {}
+
+        rows = self.fetch_all(
+            f"""
+            SELECT
+                li.document_match_key AS match_key,
+                li.series AS match_series,
+                r.id,
+                r.document_number,
+                r.series,
+                r.branch_code,
+                r.status,
+                r.amount,
+                r.supplier_name,
+                r.created_at
+              FROM {SCHEMA}.invoice_posting_linked_invoices li
+              JOIN {SCHEMA}.invoice_posting_requests r
+                ON r.id = li.request_id
+             WHERE r.fiscal_model = 'cte'
+               AND (li.document_match_key, li.series) IN %s
+             ORDER BY r.created_at DESC, r.id ASC
+            """,
+            (tuple(keys),),
+        )
+        out: dict[tuple[str, str], list[dict[str, Any]]] = {key: [] for key in keys}
+        for row in rows:
+            key = (str(row["match_key"]), str(row["match_series"]))
+            amount = row.get("amount")
+            if isinstance(amount, Decimal):
+                amount = float(amount)
+            out.setdefault(key, []).append(
+                {
+                    "id": str(row["id"]),
+                    "document_number": str(row["document_number"]),
+                    "series": str(row["series"]),
+                    "branch_code": str(row["branch_code"]),
+                    "status": str(row["status"]),
+                    "amount": amount,
+                    "supplier_name": str(row.get("supplier_name") or ""),
+                }
+            )
+        return out
+
     def _replace_linked_invoices(
         self,
         request_id: str,
@@ -1228,6 +1303,8 @@ def _serialize_request(row: dict[str, Any]) -> dict[str, Any]:
         out["linked_purchase_orders"] = []
     if "linked_invoices" not in out:
         out["linked_invoices"] = []
+    if "linked_cte_requests" not in out:
+        out["linked_cte_requests"] = []
     return out
 
 

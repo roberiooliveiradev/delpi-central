@@ -59,6 +59,17 @@ export type LinkedInvoice = {
   series: string;
 };
 
+/** CT-e(s) que vinculam esta NF (lookup reverso live). */
+export type LinkedCteRequest = {
+  id: string;
+  document_number: string;
+  series: string;
+  branch_code: string;
+  status: string;
+  amount: number;
+  supplier_name: string;
+};
+
 export type InvoicePostingRequest = {
   id: string;
   branch_code: string;
@@ -102,6 +113,7 @@ export type InvoicePostingRequest = {
   linked_po_linked_by_name: string | null;
   linked_purchase_orders: LinkedPurchaseOrderSnapshot[];
   linked_invoices?: LinkedInvoice[];
+  linked_cte_requests?: LinkedCteRequest[];
   created_at: string;
   updated_at: string;
 };

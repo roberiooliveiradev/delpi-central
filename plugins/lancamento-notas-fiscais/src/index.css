@@ -1214,6 +1214,38 @@
   font-size: 0.85rem;
 }
 
+.lnf-linked-cte-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.lnf-link-button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: var(--lnf-accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.lnf-link-button:hover,
+.lnf-link-button:focus-visible {
+  color: var(--lnf-blue-700);
+}
+
+.lnf-link-button:focus-visible {
+  outline: 2px solid var(--lnf-accent);
+  outline-offset: 2px;
+}
+
 .lnf-po-receipt {
   padding: 0;
   overflow: hidden;

@@ -211,6 +211,7 @@ class FakeRequests:
             "linked_po_linked_by_name": None,
             "linked_purchase_orders": [],
             "linked_invoices": deepcopy(linked_invoices or []),
+            "linked_cte_requests": [],
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -263,6 +264,34 @@ class FakeRequests:
         out["linked_purchase_orders"] = deepcopy(
             self.linked_pos.get(request_id, out.get("linked_purchase_orders") or [])
         )
+        match_key = str(out.get("document_match_key") or "")
+        series = str(out.get("series") or "").strip().upper()
+        linked_ctes: list[dict[str, Any]] = []
+        for other in self.rows.values():
+            if other.get("fiscal_model") != "cte":
+                continue
+            for link in other.get("linked_invoices") or []:
+                link_key = str(link.get("document_match_key") or "").strip()
+                if not link_key:
+                    digits = "".join(
+                        ch for ch in str(link.get("document_number") or "") if ch.isdigit()
+                    )
+                    link_key = digits.zfill(9) if digits else ""
+                link_series = str(link.get("series") or "").strip().upper()
+                if link_key == match_key and link_series == series:
+                    linked_ctes.append(
+                        {
+                            "id": other["id"],
+                            "document_number": other["document_number"],
+                            "series": other["series"],
+                            "branch_code": other["branch_code"],
+                            "status": other["status"],
+                            "amount": other["amount"],
+                            "supplier_name": other.get("supplier_name") or "",
+                        }
+                    )
+                    break
+        out["linked_cte_requests"] = linked_ctes
         return out
 
     def set_linked_purchase_orders(
@@ -610,6 +639,101 @@ def test_create_requires_fiscal_model() -> None:
         uc.execute(_payload(fiscal_model=None), _creator())
     with pytest.raises(InvoicePostingValidationError):
         uc.execute(_payload(fiscal_model="mdfe"), _creator())
+
+
+def test_nf_detail_shows_linked_cte_after_freight_is_registered() -> None:
+    """RQ-01: CT-e cadastrado depois da NF → detalhe da NF lista o frete."""
+    repo = FakeRequests()
+    create = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers())
+    get_uc = GetInvoicePostingRequestUseCase(repo)
+    nf = create.execute(
+        _payload(document="10", series="1", fiscal_model="nfe"),
+        _creator(),
+    )
+    before = get_uc.execute(nf["id"], _creator())
+    assert before["request"]["linked_cte_requests"] == []
+
+    cte = create.execute(
+        _payload(
+            fiscal_model="cte",
+            document="900",
+            series="1",
+            linked_invoices=[{"document": "10", "series": "1"}],
+        ),
+        _creator(),
+    )
+    after = get_uc.execute(nf["id"], _creator())
+    linked = after["request"]["linked_cte_requests"]
+    assert len(linked) == 1
+    assert linked[0]["id"] == cte["id"]
+    assert linked[0]["document_number"] == "000000900"
+    assert linked[0]["series"] == "1"
+
+
+def test_nf_detail_shows_linked_cte_when_nf_registered_after_freight() -> None:
+    """RQ-02: NF cadastrada depois do vínculo CT-e → detalhe já traz o frete."""
+    repo = FakeRequests()
+    create = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers())
+    get_uc = GetInvoicePostingRequestUseCase(repo)
+    cte = create.execute(
+        _payload(
+            fiscal_model="cte",
+            document="901",
+            series="1",
+            linked_invoices=[{"document": "20", "series": "2"}],
+        ),
+        _creator(),
+    )
+    nf = create.execute(
+        _payload(document="20", series="2", fiscal_model="nfe"),
+        _creator(),
+    )
+    detail = get_uc.execute(nf["id"], _creator())
+    linked = detail["request"]["linked_cte_requests"]
+    assert len(linked) == 1
+    assert linked[0]["id"] == cte["id"]
+    assert linked[0]["document_number"] == "000000901"
+
+
+def test_nf_detail_lists_multiple_linked_ctes_and_empty_without_match() -> None:
+    repo = FakeRequests()
+    create = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers())
+    get_uc = GetInvoicePostingRequestUseCase(repo)
+    cte_a = create.execute(
+        _payload(
+            fiscal_model="cte",
+            document="910",
+            series="1",
+            linked_invoices=[{"document": "30", "series": "1"}],
+        ),
+        _creator(),
+    )
+    cte_b = create.execute(
+        _payload(
+            fiscal_model="cte",
+            document="911",
+            series="1",
+            linked_invoices=[{"document": "30", "series": "1"}],
+        ),
+        _creator(),
+    )
+    nf = create.execute(
+        _payload(document="30", series="1", fiscal_model="nfse"),
+        _creator(),
+    )
+    orphan = create.execute(
+        _payload(document="99", series="9", fiscal_model="nfe"),
+        _creator(),
+    )
+    linked_ids = {
+        item["id"]
+        for item in get_uc.execute(nf["id"], _creator())["request"]["linked_cte_requests"]
+    }
+    assert linked_ids == {cte_a["id"], cte_b["id"]}
+    assert get_uc.execute(orphan["id"], _creator())["request"]["linked_cte_requests"] == []
+    cte_detail = get_uc.execute(cte_a["id"], _creator())
+    assert cte_detail["request"]["linked_invoices"]
+    assert cte_detail["request"]["linked_cte_requests"] == []
 
 
 def test_create_freight_invoice_links_several_notes_and_rejects_the_others() -> None:

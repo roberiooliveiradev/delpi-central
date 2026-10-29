@@ -200,6 +200,59 @@ describe("RequestDetailPage", () => {
     expect(screen.queryByRole("button", { name: "Iniciar atendimento" })).toBeNull();
   });
 
+  it("mostra Frete CT-e vinculado nos dados fiscais e abre o detalhe", async () => {
+    const withCte = detail(["view"]);
+    withCte.request.fiscal_model = "nfe";
+    withCte.request.document_number = "000017461";
+    withCte.request.document_match_key = "000017461";
+    withCte.request.series = "001";
+    withCte.request.linked_cte_requests = [
+      {
+        id: "cte-1",
+        document_number: "000000555",
+        series: "001",
+        branch_code: "01",
+        status: "pending",
+        amount: 320,
+        supplier_name: "Transportadora XYZ",
+      },
+    ];
+    const onOpenRequest = vi.fn();
+    vi.mocked(api.getRequest).mockResolvedValue(withCte);
+
+    render(
+      <RequestDetailPage
+        requestId="req-1"
+        onBack={() => undefined}
+        onEdit={() => undefined}
+        onOpenRequest={onOpenRequest}
+      />,
+    );
+    await waitFor(() => expect(screen.getByTestId("linked-cte-requests")).toBeTruthy());
+    expect(screen.getByText("Frete (CT-e)")).toBeTruthy();
+    expect(screen.getByText(/Transportadora XYZ/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /000000555/ }));
+    expect(onOpenRequest).toHaveBeenCalledWith("cte-1");
+  });
+
+  it("não mostra Frete CT-e quando não há vínculo", async () => {
+    const plain = detail(["view"]);
+    plain.request.fiscal_model = "nfe";
+    plain.request.linked_cte_requests = [];
+    vi.mocked(api.getRequest).mockResolvedValue(plain);
+
+    render(
+      <RequestDetailPage
+        requestId="req-1"
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    );
+    await waitFor(() => expect(screen.getByTestId("detail-page")).toBeTruthy());
+    expect(screen.queryByTestId("linked-cte-requests")).toBeNull();
+    expect(screen.queryByText("Frete (CT-e)")).toBeNull();
+  });
+
   it("mostra tempo até lançamento quando postada", async () => {
     const posted = detail(["view"]);
     posted.request.status = "posted";

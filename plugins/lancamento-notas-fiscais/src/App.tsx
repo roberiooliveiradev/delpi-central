@@ -118,6 +118,7 @@ export default function App({ getAccessToken, pathname }: AppProps) {
             requestId={view.requestId}
             onBack={() => goQueue()}
             onEdit={() => setView({ name: "edit", requestId: view.requestId })}
+            onOpenRequest={(id) => setView({ name: "detail", requestId: id })}
           />
         )}
       </div>

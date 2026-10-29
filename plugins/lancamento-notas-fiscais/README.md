@@ -41,7 +41,7 @@ Gateway → /apps/api-delpi/lancamento-notas-fiscais/*
 - Em comentários: digite `@` para buscar usuários do Minha Delpi; quem for marcado recebe notificação com link para a solicitação
 - Pendência «falta de pedido de compra»: ao amarrar PC, retoma automática + notificação (mesmo efeito do botão Retomar)
 - Atendimento: iniciar, bloquear (com responsável pela correção + notificação no sino), retomar, comentar, **Já lançada**, consultar e **amarrar Pedidos de compra** (grupos SC7 por PC + data de entrega, com seleção por item/`C7_ITEM`)
-- Detalhe em layout denso (resumo + dados fiscais/situação + histórico sticky)
+- Detalhe em layout denso (resumo + dados fiscais/situação + histórico sticky). Em NF-e/NFS-e, se existir CT-e de frete vinculado (mesmo nº+série), o bloco **Frete (CT-e)** aparece em Dados fiscais com link para o detalhe do frete — vale tanto quando o CT-e foi cadastrado depois quanto quando a NF já nasceu amarrada
 - Documento com **9 dígitos** (zeros à esquerda); valor aceita **vírgula** (formato BR)
 
 ---

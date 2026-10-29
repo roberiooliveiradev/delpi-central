@@ -156,13 +156,22 @@ O download de anexo da solicitação aceita `xml_original`, `xml_standard` e `da
 **Escopo:** quem só tem `create` (sem view/process/manage) vê **somente as próprias**.  
 Ordenação padrão da lista: `received_at DESC, created_at DESC` (mais recentes primeiro). A conciliação automática continua FIFO (`received_at ASC`).
 
-**`data`:** lista paginada (`items`, `total`, …).
+**`data`:** lista paginada (`items`, `total`, …). Cada item inclui `linked_invoices` (preenchido só em CT-e) e `linked_cte_requests` (lookup reverso: CT-e(s) que vinculam o nº+série desta solicitação).
 
 ---
 
 ## GET `/requests/{id}`
 
 **`data`:** solicitação + timeline (histórico/comentários) + `allowed_actions`.
+
+Campos de vínculo CT-e ↔ NF (leitura live, sem denormalização):
+
+| Campo | Quando | Conteúdo |
+|-------|--------|----------|
+| `linked_invoices` | pai CT-e | `[{ document_number, series }]` — NFs amarradas no cadastro do frete |
+| `linked_cte_requests` | NF-e / NFS-e (ou qualquer nº+série casado) | `[{ id, document_number, series, branch_code, status, amount, supplier_name }]` — CT-e(s) cujo vínculo aponta para esta nota |
+
+Match do reverso: `document_match_key` + `series` (mesmo critério de `invoice_posting_linked_invoices`; filial **não** entra). Índice: migration `V013`. Cobre CT-e cadastrado antes ou depois da NF.
 
 ---
 

@@ -167,6 +167,21 @@ def test_v009_migration_adds_cte_and_linked_invoices() -> None:
     assert "ON DELETE CASCADE" in sql
 
 
+def test_v013_migration_adds_reverse_lookup_index() -> None:
+    sql = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "plugins"
+        / "lancamento-notas-fiscais"
+        / "V013__linked_invoices_reverse_lookup.sql"
+    ).read_text(encoding="utf-8")
+    assert "ix_lnf_linked_invoices_document_series" in sql
+    assert "document_match_key" in sql
+    assert "series" in sql
+    assert "invoice_posting_linked_invoices" in sql
+    assert "DROP TABLE" not in sql.upper()
+
+
 def test_v010_migration_adds_fiscal_attachments_without_touching_danfe() -> None:
     sql = (
         Path(__file__).resolve().parents[1]
