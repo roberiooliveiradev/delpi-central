@@ -70,11 +70,16 @@ def build_davi_profile(doc: Mapping[str, Any] | None = None) -> CharacterProfile
             short_introduction=str(persona.get("identity") or ""),
         ),
         appearance=Appearance(
-            age_appearance="jovem",
-            hair="escuros",
-            face="expressão curiosa e simpática",
-            clothing="casual tecnológico, tons de azul",
-            visual_style="estética compatível com o universo visual DELPI",
+            age_appearance="23 anos",
+            hair="castanho escuro, volumoso e levemente bagunçado",
+            eyes="grandes e expressivos",
+            face="expressão simpática e curiosa",
+            glasses="óculos pretos de armação arredondada",
+            clothing="moletom rosa com cordões escuros",
+            visual_style="ilustração digital 3D estilizada",
+            avatar_reference=str(
+                (persona.get("appearance") or {}).get("reference") or ""
+            ),
             avatar_status=str(
                 (persona.get("appearance") or {}).get("status")
                 or "REFERENCE_NOT_OFFICIAL_AVATAR"

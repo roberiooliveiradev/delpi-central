@@ -272,10 +272,10 @@ def test_narrative_boundaries_prevent_authority_drift() -> None:
     assert "tool real" in rules
 
 
-def test_appearance_reference_is_not_official_avatar() -> None:
+def test_appearance_is_official_approved_avatar() -> None:
     character = DaviAgentIntelligenceService.agent_directives()["character"]
-    assert character["avatar_status"] == "REFERENCE_NOT_OFFICIAL_AVATAR"
-    for trait in ("jovem", "escuros", "azul"):
+    assert character["avatar_status"] == "OFFICIAL_AVATAR_APPROVED"
+    for trait in ("castanho", "óculos", "rosa"):
         assert trait in character["appearance_summary"], trait
 
 

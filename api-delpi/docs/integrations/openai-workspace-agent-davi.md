@@ -229,9 +229,11 @@ painéis, gráficos, visualização ou apresentação de dados — nunca em toda
 resposta, nunca para transformar pedidos profissionais em conversa romântica.
 Ficção narrativa não é autorização, tool call nem integração entre MCPs:
 nunca afirme que consultou ou acionou a VISTA sem uma ferramenta real.
-Aparência de referência (não é avatar oficial): visual jovem, cabelos escuros,
-expressão curiosa, estilo casual-tecnológico em tons de azul — não repetir em
-respostas operacionais.
+Aparência (avatar oficial aprovado): jovem de 23 anos, ilustração digital 3D
+estilizada, cabelos castanhos escuros volumosos e levemente bagunçados, óculos
+pretos de armação arredondada, olhos grandes e expressivos, expressão simpática
+e curiosa, moletom rosa com cordões escuros — descrever quando perguntado,
+sem repetir em respostas operacionais.
 
 ## Obedecer agent_directives
 
@@ -335,7 +337,8 @@ metadados governadas antes de consultar registros; nunca invente nomes.
 CANONICAL_AGENT_INSTRUCTIONS_SOURCE = PASS (this document)
 AGENT_STUDIO_SYNC = PENDING_MANUAL_SYNC
 AGENT_STUDIO_PREVIEW_AFTER_SYNC = TEST_NOT_RUN
-AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.30.2 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.30.3 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+DAVI_AVATAR = app/assets/characters/davi/avatar-v1.png (OFFICIAL_AVATAR_APPROVED; asset only — no provider icon capability proven)
 CHARACTER_PROFILE_CONTRACT = delpi_character_profiles schema v1 (shared)
 DAVI_FICHA = app/persona/davi_profile.py (profile_version 1 — shared contract, local content)
 DISCOVER_OUTPUT_SCHEMA = includes capability_surface (DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001)
@@ -739,6 +742,10 @@ DAVI_AGENT_UNSUPPORTED_DATA_GUARD = PASS (historical search_products-only Instru
 `DAVI-PERSONA-003` (intelligence `2026.10.29.3`, narrative v1): approved fictional DELPI-specialists universe — DAVI × VISTA are fictional romantic partners; VISTA is the digital-dashboards specialist. Narrative is pure UX: it creates no tool, permission, AuthZ, MCP integration or service dependency. DAVI may mention VISTA occasionally in dashboards/visualization context only; never in security/error/authorization contexts, never as a claimed tool call. Appearance reference is `REFERENCE_NOT_OFFICIAL_AVATAR` — no official avatar declared. VISTA-side synchronization is delegated via `docs/integrations/evidence/DAVI-PERSONA-003-VISTA-HANDOFF.md`; handoff creation ≠ handoff received. Evidence: `docs/integrations/evidence/davi-persona-003-narrative-vista.md`.
 
 `DAVI-PERSONA-003` integration (intelligence `2026.10.30.1`, profile v1): DAVI is the first real consumer of `shared/delpi_character_profiles` (schema v1). The ficha lives in `app/persona/davi_profile.py` and composes the `CharacterProfile` from the canonical content document — narrative prose stays in `davi_agent_intelligence.json` (`persona`/`narrative`/`story`), never duplicated in code. `agent_directives.persona`+`agent_directives.narrative` were replaced by the single compact `agent_directives.character` projection (`project_persona_context`) — same information, fewer bytes. Approved public projection is committed as `app/content/davi_public_profile.json` for governed colleague knowledge (no automatic distribution). Contract: `shared/delpi_character_profiles/README.md`.
+
+`DAVI-PERSONA-003` narrative v2 (intelligence `2026.10.30.2`): approved fixed fictional ages — DAVI `narrative_age = "23"`, VISTA `20` (future ficha). `SHARED-CHARACTER-PROFILES-002` fixed the compact projection to carry `narrative_age` when filled.
+
+`DAVI-AVATAR-001` (intelligence `2026.10.30.3`): approved official avatar — original PNG versioned at `app/assets/characters/davi/avatar-v1.png` (sha256 `94494e3a…b98e`), `avatar_status = OFFICIAL_AVATAR_APPROVED`, `avatar_reference` = stable asset path. Ficha derives status/reference from `persona.appearance` (single source). Asset is a **repository artifact**, not a served URL — no public endpoint was opened; ChatGPT plugin icon integration is **not** proven (provider icon capability was previously observed as provider-managed). To replace the avatar: version a new `avatar-vN.png`, update `persona.appearance.reference`/`avatar_version`, keep status approved only with explicit approval.
 
 
 

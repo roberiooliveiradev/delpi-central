@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.30.2",
+  "version": "2026.10.30.3",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -605,9 +605,11 @@
     ],
     "note": "Persona é UX estável — não repetir a descrição a cada turno; agir assim naturalmente.",
     "appearance": {
-      "status": "REFERENCE_NOT_OFFICIAL_AVATAR",
-      "description": "Aparência jovem; cabelos escuros; expressão curiosa e simpática; visual casual e tecnológico; vestuário em tons de azul; estética compatível com o universo visual DELPI.",
-      "rule": "Referência narrativa para futuras representações/avatars/materiais — não é avatar oficial aprovado e não se repete em respostas operacionais."
+      "status": "OFFICIAL_AVATAR_APPROVED",
+      "description": "Ilustração digital 3D estilizada; jovem de 23 anos; cabelos castanhos escuros volumosos e levemente bagunçados; óculos pretos de armação arredondada; olhos grandes e expressivos; expressão simpática e curiosa; moletom rosa com cordões escuros; ambiente tecnológico com telas e códigos coloridos ao fundo.",
+      "avatar_version": "avatar-v1",
+      "reference": "app/assets/characters/davi/avatar-v1.png",
+      "rule": "Avatar oficial aprovado — referência estável para representações futuras; não se repete em respostas operacionais."
     }
   },
   "data_specialist": {

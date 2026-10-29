@@ -7,6 +7,7 @@ F conversational readiness. Ficha lives in api-delpi; structure lives in
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -94,9 +95,22 @@ def test_no_invented_demographics_or_appearance() -> None:
     # from the real calendar; birthdate stays undefined.
     assert p.identity.narrative_age == "23"
     assert p.appearance.height_description == ""
-    assert p.appearance.eyes == ""
-    assert p.appearance.avatar_status == "REFERENCE_NOT_OFFICIAL_AVATAR"
-    assert not p.appearance.avatar_reference
+    assert p.appearance.avatar_status == "OFFICIAL_AVATAR_APPROVED"
+    assert p.appearance.avatar_reference.endswith(
+        "app/assets/characters/davi/avatar-v1.png"
+    )
+
+
+def test_official_avatar_asset_exists_and_is_intact() -> None:
+    """DAVI-AVATAR-001 — original approved image is versioned and unmodified."""
+    asset = (
+        Path(__file__).resolve().parents[1]
+        / "app/assets/characters/davi/avatar-v1.png"
+    )
+    assert asset.is_file()
+    assert hashlib.sha256(asset.read_bytes()).hexdigest() == (
+        "94494e3a0c5ccc4672f4cb765e7e23785d48001f2a66514a86f4d356f281b98e"
+    )
 
 
 def test_communication_and_conduct() -> None:

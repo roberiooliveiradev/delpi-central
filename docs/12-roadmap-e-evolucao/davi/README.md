@@ -227,8 +227,11 @@ SHA `7f2bfab647`; promoted counts recomputed at
 ```text
 allowlist              = v30
 DAVI_ELIGIBLE_READ     = 94 governed ops (baseline; live index 97)
-agent intelligence     = 2026.10.30.2 (narrativa v2: idades aprovadas —
-                         DAVI 23, VISTA 20, fixas/fictícias sem nascimento;
+agent intelligence     = 2026.10.30.3 (DAVI-AVATAR-001: avatar oficial
+                         aprovado — app/assets/characters/davi/avatar-v1.png,
+                         OFFICIAL_AVATAR_APPROVED; narrativa v2: idades
+                         aprovadas — DAVI 23, VISTA 20, fixas/fictícias sem
+                         nascimento;
                          ficha CharacterProfile compartilhada:
                          app/persona/davi_profile.py profile v1 sobre
                          delpi_character_profiles schema v1 — projeção
