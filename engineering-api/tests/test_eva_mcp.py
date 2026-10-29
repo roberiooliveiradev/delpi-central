@@ -105,8 +105,17 @@ def test_contract_freeze() -> None:
         "get_catalog",
         "get_engineering_home",
         "get_engineering_overview",
+        "search_nonconformities",
+        "get_nonconformity",
+        "get_nonconformity_history",
+        "get_nonconformity_indicators",
+        "get_nonconformity_tags",
+        "get_nonconformity_context",
+        "prepare_nonconformity_mutation",
     }
-    assert all(v in {"DISCOVERY", "READ"} for v in TOOL_CLASS.values())
+    assert all(
+        v in {"DISCOVERY", "READ", "PREPARE"} for v in TOOL_CLASS.values()
+    )
 
 
 def test_scopes_contract() -> None:
@@ -418,3 +427,177 @@ def test_overview_upstream_error_is_honest(monkeypatch) -> None:
     result = asyncio.run(bridge.tool_get_engineering_overview())
     assert result.is_error
     assert result.structured_content["status_code"] == 502
+
+
+# --- NC READ tools (E-NC-01..05, E-NC-11) ----------------------------------
+
+
+def _fake_use_case(result=None, error=None):
+    captured = {}
+
+    class _Fake:
+        async def execute(self, *args, **kwargs):
+            captured["args"] = args
+            captured["kwargs"] = kwargs
+            if error is not None:
+                raise error
+            return result if result is not None else {"items": []}
+
+    _Fake.captured = captured
+    return _Fake()
+
+
+def test_nc_search_delegates_filters(monkeypatch) -> None:
+    _set_context(_human_user())
+    fake = _fake_use_case({"items": [], "total": 0})
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_list_nonconformities_use_case",
+        lambda: fake,
+    )
+    result = asyncio.run(
+        bridge.tool_search_nonconformities(
+            status="open", sale_number="004101", page=2, page_size=10
+        )
+    )
+    assert not result.is_error
+    kwargs = fake.captured["kwargs"]
+    assert kwargs["status"] == "open"
+    assert kwargs["sale_number"] == "004101"
+    assert kwargs["page"] == 2
+
+
+def test_nc_tools_forbidden_without_permission() -> None:
+    _set_context(_human_user(permissions=()))
+    for call in (
+        lambda: bridge.tool_search_nonconformities(),
+        lambda: bridge.tool_get_nonconformity(record_id="x"),
+        lambda: bridge.tool_get_nonconformity_history(record_id="x"),
+        lambda: bridge.tool_get_nonconformity_indicators(),
+        lambda: bridge.tool_get_nonconformity_tags(),
+        lambda: bridge.tool_get_nonconformity_context(record_id="x"),
+    ):
+        result = asyncio.run(call())
+        assert result.is_error
+        assert result.structured_content["status_code"] == 403
+
+
+def test_nc_tools_reject_service_principal() -> None:
+    _set_context(_human_user(principal_type="service"), "Bearer svc")
+    result = asyncio.run(bridge.tool_search_nonconformities())
+    assert result.is_error
+    assert result.structured_content["status_code"] == 403
+
+
+def test_nc_tools_unauthenticated_without_context() -> None:
+    result = asyncio.run(bridge.tool_get_nonconformity_tags())
+    assert result.is_error
+    assert result.structured_content["status_code"] == 401
+
+
+def test_nc_get_maps_not_found(monkeypatch) -> None:
+    from engineering_app.domain.nonconformity.errors import NcNotFoundError
+
+    _set_context(_human_user())
+    fake = _fake_use_case(error=NcNotFoundError("abc"))
+    monkeypatch.setattr(
+        bridge.nc_composer, "build_get_nonconformity_use_case", lambda: fake
+    )
+    result = asyncio.run(bridge.tool_get_nonconformity(record_id="abc"))
+    assert result.is_error
+    assert result.structured_content["status_code"] == 404
+
+
+def test_nc_search_maps_unavailable(monkeypatch) -> None:
+    from engineering_app.domain.nonconformity.errors import NcRepositoryError
+
+    _set_context(_human_user())
+    fake = _fake_use_case(error=NcRepositoryError("db down"))
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_list_nonconformities_use_case",
+        lambda: fake,
+    )
+    result = asyncio.run(bridge.tool_search_nonconformities())
+    assert result.is_error
+    assert result.structured_content["status_code"] == 503
+
+
+def test_nc_indicators_propagates_human_token(monkeypatch) -> None:
+    _set_context(_human_user())
+    fake = _fake_use_case({"current_days_without_nc": 0})
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_get_nonconformity_indicators_use_case",
+        lambda: fake,
+    )
+    result = asyncio.run(bridge.tool_get_nonconformity_indicators())
+    assert not result.is_error
+    assert fake.captured["kwargs"]["access_token"] == "human-token"
+
+
+def test_nc_context_propagates_source_context(monkeypatch) -> None:
+    _set_context(_human_user())
+    fake = _fake_use_case({"ov_status": "available"})
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_get_nonconformity_context_use_case",
+        lambda: fake,
+    )
+    result = asyncio.run(bridge.tool_get_nonconformity_context(record_id="r1"))
+    assert not result.is_error
+    ctx = fake.captured["args"][0]
+    assert ctx.access_token == "human-token"
+    assert fake.captured["kwargs"]["record_id"] == "r1"
+
+
+def test_nc_history_wraps_items(monkeypatch) -> None:
+    _set_context(_human_user())
+    fake = _fake_use_case([{"event_type": "created"}])
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_list_nonconformity_history_use_case",
+        lambda: fake,
+    )
+    result = asyncio.run(bridge.tool_get_nonconformity_history(record_id="r1"))
+    assert not result.is_error
+    assert result.structured_content["data"]["items"][0]["event_type"] == "created"
+
+
+def test_nc_prepare_is_side_effect_free(monkeypatch) -> None:
+    _set_context(_human_user())
+    fake = _fake_use_case(
+        {"valid": True, "side_effects": "none", "projected_changes": {}}
+    )
+    monkeypatch.setattr(
+        bridge.nc_composer,
+        "build_prepare_nonconformity_mutation_use_case",
+        lambda: fake,
+    )
+    result = asyncio.run(
+        bridge.tool_prepare_nonconformity_mutation(
+            operation="create",
+            payload={"status": "open", "defect_description": "x"},
+        )
+    )
+    assert not result.is_error
+    assert fake.captured["kwargs"]["operation"] == "create"
+    assert result.structured_content["data"]["side_effects"] == "none"
+
+
+def test_nc_prepare_forbidden_without_permission() -> None:
+    _set_context(_human_user(permissions=()))
+    result = asyncio.run(
+        bridge.tool_prepare_nonconformity_mutation(
+            operation="create", payload={}
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["status_code"] == 403
+
+
+def test_prepare_tool_annotations_readonly() -> None:
+    tools = _wire_tools()
+    prepare = next(t for t in tools if t["name"] == "prepare_nonconformity_mutation")
+    assert prepare["annotations"]["readOnlyHint"] is True
+    assert prepare["annotations"]["destructiveHint"] is False

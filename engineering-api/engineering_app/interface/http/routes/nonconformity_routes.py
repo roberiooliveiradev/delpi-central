@@ -35,6 +35,7 @@ from engineering_app.composition.nc_composer import (
     build_list_nonconformities_use_case,
     build_list_nonconformity_history_use_case,
     build_list_problem_tags_use_case,
+    build_prepare_nonconformity_mutation_use_case,
     build_update_nonconformity_use_case,
 )
 from engineering_app.core.responses import fail, ok
@@ -550,4 +551,48 @@ async def import_nonconformities(body: ImportNonconformitiesBody = Body(...)):
         result.to_dict(),
         message="Importação de não conformidades concluída.",
         operation_id="import_nonconformities",
+    )
+
+
+class PrepareNonconformityBody(BaseModel):
+    """Body PREPARE — validação + diff projetado, SEM efeitos colaterais."""
+
+    operation: str = Field(..., pattern="^(create|update)$")
+    record_id: str | None = Field(default=None)
+    payload: dict = Field(default_factory=dict)
+
+
+@router.post(
+    "/v1/nonconformities/prepare",
+    operation_id="prepare_nonconformity_mutation",
+    summary="E-NC-12 — PREPARE de mutação (validação + diff, sem gravação)",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def prepare_nonconformity_mutation(
+    body: PrepareNonconformityBody = Body(...),
+):
+    user, denied = _require_human_principal("prepare_nonconformity_mutation")
+    if denied is not None:
+        return denied
+    if body.record_id:
+        try:
+            UUID(body.record_id)
+        except ValueError:
+            return fail(
+                "record_id inválido (UUID esperado).",
+                400,
+                operation_id="prepare_nonconformity_mutation",
+            )
+    try:
+        result = await build_prepare_nonconformity_mutation_use_case().execute(
+            operation=body.operation,
+            payload=body.payload,
+            record_id=body.record_id,
+        )
+    except Exception as exc:
+        return _nc_error_response(exc, "prepare_nonconformity_mutation")
+    return ok(
+        result,
+        message="Mutação analisada — nada foi gravado.",
+        operation_id="prepare_nonconformity_mutation",
     )

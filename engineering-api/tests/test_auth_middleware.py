@@ -309,6 +309,7 @@ def test_probe_route_not_in_production_openapi(client):
         "/v1/nonconformities/problem-tags",
         "/v1/nonconformities/export",
         "/v1/nonconformities/import",
+        "/v1/nonconformities/prepare",
     }
 
 

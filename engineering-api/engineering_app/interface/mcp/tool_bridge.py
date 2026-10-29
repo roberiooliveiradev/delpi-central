@@ -30,6 +30,12 @@ from engineering_app.application.eva.agent_intelligence_service import (
     EvaAgentIntelligenceService,
 )
 from engineering_app.application.ports.home_sources import HomeSourceContext
+from engineering_app.composition import nc_composer
+from engineering_app.domain.nonconformity.errors import (
+    NcNotFoundError,
+    NcRepositoryError,
+    NcValidationError,
+)
 from engineering_app.application.ports.overview_sources import OverviewQuery
 from engineering_app.composition.home_composer import (
     build_get_engineering_home_use_case,
@@ -91,6 +97,131 @@ _TOOL_CONTRACT: dict[str, dict[str, Any]] = {
         "read_only": True,
         "required_permission": ENGINEERING_ACCESS,
         "source": "engineering-api GET /v1/overview",
+    },
+    "search_nonconformities": {
+        "title": "Search nonconformities",
+        "description": (
+            "Paginated LMP nonconformity list with filters (status, OV, "
+            "LMP number, customer, product code, problem tag, occurrence "
+            "period) and whitelisted sorting."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string", "enum": ["open", "in_progress", "done"]},
+                "sale_number": {"type": "string"},
+                "lmp_number": {"type": "string"},
+                "customer_name": {"type": "string"},
+                "product_code": {"type": "string"},
+                "problem_tag": {"type": "string"},
+                "date_start": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "date_end": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+                "sort_by": {"type": "string"},
+                "sort_dir": {"type": "string", "enum": ["asc", "desc"]},
+                "page": {"type": "integer", "minimum": 1},
+                "page_size": {"type": "integer", "minimum": 1, "maximum": 200},
+            },
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/nonconformities",
+    },
+    "get_nonconformity": {
+        "title": "Get nonconformity",
+        "description": "Single nonconformity detail by UUID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "record_id": {"type": "string", "format": "uuid"},
+            },
+            "required": ["record_id"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/nonconformities/{record_id}",
+    },
+    "get_nonconformity_history": {
+        "title": "Get nonconformity history",
+        "description": (
+            "Append-only audit events (created/updated diffs with actor) "
+            "of a nonconformity, newest first."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "record_id": {"type": "string", "format": "uuid"},
+            },
+            "required": ["record_id"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/nonconformities/{record_id}/history",
+    },
+    "get_nonconformity_indicators": {
+        "title": "Get nonconformity indicators",
+        "description": (
+            "Days-without-NC streak (current and record) computed from "
+            "official occurrence dates, plus counters and anchor "
+            "degradation flags."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/nonconformities/indicators",
+    },
+    "get_nonconformity_tags": {
+        "title": "Get nonconformity tags",
+        "description": "Shared problem-tag catalog with usage counts.",
+        "input_schema": {"type": "object", "properties": {}},
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/nonconformities/problem-tags",
+    },
+    "get_nonconformity_context": {
+        "title": "Get nonconformity context",
+        "description": (
+            "Functional context of a nonconformity: official OV fact "
+            "(TOTVS via api-delpi facts) plus product structures/BOM of "
+            "linked products, with per-source honest availability."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "record_id": {"type": "string", "format": "uuid"},
+            },
+            "required": ["record_id"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api GET /v1/nonconformities/{record_id}/context",
+    },
+    "prepare_nonconformity_mutation": {
+        "title": "Prepare nonconformity mutation",
+        "description": (
+            "PREPARE-only analysis of a candidate create/update: returns "
+            "normalized payload, validation errors and the projected "
+            "history diff — with ZERO side effects. Applying requires "
+            "separate human confirmation through the authorized channel."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "operation": {"type": "string", "enum": ["create", "update"]},
+                "record_id": {"type": "string", "format": "uuid"},
+                "payload": {"type": "object"},
+            },
+            "required": ["operation", "payload"],
+        },
+        "output_schema": {"type": "object"},
+        "read_only": True,
+        "required_permission": ENGINEERING_ACCESS,
+        "source": "engineering-api POST /v1/nonconformities/prepare",
     },
 }
 
@@ -154,6 +285,27 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
             status_code=403,
             error_code="forbidden",
             data={"error_kind": "authz"},
+        )
+    if isinstance(exc, NcNotFoundError):
+        return _error_result(
+            "Nonconformity not found.",
+            status_code=404,
+            error_code="not_found",
+            data={"error_kind": "not_found"},
+        )
+    if isinstance(exc, NcValidationError):
+        return _error_result(
+            str(exc),
+            status_code=400,
+            error_code="validation",
+            data={"error_kind": "validation", "fields": exc.fields},
+        )
+    if isinstance(exc, NcRepositoryError):
+        return _error_result(
+            "Nonconformity source unavailable.",
+            status_code=503,
+            error_code="unavailable",
+            data={"error_kind": "unavailable"},
         )
     if isinstance(exc, TimeoutError):
         return _error_result(
@@ -258,6 +410,10 @@ def tool_get_catalog() -> CallToolResult:
             "tool_class_legend": {
                 "DISCOVERY": "Discovery only — never business data.",
                 "READ": "Read-only official data — never persists.",
+                "PREPARE": (
+                    "Validation + projected diff only — zero side "
+                    "effects; requires human confirmation to apply."
+                ),
             },
             "write_tools": [],
             "agent_directives": (
@@ -352,6 +508,122 @@ async def tool_get_engineering_overview(
         return _ok_result(
             overview.model_dump(),
             "Visão geral oficial de Engenharia.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+# --- READ tools: nonconformities (E-NC-01..05, E-NC-11) -------------------
+
+
+async def tool_search_nonconformities(
+    *,
+    status: str | None = None,
+    sale_number: str | None = None,
+    lmp_number: str | None = None,
+    customer_name: str | None = None,
+    product_code: str | None = None,
+    problem_tag: str | None = None,
+    date_start: str | None = None,
+    date_end: str | None = None,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    try:
+        _require_engineering_human()
+        result = await nc_composer.build_list_nonconformities_use_case().execute(
+            status=status,
+            sale_number=sale_number,
+            lmp_number=lmp_number,
+            customer_name=customer_name,
+            product_code=product_code,
+            problem_tag=problem_tag,
+            date_start=date_start,
+            date_end=date_end,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+            page=page,
+            page_size=page_size,
+        )
+        return _ok_result(result, "Não conformidades listadas.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_nonconformity(*, record_id: str) -> CallToolResult:
+    try:
+        _require_engineering_human()
+        record = await nc_composer.build_get_nonconformity_use_case().execute(
+            record_id
+        )
+        return _ok_result(record, "Detalhe da não conformidade.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_nonconformity_history(*, record_id: str) -> CallToolResult:
+    try:
+        _require_engineering_human()
+        events = await nc_composer.build_list_nonconformity_history_use_case().execute(
+            record_id
+        )
+        return _ok_result({"items": events}, "Histórico da não conformidade.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_nonconformity_indicators() -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        ctx = _source_context(context)
+        indicators = await nc_composer.build_get_nonconformity_indicators_use_case().execute(
+            access_token=ctx.access_token
+        )
+        return _ok_result(indicators, "Indicadores de dias sem NC.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_nonconformity_tags() -> CallToolResult:
+    try:
+        _require_engineering_human()
+        tags = await nc_composer.build_list_problem_tags_use_case().execute()
+        return _ok_result({"items": tags}, "Catálogo de tags de problema.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_get_nonconformity_context(*, record_id: str) -> CallToolResult:
+    try:
+        context = _require_engineering_human()
+        ctx = _source_context(context)
+        payload = await nc_composer.build_get_nonconformity_context_use_case().execute(
+            ctx, record_id=record_id
+        )
+        return _ok_result(payload, "Contexto OV/produtos da não conformidade.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+async def tool_prepare_nonconformity_mutation(
+    *,
+    operation: str,
+    payload: dict,
+    record_id: str | None = None,
+) -> CallToolResult:
+    """EVA PREPARE — validation + projected diff, ZERO side effects."""
+    try:
+        _require_engineering_human()
+        result = await nc_composer.build_prepare_nonconformity_mutation_use_case().execute(
+            operation=operation,
+            payload=payload or {},
+            record_id=record_id,
+        )
+        return _ok_result(
+            result,
+            "Mutação analisada — nada foi gravado (PREPARE).",
         )
     except Exception as exc:
         return handle_tool_error(exc)

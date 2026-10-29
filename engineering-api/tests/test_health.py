@@ -52,6 +52,7 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/nonconformities/problem-tags",
         "/v1/nonconformities/export",
         "/v1/nonconformities/import",
+        "/v1/nonconformities/prepare",
     }
     assert set(spec["paths"].keys()) == allowed
 

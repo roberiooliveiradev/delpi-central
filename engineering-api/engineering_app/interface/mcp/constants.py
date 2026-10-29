@@ -25,6 +25,13 @@ TOOL_CLASS: dict[str, str] = {
     "get_catalog": "DISCOVERY",
     "get_engineering_home": "READ",
     "get_engineering_overview": "READ",
+    "search_nonconformities": "READ",
+    "get_nonconformity": "READ",
+    "get_nonconformity_history": "READ",
+    "get_nonconformity_indicators": "READ",
+    "get_nonconformity_tags": "READ",
+    "get_nonconformity_context": "READ",
+    "prepare_nonconformity_mutation": "PREPARE",
 }
 
 MCP_TOOL_NAMES: tuple[str, ...] = tuple(TOOL_CLASS.keys())
