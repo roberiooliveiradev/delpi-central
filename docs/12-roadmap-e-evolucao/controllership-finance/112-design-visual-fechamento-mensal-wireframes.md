@@ -2302,3 +2302,9 @@ Semântica implementada que diferencia **disponibilidade operacional** de **eleg
 | `Conferência não realizada` | P3/matriz 404 (competência não aberta) | Atividade ainda não executada |
 
 Regras: a autoridade sobre o estado da conciliação é o backend — o MFE apenas apresenta `source_state`, `fetched_at` e o estado operacional já contratados; células monetárias permanecem `—` enquanto não houver operando elegível (nunca divergência zero fabricada). Item P7 pendente oferece «Abrir relatório» para a página contextual. **Implementado** (`MonthlyReportsPanel` + `P3ReconciliationSection`; smoke 14/14 — doc 119 §11.7).
+
+## REWORK-012 — qualidade documental e hierarquia operacional (29/10/2026)
+
+- **Página P7 (`stock-inventory`):** a ordem visual prioriza a análise operacional — filtros → disponibilidade → totalizadores → resumos → detalhamento → exportações; a conciliação governada ficou ao final em `<details class="cf-disclosure">` recolhível «Conciliação formal do fechamento — P3» (abre sozinha quando já existe fonte registrada; fechada, mostra mensagem de dependência em vez de tabela financeira vazia).
+- **Matriz R01–R15:** colunas separadas para disponibilidade da consulta (`source_kind`) e paridade oficial (`official_parity`) — a mesma tabela compartilhada (`ReportsMatrixTable`) serve o painel e o disclosure técnico do relatório mensal; dimensão secundária/técnica preservada.
+- **PDFs compartilhados (R05/P7/R08):** A4 paisagem, hierarquia título → contexto → totais → resumos → detalhe, `Página X de Y`, aviso de paridade pendente no rodapé, SB9 referência visualmente separado do total composto.

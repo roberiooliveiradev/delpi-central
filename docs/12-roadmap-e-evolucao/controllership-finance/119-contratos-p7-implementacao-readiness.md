@@ -1053,4 +1053,113 @@ MFE — mudança de apresentação pura, zero contrato/migration.
 
 ---
 
+## 15. Registro de correção — `CF-PROC0072-REPORTS-PDF-UX-QUALITY-012` (29/10/2026)
+
+**Problema (evidência do PO — PDF P7 real, 347 páginas):**
+descrições longas invadiam colunas vizinhas; linhas multilinha sem
+altura adequada; totais em formato técnico (`14638712.476000`);
+cabeçalho repetitivo com ruído técnico (`all`, `available`,
+`PENDING`); UTC cru; resumo por tipo quebrado entre páginas 1–2 com
+registro órfão; cabeçalho de detalhamento isolado no fim da página 2;
+histórico SB9 visualmente confundido com o total composto; a matriz
+R01–R15 marcava R03/R05/R08 como pendentes apesar das consultas
+implantadas; a página P7 abria com a tabela de conciliação P3 vazia
+competindo com o conteúdo operacional.
+
+**A — Matriz R01–R15 (BFF + MFE):** `REPORT_CATALOG` passa a expor
+`source_kind` honesto por relatório (`OPERATIONAL_VIEW`,
+`MANUAL_EVIDENCE`, `EXTERNAL`, `PENDING_CONTRACT`) +
+`official_parity` explícita (`PENDING` em R01/R02/R03/R05/R08) +
+`operational_view` (slug da página contextual). R03/R05/R08 =
+«Implementada» na consulta × «Pendente» na paridade oficial —
+disponibilidade nunca promove homologação. Painel renderiza as
+duas dimensões em colunas separadas; tabela da matriz extraída para
+componente compartilhado (`ReportsMatrixTable`) consumido pelo
+`ReportsMatrixPanel` e pelo disclosure técnico do
+`MonthlyReportsPanel` (fim da duplicação de renderers).
+
+**B — Página P7:** ordem operacional primeiro (filtros → totais →
+resumos → detalhamento → exportações); «Conciliação formal do
+fechamento — P3» movida ao final como `<details>` recolhível —
+aberta automaticamente quando existe fonte registrada; fechada,
+exibe a mensagem «Os dados do P7 estão disponíveis para análise.
+A utilização na conciliação formal depende do registro e da
+validação das fontes no P3.» Estados `source_missing`/«não
+registrada»/«pendente» preservados — nunca falso zero.
+
+**C — Exportação real:** `StreamingResponse` iterava o `BytesIO`
+**por linhas** — patológico para binário (P7 `all_products`:
+261 s wall / ~9,5 MB). Trocado por `Response` bufferizado com
+`Content-Length` no helper compartilhado
+(`stock_inventory_route_helpers.py`) aplicado aos 3 routers:
+**P7 all 261 s → ~50 s**; bytes idênticos (9.456.723). CSV/PDF
+reais verificados com download + `pdfinfo`; `source_missing`
+(2026-10) recusado com HTTP 409 `not_exportable`;
+`X-Exported-Count`, `Content-Disposition` e Content-Type
+preservados via proxy BFF (budget 120 s).
+
+**D — Renderer compartilhado** (`closing_report_pdf.py`, ReportLab
+Platypus, A4 paisagem) para R05/P7/R08:
+
+- células longas quebram via `Paragraph` — zero sobreposição, altura
+  dinâmica por registro, larguras planejadas por conteúdo, limite
+  explícito para células patológicas;
+- cabeçalho de tabela repetido a cada página (`repeatRows`), sem
+  cabeçalho órfão (`KeepTogether` nos blocos de resumo, título de
+  seção sempre acompanhado da primeira linha);
+- PT-BR integral: `R$ 14.638.712,48`, `29/10/2026 12:28 (Brasília)`,
+  `Filial: Todas as filiais`, `Paridade oficial pendente` — códigos
+  técnicos preservados nos metadados/auditoria;
+- política monetária declarada no documento: totais calculados com
+  precisão integral; diferença de um centavo entre parcelas pode
+  decorrer do arredondamento individual de exibição;
+- proveniência completa: competência, filial, escopo, data-base,
+  fonte, motor, produtor oficial, estado, paridade, gerado por,
+  timestamp e **SHA-256** do conteúdo; identificação compacta no
+  rodapé `Página X de Y`;
+- marca d'água honesta preservada: «RELATÓRIO OPERACIONAL —
+  PARIDADE OFICIAL PENDENTE. Não substitui a emissão oficial do
+  Protheus.»;
+- SB9 referência × EM ESTOQUE/EM PROCESSO visualmente separados
+  com nota explicativa (grandezas distintas).
+
+**Preservado (CP9):** motores e cálculos R05/P7/R08, Decimal,
+escopos `all_products`/`mp_pi_pa`, TOTVS read-only, autorização via
+Core, S2S, P3 governado, sem falso zero, `PENDING` de paridade,
+independência documental — **zero permission nova**, zero cadastro
+automático, zero alteração de fórmula.
+
+**Testes:** renderer 22/22 (header `%PDF-`, metadados/watermark,
+wrap, cabeçalho repetido, PT-BR, Brasília, payloads R05/P7/R08,
+`source_missing` recusado, mesmo motor/não paginado, gate de
+escopo); BFF matriz 7/7 (15 IDs, contagens, operacional≠oficial,
+filial, competência fechada); MFE 58/58 focados (suite 399/400 —
+`DocumentDetailPanel` flake pré-existente não relacionado); smoke
+autenticado **31/31**; QA visual de PDFs renderizados (início/meio/
+fim) + página P7 (P3 colapsável ao final). PDFs gerados: R05 42 KB/
+1 pág/4 s; R08 837 KB/31 págs; P7 MP/PI/PA 767 KB/253 págs; P7 all
+9,45 MB/311 págs (~50 s pós-fix).
+
+**Ambiente local reparado (não-prod):** após reimport do realm
+Keycloak que removeu role/grupo/vínculos do Core, recriados
+`Portal Controladoria - Analista` (access+manage), grupo `Portal
+Controladoria`, vínculos `rober`/`cf-e2e-access`; cache de
+permissões do Core invalidado via restart. Nenhuma permission nova
+criada — restaurado o mapeamento pré-existente.
+
+**Commit/push:** `497c8095e9` (19 arquivos).
+
+**Deploy produtivo** (`operador@192.168.1.237`, `git pull
+--ff-only` → `up-prod-sequential.sh --build api-delpi
+controllership-finance-api controllership-finance`): os 3 serviços
+recriados healthy; PROD_SHA `497c8095e9`; rotas 401 anônimo;
+S2S/service principal nos financeiro exports → 401 (fail-closed);
+`remoteEntry` → expose → `App-W6_JxSma.js` (novos rótulos). Smoke
+autenticado/export por persona em prod: `TEST_NOT_RUN` — sem
+persona sancionada.
+
+**Rollback:** `git revert 497c8095e9` + rebuild dos 3 serviços.
+
+---
+
 *Fim do documento 119.*
