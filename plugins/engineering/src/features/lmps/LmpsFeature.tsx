@@ -45,20 +45,28 @@ function NcLegacyRedirectNotice() {
       <EngineeringPageHero
         eyebrow="Portal Engenharia • LMPs"
         title="Não conformidades"
-        description="O registro de não conformidades continua disponível no aplicativo de acompanhamento de LMPs."
+        description="O registro de não conformidades agora tem experiência nativa no Portal Engenharia."
       />
       <EngineeringSectionCard
-        title="Funcionalidade no aplicativo legado"
-        subtitle="A migração desta área será tratada em gate próprio; o aplicativo legado permanece operacional e autorizado."
+        title="Experiência nativa disponível"
+        subtitle="O caminho oficial de não conformidades é o Portal Engenharia; o aplicativo legado permanece operacional e autorizado durante a migração governada."
       >
         <div className="engineering-lmps-nc-actions">
           <EngineeringActionButton
             variant="primary"
             onClick={() => {
+              window.location.assign("/apps/engineering/nonconformities");
+            }}
+          >
+            Abrir não conformidades no Portal
+          </EngineeringActionButton>
+          <EngineeringActionButton
+            variant="ghost"
+            onClick={() => {
               window.location.assign(LEGACY_NONCONFORMITIES_HREF);
             }}
           >
-            Abrir registro de não conformidades
+            Abrir registro legado
           </EngineeringActionButton>
           <EngineeringActionButton
             variant="ghost"

@@ -5,7 +5,12 @@
 
 export const ENGINEERING_BASE_PATH = "/apps/engineering";
 
-export type EngineeringView = "home" | "overview" | "lmps" | "help";
+export type EngineeringView =
+  | "home"
+  | "overview"
+  | "lmps"
+  | "nonconformities"
+  | "help";
 
 export type ResolvedEngineeringRoute = {
   view: EngineeringView | "not_found";
@@ -48,6 +53,12 @@ export function resolveEngineeringRoute(
   }
   if (relativePath === "lmps" || relativePath.startsWith("lmps/")) {
     return { view: "lmps", pathname: path, relativePath };
+  }
+  if (
+    relativePath === "nonconformities" ||
+    relativePath.startsWith("nonconformities/")
+  ) {
+    return { view: "nonconformities", pathname: path, relativePath };
   }
   if (relativePath === "help") {
     return { view: "help", pathname: path, relativePath };

@@ -31,6 +31,7 @@ export function HelpPage({ basePath }: HelpPageProps) {
   const sections = [
     { id: "start", title: "Página Início" },
     { id: "overview", title: "Visão geral" },
+    { id: "nonconformities", title: "Não conformidades" },
     { id: "paths", title: "Caminhos e funcionalidades" },
     { id: "search", title: "Busca e favoritos" },
     { id: "states", title: "Estados das informações" },
@@ -139,6 +140,50 @@ export function HelpPage({ basePath }: HelpPageProps) {
                   term: "Aprofundamento",
                   meaning:
                     "O atalho para o Portal TRANSFORMA+ aparece somente quando você tem permissão. O acompanhamento detalhado de LMPs está disponível em LMPs — filtros, indicadores, gráficos, tabela e detalhe por proposta.",
+                },
+              ]}
+            />
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-nonconformities">
+          <EngineeringSectionCard title="Não conformidades">
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Listagem",
+                  meaning:
+                    "Registros oficiais da Engineering API com busca por status, OV, LMP, cliente, produto, problema identificado e período de ocorrência. Toque em uma linha para abrir o detalhe.",
+                },
+                {
+                  term: "Indicadores",
+                  meaning:
+                    "Cartões com os dias consecutivos sem não conformidade e o recorde histórico — mesma semântica do painel legado.",
+                },
+                {
+                  term: "Cadastro e edição",
+                  meaning:
+                    "Crie ou edite registros pelo botão Nova não conformidade ou Editar. Toda alteração grava histórico de auditoria com o seu usuário.",
+                },
+                {
+                  term: "Histórico",
+                  meaning:
+                    "Linha do tempo de auditoria do registro: criação e cada atualização com autor, data e campos alterados.",
+                },
+                {
+                  term: "Contexto da proposta",
+                  meaning:
+                    "No detalhe, a situação da OV vinculada e a estrutura dos produtos associados chegam dos fatos oficiais TOTVS via Engineering API — quando uma fonte está indisponível, o estado real aparece no cartão.",
+                },
+                {
+                  term: "Exportar e importar",
+                  meaning:
+                    "Exportar baixa o acervo em JSON. Importar substitui todo o acervo e exige dry-run e confirmação explícita — a mesma semântica do registro legado.",
+                },
+                {
+                  term: "Registro legado",
+                  meaning:
+                    "O aplicativo legado de não conformidades permanece operacional durante a migração governada — o acesso fica disponível na própria área de LMPs.",
                 },
               ]}
             />

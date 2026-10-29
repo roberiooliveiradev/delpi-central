@@ -51,6 +51,14 @@ export const ENGINEERING_CATALOG: readonly CatalogSection[] = [
         requiredPermission: "engineering.access",
         keywords: ["lmp", "licitacoes", "medicoes", "dashboard"],
       },
+      {
+        id: "nonconformities",
+        label: "Não conformidades",
+        description: "Registro e acompanhamento de não conformidades",
+        target: { kind: "internal", view: "nonconformities" },
+        requiredPermission: "engineering.access",
+        keywords: ["nc", "nao conformidade", "defeito", "qualidade", "problema"],
+      },
     ],
   },
   {
