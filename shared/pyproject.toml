@@ -42,6 +42,7 @@ include = [
   "delpi_auth*",
   "delpi_api_client*",
   "delpi_mcp*",
+  "delpi_character_profiles*",
   "strategic_indicators_client*",
   "transformometro_client*",
   "bpmn_validation*",
