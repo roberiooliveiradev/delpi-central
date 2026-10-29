@@ -145,8 +145,42 @@ def test_matrix_never_marks_operational_as_official(
     }
     assert reports["R01"]["source_kind"] == "OPERATIONAL_VIEW"
     assert reports["R03"]["source_kind"] == "OPERATIONAL_VIEW"
+    assert reports["R05"]["source_kind"] == "OPERATIONAL_VIEW"
+    assert reports["R08"]["source_kind"] == "OPERATIONAL_VIEW"
+    assert reports["R05"]["operational_view"] == "stock-movements"
+    assert reports["R08"]["operational_view"] == "work-in-process"
     assert "não é" in reports["R01"]["note"].lower()
+    assert "não substitui" in reports["R05"]["note"].lower()
+    assert "não substitui" in reports["R08"]["note"].lower()
     assert reports["R04"]["source_kind"] == "PENDING_CONTRACT"
+
+
+def test_matrix_separates_implementation_from_official_parity(
+    client, checklist_repo
+):
+    """Consulta implementada nunca equivale a homologação oficial —
+    `official_parity` é dimensão própria e permanece PENDING."""
+    checklist_repo.list_competence_items.return_value = []
+    resp = client.get(f"/closing/competences/{PERIOD}/reports")
+    reports = {
+        r["report_id"]: r
+        for r in resp.json()["data"]["reports"]
+    }
+    operational = [
+        r for r in reports.values() if r["operational_view"]
+    ]
+    assert {r["report_id"] for r in operational} == {
+        "R01",
+        "R02",
+        "R03",
+        "R05",
+        "R08",
+    }
+    for entry in operational:
+        assert entry["official_parity"] == "PENDING"
+    for entry in reports.values():
+        if not entry["operational_view"]:
+            assert entry["official_parity"] is None
 
 
 def test_matrix_branch_scope_filter(client, checklist_repo):

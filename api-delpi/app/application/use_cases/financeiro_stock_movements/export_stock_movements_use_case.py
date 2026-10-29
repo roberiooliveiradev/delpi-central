@@ -115,11 +115,12 @@ def _rows_section(payload: dict[str, Any]) -> ReportTableSection:
     for key, _label in _ROW_COLUMNS[1:]:
         totals_row[key] = totals.get(key)
     return ReportTableSection(
-        title="Movimentação por tipo de produto (R$)",
+        title="Movimentação por tipo de produto",
         columns=list(_ROW_COLUMNS),
         rows=rows,
         totals_row=totals_row,
         align_right_keys=_NUMERIC_KEYS,
+        money_keys=_NUMERIC_KEYS,
     )
 
 

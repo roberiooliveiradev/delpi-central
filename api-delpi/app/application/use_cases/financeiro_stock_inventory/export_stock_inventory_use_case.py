@@ -392,6 +392,14 @@ def _build_pdf(
             columns=list(_PDF_TOTALS_COLUMNS),
             rows=totals_rows,
             align_right_keys=frozenset({"value"}),
+            money_keys=frozenset({"value"}),
+            note=(
+                "«Histórico SB9 (referência)» é a posição gravada no "
+                "fechamento do período; «Em estoque» e «Em processo» "
+                "compõem o total calculado pelo motor P7 — grandezas "
+                "distintas, não um mesmo saldo."
+            ),
+            keep_together=True,
         ),
         ReportTableSection(
             title="Resumo por tipo de produto",
@@ -401,6 +409,8 @@ def _build_pdf(
                 for row in payload.get("summariesByType") or []
             ],
             align_right_keys=_PDF_TYPE_NUMERIC,
+            money_keys=frozenset({"totalStockValue"}),
+            quantity_keys=frozenset({"totalQuantity"}),
         ),
         ReportTableSection(
             title="Resumo por armazém",
@@ -430,6 +440,8 @@ def _build_pdf(
                 ),
             },
             align_right_keys=_PDF_TYPE_NUMERIC,
+            money_keys=frozenset({"totalStockValue"}),
+            quantity_keys=frozenset({"totalQuantity"}),
         ),
         ReportTableSection(
             title="Itens do inventário",
@@ -439,6 +451,8 @@ def _build_pdf(
                 for item in payload.get("items") or []
             ],
             align_right_keys=_PDF_ITEM_NUMERIC,
+            money_keys=frozenset({"historicalStockValue"}),
+            quantity_keys=frozenset({"historicalQuantity"}),
         ),
     ]
     return build_pdf(

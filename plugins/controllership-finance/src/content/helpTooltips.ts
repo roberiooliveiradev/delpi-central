@@ -80,7 +80,7 @@ export const CF_HELP = {
   },
   stockInventory: {
     page:
-      "Registro de Inventário — P7: relatório do estoque no fechamento de cada mês, calculado pelo motor P7 do Portal sobre o ERP (SB9 + MATR989 — EM ESTOQUE + EM PROCESSO). A paridade por competência contra uma nova emissão oficial MATR460 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",
+      "Registro de Inventário — P7: relatório do estoque no fechamento de cada mês, calculado pelo motor P7 do Portal sobre o ERP (SB9 + MATR989 — EM ESTOQUE + EM PROCESSO). A paridade por competência contra uma nova emissão oficial MATR460 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial. A página prioriza a análise operacional (filtros, totais, resumos e detalhamento); a conciliação governada aparece ao final, na seção recolhível «Conciliação formal do fechamento — P3» — consulta disponível não é fonte validada no P3.",
     totals:
       "Composição oficial do registro: EM ESTOQUE = saldos do snapshot fora do armazém de processo; EM PROCESSO = material no armazém 99 (bloco sem-OP) + saldo requisitado líquido (RE − DE) em ordens de produção vivas na data de emissão; TOTAL GERAL = soma das duas medidas. Os totalizadores cobrem todo o universo do escopo — o filtro de Armazém não os reduz.",
     parity:
@@ -92,7 +92,7 @@ export const CF_HELP = {
     status:
       "Disponibilidade da origem: «Disponível» = snapshot encontrado; «Parcial» = alguma filial solicitada não tem snapshot no mês; «Não encontrado» = o ERP não gravou fechamento de estoque para a competência; «Sem itens» = o snapshot existe mas os filtros não retornaram registros. Estados de acesso: «Acesso restrito» = seu usuário não possui a permissão do Portal; «Consulta ainda não habilitada» = a liberação do conjunto de dados está desativada no ambiente; «Integração de dados pendente» = a credencial técnica entre o Portal e a origem ainda aguarda autorização — acione o suporte.",
     export:
-      "Exporta o relatório completo em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR460 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações — a entrega à DRE continua pelo fluxo documental de pacotes.",
+      "Exporta o relatório completo em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade, com valores em formato brasileiro (R$ com duas casas) e data/hora de emissão em horário de Brasília; o próprio PDF declara a política de arredondamento de exibição. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR460 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações — a entrega à DRE continua pelo fluxo documental de pacotes.",
     summaryType:
       "Totais por tipo de produto (MP, PI, PA e demais) sobre o universo filtrado, com a participação percentual de cada grupo no valor histórico total.",
     summaryWarehouse:
@@ -122,7 +122,7 @@ export const CF_HELP = {
     totals:
       "Saldo inicial é uma coluna derivada (saldo atual − movimento líquido do mês) — não é um registro gravado. Saldo atual vem do snapshot de fechamento do ERP sobre todos os armazéns, incluindo o armazém de processo — o mesmo universo que alimenta a conciliação. Quando o snapshot não existe, os saldos ficam «—»: ausência nunca aparece como zero.",
     export:
-      "Exporta o relatório em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR320 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações — exportar não cria exigência documental.",
+      "Exporta o relatório em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade, com valores em formato brasileiro (R$ com duas casas) e data/hora de emissão em horário de Brasília. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR320 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações — exportar não cria exigência documental.",
     table:
       "Uma linha por tipo de produto com as colunas do MATR320: saldo inicial derivado, compras, movimentos internos, requisições, transferências, produção, vendas, transferência para processo (memo — não entra na equação de saldo), devoluções, poder de terceiros, saldo atual e movimento líquido.",
     columns: {
@@ -135,7 +135,7 @@ export const CF_HELP = {
     totals:
       "Físico (armazém 99) = estoque gravado no armazém de processo sem vínculo a ordem — bloco sem-OP do MATR989, que é o operando H02 da conciliação. Alocado em OPs = saldo líquido requisitado (RE − DE) em ordens de produção vivas na data de emissão — medida distinta, não somada como operando para evitar dupla contagem. Total em processo = físico + alocado. Quando o snapshot não existe, os totais ficam «—».",
     export:
-      "Exporta o relatório em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR989 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações.",
+      "Exporta o relatório em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade, com valores em formato brasileiro (R$ com duas casas) e data/hora de emissão em horário de Brasília. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR989 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações.",
     summaryType:
       "Totais por tipo de produto separando as duas medidas do MATR989 — físico do armazém 99 e alocado em ordens — com a contagem de ordens abertas na referência.",
     table:
@@ -359,7 +359,7 @@ export const CF_HELP = {
   },
   reports: {
     panel:
-      "Matriz R01–R15: cobertura de evidências por relatório do processo de fechamento, derivada do snapshot da competência. «Consulta operacional» (baixas SE5, estoque SB9) é visão auxiliar — não é relatório oficial nem comprovação de paridade. «Contrato pendente» marca fontes sem owner/contrato confirmado — a captura segue fluxo manual governado de evidências. «Coberto» significa todos os itens vinculados ao R-ID validados — não é aceite de negócio do relatório.",
+      "Matriz R01–R15: cobertura de evidências por relatório do processo de fechamento, derivada do snapshot da competência. «Consulta operacional» (baixas SE5, estoque SB9) é visão auxiliar — não é relatório oficial nem comprovação de paridade. «Contrato pendente» marca fontes sem owner/contrato confirmado — a captura segue fluxo manual governado de evidências. «Coberto» significa todos os itens vinculados ao R-ID validados — não é aceite de negócio do relatório. A coluna «Paridade oficial» mostra o estado da homologação contra a emissão oficial do ERP (pendente até a comparação homologada) — separada da disponibilidade da consulta, que indica apenas que a visão operacional existe.",
   },
   pendencies: {
     page:

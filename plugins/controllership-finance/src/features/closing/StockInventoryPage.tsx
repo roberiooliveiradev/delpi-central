@@ -795,18 +795,11 @@ export function StockInventoryPage({
       ) : null}
       {renderStatusBanner()}
 
-      {/* UX-011: conciliação canônica ENTRADAS_SAIDAS − P7 − H02 vem
-          primeiro na página do relatório — valores calculados pelo
-          backend, nunca derivados no navegador. */}
-      {reportContext ? (
-        <P3ReconciliationSection
-          p3={p3}
-          loading={p3Loading}
-          p7OperationalAvailable={
-            !!payload && payload.status !== "source_missing"
-          }
-        />
-      ) : null}
+      {/* RW-012/B: a análise operacional vem primeiro — totais,
+          resumos e detalhamento. A conciliação governada P3 fecha a
+          página como workflow formal separado, recolhível quando não
+          há fonte registrada — nunca uma tabela vazia competindo com
+          os dados do relatório. */}
 
       {/* Totalizadores oficiais do registro (doc 119 §8): EM ESTOQUE +
           EM PROCESSO = TOTAL — sempre sobre o universo do escopo, nunca
@@ -996,6 +989,33 @@ export function StockInventoryPage({
           fontSizePreferencesKey="cf:closing:stock-inventory:font:v1"
           resizableColumns
         />
+      ) : null}
+
+      {/* Conciliação governada P3 — workflow formal separado da
+          análise operacional (RW-012/B). Abre sozinha quando existe
+          fonte já registrada; vazia, permanece recolhida com a
+          mensagem de dependência. */}
+      {reportContext ? (
+        <details
+          className="cf-disclosure"
+          open={
+            p3?.reconciliations.some((recon) => recon.fetched_at) ??
+            false
+          }
+        >
+          <summary className="cf-disclosure__summary">
+            Conciliação formal do fechamento — P3
+          </summary>
+          <div className="cf-disclosure__body">
+            <P3ReconciliationSection
+              p3={p3}
+              loading={p3Loading}
+              p7OperationalAvailable={
+                !!payload && payload.status !== "source_missing"
+              }
+            />
+          </div>
+        </details>
       ) : null}
       </div>
 

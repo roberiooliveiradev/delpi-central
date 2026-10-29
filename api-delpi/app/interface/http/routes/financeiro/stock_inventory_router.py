@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Query
-from fastapi.responses import StreamingResponse
 
 from app.application.use_cases.financeiro_stock_inventory.export_stock_inventory_use_case import (
     EXPORT_PAGE_SIZE,
@@ -39,6 +38,7 @@ from app.interface.http.routes.financeiro.stock_inventory_route_helpers import (
     build_stock_inventory_request,
     delegated_user_subject,
     execute_stock_inventory_route,
+    export_binary_response,
 )
 from app.interface.http.s2s_service_access import require_s2s_service
 from app.utils.logger import log_error
@@ -177,13 +177,4 @@ def export_financeiro_stock_inventory_route(
             status_code=500,
         )
 
-    return StreamingResponse(
-        result["stream"],
-        media_type=result["content_type"],
-        headers={
-            "Content-Disposition": (
-                f'attachment; filename="{result["filename"]}"'
-            ),
-            "X-Exported-Count": str(result["exported_count"]),
-        },
-    )
+    return export_binary_response(result)

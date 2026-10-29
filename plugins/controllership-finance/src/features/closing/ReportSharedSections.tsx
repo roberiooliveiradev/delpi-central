@@ -80,11 +80,24 @@ export function P3ReconciliationSection({
       </CfFeedbackMessage>
     );
   }
+  const hasRegisteredSource = p3.reconciliations.some(
+    (recon) => recon.fetched_at,
+  );
   return (
     <CfSectionCard
       title="Conciliação Entradas/Saídas − P7 − H02"
       hint={CF_HELP.p3.panel}
     >
+      {!hasRegisteredSource ? (
+        <CfFeedbackMessage
+          intent="info"
+          title="Nenhuma fonte registrada no P3"
+        >
+          {p7OperationalAvailable
+            ? "Os dados do P7 estão disponíveis para análise. A utilização na conciliação formal depende do registro e da validação das fontes no P3."
+            : "A utilização na conciliação formal depende do registro e da validação das fontes no P3."}
+        </CfFeedbackMessage>
+      ) : null}
       <table className="cf-p3-table" aria-label="Conciliação de estoque">
         <thead>
           <tr>

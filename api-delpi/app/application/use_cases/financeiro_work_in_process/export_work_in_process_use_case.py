@@ -46,15 +46,15 @@ _ITEM_COLUMNS = (
     ("productType", "Tipo"),
     ("productionOrder", "Ordem de Produção"),
     ("allocatedQuantity", "Qtd. Alocada"),
-    ("allocatedValue", "Valor Alocado (R$)"),
+    ("allocatedValue", "Valor Alocado"),
 )
 _ITEM_NUMERIC_KEYS = frozenset({"allocatedQuantity", "allocatedValue"})
 
 _TYPE_COLUMNS = (
     ("productType", "Tipo"),
-    ("physicalValue", "Físico Proc. (R$)"),
-    ("allocatedValue", "Alocado OP (R$)"),
-    ("totalValue", "Total (R$)"),
+    ("physicalValue", "Físico Proc."),
+    ("allocatedValue", "Alocado OP"),
+    ("totalValue", "Total"),
     ("openOrderCount", "OPs Abertas"),
 )
 _TYPE_NUMERIC_KEYS = frozenset(
@@ -152,6 +152,9 @@ def _type_section(payload: dict[str, Any]) -> ReportTableSection:
             ),
         },
         align_right_keys=_TYPE_NUMERIC_KEYS,
+        money_keys=frozenset(
+            {"physicalValue", "allocatedValue", "totalValue"}
+        ),
     )
 
 
@@ -165,6 +168,8 @@ def _items_section(payload: dict[str, Any]) -> ReportTableSection:
         columns=list(_ITEM_COLUMNS),
         rows=rows,
         align_right_keys=_ITEM_NUMERIC_KEYS,
+        money_keys=frozenset({"allocatedValue"}),
+        quantity_keys=frozenset({"allocatedQuantity"}),
     )
 
 

@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import {
   afterEach,
@@ -86,7 +87,8 @@ function matrixEntry(overrides: Record<string, unknown> = {}) {
     label: "Baixas a pagar",
     source_kind: "OPERATIONAL_VIEW",
     owner: "TOTVS/SE5",
-    operational_view: null,
+    operational_view: "financial-settlements",
+    official_parity: "PENDING",
     note: "",
     checklist_items: 1,
     items_validated: 1,
@@ -729,6 +731,57 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(details?.hasAttribute("open")).toBe(false);
     // O conteúdo permanece acessível no DOM, colapsado.
     expect(screen.getByText(/Baixas a pagar/)).toBeTruthy();
+  });
+
+  it("matriz separa consulta implementada, paridade e cobertura", async () => {
+    matrixMock.mockResolvedValue(
+      matrix({
+        reports: [
+          matrixEntry({
+            report_id: "R05",
+            label: "Entradas/Saídas",
+            operational_view: "stock-movements",
+            official_parity: "PENDING",
+          }),
+          matrixEntry({
+            report_id: "R04",
+            label: "Consumo por OP",
+            source_kind: "PENDING_CONTRACT",
+            owner: null,
+            operational_view: null,
+            official_parity: null,
+            checklist_items: 0,
+            items_validated: 0,
+            items_terminal: 0,
+            items_pending: 0,
+            coverage: "pending",
+          }),
+        ],
+      }),
+    );
+    renderPanel();
+
+    await screen.findByText(/Cobertura da matriz R01–R15/);
+    const table = screen.getByRole("table", {
+      name: "Matriz R01–R15",
+    });
+    expect(
+      within(table).getByRole("columnheader", { name: "Consulta" }),
+    ).toBeTruthy();
+    expect(
+      within(table).getByRole("columnheader", {
+        name: "Paridade oficial",
+      }),
+    ).toBeTruthy();
+    // R05: consulta implementada + paridade pendente — dimensões
+    // separadas, sem promover a consulta a relatório oficial.
+    expect(within(table).getByText("Implementada")).toBeTruthy();
+    expect(within(table).getByText("Paridade pendente")).toBeTruthy();
+    // R04 sem contrato: nenhuma dimensão inventada.
+    const r04Row = within(table)
+      .getByText("Consumo por OP")
+      .closest("tr");
+    expect(r04Row?.textContent).toContain("Contrato pendente");
   });
 
   it("sem período selecionado pede o mês de referência", async () => {

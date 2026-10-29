@@ -6,9 +6,13 @@ validação — somada ao catálogo canônico de fonte/owner do processo.
 
 O que NÃO é: relatório oficial, export do ERP ou comprovação de
 paridade. `OPERATIONAL_VIEW` marca as consultas auxiliares já
-implementadas (R01/R02 baixas SE5, R03 estoque SB9/SB1) — auxiliares,
-não oficiais. R-IDs sem contrato/owner confirmado permanecem
-`PENDING_CONTRACT` — captura manual de evidência pelo fluxo P2.
+implementadas (R01/R02 baixas SE5, R03 estoque SB9/SB1, R05
+movimentações, R08 material em processo) — auxiliares, não oficiais.
+`official_parity` separa a implementação da homologação oficial:
+toda consulta implementada permanece `PENDING` até validação contra
+o relatório oficial do Protheus. R-IDs sem contrato/owner confirmado
+permanecem `PENDING_CONTRACT` — captura manual de evidência pelo
+fluxo P2.
 """
 
 from __future__ import annotations
@@ -44,6 +48,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "OPERATIONAL_VIEW",
         "owner": "TOTVS/SE5",
         "operational_view": "financial-settlements",
+        "official_parity": "PENDING",
         "note": "Consulta auxiliar operacional — não é relatório oficial.",
     },
     {
@@ -52,6 +57,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "OPERATIONAL_VIEW",
         "owner": "TOTVS/SE5",
         "operational_view": "financial-settlements",
+        "official_parity": "PENDING",
         "note": "Consulta auxiliar operacional — não é relatório oficial.",
     },
     {
@@ -60,6 +66,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "OPERATIONAL_VIEW",
         "owner": "TOTVS/SB9",
         "operational_view": "stock-inventory",
+        "official_parity": "PENDING",
         "note": "Snapshot operacional — não é o MATR460/P7 oficial.",
     },
     {
@@ -68,15 +75,17 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "PENDING_CONTRACT",
         "owner": None,
         "operational_view": None,
+        "official_parity": None,
         "note": "Fonte/owner não confirmados — captura manual governada.",
     },
     {
         "report_id": "R05",
         "label": "Entradas/Saídas",
-        "source_kind": "MANUAL_EVIDENCE",
-        "owner": "Controladoria",
-        "operational_view": None,
-        "note": "Evidência documental — validação humana P2.",
+        "source_kind": "OPERATIONAL_VIEW",
+        "owner": "TOTVS/SD1-SD4",
+        "operational_view": "stock-movements",
+        "official_parity": "PENDING",
+        "note": "Consulta operacional — não substitui o MATR320 oficial.",
     },
     {
         "report_id": "R06",
@@ -84,6 +93,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "PENDING_CONTRACT",
         "owner": None,
         "operational_view": None,
+        "official_parity": None,
         "note": "Fonte/owner não confirmados — captura manual governada.",
     },
     {
@@ -92,15 +102,17 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "PENDING_CONTRACT",
         "owner": None,
         "operational_view": None,
+        "official_parity": None,
         "note": "Fonte/owner não confirmados — captura manual governada.",
     },
     {
         "report_id": "R08",
         "label": "Posição H02",
-        "source_kind": "MANUAL_EVIDENCE",
-        "owner": "Controladoria",
-        "operational_view": None,
-        "note": "Alimenta a conciliação P3 — evidência documental.",
+        "source_kind": "OPERATIONAL_VIEW",
+        "owner": "TOTVS/SD3-SC2",
+        "operational_view": "work-in-process",
+        "official_parity": "PENDING",
+        "note": "Consulta operacional — não substitui o MATR989 oficial. Alimenta a conciliação P3.",
     },
     {
         "report_id": "R09",
@@ -108,6 +120,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "PENDING_CONTRACT",
         "owner": None,
         "operational_view": None,
+        "official_parity": None,
         "note": "Fonte/owner não confirmados — captura manual governada.",
     },
     {
@@ -116,6 +129,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "MANUAL_EVIDENCE",
         "owner": "Controladoria",
         "operational_view": None,
+        "official_parity": None,
         "note": "Evidência documental — validação humana P2.",
     },
     {
@@ -124,6 +138,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "MANUAL_EVIDENCE",
         "owner": "Controladoria",
         "operational_view": None,
+        "official_parity": None,
         "note": "Evidência documental — validação humana P2.",
     },
     {
@@ -132,6 +147,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "PENDING_CONTRACT",
         "owner": None,
         "operational_view": None,
+        "official_parity": None,
         "note": "Fonte/owner não confirmados — captura manual governada.",
     },
     {
@@ -140,6 +156,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "EXTERNAL",
         "owner": "Instituições financeiras",
         "operational_view": None,
+        "official_parity": None,
         "note": "Origem externa — evidência anexada e validada (P2).",
     },
     {
@@ -148,6 +165,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "EXTERNAL",
         "owner": "Instituições financeiras",
         "operational_view": None,
+        "official_parity": None,
         "note": "Origem externa — evidência anexada e validada (P2).",
     },
     {
@@ -156,6 +174,7 @@ REPORT_CATALOG: tuple[dict, ...] = (
         "source_kind": "PENDING_CONTRACT",
         "owner": None,
         "operational_view": None,
+        "official_parity": None,
         "note": "Vinculado ao cutoff P3 — owner do fechamento no ERP.",
     },
 )

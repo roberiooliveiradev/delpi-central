@@ -13,6 +13,7 @@ export type ReportMatrixEntry = {
   source_kind: ReportSourceKind;
   owner: string | null;
   operational_view: string | null;
+  official_parity: "PENDING" | null;
   note: string;
   checklist_items: number;
   items_validated: number;

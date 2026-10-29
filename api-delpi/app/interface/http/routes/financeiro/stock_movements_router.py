@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Query
-from fastapi.responses import StreamingResponse
 
 from app.application.dto.financeiro_stock_movements.stock_movements_request import (
     StockMovementsQueryRequest,
@@ -38,6 +37,7 @@ from app.interface.http.routes.financeiro.stock_inventory_route_helpers import (
     PERIOD_QUERY,
     REPORT_SCOPE_QUERY,
     delegated_user_subject,
+    export_binary_response,
 )
 from app.interface.http.s2s_service_access import require_s2s_service
 from app.utils.logger import log_error
@@ -187,13 +187,4 @@ def export_financeiro_stock_movements_route(
             status_code=500,
         )
 
-    return StreamingResponse(
-        result["stream"],
-        media_type=result["content_type"],
-        headers={
-            "Content-Disposition": (
-                f'attachment; filename="{result["filename"]}"'
-            ),
-            "X-Exported-Count": str(result["exported_count"]),
-        },
-    )
+    return export_binary_response(result)

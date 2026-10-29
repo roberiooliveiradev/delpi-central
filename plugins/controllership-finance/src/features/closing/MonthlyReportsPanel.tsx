@@ -55,9 +55,7 @@ import {
   type ReportMatrix,
 } from "../../api/reportsApi";
 import {
-  COVERAGE_LABELS,
-  COVERAGE_VARIANTS,
-  SOURCE_LABELS,
+  ReportsMatrixTable,
 } from "./ReportsMatrixPanel";
 import {
   CfFeedbackMessage,
@@ -1323,40 +1321,7 @@ export function MonthlyReportsPanel({
         </summary>
         <div className="cf-disclosure__body">
           {matrix?.kind === "ready" ? (
-            <table
-              className="cf-p3-table"
-              aria-label="Cobertura dos relatórios R01 a R15"
-            >
-              <thead>
-                <tr>
-                  <th>Relatório</th>
-                  <th>Fonte</th>
-                  <th>Itens</th>
-                  <th>Cobertura</th>
-                </tr>
-              </thead>
-              <tbody>
-                {matrix.data.reports.map((entry) => (
-                  <tr key={entry.report_id}>
-                    <td>
-                      {entry.report_id} — {entry.label}
-                    </td>
-                    <td>{SOURCE_LABELS[entry.source_kind]}</td>
-                    <td>
-                      {entry.checklist_items > 0
-                        ? `${entry.items_validated}/${entry.checklist_items}`
-                        : "—"}
-                    </td>
-                    <td>
-                      <CfStatusBadge
-                        label={COVERAGE_LABELS[entry.coverage]}
-                        variant={COVERAGE_VARIANTS[entry.coverage]}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ReportsMatrixTable reports={matrix.data.reports} />
           ) : matrix?.kind === "not_opened" ? (
             <CfFeedbackMessage intent="info" title="Matriz de entregáveis">
               A competência ainda não foi aberta — a cobertura dos

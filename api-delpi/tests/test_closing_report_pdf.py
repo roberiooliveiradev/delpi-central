@@ -47,7 +47,13 @@ from app.application.use_cases.financeiro_work_in_process.get_work_in_process_us
 from app.infrastructure.pdf.closing_reports.closing_report_pdf import (
     ClosingReportPdfSpec,
     ReportTableSection,
+    _cell_text,
+    format_money_pt_br,
+    format_quantity_pt_br,
     render_closing_report_pdf,
+)
+from app.interface.http.routes.financeiro.stock_inventory_route_helpers import (
+    export_binary_response,
 )
 
 
@@ -110,6 +116,126 @@ def test_renderer_handles_long_table_across_pages() -> None:
     assert pdf[:5] == b"%PDF-"
     # Multi-page document: more than one /Type /Page object.
     assert pdf.count(b"/Type /Page") >= 2
+
+
+# ---------- RW-012: presentation quality --------------------------------
+
+def test_money_and_quantity_format_pt_br() -> None:
+    section = ReportTableSection(
+        title="Totais",
+        columns=[("amount", "Valor"), ("qty", "Qtd")],
+        rows=[
+            {"amount": "14638712.476000", "qty": "39651428.075"},
+            {"amount": "-11964.39", "qty": "1"},
+            {"amount": "0", "qty": "0"},
+            {"amount": None, "qty": None},
+        ],
+        money_keys=frozenset({"amount"}),
+        quantity_keys=frozenset({"qty"}),
+    )
+    assert _cell_text(section, "amount", "14638712.476000") == (
+        "R$ 14.638.712,48"
+    )
+    assert _cell_text(section, "amount", "-11964.39") == "R$ -11.964,39"
+    assert _cell_text(section, "amount", "0") == "R$ 0,00"
+    assert _cell_text(section, "amount", None) == "—"
+    assert _cell_text(section, "qty", "39651428.075") == "39.651.428,075"
+    assert _cell_text(section, "qty", "1") == "1,00"
+    # Presentation is display-only — Decimal precision is never fed back.
+    assert format_money_pt_br(Decimal("0.005")) == "R$ 0,01"
+    assert format_quantity_pt_br("2.5") == "2,50"
+
+
+def test_long_description_wraps_without_silent_truncation() -> None:
+    tail = "Z99TOKENFIM"
+    long_desc = "CHICOTE ATERRAMENTO " * 8 + tail  # ~170 chars
+    spec = ClosingReportPdfSpec(
+        title="P7 — REGISTRO DE INVENTÁRIO",
+        metadata=[("Competência", "2026-09")],
+        sections=[
+            ReportTableSection(
+                title="Itens",
+                columns=[
+                    ("code", "Produto"),
+                    ("description", "Descrição"),
+                    ("unit", "UM"),
+                ],
+                rows=[{"code": "P1", "description": long_desc, "unit": "MI"}],
+            )
+        ],
+    )
+    pdf = render_closing_report_pdf(spec, generated_stamp="2026-10-01T00:00:00+00:00")
+    # The full content must survive — the tail token proves no truncation.
+    assert tail.encode() in pdf
+
+
+def test_pathological_cell_truncates_with_explicit_marker() -> None:
+    section = ReportTableSection(
+        title="Itens",
+        columns=[("description", "Descrição")],
+        rows=[{"description": "X" * 1500}],
+    )
+    text = _cell_text(section, "description", "X" * 1500)
+    assert text.endswith("… [conteúdo truncado]")
+    assert len(text) <= 1000
+
+
+def test_page_numbers_and_repeated_headers() -> None:
+    spec = ClosingReportPdfSpec(
+        title="P7 — REGISTRO DE INVENTÁRIO",
+        metadata=[("Competência", "2026-09")],
+        sections=[
+            ReportTableSection(
+                title="Itens",
+                columns=[("productCode", "Produto")],
+                rows=[
+                    {"productCode": f"P{i:05d}"} for i in range(300)
+                ],
+            )
+        ],
+    )
+    pdf = render_closing_report_pdf(spec, generated_stamp="2026-10-01T00:00:00+00:00")
+    # "Página X de Y" numbering — ReportLab octal-escapes non-ASCII
+    # in literal strings (á → \341).
+    assert b"P\\341gina 1 de " in pdf
+    assert pdf.count(b"/Type /Page") >= 2
+    # Header repeats on continuation pages ("/Pages" inflates the page
+    # count — repetition is proven by multiple header occurrences).
+    assert pdf.count(b"PRODUTO") >= 2
+
+
+def test_small_summary_stays_together_and_labels_translate() -> None:
+    from app.application.use_cases.financeiro_reports_export.report_export_common import (
+        branch_label,
+        emission_stamp,
+        parity_label,
+        status_label,
+    )
+
+    assert branch_label("all") == "Todas as filiais"
+    assert branch_label("01") == "01"
+    assert status_label("available") == "Disponível"
+    assert status_label("source_missing") == "Posição histórica indisponível"
+    assert parity_label("PENDING") == "Paridade oficial pendente"
+    stamp = emission_stamp()
+    assert stamp.endswith(" (Brasília)")
+    assert len(stamp.split(" ")[0].split("/")) == 3
+
+
+def test_export_binary_response_is_buffered_with_content_length() -> None:
+    body = b"%PDF-1.4 fake bytes"
+    result = {
+        "stream": __import__("io").BytesIO(body),
+        "content_type": "application/pdf",
+        "filename": "r05-test.pdf",
+        "exported_count": 7,
+    }
+    response = export_binary_response(result)
+    assert response.body == body
+    assert response.media_type == "application/pdf"
+    assert response.headers["content-length"] == str(len(body))
+    assert "r05-test.pdf" in response.headers["content-disposition"]
+    assert response.headers["x-exported-count"] == "7"
 
 
 # ---------- P7 PDF export ----------------------------------------------

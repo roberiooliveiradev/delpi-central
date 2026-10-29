@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
-from fastapi import Query
+from fastapi import Query, Response
 
 from delpi_auth.context_resolver import resolve_user_context
 
@@ -75,6 +75,33 @@ def build_stock_inventory_request(
         warehouse=warehouse,
         page=page,
         page_size=page_size,
+    )
+
+
+def export_binary_response(result: dict[str, Any]) -> Response:
+    """Buffered binary response for the shared CSV/PDF export contract.
+
+    Export payloads are already fully materialized (``io.BytesIO``).
+    Serving them via ``StreamingResponse`` iterates the buffer line by
+    line on ``\\n`` bytes — pathological for binary content (~40 KB/s on
+    multi-MB PDFs). A plain ``Response`` sends the body at once and sets
+    ``Content-Length``, which browsers need for download progress.
+    """
+    stream = result["stream"]
+    body = (
+        stream.getvalue()
+        if hasattr(stream, "getvalue")
+        else b"".join(stream)
+    )
+    return Response(
+        content=body,
+        media_type=result["content_type"],
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{result["filename"]}"'
+            ),
+            "X-Exported-Count": str(result["exported_count"]),
+        },
     )
 
 

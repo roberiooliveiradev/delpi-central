@@ -36,6 +36,28 @@ _SCOPE_LABELS = {
     "mp_pi_pa": "Somente MP, PI e PA",
 }
 
+_STATUS_LABELS = {
+    "available": "Disponível",
+    "incomplete": "Incompleto (filiais ausentes)",
+    "no_matching_items": "Sem dados para o filtro",
+    "source_missing": "Posição histórica indisponível",
+    "unavailable": "Indisponível",
+}
+
+_PARITY_LABELS = {
+    "PENDING": "Paridade oficial pendente",
+    "UNVERIFIED": "Paridade oficial não verificada",
+}
+
+# Monetary-presentation policy (doc 119 §11.6): totals keep integral
+# Decimal precision; ≤ R$ 0,01 drift between displayed parcels is
+# legitimate display rounding, never a calculation adjustment.
+MONETARY_POLICY_NOTE = (
+    "Os totais são calculados com precisão integral. Diferenças de um "
+    "centavo entre parcelas apresentadas podem decorrer do "
+    "arredondamento individual para exibição."
+)
+
 
 class ReportNotExportableError(RuntimeError):
     """Payload status cannot certify a document (e.g. source_missing)."""
@@ -57,6 +79,29 @@ def content_hash(payload: dict[str, Any], hashed_keys: tuple[str, ...]) -> str:
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
+def status_label(status: str | None) -> str:
+    return _STATUS_LABELS.get(status or "", status or "—")
+
+
+def parity_label(parity: str | None) -> str:
+    return _PARITY_LABELS.get(parity or "", parity or "UNVERIFIED")
+
+
+def branch_label(branch: str | None) -> str:
+    if not branch or branch == "all":
+        return "Todas as filiais"
+    return branch
+
+
+def emission_stamp() -> str:
+    """Data/hora de emissão em PT-BR — horário de Brasília (UTC−3, sem
+    horário de verão desde 2019), com o fuso identificado."""
+    from datetime import datetime, timedelta, timezone
+
+    brasilia = timezone(timedelta(hours=-3))
+    return datetime.now(brasilia).strftime("%d/%m/%Y %H:%M") + " (Brasília)"
+
+
 def export_metadata(
     payload: dict[str, Any], *, generated_by: str | None
 ) -> list[tuple[str, str]]:
@@ -64,14 +109,14 @@ def export_metadata(
     provenance = payload.get("provenance") or {}
     return [
         ("Competência", str(payload.get("period") or "—")),
-        ("Filial", str(payload.get("branchCode") or "—")),
+        ("Filial", branch_label(payload.get("branchCode"))),
         ("Escopo", scope_label(payload.get("reportScope"))),
-        ("Referência", str(payload.get("dataAsOf") or "—")),
+        ("Data-base", str(payload.get("dataAsOf") or "—")),
         ("Fonte", str(payload.get("source") or "—")),
         ("Motor", str(provenance.get("engine") or "—")),
         ("Produtor oficial", str(provenance.get("officialProducer") or "—")),
-        ("Status", str(payload.get("status") or "—")),
-        ("Paridade", str(payload.get("parityStatus") or "UNVERIFIED")),
+        ("Status", status_label(payload.get("status"))),
+        ("Paridade", parity_label(payload.get("parityStatus"))),
         ("Gerado por", generated_by or "desconhecido"),
     ]
 
@@ -100,21 +145,22 @@ def build_pdf(
     generated_by: str | None,
     extra_metadata: list[tuple[str, str]] | None = None,
 ) -> io.BytesIO:
-    from datetime import datetime, timezone
-
-    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    stamp = emission_stamp()
     metadata = export_metadata(payload, generated_by=generated_by)
     metadata.extend(extra_metadata or [])
-    metadata.append(("Gerado em", stamp))
+    metadata.append(("Emitido em", stamp))
     metadata.append(
-        ("SHA-256", content_hash(payload, hashed_keys)[:16] + "…")
+        ("SHA-256 do conteúdo", content_hash(payload, hashed_keys))
     )
     spec = ClosingReportPdfSpec(
         title=title,
         metadata=metadata,
         sections=sections,
         watermark=watermark(payload),
-        footer_note=watermark(payload) or title,
+        footer_note=(
+            f"{title} — competência {payload.get('period') or '—'}"
+        ),
+        policy_note=MONETARY_POLICY_NOTE,
     )
     return io.BytesIO(
         render_closing_report_pdf(spec, generated_stamp=stamp)

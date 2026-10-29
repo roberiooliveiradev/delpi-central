@@ -12,6 +12,7 @@ import { ApiError } from "../../api/httpClient";
 import {
   listReportMatrix,
   type ReportMatrix,
+  type ReportMatrixEntry,
   type ReportSourceKind,
 } from "../../api/reportsApi";
 import {
@@ -43,6 +44,88 @@ export const COVERAGE_VARIANTS = {
   partial: "info",
   pending: "warning",
 } as const;
+
+export const PARITY_LABELS: Record<string, string> = {
+  PENDING: "Paridade pendente",
+};
+
+/** Tabela R01–R15 — dimensões separadas: disponibilidade da consulta
+ *  operacional, paridade oficial e cobertura documental (P2). Nunca
+ *  promove consulta implementada a relatório homologado. */
+export function ReportsMatrixTable({
+  reports,
+}: {
+  reports: ReportMatrixEntry[];
+}) {
+  return (
+    <table className="cf-p3-table" aria-label="Matriz R01–R15">
+      <thead>
+        <tr>
+          <th>R-ID</th>
+          <th>Relatório</th>
+          <th>Fonte</th>
+          <th>Consulta</th>
+          <th>Paridade oficial</th>
+          <th>Itens</th>
+          <th>Validados</th>
+          <th>Cobertura</th>
+        </tr>
+      </thead>
+      <tbody>
+        {reports.map((entry) => (
+          <tr key={entry.report_id}>
+            <td>{entry.report_id}</td>
+            <td>
+              {entry.label}
+              {entry.note ? (
+                <span
+                  className="cf-p3-cutoff-info"
+                  title={entry.note}
+                >
+                  {" "}
+                  — {entry.note}
+                </span>
+              ) : null}
+            </td>
+            <td>{SOURCE_LABELS[entry.source_kind]}</td>
+            <td>
+              {entry.operational_view ? (
+                <CfStatusBadge variant="info" label="Implementada" />
+              ) : (
+                "—"
+              )}
+            </td>
+            <td>
+              {entry.official_parity ? (
+                <CfStatusBadge
+                  variant="warning"
+                  label={
+                    PARITY_LABELS[entry.official_parity] ??
+                    entry.official_parity
+                  }
+                />
+              ) : (
+                "—"
+              )}
+            </td>
+            <td>{entry.checklist_items || "—"}</td>
+            <td>
+              {entry.checklist_items
+                ? `${entry.items_validated}/${entry.checklist_items}`
+                : "—"}
+            </td>
+            <td>
+              <CfStatusBadge
+                variant={COVERAGE_VARIANTS[entry.coverage]}
+                label={COVERAGE_LABELS[entry.coverage]}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 function mapError(error: unknown): PanelError {
   if (error instanceof ApiError) {
@@ -107,50 +190,7 @@ export function ReportsMatrixPanel({ period }: { period: string }) {
       title="Relatórios do processo (R01–R15)"
       hint={CF_HELP.reports.panel}
     >
-      <table className="cf-p3-table" aria-label="Matriz R01–R15">
-        <thead>
-          <tr>
-            <th>R-ID</th>
-            <th>Relatório</th>
-            <th>Fonte</th>
-            <th>Itens</th>
-            <th>Validados</th>
-            <th>Cobertura</th>
-          </tr>
-        </thead>
-        <tbody>
-          {matrix.reports.map((entry) => (
-            <tr key={entry.report_id}>
-              <td>{entry.report_id}</td>
-              <td>
-                {entry.label}
-                {entry.note ? (
-                  <span
-                    className="cf-p3-cutoff-info"
-                    title={entry.note}
-                  >
-                    {" "}
-                    — {entry.note}
-                  </span>
-                ) : null}
-              </td>
-              <td>{SOURCE_LABELS[entry.source_kind]}</td>
-              <td>{entry.checklist_items || "—"}</td>
-              <td>
-                {entry.checklist_items
-                  ? `${entry.items_validated}/${entry.checklist_items}`
-                  : "—"}
-              </td>
-              <td>
-                <CfStatusBadge
-                  variant={COVERAGE_VARIANTS[entry.coverage]}
-                  label={COVERAGE_LABELS[entry.coverage]}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ReportsMatrixTable reports={matrix.reports} />
     </CfSectionCard>
   );
 }
