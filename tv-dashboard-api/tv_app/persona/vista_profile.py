@@ -36,7 +36,7 @@ _INTELLIGENCE_PATH = (
     Path(__file__).resolve().parents[1] / "content" / "vista_agent_intelligence.json"
 )
 
-PROFILE_VERSION = 1
+PROFILE_VERSION = 2
 
 
 def _doc() -> Mapping[str, Any]:
@@ -73,11 +73,17 @@ def build_vista_profile(doc: Mapping[str, Any] | None = None) -> CharacterProfil
         ),
         appearance=Appearance(
             age_appearance="jovem — 20 anos",
-            hair="pretos e lisos",
             skin="clara",
-            face="expressão simpática e profissional",
-            glasses="usa óculos",
-            visual_style="contemporâneo, compatível com o universo visual DELPI",
+            hair="pretos e lisos, corte curto até o pescoço, franja lateral longa",
+            eyes="grandes e expressivos (representação estilizada)",
+            face="rosto jovem, delicado e expressivo — simpático, confiante e acolhedor",
+            glasses="óculos de armação escura grande, levemente arredondada e retangular",
+            clothing="moletom claro lilás suave — casual, moderno e tecnológico",
+            visual_style="personagem 3D estilizada, acabamento polido, traços suaves, iluminação difusa — estética amigável, profissional e contemporânea",
+            color_palette=("lilás suave", "azulado", "preto"),
+            avatar_reference=str(
+                (persona.get("appearance") or {}).get("reference") or ""
+            ),
             avatar_status=str(
                 (persona.get("appearance") or {}).get("status")
                 or "REFERENCE_NOT_OFFICIAL_AVATAR"

@@ -99,6 +99,8 @@ def project_persona_context(profile: CharacterProfile) -> dict[str, Any]:
         },
         "appearance_summary": _appearance_summary(profile),
         "avatar_status": profile.appearance.avatar_status,
+        **({"avatar_reference": profile.appearance.avatar_reference}
+           if profile.appearance.avatar_reference else {}),
         "relationships": [
             {
                 "target_character_id": r.target_character_id,
