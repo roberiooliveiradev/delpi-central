@@ -53,5 +53,7 @@ Campos atualizados na ficha conforme imagem aprovada: `skin`, `hair` (curto até
 
 ## Deploy/runtime
 
-- Asset empacotado via `COPY tv_app/` do Dockerfile — presença no container verificada pós-deploy.
+- Asset empacotado via `COPY tv_app/` do Dockerfile — presença no container verificada pós-deploy: `/app/tv_app/content/characters/vista/avatar-v1.png`, 1.001.174 bytes, SHA-256 `740f772b…42b6` (idêntico ao commit).
+- Runtime in-container: `vista 20 2 OFFICIAL_AVATAR_APPROVED tv_app/content/characters/vista/avatar-v1.png`.
+- Smoke via gateway: `/apps/tv-dashboard-api/health` 200; catalog sem auth 401 (fail-closed); `/.well-known/oauth-protected-resource` 200; portal `/` 200.
 - Validação conversacional live ChatGPT: TEST_NOT_RUN (sem acesso ao host nesta sessão).
