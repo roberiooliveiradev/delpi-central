@@ -748,7 +748,7 @@ function TicketListPage() {
  * related-ticket linking (Ticket_Ticket "link to" only — the canonical
  * proven relation type). All selections persist via POST /tickets.
  */
-function CreateItemsSection({
+export function CreateItemsSection({
   sessionCtx,
   disabled,
   open,
@@ -804,6 +804,7 @@ function CreateItemsSection({
   const itemsAvailable = canMine || canAll;
   const [relatedResults, setRelatedResults] = useState<TicketSummary[]>([]);
   const [relatedSearched, setRelatedSearched] = useState(false);
+  const [relatedSearching, setRelatedSearching] = useState(false);
   const [relatedError, setRelatedError] = useState<string | null>(null);
 
   if (!itemsAvailable && related.length === 0 && selections.length === 0 && !open) {
@@ -1584,22 +1585,6 @@ function CreateTicketPage() {
                 onChange={setObserverIdsInput}
                 icon={<Users size={14} aria-hidden />}
               />
-              <div className="helpdesk-create-layout__aside-actions">
-                <HintAction hint={helpTooltips.createUi.send} ariaLabel="Ajuda: Enviar chamado">
-                  <ActionButton
-                    variant="primary"
-                    type="submit"
-                    className="helpdesk-create-send"
-                    aria-label={saving ? "Enviando" : "Enviar chamado"}
-                    disabled={
-                      saving || loading || !title.trim() || !hasVisibleRichText(description) || !categoryId
-                    }
-                  >
-                    <Send size={18} aria-hidden />
-                    {saving ? "Enviando…" : "Enviar"}
-                  </ActionButton>
-                </HintAction>
-              </div>
             </aside>
           </div>
           <div className="helpdesk-create-files">
@@ -1626,6 +1611,20 @@ function CreateTicketPage() {
                 >
                   <Paperclip size={16} aria-hidden />
                   Anexar arquivo ao chamado
+                </ActionButton>
+              </HintAction>
+              <HintAction hint={helpTooltips.createUi.send} ariaLabel="Ajuda: Enviar chamado">
+                <ActionButton
+                  variant="primary"
+                  type="submit"
+                  className="helpdesk-create-send"
+                  aria-label={saving ? "Enviando" : "Enviar chamado"}
+                  disabled={
+                    saving || loading || !title.trim() || !hasVisibleRichText(description) || !categoryId
+                  }
+                >
+                  <Send size={18} aria-hidden />
+                  {saving ? "Enviando…" : "Enviar"}
                 </ActionButton>
               </HintAction>
             </div>

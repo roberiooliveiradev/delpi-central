@@ -445,18 +445,6 @@
   border-inline-start: 1px solid var(--helpdesk-border);
 }
 
-.dashboard-helpdesk .helpdesk-create-layout__aside-actions {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: stretch;
-  justify-content: flex-end;
-  gap: var(--delpi-ui-form-actions-gap, 6px);
-  margin-block-start: auto;
-  padding-block-start: 0.75rem;
-  border-block-start: 1px solid var(--helpdesk-border);
-}
-
 .dashboard-helpdesk .helpdesk-compose-attach {
   flex: 0 0 auto;
   min-height: 2.75rem;
@@ -465,7 +453,8 @@
 }
 
 .dashboard-helpdesk .helpdesk-create-send {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  margin-inline-start: auto;
   min-width: 7rem;
   min-height: 2.75rem;
   padding-inline: 1rem;
@@ -2021,9 +2010,6 @@
     border-block-start: 1px solid var(--helpdesk-border);
   }
 
-  .dashboard-helpdesk .helpdesk-create-layout__aside-actions {
-    margin-block-start: 0.5rem;
-  }
 }
 
 .dashboard-helpdesk a.helpdesk-ticket-link {
