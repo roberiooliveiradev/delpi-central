@@ -98,6 +98,25 @@ def _install_stub(monkeypatch, page: LmpFactsResult):
     return stub
 
 
+def _install_summary_stub(monkeypatch, page: LmpFactsResult):
+    stub = _StubFacts(page)
+
+    class _UseCase:
+        def __init__(self):
+            self._facts = stub
+
+        async def execute(self, ctx, query):
+            from engineering_app.application.use_cases.get_lmp_summary import (
+                GetLmpSummaryUseCase,
+            )
+            return await GetLmpSummaryUseCase(stub).execute(ctx, query)
+
+    monkeypatch.setattr(
+        lmp_routes, "build_get_lmp_summary_use_case", _UseCase
+    )
+    return stub
+
+
 # --- AuthN / AuthZ unificada -----------------------------------------------
 
 
@@ -209,6 +228,42 @@ def test_forbidden_source_maps_403(client, jwks_env, core_rbac, monkeypatch):
     token = jwks_env["make_token"]()
     resp = client.get("/v1/lmps", headers=_bearer(token))
     assert resp.status_code == 403
+
+
+def test_summary_total_items_counts_all_listing_kinds(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    """G4.B divergência real: legado `total_items` = universo filtrado
+    (todos os kinds), não apenas LMPs. Regressão de paridade do
+    `lmp_only=True` removido do fetch de facts do summary."""
+    facts = [
+        _fact(sale_number="OV901"),  # LMP
+        _fact(
+            sale_number="OV902",
+            listing_kind_source="AMOSTRA",
+            listing_kind="AMOSTRA",
+            has_sample_anchor=True,
+            has_lmp_finalized=False,
+            engineering_status="EM_ANDAMENTO",
+            sample_eng_minutes=45,
+        ),
+        _fact(
+            sale_number="OV903",
+            listing_kind_source="OUTRO",
+            listing_kind="OUTRO",
+            has_lmp_finalized=False,
+            engineering_status="EM_ANDAMENTO",
+        ),
+    ]
+    stub = _install_summary_stub(monkeypatch, _available_page(facts))
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/lmps/summary", headers=_bearer(token))
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    # facts fetch NÃO pode ser estreitado a LMP — semântica legada.
+    assert stub.calls[0].get("listing_type") is None
+    assert data["total_items"] == 3
+    assert data["total_lmps"] == 1
 
 
 def test_invalid_listing_type_returns_400(

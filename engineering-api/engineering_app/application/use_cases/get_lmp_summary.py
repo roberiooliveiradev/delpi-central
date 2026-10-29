@@ -58,9 +58,7 @@ class GetLmpSummaryUseCase:
                 end_date=query.end_date,
                 branch=query.branch,
                 listing_type=facts_listing_type_param(
-                    resolve_listing_type_filter(
-                        query.listing_type, lmp_only=True
-                    )
+                    resolve_listing_type_filter(query.listing_type)
                 ),
                 page=page,
                 page_size=FACTS_PAGE_SIZE,
