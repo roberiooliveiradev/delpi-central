@@ -47,7 +47,25 @@ sequencing variable lives in the edges, not in duplicated gates):
                          |
                          +--> admission --+--> surface_inquiry -> END
                                           +--> conversational -> END
-                                          +--> owner_path -> END
+                                          +--> evidence_session
+                                                    |
+                                                owner_path -> END
+
+H5 sequencing strategy (doc 196): ``evidence_session`` is the
+graph-level decision point that records ``assessment_reuse`` in
+typed state when ``recovery_reuse_enabled`` is set (B1); the
+``owner_path`` node then binds the OPT-IN ambient
+``_NATIVE_ASSESSMENT_LEDGER`` for that attempt — LangGraph executes
+nodes in copied contexts, so the binding must live in the calling
+node's context. With the flag off (B0 — the Task-03 framework
+baseline) no ledger is bound and the runtime is byte-identical to
+Engine A. The shared deterministic monotonic-reuse check inside the
+governed recovery stage decides per call whether a prior
+``foreign_evidence_required`` decision on the same target+goal is
+still valid — reuse skips the redundant model call, never the
+foreign consult, never a mandatory gate; every other premise
+combination re-runs the assessment. Reuse/reassess events are
+surfaced on the node trace for A/B attribution.
 """
 
 from __future__ import annotations
@@ -63,6 +81,7 @@ from app.application.capability_provision.governed_stage_gates import (
 )
 from app.application.capability_provision.orchestration import (
     _emit_activity,
+    _NATIVE_ASSESSMENT_LEDGER,
 )
 from app.application.interaction.activity import (
     ActivityEventSink,
@@ -99,6 +118,7 @@ class _GovernedTurnState(TypedDict, total=False):
     deadline: TurnDeadline
     admission_class: str | None
     admission_owner_required: bool
+    assessment_reuse: bool
     attempt: GovernedCapabilityAttempt
     trace: list[str]
 
@@ -115,11 +135,22 @@ class LangGraphCapabilityOrchestrator:
     which gates provider to hand over.
     """
 
-    def __init__(self, gates: SupportsGovernedStageGates) -> None:
+    def __init__(
+        self,
+        gates: SupportsGovernedStageGates,
+        *,
+        recovery_reuse_enabled: bool = True,
+    ) -> None:
         # Shared governed primitives — the SAME gates Engine A runs;
         # the engine calls its stage-phase methods, never attempt()
         # or _attempt() flow entrypoints on any engine.
         self._gates = gates
+        # H5 sequencing knob (B1 vs B0): binds the opt-in assessment
+        # ledger per attempt in ``evidence_session``. Sequencing
+        # policy only — no governed primitive changes behavior based
+        # on this flag; the ledger merely exposes decisions the
+        # shared monotonic check may safely reuse.
+        self._recovery_reuse_enabled = recovery_reuse_enabled
         self._compiled_graph: CompiledStateGraph = self._build_graph()
         # Evaluation observability only — the executed node list of
         # the most recent invocation (proves real sequencing in the
@@ -135,6 +166,7 @@ class LangGraphCapabilityOrchestrator:
         graph.add_node("confirmation", self._confirmation_node)
         graph.add_node("surface_inquiry", self._surface_inquiry_node)
         graph.add_node("conversational", self._conversational_node)
+        graph.add_node("evidence_session", self._evidence_session_node)
         graph.add_node("owner_path", self._owner_path_node)
 
         graph.add_edge(START, "preflight")
@@ -149,9 +181,10 @@ class LangGraphCapabilityOrchestrator:
             {
                 "surface_inquiry": "surface_inquiry",
                 "conversational": "conversational",
-                "owner_path": "owner_path",
+                "owner_path": "evidence_session",
             },
         )
+        graph.add_edge("evidence_session", "owner_path")
         graph.add_edge("confirmation", END)
         graph.add_edge("surface_inquiry", END)
         graph.add_edge("conversational", END)
@@ -261,6 +294,21 @@ class LangGraphCapabilityOrchestrator:
             "attempt": attempt,
         }
 
+    def _evidence_session_node(
+        self, state: _GovernedTurnState
+    ) -> dict[str, Any]:
+        # H5 strategy seam: the graph-level DECISION to allow
+        # assessment reuse for this attempt, recorded in typed state.
+        # The ambient ledger itself must be bound inside owner_path's
+        # own context — LangGraph executes each node in a copied
+        # context, so a ContextVar set here would not propagate. B0
+        # (flag off) records ``assessment_reuse=False`` and the
+        # runtime is byte-identical to Engine A.
+        return {
+            **self._traced(state, "evidence_session"),
+            "assessment_reuse": self._recovery_reuse_enabled,
+        }
+
     def _owner_path_node(
         self, state: _GovernedTurnState
     ) -> dict[str, Any]:
@@ -269,6 +317,12 @@ class LangGraphCapabilityOrchestrator:
             if state.get("admission_owner_required")
             else None
         )
+        if state.get("assessment_reuse"):
+            # Opt-in ambient carrier for THIS attempt only — a fresh
+            # dict per invocation; no decisions leak across attempts
+            # or turns. The governed recovery stage exposes/reuses
+            # decisions through the shared monotonic check.
+            _NATIVE_ASSESSMENT_LEDGER.set({"records": {}, "events": []})
         attempt = self._gates._governed_owner_path(
             state["input_text"],
             correlation=state["correlation"],
@@ -280,7 +334,14 @@ class LangGraphCapabilityOrchestrator:
             unbound_outcome=unbound_outcome,
             deadline=state["deadline"],
         )
-        return {**self._traced(state, "owner_path"), "attempt": attempt}
+        traced = self._traced(state, "owner_path")
+        ledger = _NATIVE_ASSESSMENT_LEDGER.get()
+        if ledger is not None:
+            traced["trace"] = traced["trace"] + [
+                f"assessment_{event}"
+                for event, _group_key, _cap_id in ledger["events"]
+            ]
+        return {**traced, "attempt": attempt}
 
     # ---------------- contract entrypoint ----------------
 

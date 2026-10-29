@@ -3832,6 +3832,93 @@ _RELEVANCE_RECOVERY_USED: contextvars.ContextVar[bool] = (
     )
 )
 
+# Sequencing-strategy ledger (H5 experiment, task
+# DELIA-C3-SEQUENCING-RECOVERY-AB-01): an OPT-IN ambient carrier a
+# sequencing engine may bind per attempt to observe established
+# native_assessment decisions during the bounded recovery round.
+# Unbound (default) = the runtime behaves exactly as if it did not
+# exist — Engine A never binds it. The ledger records DECISIONS only
+# (status string + target key + goal fingerprint); it never carries
+# authorization, arguments, evidence payloads or chain-of-thought.
+_NATIVE_ASSESSMENT_LEDGER: contextvars.ContextVar[dict | None] = (
+    contextvars.ContextVar(
+        "delia_native_assessment_ledger", default=None
+    )
+)
+
+
+def _goal_fingerprint(goal: _TurnGoal | None) -> tuple:
+    """The goal inputs a native_assessment decision actually saw — a
+    decision is only reusable while every one of them is identical."""
+    if goal is None:
+        return ()
+    return (
+        goal.goal_class,
+        goal.comparison_requested,
+        goal.output_mode,
+        goal.business_subject,
+    )
+
+
+def _record_native_assessment(
+    group_key: str,
+    descriptor: ProviderCapability,
+    goal: _TurnGoal | None,
+    decision: str,
+) -> None:
+    """Persist a just-made assessment decision when a sequencing
+    engine bound the opt-in ledger. No-ops otherwise."""
+    ledger = _NATIVE_ASSESSMENT_LEDGER.get()
+    if ledger is None:
+        return
+    ledger["records"][(group_key, descriptor.capability_id)] = {
+        "decision": decision,
+        "goal_fp": _goal_fingerprint(goal),
+    }
+
+
+def _reusable_native_assessment(
+    group_key: str,
+    descriptor: ProviderCapability,
+    goal: _TurnGoal | None,
+) -> str | None:
+    """Deterministic monotonic reuse check for the recovery-round
+    assessment. Reuse is legal ONLY when the prior decision on the
+    SAME target with the SAME goal was ``foreign_evidence_required``:
+    an irrelevant native result can never REDUCE an established
+    foreign-evidence requirement, so reuse moves strictly toward
+    more evidence, never less. A prior ``sufficient`` verdict is
+    REFUTED by the mismatch — reusing it would skip a mandatory
+    decision on confirmed divergence, so it always reassesses.
+    Reuse skips the model call, never the foreign consult itself,
+    which still executes under the fresh relevance feedback.
+    """
+    ledger = _NATIVE_ASSESSMENT_LEDGER.get()
+    if ledger is None:
+        return None
+    record = ledger["records"].get(
+        (group_key, descriptor.capability_id)
+    )
+    if (
+        record is not None
+        and record["decision"] == "foreign_evidence_required"
+        and record["goal_fp"] == _goal_fingerprint(goal)
+    ):
+        ledger["events"].append(
+            ("reused", group_key, descriptor.capability_id)
+        )
+        _logger.info(
+            "orchestration stage=native_assessment "
+            "decision=reuse_foreign_required target=%s",
+            descriptor.capability_id,
+        )
+        return "foreign_evidence_required"
+    ledger["events"].append(
+        ("reassessed", group_key, descriptor.capability_id)
+    )
+    return None
+
+
 def _resume_stage_key(
     instruction_id: str,
     input_text: str,
@@ -4708,6 +4795,9 @@ class OperationalCapabilityOrchestrator:
                     prior_turns,
                     goal=goal,
                     deadline=deadline,
+                )
+                _record_native_assessment(
+                    group_key, descriptor, goal, assessment
                 )
             if (
                 assessment == "corroboration_requested"
@@ -9798,17 +9888,21 @@ class OperationalCapabilityOrchestrator:
         # reformulation — recovery is best-effort, still bounded.
         foreign_evidence: str | None = None
         if len(groups) > 1:
-            assessment = self._assess_native_path(
-                input_text,
-                sel_group,
-                sel_descriptor,
-                correlation,
-                workspace_context,
-                prior_turns,
-                goal=goal,
-                deadline=deadline,
-                relevance_feedback=feedback,
+            assessment = _reusable_native_assessment(
+                sel_group_key, sel_descriptor, goal
             )
+            if assessment is None:
+                assessment = self._assess_native_path(
+                    input_text,
+                    sel_group,
+                    sel_descriptor,
+                    correlation,
+                    workspace_context,
+                    prior_turns,
+                    goal=goal,
+                    deadline=deadline,
+                    relevance_feedback=feedback,
+                )
             if assessment == "foreign_evidence_required":
                 found = self._select_foreign_capability(
                     input_text,

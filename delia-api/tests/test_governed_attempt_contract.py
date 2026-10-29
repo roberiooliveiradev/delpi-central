@@ -87,11 +87,14 @@ def _build_langgraph_engine(
     turn_budget_seconds=None,
     max_governed_attempts=1,
     llm_call_max_attempts=1,
+    recovery_reuse_enabled=True,
     **gates_kwargs,
 ) -> SupportsGovernedCapabilityAttempt:
     """Engine B — LangGraph sequencing over the same governed
     primitives. Skipped entirely when the optional eval dependency is
-    absent (never a production requirement)."""
+    absent (never a production requirement). ``recovery_reuse_enabled``
+    toggles the H5 sequencing strategy (B1 vs the B0 framework
+    baseline) — a sequencing knob, never a production setting."""
     pytest.importorskip("langgraph")
     from app.infrastructure.orchestration.langgraph_engine import (
         LangGraphCapabilityOrchestrator,
@@ -119,7 +122,10 @@ def _build_langgraph_engine(
         **gates_kwargs,
         **kwargs,
     )
-    return LangGraphCapabilityOrchestrator(gates)
+    return LangGraphCapabilityOrchestrator(
+        gates,
+        recovery_reuse_enabled=recovery_reuse_enabled,
+    )
 
 
 def build_engine(
@@ -149,7 +155,7 @@ def build_engine(
     tests that need a bounded window pass ``turn_deadline`` on
     ``attempt()`` instead.
     """
-    if engine_id == "langgraph":
+    if engine_id in ("langgraph", "langgraph_b0"):
         return _build_langgraph_engine(
             port=port,
             specialist_ids=specialist_ids,
@@ -159,6 +165,7 @@ def build_engine(
             turn_budget_seconds=turn_budget_seconds,
             max_governed_attempts=max_governed_attempts,
             llm_call_max_attempts=llm_call_max_attempts,
+            recovery_reuse_enabled=(engine_id == "langgraph"),
             **gates_kwargs,
         )
     if engine_id != "delia":

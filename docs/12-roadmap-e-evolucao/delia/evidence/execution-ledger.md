@@ -697,3 +697,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - A/B rerun post-move: OUTCOME_DIVERGENCES=0, identical model-call counts (6/7/9/6/3/4).
 - Regression: focused 309 passed; full 2534 passed + 2 failed (SAME pre-existing env failures) + 3 skipped. Arch Phase-3 PASS; backend boundaries PASS (0 findings). Residual search clean. No production changes, no deploy.
 - NEXT: coordination acceptance → Task 04 sequencing-variation POC may proceed on the now-explicit gates boundary.
+
+## 2026-10-29 — Engine B sequencing/recovery strategy A/B experiment (doc 196) — PROVEN (LOCAL POC)
+- Task DELIA-C3-PLUGGABLE-ORCHESTRATION-SEQUENCING-RECOVERY-AB-01 on 68b10b81dd.
+- H5 revalidated+refined: naive 'second native_assessment is redundant' REFUTED (relevance_feedback is a decisional input by design). Bounded reuse = monotonic-safe ONLY for prior foreign_evidence_required on same target+goal; 'sufficient' is refuted by the mismatch, everything else reassesses.
+- Implementation: opt-in ambient _NATIVE_ASSESSMENT_LEDGER ContextVar (unbound = Engine A byte-identical) + shared deterministic _reusable_native_assessment check in _recover_relevance; Engine B gains evidence_session node + assessment_reuse graph-state decision; owner_path binds ledger in its own node context (LangGraph node contexts are copied). recovery_reuse_enabled knob = B1 vs B0, eval-only.
+- RED recorded (ImportError → strategy absent; 2 assessment calls pre-strategy) → GREEN 18/18 R1-R10 strategy tests (reuse, stale-decision rejection, authz/cancel/ceiling/trace/engine-A isolation, real alternative transition).
+- Three-way A/B (delia / langgraph_b0 / langgraph): S1-S10 identical calls+outcomes; S11_recovery_reuse 17/17/16 calls — 1 redundant native_assessment eliminated, assessments 2/2/1, owner calls 4/4/4, OUTCOME_DIVERGENCES=0. Harness now exits nonzero on divergence (was unconditional 0).
+- Tokens NOT_AVAILABLE (fakes); latency local-fake only (B1≈B0, ~2x A); SEMANTIC_EVAL=INCONCLUSIVE (no real-model run).
+- Conformance 43/43 both engines; isolation 9/9; focused sweep 289 pass; full suite 2557 collected → 2552 passed + 2 failed (cri variant fixture drift pre-existing; openapi env scan surfaces only under repo-root layout — env.example comment at baseline SHA) + 3 skipped. Arch phase-3 + backend boundaries PASS. Residual search clean; no production wiring/deps/calls.
+- VERDICT: PROMISING_LOCAL_EVIDENCE — real call reduction in a narrow reuse window; real-model benefit unproven. NEXT: Task 05 candidates = Ollama semantic A/B on reuse path; production-frequency inventory of the reuse window; optional monotonic check for corroboration_requested.
