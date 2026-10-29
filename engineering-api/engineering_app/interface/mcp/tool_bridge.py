@@ -26,6 +26,9 @@ from delpi_mcp.identity import (
 )
 from starlette.requests import Request
 
+from engineering_app.application.eva.agent_intelligence_service import (
+    EvaAgentIntelligenceService,
+)
 from engineering_app.application.ports.home_sources import HomeSourceContext
 from engineering_app.application.ports.overview_sources import OverviewQuery
 from engineering_app.composition.home_composer import (
@@ -257,6 +260,9 @@ def tool_get_catalog() -> CallToolResult:
                 "READ": "Read-only official data — never persists.",
             },
             "write_tools": [],
+            "agent_directives": (
+                EvaAgentIntelligenceService.agent_directives()
+            ),
             "planned_capabilities": list(_PLANNED_CAPABILITIES),
             "notes": [
                 "EVA é somente leitura; não existem ferramentas de escrita.",
