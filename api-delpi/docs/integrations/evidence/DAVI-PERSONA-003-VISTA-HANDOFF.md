@@ -59,8 +59,8 @@ A menção é opcional e contextual.
 
 ## Evidências do DAVI
 
-- **Commit SHA:** ver `git log` — commit `feat(davi): narrative identity &
-  VISTA fictional relationship` em `main` (DAVI-PERSONA-003).
+- **Commit SHA:** `3d862ab78dbf653bf3e82bbe1bc024bd97ab5a24` em `main`
+  (DAVI-PERSONA-003).
 - **Arquivos alterados:** `app/content/davi_agent_intelligence.json`
   (`persona.appearance`, seção `narrative`), service projection,
   `app/interface/mcp/branding.py` (initialize instructions), paste canônico
@@ -68,11 +68,11 @@ A menção é opcional e contextual.
 - **Versão de inteligência:** `2026.10.29.3`.
 - **Testes:** seção PERSONA-003 (narrativa projetada, limites, sem novas
   tools/AuthZ) + regressão DAVI + benchmark 264 casos.
-- **Deploy:** deploy canônico api-delpi no srv-api; verificar SHA no
-  relatório de execução.
+- **Deploy:** `3d862ab78d` deployed — api-delpi rebuilt via compose,
+  `/health` 200, intelligence `2026.10.29.3` lida do container.
 - **Projeção MCP:** `capability_surface.agent_directives.narrative` +
-  `initialize` instructions contêm a narrativa; consumo pelo host =
-  `TO_INVENTORY`.
+  `initialize` instructions (1426 chars, contêm VISTA) verificados no
+  container; consumo pelo host = `TO_INVENTORY`.
 - **Pendências:** Agent Studio sync manual; validação ChatGPT live;
   recebimento deste handoff pela VISTA não é provado pela criação do arquivo.
 
