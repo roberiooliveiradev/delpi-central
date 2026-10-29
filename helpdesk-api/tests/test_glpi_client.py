@@ -2979,3 +2979,140 @@ def test_revoke_requires_explicit_provisioner():
     with pytest.raises(GlpiUnavailable):
         client.revoke_user_api_token(68)
     assert calls == []
+
+
+def test_list_query_numeric_term_adds_ticket_id_clause():
+    query = build_ticket_list_query(q="1465")
+    assert "(id==1465,name=like=*1465*,content=like=*1465*)" in query.filter
+
+
+def test_list_query_text_term_keeps_name_content_group_without_id():
+    query = build_ticket_list_query(q="Portal Comercial")
+    assert "(name=like=*Portal Comercial*,content=like=*Portal Comercial*)" in query.filter
+    assert "id==" not in query.filter
+
+
+def test_list_tickets_legacy_search_finds_numeric_id_title_and_content():
+    search_calls: list[str] = []
+    hydrate_filters: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "legacy-st"})
+        if path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        if path.endswith("/apirest.php/search/Ticket"):
+            search_calls.append(str(request.url))
+            field = request.url.params.get("criteria[0][field]")
+            rows = {
+                "2": [{"2": 1465, "19": "2026-01-05 10:00:00"}],
+                "1": [
+                    {"2": 900, "19": "2026-01-07 09:00:00"},
+                    {"2": 1465, "19": "2026-01-05 10:00:00"},
+                ],
+                "21": [{"2": 1465, "19": "2026-01-05 10:00:00"}],
+            }.get(field or "", [])
+            return httpx.Response(200, json={"totalcount": len(rows), "data": rows})
+        if path.endswith("/Assistance/Ticket"):
+            params = request.url.params
+            if "filter" in params:
+                hydrate_filters.append(params["filter"])
+                return httpx.Response(
+                    200,
+                    json={
+                        "results": [
+                            {
+                                "id": 900,
+                                "name": "Portal Comercial",
+                                "status": {"id": 2, "name": "Em andamento"},
+                                "urgency": 3,
+                                "date_mod": "2026-01-07T09:00:00Z",
+                            },
+                            {
+                                "id": 1465,
+                                "name": "Portal Comercial 1465",
+                                "status": {"id": 2, "name": "Em andamento"},
+                                "urgency": 3,
+                                "date_mod": "2026-01-05T10:00:00Z",
+                            },
+                        ]
+                    },
+                )
+            return httpx.Response(200, json={"results": []})
+        return httpx.Response(404, json={"error": "not found"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token",
+        legacy_user_token="user-token",
+        transport=httpx.MockTransport(handler),
+    )
+    listed = client.list_tickets("token", build_ticket_list_query(q="1465", assignee_id=22))
+    assert len(search_calls) == 3
+    # Union dedupes the id hit, orders by date_mod desc, hydrates via actor Bearer.
+    assert [row.id for row in listed.items] == [900, 1465]
+    assert hydrate_filters == ["is_deleted==false;id=in=(900,1465)"]
+
+
+def test_list_tickets_legacy_search_unauthorized_id_not_revealed():
+    """Ids visible to the legacy session but not to the actor are dropped at
+    HLAPI hydration — the legacy discover step never bypasses actor ACL."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "legacy-st"})
+        if path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        if path.endswith("/apirest.php/search/Ticket"):
+            field = request.url.params.get("criteria[0][field]")
+            rows = {"2": [{"2": 4242, "19": "2026-01-05 10:00:00"}]}.get(field or "", [])
+            return httpx.Response(200, json={"totalcount": len(rows), "data": rows})
+        if path.endswith("/Assistance/Ticket"):
+            # Actor ACL hides 4242 — hydration returns nothing.
+            return httpx.Response(200, json={"results": []})
+        return httpx.Response(404, json={"error": "not found"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token",
+        legacy_user_token="user-token",
+        transport=httpx.MockTransport(handler),
+    )
+    listed = client.list_tickets("token", build_ticket_list_query(q="4242", assignee_id=22))
+    assert listed.items == ()
+    assert listed.has_more is False
+
+
+def test_dashboard_reader_rejects_unsupported_filters():
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+    )
+    with pytest.raises(GlpiValidation):
+        client.list_tickets_as_dashboard_reader(
+            build_ticket_list_query(q="1465"),
+            app_token="app",
+            user_token="user",
+            entity_ids=(0,),
+            group_ids=(),
+        )
+    with pytest.raises(GlpiValidation):
+        client.list_tickets_as_dashboard_reader(
+            build_ticket_list_query(status="open"),
+            app_token="app",
+            user_token="user",
+            entity_ids=(0,),
+            group_ids=(),
+        )

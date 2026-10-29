@@ -274,3 +274,23 @@ describe("Helpdesk list UX structural", () => {
     expect(sort).not.toContain("Drawer");
   });
 });
+
+  it("busca é server-side: debounce, Enter imediato, AbortSignal e sem filtro local", () => {
+    const page = read("HelpdeskPage.tsx");
+    const flow = read("ticketSearchFlow.ts");
+    // Backend-driven: q flows to listTickets; no local filtering of items.
+    expect(page).toContain("q: next.q || undefined");
+    expect(page).not.toContain("items.filter(");
+    expect(page).not.toContain("body.items.filter(");
+    // Debounced backend commit on typing; Enter/clear use the same commit path.
+    expect(page).toContain("createDebouncer()");
+    expect(page).toContain("searchDebouncerRef.current.schedule(");
+    expect(page).toContain("applySearch()");
+    // Stale/abort protection on the request lifecycle.
+    expect(page).toContain("createStaleGuard()");
+    expect(page).toContain("new AbortController()");
+    expect(page).toContain("void load(filters, controller.signal)");
+    expect(flow).toContain("SEARCH_DEBOUNCE_MS = 350");
+    // Page reset and URL sync stay on the committed-filters path.
+    expect(page).toContain("commitFilters({ ...filtersRef.current, q, page: 1 })");
+  });

@@ -311,7 +311,12 @@ def build_ticket_list_query(
     clauses: list[str] = ["is_deleted==false"]
     term = _search_term(q)
     if term:
-        clauses.append(f"(name=like=*{term}*,content=like=*{term}*)")
+        # Numeric terms also match the ticket id (users search by number as
+        # often as by title); non-numeric terms never hit the id clause.
+        group = f"name=like=*{term}*,content=like=*{term}*"
+        if term.isdigit():
+            group = f"id=={int(term)}," + group
+        clauses.append(f"({group})")
     status_ids = _status_ids(status)
     if status_ids:
         joined = ",".join(str(item) for item in status_ids)

@@ -183,6 +183,7 @@ import { TicketListFilterPopover } from "./TicketListFilterPopover";
 import { TicketListSortPopover } from "./TicketListSortPopover";
 import { TicketListTable } from "./TicketListTable";
 import { TicketListToolbar } from "./TicketListToolbar";
+import { createDebouncer, createStaleGuard } from "./ticketSearchFlow";
 import { TicketTaskListPopover, TicketTimelineFilterPopover } from "./TicketTimelineTools";
 import {
   HelpdeskAssigneePicker,
@@ -302,6 +303,10 @@ function TicketListPage() {
   const [linking, setLinking] = useState(false);
   const autoLinkStartedRef = useRef(false);
   const [searchDraft, setSearchDraft] = useState(() => currentListFilters().q);
+  const loadGuardRef = useRef(createStaleGuard());
+  const searchDebouncerRef = useRef(createDebouncer());
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
   const [canAssign, setCanAssign] = useState<boolean | null>(null);
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window === "undefined" ? 1280 : window.innerWidth,
@@ -378,36 +383,44 @@ function TicketListPage() {
     commitFilters({ ...filters, q, page: 1 });
   }
 
-  async function load(next = filters) {
+  async function load(next = filters, signal?: AbortSignal) {
+    const seq = loadGuardRef.current.next();
     setLoading(true);
     setErrorCode(null);
     setErrorText(null);
     try {
-      const body = await listTickets({
-        q: next.q || undefined,
-        status: next.status || undefined,
-        urgency_id: next.urgency_id || undefined,
-        category_id: next.category_id || undefined,
-        assignee_id: next.assignee_id || undefined,
-        updated_from: next.updated_from || undefined,
-        updated_to: next.updated_to || undefined,
-        created_from: next.created_from || undefined,
-        created_to: next.created_to || undefined,
-        sort: next.sort || undefined,
-        page: next.page,
-        page_size: next.page_size,
-      });
+      const body = await listTickets(
+        {
+          q: next.q || undefined,
+          status: next.status || undefined,
+          urgency_id: next.urgency_id || undefined,
+          category_id: next.category_id || undefined,
+          assignee_id: next.assignee_id || undefined,
+          updated_from: next.updated_from || undefined,
+          updated_to: next.updated_to || undefined,
+          created_from: next.created_from || undefined,
+          created_to: next.created_to || undefined,
+          sort: next.sort || undefined,
+          page: next.page,
+          page_size: next.page_size,
+        },
+        signal,
+      );
+      if (!loadGuardRef.current.isCurrent(seq) || signal?.aborted) return;
       setItems(body.items);
       setHasMore(body.has_more);
       clearGlpiAutoLinkAttempt();
     } catch (error) {
+      if (!loadGuardRef.current.isCurrent(seq) || signal?.aborted) return;
       const mapped = messageFor(error);
       setItems([]);
       setHasMore(false);
       setErrorCode(mapped.code);
       setErrorText(mapped.text);
     } finally {
-      setLoading(false);
+      if (loadGuardRef.current.isCurrent(seq)) {
+        setLoading(false);
+      }
     }
   }
 
@@ -426,8 +439,24 @@ function TicketListPage() {
   }
 
   useEffect(() => {
-    void load(filters);
+    const controller = new AbortController();
+    void load(filters, controller.signal);
+    return () => controller.abort();
   }, [filters]);
+
+  // Debounced server-side search: typing commits q (page reset to 1) after
+  // the debounce window; Enter submits immediately via applySearch(). Clearing
+  // the input commits an empty q, which reloads the unfiltered list.
+  useEffect(() => {
+    const q = searchDraft.trim();
+    if (q === filters.q) {
+      searchDebouncerRef.current.cancel();
+      return;
+    }
+    searchDebouncerRef.current.schedule(() => {
+      commitFilters({ ...filtersRef.current, q, page: 1 });
+    });
+  }, [searchDraft, filters]);
 
   useEffect(() => {
     void Promise.all([listCategories(), listUrgencies()])

@@ -411,12 +411,12 @@ class HttpxGlpiClient:
     ) -> TicketListPage:
         """Discover ticket ids via classic Search; hydrate+ACL via OAuth HLAPI."""
         from helpdesk_app.infrastructure.glpi.legacy_ticket_search import (
-            build_legacy_ticket_search_path_from_parts,
-            parse_legacy_ticket_search,
+            build_legacy_ticket_search_paths_from_parts,
+            merge_legacy_ticket_search,
         )
 
         self._legacy_require_ready()
-        path = build_legacy_ticket_search_path_from_parts(
+        paths = build_legacy_ticket_search_paths_from_parts(
             q=query.q,
             status=query.status,
             urgency_id=query.urgency_id,
@@ -432,14 +432,17 @@ class HttpxGlpiClient:
         )
         session_token = self._legacy_init_session()
         try:
-            payload = self._legacy_get_json(session_token, path)
+            payloads = [
+                self._legacy_get_json(session_token, path) for path in paths
+            ]
         finally:
             self._legacy_kill_session(session_token)
 
-        searched = parse_legacy_ticket_search(
-            payload if isinstance(payload, (dict, list)) else {},
+        searched = merge_legacy_ticket_search(
+            payloads,
             page=query.page,
             page_size=query.page_size,
+            sort=query.client_sort,
         )
         if not searched.ticket_ids:
             return TicketListPage(
@@ -1986,6 +1989,29 @@ class HttpxGlpiClient:
         payload = response.json() if response.content else {}
         return parse_sla_ttr_exceeded(payload, ticket_ids)
 
+    @staticmethod
+    def _dashboard_reader_reject_unsupported_filters(query) -> None:
+        """The institutional reader page supports pagination only. Filters
+        must be applied in the backend or rejected — never silently ignored."""
+        requested = {
+            "q": bool(str(query.q or "").strip()),
+            "status": str(query.status or "").strip().lower() not in {"", "all"},
+            "urgency_id": query.urgency_id is not None,
+            "category_id": query.category_id is not None,
+            "updated_from": bool(str(query.updated_from or "").strip()),
+            "updated_to": bool(str(query.updated_to or "").strip()),
+            "created_from": bool(str(query.created_from or "").strip()),
+            "created_to": bool(str(query.created_to or "").strip()),
+            "assignee_id": query.assignee_id is not None,
+            "sort": str(query.client_sort or "updated_at:desc").strip()
+            != "updated_at:desc",
+        }
+        applied = [name for name, active in requested.items() if active]
+        if applied:
+            raise GlpiValidation(
+                f"Leitura institucional não suporta filtros: {', '.join(applied)}."
+            )
+
     def list_tickets_as_dashboard_reader(
         self,
         query,
@@ -2004,6 +2030,7 @@ class HttpxGlpiClient:
 
         if not app_token or not user_token or not entity_ids:
             raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
+        self._dashboard_reader_reject_unsupported_filters(query)
         session_token = self._legacy_init_session(app_token=app_token, user_token=user_token)
         start = max(0, (int(query.page) - 1) * int(query.page_size))
         end = start + int(query.page_size) - 1
