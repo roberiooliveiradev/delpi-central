@@ -2321,6 +2321,70 @@ services:
     networks:
       - delpi-network
 
+  # PROC-0076 R10 — scheduled market-data ingestion, outside the
+  # request path. Same image as external-data-api; the loop only
+  # triggers a due feed once per day after RUN_AT, derives
+  # due/attempt state from market_data_ingestion_runs, and every
+  # per-feed env flag + catalog rights guard still applies inside
+  # the job (disabled scheduler = inert container, never bypassed).
+  external-data-scheduler:
+    build:
+      context: ..
+      dockerfile: external-data-api/Dockerfile
+
+    container_name: delpi-external-data-scheduler
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      SERVICE_NAME: external-data-scheduler
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+      EXTERNAL_DATA_SCHEDULER_ENABLED: ${EXTERNAL_DATA_SCHEDULER_ENABLED:-false}
+      EXTERNAL_DATA_SCHEDULER_FEEDS: ${EXTERNAL_DATA_SCHEDULER_FEEDS:-metals-daily}
+      EXTERNAL_DATA_SCHEDULER_RUN_AT: ${EXTERNAL_DATA_SCHEDULER_RUN_AT:-20:30}
+      EXTERNAL_DATA_SCHEDULER_POLL_SECONDS: ${EXTERNAL_DATA_SCHEDULER_POLL_SECONDS:-300}
+      # metals-daily interval defaults to 3 days: a daily per-symbol
+      # history pull (5 × weight 2 ≈ 300/month) exceeds the upstream
+      # MetalCharts Free 200/month allowance; every ≤3 days ≈ 100/month
+      # keeps cache fresh within TTL with budget headroom for retries.
+      EXTERNAL_DATA_SCHEDULER_INTERVAL_DAYS: ${EXTERNAL_DATA_SCHEDULER_INTERVAL_DAYS:-3}
+      EXTERNAL_DATA_SCHEDULER_METALS_DAILY_INTERVAL_DAYS: ${EXTERNAL_DATA_SCHEDULER_METALS_DAILY_INTERVAL_DAYS:-3}
+      EXTERNAL_DATA_FEED_METALS_DAILY_ENABLED: ${EXTERNAL_DATA_FEED_METALS_DAILY_ENABLED:-false}
+      METALCHARTS_API_KEY: ${METALCHARTS_API_KEY:-${METAL_CHARTS_KEY:-}}
+      METALCHARTS_BASE_URL: ${METALCHARTS_BASE_URL:-https://api.metalcharts.org}
+      METALCHARTS_ALLOWED_HOSTS: ${METALCHARTS_ALLOWED_HOSTS:-api.metalcharts.org}
+      METALCHARTS_TIMEOUT_SECONDS: ${METALCHARTS_TIMEOUT_SECONDS:-15}
+      METALCHARTS_MONTHLY_WEIGHT_BUDGET: ${METALCHARTS_MONTHLY_WEIGHT_BUDGET:-160}
+      METALCHARTS_MINUTE_WEIGHT_BUDGET: ${METALCHARTS_MINUTE_WEIGHT_BUDGET:-8}
+      METALCHARTS_CACHE_TTL_HOURS: ${METALCHARTS_CACHE_TTL_HOURS:-48}
+
+    command: ["python", "-m", "app.jobs.ingest_scheduler"]
+
+    depends_on:
+      external-data-api:
+        condition: service_healthy
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   requests-api:
     build:
       context: ..

@@ -184,6 +184,7 @@ FASE_API=(
   tv-dashboard-api
   bpmn-modeler-api
   external-data-api
+  external-data-scheduler
   engineering-api
 )
 

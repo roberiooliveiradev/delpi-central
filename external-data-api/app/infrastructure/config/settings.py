@@ -139,6 +139,37 @@ class Settings:
         os.getenv("METALCHARTS_CACHE_TTL_HOURS", "48") or "48"
     )
 
+    # R10 — scheduled ingestion runtime (external-data-scheduler
+    # service). Master kill switch; per-feed env flags and the source
+    # catalog still gate every run inside the job itself.
+    EXTERNAL_DATA_SCHEDULER_ENABLED = (
+        os.getenv("EXTERNAL_DATA_SCHEDULER_ENABLED", "false")
+        .strip().lower() in {"1", "true", "yes"}
+    )
+    EXTERNAL_DATA_SCHEDULER_FEEDS = tuple(
+        f.strip()
+        for f in os.getenv(
+            "EXTERNAL_DATA_SCHEDULER_FEEDS", "metals-daily"
+        ).split(",")
+        if f.strip()
+    )
+    # Local wall-clock time (container TZ) after which a due feed may
+    # run — provisional pending provider publication-time evidence.
+    EXTERNAL_DATA_SCHEDULER_RUN_AT = os.getenv(
+        "EXTERNAL_DATA_SCHEDULER_RUN_AT", "20:30"
+    ).strip()
+    EXTERNAL_DATA_SCHEDULER_POLL_SECONDS = int(
+        os.getenv("EXTERNAL_DATA_SCHEDULER_POLL_SECONDS", "300") or "300"
+    )
+    # Minimum days between successful runs per feed; overridable via
+    # EXTERNAL_DATA_SCHEDULER_<FEED>_INTERVAL_DAYS (feed uppercased,
+    # '-'→'_'). metals-daily defaults to 3 because a daily
+    # per-symbol history refresh (5 × weight 2 ≈ 300/month) exceeds
+    # the upstream 200/month Free-plan allowance.
+    EXTERNAL_DATA_SCHEDULER_INTERVAL_DAYS = int(
+        os.getenv("EXTERNAL_DATA_SCHEDULER_INTERVAL_DAYS", "3") or "3"
+    )
+
     EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED = (
         os.getenv("EXTERNAL_DATA_FEED_COMEX_MONTHLY_ENABLED", "false")
         .strip().lower() in {"1", "true", "yes"}
