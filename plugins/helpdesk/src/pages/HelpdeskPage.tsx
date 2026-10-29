@@ -7,7 +7,7 @@ import {
   SectionHintLabel,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, Pencil, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
+import { AlignLeft, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, Pencil, Plus, RefreshCw, Send, TicketPlus, Trash2, Type, Users } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -18,6 +18,7 @@ import {
   createTicket,
   createTicketSolution,
   createTicketTask,
+  deleteTicket,
   fetchTicketAttachmentBlob,
   getSessionCapabilities,
   getTicket,
@@ -75,6 +76,15 @@ import {
   consumeAttachmentAuthorNotice,
   stageAttachmentAuthorNotice,
 } from "../presentation/attachmentAuthorNotice";
+import {
+  TICKET_DELETE_UNCONFIRMED_TEXT,
+  canShowTicketDelete,
+  consumeTicketDeleteNotice,
+  stageTicketDeleteNotice,
+  ticketDeleteConfirmed,
+  ticketDeleteErrorText,
+  ticketDeleteSuccessText,
+} from "../presentation/ticketDeleteFlow";
 import type {
   HelpdeskInlineUploadResult,
   HelpdeskPendingAttachmentItem,
@@ -178,6 +188,7 @@ import {
   HelpdeskFormActions,
   HelpdeskIconButton,
   HelpdeskAttachButton,
+  HelpdeskConfirmModal,
   HelpdeskListPaginationFooter,
   HelpdeskLoadingCard,
   HelpdeskMessageThread,
@@ -280,6 +291,7 @@ function TicketListPage() {
   const [loading, setLoading] = useState(true);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [noticeText] = useState<string | null>(() => consumeTicketDeleteNotice());
   const [linking, setLinking] = useState(false);
   const autoLinkStartedRef = useRef(false);
   const [searchDraft, setSearchDraft] = useState(() => currentListFilters().q);
@@ -684,6 +696,9 @@ function TicketListPage() {
                 : "Você ainda não possui chamados."
             }
           />
+        ) : null}
+        {view === "list" && noticeText ? (
+          <HelpdeskStateBanner>{noticeText}</HelpdeskStateBanner>
         ) : null}
         {view === "list" ? (
           showCards ? (
@@ -1245,6 +1260,12 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     useState<ClassificationCatalogs | null>(null);
   const [classificationCatalogsLoading, setClassificationCatalogsLoading] = useState(false);
   const [classificationKey, setClassificationKey] = useState(newIdempotencyKey);
+  /** Move-to-trash intent — key generated per confirmation open (one intent). */
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteKey, setDeleteKey] = useState(newIdempotencyKey);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteChecking, setDeleteChecking] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const conversationHtml = useMemo(() => {
     if (!ticket) return "";
@@ -1749,6 +1770,54 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
 
   const workspaceActions = ticket ? ticketWorkspaceActions(ticket) : [];
   const selectorActions = ticketWorkspaceSelectorActions(workspaceActions);
+
+  /**
+   * Move-to-trash intent: READ → CONFIRM → DELETE → the BFF's own
+   * read-back decides `deleted` — never trusting 2xx alone.
+   * The ticket is re-fetched at dialog open so a state change between
+   * read and confirm is re-presented before any write.
+   */
+  function openDeleteDialog() {
+    if (!ticket || deleting || deleteChecking) return;
+    setDeleteError(null);
+    setDeleteChecking(true);
+    void getTicket(ticketId)
+      .then((fresh) => {
+        setTicket(fresh);
+        if (!canShowTicketDelete(fresh)) {
+          setErrorText("O chamado mudou e não pode mais ser movido para a lixeira.");
+          return;
+        }
+        setDeleteKey(newIdempotencyKey());
+        setDeleteDialogOpen(true);
+      })
+      .catch((error) => setErrorText(messageFor(error).text))
+      .finally(() => setDeleteChecking(false));
+  }
+
+  function cancelDelete() {
+    if (deleting) return;
+    setDeleteDialogOpen(false);
+    setDeleteError(null);
+  }
+
+  function confirmDelete() {
+    if (!ticket || deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    void deleteTicket(ticketId, deleteKey)
+      .then((result) => {
+        if (!ticketDeleteConfirmed(result)) {
+          // 2xx without confirmed trash semantics — never claim success.
+          setDeleteError(TICKET_DELETE_UNCONFIRMED_TEXT);
+          return;
+        }
+        stageTicketDeleteNotice(ticketDeleteSuccessText(result.id || ticket.id));
+        navigateHelpdesk(lastHelpdeskListPath());
+      })
+      .catch((error) => setDeleteError(ticketDeleteErrorText(error)))
+      .finally(() => setDeleting(false));
+  }
   const visibleMessages = ticket
     ? conversationMessages(ticket, new Date()).filter((message) =>
         conversationMessageVisible(message.kind, timelineVisibility),
@@ -1829,6 +1898,26 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                         <span className="helpdesk-ticket-summary-rail__value">{field.value}</span>
                       </span>
                     ))}
+                  {canShowTicketDelete(ticket) ? (
+                    <span className="helpdesk-ticket-summary-rail__item helpdesk-ticket-summary-rail__delete">
+                      <HintAction
+                        hint={helpTooltips.detailUi.deleteTicket}
+                        ariaLabel="Ajuda: Excluir chamado"
+                      >
+                        <ActionButton
+                          type="button"
+                          variant="ghost"
+                          className="helpdesk-ticket-delete"
+                          aria-label="Excluir chamado"
+                          disabled={saving || deleting || deleteChecking}
+                          onClick={openDeleteDialog}
+                        >
+                          <Trash2 size={16} aria-hidden />
+                          {deleteChecking ? "Verificando…" : "Excluir chamado"}
+                        </ActionButton>
+                      </HintAction>
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </section>
@@ -3024,6 +3113,34 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
               }
               portalScopeClassName="dashboard-helpdesk"
               onClose={() => setPendingPreviewId(null)}
+            />
+            <HelpdeskConfirmModal
+              open={deleteDialogOpen && Boolean(ticket)}
+              title={`Excluir chamado #${ticket?.id ?? ticketId}`}
+              message={
+                <span className="helpdesk-ticket-delete-modal">
+                  <span className="helpdesk-ticket-delete-modal__summary">
+                    <strong>{ticket?.title || "Chamado"}</strong>
+                    {ticket?.status ? <span> · {ticket.status}</span> : null}
+                  </span>
+                  <span className="helpdesk-ticket-delete-modal__hint">
+                    O chamado será movido para a lixeira do helpdesk e sairá da sua
+                    lista ativa. Isso não é uma exclusão permanente — ele continua
+                    recuperável dentro do GLPI.
+                  </span>
+                  {deleteError ? (
+                    <span className="helpdesk-ticket-delete-modal__error" role="alert">
+                      {deleteError}
+                    </span>
+                  ) : null}
+                </span>
+              }
+              confirmLabel="Mover para a lixeira"
+              busy={deleting}
+              busyLabel="Movendo…"
+              variant="danger"
+              onConfirm={confirmDelete}
+              onCancel={cancelDelete}
             />
           </>
         ) : null}

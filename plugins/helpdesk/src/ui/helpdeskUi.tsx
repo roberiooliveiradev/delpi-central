@@ -39,6 +39,10 @@ import {
   FieldLabel,
   HintAction,
   IconButton,
+  ConfirmModalPanel,
+  ModalShell,
+  confirmModalBemClasses,
+  modalShellBemClasses,
   emptyStateCardBemClasses,
   formActionsBemClasses,
   loadingStateCardBemClasses,
@@ -110,6 +114,54 @@ export const HelpdeskHostDrawer = createHostContainedDrawerShell({
   closeAriaLabel: "Fechar",
   backdropAriaLabel: "Fechar painel",
 });
+
+const helpdeskModalClasses = modalShellBemClasses(PREFIX);
+const helpdeskConfirmClasses = confirmModalBemClasses(PREFIX);
+
+/** Modal de confirmação do MFE — kit `ModalShell` + `ConfirmModalPanel`. */
+export function HelpdeskConfirmModal({
+  open,
+  title,
+  message,
+  confirmLabel,
+  busy = false,
+  busyLabel,
+  variant = "default",
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  message: ReactNode;
+  confirmLabel: string;
+  busy?: boolean;
+  busyLabel?: string;
+  variant?: "default" | "danger";
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <ModalShell
+      open={open}
+      title={title}
+      onClose={onCancel}
+      classNames={helpdeskModalClasses}
+      portalScopeClassName={HELPDESK_PORTAL_SCOPE}
+      closeAriaLabel="Fechar"
+    >
+      <ConfirmModalPanel
+        message={message}
+        confirmLabel={confirmLabel}
+        confirmBusy={busy}
+        confirmBusyLabel={busyLabel}
+        variant={variant}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+        classNames={helpdeskConfirmClasses}
+      />
+    </ModalShell>
+  );
+}
 
 export const HelpdeskSectionCard = createDashboardSectionCard({
   classNames: sectionCardPacBemClasses(PREFIX),

@@ -1257,6 +1257,59 @@ def ticket_allows_technician_ops(status_id: int | None) -> bool:
     return status_id != 6
 
 
+# GLPI bitmask rights (src/autoload/constants.php): CREATE=4, DELETE=8.
+GLPI_RIGHT_CREATE = 4
+GLPI_RIGHT_DELETE = 8
+
+# Timeline kinds that count as "action on the ticket" for GLPI self-service
+# delete (`numberOfFollowups() > 0 || numberOfTasks() > 0` blocks it).
+_DELETE_BLOCKING_ENTRY_KINDS = frozenset({"followup", "task"})
+
+
+def can_delete_ticket(
+    detail,
+    active_profile: dict | None,
+) -> bool:
+    """UX-disclosure mirror of ``Ticket::canDeleteItem()`` — presentation only.
+
+    Evidence is the actor's own HLAPI ``/session`` ``active_profile``
+    (``interface`` + ``rights``), the same source ``Session::haveRight`` and
+    ``Session::getCurrentInterface`` read at write time. GLPI DELETE stays
+    the authority of record — this flag never widens the write path.
+
+    Self-service (``interface == "helpdesk"``): GLPI allows deleting only a
+    *fresh* own ticket — requester/recipient == viewer, zero followups/tasks
+    and ``date == date_mod`` — gated by the ``ticket CREATE`` right
+    (``Ticket::canDelete`` special-cases the helpdesk interface).
+    Central interface: ``ticket DELETE`` right (entity visibility is already
+    enforced upstream — an invisible ticket never reaches this function).
+    """
+    if not isinstance(active_profile, dict):
+        return False
+    rights = active_profile.get("rights")
+    ticket_rights = 0
+    if isinstance(rights, dict):
+        try:
+            ticket_rights = int(rights.get("ticket") or 0)
+        except (TypeError, ValueError):
+            ticket_rights = 0
+    if str(active_profile.get("interface") or "") != "helpdesk":
+        return bool(ticket_rights & GLPI_RIGHT_DELETE)
+    if not (ticket_rights & GLPI_RIGHT_CREATE):
+        return False
+    if not getattr(detail, "requester_mine", False):
+        return False
+    timeline = getattr(detail, "timeline", ()) or ()
+    if any(getattr(entry, "kind", "") in _DELETE_BLOCKING_ENTRY_KINDS for entry in timeline):
+        return False
+    # `date == date_mod` — untouched ticket. Private items hidden from the
+    # requester's Timeline may still block inside GLPI; the write stays
+    # authoritative, so an occasional false-positive degrades to a typed 403.
+    return str(getattr(detail, "created_at", "") or "") == str(
+        getattr(detail, "updated_at", "") or ""
+    )
+
+
 def timeline_has_solution(timeline: tuple) -> bool:
     return any(getattr(entry, "kind", None) == "solution" for entry in (timeline or ()))
 

@@ -436,6 +436,7 @@ def get_ticket(request: Request, ticket_id: int):
         "type_name": ticket.type_name,
         "request_type_id": ticket.request_type_id,
         "can_update_classification": ticket.can_update_classification,
+        "can_delete": ticket.can_delete,
         "updated_at": ticket.updated_at,
         "created_at": ticket.created_at,
         "solved_at": ticket.solved_at,

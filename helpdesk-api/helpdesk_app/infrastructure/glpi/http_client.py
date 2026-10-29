@@ -584,6 +584,21 @@ class HttpxGlpiClient:
         user_id = int(identity.user_id or 0)
         return user_id if user_id > 0 else None
 
+    def session_active_profile(self, access_token: str) -> dict:
+        """HLAPI ``GET /session`` ``active_profile`` (interface + rights).
+
+        Effective-permission evidence for UX-disclosure flags such as
+        ``can_delete`` — the same ``glpiactiveprofile`` GLPI reads at
+        write time. Empty dict when the session/payload is unavailable;
+        callers must treat that as fail-closed.
+        """
+        try:
+            payload = self._json("GET", "/api.php/v2.2/session", token=access_token)
+        except (GlpiUnauthorized, GlpiForbidden, GlpiNotFound, GlpiUnavailable):
+            return {}
+        profile = payload.get("active_profile") if isinstance(payload, dict) else None
+        return profile if isinstance(profile, dict) else {}
+
     def get_user(self, access_token: str, user_id: int) -> GlpiUserProfile | None:
         """Read a single Administration/User row (firstname/realname parity check)."""
         from helpdesk_app.infrastructure.glpi.mapping import parse_user_profile

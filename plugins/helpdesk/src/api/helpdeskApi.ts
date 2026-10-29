@@ -148,6 +148,12 @@ export type TicketDetail = TicketSummary & {
   priority?: string;
   type_name?: string;
   can_update_classification?: boolean;
+  /**
+   * UX disclosure only (GLPI `Ticket::canDeleteItem` mirror from the
+   * actor's own session profile). The DELETE endpoint stays the authority
+   * — this flag only controls whether the trash affordance is shown.
+   */
+  can_delete?: boolean;
   timeline: TimelineEntry[];
   attachments: TicketAttachment[];
 };
@@ -295,6 +301,29 @@ export function createTicket(
       "Idempotency-Key": idempotencyKey,
     },
     body: JSON.stringify(body),
+  });
+}
+
+export type TicketDeleteResult = {
+  id: number;
+  title?: string;
+  deleted?: boolean;
+  /** GLPI move-to-trash semantics — permanent purge is never requested. */
+  delete_semantics?: string;
+};
+
+/**
+ * Move the ticket to the GLPI trash (`DELETE /tickets/{id}` — soft delete,
+ * never `force`). The BFF verifies the ticket left the active view before
+ * reporting `deleted: true`; callers must not treat any 2xx as confirmed
+ * (see `ticketDeleteConfirmed`).
+ */
+export function deleteTicket(ticketId: string, idempotencyKey: string) {
+  return request<TicketDeleteResult>(`/tickets/${ticketId}`, {
+    method: "DELETE",
+    headers: {
+      "Idempotency-Key": idempotencyKey,
+    },
   });
 }
 

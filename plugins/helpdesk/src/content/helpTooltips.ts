@@ -50,6 +50,8 @@ export const helpTooltips = {
     classificationUrgency: "Urgência do chamado conforme percebida pelo solicitante.",
     classificationImpact: "Impacto do chamado no negócio. Junto com a urgência, ajuda a compor a prioridade.",
     classificationRequestType: "Origem ou canal da solicitação registrada no helpdesk.",
+    deleteTicket:
+      "Move o chamado para a lixeira do helpdesk (não é exclusão permanente). Só aparece quando seu perfil permite excluir.",
     classificationPriorityDerived:
       "Prioridade calculada pelo helpdesk a partir de urgência e impacto. Somente leitura.",
     classificationSave:

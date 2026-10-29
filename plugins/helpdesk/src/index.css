@@ -755,6 +755,52 @@
   flex: 0 0 auto;
 }
 
+/* Move-to-trash affordance — danger action in the summary rail. */
+.dashboard-helpdesk .helpdesk-ticket-summary-rail__delete {
+  margin-inline-start: auto;
+  align-items: center;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--helpdesk-danger, #b42318);
+  border-color: color-mix(in srgb, var(--helpdesk-danger, #b42318) 35%, transparent);
+}
+
+.dashboard-helpdesk .helpdesk-ticket-delete:hover:not(:disabled),
+.dashboard-helpdesk .helpdesk-ticket-delete:focus-visible {
+  color: #fff;
+  background: var(--helpdesk-danger, #b42318);
+  border-color: var(--helpdesk-danger, #b42318);
+}
+
+/* Delete confirmation — ticket summary + trash semantics + inline error. */
+.dashboard-helpdesk .helpdesk-ticket-delete-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-delete-modal__summary {
+  font-size: 0.9rem;
+  color: var(--helpdesk-text);
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.dashboard-helpdesk .helpdesk-ticket-delete-modal__hint {
+  font-size: 0.8rem;
+  color: var(--helpdesk-text-muted);
+}
+
+.dashboard-helpdesk .helpdesk-ticket-delete-modal__error {
+  font-size: 0.8rem;
+  color: var(--helpdesk-danger, #c0392b);
+}
+
 /* Detail conversation layout — summary / banners / thread / composer */
 .dashboard-helpdesk .helpdesk-detail {
   display: flex;

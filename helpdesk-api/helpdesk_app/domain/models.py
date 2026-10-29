@@ -247,6 +247,9 @@ class TicketDetail:
     priority: str = ""
     type_name: str = ""
     can_update_classification: bool = False
+    # UX disclosure for move-to-trash (GLPI canDeleteItem mirror). GLPI
+    # DELETE remains the authority of record — presentation only.
+    can_delete: bool = False
 
 
 @dataclass(frozen=True)

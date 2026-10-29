@@ -389,6 +389,13 @@ class FakeGlpi:
         uid = getattr(self, "session_uid", None)
         return int(uid) if uid else None
 
+    def session_active_profile(self, access_token: str):
+        """Fake HLAPI /session active_profile — tests override
+        ``active_profile`` to model self-service vs central interfaces."""
+        self.calls += 1
+        assert access_token
+        return getattr(self, "active_profile", None) or {}
+
     def get_user(self, access_token: str, user_id: int):
         """Fake ``GET /Administration/User/{id}`` → GlpiUserProfile or None."""
         from helpdesk_app.domain.models import GlpiUserProfile

@@ -839,6 +839,74 @@ declare module "@delpi/plugin-ui/index" {
     variant?: "default" | "wide" | "page";
   }): ComponentType<DashboardModalShellProps>;
 
+  export type ConfirmModalClassNames = {
+    root: string;
+    rootDanger: string;
+    iconWrap: string;
+    iconWrapDanger: string;
+    message: string;
+    actions: string;
+    cancelButton: string;
+    confirmButton: string;
+    confirmButtonDanger: string;
+    secondaryButton?: string;
+  };
+
+  export function confirmModalBemClasses(
+    prefix: string,
+    options?: { actionsBlock?: string; actionsAlign?: "start" | "end" },
+  ): ConfirmModalClassNames;
+
+  export const ConfirmModalPanel: ComponentType<{
+    message: ReactNode;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    secondaryLabel?: string;
+    confirmBusy?: boolean;
+    confirmBusyLabel?: string;
+    variant?: "default" | "danger";
+    showCancel?: boolean;
+    onConfirm: () => void;
+    onCancel: () => void;
+    onSecondary?: () => void;
+    classNames: ConfirmModalClassNames;
+  }>;
+
+  export type ModalShellClassNames = {
+    overlay: string;
+    dialog: string;
+    header: string;
+    title: string;
+    closeButton: string;
+    body: string;
+    headerText?: string;
+    description?: string;
+    footer?: string;
+    headerActions?: string;
+  };
+
+  export function modalShellBemClasses(prefix: string): ModalShellClassNames;
+
+  export const ModalShell: ComponentType<{
+    open: boolean;
+    title: string;
+    description?: string;
+    footer?: ReactNode;
+    headerActions?: ReactNode;
+    onClose: () => void;
+    children: ReactNode;
+    classNames: ModalShellClassNames;
+    className?: string;
+    overlayClassName?: string;
+    closeAriaLabel?: string;
+    closeOnOverlayClick?: boolean;
+    initialFocusSelector?: string;
+    portalScopeClassName?: string;
+    portalTarget?: Element | null;
+    containedInPortalTarget?: boolean;
+    containedLayout?: "fill" | "dialog";
+  }>;
+
   export type FileDropzoneClassNames = Record<string, string>;
   export type FileDropzoneLabels = { title: string; hint: string };
   export type DashboardFileDropzoneProps = {

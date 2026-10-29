@@ -37,6 +37,7 @@ from helpdesk_app.domain.models import (
     TicketListQuery,
 )
 from helpdesk_app.infrastructure.glpi.mapping import (
+    can_delete_ticket,
     classification_field_names,
     filter_assignable_catalog_users,
     normalize_assignee_id,
@@ -341,6 +342,7 @@ class TicketService:
         detail = replace(detail, can_assign=self._assignee_catalog_ready(token))
         detail = self._with_technician_ops_flags(token, detail, viewer_email=viewer_email)
         detail = self._with_classification_flag(token, detail, viewer_email=viewer_email)
+        detail = self._with_delete_flag(token, detail)
         return self._with_cycle_flags(token, detail)
 
     def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:
@@ -1570,6 +1572,22 @@ class TicketService:
             or self._viewer_is_technician(token, viewer_email)
         )
         return replace(detail, can_update_classification=allowed)
+
+    def _with_delete_flag(self, token: str, detail: TicketDetail) -> TicketDetail:
+        """UX disclosure only — GLPI DELETE stays the authority of record.
+
+        ``can_delete_ticket`` mirrors ``Ticket::canDeleteItem`` over the
+        actor's own ``active_profile`` (HLAPI /session). Any session or
+        payload failure fails closed (button hidden), never widens the
+        write path."""
+        try:
+            profile = self._glpi.session_active_profile(token)
+        except HelpdeskError:
+            profile = {}
+        except Exception:
+            logger.info("helpdesk_delete_flag_session_unavailable")
+            profile = {}
+        return replace(detail, can_delete=can_delete_ticket(detail, profile))
 
     def _with_cycle_flags(self, token: str, detail: TicketDetail) -> TicketDetail:
         legacy_on = True

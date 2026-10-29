@@ -1338,6 +1338,95 @@ def test_delete_ticket_2xx_without_readback_fails_loudly():
     assert resp.json()["error"] == "glpi_unavailable"
     assert glpi.delete_calls == 1
 
+
+# --------------------------------------------------------------------------
+# can_delete — UX disclosure mirroring GLPI Ticket::canDeleteItem (effective
+# session evidence only; the write itself stays GLPI-authoritative)
+# --------------------------------------------------------------------------
+
+
+def _active_profile(interface: str, ticket_rights: int) -> dict:
+    return {
+        "id": 1,
+        "name": "Perfil",
+        "interface": interface,
+        "rights": {"ticket": ticket_rights},
+    }
+
+
+def _fresh_own_detail(glpi):
+    from dataclasses import replace
+
+    glpi.detail = replace(
+        glpi.detail,
+        requester_mine=True,
+        timeline=(),
+        created_at="2026-10-01T10:00:00Z",
+        updated_at="2026-10-01T10:00:00Z",
+    )
+
+
+def test_can_delete_flag_helpdesk_interface_fresh_own_ticket():
+    client, glpi = build_client()
+    link(client)
+    _fresh_own_detail(glpi)
+    glpi.active_profile = _active_profile("helpdesk", 4)  # CREATE
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.status_code == 200
+    assert detail.json()["can_delete"] is True
+
+
+def test_can_delete_flag_hidden_when_ticket_has_activity_or_is_not_mine():
+    client, glpi = build_client()
+    link(client)
+    glpi.active_profile = _active_profile("helpdesk", 4)
+    # Default detail already carries a followup → GLPI numberOfFollowups()>0.
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.json()["can_delete"] is False
+
+    _fresh_own_detail(glpi)
+    from dataclasses import replace
+
+    glpi.detail = replace(glpi.detail, requester_mine=False)
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.json()["can_delete"] is False
+
+    glpi.detail = replace(
+        glpi.detail, requester_mine=True, updated_at="2026-10-02T09:00:00Z"
+    )
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.json()["can_delete"] is False
+
+
+def test_can_delete_flag_helpdesk_without_create_right_is_hidden():
+    client, glpi = build_client()
+    link(client)
+    _fresh_own_detail(glpi)
+    glpi.active_profile = _active_profile("helpdesk", 0)
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.json()["can_delete"] is False
+
+
+def test_can_delete_flag_central_interface_uses_delete_right():
+    client, glpi = build_client()
+    link(client)
+    glpi.active_profile = _active_profile("central", 8)  # DELETE
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.json()["can_delete"] is True
+
+    glpi.active_profile = _active_profile("central", 4)  # CREATE only
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.json()["can_delete"] is False
+
+
+def test_can_delete_flag_fails_closed_without_profile_evidence():
+    client, glpi = build_client()
+    link(client)
+    _fresh_own_detail(glpi)
+    glpi.active_profile = {}
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.json()["can_delete"] is False
+
 def test_ticket_detail_projects_attachment_refs_including_inline():
     """R4.2: attachment_refs = attachments[] + inline img refs, deduped."""
     from dataclasses import replace
