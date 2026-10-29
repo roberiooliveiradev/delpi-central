@@ -67,8 +67,8 @@ _SNAPSHOT = {
         1225,
     ),
     "delia.capability_orchestration.arguments": (
-        "5f2b656d0fe361e235eee2a09921af39e25a94439fd06e7878c1d6671a5d1d75",
-        8186,
+        "29b81c6fe50b33a18f463c3cd28baf5c94463e6baefa3ff513694232ca9e1de3",
+        8001,
     ),
     "delia.capability_orchestration.select_resolver": (
         "d030eb7a0b71d60a7a62c3f0a718e42207c7b0857f6a27e9689498fc63667c4e",
@@ -133,7 +133,7 @@ def test_instruction_resource_snapshot_parity():
     InstructionLineage cannot drift silently."""
     res = _load()
     assert res.resource_id == "delia.capability_orchestration.instructions"
-    assert res.version == "25"
+    assert res.version == "26"
     assert set(res.instructions) == set(_SNAPSHOT)
     for key, (sha, nbytes) in _SNAPSHOT.items():
         text = res.instructions[key]

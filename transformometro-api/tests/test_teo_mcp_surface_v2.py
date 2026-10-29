@@ -169,3 +169,44 @@ def test_specialized_prepares_still_registered() -> None:
         "analyze",
     ):
         assert required in names
+
+
+def _record_read_tool():
+    tools = asyncio.run(create_mcp_server().list_tools())
+    return next(t for t in tools if t.name == "record_read")
+
+
+def test_record_read_publishes_per_parameter_descriptions() -> None:
+    """C3 Task 14 — the owner's published inputSchema must carry
+    field-level semantics, not only the tool-level prose description.
+    q is record-content text search (ILIKE over canonical textual
+    fields), not a record-set scope; page/page_size are the
+    owner cursor; date_* scope temporal evidence; identifier and
+    filter fields name their exact binding."""
+    tool = _record_read_tool()
+    props = tool.input_schema.get("properties", {})
+    expected = {
+        "action", "entity", "id", "parent_id", "instance_id",
+        "filial_id", "setor_id", "status", "familia_processo",
+        "q", "unit_code", "fase_melhoria", "status_instancia",
+        "cenario_tipo", "revisao_ativa", "has_improvement",
+        "date_field", "date_from", "date_to", "page", "page_size",
+    }
+    assert expected <= set(props)
+    for name in expected:
+        description = props[name].get("description")
+        assert isinstance(description, str) and description.strip(), (
+            f"record_read.{name} publishes no field description"
+        )
+
+
+def test_record_read_q_description_is_text_search_semantics() -> None:
+    """q must be described as contained text search over record
+    content fields — a consumer must not treat it as record identity,
+    ordering, or set scoping."""
+    tool = _record_read_tool()
+    description = (
+        tool.input_schema["properties"]["q"].get("description") or ""
+    ).lower()
+    assert description
+    assert "text" in description

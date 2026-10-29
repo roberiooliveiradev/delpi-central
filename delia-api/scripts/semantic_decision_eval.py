@@ -81,7 +81,7 @@ _INSTRUCTIONS = json.loads(
     (REPO / "config" / "orchestration_instructions.delpi.json")
     .read_text(encoding="utf-8")
 )["instructions"]
-INSTRUCTION_VERSION = "25"
+INSTRUCTION_VERSION = "26"
 
 
 def _instruction(instruction_id: str) -> str:

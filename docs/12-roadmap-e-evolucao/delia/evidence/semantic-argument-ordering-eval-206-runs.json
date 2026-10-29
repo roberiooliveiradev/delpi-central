@@ -1,0 +1,629 @@
+{
+ "arm": "baseline_vs_correction",
+ "model": "local-ollama",
+ "baseline": {
+  "cases": [
+   {
+    "case": "e2_incident",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": "Transforma+",
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "process",
+     "fase_melhoria": "Última",
+     "q": "Transforma+"
+    },
+    "missing_inputs": [],
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": false,
+     "action": true
+    },
+    "ok": false,
+    "ms": 8118
+   },
+   {
+    "case": "latest_process",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": "processo",
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "process"
+    },
+    "missing_inputs": [],
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": false,
+    "ms": 3267
+   },
+   {
+    "case": "latest_request",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "unspecified",
+     "execution_bound": "unrestricted",
+     "business_subject": null,
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "instance"
+    },
+    "missing_inputs": null,
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": false,
+    "ms": 3222
+   },
+   {
+    "case": "three_recent",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": null,
+     "scope_constraints": {},
+     "answer_requirements": {
+      "min_items": 3
+     },
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "revision",
+     "q": null,
+     "page": null,
+     "page_size": null,
+     "date_field": null,
+     "date_from": null,
+     "date_to": null
+    },
+    "missing_inputs": [
+     "parent_id",
+     "instance_id",
+     "filial_id",
+     "setor_id",
+     "status",
+     "familia_processo",
+     "status_instancia",
+     "cenario_tipo",
+     "revisao_ativa",
+     "has_improvement"
+    ],
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": false,
+    "ms": 5814
+   },
+   {
+    "case": "recent_updated",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": "processos",
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "process",
+     "q": "recentemente"
+    },
+    "missing_inputs": null,
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": false,
+     "action": true
+    },
+    "ok": false,
+    "ms": 3117
+   },
+   {
+    "case": "count_processes",
+    "goal": {
+     "goal_class": "read",
+     "business_subject": "process",
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": null,
+    "missing_inputs": [
+     "entity"
+    ],
+    "checks": {
+     "ordering": true,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": true,
+    "ms": 2202
+   },
+   {
+    "case": "text_search",
+    "goal": {
+     "goal_class": "read",
+     "business_subject": "processos",
+     "answer_requirements": {
+      "complete_coverage": false
+     }
+    },
+    "arguments": {
+     "entity": "process",
+     "q": "melhoria"
+    },
+    "missing_inputs": [],
+    "checks": {
+     "ordering": true,
+     "min_items": true,
+     "q": true,
+     "action": false
+    },
+    "ok": false,
+    "ms": 2106
+   },
+   {
+    "case": "by_id",
+    "goal": {
+     "goal_class": "read",
+     "business_subject": "processo",
+     "contract_subject": false,
+     "scope_constraints": {
+      "identificacao": "12345"
+     },
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "execution_bound": "prepare_only"
+    },
+    "arguments": {
+     "action": "get",
+     "entity": "process",
+     "id": "12345"
+    },
+    "missing_inputs": [],
+    "checks": {
+     "ordering": true,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": true,
+    "ms": 2998
+   },
+   {
+    "case": "oldest_record",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": null,
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": null,
+    "missing_inputs": [
+     "date_field",
+     "date_from",
+     "date_to"
+    ],
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": false,
+    "ms": 2844
+   },
+   {
+    "case": "list_all",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "unrestricted",
+     "business_subject": null,
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "branch"
+    },
+    "missing_inputs": null,
+    "checks": {
+     "ordering": true,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": true,
+    "ms": 2785
+   }
+  ],
+  "summary": {
+   "passed": 3,
+   "total": 10,
+   "calls": 20,
+   "in_tok": 0,
+   "out_tok": 0,
+   "ms": 36473
+  }
+ },
+ "correction": {
+  "cases": [
+   {
+    "case": "e2_incident",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": "processo",
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "process",
+     "q": "Transforma+",
+     "fase_melhoria": "última"
+    },
+    "missing_inputs": null,
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": false,
+     "action": true
+    },
+    "ok": false,
+    "ms": 3757
+   },
+   {
+    "case": "latest_process",
+    "goal": {
+     "goal_class": "read",
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": "process",
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "process",
+     "date_field": "update_date",
+     "date_from": null,
+     "date_to": null,
+     "page": null,
+     "page_size": "10"
+    },
+    "missing_inputs": [],
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": false,
+    "ms": 3956
+   },
+   {
+    "case": "latest_request",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "unspecified",
+     "execution_bound": "unrestricted",
+     "business_subject": null,
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": null,
+    "missing_inputs": [
+     "action",
+     "entity"
+    ],
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": false,
+    "ms": 3003
+   },
+   {
+    "case": "three_recent",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": null,
+     "scope_constraints": {},
+     "answer_requirements": {
+      "min_items": 3
+     },
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "measurement",
+     "page": null,
+     "page_size": "10",
+     "q": null,
+     "date_field": "date",
+     "date_from": null,
+     "date_to": null
+    },
+    "missing_inputs": [
+     "parent_id",
+     "instance_id",
+     "setor_id",
+     "familia_processo",
+     "status",
+     "cenario_tipo",
+     "revisao_ativa",
+     "fase_melhoria",
+     "status_instancia",
+     "unit_code",
+     "has_improvement"
+    ],
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": false,
+    "ms": 6264
+   },
+   {
+    "case": "recent_updated",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": "processos",
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "process"
+    },
+    "missing_inputs": null,
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": false,
+    "ms": 3342
+   },
+   {
+    "case": "count_processes",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "unspecified",
+     "execution_bound": "unrestricted",
+     "business_subject": "processos",
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "process"
+    },
+    "missing_inputs": [
+     "id",
+     "parent_id",
+     "instance_id",
+     "filial_id",
+     "setor_id",
+     "status",
+     "familia_processo",
+     "q",
+     "unit_code",
+     "fase_melhoria",
+     "status_instancia",
+     "cenario_tipo",
+     "revisao_ativa",
+     "has_improvement",
+     "date_field",
+     "date_from",
+     "date_to",
+     "page",
+     "page_size"
+    ],
+    "checks": {
+     "ordering": true,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": true,
+    "ms": 5748
+   },
+   {
+    "case": "text_search",
+    "goal": {
+     "goal_class": "read",
+     "business_subject": "process",
+     "answer_requirements": {
+      "complete_coverage": false
+     },
+     "scope_constraints": {},
+     "execution_bound": "prepare_only"
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "process",
+     "q": "melhoria"
+    },
+    "missing_inputs": [],
+    "checks": {
+     "ordering": true,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": true,
+    "ms": 2779
+   },
+   {
+    "case": "by_id",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": "processo",
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "get",
+     "entity": "process",
+     "id": "12345"
+    },
+    "missing_inputs": null,
+    "checks": {
+     "ordering": true,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": true,
+    "ms": 3379
+   },
+   {
+    "case": "oldest_record",
+    "goal": {
+     "goal_class": "read",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "prepare_only",
+     "business_subject": null,
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "record",
+     "q": "date_field>date_from"
+    },
+    "missing_inputs": [],
+    "checks": {
+     "ordering": false,
+     "min_items": true,
+     "q": false,
+     "action": true
+    },
+    "ok": false,
+    "ms": 3286
+   },
+   {
+    "case": "list_all",
+    "goal": {
+     "goal_class": "list_or_show",
+     "comparison_requested": false,
+     "output_mode": "snapshot",
+     "execution_bound": "unrestricted",
+     "business_subject": null,
+     "scope_constraints": {},
+     "answer_requirements": null,
+     "prior_evidence_sufficient": false,
+     "contract_subject": false
+    },
+    "arguments": {
+     "action": "search",
+     "entity": "measurement"
+    },
+    "missing_inputs": null,
+    "checks": {
+     "ordering": true,
+     "min_items": true,
+     "q": true,
+     "action": true
+    },
+    "ok": true,
+    "ms": 5446
+   }
+  ],
+  "summary": {
+   "passed": 4,
+   "total": 10,
+   "calls": 20,
+   "in_tok": 0,
+   "out_tok": 0,
+   "ms": 40960
+  }
+ }
+}

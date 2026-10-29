@@ -2445,6 +2445,29 @@ def _resolved_values_proven(
                 return False
     return True
 
+def _declared_requirements_projection(
+    requirements: Any,
+) -> dict[str, Any] | None:
+    """Bounded typed projection of goal-declared answer requirements —
+    verbatim values from the governed ``answer_requirements``
+    vocabulary only; the model proposing arguments sees the same
+    declared requirements the assessment stage will verify."""
+    if requirements is None:
+        return None
+    declared = {
+        key: value
+        for key, value in {
+            "min_items": getattr(requirements, "min_items", None),
+            "ordering": getattr(requirements, "ordering", None),
+            "complete_coverage": getattr(
+                requirements, "complete_coverage", None
+            ),
+        }.items()
+        if value not in (None, False)
+    }
+    return declared or None
+
+
 def _schema_declared_literals(descriptor: ProviderCapability) -> str:
     """Bounded serialization of owner-declared literal values
     (``enum``/``const``/``default``). A value the owner itself declares
@@ -5213,6 +5236,7 @@ class OperationalCapabilityOrchestrator:
                 workspace_context,
                 owner_evidence=owner_evidence,
                 business_subject=goal.business_subject,
+                answer_requirements=goal.answer_requirements,
                 prior_turns=prior_turns,
                 deadline=deadline,
             )
@@ -5387,6 +5411,7 @@ class OperationalCapabilityOrchestrator:
                 owner_evidence=owner_evidence,
                 foreign_evidence=foreign_evidence,
                 business_subject=goal.business_subject,
+                answer_requirements=goal.answer_requirements,
                 prior_turns=prior_turns,
                 deadline=deadline,
             )
@@ -10287,6 +10312,7 @@ class OperationalCapabilityOrchestrator:
                 foreign_evidence=foreign_evidence,
                 relevance_feedback=feedback,
                 business_subject=goal.business_subject,
+                answer_requirements=goal.answer_requirements,
                 prior_turns=prior_turns,
                 correlation=correlation,
                 deadline=deadline,
@@ -11221,6 +11247,7 @@ class OperationalCapabilityOrchestrator:
         foreign_evidence: str | None = None,
         business_subject: str | None = None,
         relevance_feedback: str | None = None,
+        answer_requirements: Any = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
@@ -11274,6 +11301,15 @@ class OperationalCapabilityOrchestrator:
             # keeps query-type arguments anchored on the business
             # concept, not on host/context stopwords (LOOP-03R1 D03).
             block["business_subject"] = business_subject
+        declared_requirements = _declared_requirements_projection(
+            answer_requirements
+        )
+        if declared_requirements:
+            # Declared ordering/quantity/coverage requirements reach
+            # the argument stage so the model can formulate a
+            # compatible invocation (e.g. an unfiltered listing for an
+            # ordering goal) instead of inventing a text filter.
+            block["declared_requirements"] = declared_requirements
         if relevance_feedback is not None:
             # Bounded semantic-mismatch signal from a validated
             # goal/evidence judgment — untrusted data, never an
@@ -11482,6 +11518,9 @@ class OperationalCapabilityOrchestrator:
                 business_subject=(
                     goal.business_subject if goal is not None else None
                 ),
+                answer_requirements=(
+                    goal.answer_requirements if goal is not None else None
+                ),
             )
             if merged is None:
                 terminal = self._unusable_candidate_terminal(
@@ -11574,6 +11613,11 @@ class OperationalCapabilityOrchestrator:
                     deadline=deadline,
                     business_subject=(
                         goal.business_subject
+                        if goal is not None
+                        else None
+                    ),
+                    answer_requirements=(
+                        goal.answer_requirements
                         if goal is not None
                         else None
                     ),
@@ -11893,21 +11937,11 @@ class OperationalCapabilityOrchestrator:
                 goal_projection["business_subject"] = (
                     goal.business_subject
                 )
-            requirements = goal.answer_requirements
-            if requirements is not None:
-                declared = {
-                    key: value
-                    for key, value in {
-                        "min_items": requirements.min_items,
-                        "ordering": requirements.ordering,
-                        "complete_coverage": (
-                            requirements.complete_coverage
-                        ),
-                    }.items()
-                    if value not in (None, False)
-                }
-                if declared:
-                    goal_projection["declared_requirements"] = declared
+            declared = _declared_requirements_projection(
+                goal.answer_requirements
+            )
+            if declared:
+                goal_projection["declared_requirements"] = declared
             if goal_projection:
                 block["goal"] = goal_projection
         block["candidates"] = entries
@@ -11960,6 +11994,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         deadline: TurnDeadline | None = None,
         business_subject: str | None = None,
+        answer_requirements: Any = None,
     ) -> dict[str, Any] | None:
         """Resolve inner args against the candidate's own schema.
 
@@ -12004,6 +12039,7 @@ class OperationalCapabilityOrchestrator:
             correlation=correlation,
             deadline=deadline,
             business_subject=business_subject,
+            answer_requirements=answer_requirements,
         )
         if second is None:
             return None
@@ -12023,18 +12059,26 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         deadline: TurnDeadline | None = None,
         business_subject: str | None = None,
+        answer_requirements: Any = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model proposal of inner arguments, schema-scoped."""
         # The candidate's inner schema is the argument contract —
         # an immutable payload emitted whole (never severed); an
         # over-budget schema is a typed boundary concern, not a
         # compaction target.
+        payload_fields: dict[str, Any] = {}
+        if business_subject is not None:
+            payload_fields["business_subject"] = business_subject
+        declared_requirements = _declared_requirements_projection(
+            answer_requirements
+        )
+        if declared_requirements:
+            payload_fields["declared_requirements"] = (
+                declared_requirements
+            )
         schema_payload = _json_block(
-            {
-                "business_subject": business_subject,
-                "schema": schema or {"type": "object"},
-            }
-            if business_subject is not None
+            {**payload_fields, "schema": schema or {"type": "object"}}
+            if payload_fields
             else (schema or {"type": "object"})
         )
         proposal = self._model_stage_proposal(

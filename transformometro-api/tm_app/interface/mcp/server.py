@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
@@ -14,7 +14,7 @@ from delpi_mcp.tool_metadata import (
 )
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, Tool as MCPTool, ToolAnnotations
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from tm_app.application.gpt_actions.capability_descriptors import (
     RECORD_OPERATIONS,
@@ -436,27 +436,131 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def record_read(
-        action: Literal["search", "get"],
-        entity: _EntityParam,
-        id: str | None = None,
-        parent_id: str | None = None,
-        instance_id: str | None = None,
-        filial_id: str | None = None,
-        setor_id: str | None = None,
-        status: str | None = None,
-        familia_processo: str | None = None,
-        q: str | None = None,
-        unit_code: str | None = None,
-        fase_melhoria: str | None = None,
-        status_instancia: str | None = None,
-        cenario_tipo: str | None = None,
-        revisao_ativa: str | None = None,
-        has_improvement: str | None = None,
-        date_field: str | None = None,
-        date_from: str | None = None,
-        date_to: str | None = None,
-        page: str | None = None,
-        page_size: str | None = None,
+        action: Annotated[
+            Literal["search", "get"],
+            Field(
+                description=(
+                    "search: list records matching optional filters "
+                    "(omit all filters for the full set); get: one "
+                    "record by entity + id."
+                )
+            ),
+        ],
+        entity: Annotated[
+            _EntityParam,
+            Field(description="Entity kind to read (e.g. process)."),
+        ],
+        id: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Record identifier for action=get (literal id; for "
+                    "measurement use revisao_id, for decomposition/"
+                    "diagram entities the parent id)."
+                )
+            ),
+        ] = None,
+        parent_id: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Literal parent record id — scopes the search to "
+                    "children of that record."
+                )
+            ),
+        ] = None,
+        instance_id: Annotated[
+            str | None,
+            Field(description="Literal process-instance id filter."),
+        ] = None,
+        filial_id: Annotated[
+            str | None,
+            Field(description="Literal branch (filial) id filter."),
+        ] = None,
+        setor_id: Annotated[
+            str | None,
+            Field(description="Literal department (setor) id filter."),
+        ] = None,
+        status: Annotated[
+            str | None,
+            Field(description="Literal process status filter."),
+        ] = None,
+        familia_processo: Annotated[
+            str | None,
+            Field(description="Literal process-family name filter."),
+        ] = None,
+        q: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Free-text search contained in the record's own "
+                    "text fields (name, code, family, description, "
+                    "objective). Use only when the user asks to find "
+                    "records by their content. Omit for listing, "
+                    "counting, ordering or latest/first-record goals — "
+                    "a text filter narrows the set and cannot express "
+                    "recency."
+                )
+            ),
+        ] = None,
+        unit_code: Annotated[
+            str | None,
+            Field(description="Literal unit code filter."),
+        ] = None,
+        fase_melhoria: Annotated[
+            str | None,
+            Field(
+                description="Improvement-phase filter (instances/revisions)."
+            ),
+        ] = None,
+        status_instancia: Annotated[
+            str | None,
+            Field(description="Instance status filter."),
+        ] = None,
+        cenario_tipo: Annotated[
+            str | None,
+            Field(description="Scenario type filter."),
+        ] = None,
+        revisao_ativa: Annotated[
+            str | None,
+            Field(description="Active-revision filter."),
+        ] = None,
+        has_improvement: Annotated[
+            str | None,
+            Field(
+                description="Restrict to processes with/without improvements."
+            ),
+        ] = None,
+        date_field: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Owner date field used with date_from/date_to "
+                    "(temporal evidence; not a sort key)."
+                )
+            ),
+        ] = None,
+        date_from: Annotated[
+            str | None,
+            Field(description="Inclusive lower bound for date_field."),
+        ] = None,
+        date_to: Annotated[
+            str | None,
+            Field(description="Inclusive upper bound for date_field."),
+        ] = None,
+        page: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Page cursor for listing (owner pages records; the "
+                    "set is ordered by last update, newest first)."
+                )
+            ),
+        ] = None,
+        page_size: Annotated[
+            str | None,
+            Field(description="Records per page (bounded by owner)."),
+        ] = None,
     ) -> CallToolResult:
         return bridge.tool_record_read(
             action=action,
