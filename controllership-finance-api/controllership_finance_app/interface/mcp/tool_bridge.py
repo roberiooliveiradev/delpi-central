@@ -25,6 +25,9 @@ from delpi_mcp.identity import (
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
 )
+from controllership_finance_app.application.clara.agent_intelligence_service import (  # noqa: E501
+    ClaraAgentIntelligenceService,
+)
 from controllership_finance_app.application.clara.batch_orchestrator import (
     ClaraBatchOrchestrator,
 )
@@ -229,20 +232,9 @@ def tool_get_catalog() -> CallToolResult:
             "knowledge": {
                 "corpus": _safe_corpus_version(),
             },
-            "agent_directives": {
-                "read_first": (
-                    "Responda estado operacional somente com resultado "
-                    "de tool READ — nunca de memória."
-                ),
-                "citations": (
-                    "Conhecimento retornado traz citation_locator e "
-                    "evidence_classification — apresente ambos."
-                ),
-                "confirmation": (
-                    "Toda ACT exige proposal_handle de PREPARE + "
-                    "confirmação humana explícita da operação exata."
-                ),
-            },
+            "agent_directives": (
+                ClaraAgentIntelligenceService.agent_directives()
+            ),
         }
     )
 
