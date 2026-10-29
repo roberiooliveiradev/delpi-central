@@ -67,17 +67,17 @@ def test_appearance_reflects_official_avatar():
     app = _profile().appearance
     assert app.avatar_status == "OFFICIAL_AVATAR_APPROVED"
     assert "16" in app.age_appearance
-    assert "castanho-escuro" in app.hair
+    assert "castanho" in app.hair
     assert "óculos pretos arredondados" in app.glasses
-    assert "jaqueta laranja" in app.clothing
+    assert "colete xadrez" in app.clothing
     assert "3D" in app.visual_style
 
 
 AVATAR_PATH = (
-    APP_ROOT / "tm_app" / "assets" / "characters" / "teo" / "avatar-v1.png"
+    APP_ROOT / "tm_app" / "assets" / "characters" / "teo" / "avatar-v2.png"
 )
 AVATAR_SHA256 = (
-    "d3b762fdc4247af955af85ef5fa79041145af3fc7c2cc2e90ca84f3a3a8c777f"
+    "51f5bab4603a818d6f857603b8b3d15e1472c875c5221619a8b91d8e0cad8c8b"
 )
 
 
@@ -85,7 +85,7 @@ def test_official_avatar_asset_stored_with_stable_reference():
     import hashlib
 
     ref = _profile().appearance.avatar_reference
-    assert ref == "tm_app/assets/characters/teo/avatar-v1.png"
+    assert ref == "tm_app/assets/characters/teo/avatar-v2.png"
     assert not ref.startswith("/mnt/data")
     asset = APP_ROOT / ref
     assert asset.is_file()
