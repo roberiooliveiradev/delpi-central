@@ -761,3 +761,12 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Security: retries=0, provider_requests==1/call, PREPARE/ACT untouched, no SDK in app/ (residual clean).
 - Regression: focused 231 GREEN; Phase-3 audit OK; backend boundaries 0 findings.
 - VERDICT: EXTEND_BASELINE — framework works cleanly but measured zero gain on this model; the only real delta (earlier type/enum rejection) is achievable with already-present Pydantic / baseline contract hardening. Unknown-status coercion documented as future bounded contract decision. NEXT: none (optional baseline contract hardening decision at coordination).
+
+## 2026-10-29 — native_assessment status fail-closed remediation (doc 202) — PRODUCTION DEPLOY EXECUTED
+- Task DELIA-C3-NATIVE-ASSESSMENT-STATUS-FAIL-CLOSED-REMEDIATION-01 on 45118d6425 (deployed SHA; origin moved to d323d8ef6a, helpdesk-only).
+- Defect proven: _assess_native_path coerced ANY out-of-vocabulary status (absent/null/wrong-type/unknown) to "sufficient" — invalid model decisions recorded as affirmative sufficiency. RED: assert 'sufficient' == 'inconclusive' reproduced.
+- Fix: invalid → "inconclusive" (canonical undetermined decision) + invalid_status_rejected log decision; native default preserved, foreign fan-out never the fallback; no retry/graph/budget/auth changes; both engines share the path (B1 via _governed_owner_path).
+- GREEN 34/34 (R1–R18 incl. 16 invalid values, missing/null/non-Mapping, zero extra calls, governed turn parity across delia/langgraph_b0/langgraph). Regression: 2 pre-existing env failures only (one stash-verified). Phase-3 + backend-boundary audits clean.
+- Deployed to srv-api via SSH: ff-only pull 7644500a58→45118d6425 + up-prod-sequential.sh --build delia-api; image sha256:def538a0…; engine=langgraph; kimi-k3/OpenRouter preserved; rollback image 8931066e retained.
+- Smoke (identity user, password-grant token; first mint lacked openid scope → api-delpi correctly denied, re-minted with scope=openid profile email; NO resets/admin APIs): S1 GROUNDED real record 10080092 TERM. BALA via DAVI (7 calls, full provenance); S2 GROUNDED honest insufficient_evidence (16 calls; recovery counters live: relevance_recovery_entered=1, reuse_candidates=1, reassessments=1, reuse_eligible=0 — reuse correctly declined).
+- VERDICT: PRODUCTION_DEPLOY_EXECUTED_AND_VERIFIED. Residual: invalid-status inconclusive shares the response projection with model-declared inconclusive; audit distinction kept via the log decision.
