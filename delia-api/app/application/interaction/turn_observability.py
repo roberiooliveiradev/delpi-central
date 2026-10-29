@@ -194,6 +194,8 @@ class ModelCallLedger:
         "_operational",
         "_timeout_source",
         "_composition_ms",
+        "_recovery_records",
+        "_recovery_counters",
     )
 
     def __init__(self) -> None:
@@ -201,6 +203,19 @@ class ModelCallLedger:
         self._operational: list[OperationalCallObservation] = []
         self._timeout_source: str | None = None
         self._composition_ms: int = 0
+        # Recovery-opportunity observation (Task 06): attempt-scoped
+        # assessment-decision records + turn-scoped event counters.
+        # Decisions + premise hashes only — never payloads, prompts
+        # or reasoning; observation never drives execution.
+        self._recovery_records: dict[tuple[str, str], dict] = {}
+        self._recovery_counters: dict[str, int] = {
+            "native_assessment_calls": 0,
+            "relevance_recovery_entered": 0,
+            "reuse_candidates": 0,
+            "reuse_eligible": 0,
+            "reuse_performed": 0,
+            "reassessments": 0,
+        }
 
     @property
     def calls(self) -> tuple[ModelCallObservation, ...]:
@@ -381,6 +396,45 @@ class ModelCallLedger:
         if isinstance(duration_ms, int) and duration_ms > 0:
             self._composition_ms += duration_ms
 
+    # ---------------- recovery-opportunity observation ----------------
+
+    def begin_recovery_attempt(self) -> None:
+        """Reset attempt-scoped decision records at a governed
+        owner-path entry — a record from one attempt is never a
+        candidate in another. Counters stay turn-scoped."""
+        self._recovery_records.clear()
+
+    def record_assessment_decision(
+        self,
+        group_key: str,
+        capability_id: str,
+        decision: str,
+        premise_fp: str,
+    ) -> None:
+        """Persist one governed assessment verdict for eligibility
+        observation. Bounded; decisions + fingerprints only."""
+        if len(self._recovery_records) >= MAX_LEDGER_CALLS:
+            return
+        self._recovery_records[(group_key, capability_id)] = {
+            "decision": decision,
+            "premise_fp": premise_fp,
+        }
+
+    @property
+    def recovery_records(self) -> dict[tuple[str, str], dict]:
+        return self._recovery_records
+
+    def record_recovery_event(self, event: str) -> None:
+        """Increment a bounded non-negative counter — silently
+        ignores unknown event names (fail-closed, never invents)."""
+        if event in self._recovery_counters:
+            self._recovery_counters[event] += 1
+
+    @property
+    def recovery_observation(self) -> dict[str, int]:
+        """Turn-scoped counters — operational metadata only."""
+        return dict(self._recovery_counters)
+
 
 # Request-scoped binding — same ContextVar pattern as the activity sink
 # and the resume checkpoint. Absent → observation silently off (legacy
@@ -464,6 +518,7 @@ def build_turn_observability(
     operational_calls: tuple[OperationalCallObservation, ...] = (),
     timeout_source: str | None = None,
     composition_ms: int = 0,
+    recovery_opportunity: Mapping[str, int] | None = None,
 ) -> dict[str, Any]:
     """Bounded presentation-only projection for ``turn_result``.
 
@@ -528,4 +583,14 @@ def build_turn_observability(
         ),
         "tokens": aggregate_usage(calls),
         "cost": {"status": "unavailable"},
+        **(
+            {
+                "recovery_opportunity": {
+                    key: _bounded_int(value)
+                    for key, value in recovery_opportunity.items()
+                }
+            }
+            if recovery_opportunity is not None
+            else {}
+        ),
     }

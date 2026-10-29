@@ -29,6 +29,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.application.interaction.turn_observability import (  # noqa: E402
+    ModelCallLedger,
+    bind_turn_call_ledger,
+    reset_turn_call_ledger,
+)
 from app.application.interaction.capability_attempt import (  # noqa: E402
     GovernedCapabilityStatus,
 )
@@ -282,12 +287,20 @@ def main() -> int:
         for engine_id in ENGINE_IDS:
             spec = factory()
             engine = build_engine(engine_id, **spec["kwargs"])
+            # Task 06: bind the canonical per-turn call ledger so the
+            # recovery-opportunity counters are observed per engine —
+            # measurement only, no execution effect.
+            ledger = ModelCallLedger()
+            ledger_token = bind_turn_call_ledger(ledger)
             started = time.perf_counter()
             try:
                 attempt = engine.attempt(spec["input"])
                 status = attempt.status
             except Exception as exc:  # measurement, not a gate
                 status = f"EXC:{type(exc).__name__}"
+            finally:
+                recovery_obs = ledger.recovery_observation
+                reset_turn_call_ledger(ledger_token)
             latency_ms = (time.perf_counter() - started) * 1000
             model_calls, owner_calls = spec["meter"]()
             stage_meter = spec.get("stage_meter")
@@ -307,6 +320,7 @@ def main() -> int:
                     "owner_calls": owner_calls,
                     "stage_name": spec.get("stage_name", "-"),
                     "stage_calls": stage_calls,
+                    "recovery_obs": recovery_obs,
                     "latency_ms": round(latency_ms, 2),
                 }
             )
@@ -367,7 +381,8 @@ def main() -> int:
             print(
                 f"  S11 {row['engine']}: assessments="
                 f"{row['stage_calls']} total_calls="
-                f"{row['fake_model_calls']}"
+                f"{row['fake_model_calls']} "
+                f"recovery_obs={row['recovery_obs']}"
             )
     if divergent or nonconformant:
         return 1

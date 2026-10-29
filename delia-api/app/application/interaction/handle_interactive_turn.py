@@ -737,6 +737,11 @@ class HandleInteractiveConversationTurn:
                 composition_ms=(
                     ledger.composition_ms if ledger is not None else 0
                 ),
+                recovery_opportunity=(
+                    ledger.recovery_observation
+                    if ledger is not None
+                    else None
+                ),
             ),
         )
 

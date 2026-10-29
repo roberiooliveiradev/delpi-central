@@ -3929,20 +3929,32 @@ def _record_native_assessment(
     a decision string + premise fingerprint — never payloads,
     feedback text or reasoning."""
     ledger = _NATIVE_ASSESSMENT_LEDGER.get()
-    if ledger is None:
-        return
-    ledger["records"][(group_key, descriptor.capability_id)] = {
-        "decision": decision,
-        "premise_fp": _native_assessment_premise_fp(
-            input_text,
-            group,
+    premise_fp = _native_assessment_premise_fp(
+        input_text,
+        group,
+        group_key,
+        descriptor,
+        goal,
+        workspace_context,
+        prior_turns,
+    )
+    if ledger is not None:
+        ledger["records"][(group_key, descriptor.capability_id)] = {
+            "decision": decision,
+            "premise_fp": premise_fp,
+        }
+    # Task 06: the same record also feeds the per-turn observation
+    # carrier when bound — observation only, never execution. Under
+    # Engine A this is the sole copy; eligibility is measured, the
+    # assessment call still runs.
+    telemetry = current_call_ledger()
+    if telemetry is not None:
+        telemetry.record_assessment_decision(
             group_key,
-            descriptor,
-            goal,
-            workspace_context,
-            prior_turns,
-        ),
-    }
+            descriptor.capability_id,
+            decision,
+            premise_fp,
+        )
 
 
 def _reusable_native_assessment(
@@ -3970,9 +3982,48 @@ def _reusable_native_assessment(
     ledger = _NATIVE_ASSESSMENT_LEDGER.get()
     if ledger is None:
         return None
-    record = ledger["records"].get(
-        (group_key, descriptor.capability_id)
+    verdict = _native_assessment_reuse_verdict(
+        ledger["records"],
+        input_text,
+        group,
+        group_key,
+        descriptor,
+        goal,
+        workspace_context,
+        prior_turns,
     )
+    if verdict is not None:
+        ledger["events"].append(
+            ("reused", group_key, descriptor.capability_id)
+        )
+        _logger.info(
+            "orchestration stage=native_assessment "
+            "decision=reuse_foreign_required target=%s",
+            descriptor.capability_id,
+        )
+        return verdict
+    ledger["events"].append(
+        ("reassessed", group_key, descriptor.capability_id)
+    )
+    return None
+
+
+def _native_assessment_reuse_verdict(
+    records: Mapping[tuple[str, str], dict],
+    input_text: str,
+    group: CapabilityGroup,
+    group_key: str,
+    descriptor: ProviderCapability,
+    goal: _TurnGoal | None,
+    workspace_context: WorkspaceContext | None,
+    prior_turns: tuple[ConversationContextTurn, ...],
+) -> str | None:
+    """Pure monotonic eligibility predicate over a records mapping —
+    the single contract evaluated by both the B1 apply path (bound
+    _NATIVE_ASSESSMENT_LEDGER) and the Task-06 observation path
+    (per-turn ModelCallLedger records). Returns the reusable
+    decision or None; no side effects, no event emission."""
+    record = records.get((group_key, descriptor.capability_id))
     if (
         record is not None
         and record["decision"] == "foreign_evidence_required"
@@ -3986,18 +4037,7 @@ def _reusable_native_assessment(
             prior_turns,
         )
     ):
-        ledger["events"].append(
-            ("reused", group_key, descriptor.capability_id)
-        )
-        _logger.info(
-            "orchestration stage=native_assessment "
-            "decision=reuse_foreign_required target=%s",
-            descriptor.capability_id,
-        )
-        return "foreign_evidence_required"
-    ledger["events"].append(
-        ("reassessed", group_key, descriptor.capability_id)
-    )
+        return record["decision"]
     return None
 
 
@@ -4539,6 +4579,12 @@ class OperationalCapabilityOrchestrator:
         alternative engines may sequence to it under their own
         admission/routing policy. No behavior change: verbatim
         move of the former tail."""
+        # Task 06: attempt-scoped eligibility records start fresh per
+        # governed attempt — a prior attempt's assessment is never a
+        # reuse candidate in this one (observation only).
+        attempt_ledger = current_call_ledger()
+        if attempt_ledger is not None:
+            attempt_ledger.begin_recovery_attempt()
         groups, failures = self._groups(correlation, deadline)
         surface = _project_surface(groups)
         if not surface:
@@ -8995,6 +9041,11 @@ class OperationalCapabilityOrchestrator:
                 attempt=_ATTEMPT_INDEX.get(),
                 budget_remaining_ms=call_remaining_ms,
             )
+            if instruction_id == NATIVE_ASSESSMENT_INSTRUCTION_ID:
+                # Task 06 (E1): every real assessment invocation is
+                # counted at the authoritative recording point —
+                # never inferred from replayed proposals.
+                ledger.record_recovery_event("native_assessment_calls")
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
             return None
@@ -9845,6 +9896,13 @@ class OperationalCapabilityOrchestrator:
         any failure returns ``None`` and the original outcome stands
         as insufficient — no loops, no amplification, no PREPARE/ACT.
         """
+        # Task 06: a bounded relevance-recovery round was entered —
+        # counted independently of eligibility or outcome.
+        recovery_ledger = current_call_ledger()
+        if recovery_ledger is not None:
+            recovery_ledger.record_recovery_event(
+                "relevance_recovery_entered"
+            )
         if descriptor.operation_class not in (
             _RESUMABLE_OPERATION_CLASSES
         ):
@@ -9977,6 +10035,33 @@ class OperationalCapabilityOrchestrator:
         # reformulation — recovery is best-effort, still bounded.
         foreign_evidence: str | None = None
         if len(groups) > 1:
+            # Task 06 (observation only): candidate = a recorded
+            # assessment exists in THIS attempt context; eligible =
+            # the same deterministic predicate B1 applies. Neither
+            # affects execution — Engine A measures the window it
+            # does not use.
+            if recovery_ledger is not None:
+                observed = recovery_ledger.recovery_records
+                if observed:
+                    recovery_ledger.record_recovery_event(
+                        "reuse_candidates"
+                    )
+                    if (
+                        _native_assessment_reuse_verdict(
+                            observed,
+                            input_text,
+                            sel_group,
+                            sel_group_key,
+                            sel_descriptor,
+                            goal,
+                            workspace_context,
+                            prior_turns,
+                        )
+                        is not None
+                    ):
+                        recovery_ledger.record_recovery_event(
+                            "reuse_eligible"
+                        )
             assessment = _reusable_native_assessment(
                 input_text,
                 sel_group,
@@ -9986,7 +10071,12 @@ class OperationalCapabilityOrchestrator:
                 workspace_context,
                 prior_turns,
             )
-            if assessment is None:
+            if assessment is not None:
+                if recovery_ledger is not None:
+                    recovery_ledger.record_recovery_event(
+                        "reuse_performed"
+                    )
+            else:
                 assessment = self._assess_native_path(
                     input_text,
                     sel_group,
@@ -9998,6 +10088,10 @@ class OperationalCapabilityOrchestrator:
                     deadline=deadline,
                     relevance_feedback=feedback,
                 )
+                if recovery_ledger is not None:
+                    recovery_ledger.record_recovery_event(
+                        "reassessments"
+                    )
             if assessment == "foreign_evidence_required":
                 found = self._select_foreign_capability(
                     input_text,
