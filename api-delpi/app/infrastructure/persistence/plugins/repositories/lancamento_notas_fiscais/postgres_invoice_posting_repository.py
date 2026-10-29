@@ -540,8 +540,8 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         out["linked_invoices"] = (
             self.list_linked_invoices_for_requests([rid]).get(rid, []) if rid else []
         )
-        match_key = str(out.get("document_match_key") or "")
-        series = str(out.get("series") or "")
+        match_key = str(out.get("document_match_key") or "").strip()
+        series = str(out.get("series") or "").strip().upper()
         out["linked_cte_requests"] = (
             self.list_linked_cte_requests_for_documents([(match_key, series)]).get(
                 (match_key, series),
@@ -560,7 +560,10 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         by_id = self.list_linked_purchase_orders_for_requests(ids)
         linked_invoices = self.list_linked_invoices_for_requests(ids)
         doc_keys = [
-            (str(item.get("document_match_key") or ""), str(item.get("series") or ""))
+            (
+                str(item.get("document_match_key") or "").strip(),
+                str(item.get("series") or "").strip().upper(),
+            )
             for item in serialized
         ]
         linked_ctes = self.list_linked_cte_requests_for_documents(doc_keys)
@@ -568,8 +571,8 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             item["linked_purchase_orders"] = by_id.get(str(item["id"]), [])
             item["linked_invoices"] = linked_invoices.get(str(item["id"]), [])
             key = (
-                str(item.get("document_match_key") or ""),
-                str(item.get("series") or ""),
+                str(item.get("document_match_key") or "").strip(),
+                str(item.get("series") or "").strip().upper(),
             )
             item["linked_cte_requests"] = linked_ctes.get(key, [])
         return serialized
@@ -951,11 +954,14 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         if not keys:
             return {}
 
+        match_keys = [item[0] for item in keys]
+        series_keys = [item[1] for item in keys]
+        # unnest de arrays — compatível com psycopg3 (evita IN %s de tuplas compostas).
         rows = self.fetch_all(
             f"""
             SELECT
                 li.document_match_key AS match_key,
-                li.series AS match_series,
+                upper(li.series) AS match_series,
                 r.id,
                 r.document_number,
                 r.series,
@@ -967,11 +973,13 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
               FROM {SCHEMA}.invoice_posting_linked_invoices li
               JOIN {SCHEMA}.invoice_posting_requests r
                 ON r.id = li.request_id
+              JOIN unnest(%s::text[], %s::text[]) AS wanted(match_key, series)
+                ON wanted.match_key = li.document_match_key
+               AND wanted.series = upper(li.series)
              WHERE r.fiscal_model = 'cte'
-               AND (li.document_match_key, li.series) IN %s
              ORDER BY r.created_at DESC, r.id ASC
             """,
-            (tuple(keys),),
+            (match_keys, series_keys),
         )
         out: dict[tuple[str, str], list[dict[str, Any]]] = {key: [] for key in keys}
         for row in rows:
