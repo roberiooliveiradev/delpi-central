@@ -25,3 +25,14 @@
 - DÉLIA↔TÉO integration stays **PLANNED** until a real adapter with user delegation exists.
 - Legacy CRUD Action routes remain as HTTP PREPARE shims (`include_in_schema=False`) until consumers are cleared.
 - New Portal capability ⇒ new typed `action` in an existing family by default; a new tool/operation only by exception (real business boundary, Abstraction Gate).
+
+## Distribuição pública do avatar — DELPI-CHARACTER-AVATARS-001
+
+- Rota owner-local: `GET /public/characters/teo/avatar/avatar-v2.png`
+  (externa: `/apps/transformometro-api/public/characters/teo/avatar/avatar-v2.png`).
+- `PUBLIC_PREFIXES = ("/public/",)` já cobre o path — sem mudança de middleware.
+- Fonte única: `appearance.avatar_status` + `avatar_reference` da ficha;
+  filename deve ser idêntico ao basename da referência — caso contrário 404.
+  A versão substituída `avatar-v1.png` não é publicada.
+- Cache `public, max-age=300`; `X-Content-Type-Options: nosniff`.
+- Revogação: mudar `avatar_status` na ficha → 404 imediato.

@@ -53,3 +53,16 @@ possui projeção pública no repositório (handoffs aos owners:
 `transformometro-api`, `api-delpi`, `tv-dashboard-api`,
 `controllership-finance-api`, `delia-api`). Nenhuma contradição
 (`ERROR`).
+
+## Distribuição pública do avatar — DELPI-CHARACTER-AVATARS-001 (D05)
+
+- Implementação owner-local preparada:
+  `GET /public/characters/eva/avatar/avatar-v1.jpg` —
+  **publicação desabilitada** até ratificação do PO.
+- Gate: `_PUBLIC_DISTRIBUTION_ENABLED = False` na rota (404 em qualquer
+  requisição) + path **fora** da allowlist pública do `jwt_middleware`
+  (401 no transporte) — defesa em profundidade.
+- Asset: `engineering_app/assets/characters/eva/avatar-v1.jpg`,
+  1024×1024, sha256 `18d9e05f…e6fc`, status `OFFICIAL_AVATAR_APPROVED`.
+- Para ativar: ratificação do PO + `ENABLED = True` + entrada
+  `/public/characters/` na allowlist pública do middleware.

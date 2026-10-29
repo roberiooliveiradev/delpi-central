@@ -1083,6 +1083,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_public_mural_acessos_link_image": RouteContract(
         "mural_access_link_image", "scalar"
     ),
+    "get_public_character_avatar": RouteContract("character_avatar", "scalar"),
     "list_guias_procedimentos_departments": RouteContract(
         "guias_procedimentos_department", "paged_list"
     ),

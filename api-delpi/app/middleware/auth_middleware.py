@@ -27,6 +27,7 @@ _PUBLIC_PREFIXES = (
     "/public/mural-acessos/",
     "/public/canal-denuncia/",
     "/public/scheduling/",
+    "/public/characters/",
 )
 
 # Exact public paths (Custom GPT OpenAPI import only — no business data).

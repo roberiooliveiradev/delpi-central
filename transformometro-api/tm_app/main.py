@@ -40,6 +40,7 @@ from tm_app.interface.http.routes.diagnostic_routes import router as diagnostic_
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
 from tm_app.interface.http.routes.meeting_minutes_routes import router as meeting_minutes_router
 from tm_app.interface.http.routes.public_meeting_minutes_routes import public_router as public_meeting_minutes_router
+from tm_app.interface.http.routes.characters_routes import router as characters_router
 from tm_app.interface.http.routes.signature_profile_routes import router as signature_profile_router
 from tm_app.interface.http.routes.task_routes import router as task_router
 from tm_app.interface.http.routes.interaction_room_routes import router as interaction_room_router
@@ -154,6 +155,7 @@ app.include_router(meeting_minutes_router, prefix="/transformometro/meeting-minu
 app.include_router(meeting_minutes_router, prefix="/transformometro/atas")
 app.include_router(public_meeting_minutes_router, prefix="/public/meeting-minutes/sign-invites")
 app.include_router(public_meeting_minutes_router, prefix="/public/atas/sign-invites")
+app.include_router(characters_router)
 app.include_router(signature_profile_router)
 app.include_router(task_router)
 app.include_router(interaction_room_router)

@@ -7,6 +7,9 @@ from fastapi.exceptions import RequestValidationError
 from delpi_auth.credential_guard import check_credentials
 from engineering_app.config import settings
 from engineering_app.core.responses import fail
+from engineering_app.interface.http.routes.characters_routes import (
+    router as characters_router,
+)
 from engineering_app.interface.http.routes.health_routes import (
     router as health_router,
 )
@@ -102,6 +105,7 @@ app.middleware("http")(mcp_mount_path_middleware)
 
 
 app.include_router(health_router)
+app.include_router(characters_router)
 app.include_router(mcp_metadata_router)
 app.include_router(home_router)
 app.include_router(overview_router)

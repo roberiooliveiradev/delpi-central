@@ -40,6 +40,8 @@ def _is_controllership_finance_public_path(path: str) -> bool:
     normalized = normalize_path(stripped)
     if is_public_path(path):
         return True
+    if normalized.startswith("/public/"):
+        return True
     if normalized in {"/ready", "/health"}:
         return True
     if normalized.endswith("/controllership-finance-api/ready") or normalized.endswith(

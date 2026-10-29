@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-16",
-  "operation_count": 224,
+  "generatedAt": "2026-10-29",
+  "operation_count": 225,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -256,33 +256,33 @@
       "module": "crud"
     },
     {
+      "operationId": "remove_process_bpmn_reference",
       "method": "DELETE",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference",
-      "operationId": "remove_process_bpmn_reference",
       "module": "crud"
     },
     {
+      "operationId": "get_process_bpmn_reference",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference",
-      "operationId": "get_process_bpmn_reference",
       "module": "crud"
     },
     {
+      "operationId": "set_process_bpmn_reference",
       "method": "PUT",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference",
-      "operationId": "set_process_bpmn_reference",
       "module": "crud"
     },
     {
+      "operationId": "list_process_bpmn_model_candidates",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference/candidates",
-      "operationId": "list_process_bpmn_model_candidates",
       "module": "crud"
     },
     {
+      "operationId": "list_process_bpmn_model_revisions",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference/candidates/{model_id}/revisions",
-      "operationId": "list_process_bpmn_model_revisions",
       "module": "crud"
     },
     {
@@ -886,9 +886,9 @@
       "module": "gpt_actions"
     },
     {
+      "operationId": "gpt_prepare_helpdesk_change",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/helpdesk/prepare",
-      "operationId": "gpt_prepare_helpdesk_change",
       "module": "gpt_actions"
     },
     {
@@ -1012,9 +1012,9 @@
       "module": "interaction_rooms"
     },
     {
+      "operationId": "delete_transformometro_interaction_room",
       "method": "DELETE",
       "path": "/transformometro/interaction-rooms/{room_id}",
-      "operationId": "delete_transformometro_interaction_room",
       "module": "interaction_rooms"
     },
     {
@@ -1286,6 +1286,12 @@
       "method": "POST",
       "path": "/transformometro/signatures/me/image",
       "module": "meeting_minutes"
+    },
+    {
+      "operationId": "get_public_character_avatar",
+      "method": "GET",
+      "path": "/public/characters/{character_id}/avatar/{filename}",
+      "module": "meeting_minutes_public"
     },
     {
       "operationId": "get_public_meeting_minute_sign_invite",

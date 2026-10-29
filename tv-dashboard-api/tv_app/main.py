@@ -25,6 +25,7 @@ from tv_app.interface.http.routes.playlist_history_routes import router as playl
 from tv_app.interface.http.routes.playlist_routes import router as playlist_router
 from tv_app.interface.http.routes.presentation_realtime_routes import router as presentation_realtime_router
 from tv_app.interface.http.routes.public_routes import router as public_router
+from tv_app.interface.http.routes.characters_routes import router as characters_router
 from tv_app.interface.http.routes.slide_routes import router as slide_router
 from tv_app.interface.http.routes.section_routes import router as section_router
 from tv_app.interface.http.routes.template_routes import router as template_router
@@ -148,6 +149,7 @@ app.include_router(data_routes_router)
 app.include_router(data_api_router)
 app.include_router(gpt_actions_router)
 app.include_router(public_router)
+app.include_router(characters_router)
 app.include_router(presentation_realtime_router)
 
 # MCP (Streamable HTTP) — VISTA READ surface, mounted in parallel with HTTP API.

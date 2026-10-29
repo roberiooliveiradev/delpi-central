@@ -67,3 +67,14 @@ EOF
 O teste `test_public_profile_excludes_internals_and_operational_data`
 falha se o artefato divergir da projeção viva — regenerar ao revisar a
 ficha e incrementar `PROFILE_VERSION`.
+
+## Distribuição pública do avatar — DELPI-CHARACTER-AVATARS-001
+
+- Rota owner-local: `GET /public/characters/clara/avatar/avatar-v1.jpg`
+  (externa: `/apps/controllership-finance-api/public/characters/clara/avatar/avatar-v1.jpg`).
+- Prefixo `/public/` liberado no `_is_controllership_finance_public_path`
+  do `jwt_middleware` local.
+- Fonte única: `appearance.avatar_status` + `avatar_reference` da ficha;
+  filename deve ser idêntico ao basename da referência — caso contrário 404.
+- Cache `public, max-age=300`; `X-Content-Type-Options: nosniff`.
+- Revogação: mudar `avatar_status` na ficha → 404 imediato.

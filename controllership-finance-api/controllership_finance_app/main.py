@@ -17,6 +17,9 @@ from controllership_finance_app.interface.http.routes.admin_catalogs_routes impo
 from controllership_finance_app.interface.http.routes.admin_checklist_routes import (
     router as admin_checklist_router,
 )
+from controllership_finance_app.interface.http.routes.characters_routes import (
+    router as characters_router,
+)
 from controllership_finance_app.interface.http.routes.clara_consent_routes import (
     router as clara_consent_router,
 )
@@ -151,6 +154,7 @@ app.add_middleware(
 
 app.include_router(mcp_metadata_router)
 app.include_router(health_router)
+app.include_router(characters_router)
 app.include_router(viewer_context_router)
 app.include_router(closing_router)
 app.include_router(competences_router)

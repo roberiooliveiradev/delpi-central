@@ -58,3 +58,14 @@ Campos atualizados na ficha conforme imagem aprovada v2: `skin`, `hair` (pretos,
 - Runtime in-container: `vista 20 3 OFFICIAL_AVATAR_APPROVED tv_app/content/characters/vista/avatar-v2.jpg`.
 - Smoke via gateway: `/apps/tv-dashboard-api/health` 200; catalog sem auth 401 (fail-closed); `/.well-known/oauth-protected-resource` 200; portal `/` 200.
 - Validação conversacional live ChatGPT: TEST_NOT_RUN (sem acesso ao host nesta sessão).
+
+## Distribuição pública do avatar — DELPI-CHARACTER-AVATARS-001
+
+- Rota owner-local: `GET /public/characters/vista/avatar/avatar-v2.jpg`
+  (externa: `/apps/tv-dashboard-api/public/characters/vista/avatar/avatar-v2.jpg`).
+- `PUBLIC_PREFIXES` já cobre `/public/` — sem mudança de middleware.
+- Fonte única: `appearance.avatar_status` + `avatar_reference` da ficha;
+  filename deve ser idêntico ao basename da referência — caso contrário 404.
+- Resposta via `build_media_file_response` (helper canônico); cache
+  `public, max-age=300`.
+- Revogação: mudar `avatar_status` na ficha → 404 imediato.

@@ -69,3 +69,15 @@ REGRESSION = suites DAVI + benchmark preservados
 - Nenhuma tool/capability/endpoint/scope/AuthZ alterado.
 - Nenhuma distribuição automática de perfis; artefato commitado apenas.
 - Handoff atualizado; recebimento pela VISTA não comprovado.
+
+## Distribuição pública do avatar — DELPI-CHARACTER-AVATARS-001
+
+- Rota owner-local: `GET /public/characters/davi/avatar/avatar-v1.png`
+  (externa: `/apps/api-delpi/public/characters/davi/avatar/avatar-v1.png`).
+- Prefixo `/public/characters/` liberado em `_PUBLIC_PREFIXES` do
+  `jwt_middleware`; operação `get_public_character_avatar` registrada no
+  `ROUTE_CONTRACTS` (`character_avatar`/`scalar`).
+- Fonte única: `appearance.avatar_status` + `avatar_reference` da ficha;
+  filename deve ser idêntico ao basename da referência — caso contrário 404.
+- Cache `public, max-age=300`; filename versionado garante imutabilidade.
+- Revogação: mudar `avatar_status` na ficha → 404 imediato.

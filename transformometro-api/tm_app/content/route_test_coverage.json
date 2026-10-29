@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-16",
-  "baselineOperationCount": 224,
-  "operationCount": 224,
-  "coveredCount": 224,
+  "generatedAt": "2026-10-29",
+  "baselineOperationCount": 225,
+  "operationCount": 225,
+  "coveredCount": 225,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -62,8 +62,8 @@
       "exempt": 0
     },
     "meeting_minutes_public": {
-      "total": 4,
-      "covered": 4,
+      "total": 5,
+      "covered": 5,
       "gap": 0,
       "exempt": 0
     },
@@ -370,37 +370,37 @@
       "status": "covered"
     },
     {
+      "operationId": "remove_process_bpmn_reference",
       "method": "DELETE",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference",
-      "operationId": "remove_process_bpmn_reference",
       "module": "crud",
       "status": "covered"
     },
     {
+      "operationId": "get_process_bpmn_reference",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference",
-      "operationId": "get_process_bpmn_reference",
       "module": "crud",
       "status": "covered"
     },
     {
+      "operationId": "set_process_bpmn_reference",
       "method": "PUT",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference",
-      "operationId": "set_process_bpmn_reference",
       "module": "crud",
       "status": "covered"
     },
     {
+      "operationId": "list_process_bpmn_model_candidates",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference/candidates",
-      "operationId": "list_process_bpmn_model_candidates",
       "module": "crud",
       "status": "covered"
     },
     {
+      "operationId": "list_process_bpmn_model_revisions",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/bpmn-reference/candidates/{model_id}/revisions",
-      "operationId": "list_process_bpmn_model_revisions",
       "module": "crud",
       "status": "covered"
     },
@@ -1105,9 +1105,9 @@
       "status": "covered"
     },
     {
+      "operationId": "gpt_prepare_helpdesk_change",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/helpdesk/prepare",
-      "operationId": "gpt_prepare_helpdesk_change",
       "module": "gpt_actions",
       "status": "covered"
     },
@@ -1252,9 +1252,9 @@
       "status": "covered"
     },
     {
+      "operationId": "delete_transformometro_interaction_room",
       "method": "DELETE",
       "path": "/transformometro/interaction-rooms/{room_id}",
-      "operationId": "delete_transformometro_interaction_room",
       "module": "interaction_rooms",
       "status": "covered"
     },
@@ -1571,6 +1571,13 @@
       "method": "POST",
       "path": "/transformometro/signatures/me/image",
       "module": "meeting_minutes",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_public_character_avatar",
+      "method": "GET",
+      "path": "/public/characters/{character_id}/avatar/{filename}",
+      "module": "meeting_minutes_public",
       "status": "covered"
     },
     {
