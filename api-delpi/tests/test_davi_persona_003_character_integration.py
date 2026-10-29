@@ -161,6 +161,12 @@ def test_agent_directives_project_character_context() -> None:
     assert rels["vista"]["relationship_type"] == "romantic_partner"
 
 
+def test_agent_directives_project_narrative_age() -> None:
+    """SHARED-CHARACTER-PROFILES-002 — approved age reaches the host."""
+    character = DaviAgentIntelligenceService.agent_directives()["character"]
+    assert character["identity"]["narrative_age"] == "23"
+
+
 def test_directives_stay_within_budget_and_preserve_operational() -> None:
     size = DaviAgentIntelligenceService.directives_serialized_size()
     assert size <= DAVI_AGENT_DIRECTIVES_MAX_BYTES, size

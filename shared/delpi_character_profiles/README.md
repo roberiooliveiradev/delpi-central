@@ -93,6 +93,15 @@ issues = validate_relationship_consistency([public, peer])
 O mecanismo de publicação/transporte é do consumer (TARGET até owner +
 contrato ratificados). Conhecimento mútuo é **eventual e narrativo**.
 
+`project_persona_context` ecoa apenas o que o host precisa para *agir* como
+o personagem: `identity` (character_id, name, display_name, role,
+`narrative_age` **somente quando preenchida**, short_introduction),
+personality/communication summaries, expertise, appearance_summary +
+avatar_status, relacionamentos públicos e regras de coexistência/conduta.
+Demais demografia (`gender_identity`, `pronouns`, `title`, `organization`)
+e história/eventos ficam de fora do contexto por orçamento — a ficha local
+permanece a fonte.
+
 ## 6. Tutorial passo a passo
 
 1. Localize o MCP dono e suas fontes canônicas de persona/instruções.

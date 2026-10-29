@@ -83,6 +83,7 @@ def project_persona_context(profile: CharacterProfile) -> dict[str, Any]:
             "name": ident.name,
             "display_name": ident.display_name or ident.name,
             "role": ident.role,
+            **({"narrative_age": ident.narrative_age} if ident.narrative_age else {}),
             "short_introduction": ident.short_introduction,
         },
         "personality_summary": _personality_summary(profile),

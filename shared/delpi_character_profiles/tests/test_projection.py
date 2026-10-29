@@ -34,6 +34,19 @@ def test_persona_context_is_compact_and_marked(alpha_profile) -> None:
     assert "origin_story" not in json.dumps(ctx)
 
 
+def test_persona_context_projects_narrative_age_when_filled(
+    alpha_profile,
+) -> None:
+    ctx = project_persona_context(alpha_profile)
+    assert ctx["identity"]["narrative_age"] == "~25"
+
+
+def test_persona_context_omits_narrative_age_when_absent() -> None:
+    p = CharacterProfile(identity=Identity(character_id="x", name="X"))
+    ctx = project_persona_context(p)
+    assert "narrative_age" not in ctx["identity"]
+
+
 def test_persona_context_omits_internal_relationships(alpha_profile) -> None:
     ctx = project_persona_context(alpha_profile)
     targets = {r["target_character_id"] for r in ctx["relationships"]}
