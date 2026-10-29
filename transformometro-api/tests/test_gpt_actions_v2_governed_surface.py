@@ -10,6 +10,8 @@ import pytest
 
 from tm_app.application.governed_writes.errors import (
     PROPOSAL_ACTOR_MISMATCH,
+    PROPOSAL_NOT_FOUND,
+    PROPOSAL_REQUIRED,
     PROPOSAL_STALE,
     GovernedWriteError,
 )
@@ -226,3 +228,109 @@ def test_search_rejects_disallowed_filter(tm_client):
     )
     assert response.status_code == 400
     assert response.json()["success"] is False
+
+
+def _prepare_delete(facade, req, doc=None):
+    doc = doc or _doc()
+    with (
+        patch.object(facade._dispatch, "_require_capability"),
+        patch(
+            "tm_app.interface.http.branch_access_http."
+            "require_transformometro_view_access",
+            return_value=None,
+        ),
+        patch.object(
+            facade._dispatch, "get_record", return_value=doc.to_dict()
+        ),
+    ):
+        prepared = facade.prepare_record_change(
+            req,
+            entity="process_document",
+            operation="delete",
+            record_id="doc-1",
+        )
+    return prepared, doc
+
+
+def test_commit_by_proposal_id_recovers_across_turns():
+    """Turn-N PREPARE → handle lost → turn-N+1 commit by proposal_id.
+
+    The id is deterministic (HMAC-derived handle re-minted server-side),
+    so the SAME stored proposal resumes — no second PREPARE, no second
+    confirmation round-trip.
+    """
+    facade = GovernedActionsFacade()
+    req = _request()
+    prepared, doc = _prepare_delete(facade, req)
+    proposal_id = prepared["proposal"]["proposal_id"]
+    assert proposal_id.startswith("gp_")
+
+    with (
+        patch.object(
+            facade._dispatch, "delete_record", return_value=({}, "ok")
+        ) as deleter,
+        patch.object(
+            facade._dispatch, "get_record", return_value=doc.to_dict()
+        ),
+    ):
+        committed = facade.commit_proposal(
+            req, proposal_id=proposal_id, confirmation=True
+        )
+    deleter.assert_called_once()
+    assert committed["status"] == "ok"
+    assert committed["proposal_id"] == proposal_id
+    assert committed["postcondition"]["verified"] is True
+
+
+def test_commit_by_proposal_id_replay_is_rejected():
+    """A consumed proposal cannot be executed twice via proposal_id."""
+    facade = GovernedActionsFacade()
+    req = _request()
+    prepared, doc = _prepare_delete(facade, req)
+    proposal_id = prepared["proposal"]["proposal_id"]
+
+    with (
+        patch.object(
+            facade._dispatch, "delete_record", return_value=({}, "ok")
+        ),
+        patch.object(
+            facade._dispatch, "get_record", return_value=doc.to_dict()
+        ),
+    ):
+        facade.commit_proposal(req, proposal_id=proposal_id, confirmation=True)
+        with pytest.raises(GovernedWriteError) as exc:
+            facade.commit_proposal(
+                req, proposal_id=proposal_id, confirmation=True
+            )
+    assert exc.value.code in {PROPOSAL_NOT_FOUND, PROPOSAL_STALE}
+
+
+def test_commit_by_proposal_id_wrong_actor_denied():
+    """Recovery key does not bypass actor binding."""
+    facade = GovernedActionsFacade()
+    prepared, _shared = _prepare_delete(facade, _request("u1"))
+    proposal_id = prepared["proposal"]["proposal_id"]
+
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(
+            _request("u2"), proposal_id=proposal_id, confirmation=True
+        )
+    assert exc.value.code == PROPOSAL_ACTOR_MISMATCH
+
+
+def test_commit_by_unknown_proposal_id_not_found():
+    facade = GovernedActionsFacade()
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(
+            _request("u1"),
+            proposal_id="gp_0000000000000000000000000000dead",
+            confirmation=True,
+        )
+    assert exc.value.code == PROPOSAL_NOT_FOUND
+
+
+def test_commit_neither_handle_nor_id_required():
+    facade = GovernedActionsFacade()
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(_request("u1"), confirmation=True)
+    assert exc.value.code == PROPOSAL_REQUIRED

@@ -2555,12 +2555,23 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
     }
     doc["components"]["schemas"]["GptCommitProposalBody"] = {
         "type": "object",
-        "required": ["proposal_handle", "confirmation"],
+        "required": ["confirmation"],
         "additionalProperties": False,
         "properties": {
             "proposal_handle": {
                 "type": "string",
-                "description": "Opaque server handle from PREPARE. Do not invent.",
+                "description": (
+                    "Opaque server handle from PREPARE. Do not invent. "
+                    "Either proposal_handle or proposal_id is required."
+                ),
+            },
+            "proposal_id": {
+                "type": "string",
+                "description": (
+                    "Stable gp_... id from the PREPARE proposal envelope. "
+                    "Recovery key when the opaque handle was not carried "
+                    "across turns; resolves to the same stored proposal."
+                ),
             },
             "confirmation": {
                 "type": "boolean",
@@ -2657,10 +2668,12 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
     paths[f"{GPT_ACTIONS_BASE_PATH}/proposals/commit"] = {
         "post": {
             "operationId": "gpt_commit_proposal",
-            "summary": "COMMIT opaque proposal_handle after confirmation",
+            "summary": "COMMIT proposal (handle or proposal_id) after confirmation",
             "description": (
                 "NOT a generic proxy: executes only a server-side PREPARE proposal. "
-                "Revalidates AuthZ + state fingerprint; authoritative read-back."
+                "Accepts proposal_handle or proposal_id — the id resumes a "
+                "proposal prepared in an earlier turn. Revalidates AuthZ + "
+                "state fingerprint; authoritative read-back."
             ),
             "tags": ["Transformômetro GPT"],
             "security": [{"BearerAuth": []}],

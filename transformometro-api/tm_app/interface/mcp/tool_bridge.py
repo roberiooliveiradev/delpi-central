@@ -260,11 +260,13 @@ def _prepared_message(data: dict[str, Any]) -> str:
     if prop.get("execution_policy") == AUTO_ACT:
         return (
             "Governed auto_act proposal prepared. Proceed with "
-            "commit_proposal — no additional user confirmation required."
+            "commit_proposal — no additional user confirmation required. "
+            "Carry proposal.proposal_id to commit in a later turn."
         )
     return (
         "Governed destructive proposal prepared. One explicit user "
-        "confirmation is required before commit_proposal."
+        "confirmation is required before commit_proposal. Carry "
+        "proposal.proposal_id to commit in a later turn."
     )
 
 
@@ -821,14 +823,19 @@ def tool_prepare_record_change(
 
 
 def tool_commit_proposal(
-    proposal_handle: str, confirmation: bool
+    proposal_handle: str | None = None,
+    proposal_id: str | None = None,
+    *,
+    confirmation: bool,
 ) -> CallToolResult:
-    """Common governed commit: opaque handle only; capability from stored proposal."""
+    """Common governed commit: opaque handle or proposal_id recovery key;
+    capability from stored proposal."""
     try:
         request = build_mcp_request()
         data = _governed.commit_proposal(
             request,
             proposal_handle=proposal_handle,
+            proposal_id=proposal_id,
             confirmation=confirmation,
         )
         post = data.get("postcondition") or {}

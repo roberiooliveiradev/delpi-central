@@ -744,4 +744,10 @@ class TestCommonCommit:
         props = tools["commit_proposal"].input_schema["properties"]
         assert "capability" not in props
         assert "action" not in props
-        assert set(props) <= {"proposal_handle", "confirmation"}
+        # proposal_id is the sanctioned recovery key for the same
+        # stored proposal — still not an arbitrary executor.
+        assert set(props) <= {
+            "proposal_handle",
+            "proposal_id",
+            "confirmation",
+        }

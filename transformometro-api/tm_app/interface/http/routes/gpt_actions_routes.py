@@ -323,7 +323,8 @@ class GptPrepareRecordChangeBody(BaseModel):
 
 
 class GptCommitProposalBody(BaseModel):
-    proposal_handle: str
+    proposal_handle: str | None = None
+    proposal_id: str | None = None
     confirmation: bool = False
 
 
@@ -817,13 +818,14 @@ def gpt_prepare_record_change(body: GptPrepareRecordChangeBody, request: Request
 @router.post(
     "/proposals/commit",
     operation_id="gpt_commit_proposal",
-    summary="COMMIT opaque proposal_handle after explicit confirmation",
+    summary="COMMIT proposal (proposal_handle or proposal_id) after explicit confirmation",
 )
 def gpt_commit_proposal(body: GptCommitProposalBody, request: Request):
     try:
         data = _governed.commit_proposal(
             request,
             proposal_handle=body.proposal_handle,
+            proposal_id=body.proposal_id,
             confirmation=body.confirmation,
         )
         return ok(data, "Proposal committed and verified.")

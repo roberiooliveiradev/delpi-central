@@ -82,10 +82,11 @@ class TestPrepareSchemasArePure:
 
     def test_commit_proposal_schema_is_act_only(self):
         schema = _tools()["commit_proposal"].input_schema
-        assert set(schema.get("required") or []) == {
-            "proposal_handle",
-            "confirmation",
-        }
+        # confirmation is the only strictly-required field; the proposal
+        # is identified by proposal_handle OR proposal_id (recovery key).
+        assert set(schema.get("required") or []) == {"confirmation"}
+        props = set(schema.get("properties") or {})
+        assert {"proposal_handle", "proposal_id"} <= props
 
     def test_bridge_prepare_signatures_have_no_act_collapse_params(self):
         fns = {

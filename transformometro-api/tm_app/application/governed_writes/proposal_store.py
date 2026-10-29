@@ -18,7 +18,9 @@ from tm_app.application.governed_writes.errors import (
     PROPOSAL_EXPIRED,
     PROPOSAL_MISMATCH,
     PROPOSAL_NOT_FOUND,
+    PROPOSAL_REQUIRED,
     PROPOSAL_STALE,
+    VALIDATION,
     GovernedWriteError,
 )
 from tm_app.application.governed_writes.proposal import GovernedProposal
@@ -72,6 +74,31 @@ def parse_proposal_handle(handle: str) -> str:
             status_code=400,
         ) from exc
     return proposal_id
+
+
+def resolve_proposal_handle(
+    *,
+    proposal_handle: str | None = None,
+    proposal_id: str | None = None,
+) -> str:
+    """Canonical handle resolution for ACT entry points.
+
+    ``proposal_id`` is an accepted recovery key: handles are a
+    deterministic HMAC of the id, so re-minting feeds the same
+    ``load_valid_proposal`` path (existence, expiry, consumed,
+    actor binding, capability match) with zero auth logic duplicated.
+    """
+    handle = (proposal_handle or "").strip()
+    if handle:
+        return handle
+    pid = (proposal_id or "").strip()
+    if pid:
+        return mint_proposal_handle(pid)
+    raise GovernedWriteError(
+        "proposal_handle or proposal_id is required for ACT.",
+        code=PROPOSAL_REQUIRED,
+        status_code=400,
+    )
 
 
 class ProposalStore:

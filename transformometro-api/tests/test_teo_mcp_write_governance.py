@@ -551,11 +551,13 @@ class TestExplicitConfirmationHardening:
 
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
         schema = tools["commit_proposal"].input_schema
-        assert set(schema.get("required") or []) == {
-            "proposal_handle",
-            "confirmation",
-        }
+        # proposal_id (recovery key) OR proposal_handle identifies the
+        # stored proposal — both optional in schema; backend requires one.
+        # confirmation remains the only strictly-required argument.
+        assert set(schema.get("required") or []) == {"confirmation"}
         assert "default" not in schema["properties"]["confirmation"]
+        assert "proposal_handle" in schema["properties"]
+        assert "proposal_id" in schema["properties"]
 
     def test_bridge_commit_requires_confirmation_argument(self):
         import inspect

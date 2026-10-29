@@ -1201,19 +1201,27 @@ def create_mcp_server() -> MCPServer:
         title="Commit proposal",
         description=(
             "ACT/COMMIT: execute the exact prepared change. "
-            "Accepts only proposal_handle (and optional confirmation flags already "
-            "bound in the proposal). Does NOT accept entity/operation/changes/"
-            "tool_name. Revalidates AuthZ, user binding, fingerprint, then "
-            "authoritative read-back. Use after any prepare_* tool."
+            "Accepts proposal_handle OR proposal_id (gp_...) — use "
+            "proposal_id to resume a proposal prepared in an earlier turn "
+            "when the opaque handle was not carried over; both resolve to "
+            "the same stored proposal. Does NOT accept entity/operation/"
+            "changes/tool_name. Revalidates AuthZ, user binding, "
+            "fingerprint, then authoritative read-back. "
+            "Use after any prepare_* tool."
         ),
         annotations=_annotations("commit_proposal", "Commit proposal"),
         meta=meta,
     )
     def commit_proposal(
-        proposal_handle: str, confirmation: bool
+        proposal_handle: str | None = None,
+        proposal_id: str | None = None,
+        *,
+        confirmation: bool,
     ) -> CallToolResult:
         return bridge.tool_commit_proposal(
-            proposal_handle=proposal_handle, confirmation=confirmation
+            proposal_handle=proposal_handle,
+            proposal_id=proposal_id,
+            confirmation=confirmation,
         )
 
     registered = {t.name for t in mcp._tool_manager.list_tools()}

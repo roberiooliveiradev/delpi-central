@@ -693,6 +693,11 @@ def _canonical_catalog() -> dict[str, Any]:
                 "sealed server-side proposals produced by governed PREPARE. "
                 "Material execution occurs only through commit."
             ),
+            "recovery_key": (
+                "proposal_id (gp_...) commits the SAME stored proposal when "
+                "the opaque handle was not carried across turns — do not "
+                "re-prepare an identical confirmed change."
+            ),
         },
         "rules": {
             "agent_directives_are_live": True,

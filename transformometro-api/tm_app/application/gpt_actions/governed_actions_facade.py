@@ -162,13 +162,19 @@ class GovernedActionsFacade:
         self,
         request: Request,
         *,
-        proposal_handle: str,
+        proposal_handle: str | None = None,
+        proposal_id: str | None = None,
         confirmation: bool,
     ) -> dict[str, Any]:
         from tm_app.application.governed_writes.proposal_store import (
             load_valid_proposal,
+            resolve_proposal_handle,
         )
 
+        proposal_handle = resolve_proposal_handle(
+            proposal_handle=proposal_handle,
+            proposal_id=proposal_id,
+        )
         actor_id, _email = _actor(request)
         proposal = load_valid_proposal(
             proposal_handle=proposal_handle,

@@ -32,13 +32,13 @@
   },
   "write_flow": {
     "additive": "execution_policy=auto_act (create/update/duplicate/cost-adjust): commit_now=true + confirmation=true + Idempotency-Key → PREPARE+ACT atômico. Pedido do usuário = intenção — não perguntar Confirma?.",
-    "destructive": "execution_policy=confirm_before_act (delete/activate/cancel/package/recalculate/workflow): prepare_* → mostrar proposal → uma Confirma? → commit_proposal(proposal_handle, confirmation=true).",
+    "destructive": "execution_policy=confirm_before_act (delete/activate/cancel/package/recalculate/workflow): prepare_* → mostrar proposal → uma Confirma? → commit_proposal(proposal_handle, confirmation=true). Handle perdido entre turnos → commit_proposal(proposal_id, confirmation=true) retoma a MESMA proposta — não re-preparar.",
     "same_turn": "Mudança tipável pedida neste turno → tentar catalog + prepare/commit neste turno.",
     "compat_prepare_only": "Sem commit_now → só proposal (persisted=false); commit separado via gpt_commit_proposal / commit_proposal respeitando execution_policy."
   },
   "write_flow_mcp": {
     "prepare": "prepare_* valida e sela a mudança (persisted=false) e retorna proposal_handle opaco — PREPARE nunca persiste estado.",
-    "commit": "commit_proposal(proposal_handle, confirmation) é o único caminho ACT. execution_policy=auto_act → commit imediato após mostrar a mudança, sem Confirma? adicional (a flag confirmation, se presente, é compat de transporte — não define a política de negócio). confirm_before_act → mostrar a mudança exata → uma Confirma? explícita do usuário antes do commit. AuthZ backend sempre revalidada.",
+    "commit": "commit_proposal(proposal_handle|proposal_id, confirmation) é o único caminho ACT. execution_policy=auto_act → commit imediato após mostrar a mudança, sem Confirma? adicional (a flag confirmation, se presente, é compat de transporte — não define a política de negócio). confirm_before_act → mostrar a mudança exata → uma Confirma? explícita do usuário antes do commit. Handle perdido entre turnos → usar proposal_id (gp_...) do envelope da proposta para retomar a MESMA proposta; nunca re-preparar uma mudança idêntica já confirmada. AuthZ backend sempre revalidada.",
     "same_turn": "Mudança tipável pedida neste turno → catalog + prepare + commit (auto_act) ou prepare + Confirma? + commit (confirm_before_act) neste turno.",
     "verify": "Após commit: read-back autoritativo + VERIFY. 2xx técnico ≠ sucesso de negócio."
   },
@@ -570,6 +570,7 @@
     "Alegar Actions/MCP indisponíveis sem tentar neste turno.",
     "Usar evidence/meeting-minutes prepare ops para busca de atas (search via gpt_record_read action=search entity=meeting_minute).",
     "Inventar proposal_handle (latest/current/null).",
+    "Re-preparar mudança idêntica já confirmada quando proposal_id está disponível (commit_proposal aceita proposal_id).",
     "Tratar confirmation conversacional como AuthZ.",
     "Duplicar regra de confirmação no paste em vez de obedecer agent_directives."
   ],

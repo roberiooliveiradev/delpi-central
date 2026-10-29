@@ -137,7 +137,11 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                 "proposal → ONE EXPLICIT CONFIRMATION → gpt_commit_proposal "
                 "{proposal_handle, confirmation:true}. ACT → AUTHORITATIVE "
                 "READ-BACK → VERIFY. PREPARE = NO WRITE. commit_proposal is "
-                "NOT a generic executor (only opaque proposal_handle from PREPARE)."
+                "NOT a generic executor (only a stored PREPARE proposal). "
+                "proposal_id (gp_...) is the sanctioned recovery key when "
+                "the opaque handle was not carried across turns — commit "
+                "with proposal_id instead of re-preparing an identical "
+                "confirmed change."
             ),
             "changes_wrapper": (
                 "Put canonical fields under changes.<field>. "
