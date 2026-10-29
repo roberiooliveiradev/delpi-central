@@ -1,7 +1,7 @@
 # ENGINEERING.LMP.G3 — Domain Rules, BFF Integration, Unified Authorization & Shadow Parity Evidence
 
 **Status:** domínio LMP implementado e validado em teste na Engineering API — paridade sintética tolerância 0 contra outputs reais do código legado; shadow real e benchmark permanecem pendentes de ambiente autorizado; S2S facts segue bloqueado até provisionamento oficial.
-**Baseline:** `BASE_HEAD` = HEAD real de `origin/main` no início da execução.
+**Baseline:** `BASE_HEAD` = `df2df3c9c493a047b7c27dea470a62ef7c4e94b4` (HEAD real de `origin/main`; trabalho ancorado após commits concorrentes DÉLIA/controllership fora do escopo).
 **Autoridades:** docs 32/33/34 (inventário, ownership, facts evidence), `lmp_semantics.v1.yaml` (spec canônica), regras transversais (`centralized-rules-first`, `clean-code-architecture-guardrails`, `platform-security-identity-authorization`, `platform-api-contracts-integration`, `platform-quality-testing`, `evidence-driven-execution`, `english-code-identifiers`).
 
 ---
