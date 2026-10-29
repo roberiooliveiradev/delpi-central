@@ -17,14 +17,22 @@
 BEGIN;
 
 -- 1) Role dedicada (login próprio do bounded context NC).
+--    A senha chega via variável psql e é transportada pela GUC de sessão
+--    (interpolação :'var' não funciona dentro de blocos DO).
+SET app.nc_role_password = :'eng_nc_password';
+
 DO $$
+DECLARE
+    role_password text := current_setting('app.nc_role_password');
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'eng_nc') THEN
-        CREATE ROLE eng_nc LOGIN PASSWORD :'eng_nc_password';
+        EXECUTE format('CREATE ROLE eng_nc LOGIN PASSWORD %L', role_password);
     ELSE
-        ALTER ROLE eng_nc WITH LOGIN PASSWORD :'eng_nc_password';
+        EXECUTE format('ALTER ROLE eng_nc WITH LOGIN PASSWORD %L', role_password);
     END IF;
 END $$;
+
+RESET app.nc_role_password;
 
 -- 2) Uso do schema — sem CREATE (schema e objetos pertencem ao owner/migrations).
 GRANT USAGE ON SCHEMA engineering TO eng_nc;
