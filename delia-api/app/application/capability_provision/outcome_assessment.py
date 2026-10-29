@@ -618,6 +618,14 @@ _CAPABILITY_DESCRIPTOR_STRONG_KEYS = frozenset(
         "sideeffecthint",
         "toolname",
         "toolid",
+        # Owner-published discovery-candidate vocabulary
+        # (discover_delpi_information catalog descriptors — never
+        # business records; DELIA-C3-EVIDENCE-TO-ANSWER-...-01).
+        "candidatetoken",
+        "argumentschema",
+        "semantichints",
+        "retrievalscore",
+        "paginationhints",
     }
 )
 
