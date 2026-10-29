@@ -9,7 +9,7 @@ Data: 2026-10-29 · Executor: Devin · Missão: `ENGINEERING.NC.MASTER.EXECUTION
 | BASE_HEAD (missão) | `712ea62048` (G0, doc 47) |
 | HEAD T2+T2b+T4 | `7b610cf232` |
 | HEAD T3 (EVA) | `d4edb2dad3` |
-| HEAD T5/T6 (este doc) | a registrar no commit deste gate |
+| HEAD T5/T6 (este doc) | `52011b889a` (pushed origin/main) |
 | Plano canônico | doc 48 — `48-engineering-nc-end-to-end-delivery-track-master-plan.md` |
 
 ## 2. Matriz de gates T1–T6
