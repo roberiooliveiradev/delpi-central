@@ -6,8 +6,7 @@ negócio (owner-alvo). Sem classificação de status/nível/prazo/KPI e sem
 enriquecimento de metas — esses resultados pertencem aos respectivos owners.
 
 AuthZ: ``require_s2s_or_any_permission`` — Bearer humano com permissão LMP
-legada OU ``engineering.access`` (delegação via engineering-api — modelo
-unificado G3/G4.A) OU credencial S2S estrita
+(contrato funcional existente) OU credencial S2S estrita
 (``X-Delpi-Service-Authorization`` + escopo ``engineering-facts.read`` +
 client allowlist). O token interno compartilhado nunca autoriza; se o S2S
 não estiver provisionado, a validação falha fechada (503/401/403).
@@ -20,9 +19,7 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Body, Path, Query
 from pydantic import BaseModel, Field, field_validator
 
-from app.application.security.api_delpi_permissions import (
-    ENGINEERING_LMP_FACTS_ACCESS,
-)
+from app.application.security.api_delpi_permissions import ENGINEERING_LMP_ACCESS
 from app.composition.engineering_composer import (
     build_engineering_get_lmp_fact_use_case,
     build_engineering_get_lmp_facts_history_use_case,
@@ -69,7 +66,7 @@ FACTS_S2S_ALLOWED_CLIENTS = ("engineering-api",)
 
 def _facts_guard(fn):
     return require_s2s_or_any_permission(
-        ENGINEERING_LMP_FACTS_ACCESS,
+        ENGINEERING_LMP_ACCESS,
         required_scopes=FACTS_S2S_REQUIRED_SCOPES,
         allowed_clients=FACTS_S2S_ALLOWED_CLIENTS,
     )(fn)

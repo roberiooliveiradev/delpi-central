@@ -2664,6 +2664,20 @@ services:
       ENGINEERING_HOME_SOURCE_TIMEOUT_SECONDS: ${ENGINEERING_HOME_SOURCE_TIMEOUT_SECONDS:-5.0}
       ENGINEERING_HOME_MAX_SECTION_ITEMS: ${ENGINEERING_HOME_MAX_SECTION_ITEMS:-10}
       ENGINEERING_HOME_MAX_CONCURRENT_SOURCES: ${ENGINEERING_HOME_MAX_CONCURRENT_SOURCES:-3}
+
+      # S2S individual para os contratos facts LMP (G4.A.R1 — padrão
+      # controllership-finance-api). Sem credencial provisionada o adapter
+      # falha fechado (unavailable), sem fallback.
+      # Provisionamento: infra/scripts/keycloak_s2s_engineering_facts_scope.py
+      # — client `engineering-api` com scope default `engineering-facts.read`
+      # (S2S_SCOPE vazio = token carrega os default scopes do client);
+      # api-delpi exige `engineering-api` em S2S_ALLOWED_CLIENTS.
+      S2S_TOKEN_URL: ${S2S_TOKEN_URL}
+      S2S_CLIENT_ID: ${ENG_S2S_CLIENT_ID:-engineering-api}
+      S2S_CLIENT_SECRET: ${ENG_S2S_CLIENT_SECRET:-}
+      S2S_SCOPE: ${ENG_S2S_SCOPE:-}
+      S2S_TIMEOUT_SECONDS: ${ENG_S2S_TIMEOUT_SECONDS:-10}
+
       # EVA MCP (RFC 9728) — resource audience exata do endpoint público.
       MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_ENGINEERING:-https://minhadelpi.com.br/apps/engineering-api/mcp}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}

@@ -1,20 +1,26 @@
 """Cliente HTTP oficial para chamadas downstream em nome do usuário.
 
 Delegação humana (F2a.R1 — contrato aprovado):
-- `Authorization: Bearer <JWT do usuário>` — única credencial; o owner
-  downstream valida o JWT humano e resolve a autorização efetiva do
-  usuário pela Core, exatamente como nas chamadas do Portal.
+- `Authorization: Bearer <JWT do usuário>` — o owner downstream resolve o
+  principal delegado para auditoria/ator delegado.
 - `X-Delpi-Caller-App: engineering-api` — identificação de consumidor,
   nunca autorização.
 - `X-Request-Id` propagado para correlação ponta a ponta.
 
+Credencial de serviço (G4.A.R1 — contrato S2S individual):
+- `service_token` (opt-in por chamada, apenas para superfícies protegidas
+  por S2S na api-delpi) viaja em `X-Delpi-Service-Authorization` — o
+  header canônico do contrato interserviços. A credencial técnica
+  (client-credentials Keycloak) autoriza a OPERAÇÃO técnica; o Bearer
+  humano permanece separado, como ator delegado para auditoria — nunca é
+  substituído, nunca se mistura com a identidade de serviço.
+
 NUNCA injetar `X-Delpi-Service-Token`/`apply_internal_service_headers`
-em chamadas personalizadas: o middleware compartilhado valida o token
-interno ANTES do JWT humano e o aceita como principal de serviço
-privilegiado (`principal_type="service"`, `is_superadmin=True`),
-substituindo a identidade do usuário — bypass de autorização por
-recurso (F2a.R1, gate de segurança). Sem fallback privilegiado: se o
-JWT humano falhar, a seção fica indisponível/forbidden.
+(token legado compartilhado) em chamadas downstream: o middleware
+compartilhado o aceitaria como principal de serviço privilegiado
+(`principal_type="service"`, `is_superadmin=True`) — bypass de
+autorização por recurso (F2a.R1, gate de segurança). Sem fallback
+privilegiado: se a credencial falhar, a seção fica indisponível/forbidden.
 
 Sem retries e com timeout explícito — falhas de fonte viram estados
 honestos de seção, nunca dados silenciosos.
@@ -27,6 +33,10 @@ from typing import Any, Mapping
 import httpx
 
 from delpi_api_client.envelope import format_error_message, parse_envelope
+from delpi_auth.service_contract import (
+    SERVICE_AUTHORIZATION_HEADER,
+    build_service_authorization,
+)
 
 _CALLER_APP = "engineering-api"
 
@@ -61,12 +71,21 @@ class DownstreamClient:
         self._timeout = timeout_seconds
         self._transport = transport
 
-    def _headers(self, access_token: str, request_id: str | None) -> dict[str, str]:
+    def _headers(
+        self,
+        access_token: str,
+        request_id: str | None,
+        service_token: str | None = None,
+    ) -> dict[str, str]:
         headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {access_token}",
             "X-Delpi-Caller-App": _CALLER_APP,
         }
+        if service_token:
+            headers[SERVICE_AUTHORIZATION_HEADER] = build_service_authorization(
+                service_token
+            )
         if request_id:
             headers["X-Request-Id"] = request_id
         return headers
@@ -78,6 +97,7 @@ class DownstreamClient:
         params: Mapping[str, Any] | None = None,
         access_token: str,
         request_id: str | None = None,
+        service_token: str | None = None,
     ) -> Any:
         """GET e parse do envelope `{"success", "data"}` — retorna `data`.
 
@@ -95,7 +115,7 @@ class DownstreamClient:
                 resp = await client.get(
                     path,
                     params=clean_params,
-                    headers=self._headers(access_token, request_id),
+                    headers=self._headers(access_token, request_id, service_token),
                 )
         except httpx.TimeoutException as exc:
             raise DownstreamError("timeout", str(exc)) from exc
@@ -126,11 +146,13 @@ class DownstreamClient:
         json_body: Mapping[str, Any],
         access_token: str,
         request_id: str | None = None,
+        service_token: str | None = None,
     ) -> Any:
         """POST e parse do envelope `{"success", "data"}` — retorna `data`.
 
-        Mesma delegação do GET: Bearer humano único + caller_app de
-        telemetria; nunca service headers (F2a.R1).
+        Mesma delegação do GET: Bearer humano preservado + caller_app de
+        telemetria; `service_token` opt-in vai no header S2S canônico,
+        nunca no legado compartilhado (F2a.R1/G4.A.R1).
         """
         try:
             async with httpx.AsyncClient(
@@ -141,7 +163,7 @@ class DownstreamClient:
                 resp = await client.post(
                     path,
                     json=dict(json_body),
-                    headers=self._headers(access_token, request_id),
+                    headers=self._headers(access_token, request_id, service_token),
                 )
         except httpx.TimeoutException as exc:
             raise DownstreamError("timeout", str(exc)) from exc

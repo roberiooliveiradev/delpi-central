@@ -600,16 +600,18 @@ def test_facts_s2s_denied_on_missing_scope() -> None:
 
 
 # ---------------------------------------------------------------------------
-# G4.A — delegação humana `engineering.access` e negações S2S adicionais
+# G4.A.R1 — boundary corrigido: api-delpi NÃO conhece permissões
+# funcionais `engineering.*`; facts humano = conjunto legado; facts via
+# engineering-api = credencial S2S individual (negações abaixo).
 # ---------------------------------------------------------------------------
 
 
-def test_facts_human_engineering_access_allowed() -> None:
-    """G4.A — usuário com APENAS `engineering.access` acessa os facts.
+def test_facts_human_engineering_access_alone_denied() -> None:
+    """G4.A.R1 — `engineering.access` NÃO autoriza o contrato facts.
 
-    Permissão canônica do Portal Engenharia (modelo unificado): o contrato
-    facts aceita o Bearer humano delegado pela engineering-api — aditivo,
-    sem remover o conjunto legado.
+    Boundary: a Engineering API aplica `engineering.access` via Core; a
+    api-delpi valida apenas a credencial técnica do consumidor (S2S) ou a
+    permissão LMP legada de consumidores diretos preservados.
     """
     user = MagicMock(
         principal_type="user",
@@ -617,31 +619,17 @@ def test_facts_human_engineering_access_allowed() -> None:
         permissions=["engineering.access"],
         rbac_unavailable=False,
     )
-    use_case = MagicMock()
-    use_case.execute.return_value = {
-        "items": [],
-        "total": 0,
-        "page": 1,
-        "page_size": 50,
-        "total_pages": 0,
-        "provenance": {},
-        "policy": {},
-    }
 
     with patch(
         "delpi_auth.authorization.resolve_user_context",
         return_value=user,
-    ), patch(
-        f"{ROUTER_MODULE}.build_engineering_list_lmp_facts_use_case",
-        return_value=use_case,
     ):
-        response = list_lmp_facts_route()
-
-    assert body_json(response)["success"] is True
+        with pytest.raises(Exception, match="Forbidden"):
+            list_lmp_facts_route()
 
 
 def test_facts_human_engineering_manage_only_denied() -> None:
-    """G4.A — `engineering.manage` sozinho não concede acesso operacional."""
+    """G4.A.R1 — `engineering.manage` também não autoriza o contrato facts."""
     user = MagicMock(
         principal_type="user",
         is_superadmin=False,
@@ -733,21 +721,11 @@ def test_facts_s2s_validator_unavailable() -> None:
     assert excinfo.value.status_code == 503
 
 
-def test_facts_access_constant_includes_engineering_access() -> None:
-    from app.application.security.api_delpi_permissions import (
-        API_DELPI_ACCESS,
-        DASHBOARD_ENGINEERING_VIEW,
-        DASHBOARD_LMPS_VIEW,
-        ENGINEERING_ACCESS,
-        ENGINEERING_LMP_FACTS_ACCESS,
-    )
+def test_facts_access_constant_has_no_engineering_functional_perms() -> None:
+    """Guarda de boundary: a allowlist humana facts não contém `engineering.*`."""
+    import app.application.security.api_delpi_permissions as perms
 
-    assert ENGINEERING_ACCESS == "engineering.access"
-    assert ENGINEERING_ACCESS in ENGINEERING_LMP_FACTS_ACCESS
-    # Conjunto legado preservado — aditivo, sem remoção.
-    for legacy in (
-        API_DELPI_ACCESS,
-        DASHBOARD_ENGINEERING_VIEW,
-        DASHBOARD_LMPS_VIEW,
-    ):
-        assert legacy in ENGINEERING_LMP_FACTS_ACCESS
+    legacy = perms.ENGINEERING_LMP_ACCESS
+    assert not any(
+        str(code).startswith("engineering.") for code in legacy
+    ), "permissões funcionais engineering.* não pertencem à api-delpi"

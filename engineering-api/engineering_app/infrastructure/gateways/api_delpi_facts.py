@@ -1,20 +1,29 @@
 """Adapter oficial — contrato facts LMP F-LMP-01..04 (owner: api-delpi).
 
-Delegação humana (mesma política das fontes atuais): `Authorization:
-Bearer <JWT do usuário>`; o downstream revalida via Core
-(`ENGINEERING_LMP_ACCESS`). O caminho S2S (`engineering-facts.read` +
-allowlist `engineering-api`) já existe na api-delpi, mas o client/
-audience/scope ainda aguardam provisionamento oficial (doc 34 §11) —
-não há fallback permissivo: sem credencial S2S provisionada, este
-adapter usa somente o Bearer humano.
+Autenticação interserviços (G4.A.R1 — boundary corrigido): a operação
+técnica é autorizada pela credencial S2S individual
+(`X-Delpi-Service-Authorization` = client-credentials Keycloak do client
+`engineering-api`, scope `engineering-facts.read`, audience `api-delpi`).
+O Bearer humano permanece em `Authorization` como ator delegado para
+auditoria — nunca como autoridade do contrato facts, nunca substituído
+pela identidade de serviço. Sem credencial provisionada o adapter falha
+fechado (`unavailable`), sem fallback para o token legado compartilhado.
+
+A api-delpi não conhece permissões funcionais `engineering.*` — a
+autorização funcional (`engineering.access`) já foi aplicada nesta API
+pela Core antes de qualquer chamada downstream.
 
 Erros viram estados honestos de fonte: forbidden (401/403),
-unavailable (timeout/transporte/contrato) — nunca lista vazia falsa.
+unavailable (timeout/transporte/contrato/service-auth) — nunca lista
+vazia falsa.
 """
 
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
+
+from delpi_auth.service_errors import ServiceAuthError
 
 from engineering_app.application.models.lmp import (
     LmpFact,
@@ -42,13 +51,33 @@ def _map_fetch_error(exc: DownstreamError) -> tuple[str, str | None]:
 
 
 class ApiDelpiFactsSource:
-    """LmpFactsSource sobre DownstreamClient (delegação humana)."""
+    """LmpFactsSource sobre DownstreamClient (S2S individual + Bearer humano).
+
+    `service_token_getter` retorna o JWT client-credentials desta API —
+    configurado na composition root; falha de configuração/emissão vira
+    `unavailable` (fail-closed), nunca bypass.
+    """
 
     system = _SYSTEM
     endpoint = f"GET {_FACTS_PATH}"
 
-    def __init__(self, client: DownstreamClient) -> None:
+    def __init__(
+        self,
+        client: DownstreamClient,
+        service_token_getter: Callable[[], str],
+    ) -> None:
         self._client = client
+        self._service_token_getter = service_token_getter
+
+    def _service_token(self) -> str:
+        try:
+            return self._service_token_getter()
+        except ServiceAuthError as exc:
+            logger.warning("lmp_facts_s2s_token_unavailable code=%s", exc.code)
+            raise DownstreamError(
+                "service_auth_unavailable",
+                f"s2s credential unavailable ({exc.code})",
+            ) from exc
 
     async def fetch_facts(
         self,
@@ -76,6 +105,7 @@ class ApiDelpiFactsSource:
                 },
                 access_token=ctx.access_token,
                 request_id=ctx.request_id,
+                service_token=self._service_token(),
             )
         except DownstreamError as exc:
             status, reason = _map_fetch_error(exc)
@@ -127,6 +157,7 @@ class ApiDelpiFactsSource:
                 json_body={"ovs": ov_keys, "branch": branch},
                 access_token=ctx.access_token,
                 request_id=ctx.request_id,
+                service_token=self._service_token(),
             )
         except DownstreamError as exc:
             status, reason = _map_fetch_error(exc)

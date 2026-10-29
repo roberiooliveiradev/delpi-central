@@ -231,14 +231,6 @@ ENGINEERING_LMP_ACCESS = [
     DASHBOARD_ENGINEERING_VIEW,
     DASHBOARD_LMPS_VIEW,
 ]
-
-# --- Engineering API (Portal Engenharia — modelo unificado G3/G4.A) ---
-# Permissão funcional canônica emitida pela Core. O contrato facts aceita
-# o Bearer humano de um usuário `engineering.access` (delegação via
-# engineering-api) além do conjunto legado — aditivo, sem remoção.
-ENGINEERING_ACCESS = "engineering.access"
-ENGINEERING_MANAGE = "engineering.manage"
-ENGINEERING_LMP_FACTS_ACCESS = ENGINEERING_LMP_ACCESS + [ENGINEERING_ACCESS]
 ENGINEERING_LMP_NC_WRITE = [
     API_DELPI_ACCESS,
     DASHBOARD_LMPS_NC_WRITE,
