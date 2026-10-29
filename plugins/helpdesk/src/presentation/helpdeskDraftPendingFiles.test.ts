@@ -13,6 +13,7 @@ import {
   rekeyDraftFileToDocument,
   replyDraftPendingScope,
   resetHelpdeskDraftWriteChainsForTests,
+  resolveHelpdeskDraftPendingKind,
   writeHelpdeskDraftPendingFiles,
   type HelpdeskDraftPendingFile,
   type HelpdeskDraftStoredFile,
@@ -309,5 +310,60 @@ describe("E0 H4 — seed depois do paint sem rebind (classe do bug reply)", () =
     expect(resolveAttachmentDisplaySrc("1201", srcsBefore, {})).toBeNull();
     const srcsAfter = { ...srcsBefore, "1201": "blob:late-seed" };
     expect(resolveAttachmentDisplaySrc("1201", srcsAfter, {})).toBe("blob:late-seed");
+  });
+});
+
+describe("pending file kind — intenção explícita inline vs attachment", () => {
+  const isImage = (file: File) => file.type.startsWith("image/");
+
+  it("positive: rows IDB preservam kind através do round-trip File→stored→File", async () => {
+    const scope = replyDraftPendingScope("1122");
+    await writeHelpdeskDraftPendingFiles(scope, [
+      {
+        id: "att-img",
+        file: new File([new Uint8Array([1])], "shot.png", { type: "image/png" }),
+        kind: "attachment",
+      },
+      {
+        id: "in-img",
+        file: new File([new Uint8Array([2])], "inline.png", { type: "image/png" }),
+        kind: "inline",
+      },
+    ]);
+    const rows = await readHelpdeskDraftPendingFiles(scope);
+    expect(rows.find((r) => r.id === "att-img")?.kind).toBe("attachment");
+    expect(rows.find((r) => r.id === "in-img")?.kind).toBe("inline");
+  });
+
+  it("resolve: kind explícito vence o MIME — PNG anexado fica attachment", () => {
+    const row: HelpdeskDraftPendingFile = {
+      id: "a1",
+      file: new File([new Uint8Array([1])], "a.png", { type: "image/png" }),
+      kind: "attachment",
+    };
+    expect(resolveHelpdeskDraftPendingKind(row, isImage)).toBe("attachment");
+  });
+
+  it("legacy fallback: row sem kind usa o MIME antigo (imagem→inline)", () => {
+    const row: HelpdeskDraftPendingFile = {
+      id: "l1",
+      file: new File([new Uint8Array([1])], "l.png", { type: "image/png" }),
+    };
+    expect(resolveHelpdeskDraftPendingKind(row, isImage)).toBe("inline");
+    const pdf: HelpdeskDraftPendingFile = {
+      id: "l2",
+      file: new File([new Uint8Array([2])], "l.pdf", { type: "application/pdf" }),
+    };
+    expect(resolveHelpdeskDraftPendingKind(pdf, isImage)).toBe("attachment");
+  });
+
+  it("mapToRows carrega kind do mapa de intenções", () => {
+    const file = new File([new Uint8Array([1])], "a.png", { type: "image/png" });
+    const map = new Map<string, File>([["p1", file]]);
+    const kinds = new Map<string, "inline" | "attachment">([["p1", "attachment"]]);
+    const rows = pendingFilesMapToDraftRows(map, kinds);
+    expect(rows[0].kind).toBe("attachment");
+    const legacy = pendingFilesMapToDraftRows(map);
+    expect(legacy[0].kind).toBeUndefined();
   });
 });

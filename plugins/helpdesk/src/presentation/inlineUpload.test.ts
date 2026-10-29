@@ -5,6 +5,7 @@ import {
   hasUnresolvedInlineImageRefs,
   hydrateInlineAttachmentSrcs,
   listPendingInlineIds,
+  listRemovedPendingInlineIds,
   normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
   stripPendingInlineImages,
@@ -134,5 +135,39 @@ describe("inlineUpload", () => {
     });
     expect(hydrated).toBe(html);
     expect(objectUrls).toEqual([]);
+  });
+});
+
+describe("listRemovedPendingInlineIds", () => {
+  const img = (id: string) =>
+    `<p><img src="attachment:pending:${id}" data-attachment-pending="${id}" alt="x" /></p>`;
+
+  it("detecta imagem inline removida do editor (x ou Delete)", () => {
+    const prev = `<p>texto</p>${img("p1")}${img("p2")}`;
+    const next = `<p>texto</p>${img("p2")}`;
+    expect(listRemovedPendingInlineIds(prev, next)).toEqual(["p1"]);
+  });
+
+  it("vazio quando nada mudou e quando next ganhou uma imagem nova", () => {
+    const prev = img("p1");
+    expect(listRemovedPendingInlineIds(prev, `${prev}${img("p2")}`)).toEqual([]);
+    expect(listRemovedPendingInlineIds(prev, prev)).toEqual([]);
+  });
+
+  it("id ainda materializando (nunca esteve no html) nao e reportado", () => {
+    const prev = `<p>sem imagem</p>`;
+    const next = `<p>sem imagem ainda</p>`;
+    expect(listRemovedPendingInlineIds(prev, next)).toEqual([]);
+  });
+
+  it("remocao total reporta todos os ids", () => {
+    const prev = `${img("a")}${img("b")}`;
+    expect(listRemovedPendingInlineIds(prev, "<p>fim</p>")).toEqual(["a", "b"]);
+  });
+
+  it("src com token pending nao conta — so o atributo pending", () => {
+    const prev =
+      '<p><img src="attachment:pending:z" data-attachment-href="attachment:pending:z" alt="x" /></p>';
+    expect(listRemovedPendingInlineIds(prev, "<p>fim</p>")).toEqual([]);
   });
 });

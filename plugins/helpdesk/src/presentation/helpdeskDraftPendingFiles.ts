@@ -16,17 +16,27 @@ export const HELPDESK_DRAFT_IDB_VERSION = 1;
 /** Stable draft scope keys. */
 export const HELPDESK_CREATE_DRAFT_SCOPE = "create";
 
+/**
+ * User intent for a staged file — independent from MIME type:
+ *   inline     → image rendered inside the description html
+ *   attachment → file staged as a removable ticket attachment
+ * Legacy rows lack `kind`; restore falls back to the previous MIME heuristic.
+ */
+export type HelpdeskDraftPendingKind = "inline" | "attachment";
+
 export type HelpdeskDraftStoredFile = {
   id: string;
   name: string;
   type: string;
   lastModified: number;
   buffer: ArrayBuffer;
+  kind?: string;
 };
 
 export type HelpdeskDraftPendingFile = {
   id: string;
   file: File;
+  kind?: HelpdeskDraftPendingKind;
 };
 
 /** Per-scope promise chain — shared so tests can assert serialization. */
@@ -85,6 +95,7 @@ async function fileToStored(item: HelpdeskDraftPendingFile): Promise<HelpdeskDra
     type: item.file.type,
     lastModified: item.file.lastModified,
     buffer,
+    ...(item.kind ? { kind: item.kind } : null),
   };
 }
 
@@ -93,7 +104,9 @@ function storedToFile(item: HelpdeskDraftStoredFile): HelpdeskDraftPendingFile {
     type: item.type,
     lastModified: item.lastModified,
   });
-  return { id: item.id, file };
+  const kind =
+    item.kind === "inline" || item.kind === "attachment" ? item.kind : undefined;
+  return { id: item.id, file, ...(kind ? { kind } : null) };
 }
 
 export function replyDraftPendingScope(ticketId: string): string {
@@ -132,11 +145,29 @@ export function canRewritePendingDraftHtml(
   return draftPendingFilesCoverHtml(rewrittenHtml, rows);
 }
 
-/** Snapshot Map → IDB rows (inline pending images only). */
+/**
+ * Restore-time kind resolution. Rows written before `kind` existed carry no
+ * intent — fall back to the previous MIME heuristic so old drafts keep the
+ * exact behavior they had (image rows stay out of the removable strip; the
+ * editor restores their remove chrome instead of silently migrating them).
+ */
+export function resolveHelpdeskDraftPendingKind(
+  row: HelpdeskDraftPendingFile,
+  isInlineImage: (file: File) => boolean,
+): HelpdeskDraftPendingKind {
+  if (row.kind === "inline" || row.kind === "attachment") return row.kind;
+  return isInlineImage(row.file) ? "inline" : "attachment";
+}
+
+/** Snapshot Map → IDB rows; `kinds` carries the per-id user intent. */
 export function pendingFilesMapToDraftRows(
   map: Map<string, File>,
+  kinds?: ReadonlyMap<string, HelpdeskDraftPendingKind>,
 ): HelpdeskDraftPendingFile[] {
-  return [...map.entries()].map(([id, file]) => ({ id, file }));
+  return [...map.entries()].map(([id, file]) => {
+    const kind = kinds?.get(id);
+    return kind ? { id, file, kind } : { id, file };
+  });
 }
 
 /**
@@ -229,7 +260,11 @@ export async function writeHelpdeskDraftPendingFiles(
   const id = scope.trim();
   if (!id) return;
   // Capture snapshot at enqueue time (caller already mapped from Map).
-  const snapshot = files.map((item) => ({ id: item.id, file: item.file }));
+  const snapshot = files.map((item) => ({
+    id: item.id,
+    file: item.file,
+    ...(item.kind ? { kind: item.kind } : null),
+  }));
   try {
     await enqueueHelpdeskDraftScopeTask(id, () =>
       writeHelpdeskDraftPendingFilesNow(id, snapshot),

@@ -33,6 +33,25 @@ function ensureParagraphAtCaret(editor: HTMLElement, range: Range): void {
   range.collapse(true);
 }
 
+function createInlineImageRemoveButton(
+  alt: string,
+  options?: { removeAriaLabel?: string },
+): HTMLButtonElement {
+  const btn = editorDocument().createElement("button");
+  btn.type = "button";
+  btn.className =
+    "delpi-ui-mention-composer__inline-image-remove delpi-ui-rich-text__inline-image-remove";
+  btn.setAttribute("data-inline-image-remove", "1");
+  btn.setAttribute("contenteditable", "false");
+  btn.tabIndex = -1;
+  btn.setAttribute(
+    "aria-label",
+    options?.removeAriaLabel ?? `Remove ${alt || "image"}`,
+  );
+  btn.textContent = "×";
+  return btn;
+}
+
 export function createRichTextInlineImageSpan(
   insert: RichTextInlineImageInsert,
   options?: { removeAriaLabel?: string },
@@ -57,22 +76,43 @@ export function createRichTextInlineImageSpan(
     img.setAttribute(DOCUMENT_ATTR, String(insert.documentId));
   }
 
-  const btn = doc.createElement("button");
-  btn.type = "button";
-  btn.className =
-    "delpi-ui-mention-composer__inline-image-remove delpi-ui-rich-text__inline-image-remove";
-  btn.setAttribute("data-inline-image-remove", "1");
-  btn.setAttribute("contenteditable", "false");
-  btn.tabIndex = -1;
-  btn.setAttribute(
-    "aria-label",
-    options?.removeAriaLabel ?? `Remove ${insert.alt || "image"}`,
-  );
-  btn.textContent = "×";
-
   span.appendChild(img);
-  span.appendChild(btn);
+  span.appendChild(createInlineImageRemoveButton(img.alt, options));
   return span;
+}
+
+const INLINE_IMAGE_HOST_SELECTOR =
+  "span.delpi-ui-mention-composer__inline-image, span.delpi-ui-rich-text__inline-image, " +
+  "figure.delpi-ui-mention-composer__inline-image, figure.delpi-ui-rich-text__inline-image";
+const ATTACHMENT_IMAGE_SELECTOR =
+  "img[data-attachment-pending], img[data-attachment-id], img[data-attachment-href]";
+
+/**
+ * Restores the remove chrome on persisted attachment images. Drafts strip the
+ * `__inline-image` wrapper + `×` button before save, so a restored bare `<img>`
+ * has no reliable removal path — wrap it back in place (idempotent).
+ */
+export function hydrateRichTextInlineImageChrome(
+  editor: HTMLElement | null,
+  options?: { removeAriaLabel?: string },
+): number {
+  if (!editor) return 0;
+  let wrapped = 0;
+  for (const node of Array.from(editor.querySelectorAll(ATTACHMENT_IMAGE_SELECTOR))) {
+    if (!(node instanceof HTMLImageElement)) continue;
+    if (node.closest(INLINE_IMAGE_HOST_SELECTOR)) continue;
+    const parent = node.parentNode;
+    if (!parent) continue;
+    const span = editor.ownerDocument.createElement("span");
+    span.className =
+      "delpi-ui-mention-composer__inline-image delpi-ui-rich-text__inline-image";
+    span.setAttribute("contenteditable", "false");
+    parent.insertBefore(span, node);
+    span.appendChild(node);
+    span.appendChild(createInlineImageRemoveButton(node.alt, options));
+    wrapped += 1;
+  }
+  return wrapped;
 }
 
 function editorDocument(): Document {

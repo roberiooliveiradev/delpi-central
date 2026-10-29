@@ -48,6 +48,45 @@ describe("Helpdesk pending attachments structural", () => {
     expect(branchBody).not.toContain("uploadTicketAttachment(");
   });
 
+  it("P0: attach picker carries explicit attachment intent — never MIME-inferred", () => {
+    const page = read("HelpdeskPage.tsx");
+    const ui = read("../ui/helpdeskUi.tsx");
+    // The picker contract carries an explicit intent — accept filter is not
+    // a semantic. Both create buttons and the reply attach button declare it.
+    expect(ui).toContain("HelpdeskUploadIntent");
+    expect(ui).toContain("pickerIntentRef");
+    expect(ui).toContain("onAttachFiles");
+    expect(page).toContain('intent: "attachment"');
+    expect(page).toContain('intent: "inline"');
+    // Attachment-intent files stage through a dedicated handler — images
+    // included — and never pass through the editor ingest path.
+    expect(page).toContain("const stagePendingAttachments = (files: File[])");
+    expect(page).toContain("onAttachFiles={stagePendingAttachments}");
+    expect(page).toContain("const stageReplyAttachments = (files: File[])");
+    expect(page).toContain("onAttachFiles={stageReplyAttachments}");
+    // Per-id intent persists with the draft row (survives F5).
+    expect(page).toContain("pendingKindsRef");
+    const draft = read("../presentation/helpdeskDraftPendingFiles.ts");
+    expect(draft).toContain('kind?: HelpdeskDraftPendingKind');
+    expect(draft).toContain("resolveHelpdeskDraftPendingKind");
+    // A removed inline image must not upload silently — the onChange diff
+    // reconcile drops the orphan pending row before submit.
+    const inline = read("../presentation/inlineUpload.ts");
+    expect(inline).toContain("listRemovedPendingInlineIds");
+    expect(page).toContain("reconcileCreatePendingRemoval(description, persisted)");
+    expect(page).toContain("reconcileReplyPendingRemoval(content, persisted)");
+  });
+
+  it("P0: restored attachment images keep their remove chrome (editor hydrates)", () => {
+    const kit = read("../../../plugin-ui/src/components/rich-text/RichTextEditor.tsx");
+    const inline = read("../../../plugin-ui/src/components/rich-text/richTextInlineImage.ts");
+    // Drafts strip the __inline-image wrapper + × button — the editor must
+    // restore that chrome on attachment images when the html is re-injected,
+    // otherwise a restored image has no removal path (the reported F5 bug).
+    expect(inline).toContain("hydrateRichTextInlineImageChrome");
+    expect(kit).toContain("hydrateRichTextInlineImageChrome(editorRef.current)");
+  });
+
   it("degraded upload authorship surfaces a notice — never silent full success", () => {
     const page = read("HelpdeskPage.tsx");
     // Every upload call site must check author_verified before continuing

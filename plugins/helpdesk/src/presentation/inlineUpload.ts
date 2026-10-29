@@ -185,6 +185,19 @@ function listDocumentIdsInHtml(html: string): number[] {
   return ids;
 }
 
+/**
+ * Pending ids present in `prev` html but gone from `next` — i.e. images the
+ * user removed from the editor (× button, keyboard delete, block replace).
+ * Diff-based so an id that never reached the html (still materializing)
+ * is never reported as removed.
+ */
+export function listRemovedPendingInlineIds(prev: string, next: string): string[] {
+  const before = new Set(listPendingInlineIds(prev));
+  if (before.size === 0) return [];
+  const after = new Set(listPendingInlineIds(next));
+  return [...before].filter((id) => !after.has(id));
+}
+
 export function stripPendingInlineImages(html: string): string {
   return String(html || "").replace(
     new RegExp(`<img\\b[^>]*\\b${PENDING_ATTR}=["'][^"']*["'][^>]*/?>`, "gi"),

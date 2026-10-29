@@ -256,10 +256,24 @@ export type HelpdeskPendingAttachmentItem = {
   busy?: boolean;
 };
 
+/**
+ * Explicit user intent for a picker selection — the accept filter is NOT a
+ * semantic: an image chosen via "Anexar" stays a removable attachment, while
+ * an image chosen via "Inserir imagem" enters the description html.
+ */
+export type HelpdeskUploadIntent = "inline" | "attachment";
+
+export type HelpdeskAttachPickerOptions = {
+  /** Overrides the input filter for this pick (e.g. "image/*"). */
+  accept?: string;
+  /** Defaults to "inline" (legacy behavior: materialize through the editor). */
+  intent?: HelpdeskUploadIntent;
+};
+
 export type HelpdeskRichTextFieldHandle = {
   /** Opens the file picker; `accept` overrides the input filter for this pick
    * (e.g. "image/*" for inline insertion vs broad for file attachments). */
-  openAttachPicker: (accept?: string) => void;
+  openAttachPicker: (options?: HelpdeskAttachPickerOptions | string) => void;
   /** Awaits any in-flight paste/attach materialization, then returns the live
    * editor html — the submit path must read this instead of React state,
    * which can lag one frame behind a just-inserted image. */
@@ -283,8 +297,14 @@ export type HelpdeskRichTextFieldProps = {
   required?: boolean;
   /** When false (default), host places Anexar next to Enviar via `openAttachPicker`. */
   showAttachButton?: boolean;
-  /** H12 — colar/arrastar imagem ou escolher arquivo. */
+  /** H12 — colar/arrastar imagem ou escolher arquivo (inline editor path). */
   onUploadFiles?: (files: File[]) => Promise<HelpdeskInlineUploadResult[]>;
+  /**
+   * Explicit "Anexar arquivo" intent — files stage as removable attachments
+   * and must never enter the editor html (images included). When absent,
+   * attachment picks fall back to the editor ingest path (legacy behavior).
+   */
+  onAttachFiles?: (files: File[]) => void;
   onUploadError?: (error: unknown) => void;
   accept?: string;
   /** Kit contract: display blob for `data-attachment-id` (MessageThread parity). */
@@ -354,6 +374,7 @@ export const HelpdeskRichTextField = forwardRef<
     required = false,
     showAttachButton = false,
     onUploadFiles,
+    onAttachFiles,
     onUploadError,
     accept = "image/*,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.txt",
     resolveAttachmentImageSrc,
@@ -369,6 +390,8 @@ export const HelpdeskRichTextField = forwardRef<
   const editorRef = useRef<RichTextEditorHandle>(null);
   const uploadingRef = useRef(false);
   const materializeInFlightRef = useRef<Promise<unknown> | null>(null);
+  /** Intent recorded by openAttachPicker — consumed (and reset) by the input. */
+  const pickerIntentRef = useRef<HelpdeskUploadIntent>("inline");
   const mentionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mentionAbortRef = useRef<AbortController | null>(null);
   const [mentionHits, setMentionHits] = useState<MentionMenuHit[]>([]);
@@ -376,9 +399,12 @@ export const HelpdeskRichTextField = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      openAttachPicker: (acceptOverride?: string) => {
+      openAttachPicker: (options?: HelpdeskAttachPickerOptions | string) => {
+        const resolved =
+          typeof options === "string" ? { accept: options } : options || {};
+        pickerIntentRef.current = resolved.intent === "attachment" ? "attachment" : "inline";
         if (fileRef.current) {
-          fileRef.current.accept = acceptOverride ?? accept;
+          fileRef.current.accept = resolved.accept ?? accept;
         }
         fileRef.current?.click();
       },
@@ -529,7 +555,7 @@ export const HelpdeskRichTextField = forwardRef<
           onRemove={(item) => onPendingAttachmentRemove?.(item.id)}
         />
       ) : null}
-      {onUploadFiles ? (
+      {onUploadFiles || onAttachFiles ? (
         <input
           ref={fileRef}
           type="file"
@@ -539,16 +565,25 @@ export const HelpdeskRichTextField = forwardRef<
           onChange={(event) => {
             const files = Array.from(event.target.files || []);
             event.target.value = "";
+            const intent = pickerIntentRef.current;
+            pickerIntentRef.current = "inline";
+            if (intent === "attachment" && onAttachFiles) {
+              onAttachFiles(files);
+              return;
+            }
             void ingestViaEditor(files);
           }}
         />
       ) : null}
-      {onUploadFiles && showAttachButton ? (
+      {(onUploadFiles || onAttachFiles) && showAttachButton ? (
         <div className="helpdesk-rich-text-field__attach">
           <HelpdeskAttachButton
             hint={attachHint}
             disabled={disabled}
-            onClick={() => fileRef.current?.click()}
+            onClick={() => {
+              pickerIntentRef.current = "attachment";
+              fileRef.current?.click();
+            }}
           />
         </div>
       ) : null}

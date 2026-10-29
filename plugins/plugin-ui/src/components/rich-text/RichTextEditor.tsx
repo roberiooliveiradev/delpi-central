@@ -35,6 +35,7 @@ import {
 import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
 import { applyRichTextImageWidth, fitRichTextImageToContainer, resolveRichTextImageResizeHandlePosition } from "./richTextImageResize";
 import {
+  hydrateRichTextInlineImageChrome,
   type RichTextInlineImageInsert,
 } from "./richTextInlineImage";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
@@ -221,6 +222,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     if (editorRef.current.innerHTML !== resolvedHtml) {
       editorRef.current.innerHTML = resolvedHtml;
     }
+    // Persisted html carries bare <img data-attachment-*> — restore the
+    // remove chrome so a draft-restored image stays removable (F5 parity).
+    hydrateRichTextInlineImageChrome(editorRef.current);
   }, [mode, disabled, sourceMode, resolvedHtml]);
 
   useEffect(() => {

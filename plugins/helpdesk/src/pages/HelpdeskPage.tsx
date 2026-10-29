@@ -71,6 +71,7 @@ import {
 import {
   hasUnresolvedInlineImageRefs,
   listPendingInlineIds,
+  listRemovedPendingInlineIds,
   normalizeInlineAttachmentSrcs,
   rewritePendingInlineImages,
   stripPendingInlineImages,
@@ -124,7 +125,9 @@ import {
   readHelpdeskDraftPendingFiles,
   rekeyDraftFileToDocument,
   replyDraftPendingScope,
+  resolveHelpdeskDraftPendingKind,
   writeHelpdeskDraftPendingFiles,
+  type HelpdeskDraftPendingKind,
 } from "../presentation/helpdeskDraftPendingFiles";
 import {
   persistHelpdeskAttachmentHtml,
@@ -1083,9 +1086,11 @@ function CreateTicketPage() {
   const [idempotencyKey] = useState(newIdempotencyKey);
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  /** Explicit per-id user intent — MIME type never decides attachment vs inline. */
+  const pendingKindsRef = useRef<Map<string, HelpdeskDraftPendingKind>>(new Map());
   const pendingPreviewUrlsRef = useRef<Map<string, string>>(new Map());
   const createComposerRef = useRef<HelpdeskRichTextFieldHandle>(null);
-  /** Non-image staged files shown as removable chips (they are not inline imgs). */
+  /** Attachment-intent staged files shown as removable chips (any file type). */
   const [pendingAttachments, setPendingAttachments] = useState<HelpdeskPendingAttachmentItem[]>([]);
   const [pendingPreviewId, setPendingPreviewId] = useState<string | null>(null);
   const pendingPreview = useMemo(
@@ -1112,10 +1117,17 @@ function CreateTicketPage() {
       if (cancelled) return;
       for (const row of rows) {
         pendingFilesRef.current.set(row.id, row.file);
+        pendingKindsRef.current.set(
+          row.id,
+          resolveHelpdeskDraftPendingKind(row, isInlineImageFile),
+        );
       }
       setPendingAttachments(
         rows
-          .filter((row) => !isInlineImageFile(row.file))
+          .filter(
+            (row) =>
+              resolveHelpdeskDraftPendingKind(row, isInlineImageFile) === "attachment",
+          )
           .map((row) => ({
             id: row.id,
             fileName: row.file.name || "anexo",
@@ -1132,7 +1144,7 @@ function CreateTicketPage() {
   const persistCreatePendingFiles = useCallback(() => {
     void writeHelpdeskDraftPendingFiles(
       HELPDESK_CREATE_DRAFT_SCOPE,
-      pendingFilesMapToDraftRows(pendingFilesRef.current),
+      pendingFilesMapToDraftRows(pendingFilesRef.current, pendingKindsRef.current),
     );
   }, []);
 
@@ -1319,24 +1331,35 @@ function CreateTicketPage() {
     return `attachment:pending:${pending}`;
   }, []);
 
+  const dropPendingFile = (pendingId: string) => {
+    const cached = pendingPreviewUrlsRef.current.get(pendingId);
+    if (cached) {
+      try {
+        URL.revokeObjectURL(cached);
+      } catch {
+        /* ignore */
+      }
+      pendingPreviewUrlsRef.current.delete(pendingId);
+    }
+    pendingFilesRef.current.delete(pendingId);
+    pendingKindsRef.current.delete(pendingId);
+  };
+
   const removePendingAttachment = useCallback(
     (pendingId: string) => {
-      const cached = pendingPreviewUrlsRef.current.get(pendingId);
-      if (cached) {
-        try {
-          URL.revokeObjectURL(cached);
-        } catch {
-          /* ignore */
-        }
-        pendingPreviewUrlsRef.current.delete(pendingId);
-      }
-      pendingFilesRef.current.delete(pendingId);
+      dropPendingFile(pendingId);
       setPendingAttachments((current) => current.filter((item) => item.id !== pendingId));
       persistCreatePendingFiles();
     },
     [persistCreatePendingFiles],
   );
 
+  /**
+   * Editor-driven files (paste/drop/inline picker): images insert inline at
+   * the caret, everything else stages as a removable attachment chip.
+   * The MIME split only applies to editor ingest — the explicit "Anexar"
+   * button routes through stagePendingAttachments instead.
+   */
   const queuePendingFiles = async (files: File[]): Promise<HelpdeskInlineUploadResult[]> => {
     const results: HelpdeskInlineUploadResult[] = [];
     const staged: HelpdeskPendingAttachmentItem[] = [];
@@ -1344,6 +1367,7 @@ function CreateTicketPage() {
       const pendingId = newIdempotencyKey();
       pendingFilesRef.current.set(pendingId, file);
       if (isInlineImageFile(file)) {
+        pendingKindsRef.current.set(pendingId, "inline");
         let src = pendingPreviewUrlsRef.current.get(pendingId);
         if (!src) {
           src = URL.createObjectURL(file);
@@ -1356,6 +1380,7 @@ function CreateTicketPage() {
           alt: file.name || "imagem",
         });
       } else {
+        pendingKindsRef.current.set(pendingId, "attachment");
         staged.push({
           id: pendingId,
           fileName: file.name || "anexo",
@@ -1368,6 +1393,44 @@ function CreateTicketPage() {
     }
     persistCreatePendingFiles();
     return results;
+  };
+
+  /** "Anexar arquivo ao chamado" — every file (images included) stages as a
+   *  removable attachment chip; nothing enters the description html. */
+  const stagePendingAttachments = (files: File[]) => {
+    if (files.length === 0) return;
+    const staged: HelpdeskPendingAttachmentItem[] = [];
+    for (const file of files) {
+      const pendingId = newIdempotencyKey();
+      pendingFilesRef.current.set(pendingId, file);
+      pendingKindsRef.current.set(pendingId, "attachment");
+      staged.push({
+        id: pendingId,
+        fileName: file.name || "anexo",
+        contentType: file.type || null,
+      });
+    }
+    setPendingAttachments((current) => [...current, ...staged]);
+    persistCreatePendingFiles();
+  };
+
+  /**
+   * An inline image removed from the editor (× / Delete / block replace)
+   * leaves an orphan pending row that would still upload silently at submit.
+   * Diff-based reconcile: only ids that were in the previous html and are
+   * gone now are dropped — ids still materializing are never touched.
+   */
+  const reconcileCreatePendingRemoval = (prevHtml: string, nextHtml: string) => {
+    const removed = listRemovedPendingInlineIds(prevHtml, nextHtml);
+    if (removed.length === 0) return;
+    let changed = false;
+    for (const id of removed) {
+      if (pendingKindsRef.current.get(id) === "attachment") continue;
+      if (!pendingFilesRef.current.has(id)) continue;
+      dropPendingFile(id);
+      changed = true;
+    }
+    if (changed) persistCreatePendingFiles();
   };
 
   return (
@@ -1461,6 +1524,7 @@ function CreateTicketPage() {
                       mapping[pendingId] = { documentId: uploaded.document_id, ticketId };
                     }
                     pendingFilesRef.current.delete(pendingId);
+                    pendingKindsRef.current.delete(pendingId);
                   } catch (error) {
                     // One failed file must not orphan the others — the pending
                     // ref stays in the map and is stripped from the HTML below.
@@ -1521,12 +1585,17 @@ function CreateTicketPage() {
                 label="Descrição"
                 hint={helpTooltips.createUi.description}
                 value={description}
-                onChange={(next) => setDescription(persistHelpdeskAttachmentHtml(next))}
+                onChange={(next) => {
+                  const persisted = persistHelpdeskAttachmentHtml(next);
+                  reconcileCreatePendingRemoval(description, persisted);
+                  setDescription(persisted);
+                }}
                 minHeight={120}
                 fill
                 enableMentions
                 icon={<AlignLeft size={14} aria-hidden />}
                 onUploadFiles={queuePendingFiles}
+                onAttachFiles={stagePendingAttachments}
                 onUploadError={(error) => setErrorText(messageFor(error).text)}
                 pendingAttachments={pendingAttachments}
                 onPendingAttachmentOpen={(id) => setPendingPreviewId(id)}
@@ -1624,7 +1693,12 @@ function CreateTicketPage() {
                 className="helpdesk-compose-attach"
                 aria-label="Inserir imagem no texto"
                 disabled={saving || loading}
-                onClick={() => createComposerRef.current?.openAttachPicker("image/*")}
+                onClick={() =>
+                  createComposerRef.current?.openAttachPicker({
+                    accept: "image/*",
+                    intent: "inline",
+                  })
+                }
               >
                 <ImageIcon size={16} aria-hidden />
                 Inserir imagem no texto
@@ -1636,7 +1710,9 @@ function CreateTicketPage() {
                   className="helpdesk-compose-attach"
                   aria-label="Anexar arquivo ao chamado"
                   disabled={saving || loading}
-                  onClick={() => createComposerRef.current?.openAttachPicker()}
+                  onClick={() =>
+                    createComposerRef.current?.openAttachPicker({ intent: "attachment" })
+                  }
                 >
                   <Paperclip size={16} aria-hidden />
                   Anexar arquivo ao chamado
@@ -1794,10 +1870,12 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  /** Explicit per-id user intent — MIME type never decides attachment vs inline. */
+  const pendingKindsRef = useRef<Map<string, HelpdeskDraftPendingKind>>(new Map());
   /** In-flight uploads keyed by pendingId — submit awaits these, never re-uploads. */
   const inlineUploadsRef = useRef<Map<string, Promise<number | null>>>(new Map());
   const replyComposerRef = useRef<HelpdeskRichTextFieldHandle>(null);
-  /** Non-image files staged in the reply composer — removable chips below the editor. */
+  /** Attachment-intent files staged in the reply composer — removable chips. */
   const [pendingAttachments, setPendingAttachments] = useState<HelpdeskPendingAttachmentItem[]>([]);
   const [pendingPreviewId, setPendingPreviewId] = useState<string | null>(null);
   const pendingPreview = useMemo(
@@ -1841,7 +1919,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const persistReplyPendingFiles = useCallback((): Promise<void> => {
     return writeHelpdeskDraftPendingFiles(
       replyDraftPendingScope(ticketId),
-      pendingFilesMapToDraftRows(pendingFilesRef.current),
+      pendingFilesMapToDraftRows(pendingFilesRef.current, pendingKindsRef.current),
     );
   }, [ticketId]);
 
@@ -1866,6 +1944,8 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             pendingId,
             uploaded.document_id,
           );
+          const kind = pendingKindsRef.current.get(pendingId);
+          if (kind) pendingKindsRef.current.set(String(uploaded.document_id), kind);
           void persistReplyPendingFiles();
           return uploaded.document_id;
         })
@@ -1929,11 +2009,53 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const removePendingAttachment = useCallback(
     (pendingId: string) => {
       pendingFilesRef.current.delete(pendingId);
+      pendingKindsRef.current.delete(pendingId);
       setPendingAttachments((current) => current.filter((item) => item.id !== pendingId));
       void persistReplyPendingFiles();
     },
     [persistReplyPendingFiles],
   );
+
+  /** "Anexar" in the reply composer — every file (images included) stages as
+   *  a removable attachment; nothing enters the message html. */
+  const stageReplyAttachments = (files: File[]) => {
+    if (files.length === 0) return;
+    const staged: HelpdeskPendingAttachmentItem[] = [];
+    for (const file of files) {
+      const pendingId = newIdempotencyKey();
+      pendingFilesRef.current.set(pendingId, file);
+      pendingKindsRef.current.set(pendingId, "attachment");
+      staged.push({
+        id: pendingId,
+        fileName: file.name || "anexo",
+        contentType: file.type || null,
+      });
+    }
+    setPendingAttachments((current) => [...current, ...staged]);
+    void persistReplyPendingFiles();
+  };
+
+  /**
+   * Inline image removed from the reply editor leaves an orphan pending row
+   * (it would still upload at send). Diff-based reconcile — ids still
+   * materializing are never touched; an in-flight upload already sent to the
+   * BFF may leave an unattached document on the ticket, never deleted as a
+   * visual side effect.
+   */
+  const reconcileReplyPendingRemoval = (prevHtml: string, nextHtml: string) => {
+    const removed = listRemovedPendingInlineIds(prevHtml, nextHtml);
+    if (removed.length === 0) return;
+    let changed = false;
+    for (const id of removed) {
+      if (pendingKindsRef.current.get(id) === "attachment") continue;
+      if (!pendingFilesRef.current.has(id)) continue;
+      pendingFilesRef.current.delete(id);
+      pendingKindsRef.current.delete(id);
+      inlineUploadsRef.current.delete(id);
+      changed = true;
+    }
+    if (changed) void persistReplyPendingFiles();
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -1942,12 +2064,19 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       if (cancelled) return;
       for (const row of rows) {
         pendingFilesRef.current.set(row.id, row.file);
+        pendingKindsRef.current.set(
+          row.id,
+          resolveHelpdeskDraftPendingKind(row, isInlineImageFile),
+        );
         // Keys are pending uuid and/or document id after upload rekey.
         attachmentPreview.seedFile(row.id, row.file);
       }
       setPendingAttachments(
         rows
-          .filter((row) => !isInlineImageFile(row.file))
+          .filter(
+            (row) =>
+              resolveHelpdeskDraftPendingKind(row, isInlineImageFile) === "attachment",
+          )
           .map((row) => ({
             id: row.id,
             fileName: row.file.name || "anexo",
@@ -2801,7 +2930,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     hint={helpTooltips.detailUi.attach}
                                     disabled={saving}
                                     className="helpdesk-compose-attach"
-                                    onClick={() => replyComposerRef.current?.openAttachPicker()}
+                                    onClick={() =>
+                                      replyComposerRef.current?.openAttachPicker({
+                                        intent: "attachment",
+                                      })
+                                    }
                                   />
                                   <HintAction
                                     hint={helpTooltips.detailUi.send}
@@ -2848,6 +2981,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                       setNoticeText(ATTACHMENT_AUTHOR_NOTICE_TEXT);
                                     }
                                     pendingFilesRef.current.delete(item.id);
+                                    pendingKindsRef.current.delete(item.id);
                                   }
                                   // Inline images must resolve to persisted
                                   // document refs before the write — sending
@@ -2892,6 +3026,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     setReplyMeta(EMPTY_TICKET_REPLY_META);
                                     clearReplyDraft(ticketId);
                                     pendingFilesRef.current.clear();
+                                    pendingKindsRef.current.clear();
                                     setPendingAttachments([]);
                                     setPendingPreviewId(null);
                                     void clearHelpdeskDraftPendingFiles(
@@ -2914,9 +3049,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 value={replyMeta}
                                 onChange={setReplyMeta}
                                 disabled={saving}
-                                onApplyContent={(html) =>
-                                  setContent(attachmentPreview.persistHtml(html))
-                                }
+                                onApplyContent={(html) => {
+                                  const persisted = attachmentPreview.persistHtml(html);
+                                  reconcileReplyPendingRemoval(content, persisted);
+                                  setContent(persisted);
+                                }}
                               />
                               <HelpdeskRichTextField
                                 ref={replyComposerRef}
@@ -2924,9 +3061,11 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 hint={helpTooltips.detailUi.actionFields.reply.message}
                                 required
                                 value={content}
-                                onChange={(next) =>
-                                  setContent(attachmentPreview.persistHtml(next))
-                                }
+                                onChange={(next) => {
+                                  const persisted = attachmentPreview.persistHtml(next);
+                                  reconcileReplyPendingRemoval(content, persisted);
+                                  setContent(persisted);
+                                }}
                                 minHeight={144}
                                 enableMentions
                                 resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
@@ -2941,6 +3080,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     if (!isInlineImageFile(file)) {
                                       const pendingId = newIdempotencyKey();
                                       pendingFilesRef.current.set(pendingId, file);
+                                      pendingKindsRef.current.set(pendingId, "attachment");
                                       staged.push({
                                         id: pendingId,
                                         fileName: file.name || "anexo",
@@ -2950,6 +3090,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                     }
                                     const pendingId = newIdempotencyKey();
                                     pendingFilesRef.current.set(pendingId, file);
+                                    pendingKindsRef.current.set(pendingId, "inline");
                                     const src = attachmentPreview.seedFile(pendingId, file);
                                     results.push({
                                       kind: "pending",
@@ -2997,6 +3138,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                   }
                                   return results;
                                 }}
+                                onAttachFiles={stageReplyAttachments}
                                 onUploadError={(error) => setErrorText(messageFor(error).text)}
                                 pendingAttachments={pendingAttachments}
                                 onPendingAttachmentOpen={(id) => setPendingPreviewId(id)}
