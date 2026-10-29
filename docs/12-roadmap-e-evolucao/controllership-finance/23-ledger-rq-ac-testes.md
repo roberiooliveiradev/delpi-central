@@ -900,4 +900,4 @@ Execução `CF-PROC0072-P3-P7-INTEGRATION-REWORK-008`. Registro completo: [doc 1
 | RW-08 (AC-10/11/12) | Sem alteração de motor/permissão; DRE restrito | PASS — zero diff em api-delpi/BFF/authz; 3 permissions intactas |
 | RW-09 (AC-13/14/15) | Testes + smoke local + QA visual | PASS — MFE 49/49 arquivos afetados, suite 390/391 (flake pré-existente não relacionado), tsc/build limpos, smoke autenticado 14/14 (`cf-e2e-access`), screenshots `rework008_*.png` |
 | RW-10 (AC-16) | Documentação e Help sincronizados | PASS — docs 118/119/113/112/23 + `helpTooltips.ts` |
-| RW-11 (AC-17/18/19) | Commit/push/deploy/smoke prod | PENDING — gate de publicação; smoke prod usuário permanece `TEST_NOT_RUN` sem persona sancionada |
+| RW-11 (AC-17/18/19) | Commit/push/deploy/smoke prod | PASS — `4bc90151df` pushado (12 arq. escopo puro); deploy `srv-api` MFE-only via script oficial; SHA/bundle/remoteEntry/401 verificados; smoke prod usuário `TEST_NOT_RUN` (sem persona sancionada) |

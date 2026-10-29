@@ -752,6 +752,22 @@ atenção exibe «Conciliação pendente» (P7) + «Fonte não registrada»
 disponível» e «Não registrada»; screenshots em
 `test-results/rework008_*.png`.
 
+**Commit/push:** `4bc90151df` (12 arquivos — 5 MFE + 1 README +
+helpTooltips + 5 docs; concorrentes engineering-api/helpdesk/
+plugin-ui preservados fora do commit).
+
+**Deploy produtivo** (`srv-api`, `up-prod-sequential.sh --pull
+--build controllership-finance`): `delpi-controllership-finance` Up,
+`remoteEntry` 200, bundle `App-C2una27U.js` com as novas strings;
+401 anônimo fail-closed nas rotas P3/stock. Mudança MFE-only —
+api-delpi e BFF intocados. Rollback: `git revert 4bc90151df` +
+mesmo script `--build controllership-finance`.
+
+**Smoke produtivo:** infraestrutura `PASS` (SHA, remoteEntry,
+fail-closed). Smoke autenticado de usuário `TEST_NOT_RUN` — sem
+persona de teste sancionada no realm prod; reservado à homologação
+G2/G3.
+
 **Classificações:** consulta×elegibilidade diferenciadas `PROVEN`;
 integração operacional→operando P3 permanece `PENDING` (requer
 registro governado com proveniência — possivelmente `OFFICIAL` com
