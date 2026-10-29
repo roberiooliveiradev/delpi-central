@@ -7,14 +7,15 @@
 
 ## Asset original preservado
 
-Fonte: imagem fornecida pelo usuário na task (referência visual aprovada — não recriada, não reinterpretada, não substituída).
+Fonte: imagem fornecida pelo usuário (referência visual aprovada — não recriada, não reinterpretada, não substituída). **v2** — o usuário aprovou nova imagem após a v1; a v1 permanece no histórico do git.
 
 | Propriedade | Valor |
 |---|---|
-| Caminho canônico | `tv_app/content/characters/vista/avatar-v1.png` |
-| Formato | PNG RGBA, 1024×1024 |
-| Tamanho | 1.001.174 bytes |
-| SHA-256 | `740f772b66fbea4442342adb783f77539d554816da0ed8c40dfed39fdb0942b6` |
+| Caminho canônico | `tv_app/content/characters/vista/avatar-v2.jpg` |
+| Formato | JPEG (JFIF), 1024×1024 |
+| Tamanho | 340.944 bytes |
+| SHA-256 | `8d4879cc395361619d6b4c2623a04c029faaa41714283c76dec3e82ddc39d155` |
+| v1 (superseded) | `avatar-v1.png` — PNG 1024×1024, SHA-256 `740f772b…42b6` |
 
 - Byte-idêntico ao original (checksum verificado após cópia); nenhuma alteração visual, nenhum derivado gerado.
 - Convenção reutilizada: assets versionados em `tv_app/content/` (mesmo mecanismo de `content/brand/`); estrutura `characters/<character_id>/avatar-v1.png` espelha a convenção cross-MCP de DAVI-AVATAR-001 (`app/assets/characters/davi/`); nenhum sistema de storage novo criado.
@@ -23,9 +24,9 @@ Fonte: imagem fornecida pelo usuário na task (referência visual aprovada — n
 
 ## Identidade visual oficial (Appearance)
 
-Campos atualizados na ficha conforme imagem aprovada: `skin`, `hair` (curto até o pescoço, franja lateral), `eyes`, `face`, `glasses` (armação escura grande arredondada), `clothing` (moletom lilás suave), `visual_style` (3D estilizado), `color_palette` (lilás/azulado/preto), `avatar_reference`, `avatar_status=OFFICIAL_AVATAR_APPROVED` (aplicado só após validar+persistir o asset). `age_appearance` preservado ("jovem — 20 anos").
+Campos atualizados na ficha conforme imagem aprovada v2: `skin`, `hair` (pretos, lisos e longos), `eyes` (grandes, expressivos e castanhos), `face`, `glasses` (armação escura retangular — segurado na mão), `clothing` (blazer cinza sobre blusa clara), `visual_style` (3D estilizado), `color_palette` (cinza/branco/preto/bege quente), `avatar_reference`, `avatar_status=OFFICIAL_AVATAR_APPROVED` (aplicado só após validar+persistir o asset). `age_appearance` preservado ("jovem — 20 anos").
 
-`profile_version` 1 → 2 (content version do owner; `SCHEMA_VERSION` e `PUBLIC_PROJECTION_VERSION` inalterados — mudança aditiva).
+`profile_version` 1 → 3 (v1: ficha inicial; v2: avatar PNG v1; v3: avatar JPEG v2 — content version do owner; `SCHEMA_VERSION` e `PUBLIC_PROJECTION_VERSION` inalterados — mudança aditiva).
 
 ## Contrato shared — evolução mínima
 
@@ -36,7 +37,7 @@ Campos atualizados na ficha conforme imagem aprovada: `skin`, `hair` (curto até
 - Personalidade, expertise, história, `narrative_age="20"`, estilo de comunicação: **inalterados**.
 - Relacionamento `romantic_partner` → `davi` e evento `davi-vista-partnership`: **inalterados**; ficha DAVI intocada.
 - Características visuais não viram instruções repetitivas: `appearance.rule` mantém «não se repete em respostas operacionais».
-- `specialist-instructions.md`: descrição visual dos blocos «Identidade fictícia» atualizada (cabelo curto, óculos, moletom lilás); edição anterior do usuário («identidade fictícia») preservada.
+- `specialist-instructions.md`: descrição visual dos blocos «Identidade fictícia» atualizada (cabelo longo, óculos na mão, blazer cinza); edição do usuário («identidade fictícia») preservada.
 
 ## Segurança
 
@@ -53,7 +54,7 @@ Campos atualizados na ficha conforme imagem aprovada: `skin`, `hair` (curto até
 
 ## Deploy/runtime
 
-- Asset empacotado via `COPY tv_app/` do Dockerfile — presença no container verificada pós-deploy: `/app/tv_app/content/characters/vista/avatar-v1.png`, 1.001.174 bytes, SHA-256 `740f772b…42b6` (idêntico ao commit).
-- Runtime in-container: `vista 20 2 OFFICIAL_AVATAR_APPROVED tv_app/content/characters/vista/avatar-v1.png`.
+- Asset empacotado via `COPY tv_app/` do Dockerfile — presença no container verificada pós-deploy: `/app/tv_app/content/characters/vista/avatar-v2.jpg`, 340.944 bytes, SHA-256 `8d4879cc…d155` (idêntico ao commit).
+- Runtime in-container: `vista 20 3 OFFICIAL_AVATAR_APPROVED tv_app/content/characters/vista/avatar-v2.jpg`.
 - Smoke via gateway: `/apps/tv-dashboard-api/health` 200; catalog sem auth 401 (fail-closed); `/.well-known/oauth-protected-resource` 200; portal `/` 200.
 - Validação conversacional live ChatGPT: TEST_NOT_RUN (sem acesso ao host nesta sessão).

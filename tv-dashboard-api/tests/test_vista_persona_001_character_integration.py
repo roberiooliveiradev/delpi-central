@@ -45,8 +45,8 @@ DAVI_PUBLIC_ARTIFACT = (
 def test_shared_package_import_and_profile_instantiation() -> None:
     profile = get_vista_profile()
     assert profile.identity.character_id == "vista"
-    # v2: avatar oficial aprovado (VISTA-AVATAR-001).
-    assert profile.profile_version == 2
+    # v3: avatar oficial aprovado v2 (imagem fornecida pelo usuário).
+    assert profile.profile_version == 3
     assert profile.narrative_classification == FICTION_IDENTITY_ONLY
 
 
@@ -122,7 +122,7 @@ def test_no_invented_demographics_or_appearance() -> None:
     # from the real calendar; birthdate stays undefined.
     assert p.identity.narrative_age == "20"
     assert p.appearance.age_appearance == "jovem — 20 anos"
-    assert "pretos e lisos" in p.appearance.hair
+    assert "pretos" in p.appearance.hair and "lisos" in p.appearance.hair
     assert p.appearance.skin == "clara"
     assert p.appearance.glasses
     # VISTA-AVATAR-001 — approved official avatar reference.
@@ -133,20 +133,20 @@ def test_no_invented_demographics_or_appearance() -> None:
 
 
 def test_avatar_asset_persisted_and_resolvable() -> None:
-    """The approved avatar is the original task-provided PNG, stored in the
+    """The approved avatar is the original user-provided image, stored in the
     VISTA bounded context and resolvable from the ficha."""
     import hashlib
 
     p = get_vista_profile()
     ref = p.appearance.avatar_reference
-    assert ref == "tv_app/content/characters/vista/avatar-v1.png"
+    assert ref == "tv_app/content/characters/vista/avatar-v2.jpg"
     asset = API_DIR / ref
     assert asset.is_file(), ref
     blob = asset.read_bytes()
-    # PNG magic + original file SHA-256 (byte-identical preservation).
-    assert blob[:4] == b"\x89PNG"
+    # JPEG magic + original file SHA-256 (byte-identical preservation).
+    assert blob[:2] == b"\xff\xd8"
     assert hashlib.sha256(blob).hexdigest() == (
-        "740f772b66fbea4442342adb783f77539d554816da0ed8c40dfed39fdb0942b6"
+        "8d4879cc395361619d6b4c2623a04c029faaa41714283c76dec3e82ddc39d155"
     )
 
 
@@ -343,7 +343,7 @@ def test_context_covers_identity_questions() -> None:
     # VISTA-AVATAR-001 — official avatar exposed via the shared context
     # projection as a stable repo-local reference (no base64, no URL).
     assert ctx["avatar_status"] == "OFFICIAL_AVATAR_APPROVED"
-    assert ctx["avatar_reference"] == "tv_app/content/characters/vista/avatar-v1.png"
+    assert ctx["avatar_reference"] == "tv_app/content/characters/vista/avatar-v2.jpg"
     assert "observadora" in ctx["personality_summary"]
     assert "visualização" in " ".join(
         ctx["expertise"]["specialties"]
