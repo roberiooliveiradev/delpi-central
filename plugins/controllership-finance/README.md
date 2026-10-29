@@ -28,21 +28,34 @@ Central de Fechamento — Estoque P7 (R03): rota interna
 `closing/stock-inventory` com motor único — `EM ESTOQUE` (SB9 ex-
 armazém de processo) + `EM PROCESSO` (MATR989 `as_of`), seleção
 «Todos os produtos» × «MP, PA e PI — DRE» (`report_scope=
-all_products|mp_pi_pa`), export CSV com metadados/hash e marca
+all_products|mp_pi_pa`), export CSV/PDF com metadados/hash e marca
 não-oficial (`officialP7=false`, `parityStatus=PENDING` — não é o
 relatório oficial MATR460 homologado). Estados tipados `available` /
 `incomplete` / `source_missing` / `no_matching_items`; snapshot
 ausente exibe apenas banner — nunca tabela vazia (ausência não é
 saldo zero).
 
+Central de Fechamento — Entradas e Saídas R05 + Material em Processo
+R08 (IMPLEMENTATION-009): rotas internas `closing/stock-movements` e
+`closing/work-in-process`, consultáveis por mês de referência +
+filial autorizada **sem competência formal, checklist, documentos ou
+pacote DRE** (DEC-ANALYTICS-INDEPENDENCE). R05 = matriz MATR320 por
+tipo de produto; R08 = físico loc99 + alocado `RE−DE` (mesmo motor
+MATR989 do P7). Ambos exportam CSV/PDF com selo `parityStatus=PENDING`
+(`officialMatr320=false`, `officialMatr989=false`). A aba exibe ainda
+a **conciliação analítica** `closing/analytics/stock-reconciliation`
+— `E/S − P7 − H02` calculada só quando os três operandos estão
+disponíveis (ausente ≠ zero), `governedReconciliation=not_persisted`,
+declarada na UI como «não substitui a conciliação governada (P3)».
+
 Central de Fechamento — Relatórios e divergências (aba `?tab=reports`):
 hub de análise com indicadores honestos, atenção primeiro e cartões por
-família; cada cartão abre página contextual
+relatório; cada cartão abre página contextual
 `closing/monthly-closing/{YYYY-MM}/reports/{reportKey}`
-(`financial-settlements` | `stock-inventory`) dentro do próprio
-Fechamento mensal — as páginas legadas são reutilizadas em modo
-`reportContext` com competência travada, agrupamentos em tabelas por
-colunas e slot de PDF honesto enquanto não houver produtor homologado.
+(`financial-settlements` | `stock-inventory` | `stock-movements` |
+`work-in-process`) dentro do próprio Fechamento mensal — as páginas
+legadas são reutilizadas em modo `reportContext` com competência
+travada, agrupamentos em tabelas por colunas e export CSV/PDF real.
 O retorno restaura competência, aba e família analisada; a matriz
 R01–R15 permanece como rastreabilidade técnica recolhida.
 REWORK-008: os estados das fontes da conciliação distinguem

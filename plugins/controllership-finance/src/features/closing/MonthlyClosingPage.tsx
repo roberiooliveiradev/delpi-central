@@ -71,11 +71,11 @@ import {
   type ReportFamily,
 } from "./MonthlyReportsPanel";
 import {
-  FAMILY_TO_REPORT_KEY,
   isReportKey,
   MonthlyReportPage,
   REPORT_KEY_LABELS,
   REPORT_KEY_TO_FAMILY,
+  type ReportKey,
 } from "./MonthlyReportPage";
 import {
   pickFamilyParams,
@@ -289,7 +289,8 @@ export function MonthlyClosingPage({
   // só são repassados quando `report` corresponde à família aberta, o
   // que evita vazamento de contexto entre relatórios (ex.: `page`).
   const openReport = useCallback(
-    (family: ReportFamily) => {
+    (key: ReportKey) => {
+      const family = REPORT_KEY_TO_FAMILY[key];
       const current = new URLSearchParams(window.location.search);
       let query = "";
       if (current.get("report") === family) {
@@ -300,7 +301,7 @@ export function MonthlyClosingPage({
         if (familyParams) query = `?${familyParams}`;
       }
       navigatePluginPath(
-        `${base}/closing/monthly-closing/${period}/reports/${FAMILY_TO_REPORT_KEY[family]}${query}`,
+        `${base}/closing/monthly-closing/${period}/reports/${key}${query}`,
       );
     },
     [base, period],

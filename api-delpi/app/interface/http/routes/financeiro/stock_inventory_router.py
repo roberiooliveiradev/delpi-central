@@ -118,12 +118,13 @@ def export_financeiro_stock_inventory_route(
     export_format: str = Query(
         "csv",
         alias="format",
-        pattern="^csv$",
-        description="Export format — csv only while parity is pending.",
+        pattern="^(csv|pdf)$",
+        description="Export format — csv or pdf.",
     ),
 ):
-    """CSV document of the SAME P7 engine (doc 119 §8.C): metadata header,
-    SHA-256 content hash and parity watermark — never an official seal."""
+    """CSV/PDF document of the SAME P7 engine (doc 119 §8.C): metadata
+    header, SHA-256 content hash and parity watermark — never an
+    official seal."""
     try:
         request = build_stock_inventory_request(
             period=period,
@@ -139,7 +140,9 @@ def export_financeiro_stock_inventory_route(
 
     try:
         result = build_export_stock_inventory_use_case().execute(
-            request, user_subject=delegated_user_subject()
+            request,
+            export_format=export_format,
+            user_subject=delegated_user_subject(),
         )
     except StockInventoryScopeUnavailableError as exc:
         log_error(

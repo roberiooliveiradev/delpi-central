@@ -115,6 +115,7 @@ class ApiDelpiSettlementsGateway:
         *,
         access_token: str,
         params: dict[str, Any] | None = None,
+        timeout_seconds: float | None = None,
     ) -> Any:
         url = urljoin(self.base_url, path.lstrip("/"))
         try:
@@ -122,7 +123,11 @@ class ApiDelpiSettlementsGateway:
                 url,
                 headers=self._build_headers(access_token),
                 params=params,
-                timeout=self.timeout,
+                timeout=(
+                    timeout_seconds
+                    if timeout_seconds is not None
+                    else self.timeout
+                ),
             )
         except requests.Timeout as exc:
             logger.warning("delpi_api_timeout path=%s", path)
@@ -156,17 +161,24 @@ class ApiDelpiSettlementsGateway:
         *,
         access_token: str,
         params: dict[str, Any] | None = None,
-    ) -> tuple[bytes, str | None]:
+        timeout_seconds: float | None = None,
+    ) -> tuple[bytes, str | None, str | None]:
         """Binary passthrough for file-producing routes (exports). Error
         mapping stays identical to ``get`` — upstream JSON errors are
-        relayed with their typed codes."""
+        relayed with their typed codes. Returns the payload, the
+        upstream ``Content-Disposition`` and the upstream
+        ``Content-Type`` so the BFF never re-derives the media type."""
         url = urljoin(self.base_url, path.lstrip("/"))
         try:
             response = requests.get(
                 url,
                 headers=self._build_headers(access_token, accept="*/*"),
                 params=params,
-                timeout=self.timeout,
+                timeout=(
+                    timeout_seconds
+                    if timeout_seconds is not None
+                    else self.timeout
+                ),
             )
         except requests.Timeout as exc:
             logger.warning("delpi_api_timeout path=%s", path)
@@ -188,7 +200,11 @@ class ApiDelpiSettlementsGateway:
                 status_code=response.status_code,
                 error_code=error_code,
             )
-        return response.content, response.headers.get("Content-Disposition")
+        return (
+            response.content,
+            response.headers.get("Content-Disposition"),
+            response.headers.get("Content-Type"),
+        )
 
 
 def _extract_error_code(response) -> str | None:

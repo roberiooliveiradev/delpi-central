@@ -79,3 +79,28 @@ class StockInventoryRepositoryPort(Protocol):
         grouped by product type so the scope filter applies to the same
         product population."""
         ...
+
+    def work_in_process_detail(
+        self,
+        *,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        movement_cutoff: str,
+        op_alive_cutoff: str,
+        page: int,
+        page_size: int,
+    ) -> list[dict]:
+        """MATR989 com-OP detail rows (branch, product, OP) — the
+        standalone R08 item universe."""
+        ...
+
+    def work_in_process_detail_count(
+        self,
+        *,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        movement_cutoff: str,
+        op_alive_cutoff: str,
+    ) -> int:
+        """Total MATR989 com-OP detail rows for honest pagination."""
+        ...

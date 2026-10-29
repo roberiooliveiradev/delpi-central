@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 759,
-  "stableCount": 759,
+  "operationCount": 784,
+  "stableCount": 784,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -46,6 +46,13 @@
       "operationId": "get_billing_portfolio_summary",
       "method": "GET",
       "path": "/commercial/billing-portfolio/summary",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_commercial_billing_by_customer_month",
+      "method": "GET",
+      "path": "/commercial/billing/by-customer-month",
       "tag": "Comercial",
       "stable": true
     },
@@ -834,6 +841,41 @@
       "stable": true
     },
     {
+      "operationId": "list_lmp_facts",
+      "method": "GET",
+      "path": "/engineering/lmps/facts",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_pi_counts",
+      "method": "POST",
+      "path": "/engineering/lmps/facts/pi-counts",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_fact",
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_facts_history_events",
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}/history/events",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_facts_history_flow",
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}/history/flow",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
       "operationId": "list_lmp_nonconformities",
       "method": "GET",
       "path": "/engineering/lmps/nonconformities",
@@ -921,6 +963,76 @@
       "operationId": "get_lmp_history_flow",
       "method": "GET",
       "path": "/engineering/lmps/{sale_number}/history/flow",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_list_metallographic_reports",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_create_metallographic_report",
+      "method": "POST",
+      "path": "/engineering/metallographic-reports",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_delete_metallographic_report",
+      "method": "DELETE",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_get_metallographic_report",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_update_metallographic_report",
+      "method": "PATCH",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_copy_metallographic_report",
+      "method": "POST",
+      "path": "/engineering/metallographic-reports/{report_id}/copies",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_delete_metallographic_image",
+      "method": "DELETE",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_get_metallographic_image",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_put_metallographic_image",
+      "method": "PUT",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "engineering_export_metallographic_report_pdf",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}/pdf",
       "tag": "Engenharia",
       "stable": true
     },
@@ -1097,6 +1209,41 @@
       "method": "GET",
       "path": "/financeiro/stock-inventory",
       "tag": "Financeiro — Stock Inventory",
+      "stable": true
+    },
+    {
+      "operationId": "export_financeiro_stock_inventory",
+      "method": "GET",
+      "path": "/financeiro/stock-inventory/export",
+      "tag": "Financeiro — Stock Inventory",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_stock_movements",
+      "method": "GET",
+      "path": "/financeiro/stock-movements",
+      "tag": "Financeiro — Stock Movements",
+      "stable": true
+    },
+    {
+      "operationId": "export_financeiro_stock_movements",
+      "method": "GET",
+      "path": "/financeiro/stock-movements/export",
+      "tag": "Financeiro — Stock Movements",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_work_in_process",
+      "method": "GET",
+      "path": "/financeiro/work-in-process",
+      "tag": "Financeiro — Work In Process",
+      "stable": true
+    },
+    {
+      "operationId": "export_financeiro_work_in_process",
+      "method": "GET",
+      "path": "/financeiro/work-in-process/export",
+      "tag": "Financeiro — Work In Process",
       "stable": true
     },
     {
@@ -1622,6 +1769,13 @@
       "method": "POST",
       "path": "/invoice-issuance/requests/{request_id}/start",
       "tag": "Invoice issuance",
+      "stable": true
+    },
+    {
+      "operationId": "read_governed_technical_knowledge",
+      "method": "GET",
+      "path": "/knowledge/technical-guides/{topic}",
+      "tag": "Governed Knowledge",
       "stable": true
     },
     {
@@ -3928,6 +4082,13 @@
       "stable": true
     },
     {
+      "operationId": "get_audit_5s_previous_criterion_nonconformities",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/previous-criterion-nonconformities",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
       "operationId": "reopen_audit_5s_evaluation",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/reopen-evaluation",
@@ -4950,6 +5111,13 @@
       "stable": true
     },
     {
+      "operationId": "search_supplies_products",
+      "method": "GET",
+      "path": "/supplies/products/search",
+      "tag": "Supplies — Products",
+      "stable": true
+    },
+    {
       "operationId": "get_supplies_protheus_user_by_email",
       "method": "GET",
       "path": "/supplies/protheus-users/by-email",
@@ -5002,6 +5170,13 @@
       "operationId": "list_supplies_purchase_request_approval_states",
       "method": "GET",
       "path": "/supplies/purchase-requests/approval-states",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_purchase_request_cost_centers",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/cost-centers",
       "tag": "Suprimentos — Solicitações de compra",
       "stable": true
     },

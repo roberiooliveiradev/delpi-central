@@ -35,7 +35,10 @@ WITH mov AS (
          D3.D3_OP AS production_order,
          SUM(CASE WHEN D3.D3_CF LIKE ? THEN CAST(D3.D3_CUSTO1 AS DECIMAL(28,8))
                   WHEN D3.D3_CF LIKE ? THEN -CAST(D3.D3_CUSTO1 AS DECIMAL(28,8))
-                  ELSE 0 END) AS allocated_value
+                  ELSE 0 END) AS allocated_value,
+         SUM(CASE WHEN D3.D3_CF LIKE ? THEN CAST(D3.D3_QUANT AS DECIMAL(28,8))
+                  WHEN D3.D3_CF LIKE ? THEN -CAST(D3.D3_QUANT AS DECIMAL(28,8))
+                  ELSE 0 END) AS allocated_quantity
     FROM SD3010 D3 WITH (NOLOCK)
    WHERE D3.D_E_L_E_T_ = ' '
      AND D3.D3_FILIAL IN ({branch_placeholders})
@@ -110,6 +113,8 @@ def build_work_in_process_by_type_query(
     params: list[Any] = [
         _REQUISITION_CF_PATTERN,
         _DEVOLUTION_CF_PATTERN,
+        _REQUISITION_CF_PATTERN,
+        _DEVOLUTION_CF_PATTERN,
         *branches,
         movement_cutoff,
         _REQUISITION_CF_PATTERN,
@@ -133,3 +138,114 @@ def build_work_in_process_by_type_query(
     )
     type_params = list(product_types) if product_types else []
     return sql, [*params, *alive_params, *type_params]
+
+
+# Standalone R08 detail (MATR989 com-OP block): one row per
+# (branch, product, production order) alive at the emission cutoff —
+# same CTE, same alive predicate as the P7 composition.
+_DETAIL_SQL = _MOV_CTE + """
+SELECT m.branch_code,
+       RTRIM(m.product_code) AS product_code,
+       RTRIM(P.B1_DESC) AS description,
+       RTRIM(P.B1_TIPO) AS product_type,
+       m.production_order,
+       CAST(m.allocated_quantity AS DECIMAL(28,6)) AS allocated_quantity,
+       CAST(m.allocated_value AS DECIMAL(28,6)) AS allocated_value
+  FROM mov m
+  LEFT JOIN SB1010 P WITH (NOLOCK)
+         ON P.B1_COD = m.product_code
+        AND P.D_E_L_E_T_ = ' '
+ WHERE m.allocated_value <> 0
+{alive}
+{type_filter}
+ ORDER BY m.branch_code, m.product_code, m.production_order
+OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+"""
+
+_DETAIL_COUNT_SQL = _MOV_CTE + """
+SELECT COUNT_BIG(1) AS item_count
+  FROM mov m
+  LEFT JOIN SB1010 P WITH (NOLOCK)
+         ON P.B1_COD = m.product_code
+        AND P.D_E_L_E_T_ = ' '
+ WHERE m.allocated_value <> 0
+{alive}
+{type_filter}
+"""
+
+
+def _detail_query(
+    *,
+    template: str,
+    branches: tuple[str, ...],
+    product_types: tuple[str, ...] | None,
+    movement_cutoff: str,
+    op_alive_cutoff: str,
+) -> tuple[str, list[Any]]:
+    type_filter = ""
+    params: list[Any] = [
+        _REQUISITION_CF_PATTERN,
+        _DEVOLUTION_CF_PATTERN,
+        _REQUISITION_CF_PATTERN,
+        _DEVOLUTION_CF_PATTERN,
+        *branches,
+        movement_cutoff,
+        _REQUISITION_CF_PATTERN,
+        _DEVOLUTION_CF_PATTERN,
+    ]
+    alive_params: list[Any] = [
+        _PRODUCTION_CF_PATTERN,
+        op_alive_cutoff,
+        op_alive_cutoff,
+    ]
+    if product_types:
+        type_filter = (
+            "   AND RTRIM(P.B1_TIPO) IN ("
+            + _in_placeholders(product_types)
+            + ")"
+        )
+    sql = template.format(
+        branch_placeholders=_in_placeholders(branches),
+        alive=_ALIVE_PREDICATE,
+        type_filter=type_filter,
+    )
+    type_params = list(product_types) if product_types else []
+    return sql, [*params, *alive_params, *type_params]
+
+
+def build_work_in_process_detail_query(
+    *,
+    branches: tuple[str, ...],
+    product_types: tuple[str, ...] | None,
+    movement_cutoff: str,
+    op_alive_cutoff: str,
+    page: int,
+    page_size: int,
+) -> tuple[str, list[Any]]:
+    """MATR989 com-OP detail rows, paginated."""
+    sql, params = _detail_query(
+        template=_DETAIL_SQL,
+        branches=branches,
+        product_types=product_types,
+        movement_cutoff=movement_cutoff,
+        op_alive_cutoff=op_alive_cutoff,
+    )
+    offset = max(page - 1, 0) * page_size
+    return sql, [*params, offset, page_size]
+
+
+def build_work_in_process_detail_count_query(
+    *,
+    branches: tuple[str, ...],
+    product_types: tuple[str, ...] | None,
+    movement_cutoff: str,
+    op_alive_cutoff: str,
+) -> tuple[str, list[Any]]:
+    """Total detail rows for pagination — never a page-bounded count."""
+    return _detail_query(
+        template=_DETAIL_COUNT_SQL,
+        branches=branches,
+        product_types=product_types,
+        movement_cutoff=movement_cutoff,
+        op_alive_cutoff=op_alive_cutoff,
+    )

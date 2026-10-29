@@ -1,4 +1,4 @@
-"""CSV export of the P7 stock-inventory report (doc 119 §8.C).
+"""CSV/PDF export of the P7 stock-inventory report (doc 119 §8.C).
 
 Single engine: this use case composes ``GetStockInventoryUseCase`` and
 serializes the SAME payload the query returns — no second calculation,
@@ -14,17 +14,25 @@ import hashlib
 import io
 import json
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from app.application.dto.financeiro_stock_inventory.stock_inventory_request import (
     StockInventoryQueryRequest,
+)
+from app.application.use_cases.financeiro_reports_export.report_export_common import (
+    build_pdf,
+)
+from app.infrastructure.pdf.closing_reports.closing_report_pdf import (
+    ReportTableSection,
 )
 
 from .get_stock_inventory_use_case import GetStockInventoryUseCase
 
 EXPORT_PAGE_SIZE = 50000
 EXPORT_FORMAT_CSV = "csv"
-EXPORT_FORMATS = (EXPORT_FORMAT_CSV,)
+EXPORT_FORMAT_PDF = "pdf"
+EXPORT_FORMATS = (EXPORT_FORMAT_CSV, EXPORT_FORMAT_PDF)
 
 # Statuses representing a real population — anything else never becomes
 # a document (a header-only file could masquerade as zero stock).
@@ -95,11 +103,11 @@ def _safe_text(value: Any) -> Any:
     return value
 
 
-def export_filename(payload: dict[str, Any]) -> str:
+def export_filename(payload: dict[str, Any], export_format: str = "csv") -> str:
     period = payload.get("period") or "unknown"
     branch = payload.get("branchCode") or "all"
     scope = payload.get("reportScope") or "all_products"
-    return f"p7-inventory-{period}-{branch}-{scope}.csv"
+    return f"p7-inventory-{period}-{branch}-{scope}.{export_format}"
 
 
 def content_hash(payload: dict[str, Any]) -> str:
@@ -120,6 +128,7 @@ class ExportStockInventoryUseCase:
         self,
         request: StockInventoryQueryRequest,
         *,
+        export_format: str = EXPORT_FORMAT_CSV,
         user_subject: str | None,
     ) -> dict:
         result = self._get_use_case.execute(
@@ -140,15 +149,24 @@ class ExportStockInventoryUseCase:
                 f"total_items={total_items}"
             )
 
-        stream = _build_csv(
-            payload,
-            generated_by=user_subject,
-            warehouse_filter=request.warehouse,
-        )
+        if export_format == EXPORT_FORMAT_CSV:
+            stream = _build_csv(
+                payload,
+                generated_by=user_subject,
+                warehouse_filter=request.warehouse,
+            )
+            content_type = "text/csv; charset=utf-8"
+        else:
+            stream = _build_pdf(
+                payload,
+                generated_by=user_subject,
+                warehouse_filter=request.warehouse,
+            )
+            content_type = "application/pdf"
         return {
             "stream": stream,
-            "content_type": "text/csv; charset=utf-8",
-            "filename": export_filename(payload),
+            "content_type": content_type,
+            "filename": export_filename(payload, export_format),
             "exported_count": len(payload.get("items") or []),
         }
 
@@ -298,3 +316,138 @@ def _warehouse_summary_row(row: dict[str, Any]) -> dict[str, Any]:
         "total_quantity": row.get("totalQuantity"),
         "total_stock_value": row.get("totalStockValue"),
     }
+
+
+_PDF_TOTALS_COLUMNS = (("label", "Medida"), ("value", "Valor (R$)"))
+
+_PDF_TYPE_COLUMNS = (
+    ("productType", "Tipo"),
+    ("itemCount", "Itens"),
+    ("totalQuantity", "Quantidade"),
+    ("totalStockValue", "Valor (R$)"),
+)
+_PDF_TYPE_NUMERIC = frozenset(
+    {"itemCount", "totalQuantity", "totalStockValue"}
+)
+
+_PDF_WAREHOUSE_COLUMNS = (
+    ("branchCode", "Filial"),
+    ("warehouse", "Armazém"),
+    ("itemCount", "Itens"),
+    ("totalQuantity", "Quantidade"),
+    ("totalStockValue", "Valor (R$)"),
+)
+
+_PDF_ITEM_COLUMNS = (
+    ("productCode", "Produto"),
+    ("description", "Descrição"),
+    ("productType", "Tipo"),
+    ("unit", "UM"),
+    ("warehouse", "Armazém"),
+    ("branchCode", "Filial"),
+    ("historicalQuantity", "Quantidade"),
+    ("historicalStockValue", "Valor (R$)"),
+)
+_PDF_ITEM_NUMERIC = frozenset(
+    {"historicalQuantity", "historicalStockValue"}
+)
+
+
+def _dec_sum(rows: list[dict[str, Any]], key: str) -> Decimal:
+    total = Decimal("0")
+    for row in rows:
+        try:
+            total += Decimal(str(row.get(key) or "0"))
+        except (InvalidOperation, ValueError):
+            continue
+    return total
+
+
+def _build_pdf(
+    payload: dict[str, Any],
+    *,
+    generated_by: str | None,
+    warehouse_filter: str | None,
+) -> io.BytesIO:
+    totals_rows = [
+        {"label": "EM ESTOQUE", "value": payload.get("stockTotal")},
+        {
+            "label": "EM PROCESSO — FÍSICO (LOC. PROCESSO)",
+            "value": payload.get("processPhysicalTotal"),
+        },
+        {
+            "label": "EM PROCESSO — ALOCADO (OP)",
+            "value": payload.get("processAllocatedTotal"),
+        },
+        {"label": "EM PROCESSO — TOTAL", "value": payload.get("processTotal")},
+        {
+            "label": "HISTÓRICO SB9 (REFERÊNCIA)",
+            "value": payload.get("historicalTotal"),
+        },
+        {"label": "TOTAL GERAL", "value": payload.get("grandTotal")},
+    ]
+    sections = [
+        ReportTableSection(
+            title="Totais do fechamento",
+            columns=list(_PDF_TOTALS_COLUMNS),
+            rows=totals_rows,
+            align_right_keys=frozenset({"value"}),
+        ),
+        ReportTableSection(
+            title="Resumo por tipo de produto",
+            columns=list(_PDF_TYPE_COLUMNS),
+            rows=[
+                {key: row.get(key) for key, _ in _PDF_TYPE_COLUMNS}
+                for row in payload.get("summariesByType") or []
+            ],
+            align_right_keys=_PDF_TYPE_NUMERIC,
+        ),
+        ReportTableSection(
+            title="Resumo por armazém",
+            columns=list(_PDF_WAREHOUSE_COLUMNS),
+            rows=[
+                {key: row.get(key) for key, _ in _PDF_WAREHOUSE_COLUMNS}
+                for row in payload.get("summariesByWarehouse") or []
+            ],
+            totals_row={
+                "branchCode": "TOTAL",
+                "warehouse": "",
+                "itemCount": sum(
+                    int(row.get("itemCount") or 0)
+                    for row in payload.get("summariesByWarehouse") or []
+                ),
+                "totalQuantity": str(
+                    _dec_sum(
+                        payload.get("summariesByWarehouse") or [],
+                        "totalQuantity",
+                    )
+                ),
+                "totalStockValue": str(
+                    _dec_sum(
+                        payload.get("summariesByWarehouse") or [],
+                        "totalStockValue",
+                    )
+                ),
+            },
+            align_right_keys=_PDF_TYPE_NUMERIC,
+        ),
+        ReportTableSection(
+            title="Itens do inventário",
+            columns=list(_PDF_ITEM_COLUMNS),
+            rows=[
+                {key: item.get(key) for key, _ in _PDF_ITEM_COLUMNS}
+                for item in payload.get("items") or []
+            ],
+            align_right_keys=_PDF_ITEM_NUMERIC,
+        ),
+    ]
+    return build_pdf(
+        title="P7 — REGISTRO DE INVENTÁRIO DE ESTOQUE",
+        payload=payload,
+        hashed_keys=_HASHED_KEYS,
+        sections=sections,
+        generated_by=generated_by,
+        extra_metadata=(
+            [("Armazém", warehouse_filter)] if warehouse_filter else None
+        ),
+    )

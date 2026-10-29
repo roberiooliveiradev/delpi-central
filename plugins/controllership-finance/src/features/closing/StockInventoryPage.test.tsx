@@ -17,6 +17,7 @@ const saveMock = vi.fn();
 
 vi.mock("../../api/stockInventoryApi", () => ({
   getStockInventory: (...args: unknown[]) => getMock(...args),
+  exportStockInventory: (...args: unknown[]) => exportMock(...args),
   exportStockInventoryCsv: (...args: unknown[]) => exportMock(...args),
   stockInventoryExportFilename: () => "p7-inventory-test.csv",
 }));
@@ -551,6 +552,7 @@ describe("StockInventoryPage — exportação CSV (doc 119 §8.C)", () => {
     const query = exportMock.mock.calls[0][0];
     expect(query.branch).toBe("all");
     expect(query.reportScope).toBe("all_products");
+    expect(exportMock.mock.calls[0][1]).toBe("csv");
     await waitFor(() =>
       expect(saveMock).toHaveBeenCalledWith(
         expect.any(Blob),
@@ -574,6 +576,23 @@ describe("StockInventoryPage — exportação CSV (doc 119 §8.C)", () => {
     );
     await waitFor(() => expect(exportMock).toHaveBeenCalledTimes(1));
     expect(exportMock.mock.calls[0][0].reportScope).toBe("mp_pi_pa");
+  });
+
+  it("exporta PDF pelo mesmo motor com format=pdf", async () => {
+    getMock.mockResolvedValue(payload());
+    exportMock.mockResolvedValue(
+      new Blob(["pdf"], { type: "application/pdf" }),
+    );
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+    await screen.findByText("Produto Exemplo");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Exportar PDF/ }),
+    );
+
+    await waitFor(() => expect(exportMock).toHaveBeenCalledTimes(1));
+    expect(exportMock.mock.calls[0][1]).toBe("pdf");
   });
 
   it("source_missing desabilita a exportação — ausência não vira arquivo", async () => {
@@ -650,11 +669,9 @@ describe("StockInventoryPage — modo contextual do relatório (UX-011)", () => 
     // Agrupamentos em tabelas organizadas por colunas.
     expect(screen.getByText("Resumo por tipo de produto")).toBeTruthy();
     expect(screen.getByText("Resumo por armazém")).toBeTruthy();
-    // Slot de PDF honesto.
+    // Exportação PDF real disponível no mesmo motor.
     expect(
-      screen.getByText(
-        "A prévia do PDF ainda não está disponível para este relatório.",
-      ),
+      screen.getByRole("button", { name: /Exportar PDF/ }),
     ).toBeTruthy();
   });
 

@@ -14,7 +14,7 @@ import { ApiError } from "../../api/httpClient";
 import { getP3State, type P3Status } from "../../api/p3Api";
 import { saveDocumentBlob } from "../../api/documentsApi";
 import {
-  exportStockInventoryCsv,
+  exportStockInventory,
   getStockInventory,
   stockInventoryExportFilename,
   type StockInventoryBranch,
@@ -66,7 +66,6 @@ import {
 import { useDebouncedValue } from "../../utils/useDebouncedValue";
 import {
   P3ReconciliationSection,
-  ReportPdfSlot,
 } from "./ReportSharedSections";
 import {
   parseStockQuery,
@@ -150,7 +149,7 @@ export function StockInventoryPage({
   const [result, setResult] = useState<FetchResult | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const requestId = useRef(0);
   const [p3Result, setP3Result] = useState<{
@@ -199,26 +198,32 @@ export function StockInventoryPage({
 
   const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
 
-  // Export CSV do mesmo motor (doc 119 §8.C) — o arquivo carrega a
-  // marca de paridade vigente; nunca promove o recorte a documento
-  // oficial enquanto a homologação MATR460 estiver pendente.
-  const handleExport = useCallback(async () => {
-    if (!applied || exporting) return;
-    setExporting(true);
-    setExportError(null);
-    try {
-      const blob = await exportStockInventoryCsv(applied);
-      saveDocumentBlob(blob, stockInventoryExportFilename(applied));
-    } catch (error) {
-      setExportError(
-        error instanceof ApiError
-          ? error.message
-          : "Não foi possível exportar o relatório agora.",
-      );
-    } finally {
-      setExporting(false);
-    }
-  }, [applied, exporting]);
+  // Export do mesmo motor (doc 119 §8.C) — o arquivo carrega a marca
+  // de paridade vigente; nunca promove o recorte a documento oficial
+  // enquanto a homologação MATR460 estiver pendente.
+  const handleExport = useCallback(
+    async (format: "csv" | "pdf") => {
+      if (!applied || exporting) return;
+      setExporting(format);
+      setExportError(null);
+      try {
+        const blob = await exportStockInventory(applied, format);
+        saveDocumentBlob(
+          blob,
+          stockInventoryExportFilename(applied, format),
+        );
+      } catch (error) {
+        setExportError(
+          error instanceof ApiError
+            ? error.message
+            : "Não foi possível exportar o relatório agora.",
+        );
+      } finally {
+        setExporting(null);
+      }
+    },
+    [applied, exporting],
+  );
 
   // RW01: query da rota espelha os campos brutos — reidratação por
   // popstate nunca regrava valor ainda em debounce na URL.
@@ -742,20 +747,36 @@ export function StockInventoryPage({
         }
         onClearFilters={clearFilters}
         extraActions={
-          <CfActionButton
-            variant="ghost"
-            type="button"
-            onClick={handleExport}
-            disabled={
-              exporting ||
-              !payload ||
-              payload.status === "source_missing"
-            }
-            title={CF_HELP.stockInventory.export}
-          >
-            <Download size={16} aria-hidden />{" "}
-            {exporting ? "Exportando…" : "Exportar CSV"}
-          </CfActionButton>
+          <>
+            <CfActionButton
+              variant="ghost"
+              type="button"
+              onClick={() => handleExport("csv")}
+              disabled={
+                exporting !== null ||
+                !payload ||
+                payload.status === "source_missing"
+              }
+              title={CF_HELP.stockInventory.export}
+            >
+              <Download size={16} aria-hidden />{" "}
+              {exporting === "csv" ? "Exportando…" : "Exportar CSV"}
+            </CfActionButton>
+            <CfActionButton
+              variant="ghost"
+              type="button"
+              onClick={() => handleExport("pdf")}
+              disabled={
+                exporting !== null ||
+                !payload ||
+                payload.status === "source_missing"
+              }
+              title={CF_HELP.stockInventory.export}
+            >
+              <Download size={16} aria-hidden />{" "}
+              {exporting === "pdf" ? "Exportando…" : "Exportar PDF"}
+            </CfActionButton>
+          </>
         }
       />
 
@@ -978,9 +999,6 @@ export function StockInventoryPage({
       ) : null}
       </div>
 
-      {reportContext ? (
-        <ReportPdfSlot reportName="Estoque e conciliação" />
-      ) : null}
     </section>
   );
 }

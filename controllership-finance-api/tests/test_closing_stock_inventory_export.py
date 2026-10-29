@@ -26,6 +26,7 @@ PERIOD = "period=2026-09"
 ROUTE = "/closing/stock-inventory/export"
 
 CSV_BYTES = b"\xef\xbb\xbf# competencia=2026-09\nproduct_code\nP1\n"
+CSV_CONTENT_TYPE = "text/csv; charset=utf-8"
 DISPOSITION = 'attachment; filename="p7-inventory-2026-09-all-all_products.csv"'
 
 
@@ -78,7 +79,11 @@ def _auth_pipeline(monkeypatch):
 @pytest.fixture
 def gateway(monkeypatch):
     fake = MagicMock()
-    fake.get_bytes.return_value = (CSV_BYTES, DISPOSITION)
+    fake.get_bytes.return_value = (
+        CSV_BYTES,
+        DISPOSITION,
+        CSV_CONTENT_TYPE,
+    )
     monkeypatch.setattr(
         "controllership_finance_app.interface.http.routes.closing_routes."
         "ApiDelpiSettlementsGateway",
@@ -195,3 +200,26 @@ def test_export_upstream_timeout_maps_503(gateway):
         "api-delpi timeout"
     )
     assert _get(_client(), f"{ROUTE}?{PERIOD}").status_code == 503
+
+
+# --- pdf format ---------------------------------------------------------------
+
+PDF_BYTES = b"%PDF-1.4 fake"
+PDF_CONTENT_TYPE = "application/pdf"
+PDF_DISPOSITION = 'attachment; filename="p7-inventory-2026-09-all-all_products.pdf"'
+
+
+def test_export_pdf_relays_upstream_media_type(gateway):
+    gateway.get_bytes.return_value = (
+        PDF_BYTES,
+        PDF_DISPOSITION,
+        PDF_CONTENT_TYPE,
+    )
+    response = _get(_client(), f"{ROUTE}?{PERIOD}&format=pdf")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/pdf")
+    assert response.headers["content-disposition"] == PDF_DISPOSITION
+    assert response.content == PDF_BYTES
+    assert (
+        gateway.get_bytes.call_args.kwargs["params"]["format"] == "pdf"
+    )

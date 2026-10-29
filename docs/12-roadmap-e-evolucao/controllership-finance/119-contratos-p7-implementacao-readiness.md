@@ -773,6 +773,96 @@ integração operacional→operando P3 permanece `PENDING` (requer
 registro governado com proveniência — possivelmente `OFFICIAL` com
 artefato anexado, decisão do workflow P3, não deste rework).
 
+## 12. Registro de implementação — `CF-PROC0072-ANALYTICS-INDEPENDENCE-IMPLEMENTATION-009` (29/10/2026)
+
+**Objetivo aprovado:** tornar «Relatórios e divergências» uma superfície
+operacional independente da gestão documental — consulta por mês de
+referência + filial autorizada, análise, conciliação analítica e
+exportação PDF, sem cadastro de documentos, checklist, anexo ou
+competência formal aberta (DEC-ANALYTICS-INDEPENDENCE, doc 118 §DEC).
+
+**Contratos novos (api-delpi, envelope canônico + OpenAPI/operationId
+registrados):**
+
+- `GET /financeiro/stock-movements` — R05 «Entradas e Saídas». Matriz
+  MATR320 por tipo de produto (SI/Compras/MovInt/Requisições/
+  Transferências/Produção/Vendas/DevV/DevC/EntPT/SaiPT/SA/Líquido),
+  SD1/SD2/SD3/SF4/SB9/SB1, precisão `DECIMAL(30,9)` por linha antes do
+  SUM (BR-R05-012); `totals.closingBalance` = saldo atual em **todos**
+  os armazéns (incl. 99) — operando E/S da equação.
+- `GET /financeiro/work-in-process` — R08 «Material em Processo».
+  **Mesmo motor MATR989 do P7** (CTE compartilhado em
+  `work_in_process_sql.py` — sem duplicação): `physicalTotal` = SB9
+  armazém 99 (bloco sem-OP), `allocatedTotal` = SD3/SC2 `RE−DE` de OPs
+  abertas, `grandTotal` = físico + alocado. `allocated_quantity`
+  adicionado ao CTE compartilhado.
+- `GET /financeiro/stock-movements/export` e
+  `GET /financeiro/work-in-process/export` — `format=csv|pdf`. PDF por
+  renderer tabular compartilhado
+  (`app/infrastructure/pdf/closing_reports/`), mesmo dataset/filtros/
+  competência/filial/escopo, metadados + SHA-256 + watermark
+  «Relatório operacional — paridade oficial pendente».
+- `GET /financeiro/stock-inventory/export` evoluído para
+  `format=csv|pdf` (mesmo payload, mesma engine — P7 inalterado).
+
+**Contratos novos (BFF `controllership-finance-api`):**
+
+- `GET /closing/stock-movements[/export]` e
+  `GET /closing/work-in-process[/export]` — proxies autenticados
+  (`controllership-finance.access`), bytes+content-type repassados
+  verbatim; S2S reusa o client e o escopo `stock-inventory.read`
+  (mesma família de contrato — nenhum provisionamento Keycloak novo).
+- `GET /closing/analytics/stock-reconciliation` — **conciliação
+  analítica** `DIVERGENCIA = entradasSaidas − p7 − h02`:
+  - `entradasSaidas` = R05 `totals.closingBalance` (SA, todos os
+    armazéns);
+  - `p7` = P7 `stockTotal` (EM ESTOQUE, ex-99);
+  - `h02` = R08 `physicalTotal` (bloco físico sem-OP; o alocado é
+    componente de drill-down, excluído da equação contra dupla
+    contagem);
+  - elegibilidade: qualquer operando ausente/incompleto/indisponível →
+    `INELIGIBLE` + `NOT_COMPUTED`, **nunca zero fabricado**;
+  - paridade em centavos `EXACT_PARITY|DIVERGENCE`, tolerância `NONE`;
+  - `governedReconciliation: "not_persisted"` — a superfície não
+    persiste registro nem substitui o P3 governado;
+  - falhas de autorização propagadas (401/403/`scope_unavailable`).
+- `get_bytes` do gateway estendido com `timeout_seconds` por chamada;
+  exports usam budget dedicado de 120 s (o R08 upstream leva ~38 s;
+  o budget interativo de 30 s retornava 503 espúrio).
+
+**MFE (`plugins/controllership-finance`):** catálogo por
+`ReportKey` (`financial-settlements`, `stock-inventory`,
+`stock-movements`, `work-in-process`); páginas contextuais
+`StockMovementsPage` e `WorkInProcessPage` com filtros persistidos na
+URL (`STOCK_PARAMS`, isolados por família — RW01); seção
+`AnalyticalReconciliationSection` no hub (operandos, valores,
+data-base, divergência, declaração «não substitui o P3»); exports
+CSV+PDF autenticados nos 3 relatórios; Help atualizado.
+
+**Evidência (29/10):**
+
+- api-delpi: 67/67 testes nos arquivos afetados; suites SQL/rotas/use
+  cases + `test_closing_report_pdf.py`; OpenAPI baseline e
+  `route_test_coverage.json` regenerados (6 operationIds cobertos).
+- BFF: 57/57 → suite completa 523 pass (1 falha ambiental
+  `test_clara_mcp_surface` — manifest aponta docs ausentes no
+  container, não relacionada).
+- MFE: `tsc -b` limpo, eslint limpo, vitest 394/395 (única falha =
+  flake pré-existente `DocumentDetailPanel`), `vite build` OK.
+- Live local: conciliação 2026-09/all/`all_products` =
+  `ELIGIBLE`/`EXACT_PARITY`, `divergenceCents "0.00"` (R05
+  14469584.013000 − P7 13767296.144000 − H02 702287.869000).
+- Smoke autenticado `cf-e2e-access` **30/30**: catálogo 4 cartões,
+  seção analítica + declaração não-P3, deep links R05/R08/P7, dados
+  reais, exports R05/R08 CSV+PDF e P7 PDF, selos de paridade
+  pendente, F1 independência documental.
+- 401 anônimo fail-closed nas novas rotas (probe sem Bearer).
+
+**Estados de paridade:** `officialMatr320=false`,
+`officialMatr989=false`, `officialP7=false`, `parityStatus=PENDING`
+— homologação contra novas emissões oficiais segue pendente (E2/E8).
+Nenhum PDF se apresenta como emissão oficial TOTVS.
+
 ---
 
 *Fim do documento 119.*

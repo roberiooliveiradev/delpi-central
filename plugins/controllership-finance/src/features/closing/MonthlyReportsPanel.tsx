@@ -41,6 +41,10 @@ import {
   type StockInventoryPayload,
 } from "../../api/stockInventoryApi";
 import {
+  getStockReconciliation,
+  type StockReconciliationPayload,
+} from "../../api/stockReconciliationApi";
+import {
   getP3State,
   type P3Status,
   type ReconciliationDomain,
@@ -73,10 +77,14 @@ import {
   formatDateTime,
 } from "../../utils/formatters";
 import {
-  FAMILY_TO_REPORT_KEY,
+  REPORT_KEY_TO_FAMILY,
   type ReportFamily,
   type ReportKey,
 } from "./MonthlyReportPage";
+import {
+  AnalyticalReconciliationSection,
+  OPERAND_STATUS_LABELS,
+} from "./ReportSharedSections";
 
 export type { ReportFamily };
 
@@ -126,28 +134,54 @@ type Source<T> =
 
 type Keyed<T> = { key: string; result: Source<T> };
 
-const FAMILY_META: Record<
-  ReportFamily,
+/** Metadados do catálogo — um cartão por relatório implementado. */
+const REPORT_META: Record<
+  ReportKey,
   { name: string; description: string; origin: string }
 > = {
-  settlements: {
+  "financial-settlements": {
     name: "Baixas financeiras",
     description:
       "Pagamentos e recebimentos do período, agrupados por natureza e tipo de movimento.",
     origin: "TOTVS/SE5 — consulta operacional",
   },
-  stock: {
-    name: "Estoque e conciliação",
+  "stock-inventory": {
+    name: "Estoque histórico — P7",
     description:
-      "Posição histórica de estoque (P7) e conferência Entradas/Saídas − P7 − H02.",
-    origin: "TOTVS/SB9 + conciliação P3",
+      "Posição de estoque do fechamento (EM ESTOQUE + EM PROCESSO) pelo motor P7.",
+    origin: "TOTVS/SB9 + MATR989 — consulta operacional",
+  },
+  "stock-movements": {
+    name: "Entradas e saídas — R05",
+    description:
+      "Movimentações do mês por tipo de produto e saldo do fechamento — regra MATR320.",
+    origin: "TOTVS/SD1·SD2·SD3·SF4 + SB9",
+  },
+  "work-in-process": {
+    name: "Material em processo — R08",
+    description:
+      "Material em processo físico (armazém 99) e alocado em ordens vivas — regra MATR989.",
+    origin: "TOTVS/SB9 + SD3/SC2",
   },
 };
+
+const CATALOG_REPORT_KEYS: ReportKey[] = [
+  "financial-settlements",
+  "stock-inventory",
+  "stock-movements",
+  "work-in-process",
+];
 
 const DOMAIN_LABELS: Record<ReconciliationDomain, string> = {
   ENTRADAS_SAIDAS: "Entradas e saídas (R05)",
   P7: "Posição de estoque P7 (R03)",
   H02: "Posição H02 (R08)",
+};
+
+const DOMAIN_OPERAND_LABELS: Record<string, string> = {
+  entradasSaidas: "Entradas e saídas (R05)",
+  p7: "Posição de estoque P7 (R03)",
+  h02: "Material em processo (R08)",
 };
 
 const SOURCE_STATE_LABELS: Record<SourceState, string> = {
@@ -231,9 +265,101 @@ function buildAttentionItems(args: {
   matrix: Source<ReportMatrix> | null;
   settlements: Source<SettlementsSummaryPayload> | null;
   stock: Source<StockInventoryPayload> | null;
+  recon: Source<StockReconciliationPayload> | null;
 }): AttentionItem[] {
-  const { p3, matrix, settlements, stock } = args;
+  const { p3, matrix, settlements, stock, recon } = args;
   const items: AttentionItem[] = [];
+
+  // Conciliação analítica — divergência calculada pela BFF a partir
+  // dos três relatórios operacionais (superfície analítica, distinta
+  // do workflow governado P3).
+  if (recon?.kind === "ready") {
+    const data = recon.data;
+    if (
+      data.eligibility === "ELIGIBLE" &&
+      data.parity === "DIVERGENCE" &&
+      data.divergenceCents !== null
+    ) {
+      items.push({
+        id: "analytics-divergence",
+        kind: "divergence",
+        source: "Conciliação analítica de estoque",
+        description:
+          "Diferença calculada entre Entradas/Saídas, P7 e Material em processo nesta competência.",
+        situation: "Divergência identificada",
+        difference: formatAmount(data.divergenceCents),
+        origin: "Conciliação analítica (E/S − P7 − H02)",
+        fetchedAt: recon.at.toISOString(),
+        nextAction:
+          "Investigue os operandos nos relatórios R05, P7 e R08; a validação formal segue pelo checklist P3.",
+        facts: [
+          [
+            "Entradas e saídas (R05)",
+            data.operands.entradasSaidas.value
+              ? formatAmount(data.operands.entradasSaidas.value)
+              : "—",
+          ],
+          [
+            "Estoque P7 (R03)",
+            data.operands.p7.value
+              ? formatAmount(data.operands.p7.value)
+              : "—",
+          ],
+          [
+            "Material em processo (R08)",
+            data.operands.h02.value
+              ? formatAmount(data.operands.h02.value)
+              : "—",
+          ],
+          [
+            "Divergência",
+            formatAmount(data.divergenceCents),
+          ],
+        ],
+        totvsGuide: null,
+        reportKey: "stock-inventory",
+      });
+    } else if (data.eligibility === "INELIGIBLE") {
+      const missing = data.ineligibleOperands
+        .map(
+          (key) =>
+            DOMAIN_OPERAND_LABELS[key] ?? key,
+        )
+        .join(", ");
+      items.push({
+        id: "analytics-ineligible",
+        kind: "check_pending",
+        source: "Conciliação analítica de estoque",
+        description: `Operandos indisponíveis ou incompletos: ${missing}. A divergência não é calculada — fonte ausente nunca entra como zero.`,
+        situation: "Conciliação pendente",
+        difference: null,
+        origin: "Conciliação analítica (E/S − P7 − H02)",
+        fetchedAt: recon.at.toISOString(),
+        nextAction:
+          "Consulte os relatórios indisponíveis na origem — a conciliação calcula quando os três operandos estão completos.",
+        facts: [
+          ["Operandos pendentes", missing],
+          ["Estado", "Cálculo não realizado"],
+        ],
+        totvsGuide: null,
+      });
+    }
+  } else if (recon?.kind === "error") {
+    items.push({
+      id: "analytics-error",
+      kind: "source_unavailable",
+      source: "Conciliação analítica de estoque",
+      description:
+        "Não foi possível consultar a conciliação analítica deste período.",
+      situation: recon.error.message,
+      difference: null,
+      origin: "Conciliação analítica (E/S − P7 − H02)",
+      fetchedAt: null,
+      nextAction: "Atualize a consulta e tente novamente.",
+      facts: [["Erro", recon.error.message]],
+      totvsGuide: null,
+    });
+  }
 
   // Conciliação P3 — divergências monetárias canônicas.
   if (p3?.kind === "ready") {
@@ -656,7 +782,7 @@ export function MonthlyReportsPanel({
   period: string;
   selectedReport: ReportFamily | null;
   /** Abre a página contextual do relatório (UX-011 D3). */
-  onOpenReport: (family: ReportFamily) => void;
+  onOpenReport: (key: ReportKey) => void;
 }) {
   const [nonce, setNonce] = useState(0);
   const reload = useCallback(() => setNonce((n) => n + 1), []);
@@ -668,11 +794,14 @@ export function MonthlyReportsPanel({
     useState<Keyed<SettlementsSummaryPayload> | null>(null);
   const [stockResult, setStockResult] =
     useState<Keyed<StockInventoryPayload> | null>(null);
+  const [reconResult, setReconResult] =
+    useState<Keyed<StockReconciliationPayload> | null>(null);
 
   const p3Id = useRef(0);
   const matrixId = useRef(0);
   const setId = useRef(0);
   const stockId = useRef(0);
+  const reconId = useRef(0);
 
   const sourceKey = `${period}:${nonce}`;
   const { startDate, endDate } = useMemo(
@@ -687,11 +816,14 @@ export function MonthlyReportsPanel({
     setResult?.key === sourceKey ? setResult.result : null;
   const stock =
     stockResult?.key === sourceKey ? stockResult.result : null;
+  const recon =
+    reconResult?.key === sourceKey ? reconResult.result : null;
   const anyLoading =
     p3 === null ||
     matrix === null ||
     settlements === null ||
-    stock === null;
+    stock === null ||
+    recon === null;
 
   useEffect(() => {
     if (!period) return;
@@ -806,10 +938,38 @@ export function MonthlyReportsPanel({
     return () => controller.abort();
   }, [period, sourceKey]);
 
+  // Conciliação analítica (E/S − P7 − H02) — consulta operacional
+  // por mês de referência; não depende de competência aberta nem do
+  // fluxo documental (DEC-ANALYTICS-INDEPENDENCE).
+  useEffect(() => {
+    if (!period) return;
+    const id = ++reconId.current;
+    const controller = new AbortController();
+    getStockReconciliation(
+      { period },
+      { signal: controller.signal },
+    )
+      .then((data) => {
+        if (controller.signal.aborted || reconId.current !== id) return;
+        setReconResult({
+          key: sourceKey,
+          result: { kind: "ready", data, at: new Date() },
+        });
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted || reconId.current !== id) return;
+        setReconResult({
+          key: sourceKey,
+          result: { kind: "error", error: mapError(err) },
+        });
+      });
+    return () => controller.abort();
+  }, [period, sourceKey]);
+
   const attention = useMemo(
     () =>
-      buildAttentionItems({ p3, matrix, settlements, stock }),
-    [p3, matrix, settlements, stock],
+      buildAttentionItems({ p3, matrix, settlements, stock, recon }),
+    [p3, matrix, settlements, stock, recon],
   );
 
   // Indicadores — só valores cuja definição está comprovada.
@@ -822,16 +982,31 @@ export function MonthlyReportsPanel({
   const divergenceUnknown =
     p3?.kind === "error" ||
     settlements?.kind === "error" ||
-    stock?.kind === "error";
-  const availableFamilies = (
-    ["settlements", "stock"] as const
-  ).filter((family) => {
-    if (family === "settlements") return settlements?.kind === "ready";
-    return (
-      stock?.kind === "ready" &&
-      stock.data.status !== "source_missing"
-    );
-  }).length;
+    stock?.kind === "error" ||
+    recon?.kind === "error";
+  const operandStatus = (
+    key: "entradasSaidas" | "p7" | "h02",
+  ): string | null =>
+    recon?.kind === "ready"
+      ? (recon.data.operands[key].status ?? null)
+      : null;
+  const reportAvailable = (key: ReportKey): boolean => {
+    if (key === "financial-settlements") {
+      return settlements?.kind === "ready";
+    }
+    if (key === "stock-inventory") {
+      return (
+        stock?.kind === "ready" &&
+        stock.data.status !== "source_missing"
+      );
+    }
+    const operand =
+      key === "stock-movements" ? "entradasSaidas" : "h02";
+    return operandStatus(operand) === "AVAILABLE";
+  };
+  const availableReports = CATALOG_REPORT_KEYS.filter(
+    reportAvailable,
+  ).length;
 
   const scrollTo = (id: string) => {
     const node = document.getElementById(id);
@@ -844,13 +1019,6 @@ export function MonthlyReportsPanel({
   const [expandedAttention, setExpandedAttention] = useState<
     string | null
   >(null);
-
-  const openReportKey = (key: ReportKey) => {
-    const family = (
-      Object.keys(FAMILY_TO_REPORT_KEY) as ReportFamily[]
-    ).find((f) => FAMILY_TO_REPORT_KEY[f] === key);
-    if (family) onOpenReport(family);
-  };
 
   if (!period) {
     return (
@@ -894,12 +1062,12 @@ export function MonthlyReportsPanel({
             onActivate={() => scrollTo("cf-reports-attention")}
           />
           <CfInteractiveDataCard
-            ariaLabel={`Relatórios disponíveis: ${availableFamilies}`}
+            ariaLabel={`Relatórios disponíveis: ${availableReports}`}
             fields={[
               {
                 id: "value",
                 label: "Relatórios disponíveis",
-                value: anyLoading ? "—" : String(availableFamilies),
+                value: anyLoading ? "—" : String(availableReports),
                 valueTone: "value",
                 present: true,
                 hint: "famílias com consulta autorizada",
@@ -959,13 +1127,20 @@ export function MonthlyReportsPanel({
                       current === item.id ? null : item.id,
                     )
                   }
-                  onOpenReport={openReportKey}
+                  onOpenReport={onOpenReport}
                 />
               ))}
             </ul>
           )}
         </section>
       </CfSectionCard>
+
+      {/* Conciliação analítica — composição BFF dos três relatórios
+          operacionais; distinta da conciliação governada P3. */}
+      <AnalyticalReconciliationSection
+        reconciliation={recon?.kind === "ready" ? recon.data : null}
+        loading={recon === null}
+      />
 
       {/* Catálogo compacto — cada cartão abre a página contextual do
           relatório dentro do Fechamento Mensal (sem rótulos repetidos). */}
@@ -980,33 +1155,49 @@ export function MonthlyReportsPanel({
           className="cf-report-cards"
           aria-label="Catálogo de relatórios"
         >
-          {(["settlements", "stock"] as const).map((family) => {
-            const meta = FAMILY_META[family];
-            const status =
-              family === "settlements"
-                ? settlements?.kind === "ready"
+          {CATALOG_REPORT_KEYS.map((key) => {
+            const meta = REPORT_META[key];
+            let status: string | null;
+            let updated: Date | null = null;
+            if (key === "financial-settlements") {
+              status =
+                settlements?.kind === "ready"
                   ? "Disponível"
                   : settlements?.kind === "error"
                     ? "Indisponível"
-                    : null
-                : stock?.kind === "ready"
-                  ? STOCK_STATUS_LABELS[stock.data.status] ??
-                    "Disponível"
+                    : null;
+              updated =
+                settlements?.kind === "ready" ? settlements.at : null;
+            } else if (key === "stock-inventory") {
+              status =
+                stock?.kind === "ready"
+                  ? (STOCK_STATUS_LABELS[stock.data.status] ??
+                    "Disponível")
                   : stock?.kind === "error"
                     ? "Indisponível"
                     : null;
-            const updated =
-              family === "settlements"
-                ? settlements?.kind === "ready"
-                  ? settlements.at
-                  : null
-                : stock?.kind === "ready"
-                  ? stock.at
-                  : null;
-            const selected = selectedReport === family;
+              updated = stock?.kind === "ready" ? stock.at : null;
+            } else {
+              // R05/R08 — disponibilidade derivada da conciliação
+              // analítica (a BFF consulta cada produtor e classifica
+              // o operando; fonte ausente nunca entra como zero).
+              const operand =
+                key === "stock-movements" ? "entradasSaidas" : "h02";
+              status =
+                recon?.kind === "ready"
+                  ? (OPERAND_STATUS_LABELS[
+                      recon.data.operands[operand].status ?? ""
+                    ] ?? "Disponível")
+                  : recon?.kind === "error"
+                    ? "Indisponível"
+                    : null;
+              updated = recon?.kind === "ready" ? recon.at : null;
+            }
+            const selected =
+              selectedReport === REPORT_KEY_TO_FAMILY[key];
             return (
               <CfInteractiveDataCard
-                key={family}
+                key={key}
                 className={
                   selected ? "cf-report-card--selected" : undefined
                 }
@@ -1014,7 +1205,7 @@ export function MonthlyReportsPanel({
                   selected ? " — último relatório aberto" : ""
                 }`}
                 openHint="Abrir relatório"
-                onActivate={() => onOpenReport(family)}
+                onActivate={() => onOpenReport(key)}
               >
                 <div className="cf-report-card">
                   <strong className="cf-report-card__name">

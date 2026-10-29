@@ -140,8 +140,10 @@ def test_wip_query_matr989_rule():
     assert "C2.C2_DATRF <= ?" in query
     assert "P3.D3_EMISSAO <= ?" in query
     assert "D_E_L_E_T_ = ' '" in query
-    assert params[:2] == ["RE%", "DE%"]
-    assert params[2:4] == ["01", "02"]
+    # Value CASE (RE%/DE%) then quantity CASE (RE%/DE%) precede the
+    # branch list — the CTE binds both CASE pairs first.
+    assert params[:4] == ["RE%", "DE%", "RE%", "DE%"]
+    assert params[4:6] == ["01", "02"]
     assert "20260930" in params
     assert params.count("20261001") == 2
 

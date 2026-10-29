@@ -131,3 +131,44 @@ class StockInventoryRepository(BaseRepository, StockInventoryRepositoryPort):
         )
         with self:
             return self.execute_query(query, params)
+
+    def work_in_process_detail(
+        self,
+        *,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        movement_cutoff: str,
+        op_alive_cutoff: str,
+        page: int,
+        page_size: int,
+    ) -> list[dict]:
+        query, params = work_in_process_sql.build_work_in_process_detail_query(
+            branches=branches,
+            product_types=product_types,
+            movement_cutoff=movement_cutoff,
+            op_alive_cutoff=op_alive_cutoff,
+            page=page,
+            page_size=page_size,
+        )
+        with self:
+            return self.execute_query(query, params)
+
+    def work_in_process_detail_count(
+        self,
+        *,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        movement_cutoff: str,
+        op_alive_cutoff: str,
+    ) -> int:
+        query, params = (
+            work_in_process_sql.build_work_in_process_detail_count_query(
+                branches=branches,
+                product_types=product_types,
+                movement_cutoff=movement_cutoff,
+                op_alive_cutoff=op_alive_cutoff,
+            )
+        )
+        with self:
+            row = self.execute_one(query, params) or {}
+        return int(row.get("item_count") or 0)

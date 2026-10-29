@@ -92,7 +92,7 @@ export const CF_HELP = {
     status:
       "Disponibilidade da origem: «Disponível» = snapshot encontrado; «Parcial» = alguma filial solicitada não tem snapshot no mês; «Não encontrado» = o ERP não gravou fechamento de estoque para a competência; «Sem itens» = o snapshot existe mas os filtros não retornaram registros. Estados de acesso: «Acesso restrito» = seu usuário não possui a permissão do Portal; «Consulta ainda não habilitada» = a liberação do conjunto de dados está desativada no ambiente; «Integração de dados pendente» = a credencial técnica entre o Portal e a origem ainda aguarda autorização — acione o suporte.",
     export:
-      "Exporta o relatório completo em CSV com o mesmo motor e escopo da tela — o cabeçalho registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como documento não oficial — ele não substitui a emissão MATR460 do ERP. A entrega à DRE continua pelo fluxo documental de pacotes.",
+      "Exporta o relatório completo em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR460 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações — a entrega à DRE continua pelo fluxo documental de pacotes.",
     summaryType:
       "Totais por tipo de produto (MP, PI, PA e demais) sobre o universo filtrado, com a participação percentual de cada grupo no valor histórico total.",
     summaryWarehouse:
@@ -115,6 +115,49 @@ export const CF_HELP = {
       percent:
         "Participação do grupo no valor histórico total do universo filtrado.",
     },
+  },
+  stockMovements: {
+    page:
+      "Entradas e Saídas — R05: resumo das movimentações de estoque do mês por tipo de produto, com a regra do relatório MATR320 do ERP (recebimentos, saídas, movimentos internos e saldo do fechamento). A paridade por competência contra uma nova emissão oficial MATR320 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",
+    totals:
+      "Saldo inicial é uma coluna derivada (saldo atual − movimento líquido do mês) — não é um registro gravado. Saldo atual vem do snapshot de fechamento do ERP sobre todos os armazéns, incluindo o armazém de processo — o mesmo universo que alimenta a conciliação. Quando o snapshot não existe, os saldos ficam «—»: ausência nunca aparece como zero.",
+    export:
+      "Exporta o relatório em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR320 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações — exportar não cria exigência documental.",
+    table:
+      "Uma linha por tipo de produto com as colunas do MATR320: saldo inicial derivado, compras, movimentos internos, requisições, transferências, produção, vendas, transferência para processo (memo — não entra na equação de saldo), devoluções, poder de terceiros, saldo atual e movimento líquido.",
+    columns: {
+      type: "Tipo do produto (MP, PI, PA e demais tipos TOTVS).",
+    },
+  },
+  workInProcess: {
+    page:
+      "Material em Processo — R08: relatório do material em processo no fechamento do mês, com a mesma composição MATR989 que o motor P7 certifica — bloco físico do armazém de processo (99) mais o saldo alocado em ordens de produção vivas. A paridade por competência contra uma nova emissão oficial MATR989 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",
+    totals:
+      "Físico (armazém 99) = estoque gravado no armazém de processo sem vínculo a ordem — bloco sem-OP do MATR989, que é o operando H02 da conciliação. Alocado em OPs = saldo líquido requisitado (RE − DE) em ordens de produção vivas na data de emissão — medida distinta, não somada como operando para evitar dupla contagem. Total em processo = físico + alocado. Quando o snapshot não existe, os totais ficam «—».",
+    export:
+      "Exporta o relatório em CSV ou PDF com o mesmo motor e escopo da tela — o documento registra competência, filial, escopo, data-base, fonte, hash do conteúdo, quem gerou e o estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não substitui a emissão MATR989 do ERP. O PDF pode ser anexado depois, por decisão sua, em Documentos e interações.",
+    summaryType:
+      "Totais por tipo de produto separando as duas medidas do MATR989 — físico do armazém 99 e alocado em ordens — com a contagem de ordens abertas na referência.",
+    table:
+      "Detalhamento do saldo alocado por produto e ordem de produção (bloco com-OP do MATR989). O bloco físico sem-OP é o mesmo universo exibido no P7 filtrando armazém 99 — aqui aparece consolidado por tipo, sem duplicar item a item.",
+    columns: {
+      product: "Código do produto no ERP.",
+      description: "Descrição do produto no cadastro do ERP.",
+      order: "Ordem de produção viva à qual o saldo está alocado.",
+      physical:
+        "Valor físico do tipo no armazém de processo (bloco sem-OP).",
+      allocatedQuantity:
+        "Quantidade líquida requisitada para a ordem (RE − DE).",
+      allocatedValue:
+        "Valor líquido alocado à ordem de produção (RE − DE).",
+      total: "Físico + alocado do tipo de produto.",
+      openOrders:
+        "Quantidade de ordens de produção abertas com saldo alocado.",
+    },
+  },
+  analytics: {
+    reconciliation:
+      "Conciliação analítica de estoque: DIVERGENCIA = Entradas/Saídas (saldo atual, todos os armazéns) − P7 (em estoque, fora do armazém de processo) − H02 (material em processo físico, bloco sem-OP do armazém 99). A paridade exigida é exatamente R$ 0,00. A divergência só é calculada quando os três operandos estão disponíveis na mesma competência e filial — fonte ausente ou incompleta nunca entra como zero. É uma visão analítica: não grava registro e não substitui a conciliação governada do checklist P3, que permanece a autoridade do fechamento.",
   },
   checklist: {
     page:
@@ -408,7 +451,7 @@ export const CF_HELP = {
     reportsAttention:
       "O que precisa de atenção: divergência comprovada (diferença calculada pelo owner), fonte indisponível (a consulta não respondeu ou está parcial), conciliação pendente (o relatório operacional responde, mas a fonte ainda não foi validada como operando da conciliação P3 — consulta disponível não é elegibilidade para conciliar), fonte não registrada (o domínio ainda não tem fonte elegível registrada) e conferência não realizada (atividade ainda não executada). Cada item mostra origem, data da consulta e próxima ação; «Ver detalhes» expande valores, fatos e orientação de correção manual no TOTVS quando comprovada — sem escrever no ERP.",
     reportsCatalog:
-      "Relatórios organizados em cartões por família: Baixas financeiras (pagamentos e recebimentos SE5) e Estoque e conciliação (posição P7 + conferência Entradas/Saídas − P7 − H02). «Abrir relatório» abre a página contextual do relatório — a situação do cartão reflete a consulta real, não a homologação do relatório oficial.",
+      "Relatórios organizados em cartões por família: Baixas financeiras (pagamentos e recebimentos SE5) e Estoque e conciliação — posição P7 (R03), Entradas e saídas (R05), Material em processo (R08) e a conciliação analítica Entradas/Saídas − P7 − H02. «Abrir relatório» abre a página contextual — a situação do cartão reflete a consulta real, não a homologação do relatório oficial. A consulta não depende de competência aberta nem de documentos cadastrados.",
     reportsResults:
       "Página contextual do relatório: totais calculados pelo backend, agrupamentos em tabelas por colunas e registros com filtros e paginação reais do contrato. A competência vem da rota e os filtros vigentes ficam na própria URL — atualizar a página (F5), abrir um link direto ou navegar com voltar/avançar restaura o contexto da análise, e o retorno à aba Relatórios e divergências preserva a família e a seleção anterior.",
     attention:

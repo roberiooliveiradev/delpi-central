@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 772,
+  "operation_count": 784,
   "operations": [
     {
       "method": "GET",
@@ -1631,6 +1631,328 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Order delivery forecast (C6_ENTREG) versus billing realized (D2_EMISSAO) for a period, with variance."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/billing/by-customer-month",
+      "operationId": "get_commercial_billing_by_customer_month",
+      "summary": "Get Commercial Billing By Customer Month",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer codes (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match).",
+          "type": "string"
+        },
+        {
+          "name": "customer_centers",
+          "in": "query",
+          "required": false,
+          "description": "CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match).",
+          "type": "string"
+        },
+        {
+          "name": "nature",
+          "in": "query",
+          "required": false,
+          "description": "Billing nature: gross (NF F2_VALBRUT) or net (ROL).",
+          "type": "string",
+          "default": "gross"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=500 ge=1 le=5000",
+          "type": "integer",
+          "default": 500
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_billing_by_customer_month",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_centers": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505.",
+                "label": "Customer centers"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505.",
+                "label": "Centros do cliente"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "nature": {
+            "locale": {
+              "en": {
+                "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+                "label": "Nature"
+              },
+              "pt-BR": {
+                "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida).",
+                "label": "Natureza"
+              }
+            },
+            "enumLabels": {
+              "order_gross": {
+                "en": {
+                  "label": "Order / NF gross"
+                },
+                "pt-BR": {
+                  "label": "Bruto de pedido / NF"
+                }
+              },
+              "rol": {
+                "en": {
+                  "label": "Net operating revenue (ROL)"
+                },
+                "pt-BR": {
+                  "label": "Receita operacional líquida (ROL)"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Customer × month billing matrix for commercial reports (gross NF or net ROL)."
     },
     {
       "method": "GET",
@@ -25976,6 +26298,921 @@
     },
     {
       "method": "GET",
+      "path": "/engineering/lmps/facts",
+      "operationId": "list_lmp_facts",
+      "summary": "Fatos de LMPs (contrato facts F-LMP-01)",
+      "tags": [
+        "Engenharia",
+        "Engenharia — LMP Facts"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "listing_type",
+          "in": "query",
+          "required": false,
+          "description": "LMP listing type: Todos, LMP, Amostra or Outro.",
+          "enum": [
+            "Todos",
+            "LMP",
+            "Amostra",
+            "Outro"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "default": 1,
+          "type": "integer"
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=500",
+          "default": 50,
+          "type": "integer"
+        },
+        {
+          "name": "include_qtd_pi",
+          "in": "query",
+          "required": false,
+          "description": "Include PI quantity query parameter.",
+          "type": "boolean"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "lmp_fact",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "include_qtd_pi": {
+            "locale": {
+              "en": {
+                "description": "Include PI quantity query parameter.",
+                "label": "Include PI quantity"
+              },
+              "pt-BR": {
+                "description": "Inclui quantidade de produto intermediário (PI) no resultado.",
+                "label": "Incluir quantidade PI"
+              }
+            }
+          },
+          "listing_type": {
+            "locale": {
+              "en": {
+                "description": "Listing type query parameter.",
+                "label": "Listing type"
+              },
+              "pt-BR": {
+                "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra).",
+                "label": "Tipo de listagem"
+              }
+            },
+            "enumLabels": {
+              "Amostra": {
+                "en": {
+                  "label": "Sample"
+                },
+                "pt-BR": {
+                  "label": "Amostra"
+                }
+              },
+              "LMP": {
+                "en": {
+                  "label": "LMP"
+                },
+                "pt-BR": {
+                  "label": "LMP"
+                }
+              },
+              "Outro": {
+                "en": {
+                  "label": "Other"
+                },
+                "pt-BR": {
+                  "label": "Outro"
+                }
+              },
+              "Todos": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todos"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Listagem de fatos oficiais de LMPs extraídos das fontes TOTVS para o cálculo de regras pela Engineering API. Retorna campos de origem e flags derivadas declaradas; não retorna status, nível, prazo nem KPI. Contrato técnico (S2S ou Bearer autorizado); não é ferramenta de chat para perguntas de negócio — prefira o dashboard legado."
+    },
+    {
+      "method": "POST",
+      "path": "/engineering/lmps/facts/pi-counts",
+      "operationId": "get_lmp_pi_counts",
+      "summary": "Contagens de PI em lote por OV (F-LMP-04)",
+      "tags": [
+        "Engenharia",
+        "Engenharia — LMP Facts"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "lmp_pi_count",
+        "shape": "list",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Contagem de itens PI (BOM) por (filial, OV, revisão) em lote limitado, evitando consultas N+1 dos consumers de regras. Entrada máxima de 500 chaves. Contrato técnico facts; resposta associa inequivocamente chave → contagem."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}",
+      "operationId": "get_lmp_fact",
+      "summary": "Fato de LMP por OV (F-LMP-02)",
+      "tags": [
+        "Engenharia",
+        "Engenharia — LMP Facts"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "sale_number",
+          "in": "path",
+          "required": true,
+          "description": "Número da OV",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "include",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated flags for optional response sections (e.g. portfolio for weekly open orders).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "lmp_fact",
+        "shape": "product_snapshot",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "include": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated flags for optional response sections (e.g. portfolio for weekly open orders).",
+                "label": "Include sections"
+              },
+              "pt-BR": {
+                "description": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal).",
+                "label": "Seções opcionais"
+              }
+            },
+            "enumLabels": {
+              "portfolio": {
+                "en": {
+                  "label": "Portfolio"
+                },
+                "pt-BR": {
+                  "label": "Carteira semanal"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Detalhe de uma LMP no contrato facts: dados de origem autorizados, revisões, datas, flags derivadas declaradas e provenance. Não calcula classificação final — pertence à Engineering API."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}/history/events",
+      "operationId": "get_lmp_facts_history_events",
+      "summary": "Fatos de histórico da OV — eventos (F-LMP-03)",
+      "tags": [
+        "Engenharia",
+        "Engenharia — LMP Facts"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "sale_number",
+          "in": "path",
+          "required": true,
+          "description": "Número da OV",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "revision",
+          "in": "query",
+          "required": false,
+          "description": "Revision query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "lmp_fact_history",
+        "shape": "list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "revision": {
+            "locale": {
+              "en": {
+                "description": "Revision query parameter.",
+                "label": "Revision"
+              },
+              "pt-BR": {
+                "description": "Número ou código da revisão.",
+                "label": "Revisão"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Eventos oficiais do histórico AIJ010 da OV no contrato facts: ordenação determinística, timestamps, origem declarada e sem deduplicação interpretativa — dedup/semântica pertencem ao consumer de regras."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}/history/flow",
+      "operationId": "get_lmp_facts_history_flow",
+      "summary": "Fatos de histórico da OV — fluxo de engenharia (F-LMP-03)",
+      "tags": [
+        "Engenharia",
+        "Engenharia — LMP Facts"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "sale_number",
+          "in": "path",
+          "required": true,
+          "description": "Número da OV",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "revision",
+          "in": "query",
+          "required": false,
+          "description": "Revision query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "lmp_fact_history_flow",
+        "shape": "list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "revision": {
+            "locale": {
+              "en": {
+                "description": "Revision query parameter.",
+                "label": "Revision"
+              },
+              "pt-BR": {
+                "description": "Número ou código da revisão.",
+                "label": "Revisão"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Eventos de engenharia da OV com contexto anterior/próximo no contrato facts, preservando a informação oficial da fonte para as regras de histórico da Engineering API."
+    },
+    {
+      "method": "GET",
       "path": "/engineering/lmps/nonconformities",
       "operationId": "list_lmp_nonconformities",
       "summary": "List LMP nonconformities",
@@ -34607,6 +35844,629 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna financeiro stock inventory via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/stock-inventory/export",
+      "operationId": "export_financeiro_stock_inventory",
+      "summary": "Exportação — Financeiro stock inventory export",
+      "tags": [
+        "Financeiro — Stock Inventory"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "period",
+          "in": "query",
+          "required": true,
+          "description": "Competence in YYYY-MM. The SB9 snapshot is read at the last calendar day of that month (no month substitution).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "default": "all",
+          "type": "string"
+        },
+        {
+          "name": "report_scope",
+          "in": "query",
+          "required": false,
+          "description": "Operational view: all_products | mp_pi_pa.",
+          "default": "all_products",
+          "type": "string"
+        },
+        {
+          "name": "warehouse",
+          "in": "query",
+          "required": false,
+          "description": "Warehouse filter (SB9 B9_LOCAL).",
+          "type": "string"
+        },
+        {
+          "name": "format",
+          "in": "query",
+          "required": false,
+          "description": "Export format — csv or pdf.",
+          "type": "string",
+          "default": "csv"
+        }
+      ],
+      "xDelpi": {
+        "entity": "financeiro_stock_inventory_export",
+        "shape": "document_export",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "format": {
+            "locale": {
+              "en": {
+                "description": "Format query parameter.",
+                "label": "Format"
+              },
+              "pt-BR": {
+                "description": "Formato de saída ou apresentação do dado.",
+                "label": "Formato"
+              }
+            }
+          },
+          "warehouse": {
+            "locale": {
+              "en": {
+                "description": "Warehouse query parameter.",
+                "label": "Warehouse"
+              },
+              "pt-BR": {
+                "description": "Código do armazém/estoque.",
+                "label": "Armazém"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna financeiro stock inventory export via API DELPI. Resposta estruturada para consumo no chat. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/stock-movements",
+      "operationId": "get_financeiro_stock_movements",
+      "summary": "Indicador — Financeiro stock movements",
+      "tags": [
+        "Financeiro — Stock Movements"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "period",
+          "in": "query",
+          "required": true,
+          "description": "Competence in YYYY-MM. The SB9 snapshot is read at the last calendar day of that month (no month substitution).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "default": "all",
+          "type": "string"
+        },
+        {
+          "name": "report_scope",
+          "in": "query",
+          "required": false,
+          "description": "Operational view: all_products | mp_pi_pa.",
+          "default": "all_products",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "financeiro_stock_movements",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna financeiro stock movements via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/stock-movements/export",
+      "operationId": "export_financeiro_stock_movements",
+      "summary": "Exportação — Financeiro stock movements export",
+      "tags": [
+        "Financeiro — Stock Movements"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "period",
+          "in": "query",
+          "required": true,
+          "description": "Competence in YYYY-MM. The SB9 snapshot is read at the last calendar day of that month (no month substitution).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "default": "all",
+          "type": "string"
+        },
+        {
+          "name": "report_scope",
+          "in": "query",
+          "required": false,
+          "description": "Operational view: all_products | mp_pi_pa.",
+          "default": "all_products",
+          "type": "string"
+        },
+        {
+          "name": "format",
+          "in": "query",
+          "required": false,
+          "description": "Export format — csv or pdf.",
+          "type": "string",
+          "default": "csv"
+        }
+      ],
+      "xDelpi": {
+        "entity": "financeiro_stock_movements_export",
+        "shape": "document_export",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "format": {
+            "locale": {
+              "en": {
+                "description": "Format query parameter.",
+                "label": "Format"
+              },
+              "pt-BR": {
+                "description": "Formato de saída ou apresentação do dado.",
+                "label": "Formato"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna financeiro stock movements export via API DELPI. Resposta estruturada para consumo no chat. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/work-in-process",
+      "operationId": "get_financeiro_work_in_process",
+      "summary": "Lista paginada — Financeiro work in process",
+      "tags": [
+        "Financeiro — Work In Process"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "period",
+          "in": "query",
+          "required": true,
+          "description": "Competence in YYYY-MM. The SB9 snapshot is read at the last calendar day of that month (no month substitution).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "default": "all",
+          "type": "string"
+        },
+        {
+          "name": "report_scope",
+          "in": "query",
+          "required": false,
+          "description": "Operational view: all_products | mp_pi_pa.",
+          "default": "all_products",
+          "type": "string"
+        },
+        {
+          "name": "warehouse",
+          "in": "query",
+          "required": false,
+          "description": "Warehouse filter (SB9 B9_LOCAL).",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (minimum 1).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=200",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "financeiro_work_in_process",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "warehouse": {
+            "locale": {
+              "en": {
+                "description": "Warehouse query parameter.",
+                "label": "Warehouse"
+              },
+              "pt-BR": {
+                "description": "Código do armazém/estoque.",
+                "label": "Armazém"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna financeiro work in process via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/work-in-process/export",
+      "operationId": "export_financeiro_work_in_process",
+      "summary": "Exportação — Financeiro work in process export",
+      "tags": [
+        "Financeiro — Work In Process"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "period",
+          "in": "query",
+          "required": true,
+          "description": "Competence in YYYY-MM. The SB9 snapshot is read at the last calendar day of that month (no month substitution).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "default": "all",
+          "type": "string"
+        },
+        {
+          "name": "report_scope",
+          "in": "query",
+          "required": false,
+          "description": "Operational view: all_products | mp_pi_pa.",
+          "default": "all_products",
+          "type": "string"
+        },
+        {
+          "name": "format",
+          "in": "query",
+          "required": false,
+          "description": "Export format — csv or pdf.",
+          "type": "string",
+          "default": "csv"
+        }
+      ],
+      "xDelpi": {
+        "entity": "financeiro_work_in_process_export",
+        "shape": "document_export",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "format": {
+            "locale": {
+              "en": {
+                "description": "Format query parameter.",
+                "label": "Format"
+              },
+              "pt-BR": {
+                "description": "Formato de saída ou apresentação do dado.",
+                "label": "Formato"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna financeiro work in process export via API DELPI. Resposta estruturada para consumo no chat. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
     },
     {
       "method": "GET",
@@ -69591,6 +71451,20 @@
           "type": "string"
         },
         {
+          "name": "subgroup",
+          "in": "query",
+          "required": false,
+          "description": "Filtro opcional por subgrupo (SB1.B1_SUBGRUP, exato).",
+          "type": "string"
+        },
+        {
+          "name": "product_type",
+          "in": "query",
+          "required": false,
+          "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract.",
+          "type": "string"
+        },
+        {
           "name": "description",
           "in": "query",
           "required": false,
@@ -69755,6 +71629,36 @@
               "pt-BR": {
                 "description": "Quantidade de linhas por página.",
                 "label": "Tamanho da página"
+              }
+            }
+          },
+          "product_type": {
+            "locale": {
+              "en": {
+                "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract.",
+                "label": "Product type"
+              },
+              "pt-BR": {
+                "description": "Filtra por tipo de produto (SB1.B1_TIPO); valores aceitos dependem do contrato da rota.",
+                "label": "Tipo de produto"
+              }
+            },
+            "enumLabels": {
+              "PA": {
+                "en": {
+                  "label": "Finished product (PA)"
+                },
+                "pt-BR": {
+                  "label": "Produto acabado (PA)"
+                }
+              },
+              "PI": {
+                "en": {
+                  "label": "Intermediate product (PI)"
+                },
+                "pt-BR": {
+                  "label": "Produto intermediário (PI)"
+                }
               }
             }
           },
@@ -74802,6 +76706,33 @@
           "required": false,
           "description": "Rows per page.",
           "type": "integer"
+        },
+        {
+          "name": "sort_by",
+          "in": "query",
+          "required": false,
+          "description": "Sort by query parameter.",
+          "type": "string",
+          "enum": [
+            "ov",
+            "interna",
+            "cliente",
+            "oportunidade",
+            "versao",
+            "data",
+            "itens"
+          ]
+        },
+        {
+          "name": "sort_dir",
+          "in": "query",
+          "required": false,
+          "description": "Sort direction: asc or desc.",
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ]
         }
       ],
       "xDelpi": {
@@ -74866,6 +76797,154 @@
               "pt-BR": {
                 "description": "Texto livre de busca.",
                 "label": "Busca"
+              }
+            }
+          },
+          "sort_by": {
+            "locale": {
+              "en": {
+                "description": "Sort by query parameter.",
+                "label": "Sort by"
+              },
+              "pt-BR": {
+                "description": "Campo usado para ordenar a listagem.",
+                "label": "Ordenar por"
+              }
+            },
+            "enumLabels": {
+              "customer_name": {
+                "en": {
+                  "label": "Customer name"
+                },
+                "pt-BR": {
+                  "label": "Nome do cliente"
+                }
+              },
+              "defect_description": {
+                "en": {
+                  "label": "Defect description"
+                },
+                "pt-BR": {
+                  "label": "Descrição do defeito"
+                }
+              },
+              "executed_by": {
+                "en": {
+                  "label": "Executed by"
+                },
+                "pt-BR": {
+                  "label": "Executado por"
+                }
+              },
+              "last_revision_date": {
+                "en": {
+                  "label": "Last revision date"
+                },
+                "pt-BR": {
+                  "label": "Data da última revisão"
+                }
+              },
+              "launch_date": {
+                "en": {
+                  "label": "Launch date"
+                },
+                "pt-BR": {
+                  "label": "Data de lançamento"
+                }
+              },
+              "lmp_number": {
+                "en": {
+                  "label": "LMP number"
+                },
+                "pt-BR": {
+                  "label": "Número LMP"
+                }
+              },
+              "occurrence_date": {
+                "en": {
+                  "label": "Occurrence date"
+                },
+                "pt-BR": {
+                  "label": "Data da ocorrência"
+                }
+              },
+              "problem_tags": {
+                "en": {
+                  "label": "Problem tags"
+                },
+                "pt-BR": {
+                  "label": "Tags do problema"
+                }
+              },
+              "products": {
+                "en": {
+                  "label": "Products"
+                },
+                "pt-BR": {
+                  "label": "Produtos"
+                }
+              },
+              "registered_at": {
+                "en": {
+                  "label": "Registered at"
+                },
+                "pt-BR": {
+                  "label": "Registrado em"
+                }
+              },
+              "released_by": {
+                "en": {
+                  "label": "Released by"
+                },
+                "pt-BR": {
+                  "label": "Liberado por"
+                }
+              },
+              "sale_number": {
+                "en": {
+                  "label": "Sale number"
+                },
+                "pt-BR": {
+                  "label": "Número da venda"
+                }
+              },
+              "status": {
+                "en": {
+                  "label": "Status"
+                },
+                "pt-BR": {
+                  "label": "Status"
+                }
+              }
+            }
+          },
+          "sort_dir": {
+            "locale": {
+              "en": {
+                "description": "Sort direction: asc or desc.",
+                "label": "Sort direction"
+              },
+              "pt-BR": {
+                "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
+                "label": "Direção da ordenação"
+              }
+            },
+            "enumLabels": {
+              "asc": {
+                "en": {
+                  "label": "Ascending"
+                },
+                "pt-BR": {
+                  "label": "Crescente"
+                }
+              },
+              "desc": {
+                "en": {
+                  "label": "Descending"
+                },
+                "pt-BR": {
+                  "label": "Decrescente"
+                }
               }
             }
           }
@@ -102119,6 +104198,493 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Supplies otd."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/products/search",
+      "operationId": "search_supplies_products",
+      "summary": "Busca paginada de produtos para seleção Comex (Suprimentos)",
+      "tags": [
+        "Supplies — Products"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "code",
+          "in": "query",
+          "required": false,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "in": "query",
+          "required": false,
+          "description": "Description query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "product_type",
+          "in": "query",
+          "required": false,
+          "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract.",
+          "type": "string"
+        },
+        {
+          "name": "group_code",
+          "in": "query",
+          "required": false,
+          "description": "Grupo exato (SB1.B1_GRUPO).",
+          "type": "string"
+        },
+        {
+          "name": "subgroup",
+          "in": "query",
+          "required": false,
+          "description": "Subgrupo exato (SB1.B1_SUBGRUP).",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=500",
+          "type": "integer",
+          "default": 50
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "direction",
+          "in": "query",
+          "required": false,
+          "description": "Sort direction: asc or desc.",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_product",
+        "shape": "paged_list",
+        "params": {
+          "code": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          },
+          "description": {
+            "locale": {
+              "en": {
+                "description": "Description query parameter.",
+                "label": "Description"
+              },
+              "pt-BR": {
+                "description": "Descrição (ou parte dela) para filtrar.",
+                "label": "Descrição"
+              }
+            }
+          },
+          "direction": {
+            "locale": {
+              "en": {
+                "description": "Direction query parameter.",
+                "label": "Direction"
+              },
+              "pt-BR": {
+                "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
+                "label": "Direção"
+              }
+            },
+            "enumLabels": {
+              "asc": {
+                "en": {
+                  "label": "Ascending"
+                },
+                "pt-BR": {
+                  "label": "Crescente"
+                }
+              },
+              "desc": {
+                "en": {
+                  "label": "Descending"
+                },
+                "pt-BR": {
+                  "label": "Decrescente"
+                }
+              }
+            }
+          },
+          "group_code": {
+            "locale": {
+              "en": {
+                "description": "Group code query parameter.",
+                "label": "Group code"
+              },
+              "pt-BR": {
+                "description": "Código do grupo de produto/material.",
+                "label": "Código do grupo"
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "product_type": {
+            "locale": {
+              "en": {
+                "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract.",
+                "label": "Product type"
+              },
+              "pt-BR": {
+                "description": "Filtra por tipo de produto (SB1.B1_TIPO); valores aceitos dependem do contrato da rota.",
+                "label": "Tipo de produto"
+              }
+            },
+            "enumLabels": {
+              "PA": {
+                "en": {
+                  "label": "Finished product (PA)"
+                },
+                "pt-BR": {
+                  "label": "Produto acabado (PA)"
+                }
+              },
+              "PI": {
+                "en": {
+                  "label": "Intermediate product (PI)"
+                },
+                "pt-BR": {
+                  "label": "Produto intermediário (PI)"
+                }
+              }
+            }
+          },
+          "sort": {
+            "locale": {
+              "en": {
+                "description": "Sort query parameter.",
+                "label": "Sort"
+              },
+              "pt-BR": {
+                "description": "Critério de ordenação da listagem.",
+                "label": "Ordenação"
+              }
+            },
+            "enumLabels": {
+              "cost_asc": {
+                "en": {
+                  "label": "Cost ↑"
+                },
+                "pt-BR": {
+                  "label": "Custo ↑"
+                }
+              },
+              "cost_desc": {
+                "en": {
+                  "label": "Cost ↓"
+                },
+                "pt-BR": {
+                  "label": "Custo ↓"
+                }
+              },
+              "created_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "date_asc": {
+                "en": {
+                  "label": "Date ↑"
+                },
+                "pt-BR": {
+                  "label": "Data ↑"
+                }
+              },
+              "date_desc": {
+                "en": {
+                  "label": "Date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data ↓"
+                }
+              },
+              "delay_asc": {
+                "en": {
+                  "label": "Delay ↑"
+                },
+                "pt-BR": {
+                  "label": "Atraso ↑"
+                }
+              },
+              "delay_desc": {
+                "en": {
+                  "label": "Delay ↓"
+                },
+                "pt-BR": {
+                  "label": "Atraso ↓"
+                }
+              },
+              "delivery_asc": {
+                "en": {
+                  "label": "Delivery ↑"
+                },
+                "pt-BR": {
+                  "label": "Entrega ↑"
+                }
+              },
+              "delivery_desc": {
+                "en": {
+                  "label": "Delivery ↓"
+                },
+                "pt-BR": {
+                  "label": "Entrega ↓"
+                }
+              },
+              "due_date_asc": {
+                "en": {
+                  "label": "Due date ↑"
+                },
+                "pt-BR": {
+                  "label": "Vencimento ↑"
+                }
+              },
+              "due_date_desc": {
+                "en": {
+                  "label": "Due date ↓"
+                },
+                "pt-BR": {
+                  "label": "Vencimento ↓"
+                }
+              },
+              "hours_asc": {
+                "en": {
+                  "label": "Hours ↑"
+                },
+                "pt-BR": {
+                  "label": "Horas ↑"
+                }
+              },
+              "hours_desc": {
+                "en": {
+                  "label": "Hours ↓"
+                },
+                "pt-BR": {
+                  "label": "Horas ↓"
+                }
+              },
+              "issue_asc": {
+                "en": {
+                  "label": "Issue ↑"
+                },
+                "pt-BR": {
+                  "label": "Emissão ↑"
+                }
+              },
+              "issue_desc": {
+                "en": {
+                  "label": "Issue ↓"
+                },
+                "pt-BR": {
+                  "label": "Emissão ↓"
+                }
+              },
+              "op_asc": {
+                "en": {
+                  "label": "OP ↑"
+                },
+                "pt-BR": {
+                  "label": "OP ↑"
+                }
+              },
+              "op_desc": {
+                "en": {
+                  "label": "OP ↓"
+                },
+                "pt-BR": {
+                  "label": "OP ↓"
+                }
+              },
+              "priority_desc": {
+                "en": {
+                  "label": "Priority ↓"
+                },
+                "pt-BR": {
+                  "label": "Prioridade ↓"
+                }
+              },
+              "product_code_asc": {
+                "en": {
+                  "label": "Product code ↑"
+                },
+                "pt-BR": {
+                  "label": "Código ↑"
+                }
+              },
+              "product_code_desc": {
+                "en": {
+                  "label": "Product code ↓"
+                },
+                "pt-BR": {
+                  "label": "Código ↓"
+                }
+              },
+              "qty_asc": {
+                "en": {
+                  "label": "Quantity ↑"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↑"
+                }
+              },
+              "qty_desc": {
+                "en": {
+                  "label": "Quantity ↓"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↓"
+                }
+              },
+              "quantity_asc": {
+                "en": {
+                  "label": "Quantity ↑"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↑"
+                }
+              },
+              "quantity_desc": {
+                "en": {
+                  "label": "Quantity ↓"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↓"
+                }
+              },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
+                }
+              },
+              "stock_value_asc": {
+                "en": {
+                  "label": "Stock value ↑"
+                },
+                "pt-BR": {
+                  "label": "Valor ↑"
+                }
+              },
+              "stock_value_desc": {
+                "en": {
+                  "label": "Stock value ↓"
+                },
+                "pt-BR": {
+                  "label": "Valor ↓"
+                }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Busca produtos reais da SB1010 por código, descrição, tipo (MP/PI/PA), grupo e subgrupo, retornando a NCM cadastrada (B1_POSIPI) com status de formato. Projeção reduzida de seleção — não é um espelho do cadastro."
     },
     {
       "method": "GET",

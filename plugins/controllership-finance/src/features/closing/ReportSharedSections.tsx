@@ -7,6 +7,7 @@
  * a conciliação provada pelo backend (divergence = reported - expected).
  */
 import { type P3Status, type SourceState } from "../../api/p3Api";
+import type { StockReconciliationPayload } from "../../api/stockReconciliationApi";
 import {
   CfSectionCard,
   CfStatusBadge,
@@ -170,6 +171,153 @@ export function P3ReconciliationSection({
           é exatamente R$ 0,00.
         </p>
       ) : null}
+    </CfSectionCard>
+  );
+}
+
+const OPERAND_LABELS: Record<string, string> = {
+  entradasSaidas: "Entradas e saídas (R05)",
+  p7: "Posição de estoque P7 (R03)",
+  h02: "Material em processo (R08)",
+};
+
+export const OPERAND_STATUS_LABELS: Record<string, string> = {
+  AVAILABLE: "Disponível",
+  INCOMPLETE: "Parcialmente disponível",
+  SOURCE_MISSING: "Fonte indisponível",
+  NO_MATCHING_ITEMS: "Sem dados para o filtro",
+  UNAVAILABLE: "Indisponível",
+};
+
+const PARITY_LABELS: Record<string, string> = {
+  EXACT_PARITY: "Paridade exata (R$ 0,00)",
+  DIVERGENCE: "Divergência identificada",
+  NOT_COMPUTED: "Não calculada",
+};
+
+/**
+ * Conciliação analítica `DIVERGENCIA = ENTRADAS_SAIDAS − P7 − H02`
+ * (doc 15.1) computada pela BFF sobre os três relatórios operacionais —
+ * independente da competência formal e do fluxo documental. É superfície
+ * analítica: não persiste registro, não substitui a conciliação governada
+ * P3 e nunca trata fonte ausente como zero.
+ */
+export function AnalyticalReconciliationSection({
+  reconciliation,
+  loading,
+}: {
+  reconciliation: StockReconciliationPayload | null;
+  loading: boolean;
+}) {
+  if (loading && !reconciliation) {
+    return (
+      <p aria-live="polite">Consultando a conciliação analítica…</p>
+    );
+  }
+  if (!reconciliation) {
+    return (
+      <CfFeedbackMessage
+        intent="info"
+        title="Conciliação analítica de estoque"
+      >
+        A conciliação analítica não respondeu — ela não é uma divergência
+        zero.
+      </CfFeedbackMessage>
+    );
+  }
+  const eligible = reconciliation.eligibility === "ELIGIBLE";
+  return (
+    <CfSectionCard
+      title="Conciliação analítica — Entradas/Saídas − P7 − H02"
+      hint={CF_HELP.analytics.reconciliation}
+    >
+      <table
+        className="cf-p3-table"
+        aria-label="Operandos da conciliação analítica"
+      >
+        <thead>
+          <tr>
+            <th>Operando</th>
+            <th>Valor</th>
+            <th>Fonte</th>
+            <th>Data-base</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(
+            ["entradasSaidas", "p7", "h02"] as const
+          ).map((key) => {
+            const operand = reconciliation.operands[key];
+            return (
+              <tr key={key}>
+                <td>{OPERAND_LABELS[key]}</td>
+                <td>
+                  {operand.value !== null
+                    ? formatAmount(operand.value)
+                    : "—"}
+                </td>
+                <td>
+                  <CfStatusBadge
+                    label={
+                      OPERAND_STATUS_LABELS[operand.status ?? ""] ??
+                      operand.status ??
+                      "—"
+                    }
+                    variant={operand.available ? "success" : "warning"}
+                  />
+                </td>
+                <td>
+                  {operand.dataAsOf
+                    ? formatDateTime(operand.dataAsOf)
+                    : "—"}
+                </td>
+              </tr>
+            );
+          })}
+          <tr>
+            <td>
+              <strong>Divergência analítica</strong>
+            </td>
+            <td>
+              {reconciliation.divergenceCents !== null ? (
+                <strong>
+                  {formatAmount(reconciliation.divergenceCents)}
+                </strong>
+              ) : (
+                "—"
+              )}
+            </td>
+            <td colSpan={2}>
+              <CfStatusBadge
+                label={PARITY_LABELS[reconciliation.parity]}
+                variant={
+                  reconciliation.parity === "EXACT_PARITY"
+                    ? "success"
+                    : reconciliation.parity === "DIVERGENCE"
+                      ? "danger"
+                      : "info"
+                }
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      {!eligible ? (
+        <p className="cf-attention-item__meta">
+          Operandos indisponíveis ou incompletos:{" "}
+          {reconciliation.ineligibleOperands
+            .map((key) => OPERAND_LABELS[key] ?? key)
+            .join(", ")}
+          . A divergência não é calculada — fonte ausente nunca entra
+          como zero.
+        </p>
+      ) : null}
+      <p className="cf-attention-item__meta">
+        Visão analítica calculada pela BFF a partir dos relatórios
+        operacionais — não persiste registro nem substitui a conciliação
+        governada do checklist P3, que permanece a autoridade do
+        fechamento.
+      </p>
     </CfSectionCard>
   );
 }

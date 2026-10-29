@@ -20,6 +20,7 @@ const p3Mock = vi.fn();
 const matrixMock = vi.fn();
 const summaryMock = vi.fn();
 const stockMock = vi.fn();
+const reconMock = vi.fn();
 
 vi.mock("../../api/p3Api", () => ({
   getP3State: (...args: unknown[]) => p3Mock(...args),
@@ -36,6 +37,10 @@ vi.mock("../../api/financialSettlementsApi", () => ({
 
 vi.mock("../../api/stockInventoryApi", () => ({
   getStockInventory: (...args: unknown[]) => stockMock(...args),
+}));
+
+vi.mock("../../api/stockReconciliationApi", () => ({
+  getStockReconciliation: (...args: unknown[]) => reconMock(...args),
 }));
 
 import { ApiError } from "../../api/httpClient";
@@ -163,11 +168,63 @@ function stock(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function operand(
+  value: string | null,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    available: value !== null,
+    status: value !== null ? "AVAILABLE" : "SOURCE_MISSING",
+    errorCode: null,
+    value,
+    dataAsOf: "2026-10-31T23:59:59Z",
+    parityStatus: "PENDING",
+    ...overrides,
+  };
+}
+
+function reconPayload(
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    report: "stock_reconciliation",
+    kind: "analytical",
+    governedReconciliation: "P3",
+    period: PERIOD,
+    branchCode: "all",
+    reportScope: "all_products",
+    equation: "DIVERGENCIA = ENTRADAS_SAIDAS - P7 - H02",
+    operandSemantics: {},
+    eligibility: "ELIGIBLE",
+    ineligibleOperands: [],
+    operands: {
+      entradasSaidas: operand("3890247.18"),
+      p7: operand("3776994.69"),
+      h02: operand("64591.71"),
+    },
+    components: {},
+    divergence: "48660.78",
+    divergenceCents: "48660.78",
+    parity: "DIVERGENCE",
+    parityTolerance: "NONE",
+    provenance: {},
+    parityNotes: [],
+    ...overrides,
+  };
+}
+
 function mockAllReady() {
   p3Mock.mockResolvedValue(p3State());
   matrixMock.mockResolvedValue(matrix());
   summaryMock.mockResolvedValue(summary());
   stockMock.mockResolvedValue(stock());
+  reconMock.mockResolvedValue(
+    reconPayload({
+      divergence: "0.00",
+      divergenceCents: "0.00",
+      parity: "EXACT_PARITY",
+    }),
+  );
 }
 
 function renderPanel(props: Partial<Parameters<typeof MonthlyReportsPanel>[0]> = {}) {
@@ -206,7 +263,9 @@ describe("indicadores e área de atenção", () => {
     renderPanel();
 
     await screen.findByText("Divergência comprovada");
-    expect(screen.getByText("Entradas e saídas (R05)")).toBeTruthy();
+    expect(
+      screen.getAllByText("Entradas e saídas (R05)").length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByRole("button", {
         name: /Divergências identificadas: 1/,
@@ -238,7 +297,9 @@ describe("indicadores e área de atenção", () => {
     renderPanel();
 
     await screen.findByText("Conciliação pendente");
-    expect(screen.getByText("Posição de estoque P7 (R03)")).toBeTruthy();
+    expect(
+      screen.getAllByText("Posição de estoque P7 (R03)").length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(
         /Consulta disponível — conciliação pendente/,
@@ -269,7 +330,9 @@ describe("indicadores e área de atenção", () => {
     renderPanel();
 
     await screen.findByText("Fonte não registrada");
-    expect(screen.getByText("Entradas e saídas (R05)")).toBeTruthy();
+    expect(
+      screen.getAllByText("Entradas e saídas (R05)").length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(/Fonte da conciliação não registrada/),
     ).toBeTruthy();
@@ -290,7 +353,9 @@ describe("indicadores e área de atenção", () => {
     renderPanel();
 
     await screen.findByText("Fonte indisponível");
-    expect(screen.getByText("Posição H02 (R08)")).toBeTruthy();
+    expect(
+      screen.getAllByText("Posição H02 (R08)").length,
+    ).toBeGreaterThan(0);
   });
 
   it("competência não aberta vira conferência não realizada, não erro", async () => {
@@ -377,6 +442,75 @@ describe("indicadores e área de atenção", () => {
   });
 });
 
+describe("conciliação analítica — superfície independente", () => {
+  it("divergência analítica calculada aparece na seção e na atenção", async () => {
+    reconMock.mockResolvedValue(reconPayload());
+    renderPanel();
+
+    await screen.findByText("Divergência analítica");
+    expect(
+      screen.getAllByText(/48\.660,78/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/nem substitui a conciliação governada/)
+        .length,
+    ).toBeGreaterThan(0);
+    // A divergência analítica também entra na área de atenção.
+    expect(
+      screen.getByRole("button", {
+        name: /Divergências identificadas: 1/,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("operando ausente torna a conciliação inelegível — nunca zero", async () => {
+    reconMock.mockResolvedValue(
+      reconPayload({
+        eligibility: "INELIGIBLE",
+        ineligibleOperands: ["h02"],
+        operands: {
+          entradasSaidas: operand("3890247.18"),
+          p7: operand("3776994.69"),
+          h02: operand(null),
+        },
+        divergence: null,
+        divergenceCents: null,
+        parity: "NOT_COMPUTED",
+      }),
+    );
+    renderPanel();
+
+    await screen.findByText("Não calculada");
+    expect(
+      screen.getAllByText(/Operandos indisponíveis/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/fonte ausente nunca entra como zero/).length,
+    ).toBeGreaterThan(0);
+    // Nenhuma divergência analítica é declarada.
+    expect(
+      screen.getByRole("button", {
+        name: /Divergências identificadas: 0/,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("falha da conciliação analítica não é ausência de divergência", async () => {
+    reconMock.mockRejectedValue(new ApiError(502, "falha upstream"));
+    renderPanel();
+
+    const messages = await screen.findAllByText(
+      /não é uma divergência zero/,
+    );
+    expect(messages.length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("button", {
+        name: /Divergências identificadas: —/,
+      }),
+    ).toBeTruthy();
+  });
+});
+
 describe("catálogo em cartões — navegação contextual", () => {
   it("item de atenção vinculado a família oferece a página contextual", async () => {
     const onOpen = vi.fn();
@@ -398,7 +532,7 @@ describe("catálogo em cartões — navegação contextual", () => {
       name: "Abrir relatório",
     });
     fireEvent.click(buttons[0]);
-    expect(onOpen).toHaveBeenCalledWith("stock");
+    expect(onOpen).toHaveBeenCalledWith("stock-inventory");
   });
 
   it("cartão abre a página do relatório via callback", async () => {
@@ -409,12 +543,22 @@ describe("catálogo em cartões — navegação contextual", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Baixas financeiras/ }),
     );
-    expect(onOpen).toHaveBeenCalledWith("settlements");
+    expect(onOpen).toHaveBeenCalledWith("financial-settlements");
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Estoque e conciliação/ }),
+      screen.getByRole("button", { name: /Estoque histórico — P7/ }),
     );
-    expect(onOpen).toHaveBeenCalledWith("stock");
+    expect(onOpen).toHaveBeenCalledWith("stock-inventory");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Entradas e saídas — R05/ }),
+    );
+    expect(onOpen).toHaveBeenCalledWith("stock-movements");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Material em processo — R08/ }),
+    );
+    expect(onOpen).toHaveBeenCalledWith("work-in-process");
   });
 
   it("cartões compactos não repetem rótulos de campos", async () => {
@@ -424,7 +568,7 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(screen.queryByText("RELATÓRIO")).toBeNull();
     expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
     expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Abrir relatório").length).toBe(2);
+    expect(screen.getAllByText("Abrir relatório").length).toBe(4);
   });
 
   it("matriz R01–R15 fica em rastreabilidade técnica expansível", async () => {

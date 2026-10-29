@@ -252,3 +252,48 @@ def test_service_principal_as_user_does_not_unlock(
         f"{ROUTE}?{PERIOD}", headers=S2S_HEADERS
     )
     assert response.status_code == 403
+
+
+def test_export_streams_document_bytes(
+    stock_inventory_client: TestClient, monkeypatch
+) -> None:
+    """export_financeiro_stock_inventory — authenticated bytes passthrough
+    (csv or pdf, same engine payload)."""
+    import io
+
+    _patch_s2s(monkeypatch, _request_headers(S2S_HEADERS), _validator())
+    _patch_user(monkeypatch)
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "stream": io.BytesIO(b"%PDF-fake"),
+        "content_type": "application/pdf",
+        "filename": "p7-inventory-2026-09-01-all_products.pdf",
+        "exported_count": 7,
+    }
+    monkeypatch.setattr(
+        "app.interface.http.routes.financeiro.stock_inventory_router."
+        "build_export_stock_inventory_use_case",
+        lambda: use_case,
+    )
+    response = stock_inventory_client.get(
+        f"{ROUTE}/export?{PERIOD}&branch=01&format=pdf",
+        headers=S2S_HEADERS,
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/pdf")
+    assert response.headers["X-Exported-Count"] == "7"
+    assert response.content == b"%PDF-fake"
+    kwargs = use_case.execute.call_args.kwargs
+    assert kwargs["export_format"] == "pdf"
+    assert kwargs["user_subject"] == "user-1"
+
+
+def test_export_invalid_format_returns_400(
+    stock_inventory_client: TestClient, monkeypatch
+) -> None:
+    _patch_s2s(monkeypatch, _request_headers(S2S_HEADERS), _validator())
+    _patch_user(monkeypatch)
+    response = stock_inventory_client.get(
+        f"{ROUTE}/export?{PERIOD}&format=xlsx", headers=S2S_HEADERS
+    )
+    assert response.status_code in (400, 422)

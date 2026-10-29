@@ -702,6 +702,18 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "export_financeiro_stock_inventory": RouteContract(
         "financeiro_stock_inventory_export", "document_export"
     ),
+    "get_financeiro_stock_movements": RouteContract(
+        "financeiro_stock_movements", "scalar"
+    ),
+    "export_financeiro_stock_movements": RouteContract(
+        "financeiro_stock_movements_export", "document_export"
+    ),
+    "get_financeiro_work_in_process": RouteContract(
+        "financeiro_work_in_process", "paged_list"
+    ),
+    "export_financeiro_work_in_process": RouteContract(
+        "financeiro_work_in_process_export", "document_export"
+    ),
     "get_retrabalhos_health": RouteContract(
         "retrabalho_horas_improdutivas_health", "scalar"
     ),

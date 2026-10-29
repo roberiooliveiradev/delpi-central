@@ -136,20 +136,22 @@ export async function getStockInventory(
 /** Nome do arquivo exportado — mesmo contrato do servidor (doc 119 §8.C). */
 export function stockInventoryExportFilename(
   query: Pick<StockInventoryQuery, "period" | "branch" | "reportScope">,
+  format: "csv" | "pdf" = "csv",
 ): string {
   return (
     `p7-inventory-${query.period}-${query.branch ?? "all"}-` +
-    `${query.reportScope ?? "all_products"}.csv`
+    `${query.reportScope ?? "all_products"}.${format}`
   );
 }
 
 /**
- * Export CSV do mesmo motor P7 — cabeçalho com competência, filial,
+ * Export do mesmo motor P7 — cabeçalho com competência, filial,
  * escopo, hash de conteúdo e marca de paridade (documento não oficial
  * enquanto a homologação MATR460 estiver pendente).
  */
-export async function exportStockInventoryCsv(
+export async function exportStockInventory(
   query: StockInventoryQuery,
+  format: "csv" | "pdf",
   options?: { signal?: AbortSignal },
 ): Promise<Blob> {
   const qs = buildQuery({
@@ -157,10 +159,18 @@ export async function exportStockInventoryCsv(
     branch: query.branch ?? "all",
     report_scope: query.reportScope ?? "all_products",
     warehouse: query.warehouse,
-    format: "csv",
+    format,
   });
   return httpGetBlob(
     cfApiUrl(`/closing/stock-inventory/export?${qs}`),
     options,
   );
+}
+
+/** Alias de compatibilidade — o formato CSV continua o default. */
+export async function exportStockInventoryCsv(
+  query: StockInventoryQuery,
+  options?: { signal?: AbortSignal },
+): Promise<Blob> {
+  return exportStockInventory(query, "csv", options);
 }

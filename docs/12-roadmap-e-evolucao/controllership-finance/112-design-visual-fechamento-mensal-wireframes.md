@@ -2287,6 +2287,8 @@ Decisão PO (doc 118 DEC-12): a experiência do P7 na bancada «Relatórios e di
 
 > **Implementado (IMPLEMENTATION-006, 29/10/2026):** a seleção única «Todos os produtos» × «MP, PA e PI — DRE» está em runtime na página contextual, com totalizadores por escopo, selo de paridade `PENDING`/não homologado e export CSV com metadados (doc 119 §11). DRE continua sem acesso à consulta/export — apenas pacote documental.
 
+> **Implementado (IMPLEMENTATION-009, 29/10/2026):** o hub de «Relatórios e divergências» virou catálogo por relatório (Baixas, P7, R05, R08) com seção de **conciliação analítica** (operandos/valores/data-base/divergência + declaração «não substitui o P3 governado»); páginas contextuais `stock-movements` e `work-in-process` com os mesmos padrões visuais da página P7 (hero, cards de totalizadores, selo de paridade, export CSV+PDF, filtros persistidos na URL). Nenhuma nova permission; DRE sem acesso — doc 119 §12.
+
 ## REWORK-008 — estados de fonte na área de atenção e na conciliação P3 (29/10/2026)
 
 Semântica implementada que diferencia **disponibilidade operacional** de **elegibilidade para a conciliação** — uma mesma expressão («Fonte indisponível») nunca representa condições distintas:

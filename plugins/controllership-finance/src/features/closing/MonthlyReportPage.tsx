@@ -20,12 +20,19 @@ import {
 } from "../../app/controllershipFinanceUi";
 import { FinancialSettlementsPage } from "./FinancialSettlementsPage";
 import { StockInventoryPage } from "./StockInventoryPage";
+import { StockMovementsPage } from "./StockMovementsPage";
+import { WorkInProcessPage } from "./WorkInProcessPage";
 
-/** Famílias com página contextual implementada (hub → rota). */
-export type ReportKey = "financial-settlements" | "stock-inventory";
+/** Relatórios com página contextual implementada (hub → rota). */
+export type ReportKey =
+  | "financial-settlements"
+  | "stock-inventory"
+  | "stock-movements"
+  | "work-in-process";
 
 export type ReportFamily = "settlements" | "stock";
 
+/** Família → report key principal (cards do catálogo são por relatório). */
 export const FAMILY_TO_REPORT_KEY: Record<ReportFamily, ReportKey> = {
   settlements: "financial-settlements",
   stock: "stock-inventory",
@@ -34,16 +41,23 @@ export const FAMILY_TO_REPORT_KEY: Record<ReportFamily, ReportKey> = {
 export const REPORT_KEY_TO_FAMILY: Record<ReportKey, ReportFamily> = {
   "financial-settlements": "settlements",
   "stock-inventory": "stock",
+  "stock-movements": "stock",
+  "work-in-process": "stock",
 };
 
 export const REPORT_KEY_LABELS: Record<ReportKey, string> = {
   "financial-settlements": "Baixas financeiras",
   "stock-inventory": "Estoque e conciliação",
+  "stock-movements": "Entradas e saídas",
+  "work-in-process": "Material em processo",
 };
 
 export function isReportKey(value: string | undefined): value is ReportKey {
   return (
-    value === "financial-settlements" || value === "stock-inventory"
+    value === "financial-settlements" ||
+    value === "stock-inventory" ||
+    value === "stock-movements" ||
+    value === "work-in-process"
   );
 }
 
@@ -84,6 +98,10 @@ export function MonthlyReportPage({
       {backButton}
       {reportKey === "financial-settlements" ? (
         <FinancialSettlementsPage reportContext={{ period }} />
+      ) : reportKey === "stock-movements" ? (
+        <StockMovementsPage reportContext={{ period }} />
+      ) : reportKey === "work-in-process" ? (
+        <WorkInProcessPage reportContext={{ period }} />
       ) : (
         <StockInventoryPage reportContext={{ period }} />
       )}

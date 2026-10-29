@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-24",
-  "baselineOperationCount": 772,
-  "operationCount": 772,
-  "coveredCount": 692,
+  "generatedAt": "2026-10-29",
+  "baselineOperationCount": 784,
+  "operationCount": 784,
+  "coveredCount": 704,
   "gapCount": 79,
   "exemptCount": 1,
   "byModule": {
@@ -20,8 +20,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 32,
-      "covered": 32,
+      "total": 33,
+      "covered": 33,
       "gap": 0,
       "exempt": 0
     },
@@ -50,14 +50,14 @@
       "exempt": 0
     },
     "engineering": {
-      "total": 38,
-      "covered": 38,
+      "total": 43,
+      "covered": 43,
       "gap": 0,
       "exempt": 0
     },
     "financeiro": {
-      "total": 15,
-      "covered": 15,
+      "total": 20,
+      "covered": 20,
       "gap": 0,
       "exempt": 0
     },
@@ -230,8 +230,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 44,
-      "covered": 42,
+      "total": 45,
+      "covered": 43,
       "gap": 2,
       "exempt": 0
     },
@@ -295,6 +295,15 @@
       "module": "commercial",
       "entity": "billing_portfolio_summary",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_commercial_billing_by_customer_month",
+      "method": "GET",
+      "path": "/commercial/billing/by-customer-month",
+      "module": "commercial",
+      "entity": "commercial_billing_by_customer_month",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -1306,6 +1315,51 @@
       "status": "covered"
     },
     {
+      "operationId": "list_lmp_facts",
+      "method": "GET",
+      "path": "/engineering/lmps/facts",
+      "module": "engineering",
+      "entity": "lmp_fact",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lmp_pi_counts",
+      "method": "POST",
+      "path": "/engineering/lmps/facts/pi-counts",
+      "module": "engineering",
+      "entity": "lmp_pi_count",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lmp_fact",
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}",
+      "module": "engineering",
+      "entity": "lmp_fact",
+      "shape": "product_snapshot",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lmp_facts_history_events",
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}/history/events",
+      "module": "engineering",
+      "entity": "lmp_fact_history",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lmp_facts_history_flow",
+      "method": "GET",
+      "path": "/engineering/lmps/facts/{sale_number}/history/flow",
+      "module": "engineering",
+      "entity": "lmp_fact_history_flow",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
       "operationId": "list_lmp_nonconformities",
       "method": "GET",
       "path": "/engineering/lmps/nonconformities",
@@ -1735,6 +1789,51 @@
       "module": "financeiro",
       "entity": "financeiro_stock_inventory",
       "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_financeiro_stock_inventory",
+      "method": "GET",
+      "path": "/financeiro/stock-inventory/export",
+      "module": "financeiro",
+      "entity": "financeiro_stock_inventory_export",
+      "shape": "document_export",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_stock_movements",
+      "method": "GET",
+      "path": "/financeiro/stock-movements",
+      "module": "financeiro",
+      "entity": "financeiro_stock_movements",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_financeiro_stock_movements",
+      "method": "GET",
+      "path": "/financeiro/stock-movements/export",
+      "module": "financeiro",
+      "entity": "financeiro_stock_movements_export",
+      "shape": "document_export",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_work_in_process",
+      "method": "GET",
+      "path": "/financeiro/work-in-process",
+      "module": "financeiro",
+      "entity": "financeiro_work_in_process",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_financeiro_work_in_process",
+      "method": "GET",
+      "path": "/financeiro/work-in-process/export",
+      "module": "financeiro",
+      "entity": "financeiro_work_in_process_export",
+      "shape": "document_export",
       "status": "covered"
     },
     {
@@ -6704,6 +6803,15 @@
       "module": "supplies",
       "entity": "supplies_otd",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_supplies_products",
+      "method": "GET",
+      "path": "/supplies/products/search",
+      "module": "supplies",
+      "entity": "supplies_product",
+      "shape": "paged_list",
       "status": "covered"
     },
     {

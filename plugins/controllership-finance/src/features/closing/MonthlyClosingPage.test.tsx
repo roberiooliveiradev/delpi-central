@@ -60,44 +60,37 @@ vi.mock("./MonthlyReportsPanel", () => ({
   }) => (
     <div data-testid="reports-panel">
       reports:{period}
-      <button onClick={() => onOpenReport?.("settlements")}>
+      <button onClick={() => onOpenReport?.("financial-settlements")}>
         open-report
       </button>
-      <button onClick={() => onOpenReport?.("stock")}>open-stock</button>
+      <button onClick={() => onOpenReport?.("stock-inventory")}>
+        open-stock
+      </button>
     </div>
   ),
 }));
 
-vi.mock("./MonthlyReportPage", () => ({
-  MonthlyReportPage: ({
-    period,
-    reportKey,
-    onBack,
-  }: {
-    period: string;
-    reportKey: string;
-    onBack: () => void;
-  }) => (
-    <div data-testid="report-page">
-      report:{reportKey}:{period}
-      <button onClick={onBack}>report-back</button>
-    </div>
-  ),
-  FAMILY_TO_REPORT_KEY: {
-    settlements: "financial-settlements",
-    stock: "stock-inventory",
-  },
-  REPORT_KEY_TO_FAMILY: {
-    "financial-settlements": "settlements",
-    "stock-inventory": "stock",
-  },
-  REPORT_KEY_LABELS: {
-    "financial-settlements": "Baixas financeiras",
-    "stock-inventory": "Estoque e conciliação",
-  },
-  isReportKey: (value: string | undefined) =>
-    value === "financial-settlements" || value === "stock-inventory",
-}));
+vi.mock("./MonthlyReportPage", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("./MonthlyReportPage")>();
+  return {
+    ...original,
+    MonthlyReportPage: ({
+      period,
+      reportKey,
+      onBack,
+    }: {
+      period: string;
+      reportKey: string;
+      onBack: () => void;
+    }) => (
+      <div data-testid="report-page">
+        report:{reportKey}:{period}
+        <button onClick={onBack}>report-back</button>
+      </div>
+    ),
+  };
+});
 
 import { ApiError } from "../../api/httpClient";
 import { MonthlyClosingPage } from "./MonthlyClosingPage";

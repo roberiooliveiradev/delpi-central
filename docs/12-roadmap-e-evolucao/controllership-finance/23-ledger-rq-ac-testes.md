@@ -862,6 +862,21 @@ Entrega documental: [Documento 118 — base canônica do fechamento](./118-base-
 | RQ-ANL-13 (novo) | `PROPOSED` | entregáveis externos R13/R14 via P2 upload com roles configuráveis (E05) |
 | RQ-ANL-14 (novo) | `PROPOSED` | `STOCK_CLOSED` canonical owner state (T03/E5) |
 
+### IMPLEMENTATION-009 — análises independentes da gestão documental (2026-10-29)
+
+Execução `CF-PROC0072-ANALYTICS-INDEPENDENCE-IMPLEMENTATION-009`. Registro completo: [doc 119 §12](./119-contratos-p7-implementacao-readiness.md). DEC-ANALYTICS-INDEPENDENCE: a aba «Relatórios e divergências» opera por mês de referência sem competência formal, checklist, documentos ou pacote DRE.
+
+| RQ/AC | Critério | Estado |
+|---|---|---|
+| RQ-ANL-02 → IMP-09.R05 | Consulta R05 (MATR320 SD1/SD2/SD3/SF4 + SA SB9) | PASS (`/closing/stock-movements`, 200 autenticado, 401 anônimo) |
+| IMP-09.R08 | Consulta R08 (motor MATR989: físico loc99 + alocado RE−DE) | PASS (`/closing/work-in-process`, composição exibida) |
+| RQ-ANL-03.analítico | Conciliação analítica E/S−P7−H02 | PASS (`EXACT_PARITY` 0,00 em 2026-09; `not_persisted`, P3 intacto) |
+| IMP-09.PDF | Export CSV+PDF nos 3 relatórios | PASS (R05/R08/P7 — `text/csv` + `application/pdf`, metadados+hash+watermark) |
+| IMP-09.IND | Independência documental (cenários A–F) | PASS — deep links + dados + export sem acionar fluxo documental (smoke 30/30) |
+| IMP-09.NEG | Sem falso zero; operando ausente → `INELIGIBLE` | PASS (testes BFF + smoke C4) |
+| IMP-09.AUTH | Falha de autorização propagada | PASS (401/403/`scope_unavailable` mapeados; anônimo 401) |
+| Paridade | Homologação MATR320/MATR989 oficial | `PENDING` — `officialMatr320/989=false`, watermark não-oficial |
+
 ### IMPLEMENTATION-006 — P7 na página Relatórios e divergências (2026-10-29)
 
 Execução `CF-PROC0072-P7-IMPLEMENTATION-006`. Registro completo: [doc 119 §11](./119-contratos-p7-implementacao-readiness.md). Motor único P7 entregue (`SB9` ex-`MV_LOCPROC` + `MATR989` `as_of`); causa raiz «fonte indisponível» = flag off + provisão S2S incompleta — resolvida (client/scope/audience/token URL pelo gateway).
