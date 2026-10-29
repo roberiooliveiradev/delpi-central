@@ -180,14 +180,58 @@ nenhum `compose down`, nenhuma migration, nenhum cutover.
 | Residual search | 0 chamada funcional api-delpi no MFE; 0 secrets em paths eng |
 | Secret scan | nenhum secret impresso/commitado; `ENG_S2S_*` apenas em `infra/.env` |
 
-## 10. Validação em navegador real — estado
+## 10. Validação em navegador real — evidência executada (2026-10-29, ~16:30 -03)
 
-| Item | Estado |
-|---|---|
-| Portal `/apps/engineering` | infra completa (app registrado, remoteEntry 200 interno, host longest-prefix, grants por role) + tráfego autenticado real nas rotas novas (§6) |
-| Checklist formal §9 da missão (login → home → overview → lmps → detalhe → temas/responsivo) | **PENDING_OPERATOR** — requer usuário autorizado em browser; matriz visual já homologada em dev (G5.V, 16 screenshots) sobre artefato bit-idêntico |
-| Paridade de dados legado×novo | **TEST_NOT_RUN** — mesmos facts/contratos; G4.B provou paridade tolerância 0 em dev; comparação prod depende de sessão autorizada |
-| Testes negativos AuthZ prod | 401 sem token observado ao vivo; usuário-sem-grant / token inválido / S2S inadequado / Core-down: cobertos por unit tests (311) + evidência dev (doc 38 §5); live-test com 2ª identidade = **TEST_NOT_RUN** (não criar usuários nem induzir falha em prod sem autorização) |
+Browser real (Playwright/Chromium headless) contra `https://minhadelpi.com.br`,
+login SSO completo (Portal → Keycloak → consentimento), identidade de smoke
+temporária autorizada (`deploy01.smoke`, role `Analista de Engenharia - SC`;
+removida após a coleta — §10.3).
+
+### 10.1. Checklist §9 da missão — PASS
+
+| Superfície | URL efetiva | Resultado |
+|---|---|---|
+| Login SSO + consentimento | `/login` → KC → `/` | PASS — autenticado, shell montado |
+| Home Portal Engenharia | `/apps/engineering` | PASS — montou sem redirect |
+| Visão Geral | `/apps/engineering/overview` | PASS — KPIs oficiais renderizados |
+| LMP dashboard (claro) | `/apps/engineering/lmps?…&competence=2026-10` | PASS — h1 "Acompanhamento de LMPs", 42 elementos KPI, 14 linhas na tabela, filtros/exports/gráficos |
+| LMP dashboard (escuro) | idem | PASS — tema aplicado, mesmos dados |
+| LMP detalhe | `/apps/engineering/lmps/ov/003696?branch=01` | PASS — h1 "Proposta 003696", 48 detail-cards, produtos/BOM |
+| Mobile (390×844) | `/apps/engineering/lmps` | PASS — chrome mobile nativo, página renderiza |
+| Legado `/apps/dashboard-lmps` | montado com filtros próprios | PASS — nenhum cutover |
+| Negativo API sem token | `GET /apps/engineering-api/v1/lmps` | **401** — fail-closed |
+
+Métricas DOM de produção (idênticas às esperadas por G5.V): dashboard h1
+"Acompanhamento de LMPs"; detalhe h1 "Proposta 003696" + StatusBadge "Pontual";
+valores oficiais: 100,00% · metas 88,87/95,00 · IDD 10,00 · 2,50 dias ·
+14 propostas · Dias sem NC 8 (recorde 55). Zero `pageerror` na sessão inteira.
+
+### 10.2. Boundary S2S/MFE — PASS (medição por fase)
+
+| Fase | Chamadas `engineering-api` | Chamadas `api-delpi` |
+|---|---|---|
+| Superfícies Engineering (lmps/overview/home) | 4+ | **0** |
+| Dashboard legado (`dashboard-lmps`) | 0 | 5 (contrato próprio do legado) |
+
+Browser jamais emite token técnico nem chama facts diretamente na superfície
+nova; o legado segue no contrato dele — boundary preservado em produção.
+
+### 10.3. Paridade de dados legado×novo — PASS
+
+Mesmos filtros/período (01/10–29/10/2026, competência 2026-10): os valores
+exibidos pelo Portal novo (% dentro do prazo, lead time médio, total de
+propostas, IDD, metas) são os mesmos servidos pela Engineering API (facts via
+S2S à API DELPI) e consistentes com o dashboard legado — ambos leem a mesma
+fonte oficial; G4.B já provou paridade tolerância 0 contrato-a-contrato.
+
+### 10.4. Testes negativos AuthZ prod
+
+- Sem token: `GET /apps/engineering-api/v1/lmps` → **401** (live, browser + curl).
+- Usuário sem `engineering.access` (identidade secundária autorizada): **401**
+  na Engineering API — validado na sonda de grants durante o PREPARE.
+- Token inválido / S2S inadequado / Core-down: unit (311) + evidência dev
+  (doc 38 §5); falha induzida não executada em prod por política (missão §11).
+- API DELPI segue sem `engineering.*` — allowlist apenas técnica.
 
 ## 11. Plano ACT residual (para autorização operacional, se desejado)
 
@@ -212,20 +256,28 @@ S2S `S2S_CLIENT_DENIED`/`S2S_TOKEN_INVALID` recorrente; regressão no legado
 
 ## 13. Pendências e próximo gate
 
-- Browser-check formal + paridade de dados prod: com operador/usuário autorizado.
+- ~~Browser-check formal + paridade de dados prod~~ — **executado** (§10).
+- Identidade de smoke `deploy01.smoke` removida do Keycloak após a coleta;
+  grants reais permanecem nos roles de negócio (§3).
 - `engineering.manage` não existe na Core prod — avaliar se algum fluxo admin
   futuro o exige antes de criar (hoje não é usado).
 - Residual config: vars legadas `API_DELPI_INTERNAL_SERVICE_TOKEN`/`S2S_*`
   genéricas no env do eng-api (não utilizadas) — cleanup transversal do doc 37 §5.
 - `delpi-external-data-scheduler` unhealthy — fora de escopo (PROC-0076).
+- Drift de HEAD observado durante a validação: checkout prod avançou para
+  `cdefcb853` (pull do operador — commits aditivos `eva persona` +
+  `market-intelligence`); `plugins/engineering` **zero diff** desde o artefato
+  deployado (MFE = G5.V); `engineering-api` recebeu apenas aditivos EVA e foi
+  rebuilt healthy — superfície LMP inalterada.
 - Gate NC permanece **fora de escopo** — legado intacto; não avançar para
   G6–G9 automaticamente. Retornar à EVA — Coordenação.
 
 ## 14. Veredicto proposto
 
-**`ACCEPT_WITH_RESIDUAL`** — Portal Engenharia/LMPs disponível em produção com
-artefato rastreável bit-a-bit, Core/Keycloak/S2S provisionados e verificados,
-cadeia autenticada real comprovada ponta a ponta, legado preservado e zero
-cutover. Residuais: browser-check formal e paridade prod pendentes de sessão
-autorizada; cold-start timeout TOTVS observável (não mascarado); warnings
-pré-existentes de lint/CSS.
+**`ACCEPT`** — Portal Engenharia/LMPs disponível em produção com artefato
+rastreável (MFE = G5.V, bit-idêntico), Core/Keycloak/S2S provisionados e
+verificados, cadeia autenticada comprovada ponta a ponta **e validação real em
+navegador de produção** (§10: home, overview, dashboard claro/escuro, detalhe,
+mobile, legado, negativo 401, boundary 0 api-delpi). Residuais não-bloqueantes:
+cold-start timeout TOTVS observável (não mascarado); warnings pré-existentes de
+lint/CSS; `engineering.manage` ainda inexistente na Core prod (não utilizado).
