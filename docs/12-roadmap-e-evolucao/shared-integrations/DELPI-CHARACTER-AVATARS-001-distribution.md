@@ -9,9 +9,8 @@ Status: implementado em código (sem deploy produtivo nesta execução).
 - **D02** — Arquitetura distribuída: cada API owner serve o próprio avatar.
 - **D03** — Assets preservados: bytes intocados (sha256 provado).
 - **D04** — Sem serviço central, sem registry, sem duplicação de arquivos.
-- **D05** — EVA: ficha e avatar existem no `engineering-api`; publicação
-  pública **DECISION_REQUIRED** (ratificação do PO pendente). Implementação
-  preparada com gate fechado.
+- **D05 (R01)** — EVA: ficha e avatar existem no `engineering-api`;
+  publicação pública **ratificada pelo PO** na revisão R01 — gate aberto.
 - **D06** — Deploy produtivo não autorizado nesta task.
 
 ## Contrato HTTP
@@ -26,11 +25,20 @@ GET /apps/<api>/public/characters/{character_id}/avatar/{versioned_filename}
 | CLARA | controllership-finance-api | `/apps/controllership-finance-api/public/characters/clara/avatar/avatar-v1.jpg` | ATIVO |
 | TÉO | transformometro-api | `/apps/transformometro-api/public/characters/teo/avatar/avatar-v2.png` | ATIVO |
 | VISTA | tv-dashboard-api | `/apps/tv-dashboard-api/public/characters/vista/avatar/avatar-v2.jpg` | ATIVO |
-| EVA | engineering-api | `/apps/engineering-api/public/characters/eva/avatar/avatar-v1.jpg` | BLOQUEADO (D05) |
+| EVA | engineering-api | `/apps/engineering-api/public/characters/eva/avatar/avatar-v1.jpg` | ATIVO (R01) |
 
 O prefixo `/public/` segue a convenção de superfície pública já existente
 (`jwt_middleware` por API). O path canônico do brief (`/characters/...`)
 foi ajustado para o padrão vigente da plataforma.
+
+Política pública por owner (R01 — endurecimento da CLARA):
+- api-delpi: prefixo `/public/characters/` em `_PUBLIC_PREFIXES`.
+- controllership-finance-api: **allowlist exata** — apenas
+  `/public/characters/clara/avatar/avatar-v1.jpg`; nenhum prefixo genérico.
+- transformometro-api / tv-dashboard-api: convenção preexistente
+  `PUBLIC_PREFIXES = ("/public/",)`.
+- engineering-api: **allowlist exata** — apenas
+  `/public/characters/eva/avatar/avatar-v1.jpg` (+ variante root_path).
 
 ## Controles de segurança (por owner)
 
@@ -84,7 +92,7 @@ escopo e sem promessa de integração automática.
 | dimensões | 512×512 | 1024×1024 | 1024×1024 | 1024×1024 | 1024×1024 |
 | sha256 | `94494e3a…b98e` | `967e79b8…140f` | `51f5bab4…8c8b` | `8d4879cc…d155` | `18d9e05f…e6fc` |
 | aprovação | OFFICIAL_AVATAR_APPROVED | OFFICIAL_AVATAR_APPROVED | OFFICIAL_AVATAR_APPROVED | OFFICIAL_AVATAR_APPROVED | OFFICIAL_AVATAR_APPROVED |
-| GET público | 200 + bytes idênticos | 200 + bytes idênticos | 200 + bytes idênticos | 200 + bytes idênticos | 401/404 (gate fechado) |
+| GET público | 200 + bytes idênticos | 200 + bytes idênticos | 200 + bytes idênticos | 200 + bytes idênticos | 200 + bytes idênticos |
 
 ## Procedimento de atualização / revogação
 
@@ -108,4 +116,4 @@ escopo e sem promessa de integração automática.
 | T13 | gateway externo | TEST_NOT_RUN (deploy não autorizado) |
 | T14–T15 | descoberta/render no ChatGPT | TEST_NOT_RUN |
 | T16 | sem fallback genérico | PASS |
-| T17 | EVA sem ratificação → bloqueada | PASS (401 transporte + 404 gate) |
+| T17 | EVA: publicação ratificada (R01) → serve bytes oficiais; allowlist exata; MCP/AuthZ intactos | PASS (200 + sha256; paths não autorizados → 401) |

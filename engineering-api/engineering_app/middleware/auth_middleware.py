@@ -40,6 +40,10 @@ _PUBLIC_PATHS = frozenset(
         "/apps/engineering-api/docs",
         "/apps/engineering-api/redoc",
         "/apps/engineering-api/openapi.json",
+        # DELPI-CHARACTER-AVATARS-001-R01: avatar oficial EVA — distribuição
+        # pública aprovada pelo PO. Asset único, comparação exata.
+        "/public/characters/eva/avatar/avatar-v1.jpg",
+        "/apps/engineering-api/public/characters/eva/avatar/avatar-v1.jpg",
     }
 )
 

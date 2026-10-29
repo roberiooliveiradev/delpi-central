@@ -20,10 +20,34 @@ _EXPECTED_SHA256 = (
 )
 
 
-def test_route_is_public_for_jwt_middleware() -> None:
+def test_authorized_asset_path_is_public_exact_match() -> None:
     assert _is_controllership_finance_public_path(
         "/public/characters/clara/avatar/avatar-v1.jpg"
     ) is True
+
+
+def test_gateway_root_path_variant_is_public() -> None:
+    assert _is_controllership_finance_public_path(
+        "/apps/controllership-finance-api/public/characters/clara/avatar/"
+        "avatar-v1.jpg"
+    ) is True
+
+
+def test_no_generic_public_exemption() -> None:
+    for path in (
+        "/public/qualquer-outra-rota",
+        "/public/characters/clara/avatar/avatar-v2.jpg",
+        "/public/characters/davi/avatar/avatar-v1.png",
+        "/public/characters/",
+        "/public/",
+        "/publicity/characters/clara/avatar/avatar-v1.jpg",
+    ):
+        assert _is_controllership_finance_public_path(path) is False, path
+
+
+def test_operational_and_mcp_paths_stay_authenticated() -> None:
+    for path in ("/mcp", "/api/mcp", "/v1/documents", "/internal/anything"):
+        assert _is_controllership_finance_public_path(path) is False, path
 
 
 def test_approved_avatar_serves_official_bytes() -> None:

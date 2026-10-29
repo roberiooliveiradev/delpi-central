@@ -1,13 +1,11 @@
-"""Distribuição do avatar oficial da especialista local (EVA).
+"""Distribuição pública do avatar oficial da especialista local (EVA).
 
-DELPI-CHARACTER-AVATARS-001 (D05): a publicação pública da EVA permanece
-``DECISION_REQUIRED`` até a ratificação do PO. A implementação owner-local
-está preparada mas desabilitada — toda requisição responde 404 e o path não
-entra na allowlist pública do middleware enquanto o gate estiver fechado.
-
-Para ativar: (1) ratificação do PO, (2) ``_PUBLIC_DISTRIBUTION_ENABLED = True``,
-(3) incluir o prefixo ``/public/characters/`` na allowlist pública do
-``jwt_middleware``.
+DELPI-CHARACTER-AVATARS-001-R01: publicação pública aprovada pelo PO.
+Serve apenas o arquivo aprovado declarado na ficha canônica do personagem
+(``avatar_status == "OFFICIAL_AVATAR_APPROVED"`` e ``filename`` idêntico ao
+basename de ``avatar_reference``). O path entra na allowlist pública do
+``jwt_middleware`` por comparação exata. Sem resolução de caminho arbitrária
+e sem fallback para imagem genérica.
 """
 
 from __future__ import annotations
@@ -22,7 +20,9 @@ from engineering_app.persona.eva_profile import get_eva_profile
 
 router = APIRouter(prefix="/public/characters", tags=["Characters"])
 
-_PUBLIC_DISTRIBUTION_ENABLED = False  # D05 — PO ratification pending.
+# R01: distribuição pública aprovada pelo PO — gate aberto. Os controles de
+# aprovação da ficha e de correspondência exata permanecem ativos abaixo.
+_PUBLIC_DISTRIBUTION_ENABLED = True
 
 _API_ROOT = Path(__file__).resolve().parents[4]
 _MIME_BY_SUFFIX = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}

@@ -54,15 +54,18 @@ possui projeção pública no repositório (handoffs aos owners:
 `controllership-finance-api`, `delia-api`). Nenhuma contradição
 (`ERROR`).
 
-## Distribuição pública do avatar — DELPI-CHARACTER-AVATARS-001 (D05)
+## Distribuição pública do avatar — DELPI-CHARACTER-AVATARS-001-R01
 
-- Implementação owner-local preparada:
-  `GET /public/characters/eva/avatar/avatar-v1.jpg` —
-  **publicação desabilitada** até ratificação do PO.
-- Gate: `_PUBLIC_DISTRIBUTION_ENABLED = False` na rota (404 em qualquer
-  requisição) + path **fora** da allowlist pública do `jwt_middleware`
-  (401 no transporte) — defesa em profundidade.
+- Publicação pública **ratificada pelo PO** (R01) — gate
+  `_PUBLIC_DISTRIBUTION_ENABLED = True`.
+- Rota owner-local: `GET /public/characters/eva/avatar/avatar-v1.jpg`
+  (externa: `/apps/engineering-api/public/characters/eva/avatar/avatar-v1.jpg`).
+- `jwt_middleware`: allowlist **exata** — apenas o path do asset e sua
+  variante `/apps/engineering-api/…` foram adicionados a `_PUBLIC_PATHS`.
+  Nenhum prefixo genérico (`/public/`, `/public/characters/`) é liberado.
+- Fonte única: `appearance.avatar_status` + `avatar_reference` da ficha;
+  filename deve ser idêntico ao basename da referência — caso contrário 404.
 - Asset: `engineering_app/assets/characters/eva/avatar-v1.jpg`,
   1024×1024, sha256 `18d9e05f…e6fc`, status `OFFICIAL_AVATAR_APPROVED`.
-- Para ativar: ratificação do PO + `ENABLED = True` + entrada
-  `/public/characters/` na allowlist pública do middleware.
+- Cache `public, max-age=300`; `X-Content-Type-Options: nosniff`.
+- Revogação: mudar `avatar_status` na ficha → 404 imediato.

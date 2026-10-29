@@ -72,8 +72,10 @@ ficha e incrementar `PROFILE_VERSION`.
 
 - Rota owner-local: `GET /public/characters/clara/avatar/avatar-v1.jpg`
   (externa: `/apps/controllership-finance-api/public/characters/clara/avatar/avatar-v1.jpg`).
-- Prefixo `/public/` liberado no `_is_controllership_finance_public_path`
-  do `jwt_middleware` local.
+- `jwt_middleware`: allowlist **exata** `_PUBLIC_CHARACTER_ASSETS` —
+  apenas `/public/characters/clara/avatar/avatar-v1.jpg` é público
+  (variante `/apps/controllership-finance-api/…` resolvida pelo strip de
+  root_path). Nenhum prefixo genérico `/public/` é liberado (R01).
 - Fonte única: `appearance.avatar_status` + `avatar_reference` da ficha;
   filename deve ser idêntico ao basename da referência — caso contrário 404.
 - Cache `public, max-age=300`; `X-Content-Type-Options: nosniff`.

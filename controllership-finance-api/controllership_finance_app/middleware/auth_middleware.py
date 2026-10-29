@@ -32,6 +32,16 @@ def _strip_root_path(request) -> str:
     return path
 
 
+# Allowlist exata de assets públicos autorizados — cada nova superfície
+# pública exige entrada explícita (DELPI-CHARACTER-AVATARS-001-R01: a
+# distribuição pública aprovada contempla apenas o avatar oficial da CLARA).
+_PUBLIC_CHARACTER_ASSETS = frozenset(
+    {
+        "/public/characters/clara/avatar/avatar-v1.jpg",
+    }
+)
+
+
 def _is_controllership_finance_public_path(path: str) -> bool:
     if path.startswith("/apps/controllership-finance-api/"):
         stripped = path[len("/apps/controllership-finance-api"):]
@@ -40,7 +50,7 @@ def _is_controllership_finance_public_path(path: str) -> bool:
     normalized = normalize_path(stripped)
     if is_public_path(path):
         return True
-    if normalized.startswith("/public/"):
+    if normalized in _PUBLIC_CHARACTER_ASSETS:
         return True
     if normalized in {"/ready", "/health"}:
         return True
