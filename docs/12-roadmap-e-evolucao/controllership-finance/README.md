@@ -550,3 +550,7 @@ A sessão de validação funcional assistida pelo PO, a matriz de testes visual/
 
 
 > **UX FECHAMENTO MENSAL — PLANO 113 (26/10/2026):** detalhamento de cada superfície e mapa de componentes `@delpi/plugin-ui`: [Plano 113 §9](./113-plano-canonico-fluxo-fechamento-controladoria-dre-vigencia-documental.md) e [Mapa 30](./30-plugin-ui-reuse-map.md). Três abas operacionais, detalhe documental contextual compartilhado Controladoria/DRE, PDF + interações + histórico; cadastro e edição de exigências DRE em **páginas administrativas**, não modais. DRE por último. `TARGET` — exige gates/contratos; preservar legado até depreciação aprovada.
+
+## Ciclo de Inteligencia do Fechamento — ANALYSIS-001 a 005 (2026-10-28)
+
+Plano documental aprovado para reconstruir as analises reais de Joyce, identificar fontes e contratos, definir conciliacoes rastreaveis, evoluir Relatorios e divergencias e conectar a CLARA sem duplicar calculos: [Documento 116](./116-ciclo-inteligencia-fechamento-analyses-001-005.md). ANALYSIS-001 e o primeiro gate, **somente leitura/inventario/evidencias**, sem runtime. ANALYSIS-002 a 005 permanecem PLANNED e dependem de validacao das regras e gates proprios.
