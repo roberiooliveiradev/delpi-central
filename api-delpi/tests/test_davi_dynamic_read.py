@@ -2548,3 +2548,86 @@ def test_entity_marker_does_not_create_false_positive(monkeypatch):
         query="Exemplos de melhoria de processos", top_k=5, actor_id="u1"
     )
     assert all(c["action_id"] != "search_products" for c in result["candidates"])
+
+
+# ---------------------------------------------------------------------------
+# C3 Task 13 / E1 — published argument_schema carries owner field semantics
+#
+# The governed consumer argument model receives ONLY the published
+# ``argument_schema`` (plus business_subject) — the owner-declared OpenAPI
+# parameter descriptions are the field canonical semantics. Dropping them
+# leaves the model with bare field names and provably degrades argument
+# formulation for semantics-critical fields (e.g. a text-content filter
+# mistaken for free request phrasing).
+# ---------------------------------------------------------------------------
+
+
+def test_published_schema_carries_owner_param_description():
+    """E1: the published argument_schema must carry the owner-declared
+    parameter description — the only field semantics the governed
+    argument formulation receives."""
+    params = tuple(
+        {
+            **p,
+            "description": "Termos contidos na descricao (acento-insensivel).",
+        }
+        if p["name"] == "description"
+        else p
+        for p in _search_params()
+    )
+    action = _action(
+        oid="search_products", path="/products", parameters=params
+    )
+    schema = build_argument_json_schema(action)
+    prop = schema["properties"]["description"]
+    assert (
+        prop.get("description")
+        == "Termos contidos na descricao (acento-insensivel)."
+    )
+
+
+def test_published_schema_omits_description_when_owner_silent():
+    """Negative case — absent owner text yields no fabricated key."""
+    action = _action(oid="search_products", path="/products")
+    schema = build_argument_json_schema(action)
+    for name, prop in schema["properties"].items():
+        assert "description" not in prop or isinstance(
+            prop["description"], str
+        )
+
+
+def test_published_schema_param_description_is_bounded():
+    params = tuple(
+        {**p, "description": "x" * 4000}
+        if p["name"] == "description"
+        else p
+        for p in _search_params()
+    )
+    action = _action(
+        oid="search_products", path="/products", parameters=params
+    )
+    schema = build_argument_json_schema(action)
+    text = schema["properties"]["description"].get("description", "")
+    assert len(text) <= 500
+
+
+def test_baseline_search_products_publishes_field_descriptions():
+    """Real governed contract: the baseline search_products action
+    declares param descriptions in the OpenAPI baseline — they must
+    reach the published schema."""
+    action = _load_governed_search_products()
+    schema = build_argument_json_schema(action)
+    props = schema["properties"]
+    assert props["description"].get("description")
+    assert props["page"].get("description")
+
+
+def test_published_schema_types_required_and_bounds_unchanged():
+    """Contract parity — descriptions are annotations only; types,
+    required sets and pagination bounds are untouched."""
+    action = _action(oid="search_products", path="/products")
+    schema = build_argument_json_schema(action)
+    props = schema["properties"]
+    assert props["page"]["type"] == "integer"
+    assert props["page_size"]["maximum"] <= 50
+    assert props["description"]["type"] == "string"

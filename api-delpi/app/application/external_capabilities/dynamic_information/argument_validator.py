@@ -45,12 +45,24 @@ class ArgumentValidationError(ValueError):
     """Caller-facing argument validation failure."""
 
 
+# Owner-declared parameter descriptions are contract semantics — the
+# only field meaning a governed consumer's argument formulation ever
+# sees. Kept bounded: they annotate the published schema, never grow
+# it unboundedly.
+_MAX_PARAM_DESCRIPTION_CHARS = 500
+
+
 def _param_schema(param: dict[str, Any]) -> dict[str, Any]:
     nested = param.get("schema") if isinstance(param.get("schema"), dict) else {}
     nested = _unwrap_nullable_schema(dict(nested))
     schema: dict[str, Any] = {}
     ptype = param.get("type") or nested.get("type") or "string"
     schema["type"] = ptype
+    description = param.get("description") or nested.get("description")
+    if isinstance(description, str) and description.strip():
+        schema["description"] = description.strip()[
+            :_MAX_PARAM_DESCRIPTION_CHARS
+        ]
     for key in (
         "enum",
         "pattern",

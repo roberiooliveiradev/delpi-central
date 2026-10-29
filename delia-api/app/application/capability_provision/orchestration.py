@@ -211,6 +211,7 @@ from app.application.capability_provision.outcome_assessment import (
 )
 from app.application.capability_provision.paginated_result_semantics import (
     DEFAULT_MAX_PAGES,
+    PaginationEnvelope,
     PersonalTicketScope,
     ResultIntent,
     aggregate_paginated_pages,
@@ -9241,17 +9242,39 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline | None,
         goal: "_TurnGoal | None" = None,
     ) -> SpecialistOutcome:
-        """Bounded same-capability page walk for COUNT intents (R5).
+        """Bounded same-capability page walk (R5 + T13).
+
+        COUNT intents keep the original trigger (``has_more`` without
+        an authoritative total — the total itself answers the goal).
+        CRI declared ``answer_requirements`` add a second trigger: an
+        ``ordering`` / ``complete_coverage`` / unsatisfied
+        ``min_items`` demand the first page cannot prove — the walk
+        then gathers the remaining pages until the owner's
+        authoritative total is covered (or ``has_more=False``), so the
+        requirement can be verified on the complete evidence set
+        rather than degrade to perpetual ``coverage_unproven``.
 
         Only for non-personal / all-visible scopes. Personal assigned /
         requested / ambiguous paths never aggregate visible pages into
-        a fabricated personal total. Stops on ``has_more=False``,
-        authoritative total, page failure, duplicate storm, max pages,
-        or turn-budget headroom exhaustion — never invents a total.
+        a fabricated personal total or personal extreme. Stops on
+        ``has_more=False``, authoritative total coverage, page failure,
+        duplicate storm, max pages, or turn-budget headroom exhaustion
+        — never invents a total or an ordering.
         """
         intent = classify_result_intent(input_text)
         scope = classify_personal_ticket_scope(input_text)
-        if intent is not ResultIntent.COUNT:
+        envelope = extract_pagination_envelope(outcome.structured)
+        if envelope is None:
+            return outcome
+        count_walk = (
+            intent is ResultIntent.COUNT
+            and envelope.total_count is None
+            and envelope.has_more is True
+        )
+        gather_evidence = self._requirements_need_more_pages(
+            goal, envelope
+        )
+        if not count_walk and not gather_evidence:
             return outcome
         if scope in {
             PersonalTicketScope.MY_TICKETS_AMBIGUOUS,
@@ -9259,27 +9282,19 @@ class OperationalCapabilityOrchestrator:
             PersonalTicketScope.REQUESTED_BY_ME,
         }:
             return outcome
-        envelope = extract_pagination_envelope(outcome.structured)
-        if envelope is None:
-            return outcome
-        if envelope.total_count is not None:
-            return outcome
-        if envelope.has_more is not True:
-            return outcome
         if not isinstance(arguments, Mapping):
             return outcome
-        # Owner must expose a page cursor we can advance.
-        page_key = next(
-            (
-                key
-                for key in arguments
-                if str(key).strip().lower().replace("-", "_") == "page"
-            ),
-            None,
+        # Owner must expose a page cursor we can advance — either sent
+        # with the first invocation or declared in the capability's own
+        # published input schema.
+        page_key, page_spec = self._page_cursor(
+            arguments, group, remote_name
         )
         if page_key is None:
             return outcome
 
+        target_total = envelope.total_count
+        fetched_items = len(envelope.items)
         pages: list[object] = [outcome.structured]
         try:
             current_page = int(arguments.get(page_key) or envelope.page or 1)
@@ -9301,7 +9316,12 @@ class OperationalCapabilityOrchestrator:
                 break
             current_page += 1
             next_arguments = dict(arguments)
-            next_arguments[page_key] = current_page
+            next_arguments[page_key] = (
+                str(current_page)
+                if page_spec is not None
+                and page_spec.get("type") == "string"
+                else current_page
+            )
             try:
                 invoked = self._invoke_selected(
                     group_key,
@@ -9328,10 +9348,30 @@ class OperationalCapabilityOrchestrator:
                 pages.append(None)
                 break
             pages.append(next_outcome.structured)
-            if next_envelope.total_count is not None:
-                break
-            if next_envelope.has_more is not True:
-                break
+            fetched_items += len(next_envelope.items)
+            if count_walk:
+                # COUNT: a published total or an exhausted walk answers
+                # the intent — the total is the evidence, not items.
+                if next_envelope.total_count is not None:
+                    break
+                if next_envelope.has_more is not True:
+                    break
+            else:
+                # Requirements: keep gathering until the owner's
+                # authoritative total is covered or the owner closes
+                # the collection — an unsigned end stops too (partial
+                # coverage is honest, never completed by assumption).
+                if next_envelope.has_more is False:
+                    break
+                if (
+                    target_total is not None
+                    and fetched_items >= target_total
+                ):
+                    break
+                if next_envelope.has_more is not True and (
+                    next_envelope.total_count is None
+                ):
+                    break
 
         aggregation = aggregate_paginated_pages(pages, max_pages=max_pages)
         _logger.info(
@@ -9343,6 +9383,18 @@ class OperationalCapabilityOrchestrator:
             len(aggregation.duplicate_ids),
             correlation,
         )
+        # ``aggregation.complete`` certifies walk integrity — for COUNT
+        # the authoritative total answers the intent even mid-walk.
+        # Declared ordering/coverage requirements instead need the
+        # ITEMS themselves: a published total gathered only partially
+        # is honest incomplete coverage, never a fabricated complete
+        # set.
+        coverage_done = aggregation.complete and (
+            count_walk
+            or aggregation.authoritative_total is None
+            or aggregation.unique_count
+            >= aggregation.authoritative_total
+        )
         base = (
             dict(outcome.structured)
             if isinstance(outcome.structured, Mapping)
@@ -9353,13 +9405,95 @@ class OperationalCapabilityOrchestrator:
             "items": [dict(item) for item in aggregation.items],
             "page": 1,
             "page_size": aggregation.unique_count,
-            "has_more": not aggregation.complete,
+            "has_more": not coverage_done,
         }
         if aggregation.authoritative_total is not None:
             merged["total_count"] = aggregation.authoritative_total
         elif aggregation.complete and not aggregation.duplicate_ids:
             merged["has_more"] = False
         return dataclasses.replace(outcome, structured=merged)
+
+    @staticmethod
+    def _requirements_need_more_pages(
+        goal: "_TurnGoal | None",
+        envelope: PaginationEnvelope,
+    ) -> bool:
+        """Declared-requirement coverage gap that a page walk can close.
+
+        ``ordering`` and ``complete_coverage`` demand the complete
+        evidence set; ``min_items`` demands more items only when the
+        distinct records on hand fall short. A demonstrably complete
+        page (``has_more=False`` or authoritative total covered) needs
+        no further owner calls — requirements already provable never
+        trigger the walk.
+        """
+
+        requirements = (
+            goal.answer_requirements if goal is not None else None
+        )
+        if requirements is None or not requirements.declared:
+            return False
+        coverage_incomplete = envelope.has_more is True or (
+            envelope.total_count is not None
+            and envelope.total_count > len(envelope.items)
+        )
+        if not coverage_incomplete:
+            return False
+        if (
+            requirements.ordering is not None
+            or requirements.complete_coverage
+        ):
+            return True
+        return requirements.min_items is not None and (
+            distinct_delivered_count(envelope.items)
+            < requirements.min_items
+        )
+
+    @staticmethod
+    def _page_cursor(
+        arguments: Mapping[str, Any],
+        group: CapabilityGroup,
+        remote_name: str,
+    ) -> tuple[str | None, Mapping[str, Any] | None]:
+        """Owner-declared pagination cursor and its published spec.
+
+        The cursor is an argument already sent, or — when the first
+        invocation paged implicitly — a ``page`` property declared in
+        the capability's own input schema. The returned spec carries
+        the owner-declared type so follow-up calls respect the
+        contract (some owners type the cursor as a string).
+        """
+
+        def _is_page(key: object) -> bool:
+            return (
+                str(key).strip().lower().replace("-", "_") == "page"
+            )
+
+        capability = next(
+            (
+                cap
+                for cap in group.capabilities
+                if cap.remote_name == remote_name
+            ),
+            None,
+        )
+        schema = (
+            capability.input_schema if capability is not None else None
+        )
+        props = (
+            schema.get("properties")
+            if isinstance(schema, Mapping)
+            else None
+        )
+        key = next((k for k in arguments if _is_page(k)), None)
+        if key is None and isinstance(props, Mapping):
+            key = next((k for k in props if _is_page(k)), None)
+        spec = (
+            props.get(key)
+            if isinstance(props, Mapping) and key is not None
+            else None
+        )
+        return key, spec if isinstance(spec, Mapping) else None
 
     def _synthesize_content(
         self,
