@@ -6999,8 +6999,10 @@ class OperationalCapabilityOrchestrator:
         description is exposed before the assessment decides that a
         foreign path is justified. Returns ``sufficient`` (native),
         ``foreign_evidence_required``, ``corroboration_requested`` or
-        ``inconclusive``; anything unparseable or absent is native —
-        foreign fan-out is never the default.
+        ``inconclusive``; anything unparseable, absent or outside the
+        canonical vocabulary resolves to ``inconclusive`` — never to
+        ``sufficient`` — keeping the native path as the default:
+        foreign fan-out is never the fallback.
         """
         assessment_block: dict[str, Any] = {
             "target_capability_id": descriptor.capability_id,
@@ -7070,7 +7072,17 @@ class OperationalCapabilityOrchestrator:
             "corroboration_requested",
             "inconclusive",
         ):
-            status = "sufficient"
+            # Fail closed (Task 09): an unrecognized, absent or
+            # wrong-typed status is never affirmative sufficiency — the
+            # undetermined assessment resolves to ``inconclusive``,
+            # which keeps the native default (foreign fan-out is never
+            # the fallback) while recording the decision truthfully.
+            _logger.info(
+                "orchestration stage=native_assessment "
+                "decision=invalid_status_rejected correlation_id=%s",
+                correlation,
+            )
+            status = "inconclusive"
         _logger.info(
             "orchestration stage=native_assessment decision=%s "
             "correlation_id=%s",
