@@ -698,7 +698,12 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "save_bpmn_working_copy (processo_id + xml + "
                     "expected_version), "
                     "create_bpmn_revision (processo_id + expected_version + "
-                    "optional name/description).",
+                    "optional name/description), "
+                    "organize_bpmn_document (processo_id — canonical "
+                    "Organizar auto-layout, DI-only, idempotent). "
+                    "Writes authored through these capabilities also "
+                    "run the same layout automatically before sealing "
+                    "(Modality B — structural TÉO edits stay organized).",
                     "Payload: BPMN 2.0 XML (same contract as the Portal "
                     "editor — include BPMNDI shape/edge bounds so the "
                     "editor renders positions). intake_bytes → "

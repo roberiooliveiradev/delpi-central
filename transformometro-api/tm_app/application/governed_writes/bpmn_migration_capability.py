@@ -44,6 +44,10 @@ from tm_app.application.use_cases.migrate_legacy_diagram_to_bpmn import (
     MigrationExecutionError,
     MigrateLegacyDiagramToBpmnUseCase,
 )
+from tm_app.application.ports.bpmn_layout_port import (
+    BpmnLayoutError,
+    BpmnLayoutPort,
+)
 from tm_app.domain.diagram.flowchart_v1 import FlowchartValidationError
 from tm_app.domain.diagram.legacy_bpmn_migration import (
     STATUS_READY,
@@ -86,6 +90,7 @@ class MigrationWriteStack(NamedTuple):
     docs: ProcessBpmnDocumentRepositoryPort
     refs: ProcessBpmnReferenceRepositoryPort
     migrations: ProcessBpmnMigrationRepositoryPort
+    layout: BpmnLayoutPort
 
 
 def _raise_http_err(response: Any) -> None:
@@ -100,6 +105,12 @@ def _raise_http_err(response: Any) -> None:
         code="FORBIDDEN",
         status_code=status,
     )
+
+
+def _sha256(text: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _compose_source(processo_id: str) -> dict[str, Any]:
@@ -296,6 +307,31 @@ def prepare(
             candidate_sha = candidate.checksum_sha256
             candidate_report = candidate.to_report_dict()
             ready = candidate.status == STATUS_READY
+            if ready:
+                # Modality B — migration output gets the canonical
+                # Organizar pipeline; fallback keeps the mapper's grid
+                # DI and records the reason (never blocks the write).
+                try:
+                    layout_result = stack.layout.organize(candidate_xml)
+                    if layout_result.changed:
+                        candidate_xml = layout_result.xml
+                        candidate_sha = _sha256(candidate_xml)
+                        candidate_report["auto_layout"] = {
+                            "applied": True,
+                            "moved_elements": (
+                                layout_result.moved_elements
+                            ),
+                        }
+                    else:
+                        candidate_report["auto_layout"] = {
+                            "applied": False,
+                            "reason": "already_organized",
+                        }
+                except BpmnLayoutError as exc:
+                    candidate_report["auto_layout"] = {
+                        "applied": False,
+                        "reason": str(exc),
+                    }
 
     # ---- shared BPMN validation (G7 pipeline) ------------------------------
     # Same canonical intake boundary as manage_process_bpmn_document:

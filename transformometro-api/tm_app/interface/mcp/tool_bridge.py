@@ -898,6 +898,7 @@ _GOVERNED_OPERATION_REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     "create_bpmn_document": ("processo_id",),
     "save_bpmn_working_copy": ("processo_id", "xml", "expected_version"),
     "create_bpmn_revision": ("processo_id", "expected_version"),
+    "organize_bpmn_document": ("processo_id",),
 }
 
 

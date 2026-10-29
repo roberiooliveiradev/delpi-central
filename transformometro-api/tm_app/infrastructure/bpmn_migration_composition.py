@@ -19,6 +19,9 @@ from tm_app.application.use_cases.manage_process_bpmn_document import (
 from tm_app.application.use_cases.migrate_legacy_diagram_to_bpmn import (
     MigrateLegacyDiagramToBpmnUseCase,
 )
+from tm_app.infrastructure.bpmn_layout.node_bpmn_layout_service import (
+    NodeBpmnLayoutService,
+)
 from tm_app.infrastructure.persistence.repositories.process_bpmn_document_repository import (
     ProcessBpmnDocumentRepository,
 )
@@ -44,6 +47,7 @@ def build_migration_write_stack() -> MigrationWriteStack:
         docs=docs,
         refs=refs,
         migrations=migrations,
+        layout=NodeBpmnLayoutService(),
     )
 
 
@@ -56,4 +60,5 @@ def build_bpmn_document_stack() -> BpmnDocumentWriteStack:
         use_case=ProcessBpmnDocumentUseCases(docs, refs),
         docs=docs,
         refs=refs,
+        layout=NodeBpmnLayoutService(),
     )

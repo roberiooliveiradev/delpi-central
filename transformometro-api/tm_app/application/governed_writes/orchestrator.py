@@ -265,6 +265,9 @@ GOVERNED_OPERATION_ACTION_TO_CAPABILITY = {
     "create_bpmn_document": "create_bpmn_document",
     "save_bpmn_working_copy": "save_bpmn_working_copy",
     "create_bpmn_revision": "create_bpmn_revision",
+    # Canonical Organizar on the native document — DI-only update via
+    # the same ELK pipeline the Portal editor runs; no-ops never write.
+    "organize_bpmn_document": "organize_bpmn_document",
 }
 
 # Semantic family: meeting minutes — workflow transitions and minute

@@ -26,6 +26,10 @@ from tm_app.application.governed_writes.bpmn_document_capability import (
     BpmnDocumentWriteStack,
 )
 from tm_app.application.governed_writes.errors import GovernedWriteError
+from tm_app.application.ports.bpmn_layout_port import (
+    BpmnLayoutError,
+    BpmnLayoutResult,
+)
 from tm_app.application.use_cases.manage_process_bpmn_document import (
     ProcessBpmnDocumentUseCases,
 )
@@ -181,10 +185,28 @@ def _doc(xml: str = XML, version: int = 1) -> ProcessBpmnDocument:
     )
 
 
+class FakeLayout:
+    """Controllable layout stub — default no-op (already organized)."""
+
+    def __init__(self, result=None, error=None):
+        self._result = result
+        self._error = error
+        self.calls = []
+
+    def organize(self, xml):
+        self.calls.append(xml)
+        if self._error is not None:
+            raise self._error
+        return self._result or BpmnLayoutResult(
+            xml=xml, changed=False, moved_elements=0
+        )
+
+
 def _stack(
     docs: FakeDocs | None = None,
     refs: FakeRefs | None = None,
     validator: FakeValidator | None = None,
+    layout: FakeLayout | None = None,
 ) -> BpmnDocumentWriteStack:
     docs = docs or FakeDocs()
     refs = refs or FakeRefs()
@@ -194,6 +216,7 @@ def _stack(
         ),
         docs=docs,
         refs=refs,
+        layout=layout or FakeLayout(),
     )
 
 
@@ -865,4 +888,167 @@ class TestLegacyIsolation:
     def test_stack_exposes_no_legacy_ports(self):
         stack = _stack()
         assert not hasattr(stack, "legacy")
-        assert set(stack._fields) == {"use_case", "docs", "refs"}
+        assert set(stack._fields) == {"use_case", "docs", "refs", "layout"}
+
+
+class TestOrganizeDocument:
+    """Modality A — explicit organize_bpmn_document capability."""
+
+    def _prepare_organize(self, stack):
+        return _prepare(
+            stack,
+            _request(),
+            {"processo_id": PROCESSO},
+            capability=cap.ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
+        )
+
+    def test_organize_changed_seals_candidate(self):
+        layout = FakeLayout(
+            result=BpmnLayoutResult(
+                xml=XML_V2, changed=True, moved_elements=7
+            )
+        )
+        stack = _stack(docs=FakeDocs(active=_doc()), layout=layout)
+        out = self._prepare_organize(stack)
+        change = out["exact_change"]
+        assert out["validation_result"]["ready"] is True
+        assert out["validation_result"]["auto_layout"]["applied"] is True
+        assert out["validation_result"]["auto_layout"]["moved_elements"] == 7
+        assert change["candidate_xml"] == XML_V2
+        assert change["expected_version"] == 1
+        assert layout.calls == [XML]
+
+    def test_organize_already_organized_seals_noop(self):
+        stack = _stack(docs=FakeDocs(active=_doc()))
+        out = self._prepare_organize(stack)
+        change = out["exact_change"]
+        assert out["validation_result"]["ready"] is True
+        assert change["no_op"] is True
+        assert change["candidate_xml"] is None
+        assert out["consequential_impact"]["persists"] is False
+
+    def test_organize_layout_failure_ready_false(self):
+        layout = FakeLayout(error=BpmnLayoutError("engine down"))
+        stack = _stack(docs=FakeDocs(active=_doc()), layout=layout)
+        out = self._prepare_organize(stack)
+        assert out["validation_result"]["ready"] is False
+        assert "engine down" in out["exact_change"]["layout_error"]
+        assert out["consequential_impact"]["persists"] is False
+
+    def test_organize_no_document_404(self):
+        stack = _stack()
+        with pytest.raises(GovernedWriteError) as exc:
+            self._prepare_organize(stack)
+        assert exc.value.status_code == 404
+
+    def test_organize_execute_writes_organized_and_verifies(self):
+        docs = FakeDocs(active=_doc())
+        layout = FakeLayout(
+            result=BpmnLayoutResult(
+                xml=XML_V2, changed=True, moved_elements=3
+            )
+        )
+        stack = _stack(docs=docs, layout=layout)
+        prep = self._prepare_organize(stack)
+        change = prep["exact_change"]
+        with (
+            patch.object(
+                cap, "check_processo_manage_access", return_value=None
+            ),
+        ):
+            write = cap.execute(stack, _request(), change)
+        doc = docs.docs[PROCESSO]
+        assert doc.working_copy_xml == XML_V2
+        assert doc.version == 2
+        out = cap.verify(stack, change, write)
+        assert out["verified"] is True
+        assert out["version"] == 2
+
+    def test_organize_noop_execute_skips_write(self):
+        docs = FakeDocs(active=_doc())
+        stack = _stack(docs=docs)
+        prep = self._prepare_organize(stack)
+        change = prep["exact_change"]
+        with (
+            patch.object(
+                cap, "check_processo_manage_access", return_value=None
+            ),
+        ):
+            write = cap.execute(stack, _request(), change)
+        assert write["skipped"] is True
+        assert docs.docs[PROCESSO].version == 1
+        out = cap.verify(stack, change, write)
+        assert out["verified"] is True
+
+
+class TestAutoLayoutOnWrites:
+    """Modality B — TÉO-authored writes auto-organize before sealing."""
+
+    def test_save_candidate_is_organized(self):
+        layout = FakeLayout(
+            result=BpmnLayoutResult(
+                xml=XML_V2, changed=True, moved_elements=4
+            )
+        )
+        stack = _stack(docs=FakeDocs(active=_doc()), layout=layout)
+        out = _prepare(
+            stack,
+            _request(),
+            {
+                "processo_id": PROCESSO,
+                "xml": XML_V2,
+                "expected_version": 1,
+            },
+            capability=cap.SAVE_BPMN_WORKING_COPY_CAPABILITY,
+        )
+        assert out["exact_change"]["candidate_xml"] == XML_V2
+        assert out["meta"]["auto_layout"]["applied"] is True
+
+    def test_save_layout_failure_keeps_candidate(self):
+        layout = FakeLayout(error=BpmnLayoutError("no node runtime"))
+        stack = _stack(docs=FakeDocs(active=_doc()), layout=layout)
+        out = _prepare(
+            stack,
+            _request(),
+            {
+                "processo_id": PROCESSO,
+                "xml": XML_V2,
+                "expected_version": 1,
+            },
+            capability=cap.SAVE_BPMN_WORKING_COPY_CAPABILITY,
+        )
+        assert out["exact_change"]["candidate_xml"] == XML_V2
+        assert out["meta"]["auto_layout"]["applied"] is False
+        assert "no node runtime" in out["meta"]["auto_layout"]["reason"]
+        assert out["validation_result"]["ready"] is True
+
+    def test_save_already_organized_unchanged(self):
+        stack = _stack(docs=FakeDocs(active=_doc()))
+        out = _prepare(
+            stack,
+            _request(),
+            {
+                "processo_id": PROCESSO,
+                "xml": XML_V2,
+                "expected_version": 1,
+            },
+            capability=cap.SAVE_BPMN_WORKING_COPY_CAPABILITY,
+        )
+        assert out["exact_change"]["candidate_xml"] == XML_V2
+        assert out["meta"]["auto_layout"]["applied"] is False
+
+    def test_create_with_xml_is_organized(self):
+        layout = FakeLayout(
+            result=BpmnLayoutResult(
+                xml=XML_V2, changed=True, moved_elements=2
+            )
+        )
+        stack = _stack(docs=FakeDocs(), layout=layout)
+        out = _prepare(
+            stack,
+            _request(),
+            {"processo_id": PROCESSO, "xml": XML_V2},
+            capability=cap.CREATE_BPMN_DOCUMENT_CAPABILITY,
+        )
+        assert out["exact_change"]["candidate_xml"] == XML_V2
+        assert out["meta"]["auto_layout"]["applied"] is True

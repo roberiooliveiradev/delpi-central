@@ -281,6 +281,15 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         "create_bpmn_revision",
         workflow_id="create_bpmn_revision",
     ),
+    # Canonical Organizar on the working copy — DI-only update, same
+    # update-class treatment as save_working_copy; idempotent no-ops
+    # never persist.
+    WritePolicyRecord(
+        "bpmn_document.organize",
+        AUTO_ACT,
+        "organize_bpmn_document",
+        workflow_id="organize_bpmn_document",
+    ),
     # --- Helpdesk governed writes (BFF-owned; same-user Bearer) --------------
     # Additive ticket creation — the user's request is the intent.
     WritePolicyRecord(

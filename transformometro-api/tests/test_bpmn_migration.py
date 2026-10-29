@@ -377,8 +377,29 @@ class FakeDocUseCases:
         )
 
 
+class FakeLayout:
+    """Default no-op layout: document already organized."""
+
+    def __init__(self, result=None, error=None):
+        self._result = result
+        self._error = error
+        self.calls = []
+
+    def organize(self, xml):
+        from tm_app.application.ports.bpmn_layout_port import (
+            BpmnLayoutResult,
+        )
+
+        self.calls.append(xml)
+        if self._error is not None:
+            raise self._error
+        return self._result or BpmnLayoutResult(
+            xml=xml, changed=False, moved_elements=0
+        )
+
+
 def _stack(
-    docs=None, refs=None, migrations=None, doc_uc=None
+    docs=None, refs=None, migrations=None, doc_uc=None, layout=None
 ) -> MigrationWriteStack:
     docs = docs or FakeDocs()
     refs = refs or FakeRefs()
@@ -393,6 +414,7 @@ def _stack(
         docs=docs,
         refs=refs,
         migrations=migrations,
+        layout=layout or FakeLayout(),
     )
 
 
@@ -992,3 +1014,49 @@ class TestXsdCompliantSerialization:
         assert not [
             i for i in report.issues if i.severity.value == "error"
         ], [i.message for i in report.issues]
+
+
+_ORG_XML = (
+    '<?xml version="1.0" encoding="UTF-8"?>'
+    '<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">'
+    '<bpmn:process id="p1"/></bpmn:definitions>'
+)
+
+
+class TestMigrationAutoLayout:
+    """Modality B — migration candidates get canonical Organizar."""
+
+    def test_candidate_replaced_when_layout_changes(self):
+        layout = FakeLayout(
+            result=SimpleNamespace(
+                xml=_ORG_XML, changed=True, moved_elements=5
+            )
+        )
+        stack = _stack(layout=layout)
+        out = _prepare(stack, _request(), {"processo_id": PROCESSO})
+        report = out["validation_result"]["migration_report"]
+        assert report["auto_layout"]["applied"] is True
+        assert report["auto_layout"]["moved_elements"] == 5
+        assert out["exact_change"]["candidate_xml"] == _ORG_XML
+        assert len(out["exact_change"]["candidate_sha256"]) == 64
+
+    def test_layout_failure_keeps_mapper_candidate(self):
+        from tm_app.application.ports.bpmn_layout_port import (
+            BpmnLayoutError,
+        )
+
+        layout = FakeLayout(error=BpmnLayoutError("engine down"))
+        stack = _stack(layout=layout)
+        out = _prepare(stack, _request(), {"processo_id": PROCESSO})
+        report = out["validation_result"]["migration_report"]
+        assert report["auto_layout"]["applied"] is False
+        assert "engine down" in report["auto_layout"]["reason"]
+        assert out["exact_change"]["candidate_xml"].startswith("<")
+        assert out["validation_result"]["ready"] is True
+
+    def test_already_organized_keeps_candidate(self):
+        stack = _stack()
+        out = _prepare(stack, _request(), {"processo_id": PROCESSO})
+        report = out["validation_result"]["migration_report"]
+        assert report["auto_layout"]["applied"] is False
+        assert report["auto_layout"]["reason"] == "already_organized"

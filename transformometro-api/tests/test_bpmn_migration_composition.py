@@ -49,7 +49,8 @@ class _FakeRefs:
 
 def _stack() -> cap.MigrationWriteStack:
     return cap.MigrationWriteStack(
-        use_case=None, docs=_FakeDocs(), refs=_FakeRefs(), migrations=None
+        use_case=None, docs=_FakeDocs(), refs=_FakeRefs(),
+        migrations=None, layout=None,
     )
 
 

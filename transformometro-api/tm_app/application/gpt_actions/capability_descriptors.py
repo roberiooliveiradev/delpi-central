@@ -382,6 +382,30 @@ def _canonical_catalog() -> dict[str, Any]:
             "read_back_policy": "authoritative",
         },
         {
+            "id": "organize_bpmn_document",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Run the canonical Organizar auto-layout on the native "
+                "BPMN document — the same ELK pipeline the Portal "
+                "editor executes (Organizar → Prévia → Aplicar), "
+                "applied server-side to BPMN-DI geometry only; BPMN "
+                "semantics are preserved. Idempotent: an already "
+                "organized document seals a no-op and never persists. "
+                "TÉO-driven create/save/migrate applies the same "
+                "layout automatically before sealing."
+            ),
+            "read_write": "WRITE",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "organize_bpmn_document",
+            "commit_via": "commit_proposal",
+            "confirmation_requirement": False,
+            "confirmation_policy": confirmation_kind_for_workflow(
+                "organize_bpmn_document"
+            ),
+            "read_back_policy": "authoritative",
+        },
+        {
             "id": "create_bpmn_revision",
             "kind": "workflow",
             "owner": "transformometro-api",

@@ -47,6 +47,10 @@ from tm_app.application.governed_writes.errors import (
     GovernedWriteError,
 )
 from tm_app.application.governed_writes.proposal import fingerprint
+from tm_app.application.ports.bpmn_layout_port import (
+    BpmnLayoutError,
+    BpmnLayoutPort,
+)
 from tm_app.application.use_cases.manage_process_bpmn_document import (
     MAX_XML_BYTES,
     DualModeConflict,
@@ -67,12 +71,14 @@ from tm_app.interface.http.branch_access_http import (
 CREATE_BPMN_DOCUMENT_CAPABILITY = "create_bpmn_document"
 SAVE_BPMN_WORKING_COPY_CAPABILITY = "save_bpmn_working_copy"
 CREATE_BPMN_REVISION_CAPABILITY = "create_bpmn_revision"
+ORGANIZE_BPMN_DOCUMENT_CAPABILITY = "organize_bpmn_document"
 
 BPMN_DOCUMENT_CAPABILITIES = frozenset(
     {
         CREATE_BPMN_DOCUMENT_CAPABILITY,
         SAVE_BPMN_WORKING_COPY_CAPABILITY,
         CREATE_BPMN_REVISION_CAPABILITY,
+        ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
     }
 )
 
@@ -94,6 +100,7 @@ class BpmnDocumentWriteStack(NamedTuple):
     use_case: ProcessBpmnDocumentUseCases
     docs: ProcessBpmnDocumentRepositoryPort
     refs: ProcessBpmnReferenceRepositoryPort
+    layout: BpmnLayoutPort
 
 
 def _raise_http_err(response: Any) -> None:
@@ -155,6 +162,40 @@ def _require_expected_version(raw: Any) -> int:
 
 def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _auto_organize(
+    stack: BpmnDocumentWriteStack, xml: str
+) -> tuple[str, dict[str, Any]]:
+    """Modality B — every structural write authored through the TÉO
+    governed surface gets the CANONICAL Organizar pipeline applied to
+    its BPMN-DI before sealing. Fallback policy (product decision): a
+    layout failure NEVER blocks the write — the unorganized candidate
+    is kept and the summary records the reason."""
+    try:
+        result = stack.layout.organize(xml)
+    except BpmnLayoutError as exc:
+        return xml, {"applied": False, "reason": str(exc)}
+    if not result.changed:
+        return xml, {
+            "applied": False,
+            "reason": "already_organized",
+            "moved_elements": 0,
+        }
+    # Never seal a layout output that broke the artifact — keep the
+    # original candidate (semantics are preserved by construction, but
+    # the organized XML still goes through the canonical validator).
+    check = _validate_candidate_xml(result.xml)
+    if not check.get("passed"):
+        return xml, {
+            "applied": False,
+            "reason": "organized_xml_failed_validation",
+            "moved_elements": result.moved_elements,
+        }
+    return result.xml, {
+        "applied": True,
+        "moved_elements": result.moved_elements,
+    }
 
 
 # ---------------------------------------------------------------------
@@ -261,10 +302,18 @@ def _prepare_create(
     candidate_xml = xml_arg or None
     candidate_sha = _sha256(candidate_xml) if candidate_xml else None
     bpmn_validation: dict[str, Any] = {"stage": "blank_artifact", "passed": True}
+    auto_layout: dict[str, Any] = {"applied": False}
     ready = True
     if candidate_xml is not None:
         bpmn_validation = _validate_candidate_xml(candidate_xml)
         ready = bool(bpmn_validation.get("passed"))
+        if ready:
+            candidate_xml, auto_layout = _auto_organize(
+                stack, candidate_xml
+            )
+            candidate_sha = _sha256(candidate_xml)
+            if auto_layout.get("applied"):
+                bpmn_validation = _validate_candidate_xml(candidate_xml)
 
     return {
         "resource_type": "process_bpmn_document",
@@ -300,7 +349,7 @@ def _prepare_create(
             "type": "native_bpmn_document_created",
             "processo_id": processo_id,
         },
-        "meta": {},
+        "meta": {"auto_layout": auto_layout},
     }
 
 
@@ -347,6 +396,12 @@ def _prepare_save(
     candidate_sha = _sha256(xml)
     bpmn_validation = _validate_candidate_xml(xml)
     ready = bool(bpmn_validation.get("passed"))
+    auto_layout: dict[str, Any] = {"applied": False}
+    if ready:
+        xml, auto_layout = _auto_organize(stack, xml)
+        candidate_sha = _sha256(xml)
+        if auto_layout.get("applied"):
+            bpmn_validation = _validate_candidate_xml(xml)
 
     return {
         "resource_type": "process_bpmn_document",
@@ -385,6 +440,132 @@ def _prepare_save(
             "type": "bpmn_working_copy_saved",
             "processo_id": processo_id,
             "expected_version": expected_version,
+        },
+        "meta": {"auto_layout": auto_layout},
+    }
+
+
+def _prepare_organize(
+    stack: BpmnDocumentWriteStack, processo_id: str, args: dict[str, Any]
+) -> dict[str, Any]:
+    """Modality A — explicit 'organize this BPMN' request. Reads the
+    active native document, runs the canonical Organizar pipeline and
+    seals either the organized candidate or an idempotent no-op."""
+    doc = _require_active_doc(stack, processo_id)
+    xml = doc.working_copy_xml
+    layout_report: dict[str, Any]
+    try:
+        result = stack.layout.organize(xml)
+    except BpmnLayoutError as exc:
+        return {
+            "resource_type": "process_bpmn_document",
+            "resource_id": processo_id,
+            "current_state_fingerprint": _bpmn_state_fingerprint(
+                stack, processo_id
+            ),
+            "exact_change": {
+                "capability": ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
+                "processo_id": processo_id,
+                "expected_version": doc.version,
+                "candidate_xml": None,
+                "candidate_sha256": None,
+                "layout_error": str(exc),
+            },
+            "validation_result": {
+                "ready": False,
+                "auto_layout": {
+                    "applied": False,
+                    "reason": str(exc),
+                },
+            },
+            "consequential_impact": {
+                "persists": False,
+                "operation": ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "bpmn_document_organized",
+                "processo_id": processo_id,
+            },
+            "meta": {},
+        }
+
+    layout_report = {
+        "applied": result.changed,
+        "moved_elements": result.moved_elements,
+        "reason": None if result.changed else "already_organized",
+    }
+    if not result.changed:
+        # Idempotent no-op: already organized — seal a no-write change.
+        return {
+            "resource_type": "process_bpmn_document",
+            "resource_id": processo_id,
+            "current_state_fingerprint": _bpmn_state_fingerprint(
+                stack, processo_id
+            ),
+            "exact_change": {
+                "capability": ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
+                "processo_id": processo_id,
+                "expected_version": doc.version,
+                "candidate_xml": None,
+                "candidate_sha256": doc.working_copy_sha256,
+                "no_op": True,
+            },
+            "validation_result": {
+                "ready": True,
+                "auto_layout": layout_report,
+            },
+            "consequential_impact": {
+                "persists": False,
+                "operation": ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
+                "already_organized": True,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "bpmn_document_organized",
+                "processo_id": processo_id,
+                "no_op": True,
+            },
+            "meta": {},
+        }
+
+    organized_xml = result.xml
+    bpmn_validation = _validate_candidate_xml(organized_xml)
+    ready = bool(bpmn_validation.get("passed"))
+    return {
+        "resource_type": "process_bpmn_document",
+        "resource_id": processo_id,
+        "current_state_fingerprint": _bpmn_state_fingerprint(
+            stack, processo_id
+        ),
+        "exact_change": {
+            "capability": ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
+            "processo_id": processo_id,
+            "expected_version": doc.version,
+            "candidate_xml": organized_xml if ready else None,
+            "candidate_sha256": (
+                _sha256(organized_xml) if ready else None
+            ),
+        },
+        "validation_result": {
+            "ready": ready,
+            "bpmn_validation": bpmn_validation,
+            "auto_layout": layout_report,
+        },
+        "consequential_impact": {
+            "persists": True,
+            "operation": ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
+            "updates_working_copy": True,
+            "version_bump": f"{doc.version} → {doc.version + 1}",
+            "moves_bpmn_di_only": True,
+            "mutates_legacy": False,
+            "writes_to_bpmn_modeler": False,
+        },
+        "confirmation_requirement": {},
+        "expected_postcondition": {
+            "type": "bpmn_document_organized",
+            "processo_id": processo_id,
+            "expected_version": doc.version,
         },
         "meta": {},
     }
@@ -457,6 +638,8 @@ def prepare(
         return _prepare_create(stack, processo_id, args)
     if capability == SAVE_BPMN_WORKING_COPY_CAPABILITY:
         return _prepare_save(stack, processo_id, args)
+    if capability == ORGANIZE_BPMN_DOCUMENT_CAPABILITY:
+        return _prepare_organize(stack, processo_id, args)
     return _prepare_revision(stack, processo_id, args)
 
 
@@ -482,6 +665,20 @@ def execute(
             )
             return {"document": doc.to_dict()}
         if capability == SAVE_BPMN_WORKING_COPY_CAPABILITY:
+            doc = stack.use_case.save_working_copy(
+                user,
+                processo_id,
+                xml=str(change.get("candidate_xml") or ""),
+                expected_version=int(change.get("expected_version") or 0),
+            )
+            return {"document": doc.to_dict()}
+        if capability == ORGANIZE_BPMN_DOCUMENT_CAPABILITY:
+            if change.get("no_op"):
+                return {
+                    "skipped": True,
+                    "reason": "already_organized",
+                    "processo_id": processo_id,
+                }
             doc = stack.use_case.save_working_copy(
                 user,
                 processo_id,
@@ -543,6 +740,7 @@ def verify(
     if capability in (
         CREATE_BPMN_DOCUMENT_CAPABILITY,
         SAVE_BPMN_WORKING_COPY_CAPABILITY,
+        ORGANIZE_BPMN_DOCUMENT_CAPABILITY,
     ):
         sealed_sha = str(change.get("candidate_sha256") or "")
         if sealed_sha and doc.working_copy_sha256 != sealed_sha:
@@ -601,6 +799,7 @@ __all__ = [
     "BpmnDocumentWriteStack",
     "CREATE_BPMN_DOCUMENT_CAPABILITY",
     "CREATE_BPMN_REVISION_CAPABILITY",
+    "ORGANIZE_BPMN_DOCUMENT_CAPABILITY",
     "SAVE_BPMN_WORKING_COPY_CAPABILITY",
     "execute",
     "prepare",

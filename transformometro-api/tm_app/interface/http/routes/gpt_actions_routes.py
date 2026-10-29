@@ -122,7 +122,7 @@ class GptGovernedOperationBody(BaseModel):
             "update_signature_profile | "
             "migrate_legacy_diagram_to_native_bpmn | "
             "create_bpmn_document | save_bpmn_working_copy | "
-            "create_bpmn_revision"
+            "create_bpmn_revision | organize_bpmn_document"
         ),
     )
     id: str | None = None
