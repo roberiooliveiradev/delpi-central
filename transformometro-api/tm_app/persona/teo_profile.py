@@ -39,7 +39,7 @@ _INTELLIGENCE_PATH = (
     / "teo_agent_intelligence.json"
 )
 
-PROFILE_VERSION = 1
+PROFILE_VERSION = 2
 
 
 def _doc() -> Mapping[str, Any]:
@@ -81,17 +81,25 @@ def build_teo_profile(doc: Mapping[str, Any] | None = None) -> CharacterProfile:
         ),
         appearance=Appearance(
             age_appearance="garoto de 16 anos",
-            hair="castanho-escuro, levemente bagunçado",
-            eyes="expressivos",
-            face="expressões faciais curiosas e divertidas",
-            glasses="óculos arredondados opcionais",
-            clothing="casual de inspiração tecnológica",
-            accessories="acessórios digitais ilustrativos (tablet/dispositivo)",
-            color_palette=("azul", "turquesa", "laranja"),
-            visual_style=(
-                "jovem, moderno, inventivo e amigável — comunica "
-                "inteligência, curiosidade e criatividade sem infantilizar"
+            hair=(
+                "castanho-escuro, volumoso, espetado e desalinhado "
+                "artisticamente"
             ),
+            eyes="grandes olhos castanhos",
+            face=(
+                "rosto juvenil estilizado; sobrancelhas grossas; nariz "
+                "pequeno; sorriso discreto e simpático; expressão curiosa, "
+                "inteligente e amigável"
+            ),
+            glasses="óculos pretos arredondados",
+            clothing=(
+                "jaqueta laranja com capuz, detalhes em cinza-escuro e "
+                "preto, patches técnicos e insígnias; camiseta cinza"
+            ),
+            accessories="oficina/laboratório tecnológico como ambientação narrativa",
+            color_palette=("laranja", "azul", "cinza-escuro", "preto"),
+            visual_style="personagem 3D estilizado de animação cinematográfica",
+            avatar_reference=str(appearance.get("reference") or ""),
             avatar_status=str(
                 appearance.get("status") or "REFERENCE_NOT_OFFICIAL_AVATAR"
             ),
