@@ -296,4 +296,30 @@ describe("RichTextEditor", () => {
     fireEvent.input(editor);
     expect(onMentionQueryChange).toHaveBeenCalledWith(null);
   });
+
+  it("F5: restored pending attachment img gets remove chrome and x removes it", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <RichTextEditor
+        value={
+          '<p>texto</p><p><img src="attachment:pending:p1" ' +
+          'data-attachment-pending="p1" data-attachment-href="attachment:pending:p1" ' +
+          'alt="shot.png" /></p>'
+        }
+        onChange={onChange}
+      />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    const host = editor.querySelector("span.delpi-ui-rich-text__inline-image");
+    expect(host).toBeTruthy();
+    const btn = host?.querySelector("button[data-inline-image-remove]") as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    fireEvent.click(btn);
+    expect(editor.querySelector("img[data-attachment-pending]")).toBeNull();
+    expect(editor.querySelector("button[data-inline-image-remove]")).toBeNull();
+    expect(onChange).toHaveBeenCalled();
+    const emitted = onChange.mock.calls.at(-1)?.[0] as string;
+    expect(emitted).not.toContain("data-attachment-pending");
+    expect(emitted).toContain("texto");
+  });
 });
