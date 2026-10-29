@@ -220,16 +220,18 @@ CURRENT SOURCE STATE (recomputed at `DAVI-MCP-RUNTIME-REBASELINE-001`,
 SHA `7f2bfab647`; promoted counts recomputed at
 `DAVI-PRODUCT-DETAIL-SIMILARITY-001`; matching V2 at
 `DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001`; web research at
-`DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003`):
+`DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003`; row-record intent routing at
+`DAVI-INTELLIGENCE-001`):
 
 ```text
-allowlist              = v28
+allowlist              = v29
 DAVI_ELIGIBLE_READ     = 94 governed ops (baseline; live index 97)
-agent intelligence     = 2026.10.27.1 (similarity_dedup_check V2: P1→P4;
+agent intelligence     = 2026.10.29.1 (similarity_dedup_check V2: P1→P4;
                          supplier_web_research: código DELPI âncora →
                          suppliers → PN/fabricante → pesquisa pública
-                         provider-side; modos A-D; sem homologação ou
-                         equivalência automática)
+                         provider-side; ad_hoc_sql_read: intenção de
+                         registros/dados/linhas de tabela roteada à
+                         rota SQL canônica + taxonomia de recusa)
 MCP tools              = exactly 2 (discover_delpi_information,
                          execute_delpi_information)
 provider live discover = PROVEN (89 eligible; PROVIDER_CHAT_RUNTIME_OBSERVATION
@@ -276,7 +278,12 @@ manufacturer details are supplementary, not DELPI source of truth.
 
 Families now governed behind the same broker: Product Master & item context,
 Commercial/Sales, Supplies/Purchasing/Inventory, Production, System Metadata
-(describe/search only — generic SQL remains FORBIDDEN).
+(describe/search only) and the canonical read-only SQL route
+(`execute_readonly_sql`) for record/data/table-row intents —
+`DAVI-INTELLIGENCE-001` completed the CORRECTIVE-001 contract: metadata ops
+already suppressed row-access phrases; the positive side now routes those
+intents to the governed SQL capability. Arbitrary SQL outside the canonical
+route remains FORBIDDEN.
 
 
 ## SQL SELECT via DAVI — restored 2026-10-19

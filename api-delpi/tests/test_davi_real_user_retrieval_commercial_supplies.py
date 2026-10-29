@@ -262,7 +262,7 @@ def test_allowlist_version_and_eligible_count():
             "previousDecision"
         ]["previousDecision"]["previousDecision"]["previousDecision"][
             "previousDecision"
-        ].get("previousDecision")
+        ]["previousDecision"].get("previousDecision")
         or {}
     )
     assert previous.get("taskId") == (

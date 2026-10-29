@@ -2,12 +2,12 @@
   "metadata": {
     "taskId": "DAVI-CAPABILITY-EXPANSION-INVENTORY-001",
     "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
-    "generated_at": "2026-10-15T19:43:29.618166+00:00",
-    "source_head": "c15c82cf3e58fb18f3c14d24b3a156f59dd32419",
-    "origin_main": "c15c82cf3e58fb18f3c14d24b3a156f59dd32419",
+    "generated_at": "2026-10-29T13:23:30.320008+00:00",
+    "source_head": "acb80117fd237aec7e12ddd6097e8e0960c48412",
+    "origin_main": "d955f51cfda36e9d5f5af5d04194e1441ae34d36",
     "openapi_version": "3.0.3",
     "baseline_version": "3",
-    "baseline_operation_count": 743,
+    "baseline_operation_count": 784,
     "budgets": {
       "version": 2,
       "discover_default_top_k": 5,
@@ -17,7 +17,9 @@
       "default_page_size": 50,
       "max_page_size": 50,
       "projection_max_depth": 8,
-      "candidate_token_ttl_seconds": 300
+      "candidate_token_ttl_seconds": 300,
+      "execute_max_resultsets": 8,
+      "execute_max_result_columns": 64
     }
   },
   "wave_1_freeze": {
@@ -29,9 +31,9 @@
       "product.shipping.status"
     ],
     "count": 3,
-    "current_eligible": 88,
+    "current_eligible": 94,
     "new_capabilities": 3,
-    "expected_eligible_after_implementation": 91,
+    "expected_eligible_after_implementation": 97,
     "expected_mcp_tools_after_implementation": 3,
     "agent_instruction_change": "NO",
     "capabilities": [

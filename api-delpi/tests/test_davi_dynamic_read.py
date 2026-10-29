@@ -377,11 +377,14 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 28
+    assert allow.get("version") == 29
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "EVOLVE_SUPPLIER_WEB_RESEARCH_ORCHESTRATION"
+        "COMPLETE_ROW_RECORD_INTENT_ROUTING"
     )
     coverage = (allow.get("coverageDecision", {}).get("previousDecision") or {})
+    assert coverage.get("decision") == (
+        "EVOLVE_SUPPLIER_WEB_RESEARCH_ORCHESTRATION")
+    coverage = coverage.get("previousDecision") or {}
     assert coverage.get("decision") == "EVOLVE_MATCHING_INTELLIGENCE_P1_TO_P4"
     coverage = coverage.get("previousDecision") or {}
     assert coverage.get("decision") == (

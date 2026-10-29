@@ -64,6 +64,9 @@ from app.application.external_capabilities.dynamic_information.retrieval import 
     retrieve_eligible_actions,
 )
 from app.domain.ports.davi_catalog_action_executor_port import CatalogActionExecutionResult
+from app.application.external_capabilities.davi_agent_intelligence_service import (
+    DaviAgentIntelligenceService,
+)
 
 _API_ROOT = Path(__file__).resolve().parents[1]
 _SECRET = "test-secret-davi-system-metadata"
@@ -891,6 +894,10 @@ def test_retrieval_positives(query, expected, monkeypatch):
     ],
 )
 def test_retrieval_negatives_no_metadata_or_sql_candidate(query, monkeypatch):
+    """BASELINE fail-closed posture (SEC-02): the versioned snapshot carries no
+    requestBody, so governed POST ops are never executable from it — record
+    intents surface nothing under baseline. The live-seeded production path
+    (live app.openapi()) is covered by the INTELLIGENCE-001 section below."""
     set_actions_for_tests(_actions())
     _patch_token_secret(monkeypatch)
     discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
@@ -1663,3 +1670,105 @@ def test_rb_cfg12_absent_bindings_keep_normal_execution():
     )
     assert projected.get("X2_CHAVE") == "SB1"
     assert "internal" not in projected
+
+
+# ---------------------------------------------------------------------------
+# DAVI-INTELLIGENCE-001 — row-record intent routing (live-seeded catalog)
+# ---------------------------------------------------------------------------
+#
+# The metadata ops already suppress row-access phrases via
+# retrievalNegativePhrases (CORRECTIVE-001); the positive side was missing —
+# record/data/table-row intents found zero candidates and the agent reported
+# "no access". INTELLIGENCE-001 wires those intents to the canonical governed
+# execute_readonly_sql capability. These tests seed from live app.openapi()
+# (same as main.py startup) because governed POST ops are executable only via
+# the live requestBody contract, never the baseline snapshot.
+
+
+@pytest.fixture()
+def _live_sql_actions(monkeypatch):
+    from app.main import app
+
+    from app.application.external_capabilities.dynamic_information.action_index import (
+        seed_actions_from_openapi,
+    )
+
+    actions = seed_actions_from_openapi(app.openapi())
+    _patch_token_secret(monkeypatch)
+    yield actions
+
+
+def test_int001_live_sql_op_executable(_live_sql_actions):
+    sql = next(a for a in _live_sql_actions
+               if a.operation_id == "execute_readonly_sql")
+    assert sql.executable
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "traga os 10 primeiros registros da SG1010",
+        "mostre os dados da tabela SG1010",
+        "liste os registros da SB1010",
+        "quero ver os dados dessa tabela",
+        "filtre os registros do mês atual",
+        "me mostre os registros da SB1",
+        "traga todos os dados da SC7",
+    ],
+)
+def test_int001_record_intent_surfaces_canonical_sql(
+    query, _live_sql_actions
+):
+    discovered = discover_delpi_information(
+        query=query, top_k=5, actor_id=_ACTOR)
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert ids[0] == "execute_readonly_sql", (query, ids)
+    # Row-access intents never land on metadata ops (negative phrases hold).
+    assert not set(ids) & set(_PROMOTED), (query, ids)
+
+
+@pytest.mark.parametrize(
+    ("query", "expected_top1"),
+    [
+        # Metadata intents keep their owners — SQL never steals them.
+        ("quais campos existem na SG1010", "search_protheus_columns_in_table"),
+        ("quais são os campos da SB1010?", "list_protheus_table_columns"),
+        ("dados cadastrais da tabela SB1010", "get_protheus_table"),
+        # Business intents keep their semantic routes — no SQL bypass.
+        ("qual a descrição do produto 10080034", "search_products"),
+        ("mostre os dados do produto 10080034", "get_product_detail"),
+    ],
+)
+def test_int001_sql_does_not_steal_metadata_or_business(
+    query, expected_top1, _live_sql_actions
+):
+    discovered = discover_delpi_information(
+        query=query, top_k=5, actor_id=_ACTOR)
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert ids[0] == expected_top1, (query, ids)
+
+
+def test_int001_write_intent_still_blocked(_live_sql_actions):
+    for q in (
+        "delete os registros da SG1010",
+        "atualize a tabela SB1010",
+        "insira um registro na SC7",
+    ):
+        discovered = discover_delpi_information(
+            query=q, top_k=5, actor_id=_ACTOR)
+        ids = [c["action_id"] for c in discovered["candidates"]]
+        assert "execute_readonly_sql" not in ids, (q, ids)
+
+
+def test_int001_intelligence_flow_documents_routing():
+    flow = DaviAgentIntelligenceService.document()["flows"]["ad_hoc_sql_read"]
+    assert flow["capabilities"] == ["execute_readonly_sql"]
+    note = flow["note"]
+    assert "registros" in note and "SG1" in note
+    # Short table names must be resolved via metadata, never fabricated.
+    assert "nunca fabrique" in note
+    assert "metadata" in note
+    # Precise refusal taxonomy: gap vs AuthZ vs not-found vs zero rows.
+    taxonomy = " ".join(flow["refusal_taxonomy"])
+    for key in ("capability", "autorização", "metadata", "zero linhas"):
+        assert key in taxonomy

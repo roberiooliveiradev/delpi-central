@@ -322,14 +322,18 @@ def test_wave006_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
     assert allow.get("version") >= 17
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003"
+        "DAVI-INTELLIGENCE-001"
     )
     coverage = (allow.get("coverageDecision", {}).get("previousDecision") or {})
     assert (coverage.get("taskId") or "") == (
-        "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001"
+        "DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003"
     )
     coverage = coverage.get("previousDecision") or {}
-    assert coverage.get("taskId") == "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002"
+    assert coverage.get("taskId") == "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001"
+    assert (coverage.get("previousDecision") or {}).get(
+        "taskId"
+    ) == "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002"
+    coverage = coverage.get("previousDecision") or {}
     assert (coverage.get("previousDecision") or {}).get(
         "taskId"
     ) == "DAVI-PRODUCT-DETAIL-SIMILARITY-001"
@@ -899,7 +903,9 @@ def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
     # Wave 006 was superseded by later waves; its decision record must
     # remain chained, not silently dropped.
     previous = (
-        (coverage.get("previousDecision") or {}).get("previousDecision") or {}
+        ((coverage.get("previousDecision") or {}).get("previousDecision") or {})
+        .get("previousDecision")
+        or {}
     ).get("previousDecision") or {}
     assert previous.get("taskId") == (
         "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001"

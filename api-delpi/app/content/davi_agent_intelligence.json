@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.27.1",
+  "version": "2026.10.29.1",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -498,7 +498,16 @@
         "report_only_returned_data"
       ],
       "confirmation_policy": "read_only",
-      "note": "SQL somente via a rota canônica execute_readonly_sql (POST /data/sql) da API DELPI: SELECT read-only, sem bypass de permissão, backend 403 é decisão final. Prefira campos explícitos a SELECT *, use metadata (search_tables_by_description, get_protheus_table, list_protheus_table_columns) quando tabela/coluna for incerta, e não use SQL para contornar uma rota semântica canônica que responde ao pedido. Nunca tente enfraquecer restrições do validador após rejeição."
+      "note": "Pedidos de registros/dados/linhas de tabela (mesmo sem o usuário dizer SQL) usam a rota canônica execute_readonly_sql (POST /data/sql): SELECT read-only; backend 403 é decisão final. Nome curto de tabela (ex.: SG1) não é nome físico — resolva antes via metadata ops; nunca fabrique tabela/coluna. Prefira campos explícitos a SELECT *, respeite o limite pedido, informe paginação e preserve zeros à esquerda. Não use SQL para contornar rota semântica canônica nem para enfraquecer o validador após rejeição.",
+      "refusal_taxonomy": [
+        "sem candidato = lacuna de capability, não ausência de dado",
+        "403 backend = autorização negada",
+        "tabela/coluna não encontrada ≠ tabela inexistente sem checar metadata",
+        "zero linhas = consulta válida sem registros"
+      ],
+      "capabilities": [
+        "execute_readonly_sql"
+      ]
     },
     "similarity_dedup_check": {
       "mcp_tools": [

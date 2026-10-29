@@ -707,6 +707,8 @@ DAVI_AGENT_UNSUPPORTED_DATA_GUARD = PASS (historical search_products-only Instru
 - Behavior: prefer canonical business endpoints where sufficient; use SQL SELECT for authorized ad hoc analytics, reconciliation and cross-checks. Never invent data, and never retry by weakening validator constraints.
 - Restored on source `main`; deploy, provider rediscovery, authenticated SQL positive test and negative backend AuthZ test remain **TEST_NOT_RUN**, and must be verified independently. This statement supersedes the 2026-10-09 DAVI SQL exposure prohibition for this explicitly permitted route only; historical evidence is retained.
 
+`DAVI-INTELLIGENCE-001` (allowlist v29): natural record/data/table-row requests ("traga os 10 primeiros registros da SG1010", "mostre os dados da tabela") now route to this canonical capability via discovery — the user never needs to name SQL. Short table names (e.g., `SG1`) are resolved through governed metadata ops before SQL formulation; arbitrary SQL, proxies and mutation statements remain FORBIDDEN. Evidence: `docs/integrations/evidence/davi-intelligence-001-record-intent-routing.md`.
+
 
 
 ### Direção de produto aprovada — Inteligência técnica viva no MCP existente (2026-10-24)

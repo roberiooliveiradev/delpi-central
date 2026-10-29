@@ -8,7 +8,8 @@
   "supplies": "Supplies / Purchasing / Inventory",
   "production": "Production",
   "system_metadata": "System Metadata",
-  "governed_knowledge": "Governed technical knowledge corpus"
+  "governed_knowledge": "Governed technical knowledge corpus",
+  "canonical_sql": "Canonical read-only SQL route (records/rows/data intents)"
  },
  "cases": [
   {
@@ -2957,6 +2958,102 @@
    ],
    "top1_required": false,
    "notes": "V3 market research phrasing."
+  },
+  {
+   "id": "DQ-SQL-101",
+   "query": "traga os 10 primeiros registros da SG1010",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
+   "top1_required": true,
+   "notes": "INTELLIGENCE-001 golden: record intent without SQL wording"
+  },
+  {
+   "id": "DQ-SQL-102",
+   "query": "mostre os dados da tabela SG1010",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
+   "top1_required": true,
+   "notes": "table data read intent"
+  },
+  {
+   "id": "DQ-SQL-103",
+   "query": "liste os registros da SB1010",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PRECISE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
+   "top1_required": true,
+   "notes": "records listing intent"
+  },
+  {
+   "id": "DQ-SQL-104",
+   "query": "quero ver os dados dessa tabela",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
+   "top1_required": false,
+   "notes": "contextual table data read"
+  },
+  {
+   "id": "DQ-SQL-105",
+   "query": "filtre os registros do mês atual",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "canonical_sql",
+   "expected_action_ids": [
+    "execute_readonly_sql"
+   ],
+   "top1_required": false,
+   "notes": "filtered records intent"
+  },
+  {
+   "id": "DQ-SQL-106",
+   "query": "quais campos existem na SG1010?",
+   "language": "pt-BR",
+   "case_type": "QUARANTINE_CONFLICT",
+   "family": "system_metadata",
+   "expected_action_ids": [
+    "search_protheus_columns_in_table",
+    "list_protheus_table_columns"
+   ],
+   "top1_required": false,
+   "notes": "metadata intent must not be stolen by sql"
+  },
+  {
+   "id": "DQ-SQL-107",
+   "query": "mostre os dados do produto 10080034",
+   "language": "pt-BR",
+   "case_type": "QUARANTINE_CONFLICT",
+   "family": "product_master",
+   "expected_action_ids": [
+    "get_product_detail",
+    "search_products"
+   ],
+   "top1_required": false,
+   "notes": "product data keeps semantic route — no sql bypass"
+  },
+  {
+   "id": "DQ-SQL-108",
+   "query": "delete os registros da SG1010",
+   "language": "pt-BR",
+   "case_type": "WRITE_NEGATIVE",
+   "family": "canonical_sql",
+   "expected_action_ids": [],
+   "top1_required": false,
+   "notes": "write intent must surface nothing"
   }
  ]
 }

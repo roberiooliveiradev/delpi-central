@@ -452,9 +452,9 @@ def test_sim19_candidate_token_bound_to_actor(monkeypatch):
 
 def test_similarity_aliases_do_not_promote_writes():
     allow = load_external_read_allowlist()
-    assert allow["version"] == 28
+    assert allow["version"] == 29
     prev = allow["coverageDecision"]["previousDecision"][
-        "previousDecision"]
+        "previousDecision"]["previousDecision"]
     assert prev["taskId"] == "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002"
     entry = next(
         o for o in allow["operations"] if o["operationId"] == "search_products"
@@ -644,7 +644,8 @@ def test_v2_url_vs_text_divergence_guidance():
 def test_v2_allowlist_v27_chain():
     allow = load_external_read_allowlist()
     assert allow["version"] >= 27
-    prev = allow["coverageDecision"]["previousDecision"]
+    prev = allow["coverageDecision"]["previousDecision"][
+        "previousDecision"]
     assert prev["taskId"] == (
         "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001")
     pn = next(o for o in allow["operations"] if o["operationId"] ==
@@ -764,13 +765,13 @@ def test_v3_no_public_data_bypass_possible(monkeypatch):
     assert "códigos internos" in uc
 
 
-def test_v3_allowlist_v28_chain():
+def test_v3_allowlist_v29_chain():
     allow = load_external_read_allowlist()
-    assert allow["version"] == 28
+    assert allow["version"] == 29
     assert allow["coverageDecision"]["taskId"] == (
-        "DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003")
+        "DAVI-INTELLIGENCE-001")
     assert allow["coverageDecision"]["previousDecision"]["taskId"] == (
-        "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001")
+        "DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003")
     sup = next(o for o in allow["operations"] if o["operationId"] ==
                "get_product_suppliers")
     assert "novos fornecedores" in sup["semanticAliases"]

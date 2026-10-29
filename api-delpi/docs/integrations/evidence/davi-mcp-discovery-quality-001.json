@@ -1,27 +1,27 @@
 {
   "task_id": "DAVI-MCP-DISCOVERY-QUALITY-001",
-  "evaluated_sha": "42b7d71ce6dec34f61bac97db79da36437f3f583",
+  "evaluated_sha": "acb80117fd",
   "catalog_source": "live app.openapi() (same as runtime seed)",
-  "catalog_operation_count": 96,
-  "allowlist_version": 24,
+  "catalog_operation_count": 97,
+  "allowlist_version": 29,
   "benchmark_version": "1",
   "metrics": {
     "case_counts": {
-      "total": 230,
-      "positive_precise": 98,
-      "positive_paraphrase": 99,
+      "total": 254,
+      "positive_precise": 104,
+      "positive_paraphrase": 114,
       "ambiguous": 10,
-      "write_negative": 8,
+      "write_negative": 9,
       "generic_sql_negative": 0,
       "unsupported_negative": 8,
-      "quarantine_conflict": 7
+      "quarantine_conflict": 9
     },
-    "positive_case_count": 204,
-    "top1_accuracy": 0.9608,
-    "top1_required_accuracy": 0.9901,
-    "top3_recall": 0.9951,
+    "positive_case_count": 227,
+    "top1_accuracy": 0.9604,
+    "top1_required_accuracy": 0.9907,
+    "top3_recall": 0.9956,
     "top5_recall": 1.0,
-    "mrr": 0.9783,
+    "mrr": 0.9781,
     "positive_no_candidate_rate": 0.0,
     "hard_negative_zero_candidate_rate": 1.0,
     "unsupported_zero_candidate_rate": 0.875,
@@ -33,7 +33,7 @@
     "unrelated_family_top1": 3,
     "family_metrics": {
       "canonical_sql": {
-        "cases": 6,
+        "cases": 11,
         "top1": 1.0,
         "top3": 1.0,
         "top5": 1.0
@@ -51,8 +51,8 @@
         "top5": 1.0
       },
       "product_master": {
-        "cases": 58,
-        "top1": 0.931,
+        "cases": 75,
+        "top1": 0.9333,
         "top3": 1.0,
         "top5": 1.0
       },
@@ -69,7 +69,7 @@
         "top5": 1.0
       },
       "system_metadata": {
-        "cases": 12,
+        "cases": 13,
         "top1": 1.0,
         "top3": 1.0,
         "top5": 1.0
@@ -119,11 +119,11 @@
       "family": "product_master",
       "expected": "get_product_guide",
       "target_rank": 2,
-      "target_score": 0.6944,
+      "target_score": 0.6956,
       "higher_ranked": [
         {
           "action_id": "read_governed_technical_knowledge",
-          "score": 0.702
+          "score": 0.7021
         }
       ],
       "expected_aliases": [
@@ -268,8 +268,8 @@
       "query": "consumo de matéria-prima na produção por item",
       "family": "production",
       "expected": "get_production_consumption_by_item",
-      "target_rank": 4,
-      "target_score": 0.5941,
+      "target_rank": 5,
+      "target_score": 0.5908,
       "higher_ranked": [
         {
           "action_id": "get_product_production_status",
@@ -277,11 +277,15 @@
         },
         {
           "action_id": "get_production_orders_finished_without_consumption",
-          "score": 0.7254
+          "score": 0.7318
         },
         {
           "action_id": "get_product_safety_stock",
-          "score": 0.7075
+          "score": 0.7046
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.6879
         }
       ],
       "expected_aliases": [
@@ -306,7 +310,7 @@
       "family": "product_master",
       "expected": "get_product_safety_stock",
       "target_rank": 3,
-      "target_score": 0.6631,
+      "target_score": 0.6617,
       "higher_ranked": [
         {
           "action_id": "get_supplies_safety_stock_summary",
@@ -314,7 +318,7 @@
         },
         {
           "action_id": "get_product_stock",
-          "score": 0.6789
+          "score": 0.6791
         }
       ],
       "expected_aliases": [
@@ -328,13 +332,90 @@
         "BZ_ESTSEG"
       ],
       "root_cause": "MULTIWORD_ALIAS_COLLISION"
+    },
+    {
+      "id": "DQ-PM-066",
+      "query": "compare as especificações com materiais semelhantes cadastrados",
+      "family": "product_master",
+      "expected": "search_products",
+      "target_rank": 2,
+      "target_score": 0.9125,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_detail",
+          "score": 0.9175
+        }
+      ],
+      "expected_aliases": [
+        "produto",
+        "produtos",
+        "buscar produto",
+        "buscar produtos",
+        "consultar produto",
+        "consultar produtos",
+        "codigo do produto",
+        "código do produto",
+        "descricao do produto",
+        "descrição do produto",
+        "grupo do produto",
+        "categoria do produto",
+        "search products",
+        "product search",
+        "product code",
+        "product description",
+        "product group",
+        "descricao do item",
+        "descrição do item",
+        "qual a descricao do item",
+        "qual a descrição do item",
+        "material",
+        "materiais",
+        "buscar material",
+        "buscar materiais",
+        "consultar material",
+        "consultar materiais",
+        "codigo do material",
+        "código do material",
+        "descricao do material",
+        "descrição do material",
+        "qual a descricao do material",
+        "qual a descrição do material",
+        "material code",
+        "material description",
+        "material search",
+        "produtos similares",
+        "produtos semelhantes",
+        "materiais similares",
+        "materiais semelhantes",
+        "material semelhante",
+        "produto semelhante",
+        "similaridade",
+        "buscar similares",
+        "verificar duplicidade",
+        "produto duplicado",
+        "material duplicado",
+        "possível duplicidade",
+        "possivel duplicidade",
+        "equivalente cadastrado",
+        "já existe cadastrado",
+        "ja existe cadastrado",
+        "existe no cadastro",
+        "existe cadastrado",
+        "verificar se existe",
+        "similar products",
+        "duplicate product",
+        "equivalent product",
+        "item semelhante",
+        "itens similares"
+      ],
+      "root_cause": "OTHER"
     }
   ],
   "root_cause_breakdown": {
     "SUMMARY_TOKEN_NOISE": 1,
     "ALIAS_COLLISION": 1,
     "MULTIWORD_ALIAS_COLLISION": 2,
-    "OTHER": 2,
+    "OTHER": 3,
     "TIE_BREAK_ARTIFACT": 1,
     "QUARANTINE_INTERACTION": 1
   },
@@ -357,13 +438,13 @@
     ]
   },
   "discover_contract_checks": {
-    "ran": 48,
-    "shape_ok": 48,
-    "order_matches_retrieval": 48
+    "ran": 49,
+    "shape_ok": 49,
+    "order_matches_retrieval": 49
   },
   "catalog_parity": {
-    "allowlist_count": 96,
-    "live_openapi_executable_count": 96,
+    "allowlist_count": 97,
+    "live_openapi_executable_count": 97,
     "baseline_executable_count": "87 (expected: 2 SEMANTIC_READ_POST ops lack baseline requestBody)",
     "runtime_observed_eligible_count": 89,
     "classification": "EXPLAINED_DIFFERENCE"
