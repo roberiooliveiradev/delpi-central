@@ -227,8 +227,17 @@ def env(_configure_db):
         "pkg": pkg,
         "proposals": ClaraProposalRepository(),
         "batches": ClaraBatchRepository(),
-        "orchestrator": ClaraBatchOrchestrator(),
-        "writes": ClaraGovernedWrites(),
+        "orchestrator": ClaraBatchOrchestrator(
+            writes=ClaraGovernedWrites(
+                identity_provider=lambda: {
+                    "subject": ADMIN, "name": "cf-admin-test",
+                    "is_manage": True, "is_dre": True,
+                })),
+        "writes": ClaraGovernedWrites(
+            identity_provider=lambda: {
+                "subject": ADMIN, "name": "cf-admin-test",
+                "is_manage": True, "is_dre": True,
+            }),
         "version_id": version_id,
     }
 
@@ -983,7 +992,12 @@ def test_batch_db_failure_marks_failed_and_reports(env, monkeypatch):
     )
     # Orquestrador constrói sua própria tabela via self._writes —
     # usa um orchestrator cujo _writes é a classe monkeypatchada.
-    orch2 = ClaraBatchOrchestrator(writes=ClaraGovernedWrites())
+    orch2 = ClaraBatchOrchestrator(
+            writes=ClaraGovernedWrites(
+                identity_provider=lambda: {
+                    "subject": ADMIN, "name": "cf-admin-test",
+                    "is_manage": True, "is_dre": True,
+                }))
     prepared = orch2.prepare_batch(
         operations=[
             _resolve_op(clarif_id),

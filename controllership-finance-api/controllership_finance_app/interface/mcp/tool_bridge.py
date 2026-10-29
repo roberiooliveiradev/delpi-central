@@ -5,14 +5,23 @@ estabelecido pelo transport gate (`delpi_mcp.identity`) e reaplica o
 MESMO gate de autorização das rotas (`authorized_user` /
 `has_permission(manage)`). Nenhuma regra de negócio aqui — os
 repositórios canônicos respondem por estado, escopo e erros tipados.
+
+Paridade READ (classe A): as tools de consulta invocam as próprias
+funções de rota do Portal com a Request reconstruída — mesmo gate,
+mesmo bearer delegado ao api-delpi, mesmo envelope e erros tipados.
+O bridge só adapta transporte; nunca reimplementa contrato.
 """
 
 from __future__ import annotations
 
+import asyncio
+import inspect
+import json
 import logging
 from typing import Any
 
 from starlette.requests import Request
+from starlette.responses import Response
 from mcp.types import CallToolResult
 
 from delpi_auth.authz_core import has_permission
@@ -54,9 +63,25 @@ from controllership_finance_app.infrastructure.persistence.closing_pendency_repo
 )
 from controllership_finance_app.interface.http.authz import (
     ACCESS_PERMISSION,
+    DRE_ACCESS_PERMISSION,
     MANAGE_PERMISSION,
     authorized_user,
     actor_subject,
+)
+from controllership_finance_app.interface.http.routes import (
+    admin_catalogs_routes,
+    admin_checklist_routes,
+    closing_routes,
+    competences_routes,
+    documents_routes,
+    me_routes,
+    p3_routes,
+    packages_routes,
+    participants_routes,
+    pendencies_routes,
+    received_documents_routes,
+    reports_routes,
+    validations_routes,
 )
 from controllership_finance_app.interface.mcp.constants import TOOL_CLASS
 from controllership_finance_app.interface.mcp.oauth_contract import (
@@ -184,6 +209,40 @@ def _is_manage(user) -> bool:
     )
 
 
+def _mcp_identity() -> dict:
+    """Identidade efetiva para os gates do catálogo governado.
+
+    Reconstroi a Request e resolve as permissions no Core a cada
+    chamada — PREPARE e ACT sempre leem a autorização vigente."""
+    request = build_mcp_request()
+    try:
+        user = authorized_user(request)
+    except Exception as exc:  # noqa: BLE001 — literals canônicos
+        msg = str(exc)
+        if msg == "Unauthorized":
+            raise PermissionError("Unauthorized") from exc
+        if msg == "Service Unavailable":
+            raise PermissionError("Service Unavailable") from exc
+        raise PermissionError(msg or "Forbidden") from exc
+    return {
+        "subject": actor_subject(user),
+        "name": getattr(user, "name", None)
+        or getattr(user, "email", None),
+        "is_manage": _is_manage(user),
+        "is_dre": bool(
+            has_permission(user, DRE_ACCESS_PERMISSION)
+        ),
+    }
+
+
+def _governed_writes() -> ClaraGovernedWrites:
+    return ClaraGovernedWrites(identity_provider=_mcp_identity)
+
+
+def _batch_orchestrator() -> ClaraBatchOrchestrator:
+    return ClaraBatchOrchestrator(writes=_governed_writes())
+
+
 # -- READ / DISCOVERY -----------------------------------------------------
 
 
@@ -213,7 +272,7 @@ def tool_get_my_context() -> CallToolResult:
 def tool_get_catalog() -> CallToolResult:
     request, user = _user_and_access()
     managed = _is_manage(user)
-    governed = ClaraGovernedWrites().capabilities()
+    governed = _governed_writes().capabilities()
     tools = []
     for name, kind in TOOL_CLASS.items():
         if kind == "PREPARE" or (
@@ -344,6 +403,462 @@ def tool_get_package_review(period: str) -> CallToolResult:
     except ChecklistDomainError as exc:
         return _domain_fail(exc)
     return _ok(result)
+
+
+# -- PARIDADE READ com rotas do Portal (classe A) ----------------------------
+# `_call_route` invoca a MESMA função de rota que o Portal chama —
+# gate, envelope e erros tipados ficam idênticos por construção.
+# Rotas devolvem `ok()/fail()` (JSONResponse) ou dict/list direto;
+# exceções de authz ("Unauthorized"/"Forbidden"/"Service Unavailable")
+# seguem o literal canônico do middleware → PermissionError → 401/403/503.
+
+
+def _route_fail_status(result: Response) -> int:
+    status = getattr(result, "status_code", 500)
+    try:
+        return int(status)
+    except (TypeError, ValueError):
+        return 500
+
+
+def _call_route(fn, request: Request, **params) -> CallToolResult:
+    try:
+        result = fn(request, **params)
+    except Exception as exc:  # noqa: BLE001 — literals canônicos authz
+        msg = str(exc)
+        if msg in ("Unauthorized", "Forbidden", "Service Unavailable"):
+            raise PermissionError(msg) from exc
+        raise
+    if inspect.isawaitable(result):
+        result = asyncio.run(result)
+    if isinstance(result, Response):
+        try:
+            body = json.loads(result.body)
+        except Exception as exc:  # noqa: BLE001 — resposta não-JSON
+            raise RuntimeError("route_response_not_json") from exc
+        if isinstance(body, dict) and body.get("success") is False:
+            data = body.get("data")
+            err_code = None
+            if isinstance(data, dict):
+                err_code = (data.get("error") or {}).get("code")
+            return _error(
+                body.get("message") or "Erro na operação.",
+                status_code=_route_fail_status(result),
+                data=data if isinstance(data, dict) else {},
+                error_code=err_code,
+            )
+        if isinstance(body, dict) and "data" in body:
+            return _ok(
+                body.get("data"),
+                message=body.get("message") or "ok",
+            )
+        return _ok(body)
+    return _ok(result)
+
+
+def tool_list_competences() -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        competences_routes.list_closing_competences, request
+    )
+
+
+def tool_get_competence(period: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        competences_routes.get_closing_competence,
+        request,
+        period=period,
+    )
+
+
+def tool_get_checklist_item(period: str, item_key: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        competences_routes.get_closing_competence_item,
+        request,
+        period=period,
+        item_key=item_key,
+    )
+
+
+def tool_get_closing_cockpit(period: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        packages_routes.get_closing_cockpit, request, period=period
+    )
+
+
+def tool_list_my_tasks(period: str | None = None) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        me_routes.list_my_tasks, request, period=period
+    )
+
+
+def tool_get_pendency(
+    period: str,
+    pendency_id: str,
+    include_history: bool = True,
+    branch_scope: str | None = None,
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    detail = _call_route(
+        pendencies_routes.get_closing_pendency,
+        request,
+        period=period,
+        pendency_id=pendency_id,
+        branch_scope=branch_scope,
+    )
+    if detail.is_error or not include_history:
+        return detail
+    history = _call_route(
+        pendencies_routes.list_pendency_history,
+        request,
+        period=period,
+        pendency_id=pendency_id,
+        branch_scope=branch_scope,
+    )
+    if history.is_error:
+        return history
+    return _merge_route_results(
+        detail, history, merged_key="history"
+    )
+
+
+def _merge_route_results(
+    base: CallToolResult,
+    extra: CallToolResult,
+    *,
+    merged_key: str,
+) -> CallToolResult:
+    """Junta o `data` de duas respostas de rota (detail + coleção)."""
+    try:
+        base_payload = json.loads(base.content[0].text)
+        extra_payload = json.loads(extra.content[0].text)
+    except Exception:  # noqa: BLE001 — payload canônico do bridge
+        return base
+    data = dict(base_payload.get("data") or {})
+    data[merged_key] = extra_payload.get("data")
+    return _ok(data)
+
+
+def tool_get_package(period: str, package_id: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        packages_routes.get_closing_package,
+        request,
+        period=period,
+        package_id=package_id,
+    )
+
+
+def tool_get_document(
+    period: str,
+    document_id: str,
+    branch_scope: str | None = None,
+    include_audit: bool = False,
+) -> CallToolResult:
+    """Detalhe + versões + mensagens + solicitações de ajuste —
+    mesma visão do painel «Documentos e interações»."""
+    request, _user = _user_and_access()
+    detail = _call_route(
+        documents_routes.get_competence_document,
+        request,
+        period=period,
+        document_id=document_id,
+        branch_scope=branch_scope,
+    )
+    if detail.is_error:
+        return detail
+    parts = [("versions", documents_routes.list_document_versions)]
+    parts.append(("messages", documents_routes.list_document_messages))
+    parts.append(
+        ("adjustment_requests",
+         documents_routes.list_document_adjustment_requests)
+    )
+    if include_audit:
+        parts.append(("audit", documents_routes.list_document_audit))
+    merged = detail
+    for key, fn in parts:
+        extra = _call_route(
+            fn,
+            request,
+            period=period,
+            document_id=document_id,
+            branch_scope=branch_scope,
+        )
+        if extra.is_error:
+            return extra
+        merged = _merge_route_results(merged, extra, merged_key=key)
+    return merged
+
+
+def tool_get_item_validation(
+    period: str, item_key: str, branch_scope: str | None = None
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    detail = _call_route(
+        validations_routes.get_item_validation,
+        request,
+        period=period,
+        item_key=item_key,
+        branch_scope=branch_scope,
+    )
+    if detail.is_error:
+        return detail
+    corrections = _call_route(
+        validations_routes.list_item_corrections,
+        request,
+        period=period,
+        item_key=item_key,
+        branch_scope=branch_scope,
+    )
+    if corrections.is_error:
+        return corrections
+    return _merge_route_results(
+        detail, corrections, merged_key="corrections"
+    )
+
+
+def tool_list_p3_events(period: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        p3_routes.list_p3_events, request, period=period
+    )
+
+
+def tool_lookup_participants(
+    period: str,
+    document_id: str,
+    ids: list[str],
+    branch_scope: str | None = None,
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        participants_routes.lookup_participants,
+        request,
+        body=participants_routes.ParticipantLookupBody(ids=list(ids)),
+        period=period,
+        document_id=document_id,
+        branch_scope=branch_scope,
+    )
+
+
+def tool_get_financial_settlements(
+    side: str,
+    start_date: str,
+    end_date: str,
+    nature_code: str | None = None,
+    movement_type: str | None = None,
+    sort_by: str = "settlement_date",
+    sort_dir: str = "desc",
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    """R01/R02 — mesma rota Portal; sort/filtro/paginação delegados."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_financial_settlements,
+        request,
+        side=side,
+        start_date=start_date,
+        end_date=end_date,
+        nature_code=nature_code,
+        movement_type=movement_type,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        page=page,
+        page_size=page_size,
+    )
+
+
+def tool_get_financial_settlements_summary(
+    start_date: str,
+    end_date: str,
+    nature_code: str | None = None,
+    movement_type: str | None = None,
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_financial_settlements_summary,
+        request,
+        start_date=start_date,
+        end_date=end_date,
+        nature_code=nature_code,
+        movement_type=movement_type,
+    )
+
+
+def tool_get_stock_inventory(
+    period: str,
+    branch: str = "all",
+    report_scope: str = "all_products",
+    warehouse: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    """R03/P7 — consulta operacional (paridade oficial PENDING)."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_stock_inventory,
+        request,
+        period=period,
+        branch=branch,
+        report_scope=report_scope,
+        warehouse=warehouse,
+        page=page,
+        page_size=page_size,
+    )
+
+
+def tool_get_stock_movements(
+    period: str,
+    branch: str = "all",
+    report_scope: str = "all_products",
+) -> CallToolResult:
+    """R05 — entradas e saídas do mês (MATR320 rule)."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_stock_movements,
+        request,
+        period=period,
+        branch=branch,
+        report_scope=report_scope,
+    )
+
+
+def tool_get_work_in_process(
+    period: str,
+    branch: str = "all",
+    report_scope: str = "all_products",
+    warehouse: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    """R08/H02 — material em processo (MATR989 rule)."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_work_in_process,
+        request,
+        period=period,
+        branch=branch,
+        report_scope=report_scope,
+        warehouse=warehouse,
+        page=page,
+        page_size=page_size,
+    )
+
+
+def tool_get_stock_reconciliation(
+    period: str,
+    branch: str = "all",
+    report_scope: str = "all_products",
+) -> CallToolResult:
+    """Conciliação analítica R05−P7−H02 — IDENTITY_ONLY/INCONCLUSIVE
+    preservados; nunca oficial parity."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_analytics_stock_reconciliation,
+        request,
+        period=period,
+        branch=branch,
+        report_scope=report_scope,
+    )
+
+
+def tool_get_report_matrix(
+    period: str, branch_scope: str | None = None
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        reports_routes.list_report_matrix,
+        request,
+        period=period,
+        branch_scope=branch_scope,
+    )
+
+
+def tool_list_closing_catalogs() -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_catalogs_routes.list_closing_catalogs, request
+    )
+
+
+def tool_list_catalog_entries(
+    catalog_key: str, include_inactive: bool = True
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_catalogs_routes.list_closing_catalog_entries,
+        request,
+        catalog_key=catalog_key,
+        include_inactive=include_inactive,
+    )
+
+
+def tool_list_checklist_templates() -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_checklist_routes.list_checklist_templates, request
+    )
+
+
+def tool_get_checklist_template_version(
+    template_id: str, version: int
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_checklist_routes.get_checklist_template_version,
+        request,
+        template_id=template_id,
+        version=version,
+    )
+
+
+def tool_list_received_deliveries() -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        received_documents_routes.list_received_deliveries, request
+    )
+
+
+def tool_get_received_delivery(period: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        received_documents_routes.get_received_delivery,
+        request,
+        period=period,
+    )
+
+
+def tool_get_received_document(
+    period: str, document_id: str
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    detail = _call_route(
+        received_documents_routes.get_received_document,
+        request,
+        period=period,
+        document_id=document_id,
+    )
+    if detail.is_error:
+        return detail
+    for key, fn in (
+        ("messages",
+         received_documents_routes.list_received_document_messages),
+        ("adjustment_requests",
+         received_documents_routes.list_received_adjustment_requests),
+    ):
+        params = {"period": period, "document_id": document_id}
+        if fn is received_documents_routes.list_received_document_messages:
+            params.update({"limit": 100, "offset": 0})
+        extra = _call_route(fn, request, **params)
+        if extra.is_error:
+            return extra
+        detail = _merge_route_results(detail, extra, merged_key=key)
+    return detail
 
 
 # -- ANALYSIS ---------------------------------------------------------------
@@ -571,7 +1086,7 @@ def tool_prepare_governed_operation(
 ) -> CallToolResult:
     request, user = _user_and_access()
     try:
-        proposal = ClaraGovernedWrites().prepare(
+        proposal = _governed_writes().prepare(
             capability=capability,
             params=dict(params or {}),
             actor_sub=actor_subject(user),
@@ -587,7 +1102,7 @@ def tool_commit_proposal(
 ) -> CallToolResult:
     request, user = _user_and_access()
     try:
-        result = ClaraGovernedWrites().commit(
+        result = _governed_writes().commit(
             handle=proposal_handle,
             actor_sub=actor_subject(user),
             user_groups=getattr(user, "groups", []) or [],
@@ -601,7 +1116,7 @@ def tool_commit_proposal(
 def tool_prepare_batch(operations: list) -> CallToolResult:
     request, user = _user_and_access()
     try:
-        result = ClaraBatchOrchestrator().prepare_batch(
+        result = _batch_orchestrator().prepare_batch(
             operations=list(operations or []),
             actor_sub=actor_subject(user),
         )
@@ -617,7 +1132,7 @@ def tool_confirm_batch(
 ) -> CallToolResult:
     request, user = _user_and_access()
     try:
-        result = ClaraBatchOrchestrator().confirm_batch(
+        result = _batch_orchestrator().confirm_batch(
             handle=batch_handle,
             actor_sub=actor_subject(user),
             plan_hash=plan_hash,
@@ -633,7 +1148,7 @@ def tool_execute_batch(
 ) -> CallToolResult:
     request, user = _user_and_access()
     try:
-        result = ClaraBatchOrchestrator().execute_batch(
+        result = _batch_orchestrator().execute_batch(
             handle=batch_handle,
             resume=resume,
             actor_sub=actor_subject(user),
@@ -647,7 +1162,7 @@ def tool_execute_batch(
 def tool_get_batch_status(batch_id: str) -> CallToolResult:
     request, user = _user_and_access()
     try:
-        result = ClaraBatchOrchestrator().batch_status(
+        result = _batch_orchestrator().batch_status(
             batch_id=batch_id,
             actor_sub=actor_subject(user),
         )
@@ -666,15 +1181,40 @@ __all__ = [
     "tool_get_batch_status",
     "tool_prepare_batch",
     "tool_get_catalog",
+    "tool_get_checklist_item",
     "tool_get_checklist_items",
+    "tool_get_checklist_template_version",
+    "tool_get_closing_cockpit",
+    "tool_get_competence",
     "tool_get_competence_state",
+    "tool_get_document",
+    "tool_get_financial_settlements",
+    "tool_get_financial_settlements_summary",
+    "tool_get_item_validation",
     "tool_get_knowledge_item",
     "tool_get_my_context",
     "tool_get_p3_reconciliation",
+    "tool_get_package",
     "tool_get_package_review",
+    "tool_get_pendency",
+    "tool_get_received_delivery",
+    "tool_get_received_document",
+    "tool_get_report_matrix",
+    "tool_get_stock_inventory",
+    "tool_get_stock_movements",
+    "tool_get_stock_reconciliation",
+    "tool_get_work_in_process",
+    "tool_list_catalog_entries",
+    "tool_list_checklist_templates",
+    "tool_list_closing_catalogs",
+    "tool_list_competences",
     "tool_list_documents",
     "tool_list_knowledge_sources",
+    "tool_list_my_tasks",
+    "tool_list_p3_events",
     "tool_list_pendencies",
+    "tool_list_received_deliveries",
+    "tool_lookup_participants",
     "tool_prepare_governed_operation",
     "tool_search_closing_knowledge",
 ]

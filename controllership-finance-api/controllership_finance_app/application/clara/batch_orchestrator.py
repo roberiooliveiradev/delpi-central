@@ -155,6 +155,15 @@ class ClaraBatchOrchestrator:
                 classified.append(op)
                 continue
             try:
+                self._writes._check_gate(op["capability"])
+            except ChecklistDomainError as exc:
+                op["status"] = "blocked"
+                op["block_reason"] = getattr(
+                    exc, "code", "forbidden"
+                )
+                classified.append(op)
+                continue
+            try:
                 resource_key = spec["resource_key"](op["params"])
             except ChecklistDomainError as exc:
                 op["status"] = "blocked"
@@ -622,6 +631,7 @@ class ClaraBatchOrchestrator:
                 results.append(
                     {
                         "index": op["index"],
+                        "seq": op["index"],
                         "capability": op["capability"],
                         "state": "BLOCKED",
                         "error_code": op.get("block_reason"),
@@ -691,6 +701,9 @@ class ClaraBatchOrchestrator:
         try:
             if spec is None:
                 raise ChecklistDomainError("Capability desconhecida.")
+            # Gate de permission efetiva revalidado no ACT — a
+            # permission pode ter sido revogada desde o PREPARE.
+            self._writes._check_gate(capability)
             # Claim durável da proposta ANTES do efeito.
             proposal = self._proposals.claim_by_id(
                 proposal_id=str(row["proposal_id"]),

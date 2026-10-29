@@ -243,6 +243,471 @@ def create_mcp_server() -> MCPServer:
     def get_package_review(period: str) -> CallToolResult:
         return _guarded(bridge.tool_get_package_review)(period)
 
+    # --- Paridade READ Portal × CLARA (classe A — sem confirmação) --
+    # Cada tool invoca a função de rota canônica do Portal com a
+    # request reconstruída: gate, bearer e envelope idênticos.
+
+    @mcp.tool(
+        name="list_competences",
+        title="List competences",
+        description=(
+            "Competências do fechamento mensal — mesma listagem do "
+            "Portal (GET /closing/competences)."
+        ),
+        annotations=_annotations("list_competences", "List competences"),
+        meta=meta,
+    )
+    def list_competences() -> CallToolResult:
+        return _guarded(bridge.tool_list_competences)()
+
+    @mcp.tool(
+        name="get_competence",
+        title="Get competence",
+        description=(
+            "Detalhe da competência (período AAAA-MM) — mesmo "
+            "contrato do Portal."
+        ),
+        annotations=_annotations("get_competence", "Get competence"),
+        meta=meta,
+    )
+    def get_competence(period: str) -> CallToolResult:
+        return _guarded(bridge.tool_get_competence)(period)
+
+    @mcp.tool(
+        name="get_checklist_item",
+        title="Get checklist item",
+        description="Detalhe de um item do checklist da competência.",
+        annotations=_annotations(
+            "get_checklist_item", "Get checklist item"
+        ),
+        meta=meta,
+    )
+    def get_checklist_item(
+        period: str, item_key: str
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_checklist_item)(
+            period, item_key
+        )
+
+    @mcp.tool(
+        name="get_closing_cockpit",
+        title="Get closing cockpit",
+        description=(
+            "Cockpit consolidado da competência (P1) — a mesma "
+            "composição da tela Cockpit do Portal."
+        ),
+        annotations=_annotations(
+            "get_closing_cockpit", "Get closing cockpit"
+        ),
+        meta=meta,
+    )
+    def get_closing_cockpit(period: str) -> CallToolResult:
+        return _guarded(bridge.tool_get_closing_cockpit)(period)
+
+    @mcp.tool(
+        name="list_my_tasks",
+        title="List my tasks",
+        description=(
+            "Fila de tarefas do usuário autenticado (pendências, "
+            "revisões, correções) — mesma visão «Minhas tarefas»."
+        ),
+        annotations=_annotations("list_my_tasks", "List my tasks"),
+        meta=meta,
+    )
+    def list_my_tasks(period: str | None = None) -> CallToolResult:
+        return _guarded(bridge.tool_list_my_tasks)(period)
+
+    @mcp.tool(
+        name="get_pendency",
+        title="Get pendency",
+        description=(
+            "Detalhe da pendência + histórico de eventos — mesma "
+            "visão do Portal."
+        ),
+        annotations=_annotations("get_pendency", "Get pendency"),
+        meta=meta,
+    )
+    def get_pendency(
+        period: str,
+        pendency_id: str,
+        include_history: bool = True,
+        branch_scope: str | None = None,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_pendency)(
+            period, pendency_id, include_history, branch_scope
+        )
+
+    @mcp.tool(
+        name="list_p3_events",
+        title="List P3 events",
+        description=(
+            "Eventos/auditoria da conciliação P3 da competência."
+        ),
+        annotations=_annotations("list_p3_events", "List P3 events"),
+        meta=meta,
+    )
+    def list_p3_events(period: str) -> CallToolResult:
+        return _guarded(bridge.tool_list_p3_events)(period)
+
+    @mcp.tool(
+        name="get_package",
+        title="Get package detail",
+        description=(
+            "Detalhe de um pacote (versões, estado, esclarecimentos) "
+            "— mesmo escopo de visibilidade do Portal."
+        ),
+        annotations=_annotations("get_package", "Get package"),
+        meta=meta,
+    )
+    def get_package(period: str, package_id: str) -> CallToolResult:
+        return _guarded(bridge.tool_get_package)(period, package_id)
+
+    @mcp.tool(
+        name="get_document",
+        title="Get document detail",
+        description=(
+            "Documento da competência com versões, mensagens, "
+            "solicitações de ajuste e (opcional) eventos de auditoria "
+            "— mesma visão do painel de documentos do Portal."
+        ),
+        annotations=_annotations("get_document", "Get document"),
+        meta=meta,
+    )
+    def get_document(
+        period: str,
+        document_id: str,
+        branch_scope: str | None = None,
+        include_audit: bool = False,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_document)(
+            period, document_id, branch_scope, include_audit
+        )
+
+    @mcp.tool(
+        name="get_item_validation",
+        title="Get item validation",
+        description=(
+            "Decisões e correções de um item do checklist — mesma "
+            "visão de validação do Portal."
+        ),
+        annotations=_annotations(
+            "get_item_validation", "Get item validation"
+        ),
+        meta=meta,
+    )
+    def get_item_validation(
+        period: str, item_key: str, branch_scope: str | None = None
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_item_validation)(
+            period, item_key, branch_scope
+        )
+
+    @mcp.tool(
+        name="lookup_participants",
+        title="Lookup document participants",
+        description=(
+            "Resolve nomes de participantes vinculados ao documento "
+            "(autor/ator/uploader). Ids sem vínculo são omitidos — "
+            "ausência não confirma existência."
+        ),
+        annotations=_annotations(
+            "lookup_participants", "Lookup participants"
+        ),
+        meta=meta,
+    )
+    def lookup_participants(
+        period: str,
+        document_id: str,
+        ids: list[str],
+        branch_scope: str | None = None,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_lookup_participants)(
+            period, document_id, ids, branch_scope
+        )
+
+    @mcp.tool(
+        name="get_financial_settlements",
+        title="Get financial settlements",
+        description=(
+            "Baixas a pagar/receber (R01/R02) — consulta operacional "
+            "real via api-delpi com filtros, ordenação e paginação "
+            "idênticos ao Portal. Paridade oficial do relatório: "
+            "PENDING."
+        ),
+        annotations=_annotations(
+            "get_financial_settlements", "Get financial settlements"
+        ),
+        meta=meta,
+    )
+    def get_financial_settlements(
+        side: str,
+        start_date: str,
+        end_date: str,
+        nature_code: str | None = None,
+        movement_type: str | None = None,
+        sort_by: str = "settlement_date",
+        sort_dir: str = "desc",
+        page: int = 1,
+        page_size: int = 50,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_financial_settlements)(
+            side, start_date, end_date, nature_code, movement_type,
+            sort_by, sort_dir, page, page_size
+        )
+
+    @mcp.tool(
+        name="get_financial_settlements_summary",
+        title="Get settlements summary",
+        description=(
+            "Totais das baixas no período (mesma rota /summary do "
+            "Portal)."
+        ),
+        annotations=_annotations(
+            "get_financial_settlements_summary",
+            "Get settlements summary",
+        ),
+        meta=meta,
+    )
+    def get_financial_settlements_summary(
+        start_date: str,
+        end_date: str,
+        nature_code: str | None = None,
+        movement_type: str | None = None,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_financial_settlements_summary)(
+            start_date, end_date, nature_code, movement_type
+        )
+
+    @mcp.tool(
+        name="get_stock_inventory",
+        title="Get stock inventory",
+        description=(
+            "R03/P7 posição de estoque — consulta operacional real "
+            "(período, filial, escopo all_products|mp_pi_pa, armazém, "
+            "paginação). Paridade oficial MATR460: PENDING."
+        ),
+        annotations=_annotations(
+            "get_stock_inventory", "Get stock inventory"
+        ),
+        meta=meta,
+    )
+    def get_stock_inventory(
+        period: str,
+        branch: str = "all",
+        report_scope: str = "all_products",
+        warehouse: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_stock_inventory)(
+            period, branch, report_scope, warehouse, page, page_size
+        )
+
+    @mcp.tool(
+        name="get_stock_movements",
+        title="Get stock movements",
+        description=(
+            "R05 entradas e saídas do mês (MATR320) — dados reais "
+            "delegados ao api-delpi com o bearer do usuário."
+        ),
+        annotations=_annotations(
+            "get_stock_movements", "Get stock movements"
+        ),
+        meta=meta,
+    )
+    def get_stock_movements(
+        period: str,
+        branch: str = "all",
+        report_scope: str = "all_products",
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_stock_movements)(
+            period, branch, report_scope
+        )
+
+    @mcp.tool(
+        name="get_work_in_process",
+        title="Get work in process",
+        description=(
+            "R08/H02 material em processo (MATR989) — físico e "
+            "alocado, com filtro de armazém e paginação do Portal."
+        ),
+        annotations=_annotations(
+            "get_work_in_process", "Get work in process"
+        ),
+        meta=meta,
+    )
+    def get_work_in_process(
+        period: str,
+        branch: str = "all",
+        report_scope: str = "all_products",
+        warehouse: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_work_in_process)(
+            period, branch, report_scope, warehouse, page, page_size
+        )
+
+    @mcp.tool(
+        name="get_stock_reconciliation",
+        title="Get stock reconciliation",
+        description=(
+            "Conciliação analítica R05−P7−H02 — composição de "
+            "identidade SB9. verdict=IDENTITY_ONLY ou DIVERGENCE com "
+            "reconciliationVerdict=INCONCLUSIVE; nunca paridade "
+            "oficial."
+        ),
+        annotations=_annotations(
+            "get_stock_reconciliation", "Get stock reconciliation"
+        ),
+        meta=meta,
+    )
+    def get_stock_reconciliation(
+        period: str,
+        branch: str = "all",
+        report_scope: str = "all_products",
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_stock_reconciliation)(
+            period, branch, report_scope
+        )
+
+    @mcp.tool(
+        name="get_report_matrix",
+        title="Get report matrix",
+        description=(
+            "Matriz R01–R15 de cobertura da competência (checklist-"
+            "derived) — implementado vs pendente, sem afirmar "
+            "paridade oficial."
+        ),
+        annotations=_annotations(
+            "get_report_matrix", "Get report matrix"
+        ),
+        meta=meta,
+    )
+    def get_report_matrix(
+        period: str, branch_scope: str | None = None
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_report_matrix)(
+            period, branch_scope
+        )
+
+    @mcp.tool(
+        name="list_closing_catalogs",
+        title="List closing catalogs",
+        description=(
+            "Catálogos governados do fechamento — superfície "
+            "administrativa (manage)."
+        ),
+        annotations=_annotations(
+            "list_closing_catalogs", "List closing catalogs"
+        ),
+        meta=meta,
+    )
+    def list_closing_catalogs() -> CallToolResult:
+        return _guarded(bridge.tool_list_closing_catalogs)()
+
+    @mcp.tool(
+        name="list_catalog_entries",
+        title="List catalog entries",
+        description=(
+            "Entradas de um catálogo governado (manage) — ativas e "
+            "opcionalmente inativas."
+        ),
+        annotations=_annotations(
+            "list_catalog_entries", "List catalog entries"
+        ),
+        meta=meta,
+    )
+    def list_catalog_entries(
+        catalog_key: str, include_inactive: bool = True
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_list_catalog_entries)(
+            catalog_key, include_inactive
+        )
+
+    @mcp.tool(
+        name="list_checklist_templates",
+        title="List checklist templates",
+        description=(
+            "Templates do checklist e suas versões — superfície "
+            "administrativa (manage)."
+        ),
+        annotations=_annotations(
+            "list_checklist_templates", "List checklist templates"
+        ),
+        meta=meta,
+    )
+    def list_checklist_templates() -> CallToolResult:
+        return _guarded(bridge.tool_list_checklist_templates)()
+
+    @mcp.tool(
+        name="get_checklist_template_version",
+        title="Get template version",
+        description=(
+            "Versão de um template com os itens — superfície "
+            "administrativa (manage)."
+        ),
+        annotations=_annotations(
+            "get_checklist_template_version", "Get template version"
+        ),
+        meta=meta,
+    )
+    def get_checklist_template_version(
+        template_id: str, version: int
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_checklist_template_version)(
+            template_id, version
+        )
+
+    @mcp.tool(
+        name="list_received_deliveries",
+        title="List received deliveries",
+        description=(
+            "Entregas de documentos disponibilizados ao destinatário "
+            "— experiência DRE (access.dre)."
+        ),
+        annotations=_annotations(
+            "list_received_deliveries", "List received deliveries"
+        ),
+        meta=meta,
+    )
+    def list_received_deliveries() -> CallToolResult:
+        return _guarded(bridge.tool_list_received_deliveries)()
+
+    @mcp.tool(
+        name="get_received_delivery",
+        title="Get received delivery",
+        description=(
+            "Entrega da competência com documentos disponibilizados "
+            "— experiência DRE (access.dre)."
+        ),
+        annotations=_annotations(
+            "get_received_delivery", "Get received delivery"
+        ),
+        meta=meta,
+    )
+    def get_received_delivery(period: str) -> CallToolResult:
+        return _guarded(bridge.tool_get_received_delivery)(period)
+
+    @mcp.tool(
+        name="get_received_document",
+        title="Get received document",
+        description=(
+            "Documento recebido com mensagens e solicitações de "
+            "ajuste — experiência DRE (access.dre)."
+        ),
+        annotations=_annotations(
+            "get_received_document", "Get received document"
+        ),
+        meta=meta,
+    )
+    def get_received_document(
+        period: str, document_id: str
+    ) -> CallToolResult:
+        return _guarded(bridge.tool_get_received_document)(
+            period, document_id
+        )
+
     @mcp.tool(
         name="analyze_closing_blockers",
         title="Analyze closing blockers",

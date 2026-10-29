@@ -231,7 +231,11 @@ def env(_configure_db):
         "pkg": pkg,
         "knowledge": ClaraKnowledgeRepository(),
         "proposals": ClaraProposalRepository(),
-        "writes": ClaraGovernedWrites(),
+        "writes": ClaraGovernedWrites(
+            identity_provider=lambda: {
+                "subject": ADMIN, "name": "cf-admin-test",
+                "is_manage": True, "is_dre": True,
+            }),
         "version_id": version_id,
     }
 
@@ -947,3 +951,204 @@ def test_proposal_summary_presentation(env):
     assert summary["presentation"]["motivation"]
     assert summary["challenge"]["status"] == "PENDING"
     assert summary["period_label"]
+
+
+# == Paridade 016 — novas capabilities end-to-end ============================
+
+
+def _act(env, capability, params, actor=ADMIN):
+    """PREPARE → consentimento Portal (double honesto) → ACT."""
+    writes = env["writes"]
+    proposal = writes.prepare(
+        capability=capability, params=params, actor_sub=actor
+    )
+    _consent_proposal(proposal, actor)
+    return writes.commit(
+        handle=proposal["proposal_handle"], actor_sub=actor
+    )
+
+
+def test_pg_parity016_competence_open_idempotent(env):
+    result = _act(env, "competence.open", {"period": PERIOD})
+    assert result["executed"] is True
+    assert result["capability"] == "competence.open"
+
+
+def test_pg_parity016_pendency_lifecycle(env):
+    created = _act(
+        env,
+        "pendency.create",
+        {
+            "period": PERIOD,
+            "kind": "OTHER",
+            "title": "Pendência CLARA 016",
+            "description": "Criada via catálogo governado.",
+        },
+    )
+    assert created["executed"] is True
+    pendency = (created["result"].get("pendency")
+                or created["result"])
+    pid = str(pendency["pendency_id"])
+    rev = pendency["revision"]
+
+    claimed = _act(
+        env,
+        "pendency.claim",
+        {
+            "period": PERIOD,
+            "pendency_id": pid,
+            "expected_revision": rev,
+        },
+    )
+    assert claimed["executed"] is True
+    rev = claimed["result"]["revision"]
+
+    moved = _act(
+        env,
+        "pendency.transition",
+        {
+            "period": PERIOD,
+            "pendency_id": pid,
+            "to_state": "IN_ANALYSIS",
+            "expected_revision": rev,
+        },
+    )
+    assert moved["executed"] is True
+    assert moved["result"]["state"] == "IN_ANALYSIS"
+
+
+def test_pg_parity016_document_post_message(env):
+    with plugins_db_connect() as conn, conn.cursor(
+        row_factory=dict_row
+    ) as cur:
+        cur.execute(
+            """
+            SELECT competence_id
+              FROM controllership_finance.monthly_competence
+             WHERE period = %s
+            """,
+            (PERIOD,),
+        )
+        competence_id = str(cur.fetchone()["competence_id"])
+    doc, _created = env["docs"].create_document(
+        competence_id=competence_id,
+        snapshot_item_id=None,
+        link_kind="competence",
+        title="Documento CLARA 016",
+        attachment_role="generic",
+        idempotency_key=f"clara-016-{uuid.uuid4()}",
+        request_hash=uuid.uuid4().hex * 2,
+        storage_key=f"{competence_id}/{uuid.uuid4().hex}.pdf",
+        original_name="clara-016.pdf",
+        stored_name=f"{uuid.uuid4().hex}.pdf",
+        mime_type="application/pdf",
+        extension=".pdf",
+        size_bytes=1024,
+        checksum_sha256=uuid.uuid4().hex * 2,
+        actor=ADMIN,
+    )
+    result = _act(
+        env,
+        "document.post_message",
+        {
+            "period": PERIOD,
+            "document_id": str(doc["document_id"]),
+            "body": "Mensagem via CLARA (parity 016).",
+        },
+    )
+    assert result["executed"] is True
+
+
+def test_pg_parity016_item_not_applicable_roundtrip(env):
+    items = env["checklist"].list_competence_items(PERIOD)
+    item_key = items[0]["item_key"]
+    # Fixture marcou tudo ACCEPTED — volta um item a EXPECTED +
+    # CONDITIONAL (estado elegível à transição canônica N/A).
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE controllership_finance.competence_checklist_item
+               SET state = 'EXPECTED',
+                   applicability = 'CONDITIONAL'
+             WHERE competence_id = (
+                 SELECT competence_id
+                   FROM controllership_finance.monthly_competence
+                  WHERE period = %s)
+               AND item_key = %s
+            """,
+            (PERIOD, item_key),
+        )
+    marked = _act(
+        env,
+        "item.mark_not_applicable",
+        {
+            "period": PERIOD,
+            "item_key": item_key,
+            "justification": "Sem aplicabilidade no período (016).",
+        },
+    )
+    assert marked["executed"] is True
+    reverted = _act(
+        env,
+        "item.revert_not_applicable",
+        {
+            "period": PERIOD,
+            "item_key": item_key,
+            "justification": "Reversão do N/A (016).",
+        },
+    )
+    assert reverted["executed"] is True
+
+
+def test_pg_parity016_p3_revalidate(env):
+    result = _act(env, "p3.revalidate", {"period": PERIOD})
+    assert result["executed"] is True
+
+
+def test_pg_parity016_catalog_entry_lifecycle(env):
+    created = _act(
+        env,
+        "catalog.entry_create",
+        {
+            "catalog_key": "REJECTION_REASON",
+            "code": "CLARA_016",
+            "label": "Motivo criado pela CLARA",
+        },
+    )
+    assert created["executed"] is True
+    entry = created["result"].get("entry") or created["result"]
+
+    updated = _act(
+        env,
+        "catalog.entry_update",
+        {
+            "catalog_key": "REJECTION_REASON",
+            "code": "CLARA_016",
+            "label": "Motivo atualizado pela CLARA",
+            "expected_revision": entry["revision"],
+        },
+    )
+    assert updated["executed"] is True
+
+    deactivated = _act(
+        env,
+        "catalog.entry_deactivate",
+        {
+            "catalog_key": "REJECTION_REASON",
+            "code": "CLARA_016",
+            "expected_revision": updated["result"].get(
+                "entry", updated["result"]
+            )["revision"],
+        },
+    )
+    assert deactivated["executed"] is True
+
+    reactivated = _act(
+        env,
+        "catalog.entry_reactivate",
+        {
+            "catalog_key": "REJECTION_REASON",
+            "code": "CLARA_016",
+        },
+    )
+    assert reactivated["executed"] is True

@@ -1,6 +1,6 @@
 """CLARA MCP — superfície e contrato (não-PG).
 
-Cobre: registro das 18 tools com classes DISCOVERY/READ/ANALYSIS/
+Cobre: registro das 43 tools com classes DISCOVERY/READ/ANALYSIS/
 PREPARE/ACT, anotações honestas (readOnly/destructive), securitySchemes
 no wire, instructions, mount paths e o guard de transporte (service
 tokens proibidos na superfície de dados).
@@ -48,7 +48,7 @@ def test_tool_names_and_classes():
     tools = _list_tools()
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
-    assert len(tools) == 18
+    assert len(tools) == 43
     for t in tools:
         assert (t.meta or {}).get("delpi/toolClass") == TOOL_CLASS[t.name]
 
@@ -66,6 +66,32 @@ def test_tool_taxonomy():
         "get_package_review",
         "search_closing_knowledge",
         "get_knowledge_item",
+        # paridade READ Portal × CLARA (execução 016)
+        "list_competences",
+        "get_competence",
+        "get_checklist_item",
+        "get_closing_cockpit",
+        "list_my_tasks",
+        "get_pendency",
+        "list_p3_events",
+        "get_package",
+        "get_document",
+        "get_item_validation",
+        "lookup_participants",
+        "get_financial_settlements",
+        "get_financial_settlements_summary",
+        "get_stock_inventory",
+        "get_stock_movements",
+        "get_work_in_process",
+        "get_stock_reconciliation",
+        "get_report_matrix",
+        "list_closing_catalogs",
+        "list_catalog_entries",
+        "list_checklist_templates",
+        "get_checklist_template_version",
+        "list_received_deliveries",
+        "get_received_delivery",
+        "get_received_document",
     ):
         assert TOOL_CLASS[name] == "READ", name
     assert TOOL_CLASS["analyze_closing_blockers"] == "ANALYSIS"

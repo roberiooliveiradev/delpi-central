@@ -310,8 +310,9 @@ def test_character_never_appears_as_capability_or_tool():
         MCP_TOOL_NAMES,
     )
 
-    # Narrative is not a tool: frozen surface stays at the declared set.
-    assert len(MCP_TOOL_NAMES) == 18
+    # Narrative is not a tool: frozen surface stays at the declared
+    # set (43 tools após a expansão de paridade READ/ACT — exec. 016).
+    assert len(MCP_TOOL_NAMES) == 43
     for name in MCP_TOOL_NAMES:
         for forbidden in ("persona", "character", "story", "narrative"):
             assert forbidden not in name.lower()
