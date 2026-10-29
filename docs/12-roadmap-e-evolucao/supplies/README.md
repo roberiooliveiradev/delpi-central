@@ -16,6 +16,10 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076.COMEX.S8 — Proposta de refinamento UX (2026-10-28)
+
+- [Plano S8.1–S8.3: reorganização da seleção/catálogo, painel Minha análise, ações contextuais e homologação visual](./PROC-0076-COMEX-S8-UX-REFINEMENT-PLAN-20261028.md). **PLANNED**, derivado de capturas do PO; sem autorização de implementação/deploy ou ativação MDIC. Preservar S7, ownership/RBAC e governança de NCMs.
+
 ## PROC-0076.R5.S2 — Refinamento de UX: cards, ícones, unidades e completude (2026-10-27)
 
 Evolução visual/funcional do dashboard: a label de unidade amigável (`US$/t`, `US$/lb`, `R$/US$`, `Índice`, `%`) passa a ser emitida pelo producer (`unit` amigável + `unit_code` de máquina); cards de instrumento ganham ícone, base da cotação e última referência; o gráfico de metais é **agrupado por unidade** (USD/lb e USD/t nunca compartilham eixo); instrumentos selecionados sem direito de exibição são nomeados com motivo; câmbio e IPP exibem cartões de contexto reais quando não há observações; Comex pendente mostra próximos passos e prévia dos indicadores — sem valores sintéticos. Detalhes: §10 do documento de evidência R5.
