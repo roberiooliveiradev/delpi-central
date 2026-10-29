@@ -108,6 +108,7 @@ class TeoAgentIntelligenceService:
         raw = {
             "version": cls.version(),
             "authority": authority,
+            "identity": doc.get("identity") or {},
             "actions_runtime": doc.get("actions_runtime") or {},
             "execution_posture": posture,
             "write_flow": doc.get("write_flow") or {},
