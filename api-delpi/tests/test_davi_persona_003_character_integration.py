@@ -90,7 +90,9 @@ def test_identity_and_approved_traits() -> None:
 
 def test_no_invented_demographics_or_appearance() -> None:
     p = get_davi_profile()
-    assert p.identity.narrative_age is None  # never invented
+    # Approved fictional age — fixed narrative attribute, never computed
+    # from the real calendar; birthdate stays undefined.
+    assert p.identity.narrative_age == "23"
     assert p.appearance.height_description == ""
     assert p.appearance.eyes == ""
     assert p.appearance.avatar_status == "REFERENCE_NOT_OFFICIAL_AVATAR"

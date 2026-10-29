@@ -228,7 +228,7 @@ def test_specialist_additions_keep_read_only_authority() -> None:
 def test_narrative_section_is_versioned_and_projected() -> None:
     doc = DaviAgentIntelligenceService.document()
     narrative = doc.get("narrative") or {}
-    assert narrative["narrative_version"] == 1
+    assert narrative["narrative_version"] == 2
     assert narrative["type"] == "FICTION_IDENTITY_ONLY"
     assert "Especialistas DELPI" in narrative["universe"]
     # Character projection carries the same fiction marking + universe.

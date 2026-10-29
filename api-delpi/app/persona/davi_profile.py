@@ -62,7 +62,9 @@ def build_davi_profile(doc: Mapping[str, Any] | None = None) -> CharacterProfile
             role=expertise.get("professional_role")
             or "Especialista em Dados e Informações DELPI",
             organization="DELPI",
-            narrative_age=None,  # not approved — young appearance only
+            # Approved narrative age lives in the content layer; it is a
+            # fixed fictional attribute — never derived from the calendar.
+            narrative_age=persona.get("narrative_age"),
             gender_identity="masculino",
             pronouns="ele/dele",
             short_introduction=str(persona.get("identity") or ""),

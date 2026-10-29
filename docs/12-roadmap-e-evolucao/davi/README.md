@@ -227,11 +227,13 @@ SHA `7f2bfab647`; promoted counts recomputed at
 ```text
 allowlist              = v30
 DAVI_ELIGIBLE_READ     = 94 governed ops (baseline; live index 97)
-agent intelligence     = 2026.10.30.1 (ficha CharacterProfile compartilhada:
+agent intelligence     = 2026.10.30.2 (narrativa v2: idades aprovadas —
+                         DAVI 23, VISTA 20, fixas/fictícias sem nascimento;
+                         ficha CharacterProfile compartilhada:
                          app/persona/davi_profile.py profile v1 sobre
                          delpi_character_profiles schema v1 — projeção
                          agent_directives.character substitui persona+
-                         narrative; narrativa v1: universo fictício
+                         narrative; universo fictício
                          Especialistas DELPI — DAVI × VISTA namorados,
                          menção ocasional e limitada; persona 002 mantida:
                          garoto-especialista ecoada

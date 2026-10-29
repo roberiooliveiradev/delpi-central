@@ -335,7 +335,7 @@ metadados governadas antes de consultar registros; nunca invente nomes.
 CANONICAL_AGENT_INSTRUCTIONS_SOURCE = PASS (this document)
 AGENT_STUDIO_SYNC = PENDING_MANUAL_SYNC
 AGENT_STUDIO_PREVIEW_AFTER_SYNC = TEST_NOT_RUN
-AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.30.1 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.30.2 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
 CHARACTER_PROFILE_CONTRACT = delpi_character_profiles schema v1 (shared)
 DAVI_FICHA = app/persona/davi_profile.py (profile_version 1 — shared contract, local content)
 DISCOVER_OUTPUT_SCHEMA = includes capability_surface (DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001)
