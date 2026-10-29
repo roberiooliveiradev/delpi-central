@@ -12,6 +12,8 @@ from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import re
+
 import pytest
 
 from tm_app.application.governed_writes import bpmn_migration_capability as cap
@@ -883,3 +885,110 @@ class TestCatalog:
         assert not entity_supports(entity, "create")
         assert not entity_supports(entity, "update")
         assert not entity_supports(entity, "delete")
+
+class TestXsdCompliantSerialization:
+    """Regression: tProcess children must follow laneSet* → flowElement* →
+    artifact*, and tArtifact carries no ``name`` attribute (label goes to
+    <bpmn:text> / <bpmn:documentation>)."""
+
+    def _flowchart(self) -> dict:
+        return {
+            "format": "flowchart_v1",
+            "format_version": 1,
+            "lanes": [
+                {"id": "lane_a", "label": "Controladoria", "height": 168},
+                {"id": "lane_b", "label": "Operações", "height": 168},
+            ],
+            "nodes": [
+                # Artifacts interleaved before/among flow elements — the
+                # ordering defect reported for PROC-0072.
+                {"id": "doc1", "type": "document",
+                 "label": "Checklist de fechamento", "lane_id": "lane_a",
+                 "position": {"x": 60, "y": 220}},
+                {"id": "n1", "type": "start", "label": "Início",
+                 "lane_id": "lane_a", "position": {"x": 80, "y": 60}},
+                {"id": "c1", "type": "comment",
+                 "label": "Observações da competência", "lane_id": "lane_a",
+                 "position": {"x": 60, "y": 280}},
+                {"id": "n2", "type": "subprocess_ad_hoc",
+                 "label": "Gerar e coletar entregáveis",
+                 "lane_id": "lane_b", "position": {"x": 240, "y": 60}},
+                {"id": "g1", "type": "group", "label": "Etapa conciliação",
+                 "lane_id": "lane_b", "position": {"x": 400, "y": 320}},
+                {"id": "n3", "type": "decision", "label": "Divergência?",
+                 "lane_id": "lane_a", "position": {"x": 420, "y": 50}},
+                {"id": "n4", "type": "process", "label": "Investigar",
+                 "lane_id": "lane_b", "position": {"x": 560, "y": 60}},
+                {"id": "n5", "type": "end", "label": "Conclusão mensal",
+                 "lane_id": "lane_a", "position": {"x": 700, "y": 60}},
+            ],
+            "edges": [
+                {"id": "e1", "from": "n1", "to": "n2", "kind": "sequence"},
+                {"id": "e2", "from": "n2", "to": "n3", "kind": "sequence"},
+                {"id": "e3", "from": "n3", "to": "n4", "kind": "sequence",
+                 "label": "Sim"},
+                {"id": "e4", "from": "n3", "to": "n5", "kind": "sequence",
+                 "label": "Não"},
+                {"id": "a1", "from": "doc1", "to": "n2",
+                 "kind": "association"},
+                {"id": "a2", "from": "c1", "to": "n2",
+                 "kind": "association"},
+            ],
+        }
+
+    def test_text_annotation_uses_text_child_not_name_attr(self):
+        from bpmn_validation import LxmlBpmnValidator, intake_bytes
+
+        candidate = LegacyFlowchartToBpmnMapper().map(
+            self._flowchart(), process_name="Fechamento"
+        )
+        assert candidate.status == STATUS_READY
+        xml = candidate.bpmn_xml
+        for elem in re.findall(r"<bpmn:textAnnotation[^>]*>", xml):
+            assert "name=" not in elem
+        assert xml.count("<bpmn:textAnnotation") == 2
+        assert "<bpmn:text>Checklist de fechamento</bpmn:text>" in xml
+        assert "<bpmn:text>Observações da competência</bpmn:text>" in xml
+        assert "<bpmn:documentation>Etapa conciliação</bpmn:documentation>"             in xml
+
+        intake = intake_bytes(xml.encode())
+        assert intake.artifact is not None
+        report = LxmlBpmnValidator().validate(
+            intake.artifact, evidence=intake.evidence
+        )
+        assert not [
+            i for i in report.issues if i.severity.value == "error"
+        ], [i.message for i in report.issues]
+
+    def test_artifacts_emitted_after_flow_elements(self):
+        candidate = LegacyFlowchartToBpmnMapper().map(
+            self._flowchart(), process_name="Fechamento"
+        )
+        body = candidate.bpmn_xml.split("<bpmndi:BPMNDiagram")[0]
+        last_flow = max(
+            body.rfind(f"<bpmn:{tag}")
+            for tag in ("task", "startEvent", "endEvent", "sequenceFlow",
+                        "adHocSubProcess", "exclusiveGateway")
+        )
+        first_artifact = min(
+            idx for idx in (body.find("<bpmn:textAnnotation"),
+                            body.find("<bpmn:association"),
+                            body.find("<bpmn:group")) if idx >= 0
+        )
+        assert first_artifact > last_flow
+        assert "<bpmn:adHocSubProcess" in body
+
+    def test_ad_hoc_subprocess_passes_real_xsd(self):
+        from bpmn_validation import LxmlBpmnValidator, intake_bytes
+
+        candidate = LegacyFlowchartToBpmnMapper().map(
+            self._flowchart(), process_name="Fechamento"
+        )
+        intake = intake_bytes(candidate.bpmn_xml.encode())
+        assert intake.artifact is not None
+        report = LxmlBpmnValidator().validate(
+            intake.artifact, evidence=intake.evidence
+        )
+        assert not [
+            i for i in report.issues if i.severity.value == "error"
+        ], [i.message for i in report.issues]

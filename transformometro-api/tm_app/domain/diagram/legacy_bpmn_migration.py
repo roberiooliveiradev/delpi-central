@@ -65,6 +65,10 @@ _LANE_HEIGHT = 160
 _LANE_WIDTH_MIN = 360
 _LANE_PAD = 30
 
+# BPMN element names that substitute ``artifact`` under tProcess — they are
+# emitted after every flowElement and never carry a ``name`` attribute.
+_ARTIFACT_TAGS = frozenset({"textAnnotation", "group"})
+
 CLASS_EXACT = "EXACT"
 CLASS_HEURISTIC = "HEURISTIC"
 CLASS_AMBIGUOUS = "AMBIGUOUS"
@@ -677,8 +681,14 @@ class LegacyFlowchartToBpmnMapper:
                     )
                     ref.text = node["_bpmn_id"]
 
+        # XSD tProcess sequence: laneSet* → flowElement* → artifact* →
+        # resourceRole* → correlationSubscription* → supports*. Children must
+        # be emitted in two slices — interleaving artifacts with flow
+        # elements is a structural violation.
         for node in nodes:
             tag = node["_bpmn_tag"]
+            if tag in _ARTIFACT_TAGS:
+                continue  # artifact slice below
             attrs = {
                 "id": node["_bpmn_id"],
                 "name": _esc(str(node.get("label") or node["_bpmn_id"])),
@@ -693,6 +703,8 @@ class LegacyFlowchartToBpmnMapper:
             if edge.get("_skip"):
                 continue
             tag = edge["_bpmn_tag"]
+            if tag == "association":
+                continue  # artifact slice below
             attrs = {
                 "id": edge["_bpmn_id"],
                 "sourceRef": id_map.get(str(edge.get("from") or ""), ""),
@@ -701,6 +713,39 @@ class LegacyFlowchartToBpmnMapper:
             label = edge.get("label")
             if label and tag == "sequenceFlow":
                 attrs["name"] = _esc(str(label))
+            ET.SubElement(process_el, f"{{{BPMN_NS}}}{tag}", attrib=attrs)
+
+        # Artifact slice — tArtifact has no ``name`` attribute (tBaseElement
+        # carries only ``id``). Labels are preserved in the canonical
+        # children: <bpmn:text> for textAnnotation, <bpmn:documentation>
+        # for group.
+        for node in nodes:
+            tag = node["_bpmn_tag"]
+            if tag not in _ARTIFACT_TAGS:
+                continue
+            label = str(node.get("label") or "")
+            element = ET.SubElement(
+                process_el, f"{{{BPMN_NS}}}{tag}", attrib={"id": node["_bpmn_id"]}
+            )
+            if tag == "textAnnotation":
+                if label:
+                    text_el = ET.SubElement(element, f"{{{BPMN_NS}}}text")
+                    text_el.text = label
+            elif label:
+                doc_el = ET.SubElement(element, f"{{{BPMN_NS}}}documentation")
+                doc_el.text = label
+
+        for edge in edges:
+            if edge.get("_skip"):
+                continue
+            tag = edge["_bpmn_tag"]
+            if tag != "association":
+                continue
+            attrs = {
+                "id": edge["_bpmn_id"],
+                "sourceRef": id_map.get(str(edge.get("from") or ""), ""),
+                "targetRef": id_map.get(str(edge.get("to") or ""), ""),
+            }
             ET.SubElement(process_el, f"{{{BPMN_NS}}}{tag}", attrib=attrs)
 
         # ---- BPMN-DI ---------------------------------------------------------
