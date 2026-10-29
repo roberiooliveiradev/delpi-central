@@ -3848,8 +3848,10 @@ _NATIVE_ASSESSMENT_LEDGER: contextvars.ContextVar[dict | None] = (
 
 
 def _goal_fingerprint(goal: _TurnGoal | None) -> tuple:
-    """The goal inputs a native_assessment decision actually saw — a
-    decision is only reusable while every one of them is identical."""
+    """Every field of the validated turn-goal contract — including
+    fields the assessment prompt does not serialize today. Strictly
+    conservative: an unexpected future goal input invalidates reuse
+    rather than silently inheriting it."""
     if goal is None:
         return ()
     return (
@@ -3857,41 +3859,113 @@ def _goal_fingerprint(goal: _TurnGoal | None) -> tuple:
         goal.comparison_requested,
         goal.output_mode,
         goal.business_subject,
+        goal.scope_constraints,
+        goal.declared,
+        goal.execution_bound,
+        goal.prior_evidence_sufficient,
+        repr(goal.answer_requirements),
+        goal.contract_subject,
     )
 
 
-def _record_native_assessment(
+def _native_assessment_premise_fp(
+    input_text: str,
+    group: CapabilityGroup,
     group_key: str,
     descriptor: ProviderCapability,
     goal: _TurnGoal | None,
+    workspace_context: WorkspaceContext | None,
+    prior_turns: tuple[ConversationContextTurn, ...],
+) -> str:
+    """sha256 over EVERY material input the native_assessment
+    decision consumed — target capability id + operation class, the
+    serialized group capability surface, the turn-goal payload,
+    user input text, workspace context and prior turns. The single
+    intentional absence is ``relevance_feedback``: it exists only in
+    recovery and its delta is governed by the monotonic rule — a
+    foreign_evidence_required decision is never weakened by an
+    irrelevant native result. Anything else differing invalidates.
+    """
+    payload = {
+        "input_text": input_text,
+        "group_key": group_key,
+        "capability_id": descriptor.capability_id,
+        "operation_class": descriptor.operation_class.value,
+        "capabilities": json.loads(_capability_payload(group)),
+        "turn_goal": _goal_fingerprint(goal),
+        "workspace_context": (
+            workspace_context.to_prompt_block()
+            if workspace_context is not None
+            else None
+        ),
+        "prior_turns": [
+            [
+                getattr(turn.kind, "value", str(turn.kind)),
+                turn.content,
+                str(turn.epistemic_class),
+            ]
+            for turn in (prior_turns or ())
+        ],
+    }
+    return hashlib.sha256(
+        json.dumps(
+            payload, sort_keys=True, ensure_ascii=False, default=str
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _record_native_assessment(
+    input_text: str,
+    group: CapabilityGroup,
+    group_key: str,
+    descriptor: ProviderCapability,
+    goal: _TurnGoal | None,
+    workspace_context: WorkspaceContext | None,
+    prior_turns: tuple[ConversationContextTurn, ...],
     decision: str,
 ) -> None:
     """Persist a just-made assessment decision when a sequencing
-    engine bound the opt-in ledger. No-ops otherwise."""
+    engine bound the opt-in ledger. No-ops otherwise. The record is
+    a decision string + premise fingerprint — never payloads,
+    feedback text or reasoning."""
     ledger = _NATIVE_ASSESSMENT_LEDGER.get()
     if ledger is None:
         return
     ledger["records"][(group_key, descriptor.capability_id)] = {
         "decision": decision,
-        "goal_fp": _goal_fingerprint(goal),
+        "premise_fp": _native_assessment_premise_fp(
+            input_text,
+            group,
+            group_key,
+            descriptor,
+            goal,
+            workspace_context,
+            prior_turns,
+        ),
     }
 
 
 def _reusable_native_assessment(
+    input_text: str,
+    group: CapabilityGroup,
     group_key: str,
     descriptor: ProviderCapability,
     goal: _TurnGoal | None,
+    workspace_context: WorkspaceContext | None,
+    prior_turns: tuple[ConversationContextTurn, ...],
 ) -> str | None:
     """Deterministic monotonic reuse check for the recovery-round
-    assessment. Reuse is legal ONLY when the prior decision on the
-    SAME target with the SAME goal was ``foreign_evidence_required``:
-    an irrelevant native result can never REDUCE an established
-    foreign-evidence requirement, so reuse moves strictly toward
-    more evidence, never less. A prior ``sufficient`` verdict is
-    REFUTED by the mismatch — reusing it would skip a mandatory
-    decision on confirmed divergence, so it always reassesses.
-    Reuse skips the model call, never the foreign consult itself,
-    which still executes under the fresh relevance feedback.
+    assessment. Reuse is legal ONLY when (a) the recorded decision on
+    the SAME (group, capability) key was ``foreign_evidence_required``
+    AND (b) every material premise except relevance_feedback is
+    identical — proven by the full premise fingerprint. An irrelevant
+    native result can never REDUCE an established foreign-evidence
+    requirement, so reuse moves strictly toward more evidence, never
+    less. A prior ``sufficient`` verdict is REFUTED by the mismatch —
+    reusing it would skip a mandatory decision on confirmed
+    divergence, so it always reassesses. Reuse skips the model call,
+    never the foreign consult itself, which still executes under the
+    fresh relevance feedback.
     """
     ledger = _NATIVE_ASSESSMENT_LEDGER.get()
     if ledger is None:
@@ -3902,7 +3976,15 @@ def _reusable_native_assessment(
     if (
         record is not None
         and record["decision"] == "foreign_evidence_required"
-        and record["goal_fp"] == _goal_fingerprint(goal)
+        and record["premise_fp"] == _native_assessment_premise_fp(
+            input_text,
+            group,
+            group_key,
+            descriptor,
+            goal,
+            workspace_context,
+            prior_turns,
+        )
     ):
         ledger["events"].append(
             ("reused", group_key, descriptor.capability_id)
@@ -4797,7 +4879,14 @@ class OperationalCapabilityOrchestrator:
                     deadline=deadline,
                 )
                 _record_native_assessment(
-                    group_key, descriptor, goal, assessment
+                    input_text,
+                    group,
+                    group_key,
+                    descriptor,
+                    goal,
+                    workspace_context,
+                    prior_turns,
+                    assessment,
                 )
             if (
                 assessment == "corroboration_requested"
@@ -9889,7 +9978,13 @@ class OperationalCapabilityOrchestrator:
         foreign_evidence: str | None = None
         if len(groups) > 1:
             assessment = _reusable_native_assessment(
-                sel_group_key, sel_descriptor, goal
+                input_text,
+                sel_group,
+                sel_group_key,
+                sel_descriptor,
+                goal,
+                workspace_context,
+                prior_turns,
             )
             if assessment is None:
                 assessment = self._assess_native_path(

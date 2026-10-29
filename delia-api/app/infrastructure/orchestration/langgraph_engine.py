@@ -317,31 +317,40 @@ class LangGraphCapabilityOrchestrator:
             if state.get("admission_owner_required")
             else None
         )
+        # Opt-in ambient carrier for THIS attempt only — bound with a
+        # set/reset pair so cancellation, exceptions or non-copying
+        # runtimes can never leak the binding outside this node. A
+        # fresh dict per invocation; no decisions leak across
+        # attempts or turns. The governed recovery stage
+        # exposes/reuses decisions through the shared monotonic check.
+        ledger_token = None
         if state.get("assessment_reuse"):
-            # Opt-in ambient carrier for THIS attempt only — a fresh
-            # dict per invocation; no decisions leak across attempts
-            # or turns. The governed recovery stage exposes/reuses
-            # decisions through the shared monotonic check.
-            _NATIVE_ASSESSMENT_LEDGER.set({"records": {}, "events": []})
-        attempt = self._gates._governed_owner_path(
-            state["input_text"],
-            correlation=state["correlation"],
-            actor_user_id=state.get("actor_user_id"),
-            session_id=state.get("session_id"),
-            workspace_context=state.get("workspace_context"),
-            prior_turns=state.get("prior_turns") or (),
-            prepare_only=state["prepare_only"],
-            unbound_outcome=unbound_outcome,
-            deadline=state["deadline"],
-        )
-        traced = self._traced(state, "owner_path")
-        ledger = _NATIVE_ASSESSMENT_LEDGER.get()
-        if ledger is not None:
-            traced["trace"] = traced["trace"] + [
-                f"assessment_{event}"
-                for event, _group_key, _cap_id in ledger["events"]
-            ]
-        return {**traced, "attempt": attempt}
+            ledger_token = _NATIVE_ASSESSMENT_LEDGER.set(
+                {"records": {}, "events": []}
+            )
+        try:
+            attempt = self._gates._governed_owner_path(
+                state["input_text"],
+                correlation=state["correlation"],
+                actor_user_id=state.get("actor_user_id"),
+                session_id=state.get("session_id"),
+                workspace_context=state.get("workspace_context"),
+                prior_turns=state.get("prior_turns") or (),
+                prepare_only=state["prepare_only"],
+                unbound_outcome=unbound_outcome,
+                deadline=state["deadline"],
+            )
+            traced = self._traced(state, "owner_path")
+            ledger = _NATIVE_ASSESSMENT_LEDGER.get()
+            if ledger is not None:
+                traced["trace"] = traced["trace"] + [
+                    f"assessment_{event}"
+                    for event, _group_key, _cap_id in ledger["events"]
+                ]
+            return {**traced, "attempt": attempt}
+        finally:
+            if ledger_token is not None:
+                _NATIVE_ASSESSMENT_LEDGER.reset(ledger_token)
 
     # ---------------- contract entrypoint ----------------
 
