@@ -2665,14 +2665,16 @@ services:
       ENGINEERING_HOME_MAX_SECTION_ITEMS: ${ENGINEERING_HOME_MAX_SECTION_ITEMS:-10}
       ENGINEERING_HOME_MAX_CONCURRENT_SOURCES: ${ENGINEERING_HOME_MAX_CONCURRENT_SOURCES:-3}
 
-      # S2S individual para os contratos facts LMP (G4.A.R1 — padrão
+      # S2S individual para os contratos facts LMP (G4.A.R1/R2 — padrão
       # controllership-finance-api). Sem credencial provisionada o adapter
       # falha fechado (unavailable), sem fallback.
       # Provisionamento: infra/scripts/keycloak_s2s_engineering_facts_scope.py
       # — client `engineering-api` com scope default `engineering-facts.read`
       # (S2S_SCOPE vazio = token carrega os default scopes do client);
       # api-delpi exige `engineering-api` em S2S_ALLOWED_CLIENTS.
-      S2S_TOKEN_URL: ${S2S_TOKEN_URL}
+      # ENG_S2S_TOKEN_URL: permite token endpoint via gateway quando o iss
+      # precisa casar com KEYCLOAK_ISSUER (dev); default = S2S_TOKEN_URL.
+      S2S_TOKEN_URL: ${ENG_S2S_TOKEN_URL:-${S2S_TOKEN_URL}}
       S2S_CLIENT_ID: ${ENG_S2S_CLIENT_ID:-engineering-api}
       S2S_CLIENT_SECRET: ${ENG_S2S_CLIENT_SECRET:-}
       S2S_SCOPE: ${ENG_S2S_SCOPE:-}

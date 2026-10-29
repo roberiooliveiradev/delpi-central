@@ -13,11 +13,16 @@ Safety rails (same convention as keycloak_s2s_supplies_scope.py):
 
   * DEFAULT MODE = --check (read-only drift report; modifies nothing);
   * realm must ALREADY exist — it is never created here (fail closed);
-  * client ``engineering-api`` creation is OUT OF SCOPE — without it the
-    script reports DRIFT and documents what to provision manually;
-  * no user creation, no secret rotation/print, no realm mutation beyond
-    the single client scope + default-scope assignment + audience mapper;
-  * --apply requires an https:// Keycloak base URL.
+  * --apply creates the client ONLY with the strict S2S shape
+    (confidential, service account, no interactive grants) — it never
+    touches other clients, users or grants;
+  * no user creation, no realm mutation beyond the bounded client +
+    client scope + default-scope assignment + audience mapper;
+  * the client secret is NEVER printed/logged — in --apply it is written
+    directly to ``infra/.env`` (gitignored) as ``ENG_S2S_*`` and
+    ``engineering-api`` is appended to ``S2S_ALLOWED_CLIENTS``;
+  * --apply requires an https:// Keycloak base URL unless
+    ``KC_ALLOW_HTTP_APPLY=1`` is set explicitly for a local dev realm.
 
 Companion env change (manual, api-delpi deploy):
     S2S_ALLOWED_CLIENTS must include ``engineering-api``
@@ -130,6 +135,44 @@ def report(ok: bool, element: str, note: str) -> None:
     print(f"  [{tag}] {element} — {note}")
 
 
+def _upsert_env(lines: list[str], key: str, value: str) -> list[str]:
+    """Replace or append ``key=value`` in an env file line list."""
+    prefix = f"{key}="
+    for i, line in enumerate(lines):
+        if line.startswith(prefix):
+            lines[i] = f"{key}={value}"
+            return lines
+    lines.append(f"{key}={value}")
+    return lines
+
+
+def _write_env_config(secret: str) -> None:
+    """Persist ENG_S2S_* + S2S_ALLOWED_CLIENTS into infra/.env.
+
+    The secret value is written to the gitignored env file only — never
+    to stdout, logs or the repository.
+    """
+    lines = (
+        _INFRA_ENV.read_text(encoding="utf-8").splitlines()
+        if _INFRA_ENV.is_file()
+        else []
+    )
+    lines = _upsert_env(lines, "ENG_S2S_CLIENT_ID", CALLER_CLIENT)
+    lines = _upsert_env(lines, "ENG_S2S_CLIENT_SECRET", secret)
+    allow = next(
+        (line.split("=", 1)[1] for line in lines
+         if line.startswith("S2S_ALLOWED_CLIENTS=")),
+        "",
+    )
+    clients = [c.strip() for c in allow.split(",") if c.strip()]
+    if CALLER_CLIENT not in clients:
+        clients.append(CALLER_CLIENT)
+        lines = _upsert_env(lines, "S2S_ALLOWED_CLIENTS", ",".join(clients))
+    _INFRA_ENV.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    report(True, "infra/.env", "ENG_S2S_CLIENT_ID/SECRET gravados; "
+           "engineering-api em S2S_ALLOWED_CLIENTS (valores nunca exibidos)")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true")
@@ -141,24 +184,52 @@ def main() -> int:
     if not base:
         raise SystemExit("[ERRO] KC_BASE_URL/KEYCLOAK_URL ausente")
     if apply_mode and not base.startswith("https://"):
-        raise SystemExit("[ERRO] --apply exige base https:// em produção")
+        if os.environ.get("KC_ALLOW_HTTP_APPLY") != "1":
+            raise SystemExit(
+                "[ERRO] --apply exige base https:// — para realm local de "
+                "dev, exporte KC_ALLOW_HTTP_APPLY=1 explicitamente"
+            )
 
     realm = os.environ.get("KEYCLOAK_REALM") or REALM
     print(f"[kc-s2s-engineering-facts] mode={'APPLY' if apply_mode else 'CHECK'} "
           f"realm={realm} base={base}")
     admin = KcAdmin(base, mint_admin_token(base))
 
-    # --- caller client must exist (creation out of scope) ---
+    # --- caller client: strict S2S shape, created only under --apply ---
     clients = admin.call(
         "GET", f"/admin/realms/{realm}/clients?clientId={CALLER_CLIENT}"
     )
     if not clients:
-        report(False, "client engineering-api", "inexistente — criar client "
-               "confidencial com serviceAccountsEnabled=true antes deste "
-               "script (decisão de provisioning, G4.A §6)")
-        print("\n[REMINDER] api-delpi env: incluir 'engineering-api' em "
-              "S2S_ALLOWED_CLIENTS (S2S_AUDIENCE=api-delpi já vigente).")
-        return 1
+        if not apply_mode:
+            report(False, "client engineering-api", "inexistente — execute "
+                   "--apply para criar (confidencial, service account, "
+                   "somente client_credentials)")
+            print("\n[REMINDER] api-delpi env: incluir 'engineering-api' em "
+                  "S2S_ALLOWED_CLIENTS (S2S_AUDIENCE=api-delpi já vigente).")
+            return 1
+        admin.call(
+            "POST", f"/admin/realms/{realm}/clients",
+            {
+                "clientId": CALLER_CLIENT,
+                "protocol": "openid-connect",
+                "enabled": True,
+                "publicClient": False,
+                "serviceAccountsEnabled": True,
+                "standardFlowEnabled": False,
+                "implicitFlowEnabled": False,
+                "directAccessGrantsEnabled": False,
+                "authorizationServicesEnabled": False,
+            },
+        )
+        clients = admin.call(
+            "GET",
+            f"/admin/realms/{realm}/clients?clientId={CALLER_CLIENT}",
+        ) or []
+        report(bool(clients), "client engineering-api",
+               "criado (confidencial, SA, sem grants interativos)"
+               if clients else "falha ao criar")
+        if not clients:
+            return 1
     client = clients[0]
     client_uuid = client["id"]
     report(
@@ -264,8 +335,22 @@ def main() -> int:
         )
         report(True, "audience mapper api-delpi", "criado")
 
-    print("\n[REMINDER] api-delpi env: incluir 'engineering-api' em "
-          "S2S_ALLOWED_CLIENTS (S2S_AUDIENCE=api-delpi já vigente).")
+    # --- secret handling: written to gitignored env, never printed ---
+    if apply_mode:
+        secret_body = admin.call(
+            "GET",
+            f"/admin/realms/{realm}/clients/{client_uuid}/client-secret",
+        ) or {}
+        secret = str(secret_body.get("value") or "")
+        if secret:
+            _write_env_config(secret)
+        else:
+            report(False, "client secret", "não retornado pelo Keycloak — "
+                   "verificar serviceAccountsEnabled")
+            return 1
+    else:
+        print("\n[REMINDER] api-delpi env: incluir 'engineering-api' em "
+              "S2S_ALLOWED_CLIENTS (S2S_AUDIENCE=api-delpi já vigente).")
     return 0
 
 
