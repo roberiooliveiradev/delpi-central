@@ -21,6 +21,10 @@ from engineering_app.application.use_cases.list_lmps_dashboard import (
 )
 from engineering_app.domain.lmp.business_rules import is_engineering_finished
 from engineering_app.domain.lmp.dashboard_aggregates import compute_summary, is_lmp
+from engineering_app.domain.lmp.listing_semantics import (
+    facts_listing_type_param,
+    resolve_listing_type_filter,
+)
 
 
 def _ov_key(fact: LmpFact) -> dict[str, str] | None:
@@ -53,7 +57,11 @@ class GetLmpSummaryUseCase:
                 start_date=query.start_date,
                 end_date=query.end_date,
                 branch=query.branch,
-                listing_type=query.listing_type or "lmp",
+                listing_type=facts_listing_type_param(
+                    resolve_listing_type_filter(
+                        query.listing_type, lmp_only=True
+                    )
+                ),
                 page=page,
                 page_size=FACTS_PAGE_SIZE,
                 include_qtd_pi=False,

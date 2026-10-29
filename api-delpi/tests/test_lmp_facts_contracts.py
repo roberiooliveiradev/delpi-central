@@ -597,3 +597,157 @@ def test_facts_s2s_denied_on_missing_scope() -> None:
             )
 
     assert excinfo.value.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# G4.A — delegação humana `engineering.access` e negações S2S adicionais
+# ---------------------------------------------------------------------------
+
+
+def test_facts_human_engineering_access_allowed() -> None:
+    """G4.A — usuário com APENAS `engineering.access` acessa os facts.
+
+    Permissão canônica do Portal Engenharia (modelo unificado): o contrato
+    facts aceita o Bearer humano delegado pela engineering-api — aditivo,
+    sem remover o conjunto legado.
+    """
+    user = MagicMock(
+        principal_type="user",
+        is_superadmin=False,
+        permissions=["engineering.access"],
+        rbac_unavailable=False,
+    )
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "page_size": 50,
+        "total_pages": 0,
+        "provenance": {},
+        "policy": {},
+    }
+
+    with patch(
+        "delpi_auth.authorization.resolve_user_context",
+        return_value=user,
+    ), patch(
+        f"{ROUTER_MODULE}.build_engineering_list_lmp_facts_use_case",
+        return_value=use_case,
+    ):
+        response = list_lmp_facts_route()
+
+    assert body_json(response)["success"] is True
+
+
+def test_facts_human_engineering_manage_only_denied() -> None:
+    """G4.A — `engineering.manage` sozinho não concede acesso operacional."""
+    user = MagicMock(
+        principal_type="user",
+        is_superadmin=False,
+        permissions=["engineering.manage"],
+        rbac_unavailable=False,
+    )
+
+    with patch(
+        "delpi_auth.authorization.resolve_user_context",
+        return_value=user,
+    ):
+        with pytest.raises(Exception, match="Forbidden"):
+            list_lmp_facts_route()
+
+
+def test_facts_s2s_denied_wrong_client() -> None:
+    from delpi_auth.service_errors import ServiceClientDeniedError
+
+    request = MagicMock()
+    request.headers = {"x-delpi-service-authorization": "Bearer tok"}
+    validator = MagicMock()
+    validator.validate.side_effect = ServiceClientDeniedError()
+
+    with patch(
+        "app.interface.http.s2s_service_access.get_request",
+        return_value=request,
+    ), patch(
+        "app.interface.http.s2s_service_access.extract_service_authorization",
+        return_value="tok",
+    ), patch(
+        "app.interface.http.s2s_service_access.ServiceTokenValidator.from_env",
+        return_value=validator,
+    ):
+        with pytest.raises(HTTPException) as excinfo:
+            list_lmp_facts_route()
+
+    assert excinfo.value.status_code == 403
+    assert getattr(excinfo.value, "error_code", None) == "S2S_CLIENT_DENIED"
+
+
+def test_facts_s2s_denied_invalid_token_or_audience() -> None:
+    """Token inválido/audience incorreta → 401 com code estável."""
+    from delpi_auth.service_errors import ServiceTokenInvalidError
+
+    request = MagicMock()
+    request.headers = {"x-delpi-service-authorization": "Bearer bad"}
+    validator = MagicMock()
+    validator.validate.side_effect = ServiceTokenInvalidError()
+
+    with patch(
+        "app.interface.http.s2s_service_access.get_request",
+        return_value=request,
+    ), patch(
+        "app.interface.http.s2s_service_access.extract_service_authorization",
+        return_value="bad",
+    ), patch(
+        "app.interface.http.s2s_service_access.ServiceTokenValidator.from_env",
+        return_value=validator,
+    ):
+        with pytest.raises(HTTPException) as excinfo:
+            list_lmp_facts_route()
+
+    assert excinfo.value.status_code == 401
+    assert getattr(excinfo.value, "error_code", None) == "S2S_TOKEN_INVALID"
+
+
+def test_facts_s2s_validator_unavailable() -> None:
+    """JWKS/Keycloak indisponível → 503 fail-closed."""
+    from delpi_auth.service_errors import ServiceValidatorUnavailableError
+
+    request = MagicMock()
+    request.headers = {"x-delpi-service-authorization": "Bearer tok"}
+    validator = MagicMock()
+    validator.validate.side_effect = ServiceValidatorUnavailableError()
+
+    with patch(
+        "app.interface.http.s2s_service_access.get_request",
+        return_value=request,
+    ), patch(
+        "app.interface.http.s2s_service_access.extract_service_authorization",
+        return_value="tok",
+    ), patch(
+        "app.interface.http.s2s_service_access.ServiceTokenValidator.from_env",
+        return_value=validator,
+    ):
+        with pytest.raises(HTTPException) as excinfo:
+            list_lmp_facts_route()
+
+    assert excinfo.value.status_code == 503
+
+
+def test_facts_access_constant_includes_engineering_access() -> None:
+    from app.application.security.api_delpi_permissions import (
+        API_DELPI_ACCESS,
+        DASHBOARD_ENGINEERING_VIEW,
+        DASHBOARD_LMPS_VIEW,
+        ENGINEERING_ACCESS,
+        ENGINEERING_LMP_FACTS_ACCESS,
+    )
+
+    assert ENGINEERING_ACCESS == "engineering.access"
+    assert ENGINEERING_ACCESS in ENGINEERING_LMP_FACTS_ACCESS
+    # Conjunto legado preservado — aditivo, sem remoção.
+    for legacy in (
+        API_DELPI_ACCESS,
+        DASHBOARD_ENGINEERING_VIEW,
+        DASHBOARD_LMPS_VIEW,
+    ):
+        assert legacy in ENGINEERING_LMP_FACTS_ACCESS

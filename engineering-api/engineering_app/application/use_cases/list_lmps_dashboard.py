@@ -34,6 +34,7 @@ from engineering_app.domain.lmp.dashboard_aggregates import (
 )
 from engineering_app.domain.lmp.listing_semantics import (
     effective_listing_kind,
+    facts_listing_type_param,
     resolve_listing_type_filter,
 )
 
@@ -153,7 +154,9 @@ class ListLmpsDashboardUseCase:
             ctx,
             query,
             include_qtd_pi=True,
-            listing_type=query.listing_type or resolved_listing,
+            # F-LMP-01 exige enum case-sensitive (Todos/LMP/Amostra/Outro) —
+            # sempre o valor canônico resolvido, nunca a entrada crua.
+            listing_type=facts_listing_type_param(resolved_listing),
         )
         if result.status != "available":
             return {

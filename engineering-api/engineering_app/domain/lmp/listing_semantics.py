@@ -21,6 +21,21 @@ LISTING_KIND_PRIORITY = {LISTING_KIND_LMP: 2, LISTING_KIND_SAMPLE: 1, LISTING_KI
 DEFAULT_MIN_RESIDENCE_MINUTES = 30
 DEFAULT_STRICT_RESIDENCE_AFTER_HOMOLOG = False
 
+# Enum case-sensitive do contrato facts F-LMP-01 (query_param_enums):
+# Todos/LMP/Amostra/Outro — valores de EXIBIÇÃO, não os kinds internos.
+FACTS_LISTING_TYPE_PARAM = {
+    LISTING_KIND_LMP: "LMP",
+    LISTING_KIND_SAMPLE: "Amostra",
+    LISTING_KIND_OTHER: "Outro",
+}
+
+
+def facts_listing_type_param(resolved_kind: str | None) -> str | None:
+    """Traduz o kind resolvido para o enum do contrato facts."""
+    if resolved_kind is None:
+        return None
+    return FACTS_LISTING_TYPE_PARAM.get(resolved_kind)
+
 
 def resolve_listing_type_filter(
     raw: str | None,
