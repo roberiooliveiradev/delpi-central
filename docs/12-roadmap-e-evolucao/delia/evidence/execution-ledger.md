@@ -740,3 +740,13 @@ Plano [148](../corrections/mcp-contextual-intelligence-orchestration/148-r7-arch
 - Deployed locally: image sha256:62519548... on code 6fc0d7cb98, container healthy, in-container resolver verified (langgraph→B1, delia→gates, bogus→ValueError); rollback to delia tested and reversed — no business replay.
 - Bounded comparison (6 authenticated turns, delia-json 3.1B, provider-reported tokens): stage-sequence + contract + per-call cost parity across engines; B1 executed a real MCP owner call with complete provenance (C3); recovery counters 0 everywhere (model never produced a reuse window); C3 grounding divergence is 3.1B stochasticity, disclosed.
 - VERDICT: PRODUCTION_ACTIVATION_EXECUTED (local runtime); engine parity + safety verified; reuse-path value still awaits real-traffic frequency aggregation.
+
+
+## 2026-10-30 — LangGraph B1 REAL production deployment on srv-api (doc 200) — PRODUCTION DEPLOY EXECUTED
+- Task DELIA-C3-LANGGRAPH-B1-REAL-PRODUCTION-DEPLOY-01 on 78e7b4d7ef (PO-authorized SSH deploy).
+- Host verified: srv-api (operador@192.168.1.237, AGENTS.md canonical); repo pull 1f34403767 → 78e7b4d7ef ff-only; 6fc0d7cb98 ancestor confirmed.
+- Deploy: DELIA_ORCHESTRATION_ENGINE=langgraph appended to infra/.env + up-prod-sequential.sh --build delia-api (only service touched); image sha256:8931066e...; previous image sha256:9947eac9... retained.
+- Verified on host: healthy, startup log selected=langgraph surface=configured, langgraph 1.2.16 + pinned tree in image, kimi-k3/OpenRouter preserved (no local override), 0 critical errors, governed_attempts=1/turn.
+- Smoke: 2 authenticated READ turns (identity user, PO-provided; NO reset/admin-API/RBAC writes — flagged drift not repeated). S1 GROUNDED real record 10080092 TERM. BALA via DAVI search_products (provenance complete); S2 GROUNDED honest empty-collection via read_governed_technical_knowledge. recovery_opportunity counters live, all zero.
+- ROLLBACK: delia env path + retained image, config-only, no replay.
+- VERDICT: PRODUCTION_DEPLOY_EXECUTED_AND_VERIFIED. NEXT: bounded recovery_opportunity aggregation on real traffic (separate auth).
