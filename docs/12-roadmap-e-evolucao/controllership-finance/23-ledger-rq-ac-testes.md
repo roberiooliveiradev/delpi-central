@@ -820,3 +820,20 @@ Decisão PO: UMA HomePage/UM basePath/UMA top bar/UM catálogo — audiência s�
 | RW04-17 | Deploy governado e verificável | PENDING — portal + MFE rebuild via deploy canônico |
 | RW04-18 | Documentação sincronizada | PASS (docs 91/112/113/115/23/30 + README) |
 | RW04-smoke | Smoke autenticado interno + DRE | TEST_NOT_RUN — requer identidade autorizada (v0.1.5 pendente de registro pelo PO) |
+
+### ANALYSIS-INVENTORY-001 — Inventário AS-IS do processo real de Joyce (2026-10-28)
+
+Entrega documental: `117-analysis-001-inventario-processo-real-joyce.md`. Sem alteração de runtime. RQs abaixo são **candidatos PROPOSED** para ANALYSIS-002 — ainda não aceitos; dependem do gate PO/Joyce.
+
+| RQ/AC | Critério | Estado |
+|---|---|---|
+| RQ-ANL-01 | Contrato canônico P7/MATR460 (competência/filial, excl. poder de terceiros, subtotais EM ESTOQUE/EM PROCESSO) — SB9 nunca servido como P7 | PROPOSED — gate ANALYSIS-002 |
+| RQ-ANL-02 | Contratos H02/MATR989 e ENTRADAS_SAIDAS/MATR320; `UNAVAILABLE` nunca vira zero | PROPOSED — gate ANALYSIS-002 |
+| RQ-ANL-03 | Motor determinístico da conciliação tripla (E/S − P7 − H02, paridade exata R$0,00, versão de regra, evidências citáveis) | PROPOSED — gate ANALYSIS-003 |
+| RQ-ANL-04 | Drill-down de divergência por grupo de material (reproduzir localização MP da demo) | PROPOSED |
+| RQ-ANL-05 | Kardex SD3 arm. 01/99 com filtros CF/INVENT — lista CF homologada por Joyce antes de parametrizar | PROPOSED — depende pergunta §17.2 doc 117 |
+| RQ-ANL-06 | Análise SD1 por CC com expurgos/taxonomia/exceções homologadas | PROPOSED — depende §17.2/§17.3 |
+| RQ-ANL-07 | Relação de baixas (5 ordenações) via SE5 com paridade às saídas oficiais | PROPOSED — decisão `_F190C` pendente |
+| RQ-ANL-08 | Fat × MOD: contrato + consolidação com intervalo/soma homologados | PROPOSED — depende §17.4 |
+| RQ-ANL-09 | Configuração de bancos/extratos por unidade; sem movimento exige comprovante | PROPOSED — depende E01 doc 34 |
+| RQ-ANL-10 | Base de conhecimento CLARA versionada (glossário, regras, limites; fail-closed) | PROPOSED — gate ANALYSIS-005 |

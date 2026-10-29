@@ -56,4 +56,4 @@ Regras: **nao inventar** formulas, tolerancias, ownership ou prioridade. Se o vi
 - **PLAN-04** separar fonte indisponivel de divergencia provada: REQUIRED.
 - **PLAN-05** nao atribuir conhecimento automatico a CLARA antes de contracts/testes: REQUIRED.
 
-Status de execucao: **ANALYSIS-001 NOT_STARTED**; ANALYSIS-002 a 005 **PLANNED**. Nenhuma analise real foi confirmada apenas pela redacao deste documento.
+Status de execucao: **ANALYSIS-001 COMPLETED_WITH_RESIDUAL (2026-10-28)** — inventario AS-IS reconstruido em [Documento 117](./117-analysis-001-inventario-processo-real-joyce.md): 32 analises catalogadas (24 PROVEN, 2 INFORMED/MENTIONED, 6 TO_INVENTORY), 11 problemas, transcricao integral da gravacao de 30/09/2026 e quadros verificados. Residuos: perguntas §17 do doc 117 para Joyce/PO; fontes oficiais P7/H02/E-S pendentes de contrato. Gate para ANALYSIS-002: revisao PO/Joyce + owners de fonte. ANALYSIS-002 a 005 **PLANNED**. Nenhuma alteracao de runtime foi executada.
