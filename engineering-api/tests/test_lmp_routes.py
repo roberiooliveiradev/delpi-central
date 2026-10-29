@@ -55,6 +55,8 @@ class _StubFacts:
     def __init__(self, page: LmpFactsResult):
         self._page = page
         self.calls: list[dict] = []
+        self.fact_detail = None
+        self.history = None
 
     async def fetch_facts(self, ctx, **params):
         self.calls.append(params)
@@ -66,6 +68,56 @@ class _StubFacts:
         return LmpPiCountsResult(
             status="available",
             counts=((("01", "OV900", "001"), 5),),
+        )
+
+    async def fetch_fact(self, ctx, **params):
+        self.calls.append(params)
+        if self.fact_detail is not None:
+            return self.fact_detail
+        from engineering_app.application.models.lmp import LmpFactDetailResult
+
+        return LmpFactDetailResult(
+            status="available",
+            fact={
+                "branch": "01",
+                "sale_number": "OV900",
+                "sale_description": "Fato",
+                "listing_kind": "LMP",
+                "start_date": "2026-05-01",
+                "end_date": "2026-05-07",
+                "engineering_status": "FINALIZADA",
+                "engineering_total_minutes": 120,
+                "qtd_pi": 5,
+                "list_products": [{"code": "P1"}],
+            },
+            provenance={"source_system": "TOTVS"},
+        )
+
+    async def fetch_history(self, ctx, **params):
+        self.calls.append(params)
+        if self.history is not None:
+            return self.history
+        from engineering_app.application.models.lmp import LmpHistoryResult
+
+        return LmpHistoryResult(
+            status="available",
+            items=(
+                {
+                    "revision": "001",
+                    "process_code": "ENG",
+                    "stage_code": "10",
+                    "start_date": "2026-05-01",
+                    "start_time": "08:00",
+                    "end_date": "2026-05-02",
+                    "end_time": "10:00",
+                    "limit_date": "2026-05-05",
+                    "status_code": "F",
+                },
+            ),
+            branch="01",
+            reference_revision="001",
+            panel_start_date="2026-05-01",
+            provenance={"source_system": "TOTVS"},
         )
 
 
@@ -113,6 +165,43 @@ def _install_summary_stub(monkeypatch, page: LmpFactsResult):
 
     monkeypatch.setattr(
         lmp_routes, "build_get_lmp_summary_use_case", _UseCase
+    )
+    return stub
+
+
+def _install_detail_history_stubs(monkeypatch, page: LmpFactsResult):
+    stub = _StubFacts(page)
+
+    class _DetailUseCase:
+        def __init__(self):
+            self._facts = stub
+
+        async def execute(self, ctx, query):
+            from engineering_app.application.use_cases.get_lmp_detail import (
+                GetLmpDetailUseCase,
+            )
+            return await GetLmpDetailUseCase(stub).execute(ctx, query)
+
+    class _HistoryUseCase:
+        def __init__(self, view):
+            self._facts = stub
+            self._view = view
+
+        async def execute(self, ctx, query):
+            from engineering_app.application.use_cases.get_lmp_history import (
+                GetLmpHistoryUseCase,
+            )
+            return await GetLmpHistoryUseCase(stub, view=self._view).execute(
+                ctx, query
+            )
+
+    monkeypatch.setattr(
+        lmp_routes, "build_get_lmp_detail_use_case", lambda: _DetailUseCase()
+    )
+    monkeypatch.setattr(
+        lmp_routes,
+        "build_get_lmp_history_use_case",
+        lambda *, view: _HistoryUseCase(view),
     )
     return stub
 
@@ -264,6 +353,115 @@ def test_summary_total_items_counts_all_listing_kinds(
     assert stub.calls[0].get("listing_type") is None
     assert data["total_items"] == 3
     assert data["total_lmps"] == 1
+
+
+# --- E-LMP-02/04/05 — detalhe e histórico (G4.C) ---------------------------
+
+
+def test_detail_requires_auth(client):
+    resp = client.get("/v1/lmps/OV900")
+    assert resp.status_code == 401
+
+
+def test_history_events_requires_auth(client):
+    resp = client.get("/v1/lmps/OV900/history/events")
+    assert resp.status_code == 401
+
+
+def test_history_flow_requires_auth(client):
+    resp = client.get("/v1/lmps/OV900/history/flow")
+    assert resp.status_code == 401
+
+
+def test_detail_returns_enriched_item(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_detail_history_stubs(monkeypatch, _available_page())
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/lmps/OV900", headers=_bearer(token))
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["status"] == "available"
+    item = data["item"]
+    # campos calculados pelo domínio migrado (R01–R05)
+    assert item["nivel"] == "Nível 1"
+    assert item["status"] == "Pontual"
+    assert item["data_limite"] == "2026-05-07"
+    assert item["list_products"] == [{"code": "P1"}]
+    assert item["list_history"] == []
+    assert data["provenance"]["source_system"] == "TOTVS"
+
+
+def test_detail_not_found_returns_404(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    from engineering_app.application.models.lmp import LmpFactDetailResult
+
+    stub = _install_detail_history_stubs(monkeypatch, _available_page())
+    stub.fact_detail = LmpFactDetailResult(
+        status="not_found", reason="lmp_not_found"
+    )
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/lmps/OV999", headers=_bearer(token))
+    assert resp.status_code == 404
+
+
+def test_detail_denied_without_engineering_access(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_detail_history_stubs(monkeypatch, _available_page())
+    core_rbac["behavior"] = ("data", rbac_payload_local([]))
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/lmps/OV900", headers=_bearer(token))
+    assert resp.status_code == 403
+
+
+def test_history_events_enriched(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_detail_history_stubs(monkeypatch, _available_page())
+    token = jwks_env["make_token"]()
+    resp = client.get(
+        "/v1/lmps/OV900/history/events", headers=_bearer(token)
+    )
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["view"] == "events"
+    assert data["total"] == 1
+    assert data["reference_revision"] == "001"
+    event = data["items"][0]
+    assert event["process_label"]
+    assert event["stage_label"]
+
+
+def test_history_flow_enriched(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_detail_history_stubs(monkeypatch, _available_page())
+    token = jwks_env["make_token"]()
+    resp = client.get(
+        "/v1/lmps/OV900/history/flow", headers=_bearer(token)
+    )
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["view"] == "flow"
+    event = data["items"][0]
+    assert event["process_label"]
+    assert event["stage_label"]
+
+
+def test_detail_unavailable_source_is_honest(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    from engineering_app.application.models.lmp import LmpFactDetailResult
+
+    stub = _install_detail_history_stubs(monkeypatch, _available_page())
+    stub.fact_detail = LmpFactDetailResult(
+        status="unavailable", reason="timeout"
+    )
+    token = jwks_env["make_token"]()
+    resp = client.get("/v1/lmps/OV900", headers=_bearer(token))
+    assert resp.json()["data"]["status"] == "unavailable"
 
 
 def test_invalid_listing_type_returns_400(

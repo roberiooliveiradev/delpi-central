@@ -10,7 +10,9 @@ from __future__ import annotations
 from typing import Protocol
 
 from engineering_app.application.models.lmp import (
+    LmpFactDetailResult,
     LmpFactsResult,
+    LmpHistoryResult,
     LmpPiCountsResult,
 )
 from engineering_app.application.ports.home_sources import HomeSourceContext
@@ -45,4 +47,31 @@ class LmpFactsSource(Protocol):
         branch: str | None,
     ) -> LmpPiCountsResult:
         """F-LMP-04 — contagens PI por chave (branch, sale_number, revision)."""
+        ...
+
+    async def fetch_fact(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        sale_number: str,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None,
+        include: str | None,
+    ) -> LmpFactDetailResult:
+        """F-LMP-02 — fato detalhado de uma OV (products/history opcionais)."""
+        ...
+
+    async def fetch_history(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        sale_number: str,
+        view: str,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None,
+        revision: str | None,
+    ) -> LmpHistoryResult:
+        """F-LMP-03 — eventos (`events`) ou fluxo (`flow`) crus da fonte."""
         ...

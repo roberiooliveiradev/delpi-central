@@ -36,6 +36,9 @@ def test_only_authorized_business_routes_exposed(client):
         "/v1/overview",
         "/v1/lmps",
         "/v1/lmps/summary",
+        "/v1/lmps/{sale_number}",
+        "/v1/lmps/{sale_number}/history/events",
+        "/v1/lmps/{sale_number}/history/flow",
     }
     assert set(spec["paths"].keys()) == allowed
 

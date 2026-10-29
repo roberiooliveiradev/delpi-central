@@ -14,6 +14,12 @@ import threading
 
 from delpi_auth.service_token_provider import ClientCredentialsTokenProvider
 
+from engineering_app.application.use_cases.get_lmp_detail import (
+    GetLmpDetailUseCase,
+)
+from engineering_app.application.use_cases.get_lmp_history import (
+    GetLmpHistoryUseCase,
+)
 from engineering_app.application.use_cases.get_lmp_summary import (
     GetLmpSummaryUseCase,
 )
@@ -53,7 +59,7 @@ def _reset_s2s_provider() -> None:
 def _build_facts_source() -> ApiDelpiFactsSource:
     client = DownstreamClient(
         settings.DELPI_API_URL,
-        timeout_seconds=settings.HOME_SOURCE_TIMEOUT_SECONDS,
+        timeout_seconds=settings.LMP_FACTS_TIMEOUT_SECONDS,
     )
     return ApiDelpiFactsSource(client, _s2s_service_token)
 
@@ -64,3 +70,11 @@ def build_list_lmps_dashboard_use_case() -> ListLmpsDashboardUseCase:
 
 def build_get_lmp_summary_use_case() -> GetLmpSummaryUseCase:
     return GetLmpSummaryUseCase(_build_facts_source())
+
+
+def build_get_lmp_detail_use_case() -> GetLmpDetailUseCase:
+    return GetLmpDetailUseCase(_build_facts_source())
+
+
+def build_get_lmp_history_use_case(*, view: str) -> GetLmpHistoryUseCase:
+    return GetLmpHistoryUseCase(_build_facts_source(), view=view)

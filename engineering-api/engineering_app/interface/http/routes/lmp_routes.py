@@ -25,6 +25,8 @@ from delpi_auth.context_resolver import resolve_user_context
 from engineering_app.application.models.lmp import LmpQuery
 from engineering_app.application.ports.home_sources import HomeSourceContext
 from engineering_app.composition.lmp_composer import (
+    build_get_lmp_detail_use_case,
+    build_get_lmp_history_use_case,
     build_get_lmp_summary_use_case,
     build_list_lmps_dashboard_use_case,
 )
@@ -166,4 +168,122 @@ async def get_lmp_summary(
         result,
         message="Resumo realizado de LMPs carregado com sucesso.",
         operation_id="get_lmp_summary",
+    )
+
+
+def _lmp_result_to_response(result: dict, operation_id: str, not_found_message: str):
+    """Mapeia estados honestos da fonte para HTTP sem inventar payload."""
+    status = result.get("status")
+    if status == "forbidden":
+        return fail(
+            "Acesso negado pelo owner da fonte.", 403, operation_id=operation_id
+        )
+    if status == "not_found":
+        return fail(not_found_message, 404, operation_id=operation_id)
+    return ok(result, message="Consulta realizada com sucesso.", operation_id=operation_id)
+
+
+@router.get(
+    "/v1/lmps/{sale_number}/history/events",
+    operation_id="get_lmp_history_events",
+    summary="Histórico de eventos da OV — regras Engineering API",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def get_lmp_history_events(
+    sale_number: str,
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    branch: str | None = Query(default=None),
+    revision: str | None = Query(default=None),
+):
+    user, denied = _require_human_principal("get_lmp_history_events")
+    if denied is not None:
+        return denied
+
+    error = _validate_period(start_date, end_date)
+    if error:
+        return fail(error, 400, operation_id="get_lmp_history_events")
+
+    query = LmpQuery(
+        sale_number=sale_number.strip(),
+        start_date=start_date.strip() if start_date else None,
+        end_date=end_date.strip() if end_date else None,
+        branch=branch.strip() if branch else None,
+        revision=revision.strip() if revision else None,
+    )
+    result = await build_get_lmp_history_use_case(view="events").execute(
+        _source_context(user), query
+    )
+    return _lmp_result_to_response(
+        result, "get_lmp_history_events", "OV não encontrada na listagem de engenharia."
+    )
+
+
+@router.get(
+    "/v1/lmps/{sale_number}/history/flow",
+    operation_id="get_lmp_history_flow",
+    summary="Fluxo de transições da OV — regras Engineering API",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def get_lmp_history_flow(
+    sale_number: str,
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    branch: str | None = Query(default=None),
+    revision: str | None = Query(default=None),
+):
+    user, denied = _require_human_principal("get_lmp_history_flow")
+    if denied is not None:
+        return denied
+
+    error = _validate_period(start_date, end_date)
+    if error:
+        return fail(error, 400, operation_id="get_lmp_history_flow")
+
+    query = LmpQuery(
+        sale_number=sale_number.strip(),
+        start_date=start_date.strip() if start_date else None,
+        end_date=end_date.strip() if end_date else None,
+        branch=branch.strip() if branch else None,
+        revision=revision.strip() if revision else None,
+    )
+    result = await build_get_lmp_history_use_case(view="flow").execute(
+        _source_context(user), query
+    )
+    return _lmp_result_to_response(
+        result, "get_lmp_history_flow", "OV não encontrada na listagem de engenharia."
+    )
+
+
+@router.get(
+    "/v1/lmps/{sale_number}",
+    operation_id="get_lmp_detail",
+    summary="Detalhe funcional da OV/LMP — regras Engineering API",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def get_lmp_detail(
+    sale_number: str,
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    branch: str | None = Query(default=None),
+):
+    user, denied = _require_human_principal("get_lmp_detail")
+    if denied is not None:
+        return denied
+
+    error = _validate_period(start_date, end_date)
+    if error:
+        return fail(error, 400, operation_id="get_lmp_detail")
+
+    query = LmpQuery(
+        sale_number=sale_number.strip(),
+        start_date=start_date.strip() if start_date else None,
+        end_date=end_date.strip() if end_date else None,
+        branch=branch.strip() if branch else None,
+    )
+    result = await build_get_lmp_detail_use_case().execute(
+        _source_context(user), query
+    )
+    return _lmp_result_to_response(
+        result, "get_lmp_detail", "OV não encontrada na listagem de engenharia."
     )

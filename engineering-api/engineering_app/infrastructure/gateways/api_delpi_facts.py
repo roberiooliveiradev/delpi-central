@@ -27,7 +27,9 @@ from delpi_auth.service_errors import ServiceAuthError
 
 from engineering_app.application.models.lmp import (
     LmpFact,
+    LmpFactDetailResult,
     LmpFactsResult,
+    LmpHistoryResult,
     LmpPiCountsResult,
 )
 from engineering_app.application.ports.home_sources import HomeSourceContext
@@ -188,3 +190,98 @@ class ApiDelpiFactsSource:
         if not counts:
             return LmpPiCountsResult(status="empty", provenance=provenance)
         return LmpPiCountsResult(status="available", counts=counts, provenance=provenance)
+
+    async def fetch_fact(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        sale_number: str,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None,
+        include: str | None,
+    ) -> LmpFactDetailResult:
+        try:
+            data = await self._client.get(
+                f"{_FACTS_PATH}/{sale_number}",
+                params={
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "branch": branch,
+                    "include": include,
+                },
+                access_token=ctx.access_token,
+                request_id=ctx.request_id,
+                service_token=self._service_token(),
+            )
+        except DownstreamError as exc:
+            if exc.status_code == 400:
+                # OV inexistente na listagem de engenharia → erro de
+                # validação upstream; estado honesto dedicado.
+                return LmpFactDetailResult(status="not_found", reason="lmp_not_found")
+            status, reason = _map_fetch_error(exc)
+            return LmpFactDetailResult(status=status, reason=reason)
+        except Exception:
+            logger.warning("api_delpi_fact_detail_unexpected_error", exc_info=True)
+            return LmpFactDetailResult(status="unavailable", reason="upstream_error")
+
+        if not isinstance(data, dict) or not data.get("sale_number"):
+            return LmpFactDetailResult(status="unavailable", reason="contract_error")
+        provenance = data.get("provenance") if isinstance(data.get("provenance"), dict) else {}
+        fact = {k: v for k, v in data.items() if k != "provenance"}
+        return LmpFactDetailResult(
+            status="available", fact=fact, provenance=provenance
+        )
+
+    async def fetch_history(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        sale_number: str,
+        view: str,
+        start_date: str | None,
+        end_date: str | None,
+        branch: str | None,
+        revision: str | None,
+    ) -> LmpHistoryResult:
+        try:
+            data = await self._client.get(
+                f"{_FACTS_PATH}/{sale_number}/history/{view}",
+                params={
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "branch": branch,
+                    "revision": revision,
+                },
+                access_token=ctx.access_token,
+                request_id=ctx.request_id,
+                service_token=self._service_token(),
+            )
+        except DownstreamError as exc:
+            status, reason = _map_fetch_error(exc)
+            return LmpHistoryResult(status=status, reason=reason)
+        except Exception:
+            logger.warning("api_delpi_facts_history_unexpected_error", exc_info=True)
+            return LmpHistoryResult(status="unavailable", reason="upstream_error")
+
+        if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+            return LmpHistoryResult(status="unavailable", reason="contract_error")
+
+        provenance = data.get("provenance") if isinstance(data.get("provenance"), dict) else {}
+        status = "available" if data["items"] else "empty"
+        return LmpHistoryResult(
+            status=status,
+            items=tuple(item for item in data["items"] if isinstance(item, dict)),
+            branch=data.get("branch") if isinstance(data.get("branch"), str) else None,
+            reference_revision=(
+                data.get("reference_revision")
+                if isinstance(data.get("reference_revision"), str)
+                else None
+            ),
+            panel_start_date=(
+                data.get("panel_start_date")
+                if isinstance(data.get("panel_start_date"), str)
+                else None
+            ),
+            provenance=provenance,
+        )

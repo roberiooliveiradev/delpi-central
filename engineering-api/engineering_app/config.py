@@ -66,6 +66,13 @@ class Settings:
         _get_env("ENGINEERING_HOME_MAX_CONCURRENT_SOURCES", default="3")
     )
 
+    # Timeout dedicado das chamadas facts LMP — o detalhe F-LMP-02 é uma
+    # query mais pesada (~6-18s cold) e não é uma fonte da composição
+    # Home; o bound de 5s da Home não se aplica. Ainda limitado.
+    LMP_FACTS_TIMEOUT_SECONDS: float = float(
+        _get_env("ENGINEERING_LMP_FACTS_TIMEOUT_SECONDS", default="30.0")
+    )
+
     def resolved_log_level(self) -> int:
         import logging
 

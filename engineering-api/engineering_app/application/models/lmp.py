@@ -24,6 +24,8 @@ class LmpQuery:
     status_filter: str | None = None
     page: int = 1
     page_size: int = 50
+    sale_number: str | None = None
+    revision: str | None = None
 
 
 @dataclass(frozen=True)
@@ -148,3 +150,28 @@ class LmpPiCountsResult:
             if candidate == key:
                 return value
         return default
+
+
+@dataclass(frozen=True)
+class LmpFactDetailResult:
+    """Resposta normalizada do port F-LMP-02 — fato detalhado de uma OV."""
+
+    status: str  # "available" | "not_found" | "unavailable" | "forbidden"
+    fact: dict[str, Any] | None = None
+    reason: str | None = None
+    message: str | None = None
+    provenance: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class LmpHistoryResult:
+    """Resposta normalizada do port F-LMP-03 — eventos/fluxo crus."""
+
+    status: str  # "available" | "empty" | "unavailable" | "forbidden"
+    items: tuple[dict[str, Any], ...] = ()
+    branch: str | None = None
+    reference_revision: str | None = None
+    panel_start_date: str | None = None
+    reason: str | None = None
+    message: str | None = None
+    provenance: dict[str, Any] = field(default_factory=dict)

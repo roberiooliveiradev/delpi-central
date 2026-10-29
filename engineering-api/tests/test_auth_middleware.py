@@ -293,6 +293,9 @@ def test_probe_route_not_in_production_openapi(client):
         "/v1/overview",
         "/v1/lmps",
         "/v1/lmps/summary",
+        "/v1/lmps/{sale_number}",
+        "/v1/lmps/{sale_number}/history/events",
+        "/v1/lmps/{sale_number}/history/flow",
     }
 
 
