@@ -386,6 +386,22 @@ Paridade parcial: doc 84 §3.
   Fonte `matr460.prx` continua ausente. Decisão funcional do PO:
   dois escopos `all_products`/`mp_pi_pa` (doc 118 DEC-12).
 
+### BR-R03-009 — Filtro de tipos × emissão oficial MP/PA/PI — `PROVEN` (fronteira negativa)
+
+- O exploratório `GET /financeiro/stock-inventory` implementa
+  `report_scope=mp_pi_pa` como `B1_TIPO IN ('MP','PI','PA')`
+  (`constantes.MP_PI_PA_PRODUCT_TYPES`; owner canônico de tipos
+  `domain/totvs/protheus_product_types.py`).
+- Equivalência medida (doc 80 §35): PA/PI **idênticos** ao oficial;
+  MP diverge — o recorte oficial exclui produtos com poder3 no
+  `as_of` (Δ estoque 587.698,28 — modelo `QTNP@emissão>0` residual
+  76,43; Δ processo 77.251,73 — modelo residual +1.942,62).
+- **Regra de reúso:** o contrato oficial reusa a classificação
+  canônica e adiciona a exclusão poder3
+  (`third_party_materials=exclude` — candidato ao parâmetro `02`
+  `Saldo em Poder 3º?` do `MTR460`, `PENDING` E2). O exploratório
+  permanece tipo-only, sem rótulo P7 (`officialP7:false`).
+
 ---
 
 ## §4 — R04 · Consumo por OP — `BLOQUEADO`

@@ -138,3 +138,16 @@ Sintoma reportado: pagina `/apps/controllership-finance/closing/stock-inventory`
 - Os identificadores `all_products`/`mp_pi_pa` deste contrato exploratório tornam-se **candidatos canônicos** do contrato P7 oficial (RQ-ANL-01, doc 118 §9.1) — mas o recorte oficial **não** se presume equivalente ao filtro exploratório `B1_TIPO IN ('MP','PA','PI')`: a folha 74 diverge do completo em MP (doc 80 §35); mecanismo oficial `PENDING` (E2; SX1 `MTR460` sem parâmetro de tipo).
 - **Fonte do hook localizada:** `docs/13-fontes-totvs-protheus/04. Estoque/A460UNIT.prw` — entry-point por produto que atualiza `MP7GDA.VALOR` a partir do workfile `MP7_*`. Confirma `A460UNIT` como customização de custo do MATR460; **não é o mecanismo de escopo**.
 - Fonte `matr460.prx`/RPO e parâmetros efetivos por emissão seguem `PENDING` (E2); G4/G5 do oficial permanecem PENDING. Nenhuma alteração de runtime nesta execução.
+
+## 12. Reaproveitamento do filtro canônico e veredito de equivalência (P7-SCOPE-CONTRACT-004, 28/10/2026)
+
+**Inventário da implementação existente (HEAD `a583fdac87`):**
+- `constantes.MP_PI_PA_PRODUCT_TYPES = ("MP","PI","PA")`; `StockInventoryQueryRequest.product_types()` mapeia `report_scope` → `P.B1_TIPO IN (...)` — confirmado: `mp_pi_pa` usa efetivamente os tipos MP, PA e PI.
+- Owner canônico de classificação: `app/domain/totvs/protheus_product_types.py` (reutilizado por supplies/product/production). **Nenhuma segunda regra de tipos será criada**; o contrato oficial reusa este módulo.
+- Competência→snapshot (`B9_DATA` último dia), status `source_missing`/`incomplete`/`no_matching_items`, filial como filtro de dados — preservados no contrato oficial.
+
+**Veredito CP3 — o filtro reproduz a emissão oficial MP/PA/PI?**
+- PA/PI: **PROVEN** — valores idênticos à folha 74 (doc 80 §35).
+- MP: **NÃO** — diferença mínima comprovada = exclusão de material em poder de terceiros no `as_of` (Δ −587.698,28 estoque / −77.251,73 processo; modelo `QTNP@emissão>0`, residuais 76,43/+1.942,62 — doc 85 BR-R03-009).
+- Conclusão: `mp_pi_pa` oficial = filtro de tipo **+** `third_party_materials=exclude` (candidato ao parâmetro `02 Saldo em Poder 3º?` do `MTR460`; binding `PENDING` — E2). `all_products` não recebe exclusão (completo provado com poder3 incluído — total ex-99 integral).
+- O exploratório permanece tipo-only com rótulo honesto (`officialP7:false`); **nenhuma alteração de runtime** nesta execução.

@@ -846,6 +846,7 @@ Entrega documental: [Documento 118 — base canônica do fechamento](./118-base-
 |---|---|---|
 | RQ-ANL-01 | `PROPOSED → DESIGN_READY_CONDITIONED` | binding de totalização P7 PROVEN (doc 84 §3); condicionado a E2 (params/produtor/RPO); SB9 nunca servido como P7 |
 | RQ-ANL-01 | `escopo decidido — DEC-12` | PO (28/10): `all_products` = interno/conciliação, `mp_pi_pa` = entrega DRE; nomes canônicos preservados do exploratório (doc 49 §9); `A460UNIT.prw` localizado no acervo; recorte oficial segue `PENDING_SOURCE` (E2) — doc 118 §9.1 |
+| RQ-ANL-01 | `filtro canônico reutilizado — SCOPE-CONTRACT-004` | `mp_pi_pa` oficial = `B1_TIPO IN (MP,PI,PA)` **+** exclusão poder3 (`third_party_materials=exclude`); PA/PI `PROVEN`, MP Δ quantificada; owner de tipos `protheus_product_types.py` preservado — nenhuma segunda regra; mecanismo oficial `PENDING` (E2) — doc 118 §9.1, doc 85 BR-R03-009 |
 | RQ-ANL-02 | `PROPOSED → DESIGN_READY` | DR-05/06 (MATR320 130/130) e DR-08 (MATR989) provadas; E5/E8 como pendências de fonte oficial |
 | RQ-ANL-03 | `PROPOSED → DESIGN_READY` | regra homologada (TÉO 06.2, doc 15.1); depende dos contratos de dados RQ-ANL-01/02 |
 | RQ-ANL-04 | `PROPOSED → DESIGN_READY` | decomposição por produto provada (doc 84 §4.3) |

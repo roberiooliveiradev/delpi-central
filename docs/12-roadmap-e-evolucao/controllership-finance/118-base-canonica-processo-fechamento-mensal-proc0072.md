@@ -250,13 +250,27 @@ Decisão funcional `DEC-12` encerrada; o desenho abaixo é proposta documental �
 
 **Escopos (nomes canônicos — já existem no contrato exploratório, doc 49 §9):**
 - `all_products` — todos os produtos da emissão completa; escopo principal de análise interna e **operando P7 da conciliação tripla** (a emissão usada na demonstração — folha 91 — continha as 10 classificações + EM PROCESSO; doc 83).
-- `mp_pi_pa` — recorte MP/PA/PI conforme classificação oficial da emissão; escopo do entregável à Contabilidade/DRE. **Não** presumir equivalência com `B1_TIPO IN ('MP','PA','PI')`: a folha 74 diverge do completo em MP (Δ estoque −587.698,28 / Δ processo −77.251,73 — doc 80 §35); o mecanismo oficial do recorte é `PENDING` (E2).
+- `mp_pi_pa` — recorte MP/PA/PI conforme classificação oficial da emissão; escopo do entregável à Contabilidade/DRE. Equivale a `B1_TIPO IN ('MP','PI','PA')` **+ exclusão de material em poder de terceiros** no `as_of` (fato observado — ver veredito de equivalência abaixo; mecanismo oficial `PENDING`, E2).
 
-**Entradas:** `competence=YYYY-MM` (obrigatório), `filial` (escopo de dados, não permission), `report_scope` (obrigatório), `emission`/`as_of` (quando emissões persistidas existirem), `warehouse` opcional, paginação limitada.
+**Entradas:** `competence=YYYY-MM` (obrigatório), `filial` (escopo de dados, não permission), `report_scope` (obrigatório), `third_party_materials: "include"|"exclude"` (candidato ao parâmetro `02 Saldo em Poder 3º?` do `MTR460`; oficial `all_products`=`include`, `mp_pi_pa`=`exclude` — binding `PENDING` E2), `emission`/`as_of` (quando emissões persistidas existirem), `warehouse` opcional, paginação limitada.
 
 **Saídas:** `items[]` por produto (código, descrição, tipo, armazém, quantidade, valor, custo unitário, valor em processo); `summariesByType[]` com `em_estoque`/`em_processo` por classificação; `total_geral`; `emission` (id, `emittedAt`, data de fechamento, parâmetros efetivos, folha, versão/RPO quando identificável, destinatário quando aplicável); `status` (`available|source_missing|incomplete|parity_pending`).
 
 **Totalizadores obrigatórios (homologados no dado):** `EM_ESTOQUE + EM_PROCESSO = TOTAL_GERAL` exato (BR-R03-006); EM ESTOQUE exclui `MV_LOCPROC='99'` (BR-R03-004, prova centesimal 3.591.191,36); EM PROCESSO = medida `MATR989`, não estoque físico de loc 99 (BR-R03-003).
+
+**Reaproveitamento da implementação existente (P7-SCOPE-CONTRACT-004, 28/10/2026):**
+
+| Componente | Já existe no api-delpi | Reuso no contrato oficial |
+|---|---|---|
+| `report_scope`=`all_products`/`mp_pi_pa` | `financeiro_stock_inventory/constantes.py` + `stock_inventory_request.product_types()` | nomes e validação preservados — mesma enumeração |
+| Classificação de tipos | `domain/totvs/protheus_product_types.py` (MP/PA/PI + labels PT) — **owner canônico**, reusado por supplies/product/production | única fonte de classificação; nenhuma segunda regra de tipos |
+| Competência→snapshot | `reference_date()` → `B9_DATA` último dia calendário | mesma chave temporal; `as_of` = data de fechamento/emissão |
+| Indisponibilidade | `source_missing`/`incomplete`/`no_matching_items` (nunca zero falso) | preservada integralmente |
+| Filial como filtro | `normalize_branch_scope`/`requested_branches` | preservada (dado, não permission) |
+| Totalização oficial | — (exploratório não separa EM PROCESSO) | EM ESTOQUE ex-`MV_LOCPROC` + EM PROCESSO `MATR989` (RQ-ANL-02) |
+| Exclusão poder3 do recorte | — (exploratório é tipo-only) | `third_party_materials` — ver veredito abaixo |
+
+**Veredito de equivalência (CP3):** o filtro canônico `B1_TIPO IN ('MP','PI','PA')` **reproduz PA e PI exatamente** (valores bit a bit entre folha 74 e emissão completa — doc 80 §35) e **não reproduz MP**: a emissão oficial exclui adicionalmente produtos MP com quantidade em poder de terceiros no `as_of` (Δ EM ESTOQUE −587.698,28 — modelo `QTNP@emissão>0` = 587.621,85, residual 76,43; Δ EM PROCESSO −77.251,73 — modelo 79.194,35, residual +1.942,62). **Filtro de tipo é necessário, mas insuficiente**; a diferença mínima comprovada é a exclusão poder3 em MP, candidata ao parâmetro `02` do `MTR460` (`PENDING`, E2).
 
 **Proveniência:** `producer="matr460"` + identidade de emissão + `as_of`; cadeia `MATR460→MP7_*→MP7GDA→A460UNIT` documentada e hook confirmado no acervo (`04. Estoque/A460UNIT.prw`); o exploratório SB9 permanece com `officialP7:false`.
 
@@ -409,4 +423,4 @@ Reabrir a consolidação **somente** quando: (a) nova revisão do processo no T�
 - **CLARA:** [doc 94](./94-clara-especialista-mcp-controladoria-financas.md), [doc 111](./111-clara-chatgpt-smoke-autenticado-retomada-central-2026-10-26.md).
 - **Plano do ciclo de análise:** [doc 116](./116-ciclo-inteligencia-fechamento-analysis-001-a-005.md); ledger [23](./23-ledger-rq-ac-testes.md); [README](./README.md).
 
-**Versão:** 1.1 — DEC-12 (escopos P7) + fonte `A460UNIT` localizada + proposta de contrato §9.1 (P7-EVIDENCE-REUSE-003, 2026-10-28). Próxima revisão somente sob as condições do §17.
+**Versão:** 1.2 — §9.1 ampliada: reuso do filtro canônico `B1_TIPO` + veredito de equivalência (`mp_pi_pa` oficial = tipos + exclusão poder3) — P7-SCOPE-CONTRACT-004, 2026-10-28. Próxima revisão somente sob as condições do §17.
