@@ -151,3 +151,20 @@ Sintoma reportado: pagina `/apps/controllership-finance/closing/stock-inventory`
 - MP: **NÃO** — diferença mínima comprovada = exclusão de material em poder de terceiros no `as_of` (Δ −587.698,28 estoque / −77.251,73 processo; modelo `QTNP@emissão>0`, residuais 76,43/+1.942,62 — doc 85 BR-R03-009).
 - Conclusão: `mp_pi_pa` oficial = filtro de tipo **+** `third_party_materials=exclude` (candidato ao parâmetro `02 Saldo em Poder 3º?` do `MTR460`; binding `PENDING` — E2). `all_products` não recebe exclusão (completo provado com poder3 incluído — total ex-99 integral).
 - O exploratório permanece tipo-only com rótulo honesto (`officialP7:false`); **nenhuma alteração de runtime** nesta execução.
+
+
+## 13. Contrato definitivo do P7 oficial (P7-IMPLEMENTATION-READINESS-005, 28/10/2026)
+
+O contrato executável do P7 oficial (consulta, totalização, exportação,
+integração documental DRE, segurança, erros, plano de implementação e
+gate) foi consolidado em [doc 119](./119-contratos-p7-implementacao-readiness.md).
+Este documento 49 permanece como a descrição do **contrato exploratório
+SB9** (rótulo honesto `officialP7:false`) — não é o P7 oficial.
+
+Novidades verificadas em dados (SELECT-only, 2026-10-28): SB9@30/09
+existe nas duas filiais; filial 01 = MATRIZ; `B2_QTNP`/`B2_QTER` só em
+`B2_LOCAL='01'`; QTNP@emissão = QTNP atual para MP (movimentos de 02/10
+foram direção QTER); a exclusão do resumo é **por produto** (conjunto
+`QTNP>0`), não por quantidade; EM PROCESSO excluído = medida
+MATR989-por-produto (modelo 73.412,67 vs alvo 77.251,73 — residual
+−3.839,06 `PENDING_EXTERNAL`); drift MP +8.182,43 (`STALE_EVIDENCE`).

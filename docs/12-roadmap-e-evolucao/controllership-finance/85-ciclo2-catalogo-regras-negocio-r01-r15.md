@@ -1474,3 +1474,33 @@ memória. O catálogo **não afirma completude**: itens com binding/pendência
 declarada (R04, R08, R13, R14 e pendências internas de R01–R03/R05–R07/R15)
 não têm ainda todas as regras necessárias para conclusão — permanecem
 `PENDING`/`TO_INVENTORY`.
+
+
+### BR-R03-010 — Semântica poder-de-terceiros verificada em dados (P7-READINESS-005)
+
+Verificação SELECT-only 2026-10-28 (filial 01, fechamento 30/09/2026):
+
+- `SB2.B2_QTNP` = material próprio **em** terceiros — só em linhas
+  `B2_LOCAL='01'` (111 produtos MP, 710.034,862 u).
+- `SB2.B2_QTER` = material de terceiros **conosco** — só em `B2_LOCAL='01'`
+  (50 produtos MP, 6.788,40 u).
+- `SF4.F4_PODER3` ∈ {N,R,D}: `SD2 R` = remessa p/ terceiro (QTNP+);
+  `SD1 D` = retorno poder3 (QTNP−); `SD1 R` = entrada de material de
+  terceiro (QTER+); `SD2 D` = devolução ao dono (QTER−). Catálogo SF4
+  extraído integralmente.
+- `SB6`/`VW_PD3_BENEF_RETORNOS` = tracking de beneficiamento (módulo
+  canônico `protheus_third_party_materials.py`); 221 remessas tipo `D`
+  abertas + 80 tipo `E`, filial 01.
+- **Proibido** excluir genericamente `F4_PODER3<>'N'` — direção importa
+  (decisão PO; doc 119 §4).
+- A exclusão MP do resumo oficial atua **por produto** (conjunto
+  `QTNP>0` no `as_of`), não por quantidade `QTNP×custo` — modelos de
+  quantidade descartados; população exata `PENDING_EXTERNAL` (E2).
+- EM PROCESSO excluído mede-se como **MATR989 por produto**
+  (loc99 + RE−DE por OP viva `as_of`), não loc99+RE globais — modelo
+  73.412,67 vs alvo 77.251,73 (residual −3.839,06, `PENDING_EXTERNAL`).
+- QTNP@emissão = QTNP atual para MP filial 01: movimentos poder3 de
+  02/10 foram direção QTER (SD1-R/SD2-D), não QTNP.
+- Drift MP `STALE_EVIDENCE`: SB9 ex-99 atual diverge do estado de
+  emissão em +8.182,43 (revalorização + regravação 21/10); PA/PI/II
+  exatos — validação de paridade exige nova emissão controlada.

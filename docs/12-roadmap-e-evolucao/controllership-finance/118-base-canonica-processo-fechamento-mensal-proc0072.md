@@ -280,6 +280,8 @@ Decisão funcional `DEC-12` encerrada; o desenho abaixo é proposta documental �
 
 **Paridade e aceite:** G4 = binding de totalização ao centavo contra emissão oficial de referência; G5 = reprodução `as_of` por escopo — completo `DESIGN_READY`, `mp_pi_pa` `PENDING_SOURCE` até E2; G6 = aceite humano da Controladoria.
 
+**Contratos definitivos (P7-IMPLEMENTATION-READINESS-005, 28/10/2026):** [doc 119](./119-contratos-p7-implementacao-readiness.md) fecha o levantamento técnico — fórmula MATR989 por produto, semântica poder3 `QTNP`/`QTER`/`SB6`/`F4_PODER3` verificada em dados, contratos de consulta/exportação/integração documental/segurança/erros, plano de implementação por owner e gate final `PENDING_EXTERNAL_EVIDENCE` com subconjunto implementável (`all_products` + infraestrutura completa; `mp_pi_pa` como escopo declarado `parity_unverified` até E2). Evidência nova: SB9@30/09 existe nas duas filiais; filial 01 = MATRIZ; drift MP +8.182,43 (revalorização pós-emissão, `STALE_EVIDENCE`); PA/PI/II ex-99 bit a bit iguais ao oficial; QTNP/QTER só em `B2_LOCAL='01'`; exclusão do resumo é por produto (conjunto `QTNP>0`), não por quantidade.
+
 ## 10. Mapa de conhecimento para a CLARA (referência, não runtime)
 
 **Glossário canônico:** P7 = Registro de Inventário Modelo P7 (MATR460); H02 = Material/Saldo em Processo (MATR989); E/S = Resumo Entradas e Saídas (MATR320); sacramentação/virada = `MATA330`→`MATA280`→`SB9`+`SC2`+`MV_ULMES`; CM = custo médio (`B9_CM1`/`B9_VINI1`); poder3 = `F4_PODER3` (material de terceiros); loc99 = `MV_LOCPROC` (armazém de processo); TES = `F4_*`/`D1_TES`/`D2_TES` (não confundir com CFOP `D*_CF`); MOD = mão de obra direta (`MOD`+`H1_CCUSTO`, rate `SBZ.BZ_CUSTD`); OP = ordem de produção (`SC2`/`SD3 D3_OP`); EDAPP = consulta genérica que exporta SD1/SD2; competência = `YYYY-MM`; filial = dimensão de dado, não permission.
@@ -423,4 +425,4 @@ Reabrir a consolidação **somente** quando: (a) nova revisão do processo no T�
 - **CLARA:** [doc 94](./94-clara-especialista-mcp-controladoria-financas.md), [doc 111](./111-clara-chatgpt-smoke-autenticado-retomada-central-2026-10-26.md).
 - **Plano do ciclo de análise:** [doc 116](./116-ciclo-inteligencia-fechamento-analysis-001-a-005.md); ledger [23](./23-ledger-rq-ac-testes.md); [README](./README.md).
 
-**Versão:** 1.2 — §9.1 ampliada: reuso do filtro canônico `B1_TIPO` + veredito de equivalência (`mp_pi_pa` oficial = tipos + exclusão poder3) — P7-SCOPE-CONTRACT-004, 2026-10-28. Próxima revisão somente sob as condições do §17.
+**Versão:** 1.3 — §9.1 referencia doc 119 (contratos definitivos P7 + readiness de implementação) — P7-IMPLEMENTATION-READINESS-005, 2026-10-28. Anterior: 1.2 — reuso do filtro canônico `B1_TIPO` + veredito de equivalência — P7-SCOPE-CONTRACT-004. Próxima revisão somente sob as condições do §17.
