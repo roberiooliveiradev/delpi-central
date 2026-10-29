@@ -621,7 +621,11 @@ def _canonical_catalog() -> dict[str, Any]:
             "id": "process_timeline",
             "kind": "analysis",
             "owner": "transformometro-api",
-            "description": "Process audit timeline.",
+            "description": (
+                "Audit timeline of one already-identified process "
+                "(requires processo_id) — events of a known process, "
+                "not a way to find which process is latest."
+            ),
             "read_only": True,
             "operation": "get_process_timeline",
         },

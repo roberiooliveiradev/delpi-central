@@ -611,7 +611,11 @@ def create_mcp_server() -> MCPServer:
     @mcp.tool(
         name="get_process_timeline",
         title="Get process timeline",
-        description="READ: process audit timeline.",
+        description=(
+            "READ: audit timeline of one already-identified process "
+            "(requires processo_id) — the events of a known process, "
+            "not a way to find which process is latest."
+        ),
         annotations=_annotations("get_process_timeline", "Get process timeline"),
         meta=meta,
     )

@@ -232,9 +232,11 @@ def create_mcp_server() -> MCPServer:
         name=MCP_TOOL_DISCOVER_DELPI_INFORMATION,
         title=MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
         description=(
-            "Find the governed DELPI READ capability that best matches the user's "
-            "natural-language information need. Call this first. Returns opaque "
-            "candidate_token values for execute_delpi_information. "
+            "Discover governed DELPI business data — products, materials, parts, "
+            "registers, records and other entities exposed by eligible DELPI "
+            "read surfaces. Find the READ capability that best matches the "
+            "user's natural-language information need. Call this first. Returns "
+            "opaque candidate_token values for execute_delpi_information. "
             "Does not accept URL, path, method, operationId, or SQL."
         ),
         annotations=ToolAnnotations.model_validate(
