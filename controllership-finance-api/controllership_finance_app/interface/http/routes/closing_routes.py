@@ -500,6 +500,15 @@ def get_closing_analytics_stock_reconciliation(
       an operand: it is outside the stock equation and is exposed as a
       drill-down component instead — summing it would double-count.
 
+    Honesty constraint (REWORK-010): all three operands are partitions
+    of the SAME live ``SB9`` universe (``sb9_total`` = ``sb9_ex_99`` +
+    ``sb9_loc99``), so a zero delta proves only the internal integrity
+    of the balance decomposition — an identity, never parity between
+    the independent official reports MATR320/MATR460/MATR989. The
+    response therefore reports ``parity=IDENTITY_ONLY|DIVERGENCE`` and
+    ``reconciliationVerdict=INCONCLUSIVE``; ``EXACT_PARITY`` is never
+    emitted while the operands share the same universe basis.
+
     This is an analytical composition only: it never reads, writes or
     mutates the governed P3 ``closing_reconciliation`` projection, never
     converts an unavailable source into zero and never certifies parity
@@ -575,6 +584,17 @@ def get_closing_analytics_stock_reconciliation(
     ]
     eligible = not ineligible
 
+    # Temporal compatibility — a valid composition requires operands
+    # measured at the same reference. Different data bases are
+    # ineligible, never silently averaged.
+    data_bases = {
+        op["dataAsOf"] for op in operands.values() if op["dataAsOf"]
+    }
+    reference_compatible = eligible and len(data_bases) <= 1
+    if eligible and not reference_compatible:
+        eligible = False
+        ineligible.append("reference_mismatch")
+
     divergence: Decimal | None = None
     if eligible:
         divergence = (
@@ -588,12 +608,22 @@ def get_closing_analytics_stock_reconciliation(
         if divergence is not None
         else None
     )
+
+    # The three operands share the SB9 universe — a zero delta is the
+    # balance-composition identity (internal integrity check), never
+    # parity between independent reports. A NONZERO delta is a real
+    # composition anomaly worth investigating.
     parity = "NOT_COMPUTED"
+    composition_consistent: bool | None = None
     if divergence is not None:
+        composition_consistent = divergence_cents == Decimal("0.00")
         parity = (
-            "EXACT_PARITY" if divergence_cents == Decimal("0.00")
+            "IDENTITY_ONLY" if composition_consistent
             else "DIVERGENCE"
         )
+    verdict = (
+        "INCONCLUSIVE" if divergence is not None else "NOT_COMPUTED"
+    )
 
     inv = inventory if isinstance(inventory, dict) else {}
     mov = movements if isinstance(movements, dict) else {}
@@ -626,6 +656,23 @@ def get_closing_analytics_stock_reconciliation(
             "eligibility": "ELIGIBLE" if eligible else "INELIGIBLE",
             "ineligibleOperands": ineligible,
             "operands": operands,
+            "independence": {
+                "independentSources": False,
+                "verdict": "shared_universe",
+                "operandBases": {
+                    "entradasSaidas": "sb9_total_universe",
+                    "p7": "sb9_ex_process_warehouse",
+                    "h02": "sb9_process_warehouse",
+                },
+            },
+            "compositionCheck": {
+                "name": "balance_composition",
+                "consistent": composition_consistent,
+                "deltaCents": (
+                    None if divergence_cents is None
+                    else str(divergence_cents)
+                ),
+            },
             "components": {
                 "r05OpeningBalance": mov_totals.get("openingBalance"),
                 "r05NetMovement": mov_totals.get("netMovement"),
@@ -653,6 +700,7 @@ def get_closing_analytics_stock_reconciliation(
             ),
             "parity": parity,
             "parityTolerance": "NONE",
+            "reconciliationVerdict": verdict,
             "provenance": {
                 "period": period,
                 "branch": branch,
@@ -672,6 +720,9 @@ def get_closing_analytics_stock_reconciliation(
                 "Conciliação analítica — distinta da conciliação "
                 "governada P3; não persiste registro nem valida "
                 "fechamento.",
+                "Operandos derivados do mesmo universo SB9 — delta zero "
+                "é identidade de composição (controle de integridade), "
+                "não paridade entre relatórios independentes.",
                 "Paridade oficial dos relatórios permanece pendente de "
                 "homologação por competência.",
             ],

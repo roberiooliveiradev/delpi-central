@@ -222,7 +222,7 @@ function mockAllReady() {
     reconPayload({
       divergence: "0.00",
       divergenceCents: "0.00",
-      parity: "EXACT_PARITY",
+      parity: "IDENTITY_ONLY",
     }),
   );
 }
@@ -480,7 +480,7 @@ describe("conciliação analítica — superfície independente", () => {
     );
     renderPanel();
 
-    await screen.findByText("Não calculada");
+    await screen.findByText("Conciliação pendente de validação");
     expect(
       screen.getAllByText(/Operandos indisponíveis/).length,
     ).toBeGreaterThan(0);

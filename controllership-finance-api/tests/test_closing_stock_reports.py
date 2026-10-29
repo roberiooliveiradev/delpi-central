@@ -317,14 +317,21 @@ def test_reconciliation_dre_only_forbidden(_auth_pipeline, gateway):
     gateway.get.assert_not_called()
 
 
-def test_reconciliation_exact_parity(gateway):
-    """positive — SA = EM ESTOQUE + loc99 → divergence R$ 0,00."""
+def test_reconciliation_identity_only_not_parity(gateway):
+    """positive — SA = EM ESTOQUE + loc99 is the SB9 partition identity:
+    delta zero is reported as IDENTITY_ONLY with an INCONCLUSIVE
+    reconciliation verdict, never EXACT_PARITY (REWORK-010)."""
     _wire_analytics(gateway)
     response = _get(_client(), f"{ROUTE_REC}?{PERIOD}")
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["eligibility"] == "ELIGIBLE"
-    assert data["parity"] == "EXACT_PARITY"
+    assert data["parity"] == "IDENTITY_ONLY"
+    assert data["reconciliationVerdict"] == "INCONCLUSIVE"
+    assert data["compositionCheck"]["consistent"] is True
+    assert data["compositionCheck"]["deltaCents"] == "0.00"
+    assert data["independence"]["independentSources"] is False
+    assert data["independence"]["verdict"] == "shared_universe"
     assert data["divergenceCents"] == "0.00"
     assert data["operands"]["entradasSaidas"]["value"] == (
         "14469584.010000"
@@ -335,6 +342,20 @@ def test_reconciliation_exact_parity(gateway):
     assert data["governedReconciliation"] == "not_persisted"
 
 
+def test_reconciliation_reference_mismatch_ineligible(gateway):
+    """temporal compatibility — operands measured at different data
+    bases are ineligible, never averaged (CP3)."""
+    mov = _movements_payload()
+    mov["dataAsOf"] = "2026-09-29"
+    _wire_analytics(gateway, mov=mov)
+    data = _get(_client(), f"{ROUTE_REC}?{PERIOD}").json()["data"]
+    assert data["eligibility"] == "INELIGIBLE"
+    assert "reference_mismatch" in data["ineligibleOperands"]
+    assert data["parity"] == "NOT_COMPUTED"
+    assert data["reconciliationVerdict"] == "NOT_COMPUTED"
+    assert data["compositionCheck"]["consistent"] is None
+
+
 def test_reconciliation_divergence_positive_cent(gateway):
     """negative — one cent of divergence stays divergence."""
     _wire_analytics(
@@ -343,6 +364,8 @@ def test_reconciliation_divergence_positive_cent(gateway):
     data = _get(_client(), f"{ROUTE_REC}?{PERIOD}").json()["data"]
     assert data["parity"] == "DIVERGENCE"
     assert data["divergenceCents"] == "0.01"
+    assert data["compositionCheck"]["consistent"] is False
+    assert data["reconciliationVerdict"] == "INCONCLUSIVE"
 
 
 def test_reconciliation_divergence_large(gateway):

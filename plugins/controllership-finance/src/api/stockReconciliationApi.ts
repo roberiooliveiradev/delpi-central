@@ -41,8 +41,25 @@ export type StockReconciliationPayload = {
   components: Record<string, string | null>;
   divergence: string | null;
   divergenceCents: string | null;
-  parity: "EXACT_PARITY" | "DIVERGENCE" | "NOT_COMPUTED";
+  /**
+   * `IDENTITY_ONLY` = delta zero entre partições do mesmo universo SB9
+   * (controle de integridade — NÃO é paridade entre relatórios
+   * independentes). `DIVERGENCE` = quebra real da composição.
+   */
+  parity: "IDENTITY_ONLY" | "DIVERGENCE" | "NOT_COMPUTED";
   parityTolerance: string;
+  /** Veredito honesto da conciliação entre relatórios independentes. */
+  reconciliationVerdict?: "INCONCLUSIVE" | "NOT_COMPUTED";
+  independence?: {
+    independentSources: boolean;
+    verdict: string;
+    operandBases?: Record<string, string>;
+  };
+  compositionCheck?: {
+    name: string;
+    consistent: boolean | null;
+    deltaCents: string | null;
+  };
   provenance: Record<string, unknown>;
   parityNotes?: string[];
 };

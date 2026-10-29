@@ -157,7 +157,7 @@ export const CF_HELP = {
   },
   analytics: {
     reconciliation:
-      "Conciliação analítica de estoque: DIVERGENCIA = Entradas/Saídas (saldo atual, todos os armazéns) − P7 (em estoque, fora do armazém de processo) − H02 (material em processo físico, bloco sem-OP do armazém 99). A paridade exigida é exatamente R$ 0,00. A divergência só é calculada quando os três operandos estão disponíveis na mesma competência e filial — fonte ausente ou incompleta nunca entra como zero. É uma visão analítica: não grava registro e não substitui a conciliação governada do checklist P3, que permanece a autoridade do fechamento.",
+      "Conciliação analítica de estoque: DIVERGENCIA = Entradas/Saídas (saldo atual, todos os armazéns) − P7 (em estoque, fora do armazém de processo) − H02 (material em processo físico, bloco sem-OP do armazém 99). A divergência só é calculada quando os três operandos estão disponíveis na mesma competência, filial e data-base — fonte ausente ou incompleta nunca entra como zero. Como os três operandos são partições do mesmo universo de saldo, um delta zero é «Composição dos saldos consistente»: um controle de integridade interno, não a paridade entre os relatórios oficiais (essa segue pendente de homologação). Delta diferente de zero indica quebra real da composição e deve ser investigado. É uma visão analítica: não grava registro e não substitui a conciliação governada do checklist P3, que permanece a autoridade do fechamento.",
   },
   checklist: {
     page:

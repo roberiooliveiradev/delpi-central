@@ -190,9 +190,9 @@ export const OPERAND_STATUS_LABELS: Record<string, string> = {
 };
 
 const PARITY_LABELS: Record<string, string> = {
-  EXACT_PARITY: "Paridade exata (R$ 0,00)",
-  DIVERGENCE: "Divergência identificada",
-  NOT_COMPUTED: "Não calculada",
+  IDENTITY_ONLY: "Composição dos saldos consistente",
+  DIVERGENCE: "Divergência na composição dos saldos",
+  NOT_COMPUTED: "Conciliação pendente de validação",
 };
 
 /**
@@ -291,11 +291,9 @@ export function AnalyticalReconciliationSection({
               <CfStatusBadge
                 label={PARITY_LABELS[reconciliation.parity]}
                 variant={
-                  reconciliation.parity === "EXACT_PARITY"
-                    ? "success"
-                    : reconciliation.parity === "DIVERGENCE"
-                      ? "danger"
-                      : "info"
+                  reconciliation.parity === "DIVERGENCE"
+                    ? "danger"
+                    : "info"
                 }
               />
             </td>
@@ -310,6 +308,27 @@ export function AnalyticalReconciliationSection({
             .join(", ")}
           . A divergência não é calculada — fonte ausente nunca entra
           como zero.
+        </p>
+      ) : null}
+      {reconciliation.parity === "IDENTITY_ONLY" ? (
+        <p className="cf-attention-item__meta">
+          Os três operandos são partições do mesmo universo de saldo —
+          a igualdade é um controle de integridade da composição, não
+          comprova a paridade entre os relatórios oficiais
+          (MATR320 × MATR460 × MATR989).
+        </p>
+      ) : null}
+      {reconciliation.parity === "DIVERGENCE" ? (
+        <p className="cf-attention-item__meta">
+          A composição dos saldos não fecha — investigue os operandos
+          e as fontes acima antes de considerar qualquer conclusão.
+        </p>
+      ) : null}
+      {reconciliation.reconciliationVerdict === "INCONCLUSIVE" ? (
+        <p className="cf-attention-item__meta">
+          Conciliação entre relatórios independentes: pendente de
+          validação — a paridade oficial permanece sujeita a
+          homologação por competência.
         </p>
       ) : null}
       <p className="cf-attention-item__meta">
