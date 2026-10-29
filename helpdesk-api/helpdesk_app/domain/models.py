@@ -197,6 +197,22 @@ class TicketValidation:
 
 
 @dataclass(frozen=True)
+class TicketItemRef:
+    itemtype: str
+    items_id: int
+    name: str = ""
+    relation_id: int | None = None
+
+
+@dataclass(frozen=True)
+class TicketRelation:
+    ticket_id: int
+    title: str = ""
+    link: int = 1
+    relation_id: int | None = None
+
+
+@dataclass(frozen=True)
 class TicketDetail:
     id: int
     title: str
@@ -250,6 +266,10 @@ class TicketDetail:
     # UX disclosure for move-to-trash (GLPI canDeleteItem mirror). GLPI
     # DELETE remains the authority of record — presentation only.
     can_delete: bool = False
+    # Linked hardware (Item_Ticket) and ticket↔ticket relations
+    # (Ticket_Ticket link=1) — read-back under the actor's own session.
+    items: tuple[TicketItemRef, ...] = ()
+    related_tickets: tuple[TicketRelation, ...] = ()
 
 
 @dataclass(frozen=True)

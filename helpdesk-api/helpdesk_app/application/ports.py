@@ -28,6 +28,8 @@ class GlpiGateway(Protocol):
 
     def list_request_types(self, access_token: str) -> list[Category]: ...
 
+    def list_ticket_request_types(self, access_token: str) -> list[Category]: ...
+
     def list_followup_templates(self, access_token: str): ...
 
     def list_solution_types(self, access_token: str) -> list[Category]: ...
@@ -58,6 +60,9 @@ class GlpiGateway(Protocol):
         description: str,
         category_id: int,
         urgency_id: int,
+        type_id: int | None = None,
+        impact_id: int | None = None,
+        request_type_id: int | None = None,
     ) -> int: ...
 
     def add_ticket_observer(self, access_token: str, ticket_id: int, user_id: int) -> None: ...
@@ -224,6 +229,41 @@ class GlpiGateway(Protocol):
     def delete_ticket(self, access_token: str, ticket_id: int) -> None:
         """Move a ticket to the GLPI trash (soft delete — never force purge)."""
         ...
+
+    def session_context(self, access_token: str) -> dict: ...
+
+    def list_ticket_request_types(self, access_token: str) -> list[Category]: ...
+
+    def search_ticket_items(
+        self,
+        access_token: str,
+        *,
+        scope: str,
+        item_types: list[str],
+        query: str,
+        limit: int,
+    ) -> list[dict]: ...
+
+    def ticket_item_links(self, access_token: str, ticket_id: int) -> list[dict]: ...
+
+    def add_ticket_item(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        itemtype: str,
+        items_id: int,
+    ) -> dict: ...
+
+    def ticket_links(self, access_token: str, ticket_id: int) -> list[dict]: ...
+
+    def add_ticket_link(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        other_ticket_id: int,
+    ) -> dict: ...
 
 
 class ProfileSyncWriterPort(Protocol):

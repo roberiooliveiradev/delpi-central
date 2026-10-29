@@ -271,10 +271,30 @@ class FakeGlpi:
         if self.delete_actually_removes:
             self.deleted_tickets.add(int(ticket_id))
 
-    def create_ticket(self, access_token: str, *, title, description, category_id, urgency_id):
+    def create_ticket(
+        self,
+        access_token: str,
+        *,
+        title,
+        description,
+        category_id,
+        urgency_id,
+        type_id=None,
+        impact_id=None,
+        request_type_id=None,
+    ):
         self.calls += 1
         assert "requester" not in title
-        self.created.append((title, description, category_id, urgency_id, access_token))
+        self.created.append(
+            (
+                title,
+                description,
+                category_id,
+                urgency_id,
+                access_token,
+                {"type_id": type_id, "impact_id": impact_id, "request_type_id": request_type_id},
+            )
+        )
         return 42
 
     def add_ticket_requester(self, access_token: str, ticket_id: int, user_id: int):
@@ -395,6 +415,73 @@ class FakeGlpi:
         self.calls += 1
         assert access_token
         return getattr(self, "active_profile", None) or {}
+
+    def list_ticket_request_types(self, access_token: str):
+        self.calls += 1
+        return getattr(self, "ticket_request_types_result", None) or [
+            Category(1, "Helpdesk"),
+            Category(4, "Direct"),
+        ]
+
+    def session_context(self, access_token: str):
+        self.calls += 1
+        assert access_token
+        return getattr(self, "session_context_result", None) or {
+            "entity": {"id": 0, "name": "Delpi"},
+            "hardware": {
+                "my_devices": True,
+                "all_devices": True,
+                "item_types": [("Computer", "Computador"), ("Peripheral", "Periférico"), ("Printer", "Impressora")],
+            },
+            "default_request_type_id": 1,
+        }
+
+    def search_ticket_items(
+        self, access_token: str, *, scope: str, item_types: list[str], query: str, limit: int
+    ):
+        self.calls += 1
+        assert access_token
+        if getattr(self, "search_items_error", None) is not None:
+            raise self.search_items_error
+        return list(getattr(self, "search_items_result", None) or [])
+
+    def ticket_item_links(self, access_token: str, ticket_id: int):
+        self.calls += 1
+        assert access_token
+        return list(getattr(self, "item_links_result", None) or [])
+
+    def ticket_links(self, access_token: str, ticket_id: int):
+        self.calls += 1
+        assert access_token
+        return list(getattr(self, "related_links_result", None) or [])
+
+    def add_ticket_item(
+        self, access_token: str, ticket_id: int, *, itemtype: str, items_id: int
+    ) -> dict:
+        self.calls += 1
+        assert access_token
+        if getattr(self, "link_item_error", None) is not None:
+            raise self.link_item_error
+        linked = getattr(self, "linked_items", None)
+        if linked is None:
+            linked = self.linked_items = []
+        rel_id = 100 + len(linked)
+        linked.append((ticket_id, itemtype, items_id, rel_id))
+        return {"id": rel_id, "itemtype": itemtype, "items_id": items_id}
+
+    def add_ticket_link(
+        self, access_token: str, ticket_id: int, *, other_ticket_id: int
+    ) -> dict:
+        self.calls += 1
+        assert access_token
+        if getattr(self, "link_relation_error", None) is not None:
+            raise self.link_relation_error
+        linked = getattr(self, "linked_relations", None)
+        if linked is None:
+            linked = self.linked_relations = []
+        rel_id = 200 + len(linked)
+        linked.append((ticket_id, other_ticket_id, rel_id))
+        return {"id": rel_id, "other_id": other_ticket_id}
 
     def get_user(self, access_token: str, user_id: int):
         """Fake ``GET /Administration/User/{id}`` → GlpiUserProfile or None."""

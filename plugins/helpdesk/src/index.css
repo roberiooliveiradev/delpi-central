@@ -2234,3 +2234,183 @@
   font-size: 0.8125rem;
   color: var(--helpdesk-danger, #c0392b);
 }
+
+/* Etapa 1 — create: entity context, file UX, items section */
+.dashboard-helpdesk .helpdesk-create-entity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: var(--delpi-ui-radius-md, 8px);
+  background: var(--helpdesk-surface-muted, rgba(127, 127, 127, 0.06));
+}
+
+.dashboard-helpdesk .helpdesk-create-entity__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--helpdesk-text-muted, #6b7280);
+}
+
+.dashboard-helpdesk .helpdesk-create-entity__value {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dashboard-helpdesk .helpdesk-create-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-block-start: 0.9rem;
+  padding-block-start: 0.75rem;
+  border-block-start: 1px solid var(--helpdesk-border);
+}
+
+.dashboard-helpdesk .helpdesk-create-files__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dashboard-helpdesk .helpdesk-create-files__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--helpdesk-text-muted, #6b7280);
+}
+
+.dashboard-helpdesk .helpdesk-create-items {
+  margin-block-start: 0.9rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: var(--delpi-ui-radius-md, 8px);
+}
+
+.dashboard-helpdesk .helpdesk-create-items__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: start;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__toggle:focus-visible {
+  outline: 2px solid var(--delpi-ui-focus, #2563eb);
+  outline-offset: -2px;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__count {
+  margin-inline-start: auto;
+  min-width: 1.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--delpi-ui-primary, #2563eb);
+  color: #fff;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0 0.85rem 0.85rem;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__results > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: var(--delpi-ui-radius-md, 8px);
+}
+
+.dashboard-helpdesk .helpdesk-create-items__result-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__result-label small {
+  color: var(--helpdesk-text-muted, #6b7280);
+}
+
+.dashboard-helpdesk .helpdesk-create-items__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.4rem 0.25rem 0.65rem;
+  border: 1px solid var(--helpdesk-border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--helpdesk-text-muted, #6b7280);
+  cursor: pointer;
+}
+
+.dashboard-helpdesk .helpdesk-create-items__chip button:hover {
+  color: var(--delpi-ui-danger, #dc2626);
+}
+
+.dashboard-helpdesk .helpdesk-create-items__chip button:focus-visible {
+  outline: 2px solid var(--delpi-ui-focus, #2563eb);
+}
+
+.dashboard-helpdesk .helpdesk-create-items__related {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-block-start: 0.75rem;
+  border-block-start: 1px solid var(--helpdesk-border);
+}
+
+.dashboard-helpdesk .helpdesk-create-items__empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--helpdesk-text-muted, #6b7280);
+}

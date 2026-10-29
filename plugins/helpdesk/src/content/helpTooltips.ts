@@ -14,8 +14,12 @@ export const helpTooltips = {
     description:
       "Formatação, @ para mencionar, clipe, colar ou arrastar. Arraste o canto da imagem para redimensionar.",
     attach: "Anexa por clipe ou arrastar. Na abertura, o envio sobe depois de criar o chamado.",
-    category: "Categoria visível para você no helpdesk. Obrigatória.",
+    category: "Categoria visível para você no helpdesk. Obrigatória — escolha explicitamente.",
+    ticketType: "Tipo do chamado no helpdesk (incidente ou requisição).",
     urgency: "Urgência do chamado. Obrigatória.",
+    impact: "Impacto do chamado. Junto com a urgência, define a prioridade calculada pelo helpdesk.",
+    requestType: "Canal de origem da solicitação registrado no helpdesk.",
+    entity: "Entidade do helpdesk na qual o chamado será criado (somente leitura).",
     assignee: "Opcional. Busque por nome ou e-mail (Minha DELPI e helpdesk).",
     observers: "Opcional. IDs de usuário do helpdesk, separados por vírgula (só observador).",
     send: "Grava o chamado no seu nome e abre a conversa.",

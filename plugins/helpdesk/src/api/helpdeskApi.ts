@@ -154,6 +154,10 @@ export type TicketDetail = TicketSummary & {
    * — this flag only controls whether the trash affordance is shown.
    */
   can_delete?: boolean;
+  /** Linked assets (Item_Ticket) — authoritative GLPI read-back. */
+  items?: TicketItemRef[];
+  /** Related tickets (Ticket_Ticket "link to") — authoritative read-back. */
+  related_tickets?: TicketRelationRef[];
   timeline: TimelineEntry[];
   attachments: TicketAttachment[];
 };
@@ -283,6 +287,71 @@ export function getSessionCapabilities(signal?: AbortSignal) {
   return request<{ can_assign: boolean }>("/session/capabilities", { signal });
 }
 
+/**
+ * Effective creation context from the actor's own GLPI session: active
+ * entity (read-only), hardware capabilities and the session default
+ * request type. Disclosure only — GLPI stays the write-time authority.
+ */
+export type SessionContext = {
+  entity?: { id: number; name: string } | null;
+  hardware?: {
+    my_devices: boolean;
+    all_devices: boolean;
+    item_types: [string, string][];
+  };
+  default_request_type_id?: number | null;
+};
+
+export function getSessionContext(signal?: AbortSignal) {
+  return request<SessionContext>("/session/context", { signal });
+}
+
+export type TicketItemOption = {
+  itemtype: string;
+  items_id: number;
+  name: string;
+  serial?: string;
+  inventory_number?: string;
+  entity?: string;
+  owner?: string;
+  type_label?: string;
+};
+
+export type TicketItemRef = {
+  itemtype: string;
+  items_id: number;
+  name?: string;
+  relation_id?: number | null;
+};
+
+export type TicketRelationRef = {
+  ticket_id: number;
+  title?: string;
+  link?: number;
+  relation_id?: number | null;
+};
+
+/** Profile-gated linkable assets (scope mine|all enforced server-side). */
+export function searchTicketItems(
+  params: { scope: "mine" | "all"; itemtype?: string; q?: string; limit?: number },
+  signal?: AbortSignal,
+) {
+  const search = new URLSearchParams();
+  search.set("scope", params.scope);
+  if (params.itemtype) search.set("itemtype", params.itemtype);
+  if (params.q) search.set("q", params.q);
+  if (params.limit) search.set("limit", String(params.limit));
+  return request<{ items: TicketItemOption[] }>(`/ticket-items?${search}`, { signal });
+}
+
+export type CreateTicketResult = {
+  id: number;
+  linked_items?: TicketItemRef[];
+  linked_tickets?: { ticket_id: number; relation_id?: number | null }[];
+  failed_items?: { itemtype: string; items_id: number; reason: string }[];
+  failed_tickets?: { ticket_id: number; reason: string }[];
+};
+
 export function createTicket(
   body: {
     title: string;
@@ -291,10 +360,15 @@ export function createTicket(
     urgency_id: number;
     observer_ids?: number[];
     assignee_id?: number | null;
+    type_id?: number | null;
+    impact_id?: number | null;
+    request_type_id?: number | null;
+    item_links?: { itemtype: string; items_id: number }[];
+    related_ticket_ids?: number[];
   },
   idempotencyKey: string,
 ) {
-  return request<{ id: number }>("/tickets", {
+  return request<CreateTicketResult>("/tickets", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -484,6 +558,11 @@ function listTemplates(path: string) {
 
 export function listRequestTypes() {
   return listCatalog("/request-types");
+}
+
+/** Request sources valid for ticket opening (`is_visible_ticket`). */
+export function listTicketRequestTypes() {
+  return listCatalog("/request-types?purpose=ticket");
 }
 
 export function listFollowupTemplates() {

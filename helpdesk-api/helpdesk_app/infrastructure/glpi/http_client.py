@@ -40,13 +40,21 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     build_user_search_filter,
     create_ticket_body,
     display_text,
+    item_link_body,
     parse_categories,
     parse_catalog_users,
     parse_created_id,
     parse_followup_templates,
+    parse_item_link_rows,
     parse_named_catalog,
     parse_profile_user_ids,
+    parse_search_item_rows,
+    parse_session_entity,
+    parse_session_hardware,
     parse_solution_templates,
+    parse_ticket_link_rows,
+    supported_item_types,
+    ticket_link_body,
     parse_task_templates,
     payload_row_count,
     parse_ticket_detail,
@@ -599,6 +607,267 @@ class HttpxGlpiClient:
         profile = payload.get("active_profile") if isinstance(payload, dict) else None
         return profile if isinstance(profile, dict) else {}
 
+    def session_context(self, access_token: str) -> dict:
+        """Effective creation context: active entity + hardware capabilities.
+
+        Entity comes from HLAPI ``GET /session`` (``active_entity``);
+        ``helpdesk_hardware``/``helpdesk_item_type`` and the default request
+        type are profile fields only exposed by the legacy ``getFullSession``
+        — read under the actor's own ``api_token`` session, never inferred.
+        Missing evidence degrades to empty/absent (fail-closed disclosure).
+        """
+        entity: dict = {}
+        try:
+            payload = self._json("GET", "/api.php/v2.2/session", token=access_token)
+            entity = parse_session_entity(payload if isinstance(payload, dict) else {})
+        except (GlpiUnauthorized, GlpiForbidden, GlpiNotFound, GlpiUnavailable):
+            entity = {}
+        hardware = self._session_hardware_profile(access_token)
+        return {
+            "entity": entity,
+            "hardware": {
+                "my_devices": hardware.get("my_devices", False),
+                "all_devices": hardware.get("all_devices", False),
+                "item_types": supported_item_types(hardware.get("item_types") or []),
+            },
+            "default_request_type_id": hardware.get("default_request_type_id"),
+        }
+
+    def _session_hardware_profile(self, access_token: str) -> dict:
+        """Profile hardware rights + request-type default via legacy session."""
+        user_id = self.session_user_id(access_token)
+        if user_id is None or not self._legacy_ready():
+            return {}
+        try:
+            session_token = self._user_legacy_session(glpi_user_id=user_id)
+        except GlpiUnavailable:
+            logger.info("glpi_hardware_profile_session_unavailable")
+            return {}
+        try:
+            full = self._legacy_get_json(session_token, "/apirest.php/getFullSession")
+            return parse_session_hardware(full if isinstance(full, dict) else {})
+        except (GlpiForbidden, GlpiNotFound, GlpiUnavailable):
+            return {}
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def search_ticket_items(
+        self,
+        access_token: str,
+        *,
+        scope: str,
+        item_types: list[str],
+        query: str,
+        limit: int,
+    ) -> list[dict]:
+        """Search linkable assets via the actor's own legacy session.
+
+        ``scope=mine`` filters ``users_id == session user`` (GLPI "My
+        devices"); ``scope=all`` is an unfiltered name search — callers must
+        only allow it when the profile has the ``ALL_DEVICES`` bit. GLPI
+        applies entity + read rights on every hit: a forbidden itemtype
+        returns 403 and is skipped (fail-closed per type).
+        """
+        user_id = self.session_user_id(access_token)
+        if user_id is None or not self._legacy_ready():
+            return []
+        try:
+            session_token = self._user_legacy_session(glpi_user_id=user_id)
+        except GlpiUnavailable:
+            return []
+        limit = max(1, min(int(limit), 50))
+        try:
+            items: list[dict] = []
+            for itemtype in item_types:
+                params = (
+                    f"criteria[0][field]=70&criteria[0][searchtype]=equals&criteria[0][value]={user_id}"
+                    if scope == "mine"
+                    else "criteria[0][field]=1&criteria[0][searchtype]=contains"
+                    + f"&criteria[0][value]={quote(query)}"
+                )
+                if scope == "mine" and query:
+                    params += (
+                        "&criteria[1][link]=AND&criteria[1][field]=1"
+                        f"&criteria[1][searchtype]=contains&criteria[1][value]={quote(query)}"
+                    )
+                path = (
+                    f"/apirest.php/search/{quote(itemtype)}?{params}"
+                    "&forcedisplay[0]=2&forcedisplay[1]=5&forcedisplay[2]=6"
+                    f"&forcedisplay[3]=80&forcedisplay[4]=70&range=0-{limit - 1}"
+                )
+                try:
+                    payload = self._legacy_get_json(session_token, path)
+                except GlpiForbidden:
+                    continue
+                items.extend(parse_search_item_rows(payload, itemtype))
+            return items
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def ticket_item_links(self, access_token: str, ticket_id: int) -> list[dict]:
+        """``Item_Ticket`` rows of a ticket, hydrated with the item name.
+
+        Read under the actor's own session — GLPI visibility applies to both
+        the relation rows and each item lookup.
+        """
+        user_id = self.session_user_id(access_token)
+        if user_id is None or not self._legacy_ready():
+            return []
+        try:
+            session_token = self._user_legacy_session(glpi_user_id=user_id)
+        except GlpiUnavailable:
+            return []
+        ticket_id = int(ticket_id)
+        try:
+            payload = self._legacy_get_json(
+                session_token, f"/apirest.php/Ticket/{ticket_id}/Item_Ticket"
+            )
+            links = parse_item_link_rows(payload)
+            items = []
+            for link in links:
+                name = ""
+                try:
+                    row = self._legacy_get_json(
+                        session_token,
+                        f"/apirest.php/{quote(link['itemtype'])}/{link['items_id']}",
+                    )
+                    if isinstance(row, dict):
+                        name = display_text(row.get("name"))
+                except HelpdeskError:
+                    name = ""
+                items.append({**link, "name": name})
+            return items
+        except (GlpiForbidden, GlpiNotFound, GlpiUnavailable):
+            return []
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def add_ticket_item(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        itemtype: str,
+        items_id: int,
+    ) -> dict:
+        """Link one asset to a ticket — ``POST /apirest.php/Item_Ticket``.
+
+        Runs under the actor's own legacy session: GLPI requires update
+        permission on the ticket AND view permission on the item
+        (``HAVE_VIEW_RIGHT_ON_ITEM``), enforced at write time. Read-back
+        confirms the row before returning.
+        """
+        user_id = self.session_user_id(access_token)
+        if user_id is None:
+            raise GlpiUnavailable(
+                "A operação exige autoria de usuário final indisponível no GLPI."
+            )
+        session_token = self._user_legacy_session(glpi_user_id=user_id)
+        ticket_id = int(ticket_id)
+        try:
+            self._legacy_post_json(
+                session_token,
+                "/apirest.php/Item_Ticket",
+                item_link_body(ticket_id, itemtype, items_id),
+            )
+            payload = self._legacy_get_json(
+                session_token, f"/apirest.php/Ticket/{ticket_id}/Item_Ticket"
+            )
+            for row in parse_item_link_rows(payload):
+                if row["itemtype"] == itemtype and row["items_id"] == int(items_id):
+                    return row
+            raise GlpiUnavailable("Vínculo de item não confirmado pelo GLPI.")
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def ticket_links(self, access_token: str, ticket_id: int) -> list[dict]:
+        """``Ticket_Ticket`` rows involving this ticket (filtered)."""
+        user_id = self.session_user_id(access_token)
+        if user_id is None or not self._legacy_ready():
+            return []
+        try:
+            session_token = self._user_legacy_session(glpi_user_id=user_id)
+        except GlpiUnavailable:
+            return []
+        ticket_id = int(ticket_id)
+        try:
+            payload = self._legacy_get_json(
+                session_token, f"/apirest.php/Ticket/{ticket_id}/Ticket_Ticket"
+            )
+            links = parse_ticket_link_rows(payload, ticket_id)
+            out = []
+            for row in links:
+                title = ""
+                try:
+                    other = self._json(
+                        "GET",
+                        f"/api.php/v2.2/Assistance/Ticket/{row['other_id']}",
+                        token=access_token,
+                    )
+                    if isinstance(other, dict):
+                        title = display_text(other.get("name"))
+                except HelpdeskError:
+                    title = ""
+                out.append({**row, "title": title})
+            return out
+        except (GlpiForbidden, GlpiNotFound, GlpiUnavailable):
+            return []
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def add_ticket_link(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        other_ticket_id: int,
+    ) -> dict:
+        """Link two tickets (``Ticket_Ticket``, ``link=1`` — "related to").
+
+        GLPI requires update right on the source ticket and visibility on
+        the target; a foreign ticket 403/400s, fail-closed. Read-back is
+        filtered to rows involving the ticket (legacy sub-resource is not
+        parent-scoped).
+        """
+        user_id = self.session_user_id(access_token)
+        if user_id is None:
+            raise GlpiUnavailable(
+                "A operação exige autoria de usuário final indisponível no GLPI."
+            )
+        session_token = self._user_legacy_session(glpi_user_id=user_id)
+        ticket_id = int(ticket_id)
+        try:
+            self._legacy_post_json(
+                session_token,
+                "/apirest.php/Ticket_Ticket",
+                ticket_link_body(ticket_id, other_ticket_id),
+            )
+            payload = self._legacy_get_json(
+                session_token, f"/apirest.php/Ticket/{ticket_id}/Ticket_Ticket"
+            )
+            for row in parse_ticket_link_rows(payload, ticket_id):
+                if row["other_id"] == int(other_ticket_id):
+                    return row
+            raise GlpiUnavailable("Vínculo entre chamados não confirmado pelo GLPI.")
+        finally:
+            self._legacy_kill_session(session_token)
+
+    def list_ticket_request_types(self, access_token: str) -> list[Category]:
+        """Request types valid for ticket creation (``is_visible_ticket``)."""
+        try:
+            return self._list_dropdown_pages(
+                access_token,
+                "/api.php/v2.2/Dropdowns/RequestType",
+                filter_expr="is_visible_ticket==true",
+                require_active=True,
+            )
+        except GlpiValidation:
+            return self._list_dropdown_pages(
+                access_token,
+                "/api.php/v2.2/Dropdowns/RequestType",
+                require_active=True,
+            )
+
     def get_user(self, access_token: str, user_id: int) -> GlpiUserProfile | None:
         """Read a single Administration/User row (firstname/realname parity check)."""
         from helpdesk_app.infrastructure.glpi.mapping import parse_user_profile
@@ -691,12 +960,18 @@ class HttpxGlpiClient:
         description: str,
         category_id: int,
         urgency_id: int,
+        type_id: int | None = None,
+        impact_id: int | None = None,
+        request_type_id: int | None = None,
     ) -> int:
         body = create_ticket_body(
             title=title,
             description=description,
             category_id=category_id,
             urgency_id=urgency_id,
+            type_id=type_id,
+            impact_id=impact_id,
+            request_type_id=request_type_id,
         )
         payload = self._json(
             "POST",

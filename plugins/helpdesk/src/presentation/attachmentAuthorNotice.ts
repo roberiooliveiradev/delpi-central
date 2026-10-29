@@ -22,6 +22,30 @@ export function attachmentAuthorDegraded(
   return attachment?.author_verified === false;
 }
 
+const STAGED_TEXT_KEY = "helpdesk:staged-ticket-notice";
+
+/** Stage a free-text notice before navigating away (e.g. partial links). */
+export function stageTicketNotice(text: string): void {
+  try {
+    const trimmed = text.trim();
+    if (trimmed) sessionStorage.setItem(STAGED_TEXT_KEY, trimmed);
+  } catch {
+    /* storage unavailable — notice simply isn't staged */
+  }
+}
+
+/** Consume a staged free-text notice once (ticket detail mount). */
+export function consumeTicketNotice(): string | null {
+  try {
+    const text = sessionStorage.getItem(STAGED_TEXT_KEY);
+    if (!text) return null;
+    sessionStorage.removeItem(STAGED_TEXT_KEY);
+    return text;
+  } catch {
+    return null;
+  }
+}
+
 /** Stage the notice before navigating away (create flow → ticket detail). */
 export function stageAttachmentAuthorNotice(): void {
   try {

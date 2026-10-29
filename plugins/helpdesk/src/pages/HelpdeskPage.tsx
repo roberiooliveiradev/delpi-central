@@ -7,7 +7,7 @@ import {
   SectionHintLabel,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, Pencil, Plus, RefreshCw, Send, TicketPlus, Trash2, Type, Users } from "lucide-react";
+import { AlignLeft, Building2, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, Image as ImageIcon, Link2, Monitor, Paperclip, Pencil, Plus, RefreshCw, Send, TicketPlus, Trash2, Type, Users, X } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -21,10 +21,12 @@ import {
   deleteTicket,
   fetchTicketAttachmentBlob,
   getSessionCapabilities,
+  getSessionContext,
   getTicket,
   listCategories,
   listImpacts,
   listRequestTypes,
+  listTicketRequestTypes,
   listTicketTypes,
   listTickets,
   listUrgencies,
@@ -32,6 +34,7 @@ import {
   rejectTicketSolution,
   rejectTicketValidation,
   requestTicketApproval,
+  searchTicketItems,
   setTicketAssignee,
   submitTicketSatisfaction,
   updateFollowup,
@@ -39,8 +42,10 @@ import {
   updateTicketDescription,
   uploadTicketAttachment,
   type ClassificationPatch,
+  type SessionContext,
   type TicketAttachment,
   type TicketDetail,
+  type TicketItemOption,
   type TicketSummary,
 } from "../api/helpdeskApi";
 import { helpTooltips } from "../content/helpTooltips";
@@ -74,7 +79,9 @@ import {
   ATTACHMENT_AUTHOR_NOTICE_TEXT,
   attachmentAuthorDegraded,
   consumeAttachmentAuthorNotice,
+  consumeTicketNotice,
   stageAttachmentAuthorNotice,
+  stageTicketNotice,
 } from "../presentation/attachmentAuthorNotice";
 import {
   TICKET_DELETE_UNCONFIRMED_TEXT,
@@ -735,6 +742,267 @@ function TicketListPage() {
   );
 }
 
+/**
+ * Etapa 1 — "Itens" + "Objetos de assistência relacionados" do GLPI.
+ * Collapsible section: authorized asset search (profile-gated scope) and
+ * related-ticket linking (Ticket_Ticket "link to" only — the canonical
+ * proven relation type). All selections persist via POST /tickets.
+ */
+function CreateItemsSection({
+  sessionCtx,
+  disabled,
+  open,
+  onToggle,
+  scope,
+  onScopeChange,
+  typeFilter,
+  onTypeFilterChange,
+  query,
+  onQueryChange,
+  results,
+  searching,
+  searched,
+  searchError,
+  selections,
+  related,
+  relatedInput,
+  onRelatedInputChange,
+  onSearchItems,
+  onAddItem,
+  onRemoveItem,
+  onAddRelated,
+  onRemoveRelated,
+}: {
+  sessionCtx: SessionContext | null;
+  disabled: boolean;
+  open: boolean;
+  onToggle: (open: boolean) => void;
+  scope: "mine" | "all";
+  onScopeChange: (scope: "mine" | "all") => void;
+  typeFilter: string;
+  onTypeFilterChange: (value: string) => void;
+  query: string;
+  onQueryChange: (value: string) => void;
+  results: TicketItemOption[];
+  searching: boolean;
+  searched: boolean;
+  searchError: string | null;
+  selections: TicketItemOption[];
+  related: { id: number; title: string }[];
+  relatedInput: string;
+  onRelatedInputChange: (value: string) => void;
+  onSearchItems: () => void;
+  onAddItem: (item: TicketItemOption) => void;
+  onRemoveItem: (item: TicketItemOption) => void;
+  onAddRelated: (row: { id: number; title: string }) => void;
+  onRemoveRelated: (id: number) => void;
+}) {
+  const hardware = sessionCtx?.hardware;
+  const itemTypes = hardware?.item_types ?? [];
+  const canMine = hardware?.my_devices === true;
+  const canAll = hardware?.all_devices === true;
+  const itemsAvailable = canMine || canAll;
+  const [relatedResults, setRelatedResults] = useState<TicketSummary[]>([]);
+  const [relatedSearched, setRelatedSearched] = useState(false);
+  const [relatedError, setRelatedError] = useState<string | null>(null);
+
+  if (!itemsAvailable && related.length === 0 && selections.length === 0 && !open) {
+    // Nothing to offer and nothing selected — keep the form lean.
+    return null;
+  }
+
+  const searchRelated = () => {
+    const q = relatedInput.trim();
+    if (!q) return;
+    setRelatedSearching(true);
+    setRelatedError(null);
+    void listTickets({ q, page_size: "8" })
+      .then((payload) => {
+        setRelatedResults(payload.items ?? []);
+        setRelatedSearched(true);
+      })
+      .catch((error) => {
+        setRelatedResults([]);
+        setRelatedSearched(true);
+        setRelatedError(messageFor(error).text);
+      })
+      .finally(() => setRelatedSearching(false));
+  };
+
+  return (
+    <section className="helpdesk-create-items" aria-label="Itens e chamados relacionados">
+      <button
+        type="button"
+        className="helpdesk-create-items__toggle"
+        aria-expanded={open}
+        onClick={() => onToggle(!open)}
+      >
+        <Monitor size={15} aria-hidden />
+        Itens e chamados relacionados
+        {selections.length + related.length > 0 ? (
+          <span className="helpdesk-create-items__count">{selections.length + related.length}</span>
+        ) : null}
+      </button>
+      {open ? (
+        <div className="helpdesk-create-items__body">
+          {itemsAvailable ? (
+            <div className="helpdesk-create-items__search">
+              <HelpdeskSelect
+                label="Origem da busca"
+                value={scope}
+                onChange={(value) => onScopeChange(value === "all" ? "all" : "mine")}
+                options={[
+                  ...(canMine ? [{ value: "mine", label: "Meus equipamentos" }] : []),
+                  ...(canAll ? [{ value: "all", label: "Todos os equipamentos" }] : []),
+                ]}
+              />
+              <HelpdeskSelect
+                label="Tipo de item"
+                value={typeFilter}
+                onChange={onTypeFilterChange}
+                options={[
+                  { value: "", label: "Todos os tipos" },
+                  ...itemTypes.map(([itemtype, label]) => ({ value: itemtype, label })),
+                ]}
+              />
+              <HelpdeskTextField
+                label="Buscar equipamento"
+                value={query}
+                onChange={onQueryChange}
+                ariaLabel="Buscar equipamento por nome, serial ou inventário"
+              />
+              <ActionButton
+                type="button"
+                variant="ghost"
+                disabled={disabled || searching}
+                onClick={onSearchItems}
+              >
+                {searching ? "Buscando…" : "Buscar"}
+              </ActionButton>
+            </div>
+          ) : null}
+          {searchError ? (
+            <HelpdeskStateBanner variant="error">{searchError}</HelpdeskStateBanner>
+          ) : null}
+          {searched && !searching && results.length === 0 && !searchError ? (
+            <p className="helpdesk-create-items__empty">Nenhum equipamento encontrado.</p>
+          ) : null}
+          {results.length > 0 ? (
+            <ul className="helpdesk-create-items__results" role="list">
+              {results.map((item) => {
+                const selected = selections.some(
+                  (row) => row.itemtype === item.itemtype && row.items_id === item.items_id,
+                );
+                return (
+                  <li key={`${item.itemtype}-${item.items_id}`}>
+                    <span className="helpdesk-create-items__result-label">
+                      <strong>{item.name}</strong>
+                      <small>
+                        {item.type_label || item.itemtype} #{item.items_id}
+                        {item.serial ? ` · S/N ${item.serial}` : ""}
+                        {item.inventory_number ? ` · Inv. ${item.inventory_number}` : ""}
+                        {item.entity ? ` · ${item.entity}` : ""}
+                      </small>
+                    </span>
+                    <ActionButton
+                      type="button"
+                      variant="ghost"
+                      disabled={disabled || selected}
+                      aria-label={`Vincular ${item.name}`}
+                      onClick={() => onAddItem(item)}
+                    >
+                      {selected ? "Vinculado" : "Vincular"}
+                    </ActionButton>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+          {selections.length > 0 ? (
+            <div className="helpdesk-create-items__chips" aria-label="Equipamentos selecionados">
+              {selections.map((item) => (
+                <span key={`${item.itemtype}-${item.items_id}`} className="helpdesk-create-items__chip">
+                  {item.name}
+                  <button
+                    type="button"
+                    aria-label={`Remover ${item.name}`}
+                    disabled={disabled}
+                    onClick={() => onRemoveItem(item)}
+                  >
+                    <X size={13} aria-hidden />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className="helpdesk-create-items__related">
+            <HelpdeskTextField
+              label="Chamado relacionado"
+              value={relatedInput}
+              onChange={onRelatedInputChange}
+              ariaLabel="Buscar chamado por número ou título"
+            />
+            <ActionButton
+              type="button"
+              variant="ghost"
+              disabled={disabled || relatedSearching || !relatedInput.trim()}
+              onClick={searchRelated}
+            >
+              {relatedSearching ? "Buscando…" : "Buscar chamado"}
+            </ActionButton>
+            {relatedError ? (
+              <HelpdeskStateBanner variant="error">{relatedError}</HelpdeskStateBanner>
+            ) : null}
+            {relatedSearched && !relatedSearching && relatedResults.length === 0 && !relatedError ? (
+              <p className="helpdesk-create-items__empty">Nenhum chamado encontrado.</p>
+            ) : null}
+            {relatedResults.length > 0 ? (
+              <ul className="helpdesk-create-items__results" role="list">
+                {relatedResults.map((row) => {
+                  const selected = related.some((entry) => entry.id === row.id);
+                  return (
+                    <li key={row.id}>
+                      <span className="helpdesk-create-items__result-label">
+                        <strong>#{row.id}</strong> {row.title}
+                      </span>
+                      <ActionButton
+                        type="button"
+                        variant="ghost"
+                        disabled={disabled || selected}
+                        aria-label={`Relacionar chamado ${row.id}`}
+                        onClick={() => onAddRelated({ id: row.id, title: row.title })}
+                      >
+                        {selected ? "Relacionado" : "Relacionar"}
+                      </ActionButton>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+            {related.length > 0 ? (
+              <div className="helpdesk-create-items__chips" aria-label="Chamados relacionados">
+                {related.map((row) => (
+                  <span key={row.id} className="helpdesk-create-items__chip">
+                    #{row.id} {row.title}
+                    <button
+                      type="button"
+                      aria-label={`Remover chamado ${row.id}`}
+                      disabled={disabled}
+                      onClick={() => onRemoveRelated(row.id)}
+                    >
+                      <X size={13} aria-hidden />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function CreateTicketPage() {
   const savedDraft = readCreateDraft();
   const [title, setTitle] = useState(savedDraft?.title ?? "");
@@ -749,8 +1017,36 @@ function CreateTicketPage() {
   const [canAssign, setCanAssign] = useState<boolean | null>(null);
   const [categoryId, setCategoryId] = useState(savedDraft?.categoryId ?? "");
   const [urgencyId, setUrgencyId] = useState(savedDraft?.urgencyId ?? "");
+  const [typeId, setTypeId] = useState(savedDraft?.typeId ?? "");
+  const [impactId, setImpactId] = useState(savedDraft?.impactId ?? "");
+  const [requestTypeId, setRequestTypeId] = useState(savedDraft?.requestTypeId ?? "");
+  const [itemSelections, setItemSelections] = useState<TicketItemOption[]>(
+    () =>
+      (savedDraft?.itemLinks ?? []).map((row) => ({
+        itemtype: row.itemtype,
+        items_id: row.itemsId,
+        name: row.name,
+        type_label: row.typeLabel,
+      })),
+  );
+  const [relatedTickets, setRelatedTickets] = useState<{ id: number; title: string }[]>(
+    () => savedDraft?.relatedTickets ?? [],
+  );
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [urgencies, setUrgencies] = useState<{ id: number; name: string }[]>([]);
+  const [impacts, setImpacts] = useState<{ id: number; name: string }[]>([]);
+  const [ticketTypes, setTicketTypes] = useState<{ id: number; name: string }[]>([]);
+  const [ticketRequestTypes, setTicketRequestTypes] = useState<{ id: number; name: string }[]>([]);
+  const [sessionCtx, setSessionCtx] = useState<SessionContext | null>(null);
+  const [itemScope, setItemScope] = useState<"mine" | "all">("mine");
+  const [itemTypeFilter, setItemTypeFilter] = useState("");
+  const [itemQuery, setItemQuery] = useState("");
+  const [itemResults, setItemResults] = useState<TicketItemOption[]>([]);
+  const [itemSearching, setItemSearching] = useState(false);
+  const [itemSearched, setItemSearched] = useState(false);
+  const [itemSearchError, setItemSearchError] = useState<string | null>(null);
+  const [relatedInput, setRelatedInput] = useState("");
+  const [itemsOpen, setItemsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -816,40 +1112,93 @@ function CreateTicketPage() {
       listCategories(controller.signal),
       listUrgencies(controller.signal),
       getSessionCapabilities(controller.signal),
+      listImpacts(controller.signal),
+      listTicketTypes(controller.signal),
+      listTicketRequestTypes(),
+      getSessionContext(controller.signal),
     ])
-      .then(([categoryResult, urgencyResult, capsResult]) => {
-        if (controller.signal.aborted) return;
-        const draft = readCreateDraft();
-        if (capsResult.status === "fulfilled") {
-          setCanAssign(Boolean(capsResult.value.can_assign));
-        } else {
-          setCanAssign(false);
-        }
-        if (urgencyResult.status === "fulfilled") {
-          const items = urgencyResult.value.items;
-          setUrgencies(items);
-          setUrgencyId((current) => {
-            if (current && items.some((item) => String(item.id) === current)) return current;
-            if (draft?.urgencyId && items.some((item) => String(item.id) === draft.urgencyId)) {
-              return draft.urgencyId;
-            }
-            return items[0] ? String(items[0].id) : "";
-          });
-        }
-        if (categoryResult.status === "fulfilled") {
-          const items = categoryResult.value.items;
-          setCategories(items);
-          setCategoryId((current) => {
-            if (current && items.some((item) => String(item.id) === current)) return current;
-            if (draft?.categoryId && items.some((item) => String(item.id) === draft.categoryId)) {
-              return draft.categoryId;
-            }
-            return items[0] ? String(items[0].id) : "";
-          });
-          return;
-        }
-        setErrorText(MESSAGES.catalog_unavailable);
-      })
+      .then(
+        ([
+          categoryResult,
+          urgencyResult,
+          capsResult,
+          impactResult,
+          typeResult,
+          requestTypeResult,
+          contextResult,
+        ]) => {
+          if (controller.signal.aborted) return;
+          const draft = readCreateDraft();
+          if (capsResult.status === "fulfilled") {
+            setCanAssign(Boolean(capsResult.value.can_assign));
+          } else {
+            setCanAssign(false);
+          }
+          if (contextResult.status === "fulfilled") {
+            setSessionCtx(contextResult.value);
+          }
+          const contextDefaultRequestType =
+            contextResult.status === "fulfilled"
+              ? contextResult.value.default_request_type_id
+              : null;
+          const pickOrDefault = (
+            items: { id: number; name: string }[],
+            draftValue: string | undefined,
+            defaultId: number | null,
+          ) =>
+            (current: string) => {
+              if (current && items.some((item) => String(item.id) === current)) return current;
+              if (draftValue && items.some((item) => String(item.id) === draftValue)) {
+                return draftValue;
+              }
+              // Canonical GLPI default only (never "first catalog row").
+              if (defaultId !== null && items.some((item) => item.id === defaultId)) {
+                return String(defaultId);
+              }
+              return "";
+            };
+          if (urgencyResult.status === "fulfilled") {
+            const items = urgencyResult.value.items;
+            setUrgencies(items);
+            // GLPI Ticket::getDefaultValues → urgency 3 (proven canonical).
+            setUrgencyId(pickOrDefault(items, draft?.urgencyId, 3));
+          }
+          if (impactResult.status === "fulfilled") {
+            const items = impactResult.value.items;
+            setImpacts(items);
+            setImpactId(pickOrDefault(items, draft?.impactId, 3));
+          }
+          if (typeResult.status === "fulfilled") {
+            const items = typeResult.value.items;
+            setTicketTypes(items);
+            // Entity config tickettype → Delpi=incident(1); GLPI fallback is
+            // incident too (Ticket::getDefaultValues).
+            setTypeId(pickOrDefault(items, draft?.typeId, 1));
+          }
+          if (requestTypeResult.status === "fulfilled") {
+            const items = requestTypeResult.value;
+            setTicketRequestTypes(items);
+            setRequestTypeId(
+              pickOrDefault(items, draft?.requestTypeId, contextDefaultRequestType ?? null),
+            );
+          }
+          if (categoryResult.status === "fulfilled") {
+            const items = categoryResult.value.items;
+            setCategories(items);
+            // Category has NO canonical default (GLPI 0 = none) — explicit
+            // selection only; draft restore is the only allowed prefill.
+            setCategoryId((current) => {
+              if (current && items.some((item) => String(item.id) === current)) return current;
+              if (draft?.categoryId && items.some((item) => String(item.id) === draft.categoryId)) {
+                return draft.categoryId;
+              }
+              return "";
+            });
+            return;
+          }
+          setErrorText(MESSAGES.catalog_unavailable);
+        },
+      )
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
@@ -868,8 +1217,30 @@ function CreateTicketPage() {
       assigneeHasPhoto: Boolean(assignee?.hasPhoto),
       categoryId,
       urgencyId,
+      typeId,
+      impactId,
+      requestTypeId,
+      itemLinks: itemSelections.map((item) => ({
+        itemtype: item.itemtype,
+        itemsId: item.items_id,
+        name: item.name,
+        typeLabel: item.type_label,
+      })),
+      relatedTickets: relatedTickets.map((row) => ({ id: row.id, title: row.title })),
     });
-  }, [title, description, observerIdsInput, assignee, categoryId, urgencyId]);
+  }, [
+    title,
+    description,
+    observerIdsInput,
+    assignee,
+    categoryId,
+    urgencyId,
+    typeId,
+    impactId,
+    requestTypeId,
+    itemSelections,
+    relatedTickets,
+  ]);
 
   /** Rascunho legado (só id) — rehidrata nome/e-mail/foto via GET /users. */
   useEffect(() => {
@@ -991,7 +1362,7 @@ function CreateTicketPage() {
           className="helpdesk-create-form"
           onSubmit={(event) => {
             event.preventDefault();
-            if (saving || !title.trim() || !hasVisibleRichText(description)) return;
+            if (saving || !title.trim() || !hasVisibleRichText(description) || !categoryId) return;
             setSaving(true);
             setErrorText(null);
             void (async () => {
@@ -1017,11 +1388,32 @@ function CreateTicketPage() {
                 urgency_id: Number(urgencyId),
                 observer_ids: parseObserverIdsInput(observerIdsInput),
                 assignee_id: canAssign === true && assignee?.id ? Number(assignee.id) : undefined,
+                type_id: typeId ? Number(typeId) : undefined,
+                impact_id: impactId ? Number(impactId) : undefined,
+                request_type_id: requestTypeId ? Number(requestTypeId) : undefined,
+                item_links: itemSelections.map((item) => ({
+                  itemtype: item.itemtype,
+                  items_id: item.items_id,
+                })),
+                related_ticket_ids: relatedTickets.map((row) => row.id),
               },
               idempotencyKey,
             )
               .then(async (created) => {
                 const ticketId = String(created.id);
+                // Typed partial outcome — ticket persisted but one or more
+                // post-create links failed. Never presented as integral
+                // success; the notice rides to the detail page.
+                const failedLinks =
+                  (created.failed_items?.length ?? 0) + (created.failed_tickets?.length ?? 0);
+                if (failedLinks > 0) {
+                  stageTicketNotice(
+                    "O chamado foi criado, mas " +
+                      `${failedLinks} vínculo${failedLinks > 1 ? "s" : ""} ` +
+                      "(equipamento ou chamado relacionado) não pôde ser confirmado no GLPI. " +
+                      "Revise os itens vinculados abaixo.",
+                  );
+                }
                 const mapping: Record<string, { documentId: number; ticketId: string }> = {};
                 for (const pendingId of pendingIds) {
                   const file = pendingFilesRef.current.get(pendingId);
@@ -1124,6 +1516,16 @@ function CreateTicketPage() {
                 options={categories.map((item) => ({ value: String(item.id), label: item.name }))}
                 icon={<FolderTree size={14} aria-hidden />}
               />
+              {ticketTypes.length > 0 ? (
+                <HelpdeskSelect
+                  label="Tipo de chamado"
+                  hint={helpTooltips.createUi.ticketType}
+                  value={typeId}
+                  onChange={setTypeId}
+                  options={ticketTypes.map((item) => ({ value: String(item.id), label: item.name }))}
+                  icon={<TicketPlus size={14} aria-hidden />}
+                />
+              ) : null}
               <HelpdeskSelect
                 label="Urgência"
                 hint={helpTooltips.createUi.urgency}
@@ -1133,6 +1535,38 @@ function CreateTicketPage() {
                 options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
                 icon={<Gauge size={14} aria-hidden />}
               />
+              {impacts.length > 0 ? (
+                <HelpdeskSelect
+                  label="Impacto"
+                  hint={helpTooltips.createUi.impact}
+                  value={impactId}
+                  onChange={setImpactId}
+                  options={impacts.map((item) => ({ value: String(item.id), label: item.name }))}
+                  icon={<Gauge size={14} aria-hidden />}
+                />
+              ) : null}
+              {ticketRequestTypes.length > 0 ? (
+                <HelpdeskSelect
+                  label="Origem"
+                  hint={helpTooltips.createUi.requestType}
+                  value={requestTypeId}
+                  onChange={setRequestTypeId}
+                  options={ticketRequestTypes.map((item) => ({
+                    value: String(item.id),
+                    label: item.name,
+                  }))}
+                  icon={<Link2 size={14} aria-hidden />}
+                />
+              ) : null}
+              <div className="helpdesk-create-entity" aria-label="Entidade do chamado">
+                <span className="helpdesk-create-entity__label">
+                  <Building2 size={14} aria-hidden />
+                  Entidade
+                </span>
+                <span className="helpdesk-create-entity__value">
+                  {sessionCtx?.entity?.name || "Carregando…"}
+                </span>
+              </div>
               {canAssign === true ? (
                 <HelpdeskAssigneePicker
                   label="Técnico atribuído"
@@ -1151,19 +1585,15 @@ function CreateTicketPage() {
                 icon={<Users size={14} aria-hidden />}
               />
               <div className="helpdesk-create-layout__aside-actions">
-                <HelpdeskAttachButton
-                  hint={helpTooltips.createUi.attach}
-                  disabled={saving || loading}
-                  className="helpdesk-compose-attach"
-                  onClick={() => createComposerRef.current?.openAttachPicker()}
-                />
                 <HintAction hint={helpTooltips.createUi.send} ariaLabel="Ajuda: Enviar chamado">
                   <ActionButton
                     variant="primary"
                     type="submit"
                     className="helpdesk-create-send"
                     aria-label={saving ? "Enviando" : "Enviar chamado"}
-                    disabled={saving || loading || !title.trim() || !hasVisibleRichText(description)}
+                    disabled={
+                      saving || loading || !title.trim() || !hasVisibleRichText(description) || !categoryId
+                    }
                   >
                     <Send size={18} aria-hidden />
                     {saving ? "Enviando…" : "Enviar"}
@@ -1172,6 +1602,105 @@ function CreateTicketPage() {
               </div>
             </aside>
           </div>
+          <div className="helpdesk-create-files">
+            <div className="helpdesk-create-files__actions">
+              <ActionButton
+                type="button"
+                variant="ghost"
+                className="helpdesk-compose-attach"
+                aria-label="Inserir imagem no texto"
+                disabled={saving || loading}
+                onClick={() => createComposerRef.current?.openAttachPicker("image/*")}
+              >
+                <ImageIcon size={16} aria-hidden />
+                Inserir imagem no texto
+              </ActionButton>
+              <HintAction hint={helpTooltips.createUi.attach} ariaLabel="Ajuda: Anexar arquivo">
+                <ActionButton
+                  type="button"
+                  variant="ghost"
+                  className="helpdesk-compose-attach"
+                  aria-label="Anexar arquivo ao chamado"
+                  disabled={saving || loading}
+                  onClick={() => createComposerRef.current?.openAttachPicker()}
+                >
+                  <Paperclip size={16} aria-hidden />
+                  Anexar arquivo ao chamado
+                </ActionButton>
+              </HintAction>
+            </div>
+            <p className="helpdesk-create-files__hint">
+              Imagens inseridas aparecem dentro da descrição. Arquivos anexados ficam
+              disponíveis nos documentos do chamado.
+            </p>
+          </div>
+          <CreateItemsSection
+            sessionCtx={sessionCtx}
+            disabled={saving || loading}
+            open={itemsOpen}
+            onToggle={setItemsOpen}
+            scope={itemScope}
+            onScopeChange={setItemScope}
+            typeFilter={itemTypeFilter}
+            onTypeFilterChange={setItemTypeFilter}
+            query={itemQuery}
+            onQueryChange={setItemQuery}
+            results={itemResults}
+            searching={itemSearching}
+            searched={itemSearched}
+            searchError={itemSearchError}
+            selections={itemSelections}
+            related={relatedTickets}
+            relatedInput={relatedInput}
+            onRelatedInputChange={setRelatedInput}
+            onSearchItems={() => {
+              setItemSearching(true);
+              setItemSearchError(null);
+              void searchTicketItems(
+                {
+                  scope: itemScope,
+                  itemtype: itemTypeFilter || undefined,
+                  q: itemQuery.trim(),
+                  limit: 25,
+                },
+              )
+                .then((payload) => {
+                  setItemResults(payload.items ?? []);
+                  setItemSearched(true);
+                })
+                .catch((error) => {
+                  setItemResults([]);
+                  setItemSearched(true);
+                  setItemSearchError(messageFor(error).text);
+                })
+                .finally(() => setItemSearching(false));
+            }}
+            onAddItem={(item) => {
+              setItemSelections((current) =>
+                current.some(
+                  (row) => row.itemtype === item.itemtype && row.items_id === item.items_id,
+                )
+                  ? current
+                  : [...current, item],
+              );
+            }}
+            onRemoveItem={(item) => {
+              setItemSelections((current) =>
+                current.filter(
+                  (row) => !(row.itemtype === item.itemtype && row.items_id === item.items_id),
+                ),
+              );
+            }}
+            onAddRelated={(row) => {
+              setRelatedTickets((current) =>
+                current.some((entry) => entry.id === row.id) ? current : [...current, row],
+              );
+              setRelatedInput("");
+            }}
+            onRemoveRelated={(id) => {
+              setRelatedTickets((current) => current.filter((row) => row.id !== id));
+            }}
+          />
         </form>
       </HelpdeskSectionCard>
       <FilePreviewModal
@@ -1196,7 +1725,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [noticeText, setNoticeText] = useState<string | null>(
-    () => consumeAttachmentAuthorNotice(),
+    () => consumeAttachmentAuthorNotice() ?? consumeTicketNotice(),
   );
   const [content, setContent] = useState(() =>
     persistHelpdeskAttachmentHtml(

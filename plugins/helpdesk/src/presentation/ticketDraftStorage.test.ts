@@ -51,6 +51,11 @@ describe("ticketDraftStorage", () => {
       assigneeHasPhoto: true,
       categoryId: "3",
       urgencyId: "2",
+      typeId: "1",
+      impactId: "3",
+      requestTypeId: "1",
+      itemLinks: [{ itemtype: "Peripheral", itemsId: 19, name: "Ativo", typeLabel: "Periférico" }],
+      relatedTickets: [{ id: 7, title: "Relacionado" }],
     });
     expect(readCreateDraft()).toEqual({
       title: "Impressora",
@@ -63,6 +68,11 @@ describe("ticketDraftStorage", () => {
       assigneeHasPhoto: true,
       categoryId: "3",
       urgencyId: "2",
+      typeId: "1",
+      impactId: "3",
+      requestTypeId: "1",
+      itemLinks: [{ itemtype: "Peripheral", itemsId: 19, name: "Ativo", typeLabel: "Periférico" }],
+      relatedTickets: [{ id: 7, title: "Relacionado" }],
     });
     expect(assigneeFromCreateDraft(readCreateDraft())).toEqual({
       id: "22",
@@ -82,6 +92,11 @@ describe("ticketDraftStorage", () => {
       assigneeHasPhoto: false,
       categoryId: "",
       urgencyId: "",
+      typeId: "",
+      impactId: "",
+      requestTypeId: "",
+      itemLinks: [],
+      relatedTickets: [],
     });
     expect(readCreateDraft()).toBeNull();
   });

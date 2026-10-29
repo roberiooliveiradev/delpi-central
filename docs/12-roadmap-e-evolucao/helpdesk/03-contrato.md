@@ -167,6 +167,45 @@ Resposta `201`:
 
 Repetir a mesma chave depois de sucesso devolve o mesmo `id`, sem segundo chamado.
 
+**Campos de classificação (Etapa 1, aditivos e opcionais):**
+
+```json
+{
+  "type_id": 1,
+  "impact_id": 3,
+  "request_type_id": 1,
+  "item_links": [{ "itemtype": "Peripheral", "items_id": 19 }],
+  "related_ticket_ids": [1230]
+}
+```
+
+- `type_id` / `impact_id` — ids dos enums canônicos do GLPI (mesmos mapas do `PATCH /classification`); inválido → `422` antes do claim de idempotência. `priority_id` **não** existe na abertura: a prioridade continua derivada da matriz urgência×impacto do GLPI.
+- `request_type_id` — origem/canal (`RequestType.is_visible_ticket`); o default da sessão vem de `GET /session/context`.
+- `item_links` (máx. 10) — ativos GLPI vinculados via `POST /apirest.php/Item_Ticket` sob a **sessão legada do próprio ator** (o GLPI exige update no chamado + `HAVE_VIEW_RIGHT_ON_ITEM` no ativo). `itemtype` precisa estar no allowlist efetivo do perfil (`helpdesk_item_type` ∩ tipos suportados pelo BFF); fora dele → `type_not_allowed` em `failed_items`.
+- `related_ticket_ids` (máx. 10) — vínculo `Ticket_Ticket` (`link=1`, "relacionado a") via `POST /apirest.php/Ticket_Ticket`; o outro chamado precisa ser legível pelo mesmo usuário (gate de visibilidade antes da escrita).
+
+Resposta `201` estendida quando houver vínculos — **`207` quando houver falha parcial** (mesma convenção dos anexos: persistido-mas-não-integral, nunca sucesso de negócio completo):
+
+```json
+{
+  "id": 1234,
+  "linked_items": [{ "itemtype": "Peripheral", "items_id": 19, "relation_id": 16 }],
+  "linked_tickets": [{ "ticket_id": 1230, "relation_id": 3 }],
+  "failed_items": [{ "itemtype": "X", "items_id": 9, "reason": "glpi_forbidden" }],
+  "failed_tickets": [{ "ticket_id": 999, "reason": "glpi_not_found" }]
+}
+```
+
+Falhas de vínculo são **resultado parcial tipado** — o chamado já existe e não pode ser desfeito às cegas; `failed_*` preserva ids e motivo para reconciliação. O claim é gravado como `completed`: replay da mesma chave devolve o mesmo corpo (inclusive o `207`) sem reexecutar nenhuma associação (nunca duplica).
+
+`GET /session/context` — contexto efetivo de criação sob a sessão do ator: `{ "entity": { "id": 0, "name": "Delpi" }, "hardware": { "my_devices": true, "all_devices": false, "item_types": [["Peripheral","Periférico"],…] }, "default_request_type_id": 1 }`. `entity` vem do HLAPI `GET /session` (`active_entity`, somente leitura — não há seleção arbitrária); `helpdesk_hardware`/`helpdesk_item_type`/`glpidefault_requesttypes_id` vêm do `getFullSession` legado — campos de perfil que o HLAPI não expõe.
+
+`GET /ticket-items?scope=mine|all&itemtype=&q=&limit=` — catálogo de ativos vinculáveis via `search/{itemtype}` legado sob a sessão do ator. `scope=mine` exige `helpdesk_hardware & 1` ("Meus dispositivos", filtro `users_id`); `scope=all` exige `helpdesk_hardware & 2` ("ou pesquisa completa"). Sem o bit → `403`. `itemtype` fora do allowlist do perfil → `422`. A visibilidade de entidade/ativo é do GLPI por linha (tipo proibido → 403, ignorado).
+
+`GET /request-types?purpose=ticket` — variantes `RequestType` com `is_visible_ticket` (catálogo de origem da abertura); o default `/request-types` segue `is_visible_followup`. Fallback sem filtro quando o dropdown não aceita o critério.
+
+`GET /tickets/{id}` — agora inclui (aditivo): `items: [{ itemtype, items_id, name, relation_id }]` (read-back `Item_Ticket` hidratado) e `related_tickets: [{ ticket_id, title, link, relation_id }]` (`Ticket_Ticket` filtrado ao chamado — o sub-recurso legado não é parent-scoped). Indisponibilidade do canal legado degrada para listas vazias, nunca derruba o detalhe.
+
 `PUT /tickets/{id}/assignee` — atribuir ou reatribuir (idempotente). Exige `Idempotency-Key`.
 
 ```json

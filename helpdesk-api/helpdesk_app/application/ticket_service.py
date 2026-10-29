@@ -33,17 +33,22 @@ from helpdesk_app.domain.models import (
     CycleWriteOutcome,
     StoredResponse,
     TicketDetail,
+    TicketItemRef,
     TicketListPage,
     TicketListQuery,
+    TicketRelation,
 )
 from helpdesk_app.infrastructure.glpi.mapping import (
     can_delete_ticket,
     classification_field_names,
     filter_assignable_catalog_users,
     normalize_assignee_id,
+    normalize_item_links,
     normalize_observer_ids,
+    normalize_related_ticket_ids,
     search_term_variants,
     solicitante_cycle_flags,
+    supported_item_types,
     ticket_allows_technician_ops,
     timeline_has_entry,
     timeline_has_solution,
@@ -79,6 +84,9 @@ class TicketService:
 
     def request_types(self, subject: str):
         return self._glpi.list_request_types(self._token(subject))
+
+    def ticket_request_types(self, subject: str):
+        return self._glpi.list_ticket_request_types(self._token(subject))
 
     def followup_templates(self, subject: str):
         return self._glpi.list_followup_templates(self._token(subject))
@@ -343,6 +351,7 @@ class TicketService:
         detail = self._with_technician_ops_flags(token, detail, viewer_email=viewer_email)
         detail = self._with_classification_flag(token, detail, viewer_email=viewer_email)
         detail = self._with_delete_flag(token, detail)
+        detail = self._with_linked_objects(token, detail)
         return self._with_cycle_flags(token, detail)
 
     def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:
@@ -566,6 +575,11 @@ class TicketService:
         urgency_id: int,
         observer_ids: list[int] | tuple[int, ...] | None = None,
         assignee_id: int | None = None,
+        type_id: int | None = None,
+        impact_id: int | None = None,
+        request_type_id: int | None = None,
+        item_links: list[dict] | tuple[dict, ...] | None = None,
+        related_ticket_ids: list[int] | tuple[int, ...] | None = None,
         idempotency_key: str | None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
@@ -574,9 +588,19 @@ class TicketService:
         description_html = _prepare_message_html(description, "description", ticket_id=0)
         observers = normalize_observer_ids(observer_ids)
         assignee = normalize_assignee_id(assignee_id)
+        items = normalize_item_links(item_links)
+        related = normalize_related_ticket_ids(related_ticket_ids)
+        # Contract-level enum validation BEFORE the idempotency claim —
+        # the same canonical maps the gateway enforces; a bad value must
+        # never consume the key nor reach GLPI.
+        names = classification_field_names()
+        if type_id is not None and type_id not in names["type_id"]:
+            raise GlpiValidation("type_id inválido.")
+        if impact_id is not None and impact_id not in names["impact_id"]:
+            raise GlpiValidation("impact_id inválido.")
         operation = "create_ticket"
         existing = self._claim_or_replay(
-            subject, operation, key, intent={"title": title.strip(), "category_id": category_id, "urgency_id": urgency_id, "sha256": hashlib.sha256(description_html.encode("utf-8")).hexdigest(), "assignee_id": assignee, "observer_ids": list(observers)}
+            subject, operation, key, intent={"title": title.strip(), "category_id": category_id, "urgency_id": urgency_id, "sha256": hashlib.sha256(description_html.encode("utf-8")).hexdigest(), "assignee_id": assignee, "observer_ids": list(observers), "type_id": type_id, "impact_id": impact_id, "request_type_id": request_type_id, "item_links": items, "related_ticket_ids": related}
         )
         if existing is not None:
             return existing
@@ -595,6 +619,9 @@ class TicketService:
                 description=description_html,
                 category_id=category_id,
                 urgency_id=urgency_id,
+                type_id=type_id,
+                impact_id=impact_id,
+                request_type_id=request_type_id,
             )
             try:
                 self._glpi.add_ticket_requester(token, ticket_id, requester_user_id)
@@ -611,7 +638,21 @@ class TicketService:
             if assignee is not None:
                 self._require_technician(token, assignee)
                 self._glpi.add_ticket_assignee(token, ticket_id, assignee)
-            stored = StoredResponse(status_code=201, body={"id": ticket_id})
+            linked_items, failed_items = self._link_ticket_items(token, ticket_id, items)
+            linked_tickets, failed_tickets = self._link_related_tickets(token, ticket_id, related)
+            body = {"id": ticket_id}
+            partial = bool(failed_items or failed_tickets)
+            if items or related:
+                body["linked_items"] = linked_items
+                body["linked_tickets"] = linked_tickets
+                if failed_items:
+                    body["failed_items"] = failed_items
+                if failed_tickets:
+                    body["failed_tickets"] = failed_tickets
+            # 207 = persisted-but-partial: the ticket exists, one or more
+            # optional links did not. Never presented as integral success;
+            # the completed claim replays this same governed result.
+            stored = StoredResponse(status_code=207 if partial else 201, body=body)
             self._idempotency.save(subject, operation, key, stored)
             return stored
 
@@ -623,6 +664,126 @@ class TicketService:
             # persisted and a blind retry could duplicate it.
             self._idempotency.release(subject, operation, key)
             raise
+
+    def _link_ticket_items(
+        self, token: str, ticket_id: int, items: list[dict]
+    ) -> tuple[list[dict], list[dict]]:
+        """Item_Ticket links under the actor's session — per-item outcome.
+
+        Each link is authorized by GLPI at write time (ticket update +
+        ``HAVE_VIEW_RIGHT_ON_ITEM``); failures are collected and reported in
+        the stored 201 body instead of aborting the whole create (the ticket
+        provably exists at this point).
+        """
+        linked: list[dict] = []
+        failed: list[dict] = []
+        if not items:
+            return linked, failed
+        allowed_types = {
+            itemtype
+            for itemtype, _label in supported_item_types(
+                self._session_hardware_item_types(token)
+            )
+        }
+        for item in items:
+            itemtype = item["itemtype"]
+            items_id = item["items_id"]
+            if itemtype not in allowed_types:
+                failed.append(
+                    {"itemtype": itemtype, "items_id": items_id, "reason": "type_not_allowed"}
+                )
+                continue
+            try:
+                row = self._glpi.add_ticket_item(
+                    token, ticket_id, itemtype=itemtype, items_id=items_id
+                )
+                linked.append(
+                    {"itemtype": itemtype, "items_id": items_id, "relation_id": row.get("id")}
+                )
+            except HelpdeskError as exc:
+                failed.append(
+                    {
+                        "itemtype": itemtype,
+                        "items_id": items_id,
+                        "reason": getattr(exc, "code", "link_failed"),
+                    }
+                )
+        return linked, failed
+
+    def _link_related_tickets(
+        self, token: str, ticket_id: int, related: list[int]
+    ) -> tuple[list[dict], list[dict]]:
+        linked: list[dict] = []
+        failed: list[dict] = []
+        for other_id in related:
+            if other_id == ticket_id:
+                failed.append({"ticket_id": other_id, "reason": "self_link"})
+                continue
+            try:
+                # Visibility gate: the related ticket must be readable by the
+                # same user — a foreign id fails BEFORE the write attempt.
+                self._glpi.get_ticket(token, other_id, viewer_email="")
+                row = self._glpi.add_ticket_link(
+                    token, ticket_id, other_ticket_id=other_id
+                )
+                linked.append({"ticket_id": other_id, "relation_id": row.get("id")})
+            except HelpdeskError as exc:
+                failed.append(
+                    {
+                        "ticket_id": other_id,
+                        "reason": getattr(exc, "code", "link_failed"),
+                    }
+                )
+        return linked, failed
+
+    def _session_hardware_item_types(self, token: str) -> list[str]:
+        context = self._glpi.session_context(token)
+        hardware = context.get("hardware") or {}
+        return [itemtype for itemtype, _label in hardware.get("item_types") or []]
+
+    def session_context(self, subject: str) -> dict:
+        return self._glpi.session_context(self._token(subject))
+
+    def ticket_items(
+        self,
+        subject: str,
+        *,
+        scope: str = "mine",
+        itemtype: str | None = None,
+        query: str = "",
+        limit: int = 25,
+    ) -> dict:
+        """Linkable hardware catalog — profile-gated, GLPI-scoped search."""
+        token = self._token(subject)
+        context = self._glpi.session_context(token)
+        hardware = context.get("hardware") or {}
+        allowed = hardware.get("item_types") or []
+        scope = (scope or "mine").strip().lower()
+        if scope not in {"mine", "all"}:
+            raise GlpiValidation("scope inválido.")
+        if scope == "mine" and not hardware.get("my_devices"):
+            raise GlpiForbidden("A visualização de itens não está disponível neste perfil.")
+        if scope == "all" and not hardware.get("all_devices"):
+            raise GlpiForbidden("A pesquisa completa de itens não está disponível neste perfil.")
+        type_names = [name for name, _label in allowed]
+        if itemtype:
+            itemtype = itemtype.strip()
+            if itemtype not in type_names:
+                raise GlpiValidation("Tipo de item não permitido para este perfil.")
+            type_names = [itemtype]
+        items = self._glpi.search_ticket_items(
+            token,
+            scope=scope,
+            item_types=type_names,
+            query=(query or "").strip()[:80],
+            limit=limit,
+        )
+        return {
+            "items": [
+                {**row, "type_label": dict(allowed).get(row["itemtype"], row["itemtype"])}
+                for row in items
+            ]
+        }
     def set_assignee(
         self,
         subject: str,
@@ -1588,6 +1749,42 @@ class TicketService:
             logger.info("helpdesk_delete_flag_session_unavailable")
             profile = {}
         return replace(detail, can_delete=can_delete_ticket(detail, profile))
+
+    def _with_linked_objects(self, token: str, detail: TicketDetail) -> TicketDetail:
+        """Item_Ticket + Ticket_Ticket read-back under the actor's session.
+
+        Degrades to empty lists when the legacy channel is unavailable —
+        the detail read must not fail because a secondary projection did.
+        """
+        try:
+            item_rows = self._glpi.ticket_item_links(token, detail.id)
+        except HelpdeskError:
+            item_rows = []
+        try:
+            link_rows = self._glpi.ticket_links(token, detail.id)
+        except HelpdeskError:
+            link_rows = []
+        return replace(
+            detail,
+            items=tuple(
+                TicketItemRef(
+                    itemtype=row["itemtype"],
+                    items_id=row["items_id"],
+                    name=row.get("name") or "",
+                    relation_id=row.get("id"),
+                )
+                for row in item_rows
+            ),
+            related_tickets=tuple(
+                TicketRelation(
+                    ticket_id=row["other_id"],
+                    title=row.get("title") or "",
+                    link=row.get("link") or 1,
+                    relation_id=row.get("id"),
+                )
+                for row in link_rows
+            ),
+        )
 
     def _with_cycle_flags(self, token: str, detail: TicketDetail) -> TicketDetail:
         legacy_on = True

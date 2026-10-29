@@ -46,6 +46,13 @@ def _attachment_refs(ticket) -> list[dict[str, int]]:
     ]
 
 
+class ItemLinkBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    itemtype: str
+    items_id: int = Field(gt=0)
+
+
 class CreateTicketBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -55,6 +62,12 @@ class CreateTicketBody(BaseModel):
     urgency_id: int
     observer_ids: list[int] = Field(default_factory=list)
     assignee_id: int | None = None
+    # Etapa 1 — optional GLPI-native classification (priority stays derived).
+    type_id: int | None = Field(default=None, gt=0)
+    impact_id: int | None = Field(default=None, gt=0)
+    request_type_id: int | None = Field(default=None, gt=0)
+    item_links: list[ItemLinkBody] = Field(default_factory=list)
+    related_ticket_ids: list[int] = Field(default_factory=list)
 
 
 class FollowupBody(BaseModel):
@@ -198,10 +211,47 @@ def _template_items(rows) -> dict:
 
 
 @router.get("/request-types")
-def request_types(request: Request):
+def request_types(request: Request, purpose: str = "followup"):
     actor = require_actor(request)
     try:
+        if purpose == "ticket":
+            return _catalog_items(
+                _tickets(request).ticket_request_types(actor.subject)
+            )
         return _catalog_items(_tickets(request).request_types(actor.subject))
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/session/context")
+def session_context(request: Request):
+    """Effective creation context: active entity, hardware capabilities and
+    the session default request type — read-only disclosure for the create
+    form, sourced from the actor's own GLPI session."""
+    actor = require_actor(request)
+    try:
+        return _tickets(request).session_context(actor.subject)
+    except HelpdeskError as exc:
+        return _error(exc, request)
+
+
+@router.get("/ticket-items")
+def ticket_items(
+    request: Request,
+    scope: str = "mine",
+    itemtype: str = "",
+    q: str = "",
+    limit: int = 25,
+):
+    actor = require_actor(request)
+    try:
+        return _tickets(request).ticket_items(
+            actor.subject,
+            scope=scope,
+            itemtype=itemtype or None,
+            query=q,
+            limit=limit,
+        )
     except HelpdeskError as exc:
         return _error(exc, request)
 
@@ -437,6 +487,24 @@ def get_ticket(request: Request, ticket_id: int):
         "request_type_id": ticket.request_type_id,
         "can_update_classification": ticket.can_update_classification,
         "can_delete": ticket.can_delete,
+        "items": [
+            {
+                "itemtype": item.itemtype,
+                "items_id": item.items_id,
+                "name": item.name,
+                "relation_id": item.relation_id,
+            }
+            for item in ticket.items
+        ],
+        "related_tickets": [
+            {
+                "ticket_id": rel.ticket_id,
+                "title": rel.title,
+                "link": rel.link,
+                "relation_id": rel.relation_id,
+            }
+            for rel in ticket.related_tickets
+        ],
         "updated_at": ticket.updated_at,
         "created_at": ticket.created_at,
         "solved_at": ticket.solved_at,
@@ -598,6 +666,11 @@ def create_ticket(
             urgency_id=body.urgency_id,
             observer_ids=body.observer_ids,
             assignee_id=body.assignee_id,
+            type_id=body.type_id,
+            impact_id=body.impact_id,
+            request_type_id=body.request_type_id,
+            item_links=[item.model_dump() for item in body.item_links],
+            related_ticket_ids=body.related_ticket_ids,
             idempotency_key=idempotency_key,
         )
     except HelpdeskError as exc:

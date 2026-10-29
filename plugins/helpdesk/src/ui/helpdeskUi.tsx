@@ -257,7 +257,9 @@ export type HelpdeskPendingAttachmentItem = {
 };
 
 export type HelpdeskRichTextFieldHandle = {
-  openAttachPicker: () => void;
+  /** Opens the file picker; `accept` overrides the input filter for this pick
+   * (e.g. "image/*" for inline insertion vs broad for file attachments). */
+  openAttachPicker: (accept?: string) => void;
   /** Awaits any in-flight paste/attach materialization, then returns the live
    * editor html — the submit path must read this instead of React state,
    * which can lag one frame behind a just-inserted image. */
@@ -374,7 +376,10 @@ export const HelpdeskRichTextField = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      openAttachPicker: () => {
+      openAttachPicker: (acceptOverride?: string) => {
+        if (fileRef.current) {
+          fileRef.current.accept = acceptOverride ?? accept;
+        }
         fileRef.current?.click();
       },
       prepareForSubmit: async () => {

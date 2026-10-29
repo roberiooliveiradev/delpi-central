@@ -459,15 +459,35 @@ def parse_created_id(payload: dict) -> int:
     return int(raw)
 
 
-def create_ticket_body(*, title: str, description: str, category_id: int, urgency_id: int) -> dict:
+def create_ticket_body(
+    *,
+    title: str,
+    description: str,
+    category_id: int,
+    urgency_id: int,
+    type_id: int | None = None,
+    impact_id: int | None = None,
+    request_type_id: int | None = None,
+) -> dict:
     if urgency_id not in _URGENCY_NAMES:
         raise GlpiValidation("urgency_id inválido.")
-    return {
+    if type_id is not None and type_id not in _TICKET_TYPE_NAMES:
+        raise GlpiValidation("type_id inválido.")
+    if impact_id is not None and impact_id not in _IMPACT_NAMES:
+        raise GlpiValidation("impact_id inválido.")
+    body = {
         "name": title,
         "content": description,
         "urgency": urgency_id,
         "category": {"id": category_id},
     }
+    if type_id is not None:
+        body["type"] = int(type_id)
+    if impact_id is not None:
+        body["impact"] = int(impact_id)
+    if request_type_id is not None and int(request_type_id) > 0:
+        body["request_type"] = {"id": int(request_type_id)}
+    return body
 
 
 def team_member_observer_body(user_id: int) -> dict:
@@ -1488,3 +1508,249 @@ def _repair_cp850_mojibake(text: str) -> str:
     if _CP850_MOJIBAKE in repaired:
         return text
     return repaired
+
+
+# ---------------------------------------------------------------------------
+# Ticket creation Etapa 1 — hardware items + related tickets (legacy apirest)
+# ---------------------------------------------------------------------------
+
+# GLPI profile column ``helpdesk_hardware`` bitmask (CommonITILObject):
+# bit 0 → "My devices" dropdown, bit 1 → "Or complete search".
+HELPDESK_HW_MY_DEVICES = 1
+HELPDESK_HW_ALL_DEVICES = 2
+
+# Canonical itemtype → pt-BR label for the types the BFF can search and link.
+# Restricted to GLPI core assets that expose ``users_id`` (field 70) in the
+# legacy search — custom assets and infrastructure types are not offered.
+TICKET_ITEM_TYPES: tuple[tuple[str, str], ...] = (
+    ("Computer", "Computador"),
+    ("Monitor", "Monitor"),
+    ("Peripheral", "Periférico"),
+    ("Phone", "Telefone"),
+    ("Printer", "Impressora"),
+    ("NetworkEquipment", "Equipamento de rede"),
+    ("Software", "Software"),
+)
+_TICKET_ITEM_TYPE_NAMES = dict(TICKET_ITEM_TYPES)
+
+
+def supported_item_types(profile_item_types) -> list[tuple[str, str]]:
+    """Profile ``helpdesk_item_type`` ∩ BFF-supported types, catalog order.
+
+    GLPI profile is the authority on which types the session may link; the
+    BFF set is the technical subset it knows how to search (legacy
+    ``search/{itemtype}`` + ``Item_Ticket`` relation).
+    """
+    allowed = set(profile_item_types or [])
+    return [
+        (itemtype, label)
+        for itemtype, label in TICKET_ITEM_TYPES
+        if itemtype in allowed
+    ]
+
+
+def item_link_body(ticket_id: int, itemtype: str, items_id: int) -> dict:
+    if itemtype not in _TICKET_ITEM_TYPE_NAMES:
+        raise GlpiValidation("Tipo de item não suportado.")
+    if int(ticket_id) <= 0 or int(items_id) <= 0:
+        raise GlpiValidation("item_id inválido.")
+    # Runtime-proven: Item_Ticket requires an array of objects (ERROR_BAD_ARRAY otherwise).
+    return {
+        "input": [
+            {
+                "tickets_id": int(ticket_id),
+                "itemtype": itemtype,
+                "items_id": int(items_id),
+            }
+        ]
+    }
+
+
+def ticket_link_body(ticket_id_1: int, ticket_id_2: int, link: int = 1) -> dict:
+    if int(ticket_id_1) <= 0 or int(ticket_id_2) <= 0:
+        raise GlpiValidation("Chamado relacionado inválido.")
+    # Same contract: Ticket_Ticket expects an array of objects.
+    return {
+        "input": [
+            {
+                "tickets_id_1": int(ticket_id_1),
+                "tickets_id_2": int(ticket_id_2),
+                "link": int(link),
+            }
+        ]
+    }
+
+
+def parse_item_link_rows(payload) -> list[dict]:
+    """``GET /Ticket/{id}/Item_Ticket`` rows → normalized dicts."""
+    if isinstance(payload, dict):
+        rows = payload.get("results") or payload.get("data") or []
+    else:
+        rows = payload or []
+    out = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        itemtype = str(row.get("itemtype") or "").strip()
+        try:
+            items_id = int(row.get("items_id"))
+        except (TypeError, ValueError):
+            continue
+        if itemtype and items_id > 0:
+            out.append(
+                {
+                    "id": _int_field(row.get("id")),
+                    "itemtype": itemtype,
+                    "items_id": items_id,
+                }
+            )
+    return out
+
+
+def parse_ticket_link_rows(payload, ticket_id: int) -> list[dict]:
+    """``GET /Ticket/{id}/Ticket_Ticket`` → rows where ``ticket_id`` participates.
+
+    The legacy sub-resource is NOT parent-filtered (runtime-proven: it can
+    return links between other tickets), so filtering is mandatory here —
+    never surface a relation the ticket is not part of.
+    """
+    if isinstance(payload, dict):
+        rows = payload.get("results") or payload.get("data") or []
+    else:
+        rows = payload or []
+    ticket_id = int(ticket_id)
+    out = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        a = _int_field(row.get("tickets_id_1"))
+        b = _int_field(row.get("tickets_id_2"))
+        link = _int_field(row.get("link")) or 1
+        if a == ticket_id and b and b > 0:
+            out.append({"id": _int_field(row.get("id")), "other_id": b, "link": link})
+        elif b == ticket_id and a and a > 0:
+            out.append({"id": _int_field(row.get("id")), "other_id": a, "link": link})
+    return out
+
+
+def parse_search_item_rows(payload, itemtype: str) -> list[dict]:
+    """Legacy ``search/{itemtype}`` data rows → normalized item dicts.
+
+    Search option ids used: 2=id (forcedisplay), 1=name, 5=serial,
+    6=inventory number, 80=entity, 70=user.
+    """
+    if not isinstance(payload, dict):
+        return []
+    rows = payload.get("data") or payload.get("results") or []
+    out = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        items_id = _int_field(row.get("2"))
+        name = display_text(row.get("1"))
+        if not items_id or items_id <= 0:
+            continue
+        out.append(
+            {
+                "itemtype": itemtype,
+                "items_id": items_id,
+                "name": name or f"{itemtype} #{items_id}",
+                "serial": display_text(row.get("5")),
+                "inventory_number": display_text(row.get("6")),
+                "entity": display_text(row.get("80")),
+                "owner": display_text(row.get("70")),
+            }
+        )
+    return out
+
+
+def parse_session_hardware(full_session) -> dict:
+    """Legacy ``getFullSession`` → hardware capabilities + request-type default.
+
+    ``glpiactiveprofile.helpdesk_hardware`` and ``helpdesk_item_type`` are
+    profile fields (not profilerights) — the legacy session is the only
+    canonical surface that exposes them.
+    """
+    session = (full_session or {}).get("session") or {}
+    profile = session.get("glpiactiveprofile") or {}
+    hardware = _int_field(profile.get("helpdesk_hardware")) or 0
+    item_types = profile.get("helpdesk_item_type")
+    if not isinstance(item_types, list):
+        item_types = []
+    try:
+        default_rt = int(session.get("glpidefault_requesttypes_id") or 0)
+    except (TypeError, ValueError):
+        default_rt = 0
+    return {
+        "my_devices": bool(hardware & HELPDESK_HW_MY_DEVICES),
+        "all_devices": bool(hardware & HELPDESK_HW_ALL_DEVICES),
+        "item_types": [str(t) for t in item_types],
+        "default_request_type_id": default_rt or None,
+    }
+
+
+def parse_session_entity(payload) -> dict:
+    """HLAPI ``GET /session`` → active entity {id, name}."""
+    entity = (payload or {}).get("active_entity") or {}
+    try:
+        entity_id = int(entity.get("id"))
+    except (TypeError, ValueError):
+        entity_id = None
+    # Entity 0 (root "Delpi") is a valid active entity — falsy but real.
+    if entity_id is None or entity_id < 0:
+        return {}
+    return {
+        "id": entity_id,
+        "name": display_text(entity.get("complete_name") or entity.get("short_name")),
+    }
+
+
+_MAX_ITEM_LINKS = 10
+_MAX_RELATED_TICKETS = 10
+
+
+def normalize_item_links(item_links) -> list[dict]:
+    """Validated, deduplicated ``item_links`` entries from the create body."""
+    if not item_links:
+        return []
+    if len(item_links) > _MAX_ITEM_LINKS:
+        raise GlpiValidation(f"Máximo de {_MAX_ITEM_LINKS} itens por chamado.")
+    out: list[dict] = []
+    seen: set[tuple[str, int]] = set()
+    for entry in item_links:
+        if not isinstance(entry, dict):
+            raise GlpiValidation("item_links inválido.")
+        itemtype = str(entry.get("itemtype") or "").strip()
+        try:
+            items_id = int(entry.get("items_id"))
+        except (TypeError, ValueError):
+            raise GlpiValidation("items_id inválido.")
+        if itemtype not in _TICKET_ITEM_TYPE_NAMES or items_id <= 0:
+            raise GlpiValidation("Item inválido.")
+        key = (itemtype, items_id)
+        if key not in seen:
+            seen.add(key)
+            out.append({"itemtype": itemtype, "items_id": items_id})
+    return out
+
+
+def normalize_related_ticket_ids(related_ticket_ids) -> list[int]:
+    if not related_ticket_ids:
+        return []
+    if len(related_ticket_ids) > _MAX_RELATED_TICKETS:
+        raise GlpiValidation(
+            f"Máximo de {_MAX_RELATED_TICKETS} chamados relacionados por chamado."
+        )
+    out: list[int] = []
+    seen: set[int] = set()
+    for value in related_ticket_ids:
+        try:
+            ticket_id = int(value)
+        except (TypeError, ValueError):
+            raise GlpiValidation("related_ticket_ids inválido.")
+        if ticket_id <= 0:
+            raise GlpiValidation("related_ticket_ids inválido.")
+        if ticket_id not in seen:
+            seen.add(ticket_id)
+            out.append(ticket_id)
+    return out
