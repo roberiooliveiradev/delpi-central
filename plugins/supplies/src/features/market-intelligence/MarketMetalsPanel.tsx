@@ -386,7 +386,17 @@ export function MarketMetalsPanel({
           hint: content.latestValueHint,
           value: `${formatMarketDecimal(summary.latest?.value)} ${unitLabel}`,
           context: summary.latest
-            ? `${entry.instrument.label} · ${formatMarketDate(summary.latest.period)}`
+            ? [
+                entry.instrument.label,
+                formatMarketDate(summary.latest.period),
+                summary.latest.quote_basis
+                  ? MARKET_INTELLIGENCE_CONTENT.quoteBasis[
+                      summary.latest.quote_basis
+                    ] ?? summary.latest.quote_basis
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")
             : entry.instrument.label,
           icon: KPI_ICONS.metal,
         },
@@ -422,6 +432,11 @@ export function MarketMetalsPanel({
           context: [
             summary?.latest?.period
               ? formatMarketDate(summary.latest.period)
+              : "",
+            summary?.latest?.quote_basis
+              ? MARKET_INTELLIGENCE_CONTENT.quoteBasis[
+                  summary.latest.quote_basis
+                ] ?? summary.latest.quote_basis
               : "",
             `${MARKET_INTELLIGENCE_CONTENT.kpis.variationTitle}: ${formatMarketPercent(summary?.period_change_pct)}`,
           ]

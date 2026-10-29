@@ -152,13 +152,20 @@ export const MARKET_INTELLIGENCE_CONTENT = {
   },
 
   /** Quote-basis labels emitted by the catalog — shown as context on
-   * instrument cards and KPI lines (R5.S2). */
+   * instrument cards and KPI lines (R5.S2). `*_last` tokens mark an
+   * intraday last-quote refresh — never presented as a close (R11). */
   quoteBasis: {
     comex_daily_close: "Fechamento COMEX",
     lme_daily_close: "Fechamento LME",
     spot_daily_close: "Fechamento spot",
     daily_close: "Fechamento diário",
     monthly_average: "Média mensal da fonte",
+    comex_futures_last: "Último negócio COMEX",
+    comex_spot_last: "Último negócio COMEX (spot)",
+    lme_spot_last: "Último negócio LME",
+    lme_futures_last: "Último negócio LME (futuros)",
+    spot_last: "Último negócio spot",
+    unknown_last: "Último negócio",
   } as Record<string, string>,
 
   summary: {

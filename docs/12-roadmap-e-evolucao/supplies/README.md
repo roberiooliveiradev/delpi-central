@@ -16,6 +16,13 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ---
 
+## PROC-0076.R11 — Cotação diária via /v1/prices + histórico persistente gated (2026-10-30)
+
+Novo feed `metals-prices-daily`: uma chamada diária `/v1/prices` (weight 1, ~31/mês) atualiza a cotação dos cinco metais com data de referência do provedor, base `*_last` honesta (nunca apresentada como fechamento) e precedência atômica de quote-basis — um "último negócio" não sobrescreve um fechamento no cache nem na tabela permanente. Persistência permanente autorizada pelo PO **mas bloqueada por direito do provedor** (`PROVIDER_PERMANENT_STORAGE_RIGHT=PENDING`): o caminho permanente existe e está testado, alcançável apenas quando o catálogo mudar para `observation_retention='permanent'` + `store` no escopo — fail-closed até lá.
+
+- [Evidência R11 — decisões, contrato, feed, scheduler, testes](../shared-integrations/PROC-0076-R11-DAILY-QUOTES-EVIDENCE.md)
+- [Direitos — §7 decisão de produto × gate do provedor](../shared-integrations/PROC-0076-SOURCE-RIGHTS-EVIDENCE-20261027.md)
+
 ## PROC-0076.R5.S2 — Refinamento de UX: cards, ícones, unidades e completude (2026-10-27)
 
 Evolução visual/funcional do dashboard: a label de unidade amigável (`US$/t`, `US$/lb`, `R$/US$`, `Índice`, `%`) passa a ser emitida pelo producer (`unit` amigável + `unit_code` de máquina); cards de instrumento ganham ícone, base da cotação e última referência; o gráfico de metais é **agrupado por unidade** (USD/lb e USD/t nunca compartilham eixo); instrumentos selecionados sem direito de exibição são nomeados com motivo; câmbio e IPP exibem cartões de contexto reais quando não há observações; Comex pendente mostra próximos passos e prévia dos indicadores — sem valores sintéticos. Detalhes: §10 do documento de evidência R5.

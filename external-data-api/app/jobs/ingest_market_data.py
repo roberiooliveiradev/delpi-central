@@ -31,6 +31,7 @@ from app.domain.market_data import (
     FEED_IPP_MONTHLY,
     FEED_METALS_DAILY,
     FEED_METALS_MONTHLY,
+    FEED_METALS_PRICES_DAILY,
     SUPPORTED_FEEDS,
 )
 from app.infrastructure.config.settings import Settings
@@ -64,6 +65,9 @@ _DEFAULT_WINDOW_DAYS = {
     # S1: a 35-day window is refused upstream with 403); 29 days keeps
     # every request inside the plan's daily-bars window with margin.
     FEED_METALS_DAILY: 29,
+    # R11 — /v1/prices is a snapshot call; the CLI window is unused, but
+    # the key must exist for manual runs.
+    FEED_METALS_PRICES_DAILY: 1,
     FEED_COMEX_MONTHLY: 400,
     FEED_IPP_MONTHLY: 400,
 }

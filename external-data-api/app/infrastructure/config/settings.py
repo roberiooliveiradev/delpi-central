@@ -107,6 +107,13 @@ class Settings:
         os.getenv("EXTERNAL_DATA_FEED_METALS_DAILY_ENABLED", "false")
         .strip().lower() in {"1", "true", "yes"}
     )
+    # R11 — one /v1/prices last-quote refresh per day (1 weight/run,
+    # ~31/month). Keeps today's bar fresh between the spaced metals-daily
+    # history runs. Same source catalog + scope gates apply.
+    EXTERNAL_DATA_FEED_METALS_PRICES_DAILY_ENABLED = (
+        os.getenv("EXTERNAL_DATA_FEED_METALS_PRICES_DAILY_ENABLED", "false")
+        .strip().lower() in {"1", "true", "yes"}
+    )
 
     # MetalCharts (PROC-0076 R5) — Bearer key lives only in backend env;
     # never logged, never returned in payloads. The feed flag AND the

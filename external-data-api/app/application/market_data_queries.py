@@ -522,6 +522,7 @@ def get_ingestion_status() -> dict[str, Any]:
     feed_source = {
         "metals-monthly": "world-bank-pink-sheet",
         "metals-daily": PROVIDER_METALCHARTS,
+        "metals-prices-daily": PROVIDER_METALCHARTS,
         "fx-daily": "bcb-ptax",
         "comex-import-monthly": PROVIDER_MDIC_COMEX,
         "ipp-monthly": PROVIDER_IBGE_IPP,
@@ -757,6 +758,9 @@ def _metal_observation_dto(row, instrument, source) -> dict[str, Any]:
             row.get("unit_code"), instrument.unit_label
         ),
         "quote_basis": row["quote_basis"],
+        # Provider-published tick time when present (R11) — lets
+        # consumers distinguish a same-day "last" refresh from a close.
+        "observation_timestamp": _iso(row.get("observation_timestamp")),
         "quality": row["quality_status"],
         "source": {
             "source_id": row["source_id"],

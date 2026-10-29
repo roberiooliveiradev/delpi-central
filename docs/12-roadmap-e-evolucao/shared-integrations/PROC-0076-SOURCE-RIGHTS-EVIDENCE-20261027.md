@@ -158,3 +158,47 @@ Provas (sanitizadas): `/v1/instruments` 200 (1.137 instrumentos), `/v1/prices/` 
 - Adapter readiness R5: `external-data-api/migrations/V007__r5_metalcharts_adapter_readiness.sql` (fonte metalcharts inativa, bindings, cache TTL, ledger de franquia)
 - Guarda de ingestão: `market_data_ingestion.py` exige fonte ativa/licenciada + feed habilitado por env
 - Atribuição ao usuário: contrato BFF → `meta.source`/`attribution` exibido na página e no glossário
+
+## 7. R11 — Autorização de produto × direito do provedor (2026-10-30)
+
+### 7.1 Decisão de produto (autorização expressa do Product Owner)
+
+| Campo | Valor |
+|---|---|
+| PRODUCT_OWNER_AUTHORIZATION | **APPROVED** |
+| PURPOSE | INTERNAL_MARKET_INTELLIGENCE |
+| REDISTRIBUTION | FORBIDDEN |
+| TARGET_RETENTION | PERMANENT |
+| TARGET_FREQUENCY | DAILY |
+
+A DELPI autoriza, para suas próprias finalidades: coletar uma cotação
+diária dos cinco metais monitorados, persistir observações históricas
+em PostgreSQL, preservar observações de datas anteriores e usar os
+dados exclusivamente no Portal Suprimentos e em análises internas —
+sem redistribuição ou comercialização. A decisão substitui a
+preferência anterior por cache temporário como única fonte histórica.
+
+### 7.2 Direito do provedor — GATE-S0
+
+`PROVIDER_PERMANENT_STORAGE_RIGHT = PENDING` (MetalCharts Free).
+
+A autorização empresarial não substitui a licença do fornecedor. Os
+termos da MetalCharts seguem sem autorização expressa de retenção
+histórica permanente (seção 5.2); silêncio contratual não é
+autorização. Enquanto `store` permanecer ausente do
+`allowed_use_scope` e `observation_retention=ttl_cache` no catálogo:
+
+- a ingestão diária `/v1/prices` **escreve apenas em
+  `metal_quote_cache`** (TTL obrigatório) — histórico de fechamentos
+  segue coberto pelo feed `metals-daily` (barras diárias, mesma
+  retenção temporária);
+- **nenhuma** linha MetalCharts é copiada para
+  `metal_quote_observations`;
+- o caminho de escrita permanente existe e está testado, mas é
+  alcançável somente quando a linha do catálogo mudar para
+  `observation_retention=permanent` **e** `store` constar do escopo
+  — fail-closed nas duas condições (`_quote_source` em
+  `market_data_ingestion.py`).
+
+Alternativa para destravar o objetivo: fonte adicional com direito
+de armazenamento comprovado, ou autorização escrita da MetalCharts.

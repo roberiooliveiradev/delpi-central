@@ -17,12 +17,17 @@ from decimal import Decimal
 FEED_FX_DAILY = "fx-daily"
 FEED_METALS_MONTHLY = "metals-monthly"
 FEED_METALS_DAILY = "metals-daily"
+# PROC-0076 R11 — one /v1/prices call per day (1 weight) refreshing the
+# last-quote bars for every bound metal, so the cache stays fresh between
+# the spaced metals-daily history runs.
+FEED_METALS_PRICES_DAILY = "metals-prices-daily"
 FEED_COMEX_MONTHLY = "comex-import-monthly"
 FEED_IPP_MONTHLY = "ipp-monthly"
 SUPPORTED_FEEDS = (
     FEED_FX_DAILY,
     FEED_METALS_MONTHLY,
     FEED_METALS_DAILY,
+    FEED_METALS_PRICES_DAILY,
     FEED_COMEX_MONTHLY,
     FEED_IPP_MONTHLY,
 )
@@ -59,6 +64,42 @@ PROVIDER_METALCHARTS = "metalcharts"
 # retention (MetalCharts Free terms, PROC-0076 R5).
 RETENTION_PERMANENT = "permanent"
 RETENTION_TTL_CACHE = "ttl_cache"
+
+# Quote-basis semantics (PROC-0076 R11). Bases that carry a canonical
+# periodic value (daily closes, monthly averages) are authoritative: an
+# intraday "last" quote must never overwrite them. ``upsert`` guards in
+# the repository enforce this precedence atomically.
+QUOTE_BASIS_COMEX_DAILY_CLOSE = "comex_daily_close"
+QUOTE_BASIS_LME_DAILY_CLOSE = "lme_daily_close"
+QUOTE_BASIS_SPOT_DAILY_CLOSE = "spot_daily_close"
+QUOTE_BASIS_DAILY_CLOSE = "daily_close"
+QUOTE_BASIS_MONTHLY_AVERAGE = "monthly_average"
+AUTHORITATIVE_QUOTE_BASES = frozenset(
+    {
+        QUOTE_BASIS_COMEX_DAILY_CLOSE,
+        QUOTE_BASIS_LME_DAILY_CLOSE,
+        QUOTE_BASIS_SPOT_DAILY_CLOSE,
+        QUOTE_BASIS_DAILY_CLOSE,
+        QUOTE_BASIS_MONTHLY_AVERAGE,
+    }
+)
+
+
+def spot_last_quote_basis(
+    exchange: str | None, market_type: str | None
+) -> str:
+    """Honest basis token for a ``/v1/prices`` "last" quote.
+
+    The endpoint reports an intraday last trade, not a periodic close —
+    the label is composed from the reported exchange and market type so
+    spot/close semantics are never conflated. Unknown values produce a
+    deterministic ``*_last`` token rather than a fabricated close."""
+    ex = (exchange or "unknown").strip().lower() or "unknown"
+    mt = (market_type or "spot").strip().lower() or "spot"
+    if ex == mt:
+        return f"{ex}_last"
+    return f"{ex}_{mt}_last"
+
 
 SCHEMA_VERSION = "v1"
 

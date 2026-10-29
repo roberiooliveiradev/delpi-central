@@ -13,6 +13,7 @@ from decimal import Decimal
 from typing import Any, Iterable
 
 from app.domain.market_data import (
+    AUTHORITATIVE_QUOTE_BASES,
     MetalInstrumentBinding,
     RETENTION_PERMANENT,
     FeedStatus,
@@ -193,7 +194,7 @@ class MarketDataRepository:
             SELECT o.observation_id, o.observation_date, o.native_price,
                    o.native_currency, o.unit_code, o.quote_basis,
                    o.quality_status, o.source_id, o.source_record_key,
-                   o.retrieved_at, o.revised_at
+                   o.retrieved_at, o.revised_at, o.observation_timestamp
             FROM {self._t('metal_quote_observations')} o
             WHERE o.instrument_id = %s
               AND o.observation_date BETWEEN %s AND %s
@@ -606,25 +607,48 @@ class MarketDataRepository:
         source_id: str,
         source_record_key: str | None,
         retrieved_at: datetime,
+        observation_timestamp: datetime | None = None,
         quality_status: str = "validated",
     ) -> str:
-        """Insert or revise. Returns 'inserted' | 'updated' | 'unchanged'."""
+        """Insert or revise. Returns 'inserted' | 'updated' | 'unchanged'.
+
+        Quote-basis precedence (R11): an intraday ``*_last`` quote must
+        never overwrite a canonical close/average row for the same
+        identity, while an authoritative basis may supersede a ``*_last``
+        row. Unknown/NULL existing bases stay protected."""
+        table = self._t("metal_quote_observations")
+        authoritative = sorted(AUTHORITATIVE_QUOTE_BASES)
         with self._conn.cursor() as cur:
             cur.execute(
                 f"""
-                INSERT INTO {self._t('metal_quote_observations')}
+                INSERT INTO {table}
                     (instrument_id, observation_date, native_price,
                      native_currency, unit_code, quote_basis, source_id,
-                     source_record_key, retrieved_at, quality_status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     source_record_key, retrieved_at,
+                     observation_timestamp, quality_status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (instrument_id, observation_date, source_id)
                 DO UPDATE SET native_price = EXCLUDED.native_price,
+                              observation_timestamp =
+                                  EXCLUDED.observation_timestamp,
                               retrieved_at = EXCLUDED.retrieved_at,
                               revised_at = NOW(),
                               quality_status = EXCLUDED.quality_status,
-                              source_record_key = EXCLUDED.source_record_key
-                WHERE {self._t('metal_quote_observations')}.native_price
-                      IS DISTINCT FROM EXCLUDED.native_price
+                              source_record_key = EXCLUDED.source_record_key,
+                              quote_basis = EXCLUDED.quote_basis
+                WHERE (
+                    EXCLUDED.quote_basis = ANY(%s)
+                    OR EXCLUDED.quote_basis = {table}.quote_basis
+                    OR ({table}.quote_basis IS NOT NULL
+                        AND {table}.quote_basis <> ALL(%s))
+                ) AND (
+                    {table}.native_price
+                        IS DISTINCT FROM EXCLUDED.native_price
+                    OR {table}.quote_basis
+                        IS DISTINCT FROM EXCLUDED.quote_basis
+                    OR {table}.observation_timestamp
+                        IS DISTINCT FROM EXCLUDED.observation_timestamp
+                )
                 RETURNING (xmax = 0) AS inserted
                 """,
                 (
@@ -637,7 +661,10 @@ class MarketDataRepository:
                     source_id,
                     source_record_key,
                     retrieved_at,
+                    observation_timestamp,
                     quality_status,
+                    authoritative,
+                    authoritative,
                 ),
             )
             row = cur.fetchone()
@@ -707,11 +734,17 @@ class MarketDataRepository:
         quality_status: str = "validated",
     ) -> str:
         """Insert or refresh a TTL-cache row. Every write carries a new
-        expiry — 'updated' resets the retention clock deliberately."""
+        expiry — 'updated' resets the retention clock deliberately.
+
+        Same quote-basis precedence as the permanent table (R11): a
+        ``*_last`` intraday quote never overwrites a canonical close
+        row; a blocked conflict returns 'unchanged'."""
+        table = self._t("metal_quote_cache")
+        authoritative = sorted(AUTHORITATIVE_QUOTE_BASES)
         with self._conn.cursor() as cur:
             cur.execute(
                 f"""
-                INSERT INTO {self._t('metal_quote_cache')}
+                INSERT INTO {table}
                     (instrument_id, source_id, observation_date,
                      observation_timestamp, native_price, native_currency,
                      unit_code, quote_basis, source_record_key,
@@ -724,7 +757,12 @@ class MarketDataRepository:
                               retrieved_at = EXCLUDED.retrieved_at,
                               expires_at = EXCLUDED.expires_at,
                               quality_status = EXCLUDED.quality_status,
-                              source_record_key = EXCLUDED.source_record_key
+                              source_record_key = EXCLUDED.source_record_key,
+                              quote_basis = EXCLUDED.quote_basis
+                WHERE EXCLUDED.quote_basis = ANY(%s)
+                   OR EXCLUDED.quote_basis = {table}.quote_basis
+                   OR ({table}.quote_basis IS NOT NULL
+                       AND {table}.quote_basis <> ALL(%s))
                 RETURNING (xmax = 0) AS inserted
                 """,
                 (
@@ -740,10 +778,14 @@ class MarketDataRepository:
                     retrieved_at,
                     expires_at,
                     quality_status,
+                    authoritative,
+                    authoritative,
                 ),
             )
             row = cur.fetchone()
-        return "inserted" if row is None or row["inserted"] else "updated"
+        if row is None:
+            return "unchanged"
+        return "inserted" if row["inserted"] else "updated"
 
     def purge_expired_cache(self) -> int:
         """Delete TTL-expired cache rows — enforces the no-permanent-
@@ -917,14 +959,26 @@ class MarketDataRepository:
                 """
                 feeds.append("ipp-monthly")
             if self._table_exists("metal_quote_cache"):
+                # R11 — both MetalCharts feeds write the same TTL cache
+                # table; freshness is reported per feed name so the
+                # status endpoint tracks each schedule independently.
                 freshness_sql += f"""
                 UNION ALL
-                SELECT 'metals-daily' AS feed,
-                       MAX(c.observation_date), COUNT(*)
-                FROM {self._t('metal_quote_cache')} c
-                WHERE c.expires_at > NOW()
+                SELECT feed, latest, n FROM (
+                    SELECT 'metals-daily' AS feed,
+                           MAX(c.observation_date) AS latest,
+                           COUNT(*) AS n
+                    FROM {self._t('metal_quote_cache')} c
+                    WHERE c.expires_at > NOW()
+                    UNION ALL
+                    SELECT 'metals-prices-daily',
+                           MAX(c.observation_date), COUNT(*)
+                    FROM {self._t('metal_quote_cache')} c
+                    WHERE c.expires_at > NOW()
+                ) metals_cache
                 """
                 feeds.append("metals-daily")
+                feeds.append("metals-prices-daily")
             cur.execute(freshness_sql)
             freshness = {r["feed"]: r for r in cur.fetchall()}
 

@@ -196,6 +196,65 @@ def test_metal_day_granularity_returns_daily_closes(
 
 @patch(_JWT)
 @patch(_AUTH_MIDDLEWARE)
+def test_metal_day_series_surfaces_last_quote_basis(
+    mock_resolve, mock_validate
+):
+    """R11 — a /v1/prices same-day refresh lands as a ``*_last`` row and
+    stays labelled as such through points and the summary read model;
+    historical close rows keep their canonical basis."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user()
+    gateway = _gateway()
+
+    def obs(code, start, end):
+        rows = [
+            _obs(code, day, price)
+            for day, price in _DAILY.get(code, [])
+            if start.isoformat() <= day <= end.isoformat()
+        ]
+        if code == "copper" and end.isoformat() >= "2026-10-26":
+            rows.append(
+                {
+                    "instrument_code": code,
+                    "observation_date": "2026-10-27",
+                    "price": "4.95",
+                    "currency": "USD",
+                    "unit": "US$/lb",
+                    "quote_basis": "comex_futures_last",
+                    "observation_timestamp": "2026-10-27T17:30:00+00:00",
+                    "quality": "validated",
+                    "source": {"source_id": "metalcharts"},
+                }
+            )
+        return rows
+
+    gateway.metal_observations.side_effect = obs
+    client, ctx = _client(gateway)
+    with ctx:
+        response = client.get(
+            "/market-intelligence/quotes/series"
+            "?instruments=copper&granularity=day"
+            "&date_from=2026-10-19&date_to=2026-10-27",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    series = response.get_json()["series"][0]
+    points = {p["period"]: p for p in series["points"]}
+    assert points["2026-10-27"]["quote_basis"] == "comex_futures_last"
+    assert (
+        points["2026-10-27"]["observation_timestamp"]
+        == "2026-10-27T17:30:00+00:00"
+    )
+    assert points["2026-10-26"]["quote_basis"] == "daily_close"
+    latest = series["summary"]["latest"]
+    assert latest["quote_basis"] == "comex_futures_last"
+    assert latest["observation_timestamp"] == (
+        "2026-10-27T17:30:00+00:00"
+    )
+
+
+@patch(_JWT)
+@patch(_AUTH_MIDDLEWARE)
 def test_metal_week_granularity_iso_week_mean(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user()

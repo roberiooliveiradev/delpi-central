@@ -188,6 +188,94 @@ def test_metal_observation_upsert_idempotent(repo):
     assert rows[0]["revised_at"] is not None
 
 
+def test_quote_basis_precedence_last_never_overwrites_close(repo):
+    """R11 — an intraday ``*_last`` quote must never overwrite a
+    canonical close for the same identity; the close may supersede the
+    last-quote row. Verified against the real ON CONFLICT guard."""
+    inst = repo.get_instrument("copper")
+    now = datetime.now(timezone.utc)
+    close = repo.upsert_metal_observation(
+        instrument_id=inst.instrument_id,
+        observation_date=date(2026, 9, 2),
+        native_price=Decimal("9500.0"),
+        native_currency="USD",
+        unit_code="metric_ton",
+        quote_basis="comex_daily_close",
+        source_id="world-bank-pink-sheet",
+        source_record_key="test:close",
+        retrieved_at=now,
+    )
+    repo.commit()
+    assert close == "inserted"
+
+    last_tick = repo.upsert_metal_observation(
+        instrument_id=inst.instrument_id,
+        observation_date=date(2026, 9, 2),
+        native_price=Decimal("9510.0"),
+        native_currency="USD",
+        unit_code="metric_ton",
+        quote_basis="comex_futures_last",
+        source_id="world-bank-pink-sheet",
+        source_record_key="test:last",
+        retrieved_at=now,
+    )
+    repo.commit()
+    assert last_tick == "unchanged"  # blocked — close stays authoritative
+
+    rows = repo.list_metal_observations(
+        instrument_id=inst.instrument_id,
+        date_from=date(2026, 9, 2),
+        date_to=date(2026, 9, 2),
+        limit=10,
+    )
+    assert rows[0]["native_price"] == Decimal("9500.000000")
+    assert rows[0]["quote_basis"] == "comex_daily_close"
+
+
+def test_quote_basis_close_supersedes_last(repo):
+    """Inverse direction: a daily close may replace a prior ``*_last``
+    row for the same identity (correction completeness, not loss)."""
+    inst = repo.get_instrument("copper")
+    now = datetime.now(timezone.utc)
+    tick = repo.upsert_metal_observation(
+        instrument_id=inst.instrument_id,
+        observation_date=date(2026, 9, 3),
+        native_price=Decimal("9490.0"),
+        native_currency="USD",
+        unit_code="metric_ton",
+        quote_basis="comex_futures_last",
+        source_id="world-bank-pink-sheet",
+        source_record_key="test:last2",
+        retrieved_at=now,
+    )
+    repo.commit()
+    assert tick == "inserted"
+
+    close = repo.upsert_metal_observation(
+        instrument_id=inst.instrument_id,
+        observation_date=date(2026, 9, 3),
+        native_price=Decimal("9495.0"),
+        native_currency="USD",
+        unit_code="metric_ton",
+        quote_basis="comex_daily_close",
+        source_id="world-bank-pink-sheet",
+        source_record_key="test:close2",
+        retrieved_at=now,
+    )
+    repo.commit()
+    assert close == "updated"
+
+    rows = repo.list_metal_observations(
+        instrument_id=inst.instrument_id,
+        date_from=date(2026, 9, 3),
+        date_to=date(2026, 9, 3),
+        limit=10,
+    )
+    assert rows[0]["native_price"] == Decimal("9495.000000")
+    assert rows[0]["quote_basis"] == "comex_daily_close"
+    assert rows[0]["revised_at"] is not None
+
+
 def test_fx_upsert_and_read(repo):
     now = datetime.now(timezone.utc)
     out = repo.upsert_fx_observation(

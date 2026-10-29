@@ -86,6 +86,15 @@ _FEED_BY_KIND = {
     KIND_IPP: IPP_FEED,
 }
 
+
+def _feed_for_instrument(kind: str, instrument: dict[str, Any]) -> str:
+    """Collecting feed that actually refreshes this instrument (R11):
+    day-native MetalCharts instruments are refreshed by the daily
+    /v1/prices run, monthly instruments by the monthly batch."""
+    if kind == KIND_METAL and instrument.get("granularity") == "day":
+        return "metals-prices-daily"
+    return _FEED_BY_KIND[kind]
+
 _PUBLICATION_DAY_BY_KIND = {
     KIND_METAL: PINK_SHEET_PUBLICATION_DAY,
     KIND_IMPORT: COMEX_PUBLICATION_DAY,
@@ -103,6 +112,10 @@ class Observation:
     value: Decimal
     quality: str
     source_id: str | None
+    # Optional provenance carried from the producer row (R11) — lets
+    # the summary label a same-day "last" refresh vs a close basis.
+    quote_basis: str | None = None
+    observed_at: str | None = None
 
 
 def _month_add(d: date, months: int) -> date:
@@ -351,6 +364,8 @@ class MarketIntelligenceService:
                     value=value,
                     quality=item.get("quality") or "validated",
                     source_id=(item.get("source") or {}).get("source_id"),
+                    quote_basis=item.get("quote_basis"),
+                    observed_at=item.get("observation_timestamp"),
                 )
             )
         return points
@@ -457,6 +472,8 @@ class MarketIntelligenceService:
                     value=point.value * fx,
                     quality=point.quality,
                     source_id=point.source_id,
+                    quote_basis=point.quote_basis,
+                    observed_at=point.observed_at,
                 )
             )
         return converted, sorted(set(missing))
@@ -655,14 +672,17 @@ class MarketIntelligenceService:
         """
         valid = [p for p in points if p.get(value_key) is not None]
         observed = len(valid)
-        latest = (
-            {
+        latest = None
+        if valid:
+            latest = {
                 "period": valid[-1]["period"],
                 "value": valid[-1][value_key],
             }
-            if valid
-            else None
-        )
+            # R11 — additive provenance: emitted only when the producer
+            # row actually carries it (metal day-granularity points).
+            for key in ("quote_basis", "observation_timestamp"):
+                if valid[-1].get(key) is not None:
+                    latest[key] = valid[-1][key]
         change = None
         if include_change and len(valid) >= 2:
             first_v = _dec(valid[0][value_key])
@@ -947,6 +967,10 @@ class MarketIntelligenceService:
                 "currency": currency,
                 "unit": display_unit,
             }
+            if latest.quote_basis:
+                last_quote["quote_basis"] = latest.quote_basis
+            if latest.observed_at:
+                last_quote["observation_timestamp"] = latest.observed_at
             if converted:
                 native = next(
                     (p for p in reversed(raw_points) if p.period == latest.period),
@@ -995,7 +1019,7 @@ class MarketIntelligenceService:
                 "reference_date": fx_points[-1].period.isoformat(),
             }
 
-        meta = self._ingestion_meta(_FEED_BY_KIND[kind])
+        meta = self._ingestion_meta(_feed_for_instrument(kind, instrument))
         freshness = self._freshness(
             kind=kind,
             latest_available=self._instrument_latest(instrument),
@@ -1114,7 +1138,7 @@ class MarketIntelligenceService:
         for point in points:
             point.pop("period_date", None)
 
-        meta = self._ingestion_meta(_FEED_BY_KIND[kind])
+        meta = self._ingestion_meta(_feed_for_instrument(kind, instrument))
         freshness = self._freshness(
             kind=kind,
             latest_available=self._instrument_latest(instrument),
@@ -1313,7 +1337,11 @@ class MarketIntelligenceService:
                     else "no_data"
                 ),
                 "schema_version": SCHEMA_VERSION,
-                **self._ingestion_meta(_FEED_BY_KIND[KIND_METAL]),
+                **self._ingestion_meta(
+                    _feed_for_instrument(
+                        KIND_METAL, resolved[0] if resolved else {}
+                    )
+                ),
             },
         }
 
@@ -1449,7 +1477,7 @@ class MarketIntelligenceService:
 
         total = len(rows)
         items = rows[(page_no - 1) * size : page_no * size]
-        meta = self._ingestion_meta(_FEED_BY_KIND[kind])
+        meta = self._ingestion_meta(_feed_for_instrument(kind, instrument))
         freshness = self._freshness(
             kind=kind,
             latest_available=self._instrument_latest(instrument),
@@ -1956,6 +1984,19 @@ class MarketIntelligenceService:
                     "value": _fmt(conv.value) if conv is not None else None,
                     "observation_count": 1,
                     "coverage": "ok" if conv is not None else "fx_missing",
+                    # R11 — per-day provenance (additive, only when the
+                    # producer row carries it): a same-day "last" refresh
+                    # stays distinguishable from a daily close.
+                    **(
+                        {"quote_basis": nat.quote_basis}
+                        if nat.quote_basis is not None
+                        else {}
+                    ),
+                    **(
+                        {"observation_timestamp": nat.observed_at}
+                        if nat.observed_at is not None
+                        else {}
+                    ),
                 }
                 for nat, conv in pairs
             ]

@@ -129,6 +129,12 @@ export type MarketSummaryResponse = {
     currency: MarketCurrency;
     /** Display unit — BRL/metric ton when converted, USD/metric ton natively. */
     unit: string | null;
+    /** Producer basis of the latest row — `*_last` marks an intraday
+     * last-quote refresh, `*_daily_close`/`monthly_average` a canonical
+     * periodic value (R11). */
+    quote_basis?: string | null;
+    /** Provider-published tick timestamp for last-quote rows. */
+    observation_timestamp?: string | null;
     /** Original source values — audit trail, present on converted quotes. */
     native?: { value: string | null; currency: string; unit: string | null };
     conversion?: {
@@ -193,7 +199,14 @@ export type MarketUnavailableReason =
 /** Contextual KPI read model computed by the BFF for the selected
  * series — never a quotation card repurposed for another metric. */
 export type MarketSeriesSummary = {
-  latest: { period: string; value: string } | null;
+  latest: {
+    period: string;
+    value: string;
+    /** Basis of the latest observed row — `*_last` marks an intraday
+     * last-quote refresh, not a periodic close (R11). */
+    quote_basis?: string | null;
+    observation_timestamp?: string | null;
+  } | null;
   period_average: string | null;
   period_change_pct: string | null;
   period_min: { period: string; value: string } | null;
