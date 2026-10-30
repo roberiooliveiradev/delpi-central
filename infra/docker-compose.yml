@@ -2261,6 +2261,10 @@ services:
       CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
       DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
 
+      # Supplier enrichment parity with supplies-api: distributed registry
+      # rate limiter needs the shared DELPI redis URL (same X3 mapping).
+      REDIS_URL: ${DELPI_REDIS_URL:-}
+
     depends_on:
       keycloak:
         condition: service_started
