@@ -4,6 +4,7 @@ Task: `SURI-MCP-FULL-PARITY-P0` · HEAD `8a822e29c1` · Status por item: `PROVEN
 Granularidade: família de operação (não endpoint). Uma tool ≠ N capacidades provadas sem teste por operação.
 Revisão `SURI-MCP-SUPPLIERS-WRITE-001` (2026-10-30): B-01/B-02 superadas por evidência de runtime — ver seção «Reconciliação».
 Revisão `SURI-MCP-FULL-PARITY-V4-G1` (2026-10-30): lote P1-R5 entregue — R-15..R-22 promovidas a PROVEN (catálogo v4, `test_suppliers_read.py`).
+Revisão `SURI-MCP-V4-G1-RUNTIME-RECOVERY-001` (2026-10-30): smoke autenticado user-delegated em produção — R-16 (ficha 360), R-18 (CEP), R-19 (tax_id), R-20 (preview, `write_enabled=false`) e regressão R-15/R-17 comprovadas em runtime; duas falhas (502 transitório Protheus OAuth; REDIS_URL ausente no MCP) diagnosticadas e recuperadas — ver `SURI-MCP-V4-G1-RUNTIME-RECOVERY-001-ACCEPTANCE-20261030.md`.
 
 ## Indicadores
 
