@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS supplies.suri_execute_operations (
     entity VARCHAR(40) NOT NULL,
     action VARCHAR(20) NOT NULL,
     idempotency_key VARCHAR(128) NOT NULL,
-    payload_hash CHAR(64) NOT NULL,
+    payload_hash VARCHAR(64) NOT NULL,
     status VARCHAR(20) NOT NULL
         CHECK (status IN ('in_progress', 'completed')),
     correlation_id VARCHAR(64),

@@ -100,7 +100,7 @@ class PostgresSuriExecuteOperationsRepository:
                         correlation_id=correlation_id,
                     )
                 conn.commit()
-        if existing["payload_hash"] != payload_hash:
+        if str(existing["payload_hash"]).strip() != payload_hash:
             return ExecuteClaim(kind="conflict")
         if existing["status"] == "completed":
             return ExecuteClaim(

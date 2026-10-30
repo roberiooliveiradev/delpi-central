@@ -80,7 +80,7 @@ def test_v005_defines_suri_execute_idempotency_claims():
         "CREATE TABLE IF NOT EXISTS supplies.suri_execute_operations" in sql
     )
     assert "UNIQUE (actor_subject, entity, action, idempotency_key)" in sql
-    assert "payload_hash CHAR(64) NOT NULL" in sql
+    assert "payload_hash VARCHAR(64) NOT NULL" in sql
     assert "'in_progress'" in sql and "'completed'" in sql
     assert "correlation_id" in sql
     assert "result JSONB" in sql
