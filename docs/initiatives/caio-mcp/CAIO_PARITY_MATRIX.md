@@ -204,3 +204,19 @@ Fonte canônica citada por tópico (rotas, use cases, helpers, docs).
   capability + alvo + fingerprint + TTL + uso único, HMAC) →
   `phase=commit` revalidando tudo; `confirmed=true` do cliente nunca
   é prova.
+
+## Correções transversais — Issue #123
+
+| Falha reportada | Causa raiz (compartilhada) | Correção |
+|---|---|---|
+| 8 reads → 502 com `pagination` | `_filters` injetava `page`/`page_size` em todo handler; `TypeError` era mascarado como `upstream_error` | paginação só flui para capabilities que a declaram em `fields`; caso contrário 400 tipado com os campos suportados |
+| `*.series` → 502 | `granularity` exigida pelo owner (api-delpi) e ausente do allowed params de `sales_order_otd.series`; demais séries falhavam sem granularity | `ANALYZE_PROXY_MAP` agora declara `(path, allowed, required)` — `rol.series`/`closing_rate.series`/`sales_order_otd.series` exigem `granularity`; `rol.by_product`/`rol.by_customer` exigem `start_date`+`end_date` (DTO do owner); falta → 400 local |
+| erros de validação upstream → 502 | gateway convertia todo `status >= 400` em `RuntimeError` | `DelpiUpstreamError` carrega o status upstream: 400/422 → 400 validation, 404 → 404, demais → 502 honesto |
+| delete: executor antes de consume | commit executava e só depois consumia — janela de replay | `claim_valid_proposal`: validação + consumo na mesma seção crítica sob o lock; executor só roda após o claim; falha do executor deixa proposta consumida (replay impossível) + audit log `caio_delete_commit(ed)` |
+| 403 intermitentes | classificados: `coverage_audit`/`portfolio.list`/`load_summary` são `commercial.manage`; demais exigem `commercial.access` — 403 = principal sem permissão naquela chamada (negação legítima, mesma regra das rotas REST) | sem mudança de comportamento |
+
+**Capabilities com paginação `page`/`page_size`:** `proposal.list`,
+`proposal.analytics_list`, `customer.search`, `customer.account_audit`,
+`customer.outbound_invoices`, `portfolio.audit`,
+`production.appointments`. **`interaction_room.list`** usa
+`limit`/`cursor` (modelo cursor do owner) — `page` rejeitado com 400.

@@ -2663,15 +2663,21 @@ def analyze_otd_line_detail(
         return handle_tool_error(exc)
 
 
-# Analytics proxy map — analysis_type → (path, allowed upstream params).
-# Mirrors analytics_routes: scope merged server-side, never widened.
-ANALYZE_PROXY_MAP: dict[str, tuple[str, tuple[str, ...]]] = {
+# Analytics proxy map — analysis_type → (path, allowed upstream
+# params, required upstream params). Mirrors analytics_routes: scope
+# merged server-side, never widened. ``required`` mirrors the owner
+# contract (api-delpi required query params / DTO validation) so a
+# missing input fails locally with 400 — never an upstream 502.
+ANALYZE_PROXY_MAP: dict[
+    str, tuple[str, tuple[str, ...], tuple[str, ...]]
+] = {
     "rol.series": (
         "/rol/series",
         (
             "start_date", "end_date", "branch", "customer_segment",
             "granularity", "customer_centers",
         ),
+        ("granularity",),
     ),
     "rol.by_product": (
         "/rol/by-product",
@@ -2680,6 +2686,7 @@ ANALYZE_PROXY_MAP: dict[str, tuple[str, tuple[str, ...]]] = {
             "product_codes", "product_groups", "market", "group_by",
             "limit", "customer_centers",
         ),
+        ("start_date", "end_date"),
     ),
     "rol.by_customer": (
         "/rol/by-customer",
@@ -2688,6 +2695,7 @@ ANALYZE_PROXY_MAP: dict[str, tuple[str, tuple[str, ...]]] = {
             "product_codes", "product_groups", "market", "limit",
             "include_others", "customer_centers",
         ),
+        ("start_date", "end_date"),
     ),
     "billing.by_customer_month": (
         "/billing/by-customer-month",
@@ -2695,12 +2703,14 @@ ANALYZE_PROXY_MAP: dict[str, tuple[str, tuple[str, ...]]] = {
             "start_date", "end_date", "branch", "customer_segment",
             "nature", "limit", "customer_centers",
         ),
+        (),
     ),
     "closing_rate.summary": (
         "/closing-rate",
         (
             "start_date", "end_date", "branch", "customer_segment",
         ),
+        (),
     ),
     "closing_rate.series": (
         "/closing-rate/series",
@@ -2708,6 +2718,7 @@ ANALYZE_PROXY_MAP: dict[str, tuple[str, tuple[str, ...]]] = {
             "start_date", "end_date", "branch", "customer_segment",
             "granularity",
         ),
+        ("granularity",),
     ),
     "sales_order_otd.summary": (
         "/sales-order-otd",
@@ -2715,6 +2726,7 @@ ANALYZE_PROXY_MAP: dict[str, tuple[str, tuple[str, ...]]] = {
             "start_date", "end_date", "branch", "customer_segment",
             "customer_centers",
         ),
+        (),
     ),
     "sales_order_otd.panel": (
         "/sales-order-otd/panel",
@@ -2722,36 +2734,42 @@ ANALYZE_PROXY_MAP: dict[str, tuple[str, tuple[str, ...]]] = {
             "start_date", "end_date", "branch", "customer_segment",
             "customer_centers",
         ),
+        (),
     ),
     "sales_order_otd.series": (
         "/sales-order-otd/series",
         (
             "start_date", "end_date", "branch", "customer_segment",
-            "customer_centers",
+            "granularity", "customer_centers",
         ),
+        ("granularity",),
     ),
     "new_business.rol_pct": (
         "/new-business-rol-pct",
         (
             "start_date", "end_date", "branch", "customer_segment",
         ),
+        (),
     ),
     "new_business.rol_target_pct": (
         "/new-business-rol-target-pct",
         (
             "start_date", "end_date", "branch", "customer_segment",
         ),
+        (),
     ),
     "weg.rol_target_pct": (
         "/weg-rol-target-pct",
         (
             "start_date", "end_date", "branch", "customer_segment",
         ),
+        (),
     ),
     "opportunity.collaborator_summary": (
         "/proposals/collaborator-summary",
         (
             "start_date", "end_date", "branch", "customer_segment",
         ),
+        (),
     ),
 }

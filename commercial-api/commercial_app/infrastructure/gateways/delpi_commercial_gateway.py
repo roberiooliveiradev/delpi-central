@@ -9,6 +9,16 @@ from commercial_app.config import settings
 from commercial_app.infrastructure.http.auth_header import bearer_authorization_from_context
 
 
+class DelpiUpstreamError(RuntimeError):
+    """Upstream api-delpi rejected the request — carries the upstream
+    status so callers can surface honest validation/not-found errors
+    instead of masking every 4xx as a 502 dependency failure."""
+
+    def __init__(self, message: str, *, status_code: int) -> None:
+        super().__init__(message)
+        self.upstream_status_code = status_code
+
+
 class DelpiCommercialGateway:
     """Proxy HTTP para rotas TOTVS/enrichment na api-delpi."""
 
@@ -289,7 +299,9 @@ class DelpiCommercialGateway:
                 message = body.get("message") or body.get("detail") or message
             except Exception:
                 pass
-            raise RuntimeError(message)
+            raise DelpiUpstreamError(
+                message, status_code=response.status_code
+            )
         filename = None
         disposition = response.headers.get("content-disposition") or ""
         if "filename=" in disposition:
@@ -328,7 +340,9 @@ class DelpiCommercialGateway:
                 message = body.get("message") or body.get("detail") or message
             except Exception:
                 pass
-            raise RuntimeError(message)
+            raise DelpiUpstreamError(
+                message, status_code=response.status_code
+            )
         try:
             return response.json()
         except Exception as exc:

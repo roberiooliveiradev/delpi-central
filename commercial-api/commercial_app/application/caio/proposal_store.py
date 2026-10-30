@@ -232,16 +232,15 @@ def seal_proposal(
     return proposal, handle
 
 
-def load_valid_proposal(
+def _validate_proposal(
+    proposal: CaioProposal | None,
     *,
-    proposal_handle: str,
     actor_id: str,
     expected_capability: str,
-    expected_target_ref: str | None = None,
+    expected_target_ref: str | None,
 ) -> CaioProposal:
-    """Verify handle integrity + actor + capability + target + freshness."""
-    proposal_id = parse_proposal_handle(proposal_handle)
-    proposal = get_proposal_store().get(proposal_id)
+    """Shared binding checks — actor, capability, target, freshness,
+    single-use. Raising keeps the proposal unconsumed."""
     if proposal is None:
         raise CaioProposalError(
             "Proposta não encontrada ou já consumida.",
@@ -290,3 +289,50 @@ def load_valid_proposal(
             },
         )
     return proposal
+
+
+def load_valid_proposal(
+    *,
+    proposal_handle: str,
+    actor_id: str,
+    expected_capability: str,
+    expected_target_ref: str | None = None,
+) -> CaioProposal:
+    """Verify handle integrity + actor + capability + target + freshness."""
+    proposal_id = parse_proposal_handle(proposal_handle)
+    proposal = get_proposal_store().get(proposal_id)
+    return _validate_proposal(
+        proposal,
+        actor_id=actor_id,
+        expected_capability=expected_capability,
+        expected_target_ref=expected_target_ref,
+    )
+
+
+def claim_valid_proposal(
+    *,
+    proposal_handle: str,
+    actor_id: str,
+    expected_capability: str,
+    expected_target_ref: str | None = None,
+) -> CaioProposal:
+    """Atomic validate-and-consume under the store lock.
+
+    The single-use flag is flipped in the same critical section as the
+    binding checks — concurrent commits of the same handle can never
+    both pass. Callers MUST run the destructive executor only after a
+    successful claim; a failed executor leaves the proposal consumed,
+    which is the safe failure mode (re-prepare required, replay
+    impossible)."""
+    proposal_id = parse_proposal_handle(proposal_handle)
+    store = get_proposal_store()
+    with store._lock:
+        store._purge_locked()
+        proposal = _validate_proposal(
+            store._items.get(proposal_id),
+            actor_id=actor_id,
+            expected_capability=expected_capability,
+            expected_target_ref=expected_target_ref,
+        )
+        proposal.consumed = True
+        return proposal

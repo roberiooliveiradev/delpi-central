@@ -532,3 +532,251 @@ def test_knowledge_planned_topic_still_honest():
     result = sem.tool_knowledge(topic="products.guide")
     assert result.is_error is True
     assert result.structured_content["error_code"] == "not_implemented"
+
+
+# --- issue #123: pagination contract -------------------------------------------------
+
+
+def test_read_pagination_rejected_when_capability_does_not_declare_it():
+    """Issue #123 — pagination forwarded to handlers that do not
+    support it surfaced as 502; now a typed 400."""
+    _set_context(_human_user())
+    for entity, action in (
+        ("portfolio", "list"),
+        ("portfolio", "load_summary"),
+        ("customer", "list"),
+        ("open_order", "list"),
+        ("open_order", "recently_closed"),
+        ("worklist", "mine"),
+        ("task", "list"),
+        ("interaction_room", "list"),
+    ):
+        result = sem.tool_read(
+            entity=entity,
+            action=action,
+            pagination={"page": 1, "page_size": 1},
+        )
+        assert result.is_error is True, f"{entity}.{action}"
+        payload = result.structured_content
+        assert payload["status_code"] == 400, f"{entity}.{action}"
+        assert payload["error_code"] == "validation"
+
+
+def test_read_pagination_supported_capabilities_accept_it():
+    _set_context(_human_user())
+    captured = {}
+    from commercial_app.interface.mcp import tool_bridge as bridge
+
+    def fake(**kwargs):
+        captured.update(kwargs)
+        return mcp_tool_result({"success": True, "data": {"items": []}}, is_error=False)
+
+    with patch.object(bridge, "tool_proposal_list", fake):
+        result = sem.tool_read(
+            entity="proposal",
+            action="list",
+            pagination={"page": 2, "page_size": 5},
+        )
+    assert result.is_error is False
+    assert captured["page"] == 2
+    assert captured["page_size"] == 5
+
+
+def test_read_pagination_unknown_key_rejected():
+    _set_context(_human_user())
+    result = sem.tool_read(
+        entity="proposal",
+        action="list",
+        pagination={"offset": 10},
+    )
+    assert result.is_error is True
+    assert result.structured_content["error_code"] == "validation"
+
+
+def test_read_cursor_pagination_on_room_list():
+    _set_context(_human_user())
+    captured = {}
+
+    def fake(**kwargs):
+        captured.update(kwargs)
+        return mcp_tool_result({"success": True, "data": {}}, is_error=False)
+
+    with patch.object(parity, "tool_interaction_room_list", fake):
+        result = sem.tool_read(
+            entity="interaction_room",
+            action="list",
+            pagination={"limit": 10, "cursor": "abc"},
+        )
+    assert result.is_error is False
+    assert captured["limit"] == 10
+    assert captured["cursor"] == "abc"
+
+
+# --- issue #123: required upstream params (series) ------------------------------------
+
+
+def test_analyze_series_requires_granularity_locally():
+    _set_context(_human_user())
+    for kind in ("rol.series", "closing_rate.series",
+                 "sales_order_otd.series"):
+        result = sem.tool_analyze(
+            analysis_type=kind,
+            parameters={
+                "start_date": "2026-10-01",
+                "end_date": "2026-10-30",
+            },
+        )
+        assert result.is_error is True, kind
+        payload = result.structured_content
+        assert payload["status_code"] == 400
+        assert payload["error_code"] == "validation"
+        assert "granularity" in str(payload["data"]["required"])
+
+
+def test_analyze_sales_order_otd_series_forwards_granularity():
+    """granularity was missing from the allowed upstream params of
+    sales_order_otd.series — the call could never succeed upstream."""
+    _set_context(_human_user())
+    captured = {}
+
+    def fake(**kwargs):
+        captured.update(kwargs)
+        return mcp_tool_result({"success": True, "data": {}}, is_error=False)
+
+    with patch.object(parity, "analyze_proxy", fake):
+        result = sem.tool_analyze(
+            analysis_type="sales_order_otd.series",
+            parameters={
+                "start_date": "2026-10-01",
+                "end_date": "2026-10-30",
+                "granularity": "day",
+            },
+        )
+    assert result.is_error is False
+    assert captured["granularity"] == "day"
+    assert captured["path"] == "/sales-order-otd/series"
+
+
+def test_analyze_rol_by_product_requires_period():
+    _set_context(_human_user())
+    result = sem.tool_analyze(analysis_type="rol.by_product")
+    assert result.is_error is True
+    payload = result.structured_content
+    assert payload["status_code"] == 400
+    assert set(payload["data"]["required"]) == {
+        "start_date", "end_date"
+    }
+
+
+# --- issue #123: upstream 4xx must not surface as 502 ----------------------------------
+
+
+def test_upstream_client_error_maps_to_typed_result():
+    from commercial_app.infrastructure.gateways.delpi_commercial_gateway import (  # noqa: E501
+        DelpiUpstreamError,
+    )
+    from commercial_app.interface.mcp import tool_bridge as bridge
+
+    res = bridge.handle_tool_error(
+        DelpiUpstreamError(
+            "start_date e end_date são obrigatórios.",
+            status_code=400,
+        )
+    )
+    assert res.is_error is True
+    payload = res.structured_content
+    assert payload["status_code"] == 400
+    assert payload["error_code"] == "validation"
+
+    res = bridge.handle_tool_error(
+        DelpiUpstreamError("not found", status_code=404)
+    )
+    assert res.structured_content["status_code"] == 404
+
+    res = bridge.handle_tool_error(
+        DelpiUpstreamError("boom", status_code=500)
+    )
+    assert res.structured_content["status_code"] == 502
+    assert res.structured_content["error_code"] == "upstream_error"
+
+
+# --- issue #123: delete commit claims atomically before executing ----------------------
+
+
+def test_delete_commit_executor_runs_only_after_claim():
+    _set_context(_human_user())
+    observed = {}
+
+    def impact(target):
+        return {"target": target, "effect": "x"}
+
+    def executor(target, args):
+        store = proposal_store.get_proposal_store()
+        pid = observed["pid"]
+        # consumed proposals are purged from the store — absence at
+        # executor time proves the claim already flipped single-use.
+        observed["consumed_at_exec"] = store.get(pid) is None
+        return {"ok": True}
+
+    spec = dict(sem._DELETE_SPEC)
+    spec["task.delete"] = (impact, executor)
+    with patch.object(sem, "_DELETE_SPEC", spec):
+        prep = sem.tool_delete(
+            entity="task", target_ref="t", phase="prepare"
+        )
+        ref = prep.structured_content["data"]["proposal_ref"]
+        observed["pid"] = proposal_store.parse_proposal_handle(ref)
+        result = sem.tool_delete(
+            entity="task", target_ref="t", phase="commit",
+            proposal_ref=ref,
+        )
+    assert result.is_error is False
+    assert observed["consumed_at_exec"] is True
+
+
+def test_delete_commit_failed_executor_still_consumes_proposal():
+    _set_context(_human_user())
+
+    def impact(target):
+        return {"target": target}
+
+    def executor(target, args):
+        raise RuntimeError("backend failure")
+
+    spec = dict(sem._DELETE_SPEC)
+    spec["task.delete"] = (impact, executor)
+    with patch.object(sem, "_DELETE_SPEC", spec):
+        prep = sem.tool_delete(
+            entity="task", target_ref="t", phase="prepare"
+        )
+        ref = prep.structured_content["data"]["proposal_ref"]
+        first = sem.tool_delete(
+            entity="task", target_ref="t", phase="commit",
+            proposal_ref=ref,
+        )
+        second = sem.tool_delete(
+            entity="task", target_ref="t", phase="commit",
+            proposal_ref=ref,
+        )
+    assert first.is_error is True
+    assert first.structured_content["error_code"] == "upstream_error"
+    assert second.is_error is True
+    assert second.structured_content["error_code"] in {
+        "proposal_not_found", "proposal_stale"
+    }
+
+
+def test_delete_commit_concurrent_replay_fails_atomically():
+    """Two near-simultaneous commits of one handle: the claim is a
+    single critical section, so the second always loses."""
+    _set_context(_human_user())
+    calls, patcher = _install_fake_spec()
+    with patcher:
+        prep = sem.tool_delete(entity="task", target_ref="t", phase="prepare")
+        ref = prep.structured_content["data"]["proposal_ref"]
+        for _ in range(3):
+            sem.tool_delete(
+                entity="task", target_ref="t", phase="commit",
+                proposal_ref=ref,
+            )
+    assert len(calls) == 1

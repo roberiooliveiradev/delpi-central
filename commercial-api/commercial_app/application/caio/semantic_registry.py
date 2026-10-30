@@ -169,6 +169,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "read",
         ref_arg="portfolio_id",
         ref_description="Portfolio UUID.",
+        fields=("page", "page_size"),
         requires=(REQ_READ, REQ_AUDIT),
     ),
     _a(
@@ -206,7 +207,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Active-customer search over the production catalog "
         "(backend search + pagination).",
         "read",
-        fields=("q", "include_blocked"),
+        fields=("q", "include_blocked", "page", "page_size"),
         requires=(REQ_READ,),
     ),
     _a(
@@ -242,7 +243,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "single pair, no membership filter).",
         "read",
         fields=_CUSTOMER_PAIR_FIELDS + (
-            "branch", "start_date", "end_date",
+            "branch", "start_date", "end_date", "page", "page_size",
         ),
         requires=(REQ_READ,),
     ),
@@ -273,7 +274,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "customer", "account_audit", "read",
         "Account audit timeline of one customer account.",
         "read",
-        fields=_CUSTOMER_PAIR_FIELDS + ("limit",),
+        fields=_CUSTOMER_PAIR_FIELDS + ("limit", "page", "page_size"),
         requires=(REQ_READ,),
     ),
     # --- read: customer_center -------------------------------------------------
@@ -313,7 +314,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "Commercial proposal documents — backend search over the full "
         "eligible catalog (search, sort_by/sort_dir, pagination).",
         "read",
-        fields=("search", "sort_by", "sort_dir"),
+        fields=("search", "sort_by", "sort_dir", "page", "page_size"),
         requires=(REQ_PROPOSALS,),
     ),
     _a(
@@ -334,6 +335,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "granularity", "status", "search", "product_code",
             "product_group", "sort_by", "sort_dir",
             "account_customer_code", "customer_codes",
+            "page", "page_size",
         ),
         requires=(REQ_ANALYTICS,),
     ),
@@ -433,7 +435,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "interaction_room", "list", "read",
         "Caller interaction-room inbox.",
         "read",
-        fields=("filter_key", "query", "limit"),
+        fields=("filter_key", "query", "limit", "cursor"),
         requires=(REQ_ACCESS,),
     ),
     _a(

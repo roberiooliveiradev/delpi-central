@@ -56,6 +56,9 @@ from commercial_app.composition.commercial_composer import (
     build_manage_seller_portfolio_use_case,
     build_resolve_commercial_customer_scope_service,
 )
+from commercial_app.infrastructure.gateways.delpi_commercial_gateway import (
+    DelpiUpstreamError,
+)
 from commercial_app.core.auth_actor import (
     actor_sub_from_request,
     current_user_from_request,
@@ -131,6 +134,37 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
             status_code=400,
             error_code="validation",
             data={"error_kind": "validation"},
+        )
+    if isinstance(exc, DelpiUpstreamError):
+        upstream = exc.upstream_status_code
+        if upstream in (400, 422):
+            return _error_result(
+                str(exc),
+                status_code=400,
+                error_code="validation",
+                data={
+                    "error_kind": "upstream_validation",
+                    "upstream_status": upstream,
+                },
+            )
+        if upstream == 404:
+            return _error_result(
+                str(exc),
+                status_code=404,
+                error_code="not_found",
+                data={
+                    "error_kind": "upstream_not_found",
+                    "upstream_status": upstream,
+                },
+            )
+        logger.warning(
+            "caio_mcp_upstream_error status=%s", upstream
+        )
+        return _error_result(
+            "Upstream service error.",
+            status_code=502,
+            error_code="upstream_error",
+            data={"upstream_status": upstream},
         )
     if isinstance(exc, RuntimeError):
         return _error_result(

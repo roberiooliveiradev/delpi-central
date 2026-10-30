@@ -122,10 +122,13 @@ def create_mcp_server() -> MCPServer:
         title="Read",
         description=(
             "Semantic official-data reads — entity + action only "
-            "(typed allowlist; no URLs/methods/handler names). "
-            "entities: portfolio(me), customer(list), "
-            "open_order(list|recently_closed), proposal(list). "
-            "filters/pagination are per-action allowlisted fields — "
+            "(typed allowlist; no URLs/methods/handler names). The "
+            "full action catalog (49 reads: portfolios, customers, "
+            "orders, proposals, worklist, rooms, production, profile…) "
+            "is discoverable via get_context. filters/pagination are "
+            "per-action allowlisted fields — pagination is only "
+            "accepted on capabilities that declare it; unsupported "
+            "params fail with 400 validation, never silently. "
             "portfolio_id/seller_id select portfolios (manage/team "
             "scope); members see only their own portfolio scope."
         ),
@@ -155,10 +158,12 @@ def create_mcp_server() -> MCPServer:
         description=(
             "Grounded Commercial analyses over official facts — every "
             "value labeled OBSERVED|CALCULATED|INFERRED|UNKNOWN with "
-            "provenance. Types: portfolio.open_summary (open balance "
-            "KPI), portfolio.open_horizon (delivery horizon buckets), "
-            "rol.summary (revenue summary). CAIO never recalculates "
-            "indicators; unknown types answer not_implemented."
+            "provenance. 21 analysis types (portfolio, rol, closing "
+            "rate, sales order OTD, billing, dashboard, new business, "
+            "weg, opportunities) — full catalog via get_context. "
+            "Series analyses require granularity per the owner "
+            "contract. CAIO never recalculates indicators; unknown "
+            "types answer not_implemented."
         ),
         annotations=_annotations("analyze", "Analyze"),
         meta=meta,

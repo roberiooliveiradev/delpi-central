@@ -11,9 +11,13 @@ Governance model:
 - ``read``/``analyze``/``knowledge`` — human principal + commercial
   permission (``commercial.access``/``commercial.manage``), same gate
   as the REST routes, portfolio scope by the official resolver.
-- ``execute``/``delete`` — public tools with a deny-by-default
-  internal surface in v1: no write contract is activated yet, so
-  every operation answers ``not_implemented`` honestly.
+- ``execute`` — authorized creates/updates run directly through the
+  official owner use cases (no repetitive confirmations); contracts
+  not activated answer ``not_implemented`` honestly.
+- ``delete`` — destructive operations only via sealed
+  ``prepare → commit``: server-side proposal bound to actor,
+  capability, target, TTL and single-use, claimed atomically under
+  the store lock before the executor runs.
 """
 
 from __future__ import annotations
@@ -129,7 +133,10 @@ def _filters(
     entry, filters: dict | None, pagination: dict | None
 ) -> tuple[dict[str, Any], CallToolResult | None]:
     """Strict arg mapping: ref → ref_arg; filters → declared fields;
-    unknown keys are rejected, never silently dropped."""
+    pagination → only the keys the capability contract declares
+    (``entry.fields``). Unknown keys are rejected as typed validation
+    errors — never forwarded to handlers that cannot accept them
+    (which previously surfaced as a masked 502)."""
     merged: dict[str, Any] = {}
     for key, value in (filters or {}).items():
         if key not in entry.fields:
@@ -139,13 +146,30 @@ def _filters(
                 data={"allowed_fields": list(entry.fields)},
             )
         merged[key] = value
-    for key, value in (pagination or {}).items():
-        if key not in {"page", "page_size"}:
-            return {}, _err(
-                f"Campo de paginação '{key}' não suportado.",
-                code="validation",
-            )
-        merged[key] = value
+    if pagination:
+        declared = set(entry.fields)
+        supported = {"page", "page_size", "limit", "cursor"}
+        for key, value in pagination.items():
+            if key not in supported:
+                return {}, _err(
+                    f"Campo de paginação '{key}' não suportado.",
+                    code="validation",
+                    data={"supported_pagination": sorted(supported)},
+                )
+            if key not in declared:
+                return {}, _err(
+                    f"Operação {entry.capability} não suporta "
+                    f"paginação '{key}'.",
+                    code="validation",
+                    data={
+                        "capability": entry.capability,
+                        "pagination_fields": sorted(
+                            declared & supported
+                        ),
+                        "allowed_fields": list(entry.fields),
+                    },
+                )
+            merged[key] = value
     return merged, None
 
 
@@ -439,9 +463,21 @@ def tool_analyze(
 
 
 def _analyze_proxy(kind: str):
-    path, allowed = parity.ANALYZE_PROXY_MAP[kind]
+    path, allowed, required = parity.ANALYZE_PROXY_MAP[kind]
 
     def handler(p: dict) -> CallToolResult:
+        missing = [key for key in required if not p.get(key)]
+        if missing:
+            return _err(
+                f"Parâmetros obrigatórios ausentes em '{kind}': "
+                f"{missing}.",
+                code="validation",
+                data={
+                    "analysis_type": kind,
+                    "required": list(required),
+                    "allowed": list(allowed),
+                },
+            )
         upstream = {
             key: p.get(key) for key in allowed if p.get(key) is not None
         }
@@ -862,16 +898,31 @@ def tool_delete(
             raise PermissionError("Unauthorized")
 
         if normalized_phase == "commit":
-            proposal = proposal_store.load_valid_proposal(
+            # Atomic claim under the store lock: validate + consume in
+            # one critical section — a concurrent/replayed commit of
+            # the same handle can never pass twice. The executor runs
+            # strictly after the claim so the destructive call can
+            # never execute before single-use is enforced.
+            proposal = proposal_store.claim_valid_proposal(
                 proposal_handle=proposal_ref or "",
                 actor_id=actor,
                 expected_capability=capability,
                 expected_target_ref=target_ref.strip(),
             )
             args = dict(proposal.meta.get("args") or {})
+            logger.info(
+                "caio_delete_commit capability=%s proposal_id=%s "
+                "actor=%s target=%s",
+                capability,
+                proposal.proposal_id,
+                actor,
+                proposal.target_ref,
+            )
             data = executor(target_ref.strip(), args)
-            proposal_store.get_proposal_store().consume(
-                proposal.proposal_id
+            logger.info(
+                "caio_delete_committed capability=%s proposal_id=%s",
+                capability,
+                proposal.proposal_id,
             )
             return _ok(
                 {
