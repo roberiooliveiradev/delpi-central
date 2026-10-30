@@ -272,3 +272,7 @@ de segurança do owner.
 | D-9 opIds novos | RECOMMENDED | — | tv-dashboard-api | 6 vista_* + deprecar | E3-E5 |
 | D-10 audit canal | RECOMMENDED | — | tv-dashboard-api | channel na provenance | E8 |
 | ADR supersession | **PROPOSED** | aprovação formal | architecture board | `tv-dashboard-api/docs/architecture/adr-vista-semantic-verbs-surface.md` (pacote em doc 14) | E0 — **bloqueia tudo** |
+
+## D-6 amendment — latest product direction (2026-10-30)
+
+**Superseding the D-6 recommendation table above for product-target scope only**, the requester chooses INCLUDE for all eight blocks: playlist settings, activate/deactivate, slide duplication, section ordering, media/preset read, playlist deletion, history restore/templates/MDD, and shares/invites/permissions. See [15 — master plan](15-d6-product-direction-and-master-plan.md). These are **PRODUCT_DIRECTION_RECORDED**, not PRODUCT_SCOPE_APPROVED. Restoration, MDD and shares/permissions are not assumed compatible with PresentationMutation; require owner-specific contract decisions and Core RBAC/security approval for access-grant/revoke. The old recommendation to EXCLUDE ACL is no longer the user's target, but the prohibition on VISTA-local RBAC and unauthorized privilege elevation remains. D-5, D-8 and ADR remain PENDING.
