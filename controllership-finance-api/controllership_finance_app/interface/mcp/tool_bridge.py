@@ -913,6 +913,44 @@ def tool_get_cost_center_expenses(
     )
 
 
+def tool_get_billing_exclusion_roster(
+    period: str,
+    branch: str = "all",
+    view: str = "candidates",
+    product_group: str | None = None,
+    product_code: str | None = None,
+    document: str | None = None,
+    customer_code: str | None = None,
+    tes: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> CallToolResult:
+    """R11 Notas Fiscais a Desconsiderar — mesma rota governada do
+    Portal (eixo D2_EMISSAO). Lista investigativa: ``candidates`` usa o
+    critério histórico observado; ``out_of_criteria`` retorna linhas
+    relacionadas fora do predicado. Nenhuma nota é excluída
+    automaticamente de CPV, faturamento ou DRE; findings são
+    POSSIBLE_DIVERGENCE, nunca erro confirmado."""
+    request, _user = _user_and_access()
+    return _call_route(
+        closing_routes.get_closing_billing_exclusion_roster,
+        request,
+        period=period,
+        branch=branch,
+        view=view,
+        product_group=product_group,
+        product_code=product_code,
+        document=document,
+        customer_code=customer_code,
+        tes=tes,
+        include_findings=True,
+        page=page,
+        page_size=page_size,
+        sort="date",
+        sort_dir="asc",
+    )
+
+
 def tool_get_report_matrix(
     period: str, branch_scope: str | None = None
 ) -> CallToolResult:

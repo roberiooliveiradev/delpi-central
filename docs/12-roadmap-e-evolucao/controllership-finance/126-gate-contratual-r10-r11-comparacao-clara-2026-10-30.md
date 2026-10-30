@@ -393,3 +393,22 @@ silenciadas:
 | Paridade | 353 linhas / R$ 169.704,12 | **reproduzida ao vivo** no TOTVS: 353 / R$ 169.704,12 / 139 docs / 46 buckets CC (45 + grupo sem-CC) | `PROVEN` para 2026-09 f01 |
 
 E10a, E10b, E11a, E11b, LISTA-13 e G6 permanecem `PENDING`/`DECISION_REQUIRED` conforme §19.
+
+## 21. Status pós-stage-02 (2026-10-31) — contrato R11 `IMPLEMENTED`
+
+Execução `CF-PROC0072-R11-IMPLEMENTATION-STAGE-02` (doc 127 Etapa 2).
+Divergências entre o alvo do §17 e o contrato entregue — registradas, não
+silenciadas:
+
+| Aspecto | TARGET (§17) | Entregue (stage-02) | Nota |
+|---|---|---|---|
+| Rota produtor | `GET /controllership/billing-exclusion-roster` | `GET /financeiro/billing-exclusion-roster` (+`/export`) na api-delpi | prefixo `/financeiro` = padrão vigente do domínio no repo |
+| Rota BFF | — | `GET /closing/billing-exclusion-roster` (+`/export`) | mesma família dos proxies `closing/*` |
+| CLARA | `read(report.billing_exclusion_roster)` | idem — registrado em `READ_ACTIONS`; handler chama a mesma rota BFF | paridade por reúso de rota |
+| `view` | roster único | `view`∈{`candidates`,`out_of_criteria`,`all`} | separação explícita das duas populações; totais nunca somados |
+| Findings | DV-R11-01..04 | DV-R11-03 executado como `POSSIBLE_DIVERGENCE`; DV-R11-01 exposta como `selection`; DV-R11-02 como `costStatus=structural_zero_expected` (explicação); DV-R11-04 como visão `out_of_criteria` | nunca `CONFIRMED_ERROR` |
+| `affectedCalculation` | `TO_INVENTORY` até owner | `TO_INVENTORY` + `correctiveAction=PENDING_EVIDENCE` em `selection`/`provenance` | E11a preservado honesto — nenhuma exclusão automática (D-02) |
+| Paridade | 11 linhas / R$ 97.462,71 | **reproduzida ao vivo** no TOTVS via o próprio engine (`build_lines_query`): 11 / R$ 97.462,71 / 11 docs / 3 docs sem item-irmão (103033, 103199, 103202) | `PROVEN` para 2026-09 f01 |
+| Export | CSV/PDF individual | entregue — mesmo engine; cabeçalho declara competência/filial/visão/critério observado/caráter investigativo/fonte/hash/paridade | documento operacional, não emissão oficial |
+
+E11a e E11b **permanecem** `PENDING`/`DECISION_REQUIRED` conforme §4 e §19 — o relatório expõe a seleção como evidência histórica e a orientação limita-se a localizar/conferir o lançamento no Protheus; o predicado não foi publicado como regra oficial universal. G6 (homologação humana) e smoke produtivo `PENDING`.

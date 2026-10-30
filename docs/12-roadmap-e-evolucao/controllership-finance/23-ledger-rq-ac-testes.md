@@ -1080,3 +1080,26 @@ Execução `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` — Etapa 1 do doc 127, esc
 | RQ-R10-G6 | Homologação humana oficial da paridade | independente e pendente | PENDING |
 
 **Residuais da etapa:** E10a (catálogo CC→classe — bloqueia DV-R10-03/06 e a classificação Direto/Ind/Adm), E10b (persistência de revisão — sem `REVIEWED`), CTT consulta snapshot vigente (não comprova validade histórica), lista TES 12-vs-13 (observada a de 13, que reproduz o artefato), G6 humano.
+
+### IMPLEMENTATION-STAGE-02 — R11 notas fiscais a desconsiderar (2026-10-31)
+
+Execução `CF-PROC0072-R11-IMPLEMENTATION-STAGE-02` — Etapa 2 do doc 127, escopo exclusivo R11 (sem deploy, sem comparação universal, sem mutação no ERP). Stack: api-delpi `GET /financeiro/billing-exclusion-roster` (+`/export`), BFF `GET /closing/billing-exclusion-roster` (+`/export`), MFE `billing-exclusion-roster` no hub, CLARA `read(report.billing_exclusion_roster)`.
+
+| RQ/AC | Critério | Evidência | Estado |
+|---|---|---|---|
+| RQ-R11-SEL | Seleção histórica reproduzida pelo engine novo | SQL real no TOTVS via `build_lines_query` + split da aplicação: **11 linhas, Σ `D2_TOTAL` = 97.462,71, 11 docs**, TES={594}, CF={5101}, grupo={9035}, `D2_CUSTO1`=0, `F4_ESTOQUE`='N' — idêntico a `NF a desconsiderar.xlsb`/`Planilha2` | **PASS (PROVEN, live)** |
+| RQ-R11-GRAO | Grão item SD2 e identidade do documento | 11 linhas item; `document_item_count` e `has_stock_sibling_item` resolvidos por `D2_FILIAL+D2_DOC+D2_SERIE` (correlação, sem join que multiplique) | PASS |
+| RQ-R11-VIEW | Candidatas × relacionadas como populações separadas | `view=candidates\|out_of_criteria\|all`; totais nunca somados; `selectionStatus` por linha (`matches_historical_criteria`/`related_out_of_criteria`) | PASS |
+| RQ-R11-DV | Findings = `POSSIBLE_DIVERGENCE`, nunca `CONFIRMED_ERROR` | implementado DV-R11-03 (doc candidato sem item-irmão com `F4_ESTOQUE='S'` — 3/11 live); DV-R11-01 exposta como `selection`; DV-R11-02 como `costStatus=structural_zero_expected` (explicação, nunca divergência); DV-R11-04 como visão `out_of_criteria` | PASS |
+| RQ-R11-E11 | E11a/E11b honestos | `affectedCalculation=TO_INVENTORY`, `predicateOfficiality=TO_INVENTORY`, `correctiveAction=PENDING_EVIDENCE`; orientação apenas de localização/conferência no Protheus; nada excluído de CPV/faturamento/DRE | PASS |
+| RQ-R11-SEC | S2S + usuário delegado + scope fail-closed, sem permission nova | `stock-inventory.read` + `controllership-finance-api` + `controllership-finance.access`; 401/403/503 tipados; dataset gate `FINANCEIRO_STOCK_INVENTORY_ENABLED` | PASS (unit) |
+| RQ-R11-BFF | BFF proxy com forward verbatim + erros tipados | `tests/test_closing_billing_exclusion_roster.py` — 18 testes: bearer, manage-only 403, RBAC-down 503, service-principal 403, filtros/view forwarding, `scope_unavailable` 403, timeout 503, export bytes | PASS |
+| RQ-R11-CLARA | Capability semântica no dispatcher (não tool plana) | `READ_ACTIONS[("report","billing_exclusion_roster")]`; dispatch via `sb.tool_read` com filtros permitidos e rejeição de parâmetro desconhecido; handler chama a MESMA rota do Portal (`_call_route`) | PASS |
+| RQ-R11-MFE | Página com visões distintas, findings, estados, export | `BillingExclusionRosterPage` + catálogo + matriz (`OPERATIONAL_VIEW`/`billing-exclusion-roster`) + Help; 6 testes dedicados; lint/tsc limpos | PASS |
+| RQ-R11-EXP | Export individual CSV/PDF com metadados | mesmo motor da consulta; header declara competência/filial/visão/critério observado/caráter investigativo/fonte/hash/paridade | PASS (contrato; smoke manual PENDING) |
+| RQ-R11-REG | Regressão suítes afetadas | api-delpi 844/844 (23 R11 + 27 R10 + demais financeiro/stock), BFF 816/816, MFE 413/413 | PASS |
+| RQ-R11-AUTH+ | Autorização positiva com persona real autorizada | sem harness E2E nesta etapa | TEST_NOT_RUN |
+| RQ-R11-SMOKE | Smoke HTTP contra runtime real | container executa imagem anterior; deploy não autorizado na etapa | TEST_NOT_RUN |
+| RQ-R11-G6 | Homologação humana oficial da paridade e do predicado | independente e pendente | PENDING |
+
+**Residuais da etapa:** E11a (apuração afetada + ação corretiva no ERP — `TO_INVENTORY`/`PENDING_EVIDENCE`), E11b (predicado oficial — o artefato não distingue grupo vs TES vs interseção; seleção exposta como evidência histórica, não regra universal), paridade oficial humana (G6), smoke produtivo, gravação 54:44 não demonstra R11 (gate 020 `INCONCLUSIVE`).

@@ -746,6 +746,13 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(onOpen).toHaveBeenCalledWith("cost-center-expenses");
 
     fireEvent.click(
+      screen.getByRole("button", {
+        name: /Notas fiscais a desconsiderar — R11/,
+      }),
+    );
+    expect(onOpen).toHaveBeenCalledWith("billing-exclusion-roster");
+
+    fireEvent.click(
       screen.getByRole("button", { name: /Material em processo — R08/ }),
     );
     expect(onOpen).toHaveBeenCalledWith("work-in-process");
@@ -758,7 +765,7 @@ describe("catálogo em cartões — navegação contextual", () => {
     expect(screen.queryByText("RELATÓRIO")).toBeNull();
     expect(screen.queryByText("DESCRIÇÃO")).toBeNull();
     expect(screen.getAllByText("Disponível").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Abrir relatório").length).toBe(7);
+    expect(screen.getAllByText("Abrir relatório").length).toBe(8);
   });
 
   it("matriz R01–R15 fica em rastreabilidade técnica expansível", async () => {

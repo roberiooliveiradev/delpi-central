@@ -745,6 +745,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "export_financeiro_cost_center_expenses": RouteContract(
         "financeiro_cost_center_expenses_export", "document_export"
     ),
+    "get_financeiro_billing_exclusion_roster": RouteContract(
+        "financeiro_billing_exclusion_roster", "paged_list"
+    ),
+    "export_financeiro_billing_exclusion_roster": RouteContract(
+        "financeiro_billing_exclusion_roster_export", "document_export"
+    ),
     "get_financeiro_work_in_process": RouteContract(
         "financeiro_work_in_process", "paged_list"
     ),

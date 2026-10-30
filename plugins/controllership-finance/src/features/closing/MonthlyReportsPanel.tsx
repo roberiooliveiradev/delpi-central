@@ -173,6 +173,12 @@ const REPORT_META: Record<
       "Despesas por centro de custo com a seleção histórica do fechamento (eixo de digitação), universo investigativo separado e possíveis divergências para conferência no ERP.",
     origin: "TOTVS/SD1 + SB1 + CTT",
   },
+  "billing-exclusion-roster": {
+    name: "Notas fiscais a desconsiderar — R11",
+    description:
+      "Notas fiscais de saída selecionadas pelo critério histórico observado (grupo 9035 ∩ TES 594, eixo de emissão), com possíveis divergências e orientação de conferência no ERP — lista investigativa, não é exclusão automática.",
+    origin: "TOTVS/SD2 + SF4 + SB1",
+  },
   "work-in-process": {
     name: "Material em processo — R08",
     description:
@@ -188,6 +194,7 @@ const CATALOG_REPORT_KEYS: ReportKey[] = [
   "stock-kardex",
   "inventory-adjustments",
   "cost-center-expenses",
+  "billing-exclusion-roster",
   "work-in-process",
 ];
 

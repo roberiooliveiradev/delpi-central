@@ -203,6 +203,30 @@ export const CF_HELP = {
         "Regras de divergência disparadas na linha — sempre candidatos a revisão, nunca erro confirmado.",
     },
   },
+  billingExclusionRoster: {
+    page:
+      "Notas fiscais a desconsiderar — R11: notas de saída (SD2) da competência pelo eixo de data de emissão, selecionadas pelo critério histórico observado no artefato de fechamento (set/2026: grupo 9035 ∩ TES 594 — 11 linhas / R$ 97.462,71). A visão «Candidatas» aplica exatamente esse critério; «Relacionadas fora do critério» e «Todas» ampliam a investigação para linhas do grupo/TES fora do predicado — com totais próprios, nunca somados ao conjunto candidato. A lista é investigativa: nenhuma nota é excluída automaticamente de CPV, faturamento, estoque ou DRE, e a finalidade da desconsideração ainda aguarda decisão funcional. Achados são possíveis divergências para conferência humana no Protheus — nunca erro confirmado.",
+    totals:
+      "Totais da visão consultada (candidatas ou investigativa — nunca somados): quantidade de linhas, valor total, documentos, linhas com custo estruturalmente zero e documentos sem item-irmão de estoque, sobre todo o universo autorizado — não apenas a página exibida.",
+    findings:
+      "Achados das regras verificáveis: nota selecionada pelo critério histórico, custo estruturalmente zero explicado pelo TES sem movimento de estoque (condição esperada, não erro), documento sem item-irmão com movimento de estoque e linha fora do critério observado. Cada achado informa o que conferir e como localizar o documento no Protheus; a correção é atividade humana externa.",
+    export:
+      "Exporta a lista em CSV ou PDF com o mesmo motor e escopo da tela — o documento declara competência, filial, visão, critério observado, caráter investigativo, fonte, hash e estado de paridade. Enquanto a homologação oficial estiver pendente, o arquivo sai marcado como relatório operacional — não é lista oficial de exclusão.",
+    table:
+      "Detalhamento das notas no grão do item SD2 — documento, série, item, produto, grupo, TES, CFOP, cliente, quantidade, valor e custo de estoque. «Situação» distingue candidata (critério histórico) de linha fora do critério e marca documentos sem item-irmão de estoque; «Alertas» marca as regras disparadas. A paginação é no servidor sobre o conjunto inteiro autorizado.",
+    columns: {
+      issueDate:
+        "Data de emissão da nota (D2_EMISSAO) — o eixo temporal da seleção histórica.",
+      product:
+        "Código, descrição e grupo do produto no ERP (o critério histórico observado usa grupo 9035).",
+      cost:
+        "Custo de estoque do item (D2_CUSTO1). Zero é condição estrutural esperada quando o TES não movimenta estoque — explicação, não divergência.",
+      status:
+        "Situação investigativa da linha: «Candidata» atende ao critério histórico observado; «Fora do critério» pertence ao universo ampliado; «Sem item-irmão de estoque» indica documento TES 594 sem item relacionado com movimento de estoque — candidato a revisão, não erro.",
+      findings:
+        "Regras disparadas na linha — sempre candidatos a revisão ou explicações estruturais, nunca erro confirmado.",
+    },
+  },
   workInProcess: {
     page:
       "Material em Processo — R08: relatório do material em processo no fechamento do mês, com a mesma composição MATR989 que o motor P7 certifica — bloco físico do armazém de processo (99) mais o saldo alocado em ordens de produção vivas. A paridade por competência contra uma nova emissão oficial MATR989 ainda está pendente de homologação — use os valores como referência verificável, não como selo oficial.",

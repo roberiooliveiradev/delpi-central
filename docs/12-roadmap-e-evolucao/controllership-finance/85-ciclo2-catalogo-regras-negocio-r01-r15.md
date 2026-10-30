@@ -1110,6 +1110,31 @@ MATR910. Nenhum consumidor implementa "lista de exceções de
 faturamento" — `TARGET` se homologada (doc 56 §Reg.18: estados
 `excluded_from_analysis` etc. são `TARGET_DECISION_REQUIRED`).
 
+#### IMPLEMENTAÇÃO (stage-02, 2026-10-31) — `PROVEN` operacional
+
+Execução `CF-PROC0072-R11-IMPLEMENTATION-STAGE-02` materializou
+BR-R11-001..006 como engine novo na api-delpi
+(`GET /financeiro/billing-exclusion-roster`, módulo
+`financeiro_billing_exclusion_roster`): população SD2 f01 por
+`D2_EMISSAO` ∈ competência relacionada ao critério (grupo 9035 ∪
+TES 594), classificada por linha em `matches_historical_criteria`
+(interseção observada) ou `related_out_of_criteria`, exposta pelas
+visões `candidates`/`out_of_criteria`/`all` com totalizadores separados
+e nunca somados. Paridade live 2026-09 f01 via o próprio engine:
+**11 linhas / R$ 97.462,71 / 11 docs / 3 docs sem item-irmão de
+estoque** (103033, 103199, 103202 — identidade exata do artefato).
+SF4 resolvido via `TOP 1 OUTER APPLY` (filial específica, fallback
+filial-branca); SB1/SA1 por LEFT JOIN sem multiplicação; item-irmão por
+correlação `D2_FILIAL+D2_DOC+D2_SERIE`. DV-R11-03 implementado como
+`POSSIBLE_DIVERGENCE`; DV-R11-01 exposta como bloco `selection`;
+DV-R11-02 como `costStatus=structural_zero_expected` (condição
+esperada, nunca divergência); DV-R11-04 como visão separada. E11a/E11b
+permanecem `TO_INVENTORY`/`PENDING_EVIDENCE`: `affectedCalculation`
+honesto, nenhuma exclusão automática de CPV/faturamento/DRE, predicado
+não publicado como regra oficial universal. CPV canônico não foi
+alterado (BR-R11-005 `REUSE_PARTIAL` confirmado — contribuição zero no
+numerador).
+
 ## §11 — R12 · Fechamento de custo / Reposição / Refaz Saldos — `AS-IS`→`PROVEN` (bindings)
 
 ### BR-R12-001 — Recálculo do Custo de Reposição = **MATA320** — `PROVEN` (rotina + efeito)

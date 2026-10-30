@@ -152,6 +152,9 @@ def test_matrix_never_marks_operational_as_official(
     assert reports["R07"]["operational_view"] == "inventory-adjustments"
     assert reports["R08"]["operational_view"] == "work-in-process"
     assert reports["R10"]["operational_view"] == "cost-center-expenses"
+    assert (
+        reports["R11"]["operational_view"] == "billing-exclusion-roster"
+    )
     assert "não é" in reports["R01"]["note"].lower()
     assert "não substitui" in reports["R05"]["note"].lower()
     assert "não substitui" in reports["R08"]["note"].lower()
@@ -181,6 +184,7 @@ def test_matrix_separates_implementation_from_official_parity(
         "R07",
         "R08",
         "R10",
+        "R11",
     }
     for entry in operational:
         assert entry["official_parity"] == "PENDING"

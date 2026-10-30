@@ -295,6 +295,15 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
             "page", "page_size",
         ),
     ),
+    ("report", "billing_exclusion_roster"): _read_spec(
+        bridge.tool_get_billing_exclusion_roster,
+        required=("period",),
+        allowed=(
+            "branch", "view", "product_group",
+            "product_code", "document", "customer_code", "tes",
+            "page", "page_size",
+        ),
+    ),
     ("report", "matrix"): _read_spec(
         bridge.tool_get_report_matrix,
         required=("period",),

@@ -1095,3 +1095,107 @@ def export_closing_cost_center_expenses(
         params=params,
         operation_id="export_closing_cost_center_expenses",
     )
+
+
+# --- R11 (doc 126, IMPLEMENTATION-STAGE-02) — proxy governado do
+# owner api-delpi. Lista investigativa: candidatas (critério histórico
+# observado), relacionadas fora do critério ou ambas — totalizadores
+# sempre separados. Nenhuma nota é excluída automaticamente de CPV,
+# faturamento ou DRE (D-02). O BFF não recalcula nem mistura totais.
+
+
+@router.get(
+    "/billing-exclusion-roster",
+    operation_id="get_closing_billing_exclusion_roster",
+)
+def get_closing_billing_exclusion_roster(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    view: str = Query(
+        "candidates", pattern="^(candidates|out_of_criteria|all)$"
+    ),
+    product_group: str | None = Query(None),
+    product_code: str | None = Query(None),
+    document: str | None = Query(None),
+    customer_code: str | None = Query(None),
+    tes: str | None = Query(None),
+    include_findings: bool = Query(True),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    sort: str = Query(
+        "date",
+        pattern="^(date|document|product|total_value)$",
+    ),
+    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+):
+    """R11 Notas Fiscais a Desconsiderar — lista investigativa (eixo
+    D2_EMISSAO) com POSSIBLE_DIVERGENCE e orientação de conferência."""
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "view": view,
+        "include_findings": include_findings,
+        "page": page,
+        "page_size": page_size,
+        "sort": sort,
+        "sort_dir": sort_dir,
+    }
+    if product_group:
+        params["product_group"] = product_group
+    if product_code:
+        params["product_code"] = product_code
+    if document:
+        params["document"] = document
+    if customer_code:
+        params["customer_code"] = customer_code
+    if tes:
+        params["tes"] = tes
+    return _call_gateway(
+        request,
+        path="/financeiro/billing-exclusion-roster",
+        params=params,
+        operation_id="get_closing_billing_exclusion_roster",
+    )
+
+
+@router.get(
+    "/billing-exclusion-roster/export",
+    operation_id="export_closing_billing_exclusion_roster",
+)
+def export_closing_billing_exclusion_roster(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    view: str = Query(
+        "candidates", pattern="^(candidates|out_of_criteria|all)$"
+    ),
+    product_group: str | None = Query(None),
+    product_code: str | None = Query(None),
+    document: str | None = Query(None),
+    customer_code: str | None = Query(None),
+    tes: str | None = Query(None),
+    export_format: str = Query("csv", alias="format", pattern="^(csv|pdf)$"),
+):
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "view": view,
+        "format": export_format,
+    }
+    if product_group:
+        params["product_group"] = product_group
+    if product_code:
+        params["product_code"] = product_code
+    if document:
+        params["document"] = document
+    if customer_code:
+        params["customer_code"] = customer_code
+    if tes:
+        params["tes"] = tes
+    return _proxy_export(
+        request,
+        upstream_path="/financeiro/billing-exclusion-roster/export",
+        params=params,
+        operation_id="export_closing_billing_exclusion_roster",
+    )

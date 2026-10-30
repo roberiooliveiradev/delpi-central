@@ -132,7 +132,7 @@ Cada gate:
 | Etapa | Estado inicial | EXECUTION_ID | SHA | Veredito GPT | Residuais |
 |---|---|---|---|---|---|
 | 1 — R10 | IMPLEMENTED (aguardando review) | `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` | ver EXECUTION_REPORT | PENDING | E10a, E10b, CTT histórico, TES 12-vs-13, G6 |
-| 2 — R11 | PLANNED | A atribuir | — | PENDING | E11a, E11b |
+| 2 — R11 | IMPLEMENTED (aguardando review) | `CF-PROC0072-R11-IMPLEMENTATION-STAGE-02` | ver EXECUTION_REPORT | PENDING | E11a, E11b, paridade oficial/G6, smoke produtivo |
 | 3 — Comparação | PLANNED | A atribuir | — | PENDING | semântica/limites/AuthZ |
 | 4 — Conhecimento CLARA | PLANNED | A atribuir | — | PENDING | corpus e citações |
 | 5 — Homologação/deploy | PLANNED | A atribuir | — | PENDING | G6/E7 e smoke positivo |
@@ -143,4 +143,6 @@ Atualizar por **evidência**, não apenas pelo relato de execução. A aprovaç�
 
 **Etapa 1 executada** sob `CF-PROC0072-R10-IMPLEMENTATION-STAGE-01` — R10 implementado ponta a ponta (api-delpi `/financeiro/cost-center-expenses`, BFF `/closing/cost-center-expenses` + export, página MFE no hub de relatórios, CLARA `read(report.cost_center_expenses)`), com paridade monetária reproduzida ao vivo contra o TOTVS (353 linhas / R$ 169.704,12 / 139 documentos / 46 buckets de CC para 2026-09 filial 01 — incluindo o grupo «sem centro de custo» como no artefato). Subset implementado de divergências: DV-R10-01 (universo investigação), DV-R10-02 (CTT vigente, sem conclusão histórica), DV-R10-04, DV-R10-05 (`UNCLASSIFIED` por D-01); DV-R10-03 e DV-R10-06 declarados e bloqueados por E10a. Sem deploy, sem corpus produtivo, sem R11 — EXECUTION_REPORT entregue para GPT REVIEW.
 
-**Próximo prompt, somente quando o PO solicitar:** Etapa 2 — R11, conforme §4, após review da Etapa 1 e autorização explícita do Product Owner.
+**Etapa 2 executada** sob `CF-PROC0072-R11-IMPLEMENTATION-STAGE-02` — R11 implementado ponta a ponta (api-delpi `/financeiro/billing-exclusion-roster`, BFF `/closing/billing-exclusion-roster` + export, página MFE no hub de relatórios, CLARA `read(report.billing_exclusion_roster)`), com paridade reproduzida ao vivo contra o TOTVS **via o próprio engine** (11 linhas / R$ 97.462,71 / 11 documentos / 3 documentos sem item-irmão de estoque — 103033, 103199, 103202 — para 2026-09 filial 01, eixo `D2_EMISSAO`). Três visões com totalizadores separados e nunca somados: `candidates` (predicado histórico observado grupo 9035 ∩ TES 594), `out_of_criteria` (linhas relacionadas fora do predicado — DV-R11-04) e `all`. Subset implementado de regras: DV-R11-03 como `POSSIBLE_DIVERGENCE`; DV-R11-01 exposta como bloco de seleção; DV-R11-02 como `costStatus` explicativo (nunca divergência); DV-R11-04 como visão separada. E11a/E11b permanecem `TO_INVENTORY`/`PENDING_EVIDENCE`: nenhuma nota é excluída automaticamente de CPV, faturamento ou DRE, e o predicado não é publicado como regra oficial universal. Sem deploy, sem comparação universal — EXECUTION_REPORT entregue para GPT REVIEW.
+
+**Próximo prompt, somente quando o PO solicitar:** Etapa 3 — Comparação transversal pela CLARA, conforme §5, após review da Etapa 2 e autorização explícita do Product Owner.

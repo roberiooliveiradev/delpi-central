@@ -135,11 +135,11 @@ REPORT_CATALOG: tuple[dict, ...] = (
     {
         "report_id": "R11",
         "label": "NF a desconsiderar",
-        "source_kind": "MANUAL_EVIDENCE",
-        "owner": "Controladoria",
-        "operational_view": None,
-        "official_parity": None,
-        "note": "Evidência documental — validação humana P2.",
+        "source_kind": "OPERATIONAL_VIEW",
+        "owner": "TOTVS/SD2-SF4-SB1",
+        "operational_view": "billing-exclusion-roster",
+        "official_parity": "PENDING",
+        "note": "Lista investigativa da seleção histórica SD2/D2_EMISSAO (grupo 9035 ∩ TES 594 observado) — nenhuma nota é excluída automaticamente de CPV, faturamento ou DRE. Achados são possíveis divergências, nunca erro confirmado.",
     },
     {
         "report_id": "R12",
