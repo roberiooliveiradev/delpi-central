@@ -92,3 +92,7 @@ Revisão corrigiu pontos bloqueantes sem implementar código:
   documental foi rebaseada sobre `origin/main` `5adbed8737` (avanços
   upstream: docs commercial/transformometro — sem impacto nos arquivos
   inspecionados).
+
+## Current product direction and complete execution plan (2026-10-30)
+
+**Read [15 — D-6 Product Direction and Full Refactoring Implementation Master Plan](15-d6-product-direction-and-master-plan.md)** for the latest user-requested target scope and cross-program execution order. All eight D-6 blocks are now INCLUDED in the desired product roadmap, including previously deferred history restore/templates/MDD and previously excluded shares/invites/permissions. This **overrides earlier D-6 recommendations only**, not approved owners/ADRs, security requirements or runtime. Owner approvals remain PENDING; do not infer READY_FOR_EXECUTION from product direction.
