@@ -111,3 +111,16 @@ Cada etapa: matriz de lacunas → owner e contrato → menor solução suficient
 - **Próxima decisão recomendada:** planejar P0/P1 com inventário de fontes e seis métodos pilotos; desenvolver em lotes pequenos com evidência, sem substituir a plataforma por um novo framework genérico.
 
 **Referências externas metodológicas a verificar e curar na implementação:** APQC Process Classification Framework, ASCM SCOR, SIPOC/BPMN, PDCA/5W2H, SPIN Selling e MEDDPICC. Esta lista não constitui endosso nem comprovação de adequação à DELPI.
+
+## 9. Auditoria de cobertura — 2026-10-30
+
+**Fonte verificada:** `commercial-api/commercial_app/content/caio_commercial_knowledge.json` v3.0, HEAD observado `008d91e4046fe5d1c02cf96e8a04c33117e03670`. Esta auditoria descreve **conteúdo recuperável**, não homologação de execução analítica automática.
+
+- **Glossário existente:** `commercial.glossary` já descreve OV (ordem de venda), OP (ordem de produção), ROL, OTD, carteiras, cliente, proposta, follow-up e salas. A definição de OV e sua identidade operacional devem continuar subordinadas aos contratos canônicos; não substituir fatos oficiais por glossário.
+- **14 métodos registrados:** `abc_pareto`, `rfv`, `desvio_meta`, `funil_conversao`, `risco_pedidos_otd`, `cinco_porques`, `spin_selling`, `meddpicc`, `account_planning`, `sipoc_bpmn`, `ishikawa`, `pdca_5w2h`, `swot`, `matriz_priorizacao`. Oito métodos avançados constam com `pending_business_validation`; não declará-los normas da DELPI.
+- **8 playbooks registrados:** `executive_diagnosis`, `customers_retraction`, `expansion_opportunities`, `order_health`, `proposal_funnel`, `forecast_scenarios`, `seller_portfolio_performance`, `plan_30_60_90`.
+- **Cobertura indireta:** análise de perda de clientes está em RFV + `customers_retraction`, previsão comercial em `forecast_scenarios`, sem método de forecast independente; calibrar e avaliar qualidade antes de afirmar forecasts oficiais.
+- **Gaps de conteúdo estruturado:** benchmarking ainda sem método próprio; `products.guide` permanece formalmente planejado. A EVA confirmou acesso delegado de leitura à fonte de produtos TOTVS SB1 e estrutura/BOM (exemplo observado: chicote de ligação 90260921, grupo 9026). Isto **identifica fonte autorizada**, mas não autoriza copiar catálogo ou estrutura técnica para o CAIO, nem prova integração CAIO↔EVA já implantada. Exigem contrato de produto/segurança e validação dos owners.
+- **Gaps de demonstração:** exemplos reais de utilização ponta a ponta dos playbooks com seleção automática por contexto, cálculos oficiais e referências rastreáveis; pesquisa web externa permanece `BLOCKED_EXTERNAL` até gate de segurança; histórico completo da conversa não é presumido disponível ao MCP.
+
+**Ação incremental proposta (não backlog aprovado):** (1) validar com owners glossário expandido de termos comerciais e famílias de chicotes; (2) incorporar `products.guide` baseado em dados técnicos permitidos e acesso por contrato autorizado; (3) definir método de benchmarking com fontes/datas/limites; (4) refinar previsão de vendas e a aplicação dos oito playbooks com testes reais `read/analyze/knowledge`; (5) testar seleção contextual e escopos com perfis distintos, sem writes produtivos. Atualizar corpus, testes e matriz de homologação somente conforme evidência.
