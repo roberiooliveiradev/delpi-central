@@ -2159,7 +2159,7 @@ services:
       # S2S individual (scope por operação exigido por api-delpi:
       # suppliers.read/.create/.update; provisionamento:
       # infra/scripts/keycloak_s2s_supplies_scope.py)
-      S2S_SCOPE: ${S2S_SCOPE:-suppliers.read suppliers.create suppliers.update}
+      S2S_SCOPE: ${S2S_SCOPE:-suppliers.read suppliers.create suppliers.update consumption-audit.read}
 
       PURCHASE_REQUESTS_API_URL: ${PURCHASE_REQUESTS_API_URL:-http://delpi-purchase-requests-api:8000}
       PURCHASE_REQUESTS_API_TIMEOUT: ${PURCHASE_REQUESTS_API_TIMEOUT:-90}
@@ -2769,6 +2769,11 @@ services:
       ENG_NC_DB_PASSWORD: ${ENG_NC_DB_PASSWORD:-}
       ENG_NC_IMPORT_REPLACE_ENABLED: ${ENG_NC_IMPORT_REPLACE_ENABLED:-}
       PLUGINS_DB_USER: ${PLUGINS_DB_USER:-}
+
+      # EVA ACT (tools mutáveis MCP) — fail-closed: vazio/ausente =
+      # desabilitado. Produção permanece desabilitada até autorização
+      # operacional específica (doc 53, gate EVA-P8).
+      ENG_EVA_ACT_ENABLED: ${ENG_EVA_ACT_ENABLED:-}
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]

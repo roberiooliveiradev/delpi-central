@@ -43,8 +43,15 @@ TARGET_AUDIENCE = "api-delpi"
 # api-delpi exige um scope por operação (protheus_router.py):
 #   GET /integrations/protheus/suppliers -> suppliers.read
 #   POST -> suppliers.create | PUT -> suppliers.update
+#   GET /supplies/consumption-audit/orders/* -> consumption-audit.read
+#     (GLPI #1353 — auditoria de consumo OP × operação, read-only)
 # F3.4: S2S_SCOPE_DENIED no PUT porque só suppliers.read era provisionado.
-REQUIRED_SCOPES = ("suppliers.read", "suppliers.create", "suppliers.update")
+REQUIRED_SCOPES = (
+    "suppliers.read",
+    "suppliers.create",
+    "suppliers.update",
+    "consumption-audit.read",
+)
 AUDIENCE_MAPPER_NAME = f"audience-{TARGET_AUDIENCE}"
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -137,21 +144,50 @@ def main() -> int:
     if not base:
         raise SystemExit("[ERRO] KC_BASE_URL/KEYCLOAK_URL ausente")
     if apply_mode and not base.startswith("https://"):
-        raise SystemExit("[ERRO] --apply exige base https:// em produção")
+        if os.environ.get("KC_ALLOW_HTTP_APPLY") != "1":
+            raise SystemExit(
+                "[ERRO] --apply exige base https:// — para realm local de "
+                "dev, exporte KC_ALLOW_HTTP_APPLY=1 explicitamente"
+            )
 
     realm = os.environ.get("KEYCLOAK_REALM") or REALM
     print(f"[kc-s2s-supplies] mode={'APPLY' if apply_mode else 'CHECK'} "
           f"realm={realm} base={base}")
     admin = KcAdmin(base, mint_admin_token(base))
 
-    # --- caller client must exist (creation out of scope) ---
+    # --- caller client: strict S2S shape, created only under --apply ---
     clients = admin.call(
         "GET", f"/admin/realms/{realm}/clients?clientId={CALLER_CLIENT}"
     )
     if not clients:
-        report(False, "client supplies-api", "inexistente — provisionar "
-               "conforme evidência P1.SEC.5 antes deste script")
-        return 1
+        if not apply_mode:
+            report(False, "client supplies-api", "inexistente — execute "
+                   "--apply para criar (confidencial, service account, "
+                   "somente client_credentials)")
+            return 1
+        admin.call(
+            "POST", f"/admin/realms/{realm}/clients",
+            {
+                "clientId": CALLER_CLIENT,
+                "protocol": "openid-connect",
+                "enabled": True,
+                "publicClient": False,
+                "serviceAccountsEnabled": True,
+                "standardFlowEnabled": False,
+                "implicitFlowEnabled": False,
+                "directAccessGrantsEnabled": False,
+                "authorizationServicesEnabled": False,
+            },
+        )
+        clients = admin.call(
+            "GET",
+            f"/admin/realms/{realm}/clients?clientId={CALLER_CLIENT}",
+        ) or []
+        report(bool(clients), "client supplies-api",
+               "criado (confidencial, SA, sem grants interativos)"
+               if clients else "falha ao criar")
+        if not clients:
+            return 1
     client = clients[0]
     client_uuid = client["id"]
     report(
@@ -257,7 +293,50 @@ def main() -> int:
         )
         report(True, "audience mapper api-delpi", "criado")
 
+    # --- secret handling: written to gitignored env, never printed ---
+    if apply_mode:
+        secret_body = admin.call(
+            "GET",
+            f"/admin/realms/{realm}/clients/{client_uuid}/client-secret",
+        ) or {}
+        secret = str(secret_body.get("value") or "")
+        if secret:
+            _write_env_config(secret)
+        else:
+            report(False, "client secret", "não retornado pelo Keycloak — "
+                   "verificar serviceAccountsEnabled")
+            return 1
+
     return 0
+
+
+def _upsert_env(lines: list[str], key: str, value: str) -> list[str]:
+    """Replace or append ``key=value`` in an env file line list."""
+    prefix = f"{key}="
+    for i, line in enumerate(lines):
+        if line.startswith(prefix):
+            lines[i] = f"{key}={value}"
+            return lines
+    lines.append(f"{key}={value}")
+    return lines
+
+
+def _write_env_config(secret: str) -> None:
+    """Persist S2S_CLIENT_* into infra/.env.
+
+    The secret value is written to the gitignored env file only — never
+    to stdout, logs or the repository.
+    """
+    lines = (
+        _INFRA_ENV.read_text(encoding="utf-8").splitlines()
+        if _INFRA_ENV.is_file()
+        else []
+    )
+    lines = _upsert_env(lines, "S2S_CLIENT_ID", CALLER_CLIENT)
+    lines = _upsert_env(lines, "S2S_CLIENT_SECRET", secret)
+    _INFRA_ENV.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    report(True, "infra/.env", "S2S_CLIENT_ID/SECRET gravados "
+           "(valores nunca exibidos)")
 
 
 if __name__ == "__main__":
