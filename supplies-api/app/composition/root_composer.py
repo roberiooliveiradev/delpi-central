@@ -5,6 +5,9 @@ from app.interfaces.http.auth_middleware import register_auth_middleware
 from app.interfaces.http.error_handlers import register_error_handlers
 from app.interfaces.http.request_context import register_request_context
 from app.interfaces.http.routes.analytics_routes import analytics_bp
+from app.interfaces.http.routes.consumption_audit_routes import (
+    consumption_audit_bp,
+)
 from app.interfaces.http.routes.deliveries_routes import deliveries_bp
 from app.interfaces.http.routes.health_routes import health_bp
 from app.interfaces.http.routes.inventory_routes import inventory_bp
@@ -39,6 +42,7 @@ def create_application() -> Flask:
     app.register_blueprint(safety_stock_bp)
     app.register_blueprint(market_intelligence_bp)
     app.register_blueprint(suppliers_bp)
+    app.register_blueprint(consumption_audit_bp)
     app.register_blueprint(creation_bp)
     app.register_blueprint(enrichment_bp)
     app.register_blueprint(users_bp)
