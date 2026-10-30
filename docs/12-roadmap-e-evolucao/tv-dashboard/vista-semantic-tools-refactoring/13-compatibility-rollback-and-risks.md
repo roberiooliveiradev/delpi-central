@@ -119,3 +119,7 @@ instructions apontando para ele).
 - Consumidores externos do GPT: remoção das 12 depende de evidência
   que não está no repositório — janela de coexistência longa é o
   custo honesto.
+
+## Expanded D-6 compatibility addendum — 2026-10-30
+
+The [full implementation master plan](15-d6-product-direction-and-master-plan.md) now includes restore, templates, MDD and access sharing/permissions as *target scope*, replacing older DEFER/EXCLUDE recommendations. Each is a separate contract-risk family: restore must preserve history/revision semantics; template lifecycle must preserve publish/archive and consuming editor/public parity; MDD must preserve portable schema/versioning, preview!=apply, asset validation and round-trip; resource access must preserve Core RBAC, end-user context, TV resource scope and auditable grant/revoke. Do not assert these paths are ADDITIVE or implementable via typed ops before owner/consumer proof; permission changes are not generic VISTA admin operations. Product target remains unapproved for execution.
