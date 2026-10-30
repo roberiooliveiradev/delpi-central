@@ -216,7 +216,7 @@ function NotOpenedNotice({
         </CfFeedbackMessage>
       ) : null}
       <div className="cf-settlements-actions">
-        <CfActionButton type="button" onClick={onOpen} disabled={opening}>
+        <CfActionButton type="button" onClick={onOpen} disabled={opening} softDisabled>
           {opening ? "Abrindo…" : "Abrir fechamento"}
         </CfActionButton>
       </div>

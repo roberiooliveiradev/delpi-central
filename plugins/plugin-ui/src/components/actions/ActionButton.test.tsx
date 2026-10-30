@@ -49,6 +49,39 @@ describe("ActionButton", () => {
     expect(container.querySelector(".delpi-ui-action-btn.cipa-extra")).toBeTruthy();
   });
 
+  it("softDisabled mantém focável com aria-disabled e não dispara onClick", () => {
+    const onClick = vi.fn();
+    render(
+      <ActionButton disabled softDisabled onClick={onClick}>
+        Atualizar
+      </ActionButton>,
+    );
+
+    const button = screen.getByRole("button", { name: "Atualizar" });
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.hasAttribute("disabled")).toBe(false);
+
+    fireEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+
+    button.focus();
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("softDisabled sem disabled renderiza botão normal", () => {
+    const onClick = vi.fn();
+    render(
+      <ActionButton softDisabled onClick={onClick}>
+        Atualizar
+      </ActionButton>,
+    );
+
+    const button = screen.getByRole("button", { name: "Atualizar" });
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(button.getAttribute("aria-disabled")).toBeNull();
+  });
+
   it("com href renderiza anchor real e left-click chama onClick", () => {
     const onClick = vi.fn();
     render(

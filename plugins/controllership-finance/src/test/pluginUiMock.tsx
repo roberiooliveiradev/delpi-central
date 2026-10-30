@@ -27,14 +27,17 @@ export function ActionButton(props: {
   variant?: string;
   type?: "button" | "submit";
   disabled?: boolean;
+  softDisabled?: boolean;
   "aria-label"?: string;
 }) {
+  const soft = Boolean(props.disabled && props.softDisabled);
   return el(
     "button",
     {
       type: props.type ?? "button",
-      disabled: props.disabled,
-      onClick: props.onClick,
+      disabled: props.disabled && !soft,
+      "aria-disabled": soft || undefined,
+      onClick: soft ? undefined : props.onClick,
       "aria-label": props["aria-label"],
     },
     props.children,

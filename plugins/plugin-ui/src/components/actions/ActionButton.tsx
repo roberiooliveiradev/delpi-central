@@ -9,6 +9,13 @@ type ActionButtonBaseProps = {
   children: ReactNode;
   variant?: ActionButtonVariant;
   disabled?: boolean;
+  /**
+   * Quando `disabled`, renderiza `aria-disabled` + guarda de clique em vez
+   * do atributo nativo — o botão permanece focável e o foco não é perdido
+   * para `<body>` quando a ação desabilita o controle no meio do loading.
+   * Opt-in: controles de refresh/ação; `type="submit"` continua nativo.
+   */
+  softDisabled?: boolean;
   className?: string;
   "aria-label"?: string;
   "aria-describedby"?: string;
@@ -45,6 +52,7 @@ export function ActionButton(props: ActionButtonProps) {
     children,
     variant = "default",
     disabled = false,
+    softDisabled = false,
     className,
     "aria-label": ariaLabel,
     "aria-describedby": ariaDescribedby,
@@ -95,13 +103,15 @@ export function ActionButton(props: ActionButtonProps) {
   }
 
   const buttonProps = props as Extract<ActionButtonProps, { href?: undefined }>;
+  const soft = disabled && softDisabled && (buttonProps.type ?? "button") !== "submit";
 
   return (
     <button
       type={buttonProps.type ?? "button"}
       className={rootClass}
-      disabled={disabled}
-      onClick={buttonProps.onClick}
+      disabled={disabled && !soft}
+      aria-disabled={soft || undefined}
+      onClick={soft ? undefined : buttonProps.onClick}
       form={buttonProps.form}
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedby}

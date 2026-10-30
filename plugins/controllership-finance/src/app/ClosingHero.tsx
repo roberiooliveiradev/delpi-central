@@ -112,6 +112,7 @@ export function ClosingHero({
           type="button"
           onClick={onRefresh}
           disabled={refreshing}
+          softDisabled
         >
           Atualizar consulta
         </CfActionButton>
