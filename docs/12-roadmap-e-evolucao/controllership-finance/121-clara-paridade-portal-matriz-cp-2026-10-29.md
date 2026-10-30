@@ -169,7 +169,7 @@ Consulta operacional, cálculo analítico e exportação **não dependem** de do
 | Pacote | Escopo | Estado |
 |---|---|---|
 | 014/015 | R06 CPV/Kardex + R07 inventários | IMPLEMENTADO operacional — `CF-PROC0072-R06-R07-IMPLEMENTATION-015` (D-O1..D-O4 aprovadas pelo PO 29/10/2026); paridade oficial × MATR910 PENDING (E8) |
-| 015 | R10 centro de custo + R11 NF a desconsiderar | PLANNED |
+| 015 | R10 centro de custo + R11 NF a desconsiderar | **CONTRACT_GATE_DONE** — [doc 126](./126-gate-contratual-r10-r11-comparacao-clara-2026-10-30.md); implementação aguarda D-01/D-02 |
 | 016 | R09 Faturamento × MOD | PLANNED (lacunas E9/G5) |
 | 017 | R12 estado de custos + R15 cutoff | PLANNED (READ-only de estado) |
 | depois | R04, R13, R14 | PLANNED (dependem de produtores/fontes) |
@@ -357,3 +357,14 @@ Todos os READ de relatório invocam a **mesma função de rota BFF** com a reque
 | Upload/substituição de evidência | multipart/antivírus/tamanho; fluxo autenticado do Portal preservado (§10 do pedido) |
 | Export CSV/PDF de relatórios | payload binário + runtime dedicado; CLARA explica/localiza |
 | `me` perfil completo, `viewer-context`, fotos | superfícies de UI; `get_my_context` cobre identidade mínima |
+
+## Adendo — gate-019 (30/10/2026): linhas TARGET R10/R11 + comparação
+
+Registro do gate documental `CF-PROC0072-R10-R11-CLARA-COMPARISON-CONTRACT-GATE-019` ([doc 126](./126-gate-contratual-r10-r11-comparacao-clara-2026-10-30.md)). Linhas `TARGET` — nada implementado; expõem a paridade **projetada** sob a arquitetura semântica vigente (6 tools; capabilities via registry `read`/`analyze`, não tools planas).
+
+| Capacidade | Portal (TARGET) | CLARA (TARGET) | AuthZ | Observações |
+|---|---|---|---|---|
+| R10 despesas por centro de custo | `GET /reports/cost-center-expenses` + página MFE | `read(report.cost_center_expenses)` | access + branch_scope | Eixo `D1_DTDIGIT`; seleção EDAPP provada; `cost_class` manual até D-01 |
+| R11 NF a desconsiderar | `GET /reports/billing-exclusion-roster` + página MFE | `read(report.billing_exclusion_roster)` | access + branch_scope | Roster SD2 9035∩594; `review_state` depende de D-02 |
+| Comparação universal R01–R15 | `POST /analysis/report-comparison` + painel MFE | `analyze(report_comparison)` | access sobre **todos** os sujeitos (fail-closed) | Orquestra contratos, nunca recalcula; matriz semântica doc 126 §7 |
+| Fichas de conhecimento R01–R15 | Help/MFE | `knowledge` (corpus governado) | access | Esquema doc 126 §9; publicação = gate de corpus separado |

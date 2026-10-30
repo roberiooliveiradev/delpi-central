@@ -935,6 +935,10 @@ de semântica com a view (BR-R09-012) permanece registrada — falta ≠ zero
 
 ## §10 — R10/R11 · Consultas EDAPP (SD1/SD2)
 
+> **Gate contratual:** inventário, reuso, contratos TARGET e decisões E10/E11
+> consolidados em [doc 126](126-gate-contratual-r10-r11-comparacao-clara-2026-10-30.md)
+> (`CF-PROC0072-R10-R11-CLARA-COMPARISON-CONTRACT-GATE-019`).
+
 ### R10 · `CC matriz.xlsb` — seleção reconstruída e corroborada pelo owner (rodada 25)
 
 Artefato: aba `SCAGQGA0.XML`, linha 0 literal `SD1`, headers = títulos

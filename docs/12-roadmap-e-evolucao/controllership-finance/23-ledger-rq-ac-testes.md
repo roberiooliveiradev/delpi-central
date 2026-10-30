@@ -1009,3 +1009,29 @@ Execução `CF-PROC0072-R06-R07-HISTORICAL-ROOT-CAUSE-REWORK-018`. Sintoma CLARA
 | Latência | Engine f02/01 | jun 6,6s / jul 5,5s / ago 5,1s / set 4,8s (antes: 30–60s+, timeout) | PASS |
 | Smoke autenticado positivo | identidade autorizada | nenhuma credencial com `controllership-finance.access` disponível | TEST_NOT_RUN |
 | G6 | Homologação humana | aguarda PO/TÉO | PENDING |
+
+### CONTRACT-GATE-019 — R10 + R11 + comparação universal (2026-10-30)
+
+Execução `CF-PROC0072-R10-R11-CLARA-COMPARISON-CONTRACT-GATE-019` — gate **documental/contratual** (zero runtime/migration/deploy/corpus). Registro canônico: [doc 126](126-gate-contratual-r10-r11-comparacao-clara-2026-10-30.md). Inventários R10/R11 herdados `PROVEN` dos docs 84 §5.4/§5.5 + 85 §10 + 118 OPS-11/12 — não reabertos.
+
+| RQ/AC | Critério | Evidência | Estado |
+|---|---|---|---|
+| RQ-R10-01 | Produtor R10 = EDAPP export SD1; grão item SD1; filial escopo | doc 85 BR-R10-001; artefato `CC matriz.xlsb` 353 linhas f01 | PASS (PROVEN) |
+| RQ-R10-02 | Seleção = `D1_DTDIGIT`∈mês − 13 TES − `D1_TP='MP'` − 6 benefícios | doc 84 §5.4: 353/353 identidade, Σ169.704,12 exato | PASS (PROVEN); lista narrada 12 vs 13 → E10 |
+| RQ-R10-03 | Classificação Direto/Ind/Adm com fonte homologada ou `UNCLASSIFIED` | coluna manual pós-exportação, não é SD1/CTT | TARGET — **D-01 DECISION_REQUIRED** |
+| RQ-R10-04 | `vw_fin_despesas_centro_custo` reuso sem transplante de seleção | BR-R10-007: eixo `D1_EMISSAO`, CC-obrigatório, sem exclusões (269/353) | PASS classificação `REUSE_PARTIAL` |
+| RQ-R11-01 | Produtor R11 = EDAPP export SD2; grão item SD2 | doc 85 BR-R11-001; artefato `NF a desconsiderar.xlsb` | PASS (PROVEN) |
+| RQ-R11-02 | Seleção = `9035`∩`594`∩`D2_EMISSAO`∩f01 (esta competência) | doc 84 §5.5: 11/11 identidade, Σ97.462,71 exato | PASS (PROVEN); predicado exato (grupo vs TES) → E11 |
+| RQ-R11-03 | `D2_CUSTO1=0` estrutural (`F4_ESTOQUE='N'`), CPV impacto nulo | TTAT `COLD=CNEW=0` desde insert; BR-R11-003/005 | PASS (PROVEN) |
+| RQ-R11-04 | Finalidade do «desconsiderar» definida pelo owner | `OWNER_REPORTED` — qual apuração desconsidera | TARGET — **D-02 DECISION_REQUIRED** |
+| RQ-CMP-01 | Comparação orquestra contratos governados, nunca recalcula | contrato `POST /analysis/report-comparison` desenhado (doc 126 §6) | TARGET — D-03/D-04 |
+| RQ-CMP-02 | Semântica incompatível → `INCOMPATIBLE`+explicação citada | matriz doc 126 §7 (R06×CPV `RELATED_NOT_EQUIVALENT` etc.) | TARGET |
+| RQ-CMP-03 | `INSUFFICIENT_EVIDENCE` default para pares não classificados | doc 126 §7 | TARGET |
+| RQ-CMP-04 | Limites: 2–6 sujeitos, timeouts, `PARTIAL` honesto, diffs≤500 | doc 126 §6 | TARGET |
+| RQ-SEC-01 | AuthZ sobre todos os sujeitos, fail-closed, sem vazamento de existência | doc 126 §8; zero permissions novas | TARGET |
+| RQ-SEC-02 | `.access.dre` exclusivo a documentos DRE; comparação não a usa | doc 126 §8 | TARGET |
+| RQ-CLARA-01 | `read(report.*)`/`analyze(report_comparison)` no dispatcher semântico; zero tools planas | doc 126 §5/§6; arquitetura doc 119 preservada | TARGET |
+| RQ-CLARA-02 | Fichas R01–R15 citáveis, classificadas `PROVEN|TO_INVENTORY|PLANNED|TARGET` | esquema doc 126 §9 | TARGET — D-06 |
+| RQ-EXP-01 | Export comparação exportável, bounded, watermark | doc 126 §6 | TARGET — D-07 |
+| RQ-DATA-01 | Dados parciais → `PARTIAL`+`subject_error`, nunca zero implícito | doc 126 §6/§8 | TARGET — D-08 |
+| RQ-TEST-01 | Suite de testes dos contratos R10/R11/comparação/segurança/CLARA | plano doc 126 §10; nenhum teste executado (gate documental) | TEST_NOT_RUN |
