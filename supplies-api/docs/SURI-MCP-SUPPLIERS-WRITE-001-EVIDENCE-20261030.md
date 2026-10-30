@@ -39,9 +39,10 @@ handler arbitrário.
   mesma policy das rotas `POST/PUT /suppliers` do Portal.
 - **Registry fechado**: `EXECUTE_ACTIONS_BY_ENTITY` em `constants.py` é a
   única fonte do dispatch.
-- **Idempotência**: `idempotency_key` por operação; replay no TTL (900s)
-  retorna `replayed` sem reexecutar; mesma chave + payload divergente →
-  `idempotency_conflict`. Fonte durável = integration tracker api-delpi.
+- **Idempotência**: `idempotency_key` por operação; claim durável atômico
+  `supplies.suri_execute_operations` (V005, deploy-001/D1) — replay retorna
+  `replayed` sem reexecutar, payload divergente → `idempotency_conflict`,
+  chave em voo → `in_progress`, store indisponível → fail-closed 503.
 - **Auditoria**: uma linha estruturada `suri_execute` por operação —
   ator, correlação, identidade normalizada, nomes de campos (nunca
   valores — LGPD), outcome, `operation_id`, http_status.
@@ -105,10 +106,9 @@ exige deploy + `tools/list` autenticado como evidência.
 
 ## Residual
 
-- Idempotência cross-restart: cache in-process TTL 900s; o registro
-  durável (tracker api-delpi + `operation_id`) é a fonte de verdade —
-  replays pós-restart caem no dedupe natural do ERP/tracker, não no
-  cache. Store pg dedicado segue `TO_INVENTORY` (DECISION-E1 do P0).
+- Idempotência cross-restart: **resolvido no deploy-001/D1** — claim
+  atômico em `supplies.suri_execute_operations` (V005) substitui o cache
+  in-process; DECISION-E1 encerrada como store pg no owner supplies-api.
 - `persistence_proven=false`/`tracking_warning` propagados verbatim —
   ACK nunca é persistência.
 - `S2S_SCOPE` vazio no `.env` host vs scope completo resolvido no

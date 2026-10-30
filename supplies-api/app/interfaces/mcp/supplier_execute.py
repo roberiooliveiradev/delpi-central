@@ -15,10 +15,12 @@ Governance guarantees:
 - server-side authorization was already enforced by the caller
   (``can_use_operations`` on the user's own effective identity — the
   same policy the Portal write routes apply);
-- per-operation ``idempotency_key`` binds client retries: an in-process
-  bounded replay cache returns the previous result instead of writing
-  twice, while the durable operation record lives in the api-delpi
-  integration tracker (``operation_id`` + ``X-Correlation-ID``);
+- per-operation ``idempotency_key`` binds client retries: a durable,
+  atomic claim row in ``supplies.suri_execute_operations`` (V005) makes
+  check-then-act safe across processes, workers and restarts — the first
+  claim wins, same-key callers get ``replay``/``in_progress``/
+  ``conflict`` and never re-execute; the api-delpi integration tracker
+  (``operation_id`` + ``X-Correlation-ID``) remains the write record;
 - creates run the same advisory duplicate pre-check the Portal performs
   (tax_id search over the governed list read) before any write byte;
 - every executed operation emits one structured audit line — actor,
@@ -33,9 +35,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import threading
-import time
-from collections import OrderedDict
+from datetime import timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -51,9 +51,11 @@ from app.domain.entities import EffectiveUser
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGatewayError
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.infrastructure.gateways.delpi_s2s_gateway import DelpiS2SApiGateway
+from app.infrastructure.persistence.suri_execute_operations_repository import (
+    PostgresSuriExecuteOperationsRepository,
+)
 from app.interfaces.mcp.constants import (
-    EXECUTE_REPLAY_CACHE_SIZE,
-    EXECUTE_REPLAY_TTL_SECONDS,
+    EXECUTE_IDEMPOTENCY_TTL_HOURS,
     MAX_IDEMPOTENCY_KEY_LENGTH,
 )
 
@@ -66,81 +68,14 @@ _UPDATE_PATH = "/integrations/protheus/suppliers/{supplier_id}"
 _LIST_PATH = "/supplies/suppliers"
 
 # Per-operation outcome vocabulary — mirrors the BFF write contract plus
-# the MCP-level replay marker: confirmed | acknowledged | sent |
-# rejected | indeterminate | replayed. ``sent`` means upstream accepted
-# transport without a persistence verdict.
+# MCP-level markers: confirmed | acknowledged | sent | rejected |
+# indeterminate | replayed | in_progress. ``sent`` means upstream
+# accepted transport without a persistence verdict; ``in_progress``
+# means an identical-keyed operation is still in flight or its claim
+# could not be resolved — never re-executed blindly.
 
-
-class _ReplayCache:
-    """Bounded in-process idempotency replay store.
-
-    This is a replay *guard*, not a source of truth: the durable write
-    record is the api-delpi integration tracker. Replays within the TTL
-    return the previous outcome instead of re-executing the write —
-    including ``indeterminate`` results, which are never re-sent blindly.
-    """
-
-    def __init__(self, *, ttl_seconds: int, max_size: int) -> None:
-        self._ttl = ttl_seconds
-        self._max = max_size
-        self._lock = threading.Lock()
-        self._entries: OrderedDict[str, tuple[float, str, dict[str, Any]]] = (
-            OrderedDict()
-        )
-
-    @staticmethod
-    def _key(user_id: str, action: str, idempotency_key: str) -> str:
-        raw = f"{user_id}|{action}|{idempotency_key}".encode("utf-8")
-        return hashlib.sha256(raw).hexdigest()
-
-    def lookup(
-        self, user_id: str, action: str, idempotency_key: str, payload_hash: str
-    ) -> str | dict[str, Any] | None:
-        """Return the cached op result, ``"conflict"`` on payload mismatch,
-        or ``None`` on miss."""
-        key = self._key(user_id, action, idempotency_key)
-        now = time.monotonic()
-        with self._lock:
-            entry = self._entries.get(key)
-            if entry is None:
-                return None
-            ts, stored_hash, result = entry
-            if now - ts > self._ttl:
-                self._entries.pop(key, None)
-                return None
-            self._entries.move_to_end(key)
-            if stored_hash != payload_hash:
-                return "conflict"
-            return dict(result)
-
-    def store(
-        self,
-        user_id: str,
-        action: str,
-        idempotency_key: str,
-        payload_hash: str,
-        result: dict[str, Any],
-    ) -> None:
-        key = self._key(user_id, action, idempotency_key)
-        now = time.monotonic()
-        with self._lock:
-            for stale in [
-                k for k, (ts, _, _) in self._entries.items() if now - ts > self._ttl
-            ]:
-                self._entries.pop(stale, None)
-            self._entries[key] = (now, payload_hash, dict(result))
-            self._entries.move_to_end(key)
-            while len(self._entries) > self._max:
-                self._entries.popitem(last=False)
-
-    def clear(self) -> None:
-        with self._lock:
-            self._entries.clear()
-
-
-_REPLAY_CACHE = _ReplayCache(
-    ttl_seconds=EXECUTE_REPLAY_TTL_SECONDS,
-    max_size=EXECUTE_REPLAY_CACHE_SIZE,
+_IDEMPOTENCY_STORE = PostgresSuriExecuteOperationsRepository(
+    ttl=timedelta(hours=EXECUTE_IDEMPOTENCY_TTL_HOURS)
 )
 
 
@@ -219,21 +154,53 @@ def _validation_reject(
     )
 
 
-def _check_replay(
+def _claim_or_replay(
     user: EffectiveUser,
     action: str,
     index: int,
     op: dict[str, Any],
     idempotency_key: str | None,
-) -> dict[str, Any] | None:
+    correlation_id: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Durable idempotency claim — returns ``(entry, claim_operation_id)``.
+
+    ``entry`` is a terminal per-operation result (replay/conflict/
+    in_progress/store failure) and ``claim_operation_id`` stays ``None``;
+    on a fresh claim ``entry`` is ``None`` and the caller MUST execute
+    the write then ``complete()`` the claim row. Any store error fails
+    closed — a keyed write is never issued without a successful claim.
+    """
     if not idempotency_key:
-        return None
-    hit = _REPLAY_CACHE.lookup(
-        user.id, action, idempotency_key, _payload_hash(op)
-    )
-    if hit is None:
-        return None
-    if hit == "conflict":
+        return None, None
+    try:
+        claim = _IDEMPOTENCY_STORE.claim(
+            actor_subject=str(user.id),
+            entity="suppliers",
+            action=action,
+            idempotency_key=str(idempotency_key),
+            payload_hash=_payload_hash(op),
+            correlation_id=correlation_id,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "suri_execute idempotency_store_unavailable error=%s",
+            type(exc).__name__,
+        )
+        return _op_error(
+            index,
+            outcome="indeterminate",
+            code="idempotency_store_unavailable",
+            message=(
+                "The durable idempotency store is unavailable — the "
+                "write was not sent. Retry later with the same "
+                "idempotency_key or verify the operation first."
+            ),
+            idempotency_key=idempotency_key,
+            http_status=503,
+        ), None
+    if claim.kind == "claimed":
+        return None, claim.operation_id
+    if claim.kind == "conflict":
         return _op_error(
             index,
             outcome="rejected",
@@ -244,14 +211,51 @@ def _check_replay(
             ),
             idempotency_key=idempotency_key,
             http_status=409,
+        ), None
+    if claim.kind == "in_progress":
+        return _op_error(
+            index,
+            outcome="in_progress",
+            code="operation_in_progress",
+            message=(
+                "An operation with the same idempotency key is still "
+                "in flight or could not be confirmed — it was NOT "
+                "re-executed. Verify via operation_id/tracker before "
+                "retrying."
+            ),
+            idempotency_key=idempotency_key,
+            http_status=409,
+        ), None
+    stored = dict(claim.result or {})
+    stored["index"] = index
+    stored["outcome"] = "replayed"
+    stored["replayed"] = True
+    stored["replayed_outcome"] = stored.get("replayed_outcome") or (
+        claim.result or {}
+    ).get("outcome")
+    stored["idempotency_key"] = idempotency_key
+    return stored, None
+
+
+def _complete_claim(claim_operation_id: str | None, entry: dict[str, Any]) -> None:
+    """Persist the sanitized operation result on the claim row.
+
+    The stored result carries outcome/operation_id/supplier_id/status —
+    never payload values. A complete failure keeps the claim in
+    'in_progress' (never reclaimed, never re-executed) and is logged so
+    the tracker reconciles it.
+    """
+    if not claim_operation_id:
+        return
+    try:
+        _IDEMPOTENCY_STORE.complete(
+            operation_id=claim_operation_id, result=entry
         )
-    replayed = dict(hit)
-    replayed["index"] = index
-    replayed["outcome"] = "replayed"
-    replayed["replayed"] = True
-    replayed["replayed_outcome"] = hit.get("outcome")
-    replayed["idempotency_key"] = idempotency_key
-    return replayed
+    except Exception:  # noqa: BLE001
+        logger.warning(
+            "suri_execute idempotency_complete_failed claim=%s",
+            claim_operation_id,
+        )
 
 
 def _duplicate_precheck(user: EffectiveUser, supplier: dict[str, Any]) -> str | None:
@@ -523,9 +527,18 @@ def execute_supplier_write(
             )
             continue
         idem_key = op.get("idempotency_key")
-        replay = _check_replay(user, action, index, op, idem_key)
+        replay, claim_id = _claim_or_replay(
+            user, action, index, op, idem_key, correlation_id
+        )
         if replay is not None:
             results.append(replay)
+            _audit(
+                user,
+                correlation_id=correlation_id,
+                action=action,
+                entry=replay,
+                field_names=None,
+            )
             continue
         if action == "create":
             field_names = sorted(str(k) for k in op["supplier"])
@@ -533,10 +546,7 @@ def execute_supplier_write(
         else:
             field_names = sorted(str(k) for k in op["fields"])
             entry = _run_update(user, correlation_id, index, op)
-        if idem_key:
-            _REPLAY_CACHE.store(
-                user.id, action, idem_key, _payload_hash(op), entry
-            )
+        _complete_claim(claim_id, entry)
         results.append(entry)
         _audit(
             user,

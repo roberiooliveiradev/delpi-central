@@ -65,11 +65,16 @@ use cases api-delpi — o MCP não redefine regras):
 - **Batch**: operações sequenciais, resultado individual por operação,
   sem transação presumida. Falha de uma não impede as demais; o `summary`
   agrega por outcome.
-- **Idempotência**: `idempotency_key` por operação. Replay dentro do TTL
-  (900s, cache in-process limitado) retorna `outcome=replayed` +
-  `replayed_outcome` sem reexecutar; mesma chave com payload divergente →
-  `idempotency_conflict` (409). O registro durável é o integration
-  tracker da api-delpi — o cache é guarda de retry, não fonte de verdade.
+- **Idempotência**: `idempotency_key` por operação. Claim durável e
+  atômico em `supplies.suri_execute_operations` (V005 — UNIQUE
+  actor+entity+action+key + payload_hash + resultado sanitizado,
+  retenção 24h): primeira claim vence; replay retorna
+  `outcome=replayed` + `replayed_outcome` sem reexecutar; mesma chave
+  com payload divergente → `idempotency_conflict` (409); chave ainda em
+  voo ou não resolvida → `in_progress` (nunca reexecuta); store
+  indisponível → `idempotency_store_unavailable` fail-closed (503,
+  nenhuma escrita emitida). O registro de escrita durável continua sendo
+  o integration tracker da api-delpi.
 - **Retry**: nenhuma escrita é repetida implicitamente — nem pelo MCP,
   nem pelo gateway (contrato "no blind write retries"). `indeterminate`
   exige verificação via `operation_id` antes de nova tentativa.

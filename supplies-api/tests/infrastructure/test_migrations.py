@@ -70,3 +70,21 @@ def test_v003_separates_idempotent_operation_from_field_decisions():
     assert "ALTER COLUMN operation_id SET NOT NULL" in sql
     for forbidden in ("DROP TABLE", "TRUNCATE", "DELETE FROM"):
         assert forbidden not in sql
+
+
+def test_v005_defines_suri_execute_idempotency_claims():
+    sql = (
+        Path(MIGRATIONS_DIR) / "V005__suri_execute_operations.sql"
+    ).read_text(encoding="utf-8")
+    assert (
+        "CREATE TABLE IF NOT EXISTS supplies.suri_execute_operations" in sql
+    )
+    assert "UNIQUE (actor_subject, entity, action, idempotency_key)" in sql
+    assert "payload_hash CHAR(64) NOT NULL" in sql
+    assert "'in_progress'" in sql and "'completed'" in sql
+    assert "correlation_id" in sql
+    assert "result JSONB" in sql
+    assert "expires_at TIMESTAMPTZ NOT NULL" in sql
+    # Claim envelope only — never ERP cadastral payload columns.
+    assert "tax_id" not in sql
+    assert "supplier_payload" not in sql

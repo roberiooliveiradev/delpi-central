@@ -54,10 +54,11 @@ DEFAULT_KNOWLEDGE_LIMIT = 8
 # Governed write budgets — batch writes are bounded and sequential.
 MAX_EXECUTE_OPERATIONS = 10
 MAX_IDEMPOTENCY_KEY_LENGTH = 128
-# In-process replay window for execute idempotency keys; the durable
-# operation record is the api-delpi integration tracker (operation_id).
-EXECUTE_REPLAY_TTL_SECONDS = 900
-EXECUTE_REPLAY_CACHE_SIZE = 512
+# Durable idempotency-claim retention for execute keys — the atomic
+# claim row lives in supplies.suri_execute_operations (V005) so replays
+# survive process restarts and concurrent workers; expired rows are
+# garbage-collected lazily on claim.
+EXECUTE_IDEMPOTENCY_TTL_HOURS = 24
 
 # ---------------------------------------------------------------------------
 # Semantic registry — the ONLY executable capability surface of V1.

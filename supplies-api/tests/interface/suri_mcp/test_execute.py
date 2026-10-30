@@ -114,11 +114,85 @@ VALID_CREATE_SUPPLIER = {
 }
 
 
+class FakeIdempotencyStore:
+    """Durable-store stand-in honoring the repository contract.
+
+    Postgres provides the atomic UNIQUE claim (covered by the pg suite);
+    this fake preserves the *durable* semantics — state survives call
+    boundaries exactly like a real row, so replay/conflict/in_progress
+    never depend on in-process memory.
+    """
+
+    def __init__(self, *, fail_claim=False, fail_complete=False):
+        self.rows: dict[tuple, dict] = {}
+        self.fail_claim = fail_claim
+        self.fail_complete = fail_complete
+        self.claim_calls = 0
+        self.complete_calls = 0
+
+    def claim(self, *, actor_subject, entity, action, idempotency_key,
+              payload_hash, correlation_id):
+        from app.infrastructure.persistence.suri_execute_operations_repository import (
+            ExecuteClaim,
+        )
+
+        self.claim_calls += 1
+        if self.fail_claim:
+            raise RuntimeError("store down")
+        key = (actor_subject, entity, action, idempotency_key)
+        row = self.rows.get(key)
+        if row is None:
+            operation_id = f"claim-{len(self.rows)}"
+            self.rows[key] = {
+                "operation_id": operation_id,
+                "payload_hash": payload_hash,
+                "status": "in_progress",
+                "result": None,
+            }
+            return ExecuteClaim(kind="claimed", operation_id=operation_id)
+        if row["payload_hash"] != payload_hash:
+            return ExecuteClaim(kind="conflict")
+        if row["status"] == "completed":
+            return ExecuteClaim(
+                kind="replay",
+                operation_id=row["operation_id"],
+                result=row["result"],
+            )
+        return ExecuteClaim(kind="in_progress", operation_id=row["operation_id"])
+
+    def complete(self, *, operation_id, result):
+        self.complete_calls += 1
+        if self.fail_complete:
+            raise RuntimeError("complete failed")
+        for row in self.rows.values():
+            if row["operation_id"] == operation_id:
+                row["status"] = "completed"
+                row["result"] = result
+
+    def seed_in_progress(self, *, actor_subject, entity, action,
+                         idempotency_key, payload_hash):
+        self.rows[(actor_subject, entity, action, idempotency_key)] = {
+            "operation_id": "claim-stuck",
+            "payload_hash": payload_hash,
+            "status": "in_progress",
+            "result": None,
+        }
+
+
+@pytest.fixture()
+def idem_store(monkeypatch):
+    def _install(**kwargs) -> FakeIdempotencyStore:
+        store = FakeIdempotencyStore(**kwargs)
+        monkeypatch.setattr(supplier_execute, "_IDEMPOTENCY_STORE", store)
+        return store
+
+    return _install
+
+
 @pytest.fixture(autouse=True)
-def _clear_replay_cache():
-    supplier_execute._REPLAY_CACHE.clear()
+def _durable_idem_store(idem_store):
+    idem_store()
     yield
-    supplier_execute._REPLAY_CACHE.clear()
 
 
 @pytest.fixture()
@@ -520,6 +594,104 @@ def test_idempotency_conflict_on_different_payload(access_context, s2s):
     entry = _op(data, 0)
     assert entry["outcome"] == "rejected"
     assert entry["error"]["code"] == "idempotency_conflict"
+    assert len([c for c in gw.calls if c["method"] == "POST"]) == 1
+
+
+def test_idempotent_replay_survives_process_restart(access_context, s2s, idem_store):
+    """Cross-restart dedup: the claim row lives in the durable store —
+    simulating a restart (fresh executor, same store) still replays."""
+    access_context()
+    store = idem_store()
+    gw = s2s(post=CREATE_PAYLOAD, get=EMPTY_LIST)
+    op = {
+        "idempotency_key": "boot-1",
+        "supplier": dict(VALID_CREATE_SUPPLIER),
+    }
+    _ops_data(_call("suppliers", "create", [op]))
+    # "restart": a second invocation path shares only the durable store —
+    # no in-process replay cache exists anymore.
+    second = _ops_data(_call("suppliers", "create", [op]))
+    assert _op(second, 0)["outcome"] == "replayed"
+    assert _op(second, 0)["replayed_outcome"] == "confirmed"
+    assert len([c for c in gw.calls if c["method"] == "POST"]) == 1
+    assert store.complete_calls == 1
+
+
+def test_in_progress_claim_blocks_reexecution(access_context, s2s, idem_store):
+    """Concurrent same-key: while the first claim is still 'in_progress'
+    the second requester gets an honest in_progress — never a re-write."""
+    ns = access_context()
+    gw = s2s(post=CREATE_PAYLOAD, get=EMPTY_LIST)
+    op = {
+        "idempotency_key": "flight-1",
+        "supplier": dict(VALID_CREATE_SUPPLIER),
+    }
+    store = idem_store()
+    # Claim the key first without completing — mimics a concurrent caller
+    # mid-write or a worker that died after claiming.
+    claim = store.claim(
+        actor_subject=str(ns.id),
+        entity="suppliers",
+        action="create",
+        idempotency_key="flight-1",
+        payload_hash=supplier_execute._payload_hash(op),
+        correlation_id="corr",
+    )
+    assert claim.kind == "claimed"
+    data = _ops_data(_call("suppliers", "create", [op]))
+    entry = _op(data, 0)
+    assert entry["outcome"] == "in_progress"
+    assert entry["error"]["code"] == "operation_in_progress"
+    assert not [c for c in gw.calls if c["method"] == "POST"]
+
+
+def test_indeterminate_result_replayed_not_retried(access_context, s2s):
+    """A timed-out write is never blindly retried: the indeterminate
+    result is persisted on the claim and replayed on retry."""
+    access_context()
+    gw = s2s(
+        error=DelpiApiGatewayError("api-delpi timeout"),
+        get=EMPTY_LIST,
+    )
+    op = {
+        "idempotency_key": "timeout-1",
+        "supplier": dict(VALID_CREATE_SUPPLIER),
+    }
+    first = _ops_data(_call("suppliers", "create", [op]))
+    assert _op(first, 0)["outcome"] == "indeterminate"
+    second = _ops_data(_call("suppliers", "create", [op]))
+    entry = _op(second, 0)
+    assert entry["outcome"] == "replayed"
+    assert entry["replayed_outcome"] == "indeterminate"
+    assert len([c for c in gw.calls if c["method"] == "POST"]) == 1
+
+
+def test_idempotency_store_unavailable_fails_closed(access_context, s2s, idem_store):
+    """Keyed write without a working claim store is never issued."""
+    access_context()
+    gw = s2s(post=CREATE_PAYLOAD, get=EMPTY_LIST)
+    idem_store(fail_claim=True)
+    op = {
+        "idempotency_key": "down-1",
+        "supplier": dict(VALID_CREATE_SUPPLIER),
+    }
+    data = _ops_data(_call("suppliers", "create", [op]))
+    entry = _op(data, 0)
+    assert entry["outcome"] == "indeterminate"
+    assert entry["error"]["code"] == "idempotency_store_unavailable"
+    assert entry["http_status"] == 503
+    assert not [c for c in gw.calls if c["method"] == "POST"]
+
+
+def test_unkeyed_operation_bypasses_store(access_context, s2s, idem_store):
+    """No idempotency_key → Portal parity: no claim, write proceeds."""
+    access_context()
+    store = idem_store()
+    gw = s2s(post=CREATE_PAYLOAD, get=EMPTY_LIST)
+    op = {"supplier": dict(VALID_CREATE_SUPPLIER)}
+    data = _ops_data(_call("suppliers", "create", [op]))
+    assert _op(data, 0)["outcome"] == "confirmed"
+    assert store.claim_calls == 0
     assert len([c for c in gw.calls if c["method"] == "POST"]) == 1
 
 
