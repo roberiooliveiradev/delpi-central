@@ -219,6 +219,14 @@ Plano canônico: [PLAYBOOK-PORTAL-TRANSFORMA.md](./PLAYBOOK-PORTAL-TRANSFORMA.md
 
 Não duplica as fases de domínio acima; complementa a jornada UX/produto.
 
+## Evolução do TÉO — Semantic MCP V3 (PLANNED / PENDING)
+
+Plano mestre: [TEO-SEMANTIC-MCP-V3-PLANO-MESTRE.md](./TEO-SEMANTIC-MCP-V3-PLANO-MESTRE.md). Ledger de progresso do Devin: [GitHub issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124).
+
+**Objetivo:** convergir 23 tools MCP do inventário para seis interfaces semânticas (`get_context`, `read`, `analyze`, `knowledge`, `execute`, `delete`) por adapter sobre capabilities e use cases canônicos, sem perda de AuthZ, políticas de escrita, verificações, GPT Actions ou compatibilidade. Os marcos G0 e F1–F6 abrangem contrato, implementação, testes, correções, aceite conversacional, commit/push, deploy e pós-deploy. **G0 está PENDING; não há implementação ou runtime V3 comprovados por este registro.**
+
+A iniciativa não substitui a sequência das demais evoluções prevista em [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). A issue #124 recebe checklists, checkpoints, evidências e status por fase.
+
 ## Próximo passo imediato
 
 1. **Deploy produção** com runbook em [status-atual.md](./status-atual.md) e [OPERATIONS.md](./OPERATIONS.md) (incl. V026–V028 na 1ª subida pós-pull)

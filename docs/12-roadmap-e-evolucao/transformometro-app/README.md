@@ -28,6 +28,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [gpt-actions/](../../../transformometro-api/docs/gpt-actions/) | Custom GPT OpenAI (Actions + especialista) |
 | [docs API (índice)](../../../transformometro-api/docs/README.md) | Índice da documentação da transformometro-api |
 | [ROADMAP.md](./ROADMAP.md) | Fases de entrega e Playbook 18 |
+| **[TEO-SEMANTIC-MCP-V3-PLANO-MESTRE.md](./TEO-SEMANTIC-MCP-V3-PLANO-MESTRE.md)** | **PLANNED/PENDING** — refatoração de 23 tools MCP para seis interfaces semânticas; gates, critérios de aceite e ledger [issue #124](https://github.com/roberiooliveiradev/delpi-central/issues/124). Não comprova runtime. |
 | **[CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md)** | **Alvo de produto** — ciclo mapeamento → diagnóstico → TO-BE → medição → aprendizado. Não é runtime. |
 | **[PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md)** | **Portal Transforma+** — experiência e IA sobre o domínio Transformômetro. Comercial é referência de UX, não fonte de regra. Não é runtime. |
 | **[ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md)** | **Ordem de implementação** — decisões caras, waves, DoR/DoD e pacote. Única fonte de sequência. Não autoriza código. |

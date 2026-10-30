@@ -32,6 +32,17 @@ Portal Minha DELPI
     → api-delpi (pedidos, faturamento, produção, OV e ADY)
 ```
 
+## Registro obrigatório de evolução e homologação comercial
+
+Toda mudança relevante no Portal Comercial ou em sua interface conversacional CAIO deve ser registrada **na documentação canônica do Portal Comercial**, no mesmo trabalho de implementação ou homologação — não apenas em mensagens de chat, issues ou documentação isolada do CAIO.
+
+- **Funcionalidade/processo:** registrar comportamento observado, processo apoiado, owner, autoridade dos dados, permissões e dependências; distinguir estado implementado, proposta e pendência.
+- **Contratos e alterações:** atualizar a seção/doc comercial existente correspondente (navegação, regra, API, operação, indicadores, autorização) em vez de criar duplicata.
+- **CAIO:** vincular as mudanças às matrizes [paridade CAIO](../../docs/initiatives/caio-mcp/CAIO_PARITY_MATRIX.md) e, quando criada, homologação CAIO; registrar cobertura, teste real, problemas, correções, commit e deploy sem declarar sucesso por mera existência de handler.
+- **Evidências:** registrar data, base/HEAD, owner, testes, limitações, deployed SHA quando aplicável e gaps residuais. Falta de prova = `TO_INVENTORY`/`PENDING`/`TEST_NOT_RUN`, nunca `PASS`.
+
+Esta regra vale também para trabalhos delegados a Devin/Cursor: entrega comercial sem atualização da documentação canônica aplicável **não está concluída**. GitHub issues organizam execução, mas não substituem a documentação do Portal.
+
 ## Rotas UI
 
 Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — **não** entram no manifesto Core (`PATH_RE` = `^/[-a-z0-9/]*$`).
