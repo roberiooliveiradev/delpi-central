@@ -1,4 +1,8 @@
-import type { ConsumptionAuditBranch, ConsumptionAuditResponse } from "./types";
+import type {
+  ConsumptionAuditBranch,
+  ConsumptionAuditDateType,
+  ConsumptionAuditResponse,
+} from "./types";
 import { PRODUCTION_ORDER_RE } from "./api";
 
 /** Estado da consulta na URL — F5 e compartilhamento restauram o mesmo alvo. */
@@ -50,6 +54,102 @@ export function sameTarget(
 ): boolean {
   if (!a || !b) return a === b;
   return a.unit === b.unit && a.productionOrder === b.productionOrder;
+}
+
+// ——— F3 · estado dos filtros avançados na URL ———
+
+const DATE_TYPES = new Set<ConsumptionAuditDateType>([
+  "emission",
+  "finished",
+  "appointment",
+]);
+
+export type ConsumptionAuditFilterState = {
+  dateType: ConsumptionAuditDateType;
+  periodStart: string;
+  periodEnd: string;
+  product: string;
+  status: string;
+  workCenter: string;
+  operation: string;
+};
+
+export const EMPTY_FILTERS: ConsumptionAuditFilterState = {
+  dateType: "emission",
+  periodStart: "",
+  periodEnd: "",
+  product: "",
+  status: "",
+  workCenter: "",
+  operation: "",
+};
+
+function normalizeDateType(raw: string | null): ConsumptionAuditDateType {
+  const value = String(raw ?? "").trim();
+  return (DATE_TYPES as Set<string>).has(value)
+    ? (value as ConsumptionAuditDateType)
+    : "emission";
+}
+
+function normalizeDateParam(raw: string | null): string {
+  const value = String(raw ?? "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+  // Rejeita datas inexistentes (ex.: 2026-13-99) — mesma regra do backend.
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(parsed.getTime()) ? "" : value;
+}
+
+export function parseFiltersFromSearch(search: string): {
+  unit: ConsumptionAuditBranch | null;
+  filters: ConsumptionAuditFilterState;
+} {
+  try {
+    const params = new URLSearchParams(search || "");
+    return {
+      unit: normalizeUnit(params.get("unit")),
+      filters: {
+        dateType: normalizeDateType(params.get("date_type")),
+        periodStart: normalizeDateParam(params.get("period_start")),
+        periodEnd: normalizeDateParam(params.get("period_end")),
+        product: String(params.get("product") ?? "").trim(),
+        status: String(params.get("status") ?? "").trim().toUpperCase(),
+        workCenter: String(params.get("work_center") ?? "").trim().toUpperCase(),
+        operation: String(params.get("operation") ?? "").trim(),
+      },
+    };
+  } catch {
+    return { unit: null, filters: EMPTY_FILTERS };
+  }
+}
+
+export function buildSearchQuery(
+  unit: ConsumptionAuditBranch,
+  filters: ConsumptionAuditFilterState,
+  search?: string,
+): string {
+  const params = new URLSearchParams({ unit });
+  const fragment = normalizeProductionOrder(search ?? "");
+  if (fragment) params.set("search", fragment);
+  if (filters.dateType !== "emission") params.set("date_type", filters.dateType);
+  if (filters.periodStart) params.set("period_start", filters.periodStart);
+  if (filters.periodEnd) params.set("period_end", filters.periodEnd);
+  if (filters.product) params.set("product", filters.product);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.workCenter) params.set("work_center", filters.workCenter);
+  if (filters.operation) params.set("operation", filters.operation);
+  return `?${params.toString()}`;
+}
+
+export function filtersAreEmpty(filters: ConsumptionAuditFilterState): boolean {
+  return (
+    filters.dateType === "emission" &&
+    !filters.periodStart &&
+    !filters.periodEnd &&
+    !filters.product &&
+    !filters.status &&
+    !filters.workCenter &&
+    !filters.operation
+  );
 }
 
 // ——— Formatação PT-BR ———

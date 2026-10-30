@@ -23,6 +23,73 @@ export const CONSUMPTION_AUDIT_CONTENT = {
   updatedAtLabel: (time: string) => `Consultado às ${time}`,
   loading: "Consultando a ordem no ERP…",
 
+  // ——— Busca automática (F2) ———
+  searchTitle: "Pesquisar ordens de produção",
+  searchHint:
+    "Digite parte do número da OP, ou use os filtros para localizar ordens por produto, período, situação, centro de trabalho e operação. A pesquisa é automática — não é preciso confirmar.",
+  searchPlaceholder: "Digite parte da OP ou use os filtros abaixo…",
+  searchMinChars: (min: number) => `Digite ao menos ${min} caracteres ou combine os filtros.`,
+  searchLoading: "Pesquisando…",
+  searchEmpty: "Nenhuma ordem encontrada com estes critérios.",
+  searchResultsTitle: "Resultados",
+  searchResultsSubtitle: (total: number) =>
+    `${total} ordem(ns) encontrada(s) — selecione uma linha para abrir a auditoria completa.`,
+  searchPageOf: (page: number, totalPages: number) =>
+    `Página ${page} de ${totalPages}`,
+  searchPrevPage: "Anterior",
+  searchNextPage: "Próxima",
+  suggestionFor: (op: string, product: string) => `OP ${op} · ${product}`,
+
+  // ——— Filtros avançados (F3) ———
+  filtersTitle: "Filtros de pesquisa",
+  filtersHint:
+    "Os filtros se combinam (interseção): período usa o tipo de data escolhido; produto aceita código ou descrição parcial.",
+  dateTypeLabel: "Tipo de data",
+  dateTypes: {
+    emission: "Emissão",
+    appointment: "Apontamento",
+    finished: "Encerramento",
+  } as Record<string, string>,
+  periodStartLabel: "Data inicial",
+  periodEndLabel: "Data final",
+  productLabel: "Produto (código ou descrição)",
+  productPlaceholder: "Ex.: CABO ou 50226108",
+  statusFilterLabel: "Situação",
+  statusAllLabel: "Todas",
+  workCenterLabel: "Centro de trabalho",
+  workCenterPlaceholder: "Ex.: CT-23",
+  operationLabel: "Operação",
+  operationPlaceholder: "Ex.: 01",
+  clearFilters: "Limpar filtros",
+  colOrder: "OP",
+  colProduct: "Produto",
+  colStatus: "Situação",
+  colEmission: "Emissão",
+  colFinished: "Encerramento",
+  colPlanned: "Qtd. planejada",
+  compareSelect: "Comparar",
+
+  // ——— Comparação (F4) ———
+  compareTitle: "Comparação de ordens",
+  compareHint:
+    "Selecione de 2 a 10 OPs na lista de resultados (todas da mesma filial). A comparação projeta cada OP separadamente — totais só somam componentes da mesma unidade de medida; diferenças não provam irregularidade.",
+  compareAction: (count: number) => `Comparar ${count} OPs`,
+  compareMinMax: "Selecione entre 2 e 10 ordens para comparar.",
+  compareMaxReached: "Limite de 10 ordens selecionadas.",
+  compareNotFound: "Sem dados para estas OPs nesta filial: ",
+  compareLoading: "Comparando ordens…",
+  compareClose: "Fechar comparação",
+  compareColMetric: "Medida",
+  compareTotalsTitle: "Totais por unidade de medida",
+  compareComponentsTitle: "Componentes por operação",
+  compareQualityTitle: "Qualidade das informações",
+  compareNoUm: "Sem UM",
+  metricTheoretical: "Estrutura teórica",
+  metricCommitted: "Empenho original",
+  metricOpen: "Saldo empenhado",
+  metricDerived: "Consumo derivado",
+  metricEligible: "Consumo classificado",
+
   // ——— Estados ———
   emptyTitle: "Informe uma ordem de produção",
   emptyMessage:

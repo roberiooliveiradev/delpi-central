@@ -173,3 +173,90 @@ export type ConsumptionAuditResponse = {
   related_orders: ConsumptionAuditRelatedOrder[];
   quality: ConsumptionAuditQuality;
 };
+
+// ——— F1 · busca/listagem paginada (GET /consumption-audit/orders) ———
+
+export type ConsumptionAuditDateType = "emission" | "finished" | "appointment";
+
+export type ConsumptionAuditOrderSummary = {
+  production_order: string;
+  order_number: string;
+  order_item: string;
+  order_sequence: string;
+  product_code: string;
+  product_description: string;
+  product_type: string;
+  status: string;
+  planned_quantity: number;
+  produced_quantity: number;
+  unit_of_measure: string;
+  warehouse: string;
+  emission_date: string;
+  planned_start_date: string;
+  due_date: string;
+  finished_at: string;
+};
+
+export type ConsumptionAuditSearchPage = {
+  items: ConsumptionAuditOrderSummary[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
+
+// ——— F4 · comparação (GET /consumption-audit/comparison) ———
+
+export type ConsumptionAuditComparisonComponent = {
+  component_code: string;
+  component_description: string;
+  component_type: string;
+  unit_of_measure: string;
+  theoretical_quantity: number | null;
+  original_commitment_quantity: number | null;
+  open_commitment_quantity: number | null;
+  derived_consumption_quantity: number | null;
+  eligible_consumption_quantity: number | null;
+  difference: number | null;
+  classification: string;
+  quality_flags: string[];
+};
+
+export type ConsumptionAuditComparisonOperation = {
+  operation: string;
+  work_center: string;
+  execution_state: string;
+  components: ConsumptionAuditComparisonComponent[];
+};
+
+export type ConsumptionAuditUnitTotals = {
+  unit_of_measure: string | null;
+  theoretical_quantity: number;
+  committed_quantity: number;
+  open_commitment_quantity: number;
+  derived_consumption_quantity: number;
+  eligible_consumption_quantity: number;
+  components: number;
+};
+
+export type ConsumptionAuditComparisonItem = {
+  production_order: string;
+  branch: string;
+  order: ConsumptionAuditOrderInfo;
+  operations: ConsumptionAuditComparisonOperation[];
+  totals_by_unit: ConsumptionAuditUnitTotals[];
+  quality: ConsumptionAuditQuality;
+  unmatched_movements_count: number;
+  related_orders_count: number;
+};
+
+export type ConsumptionAuditComparisonResponse = {
+  branch: string;
+  items: ConsumptionAuditComparisonItem[];
+  not_found: string[];
+  metadata: {
+    generated_at_source: string;
+    comparison_rule: string;
+    contract_version: string;
+  };
+};

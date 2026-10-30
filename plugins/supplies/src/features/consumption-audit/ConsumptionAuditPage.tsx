@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiRequestError } from "../../api/httpClient";
 import { formatSuppliesUnitName } from "../../app/suppliesUnits";
@@ -19,26 +18,37 @@ import {
   SuppliesTextField,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
-import { ConsumptionAuditContractError, getConsumptionAuditOrder } from "./api";
+import {
+  ConsumptionAuditContractError,
+  getConsumptionAuditComparison,
+  getConsumptionAuditOrder,
+  searchConsumptionAuditOrders,
+} from "./api";
 import { CONSUMPTION_AUDIT_CONTENT as C } from "./content";
 import {
+  buildSearchQuery,
   buildTargetSearch,
+  EMPTY_FILTERS,
+  filtersAreEmpty,
   formatDatePtBr,
   formatDateTimePtBr,
   formatQuantity,
   isValidProductionOrder,
-  normalizeProductionOrder,
   normalizeUnit,
+  parseFiltersFromSearch,
   parseTargetFromSearch,
-  sameTarget,
 } from "./query";
 import type {
+  ConsumptionAuditComparisonResponse,
   ConsumptionAuditComponent,
+  ConsumptionAuditDateType,
   ConsumptionAuditMovement,
   ConsumptionAuditOperation,
+  ConsumptionAuditOrderSummary,
   ConsumptionAuditResponse,
+  ConsumptionAuditSearchPage,
 } from "./types";
-import type { ConsumptionAuditTarget } from "./query";
+import type { ConsumptionAuditFilterState, ConsumptionAuditTarget } from "./query";
 
 type LoadState = {
   key: string;
@@ -46,6 +56,24 @@ type LoadState = {
   data: ConsumptionAuditResponse | null;
   error: string | null;
 };
+
+type SearchState = {
+  key: string;
+  status: "idle" | "loading" | "ready" | "error";
+  page: ConsumptionAuditSearchPage | null;
+  error: string | null;
+};
+
+type ComparisonState = {
+  status: "idle" | "loading" | "ready" | "error";
+  data: ConsumptionAuditComparisonResponse | null;
+  error: string | null;
+};
+
+const SEARCH_DEBOUNCE_MS = 350;
+const SEARCH_MIN_CHARS = 2;
+const SEARCH_PAGE_SIZE = 10;
+const COMPARE_MAX = 10;
 
 function initialLoad(key: string): LoadState {
   return { key, status: "loading", data: null, error: null };
@@ -101,6 +129,10 @@ function executionBadgeVariant(
 function labelOf(map: Record<string, string>, key: string): string {
   return map[key] ?? key;
 }
+
+// ————————————————————————————————————————————————————————————
+// Detalhe da OP (inalterado — F5/regressão)
+// ————————————————————————————————————————————————————————————
 
 function MovementTable({
   movements,
@@ -337,6 +369,8 @@ function OperationSection({ operation }: { operation: ConsumptionAuditOperation 
     <SuppliesSectionCard
       title={C.operationTitle(operation.operation, operation.work_center || "—")}
       subtitle={C.operationsHint}
+      collapsible
+      defaultOpen
     >
       <ExecutionEvidence operation={operation} />
 
@@ -424,6 +458,158 @@ function QualitySection({ data }: { data: ConsumptionAuditResponse }) {
   );
 }
 
+// ————————————————————————————————————————————————————————————
+// F4 · seção de comparação
+// ————————————————————————————————————————————————————————————
+
+function ComparisonSection({ data }: { data: ConsumptionAuditComparisonResponse }) {
+  const items = data.items;
+  const uoms = useMemo(() => {
+    const set = new Map<string, string | null>();
+    for (const item of items) {
+      for (const t of item.totals_by_unit) set.set(t.unit_of_measure ?? "?", t.unit_of_measure);
+    }
+    return [...set.keys()];
+  }, [items]);
+
+  const totalsFor = (itemIndex: number, uom: string) =>
+    items[itemIndex].totals_by_unit.find(
+      (t) => (t.unit_of_measure ?? "?") === uom,
+    );
+
+  const metricRows: Array<{ key: string; label: string; pick: (t: { theoretical_quantity: number; committed_quantity: number; open_commitment_quantity: number; derived_consumption_quantity: number; eligible_consumption_quantity: number } | undefined) => number | null }> = [
+    { key: "theoretical", label: C.metricTheoretical, pick: (t) => t?.theoretical_quantity ?? null },
+    { key: "committed", label: C.metricCommitted, pick: (t) => t?.committed_quantity ?? null },
+    { key: "open", label: C.metricOpen, pick: (t) => t?.open_commitment_quantity ?? null },
+    { key: "derived", label: C.metricDerived, pick: (t) => t?.derived_consumption_quantity ?? null },
+    { key: "eligible", label: C.metricEligible, pick: (t) => t?.eligible_consumption_quantity ?? null },
+  ];
+
+  return (
+    <div className="sp-consumption-audit__comparison">
+      {data.not_found.length ? (
+        <SuppliesStateBanner variant="default">
+          {C.compareNotFound}
+          {data.not_found.join(", ")}
+        </SuppliesStateBanner>
+      ) : null}
+
+      {uoms.map((uom) => (
+        <SuppliesSectionCard
+          key={uom}
+          title={`${C.compareTotalsTitle} — ${uom === "?" ? C.compareNoUm : uom}`}
+          subtitle={C.compareHint}
+        >
+          <div className="sp-consumption-audit__table-wrap">
+            <table className="sp-consumption-audit__materials-table">
+              <thead>
+                <tr>
+                  <th scope="col">{C.compareColMetric}</th>
+                  {items.map((item) => (
+                    <th scope="col" key={item.production_order}>
+                      {item.production_order}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {metricRows.map((row) => (
+                  <tr key={row.key}>
+                    <td>{row.label}</td>
+                    {items.map((item, itemIndex) => (
+                      <td key={item.production_order}>
+                        {formatQuantity(row.pick(totalsFor(itemIndex, uom)))}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SuppliesSectionCard>
+      ))}
+
+      {items.map((item) => (
+        <SuppliesSectionCard
+          key={item.production_order}
+          title={C.suggestionFor(
+            item.production_order,
+            item.order?.product_code ?? "",
+          )}
+          subtitle={`${C.colStatus}: ${labelOf(C.statusLabels, item.order?.status ?? "")}`}
+        >
+          {item.operations.map((op) => (
+            <div key={op.operation} className="sp-consumption-audit__compare-op">
+              <h5>
+                {C.operationTitle(op.operation, op.work_center || "—")}{" "}
+                <SuppliesStatusBadge
+                  label={labelOf(C.executionStates, op.execution_state)}
+                  variant={executionBadgeVariant(op.execution_state)}
+                />
+              </h5>
+              <div className="sp-consumption-audit__table-wrap">
+                <table className="sp-consumption-audit__materials-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{C.colComponent}</th>
+                      <th scope="col">{C.colUm}</th>
+                      <th scope="col">{C.colTheoretical}</th>
+                      <th scope="col">{C.colCommitment}</th>
+                      <th scope="col">{C.colDerived}</th>
+                      <th scope="col">{C.colClassified}</th>
+                      <th scope="col">{C.colDiscrepancy}</th>
+                      <th scope="col">{C.colClassification}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {op.components.map((comp, idx) => (
+                      <tr key={`${comp.component_code}-${idx}`}>
+                        <td>
+                          <div className="sp-consumption-audit__component-code">
+                            {comp.component_code}
+                          </div>
+                          <div className="sp-consumption-audit__component-type">
+                            {comp.component_description}
+                          </div>
+                        </td>
+                        <td>{comp.unit_of_measure || "—"}</td>
+                        <td>{formatQuantity(comp.theoretical_quantity)}</td>
+                        <td>{formatQuantity(comp.original_commitment_quantity)}</td>
+                        <td>{formatQuantity(comp.derived_consumption_quantity)}</td>
+                        <td>{formatQuantity(comp.eligible_consumption_quantity)}</td>
+                        <td>{formatQuantity(comp.difference)}</td>
+                        <td>
+                          <SuppliesStatusBadge
+                            label={labelOf(C.classifications, comp.classification)}
+                            variant={classificationBadgeVariant(comp.classification)}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+          <p className="sp-consumption-audit__meta">
+            {C.qualityTitle}: {labelOf(
+              { complete: C.qualityStatusComplete, partial: C.qualityStatusPartial },
+              item.quality?.status ?? "",
+            )}
+            {item.unmatched_movements_count
+              ? ` · ${item.unmatched_movements_count} ${C.unmatchedTitle.toLowerCase()}`
+              : ""}
+          </p>
+        </SuppliesSectionCard>
+      ))}
+    </div>
+  );
+}
+
+// ————————————————————————————————————————————————————————————
+// Página
+// ————————————————————————————————————————————————————————————
+
 type ConsumptionAuditPageProps = {
   basePath: string;
 };
@@ -432,35 +618,54 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
   const [target, setTarget] = useState<ConsumptionAuditTarget | null>(() =>
     parseTargetFromSearch(readBrowserSearch()),
   );
-  const [result, setResult] = useState<LoadState>(() =>
-    initialLoad(""),
-  );
+  const [result, setResult] = useState<LoadState>(() => initialLoad(""));
   const [retryKey, setRetryKey] = useState(0);
   const [lastQueriedAt, setLastQueriedAt] = useState<Date | null>(null);
 
-  // Campos do formulário — espelham o último alvo válido na URL.
+  // ——— Estado da pesquisa (F2/F3) ———
+  const parsed = useMemo(() => parseFiltersFromSearch(readBrowserSearch()), []);
   const [unitDraft, setUnitDraft] = useState<string>(
-    () => parseTargetFromSearch(readBrowserSearch())?.unit ?? "",
+    () => parseTargetFromSearch(readBrowserSearch())?.unit ?? parsed.unit ?? "01",
   );
-  const [opDraft, setOpDraft] = useState<string>(
-    () => parseTargetFromSearch(readBrowserSearch())?.productionOrder ?? "",
+  const [searchDraft, setSearchDraft] = useState<string>("");
+  const [filters, setFilters] = useState<ConsumptionAuditFilterState>(
+    () => parsed.filters,
   );
-  const [formError, setFormError] = useState<string | null>(null);
+  const [listPage, setListPage] = useState(1);
+  const [searchState, setSearchState] = useState<SearchState>({
+    key: "",
+    status: "idle",
+    page: null,
+    error: null,
+  });
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestActive, setSuggestActive] = useState(-1);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [comparison, setComparison] = useState<ComparisonState>({
+    status: "idle",
+    data: null,
+    error: null,
+  });
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const lastSearchKey = useRef("");
 
-  // URL → estado: popstate (voltar/avançar/navigatePluginPath) re-sincroniza.
+  // URL → estado: popstate re-sincroniza alvo e filtros.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onPopState = () => {
-      setTarget(parseTargetFromSearch(readBrowserSearch()));
+      const browserSearch = readBrowserSearch();
+      setTarget(parseTargetFromSearch(browserSearch));
+      const parsedNow = parseFiltersFromSearch(browserSearch);
+      setFilters(parsedNow.filters);
+      if (parsedNow.unit) setUnitDraft(parsedNow.unit);
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const targetKey = target
-    ? `${target.unit}|${target.productionOrder}`
-    : "";
+  const targetKey = target ? `${target.unit}|${target.productionOrder}` : "";
 
+  // ——— Detalhe da OP ———
   useEffect(() => {
     if (!target) return undefined;
     const controller = new AbortController();
@@ -475,47 +680,162 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
-        setResult({
-          key,
-          status: "error",
-          data: null,
-          error: mapFetchError(err),
-        });
+        setResult({ key, status: "error", data: null, error: mapFetchError(err) });
       });
     return () => controller.abort();
   }, [target, retryKey]);
 
-  const resultState =
-    result.key === targetKey ? result : initialLoad(targetKey);
+  const resultState = result.key === targetKey ? result : initialLoad(targetKey);
   const loading = Boolean(target) && resultState.status === "loading";
   const data = resultState.data;
 
-  const submitQuery = useCallback(() => {
-    const unit = normalizeUnit(unitDraft);
-    const op = normalizeProductionOrder(opDraft);
-    if (!unit) {
-      setFormError(C.unitInvalid);
-      return;
+  // ——— Pesquisa automática: digitação ou filtros (debounce + cancel) ———
+  const unit = normalizeUnit(unitDraft);
+  const hasCriteria =
+    Boolean(unit) &&
+    (searchDraft.trim().length >= SEARCH_MIN_CHARS || !filtersAreEmpty(filters));
+
+  useEffect(() => {
+    if (!unit || !hasCriteria) {
+      // O bloco de resultados é renderizado apenas quando hasCriteria —
+      // estado obsoleto aqui nunca chega à tela.
+      return undefined;
     }
-    if (!isValidProductionOrder(op)) {
-      setFormError(C.opInvalid);
-      return;
+    const key = JSON.stringify({ unit, searchDraft, filters, listPage });
+    const timer = window.setTimeout(() => {
+      const controller = new AbortController();
+      lastSearchKey.current = key;
+      setSearchState((prev) => ({
+        key,
+        status: "loading",
+        page: prev.key === key ? prev.page : prev.page,
+        error: null,
+      }));
+      searchConsumptionAuditOrders(
+        {
+          unit,
+          search: searchDraft,
+          dateType: filters.dateType,
+          periodStart: filters.periodStart || undefined,
+          periodEnd: filters.periodEnd || undefined,
+          product: filters.product || undefined,
+          status: filters.status || undefined,
+          workCenter: filters.workCenter || undefined,
+          operation: filters.operation || undefined,
+          page: listPage,
+          pageSize: SEARCH_PAGE_SIZE,
+        },
+        controller.signal,
+      )
+        .then((page) => {
+          if (lastSearchKey.current !== key) return;
+          setSearchState({ key, status: "ready", page, error: null });
+          setSuggestActive(-1);
+          // Filtros relevantes na URL — replaceState (sem poluir o histórico).
+          if (typeof window !== "undefined") {
+            const qs = buildSearchQuery(unit, filters, searchDraft);
+            window.history.replaceState(
+              null,
+              "",
+              `${window.location.pathname}${qs}`,
+            );
+          }
+        })
+        .catch((err: unknown) => {
+          if (controller.signal.aborted || lastSearchKey.current !== key) return;
+          setSearchState({
+            key,
+            status: "error",
+            page: null,
+            error: mapFetchError(err),
+          });
+        });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [unit, searchDraft, filters, listPage, hasCriteria]);
+
+  const selectOrder = useCallback(
+    (op: string) => {
+      if (!unit) return;
+      setSuggestOpen(false);
+      const next: ConsumptionAuditTarget = {
+        unit,
+        productionOrder: op,
+      };
+      navigatePluginPath(
+        `${buildPluginPath("consumption_audit", basePath)}${buildTargetSearch(next)}`,
+      );
+    },
+    [unit, basePath],
+  );
+
+  const toggleSelect = useCallback((op: string) => {
+    setSelected((prev) => {
+      if (prev.includes(op)) return prev.filter((x) => x !== op);
+      if (prev.length >= COMPARE_MAX) return prev;
+      return [...prev, op];
+    });
+  }, []);
+
+  const runComparison = useCallback(() => {
+    if (!unit || selected.length < 2 || selected.length > COMPARE_MAX) return;
+    setComparison({ status: "loading", data: null, error: null });
+    getConsumptionAuditComparison(unit, selected)
+      .then((cmp) =>
+        setComparison({ status: "ready", data: cmp, error: null }),
+      )
+      .catch((err: unknown) =>
+        setComparison({
+          status: "error",
+          data: null,
+          error: mapFetchError(err),
+        }),
+      );
+  }, [unit, selected]);
+
+  const onSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const items = searchState.page?.items ?? [];
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setSuggestOpen(true);
+      setSuggestActive((i) => Math.min(i + 1, items.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setSuggestActive((i) => Math.max(i - 1, -1));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (suggestActive >= 0 && items[suggestActive]) {
+        selectOrder(items[suggestActive].production_order);
+      } else if (isValidProductionOrder(searchDraft.trim().toUpperCase()) && unit) {
+        selectOrder(searchDraft.trim().toUpperCase());
+      }
+    } else if (event.key === "Escape") {
+      setSuggestOpen(false);
+      setSuggestActive(-1);
     }
-    setFormError(null);
-    const next: ConsumptionAuditTarget = { unit, productionOrder: op };
-    if (sameTarget(next, target)) {
-      setRetryKey((value) => value + 1);
-      return;
-    }
-    navigatePluginPath(
-      `${buildPluginPath("consumption_audit", basePath)}${buildTargetSearch(next)}`,
-    );
-  }, [unitDraft, opDraft, target, basePath]);
+  };
 
   const unitOptions = useMemo(
     () => [
       { value: "01", label: formatSuppliesUnitName("01") },
       { value: "02", label: formatSuppliesUnitName("02") },
+    ],
+    [],
+  );
+  const dateTypeOptions = useMemo(
+    () =>
+      (["emission", "appointment", "finished"] as ConsumptionAuditDateType[]).map(
+        (value) => ({ value, label: C.dateTypes[value] }),
+      ),
+    [],
+  );
+  const statusOptions = useMemo(
+    () => [
+      { value: "", label: C.statusAllLabel },
+      ...Object.entries(C.statusLabels).map(([value, label]) => ({
+        value,
+        label,
+      })),
     ],
     [],
   );
@@ -528,6 +848,15 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
       navigatePluginView("home", { basePath });
     },
   };
+
+  const suggestions =
+    suggestOpen && hasCriteria ? (searchState.page?.items ?? []) : [];
+  const searchReady =
+    hasCriteria && searchState.status === "ready" && searchState.page;
+  const searchEmpty =
+    hasCriteria &&
+    searchState.status === "ready" &&
+    !searchState.page?.items.length;
 
   return (
     <div className="sp-page-stack sp-consumption-audit">
@@ -554,51 +883,336 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
           ) : null
         }
       >
-        <form
-          className="sp-consumption-audit__query"
-          aria-label={C.queryTitle}
-          onSubmit={(event) => {
-            event.preventDefault();
-            submitQuery();
-          }}
-        >
+        <div className="sp-consumption-audit__query" role="search" aria-label={C.searchTitle}>
           <div className="sp-consumption-audit__query-grid">
             <SuppliesSelectField
               label={C.unitLabel}
-              hint={C.queryHint}
+              hint={C.searchHint}
               value={unitDraft}
               options={unitOptions}
-              onChange={(value) => setUnitDraft(value)}
+              onChange={(value) => {
+                setUnitDraft(value);
+                setSelected([]);
+              }}
             />
-            <SuppliesTextField
-              label={C.opLabel}
-              value={opDraft}
-              onChange={(value) => setOpDraft(value)}
-              placeholder={C.opPlaceholder}
-              hint={C.opInvalid}
-            />
-            <div className="sp-consumption-audit__query-actions">
-              <SuppliesActionButton
-                type="submit"
-                variant="primary"
-                disabled={loading}
-              >
-                <Search size={16} aria-hidden="true" />
-                <span>{loading ? C.loading : C.consultAction}</span>
-              </SuppliesActionButton>
+            <div className="sp-consumption-audit__combobox sp-field">
+              <label className="sp-field__label" htmlFor="ca-op-search">
+                {C.opLabel}
+              </label>
+              <input
+                id="ca-op-search"
+                ref={searchInputRef}
+                className="sp-field__control"
+                type="search"
+                role="combobox"
+                aria-expanded={suggestOpen && suggestions.length > 0}
+                aria-controls="ca-op-suggestions"
+                aria-activedescendant={
+                  suggestActive >= 0 ? `ca-suggestion-${suggestActive}` : undefined
+                }
+                aria-autocomplete="list"
+                autoComplete="off"
+                value={searchDraft}
+                placeholder={C.searchPlaceholder}
+                onChange={(event) => {
+                  setSearchDraft(event.target.value.toUpperCase());
+                  setSuggestOpen(true);
+                  setListPage(1);
+                }}
+                onFocus={() => setSuggestOpen(true)}
+                onKeyDown={onSearchKeyDown}
+              />
+              {suggestOpen && searchState.status === "loading" ? (
+                <div className="sp-consumption-audit__suggestions-status">
+                  {C.searchLoading}
+                </div>
+              ) : null}
+              {suggestOpen && suggestions.length ? (
+                <ul
+                  id="ca-op-suggestions"
+                  role="listbox"
+                  className="sp-consumption-audit__suggestions"
+                >
+                  {suggestions.map((item, index) => (
+                    <li
+                      key={item.production_order}
+                      id={`ca-suggestion-${index}`}
+                      role="option"
+                      aria-selected={index === suggestActive}
+                      className={
+                        index === suggestActive
+                          ? "sp-consumption-audit__suggestion is-active"
+                          : "sp-consumption-audit__suggestion"
+                      }
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        selectOrder(item.production_order);
+                      }}
+                    >
+                      <strong>{item.production_order}</strong>
+                      <span>
+                        {item.product_code}
+                        {item.product_description
+                          ? ` · ${item.product_description}`
+                          : ""}
+                      </span>
+                      <span className="sp-consumption-audit__suggestion-meta">
+                        {formatDatePtBr(item.emission_date)} ·{" "}
+                        {labelOf(C.statusLabels, item.status)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
           </div>
-          {formError ? (
-            <SuppliesStateBanner variant="error">{formError}</SuppliesStateBanner>
-          ) : null}
-        </form>
+
+          <details className="sp-consumption-audit__filters">
+            <summary>{C.filtersTitle}</summary>
+            <div className="sp-consumption-audit__query-grid">
+              <SuppliesSelectField
+                label={C.dateTypeLabel}
+                hint={C.filtersHint}
+                value={filters.dateType}
+                options={dateTypeOptions}
+                onChange={(value) => {
+                  setFilters((f) => ({
+                    ...f,
+                    dateType: value as ConsumptionAuditDateType,
+                  }));
+                  setListPage(1);
+                }}
+              />
+              <SuppliesTextField
+                label={C.periodStartLabel}
+                value={filters.periodStart}
+                onChange={(value) => {
+                  setFilters((f) => ({ ...f, periodStart: value }));
+                  setListPage(1);
+                }}
+                type="date"
+              />
+              <SuppliesTextField
+                label={C.periodEndLabel}
+                value={filters.periodEnd}
+                onChange={(value) => {
+                  setFilters((f) => ({ ...f, periodEnd: value }));
+                  setListPage(1);
+                }}
+                type="date"
+              />
+              <SuppliesTextField
+                label={C.productLabel}
+                value={filters.product}
+                onChange={(value) => {
+                  setFilters((f) => ({ ...f, product: value }));
+                  setListPage(1);
+                }}
+                placeholder={C.productPlaceholder}
+              />
+              <SuppliesSelectField
+                label={C.statusFilterLabel}
+                value={filters.status}
+                options={statusOptions}
+                onChange={(value) => {
+                  setFilters((f) => ({ ...f, status: value }));
+                  setListPage(1);
+                }}
+              />
+              <SuppliesTextField
+                label={C.workCenterLabel}
+                value={filters.workCenter}
+                onChange={(value) => {
+                  setFilters((f) => ({ ...f, workCenter: value }));
+                  setListPage(1);
+                }}
+                placeholder={C.workCenterPlaceholder}
+              />
+              <SuppliesTextField
+                label={C.operationLabel}
+                value={filters.operation}
+                onChange={(value) => {
+                  setFilters((f) => ({ ...f, operation: value }));
+                  setListPage(1);
+                }}
+                placeholder={C.operationPlaceholder}
+              />
+              <div className="sp-consumption-audit__query-actions">
+                <SuppliesActionButton
+                  type="button"
+                  variant="default"
+                  disabled={filtersAreEmpty(filters)}
+                  onClick={() => {
+                    setFilters(EMPTY_FILTERS);
+                    setListPage(1);
+                  }}
+                >
+                  {C.clearFilters}
+                </SuppliesActionButton>
+              </div>
+            </div>
+          </details>
+        </div>
       </SuppliesPageHero>
 
-      {!target ? (
-        <SuppliesEmptyState title={C.emptyTitle} message={C.emptyMessage} />
+      {/* ——— Lista de resultados (F3) ——— */}
+      {!hasCriteria && !target ? (
+        <SuppliesEmptyState
+          title={C.emptyTitle}
+          message={C.searchMinChars(SEARCH_MIN_CHARS)}
+        />
       ) : null}
 
-      {loading ? (
+      {hasCriteria && searchState.status === "loading" ? (
+        <SuppliesLoadingCard title={C.searchLoading} variant="panel" />
+      ) : null}
+
+      {hasCriteria && searchState.status === "error" ? (
+        <SuppliesStateBanner variant="error">
+          {searchState.error ?? C.error}
+        </SuppliesStateBanner>
+      ) : null}
+
+      {searchReady && searchState.page ? (
+        <SuppliesSectionCard
+          title={C.searchResultsTitle}
+          subtitle={C.searchResultsSubtitle(searchState.page.total)}
+        >
+          {searchState.page.items.length ? (
+            <>
+              <div className="sp-consumption-audit__table-wrap">
+                <table className="sp-consumption-audit__materials-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">
+                        <span className="sp-visually-hidden">{C.compareSelect}</span>
+                      </th>
+                      <th scope="col">{C.colOrder}</th>
+                      <th scope="col">{C.colProduct}</th>
+                      <th scope="col">{C.colStatus}</th>
+                      <th scope="col">{C.colEmission}</th>
+                      <th scope="col">{C.colFinished}</th>
+                      <th scope="col">{C.colPlanned}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchState.page.items.map(
+                      (item: ConsumptionAuditOrderSummary) => (
+                        <tr
+                          key={item.production_order}
+                          className="sp-consumption-audit__result-row"
+                          onClick={() => selectOrder(item.production_order)}
+                        >
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              aria-label={`${C.compareSelect} ${item.production_order}`}
+                              checked={selected.includes(item.production_order)}
+                              disabled={
+                                !selected.includes(item.production_order) &&
+                                selected.length >= COMPARE_MAX
+                              }
+                              onChange={() => toggleSelect(item.production_order)}
+                            />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="sp-consumption-audit__related-link"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                selectOrder(item.production_order);
+                              }}
+                            >
+                              <strong>{item.production_order}</strong>
+                            </button>
+                          </td>
+                          <td>
+                            {item.product_code}
+                            {item.product_description
+                              ? ` · ${item.product_description}`
+                              : ""}
+                          </td>
+                          <td>{labelOf(C.statusLabels, item.status)}</td>
+                          <td>{formatDatePtBr(item.emission_date)}</td>
+                          <td>{formatDatePtBr(item.finished_at)}</td>
+                          <td>
+                            {formatQuantity(item.planned_quantity, 3)}{" "}
+                            {item.unit_of_measure}
+                          </td>
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="sp-consumption-audit__pagination">
+                <span>{C.searchPageOf(searchState.page.page, searchState.page.total_pages)}</span>
+                <div>
+                  <SuppliesActionButton
+                    type="button"
+                    variant="default"
+                    disabled={listPage <= 1}
+                    onClick={() => setListPage((p) => Math.max(1, p - 1))}
+                  >
+                    {C.searchPrevPage}
+                  </SuppliesActionButton>
+                  <SuppliesActionButton
+                    type="button"
+                    variant="default"
+                    disabled={listPage >= searchState.page.total_pages}
+                    onClick={() => setListPage((p) => p + 1)}
+                  >
+                    {C.searchNextPage}
+                  </SuppliesActionButton>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="sp-consumption-audit__note">{C.searchEmpty}</p>
+          )}
+
+          <div className="sp-consumption-audit__compare-bar">
+            <SuppliesActionButton
+              type="button"
+              variant="primary"
+              disabled={selected.length < 2 || selected.length > COMPARE_MAX || comparison.status === "loading"}
+              onClick={runComparison}
+            >
+              {comparison.status === "loading"
+                ? C.compareLoading
+                : C.compareAction(selected.length)}
+            </SuppliesActionButton>
+            <span className="sp-consumption-audit__note">
+              {selected.length >= COMPARE_MAX
+                ? C.compareMaxReached
+                : C.compareMinMax}
+            </span>
+          </div>
+        </SuppliesSectionCard>
+      ) : null}
+
+      {searchEmpty ? (
+        <SuppliesStateBanner variant="default">{C.searchEmpty}</SuppliesStateBanner>
+      ) : null}
+
+      {/* ——— Comparação (F4) ——— */}
+      {comparison.status === "ready" && comparison.data ? (
+        <>
+          <h2 className="sp-consumption-audit__section-heading">
+            {C.compareTitle}
+          </h2>
+          <ComparisonSection data={comparison.data} />
+        </>
+      ) : null}
+      {comparison.status === "error" ? (
+        <SuppliesStateBanner variant="error">
+          {comparison.error ?? C.error}
+        </SuppliesStateBanner>
+      ) : null}
+
+      {/* ——— Detalhe da OP selecionada ——— */}
+      {target && loading ? (
         <SuppliesLoadingCard title={C.loading} variant="panel" />
       ) : null}
 
@@ -742,10 +1356,10 @@ export function ConsumptionAuditPage({ basePath }: ConsumptionAuditPageProps) {
                       type="button"
                       className="sp-consumption-audit__related-link"
                       onClick={() => {
-                        const unit = normalizeUnit(data.branch);
-                        if (!unit) return;
+                        const relUnit = normalizeUnit(data.branch);
+                        if (!relUnit) return;
                         navigatePluginPath(
-                          `${buildPluginPath("consumption_audit", basePath)}${buildTargetSearch({ unit, productionOrder: rel.production_order })}`,
+                          `${buildPluginPath("consumption_audit", basePath)}${buildTargetSearch({ unit: relUnit, productionOrder: rel.production_order })}`,
                         );
                       }}
                     >

@@ -391,3 +391,161 @@ describe("consumption-audit formatting", () => {
     expect(formatDateTimePtBr("2026-10-30T08:50")).toBe("30/10/2026 08:50");
   });
 });
+
+// ——— F1–F4 · busca, filtros e comparação (GLPI #1353 evolução) ———
+
+import {
+  buildSearchQuery,
+  EMPTY_FILTERS,
+  filtersAreEmpty,
+  parseFiltersFromSearch,
+} from "./query";
+import {
+  isConsumptionAuditComparison,
+  isConsumptionAuditSearchPage,
+} from "./api";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+describe("consumption-audit search filters (URL state)", () => {
+  it("round-trip dos filtros pela query string", () => {
+    const qs = buildSearchQuery("01", {
+      dateType: "finished",
+      periodStart: "2026-10-01",
+      periodEnd: "2026-10-31",
+      product: "CABO",
+      status: "N",
+      workCenter: "CT-23",
+      operation: "01",
+    });
+    const parsed = parseFiltersFromSearch(qs);
+    expect(parsed.unit).toBe("01");
+    expect(parsed.filters).toEqual({
+      dateType: "finished",
+      periodStart: "2026-10-01",
+      periodEnd: "2026-10-31",
+      product: "CABO",
+      status: "N",
+      workCenter: "CT-23",
+      operation: "01",
+    });
+  });
+
+  it("date_types permanecem semanticamente distintos", () => {
+    const qs = buildSearchQuery("01", {
+      ...EMPTY_FILTERS,
+      dateType: "appointment",
+    });
+    expect(qs).toContain("date_type=appointment");
+    expect(qs).not.toContain("date_type=emission");
+    const parsed = parseFiltersFromSearch(qs);
+    expect(parsed.filters.dateType).toBe("appointment");
+  });
+
+  it("datas inválidas na URL são descartadas", () => {
+    const parsed = parseFiltersFromSearch(
+      "?unit=01&period_start=29/10/2026&period_end=2026-13-99",
+    );
+    expect(parsed.filters.periodStart).toBe("");
+    expect(parsed.filters.periodEnd).toBe("");
+  });
+
+  it("filtros padrão não poluem a URL", () => {
+    const qs = buildSearchQuery("02", EMPTY_FILTERS);
+    expect(qs).toBe("?unit=02");
+    expect(filtersAreEmpty(EMPTY_FILTERS)).toBe(true);
+    expect(
+      filtersAreEmpty({ ...EMPTY_FILTERS, product: "x" }),
+    ).toBe(false);
+  });
+});
+
+describe("consumption-audit search/comparison api guards", () => {
+  it("aceita página de busca válida e rejeita shape errado", () => {
+    const page = {
+      items: [
+        {
+          production_order: "24884201006",
+          order_number: "248842",
+          order_item: "01",
+          order_sequence: "006",
+          product_code: "50226108",
+          product_description: "CB",
+          product_type: "PI",
+          status: "N",
+          planned_quantity: 0.125,
+          produced_quantity: 0,
+          unit_of_measure: "MI",
+          warehouse: "01",
+          emission_date: "2026-10-20",
+          planned_start_date: "",
+          due_date: "",
+          finished_at: "",
+        },
+      ],
+      page: 1,
+      page_size: 10,
+      total: 1,
+      total_pages: 1,
+    };
+    expect(isConsumptionAuditSearchPage(page)).toBe(true);
+    expect(isConsumptionAuditSearchPage({ items: "x" })).toBe(false);
+    expect(isConsumptionAuditSearchPage({ items: [{ bad: 1 }] })).toBe(false);
+  });
+
+  it("aceita comparação válida e rejeita shape errado", () => {
+    const comparison = {
+      branch: "01",
+      items: [
+        {
+          production_order: "24884201006",
+          branch: "01",
+          order: {},
+          operations: [],
+          totals_by_unit: [],
+          quality: { status: "partial", warnings: [] },
+          unmatched_movements_count: 0,
+          related_orders_count: 0,
+        },
+      ],
+      not_found: [],
+      metadata: { generated_at_source: "api-delpi" },
+    };
+    expect(isConsumptionAuditComparison(comparison)).toBe(true);
+    expect(isConsumptionAuditComparison({ items: [] })).toBe(false);
+  });
+});
+
+describe("consumption-audit page structure (F2–F5)", () => {
+  const pageSource = readFileSync(
+    join(
+      dirname(fileURLToPath(import.meta.url)),
+      "ConsumptionAuditPage.tsx",
+    ),
+    "utf-8",
+  );
+
+  it("removeu o botão Consultar — nenhum submit dispara a pesquisa", () => {
+    expect(pageSource).not.toContain('type="submit"');
+    expect(pageSource).not.toContain("consultAction");
+  });
+
+  it("busca automática usa debounce e descarte de respostas antigas", () => {
+    expect(pageSource).toContain("SEARCH_DEBOUNCE_MS = 350");
+    expect(pageSource).toContain("AbortController");
+    expect(pageSource).toContain("lastSearchKey");
+  });
+
+  it("combobox expõe semântica acessível e teclado", () => {
+    expect(pageSource).toContain('role="combobox"');
+    expect(pageSource).toContain("aria-activedescendant");
+    expect(pageSource).toContain('"ArrowDown"');
+    expect(pageSource).toContain('"Escape"');
+  });
+
+  it("seleção múltipla respeita o limite de comparação", () => {
+    expect(pageSource).toContain("COMPARE_MAX = 10");
+    expect(pageSource).toContain("selected.length >= COMPARE_MAX");
+  });
+});

@@ -310,7 +310,11 @@ export const SP_HELP = {
   consumptionAudit:
     "Auditoria de consumo de uma ordem de produção: estrutura prevista, empenhos, consumo registrado e evidências de execução por operação — tudo calculado pelo servidor, o Portal não recalcula.",
   consumptionAuditQuery:
-    "Informe a chave completa da OP (11 posições) e a filial. A consulta fica na URL — F5 e compartilhamento restauram o mesmo resultado.",
+    "Digite parte do número da OP ou combine os filtros (período, produto, situação, centro de trabalho, operação) — a pesquisa é automática, sem botão de consultar. Selecionar uma linha abre a auditoria completa; filial e OP ficam na URL.",
+  consumptionAuditSearch:
+    "A pesquisa combina todos os filtros preenchidos (interseção). O período usa o tipo de data escolhido: Emissão, Apontamento ou Encerramento — datas diferentes, nunca misturadas.",
+  consumptionAuditCompare:
+    "Marque de 2 a 10 ordens da mesma filial e compare: cada OP aparece separada e os totais só somam componentes da mesma unidade de medida. Diferença aritmética não prova irregularidade.",
   consumptionAuditExecution:
     "Apontada = existe apontamento registrado. Pendente = programada sem apontamento encontrado — não prova não-execução. Desconhecida = evidência insuficiente.",
   consumptionAuditMaterials:
