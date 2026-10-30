@@ -91,7 +91,7 @@ def _err(
 def _wrap(entity: str, action: str, result: CallToolResult) -> CallToolResult:
     """Semantic envelope — action/entity stamped on top of the official
     result payload; legacy error/success semantics preserved."""
-    payload = dict(getattr(result, "structuredContent", None) or {})
+    payload = dict(getattr(result, "structured_content", None) or {})
     payload.setdefault("entity", entity)
     payload.setdefault("action", action)
     return mcp_tool_result(payload, is_error=bool(result.is_error))
@@ -295,7 +295,7 @@ async def tool_read(
         handler = _READ_DISPATCH[(entry.entity, entry.action)]
         result = await handler(args)
         if projection and isinstance(projection, list):
-            payload = dict(getattr(result, "structuredContent", None) or {})
+            payload = dict(getattr(result, "structured_content", None) or {})
             inner = payload.get("data")
             if isinstance(inner, dict):
                 keep = {str(k) for k in projection}
