@@ -95,34 +95,35 @@ presets compartilhados. Se outros plugins precisarem desses atalhos, o owner
 ## Hotfix 2026-10-30 — «Resposta inválida do servidor» na pesquisa
 
 **Sintoma (PO):** pesquisa por período sem OP (filial 01, Ontem,
-) exibia «Resposta inválida do servidor — os dados
+`date_type=appointment`) exibia «Resposta inválida do servidor — os dados
 não puderam ser interpretados».
 
-**Causa raiz:** a rota  serializava o
-dataclass  direto em  →  usa
-, que descarta a property . O BFF repassava
-o payload e o guard de contrato do MFE (,
-que exige  numérico) derrubava qualquer resposta 200 da busca
+**Causa raiz:** a rota `search_consumption_audit_orders` serializava o
+dataclass `Page` direto em `api_delpi_success` → `jsonable_encoder` usa
+`dataclasses.asdict`, que descarta a property `total_pages`. O BFF repassava
+o payload e o guard de contrato do MFE (`isConsumptionAuditSearchPage`,
+que exige `total_pages` numérico) derrubava qualquer resposta 200 da busca
 — o bug era genérico ao endpoint de listagem, não específico de
-.
+`appointment`.
 
-**Fix (1 linha):**  — convenção já
-usada pelos demais routers que devolvem ;  inclui
- e formata datas dos itens. Commit .
+**Fix (1 linha):** `api_delpi_success(result.to_dict(), …)` — convenção já
+usada pelos demais routers que devolvem `Page`; `Page.to_dict()` inclui
+`total_pages` e formata datas dos itens. Commit `8b4c183e64`.
 
-**Testes:**  (regressão no
+**Testes:** `test_search_route_page_serializes_total_pages` (regressão no
 shape do envelope); suíte api-delpi **6581 passed** (4 falhas DAVI
 preexistentes/alheias ao diff); E2E dev BFF→producer→Protheus:
- 200 ,  200 ,
-fragmento 200, data inválida 422,  inválido 422,  403,
+`appointment` 200 `total_pages=7`, `emission` 200 `total_pages=48`,
+fragmento 200, data inválida 422, `date_type` inválido 422, `unit=03` 403,
 detalhe 200.
 
-**Deploy/smoke prod:**  → , srv-api HEAD ,
+**Deploy/smoke prod:** `up-prod-sequential.sh --pull --fase core --build
+api-delpi` → `infra-api-delpi@1b3bc9fb6427`, srv-api HEAD `8b4c183e6`,
 container healthy. Smoke autenticado (impersonation OIDC oficial do
-superadmin) com a query exata do PO → **HTTP 200**, ,
-, itens reais — guard do MFE satisfeito.
+superadmin) com a query exata do PO → **HTTP 200**, `total:158`,
+`total_pages:7`, itens reais — guard do MFE satisfeito.
 
-**TO_INVENTORY:** demais routers que devolvem  sem 
-( structure/inspection/guide/parents) têm o mesmo defeito
-latente de / — corrigir no owner com
+**TO_INVENTORY:** demais routers que devolvem `Page` sem `.to_dict()`
+(`product_routes` structure/inspection/guide/parents) têm o mesmo defeito
+latente de `total_pages`/`meta.pagination` — corrigir no owner com
 avaliação de compatibilidade de consumidores.
