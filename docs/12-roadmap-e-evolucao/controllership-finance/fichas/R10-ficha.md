@@ -1,6 +1,8 @@
 # R10 — Notas/Despesas por Centro de Custo
 
-Versão da ficha: 1.1 · 31/10/2026 · doc 127 Etapa 4 (GATE C — ficha de
+Versão da ficha: 1.2 · doc 127 Etapa 5 (correção editorial §4.1:
+universo `calculation` definido como 686−exclusões=353, prova doc 85
+§10). Anterior: 1.1 · 31/10/2026 · doc 127 Etapa 4 (GATE C — ficha de
 atenção especial).
 
 ## Identificação
@@ -35,9 +37,10 @@ atenção especial).
   pelo owner ("data de digitação no mês") + prova física.
 - Filial: `D1_FILIAL` — dimensão de dado, não fronteira RBAC.
 - Universos:
-  - `calculation` — universo da apuração: todas as linhas em competência
-    **menos** as exclusões abaixo (302/353 → 353? Não: o universo do
-    artefato é a apuração; ver abaixo).
+  - `calculation` — universo da apuração: **353 linhas** — as 686 linhas
+    SD1 em competência **menos** as exclusões BR-R10-003/004/005
+    (13 TES, 302 MP, 6 benefícios) — identidade exata com o artefato:
+    R$ 169.704,12 / 139 documentos / 46 buckets de CC (`PROVEN` live).
   - `investigation` — demais linhas em competência (excluídas da
     apuração, mantidas para conferência).
   - **Invariante: nunca somar nem comparar totais dos dois universos.**

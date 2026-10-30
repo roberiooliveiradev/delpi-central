@@ -113,7 +113,7 @@ _PAIR_MATRIX: dict[frozenset[str], CompatibilityVerdict] = {
             "saldo, mas dimensão estática × fluxo — nenhum delta "
             "direto certifica reconciliação."
         ),
-        evidence=("doc-126#7"),
+        evidence=("doc-126#7",),
     ),
     frozenset({"R03", "R08"}): _verdict(
         RELATED_REQUIRES_EXPLANATION,
@@ -150,7 +150,7 @@ _PAIR_MATRIX: dict[frozenset[str], CompatibilityVerdict] = {
             "documento/produto — mas R09 não tem contrato "
             "implementado."
         ),
-        evidence=("doc-126#7"),
+        evidence=("doc-126#7",),
     ),
     frozenset({"R12", "R15"}): _verdict(
         NOT_COMPARABLE,
@@ -160,7 +160,7 @@ _PAIR_MATRIX: dict[frozenset[str], CompatibilityVerdict] = {
             "possuem medida numérica comum — nenhum delta financeiro "
             "é válido."
         ),
-        evidence=("doc-126#7"),
+        evidence=("doc-126#7",),
     ),
 }
 
@@ -210,7 +210,7 @@ def classify_pair(
                 "convenção de custo — variação por período/filial é "
                 "diretamente comparável."
             ),
-            evidence=("doc-126#7"),
+            evidence=("doc-126#7",),
             delta=True,
             delta_semantics="direct",
         )
@@ -224,6 +224,6 @@ def classify_pair(
                 "compatibilidade nunca é inferida por semelhança de "
                 "colunas."
             ),
-            evidence=("doc-126#7"),
+            evidence=("doc-126#7",),
         )
     return pair

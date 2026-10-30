@@ -768,6 +768,37 @@ def test_r12_x_r15_not_implemented():
     assert data["diffs"] == []
 
 
+def test_compatibility_evidence_refs_are_locators(gateway):
+    """Regression: evidenceRefs must serialize as locator strings, never
+    exploded characters (single-element tuples need the trailing comma)."""
+    gateway.responses[(KARDEX_SUMMARY, "2026-09")] = (
+        _kardex_payload("100.00")
+    )
+    gateway.responses[(KARDEX_SUMMARY, "2026-08")] = (
+        _kardex_payload("80.00")
+    )
+    response = _post(
+        _client(),
+        {
+            "comparisonKind": "PERIOD",
+            "measure": "outputValue",
+            "subjects": [
+                _subject("R06", "2026-08"),
+                _subject("R06", "2026-09"),
+            ],
+        },
+    )
+    assert response.status_code == 200
+    compat = response.json()["data"]["compatibility"]
+    assert compat, "expected at least one compatibility entry"
+    for entry in compat:
+        assert entry["evidenceRefs"]
+        for ref in entry["evidenceRefs"]:
+            assert isinstance(ref, str)
+            assert len(ref) > 1  # not a single exploded character
+            assert ref.startswith("doc-")
+
+
 def test_unknown_report_insufficient_evidence():
     response = _post(
         _client(),
